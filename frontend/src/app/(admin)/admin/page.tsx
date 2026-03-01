@@ -11,6 +11,7 @@ import {
   RotateCcw,
   MessageSquarePlus,
   Info,
+  Zap,
 } from "lucide-react";
 import { PageHeader } from "@/components/game/page-header";
 import { LoadingState } from "@/components/game/loading-state";
@@ -26,7 +27,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { adminApi, worldApi, scenarioApi } from "@/lib/gameApi";
+import { adminApi, adminEventApi, worldApi, scenarioApi } from "@/lib/gameApi";
 import { toast } from "sonner";
 import type { WorldState, Scenario, AdminDashboard } from "@/types";
 
@@ -49,6 +50,9 @@ export default function AdminDashboardPage() {
   const [turnTerm, setTurnTerm] = useState("");
   const [locked, setLocked] = useState(false);
   const [logMessage, setLogMessage] = useState("");
+  const [eventLoading, setEventLoading] = useState<string | null>(null);
+  const [eventLogMsg, setEventLogMsg] = useState("");
+  const [eventDeleteId, setEventDeleteId] = useState("");
 
   // Global (gateway) system flags
   const [allowLogin, setAllowLogin] = useState<boolean | null>(null);
@@ -138,7 +142,7 @@ export default function AdminDashboardPage() {
         turnTerm: newTurnTerm ? Number(newTurnTerm) : undefined,
         gameVersion: newGameVersion.trim() || undefined,
       });
-      toast.success(`월드 생성 완료 (ID: ${res.data.worldId})`);
+      toast.success(`월드 생성 완료 (ID: ${res.data.id})`);
       setNewWorldName("");
       setShowCreateForm(false);
       loadWorlds();
@@ -247,6 +251,101 @@ export default function AdminDashboardPage() {
       toast.success("설정이 저장되었습니다.");
     } catch {
       toast.error("저장 실패");
+    }
+  };
+
+  // ── Event Definitions ───────────────────────────────────────
+  const EVENT_ACTIONS: {
+    name: string;
+    label: string;
+    description: string;
+    needsArg?: "message" | "eventId";
+  }[] = [
+    {
+      name: "ProcessIncome",
+      label: "세금 징수",
+      description: "도시 수입 처리 (골드/쌀)",
+    },
+    {
+      name: "ProcessSemiAnnual",
+      label: "반기 처리",
+      description: "인구 변동, 기술 퇴화, 장수 수명 등",
+    },
+    {
+      name: "UpdateCitySupply",
+      label: "도시 보급",
+      description: "도시 물자 갱신",
+    },
+    {
+      name: "UpdateNationLevel",
+      label: "국가 등급",
+      description: "국가 등급 재계산",
+    },
+    {
+      name: "RandomizeCityTradeRate",
+      label: "교역률 변경",
+      description: "도시 교역률 무작위 변경",
+    },
+    {
+      name: "RaiseInvader",
+      label: "이민족 침입",
+      description: "이민족 NPC 국가 발생",
+    },
+    { name: "RaiseNPCNation", label: "NPC 건국", description: "NPC 국가 생성" },
+    {
+      name: "RegNeutralNPC",
+      label: "중립 NPC 배치",
+      description: "중립 NPC 장수를 빈 도시에 배치",
+    },
+    {
+      name: "NoticeToHistoryLog",
+      label: "중원정세 기록",
+      description: "중원정세에 메시지 기록",
+      needsArg: "message",
+    },
+    {
+      name: "DeleteEvent",
+      label: "이벤트 삭제",
+      description: "예정된 이벤트를 ID로 삭제",
+      needsArg: "eventId",
+    },
+  ];
+
+  const handleRaiseEvent = async (
+    eventName: string,
+    needsArg?: "message" | "eventId",
+  ) => {
+    let args: unknown[] | undefined;
+    if (needsArg === "message") {
+      if (!eventLogMsg.trim()) {
+        toast.error("메시지를 입력하세요.");
+        return;
+      }
+      args = [eventLogMsg.trim()];
+    } else if (needsArg === "eventId") {
+      const id = Number(eventDeleteId);
+      if (!id || isNaN(id)) {
+        toast.error("이벤트 ID를 입력하세요.");
+        return;
+      }
+      args = [id];
+    }
+
+    const activeWorld = worlds.find((w) => !w.config?.locked);
+    setEventLoading(eventName);
+    try {
+      const res = await adminEventApi.raise(eventName, args, activeWorld?.id);
+      if (res.data.result) {
+        toast.success(`${eventName} 실행 완료`);
+        if (needsArg === "message") setEventLogMsg("");
+        if (needsArg === "eventId") setEventDeleteId("");
+      } else {
+        toast.error(res.data.reason || "이벤트 실행 실패");
+      }
+    } catch {
+      toast.error("이벤트 실행 중 오류 발생");
+    } finally {
+      setEventLoading(null);
     }
   };
 
@@ -627,6 +726,112 @@ export default function AdminDashboardPage() {
               <p>
                 게임 인스턴스가 실행 중이 아닙니다. 월드를 오픈(활성화)하면
                 공지사항, 턴 간격, 서버 잠금 등 상세 설정이 가능합니다.
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* ── 이벤트 발동 (Per-world, requires game instance) ── */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-sm">
+            <Zap className="size-4" />
+            이벤트 발동
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {dashboardAvailable ? (
+            <>
+              <p className="text-xs text-muted-foreground">
+                게임 이벤트를 수동으로 발동합니다. 현재 활성 월드에 적용됩니다.
+              </p>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                {EVENT_ACTIONS.filter((e) => !e.needsArg).map((evt) => (
+                  <Button
+                    key={evt.name}
+                    size="sm"
+                    variant="outline"
+                    className="flex flex-col items-start h-auto py-2 px-3"
+                    disabled={eventLoading !== null}
+                    onClick={() => handleRaiseEvent(evt.name)}
+                  >
+                    <span className="text-xs font-medium">{evt.label}</span>
+                    <span className="text-[10px] text-muted-foreground font-normal">
+                      {evt.description}
+                    </span>
+                    {eventLoading === evt.name && (
+                      <span className="text-[10px] text-blue-400 mt-0.5">
+                        실행 중...
+                      </span>
+                    )}
+                  </Button>
+                ))}
+              </div>
+
+              {/* NoticeToHistoryLog with message input */}
+              <div className="flex gap-2 items-end">
+                <div className="flex-1 space-y-1">
+                  <label className="text-xs text-muted-foreground">
+                    중원정세 기록
+                  </label>
+                  <Input
+                    value={eventLogMsg}
+                    onChange={(e) => setEventLogMsg(e.target.value)}
+                    placeholder="기록할 메시지 입력"
+                    onKeyDown={(e) =>
+                      e.key === "Enter" &&
+                      handleRaiseEvent("NoticeToHistoryLog", "message")
+                    }
+                  />
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={eventLoading !== null || !eventLogMsg.trim()}
+                  onClick={() =>
+                    handleRaiseEvent("NoticeToHistoryLog", "message")
+                  }
+                >
+                  {eventLoading === "NoticeToHistoryLog"
+                    ? "실행 중..."
+                    : "기록"}
+                </Button>
+              </div>
+
+              {/* DeleteEvent with ID input */}
+              <div className="flex gap-2 items-end">
+                <div className="flex-1 space-y-1">
+                  <label className="text-xs text-muted-foreground">
+                    이벤트 삭제 (ID)
+                  </label>
+                  <Input
+                    type="number"
+                    value={eventDeleteId}
+                    onChange={(e) => setEventDeleteId(e.target.value)}
+                    placeholder="삭제할 이벤트 ID"
+                    onKeyDown={(e) =>
+                      e.key === "Enter" &&
+                      handleRaiseEvent("DeleteEvent", "eventId")
+                    }
+                  />
+                </div>
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  disabled={eventLoading !== null || !eventDeleteId}
+                  onClick={() => handleRaiseEvent("DeleteEvent", "eventId")}
+                >
+                  {eventLoading === "DeleteEvent" ? "실행 중..." : "삭제"}
+                </Button>
+              </div>
+            </>
+          ) : (
+            <div className="flex items-center gap-3 text-sm text-muted-foreground py-4">
+              <Info className="size-5 shrink-0" />
+              <p>
+                게임 인스턴스가 실행 중이 아닙니다. 월드를 오픈(활성화)해야
+                이벤트를 발동할 수 있습니다.
               </p>
             </div>
           )}

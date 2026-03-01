@@ -118,7 +118,7 @@ export default function NpcListPage() {
       }
       return sortDir === "asc" ? cmp : -cmp;
     });
-  }, [generals, search, sortKey, sortDir, nationFilter, nationMap]);
+  }, [generals, search, sortKey, sortDir, nationFilter, nationMap, cityMap]);
 
   const handleSortChange = (key: SortKey) => {
     if (sortKey === key) {
@@ -219,6 +219,7 @@ export default function NpcListPage() {
                   도시{arrow("city")}
                 </TableHead>
                 <TableHead>성격</TableHead>
+                <TableHead>보관횟수</TableHead>
                 <TableHead>특기</TableHead>
                 <TableHead
                   className="cursor-pointer hover:text-foreground"
@@ -280,6 +281,12 @@ export default function NpcListPage() {
                 const specialFull = special2Display
                   ? `${specialDisplay} / ${special2Display}`
                   : specialDisplay;
+                const storageCount =
+                  typeof g.meta?.keepCount === "number"
+                    ? g.meta.keepCount
+                    : typeof g.meta?.storageCount === "number"
+                      ? g.meta.storageCount
+                      : null;
 
                 return (
                   <TableRow
@@ -345,6 +352,9 @@ export default function NpcListPage() {
                     </TableCell>
                     <TableCell className="text-xs">
                       {g.personalCode ?? "-"}
+                    </TableCell>
+                    <TableCell className="text-xs tabular-nums">
+                      {storageCount ?? "-"}
                     </TableCell>
                     <TableCell className="text-xs whitespace-nowrap">
                       {specialFull}

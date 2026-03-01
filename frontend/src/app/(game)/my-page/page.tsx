@@ -925,54 +925,55 @@ export default function MyPage() {
                     variant="outline"
                     className="w-full"
                     onClick={async () => {
+                      if (!confirm("거병후보로 등록하시겠습니까?")) return;
                       if (
                         !confirm(
-                          "거병 이후 장수를 삭제할 수 없게됩니다. 거병하시겠습니까?",
+                          "거병 이후 장수를 삭제할 수 없게 됩니다. 계속하시겠습니까?",
                         )
                       )
                         return;
                       try {
                         await accountApi.buildNationCandidate();
-                        toast.success("거병하였습니다.");
+                        toast.success("거병후보로 등록되었습니다.");
                         if (currentWorld) fetchMyGeneral(currentWorld.id);
                       } catch {
-                        toast.error("거병에 실패했습니다.");
+                        toast.error("거병후보 등록에 실패했습니다.");
                       }
                     }}
                   >
-                    거병 (건국 후보)
+                    거병후보
                   </Button>
                   <Button
                     variant="outline"
                     className="w-full"
                     onClick={async () => {
-                      if (!confirm("아군 접경으로 이동할까요?")) return;
+                      if (!confirm("즉시퇴각 하시겠습니까?")) return;
                       try {
                         await accountApi.instantRetreat();
-                        toast.success("접경으로 귀환하였습니다.");
+                        toast.success("즉시퇴각이 완료되었습니다.");
                         if (currentWorld) fetchMyGeneral(currentWorld.id);
                       } catch {
-                        toast.error("접경 귀환에 실패했습니다.");
+                        toast.error("즉시퇴각에 실패했습니다.");
                       }
                     }}
                   >
-                    접경 귀환
+                    즉시퇴각
                   </Button>
                   <Button
                     variant="destructive"
                     className="w-full"
                     onClick={async () => {
-                      if (!confirm("정말로 삭제하시겠습니까?")) return;
+                      if (!confirm("사전종료를 진행하시겠습니까?")) return;
                       try {
                         await accountApi.dieOnPrestart();
-                        toast.success("장수가 삭제되었습니다.");
+                        toast.success("사전종료가 완료되었습니다.");
                         router.push("/");
                       } catch {
-                        toast.error("삭제에 실패했습니다.");
+                        toast.error("사전종료에 실패했습니다.");
                       }
                     }}
                   >
-                    사전거병 삭제
+                    사전종료
                   </Button>
                 </CardContent>
               </Card>

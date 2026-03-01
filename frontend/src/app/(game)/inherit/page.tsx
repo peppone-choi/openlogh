@@ -26,6 +26,7 @@ import type {
   InheritanceLogEntry,
   InheritBuffType,
   InheritanceActionCost,
+  InheritancePointCategory,
   City,
 } from "@/types";
 
@@ -44,6 +45,20 @@ const POINT_CATEGORY_LABELS: Record<string, string> = {
   tournament: "토너먼트",
   betting: "베팅 당첨",
 };
+
+const POINT_BREAKDOWN_ORDER: InheritancePointCategory[] = [
+  "previous",
+  "lived_month",
+  "max_belong",
+  "max_domestic_critical",
+  "active_action",
+  "combat",
+  "sabotage",
+  "unifier",
+  "dex",
+  "tournament",
+  "betting",
+];
 
 /* ── Combat buff definitions ── */
 
@@ -98,6 +113,7 @@ const COMBAT_BUFF_LIST: {
 
 const FALLBACK_BUFF_LEVEL_COSTS = [0, 200, 600, 1200, 2000, 3000];
 const MAX_BUFF_LEVEL = 5;
+const MAX_INHERIT_BONUS_STAT_TOTAL = 3;
 
 // Fibonacci cost for turn reset / special war reset
 function fibonacciCost(base: number, count: number): number {
@@ -139,7 +155,7 @@ export default function InheritPage() {
 
   // Unique auction
   const [selectedUnique, setSelectedUnique] = useState("");
-  const [auctionBid, setAuctionBid] = useState(500);
+  const [auctionBid, setAuctionBid] = useState(0);
 
   // Logs with pagination
   const [allLogs, setAllLogs] = useState<InheritanceLogEntry[]>([]);
@@ -196,6 +212,18 @@ export default function InheritPage() {
     fetchInfo();
   }, [fetchInfo]);
 
+  const getBuffCost = useCallback(
+    (level: number) => {
+      if (level <= 0) return 0;
+      return actionCost.buff[level] ?? actionCost.buff[actionCost.buff.length - 1] ?? 0;
+    },
+    [actionCost.buff],
+  );
+
+  const stripHtml = useCallback((value: string) => {
+    return value.replace(/<[^>]*>/g, "").trim();
+  }, []);
+
   /* ── Combat buff buy ── */
   const handleBuyCombatBuff = async (buffCode: InheritBuffType) => {
     if (!currentWorld || !info) return;
@@ -203,7 +231,7 @@ export default function InheritPage() {
     const targetLevel = combatBuffLevels[buffCode] ?? 0;
     if (targetLevel <= prevLevel) return;
 
-    const cost = actionCost.buff[targetLevel] - actionCost.buff[prevLevel];
+    const cost = getBuffCost(targetLevel) - getBuffCost(prevLevel);
     if (info.points < cost) {
       toast.error(`포인트 부족 (필요: ${cost})`);
       return;
@@ -319,11 +347,31 @@ export default function InheritPage() {
 
   /* ── Stat reset with inheritBonusStat ── */
   const bonusStatTotal = bonusStat[0] + bonusStat[1] + bonusStat[2];
+  const bonusStatRemaining = MAX_INHERIT_BONUS_STAT_TOTAL - bonusStatTotal;
+  const bonusStatValid = bonusStatTotal === 0 || bonusStatTotal === MAX_INHERIT_BONUS_STAT_TOTAL;
   const requiredResetStatPoint =
     bonusStatTotal > 0 ? actionCost.bornStatPoint : 0;
 
+  const updateBonusStat = (index: 0 | 1 | 2, nextRaw: number) => {
+    const requested = Number.isFinite(nextRaw) ? Math.trunc(nextRaw) : 0;
+    setBonusStat((prev) => {
+      const otherTotal = prev.reduce((sum, value, idx) => {
+        return idx === index ? sum : sum + value;
+      }, 0);
+      const maxForIndex = Math.max(0, MAX_INHERIT_BONUS_STAT_TOTAL - otherTotal);
+      const nextValue = Math.max(0, Math.min(maxForIndex, requested));
+      if (index === 0) return [nextValue, prev[1], prev[2]];
+      if (index === 1) return [prev[0], nextValue, prev[2]];
+      return [prev[0], prev[1], nextValue];
+    });
+  };
+
   const handleResetStats = async () => {
     if (!currentWorld || !info) return;
+    if (!bonusStatValid) {
+      toast.error(`보너스 능력치 합계는 0 또는 ${MAX_INHERIT_BONUS_STAT_TOTAL}이어야 합니다.`);
+      return;
+    }
     if (requiredResetStatPoint > 0 && info.points < requiredResetStatPoint) {
       toast.error(`포인트 부족 (필요: ${requiredResetStatPoint})`);
       return;
@@ -339,15 +387,13 @@ export default function InheritPage() {
         leadership: number;
         strength: number;
         intel: number;
-        inheritBonusStat?: [number, number, number];
+        inheritBonusStat: [number, number, number];
       } = {
         leadership: statLeadership,
         strength: statStrength,
         intel: statIntel,
+        inheritBonusStat: bonusStat,
       };
-      if (bonusStatTotal > 0) {
-        payload.inheritBonusStat = bonusStat;
-      }
       await inheritanceApi.resetStats(currentWorld.id, payload);
       toast.success("능력치 초기화 완료");
       fetchInfo();
@@ -390,6 +436,10 @@ export default function InheritPage() {
   /* ── Unique auction ── */
   const availableUnique = info?.availableUnique ?? {};
   const minBid = actionCost.minSpecificUnique;
+
+  useEffect(() => {
+    setAuctionBid((prev) => Math.max(prev, minBid));
+  }, [minBid]);
 
   const handleAuctionUnique = async () => {
     if (!currentWorld || !info || !selectedUnique) return;
@@ -444,7 +494,10 @@ export default function InheritPage() {
   // Dynamic lists from server
   const availableSpecialWar = info?.availableSpecialWar ?? {};
   const availableTargetGeneral = info?.availableTargetGeneral ?? {};
-  const maxBuff = info?.maxInheritBuff ?? MAX_BUFF_LEVEL;
+  const maxBuff = Math.min(
+    info?.maxInheritBuff ?? MAX_BUFF_LEVEL,
+    Math.max(actionCost.buff.length - 1, 0),
+  );
   const currentStat = info?.currentStat;
 
   if (loading)
@@ -470,7 +523,8 @@ export default function InheritPage() {
           {/* Detailed point breakdown by category */}
           {info?.pointBreakdown && (
             <div className="text-xs text-muted-foreground space-y-1 border-t border-gray-800 pt-2">
-              {Object.entries(info.pointBreakdown).map(([key, value]) => {
+              {POINT_BREAKDOWN_ORDER.map((key) => {
+                const value = info.pointBreakdown?.[key] ?? 0;
                 if (value === 0 && key !== "previous") return null;
                 return (
                   <div key={key} className="flex justify-between">
@@ -509,8 +563,8 @@ export default function InheritPage() {
                   <span>+{info.newPoints}P</span>
                 </div>
               )}
-              {info.pointSources?.map((src, i) => (
-                <div key={i} className="flex justify-between">
+              {info.pointSources?.map((src) => (
+                <div key={`${src.label}-${src.amount}`} className="flex justify-between">
                   <span className="pl-2 text-muted-foreground/70">
                     └ {src.label}
                   </span>
@@ -562,8 +616,7 @@ export default function InheritPage() {
                   combatBuffLevels[buff.code] ?? prevLevel;
                 const cost =
                   currentSelected > prevLevel
-                    ? actionCost.buff[currentSelected] -
-                      actionCost.buff[prevLevel]
+                    ? getBuffCost(currentSelected) - getBuffCost(prevLevel)
                     : 0;
                 return (
                   <div
@@ -676,12 +729,9 @@ export default function InheritPage() {
                 </Button>
               </div>
               {selectedSpecial && availableSpecialWar[selectedSpecial] && (
-                <p
-                  className="text-xs text-muted-foreground"
-                  dangerouslySetInnerHTML={{
-                    __html: availableSpecialWar[selectedSpecial].info,
-                  }}
-                />
+                <p className="text-xs text-muted-foreground whitespace-pre-wrap">
+                  {stripHtml(availableSpecialWar[selectedSpecial].info)}
+                </p>
               )}
             </CardContent>
           </Card>
@@ -794,10 +844,14 @@ export default function InheritPage() {
                 <p className="text-xs font-medium">기본 능력치</p>
                 <div className="grid grid-cols-3 gap-2">
                   <div className="space-y-1">
-                    <label className="text-xs text-muted-foreground">
+                    <label
+                      htmlFor="inherit-reset-leadership"
+                      className="text-xs text-muted-foreground"
+                    >
                       통솔
                     </label>
                     <Input
+                      id="inherit-reset-leadership"
                       type="number"
                       min={currentStat?.statMin ?? 0}
                       max={currentStat?.statMax ?? 100}
@@ -808,10 +862,14 @@ export default function InheritPage() {
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs text-muted-foreground">
+                    <label
+                      htmlFor="inherit-reset-strength"
+                      className="text-xs text-muted-foreground"
+                    >
                       무력
                     </label>
                     <Input
+                      id="inherit-reset-strength"
                       type="number"
                       min={currentStat?.statMin ?? 0}
                       max={currentStat?.statMax ?? 100}
@@ -820,10 +878,14 @@ export default function InheritPage() {
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs text-muted-foreground">
+                    <label
+                      htmlFor="inherit-reset-intel"
+                      className="text-xs text-muted-foreground"
+                    >
                       지력
                     </label>
                     <Input
+                      id="inherit-reset-intel"
                       type="number"
                       min={currentStat?.statMin ?? 0}
                       max={currentStat?.statMax ?? 100}
@@ -835,68 +897,68 @@ export default function InheritPage() {
                 <p className="text-xs font-medium mt-2">추가 능력치 (보너스)</p>
                 <div className="grid grid-cols-3 gap-2">
                   <div className="space-y-1">
-                    <label className="text-xs text-muted-foreground">
+                    <label
+                      htmlFor="inherit-bonus-leadership"
+                      className="text-xs text-muted-foreground"
+                    >
                       통솔
                     </label>
                     <Input
+                      id="inherit-bonus-leadership"
                       type="number"
                       min={0}
-                      max={5}
+                      max={MAX_INHERIT_BONUS_STAT_TOTAL}
                       value={bonusStat[0]}
-                      onChange={(e) => {
-                        const v = Math.max(
-                          0,
-                          Math.min(5, Number(e.target.value)),
-                        );
-                        setBonusStat((prev) => [v, prev[1], prev[2]]);
-                      }}
+                      onChange={(e) => updateBonusStat(0, Number(e.target.value))}
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs text-muted-foreground">
+                    <label
+                      htmlFor="inherit-bonus-strength"
+                      className="text-xs text-muted-foreground"
+                    >
                       무력
                     </label>
                     <Input
+                      id="inherit-bonus-strength"
                       type="number"
                       min={0}
-                      max={5}
+                      max={MAX_INHERIT_BONUS_STAT_TOTAL}
                       value={bonusStat[1]}
-                      onChange={(e) => {
-                        const v = Math.max(
-                          0,
-                          Math.min(5, Number(e.target.value)),
-                        );
-                        setBonusStat((prev) => [prev[0], v, prev[2]]);
-                      }}
+                      onChange={(e) => updateBonusStat(1, Number(e.target.value))}
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs text-muted-foreground">
+                    <label
+                      htmlFor="inherit-bonus-intel"
+                      className="text-xs text-muted-foreground"
+                    >
                       지력
                     </label>
                     <Input
+                      id="inherit-bonus-intel"
                       type="number"
                       min={0}
-                      max={5}
+                      max={MAX_INHERIT_BONUS_STAT_TOTAL}
                       value={bonusStat[2]}
-                      onChange={(e) => {
-                        const v = Math.max(
-                          0,
-                          Math.min(5, Number(e.target.value)),
-                        );
-                        setBonusStat((prev) => [prev[0], prev[1], v]);
-                      }}
+                      onChange={(e) => updateBonusStat(2, Number(e.target.value))}
                     />
                   </div>
                 </div>
                 <div className="flex items-center justify-between pt-1">
                   <span className="text-xs text-muted-foreground">
-                    필요 포인트: {requiredResetStatPoint}P
+                    보너스 합계 {bonusStatTotal}/{MAX_INHERIT_BONUS_STAT_TOTAL}
+                    {bonusStatRemaining > 0 ? ` (남음: ${bonusStatRemaining})` : ""} · 필요 포인트: {requiredResetStatPoint}P
                   </span>
-                  <Button size="sm" onClick={handleResetStats}>
+                  <Button size="sm" disabled={!bonusStatValid} onClick={handleResetStats}>
                     능력치 초기화
                   </Button>
                 </div>
+                {!bonusStatValid && (
+                  <p className="text-xs text-red-400">
+                    보너스 능력치는 사용하지 않거나, 정확히 {MAX_INHERIT_BONUS_STAT_TOTAL} 포인트를 분배해야 합니다.
+                  </p>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -953,12 +1015,9 @@ export default function InheritPage() {
                   ))}
                 </select>
                 {selectedUnique && availableUnique[selectedUnique] && (
-                  <p
-                    className="text-xs text-muted-foreground"
-                    dangerouslySetInnerHTML={{
-                      __html: availableUnique[selectedUnique].info,
-                    }}
-                  />
+                  <p className="text-xs text-muted-foreground whitespace-pre-wrap">
+                    {stripHtml(availableUnique[selectedUnique].info)}
+                  </p>
                 )}
                 <div className="flex gap-2 items-center">
                   <Input

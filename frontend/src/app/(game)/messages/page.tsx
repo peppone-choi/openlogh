@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useWorldStore } from "@/stores/worldStore";
 import { useGeneralStore } from "@/stores/generalStore";
 import { useGameStore } from "@/stores/gameStore";
-import { messageApi, diplomacyApi } from "@/lib/gameApi";
+import { messageApi } from "@/lib/gameApi";
 import { subscribeWebSocket } from "@/lib/websocket";
 import type { MailboxType, Message } from "@/types";
 import { ChevronDown, Mail, PenLine, Reply, Send, Trash2 } from "lucide-react";
@@ -218,14 +218,9 @@ export default function MessagesPage() {
     }
   };
 
-  const handleDiplomacyResponse = async (
-    messageId: number,
-    action: string,
-    accept: boolean,
-  ) => {
-    if (!currentWorld) return;
+  const handleDiplomacyResponse = async (messageId: number, accept: boolean) => {
     try {
-      await diplomacyApi.respond(currentWorld.id, messageId, action, accept);
+      await messageApi.respondDiplomacy(messageId, accept);
       await fetchMessages();
     } catch {
       /* ignore */
@@ -528,7 +523,18 @@ export default function MessagesPage() {
                   ? senderNation?.name
                   : senderGeneral?.name;
               return (
-                <Card key={m.id} onClick={() => handleMarkAsRead(m.id)}>
+                <Card
+                  key={m.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => handleMarkAsRead(m.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      handleMarkAsRead(m.id);
+                    }
+                  }}
+                >
                   <CardContent className="space-y-1">
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
                       <span className="font-medium text-foreground">
@@ -572,22 +578,16 @@ export default function MessagesPage() {
                     </p>
                     {/* Diplomacy action buttons (수락/거절) */}
                     {m.mailboxType === "DIPLOMACY" &&
-                      typeof m.payload.action === "string" && (
-                        <div
-                          className="flex gap-2 mt-2"
-                          onClick={(e) => e.stopPropagation()}
-                        >
+                      m.meta.responded !== true && (
+                        <div className="flex gap-2 mt-2">
                           <Button
                             size="sm"
                             variant="default"
                             className="bg-green-700 hover:bg-green-600 text-xs h-7"
-                            onClick={() =>
-                              handleDiplomacyResponse(
-                                m.id,
-                                m.payload.action as string,
-                                true,
-                              )
-                            }
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDiplomacyResponse(m.id, true);
+                            }}
                           >
                             수락
                           </Button>
@@ -595,13 +595,10 @@ export default function MessagesPage() {
                             size="sm"
                             variant="destructive"
                             className="text-xs h-7"
-                            onClick={() =>
-                              handleDiplomacyResponse(
-                                m.id,
-                                m.payload.action as string,
-                                false,
-                              )
-                            }
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDiplomacyResponse(m.id, false);
+                            }}
                           >
                             거절
                           </Button>

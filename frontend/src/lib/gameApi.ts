@@ -1005,7 +1005,7 @@ export const adminApi = {
     turnTerm?: number;
     notice?: string;
     gameVersion?: string;
-  }) => api.post<{ worldId: number }>("/worlds", data),
+  }) => api.post<{ id: number }>("/worlds", data),
   deleteWorld: (worldId: number) =>
     api.delete<void>(`/admin/worlds/${worldId}`),
   listWorlds: () =>
@@ -1046,5 +1046,18 @@ export const adminApi = {
     api.post<{ tempPassword: string }>(
       `/admin/users/${userId}/reset-password`,
       {},
+    ),
+};
+
+// Admin Event API (legacy parity: j_raise_event.php)
+export const adminEventApi = {
+  raise: (event: string, args?: unknown[], worldId?: number) =>
+    api.post<{ result: boolean; reason: string; info?: unknown }>(
+      "/admin/raise-event",
+      {
+        event,
+        ...(args ? { args } : {}),
+        ...(worldId != null ? { worldId } : {}),
+      },
     ),
 };

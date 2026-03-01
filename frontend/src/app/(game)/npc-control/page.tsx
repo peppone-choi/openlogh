@@ -248,49 +248,61 @@ const ALL_POLICY_KEYS = POLICY_CATEGORIES.flatMap((c) =>
 /* ── Priority items (will be overridden by server if available) ── */
 
 const DEFAULT_NATION_PRIORITY_ITEMS = [
+  { key: "부대전방발령", help: "부대 단위 전방 발령" },
+  { key: "부대후방발령", help: "부대 후방 발령" },
+  { key: "부대구출발령", help: "부대 구출 발령" },
+  { key: "부대유저장후방발령", help: "부대 단위 유저장 후방 발령" },
+  { key: "NPC전방발령", help: "NPC장 전방 발령" },
+  { key: "NPC후방발령", help: "NPC장 후방 발령" },
+  { key: "NPC내정발령", help: "NPC장 내정 발령" },
+  { key: "NPC구출발령", help: "NPC장 구출 발령" },
+  { key: "유저장전방발령", help: "유저장 전방 발령" },
+  { key: "유저장후방발령", help: "유저장 후방 발령" },
+  { key: "유저장구출발령", help: "유저장 구출 발령" },
+  { key: "유저장내정발령", help: "유저장 내정 발령" },
+  { key: "NPC긴급포상", help: "NPC장 긴급 포상" },
+  { key: "유저장긴급포상", help: "유저 전투장에게 긴급 포상" },
+  { key: "NPC포상", help: "NPC장 포상" },
+  { key: "유저장포상", help: "유저장 포상" },
+  { key: "NPC몰수", help: "NPC장 자원 몰수" },
   { key: "불가침제의", help: "불가침/동맹 외교 제의" },
   { key: "선전포고", help: "타국에 선전포고" },
   { key: "천도", help: "수도 이전 검토" },
-  { key: "유저장긴급포상", help: "유저 전투장에게 긴급 포상" },
-  { key: "부대전방발령", help: "부대 단위 전방 발령" },
-  { key: "유저장구출발령", help: "유저장 구출 발령" },
-  { key: "유저장후방발령", help: "유저장 후방 발령" },
-  { key: "부대유저장후방발령", help: "부대 단위 유저장 후방 발령" },
-  { key: "유저장전방발령", help: "유저장 전방 발령" },
-  { key: "유저장포상", help: "유저장 포상" },
-  { key: "부대구출발령", help: "부대 구출 발령" },
-  { key: "부대후방발령", help: "부대 후방 발령" },
-  { key: "NPC긴급포상", help: "NPC장 긴급 포상" },
-  { key: "NPC구출발령", help: "NPC장 구출 발령" },
-  { key: "NPC후방발령", help: "NPC장 후방 발령" },
-  { key: "NPC포상", help: "NPC장 포상" },
-  { key: "NPC전방발령", help: "NPC장 전방 발령" },
-  { key: "유저장내정발령", help: "유저장 내정 발령" },
-  { key: "NPC내정발령", help: "NPC장 내정 발령" },
-  { key: "NPC몰수", help: "NPC장 자원 몰수" },
+  { key: "전시전략", help: "전시 전략 수립" },
 ];
 
 const DEFAULT_GENERAL_PRIORITY_ITEMS = [
-  { key: "NPC사망대비", help: "NPC 사망 대비 행동" },
-  { key: "귀환", help: "귀환" },
-  { key: "금쌀구매", help: "금/쌀 구매" },
-  { key: "출병", help: "출전하여 전투 수행" },
   { key: "긴급내정", help: "긴급 내정 수행" },
-  { key: "전투준비", help: "전투 준비 (징병/훈련)" },
-  { key: "전방워프", help: "전방으로 이동" },
-  { key: "NPC헌납", help: "NPC 자원 헌납" },
-  { key: "징병", help: "병사 충원" },
-  { key: "후방워프", help: "후방으로 이동" },
   { key: "전쟁내정", help: "전쟁 중 내정 수행" },
-  { key: "소집해제", help: "소집 해제" },
-  { key: "일반내정", help: "일반 내정 수행" },
+  { key: "징병", help: "병사 충원" },
+  { key: "전투준비", help: "전투 준비 (징병/훈련)" },
+  { key: "출병", help: "출전하여 전투 수행" },
+  { key: "전방워프", help: "전방으로 이동" },
+  { key: "후방워프", help: "후방으로 이동" },
   { key: "내정워프", help: "내정 도시로 이동" },
+  { key: "귀환", help: "귀환" },
+  { key: "일반내정", help: "일반 내정 수행" },
+  { key: "금쌀구매", help: "금/쌀 구매" },
+  { key: "NPC헌납", help: "NPC 자원 헌납" },
+  { key: "소집해제", help: "소집 해제" },
+  { key: "중립", help: "중립 행동" },
 ];
 
 const NPC_MODE_LABELS: Record<number, string> = {
   0: "전투형 (공격 우선)",
   1: "균형형 (기본)",
   2: "내정형 (개발 우선)",
+};
+
+const roundToHundreds = (value: number): number => {
+  return Math.round(value / 100) * 100;
+};
+
+const toFiniteNumber = (value: unknown): number | null => {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    return null;
+  }
+  return value;
 };
 
 /* ── Drag-and-Drop Priority List Component ── */
@@ -356,12 +368,12 @@ function DraggablePriorityList({
         </h4>
 
         {/* Active items */}
-        <div className="space-y-1">
+        <ul className="space-y-1">
           <span className="text-[10px] text-green-400">
             활성 (위 → 높은 우선순위)
           </span>
           {activeItems.map((item, idx) => (
-            <div
+            <li
               key={item.key}
               draggable
               onDragStart={() => handleDragStart(idx)}
@@ -408,14 +420,14 @@ function DraggablePriorityList({
               >
                 비활성
               </Button>
-            </div>
+            </li>
           ))}
           {activeItems.length === 0 && (
             <div className="text-xs text-muted-foreground/60 py-2 text-center">
               활성 항목 없음
             </div>
           )}
-        </div>
+        </ul>
 
         {/* Inactive items */}
         {inactiveItems.length > 0 && (
@@ -540,10 +552,40 @@ export default function NpcPage() {
         setPolicy(p);
         setPrevPolicy({ ...p });
 
-        // Zero policy defaults
-        if (data.zeroPolicy) {
-          setZeroPolicy(data.zeroPolicy as Record<string, number>);
+        const nextZeroPolicy: Record<string, number> = {};
+        const incomingZeroPolicy =
+          data.zeroPolicy && typeof data.zeroPolicy === "object"
+            ? (data.zeroPolicy as Record<string, unknown>)
+            : {};
+        for (const key of [
+          "reqHumanWarUrgentGold",
+          "reqHumanWarUrgentRice",
+          "reqHumanWarRecommandGold",
+          "reqHumanWarRecommandRice",
+          "reqNPCWarGold",
+          "reqNPCWarRice",
+          "reqNPCDevelGold",
+        ]) {
+          const numberValue = toFiniteNumber(incomingZeroPolicy[key]);
+          if (numberValue != null) {
+            nextZeroPolicy[key] = numberValue;
+          }
         }
+
+        if (nextZeroPolicy.reqHumanWarRecommandGold == null) {
+          nextZeroPolicy.reqHumanWarRecommandGold = roundToHundreds(
+            (nextZeroPolicy.reqHumanWarUrgentGold ?? 0) * 2,
+          );
+        }
+        if (nextZeroPolicy.reqHumanWarRecommandRice == null) {
+          nextZeroPolicy.reqHumanWarRecommandRice = roundToHundreds(
+            (nextZeroPolicy.reqHumanWarUrgentRice ?? 0) * 2,
+          );
+        }
+        if (nextZeroPolicy.reqNPCDevelGold == null) {
+          nextZeroPolicy.reqNPCDevelGold = 3000;
+        }
+        setZeroPolicy(nextZeroPolicy);
 
         // Stat max values for zero-policy display
         if (data.defaultStatMax != null) {
@@ -662,14 +704,34 @@ export default function NpcPage() {
     );
   }, [generals, myGeneral]);
 
-  // Compute calcPolicyValue for zero-policy display
   const calcPolicyValue = useCallback(
     (key: string): number => {
-      const val = policy[key] ?? 0;
-      if (val === 0 && zeroPolicy[key] != null) {
-        return zeroPolicy[key];
-      }
-      return val;
+      const resolve = (targetKey: string): number => {
+        const rawValue = policy[targetKey] ?? 0;
+        if (rawValue !== 0) {
+          return rawValue;
+        }
+
+        if (targetKey === "reqHumanWarRecommandGold") {
+          return roundToHundreds(resolve("reqHumanWarUrgentGold") * 2);
+        }
+        if (targetKey === "reqHumanWarRecommandRice") {
+          return roundToHundreds(resolve("reqHumanWarUrgentRice") * 2);
+        }
+
+        const computedZeroValue = zeroPolicy[targetKey];
+        if (computedZeroValue != null) {
+          return computedZeroValue;
+        }
+
+        if (targetKey === "reqNPCDevelGold") {
+          return 3000;
+        }
+
+        return 0;
+      };
+
+      return resolve(key);
     },
     [policy, zeroPolicy],
   );
@@ -946,9 +1008,9 @@ export default function NpcPage() {
                           : null;
                         return (
                           <div key={f.key} className="space-y-1">
-                            <label className="text-xs text-muted-foreground">
+                            <p className="text-xs text-muted-foreground">
                               {f.label}
-                            </label>
+                            </p>
                             <Input
                               type="number"
                               step={f.step ?? 1}
@@ -995,9 +1057,9 @@ export default function NpcPage() {
                   </p>
                   <div className="space-y-2">
                     <div className="space-y-1">
-                      <label className="text-xs text-muted-foreground">
+                      <p className="text-xs text-muted-foreground">
                         전투 부대 (CombatForce)
-                      </label>
+                      </p>
                       <Input
                         value={JSON.stringify(combatForce)}
                         onChange={(e) => {
@@ -1017,9 +1079,9 @@ export default function NpcPage() {
                       </p>
                     </div>
                     <div className="space-y-1">
-                      <label className="text-xs text-muted-foreground">
+                      <p className="text-xs text-muted-foreground">
                         후방 징병 부대 (SupportForce)
-                      </label>
+                      </p>
                       <Input
                         value={JSON.stringify(supportForce)}
                         onChange={(e) => {
@@ -1034,9 +1096,9 @@ export default function NpcPage() {
                       />
                     </div>
                     <div className="space-y-1">
-                      <label className="text-xs text-muted-foreground">
+                      <p className="text-xs text-muted-foreground">
                         내정 부대 (DevelopForce)
-                      </label>
+                      </p>
                       <Input
                         value={JSON.stringify(developForce)}
                         onChange={(e) => {
@@ -1189,9 +1251,9 @@ export default function NpcPage() {
                   <div className="grid grid-cols-2 gap-3">
                     {POLICY_CATEGORIES.flatMap((cat) => cat.fields).map((f) => (
                       <div key={f.key} className="space-y-1">
-                        <label className="text-xs text-muted-foreground">
+                        <p className="text-xs text-muted-foreground">
                           {f.label}
-                        </label>
+                        </p>
                         <Input
                           type="number"
                           placeholder={String(policy[f.key] ?? 0)}
@@ -1236,8 +1298,10 @@ export default function NpcPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {settingsHistory.map((entry, idx) => (
-                      <TableRow key={idx}>
+                    {settingsHistory.map((entry) => (
+                      <TableRow
+                        key={`${entry.date}-${entry.setter}-${entry.action}-${entry.details}`}
+                      >
                         <TableCell className="text-xs text-muted-foreground">
                           {entry.date}
                         </TableCell>

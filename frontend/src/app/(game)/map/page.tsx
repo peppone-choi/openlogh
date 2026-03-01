@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useWorldStore } from "@/stores/worldStore";
 import { useGameStore } from "@/stores/gameStore";
 import { mapRecentApi } from "@/lib/gameApi";
@@ -11,7 +11,15 @@ import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import {
+  getCityLevelIcon,
+  getEventIcon,
+  getMapBgUrl,
+  getMapRoadUrl,
+  getNationBgUrl,
+  getNationFlagUrl,
+  getSpecialEventIcon,
+} from "@/lib/image";
 
 type MapTheme = "default" | "spring" | "summer" | "autumn" | "winter";
 const MAP_THEMES: {
@@ -93,9 +101,24 @@ const CREW_TYPES: Record<number, string> = {
   11: "수군",
 };
 
-const MAP_WIDTH = 1200;
-const MAP_HEIGHT = 900;
-const CITY_RADIUS = 14;
+type MapSeason = "spring" | "summer" | "fall" | "winter";
+
+const detailMapCitySizes: Record<number, number[]> = {
+  1: [48, 45, 16, 15, -8, -4],
+  2: [60, 42, 20, 14, -8, -4],
+  3: [42, 42, 14, 14, -8, -4],
+  4: [60, 45, 20, 15, -6, -3],
+  5: [72, 48, 24, 16, -6, -4],
+  6: [78, 54, 26, 18, -6, -4],
+  7: [84, 60, 28, 20, -6, -4],
+  8: [96, 72, 32, 24, -6, -3],
+};
+
+const MAP_WIDTH = 700;
+const MAP_HEIGHT = 500;
+const CITY_HIT_WIDTH = 40;
+const CITY_HIT_HEIGHT = 30;
+const CITY_RING_SIZE = 20;
 
 export default function MapPage() {
   const router = useRouter();
@@ -126,7 +149,57 @@ export default function MapPage() {
     null,
   );
 
-  const currentTheme = MAP_THEMES.find((t) => t.key === theme) ?? MAP_THEMES[0];
+  const [isAutoTheme, setIsAutoTheme] = useState(true);
+  const tooltipHideTimerRef = useRef<number | null>(null);
+  const selectedTheme = isAutoTheme ? autoTheme : theme;
+  const currentTheme =
+    MAP_THEMES.find((t) => t.key === selectedTheme) ?? MAP_THEMES[0];
+  const mapCode =
+    (
+      (currentWorld?.config as Record<string, string>)?.mapCode ?? "che"
+    ).trim() || "che";
+  const mapFolder = mapCode.includes("miniche")
+    ? "che"
+    : mapCode === "ludo_rathowm"
+      ? "ludo_rathowm"
+      : mapCode;
+  const season = useMemo<MapSeason>(() => {
+    const themeForSeason =
+      selectedTheme === "default" ? autoTheme : selectedTheme;
+    if (themeForSeason === "spring") return "spring";
+    if (themeForSeason === "summer") return "summer";
+    if (themeForSeason === "autumn") return "fall";
+    if (themeForSeason === "winter") return "winter";
+    return "spring";
+  }, [selectedTheme, autoTheme]);
+  const showSeasonBackground = isAutoTheme || selectedTheme !== "default";
+  const mapBgUrl = showSeasonBackground ? getMapBgUrl(mapFolder, season) : null;
+  const mapRoadUrl = getMapRoadUrl(mapCode);
+
+  const clearTooltipHideTimer = useCallback(() => {
+    if (tooltipHideTimerRef.current !== null) {
+      window.clearTimeout(tooltipHideTimerRef.current);
+      tooltipHideTimerRef.current = null;
+    }
+  }, []);
+
+  const scheduleTooltipHide = useCallback(() => {
+    clearTooltipHideTimer();
+    tooltipHideTimerRef.current = window.setTimeout(() => {
+      setTooltip((prev) => {
+        if (prev && touchTapId === prev.cityId) return prev;
+        return null;
+      });
+    }, 120);
+  }, [clearTooltipHideTimer, touchTapId]);
+
+  useEffect(() => {
+    return () => {
+      if (tooltipHideTimerRef.current !== null) {
+        window.clearTimeout(tooltipHideTimerRef.current);
+      }
+    };
+  }, []);
   const toggleLayer = (layer: MapLayer) => {
     setLayers((prev) => {
       const next = new Set(prev);
@@ -139,8 +212,6 @@ export default function MapPage() {
   useEffect(() => {
     if (currentWorld) {
       loadAll(currentWorld.id);
-      const mapCode =
-        (currentWorld.config as Record<string, string>)?.mapCode ?? "che";
       loadMap(mapCode);
 
       mapRecentApi
@@ -150,7 +221,7 @@ export default function MapPage() {
         })
         .catch(() => {});
     }
-  }, [currentWorld, loadAll, loadMap]);
+  }, [currentWorld, loadAll, loadMap, mapCode]);
 
   useEffect(() => {
     if (!currentWorld) return;
@@ -215,51 +286,16 @@ export default function MapPage() {
     return result;
   }, [cityGeneralData, cityMap]);
 
-  // Scale map data to SVG viewport
-  const { scaleX, scaleY, offsetX, offsetY } = useMemo(() => {
-    if (!mapData || mapData.cities.length === 0)
-      return { scaleX: 1, scaleY: 1, offsetX: 0, offsetY: 0 };
-    let minX = Infinity,
-      maxX = -Infinity,
-      minY = Infinity,
-      maxY = -Infinity;
-    for (const c of mapData.cities) {
-      if (c.x < minX) minX = c.x;
-      if (c.x > maxX) maxX = c.x;
-      if (c.y < minY) minY = c.y;
-      if (c.y > maxY) maxY = c.y;
-    }
-    const pad = 60;
-    const rangeX = maxX - minX || 1;
-    const rangeY = maxY - minY || 1;
-    return {
-      scaleX: (MAP_WIDTH - pad * 2) / rangeX,
-      scaleY: (MAP_HEIGHT - pad * 2) / rangeY,
-      offsetX: -minX,
-      offsetY: -minY,
-    };
-  }, [mapData]);
-
-  const toSvgX = useCallback(
-    (x: number) => (x + offsetX) * scaleX + 60,
-    [offsetX, scaleX],
-  );
-  const toSvgY = useCallback(
-    (y: number) => (y + offsetY) * scaleY + 60,
-    [offsetY, scaleY],
-  );
-
-  const getCityColor = (cityId: number): string => {
-    const city = cityMap.get(cityId);
-    if (!city || city.nationId === 0) return "#555";
-    return nationMap.get(city.nationId)?.color ?? "#555";
-  };
-
-  // Connection lines (deduplicated)
   const connections = useMemo(() => {
     if (!mapData?.cities) return [];
     const seen = new Set<string>();
-    const lines: { x1: number; y1: number; x2: number; y2: number }[] = [];
+    const lines: {
+      key: string;
+      x1: number;
+      y1: number;
+      x2: number;
+      y2: number;
+    }[] = [];
     for (const city of mapData.cities) {
       for (const connId of city.connections) {
         const key =
@@ -269,16 +305,17 @@ export default function MapPage() {
         const target = constMap.get(connId);
         if (target) {
           lines.push({
-            x1: toSvgX(city.x),
-            y1: toSvgY(city.y),
-            x2: toSvgX(target.x),
-            y2: toSvgY(target.y),
+            key,
+            x1: city.x,
+            y1: city.y,
+            x2: target.x,
+            y2: target.y,
           });
         }
       }
     }
     return lines;
-  }, [mapData, constMap, toSvgX, toSvgY]);
+  }, [mapData, constMap]);
 
   // Nations that own at least one city
   const legendNations = useMemo(() => {
@@ -314,91 +351,93 @@ export default function MapPage() {
     [cityMap, nationMap, constMap],
   );
 
-  const handleCityClick = (cc: CityConst, e: React.MouseEvent) => {
-    e.stopPropagation();
-    const city = cityMap.get(cc.id);
-    const nation = city?.nationId ? nationMap.get(city.nationId) : null;
-    const cityGens = cityGeneralData.get(cc.id) ?? [];
-    const generalsInfo = cityGens.map((g) => ({
-      name: g.name,
-      nationColor: nationMap.get(g.nationId)?.color ?? "#555",
-      crew: g.crew,
-      crewType: CREW_TYPES[g.crewType] ?? `${g.crewType}`,
-      isForeign: city ? g.nationId !== city.nationId : false,
-    }));
+  const buildTooltip = useCallback(
+    (cc: CityConst, screenX: number, screenY: number): CityTooltip => {
+      const city = cityMap.get(cc.id);
+      const nation = city?.nationId ? nationMap.get(city.nationId) : null;
+      const cityGens = cityGeneralData.get(cc.id) ?? [];
+      const generalsInfo = cityGens.map((g) => ({
+        name: g.name,
+        nationColor: nationMap.get(g.nationId)?.color ?? "#555",
+        crew: g.crew,
+        crewType: CREW_TYPES[g.crewType] ?? `${g.crewType}`,
+        isForeign: city ? g.nationId !== city.nationId : false,
+      }));
 
-    saveCityInfo(cc.id);
+      return {
+        cityId: cc.id,
+        cityName: cc.name,
+        nationName: nation?.name ?? "공백지",
+        nationColor: nation?.color ?? "#555",
+        level: city?.level ?? cc.level,
+        pop: city?.pop ?? 0,
+        agri: city ? `${city.agri}/${city.agriMax}` : "-",
+        comm: city ? `${city.comm}/${city.commMax}` : "-",
+        secu: city ? `${city.secu}/${city.secuMax}` : "-",
+        def: city ? `${city.def}/${city.defMax}` : "-",
+        wall: city ? `${city.wall}/${city.wallMax}` : "-",
+        trust: city?.trust ?? 0,
+        generals: generalsInfo,
+        screenX,
+        screenY,
+      };
+    },
+    [cityMap, nationMap, cityGeneralData],
+  );
 
-    setTooltip({
-      cityId: cc.id,
-      cityName: cc.name,
-      nationName: nation?.name ?? "공백지",
-      nationColor: nation?.color ?? "#555",
-      level: city?.level ?? cc.level,
-      pop: city?.pop ?? 0,
-      agri: city ? `${city.agri}/${city.agriMax}` : "-",
-      comm: city ? `${city.comm}/${city.commMax}` : "-",
-      secu: city ? `${city.secu}/${city.secuMax}` : "-",
-      def: city ? `${city.def}/${city.defMax}` : "-",
-      wall: city ? `${city.wall}/${city.wallMax}` : "-",
-      trust: city?.trust ?? 0,
-      generals: generalsInfo,
-      screenX: e.clientX,
-      screenY: e.clientY,
-    });
-  };
+  const handleCityMouseEnter = useCallback(
+    (cc: CityConst, e: React.MouseEvent<HTMLButtonElement>) => {
+      e.stopPropagation();
+      clearTooltipHideTimer();
+      setTouchTapId(null);
+      saveCityInfo(cc.id);
+      setTooltip(buildTooltip(cc, e.clientX, e.clientY));
+    },
+    [buildTooltip, clearTooltipHideTimer, saveCityInfo],
+  );
 
-  // Touch support: single-tap toggles tooltip, second tap navigates
+  const handleCityMouseMove = useCallback(
+    (cc: CityConst, e: React.MouseEvent<HTMLButtonElement>) => {
+      setTooltip((prev) => {
+        if (!prev || prev.cityId !== cc.id) return prev;
+        return { ...prev, screenX: e.clientX, screenY: e.clientY };
+      });
+    },
+    [],
+  );
+
+  const handleCityMouseLeave = useCallback(() => {
+    scheduleTooltipHide();
+  }, [scheduleTooltipHide]);
+
+  const handleCityClick = useCallback(
+    (e: React.MouseEvent<HTMLButtonElement>) => {
+      e.stopPropagation();
+    },
+    [],
+  );
+
   const handleCityTouch = useCallback(
-    (cc: CityConst, e: React.TouchEvent) => {
+    (cc: CityConst, e: React.TouchEvent<HTMLButtonElement>) => {
+      clearTooltipHideTimer();
       e.preventDefault();
       e.stopPropagation();
       if (touchTapId === cc.id && tooltip?.cityId === cc.id) {
-        // Second tap on same city: navigate
         saveCityInfo(cc.id);
         router.push(`/city?id=${cc.id}`);
         setTouchTapId(null);
       } else {
-        // First tap: show tooltip
         const touch = e.touches[0] ?? e.changedTouches[0];
-        const city = cityMap.get(cc.id);
-        const nation = city?.nationId ? nationMap.get(city.nationId) : null;
-        const cityGens = cityGeneralData.get(cc.id) ?? [];
-        const generalsInfo = cityGens.map((g) => ({
-          name: g.name,
-          nationColor: nationMap.get(g.nationId)?.color ?? "#555",
-          crew: g.crew,
-          crewType: CREW_TYPES[g.crewType] ?? `${g.crewType}`,
-          isForeign: city ? g.nationId !== city.nationId : false,
-        }));
         saveCityInfo(cc.id);
-        setTooltip({
-          cityId: cc.id,
-          cityName: cc.name,
-          nationName: nation?.name ?? "공백지",
-          nationColor: nation?.color ?? "#555",
-          level: city?.level ?? cc.level,
-          pop: city?.pop ?? 0,
-          agri: city ? `${city.agri}/${city.agriMax}` : "-",
-          comm: city ? `${city.comm}/${city.commMax}` : "-",
-          secu: city ? `${city.secu}/${city.secuMax}` : "-",
-          def: city ? `${city.def}/${city.defMax}` : "-",
-          wall: city ? `${city.wall}/${city.wallMax}` : "-",
-          trust: city?.trust ?? 0,
-          generals: generalsInfo,
-          screenX: touch?.clientX ?? 0,
-          screenY: touch?.clientY ?? 0,
-        });
+        setTooltip(buildTooltip(cc, touch?.clientX ?? 0, touch?.clientY ?? 0));
         setTouchTapId(cc.id);
       }
     },
     [
+      buildTooltip,
+      clearTooltipHideTimer,
       touchTapId,
       tooltip,
-      cityMap,
-      nationMap,
-      cityGeneralData,
-      constMap,
       router,
       saveCityInfo,
     ],
@@ -423,13 +462,9 @@ export default function MapPage() {
         <span className="text-xs text-muted-foreground">테마:</span>
         <Button
           size="sm"
-          variant={
-            theme === "default" && autoTheme !== "default"
-              ? "default"
-              : "outline"
-          }
+          variant={isAutoTheme ? "default" : "outline"}
           className="h-6 px-2 text-xs"
-          onClick={() => setTheme(autoTheme)}
+          onClick={() => setIsAutoTheme(true)}
         >
           자동({MAP_THEMES.find((t) => t.key === autoTheme)?.label ?? "기본"})
         </Button>
@@ -437,9 +472,12 @@ export default function MapPage() {
           <Button
             key={t.key}
             size="sm"
-            variant={theme === t.key ? "default" : "outline"}
+            variant={!isAutoTheme && theme === t.key ? "default" : "outline"}
             className="h-6 px-2 text-xs"
-            onClick={() => setTheme(t.key)}
+            onClick={() => {
+              setTheme(t.key);
+              setIsAutoTheme(false);
+            }}
           >
             {t.label}
           </Button>
@@ -487,217 +525,297 @@ export default function MapPage() {
         </div>
       </div>
 
-      {/* SVG Map */}
-      <div
-        className="relative border border-gray-800 rounded-lg overflow-hidden"
-        style={{ backgroundColor: currentTheme.bg }}
-        onClick={() => setTooltip(null)}
-      >
-        <svg
-          viewBox={`0 0 ${MAP_WIDTH} ${MAP_HEIGHT}`}
-          className="w-full h-auto"
+      <div className="w-full max-w-[700px] mx-auto">
+        <div
+          className="relative border border-gray-800 rounded-lg overflow-hidden"
+          style={{ backgroundColor: currentTheme.bg, aspectRatio: "700 / 500" }}
         >
-          {/* Connection lines */}
-          {connections.map((l, i) => (
-            <line
-              key={i}
-              x1={l.x1}
-              y1={l.y1}
-              x2={l.x2}
-              y2={l.y2}
-              stroke={currentTheme.line}
-              strokeWidth={1}
-            />
-          ))}
-
-          {/* City circles, labels, and troop indicators */}
-          {mapData.cities.map((cc) => {
-            const cx = toSvgX(cc.x);
-            const cy = toSvgY(cc.y);
-            const color = layers.has("nations") ? getCityColor(cc.id) : "#555";
-            const city = cityMap.get(cc.id);
-            const hasForeignTroops =
-              layers.has("troops") && foreignTroopCities.has(cc.id);
-            const genCount = layers.has("troops")
-              ? (cityGeneralData.get(cc.id)?.length ?? 0)
-              : 0;
-            const isSupplyBroken =
-              layers.has("supply") && city && city.supplyState !== 1;
-            const terrainLevel = layers.has("terrain") && city ? city.level : 0;
-
-            return (
-              <g
-                key={cc.id}
-                className="cursor-pointer"
-                onClick={(e) => handleCityClick(cc, e)}
-                onTouchEnd={(e) => handleCityTouch(cc, e)}
-              >
-                {/* Foreign troop warning ring */}
-                {hasForeignTroops && (
-                  <circle
-                    cx={cx}
-                    cy={cy}
-                    r={CITY_RADIUS + 4}
-                    fill="none"
-                    stroke="#ef4444"
-                    strokeWidth={2}
-                    strokeDasharray="4 2"
-                    opacity={0.8}
-                  >
-                    <animate
-                      attributeName="stroke-dashoffset"
-                      from="0"
-                      to="12"
-                      dur="1.5s"
-                      repeatCount="indefinite"
-                    />
-                  </circle>
-                )}
-
-                {/* Supply broken indicator */}
-                {isSupplyBroken && (
-                  <circle
-                    cx={cx}
-                    cy={cy}
-                    r={CITY_RADIUS + 6}
-                    fill="none"
-                    stroke="#f59e0b"
-                    strokeWidth={1.5}
-                    strokeDasharray="2 3"
-                    opacity={0.7}
-                  />
-                )}
-
-                {/* Terrain level ring */}
-                {terrainLevel > 0 && (
-                  <circle
-                    cx={cx}
-                    cy={cy}
-                    r={CITY_RADIUS + (terrainLevel >= 5 ? 2 : 0)}
-                    fill="none"
-                    stroke={terrainLevel >= 5 ? "#a855f7" : "transparent"}
-                    strokeWidth={1}
-                    opacity={0.5}
-                  />
-                )}
-
-                <circle
-                  cx={cx}
-                  cy={cy}
-                  r={CITY_RADIUS}
-                  fill={color}
-                  stroke="#000"
-                  strokeWidth={1.5}
-                  opacity={0.85}
-                />
-
-                {/* Troop count badge */}
-                {genCount > 0 && (
-                  <>
-                    <circle
-                      cx={cx + CITY_RADIUS - 2}
-                      cy={cy - CITY_RADIUS + 2}
-                      r={7}
-                      fill="#111"
-                      stroke="#888"
-                      strokeWidth={0.5}
-                    />
-                    <text
-                      x={cx + CITY_RADIUS - 2}
-                      y={cy - CITY_RADIUS + 5.5}
-                      textAnchor="middle"
-                      fill="#fff"
-                      fontSize={9}
-                      fontWeight="bold"
-                    >
-                      {genCount}
-                    </text>
-                  </>
-                )}
-
-                <text
-                  x={cx}
-                  y={cy + CITY_RADIUS + 14}
-                  textAnchor="middle"
-                  fill={currentTheme.text}
-                  fontSize={11}
-                >
-                  {cc.name}
-                </text>
-              </g>
-            );
-          })}
-        </svg>
-
-        {/* City detail tooltip popup */}
-        {tooltip && (
-          <div
-            className="fixed z-50 bg-gray-800 border border-gray-700 rounded-lg p-3 shadow-lg text-sm space-y-1 max-w-xs"
-            style={{ left: tooltip.screenX + 12, top: tooltip.screenY - 10 }}
-          >
-            <div className="font-semibold flex items-center gap-2">
-              <span
-                className="w-3 h-3 rounded-full"
-                style={{ backgroundColor: tooltip.nationColor }}
-              />
-              {tooltip.cityName}
-            </div>
-            <div className="text-gray-400">소속: {tooltip.nationName}</div>
-            <div className="text-gray-400">레벨: {tooltip.level}</div>
-            <div className="text-gray-400">
-              인구: {tooltip.pop.toLocaleString()}
-            </div>
-            <div className="text-gray-400">농업: {tooltip.agri}</div>
-            <div className="text-gray-400">상업: {tooltip.comm}</div>
-            <div className="text-gray-400">치안: {tooltip.secu}</div>
-            <div className="text-gray-400">수비: {tooltip.def}</div>
-            <div className="text-gray-400">성벽: {tooltip.wall}</div>
-            <div className="text-gray-400">민심: {tooltip.trust}</div>
-
-            {/* Link to city detail */}
-            <button
-              type="button"
-              className="w-full text-center text-xs text-cyan-400 hover:text-cyan-300 border border-gray-600 rounded px-2 py-1 mt-1"
-              onClick={(e) => {
-                e.stopPropagation();
-                router.push(`/city?id=${tooltip.cityId}`);
+          {mapBgUrl && (
+            <div
+              className="absolute inset-0 z-0 bg-no-repeat bg-center"
+              style={{
+                backgroundImage: `url('${mapBgUrl}')`,
+                backgroundSize: `${MAP_WIDTH}px ${MAP_HEIGHT}px`,
               }}
-            >
-              도시 상세 보기
-            </button>
+            />
+          )}
+          <div
+            className="absolute inset-0 z-[1] bg-no-repeat bg-center"
+            style={{
+              backgroundImage: `url('${mapRoadUrl}')`,
+              backgroundSize: `${MAP_WIDTH}px ${MAP_HEIGHT}px`,
+            }}
+          />
 
-            {/* Generals in this city */}
-            {tooltip.generals.length > 0 && (
-              <div className="border-t border-gray-700 pt-1 mt-1">
-                <div className="text-gray-300 font-medium text-xs mb-0.5">
-                  주둔 장수 ({tooltip.generals.length}명)
-                </div>
-                <div className="max-h-32 overflow-y-auto space-y-0.5">
-                  {tooltip.generals.map((g, i) => (
-                    <div key={i} className="flex items-center gap-1.5 text-xs">
-                      <span
-                        className="w-2 h-2 rounded-full shrink-0"
-                        style={{ backgroundColor: g.nationColor }}
+          <button
+            type="button"
+            aria-label="지도 툴팁 닫기"
+            className="absolute inset-0 z-[2] border-0 bg-transparent p-0"
+            onClick={() => {
+              clearTooltipHideTimer();
+              setTooltip(null);
+              setTouchTapId(null);
+            }}
+          />
+
+          <svg
+            viewBox={`0 0 ${MAP_WIDTH} ${MAP_HEIGHT}`}
+            className="absolute inset-0 z-[2] w-full h-full pointer-events-none"
+            aria-hidden="true"
+          >
+            {connections.map((l) => (
+              <line
+                key={l.key}
+                x1={l.x1}
+                y1={l.y1}
+                x2={l.x2}
+                y2={l.y2}
+                stroke={currentTheme.line}
+                strokeOpacity={0.55}
+                strokeWidth={1}
+              />
+            ))}
+          </svg>
+
+          <div className="absolute inset-0 z-[3]">
+            {mapData.cities.map((cc) => {
+              const rtCity = cityMap.get(cc.id);
+              const nation = rtCity?.nationId
+                ? nationMap.get(rtCity.nationId)
+                : null;
+              const sizes =
+                detailMapCitySizes[cc.level] ?? detailMapCitySizes[1];
+              const [bgW, bgH, icnW, icnH, flagR, flagT] = sizes;
+              const left = cc.x - 20;
+              const top = cc.y - 15;
+              const hasForeignTroops =
+                layers.has("troops") && foreignTroopCities.has(cc.id);
+              const genCount = layers.has("troops")
+                ? (cityGeneralData.get(cc.id)?.length ?? 0)
+                : 0;
+              const isSupplyBroken =
+                layers.has("supply") && !!rtCity && rtCity.supplyState !== 1;
+              const terrainLevel =
+                layers.has("terrain") && rtCity ? rtCity.level : 0;
+              const showNationLayer = layers.has("nations") && !!nation;
+              const showCapital = !!nation && nation.capitalCityId === cc.id;
+
+              return (
+                <button
+                  key={cc.id}
+                  type="button"
+                  className="absolute h-[30px] w-[40px] cursor-pointer appearance-none border-0 bg-transparent p-0 text-left"
+                  style={{ left, top }}
+                  onMouseEnter={(e) => handleCityMouseEnter(cc, e)}
+                  onMouseMove={(e) => handleCityMouseMove(cc, e)}
+                  onMouseLeave={handleCityMouseLeave}
+                  onTouchEnd={(e) => handleCityTouch(cc, e)}
+                  onClick={handleCityClick}
+                >
+                  {showNationLayer && nation?.color && (
+                    <div
+                      className="absolute z-[1] bg-center bg-no-repeat"
+                      style={{
+                        backgroundImage: `url('${getNationBgUrl(nation.color)}')`,
+                        backgroundSize: `${bgW}px ${bgH}px`,
+                        width: bgW,
+                        height: bgH,
+                        left: (CITY_HIT_WIDTH - bgW) / 2,
+                        top: (CITY_HIT_HEIGHT - bgH) / 2,
+                      }}
+                    />
+                  )}
+
+                  {hasForeignTroops && (
+                    <span
+                      className="absolute z-[3] animate-spin rounded-full border-2 border-dashed border-red-500"
+                      style={{
+                        width: CITY_RING_SIZE + 8,
+                        height: CITY_RING_SIZE + 8,
+                        left: (CITY_HIT_WIDTH - (CITY_RING_SIZE + 8)) / 2,
+                        top: (CITY_HIT_HEIGHT - (CITY_RING_SIZE + 8)) / 2,
+                      }}
+                    />
+                  )}
+
+                  {isSupplyBroken && (
+                    <span
+                      className="absolute z-[3] rounded-full border border-dashed border-amber-500"
+                      style={{
+                        width: CITY_RING_SIZE + 12,
+                        height: CITY_RING_SIZE + 12,
+                        left: (CITY_HIT_WIDTH - (CITY_RING_SIZE + 12)) / 2,
+                        top: (CITY_HIT_HEIGHT - (CITY_RING_SIZE + 12)) / 2,
+                      }}
+                    />
+                  )}
+
+                  <div className="absolute z-[2] w-full h-full">
+                    <div
+                      className="absolute"
+                      style={{
+                        width: icnW,
+                        height: icnH,
+                        left: (CITY_HIT_WIDTH - icnW) / 2,
+                        top: (CITY_HIT_HEIGHT - icnH) / 2,
+                      }}
+                    >
+                      <img
+                        src={getCityLevelIcon(cc.level)}
+                        className="w-full h-full block"
+                        alt={`${cc.name} 레벨 ${cc.level}`}
                       />
-                      <span
-                        className={
-                          g.isForeign
-                            ? "text-red-400 font-bold"
-                            : "text-gray-300"
-                        }
-                      >
-                        {g.name}
-                      </span>
-                      <span className="text-muted-foreground ml-auto">
-                        {g.crewType} {g.crew.toLocaleString()}
-                      </span>
+
+                      {showNationLayer && nation && (
+                        <div
+                          className="absolute"
+                          style={{
+                            right: flagR,
+                            top: flagT,
+                            width: 12,
+                            height: 12,
+                          }}
+                        >
+                          <img
+                            src={getNationFlagUrl(
+                              nation.color,
+                              (rtCity?.supplyState ?? 0) > 0,
+                            )}
+                            className="w-full h-full block"
+                            alt={`${nation.name} 국기`}
+                          />
+                          {showCapital && (
+                            <div
+                              className="absolute"
+                              style={{
+                                right: -1,
+                                top: 0,
+                                width: 10,
+                                height: 10,
+                              }}
+                            >
+                              <img
+                                src={getSpecialEventIcon(51)}
+                                className="w-full h-full block"
+                                alt="수도"
+                              />
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
-                  ))}
-                </div>
-              </div>
-            )}
+
+                    {rtCity && rtCity.state > 0 && (
+                      <div className="absolute left-0" style={{ top: 5 }}>
+                        <img
+                          src={getEventIcon(rtCity.state)}
+                          className="object-contain"
+                          style={{ width: 10 }}
+                          alt={`도시 상태 ${rtCity.state}`}
+                        />
+                      </div>
+                    )}
+
+                    {genCount > 0 && (
+                      <span className="absolute -right-1 -top-1 z-[5] min-w-4 h-4 rounded-full bg-black/90 border border-gray-500 px-1 text-[9px] leading-4 text-white text-center font-bold">
+                        {genCount}
+                      </span>
+                    )}
+
+                    {terrainLevel > 0 && (
+                      <span className="absolute -left-1 -top-1 z-[5] rounded bg-purple-900/80 border border-purple-400 px-1 text-[8px] leading-3 text-purple-100">
+                        Lv{terrainLevel}
+                      </span>
+                    )}
+
+                    <span
+                      className="absolute whitespace-nowrap px-[2px] py-[1px] bg-black/55 text-[10px]"
+                      style={{
+                        left: "70%",
+                        bottom: -10,
+                        color: currentTheme.text,
+                      }}
+                    >
+                      {cc.name}
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
           </div>
-        )}
+
+          {tooltip && (
+            <div
+              className="fixed z-50 bg-gray-800 border border-gray-700 rounded-lg p-3 shadow-lg text-sm space-y-1 max-w-xs"
+              style={{ left: tooltip.screenX + 12, top: tooltip.screenY - 10 }}
+            >
+              <div className="font-semibold flex items-center gap-2">
+                <span
+                  className="w-3 h-3 rounded-full"
+                  style={{ backgroundColor: tooltip.nationColor }}
+                />
+                {tooltip.cityName}
+              </div>
+              <div className="text-gray-400">소속: {tooltip.nationName}</div>
+              <div className="text-gray-400">레벨: {tooltip.level}</div>
+              <div className="text-gray-400">
+                인구: {tooltip.pop.toLocaleString()}
+              </div>
+              <div className="text-gray-400">농업: {tooltip.agri}</div>
+              <div className="text-gray-400">상업: {tooltip.comm}</div>
+              <div className="text-gray-400">치안: {tooltip.secu}</div>
+              <div className="text-gray-400">수비: {tooltip.def}</div>
+              <div className="text-gray-400">성벽: {tooltip.wall}</div>
+              <div className="text-gray-400">민심: {tooltip.trust}</div>
+
+              {/* Link to city detail */}
+              <button
+                type="button"
+                className="w-full text-center text-xs text-cyan-400 hover:text-cyan-300 border border-gray-600 rounded px-2 py-1 mt-1"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  router.push(`/city?id=${tooltip.cityId}`);
+                }}
+              >
+                도시 상세 보기
+              </button>
+
+              {/* Generals in this city */}
+              {tooltip.generals.length > 0 && (
+                <div className="border-t border-gray-700 pt-1 mt-1">
+                  <div className="text-gray-300 font-medium text-xs mb-0.5">
+                    주둔 장수 ({tooltip.generals.length}명)
+                  </div>
+                  <div className="max-h-32 overflow-y-auto space-y-0.5">
+                    {tooltip.generals.map((g) => (
+                      <div
+                        key={`${g.name}:${g.crewType}:${g.crew}`}
+                        className="flex items-center gap-1.5 text-xs"
+                      >
+                        <span
+                          className="w-2 h-2 rounded-full shrink-0"
+                          style={{ backgroundColor: g.nationColor }}
+                        />
+                        <span
+                          className={
+                            g.isForeign
+                              ? "text-red-400 font-bold"
+                              : "text-gray-300"
+                          }
+                        >
+                          {g.name}
+                        </span>
+                        <span className="text-muted-foreground ml-auto">
+                          {g.crewType} {g.crew.toLocaleString()}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* History Log Panel with Year/Month Navigation */}

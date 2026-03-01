@@ -45,6 +45,17 @@ const STAT_COLORS: Record<StatKey, string> = {
   charm: "bg-purple-500",
 };
 
+const EGO_OPTIONS: { value: string; label: string }[] = [
+  { value: "Random", label: "랜덤" },
+  { value: "Normal", label: "일반" },
+  { value: "Brave", label: "호전" },
+  { value: "Calm", label: "냉정" },
+  { value: "Loyal", label: "충성" },
+  { value: "Timid", label: "소심" },
+  { value: "Reckless", label: "저돌" },
+  { value: "Ambition", label: "야망" },
+];
+
 export default function LobbySelectPoolPage() {
   const router = useRouter();
   const currentWorld = useWorldStore((s) => s.currentWorld);
@@ -64,6 +75,7 @@ export default function LobbySelectPoolPage() {
     charm: 70,
   });
   const [building, setBuilding] = useState(false);
+  const [customEgo, setCustomEgo] = useState("Random");
 
   // Update existing mode state
   const [selectedForUpdate, setSelectedForUpdate] = useState<General | null>(
@@ -123,12 +135,16 @@ export default function LobbySelectPoolPage() {
     }
     setBuilding(true);
     try {
-      await generalApi.buildPoolGeneral(currentWorld.id, {
+      const buildPayload = {
         name: customName.trim(),
         ...customStats,
-      });
+        ego: customEgo,
+        personality: customEgo,
+      };
+      await generalApi.buildPoolGeneral(currentWorld.id, buildPayload);
       toast.success("커스텀 장수가 풀에 등록되었습니다.");
       setCustomName("");
+      setCustomEgo("Random");
       await loadPool();
     } catch {
       toast.error("커스텀 장수 생성에 실패했습니다.");
@@ -290,13 +306,34 @@ export default function LobbySelectPoolPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-1">
-                <label className="text-sm text-muted-foreground">장수명</label>
+                <label htmlFor="pool-custom-name" className="text-sm text-muted-foreground">
+                  장수명
+                </label>
                 <Input
+                  id="pool-custom-name"
                   value={customName}
                   onChange={(e) => setCustomName(e.target.value)}
                   placeholder="장수 이름 입력"
                   maxLength={20}
                 />
+              </div>
+
+              <div className="space-y-1">
+                <label htmlFor="pool-custom-ego" className="text-sm text-muted-foreground">
+                  성격
+                </label>
+                <select
+                  id="pool-custom-ego"
+                  value={customEgo}
+                  onChange={(e) => setCustomEgo(e.target.value)}
+                  className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm"
+                >
+                  {EGO_OPTIONS.map((ego) => (
+                    <option key={ego.value} value={ego.value}>
+                      {ego.label}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div className="flex items-center justify-between">

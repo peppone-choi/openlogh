@@ -13,8 +13,17 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import type { Message, General } from "@/types";
 import { auctionApi } from "@/lib/gameApi";
+import { toast } from "sonner";
 
 /* ── payload shape (stored in Message.payload) ── */
 interface AuctionPayload {
@@ -68,6 +77,14 @@ const RESOURCE_COLORS: Record<string, string> = {
   rice: "text-green-400",
   crew: "text-blue-400",
 };
+
+const ITEM_AUCTION_OPTIONS = [
+  { value: "horse", label: "명마" },
+  { value: "book", label: "병법서" },
+  { value: "weapon", label: "무기" },
+  { value: "armor", label: "방어구" },
+  { value: "treasure", label: "보물" },
+];
 
 function p(msg: Message): AuctionPayload {
   return (msg.payload ?? {}) as AuctionPayload;
@@ -143,9 +160,17 @@ export default function AuctionPage() {
   const [marketPrice, setMarketPrice] = useState<{
     goldPerRice: number;
     ricePerGold: number;
+    supply: number;
+    demand: number;
   } | null>(null);
   const [marketAmount, setMarketAmount] = useState("100");
   const [marketBusy, setMarketBusy] = useState(false);
+  const [itemType, setItemType] = useState(ITEM_AUCTION_OPTIONS[0].value);
+  const [itemStartPrice, setItemStartPrice] = useState("500");
+  const [creatingItemAuction, setCreatingItemAuction] = useState(false);
+  const [finalizingAuctionId, setFinalizingAuctionId] = useState<number | null>(
+    null,
+  );
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -328,6 +353,45 @@ export default function AuctionPage() {
     }
   };
 
+  const handleCreateItemAuction = async () => {
+    if (!currentWorld || !myGeneral) return;
+    const startPrice = Number(itemStartPrice);
+    if (!startPrice || startPrice <= 0) {
+      toast.error("시작가를 확인해주세요.");
+      return;
+    }
+
+    setCreatingItemAuction(true);
+    try {
+      await auctionApi.createItemAuction(
+        currentWorld.id,
+        myGeneral.id,
+        itemType,
+        startPrice,
+      );
+      toast.success("아이템 경매를 등록했습니다.");
+      setItemStartPrice("500");
+      await load();
+    } catch {
+      toast.error("아이템 경매 등록에 실패했습니다.");
+    } finally {
+      setCreatingItemAuction(false);
+    }
+  };
+
+  const handleFinalize = async (auctionId: number) => {
+    setFinalizingAuctionId(auctionId);
+    try {
+      await auctionApi.finalize(auctionId);
+      toast.success("경매 정산을 완료했습니다.");
+      await load();
+    } catch {
+      toast.error("경매 정산에 실패했습니다.");
+    } finally {
+      setFinalizingAuctionId(null);
+    }
+  };
+
   /* ── early returns ── */
   if (!currentWorld)
     return (
@@ -379,6 +443,14 @@ export default function AuctionPage() {
       p(a).sellerId !== myGeneral?.id &&
       isActive(p(a)),
   );
+  const myWonAuctions = auctions.filter((a) => {
+    const d = p(a);
+    return (
+      !isActive(d) &&
+      d.currentBidderId === myGeneral?.id &&
+      d.sellerId !== myGeneral?.id
+    );
+  });
 
   const selectedAuction = selectedAuctionId
     ? auctions.find((a) => a.id === selectedAuctionId)
@@ -397,6 +469,10 @@ export default function AuctionPage() {
           <TabsTrigger value="item">
             <Package className="size-3.5 mr-1" />
             유니크
+          </TabsTrigger>
+          <TabsTrigger value="history">
+            <Clock className="size-3.5 mr-1" />
+            경매 기록
           </TabsTrigger>
         </TabsList>
 
@@ -583,9 +659,7 @@ export default function AuctionPage() {
               </CardHeader>
               <CardContent className="space-y-3">
                 <div>
-                  <label className="block text-xs text-muted-foreground mb-1">
-                    매물
-                  </label>
+                  <p className="block text-xs text-muted-foreground mb-1">매물</p>
                   <div className="flex gap-2">
                     <Button
                       size="sm"
@@ -608,10 +682,14 @@ export default function AuctionPage() {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-xs text-muted-foreground mb-1">
+                  <label
+                    htmlFor="auction-create-amount"
+                    className="block text-xs text-muted-foreground mb-1"
+                  >
                     수량 ({createSubType === "buyRice" ? "쌀" : "금"})
                   </label>
                   <Input
+                    id="auction-create-amount"
                     type="number"
                     value={createAmount}
                     onChange={(e) => setCreateAmount(e.target.value)}
@@ -621,10 +699,14 @@ export default function AuctionPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-muted-foreground mb-1">
+                  <label
+                    htmlFor="auction-create-close-turn"
+                    className="block text-xs text-muted-foreground mb-1"
+                  >
                     기간 (턴)
                   </label>
                   <Input
+                    id="auction-create-close-turn"
                     type="number"
                     value={createCloseTurnCnt}
                     onChange={(e) => setCreateCloseTurnCnt(e.target.value)}
@@ -634,10 +716,14 @@ export default function AuctionPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-muted-foreground mb-1">
+                  <label
+                    htmlFor="auction-create-start-bid"
+                    className="block text-xs text-muted-foreground mb-1"
+                  >
                     시작가 ({createSubType === "buyRice" ? "금" : "쌀"})
                   </label>
                   <Input
+                    id="auction-create-start-bid"
                     type="number"
                     value={createStartBid}
                     onChange={(e) => setCreateStartBid(e.target.value)}
@@ -647,10 +733,14 @@ export default function AuctionPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-muted-foreground mb-1">
+                  <label
+                    htmlFor="auction-create-finish-bid"
+                    className="block text-xs text-muted-foreground mb-1"
+                  >
                     마감가 ({createSubType === "buyRice" ? "금" : "쌀"})
                   </label>
                   <Input
+                    id="auction-create-finish-bid"
                     type="number"
                     value={createFinishBid}
                     onChange={(e) => setCreateFinishBid(e.target.value)}
@@ -679,6 +769,10 @@ export default function AuctionPage() {
                 <div className="text-xs text-muted-foreground">
                   시세: 금 1 = 쌀 {marketPrice.ricePerGold.toFixed(3)} / 쌀 1 =
                   금 {marketPrice.goldPerRice.toFixed(3)}
+                </div>
+                <div className="text-[11px] text-muted-foreground">
+                  거래량 지표: 공급 {marketPrice.supply.toLocaleString()} / 수요{" "}
+                  {marketPrice.demand.toLocaleString()}
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-xs shrink-0">수량:</span>
@@ -751,6 +845,86 @@ export default function AuctionPage() {
 
         {/* ═══ Tab 2: Unique Item Auctions (legacy parity) ═══ */}
         <TabsContent value="item" className="mt-4 space-y-4 px-2">
+          {myGeneral && (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm">아이템 경매 등록</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="grid gap-2 md:grid-cols-2">
+                  <div className="space-y-1">
+                    <p className="text-xs text-muted-foreground">아이템 종류</p>
+                    <select
+                      className="h-8 w-full rounded-md border border-input bg-transparent px-2 text-xs"
+                      value={itemType}
+                      onChange={(e) => setItemType(e.target.value)}
+                    >
+                      {ITEM_AUCTION_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-xs text-muted-foreground">시작가</p>
+                    <Input
+                      type="number"
+                      min={1}
+                      step={10}
+                      value={itemStartPrice}
+                      onChange={(e) => setItemStartPrice(e.target.value)}
+                      className="h-8 text-xs"
+                    />
+                  </div>
+                </div>
+                <Button
+                  size="sm"
+                  disabled={creatingItemAuction || !itemStartPrice}
+                  onClick={handleCreateItemAuction}
+                >
+                  {creatingItemAuction ? "등록 중..." : "아이템 경매 등록"}
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+
+          {myGeneral && myWonAuctions.length > 0 && (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm">내 낙찰 경매 정산</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {myWonAuctions.map((a) => {
+                  const d = p(a);
+                  const wonPrice = d.currentBid ?? d.highestBid?.amount ?? 0;
+                  return (
+                    <div
+                      key={a.id}
+                      className="flex items-center gap-2 rounded border border-gray-700 px-2 py-1"
+                    >
+                      <span className="text-xs">#{a.id}</span>
+                      <span className="text-xs text-amber-400">
+                        {d.title ?? d.itemName ?? d.item ?? "경매 아이템"}
+                      </span>
+                      <span className="ml-auto text-xs text-muted-foreground">
+                        낙찰가 {wonPrice.toLocaleString()}
+                      </span>
+                      <Button
+                        size="sm"
+                        className="h-6 text-[10px] px-2"
+                        disabled={finalizingAuctionId === a.id}
+                        onClick={() => handleFinalize(a.id)}
+                      >
+                        {finalizingAuctionId === a.id ? "정산중..." : "정산"}
+                      </Button>
+                    </div>
+                  );
+                })}
+              </CardContent>
+            </Card>
+          )}
+
           {/* Selected auction detail */}
           {selectedAuction &&
             (() => {
@@ -806,9 +980,9 @@ export default function AuctionPage() {
                             <div className="text-right">입찰포인트</div>
                             <div>시각</div>
                           </div>
-                          {d.bidList.map((bid, idx) => (
+                          {d.bidList.map((bid) => (
                             <div
-                              key={idx}
+                              key={`${bid.generalName}-${bid.amount}-${bid.date}`}
                               className="grid grid-cols-3 gap-2 text-center py-0.5 px-2 border-t border-gray-800"
                             >
                               <div
@@ -883,6 +1057,27 @@ export default function AuctionPage() {
                           </div>
                         );
                       })()}
+
+                    {!isActive(d) &&
+                      myGeneral &&
+                      d.currentBidderId === myGeneral.id &&
+                      d.sellerId !== myGeneral.id && (
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="text-[10px]">
+                            낙찰자
+                          </Badge>
+                          <Button
+                            size="sm"
+                            className="h-7 text-xs"
+                            disabled={finalizingAuctionId === selectedAuction.id}
+                            onClick={() => handleFinalize(selectedAuction.id)}
+                          >
+                            {finalizingAuctionId === selectedAuction.id
+                              ? "정산중..."
+                              : "정산하기"}
+                          </Button>
+                        </div>
+                      )}
                   </CardContent>
                 </Card>
               );
@@ -914,7 +1109,8 @@ export default function AuctionPage() {
                     const hb = d.highestBid;
                     const isAnonymous = !!d.obfuscatedName;
                     return (
-                      <div
+                      <button
+                        type="button"
                         key={a.id}
                         className="grid grid-cols-7 gap-1 text-center py-1 px-1 border-t border-gray-800 cursor-pointer hover:bg-white/5"
                         onClick={() => setSelectedAuctionId(a.id)}
@@ -957,7 +1153,7 @@ export default function AuctionPage() {
                         <div className="text-right pr-2 tabular-nums">
                           {(hb?.amount ?? d.currentBid ?? 0).toLocaleString()}
                         </div>
-                      </div>
+                      </button>
                     );
                   })}
                 </div>
@@ -1001,7 +1197,8 @@ export default function AuctionPage() {
                             ? "text-red-400"
                             : "text-muted-foreground";
                     return (
-                      <div
+                      <button
+                        type="button"
                         key={a.id}
                         className="grid grid-cols-7 gap-1 text-center py-1 px-1 border-t border-gray-800 cursor-pointer hover:bg-white/5 opacity-70"
                         onClick={() => setSelectedAuctionId(a.id)}
@@ -1039,13 +1236,64 @@ export default function AuctionPage() {
                         <div className="text-right pr-2 tabular-nums">
                           {(hb?.amount ?? d.currentBid ?? 0).toLocaleString()}
                         </div>
-                      </div>
+                      </button>
                     );
                   })}
                 </div>
               </CardContent>
             </Card>
           )}
+        </TabsContent>
+
+        <TabsContent value="history" className="mt-4 space-y-4 px-2">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm">경매 기록</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {auctionHistory.length === 0 ? (
+                <EmptyState icon={Clock} title="경매 기록이 없습니다." />
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="text-xs">시각</TableHead>
+                      <TableHead className="text-xs">품목</TableHead>
+                      <TableHead className="text-xs text-right">거래가</TableHead>
+                      <TableHead className="text-xs">상태</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {auctionHistory.map((h) => (
+                      <TableRow key={h.id}>
+                        <TableCell className="text-xs tabular-nums">
+                          {h.createdAt.substring(5, 16)}
+                        </TableCell>
+                        <TableCell className="text-xs">{h.itemCode}</TableCell>
+                        <TableCell className="text-xs text-right tabular-nums">
+                          금 {h.currentPrice.toLocaleString()}
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={h.status === "closed" ? "default" : "secondary"}
+                            className="text-[10px]"
+                          >
+                            {h.status === "closed"
+                              ? "낙찰"
+                              : h.status === "expired"
+                                ? "유찰"
+                                : h.status === "cancelled"
+                                  ? "취소"
+                                  : h.status}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>
@@ -1113,7 +1361,8 @@ function ResourceAuctionTable({
 
         return (
           <div key={a.id}>
-            <div
+            <button
+              type="button"
               className={`grid grid-cols-8 gap-1 text-center text-xs py-1 border-b border-gray-800 cursor-pointer hover:bg-white/5 ${isMine ? "bg-cyan-900/20" : ""}`}
               onClick={() => setSelectedId(selectedId === a.id ? null : a.id)}
             >
@@ -1137,7 +1386,7 @@ function ResourceAuctionTable({
               <div className="tabular-nums">
                 {d.endTime ? cutDateTime(d.endTime) : "-"}
               </div>
-            </div>
+            </button>
 
             {/* Bid row when selected */}
             {selectedId === a.id &&
