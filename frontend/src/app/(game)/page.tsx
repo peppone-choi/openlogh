@@ -77,13 +77,19 @@ export default function GameDashboard() {
       );
       setFrontInfo(data);
 
-      // Save world month to localStorage for cross-page use (e.g., map season)
+      // Save world year/month to localStorage for cross-page use (e.g., map season header)
       if (data.global?.month) {
         try {
           localStorage.setItem(
             "opensam:world:month",
             String(data.global.month),
           );
+          if (data.global?.year) {
+            localStorage.setItem(
+              "opensam:world:year",
+              String(data.global.year),
+            );
+          }
         } catch {
           /* ignore */
         }

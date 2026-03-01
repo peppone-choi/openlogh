@@ -130,7 +130,12 @@ export default function MapPage() {
   const [touchTapId, setTouchTapId] = useState<number | null>(null);
   // Auto-detect season from world month (legacy: spring 1-3, summer 4-6, autumn 7-9, winter 10-12)
   const autoTheme = useMemo<MapTheme>(() => {
-    const month = (currentWorld?.config as Record<string, number>)?.month;
+    let month: number | null = null;
+    try {
+      month = Number(localStorage.getItem("opensam:world:month"));
+    } catch {}
+    if (!month)
+      month = (currentWorld?.config as Record<string, number>)?.month ?? null;
     if (!month) return "default";
     if (month <= 3) return "spring";
     if (month <= 6) return "summer";
@@ -530,6 +535,38 @@ export default function MapPage() {
           className="relative border border-gray-800 rounded-lg overflow-hidden"
           style={{ backgroundColor: currentTheme.bg, aspectRatio: "700 / 500" }}
         >
+          {/* Year/Season header like legacy "西紀 188年 4月 春" */}
+          {(() => {
+            let worldYear: number | null = null;
+            let worldMonth: number | null = null;
+            try {
+              worldYear =
+                Number(localStorage.getItem("opensam:world:year")) || null;
+            } catch {}
+            try {
+              worldMonth =
+                Number(localStorage.getItem("opensam:world:month")) || null;
+            } catch {}
+            const SEASON_LABELS: Record<string, string> = {
+              spring: "春",
+              summer: "夏",
+              fall: "秋",
+              winter: "冬",
+            };
+            const seasonLabel = SEASON_LABELS[season] ?? "";
+            if (!worldYear && !worldMonth) return null;
+            return (
+              <div className="absolute top-0 left-0 right-0 z-[4] text-center py-1">
+                <span
+                  className="text-white text-sm font-bold drop-shadow-lg"
+                  style={{ textShadow: "1px 1px 2px rgba(0,0,0,0.8)" }}
+                >
+                  西紀 {worldYear ?? "?"}年 {worldMonth ?? "?"}月 {seasonLabel}
+                </span>
+              </div>
+            );
+          })()}
+
           {mapBgUrl && (
             <div
               className="absolute inset-0 z-0 bg-no-repeat bg-center"
@@ -558,24 +595,7 @@ export default function MapPage() {
             }}
           />
 
-          <svg
-            viewBox={`0 0 ${MAP_WIDTH} ${MAP_HEIGHT}`}
-            className="absolute inset-0 z-[2] w-full h-full pointer-events-none"
-            aria-hidden="true"
-          >
-            {connections.map((l) => (
-              <line
-                key={l.key}
-                x1={l.x1}
-                y1={l.y1}
-                x2={l.x2}
-                y2={l.y2}
-                stroke={currentTheme.line}
-                strokeOpacity={0.55}
-                strokeWidth={1}
-              />
-            ))}
-          </svg>
+          {/* SVG connection lines removed — road overlay image already shows connections */}
 
           <div className="absolute inset-0 z-[3]">
             {mapData.cities.map((cc) => {
