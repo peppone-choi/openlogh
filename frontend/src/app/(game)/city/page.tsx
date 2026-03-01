@@ -546,36 +546,43 @@ export default function CityPage() {
                       (g) => Math.min(g.train, g.atmos) >= g.defenceTrain,
                     );
                     const crewDef = defReady.reduce((s, g) => s + g.crew, 0);
+                    const totalCrew = cityGens.reduce((s, g) => s + g.crew, 0);
                     return (
                       <>
-                        <LabelCell>적군</LabelCell>
+                        <LabelCell>적국 병력</LabelCell>
                         <ValueCell>
                           <span className={enemyCrew > 0 ? "text-red-400" : ""}>
                             {enemyCrew.toLocaleString()}/{enemyArmed}(
                             {enemyGens.length})
                           </span>
                         </ValueCell>
-                        <LabelCell>병장(총)</LabelCell>
+                        <LabelCell>아국 병력</LabelCell>
                         <ValueCell>
                           {crewTotal.toLocaleString()}/{armedTotal}(
                           {allyGens.length})
                         </ValueCell>
-                        <LabelCell>90병장</LabelCell>
+                        <LabelCell>훈련 90+</LabelCell>
                         <ValueCell>
                           <span className="text-green-400">
                             {crew90.toLocaleString()}/{t90.length}
                           </span>
                         </ValueCell>
-                        <LabelCell>60병장</LabelCell>
+                        <LabelCell>훈련 60+</LabelCell>
                         <ValueCell>
                           <span className="text-yellow-400">
                             {crew60.toLocaleString()}/{t60.length}
                           </span>
                         </ValueCell>
-                        <LabelCell>수비○</LabelCell>
+                        <LabelCell>수비 가능</LabelCell>
                         <ValueCell>
                           <span className="text-cyan-400">
                             {crewDef.toLocaleString()}/{defReady.length}
+                          </span>
+                        </ValueCell>
+                        <LabelCell>총 주둔 병력</LabelCell>
+                        <ValueCell>
+                          <span className="text-blue-400">
+                            {totalCrew.toLocaleString()}
                           </span>
                         </ValueCell>
                       </>
