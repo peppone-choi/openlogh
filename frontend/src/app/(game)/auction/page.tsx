@@ -659,7 +659,9 @@ export default function AuctionPage() {
               </CardHeader>
               <CardContent className="space-y-3">
                 <div>
-                  <p className="block text-xs text-muted-foreground mb-1">매물</p>
+                  <p className="block text-xs text-muted-foreground mb-1">
+                    매물
+                  </p>
                   <div className="flex gap-2">
                     <Button
                       size="sm"
@@ -1069,7 +1071,9 @@ export default function AuctionPage() {
                           <Button
                             size="sm"
                             className="h-7 text-xs"
-                            disabled={finalizingAuctionId === selectedAuction.id}
+                            disabled={
+                              finalizingAuctionId === selectedAuction.id
+                            }
                             onClick={() => handleFinalize(selectedAuction.id)}
                           >
                             {finalizingAuctionId === selectedAuction.id
@@ -1259,7 +1263,9 @@ export default function AuctionPage() {
                     <TableRow>
                       <TableHead className="text-xs">시각</TableHead>
                       <TableHead className="text-xs">품목</TableHead>
-                      <TableHead className="text-xs text-right">거래가</TableHead>
+                      <TableHead className="text-xs text-right">
+                        거래가
+                      </TableHead>
                       <TableHead className="text-xs">상태</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -1275,7 +1281,9 @@ export default function AuctionPage() {
                         </TableCell>
                         <TableCell>
                           <Badge
-                            variant={h.status === "closed" ? "default" : "secondary"}
+                            variant={
+                              h.status === "closed" ? "default" : "secondary"
+                            }
                             className="text-[10px]"
                           >
                             {h.status === "closed"
