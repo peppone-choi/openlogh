@@ -215,7 +215,11 @@ export default function InheritPage() {
   const getBuffCost = useCallback(
     (level: number) => {
       if (level <= 0) return 0;
-      return actionCost.buff[level] ?? actionCost.buff[actionCost.buff.length - 1] ?? 0;
+      return (
+        actionCost.buff[level] ??
+        actionCost.buff[actionCost.buff.length - 1] ??
+        0
+      );
     },
     [actionCost.buff],
   );
@@ -348,7 +352,8 @@ export default function InheritPage() {
   /* ── Stat reset with inheritBonusStat ── */
   const bonusStatTotal = bonusStat[0] + bonusStat[1] + bonusStat[2];
   const bonusStatRemaining = MAX_INHERIT_BONUS_STAT_TOTAL - bonusStatTotal;
-  const bonusStatValid = bonusStatTotal === 0 || bonusStatTotal === MAX_INHERIT_BONUS_STAT_TOTAL;
+  const bonusStatValid =
+    bonusStatTotal === 0 || bonusStatTotal === MAX_INHERIT_BONUS_STAT_TOTAL;
   const requiredResetStatPoint =
     bonusStatTotal > 0 ? actionCost.bornStatPoint : 0;
 
@@ -358,7 +363,10 @@ export default function InheritPage() {
       const otherTotal = prev.reduce((sum, value, idx) => {
         return idx === index ? sum : sum + value;
       }, 0);
-      const maxForIndex = Math.max(0, MAX_INHERIT_BONUS_STAT_TOTAL - otherTotal);
+      const maxForIndex = Math.max(
+        0,
+        MAX_INHERIT_BONUS_STAT_TOTAL - otherTotal,
+      );
       const nextValue = Math.max(0, Math.min(maxForIndex, requested));
       if (index === 0) return [nextValue, prev[1], prev[2]];
       if (index === 1) return [prev[0], nextValue, prev[2]];
@@ -369,7 +377,9 @@ export default function InheritPage() {
   const handleResetStats = async () => {
     if (!currentWorld || !info) return;
     if (!bonusStatValid) {
-      toast.error(`보너스 능력치 합계는 0 또는 ${MAX_INHERIT_BONUS_STAT_TOTAL}이어야 합니다.`);
+      toast.error(
+        `보너스 능력치 합계는 0 또는 ${MAX_INHERIT_BONUS_STAT_TOTAL}이어야 합니다.`,
+      );
       return;
     }
     if (requiredResetStatPoint > 0 && info.points < requiredResetStatPoint) {
@@ -564,7 +574,10 @@ export default function InheritPage() {
                 </div>
               )}
               {info.pointSources?.map((src) => (
-                <div key={`${src.label}-${src.amount}`} className="flex justify-between">
+                <div
+                  key={`${src.label}-${src.amount}`}
+                  className="flex justify-between"
+                >
                   <span className="pl-2 text-muted-foreground/70">
                     └ {src.label}
                   </span>
@@ -909,7 +922,9 @@ export default function InheritPage() {
                       min={0}
                       max={MAX_INHERIT_BONUS_STAT_TOTAL}
                       value={bonusStat[0]}
-                      onChange={(e) => updateBonusStat(0, Number(e.target.value))}
+                      onChange={(e) =>
+                        updateBonusStat(0, Number(e.target.value))
+                      }
                     />
                   </div>
                   <div className="space-y-1">
@@ -925,7 +940,9 @@ export default function InheritPage() {
                       min={0}
                       max={MAX_INHERIT_BONUS_STAT_TOTAL}
                       value={bonusStat[1]}
-                      onChange={(e) => updateBonusStat(1, Number(e.target.value))}
+                      onChange={(e) =>
+                        updateBonusStat(1, Number(e.target.value))
+                      }
                     />
                   </div>
                   <div className="space-y-1">
@@ -941,22 +958,32 @@ export default function InheritPage() {
                       min={0}
                       max={MAX_INHERIT_BONUS_STAT_TOTAL}
                       value={bonusStat[2]}
-                      onChange={(e) => updateBonusStat(2, Number(e.target.value))}
+                      onChange={(e) =>
+                        updateBonusStat(2, Number(e.target.value))
+                      }
                     />
                   </div>
                 </div>
                 <div className="flex items-center justify-between pt-1">
                   <span className="text-xs text-muted-foreground">
                     보너스 합계 {bonusStatTotal}/{MAX_INHERIT_BONUS_STAT_TOTAL}
-                    {bonusStatRemaining > 0 ? ` (남음: ${bonusStatRemaining})` : ""} · 필요 포인트: {requiredResetStatPoint}P
+                    {bonusStatRemaining > 0
+                      ? ` (남음: ${bonusStatRemaining})`
+                      : ""}{" "}
+                    · 필요 포인트: {requiredResetStatPoint}P
                   </span>
-                  <Button size="sm" disabled={!bonusStatValid} onClick={handleResetStats}>
+                  <Button
+                    size="sm"
+                    disabled={!bonusStatValid}
+                    onClick={handleResetStats}
+                  >
                     능력치 초기화
                   </Button>
                 </div>
                 {!bonusStatValid && (
                   <p className="text-xs text-red-400">
-                    보너스 능력치는 사용하지 않거나, 정확히 {MAX_INHERIT_BONUS_STAT_TOTAL} 포인트를 분배해야 합니다.
+                    보너스 능력치는 사용하지 않거나, 정확히{" "}
+                    {MAX_INHERIT_BONUS_STAT_TOTAL} 포인트를 분배해야 합니다.
                   </p>
                 )}
               </div>

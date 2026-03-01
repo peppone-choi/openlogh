@@ -130,7 +130,7 @@ class InheritanceService(
         )
 
         // Get current general's stat if exists
-        val general = generalRepository.findByWorldIdAndUserId(worldId, user.id!!)
+        val general = generalRepository.findByWorldIdAndUserId(worldId, user.id!!).firstOrNull()
         val currentStat = general?.let {
             CurrentStat(
                 leadership = it.leadership.toInt(),
@@ -281,7 +281,7 @@ class InheritanceService(
             return InheritanceActionResult(error = "이미 이번 시즌에 능력치를 초기화했습니다")
         }
 
-        val general = generalRepository.findByWorldIdAndUserId(worldId, user.id!!)
+        val general = generalRepository.findByWorldIdAndUserId(worldId, user.id!!).firstOrNull()
             ?: return InheritanceActionResult(error = "장수를 찾을 수 없습니다")
 
         // Update general stats

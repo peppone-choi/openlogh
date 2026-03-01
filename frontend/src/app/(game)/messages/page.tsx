@@ -218,7 +218,10 @@ export default function MessagesPage() {
     }
   };
 
-  const handleDiplomacyResponse = async (messageId: number, accept: boolean) => {
+  const handleDiplomacyResponse = async (
+    messageId: number,
+    accept: boolean,
+  ) => {
     try {
       await messageApi.respondDiplomacy(messageId, accept);
       await fetchMessages();

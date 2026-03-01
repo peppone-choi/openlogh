@@ -306,7 +306,10 @@ export default function LobbySelectPoolPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-1">
-                <label htmlFor="pool-custom-name" className="text-sm text-muted-foreground">
+                <label
+                  htmlFor="pool-custom-name"
+                  className="text-sm text-muted-foreground"
+                >
                   장수명
                 </label>
                 <Input
@@ -319,7 +322,10 @@ export default function LobbySelectPoolPage() {
               </div>
 
               <div className="space-y-1">
-                <label htmlFor="pool-custom-ego" className="text-sm text-muted-foreground">
+                <label
+                  htmlFor="pool-custom-ego"
+                  className="text-sm text-muted-foreground"
+                >
                   성격
                 </label>
                 <select

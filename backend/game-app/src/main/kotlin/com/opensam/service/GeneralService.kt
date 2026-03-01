@@ -22,7 +22,7 @@ class GeneralService(
 
     fun getMyGeneral(worldId: Long, loginId: String): General? {
         val userId = getCurrentUserId(loginId) ?: return null
-        return generalRepository.findByWorldIdAndUserId(worldId, userId)
+        return generalRepository.findByWorldIdAndUserId(worldId, userId).firstOrNull()
     }
 
     fun listByNation(nationId: Long): List<General> {
@@ -60,7 +60,7 @@ class GeneralService(
     fun possessNpc(worldId: Long, loginId: String, generalId: Long): General? {
         val userId = getCurrentUserId(loginId) ?: return null
         val existing = generalRepository.findByWorldIdAndUserId(worldId, userId)
-        if (existing != null) return null
+        if (existing.isNotEmpty()) return null
         val general = generalRepository.findById(generalId).orElse(null) ?: return null
         if (general.worldId != worldId || general.npcState.toInt() == 0 || general.userId != null) return null
         general.userId = userId
@@ -76,7 +76,7 @@ class GeneralService(
     fun selectFromPool(worldId: Long, loginId: String, generalId: Long): General? {
         val userId = getCurrentUserId(loginId) ?: return null
         val existing = generalRepository.findByWorldIdAndUserId(worldId, userId)
-        if (existing != null) return null
+        if (existing.isNotEmpty()) return null
         val general = generalRepository.findById(generalId).orElse(null) ?: return null
         if (general.worldId != worldId || general.npcState.toInt() != 5 || general.userId != null) return null
         general.userId = userId
@@ -88,7 +88,7 @@ class GeneralService(
         val userId = getCurrentUserId(loginId) ?: return null
         // Check if the user already has a general in this world (pool or otherwise)
         val existing = generalRepository.findByWorldIdAndUserId(worldId, userId)
-        if (existing != null) return null
+        if (existing.isNotEmpty()) return null
         val general = General(
             worldId = worldId,
             userId = userId,
