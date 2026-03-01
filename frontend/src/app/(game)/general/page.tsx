@@ -83,11 +83,17 @@ export default function GeneralPage() {
 
     const cityPromise =
       myGeneral.cityId > 0
-        ? cityApi.get(myGeneral.cityId).then((res) => res.data)
+        ? cityApi
+            .get(myGeneral.cityId)
+            .then((res) => res.data)
+            .catch(() => null)
         : Promise.resolve(null);
     const nationPromise =
       myGeneral.nationId > 0
-        ? nationApi.get(myGeneral.nationId).then((res) => res.data)
+        ? nationApi
+            .get(myGeneral.nationId)
+            .then((res) => res.data)
+            .catch(() => null)
         : Promise.resolve(null);
 
     try {

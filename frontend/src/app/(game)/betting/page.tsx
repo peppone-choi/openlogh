@@ -103,6 +103,7 @@ export default function BettingPage() {
     null,
   );
   const [historyLoading, setHistoryLoading] = useState(false);
+  const [phaseGateOpen, setPhaseGateOpen] = useState(false);
 
   const load = useCallback(async () => {
     if (!currentWorld) return;
@@ -138,6 +139,13 @@ export default function BettingPage() {
   useEffect(() => {
     load();
   }, [load]);
+
+  // Sync phaseGateOpen with globalInfo.isBettingActive
+  useEffect(() => {
+    if (globalInfo) {
+      setPhaseGateOpen(globalInfo.isBettingActive ?? false);
+    }
+  }, [globalInfo]);
 
   const loadHistoryEvent = useCallback(
     async (yearMonth: string) => {
@@ -222,32 +230,6 @@ export default function BettingPage() {
     }
   };
 
-  if (!currentWorld)
-    return (
-      <div className="p-4 text-muted-foreground">월드를 선택해주세요.</div>
-    );
-  if (loading) return <LoadingState />;
-
-  const tournamentType =
-    TOURNAMENT_TYPES.find(
-      (t) => t.code === (globalInfo?.tournamentType ?? 0),
-    ) ?? TOURNAMENT_TYPES[0];
-
-  const isBettingActive = globalInfo?.isBettingActive ?? false;
-  const [phaseGateOpen, setPhaseGateOpen] = useState(isBettingActive);
-
-  const handleTogglePhaseGate = async () => {
-    if (!currentWorld || !myGeneral || (myGeneral.officerLevel ?? 0) < 12)
-      return;
-    try {
-      await bettingApi.toggleGate(currentWorld.id, !phaseGateOpen);
-      setPhaseGateOpen(!phaseGateOpen);
-      await load();
-    } catch {
-      /* gate toggle may not be available */
-    }
-  };
-
   // Tournament progress phases
   const tournamentPhases = useMemo(() => {
     if (!tournament) return [];
@@ -274,6 +256,19 @@ export default function BettingPage() {
     }
     return phases;
   }, [tournament]);
+
+  if (!currentWorld)
+    return (
+      <div className="p-4 text-muted-foreground">월드를 선택해주세요.</div>
+    );
+  if (loading) return <LoadingState />;
+
+  const tournamentType =
+    TOURNAMENT_TYPES.find(
+      (t) => t.code === (globalInfo?.tournamentType ?? 0),
+    ) ?? TOURNAMENT_TYPES[0];
+
+  const isBettingActive = globalInfo?.isBettingActive ?? false;
 
   // Helper to compute betting data from a BettingInfo object
   function computeBettingData(bettingData: BettingInfo) {
