@@ -147,6 +147,10 @@ export default function BettingPage() {
     }
   }, [globalInfo]);
 
+  const handleTogglePhaseGate = useCallback(() => {
+    setPhaseGateOpen((prev) => !prev);
+  }, []);
+
   const loadHistoryEvent = useCallback(
     async (yearMonth: string) => {
       if (!currentWorld) return;
