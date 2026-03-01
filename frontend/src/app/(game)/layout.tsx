@@ -200,11 +200,10 @@ export default function GameLayout({
     return items;
   }, [inNation, showSecret, isGovernment]);
 
-  const guardChecked = Boolean(
-    isAuthenticated && !generalLoading && currentWorld && myGeneral !== null,
-  );
-
-  if (!isAuthenticated || !guardChecked) return null;
+  // Render guard: block only during initial load.
+  // myGeneral keeps its value during re-fetches (not reset to null),
+  // so children stay mounted when pages call fetchMyGeneral.
+  if (!isAuthenticated || !currentWorld || myGeneral === null) return null;
 
   return (
     <div className="min-h-screen legacy-bg0 text-white">
