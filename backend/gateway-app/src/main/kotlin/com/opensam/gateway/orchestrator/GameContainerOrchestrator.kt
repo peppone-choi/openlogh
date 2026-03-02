@@ -22,7 +22,7 @@ import kotlin.concurrent.withLock
 @ConditionalOnProperty("gateway.docker.enabled", havingValue = "true")
 class GameContainerOrchestrator(
     private val worldRouteRegistry: WorldRouteRegistry,
-    @Value("\${gateway.orchestrator.health-timeout-ms:30000}")
+    @Value("\${gateway.orchestrator.health-timeout-ms:120000}")
     private val healthTimeoutMs: Long,
     @Value("\${gateway.docker.network:opensam-net}")
     private val dockerNetwork: String,

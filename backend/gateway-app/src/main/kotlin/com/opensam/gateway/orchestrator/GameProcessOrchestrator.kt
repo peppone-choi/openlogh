@@ -26,7 +26,7 @@ import kotlin.concurrent.withLock
 @ConditionalOnProperty("gateway.docker.enabled", havingValue = "false", matchIfMissing = true)
 class GameProcessOrchestrator(
     private val worldRouteRegistry: WorldRouteRegistry,
-    @Value("\${gateway.orchestrator.health-timeout-ms:30000}")
+    @Value("\${gateway.orchestrator.health-timeout-ms:120000}")
     private val healthTimeoutMs: Long,
 ) : GameOrchestrator {
     private val log = LoggerFactory.getLogger(GameProcessOrchestrator::class.java)
