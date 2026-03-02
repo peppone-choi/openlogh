@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useGameStore } from "@/stores/gameStore";
 import { GAME_CDN_ROOT, getNationBgUrl } from "@/lib/image";
+import { REGION_NAMES } from "@/lib/game-utils";
 
 interface MapViewerProps {
   worldId: number;
@@ -23,6 +24,10 @@ const detailMapCitySizes: Record<number, number[]> = {
   8: [96, 72, 32, 24, -6, -3],
 };
 
+const CITY_LEVEL_NAMES: Record<number, string> = {
+  1: "수", 2: "진", 3: "관", 4: "이", 5: "소", 6: "중", 7: "대", 8: "특",
+};
+
 export function MapViewer({
   worldId,
   mapCode = "che",
@@ -31,6 +36,13 @@ export function MapViewer({
   const router = useRouter();
   const { cities, nations, mapData, loadAll, loadMap } = useGameStore();
   const [showNames, setShowNames] = useState(!compact);
+  const [tooltip, setTooltip] = useState<{
+    cityText: string;
+    nationText: string | null;
+    x: number;
+    y: number;
+  } | null>(null);
+  const mapBodyRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     loadAll(worldId);
@@ -96,6 +108,27 @@ export function MapViewer({
     router.push(`/city?id=${cityId}`);
   };
 
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left + e.currentTarget.scrollLeft;
+    const y = e.clientY - rect.top + e.currentTarget.scrollTop;
+    setTooltip((prev) => (prev ? { ...prev, x, y } : null));
+  }, []);
+
+  const handleCityMouseEnter = useCallback(
+    (cc: { id: number; name: string; level: number; region: number }, nationName: string | null) => {
+      const regionName = REGION_NAMES[cc.region] ?? "중원";
+      const levelName = CITY_LEVEL_NAMES[cc.level] ?? "";
+      const cityText = `【${regionName}|${levelName}】${cc.name}`;
+      setTooltip({ cityText, nationText: nationName, x: 0, y: 0 });
+    },
+    [],
+  );
+
+  const handleCityMouseLeave = useCallback(() => {
+    setTooltip(null);
+  }, []);
+
   return (
     <div
       className="relative w-full overflow-hidden bg-black text-[14px] text-white"
@@ -132,7 +165,7 @@ export function MapViewer({
       />
 
       {/* Map Cities */}
-      <div className="absolute inset-0 z-[2]">
+      <div className="absolute inset-0 z-[2]" ref={mapBodyRef} onMouseMove={handleMouseMove}>
         {mapData.cities.map((cc) => {
           const rtCity = cityMap.get(cc.id);
           const nation = rtCity?.nationId
@@ -158,6 +191,13 @@ export function MapViewer({
               className="absolute h-[30px] w-[40px] cursor-pointer appearance-none border-0 bg-transparent p-0 text-left overflow-visible"
               style={{ left, top }}
               onClick={(e) => handleCityClick(cc.id, e)}
+              onMouseEnter={() =>
+                handleCityMouseEnter(
+                  cc,
+                  nation?.name ?? null,
+                )
+              }
+              onMouseLeave={handleCityMouseLeave}
             >
               {/* Nation Color Blotch Base */}
               {nation?.color && (
@@ -262,6 +302,44 @@ export function MapViewer({
           );
         })}
       </div>
+
+      {/* City Tooltip */}
+      {tooltip && (
+        <div
+          className="absolute z-[16] pointer-events-none whitespace-nowrap text-[14px]"
+          style={{
+            top: tooltip.y + 30,
+            left: tooltip.x + 10,
+            border: "1px solid gray",
+            minWidth: 120,
+          }}
+        >
+          <div
+            className="px-1"
+            style={{
+              backgroundColor: "rgb(30, 164, 255)",
+              lineHeight: "15px",
+              height: 15,
+            }}
+          >
+            {tooltip.cityText}
+          </div>
+          {tooltip.nationText && (
+            <div
+              className="px-1 text-right"
+              style={{
+                backgroundColor: "rgb(30, 164, 255)",
+                lineHeight: "15px",
+                height: 15,
+                borderTop: "1px solid gray",
+              }}
+            >
+              {tooltip.nationText}
+            </div>
+          )}
+        </div>
+      )}
+
     </div>
   );
 }
