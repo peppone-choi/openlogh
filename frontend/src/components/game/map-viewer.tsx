@@ -155,7 +155,7 @@ export function MapViewer({
             <button
               key={cc.id}
               type="button"
-              className="absolute h-[30px] w-[40px] cursor-pointer appearance-none border-0 bg-transparent p-0 text-left"
+              className="absolute h-[30px] w-[40px] cursor-pointer appearance-none border-0 bg-transparent p-0 text-left overflow-visible"
               style={{ left, top }}
               onClick={(e) => handleCityClick(cc.id, e)}
             >
@@ -174,7 +174,7 @@ export function MapViewer({
                 />
               )}
 
-              <div className="absolute z-[2] w-full h-full">
+              <div className="absolute inset-0 z-[2]">
                 {/* City Icon Container */}
                 <div
                   className="absolute"

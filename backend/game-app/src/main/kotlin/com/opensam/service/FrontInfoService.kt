@@ -20,6 +20,7 @@ class FrontInfoService(
     private val appUserRepository: AppUserRepository,
     private val troopRepository: TroopRepository,
     private val officerRankService: OfficerRankService,
+    private val scenarioService: ScenarioService,
 ) {
     companion object {
         private const val MAX_DED_LEVEL = 10
@@ -71,7 +72,7 @@ class FrontInfoService(
             isBettingActive = tournamentState == 6,
             lastExecuted = world.meta["lastExecuted"] as? String,
             isLocked = (world.config["locked"] as? Boolean) ?: false,
-            scenarioText = world.scenarioCode,
+            scenarioText = try { scenarioService.getScenario(world.scenarioCode).title } catch (_: Exception) { world.scenarioCode },
             realtimeMode = world.realtimeMode,
             extendedGeneral = (world.config["extendedGeneral"] as? Number)?.toInt() ?: 0,
             isFiction = (world.config["isFiction"] as? Number)?.toInt() ?: 0,

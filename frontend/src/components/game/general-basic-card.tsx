@@ -11,6 +11,7 @@ import {
   nextExpLevelRemain,
   ageColor,
   isValidObjKey,
+  getCrewTypeName,
 } from "@/lib/game-utils";
 import { getPortraitUrl, getCrewTypeIconUrl } from "@/lib/image";
 
@@ -188,7 +189,7 @@ export function GeneralBasicCard({
 
       {/* Row 5: 병종/병사/성격 */}
       <Cell head>병종</Cell>
-      <Cell>{general.crewtype}</Cell>
+      <Cell>{getCrewTypeName(general.crewtype)}</Cell>
       <Cell head>병사</Cell>
       <Cell>{general.crew.toLocaleString()}</Cell>
       <Cell head>성격</Cell>

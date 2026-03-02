@@ -177,14 +177,12 @@ export default function GameDashboard() {
       {global && (
         <>
           <h3 className="text-center font-bold py-1 text-sm">
-            {((currentWorld.config as Record<string, string>)
-              ?.name as string) ?? global.scenarioText}{" "}
+            {global.scenarioText}{" "}
             {global.serverCnt > 0 && (
               <span className="text-muted-foreground">
                 {global.serverCnt}기
               </span>
-            )}{" "}
-            <span style={{ color: "cyan" }}>{global.scenarioText}</span>
+            )}
           </h3>
           <div className="grid grid-cols-12 text-center text-[11px] border-t border-b border-gray-600 bg-[#111]">
             <div
