@@ -251,6 +251,11 @@ export default function MapPage() {
     [cities],
   );
 
+  const cityByNameMap = useMemo(
+    () => new Map(cities.map((c) => [c.name, c])),
+    [cities],
+  );
+
   const constMap = useMemo(
     () => new Map(mapData?.cities.map((c) => [c.id, c]) ?? []),
     [mapData],
@@ -314,12 +319,12 @@ export default function MapPage() {
         /* ignore quota */
       }
     },
-    [cityMap, nationMap, constMap],
+    [cityMap, cityByNameMap, nationMap, constMap],
   );
 
   const buildTooltip = useCallback(
     (cc: CityConst, screenX: number, screenY: number): CityTooltip => {
-      const city = cityMap.get(cc.id);
+      const city = cityByNameMap.get(cc.name);
       const nation = city?.nationId ? nationMap.get(city.nationId) : null;
       const cityGens = cityGeneralData.get(cc.id) ?? [];
       const generalsInfo = cityGens.map((g) => ({
@@ -502,7 +507,7 @@ export default function MapPage() {
 
             <div className="absolute inset-0 z-[3]">
               {mapData.cities.map((cc) => {
-                const rtCity = cityMap.get(cc.id);
+                const rtCity = cityByNameMap.get(cc.name);
                 const nation = rtCity?.nationId
                   ? nationMap.get(rtCity.nationId)
                   : null;
@@ -521,7 +526,7 @@ export default function MapPage() {
                 const terrainLevel =
                   layers.has("terrain") && rtCity ? rtCity.level : 0;
                 const showNationLayer = layers.has("nations") && !!nation;
-                const showCapital = !!nation && nation.capitalCityId === cc.id;
+                const showCapital = !!nation && !!rtCity && nation.capitalCityId === rtCity.id;
 
                 return (
                   <button

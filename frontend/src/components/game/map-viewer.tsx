@@ -55,7 +55,7 @@ export function MapViewer({
   );
 
   const cityMap = useMemo(
-    () => new Map(cities.map((c) => [c.id, c])),
+    () => new Map(cities.map((c) => [c.name, c])),
     [cities],
   );
 
@@ -168,7 +168,7 @@ export function MapViewer({
       {/* Map Cities */}
       <div className="absolute inset-0 z-[2]" ref={mapBodyRef} onMouseMove={handleMouseMove}>
         {mapData.cities.map((cc) => {
-          const rtCity = cityMap.get(cc.id);
+          const rtCity = cityMap.get(cc.name);
           const nation = rtCity?.nationId
             ? nationMap.get(rtCity.nationId)
             : null;
@@ -253,7 +253,7 @@ export function MapViewer({
                         className="w-full h-full block"
                         alt=""
                       />
-                      {nation.capitalCityId === cc.id && (
+                      {rtCity && nation.capitalCityId === rtCity.id && (
                         <div
                           className="absolute bg-yellow-400"
                           style={{
