@@ -307,7 +307,7 @@ export default function MapPage() {
           `opensam:cityInfo:${cityId}`,
           JSON.stringify({
             id: cityId,
-            name: constMap.get(cityId)?.name ?? "",
+            name: city.name ?? "",
             nationName: nation?.name ?? "공백지",
             nationColor: nation?.color ?? "#555",
             pop: city.pop,
@@ -326,7 +326,7 @@ export default function MapPage() {
     (cc: CityConst, screenX: number, screenY: number): CityTooltip => {
       const city = cityByNameMap.get(cc.name);
       const nation = city?.nationId ? nationMap.get(city.nationId) : null;
-      const cityGens = cityGeneralData.get(cc.id) ?? [];
+      const cityGens = cityGeneralData.get(city?.id ?? -1) ?? [];
       const generalsInfo = cityGens.map((g) => ({
         name: g.name,
         nationColor: nationMap.get(g.nationId)?.color ?? "#555",
@@ -353,7 +353,7 @@ export default function MapPage() {
         screenY,
       };
     },
-    [cityMap, nationMap, cityGeneralData],
+    [cityByNameMap, nationMap, cityGeneralData],
   );
 
   const handleCityMouseEnter = useCallback(
@@ -361,10 +361,11 @@ export default function MapPage() {
       e.stopPropagation();
       clearTooltipHideTimer();
       setTouchTapId(null);
-      saveCityInfo(cc.id);
+      const rtCity = cityByNameMap.get(cc.name);
+      if (rtCity) saveCityInfo(rtCity.id);
       setTooltip(buildTooltip(cc, e.clientX, e.clientY));
     },
-    [buildTooltip, clearTooltipHideTimer, saveCityInfo],
+    [buildTooltip, clearTooltipHideTimer, saveCityInfo, cityByNameMap],
   );
 
   const handleCityMouseMove = useCallback(
@@ -393,13 +394,14 @@ export default function MapPage() {
       clearTooltipHideTimer();
       e.preventDefault();
       e.stopPropagation();
+      const rtCity = cityByNameMap.get(cc.name);
       if (touchTapId === cc.id && tooltip?.cityId === cc.id) {
-        saveCityInfo(cc.id);
-        router.push(`/city?id=${cc.id}`);
+        if (rtCity) saveCityInfo(rtCity.id);
+        router.push(`/city?id=${rtCity?.id ?? cc.id}`);
         setTouchTapId(null);
       } else {
         const touch = e.touches[0] ?? e.changedTouches[0];
-        saveCityInfo(cc.id);
+        if (rtCity) saveCityInfo(rtCity.id);
         setTooltip(buildTooltip(cc, touch?.clientX ?? 0, touch?.clientY ?? 0));
         setTouchTapId(cc.id);
       }
@@ -410,7 +412,7 @@ export default function MapPage() {
       touchTapId,
       tooltip,
       router,
-      saveCityInfo,
+      saveCityInfo, cityByNameMap,
     ],
   );
 
@@ -517,9 +519,9 @@ export default function MapPage() {
                 const left = cc.x - 20;
                 const top = cc.y - 15;
                 const hasForeignTroops =
-                  layers.has("troops") && foreignTroopCities.has(cc.id);
+                  layers.has("troops") && foreignTroopCities.has(rtCity?.id ?? -1);
                 const genCount = layers.has("troops")
-                  ? (cityGeneralData.get(cc.id)?.length ?? 0)
+                  ? (cityGeneralData.get(rtCity?.id ?? -1)?.length ?? 0)
                   : 0;
                 const isSupplyBroken =
                   layers.has("supply") && !!rtCity && rtCity.supplyState !== 1;
