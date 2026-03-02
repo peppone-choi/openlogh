@@ -25,7 +25,14 @@ const detailMapCitySizes: Record<number, number[]> = {
 };
 
 const CITY_LEVEL_NAMES: Record<number, string> = {
-  1: "수", 2: "진", 3: "관", 4: "이", 5: "소", 6: "중", 7: "대", 8: "특",
+  1: "수",
+  2: "진",
+  3: "관",
+  4: "이",
+  5: "소",
+  6: "중",
+  7: "대",
+  8: "특",
 };
 
 export function MapViewer({
@@ -67,7 +74,10 @@ export function MapViewer({
   }, []);
 
   const handleCityMouseEnter = useCallback(
-    (cc: { id: number; name: string; level: number; region: number }, nationName: string | null) => {
+    (
+      cc: { id: number; name: string; level: number; region: number },
+      nationName: string | null,
+    ) => {
       const regionName = REGION_NAMES[cc.region] ?? "중원";
       const levelName = CITY_LEVEL_NAMES[cc.level] ?? "";
       const cityText = `【${regionName}|${levelName}】${cc.name}`;
@@ -129,7 +139,6 @@ export function MapViewer({
     router.push(`/city?id=${cityId}`);
   };
 
-
   return (
     <div
       className="relative w-full overflow-hidden bg-black text-[14px] text-white"
@@ -166,7 +175,11 @@ export function MapViewer({
       />
 
       {/* Map Cities */}
-      <div className="absolute inset-0 z-[2]" ref={mapBodyRef} onMouseMove={handleMouseMove}>
+      <div
+        className="absolute inset-0 z-[2]"
+        ref={mapBodyRef}
+        onMouseMove={handleMouseMove}
+      >
         {mapData.cities.map((cc) => {
           const rtCity = cityMap.get(cc.name);
           const nation = rtCity?.nationId
@@ -193,10 +206,7 @@ export function MapViewer({
               style={{ left, top }}
               onClick={(e) => handleCityClick(cc.id, e)}
               onMouseEnter={() =>
-                handleCityMouseEnter(
-                  cc,
-                  nation?.name ?? null,
-                )
+                handleCityMouseEnter(cc, nation?.name ?? null)
               }
               onMouseLeave={handleCityMouseLeave}
             >
@@ -340,7 +350,6 @@ export function MapViewer({
           )}
         </div>
       )}
-
     </div>
   );
 }

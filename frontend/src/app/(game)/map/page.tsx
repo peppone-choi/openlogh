@@ -156,6 +156,8 @@ export default function MapPage() {
   const [isAutoTheme, setIsAutoTheme] = useState(true);
   const [showCityNames, setShowCityNames] = useState(true);
   const tooltipHideTimerRef = useRef<number | null>(null);
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const [mapScale, setMapScale] = useState(1);
   const selectedTheme = isAutoTheme ? autoTheme : theme;
   const currentTheme =
     MAP_THEMES.find((t) => t.key === selectedTheme) ?? MAP_THEMES[0];
@@ -204,6 +206,19 @@ export default function MapPage() {
         window.clearTimeout(tooltipHideTimerRef.current);
       }
     };
+  }, []);
+
+  // Measure map container width to scale the 700×500 coordinate space
+  useEffect(() => {
+    const el = mapContainerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setMapScale(entry.contentRect.width / MAP_WIDTH);
+      }
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
   }, []);
   const toggleLayer = (layer: MapLayer) => {
     setLayers((prev) => {
@@ -412,7 +427,8 @@ export default function MapPage() {
       touchTapId,
       tooltip,
       router,
-      saveCityInfo, cityByNameMap,
+      saveCityInfo,
+      cityByNameMap,
     ],
   );
 
@@ -438,12 +454,23 @@ export default function MapPage() {
       <CardContent className="space-y-3">
         <div className="w-full max-w-[700px] mx-auto">
           <div
+            ref={mapContainerRef}
             className="relative border border-gray-800 rounded-lg overflow-hidden"
             style={{
               backgroundColor: currentTheme.bg,
               aspectRatio: "700 / 500",
             }}
           >
+            {/* Scaled inner div: 700×500 coordinate space scaled to fit container */}
+            <div
+              style={{
+                width: MAP_WIDTH,
+                height: MAP_HEIGHT,
+                transform: `scale(${mapScale})`,
+                transformOrigin: "top left",
+                position: "relative",
+              }}
+            >
             {/* Year/Season header like legacy "西紀 188年 4月 春" */}
             {(() => {
               let worldYear: number | null = null;
@@ -519,7 +546,8 @@ export default function MapPage() {
                 const left = cc.x - 20;
                 const top = cc.y - 15;
                 const hasForeignTroops =
-                  layers.has("troops") && foreignTroopCities.has(rtCity?.id ?? -1);
+                  layers.has("troops") &&
+                  foreignTroopCities.has(rtCity?.id ?? -1);
                 const genCount = layers.has("troops")
                   ? (cityGeneralData.get(rtCity?.id ?? -1)?.length ?? 0)
                   : 0;
@@ -528,7 +556,8 @@ export default function MapPage() {
                 const terrainLevel =
                   layers.has("terrain") && rtCity ? rtCity.level : 0;
                 const showNationLayer = layers.has("nations") && !!nation;
-                const showCapital = !!nation && !!rtCity && nation.capitalCityId === rtCity.id;
+                const showCapital =
+                  !!nation && !!rtCity && nation.capitalCityId === rtCity.id;
 
                 return (
                   <button
@@ -688,6 +717,8 @@ export default function MapPage() {
               {showCityNames ? "도시명 표기 끄기" : "도시명 표기 켜기"}
             </button>
 
+            </div>
+
             {tooltip && (
               <div
                 className="fixed z-50 bg-gray-800 border border-gray-700 rounded-lg p-3 shadow-lg text-sm space-y-1 max-w-xs"
@@ -781,13 +812,13 @@ export default function MapPage() {
             }}
           >
             <option value="default">자동</option>
-            {MAP_THEMES.filter((themeOption) => themeOption.key !== "default").map(
-              (themeOption) => (
-                <option key={themeOption.key} value={themeOption.key}>
-                  {themeOption.label}
-                </option>
-              ),
-            )}
+            {MAP_THEMES.filter(
+              (themeOption) => themeOption.key !== "default",
+            ).map((themeOption) => (
+              <option key={themeOption.key} value={themeOption.key}>
+                {themeOption.label}
+              </option>
+            ))}
           </select>
           <span className="ml-1 text-muted-foreground">레이어</span>
           {[
