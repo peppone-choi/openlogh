@@ -31,18 +31,19 @@ export const useGameStore = create<GameStore>((set) => ({
   loadAll: async (worldId) => {
     set({ loading: true });
     try {
-      const [cities, nations, generals, diplomacy] = await Promise.all([
+      // Load each independently so one failure doesn't block others
+      const results = await Promise.allSettled([
         cityApi.listByWorld(worldId),
         nationApi.listByWorld(worldId),
         generalApi.listByWorld(worldId),
         diplomacyApi.listByWorld(worldId),
       ]);
-      set({
-        cities: cities.data,
-        nations: nations.data,
-        generals: generals.data,
-        diplomacy: diplomacy.data,
-      });
+      const patch: Partial<GameStore> = {};
+      if (results[0].status === "fulfilled") patch.cities = results[0].value.data;
+      if (results[1].status === "fulfilled") patch.nations = results[1].value.data;
+      if (results[2].status === "fulfilled") patch.generals = results[2].value.data;
+      if (results[3].status === "fulfilled") patch.diplomacy = results[3].value.data;
+      set(patch);
     } finally {
       set({ loading: false });
     }

@@ -349,7 +349,7 @@ export default function GameDashboard() {
       <div className="ingameBoard" style={{ display: "grid" }}>
         {/* Map */}
         <div className={`mapView ${isTabActive("map") ? "" : "max-lg:hidden"}`}>
-          <MapViewer worldId={currentWorld.id} mapCode={mapCode} compact />
+          <MapViewer worldId={currentWorld.id} mapCode={mapCode} />
         </div>
 
         {/* Commands */}
