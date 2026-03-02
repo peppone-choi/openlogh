@@ -41,12 +41,9 @@ backend/.proj-cache/
 backend/.tmp/
 
 # Local screenshots
-e2e-*.png
-frontend-home.png
-lobby-*.png
-login-page.png
-npc-select.png
-
+*.png
+*.log
+!frontend/**/*.png
 # OpenClaw/local agent artifacts
 .cache/
 .clawhub/
