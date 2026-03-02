@@ -59,6 +59,27 @@ export function MapViewer({
     [cities],
   );
 
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left + e.currentTarget.scrollLeft;
+    const y = e.clientY - rect.top + e.currentTarget.scrollTop;
+    setTooltip((prev) => (prev ? { ...prev, x, y } : null));
+  }, []);
+
+  const handleCityMouseEnter = useCallback(
+    (cc: { id: number; name: string; level: number; region: number }, nationName: string | null) => {
+      const regionName = REGION_NAMES[cc.region] ?? "중원";
+      const levelName = CITY_LEVEL_NAMES[cc.level] ?? "";
+      const cityText = `【${regionName}|${levelName}】${cc.name}`;
+      setTooltip({ cityText, nationText: nationName, x: 0, y: 0 });
+    },
+    [],
+  );
+
+  const handleCityMouseLeave = useCallback(() => {
+    setTooltip(null);
+  }, []);
+
   if (!mapData) {
     return (
       <div className="flex items-center justify-center h-32 text-xs text-muted-foreground">
@@ -108,26 +129,6 @@ export function MapViewer({
     router.push(`/city?id=${cityId}`);
   };
 
-  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left + e.currentTarget.scrollLeft;
-    const y = e.clientY - rect.top + e.currentTarget.scrollTop;
-    setTooltip((prev) => (prev ? { ...prev, x, y } : null));
-  }, []);
-
-  const handleCityMouseEnter = useCallback(
-    (cc: { id: number; name: string; level: number; region: number }, nationName: string | null) => {
-      const regionName = REGION_NAMES[cc.region] ?? "중원";
-      const levelName = CITY_LEVEL_NAMES[cc.level] ?? "";
-      const cityText = `【${regionName}|${levelName}】${cc.name}`;
-      setTooltip({ cityText, nationText: nationName, x: 0, y: 0 });
-    },
-    [],
-  );
-
-  const handleCityMouseLeave = useCallback(() => {
-    setTooltip(null);
-  }, []);
 
   return (
     <div

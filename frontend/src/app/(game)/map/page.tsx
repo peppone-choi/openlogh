@@ -9,7 +9,6 @@ import { formatLog } from "@/lib/formatLog";
 import type { CityConst, PublicCachedMapHistory } from "@/types";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   getCityLevelIcon,
@@ -156,7 +155,6 @@ export default function MapPage() {
 
   const [isAutoTheme, setIsAutoTheme] = useState(true);
   const [showCityNames, setShowCityNames] = useState(true);
-  const [showLegend, setShowLegend] = useState(false);
   const tooltipHideTimerRef = useRef<number | null>(null);
   const selectedTheme = isAutoTheme ? autoTheme : theme;
   const currentTheme =
@@ -293,45 +291,6 @@ export default function MapPage() {
     return result;
   }, [cityGeneralData, cityMap]);
 
-  const connections = useMemo(() => {
-    if (!mapData?.cities) return [];
-    const seen = new Set<string>();
-    const lines: {
-      key: string;
-      x1: number;
-      y1: number;
-      x2: number;
-      y2: number;
-    }[] = [];
-    for (const city of mapData.cities) {
-      for (const connId of city.connections) {
-        const key =
-          city.id < connId ? `${city.id}-${connId}` : `${connId}-${city.id}`;
-        if (seen.has(key)) continue;
-        seen.add(key);
-        const target = constMap.get(connId);
-        if (target) {
-          lines.push({
-            key,
-            x1: city.x,
-            y1: city.y,
-            x2: target.x,
-            y2: target.y,
-          });
-        }
-      }
-    }
-    return lines;
-  }, [mapData, constMap]);
-
-  // Nations that own at least one city
-  const legendNations = useMemo(() => {
-    const ids = new Set(
-      cities.filter((c) => c.nationId).map((c) => c.nationId),
-    );
-    return nations.filter((n) => ids.has(n.id));
-  }, [cities, nations]);
-
   // Save city info to localStorage for cross-page reference
   const saveCityInfo = useCallback(
     (cityId: number) => {
@@ -459,6 +418,10 @@ export default function MapPage() {
   }
 
   const serverName = currentWorld?.name ?? "삼국지";
+  const getHistoryBullet = (text: string) => {
+    if (text.includes("【대회】") || text.includes("【안내】")) return "◆";
+    return "●";
+  };
 
   return (
     <Card className="w-full max-w-[750px] mx-auto">
@@ -466,84 +429,6 @@ export default function MapPage() {
         <CardTitle className="text-lg">{serverName} 현황</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        {/* Compact theme & layer controls */}
-        <div className="flex flex-wrap items-center gap-1 text-xs">
-          <span className="text-muted-foreground">테마:</span>
-          <Button
-            size="sm"
-            variant={isAutoTheme ? "default" : "outline"}
-            className="h-5 px-1.5 text-[10px]"
-            onClick={() => setIsAutoTheme(true)}
-          >
-            자동
-          </Button>
-          {MAP_THEMES.map((t) => (
-            <Button
-              key={t.key}
-              size="sm"
-              variant={!isAutoTheme && theme === t.key ? "default" : "outline"}
-              className="h-5 px-1.5 text-[10px]"
-              onClick={() => {
-                setTheme(t.key);
-                setIsAutoTheme(false);
-              }}
-            >
-              {t.label}
-            </Button>
-          ))}
-          <span className="text-muted-foreground ml-2">레이어:</span>
-          {[
-            { key: "nations" as MapLayer, label: "국가색" },
-            { key: "troops" as MapLayer, label: "병력" },
-            { key: "supply" as MapLayer, label: "보급" },
-            { key: "terrain" as MapLayer, label: "지형" },
-          ].map((l) => (
-            <Button
-              key={l.key}
-              size="sm"
-              variant={layers.has(l.key) ? "default" : "outline"}
-              className="h-5 px-1.5 text-[10px]"
-              onClick={() => toggleLayer(l.key)}
-            >
-              {l.label}
-            </Button>
-          ))}
-          <Button
-            size="sm"
-            variant={showLegend ? "default" : "outline"}
-            className="h-5 px-1.5 text-[10px] ml-2"
-            onClick={() => setShowLegend((v) => !v)}
-          >
-            범례 {showLegend ? "▲" : "▼"}
-          </Button>
-        </div>
-
-        {/* Collapsible nation legend */}
-        {showLegend && (
-          <div className="flex flex-wrap gap-2 text-xs text-gray-400 py-1">
-            {legendNations.map((n) => (
-              <div key={n.id} className="flex items-center gap-1">
-                <span
-                  className="w-2.5 h-2.5 rounded-full"
-                  style={{ backgroundColor: n.color }}
-                />
-                <span>{n.name}</span>
-              </div>
-            ))}
-            <div className="flex items-center gap-1">
-              <span className="w-2.5 h-2.5 rounded-full bg-gray-600" />
-              <span>공백지</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <span
-                className="w-2.5 h-2.5 rounded border border-red-500"
-                style={{ background: "transparent" }}
-              />
-              <span className="text-red-400">외국 병력 주둔</span>
-            </div>
-          </div>
-        )}
-
         <div className="w-full max-w-[700px] mx-auto">
           <div
             className="relative border border-gray-800 rounded-lg overflow-hidden"
@@ -873,7 +758,49 @@ export default function MapPage() {
           </div>
         </div>
 
-        {/* History Log Panel with Year/Month Navigation */}
+        <div className="mx-auto flex w-full max-w-[700px] flex-wrap items-center gap-1.5 text-xs">
+          <span className="text-muted-foreground">테마</span>
+          <select
+            className="h-7 rounded border border-border bg-background px-1.5 text-xs"
+            value={selectedTheme}
+            onChange={(e) => {
+              const next = e.target.value as MapTheme;
+              if (next === "default") {
+                setIsAutoTheme(true);
+                return;
+              }
+              setTheme(next);
+              setIsAutoTheme(false);
+            }}
+          >
+            <option value="default">자동</option>
+            {MAP_THEMES.filter((themeOption) => themeOption.key !== "default").map(
+              (themeOption) => (
+                <option key={themeOption.key} value={themeOption.key}>
+                  {themeOption.label}
+                </option>
+              ),
+            )}
+          </select>
+          <span className="ml-1 text-muted-foreground">레이어</span>
+          {[
+            { key: "nations" as MapLayer, label: "국가색" },
+            { key: "troops" as MapLayer, label: "병력" },
+            { key: "supply" as MapLayer, label: "보급" },
+            { key: "terrain" as MapLayer, label: "지형" },
+          ].map((layer) => (
+            <Button
+              key={layer.key}
+              size="sm"
+              variant={layers.has(layer.key) ? "default" : "outline"}
+              className="h-6 px-2 text-[11px]"
+              onClick={() => toggleLayer(layer.key)}
+            >
+              {layer.label}
+            </Button>
+          ))}
+        </div>
+
         {history.length > 0 &&
           (() => {
             // Extract unique year/month pairs from history
@@ -921,12 +848,7 @@ export default function MapPage() {
 
             return (
               <div className="mt-3 border-t border-gray-800 pt-3 space-y-2">
-                <div className="text-sm font-semibold flex items-center gap-2">
-                  최근 기록
-                  <Badge variant="outline" className="text-[10px]">
-                    {filteredHistory.length}건
-                  </Badge>
-                </div>
+                <div className="text-sm font-semibold">최근 기록</div>
                 {/* Year/Month filter */}
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="text-xs text-muted-foreground">년도:</span>
@@ -1051,28 +973,19 @@ export default function MapPage() {
                 {/* History items */}
                 <div className="max-h-64 overflow-y-auto space-y-0.5 text-xs">
                   {displayItems.map((item) => (
-                    <div
-                      key={item.id}
-                      className="flex items-start gap-2 py-0.5 border-b border-gray-800 last:border-0"
-                    >
-                      <span className="text-muted-foreground whitespace-nowrap shrink-0 w-24">
+                    <div key={item.id} className="py-0.5 text-gray-300">
+                      <span
+                        className={
+                          getHistoryBullet(item.text) === "◆"
+                            ? "text-sky-300"
+                            : "text-cyan-300"
+                        }
+                      >
                         {item.year != null && item.month != null
-                          ? `${item.year}년 ${item.month}월`
-                          : item.sentAt
-                            ? new Date(item.sentAt).toLocaleDateString(
-                                "ko-KR",
-                                {
-                                  month: "short",
-                                  day: "numeric",
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                },
-                              )
-                            : ""}
-                      </span>
-                      <span className="text-gray-300">
-                        {formatLog(item.text)}
-                      </span>
+                          ? `${getHistoryBullet(item.text)}${item.year}년 ${item.month}월:`
+                          : `${getHistoryBullet(item.text)}`}
+                      </span>{" "}
+                      <span>{formatLog(item.text)}</span>
                     </div>
                   ))}
                   {displayItems.length === 0 && (
