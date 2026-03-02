@@ -32,6 +32,8 @@ class SecurityConfig(
                     .requestMatchers("/api/maps/**").permitAll()
                     .requestMatchers("/api/public/**").permitAll()
                     .requestMatchers("/api/worlds").permitAll()
+                    .requestMatchers("/ws/**").permitAll()
+                    .requestMatchers("/api/worlds/**").permitAll()
                     .anyRequest().authenticated()
             }
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter::class.java)
