@@ -387,8 +387,12 @@ export interface PublicCachedMapCity {
   name: string;
   x: number;
   y: number;
+  level: number;
   nationName: string;
   nationColor: string;
+  isCapital?: boolean;
+  supplyState?: number;
+  state?: number;
 }
 
 export interface PublicCachedMapHistory {
@@ -406,6 +410,8 @@ export interface PublicCachedMapResponse {
   worldId: number | null;
   worldName: string | null;
   mapCode: string | null;
+  currentYear?: number | null;
+  currentMonth?: number | null;
   cities: PublicCachedMapCity[];
   history: PublicCachedMapHistory[];
 }

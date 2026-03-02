@@ -7,8 +7,12 @@ data class PublicCachedMapCityResponse(
     val name: String,
     val x: Int,
     val y: Int,
+    val level: Int,
     val nationName: String,
     val nationColor: String,
+    val isCapital: Boolean = false,
+    val supplyState: Int = 1,
+    val state: Int = 0,
 )
 
 data class PublicCachedMapHistoryResponse(
@@ -25,6 +29,8 @@ data class PublicCachedMapResponse(
     val worldId: Long?,
     val worldName: String?,
     val mapCode: String?,
+    val currentYear: Int? = null,
+    val currentMonth: Int? = null,
     val cities: List<PublicCachedMapCityResponse>,
     val history: List<PublicCachedMapHistoryResponse>,
 )

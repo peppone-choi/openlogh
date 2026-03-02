@@ -1,12 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { PublicCachedMapResponse } from "@/types";
-
-const MAP_WIDTH = 700;
-const MAP_HEIGHT = 320;
+import { PublicGameMap } from "@/components/game/public-game-map";
 
 function formatDateTime(value: string): string {
   const date = new Date(value);
@@ -68,39 +66,6 @@ export function ServerStatusCard() {
     fetchData();
   }, []);
 
-  const points = useMemo(() => {
-    if (!data || data.cities.length === 0) {
-      return [];
-    }
-
-    let minX = Infinity;
-    let maxX = -Infinity;
-    let minY = Infinity;
-    let maxY = -Infinity;
-
-    for (const city of data.cities) {
-      if (city.x < minX) minX = city.x;
-      if (city.x > maxX) maxX = city.x;
-      if (city.y < minY) minY = city.y;
-      if (city.y > maxY) maxY = city.y;
-    }
-
-    const padding = 36;
-    const rangeX = Math.max(1, maxX - minX);
-    const rangeY = Math.max(1, maxY - minY);
-    const scaleX = (MAP_WIDTH - padding * 2) / rangeX;
-    const scaleY = (MAP_HEIGHT - padding * 2) / rangeY;
-
-    return data.cities.map((city) => ({
-      id: city.id,
-      x: (city.x - minX) * scaleX + padding,
-      y: (city.y - minY) * scaleY + padding,
-      color: city.nationColor,
-      name: city.name,
-      nationName: city.nationName,
-    }));
-  }, [data]);
-
   if (loading) {
     return <LoadingCard />;
   }
@@ -116,32 +81,7 @@ export function ServerStatusCard() {
             현재 가동 중인 서버가 없습니다
           </div>
         ) : (
-          <div className="overflow-hidden border border-gray-700 bg-black/30">
-            <svg
-              viewBox={`0 0 ${MAP_WIDTH} ${MAP_HEIGHT}`}
-              className="h-auto w-full"
-              role="img"
-            >
-              <title>중립 지도</title>
-              <rect width={MAP_WIDTH} height={MAP_HEIGHT} fill="#0a0a0a" />
-              {points.map((point) => (
-                <circle
-                  key={point.id}
-                  cx={point.x}
-                  cy={point.y}
-                  r={6}
-                  fill={point.color}
-                  opacity={0.9}
-                >
-                  <title>
-                    {point.name
-                      ? `${point.name} (${point.nationName})`
-                      : "도시"}
-                  </title>
-                </circle>
-              ))}
-            </svg>
-          </div>
+          <PublicGameMap data={data} />
         )}
 
         <div>

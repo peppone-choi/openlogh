@@ -57,7 +57,9 @@ class PublicCachedMapService(
         val mapCode = (world.config["mapCode"] as? String) ?: "che"
         val mapCityByName = mapService.getCities(mapCode).associateBy { it.name }
 
-        val nationById = nationRepository.findByWorldId(worldId).associateBy { it.id }
+        val nations = nationRepository.findByWorldId(worldId)
+        val nationById = nations.associateBy { it.id }
+        val capitalCityIds = nations.mapNotNull { it.capitalCityId }.toSet()
         val cities = cityRepository.findByWorldId(worldId).mapNotNull { city ->
             val mapCity = mapCityByName[city.name] ?: return@mapNotNull null
             val nation = nationById[city.nationId]
@@ -66,8 +68,12 @@ class PublicCachedMapService(
                 name = city.name,
                 x = mapCity.x,
                 y = mapCity.y,
+                level = mapCity.level,
                 nationName = nation?.name ?: "중립",
                 nationColor = nation?.color ?: "#4b5563",
+                isCapital = city.id in capitalCityIds,
+                supplyState = city.supplyState.toInt(),
+                state = city.state.toInt(),
             )
         }
 
@@ -86,6 +92,8 @@ class PublicCachedMapService(
             worldId = worldId,
             worldName = world.name,
             mapCode = mapCode,
+            currentYear = world.currentYear.toInt(),
+            currentMonth = world.currentMonth.toInt(),
             cities = cities,
             history = history,
         )
