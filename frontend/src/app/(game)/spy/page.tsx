@@ -90,6 +90,11 @@ export default function SpyPage() {
     [nations],
   );
 
+  const nationGenerals = useMemo(() => {
+    if (!myGeneral?.nationId) return [];
+    return generals.filter((g) => g.nationId === myGeneral.nationId);
+  }, [generals, myGeneral?.nationId]);
+
   if (!currentWorld)
     return (
       <div className="p-4 text-muted-foreground">월드를 선택해주세요.</div>
@@ -165,11 +170,6 @@ export default function SpyPage() {
     ]);
     setNewGroupName("");
   };
-
-  const nationGenerals = useMemo(() => {
-    if (!myGeneral?.nationId) return [];
-    return generals.filter((g) => g.nationId === myGeneral.nationId);
-  }, [generals, myGeneral?.nationId]);
 
   const handleMarkAsRead = async (id: number) => {
     try {
@@ -497,15 +497,20 @@ export default function SpyPage() {
   );
 }
 
-function getString(value: Record<string, unknown>, key: string): string | null {
+function getString(
+  value: Record<string, unknown> | null | undefined,
+  key: string,
+): string | null {
+  if (!value) return null;
   const raw = value[key];
   return typeof raw === "string" ? raw : null;
 }
 
 function getRecord(
-  value: Record<string, unknown>,
+  value: Record<string, unknown> | null | undefined,
   key: string,
 ): Record<string, unknown> {
+  if (!value) return {};
   const raw = value[key];
   if (raw && typeof raw === "object" && !Array.isArray(raw)) {
     return raw as Record<string, unknown>;
@@ -514,9 +519,10 @@ function getRecord(
 }
 
 function extractNumber(
-  value: Record<string, unknown>,
+  value: Record<string, unknown> | null | undefined,
   keys: string[],
 ): number | null {
+  if (!value) return null;
   for (const key of keys) {
     const raw = value[key];
     if (typeof raw === "number" && Number.isFinite(raw)) return raw;
@@ -528,7 +534,9 @@ function extractNumber(
   return null;
 }
 
-function getReadAt(meta: Record<string, unknown>): string | null {
+function getReadAt(
+  meta: Record<string, unknown> | null | undefined,
+): string | null {
   return getString(meta, "readAt");
 }
 
@@ -565,7 +573,11 @@ function isSpyReport(message: Message): boolean {
   );
 }
 
-function formatScoutResult(payload: Record<string, unknown>): string {
+function formatScoutResult(
+  payload: Record<string, unknown> | null | undefined,
+): string {
+  if (!payload) return "첩보 결과 형식을 확인할 수 없습니다.";
+
   const content = getString(payload, "content");
   if (content) return content;
 

@@ -471,252 +471,253 @@ export default function MapPage() {
                 position: "relative",
               }}
             >
-            {/* Year/Season header like legacy "西紀 188年 4月 春" */}
-            {(() => {
-              let worldYear: number | null = null;
-              let worldMonth: number | null = null;
-              try {
-                worldYear =
-                  Number(localStorage.getItem("opensam:world:year")) || null;
-              } catch {}
-              try {
-                worldMonth =
-                  Number(localStorage.getItem("opensam:world:month")) || null;
-              } catch {}
-              const SEASON_LABELS: Record<string, string> = {
-                spring: "春",
-                summer: "夏",
-                fall: "秋",
-                winter: "冬",
-              };
-              const seasonLabel = SEASON_LABELS[season] ?? "";
-              if (!worldYear && !worldMonth) return null;
-              return (
-                <div className="absolute top-0 left-0 right-0 z-[4] text-center py-1">
-                  <span
-                    className="text-white text-sm font-bold drop-shadow-lg"
-                    style={{ textShadow: "1px 1px 2px rgba(0,0,0,0.8)" }}
-                  >
-                    西紀 {worldYear ?? "?"}年 {worldMonth ?? "?"}月{" "}
-                    {seasonLabel}
-                  </span>
-                </div>
-              );
-            })()}
+              {/* Year/Season header like legacy "西紀 188年 4月 春" */}
+              {(() => {
+                let worldYear: number | null = null;
+                let worldMonth: number | null = null;
+                try {
+                  worldYear =
+                    Number(localStorage.getItem("opensam:world:year")) || null;
+                } catch {}
+                try {
+                  worldMonth =
+                    Number(localStorage.getItem("opensam:world:month")) || null;
+                } catch {}
+                const SEASON_LABELS: Record<string, string> = {
+                  spring: "春",
+                  summer: "夏",
+                  fall: "秋",
+                  winter: "冬",
+                };
+                const seasonLabel = SEASON_LABELS[season] ?? "";
+                if (!worldYear && !worldMonth) return null;
+                return (
+                  <div className="absolute top-0 left-0 right-0 z-[4] text-center py-1">
+                    <span
+                      className="text-white text-sm font-bold drop-shadow-lg"
+                      style={{ textShadow: "1px 1px 2px rgba(0,0,0,0.8)" }}
+                    >
+                      西紀 {worldYear ?? "?"}年 {worldMonth ?? "?"}月{" "}
+                      {seasonLabel}
+                    </span>
+                  </div>
+                );
+              })()}
 
-            {mapBgUrl && (
+              {mapBgUrl && (
+                <div
+                  className="absolute inset-0 z-0 bg-no-repeat bg-center"
+                  style={{
+                    backgroundImage: `url('${mapBgUrl}')`,
+                    backgroundSize: `${MAP_WIDTH}px ${MAP_HEIGHT}px`,
+                  }}
+                />
+              )}
               <div
-                className="absolute inset-0 z-0 bg-no-repeat bg-center"
+                className="absolute inset-0 z-[1] bg-no-repeat bg-center"
                 style={{
-                  backgroundImage: `url('${mapBgUrl}')`,
+                  backgroundImage: `url('${mapRoadUrl}')`,
                   backgroundSize: `${MAP_WIDTH}px ${MAP_HEIGHT}px`,
                 }}
               />
-            )}
-            <div
-              className="absolute inset-0 z-[1] bg-no-repeat bg-center"
-              style={{
-                backgroundImage: `url('${mapRoadUrl}')`,
-                backgroundSize: `${MAP_WIDTH}px ${MAP_HEIGHT}px`,
-              }}
-            />
 
-            <button
-              type="button"
-              aria-label="지도 툴팁 닫기"
-              className="absolute inset-0 z-[2] border-0 bg-transparent p-0"
-              onClick={() => {
-                clearTooltipHideTimer();
-                setTooltip(null);
-                setTouchTapId(null);
-              }}
-            />
+              <button
+                type="button"
+                aria-label="지도 툴팁 닫기"
+                className="absolute inset-0 z-[2] border-0 bg-transparent p-0"
+                onClick={() => {
+                  clearTooltipHideTimer();
+                  setTooltip(null);
+                  setTouchTapId(null);
+                }}
+              />
 
-            {/* SVG connection lines removed — road overlay image already shows connections */}
+              {/* SVG connection lines removed — road overlay image already shows connections */}
 
-            <div className="absolute inset-0 z-[3]">
-              {mapData.cities.map((cc) => {
-                const rtCity = cityByNameMap.get(cc.name);
-                const nation = rtCity?.nationId
-                  ? nationMap.get(rtCity.nationId)
-                  : null;
-                const sizes =
-                  detailMapCitySizes[cc.level] ?? detailMapCitySizes[1];
-                const [bgW, bgH, icnW, icnH, flagR, flagT] = sizes;
-                const left = cc.x - 20;
-                const top = cc.y - 15;
-                const hasForeignTroops =
-                  layers.has("troops") &&
-                  foreignTroopCities.has(rtCity?.id ?? -1);
-                const genCount = layers.has("troops")
-                  ? (cityGeneralData.get(rtCity?.id ?? -1)?.length ?? 0)
-                  : 0;
-                const isSupplyBroken =
-                  layers.has("supply") && !!rtCity && rtCity.supplyState !== 1;
-                const terrainLevel =
-                  layers.has("terrain") && rtCity ? rtCity.level : 0;
-                const showNationLayer = layers.has("nations") && !!nation;
-                const showCapital =
-                  !!nation && !!rtCity && nation.capitalCityId === rtCity.id;
+              <div className="absolute inset-0 z-[3]">
+                {mapData.cities.map((cc) => {
+                  const rtCity = cityByNameMap.get(cc.name);
+                  const nation = rtCity?.nationId
+                    ? nationMap.get(rtCity.nationId)
+                    : null;
+                  const sizes =
+                    detailMapCitySizes[cc.level] ?? detailMapCitySizes[1];
+                  const [bgW, bgH, icnW, icnH, flagR, flagT] = sizes;
+                  const left = cc.x - 20;
+                  const top = cc.y - 15;
+                  const hasForeignTroops =
+                    layers.has("troops") &&
+                    foreignTroopCities.has(rtCity?.id ?? -1);
+                  const genCount = layers.has("troops")
+                    ? (cityGeneralData.get(rtCity?.id ?? -1)?.length ?? 0)
+                    : 0;
+                  const isSupplyBroken =
+                    layers.has("supply") &&
+                    !!rtCity &&
+                    rtCity.supplyState !== 1;
+                  const terrainLevel =
+                    layers.has("terrain") && rtCity ? rtCity.level : 0;
+                  const showNationLayer = layers.has("nations") && !!nation;
+                  const showCapital =
+                    !!nation && !!rtCity && nation.capitalCityId === rtCity.id;
 
-                return (
-                  <button
-                    key={cc.id}
-                    type="button"
-                    className="absolute h-[30px] w-[40px] cursor-pointer appearance-none border-0 bg-transparent p-0 text-left"
-                    style={{ left, top }}
-                    onMouseEnter={(e) => handleCityMouseEnter(cc, e)}
-                    onMouseMove={(e) => handleCityMouseMove(cc, e)}
-                    onMouseLeave={handleCityMouseLeave}
-                    onTouchEnd={(e) => handleCityTouch(cc, e)}
-                    onClick={handleCityClick}
-                  >
-                    {showNationLayer && nation?.color && (
-                      <div
-                        className="absolute z-[1] bg-center bg-no-repeat"
-                        style={{
-                          backgroundImage: `url('${getNationBgUrl(nation.color)}')`,
-                          backgroundSize: `${bgW}px ${bgH}px`,
-                          width: bgW,
-                          height: bgH,
-                          left: (CITY_HIT_WIDTH - bgW) / 2,
-                          top: (CITY_HIT_HEIGHT - bgH) / 2,
-                        }}
-                      />
-                    )}
-
-                    {hasForeignTroops && (
-                      <span
-                        className="absolute z-[3] animate-spin rounded-full border-2 border-dashed border-red-500"
-                        style={{
-                          width: CITY_RING_SIZE + 8,
-                          height: CITY_RING_SIZE + 8,
-                          left: (CITY_HIT_WIDTH - (CITY_RING_SIZE + 8)) / 2,
-                          top: (CITY_HIT_HEIGHT - (CITY_RING_SIZE + 8)) / 2,
-                        }}
-                      />
-                    )}
-
-                    {isSupplyBroken && (
-                      <span
-                        className="absolute z-[3] rounded-full border border-dashed border-amber-500"
-                        style={{
-                          width: CITY_RING_SIZE + 12,
-                          height: CITY_RING_SIZE + 12,
-                          left: (CITY_HIT_WIDTH - (CITY_RING_SIZE + 12)) / 2,
-                          top: (CITY_HIT_HEIGHT - (CITY_RING_SIZE + 12)) / 2,
-                        }}
-                      />
-                    )}
-
-                    <div className="absolute z-[2] w-full h-full">
-                      <div
-                        className="absolute"
-                        style={{
-                          width: icnW,
-                          height: icnH,
-                          left: (CITY_HIT_WIDTH - icnW) / 2,
-                          top: (CITY_HIT_HEIGHT - icnH) / 2,
-                        }}
-                      >
-                        <img
-                          src={getCityLevelIcon(cc.level)}
-                          className="w-full h-full block"
-                          alt={`${cc.name} 레벨 ${cc.level}`}
-                        />
-
-                        {showNationLayer && nation && (
-                          <div
-                            className="absolute"
-                            style={{
-                              right: flagR,
-                              top: flagT,
-                              width: 12,
-                              height: 12,
-                            }}
-                          >
-                            <img
-                              src={getNationFlagUrl(
-                                nation.color,
-                                (rtCity?.supplyState ?? 0) > 0,
-                              )}
-                              className="w-full h-full block"
-                              alt={`${nation.name} 국기`}
-                            />
-                            {showCapital && (
-                              <div
-                                className="absolute"
-                                style={{
-                                  right: -1,
-                                  top: 0,
-                                  width: 10,
-                                  height: 10,
-                                }}
-                              >
-                                <img
-                                  src={getSpecialEventIcon(51)}
-                                  className="w-full h-full block"
-                                  alt="수도"
-                                />
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-
-                      {rtCity && rtCity.state > 0 && (
-                        <div className="absolute left-0" style={{ top: 5 }}>
-                          <img
-                            src={getEventIcon(rtCity.state)}
-                            className="object-contain"
-                            style={{ width: 10 }}
-                            alt={`도시 상태 ${rtCity.state}`}
-                          />
-                        </div>
-                      )}
-
-                      {genCount > 0 && (
-                        <span className="absolute -right-1 -top-1 z-[5] min-w-4 h-4 rounded-full bg-black/90 border border-gray-500 px-1 text-[9px] leading-4 text-white text-center font-bold">
-                          {genCount}
-                        </span>
-                      )}
-
-                      {terrainLevel > 0 && (
-                        <span className="absolute -left-1 -top-1 z-[5] rounded bg-purple-900/80 border border-purple-400 px-1 text-[8px] leading-3 text-purple-100">
-                          Lv{terrainLevel}
-                        </span>
-                      )}
-
-                      {showCityNames && (
-                        <span
-                          className="absolute whitespace-nowrap px-[2px] py-[1px] bg-black/55 text-[10px]"
+                  return (
+                    <button
+                      key={cc.id}
+                      type="button"
+                      className="absolute h-[30px] w-[40px] cursor-pointer appearance-none border-0 bg-transparent p-0 text-left"
+                      style={{ left, top }}
+                      onMouseEnter={(e) => handleCityMouseEnter(cc, e)}
+                      onMouseMove={(e) => handleCityMouseMove(cc, e)}
+                      onMouseLeave={handleCityMouseLeave}
+                      onTouchEnd={(e) => handleCityTouch(cc, e)}
+                      onClick={handleCityClick}
+                    >
+                      {showNationLayer && nation?.color && (
+                        <div
+                          className="absolute z-[1] bg-center bg-no-repeat"
                           style={{
-                            left: "70%",
-                            bottom: -10,
-                            color: currentTheme.text,
+                            backgroundImage: `url('${getNationBgUrl(nation.color)}')`,
+                            backgroundSize: `${bgW}px ${bgH}px`,
+                            width: bgW,
+                            height: bgH,
+                            left: (CITY_HIT_WIDTH - bgW) / 2,
+                            top: (CITY_HIT_HEIGHT - bgH) / 2,
+                          }}
+                        />
+                      )}
+
+                      {hasForeignTroops && (
+                        <span
+                          className="absolute z-[3] animate-spin rounded-full border-2 border-dashed border-red-500"
+                          style={{
+                            width: CITY_RING_SIZE + 8,
+                            height: CITY_RING_SIZE + 8,
+                            left: (CITY_HIT_WIDTH - (CITY_RING_SIZE + 8)) / 2,
+                            top: (CITY_HIT_HEIGHT - (CITY_RING_SIZE + 8)) / 2,
+                          }}
+                        />
+                      )}
+
+                      {isSupplyBroken && (
+                        <span
+                          className="absolute z-[3] rounded-full border border-dashed border-amber-500"
+                          style={{
+                            width: CITY_RING_SIZE + 12,
+                            height: CITY_RING_SIZE + 12,
+                            left: (CITY_HIT_WIDTH - (CITY_RING_SIZE + 12)) / 2,
+                            top: (CITY_HIT_HEIGHT - (CITY_RING_SIZE + 12)) / 2,
+                          }}
+                        />
+                      )}
+
+                      <div className="absolute z-[2] w-full h-full">
+                        <div
+                          className="absolute"
+                          style={{
+                            width: icnW,
+                            height: icnH,
+                            left: (CITY_HIT_WIDTH - icnW) / 2,
+                            top: (CITY_HIT_HEIGHT - icnH) / 2,
                           }}
                         >
-                          {cc.name}
-                        </span>
-                      )}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
+                          <img
+                            src={getCityLevelIcon(cc.level)}
+                            className="w-full h-full block"
+                            alt={`${cc.name} 레벨 ${cc.level}`}
+                          />
 
-            {/* City name toggle button — legacy style */}
-            <button
-              type="button"
-              className="absolute bottom-2 right-2 z-[5] px-2 py-1 text-[11px] rounded bg-blue-600 hover:bg-blue-700 text-white border-0 cursor-pointer shadow"
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowCityNames((v) => !v);
-              }}
-            >
-              {showCityNames ? "도시명 표기 끄기" : "도시명 표기 켜기"}
-            </button>
+                          {showNationLayer && nation && (
+                            <div
+                              className="absolute"
+                              style={{
+                                right: flagR,
+                                top: flagT,
+                                width: 12,
+                                height: 12,
+                              }}
+                            >
+                              <img
+                                src={getNationFlagUrl(
+                                  nation.color,
+                                  (rtCity?.supplyState ?? 0) > 0,
+                                )}
+                                className="w-full h-full block"
+                                alt={`${nation.name} 국기`}
+                              />
+                              {showCapital && (
+                                <div
+                                  className="absolute"
+                                  style={{
+                                    right: -1,
+                                    top: 0,
+                                    width: 10,
+                                    height: 10,
+                                  }}
+                                >
+                                  <img
+                                    src={getSpecialEventIcon(51)}
+                                    className="w-full h-full block"
+                                    alt="수도"
+                                  />
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
 
+                        {rtCity && rtCity.state > 0 && (
+                          <div className="absolute left-0" style={{ top: 5 }}>
+                            <img
+                              src={getEventIcon(rtCity.state)}
+                              className="object-contain"
+                              style={{ width: 10 }}
+                              alt={`도시 상태 ${rtCity.state}`}
+                            />
+                          </div>
+                        )}
+
+                        {genCount > 0 && (
+                          <span className="absolute -right-1 -top-1 z-[5] min-w-4 h-4 rounded-full bg-black/90 border border-gray-500 px-1 text-[9px] leading-4 text-white text-center font-bold">
+                            {genCount}
+                          </span>
+                        )}
+
+                        {terrainLevel > 0 && (
+                          <span className="absolute -left-1 -top-1 z-[5] rounded bg-purple-900/80 border border-purple-400 px-1 text-[8px] leading-3 text-purple-100">
+                            Lv{terrainLevel}
+                          </span>
+                        )}
+
+                        {showCityNames && (
+                          <span
+                            className="absolute whitespace-nowrap px-[2px] py-[1px] bg-black/55 text-[10px]"
+                            style={{
+                              left: "70%",
+                              bottom: -10,
+                              color: currentTheme.text,
+                            }}
+                          >
+                            {cc.name}
+                          </span>
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* City name toggle button — legacy style */}
+              <button
+                type="button"
+                className="absolute bottom-2 right-2 z-[5] px-2 py-1 text-[11px] rounded bg-blue-600 hover:bg-blue-700 text-white border-0 cursor-pointer shadow"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowCityNames((v) => !v);
+                }}
+              >
+                {showCityNames ? "도시명 표기 끄기" : "도시명 표기 켜기"}
+              </button>
             </div>
 
             {tooltip && (
