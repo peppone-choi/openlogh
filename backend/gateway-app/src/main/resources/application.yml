@@ -42,4 +42,6 @@ app:
 gateway:
   orchestrator:
     restore-active-worlds: ${GATEWAY_RESTORE_ACTIVE_WORLDS:true}
-    health-timeout-ms: ${GATEWAY_HEALTH_TIMEOUT_MS:120000}
+    health-timeout-ms: ${GATEWAY_HEALTH_TIMEOUT_MS:180000}
+    restore-max-retries: ${GATEWAY_RESTORE_MAX_RETRIES:3}
+    restore-retry-delay-ms: ${GATEWAY_RESTORE_RETRY_DELAY_MS:30000}

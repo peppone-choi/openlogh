@@ -1,6 +1,7 @@
 package com.opensam.gateway.orchestrator
 
 import com.opensam.gateway.dto.AttachWorldProcessRequest
+import com.opensam.gateway.entity.WorldState
 import com.opensam.gateway.service.WorldService
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
@@ -14,6 +15,10 @@ class WorldActivationBootstrap(
     private val gameOrchestrator: GameOrchestrator,
     @Value("\${gateway.orchestrator.restore-active-worlds:true}")
     private val restoreActiveWorlds: Boolean,
+    @Value("\${gateway.orchestrator.restore-max-retries:3}")
+    private val maxRetries: Int,
+    @Value("\${gateway.orchestrator.restore-retry-delay-ms:30000}")
+    private val retryDelayMs: Long,
 ) : ApplicationRunner {
     private val log = LoggerFactory.getLogger(WorldActivationBootstrap::class.java)
 
@@ -31,30 +36,72 @@ class WorldActivationBootstrap(
             return
         }
 
-        activeWorlds.forEach { world ->
-            try {
-                gameOrchestrator.attachWorld(
-                    worldId = world.id.toLong(),
-                    request = AttachWorldProcessRequest(
-                        commitSha = world.commitSha,
-                        gameVersion = world.gameVersion,
-                    ),
-                )
+        log.info("Restoring {} active world(s) asynchronously", activeWorlds.size)
+        Thread({ restoreWithRetry(activeWorlds) }, "world-restore").apply {
+            isDaemon = true
+            start()
+        }
+    }
+
+    private fun restoreWithRetry(activeWorlds: List<WorldState>) {
+        var remaining = activeWorlds.toList()
+
+        for (attempt in 1..maxRetries) {
+            if (remaining.isEmpty()) break
+
+            if (attempt > 1) {
                 log.info(
-                    "Restored world={} commitSha={} gameVersion={}",
-                    world.id,
-                    world.commitSha,
-                    world.gameVersion,
+                    "World restore retry {}/{} for {} world(s) after {}ms",
+                    attempt, maxRetries, remaining.size, retryDelayMs,
                 )
-            } catch (e: Exception) {
-                log.warn(
-                    "Failed to restore world={} commitSha={} gameVersion={}",
-                    world.id,
-                    world.commitSha,
-                    world.gameVersion,
-                    e,
-                )
+                try {
+                    Thread.sleep(retryDelayMs)
+                } catch (_: InterruptedException) {
+                    Thread.currentThread().interrupt()
+                    log.warn("World restore interrupted")
+                    return
+                }
             }
+
+            val failed = mutableListOf<WorldState>()
+
+            for (world in remaining) {
+                try {
+                    gameOrchestrator.attachWorld(
+                        worldId = world.id.toLong(),
+                        request = AttachWorldProcessRequest(
+                            commitSha = world.commitSha,
+                            gameVersion = world.gameVersion,
+                        ),
+                    )
+                    log.info(
+                        "Restored world={} commitSha={} gameVersion={}",
+                        world.id,
+                        world.commitSha,
+                        world.gameVersion,
+                    )
+                } catch (e: Exception) {
+                    log.warn(
+                        "Failed to restore world={} (attempt {}/{}): {}",
+                        world.id,
+                        attempt,
+                        maxRetries,
+                        e.message,
+                    )
+                    failed.add(world)
+                }
+            }
+
+            remaining = failed
+        }
+
+        if (remaining.isNotEmpty()) {
+            log.error(
+                "Gave up restoring {} world(s) after {} attempts: worldIds={}",
+                remaining.size,
+                maxRetries,
+                remaining.map { it.id },
+            )
         }
     }
 
