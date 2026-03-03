@@ -2,6 +2,7 @@ services:
   postgres:
     image: postgres:16-alpine
     container_name: opensam-postgres
+    restart: unless-stopped
     environment:
       POSTGRES_DB: ${DB_NAME:-opensam}
       POSTGRES_USER: ${DB_USER:-opensam}
@@ -21,6 +22,7 @@ services:
   redis:
     image: redis:7-alpine
     container_name: opensam-redis
+    restart: unless-stopped
     ports:
       - "${REDIS_PORT:-6379}:6379"
     volumes:
@@ -61,6 +63,7 @@ services:
   gateway:
     image: ghcr.io/peppone-choi/opensam-gateway:${TAG:-latest}
     container_name: opensam-gateway
+    restart: unless-stopped
     environment:
       SPRING_PROFILES_ACTIVE: docker
       DB_HOST: postgres
@@ -94,12 +97,14 @@ services:
   frontend:
     image: ghcr.io/peppone-choi/opensam-frontend:${TAG:-latest}
     container_name: opensam-frontend
+    restart: unless-stopped
     networks:
       - opensam-net
 
   nginx:
     image: nginx:alpine
     container_name: opensam-nginx
+    restart: unless-stopped
     ports:
       - "${HTTP_PORT:-80}:80"
     volumes:
