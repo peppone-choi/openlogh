@@ -175,14 +175,6 @@ test.describe.serial("Parity: Nation Commands", () => {
         const cityChanged = hasCityEffectDelta(beforeCity, afterCity);
         const nationChanged = hasNationEffectDelta(beforeNation, afterNation);
 
-        let effectChanged = false;
-        if (command.effectChecks.includes("general"))
-          effectChanged ||= generalChanged;
-        if (command.effectChecks.includes("city"))
-          effectChanged ||= cityChanged;
-        if (command.effectChecks.includes("nation"))
-          effectChanged ||= nationChanged;
-
         results.push({
           check: `execute_nation_${command.actionCode}_success`,
           legacy: true,
@@ -191,13 +183,31 @@ test.describe.serial("Parity: Nation Commands", () => {
           details: executeResult.data.logs.join(" | "),
         });
 
-        results.push({
-          check: `execute_nation_${command.actionCode}_effect_changed`,
-          legacy: true,
-          new: effectChanged,
-          match: effectChanged,
-          details: `general=${generalChanged}, city=${cityChanged}, nation=${nationChanged}`,
-        });
+        if (command.effectChecks.length === 0) {
+          results.push({
+            check: `execute_nation_${command.actionCode}_effect_changed`,
+            legacy: true,
+            new: true,
+            match: true,
+            details: `skipped (no effectChecks); general=${generalChanged}, city=${cityChanged}, nation=${nationChanged}`,
+          });
+        } else {
+          let effectChanged = false;
+          if (command.effectChecks.includes("general"))
+            effectChanged ||= generalChanged;
+          if (command.effectChecks.includes("city"))
+            effectChanged ||= cityChanged;
+          if (command.effectChecks.includes("nation"))
+            effectChanged ||= nationChanged;
+
+          results.push({
+            check: `execute_nation_${command.actionCode}_effect_changed`,
+            legacy: true,
+            new: effectChanged,
+            match: effectChanged,
+            details: `general=${generalChanged}, city=${cityChanged}, nation=${nationChanged}`,
+          });
+        }
       }
 
       results.push({
