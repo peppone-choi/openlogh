@@ -1,35 +1,37 @@
 import { test } from "@playwright/test";
-import { GENERAL_COMMANDS } from "./parity-config";
+import { NATION_COMMANDS } from "./parity-config";
 import {
   createReport,
-  executeGeneralCommand,
+  executeNationCommand,
   flattenCommandTable,
   getCitySnapshot,
   getGameContext,
-  getGeneralCommandTable,
   getGeneralSnapshot,
+  getNationCommandTable,
   getNationSnapshot,
   getNewSystemToken,
   hasCityEffectDelta,
   hasGeneralEffectDelta,
   hasNationEffectDelta,
-  listGeneralTurns,
+  listNationTurns,
   pauseTurnDaemon,
-  reserveGeneralCommand,
+  reserveNationCommand,
   resumeTurnDaemon,
   writeParityReport,
   type ParityCheckResult,
 } from "./parity-helpers";
 
-test.describe.serial("Parity: Commands", () => {
-  test("all 55 general commands are present, reservable, and safe commands execute with effects", async ({
+test.describe.serial("Parity: Nation Commands", () => {
+  test("all 38 nation commands are present, reservable, and safe commands execute with effects", async ({
     request,
   }) => {
     test.setTimeout(600_000);
 
     const results: ParityCheckResult[] = [];
-    const legacyScreenshot = "../parity-screenshots/parity-commands-legacy.png";
-    const nextScreenshot = "../parity-screenshots/parity-commands-new.png";
+    const legacyScreenshot =
+      "../parity-screenshots/parity-nation-commands-legacy.png";
+    const nextScreenshot =
+      "../parity-screenshots/parity-nation-commands-new.png";
 
     const token = await getNewSystemToken();
     const context = await getGameContext(request);
@@ -37,13 +39,13 @@ test.describe.serial("Parity: Commands", () => {
     try {
       const pause = await pauseTurnDaemon(request);
       results.push({
-        check: "turn_daemon_paused",
+        check: "turn_daemon_paused_nation",
         legacy: true,
         new: pause.newOk,
         match: pause.newOk,
       });
 
-      const table = await getGeneralCommandTable(
+      const table = await getNationCommandTable(
         request,
         token,
         context.generalId,
@@ -54,34 +56,36 @@ test.describe.serial("Parity: Commands", () => {
       );
 
       results.push({
-        check: "general_command_count_55",
-        legacy: GENERAL_COMMANDS.length === 55,
-        new: entries.length === 55,
-        match: entries.length === 55,
+        check: "nation_command_count_38",
+        legacy: NATION_COMMANDS.length === 38,
+        new: entries.length === 38,
+        match: entries.length === 38,
         details: `table=${entries.length}`,
       });
 
-      for (const command of GENERAL_COMMANDS) {
+      for (const command of NATION_COMMANDS) {
         const inTable = entryByCode.has(command.actionCode);
         results.push({
-          check: `command_table_has_${command.actionCode}`,
+          check: `nation_command_table_has_${command.actionCode}`,
           legacy: true,
           new: inTable,
           match: inTable,
         });
 
-        const reserveResult = await reserveGeneralCommand(
+        const reserveResult = await reserveNationCommand(
           request,
           token,
+          context.nationId,
           context.generalId,
           command.actionCode,
         );
         let reservedAtTurn0: string | undefined;
         if (reserveResult.ok) {
-          const reserved = await listGeneralTurns(
+          const reserved = await listNationTurns(
             request,
             token,
-            context.generalId,
+            context.nationId,
+            context.officerLevel,
           );
           reservedAtTurn0 = reserved.find(
             (turn) => turn.turnIdx === 0,
@@ -89,7 +93,7 @@ test.describe.serial("Parity: Commands", () => {
         }
 
         results.push({
-          check: `reserve_${command.actionCode}`,
+          check: `reserve_nation_${command.actionCode}`,
           legacy: true,
           new: reserveResult.ok && reservedAtTurn0 === command.actionCode,
           match: reserveResult.ok && reservedAtTurn0 === command.actionCode,
@@ -99,13 +103,13 @@ test.describe.serial("Parity: Commands", () => {
         });
       }
 
-      for (const command of GENERAL_COMMANDS.filter(
+      for (const command of NATION_COMMANDS.filter(
         (item) => item.safeToExecute,
       )) {
         const tableEntry = entryByCode.get(command.actionCode);
         if (!tableEntry?.enabled) {
           results.push({
-            check: `execute_${command.actionCode}_skipped_disabled`,
+            check: `execute_nation_${command.actionCode}_skipped_disabled`,
             legacy: true,
             new: false,
             match: false,
@@ -130,7 +134,7 @@ test.describe.serial("Parity: Commands", () => {
           beforeGeneral.nationId,
         );
 
-        const executeResult = await executeGeneralCommand(
+        const executeResult = await executeNationCommand(
           request,
           token,
           context.generalId,
@@ -139,7 +143,7 @@ test.describe.serial("Parity: Commands", () => {
 
         if (!executeResult.ok || !executeResult.data) {
           results.push({
-            check: `execute_${command.actionCode}_success`,
+            check: `execute_nation_${command.actionCode}_success`,
             legacy: true,
             new: false,
             match: false,
@@ -180,7 +184,7 @@ test.describe.serial("Parity: Commands", () => {
           effectChanged ||= nationChanged;
 
         results.push({
-          check: `execute_${command.actionCode}_success`,
+          check: `execute_nation_${command.actionCode}_success`,
           legacy: true,
           new: executeResult.data.success,
           match: executeResult.data.success,
@@ -188,7 +192,7 @@ test.describe.serial("Parity: Commands", () => {
         });
 
         results.push({
-          check: `execute_${command.actionCode}_effect_changed`,
+          check: `execute_nation_${command.actionCode}_effect_changed`,
           legacy: true,
           new: effectChanged,
           match: effectChanged,
@@ -197,24 +201,24 @@ test.describe.serial("Parity: Commands", () => {
       }
 
       results.push({
-        check: "world_realtime_mode",
+        check: "world_realtime_mode_nation",
         legacy: true,
         new: context.realtimeMode,
         match: true,
         details:
-          "Realtime mode allows execute API but may reject turn reservation.",
+          "Realtime mode allows execute API but may reject nation turn reservation.",
       });
     } finally {
       const resume = await resumeTurnDaemon(request);
       results.push({
-        check: "turn_daemon_resumed",
+        check: "turn_daemon_resumed_nation",
         legacy: true,
         new: resume.newOk,
         match: resume.newOk,
       });
 
       await writeParityReport(
-        createReport("commands", results, {
+        createReport("nation-commands", results, {
           legacy: legacyScreenshot,
           new: nextScreenshot,
         }),

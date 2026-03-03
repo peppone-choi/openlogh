@@ -39,10 +39,14 @@ export const useGameStore = create<GameStore>((set) => ({
         diplomacyApi.listByWorld(worldId),
       ]);
       const patch: Partial<GameStore> = {};
-      if (results[0].status === "fulfilled") patch.cities = results[0].value.data;
-      if (results[1].status === "fulfilled") patch.nations = results[1].value.data;
-      if (results[2].status === "fulfilled") patch.generals = results[2].value.data;
-      if (results[3].status === "fulfilled") patch.diplomacy = results[3].value.data;
+      if (results[0].status === "fulfilled")
+        patch.cities = results[0].value.data;
+      if (results[1].status === "fulfilled")
+        patch.nations = results[1].value.data;
+      if (results[2].status === "fulfilled")
+        patch.generals = results[2].value.data;
+      if (results[3].status === "fulfilled")
+        patch.diplomacy = results[3].value.data;
       set(patch);
     } finally {
       set({ loading: false });
