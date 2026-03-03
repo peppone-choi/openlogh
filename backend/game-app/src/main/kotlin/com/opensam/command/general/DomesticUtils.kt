@@ -103,6 +103,9 @@ object DomesticUtils {
             "success" -> DomesticContext(successMultiplier = baseValue, actionCode = actionKey)
             "fail" -> DomesticContext(failMultiplier = baseValue, actionCode = actionKey)
             "score" -> DomesticContext(scoreMultiplier = baseValue, actionCode = actionKey)
+            "rice" -> DomesticContext(riceMultiplier = baseValue, actionCode = actionKey)
+            "train" -> DomesticContext(trainMultiplier = baseValue, actionCode = actionKey)
+            "atmos" -> DomesticContext(atmosMultiplier = baseValue, actionCode = actionKey)
             else -> return baseValue
         }
 
@@ -112,6 +115,9 @@ object DomesticUtils {
             "success" -> modified.successMultiplier
             "fail" -> modified.failMultiplier
             "score" -> modified.scoreMultiplier
+            "rice" -> modified.riceMultiplier
+            "train" -> modified.trainMultiplier
+            "atmos" -> modified.atmosMultiplier
             else -> baseValue
         }
     }

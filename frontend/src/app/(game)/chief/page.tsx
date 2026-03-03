@@ -31,6 +31,7 @@ import {
   cityApi,
 } from "@/lib/gameApi";
 import type {
+  CommandArg,
   General,
   Nation,
   City,
@@ -84,9 +85,64 @@ interface NationPreset {
   items: {
     offset: number;
     actionCode: string;
-    arg?: Record<string, unknown>;
+    arg?: CommandArg;
     brief?: string | null;
   }[];
+}
+
+function isCommandArg(value: unknown): value is CommandArg {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function toCommandArg(value: unknown): CommandArg | null {
+  return isCommandArg(value) ? value : null;
+}
+
+function parseNationPresets(raw: string): NationPreset[] {
+  const parsed: unknown = JSON.parse(raw);
+  if (!Array.isArray(parsed)) return [];
+  return parsed
+    .map((entry): NationPreset | null => {
+      const record = toCommandArg(entry);
+      if (!record) return null;
+      if (typeof record.name !== "string" || !Array.isArray(record.items)) {
+        return null;
+      }
+      const items = record.items
+        .map((item): NationPreset["items"][number] | null => {
+          const row = toCommandArg(item);
+          if (!row) return null;
+          if (typeof row.offset !== "number" || typeof row.actionCode !== "string") {
+            return null;
+          }
+          if (
+            row.arg !== undefined &&
+            row.arg !== null &&
+            !isCommandArg(row.arg)
+          ) {
+            return null;
+          }
+          if (
+            row.brief !== undefined &&
+            row.brief !== null &&
+            typeof row.brief !== "string"
+          ) {
+            return null;
+          }
+          return {
+            offset: row.offset,
+            actionCode: row.actionCode,
+            arg: isCommandArg(row.arg) ? row.arg : undefined,
+            brief:
+              typeof row.brief === "string" || row.brief === null
+                ? row.brief
+                : undefined,
+          };
+        })
+        .filter((v): v is NationPreset["items"][number] => v !== null);
+      return { name: record.name, items };
+    })
+    .filter((v): v is NationPreset => v !== null);
 }
 
 export default function ChiefPage() {
@@ -128,7 +184,7 @@ export default function ChiefPage() {
     | {
         offset: number;
         actionCode: string;
-        arg?: Record<string, unknown>;
+        arg?: CommandArg;
         brief?: string | null;
       }[]
     | null
@@ -220,8 +276,7 @@ export default function ChiefPage() {
     try {
       const raw = window.localStorage.getItem(nationPresetKey);
       if (raw) {
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed)) setNationPresets(parsed);
+        setNationPresets(parseNationPresets(raw));
       }
     } catch {
       /* ignore */
@@ -447,7 +502,7 @@ export default function ChiefPage() {
 
   const handleNationReserve = async (
     actionCode: string,
-    arg?: Record<string, unknown>,
+    arg?: CommandArg,
   ) => {
     if (!myGeneral?.nationId) return;
 
@@ -1786,7 +1841,7 @@ export default function ChiefPage() {
 interface NationCommandSelectFormProps {
   commandTable: Record<string, CommandTableEntry[]>;
   reserving: boolean;
-  onReserve: (actionCode: string, arg?: Record<string, unknown>) => void;
+  onReserve: (actionCode: string, arg?: CommandArg) => void;
   onCancel: () => void;
 }
 
@@ -1798,7 +1853,7 @@ function NationCommandSelectForm({
 }: NationCommandSelectFormProps) {
   const [selectedCmd, setSelectedCmd] = useState("");
   const [pendingArg, setPendingArg] = useState<
-    Record<string, unknown> | undefined
+    CommandArg | undefined
   >();
 
   const categories = Object.keys(commandTable);

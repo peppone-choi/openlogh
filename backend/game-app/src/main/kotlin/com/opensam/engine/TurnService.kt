@@ -6,6 +6,9 @@ import com.opensam.command.CommandRegistry
 import com.opensam.engine.ai.GeneralAI
 import com.opensam.engine.ai.NationAI
 import com.opensam.engine.modifier.ModifierService
+import com.opensam.engine.turn.cqrs.persist.JpaWorldPortFactory
+import com.opensam.engine.turn.cqrs.persist.toEntity
+import com.opensam.engine.turn.cqrs.persist.toSnapshot
 import com.opensam.engine.war.BattleService
 import com.opensam.engine.trigger.TriggerCaller
 import com.opensam.engine.trigger.TriggerEnv
@@ -20,6 +23,7 @@ import com.opensam.service.TournamentService
 import com.opensam.service.TrafficService
 import com.opensam.service.WorldService
 import com.opensam.service.NationService
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import kotlinx.coroutines.runBlocking
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -61,6 +65,7 @@ class TurnService(
     private val auctionService: AuctionService,
     private val tournamentService: TournamentService,
     private val trafficSnapshotRepository: com.opensam.repository.TrafficSnapshotRepository,
+    private val worldPortFactory: JpaWorldPortFactory,
     private val generalAI: GeneralAI,
     private val nationAI: NationAI,
     private val modifierService: ModifierService,
@@ -68,6 +73,69 @@ class TurnService(
     private val nationService: NationService,
     private val battleService: BattleService,
 ) {
+    constructor(
+        worldStateRepository: WorldStateRepository,
+        generalRepository: GeneralRepository,
+        generalTurnRepository: GeneralTurnRepository,
+        nationTurnRepository: NationTurnRepository,
+        cityRepository: CityRepository,
+        nationRepository: NationRepository,
+        commandExecutor: CommandExecutor,
+        commandRegistry: CommandRegistry,
+        scenarioService: ScenarioService,
+        economyService: EconomyService,
+        eventService: EventService,
+        diplomacyService: DiplomacyService,
+        generalMaintenanceService: GeneralMaintenanceService,
+        specialAssignmentService: SpecialAssignmentService,
+        npcSpawnService: NpcSpawnService,
+        unificationService: UnificationService,
+        inheritanceService: InheritanceService,
+        yearbookService: YearbookService,
+        auctionService: AuctionService,
+        tournamentService: TournamentService,
+        trafficSnapshotRepository: com.opensam.repository.TrafficSnapshotRepository,
+        generalAI: GeneralAI,
+        nationAI: NationAI,
+        modifierService: ModifierService,
+        worldService: WorldService,
+        nationService: NationService,
+        battleService: BattleService,
+    ) : this(
+        worldStateRepository = worldStateRepository,
+        generalRepository = generalRepository,
+        generalTurnRepository = generalTurnRepository,
+        nationTurnRepository = nationTurnRepository,
+        cityRepository = cityRepository,
+        nationRepository = nationRepository,
+        commandExecutor = commandExecutor,
+        commandRegistry = commandRegistry,
+        scenarioService = scenarioService,
+        economyService = economyService,
+        eventService = eventService,
+        diplomacyService = diplomacyService,
+        generalMaintenanceService = generalMaintenanceService,
+        specialAssignmentService = specialAssignmentService,
+        npcSpawnService = npcSpawnService,
+        unificationService = unificationService,
+        inheritanceService = inheritanceService,
+        yearbookService = yearbookService,
+        auctionService = auctionService,
+        tournamentService = tournamentService,
+        trafficSnapshotRepository = trafficSnapshotRepository,
+        worldPortFactory = JpaWorldPortFactory(
+            generalRepository = generalRepository,
+            cityRepository = cityRepository,
+            nationRepository = nationRepository,
+        ),
+        generalAI = generalAI,
+        nationAI = nationAI,
+        modifierService = modifierService,
+        worldService = worldService,
+        nationService = nationService,
+        battleService = battleService,
+    )
+
     private val logger = LoggerFactory.getLogger(TurnService::class.java)
     private companion object {
         const val MAX_TURNS_PER_TICK = 5
@@ -87,7 +155,7 @@ class TurnService(
             val previousYear = world.currentYear.toInt()
             val previousMonth = world.currentMonth.toInt()
 
-            executeGeneralCommands(world)
+            executeGeneralCommandsUntil(world, nextTurnAt)
 
             try {
                 updateTraffic(world)
@@ -99,6 +167,12 @@ class TurnService(
                 eventService.dispatchEvents(world, "PRE_MONTH")
             } catch (e: Exception) {
                 logger.warn("EventService.dispatchEvents(PRE_MONTH) failed: ${e.message}")
+            }
+
+            try {
+                economyService.preUpdateMonthly(world)
+            } catch (e: Exception) {
+                logger.warn("EconomyService.preUpdateMonthly failed: ${e.message}")
             }
 
             advanceMonth(world)
@@ -120,7 +194,7 @@ class TurnService(
 
             // 트래픽 스냅샷 기록 (legacy recentTraffic 패러티)
             try {
-                val onlineCount = generalRepository.findByWorldId(worldId).count { it.userId != null }
+                val onlineCount = worldPortFactory.create(worldId).allGenerals().count { it.userId != null }
                 val snapshot = com.opensam.entity.TrafficSnapshot(
                     worldId = worldId,
                     year = world.currentYear,
@@ -145,9 +219,15 @@ class TurnService(
             }
 
             try {
-                economyService.processMonthly(world)
+                eventService.dispatchEvents(world, "MONTH")
             } catch (e: Exception) {
-                logger.warn("EconomyService.processMonthly failed: ${e.message}")
+                logger.warn("EventService.dispatchEvents failed: ${e.message}")
+            }
+
+            try {
+                economyService.postUpdateMonthly(world)
+            } catch (e: Exception) {
+                logger.warn("EconomyService.postUpdateMonthly failed: ${e.message}")
             }
 
             try {
@@ -160,12 +240,6 @@ class TurnService(
                 economyService.randomizeCityTradeRate(world)
             } catch (e: Exception) {
                 logger.warn("EconomyService.randomizeCityTradeRate failed: ${e.message}")
-            }
-
-            try {
-                eventService.dispatchEvents(world, "MONTH")
-            } catch (e: Exception) {
-                logger.warn("EventService.dispatchEvents failed: ${e.message}")
             }
 
             try {
@@ -188,10 +262,11 @@ class TurnService(
             }
 
             try {
-                val generals = generalRepository.findByWorldId(worldId)
+                val ports = worldPortFactory.create(worldId)
+                val generals = ports.allGenerals().map { it.toEntity() }
                 generalMaintenanceService.processGeneralMaintenance(world, generals)
                 specialAssignmentService.checkAndAssignSpecials(world, generals)
-                generalRepository.saveAll(generals)
+                generals.forEach { ports.putGeneral(it.toSnapshot()) }
 
                 // Accrue inheritance points for player generals
                 for (general in generals.filter { it.npcState.toInt() == 0 }) {
@@ -234,18 +309,22 @@ class TurnService(
         worldStateRepository.save(world)
     }
 
-    private fun executeGeneralCommands(world: WorldState) {
+    private fun executeGeneralCommandsUntil(world: WorldState, targetTime: OffsetDateTime) {
         val worldId = world.id.toLong()
-        val generals = generalRepository.findByWorldId(worldId).sortedBy { it.turnTime }
+        val ports = worldPortFactory.create(worldId)
+        val generals = ports.allGenerals().map { it.toEntity() }.sortedBy { it.turnTime }
         val env = buildCommandEnv(world)
 
         logger.info("[Turn] executeGeneralCommands: {} generals for world {}", generals.size, worldId)
 
         for (general in generals) {
+            if (general.turnTime >= targetTime) {
+                break
+            }
             try {
-                val city = cityRepository.findById(general.cityId).orElse(null)
+                val city = ports.city(general.cityId)?.toEntity()
                 val nation = if (general.nationId != 0L) {
-                    nationRepository.findById(general.nationId).orElse(null)
+                    ports.nation(general.nationId)?.toEntity()
                 } else null
 
                 firePreTurnTriggers(world, general, nation)
@@ -261,9 +340,9 @@ class TurnService(
                             general.killTurn = kt.toShort()
                         }
                     }
-                    general.turnTime = OffsetDateTime.now()
+                    general.turnTime = targetTime
                     general.updatedAt = OffsetDateTime.now()
-                    generalRepository.save(general)
+                    ports.putGeneral(general.toSnapshot())
                     continue
                 }
 
@@ -287,7 +366,7 @@ class TurnService(
                             world,
                             DeterministicRng.create(
                                 hiddenSeed,
-                                "nation_ai",
+                                "preprocess",
                                 general.id,
                                 world.currentYear,
                                 world.currentMonth,
@@ -310,7 +389,7 @@ class TurnService(
                                     nation,
                                     DeterministicRng.create(
                                         hiddenSeed,
-                                        "nation",
+                                        "nationCommand",
                                         general.id,
                                         world.currentYear,
                                         world.currentMonth,
@@ -346,8 +425,7 @@ class TurnService(
                 if (general.npcState >= 2 || useAutorun) {
                     // NPC generals 또는 autorun 대상: AI가 행동 결정
                     actionCode = generalAI.decideAndExecute(general, world)
-                    @Suppress("UNCHECKED_CAST")
-                    arg = (general.meta.remove("aiArg") as? Map<String, Any>)
+                    arg = readStringAnyMap(general.meta.remove("aiArg"))
                     logger.info("[Turn] NPC {} ({}) AI decided: {}, arg={}", general.id, general.name, actionCode, arg)
                     executedTurn = null
                     // Consume any queued turns
@@ -372,7 +450,7 @@ class TurnService(
 
                 val generalHiddenSeed = (world.config["hiddenSeed"] as? String) ?: "${world.id}"
                 val rng = DeterministicRng.create(
-                    generalHiddenSeed, "general", general.id, world.currentYear, world.currentMonth, actionCode
+                    generalHiddenSeed, "generalCommand", general.id, world.currentYear, world.currentMonth, actionCode
                 )
                 val cmdResult = if (commandRegistry.hasNationCommand(actionCode) && general.officerLevel >= 5 && nation != null) {
                     runBlocking {
@@ -388,17 +466,15 @@ class TurnService(
                 // Legacy: after 출병 run(), StaticEventHandler calls ConquerCity/warProcess
                 if (cmdResult.success && cmdResult.message != null) {
                     try {
-                        @Suppress("UNCHECKED_CAST")
-                        val msgJson = com.fasterxml.jackson.module.kotlin.jacksonObjectMapper()
-                            .readValue(cmdResult.message!!, Map::class.java) as Map<String, Any>
-                        if (msgJson["battleTriggered"] == true) {
-                            val targetCityId = when (val raw = msgJson["targetCityId"]) {
-                                is Number -> raw.toLong()
-                                is String -> raw.toLongOrNull()
+                        val msgJson = jacksonObjectMapper().readTree(cmdResult.message!!)
+                        if (msgJson.path("battleTriggered").asBoolean(false)) {
+                            val targetCityId = when {
+                                msgJson.path("targetCityId").isNumber -> msgJson.path("targetCityId").asLong()
+                                msgJson.path("targetCityId").isTextual -> msgJson.path("targetCityId").asText().toLongOrNull()
                                 else -> null
                             }
                             val targetCity = if (targetCityId != null) {
-                                cityRepository.findById(targetCityId).orElse(null)
+                                ports.city(targetCityId)?.toEntity()
                             } else {
                                 null
                             }
@@ -408,7 +484,7 @@ class TurnService(
                                 val battleResult = battleService.executeBattle(general, targetCity, world)
                                 if (battleResult.cityOccupied) {
                                     general.cityId = targetCity.id
-                                    generalRepository.save(general)
+                                    ports.putGeneral(general.toSnapshot())
                                     logger.info("[Turn] City {} conquered by {} ({}) — general moved to conquered city",
                                         targetCity.name, general.id, general.name)
                                 } else {
@@ -460,9 +536,9 @@ class TurnService(
                     }
                 }
 
-                general.turnTime = OffsetDateTime.now()
+                general.turnTime = targetTime
                 general.updatedAt = OffsetDateTime.now()
-                generalRepository.save(general)
+                ports.putGeneral(general.toSnapshot())
             } catch (e: Exception) {
                 logger.error("Error processing general ${general.id}: ${e.message}", e)
             }
@@ -512,13 +588,14 @@ class TurnService(
      * Per legacy: strategicCmdLimit decreases by 1 each turn until 0.
      */
     private fun resetStrategicCommandLimits(world: WorldState) {
-        val nations = nationRepository.findByWorldId(world.id.toLong())
+        val ports = worldPortFactory.create(world.id.toLong())
+        val nations = ports.allNations().map { it.toEntity() }
         for (nation in nations) {
             if (nation.strategicCmdLimit > 0) {
                 nation.strategicCmdLimit = (nation.strategicCmdLimit - 1).toShort()
             }
         }
-        nationRepository.saveAll(nations)
+        nations.forEach { ports.putNation(it.toSnapshot()) }
     }
 
     private fun firePreTurnTriggers(world: WorldState, general: com.opensam.entity.General, nation: Nation?) {
@@ -536,5 +613,16 @@ class TurnService(
                 generalId = general.id,
             )
         )
+    }
+
+    private fun readStringAnyMap(raw: Any?): Map<String, Any>? {
+        if (raw !is Map<*, *>) return null
+        val result = mutableMapOf<String, Any>()
+        raw.forEach { (k, v) ->
+            if (k is String && v != null) {
+                result[k] = v
+            }
+        }
+        return result
     }
 }

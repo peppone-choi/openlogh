@@ -28,6 +28,7 @@ data class DomesticContext(
     var successMultiplier: Double = 1.0,
     var failMultiplier: Double = 1.0,
     var scoreMultiplier: Double = 1.0,
+    var riceMultiplier: Double = 1.0,
     var trainMultiplier: Double = 1.0,
     var atmosMultiplier: Double = 1.0,
     val actionCode: String = "",

@@ -160,8 +160,7 @@ class EventActionService(
             }
             target is Map<*, *> -> {
                 val type = target["type"] as? String ?: "all"
-                @Suppress("UNCHECKED_CAST")
-                val args = target["args"] as? List<Any> ?: emptyList()
+                val args = readAnyList(target["args"])
                 when (type) {
                     "cities" -> {
                         val cityNames = args.map { it.toString() }.toSet()
@@ -551,8 +550,7 @@ class EventActionService(
             items["item"] = general.itemCode
         }
         // Check meta for additional item slots
-        @Suppress("UNCHECKED_CAST")
-        val metaItems = general.meta["items"] as? Map<String, String>
+        val metaItems = readStringStringMap(general.meta["items"])
         if (metaItems != null) {
             items.putAll(metaItems)
         }
@@ -569,10 +567,40 @@ class EventActionService(
         if (slot == "item") {
             general.itemCode = "None"
         } else {
-            @Suppress("UNCHECKED_CAST")
-            val metaItems = general.meta["items"] as? MutableMap<String, String>
+            val metaItems = getMutableStringStringMap(general.meta, "items")
             metaItems?.remove(slot)
         }
+    }
+
+    private fun readAnyList(raw: Any?): List<Any> {
+        if (raw !is Iterable<*>) return emptyList()
+        return raw.mapNotNull { it }
+    }
+
+    private fun readStringStringMap(raw: Any?): Map<String, String>? {
+        if (raw !is Map<*, *>) return null
+        val typed = mutableMapOf<String, String>()
+        raw.forEach { (key, value) ->
+            if (key is String && value is String) {
+                typed[key] = value
+            }
+        }
+        return typed
+    }
+
+    private fun getMutableStringStringMap(container: MutableMap<String, Any>, key: String): MutableMap<String, String>? {
+        val current = container[key] ?: return null
+        if (current !is Map<*, *>) return null
+        val typed = mutableMapOf<String, String>()
+        val stored = mutableMapOf<String, Any>()
+        current.forEach { (k, v) ->
+            if (k is String && v is String) {
+                typed[k] = v
+                stored[k] = v
+            }
+        }
+        container[key] = stored
+        return typed
     }
 
     // ─── MergeInheritPointRank ───

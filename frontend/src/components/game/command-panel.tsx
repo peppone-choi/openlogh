@@ -26,7 +26,13 @@ import { commandApi, realtimeApi } from "@/lib/gameApi";
 import { useWorldStore } from "@/stores/worldStore";
 import { COMMAND_ARGS } from "@/components/game/command-arg-form";
 import { CommandSelectForm } from "@/components/game/command-select-form";
-import type { CommandTableEntry, GeneralTurn, RealtimeStatus } from "@/types";
+import type {
+  CommandArg,
+  CommandTableEntry,
+  GeneralTurn,
+  JsonObject,
+  RealtimeStatus,
+} from "@/types";
 
 const TURN_COUNT = 12;
 
@@ -38,7 +44,7 @@ interface CommandPanelProps {
 interface ClipboardItem {
   offset: number;
   actionCode: string;
-  arg?: Record<string, unknown>;
+  arg?: CommandArg;
   brief?: string | null;
 }
 
@@ -50,8 +56,90 @@ interface StoredAction {
 interface FilledTurn {
   turnIdx: number;
   actionCode: string;
-  arg: Record<string, unknown>;
+  arg: CommandArg;
   brief: string | null;
+}
+
+interface RecentAction {
+  actionCode: string;
+  arg?: CommandArg;
+  brief?: string;
+}
+
+function isCommandArg(value: unknown): value is CommandArg {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function toJsonObject(value: unknown): JsonObject | null {
+  return isCommandArg(value) ? value : null;
+}
+
+function parseStoredActions(raw: string): StoredAction[] {
+  const parsed: unknown = JSON.parse(raw);
+  if (!Array.isArray(parsed)) return [];
+  return parsed
+    .map((entry): StoredAction | null => {
+      const record = toJsonObject(entry);
+      if (!record) return null;
+      const name = record.name;
+      const itemsRaw = record.items;
+      if (typeof name !== "string" || !Array.isArray(itemsRaw)) {
+        return null;
+      }
+      const items = itemsRaw
+        .map((item): ClipboardItem | null => {
+          const row = toJsonObject(item);
+          if (!row) return null;
+          const offset = row.offset;
+          const actionCode = row.actionCode;
+          if (typeof offset !== "number" || typeof actionCode !== "string") {
+            return null;
+          }
+          return {
+            offset,
+            actionCode,
+            arg: isCommandArg(row.arg) ? row.arg : undefined,
+            brief:
+              typeof row.brief === "string" || row.brief === null
+                ? row.brief
+                : undefined,
+          };
+        })
+        .filter((v): v is ClipboardItem => v !== null);
+      return { name, items };
+    })
+    .filter((v): v is StoredAction => v !== null);
+}
+
+function parseRecentActions(raw: string): RecentAction[] {
+  const parsed: unknown = JSON.parse(raw);
+  if (!Array.isArray(parsed)) return [];
+  return parsed
+    .map((entry): RecentAction | null => {
+      const row = toJsonObject(entry);
+      if (!row) return null;
+      if (typeof row.actionCode !== "string") return null;
+      if (
+        row.arg !== undefined &&
+        row.arg !== null &&
+        !isCommandArg(row.arg)
+      ) {
+        return null;
+      }
+      if (
+        row.brief !== undefined &&
+        row.brief !== null &&
+        typeof row.brief !== "string"
+      ) {
+        return null;
+      }
+      return {
+        actionCode: row.actionCode,
+        arg: isCommandArg(row.arg) ? row.arg : undefined,
+        brief: typeof row.brief === "string" ? row.brief : undefined,
+      };
+    })
+    .filter((v): v is RecentAction => v !== null);
 }
 
 function formatCountdown(totalSeconds: number): string {
@@ -98,9 +186,7 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
   const [clipboard, setClipboard] = useState<ClipboardItem[] | null>(null);
   const [storedActions, setStoredActions] = useState<StoredAction[]>([]);
   const [selectedStoredAction, setSelectedStoredAction] = useState("");
-  const [recentActions, setRecentActions] = useState<
-    { actionCode: string; arg?: Record<string, unknown>; brief?: string }[]
-  >([]);
+  const [recentActions, setRecentActions] = useState<RecentAction[]>([]);
 
   const lastTurnRef = useRef(0);
 
@@ -181,7 +267,7 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
     }
 
     try {
-      const parsed = JSON.parse(raw) as StoredAction[];
+      const parsed = parseStoredActions(raw);
       window.setTimeout(
         () => setStoredActions(Array.isArray(parsed) ? parsed : []),
         0,
@@ -197,8 +283,7 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
     try {
       const raw = window.localStorage.getItem(recentActionsKey);
       if (raw) {
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed)) setRecentActions(parsed);
+        setRecentActions(parseRecentActions(raw));
       }
     } catch {
       /* ignore */
@@ -206,7 +291,7 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
   }, [recentActionsKey]);
 
   const pushRecentAction = useCallback(
-    (actionCode: string, arg?: Record<string, unknown>, brief?: string) => {
+    (actionCode: string, arg?: CommandArg, brief?: string) => {
       setRecentActions((prev) => {
         const key = JSON.stringify([actionCode, arg ?? {}]);
         const filtered = prev.filter(
@@ -270,7 +355,7 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
     async (
       turnList: number[],
       actionCode: string,
-      arg?: Record<string, unknown>,
+      arg?: CommandArg,
     ) => {
       await Promise.all(
         turnList.map((turn) =>
@@ -628,7 +713,7 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
 
   const handleCommandSelect = async (
     actionCode: string,
-    arg?: Record<string, unknown>,
+    arg?: CommandArg,
   ) => {
     const targets = selectedTurnList.length > 0 ? selectedTurnList : [0];
     if (COMMAND_ARGS[actionCode]) {

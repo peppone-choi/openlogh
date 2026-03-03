@@ -19,10 +19,8 @@ class OfficerRankService {
         val resource = ClassPathResource("data/officer_ranks.json")
         val data: Map<String, Any> = mapper.readValue(resource.inputStream, object : TypeReference<Map<String, Any>>() {})
 
-        @Suppress("UNCHECKED_CAST")
-        defaultRanks = data["default"] as Map<String, String>
-        @Suppress("UNCHECKED_CAST")
-        byNationLevel = data["byNationLevel"] as Map<String, Map<String, Any>>
+        defaultRanks = readStringStringMap(data["default"])
+        byNationLevel = readNestedStringAnyMap(data["byNationLevel"])
     }
 
     fun getRankTitle(officerLevel: Int, nationLevel: Int?): String {
@@ -36,8 +34,7 @@ class OfficerRankService {
 
         val nationMap = byNationLevel[nationLevel.toString()] ?: return defaultRanks[officerLevel.toString()] ?: "???"
 
-        @Suppress("UNCHECKED_CAST")
-        val ranks = nationMap["ranks"] as? Map<String, String> ?: return defaultRanks[officerLevel.toString()] ?: "???"
+        val ranks = readStringStringMapOrNull(nationMap["ranks"]) ?: return defaultRanks[officerLevel.toString()] ?: "???"
 
         return ranks[officerLevel.toString()] ?: defaultRanks[officerLevel.toString()] ?: "???"
     }
@@ -45,5 +42,45 @@ class OfficerRankService {
     fun getNationTitle(nationLevel: Int): String? {
         val nationMap = byNationLevel[nationLevel.toString()] ?: return null
         return nationMap["title"] as? String
+    }
+
+    private fun readStringStringMap(raw: Any?): Map<String, String> {
+        return readStringStringMapOrNull(raw) ?: emptyMap()
+    }
+
+    private fun readStringStringMapOrNull(raw: Any?): Map<String, String>? {
+        if (raw !is Map<*, *>) return null
+        val result = mutableMapOf<String, String>()
+        raw.forEach { (key, value) ->
+            if (key is String && value is String) {
+                result[key] = value
+            }
+        }
+        return result
+    }
+
+    private fun readNestedStringAnyMap(raw: Any?): Map<String, Map<String, Any>> {
+        if (raw !is Map<*, *>) return emptyMap()
+        val result = mutableMapOf<String, Map<String, Any>>()
+        raw.forEach { (key, value) ->
+            if (key is String) {
+                val nested = readStringAnyMap(value)
+                if (nested.isNotEmpty()) {
+                    result[key] = nested
+                }
+            }
+        }
+        return result
+    }
+
+    private fun readStringAnyMap(raw: Any?): Map<String, Any> {
+        if (raw !is Map<*, *>) return emptyMap()
+        val result = mutableMapOf<String, Any>()
+        raw.forEach { (key, value) ->
+            if (key is String && value != null) {
+                result[key] = value
+            }
+        }
+        return result
     }
 }

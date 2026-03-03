@@ -63,10 +63,10 @@ class 출병(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
     override fun getPostReqTurn() = 0
 
     /**
-     * 출병은 점령 실패 시 이동하지 않는다.
-     * HasRouteWithEnemy 실패 시 alternative 없이 커맨드 자체가 실패한다.
+     * 출병은 경로상 적군 도시를 찾지 못하면 이동으로 대체한다.
+     * HasRouteWithEnemy 실패 시 CommandExecutor가 이동으로 재디스패치한다.
      */
-    override fun getAlternativeCommand(): String? = null
+    override fun getAlternativeCommand(): String? = "이동"
 
     /**
      * 출병 실행:
@@ -157,10 +157,8 @@ class 출병(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
      *  5. Randomly choose one candidate
      */
     private fun resolveAttackTarget(finalTargetCityId: Int, attackerNationId: Long, rng: Random): Int? {
-        @Suppress("UNCHECKED_CAST")
-        val adjacencyRaw = constraintEnv["mapAdjacency"] as? Map<*, *> ?: return null
-        @Suppress("UNCHECKED_CAST")
-        val cityNationById = constraintEnv["cityNationById"] as? Map<*, *> ?: return null
+        val adjacencyRaw = readMap(constraintEnv["mapAdjacency"]) ?: return null
+        val cityNationById = readMap(constraintEnv["cityNationById"]) ?: return null
 
         // Build adjacency map
         val adjacency = mutableMapOf<Long, List<Long>>()
@@ -180,13 +178,26 @@ class 출병(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
             adjacency[key] = values
         }
 
-        // Allowed nations for traversal: own nation + neutral (0) + allies (non-aggression)
-        // The atWarNationIds set from constraintEnv tells us who we're at war with
+        // Allowed nations for traversal: all non-enemy nations.
         val startCityId = general.cityId
 
         // BFS to build distance list to destination (like searchDistanceListToDest)
         // We traverse only through cities belonging to allowed nations
-        val allowedNationSet = mutableSetOf(attackerNationId, 0L)
+        val atWarNationSet = when (val raw = constraintEnv["atWarNationIds"]) {
+            is Set<*> -> raw.mapNotNull { (it as? Number)?.toLong() ?: (it as? String)?.toLongOrNull() }.toSet()
+            is Iterable<*> -> raw.mapNotNull { (it as? Number)?.toLong() ?: (it as? String)?.toLongOrNull() }.toSet()
+            else -> emptySet()
+        }
+        val allNationIds = cityNationById.values.mapNotNull {
+            when (it) {
+                is Number -> it.toLong()
+                is String -> it.toLongOrNull()
+                else -> null
+            }
+        }.toSet()
+        val allowedNationSet = allNationIds.filterTo(mutableSetOf()) { it !in atWarNationSet }
+        allowedNationSet.add(attackerNationId)
+        allowedNationSet.add(0L)
 
         // Traverse through own and neutral cities, collecting distance + nation of each reachable city
         data class CityInfo(val cityId: Long, val nationId: Long, val distance: Int)
@@ -209,7 +220,6 @@ class 출병(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
                 val nextDist = dist + 1
                 distanceList.getOrPut(nextDist) { mutableListOf() }.add(nextCity to nextNation)
 
-                // Continue BFS through allowed (own/neutral) territory only
                 if (nextNation in allowedNationSet) {
                     queue.addLast(nextCity to nextDist)
                 }
@@ -258,12 +268,13 @@ class 출병(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
 
     private fun getCityNation(cityId: Long?): Long {
         if (cityId == null) return 0L
-        @Suppress("UNCHECKED_CAST")
-        val cityNationById = constraintEnv["cityNationById"] as? Map<*, *> ?: return 0L
+        val cityNationById = readMap(constraintEnv["cityNationById"]) ?: return 0L
         val raw = cityNationById[cityId.toString()] ?: cityNationById[cityId] ?: return 0L
         return when (raw) {
             is Number -> raw.toLong()
             else -> 0L
         }
     }
+
+    private fun readMap(raw: Any?): Map<*, *>? = raw as? Map<*, *>
 }

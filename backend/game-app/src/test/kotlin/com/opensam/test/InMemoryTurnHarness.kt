@@ -185,6 +185,15 @@ class InMemoryTurnHarness {
             val nationId = it.arguments[0] as Long
             generals.values.filter { g -> g.nationId == nationId }
         }
+        `when`(generalRepository.findByWorldIdAndNationId(org.mockito.Mockito.anyLong(), org.mockito.Mockito.anyLong())).thenAnswer {
+            val worldId = it.arguments[0] as Long
+            val nationId = it.arguments[1] as Long
+            generals.values.filter { g -> g.worldId == worldId && g.nationId == nationId }
+        }
+        `when`(generalRepository.findByCityId(org.mockito.Mockito.anyLong())).thenAnswer {
+            val cityId = it.arguments[0] as Long
+            generals.values.filter { g -> g.cityId == cityId }
+        }
         `when`(generalRepository.findById(org.mockito.Mockito.anyLong())).thenAnswer {
             Optional.ofNullable(generals[it.arguments[0] as Long])
         }
@@ -246,6 +255,15 @@ class InMemoryTurnHarness {
             val worldId = it.arguments[0] as Long
             cities.values.filter { c -> c.worldId == worldId }
         }
+        `when`(cityRepository.findByNationId(org.mockito.Mockito.anyLong())).thenAnswer {
+            val nationId = it.arguments[0] as Long
+            cities.values.filter { c -> c.nationId == nationId }
+        }
+        `when`(cityRepository.save(org.mockito.Mockito.any(City::class.java))).thenAnswer {
+            val city = it.arguments[0] as City
+            cities[city.id] = city
+            city
+        }
 
         `when`(nationRepository.findById(org.mockito.Mockito.anyLong())).thenAnswer {
             Optional.ofNullable(nations[it.arguments[0] as Long])
@@ -254,12 +272,26 @@ class InMemoryTurnHarness {
             val worldId = it.arguments[0] as Long
             nations.values.filter { n -> n.worldId == worldId }
         }
+        `when`(nationRepository.save(org.mockito.Mockito.any(Nation::class.java))).thenAnswer {
+            val nation = it.arguments[0] as Nation
+            nations[nation.id] = nation
+            nation
+        }
         `when`(nationRepository.saveAll(org.mockito.Mockito.anyList<Nation>())).thenAnswer {
             val list = it.arguments[0] as List<Nation>
             list.forEach { n -> nations[n.id] = n }
             list
         }
 
+        `when`(diplomacyRepository.findByWorldId(org.mockito.Mockito.anyLong())).thenReturn(emptyList())
+        `when`(
+            diplomacyRepository.findByWorldIdAndSrcNationIdOrDestNationId(
+                org.mockito.Mockito.anyLong(),
+                org.mockito.Mockito.anyLong(),
+                org.mockito.Mockito.anyLong(),
+            )
+        ).thenReturn(emptyList())
         `when`(diplomacyRepository.findByWorldIdAndIsDeadFalse(org.mockito.Mockito.anyLong())).thenReturn(emptyList())
+        `when`(diplomacyRepository.save(org.mockito.Mockito.any(Diplomacy::class.java))).thenAnswer { it.arguments[0] }
     }
 }

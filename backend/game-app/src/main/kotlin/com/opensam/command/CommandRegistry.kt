@@ -12,6 +12,8 @@ typealias NationCommandFactory = (General, CommandEnv, Map<String, Any>?) -> Nat
 class CommandRegistry {
     private val generalCommands = mutableMapOf<String, GeneralCommandFactory>()
     private val nationCommands = mutableMapOf<String, NationCommandFactory>()
+    private val generalSchemas = mutableMapOf<String, ArgSchema>()
+    private val nationSchemas = mutableMapOf<String, ArgSchema>()
 
     init {
         // === General Commands (55) ===
@@ -136,10 +138,12 @@ class CommandRegistry {
 
     fun registerGeneralCommand(key: String, factory: GeneralCommandFactory) {
         generalCommands[key] = factory
+        generalSchemas[key] = COMMAND_SCHEMAS[key] ?: ArgSchema.NONE
     }
 
     fun registerNationCommand(key: String, factory: NationCommandFactory) {
         nationCommands[key] = factory
+        nationSchemas[key] = COMMAND_SCHEMAS[key] ?: ArgSchema.NONE
     }
 
     fun createGeneralCommand(actionCode: String, general: General, env: CommandEnv, arg: Map<String, Any>? = null): GeneralCommand {
@@ -154,6 +158,10 @@ class CommandRegistry {
 
     fun hasGeneralCommand(actionCode: String): Boolean = actionCode in generalCommands
     fun hasNationCommand(actionCode: String): Boolean = actionCode in nationCommands
+    fun getGeneralSchema(actionCode: String): ArgSchema = generalSchemas[actionCode] ?: ArgSchema.NONE
+    fun getNationSchema(actionCode: String): ArgSchema = nationSchemas[actionCode] ?: ArgSchema.NONE
+    fun getSchema(actionCode: String): ArgSchema =
+        generalSchemas[actionCode] ?: nationSchemas[actionCode] ?: ArgSchema.NONE
     fun getGeneralCommandNames(): Set<String> = generalCommands.keys
     fun getNationCommandNames(): Set<String> = nationCommands.keys
 }

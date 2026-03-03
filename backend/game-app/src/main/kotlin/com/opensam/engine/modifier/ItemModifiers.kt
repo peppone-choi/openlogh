@@ -91,10 +91,8 @@ object ItemModifiers {
                     value = (item["value"] as Number).toInt(),
                 )
             } else {
-                @Suppress("UNCHECKED_CAST")
-                val statMap = item["stat"] as? Map<String, Number> ?: emptyMap()
-                @Suppress("UNCHECKED_CAST")
-                val opposeStatMap = item["opposeStat"] as? Map<String, Number> ?: emptyMap()
+                val statMap = readNumberMap(item["stat"])
+                val opposeStatMap = readNumberMap(item["opposeStat"])
 
                 resultItems[code] = MiscItem(
                     code = code,
@@ -112,6 +110,17 @@ object ItemModifiers {
         itemMeta = resultMeta
         itemTriggerTypes = resultTriggerTypes
         itemKillRice = resultKillRice
+    }
+
+    private fun readNumberMap(raw: Any?): Map<String, Number> {
+        if (raw !is Map<*, *>) return emptyMap()
+        val result = mutableMapOf<String, Number>()
+        raw.forEach { (key, value) ->
+            if (key is String && value is Number) {
+                result[key] = value
+            }
+        }
+        return result
     }
 
     fun get(code: String): ActionModifier? = items[code]

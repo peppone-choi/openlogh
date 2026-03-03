@@ -268,23 +268,21 @@ class NpcNationPolicy(
  */
 object NpcPolicyBuilder {
 
-    @Suppress("UNCHECKED_CAST")
     fun buildGeneralPolicy(nationMeta: Map<String, Any>): NpcGeneralPolicy {
-        val raw = (nationMeta["npcGeneralPolicy"] as? Map<String, Any>)
-            ?: (nationMeta["npcPriority"] as? Map<String, Any>)
+        val raw = readStringAnyMap(nationMeta["npcGeneralPolicy"])
+            ?: readStringAnyMap(nationMeta["npcPriority"])
             ?: return NpcGeneralPolicy()
         return NpcGeneralPolicy(
-            priority = (raw["priority"] as? List<String>)
+            priority = readStringList(raw["priority"])
                 ?: NpcGeneralPolicy.DEFAULT_GENERAL_PRIORITY,
             minWarCrew = (raw["minWarCrew"] as? Number)?.toInt() ?: 500,
             properWarTrainAtmos = (raw["properWarTrainAtmos"] as? Number)?.toInt() ?: 80,
         )
     }
 
-    @Suppress("UNCHECKED_CAST")
     fun buildNationPolicy(nationMeta: Map<String, Any>): NpcNationPolicy {
-        val raw = (nationMeta["npcNationPolicy"] as? Map<String, Any>)
-            ?: (nationMeta["npcPolicy"] as? Map<String, Any>)
+        val raw = readStringAnyMap(nationMeta["npcNationPolicy"])
+            ?: readStringAnyMap(nationMeta["npcPolicy"])
             ?: return NpcNationPolicy()
 
         val combatForceRaw =
@@ -303,7 +301,7 @@ object NpcPolicyBuilder {
                 ?: emptyList<Any>()
 
         return NpcNationPolicy(
-            priority = (raw["priority"] as? List<String>)
+            priority = readStringList(raw["priority"])
                 ?: NpcNationPolicy.DEFAULT_NATION_PRIORITY,
             minNPCWarLeadership = (raw["minNPCWarLeadership"] as? Number)?.toInt() ?: 40,
             minNPCRecruitCityPopulation = (raw["minNPCRecruitCityPopulation"] as? Number)?.toInt() ?: 50000,
@@ -349,5 +347,21 @@ object NpcPolicyBuilder {
             supportForce = supportForceRaw.mapNotNull { (it as? Number)?.toInt() },
             developForce = developForceRaw.mapNotNull { (it as? Number)?.toInt() },
         )
+    }
+
+    private fun readStringAnyMap(raw: Any?): Map<String, Any>? {
+        if (raw !is Map<*, *>) return null
+        val result = mutableMapOf<String, Any>()
+        raw.forEach { (key, value) ->
+            if (key is String && value != null) {
+                result[key] = value
+            }
+        }
+        return result
+    }
+
+    private fun readStringList(raw: Any?): List<String>? {
+        if (raw !is Iterable<*>) return null
+        return raw.mapNotNull { it as? String }
     }
 }

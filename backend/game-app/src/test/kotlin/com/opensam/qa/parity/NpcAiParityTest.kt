@@ -155,7 +155,7 @@ class NpcAiParityTest {
         fun `종전제의 with low troops returns RECRUITING`() {
             val nation = createNation(id = 1)
             val diplomacy = Diplomacy(srcNationId = 1, destNationId = 2, stateCode = "종전제의")
-            `when`(generalRepository.findByNationId(1L)).thenReturn(
+            `when`(generalRepository.findByWorldIdAndNationId(1L, 1L)).thenReturn(
                 listOf(createGeneral(crew = 1000))
             )
             assertEquals(DiplomacyState.RECRUITING, ai.calcDiplomacyState(nation, listOf(diplomacy)))
@@ -165,7 +165,7 @@ class NpcAiParityTest {
         fun `종전제의 with high troops returns DECLARED`() {
             val nation = createNation(id = 1)
             val diplomacy = Diplomacy(srcNationId = 1, destNationId = 2, stateCode = "종전제의")
-            `when`(generalRepository.findByNationId(1L)).thenReturn(
+            `when`(generalRepository.findByWorldIdAndNationId(1L, 1L)).thenReturn(
                 listOf(createGeneral(crew = 5000))
             )
             assertEquals(DiplomacyState.DECLARED, ai.calcDiplomacyState(nation, listOf(diplomacy)))

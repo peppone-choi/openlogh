@@ -103,6 +103,9 @@ open class 화계(general: General, env: CommandEnv, arg: Map<String, Any>? = nu
         val dc = destCity ?: return 0.0
         val destNationId = dc.nationId
         val defenders = destCityGenerals ?: emptyList()
+        val destNation = if (destNationId != 0L) {
+            services?.nationRepository?.findById(destNationId)?.orElse(null)
+        } else null
 
         var maxStat = 0
         var probCorrection = 0.0
@@ -120,10 +123,13 @@ open class 화계(general: General, env: CommandEnv, arg: Map<String, Any>? = nu
 
             // Legacy: $probCorrection = $destGeneral->onCalcStat($destGeneral, 'sabotageDefence', $probCorrection)
             // Apply per-defender sabotageDefence modifier
+            val defenderNation = if (defender.nationId == destNationId) destNation else if (defender.nationId != 0L) {
+                services?.nationRepository?.findById(defender.nationId)?.orElse(null)
+            } else null
+            val defenderModifiers = services?.modifierService?.getModifiers(defender, defenderNation) ?: emptyList()
             val baseStat = StatContext(sabotageDefence = probCorrection)
-            // NOTE: We don't have per-defender modifiers here; this would require loading each defender's modifiers.
-            // For now, use the base probCorrection. Full per-defender modifier support requires ModifierService access.
-            probCorrection = baseStat.sabotageDefence
+            val modifiedStat = defenderModifiers.fold(baseStat) { stat, mod -> mod.onCalcStat(stat) }
+            probCorrection = modifiedStat.sabotageDefence
         }
 
         var prob = maxStat / env.sabotageProbCoefByStat.toDouble()
@@ -171,13 +177,22 @@ open class 화계(general: General, env: CommandEnv, arg: Map<String, Any>? = nu
 
         val dc = destCity ?: return 0
         val defenders = destCityGenerals ?: emptyList()
+        val destNation = if (dc.nationId != 0L) {
+            services?.nationRepository?.findById(dc.nationId)?.orElse(null)
+        } else null
         var injuryCount = 0
 
         for (defender in defenders) {
             if (defender.nationId != dc.nationId) continue
 
             // Legacy: injuryProb = 0.3, then onCalcStat($general, 'injuryProb', $injuryProb)
-            val injuryProb = INJURY_PROB_DEFAULT
+            val defenderNation = if (defender.nationId == dc.nationId) destNation else if (defender.nationId != 0L) {
+                services?.nationRepository?.findById(defender.nationId)?.orElse(null)
+            } else null
+            val defenderModifiers = services?.modifierService?.getModifiers(defender, defenderNation) ?: emptyList()
+            val baseInjuryStat = StatContext(injuryProb = INJURY_PROB_DEFAULT)
+            val modifiedInjuryStat = defenderModifiers.fold(baseInjuryStat) { stat, mod -> mod.onCalcStat(stat) }
+            val injuryProb = modifiedInjuryStat.injuryProb
             if (rng.nextDouble() >= injuryProb) continue
 
             val injuryAmount = rng.nextInt(1, 17) // 1-16

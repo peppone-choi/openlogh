@@ -126,8 +126,13 @@ class UnificationService(
             val oldLog = user.meta["inheritLog"] as? List<*>
             oldLog?.forEach {
                 val row = it as? Map<*, *> ?: return@forEach
-                @Suppress("UNCHECKED_CAST")
-                log.add(row as Map<String, Any>)
+                val typed = mutableMapOf<String, Any>()
+                row.forEach { (k, v) ->
+                    if (k is String && v != null) {
+                        typed[k] = v
+                    }
+                }
+                log.add(typed)
             }
             log.add(
                 mapOf(
@@ -450,7 +455,13 @@ class UnificationService(
     }
 
     private fun asMap(value: Any?): Map<String, Any> {
-        @Suppress("UNCHECKED_CAST")
-        return value as? Map<String, Any> ?: emptyMap()
+        if (value !is Map<*, *>) return emptyMap()
+        val typed = mutableMapOf<String, Any>()
+        value.forEach { (k, v) ->
+            if (k is String && v != null) {
+                typed[k] = v
+            }
+        }
+        return typed
     }
 }

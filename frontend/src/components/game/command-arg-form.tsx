@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { useGameStore } from "@/stores/gameStore";
 import { useGeneralStore } from "@/stores/generalStore";
 import { useWorldStore } from "@/stores/worldStore";
-import type { City, General, Nation } from "@/types";
+import type { City, CommandArg, General, Nation } from "@/types";
 import { CrewTypeBrowser } from "./crew-type-browser";
 import { EquipmentBrowser } from "./equipment-browser";
 import { DeploymentSelector } from "./deployment-selector";
@@ -495,7 +495,7 @@ const CITY_TARGET_COMMANDS = new Set([
 
 interface CommandArgFormProps {
   actionCode: string;
-  onSubmit: (arg: Record<string, unknown>) => void;
+  onSubmit: (arg: CommandArg) => void;
 }
 
 export function CommandArgForm({ actionCode, onSubmit }: CommandArgFormProps) {
@@ -572,7 +572,7 @@ export function CommandArgForm({ actionCode, onSubmit }: CommandArgFormProps) {
   };
 
   const handleSubmit = () => {
-    const arg: Record<string, unknown> = {};
+    const arg: CommandArg = {};
     for (const field of fields) {
       const raw = values[field.key];
       if (!raw && raw !== "0") continue;

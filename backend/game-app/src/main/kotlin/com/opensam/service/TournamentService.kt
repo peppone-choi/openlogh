@@ -378,8 +378,7 @@ class TournamentService(
 
     fun sendTournamentMessage(worldId: Long, message: String): Map<String, Any>? {
         val world = worldStateRepository.findById(worldId.toShort()).orElse(null) ?: return null
-        @Suppress("UNCHECKED_CAST")
-        val msgs = (world.meta["tournamentMessages"] as? MutableList<Any>)?.toMutableList() ?: mutableListOf()
+        val msgs = readAnyMutableList(world.meta["tournamentMessages"])
         msgs.add(mapOf("text" to message, "year" to world.currentYear.toInt(), "month" to world.currentMonth.toInt()))
         world.meta["tournamentMessages"] = msgs
         worldStateRepository.save(world)
@@ -449,5 +448,10 @@ class TournamentService(
         world.meta["tournamentParticipants"] = participants
         world.meta["tournamentBracket"] = bracket
         worldStateRepository.save(world)
+    }
+
+    private fun readAnyMutableList(raw: Any?): MutableList<Any> {
+        if (raw !is Iterable<*>) return mutableListOf()
+        return raw.mapNotNull { it }.toMutableList()
     }
 }

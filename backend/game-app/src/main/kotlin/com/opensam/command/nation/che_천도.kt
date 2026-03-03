@@ -52,10 +52,8 @@ class che_천도(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
     }
 
     private fun computeDistanceThroughOwnTerritory(srcCityId: Long, destCityId: Long): Int? {
-        @Suppress("UNCHECKED_CAST")
-        val adjacencyRaw = constraintEnv["mapAdjacency"] as? Map<*, *> ?: return null
-        @Suppress("UNCHECKED_CAST")
-        val cityNationById = constraintEnv["cityNationById"] as? Map<*, *>
+        val adjacencyRaw = readMap(constraintEnv["mapAdjacency"]) ?: return null
+        val cityNationById = readMap(constraintEnv["cityNationById"])
 
         val nationId = general.nationId
 
@@ -178,12 +176,8 @@ class che_천도(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
         general.dedication += expDed
 
         // Inheritance point
-        val inheritMeta = general.meta.getOrPut("inheritancePoints") { mutableMapOf<String, Any>() }
-        @Suppress("UNCHECKED_CAST")
-        if (inheritMeta is MutableMap<*, *>) {
-            (inheritMeta as MutableMap<String, Any>)["active_action"] =
-                ((inheritMeta["active_action"] as? Number)?.toInt() ?: 0) + 1
-        }
+        val inheritMeta = getOrCreateMutableStringAnyMap(general.meta, "inheritancePoints")
+        inheritMeta["active_action"] = ((inheritMeta["active_action"] as? Number)?.toInt() ?: 0) + 1
 
         // Logging (legacy parity)
         val generalName = general.name
@@ -202,5 +196,21 @@ class che_천도(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
         general.lastTurn = LastTurn(actionName, arg, 0).toMap()
 
         return CommandResult(true, logs)
+    }
+
+    private fun readMap(raw: Any?): Map<*, *>? = raw as? Map<*, *>
+
+    private fun getOrCreateMutableStringAnyMap(container: MutableMap<String, Any>, key: String): MutableMap<String, Any> {
+        val current = container[key]
+        val typed = mutableMapOf<String, Any>()
+        if (current is Map<*, *>) {
+            current.forEach { (k, v) ->
+                if (k is String && v != null) {
+                    typed[k] = v
+                }
+            }
+        }
+        container[key] = typed
+        return typed
     }
 }

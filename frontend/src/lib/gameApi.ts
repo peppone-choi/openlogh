@@ -18,6 +18,7 @@ import type {
   ContactInfo,
   InheritanceInfo,
   InheritanceActionResult,
+  InheritanceLogResponse,
   TournamentInfo,
   BettingInfo,
   BettingEventSummary,
@@ -44,6 +45,25 @@ import type {
   BoardComment,
   VoteComment,
   PublicCachedMapResponse,
+  CommandArg,
+  WorldSummary,
+  OAuthLinkResponse,
+  HallOfFameOptionsResponse,
+  TrafficResponse,
+  InheritanceOwnerCheckResponse,
+  AuctionActionResponse,
+  AuctionHistoryEntry,
+  MarketPriceResponse,
+  MarketBuyRiceResponse,
+  MarketSellRiceResponse,
+  ItemAuctionCreateResponse,
+  CreateWorldResponse,
+  SystemFlagsResponse,
+  ScrubResponse,
+  ResetPasswordResponse,
+  AdminRaiseEventResponse,
+  AccountDetailedInfoResponse,
+  JsonObject,
 } from "@/types";
 
 // World API
@@ -63,25 +83,7 @@ export const worldApi = {
       `/worlds/${id}/reset`,
       scenarioCode ? { scenarioCode } : {},
     ),
-  getSummary: (id: number) =>
-    api.get<{
-      id: number;
-      name: string;
-      scenarioCode: string;
-      currentYear: number;
-      currentMonth: number;
-      season: string;
-      phase: string;
-      tickSeconds: number;
-      realtimeMode: boolean;
-      totalPopulation: number;
-      activeNations: number;
-      activeGenerals: number;
-      humanPlayers: number;
-      atWar: boolean;
-      allowedTechLevel: number;
-      mapCode: string;
-    }>(`/worlds/${id}/summary`),
+  getSummary: (id: number) => api.get<WorldSummary>(`/worlds/${id}/summary`),
   getSnapshots: (id: number) =>
     api.get<WorldSnapshot[]>(`/worlds/${id}/snapshots`),
   captureSnapshot: (id: number) =>
@@ -178,9 +180,9 @@ export const commandApi = {
     api.get<GeneralTurn[]>(`/generals/${generalId}/turns`),
   reserveCommand: (
     generalId: number,
-    payload: { turn: number; command: string; arg?: Record<string, unknown> },
+    payload: { turn: number; command: string; arg?: CommandArg },
   ) =>
-    api.post<void>(`/generals/${generalId}/turns`, {
+    api.post<GeneralTurn[]>(`/generals/${generalId}/turns`, {
       turns: [
         {
           turnIdx: payload.turn,
@@ -190,27 +192,21 @@ export const commandApi = {
       ],
     }),
   deleteReservedCommand: (generalId: number, turn: number) =>
-    api.post<void>(`/generals/${generalId}/turns`, {
+    api.post<GeneralTurn[]>(`/generals/${generalId}/turns`, {
       turns: [{ turnIdx: turn, actionCode: "휴식" }],
     }),
-  pushReservedCommand: (generalId: number, turn: number) =>
-    api.post<GeneralTurn[]>(`/generals/${generalId}/turns/push`, {
-      amount: -Math.max(0, turn),
-    }),
-  getReserved: (generalId: number) =>
-    api.get<GeneralTurn[]>(`/generals/${generalId}/turns`),
   reserve: (
     generalId: number,
     turns: {
       turnIdx: number;
       actionCode: string;
-      arg?: Record<string, unknown>;
+      arg?: CommandArg;
     }[],
-  ) => api.post<void>(`/generals/${generalId}/turns`, { turns }),
+  ) => api.post<GeneralTurn[]>(`/generals/${generalId}/turns`, { turns }),
   execute: (
     generalId: number,
     actionCode: string,
-    arg?: Record<string, unknown>,
+    arg?: CommandArg,
   ) =>
     api.post<CommandResult>(`/generals/${generalId}/execute`, {
       actionCode,
@@ -219,7 +215,7 @@ export const commandApi = {
   executeNation: (
     generalId: number,
     actionCode: string,
-    arg?: Record<string, unknown>,
+    arg?: CommandArg,
   ) =>
     api.post<CommandResult>(`/generals/${generalId}/execute-nation`, {
       actionCode,
@@ -248,7 +244,7 @@ export const commandApi = {
     turns: {
       turnIdx: number;
       actionCode: string;
-      arg?: Record<string, unknown>;
+      arg?: CommandArg;
     }[],
   ) =>
     api.post<NationTurn[]>(
@@ -274,7 +270,7 @@ export const realtimeApi = {
   execute: (
     generalId: number,
     actionCode: string,
-    arg?: Record<string, unknown>,
+    arg?: CommandArg,
   ) =>
     api.post<CommandResult>("/realtime/execute", {
       generalId,
@@ -446,7 +442,7 @@ export const generalLogApi = {
 export interface SimulatorExportResult {
   result: boolean;
   reason?: string;
-  data?: Record<string, unknown>;
+  data?: JsonObject;
 }
 export const simulatorExportApi = {
   exportGeneral: (generalId: number, targetId: number) =>
@@ -490,7 +486,7 @@ export const accountApi = {
   getOAuthProviders: () =>
     api.get<import("@/types").OAuthProviderInfo[]>("/account/oauth"),
   linkOAuth: (provider: string) =>
-    api.post<{ redirectUrl: string }>(`/account/oauth/${provider}/link`),
+    api.post<OAuthLinkResponse>(`/account/oauth/${provider}/link`),
   completeOAuthLink: async (
     provider: string,
     code: string,
@@ -519,7 +515,7 @@ export const accountApi = {
   deleteIcon: () => api.delete<void>("/account/icon"),
   syncIcon: () => api.post<void>("/account/icon/sync"),
   getDetailedInfo: () =>
-    api.get<Record<string, unknown>>("/account/detailed-info"),
+    api.get<AccountDetailedInfoResponse>("/account/detailed-info"),
 };
 
 // Nation Management API
@@ -542,7 +538,7 @@ export const nationManagementApi = {
 export const nationPolicyApi = {
   getPolicy: (nationId: number) =>
     api.get<NationPolicyInfo>(`/nations/${nationId}/policy`),
-  updatePolicy: (nationId: number, data: Record<string, unknown>) =>
+  updatePolicy: (nationId: number, data: JsonObject) =>
     api.patch<void>(`/nations/${nationId}/policy`, data),
   updateNotice: (nationId: number, notice: string) =>
     api.patch<void>(`/nations/${nationId}/notice`, { notice }),
@@ -556,11 +552,11 @@ export const npcPolicyApi = {
     api.get<NpcPolicyInfo>(`/nations/${nationId}/npc-policy`),
   updatePolicy: (
     nationId: number,
-    policy: Partial<NpcPolicyInfo> & Record<string, unknown>,
+    policy: Partial<NpcPolicyInfo> & JsonObject,
   ) => api.put<void>(`/nations/${nationId}/npc-policy`, policy),
   updatePriority: (
     nationId: number,
-    priority: Partial<NpcPolicyInfo> & Record<string, unknown>,
+    priority: Partial<NpcPolicyInfo> & JsonObject,
   ) => api.put<void>(`/nations/${nationId}/npc-priority`, priority),
 };
 
@@ -627,13 +623,7 @@ export const rankingApi = {
     params?: { season?: number; scenario?: string },
   ) => api.get<Message[]>(`/worlds/${worldId}/hall-of-fame`, { params }),
   hallOfFameOptions: (worldId: number) =>
-    api.get<{
-      seasons: {
-        id: number;
-        label: string;
-        scenarios: { code: string; label: string }[];
-      }[];
-    }>(`/worlds/${worldId}/hall-of-fame/options`),
+    api.get<HallOfFameOptionsResponse>(`/worlds/${worldId}/hall-of-fame/options`),
   uniqueItemOwners: (worldId: number) =>
     api.get<
       {
@@ -653,24 +643,7 @@ export const rankingApi = {
 // Traffic API
 export const trafficApi = {
   getTraffic: (worldId: number) =>
-    api.get<{
-      recentTraffic: {
-        year: number;
-        month: number;
-        refresh: number;
-        online: number;
-        date: string;
-      }[];
-      maxRefresh: number;
-      maxOnline: number;
-      topRefreshers: {
-        name: string;
-        refresh: number;
-        refreshScoreTotal: number;
-      }[];
-      totalRefresh: number;
-      totalRefreshScoreTotal: number;
-    }>(`/worlds/${worldId}/traffic`),
+    api.get<TrafficResponse>(`/worlds/${worldId}/traffic`),
 };
 
 // Scenario API
@@ -726,7 +699,7 @@ export const inheritanceApi = {
       stats,
     ),
   checkOwner: (worldId: number, generalIdOrName: string | number) =>
-    api.post<{ ownerName?: string; found: boolean }>(
+    api.post<InheritanceOwnerCheckResponse>(
       `/worlds/${worldId}/inheritance/check-owner`,
       typeof generalIdOrName === "number"
         ? { destGeneralID: generalIdOrName }
@@ -738,7 +711,7 @@ export const inheritanceApi = {
       data,
     ),
   getMoreLog: (worldId: number, lastID: number) =>
-    api.get<{ log: import("@/types").InheritanceLogEntry[] }>(
+    api.get<InheritanceLogResponse>(
       `/worlds/${worldId}/inheritance/log`,
       { params: { lastID } },
     ),
@@ -773,12 +746,12 @@ export const auctionApi = {
       amount,
     }),
   cancel: (auctionId: number, generalId: number) =>
-    api.post<{ success: boolean; auctionId: number; status: string }>(
+    api.post<AuctionActionResponse>(
       `/auctions/${auctionId}/cancel`,
       { generalId },
     ),
   finalize: (auctionId: number) =>
-    api.post<{ success: boolean; auctionId: number; status: string }>(
+    api.post<AuctionActionResponse>(
       `/auctions/${auctionId}/finalize`,
     ),
   getHistory: (worldId: number) =>
@@ -796,38 +769,24 @@ export const auctionApi = {
       }[]
     >(`/worlds/${worldId}/auction-history`),
   getMarketPrice: (worldId: number) =>
-    api.get<{
-      worldId: number;
-      goldPerRice: number;
-      ricePerGold: number;
-      supply: number;
-      demand: number;
-    }>(`/worlds/${worldId}/market-price`),
+    api.get<MarketPriceResponse>(`/worlds/${worldId}/market-price`),
   buyRice: (worldId: number, generalId: number, amount: number) =>
-    api.post<{
-      success: boolean;
-      amount: number;
-      costGold: number;
-      goldPerRice: number;
-      generalGold: number;
-      generalRice: number;
-    }>(`/worlds/${worldId}/market/buy-rice`, { generalId, amount }),
+    api.post<MarketBuyRiceResponse>(`/worlds/${worldId}/market/buy-rice`, {
+      generalId,
+      amount,
+    }),
   sellRice: (worldId: number, generalId: number, amount: number) =>
-    api.post<{
-      success: boolean;
-      amount: number;
-      revenueGold: number;
-      goldPerRice: number;
-      generalGold: number;
-      generalRice: number;
-    }>(`/worlds/${worldId}/market/sell-rice`, { generalId, amount }),
+    api.post<MarketSellRiceResponse>(`/worlds/${worldId}/market/sell-rice`, {
+      generalId,
+      amount,
+    }),
   createItemAuction: (
     worldId: number,
     generalId: number,
     itemType: string,
     startPrice: number,
   ) =>
-    api.post<{ id: number; status: string; expiresAt: string }>(
+    api.post<ItemAuctionCreateResponse>(
       `/worlds/${worldId}/item-auctions`,
       { generalId, itemType, startPrice },
     ),
@@ -971,7 +930,7 @@ export const gameVersionApi = {
 // Admin API
 export const adminApi = {
   getDashboard: () => api.get<AdminDashboard>("/admin/dashboard"),
-  updateSettings: (settings: Record<string, unknown>) =>
+  updateSettings: (settings: JsonObject) =>
     api.patch<void>("/admin/settings", settings),
   listGenerals: () => api.get<AdminGeneral[]>("/admin/generals"),
   generalAction: (id: number, type: string) =>
@@ -980,7 +939,7 @@ export const adminApi = {
   getGeneralLogs: (id: number) =>
     api.get<Message[]>(`/admin/generals/${id}/logs`),
   getDiplomacy: () => api.get<Diplomacy[]>("/admin/diplomacy"),
-  timeControl: (data: Record<string, unknown>) =>
+  timeControl: (data: JsonObject) =>
     api.post<void>("/admin/time-control", data),
   listUsers: () => api.get<AdminUser[]>("/admin/users"),
   userAction: (
@@ -1005,7 +964,7 @@ export const adminApi = {
     turnTerm?: number;
     notice?: string;
     gameVersion?: string;
-  }) => api.post<{ id: number }>("/worlds", data),
+  }) => api.post<CreateWorldResponse>("/worlds", data),
   deleteWorld: (worldId: number) =>
     api.delete<void>(`/admin/worlds/${worldId}`),
   listWorlds: () =>
@@ -1034,16 +993,16 @@ export const adminApi = {
 
   // Gateway-local admin ops (entrance/system)
   getSystemFlags: () =>
-    api.get<{ allowLogin: boolean; allowJoin: boolean }>("/admin/system-flags"),
+    api.get<SystemFlagsResponse>("/admin/system-flags"),
   patchSystemFlags: (payload: { allowLogin?: boolean; allowJoin?: boolean }) =>
-    api.patch<{ allowLogin: boolean; allowJoin: boolean }>(
+    api.patch<SystemFlagsResponse>(
       "/admin/system-flags",
       payload,
     ),
   scrub: (type: "scrub_old_user" | "scrub_blocked_user") =>
-    api.post<{ affected: number }>("/admin/scrub", { type }),
+    api.post<ScrubResponse>("/admin/scrub", { type }),
   resetPassword: (userId: number) =>
-    api.post<{ tempPassword: string }>(
+    api.post<ResetPasswordResponse>(
       `/admin/users/${userId}/reset-password`,
       {},
     ),
@@ -1052,7 +1011,7 @@ export const adminApi = {
 // Admin Event API (legacy parity: j_raise_event.php)
 export const adminEventApi = {
   raise: (event: string, args?: unknown[], worldId?: number) =>
-    api.post<{ result: boolean; reason: string; info?: unknown }>(
+    api.post<AdminRaiseEventResponse>(
       "/admin/raise-event",
       {
         event,

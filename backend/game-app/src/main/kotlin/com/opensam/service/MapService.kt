@@ -26,11 +26,9 @@ class MapService {
         val resource = ClassPathResource("data/maps/$mapName.json")
         val data: Map<String, Any> = mapper.readValue(resource.inputStream, object : TypeReference<Map<String, Any>>() {})
 
-        @Suppress("UNCHECKED_CAST")
-        val rawCities = data["cities"] as List<Map<String, Any>>
+        val rawCities = readListOfStringAnyMap(data["cities"])
 
         val cities = rawCities.map { raw ->
-            @Suppress("UNCHECKED_CAST")
             CityConst(
                 id = (raw["id"] as Number).toInt(),
                 name = raw["name"] as String,
@@ -44,7 +42,7 @@ class MapService {
                 wall = (raw["wall"] as Number).toInt(),
                 x = (raw["x"] as Number).toInt(),
                 y = (raw["y"] as Number).toInt(),
-                connections = (raw["connections"] as List<Number>).map { it.toInt() }
+                connections = readNumberList(raw["connections"]).map { it.toInt() }
             )
         }
 
@@ -101,5 +99,24 @@ class MapService {
         }
 
         return -1
+    }
+
+    private fun readListOfStringAnyMap(raw: Any?): List<Map<String, Any>> {
+        if (raw !is Iterable<*>) return emptyList()
+        return raw.mapNotNull { entry ->
+            if (entry !is Map<*, *>) return@mapNotNull null
+            val typed = mutableMapOf<String, Any>()
+            entry.forEach { (key, value) ->
+                if (key is String && value != null) {
+                    typed[key] = value
+                }
+            }
+            typed
+        }
+    }
+
+    private fun readNumberList(raw: Any?): List<Number> {
+        if (raw !is Iterable<*>) return emptyList()
+        return raw.mapNotNull { it as? Number }
     }
 }

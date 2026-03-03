@@ -1,28 +1,182 @@
 package com.opensam.engine.turn.cqrs.memory
 
+import com.opensam.engine.DiplomacyService
+import com.opensam.engine.EconomyService
+import com.opensam.engine.EventService
+import com.opensam.engine.GeneralMaintenanceService
+import com.opensam.engine.NpcSpawnService
+import com.opensam.engine.SpecialAssignmentService
+import com.opensam.engine.UnificationService
 import com.opensam.engine.turn.cqrs.TurnDomainEvent
 import com.opensam.engine.turn.cqrs.TurnResult
+import com.opensam.engine.turn.cqrs.persist.toEntity
+import com.opensam.engine.turn.cqrs.persist.toSnapshot
 import com.opensam.entity.WorldState
+import com.opensam.repository.TrafficSnapshotRepository
+import com.opensam.service.AuctionService
+import com.opensam.service.InheritanceService
+import com.opensam.service.NationService
+import com.opensam.service.TournamentService
+import com.opensam.service.WorldService
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.time.Duration
 import java.time.OffsetDateTime
 
 @Service
-class InMemoryTurnProcessor {
+class InMemoryTurnProcessor(
+    private val economyService: EconomyService,
+    private val eventService: EventService,
+    private val diplomacyService: DiplomacyService,
+    private val generalMaintenanceService: GeneralMaintenanceService,
+    private val specialAssignmentService: SpecialAssignmentService,
+    private val npcSpawnService: NpcSpawnService,
+    private val unificationService: UnificationService,
+    private val inheritanceService: InheritanceService,
+    private val yearbookService: com.opensam.engine.YearbookService,
+    private val auctionService: AuctionService,
+    private val tournamentService: TournamentService,
+    private val trafficSnapshotRepository: TrafficSnapshotRepository,
+    private val worldService: WorldService,
+    private val nationService: NationService,
+) {
     private val logger = LoggerFactory.getLogger(InMemoryTurnProcessor::class.java)
 
-    fun process(state: InMemoryWorldState, dirtyTracker: DirtyTracker, world: WorldState): TurnResult {
+    fun process(world: WorldState, state: InMemoryWorldState, ports: InMemoryWorldPorts): TurnResult {
         val now = OffsetDateTime.now()
         val tickDuration = Duration.ofSeconds(world.tickSeconds.toLong())
         var nextTurnAt = world.updatedAt.plus(tickDuration)
+        val worldId = world.id.toLong()
         var advancedTurns = 0
         val events = mutableListOf<TurnDomainEvent>()
 
-        while (!now.isBefore(nextTurnAt)) {
-            executeReservedCommands(state, dirtyTracker, world)
-            resetStrategicCommandLimits(state, dirtyTracker)
+        while (!now.isBefore(nextTurnAt) && advancedTurns < MAX_TURNS_PER_TICK) {
+            val previousYear = world.currentYear.toInt()
+            val previousMonth = world.currentMonth.toInt()
+
+            executeGeneralCommandsUntil(state, ports, world, nextTurnAt)
+
+            try {
+                updateTraffic(world)
+            } catch (e: Exception) {
+                logger.warn("updateTraffic failed: ${e.message}")
+            }
+
+            try {
+                eventService.dispatchEvents(world, "PRE_MONTH")
+            } catch (e: Exception) {
+                logger.warn("EventService.dispatchEvents(PRE_MONTH) failed: ${e.message}")
+            }
+
+            try {
+                economyService.preUpdateMonthly(world)
+            } catch (e: Exception) {
+                logger.warn("EconomyService.preUpdateMonthly failed: ${e.message}")
+            }
+
             advanceMonth(world)
+
+            try {
+                yearbookService.saveMonthlySnapshot(worldId, previousYear, previousMonth)
+            } catch (e: Exception) {
+                logger.warn("YearbookService.saveMonthlySnapshot failed: ${e.message}")
+            }
+
+            try {
+                worldService.captureSnapshot(world)
+            } catch (e: Exception) {
+                logger.warn("WorldService.captureSnapshot failed: ${e.message}")
+            }
+
+            try {
+                val onlineCount = ports.allGenerals().count { it.userId != null }
+                val snapshot = com.opensam.entity.TrafficSnapshot(
+                    worldId = worldId,
+                    year = world.currentYear,
+                    month = world.currentMonth,
+                    refresh = (world.meta["refresh"] as? Number)?.toInt() ?: 0,
+                    online = onlineCount,
+                )
+                trafficSnapshotRepository.save(snapshot)
+                world.meta["refresh"] = 0
+            } catch (e: Exception) {
+                logger.warn("TrafficSnapshot recording failed: ${e.message}")
+            }
+
+            if (world.currentMonth.toInt() == 1) {
+                try {
+                    economyService.processYearlyStatistics(world)
+                } catch (e: Exception) {
+                    logger.warn("EconomyService.processYearlyStatistics failed: ${e.message}")
+                }
+            }
+
+            try {
+                eventService.dispatchEvents(world, "MONTH")
+            } catch (e: Exception) {
+                logger.warn("EventService.dispatchEvents failed: ${e.message}")
+            }
+
+            try {
+                economyService.postUpdateMonthly(world)
+            } catch (e: Exception) {
+                logger.warn("EconomyService.postUpdateMonthly failed: ${e.message}")
+            }
+
+            try {
+                economyService.processDisasterOrBoom(world)
+            } catch (e: Exception) {
+                logger.warn("EconomyService.processDisasterOrBoom failed: ${e.message}")
+            }
+
+            try {
+                economyService.randomizeCityTradeRate(world)
+            } catch (e: Exception) {
+                logger.warn("EconomyService.randomizeCityTradeRate failed: ${e.message}")
+            }
+
+            try {
+                diplomacyService.processDiplomacyTurn(world)
+            } catch (e: Exception) {
+                logger.warn("DiplomacyService.processDiplomacyTurn failed: ${e.message}")
+            }
+
+            try {
+                nationService.recalcAllFronts(worldId)
+            } catch (e: Exception) {
+                logger.warn("NationService.recalcAllFronts failed: ${e.message}")
+            }
+
+            try {
+                resetStrategicCommandLimits(ports)
+            } catch (e: Exception) {
+                logger.warn("resetStrategicCommandLimits failed: ${e.message}")
+            }
+
+            try {
+                val generals = ports.allGenerals().map { it.toEntity() }
+                generalMaintenanceService.processGeneralMaintenance(world, generals)
+                specialAssignmentService.checkAndAssignSpecials(world, generals)
+                generals.forEach { ports.putGeneral(it.toSnapshot()) }
+
+                for (general in generals.filter { it.npcState.toInt() == 0 }) {
+                    inheritanceService.accruePoints(general, "lived_month", 1)
+                }
+            } catch (e: Exception) {
+                logger.warn("GeneralMaintenanceService failed: ${e.message}")
+            }
+
+            try {
+                npcSpawnService.checkNpcSpawn(world)
+            } catch (e: Exception) {
+                logger.warn("NpcSpawnService.checkNpcSpawn failed: ${e.message}")
+            }
+
+            try {
+                unificationService.checkAndSettleUnification(world)
+            } catch (e: Exception) {
+                logger.warn("UnificationService.checkAndSettleUnification failed: ${e.message}")
+            }
 
             world.updatedAt = nextTurnAt
             nextTurnAt = nextTurnAt.plus(tickDuration)
@@ -38,21 +192,38 @@ class InMemoryTurnProcessor {
             )
         }
 
+        try {
+            tournamentService.processTournamentTurn(worldId)
+        } catch (e: Exception) {
+            logger.warn("TournamentService.processTournamentTurn failed: ${e.message}")
+        }
+
+        try {
+            auctionService.processExpiredAuctions()
+        } catch (e: Exception) {
+            logger.warn("AuctionService.processExpiredAuctions failed: ${e.message}")
+        }
+
         return TurnResult(
             advancedTurns = advancedTurns,
             events = events,
         )
     }
 
-    private fun executeReservedCommands(
+    private fun executeGeneralCommandsUntil(
         state: InMemoryWorldState,
-        dirtyTracker: DirtyTracker,
+        ports: InMemoryWorldPorts,
         _world: WorldState,
+        targetTime: OffsetDateTime,
     ) {
         val now = OffsetDateTime.now()
         val generals = state.generals.values.sortedBy { it.turnTime }
 
         for (general in generals) {
+            if (general.turnTime >= targetTime) {
+                break
+            }
+
             if (general.blockState >= 2) {
                 val killTurn = general.killTurn
                 if (killTurn != null) {
@@ -65,9 +236,9 @@ class InMemoryTurnProcessor {
                         general.killTurn = nextKillTurn.toShort()
                     }
                 }
-                general.turnTime = now
+                general.turnTime = targetTime
                 general.updatedAt = now
-                dirtyTracker.markDirty(DirtyTracker.EntityType.GENERAL, general.id)
+                ports.putGeneral(general)
                 continue
             }
 
@@ -108,9 +279,9 @@ class InMemoryTurnProcessor {
                 "arg" to arg,
                 "queuedInMemory" to true,
             )
-            general.turnTime = now
+            general.turnTime = targetTime
             general.updatedAt = now
-            dirtyTracker.markDirty(DirtyTracker.EntityType.GENERAL, general.id)
+            ports.putGeneral(general)
         }
 
         logger.debug(
@@ -120,13 +291,17 @@ class InMemoryTurnProcessor {
         )
     }
 
-    private fun resetStrategicCommandLimits(state: InMemoryWorldState, dirtyTracker: DirtyTracker) {
-        state.nations.values.forEach { nation ->
+    private fun resetStrategicCommandLimits(ports: InMemoryWorldPorts) {
+        ports.allNations().forEach { nation ->
             if (nation.strategicCmdLimit > 0) {
                 nation.strategicCmdLimit = (nation.strategicCmdLimit - 1).toShort()
-                dirtyTracker.markDirty(DirtyTracker.EntityType.NATION, nation.id)
             }
+            ports.putNation(nation)
         }
+    }
+
+    private fun updateTraffic(world: WorldState) {
+        economyService.updateCitySupplyState(world)
     }
 
     private fun advanceMonth(world: WorldState) {
@@ -141,5 +316,6 @@ class InMemoryTurnProcessor {
 
     companion object {
         const val EVENT_TURN_ADVANCED = "TURN_ADVANCED"
+        private const val MAX_TURNS_PER_TICK = 5
     }
 }

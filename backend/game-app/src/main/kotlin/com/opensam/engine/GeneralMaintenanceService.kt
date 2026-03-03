@@ -202,7 +202,13 @@ class GeneralMaintenanceService(
     }
 
     private fun asMap(value: Any?): Map<String, Any> {
-        @Suppress("UNCHECKED_CAST")
-        return value as? Map<String, Any> ?: emptyMap()
+        if (value !is Map<*, *>) return emptyMap()
+        val typed = mutableMapOf<String, Any>()
+        value.forEach { (k, v) ->
+            if (k is String && v != null) {
+                typed[k] = v
+            }
+        }
+        return typed
     }
 }

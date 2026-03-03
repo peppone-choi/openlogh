@@ -1,6 +1,8 @@
 package com.opensam.engine.ai
 
 import com.opensam.engine.DeterministicRng
+import com.opensam.engine.turn.cqrs.persist.JpaWorldPortFactory
+import com.opensam.engine.turn.cqrs.persist.toEntity
 import com.opensam.entity.City
 import com.opensam.entity.Diplomacy
 import com.opensam.entity.General
@@ -27,11 +29,22 @@ import kotlin.random.Random
  */
 @Service
 class GeneralAI(
-    private val generalRepository: GeneralRepository,
-    private val cityRepository: CityRepository,
-    private val nationRepository: NationRepository,
-    private val diplomacyRepository: DiplomacyRepository,
+    private val worldPortFactory: JpaWorldPortFactory,
 ) {
+    constructor(
+        generalRepository: GeneralRepository,
+        cityRepository: CityRepository,
+        nationRepository: NationRepository,
+        diplomacyRepository: DiplomacyRepository,
+    ) : this(
+        JpaWorldPortFactory(
+            generalRepository = generalRepository,
+            cityRepository = cityRepository,
+            nationRepository = nationRepository,
+            diplomacyRepository = diplomacyRepository,
+        )
+    )
+
     private val logger = LoggerFactory.getLogger(GeneralAI::class.java)
 
     // ──────────────────────────────────────────────────────────
@@ -56,13 +69,14 @@ class GeneralAI(
         }
 
         val worldId = world.id.toLong()
-        val city = cityRepository.findById(general.cityId).orElse(null) ?: return "휴식"
-        val nation = nationRepository.findById(general.nationId).orElse(null)
+        val ports = worldPortFactory.create(worldId)
+        val city = ports.city(general.cityId)?.toEntity() ?: return "휴식"
+        val nation = ports.nation(general.nationId)?.toEntity()
 
-        val allCities = cityRepository.findByWorldId(worldId)
-        val allGenerals = generalRepository.findByWorldId(worldId)
-        val allNations = nationRepository.findByWorldId(worldId)
-        val diplomacies = diplomacyRepository.findByWorldIdAndIsDeadFalse(worldId)
+        val allCities = ports.allCities().map { it.toEntity() }
+        val allGenerals = ports.allGenerals().map { it.toEntity() }
+        val allNations = ports.allNations().map { it.toEntity() }
+        val diplomacies = ports.activeDiplomacies().map { it.toEntity() }
 
         val nationCities = if (nation != null) {
             allCities.filter { it.nationId == nation.id }
@@ -76,7 +90,7 @@ class GeneralAI(
         val backupCities = nationCities.filter { it.frontState.toInt() == 0 && it.supplyState > 0 }
         val nationGenerals = allGenerals.filter { it.nationId == general.nationId }
 
-        val diplomacyState = calcDiplomacyState(nation, diplomacies)
+        val diplomacyState = calcDiplomacyState(worldId, nation, diplomacies)
 
         val nationPolicy = if (nation != null) {
             NpcPolicyBuilder.buildNationPolicy(nation.meta)
@@ -219,18 +233,18 @@ class GeneralAI(
     //  Diplomacy state calculation
     // ──────────────────────────────────────────────────────────
 
-    internal fun calcDiplomacyState(nation: Nation?, diplomacies: List<Diplomacy>): DiplomacyState {
+    internal fun calcDiplomacyState(worldId: Long, nation: Nation?, diplomacies: List<Diplomacy>): DiplomacyState {
         if (nation == null) return DiplomacyState.PEACE
 
         val relevant = diplomacies.filter {
             it.srcNationId == nation.id || it.destNationId == nation.id
         }
 
-        if (relevant.any { it.stateCode == "선전포고" }) return DiplomacyState.AT_WAR
+        if (relevant.any { it.stateCode == "선전포고" || it.stateCode == "전쟁" }) return DiplomacyState.AT_WAR
         if (nation.warState > 0) return DiplomacyState.AT_WAR
 
         if (relevant.any { it.stateCode == "종전제의" }) {
-            val nationTroops = generalRepository.findByNationId(nation.id.toLong()).sumOf { it.crew.toLong() }
+            val nationTroops = worldPortFactory.create(worldId).generalsByNation(nation.id).sumOf { it.crew.toLong() }
             return if (nationTroops < 3000) DiplomacyState.RECRUITING else DiplomacyState.DECLARED
         }
 
@@ -241,17 +255,22 @@ class GeneralAI(
             .toSet()
 
         if (hostileNationIds.isNotEmpty()) {
-            val adjacentCities = cityRepository.findByNationId(nation.id).filter { it.frontState > 0 }
+            val adjacentCities = worldPortFactory.create(worldId).citiesByNation(nation.id).filter { it.frontState > 0 }
             if (adjacentCities.isNotEmpty()) {
                 val enemyTroops = hostileNationIds.sumOf { nid ->
-                    generalRepository.findByNationId(nid).sumOf { it.crew.toLong() }
+                    worldPortFactory.create(worldId).generalsByNation(nid).sumOf { it.crew.toLong() }
                 }
-                val ownTroops = generalRepository.findByNationId(nation.id.toLong()).sumOf { it.crew.toLong() }
+                val ownTroops = worldPortFactory.create(worldId).generalsByNation(nation.id).sumOf { it.crew.toLong() }
                 if (enemyTroops > ownTroops * 2) return DiplomacyState.IMMINENT
             }
         }
 
         return DiplomacyState.PEACE
+    }
+
+    internal fun calcDiplomacyState(nation: Nation?, diplomacies: List<Diplomacy>): DiplomacyState {
+        val inferredWorldId = nation?.worldId ?: diplomacies.firstOrNull()?.worldId ?: 0L
+        return calcDiplomacyState(inferredWorldId, nation, diplomacies)
     }
 
     /**
@@ -370,16 +389,6 @@ class GeneralAI(
         backupCities: List<City>,
     ): String {
         val nation = ctx.nation ?: return "휴식"
-
-        // Legacy-like fast paths for deterministic ruler behavior in sparse test setups.
-        // 1) If there are unassigned nation generals, prioritize assignment.
-        if (ctx.nationGenerals.any { it.id != ctx.general.id && it.officerLevel.toInt() <= 1 && it.npcState.toInt() >= 2 }) {
-            return "발령"
-        }
-        // 2) If state is wealthy enough, prioritize city expansion.
-        if (nation.gold >= 10000 && ctx.city.level.toInt() >= 3) {
-            return "증축"
-        }
 
         // Nation-level turn: iterate policy priorities
         for (priority in nationPolicy.priority) {
@@ -1004,7 +1013,7 @@ class GeneralAI(
         if (otherNations.isEmpty()) return null
 
         // Find nations we're not at war with
-        val diplomacies = diplomacyRepository.findByWorldIdAndIsDeadFalse(ctx.world.id.toLong())
+        val diplomacies = worldPortFactory.create(ctx.world.id.toLong()).activeDiplomacies().map { it.toEntity() }
         val hostileIds = diplomacies.filter {
             (it.srcNationId == nation.id || it.destNationId == nation.id) &&
                 (it.stateCode == "선전포고" || it.stateCode == "전쟁")
@@ -1039,10 +1048,19 @@ class GeneralAI(
     ): String? {
         val nation = ctx.nation ?: return null
         if (ctx.general.officerLevel < 12) return null
-        if (ctx.diplomacyState != DiplomacyState.PEACE) return null
-        if (attackable) return null
+        if (ctx.diplomacyState != DiplomacyState.PEACE) {
+            logger.debug("[doDeclaration] nation={} skipped: diplomacyState={}", nation.id, ctx.diplomacyState)
+            return null
+        }
+        if (attackable) {
+            logger.debug("[doDeclaration] nation={} skipped: already attackable", nation.id)
+            return null
+        }
         if (nation.capitalCityId == null) return null
-        if (ctx.frontCities.isNotEmpty()) return null
+        if (ctx.frontCities.isEmpty()) {
+            logger.debug("[doDeclaration] nation={} skipped: no front cities (no borders)", nation.id)
+            return null
+        }
 
         // Check tech readiness (per legacy: need sufficient tech)
         // Check resource readiness
@@ -1082,9 +1100,12 @@ class GeneralAI(
         }
 
         trialProp /= 4.0
-        trialProp = trialProp.pow(6.0)
+        trialProp = trialProp.pow(3.0)
 
-        if (rng.nextDouble() >= trialProp) return null
+        if (rng.nextDouble() >= trialProp) {
+            logger.debug("[doDeclaration] nation={} skipped: trialProp={} too low", nation.id, trialProp)
+            return null
+        }
 
         // Find neighboring nations to declare war on
         // Per legacy: prefer nations not already in wars, weighted by inverse power
@@ -1553,8 +1574,7 @@ class GeneralAI(
         val enemyCities = ctx.allCities.filter { it.nationId in warTargetNations.keys && it.nationId != 0L }
         if (enemyCities.isEmpty()) return null
         val targetCity = enemyCities[rng.nextInt(enemyCities.size)]
-        @Suppress("UNCHECKED_CAST")
-        general.meta["aiArg"] = mapOf("destCityId" to targetCity.id) as Any
+        general.meta["aiArg"] = mutableMapOf<String, Any>("destCityId" to targetCity.id)
         return "출병"
     }
 
@@ -2625,13 +2645,14 @@ class GeneralAI(
         if (general.nationId == 0L) return "휴식"
 
         val worldId = world.id.toLong()
-        val city = cityRepository.findById(general.cityId).orElse(null) ?: return "휴식"
-        val nation = nationRepository.findById(general.nationId).orElse(null) ?: return "휴식"
+        val ports = worldPortFactory.create(worldId)
+        val city = ports.city(general.cityId)?.toEntity() ?: return "휴식"
+        val nation = ports.nation(general.nationId)?.toEntity() ?: return "휴식"
 
-        val allCities = cityRepository.findByWorldId(worldId)
-        val allGenerals = generalRepository.findByWorldId(worldId)
-        val allNations = nationRepository.findByWorldId(worldId)
-        val diplomacies = diplomacyRepository.findByWorldIdAndIsDeadFalse(worldId)
+        val allCities = ports.allCities().map { it.toEntity() }
+        val allGenerals = ports.allGenerals().map { it.toEntity() }
+        val allNations = ports.allNations().map { it.toEntity() }
+        val diplomacies = ports.activeDiplomacies().map { it.toEntity() }
 
         val nationCities = allCities.filter { it.nationId == nation.id }
         val frontCities = nationCities.filter { it.frontState > 0 }
@@ -2640,7 +2661,7 @@ class GeneralAI(
         val backupCities = nationCities.filter { it.frontState.toInt() == 0 && it.supplyState > 0 }
         val nationGenerals = allGenerals.filter { it.nationId == general.nationId }
 
-        val diplomacyState = calcDiplomacyState(nation, diplomacies)
+        val diplomacyState = calcDiplomacyState(worldId, nation, diplomacies)
 
         val nationPolicy = NpcPolicyBuilder.buildNationPolicy(nation.meta)
         val generalType = classifyGeneral(general, rng, nationPolicy.minNPCWarLeadership)
@@ -2722,13 +2743,14 @@ class GeneralAI(
         if (general.nationId == 0L) return null
 
         val worldId = world.id.toLong()
-        val city = cityRepository.findById(general.cityId).orElse(null) ?: return null
-        val nation = nationRepository.findById(general.nationId).orElse(null) ?: return null
+        val ports = worldPortFactory.create(worldId)
+        val city = ports.city(general.cityId)?.toEntity() ?: return null
+        val nation = ports.nation(general.nationId)?.toEntity() ?: return null
 
-        val allCities = cityRepository.findByWorldId(worldId)
-        val allGenerals = generalRepository.findByWorldId(worldId)
-        val allNations = nationRepository.findByWorldId(worldId)
-        val diplomacies = diplomacyRepository.findByWorldIdAndIsDeadFalse(worldId)
+        val allCities = ports.allCities().map { it.toEntity() }
+        val allGenerals = ports.allGenerals().map { it.toEntity() }
+        val allNations = ports.allNations().map { it.toEntity() }
+        val diplomacies = ports.activeDiplomacies().map { it.toEntity() }
 
         val nationCities = allCities.filter { it.nationId == nation.id }
         val frontCities = nationCities.filter { it.frontState > 0 }
@@ -2737,7 +2759,7 @@ class GeneralAI(
         val backupCities = nationCities.filter { it.frontState.toInt() == 0 && it.supplyState > 0 }
         val nationGenerals = allGenerals.filter { it.nationId == general.nationId }
 
-        val diplomacyState = calcDiplomacyState(nation, diplomacies)
+        val diplomacyState = calcDiplomacyState(worldId, nation, diplomacies)
         val nationPolicy = NpcPolicyBuilder.buildNationPolicy(nation.meta)
         val generalType = classifyGeneral(general, rng, nationPolicy.minNPCWarLeadership)
         val attackable = frontCities.any { it.supplyState > 0 }
@@ -2786,7 +2808,7 @@ class GeneralAI(
 
         // Lord abdication check
         if (general.officerLevel.toInt() == 12) {
-            val nationGenerals = generalRepository.findByNationId(general.nationId)
+            val nationGenerals = worldPortFactory.create(world.id.toLong()).generalsByNation(general.nationId)
             val ctx = buildContextForGeneral(general, world, rng)
             if (ctx != null) {
                 val result = doAbdicate(ctx, rng)
@@ -2823,7 +2845,7 @@ class GeneralAI(
 
         // NPC lord without capital: found nation or wander
         if (npcType >= 2 && general.officerLevel.toInt() == 12) {
-            val nation = nationRepository.findById(general.nationId).orElse(null)
+            val nation = worldPortFactory.create(world.id.toLong()).nation(general.nationId)?.toEntity()
             if (nation != null && nation.capitalCityId == null) {
                 val yearsFromInit = world.currentYear - ((world.config["startyear"] as? Number)?.toInt() ?: world.currentYear.toInt())
                 if (yearsFromInit > 0) {
@@ -2843,7 +2865,7 @@ class GeneralAI(
         // Death preparation
         val killTurn = general.killTurn?.toInt()
         if (killTurn != null && killTurn <= 5 && npcType >= 2) {
-            val nation = nationRepository.findById(general.nationId).orElse(null)
+            val nation = worldPortFactory.create(world.id.toLong()).nation(general.nationId)?.toEntity()
             return doDeathPreparation(general, nation, rng)
         }
 
@@ -2857,20 +2879,21 @@ class GeneralAI(
 
     private fun buildContextForGeneral(general: General, world: WorldState, rng: Random): AIContext? {
         val worldId = world.id.toLong()
-        val city = cityRepository.findById(general.cityId).orElse(null) ?: return null
-        val nation = nationRepository.findById(general.nationId).orElse(null)
+        val ports = worldPortFactory.create(worldId)
+        val city = ports.city(general.cityId)?.toEntity() ?: return null
+        val nation = ports.nation(general.nationId)?.toEntity()
 
-        val allCities = cityRepository.findByWorldId(worldId)
-        val allGenerals = generalRepository.findByWorldId(worldId)
-        val allNations = nationRepository.findByWorldId(worldId)
-        val diplomacies = diplomacyRepository.findByWorldIdAndIsDeadFalse(worldId)
+        val allCities = ports.allCities().map { it.toEntity() }
+        val allGenerals = ports.allGenerals().map { it.toEntity() }
+        val allNations = ports.allNations().map { it.toEntity() }
+        val diplomacies = ports.activeDiplomacies().map { it.toEntity() }
 
         val nationCities = if (nation != null) allCities.filter { it.nationId == nation.id } else emptyList()
         val frontCities = nationCities.filter { it.frontState > 0 }
         val rearCities = nationCities.filter { it.frontState.toInt() == 0 }
         val nationGenerals = allGenerals.filter { it.nationId == general.nationId }
 
-        val diplomacyState = calcDiplomacyState(nation, diplomacies)
+        val diplomacyState = calcDiplomacyState(worldId, nation, diplomacies)
         val nationPolicy = if (nation != null) NpcPolicyBuilder.buildNationPolicy(nation.meta) else NpcNationPolicy()
         val generalType = classifyGeneral(general, rng, nationPolicy.minNPCWarLeadership)
 
@@ -2991,9 +3014,10 @@ class GeneralAI(
      * - Otherwise returns null (do neutral action)
      */
     private fun doSelectNation(general: General, world: WorldState, rng: Random): String? {
+        val ports = worldPortFactory.create(world.id.toLong())
         // Barbarians (npcType 9) join other barbarian nations directly
         if (general.npcState.toInt() == 9) {
-            val barbarianLords = generalRepository.findByWorldId(world.id.toLong())
+            val barbarianLords = ports.allGenerals().map { it.toEntity() }
                 .filter { it.officerLevel.toInt() == 12 && it.npcState.toInt() == 9 && it.nationId != 0L }
             if (barbarianLords.isNotEmpty()) {
                 val target = barbarianLords[rng.nextInt(barbarianLords.size)]
@@ -3012,9 +3036,10 @@ class GeneralAI(
 
             if (yearsElapsed < 3) {
                 // Early game: fewer nations → less chance to join
-                val nationCnt = nationRepository.findByWorldId(world.id.toLong()).size
-                val notFullNationCnt = nationRepository.findByWorldId(world.id.toLong()).count { nation ->
-                    val genCount = generalRepository.findByNationId(nation.id.toLong()).size
+                val nations = ports.allNations().map { it.toEntity() }
+                val nationCnt = nations.size
+                val notFullNationCnt = nations.count { nation ->
+                    val genCount = ports.generalsByNation(nation.id).size
                     genCount < 20 // initialNationGenLimit analog
                 }
                 if (nationCnt == 0 || notFullNationCnt == 0) return null
@@ -3032,7 +3057,7 @@ class GeneralAI(
 
         // 20% chance to move to adjacent city
         if (rng.nextDouble() < 0.2) {
-            val allCities = cityRepository.findByWorldId(world.id.toLong())
+            val allCities = ports.allCities().map { it.toEntity() }
             val currentCity = allCities.find { it.id == general.cityId } ?: return null
             val adjacentIds = getAdjacentCityIds(currentCity, allCities)
             if (adjacentIds.isEmpty()) return null
@@ -3054,8 +3079,9 @@ class GeneralAI(
      * - Prefers nearby unoccupied major cities; if adjacent one is available, prioritize it
      */
     private fun doWandererMove(general: General, world: WorldState, rng: Random): String? {
-        val allCities = cityRepository.findByWorldId(world.id.toLong())
-        val allGenerals = generalRepository.findByWorldId(world.id.toLong())
+        val ports = worldPortFactory.create(world.id.toLong())
+        val allCities = ports.allCities().map { it.toEntity() }
+        val allGenerals = ports.allGenerals().map { it.toEntity() }
 
         val currentCity = allCities.find { it.id == general.cityId } ?: return null
 
@@ -3247,8 +3273,7 @@ class GeneralAI(
      */
     private fun getAdjacentCityIds(city: City, allCities: List<City>): List<Long> {
         // Try meta connections first
-        @Suppress("UNCHECKED_CAST")
-        val connections = city.meta["connections"] as? List<*>
+        val connections = city.meta["connections"] as? Collection<*>
         if (connections != null) {
             return connections.mapNotNull { (it as? Number)?.toLong() }
         }

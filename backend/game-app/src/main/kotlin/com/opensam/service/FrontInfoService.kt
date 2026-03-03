@@ -143,8 +143,7 @@ class FrontInfoService(
         }
 
         // Nation notice from meta
-        @Suppress("UNCHECKED_CAST")
-        val noticeMap = n.meta["nationNotice"] as? Map<String, Any>
+        val noticeMap = readStringAnyMapOrNull(n.meta["nationNotice"])
         val notice = noticeMap?.let {
             NationNoticeInfo(
                 date = (it["date"] as? String) ?: "",
@@ -296,13 +295,11 @@ class FrontInfoService(
 
         // Rank stats from meta
         val rankMeta = g.meta["rank"]
-        @Suppress("UNCHECKED_CAST")
-        val rank = rankMeta as? Map<String, Any> ?: emptyMap()
+        val rank = readStringAnyMap(rankMeta)
 
         // Dex from meta
         val dexMeta = g.meta["dex"]
-        @Suppress("UNCHECKED_CAST")
-        val dex = dexMeta as? Map<String, Any> ?: emptyMap()
+        val dex = readStringAnyMap(dexMeta)
 
         return GeneralFrontInfo(
             no = g.id,
@@ -508,4 +505,19 @@ class FrontInfoService(
         message = (m.payload["message"] as? String) ?: "",
         date = m.sentAt.toString(),
     )
+
+    private fun readStringAnyMap(raw: Any?): Map<String, Any> {
+        return readStringAnyMapOrNull(raw) ?: emptyMap()
+    }
+
+    private fun readStringAnyMapOrNull(raw: Any?): Map<String, Any>? {
+        if (raw !is Map<*, *>) return null
+        val result = mutableMapOf<String, Any>()
+        raw.forEach { (key, value) ->
+            if (key is String && value != null) {
+                result[key] = value
+            }
+        }
+        return result
+    }
 }

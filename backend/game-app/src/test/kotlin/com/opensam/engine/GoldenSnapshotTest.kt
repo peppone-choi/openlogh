@@ -198,7 +198,7 @@ class GoldenSnapshotTest {
             gold = 500,
             rice = 500,
             npcState = 0,
-            turnTime = OffsetDateTime.now(),
+            turnTime = OffsetDateTime.now().minusSeconds(1200),
         )
     }
 

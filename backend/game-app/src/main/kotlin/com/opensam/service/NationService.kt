@@ -116,19 +116,18 @@ class NationService(
 
     // -- NPC Policy --
 
-    @Suppress("UNCHECKED_CAST")
     fun getNpcPolicy(nationId: Long): Map<String, Any>? {
         val nation = nationRepository.findById(nationId).orElse(null) ?: return null
-        val legacyPolicy = nation.meta["npcPolicy"] as? Map<String, Any> ?: emptyMap()
-        val nationPolicy = nation.meta["npcNationPolicy"] as? Map<String, Any> ?: emptyMap()
-        val priorityOnly = nation.meta["npcPriority"] as? Map<String, Any> ?: emptyMap()
+        val legacyPolicy = readStringAnyMap(nation.meta["npcPolicy"])
+        val nationPolicy = readStringAnyMap(nation.meta["npcNationPolicy"])
+        val priorityOnly = readStringAnyMap(nation.meta["npcPriority"])
 
         val merged = mutableMapOf<String, Any>()
         merged.putAll(legacyPolicy)
         merged.putAll(nationPolicy)
 
         if (merged["priority"] == null && priorityOnly["priority"] != null) {
-            merged["priority"] = priorityOnly["priority"] as Any
+            merged["priority"] = priorityOnly["priority"]!!
         }
         return merged
     }
@@ -141,15 +140,25 @@ class NationService(
         return true
     }
 
-    @Suppress("UNCHECKED_CAST")
     fun updateNpcPriority(nationId: Long, priority: Map<String, Any>): Boolean {
         val nation = nationRepository.findById(nationId).orElse(null) ?: return false
-        val nationPolicy = (nation.meta["npcNationPolicy"] as? Map<String, Any>)?.toMutableMap() ?: mutableMapOf()
+        val nationPolicy = readStringAnyMap(nation.meta["npcNationPolicy"]).toMutableMap()
         priority["priority"]?.let { nationPolicy["priority"] = it }
         nation.meta["npcNationPolicy"] = nationPolicy
         nation.meta["npcPriority"] = priority
         nationRepository.save(nation)
         return true
+    }
+
+    private fun readStringAnyMap(raw: Any?): Map<String, Any> {
+        if (raw !is Map<*, *>) return emptyMap()
+        val result = mutableMapOf<String, Any>()
+        raw.forEach { (key, value) ->
+            if (key is String && value != null) {
+                result[key] = value
+            }
+        }
+        return result
     }
 
     /**
@@ -159,7 +168,7 @@ class NationService(
      * front=0: rear (no front)
      * front=1: adjacent to imminent war city (선전포고, term<=5)
      * front=2: adjacent to neutral/empty city (peacetime only)
-     * front=3: adjacent to active war city (선전포고, state=0 in legacy)
+     * front=3: adjacent to active war city (전쟁, state=0 in legacy)
      */
     fun setNationFront(worldId: Long, nationId: Long) {
         if (nationId == 0L) return
@@ -177,19 +186,14 @@ class NationService(
         val imminentNations = mutableSetOf<Long>()  // imminent war (선포, term<=5): front=1
 
         for (d in activeDiplomacy) {
-            if (d.stateCode != "선전포고") continue
             val otherNationId = when {
                 d.srcNationId == nationId -> d.destNationId
                 d.destNationId == nationId -> d.srcNationId
                 else -> continue
             }
-            // Legacy: state=0 → active war (adj3/front=3), state=1 && term<=5 → imminent (adj1/front=1)
-            // In Kotlin both map to "선전포고". Distinguish by term:
-            // Large term (>5) with active war = adj3, small term (<=5) = adj1
-            // Since scenarios start with term=975 (active war), treat term > 5 as active war.
-            if (d.term > 5) {
+            if (d.stateCode == "전쟁") {
                 warNations.add(otherNationId)
-            } else {
+            } else if (d.stateCode == "선전포고" && d.term <= 5) {
                 imminentNations.add(otherNationId)
             }
         }

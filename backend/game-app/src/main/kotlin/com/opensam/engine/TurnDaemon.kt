@@ -1,6 +1,7 @@
 package com.opensam.engine
 
 import com.opensam.repository.WorldStateRepository
+import com.opensam.engine.turn.cqrs.TurnCoordinator
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.scheduling.annotation.Scheduled
@@ -14,8 +15,10 @@ import org.springframework.stereotype.Component
 @Component
 class TurnDaemon(
     private val turnService: TurnService,
+    private val turnCoordinator: TurnCoordinator,
     private val realtimeService: RealtimeService,
     @Value("\${game.commit-sha:local}") private val processCommitSha: String,
+    @Value("\${opensam.cqrs.enabled:false}") private val cqrsEnabled: Boolean,
     private val worldStateRepository: WorldStateRepository,
 ) {
     enum class DaemonState { IDLE, RUNNING, FLUSHING, PAUSED, STOPPING }
@@ -23,12 +26,29 @@ class TurnDaemon(
     @Volatile
     private var state = DaemonState.IDLE
 
+    /** Reason for last state transition (e.g. "manual_pause", "tick_start", "error"). */
+    @Volatile
+    private var stateReason: String? = null
+
+    /** Unique request ID for the current/last operation. */
+    @Volatile
+    private var requestId: String? = null
+
     private val logger = LoggerFactory.getLogger(TurnDaemon::class.java)
+
+    private fun transitionTo(newState: DaemonState, reason: String, reqId: String? = null) {
+        val prev = state
+        state = newState
+        stateReason = reason
+        if (reqId != null) requestId = reqId
+        logger.debug("Daemon state: {} -> {} (reason={}, requestId={})", prev, newState, reason, requestId)
+    }
 
     @Scheduled(fixedDelayString = "\${app.turn.interval-ms:300000}")
     fun tick() {
         if (state != DaemonState.IDLE) return
-        state = DaemonState.RUNNING
+        val reqId = java.util.UUID.randomUUID().toString().take(8)
+        transitionTo(DaemonState.RUNNING, "tick_start", reqId)
         try {
             val worlds = worldStateRepository
                 .findByCommitSha(processCommitSha)
@@ -40,25 +60,30 @@ class TurnDaemon(
                         realtimeService.processCompletedCommands(world)
                         realtimeService.regenerateCommandPoints(world)
                     } else {
-                        turnService.processWorld(world)
+                        if (cqrsEnabled) {
+                            turnCoordinator.processWorld(world)
+                        } else {
+                            turnService.processWorld(world)
+                        }
                     }
                 } catch (e: Exception) {
                     logger.error("Error processing world ${world.id}: ${e.message}", e)
                 }
             }
         } finally {
-            state = DaemonState.FLUSHING
+            transitionTo(DaemonState.FLUSHING, "flush_start")
             try {
                 worldStateRepository.flush()
             } finally {
-                state = DaemonState.IDLE
+                transitionTo(DaemonState.IDLE, "tick_complete")
             }
         }
     }
 
-    fun pause() { state = DaemonState.PAUSED }
-    fun resume() { state = DaemonState.IDLE }
+    fun pause(reason: String = "manual_pause") { transitionTo(DaemonState.PAUSED, reason) }
+    fun resume(reason: String = "manual_resume") { transitionTo(DaemonState.IDLE, reason) }
     fun getStatus() = state
+    fun getStatusDetail() = mapOf("state" to state, "reason" to stateReason, "requestId" to requestId)
     fun manualRun() {
         if (state == DaemonState.IDLE) tick()
     }

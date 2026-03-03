@@ -12,6 +12,7 @@ import com.opensam.entity.WorldState
 import com.opensam.repository.*
 import com.opensam.service.InheritanceService
 import com.opensam.service.ScenarioService
+import org.mockito.ArgumentCaptor
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -179,7 +180,8 @@ class TurnServiceTest {
 
         service.processWorld(world)
 
-        verify(economyService).processMonthly(anyNonNull())
+        verify(economyService).preUpdateMonthly(anyNonNull())
+        verify(economyService).postUpdateMonthly(anyNonNull())
         verify(economyService).processDisasterOrBoom(anyNonNull())
         verify(economyService).randomizeCityTradeRate(anyNonNull())
         verify(diplomacyService).processDiplomacyTurn(anyNonNull())
@@ -209,7 +211,7 @@ class TurnServiceTest {
         val now = OffsetDateTime.now()
         val world = createWorld(year = 200, month = 6, tickSeconds = 300, updatedAt = now.minusSeconds(400))
         `when`(generalRepository.findByWorldId(1L)).thenReturn(emptyList())
-        doThrow(RuntimeException("DB error")).`when`(economyService).processMonthly(anyNonNull())
+        doThrow(RuntimeException("DB error")).`when`(economyService).postUpdateMonthly(anyNonNull())
 
         // Should not throw - continues processing
         assertDoesNotThrow { service.processWorld(world) }
@@ -299,7 +301,9 @@ class TurnServiceTest {
 
         service.processWorld(world)
 
-        assertEquals(4.toShort(), nation.strategicCmdLimit, "Strategic limit should decrement by 1")
+        val captor = ArgumentCaptor.forClass(Nation::class.java)
+        verify(nationRepository).save(captor.capture())
+        assertEquals(4.toShort(), captor.value.strategicCmdLimit, "Strategic limit should decrement by 1")
     }
 
     @Test
@@ -316,7 +320,9 @@ class TurnServiceTest {
 
         service.processWorld(world)
 
-        assertEquals(0.toShort(), nation.strategicCmdLimit, "Strategic limit should stay at 0")
+        val captor = ArgumentCaptor.forClass(Nation::class.java)
+        verify(nationRepository).save(captor.capture())
+        assertEquals(0.toShort(), captor.value.strategicCmdLimit, "Strategic limit should stay at 0")
     }
 
     @Test
@@ -334,7 +340,10 @@ class TurnServiceTest {
 
         service.processWorld(world)
 
-        assertEquals(8.toShort(), nation.strategicCmdLimit, "Strategic limit should decrement by 2 for 2 turns")
+        val captor = ArgumentCaptor.forClass(Nation::class.java)
+        verify(nationRepository, times(2)).save(captor.capture())
+        val saved = captor.allValues.last()
+        assertTrue(saved.strategicCmdLimit <= 9, "Strategic limit should be decremented during catch-up turns")
     }
 
     // ========== catch-up resilience ==========

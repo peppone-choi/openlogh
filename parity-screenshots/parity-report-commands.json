@@ -1,0 +1,1003 @@
+{
+  "section": "commands",
+  "timestamp": "2026-03-03T10:49:41.546Z",
+  "results": [
+    {
+      "check": "turn_daemon_paused",
+      "legacy": true,
+      "new": false,
+      "match": false
+    },
+    {
+      "check": "general_command_count_55",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "table=55"
+    },
+    {
+      "check": "command_table_has_휴식",
+      "legacy": true,
+      "new": true,
+      "match": true
+    },
+    {
+      "check": "reserve_휴식",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "reserved=휴식"
+    },
+    {
+      "check": "command_table_has_농지개간",
+      "legacy": true,
+      "new": true,
+      "match": true
+    },
+    {
+      "check": "reserve_농지개간",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "reserved=농지개간"
+    },
+    {
+      "check": "command_table_has_상업투자",
+      "legacy": true,
+      "new": true,
+      "match": true
+    },
+    {
+      "check": "reserve_상업투자",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "reserved=상업투자"
+    },
+    {
+      "check": "command_table_has_치안강화",
+      "legacy": true,
+      "new": true,
+      "match": true
+    },
+    {
+      "check": "reserve_치안강화",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "reserved=치안강화"
+    },
+    {
+      "check": "command_table_has_수비강화",
+      "legacy": true,
+      "new": true,
+      "match": true
+    },
+    {
+      "check": "reserve_수비강화",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "reserved=수비강화"
+    },
+    {
+      "check": "command_table_has_성벽보수",
+      "legacy": true,
+      "new": true,
+      "match": true
+    },
+    {
+      "check": "reserve_성벽보수",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "reserved=성벽보수"
+    },
+    {
+      "check": "command_table_has_정착장려",
+      "legacy": true,
+      "new": true,
+      "match": true
+    },
+    {
+      "check": "reserve_정착장려",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "reserved=정착장려"
+    },
+    {
+      "check": "command_table_has_주민선정",
+      "legacy": true,
+      "new": true,
+      "match": true
+    },
+    {
+      "check": "reserve_주민선정",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "reserved=주민선정"
+    },
+    {
+      "check": "command_table_has_기술연구",
+      "legacy": true,
+      "new": true,
+      "match": true
+    },
+    {
+      "check": "reserve_기술연구",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "reserved=기술연구"
+    },
+    {
+      "check": "command_table_has_모병",
+      "legacy": true,
+      "new": true,
+      "match": true
+    },
+    {
+      "check": "reserve_모병",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "reserved=모병"
+    },
+    {
+      "check": "command_table_has_징병",
+      "legacy": true,
+      "new": true,
+      "match": true
+    },
+    {
+      "check": "reserve_징병",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "reserved=징병"
+    },
+    {
+      "check": "command_table_has_훈련",
+      "legacy": true,
+      "new": true,
+      "match": true
+    },
+    {
+      "check": "reserve_훈련",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "reserved=훈련"
+    },
+    {
+      "check": "command_table_has_사기진작",
+      "legacy": true,
+      "new": true,
+      "match": true
+    },
+    {
+      "check": "reserve_사기진작",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "reserved=사기진작"
+    },
+    {
+      "check": "command_table_has_단련",
+      "legacy": true,
+      "new": true,
+      "match": true
+    },
+    {
+      "check": "reserve_단련",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "reserved=단련"
+    },
+    {
+      "check": "command_table_has_소집해제",
+      "legacy": true,
+      "new": true,
+      "match": true
+    },
+    {
+      "check": "reserve_소집해제",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "reserved=소집해제"
+    },
+    {
+      "check": "command_table_has_숙련전환",
+      "legacy": true,
+      "new": true,
+      "match": true
+    },
+    {
+      "check": "reserve_숙련전환",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "reserved=숙련전환"
+    },
+    {
+      "check": "command_table_has_물자조달",
+      "legacy": true,
+      "new": true,
+      "match": true
+    },
+    {
+      "check": "reserve_물자조달",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "reserved=물자조달"
+    },
+    {
+      "check": "command_table_has_군량매매",
+      "legacy": true,
+      "new": true,
+      "match": true
+    },
+    {
+      "check": "reserve_군량매매",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "reserved=군량매매"
+    },
+    {
+      "check": "command_table_has_헌납",
+      "legacy": true,
+      "new": true,
+      "match": true
+    },
+    {
+      "check": "reserve_헌납",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "reserved=헌납"
+    },
+    {
+      "check": "command_table_has_출병",
+      "legacy": true,
+      "new": true,
+      "match": true
+    },
+    {
+      "check": "reserve_출병",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "reserved=출병"
+    },
+    {
+      "check": "command_table_has_이동",
+      "legacy": true,
+      "new": true,
+      "match": true
+    },
+    {
+      "check": "reserve_이동",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "reserved=이동"
+    },
+    {
+      "check": "command_table_has_집합",
+      "legacy": true,
+      "new": true,
+      "match": true
+    },
+    {
+      "check": "reserve_집합",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "reserved=집합"
+    },
+    {
+      "check": "command_table_has_귀환",
+      "legacy": true,
+      "new": true,
+      "match": true
+    },
+    {
+      "check": "reserve_귀환",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "reserved=귀환"
+    },
+    {
+      "check": "command_table_has_접경귀환",
+      "legacy": true,
+      "new": true,
+      "match": true
+    },
+    {
+      "check": "reserve_접경귀환",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "reserved=접경귀환"
+    },
+    {
+      "check": "command_table_has_강행",
+      "legacy": true,
+      "new": true,
+      "match": true
+    },
+    {
+      "check": "reserve_강행",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "reserved=강행"
+    },
+    {
+      "check": "command_table_has_거병",
+      "legacy": true,
+      "new": true,
+      "match": true
+    },
+    {
+      "check": "reserve_거병",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "reserved=거병"
+    },
+    {
+      "check": "command_table_has_전투태세",
+      "legacy": true,
+      "new": true,
+      "match": true
+    },
+    {
+      "check": "reserve_전투태세",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "reserved=전투태세"
+    },
+    {
+      "check": "command_table_has_화계",
+      "legacy": true,
+      "new": true,
+      "match": true
+    },
+    {
+      "check": "reserve_화계",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "reserved=화계"
+    },
+    {
+      "check": "command_table_has_첩보",
+      "legacy": true,
+      "new": true,
+      "match": true
+    },
+    {
+      "check": "reserve_첩보",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "reserved=첩보"
+    },
+    {
+      "check": "command_table_has_선동",
+      "legacy": true,
+      "new": true,
+      "match": true
+    },
+    {
+      "check": "reserve_선동",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "reserved=선동"
+    },
+    {
+      "check": "command_table_has_탈취",
+      "legacy": true,
+      "new": true,
+      "match": true
+    },
+    {
+      "check": "reserve_탈취",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "reserved=탈취"
+    },
+    {
+      "check": "command_table_has_파괴",
+      "legacy": true,
+      "new": true,
+      "match": true
+    },
+    {
+      "check": "reserve_파괴",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "reserved=파괴"
+    },
+    {
+      "check": "command_table_has_요양",
+      "legacy": true,
+      "new": true,
+      "match": true
+    },
+    {
+      "check": "reserve_요양",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "reserved=요양"
+    },
+    {
+      "check": "command_table_has_방랑",
+      "legacy": true,
+      "new": true,
+      "match": true
+    },
+    {
+      "check": "reserve_방랑",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "reserved=방랑"
+    },
+    {
+      "check": "command_table_has_등용",
+      "legacy": true,
+      "new": true,
+      "match": true
+    },
+    {
+      "check": "reserve_등용",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "reserved=등용"
+    },
+    {
+      "check": "command_table_has_등용수락",
+      "legacy": true,
+      "new": true,
+      "match": true
+    },
+    {
+      "check": "reserve_등용수락",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "reserved=등용수락"
+    },
+    {
+      "check": "command_table_has_임관",
+      "legacy": true,
+      "new": true,
+      "match": true
+    },
+    {
+      "check": "reserve_임관",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "reserved=임관"
+    },
+    {
+      "check": "command_table_has_랜덤임관",
+      "legacy": true,
+      "new": true,
+      "match": true
+    },
+    {
+      "check": "reserve_랜덤임관",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "reserved=랜덤임관"
+    },
+    {
+      "check": "command_table_has_장수대상임관",
+      "legacy": true,
+      "new": true,
+      "match": true
+    },
+    {
+      "check": "reserve_장수대상임관",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "reserved=장수대상임관"
+    },
+    {
+      "check": "command_table_has_하야",
+      "legacy": true,
+      "new": true,
+      "match": true
+    },
+    {
+      "check": "reserve_하야",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "reserved=하야"
+    },
+    {
+      "check": "command_table_has_은퇴",
+      "legacy": true,
+      "new": true,
+      "match": true
+    },
+    {
+      "check": "reserve_은퇴",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "reserved=은퇴"
+    },
+    {
+      "check": "command_table_has_건국",
+      "legacy": true,
+      "new": true,
+      "match": true
+    },
+    {
+      "check": "reserve_건국",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "reserved=건국"
+    },
+    {
+      "check": "command_table_has_무작위건국",
+      "legacy": true,
+      "new": true,
+      "match": true
+    },
+    {
+      "check": "reserve_무작위건국",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "reserved=무작위건국"
+    },
+    {
+      "check": "command_table_has_모반시도",
+      "legacy": true,
+      "new": true,
+      "match": true
+    },
+    {
+      "check": "reserve_모반시도",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "reserved=모반시도"
+    },
+    {
+      "check": "command_table_has_선양",
+      "legacy": true,
+      "new": true,
+      "match": true
+    },
+    {
+      "check": "reserve_선양",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "reserved=선양"
+    },
+    {
+      "check": "command_table_has_해산",
+      "legacy": true,
+      "new": true,
+      "match": true
+    },
+    {
+      "check": "reserve_해산",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "reserved=해산"
+    },
+    {
+      "check": "command_table_has_견문",
+      "legacy": true,
+      "new": true,
+      "match": true
+    },
+    {
+      "check": "reserve_견문",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "reserved=견문"
+    },
+    {
+      "check": "command_table_has_인재탐색",
+      "legacy": true,
+      "new": true,
+      "match": true
+    },
+    {
+      "check": "reserve_인재탐색",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "reserved=인재탐색"
+    },
+    {
+      "check": "command_table_has_증여",
+      "legacy": true,
+      "new": true,
+      "match": true
+    },
+    {
+      "check": "reserve_증여",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "reserved=증여"
+    },
+    {
+      "check": "command_table_has_장비매매",
+      "legacy": true,
+      "new": true,
+      "match": true
+    },
+    {
+      "check": "reserve_장비매매",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "reserved=장비매매"
+    },
+    {
+      "check": "command_table_has_내정특기초기화",
+      "legacy": true,
+      "new": true,
+      "match": true
+    },
+    {
+      "check": "reserve_내정특기초기화",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "reserved=내정특기초기화"
+    },
+    {
+      "check": "command_table_has_전투특기초기화",
+      "legacy": true,
+      "new": true,
+      "match": true
+    },
+    {
+      "check": "reserve_전투특기초기화",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "reserved=전투특기초기화"
+    },
+    {
+      "check": "command_table_has_NPC능동",
+      "legacy": true,
+      "new": true,
+      "match": true
+    },
+    {
+      "check": "reserve_NPC능동",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "reserved=NPC능동"
+    },
+    {
+      "check": "command_table_has_CR건국",
+      "legacy": true,
+      "new": true,
+      "match": true
+    },
+    {
+      "check": "reserve_CR건국",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "reserved=CR건국"
+    },
+    {
+      "check": "command_table_has_CR맹훈련",
+      "legacy": true,
+      "new": true,
+      "match": true
+    },
+    {
+      "check": "reserve_CR맹훈련",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "reserved=CR맹훈련"
+    },
+    {
+      "check": "execute_휴식_success",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "휴식했습니다. 아무것도 실행하지 않았습니다. <1>212년 05월</>"
+    },
+    {
+      "check": "execute_휴식_effect_changed",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "skipped (no effectChecks); general=false, city=false, nation=false"
+    },
+    {
+      "check": "execute_농지개간_success",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "농지 개간을 하여 <C>56</> 상승했습니다. <1>212년 05월</>"
+    },
+    {
+      "check": "execute_농지개간_effect_changed",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "general=true, city=true, nation=false"
+    },
+    {
+      "check": "execute_상업투자_success",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "상업 투자를 <span class='ev_failed'>실패</span>하여 <C>41</> 상승했습니다. <1>212년 05월</>"
+    },
+    {
+      "check": "execute_상업투자_effect_changed",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "general=true, city=true, nation=false"
+    },
+    {
+      "check": "execute_치안강화_success",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "치안 강화를 하여 <C>63</> 상승했습니다. <1>212년 05월</>"
+    },
+    {
+      "check": "execute_치안강화_effect_changed",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "general=true, city=true, nation=false"
+    },
+    {
+      "check": "execute_수비강화_success",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "수비 강화를 <S>성공</>하여 <C>105</> 상승했습니다. <1>212년 05월</>"
+    },
+    {
+      "check": "execute_수비강화_effect_changed",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "general=true, city=true, nation=false"
+    },
+    {
+      "check": "execute_성벽보수_success",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "성벽 보수를 하여 <C>76</> 상승했습니다. <1>212년 05월</>"
+    },
+    {
+      "check": "execute_성벽보수_effect_changed",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "general=true, city=true, nation=false"
+    },
+    {
+      "check": "execute_정착장려_success",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "정착 장려를 <span class='ev_failed'>실패</span>하여 주민이 <C>200</>명 증가했습니다. <1>212년 05월</>"
+    },
+    {
+      "check": "execute_정착장려_effect_changed",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "general=true, city=true, nation=false"
+    },
+    {
+      "check": "execute_기술연구_success",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "기술 연구를 <span class='ev_failed'>실패</span>하여 <C>17</> 상승했습니다. <1>212년 05월</>"
+    },
+    {
+      "check": "execute_기술연구_effect_changed",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "general=true, city=false, nation=true"
+    },
+    {
+      "check": "execute_모병_success",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "병사 <C>100</>명을 추가모병했습니다. <1>212년 05월</>"
+    },
+    {
+      "check": "execute_모병_effect_changed",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "general=true, city=true, nation=false"
+    },
+    {
+      "check": "execute_징병_success",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "병사 <C>100</>명을 추가징병했습니다. <1>212년 05월</>"
+    },
+    {
+      "check": "execute_징병_effect_changed",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "general=true, city=true, nation=false"
+    },
+    {
+      "check": "execute_훈련_success",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "훈련치가 <C>1</> 상승했습니다. <1>212년 05월</> | <S>통솔</>이 <C>1</> 올랐습니다!"
+    },
+    {
+      "check": "execute_훈련_effect_changed",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "general=true, city=false, nation=false"
+    },
+    {
+      "check": "execute_사기진작_success",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "사기치가 <C>1</> 상승했습니다. <1>212년 05월</>"
+    },
+    {
+      "check": "execute_사기진작_effect_changed",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "general=true, city=false, nation=false"
+    },
+    {
+      "check": "execute_단련_success",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "병사 숙련도가 <C>6</> 향상되었습니다. <1>212년 05월</>"
+    },
+    {
+      "check": "execute_단련_effect_changed",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "general=true, city=false, nation=false"
+    },
+    {
+      "check": "execute_소집해제_success",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "병사들을 <R>소집해제</>하였습니다. <1>212년 05월</>"
+    },
+    {
+      "check": "execute_소집해제_effect_changed",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "general=true, city=true, nation=false"
+    },
+    {
+      "check": "execute_물자조달_success",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "조달을 <span class='ev_failed'>실패</span>하여 쌀을 <C>108</> 조달했습니다. <1>212년 05월</>"
+    },
+    {
+      "check": "execute_물자조달_effect_changed",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "general=false, city=false, nation=true"
+    },
+    {
+      "check": "execute_헌납_success",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "금 <C>100</>을 헌납했습니다. <1>212년 05월</>"
+    },
+    {
+      "check": "execute_헌납_effect_changed",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "general=true, city=false, nation=true"
+    },
+    {
+      "check": "execute_요양_success",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "건강 회복을 위해 요양합니다. <1>212년 05월</>"
+    },
+    {
+      "check": "execute_요양_effect_changed",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "general=true, city=false, nation=false"
+    },
+    {
+      "check": "execute_견문_success",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "쌀을 빌려주었다가 이자 300을 받았습니다. <1>212년 05월</>"
+    },
+    {
+      "check": "execute_견문_effect_changed",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "general=true, city=false, nation=false"
+    },
+    {
+      "check": "world_realtime_mode",
+      "legacy": true,
+      "new": false,
+      "match": true,
+      "details": "Realtime mode allows execute API but may reject turn reservation."
+    },
+    {
+      "check": "turn_daemon_resumed",
+      "legacy": true,
+      "new": false,
+      "match": false
+    }
+  ],
+  "screenshots": {
+    "legacy": "../parity-screenshots/parity-commands-legacy.png",
+    "new": "../parity-screenshots/parity-commands-new.png"
+  }
+}

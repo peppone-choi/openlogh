@@ -121,7 +121,7 @@ class NationAITest {
         diplomacies: List<Diplomacy> = emptyList(),
     ) {
         `when`(cityRepository.findByNationId(nation.id)).thenReturn(cities)
-        `when`(generalRepository.findByNationId(nation.id)).thenReturn(generals)
+        `when`(generalRepository.findByWorldIdAndNationId(1L, nation.id)).thenReturn(generals)
         `when`(nationRepository.findByWorldId(1L)).thenReturn(allNations)
         `when`(diplomacyRepository.findByWorldIdAndIsDeadFalse(1L)).thenReturn(diplomacies)
     }
@@ -132,8 +132,8 @@ class NationAITest {
         val target = createNation(id = 2, power = 50)
         `when`(cityRepository.findByNationId(1)).thenReturn(listOf(createCity(id = 1), createCity(id = 2)))
         `when`(cityRepository.findByNationId(2)).thenReturn(listOf(createCity(id = 3, nationId = 2)))
-        `when`(generalRepository.findByNationId(1)).thenReturn(listOf(createGeneral(id = 1), createGeneral(id = 2)))
-        `when`(generalRepository.findByNationId(2)).thenReturn(listOf(createGeneral(id = 3, nationId = 2)))
+        `when`(generalRepository.findByWorldIdAndNationId(1L, 1L)).thenReturn(listOf(createGeneral(id = 1), createGeneral(id = 2)))
+        `when`(generalRepository.findByWorldIdAndNationId(1L, 2L)).thenReturn(listOf(createGeneral(id = 3, nationId = 2)))
 
         assertTrue(ai.shouldDeclareWar(nation, target, createWorld()))
     }
@@ -144,8 +144,8 @@ class NationAITest {
         val target = createNation(id = 2, power = 200)
         `when`(cityRepository.findByNationId(1)).thenReturn(listOf(createCity()))
         `when`(cityRepository.findByNationId(2)).thenReturn(listOf(createCity(id = 2, nationId = 2)))
-        `when`(generalRepository.findByNationId(1)).thenReturn(listOf(createGeneral()))
-        `when`(generalRepository.findByNationId(2)).thenReturn(listOf(createGeneral(id = 2, nationId = 2)))
+        `when`(generalRepository.findByWorldIdAndNationId(1L, 1L)).thenReturn(listOf(createGeneral()))
+        `when`(generalRepository.findByWorldIdAndNationId(1L, 2L)).thenReturn(listOf(createGeneral(id = 2, nationId = 2)))
 
         assertFalse(ai.shouldDeclareWar(nation, target, createWorld()))
     }

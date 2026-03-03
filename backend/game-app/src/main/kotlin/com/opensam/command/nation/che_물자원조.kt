@@ -31,11 +31,10 @@ class che_물자원조(general: General, env: CommandEnv, arg: Map<String, Any>?
         val dn = destNation ?: return CommandResult(false, logs, "대상 국가 정보를 찾을 수 없습니다")
 
         // Parse amountList [goldAmount, riceAmount] matching PHP/TS
-        @Suppress("UNCHECKED_CAST")
-        val amountList = arg?.get("amountList") as? List<Number>
+        val amountList = readNumberList(arg?.get("amountList"))
         val goldAmount: Int
         val riceAmount: Int
-        if (amountList != null && amountList.size == 2) {
+        if (amountList.size == 2) {
             goldAmount = amountList[0].toInt()
             riceAmount = amountList[1].toInt()
         } else {
@@ -64,5 +63,10 @@ class che_물자원조(general: General, env: CommandEnv, arg: Map<String, Any>?
 
         pushLog("<D><b>${dn.name}</b></>로 금<C>$actualGold</> 쌀<C>$actualRice</>을 지원했습니다. <1>$date</>")
         return CommandResult(true, logs)
+    }
+
+    private fun readNumberList(raw: Any?): List<Number> {
+        if (raw !is Iterable<*>) return emptyList()
+        return raw.mapNotNull { it as? Number }
     }
 }

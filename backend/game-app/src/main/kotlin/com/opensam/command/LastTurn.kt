@@ -10,12 +10,13 @@ data class LastTurn(
     val arg: Map<String, Any>? = null,
     val term: Int? = null,
 ) {
-    @Suppress("UNCHECKED_CAST")
-    fun toMap(): MutableMap<String, Any> = buildMap {
-        put("command", command)
-        if (arg != null) put("arg", arg)
-        if (term != null) put("term", term)
-    }.toMutableMap() as MutableMap<String, Any>
+    fun toMap(): MutableMap<String, Any> {
+        val out = mutableMapOf<String, Any>()
+        out["command"] = command
+        if (arg != null) out["arg"] = arg
+        if (term != null) out["term"] = term
+        return out
+    }
 
     /**
      * Check if this LastTurn matches the given command code and arg.
@@ -53,10 +54,20 @@ data class LastTurn(
         fun fromMap(raw: Map<String, Any>?): LastTurn {
             if (raw == null) return LastTurn()
             val command = raw["command"] as? String ?: "휴식"
-            @Suppress("UNCHECKED_CAST")
-            val arg = raw["arg"] as? Map<String, Any>
+            val arg = readStringAnyMap(raw["arg"])
             val term = (raw["term"] as? Number)?.toInt()
             return LastTurn(command = command, arg = arg, term = term)
+        }
+
+        private fun readStringAnyMap(raw: Any?): Map<String, Any>? {
+            if (raw !is Map<*, *>) return null
+            val typed = mutableMapOf<String, Any>()
+            raw.forEach { (k, v) ->
+                if (k is String && v != null) {
+                    typed[k] = v
+                }
+            }
+            return typed
         }
     }
 }

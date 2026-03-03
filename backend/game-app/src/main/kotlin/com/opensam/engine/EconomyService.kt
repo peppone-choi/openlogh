@@ -4,10 +4,14 @@ import com.opensam.entity.City
 import com.opensam.entity.General
 import com.opensam.entity.Nation
 import com.opensam.entity.WorldState
-import com.opensam.repository.CityRepository
-import com.opensam.repository.GeneralRepository
+import com.opensam.engine.turn.cqrs.persist.JpaWorldPortFactory
+import com.opensam.engine.turn.cqrs.persist.toEntity
+import com.opensam.engine.turn.cqrs.persist.toSnapshot
+import com.opensam.engine.turn.cqrs.port.WorldWritePort
 import com.opensam.engine.modifier.IncomeContext
 import com.opensam.engine.modifier.NationTypeModifiers
+import com.opensam.repository.CityRepository
+import com.opensam.repository.GeneralRepository
 import com.opensam.repository.NationRepository
 import com.opensam.service.MapService
 import org.slf4j.LoggerFactory
@@ -19,11 +23,23 @@ import kotlin.math.sqrt
 
 @Service
 class EconomyService(
-    private val cityRepository: CityRepository,
-    private val nationRepository: NationRepository,
-    private val generalRepository: GeneralRepository,
+    private val worldPortFactory: JpaWorldPortFactory,
     private val mapService: MapService,
 ) {
+    constructor(
+        cityRepository: CityRepository,
+        nationRepository: NationRepository,
+        generalRepository: GeneralRepository,
+        mapService: MapService,
+    ) : this(
+        JpaWorldPortFactory(
+            generalRepository = generalRepository,
+            cityRepository = cityRepository,
+            nationRepository = nationRepository,
+        ),
+        mapService,
+    )
+
     private val log = LoggerFactory.getLogger(javaClass)
 
     companion object {
@@ -38,12 +54,31 @@ class EconomyService(
 
     @Transactional
     fun processMonthly(world: WorldState) {
-        val cities = cityRepository.findByWorldId(world.id.toLong())
-        val nations = nationRepository.findByWorldId(world.id.toLong())
-        val generals = generalRepository.findByWorldId(world.id.toLong())
+        preUpdateMonthly(world)
+        postUpdateMonthly(world)
+    }
+
+    @Transactional
+    fun preUpdateMonthly(world: WorldState) {
+        val ports = worldPortFactory.create(world.id.toLong())
+        val cities = ports.allCities().map { it.toEntity() }
+        val nations = ports.allNations().map { it.toEntity() }
+        val generals = ports.allGenerals().map { it.toEntity() }
 
         processIncome(world, nations, cities, generals)
         processWarIncome(nations, cities)
+
+        saveCities(ports, cities)
+        saveNations(ports, nations)
+        saveGenerals(ports, generals)
+    }
+
+    @Transactional
+    fun postUpdateMonthly(world: WorldState) {
+        val ports = worldPortFactory.create(world.id.toLong())
+        val cities = ports.allCities().map { it.toEntity() }
+        val nations = ports.allNations().map { it.toEntity() }
+        val generals = ports.allGenerals().map { it.toEntity() }
 
         if (world.currentMonth.toInt() == 1 || world.currentMonth.toInt() == 7) {
             processSemiAnnual(world, nations, cities, generals)
@@ -52,9 +87,9 @@ class EconomyService(
         updateCitySupply(world, nations, cities, generals)
         updateNationLevel(nations, cities)
 
-        cityRepository.saveAll(cities)
-        nationRepository.saveAll(nations)
-        generalRepository.saveAll(generals)
+        saveCities(ports, cities)
+        saveNations(ports, nations)
+        saveGenerals(ports, generals)
     }
 
     // ── Phase A1: processIncome (legacy formula) ──
@@ -308,12 +343,13 @@ class EconomyService(
      */
     @Transactional
     fun updateCitySupplyState(world: WorldState) {
-        val cities = cityRepository.findByWorldId(world.id.toLong())
-        val nations = nationRepository.findByWorldId(world.id.toLong())
-        val generals = generalRepository.findByWorldId(world.id.toLong())
+        val ports = worldPortFactory.create(world.id.toLong())
+        val cities = ports.allCities().map { it.toEntity() }
+        val nations = ports.allNations().map { it.toEntity() }
+        val generals = ports.allGenerals().map { it.toEntity() }
         updateCitySupply(world, nations, cities, generals)
-        cityRepository.saveAll(cities)
-        generalRepository.saveAll(generals)
+        saveCities(ports, cities)
+        saveGenerals(ports, generals)
     }
 
     /**
@@ -321,13 +357,14 @@ class EconomyService(
      */
     @Transactional
     fun processIncomeEvent(world: WorldState) {
-        val cities = cityRepository.findByWorldId(world.id.toLong())
-        val nations = nationRepository.findByWorldId(world.id.toLong())
-        val generals = generalRepository.findByWorldId(world.id.toLong())
+        val ports = worldPortFactory.create(world.id.toLong())
+        val cities = ports.allCities().map { it.toEntity() }
+        val nations = ports.allNations().map { it.toEntity() }
+        val generals = ports.allGenerals().map { it.toEntity() }
         processIncome(world, nations, cities, generals)
-        cityRepository.saveAll(cities)
-        nationRepository.saveAll(nations)
-        generalRepository.saveAll(generals)
+        saveCities(ports, cities)
+        saveNations(ports, nations)
+        saveGenerals(ports, generals)
     }
 
     /**
@@ -335,13 +372,14 @@ class EconomyService(
      */
     @Transactional
     fun processSemiAnnualEvent(world: WorldState) {
-        val cities = cityRepository.findByWorldId(world.id.toLong())
-        val nations = nationRepository.findByWorldId(world.id.toLong())
-        val generals = generalRepository.findByWorldId(world.id.toLong())
+        val ports = worldPortFactory.create(world.id.toLong())
+        val cities = ports.allCities().map { it.toEntity() }
+        val nations = ports.allNations().map { it.toEntity() }
+        val generals = ports.allGenerals().map { it.toEntity() }
         processSemiAnnual(world, nations, cities, generals)
-        cityRepository.saveAll(cities)
-        nationRepository.saveAll(nations)
-        generalRepository.saveAll(generals)
+        saveCities(ports, cities)
+        saveNations(ports, nations)
+        saveGenerals(ports, generals)
     }
 
     /**
@@ -349,10 +387,11 @@ class EconomyService(
      */
     @Transactional
     fun updateNationLevelEvent(world: WorldState) {
-        val cities = cityRepository.findByWorldId(world.id.toLong())
-        val nations = nationRepository.findByWorldId(world.id.toLong())
+        val ports = worldPortFactory.create(world.id.toLong())
+        val cities = ports.allCities().map { it.toEntity() }
+        val nations = ports.allNations().map { it.toEntity() }
         updateNationLevel(nations, cities)
-        nationRepository.saveAll(nations)
+        saveNations(ports, nations)
     }
 
     // ── Phase A2: updateCitySupply (+ trust < 30 neutral conversion) ──
@@ -481,9 +520,10 @@ class EconomyService(
      */
     @Transactional
     fun processYearlyStatistics(world: WorldState) {
-        val nations = nationRepository.findByWorldId(world.id.toLong())
-        val cities = cityRepository.findByWorldId(world.id.toLong())
-        val generals = generalRepository.findByWorldId(world.id.toLong())
+        val ports = worldPortFactory.create(world.id.toLong())
+        val nations = ports.allNations().map { it.toEntity() }
+        val cities = ports.allCities().map { it.toEntity() }
+        val generals = ports.allGenerals().map { it.toEntity() }
 
         val citiesByNation = cities.groupBy { it.nationId }
         val generalsByNation = generals.filter { it.npcState.toInt() != 5 }.groupBy { it.nationId }
@@ -538,7 +578,7 @@ class EconomyService(
             nation.power = power
         }
 
-        nationRepository.saveAll(nations)
+        saveNations(ports, nations)
         log.info("[World {}] Yearly statistics updated for {} nations", world.id, nations.size)
     }
 
@@ -554,7 +594,8 @@ class EconomyService(
         // Skip first 3 years
         if (startYear + 3 > world.currentYear.toInt()) return
 
-        val cities = cityRepository.findByWorldId(world.id.toLong())
+        val ports = worldPortFactory.create(world.id.toLong())
+        val cities = ports.allCities().map { it.toEntity() }
         val month = world.currentMonth.toInt()
 
         // Reset disaster state
@@ -591,7 +632,7 @@ class EconomyService(
         }
 
         if (targetCities.isEmpty()) {
-            cityRepository.saveAll(cities)
+            saveCities(ports, cities)
             return
         }
 
@@ -640,13 +681,14 @@ class EconomyService(
             }
         }
 
-        cityRepository.saveAll(cities)
+        saveCities(ports, cities)
     }
 
     // ── Phase A3: randomizeCityTradeRate ──
 
     fun randomizeCityTradeRate(world: WorldState) {
-        val cities = cityRepository.findByWorldId(world.id.toLong())
+        val ports = worldPortFactory.create(world.id.toLong())
+        val cities = ports.allCities().map { it.toEntity() }
         val hiddenSeed = (world.config["hiddenSeed"] as? String) ?: "${world.id}"
         val rng = DeterministicRng.create(
             hiddenSeed, "tradeRate",
@@ -665,6 +707,18 @@ class EconomyService(
             }
         }
 
-        cityRepository.saveAll(cities)
+        saveCities(ports, cities)
+    }
+
+    private fun saveCities(writePort: WorldWritePort, cities: List<City>) {
+        cities.forEach { writePort.putCity(it.toSnapshot()) }
+    }
+
+    private fun saveNations(writePort: WorldWritePort, nations: List<Nation>) {
+        nations.forEach { writePort.putNation(it.toSnapshot()) }
+    }
+
+    private fun saveGenerals(writePort: WorldWritePort, generals: List<General>) {
+        generals.forEach { writePort.putGeneral(it.toSnapshot()) }
     }
 }

@@ -1,4 +1,8 @@
 // Auth types
+export type JsonValue = unknown;
+
+export type JsonObject = Record<string, unknown>;
+
 export interface User {
   id: number;
   loginId: string;
@@ -330,7 +334,7 @@ export interface GeneralTurn {
   generalId: number;
   turnIdx: number;
   actionCode: string;
-  arg: Record<string, unknown>;
+  arg: CommandArg;
   brief: string | null;
   createdAt: string;
 }
@@ -342,7 +346,7 @@ export interface NationTurn {
   officerLevel: number;
   turnIdx: number;
   actionCode: string;
-  arg: Record<string, unknown>;
+  arg: CommandArg;
   brief: string | null;
   createdAt: string;
 }
@@ -352,6 +356,138 @@ export interface CommandResult {
   logs: string[];
   message?: string;
 }
+
+export type CommandArg = JsonObject;
+
+export interface WorldSummary {
+  id: number;
+  name: string;
+  scenarioCode: string;
+  currentYear: number;
+  currentMonth: number;
+  season: string;
+  phase: string;
+  tickSeconds: number;
+  realtimeMode: boolean;
+  totalPopulation: number;
+  activeNations: number;
+  activeGenerals: number;
+  humanPlayers: number;
+  atWar: boolean;
+  allowedTechLevel: number;
+  mapCode: string;
+}
+
+export interface OAuthLinkResponse {
+  redirectUrl: string;
+}
+
+export interface HallOfFameOptionsResponse {
+  seasons: {
+    id: number;
+    label: string;
+    scenarios: { code: string; label: string }[];
+  }[];
+}
+
+export interface TrafficResponse {
+  recentTraffic: {
+    year: number;
+    month: number;
+    refresh: number;
+    online: number;
+    date: string;
+  }[];
+  maxRefresh: number;
+  maxOnline: number;
+  topRefreshers: {
+    name: string;
+    refresh: number;
+    refreshScoreTotal: number;
+  }[];
+  totalRefresh: number;
+  totalRefreshScoreTotal: number;
+}
+
+export interface InheritanceOwnerCheckResponse {
+  ownerName?: string;
+  found: boolean;
+}
+
+export interface AuctionActionResponse {
+  success: boolean;
+  auctionId: number;
+  status: string;
+}
+
+export interface AuctionHistoryEntry {
+  id: number;
+  sellerGeneralId: number;
+  buyerGeneralId: number | null;
+  itemCode: string;
+  minPrice: number;
+  currentPrice: number;
+  status: string;
+  createdAt: string;
+  expiresAt: string;
+}
+
+export interface MarketPriceResponse {
+  worldId: number;
+  goldPerRice: number;
+  ricePerGold: number;
+  supply: number;
+  demand: number;
+}
+
+export interface MarketBuyRiceResponse {
+  success: boolean;
+  amount: number;
+  costGold: number;
+  goldPerRice: number;
+  generalGold: number;
+  generalRice: number;
+}
+
+export interface MarketSellRiceResponse {
+  success: boolean;
+  amount: number;
+  revenueGold: number;
+  goldPerRice: number;
+  generalGold: number;
+  generalRice: number;
+}
+
+export interface ItemAuctionCreateResponse {
+  id: number;
+  status: string;
+  expiresAt: string;
+}
+
+export interface CreateWorldResponse {
+  id: number;
+}
+
+export interface SystemFlagsResponse {
+  allowLogin: boolean;
+  allowJoin: boolean;
+}
+
+export interface ScrubResponse {
+  affected: number;
+}
+
+export interface ResetPasswordResponse {
+  tempPassword: string;
+}
+
+export interface AdminRaiseEventResponse {
+  result: boolean;
+  reason: string;
+  info?: JsonValue;
+}
+
+export type AccountDetailedInfoResponse = JsonObject;
 
 export interface RealtimeStatus {
   generalId: number;
@@ -503,7 +639,7 @@ export interface NationNoticeInfo {
 }
 
 export interface TroopInfoFront {
-  leader: { city: number; reservedCommand: Record<string, unknown> | null };
+  leader: { city: number; reservedCommand: CommandArg | null };
   name: string;
 }
 
@@ -566,7 +702,7 @@ export interface GeneralFrontInfo {
   refreshScoreTotal: number | null;
   refreshScore: number | null;
   autorunLimit: number;
-  reservedCommand: Record<string, unknown> | null;
+  reservedCommand: CommandArg | null;
   troopInfo: TroopInfoFront | null;
   dex1: number;
   dex2: number;
@@ -747,6 +883,10 @@ export interface InheritanceActionResult {
   remainingPoints?: number;
   newLevel?: number;
   error?: string;
+}
+
+export interface InheritanceLogResponse {
+  log: InheritanceLogEntry[];
 }
 
 // Tournament

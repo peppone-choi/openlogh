@@ -4,18 +4,42 @@ import com.opensam.engine.turn.cqrs.memory.DirtyTracker
 import com.opensam.engine.turn.cqrs.memory.GeneralSnapshot
 import com.opensam.engine.turn.cqrs.memory.GeneralTurnSnapshot
 import com.opensam.engine.turn.cqrs.memory.InMemoryTurnProcessor
+import com.opensam.engine.turn.cqrs.memory.InMemoryWorldPorts
 import com.opensam.engine.turn.cqrs.memory.InMemoryWorldState
 import com.opensam.engine.turn.cqrs.memory.NationSnapshot
 import com.opensam.engine.turn.cqrs.memory.NationTurnKey
 import com.opensam.engine.turn.cqrs.memory.NationTurnSnapshot
+import com.opensam.engine.turn.cqrs.memory.WorldIndexes
 import com.opensam.entity.WorldState
+import com.opensam.repository.TrafficSnapshotRepository
+import com.opensam.service.AuctionService
+import com.opensam.service.InheritanceService
+import com.opensam.service.NationService
+import com.opensam.service.TournamentService
+import com.opensam.service.WorldService
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
+import org.mockito.Mockito.mock
 import java.time.OffsetDateTime
 
 class DeterministicReplayParityTest {
-    private val processor = InMemoryTurnProcessor()
+    private val processor = InMemoryTurnProcessor(
+        economyService = mock(EconomyService::class.java),
+        eventService = mock(EventService::class.java),
+        diplomacyService = mock(DiplomacyService::class.java),
+        generalMaintenanceService = mock(GeneralMaintenanceService::class.java),
+        specialAssignmentService = mock(SpecialAssignmentService::class.java),
+        npcSpawnService = mock(NpcSpawnService::class.java),
+        unificationService = mock(UnificationService::class.java),
+        inheritanceService = mock(InheritanceService::class.java),
+        yearbookService = mock(YearbookService::class.java),
+        auctionService = mock(AuctionService::class.java),
+        tournamentService = mock(TournamentService::class.java),
+        trafficSnapshotRepository = mock(TrafficSnapshotRepository::class.java),
+        worldService = mock(WorldService::class.java),
+        nationService = mock(NationService::class.java),
+    )
 
     @Test
     fun `replay fixture consumes player and nation queues with expected snapshot`() {
@@ -58,13 +82,16 @@ class DeterministicReplayParityTest {
     }
 
     private fun runFixture(fixture: ReplayFixture): CanonicalReplayOutput {
-        val dirtyTracker = DirtyTracker()
-        val result = processor.process(fixture.state, dirtyTracker, fixture.world)
+        val ports = InMemoryWorldPorts(fixture.state, fixture.tracker, WorldIndexes(fixture.state))
+        val result = processor.process(fixture.world, fixture.state, ports)
         val general = fixture.state.generals.getValue(fixture.generalId)
         val nation = fixture.state.nations.getValue(fixture.nationId)
         val lastActionCode = general.lastTurn["actionCode"] as? String ?: "NONE"
-        @Suppress("UNCHECKED_CAST")
-        val lastActionArg = (general.lastTurn["arg"] as? Map<String, Any>) ?: emptyMap()
+        val lastActionArg = (general.lastTurn["arg"] as? Map<*, *>)
+            ?.entries
+            ?.filter { it.key is String && it.value != null }
+            ?.associate { it.key as String to it.value as Any }
+            ?: emptyMap()
 
         return CanonicalReplayOutput(
             advancedTurns = result.advancedTurns,
@@ -150,6 +177,7 @@ class DeterministicReplayParityTest {
         return ReplayFixture(
             world = world,
             state = state,
+            tracker = DirtyTracker(),
             generalId = 101,
             nationId = 10,
             generalOfficerLevel = 5,
@@ -208,17 +236,14 @@ class DeterministicReplayParityTest {
         return ReplayFixture(
             world = world,
             state = state,
+            tracker = DirtyTracker(),
             generalId = 201,
             nationId = 20,
             generalOfficerLevel = 5,
         )
     }
 
-    private fun nationSnapshot(
-        id: Long,
-        worldId: Long,
-        strategicCmdLimit: Int,
-    ): NationSnapshot {
+    private fun nationSnapshot(id: Long, worldId: Long, strategicCmdLimit: Int): NationSnapshot {
         val now = OffsetDateTime.now()
         return NationSnapshot(
             id = id,
@@ -336,6 +361,7 @@ class DeterministicReplayParityTest {
     private data class ReplayFixture(
         val world: WorldState,
         val state: InMemoryWorldState,
+        val tracker: DirtyTracker,
         val generalId: Long,
         val nationId: Long,
         val generalOfficerLevel: Short,

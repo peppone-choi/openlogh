@@ -31,7 +31,7 @@ import { Input } from "@/components/ui/input";
 import { useWorldStore } from "@/stores/worldStore";
 import { useGeneralStore } from "@/stores/generalStore";
 import { commandApi } from "@/lib/gameApi";
-import type { NationTurn, CommandTableEntry } from "@/types";
+import type { CommandArg, CommandTableEntry, NationTurn } from "@/types";
 
 /** Server clock display */
 function ServerClock() {
@@ -64,7 +64,7 @@ const TURN_COUNT = 12;
 interface NationFilledTurn {
   turnIdx: number;
   actionCode: string;
-  arg: Record<string, unknown>;
+  arg: CommandArg;
   brief: string | null;
 }
 
@@ -73,9 +73,49 @@ interface NationPreset {
   items: {
     offset: number;
     actionCode: string;
-    arg: Record<string, unknown>;
+    arg: CommandArg;
     brief: string | null;
   }[];
+}
+
+function isCommandArg(value: unknown): value is CommandArg {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function toCommandArg(value: unknown): CommandArg | null {
+  return isCommandArg(value) ? value : null;
+}
+
+function parseNationPresets(raw: string): NationPreset[] {
+  const parsed: unknown = JSON.parse(raw);
+  if (!Array.isArray(parsed)) return [];
+  return parsed
+    .map((entry): NationPreset | null => {
+      const record = toCommandArg(entry);
+      if (!record) return null;
+      if (typeof record.name !== "string" || !Array.isArray(record.items)) {
+        return null;
+      }
+      const items = record.items
+        .map((item): NationPreset["items"][number] | null => {
+          const row = toCommandArg(item);
+          if (!row) return null;
+          if (typeof row.offset !== "number" || typeof row.actionCode !== "string") {
+            return null;
+          }
+          if (!isCommandArg(row.arg)) return null;
+          if (typeof row.brief !== "string" && row.brief !== null) return null;
+          return {
+            offset: row.offset,
+            actionCode: row.actionCode,
+            arg: row.arg,
+            brief: row.brief,
+          };
+        })
+        .filter((v): v is NationPreset["items"][number] => v !== null);
+      return { name: record.name, items };
+    })
+    .filter((v): v is NationPreset => v !== null);
 }
 
 /** Nation Command Panel with drag/drop + clipboard + presets */
@@ -133,8 +173,7 @@ function NationCommandPanel({
     try {
       const raw = window.localStorage.getItem(presetKey);
       if (!raw) return;
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) setPresets(parsed);
+      setPresets(parseNationPresets(raw));
     } catch {
       // ignore
     }
@@ -168,7 +207,7 @@ function NationCommandPanel({
 
   const handleReserve = async (
     actionCode: string,
-    arg?: Record<string, unknown>,
+    arg?: CommandArg,
   ) => {
     try {
       await commandApi.reserveNation(nationId, generalId, [

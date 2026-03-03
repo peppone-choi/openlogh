@@ -1,5 +1,7 @@
 package com.opensam.controller
 
+import com.opensam.dto.RaiseEventRequest
+import com.opensam.dto.SetPermissionRequest
 import com.opensam.service.*
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
@@ -126,18 +128,6 @@ class LegacyParityController(
 
     private fun currentLoginId(): String? = SecurityContextHolder.getContext().authentication?.name
 
-    private fun unauthorized(): ResponseEntity<Any> =
+private fun unauthorized(): ResponseEntity<Any> =
         ResponseEntity.status(401).body(mapOf("result" to false, "reason" to "Unauthorized"))
 }
-
-data class SetPermissionRequest(
-    val requesterId: Long,
-    val isAmbassador: Boolean,
-    val generalIds: List<Long>,
-)
-
-data class RaiseEventRequest(
-    val event: String,
-    val args: List<Any>? = null,
-    val worldId: Long? = null,
-)

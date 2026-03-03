@@ -88,16 +88,13 @@ class InheritanceService(
         val user = appUserRepository.findByLoginId(loginId) ?: return null
         val points = (user.meta["inheritPoints"] as? Number)?.toInt() ?: 0
 
-        @Suppress("UNCHECKED_CAST")
-        val rawBuffs = user.meta["inheritBuffs"] as? Map<String, Any> ?: emptyMap()
+        val rawBuffs = readStringAnyMap(user.meta["inheritBuffs"])
         val buffs = rawBuffs.mapValues { (it.value as? Number)?.toInt() ?: 0 }
 
-        @Suppress("UNCHECKED_CAST")
-        val rawInheritBuff = user.meta["inheritCombatBuffs"] as? Map<String, Any> ?: emptyMap()
+        val rawInheritBuff = readStringAnyMap(user.meta["inheritCombatBuffs"])
         val inheritBuff = rawInheritBuff.mapValues { (it.value as? Number)?.toInt() ?: 0 }
 
-        @Suppress("UNCHECKED_CAST")
-        val rawLog = user.meta["inheritLog"] as? List<Map<String, Any>> ?: emptyList()
+        val rawLog = readStringAnyMapList(user.meta["inheritLog"])
         var logId = rawLog.size.toLong()
         val log = rawLog.map { entry ->
             logId--
@@ -111,9 +108,8 @@ class InheritanceService(
         }
 
         // Point breakdown
-        @Suppress("UNCHECKED_CAST")
-        val rawBreakdown = user.meta["inheritPointBreakdown"] as? Map<String, Any>
-        val pointBreakdown = rawBreakdown?.mapValues { (it.value as? Number)?.toInt() ?: 0 }
+        val rawBreakdown = readStringAnyMap(user.meta["inheritPointBreakdown"])
+        val pointBreakdown = rawBreakdown.mapValues { (it.value as? Number)?.toInt() ?: 0 }
 
         val turnResetCount = (user.meta["inheritTurnResetCount"] as? Number)?.toInt() ?: 0
         val specialWarResetCount = (user.meta["inheritSpecialWarResetCount"] as? Number)?.toInt() ?: 0
@@ -172,8 +168,7 @@ class InheritanceService(
         if (request.type !in COMBAT_BUFF_TYPES) return InheritanceActionResult(error = "잘못된 전투 버프 타입")
         if (request.level < 1 || request.level > MAX_BUFF_LEVEL) return InheritanceActionResult(error = "잘못된 레벨")
 
-        @Suppress("UNCHECKED_CAST")
-        val combatBuffs = (user.meta["inheritCombatBuffs"] as? MutableMap<String, Any>) ?: mutableMapOf()
+        val combatBuffs = getOrCreateMutableStringAnyMap(user.meta, "inheritCombatBuffs")
         val currentLevel = (combatBuffs[request.type] as? Number)?.toInt() ?: 0
         if (request.level <= currentLevel) return InheritanceActionResult(error = "현재 레벨보다 높아야 합니다")
 
@@ -336,8 +331,7 @@ class InheritanceService(
     fun getMoreLog(worldId: Long, loginId: String, lastID: Long): List<InheritanceLogEntry> {
         val user = appUserRepository.findByLoginId(loginId) ?: return emptyList()
 
-        @Suppress("UNCHECKED_CAST")
-        val rawLog = user.meta["inheritLog"] as? List<Map<String, Any>> ?: emptyList()
+        val rawLog = readStringAnyMapList(user.meta["inheritLog"])
 
         var logId = rawLog.size.toLong()
         val allLogs = rawLog.map { entry ->
@@ -405,8 +399,7 @@ class InheritanceService(
     }
 
     private fun addInheritLog(user: AppUser, action: String, amount: Int) {
-        @Suppress("UNCHECKED_CAST")
-        val log = (user.meta["inheritLog"] as? MutableList<Map<String, Any>>) ?: mutableListOf()
+        val log = getOrCreateMutableStringAnyMapList(user.meta, "inheritLog")
         log.add(mapOf(
             "action" to action,
             "amount" to amount,
@@ -417,5 +410,64 @@ class InheritanceService(
         } else {
             user.meta["inheritLog"] = log
         }
+    }
+
+    private fun readStringAnyMap(raw: Any?): Map<String, Any> {
+        if (raw !is Map<*, *>) return emptyMap()
+        val result = mutableMapOf<String, Any>()
+        raw.forEach { (key, value) ->
+            if (key is String && value != null) {
+                result[key] = value
+            }
+        }
+        return result
+    }
+
+    private fun readStringAnyMapList(raw: Any?): List<Map<String, Any>> {
+        if (raw !is Iterable<*>) return emptyList()
+        return raw.mapNotNull { readStringAnyMapOrNull(it) }
+    }
+
+    private fun readStringAnyMapOrNull(raw: Any?): Map<String, Any>? {
+        if (raw !is Map<*, *>) return null
+        val result = mutableMapOf<String, Any>()
+        raw.forEach { (key, value) ->
+            if (key is String && value != null) {
+                result[key] = value
+            }
+        }
+        return result
+    }
+
+    private fun getOrCreateMutableStringAnyMap(container: MutableMap<String, Any>, key: String): MutableMap<String, Any> {
+        val current = container[key]
+        val typed = mutableMapOf<String, Any>()
+        if (current is Map<*, *>) {
+            current.forEach { (k, v) ->
+                if (k is String && v != null) {
+                    typed[k] = v
+                }
+            }
+        }
+        container[key] = typed
+        return typed
+    }
+
+    private fun getOrCreateMutableStringAnyMapList(
+        container: MutableMap<String, Any>,
+        key: String,
+    ): MutableList<Map<String, Any>> {
+        val current = container[key]
+        val typed = mutableListOf<Map<String, Any>>()
+        if (current is Iterable<*>) {
+            current.forEach { entry ->
+                val parsed = readStringAnyMapOrNull(entry)
+                if (parsed != null) {
+                    typed.add(parsed)
+                }
+            }
+        }
+        container[key] = typed
+        return typed
     }
 }

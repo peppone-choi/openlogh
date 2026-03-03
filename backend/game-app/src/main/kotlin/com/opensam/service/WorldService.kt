@@ -129,7 +129,6 @@ class WorldService(
     /**
      * Get a configuration value with a typed default.
      */
-    @Suppress("UNCHECKED_CAST")
     fun <T> getConfig(world: WorldState, key: String, default: T): T {
         return (world.config[key] as? T) ?: default
     }

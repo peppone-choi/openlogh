@@ -276,8 +276,7 @@ abstract class BaseCommand(
      * Get crew type name from the environment game storage.
      */
     protected fun getCrewTypeName(crewTypeId: Int): String? {
-        @Suppress("UNCHECKED_CAST")
-        val crewTypes = env.gameStor["crewTypes"] as? Map<String, Any> ?: return null
+        val crewTypes = readStringAnyMap(env.gameStor["crewTypes"]) ?: return null
         val entry = crewTypes[crewTypeId.toString()] as? Map<*, *> ?: return null
         return entry["name"] as? String
     }
@@ -293,5 +292,16 @@ abstract class BaseCommand(
         merged.putAll(env.gameStor)
         merged.putAll(constraintEnv)
         return merged
+    }
+
+    private fun readStringAnyMap(raw: Any?): Map<String, Any>? {
+        if (raw !is Map<*, *>) return null
+        val typed = mutableMapOf<String, Any>()
+        raw.forEach { (key, value) ->
+            if (key is String && value != null) {
+                typed[key] = value
+            }
+        }
+        return typed
     }
 }

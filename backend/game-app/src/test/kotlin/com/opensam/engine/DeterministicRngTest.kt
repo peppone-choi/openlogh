@@ -7,8 +7,8 @@ class DeterministicRngTest {
 
     @Test
     fun `same seed and tags produce same sequence`() {
-        val rng1 = DeterministicRng.create("world1", "general", 1L, 200, 1)
-        val rng2 = DeterministicRng.create("world1", "general", 1L, 200, 1)
+        val rng1 = DeterministicRng.create("world1", "generalCommand", 1L, 200, 1)
+        val rng2 = DeterministicRng.create("world1", "generalCommand", 1L, 200, 1)
 
         val values1 = (1..10).map { rng1.nextInt() }
         val values2 = (1..10).map { rng2.nextInt() }
@@ -18,8 +18,8 @@ class DeterministicRngTest {
 
     @Test
     fun `different seeds produce different sequences`() {
-        val rng1 = DeterministicRng.create("world1", "general", 1L, 200, 1)
-        val rng2 = DeterministicRng.create("world2", "general", 1L, 200, 1)
+        val rng1 = DeterministicRng.create("world1", "generalCommand", 1L, 200, 1)
+        val rng2 = DeterministicRng.create("world2", "generalCommand", 1L, 200, 1)
 
         val values1 = (1..10).map { rng1.nextInt() }
         val values2 = (1..10).map { rng2.nextInt() }
@@ -29,8 +29,8 @@ class DeterministicRngTest {
 
     @Test
     fun `different tags produce different sequences`() {
-        val rng1 = DeterministicRng.create("world1", "general", 1L, 200, 1)
-        val rng2 = DeterministicRng.create("world1", "nation", 1L, 200, 1)
+        val rng1 = DeterministicRng.create("world1", "generalCommand", 1L, 200, 1)
+        val rng2 = DeterministicRng.create("world1", "nationCommand", 1L, 200, 1)
 
         val values1 = (1..10).map { rng1.nextInt() }
         val values2 = (1..10).map { rng2.nextInt() }
@@ -40,8 +40,8 @@ class DeterministicRngTest {
 
     @Test
     fun `different general ids produce different sequences`() {
-        val rng1 = DeterministicRng.create("world1", "general", 1L, 200, 1)
-        val rng2 = DeterministicRng.create("world1", "general", 2L, 200, 1)
+        val rng1 = DeterministicRng.create("world1", "generalCommand", 1L, 200, 1)
+        val rng2 = DeterministicRng.create("world1", "generalCommand", 2L, 200, 1)
 
         val values1 = (1..5).map { rng1.nextInt() }
         val values2 = (1..5).map { rng2.nextInt() }
@@ -51,8 +51,8 @@ class DeterministicRngTest {
 
     @Test
     fun `different months produce different sequences`() {
-        val rng1 = DeterministicRng.create("world1", "general", 1L, 200, 1)
-        val rng2 = DeterministicRng.create("world1", "general", 1L, 200, 2)
+        val rng1 = DeterministicRng.create("world1", "generalCommand", 1L, 200, 1)
+        val rng2 = DeterministicRng.create("world1", "generalCommand", 1L, 200, 2)
 
         val v1 = rng1.nextInt()
         val v2 = rng2.nextInt()

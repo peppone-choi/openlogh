@@ -1,0 +1,64 @@
+{
+  "section": "main",
+  "timestamp": "2026-03-03T09:17:12.286Z",
+  "results": [
+    {
+      "check": "main_loaded",
+      "legacy": true,
+      "new": true,
+      "match": true
+    },
+    {
+      "check": "main_section_serverInfo",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "markers=현재:,턴,접속자"
+    },
+    {
+      "check": "main_section_cityInfo",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "markers=인구,농업,상업,치안,수비,성벽"
+    },
+    {
+      "check": "main_section_nationInfo",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "markers=국가방침,국력,군주,금,쌀"
+    },
+    {
+      "check": "main_section_generalInfo",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "markers=통솔,무력,지력,정치,매력"
+    },
+    {
+      "check": "main_section_news",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "markers=장수 동향,개인 기록,중원 정세"
+    },
+    {
+      "check": "main_section_messages",
+      "legacy": true,
+      "new": true,
+      "match": true,
+      "details": "markers=전체,국가,개인,외교"
+    },
+    {
+      "check": "main_map_widget_visible",
+      "legacy": false,
+      "new": true,
+      "match": false
+    }
+  ],
+  "screenshots": {
+    "legacy": "../parity-screenshots/parity-main-legacy.png",
+    "new": "../parity-screenshots/parity-main-new.png"
+  }
+}

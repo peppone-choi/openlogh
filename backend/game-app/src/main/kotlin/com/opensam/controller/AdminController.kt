@@ -182,8 +182,7 @@ class AdminController(
         return try {
             val loginId = currentLoginId() ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
             val resolvedWorldId = adminAuthorizationService.resolveWorldIdOrThrow(loginId, worldId, PERMISSION_BLOCK_GENERAL)
-            @Suppress("UNCHECKED_CAST")
-            val ids = (body["ids"] as? List<Number>)?.map { it.toLong() } ?: return ResponseEntity.badRequest().build()
+            val ids = readLongList(body["ids"]) ?: return ResponseEntity.badRequest().build()
             val type = body["type"] as? String ?: return ResponseEntity.badRequest().build()
             for (id in ids) {
                 adminService.generalAction(resolvedWorldId, id, type)
@@ -196,5 +195,19 @@ class AdminController(
 
     private fun currentLoginId(): String? {
         return SecurityContextHolder.getContext().authentication?.name
+    }
+
+    private fun readLongList(raw: Any?): List<Long>? {
+        if (raw !is Iterable<*>) return null
+        val out = mutableListOf<Long>()
+        raw.forEach { entry ->
+            val value = when (entry) {
+                is Number -> entry.toLong()
+                is String -> entry.toLongOrNull()
+                else -> null
+            } ?: return null
+            out.add(value)
+        }
+        return out
     }
 }

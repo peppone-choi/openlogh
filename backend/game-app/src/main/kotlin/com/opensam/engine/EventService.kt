@@ -2,6 +2,7 @@ package com.opensam.engine
 
 import com.opensam.entity.Message
 import com.opensam.entity.WorldState
+import com.opensam.engine.turn.cqrs.persist.JpaWorldPortFactory
 import com.opensam.repository.EventRepository
 import com.opensam.repository.MessageRepository
 import com.opensam.repository.NationRepository
@@ -13,13 +14,31 @@ import org.springframework.transaction.annotation.Transactional
 @Service
 class EventService(
     private val eventRepository: EventRepository,
-    private val nationRepository: NationRepository,
+    private val worldPortFactory: JpaWorldPortFactory,
     private val messageRepository: MessageRepository,
     private val economyService: EconomyService,
     private val npcSpawnService: NpcSpawnService,
     private val scenarioService: ScenarioService,
     private val eventActionService: EventActionService,
 ) {
+    constructor(
+        eventRepository: EventRepository,
+        nationRepository: NationRepository,
+        messageRepository: MessageRepository,
+        economyService: EconomyService,
+        npcSpawnService: NpcSpawnService,
+        scenarioService: ScenarioService,
+        eventActionService: EventActionService,
+    ) : this(
+        eventRepository = eventRepository,
+        worldPortFactory = JpaWorldPortFactory(nationRepository = nationRepository),
+        messageRepository = messageRepository,
+        economyService = economyService,
+        npcSpawnService = npcSpawnService,
+        scenarioService = scenarioService,
+        eventActionService = eventActionService,
+    )
+
     private val log = LoggerFactory.getLogger(EventService::class.java)
 
     @Transactional
@@ -80,26 +99,28 @@ class EventService(
 
             "remain_nation" -> {
                 val count = (condition["count"] as? Number)?.toInt() ?: return false
-                val nationCount = nationRepository.findByWorldId(world.id.toLong()).size
+                val nationCount = worldPortFactory.create(world.id.toLong()).allNations().size
                 nationCount <= count
             }
 
             "and" -> {
-                @Suppress("UNCHECKED_CAST")
-                val conditions = condition["conditions"] as? List<Map<String, Any>> ?: return false
+                val conditions = readStringAnyMapList(condition["conditions"]) ?: return false
                 conditions.all { evaluateCondition(it, world) }
             }
 
             "or" -> {
-                @Suppress("UNCHECKED_CAST")
-                val conditions = condition["conditions"] as? List<Map<String, Any>> ?: return false
+                val conditions = readStringAnyMapList(condition["conditions"]) ?: return false
                 conditions.any { evaluateCondition(it, world) }
             }
 
             "not" -> {
-                @Suppress("UNCHECKED_CAST")
-                val sub = condition["condition"] as? Map<String, Any> ?: return false
+                val sub = readStringAnyMap(condition["condition"]) ?: return false
                 !evaluateCondition(sub, world)
+            }
+
+            "xor" -> {
+                val conditions = readStringAnyMapList(condition["conditions"]) ?: return false
+                conditions.count { evaluateCondition(it, world) } == 1
             }
 
             else -> {
@@ -201,8 +222,7 @@ class EventService(
 
             // Compound action: execute multiple sub-actions sequentially
             "compound" -> {
-                @Suppress("UNCHECKED_CAST")
-                val actions = action["actions"] as? List<Map<String, Any>> ?: return
+                val actions = readStringAnyMapList(action["actions"]) ?: return
                 for (subAction in actions) {
                     executeAction(subAction, world, currentEventId)
                 }
@@ -237,8 +257,7 @@ class EventService(
 
             "change_city" -> {
                 val target = action["target"]
-                @Suppress("UNCHECKED_CAST")
-                val changes = action["changes"] as? Map<String, Any> ?: return
+                val changes = readStringAnyMap(action["changes"]) ?: return
                 eventActionService.changeCity(world, target, changes)
             }
 
@@ -289,14 +308,12 @@ class EventService(
             }
 
             "reg_npc" -> {
-                @Suppress("UNCHECKED_CAST")
-                val params = action.filterKeys { it != "type" }
+                val params = action.filterKeys { it != "type" }.toMap()
                 eventActionService.regNPC(world, params)
             }
 
             "reg_neutral_npc" -> {
-                @Suppress("UNCHECKED_CAST")
-                val params = action.filterKeys { it != "type" }
+                val params = action.filterKeys { it != "type" }.toMap()
                 eventActionService.regNeutralNPC(world, params)
             }
 
@@ -308,5 +325,26 @@ class EventService(
                 log.warn("[World {}] Unknown action type: {}", world.id, type)
             }
         }
+    }
+
+    private fun readStringAnyMap(raw: Any?): Map<String, Any>? {
+        if (raw !is Map<*, *>) return null
+        val result = mutableMapOf<String, Any>()
+        raw.forEach { (key, value) ->
+            if (key is String && value != null) {
+                result[key] = value
+            }
+        }
+        return result
+    }
+
+    private fun readStringAnyMapList(raw: Any?): List<Map<String, Any>>? {
+        if (raw !is Iterable<*>) return null
+        val result = mutableListOf<Map<String, Any>>()
+        raw.forEach { entry ->
+            val parsed = readStringAnyMap(entry) ?: return@forEach
+            result.add(parsed)
+        }
+        return result
     }
 }

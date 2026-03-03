@@ -44,40 +44,32 @@ object CommandResultApplicator {
             return
         }
 
-        @Suppress("UNCHECKED_CAST")
-        (json["statChanges"] as? Map<String, Any>)?.let { applyStatChanges(general, it) }
+        readStringAnyMap(json["statChanges"])?.let { applyStatChanges(general, it) }
 
-        @Suppress("UNCHECKED_CAST")
-        (json["cityChanges"] as? Map<String, Any>)?.let {
+        readStringAnyMap(json["cityChanges"])?.let {
             if (city != null) applyCityChanges(city, it)
         }
 
-        @Suppress("UNCHECKED_CAST")
-        (json["nationChanges"] as? Map<String, Any>)?.let {
+        readStringAnyMap(json["nationChanges"])?.let {
             if (nation != null) applyNationChanges(nation, it)
         }
 
-        @Suppress("UNCHECKED_CAST")
-        (json["destGeneralChanges"] as? Map<String, Any>)?.let {
+        readStringAnyMap(json["destGeneralChanges"])?.let {
             if (destGeneral != null) applyStatChanges(destGeneral, it)
         }
 
-        @Suppress("UNCHECKED_CAST")
-        (json["destCityChanges"] as? Map<String, Any>)?.let {
+        readStringAnyMap(json["destCityChanges"])?.let {
             if (destCity != null) applyCityChanges(destCity, it)
         }
 
-        @Suppress("UNCHECKED_CAST")
-        (json["destNationChanges"] as? Map<String, Any>)?.let {
+        readStringAnyMap(json["destNationChanges"])?.let {
             if (destNation != null) applyNationChanges(destNation, it)
         }
 
-        @Suppress("UNCHECKED_CAST")
-        (json["dexChanges"] as? Map<String, Any>)?.let { applyDexChanges(general, it) }
+        readStringAnyMap(json["dexChanges"])?.let { applyDexChanges(general, it) }
 
         // Extra stat changes (e.g., 탈취 general's share of stolen resources)
-        @Suppress("UNCHECKED_CAST")
-        (json["extraStatChanges"] as? Map<String, Any>)?.let { applyStatChanges(general, it) }
+        readStringAnyMap(json["extraStatChanges"])?.let { applyStatChanges(general, it) }
 
         // Consumable item: delete item on use (legacy: tryConsumeNow + deleteItem)
         if (json["consumeItem"] == true) {
@@ -85,14 +77,12 @@ object CommandResultApplicator {
         }
 
         // Own nation changes (e.g., 탈취 resource transfer to own nation)
-        @Suppress("UNCHECKED_CAST")
-        (json["ownNationChanges"] as? Map<String, Any>)?.let {
+        readStringAnyMap(json["ownNationChanges"])?.let {
             if (nation != null) applyNationChanges(nation, it)
         }
 
         // Handle cityId in statChanges → move general to new city (legacy: 이동/강행/귀환)
-        @Suppress("UNCHECKED_CAST")
-        (json["statChanges"] as? Map<String, Any>)?.let { changes ->
+        readStringAnyMap(json["statChanges"])?.let { changes ->
             val cityIdRaw = changes["cityId"]
             if (cityIdRaw != null) {
                 val id = when (cityIdRaw) {
@@ -107,21 +97,16 @@ object CommandResultApplicator {
         }
 
         // Handle inheritancePoint: {"key": "active_action", "amount": 1}
-        @Suppress("UNCHECKED_CAST")
-        (json["inheritancePoint"] as? Map<String, Any>)?.let { ip ->
+        readStringAnyMap(json["inheritancePoint"])?.let { ip ->
             val key = ip["key"] as? String ?: return@let
             val amount = (ip["amount"] as? Number)?.toInt() ?: 1
-            @Suppress("UNCHECKED_CAST")
-            val inheritMeta = general.meta.getOrPut("inheritancePoints") {
-                mutableMapOf<String, Any>()
-            } as? MutableMap<String, Any> ?: return@let
+            val inheritMeta = getOrCreateMutableStringAnyMap(general.meta, "inheritancePoints")
             inheritMeta[key] = ((inheritMeta[key] as? Number)?.toInt() ?: 0) + amount
         }
 
         // Handle cityStateUpdate: {"cityId": X, "state": 43, "term": 3}
         // Updates the dest city's state/term for battle preparation
-        @Suppress("UNCHECKED_CAST")
-        (json["cityStateUpdate"] as? Map<String, Any>)?.let { csu ->
+        readStringAnyMap(json["cityStateUpdate"])?.let { csu ->
             val targetCityId = when (val raw = csu["cityId"]) {
                 is Number -> raw.toLong()
                 is String -> raw.toLongOrNull()
@@ -226,5 +211,45 @@ object CommandResultApplicator {
             3 -> general.dex4 = maxOf(0, general.dex4 + amount)
             4 -> general.dex5 = maxOf(0, general.dex5 + amount)
         }
+    }
+
+    private fun readStringAnyMap(raw: Any?): Map<String, Any>? {
+        if (raw !is Map<*, *>) return null
+        val result = mutableMapOf<String, Any>()
+        raw.forEach { (key, value) ->
+            if (key is String && value != null) {
+                result[key] = value
+            }
+        }
+        return result
+    }
+
+    private fun getOrCreateMutableStringAnyMap(container: MutableMap<String, Any>, key: String): MutableMap<String, Any> {
+        val current = container[key]
+        if (current is MutableMap<*, *>) {
+            val typed = mutableMapOf<String, Any>()
+            current.forEach { (k, v) ->
+                if (k is String && v != null) {
+                    typed[k] = v
+                }
+            }
+            container[key] = typed
+            return typed
+        }
+
+        if (current is Map<*, *>) {
+            val typed = mutableMapOf<String, Any>()
+            current.forEach { (k, v) ->
+                if (k is String && v != null) {
+                    typed[k] = v
+                }
+            }
+            container[key] = typed
+            return typed
+        }
+
+        val created = mutableMapOf<String, Any>()
+        container[key] = created
+        return created
     }
 }

@@ -169,8 +169,9 @@ class SpecialAssignmentService {
     }
 
     private fun getPrevSpecials(general: General, metaKey: String): List<String> {
-        @Suppress("UNCHECKED_CAST")
-        return (general.meta[metaKey] as? List<String>) ?: emptyList()
+        val raw = general.meta[metaKey]
+        if (raw !is Iterable<*>) return emptyList()
+        return raw.mapNotNull { it as? String }
     }
 
     private fun calcStatCondition(general: General): Int {

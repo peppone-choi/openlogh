@@ -100,8 +100,7 @@ class AutoResetService(
         }
 
         // Reset time has arrived — trigger the reset
-        @Suppress("UNCHECKED_CAST")
-        val options = world.meta["reservedResetOptions"] as? Map<String, Any>
+        val options = readStringAnyMap(world.meta["reservedResetOptions"])
             ?: return AutoResetResult(status = "no_options")
 
         val scenarioCode = options["scenario"] as? String ?: world.scenarioCode
@@ -156,5 +155,16 @@ class AutoResetService(
         world.config["locked"] = false
         worldStateRepository.save(world)
         log.info("Server opened for world {}", world.id)
+    }
+
+    private fun readStringAnyMap(raw: Any?): Map<String, Any>? {
+        if (raw !is Map<*, *>) return null
+        val typed = mutableMapOf<String, Any>()
+        raw.forEach { (k, v) ->
+            if (k is String && v != null) {
+                typed[k] = v
+            }
+        }
+        return typed
     }
 }

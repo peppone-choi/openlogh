@@ -103,8 +103,7 @@ class ScenarioService(
             val nation = parseNation(nationRow, worldId)
 
             // Set capital from first city in nation's city list
-            @Suppress("UNCHECKED_CAST")
-            val nationCityNames = (nationRow.getOrNull(8) as? List<String>) ?: emptyList()
+            val nationCityNames = readStringList(nationRow.getOrNull(8))
             val nationCities = nationCityNames.mapNotNull { cityNameToId[it] }
             if (nationCities.isNotEmpty()) {
                 nation.capitalCityId = nationCities.first()
@@ -161,7 +160,7 @@ class ScenarioService(
                 val destId = nationIdxToDbId[destIdx + 1]
                 if (srcId != null && destId != null) {
                     val stateCode = when (stateType) {
-                        0 -> "선전포고"
+                        0 -> "전쟁"
                         1 -> "선전포고"
                         7 -> "불가침"
                         else -> "통상"
@@ -297,5 +296,10 @@ class ScenarioService(
         } catch (_: Exception) {
             ScenarioData()
         }
+    }
+
+    private fun readStringList(raw: Any?): List<String> {
+        if (raw !is Collection<*>) return emptyList()
+        return raw.mapNotNull { it as? String }
     }
 }

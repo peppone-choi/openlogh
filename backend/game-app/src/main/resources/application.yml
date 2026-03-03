@@ -42,3 +42,7 @@ app:
 
   turn:
     interval-ms: 300000
+
+opensam:
+  cqrs:
+    enabled: false

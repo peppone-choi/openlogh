@@ -10,11 +10,11 @@ import {
   CommandArgForm,
   COMMAND_ARGS,
 } from "@/components/game/command-arg-form";
-import type { CommandTableEntry, CommandResult } from "@/types";
+import type { CommandArg, CommandResult, CommandTableEntry } from "@/types";
 
 interface CommandSelectFormProps {
   commandTable: Record<string, CommandTableEntry[]>;
-  onSelect: (actionCode: string, arg?: Record<string, unknown>) => void;
+  onSelect: (actionCode: string, arg?: CommandArg) => void;
   onCancel: () => void;
   realtimeMode: boolean;
   generalId: number;
@@ -28,21 +28,19 @@ export function CommandSelectForm({
   generalId,
 }: CommandSelectFormProps) {
   const [selectedCmd, setSelectedCmd] = useState("");
-  const [pendingArg, setPendingArg] = useState<
-    Record<string, unknown> | undefined
-  >();
+  const [pendingArg, setPendingArg] = useState<CommandArg | undefined>();
   const [result, setResult] = useState<CommandResult | null>(null);
   const [executing, setExecuting] = useState(false);
 
   const categories = Object.keys(commandTable);
   const hasArgForm = !!(selectedCmd && COMMAND_ARGS[selectedCmd]);
 
-  const handleReserve = (arg?: Record<string, unknown>) => {
+  const handleReserve = (arg?: CommandArg) => {
     if (!selectedCmd) return;
     onSelect(selectedCmd, arg);
   };
 
-  const handleExecute = async (arg?: Record<string, unknown>) => {
+  const handleExecute = async (arg?: CommandArg) => {
     if (!selectedCmd) return;
     setExecuting(true);
     try {
@@ -57,7 +55,7 @@ export function CommandSelectForm({
     }
   };
 
-  const handleArgSubmit = (arg: Record<string, unknown>) => {
+  const handleArgSubmit = (arg: CommandArg) => {
     setPendingArg(arg);
   };
 

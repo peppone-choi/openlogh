@@ -1,5 +1,6 @@
 package com.opensam.engine
 
+import com.opensam.engine.turn.cqrs.TurnCoordinator
 import com.opensam.entity.WorldState
 import com.opensam.repository.WorldStateRepository
 import org.junit.jupiter.api.Assertions.*
@@ -12,6 +13,7 @@ class TurnDaemonTest {
 
     private lateinit var daemon: TurnDaemon
     private lateinit var turnService: TurnService
+    private lateinit var turnCoordinator: TurnCoordinator
     private lateinit var realtimeService: RealtimeService
     private lateinit var worldStateRepository: WorldStateRepository
 
@@ -21,13 +23,16 @@ class TurnDaemonTest {
     @BeforeEach
     fun setUp() {
         turnService = mock(TurnService::class.java)
+        turnCoordinator = mock(TurnCoordinator::class.java)
         realtimeService = mock(RealtimeService::class.java)
         worldStateRepository = mock(WorldStateRepository::class.java)
 
         daemon = TurnDaemon(
             turnService,
+            turnCoordinator,
             realtimeService,
             "test-sha",
+            false,
             worldStateRepository,
         )
     }
@@ -55,6 +60,7 @@ class TurnDaemonTest {
         daemon.tick()
 
         verify(turnService).processWorld(world)
+        verify(turnCoordinator, never()).processWorld(anyNonNull())
         verify(realtimeService, never()).processCompletedCommands(anyNonNull())
     }
 
@@ -67,6 +73,26 @@ class TurnDaemonTest {
 
         verify(realtimeService).processCompletedCommands(world)
         verify(realtimeService).regenerateCommandPoints(world)
+        verify(turnService, never()).processWorld(anyNonNull())
+        verify(turnCoordinator, never()).processWorld(anyNonNull())
+    }
+
+    @Test
+    fun `tick calls turnCoordinator for non-realtime worlds when cqrs is enabled`() {
+        val world = createWorld(realtimeMode = false)
+        `when`(worldStateRepository.findByCommitSha("test-sha")).thenReturn(listOf(world))
+
+        val cqrsDaemon = TurnDaemon(
+            turnService,
+            turnCoordinator,
+            realtimeService,
+            "test-sha",
+            true,
+            worldStateRepository,
+        )
+        cqrsDaemon.tick()
+
+        verify(turnCoordinator).processWorld(world)
         verify(turnService, never()).processWorld(anyNonNull())
     }
 

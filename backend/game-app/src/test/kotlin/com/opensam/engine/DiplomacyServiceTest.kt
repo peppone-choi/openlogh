@@ -5,10 +5,19 @@ import com.opensam.entity.Message
 import com.opensam.entity.WorldState
 import com.opensam.repository.DiplomacyRepository
 import com.opensam.repository.MessageRepository
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertDoesNotThrow
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertThrows
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.mockito.Mockito.*
+import org.mockito.ArgumentMatchers
+import org.mockito.Mockito.mock
+import org.mockito.Mockito.times
+import org.mockito.Mockito.verify
+import org.mockito.Mockito.`when`
 import java.util.Optional
 
 class DiplomacyServiceTest {
@@ -17,396 +26,328 @@ class DiplomacyServiceTest {
     private lateinit var diplomacyRepository: DiplomacyRepository
     private lateinit var messageRepository: MessageRepository
 
-    @Suppress("UNCHECKED_CAST")
-    private fun <T> anyNonNull(): T = org.mockito.Mockito.any<T>() as T
+    private val diplomacies = linkedMapOf<Long, Diplomacy>()
+    private val messages = linkedMapOf<Long, Message>()
+    private var nextDiplomacyId = 1_000L
+    private var nextMessageId = 10_000L
 
     @BeforeEach
     fun setUp() {
         diplomacyRepository = mock(DiplomacyRepository::class.java)
         messageRepository = mock(MessageRepository::class.java)
-
-        `when`(messageRepository.save(anyNonNull<Message>())).thenAnswer { it.arguments[0] }
-        `when`(diplomacyRepository.save(anyNonNull<Diplomacy>())).thenAnswer { it.arguments[0] }
-        `when`(diplomacyRepository.saveAll(anyNonNull<List<Diplomacy>>())).thenAnswer { it.arguments[0] }
-
+        wireDiplomacyRepo()
+        wireMessageRepo()
         service = DiplomacyService(diplomacyRepository, messageRepository)
     }
 
-    private fun createWorld(year: Short = 200, month: Short = 3): WorldState {
-        return WorldState(
-            id = 1,
-            scenarioCode = "test",
-            currentYear = year,
-            currentMonth = month,
-            tickSeconds = 300,
-        )
+    private fun wireDiplomacyRepo() {
+        `when`(diplomacyRepository.save(ArgumentMatchers.any(Diplomacy::class.java))).thenAnswer { inv ->
+            val d = inv.arguments[0] as Diplomacy
+            if (d.id == 0L) {
+                d.id = nextDiplomacyId++
+            }
+            diplomacies[d.id] = cloneDiplomacy(d)
+            d
+        }
+
+        `when`(diplomacyRepository.saveAll(ArgumentMatchers.anyList<Diplomacy>())).thenAnswer { inv ->
+            val list = inv.arguments[0] as List<Diplomacy>
+            list.forEach { d ->
+                if (d.id == 0L) {
+                    d.id = nextDiplomacyId++
+                }
+                diplomacies[d.id] = cloneDiplomacy(d)
+            }
+            list
+        }
+
+        `when`(diplomacyRepository.findById(ArgumentMatchers.anyLong())).thenAnswer { inv ->
+            Optional.ofNullable(diplomacies[inv.arguments[0] as Long]?.let { cloneDiplomacy(it) })
+        }
+
+        `when`(diplomacyRepository.findByWorldId(ArgumentMatchers.anyLong())).thenAnswer { inv ->
+            val worldId = inv.arguments[0] as Long
+            diplomacies.values.filter { it.worldId == worldId }.map { cloneDiplomacy(it) }
+        }
+
+        `when`(diplomacyRepository.findByWorldIdAndIsDeadFalse(ArgumentMatchers.anyLong())).thenAnswer { inv ->
+            val worldId = inv.arguments[0] as Long
+            diplomacies.values.filter { it.worldId == worldId && !it.isDead }.map { cloneDiplomacy(it) }
+        }
+
+        `when`(
+            diplomacyRepository.findByWorldIdAndSrcNationIdOrDestNationId(
+                ArgumentMatchers.anyLong(),
+                ArgumentMatchers.anyLong(),
+                ArgumentMatchers.anyLong(),
+            )
+        ).thenAnswer { inv ->
+            val worldId = inv.arguments[0] as Long
+            val src = inv.arguments[1] as Long
+            val dest = inv.arguments[2] as Long
+            diplomacies.values
+                .filter { it.worldId == worldId && (it.srcNationId == src || it.destNationId == dest) }
+                .map { cloneDiplomacy(it) }
+        }
     }
+
+    private fun wireMessageRepo() {
+        `when`(messageRepository.save(ArgumentMatchers.any(Message::class.java))).thenAnswer { inv ->
+            val m = inv.arguments[0] as Message
+            if (m.id == null || m.id == 0L) {
+                m.id = nextMessageId++
+            }
+            messages[m.id!!] = cloneMessage(m)
+            m
+        }
+
+        `when`(messageRepository.findById(ArgumentMatchers.anyLong())).thenAnswer { inv ->
+            Optional.ofNullable(messages[inv.arguments[0] as Long]?.let { cloneMessage(it) })
+        }
+    }
+
+    private fun createWorld(year: Short = 200, month: Short = 3): WorldState =
+        WorldState(id = 1, scenarioCode = "test", currentYear = year, currentMonth = month, tickSeconds = 300)
 
     private fun createDiplomacy(
-        id: Long = 0,
+        id: Long,
         srcNationId: Long = 1,
         destNationId: Long = 2,
-        stateCode: String = "불가침",
-        term: Short = 10,
+        stateCode: String,
+        term: Short,
         isDead: Boolean = false,
-    ): Diplomacy {
+    ): Diplomacy = Diplomacy(
+        id = id,
+        worldId = 1,
+        srcNationId = srcNationId,
+        destNationId = destNationId,
+        stateCode = stateCode,
+        term = term,
+        isDead = isDead,
+    )
+
+    private fun seed(vararg data: Diplomacy) {
+        data.forEach { diplomacies[it.id] = cloneDiplomacy(it) }
+    }
+
+    private fun cloneDiplomacy(d: Diplomacy): Diplomacy {
         return Diplomacy(
-            id = id,
-            worldId = 1,
-            srcNationId = srcNationId,
-            destNationId = destNationId,
-            stateCode = stateCode,
-            term = term,
-            isDead = isDead,
+            id = d.id,
+            worldId = d.worldId,
+            srcNationId = d.srcNationId,
+            destNationId = d.destNationId,
+            stateCode = d.stateCode,
+            term = d.term,
+            isDead = d.isDead,
+            isShowing = d.isShowing,
+            meta = d.meta.toMutableMap(),
+            createdAt = d.createdAt,
         )
     }
 
-    // ========== processDiplomacyTurn: term decrement ==========
+    private fun cloneMessage(m: Message): Message {
+        return Message(
+            id = m.id,
+            worldId = m.worldId,
+            mailboxCode = m.mailboxCode,
+            messageType = m.messageType,
+            srcId = m.srcId,
+            destId = m.destId,
+            payload = m.payload.toMutableMap(),
+            meta = m.meta.toMutableMap(),
+        )
+    }
+
+    private fun load(id: Long): Diplomacy = diplomacies[id] ?: error("missing diplomacy $id")
 
     @Test
     fun `processDiplomacyTurn decrements term by 1`() {
         val world = createWorld()
-        val diplomacy = createDiplomacy(srcNationId = 1, destNationId = 2, stateCode = "불가침", term = 5)
-
-        `when`(diplomacyRepository.findByWorldIdAndIsDeadFalse(world.id.toLong()))
-            .thenReturn(listOf(diplomacy))
+        seed(createDiplomacy(id = 1, stateCode = "불가침", term = 5))
 
         service.processDiplomacyTurn(world)
 
-        assertEquals(4.toShort(), diplomacy.term)
-        verify(diplomacyRepository).saveAll(listOf(diplomacy))
+        assertEquals(4, load(1).term.toInt())
     }
 
     @Test
-    fun `processDiplomacyTurn marks 불가침 as dead when term expires`() {
+    fun `processDiplomacyTurn marks expiring relations dead correctly`() {
         val world = createWorld()
-        val diplomacy = createDiplomacy(srcNationId = 1, destNationId = 2, stateCode = "불가침", term = 1)
-
-        `when`(diplomacyRepository.findByWorldIdAndIsDeadFalse(world.id.toLong()))
-            .thenReturn(listOf(diplomacy))
+        seed(
+            createDiplomacy(id = 1, stateCode = "불가침", term = 1),
+            createDiplomacy(id = 2, stateCode = "종전제의", term = 1),
+            createDiplomacy(id = 3, stateCode = "불가침제의", term = 1),
+            createDiplomacy(id = 4, stateCode = "불가침파기제의", term = 1),
+            createDiplomacy(id = 5, stateCode = "전쟁", term = 1),
+        )
 
         service.processDiplomacyTurn(world)
 
-        assertEquals(0.toShort(), diplomacy.term)
-        assertTrue(diplomacy.isDead)
+        assertTrue(load(1).isDead)
+        assertTrue(load(2).isDead)
+        assertTrue(load(3).isDead)
+        assertTrue(load(4).isDead)
+        assertFalse(load(5).isDead)
+        assertEquals(0, load(5).term.toInt())
     }
 
     @Test
-    fun `processDiplomacyTurn marks 종전제의 as dead when term expires`() {
+    fun `processDiplomacyTurn transitions 선전포고 to 전쟁 at term 12`() {
         val world = createWorld()
-        val diplomacy = createDiplomacy(srcNationId = 1, destNationId = 2, stateCode = "종전제의", term = 1)
-
-        `when`(diplomacyRepository.findByWorldIdAndIsDeadFalse(world.id.toLong()))
-            .thenReturn(listOf(diplomacy))
+        seed(createDiplomacy(id = 1, stateCode = "선전포고", term = 13))
 
         service.processDiplomacyTurn(world)
 
-        assertEquals(0.toShort(), diplomacy.term)
-        assertTrue(diplomacy.isDead)
-    }
-
-    @Test
-    fun `processDiplomacyTurn does not mark 선전포고 as dead when term expires`() {
-        val world = createWorld()
-        val diplomacy = createDiplomacy(srcNationId = 1, destNationId = 2, stateCode = "선전포고", term = 1)
-
-        `when`(diplomacyRepository.findByWorldIdAndIsDeadFalse(world.id.toLong()))
-            .thenReturn(listOf(diplomacy))
-
-        service.processDiplomacyTurn(world)
-
-        assertEquals(0.toShort(), diplomacy.term)
-        assertFalse(diplomacy.isDead, "선전포고 should not auto-expire")
-    }
-
-    @Test
-    fun `processDiplomacyTurn marks 불가침제의 as dead when term expires`() {
-        val world = createWorld()
-        val diplomacy = createDiplomacy(srcNationId = 1, destNationId = 2, stateCode = "불가침제의", term = 1)
-
-        `when`(diplomacyRepository.findByWorldIdAndIsDeadFalse(world.id.toLong()))
-            .thenReturn(listOf(diplomacy))
-
-        service.processDiplomacyTurn(world)
-
-        assertTrue(diplomacy.isDead)
-    }
-
-    @Test
-    fun `processDiplomacyTurn marks 불가침파기제의 as dead when term expires`() {
-        val world = createWorld()
-        val diplomacy = createDiplomacy(srcNationId = 1, destNationId = 2, stateCode = "불가침파기제의", term = 1)
-
-        `when`(diplomacyRepository.findByWorldIdAndIsDeadFalse(world.id.toLong()))
-            .thenReturn(listOf(diplomacy))
-
-        service.processDiplomacyTurn(world)
-
-        assertTrue(diplomacy.isDead)
-    }
-
-    @Test
-    fun `processDiplomacyTurn processes multiple diplomacies`() {
-        val world = createWorld()
-        val d1 = createDiplomacy(srcNationId = 1, destNationId = 2, stateCode = "불가침", term = 3)
-        val d2 = createDiplomacy(srcNationId = 2, destNationId = 3, stateCode = "선전포고", term = 5)
-        val d3 = createDiplomacy(srcNationId = 3, destNationId = 4, stateCode = "종전제의", term = 2)
-
-        `when`(diplomacyRepository.findByWorldIdAndIsDeadFalse(world.id.toLong()))
-            .thenReturn(listOf(d1, d2, d3))
-
-        service.processDiplomacyTurn(world)
-
-        assertEquals(2.toShort(), d1.term)
-        assertEquals(4.toShort(), d2.term)
-        assertEquals(1.toShort(), d3.term)
-        assertFalse(d1.isDead)
-        assertFalse(d2.isDead)
-        assertFalse(d3.isDead)
+        assertEquals(12, load(1).term.toInt())
+        assertEquals("전쟁", load(1).stateCode)
+        assertFalse(load(1).isDead)
     }
 
     @Test
     fun `processDiplomacyTurn handles empty world gracefully`() {
-        val world = createWorld()
-
-        `when`(diplomacyRepository.findByWorldIdAndIsDeadFalse(world.id.toLong()))
-            .thenReturn(emptyList())
-
-        assertDoesNotThrow {
-            service.processDiplomacyTurn(world)
-        }
-
-        verify(diplomacyRepository).saveAll(emptyList())
+        assertDoesNotThrow { service.processDiplomacyTurn(createWorld()) }
+        assertTrue(diplomacies.isEmpty())
     }
 
-    // ========== declareWar ==========
-
     @Test
-    fun `declareWar creates 선전포고 relation`() {
-        `when`(diplomacyRepository.findActiveRelation(1L, 1L, 2L, "불가침")).thenReturn(null)
-        `when`(diplomacyRepository.findActiveRelation(1L, 1L, 2L, "선전포고")).thenReturn(null)
-        `when`(diplomacyRepository.findActiveRelationsBetween(1L, 1L, 2L)).thenReturn(emptyList())
+    fun `declareWar creates 선전포고 and kills pending proposals`() {
+        seed(
+            createDiplomacy(id = 1, srcNationId = 1, destNationId = 2, stateCode = "불가침제의", term = 5),
+            createDiplomacy(id = 2, srcNationId = 1, destNationId = 2, stateCode = "종전제의", term = 5),
+        )
 
         val result = service.declareWar(1L, 1L, 2L)
 
         assertEquals("선전포고", result.stateCode)
-        assertEquals(Short.MAX_VALUE, result.term)
+        assertTrue(load(1).isDead)
+        assertTrue(load(2).isDead)
+        assertNotNull(diplomacies.values.firstOrNull { it.stateCode == "선전포고" && !it.isDead })
     }
 
     @Test
-    fun `declareWar throws when non-aggression pact exists`() {
-        val existingNA = createDiplomacy(stateCode = "불가침")
-        `when`(diplomacyRepository.findActiveRelation(1L, 1L, 2L, "불가침")).thenReturn(existingNA)
+    fun `declareWar throws when non aggression exists or already at war`() {
+        seed(createDiplomacy(id = 1, stateCode = "불가침", term = 10))
+        assertThrows(IllegalStateException::class.java) { service.declareWar(1L, 1L, 2L) }
 
-        assertThrows(IllegalStateException::class.java) {
-            service.declareWar(1L, 1L, 2L)
-        }
+        diplomacies.clear()
+        seed(createDiplomacy(id = 2, stateCode = "전쟁", term = 10))
+        assertThrows(IllegalStateException::class.java) { service.declareWar(1L, 1L, 2L) }
     }
 
     @Test
-    fun `declareWar throws when already at war`() {
-        `when`(diplomacyRepository.findActiveRelation(1L, 1L, 2L, "불가침")).thenReturn(null)
-        val existingWar = createDiplomacy(stateCode = "선전포고")
-        `when`(diplomacyRepository.findActiveRelation(1L, 1L, 2L, "선전포고")).thenReturn(existingWar)
-
-        assertThrows(IllegalStateException::class.java) {
-            service.declareWar(1L, 1L, 2L)
-        }
-    }
-
-    @Test
-    fun `declareWar kills pending proposals`() {
-        `when`(diplomacyRepository.findActiveRelation(1L, 1L, 2L, "불가침")).thenReturn(null)
-        `when`(diplomacyRepository.findActiveRelation(1L, 1L, 2L, "선전포고")).thenReturn(null)
-
-        val pendingProposal = createDiplomacy(stateCode = "불가침제의")
-        `when`(diplomacyRepository.findActiveRelationsBetween(1L, 1L, 2L)).thenReturn(listOf(pendingProposal))
-
-        service.declareWar(1L, 1L, 2L)
-
-        assertTrue(pendingProposal.isDead, "Pending proposal should be killed")
-    }
-
-    // ========== proposeNonAggression ==========
-
-    @Test
-    fun `proposeNonAggression creates proposal and sends message`() {
-        `when`(diplomacyRepository.findActiveRelation(1L, 1L, 2L, "선전포고")).thenReturn(null)
-        `when`(diplomacyRepository.findActiveRelation(1L, 1L, 2L, "불가침")).thenReturn(null)
-        `when`(diplomacyRepository.findActiveRelation(1L, 1L, 2L, "불가침제의")).thenReturn(null)
-
+    fun `proposeNonAggression creates proposal and message`() {
         val result = service.proposeNonAggression(1L, 1L, 2L)
-
         assertEquals("불가침제의", result.stateCode)
-        verify(messageRepository).save(anyNonNull<Message>())
+        assertEquals(1, messages.size)
     }
 
     @Test
-    fun `proposeNonAggression throws when at war`() {
-        val war = createDiplomacy(stateCode = "선전포고")
-        `when`(diplomacyRepository.findActiveRelation(1L, 1L, 2L, "선전포고")).thenReturn(war)
+    fun `proposeNonAggression blocks war pact and duplicate proposal cases`() {
+        seed(createDiplomacy(id = 1, stateCode = "선전포고", term = 10))
+        assertThrows(IllegalStateException::class.java) { service.proposeNonAggression(1L, 1L, 2L) }
 
-        assertThrows(IllegalStateException::class.java) {
-            service.proposeNonAggression(1L, 1L, 2L)
-        }
+        diplomacies.clear()
+        seed(createDiplomacy(id = 2, stateCode = "불가침", term = 10))
+        assertThrows(IllegalStateException::class.java) { service.proposeNonAggression(1L, 1L, 2L) }
+
+        diplomacies.clear()
+        seed(createDiplomacy(id = 3, stateCode = "불가침제의", term = 10))
+        assertThrows(IllegalStateException::class.java) { service.proposeNonAggression(1L, 1L, 2L) }
     }
-
-    @Test
-    fun `proposeNonAggression throws when pact already exists`() {
-        `when`(diplomacyRepository.findActiveRelation(1L, 1L, 2L, "선전포고")).thenReturn(null)
-        val na = createDiplomacy(stateCode = "불가침")
-        `when`(diplomacyRepository.findActiveRelation(1L, 1L, 2L, "불가침")).thenReturn(na)
-
-        assertThrows(IllegalStateException::class.java) {
-            service.proposeNonAggression(1L, 1L, 2L)
-        }
-    }
-
-    @Test
-    fun `proposeNonAggression throws when proposal already pending`() {
-        `when`(diplomacyRepository.findActiveRelation(1L, 1L, 2L, "선전포고")).thenReturn(null)
-        `when`(diplomacyRepository.findActiveRelation(1L, 1L, 2L, "불가침")).thenReturn(null)
-        val pending = createDiplomacy(stateCode = "불가침제의")
-        `when`(diplomacyRepository.findActiveRelation(1L, 1L, 2L, "불가침제의")).thenReturn(pending)
-
-        assertThrows(IllegalStateException::class.java) {
-            service.proposeNonAggression(1L, 1L, 2L)
-        }
-    }
-
-    // ========== acceptNonAggression ==========
 
     @Test
     fun `acceptNonAggression transitions proposal to pact`() {
-        val proposal = createDiplomacy(id = 10, stateCode = "불가침제의")
-        `when`(diplomacyRepository.findActiveRelation(1L, 1L, 2L, "불가침제의")).thenReturn(proposal)
+        seed(createDiplomacy(id = 10, stateCode = "불가침제의", term = 5))
 
         val result = service.acceptNonAggression(1L, 1L, 2L)
 
-        assertTrue(proposal.isDead, "Proposal should be killed")
+        assertTrue(load(10).isDead)
         assertEquals("불가침", result.stateCode)
-        assertEquals(DiplomacyService.NON_AGGRESSION_TERM, result.term)
+        assertNotNull(diplomacies.values.firstOrNull { it.stateCode == "불가침" && !it.isDead })
     }
 
     @Test
-    fun `acceptNonAggression throws when no pending proposal`() {
-        `when`(diplomacyRepository.findActiveRelation(1L, 1L, 2L, "불가침제의")).thenReturn(null)
-
-        assertThrows(IllegalStateException::class.java) {
-            service.acceptNonAggression(1L, 1L, 2L)
-        }
+    fun `acceptNonAggression throws when no proposal`() {
+        assertThrows(IllegalStateException::class.java) { service.acceptNonAggression(1L, 1L, 2L) }
     }
 
-    // ========== proposeBreakNonAggression ==========
-
     @Test
-    fun `proposeBreakNonAggression creates break proposal and sends message`() {
-        val pact = createDiplomacy(stateCode = "불가침")
-        `when`(diplomacyRepository.findActiveRelation(1L, 1L, 2L, "불가침")).thenReturn(pact)
-        `when`(diplomacyRepository.findActiveRelation(1L, 1L, 2L, "불가침파기제의")).thenReturn(null)
+    fun `proposeBreakNonAggression creates break proposal`() {
+        seed(createDiplomacy(id = 1, stateCode = "불가침", term = 10))
 
         val result = service.proposeBreakNonAggression(1L, 1L, 2L)
 
         assertEquals("불가침파기제의", result.stateCode)
-        verify(messageRepository).save(anyNonNull<Message>())
+        assertEquals(1, messages.size)
     }
 
     @Test
-    fun `proposeBreakNonAggression throws when no pact exists`() {
-        `when`(diplomacyRepository.findActiveRelation(1L, 1L, 2L, "불가침")).thenReturn(null)
-
-        assertThrows(IllegalStateException::class.java) {
-            service.proposeBreakNonAggression(1L, 1L, 2L)
-        }
+    fun `proposeBreakNonAggression throws when no pact`() {
+        assertThrows(IllegalStateException::class.java) { service.proposeBreakNonAggression(1L, 1L, 2L) }
     }
-
-    // ========== acceptBreakNonAggression ==========
 
     @Test
     fun `acceptBreakNonAggression kills proposal and pact`() {
-        val proposal = createDiplomacy(id = 10, stateCode = "불가침파기제의")
-        val pact = createDiplomacy(id = 5, stateCode = "불가침")
-        `when`(diplomacyRepository.findActiveRelation(1L, 1L, 2L, "불가침파기제의")).thenReturn(proposal)
-        `when`(diplomacyRepository.findActiveRelation(1L, 1L, 2L, "불가침")).thenReturn(pact)
+        seed(
+            createDiplomacy(id = 1, stateCode = "불가침", term = 10),
+            createDiplomacy(id = 2, stateCode = "불가침파기제의", term = 10),
+        )
 
         service.acceptBreakNonAggression(1L, 1L, 2L)
 
-        assertTrue(proposal.isDead)
-        assertTrue(pact.isDead)
+        assertTrue(load(1).isDead)
+        assertTrue(load(2).isDead)
     }
 
     @Test
-    fun `acceptBreakNonAggression throws when no pending break proposal`() {
-        `when`(diplomacyRepository.findActiveRelation(1L, 1L, 2L, "불가침파기제의")).thenReturn(null)
-
-        assertThrows(IllegalStateException::class.java) {
-            service.acceptBreakNonAggression(1L, 1L, 2L)
-        }
+    fun `acceptBreakNonAggression throws when no pending proposal`() {
+        assertThrows(IllegalStateException::class.java) { service.acceptBreakNonAggression(1L, 1L, 2L) }
     }
 
-    // ========== proposeCeasefire ==========
-
     @Test
-    fun `proposeCeasefire creates ceasefire proposal and sends message`() {
-        val war = createDiplomacy(stateCode = "선전포고")
-        `when`(diplomacyRepository.findActiveRelation(1L, 1L, 2L, "선전포고")).thenReturn(war)
-        `when`(diplomacyRepository.findActiveRelation(1L, 1L, 2L, "종전제의")).thenReturn(null)
+    fun `proposeCeasefire creates proposal when at war`() {
+        seed(createDiplomacy(id = 1, stateCode = "선전포고", term = 10))
 
         val result = service.proposeCeasefire(1L, 1L, 2L)
 
         assertEquals("종전제의", result.stateCode)
-        verify(messageRepository).save(anyNonNull<Message>())
+        assertEquals(1, messages.size)
     }
 
     @Test
-    fun `proposeCeasefire throws when not at war`() {
-        `when`(diplomacyRepository.findActiveRelation(1L, 1L, 2L, "선전포고")).thenReturn(null)
+    fun `proposeCeasefire throws when not at war or proposal exists`() {
+        assertThrows(IllegalStateException::class.java) { service.proposeCeasefire(1L, 1L, 2L) }
 
-        assertThrows(IllegalStateException::class.java) {
-            service.proposeCeasefire(1L, 1L, 2L)
-        }
+        seed(
+            createDiplomacy(id = 1, stateCode = "전쟁", term = 10),
+            createDiplomacy(id = 2, stateCode = "종전제의", term = 5),
+        )
+        assertThrows(IllegalStateException::class.java) { service.proposeCeasefire(1L, 1L, 2L) }
     }
 
     @Test
-    fun `proposeCeasefire throws when proposal already pending`() {
-        val war = createDiplomacy(stateCode = "선전포고")
-        `when`(diplomacyRepository.findActiveRelation(1L, 1L, 2L, "선전포고")).thenReturn(war)
-        val pending = createDiplomacy(stateCode = "종전제의")
-        `when`(diplomacyRepository.findActiveRelation(1L, 1L, 2L, "종전제의")).thenReturn(pending)
-
-        assertThrows(IllegalStateException::class.java) {
-            service.proposeCeasefire(1L, 1L, 2L)
-        }
-    }
-
-    // ========== acceptCeasefire ==========
-
-    @Test
-    fun `acceptCeasefire kills proposal and war`() {
-        val proposal = createDiplomacy(id = 10, stateCode = "종전제의")
-        val war = createDiplomacy(id = 5, stateCode = "선전포고")
-        `when`(diplomacyRepository.findActiveRelation(1L, 1L, 2L, "종전제의")).thenReturn(proposal)
-        `when`(diplomacyRepository.findActiveRelation(1L, 1L, 2L, "선전포고")).thenReturn(war)
+    fun `acceptCeasefire kills proposal and war relations`() {
+        seed(
+            createDiplomacy(id = 1, stateCode = "종전제의", term = 5),
+            createDiplomacy(id = 2, stateCode = "선전포고", term = 5),
+            createDiplomacy(id = 3, stateCode = "전쟁", term = 5),
+        )
 
         service.acceptCeasefire(1L, 1L, 2L)
 
-        assertTrue(proposal.isDead)
-        assertTrue(war.isDead)
+        assertTrue(load(1).isDead)
+        assertTrue(load(2).isDead)
+        assertTrue(load(3).isDead)
     }
 
     @Test
     fun `acceptCeasefire throws when no pending ceasefire`() {
-        `when`(diplomacyRepository.findActiveRelation(1L, 1L, 2L, "종전제의")).thenReturn(null)
-
-        assertThrows(IllegalStateException::class.java) {
-            service.acceptCeasefire(1L, 1L, 2L)
-        }
+        assertThrows(IllegalStateException::class.java) { service.acceptCeasefire(1L, 1L, 2L) }
     }
 
-    // ========== acceptDiplomaticMessage ==========
-
     @Test
-    fun `acceptDiplomaticMessage routes NA proposal to acceptNonAggression`() {
+    fun `acceptDiplomaticMessage routes by messageType and marks responded`() {
+        seed(createDiplomacy(id = 1, stateCode = "불가침제의", term = 5))
         val message = Message(
             id = 100,
             worldId = 1,
@@ -414,100 +355,63 @@ class DiplomacyServiceTest {
             messageType = DiplomacyService.MSG_NON_AGGRESSION_PROPOSAL,
             srcId = 1,
             destId = 2,
-            payload = mutableMapOf("srcNationId" to 1L, "destNationId" to 2L, "diplomacyId" to 10L),
+            payload = mutableMapOf("srcNationId" to 1L, "destNationId" to 2L),
         )
-        `when`(messageRepository.findById(100L)).thenReturn(Optional.of(message))
+        messages[100] = message
 
-        val proposal = createDiplomacy(id = 10, stateCode = "불가침제의")
-        `when`(diplomacyRepository.findActiveRelation(1L, 1L, 2L, "불가침제의")).thenReturn(proposal)
+        service.acceptDiplomaticMessage(1L, 100)
 
-        service.acceptDiplomaticMessage(1L, 100L)
-
-        assertTrue(proposal.isDead)
-        assertEquals(true, message.meta["responded"])
-        assertEquals(true, message.meta["accepted"])
+        assertTrue(load(1).isDead)
+        val saved = messages[100]!!
+        assertEquals(true, saved.meta["responded"])
+        assertEquals(true, saved.meta["accepted"])
     }
 
     @Test
-    fun `acceptDiplomaticMessage routes ceasefire proposal to acceptCeasefire`() {
-        val message = Message(
-            id = 101,
-            worldId = 1,
-            mailboxCode = "diplomacy",
-            messageType = DiplomacyService.MSG_CEASEFIRE_PROPOSAL,
-            srcId = 1,
-            destId = 2,
-            payload = mutableMapOf("srcNationId" to 1L, "destNationId" to 2L, "diplomacyId" to 20L),
-        )
-        `when`(messageRepository.findById(101L)).thenReturn(Optional.of(message))
-
-        val proposal = createDiplomacy(id = 20, stateCode = "종전제의")
-        `when`(diplomacyRepository.findActiveRelation(1L, 1L, 2L, "종전제의")).thenReturn(proposal)
-        `when`(diplomacyRepository.findActiveRelation(1L, 1L, 2L, "선전포고")).thenReturn(null)
-
-        service.acceptDiplomaticMessage(1L, 101L)
-
-        assertTrue(proposal.isDead)
-        assertEquals(true, message.meta["accepted"])
-    }
-
-    // ========== rejectDiplomaticMessage ==========
-
-    @Test
-    fun `rejectDiplomaticMessage marks message as rejected`() {
-        val message = Message(
+    fun `rejectDiplomaticMessage marks rejected`() {
+        messages[100] = Message(
             id = 100,
             worldId = 1,
             mailboxCode = "diplomacy",
             messageType = DiplomacyService.MSG_NON_AGGRESSION_PROPOSAL,
             payload = mutableMapOf("srcNationId" to 1L, "destNationId" to 2L),
         )
-        `when`(messageRepository.findById(100L)).thenReturn(Optional.of(message))
 
-        service.rejectDiplomaticMessage(1L, 100L)
+        service.rejectDiplomaticMessage(1L, 100)
 
-        assertEquals(true, message.meta["responded"])
-        assertEquals(false, message.meta["accepted"])
+        val saved = messages[100]!!
+        assertEquals(true, saved.meta["responded"])
+        assertEquals(false, saved.meta["accepted"])
     }
 
-    // ========== killAllRelationsForNation ==========
-
     @Test
-    fun `killAllRelationsForNation kills all active relations`() {
-        val d1 = createDiplomacy(srcNationId = 5, destNationId = 2, stateCode = "불가침")
-        val d2 = createDiplomacy(srcNationId = 3, destNationId = 5, stateCode = "선전포고")
-        val d3 = createDiplomacy(srcNationId = 5, destNationId = 4, stateCode = "불가침", isDead = true)
-        `when`(diplomacyRepository.findByWorldIdAndSrcNationIdOrDestNationId(1L, 5L, 5L))
-            .thenReturn(listOf(d1, d2, d3))
+    fun `killAllRelationsForNation kills active only`() {
+        seed(
+            createDiplomacy(id = 1, srcNationId = 5, destNationId = 2, stateCode = "불가침", term = 10),
+            createDiplomacy(id = 2, srcNationId = 3, destNationId = 5, stateCode = "선전포고", term = 10),
+            createDiplomacy(id = 3, srcNationId = 5, destNationId = 4, stateCode = "불가침", term = 10, isDead = true),
+        )
 
         service.killAllRelationsForNation(1L, 5L)
 
-        assertTrue(d1.isDead)
-        assertTrue(d2.isDead)
-        // d3 was already dead, should stay dead
-        assertTrue(d3.isDead)
-    }
-
-    // ========== getRelations ==========
-
-    @Test
-    fun `getRelations returns all diplomacies for world`() {
-        val d1 = createDiplomacy(srcNationId = 1, destNationId = 2, stateCode = "불가침")
-        val d2 = createDiplomacy(srcNationId = 2, destNationId = 3, stateCode = "선전포고")
-
-        `when`(diplomacyRepository.findByWorldId(1L)).thenReturn(listOf(d1, d2))
-
-        val relations = service.getRelations(1L)
-
-        assertEquals(2, relations.size)
+        assertTrue(load(1).isDead)
+        assertTrue(load(2).isDead)
+        assertTrue(load(3).isDead)
     }
 
     @Test
-    fun `createRelation saves new diplomacy`() {
-        val result = service.createRelation(1L, 1, 2, "불가침", 12)
+    fun `getRelations returns world relations and createRelation persists`() {
+        seed(
+            createDiplomacy(id = 1, srcNationId = 1, destNationId = 2, stateCode = "불가침", term = 10),
+            createDiplomacy(id = 2, srcNationId = 2, destNationId = 3, stateCode = "선전포고", term = 10),
+        )
 
-        assertEquals("불가침", result.stateCode)
-        assertEquals(12.toShort(), result.term)
-        verify(diplomacyRepository).save(anyNonNull<Diplomacy>())
+        val all = service.getRelations(1L)
+        assertEquals(2, all.size)
+
+        val created = service.createRelation(1L, 1, 2, "불가침", 12)
+        assertEquals("불가침", created.stateCode)
+        assertNotNull(diplomacies[created.id])
+        verify(diplomacyRepository, times(1)).save(ArgumentMatchers.any(Diplomacy::class.java))
     }
 }
