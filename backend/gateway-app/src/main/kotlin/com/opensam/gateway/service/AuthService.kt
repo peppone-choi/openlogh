@@ -171,9 +171,7 @@ class AuthService(
 
     private fun loginUser(user: AppUser): AuthResponse {
         val role = effectiveRole(user)
-        user.role = role
-        user.lastLoginAt = OffsetDateTime.now()
-        appUserRepository.save(user)
+        appUserRepository.updateLoginInfo(user.id, role, OffsetDateTime.now())
 
         val token = jwtUtil.generateToken(user.id, user.loginId, user.displayName, role, user.grade.toInt())
         return AuthResponse(token, UserInfo(user.id, user.loginId, user.displayName))

@@ -68,9 +68,14 @@ export async function loginToLegacy(page: Page): Promise<void> {
   await page.goto(LEGACY.gameUrl, { waitUntil: "domcontentloaded" });
 }
 
-export async function loginToNewSystem(page: Page): Promise<void> {
+let cachedNewSystemToken: string | null = null;
+
+async function getNewSystemToken(page: Page): Promise<string> {
+  if (cachedNewSystemToken) return cachedNewSystemToken;
+
   const response = await page.request.post(`${NEW_SYSTEM.apiUrl}/auth/login`, {
     data: NEW_SYSTEM.credentials,
+    timeout: 60_000,
   });
 
   if (!response.ok()) {
@@ -82,36 +87,39 @@ export async function loginToNewSystem(page: Page): Promise<void> {
     throw new Error("New system login did not return token");
   }
 
-  await page.addInitScript((token) => {
-    window.localStorage.setItem("token", token);
-  }, body.token);
+  cachedNewSystemToken = body.token;
+  return body.token;
+}
+
+export async function loginToNewSystem(page: Page): Promise<void> {
+  const token = await getNewSystemToken(page);
+
+  await page.addInitScript((t) => {
+    window.localStorage.setItem("token", t);
+  }, token);
 
   await page.goto(`${NEW_SYSTEM.baseUrl}/lobby`, {
     waitUntil: "domcontentloaded",
   });
 
-  const worldMeta = page
-    .locator("p.text-xs.text-muted-foreground")
-    .filter({ hasText: /년\s*\d+월/ })
+  // Step 1: Click the world card to select it (reveals character panel)
+  const worldCard = page
+    .locator("[class*='cursor-pointer']")
+    .filter({ hasText: /반동탁|시나리오.*역사모드|턴제.*인원/ })
     .first();
-  if (await worldMeta.count()) {
-    await worldMeta.click();
-  } else {
-    const fallbackWorld = page
-      .locator('[role="button"], .cursor-pointer')
-      .filter({ hasText: /월드|서버/ })
-      .first();
-    if (await fallbackWorld.count()) {
-      await fallbackWorld.click();
-    }
-  }
+  await worldCard.waitFor({ state: "visible", timeout: 10_000 });
+  await worldCard.click();
+  await page.waitForTimeout(2_000);
 
+  // Step 2: Click "입장" button (appears under "내 장수" after world selected)
   const enterButton = page.getByRole("button", { name: "입장" }).first();
-  if (!(await enterButton.count())) {
-    throw new Error("New system lobby enter button not found");
+  try {
+    await enterButton.waitFor({ state: "visible", timeout: 5_000 });
+  } catch {
+    throw new Error("New system lobby enter button not found after selecting world");
   }
   await enterButton.click();
-  await page.waitForURL(/localhost:(80|3000)\/?$/, { timeout: 20_000 });
+  await page.waitForURL(/localhost(:(80|3000))?\/?$/, { timeout: 30_000 });
 }
 
 export async function extractTextContent(
