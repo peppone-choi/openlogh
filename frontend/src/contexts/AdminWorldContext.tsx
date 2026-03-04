@@ -8,6 +8,7 @@ import {
   useMemo,
   useState,
 } from "react";
+import { useSearchParams } from "next/navigation";
 import { adminApi } from "@/lib/gameApi";
 import type { AdminWorldListEntry } from "@/types";
 
@@ -26,9 +27,11 @@ export function AdminWorldProvider({
 }: {
   children: React.ReactNode;
 }) {
+  const searchParams = useSearchParams();
   const [worlds, setWorlds] = useState<AdminWorldListEntry[]>([]);
   const [worldId, setWorldId] = useState<number | undefined>(undefined);
   const [loading, setLoading] = useState(true);
+  const [initializedFromUrl, setInitializedFromUrl] = useState(false);
 
   const refreshWorlds = useCallback(async () => {
     try {
@@ -36,6 +39,18 @@ export function AdminWorldProvider({
       const list = res.data;
       setWorlds(list);
       setWorldId((prev) => {
+        // On first load, honor ?worldId= URL param if present and valid
+        if (!initializedFromUrl) {
+          const urlWorldId = searchParams.get("worldId");
+          if (urlWorldId) {
+            const parsed = Number(urlWorldId);
+            if (!isNaN(parsed) && list.some((w) => w.id === parsed)) {
+              setInitializedFromUrl(true);
+              return parsed;
+            }
+          }
+          setInitializedFromUrl(true);
+        }
         if (prev != null && list.some((w) => w.id === prev)) return prev;
         const active = list.find((w) => !w.locked);
         return active?.id ?? list[0]?.id;
@@ -45,7 +60,7 @@ export function AdminWorldProvider({
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [searchParams, initializedFromUrl]);
 
   useEffect(() => {
     refreshWorlds();
