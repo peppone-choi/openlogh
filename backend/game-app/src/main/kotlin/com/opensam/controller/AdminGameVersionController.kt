@@ -1,7 +1,7 @@
 package com.opensam.controller
 
-import com.opensam.repository.WorldStateRepository
 import com.opensam.service.AdminAuthorizationService
+import com.opensam.service.WorldService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.AccessDeniedException
@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*
 @RestController
 @RequestMapping("/api/admin/game-versions")
 class AdminGameVersionController(
-    private val worldStateRepository: WorldStateRepository,
+    private val worldService: WorldService,
     private val adminAuthorizationService: AdminAuthorizationService,
 ) {
     data class GameVersionInfo(
@@ -39,7 +39,7 @@ class AdminGameVersionController(
         val loginId = currentLoginId() ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
         return try {
             adminAuthorizationService.requireGlobalAdmin(loginId)
-            val worlds = worldStateRepository.findAll()
+            val worlds = worldService.listWorlds()
             val pid = ProcessHandle.current().pid()
             val info = GameVersionInfo(
                 commitSha = worlds.firstOrNull()?.commitSha ?: "local",

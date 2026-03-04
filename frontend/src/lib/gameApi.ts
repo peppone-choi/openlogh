@@ -46,7 +46,6 @@ import type {
   VoteComment,
   PublicCachedMapResponse,
   CommandArg,
-  WorldSummary,
   OAuthLinkResponse,
   HallOfFameOptionsResponse,
   TrafficResponse,
@@ -90,7 +89,6 @@ export const worldApi = {
       `/worlds/${id}/reset`,
       scenarioCode ? { scenarioCode } : {},
     ),
-  getSummary: (id: number) => api.get<WorldSummary>(`/worlds/${id}/summary`),
   getSnapshots: (id: number) =>
     api.get<WorldSnapshot[]>(`/worlds/${id}/snapshots`),
   captureSnapshot: (id: number) =>
@@ -133,10 +131,6 @@ export const generalApi = {
     api.get<General>(`/worlds/${worldId}/generals/me`),
   listByNation: (nationId: number) =>
     api.get<General[]>(`/nations/${nationId}/generals`),
-  listByCity: (cityId: number) =>
-    api.get<General[]>(`/cities/${cityId}/generals`),
-  listAvailableNpcs: (worldId: number) =>
-    api.get<General[]>(`/worlds/${worldId}/available-npcs`),
   selectNpc: (worldId: number, generalId: number) =>
     api.post<General>(`/worlds/${worldId}/select-npc`, { generalId }),
   listPool: (worldId: number) => api.get<General[]>(`/worlds/${worldId}/pool`),
@@ -267,10 +261,6 @@ export const commandApi = {
     api.get<Record<string, CommandTableEntry[]>>(
       `/generals/${generalId}/nation-command-table`,
     ),
-  repeatTurns: (generalId: number, count: number) =>
-    api.post<GeneralTurn[]>(`/generals/${generalId}/turns/repeat`, { count }),
-  pushTurns: (generalId: number, amount: number) =>
-    api.post<GeneralTurn[]>(`/generals/${generalId}/turns/push`, { amount }),
 };
 
 export const realtimeApi = {
@@ -386,8 +376,6 @@ export const messageApi = {
     api.get<ContactInfo[]>(`/worlds/${worldId}/contacts`),
   respondDiplomacy: (messageId: number, accept: boolean) =>
     api.post<void>(`/messages/${messageId}/diplomacy-respond`, { accept }),
-  getRecent: (sequence: number) =>
-    api.get<Message[]>("/messages/recent", { params: { sequence } }),
   delete: (id: number) => api.delete<void>(`/messages/${id}`),
   markAsRead: (id: number) => api.patch<void>(`/messages/${id}/read`),
 };
@@ -638,10 +626,6 @@ export const mapApi = {
 export const inheritanceApi = {
   getInfo: (worldId: number) =>
     api.get<InheritanceInfo>(`/worlds/${worldId}/inheritance`),
-  buy: (worldId: number, buffCode: string) =>
-    api.post<InheritanceActionResult>(`/worlds/${worldId}/inheritance/buy`, {
-      buffCode,
-    }),
   setSpecial: (worldId: number, specialCode: string) =>
     api.post<InheritanceActionResult>(
       `/worlds/${worldId}/inheritance/special`,
@@ -764,11 +748,6 @@ export const itemApi = {
     api.post<CommandResult>(`/generals/${generalId}/items/discard`, {
       itemType,
     }),
-  equip: (generalId: number, itemCode: string, itemType: string) =>
-    api.post<CommandResult>(`/generals/${generalId}/items/equip`, {
-      itemCode,
-      itemType,
-    }),
   unequip: (generalId: number, itemType: string) =>
     api.post<CommandResult>(`/generals/${generalId}/items/unequip`, {
       itemType,
@@ -777,11 +756,6 @@ export const itemApi = {
     api.post<CommandResult>(`/generals/${generalId}/items/use`, {
       itemType,
       itemCode,
-    }),
-  give: (generalId: number, targetGeneralId: number, itemType: string) =>
-    api.post<CommandResult>(`/generals/${generalId}/items/give`, {
-      targetGeneralId,
-      itemType,
     }),
 };
 
