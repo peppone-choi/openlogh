@@ -9,7 +9,6 @@ import com.opensam.engine.turn.cqrs.memory.InMemoryWorldState
 import com.opensam.engine.turn.cqrs.memory.NationSnapshot
 import com.opensam.engine.turn.cqrs.memory.NationTurnKey
 import com.opensam.engine.turn.cqrs.memory.NationTurnSnapshot
-import com.opensam.engine.turn.cqrs.memory.WorldIndexes
 import com.opensam.entity.WorldState
 import com.opensam.repository.TrafficSnapshotRepository
 import com.opensam.service.AuctionService
@@ -82,7 +81,7 @@ class DeterministicReplayParityTest {
     }
 
     private fun runFixture(fixture: ReplayFixture): CanonicalReplayOutput {
-        val ports = InMemoryWorldPorts(fixture.state, fixture.tracker, WorldIndexes(fixture.state))
+        val ports = InMemoryWorldPorts(fixture.state, fixture.tracker)
         val result = processor.process(fixture.world, fixture.state, ports)
         val general = fixture.state.generals.getValue(fixture.generalId)
         val nation = fixture.state.nations.getValue(fixture.nationId)
