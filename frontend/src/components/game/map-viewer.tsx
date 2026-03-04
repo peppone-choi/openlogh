@@ -3,8 +3,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useGameStore } from "@/stores/gameStore";
-import { GAME_CDN_ROOT, getNationBgUrl } from "@/lib/image";
+import { GAME_CDN_ROOT, getNationBgGradient } from "@/lib/image";
 import { REGION_NAMES } from "@/lib/game-utils";
+import { FactionFlag } from "@/components/game/faction-flag";
 
 interface MapViewerProps {
   worldId: number;
@@ -213,10 +214,9 @@ export function MapViewer({
               {/* Nation Color Blotch Base */}
               {nation?.color && (
                 <div
-                  className="absolute z-[1] bg-center bg-no-repeat"
+                    className="absolute z-[1]"
                   style={{
-                    backgroundImage: `url('${getNationBgUrl(nation.color)}')`,
-                    backgroundSize: `${bgW}px ${bgH}px`,
+                    background: getNationBgGradient(nation.color),
                     width: bgW,
                     height: bgH,
                     left: (40 - bgW) / 2,
@@ -250,19 +250,19 @@ export function MapViewer({
                   {/* Nation Flag and Capital Icon */}
                   {nation && (
                     <div
-                      className="absolute"
-                      style={{
-                        right: flagR,
-                        top: flagT,
-                        width: 12 * smV,
-                        height: 12 * smV,
-                      }}
-                    >
-                      <img
-                        src={`${GAME_CDN_ROOT}/${(rtCity?.supplyState ?? 0) > 0 ? "f" : "d"}${nation.color.substring(1).toUpperCase()}.gif`}
-                        className="w-full h-full block"
-                        alt=""
-                      />
+                       className="absolute"
+                       style={{
+                         right: flagR,
+                         top: flagT,
+                         width: 12 * smV,
+                         height: 12 * smV,
+                       }}
+                     >
+                       <FactionFlag
+                         color={nation.color}
+                         supplied={(rtCity?.supplyState ?? 0) > 0}
+                         className="w-full h-full block"
+                       />
                       {rtCity && nation.capitalCityId === rtCity.id && (
                         <div
                           className="absolute bg-yellow-400"
