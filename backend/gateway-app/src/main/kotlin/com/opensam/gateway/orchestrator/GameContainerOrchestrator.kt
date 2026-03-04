@@ -177,6 +177,7 @@ class GameContainerOrchestrator(
             "docker", "run", "-d",
             "--name", containerName,
             "--network", dockerNetwork,
+            "--label", "opensam.role=game",
             "-e", "SERVER_PORT=9001",
             "-e", "SPRING_PROFILES_ACTIVE=docker",
             "-e", "GAME_COMMIT_SHA=$commitSha",
@@ -227,6 +228,32 @@ class GameContainerOrchestrator(
             instances.remove(instance.gameVersion)
             log.warn("Removed dead container gameVersion={} name={}", instance.gameVersion, instance.containerName)
         }
+        cleanupOrphanGameContainers()
+    }
+
+    private fun cleanupOrphanGameContainers() {
+        try {
+            val process = ProcessBuilder(
+                "docker", "ps", "-a",
+                "--filter", "label=$ROLE_LABEL=$ROLE_GAME",
+                "--format", "{{.Names}}",
+            )
+                .redirectErrorStream(true)
+                .start()
+            val output = process.inputStream.bufferedReader().readText().trim()
+            process.waitFor(10, TimeUnit.SECONDS)
+            if (process.exitValue() != 0 || output.isBlank()) return
+
+            val trackedNames = instances.values.map { it.containerName }.toSet()
+            output.lines()
+                .filter { it.isNotBlank() && it !in trackedNames }
+                .forEach { orphan ->
+                    log.warn("Removing orphan game container: {}", orphan)
+                    dockerRemove(orphan)
+                }
+        } catch (_: Exception) {
+            // best-effort cleanup
+        }
     }
 
     private fun stopContainer(instance: ManagedDockerInstance) {
@@ -241,12 +268,24 @@ class GameContainerOrchestrator(
 
     private fun dockerIsRunning(containerName: String): Boolean {
         return try {
-            val process = ProcessBuilder("docker", "inspect", "-f", "{{.State.Running}}", containerName)
+            val process = ProcessBuilder(
+                "docker", "inspect", "-f",
+                "{{.State.Running}}|{{index .Config.Labels \"opensam.role\"}}",
+                containerName,
+            )
                 .redirectErrorStream(true)
                 .start()
             val output = process.inputStream.bufferedReader().readText().trim()
             process.waitFor(5, TimeUnit.SECONDS)
-            process.exitValue() == 0 && output == "true"
+            if (process.exitValue() != 0) return false
+            val parts = output.split("|", limit = 2)
+            val running = parts.getOrElse(0) { "false" } == "true"
+            val role = parts.getOrElse(1) { "" }
+            if (running && role != ROLE_GAME) {
+                log.warn("Container {} is running but has role='{}', expected '{}'", containerName, role, ROLE_GAME)
+                return false
+            }
+            running
         } catch (_: Exception) {
             false
         }
@@ -370,5 +409,7 @@ class GameContainerOrchestrator(
 
     companion object {
         private const val CONTAINER_PORT = 9001
+        private const val ROLE_GAME = "game"
+        private const val ROLE_LABEL = "opensam.role"
     }
 }
