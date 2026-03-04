@@ -112,7 +112,10 @@ function parseNationPresets(raw: string): NationPreset[] {
         .map((item): NationPreset["items"][number] | null => {
           const row = toCommandArg(item);
           if (!row) return null;
-          if (typeof row.offset !== "number" || typeof row.actionCode !== "string") {
+          if (
+            typeof row.offset !== "number" ||
+            typeof row.actionCode !== "string"
+          ) {
             return null;
           }
           if (
@@ -500,10 +503,7 @@ export default function ChiefPage() {
     setLastNationClickedSlot(idx);
   };
 
-  const handleNationReserve = async (
-    actionCode: string,
-    arg?: CommandArg,
-  ) => {
+  const handleNationReserve = async (actionCode: string, arg?: CommandArg) => {
     if (!myGeneral?.nationId) return;
 
     setReservingNation(true);
@@ -1852,9 +1852,7 @@ function NationCommandSelectForm({
   onCancel,
 }: NationCommandSelectFormProps) {
   const [selectedCmd, setSelectedCmd] = useState("");
-  const [pendingArg, setPendingArg] = useState<
-    CommandArg | undefined
-  >();
+  const [pendingArg, setPendingArg] = useState<CommandArg | undefined>();
 
   const categories = Object.keys(commandTable);
   const hasArgForm = !!(selectedCmd && COMMAND_ARGS[selectedCmd]);

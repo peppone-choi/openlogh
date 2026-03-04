@@ -75,7 +75,9 @@ function AccountPageContent() {
   const [thirdUseLoading, setThirdUseLoading] = useState(false);
 
   // Detailed user info
-  const [detailedInfo, setDetailedInfo] = useState<AccountDetailedInfo | null>(null);
+  const [detailedInfo, setDetailedInfo] = useState<AccountDetailedInfo | null>(
+    null,
+  );
 
   // Account deletion modal
   const [showDeleteModal, setShowDeleteModal] = useState(false);

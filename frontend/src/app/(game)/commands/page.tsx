@@ -100,7 +100,10 @@ function parseNationPresets(raw: string): NationPreset[] {
         .map((item): NationPreset["items"][number] | null => {
           const row = toCommandArg(item);
           if (!row) return null;
-          if (typeof row.offset !== "number" || typeof row.actionCode !== "string") {
+          if (
+            typeof row.offset !== "number" ||
+            typeof row.actionCode !== "string"
+          ) {
             return null;
           }
           if (!isCommandArg(row.arg)) return null;
@@ -205,10 +208,7 @@ function NationCommandPanel({
 
   const categories = useMemo(() => Object.keys(commandTable), [commandTable]);
 
-  const handleReserve = async (
-    actionCode: string,
-    arg?: CommandArg,
-  ) => {
+  const handleReserve = async (actionCode: string, arg?: CommandArg) => {
     try {
       await commandApi.reserveNation(nationId, generalId, [
         { turnIdx: selectedTurn, actionCode, arg },
