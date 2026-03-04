@@ -4,7 +4,6 @@ import com.opensam.engine.turn.cqrs.memory.DirtyTracker
 import com.opensam.engine.turn.cqrs.memory.InMemoryTurnProcessor
 import com.opensam.engine.turn.cqrs.memory.InMemoryWorldPorts
 import com.opensam.engine.turn.cqrs.memory.WorldStateLoader
-import com.opensam.engine.turn.cqrs.memory.WorldIndexes
 import com.opensam.engine.turn.cqrs.persist.WorldStatePersister
 import com.opensam.entity.WorldState
 import com.opensam.repository.WorldStateRepository
@@ -29,8 +28,7 @@ class TurnCoordinator(
             transition(worldId, TurnLifecycleState.LOADING)
             val state = worldStateLoader.loadWorldState(worldId)
             val dirtyTracker = DirtyTracker()
-            val indexes = WorldIndexes(state)
-            val ports = InMemoryWorldPorts(state, dirtyTracker, indexes)
+            val ports = InMemoryWorldPorts(state, dirtyTracker)
 
             transition(worldId, TurnLifecycleState.PROCESSING)
             val result = inMemoryTurnProcessor.process(world, state, ports)

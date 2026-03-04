@@ -52,7 +52,7 @@ backend/.tmp/
 .npm/
 frontend/.npm/
 .gradle/
-memory/
+/memory/
 skills/
 AGENTS.md
 BOOTSTRAP.md
