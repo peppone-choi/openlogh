@@ -24,8 +24,7 @@ import type {
   BettingEventSummary,
   BattleSimUnit,
   BattleSimCity,
-  BattleSimResult,
-  BattleSimRepeatResult,
+  BattleSimResponse,
   NationPolicyInfo,
   NpcPolicyInfo,
   OfficerInfo,
@@ -34,6 +33,7 @@ import type {
   AdminDashboard,
   AdminUser,
   AdminGeneral,
+  AdminWorldListEntry,
   RealtimeStatus,
   AuctionBidResponse,
   AccountSettings,
@@ -63,7 +63,14 @@ import type {
   ResetPasswordResponse,
   AdminRaiseEventResponse,
   AccountDetailedInfoResponse,
+  TimeControlRequest,
+  UniqueItemOwnerInfo,
+  GameVersionInfo,
+  GeneralLogEntry,
+  GeneralLogResult,
+  SimulatorExportResult,
   JsonObject,
+  JsonValue,
 } from "@/types";
 
 // World API
@@ -415,17 +422,6 @@ export const historyApi = {
     api.get<Message[]>(`/generals/${generalId}/records`),
 };
 
-// General Log API (legacy parity: battle center per-general logs)
-export interface GeneralLogEntry {
-  id: number;
-  message: string;
-  date: string;
-}
-export interface GeneralLogResult {
-  result: boolean;
-  reason?: string;
-  logs: GeneralLogEntry[];
-}
 export const generalLogApi = {
   getOldLogs: (
     generalId: number,
@@ -438,12 +434,6 @@ export const generalLogApi = {
     }),
 };
 
-// Simulator Export API (legacy parity: load general from server)
-export interface SimulatorExportResult {
-  result: boolean;
-  reason?: string;
-  data?: JsonObject;
-}
 export const simulatorExportApi = {
   exportGeneral: (generalId: number, targetId: number) =>
     api.get<SimulatorExportResult>(`/generals/${generalId}/simulator-export`, {
@@ -625,19 +615,7 @@ export const rankingApi = {
   hallOfFameOptions: (worldId: number) =>
     api.get<HallOfFameOptionsResponse>(`/worlds/${worldId}/hall-of-fame/options`),
   uniqueItemOwners: (worldId: number) =>
-    api.get<
-      {
-        slot: string;
-        slotLabel: string;
-        generalId: number;
-        generalName: string;
-        nationId: number;
-        nationName: string;
-        nationColor: string;
-        itemName: string;
-        itemGrade: string;
-      }[]
-    >(`/worlds/${worldId}/unique-item-owners`),
+    api.get<UniqueItemOwnerInfo[]>(`/worlds/${worldId}/unique-item-owners`),
 };
 
 // Traffic API
@@ -755,19 +733,7 @@ export const auctionApi = {
       `/auctions/${auctionId}/finalize`,
     ),
   getHistory: (worldId: number) =>
-    api.get<
-      {
-        id: number;
-        sellerGeneralId: number;
-        buyerGeneralId: number | null;
-        itemCode: string;
-        minPrice: number;
-        currentPrice: number;
-        status: string;
-        createdAt: string;
-        expiresAt: string;
-      }[]
-    >(`/worlds/${worldId}/auction-history`),
+    api.get<AuctionHistoryEntry[]>(`/worlds/${worldId}/auction-history`),
   getMarketPrice: (worldId: number) =>
     api.get<MarketPriceResponse>(`/worlds/${worldId}/market-price`),
   buyRice: (worldId: number, generalId: number, amount: number) =>
@@ -890,7 +856,7 @@ export const battleSimApi = {
       repeatCount?: number;
     },
   ) =>
-    api.post<BattleSimResult & { repeatSummary?: BattleSimRepeatResult }>(
+    api.post<BattleSimResponse>(
       "/battle/simulate",
       {
         attacker,
@@ -903,26 +869,12 @@ export const battleSimApi = {
 
 // Game Version API (Admin)
 export const gameVersionApi = {
-  list: () =>
-    api.get<
-      {
-        commitSha: string;
-        gameVersion: string;
-        jarPath: string;
-        port: number;
-        worldIds: number[];
-        alive: boolean;
-        pid: number;
-        baseUrl: string;
-        containerId: string | null;
-        imageTag: string | null;
-      }[]
-    >("/admin/game-versions"),
+  list: () => api.get<GameVersionInfo[]>("/admin/game-versions"),
   deploy: (data: {
     gameVersion: string;
     imageTag?: string;
     commitSha?: string;
-  }) => api.post<unknown>("/admin/game-versions", data),
+  }) => api.post<GameVersionInfo>("/admin/game-versions", data),
   stop: (version: string) =>
     api.delete<void>(`/admin/game-versions/${encodeURIComponent(version)}`),
 };
@@ -939,7 +891,7 @@ export const adminApi = {
   getGeneralLogs: (id: number) =>
     api.get<Message[]>(`/admin/generals/${id}/logs`),
   getDiplomacy: () => api.get<Diplomacy[]>("/admin/diplomacy"),
-  timeControl: (data: JsonObject) =>
+  timeControl: (data: TimeControlRequest) =>
     api.post<void>("/admin/time-control", data),
   listUsers: () => api.get<AdminUser[]>("/admin/users"),
   userAction: (
@@ -967,16 +919,7 @@ export const adminApi = {
   }) => api.post<CreateWorldResponse>("/worlds", data),
   deleteWorld: (worldId: number) =>
     api.delete<void>(`/admin/worlds/${worldId}`),
-  listWorlds: () =>
-    api.get<
-      {
-        id: number;
-        scenarioCode: string;
-        year: number;
-        month: number;
-        locked: boolean;
-      }[]
-    >("/admin/worlds"),
+  listWorlds: () => api.get<AdminWorldListEntry[]>("/admin/worlds"),
   bulkGeneralAction: (ids: number[], type: string) =>
     api.post<void>("/admin/generals/bulk-action", { ids, type }),
   activateWorld: (worldId: number, data?: { gameVersion?: string }) =>
@@ -1010,7 +953,7 @@ export const adminApi = {
 
 // Admin Event API (legacy parity: j_raise_event.php)
 export const adminEventApi = {
-  raise: (event: string, args?: unknown[], worldId?: number) =>
+  raise: (event: string, args?: JsonValue[], worldId?: number) =>
     api.post<AdminRaiseEventResponse>(
       "/admin/raise-event",
       {

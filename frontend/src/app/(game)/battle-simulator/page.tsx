@@ -8,8 +8,7 @@ import { battleSimApi, simulatorExportApi } from "@/lib/gameApi";
 import type {
   BattleSimUnit,
   BattleSimCity,
-  BattleSimResult,
-  BattleSimRepeatResult,
+  BattleSimResponse,
   General,
 } from "@/types";
 import {
@@ -778,9 +777,7 @@ export default function BattleSimulatorPage() {
   const setDefender = (u: UnitFormState) =>
     setDefenders((prev) => [u, ...prev.slice(1)]);
 
-  const [result, setResult] = useState<
-    (BattleSimResult & { repeatSummary?: BattleSimRepeatResult }) | null
-  >(null);
+  const [result, setResult] = useState<BattleSimResponse | null>(null);
   const [running, setRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

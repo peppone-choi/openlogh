@@ -98,9 +98,7 @@ export default function GameDashboard() {
       if (data.global?.lastVote) {
         try {
           const prevVoteState = localStorage.getItem("opensam:lastVoteState");
-          const curVoteId = String(
-            (data.global.lastVote as Record<string, unknown>)?.id ?? "",
-          );
+          const curVoteId = String(data.global.lastVote.id ?? "");
           if (prevVoteState !== curVoteId && curVoteId) {
             toast.info("새로운 설문이 진행중입니다!", { duration: 5000 });
           }
@@ -280,7 +278,7 @@ export default function GameDashboard() {
                   <a href="/vote" className="underline">
                     설문 진행 중:{" "}
                     <span>
-                      {(global.lastVote as Record<string, string>)?.title ?? ""}
+                      {global.lastVote?.title ?? ""}
                     </span>
                   </a>
                 </span>

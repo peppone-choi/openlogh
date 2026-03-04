@@ -36,16 +36,21 @@ export default function AdminLayout({
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { isAuthenticated, initAuth, logout } = useAuthStore();
+  const { user, isAuthenticated, initAuth, logout } = useAuthStore();
+  const isAdmin = isAuthenticated && user?.role === "ADMIN";
 
   useEffect(() => {
     initAuth();
   }, [initAuth]);
   useEffect(() => {
-    if (!isAuthenticated) router.replace("/login");
-  }, [isAuthenticated, router]);
+    if (!isAuthenticated) {
+      router.replace("/login");
+    } else if (!isAdmin) {
+      router.replace("/");
+    }
+  }, [isAuthenticated, isAdmin, router]);
 
-  if (!isAuthenticated) return null;
+  if (!isAdmin) return null;
 
   return (
     <div className="flex h-screen bg-background text-foreground">

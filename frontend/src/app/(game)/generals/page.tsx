@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useWorldStore } from "@/stores/worldStore";
 import { useGameStore } from "@/stores/gameStore";
 import { useGeneralStore } from "@/stores/generalStore";
+import type { LastTurnInfo } from "@/types";
 import { Users, Search, Columns3 } from "lucide-react";
 import { PageHeader } from "@/components/game/page-header";
 import { LoadingState } from "@/components/game/loading-state";
@@ -225,12 +226,8 @@ export default function GeneralsPage() {
     return canSpyAccess;
   };
 
-  const currentCommandLabel = (value: Record<string, unknown>): string => {
-    const actionCode = value.actionCode;
-    if (typeof actionCode === "string" && actionCode.length > 0)
-      return actionCode;
-    const brief = value.brief;
-    if (typeof brief === "string" && brief.length > 0) return brief;
+  const currentCommandLabel = (lt: LastTurnInfo): string => {
+    if (lt.command && lt.command.length > 0) return lt.command;
     return "-";
   };
 

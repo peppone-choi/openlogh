@@ -4,8 +4,8 @@ import { useEffect, useMemo, useState, useCallback } from "react";
 import { useWorldStore } from "@/stores/worldStore";
 import { useGeneralStore } from "@/stores/generalStore";
 import { useGameStore } from "@/stores/gameStore";
-import { generalLogApi, type GeneralLogEntry } from "@/lib/gameApi";
-import type { General } from "@/types";
+import { generalLogApi } from "@/lib/gameApi";
+import type { General, GeneralLogEntry } from "@/types";
 import {
   Swords,
   ChevronLeft,

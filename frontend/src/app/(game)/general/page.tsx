@@ -12,7 +12,7 @@ import {
   nationApi,
 } from "@/lib/gameApi";
 import { subscribeWebSocket } from "@/lib/websocket";
-import type { City, General, GeneralFrontInfo, Message, Nation } from "@/types";
+import type { City, General, GeneralFrontInfo, LastTurnInfo, Message, Nation } from "@/types";
 import { User, Users, Swords } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -764,24 +764,19 @@ function getRecord(
   return {};
 }
 
-function getCurrentCommandName(lastTurn: Record<string, unknown>): string {
-  const actionCode = lastTurn.actionCode;
-  if (typeof actionCode === "string" && actionCode.length > 0) {
-    return actionCode;
-  }
-  const brief = lastTurn.brief;
-  if (typeof brief === "string" && brief.length > 0) {
-    return brief;
+function getCurrentCommandName(lastTurn: LastTurnInfo): string {
+  if (lastTurn.command && lastTurn.command.length > 0) {
+    return lastTurn.command;
   }
   return "대기";
 }
 
 function getCurrentCommandTarget(
-  lastTurn: Record<string, unknown>,
+  lastTurn: LastTurnInfo,
   currentCityName: string | undefined,
 ): string {
-  const arg = getRecord(lastTurn, "arg");
-  const targetCity = arg.destCityId;
+  const arg = lastTurn.arg;
+  const targetCity = arg?.destCityId;
   if (typeof targetCity === "number") return `도시 #${targetCity}`;
   if (typeof targetCity === "string" && targetCity.length > 0) {
     return `도시 #${targetCity}`;

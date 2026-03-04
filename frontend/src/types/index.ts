@@ -74,7 +74,8 @@ export interface Nation {
   power: number;
   level: number;
   typeCode: string;
-  spy: Record<string, unknown>;
+  /** Spy intel map: city ID (string) → spy level (number) */
+  spy: Record<string, number>;
   meta: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
@@ -108,8 +109,15 @@ export interface City {
   state: number;
   region: number;
   term: number;
-  conflict: Record<string, unknown>;
+  /** Conflict score map: nation ID (string) → conflict score (number) */
+  conflict: Record<string, number>;
   meta: Record<string, unknown>;
+}
+
+export interface LastTurnInfo {
+  command: string;
+  arg?: Record<string, unknown>;
+  term?: number;
 }
 
 // General (5-stat system)
@@ -171,7 +179,7 @@ export interface General {
   spec2Age: number;
   commandPoints: number;
   commandEndTime: string | null;
-  lastTurn: Record<string, unknown>;
+  lastTurn: LastTurnInfo;
   meta: Record<string, unknown>;
   penalty: Record<string, unknown>;
   picture: string;
@@ -487,7 +495,21 @@ export interface AdminRaiseEventResponse {
   info?: JsonValue;
 }
 
-export type AccountDetailedInfoResponse = JsonObject;
+export interface AccountDetailedInfo {
+  loginId: string;
+  displayName: string;
+  grade: number;
+  role: string;
+  joinDate: string;
+  lastLoginAt: string | null;
+  thirdUse: boolean;
+  oauthType: string | null;
+  tokenValidUntil: string | null;
+  acl: string | null;
+}
+
+/** @deprecated Use AccountDetailedInfo instead */
+export type AccountDetailedInfoResponse = AccountDetailedInfo;
 
 export interface RealtimeStatus {
   generalId: number;
@@ -595,7 +617,14 @@ export interface GlobalInfo {
   generalCntLimit: number;
   serverCnt: number;
   lastVoteID: number;
-  lastVote: Record<string, unknown> | null;
+  lastVote: LastVoteInfo | null;
+}
+
+export interface LastVoteInfo {
+  id: number;
+  title: string;
+  options: string[];
+  votes: Record<string, number>;
 }
 
 export interface OnlineNationInfo {
@@ -1004,6 +1033,10 @@ export interface BattleSimResult {
   defendersRemaining?: number[];
 }
 
+export interface BattleSimResponse extends BattleSimResult {
+  repeatSummary?: BattleSimRepeatResult;
+}
+
 // Nation Policy
 export interface NationPolicyInfo {
   rate: number;
@@ -1015,7 +1048,6 @@ export interface NationPolicyInfo {
 }
 
 export interface NpcPolicyInfo {
-  [key: string]: unknown;
   reqNationGold: number;
   reqNationRice: number;
   reqHumanWarUrgentGold: number;
@@ -1054,6 +1086,16 @@ export interface NpcPolicyInfo {
   defaultGeneralActionPriority: string[];
   availableNationPriorityItems: string[];
   availableGeneralActionPriorityItems: string[];
+  /** NPC auto-play mode (0=off, 1+=active) */
+  npcMode?: number;
+  /** Last setter info per category */
+  lastSetters?: {
+    nation?: { setter: string; date: string };
+    general?: { setter: string; date: string };
+    policy?: { setter: string; date: string };
+  };
+  /** Recent settings change history */
+  history?: { setter: string; date: string; action: string; details: string }[];
 }
 
 // Officer
@@ -1143,4 +1185,71 @@ export interface AdminGeneral {
   experience: number;
   npcState: number;
   blockState: number;
+}
+
+export interface TimeControlRequest {
+  year?: number;
+  month?: number;
+  startYear?: number;
+  locked?: boolean;
+  turnTerm?: number;
+  distribute?: { gold: number; rice: number; target: string };
+  auctionSync?: boolean;
+  auctionCloseMinutes?: number;
+}
+
+// Admin World List Entry
+export interface AdminWorldListEntry {
+  id: number;
+  scenarioCode: string;
+  year: number;
+  month: number;
+  locked: boolean;
+}
+
+// Unique Item Owner
+export interface UniqueItemOwnerInfo {
+  slot: string;
+  slotLabel: string;
+  generalId: number;
+  generalName: string;
+  nationId: number;
+  nationName: string;
+  nationColor: string;
+  itemName: string;
+  itemGrade: string;
+}
+
+// Game Version (Admin)
+export interface GameVersionInfo {
+  commitSha: string;
+  gameVersion: string;
+  jarPath: string;
+  port: number;
+  worldIds: number[];
+  alive: boolean;
+  pid: number;
+  baseUrl: string;
+  containerId: string | null;
+  imageTag: string | null;
+}
+
+// General Log (battle center)
+export interface GeneralLogEntry {
+  id: number;
+  message: string;
+  date: string;
+}
+
+export interface GeneralLogResult {
+  result: boolean;
+  reason?: string;
+  logs: GeneralLogEntry[];
+}
+
+// Simulator Export
+export interface SimulatorExportResult {
+  result: boolean;
+  reason?: string;
+  data?: JsonObject;
 }

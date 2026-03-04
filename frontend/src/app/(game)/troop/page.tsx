@@ -129,7 +129,7 @@ function CommandTimeline({ members }: { members: General[] }) {
               ? new Date(g.commandEndTime)
               : null;
             const isActive = endTime && endTime > new Date();
-            const lastTurnAction = g.lastTurn?.actionCode as string | undefined;
+            const lastTurnAction = g.lastTurn?.command;
             return (
               <div
                 key={g.id}

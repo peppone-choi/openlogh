@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import type { OAuthProviderInfo } from "@/types";
+import type { AccountDetailedInfo, OAuthProviderInfo } from "@/types";
 import {
   Link2,
   Unlink,
@@ -75,10 +75,7 @@ function AccountPageContent() {
   const [thirdUseLoading, setThirdUseLoading] = useState(false);
 
   // Detailed user info
-  const [detailedInfo, setDetailedInfo] = useState<Record<
-    string,
-    unknown
-  > | null>(null);
+  const [detailedInfo, setDetailedInfo] = useState<AccountDetailedInfo | null>(null);
 
   // Account deletion modal
   const [showDeleteModal, setShowDeleteModal] = useState(false);

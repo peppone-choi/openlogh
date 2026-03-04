@@ -5,6 +5,7 @@ import { useWorldStore } from "@/stores/worldStore";
 import { useGameStore } from "@/stores/gameStore";
 import { useGeneralStore } from "@/stores/generalStore";
 import { npcPolicyApi } from "@/lib/gameApi";
+import type { NpcPolicyInfo } from "@/types";
 import {
   Bot,
   Settings,
@@ -55,7 +56,7 @@ import { toast } from "sonner";
 /* ── Full NPC policy field definitions (legacy parity) ── */
 
 interface PolicyField {
-  key: string;
+  key: keyof NpcPolicyInfo;
   label: string;
   hint?: string;
   step?: number;
@@ -654,23 +655,10 @@ export default function NpcPage() {
           setNpcMode(String(data.npcMode));
         }
         if (data.lastSetters) {
-          setLastSetters(
-            data.lastSetters as {
-              nation?: { setter: string; date: string };
-              general?: { setter: string; date: string };
-              policy?: { setter: string; date: string };
-            },
-          );
+          setLastSetters(data.lastSetters);
         }
-        if (Array.isArray(data.history)) {
-          setSettingsHistory(
-            data.history as {
-              setter: string;
-              date: string;
-              action: string;
-              details: string;
-            }[],
-          );
+        if (data.history) {
+          setSettingsHistory(data.history);
         }
 
         // Force config (hidden JSON)
