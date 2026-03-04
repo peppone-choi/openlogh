@@ -27,11 +27,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { adminApi, adminEventApi, worldApi, scenarioApi } from "@/lib/gameApi";
+import { adminApi, adminEventApi, worldApi, scenarioApi, gameVersionApi } from "@/lib/gameApi";
 import { toast } from "sonner";
 import type { WorldState, Scenario, AdminDashboard } from "@/types";
+import { useAdminWorld } from "@/contexts/AdminWorldContext";
 
 export default function AdminDashboardPage() {
+  const { worldId, refreshWorlds: refreshWorldsContext } = useAdminWorld();
   // Gateway-level world list (always available)
   const [worlds, setWorlds] = useState<WorldState[]>([]);
   const [loading, setLoading] = useState(true);
@@ -58,6 +60,26 @@ export default function AdminDashboardPage() {
   const [allowLogin, setAllowLogin] = useState<boolean | null>(null);
   const [allowJoin, setAllowJoin] = useState<boolean | null>(null);
   const [savingSystemFlags, setSavingSystemFlags] = useState(false);
+
+  const [availableVersions, setAvailableVersions] = useState<string[]>([]);
+  const [maxGeneral, setMaxGeneral] = useState("");
+  const [maxNation, setMaxNation] = useState("");
+  const [npcMode, setNpcMode] = useState("1");
+  const [isFiction, setIsFiction] = useState(false);
+  const [joinMode, setJoinMode] = useState("standard");
+  const [blockGeneralCreate, setBlockGeneralCreate] = useState(false);
+  const [realtimeMode, setRealtimeMode] = useState(false);
+  const [commandPointRegenRate, setCommandPointRegenRate] = useState("");
+  const [bettingActive, setBettingActive] = useState(false);
+  const [tournamentAuto, setTournamentAuto] = useState(false);
+  const [allowDomestic, setAllowDomestic] = useState(true);
+  const [allowTeleport, setAllowTeleport] = useState(true);
+  const [allowRecruit, setAllowRecruit] = useState(true);
+  const [allowTraining, setAllowTraining] = useState(true);
+  const [allowMoraleBoost, setAllowMoraleBoost] = useState(true);
+  const [allowDispatch, setAllowDispatch] = useState(true);
+  const [commanderTurnEnabled, setCommanderTurnEnabled] = useState(true);
+  const [turnValidityHours, setTurnValidityHours] = useState("24");
 
   // Create world form
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -95,7 +117,11 @@ export default function AdminDashboardPage() {
         })
         .catch(() => {});
 
-      // 3. Load gateway system flags
+      gameVersionApi
+        .available()
+        .then((res) => setAvailableVersions(res.data))
+        .catch(() => {});
+
       adminApi
         .getSystemFlags()
         .then((res) => {
@@ -105,27 +131,50 @@ export default function AdminDashboardPage() {
         .catch(() => {});
 
       // 4. Try loading per-world dashboard (may fail if no game instance)
-      adminApi
-        .getDashboard()
-        .then((res) => {
-          const d = res.data;
-          setDashboard(d);
-          setDashboardAvailable(true);
-          if (d.currentWorld) {
-            setNotice((d.currentWorld.config?.notice as string) ?? "");
-            setTurnTerm(String(d.currentWorld.config?.turnTerm ?? ""));
-            setLocked(Boolean(d.currentWorld.config?.locked));
-          }
-        })
-        .catch(() => {
-          setDashboardAvailable(false);
-        })
-        .finally(() => {
-          setLoading(false);
-        });
+      if (worldId != null) {
+        adminApi
+          .getDashboard(worldId)
+          .then((res) => {
+            const d = res.data;
+            setDashboard(d);
+            setDashboardAvailable(true);
+            if (d.currentWorld) {
+              const cfg = d.currentWorld.config;
+              setNotice((cfg?.notice as string) ?? "");
+              setTurnTerm(String(cfg?.turnTerm ?? ""));
+              setLocked(Boolean(cfg?.locked));
+              setMaxGeneral(String(cfg?.maxGeneral ?? ""));
+              setMaxNation(String(cfg?.maxNation ?? ""));
+              setNpcMode(String(cfg?.npcMode ?? "1"));
+              setIsFiction(Boolean(cfg?.isFiction));
+              setJoinMode(String(cfg?.joinMode ?? "standard"));
+              setBlockGeneralCreate(Boolean(cfg?.blockGeneralCreate));
+              setRealtimeMode(Boolean(d.currentWorld.realtimeMode));
+              setCommandPointRegenRate(String(d.currentWorld.commandPointRegenRate ?? ""));
+              setBettingActive(Boolean(cfg?.bettingActive));
+              setTournamentAuto(Boolean(cfg?.tournamentAuto));
+              setAllowDomestic(cfg?.allowDomestic !== false);
+              setAllowTeleport(cfg?.allowTeleport !== false);
+              setAllowRecruit(cfg?.allowRecruit !== false);
+              setAllowTraining(cfg?.allowTraining !== false);
+              setAllowMoraleBoost(cfg?.allowMoraleBoost !== false);
+              setAllowDispatch(cfg?.allowDispatch !== false);
+              setCommanderTurnEnabled(cfg?.commanderTurnEnabled !== false);
+              setTurnValidityHours(String(cfg?.turnValidityHours ?? "24"));
+            }
+          })
+          .catch(() => {
+            setDashboardAvailable(false);
+          })
+          .finally(() => {
+            setLoading(false);
+          });
+      } else {
+        setLoading(false);
+      }
     };
     init();
-  }, [loadWorlds]);
+  }, [loadWorlds, worldId]);
 
   // ── Handlers ────────────────────────────────────────────────
 
@@ -146,6 +195,7 @@ export default function AdminDashboardPage() {
       setNewWorldName("");
       setShowCreateForm(false);
       loadWorlds();
+      refreshWorldsContext();
     } catch {
       toast.error("월드 생성 실패");
     } finally {
@@ -164,6 +214,7 @@ export default function AdminDashboardPage() {
       await adminApi.deleteWorld(worldId);
       toast.success(`월드 #${worldId} 삭제 완료`);
       loadWorlds();
+      refreshWorldsContext();
     } catch {
       toast.error("월드 삭제 실패");
     }
@@ -184,6 +235,7 @@ export default function AdminDashboardPage() {
       }
       toast.success(`월드 #${worldId} ${labels[action]} 완료`);
       loadWorlds();
+      refreshWorldsContext();
     } catch {
       toast.error(`${labels[action]} 실패`);
     }
@@ -212,6 +264,7 @@ export default function AdminDashboardPage() {
       toast.success(`월드 #${resetTarget.id} 리셋 완료`);
       setResetTarget(null);
       loadWorlds();
+      refreshWorldsContext();
     } catch {
       toast.error("리셋 실패");
     }
@@ -220,7 +273,7 @@ export default function AdminDashboardPage() {
   const handleWriteLog = async () => {
     if (!logMessage.trim()) return;
     try {
-      await adminApi.writeLog(logMessage.trim());
+      await adminApi.writeLog(logMessage.trim(), worldId);
       toast.success("중원정세 로그가 추가되었습니다.");
       setLogMessage("");
     } catch {
@@ -247,7 +300,29 @@ export default function AdminDashboardPage() {
         notice,
         turnTerm: turnTerm ? Number(turnTerm) : undefined,
         locked,
-      });
+        maxGeneral: maxGeneral ? Number(maxGeneral) : undefined,
+        maxNation: maxNation ? Number(maxNation) : undefined,
+        npcMode: Number(npcMode),
+        isFiction,
+        joinMode,
+        blockGeneralCreate,
+        realtimeMode,
+        commandPointRegenRate: commandPointRegenRate
+          ? Number(commandPointRegenRate)
+          : undefined,
+        bettingActive,
+        tournamentAuto,
+        allowDomestic,
+        allowTeleport,
+        allowRecruit,
+        allowTraining,
+        allowMoraleBoost,
+        allowDispatch,
+        commanderTurnEnabled,
+        turnValidityHours: turnValidityHours
+          ? Number(turnValidityHours)
+          : undefined,
+      }, worldId);
       toast.success("설정이 저장되었습니다.");
     } catch {
       toast.error("저장 실패");
@@ -331,10 +406,9 @@ export default function AdminDashboardPage() {
       args = [id];
     }
 
-    const activeWorld = worlds.find((w) => !w.config?.locked);
     setEventLoading(eventName);
     try {
-      const res = await adminEventApi.raise(eventName, args, activeWorld?.id);
+      const res = await adminEventApi.raise(eventName, args, worldId);
       if (res.data.result) {
         toast.success(`${eventName} 실행 완료`);
         if (needsArg === "message") setEventLogMsg("");
@@ -457,11 +531,20 @@ export default function AdminDashboardPage() {
                   <label className="text-xs text-muted-foreground">
                     게임 버전
                   </label>
-                  <Input
+                  <select
                     value={newGameVersion}
                     onChange={(e) => setNewGameVersion(e.target.value)}
-                    placeholder="latest"
-                  />
+                    className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm"
+                  >
+                    <option value="latest">latest</option>
+                    {availableVersions
+                      .filter((v) => v !== "latest")
+                      .map((v) => (
+                        <option key={v} value={v}>
+                          {v}
+                        </option>
+                      ))}
+                  </select>
                 </div>
               </div>
               <div className="flex gap-2">
@@ -515,11 +598,20 @@ export default function AdminDashboardPage() {
                   <label className="text-xs text-muted-foreground">
                     게임 버전
                   </label>
-                  <Input
+                  <select
                     value={newGameVersion}
                     onChange={(e) => setNewGameVersion(e.target.value)}
-                    placeholder="latest"
-                  />
+                    className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm"
+                  >
+                    <option value="latest">latest</option>
+                    {availableVersions
+                      .filter((v) => v !== "latest")
+                      .map((v) => (
+                        <option key={v} value={v}>
+                          {v}
+                        </option>
+                      ))}
+                  </select>
                 </div>
               </div>
               <div className="flex gap-2">
@@ -700,6 +792,30 @@ export default function AdminDashboardPage() {
                   onChange={(e) => setTurnTerm(e.target.value)}
                   placeholder="300"
                 />
+                <div className="flex flex-wrap gap-1 pt-1">
+                  {[
+                    { label: "1분", value: 60 },
+                    { label: "2분", value: 120 },
+                    { label: "5분", value: 300 },
+                    { label: "10분", value: 600 },
+                    { label: "20분", value: 1200 },
+                    { label: "30분", value: 1800 },
+                    { label: "60분", value: 3600 },
+                    { label: "120분", value: 7200 },
+                  ].map((p) => (
+                    <Button
+                      key={p.value}
+                      size="sm"
+                      variant={
+                        turnTerm === String(p.value) ? "default" : "outline"
+                      }
+                      onClick={() => setTurnTerm(String(p.value))}
+                      className="text-xs"
+                    >
+                      {p.label}
+                    </Button>
+                  ))}
+                </div>
               </div>
               <div className="flex items-center gap-2">
                 <input
@@ -713,6 +829,182 @@ export default function AdminDashboardPage() {
                   서버 잠금
                 </label>
               </div>
+
+              <div className="border-t pt-4 mt-4 space-y-3">
+                <h4 className="text-sm font-medium">게임 규칙</h4>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-xs text-muted-foreground">
+                      최대 장수
+                    </label>
+                    <Input
+                      type="number"
+                      value={maxGeneral}
+                      onChange={(e) => setMaxGeneral(e.target.value)}
+                      placeholder="600"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs text-muted-foreground">
+                      최대 국가
+                    </label>
+                    <Input
+                      type="number"
+                      value={maxNation}
+                      onChange={(e) => setMaxNation(e.target.value)}
+                      placeholder="24"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs text-muted-foreground">
+                      NPC 모드
+                    </label>
+                    <select
+                      value={npcMode}
+                      onChange={(e) => setNpcMode(e.target.value)}
+                      className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm"
+                    >
+                      <option value="0">불가</option>
+                      <option value="1">가능</option>
+                      <option value="2">선택 생성</option>
+                    </select>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs text-muted-foreground">
+                      가입 모드
+                    </label>
+                    <select
+                      value={joinMode}
+                      onChange={(e) => setJoinMode(e.target.value)}
+                      className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm"
+                    >
+                      <option value="standard">일반</option>
+                      <option value="onlyRandom">랜덤 전용</option>
+                    </select>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs text-muted-foreground">
+                      사령 포인트 회복률
+                    </label>
+                    <Input
+                      type="number"
+                      value={commandPointRegenRate}
+                      onChange={(e) =>
+                        setCommandPointRegenRate(e.target.value)
+                      }
+                      placeholder="100"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs text-muted-foreground">
+                      턴 유효시간 (시간)
+                    </label>
+                    <Input
+                      type="number"
+                      value={turnValidityHours}
+                      onChange={(e) => setTurnValidityHours(e.target.value)}
+                      placeholder="24"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                  {[
+                    {
+                      label: "가상 모드",
+                      checked: isFiction,
+                      onChange: setIsFiction,
+                    },
+                    {
+                      label: "장수 생성 차단",
+                      checked: blockGeneralCreate,
+                      onChange: setBlockGeneralCreate,
+                    },
+                    {
+                      label: "실시간 모드",
+                      checked: realtimeMode,
+                      onChange: setRealtimeMode,
+                    },
+                    {
+                      label: "베팅 활성화",
+                      checked: bettingActive,
+                      onChange: setBettingActive,
+                    },
+                    {
+                      label: "자동 토너먼트",
+                      checked: tournamentAuto,
+                      onChange: setTournamentAuto,
+                    },
+                  ].map((opt) => (
+                    <label
+                      key={opt.label}
+                      className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm"
+                    >
+                      <span>{opt.label}</span>
+                      <input
+                        type="checkbox"
+                        checked={opt.checked}
+                        onChange={(e) => opt.onChange(e.target.checked)}
+                      />
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div className="border-t pt-4 mt-4 space-y-3">
+                <h4 className="text-sm font-medium">게임 기능 설정</h4>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                  {[
+                    {
+                      label: "내정",
+                      checked: allowDomestic,
+                      onChange: setAllowDomestic,
+                    },
+                    {
+                      label: "순간이동",
+                      checked: allowTeleport,
+                      onChange: setAllowTeleport,
+                    },
+                    {
+                      label: "모병",
+                      checked: allowRecruit,
+                      onChange: setAllowRecruit,
+                    },
+                    {
+                      label: "훈련",
+                      checked: allowTraining,
+                      onChange: setAllowTraining,
+                    },
+                    {
+                      label: "사기진작",
+                      checked: allowMoraleBoost,
+                      onChange: setAllowMoraleBoost,
+                    },
+                    {
+                      label: "출병",
+                      checked: allowDispatch,
+                      onChange: setAllowDispatch,
+                    },
+                    {
+                      label: "사령턴",
+                      checked: commanderTurnEnabled,
+                      onChange: setCommanderTurnEnabled,
+                    },
+                  ].map((opt) => (
+                    <label
+                      key={opt.label}
+                      className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm"
+                    >
+                      <span>{opt.label}</span>
+                      <input
+                        type="checkbox"
+                        checked={opt.checked}
+                        onChange={(e) => opt.onChange(e.target.checked)}
+                      />
+                    </label>
+                  ))}
+                </div>
+              </div>
+
               <Button
                 onClick={handleSave}
                 className="bg-red-400 hover:bg-red-500 text-white"

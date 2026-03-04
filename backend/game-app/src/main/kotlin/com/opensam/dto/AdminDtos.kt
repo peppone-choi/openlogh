@@ -28,6 +28,8 @@ data class AdminWorldInfo(
     val month: Short,
     val scenarioCode: String,
     val realtimeMode: Boolean,
+    val tickSeconds: Int,
+    val commandPointRegenRate: Int,
     val config: MutableMap<String, Any>,
 )
 

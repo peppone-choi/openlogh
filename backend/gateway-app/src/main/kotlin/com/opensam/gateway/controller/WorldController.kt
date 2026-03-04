@@ -47,7 +47,12 @@ class WorldController(
         httpServletRequest: HttpServletRequest,
     ): ResponseEntity<WorldStateResponse> {
         val commitSha = request.commitSha?.takeIf { it.isNotBlank() } ?: "local"
-        val gameVersion = request.gameVersion?.takeIf { it.isNotBlank() } ?: "latest"
+        val requestedVersion = request.gameVersion?.takeIf { it.isNotBlank() } ?: "latest"
+        val gameVersion = if (requestedVersion == "latest") {
+            gameOrchestrator.resolveImageVersion("latest") ?: requestedVersion
+        } else {
+            requestedVersion
+        }
 
         return try {
             val instance = gameOrchestrator.ensureVersion(
@@ -108,7 +113,12 @@ class WorldController(
         val world = worldService.getWorld(id) ?: return ResponseEntity.notFound().build()
 
         val commitSha = request?.commitSha?.takeIf { it.isNotBlank() } ?: world.commitSha
-        val gameVersion = request?.gameVersion?.takeIf { it.isNotBlank() } ?: world.gameVersion
+        val requestedVersion = request?.gameVersion?.takeIf { it.isNotBlank() } ?: world.gameVersion
+        val gameVersion = if (requestedVersion == "latest") {
+            gameOrchestrator.resolveImageVersion("latest") ?: requestedVersion
+        } else {
+            requestedVersion
+        }
 
         return try {
             gameOrchestrator.attachWorld(

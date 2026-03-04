@@ -24,6 +24,11 @@ class GameVersionController(
         return ResponseEntity.ok(gameOrchestrator.statuses())
     }
 
+    @GetMapping("/available")
+    fun listAvailableVersions(): ResponseEntity<List<String>> {
+        return ResponseEntity.ok(gameOrchestrator.listAvailableVersions())
+    }
+
     @PostMapping
     fun deployVersion(@RequestBody request: DeployGameVersionRequest): ResponseEntity<GameInstanceStatus> {
         return try {

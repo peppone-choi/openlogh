@@ -236,6 +236,10 @@ class GameProcessOrchestrator(
         )
     }
 
+    override fun resolveImageVersion(gameVersion: String): String? = null
+
+    override fun listAvailableVersions(): List<String> = emptyList()
+
     private fun baseUrl(port: Int): String {
         return "http://127.0.0.1:$port"
     }

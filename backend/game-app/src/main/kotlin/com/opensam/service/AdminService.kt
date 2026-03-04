@@ -35,6 +35,8 @@ class AdminService(
                     month = it.currentMonth,
                     scenarioCode = it.scenarioCode,
                     realtimeMode = it.realtimeMode,
+                    tickSeconds = it.tickSeconds,
+                    commandPointRegenRate = it.commandPointRegenRate,
                     config = it.config,
                 )
             },
@@ -43,9 +45,20 @@ class AdminService(
 
     fun updateSettings(worldId: Long, settings: Map<String, Any>): Boolean {
         val world = worldStateRepository.findById(worldId.toShort()).orElse(null) ?: return false
-        settings["notice"]?.let { world.config["notice"] = it }
+
+        // Column-level fields (not stored in config JSONB)
         settings["turnTerm"]?.let { world.tickSeconds = (it as Number).toInt() }
-        settings["locked"]?.let { world.config["locked"] = it }
+        settings["realtimeMode"]?.let { world.realtimeMode = it as Boolean }
+        settings["commandPointRegenRate"]?.let { world.commandPointRegenRate = (it as Number).toInt() }
+
+        // Config JSONB keys — pass through everything except column-level fields
+        val columnKeys = setOf("turnTerm", "realtimeMode", "commandPointRegenRate")
+        for ((key, value) in settings) {
+            if (key !in columnKeys) {
+                world.config[key] = value
+            }
+        }
+
         worldStateRepository.save(world)
         return true
     }

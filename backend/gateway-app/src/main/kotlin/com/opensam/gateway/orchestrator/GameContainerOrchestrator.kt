@@ -328,6 +328,46 @@ class GameContainerOrchestrator(
         )
     }
 
+    override fun resolveImageVersion(gameVersion: String): String? {
+        val imageRef = "$imagePrefix:$gameVersion"
+        return try {
+            val process = ProcessBuilder(
+                "docker", "inspect", imageRef,
+                "--format", "{{index .Config.Labels \"org.opencontainers.image.revision\"}}",
+            )
+                .redirectErrorStream(true)
+                .start()
+            val output = process.inputStream.bufferedReader().readText().trim()
+            process.waitFor(10, TimeUnit.SECONDS)
+            if (process.exitValue() != 0 || output.isBlank() || output == "<no value>") {
+                null
+            } else {
+                output.take(7)
+            }
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    override fun listAvailableVersions(): List<String> {
+        return try {
+            val process = ProcessBuilder(
+                "docker", "images", "--format", "{{.Tag}}", imagePrefix,
+            )
+                .redirectErrorStream(true)
+                .start()
+            val output = process.inputStream.bufferedReader().readText().trim()
+            process.waitFor(10, TimeUnit.SECONDS)
+            if (process.exitValue() != 0 || output.isBlank()) {
+                emptyList()
+            } else {
+                output.lines().filter { it.isNotBlank() && it != "<none>" }.distinct().sorted()
+            }
+        } catch (_: Exception) {
+            emptyList()
+        }
+    }
+
     companion object {
         private const val CONTAINER_PORT = 9001
     }

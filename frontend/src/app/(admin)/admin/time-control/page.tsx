@@ -25,10 +25,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { adminApi } from "@/lib/gameApi";
 import { toast } from "sonner";
+import { useAdminWorld } from "@/contexts/AdminWorldContext";
 
 const TURN_PRESETS = [1, 2, 5, 10, 20, 30, 60, 120];
 
 export default function AdminTimeControlPage() {
+  const { worldId } = useAdminWorld();
   const [loading, setLoading] = useState(true);
   const [year, setYear] = useState("");
   const [month, setMonth] = useState("");
@@ -50,8 +52,9 @@ export default function AdminTimeControlPage() {
   const [auctionCloseMinutes, setAuctionCloseMinutes] = useState("60");
 
   useEffect(() => {
+    if (worldId == null) return;
     adminApi
-      .getDashboard()
+      .getDashboard(worldId)
       .then((res) => {
         const w = res.data.currentWorld;
         if (w) {
@@ -71,7 +74,7 @@ export default function AdminTimeControlPage() {
       .finally(() => {
         setLoading(false);
       });
-  }, []);
+  }, [worldId]);
 
   const handleTimeSubmit = useCallback(async () => {
     try {
@@ -80,22 +83,22 @@ export default function AdminTimeControlPage() {
         month: month ? Number(month) : undefined,
         startYear: startYear ? Number(startYear) : undefined,
         locked,
-      });
+      }, worldId);
       toast.success("시간 설정이 변경되었습니다.");
     } catch {
       toast.error("변경 실패");
     }
-  }, [year, month, startYear, locked]);
+  }, [year, month, startYear, locked, worldId]);
 
   const handleTurnTermChange = useCallback(async (minutes: number) => {
     try {
-      await adminApi.timeControl({ turnTerm: minutes });
+      await adminApi.timeControl({ turnTerm: minutes }, worldId);
       setTurnTerm(String(minutes));
       toast.success(`턴 시간이 ${minutes}분으로 변경되었습니다.`);
     } catch {
       toast.error("턴 시간 변경 실패");
     }
-  }, []);
+  }, [worldId]);
 
   const handleCustomTurnTerm = useCallback(async () => {
     const minutes = Number(customTurnTerm);
@@ -117,7 +120,7 @@ export default function AdminTimeControlPage() {
     try {
       await adminApi.timeControl({
         distribute: { gold, rice, target: distributeTarget },
-      });
+      }, worldId);
       toast.success(
         `금 ${gold.toLocaleString()}, 쌀 ${rice.toLocaleString()} 지급 완료 (${distributeTarget === "all" ? "전체 장수" : "국가별"})`,
       );
@@ -126,19 +129,19 @@ export default function AdminTimeControlPage() {
     } catch {
       toast.error("지급 실패");
     }
-  }, [goldAmount, riceAmount, distributeTarget]);
+  }, [goldAmount, riceAmount, distributeTarget, worldId]);
 
   const handleAuctionSync = useCallback(async () => {
     try {
       await adminApi.timeControl({
         auctionSync: auctionSyncEnabled,
         auctionCloseMinutes: Number(auctionCloseMinutes) || 60,
-      });
+      }, worldId);
       toast.success("경매 시간 설정이 변경되었습니다.");
     } catch {
       toast.error("경매 시간 설정 실패");
     }
-  }, [auctionSyncEnabled, auctionCloseMinutes]);
+  }, [auctionSyncEnabled, auctionCloseMinutes, worldId]);
 
   if (loading) return <LoadingState />;
 
