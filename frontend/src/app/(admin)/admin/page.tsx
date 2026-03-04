@@ -12,6 +12,9 @@ import {
   MessageSquarePlus,
   Info,
   Zap,
+  Server,
+  AlertTriangle,
+  GitBranch,
 } from "lucide-react";
 import { PageHeader } from "@/components/game/page-header";
 import { LoadingState } from "@/components/game/loading-state";
@@ -67,7 +70,7 @@ export default function AdminDashboardPage() {
   const [npcMode, setNpcMode] = useState("1");
   const [isFiction, setIsFiction] = useState(false);
   const [joinMode, setJoinMode] = useState("standard");
-  const [blockGeneralCreate, setBlockGeneralCreate] = useState(false);
+  const [blockGeneralCreate, setBlockGeneralCreate] = useState(0);
   const [realtimeMode, setRealtimeMode] = useState(false);
   const [commandPointRegenRate, setCommandPointRegenRate] = useState("");
   const [bettingActive, setBettingActive] = useState(false);
@@ -80,6 +83,13 @@ export default function AdminDashboardPage() {
   const [allowDispatch, setAllowDispatch] = useState(true);
   const [commanderTurnEnabled, setCommanderTurnEnabled] = useState(true);
   const [turnValidityHours, setTurnValidityHours] = useState("24");
+  const [sync, setSync] = useState(true);
+  const [extend, setExtend] = useState(true);
+  const [showImgLevel, setShowImgLevel] = useState(3);
+  const [autorunMinutes, setAutorunMinutes] = useState(0);
+  const [reserveOpen, setReserveOpen] = useState("");
+  const [preReserveOpen, setPreReserveOpen] = useState("");
+  const [allowConscript, setAllowConscript] = useState(true);
 
   // Create world form
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -148,7 +158,7 @@ export default function AdminDashboardPage() {
               setNpcMode(String(cfg?.npcMode ?? "1"));
               setIsFiction(Boolean(cfg?.isFiction));
               setJoinMode(String(cfg?.joinMode ?? "standard"));
-              setBlockGeneralCreate(Boolean(cfg?.blockGeneralCreate));
+              setBlockGeneralCreate(Number(cfg?.blockGeneralCreate ?? 0));
               setRealtimeMode(Boolean(d.currentWorld.realtimeMode));
               setCommandPointRegenRate(String(d.currentWorld.commandPointRegenRate ?? ""));
               setBettingActive(Boolean(cfg?.bettingActive));
@@ -161,6 +171,13 @@ export default function AdminDashboardPage() {
               setAllowDispatch(cfg?.allowDispatch !== false);
               setCommanderTurnEnabled(cfg?.commanderTurnEnabled !== false);
               setTurnValidityHours(String(cfg?.turnValidityHours ?? "24"));
+              setSync(cfg?.sync !== false);
+              setExtend(cfg?.extend !== false);
+              setShowImgLevel(Number(cfg?.showImgLevel ?? 3));
+              setAutorunMinutes(Number(cfg?.autorunMinutes ?? 0));
+              setReserveOpen(String(cfg?.reserveOpen ?? ""));
+              setPreReserveOpen(String(cfg?.preReserveOpen ?? ""));
+              setAllowConscript(cfg?.allowConscript !== false);
             }
           })
           .catch(() => {
@@ -322,6 +339,13 @@ export default function AdminDashboardPage() {
         turnValidityHours: turnValidityHours
           ? Number(turnValidityHours)
           : undefined,
+        sync,
+        extend,
+        showImgLevel,
+        autorunMinutes,
+        reserveOpen: reserveOpen || undefined,
+        preReserveOpen: preReserveOpen || undefined,
+        allowConscript,
       }, worldId);
       toast.success("설정이 저장되었습니다.");
     } catch {
@@ -907,17 +931,79 @@ export default function AdminDashboardPage() {
                     />
                   </div>
                 </div>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-xs text-muted-foreground">
+                      장수 생성
+                    </label>
+                    <select
+                      value={blockGeneralCreate}
+                      onChange={(e) => setBlockGeneralCreate(Number(e.target.value))}
+                      className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm"
+                    >
+                      <option value={0}>가능</option>
+                      <option value={1}>불가</option>
+                      <option value={2}>장수명 무작위</option>
+                    </select>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs text-muted-foreground">
+                      이미지 표기 수준
+                    </label>
+                    <select
+                      value={showImgLevel}
+                      onChange={(e) => setShowImgLevel(Number(e.target.value))}
+                      className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm"
+                    >
+                      <option value={0}>없음 (0)</option>
+                      <option value={1}>최소 (1)</option>
+                      <option value={2}>보통 (2)</option>
+                      <option value={3}>전체 (3)</option>
+                    </select>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs text-muted-foreground">
+                      자동턴 유효시간 (분)
+                    </label>
+                    <select
+                      value={autorunMinutes}
+                      onChange={(e) => setAutorunMinutes(Number(e.target.value))}
+                      className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm"
+                    >
+                      <option value={0}>사용안함</option>
+                      <option value={20}>20분</option>
+                      <option value={30}>30분</option>
+                      <option value={60}>60분</option>
+                      <option value={120}>120분</option>
+                    </select>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs text-muted-foreground">
+                      오픈 예약 일시
+                    </label>
+                    <Input
+                      type="datetime-local"
+                      value={reserveOpen}
+                      onChange={(e) => setReserveOpen(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs text-muted-foreground">
+                      가오픈 예약 일시
+                    </label>
+                    <Input
+                      type="datetime-local"
+                      value={preReserveOpen}
+                      onChange={(e) => setPreReserveOpen(e.target.value)}
+                    />
+                  </div>
+                </div>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                   {[
                     {
                       label: "가상 모드",
                       checked: isFiction,
                       onChange: setIsFiction,
-                    },
-                    {
-                      label: "장수 생성 차단",
-                      checked: blockGeneralCreate,
-                      onChange: setBlockGeneralCreate,
                     },
                     {
                       label: "실시간 모드",
@@ -933,6 +1019,16 @@ export default function AdminDashboardPage() {
                       label: "자동 토너먼트",
                       checked: tournamentAuto,
                       onChange: setTournamentAuto,
+                    },
+                    {
+                      label: "시간 동기화",
+                      checked: sync,
+                      onChange: setSync,
+                    },
+                    {
+                      label: "확장 NPC",
+                      checked: extend,
+                      onChange: setExtend,
                     },
                   ].map((opt) => (
                     <label
@@ -968,6 +1064,11 @@ export default function AdminDashboardPage() {
                       label: "모병",
                       checked: allowRecruit,
                       onChange: setAllowRecruit,
+                    },
+                    {
+                      label: "징병",
+                      checked: allowConscript,
+                      onChange: setAllowConscript,
                     },
                     {
                       label: "훈련",
@@ -1124,6 +1225,91 @@ export default function AdminDashboardPage() {
               <p>
                 게임 인스턴스가 실행 중이 아닙니다. 월드를 오픈(활성화)해야
                 이벤트를 발동할 수 있습니다.
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* ── 서버 관리 ─────────────────────────────────────── */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-sm">
+            <Server className="size-4" />
+            서버 관리
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {dashboardAvailable && dashboard?.currentWorld ? (
+            <>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                <div className="rounded-md border border-border p-3">
+                  <p className="text-xs text-muted-foreground">게임 버전</p>
+                  <p className="font-mono font-medium">{worlds.find(w => w.id === worldId)?.gameVersion ?? "-"}</p>
+                </div>
+                <div className="rounded-md border border-border p-3">
+                  <p className="text-xs text-muted-foreground">커밋</p>
+                  <p className="font-mono font-medium text-xs">
+                    <GitBranch className="inline size-3 mr-1" />
+                    {(dashboard.currentWorld.config?.commitSha as string)?.slice(0, 8) ?? "-"}
+                  </p>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  onClick={async () => {
+                    if (!confirm("하드 리셋: DB를 완전히 초기화합니다. 복구 불가능합니다. 정말 실행할까요?")) return;
+                    if (!confirm("정말로 하드 리셋을 실행합니까? 이 작업은 되돌릴 수 없습니다.")) return;
+                    try {
+                      await adminApi.resetWorld(
+                        worldId!,
+                        dashboard.currentWorld?.scenarioCode,
+                      );
+                      toast.success("하드 리셋 완료");
+                      loadWorlds();
+                    } catch {
+                      toast.error("하드 리셋 실패");
+                    }
+                  }}
+                >
+                  <RotateCcw className="mr-1 size-4" /> 하드 리셋
+                </Button>
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  onClick={async () => {
+                    if (!confirm("긴급 119: 서버를 즉시 잠금하고 현재 상태를 스냅샷합니다. 계속할까요?")) return;
+                    try {
+                      await adminApi.updateSettings({ locked: true }, worldId);
+                      setLocked(true);
+                      toast.success("서버 119: 서버가 잠금되었습니다.");
+                    } catch {
+                      toast.error("긴급 잠금 실패");
+                    }
+                  }}
+                >
+                  <AlertTriangle className="mr-1 size-4" /> 서버 119
+                </Button>
+              </div>
+              <div className="text-xs text-muted-foreground">
+                에러 로그는{" "}
+                <a
+                  href="/admin/logs"
+                  className="text-blue-400 underline hover:text-blue-300"
+                >
+                  로그 관리
+                </a>{" "}
+                페이지에서 확인할 수 있습니다.
+              </div>
+            </>
+          ) : (
+            <div className="flex items-center gap-3 text-sm text-muted-foreground py-4">
+              <Info className="size-5 shrink-0" />
+              <p>
+                게임 인스턴스가 실행 중이 아닙니다. 월드를 오픈(활성화)해야
+                서버 관리 기능을 사용할 수 있습니다.
               </p>
             </div>
           )}

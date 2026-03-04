@@ -887,7 +887,8 @@ export const adminApi = {
         | "setGrade"
         | "block"
         | "unblock"
-        | "extendOauth";
+        | "extendOauth"
+        | "banPermanent";
       grade?: number;
       days?: number;
       oauthDays?: number;
@@ -929,7 +930,7 @@ export const adminApi = {
       "/admin/system-flags",
       payload,
     ),
-  scrub: (type: "scrub_old_user" | "scrub_blocked_user") =>
+  scrub: (type: "scrub_old_user" | "scrub_blocked_user" | "scrub_deleted" | "scrub_icon") =>
     api.post<ScrubResponse>("/admin/scrub", { type }),
   resetPassword: (userId: number) =>
     api.post<ResetPasswordResponse>(

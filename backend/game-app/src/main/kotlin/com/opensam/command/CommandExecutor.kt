@@ -15,11 +15,12 @@ import com.opensam.repository.GeneralRepository
 import com.opensam.repository.NationRepository
 import com.opensam.engine.modifier.ModifierService
 import com.opensam.service.MapService
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import kotlin.random.Random
 
 @Service
-class CommandExecutor(
+class CommandExecutor @Autowired constructor(
     private val commandRegistry: CommandRegistry,
     private val worldPortFactory: JpaWorldPortFactory,
     private val generalRepository: GeneralRepository,

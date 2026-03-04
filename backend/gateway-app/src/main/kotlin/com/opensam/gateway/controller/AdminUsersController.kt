@@ -100,6 +100,13 @@ class AdminUsersController(
                     user.role = "USER"
                     user.meta.remove("blockedUntil")
                 }
+                "banPermanent" -> {
+                    user.grade = 0.toShort()
+                    user.role = "USER"
+                    user.meta["permanentBan"] = true
+                    user.meta["bannedAt"] = OffsetDateTime.now().toString()
+                    user.meta["bannedBy"] = loginId
+                }
                 // Ops-only: record desired extension; the actual oauth integration lives in meta.
                 "extendOauth" -> {
                     val days = action.oauthDays ?: return ResponseEntity.badRequest().build()

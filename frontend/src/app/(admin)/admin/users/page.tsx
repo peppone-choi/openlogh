@@ -33,7 +33,8 @@ type UserActionPayload = {
     | "setGrade"
     | "block"
     | "unblock"
-    | "extendOauth";
+    | "extendOauth"
+    | "banPermanent";
   grade?: number;
   days?: number;
   oauthDays?: number;
@@ -98,7 +99,9 @@ export default function AdminUsersPage() {
                   ? "차단 해제"
                   : action.type === "extendOauth"
                     ? "OAuth 토큰 연장"
-                    : "유저 삭제";
+                    : action.type === "banPermanent"
+                      ? "영구 차단"
+                      : "유저 삭제";
       toast.success(`${actionText} 완료`);
       load();
     } catch {
@@ -156,6 +159,48 @@ export default function AdminUsersPage() {
           }}
         >
           <BrushCleaning className="mr-1 size-4" /> 차단 유저 정리(12개월+)
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={async () => {
+            if (
+              !confirm(
+                "탈퇴 요청 후 1개월 이상 경과한 계정을 삭제합니다. 계속할까요?",
+              )
+            )
+              return;
+            try {
+              const res = await adminApi.scrub("scrub_deleted");
+              toast.success(`정리 완료: ${res.data.affected}명 삭제`);
+              load();
+            } catch {
+              toast.error("정리 실패");
+            }
+          }}
+        >
+          <BrushCleaning className="mr-1 size-4" /> 탈퇴 계정 정리(1개월+)
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={async () => {
+            if (
+              !confirm(
+                "1개월 이상 된 전투 아이콘 데이터를 정리합니다. 계속할까요?",
+              )
+            )
+              return;
+            try {
+              const res = await adminApi.scrub("scrub_icon");
+              toast.success(`정리 완료: ${res.data.affected}건 삭제`);
+              load();
+            } catch {
+              toast.error("정리 실패");
+            }
+          }}
+        >
+          <BrushCleaning className="mr-1 size-4" /> 전콘 정리(1개월+)
         </Button>
       </div>
 
@@ -257,19 +302,32 @@ export default function AdminUsersPage() {
                     <ShieldOff className="mr-1 size-4" /> 차단 해제
                   </Button>
                 ) : (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    disabled={busyUserId === u.id}
-                    onClick={() =>
-                      doAction(u.id, {
-                        type: "block",
-                        days: 3650,
-                      })
-                    }
-                  >
-                    <Ban className="mr-1 size-4" /> 차단(10년)
-                  </Button>
+                  <>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={busyUserId === u.id}
+                      onClick={() =>
+                        doAction(u.id, {
+                          type: "block",
+                          days: 3650,
+                        })
+                      }
+                    >
+                      <Ban className="mr-1 size-4" /> 차단(10년)
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      disabled={busyUserId === u.id}
+                      onClick={() => {
+                        if (!confirm(`${u.loginId}을(를) 영구 차단합니다. 되돌릴 수 없습니다. 계속할까요?`)) return;
+                        doAction(u.id, { type: "banPermanent" });
+                      }}
+                    >
+                      <Ban className="mr-1 size-4" /> 영구차단
+                    </Button>
+                  </>
                 )}
 
                 <Button
