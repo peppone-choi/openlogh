@@ -43,9 +43,10 @@ docker-compose up -d
 
 ## Parity Target
 
-- **패러티 대상: 레거시 PHP (`legacy/` 폴더 참조)**
-- 장수 스탯: **5-stat 시스템** (통솔/무력/지력/정치/매력) - 삼국지14 기준
-  - `leadership`, `strength`, `intel`, `politics`, `charm` (all Int 0-100)
+- **패러티 대상: devsam/core PHP (`legacy-core/` 폴더, https://storage.hided.net/gitea/devsam/core)**
+- **패러티 문서는 신뢰하지 않음. 코드로만 판단.**
+- 장수 스탯: **3-stat 시스템** (통솔/무력/지력) + 정치/매력은 opensamguk에서 추가
+  - `leadership`, `strength`, `intel` (core 원본), `politics`, `charm` (opensamguk 확장)
 
 ## Officer Rank System
 
@@ -63,52 +64,35 @@ docker-compose up -d
 ## Architecture Decisions
 
 - **Multi-Process**: Split into `gateway-app` + versioned `game-app` JVMs
-- **World = Profile**: `World` entity replaces core2026's Profile/Gateway model
+- **World = Profile**: `World` entity replaces core's per-server model
 - **Logical Isolation**: Game entities use `world_id` FK (no schema-per-profile)
 - **Version Pinning**: `world_state.commit_sha` + `world_state.game_version` pin each world to a game build
 - **Turn Engine**: Runs inside `game-app` per-version JVM and processes attached worlds
-- **Field Naming**: Follow core2026 conventions (`intel` not `intelligence`, `crew`/`crewType`/`train`/`atmos`)
+- **Field Naming**: Follow core conventions (`intel` not `intelligence`, `crew`/`crewType`/`train`/`atmos`)
+- **DB**: PostgreSQL (core uses MariaDB)
+- **NPC Token**: Redis-based (core uses `select_npc_token` DB table)
 
 ## Reference
 
-- **Legacy PHP source**: `legacy/` (parity target)
-- **Core2026 docs**: `docs/` (extracted from core2026)
+- **Core PHP source**: `legacy-core/` (parity target, cloned from devsam/core)
+- **Deploy Docker**: `https://github.com/peppone-choi/opensamguk-deploy` (배포용 docker-compose)
 - Image CDN: `https://cdn.jsdelivr.net/gh/peppone-choi/opensamguk-image@master/`
 
-### Docs Index (MUST read before implementing any feature)
+### Core PHP Source (`legacy-core/`)
 
-| Domain                             | Doc File (`docs/architecture/`) |
-| ---------------------------------- | ------------------------------- |
-| Commands (80+ general, 30+ nation) | `legacy-commands.md`            |
-| Entity model & relationships       | `legacy-entities.md`            |
-| Battle/War                         | `legacy-engine-war.md`          |
-| Turn execution                     | `legacy-engine-execution.md`    |
-| Economy                            | `legacy-engine-economy.md`      |
-| Diplomacy                          | `legacy-engine-diplomacy.md`    |
-| NPC/AI                             | `legacy-engine-ai.md`           |
-| Events                             | `legacy-engine-events.md`       |
-| General entity                     | `legacy-engine-general.md`      |
-| Items                              | `legacy-engine-items.md`        |
-| City                               | `legacy-engine-city.md`         |
-| Triggers                           | `legacy-engine-triggers.md`     |
-| Constraints                        | `legacy-engine-constraints.md`  |
-| Constants/unit sets                | `legacy-engine-constants.md`    |
-| Scenarios                          | `legacy-scenarios.md`           |
-| Inheritance points                 | `legacy-inherit-points.md`      |
-| DB schema                          | `postgres-schema.md`            |
-| Frontend SPA plan                  | `game-frontend-spa-plan.md`     |
-| Runtime/daemon                     | `runtime.md`                    |
-
-### Legacy PHP (`legacy/`)
-
-| File                 | Content                         |
-| -------------------- | ------------------------------- |
-| `Scenario.php`       | 시나리오 초기화, 국가/장수 생성 |
-| `GeneralBuilder.php` | 장수 빌더, 스탯, NPC, 특기      |
-| `Nation.php`         | 국가 빌더, 수도/도시 관리       |
-| `CityConstBase.php`  | 100+ 도시 상수, 지역/레벨       |
-| `scenario/*.json`    | 시나리오 24종                   |
-| `scenario/map/*.php` | 맵 8종                          |
+| Path                         | Content                                     |
+| ---------------------------- | ------------------------------------------- |
+| `hwe/sammo/Command/General/` | 55개 장수 커맨드                            |
+| `hwe/sammo/Command/Nation/`  | 38개 국가 커맨드                            |
+| `hwe/sammo/API/`             | 78개 API 엔드포인트 (12 카테고리)           |
+| `hwe/sql/schema.sql`         | DB 스키마 (45+ 테이블)                      |
+| `hwe/func.php`               | 메인 게임 함수 (80KB)                       |
+| `hwe/GeneralAI.php`          | NPC AI 구현 (153KB)                         |
+| `hwe/process_war.php`        | 전투 처리 (33KB)                            |
+| `hwe/scenario/`              | 시나리오 83종 + 맵 8종 + 병종 7종           |
+| `hwe/data/`                  | 게임 상수, 도시, 병종 데이터                |
+| `src/daemon.ts`              | 턴 데몬 (TypeScript, 441줄)                 |
+| `src/sammo/`                 | 유틸리티 클래스 (API, Session, RNG 등)      |
 
 ## Game Data
 
