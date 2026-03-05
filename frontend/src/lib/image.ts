@@ -53,7 +53,19 @@ export function getNationBgGradient(color: string): string {
   const r = parseInt(hex.substring(0, 2), 16);
   const g = parseInt(hex.substring(2, 4), 16);
   const b = parseInt(hex.substring(4, 6), 16);
-  return `radial-gradient(circle, rgba(${r},${g},${b},0.6) 0%, transparent 70%)`;
+  return `radial-gradient(circle, rgba(${r},${g},${b},0.75) 0%, transparent 70%)`;
+}
+
+/** Animated flag GIF for supplied cities (12×12, 4 frames) */
+export function getSuppliedFlagUrl(colorHex: string): string {
+  const hex = colorHex.replace("#", "");
+  return `${GAME_CDN_ROOT}/f${hex}.gif`;
+}
+
+/** Static dot icon for depleted cities (16×16) */
+export function getDepletedFlagUrl(colorHex: string): string {
+  const hex = colorHex.replace("#", "");
+  return `${GAME_CDN_ROOT}/d${hex}.gif`;
 }
 
 /** Map background layer for a season — `bg_spring.jpg`, `bg_summer.jpg`, etc. */

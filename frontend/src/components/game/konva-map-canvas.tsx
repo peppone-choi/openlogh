@@ -223,7 +223,7 @@ export default function KonvaMapCanvas({
                 fill={color}
                 stroke={isBattle ? "#ff4444" : "#000"}
                 strokeWidth={isBattle ? 2 : 1}
-                opacity={0.85}
+                opacity={0.92}
                 onMouseEnter={(e: Konva.KonvaEventObject<MouseEvent>) => {
                   const container = e.target.getStage()?.container();
                   if (container) container.style.cursor = "pointer";
