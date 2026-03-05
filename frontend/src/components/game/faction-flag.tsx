@@ -20,9 +20,7 @@ export function FactionFlag({
   className,
   style,
 }: FactionFlagProps) {
-  const src = supplied
-    ? getSuppliedFlagUrl(GRAY)
-    : getDepletedFlagUrl(GRAY);
+  const src = supplied ? getSuppliedFlagUrl(GRAY) : getDepletedFlagUrl(GRAY);
   const size = supplied ? 12 : 16;
   const sizePx = `${size}px`;
 
@@ -54,7 +52,7 @@ export function FactionFlag({
           inset: 0,
           ...bgProps,
           backgroundColor: color,
-          backgroundBlendMode: "multiply",
+          backgroundBlendMode: "overlay",
           clipPath: supplied ? SUPPLIED_POLE_CLIP : DEPLETED_POLE_CLIP,
         }}
       />
