@@ -1082,7 +1082,7 @@ class GeneralAI(
         }
 
         trialProp /= 4.0
-        trialProp = trialProp.pow(3.0)
+        trialProp = trialProp.pow(1.5)
 
         if (rng.nextDouble() >= trialProp) {
             logger.debug("[doDeclaration] nation={} skipped: trialProp={} too low", nation.id, trialProp)
@@ -1098,15 +1098,12 @@ class GeneralAI(
         if (otherNations.isEmpty()) return null
 
         // Simple neighbor check: nations that share border (have cities adjacent to ours)
-        val nationCityIds = ctx.allCities.filter { it.nationId == nation.id }.map { it.id }.toSet()
         val neighborNationIds = mutableSetOf<Long>()
-        // Simplified: any nation that has cities in proximity
         for (city in ctx.allCities) {
             if (city.nationId != nation.id && city.nationId != 0L && city.frontState > 0) {
                 neighborNationIds.add(city.nationId)
             }
         }
-        // Also consider all other nations as potential targets
         if (neighborNationIds.isEmpty()) {
             neighborNationIds.addAll(otherNations.map { it.id })
         }
@@ -1482,8 +1479,7 @@ class GeneralAI(
         // Only recruit during war preparation or war
         if (ctx.diplomacyState == DiplomacyState.PEACE || ctx.diplomacyState == DiplomacyState.DECLARED) return null
 
-        // Only commanders recruit
-        if (ctx.generalType and GeneralType.COMMANDER.flag == 0) return null
+        if (ctx.generalType and (GeneralType.COMMANDER.flag or GeneralType.WARRIOR.flag) == 0) return null
 
         val general = ctx.general
         val city = ctx.city

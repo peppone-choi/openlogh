@@ -16,7 +16,7 @@ class che_선전포고(general: General, env: CommandEnv, arg: Map<String, Any>?
 
     override val fullConditionConstraints = listOf(
         BeChief(), NotBeNeutral(), OccupiedCity(), SuppliedCity(),
-        BeOpeningPart(env.year - env.startYear + 1),
+        NotOpeningPart(env.year - env.startYear),
         ExistsDestNation(), NearNation(),
         DisallowDiplomacyBetweenStatus(mapOf(
             0 to "아국과 이미 교전중입니다.",
