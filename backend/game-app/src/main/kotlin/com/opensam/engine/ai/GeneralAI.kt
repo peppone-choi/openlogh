@@ -8,10 +8,6 @@ import com.opensam.entity.Diplomacy
 import com.opensam.entity.General
 import com.opensam.entity.Nation
 import com.opensam.entity.WorldState
-import com.opensam.repository.CityRepository
-import com.opensam.repository.DiplomacyRepository
-import com.opensam.repository.GeneralRepository
-import com.opensam.repository.NationRepository
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import kotlin.math.max
@@ -31,20 +27,6 @@ import kotlin.random.Random
 class GeneralAI(
     private val worldPortFactory: JpaWorldPortFactory,
 ) {
-    constructor(
-        generalRepository: GeneralRepository,
-        cityRepository: CityRepository,
-        nationRepository: NationRepository,
-        diplomacyRepository: DiplomacyRepository,
-    ) : this(
-        JpaWorldPortFactory(
-            generalRepository = generalRepository,
-            cityRepository = cityRepository,
-            nationRepository = nationRepository,
-            diplomacyRepository = diplomacyRepository,
-        )
-    )
-
     private val logger = LoggerFactory.getLogger(GeneralAI::class.java)
 
     // ──────────────────────────────────────────────────────────

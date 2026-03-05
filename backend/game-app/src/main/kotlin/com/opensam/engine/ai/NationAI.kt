@@ -6,30 +6,13 @@ import com.opensam.engine.turn.cqrs.persist.toEntity
 import com.opensam.engine.turn.cqrs.persist.toSnapshot
 import com.opensam.engine.turn.cqrs.port.WorldWritePort
 import org.springframework.stereotype.Service
-import com.opensam.repository.CityRepository
-import com.opensam.repository.DiplomacyRepository
-import com.opensam.repository.GeneralRepository
-import com.opensam.repository.NationRepository
+
 import kotlin.random.Random
 
 @Service
 class NationAI(
     private val worldPortFactory: JpaWorldPortFactory,
 ) {
-    constructor(
-        cityRepository: CityRepository,
-        generalRepository: GeneralRepository,
-        nationRepository: NationRepository,
-        diplomacyRepository: DiplomacyRepository,
-    ) : this(
-        JpaWorldPortFactory(
-            generalRepository = generalRepository,
-            cityRepository = cityRepository,
-            nationRepository = nationRepository,
-            diplomacyRepository = diplomacyRepository,
-        )
-    )
-
     fun decideNationAction(nation: Nation, world: WorldState, rng: Random): String {
         val worldId = world.id.toLong()
         val ports = worldPortFactory.create(worldId)
