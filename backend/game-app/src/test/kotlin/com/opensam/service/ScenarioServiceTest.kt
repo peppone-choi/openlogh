@@ -1,14 +1,23 @@
 package com.opensam.service
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.opensam.entity.City
 import com.opensam.entity.General
+import com.opensam.entity.Nation
+import com.opensam.entity.WorldState
+import com.opensam.model.CityConst
+import com.opensam.model.ScenarioData
 import com.opensam.repository.*
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.mockito.ArgumentMatchers.any
+import org.mockito.ArgumentMatchers.anyLong
 import org.mockito.Mockito.mock
+import org.mockito.Mockito.`when`
 import kotlin.random.Random
 import java.lang.reflect.Method
+import java.util.Optional
 
 /**
  * Tests for ScenarioService's general tuple parsing (5-stat format).
@@ -17,19 +26,34 @@ class ScenarioServiceTest {
 
     private lateinit var service: ScenarioService
     private lateinit var parseGeneral: Method
+    private lateinit var objectMapper: ObjectMapper
+    private lateinit var worldStateRepository: WorldStateRepository
+    private lateinit var nationRepository: NationRepository
+    private lateinit var cityRepository: CityRepository
+    private lateinit var generalRepository: GeneralRepository
+    private lateinit var diplomacyRepository: DiplomacyRepository
+    private lateinit var mapService: MapService
 
     @BeforeEach
     fun setUp() {
+        objectMapper = mock(ObjectMapper::class.java)
+        worldStateRepository = mock(WorldStateRepository::class.java)
+        nationRepository = mock(NationRepository::class.java)
+        cityRepository = mock(CityRepository::class.java)
+        generalRepository = mock(GeneralRepository::class.java)
+        diplomacyRepository = mock(DiplomacyRepository::class.java)
+        mapService = mock(MapService::class.java)
+
         service = ScenarioService(
-            objectMapper = mock(ObjectMapper::class.java),
+            objectMapper = objectMapper,
             defaultCommitSha = "test-sha",
             defaultGameVersion = "test-v1",
-            worldStateRepository = mock(WorldStateRepository::class.java),
-            nationRepository = mock(NationRepository::class.java),
-            cityRepository = mock(CityRepository::class.java),
-            generalRepository = mock(GeneralRepository::class.java),
-            diplomacyRepository = mock(DiplomacyRepository::class.java),
-            mapService = mock(MapService::class.java),
+            worldStateRepository = worldStateRepository,
+            nationRepository = nationRepository,
+            cityRepository = cityRepository,
+            generalRepository = generalRepository,
+            diplomacyRepository = diplomacyRepository,
+            mapService = mapService,
         )
 
         parseGeneral = ScenarioService::class.java.getDeclaredMethod(
@@ -150,5 +174,98 @@ class ScenarioServiceTest {
         val row: List<Any?> = listOf(0, "어린이", "1000", null, null, 50, 50, 50, 50, 50, 0, 195, 260)
         val general = callParseGeneral(row, startYear = 200)
         assertEquals(20.toShort(), general.age) // 200 - 195 = 5, clamped to 20
+    }
+
+    @Test
+    fun `parseGeneral supports legacy 3-stat tuple with officer field`() {
+        val row: List<Any?> = listOf(1, "헌제", "1002", 1, null, 17, 13, 61, 0, 170, 250, "안전", null)
+        val general = callParseGeneral(row, nationIdxToDbId = mapOf(1 to 42L), nationCityIds = mapOf(42L to listOf(100L)))
+
+        assertEquals(61.toShort(), general.intel)
+        assertEquals(61.toShort(), general.politics)
+        assertEquals(61.toShort(), general.charm)
+        assertEquals(0.toShort(), general.officerLevel)
+        assertEquals(170.toShort(), general.bornYear)
+        assertEquals(250.toShort(), general.deadYear)
+    }
+
+    @Test
+    fun `parseGeneral supports legacy 3-stat tuple without officer field`() {
+        val row: List<Any?> = listOf(1, "테스트", "1002", 0, null, 70, 65, 60, 180, 230, "재간", "신산")
+        val general = callParseGeneral(row)
+
+        assertEquals(60.toShort(), general.intel)
+        assertEquals(60.toShort(), general.politics)
+        assertEquals(60.toShort(), general.charm)
+        assertEquals(0.toShort(), general.officerLevel)
+        assertEquals(180.toShort(), general.bornYear)
+        assertEquals(230.toShort(), general.deadYear)
+        assertEquals("재간", general.personalCode)
+        assertEquals("신산", general.specialCode)
+    }
+
+    @Test
+    fun `initializeWorld seeds cities with trust 50 and assigns all configured nation cities`() {
+        val scenario = ScenarioData(
+            title = "테스트",
+            startYear = 181,
+            nation = listOf(
+                listOf("후한", "#800000", 10000, 10000, "", 0, "유가", 7, listOf("업", "허창")),
+                listOf("황건적", "#ffd700", 10000, 10000, "", 0, "태평도", 2, listOf("낙양")),
+            ),
+        )
+
+        val scenariosField = ScenarioService::class.java.getDeclaredField("scenarios")
+        scenariosField.isAccessible = true
+        @Suppress("UNCHECKED_CAST")
+        val scenarios = scenariosField.get(service) as MutableMap<String, ScenarioData>
+        scenarios["test"] = scenario
+
+        val cityStore = mutableMapOf<Long, City>()
+        var citySeq = 1L
+        val nationStore = mutableMapOf<Long, Nation>()
+        var nationSeq = 1L
+
+        `when`(worldStateRepository.save(any(WorldState::class.java))).thenAnswer { inv ->
+            val world = inv.arguments[0] as WorldState
+            world.id = 1
+            world
+        }
+
+        `when`(mapService.getCities("che")).thenReturn(
+            listOf(
+                CityConst(1, "업", 8, 1, 1000, 100, 100, 100, 100, 100, 10, 10, emptyList()),
+                CityConst(2, "허창", 8, 2, 1000, 100, 100, 100, 100, 100, 20, 20, emptyList()),
+                CityConst(3, "낙양", 8, 2, 1000, 100, 100, 100, 100, 100, 30, 30, emptyList()),
+            ),
+        )
+
+        `when`(cityRepository.save(any(City::class.java))).thenAnswer { inv ->
+            val city = inv.arguments[0] as City
+            if (city.id == 0L) {
+                city.id = citySeq++
+            }
+            cityStore[city.id] = city
+            city
+        }
+        `when`(cityRepository.findById(anyLong())).thenAnswer { inv ->
+            Optional.ofNullable(cityStore[inv.arguments[0] as Long])
+        }
+
+        `when`(nationRepository.save(any(Nation::class.java))).thenAnswer { inv ->
+            val nation = inv.arguments[0] as Nation
+            if (nation.id == 0L) {
+                nation.id = nationSeq++
+            }
+            nationStore[nation.id] = nation
+            nation
+        }
+
+        service.initializeWorld("test")
+
+        assertEquals(3, cityStore.size)
+        assertTrue(cityStore.values.all { it.trust == 50f })
+        assertEquals(2L, cityStore.values.count { it.nationId == nationStore.values.first { it.name == "후한" }.id }.toLong())
+        assertEquals(1L, cityStore.values.count { it.nationId == nationStore.values.first { it.name == "황건적" }.id }.toLong())
     }
 }

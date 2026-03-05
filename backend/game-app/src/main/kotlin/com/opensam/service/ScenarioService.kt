@@ -91,6 +91,7 @@ class ScenarioService(
                     commMax = mc.commerce,
                     secu = mc.security,
                     secuMax = mc.security,
+                    trust = 50f,
                     def = mc.defence,
                     defMax = mc.defence,
                     wall = mc.wall,
@@ -250,10 +251,6 @@ class ScenarioService(
         startYear: Int,
         defaultNpcState: Short,
     ): General {
-        // Format: [affinity, name, picture, nationIdx(1-based int), city?,
-        //          leadership, strength, intel, politics, charm,
-        //          officerLevel, birthYear, deathYear,
-        //          personality?, special?, motto?]
         val affinity = (row[0] as? Number)?.toShort() ?: 0
         val name = row[1] as String
         val picture = row[2]?.toString() ?: ""
@@ -264,13 +261,44 @@ class ScenarioService(
         val leadership = (row[5] as Number).toShort()
         val strength = (row[6] as Number).toShort()
         val intel = (row[7] as Number).toShort()
-        val politics = (row[8] as Number).toShort()
-        val charm = (row[9] as Number).toShort()
-        val officerLevel = (row[10] as Number).toShort()
-        val bornYear = (row[11] as Number).toShort()
-        val deadYear = (row[12] as Number).toShort()
-        val personality = row.getOrNull(13)?.toString()
-        val special = row.getOrNull(14)?.toString()
+
+        val hasFiveStatTuple = row.getOrNull(10) is Number && row.getOrNull(11) is Number && row.getOrNull(12) is Number
+        val hasLegacyThreeStatWithOfficer = row.getOrNull(8) is Number && row.getOrNull(9) is Number && row.getOrNull(10) is Number
+        val hasLegacyThreeStatWithoutOfficer = row.getOrNull(8) is Number && row.getOrNull(9) is Number
+
+        val (politics, charm, officerLevel, bornYear, deadYear, personalityIndex, specialIndex) = when {
+            hasFiveStatTuple -> TupleLayout(
+                politics = (row[8] as Number).toShort(),
+                charm = (row[9] as Number).toShort(),
+                officerLevel = (row[10] as Number).toShort(),
+                bornYear = (row[11] as Number).toShort(),
+                deadYear = (row[12] as Number).toShort(),
+                personalityIndex = 13,
+                specialIndex = 14,
+            )
+            hasLegacyThreeStatWithOfficer -> TupleLayout(
+                politics = intel,
+                charm = intel,
+                officerLevel = (row[8] as Number).toShort(),
+                bornYear = (row[9] as Number).toShort(),
+                deadYear = (row[10] as Number).toShort(),
+                personalityIndex = 11,
+                specialIndex = 12,
+            )
+            hasLegacyThreeStatWithoutOfficer -> TupleLayout(
+                politics = intel,
+                charm = intel,
+                officerLevel = 0,
+                bornYear = (row[8] as Number).toShort(),
+                deadYear = (row[9] as Number).toShort(),
+                personalityIndex = 10,
+                specialIndex = 11,
+            )
+            else -> throw IllegalArgumentException("Unsupported general tuple format: $row")
+        }
+
+        val personality = row.getOrNull(personalityIndex)?.toString()
+        val special = row.getOrNull(specialIndex)?.toString()
 
         val rowCityId = resolveCityId(row.getOrNull(4), cityNameToId)
         val cityId: Long = if (rowCityId != null) {
@@ -307,6 +335,16 @@ class ScenarioService(
             turnTime = OffsetDateTime.now(),
         )
     }
+
+    private data class TupleLayout(
+        val politics: Short,
+        val charm: Short,
+        val officerLevel: Short,
+        val bornYear: Short,
+        val deadYear: Short,
+        val personalityIndex: Int,
+        val specialIndex: Int,
+    )
 
     private fun readExtendedGeneralFlag(const: Map<String, Any>): Boolean {
         val candidates = listOf(const["extendedGeneral"], const["extended_general"], const["extend"])
