@@ -3,6 +3,7 @@ package com.opensam.gateway.controller
 import com.opensam.gateway.repository.AppUserRepository
 import com.opensam.gateway.service.GatewayAdminAuthorizationService
 import com.opensam.gateway.service.SystemSettingsService
+import com.opensam.gateway.service.WorldService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.AccessDeniedException
@@ -18,6 +19,7 @@ class AdminSystemController(
     private val systemSettingsService: SystemSettingsService,
     private val appUserRepository: AppUserRepository,
     private val passwordEncoder: PasswordEncoder,
+    private val worldService: WorldService,
 ) {
     data class AuthFlagsResponse(val allowLogin: Boolean, val allowJoin: Boolean)
     data class AuthFlagsPatchRequest(val allowLogin: Boolean? = null, val allowJoin: Boolean? = null)
@@ -25,7 +27,35 @@ class AdminSystemController(
     data class ScrubRequest(val type: String)
     data class ScrubResponse(val affected: Int)
 
+    data class AdminWorldListEntry(
+        val id: Short,
+        val scenarioCode: String,
+        val year: Short,
+        val month: Short,
+        val locked: Boolean,
+    )
+
     private fun currentLoginId(): String? = SecurityContextHolder.getContext().authentication?.name
+
+    @GetMapping("/worlds")
+    fun listWorlds(): ResponseEntity<List<AdminWorldListEntry>> {
+        val loginId = currentLoginId() ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
+        return try {
+            authorizationService.requireGlobalAdmin(loginId)
+            val worlds = worldService.listWorlds().map { w ->
+                AdminWorldListEntry(
+                    id = w.id,
+                    scenarioCode = w.scenarioCode,
+                    year = w.currentYear,
+                    month = w.currentMonth,
+                    locked = w.config["locked"] as? Boolean ?: false,
+                )
+            }
+            ResponseEntity.ok(worlds)
+        } catch (_: AccessDeniedException) {
+            ResponseEntity.status(HttpStatus.FORBIDDEN).build()
+        }
+    }
 
     @GetMapping("/system-flags")
     fun getSystemFlags(): ResponseEntity<AuthFlagsResponse> {

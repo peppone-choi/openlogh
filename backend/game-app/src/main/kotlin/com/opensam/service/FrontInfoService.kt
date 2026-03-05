@@ -74,7 +74,12 @@ class FrontInfoService(
             isLocked = (world.config["locked"] as? Boolean) ?: false,
             scenarioText = try { scenarioService.getScenario(world.scenarioCode).title } catch (_: Exception) { world.scenarioCode },
             realtimeMode = world.realtimeMode,
-            extendedGeneral = (world.config["extendedGeneral"] as? Number)?.toInt() ?: 0,
+            extendedGeneral = when (val raw = world.config["extendedGeneral"] ?: world.config["extend"]) {
+                is Number -> raw.toInt()
+                is Boolean -> if (raw) 1 else 0
+                is String -> if (raw.equals("true", ignoreCase = true) || raw == "1") 1 else 0
+                else -> 0
+            },
             isFiction = (world.config["isFiction"] as? Number)?.toInt() ?: 0,
             npcMode = (world.config["npcMode"] as? Number)?.toInt() ?: 0,
             joinMode = (world.config["joinMode"] as? String) ?: "full",
