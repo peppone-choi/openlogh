@@ -22,7 +22,17 @@ class GeneralService(
 
     fun getMyGeneral(worldId: Long, loginId: String): General? {
         val userId = getCurrentUserId(loginId) ?: return null
-        return generalRepository.findByWorldIdAndUserId(worldId, userId).firstOrNull()
+        val general = generalRepository.findByWorldIdAndUserId(worldId, userId).firstOrNull() ?: return null
+        if (general.nationId > 0L && general.officerLevel < 1) {
+            general.officerLevel = 1
+            general.officerCity = 0
+            general.permission = "normal"
+            if (general.makeLimit > 0) {
+                general.makeLimit = 0
+            }
+            return generalRepository.save(general)
+        }
+        return general
     }
 
     fun listByNation(nationId: Long): List<General> {
