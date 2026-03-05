@@ -2,6 +2,7 @@ package com.opensam.gateway.controller
 
 import com.opensam.gateway.dto.WorldStateResponse
 import com.opensam.gateway.dto.AttachWorldProcessRequest
+import com.opensam.gateway.entity.WorldState
 import com.opensam.gateway.dto.ActivateWorldRequest
 import com.opensam.gateway.orchestrator.GameOrchestrator
 import com.opensam.gateway.service.WorldService
@@ -177,6 +178,8 @@ class WorldController(
             )
 
             gameOrchestrator.detachWorld(id.toLong())
+            worldService.deleteWorld(id)
+
             gameOrchestrator.attachWorld(
                 worldId = resetWorld.id.toLong(),
                 request = AttachWorldProcessRequest(
@@ -185,17 +188,22 @@ class WorldController(
                 ),
             )
 
-            worldService.getWorld(resetWorld.id)?.let {
-                worldService.updateVersionAndActivation(
-                    world = it,
-                    commitSha = resetWorld.commitSha,
-                    gameVersion = resetWorld.gameVersion,
-                    active = true,
-                )
-            }
-
-            val response = worldService.getWorld(resetWorld.id)?.let { WorldStateResponse.from(it) } ?: resetWorld
-            ResponseEntity.ok(response)
+            val newWorld = WorldState(
+                id = resetWorld.id,
+                name = resetWorld.name,
+                scenarioCode = resetWorld.scenarioCode,
+                commitSha = resetWorld.commitSha,
+                gameVersion = resetWorld.gameVersion,
+                currentYear = resetWorld.currentYear,
+                currentMonth = resetWorld.currentMonth,
+                tickSeconds = resetWorld.tickSeconds,
+                realtimeMode = resetWorld.realtimeMode,
+                commandPointRegenRate = resetWorld.commandPointRegenRate,
+                config = resetWorld.config.toMutableMap(),
+                meta = mutableMapOf("gatewayActive" to true),
+            )
+            val saved = worldService.save(newWorld)
+            ResponseEntity.ok(WorldStateResponse.from(saved))
         } catch (_: IllegalArgumentException) {
             ResponseEntity.badRequest().build()
         } catch (_: IllegalStateException) {
@@ -235,6 +243,7 @@ class WorldController(
             )
 
             gameOrchestrator.detachWorld(id.toLong())
+            worldService.deleteWorld(id)
             ResponseEntity.noContent().build()
         } catch (_: IllegalArgumentException) {
             ResponseEntity.badRequest().build()
