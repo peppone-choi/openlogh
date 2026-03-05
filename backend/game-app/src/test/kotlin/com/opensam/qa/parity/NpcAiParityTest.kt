@@ -8,6 +8,7 @@ import com.opensam.engine.ai.NpcNationPolicy
 import com.opensam.entity.Diplomacy
 import com.opensam.entity.General
 import com.opensam.entity.Nation
+import com.opensam.engine.turn.cqrs.persist.JpaWorldPortFactory
 import com.opensam.repository.*
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
@@ -42,7 +43,12 @@ class NpcAiParityTest {
         cityRepository = mock(CityRepository::class.java)
         nationRepository = mock(NationRepository::class.java)
         diplomacyRepository = mock(DiplomacyRepository::class.java)
-        ai = GeneralAI(generalRepository, cityRepository, nationRepository, diplomacyRepository)
+        ai = GeneralAI(JpaWorldPortFactory(
+            generalRepository = generalRepository,
+            cityRepository = cityRepository,
+            nationRepository = nationRepository,
+            diplomacyRepository = diplomacyRepository,
+        ))
     }
 
     // ──────────────────────────────────────────────────
