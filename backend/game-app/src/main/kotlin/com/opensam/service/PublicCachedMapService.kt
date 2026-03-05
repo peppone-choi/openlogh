@@ -3,6 +3,8 @@ package com.opensam.service
 import com.opensam.dto.PublicCachedMapCityResponse
 import com.opensam.dto.PublicCachedMapHistoryResponse
 import com.opensam.dto.PublicCachedMapResponse
+import com.opensam.dto.PublicWorldSummary
+import com.opensam.entity.WorldState
 import com.opensam.repository.CityRepository
 import com.opensam.repository.MessageRepository
 import com.opensam.repository.NationRepository
@@ -10,6 +12,7 @@ import com.opensam.repository.WorldStateRepository
 import org.springframework.stereotype.Service
 import java.time.Duration
 import java.time.Instant
+import java.util.concurrent.ConcurrentHashMap
 
 @Service
 class PublicCachedMapService(
@@ -24,35 +27,41 @@ class PublicCachedMapService(
         val payload: PublicCachedMapResponse,
     )
 
-    @Volatile
-    private var cacheEntry: CacheEntry? = null
+    private val cache = ConcurrentHashMap<Short, CacheEntry>()
 
-    fun getCachedMap(): PublicCachedMapResponse {
+    fun getCachedMap(worldId: Short? = null): PublicCachedMapResponse {
         val now = Instant.now()
-        val current = cacheEntry
-        if (current != null && now.isBefore(current.expiresAt)) {
-            return current.payload
+        val allWorlds = worldStateRepository.findAll().toList()
+        val worldSummaries = allWorlds.map { PublicWorldSummary(it.id.toLong(), it.name) }
+
+        val targetWorld = if (worldId != null) {
+            allWorlds.find { it.id == worldId }
+        } else {
+            allWorlds.maxByOrNull { it.updatedAt }
+        } ?: return PublicCachedMapResponse(
+            available = false,
+            worldId = null,
+            worldName = null,
+            mapCode = null,
+            cities = emptyList(),
+            history = emptyList(),
+            worlds = worldSummaries,
+        )
+
+        val cached = cache[targetWorld.id]
+        if (cached != null && now.isBefore(cached.expiresAt)) {
+            return cached.payload.copy(worlds = worldSummaries)
         }
 
-        val payload = buildPayload()
-        cacheEntry = CacheEntry(
+        val payload = buildPayload(targetWorld, worldSummaries)
+        cache[targetWorld.id] = CacheEntry(
             expiresAt = now.plus(Duration.ofMinutes(10)),
             payload = payload,
         )
         return payload
     }
 
-    private fun buildPayload(): PublicCachedMapResponse {
-        val world = worldStateRepository.findAll().maxByOrNull { it.updatedAt }
-            ?: return PublicCachedMapResponse(
-                available = false,
-                worldId = null,
-                worldName = null,
-                mapCode = null,
-                cities = emptyList(),
-                history = emptyList(),
-            )
-
+    private fun buildPayload(world: WorldState, worldSummaries: List<PublicWorldSummary>): PublicCachedMapResponse {
         val worldId = world.id.toLong()
         val mapCode = (world.config["mapCode"] as? String) ?: "che"
         val mapCityByName = mapService.getCities(mapCode).associateBy { it.name }
@@ -96,6 +105,7 @@ class PublicCachedMapService(
             currentMonth = world.currentMonth.toInt(),
             cities = cities,
             history = history,
+            worlds = worldSummaries,
         )
     }
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { PublicCachedMapResponse } from "@/types";
 import {
   getCityLevelIcon,
@@ -50,10 +50,51 @@ const SEASON_LABELS: Record<string, string> = {
   winter: "冬",
 };
 
+const CITY_LEVEL_NAMES: Record<number, string> = {
+  1: "수",
+  2: "진",
+  3: "관",
+  4: "이",
+  5: "소",
+  6: "중",
+  7: "대",
+  8: "특",
+};
+
 export function PublicGameMap({ data }: PublicGameMapProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const [mapScale, setMapScale] = useState(1);
   const [showCityNames, setShowCityNames] = useState(true);
+  const [tooltip, setTooltip] = useState<{
+    cityName: string;
+    nationName: string;
+    x: number;
+    y: number;
+  } | null>(null);
+
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left + e.currentTarget.scrollLeft;
+    const y = e.clientY - rect.top + e.currentTarget.scrollTop;
+    setTooltip((prev) => (prev ? { ...prev, x, y } : null));
+  }, []);
+
+  const handleCityMouseEnter = useCallback(
+    (cityName: string, nationName: string, level: number) => {
+      const levelName = CITY_LEVEL_NAMES[level] ?? "";
+      setTooltip({
+        cityName: `【${levelName}】${cityName}`,
+        nationName,
+        x: 0,
+        y: 0,
+      });
+    },
+    [],
+  );
+
+  const handleCityMouseLeave = useCallback(() => {
+    setTooltip(null);
+  }, []);
 
   useEffect(() => {
     const el = mapContainerRef.current;
@@ -136,7 +177,7 @@ export function PublicGameMap({ data }: PublicGameMapProps) {
         />
 
         {/* Cities */}
-        <div className="absolute inset-0 z-[3]">
+        <div className="absolute inset-0 z-[3]" onMouseMove={handleMouseMove}>
           {data.cities.map((city) => {
             const sizes =
               detailMapCitySizes[city.level] ?? detailMapCitySizes[1];
@@ -152,6 +193,14 @@ export function PublicGameMap({ data }: PublicGameMapProps) {
                 key={city.id}
                 className="absolute h-[30px] w-[40px] overflow-visible"
                 style={{ left, top }}
+                onMouseEnter={() =>
+                  handleCityMouseEnter(
+                    city.name,
+                    city.nationName ?? "",
+                    city.level,
+                  )
+                }
+                onMouseLeave={handleCityMouseLeave}
               >
                 {/* Nation Color Blotch */}
                 {hasNation && (
@@ -251,6 +300,43 @@ export function PublicGameMap({ data }: PublicGameMapProps) {
             );
           })}
         </div>
+
+        {/* Tooltip */}
+        {tooltip && (
+          <div
+            className="absolute z-[16] pointer-events-none whitespace-nowrap text-[14px]"
+            style={{
+              top: tooltip.y + 30,
+              left: tooltip.x + 10,
+              border: "1px solid gray",
+              minWidth: 120,
+            }}
+          >
+            <div
+              className="px-1"
+              style={{
+                backgroundColor: "rgb(30, 164, 255)",
+                lineHeight: "15px",
+                height: 15,
+              }}
+            >
+              {tooltip.cityName}
+            </div>
+            {tooltip.nationName && (
+              <div
+                className="px-1 text-right"
+                style={{
+                  backgroundColor: "rgb(30, 164, 255)",
+                  lineHeight: "15px",
+                  height: 15,
+                  borderTop: "1px solid gray",
+                }}
+              >
+                {tooltip.nationName}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* City name toggle */}
         <button
