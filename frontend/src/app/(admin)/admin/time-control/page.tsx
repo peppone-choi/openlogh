@@ -78,27 +78,33 @@ export default function AdminTimeControlPage() {
 
   const handleTimeSubmit = useCallback(async () => {
     try {
-      await adminApi.timeControl({
-        year: year ? Number(year) : undefined,
-        month: month ? Number(month) : undefined,
-        startYear: startYear ? Number(startYear) : undefined,
-        locked,
-      }, worldId);
+      await adminApi.timeControl(
+        {
+          year: year ? Number(year) : undefined,
+          month: month ? Number(month) : undefined,
+          startYear: startYear ? Number(startYear) : undefined,
+          locked,
+        },
+        worldId,
+      );
       toast.success("시간 설정이 변경되었습니다.");
     } catch {
       toast.error("변경 실패");
     }
   }, [year, month, startYear, locked, worldId]);
 
-  const handleTurnTermChange = useCallback(async (minutes: number) => {
-    try {
-      await adminApi.timeControl({ turnTerm: minutes }, worldId);
-      setTurnTerm(String(minutes));
-      toast.success(`턴 시간이 ${minutes}분으로 변경되었습니다.`);
-    } catch {
-      toast.error("턴 시간 변경 실패");
-    }
-  }, [worldId]);
+  const handleTurnTermChange = useCallback(
+    async (minutes: number) => {
+      try {
+        await adminApi.timeControl({ turnTerm: minutes }, worldId);
+        setTurnTerm(String(minutes));
+        toast.success(`턴 시간이 ${minutes}분으로 변경되었습니다.`);
+      } catch {
+        toast.error("턴 시간 변경 실패");
+      }
+    },
+    [worldId],
+  );
 
   const handleCustomTurnTerm = useCallback(async () => {
     const minutes = Number(customTurnTerm);
@@ -118,9 +124,12 @@ export default function AdminTimeControlPage() {
       return;
     }
     try {
-      await adminApi.timeControl({
-        distribute: { gold, rice, target: distributeTarget },
-      }, worldId);
+      await adminApi.timeControl(
+        {
+          distribute: { gold, rice, target: distributeTarget },
+        },
+        worldId,
+      );
       toast.success(
         `금 ${gold.toLocaleString()}, 쌀 ${rice.toLocaleString()} 지급 완료 (${distributeTarget === "all" ? "전체 장수" : "국가별"})`,
       );
@@ -133,10 +142,13 @@ export default function AdminTimeControlPage() {
 
   const handleAuctionSync = useCallback(async () => {
     try {
-      await adminApi.timeControl({
-        auctionSync: auctionSyncEnabled,
-        auctionCloseMinutes: Number(auctionCloseMinutes) || 60,
-      }, worldId);
+      await adminApi.timeControl(
+        {
+          auctionSync: auctionSyncEnabled,
+          auctionCloseMinutes: Number(auctionCloseMinutes) || 60,
+        },
+        worldId,
+      );
       toast.success("경매 시간 설정이 변경되었습니다.");
     } catch {
       toast.error("경매 시간 설정 실패");

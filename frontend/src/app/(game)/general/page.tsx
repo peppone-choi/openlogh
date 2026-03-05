@@ -12,7 +12,14 @@ import {
   nationApi,
 } from "@/lib/gameApi";
 import { subscribeWebSocket } from "@/lib/websocket";
-import type { City, General, GeneralFrontInfo, LastTurnInfo, Message, Nation } from "@/types";
+import type {
+  City,
+  General,
+  GeneralFrontInfo,
+  LastTurnInfo,
+  Message,
+  Nation,
+} from "@/types";
 import { User, Users, Swords } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";

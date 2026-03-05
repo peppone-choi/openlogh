@@ -30,7 +30,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { adminApi, adminEventApi, worldApi, scenarioApi, gameVersionApi } from "@/lib/gameApi";
+import {
+  adminApi,
+  adminEventApi,
+  worldApi,
+  scenarioApi,
+  gameVersionApi,
+} from "@/lib/gameApi";
 import { toast } from "sonner";
 import type { WorldState, Scenario, AdminDashboard } from "@/types";
 import { useAdminWorld } from "@/contexts/AdminWorldContext";
@@ -160,7 +166,9 @@ export default function AdminDashboardPage() {
               setJoinMode(String(cfg?.joinMode ?? "standard"));
               setBlockGeneralCreate(Number(cfg?.blockGeneralCreate ?? 0));
               setRealtimeMode(Boolean(d.currentWorld.realtimeMode));
-              setCommandPointRegenRate(String(d.currentWorld.commandPointRegenRate ?? ""));
+              setCommandPointRegenRate(
+                String(d.currentWorld.commandPointRegenRate ?? ""),
+              );
               setBettingActive(Boolean(cfg?.bettingActive));
               setTournamentAuto(Boolean(cfg?.tournamentAuto));
               setAllowDomestic(cfg?.allowDomestic !== false);
@@ -313,40 +321,43 @@ export default function AdminDashboardPage() {
 
   const handleSave = async () => {
     try {
-      await adminApi.updateSettings({
-        notice,
-        turnTerm: turnTerm ? Number(turnTerm) : undefined,
-        locked,
-        maxGeneral: maxGeneral ? Number(maxGeneral) : undefined,
-        maxNation: maxNation ? Number(maxNation) : undefined,
-        npcMode: Number(npcMode),
-        isFiction,
-        joinMode,
-        blockGeneralCreate,
-        realtimeMode,
-        commandPointRegenRate: commandPointRegenRate
-          ? Number(commandPointRegenRate)
-          : undefined,
-        bettingActive,
-        tournamentAuto,
-        allowDomestic,
-        allowTeleport,
-        allowRecruit,
-        allowTraining,
-        allowMoraleBoost,
-        allowDispatch,
-        commanderTurnEnabled,
-        turnValidityHours: turnValidityHours
-          ? Number(turnValidityHours)
-          : undefined,
-        sync,
-        extend,
-        showImgLevel,
-        autorunMinutes,
-        reserveOpen: reserveOpen || undefined,
-        preReserveOpen: preReserveOpen || undefined,
-        allowConscript,
-      }, worldId);
+      await adminApi.updateSettings(
+        {
+          notice,
+          turnTerm: turnTerm ? Number(turnTerm) : undefined,
+          locked,
+          maxGeneral: maxGeneral ? Number(maxGeneral) : undefined,
+          maxNation: maxNation ? Number(maxNation) : undefined,
+          npcMode: Number(npcMode),
+          isFiction,
+          joinMode,
+          blockGeneralCreate,
+          realtimeMode,
+          commandPointRegenRate: commandPointRegenRate
+            ? Number(commandPointRegenRate)
+            : undefined,
+          bettingActive,
+          tournamentAuto,
+          allowDomestic,
+          allowTeleport,
+          allowRecruit,
+          allowTraining,
+          allowMoraleBoost,
+          allowDispatch,
+          commanderTurnEnabled,
+          turnValidityHours: turnValidityHours
+            ? Number(turnValidityHours)
+            : undefined,
+          sync,
+          extend,
+          showImgLevel,
+          autorunMinutes,
+          reserveOpen: reserveOpen || undefined,
+          preReserveOpen: preReserveOpen || undefined,
+          allowConscript,
+        },
+        worldId,
+      );
       toast.success("설정이 저장되었습니다.");
     } catch {
       toast.error("저장 실패");
@@ -913,9 +924,7 @@ export default function AdminDashboardPage() {
                     <Input
                       type="number"
                       value={commandPointRegenRate}
-                      onChange={(e) =>
-                        setCommandPointRegenRate(e.target.value)
-                      }
+                      onChange={(e) => setCommandPointRegenRate(e.target.value)}
                       placeholder="100"
                     />
                   </div>
@@ -938,7 +947,9 @@ export default function AdminDashboardPage() {
                     </label>
                     <select
                       value={blockGeneralCreate}
-                      onChange={(e) => setBlockGeneralCreate(Number(e.target.value))}
+                      onChange={(e) =>
+                        setBlockGeneralCreate(Number(e.target.value))
+                      }
                       className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm"
                     >
                       <option value={0}>가능</option>
@@ -967,7 +978,9 @@ export default function AdminDashboardPage() {
                     </label>
                     <select
                       value={autorunMinutes}
-                      onChange={(e) => setAutorunMinutes(Number(e.target.value))}
+                      onChange={(e) =>
+                        setAutorunMinutes(Number(e.target.value))
+                      }
                       className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm"
                     >
                       <option value={0}>사용안함</option>
@@ -1245,13 +1258,17 @@ export default function AdminDashboardPage() {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
                 <div className="rounded-md border border-border p-3">
                   <p className="text-xs text-muted-foreground">게임 버전</p>
-                  <p className="font-mono font-medium">{worlds.find(w => w.id === worldId)?.gameVersion ?? "-"}</p>
+                  <p className="font-mono font-medium">
+                    {worlds.find((w) => w.id === worldId)?.gameVersion ?? "-"}
+                  </p>
                 </div>
                 <div className="rounded-md border border-border p-3">
                   <p className="text-xs text-muted-foreground">커밋</p>
                   <p className="font-mono font-medium text-xs">
                     <GitBranch className="inline size-3 mr-1" />
-                    {(dashboard.currentWorld.config?.commitSha as string)?.slice(0, 8) ?? "-"}
+                    {(
+                      dashboard.currentWorld.config?.commitSha as string
+                    )?.slice(0, 8) ?? "-"}
                   </p>
                 </div>
               </div>
@@ -1260,8 +1277,18 @@ export default function AdminDashboardPage() {
                   size="sm"
                   variant="destructive"
                   onClick={async () => {
-                    if (!confirm("하드 리셋: DB를 완전히 초기화합니다. 복구 불가능합니다. 정말 실행할까요?")) return;
-                    if (!confirm("정말로 하드 리셋을 실행합니까? 이 작업은 되돌릴 수 없습니다.")) return;
+                    if (
+                      !confirm(
+                        "하드 리셋: DB를 완전히 초기화합니다. 복구 불가능합니다. 정말 실행할까요?",
+                      )
+                    )
+                      return;
+                    if (
+                      !confirm(
+                        "정말로 하드 리셋을 실행합니까? 이 작업은 되돌릴 수 없습니다.",
+                      )
+                    )
+                      return;
                     try {
                       await adminApi.resetWorld(
                         worldId!,
@@ -1280,7 +1307,12 @@ export default function AdminDashboardPage() {
                   size="sm"
                   variant="destructive"
                   onClick={async () => {
-                    if (!confirm("긴급 119: 서버를 즉시 잠금하고 현재 상태를 스냅샷합니다. 계속할까요?")) return;
+                    if (
+                      !confirm(
+                        "긴급 119: 서버를 즉시 잠금하고 현재 상태를 스냅샷합니다. 계속할까요?",
+                      )
+                    )
+                      return;
                     try {
                       await adminApi.updateSettings({ locked: true }, worldId);
                       setLocked(true);
@@ -1308,8 +1340,8 @@ export default function AdminDashboardPage() {
             <div className="flex items-center gap-3 text-sm text-muted-foreground py-4">
               <Info className="size-5 shrink-0" />
               <p>
-                게임 인스턴스가 실행 중이 아닙니다. 월드를 오픈(활성화)해야
-                서버 관리 기능을 사용할 수 있습니다.
+                게임 인스턴스가 실행 중이 아닙니다. 월드를 오픈(활성화)해야 서버
+                관리 기능을 사용할 수 있습니다.
               </p>
             </div>
           )}

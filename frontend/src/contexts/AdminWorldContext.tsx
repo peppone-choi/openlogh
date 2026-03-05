@@ -80,6 +80,7 @@ export function AdminWorldProvider({
 
 export function useAdminWorld(): AdminWorldContextValue {
   const ctx = useContext(AdminWorldContext);
-  if (!ctx) throw new Error("useAdminWorld must be used within AdminWorldProvider");
+  if (!ctx)
+    throw new Error("useAdminWorld must be used within AdminWorldProvider");
   return ctx;
 }

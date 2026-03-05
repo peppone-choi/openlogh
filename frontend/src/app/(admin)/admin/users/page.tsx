@@ -321,7 +321,12 @@ export default function AdminUsersPage() {
                       variant="destructive"
                       disabled={busyUserId === u.id}
                       onClick={() => {
-                        if (!confirm(`${u.loginId}을(를) 영구 차단합니다. 되돌릴 수 없습니다. 계속할까요?`)) return;
+                        if (
+                          !confirm(
+                            `${u.loginId}을(를) 영구 차단합니다. 되돌릴 수 없습니다. 계속할까요?`,
+                          )
+                        )
+                          return;
                         doAction(u.id, { type: "banPermanent" });
                       }}
                     >

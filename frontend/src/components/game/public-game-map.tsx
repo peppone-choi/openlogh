@@ -156,7 +156,7 @@ export function PublicGameMap({ data }: PublicGameMapProps) {
                 {/* Nation Color Blotch */}
                 {hasNation && (
                   <div
-                      className="absolute z-[1]"
+                    className="absolute z-[1]"
                     style={{
                       background: getNationBgGradient(city.nationColor),
                       width: bgW,
@@ -195,11 +195,11 @@ export function PublicGameMap({ data }: PublicGameMapProps) {
                           height: 12,
                         }}
                       >
-                         <FactionFlag
-                           color={city.nationColor}
-                           supplied={isSupplied}
-                           className="w-full h-full block"
-                         />
+                        <FactionFlag
+                          color={city.nationColor}
+                          supplied={isSupplied}
+                          className="w-full h-full block"
+                        />
                         {/* Capital marker */}
                         {city.isCapital && (
                           <div
