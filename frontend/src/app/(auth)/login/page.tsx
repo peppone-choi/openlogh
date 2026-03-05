@@ -12,7 +12,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ServerStatusCard } from "@/components/auth/server-status-card";
-import { ShieldCheck, X, Map } from "lucide-react";
+import { ShieldCheck, X, Map as MapIcon } from "lucide-react";
 import { sha512 } from "js-sha512";
 import api from "@/lib/api";
 
@@ -348,7 +348,7 @@ export default function LoginPage() {
       <Card className="w-full max-w-md p-8">
         <CardHeader className="px-0 pt-0">
           <CardTitle className="text-center text-2xl">
-            삼국지 모의전투 HiDCHe
+            오픈삼국
           </CardTitle>
         </CardHeader>
         <CardContent className="px-0 pb-0">
@@ -455,6 +455,8 @@ export default function LoginPage() {
                 className="mr-2 size-4"
                 viewBox="0 0 24 24"
                 fill="currentColor"
+                aria-hidden="true"
+                focusable="false"
               >
                 <path d="M12 3C6.477 3 2 6.463 2 10.691c0 2.726 1.818 5.122 4.558 6.48-.152.543-.98 3.503-.998 3.712 0 0-.02.166.088.229.108.063.234.03.234.03.308-.043 3.57-2.33 4.132-2.724.643.09 1.307.137 1.986.137 5.523 0 10-3.463 10-7.864C22 6.463 17.523 3 12 3" />
               </svg>
@@ -481,7 +483,7 @@ export default function LoginPage() {
               className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground w-full"
               onClick={() => setShowServerMap(!showServerMap)}
             >
-              <Map className="size-4" />
+                <MapIcon className="size-4" />
               서버 근황 지도 {showServerMap ? "▲" : "▼"}
             </button>
             {showServerMap && (
