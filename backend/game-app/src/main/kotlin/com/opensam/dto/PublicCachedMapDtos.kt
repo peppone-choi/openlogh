@@ -24,6 +24,11 @@ data class PublicCachedMapHistoryResponse(
     val events: List<String>? = null,
 )
 
+data class PublicWorldSummary(
+    val id: Long,
+    val name: String,
+)
+
 data class PublicCachedMapResponse(
     val available: Boolean,
     val worldId: Long?,
@@ -33,4 +38,5 @@ data class PublicCachedMapResponse(
     val currentMonth: Int? = null,
     val cities: List<PublicCachedMapCityResponse>,
     val history: List<PublicCachedMapHistoryResponse>,
+    val worlds: List<PublicWorldSummary> = emptyList(),
 )

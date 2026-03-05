@@ -563,6 +563,11 @@ export interface PublicCachedMapHistory {
   events?: string[];
 }
 
+export interface PublicWorldSummary {
+  id: number;
+  name: string;
+}
+
 export interface PublicCachedMapResponse {
   available: boolean;
   worldId: number | null;
@@ -572,6 +577,7 @@ export interface PublicCachedMapResponse {
   currentMonth?: number | null;
   cities: PublicCachedMapCity[];
   history: PublicCachedMapHistory[];
+  worlds?: PublicWorldSummary[];
 }
 
 // FrontInfo (main dashboard API response) — legacy parity

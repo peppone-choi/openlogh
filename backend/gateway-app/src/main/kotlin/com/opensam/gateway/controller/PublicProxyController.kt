@@ -7,6 +7,7 @@ import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.reactive.function.client.WebClient
 
@@ -19,11 +20,15 @@ class PublicProxyController(
     private val responseSkipHeaders = setOf("transfer-encoding", "connection", "keep-alive")
 
     @GetMapping("/cached-map")
-    fun getCachedMap(): ResponseEntity<ByteArray> {
+    fun getCachedMap(@RequestParam worldId: Short? = null): ResponseEntity<ByteArray> {
         val baseUrl = pickAnyGameApp()
             ?: return notAvailableResponse()
 
-        val targetUrl = "$baseUrl/api/public/cached-map"
+        val targetUrl = if (worldId != null) {
+            "$baseUrl/api/public/cached-map?worldId=$worldId"
+        } else {
+            "$baseUrl/api/public/cached-map"
+        }
         return proxyGet(targetUrl)
     }
 

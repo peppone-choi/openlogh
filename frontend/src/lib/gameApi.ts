@@ -885,8 +885,7 @@ export const adminApi = {
     notice?: string;
     gameVersion?: string;
   }) => api.post<CreateWorldResponse>("/worlds", data),
-  deleteWorld: (worldId: number) =>
-    api.delete<void>(`/admin/worlds/${worldId}`),
+  deleteWorld: (worldId: number) => api.delete<void>(`/worlds/${worldId}`),
   listWorlds: () => api.get<AdminWorldListEntry[]>("/admin/worlds"),
   bulkGeneralAction: (ids: number[], type: string, worldId?: number) =>
     api.post<void>("/admin/generals/bulk-action", { ids, type }, wq(worldId)),
