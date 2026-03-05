@@ -5,6 +5,7 @@ import com.opensam.entity.Diplomacy
 import com.opensam.entity.General
 import com.opensam.entity.Nation
 import com.opensam.entity.WorldState
+import com.opensam.engine.turn.cqrs.persist.JpaWorldPortFactory
 import com.opensam.repository.CityRepository
 import com.opensam.repository.DiplomacyRepository
 import com.opensam.repository.GeneralRepository
@@ -34,7 +35,12 @@ class NationAITest {
         generalRepository = mock(GeneralRepository::class.java)
         nationRepository = mock(NationRepository::class.java)
         diplomacyRepository = mock(DiplomacyRepository::class.java)
-        ai = NationAI(cityRepository, generalRepository, nationRepository, diplomacyRepository)
+        ai = NationAI(JpaWorldPortFactory(
+            generalRepository = generalRepository,
+            cityRepository = cityRepository,
+            nationRepository = nationRepository,
+            diplomacyRepository = diplomacyRepository,
+        ))
     }
 
     private fun createWorld(year: Short = 200, month: Short = 3): WorldState {

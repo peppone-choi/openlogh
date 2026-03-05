@@ -1,5 +1,6 @@
 package com.opensam.engine.ai
 
+import com.opensam.engine.turn.cqrs.persist.JpaWorldPortFactory
 import com.opensam.entity.*
 import com.opensam.repository.*
 import org.junit.jupiter.api.Assertions.*
@@ -24,7 +25,12 @@ class GeneralAITest {
         cityRepository = mock(CityRepository::class.java)
         nationRepository = mock(NationRepository::class.java)
         diplomacyRepository = mock(DiplomacyRepository::class.java)
-        ai = GeneralAI(generalRepository, cityRepository, nationRepository, diplomacyRepository)
+        ai = GeneralAI(JpaWorldPortFactory(
+            generalRepository = generalRepository,
+            cityRepository = cityRepository,
+            nationRepository = nationRepository,
+            diplomacyRepository = diplomacyRepository,
+        ))
     }
 
     private fun createWorld(year: Short = 200, month: Short = 3): WorldState {
