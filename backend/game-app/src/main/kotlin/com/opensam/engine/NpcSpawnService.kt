@@ -10,6 +10,7 @@ import com.opensam.repository.GeneralRepository
 import com.opensam.repository.NationRepository
 import com.opensam.service.MapService
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
@@ -23,6 +24,7 @@ class NpcSpawnService(
     private val idAllocator: IdAllocator,
     private val mapService: MapService,
 ) {
+    @Autowired
     constructor(
         cityRepository: CityRepository,
         nationRepository: NationRepository,

@@ -10,6 +10,7 @@ import com.opensam.engine.turn.cqrs.port.IdAllocator
 import com.opensam.repository.DiplomacyRepository
 import com.opensam.repository.MessageRepository
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.util.concurrent.atomic.AtomicLong
@@ -29,6 +30,7 @@ class DiplomacyService(
     private val idAllocator: IdAllocator,
     private val messageRepository: MessageRepository,
 ) {
+    @Autowired
     constructor(
         diplomacyRepository: DiplomacyRepository,
         messageRepository: MessageRepository,

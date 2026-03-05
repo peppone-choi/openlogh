@@ -15,6 +15,7 @@ import com.opensam.repository.GeneralRepository
 import com.opensam.repository.NationRepository
 import com.opensam.service.MapService
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import kotlin.math.ceil
@@ -22,7 +23,7 @@ import kotlin.math.pow
 import kotlin.math.sqrt
 
 @Service
-class EconomyService(
+class EconomyService @Autowired constructor(
     private val worldPortFactory: JpaWorldPortFactory,
     private val mapService: MapService,
 ) {
