@@ -27,6 +27,7 @@ interface GameInstanceStatus {
 export default function AdminGameVersionsPage() {
   const [loading, setLoading] = useState(true);
   const [instances, setInstances] = useState<GameInstanceStatus[]>([]);
+  const [availableVersions, setAvailableVersions] = useState<string[]>([]);
   const [gameVersion, setGameVersion] = useState("");
   const [imageTag, setImageTag] = useState("");
   const [commitSha, setCommitSha] = useState("");
@@ -45,6 +46,10 @@ export default function AdminGameVersionsPage() {
 
   useEffect(() => {
     fetchInstances();
+    gameVersionApi
+      .available()
+      .then((res) => setAvailableVersions(res.data))
+      .catch(() => {});
   }, [fetchInstances]);
 
   const handleDeploy = async () => {
@@ -95,11 +100,21 @@ export default function AdminGameVersionsPage() {
           <div className="grid grid-cols-3 gap-4">
             <div className="space-y-1">
               <span className="text-sm text-muted-foreground">게임 버전 *</span>
-              <Input
-                placeholder="v1.0.0"
+              <select
                 value={gameVersion}
                 onChange={(e) => setGameVersion(e.target.value)}
-              />
+                className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm"
+              >
+                <option value="">버전 선택</option>
+                <option value="latest">latest</option>
+                {availableVersions
+                  .filter((v) => v !== "latest")
+                  .map((v) => (
+                    <option key={v} value={v}>
+                      {v}
+                    </option>
+                  ))}
+              </select>
             </div>
             <div className="space-y-1">
               <span className="text-sm text-muted-foreground">

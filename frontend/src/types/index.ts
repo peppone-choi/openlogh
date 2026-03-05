@@ -1164,6 +1164,8 @@ export interface AdminWorldInfo {
   month: number;
   scenarioCode: string;
   realtimeMode: boolean;
+  tickSeconds: number;
+  commandPointRegenRate: number;
   config: Record<string, unknown>;
 }
 

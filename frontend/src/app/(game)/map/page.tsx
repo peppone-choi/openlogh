@@ -15,10 +15,10 @@ import {
   getEventIcon,
   getMapBgUrl,
   getMapRoadUrl,
-  getNationBgUrl,
-  getNationFlagUrl,
+  getNationBgGradient,
   getSpecialEventIcon,
 } from "@/lib/image";
+import { FactionFlag } from "@/components/game/faction-flag";
 
 type MapTheme = "default" | "spring" | "summer" | "autumn" | "winter";
 const MAP_THEMES: {
@@ -575,10 +575,9 @@ export default function MapPage() {
                     >
                       {showNationLayer && nation?.color && (
                         <div
-                          className="absolute z-[1] bg-center bg-no-repeat"
+                          className="absolute z-[1]"
                           style={{
-                            backgroundImage: `url('${getNationBgUrl(nation.color)}')`,
-                            backgroundSize: `${bgW}px ${bgH}px`,
+                            background: getNationBgGradient(nation.color),
                             width: bgW,
                             height: bgH,
                             left: (CITY_HIT_WIDTH - bgW) / 2,
@@ -637,14 +636,11 @@ export default function MapPage() {
                                 height: 12,
                               }}
                             >
-                              <img
-                                src={getNationFlagUrl(
-                                  nation.color,
-                                  (rtCity?.supplyState ?? 0) > 0,
-                                )}
-                                className="w-full h-full block"
-                                alt={`${nation.name} 국기`}
-                              />
+                               <FactionFlag
+                                 color={nation.color}
+                                 supplied={(rtCity?.supplyState ?? 0) > 0}
+                                 className="w-full h-full block"
+                               />
                               {showCapital && (
                                 <div
                                   className="absolute"

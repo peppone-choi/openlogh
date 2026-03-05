@@ -27,6 +27,7 @@ import { adminApi } from "@/lib/gameApi";
 import type { NationStatistic, Diplomacy } from "@/types";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useAdminWorld } from "@/contexts/AdminWorldContext";
 
 type SortKey = keyof Omit<NationStatistic, "color">;
 
@@ -78,6 +79,7 @@ const relationSymbol = (s: string) => {
 };
 
 export default function AdminStatisticsPage() {
+  const { worldId } = useAdminWorld();
   const [stats, setStats] = useState<NationStatistic[]>([]);
   const [diplomacy, setDiplomacy] = useState<Diplomacy[]>([]);
   const [loading, setLoading] = useState(true);
@@ -85,8 +87,9 @@ export default function AdminStatisticsPage() {
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
   const load = () => {
+    if (worldId == null) return;
     setLoading(true);
-    Promise.all([adminApi.getStatistics(), adminApi.getDiplomacy()])
+    Promise.all([adminApi.getStatistics(worldId), adminApi.getDiplomacy(worldId)])
       .then(([statRes, dipRes]) => {
         setStats(statRes.data);
         setDiplomacy(dipRes.data);
@@ -100,7 +103,8 @@ export default function AdminStatisticsPage() {
   };
 
   useEffect(() => {
-    Promise.all([adminApi.getStatistics(), adminApi.getDiplomacy()])
+    if (worldId == null) return;
+    Promise.all([adminApi.getStatistics(worldId), adminApi.getDiplomacy(worldId)])
       .then(([statRes, dipRes]) => {
         setStats(statRes.data);
         setDiplomacy(dipRes.data);
@@ -111,7 +115,7 @@ export default function AdminStatisticsPage() {
       .finally(() => {
         setLoading(false);
       });
-  }, []);
+  }, [worldId]);
 
   const sorted = useMemo(() => {
     return [...stats].sort((a, b) => {

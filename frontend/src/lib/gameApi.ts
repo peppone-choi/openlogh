@@ -844,6 +844,7 @@ export const battleSimApi = {
 // Game Version API (Admin)
 export const gameVersionApi = {
   list: () => api.get<GameVersionInfo[]>("/admin/game-versions"),
+  available: () => api.get<string[]>("/admin/game-versions/available"),
   deploy: (data: {
     gameVersion: string;
     imageTag?: string;
@@ -853,20 +854,28 @@ export const gameVersionApi = {
     api.delete<void>(`/admin/game-versions/${encodeURIComponent(version)}`),
 };
 
+// Helper: attach worldId as query param when provided
+const wq = (worldId?: number) =>
+  worldId != null ? { params: { worldId } } : {};
+
 // Admin API
 export const adminApi = {
-  getDashboard: () => api.get<AdminDashboard>("/admin/dashboard"),
-  updateSettings: (settings: JsonObject) =>
-    api.patch<void>("/admin/settings", settings),
-  listGenerals: () => api.get<AdminGeneral[]>("/admin/generals"),
-  generalAction: (id: number, type: string) =>
-    api.post<void>(`/admin/generals/${id}/action`, { type }),
-  getStatistics: () => api.get<NationStatistic[]>("/admin/statistics"),
-  getGeneralLogs: (id: number) =>
-    api.get<Message[]>(`/admin/generals/${id}/logs`),
-  getDiplomacy: () => api.get<Diplomacy[]>("/admin/diplomacy"),
-  timeControl: (data: TimeControlRequest) =>
-    api.post<void>("/admin/time-control", data),
+  getDashboard: (worldId?: number) =>
+    api.get<AdminDashboard>("/admin/dashboard", wq(worldId)),
+  updateSettings: (settings: JsonObject, worldId?: number) =>
+    api.patch<void>("/admin/settings", settings, wq(worldId)),
+  listGenerals: (worldId?: number) =>
+    api.get<AdminGeneral[]>("/admin/generals", wq(worldId)),
+  generalAction: (id: number, type: string, worldId?: number) =>
+    api.post<void>(`/admin/generals/${id}/action`, { type }, wq(worldId)),
+  getStatistics: (worldId?: number) =>
+    api.get<NationStatistic[]>("/admin/statistics", wq(worldId)),
+  getGeneralLogs: (id: number, worldId?: number) =>
+    api.get<Message[]>(`/admin/generals/${id}/logs`, wq(worldId)),
+  getDiplomacy: (worldId?: number) =>
+    api.get<Diplomacy[]>("/admin/diplomacy", wq(worldId)),
+  timeControl: (data: TimeControlRequest, worldId?: number) =>
+    api.post<void>("/admin/time-control", data, wq(worldId)),
   listUsers: () => api.get<AdminUser[]>("/admin/users"),
   userAction: (
     id: number,
@@ -878,7 +887,8 @@ export const adminApi = {
         | "setGrade"
         | "block"
         | "unblock"
-        | "extendOauth";
+        | "extendOauth"
+        | "banPermanent";
       grade?: number;
       days?: number;
       oauthDays?: number;
@@ -894,8 +904,12 @@ export const adminApi = {
   deleteWorld: (worldId: number) =>
     api.delete<void>(`/admin/worlds/${worldId}`),
   listWorlds: () => api.get<AdminWorldListEntry[]>("/admin/worlds"),
-  bulkGeneralAction: (ids: number[], type: string) =>
-    api.post<void>("/admin/generals/bulk-action", { ids, type }),
+  bulkGeneralAction: (ids: number[], type: string, worldId?: number) =>
+    api.post<void>(
+      "/admin/generals/bulk-action",
+      { ids, type },
+      wq(worldId),
+    ),
   activateWorld: (worldId: number, data?: { gameVersion?: string }) =>
     api.post<void>(`/worlds/${worldId}/activate`, data ?? {}),
   deactivateWorld: (worldId: number) =>
@@ -905,8 +919,8 @@ export const adminApi = {
       ...(scenarioCode ? { scenarioCode } : {}),
       ...(gameVersion ? { gameVersion } : {}),
     }),
-  writeLog: (message: string) =>
-    api.post<void>("/admin/write-log", { message }),
+  writeLog: (message: string, worldId?: number) =>
+    api.post<void>("/admin/write-log", { message }, wq(worldId)),
 
   // Gateway-local admin ops (entrance/system)
   getSystemFlags: () =>
@@ -916,7 +930,7 @@ export const adminApi = {
       "/admin/system-flags",
       payload,
     ),
-  scrub: (type: "scrub_old_user" | "scrub_blocked_user") =>
+  scrub: (type: "scrub_old_user" | "scrub_blocked_user" | "scrub_deleted" | "scrub_icon") =>
     api.post<ScrubResponse>("/admin/scrub", { type }),
   resetPassword: (userId: number) =>
     api.post<ResetPasswordResponse>(

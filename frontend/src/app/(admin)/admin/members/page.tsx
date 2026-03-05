@@ -18,8 +18,10 @@ import {
 import { adminApi } from "@/lib/gameApi";
 import { toast } from "sonner";
 import type { AdminGeneral } from "@/types";
+import { useAdminWorld } from "@/contexts/AdminWorldContext";
 
 export default function AdminMembersPage() {
+  const { worldId } = useAdminWorld();
   const [generals, setGenerals] = useState<AdminGeneral[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -27,8 +29,9 @@ export default function AdminMembersPage() {
   const [bulkActing, setBulkActing] = useState(false);
 
   const load = useCallback(() => {
+    if (worldId == null) return;
     adminApi
-      .listGenerals()
+      .listGenerals(worldId)
       .then((res) => {
         setGenerals(res.data);
       })
@@ -38,7 +41,7 @@ export default function AdminMembersPage() {
       .finally(() => {
         setLoading(false);
       });
-  }, []);
+  }, [worldId]);
 
   useEffect(() => {
     load();
@@ -46,7 +49,7 @@ export default function AdminMembersPage() {
 
   const doAction = async (id: number, type: string) => {
     try {
-      await adminApi.generalAction(id, type);
+      await adminApi.generalAction(id, type, worldId);
       toast.success(`${type} 완료`);
       load();
     } catch {
@@ -81,7 +84,7 @@ export default function AdminMembersPage() {
       return;
     setBulkActing(true);
     try {
-      await adminApi.bulkGeneralAction(Array.from(selected), type);
+      await adminApi.bulkGeneralAction(Array.from(selected), type, worldId);
       toast.success(`${type} 일괄 처리 완료 (${selected.size}명)`);
       setSelected(new Set());
       load();

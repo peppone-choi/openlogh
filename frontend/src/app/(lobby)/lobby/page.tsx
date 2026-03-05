@@ -275,6 +275,19 @@ export default function LobbyPage() {
                               실시간
                             </Badge>
                           )}
+                          {isAdmin && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 w-6 p-0 text-red-400 hover:text-red-300"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                router.push(`/admin?worldId=${w.id}`);
+                              }}
+                            >
+                              <Shield className="size-3.5" />
+                            </Button>
+                          )}
                         </div>
                       </div>
 

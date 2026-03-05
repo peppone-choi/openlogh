@@ -29,11 +29,7 @@ export function getCityLevelIcon(level: number): string {
   return `${GAME_CDN_ROOT}/cast_${level}.gif`;
 }
 
-export function getNationFlagUrl(color: string, supply: boolean): string {
-  const prefix = supply ? "f" : "d";
-  const hex = color.replace("#", "");
-  return `${GAME_CDN_ROOT}/${prefix}${hex}.gif`;
-}
+
 
 export function getEventIcon(state: number): string {
   return `${GAME_CDN_ROOT}/event${state}.gif`;
@@ -51,10 +47,13 @@ export function getSammoBarFill(height: number): string {
   return `${GAME_CDN_ROOT}/pb${height - 2}.gif`;
 }
 
-/** Nation territory background blotch — e.g. `bFF0000.png` */
-export function getNationBgUrl(color: string): string {
-  const hex = color.replace("#", "").toUpperCase();
-  return `${GAME_CDN_ROOT}/b${hex}.png`;
+/** Nation territory background as CSS radial gradient */
+export function getNationBgGradient(color: string): string {
+  const hex = color.replace("#", "");
+  const r = parseInt(hex.substring(0, 2), 16);
+  const g = parseInt(hex.substring(2, 4), 16);
+  const b = parseInt(hex.substring(4, 6), 16);
+  return `radial-gradient(circle, rgba(${r},${g},${b},0.6) 0%, transparent 70%)`;
 }
 
 /** Map background layer for a season — `bg_spring.jpg`, `bg_summer.jpg`, etc. */
@@ -94,7 +93,4 @@ export function getBuildingIconUrl(buildingType: number): string {
   return `${GAME_CDN_ROOT}/building${buildingType}.png`;
 }
 
-/** Flag type helper — supply flag vs depleted flag */
-export function getCityFlagUrl(color: string, supply: boolean): string {
-  return getNationFlagUrl(color, supply);
-}
+

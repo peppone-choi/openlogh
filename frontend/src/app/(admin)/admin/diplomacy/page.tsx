@@ -32,6 +32,7 @@ import { adminApi } from "@/lib/gameApi";
 import type { Diplomacy, NationStatistic } from "@/types";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useAdminWorld } from "@/contexts/AdminWorldContext";
 
 const STATES = ["all", "ally", "nowar", "war", "ceasefire", "neutral"] as const;
 type StateFilter = (typeof STATES)[number];
@@ -94,14 +95,16 @@ const stateIcon = (s: string) => {
 };
 
 export default function AdminDiplomacyPage() {
+  const { worldId } = useAdminWorld();
   const [diplomacy, setDiplomacy] = useState<Diplomacy[]>([]);
   const [nationStats, setNationStats] = useState<NationStatistic[]>([]);
   const [stateFilter, setStateFilter] = useState<StateFilter>("all");
   const [loading, setLoading] = useState(true);
 
   const load = () => {
+    if (worldId == null) return;
     setLoading(true);
-    Promise.all([adminApi.getDiplomacy(), adminApi.getStatistics()])
+    Promise.all([adminApi.getDiplomacy(worldId), adminApi.getStatistics(worldId)])
       .then(([dipRes, statRes]) => {
         setDiplomacy(dipRes.data);
         setNationStats(statRes.data);
@@ -115,7 +118,8 @@ export default function AdminDiplomacyPage() {
   };
 
   useEffect(() => {
-    Promise.all([adminApi.getDiplomacy(), adminApi.getStatistics()])
+    if (worldId == null) return;
+    Promise.all([adminApi.getDiplomacy(worldId), adminApi.getStatistics(worldId)])
       .then(([dipRes, statRes]) => {
         setDiplomacy(dipRes.data);
         setNationStats(statRes.data);
@@ -126,7 +130,7 @@ export default function AdminDiplomacyPage() {
       .finally(() => {
         setLoading(false);
       });
-  }, []);
+  }, [worldId]);
 
   const nations = useMemo(() => {
     return [...nationStats].sort((a, b) => b.power - a.power);

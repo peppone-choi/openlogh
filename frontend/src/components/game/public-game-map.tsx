@@ -7,10 +7,10 @@ import {
   getEventIcon,
   getMapBgUrl,
   getMapRoadUrl,
-  getNationBgUrl,
-  getNationFlagUrl,
+  getNationBgGradient,
   getSpecialEventIcon,
 } from "@/lib/image";
+import { FactionFlag } from "@/components/game/faction-flag";
 
 interface PublicGameMapProps {
   data: PublicCachedMapResponse;
@@ -156,10 +156,9 @@ export function PublicGameMap({ data }: PublicGameMapProps) {
                 {/* Nation Color Blotch */}
                 {hasNation && (
                   <div
-                    className="absolute z-[1] bg-center bg-no-repeat"
+                      className="absolute z-[1]"
                     style={{
-                      backgroundImage: `url('${getNationBgUrl(city.nationColor)}')`,
-                      backgroundSize: `${bgW}px ${bgH}px`,
+                      background: getNationBgGradient(city.nationColor),
                       width: bgW,
                       height: bgH,
                       left: (CITY_HIT_WIDTH - bgW) / 2,
@@ -196,11 +195,11 @@ export function PublicGameMap({ data }: PublicGameMapProps) {
                           height: 12,
                         }}
                       >
-                        <img
-                          src={getNationFlagUrl(city.nationColor, isSupplied)}
-                          className="w-full h-full block"
-                          alt=""
-                        />
+                         <FactionFlag
+                           color={city.nationColor}
+                           supplied={isSupplied}
+                           className="w-full h-full block"
+                         />
                         {/* Capital marker */}
                         {city.isCapital && (
                           <div

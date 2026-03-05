@@ -76,6 +76,30 @@ class AdminSystemController(
                     appUserRepository.deleteAll(candidates)
                     candidates.size
                 }
+                "scrub_deleted" -> {
+                    val threshold = OffsetDateTime.now().minusMonths(1)
+                    val candidates = appUserRepository.findAll().filter { u ->
+                        val deleteReq = u.meta["deleteRequestedAt"] as? String
+                        deleteReq != null && runCatching { OffsetDateTime.parse(deleteReq) }.getOrNull()?.isBefore(threshold) == true
+                    }
+                    appUserRepository.deleteAll(candidates)
+                    candidates.size
+                }
+                "scrub_icon" -> {
+                    val threshold = OffsetDateTime.now().minusMonths(1)
+                    var count = 0
+                    appUserRepository.findAll().forEach { u ->
+                        val iconUpdated = u.meta["iconUpdatedAt"] as? String
+                        val stale = iconUpdated != null && runCatching { OffsetDateTime.parse(iconUpdated) }.getOrNull()?.isBefore(threshold) == true
+                        if (stale && u.meta.containsKey("icon")) {
+                            u.meta.remove("icon")
+                            u.meta.remove("iconUpdatedAt")
+                            appUserRepository.save(u)
+                            count++
+                        }
+                    }
+                    count
+                }
                 else -> return ResponseEntity.badRequest().build()
             }
             ResponseEntity.ok(ScrubResponse(affected))

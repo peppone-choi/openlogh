@@ -21,6 +21,7 @@ import { adminApi } from "@/lib/gameApi";
 import { toast } from "sonner";
 import type { AdminGeneral, Message } from "@/types";
 import { cn } from "@/lib/utils";
+import { useAdminWorld } from "@/contexts/AdminWorldContext";
 
 const LOG_CATEGORIES = [
   { key: "all", label: "전체" },
@@ -180,6 +181,7 @@ function LogEntry({
 }
 
 export default function AdminLogsPage() {
+  const { worldId } = useAdminWorld();
   const [generalId, setGeneralId] = useState("");
   const [generals, setGenerals] = useState<AdminGeneral[]>([]);
   const [allLogs, setAllLogs] = useState<Message[]>([]);
@@ -191,13 +193,14 @@ export default function AdminLogsPage() {
   const [selectedLog, setSelectedLog] = useState<Message | null>(null);
 
   useEffect(() => {
+    if (worldId == null) return;
     adminApi
-      .listGenerals()
+      .listGenerals(worldId)
       .then((res) => setGenerals(res.data))
       .catch(() => {
         // ignore optional helper list failure
       });
-  }, []);
+  }, [worldId]);
 
   const handleSearch = useCallback(async () => {
     const id = Number(generalId);
@@ -209,7 +212,7 @@ export default function AdminLogsPage() {
     setPage(1);
     setActiveCategory("all");
     try {
-      const res = await adminApi.getGeneralLogs(id);
+      const res = await adminApi.getGeneralLogs(id, worldId);
       setAllLogs(res.data);
       setSelectedLog(res.data[0] ?? null);
       setSearched(true);
@@ -223,7 +226,7 @@ export default function AdminLogsPage() {
     } finally {
       setLoading(false);
     }
-  }, [generalId]);
+  }, [generalId, worldId]);
 
   const filteredLogs = useMemo(() => {
     const byCategory =

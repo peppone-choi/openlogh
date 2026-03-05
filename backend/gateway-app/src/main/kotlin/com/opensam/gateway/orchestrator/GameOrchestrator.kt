@@ -16,4 +16,8 @@ interface GameOrchestrator {
     fun statuses(): List<GameInstanceStatus>
 
     fun shutdownAll()
+
+    fun resolveImageVersion(gameVersion: String): String?
+
+    fun listAvailableVersions(): List<String>
 }
