@@ -1,5 +1,6 @@
 """Shared fixtures for parity tests."""
 import os
+import time
 import pytest
 import requests
 import pymysql
@@ -8,6 +9,10 @@ import psycopg2
 # ── Environment ──────────────────────────────────────────────────────────────
 LEGACY_BASE = os.environ.get("LEGACY_BASE_URL", "http://legacy-app")
 NEW_BASE = os.environ.get("NEW_BASE_URL", "http://new-gateway:8080")
+ADMIN_LOGIN_ID = os.environ.get("ADMIN_LOGIN_ID", "admin")
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "testadmin123")
+PARITY_SCENARIO_CODE = os.environ.get("PARITY_SCENARIO_CODE", "1010")
+WORLD_READY_TIMEOUT_SEC = int(os.environ.get("WORLD_READY_TIMEOUT_SEC", "120"))
 
 
 # ── HTTP Sessions ────────────────────────────────────────────────────────────
@@ -36,6 +41,12 @@ class NewClient:
         self.base = base.rstrip("/")
         self.session = requests.Session()
         self.token: str | None = None
+        self.world_id: int | None = None
+
+    def _normalize_path(self, path: str) -> str:
+        if self.world_id is None:
+            return path
+        return path.replace("/api/worlds/1", f"/api/worlds/{self.world_id}", 1)
 
     def _headers(self) -> dict:
         h = {"Content-Type": "application/json"}
@@ -44,13 +55,15 @@ class NewClient:
         return h
 
     def post(self, path: str, data: dict | None = None) -> requests.Response:
+        resolved_path = self._normalize_path(path)
         return self.session.post(
-            f"{self.base}{path}", json=data or {}, headers=self._headers(), timeout=30
+            f"{self.base}{resolved_path}", json=data or {}, headers=self._headers(), timeout=30
         )
 
     def get(self, path: str, params: dict | None = None) -> requests.Response:
+        resolved_path = self._normalize_path(path)
         return self.session.get(
-            f"{self.base}{path}", params=params, headers=self._headers(), timeout=30
+            f"{self.base}{resolved_path}", params=params, headers=self._headers(), timeout=30
         )
 
     def login(self, login_id: str, password: str):
@@ -67,7 +80,88 @@ def legacy() -> LegacyClient:
 
 @pytest.fixture(scope="session")
 def new() -> NewClient:
-    return NewClient(NEW_BASE)
+    client = NewClient(NEW_BASE)
+
+    try:
+        deadline = time.time() + WORLD_READY_TIMEOUT_SEC
+
+        token = None
+        while time.time() < deadline:
+            try:
+                login = requests.post(
+                    f"{NEW_BASE}/api/auth/login",
+                    json={"loginId": ADMIN_LOGIN_ID, "password": ADMIN_PASSWORD},
+                    timeout=30,
+                )
+                if login.status_code == 200:
+                    token = login.json().get("token") or login.json().get("accessToken")
+                    if token:
+                        break
+            except requests.RequestException:
+                pass
+            time.sleep(1)
+
+        if not token:
+            return client
+
+        client.token = token
+        headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+        worlds_payload: list[dict] = []
+        while time.time() < deadline:
+            worlds_resp = requests.get(f"{NEW_BASE}/api/worlds", headers=headers, timeout=30)
+            if worlds_resp.status_code == 200:
+                payload = worlds_resp.json()
+                worlds_payload = payload if isinstance(payload, list) else []
+                break
+            time.sleep(1)
+
+        worlds = worlds_payload if isinstance(worlds_payload, list) else []
+        world_id: int | None = None
+
+        if worlds:
+            preferred = next((w for w in worlds if w.get("id") == 1), None)
+            selected = preferred or worlds[0]
+            world_id = selected.get("id")
+        else:
+            create = requests.post(
+                f"{NEW_BASE}/api/worlds",
+                json={"scenarioCode": PARITY_SCENARIO_CODE, "name": "parity-world"},
+                headers=headers,
+                timeout=30,
+            )
+            if create.status_code in (200, 201):
+                world_id = create.json().get("id")
+            elif create.status_code == 409:
+                while time.time() < deadline:
+                    worlds_retry = requests.get(f"{NEW_BASE}/api/worlds", headers=headers, timeout=30)
+                    if worlds_retry.status_code == 200:
+                        payload = worlds_retry.json()
+                        worlds = payload if isinstance(payload, list) else []
+                        if worlds:
+                            preferred = next((w for w in worlds if w.get("id") == 1), None)
+                            selected = preferred or worlds[0]
+                            world_id = selected.get("id")
+                            break
+                    time.sleep(1)
+            else:
+                return client
+
+        if world_id is None:
+            return client
+
+        client.world_id = int(world_id)
+
+        requests.post(f"{NEW_BASE}/api/worlds/{world_id}/activate", json={}, headers=headers, timeout=30)
+
+        while time.time() < deadline:
+            probe = requests.get(f"{NEW_BASE}/api/worlds/{world_id}/history", headers=headers, timeout=30)
+            if probe.status_code != 502:
+                break
+            time.sleep(1)
+    except Exception:
+        pass
+
+    return client
 
 
 # ── Database connections ─────────────────────────────────────────────────────

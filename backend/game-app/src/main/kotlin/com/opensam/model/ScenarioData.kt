@@ -46,4 +46,6 @@ data class ScenarioInfo(
     val code: String,
     val title: String,
     val startYear: Int,
+    val id: String = code,
+    val name: String = title,
 )
