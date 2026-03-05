@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useWorldStore } from "@/stores/worldStore";
 import { useGameStore } from "@/stores/gameStore";
+import { useGeneralStore } from "@/stores/generalStore";
 import { mapRecentApi } from "@/lib/gameApi";
 import { subscribeWebSocket } from "@/lib/websocket";
 import { formatLog } from "@/lib/formatLog";
@@ -66,6 +67,7 @@ interface CityTooltip {
   cityName: string;
   nationName: string;
   nationColor: string;
+  isVisible: boolean;
   level: number;
   pop: number;
   agri: string;
@@ -118,12 +120,52 @@ const MAP_HEIGHT = 500;
 const CITY_HIT_WIDTH = 40;
 const CITY_HIT_HEIGHT = 30;
 const CITY_RING_SIZE = 20;
+const CITY_NAME_MARGIN = 6;
+const CITY_NAME_HEIGHT = 14;
+const CITY_NAME_CHAR_WIDTH = 8;
+const CITY_NAME_PADDING = 6;
+
+function clamp(value: number, min: number, max: number): number {
+  if (value < min) return min;
+  if (value > max) return max;
+  return value;
+}
+
+function getCityNameOffsets(city: CityConst, markerLeft: number, markerTop: number) {
+  const estimatedWidth =
+    city.name.length * CITY_NAME_CHAR_WIDTH + CITY_NAME_PADDING;
+  const preferredX = city.x + 8;
+  const clampedX = clamp(
+    preferredX,
+    CITY_NAME_MARGIN,
+    MAP_WIDTH - CITY_NAME_MARGIN - estimatedWidth,
+  );
+
+  const belowY = city.y + 16;
+  const aboveY = city.y - CITY_NAME_HEIGHT - 8;
+  const preferredY =
+    belowY + CITY_NAME_HEIGHT <= MAP_HEIGHT - CITY_NAME_MARGIN
+      ? belowY
+      : aboveY;
+  const clampedY = clamp(
+    preferredY,
+    CITY_NAME_MARGIN,
+    MAP_HEIGHT - CITY_NAME_MARGIN - CITY_NAME_HEIGHT,
+  );
+
+  return {
+    left: clampedX - markerLeft,
+    top: clampedY - markerTop,
+  };
+}
 
 export default function MapPage() {
   const router = useRouter();
   const { currentWorld } = useWorldStore();
   const { cities, nations, generals, mapData, loadAll, loadMap } =
     useGameStore();
+  const myGeneral = useGeneralStore((s) => s.myGeneral);
+  const fetchMyGeneral = useGeneralStore((s) => s.fetchMyGeneral);
   const [tooltip, setTooltip] = useState<CityTooltip | null>(null);
   const [history, setHistory] = useState<PublicCachedMapHistory[]>([]);
   const [touchTapId, setTouchTapId] = useState<number | null>(null);
@@ -233,6 +275,7 @@ export default function MapPage() {
     if (currentWorld) {
       loadAll(currentWorld.id);
       loadMap(mapCode);
+      fetchMyGeneral(currentWorld.id);
 
       mapRecentApi
         .getMapRecent(currentWorld.id)
@@ -241,7 +284,7 @@ export default function MapPage() {
         })
         .catch(() => {});
     }
-  }, [currentWorld, loadAll, loadMap, mapCode]);
+  }, [currentWorld, loadAll, loadMap, mapCode, fetchMyGeneral]);
 
   useEffect(() => {
     if (!currentWorld) return;
@@ -264,6 +307,45 @@ export default function MapPage() {
   const cityMap = useMemo(
     () => new Map(cities.map((c) => [c.id, c])),
     [cities],
+  );
+
+  const myNation = useMemo(() => {
+    if (!myGeneral || myGeneral.nationId <= 0) return null;
+    return nationMap.get(myGeneral.nationId) ?? null;
+  }, [myGeneral, nationMap]);
+
+  const spyVisibleCityIds = useMemo(() => {
+    const result = new Set<number>();
+    const raw = myNation?.spy;
+    if (!raw || typeof raw !== "object") return result;
+
+    for (const [k, v] of Object.entries(raw)) {
+      const numericKey = Number(k.replace(/\D/g, ""));
+      if (!Number.isNaN(numericKey) && numericKey > 0 && v) {
+        result.add(numericKey);
+      }
+      if (typeof v === "number" && v > 0) result.add(v);
+      if (Array.isArray(v)) {
+        for (const item of v) {
+          if (typeof item === "number" && item > 0) result.add(item);
+        }
+      }
+    }
+
+    return result;
+  }, [myNation?.spy]);
+
+  const canViewCityInfo = useCallback(
+    (cityId: number) => {
+      const city = cityMap.get(cityId);
+      if (!city || !myGeneral) return false;
+      if (myGeneral.permission === "spy") return true;
+      if (myGeneral.nationId > 0 && city.nationId === myGeneral.nationId) {
+        return true;
+      }
+      return spyVisibleCityIds.has(city.id);
+    },
+    [cityMap, myGeneral, spyVisibleCityIds],
   );
 
   const cityByNameMap = useMemo(
@@ -317,6 +399,7 @@ export default function MapPage() {
       const city = cityMap.get(cityId);
       if (!city) return;
       const nation = city.nationId ? nationMap.get(city.nationId) : null;
+      const isVisible = canViewCityInfo(cityId);
       try {
         localStorage.setItem(
           `opensam:cityInfo:${cityId}`,
@@ -325,7 +408,7 @@ export default function MapPage() {
             name: city.name ?? "",
             nationName: nation?.name ?? "공백지",
             nationColor: nation?.color ?? "#555",
-            pop: city.pop,
+            pop: isVisible ? city.pop : 0,
             level: city.level,
             ts: Date.now(),
           }),
@@ -334,7 +417,7 @@ export default function MapPage() {
         /* ignore quota */
       }
     },
-    [cityMap, cityByNameMap, nationMap, constMap],
+    [cityMap, nationMap, canViewCityInfo],
   );
 
   const buildTooltip = useCallback(
@@ -342,33 +425,37 @@ export default function MapPage() {
       const city = cityByNameMap.get(cc.name);
       const nation = city?.nationId ? nationMap.get(city.nationId) : null;
       const cityGens = cityGeneralData.get(city?.id ?? -1) ?? [];
-      const generalsInfo = cityGens.map((g) => ({
-        name: g.name,
-        nationColor: nationMap.get(g.nationId)?.color ?? "#555",
-        crew: g.crew,
-        crewType: CREW_TYPES[g.crewType] ?? `${g.crewType}`,
-        isForeign: city ? g.nationId !== city.nationId : false,
-      }));
+      const isVisible = city ? canViewCityInfo(city.id) : false;
+      const generalsInfo = isVisible
+        ? cityGens.map((g) => ({
+            name: g.name,
+            nationColor: nationMap.get(g.nationId)?.color ?? "#555",
+            crew: g.crew,
+            crewType: CREW_TYPES[g.crewType] ?? `${g.crewType}`,
+            isForeign: city ? g.nationId !== city.nationId : false,
+          }))
+        : [];
 
       return {
         cityId: cc.id,
         cityName: cc.name,
         nationName: nation?.name ?? "공백지",
         nationColor: nation?.color ?? "#555",
+        isVisible,
         level: city?.level ?? cc.level,
         pop: city?.pop ?? 0,
-        agri: city ? `${city.agri}/${city.agriMax}` : "-",
-        comm: city ? `${city.comm}/${city.commMax}` : "-",
-        secu: city ? `${city.secu}/${city.secuMax}` : "-",
-        def: city ? `${city.def}/${city.defMax}` : "-",
-        wall: city ? `${city.wall}/${city.wallMax}` : "-",
+        agri: city && isVisible ? `${city.agri}/${city.agriMax}` : "?",
+        comm: city && isVisible ? `${city.comm}/${city.commMax}` : "?",
+        secu: city && isVisible ? `${city.secu}/${city.secuMax}` : "?",
+        def: city && isVisible ? `${city.def}/${city.defMax}` : "?",
+        wall: city && isVisible ? `${city.wall}/${city.wallMax}` : "?",
         trust: city?.trust ?? 0,
         generals: generalsInfo,
         screenX,
         screenY,
       };
     },
-    [cityByNameMap, nationMap, cityGeneralData],
+    [cityByNameMap, nationMap, cityGeneralData, canViewCityInfo],
   );
 
   const handleCityMouseEnter = useCallback(
@@ -545,6 +632,7 @@ export default function MapPage() {
                   const [bgW, bgH, icnW, icnH, flagR, flagT] = sizes;
                   const left = cc.x - 20;
                   const top = cc.y - 15;
+                  const cityNameOffsets = getCityNameOffsets(cc, left, top);
                   const hasForeignTroops =
                     layers.has("troops") &&
                     foreignTroopCities.has(rtCity?.id ?? -1);
@@ -687,10 +775,10 @@ export default function MapPage() {
 
                         {showCityNames && (
                           <span
-                            className="absolute whitespace-nowrap px-[2px] py-[1px] bg-black/55 text-[10px]"
+                            className="pointer-events-none absolute whitespace-nowrap px-[2px] py-[1px] bg-black/55 text-[10px]"
                             style={{
-                              left: "70%",
-                              bottom: -10,
+                              left: cityNameOffsets.left,
+                              top: cityNameOffsets.top,
                               color: currentTheme.text,
                             }}
                           >
@@ -734,14 +822,16 @@ export default function MapPage() {
                 <div className="text-gray-400">소속: {tooltip.nationName}</div>
                 <div className="text-gray-400">레벨: {tooltip.level}</div>
                 <div className="text-gray-400">
-                  인구: {tooltip.pop.toLocaleString()}
+                  인구: {tooltip.isVisible ? tooltip.pop.toLocaleString() : "?"}
                 </div>
                 <div className="text-gray-400">농업: {tooltip.agri}</div>
                 <div className="text-gray-400">상업: {tooltip.comm}</div>
                 <div className="text-gray-400">치안: {tooltip.secu}</div>
                 <div className="text-gray-400">수비: {tooltip.def}</div>
                 <div className="text-gray-400">성벽: {tooltip.wall}</div>
-                <div className="text-gray-400">민심: {tooltip.trust}</div>
+                <div className="text-gray-400">
+                  민심: {tooltip.isVisible ? tooltip.trust : "?"}
+                </div>
 
                 {/* Link to city detail */}
                 <button
@@ -755,37 +845,42 @@ export default function MapPage() {
                   도시 상세 보기
                 </button>
 
-                {/* Generals in this city */}
-                {tooltip.generals.length > 0 && (
-                  <div className="border-t border-gray-700 pt-1 mt-1">
-                    <div className="text-gray-300 font-medium text-xs mb-0.5">
-                      주둔 장수 ({tooltip.generals.length}명)
-                    </div>
-                    <div className="max-h-32 overflow-y-auto space-y-0.5">
-                      {tooltip.generals.map((g) => (
-                        <div
-                          key={`${g.name}:${g.crewType}:${g.crew}`}
-                          className="flex items-center gap-1.5 text-xs"
-                        >
-                          <span
-                            className="w-2 h-2 rounded-full shrink-0"
-                            style={{ backgroundColor: g.nationColor }}
-                          />
-                          <span
-                            className={
-                              g.isForeign
-                                ? "text-red-400 font-bold"
-                                : "text-gray-300"
-                            }
+                {tooltip.isVisible ? (
+                  tooltip.generals.length > 0 && (
+                    <div className="border-t border-gray-700 pt-1 mt-1">
+                      <div className="text-gray-300 font-medium text-xs mb-0.5">
+                        주둔 장수 ({tooltip.generals.length}명)
+                      </div>
+                      <div className="max-h-32 overflow-y-auto space-y-0.5">
+                        {tooltip.generals.map((g) => (
+                          <div
+                            key={`${g.name}:${g.crewType}:${g.crew}`}
+                            className="flex items-center gap-1.5 text-xs"
                           >
-                            {g.name}
-                          </span>
-                          <span className="text-muted-foreground ml-auto">
-                            {g.crewType} {g.crew.toLocaleString()}
-                          </span>
-                        </div>
-                      ))}
+                            <span
+                              className="w-2 h-2 rounded-full shrink-0"
+                              style={{ backgroundColor: g.nationColor }}
+                            />
+                            <span
+                              className={
+                                g.isForeign
+                                  ? "text-red-400 font-bold"
+                                  : "text-gray-300"
+                              }
+                            >
+                              {g.name}
+                            </span>
+                            <span className="text-muted-foreground ml-auto">
+                              {g.crewType} {g.crew.toLocaleString()}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
+                  )
+                ) : (
+                  <div className="border-t border-gray-700 pt-1 mt-1 text-xs text-yellow-300">
+                    첩보 부족: 자국 도시 또는 첩보 확보 도시만 상세 정보를 볼 수 있습니다.
                   </div>
                 )}
               </div>
