@@ -75,7 +75,7 @@ docker-compose up -d
 ## Reference
 
 - **Core PHP source**: `legacy-core/` (parity target, cloned from devsam/core)
-- **Core Docker**: `legacy-docker/` (Docker setup from devsam/docker)
+- **Deploy Docker**: `https://github.com/peppone-choi/opensamguk-deploy` (배포용 docker-compose)
 - Image CDN: `https://cdn.jsdelivr.net/gh/peppone-choi/opensamguk-image@master/`
 
 ### Core PHP Source (`legacy-core/`)
