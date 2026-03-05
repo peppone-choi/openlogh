@@ -122,7 +122,7 @@ const CITY_HIT_HEIGHT = 30;
 const CITY_RING_SIZE = 20;
 const CITY_NAME_MARGIN = 6;
 const CITY_NAME_HEIGHT = 14;
-const CITY_NAME_CHAR_WIDTH = 8;
+const CITY_NAME_CHAR_WIDTH = 10;
 const CITY_NAME_PADDING = 6;
 
 function clamp(value: number, min: number, max: number): number {
@@ -134,12 +134,13 @@ function clamp(value: number, min: number, max: number): number {
 function getCityNameOffsets(city: CityConst, markerLeft: number, markerTop: number) {
   const estimatedWidth =
     city.name.length * CITY_NAME_CHAR_WIDTH + CITY_NAME_PADDING;
-  const preferredX = city.x + 8;
-  const clampedX = clamp(
-    preferredX,
-    CITY_NAME_MARGIN,
-    MAP_WIDTH - CITY_NAME_MARGIN - estimatedWidth,
-  );
+  const rightX = city.x + 8;
+  const leftX = city.x - estimatedWidth - 8;
+  const prefersLeft =
+    rightX + estimatedWidth > MAP_WIDTH - CITY_NAME_MARGIN &&
+    leftX >= CITY_NAME_MARGIN;
+  const preferredX = prefersLeft ? leftX : rightX;
+  const clampedX = clamp(preferredX, CITY_NAME_MARGIN, MAP_WIDTH - CITY_NAME_MARGIN - estimatedWidth);
 
   const belowY = city.y + 16;
   const aboveY = city.y - CITY_NAME_HEIGHT - 8;
