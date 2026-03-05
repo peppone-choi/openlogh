@@ -699,7 +699,11 @@ class EventActionService(
             }
         }
         generalRepository.saveAll(generals)
+        val spawned = scenarioService.spawnScenarioNpcGeneralsForYear(world)
         log.info("[World {}] NewYear: {} generals aged", world.id, generals.size)
+        if (spawned > 0) {
+            log.info("[World {}] NewYear: {} scenario NPC(s) appeared", world.id, spawned)
+        }
     }
 
     // ─── ProcessWarIncome ───

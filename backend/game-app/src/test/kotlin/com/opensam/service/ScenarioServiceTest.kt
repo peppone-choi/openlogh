@@ -170,10 +170,31 @@ class ScenarioServiceTest {
     }
 
     @Test
-    fun `parseGeneral clamps age to minimum 20`() {
+    fun `parseGeneral clamps age to minimum 14 for neutral scenario NPC`() {
         val row: List<Any?> = listOf(0, "어린이", "1000", null, null, 50, 50, 50, 50, 50, 0, 195, 260)
         val general = callParseGeneral(row, startYear = 200)
-        assertEquals(20.toShort(), general.age) // 200 - 195 = 5, clamped to 20
+        assertEquals(14.toShort(), general.age)
+        assertEquals(195.toShort(), general.bornYear)
+        assertEquals(260.toShort(), general.deadYear)
+    }
+
+    @Test
+    fun `parseGeneral keeps nation general lifespan years unchanged even if younger than 14`() {
+        val nationIdxToDbId = mapOf(1 to 42L)
+        val nationCityIds = mapOf(42L to listOf(100L))
+        val row: List<Any?> = listOf(0, "소년", "1001", 1, null, 50, 50, 50, 50, 50, 2, 195, 260)
+
+        val general = callParseGeneral(
+            row,
+            nationIdxToDbId = nationIdxToDbId,
+            nationCityIds = nationCityIds,
+            startYear = 200,
+        )
+
+        assertEquals(42L, general.nationId)
+        assertEquals(195.toShort(), general.bornYear)
+        assertEquals(260.toShort(), general.deadYear)
+        assertEquals(20.toShort(), general.age)
     }
 
     @Test
@@ -267,5 +288,136 @@ class ScenarioServiceTest {
         assertTrue(cityStore.values.all { it.trust == 50f })
         assertEquals(2L, cityStore.values.count { it.nationId == nationStore.values.first { it.name == "후한" }.id }.toLong())
         assertEquals(1L, cityStore.values.count { it.nationId == nationStore.values.first { it.name == "황건적" }.id }.toLong())
+    }
+
+    @Test
+    fun `initializeWorld delays neutral NPC younger than 14`() {
+        val scenario = ScenarioData(
+            title = "등장 테스트",
+            startYear = 188,
+            general = listOf(
+                listOf(0, "미성년", "2000", 0, null, 55, 56, 57, 58, 59, 0, 177, 230),
+                listOf(0, "성인", "2001", 0, null, 65, 66, 67, 68, 69, 0, 150, 230),
+            ),
+        )
+
+        val scenariosField = ScenarioService::class.java.getDeclaredField("scenarios")
+        scenariosField.isAccessible = true
+        @Suppress("UNCHECKED_CAST")
+        val scenarios = scenariosField.get(service) as MutableMap<String, ScenarioData>
+        scenarios["delay-test"] = scenario
+
+        val cityStore = mutableMapOf<Long, City>()
+        var citySeq = 1L
+        val savedGenerals = mutableListOf<General>()
+        var generalSeq = 1L
+
+        `when`(worldStateRepository.save(any(WorldState::class.java))).thenAnswer { inv ->
+            val world = inv.arguments[0] as WorldState
+            world.id = 1
+            world
+        }
+
+        `when`(mapService.getCities("che")).thenReturn(
+            listOf(
+                CityConst(1, "낙양", 8, 1, 1000, 100, 100, 100, 100, 100, 10, 10, emptyList()),
+            ),
+        )
+
+        `when`(cityRepository.save(any(City::class.java))).thenAnswer { inv ->
+            val city = inv.arguments[0] as City
+            if (city.id == 0L) {
+                city.id = citySeq++
+            }
+            cityStore[city.id] = city
+            city
+        }
+        `when`(cityRepository.findByWorldId(1L)).thenAnswer { cityStore.values.toList() }
+
+        `when`(nationRepository.findByWorldId(1L)).thenReturn(emptyList())
+
+        `when`(generalRepository.save(any(General::class.java))).thenAnswer { inv ->
+            val general = inv.arguments[0] as General
+            if (general.id == 0L) {
+                general.id = generalSeq++
+            }
+            savedGenerals.add(general)
+            general
+        }
+        `when`(generalRepository.findByWorldId(1L)).thenAnswer { savedGenerals.toList() }
+
+        service.initializeWorld("delay-test")
+
+        assertEquals(1, savedGenerals.size)
+        assertEquals("성인", savedGenerals.first().name)
+    }
+
+    @Test
+    fun `spawnScenarioNpcGeneralsForYear spawns delayed NPC on due year`() {
+        val scenario = ScenarioData(
+            title = "연차 등장",
+            startYear = 188,
+            general = listOf(
+                listOf(0, "지연등장", "3000", 0, null, 60, 61, 62, 63, 64, 0, 177, 240),
+            ),
+        )
+
+        val scenariosField = ScenarioService::class.java.getDeclaredField("scenarios")
+        scenariosField.isAccessible = true
+        @Suppress("UNCHECKED_CAST")
+        val scenarios = scenariosField.get(service) as MutableMap<String, ScenarioData>
+        scenarios["spawn-test"] = scenario
+
+        val cityStore = mutableMapOf<Long, City>()
+        var citySeq = 1L
+        val savedGenerals = mutableListOf<General>()
+        var generalSeq = 1L
+
+        `when`(worldStateRepository.save(any(WorldState::class.java))).thenAnswer { inv ->
+            val world = inv.arguments[0] as WorldState
+            world.id = 1
+            world
+        }
+
+        `when`(mapService.getCities("che")).thenReturn(
+            listOf(
+                CityConst(1, "낙양", 8, 1, 1000, 100, 100, 100, 100, 100, 10, 10, emptyList()),
+            ),
+        )
+
+        `when`(cityRepository.save(any(City::class.java))).thenAnswer { inv ->
+            val city = inv.arguments[0] as City
+            if (city.id == 0L) {
+                city.id = citySeq++
+            }
+            cityStore[city.id] = city
+            city
+        }
+        `when`(cityRepository.findByWorldId(1L)).thenAnswer { cityStore.values.toList() }
+
+        `when`(nationRepository.findByWorldId(1L)).thenReturn(emptyList())
+
+        `when`(generalRepository.save(any(General::class.java))).thenAnswer { inv ->
+            val general = inv.arguments[0] as General
+            if (general.id == 0L) {
+                general.id = generalSeq++
+            }
+            savedGenerals.add(general)
+            general
+        }
+        `when`(generalRepository.findByWorldId(1L)).thenAnswer { savedGenerals.toList() }
+
+        val world = service.initializeWorld("spawn-test")
+        assertTrue(savedGenerals.none { it.name == "지연등장" })
+
+        world.currentYear = 190
+        val beforeDue = service.spawnScenarioNpcGeneralsForYear(world)
+        assertEquals(0, beforeDue)
+        assertTrue(savedGenerals.none { it.name == "지연등장" })
+
+        world.currentYear = 191
+        val onDue = service.spawnScenarioNpcGeneralsForYear(world)
+        assertEquals(1, onDue)
+        assertTrue(savedGenerals.any { it.name == "지연등장" && it.age == 14.toShort() })
     }
 }
