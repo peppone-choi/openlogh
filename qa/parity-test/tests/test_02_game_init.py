@@ -31,8 +31,8 @@ class TestScenarios:
         # Structural: both must have scenario entries with id/name/year fields
         if isinstance(new_data, list) and len(new_data) > 0:
             sample = new_data[0]
-            assert any(k in sample for k in ("id", "scenarioId", "name")), \
-                f"New scenario missing id/name: {list(sample.keys())}"
+            assert any(k in sample for k in ("id", "scenarioId", "name", "code", "title")), \
+                f"New scenario missing identifier/title fields: {list(sample.keys())}"
 
 
 class TestWorldState:

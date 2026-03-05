@@ -5,6 +5,7 @@ FROM php:8.2-apache
 
 # System deps
 RUN apt-get update && apt-get install -y --no-install-recommends \
+        default-mysql-client \
         libcurl4-openssl-dev \
         libfreetype6-dev \
         libjpeg62-turbo-dev \
@@ -33,7 +34,7 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
 RUN a2enmod rewrite headers
 
 # Composer
-COPY --from=composer:2 /usr/local/bin/composer /usr/local/bin/composer
+COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
 
 # Copy legacy source
 COPY legacy/ /var/www/html/
