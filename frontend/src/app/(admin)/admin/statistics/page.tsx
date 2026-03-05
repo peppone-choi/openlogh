@@ -89,7 +89,10 @@ export default function AdminStatisticsPage() {
   const load = () => {
     if (worldId == null) return;
     setLoading(true);
-    Promise.all([adminApi.getStatistics(worldId), adminApi.getDiplomacy(worldId)])
+    Promise.all([
+      adminApi.getStatistics(worldId),
+      adminApi.getDiplomacy(worldId),
+    ])
       .then(([statRes, dipRes]) => {
         setStats(statRes.data);
         setDiplomacy(dipRes.data);
@@ -104,7 +107,10 @@ export default function AdminStatisticsPage() {
 
   useEffect(() => {
     if (worldId == null) return;
-    Promise.all([adminApi.getStatistics(worldId), adminApi.getDiplomacy(worldId)])
+    Promise.all([
+      adminApi.getStatistics(worldId),
+      adminApi.getDiplomacy(worldId),
+    ])
       .then(([statRes, dipRes]) => {
         setStats(statRes.data);
         setDiplomacy(dipRes.data);

@@ -204,20 +204,12 @@ export const commandApi = {
       arg?: CommandArg;
     }[],
   ) => api.post<GeneralTurn[]>(`/generals/${generalId}/turns`, { turns }),
-  execute: (
-    generalId: number,
-    actionCode: string,
-    arg?: CommandArg,
-  ) =>
+  execute: (generalId: number, actionCode: string, arg?: CommandArg) =>
     api.post<CommandResult>(`/generals/${generalId}/execute`, {
       actionCode,
       arg,
     }),
-  executeNation: (
-    generalId: number,
-    actionCode: string,
-    arg?: CommandArg,
-  ) =>
+  executeNation: (generalId: number, actionCode: string, arg?: CommandArg) =>
     api.post<CommandResult>(`/generals/${generalId}/execute-nation`, {
       actionCode,
       arg,
@@ -264,11 +256,7 @@ export const commandApi = {
 };
 
 export const realtimeApi = {
-  execute: (
-    generalId: number,
-    actionCode: string,
-    arg?: CommandArg,
-  ) =>
+  execute: (generalId: number, actionCode: string, arg?: CommandArg) =>
     api.post<CommandResult>("/realtime/execute", {
       generalId,
       actionCode,
@@ -601,7 +589,9 @@ export const rankingApi = {
     params?: { season?: number; scenario?: string },
   ) => api.get<Message[]>(`/worlds/${worldId}/hall-of-fame`, { params }),
   hallOfFameOptions: (worldId: number) =>
-    api.get<HallOfFameOptionsResponse>(`/worlds/${worldId}/hall-of-fame/options`),
+    api.get<HallOfFameOptionsResponse>(
+      `/worlds/${worldId}/hall-of-fame/options`,
+    ),
   uniqueItemOwners: (worldId: number) =>
     api.get<UniqueItemOwnerInfo[]>(`/worlds/${worldId}/unique-item-owners`),
 };
@@ -673,10 +663,9 @@ export const inheritanceApi = {
       data,
     ),
   getMoreLog: (worldId: number, lastID: number) =>
-    api.get<InheritanceLogResponse>(
-      `/worlds/${worldId}/inheritance/log`,
-      { params: { lastID } },
-    ),
+    api.get<InheritanceLogResponse>(`/worlds/${worldId}/inheritance/log`, {
+      params: { lastID },
+    }),
   auctionUnique: (
     worldId: number,
     data: { uniqueCode: string; bidAmount: number },
@@ -708,14 +697,11 @@ export const auctionApi = {
       amount,
     }),
   cancel: (auctionId: number, generalId: number) =>
-    api.post<AuctionActionResponse>(
-      `/auctions/${auctionId}/cancel`,
-      { generalId },
-    ),
+    api.post<AuctionActionResponse>(`/auctions/${auctionId}/cancel`, {
+      generalId,
+    }),
   finalize: (auctionId: number) =>
-    api.post<AuctionActionResponse>(
-      `/auctions/${auctionId}/finalize`,
-    ),
+    api.post<AuctionActionResponse>(`/auctions/${auctionId}/finalize`),
   getHistory: (worldId: number) =>
     api.get<AuctionHistoryEntry[]>(`/worlds/${worldId}/auction-history`),
   getMarketPrice: (worldId: number) =>
@@ -736,10 +722,11 @@ export const auctionApi = {
     itemType: string,
     startPrice: number,
   ) =>
-    api.post<ItemAuctionCreateResponse>(
-      `/worlds/${worldId}/item-auctions`,
-      { generalId, itemType, startPrice },
-    ),
+    api.post<ItemAuctionCreateResponse>(`/worlds/${worldId}/item-auctions`, {
+      generalId,
+      itemType,
+      startPrice,
+    }),
 };
 
 // Item API
@@ -830,15 +817,12 @@ export const battleSimApi = {
       repeatCount?: number;
     },
   ) =>
-    api.post<BattleSimResponse>(
-      "/battle/simulate",
-      {
-        attacker,
-        defender,
-        defenderCity,
-        ...options,
-      },
-    ),
+    api.post<BattleSimResponse>("/battle/simulate", {
+      attacker,
+      defender,
+      defenderCity,
+      ...options,
+    }),
 };
 
 // Game Version API (Admin)
@@ -905,11 +889,7 @@ export const adminApi = {
     api.delete<void>(`/admin/worlds/${worldId}`),
   listWorlds: () => api.get<AdminWorldListEntry[]>("/admin/worlds"),
   bulkGeneralAction: (ids: number[], type: string, worldId?: number) =>
-    api.post<void>(
-      "/admin/generals/bulk-action",
-      { ids, type },
-      wq(worldId),
-    ),
+    api.post<void>("/admin/generals/bulk-action", { ids, type }, wq(worldId)),
   activateWorld: (worldId: number, data?: { gameVersion?: string }) =>
     api.post<void>(`/worlds/${worldId}/activate`, data ?? {}),
   deactivateWorld: (worldId: number) =>
@@ -923,15 +903,16 @@ export const adminApi = {
     api.post<void>("/admin/write-log", { message }, wq(worldId)),
 
   // Gateway-local admin ops (entrance/system)
-  getSystemFlags: () =>
-    api.get<SystemFlagsResponse>("/admin/system-flags"),
+  getSystemFlags: () => api.get<SystemFlagsResponse>("/admin/system-flags"),
   patchSystemFlags: (payload: { allowLogin?: boolean; allowJoin?: boolean }) =>
-    api.patch<SystemFlagsResponse>(
-      "/admin/system-flags",
-      payload,
-    ),
-  scrub: (type: "scrub_old_user" | "scrub_blocked_user" | "scrub_deleted" | "scrub_icon") =>
-    api.post<ScrubResponse>("/admin/scrub", { type }),
+    api.patch<SystemFlagsResponse>("/admin/system-flags", payload),
+  scrub: (
+    type:
+      | "scrub_old_user"
+      | "scrub_blocked_user"
+      | "scrub_deleted"
+      | "scrub_icon",
+  ) => api.post<ScrubResponse>("/admin/scrub", { type }),
   resetPassword: (userId: number) =>
     api.post<ResetPasswordResponse>(
       `/admin/users/${userId}/reset-password`,
@@ -942,12 +923,9 @@ export const adminApi = {
 // Admin Event API (legacy parity: j_raise_event.php)
 export const adminEventApi = {
   raise: (event: string, args?: JsonValue[], worldId?: number) =>
-    api.post<AdminRaiseEventResponse>(
-      "/admin/raise-event",
-      {
-        event,
-        ...(args ? { args } : {}),
-        ...(worldId != null ? { worldId } : {}),
-      },
-    ),
+    api.post<AdminRaiseEventResponse>("/admin/raise-event", {
+      event,
+      ...(args ? { args } : {}),
+      ...(worldId != null ? { worldId } : {}),
+    }),
 };

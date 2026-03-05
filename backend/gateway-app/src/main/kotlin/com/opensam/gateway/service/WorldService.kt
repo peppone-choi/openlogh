@@ -30,4 +30,8 @@ class WorldService(
         world.meta["gatewayActive"] = active
         return worldStateRepository.save(world)
     }
+
+    fun deleteWorld(id: Short) {
+        worldStateRepository.deleteById(id)
+    }
 }

@@ -276,10 +276,7 @@ export default function GameDashboard() {
               {global.lastVote ? (
                 <span style={{ color: "cyan" }}>
                   <a href="/vote" className="underline">
-                    설문 진행 중:{" "}
-                    <span>
-                      {global.lastVote?.title ?? ""}
-                    </span>
+                    설문 진행 중: <span>{global.lastVote?.title ?? ""}</span>
                   </a>
                 </span>
               ) : (

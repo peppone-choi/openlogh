@@ -636,11 +636,11 @@ export default function MapPage() {
                                 height: 12,
                               }}
                             >
-                               <FactionFlag
-                                 color={nation.color}
-                                 supplied={(rtCity?.supplyState ?? 0) > 0}
-                                 className="w-full h-full block"
-                               />
+                              <FactionFlag
+                                color={nation.color}
+                                supplied={(rtCity?.supplyState ?? 0) > 0}
+                                className="w-full h-full block"
+                              />
                               {showCapital && (
                                 <div
                                   className="absolute"

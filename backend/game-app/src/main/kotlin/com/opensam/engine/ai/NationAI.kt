@@ -32,17 +32,23 @@ class NationAI(
                 (it.srcNationId == nation.id || it.destNationId == nation.id)
         } || nation.warState > 0
 
-        // Low funds: use policy thresholds
-        if (nation.gold < policy.reqNationGold || nation.rice < policy.reqNationRice) {
-            return "Nation휴식"
-        }
-
         // At war: strategic commands
         if (atWar) {
             if (nation.strategicCmdLimit > 0) {
                 val warActions = listOf("급습", "의병모집", "필사즉생")
                 return warActions[rng.nextInt(warActions.size)]
             }
+            return "Nation휴식"
+        }
+
+        // Consider war declaration before resource gate (war declaration is free)
+        val allNations = ports.allNations().map { it.toEntity() }
+        if (shouldConsiderWar(nation, allNations, diplomacies, rng)) {
+            return "선전포고"
+        }
+
+        // Low funds: skip expensive nation actions
+        if (nation.gold < policy.reqNationGold || nation.rice < policy.reqNationRice) {
             return "Nation휴식"
         }
 
@@ -86,8 +92,7 @@ class NationAI(
             candidates.add("불가침제의")
         }
 
-        // Consider war declaration
-        val allNations = ports.allNations().map { it.toEntity() }
+        // Consider war declaration (already checked above resource gate; re-check here for candidates)
         if (shouldConsiderWar(nation, allNations, diplomacies, rng)) {
             candidates.add("선전포고")
         }
@@ -371,7 +376,7 @@ class NationAI(
         diplomacies: List<Diplomacy>,
         rng: Random,
     ): Boolean {
-        if (nation.gold < 10000 || nation.rice < 10000) return false
+        if (nation.gold < 3000 || nation.rice < 3000) return false
 
         // Find nations not already in diplomacy
         val existingDiploNationIds = diplomacies

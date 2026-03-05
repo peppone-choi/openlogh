@@ -119,11 +119,7 @@ function parseRecentActions(raw: string): RecentAction[] {
       const row = toJsonObject(entry);
       if (!row) return null;
       if (typeof row.actionCode !== "string") return null;
-      if (
-        row.arg !== undefined &&
-        row.arg !== null &&
-        !isCommandArg(row.arg)
-      ) {
+      if (row.arg !== undefined && row.arg !== null && !isCommandArg(row.arg)) {
         return null;
       }
       if (
@@ -352,11 +348,7 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
   }, [realtimeMode, loadRealtimeStatus]);
 
   const applyToTurns = useCallback(
-    async (
-      turnList: number[],
-      actionCode: string,
-      arg?: CommandArg,
-    ) => {
+    async (turnList: number[], actionCode: string, arg?: CommandArg) => {
       await Promise.all(
         turnList.map((turn) =>
           commandApi.reserveCommand(generalId, {
@@ -711,10 +703,7 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
     setSelectedStoredAction("");
   };
 
-  const handleCommandSelect = async (
-    actionCode: string,
-    arg?: CommandArg,
-  ) => {
+  const handleCommandSelect = async (actionCode: string, arg?: CommandArg) => {
     const targets = selectedTurnList.length > 0 ? selectedTurnList : [0];
     if (COMMAND_ARGS[actionCode]) {
       router.push(

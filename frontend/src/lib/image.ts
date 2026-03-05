@@ -29,8 +29,6 @@ export function getCityLevelIcon(level: number): string {
   return `${GAME_CDN_ROOT}/cast_${level}.gif`;
 }
 
-
-
 export function getEventIcon(state: number): string {
   return `${GAME_CDN_ROOT}/event${state}.gif`;
 }
@@ -104,5 +102,3 @@ export function getSkillIconUrl(skillId: number): string {
 export function getBuildingIconUrl(buildingType: number): string {
   return `${GAME_CDN_ROOT}/building${buildingType}.png`;
 }
-
-

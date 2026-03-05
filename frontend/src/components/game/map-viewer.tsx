@@ -214,7 +214,7 @@ export function MapViewer({
               {/* Nation Color Blotch Base */}
               {nation?.color && (
                 <div
-                    className="absolute z-[1]"
+                  className="absolute z-[1]"
                   style={{
                     background: getNationBgGradient(nation.color),
                     width: bgW,
@@ -250,19 +250,19 @@ export function MapViewer({
                   {/* Nation Flag and Capital Icon */}
                   {nation && (
                     <div
-                       className="absolute"
-                       style={{
-                         right: flagR,
-                         top: flagT,
-                         width: 12 * smV,
-                         height: 12 * smV,
-                       }}
-                     >
-                       <FactionFlag
-                         color={nation.color}
-                         supplied={(rtCity?.supplyState ?? 0) > 0}
-                         className="w-full h-full block"
-                       />
+                      className="absolute"
+                      style={{
+                        right: flagR,
+                        top: flagT,
+                        width: 12 * smV,
+                        height: 12 * smV,
+                      }}
+                    >
+                      <FactionFlag
+                        color={nation.color}
+                        supplied={(rtCity?.supplyState ?? 0) > 0}
+                        className="w-full h-full block"
+                      />
                       {rtCity && nation.capitalCityId === rtCity.id && (
                         <div
                           className="absolute bg-yellow-400"
