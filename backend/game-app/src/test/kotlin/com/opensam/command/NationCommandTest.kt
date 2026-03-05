@@ -115,19 +115,17 @@ class NationCommandTest {
         cmd2.nation = createNation()
         val r2 = cmd2.checkFullCondition()
         assertTrue(r2 is ConstraintResult.Fail)
-        assertTrue((r2 as ConstraintResult.Fail).reason.contains("오프닝"))
+        assertTrue((r2 as ConstraintResult.Fail).reason.contains("대상 국가"))
     }
 
     @Test
-    fun `선전포고 fails with opening constraint when conditions otherwise valid`() {
+    fun `선전포고 fails during opening period`() {
         val general = createGeneral(officerLevel = 12)
-        val cmd = che_선전포고(general, env(year = 192, startYear = 191))
+        val cmd = che_선전포고(general, env(year = 191, startYear = 191))
         cmd.city = createCity()
         cmd.nation = createNation(id = 1)
         cmd.destNation = createNation(id = 2)
 
-        // BeOpeningPart(env.startYear + 1) 제약 조건 검증
-        // NOTE: BeOpeningPart 파라미터 로직 수정 필요 (env.startYear+1 → 상대년도)
         val check = cmd.checkFullCondition()
         assertTrue(check is ConstraintResult.Fail)
         assertTrue((check as ConstraintResult.Fail).reason.contains("오프닝"))
