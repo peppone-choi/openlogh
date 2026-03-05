@@ -71,3 +71,9 @@ qa/results/report.json
 backend/logs/
 ref_core/
 ref_core2026/
+
+# Legacy core (parity reference, not project source)
+legacy-core/
+legacy-docker/account.env
+legacy-docker/app/id_ecdsa
+legacy-docker/app/known_hosts
