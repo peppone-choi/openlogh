@@ -204,6 +204,7 @@ class CityService(
             commMax = cityConst.commerce * 100,
             secu = cityConst.security * 100,
             secuMax = cityConst.security * 100,
+            trust = 50f,
             trade = 100,
             def = cityConst.defence * 100,
             defMax = cityConst.defence * 100,

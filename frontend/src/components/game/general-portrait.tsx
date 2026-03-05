@@ -37,12 +37,9 @@ export function GeneralPortrait({
           alt={name}
           width={px}
           height={px}
-          className="object-cover"
+          className="size-full object-cover"
           onError={() => setError(true)}
         />
-        <AvatarFallback>
-          <User className="size-4 text-muted-foreground" />
-        </AvatarFallback>
       </Avatar>
     );
   }

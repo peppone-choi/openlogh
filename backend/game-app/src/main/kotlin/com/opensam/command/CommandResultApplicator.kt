@@ -20,7 +20,14 @@ object CommandResultApplicator {
     private val mapper = jacksonObjectMapper()
 
     /** SET 연산 필드 (delta가 아닌 직접 대입) */
-    private val SET_FIELDS = setOf("crewType")
+    private val SET_FIELDS = setOf(
+        "crewType",
+        "nation",
+        "officerLevel",
+        "officerCity",
+        "troop",
+        "killTurn",
+    )
 
     /**
      * CommandResult.message JSON을 파싱하여 엔티티들에 적용한다.
@@ -71,6 +78,28 @@ object CommandResultApplicator {
         // Extra stat changes (e.g., 탈취 general's share of stolen resources)
         readStringAnyMap(json["extraStatChanges"])?.let { applyStatChanges(general, it) }
 
+        (json["setPermission"] as? String)?.let { general.permission = it }
+        (json["setBelong"] as? Number)?.let { general.belong = it.toShort() }
+        (json["setMakeLimit"] as? Number)?.let { general.makeLimit = it.toShort() }
+
+        if (json["leaveNation"] == true) {
+            general.nationId = 0L
+            general.troopId = 0L
+        }
+
+        if (json["resetOfficer"] == true) {
+            general.officerLevel = 0
+            general.officerCity = 0
+            general.permission = "normal"
+        }
+
+        if (json["moveToCityOfLord"] == true) {
+            val capitalId = destNation?.capitalCityId
+            if (capitalId != null && capitalId > 0L) {
+                general.cityId = capitalId
+            }
+        }
+
         // Consumable item: delete item on use (legacy: tryConsumeNow + deleteItem)
         if (json["consumeItem"] == true) {
             general.itemCode = "None"
@@ -83,7 +112,7 @@ object CommandResultApplicator {
 
         // Handle cityId in statChanges → move general to new city (legacy: 이동/강행/귀환)
         readStringAnyMap(json["statChanges"])?.let { changes ->
-            val cityIdRaw = changes["cityId"]
+            val cityIdRaw = changes["cityId"] ?: changes["city"]
             if (cityIdRaw != null) {
                 val id = when (cityIdRaw) {
                     is Number -> cityIdRaw.toLong()
@@ -140,6 +169,11 @@ object CommandResultApplicator {
     private fun applyStatSet(general: General, key: String, value: Int) {
         when (key) {
             "crewType" -> general.crewType = value.toShort()
+            "nation" -> general.nationId = value.toLong()
+            "officerLevel" -> general.officerLevel = value.toShort()
+            "officerCity" -> general.officerCity = value
+            "troop" -> general.troopId = value.toLong()
+            "killTurn" -> general.killTurn = value.toShort()
         }
     }
 
