@@ -121,6 +121,16 @@ class SelectNpcTokenService(
 
         general.userId = userId
         general.npcState = 1
+        if (general.nationId > 0L) {
+            if (general.officerLevel < 1) {
+                general.officerLevel = 1
+            }
+            general.officerCity = 0
+            general.permission = "normal"
+            if (general.makeLimit > 0) {
+                general.makeLimit = 0
+            }
+        }
         general.killTurn = 6
         general.updatedAt = OffsetDateTime.now()
 
