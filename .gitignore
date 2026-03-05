@@ -1,6 +1,7 @@
 # Reference sources (not part of this project's source)
 core2026/
 legacy/
+/legacy
 docs/
 tmp/
 
@@ -66,6 +67,7 @@ USER.md
 .localnode/
 .pki/
 qa/results/parity-gate/
+qa/results/report.json
 backend/logs/
 ref_core/
 ref_core2026/
