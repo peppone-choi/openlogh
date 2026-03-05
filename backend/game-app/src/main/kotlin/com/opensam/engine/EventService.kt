@@ -8,11 +8,12 @@ import com.opensam.repository.MessageRepository
 import com.opensam.repository.NationRepository
 import com.opensam.service.ScenarioService
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 @Service
-class EventService(
+class EventService @Autowired constructor(
     private val eventRepository: EventRepository,
     private val worldPortFactory: JpaWorldPortFactory,
     private val messageRepository: MessageRepository,

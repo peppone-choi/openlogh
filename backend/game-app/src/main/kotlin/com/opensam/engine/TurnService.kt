@@ -26,6 +26,7 @@ import com.opensam.service.NationService
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import kotlinx.coroutines.runBlocking
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.Duration
@@ -43,7 +44,7 @@ import java.time.OffsetDateTime
  * 8. NPC 스폰, 통일 체크
  */
 @Service
-class TurnService(
+class TurnService @Autowired constructor(
     private val worldStateRepository: WorldStateRepository,
     private val generalRepository: GeneralRepository,
     private val generalTurnRepository: GeneralTurnRepository,
