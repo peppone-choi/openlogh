@@ -6,6 +6,7 @@ import com.opensam.entity.*
 import com.opensam.model.ScenarioData
 import com.opensam.model.ScenarioInfo
 import com.opensam.repository.*
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver
 import org.springframework.stereotype.Service
@@ -26,6 +27,7 @@ class ScenarioService(
     private val mapService: MapService,
 ) {
     private val scenarios = mutableMapOf<String, ScenarioData>()
+    private val log = LoggerFactory.getLogger(javaClass)
 
     fun listScenarios(): List<ScenarioInfo> {
         loadAllScenarios()
@@ -131,6 +133,8 @@ class ScenarioService(
             }
         }
 
+        var delayedNpcCount = 0
+
         for (generalRow in scenario.general) {
             val general = parseGeneral(
                 row = generalRow,
@@ -143,7 +147,11 @@ class ScenarioService(
                 startYear = scenario.startYear,
                 defaultNpcState = 2,
             )
-            generalRepository.save(general)
+            if (shouldSpawnScenarioGeneral(general, scenario.startYear)) {
+                generalRepository.save(general)
+            } else {
+                delayedNpcCount++
+            }
         }
 
         if (extendedGeneralEnabled) {
@@ -159,7 +167,11 @@ class ScenarioService(
                     startYear = scenario.startYear,
                     defaultNpcState = 2,
                 )
-                generalRepository.save(general)
+                if (shouldSpawnScenarioGeneral(general, scenario.startYear)) {
+                    generalRepository.save(general)
+                } else {
+                    delayedNpcCount++
+                }
             }
         }
 
@@ -175,7 +187,19 @@ class ScenarioService(
                 startYear = scenario.startYear,
                 defaultNpcState = 6,
             )
-            generalRepository.save(general)
+            if (shouldSpawnScenarioGeneral(general, scenario.startYear)) {
+                generalRepository.save(general)
+            } else {
+                delayedNpcCount++
+            }
+        }
+
+        if (delayedNpcCount > 0) {
+            log.info(
+                "[World {}] Delayed {} underage scenario NPC(s) for future yearly spawn",
+                worldId,
+                delayedNpcCount,
+            )
         }
 
         for ((nationIdx, nationDbId) in nationIdxToDbId) {
@@ -310,7 +334,8 @@ class ScenarioService(
             pickRandomOrZero(allCityIds, rng)
         }
 
-        val age = (startYear - bornYear).toShort().coerceAtLeast(20)
+        val minimumAge = if (nationId == 0L) 14.toShort() else 20.toShort()
+        val age = (startYear - bornYear).toShort().coerceAtLeast(minimumAge)
 
         return General(
             worldId = worldId,
@@ -345,6 +370,128 @@ class ScenarioService(
         val personalityIndex: Int,
         val specialIndex: Int,
     )
+
+    private fun shouldSpawnScenarioGeneral(general: General, year: Int): Boolean {
+        if (general.nationId != 0L) {
+            return true
+        }
+        val appearYear = general.bornYear.toInt() + 14
+        if (year < appearYear) {
+            return false
+        }
+        if (year >= general.deadYear.toInt()) {
+            return false
+        }
+        return true
+    }
+
+    fun spawnScenarioNpcGeneralsForYear(world: WorldState): Int {
+        val scenario = getScenario(world.scenarioCode)
+        val worldId = world.id.toLong()
+        val currentYear = world.currentYear.toInt()
+        val mapName =
+            (world.config["mapCode"] as? String)
+                ?: scenario.map?.mapName
+                ?: "che"
+        val extendedGeneralEnabled =
+            parseBooleanFlag(world.config["extend"] ?: world.config["extendedGeneral"])
+                ?: readExtendedGeneralFlag(scenario.const)
+
+        val allCities = cityRepository.findByWorldId(worldId)
+        if (allCities.isEmpty()) return 0
+        val cityNameToId = allCities.associate { it.name to it.id }
+        val allCityIds = allCities.map { it.id }
+
+        val nationByName = nationRepository.findByWorldId(worldId).associateBy { it.name }
+        val nationIdxToDbId = mutableMapOf<Int, Long>()
+        for ((idx, nationRow) in scenario.nation.withIndex()) {
+            val nationName = nationRow.getOrNull(0) as? String ?: continue
+            val nationId = nationByName[nationName]?.id ?: continue
+            nationIdxToDbId[idx + 1] = nationId
+        }
+        val nationCityIds = allCities
+            .filter { it.nationId > 0L }
+            .groupBy { it.nationId }
+            .mapValues { (_, cities) -> cities.map { it.id } }
+
+        val existingKeys = generalRepository.findByWorldId(worldId)
+            .map { ScenarioGeneralKey.fromGeneral(it) }
+            .toMutableSet()
+
+        val hiddenSeed = (world.config["hiddenSeed"] as? String) ?: "${world.id}"
+        var created = 0
+
+        fun spawnRows(rows: List<List<Any?>>, defaultNpcState: Short, source: String) {
+            for ((idx, row) in rows.withIndex()) {
+                val rng = Random("$hiddenSeed:$source:$idx:$currentYear:$mapName".hashCode().toLong())
+                val general = parseGeneral(
+                    row = row,
+                    worldId = worldId,
+                    nationIdxToDbId = nationIdxToDbId,
+                    nationCityIds = nationCityIds,
+                    cityNameToId = cityNameToId,
+                    allCityIds = allCityIds,
+                    rng = rng,
+                    startYear = currentYear,
+                    defaultNpcState = defaultNpcState,
+                )
+
+                if (general.nationId != 0L) continue
+                if (!shouldSpawnScenarioGeneral(general, currentYear)) continue
+
+                val key = ScenarioGeneralKey.fromGeneral(general)
+                if (!existingKeys.add(key)) continue
+
+                generalRepository.save(general)
+                created++
+            }
+        }
+
+        spawnRows(scenario.general, 2, "general")
+        if (extendedGeneralEnabled) {
+            spawnRows(scenario.generalEx, 2, "generalEx")
+        }
+        spawnRows(scenario.generalNeutral, 6, "generalNeutral")
+
+        return created
+    }
+
+    private data class ScenarioGeneralKey(
+        val name: String,
+        val picture: String,
+        val affinity: Short,
+        val bornYear: Short,
+        val deadYear: Short,
+        val nationId: Long,
+    ) {
+        companion object {
+            fun fromGeneral(general: General): ScenarioGeneralKey {
+                return ScenarioGeneralKey(
+                    name = general.name,
+                    picture = general.picture,
+                    affinity = general.affinity,
+                    bornYear = general.bornYear,
+                    deadYear = general.deadYear,
+                    nationId = general.nationId,
+                )
+            }
+        }
+    }
+
+    private fun parseBooleanFlag(raw: Any?): Boolean? {
+        return when (raw) {
+            is Boolean -> raw
+            is Number -> raw.toInt() != 0
+            is String -> {
+                when (raw.trim().lowercase()) {
+                    "1", "true", "yes", "on" -> true
+                    "0", "false", "no", "off" -> false
+                    else -> null
+                }
+            }
+            else -> null
+        }
+    }
 
     private fun readExtendedGeneralFlag(const: Map<String, Any>): Boolean {
         val candidates = listOf(const["extendedGeneral"], const["extended_general"], const["extend"])
