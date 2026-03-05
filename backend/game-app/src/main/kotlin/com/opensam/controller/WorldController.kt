@@ -22,6 +22,19 @@ class WorldController(
     private val worldService: WorldService,
     private val adminAuthorizationService: AdminAuthorizationService,
 ) {
+    private fun parseBooleanFlag(raw: Any?): Boolean? {
+        return when (raw) {
+            is Boolean -> raw
+            is Number -> raw.toInt() != 0
+            is String -> when (raw.trim().lowercase()) {
+                "1", "true", "yes", "on" -> true
+                "0", "false", "no", "off" -> false
+                else -> null
+            }
+            else -> null
+        }
+    }
+
     private fun currentLoginId(): String? = SecurityContextHolder.getContext().authentication?.name
 
     @GetMapping("/worlds")
@@ -125,6 +138,7 @@ class WorldController(
             tickSeconds = request.tickSeconds,
             commitSha = request.commitSha ?: "local",
             gameVersion = request.gameVersion ?: "dev",
+            extendEnabled = request.extend,
         )
         if (!request.name.isNullOrBlank()) {
             world.name = request.name
@@ -166,6 +180,7 @@ class WorldController(
             tickSeconds = world.tickSeconds.toInt(),
             commitSha = world.commitSha,
             gameVersion = world.gameVersion,
+            extendEnabled = body?.extend ?: parseBooleanFlag(world.config["extend"] ?: world.config["extendedGeneral"]),
         )
         reset.name = world.name
         worldService.deleteWorld(id)

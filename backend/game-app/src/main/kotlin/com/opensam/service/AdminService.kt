@@ -47,7 +47,10 @@ class AdminService(
         val world = worldStateRepository.findById(worldId.toShort()).orElse(null) ?: return false
 
         // Column-level fields (not stored in config JSONB)
-        settings["turnTerm"]?.let { world.tickSeconds = (it as Number).toInt() }
+        settings["turnTerm"]?.let {
+            val minutes = (it as Number).toInt().coerceAtLeast(1)
+            world.tickSeconds = minutes * 60
+        }
         settings["realtimeMode"]?.let { world.realtimeMode = it as Boolean }
         settings["commandPointRegenRate"]?.let { world.commandPointRegenRate = (it as Number).toInt() }
 
@@ -55,7 +58,27 @@ class AdminService(
         val columnKeys = setOf("turnTerm", "realtimeMode", "commandPointRegenRate")
         for ((key, value) in settings) {
             if (key !in columnKeys) {
-                world.config[key] = value
+                if (key == "extend") {
+                    val enabled = when (value) {
+                        is Boolean -> value
+                        is Number -> value.toInt() != 0
+                        is String -> value.equals("true", ignoreCase = true) || value == "1"
+                        else -> false
+                    }
+                    world.config["extend"] = enabled
+                    world.config["extendedGeneral"] = if (enabled) 1 else 0
+                } else if (key == "extendedGeneral") {
+                    val enabled = when (value) {
+                        is Boolean -> value
+                        is Number -> value.toInt() != 0
+                        is String -> value.equals("true", ignoreCase = true) || value == "1"
+                        else -> false
+                    }
+                    world.config["extend"] = enabled
+                    world.config["extendedGeneral"] = if (enabled) 1 else 0
+                } else {
+                    world.config[key] = value
+                }
             }
         }
 

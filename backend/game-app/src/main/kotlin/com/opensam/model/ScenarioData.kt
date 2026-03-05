@@ -15,6 +15,8 @@ data class ScenarioData(
     val general: List<List<Any?>> = emptyList(),
     @JsonProperty("general_ex")
     val generalEx: List<List<Any?>> = emptyList(),
+    @JsonProperty("general_neutral")
+    val generalNeutral: List<List<Any?>> = emptyList(),
     val events: List<List<Any>> = emptyList(),
     val map: ScenarioMap? = null,
     val const: Map<String, Any> = emptyMap(),

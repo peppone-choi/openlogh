@@ -115,6 +115,7 @@ class AutoResetService(
                 tickSeconds = tickSeconds,
                 commitSha = world.commitSha,
                 gameVersion = world.gameVersion,
+                extendEnabled = parseBooleanFlag(world.config["extend"] ?: world.config["extendedGeneral"]),
             )
 
             // Clear the reserved reset from meta
@@ -166,5 +167,18 @@ class AutoResetService(
             }
         }
         return typed
+    }
+
+    private fun parseBooleanFlag(raw: Any?): Boolean? {
+        return when (raw) {
+            is Boolean -> raw
+            is Number -> raw.toInt() != 0
+            is String -> when (raw.trim().lowercase()) {
+                "1", "true", "yes", "on" -> true
+                "0", "false", "no", "off" -> false
+                else -> null
+            }
+            else -> null
+        }
     }
 }

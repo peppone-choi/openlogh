@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
+import kotlin.random.Random
 import java.lang.reflect.Method
 
 /**
@@ -31,15 +32,17 @@ class ScenarioServiceTest {
             mapService = mock(MapService::class.java),
         )
 
-        // parseGeneral(row, worldId, nationIdxToDbId, nationCityIds, startYear, appeared)
         parseGeneral = ScenarioService::class.java.getDeclaredMethod(
             "parseGeneral",
             List::class.java,
             Long::class.javaPrimitiveType,
             Map::class.java,
             Map::class.java,
+            Map::class.java,
+            List::class.java,
+            Random::class.java,
             Int::class.javaPrimitiveType,
-            Boolean::class.javaPrimitiveType,
+            Short::class.javaPrimitiveType,
         )
         parseGeneral.isAccessible = true
     }
@@ -48,10 +51,23 @@ class ScenarioServiceTest {
         row: List<Any?>,
         nationIdxToDbId: Map<Int, Long> = emptyMap(),
         nationCityIds: Map<Long, List<Long>> = emptyMap(),
+        cityNameToId: Map<String, Long> = emptyMap(),
+        allCityIds: List<Long> = listOf(999L),
         startYear: Int = 200,
-        appeared: Boolean = true,
+        defaultNpcState: Short = 2,
     ): General {
-        return parseGeneral.invoke(service, row, 1L, nationIdxToDbId, nationCityIds, startYear, appeared) as General
+        return parseGeneral.invoke(
+            service,
+            row,
+            1L,
+            nationIdxToDbId,
+            nationCityIds,
+            cityNameToId,
+            allCityIds,
+            Random(0),
+            startYear,
+            defaultNpcState,
+        ) as General
     }
 
     @Test
@@ -105,14 +121,21 @@ class ScenarioServiceTest {
         val row: List<Any?> = listOf(50, "방랑자", "9000", null, null, 50, 50, 50, 50, 50, 0, 180, 240)
         val general = callParseGeneral(row)
         assertEquals(0L, general.nationId)
-        assertEquals(1.toShort(), general.npcState) // free NPC
+        assertEquals(2.toShort(), general.npcState)
     }
 
     @Test
-    fun `parseGeneral sets permanent wanderer for affinity 999`() {
+    fun `parseGeneral keeps default npcState for affinity 999`() {
         val row: List<Any?> = listOf(999, "은둔자", "9001", null, null, 70, 10, 95, 80, 85, 0, 170, 234)
         val general = callParseGeneral(row)
-        assertEquals(5.toShort(), general.npcState) // permanent wanderer
+        assertEquals(2.toShort(), general.npcState)
+    }
+
+    @Test
+    fun `parseGeneral uses mapped city when city name is provided`() {
+        val row: List<Any?> = listOf(50, "도시지정", "9002", 0, "장안", 50, 50, 50, 50, 50, 0, 180, 240)
+        val general = callParseGeneral(row, cityNameToId = mapOf("장안" to 123L))
+        assertEquals(123L, general.cityId)
     }
 
     @Test

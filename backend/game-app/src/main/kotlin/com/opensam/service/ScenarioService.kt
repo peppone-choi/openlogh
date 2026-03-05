@@ -11,6 +11,7 @@ import org.springframework.core.io.support.PathMatchingResourcePatternResolver
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.OffsetDateTime
+import kotlin.random.Random
 
 @Service
 class ScenarioService(
@@ -44,12 +45,16 @@ class ScenarioService(
         tickSeconds: Int = 300,
         commitSha: String? = null,
         gameVersion: String? = null,
+        extendEnabled: Boolean? = null,
     ): WorldState {
         val scenario = getScenario(scenarioCode)
         val resolvedCommitSha = commitSha?.takeIf { it.isNotBlank() } ?: defaultCommitSha
         val resolvedGameVersion = gameVersion?.takeIf { it.isNotBlank() } ?: defaultGameVersion
 
         val mapName = scenario.map?.mapName ?: "che"
+        val extendedGeneralEnabled = extendEnabled ?: readExtendedGeneralFlag(scenario.const)
+        val hiddenSeed = java.util.UUID.randomUUID().toString()
+        val initRandom = Random(hiddenSeed.hashCode().toLong())
         val world = worldStateRepository.save(
             WorldState(
                 scenarioCode = scenarioCode,
@@ -61,7 +66,9 @@ class ScenarioService(
                 config = mutableMapOf(
                     "mapCode" to mapName,
                     "startyear" to scenario.startYear,
-                    "hiddenSeed" to java.util.UUID.randomUUID().toString(),
+                    "hiddenSeed" to hiddenSeed,
+                    "extend" to extendedGeneralEnabled,
+                    "extendedGeneral" to if (extendedGeneralEnabled) 1 else 0,
                 ),
             )
         )
@@ -93,6 +100,7 @@ class ScenarioService(
             )
             cityNameToId[mc.name] = city.id
         }
+        val allCityIds = cityNameToId.values.toList()
 
         // 2. Create nations and assign cities
         // nationIdx is 1-based: nations[0] -> idx=1, nations[1] -> idx=2, ...
@@ -122,19 +130,53 @@ class ScenarioService(
             }
         }
 
-        // 3. Create generals (등장)
         for (generalRow in scenario.general) {
-            val general = parseGeneral(generalRow, worldId, nationIdxToDbId, nationCityIds, scenario.startYear, appeared = true)
+            val general = parseGeneral(
+                row = generalRow,
+                worldId = worldId,
+                nationIdxToDbId = nationIdxToDbId,
+                nationCityIds = nationCityIds,
+                cityNameToId = cityNameToId,
+                allCityIds = allCityIds,
+                rng = initRandom,
+                startYear = scenario.startYear,
+                defaultNpcState = 2,
+            )
             generalRepository.save(general)
         }
 
-        // 4. Create generals_ex (확장 - 미등장)
-        for (generalRow in scenario.generalEx) {
-            val general = parseGeneral(generalRow, worldId, nationIdxToDbId, nationCityIds, scenario.startYear, appeared = false)
+        if (extendedGeneralEnabled) {
+            for (generalRow in scenario.generalEx) {
+                val general = parseGeneral(
+                    row = generalRow,
+                    worldId = worldId,
+                    nationIdxToDbId = nationIdxToDbId,
+                    nationCityIds = nationCityIds,
+                    cityNameToId = cityNameToId,
+                    allCityIds = allCityIds,
+                    rng = initRandom,
+                    startYear = scenario.startYear,
+                    defaultNpcState = 2,
+                )
+                generalRepository.save(general)
+            }
+        }
+
+        for (generalRow in scenario.generalNeutral) {
+            val general = parseGeneral(
+                row = generalRow,
+                worldId = worldId,
+                nationIdxToDbId = nationIdxToDbId,
+                nationCityIds = nationCityIds,
+                cityNameToId = cityNameToId,
+                allCityIds = allCityIds,
+                rng = initRandom,
+                startYear = scenario.startYear,
+                defaultNpcState = 6,
+            )
             generalRepository.save(general)
         }
 
-        // 4.5. Assign chief generals (officerLevel >= 12 → ruler)
         for ((nationIdx, nationDbId) in nationIdxToDbId) {
             val ruler = generalRepository.findByWorldId(worldId)
                 .filter { it.nationId == nationDbId && it.officerLevel >= 12 }
@@ -202,8 +244,11 @@ class ScenarioService(
         worldId: Long,
         nationIdxToDbId: Map<Int, Long>,
         nationCityIds: Map<Long, List<Long>>,
+        cityNameToId: Map<String, Long>,
+        allCityIds: List<Long>,
+        rng: Random,
         startYear: Int,
-        appeared: Boolean,
+        defaultNpcState: Short,
     ): General {
         // Format: [affinity, name, picture, nationIdx(1-based int), city?,
         //          leadership, strength, intel, politics, charm,
@@ -213,7 +258,6 @@ class ScenarioService(
         val name = row[1] as String
         val picture = row[2]?.toString() ?: ""
 
-        // row[3] is a 1-based nation index (int), 0 = no nation
         val nationIdx = (row[3] as? Number)?.toInt() ?: 0
         val nationId = if (nationIdx > 0) nationIdxToDbId[nationIdx] ?: 0L else 0L
 
@@ -228,26 +272,14 @@ class ScenarioService(
         val personality = row.getOrNull(13)?.toString()
         val special = row.getOrNull(14)?.toString()
 
-        // Determine cityId
-        val cityId: Long = if (!appeared) {
-            0L // 미등장: no city
+        val rowCityId = resolveCityId(row.getOrNull(4), cityNameToId)
+        val cityId: Long = if (rowCityId != null) {
+            rowCityId
         } else if (nationId > 0L) {
-            // Assign to a random city of the nation
             val cities = nationCityIds[nationId] ?: emptyList()
-            if (cities.isNotEmpty()) cities.random() else 0L
+            pickRandomOrZero(cities, rng, allCityIds)
         } else {
-            0L // 재야: no city assignment for now
-        }
-
-        // NPC state
-        val npcState: Short = if (!appeared) {
-            75 // 미등장 (확장 장수)
-        } else if (nationId == 0L && affinity == 999.toShort()) {
-            5 // permanent wanderer
-        } else if (nationId == 0L) {
-            1 // free NPC (재야)
-        } else {
-            2 // NPC belonging to nation
+            pickRandomOrZero(allCityIds, rng)
         }
 
         val age = (startYear - bornYear).toShort().coerceAtLeast(20)
@@ -267,13 +299,47 @@ class ScenarioService(
             politics = politics,
             charm = charm,
             officerLevel = officerLevel,
-            npcState = npcState,
+            npcState = defaultNpcState,
             age = age,
             startAge = age,
             personalCode = personality ?: "None",
             specialCode = special ?: "None",
             turnTime = OffsetDateTime.now(),
         )
+    }
+
+    private fun readExtendedGeneralFlag(const: Map<String, Any>): Boolean {
+        val candidates = listOf(const["extendedGeneral"], const["extended_general"], const["extend"])
+        for (raw in candidates) {
+            when (raw) {
+                is Boolean -> return raw
+                is Number -> return raw.toInt() != 0
+                is String -> {
+                    val normalized = raw.trim().lowercase()
+                    if (normalized in setOf("1", "true", "yes", "on")) return true
+                    if (normalized in setOf("0", "false", "no", "off")) return false
+                }
+            }
+        }
+        return true
+    }
+
+    private fun resolveCityId(raw: Any?, cityNameToId: Map<String, Long>): Long? {
+        return when (raw) {
+            is Number -> raw.toLong().takeIf { it > 0L }
+            is String -> cityNameToId[raw]
+            else -> null
+        }
+    }
+
+    private fun pickRandomOrZero(values: List<Long>, rng: Random, fallback: List<Long> = emptyList()): Long {
+        if (values.isNotEmpty()) {
+            return values[rng.nextInt(values.size)]
+        }
+        if (fallback.isNotEmpty()) {
+            return fallback[rng.nextInt(fallback.size)]
+        }
+        return 0L
     }
 
     private fun loadAllScenarios() {

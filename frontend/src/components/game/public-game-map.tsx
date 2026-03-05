@@ -269,6 +269,18 @@ export function PublicGameMap({ data }: PublicGameMapProps) {
                         )}
                       </div>
                     )}
+
+                    {showCityNames && (
+                      <span
+                        className="absolute whitespace-nowrap px-[2px] py-[1px] bg-black/55 text-[10px] text-[#ccc]"
+                        style={{
+                          left: "70%",
+                          bottom: -10,
+                        }}
+                      >
+                        {city.name}
+                      </span>
+                    )}
                   </div>
 
                   {/* City state icon */}
@@ -282,19 +294,6 @@ export function PublicGameMap({ data }: PublicGameMapProps) {
                       />
                     </div>
                   )}
-
-                  {/* City name */}
-                  {showCityNames && (
-                    <span
-                      className="absolute whitespace-nowrap px-[2px] py-[1px] bg-black/55 text-[10px] text-[#ccc]"
-                      style={{
-                        left: "70%",
-                        bottom: -10,
-                      }}
-                    >
-                      {city.name}
-                    </span>
-                  )}
                 </div>
               </div>
             );
@@ -306,8 +305,8 @@ export function PublicGameMap({ data }: PublicGameMapProps) {
           <div
             className="absolute z-[16] pointer-events-none whitespace-nowrap text-[14px]"
             style={{
-              top: tooltip.y + 30,
-              left: tooltip.x + 10,
+              top: Math.min(tooltip.y + 30, MAP_HEIGHT - 40),
+              left: Math.min(tooltip.x + 10, MAP_WIDTH - 130),
               border: "1px solid gray",
               minWidth: 120,
             }}
