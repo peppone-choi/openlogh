@@ -5,34 +5,34 @@
 // --- Color utilities ---
 
 function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
-  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-  return result
-    ? {
-        r: parseInt(result[1], 16),
-        g: parseInt(result[2], 16),
-        b: parseInt(result[3], 16),
-      }
-    : null;
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result
+        ? {
+              r: parseInt(result[1], 16),
+              g: parseInt(result[2], 16),
+              b: parseInt(result[3], 16),
+          }
+        : null;
 }
 
 export function isBrightColor(color: string): boolean {
-  const cv = hexToRgb(color);
-  if (!cv) return false;
-  return cv.r * 0.299 + cv.g * 0.587 + cv.b * 0.114 > 140;
+    const cv = hexToRgb(color);
+    if (!cv) return false;
+    return cv.r * 0.299 + cv.g * 0.587 + cv.b * 0.114 > 140;
 }
 
 // --- Injury ---
 
 export function calcInjury(baseStat: number, injury: number): number {
-  return Math.round((baseStat * (100 - injury)) / 100);
+    return Math.round((baseStat * (100 - injury)) / 100);
 }
 
 export function formatInjury(injury: number): { text: string; color: string } {
-  if (injury <= 0) return { text: "건강", color: "white" };
-  if (injury <= 20) return { text: "경상", color: "yellow" };
-  if (injury <= 40) return { text: "중상", color: "orange" };
-  if (injury <= 60) return { text: "심각", color: "magenta" };
-  return { text: "위독", color: "red" };
+    if (injury <= 0) return { text: '건강', color: 'white' };
+    if (injury <= 20) return { text: '경상', color: 'yellow' };
+    if (injury <= 40) return { text: '중상', color: 'orange' };
+    if (injury <= 60) return { text: '심각', color: 'magenta' };
+    return { text: '위독', color: 'red' };
 }
 
 // --- General type classification ---
@@ -42,294 +42,275 @@ const DEFAULT_CHIEF_STAT_MIN = 65;
 const DEFAULT_STAT_GRADE_LEVEL = 5;
 
 export function formatGeneralTypeCall(
-  leadership: number,
-  strength: number,
-  intel: number,
-  chiefStatMin: number = DEFAULT_CHIEF_STAT_MIN,
-  statGradeLevel: number = DEFAULT_STAT_GRADE_LEVEL,
+    leadership: number,
+    strength: number,
+    intel: number,
+    chiefStatMin: number = DEFAULT_CHIEF_STAT_MIN,
+    statGradeLevel: number = DEFAULT_STAT_GRADE_LEVEL
 ): string {
-  if (leadership < 40) {
-    if (strength + intel < 40) return "아둔";
-    if (intel >= chiefStatMin && strength < intel * 0.8) return "학자";
-    if (strength >= chiefStatMin && intel < strength * 0.8) return "장사";
-    return "명사";
-  }
+    if (leadership < 40) {
+        if (strength + intel < 40) return '아둔';
+        if (intel >= chiefStatMin && strength < intel * 0.8) return '학자';
+        if (strength >= chiefStatMin && intel < strength * 0.8) return '장사';
+        return '명사';
+    }
 
-  const maxStat = Math.max(leadership, strength, intel);
-  const sum2Stat = Math.min(
-    leadership + strength,
-    strength + intel,
-    intel + leadership,
-  );
-  if (maxStat >= chiefStatMin + statGradeLevel && sum2Stat >= maxStat * 1.7)
-    return "만능";
-  if (strength >= chiefStatMin - statGradeLevel && intel < strength * 0.8)
-    return "용장";
-  if (intel >= chiefStatMin - statGradeLevel && strength < intel * 0.8)
-    return "명장";
-  if (
-    leadership >= chiefStatMin - statGradeLevel &&
-    strength + intel < leadership
-  )
-    return "차장";
-  return "평범";
+    const maxStat = Math.max(leadership, strength, intel);
+    const sum2Stat = Math.min(leadership + strength, strength + intel, intel + leadership);
+    if (maxStat >= chiefStatMin + statGradeLevel && sum2Stat >= maxStat * 1.7) return '만능';
+    if (strength >= chiefStatMin - statGradeLevel && intel < strength * 0.8) return '용장';
+    if (intel >= chiefStatMin - statGradeLevel && strength < intel * 0.8) return '명장';
+    if (leadership >= chiefStatMin - statGradeLevel && strength + intel < leadership) return '차장';
+    return '평범';
 }
 
 // --- NPC color ---
 
 export function getNPCColor(npcState: number): string | undefined {
-  if (npcState === 6) return "mediumaquamarine";
-  if (npcState === 5) return "darkcyan";
-  if (npcState === 4) return "deepskyblue";
-  if (npcState >= 2) return "cyan";
-  if (npcState === 1) return "skyblue";
-  return undefined;
+    if (npcState === 6) return 'mediumaquamarine';
+    if (npcState === 5) return 'darkcyan';
+    if (npcState === 4) return 'deepskyblue';
+    if (npcState >= 2) return 'cyan';
+    if (npcState === 1) return 'skyblue';
+    return undefined;
 }
 
 // --- Refresh score ---
 
 const refreshScoreMap: [number, string][] = [
-  [0, "안함"],
-  [50, "무관심"],
-  [100, "보통"],
-  [200, "가끔"],
-  [400, "자주"],
-  [800, "열심"],
-  [1600, "중독"],
-  [3200, "폐인"],
-  [6400, "경고"],
-  [12800, "헐..."],
+    [0, '안함'],
+    [50, '무관심'],
+    [100, '보통'],
+    [200, '가끔'],
+    [400, '자주'],
+    [800, '열심'],
+    [1600, '중독'],
+    [3200, '폐인'],
+    [6400, '경고'],
+    [12800, '헐...'],
 ];
 
 /** Binary-search a sorted [threshold, label][] array and return the label for the matching bucket. */
 function searchThresholdMap(map: [number, string][], value: number): string {
-  let lo = 0;
-  let hi = map.length - 1;
-  let result = 0;
-  while (lo <= hi) {
-    const mid = (lo + hi) >>> 1;
-    if (map[mid][0] <= value) {
-      result = mid;
-      lo = mid + 1;
-    } else {
-      hi = mid - 1;
+    let lo = 0;
+    let hi = map.length - 1;
+    let result = 0;
+    while (lo <= hi) {
+        const mid = (lo + hi) >>> 1;
+        if (map[mid][0] <= value) {
+            result = mid;
+            lo = mid + 1;
+        } else {
+            hi = mid - 1;
+        }
     }
-  }
-  return map[result][1];
+    return map[result][1];
 }
 
 export function formatRefreshScore(score: number): string {
-  if (!score) score = 0;
-  return searchThresholdMap(refreshScoreMap, score);
+    if (!score) score = 0;
+    return searchThresholdMap(refreshScoreMap, score);
 }
 
 // --- Experience / level ---
 
-export function nextExpLevelRemain(
-  experience: number,
-  expLevel: number,
-): [number, number] {
-  if (experience < 1000) {
-    return [experience - expLevel * 100, 100];
-  }
-  const expBase = 10 * expLevel ** 2;
-  const expNext = 10 * (expLevel + 1) ** 2;
-  return [experience - expBase, expNext - expBase];
+export function nextExpLevelRemain(experience: number, expLevel: number): [number, number] {
+    if (experience < 1000) {
+        return [experience - expLevel * 100, 100];
+    }
+    const expBase = 10 * expLevel ** 2;
+    const expNext = 10 * (expLevel + 1) ** 2;
+    return [experience - expBase, expNext - expBase];
 }
 
 // --- Officer level text ---
 
 const OfficerLevelMapDefault: Record<number, string> = {
-  12: "군주",
-  11: "참모",
-  10: "제1장군",
-  9: "제1모사",
-  8: "제2장군",
-  7: "제2모사",
-  6: "제3장군",
-  5: "제3모사",
-  4: "태수",
-  3: "군사",
-  2: "종사",
-  1: "일반",
-  0: "재야",
+    12: '군주',
+    11: '참모',
+    10: '제1장군',
+    9: '제1모사',
+    8: '제2장군',
+    7: '제2모사',
+    6: '제3장군',
+    5: '제3모사',
+    4: '태수',
+    3: '군사',
+    2: '종사',
+    1: '일반',
+    0: '재야',
 };
 
 const OfficerLevelMapByNationLevel: Record<number, Record<number, string>> = {
-  7: {
-    12: "황제",
-    11: "승상",
-    10: "표기장군",
-    9: "사공",
-    8: "거기장군",
-    7: "태위",
-    6: "위장군",
-    5: "사도",
-  },
-  6: {
-    12: "왕",
-    11: "광록훈",
-    10: "좌장군",
-    9: "상서령",
-    8: "우장군",
-    7: "중서령",
-    6: "전장군",
-    5: "비서령",
-  },
-  5: {
-    12: "공",
-    11: "광록대부",
-    10: "안국장군",
-    9: "집금오",
-    8: "파로장군",
-    7: "소부",
-  },
-  4: {
-    12: "주목",
-    11: "태사령",
-    10: "아문장군",
-    9: "낭중",
-    8: "호군",
-    7: "종사중랑",
-  },
-  3: {
-    12: "주자사",
-    11: "주부",
-    10: "편장군",
-    9: "간의대부",
-  },
-  2: {
-    12: "군벌",
-    11: "참모",
-    10: "비장군",
-    9: "부참모",
-  },
-  1: {
-    12: "영주",
-    11: "참모",
-  },
-  0: {
-    12: "두목",
-    11: "부두목",
-  },
+    7: {
+        12: '황제',
+        11: '승상',
+        10: '표기장군',
+        9: '사공',
+        8: '거기장군',
+        7: '태위',
+        6: '위장군',
+        5: '사도',
+    },
+    6: {
+        12: '왕',
+        11: '광록훈',
+        10: '좌장군',
+        9: '상서령',
+        8: '우장군',
+        7: '중서령',
+        6: '전장군',
+        5: '비서령',
+    },
+    5: {
+        12: '공',
+        11: '광록대부',
+        10: '안국장군',
+        9: '집금오',
+        8: '파로장군',
+        7: '소부',
+    },
+    4: {
+        12: '주목',
+        11: '태사령',
+        10: '아문장군',
+        9: '낭중',
+        8: '호군',
+        7: '종사중랑',
+    },
+    3: {
+        12: '주자사',
+        11: '주부',
+        10: '편장군',
+        9: '간의대부',
+    },
+    2: {
+        12: '군벌',
+        11: '참모',
+        10: '비장군',
+        9: '부참모',
+    },
+    1: {
+        12: '영주',
+        11: '참모',
+    },
+    0: {
+        12: '두목',
+        11: '부두목',
+    },
 };
 
-export function formatOfficerLevelText(
-  officerLevel: number,
-  nationLevel?: number,
-): string {
-  if (officerLevel < 5) {
-    return OfficerLevelMapDefault[officerLevel] ?? "???";
-  }
+export function formatOfficerLevelText(officerLevel: number, nationLevel?: number): string {
+    if (officerLevel < 5) {
+        return OfficerLevelMapDefault[officerLevel] ?? '???';
+    }
 
-  const nationMap =
-    nationLevel === undefined
-      ? OfficerLevelMapDefault
-      : (OfficerLevelMapByNationLevel[nationLevel] ?? OfficerLevelMapDefault);
+    const nationMap =
+        nationLevel === undefined
+            ? OfficerLevelMapDefault
+            : (OfficerLevelMapByNationLevel[nationLevel] ?? OfficerLevelMapDefault);
 
-  return (
-    nationMap[officerLevel] ?? OfficerLevelMapDefault[officerLevel] ?? "???"
-  );
+    return nationMap[officerLevel] ?? OfficerLevelMapDefault[officerLevel] ?? '???';
 }
 
 // --- Age color (legacy parity: 3-color based on retirementYear) ---
 
 export function ageColor(age: number, retirementYear: number = 80): string {
-  if (age < retirementYear * 0.75) return "limegreen";
-  if (age < retirementYear) return "yellow";
-  return "red";
+    if (age < retirementYear * 0.75) return 'limegreen';
+    if (age < retirementYear) return 'yellow';
+    return 'red';
 }
 
 // --- Defence train ---
 
 const defenceMap: [number, string][] = [
-  [0, "△"],
-  [60, "○"],
-  [80, "◎"],
-  [90, "☆"],
-  [999, "×"],
+    [0, '△'],
+    [60, '○'],
+    [80, '◎'],
+    [90, '☆'],
+    [999, '×'],
 ];
 
 export function formatDefenceTrain(defenceTrain: number): string {
-  return searchThresholdMap(defenceMap, defenceTrain);
+    return searchThresholdMap(defenceMap, defenceTrain);
 }
 
 // --- Dexterity / dedication level ---
 
 const DexLevelMap: [number, string, string][] = [
-  [0, "navy", "F-"],
-  [350, "navy", "F"],
-  [1375, "navy", "F+"],
-  [3500, "skyblue", "E-"],
-  [7125, "skyblue", "E"],
-  [12650, "skyblue", "E+"],
-  [20475, "seagreen", "D-"],
-  [31000, "seagreen", "D"],
-  [44625, "seagreen", "D+"],
-  [61750, "teal", "C-"],
-  [82775, "teal", "C"],
-  [108100, "teal", "C+"],
-  [138125, "limegreen", "B-"],
-  [173250, "limegreen", "B"],
-  [213875, "limegreen", "B+"],
-  [260400, "darkorange", "A-"],
-  [313225, "darkorange", "A"],
-  [372750, "darkorange", "A+"],
-  [439375, "tomato", "S-"],
-  [513500, "tomato", "S"],
-  [595525, "tomato", "S+"],
-  [685850, "darkviolet", "Z-"],
-  [784875, "darkviolet", "Z"],
-  [893000, "darkviolet", "Z+"],
-  [1010625, "gold", "EX-"],
-  [1138150, "gold", "EX"],
-  [1275975, "white", "EX+"],
+    [0, 'navy', 'F-'],
+    [350, 'navy', 'F'],
+    [1375, 'navy', 'F+'],
+    [3500, 'skyblue', 'E-'],
+    [7125, 'skyblue', 'E'],
+    [12650, 'skyblue', 'E+'],
+    [20475, 'seagreen', 'D-'],
+    [31000, 'seagreen', 'D'],
+    [44625, 'seagreen', 'D+'],
+    [61750, 'teal', 'C-'],
+    [82775, 'teal', 'C'],
+    [108100, 'teal', 'C+'],
+    [138125, 'limegreen', 'B-'],
+    [173250, 'limegreen', 'B'],
+    [213875, 'limegreen', 'B+'],
+    [260400, 'darkorange', 'A-'],
+    [313225, 'darkorange', 'A'],
+    [372750, 'darkorange', 'A+'],
+    [439375, 'tomato', 'S-'],
+    [513500, 'tomato', 'S'],
+    [595525, 'tomato', 'S+'],
+    [685850, 'darkviolet', 'Z-'],
+    [784875, 'darkviolet', 'Z'],
+    [893000, 'darkviolet', 'Z+'],
+    [1010625, 'gold', 'EX-'],
+    [1138150, 'gold', 'EX'],
+    [1275975, 'white', 'EX+'],
 ];
 
 export interface DexInfo {
-  level: number;
-  name: string;
-  color: string;
+    level: number;
+    name: string;
+    color: string;
 }
 
 export function formatDexLevel(dex: number): DexInfo {
-  let lo = 0;
-  let hi = DexLevelMap.length - 1;
-  let result = 0;
-  while (lo <= hi) {
-    const mid = (lo + hi) >>> 1;
-    if (DexLevelMap[mid][0] <= dex) {
-      result = mid;
-      lo = mid + 1;
-    } else {
-      hi = mid - 1;
+    let lo = 0;
+    let hi = DexLevelMap.length - 1;
+    let result = 0;
+    while (lo <= hi) {
+        const mid = (lo + hi) >>> 1;
+        if (DexLevelMap[mid][0] <= dex) {
+            result = mid;
+            lo = mid + 1;
+        } else {
+            hi = mid - 1;
+        }
     }
-  }
-  const [, color, name] = DexLevelMap[result];
-  return { level: result, name, color };
+    const [, color, name] = DexLevelMap[result];
+    return { level: result, name, color };
 }
 
 // --- Honor (experience label) ---
 
 const honorMap: [number, string][] = [
-  [0, "전무"],
-  [640, "무명"],
-  [2560, "신동"],
-  [5760, "약간"],
-  [10240, "평범"],
-  [16000, "지역적"],
-  [23040, "전국적"],
-  [31360, "세계적"],
-  [40960, "유명"],
-  [45000, "명사"],
-  [51840, "호걸"],
-  [55000, "효웅"],
-  [64000, "영웅"],
-  [77440, "구세주"],
+    [0, '전무'],
+    [640, '무명'],
+    [2560, '신동'],
+    [5760, '약간'],
+    [10240, '평범'],
+    [16000, '지역적'],
+    [23040, '전국적'],
+    [31360, '세계적'],
+    [40960, '유명'],
+    [45000, '명사'],
+    [51840, '호걸'],
+    [55000, '효웅'],
+    [64000, '영웅'],
+    [77440, '구세주'],
 ];
 
 export function formatHonor(experience: number): string {
-  return searchThresholdMap(honorMap, experience);
+    return searchThresholdMap(honorMap, experience);
 }
 
 // --- Tech level ---
@@ -337,286 +318,267 @@ export function formatHonor(experience: number): string {
 export const TECH_LEVEL_STEP = 1000;
 
 export function convTechLevel(tech: number, maxTechLevel: number): number {
-  return Math.min(
-    Math.max(Math.floor(tech / TECH_LEVEL_STEP), 0),
-    maxTechLevel,
-  );
+    return Math.min(Math.max(Math.floor(tech / TECH_LEVEL_STEP), 0), maxTechLevel);
 }
 
 export function getMaxRelativeTechLevel(
-  startYear: number,
-  year: number,
-  maxTechLevel: number,
-  initialAllowedTechLevel: number,
-  techLevelIncYear: number,
+    startYear: number,
+    year: number,
+    maxTechLevel: number,
+    initialAllowedTechLevel: number,
+    techLevelIncYear: number
 ): number {
-  const relYear = year - startYear;
-  return Math.min(
-    Math.max(
-      Math.floor(relYear / techLevelIncYear) + initialAllowedTechLevel,
-      1,
-    ),
-    maxTechLevel,
-  );
+    const relYear = year - startYear;
+    return Math.min(Math.max(Math.floor(relYear / techLevelIncYear) + initialAllowedTechLevel, 1), maxTechLevel);
 }
 
 export function isTechLimited(
-  startYear: number,
-  year: number,
-  tech: number,
-  maxTechLevel: number,
-  initialAllowedTechLevel: number,
-  techLevelIncYear: number,
+    startYear: number,
+    year: number,
+    tech: number,
+    maxTechLevel: number,
+    initialAllowedTechLevel: number,
+    techLevelIncYear: number
 ): boolean {
-  const relMaxTech = getMaxRelativeTechLevel(
-    startYear,
-    year,
-    maxTechLevel,
-    initialAllowedTechLevel,
-    techLevelIncYear,
-  );
-  const techLevel = convTechLevel(tech, maxTechLevel);
-  return techLevel >= relMaxTech;
+    const relMaxTech = getMaxRelativeTechLevel(
+        startYear,
+        year,
+        maxTechLevel,
+        initialAllowedTechLevel,
+        techLevelIncYear
+    );
+    const techLevel = convTechLevel(tech, maxTechLevel);
+    return techLevel >= relMaxTech;
 }
 
 // --- Number formatting ---
 
 export function numberWithCommas(x: number): string {
-  return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 }
 
 // --- Valid object key check ---
 
-export function isValidObjKey<T>(key: T | "None" | undefined | null): boolean {
-  if (key === "None" || key === undefined || key === null) return false;
-  return true;
+export function isValidObjKey<T>(key: T | 'None' | undefined | null): boolean {
+    if (key === 'None' || key === undefined || key === null) return false;
+    return true;
 }
 
 // --- Crew type names ---
 
 export const CREW_TYPE_NAMES: Record<number, string> = {
-  0: "보병",
-  1100: "보병",
-  1101: "청주병",
-  1102: "수병",
-  1103: "자객병",
-  1104: "근위병",
-  1105: "등갑병",
-  1106: "백이병",
-  1200: "궁병",
-  1201: "궁기병",
-  1202: "연노병",
-  1203: "강궁병",
-  1204: "석궁병",
-  1300: "기병",
-  1301: "백마병",
-  1302: "중장기병",
-  1303: "돌격기병",
-  1304: "철기병",
-  1305: "수렵기병",
-  1306: "맹수병",
-  1307: "호표기병",
-  1400: "귀병",
-  1401: "신귀병",
-  1402: "백귀병",
-  1403: "흑귀병",
-  1404: "악귀병",
-  1405: "남귀병",
-  1406: "황귀병",
-  1407: "천귀병",
-  1408: "마귀병",
-  1500: "정란",
-  1501: "충차",
-  1502: "벽력거",
-  1503: "목우",
+    0: '보병',
+    1100: '보병',
+    1101: '청주병',
+    1102: '수병',
+    1103: '자객병',
+    1104: '근위병',
+    1105: '등갑병',
+    1106: '백이병',
+    1200: '궁병',
+    1201: '궁기병',
+    1202: '연노병',
+    1203: '강궁병',
+    1204: '석궁병',
+    1300: '기병',
+    1301: '백마병',
+    1302: '중장기병',
+    1303: '돌격기병',
+    1304: '철기병',
+    1305: '수렵기병',
+    1306: '맹수병',
+    1307: '호표기병',
+    1400: '귀병',
+    1401: '신귀병',
+    1402: '백귀병',
+    1403: '흑귀병',
+    1404: '악귀병',
+    1405: '남귀병',
+    1406: '황귀병',
+    1407: '천귀병',
+    1408: '마귀병',
+    1500: '정란',
+    1501: '충차',
+    1502: '벽력거',
+    1503: '목우',
 };
 
 export function getCrewTypeName(crewTypeStr: string): string {
-  const code = parseInt(crewTypeStr.replace("che_", "")) || 0;
-  return CREW_TYPE_NAMES[code] ?? crewTypeStr;
+    const code = parseInt(crewTypeStr.replace('che_', '')) || 0;
+    return CREW_TYPE_NAMES[code] ?? crewTypeStr;
 }
 
 // --- Region names ---
 
 export const REGION_NAMES: Record<number, string> = {
-  0: "중원",
-  1: "하북",
-  2: "서북",
-  3: "서남",
-  4: "강남",
-  5: "형남",
+    1: '하북',
+    2: '중원',
+    3: '서북',
+    4: '서촉',
+    5: '남중',
+    6: '초',
+    7: '오월',
+    8: '동이',
 };
 
 // --- Stat color (ability value → color) ---
 
 export function statColor(value: number): string {
-  if (value >= 90) return "#eab308"; // gold
-  if (value >= 80) return "#f97316"; // orange
-  if (value >= 70) return "#22c55e"; // green
-  if (value >= 60) return "#06b6d4"; // cyan
-  if (value >= 50) return "#94a3b8"; // gray
-  return "#6b7280"; // dim
+    if (value >= 90) return '#eab308'; // gold
+    if (value >= 80) return '#f97316'; // orange
+    if (value >= 70) return '#22c55e'; // green
+    if (value >= 60) return '#06b6d4'; // cyan
+    if (value >= 50) return '#94a3b8'; // gray
+    return '#6b7280'; // dim
 }
 
 // --- Trust (민심) color ---
 
 export function trustColor(trust: number): string {
-  if (trust >= 80) return "#22c55e";
-  if (trust >= 60) return "#eab308";
-  if (trust >= 40) return "#f97316";
-  return "#ef4444";
+    if (trust >= 80) return '#22c55e';
+    if (trust >= 60) return '#eab308';
+    if (trust >= 40) return '#f97316';
+    return '#ef4444';
 }
 
 // --- City level names ---
 
 export const CITY_LEVEL_NAMES: Record<number, string> = {
-  1: "소도시",
-  2: "도시",
-  3: "대도시",
-  4: "특대도시",
-  5: "거대도시",
-  6: "거점",
-  7: "수도",
+    1: '수',
+    2: '진',
+    3: '관',
+    4: '이',
+    5: '소',
+    6: '중',
+    7: '대',
+    8: '특',
 };
 
 // --- City level badge (legacy getCityLevelList) ---
 
 export const CITY_LEVEL_BADGES: Record<number, string> = {
-  1: "수",
-  2: "진",
-  3: "관",
-  4: "이",
-  5: "소",
-  6: "중",
-  7: "대",
-  8: "특",
+    1: '수',
+    2: '진',
+    3: '관',
+    4: '이',
+    5: '소',
+    6: '중',
+    7: '대',
+    8: '특',
 };
 
 export function formatCityLevelBadge(level: number): string {
-  return CITY_LEVEL_BADGES[level] ?? "?";
+    return CITY_LEVEL_BADGES[level] ?? '?';
 }
 
 // --- Officer set bit check (legacy isOfficerSet) ---
 
-export function isOfficerSet(
-  officerSet: number,
-  reqOfficerLevel: number,
-): boolean {
-  return (officerSet & (1 << reqOfficerLevel)) !== 0;
+export function isOfficerSet(officerSet: number, reqOfficerLevel: number): boolean {
+    return (officerSet & (1 << reqOfficerLevel)) !== 0;
 }
 
 // --- Format city name (legacy formatCityName) ---
 
-export function formatCityName(
-  cityId: number,
-  cityMap: Map<number, { name: string }>,
-): string {
-  const city = cityMap.get(cityId);
-  if (!city) return `도시#${cityId}`;
-  return city.name;
+export function formatCityName(cityId: number, cityMap: Map<number, { name: string }>): string {
+    const city = cityMap.get(cityId);
+    if (!city) return `도시#${cityId}`;
+    return city.name;
 }
 
 // --- Vote color (legacy formatVoteColor) ---
 
 const VOTE_COLORS: string[] = [
-  "#ff0000", // red
-  "#ffa500", // orange
-  "#ffff00", // yellow
-  "#008000", // green
-  "#0000ff", // blue
-  "#000080", // navy
-  "#800080", // purple
+    '#ff0000', // red
+    '#ffa500', // orange
+    '#ffff00', // yellow
+    '#008000', // green
+    '#0000ff', // blue
+    '#000080', // navy
+    '#800080', // purple
 ];
 
 export function formatVoteColor(type: number): string {
-  return VOTE_COLORS[type % VOTE_COLORS.length];
+    return VOTE_COLORS[type % VOTE_COLORS.length];
 }
 
 // --- Tournament term (legacy calcTournamentTerm) ---
 
 export function calcTournamentTerm(turnTerm: number): number {
-  return Math.min(Math.max(turnTerm, 5), 120);
+    return Math.min(Math.max(turnTerm, 5), 120);
 }
 
 // --- Tournament type & step formatting (legacy formatTournament) ---
 
-const TOURNAMENT_TYPE_MAP = ["전력전", "통솔전", "일기토", "설전"];
+const TOURNAMENT_TYPE_MAP = ['전력전', '통솔전', '일기토', '설전'];
 
 export function formatTournamentType(type: number | null | undefined): string {
-  if (type === null || type === undefined) return "?";
-  return TOURNAMENT_TYPE_MAP[type] ?? "?";
+    if (type === null || type === undefined) return '?';
+    return TOURNAMENT_TYPE_MAP[type] ?? '?';
 }
 
 export interface TournamentStepInfo {
-  availableJoin: boolean;
-  state: string;
-  nextText: string;
+    availableJoin: boolean;
+    state: string;
+    nextText: string;
 }
 
 const TOURNAMENT_STEP_MAP: TournamentStepInfo[] = [
-  { availableJoin: false, state: "경기 없음", nextText: "" },
-  { availableJoin: true, state: "참가 모집중", nextText: "개막시간" },
-  { availableJoin: false, state: "예선 진행중", nextText: "다음경기" },
-  { availableJoin: false, state: "본선 추첨중", nextText: "다음추첨" },
-  { availableJoin: false, state: "본선 진행중", nextText: "다음경기" },
-  { availableJoin: false, state: "16강 배정중", nextText: "16강배정" },
-  { availableJoin: true, state: "베팅 진행중", nextText: "베팅마감" },
-  { availableJoin: false, state: "16강 진행중", nextText: "다음경기" },
-  { availableJoin: false, state: "8강 진행중", nextText: "다음경기" },
-  { availableJoin: false, state: "4강 진행중", nextText: "다음경기" },
-  { availableJoin: false, state: "결승 진행중", nextText: "다음경기" },
+    { availableJoin: false, state: '경기 없음', nextText: '' },
+    { availableJoin: true, state: '참가 모집중', nextText: '개막시간' },
+    { availableJoin: false, state: '예선 진행중', nextText: '다음경기' },
+    { availableJoin: false, state: '본선 추첨중', nextText: '다음추첨' },
+    { availableJoin: false, state: '본선 진행중', nextText: '다음경기' },
+    { availableJoin: false, state: '16강 배정중', nextText: '16강배정' },
+    { availableJoin: true, state: '베팅 진행중', nextText: '베팅마감' },
+    { availableJoin: false, state: '16강 진행중', nextText: '다음경기' },
+    { availableJoin: false, state: '8강 진행중', nextText: '다음경기' },
+    { availableJoin: false, state: '4강 진행중', nextText: '다음경기' },
+    { availableJoin: false, state: '결승 진행중', nextText: '다음경기' },
 ];
 
-export function formatTournamentStep(
-  step: number | null | undefined,
-): TournamentStepInfo {
-  if (
-    step === null ||
-    step === undefined ||
-    step < 0 ||
-    step >= TOURNAMENT_STEP_MAP.length
-  ) {
-    return TOURNAMENT_STEP_MAP[0];
-  }
-  return TOURNAMENT_STEP_MAP[step];
+export function formatTournamentStep(step: number | null | undefined): TournamentStepInfo {
+    if (step === null || step === undefined || step < 0 || step >= TOURNAMENT_STEP_MAP.length) {
+        return TOURNAMENT_STEP_MAP[0];
+    }
+    return TOURNAMENT_STEP_MAP[step];
 }
 
 // --- Post-filter nation command for troop dispatch (legacy postFilterNationCommandGen) ---
 
 export interface TurnObj {
-  action: string;
-  brief: string;
-  tooltip?: string;
-  arg: Record<string, unknown>;
+    action: string;
+    brief: string;
+    tooltip?: string;
+    arg: Record<string, unknown>;
 }
 
 export function postFilterNationCommandGen<T extends TurnObj>(
-  troopList: Record<number, string>,
-  cityMap: Map<number, { name: string }>,
+    troopList: Record<number, string>,
+    cityMap: Map<number, { name: string }>
 ): (turnObj: T) => T {
-  return function (turnObj: T): T {
-    if (turnObj.action !== "che_발령") {
-      return turnObj;
-    }
-    const destGeneralID = turnObj.arg.destGeneralID as number | undefined;
-    if (destGeneralID === undefined || !(destGeneralID in troopList)) {
-      return turnObj;
-    }
+    return function (turnObj: T): T {
+        if (turnObj.action !== 'che_발령') {
+            return turnObj;
+        }
+        const destGeneralID = turnObj.arg.destGeneralID as number | undefined;
+        if (destGeneralID === undefined || !(destGeneralID in troopList)) {
+            return turnObj;
+        }
 
-    const troopName = troopList[destGeneralID];
-    const destCityID = turnObj.arg.destCityID as number;
-    const destCityName = formatCityName(destCityID, cityMap);
-    // Korean josa "로/으로"
-    const lastChar = destCityName.charCodeAt(destCityName.length - 1);
-    const hasFinalConsonant = (lastChar - 0xac00) % 28 !== 0;
-    const josaRo = hasFinalConsonant ? "으로" : "로";
-    const brief = `《${troopName}》【${destCityName}】${josaRo} 발령`;
-    const tooltip = `《${troopName}》${turnObj.brief}`;
+        const troopName = troopList[destGeneralID];
+        const destCityID = turnObj.arg.destCityID as number;
+        const destCityName = formatCityName(destCityID, cityMap);
+        // Korean josa "로/으로"
+        const lastChar = destCityName.charCodeAt(destCityName.length - 1);
+        const hasFinalConsonant = (lastChar - 0xac00) % 28 !== 0;
+        const josaRo = hasFinalConsonant ? '으로' : '로';
+        const brief = `《${troopName}》【${destCityName}】${josaRo} 발령`;
+        const tooltip = `《${troopName}》${turnObj.brief}`;
 
-    return {
-      ...turnObj,
-      brief,
-      tooltip,
+        return {
+            ...turnObj,
+            brief,
+            tooltip,
+        };
     };
-  };
 }

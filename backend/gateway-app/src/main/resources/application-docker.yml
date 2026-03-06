@@ -1,20 +1,20 @@
 spring:
-  datasource:
-    url: jdbc:postgresql://${DB_HOST:postgres}:${DB_PORT:5432}/${DB_NAME:opensam}
-    username: ${DB_USER:opensam}
-    password: ${DB_PASSWORD:opensam123}
-  data:
-    redis:
-      host: ${REDIS_HOST:redis}
-      port: ${REDIS_PORT:6379}
+    datasource:
+        url: jdbc:postgresql://${DB_HOST:postgres}:${DB_PORT:5432}/${DB_NAME:opensam}
+        username: ${DB_USER:opensam}
+        password: ${DB_PASSWORD:opensam123}
+    data:
+        redis:
+            host: ${REDIS_HOST:redis}
+            port: ${REDIS_PORT:6379}
 
 gateway:
-  orchestrator:
-    restore-active-worlds: ${GATEWAY_RESTORE_ACTIVE_WORLDS:true}
-    health-timeout-ms: ${GATEWAY_HEALTH_TIMEOUT_MS:180000}
-    restore-max-retries: ${GATEWAY_RESTORE_MAX_RETRIES:3}
-    restore-retry-delay-ms: ${GATEWAY_RESTORE_RETRY_DELAY_MS:30000}
-  docker:
-    enabled: true
-    network: ${DOCKER_NETWORK:opensam-net}
-    image-prefix: ${DOCKER_IMAGE_PREFIX:opensam/game-app}
+    orchestrator:
+        restore-active-worlds: ${GATEWAY_RESTORE_ACTIVE_WORLDS:true}
+        health-timeout-ms: ${GATEWAY_HEALTH_TIMEOUT_MS:180000}
+        restore-max-retries: ${GATEWAY_RESTORE_MAX_RETRIES:3}
+        restore-retry-delay-ms: ${GATEWAY_RESTORE_RETRY_DELAY_MS:30000}
+    docker:
+        enabled: true
+        network: ${DOCKER_NETWORK:opensam-net}
+        image-prefix: ${DOCKER_IMAGE_PREFIX:opensam/game-app}

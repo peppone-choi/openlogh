@@ -1,6 +1,6 @@
 {
-  "permissions": {
-    "allow": ["Bash(*)", "Read(*)", "Write(*)", "Edit(*)"],
-    "deny": []
-  }
+    "permissions": {
+        "allow": ["Bash(*)", "Read(*)", "Write(*)", "Edit(*)"],
+        "deny": []
+    }
 }

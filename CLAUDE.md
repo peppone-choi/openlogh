@@ -46,7 +46,7 @@ docker-compose up -d
 - **패러티 대상: devsam/core PHP (`legacy-core/` 폴더, https://storage.hided.net/gitea/devsam/core)**
 - **패러티 문서는 신뢰하지 않음. 코드로만 판단.**
 - 장수 스탯: **3-stat 시스템** (통솔/무력/지력) + 정치/매력은 opensamguk에서 추가
-  - `leadership`, `strength`, `intel` (core 원본), `politics`, `charm` (opensamguk 확장)
+    - `leadership`, `strength`, `intel` (core 원본), `politics`, `charm` (opensamguk 확장)
 
 ## Officer Rank System
 
@@ -80,19 +80,19 @@ docker-compose up -d
 
 ### Core PHP Source (`legacy-core/`)
 
-| Path                         | Content                                     |
-| ---------------------------- | ------------------------------------------- |
-| `hwe/sammo/Command/General/` | 55개 장수 커맨드                            |
-| `hwe/sammo/Command/Nation/`  | 38개 국가 커맨드                            |
-| `hwe/sammo/API/`             | 78개 API 엔드포인트 (12 카테고리)           |
-| `hwe/sql/schema.sql`         | DB 스키마 (45+ 테이블)                      |
-| `hwe/func.php`               | 메인 게임 함수 (80KB)                       |
-| `hwe/GeneralAI.php`          | NPC AI 구현 (153KB)                         |
-| `hwe/process_war.php`        | 전투 처리 (33KB)                            |
-| `hwe/scenario/`              | 시나리오 83종 + 맵 8종 + 병종 7종           |
-| `hwe/data/`                  | 게임 상수, 도시, 병종 데이터                |
-| `src/daemon.ts`              | 턴 데몬 (TypeScript, 441줄)                 |
-| `src/sammo/`                 | 유틸리티 클래스 (API, Session, RNG 등)      |
+| Path                         | Content                                |
+| ---------------------------- | -------------------------------------- |
+| `hwe/sammo/Command/General/` | 55개 장수 커맨드                       |
+| `hwe/sammo/Command/Nation/`  | 38개 국가 커맨드                       |
+| `hwe/sammo/API/`             | 78개 API 엔드포인트 (12 카테고리)      |
+| `hwe/sql/schema.sql`         | DB 스키마 (45+ 테이블)                 |
+| `hwe/func.php`               | 메인 게임 함수 (80KB)                  |
+| `hwe/GeneralAI.php`          | NPC AI 구현 (153KB)                    |
+| `hwe/process_war.php`        | 전투 처리 (33KB)                       |
+| `hwe/scenario/`              | 시나리오 83종 + 맵 8종 + 병종 7종      |
+| `hwe/data/`                  | 게임 상수, 도시, 병종 데이터           |
+| `src/daemon.ts`              | 턴 데몬 (TypeScript, 441줄)            |
+| `src/sammo/`                 | 유틸리티 클래스 (API, Session, RNG 등) |
 
 ## Game Data
 

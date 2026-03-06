@@ -1,0 +1,621 @@
+{
+    "section": "nation-commands",
+    "timestamp": "2026-03-06T03:08:54.873Z",
+    "results": [
+        {
+            "check": "turn_daemon_paused_nation",
+            "legacy": true,
+            "new": false,
+            "match": false
+        },
+        {
+            "check": "nation_command_count_38",
+            "legacy": true,
+            "new": true,
+            "match": true,
+            "details": "table=38"
+        },
+        {
+            "check": "nation_command_table_has_Nation휴식",
+            "legacy": true,
+            "new": true,
+            "match": true
+        },
+        {
+            "check": "reserve_nation_Nation휴식",
+            "legacy": true,
+            "new": true,
+            "match": true,
+            "details": "reserved=Nation휴식"
+        },
+        {
+            "check": "nation_command_table_has_포상",
+            "legacy": true,
+            "new": true,
+            "match": true
+        },
+        {
+            "check": "reserve_nation_포상",
+            "legacy": true,
+            "new": true,
+            "match": true,
+            "details": "reserved=포상"
+        },
+        {
+            "check": "nation_command_table_has_몰수",
+            "legacy": true,
+            "new": true,
+            "match": true
+        },
+        {
+            "check": "reserve_nation_몰수",
+            "legacy": true,
+            "new": true,
+            "match": true,
+            "details": "reserved=몰수"
+        },
+        {
+            "check": "nation_command_table_has_감축",
+            "legacy": true,
+            "new": true,
+            "match": true
+        },
+        {
+            "check": "reserve_nation_감축",
+            "legacy": true,
+            "new": true,
+            "match": true,
+            "details": "reserved=감축"
+        },
+        {
+            "check": "nation_command_table_has_증축",
+            "legacy": true,
+            "new": true,
+            "match": true
+        },
+        {
+            "check": "reserve_nation_증축",
+            "legacy": true,
+            "new": true,
+            "match": true,
+            "details": "reserved=증축"
+        },
+        {
+            "check": "nation_command_table_has_발령",
+            "legacy": true,
+            "new": true,
+            "match": true
+        },
+        {
+            "check": "reserve_nation_발령",
+            "legacy": true,
+            "new": true,
+            "match": true,
+            "details": "reserved=발령"
+        },
+        {
+            "check": "nation_command_table_has_천도",
+            "legacy": true,
+            "new": true,
+            "match": true
+        },
+        {
+            "check": "reserve_nation_천도",
+            "legacy": true,
+            "new": true,
+            "match": true,
+            "details": "reserved=천도"
+        },
+        {
+            "check": "nation_command_table_has_백성동원",
+            "legacy": true,
+            "new": true,
+            "match": true
+        },
+        {
+            "check": "reserve_nation_백성동원",
+            "legacy": true,
+            "new": true,
+            "match": true,
+            "details": "reserved=백성동원"
+        },
+        {
+            "check": "nation_command_table_has_물자원조",
+            "legacy": true,
+            "new": true,
+            "match": true
+        },
+        {
+            "check": "reserve_nation_물자원조",
+            "legacy": true,
+            "new": true,
+            "match": true,
+            "details": "reserved=물자원조"
+        },
+        {
+            "check": "nation_command_table_has_국기변경",
+            "legacy": true,
+            "new": true,
+            "match": true
+        },
+        {
+            "check": "reserve_nation_국기변경",
+            "legacy": true,
+            "new": true,
+            "match": true,
+            "details": "reserved=국기변경"
+        },
+        {
+            "check": "nation_command_table_has_국호변경",
+            "legacy": true,
+            "new": true,
+            "match": true
+        },
+        {
+            "check": "reserve_nation_국호변경",
+            "legacy": true,
+            "new": true,
+            "match": true,
+            "details": "reserved=국호변경"
+        },
+        {
+            "check": "nation_command_table_has_선전포고",
+            "legacy": true,
+            "new": true,
+            "match": true
+        },
+        {
+            "check": "reserve_nation_선전포고",
+            "legacy": true,
+            "new": true,
+            "match": true,
+            "details": "reserved=선전포고"
+        },
+        {
+            "check": "nation_command_table_has_종전제의",
+            "legacy": true,
+            "new": true,
+            "match": true
+        },
+        {
+            "check": "reserve_nation_종전제의",
+            "legacy": true,
+            "new": true,
+            "match": true,
+            "details": "reserved=종전제의"
+        },
+        {
+            "check": "nation_command_table_has_종전수락",
+            "legacy": true,
+            "new": true,
+            "match": true
+        },
+        {
+            "check": "reserve_nation_종전수락",
+            "legacy": true,
+            "new": true,
+            "match": true,
+            "details": "reserved=종전수락"
+        },
+        {
+            "check": "nation_command_table_has_불가침제의",
+            "legacy": true,
+            "new": true,
+            "match": true
+        },
+        {
+            "check": "reserve_nation_불가침제의",
+            "legacy": true,
+            "new": true,
+            "match": true,
+            "details": "reserved=불가침제의"
+        },
+        {
+            "check": "nation_command_table_has_불가침수락",
+            "legacy": true,
+            "new": true,
+            "match": true
+        },
+        {
+            "check": "reserve_nation_불가침수락",
+            "legacy": true,
+            "new": true,
+            "match": true,
+            "details": "reserved=불가침수락"
+        },
+        {
+            "check": "nation_command_table_has_불가침파기제의",
+            "legacy": true,
+            "new": true,
+            "match": true
+        },
+        {
+            "check": "reserve_nation_불가침파기제의",
+            "legacy": true,
+            "new": true,
+            "match": true,
+            "details": "reserved=불가침파기제의"
+        },
+        {
+            "check": "nation_command_table_has_불가침파기수락",
+            "legacy": true,
+            "new": true,
+            "match": true
+        },
+        {
+            "check": "reserve_nation_불가침파기수락",
+            "legacy": true,
+            "new": true,
+            "match": true,
+            "details": "reserved=불가침파기수락"
+        },
+        {
+            "check": "nation_command_table_has_급습",
+            "legacy": true,
+            "new": true,
+            "match": true
+        },
+        {
+            "check": "reserve_nation_급습",
+            "legacy": true,
+            "new": true,
+            "match": true,
+            "details": "reserved=급습"
+        },
+        {
+            "check": "nation_command_table_has_수몰",
+            "legacy": true,
+            "new": true,
+            "match": true
+        },
+        {
+            "check": "reserve_nation_수몰",
+            "legacy": true,
+            "new": true,
+            "match": true,
+            "details": "reserved=수몰"
+        },
+        {
+            "check": "nation_command_table_has_허보",
+            "legacy": true,
+            "new": true,
+            "match": true
+        },
+        {
+            "check": "reserve_nation_허보",
+            "legacy": true,
+            "new": true,
+            "match": true,
+            "details": "reserved=허보"
+        },
+        {
+            "check": "nation_command_table_has_초토화",
+            "legacy": true,
+            "new": true,
+            "match": true
+        },
+        {
+            "check": "reserve_nation_초토화",
+            "legacy": true,
+            "new": true,
+            "match": true,
+            "details": "reserved=초토화"
+        },
+        {
+            "check": "nation_command_table_has_필사즉생",
+            "legacy": true,
+            "new": true,
+            "match": true
+        },
+        {
+            "check": "reserve_nation_필사즉생",
+            "legacy": true,
+            "new": true,
+            "match": true,
+            "details": "reserved=필사즉생"
+        },
+        {
+            "check": "nation_command_table_has_이호경식",
+            "legacy": true,
+            "new": true,
+            "match": true
+        },
+        {
+            "check": "reserve_nation_이호경식",
+            "legacy": true,
+            "new": true,
+            "match": true,
+            "details": "reserved=이호경식"
+        },
+        {
+            "check": "nation_command_table_has_피장파장",
+            "legacy": true,
+            "new": true,
+            "match": true
+        },
+        {
+            "check": "reserve_nation_피장파장",
+            "legacy": true,
+            "new": true,
+            "match": true,
+            "details": "reserved=피장파장"
+        },
+        {
+            "check": "nation_command_table_has_의병모집",
+            "legacy": true,
+            "new": true,
+            "match": true
+        },
+        {
+            "check": "reserve_nation_의병모집",
+            "legacy": true,
+            "new": true,
+            "match": true,
+            "details": "reserved=의병모집"
+        },
+        {
+            "check": "nation_command_table_has_극병연구",
+            "legacy": true,
+            "new": true,
+            "match": true
+        },
+        {
+            "check": "reserve_nation_극병연구",
+            "legacy": true,
+            "new": true,
+            "match": true,
+            "details": "reserved=극병연구"
+        },
+        {
+            "check": "nation_command_table_has_대검병연구",
+            "legacy": true,
+            "new": true,
+            "match": true
+        },
+        {
+            "check": "reserve_nation_대검병연구",
+            "legacy": true,
+            "new": true,
+            "match": true,
+            "details": "reserved=대검병연구"
+        },
+        {
+            "check": "nation_command_table_has_무희연구",
+            "legacy": true,
+            "new": true,
+            "match": true
+        },
+        {
+            "check": "reserve_nation_무희연구",
+            "legacy": true,
+            "new": true,
+            "match": true,
+            "details": "reserved=무희연구"
+        },
+        {
+            "check": "nation_command_table_has_산저병연구",
+            "legacy": true,
+            "new": true,
+            "match": true
+        },
+        {
+            "check": "reserve_nation_산저병연구",
+            "legacy": true,
+            "new": true,
+            "match": true,
+            "details": "reserved=산저병연구"
+        },
+        {
+            "check": "nation_command_table_has_상병연구",
+            "legacy": true,
+            "new": true,
+            "match": true
+        },
+        {
+            "check": "reserve_nation_상병연구",
+            "legacy": true,
+            "new": true,
+            "match": true,
+            "details": "reserved=상병연구"
+        },
+        {
+            "check": "nation_command_table_has_원융노병연구",
+            "legacy": true,
+            "new": true,
+            "match": true
+        },
+        {
+            "check": "reserve_nation_원융노병연구",
+            "legacy": true,
+            "new": true,
+            "match": true,
+            "details": "reserved=원융노병연구"
+        },
+        {
+            "check": "nation_command_table_has_음귀병연구",
+            "legacy": true,
+            "new": true,
+            "match": true
+        },
+        {
+            "check": "reserve_nation_음귀병연구",
+            "legacy": true,
+            "new": true,
+            "match": true,
+            "details": "reserved=음귀병연구"
+        },
+        {
+            "check": "nation_command_table_has_화륜차연구",
+            "legacy": true,
+            "new": true,
+            "match": true
+        },
+        {
+            "check": "reserve_nation_화륜차연구",
+            "legacy": true,
+            "new": true,
+            "match": true,
+            "details": "reserved=화륜차연구"
+        },
+        {
+            "check": "nation_command_table_has_화시병연구",
+            "legacy": true,
+            "new": true,
+            "match": true
+        },
+        {
+            "check": "reserve_nation_화시병연구",
+            "legacy": true,
+            "new": true,
+            "match": true,
+            "details": "reserved=화시병연구"
+        },
+        {
+            "check": "nation_command_table_has_무작위수도이전",
+            "legacy": true,
+            "new": true,
+            "match": true
+        },
+        {
+            "check": "reserve_nation_무작위수도이전",
+            "legacy": true,
+            "new": true,
+            "match": true,
+            "details": "reserved=무작위수도이전"
+        },
+        {
+            "check": "nation_command_table_has_부대탈퇴지시",
+            "legacy": true,
+            "new": true,
+            "match": true
+        },
+        {
+            "check": "reserve_nation_부대탈퇴지시",
+            "legacy": true,
+            "new": true,
+            "match": true,
+            "details": "reserved=부대탈퇴지시"
+        },
+        {
+            "check": "nation_command_table_has_인구이동",
+            "legacy": true,
+            "new": true,
+            "match": true
+        },
+        {
+            "check": "reserve_nation_인구이동",
+            "legacy": true,
+            "new": true,
+            "match": true,
+            "details": "reserved=인구이동"
+        },
+        {
+            "check": "execute_nation_Nation휴식_success",
+            "legacy": true,
+            "new": true,
+            "match": true,
+            "details": ""
+        },
+        {
+            "check": "execute_nation_Nation휴식_effect_changed",
+            "legacy": true,
+            "new": true,
+            "match": true,
+            "details": "skipped (no effectChecks); general=false, city=false, nation=false"
+        },
+        {
+            "check": "execute_nation_감축_skipped_disabled",
+            "legacy": true,
+            "new": false,
+            "match": false,
+            "details": "군주만 사용할 수 있습니다."
+        },
+        {
+            "check": "execute_nation_증축_skipped_disabled",
+            "legacy": true,
+            "new": false,
+            "match": false,
+            "details": "군주만 사용할 수 있습니다."
+        },
+        {
+            "check": "execute_nation_극병연구_skipped_disabled",
+            "legacy": true,
+            "new": false,
+            "match": false,
+            "details": "군주만 사용할 수 있습니다."
+        },
+        {
+            "check": "execute_nation_대검병연구_skipped_disabled",
+            "legacy": true,
+            "new": false,
+            "match": false,
+            "details": "군주만 사용할 수 있습니다."
+        },
+        {
+            "check": "execute_nation_무희연구_skipped_disabled",
+            "legacy": true,
+            "new": false,
+            "match": false,
+            "details": "군주만 사용할 수 있습니다."
+        },
+        {
+            "check": "execute_nation_산저병연구_skipped_disabled",
+            "legacy": true,
+            "new": false,
+            "match": false,
+            "details": "군주만 사용할 수 있습니다."
+        },
+        {
+            "check": "execute_nation_상병연구_skipped_disabled",
+            "legacy": true,
+            "new": false,
+            "match": false,
+            "details": "군주만 사용할 수 있습니다."
+        },
+        {
+            "check": "execute_nation_원융노병연구_skipped_disabled",
+            "legacy": true,
+            "new": false,
+            "match": false,
+            "details": "군주만 사용할 수 있습니다."
+        },
+        {
+            "check": "execute_nation_음귀병연구_skipped_disabled",
+            "legacy": true,
+            "new": false,
+            "match": false,
+            "details": "군주만 사용할 수 있습니다."
+        },
+        {
+            "check": "execute_nation_화륜차연구_skipped_disabled",
+            "legacy": true,
+            "new": false,
+            "match": false,
+            "details": "군주만 사용할 수 있습니다."
+        },
+        {
+            "check": "execute_nation_화시병연구_skipped_disabled",
+            "legacy": true,
+            "new": false,
+            "match": false,
+            "details": "군주만 사용할 수 있습니다."
+        },
+        {
+            "check": "world_realtime_mode_nation",
+            "legacy": true,
+            "new": false,
+            "match": true,
+            "details": "Realtime mode allows execute API but may reject nation turn reservation."
+        },
+        {
+            "check": "turn_daemon_resumed_nation",
+            "legacy": true,
+            "new": false,
+            "match": false
+        }
+    ],
+    "screenshots": {
+        "legacy": "../parity-screenshots/parity-nation-commands-legacy.png",
+        "new": "../parity-screenshots/parity-nation-commands-new.png"
+    }
+}

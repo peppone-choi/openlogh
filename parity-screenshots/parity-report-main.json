@@ -1,0 +1,9 @@
+{
+    "section": "main",
+    "timestamp": "2026-03-06T02:30:19.408Z",
+    "results": [],
+    "screenshots": {
+        "legacy": "../parity-screenshots/parity-main-legacy.png",
+        "new": "../parity-screenshots/parity-main-new.png"
+    }
+}
