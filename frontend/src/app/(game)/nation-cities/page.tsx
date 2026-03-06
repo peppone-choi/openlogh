@@ -17,39 +17,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { NationBadge } from '@/components/game/nation-badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-
-function calcCityGoldIncome(city: City, officerCnt: number, isCapital: boolean, nationLevel: number): number {
-    if (city.commMax <= 0) return 0;
-    const trustRatio = city.trust / 200 + 0.5;
-    let v = (city.pop * (city.comm / city.commMax) * trustRatio) / 30;
-    v *= 1 + (city.secuMax > 0 ? city.secu / city.secuMax / 10 : 0);
-    v *= Math.pow(1.05, officerCnt);
-    if (isCapital && nationLevel > 0) v *= 1 + 1 / (3 * nationLevel);
-    return Math.round(v);
-}
-
-function calcCityRiceIncome(city: City, officerCnt: number, isCapital: boolean, nationLevel: number): number {
-    if (city.agriMax <= 0) return 0;
-    const trustRatio = city.trust / 200 + 0.5;
-    let v = (city.pop * (city.agri / city.agriMax) * trustRatio) / 30;
-    v *= 1 + (city.secuMax > 0 ? city.secu / city.secuMax / 10 : 0);
-    v *= Math.pow(1.05, officerCnt);
-    if (isCapital && nationLevel > 0) v *= 1 + 1 / (3 * nationLevel);
-    return Math.round(v);
-}
-
-function calcCityWallRiceIncome(city: City, officerCnt: number, isCapital: boolean, nationLevel: number): number {
-    if (city.wallMax <= 0) return 0;
-    let v = (city.def * city.wall) / city.wallMax / 3;
-    v *= 1 + (city.secuMax > 0 ? city.secu / city.secuMax / 10 : 0);
-    v *= Math.pow(1.05, officerCnt);
-    if (isCapital && nationLevel > 0) v *= 1 + 1 / (3 * nationLevel);
-    return Math.round(v);
-}
-
-function getBill(dedication: number): number {
-    return Math.min(Math.ceil(Math.sqrt(dedication) / 10), 30) * 200 + 400;
-}
+import {
+    calcCityGoldIncome,
+    calcCityRiceIncome,
+    calcCityWallRiceIncome,
+    calcCityWarGoldIncome,
+    getBill,
+    countCityOfficers,
+} from '@/lib/income-calc';
 
 type SortKey =
     | 'name'
@@ -183,7 +158,9 @@ export default function NationCitiesPage() {
 
     const getCityOfficers = (cityId: number) => {
         return nationGenerals
-            .filter((g) => g.cityId === cityId && g.officerLevel >= 2 && g.officerLevel <= 4)
+            .filter(
+                (g) => g.cityId === cityId && g.officerCity === cityId && g.officerLevel >= 2 && g.officerLevel <= 4
+            )
             .sort((a, b) => b.officerLevel - a.officerLevel);
     };
 
@@ -239,11 +216,29 @@ export default function NationCitiesPage() {
         });
 
     const budgetRows = sorted.map((c) => {
-        const officerCnt = nationGenerals.filter((g) => g.cityId === c.id).length;
-        const goldCity = calcCityGoldIncome(c, officerCnt, myNation?.capitalCityId === c.id, myNation?.level ?? 0);
-        const goldWar = Math.round((goldCity * rate) / 100);
-        const riceCity = calcCityRiceIncome(c, officerCnt, myNation?.capitalCityId === c.id, myNation?.level ?? 0);
-        const riceWall = calcCityWallRiceIncome(c, officerCnt, myNation?.capitalCityId === c.id, myNation?.level ?? 0);
+        const officerCnt = countCityOfficers(nationGenerals, c.id);
+        const goldCity = calcCityGoldIncome(
+            c,
+            officerCnt,
+            myNation?.capitalCityId === c.id,
+            myNation?.level ?? 0,
+            myNation?.typeCode ?? ''
+        );
+        const goldWar = calcCityWarGoldIncome(c, myNation?.typeCode ?? '');
+        const riceCity = calcCityRiceIncome(
+            c,
+            officerCnt,
+            myNation?.capitalCityId === c.id,
+            myNation?.level ?? 0,
+            myNation?.typeCode ?? ''
+        );
+        const riceWall = calcCityWallRiceIncome(
+            c,
+            officerCnt,
+            myNation?.capitalCityId === c.id,
+            myNation?.level ?? 0,
+            myNation?.typeCode ?? ''
+        );
         const expense = nationGenerals
             .filter((g) => g.cityId === c.id)
             .reduce((sum, g) => sum + getBill(g.dedication), 0);
@@ -482,19 +477,31 @@ export default function NationCitiesPage() {
                         {sorted.map((c) => {
                             const officers = getCityOfficers(c.id);
                             const isCapital = myNation?.capitalCityId === c.id;
+                            const officerCnt = countCityOfficers(nationGenerals, c.id);
                             const cityGoldIncome = myNation
                                 ? Math.round(
-                                      (calcCityGoldIncome(c, officers.length, isCapital, myNation.level) * rate) / 20
+                                      (calcCityGoldIncome(c, officerCnt, isCapital, myNation.level, myNation.typeCode) *
+                                          rate) /
+                                          20
                                   )
                                 : null;
                             const cityRiceIncome = myNation
                                 ? Math.round(
-                                      (calcCityRiceIncome(c, officers.length, isCapital, myNation.level) * rate) / 20
+                                      (calcCityRiceIncome(c, officerCnt, isCapital, myNation.level, myNation.typeCode) *
+                                          rate) /
+                                          20
                                   )
                                 : null;
                             const cityWallIncome = myNation
                                 ? Math.round(
-                                      (calcCityWallRiceIncome(c, officers.length, isCapital, myNation.level) * rate) /
+                                      (calcCityWallRiceIncome(
+                                          c,
+                                          officerCnt,
+                                          isCapital,
+                                          myNation.level,
+                                          myNation.typeCode
+                                      ) *
+                                          rate) /
                                           20
                                   )
                                 : null;

@@ -20,6 +20,7 @@ import {
     formatOfficerLevelText,
     formatDefenceTrain,
 } from '@/lib/game-utils';
+import { calcCityGoldIncome, calcCityRiceIncome, calcCityWallRiceIncome, countCityOfficers } from '@/lib/income-calc';
 
 // --- Sort ---
 
@@ -309,6 +310,7 @@ export default function CityPage() {
 
                 const officers = officersByCity[city.id] ?? {};
                 const cityGens = generalsByCity[city.id] ?? [];
+                const cityIncomeOfficerCnt = countCityOfficers(cityGens, city.id);
                 const defendingGeneral =
                     officers[4] ?? [...cityGens].sort((a, b) => b.leadership - a.leadership || b.crew - a.crew)[0];
                 const isExpanded = expandedCityId === city.id;
@@ -391,6 +393,53 @@ export default function CityPage() {
                                 <ValueCell>{tradeText}</ValueCell>
                                 <LabelCell>보급</LabelCell>
                                 <SupplyCell state={city.supplyState} hidden={!isVisible} />
+
+                                {isMyNationCity && nation && (
+                                    <>
+                                        <LabelCell>자금 수입</LabelCell>
+                                        <ValueCell>
+                                            {(
+                                                (calcCityGoldIncome(
+                                                    city,
+                                                    cityIncomeOfficerCnt,
+                                                    isCapital,
+                                                    nation.level,
+                                                    nation.typeCode
+                                                ) *
+                                                    nation.rate) /
+                                                20
+                                            ).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                                        </ValueCell>
+                                        <LabelCell>군량 수입</LabelCell>
+                                        <ValueCell>
+                                            {(
+                                                (calcCityRiceIncome(
+                                                    city,
+                                                    cityIncomeOfficerCnt,
+                                                    isCapital,
+                                                    nation.level,
+                                                    nation.typeCode
+                                                ) *
+                                                    nation.rate) /
+                                                20
+                                            ).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                                        </ValueCell>
+                                        <LabelCell>둔전 수입</LabelCell>
+                                        <ValueCell>
+                                            {(
+                                                (calcCityWallRiceIncome(
+                                                    city,
+                                                    cityIncomeOfficerCnt,
+                                                    isCapital,
+                                                    nation.level,
+                                                    nation.typeCode
+                                                ) *
+                                                    nation.rate) /
+                                                20
+                                            ).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                                        </ValueCell>
+                                    </>
+                                )}
 
                                 {/* Row 2: agri, comm, secu, def, wall */}
                                 <LabelCell>농업</LabelCell>

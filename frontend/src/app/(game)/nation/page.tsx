@@ -21,6 +21,14 @@ import { LoadingState } from '@/components/game/loading-state';
 import { NationBadge } from '@/components/game/nation-badge';
 import { GeneralPortrait } from '@/components/game/general-portrait';
 import { formatOfficerLevelText, getNPCColor, REGION_NAMES, CREW_TYPE_NAMES } from '@/lib/game-utils';
+import {
+    calcCityGoldIncome,
+    calcCityRiceIncome,
+    calcCityWallRiceIncome,
+    calcCityWarGoldIncome,
+    getDedLevel,
+    getBill,
+} from '@/lib/income-calc';
 
 // ── Constants ──────────────────────────────────────────────────────
 
@@ -35,53 +43,12 @@ const LEVEL_LABELS: Record<number, string> = {
     7: '황제',
 };
 
-const MAX_DED_LEVEL = 30;
-
 const DIP_STATE_LABELS: Record<string, { label: string; color: string }> = {
     normal: { label: '통상', color: 'gray' },
     nowar: { label: '불가침', color: 'cyan' },
     alliance: { label: '동맹', color: 'limegreen' },
     war: { label: '교전', color: 'red' },
 };
-
-// ── Income / expense helpers (legacy parity) ────────────────────────
-
-function calcCityGoldIncome(city: City, officerCnt: number, isCapital: boolean, nationLevel: number): number {
-    if (city.commMax <= 0) return 0;
-    const trustRatio = city.trust / 200 + 0.5;
-    let v = (city.pop * (city.comm / city.commMax) * trustRatio) / 30;
-    v *= 1 + (city.secuMax > 0 ? city.secu / city.secuMax / 10 : 0);
-    v *= Math.pow(1.05, officerCnt);
-    if (isCapital && nationLevel > 0) v *= 1 + 1 / (3 * nationLevel);
-    return Math.round(v);
-}
-
-function calcCityRiceIncome(city: City, officerCnt: number, isCapital: boolean, nationLevel: number): number {
-    if (city.agriMax <= 0) return 0;
-    const trustRatio = city.trust / 200 + 0.5;
-    let v = (city.pop * (city.agri / city.agriMax) * trustRatio) / 30;
-    v *= 1 + (city.secuMax > 0 ? city.secu / city.secuMax / 10 : 0);
-    v *= Math.pow(1.05, officerCnt);
-    if (isCapital && nationLevel > 0) v *= 1 + 1 / (3 * nationLevel);
-    return Math.round(v);
-}
-
-function calcCityWallRiceIncome(city: City, officerCnt: number, isCapital: boolean, nationLevel: number): number {
-    if (city.wallMax <= 0) return 0;
-    let v = (city.def * city.wall) / city.wallMax / 3;
-    v *= 1 + (city.secuMax > 0 ? city.secu / city.secuMax / 10 : 0);
-    v *= Math.pow(1.05, officerCnt);
-    if (isCapital && nationLevel > 0) v *= 1 + 1 / (3 * nationLevel);
-    return Math.round(v);
-}
-
-function getDedLevel(dedication: number): number {
-    return Math.min(Math.ceil(Math.sqrt(dedication) / 10), MAX_DED_LEVEL);
-}
-
-function getBill(dedication: number): number {
-    return getDedLevel(dedication) * 200 + 400;
-}
 
 // ── Sort options ────────────────────────────────────────────────────
 
@@ -261,7 +228,7 @@ export default function NationPage() {
     const officerCntByCity = useMemo(() => {
         const m = new Map<number, number>();
         generals.forEach((g) => {
-            if (g.officerLevel >= 2 && g.officerLevel <= 4 && g.officerCity > 0) {
+            if (g.officerLevel >= 2 && g.officerLevel <= 4 && g.officerCity > 0 && g.cityId === g.officerCity) {
                 m.set(g.officerCity, (m.get(g.officerCity) || 0) + 1);
             }
         });
@@ -279,10 +246,10 @@ export default function NationPage() {
         cities.forEach((c) => {
             const cnt = officerCntByCity.get(c.id) || 0;
             const cap = c.id === nation.capitalCityId;
-            gcBase += calcCityGoldIncome(c, cnt, cap, nation.level);
-            rcBase += calcCityRiceIncome(c, cnt, cap, nation.level);
-            rwBase += calcCityWallRiceIncome(c, cnt, cap, nation.level);
-            gw += c.supplyState ? Math.round(c.dead / 10) : 0;
+            gcBase += calcCityGoldIncome(c, cnt, cap, nation.level, nation.typeCode);
+            rcBase += calcCityRiceIncome(c, cnt, cap, nation.level, nation.typeCode);
+            rwBase += calcCityWallRiceIncome(c, cnt, cap, nation.level, nation.typeCode);
+            gw += calcCityWarGoldIncome(c, nation.typeCode);
         });
         const goldCity = Math.round((gcBase * nation.rate) / 20);
         const riceCity = Math.round((rcBase * nation.rate) / 20);
