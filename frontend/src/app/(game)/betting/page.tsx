@@ -244,9 +244,13 @@ export default function BettingPage() {
     const handleNationBet = async () => {
         if (!currentWorld || !myGeneral) return;
         if (pickedCandidates.size !== selectCnt) return;
-        const bettingType = Array.from(pickedCandidates).sort((a, b) => a - b);
+        const targets = Array.from(pickedCandidates).sort((a, b) => a - b);
         try {
-            await bettingApi.placeBet(currentWorld.id, myGeneral.id, bettingType, nationBetAmount);
+            const perAmount = Math.floor(nationBetAmount / targets.length);
+            if (perAmount <= 0) return;
+            for (const targetId of targets) {
+                await bettingApi.placeBet(currentWorld.id, myGeneral.id, targetId, perAmount);
+            }
             setPickedCandidates(new Set());
             await load();
         } catch {

@@ -6,8 +6,7 @@ import { UserPlus, ArrowLeft } from 'lucide-react';
 import { useWorldStore } from '@/stores/worldStore';
 import { useGeneralStore } from '@/stores/generalStore';
 import { useGameStore } from '@/stores/gameStore';
-import { inheritanceApi } from '@/lib/gameApi';
-import api from '@/lib/api';
+import { inheritanceApi, generalApi, nationApi } from '@/lib/gameApi';
 import { toast } from 'sonner';
 import { PageHeader } from '@/components/game/page-header';
 import { StatBar } from '@/components/game/stat-bar';
@@ -166,7 +165,8 @@ export default function LobbyJoinPage() {
                 .catch(() => {});
 
             // Load scout messages from nations
-            api.get<Nation[]>(`/worlds/${currentWorld.id}/nations`)
+            nationApi
+                .listByWorld(currentWorld.id)
                 .then(({ data: nationList }) => {
                     const msgs: Record<number, string> = {};
                     for (const n of nationList) {
@@ -306,7 +306,7 @@ export default function LobbyJoinPage() {
         setSubmitting(true);
         setError(null);
         try {
-            await api.post(`/worlds/${currentWorld.id}/generals`, {
+            await generalApi.create(currentWorld.id, {
                 name: blockCustomName ? undefined : name.trim(),
                 cityId,
                 nationId: nationId || null,

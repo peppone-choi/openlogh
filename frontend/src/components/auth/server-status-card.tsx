@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { PublicCachedMapResponse } from '@/types';
 import { PublicGameMap } from '@/components/game/public-game-map';
+import { publicApi } from '@/lib/gameApi';
 
 function formatDateTime(value: string): string {
     const date = new Date(value);
@@ -44,31 +45,14 @@ export function ServerStatusCard() {
     const [selectedWorldId, setSelectedWorldId] = useState<number | null>(null);
     const [switching, setSwitching] = useState(false);
 
-    const apiBase =
-        typeof window !== 'undefined'
-            ? process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api'
-            : 'http://localhost:8080/api';
-
-    const fetchMap = useCallback(
-        async (worldId?: number) => {
-            try {
-                const url = worldId
-                    ? `${apiBase}/public/cached-map?worldId=${worldId}`
-                    : `${apiBase}/public/cached-map`;
-                const response = await fetch(url, {
-                    method: 'GET',
-                    cache: 'no-store',
-                });
-                if (!response.ok) {
-                    throw new Error('공개 지도 조회 실패');
-                }
-                return (await response.json()) as PublicCachedMapResponse;
-            } catch {
-                return null;
-            }
-        },
-        [apiBase]
-    );
+    const fetchMap = useCallback(async (worldId?: number) => {
+        try {
+            const { data: payload } = await publicApi.getCachedMap(worldId);
+            return payload;
+        } catch {
+            return null;
+        }
+    }, []);
 
     useEffect(() => {
         const init = async () => {

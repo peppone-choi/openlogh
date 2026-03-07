@@ -147,6 +147,8 @@ export const generalApi = {
             charm: number;
         }
     ) => api.put<General>(`/worlds/${worldId}/pool/${generalId}`, stats),
+    create: (worldId: number, payload: Record<string, unknown>) =>
+        api.post<General>(`/worlds/${worldId}/generals`, payload),
 };
 
 export const npcTokenApi = {
@@ -631,10 +633,10 @@ export const bettingApi = {
     getInfo: (worldId: number) => api.get<BettingInfo>(`/worlds/${worldId}/betting`),
     getHistory: (worldId: number) => api.get<BettingEventSummary[]>(`/worlds/${worldId}/betting/history`),
     getEvent: (worldId: number, yearMonth: string) => api.get<BettingInfo>(`/worlds/${worldId}/betting/${yearMonth}`),
-    placeBet: (worldId: number, generalId: number, targetId: number | number[], amount: number) =>
+    placeBet: (worldId: number, generalId: number, targetId: number, amount: number) =>
         api.post<void>(`/worlds/${worldId}/betting`, {
             generalId,
-            bettingType: Array.isArray(targetId) ? targetId : [targetId],
+            targetId,
             amount,
         }),
     toggleGate: (worldId: number, open: boolean) => api.post<void>(`/worlds/${worldId}/betting/gate`, { open }),
@@ -688,6 +690,12 @@ export const gameVersionApi = {
     deploy: (data: { gameVersion: string; imageTag?: string; commitSha?: string }) =>
         api.post<GameVersionInfo>('/admin/game-versions', data),
     stop: (version: string) => api.delete<void>(`/admin/game-versions/${encodeURIComponent(version)}`),
+};
+
+// Public API (unauthenticated endpoints)
+export const publicApi = {
+    getCachedMap: (worldId?: number) =>
+        api.get<PublicCachedMapResponse>('/public/cached-map', worldId != null ? { params: { worldId } } : {}),
 };
 
 // Helper: attach worldId as query param when provided
