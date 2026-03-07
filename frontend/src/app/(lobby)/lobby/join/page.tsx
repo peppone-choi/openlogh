@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
-import { UserPlus, ArrowLeft } from 'lucide-react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { UserPlus, ArrowLeft, Crown } from 'lucide-react';
 import { useWorldStore } from '@/stores/worldStore';
 import { useGeneralStore } from '@/stores/generalStore';
 import { useGameStore } from '@/stores/gameStore';
@@ -120,6 +120,9 @@ type StatPreset = 'balanced' | 'random' | 'leadership' | 'strength' | 'intel';
 
 export default function LobbyJoinPage() {
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const mode = searchParams.get('mode'); // 'found' (건국) or 'rise' (거병)
+    const isFoundMode = mode === 'found' || mode === 'rise';
     const { currentWorld } = useWorldStore();
     const { fetchMyGeneral } = useGeneralStore();
     const { cities, nations, loadAll } = useGameStore();
@@ -310,7 +313,7 @@ export default function LobbyJoinPage() {
             await generalApi.create(currentWorld.id, {
                 name: blockCustomName ? undefined : name.trim(),
                 cityId,
-                nationId: nationId || null,
+                nationId: isFoundMode ? null : nationId || null,
                 crewType,
                 personality,
                 ...stats,
@@ -338,7 +341,10 @@ export default function LobbyJoinPage() {
                 <ArrowLeft className="size-4 mr-1" /> 로비로 돌아가기
             </Button>
 
-            <PageHeader icon={UserPlus} title="장수 생성" />
+            <PageHeader
+                icon={isFoundMode ? Crown : UserPlus}
+                title={isFoundMode ? `장수 생성 (${mode === 'found' ? '건국' : '거병'})` : '장수 생성'}
+            />
 
             {error && <div className="text-sm px-3 py-2 rounded bg-destructive/20 text-destructive">{error}</div>}
 
@@ -423,22 +429,35 @@ export default function LobbyJoinPage() {
                             </p>
                         </div>
 
-                        {/* Nation */}
-                        <div className="space-y-1">
-                            <label className="block text-sm text-muted-foreground">소속 국가</label>
-                            <select
-                                value={nationId}
-                                onChange={(e) => setNationId(Number(e.target.value))}
-                                className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm"
-                            >
-                                <option value={0}>재야 (무소속)</option>
-                                {nations.map((n) => (
-                                    <option key={n.id} value={n.id}>
-                                        {n.name}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
+                        {/* Nation — hidden in found/rise mode (건국/거병 always starts as 재야) */}
+                        {isFoundMode ? (
+                            <div className="space-y-1">
+                                <label className="block text-sm text-muted-foreground">소속 국가</label>
+                                <div className="text-sm text-muted-foreground p-2 border border-input rounded-md bg-muted/50">
+                                    재야 (무소속) — {mode === 'found' ? '건국' : '거병'} 시 자동 설정
+                                </div>
+                                <p className="text-xs text-amber-500">
+                                    장수 생성 후 게임 내에서 {mode === 'found' ? '건국' : '거병'} 명령을 실행하여 국가를
+                                    세울 수 있습니다.
+                                </p>
+                            </div>
+                        ) : (
+                            <div className="space-y-1">
+                                <label className="block text-sm text-muted-foreground">소속 국가</label>
+                                <select
+                                    value={nationId}
+                                    onChange={(e) => setNationId(Number(e.target.value))}
+                                    className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm"
+                                >
+                                    <option value={0}>재야 (무소속)</option>
+                                    {nations.map((n) => (
+                                        <option key={n.id} value={n.id}>
+                                            {n.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
 
                         {/* City */}
                         <div className="space-y-1">
