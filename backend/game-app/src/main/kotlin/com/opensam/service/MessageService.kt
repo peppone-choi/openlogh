@@ -47,8 +47,8 @@ class MessageService(
         return messageRepository.findConversationByMailboxTypeAndOwnerId(MAILBOX_DIPLOMACY, nationId)
     }
 
-    fun getBoardMessages(worldId: Long): List<Message> {
-        return messageRepository.findByWorldIdAndMailboxCodeOrderBySentAtDesc(worldId, "board")
+    fun getBoardMessages(worldId: Long, nationId: Long): List<Message> {
+        return messageRepository.findByWorldIdAndMailboxCodeAndDestIdOrderBySentAtDesc(worldId, "board", nationId)
     }
 
     fun getSecretBoardMessages(worldId: Long, nationId: Long): List<Message> {

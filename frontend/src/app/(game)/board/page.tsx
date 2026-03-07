@@ -61,14 +61,14 @@ export default function BoardPage() {
     }, [currentWorld, generals.length, loadAll]);
 
     const loadPublic = useCallback(async () => {
-        if (!currentWorld) return;
+        if (!currentWorld || !myGeneral?.nationId) return;
         try {
-            const { data } = await messageApi.getBoard(currentWorld.id);
+            const { data } = await messageApi.getBoard(currentWorld.id, myGeneral.nationId);
             setPublicPosts(data);
         } catch {
             /* ignore */
         }
-    }, [currentWorld]);
+    }, [currentWorld, myGeneral?.nationId]);
 
     const loadSecret = useCallback(async () => {
         if (!currentWorld || !myGeneral?.nationId || !canAccessSecret) return;
@@ -133,7 +133,13 @@ export default function BoardPage() {
                 );
                 await loadSecret();
             } else {
-                await messageApi.postBoard(currentWorld.id, myGeneral.id, content.trim(), title.trim() || undefined);
+                await messageApi.postBoard(
+                    currentWorld.id,
+                    myGeneral.id,
+                    myGeneral.nationId,
+                    content.trim(),
+                    title.trim() || undefined
+                );
                 await loadPublic();
             }
             setTitle('');
@@ -195,7 +201,7 @@ export default function BoardPage() {
                 description={
                     isSecret
                         ? '아국 관료만 열람할 수 있는 비밀 게시판입니다.'
-                        : '모든 세력이 볼 수 있는 공개 게시판입니다.'
+                        : '자국 장수만 열람할 수 있는 게시판입니다.'
                 }
             />
 
@@ -217,7 +223,7 @@ export default function BoardPage() {
 
                 <TabsContent value={tab} className="mt-4 space-y-4">
                     {/* Compose form */}
-                    {myGeneral && (!isSecret || canAccessSecret) && (
+                    {myGeneral && myGeneral.nationId > 0 && (!isSecret || canAccessSecret) && (
                         <Card>
                             <CardContent className="space-y-2">
                                 <div className="flex items-center gap-2 text-xs text-muted-foreground">

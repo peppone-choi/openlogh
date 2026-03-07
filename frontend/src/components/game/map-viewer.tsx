@@ -12,6 +12,15 @@ interface MapViewerProps {
     worldId: number;
     mapCode?: string;
     compact?: boolean;
+    /** Override runtime cities (e.g. historical snapshot with modified nationId) */
+    overrideCities?: {
+        id: number;
+        name: string;
+        nationId: number;
+        supplyState?: number;
+        state?: number;
+        level?: number;
+    }[];
 }
 
 // [bgW, bgH, icnW, icnH, flagR, flagT]
@@ -26,9 +35,10 @@ const detailMapCitySizes: Record<number, number[]> = {
     8: [96, 72, 32, 24, -6, -3],
 };
 
-export function MapViewer({ worldId, mapCode = 'che', compact = false }: MapViewerProps) {
+export function MapViewer({ worldId, mapCode = 'che', compact = false, overrideCities }: MapViewerProps) {
     const router = useRouter();
-    const { cities, nations, mapData, loadAll, loadMap } = useGameStore();
+    const { cities: storeCities, nations, mapData, loadAll, loadMap } = useGameStore();
+    const cities = overrideCities ?? storeCities;
     const myGeneral = useGeneralStore((s) => s.myGeneral);
     const [showNames, setShowNames] = useState(!compact);
     const [tooltip, setTooltip] = useState<{
@@ -249,7 +259,7 @@ export function MapViewer({ worldId, mapCode = 'che', compact = false }: MapView
                                 </div>
 
                                 {/* City State Icon */}
-                                {rtCity && rtCity.state > 0 && (
+                                {rtCity && (rtCity.state ?? 0) > 0 && (
                                     <div className="absolute left-0" style={{ top: 5 * smV }}>
                                         <img
                                             src={`${GAME_CDN_ROOT}/event${rtCity.state}.gif`}

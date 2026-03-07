@@ -321,7 +321,14 @@ export default function NationsPage() {
                                         <TableCell>{n.gold.toLocaleString()}</TableCell>
                                         <TableCell>{n.rice.toLocaleString()}</TableCell>
                                         <TableCell>{n.tech}</TableCell>
-                                        <TableCell>{n.typeCode.replace(/^che_/, '')}</TableCell>
+                                        <TableCell>
+                                            <span
+                                                className="cursor-help underline decoration-dotted"
+                                                title={n.typeCode}
+                                            >
+                                                {n.typeCode.replace(/^che_/, '')}
+                                            </span>
+                                        </TableCell>
                                     </TableRow>
 
                                     {/* Expanded detail block */}

@@ -38,8 +38,11 @@ class MessageController(
     }
 
     @GetMapping("/board")
-    fun getBoardMessages(@RequestParam worldId: Long): ResponseEntity<List<MessageResponse>> {
-        return ResponseEntity.ok(messageService.getBoardMessages(worldId).map { MessageResponse.from(it) })
+    fun getBoardMessages(
+        @RequestParam worldId: Long,
+        @RequestParam nationId: Long,
+    ): ResponseEntity<List<MessageResponse>> {
+        return ResponseEntity.ok(messageService.getBoardMessages(worldId, nationId).map { MessageResponse.from(it) })
     }
 
     @GetMapping("/secret-board")

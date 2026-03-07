@@ -927,7 +927,6 @@ export default function ChiefPage() {
                             ) : (
                                 <div className="space-y-3">
                                     {(() => {
-                                        // Group turns by officerLevel, legacy order: 12,10,8,6,11,9,7,5
                                         const officerOrder = CHIEF_OFFICER_ORDER.filter(
                                             (lv) => lv >= (nation ? getMinNationChiefLevel(nation.level) : 5)
                                         );
@@ -938,98 +937,85 @@ export default function ChiefPage() {
                                             turnsByOfficer.set(t.officerLevel, list);
                                         }
 
-                                        return (
-                                            <div className="overflow-x-auto">
-                                                <table className="w-full text-xs border-collapse">
-                                                    <thead>
-                                                        <tr className="border-b border-gray-700">
-                                                            <th className="text-left py-1 px-2 sticky left-0 bg-background min-w-[80px]">
-                                                                수관
-                                                            </th>
-                                                            {Array.from(
-                                                                { length: NATION_TURN_COUNT },
-                                                                (_, i) => i + 1
-                                                            ).map((turnNo) => (
-                                                                <th
-                                                                    key={turnNo}
-                                                                    className="text-center py-1 px-1 min-w-[60px]"
+                                        return officerOrder.map((lv) => {
+                                            const officer = nationGenerals.find((g) => g.officerLevel === lv);
+                                            const turns = turnsByOfficer.get(lv) ?? [];
+                                            const turnMap = new Map(turns.map((t) => [t.turnIdx, t]));
+                                            const isMe = lv === myGeneral.officerLevel;
+                                            const reservedCount = turns.filter((t) => t.actionCode !== '휴식').length;
+
+                                            return (
+                                                <Card key={lv} className={isMe ? 'border-blue-700/50' : ''}>
+                                                    <CardHeader className="py-2 px-3">
+                                                        <div className="flex items-center gap-2">
+                                                            {officer && (
+                                                                <GeneralPortrait
+                                                                    picture={officer.picture}
+                                                                    name={officer.name}
+                                                                    size="sm"
+                                                                />
+                                                            )}
+                                                            <div className="leading-tight">
+                                                                <div
+                                                                    className={`text-sm font-medium ${isMe ? 'text-yellow-300' : ''}`}
                                                                 >
-                                                                    {turnNo}턴
-                                                                </th>
-                                                            ))}
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        {officerOrder.map((lv) => {
-                                                            const officer = nationGenerals.find(
-                                                                (g) => g.officerLevel === lv
-                                                            );
-                                                            const turns = turnsByOfficer.get(lv) ?? [];
-                                                            const turnMap = new Map(turns.map((t) => [t.turnIdx, t]));
-                                                            const isMe = lv === myGeneral.officerLevel;
-                                                            return (
-                                                                <tr
-                                                                    key={lv}
-                                                                    className={`border-b border-gray-800 ${isMe ? 'bg-blue-950/30' : 'hover:bg-gray-900/50'}`}
+                                                                    {nation
+                                                                        ? formatOfficerLevelText(lv, nation.level)
+                                                                        : `Lv.${lv}`}
+                                                                </div>
+                                                                <div className="text-[10px] text-muted-foreground">
+                                                                    {officer?.name ?? '(공석)'}
+                                                                    {reservedCount > 0 && (
+                                                                        <span className="ml-1 text-cyan-400">
+                                                                            예약 {reservedCount}/{NATION_TURN_COUNT}
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                            {isMe && (
+                                                                <Badge
+                                                                    variant="secondary"
+                                                                    className="text-[9px] ml-auto"
                                                                 >
-                                                                    <td className="py-1.5 px-2 sticky left-0 bg-background">
-                                                                        <div className="flex items-center gap-1">
-                                                                            {officer && (
-                                                                                <GeneralPortrait
-                                                                                    picture={officer.picture}
-                                                                                    name={officer.name}
-                                                                                    size="sm"
-                                                                                />
-                                                                            )}
-                                                                            <div className="leading-tight">
-                                                                                <div
-                                                                                    className={`font-medium ${isMe ? 'text-yellow-300' : ''}`}
-                                                                                >
-                                                                                    {nation
-                                                                                        ? formatOfficerLevelText(
-                                                                                              lv,
-                                                                                              nation.level
-                                                                                          )
-                                                                                        : `Lv.${lv}`}
-                                                                                </div>
-                                                                                <div className="text-[10px] text-muted-foreground truncate max-w-[70px]">
-                                                                                    {officer?.name ?? '-'}
-                                                                                </div>
+                                                                    나
+                                                                </Badge>
+                                                            )}
+                                                        </div>
+                                                    </CardHeader>
+                                                    <CardContent className="px-3 pb-2">
+                                                        <div className="grid grid-cols-6 gap-[2px]">
+                                                            {Array.from({ length: NATION_TURN_COUNT }, (_, i) => i).map(
+                                                                (turnIdx) => {
+                                                                    const turn = turnMap.get(turnIdx);
+                                                                    const code = turn?.actionCode ?? '휴식';
+                                                                    const isRest = code === '휴식';
+                                                                    return (
+                                                                        <div
+                                                                            key={turnIdx}
+                                                                            className="text-center"
+                                                                            title={turn?.brief ?? code}
+                                                                        >
+                                                                            <div className="text-[9px] text-muted-foreground">
+                                                                                {turnIdx + 1}턴
                                                                             </div>
-                                                                        </div>
-                                                                    </td>
-                                                                    {Array.from(
-                                                                        { length: NATION_TURN_COUNT },
-                                                                        (_, i) => i
-                                                                    ).map((turnIdx) => {
-                                                                        const turn = turnMap.get(turnIdx);
-                                                                        const code = turn?.actionCode ?? '휴식';
-                                                                        const isRest = code === '휴식';
-                                                                        return (
-                                                                            <td
-                                                                                key={turnIdx + 1}
-                                                                                className="py-1 px-0.5 text-center"
+                                                                            <span
+                                                                                className={`inline-block w-full px-0.5 py-0.5 rounded text-[10px] leading-tight ${
+                                                                                    isRest
+                                                                                        ? 'text-gray-500'
+                                                                                        : 'bg-cyan-950/50 text-cyan-300 border border-cyan-800/50'
+                                                                                }`}
                                                                             >
-                                                                                <span
-                                                                                    className={`inline-block px-1 py-0.5 rounded text-[10px] leading-tight ${
-                                                                                        isRest
-                                                                                            ? 'text-gray-500'
-                                                                                            : 'bg-cyan-950/50 text-cyan-300 border border-cyan-800/50'
-                                                                                    }`}
-                                                                                    title={turn?.brief ?? code}
-                                                                                >
-                                                                                    {code}
-                                                                                </span>
-                                                                            </td>
-                                                                        );
-                                                                    })}
-                                                                </tr>
-                                                            );
-                                                        })}
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                        );
+                                                                                {code}
+                                                                            </span>
+                                                                        </div>
+                                                                    );
+                                                                }
+                                                            )}
+                                                        </div>
+                                                    </CardContent>
+                                                </Card>
+                                            );
+                                        });
                                     })()}
                                 </div>
                             )}

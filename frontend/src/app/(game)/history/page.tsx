@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState, useCallback, lazy, Suspense } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useWorldStore } from '@/stores/worldStore';
 import { useGameStore } from '@/stores/gameStore';
 import { historyApi, mapRecentApi, worldApi } from '@/lib/gameApi';
@@ -15,8 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-
-const KonvaMapCanvas = lazy(() => import('@/components/game/konva-map-canvas'));
+import { MapViewer } from '@/components/game/map-viewer';
 
 type EventType = 'war' | 'diplomacy' | 'nation' | 'general' | 'city' | 'other';
 
@@ -102,7 +101,7 @@ export default function HistoryPage() {
     const [historyView, setHistoryView] = useState<'all' | 'global' | 'action'>('all');
 
     // Map snapshot state (맵 재현/스냅샷 브라우징)
-    const { nations, cities, mapData, loadAll } = useGameStore();
+    const { cities, loadAll } = useGameStore();
     const [cachedMap, setCachedMap] = useState<PublicCachedMapResponse | null>(null);
     const [worldSnapshots, setWorldSnapshots] = useState<WorldSnapshot[]>([]);
     const [mapLoading, setMapLoading] = useState(false);
@@ -354,22 +353,8 @@ export default function HistoryPage() {
                                 )}
 
                                 {/* Map canvas */}
-                                {mapData && (
-                                    <div className="border border-gray-700 rounded overflow-hidden">
-                                        <Suspense fallback={<LoadingState message="맵 로딩..." />}>
-                                            <KonvaMapCanvas
-                                                mapData={mapData}
-                                                cities={snapshotCities}
-                                                nations={nations}
-                                                width={Math.min(
-                                                    700,
-                                                    typeof window !== 'undefined' ? window.innerWidth - 64 : 700
-                                                )}
-                                                height={500}
-                                                showLabels
-                                            />
-                                        </Suspense>
-                                    </div>
+                                {currentWorld && (
+                                    <MapViewer worldId={currentWorld.id} compact overrideCities={snapshotCities} />
                                 )}
 
                                 {/* Snapshot info */}

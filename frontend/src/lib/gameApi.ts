@@ -291,14 +291,16 @@ export const messageApi = {
             officerLevel: options?.officerLevel,
             payload: { content },
         }),
-    getBoard: (worldId: number) => api.get<Message[]>('/messages/board', { params: { worldId } }),
-    postBoard: (worldId: number, srcId: number, content: string, title?: string) =>
+    getBoard: (worldId: number, nationId: number) =>
+        api.get<Message[]>('/messages/board', { params: { worldId, nationId } }),
+    postBoard: (worldId: number, srcId: number, nationId: number, content: string, title?: string) =>
         api.post<Message>('/messages', {
             worldId,
             mailboxCode: 'board',
             mailboxType: 'PUBLIC',
             messageType: 'board',
             srcId,
+            destId: nationId,
             payload: { content, ...(title ? { title } : {}) },
         }),
     getSecretBoard: (worldId: number, nationId: number) =>
