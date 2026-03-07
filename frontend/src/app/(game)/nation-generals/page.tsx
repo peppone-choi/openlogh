@@ -182,7 +182,7 @@ export default function NationGeneralsPage() {
                                             <TableCell key={col.key} className="text-xs">
                                                 {col.key === 'officer' && (
                                                     <span className="text-muted-foreground">
-                                                        {formatOfficerLevelText(g.officerLevel, nation?.level)}
+                                                        {formatOfficerLevelText(g.officerLevel, nation?.level, g.nationId > 0)}
                                                     </span>
                                                 )}
                                                 {col.key === 'stats' && (

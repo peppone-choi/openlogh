@@ -29,6 +29,21 @@ class ScenarioService(
     private val scenarios = mutableMapOf<String, ScenarioData>()
     private val log = LoggerFactory.getLogger(javaClass)
 
+    /** Legacy CityConstBase::$buildInit — level-based initial values for new cities. */
+    private data class CityInit(val pop: Int, val agri: Int, val comm: Int, val secu: Int, val def: Int, val wall: Int)
+
+    private val CITY_LEVEL_INIT = mapOf(
+        1 to CityInit(5000, 100, 100, 100, 500, 500),
+        2 to CityInit(5000, 100, 100, 100, 500, 500),
+        3 to CityInit(10000, 100, 100, 100, 1000, 1000),
+        4 to CityInit(50000, 1000, 1000, 1000, 1000, 1000),
+        5 to CityInit(100000, 1000, 1000, 1000, 2000, 2000),
+        6 to CityInit(100000, 1000, 1000, 1000, 3000, 3000),
+        7 to CityInit(150000, 1000, 1000, 1000, 4000, 4000),
+        8 to CityInit(150000, 1000, 1000, 1000, 5000, 5000),
+    )
+    private val DEFAULT_CITY_INIT = CityInit(50000, 1000, 1000, 1000, 1000, 1000)
+
     fun listScenarios(): List<ScenarioInfo> {
         loadAllScenarios()
         return scenarios.map { (code, data) ->
@@ -80,23 +95,24 @@ class ScenarioService(
         val mapCities = try { mapService.getCities(mapName) } catch (_: Exception) { mapService.getCities("che") }
         val cityNameToId = mutableMapOf<String, Long>()
         for (mc in mapCities) {
+            val init = CITY_LEVEL_INIT[mc.level] ?: DEFAULT_CITY_INIT
             val city = cityRepository.save(
                 City(
                     worldId = worldId,
                     name = mc.name,
                     level = mc.level.toShort(),
-                    pop = mc.population,
+                    pop = init.pop,
                     popMax = mc.population,
-                    agri = mc.agriculture,
+                    agri = init.agri,
                     agriMax = mc.agriculture,
-                    comm = mc.commerce,
+                    comm = init.comm,
                     commMax = mc.commerce,
-                    secu = mc.security,
+                    secu = init.secu,
                     secuMax = mc.security,
                     trust = 50f,
-                    def = mc.defence,
+                    def = init.def,
                     defMax = mc.defence,
-                    wall = mc.wall,
+                    wall = init.wall,
                     wallMax = mc.wall,
                     region = mc.region.toShort(),
                 )

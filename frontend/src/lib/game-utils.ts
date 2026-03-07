@@ -200,7 +200,13 @@ const OfficerLevelMapByNationLevel: Record<number, Record<number, string>> = {
     },
 };
 
-export function formatOfficerLevelText(officerLevel: number, nationLevel?: number): string {
+export function formatOfficerLevelText(
+    officerLevel: number,
+    nationLevel?: number,
+    hasNation?: boolean,
+): string {
+    if (officerLevel <= 0 && hasNation) return '일반';
+
     if (officerLevel < 5) {
         return OfficerLevelMapDefault[officerLevel] ?? '???';
     }

@@ -521,7 +521,7 @@ export default function NationPage() {
                                                         </div>
                                                     </TableCell>
                                                     <TableCell className="text-center text-xs whitespace-nowrap">
-                                                        {formatOfficerLevelText(g.officerLevel, nation.level)}
+                                                        {formatOfficerLevelText(g.officerLevel, nation.level, true)}
                                                     </TableCell>
                                                     <TableCell className="text-center text-xs">
                                                         {g.npcState > 0 ? (

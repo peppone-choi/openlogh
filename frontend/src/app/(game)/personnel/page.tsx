@@ -136,7 +136,7 @@ export default function PersonnelPage() {
     const [actionLoading, setActionLoading] = useState(false);
     const [appointLevel, setAppointLevel] = useState<number>(0);
     const [appointGeneral, setAppointGeneral] = useState<number>(0);
-    const [appointCity, setAppointCity] = useState<number>(0);
+    const [appointCity, setAppointCity] = useState<number>(-1);
     const [kickTarget, setKickTarget] = useState<number>(0);
     const [message, setMessage] = useState<{
         text: string;
@@ -608,8 +608,8 @@ export default function PersonnelPage() {
                                         variant="outline"
                                         disabled={actionLoading}
                                         onClick={() => {
-                                            if (appointGeneral > 0 && appointCity > 0) {
-                                                handleAppoint(level, appointGeneral, appointCity);
+                                            if (appointGeneral > 0 && appointCity !== -1) {
+                                                handleAppoint(level, appointGeneral, appointCity > 0 ? appointCity : undefined);
                                             }
                                         }}
                                     >

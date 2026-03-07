@@ -536,7 +536,8 @@ export default function NationsPage() {
                                                                                     <td className="py-1 px-1 whitespace-nowrap">
                                                                                         {formatOfficerLevelText(
                                                                                             g.officerLevel,
-                                                                                            n.level
+                                                                                            n.level,
+                                                                                            g.nationId > 0
                                                                                         )}
                                                                                     </td>
                                                                                     <td className="py-1 px-1">
@@ -604,69 +605,20 @@ export default function NationsPage() {
                                                                 소속 도시 없음
                                                             </p>
                                                         ) : (
-                                                            <div className="overflow-x-auto">
-                                                                <table className="w-full text-xs">
-                                                                    <thead>
-                                                                        <tr className="border-b border-muted/50">
-                                                                            <th className="text-left py-1 px-1">
-                                                                                도시
-                                                                            </th>
-                                                                            <th className="text-right py-1 px-1">
-                                                                                인구
-                                                                            </th>
-                                                                            <th className="text-right py-1 px-1">
-                                                                                농업
-                                                                            </th>
-                                                                            <th className="text-right py-1 px-1">
-                                                                                상업
-                                                                            </th>
-                                                                            <th className="text-right py-1 px-1">
-                                                                                치안
-                                                                            </th>
-                                                                            <th className="text-right py-1 px-1">
-                                                                                수비
-                                                                            </th>
-                                                                            <th className="text-right py-1 px-1">
-                                                                                성벽
-                                                                            </th>
-                                                                        </tr>
-                                                                    </thead>
-                                                                    <tbody>
-                                                                        {nationCities.map((c) => (
-                                                                            <tr
-                                                                                key={c.id}
-                                                                                className="border-b border-muted/20 hover:bg-muted/20"
-                                                                            >
-                                                                                <td className="py-1 px-1 font-medium">
-                                                                                    {c.name}
-                                                                                    {n.capitalCityId === c.id && (
-                                                                                        <span className="text-yellow-400 ml-1">
-                                                                                            ★
-                                                                                        </span>
-                                                                                    )}
-                                                                                </td>
-                                                                                <td className="py-1 px-1 text-right">
-                                                                                    {c.pop.toLocaleString()}
-                                                                                </td>
-                                                                                <td className="py-1 px-1 text-right">
-                                                                                    {c.agri}/{c.agriMax}
-                                                                                </td>
-                                                                                <td className="py-1 px-1 text-right">
-                                                                                    {c.comm}/{c.commMax}
-                                                                                </td>
-                                                                                <td className="py-1 px-1 text-right">
-                                                                                    {c.secu}/{c.secuMax}
-                                                                                </td>
-                                                                                <td className="py-1 px-1 text-right">
-                                                                                    {c.def}/{c.defMax}
-                                                                                </td>
-                                                                                <td className="py-1 px-1 text-right">
-                                                                                    {c.wall}/{c.wallMax}
-                                                                                </td>
-                                                                            </tr>
-                                                                        ))}
-                                                                    </tbody>
-                                                                </table>
+                                                            <div className="flex flex-wrap gap-1 text-xs">
+                                                                {nationCities.map((c) => (
+                                                                    <span
+                                                                        key={c.id}
+                                                                        className="inline-flex items-center px-1.5 py-0.5 rounded border border-muted/30"
+                                                                    >
+                                                                        {c.name}
+                                                                        {n.capitalCityId === c.id && (
+                                                                            <span className="text-yellow-400 ml-0.5">
+                                                                                ★
+                                                                            </span>
+                                                                        )}
+                                                                    </span>
+                                                                ))}
                                                             </div>
                                                         )}
                                                     </div>

@@ -159,7 +159,7 @@ export default function GeneralPage() {
     const commandName = getCurrentCommandName(g.lastTurn);
     const commandTarget = getCurrentCommandTarget(g.lastTurn, city?.name);
     const commandEta = formatEta(g.commandEndTime);
-    const officerText = formatOfficerLevelText(g.officerLevel, nationLevel);
+    const officerText = formatOfficerLevelText(g.officerLevel, nationLevel, g.nationId > 0);
     const injuryInfo = formatInjury(g.injury);
     const typeCall = formatGeneralTypeCall(g.leadership, g.strength, g.intel);
     const honorText = formatHonor(g.experience);
@@ -619,7 +619,7 @@ function NationGeneralsList({
                             {sorted.map((g) => {
                                 const npcColor = getNPCColor(g.npcState);
                                 const cityName = cityMap.get(g.cityId)?.name ?? `#${g.cityId}`;
-                                const officerText = formatOfficerLevelText(g.officerLevel, nation?.level);
+                                const officerText = formatOfficerLevelText(g.officerLevel, nation?.level, g.nationId > 0);
                                 return (
                                     <TableRow
                                         key={g.id}

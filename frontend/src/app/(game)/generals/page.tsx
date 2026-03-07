@@ -368,7 +368,7 @@ export default function GeneralsPage() {
                                         <NationBadge name={nation?.name} color={nation?.color} />
                                     </TableCell>
                                     <TableCell className="text-xs whitespace-nowrap">
-                                        {formatOfficerLevelText(g.officerLevel, nation?.level)}
+                                        {formatOfficerLevelText(g.officerLevel, nation?.level, g.nationId > 0)}
                                     </TableCell>
                                     <TableCell style={g.injury > 0 ? { color: 'red' } : undefined}>
                                         {g.leadership}

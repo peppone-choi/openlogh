@@ -86,16 +86,21 @@ class NationService(
             throw IllegalStateException("장수가 해당 국가에 속하지 않습니다.")
         }
         
-        if (officerLevel < 1 || officerLevel > 12) {
-            throw IllegalStateException("관직 레벨은 1-12 사이여야 합니다.")
+        if (officerLevel < 1 || officerLevel > 11) {
+            throw IllegalStateException("관직 레벨은 1-11 사이여야 합니다.")
         }
         
         if (officerLevel == 12) {
             throw IllegalStateException("군주는 유일하며 임명할 수 없습니다.")
         }
-        
-        if (general.officerLevel >= officerLevel) {
-            throw IllegalStateException("현재 관직 레벨보다 높은 관직만 임명할 수 있습니다.")
+
+        if (officerLevel >= 5) {
+            val existing = generalRepository.findByWorldId(general.worldId)
+                .filter { it.nationId == nationId && it.officerLevel.toInt() == officerLevel && it.id != generalId }
+            for (prev in existing) {
+                prev.officerLevel = 1
+                generalRepository.save(prev)
+            }
         }
         
         general.officerLevel = officerLevel.toShort()

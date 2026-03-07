@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { PublicCachedMapResponse } from '@/types';
-import { PublicGameMap } from '@/components/game/public-game-map';
+import { MapViewer } from '@/components/game/map-viewer';
 import { publicApi } from '@/lib/gameApi';
 
 function formatDateTime(value: string): string {
@@ -117,7 +117,7 @@ export function ServerStatusCard() {
                         지도 로딩중...
                     </div>
                 ) : (
-                    <PublicGameMap data={data} />
+                    <MapViewer publicData={data} interactive={false} />
                 )}
 
                 <div>
