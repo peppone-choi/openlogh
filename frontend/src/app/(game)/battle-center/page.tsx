@@ -15,6 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { NationBadge } from '@/components/game/nation-badge';
 import { formatLog } from '@/lib/formatLog';
+import { CREW_TYPE_NAMES, getPersonalityName } from '@/lib/game-utils';
 
 /** NPC color helper matching legacy getNPCColor */
 function getNPCColor(npcState: number): string | undefined {
@@ -454,21 +455,6 @@ function ComparisonView({
 
 /* ---- General Basic Card ---- */
 
-const CREW_TYPES: Record<number, string> = {
-    0: '보병',
-    1: '궁병',
-    2: '기병',
-    3: '귀병',
-    4: '차병',
-    5: '노병',
-    6: '연노병',
-    7: '근위기병',
-    8: '무당병',
-    9: '서량기병',
-    10: '등갑병',
-    11: '수군',
-};
-
 const DEX_LABELS = ['창', '궁', '기', '귀/차', '노'];
 
 function GeneralBasicCard({ general, nation }: { general: General; nation?: { name: string; color: string } | null }) {
@@ -528,7 +514,7 @@ function GeneralBasicCard({ general, nation }: { general: General; nation?: { na
                 <div className="grid grid-cols-3 gap-x-4 gap-y-1">
                     <div>
                         <span className="text-muted-foreground">병종:</span>{' '}
-                        {CREW_TYPES[general.crewType] ?? general.crewType}
+                        {CREW_TYPE_NAMES[general.crewType] ?? general.crewType}
                     </div>
                     <div>
                         <span className="text-muted-foreground">병사:</span> {general.crew.toLocaleString()}
@@ -617,7 +603,7 @@ function GeneralSupplementCard({ general }: { general: General }) {
             <CardContent className="text-xs space-y-1">
                 <div className="grid grid-cols-2 gap-x-4 gap-y-1">
                     <div>
-                        <span className="text-muted-foreground">성격:</span> {general.personalCode || '-'}
+                        <span className="text-muted-foreground">성격:</span> {getPersonalityName(general.personalCode) || '-'}
                     </div>
                     <div>
                         <span className="text-muted-foreground">전투특기:</span> {general.special2Code || '-'}

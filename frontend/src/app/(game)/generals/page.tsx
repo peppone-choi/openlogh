@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { formatOfficerLevelText, formatDefenceTrain, CREW_TYPE_NAMES } from '@/lib/game-utils';
+import { formatOfficerLevelText, formatDefenceTrain, CREW_TYPE_NAMES, getPersonalityName } from '@/lib/game-utils';
 
 type SortKey =
     | 'name'
@@ -390,7 +390,7 @@ export default function GeneralsPage() {
                                                     ? ` / ${g.special2Code}`
                                                     : ''}
                                             </TableCell>
-                                            <TableCell className="text-xs">{g.personalCode ?? '-'}</TableCell>
+                                            <TableCell className="text-xs">{getPersonalityName(g.personalCode) ?? '-'}</TableCell>
                                             <TableCell>{g.age ?? '-'}</TableCell>
                                             <TableCell className="text-xs">
                                                 {CREW_TYPE_NAMES[g.crewType] ?? g.crewType}

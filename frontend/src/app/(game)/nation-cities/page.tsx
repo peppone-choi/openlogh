@@ -5,7 +5,7 @@ import { useWorldStore } from '@/stores/worldStore';
 import { useGeneralStore } from '@/stores/generalStore';
 import { cityApi, diplomacyApi, generalApi, nationApi, nationManagementApi, nationPolicyApi } from '@/lib/gameApi';
 import type { City, Diplomacy, General, Nation } from '@/types';
-import { REGION_NAMES, CITY_LEVEL_NAMES } from '@/lib/game-utils';
+import { REGION_NAMES, CITY_LEVEL_NAMES, CREW_TYPE_NAMES } from '@/lib/game-utils';
 import { Building2, Crown, Search } from 'lucide-react';
 import { PageHeader } from '@/components/game/page-header';
 import { LoadingState } from '@/components/game/loading-state';
@@ -723,7 +723,7 @@ export default function NationCitiesPage() {
                                                                                 {g.intel}
                                                                             </td>
                                                                             <td className="text-right py-0.5 px-1">
-                                                                                {g.crewType ?? '-'}
+                                                                                {CREW_TYPE_NAMES[g.crewType] ?? g.crewType ?? '-'}
                                                                             </td>
                                                                             <td className="text-right py-0.5 px-1">
                                                                                 {(g.crew ?? 0).toLocaleString()}

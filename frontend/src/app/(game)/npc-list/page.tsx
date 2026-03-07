@@ -11,7 +11,7 @@ import { GeneralPortrait } from '@/components/game/general-portrait';
 import { NationBadge } from '@/components/game/nation-badge';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { CREW_TYPE_NAMES } from '@/lib/game-utils';
+import { CREW_TYPE_NAMES, getPersonalityName } from '@/lib/game-utils';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 type SortKey =
@@ -309,7 +309,7 @@ export default function NpcListPage() {
                                             <NationBadge name={nation?.name} color={nation?.color} />
                                         </TableCell>
                                         <TableCell className="text-xs">{cityMap.get(g.cityId)?.name ?? '-'}</TableCell>
-                                        <TableCell className="text-xs">{g.personalCode ?? '-'}</TableCell>
+                                        <TableCell className="text-xs">{getPersonalityName(g.personalCode) ?? '-'}</TableCell>
                                         <TableCell className="text-xs tabular-nums">{storageCount ?? '-'}</TableCell>
                                         <TableCell className="text-xs whitespace-nowrap">{specialFull}</TableCell>
                                         <TableCell className="font-medium tabular-nums">{totalStats}</TableCell>

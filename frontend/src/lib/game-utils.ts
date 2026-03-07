@@ -374,6 +374,17 @@ export function isValidObjKey<T>(key: T | 'None' | undefined | null): boolean {
 
 export const CREW_TYPE_NAMES: Record<number, string> = {
     0: '보병',
+    1: '궁병',
+    2: '기병',
+    3: '귀병',
+    4: '차병',
+    5: '노병',
+    6: '연노병',
+    7: '근위기병',
+    8: '무당병',
+    9: '서량기병',
+    10: '등갑병',
+    11: '수군',
     1100: '보병',
     1101: '청주병',
     1102: '수병',
@@ -409,9 +420,34 @@ export const CREW_TYPE_NAMES: Record<number, string> = {
     1503: '목우',
 };
 
+/** Base crew type subset (0-11) for dropdowns / UI selectors */
+export const BASE_CREW_TYPES: Record<number, string> = Object.fromEntries(
+    Object.entries(CREW_TYPE_NAMES)
+        .filter(([k]) => Number(k) <= 11)
+        .map(([k, v]) => [Number(k), v]),
+);
+
 export function getCrewTypeName(crewTypeStr: string): string {
     const code = parseInt(crewTypeStr.replace('che_', '')) || 0;
     return CREW_TYPE_NAMES[code] ?? crewTypeStr;
+}
+
+// --- Personality names (personalCode → Korean) ---
+
+export const PERSONALITY_NAMES: Record<string, string> = {
+    Random: '랜덤',
+    Normal: '일반',
+    Brave: '호전',
+    Calm: '냉정',
+    Loyal: '충성',
+    Timid: '소심',
+    Reckless: '저돌',
+    Ambition: '야망',
+};
+
+export function getPersonalityName(code: string | undefined | null): string {
+    if (!code) return '-';
+    return PERSONALITY_NAMES[code] ?? code;
 }
 
 // --- Region names ---

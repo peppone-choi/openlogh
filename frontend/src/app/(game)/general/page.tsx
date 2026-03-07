@@ -27,6 +27,7 @@ import {
     numberWithCommas,
     ageColor,
     getNPCColor,
+    getPersonalityName,
 } from '@/lib/game-utils';
 
 const DEX_NAMES = ['보병', '궁병', '기병', '귀병', '차병'];
@@ -354,7 +355,7 @@ export default function GeneralPage() {
                                     <Badge variant={g.special2Code === 'None' ? 'outline' : 'secondary'}>
                                         특기2: {g.special2Code === 'None' ? '없음' : g.special2Code}
                                     </Badge>
-                                    <Badge variant="secondary">성격: {g.personalCode}</Badge>
+                                    <Badge variant="secondary">성격: {getPersonalityName(g.personalCode)}</Badge>
                                 </div>
                                 <div className="grid grid-cols-2 gap-2 text-sm">
                                     {EQUIPMENT_KEYS.map((entry, index) => {
@@ -619,7 +620,11 @@ function NationGeneralsList({
                             {sorted.map((g) => {
                                 const npcColor = getNPCColor(g.npcState);
                                 const cityName = cityMap.get(g.cityId)?.name ?? `#${g.cityId}`;
-                                const officerText = formatOfficerLevelText(g.officerLevel, nation?.level, g.nationId > 0);
+                                const officerText = formatOfficerLevelText(
+                                    g.officerLevel,
+                                    nation?.level,
+                                    g.nationId > 0
+                                );
                                 return (
                                     <TableRow
                                         key={g.id}

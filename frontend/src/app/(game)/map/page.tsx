@@ -20,7 +20,7 @@ import {
     getSpecialEventIcon,
 } from '@/lib/image';
 import { FactionFlag } from '@/components/game/faction-flag';
-import { CITY_LEVEL_NAMES } from '@/lib/game-utils';
+import { CITY_LEVEL_NAMES, CREW_TYPE_NAMES } from '@/lib/game-utils';
 
 type MapTheme = 'default' | 'spring' | 'summer' | 'autumn' | 'winter';
 const MAP_THEMES: {
@@ -87,21 +87,6 @@ interface CityTooltip {
     screenX: number;
     screenY: number;
 }
-
-const CREW_TYPES: Record<number, string> = {
-    0: '보병',
-    1: '궁병',
-    2: '기병',
-    3: '귀병',
-    4: '차병',
-    5: '노병',
-    6: '연노병',
-    7: '근위기병',
-    8: '무당병',
-    9: '서량기병',
-    10: '등갑병',
-    11: '수군',
-};
 
 type MapSeason = 'spring' | 'summer' | 'fall' | 'winter';
 
@@ -389,7 +374,7 @@ export default function MapPage() {
                       name: g.name,
                       nationColor: nationMap.get(g.nationId)?.color ?? '#555',
                       crew: g.crew,
-                      crewType: CREW_TYPES[g.crewType] ?? `${g.crewType}`,
+                      crewType: CREW_TYPE_NAMES[g.crewType] ?? `${g.crewType}`,
                       isForeign: city ? g.nationId !== city.nationId : false,
                   }))
                 : [];

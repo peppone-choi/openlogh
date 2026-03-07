@@ -1,18 +1,39 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { Clock, Coins, Wheat, Timer, Gavel, AlertTriangle, Lock, Unlock } from 'lucide-react';
+import {
+    Clock,
+    Coins,
+    Wheat,
+    Timer,
+    Gavel,
+    AlertTriangle,
+    Lock,
+    Unlock,
+    Play,
+    Pause,
+    RotateCw,
+    Activity,
+} from 'lucide-react';
 import { PageHeader } from '@/components/game/page-header';
 import { LoadingState } from '@/components/game/loading-state';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { adminApi } from '@/lib/gameApi';
+import { adminApi, turnApi } from '@/lib/gameApi';
 import { toast } from 'sonner';
 import { useAdminWorld } from '@/contexts/AdminWorldContext';
 
 const TURN_PRESETS = [1, 2, 5, 10, 20, 30, 60, 120];
+
+const DAEMON_STATE_CONFIG: Record<string, { label: string; color: string; icon: typeof Activity }> = {
+    IDLE: { label: '대기', color: 'bg-green-500/20 text-green-400 border-green-500/40', icon: Activity },
+    RUNNING: { label: '실행중', color: 'bg-blue-500/20 text-blue-400 border-blue-500/40', icon: RotateCw },
+    PAUSED: { label: '일시정지', color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/40', icon: Pause },
+    FLUSHING: { label: '정리중', color: 'bg-orange-500/20 text-orange-400 border-orange-500/40', icon: RotateCw },
+    STOPPING: { label: '중지중', color: 'bg-red-500/20 text-red-400 border-red-500/40', icon: Pause },
+};
 
 export default function AdminTimeControlPage() {
     const { worldId } = useAdminWorld();
@@ -24,6 +45,50 @@ export default function AdminTimeControlPage() {
     const [turnTerm, setTurnTerm] = useState('');
     const [customTurnTerm, setCustomTurnTerm] = useState('');
     const [lastTurnTime, setLastTurnTime] = useState('');
+
+    const [daemonState, setDaemonState] = useState<string>('UNKNOWN');
+    const [daemonReason, setDaemonReason] = useState<string>('');
+    const [daemonLoading, setDaemonLoading] = useState(false);
+
+    const fetchDaemonStatus = useCallback(async () => {
+        try {
+            const { data } = await turnApi.getStatus();
+            setDaemonState(data.state ?? 'UNKNOWN');
+            setDaemonReason(data.reason ?? '');
+        } catch {
+            setDaemonState('UNREACHABLE');
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchDaemonStatus();
+        const interval = setInterval(fetchDaemonStatus, 5000);
+        return () => clearInterval(interval);
+    }, [fetchDaemonStatus]);
+
+    const handleDaemonAction = useCallback(
+        async (action: 'run' | 'pause' | 'resume') => {
+            setDaemonLoading(true);
+            try {
+                if (action === 'run') {
+                    const { data } = await turnApi.run();
+                    toast.success(data.result === 'triggered' ? '턴 실행 트리거됨' : `결과: ${data.result}`);
+                } else if (action === 'pause') {
+                    await turnApi.pause();
+                    toast.success('턴 데몬 일시정지됨');
+                } else {
+                    await turnApi.resume();
+                    toast.success('턴 데몬 재개됨');
+                }
+                await fetchDaemonStatus();
+            } catch {
+                toast.error('턴 데몬 제어 실패');
+            } finally {
+                setDaemonLoading(false);
+            }
+        },
+        [fetchDaemonStatus]
+    );
 
     // Gold/Rice distribution
     const [goldAmount, setGoldAmount] = useState('');
@@ -143,6 +208,72 @@ export default function AdminTimeControlPage() {
     return (
         <div className="space-y-4 max-w-2xl">
             <PageHeader icon={Clock} title="시간 제어" />
+
+            {/* Turn Daemon Control */}
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-base">
+                        <Activity className="size-4" />턴 데몬 제어
+                    </CardTitle>
+                    <CardDescription className="flex items-center gap-2">
+                        상태:{' '}
+                        {(() => {
+                            const cfg = DAEMON_STATE_CONFIG[daemonState];
+                            if (!cfg) return <Badge variant="outline">{daemonState}</Badge>;
+                            const Icon = cfg.icon;
+                            return (
+                                <span
+                                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs border ${cfg.color}`}
+                                >
+                                    <Icon className={`size-3 ${daemonState === 'RUNNING' ? 'animate-spin' : ''}`} />
+                                    {cfg.label}
+                                </span>
+                            );
+                        })()}
+                        {daemonReason && <span className="text-xs text-muted-foreground">({daemonReason})</span>}
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                    <div className="flex gap-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={daemonLoading || daemonState === 'RUNNING'}
+                            onClick={() => handleDaemonAction('run')}
+                            className="border-green-500/40 text-green-400 hover:bg-green-500/10"
+                        >
+                            <Play className="size-3.5 mr-1" /> 수동 실행
+                        </Button>
+                        {daemonState === 'PAUSED' ? (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                disabled={daemonLoading}
+                                onClick={() => handleDaemonAction('resume')}
+                                className="border-blue-500/40 text-blue-400 hover:bg-blue-500/10"
+                            >
+                                <Play className="size-3.5 mr-1" /> 재개
+                            </Button>
+                        ) : (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                disabled={daemonLoading || daemonState === 'PAUSED'}
+                                onClick={() => handleDaemonAction('pause')}
+                                className="border-yellow-500/40 text-yellow-400 hover:bg-yellow-500/10"
+                            >
+                                <Pause className="size-3.5 mr-1" /> 일시정지
+                            </Button>
+                        )}
+                        <Button variant="ghost" size="sm" disabled={daemonLoading} onClick={fetchDaemonStatus}>
+                            <RotateCw className={`size-3.5 ${daemonLoading ? 'animate-spin' : ''}`} />
+                        </Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                        5초마다 자동 갱신 · 수동 실행은 즉시 턴을 처리합니다
+                    </p>
+                </CardContent>
+            </Card>
 
             {/* Game Time */}
             <Card>

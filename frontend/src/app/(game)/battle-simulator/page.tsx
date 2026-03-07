@@ -12,22 +12,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { formatInjury } from '@/lib/game-utils';
+import { formatInjury, BASE_CREW_TYPES } from '@/lib/game-utils';
 
-const CREW_TYPES: Record<number, string> = {
-    0: '보병',
-    1: '궁병',
-    2: '기병',
-    3: '귀병',
-    4: '차병',
-    5: '노병',
-    6: '연노병',
-    7: '근위기병',
-    8: '무당병',
-    9: '서량기병',
-    10: '등갑병',
-    11: '수군',
-};
+
 
 // Known item/weapon/horse/book codes from legacy — these are used as dropdown options.
 // In production these would come from game const store; we provide common ones here.
@@ -483,7 +470,7 @@ function UnitBuilder({
                             onChange={(e) => set('crewType', Number(e.target.value))}
                             className="h-7 border border-gray-600 bg-[#111] px-1 text-xs text-white"
                         >
-                            {Object.entries(CREW_TYPES).map(([k, v]) => (
+                            {Object.entries(BASE_CREW_TYPES).map(([k, v]) => (
                                 <option key={k} value={k}>
                                     {v}
                                 </option>

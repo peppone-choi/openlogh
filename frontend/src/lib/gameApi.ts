@@ -764,6 +764,14 @@ export const adminApi = {
     resetPassword: (userId: number) => api.post<ResetPasswordResponse>(`/admin/users/${userId}/reset-password`, {}),
 };
 
+// Turn Daemon API (game-app direct — proxied through gateway)
+export const turnApi = {
+    getStatus: () => api.get<{ state: string; reason?: string; requestId?: string }>('/turns/status'),
+    run: () => api.post<{ result: string }>('/turns/run'),
+    pause: () => api.post<{ state: string }>('/turns/pause'),
+    resume: () => api.post<{ state: string }>('/turns/resume'),
+};
+
 // Admin Event API (legacy parity: j_raise_event.php)
 export const adminEventApi = {
     raise: (event: string, args?: JsonValue[], worldId?: number) =>

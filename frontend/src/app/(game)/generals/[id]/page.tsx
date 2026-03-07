@@ -29,6 +29,7 @@ import {
     formatHonor,
     numberWithCommas,
     getNPCColor,
+    getPersonalityName,
 } from '@/lib/game-utils';
 
 const DEX_NAMES = ['보병', '궁병', '기병', '귀병', '차병'];
@@ -146,7 +147,7 @@ export default function GeneralDetailPage() {
                                     명성: {honorText} ({general.experience.toLocaleString()}) | Lv.{general.expLevel}
                                 </p>
                                 <p>
-                                    성격: {general.personalCode} | 수비숙련: {defenceTrainText}
+                                    성격: {getPersonalityName(general.personalCode)} | 수비숙련: {defenceTrainText}
                                 </p>
                             </div>
                         </div>
@@ -197,7 +198,7 @@ export default function GeneralDetailPage() {
                         <Badge variant={isValidObjKey(general.special2Code) ? 'secondary' : 'outline'}>
                             특기2: {isValidObjKey(general.special2Code) ? general.special2Code : '없음'}
                         </Badge>
-                        <Badge variant="secondary">성격: {general.personalCode}</Badge>
+                        <Badge variant="secondary">성격: {getPersonalityName(general.personalCode)}</Badge>
                     </div>
                 </CardContent>
             </Card>

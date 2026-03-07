@@ -32,6 +32,7 @@ import {
     numberWithCommas,
     ageColor,
     isValidObjKey,
+    getPersonalityName,
 } from '@/lib/game-utils';
 import { formatLog } from '@/lib/formatLog';
 
@@ -471,7 +472,7 @@ export default function MyPage() {
                                     <Badge variant={g.special2Code === 'None' ? 'outline' : 'secondary'}>
                                         특기2: {g.special2Code === 'None' ? '없음' : g.special2Code}
                                     </Badge>
-                                    <Badge variant="secondary">성격: {g.personalCode}</Badge>
+                                    <Badge variant="secondary">성격: {getPersonalityName(g.personalCode)}</Badge>
                                 </div>
                             </CardContent>
                         </Card>
