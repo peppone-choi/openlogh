@@ -307,7 +307,9 @@ export default function DiplomacyPage() {
                                                     const src = nationMap.get(d.srcNationId);
                                                     const dest = nationMap.get(d.destNationId);
                                                     const srcLeader = src ? generalMap.get(src.chiefGeneralId) : null;
-                                                    const destLeader = dest ? generalMap.get(dest.chiefGeneralId) : null;
+                                                    const destLeader = dest
+                                                        ? generalMap.get(dest.chiefGeneralId)
+                                                        : null;
                                                     return (
                                                         <div
                                                             key={d.id}
@@ -477,9 +479,11 @@ export default function DiplomacyPage() {
                                             destGeneralId != null && Number.isFinite(destGeneralId)
                                                 ? generalMap.get(destGeneralId)
                                                 : null;
-                                        const srcSigner = srcGeneral ?? (srcNation ? generalMap.get(srcNation.chiefGeneralId) : null);
+                                        const srcSigner =
+                                            srcGeneral ?? (srcNation ? generalMap.get(srcNation.chiefGeneralId) : null);
                                         const destSigner =
-                                            destGeneral ?? (destNation ? generalMap.get(destNation.chiefGeneralId) : null);
+                                            destGeneral ??
+                                            (destNation ? generalMap.get(destNation.chiefGeneralId) : null);
                                         const prevLetterRaw =
                                             letter.payload.prevLetterId ??
                                             letter.payload.previousLetterId ??
@@ -500,10 +504,7 @@ export default function DiplomacyPage() {
                                             null;
                                         const hasExplicitPrevRef =
                                             typeof prevLetterRaw === 'number' || typeof prevLetterRaw === 'string';
-                                        const prevLetterRef =
-                                            hasExplicitPrevRef
-                                                ? String(prevLetterRaw)
-                                                : `${id}`;
+                                        const prevLetterRef = hasExplicitPrevRef ? String(prevLetterRaw) : `${id}`;
                                         const hasPrevLetterLink = hasExplicitPrevRef && letterIdSet.has(prevLetterRef);
                                         const type = letter.messageType;
                                         const content = letter.payload.content as string | undefined;
@@ -532,7 +533,11 @@ export default function DiplomacyPage() {
                                         ];
 
                                         return (
-                                            <div id={`letter-${id}`} key={id} className="rounded border border-gray-700 p-3 space-y-2">
+                                            <div
+                                                id={`letter-${id}`}
+                                                key={id}
+                                                className="rounded border border-gray-700 p-3 space-y-2"
+                                            >
                                                 {/* Header */}
                                                 <div className="flex items-center gap-2 flex-wrap">
                                                     <Badge variant="outline" className="text-xs">
@@ -578,7 +583,10 @@ export default function DiplomacyPage() {
                                                 <div className="text-xs text-muted-foreground">
                                                     선행문서 참조:{' '}
                                                     {hasPrevLetterLink ? (
-                                                        <a href={`#letter-${prevLetterRef}`} className="text-cyan-400 hover:underline">
+                                                        <a
+                                                            href={`#letter-${prevLetterRef}`}
+                                                            className="text-cyan-400 hover:underline"
+                                                        >
                                                             #{prevLetterRef}
                                                         </a>
                                                     ) : (

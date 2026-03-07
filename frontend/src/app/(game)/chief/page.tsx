@@ -461,47 +461,49 @@ export default function ChiefPage() {
 
     const nationCommandCategories = Object.keys(nationCommandTable);
 
-     // City map for lookups
-     const cityMap = useMemo(() => new Map(nationCities.map((c) => [c.id, c])), [nationCities]);
+    // City map for lookups
+    const cityMap = useMemo(() => new Map(nationCities.map((c) => [c.id, c])), [nationCities]);
 
-     const chiefOverviewRows = useMemo(() => {
-         const grouped = new Map<number, OfficerInfo[]>();
-         for (const officer of officerOverview) {
-             const prev = grouped.get(officer.officerLevel) ?? [];
-             prev.push(officer);
-             grouped.set(officer.officerLevel, prev);
-         }
+    const chiefOverviewRows = useMemo(() => {
+        const grouped = new Map<number, OfficerInfo[]>();
+        for (const officer of officerOverview) {
+            const prev = grouped.get(officer.officerLevel) ?? [];
+            prev.push(officer);
+            grouped.set(officer.officerLevel, prev);
+        }
 
-         const turnMapByLevel = new Map<number, Map<number, NationTurn>>();
-         for (const turn of allOfficerTurns) {
-             const prev = turnMapByLevel.get(turn.officerLevel) ?? new Map<number, NationTurn>();
-             prev.set(turn.turnIdx, turn);
-             turnMapByLevel.set(turn.officerLevel, prev);
-         }
+        const turnMapByLevel = new Map<number, Map<number, NationTurn>>();
+        for (const turn of allOfficerTurns) {
+            const prev = turnMapByLevel.get(turn.officerLevel) ?? new Map<number, NationTurn>();
+            prev.set(turn.turnIdx, turn);
+            turnMapByLevel.set(turn.officerLevel, prev);
+        }
 
-         const levels = [...grouped.keys()].sort((a, b) => b - a);
-         return levels.map((level) => {
-             const officers = grouped.get(level) ?? [];
-             const slotTurns = turnMapByLevel.get(level);
-             const reservedCount = slotTurns
-                 ? Array.from(slotTurns.values()).filter((turn) => turn.actionCode !== '휴식').length
-                 : 0;
+        const levels = [...grouped.keys()].sort((a, b) => b - a);
+        return levels.map((level) => {
+            const officers = grouped.get(level) ?? [];
+            const slotTurns = turnMapByLevel.get(level);
+            const reservedCount = slotTurns
+                ? Array.from(slotTurns.values()).filter((turn) => turn.actionCode !== '휴식').length
+                : 0;
 
-             return {
-                 level,
-                 officers: officers.sort((a, b) => a.id - b.id).map((officer) => {
-                     const matchedGeneral = nationGenerals.find((general) => general.id === officer.id);
-                     return {
-                         ...officer,
-                         cityName: cityMap.get(officer.cityId)?.name ?? '-',
-                         commandStatus:
-                             reservedCount > 0 ? `예약 ${reservedCount}/${NATION_TURN_COUNT}` : '모두 휴식',
-                         turnTime: formatTurnClock(matchedGeneral?.turnTime),
-                     };
-                 }),
-             };
-         });
-     }, [allOfficerTurns, cityMap, nationGenerals, officerOverview]);
+            return {
+                level,
+                officers: officers
+                    .sort((a, b) => a.id - b.id)
+                    .map((officer) => {
+                        const matchedGeneral = nationGenerals.find((general) => general.id === officer.id);
+                        return {
+                            ...officer,
+                            cityName: cityMap.get(officer.cityId)?.name ?? '-',
+                            commandStatus:
+                                reservedCount > 0 ? `예약 ${reservedCount}/${NATION_TURN_COUNT}` : '모두 휴식',
+                            turnTime: formatTurnClock(matchedGeneral?.turnTime),
+                        };
+                    }),
+            };
+        });
+    }, [allOfficerTurns, cityMap, nationGenerals, officerOverview]);
 
     if (!currentWorld) return <div className="p-4 text-muted-foreground">월드를 선택해주세요.</div>;
     if (!myGeneral) return <LoadingState />;
@@ -875,9 +877,15 @@ export default function ChiefPage() {
                                                     className="flex flex-wrap items-center gap-2 rounded border border-gray-800 px-2 py-1.5 text-xs"
                                                 >
                                                     <span className="font-medium">{officer.name}</span>
-                                                    <span className="text-muted-foreground">도시: {officer.cityName}</span>
-                                                    <span className="text-muted-foreground">상태: {officer.commandStatus}</span>
-                                                    <span className="text-muted-foreground">턴: {officer.turnTime}</span>
+                                                    <span className="text-muted-foreground">
+                                                        도시: {officer.cityName}
+                                                    </span>
+                                                    <span className="text-muted-foreground">
+                                                        상태: {officer.commandStatus}
+                                                    </span>
+                                                    <span className="text-muted-foreground">
+                                                        턴: {officer.turnTime}
+                                                    </span>
                                                 </div>
                                             ))}
                                         </div>

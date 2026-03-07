@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { formatOfficerLevelText, CREW_TYPE_NAMES } from '@/lib/game-utils';
+import { formatOfficerLevelText, formatDefenceTrain, CREW_TYPE_NAMES } from '@/lib/game-utils';
 
 type SortKey =
     | 'name'
@@ -42,7 +42,9 @@ type SortKey =
     | 'totalStats'
     | 'age'
     | 'special'
-    | 'personal';
+    | 'personal'
+    | 'defenceTrain'
+    | 'injury';
 
 type NpcFilter = 'all' | 'user' | 'npc';
 
@@ -73,6 +75,8 @@ const EXT_COLUMNS: { key: SortKey; label: string }[] = [
     { key: 'killTurn', label: '삭턴' },
     { key: 'penalty', label: '벌점' },
     { key: 'fame', label: '명성' },
+    { key: 'defenceTrain', label: '수비' },
+    { key: 'injury', label: '부상' },
 ];
 
 const SORT_DROPDOWN_OPTIONS: { key: SortKey; label: string }[] = [
@@ -403,6 +407,10 @@ export default function GeneralsPage() {
                                                     : '-'}
                                             </TableCell>
                                             <TableCell>{g.experience}</TableCell>
+                                            <TableCell>{formatDefenceTrain(g.defenceTrain ?? 0)}</TableCell>
+                                            <TableCell style={g.injury > 0 ? { color: 'red' } : undefined}>
+                                                {g.injury > 0 ? `${g.injury}%` : '-'}
+                                            </TableCell>
                                         </>
                                     )}
                                     <TableCell className="text-center">

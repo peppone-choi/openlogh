@@ -267,6 +267,18 @@ export default function GeneralPage() {
                                             ({g.experience.toLocaleString()})
                                         </span>
                                     </p>
+                                    {g.belong != null && g.belong > 0 && (
+                                        <p className="text-sm">
+                                            <span className="text-muted-foreground">소속턴:</span>{' '}
+                                            <span>{g.belong}턴</span>
+                                        </p>
+                                    )}
+                                    {g.betray != null && g.betray > 0 && (
+                                        <p className="text-sm">
+                                            <span className="text-muted-foreground">배반:</span>{' '}
+                                            <span className="text-red-400">{g.betray}회</span>
+                                        </p>
+                                    )}
                                 </div>
                             </div>
                         </CardContent>

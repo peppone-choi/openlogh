@@ -18,7 +18,21 @@ import { Button } from '@/components/ui/button';
 import { formatOfficerLevelText, CREW_TYPE_NAMES } from '@/lib/game-utils';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
-type ColumnKey = 'officer' | 'stats' | 'crew' | 'train' | 'troop' | 'battle' | 'equipment' | 'status';
+type ColumnKey =
+    | 'officer'
+    | 'stats'
+    | 'crew'
+    | 'train'
+    | 'troop'
+    | 'battle'
+    | 'equipment'
+    | 'status'
+    | 'gold'
+    | 'rice'
+    | 'level'
+    | 'dedication'
+    | 'special'
+    | 'injury';
 
 const ALL_COLUMNS: {
     key: ColumnKey;
@@ -30,6 +44,12 @@ const ALL_COLUMNS: {
     { key: 'crew', label: '병력', minOfficerLevel: 0 },
     { key: 'train', label: '훈련/사기', minOfficerLevel: 3 },
     { key: 'troop', label: '부대', minOfficerLevel: 0 },
+    { key: 'gold', label: '자금', minOfficerLevel: 0 },
+    { key: 'rice', label: '군량', minOfficerLevel: 0 },
+    { key: 'level', label: '레벨', minOfficerLevel: 0 },
+    { key: 'dedication', label: '계급', minOfficerLevel: 0 },
+    { key: 'special', label: '특기', minOfficerLevel: 0 },
+    { key: 'injury', label: '부상', minOfficerLevel: 0 },
     { key: 'battle', label: '전투기록', minOfficerLevel: 4 },
     { key: 'equipment', label: '장비', minOfficerLevel: 5 },
     { key: 'status', label: '상태', minOfficerLevel: 0 },
@@ -166,8 +186,12 @@ export default function NationGeneralsPage() {
                                                     </span>
                                                 )}
                                                 {col.key === 'stats' && (
-                                                    <span className="tabular-nums">
-                                                        통{g.leadership}/무{g.strength}/지{g.intel}
+                                                    <span
+                                                        className="tabular-nums"
+                                                        style={g.injury > 0 ? { color: 'red' } : undefined}
+                                                    >
+                                                        통{g.leadership}/무{g.strength}/지{g.intel}/정{g.politics}/매
+                                                        {g.charm}
                                                     </span>
                                                 )}
                                                 {col.key === 'crew' && (
@@ -190,6 +214,32 @@ export default function NationGeneralsPage() {
                                                     ) : (
                                                         <span className="text-muted-foreground">-</span>
                                                     ))}
+                                                {col.key === 'gold' && (
+                                                    <span className="tabular-nums text-yellow-400">
+                                                        {g.gold.toLocaleString()}
+                                                    </span>
+                                                )}
+                                                {col.key === 'rice' && (
+                                                    <span className="tabular-nums text-green-400">
+                                                        {g.rice.toLocaleString()}
+                                                    </span>
+                                                )}
+                                                {col.key === 'level' && (
+                                                    <span className="tabular-nums">{g.expLevel}</span>
+                                                )}
+                                                {col.key === 'dedication' && (
+                                                    <span className="tabular-nums">Lv.{g.dedLevel ?? 0}</span>
+                                                )}
+                                                {col.key === 'special' && (
+                                                    <span>
+                                                        {g.specialCode === 'None' ? '-' : (g.specialCode ?? '-')}
+                                                    </span>
+                                                )}
+                                                {col.key === 'injury' && (
+                                                    <span style={{ color: g.injury > 0 ? 'red' : undefined }}>
+                                                        {g.injury > 0 ? `${g.injury}%` : '-'}
+                                                    </span>
+                                                )}
                                                 {col.key === 'battle' && (
                                                     <div className="flex items-center gap-1 text-[10px]">
                                                         <Swords className="size-2.5" />

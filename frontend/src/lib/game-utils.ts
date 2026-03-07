@@ -552,6 +552,61 @@ export interface TurnObj {
     arg: Record<string, unknown>;
 }
 
+// --- Dedication level text (legacy func_converter.php getDedLevel) ---
+
+export function getDedLevelText(dedLevel: number): string {
+    if (dedLevel < 10) return '무품관';
+    if (dedLevel >= 100) return '공신';
+    return `${10 - Math.floor(dedLevel / 10)}품관`;
+}
+
+// --- Dexterity call (legacy func_converter.php getDexCall — simple grade) ---
+
+const DEX_CALL_GRADES = [
+    'F-',
+    'F',
+    'F+',
+    'E-',
+    'E',
+    'E+',
+    'D-',
+    'D',
+    'D+',
+    'C-',
+    'C',
+    'C+',
+    'B-',
+    'B',
+    'B+',
+    'A-',
+    'A',
+    'A+',
+    'S-',
+    'S',
+    'S+',
+    'EX-',
+    'EX',
+    'EX+',
+];
+
+export function getDexCall(dex: number): string {
+    return DEX_CALL_GRADES[Math.min(Math.floor(dex / 100), DEX_CALL_GRADES.length - 1)];
+}
+
+// --- Experience level (legacy func_converter.php getExpLevel) ---
+
+export function getExpLevel(experience: number): number {
+    return Math.floor(experience / 100);
+}
+
+// --- Level percentage (legacy func_converter.php getLevelPer) ---
+
+export function getLevelPer(exp: number, level: number): number {
+    return exp - level * 100;
+}
+
+// --- Post-filter nation command for troop dispatch (legacy postFilterNationCommandGen) ---
+
 export function postFilterNationCommandGen<T extends TurnObj>(
     troopList: Record<number, string>,
     cityMap: Map<number, { name: string }>

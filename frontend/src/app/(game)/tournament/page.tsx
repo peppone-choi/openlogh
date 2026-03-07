@@ -525,7 +525,9 @@ export default function TournamentPage() {
                                                                         {p1?.name ?? (match.p1 ? `#${match.p1}` : '-')}
                                                                     </span>
                                                                     {typeof p1Odds === 'number' && p1Odds > 0 && (
-                                                                        <span className="text-[10px] text-sky-400">{p1Odds}x</span>
+                                                                        <span className="text-[10px] text-sky-400">
+                                                                            {p1Odds}x
+                                                                        </span>
                                                                     )}
                                                                     {isP1Winner && (
                                                                         <Medal className="size-3 text-amber-400 shrink-0 ml-auto" />
@@ -559,7 +561,9 @@ export default function TournamentPage() {
                                                                         {p2?.name ?? (match.p2 ? `#${match.p2}` : '-')}
                                                                     </span>
                                                                     {typeof p2Odds === 'number' && p2Odds > 0 && (
-                                                                        <span className="text-[10px] text-sky-400">{p2Odds}x</span>
+                                                                        <span className="text-[10px] text-sky-400">
+                                                                            {p2Odds}x
+                                                                        </span>
                                                                     )}
                                                                     {isP2Winner && (
                                                                         <Medal className="size-3 text-amber-400 shrink-0 ml-auto" />
@@ -967,7 +971,9 @@ export default function TournamentPage() {
                         <p>본선은 개인당 3경기를 치르며 승점(승3, 무1, 패0)에 따라 순위를 매깁니다.</p>
                         <p>각 조 1, 2위는 16강에 배정됩니다.</p>
                         <p>16강부터는 1경기 토너먼트로 진행됩니다.</p>
-                        <p>참가비는 금 {participationFee?.toLocaleString() ?? '?'}이며, 성적에 따라 포상이 지급됩니다.</p>
+                        <p>
+                            참가비는 금 {participationFee?.toLocaleString() ?? '?'}이며, 성적에 따라 포상이 지급됩니다.
+                        </p>
                         <p>성적에 따라 금과 명성이 포상으로 주어집니다.</p>
                         <div className="mt-2 pt-2 border-t border-gray-800">
                             <p className="text-amber-400/80">

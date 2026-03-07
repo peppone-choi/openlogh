@@ -403,10 +403,7 @@ export default function BettingPage() {
                     const losses = metaNum(g.meta, config.lossesKey);
                     const games = wins + draws + losses;
                     const points = wins * 3 + draws;
-                    const championships = config.championKeys.reduce(
-                        (acc, key) => acc || metaNum(g.meta, key),
-                        0
-                    );
+                    const championships = config.championKeys.reduce((acc, key) => acc || metaNum(g.meta, key), 0);
                     return {
                         general: g,
                         games,
@@ -877,13 +874,25 @@ export default function BettingPage() {
                                             <Table>
                                                 <TableHeader>
                                                     <TableRow>
-                                                        <TableHead className="text-[10px] px-2 py-1 w-10">순위</TableHead>
+                                                        <TableHead className="text-[10px] px-2 py-1 w-10">
+                                                            순위
+                                                        </TableHead>
                                                         <TableHead className="text-[10px] px-2 py-1">이름</TableHead>
-                                                        <TableHead className="text-[10px] px-2 py-1 text-right">경기수</TableHead>
-                                                        <TableHead className="text-[10px] px-2 py-1 text-right">승리</TableHead>
-                                                        <TableHead className="text-[10px] px-2 py-1 text-right">패배</TableHead>
-                                                        <TableHead className="text-[10px] px-2 py-1 text-right">점수</TableHead>
-                                                        <TableHead className="text-[10px] px-2 py-1 text-right">우승횟수</TableHead>
+                                                        <TableHead className="text-[10px] px-2 py-1 text-right">
+                                                            경기수
+                                                        </TableHead>
+                                                        <TableHead className="text-[10px] px-2 py-1 text-right">
+                                                            승리
+                                                        </TableHead>
+                                                        <TableHead className="text-[10px] px-2 py-1 text-right">
+                                                            패배
+                                                        </TableHead>
+                                                        <TableHead className="text-[10px] px-2 py-1 text-right">
+                                                            점수
+                                                        </TableHead>
+                                                        <TableHead className="text-[10px] px-2 py-1 text-right">
+                                                            우승횟수
+                                                        </TableHead>
                                                     </TableRow>
                                                 </TableHeader>
                                                 <TableBody>
