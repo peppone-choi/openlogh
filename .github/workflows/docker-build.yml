@@ -161,3 +161,18 @@ jobs:
                   SPRING_REDIS_HOST: localhost
                   SPRING_REDIS_PORT: 6379
               run: ./gradlew build --no-daemon
+
+    deploy:
+        needs: [build-gateway, build-game, build-frontend, build-backend]
+        runs-on: ubuntu-latest
+        steps:
+            - name: Deploy to EC2
+              uses: appleboy/ssh-action@v1
+              with:
+                  host: ${{ secrets.EC2_HOST }}
+                  username: ubuntu
+                  key: ${{ secrets.EC2_SSH_KEY }}
+                  script: |
+                      cd ~/opensamguk-deploy
+                      docker compose pull
+                      docker compose up -d
