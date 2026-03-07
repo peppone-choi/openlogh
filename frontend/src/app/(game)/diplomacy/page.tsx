@@ -117,6 +117,7 @@ export default function DiplomacyPage() {
 
     const nationMap = useMemo(() => new Map(nations.map((n) => [n.id, n])), [nations]);
     const generalMap = useMemo(() => new Map(generals.map((g) => [g.id, g])), [generals]);
+    const letterIdSet = useMemo(() => new Set(letters.map((l) => String(l.id))), [letters]);
 
     const activeDiplomacy = useMemo(() => diplomacy.filter((d) => !d.isDead), [diplomacy]);
 
@@ -305,14 +306,30 @@ export default function DiplomacyPage() {
                                                 {items.map((d) => {
                                                     const src = nationMap.get(d.srcNationId);
                                                     const dest = nationMap.get(d.destNationId);
+                                                    const srcLeader = src ? generalMap.get(src.chiefGeneralId) : null;
+                                                    const destLeader = dest ? generalMap.get(dest.chiefGeneralId) : null;
                                                     return (
                                                         <div
                                                             key={d.id}
                                                             className="flex items-center gap-2 rounded border border-gray-700 px-2 py-1.5 text-sm"
                                                         >
-                                                            <NationBadge name={src?.name} color={src?.color} />
+                                                            <span className="inline-flex items-center gap-1.5">
+                                                                <GeneralPortrait
+                                                                    picture={srcLeader?.picture}
+                                                                    name={srcLeader?.name ?? src?.name ?? '발신국'}
+                                                                    size="sm"
+                                                                />
+                                                                <NationBadge name={src?.name} color={src?.color} />
+                                                            </span>
                                                             <ArrowRight className="size-3 text-muted-foreground" />
-                                                            <NationBadge name={dest?.name} color={dest?.color} />
+                                                            <span className="inline-flex items-center gap-1.5">
+                                                                <GeneralPortrait
+                                                                    picture={destLeader?.picture}
+                                                                    name={destLeader?.name ?? dest?.name ?? '수신국'}
+                                                                    size="sm"
+                                                                />
+                                                                <NationBadge name={dest?.name} color={dest?.color} />
+                                                            </span>
                                                             <span className="ml-auto text-xs text-muted-foreground">
                                                                 {d.term}턴
                                                             </span>
@@ -460,15 +477,34 @@ export default function DiplomacyPage() {
                                             destGeneralId != null && Number.isFinite(destGeneralId)
                                                 ? generalMap.get(destGeneralId)
                                                 : null;
+                                        const srcSigner = srcGeneral ?? (srcNation ? generalMap.get(srcNation.chiefGeneralId) : null);
+                                        const destSigner =
+                                            destGeneral ?? (destNation ? generalMap.get(destNation.chiefGeneralId) : null);
                                         const prevLetterRaw =
                                             letter.payload.prevLetterId ??
+                                            letter.payload.previousLetterId ??
+                                            letter.payload.previousDocumentId ??
                                             letter.payload.parentId ??
+                                            letter.payload.referenceId ??
+                                            letter.payload.referenceNo ??
+                                            letter.payload.prev_no ??
                                             letter.payload.prevNo ??
+                                            letter.meta.prevLetterId ??
+                                            letter.meta.previousLetterId ??
+                                            letter.meta.previousDocumentId ??
+                                            letter.meta.parentId ??
+                                            letter.meta.referenceId ??
+                                            letter.meta.referenceNo ??
+                                            letter.meta.prev_no ??
+                                            letter.meta.prevNo ??
                                             null;
+                                        const hasExplicitPrevRef =
+                                            typeof prevLetterRaw === 'number' || typeof prevLetterRaw === 'string';
                                         const prevLetterRef =
-                                            typeof prevLetterRaw === 'number' || typeof prevLetterRaw === 'string'
+                                            hasExplicitPrevRef
                                                 ? String(prevLetterRaw)
-                                                : '-';
+                                                : `${id}`;
+                                        const hasPrevLetterLink = hasExplicitPrevRef && letterIdSet.has(prevLetterRef);
                                         const type = letter.messageType;
                                         const content = letter.payload.content as string | undefined;
                                         const diplomaticContent = letter.payload.diplomaticContent as
@@ -496,7 +532,7 @@ export default function DiplomacyPage() {
                                         ];
 
                                         return (
-                                            <div key={id} className="rounded border border-gray-700 p-3 space-y-2">
+                                            <div id={`letter-${id}`} key={id} className="rounded border border-gray-700 p-3 space-y-2">
                                                 {/* Header */}
                                                 <div className="flex items-center gap-2 flex-wrap">
                                                     <Badge variant="outline" className="text-xs">
@@ -540,7 +576,17 @@ export default function DiplomacyPage() {
                                                 )}
 
                                                 <div className="text-xs text-muted-foreground">
-                                                    선행 문서: <span className="text-foreground">{prevLetterRef}</span>
+                                                    선행문서 참조:{' '}
+                                                    {hasPrevLetterLink ? (
+                                                        <a href={`#letter-${prevLetterRef}`} className="text-cyan-400 hover:underline">
+                                                            #{prevLetterRef}
+                                                        </a>
+                                                    ) : (
+                                                        <span className="text-foreground">
+                                                            #{prevLetterRef}
+                                                            {!hasExplicitPrevRef ? ' (참조번호)' : ''}
+                                                        </span>
+                                                    )}
                                                 </div>
 
                                                 {/* Document chain progress: 제안→수락→이행 */}
@@ -569,8 +615,8 @@ export default function DiplomacyPage() {
                                                     <div className="grid gap-2 sm:grid-cols-2">
                                                         <div className="flex items-center gap-2 rounded border border-gray-800 px-2 py-1.5">
                                                             <GeneralPortrait
-                                                                picture={srcGeneral?.picture}
-                                                                name={srcGeneral?.name ?? '발신 장수'}
+                                                                picture={srcSigner?.picture}
+                                                                name={srcSigner?.name ?? '발신 장수'}
                                                                 size="lg"
                                                             />
                                                             <div className="min-w-0 text-xs">
@@ -578,14 +624,14 @@ export default function DiplomacyPage() {
                                                                     {srcNation?.name ?? '-'}
                                                                 </div>
                                                                 <div className="truncate text-foreground">
-                                                                    {srcGeneral?.name ?? '-'}
+                                                                    {srcSigner?.name ?? '-'}
                                                                 </div>
                                                             </div>
                                                         </div>
                                                         <div className="flex items-center gap-2 rounded border border-gray-800 px-2 py-1.5">
                                                             <GeneralPortrait
-                                                                picture={destGeneral?.picture}
-                                                                name={destGeneral?.name ?? '수신 장수'}
+                                                                picture={destSigner?.picture}
+                                                                name={destSigner?.name ?? '수신 장수'}
                                                                 size="lg"
                                                             />
                                                             <div className="min-w-0 text-xs">
@@ -593,7 +639,7 @@ export default function DiplomacyPage() {
                                                                     {destNation?.name ?? '-'}
                                                                 </div>
                                                                 <div className="truncate text-foreground">
-                                                                    {destGeneral?.name ?? '-'}
+                                                                    {destSigner?.name ?? '-'}
                                                                 </div>
                                                             </div>
                                                         </div>

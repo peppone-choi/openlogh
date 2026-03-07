@@ -121,13 +121,12 @@ type OfficerSlot = {
     statRequirement: 'strength' | 'intel' | 'any';
 };
 
-// Minimum chief officer level based on nation level
 function getNationChiefLevel(nationLevel: number): number {
-    if (nationLevel >= 7) return 1;
-    if (nationLevel >= 5) return 3;
-    if (nationLevel >= 3) return 5;
-    if (nationLevel >= 1) return 7;
-    return 12;
+    if (nationLevel >= 7) return 5;
+    if (nationLevel >= 5) return 7;
+    if (nationLevel >= 3) return 9;
+    if (nationLevel >= 1) return 11;
+    return 11;
 }
 
 export default function PersonnelPage() {

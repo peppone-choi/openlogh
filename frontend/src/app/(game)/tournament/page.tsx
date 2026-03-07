@@ -27,8 +27,8 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { GeneralPortrait } from '@/components/game/general-portrait';
 import { NationBadge } from '@/components/game/nation-badge';
-import { tournamentApi, frontApi } from '@/lib/gameApi';
-import type { TournamentInfo, TournamentBracketMatch, GlobalInfo } from '@/types';
+import { tournamentApi, bettingApi, frontApi } from '@/lib/gameApi';
+import type { TournamentInfo, TournamentBracketMatch, GlobalInfo, BettingInfo } from '@/types';
 
 /* ── Constants ── */
 
@@ -99,6 +99,7 @@ export default function TournamentPage() {
     const { myGeneral } = useGeneralStore();
     const { generals, nations, loadAll } = useGameStore();
     const [info, setInfo] = useState<TournamentInfo | null>(null);
+    const [bettingInfo, setBettingInfo] = useState<BettingInfo | null>(null);
     const [globalInfo, setGlobalInfo] = useState<GlobalInfo | null>(null);
     const [loading, setLoading] = useState(true);
 
@@ -106,11 +107,13 @@ export default function TournamentPage() {
         if (!currentWorld) return;
         try {
             loadAll(currentWorld.id);
-            const [tRes, fRes] = await Promise.all([
+            const [tRes, bRes, fRes] = await Promise.all([
                 tournamentApi.getInfo(currentWorld.id),
+                bettingApi.getInfo(currentWorld.id).catch(() => null),
                 frontApi.getInfo(currentWorld.id),
             ]);
             setInfo(tRes.data);
+            setBettingInfo(bRes?.data ?? null);
             setGlobalInfo(fRes.data.global);
         } catch {
             /* ignore */
@@ -488,6 +491,8 @@ export default function TournamentPage() {
                                                         const p2Nation = p2 ? nationMap.get(p2.nationId) : null;
                                                         const isP1Winner = match.winner === match.p1 && match.winner;
                                                         const isP2Winner = match.winner === match.p2 && match.winner;
+                                                        const p1Odds = bettingInfo?.odds[String(match.p1)];
+                                                        const p2Odds = bettingInfo?.odds[String(match.p2)];
 
                                                         return (
                                                             <div
@@ -519,6 +524,9 @@ export default function TournamentPage() {
                                                                     >
                                                                         {p1?.name ?? (match.p1 ? `#${match.p1}` : '-')}
                                                                     </span>
+                                                                    {typeof p1Odds === 'number' && p1Odds > 0 && (
+                                                                        <span className="text-[10px] text-sky-400">{p1Odds}x</span>
+                                                                    )}
                                                                     {isP1Winner && (
                                                                         <Medal className="size-3 text-amber-400 shrink-0 ml-auto" />
                                                                     )}
@@ -550,6 +558,9 @@ export default function TournamentPage() {
                                                                     >
                                                                         {p2?.name ?? (match.p2 ? `#${match.p2}` : '-')}
                                                                     </span>
+                                                                    {typeof p2Odds === 'number' && p2Odds > 0 && (
+                                                                        <span className="text-[10px] text-sky-400">{p2Odds}x</span>
+                                                                    )}
                                                                     {isP2Winner && (
                                                                         <Medal className="size-3 text-amber-400 shrink-0 ml-auto" />
                                                                     )}
@@ -956,6 +967,7 @@ export default function TournamentPage() {
                         <p>본선은 개인당 3경기를 치르며 승점(승3, 무1, 패0)에 따라 순위를 매깁니다.</p>
                         <p>각 조 1, 2위는 16강에 배정됩니다.</p>
                         <p>16강부터는 1경기 토너먼트로 진행됩니다.</p>
+                        <p>참가비는 금 {participationFee?.toLocaleString() ?? '?'}이며, 성적에 따라 포상이 지급됩니다.</p>
                         <p>성적에 따라 금과 명성이 포상으로 주어집니다.</p>
                         <div className="mt-2 pt-2 border-t border-gray-800">
                             <p className="text-amber-400/80">

@@ -231,7 +231,7 @@ export default function LoginPage() {
             router.push('/lobby');
         } catch (err: unknown) {
             const errObj = err as {
-                response?: { data?: { message?: string; otpRequired?: boolean } };
+                response?: { data?: { message?: string; error?: string; otpRequired?: boolean } };
             };
             if (errObj?.response?.data?.otpRequired) {
                 setPendingLoginId(data.loginId);
@@ -239,7 +239,7 @@ export default function LoginPage() {
                 setOtpOpen(true);
                 return;
             }
-            const message = errObj?.response?.data?.message || '로그인에 실패했습니다';
+            const message = errObj?.response?.data?.message || errObj?.response?.data?.error || '로그인에 실패했습니다';
             toast.error(message);
         }
     };

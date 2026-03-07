@@ -16,9 +16,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { GeneralPortrait } from '@/components/game/general-portrait';
 import { NationBadge } from '@/components/game/nation-badge';
-import { tournamentApi, bettingApi, frontApi } from '@/lib/gameApi';
+import { tournamentApi, bettingApi, frontApi, rankingApi } from '@/lib/gameApi';
 import { numberWithCommas } from '@/lib/game-utils';
-import type { TournamentInfo, BettingInfo, GlobalInfo, BettingEventSummary } from '@/types';
+import type { TournamentInfo, BettingInfo, GlobalInfo, BettingEventSummary, BestGeneral } from '@/types';
 
 /* ── Constants ── */
 
@@ -50,6 +50,50 @@ const TOURNAMENT_TYPES: {
     { code: 2, name: '일기토', stat: '무력', statKey: 'strength', icon: Swords },
     { code: 3, name: '설전', stat: '지력', statKey: 'intel', icon: Brain },
 ];
+
+const TOURNAMENT_RANKING_CONFIG = [
+    {
+        key: 'total-war',
+        title: '전력전 랭킹',
+        sortBy: 'ttw',
+        winsKey: 'ttw',
+        drawsKey: 'ttd',
+        lossesKey: 'ttl',
+        championKeys: ['ttc', 'ttchamp', 'ttwinner'],
+    },
+    {
+        key: 'leadership-war',
+        title: '통솔전 랭킹',
+        sortBy: 'tlw',
+        winsKey: 'tlw',
+        drawsKey: 'tld',
+        lossesKey: 'tll',
+        championKeys: ['tlc', 'tlchamp', 'tlwinner'],
+    },
+    {
+        key: 'duel',
+        title: '일기토 랭킹',
+        sortBy: 'tsw',
+        winsKey: 'tsw',
+        drawsKey: 'tsd',
+        lossesKey: 'tsl',
+        championKeys: ['tsc', 'tschamp', 'tswinner'],
+    },
+    {
+        key: 'debate',
+        title: '설전 랭킹',
+        sortBy: 'tiw',
+        winsKey: 'tiw',
+        drawsKey: 'tid',
+        lossesKey: 'til',
+        championKeys: ['tic', 'tichamp', 'tiwinner'],
+    },
+] as const;
+
+function metaNum(meta: Record<string, unknown> | undefined, key: string): number {
+    const value = meta?.[key];
+    return typeof value === 'number' ? value : 0;
+}
 
 function parseLegacyYearMonth(yearMonth: number): [number, number] {
     return [Math.floor(yearMonth / 12), (yearMonth % 12) + 1];
@@ -86,6 +130,7 @@ export default function BettingPage() {
     const [historyBetting, setHistoryBetting] = useState<BettingInfo | null>(null);
     const [historyLoading, setHistoryLoading] = useState(false);
     const [phaseGateOpen, setPhaseGateOpen] = useState(false);
+    const [tournamentRankings, setTournamentRankings] = useState<Record<string, BestGeneral[]>>({});
 
     const load = useCallback(async () => {
         if (!currentWorld) return;
@@ -121,6 +166,30 @@ export default function BettingPage() {
     useEffect(() => {
         load();
     }, [load]);
+
+    useEffect(() => {
+        if (!currentWorld) return;
+        let active = true;
+        Promise.all(
+            TOURNAMENT_RANKING_CONFIG.map((config) =>
+                rankingApi
+                    .bestGenerals(currentWorld.id, config.sortBy, 200)
+                    .then((res) => ({ key: config.key, data: res.data ?? [] }))
+                    .catch(() => ({ key: config.key, data: [] as BestGeneral[] }))
+            )
+        ).then((entries) => {
+            if (!active) return;
+            const next: Record<string, BestGeneral[]> = {};
+            for (const entry of entries) {
+                next[entry.key] = entry.data;
+            }
+            setTournamentRankings(next);
+        });
+
+        return () => {
+            active = false;
+        };
+    }, [currentWorld]);
 
     // Sync phaseGateOpen with globalInfo.isBettingActive
     useEffect(() => {
@@ -224,9 +293,6 @@ export default function BettingPage() {
         return phases;
     }, [tournament]);
 
-    if (!currentWorld) return <div className="p-4 text-muted-foreground">월드를 선택해주세요.</div>;
-    if (loading) return <LoadingState />;
-
     const tournamentType =
         TOURNAMENT_TYPES.find((t) => t.code === (globalInfo?.tournamentType ?? 0)) ?? TOURNAMENT_TYPES[0];
 
@@ -327,6 +393,47 @@ export default function BettingPage() {
         .filter((s) => s.nation)
         .sort((a, b) => b.total - a.total);
 
+    const rankingTables = useMemo(() => {
+        return TOURNAMENT_RANKING_CONFIG.map((config) => {
+            const source = tournamentRankings[config.key] ?? [];
+            const rows = source
+                .map((g) => {
+                    const wins = metaNum(g.meta, config.winsKey);
+                    const draws = metaNum(g.meta, config.drawsKey);
+                    const losses = metaNum(g.meta, config.lossesKey);
+                    const games = wins + draws + losses;
+                    const points = wins * 3 + draws;
+                    const championships = config.championKeys.reduce(
+                        (acc, key) => acc || metaNum(g.meta, key),
+                        0
+                    );
+                    return {
+                        general: g,
+                        games,
+                        wins,
+                        losses,
+                        points,
+                        championships,
+                        winRate: games > 0 ? wins / games : 0,
+                    };
+                })
+                .filter((row) => row.games > 0)
+                .sort(
+                    (a, b) =>
+                        b.wins - a.wins ||
+                        b.winRate - a.winRate ||
+                        b.points - a.points ||
+                        b.championships - a.championships
+                )
+                .slice(0, 30);
+
+            return {
+                ...config,
+                rows,
+            };
+        });
+    }, [tournamentRankings]);
+
     const myActiveBets = candidates.filter((c) => c.myBetAmount > 0);
 
     const TypeIcon = tournamentType.icon;
@@ -343,6 +450,9 @@ export default function BettingPage() {
 
     // Historical event detail view
     const historyData = historyBetting ? computeBettingData(historyBetting) : null;
+
+    if (!currentWorld) return <div className="p-4 text-muted-foreground">월드를 선택해주세요.</div>;
+    if (loading) return <LoadingState />;
 
     return (
         <div className="space-y-0">
@@ -749,6 +859,97 @@ export default function BettingPage() {
                                 </CardContent>
                             </Card>
                         )}
+
+                        <Card>
+                            <CardHeader className="py-2 px-4">
+                                <CardTitle className="text-sm flex items-center gap-2">
+                                    <Trophy className="size-4 text-amber-400" />
+                                    토너먼트 랭킹
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="px-2 pb-3 space-y-2">
+                                <div className="grid grid-cols-1 xl:grid-cols-2 gap-2">
+                                    {rankingTables.map((table) => (
+                                        <div key={table.key} className="border border-gray-700 rounded">
+                                            <div className="px-2 py-1 text-xs font-semibold bg-black/40 border-b border-gray-700">
+                                                {table.title}
+                                            </div>
+                                            <Table>
+                                                <TableHeader>
+                                                    <TableRow>
+                                                        <TableHead className="text-[10px] px-2 py-1 w-10">순위</TableHead>
+                                                        <TableHead className="text-[10px] px-2 py-1">이름</TableHead>
+                                                        <TableHead className="text-[10px] px-2 py-1 text-right">경기수</TableHead>
+                                                        <TableHead className="text-[10px] px-2 py-1 text-right">승리</TableHead>
+                                                        <TableHead className="text-[10px] px-2 py-1 text-right">패배</TableHead>
+                                                        <TableHead className="text-[10px] px-2 py-1 text-right">점수</TableHead>
+                                                        <TableHead className="text-[10px] px-2 py-1 text-right">우승횟수</TableHead>
+                                                    </TableRow>
+                                                </TableHeader>
+                                                <TableBody>
+                                                    {table.rows.length > 0 ? (
+                                                        table.rows.map((row, idx) => {
+                                                            const nation = nationMap.get(row.general.nationId);
+                                                            return (
+                                                                <TableRow key={`${table.key}-${row.general.id}`}>
+                                                                    <TableCell className="text-[10px] px-2 py-1 font-mono">
+                                                                        {idx + 1}
+                                                                    </TableCell>
+                                                                    <TableCell className="px-2 py-1">
+                                                                        <div className="flex items-center gap-1.5 min-w-0">
+                                                                            <GeneralPortrait
+                                                                                picture={row.general.picture}
+                                                                                name={row.general.name}
+                                                                                size="sm"
+                                                                            />
+                                                                            <div className="min-w-0">
+                                                                                <div className="text-[10px] truncate">
+                                                                                    {row.general.name}
+                                                                                </div>
+                                                                                {nation && (
+                                                                                    <NationBadge
+                                                                                        name={nation.name}
+                                                                                        color={nation.color}
+                                                                                    />
+                                                                                )}
+                                                                            </div>
+                                                                        </div>
+                                                                    </TableCell>
+                                                                    <TableCell className="text-[10px] px-2 py-1 text-right font-mono">
+                                                                        {row.games}
+                                                                    </TableCell>
+                                                                    <TableCell className="text-[10px] px-2 py-1 text-right font-mono text-green-400">
+                                                                        {row.wins}
+                                                                    </TableCell>
+                                                                    <TableCell className="text-[10px] px-2 py-1 text-right font-mono text-red-400">
+                                                                        {row.losses}
+                                                                    </TableCell>
+                                                                    <TableCell className="text-[10px] px-2 py-1 text-right font-mono font-bold">
+                                                                        {row.points}
+                                                                    </TableCell>
+                                                                    <TableCell className="text-[10px] px-2 py-1 text-right font-mono text-amber-400">
+                                                                        {row.championships}
+                                                                    </TableCell>
+                                                                </TableRow>
+                                                            );
+                                                        })
+                                                    ) : (
+                                                        <TableRow>
+                                                            <TableCell
+                                                                colSpan={7}
+                                                                className="text-[10px] text-center text-muted-foreground py-2"
+                                                            >
+                                                                데이터 없음
+                                                            </TableCell>
+                                                        </TableRow>
+                                                    )}
+                                                </TableBody>
+                                            </Table>
+                                        </div>
+                                    ))}
+                                </div>
+                            </CardContent>
+                        </Card>
                     </TabsContent>
 
                     {/* ── History Tab ── */}

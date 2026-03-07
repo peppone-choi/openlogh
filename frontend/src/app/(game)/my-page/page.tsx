@@ -33,6 +33,7 @@ import {
     ageColor,
     isValidObjKey,
 } from '@/lib/game-utils';
+import { formatLog } from '@/lib/formatLog';
 
 const EQUIP_MAP: { key: string; label: string }[] = [
     { key: 'weapon', label: '무기' },
@@ -939,6 +940,7 @@ export default function MyPage() {
                         records={records}
                         battleRecords={battleRecords}
                         historyRecords={historyRecords}
+                        penaltyEntries={penaltyEntries}
                     />
                 </TabsContent>
             </Tabs>
@@ -951,12 +953,15 @@ function LogTabContent({
     records,
     battleRecords,
     historyRecords,
+    penaltyEntries,
 }: {
     generalId: number;
     records: Message[];
     battleRecords: Message[];
     historyRecords: Message[];
+    penaltyEntries: { key: string; value: string }[];
 }) {
+    const [activeLogTab, setActiveLogTab] = useState('personal');
     const [oldLogs, setOldLogs] = useState<{ id: number; message: string; date: string }[]>([]);
     const [oldLogType, setOldLogType] = useState<'generalHistory' | 'generalAction' | 'battleResult' | 'battleDetail'>(
         'generalAction'
@@ -964,29 +969,44 @@ function LogTabContent({
     const [oldLogsLoading, setOldLogsLoading] = useState(false);
     const [oldLogsEnd, setOldLogsEnd] = useState(false);
 
-    const loadOldLogs = async (reset = false) => {
-        setOldLogsLoading(true);
-        try {
-            const lastId = reset ? undefined : oldLogs.length > 0 ? oldLogs[oldLogs.length - 1].id : undefined;
-            const { data } = await generalLogApi.getOldLogs(generalId, generalId, oldLogType, lastId);
-            if (data.result && data.logs) {
-                if (reset) {
-                    setOldLogs(data.logs);
-                } else {
-                    setOldLogs((prev) => [...prev, ...data.logs]);
+    const loadOldLogs = useCallback(
+        async (reset = false, logType: typeof oldLogType = oldLogType) => {
+            setOldLogsLoading(true);
+            try {
+                const lastId = reset ? undefined : oldLogs.length > 0 ? oldLogs[oldLogs.length - 1].id : undefined;
+                const { data } = await generalLogApi.getOldLogs(generalId, generalId, logType, lastId);
+                if (data.result && data.logs) {
+                    if (reset) {
+                        setOldLogs(data.logs);
+                    } else {
+                        setOldLogs((prev) => [...prev, ...data.logs]);
+                    }
+                    if (data.logs.length === 0) setOldLogsEnd(true);
+                    else setOldLogsEnd(false);
                 }
-                if (data.logs.length === 0) setOldLogsEnd(true);
-                else setOldLogsEnd(false);
+            } catch {
+                // ignore
+            } finally {
+                setOldLogsLoading(false);
             }
-        } catch {
-            // ignore
-        } finally {
-            setOldLogsLoading(false);
+        },
+        [generalId, oldLogType, oldLogs]
+    );
+
+    useEffect(() => {
+        if (activeLogTab !== 'history') return;
+        if (oldLogType !== 'generalHistory') {
+            setOldLogType('generalHistory');
+            setOldLogs([]);
+            setOldLogsEnd(false);
         }
-    };
+        if (oldLogs.length === 0 && !oldLogsLoading) {
+            void loadOldLogs(true, 'generalHistory');
+        }
+    }, [activeLogTab, oldLogType, oldLogs.length, oldLogsLoading, loadOldLogs]);
 
     return (
-        <Tabs defaultValue="personal">
+        <Tabs defaultValue="personal" value={activeLogTab} onValueChange={setActiveLogTab}>
             <TabsList>
                 <TabsTrigger value="personal">개인 기록</TabsTrigger>
                 <TabsTrigger value="battle">전투 기록</TabsTrigger>
@@ -1020,14 +1040,55 @@ function LogTabContent({
             </TabsContent>
 
             <TabsContent value="history" className="mt-3">
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="text-sm">장수 열전 ({historyRecords.length}건)</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <RecordList records={historyRecords} />
-                    </CardContent>
-                </Card>
+                <div className="space-y-3">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="text-sm">열전 ({oldLogs.length}건)</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                            {oldLogType === 'generalHistory' && oldLogs.length > 0 ? (
+                                <ScrollArea className="max-h-[420px]">
+                                    <div className="space-y-1">
+                                        {oldLogs.map((log) => (
+                                            <div key={log.id} className="text-sm py-1.5 px-2 rounded hover:bg-muted/30">
+                                                <span className="text-xs text-muted-foreground mr-2">{log.date}</span>
+                                                <span>{formatLog(log.message)}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </ScrollArea>
+                            ) : (
+                                <p className="text-sm text-muted-foreground">열전 기록이 없습니다.</p>
+                            )}
+
+                            {historyRecords.length > 0 && (
+                                <div className="border-t border-muted/40 pt-3">
+                                    <p className="text-xs text-muted-foreground mb-2">일반 기록 기반 열전</p>
+                                    <RecordList records={historyRecords} />
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="text-sm">징계 목록</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            {penaltyEntries.length > 0 ? (
+                                <div className="space-y-1">
+                                    {penaltyEntries.map(({ key, value }) => (
+                                        <div key={key} className="text-sm text-red-400">
+                                            {key}: {value}
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="text-sm text-muted-foreground">징계 없음</p>
+                            )}
+                        </CardContent>
+                    </Card>
+                </div>
             </TabsContent>
 
             <TabsContent value="old" className="mt-3">

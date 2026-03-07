@@ -19,7 +19,10 @@ api.interceptors.response.use(
     (response) => response,
     (error) => {
         if (error.response?.status === 401) {
-            if (typeof window !== 'undefined') {
+            // Skip redirect for auth endpoints — let the login/register page handle errors directly
+            const url = error.config?.url ?? '';
+            const isAuthEndpoint = url.startsWith('/auth/');
+            if (!isAuthEndpoint && typeof window !== 'undefined') {
                 localStorage.removeItem('token');
                 window.location.href = '/login';
             }

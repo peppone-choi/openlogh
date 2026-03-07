@@ -423,6 +423,8 @@ function VoteCard({
     });
     const total = counts.reduce((a, b) => a + b, 0);
     const maxCount = Math.max(...counts, 1);
+    const totalGenerals = generals.length;
+    const voteRate = totalGenerals > 0 ? (total / totalGenerals) * 100 : 0;
 
     // ── Comments ──
     const [comments, setComments] = useState<VoteComment[]>([]);
@@ -493,12 +495,15 @@ function VoteCard({
 
                 {d.reward && (
                     <div className="flex items-center gap-1.5 bg-amber-400/10 border border-amber-400/20 rounded px-2.5 py-1.5">
-                        <span className="text-xs font-bold text-amber-400">보상</span>
-                        <span className="text-xs text-amber-300">{d.reward}</span>
+                        <span className="text-xs font-bold text-amber-400">설문 조사 보상</span>
+                        <span className="text-xs font-semibold text-amber-300">{d.reward}</span>
                     </div>
                 )}
 
                 <p className="text-xs text-muted-foreground">총 {total}명 참여</p>
+                <p className="text-xs text-muted-foreground">
+                    투표율: {voteRate.toFixed(1)}% ({total}/{totalGenerals})
+                </p>
 
                 {/* results with progress bars */}
                 <div className="space-y-2">

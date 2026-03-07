@@ -36,6 +36,8 @@ class AuthController(
             ResponseEntity.status(HttpStatus.CREATED).body(authService.register(request))
         } catch (e: IllegalStateException) {
             ResponseEntity.status(HttpStatus.FORBIDDEN).body(mapOf("error" to (e.message ?: "forbidden")))
+        } catch (e: IllegalArgumentException) {
+            ResponseEntity.badRequest().body(mapOf("error" to (e.message ?: "bad request")))
         }
     }
 
@@ -45,6 +47,8 @@ class AuthController(
             ResponseEntity.ok(authService.login(request))
         } catch (e: IllegalStateException) {
             ResponseEntity.status(HttpStatus.FORBIDDEN).body(mapOf("error" to (e.message ?: "forbidden")))
+        } catch (e: IllegalArgumentException) {
+            ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(mapOf("error" to (e.message ?: "invalid credentials")))
         }
     }
 

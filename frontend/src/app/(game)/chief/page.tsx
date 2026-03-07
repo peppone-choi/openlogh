@@ -105,6 +105,14 @@ function parseNationPresets(raw: string): NationPreset[] {
         .filter((v): v is NationPreset => v !== null);
 }
 
+function formatTurnClock(raw?: string): string {
+    if (!raw) return '-';
+    const value = raw.includes('T') ? raw : raw.replace(' ', 'T');
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return raw;
+    return date.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+}
+
 export default function ChiefPage() {
     const currentWorld = useWorldStore((s) => s.currentWorld);
     const { myGeneral, fetchMyGeneral } = useGeneralStore();
@@ -453,19 +461,47 @@ export default function ChiefPage() {
 
     const nationCommandCategories = Object.keys(nationCommandTable);
 
-    // City map for lookups
-    const cityMap = useMemo(() => new Map(nationCities.map((c) => [c.id, c])), [nationCities]);
+     // City map for lookups
+     const cityMap = useMemo(() => new Map(nationCities.map((c) => [c.id, c])), [nationCities]);
 
-    const nextTurnByOfficerLevel = useMemo(() => {
-        const map = new Map<number, NationTurn>();
-        for (const turn of allOfficerTurns) {
-            const existing = map.get(turn.officerLevel);
-            if (!existing || turn.turnIdx < existing.turnIdx) {
-                map.set(turn.officerLevel, turn);
-            }
-        }
-        return map;
-    }, [allOfficerTurns]);
+     const chiefOverviewRows = useMemo(() => {
+         const grouped = new Map<number, OfficerInfo[]>();
+         for (const officer of officerOverview) {
+             const prev = grouped.get(officer.officerLevel) ?? [];
+             prev.push(officer);
+             grouped.set(officer.officerLevel, prev);
+         }
+
+         const turnMapByLevel = new Map<number, Map<number, NationTurn>>();
+         for (const turn of allOfficerTurns) {
+             const prev = turnMapByLevel.get(turn.officerLevel) ?? new Map<number, NationTurn>();
+             prev.set(turn.turnIdx, turn);
+             turnMapByLevel.set(turn.officerLevel, prev);
+         }
+
+         const levels = [...grouped.keys()].sort((a, b) => b - a);
+         return levels.map((level) => {
+             const officers = grouped.get(level) ?? [];
+             const slotTurns = turnMapByLevel.get(level);
+             const reservedCount = slotTurns
+                 ? Array.from(slotTurns.values()).filter((turn) => turn.actionCode !== '휴식').length
+                 : 0;
+
+             return {
+                 level,
+                 officers: officers.sort((a, b) => a.id - b.id).map((officer) => {
+                     const matchedGeneral = nationGenerals.find((general) => general.id === officer.id);
+                     return {
+                         ...officer,
+                         cityName: cityMap.get(officer.cityId)?.name ?? '-',
+                         commandStatus:
+                             reservedCount > 0 ? `예약 ${reservedCount}/${NATION_TURN_COUNT}` : '모두 휴식',
+                         turnTime: formatTurnClock(matchedGeneral?.turnTime),
+                     };
+                 }),
+             };
+         });
+     }, [allOfficerTurns, cityMap, nationGenerals, officerOverview]);
 
     if (!currentWorld) return <div className="p-4 text-muted-foreground">월드를 선택해주세요.</div>;
     if (!myGeneral) return <LoadingState />;
@@ -476,8 +512,6 @@ export default function ChiefPage() {
 
     const npcGenerals = nationGenerals.filter((g) => g.npcState > 0);
     const playerGenerals = nationGenerals.filter((g) => g.npcState === 0);
-    const minChiefLevel = nation ? getMinNationChiefLevel(nation.level) : 9;
-    const chiefOfficerOrder = CHIEF_OFFICER_ORDER.filter((lv) => lv >= minChiefLevel);
     const totalCrew = nationGenerals.reduce((sum, g) => sum + g.crew, 0);
     const isChief = myGeneral.officerLevel === 12;
 
@@ -825,26 +859,31 @@ export default function ChiefPage() {
                         <CardHeader>
                             <CardTitle>수관 요약</CardTitle>
                         </CardHeader>
-                        <CardContent>
-                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                                {chiefOfficerOrder.map((lv) => {
-                                    const officer = nationGenerals.find((g) => g.officerLevel === lv);
-                                    const nextTurn = nextTurnByOfficerLevel.get(lv);
-                                    const nextBrief = nextTurn?.brief ?? nextTurn?.actionCode ?? '미설정';
-                                    return (
-                                        <div
-                                            key={lv}
-                                            className="rounded border border-gray-700 bg-[#111] px-2 py-1.5 text-xs"
-                                        >
-                                            <div className="text-muted-foreground">
-                                                {nation ? formatOfficerLevelText(lv, nation.level) : `Lv.${lv}`}
-                                            </div>
-                                            <div className="font-medium truncate">{officer?.name ?? '-'}</div>
-                                            <div className="text-[10px] text-cyan-300 truncate">다음: {nextBrief}</div>
+                        <CardContent className="space-y-3">
+                            {chiefOverviewRows.length === 0 ? (
+                                <p className="text-sm text-muted-foreground">표시할 수관 정보가 없습니다.</p>
+                            ) : (
+                                chiefOverviewRows.map((group) => (
+                                    <div key={group.level} className="space-y-1.5">
+                                        <div className="text-xs font-semibold text-muted-foreground">
+                                            {formatOfficerLevelText(group.level, nation?.level)}
                                         </div>
-                                    );
-                                })}
-                            </div>
+                                        <div className="space-y-1">
+                                            {group.officers.map((officer) => (
+                                                <div
+                                                    key={officer.id}
+                                                    className="flex flex-wrap items-center gap-2 rounded border border-gray-800 px-2 py-1.5 text-xs"
+                                                >
+                                                    <span className="font-medium">{officer.name}</span>
+                                                    <span className="text-muted-foreground">도시: {officer.cityName}</span>
+                                                    <span className="text-muted-foreground">상태: {officer.commandStatus}</span>
+                                                    <span className="text-muted-foreground">턴: {officer.turnTime}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ))
+                            )}
                         </CardContent>
                     </Card>
                 </TabsContent>
