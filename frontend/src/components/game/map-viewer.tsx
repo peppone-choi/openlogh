@@ -178,7 +178,7 @@ export function MapViewer({ worldId, mapCode = 'che', compact = false }: MapView
                             {/* Nation Color Blotch Base */}
                             {nation?.color && (
                                 <div
-                                    className="absolute z-[1]"
+                                    className="absolute z-[1] rounded-full"
                                     style={{
                                         background: getNationBgGradient(nation.color),
                                         width: bgW,

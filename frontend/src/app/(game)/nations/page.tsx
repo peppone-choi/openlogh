@@ -12,7 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { formatOfficerLevelText } from '@/lib/game-utils';
+import { formatOfficerLevelText, NATION_LEVEL_LABELS } from '@/lib/game-utils';
 
 type UserType = '통' | '무' | '지' | '만능' | '평범' | '무지' | '무능';
 
@@ -38,17 +38,6 @@ const USER_TYPE_COLORS: Record<UserType, string> = {
     평범: '#94a3b8',
     무지: '#6b7280',
     무능: '#4b5563',
-};
-
-const LEVEL_LABELS: Record<number, string> = {
-    0: '재야',
-    1: '주자사',
-    2: '주목',
-    3: '자사',
-    4: '목',
-    5: '공',
-    6: '왕',
-    7: '황제',
 };
 
 type SortKey =
@@ -315,7 +304,7 @@ export default function NationsPage() {
                                         <TableCell>{capital?.name ?? '-'}</TableCell>
 
                                         <TableCell>
-                                            <Badge variant="secondary">{LEVEL_LABELS[n.level] ?? n.level}</Badge>
+                                            <Badge variant="secondary">{NATION_LEVEL_LABELS[n.level] ?? n.level}</Badge>
                                         </TableCell>
 
                                         <TableCell>
@@ -332,7 +321,7 @@ export default function NationsPage() {
                                         <TableCell>{n.gold.toLocaleString()}</TableCell>
                                         <TableCell>{n.rice.toLocaleString()}</TableCell>
                                         <TableCell>{n.tech}</TableCell>
-                                        <TableCell>{n.typeCode}</TableCell>
+                                        <TableCell>{n.typeCode.replace(/^che_/, '')}</TableCell>
                                     </TableRow>
 
                                     {/* Expanded detail block */}

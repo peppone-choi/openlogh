@@ -5,7 +5,7 @@ import { useWorldStore } from '@/stores/worldStore';
 import { useGeneralStore } from '@/stores/generalStore';
 import { cityApi, diplomacyApi, generalApi, nationApi, nationManagementApi, nationPolicyApi } from '@/lib/gameApi';
 import type { City, Diplomacy, General, Nation } from '@/types';
-import { REGION_NAMES } from '@/lib/game-utils';
+import { REGION_NAMES, CITY_LEVEL_NAMES } from '@/lib/game-utils';
 import { Building2, Crown, Search } from 'lucide-react';
 import { PageHeader } from '@/components/game/page-header';
 import { LoadingState } from '@/components/game/loading-state';
@@ -535,7 +535,7 @@ export default function NationCitiesPage() {
                                                 {REGION_NAMES[c.region] ?? `지역${c.region}`}
                                             </span>
                                         </TableCell>
-                                        <TableCell>{c.level}</TableCell>
+                                        <TableCell>{CITY_LEVEL_NAMES[c.level] ?? c.level}</TableCell>
                                         <TableCell>
                                             {c.pop.toLocaleString()}/{c.popMax.toLocaleString()}
                                         </TableCell>

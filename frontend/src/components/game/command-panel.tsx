@@ -645,7 +645,7 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
 
     const handleCommandSelect = async (actionCode: string, arg?: CommandArg) => {
         const targets = selectedTurnList.length > 0 ? selectedTurnList : [0];
-        if (COMMAND_ARGS[actionCode]) {
+        if (COMMAND_ARGS[actionCode] && !arg) {
             router.push(`/processing?command=${encodeURIComponent(actionCode)}&turnList=${targets.join(',')}`);
             setShowSelector(false);
             return;

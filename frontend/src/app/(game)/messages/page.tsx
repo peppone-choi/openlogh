@@ -211,7 +211,7 @@ export default function MessagesPage() {
         const isGeneral = recipientType === 'general';
 
         if (isGeneral && !destGeneralId) return;
-        if (!isPublic && !isGeneral && !destNationId) return;
+        if (recipientType === 'nation' && mailboxType === 'DIPLOMACY' && !destNationId) return;
 
         const mailboxCode =
             mailboxType === 'PUBLIC'
@@ -225,11 +225,13 @@ export default function MessagesPage() {
         const srcId = mailboxType === 'NATIONAL' || mailboxType === 'DIPLOMACY' ? myGeneral.nationId : myGeneral.id;
 
         const targetId =
-            mailboxType === 'NATIONAL' || mailboxType === 'DIPLOMACY'
+            mailboxType === 'DIPLOMACY'
                 ? Number(destNationId)
-                : isPublic
-                  ? null
-                  : Number(destGeneralId);
+                : mailboxType === 'NATIONAL'
+                  ? myGeneral.nationId
+                  : isPublic
+                    ? null
+                    : Number(destGeneralId);
 
         setSending(true);
         try {
@@ -351,7 +353,12 @@ export default function MessagesPage() {
                                 </select>
                             </div>
                         )}
-                        {recipientType === 'nation' && (
+                        {recipientType === 'public' && (
+                            <div className="text-xs text-muted-foreground p-2 bg-zinc-900/50 rounded">
+                                전체 장수에게 공개되는 서신입니다.
+                            </div>
+                        )}
+                        {recipientType === 'nation' && mailboxType === 'DIPLOMACY' && (
                             <div>
                                 <label htmlFor="dest-nation" className="block text-xs text-muted-foreground mb-1">
                                     받는 국가
@@ -373,6 +380,11 @@ export default function MessagesPage() {
                                 </select>
                             </div>
                         )}
+                        {recipientType === 'nation' && mailboxType === 'NATIONAL' && (
+                            <div className="text-xs text-muted-foreground p-2 bg-zinc-900/50 rounded">
+                                자국 소속 장수에게만 전달되는 서신입니다.
+                            </div>
+                        )}
                         <div>
                             <label htmlFor="message-content" className="block text-xs text-muted-foreground mb-1">
                                 내용
@@ -392,7 +404,7 @@ export default function MessagesPage() {
                                     sending ||
                                     !content.trim() ||
                                     (recipientType === 'general' && !destGeneralId) ||
-                                    (recipientType === 'nation' && !destNationId) ||
+                                    (recipientType === 'nation' && mailboxType === 'DIPLOMACY' && !destNationId) ||
                                     (mailboxType === 'DIPLOMACY' && !canUseDiplomacy)
                                 }
                                 size="sm"

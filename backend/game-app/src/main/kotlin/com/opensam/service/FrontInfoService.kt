@@ -262,6 +262,7 @@ class FrontInfoService(
             id = c.id,
             name = c.name,
             level = c.level.toInt(),
+            region = c.region.toInt(),
             nationInfo = nationInfo,
             trust = c.trust.toInt(),
             pop = listOf(c.pop, c.popMax),

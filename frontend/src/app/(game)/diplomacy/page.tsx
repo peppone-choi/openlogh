@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState, useCallback, lazy, Suspense } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useWorldStore } from '@/stores/worldStore';
 import { useGeneralStore } from '@/stores/generalStore';
 import { useGameStore } from '@/stores/gameStore';
@@ -9,7 +9,7 @@ import { subscribeWebSocket } from '@/lib/websocket';
 import type { Message, Nation, Diplomacy } from '@/types';
 import { Handshake, Send, Globe, History, ArrowRight, Map as MapIcon } from 'lucide-react';
 
-const KonvaMapCanvas = lazy(() => import('@/components/game/konva-map-canvas'));
+import { MapViewer } from '@/components/game/map-viewer';
 import { PageHeader } from '@/components/game/page-header';
 import { LoadingState } from '@/components/game/loading-state';
 import { EmptyState } from '@/components/game/empty-state';
@@ -824,22 +824,7 @@ export default function DiplomacyPage() {
                                 </CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <Suspense
-                                    fallback={
-                                        <div className="h-64 flex items-center justify-center text-xs text-muted-foreground">
-                                            지도 로딩...
-                                        </div>
-                                    }
-                                >
-                                    <KonvaMapCanvas
-                                        cities={cities}
-                                        nations={nations}
-                                        mapData={mapData}
-                                        width={600}
-                                        height={400}
-                                        onCityClick={() => {}}
-                                    />
-                                </Suspense>
+                                <MapViewer worldId={currentWorld.id} compact />
                             </CardContent>
                         </Card>
                     )}

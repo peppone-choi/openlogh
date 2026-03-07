@@ -20,7 +20,14 @@ import { PageHeader } from '@/components/game/page-header';
 import { LoadingState } from '@/components/game/loading-state';
 import { NationBadge } from '@/components/game/nation-badge';
 import { GeneralPortrait } from '@/components/game/general-portrait';
-import { formatOfficerLevelText, getNPCColor, REGION_NAMES, CREW_TYPE_NAMES } from '@/lib/game-utils';
+import {
+    formatOfficerLevelText,
+    getNPCColor,
+    REGION_NAMES,
+    CREW_TYPE_NAMES,
+    CITY_LEVEL_NAMES,
+    NATION_LEVEL_LABELS,
+} from '@/lib/game-utils';
 import {
     calcCityGoldIncome,
     calcCityRiceIncome,
@@ -31,17 +38,6 @@ import {
 } from '@/lib/income-calc';
 
 // ── Constants ──────────────────────────────────────────────────────
-
-const LEVEL_LABELS: Record<number, string> = {
-    0: '두목',
-    1: '영주',
-    2: '군벌',
-    3: '주자사',
-    4: '주목',
-    5: '공',
-    6: '왕',
-    7: '황제',
-};
 
 const DIP_STATE_LABELS: Record<string, { label: string; color: string }> = {
     normal: { label: '통상', color: 'gray' },
@@ -350,7 +346,9 @@ export default function NationPage() {
                         <CardContent>
                             <div className="flex flex-wrap items-center gap-2 mb-3">
                                 <NationBadge name={nation.name} color={nation.color} />
-                                <Badge variant="secondary">{LEVEL_LABELS[nation.level] ?? `Lv.${nation.level}`}</Badge>
+                                <Badge variant="secondary">
+                                    {NATION_LEVEL_LABELS[nation.level] ?? `Lv.${nation.level}`}
+                                </Badge>
                                 <Badge variant="outline">{nation.typeCode}</Badge>
                                 {capitalCity && (
                                     <Badge variant="outline" className="text-cyan-400">
@@ -431,7 +429,7 @@ export default function NationPage() {
                                 <VCell>{generals.length}명</VCell>
 
                                 <LCell>작 위</LCell>
-                                <VCell>{LEVEL_LABELS[nation.level] ?? `Lv.${nation.level}`}</VCell>
+                                <VCell>{NATION_LEVEL_LABELS[nation.level] ?? `Lv.${nation.level}`}</VCell>
                                 <LCell>전 쟁</LCell>
                                 <VCell>
                                     {nation.warState ? (
@@ -644,7 +642,9 @@ export default function NationPage() {
                                                                 </span>
                                                             )}
                                                         </TableCell>
-                                                        <TableCell className="text-center">{c.level}</TableCell>
+                                                        <TableCell className="text-center">
+                                                            {CITY_LEVEL_NAMES[c.level] ?? c.level}
+                                                        </TableCell>
                                                         <TableCell className="text-center text-xs">
                                                             {REGION_NAMES[c.region] ?? c.region}
                                                         </TableCell>

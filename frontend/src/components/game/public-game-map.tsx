@@ -173,7 +173,7 @@ export function PublicGameMap({ data }: PublicGameMapProps) {
                                 {/* Nation Color Blotch */}
                                 {hasNation && (
                                     <div
-                                        className="absolute z-[1]"
+                                        className="absolute z-[1] rounded-full"
                                         style={{
                                             background: getNationBgGradient(city.nationColor),
                                             width: bgW,

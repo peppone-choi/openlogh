@@ -76,26 +76,28 @@ export function CommandSelectForm({
                     {categories.map((cat) => (
                         <TabsContent key={cat} value={cat}>
                             <div className="flex flex-wrap gap-1">
-                                {commandTable[cat].map((cmd) => (
-                                    <Badge
-                                        key={cmd.actionCode}
-                                        variant={selectedCmd === cmd.actionCode ? 'default' : 'secondary'}
-                                        className={`cursor-pointer text-xs ${
-                                            !cmd.enabled ? 'opacity-40 cursor-not-allowed' : ''
-                                        }`}
-                                        onClick={() => {
-                                            if (cmd.enabled) handleSelectCmd(cmd.actionCode);
-                                        }}
-                                        title={cmd.reason ?? undefined}
-                                    >
-                                        {cmd.name}
-                                        {realtimeMode && (
-                                            <span className="ml-1 text-[10px] text-gray-300">
-                                                ({cmd.commandPointCost}CP/{cmd.durationSeconds}s)
-                                            </span>
-                                        )}
-                                    </Badge>
-                                ))}
+                                {commandTable[cat]
+                                    .filter((cmd) => !cmd.actionCode.startsWith('NPC'))
+                                    .map((cmd) => (
+                                        <Badge
+                                            key={cmd.actionCode}
+                                            variant={selectedCmd === cmd.actionCode ? 'default' : 'secondary'}
+                                            className={`cursor-pointer text-xs ${
+                                                !cmd.enabled ? 'opacity-40 cursor-not-allowed' : ''
+                                            }`}
+                                            onClick={() => {
+                                                if (cmd.enabled) handleSelectCmd(cmd.actionCode);
+                                            }}
+                                            title={cmd.reason ?? undefined}
+                                        >
+                                            {cmd.name}
+                                            {realtimeMode && (
+                                                <span className="ml-1 text-[10px] text-gray-300">
+                                                    ({cmd.commandPointCost}CP/{cmd.durationSeconds}s)
+                                                </span>
+                                            )}
+                                        </Badge>
+                                    ))}
                             </div>
                         </TabsContent>
                     ))}

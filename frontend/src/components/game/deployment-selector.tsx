@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { useGameStore } from '@/stores/gameStore';
 import { useGeneralStore } from '@/stores/generalStore';
 import { cn } from '@/lib/utils';
+import { CITY_LEVEL_NAMES } from '@/lib/game-utils';
 import type { General, City, Nation } from '@/types';
 
 // ── Crew type name mapping ──
@@ -201,7 +202,7 @@ export function DeploymentSelector({ onSubmit }: DeploymentSelectorProps) {
                                                     <div className="flex items-center gap-2">
                                                         <span className="font-medium">{city.name}</span>
                                                         <span className="text-[10px] text-muted-foreground">
-                                                            Lv.{city.level}
+                                                            {CITY_LEVEL_NAMES[city.level] ?? city.level}
                                                         </span>
                                                         {nation && (
                                                             <Badge variant="outline" className="text-[9px] px-1 py-0">

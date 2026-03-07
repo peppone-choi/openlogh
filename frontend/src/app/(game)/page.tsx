@@ -331,7 +331,7 @@ export default function GameDashboard() {
 
                 {/* City info */}
                 <div className={`cityInfo ${isTabActive('status') ? '' : 'max-lg:hidden'}`}>
-                    <CityBasicCard city={frontInfo?.city ?? null} />
+                    <CityBasicCard city={frontInfo?.city ?? null} region={frontInfo?.city?.region} />
                 </div>
 
                 {/* Controls toolbar */}

@@ -441,6 +441,19 @@ export function trustColor(trust: number): string {
     return '#ef4444';
 }
 
+// --- Nation level labels ---
+
+export const NATION_LEVEL_LABELS: Record<number, string> = {
+    0: '두목',
+    1: '영주',
+    2: '군벌',
+    3: '주자사',
+    4: '주목',
+    5: '공',
+    6: '왕',
+    7: '황제',
+};
+
 // --- City level names ---
 
 export const CITY_LEVEL_NAMES: Record<number, string> = {

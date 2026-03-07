@@ -8,6 +8,7 @@ import { useGameStore } from '@/stores/gameStore';
 import { useGeneralStore } from '@/stores/generalStore';
 import { useWorldStore } from '@/stores/worldStore';
 import type { City, CommandArg, General, Nation } from '@/types';
+import { CITY_LEVEL_NAMES } from '@/lib/game-utils';
 import { CrewTypeBrowser } from './crew-type-browser';
 import { EquipmentBrowser } from './equipment-browser';
 import { DeploymentSelector } from './deployment-selector';
@@ -611,7 +612,7 @@ export function CommandArgForm({ actionCode, onSubmit }: CommandArgFormProps) {
                             const isMyCity = myGeneral && c.nationId === myGeneral.nationId;
                             return (
                                 <option key={c.id} value={c.id} style={isMyCity ? { fontWeight: 'bold' } : undefined}>
-                                    {c.name} (Lv.{c.level}){nationTag}
+                                    {c.name} ({CITY_LEVEL_NAMES[c.level] ?? c.level}){nationTag}
                                 </option>
                             );
                         })}

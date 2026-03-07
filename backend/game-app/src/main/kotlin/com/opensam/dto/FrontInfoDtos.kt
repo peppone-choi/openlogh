@@ -206,6 +206,7 @@ data class CityFrontInfo(
     val id: Long,
     val name: String,
     val level: Int,
+    val region: Int,
     val nationInfo: CityNationInfo,
     val trust: Int,
     val pop: List<Int>,

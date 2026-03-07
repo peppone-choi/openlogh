@@ -18,6 +18,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useGeneralStore } from '@/stores/generalStore';
 import { generalLogApi } from '@/lib/gameApi';
 import { formatLog } from '@/lib/formatLog';
+import { CITY_LEVEL_NAMES } from '@/lib/game-utils';
 
 function getNation(nations: Nation[], id: number) {
     return nations.find((n) => n.id === id);
@@ -491,7 +492,7 @@ export default function BattlePage() {
                                                 <NationBadge name={ownerNation.name} color={ownerNation.color} />
                                             )}
                                             <span>{c.name}</span>
-                                            <Badge variant="secondary">Lv.{c.level}</Badge>
+                                            <Badge variant="secondary">{CITY_LEVEL_NAMES[c.level] ?? c.level}</Badge>
                                             <Badge variant="destructive" className="ml-auto">
                                                 전선 {c.frontState}
                                             </Badge>

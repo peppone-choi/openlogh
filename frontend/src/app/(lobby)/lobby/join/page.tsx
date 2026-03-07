@@ -14,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { CITY_LEVEL_NAMES } from '@/lib/game-utils';
 import type { InheritanceInfo, Nation } from '@/types';
 
 const TOTAL_STAT_POINTS = 350;
@@ -450,7 +451,7 @@ export default function LobbyJoinPage() {
                                 <option value="">도시 선택</option>
                                 {filteredCities.map((c) => (
                                     <option key={c.id} value={c.id}>
-                                        {c.name} (Lv.{c.level})
+                                        {c.name} ({CITY_LEVEL_NAMES[c.level] ?? c.level})
                                     </option>
                                 ))}
                             </select>
@@ -634,7 +635,7 @@ export default function LobbyJoinPage() {
                                             <option value="">랜덤 배치</option>
                                             {cities.map((c) => (
                                                 <option key={c.id} value={c.id}>
-                                                    {c.name} (Lv.{c.level})
+                                                    {c.name} ({CITY_LEVEL_NAMES[c.level] ?? c.level})
                                                 </option>
                                             ))}
                                         </select>

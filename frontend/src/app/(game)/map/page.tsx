@@ -20,6 +20,7 @@ import {
     getSpecialEventIcon,
 } from '@/lib/image';
 import { FactionFlag } from '@/components/game/faction-flag';
+import { CITY_LEVEL_NAMES } from '@/lib/game-utils';
 
 type MapTheme = 'default' | 'spring' | 'summer' | 'autumn' | 'winter';
 const MAP_THEMES: {
@@ -591,7 +592,7 @@ export default function MapPage() {
                                         >
                                             {showNationLayer && nation?.color && (
                                                 <div
-                                                    className="absolute z-[1]"
+                                                    className="absolute z-[1] rounded-full"
                                                     style={{
                                                         background: getNationBgGradient(nation.color),
                                                         width: bgW,
@@ -752,7 +753,9 @@ export default function MapPage() {
                                     {tooltip.cityName}
                                 </div>
                                 <div className="text-gray-400">소속: {tooltip.nationName}</div>
-                                <div className="text-gray-400">레벨: {tooltip.level}</div>
+                                <div className="text-gray-400">
+                                    레벨: {CITY_LEVEL_NAMES[tooltip.level] ?? tooltip.level}
+                                </div>
                                 <div className="text-gray-400">
                                     인구: {tooltip.isVisible ? tooltip.pop.toLocaleString() : '?'}
                                 </div>

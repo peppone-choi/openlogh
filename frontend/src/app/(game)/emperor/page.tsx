@@ -14,19 +14,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { formatOfficerLevelText } from '@/lib/game-utils';
+import { formatOfficerLevelText, NATION_LEVEL_LABELS } from '@/lib/game-utils';
 import type { Message, YearbookSummary } from '@/types';
-
-const LEVEL_LABELS: Record<number, string> = {
-    0: '재야',
-    1: '주자사',
-    2: '주목',
-    3: '자사',
-    4: '목',
-    5: '공',
-    6: '왕',
-    7: '황제',
-};
 
 export default function EmperorPage() {
     const currentWorld = useWorldStore((s) => s.currentWorld);
@@ -431,7 +420,7 @@ export default function EmperorPage() {
                                             <Badge variant="outline">{n.level}</Badge>
                                         </TableCell>
                                         <TableCell className="text-muted-foreground">
-                                            {LEVEL_LABELS[n.level] ?? n.level}
+                                            {NATION_LEVEL_LABELS[n.level] ?? n.level}
                                         </TableCell>
                                         <TableCell>{n.typeCode}</TableCell>
                                         <TableCell className="text-right tabular-nums">

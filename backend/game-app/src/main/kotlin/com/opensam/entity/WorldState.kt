@@ -31,7 +31,7 @@ class WorldState(
     var currentMonth: Short = 0,
 
     @Column(name = "tick_seconds", nullable = false)
-    var tickSeconds: Int = 0,
+    var tickSeconds: Int = 300,
 
     @Column(name = "realtime_mode", nullable = false)
     var realtimeMode: Boolean = false,

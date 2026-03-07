@@ -789,6 +789,7 @@ export interface CityFrontInfo {
     id: number;
     name: string;
     level: number;
+    region: number;
     nationInfo: CityNationInfo;
     trust: number;
     pop: number[];
