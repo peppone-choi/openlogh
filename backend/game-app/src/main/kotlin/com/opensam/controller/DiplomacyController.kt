@@ -1,6 +1,7 @@
 package com.opensam.controller
 
 import com.opensam.dto.DiplomacyDto
+import com.opensam.dto.DiplomacyRespondWithActionRequest
 import com.opensam.engine.DiplomacyService
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
@@ -23,16 +24,10 @@ class DiplomacyController(
         return ResponseEntity.ok(diplomacyService.getRelationsForNation(worldId, nationId).map(DiplomacyDto::from))
     }
 
-    data class DiplomacyRespondRequest(
-        val messageId: Long,
-        val action: String,
-        val accept: Boolean,
-    )
-
     @PostMapping("/respond")
     fun respond(
         @PathVariable worldId: Long,
-        @RequestBody request: DiplomacyRespondRequest,
+        @RequestBody request: DiplomacyRespondWithActionRequest,
     ): ResponseEntity<Void> {
         return try {
             if (request.accept) {

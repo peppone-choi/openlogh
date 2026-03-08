@@ -1325,16 +1325,14 @@ class GeneralAI(
 
         // Strategist type: tech, agriculture, commerce
         if (genType and GeneralType.STRATEGIST.flag != 0) {
-            // Tech research (simplified tech limit check)
-            val techLevel = nation.tech.toInt()
-            val yearsElapsed = ctx.world.currentYear - ((ctx.world.config["startyear"] as? Number)?.toInt() ?: ctx.world.currentYear.toInt())
-            if (techLevel < yearsElapsed * 500) { // Simplified TechLimit
-                val nextTech = techLevel % 1000 + 1
-                if (techLevel + 1000 < yearsElapsed * 500) {
-                    cmdList.add(WeightedAction("기술연구", intel / (nextTech / 2000.0)))
-                } else {
-                    cmdList.add(WeightedAction("기술연구", intel.toDouble()))
-                }
+            // Tech research: use legacy TechLimit formula
+            val currentTech = nation.tech.toDouble()
+            val startYear = (ctx.world.config["startyear"] as? Number)?.toInt() ?: ctx.world.currentYear.toInt()
+            val relYear = ctx.world.currentYear.toInt() - startYear
+            val techLevelBand = kotlin.math.floor(currentTech / 1000.0).toInt().coerceIn(0, 12)
+            val relMaxTech = (relYear / 5 + 1).coerceIn(1, 12)
+            if (techLevelBand < relMaxTech) {
+                cmdList.add(WeightedAction("기술연구", intel.toDouble()))
             }
 
             val agriRate = develRate["agri"]!!.first
@@ -1479,23 +1477,41 @@ class GeneralAI(
         // Only recruit during war preparation or war
         if (ctx.diplomacyState == DiplomacyState.PEACE || ctx.diplomacyState == DiplomacyState.DECLARED) return null
 
-        if (ctx.generalType and (GeneralType.COMMANDER.flag or GeneralType.WARRIOR.flag) == 0) return null
+        // Per legacy: only COMMANDER type (t통솔장) can recruit
+        if (ctx.generalType and GeneralType.COMMANDER.flag == 0) return null
 
         val general = ctx.general
         val city = ctx.city
 
-        // Already have enough crew
-        if (general.crew >= policy.minWarCrew) return null
+        // Already have enough crew - per legacy uses nationPolicy.minWarCrew
+        if (general.crew >= nationPolicy.minWarCrew) return null
 
-        // Population safety check: keep a minimum base population, but avoid over-restrictive
-        // leadership scaling that blocks normal wartime recruiting in practical scenarios.
-        val remainPop = city.pop - nationPolicy.minNPCRecruitCityPopulation
+        // Population safety check per legacy (line 2505):
+        // remainPop = pop - minNPCRecruitCityPopulation - fullLeadership * 100
+        val fullLeadership = general.leadership.toInt()
+        val remainPop = city.pop - nationPolicy.minNPCRecruitCityPopulation - fullLeadership * 100
         if (remainPop <= 0) return null
 
-        // Choose 모병 (volunteer) when there is reasonable gold reserve, 징병 otherwise.
-        // Poor situations should still recruit via 징병 instead of skipping action.
-        if (general.rice <= 0) return null
-        return if (general.gold >= 100) "모병" else "징병"
+        // Legacy (line 2511): if pop ratio < safeRecruitCityPopulationRatio, probabilistic skip
+        if (city.popMax > 0) {
+            val popRatio = city.pop.toDouble() / city.popMax
+            if (popRatio < nationPolicy.safeRecruitCityPopulationRatio) {
+                val maxPop = city.popMax - nationPolicy.minNPCRecruitCityPopulation
+                if (maxPop > 0 && rng.nextDouble() < remainPop.toDouble() / maxPop) {
+                    return null
+                }
+            }
+        }
+
+        // Legacy (lines 2602-2609): subtract estimated training/morale costs
+        val goldAfterTrainCost = general.gold - fullLeadership * 3
+        val riceAfterTrainCost = general.rice - fullLeadership * 4
+        if (goldAfterTrainCost <= 0 || riceAfterTrainCost <= 0) return null
+
+        // Legacy (line 2627): 모병 if gold >= cost * 6, else 징병
+        // Simplified: use trainCost as proxy for recruit cost
+        val trainCost = fullLeadership * 3
+        return if (goldAfterTrainCost >= trainCost * 6) "모병" else "징병"
     }
 
     // ──────────────────────────────────────────────────────────
@@ -1726,7 +1742,10 @@ class GeneralAI(
         val absRice = general.rice.toDouble()
 
         // Per legacy: weight rice by kill/death ratio (more deaths = rice more expensive)
-        val deathRate = 1.0  // Simplified; legacy uses kill/death stats
+        val rankMap = general.meta["rank"] as? Map<*, *>
+        val killcrew = ((rankMap?.get("killcrew") as? Number)?.toLong() ?: 0L) + 50000L
+        val deathcrew = ((rankMap?.get("deathcrew") as? Number)?.toLong() ?: 0L) + 50000L
+        val deathRate = deathcrew.toDouble() / killcrew.coerceAtLeast(1L)
 
         val relGold = absGold
         val relRice = absRice * deathRate
@@ -1859,8 +1878,36 @@ class GeneralAI(
         if (general.makeLimit > 0) return null
         if (general.npcState.toInt() > 2) return null
 
+        val worldId = world.id.toLong()
+        val ports = worldPortFactory.create(worldId)
+        val allCities = ports.allCities().map { it.toEntity() }
+        val allGenerals = ports.allGenerals().map { it.toEntity() }
+
+        // Per legacy: check for nearby unoccupied major city (level 5-6) within distance 3
+        val occupiedCityIds = mutableSetOf<Long>()
+        // Cities belonging to a nation
+        allCities.filter { it.nationId != 0L }.forEach { occupiedCityIds.add(it.id) }
+        // Cities where a lord (officer_level=12) is located in a neutral city
+        allGenerals.filter { it.officerLevel.toInt() == 12 }.forEach { gen ->
+            val city = allCities.find { it.id == gen.cityId }
+            if (city != null && city.nationId == 0L) occupiedCityIds.add(city.id)
+        }
+
+        val distances = bfsCityDistances(general.cityId, allCities)
+        val availableNearCity = distances.any { (cityId, dist) ->
+            if (dist == 0 || dist > 3) return@any false
+            if (cityId in occupiedCityIds) return@any false
+            val city = allCities.find { it.id == cityId } ?: return@any false
+            val level = city.level.toInt()
+            if (level < 5 || level > 6) return@any false
+            if (dist == 3 && rng.nextDouble() < 0.5) return@any false
+            true
+        }
+        if (!availableNearCity) return null
+
         val avgStat = (general.leadership + general.strength + general.intel).toDouble() / 3.0
-        val threshold = rng.nextDouble() * 80.0  // Simplified from (defaultStatNPCMax + chiefStatMin)/2
+        // Per legacy: (defaultStatNPCMax + chiefStatMin) / 2 = (75 + 65) / 2 = 70
+        val threshold = rng.nextDouble() * 70.0
 
         if (threshold >= avgStat) return null
 
@@ -2335,14 +2382,21 @@ class GeneralAI(
             }
         }
 
-        // Give ambassador permission to existing user chiefs
-        val minUserKillturn = 200  // Simplified from legacy calculation
+        // Per legacy: minUserKillturn = env['killturn'] - int(240 / env['turnterm'])
+        val turnterm = (ctx.world.config["turnterm"] as? Number)?.toInt() ?: (ctx.world.tickSeconds / 60)
+        val envKillturn = (ctx.world.config["killturn"] as? Number)?.toInt()
+            ?: nationGenerals.mapNotNull { it.killTurn?.toInt() }.maxOrNull() ?: 500
+        val minUserKillturn = envKillturn - (240 / turnterm.coerceAtLeast(1))
         val minNPCKillturn = 36
         var userChiefCnt = 0
 
         for (level in minChiefLevel until 12) {
             val chief = chiefGenerals[level] ?: continue
-            if (chief.npcState.toInt() < 2 && (chief.killTurn?.toInt() ?: 100) >= minUserKillturn) {
+            // Per legacy: also check !hasPenalty(NoAmbassador)
+            if (chief.npcState.toInt() < 2
+                && (chief.killTurn?.toInt() ?: 100) >= minUserKillturn
+                && chief.penalty["noAmbassador"] != true
+            ) {
                 userChiefCnt++
                 chief.permission = "ambassador"
             }
@@ -2544,21 +2598,26 @@ class GeneralAI(
         if (supplyCities.isEmpty()) return 20
 
         val nationGenerals = ctx.nationGenerals.filter { it.npcState.toInt() != 5 }
-        val generalCount = (nationGenerals.size + 1).coerceAtLeast(1)
 
-        // Simplified income estimation: sum of city commerce * tax rate
+        // Per legacy: goldIncome = sum(calcCityGoldIncome) * taxRate/20
         val goldIncome = supplyCities.sumOf { city ->
-            (city.comm.toDouble() * nation.rate / 100.0).toInt()
-        }.coerceAtLeast(1)
+            calcCityGoldIncome(city)
+        }.let { (it * nation.rate / 20.0).toInt() }
 
-        // Outcome estimation: general count * base salary
-        val outcome = (generalCount * 100).coerceAtLeast(1)
+        // Per legacy: warGoldIncome = sum(dead/10) for supply cities
+        val warGoldIncome = supplyCities.sumOf { city ->
+            if (city.supplyState > 0) (city.dead / 10) else 0
+        }
 
-        var bill = (goldIncome.toDouble() / outcome * 90).toInt()
+        val income = (goldIncome + warGoldIncome).coerceAtLeast(1)
 
-        // If treasury is abundant, increase bill
-        if (nation.gold + goldIncome - outcome > policy.reqNationGold * 2) {
-            val moreBill = ((nation.gold + goldIncome - policy.reqNationGold * 2).toDouble() / outcome * 80).toInt()
+        // Per legacy: outcome = sum(getBill(dedication)) * billRate/100
+        val outcome = calcOutcome(100, nationGenerals).coerceAtLeast(1)
+
+        var bill = (income.toDouble() / outcome * 90).toInt()
+
+        if (nation.gold + income - outcome > policy.reqNationGold * 2) {
+            val moreBill = ((nation.gold + income - policy.reqNationGold * 2).toDouble() / outcome * 80).toInt()
             if (moreBill > bill) {
                 bill = (moreBill + bill) / 2
             }
@@ -2582,20 +2641,25 @@ class GeneralAI(
         if (supplyCities.isEmpty()) return 20
 
         val nationGenerals = ctx.nationGenerals.filter { it.npcState.toInt() != 5 }
-        val generalCount = (nationGenerals.size + 1).coerceAtLeast(1)
 
-        // Simplified income estimation: sum of city agriculture * tax rate + wall income
+        // Per legacy: riceIncome = sum(calcCityRiceIncome) * taxRate/20
         val riceIncome = supplyCities.sumOf { city ->
-            (city.agri.toDouble() * nation.rate / 100.0).toInt() +
-                (city.wall.toDouble() * nation.rate / 200.0).toInt()
-        }.coerceAtLeast(1)
+            calcCityRiceIncome(city)
+        }.let { (it * nation.rate / 20.0).toInt() }
 
-        val outcome = (generalCount * 100).coerceAtLeast(1)
+        // Per legacy: wallIncome = sum(def * wall/wallMax / 3 * secuFactor) * taxRate/20
+        val wallIncome = supplyCities.sumOf { city ->
+            calcCityWallRiceIncome(city)
+        }.let { (it * nation.rate / 20.0).toInt() }
 
-        var bill = (riceIncome.toDouble() / outcome * 90).toInt()
+        val income = (riceIncome + wallIncome).coerceAtLeast(1)
 
-        if (nation.rice + riceIncome - outcome > policy.reqNationRice * 2) {
-            val moreBill = ((nation.rice + riceIncome - policy.reqNationRice * 2).toDouble() / outcome * 80).toInt()
+        val outcome = calcOutcome(100, nationGenerals).coerceAtLeast(1)
+
+        var bill = (income.toDouble() / outcome * 90).toInt()
+
+        if (nation.rice + income - outcome > policy.reqNationRice * 2) {
+            val moreBill = ((nation.rice + income - policy.reqNationRice * 2).toDouble() / outcome * 80).toInt()
             if (moreBill > bill) {
                 bill = (moreBill + bill) / 2
             }
@@ -3281,5 +3345,62 @@ class GeneralAI(
             }
         }
         return result
+    }
+
+    // ──────────────────────────────────────────────────────────
+    //  Legacy income/outcome helpers for bill rate calculation
+    // ──────────────────────────────────────────────────────────
+
+    /**
+     * Per legacy calcCityGoldIncome: pop * comm/commMax * trustRatio / 30 * secuFactor.
+     * Simplified: no officer bonus, no capital bonus, no nation type modifier.
+     */
+    private fun calcCityGoldIncome(city: City): Int {
+        if (city.supplyState <= 0) return 0
+        val trustRatio = city.trust / 200.0 + 0.5
+        val commMax = city.commMax.coerceAtLeast(1)
+        var income = city.pop.toDouble() * city.comm / commMax * trustRatio / 30.0
+        val secuMax = city.secuMax.coerceAtLeast(1)
+        income *= 1.0 + city.secu.toDouble() / secuMax / 10.0
+        return Math.round(income).toInt()
+    }
+
+    /**
+     * Per legacy calcCityRiceIncome: pop * agri/agriMax * trustRatio / 30 * secuFactor.
+     */
+    private fun calcCityRiceIncome(city: City): Int {
+        if (city.supplyState <= 0) return 0
+        val trustRatio = city.trust / 200.0 + 0.5
+        val agriMax = city.agriMax.coerceAtLeast(1)
+        var income = city.pop.toDouble() * city.agri / agriMax * trustRatio / 30.0
+        val secuMax = city.secuMax.coerceAtLeast(1)
+        income *= 1.0 + city.secu.toDouble() / secuMax / 10.0
+        return Math.round(income).toInt()
+    }
+
+    /**
+     * Per legacy calcCityWallRiceIncome: def * wall/wallMax / 3 * secuFactor.
+     */
+    private fun calcCityWallRiceIncome(city: City): Int {
+        if (city.supplyState <= 0) return 0
+        val wallMax = city.wallMax.coerceAtLeast(1)
+        var income = city.def.toDouble() * city.wall / wallMax / 3.0
+        val secuMax = city.secuMax.coerceAtLeast(1)
+        income *= 1.0 + city.secu.toDouble() / secuMax / 10.0
+        return Math.round(income).toInt()
+    }
+
+    /**
+     * Per legacy getOutcome: sum(getBill(dedication)) * billRate/100.
+     * getBill(ded) = getDedLevel(ded) * 200 + 400
+     * getDedLevel(ded) = ceil(sqrt(ded) / 10), clamped to [0, maxDedLevel=5]
+     */
+    private fun calcOutcome(billRate: Int, generals: List<General>): Int {
+        val totalBill = generals.sumOf { gen ->
+            val dedLevel = kotlin.math.ceil(kotlin.math.sqrt(gen.dedication.toDouble()) / 10.0).toInt()
+                .coerceIn(0, 5)
+            dedLevel * 200 + 400
+        }
+        return Math.round(totalBill.toDouble() * billRate / 100.0).toInt()
     }
 }

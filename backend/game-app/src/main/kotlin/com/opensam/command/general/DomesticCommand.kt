@@ -7,6 +7,8 @@ import com.opensam.command.GeneralCommand
 import com.opensam.command.constraint.*
 import com.opensam.entity.General
 import kotlin.math.max
+import kotlin.math.min
+import kotlin.math.pow
 import kotlin.random.Random
 
 abstract class DomesticCommand(
@@ -64,9 +66,25 @@ abstract class DomesticCommand(
         score = max(1.0, score)
         var scoreIntWork = score.toInt()
 
-        // Legacy parity (command tests): base success/fail 10%, success scales by trust
-        var successRatio = minOf(1.0, 0.1 * (trust / 80.0))
-        var failRatio = minOf(1.0 - successRatio, 0.1)
+        // Legacy parity: CriticalRatioDomestic — ratio = avg(leadership,strength,intel) / stat
+        val leadership = general.leadership.toDouble()
+        val strength = general.strength.toDouble()
+        val intel = general.intel.toDouble()
+        val avg = (leadership + strength + intel) / 3.0
+        val statValue = when (statKey) {
+            "leadership" -> leadership
+            "strength" -> strength
+            "intel" -> intel
+            else -> intel
+        }
+        val ratio = min(avg / statValue, 1.2)
+        var failRatio = ((ratio / 1.2).pow(1.4) - 0.3).coerceIn(0.0, 0.5)
+        var successRatio = ((ratio / 1.2).pow(1.5) - 0.25).coerceIn(0.0, 0.5)
+
+        // Legacy: trust scaling — only applies when trust < 80
+        if (trust < 80.0) {
+            successRatio *= trust / 80.0
+        }
 
         // Apply onCalcDomestic 'success'/'fail' modifiers
         successRatio = DomesticUtils.applyModifier(services, general, nation, actionKey, "success", successRatio)
@@ -75,18 +93,21 @@ abstract class DomesticCommand(
         successRatio = successRatio.coerceIn(0.0, 1.0)
         failRatio = failRatio.coerceIn(0.0, 1.0 - successRatio)
 
+        // Legacy parity: choiceUsingWeight three-way weighted random
         val roll = rng.nextDouble()
         val pick = when {
-            roll < failRatio -> {
-                scoreIntWork = (scoreIntWork * 0.5).toInt()
-                "fail"
-            }
-            roll < failRatio + successRatio -> {
-                scoreIntWork = (scoreIntWork * 1.5).toInt()
-                "success"
-            }
+            roll < failRatio -> "fail"
+            roll < failRatio + successRatio -> "success"
             else -> "normal"
         }
+
+        // Legacy parity: CriticalScoreEx — success=[2.2,3.0), fail=[0.2,0.4), normal=1.0
+        val criticalMultiplier = when (pick) {
+            "success" -> 2.2 + rng.nextDouble() * 0.8
+            "fail" -> 0.2 + rng.nextDouble() * 0.2
+            else -> 1.0
+        }
+        scoreIntWork = (scoreIntWork * criticalMultiplier).toInt()
 
         val scoreInt = max(1, scoreIntWork)
         val exp = (scoreInt * 0.7).toInt()

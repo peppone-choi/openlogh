@@ -2,6 +2,7 @@ package com.opensam.qa
 
 import com.opensam.controller.AccountController
 import com.opensam.controller.DiplomacyController
+import com.opensam.dto.DiplomacyRespondRequest
 import com.opensam.controller.GeneralController
 import com.opensam.dto.BuildPoolGeneralRequest
 import com.opensam.dto.UpdatePoolGeneralRequest
@@ -179,30 +180,21 @@ class ApiContractTest {
         }
 
         @Test
-        @DisplayName("DiplomacyRespondRequest has messageId, action, accept fields")
+        @DisplayName("DiplomacyRespondRequest has accept field")
         fun `DiplomacyRespondRequest has correct fields`() {
-            // DiplomacyRespondRequest is a nested data class inside DiplomacyController
-            // We can verify by instantiating it directly
-            val req = DiplomacyController.DiplomacyRespondRequest(
-                messageId = 42L,
-                action = "accept",
+            val req = DiplomacyRespondRequest(
                 accept = true,
             )
-            assertEquals(42L, req.messageId)
-            assertEquals("accept", req.action)
             assertTrue(req.accept)
         }
 
         @Test
         @DisplayName("DiplomacyRespondRequest accept=false is valid for rejection")
         fun `DiplomacyRespondRequest can represent rejection`() {
-            val req = DiplomacyController.DiplomacyRespondRequest(
-                messageId = 1L,
-                action = "reject",
+            val req = DiplomacyRespondRequest(
                 accept = false,
             )
             assertFalse(req.accept)
-            assertEquals("reject", req.action)
         }
 
         @Test

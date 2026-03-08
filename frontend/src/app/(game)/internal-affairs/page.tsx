@@ -272,8 +272,8 @@ export default function InternalAffairsPage() {
                 setBill((data.bill as number) ?? 100);
                 setSecretLimit((data.secretLimit as number) ?? 0);
                 setStrategicCmdLimit((data.strategicCmdLimit as number) ?? 0);
-                setBlockWar(Boolean((data as unknown as Record<string, unknown>).blockWar));
-                setBlockScout(Boolean((data as unknown as Record<string, unknown>).blockScout));
+                setBlockWar(Boolean(data.blockWar));
+                setBlockScout(Boolean(data.blockScout));
                 setNotice((data.notice as string) ?? '');
                 setScoutMsg((data.scoutMsg as string) ?? '');
             })
@@ -291,9 +291,9 @@ export default function InternalAffairsPage() {
                 bill,
                 secretLimit,
                 strategicCmdLimit,
-                blockWar,
-                blockScout,
             });
+            await nationPolicyApi.setBlockWar(myGeneral.nationId, blockWar);
+            await nationPolicyApi.setBlockScout(myGeneral.nationId, blockScout);
             setMsg('정책이 저장되었습니다.');
         } catch {
             setMsg('저장에 실패했습니다.');

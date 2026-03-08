@@ -27,6 +27,7 @@ class CommandService(
     private val commandExecutor: CommandExecutor,
     private val commandRegistry: CommandRegistry,
     private val realtimeService: RealtimeService,
+    private val gameConstService: GameConstService,
 ) {
     fun verifyOwnership(generalId: Long, loginId: String): Boolean {
         val user = appUserRepository.findByLoginId(loginId) ?: return false
@@ -215,20 +216,26 @@ class CommandService(
 
         val existing = generalTurnRepository.findByGeneralIdOrderByTurnIdx(generalId)
         if (existing.isEmpty()) return null
-        val lastTurn = existing.last()
-        val maxIdx = existing.maxOf { it.turnIdx }
-        val newTurns = (1..count).map { i ->
-            generalTurnRepository.save(
-                GeneralTurn(
-                    worldId = general.worldId,
-                    generalId = generalId,
-                    turnIdx = (maxIdx + i).toShort(),
-                    actionCode = lastTurn.actionCode,
-                    arg = lastTurn.arg.toMutableMap(),
-                )
-            )
+        val maxTurn = gameConstService.getInt("maxTurn")
+        if (count <= 0 || count >= maxTurn) {
+            return existing
         }
-        return existing + newTurns
+
+        val queue = buildFullGeneralTurnQueue(general, existing, maxTurn)
+        val reqTurn = if (count * 2 > maxTurn) maxTurn - count else count
+
+        for (turnIdx in 0 until reqTurn) {
+            val source = queue[turnIdx]
+            var target = turnIdx + count
+            while (target < maxTurn) {
+                queue[target].actionCode = source.actionCode
+                queue[target].arg = source.arg.toMutableMap()
+                queue[target].brief = source.brief
+                target += count
+            }
+        }
+
+        return replaceGeneralTurns(general, queue)
     }
 
     @Transactional
@@ -241,25 +248,150 @@ class CommandService(
 
         val existing = generalTurnRepository.findByGeneralIdOrderByTurnIdx(generalId)
         if (existing.isEmpty()) return null
-        generalTurnRepository.deleteByGeneralId(generalId)
-        return existing.mapNotNull { turn ->
-            val newIdx = turn.turnIdx + amount
-            if (newIdx >= 0) {
-                generalTurnRepository.save(
-                    GeneralTurn(
-                        worldId = general.worldId,
-                        generalId = generalId,
-                        turnIdx = newIdx.toShort(),
-                        actionCode = turn.actionCode,
-                        arg = turn.arg.toMutableMap(),
-                    )
-                )
-            } else null
+        val maxTurn = gameConstService.getInt("maxTurn")
+        if (amount == 0 || kotlin.math.abs(amount) >= maxTurn) {
+            return existing
         }
+
+        val queue = buildFullGeneralTurnQueue(general, existing, maxTurn)
+        val nextQueue = MutableList(maxTurn) { idx -> defaultGeneralTurn(general, idx.toShort()) }
+
+        if (amount > 0) {
+            for (idx in 0 until maxTurn) {
+                nextQueue[idx] = if (idx < amount) {
+                    defaultGeneralTurn(general, idx.toShort())
+                } else {
+                    queue[idx - amount].copyTurn(idx.toShort())
+                }
+            }
+        } else {
+            val pullCount = -amount
+            for (idx in 0 until maxTurn) {
+                nextQueue[idx] = if (idx >= maxTurn - pullCount) {
+                    defaultGeneralTurn(general, idx.toShort())
+                } else {
+                    queue[idx + pullCount].copyTurn(idx.toShort())
+                }
+            }
+        }
+
+        return replaceGeneralTurns(general, nextQueue)
+    }
+
+    private fun buildFullGeneralTurnQueue(general: com.opensam.entity.General, existing: List<GeneralTurn>, maxTurn: Int): MutableList<GeneralTurn> {
+        val indexed = existing.associateBy { it.turnIdx.toInt() }
+        return MutableList(maxTurn) { idx ->
+            indexed[idx]?.copyTurn(idx.toShort()) ?: defaultGeneralTurn(general, idx.toShort())
+        }
+    }
+
+    private fun replaceGeneralTurns(general: com.opensam.entity.General, turns: List<GeneralTurn>): List<GeneralTurn> {
+        generalTurnRepository.deleteByGeneralId(general.id)
+        return generalTurnRepository.saveAll(turns.map { it.copyTurn(it.turnIdx) }).sortedBy { it.turnIdx }
+    }
+
+    private fun defaultGeneralTurn(general: com.opensam.entity.General, turnIdx: Short): GeneralTurn {
+        return GeneralTurn(
+            worldId = general.worldId,
+            generalId = general.id,
+            turnIdx = turnIdx,
+            actionCode = "휴식",
+            arg = mutableMapOf(),
+            brief = "휴식",
+        )
+    }
+
+    private fun GeneralTurn.copyTurn(turnIdx: Short): GeneralTurn {
+        return GeneralTurn(
+            worldId = worldId,
+            generalId = generalId,
+            turnIdx = turnIdx,
+            actionCode = actionCode,
+            arg = arg.toMutableMap(),
+            brief = brief,
+        )
     }
 
     fun listNationTurns(nationId: Long, officerLevel: Short): List<NationTurn> {
         return nationTurnRepository.findByNationIdAndOfficerLevelOrderByTurnIdx(nationId, officerLevel)
+    }
+
+    @Transactional
+    fun repeatNationTurns(generalId: Long, nationId: Long, count: Int): List<NationTurn>? {
+        val general = generalRepository.findById(generalId).orElse(null) ?: return null
+        val world = worldStateRepository.findById(general.worldId.toShort()).orElse(null) ?: return null
+        if (general.nationId == 0L || general.nationId != nationId || general.officerLevel < 5) {
+            return null
+        }
+        if (world.realtimeMode) {
+            throw IllegalStateException("실시간 모드에서는 국가 예턴 반복을 사용할 수 없습니다.")
+        }
+
+        val existing = nationTurnRepository.findByNationIdAndOfficerLevelOrderByTurnIdx(general.nationId, general.officerLevel)
+        if (existing.isEmpty()) return null
+        val maxChiefTurn = gameConstService.getInt("maxChiefTurn")
+        if (count <= 0 || count >= maxChiefTurn) {
+            return existing
+        }
+
+        val queue = buildFullNationTurnQueue(general, existing, maxChiefTurn)
+        val reqTurn = if (count * 2 > maxChiefTurn) maxChiefTurn - count else count
+
+        for (turnIdx in 0 until reqTurn) {
+            val source = queue[turnIdx]
+            var target = turnIdx + count
+            while (target < maxChiefTurn) {
+                queue[target].actionCode = source.actionCode
+                queue[target].arg = source.arg.toMutableMap()
+                queue[target].brief = source.brief
+                target += count
+            }
+        }
+
+        return replaceNationTurns(general, queue)
+    }
+
+    @Transactional
+    fun pushNationTurns(generalId: Long, nationId: Long, amount: Int): List<NationTurn>? {
+        val general = generalRepository.findById(generalId).orElse(null) ?: return null
+        val world = worldStateRepository.findById(general.worldId.toShort()).orElse(null) ?: return null
+        if (general.nationId == 0L || general.nationId != nationId || general.officerLevel < 5) {
+            return null
+        }
+        if (world.realtimeMode) {
+            throw IllegalStateException("실시간 모드에서는 국가 예턴 밀기/당기기를 사용할 수 없습니다.")
+        }
+
+        val existing = nationTurnRepository.findByNationIdAndOfficerLevelOrderByTurnIdx(general.nationId, general.officerLevel)
+        if (existing.isEmpty()) return null
+        val maxChiefTurn = gameConstService.getInt("maxChiefTurn")
+        if (amount == 0 || kotlin.math.abs(amount) >= maxChiefTurn) {
+            return existing
+        }
+
+        val queue = buildFullNationTurnQueue(general, existing, maxChiefTurn)
+        val nextQueue = MutableList(maxChiefTurn) { idx -> defaultNationTurn(general, idx.toShort()) }
+
+        if (amount > 0) {
+            for (idx in 0 until maxChiefTurn) {
+                nextQueue[idx] = if (idx < amount) {
+                    defaultNationTurn(general, idx.toShort())
+                } else {
+                    queue[idx - amount].copyNationTurn(idx.toShort())
+                }
+            }
+        } else {
+            val pullCount = -amount
+            for (idx in 0 until maxChiefTurn) {
+                nextQueue[idx] = if (idx >= maxChiefTurn - pullCount) {
+                    defaultNationTurn(general, idx.toShort())
+                } else {
+                    queue[idx + pullCount].copyNationTurn(idx.toShort())
+                }
+            }
+        }
+
+        return replaceNationTurns(general, nextQueue)
     }
 
     @Transactional
@@ -290,6 +422,42 @@ class CommandService(
                 )
             )
         }
+    }
+
+    private fun buildFullNationTurnQueue(general: com.opensam.entity.General, existing: List<NationTurn>, maxChiefTurn: Int): MutableList<NationTurn> {
+        val indexed = existing.associateBy { it.turnIdx.toInt() }
+        return MutableList(maxChiefTurn) { idx ->
+            indexed[idx]?.copyNationTurn(idx.toShort()) ?: defaultNationTurn(general, idx.toShort())
+        }
+    }
+
+    private fun replaceNationTurns(general: com.opensam.entity.General, turns: List<NationTurn>): List<NationTurn> {
+        nationTurnRepository.deleteByNationIdAndOfficerLevel(general.nationId, general.officerLevel)
+        return nationTurnRepository.saveAll(turns.map { it.copyNationTurn(it.turnIdx) }).sortedBy { it.turnIdx }
+    }
+
+    private fun defaultNationTurn(general: com.opensam.entity.General, turnIdx: Short): NationTurn {
+        return NationTurn(
+            worldId = general.worldId,
+            nationId = general.nationId,
+            officerLevel = general.officerLevel,
+            turnIdx = turnIdx,
+            actionCode = "휴식",
+            arg = mutableMapOf(),
+            brief = "휴식",
+        )
+    }
+
+    private fun NationTurn.copyNationTurn(turnIdx: Short): NationTurn {
+        return NationTurn(
+            worldId = worldId,
+            nationId = nationId,
+            officerLevel = officerLevel,
+            turnIdx = turnIdx,
+            actionCode = actionCode,
+            arg = arg.toMutableMap(),
+            brief = brief,
+        )
     }
 
     private fun generalCategory(actionCode: String): String = when (actionCode) {

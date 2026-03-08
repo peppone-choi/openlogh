@@ -7,6 +7,7 @@ import org.springframework.data.repository.query.Param
 
 interface MessageRepository : JpaRepository<Message, Long> {
     fun findByDestIdOrderBySentAtDesc(destId: Long): List<Message>
+    fun findByDestIdAndIdGreaterThanOrderBySentAtDesc(destId: Long, id: Long): List<Message>
     fun findByWorldIdAndMailboxCodeOrderBySentAtDesc(worldId: Long, mailboxCode: String): List<Message>
     fun findByWorldIdAndMailboxCodeAndSrcIdOrderBySentAtDesc(worldId: Long, mailboxCode: String, srcId: Long): List<Message>
     fun findBySrcIdAndMailboxCodeOrderBySentAtDesc(srcId: Long, mailboxCode: String): List<Message>
@@ -15,7 +16,10 @@ interface MessageRepository : JpaRepository<Message, Long> {
     fun findByDestIdAndMailboxCodeOrderBySentAtDesc(destId: Long, mailboxCode: String): List<Message>
     fun findByWorldIdAndMailboxCodeAndDestIdOrderBySentAtDesc(worldId: Long, mailboxCode: String, destId: Long): List<Message>
     fun findByWorldIdAndMailboxTypeOrderBySentAtDesc(worldId: Long, mailboxType: String): List<Message>
+    fun findByWorldIdAndMailboxTypeAndIdLessThanOrderBySentAtDesc(worldId: Long, mailboxType: String, id: Long): List<Message>
     fun findByDestIdAndMailboxTypeOrderBySentAtDesc(destId: Long, mailboxType: String): List<Message>
+    fun findByDestIdAndMailboxTypeAndIdLessThanOrderBySentAtDesc(destId: Long, mailboxType: String, id: Long): List<Message>
+    fun findByDestIdAndMailboxTypeAndIdGreaterThanOrderBySentAtDesc(destId: Long, mailboxType: String, id: Long): List<Message>
     fun findByDestIdAndMailboxCodeAndIdLessThanOrderByIdDesc(destId: Long, mailboxCode: String, id: Long): List<Message>
 
     @Query(
@@ -65,5 +69,35 @@ interface MessageRepository : JpaRepository<Message, Long> {
     fun findConversationByMailboxTypeAndOwnerId(
         @Param("mailboxType") mailboxType: String,
         @Param("ownerId") ownerId: Long,
+    ): List<Message>
+
+    @Query(
+        """
+        SELECT m FROM Message m
+        WHERE m.mailboxType = :mailboxType
+          AND (m.srcId = :ownerId OR m.destId = :ownerId)
+          AND m.id < :beforeId
+        ORDER BY m.sentAt DESC
+        """
+    )
+    fun findConversationByMailboxTypeAndOwnerIdAndIdLessThan(
+        @Param("mailboxType") mailboxType: String,
+        @Param("ownerId") ownerId: Long,
+        @Param("beforeId") beforeId: Long,
+    ): List<Message>
+
+    @Query(
+        """
+        SELECT m FROM Message m
+        WHERE m.mailboxType = :mailboxType
+          AND (m.srcId = :ownerId OR m.destId = :ownerId)
+          AND m.id > :sinceId
+        ORDER BY m.sentAt DESC
+        """
+    )
+    fun findConversationByMailboxTypeAndOwnerIdAndIdGreaterThan(
+        @Param("mailboxType") mailboxType: String,
+        @Param("ownerId") ownerId: Long,
+        @Param("sinceId") sinceId: Long,
     ): List<Message>
 }

@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useWorldStore } from '@/stores/worldStore';
 import { useGameStore } from '@/stores/gameStore';
+import { subscribeWebSocket } from '@/lib/websocket';
 import { Globe, ChevronDown, ChevronRight } from 'lucide-react';
 import { PageHeader } from '@/components/game/page-header';
 import { LoadingState } from '@/components/game/loading-state';
@@ -59,9 +60,20 @@ export default function NationsPage() {
     const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
     const [expandedNations, setExpandedNations] = useState<Set<number>>(new Set());
 
-    useEffect(() => {
+    const reloadAll = useCallback(() => {
         if (currentWorld) loadAll(currentWorld.id);
     }, [currentWorld, loadAll]);
+
+    useEffect(() => {
+        reloadAll();
+    }, [reloadAll]);
+
+    useEffect(() => {
+        if (!currentWorld) return;
+        return subscribeWebSocket(`/topic/world/${currentWorld.id}/turn`, () => {
+            reloadAll();
+        });
+    }, [currentWorld, reloadAll]);
 
     const cityMap = useMemo(() => new Map(cities.map((c) => [c.id, c])), [cities]);
 

@@ -2,6 +2,12 @@ package com.opensam.dto
 
 import com.opensam.entity.Diplomacy
 
+data class DiplomacyRespondWithActionRequest(
+    val messageId: Long,
+    val action: String,
+    val accept: Boolean,
+)
+
 data class DiplomacyDto(
     val id: Long,
     val worldId: Long,

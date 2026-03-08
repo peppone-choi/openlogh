@@ -272,7 +272,13 @@ function NationPageContent() {
             if (!nation) return;
             setSaving(true);
             try {
-                await nationPolicyApi.updatePolicy(nation.id, { [field]: value });
+                if (field === 'blockWar') {
+                    await nationPolicyApi.setBlockWar(nation.id, value as boolean);
+                } else if (field === 'blockScout') {
+                    await nationPolicyApi.setBlockScout(nation.id, value as boolean);
+                } else {
+                    await nationPolicyApi.updatePolicy(nation.id, { [field]: value });
+                }
             } finally {
                 setSaving(false);
             }

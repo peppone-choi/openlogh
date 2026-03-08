@@ -57,9 +57,9 @@ const PERSONALITIES = LEGACY_PERSONALITY_OPTIONS.map((option) => ({
 // Famous general presets for quick character creation (랜덤 장수 프리셋)
 const GENERAL_PRESETS: {
     name: string;
-        stats: Record<StatKey, number>;
-        personality: string;
-        crewType: number;
+    stats: Record<StatKey, number>;
+    personality: string;
+    crewType: number;
 }[] = [
     {
         name: '관우형',
@@ -633,11 +633,13 @@ function LobbyJoinPageContent() {
                                             className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm"
                                         >
                                             <option value="">선택 안함</option>
-                                            {Object.entries(inheritInfo.availableSpecialWar ?? {}).map(([code, info]) => (
-                                                <option key={code} value={code}>
-                                                    {info.title}
-                                                </option>
-                                            ))}
+                                            {Object.entries(inheritInfo.availableSpecialWar ?? {}).map(
+                                                ([code, info]) => (
+                                                    <option key={code} value={code}>
+                                                        {info.title}
+                                                    </option>
+                                                )
+                                            )}
                                         </select>
                                         {selectedInheritSpecial && (
                                             <p

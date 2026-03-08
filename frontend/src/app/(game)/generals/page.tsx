@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useWorldStore } from '@/stores/worldStore';
 import { useGameStore } from '@/stores/gameStore';
 import { useGeneralStore } from '@/stores/generalStore';
+import { subscribeWebSocket } from '@/lib/websocket';
 import { Users, Search, Columns3 } from 'lucide-react';
 import { PageHeader } from '@/components/game/page-header';
 import { LoadingState } from '@/components/game/loading-state';
@@ -112,11 +113,22 @@ export default function GeneralsPage() {
     const [npcFilter, setNpcFilter] = useState<NpcFilter>('all');
     const [showExtended, setShowExtended] = useState(false);
 
-    useEffect(() => {
+    const reloadAll = useCallback(() => {
         if (!currentWorld) return;
         fetchMyGeneral(currentWorld.id).catch(() => {});
         loadAll(currentWorld.id);
     }, [currentWorld, fetchMyGeneral, loadAll]);
+
+    useEffect(() => {
+        reloadAll();
+    }, [reloadAll]);
+
+    useEffect(() => {
+        if (!currentWorld) return;
+        return subscribeWebSocket(`/topic/world/${currentWorld.id}/turn`, () => {
+            reloadAll();
+        });
+    }, [currentWorld, reloadAll]);
 
     const nationMap = useMemo(() => new Map(nations.map((n) => [n.id, n])), [nations]);
 

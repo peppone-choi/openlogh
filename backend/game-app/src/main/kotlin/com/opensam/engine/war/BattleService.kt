@@ -57,7 +57,13 @@ class BattleService(
         )
 
         val attackerNation = nationRepository.findById(attacker.nationId).orElse(null)
-        val attackerUnit = WarUnitGeneral(attacker, attackerNation?.tech ?: 0f)
+        val attackerUnit = WarUnitGeneral(
+            attacker,
+            nationTech = attackerNation?.tech ?: 0f,
+            isAttacker = true,
+            cityLevel = targetCity.level.toInt(),
+            capitalCityId = attackerNation?.capitalCityId ?: 0,
+        )
         val attackerModifiers = modifierService.getModifiers(attacker, attackerNation)
 
         // Get defenders in the city
@@ -65,7 +71,13 @@ class BattleService(
             .filter { it.nationId == targetCity.nationId && it.crew > 0 }
             .map { gen ->
                 val defNation = nationRepository.findById(gen.nationId).orElse(null)
-                val unit = WarUnitGeneral(gen, defNation?.tech ?: 0f)
+                val unit = WarUnitGeneral(
+                    gen,
+                    nationTech = defNation?.tech ?: 0f,
+                    isAttacker = false,
+                    cityLevel = targetCity.level.toInt(),
+                    capitalCityId = defNation?.capitalCityId ?: 0,
+                )
                 val modifiers = modifierService.getModifiers(gen, defNation)
                 Triple(unit, gen, modifiers)
             }

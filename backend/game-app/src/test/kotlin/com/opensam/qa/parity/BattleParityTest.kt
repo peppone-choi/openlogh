@@ -135,30 +135,30 @@ class BattleParityTest {
     inner class TechFormulaParity {
 
         @Test
-        fun `techLevel is tech divided by 100 clamped 0-30`() {
+        fun `techLevel is tech divided by 1000 clamped 0-12`() {
             assertEquals(0, getTechLevel(0f))
-            assertEquals(0, getTechLevel(99f))
-            assertEquals(1, getTechLevel(100f))
-            assertEquals(1, getTechLevel(199f))
-            assertEquals(10, getTechLevel(1000f))
-            assertEquals(30, getTechLevel(3000f))
-            assertEquals(30, getTechLevel(5000f)) // clamped at 30
+            assertEquals(0, getTechLevel(999f))
+            assertEquals(1, getTechLevel(1000f))
+            assertEquals(1, getTechLevel(1999f))
+            assertEquals(10, getTechLevel(10000f))
+            assertEquals(12, getTechLevel(12000f))
+            assertEquals(12, getTechLevel(15000f)) // clamped at 12
         }
 
         @Test
         fun `techAbil is techLevel times 25`() {
             assertEquals(0, getTechAbil(0f))
-            assertEquals(25, getTechAbil(100f))
-            assertEquals(250, getTechAbil(1000f))
-            assertEquals(750, getTechAbil(3000f))
+            assertEquals(25, getTechAbil(1000f))
+            assertEquals(250, getTechAbil(10000f))
+            assertEquals(300, getTechAbil(12000f))
         }
 
         @Test
         fun `techCost is 1 plus techLevel times 0_15`() {
             assertEquals(1.0, getTechCost(0f), 0.001)
-            assertEquals(1.15, getTechCost(100f), 0.001)
-            assertEquals(2.5, getTechCost(1000f), 0.001)
-            assertEquals(5.5, getTechCost(3000f), 0.001)
+            assertEquals(1.15, getTechCost(1000f), 0.001)
+            assertEquals(2.5, getTechCost(10000f), 0.001)
+            assertEquals(2.8, getTechCost(12000f), 0.001)
         }
     }
 
@@ -207,10 +207,10 @@ class BattleParityTest {
             val gen = createGeneral(strength = 70, crewType = CrewType.FOOTMAN.code)
             val unit = WarUnitGeneral(gen, nationTech = 1000f)
             // ratio = 70*2-40 = 100 → exactly 100
-            // techAbil = getTechAbil(1000) = 250
-            // attack = (100 + 250) = 350
-            // baseAttack = 350 * 100/100 = 350.0
-            assertEquals(350.0, unit.getBaseAttack(), 0.01)
+            // techAbil = getTechAbil(1000) = getTechLevel(1000)*25 = 1*25 = 25
+            // attack = (100 + 25) = 125
+            // baseAttack = 125 * 100/100 = 125.0
+            assertEquals(125.0, unit.getBaseAttack(), 0.01)
         }
     }
 
@@ -252,10 +252,12 @@ class BattleParityTest {
         }
 
         @Test
-        fun `city defence is 1_5x attack`() {
+        fun `city defence equals attack (legacy parity)`() {
+            // Legacy WarUnitCity.php: both getComputedAttack and getComputedDefence
+            // return (def + wall*9) / 500 + 200
             val city = createCity(def = 1000, wall = 500)
             val unit = WarUnitCity(city)
-            assertEquals(unit.getBaseAttack() * 1.5, unit.getBaseDefence(), 0.01)
+            assertEquals(unit.getBaseAttack(), unit.getBaseDefence(), 0.01)
         }
 
         @Test

@@ -59,6 +59,8 @@ class DiplomacyService(
         const val NON_AGGRESSION_TERM: Short = 60  // ~5 years
         const val CEASEFIRE_PROPOSAL_TERM: Short = 12  // expires after 12 turns if not accepted
         const val NA_PROPOSAL_TERM: Short = 12
+        const val WAR_DECLARATION_TERM: Short = 24  // legacy: 선전포고 term=24
+        const val WAR_INITIAL_TERM: Short = 6       // legacy: 선포->교전 transition sets term=6
     }
 
     // ========== Turn processing ==========
@@ -71,8 +73,9 @@ class DiplomacyService(
         for (diplomacy in active) {
             diplomacy.term = (diplomacy.term - 1).toShort()
 
-            if (diplomacy.stateCode == "선전포고" && diplomacy.term <= 12) {
+            if (diplomacy.stateCode == "선전포고" && diplomacy.term <= 0) {
                 diplomacy.stateCode = "전쟁"
+                diplomacy.term = WAR_INITIAL_TERM
                 log.info(
                     "War declaration transitioned to active war: nation {} <-> nation {}",
                     diplomacy.srcNationId,

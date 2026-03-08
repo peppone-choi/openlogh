@@ -112,9 +112,9 @@ class BattleEngineTest {
     @Test
     fun `WarUnitGeneral tech bonus increases attack`() {
         val general = createGeneral(strength = 100, leadership = 50)
-        val unit = WarUnitGeneral(general, nationTech = 100f)
+        val unit = WarUnitGeneral(general, nationTech = 1000f)
 
-        // techLevel=(100/100)=1, techAbil=25, ratio=130 (same as above)
+        // techLevel=(1000/1000)=1, techAbil=25, ratio=130 (same as above)
         // (100+25)*130/100 = 162.5
         assertEquals(162.5, unit.getBaseAttack(), 0.01)
     }
@@ -201,11 +201,12 @@ class BattleEngineTest {
     }
 
     @Test
-    fun `WarUnitCity base defence is 1_5x attack`() {
+    fun `WarUnitCity base defence equals attack (legacy parity)`() {
         val city = createCity(def = 500, wall = 500)
         val unit = WarUnitCity(city)
 
-        assertEquals(unit.getBaseAttack() * 1.5, unit.getBaseDefence(), 0.01)
+        // Legacy: both getComputedAttack and getComputedDefence return (def + wall*9) / 500 + 200
+        assertEquals(unit.getBaseAttack(), unit.getBaseDefence(), 0.01)
     }
 
     @Test

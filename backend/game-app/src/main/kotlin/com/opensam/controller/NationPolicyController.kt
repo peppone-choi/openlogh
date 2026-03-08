@@ -1,11 +1,21 @@
 package com.opensam.controller
 
 import com.opensam.dto.NationPolicyInfo
+import com.opensam.dto.NationMutationResponse
+import com.opensam.dto.SetBillRequest
+import com.opensam.dto.SetNationNoticeRequest
+import com.opensam.dto.SetNationScoutMsgRequest
+import com.opensam.dto.SetRateRequest
+import com.opensam.dto.SetSecretLimitRequest
+import com.opensam.dto.SetToggleRequest
 import com.opensam.dto.UpdateNoticeRequest
 import com.opensam.dto.UpdatePolicyRequest
 import com.opensam.dto.UpdateScoutMsgRequest
 import com.opensam.service.NationService
+import jakarta.validation.Valid
+import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.*
 
 @RestController
@@ -23,8 +33,12 @@ class NationPolicyController(
     @PatchMapping("/policy")
     fun updatePolicy(
         @PathVariable nationId: Long,
-        @RequestBody request: UpdatePolicyRequest,
+        @Valid @RequestBody request: UpdatePolicyRequest,
     ): ResponseEntity<Void> {
+        val loginId = currentLoginId() ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
+        if (!nationService.verifyPolicyAccess(nationId, loginId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build()
+        }
         if (!nationService.updatePolicy(nationId, request.rate, request.bill, request.secretLimit, request.strategicCmdLimit)) {
             return ResponseEntity.notFound().build()
         }
@@ -34,18 +48,143 @@ class NationPolicyController(
     @PatchMapping("/notice")
     fun updateNotice(
         @PathVariable nationId: Long,
-        @RequestBody request: UpdateNoticeRequest,
+        @Valid @RequestBody request: UpdateNoticeRequest,
     ): ResponseEntity<Void> {
-        if (!nationService.updateNotice(nationId, request.notice)) return ResponseEntity.notFound().build()
+        val loginId = currentLoginId() ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
+        val actor = nationService.resolvePolicyActor(nationId, loginId)
+            ?: return ResponseEntity.status(HttpStatus.FORBIDDEN).build()
+        if (!nationService.verifyPolicyAccess(nationId, loginId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build()
+        }
+        if (!nationService.updateNotice(nationId, request.notice, actor)) return ResponseEntity.notFound().build()
         return ResponseEntity.ok().build()
     }
 
     @PatchMapping("/scout-msg")
     fun updateScoutMsg(
         @PathVariable nationId: Long,
-        @RequestBody request: UpdateScoutMsgRequest,
+        @Valid @RequestBody request: UpdateScoutMsgRequest,
     ): ResponseEntity<Void> {
+        val loginId = currentLoginId() ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
+        if (!nationService.verifyPolicyAccess(nationId, loginId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build()
+        }
         if (!nationService.updateScoutMsg(nationId, request.scoutMsg)) return ResponseEntity.notFound().build()
         return ResponseEntity.ok().build()
     }
+
+    @PostMapping("/bill")
+    fun setBill(
+        @PathVariable nationId: Long,
+        @Valid @RequestBody request: SetBillRequest,
+    ): ResponseEntity<NationMutationResponse> {
+        val loginId = currentLoginId() ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(NationMutationResponse(false, "Unauthorized"))
+        if (!nationService.verifyPolicyAccess(nationId, loginId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(NationMutationResponse(false, "권한이 부족합니다."))
+        }
+        if (!nationService.updateBill(nationId, request.amount)) {
+            return ResponseEntity.notFound().build()
+        }
+        return ResponseEntity.ok(NationMutationResponse(true))
+    }
+
+    @PostMapping("/rate")
+    fun setRate(
+        @PathVariable nationId: Long,
+        @Valid @RequestBody request: SetRateRequest,
+    ): ResponseEntity<NationMutationResponse> {
+        val loginId = currentLoginId() ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(NationMutationResponse(false, "Unauthorized"))
+        if (!nationService.verifyPolicyAccess(nationId, loginId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(NationMutationResponse(false, "권한이 부족합니다."))
+        }
+        if (!nationService.updateRate(nationId, request.amount)) {
+            return ResponseEntity.notFound().build()
+        }
+        return ResponseEntity.ok(NationMutationResponse(true))
+    }
+
+    @PostMapping("/secret-limit")
+    fun setSecretLimit(
+        @PathVariable nationId: Long,
+        @Valid @RequestBody request: SetSecretLimitRequest,
+    ): ResponseEntity<NationMutationResponse> {
+        val loginId = currentLoginId() ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(NationMutationResponse(false, "Unauthorized"))
+        if (!nationService.verifyPolicyAccess(nationId, loginId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(NationMutationResponse(false, "권한이 부족합니다."))
+        }
+        if (!nationService.updateSecretLimit(nationId, request.amount)) {
+            return ResponseEntity.notFound().build()
+        }
+        return ResponseEntity.ok(NationMutationResponse(true))
+    }
+
+    @PostMapping("/notice")
+    fun setNotice(
+        @PathVariable nationId: Long,
+        @Valid @RequestBody request: SetNationNoticeRequest,
+    ): ResponseEntity<NationMutationResponse> {
+        val loginId = currentLoginId() ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(NationMutationResponse(false, "Unauthorized"))
+        val actor = nationService.resolvePolicyActor(nationId, loginId)
+            ?: return ResponseEntity.status(HttpStatus.FORBIDDEN).body(NationMutationResponse(false, "권한이 부족합니다."))
+        if (!nationService.verifyPolicyAccess(nationId, loginId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(NationMutationResponse(false, "권한이 부족합니다."))
+        }
+        if (!nationService.updateNotice(nationId, request.msg, actor)) {
+            return ResponseEntity.notFound().build()
+        }
+        return ResponseEntity.ok(NationMutationResponse(true))
+    }
+
+    @PostMapping("/scout-msg")
+    fun setScoutMsg(
+        @PathVariable nationId: Long,
+        @Valid @RequestBody request: SetNationScoutMsgRequest,
+    ): ResponseEntity<NationMutationResponse> {
+        val loginId = currentLoginId() ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(NationMutationResponse(false, "Unauthorized"))
+        if (!nationService.verifyPolicyAccess(nationId, loginId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(NationMutationResponse(false, "권한이 부족합니다."))
+        }
+        if (!nationService.updateScoutMsg(nationId, request.msg)) {
+            return ResponseEntity.notFound().build()
+        }
+        return ResponseEntity.ok(NationMutationResponse(true))
+    }
+
+    @PostMapping("/block-scout")
+    fun setBlockScout(
+        @PathVariable nationId: Long,
+        @RequestBody request: SetToggleRequest,
+    ): ResponseEntity<NationMutationResponse> {
+        val loginId = currentLoginId() ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(NationMutationResponse(false, "Unauthorized"))
+        if (!nationService.verifyPolicyAccess(nationId, loginId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(NationMutationResponse(false, "권한이 부족합니다."))
+        }
+        val result = nationService.updateBlockScout(nationId, request.value)
+        val status = when {
+            result.success -> HttpStatus.OK
+            result.reason == null -> HttpStatus.NOT_FOUND
+            else -> HttpStatus.BAD_REQUEST
+        }
+        return ResponseEntity.status(status).body(NationMutationResponse(result.success, result.reason, result.availableCnt))
+    }
+
+    @PostMapping("/block-war")
+    fun setBlockWar(
+        @PathVariable nationId: Long,
+        @RequestBody request: SetToggleRequest,
+    ): ResponseEntity<NationMutationResponse> {
+        val loginId = currentLoginId() ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(NationMutationResponse(false, "Unauthorized"))
+        if (!nationService.verifyPolicyAccess(nationId, loginId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(NationMutationResponse(false, "권한이 부족합니다."))
+        }
+        val result = nationService.updateBlockWar(nationId, request.value)
+        val status = when {
+            result.success -> HttpStatus.OK
+            result.reason == null -> HttpStatus.NOT_FOUND
+            else -> HttpStatus.BAD_REQUEST
+        }
+        return ResponseEntity.status(status).body(NationMutationResponse(result.success, result.reason, result.availableCnt))
+    }
+
+    private fun currentLoginId(): String? = SecurityContextHolder.getContext().authentication?.name
 }

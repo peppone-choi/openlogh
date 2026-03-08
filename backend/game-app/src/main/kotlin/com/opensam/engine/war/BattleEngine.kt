@@ -121,13 +121,10 @@ class BattleEngine {
         val effectiveInjuryImmune = attackerInjuryImmune || injuryCtx.injuryImmune
 
         // Legacy parity (PHP WarUnitGeneral::tryWound):
-        // Injury probability based on HP loss ratio, not flat 5%.
-        // wound chance = (1 - remainHP / maxHP) * 0.5, capped at 0.3
-        if (!effectiveInjuryImmune && attacker.isAlive && attacker.maxHp > 0) {
-            val hpLossRatio = 1.0 - attacker.hp.toDouble() / attacker.maxHp.toDouble()
-            val woundChance = (hpLossRatio * 0.5).coerceAtMost(0.3)
-            if (woundChance > 0 && rng.nextDouble() < woundChance) {
-                val woundAmount = rng.nextInt(1, 4)
+        // Flat 5% chance (nextBool(0.05)), injury random [10, 80], capped at 80
+        if (!effectiveInjuryImmune && attacker.isAlive) {
+            if (rng.nextDouble() < 0.05) {
+                val woundAmount = rng.nextInt(10, 81)  // [10, 80] inclusive
                 attacker.injury = (attacker.injury + woundAmount).coerceAtMost(80)
                 logs.add("<Y>${attacker.name}</>이(가) 부상을 입었습니다.")
             }
@@ -212,12 +209,16 @@ class BattleEngine {
         val opposeWarPowerMultiply = defenceTypeCoef
 
         // Experience level scaling (WarUnitGeneral only)
+        // Legacy: own warPower boosted AND opposeWarPowerMultiply reduced
+        var expOpposeMultiply = 1.0
         if (attacker is WarUnitGeneral) {
             val expLevel = attacker.general.expLevel.toInt()
             if (defender is WarUnitCity) {
                 warPower *= 1.0 + expLevel / 600.0
             } else {
-                warPower /= maxOf(0.01, 1.0 - expLevel / 300.0)
+                val expFactor = maxOf(0.01, 1.0 - expLevel / 300.0)
+                warPower /= expFactor
+                expOpposeMultiply = expFactor
             }
         }
 
@@ -226,7 +227,7 @@ class BattleEngine {
 
         return WarPowerResult(
             warPower = maxOf(1.0, round(warPower)),
-            opposeWarPowerMultiply = opposeWarPowerMultiply,
+            opposeWarPowerMultiply = opposeWarPowerMultiply * expOpposeMultiply,
         )
     }
 
@@ -280,15 +281,23 @@ class BattleEngine {
         for (trigger in defenderTriggers) trigger.onPreMagic(ctx)
 
         // Critical hit roll (legacy: 필살시도/발동)
+        // Legacy WarUnit::criticalDamage() returns random in [1.3, 2.0)
         if (rng.nextDouble() < attacker.criticalChance + ctx.criticalChanceBonus) {
-            attackerDamage = (attackerDamage * 1.5).toInt()
+            val critMultiplier = 1.3 + rng.nextDouble() * 0.7  // [1.3, 2.0)
+            attackerDamage = (attackerDamage * critMultiplier).toInt()
             ctx.criticalActivated = true
             // POST critical (legacy: 필살발동)
             for (trigger in attackerTriggers) trigger.onPostCritical(ctx)
         }
 
         // Dodge roll (legacy: 회피시도/발동)
-        if (!ctx.dodgeDisabled && rng.nextDouble() < defender.dodgeChance + ctx.dodgeChanceBonus) {
+        // Legacy: avoidRatio *= 0.75 when opponent is footman
+        var effectiveDodgeChance = defender.dodgeChance + ctx.dodgeChanceBonus
+        val attackerCrewObj = com.opensam.model.CrewType.fromCode(attacker.crewType)
+        if (attackerCrewObj?.armType == com.opensam.model.ArmType.FOOTMAN) {
+            effectiveDodgeChance *= 0.75
+        }
+        if (!ctx.dodgeDisabled && rng.nextDouble() < effectiveDodgeChance) {
             attackerDamage = (attackerDamage * 0.3).toInt()
             ctx.dodgeActivated = true
             // POST dodge (legacy: 회피발동)

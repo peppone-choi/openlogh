@@ -1048,6 +1048,8 @@ export interface NationPolicyInfo {
     strategicCmdLimit: number;
     notice: string;
     scoutMsg: string;
+    blockWar: boolean;
+    blockScout: boolean;
 }
 
 export interface NpcPolicyInfo {
@@ -1240,6 +1242,21 @@ export interface GameVersionInfo {
     baseUrl: string;
     containerId: string | null;
     imageTag: string | null;
+}
+
+// Turn Daemon
+export interface TurnStatus {
+    state: string;
+    reason?: string;
+    requestId?: string;
+}
+
+export interface TurnRunResult {
+    result: string;
+}
+
+export interface TurnStateResult {
+    state: string;
 }
 
 // General Log (battle center)

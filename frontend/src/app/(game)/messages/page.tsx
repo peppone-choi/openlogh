@@ -19,6 +19,7 @@ import { Badge } from '@/components/ui/badge';
 
 type MailboxTab = 'public' | 'national' | 'private' | 'diplomacy';
 type ComposeRecipientType = 'public' | 'general' | 'nation';
+const PAGE_SIZE = 30;
 
 export default function MessagesPage() {
     const currentWorld = useWorldStore((s) => s.currentWorld);
@@ -48,7 +49,6 @@ export default function MessagesPage() {
         private: true,
         diplomacy: true,
     });
-
     const canUseDiplomacy = (myGeneral?.officerLevel ?? 0) >= 4;
 
     useEffect(() => {
@@ -62,13 +62,14 @@ export default function MessagesPage() {
         setRefreshing(true);
         try {
             const [publicRes, nationalRes, privateRes, diplomacyRes] = await Promise.all([
-                messageApi.getByType('public', { worldId: currentWorld.id }),
-                messageApi.getByType('national', { nationId: myGeneral.nationId }),
-                messageApi.getByType('private', { generalId: myGeneral.id }),
+                messageApi.getByType('public', { worldId: currentWorld.id, limit: PAGE_SIZE }),
+                messageApi.getByType('national', { nationId: myGeneral.nationId, limit: PAGE_SIZE }),
+                messageApi.getByType('private', { generalId: myGeneral.id, limit: PAGE_SIZE }),
                 canUseDiplomacy
                     ? messageApi.getByType('diplomacy', {
                           nationId: myGeneral.nationId,
                           officerLevel: myGeneral.officerLevel,
+                          limit: PAGE_SIZE,
                       })
                     : Promise.resolve({ data: [] as Message[] }),
             ]);
@@ -78,6 +79,12 @@ export default function MessagesPage() {
                 national: nationalRes.data,
                 private: privateRes.data,
                 diplomacy: diplomacyRes.data,
+            });
+            setHasMoreByTab({
+                public: publicRes.data.length >= PAGE_SIZE,
+                national: nationalRes.data.length >= PAGE_SIZE,
+                private: privateRes.data.length >= PAGE_SIZE,
+                diplomacy: canUseDiplomacy && diplomacyRes.data.length >= PAGE_SIZE,
             });
         } finally {
             setLoading(false);
@@ -110,7 +117,7 @@ export default function MessagesPage() {
             const res = await messageApi.getByType(tab, {
                 ...typeParams,
                 beforeId: oldestId,
-                limit: 30,
+                limit: PAGE_SIZE,
             });
             if (res.data.length === 0) {
                 setHasMoreByTab((prev) => ({ ...prev, [tab]: false }));
@@ -119,6 +126,7 @@ export default function MessagesPage() {
                     ...prev,
                     [tab]: [...prev[tab], ...res.data],
                 }));
+                setHasMoreByTab((prev) => ({ ...prev, [tab]: res.data.length >= PAGE_SIZE }));
             }
         } finally {
             setLoadingOlder(false);

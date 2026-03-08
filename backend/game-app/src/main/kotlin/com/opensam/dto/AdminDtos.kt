@@ -68,3 +68,16 @@ data class AdminUserSummary(
     val createdAt: OffsetDateTime,
     val lastLoginAt: OffsetDateTime?,
 )
+
+data class GameVersionInfo(
+    val commitSha: String,
+    val gameVersion: String,
+    val jarPath: String,
+    val port: Int,
+    val worldIds: List<Int>,
+    val alive: Boolean,
+    val pid: Long,
+    val baseUrl: String,
+    val containerId: String?,
+    val imageTag: String?,
+)

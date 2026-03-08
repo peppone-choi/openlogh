@@ -16,6 +16,8 @@ interface MessagePanelProps {
     generals: General[];
 }
 
+const MESSAGE_PANEL_PAGE_SIZE = 30;
+
 /* ── Recipient group helpers ── */
 function groupContactsByNation(contacts: ContactInfo[], myGeneralId: number, lastContacts: Map<number, number>) {
     const filtered = contacts.filter((c) => c.generalId !== myGeneralId);
@@ -99,7 +101,9 @@ export function MessagePanel({ worldId, myGeneralId, generals }: MessagePanelPro
             try {
                 const seq = incremental ? lastSequenceRef.current : null;
                 const { data } =
-                    seq != null ? await messageApi.getMine(myGeneralId, seq) : await messageApi.getMine(myGeneralId);
+                    seq != null
+                        ? await messageApi.getMine(myGeneralId, seq)
+                        : await messageApi.getMine(myGeneralId, undefined, MESSAGE_PANEL_PAGE_SIZE);
                 if (incremental && seq != null && data.length > 0) {
                     setMessages((prev) => {
                         const existing = new Set(prev.map((m) => m.id));
@@ -145,7 +149,9 @@ export function MessagePanel({ worldId, myGeneralId, generals }: MessagePanelPro
         let result: Message[];
         switch (tab) {
             case 'nation':
-                result = messages.filter((m) => m.mailboxCode === 'nation');
+                result = messages.filter(
+                    (m) => m.mailboxType === 'NATIONAL' || m.mailboxCode === 'nation' || m.mailboxCode === 'national'
+                );
                 break;
             case 'personal':
                 result = messages.filter((m) => m.mailboxCode === 'personal' || m.mailboxCode === 'message');

@@ -24,6 +24,8 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
 import java.time.OffsetDateTime
+import kotlin.math.min
+import kotlin.math.pow
 import kotlin.math.roundToInt
 
 class CommandParityTest {
@@ -78,7 +80,7 @@ class CommandParityTest {
         val city = createCity(nationId = 1, trust = 80f, agri = 500, agriMax = 1000, frontState = 0)
         val env = createEnv(develCost = 100)
 
-        val expected = expectedDomesticDelta(stat = 80, trust = 80f, current = 500, max = 1000, frontState = 0, seed = "test_cmd_3")
+        val expected = expectedDomesticDelta(stat = 80, trust = 80f, current = 500, max = 1000, frontState = 0, seed = "test_cmd_3", leadership = 70, strength = 70, intel = 80, statKey = "intel")
 
         val first = runAgri(general, city, env, "test_cmd_3")
         val second = runAgri(general, city, env, "test_cmd_3")
@@ -101,7 +103,7 @@ class CommandParityTest {
         val city = createCity(nationId = 1, trust = 90f, comm = 450, commMax = 1000, frontState = 0)
         val env = createEnv(develCost = 120)
 
-        val expected = expectedDomesticDelta(stat = 75, trust = 90f, current = 450, max = 1000, frontState = 0, seed = "test_cmd_4")
+        val expected = expectedDomesticDelta(stat = 75, trust = 90f, current = 450, max = 1000, frontState = 0, seed = "test_cmd_4", leadership = 70, strength = 70, intel = 75, statKey = "intel")
 
         val first = runCommerce(general, city, env, "test_cmd_4")
         val second = runCommerce(general, city, env, "test_cmd_4")
@@ -220,29 +222,47 @@ class CommandParityTest {
         max: Int,
         frontState: Int,
         seed: String,
+        leadership: Int = 70,
+        strength: Int = 70,
+        intel: Int = 70,
+        statKey: String = "intel",
     ): DomesticExpected {
         val rng = LiteHashDRBG.build(seed)
         val trustApplied = maxOf(50f, trust).toDouble()
         var score = (stat * (trustApplied / 100.0) * (0.8 + rng.nextDouble() * 0.4)).toInt()
         score = maxOf(1, score)
 
-        val successRatio = minOf(1.0, 0.1 * (trustApplied / 80.0))
-        val failRatio = minOf(1.0 - successRatio, 0.1)
+        // Legacy CriticalRatioDomestic
+        val avg = (leadership + strength + intel) / 3.0
+        val statValue = when (statKey) {
+            "leadership" -> leadership.toDouble()
+            "strength" -> strength.toDouble()
+            else -> intel.toDouble()
+        }
+        val ratio = min(avg / statValue, 1.2)
+        var failRatio = ((ratio / 1.2).pow(1.4) - 0.3).coerceIn(0.0, 0.5)
+        var successRatio = ((ratio / 1.2).pow(1.5) - 0.25).coerceIn(0.0, 0.5)
+        if (trustApplied < 80.0) {
+            successRatio *= trustApplied / 80.0
+        }
+        successRatio = successRatio.coerceIn(0.0, 1.0)
+        failRatio = failRatio.coerceIn(0.0, 1.0 - successRatio)
+
         val roll = rng.nextDouble()
 
         val pick = when {
-            roll < failRatio -> {
-                score = (score * 0.5).toInt()
-                "fail"
-            }
-
-            roll < failRatio + successRatio -> {
-                score = (score * 1.5).toInt()
-                "success"
-            }
-
+            roll < failRatio -> "fail"
+            roll < failRatio + successRatio -> "success"
             else -> "normal"
         }
+
+        // Legacy CriticalScoreEx
+        val criticalMultiplier = when (pick) {
+            "success" -> 2.2 + rng.nextDouble() * 0.8
+            "fail" -> 0.2 + rng.nextDouble() * 0.2
+            else -> 1.0
+        }
+        score = (score * criticalMultiplier).toInt()
 
         score = maxOf(1, score)
         if (frontState == 1 || frontState == 3) {

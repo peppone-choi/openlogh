@@ -70,10 +70,7 @@ function storePersistentLoginToken(nextToken?: [number, string]) {
     localStorage.setItem(LOGIN_TOKEN_KEY, JSON.stringify([1, nextToken, Date.now()]));
 }
 
-function applyAuthResult(
-    set: (partial: Partial<AuthState>) => void,
-    data: AuthApiResponse
-): LoginResult {
+function applyAuthResult(set: (partial: Partial<AuthState>) => void, data: AuthApiResponse): LoginResult {
     localStorage.setItem('token', data.token);
     storePersistentLoginToken(data.nextToken);
     if (typeof window !== 'undefined') {

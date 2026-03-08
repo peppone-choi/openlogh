@@ -192,13 +192,14 @@ class DiplomacyServiceTest {
     }
 
     @Test
-    fun `processDiplomacyTurn transitions 선전포고 to 전쟁 at term 12`() {
+    fun `processDiplomacyTurn transitions 선전포고 to 전쟁 at term 0`() {
         val world = createWorld()
-        seed(createDiplomacy(id = 1, stateCode = "선전포고", term = 13))
+        seed(createDiplomacy(id = 1, stateCode = "선전포고", term = 1))
 
         service.processDiplomacyTurn(world)
 
-        assertEquals(12, load(1).term.toInt())
+        // Legacy parity: state=1 AND term=0 -> state=0 (전쟁), term=6 (WAR_INITIAL_TERM)
+        assertEquals(6, load(1).term.toInt())
         assertEquals("전쟁", load(1).stateCode)
         assertFalse(load(1).isDead)
     }

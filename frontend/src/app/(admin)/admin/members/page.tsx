@@ -229,11 +229,7 @@ export default function AdminMembersPage() {
                                     <Button size="sm" variant="ghost" onClick={() => doAction(g.id, 'resign')}>
                                         하야
                                     </Button>
-                                    <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        onClick={() => doAction(g.id, 'wanderDismiss')}
-                                    >
+                                    <Button size="sm" variant="ghost" onClick={() => doAction(g.id, 'wanderDismiss')}>
                                         방랑
                                     </Button>
                                     <Button size="sm" variant="destructive" onClick={() => doAction(g.id, 'kill')}>

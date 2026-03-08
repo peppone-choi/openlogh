@@ -233,7 +233,13 @@ function LoginPageContent() {
         try {
             const result = await login(data.loginId, data.password);
             // If server signals OTP is required
-            if (result && typeof result === 'object' && 'otpRequired' in result && result.otpRequired && result.otpTicket) {
+            if (
+                result &&
+                typeof result === 'object' &&
+                'otpRequired' in result &&
+                result.otpRequired &&
+                result.otpTicket
+            ) {
                 if (typeof window !== 'undefined') {
                     sessionStorage.setItem(OTP_TICKET_STORAGE_KEY, result.otpTicket);
                 }
@@ -484,7 +490,11 @@ function LoginPageContent() {
 
 export default function LoginPage() {
     return (
-        <Suspense fallback={<div className="w-full max-w-md p-8 text-sm text-muted-foreground">로그인 정보를 불러오는 중...</div>}>
+        <Suspense
+            fallback={
+                <div className="w-full max-w-md p-8 text-sm text-muted-foreground">로그인 정보를 불러오는 중...</div>
+            }
+        >
             <LoginPageContent />
         </Suspense>
     );

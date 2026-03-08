@@ -24,27 +24,89 @@ class MessageService(
         const val MAILBOX_NATIONAL = "NATIONAL"
         const val MAILBOX_PRIVATE = "PRIVATE"
         const val MAILBOX_DIPLOMACY = "DIPLOMACY"
+        private const val DEFAULT_TYPED_PAGE_SIZE = 30
+        private const val MAX_PAGE_SIZE = 100
     }
 
-    fun getMessages(destId: Long): List<Message> {
-        return messageRepository.findByDestIdOrderBySentAtDesc(destId)
+    fun getMessages(generalId: Long, sinceId: Long? = null, limit: Int? = null): List<Message> {
+        val general = generalRepository.findById(generalId).orElse(null) ?: return emptyList()
+        val privateMessages = if (sinceId != null) {
+            messageRepository.findConversationByMailboxTypeAndOwnerIdAndIdGreaterThan(MAILBOX_PRIVATE, generalId, sinceId)
+        } else {
+            messageRepository.findConversationByMailboxTypeAndOwnerId(MAILBOX_PRIVATE, generalId)
+        }
+
+        val nationalMessages = if (general.nationId != 0L) {
+            if (sinceId != null) {
+                messageRepository.findByDestIdAndMailboxTypeAndIdGreaterThanOrderBySentAtDesc(
+                    general.nationId,
+                    MAILBOX_NATIONAL,
+                    sinceId,
+                )
+            } else {
+                messageRepository.findByDestIdAndMailboxTypeOrderBySentAtDesc(general.nationId, MAILBOX_NATIONAL)
+            }
+        } else {
+            emptyList()
+        }
+
+        val diplomacyMessages = if (general.nationId != 0L && general.officerLevel >= 4) {
+            if (sinceId != null) {
+                messageRepository.findConversationByMailboxTypeAndOwnerIdAndIdGreaterThan(MAILBOX_DIPLOMACY, general.nationId, sinceId)
+            } else {
+                messageRepository.findConversationByMailboxTypeAndOwnerId(MAILBOX_DIPLOMACY, general.nationId)
+            }
+        } else {
+            emptyList()
+        }
+
+        val messages = (privateMessages + nationalMessages + diplomacyMessages)
+            .distinctBy { it.id }
+            .sortedWith(compareByDescending<Message> { it.sentAt }.thenByDescending { it.id })
+
+        val normalizedLimit = when {
+            limit != null -> limit.coerceIn(1, MAX_PAGE_SIZE)
+            sinceId == null -> DEFAULT_TYPED_PAGE_SIZE
+            else -> null
+        }
+        return if (normalizedLimit != null) messages.take(normalizedLimit) else messages
     }
 
-    fun getPublicMessages(worldId: Long): List<Message> {
-        return messageRepository.findByWorldIdAndMailboxTypeOrderBySentAtDesc(worldId, MAILBOX_PUBLIC)
+    fun getPublicMessages(worldId: Long, beforeId: Long? = null, limit: Int? = null): List<Message> {
+        val messages = if (beforeId != null) {
+            messageRepository.findByWorldIdAndMailboxTypeAndIdLessThanOrderBySentAtDesc(worldId, MAILBOX_PUBLIC, beforeId)
+        } else {
+            messageRepository.findByWorldIdAndMailboxTypeOrderBySentAtDesc(worldId, MAILBOX_PUBLIC)
+        }
+        return applyLimit(messages, limit)
     }
 
-    fun getNationalMessages(nationId: Long): List<Message> {
-        return messageRepository.findByDestIdAndMailboxTypeOrderBySentAtDesc(nationId, MAILBOX_NATIONAL)
+    fun getNationalMessages(nationId: Long, beforeId: Long? = null, limit: Int? = null): List<Message> {
+        val messages = if (beforeId != null) {
+            messageRepository.findByDestIdAndMailboxTypeAndIdLessThanOrderBySentAtDesc(nationId, MAILBOX_NATIONAL, beforeId)
+        } else {
+            messageRepository.findByDestIdAndMailboxTypeOrderBySentAtDesc(nationId, MAILBOX_NATIONAL)
+        }
+        return applyLimit(messages, limit)
     }
 
-    fun getPrivateMessages(generalId: Long): List<Message> {
-        return messageRepository.findConversationByMailboxTypeAndOwnerId(MAILBOX_PRIVATE, generalId)
+    fun getPrivateMessages(generalId: Long, beforeId: Long? = null, limit: Int? = null): List<Message> {
+        val messages = if (beforeId != null) {
+            messageRepository.findConversationByMailboxTypeAndOwnerIdAndIdLessThan(MAILBOX_PRIVATE, generalId, beforeId)
+        } else {
+            messageRepository.findConversationByMailboxTypeAndOwnerId(MAILBOX_PRIVATE, generalId)
+        }
+        return applyLimit(messages, limit)
     }
 
-    fun getDiplomacyMessages(nationId: Long, officerLevel: Short): List<Message> {
+    fun getDiplomacyMessages(nationId: Long, officerLevel: Short, beforeId: Long? = null, limit: Int? = null): List<Message> {
         require(officerLevel >= 4) { "Diplomacy mailbox requires officer level 4 or higher" }
-        return messageRepository.findConversationByMailboxTypeAndOwnerId(MAILBOX_DIPLOMACY, nationId)
+        val messages = if (beforeId != null) {
+            messageRepository.findConversationByMailboxTypeAndOwnerIdAndIdLessThan(MAILBOX_DIPLOMACY, nationId, beforeId)
+        } else {
+            messageRepository.findConversationByMailboxTypeAndOwnerId(MAILBOX_DIPLOMACY, nationId)
+        }
+        return applyLimit(messages, limit)
     }
 
     fun getBoardMessages(worldId: Long, nationId: Long): List<Message> {
@@ -281,5 +343,10 @@ class MessageService(
             "diplomacy", "diplomacy_letter" -> MAILBOX_DIPLOMACY
             else -> MAILBOX_PUBLIC
         }
+    }
+
+    private fun applyLimit(messages: List<Message>, limit: Int?): List<Message> {
+        val normalizedLimit = (limit ?: DEFAULT_TYPED_PAGE_SIZE).coerceIn(1, MAX_PAGE_SIZE)
+        return messages.take(normalizedLimit)
     }
 }

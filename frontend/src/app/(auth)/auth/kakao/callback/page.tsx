@@ -33,7 +33,13 @@ function KakaoCallbackPageContent() {
             try {
                 if (mode === 'register') {
                     const result = await registerWithOAuth(provider, code, redirectUri, '');
-                    if (result && typeof result === 'object' && 'otpRequired' in result && result.otpRequired && result.otpTicket) {
+                    if (
+                        result &&
+                        typeof result === 'object' &&
+                        'otpRequired' in result &&
+                        result.otpRequired &&
+                        result.otpTicket
+                    ) {
                         sessionStorage.setItem(OTP_TICKET_STORAGE_KEY, result.otpTicket);
                         toast.error('인증 코드를 입력해주세요.');
                         router.replace('/login?otp=1');
@@ -52,7 +58,13 @@ function KakaoCallbackPageContent() {
                 }
 
                 const result = await loginWithOAuth(provider, code, redirectUri);
-                if (result && typeof result === 'object' && 'otpRequired' in result && result.otpRequired && result.otpTicket) {
+                if (
+                    result &&
+                    typeof result === 'object' &&
+                    'otpRequired' in result &&
+                    result.otpRequired &&
+                    result.otpTicket
+                ) {
                     sessionStorage.setItem(OTP_TICKET_STORAGE_KEY, result.otpTicket);
                     toast.error('인증 코드를 입력해주세요.');
                     router.replace('/login?otp=1');

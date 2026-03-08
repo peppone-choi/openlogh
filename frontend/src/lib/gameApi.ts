@@ -70,6 +70,10 @@ import type {
     SimulatorExportResult,
     JsonObject,
     JsonValue,
+    TurnStatus,
+    TurnRunResult,
+    TurnStateResult,
+    WorldSummary,
 } from '@/types';
 
 // World API
@@ -99,6 +103,7 @@ export const worldApi = {
         }
     ) => api.post<void>(`/worlds/${id}/activate`, payload ?? {}),
     deactivate: (id: number) => api.post<void>(`/worlds/${id}/deactivate`),
+    getSummary: (id: number) => api.get<WorldSummary>(`/worlds/${id}/summary`),
 };
 
 // Nation API
@@ -151,6 +156,8 @@ export const generalApi = {
     ) => api.put<General>(`/worlds/${worldId}/pool/${generalId}`, stats),
     create: (worldId: number, payload: Record<string, unknown>) =>
         api.post<General>(`/worlds/${worldId}/generals`, payload),
+    listAvailableNpcs: (worldId: number) => api.get<General[]>(`/worlds/${worldId}/available-npcs`),
+    listByCity: (cityId: number) => api.get<General[]>(`/cities/${cityId}/generals`),
 };
 
 export const npcTokenApi = {
@@ -229,6 +236,14 @@ export const commandApi = {
         api.get<Record<string, CommandTableEntry[]>>(`/generals/${generalId}/command-table`),
     getNationCommandTable: (generalId: number) =>
         api.get<Record<string, CommandTableEntry[]>>(`/generals/${generalId}/nation-command-table`),
+    repeatTurns: (generalId: number, count?: number) =>
+        api.post<GeneralTurn[]>(`/generals/${generalId}/turns/repeat`, { count: count ?? 1 }),
+    pushTurns: (generalId: number, amount: number) =>
+        api.post<GeneralTurn[]>(`/generals/${generalId}/turns/push`, { amount }),
+    repeatNationTurns: (nationId: number, generalId: number, count?: number) =>
+        api.post<NationTurn[]>(`/nations/${nationId}/turns/repeat`, { count: count ?? 1 }, { params: { generalId } }),
+    pushNationTurns: (nationId: number, generalId: number, amount: number) =>
+        api.post<NationTurn[]>(`/nations/${nationId}/turns/push`, { amount }, { params: { generalId } }),
 };
 
 export const realtimeApi = {
@@ -267,9 +282,9 @@ export const messageApi = {
             limit?: number;
         }
     ) => api.get<Message[]>('/messages', { params: { type, ...params } }),
-    getMine: (generalId: number, sinceId?: number | null) =>
+    getMine: (generalId: number, sinceId?: number | null, limit?: number) =>
         api.get<Message[]>(`/messages`, {
-            params: { generalId, ...(sinceId != null ? { sinceId } : {}) },
+            params: { generalId, ...(sinceId != null ? { sinceId } : {}), ...(limit != null ? { limit } : {}) },
         }),
     send: (
         worldId: number,
@@ -324,6 +339,7 @@ export const messageApi = {
         api.post<void>(`/messages/${messageId}/diplomacy-respond`, { accept }),
     delete: (id: number) => api.delete<void>(`/messages/${id}`),
     markAsRead: (id: number) => api.patch<void>(`/messages/${id}/read`),
+    getRecent: (sequence: number) => api.get<Message[]>('/messages/recent', { params: { sequence } }),
 };
 
 // FrontInfo API
@@ -444,6 +460,12 @@ export const nationPolicyApi = {
     updateNotice: (nationId: number, notice: string) => api.patch<void>(`/nations/${nationId}/notice`, { notice }),
     updateScoutMsg: (nationId: number, scoutMsg: string) =>
         api.patch<void>(`/nations/${nationId}/scout-msg`, { scoutMsg }),
+    setBlockWar: (nationId: number, value: boolean) =>
+        api.post<{ result: boolean; reason?: string; availableCnt?: number }>(`/nations/${nationId}/block-war`, {
+            value,
+        }),
+    setBlockScout: (nationId: number, value: boolean) =>
+        api.post<{ result: boolean; reason?: string }>(`/nations/${nationId}/block-scout`, { value }),
 };
 
 // NPC Policy API (dynamic policy maps - intentionally loose)
@@ -558,6 +580,8 @@ export const inheritanceApi = {
         }),
     auctionUnique: (worldId: number, data: { uniqueCode: string; bidAmount: number }) =>
         api.post<InheritanceActionResult>(`/worlds/${worldId}/inheritance/auction-unique`, data),
+    buy: (worldId: number, payload: { buffCode: string }) =>
+        api.post<InheritanceActionResult>(`/worlds/${worldId}/inheritance/buy`, payload),
 };
 
 // Auction API
@@ -620,6 +644,10 @@ export const itemApi = {
             itemType,
             itemCode,
         }),
+    equip: (generalId: number, payload: { itemCode: string; itemType?: string }) =>
+        api.post<CommandResult>(`/generals/${generalId}/items/equip`, payload),
+    give: (generalId: number, payload: { itemType: string; targetGeneralId: number }) =>
+        api.post<CommandResult>(`/generals/${generalId}/items/give`, payload),
 };
 
 // Tournament API
@@ -630,6 +658,10 @@ export const tournamentApi = {
     advancePhase: (worldId: number) => api.post<void>(`/worlds/${worldId}/tournament/advance`),
     sendMessage: (worldId: number, message: string) =>
         api.post<void>(`/worlds/${worldId}/tournament/message`, { message }),
+    create: (worldId: number, type: number) =>
+        api.post<Record<string, unknown>>(`/worlds/${worldId}/tournament`, { type }),
+    start: (worldId: number) => api.post<Record<string, unknown>>(`/worlds/${worldId}/tournament/start`),
+    finalize: (worldId: number) => api.post<Record<string, unknown>>(`/worlds/${worldId}/tournament/finalize`),
 };
 
 // Betting API
@@ -768,10 +800,10 @@ export const adminApi = {
 
 // Turn Daemon API (game-app direct — proxied through gateway)
 export const turnApi = {
-    getStatus: () => api.get<{ state: string; reason?: string; requestId?: string }>('/turns/status'),
-    run: () => api.post<{ result: string }>('/turns/run'),
-    pause: () => api.post<{ state: string }>('/turns/pause'),
-    resume: () => api.post<{ state: string }>('/turns/resume'),
+    getStatus: () => api.get<TurnStatus>('/turns/status'),
+    run: () => api.post<TurnRunResult>('/turns/run'),
+    pause: () => api.post<TurnStateResult>('/turns/pause'),
+    resume: () => api.post<TurnStateResult>('/turns/resume'),
 };
 
 // Admin Event API (legacy parity: j_raise_event.php)

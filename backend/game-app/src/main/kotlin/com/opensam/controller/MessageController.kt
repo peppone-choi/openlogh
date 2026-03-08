@@ -21,15 +21,18 @@ class MessageController(
         @RequestParam(required = false) nationId: Long?,
         @RequestParam(required = false) generalId: Long?,
         @RequestParam(required = false, defaultValue = "0") officerLevel: Short,
+        @RequestParam(required = false) beforeId: Long?,
+        @RequestParam(required = false) sinceId: Long?,
+        @RequestParam(required = false) limit: Int?,
     ): ResponseEntity<List<MessageResponse>> {
         val messages = when (type?.lowercase()) {
-            "public" -> messageService.getPublicMessages(requireParam(worldId, "worldId"))
-            "national" -> messageService.getNationalMessages(requireParam(nationId, "nationId"))
-            "private" -> messageService.getPrivateMessages(requireParam(generalId, "generalId"))
-            "diplomacy" -> messageService.getDiplomacyMessages(requireParam(nationId, "nationId"), officerLevel)
+            "public" -> messageService.getPublicMessages(requireParam(worldId, "worldId"), beforeId, limit)
+            "national" -> messageService.getNationalMessages(requireParam(nationId, "nationId"), beforeId, limit)
+            "private" -> messageService.getPrivateMessages(requireParam(generalId, "generalId"), beforeId, limit)
+            "diplomacy" -> messageService.getDiplomacyMessages(requireParam(nationId, "nationId"), officerLevel, beforeId, limit)
             null -> {
                 val targetGeneralId = requireParam(generalId, "generalId")
-                messageService.getMessages(targetGeneralId)
+                messageService.getMessages(targetGeneralId, sinceId, limit)
             }
             else -> throw IllegalArgumentException("Unsupported mailbox type: $type")
         }

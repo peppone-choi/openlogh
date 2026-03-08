@@ -30,7 +30,7 @@ val DEX_THRESHOLDS = intArrayOf(
     1275975,
 )
 
-fun getTechLevel(tech: Float): Int = (tech / 100f).toInt().coerceIn(0, 30)
+fun getTechLevel(tech: Float): Int = (tech / 1000f).toInt().coerceIn(0, 12)
 
 fun getTechAbil(tech: Float): Int = getTechLevel(tech) * 25
 

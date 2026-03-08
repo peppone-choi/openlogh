@@ -6,33 +6,32 @@ import org.junit.jupiter.api.Test
 class WarFormulaTest {
 
     @Test
-    fun `getTechLevel returns 0 for tech below 100`() {
+    fun `getTechLevel returns 0 for tech below 1000`() {
         assertEquals(0, getTechLevel(0f))
-        assertEquals(0, getTechLevel(50f))
-        assertEquals(0, getTechLevel(99f))
+        assertEquals(0, getTechLevel(500f))
+        assertEquals(0, getTechLevel(999f))
     }
 
     @Test
-    fun `getTechLevel returns level based on hundreds`() {
-        assertEquals(1, getTechLevel(100f))
-        assertEquals(5, getTechLevel(500f))
-        assertEquals(10, getTechLevel(1000f))
-        assertEquals(30, getTechLevel(3500f), "Should clamp to max 30")
+    fun `getTechLevel returns level based on thousands`() {
+        assertEquals(1, getTechLevel(1000f))
+        assertEquals(5, getTechLevel(5000f))
+        assertEquals(10, getTechLevel(10000f))
+        assertEquals(12, getTechLevel(15000f), "Should clamp to max 12")
     }
 
     @Test
     fun `getTechAbil returns level times 25`() {
         assertEquals(0, getTechAbil(0f))
-        assertEquals(25, getTechAbil(100f))
-        assertEquals(250, getTechAbil(1000f))
-        assertEquals(750, getTechAbil(3000f))
+        assertEquals(25, getTechAbil(1000f))
+        assertEquals(250, getTechAbil(10000f))
     }
 
     @Test
     fun `getTechCost returns 1 plus level times 0_15`() {
         assertEquals(1.0, getTechCost(0f), 0.001)
-        assertEquals(1.15, getTechCost(100f), 0.001)
-        assertEquals(2.5, getTechCost(1000f), 0.001)
+        assertEquals(1.15, getTechCost(1000f), 0.001)
+        assertEquals(2.5, getTechCost(10000f), 0.001)
     }
 
     @Test

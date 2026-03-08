@@ -135,4 +135,46 @@ class CommandController(
             ResponseEntity.status(HttpStatus.BAD_REQUEST).build()
         }
     }
+
+    @PostMapping("/nations/{nationId}/turns/repeat")
+    fun repeatNationTurns(
+        @PathVariable nationId: Long,
+        @RequestParam generalId: Long,
+        @RequestBody request: RepeatRequest,
+    ): ResponseEntity<List<NationTurnResponse>> {
+        val loginId = SecurityContextHolder.getContext().authentication?.name
+            ?: return ResponseEntity.status(HttpStatus.FORBIDDEN).build()
+        if (!commandService.verifyOwnership(generalId, loginId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build()
+        }
+
+        return try {
+            val saved = commandService.repeatNationTurns(generalId, nationId, request.count)
+                ?: return ResponseEntity.status(HttpStatus.FORBIDDEN).build()
+            ResponseEntity.ok(saved.map { NationTurnResponse.from(it) })
+        } catch (e: IllegalStateException) {
+            ResponseEntity.status(HttpStatus.BAD_REQUEST).build()
+        }
+    }
+
+    @PostMapping("/nations/{nationId}/turns/push")
+    fun pushNationTurns(
+        @PathVariable nationId: Long,
+        @RequestParam generalId: Long,
+        @RequestBody request: PushRequest,
+    ): ResponseEntity<List<NationTurnResponse>> {
+        val loginId = SecurityContextHolder.getContext().authentication?.name
+            ?: return ResponseEntity.status(HttpStatus.FORBIDDEN).build()
+        if (!commandService.verifyOwnership(generalId, loginId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build()
+        }
+
+        return try {
+            val saved = commandService.pushNationTurns(generalId, nationId, request.amount)
+                ?: return ResponseEntity.status(HttpStatus.FORBIDDEN).build()
+            ResponseEntity.ok(saved.map { NationTurnResponse.from(it) })
+        } catch (e: IllegalStateException) {
+            ResponseEntity.status(HttpStatus.BAD_REQUEST).build()
+        }
+    }
 }

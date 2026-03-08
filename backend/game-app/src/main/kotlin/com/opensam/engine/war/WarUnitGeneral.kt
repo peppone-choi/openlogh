@@ -9,7 +9,15 @@ import kotlin.math.min
 class WarUnitGeneral(
     val general: General,
     nationTech: Float = 0f,
+    isAttacker: Boolean = true,
+    cityLevel: Int = 0,
+    capitalCityId: Long = 0,
 ) : WarUnit(general.name, general.nationId) {
+
+    /** Train bonus from city-level defender bonuses (legacy: WarUnitGeneral constructor). */
+    var trainBonus: Int = 0
+    /** Atmos bonus from city-level attacker bonuses (legacy: WarUnitGeneral constructor). */
+    var atmosBonus: Int = 0
 
     init {
         crew = general.crew
@@ -26,6 +34,24 @@ class WarUnitGeneral(
         rice = general.rice
         hp = crew
         maxHp = crew
+
+        // Legacy WarUnitGeneral constructor: city-level bonuses (GAP-8)
+        if (isAttacker) {
+            if (cityLevel == 2) {
+                atmosBonus += 5
+            }
+            if (capitalCityId == general.cityId) {
+                atmosBonus += 5
+            }
+        } else {
+            if (cityLevel == 1 || cityLevel == 3) {
+                trainBonus += 5
+            }
+        }
+
+        // Apply city-level bonuses to effective train/atmos
+        train = (train + trainBonus).coerceAtMost(100)
+        atmos = (atmos + atmosBonus).coerceAtMost(100)
 
         val unitCrewType = getCrewType()
         criticalChance = computeCriticalChance(unitCrewType)
@@ -50,6 +76,7 @@ class WarUnitGeneral(
             ArmType.CAVALRY -> general.dex3
             ArmType.WIZARD -> general.dex4
             ArmType.SIEGE -> general.dex5
+            ArmType.MISC -> 0  // MISC has no dedicated dex field
             else -> 0
         }
     }
@@ -60,6 +87,7 @@ class WarUnitGeneral(
         val ratioByArmType = when (unitCrewType.armType) {
             ArmType.WIZARD -> intel * 2.0 - 40.0
             ArmType.SIEGE -> leadership * 2.0 - 40.0
+            ArmType.MISC -> (intel + leadership + strength) * 2.0 / 3.0 - 40.0
             else -> strength * 2.0 - 40.0
         }
         val ratio = when {
@@ -103,6 +131,7 @@ class WarUnitGeneral(
         val (mainStat, coef) = when (unitCrewType.armType) {
             ArmType.WIZARD -> intel to 0.4
             ArmType.SIEGE -> leadership to 0.4
+            ArmType.MISC -> (intel + leadership + strength) / 3 to 0.4
             else -> strength to 0.5
         }
         val ratio = (mainStat - 65).coerceAtLeast(0) * coef

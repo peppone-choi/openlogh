@@ -3,7 +3,9 @@ package com.opensam.service
 import com.opensam.dto.NationPolicyInfo
 import com.opensam.dto.OfficerInfo
 import com.opensam.entity.Nation
+import com.opensam.entity.General
 import com.opensam.entity.WorldState
+import com.opensam.repository.AppUserRepository
 import com.opensam.repository.CityRepository
 import com.opensam.repository.DiplomacyRepository
 import com.opensam.repository.GeneralRepository
@@ -11,10 +13,12 @@ import com.opensam.repository.NationRepository
 import com.opensam.repository.WorldStateRepository
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import org.springframework.web.util.HtmlUtils
 @Service
 class NationService(
     private val nationRepository: NationRepository,
     private val generalRepository: GeneralRepository,
+    private val appUserRepository: AppUserRepository,
     private val officerRankService: OfficerRankService,
     private val cityRepository: CityRepository,
     private val diplomacyRepository: DiplomacyRepository,
@@ -22,6 +26,13 @@ class NationService(
     private val mapService: MapService,
 ) {
     private val log = LoggerFactory.getLogger(NationService::class.java)
+
+    data class MutationResult(
+        val success: Boolean,
+        val reason: String? = null,
+        val availableCnt: Int? = null,
+    )
+
     fun listByWorld(worldId: Long): List<Nation> {
         return nationRepository.findByWorldId(worldId)
     }
@@ -39,8 +50,10 @@ class NationService(
             bill = nation.bill.toInt(),
             secretLimit = nation.secretLimit.toInt(),
             strategicCmdLimit = nation.strategicCmdLimit.toInt(),
-            notice = nation.meta["notice"] as? String ?: "",
-            scoutMsg = nation.meta["scoutMsg"] as? String ?: "",
+            notice = readNationNoticeMessage(nation),
+            scoutMsg = readNationScoutMessage(nation),
+            blockWar = nation.warState.toInt() != 0,
+            blockScout = nation.scoutLevel.toInt() != 0,
         )
     }
 
@@ -54,18 +67,99 @@ class NationService(
         return true
     }
 
-    fun updateNotice(nationId: Long, notice: String): Boolean {
+    fun verifyPolicyAccess(nationId: Long, loginId: String): Boolean {
         val nation = nationRepository.findById(nationId).orElse(null) ?: return false
-        nation.meta["notice"] = notice
+        val user = appUserRepository.findByLoginId(loginId) ?: return false
+        val general = generalRepository.findByWorldIdAndUserId(nation.worldId, user.id)
+            .firstOrNull { it.nationId == nationId }
+            ?: return false
+        if (general.penalty["noTopSecret"] == true) {
+            return false
+        }
+        if (general.officerLevel >= 5 && general.penalty["noChief"] == true) {
+            return false
+        }
+        if (general.permission == "ambassador" && general.penalty["noAmbassador"] == true) {
+            return false
+        }
+        return general.officerLevel >= 5 || general.permission == "ambassador"
+    }
+
+    fun resolvePolicyActor(nationId: Long, loginId: String): General? {
+        val nation = nationRepository.findById(nationId).orElse(null) ?: return null
+        val user = appUserRepository.findByLoginId(loginId) ?: return null
+        return generalRepository.findByWorldIdAndUserId(nation.worldId, user.id)
+            .firstOrNull { it.nationId == nationId }
+    }
+
+    fun updateBill(nationId: Long, amount: Int): Boolean {
+        val nation = nationRepository.findById(nationId).orElse(null) ?: return false
+        nation.bill = amount.toShort()
+        nationRepository.save(nation)
+        return true
+    }
+
+    fun updateRate(nationId: Long, amount: Int): Boolean {
+        val nation = nationRepository.findById(nationId).orElse(null) ?: return false
+        nation.rate = amount.toShort()
+        nationRepository.save(nation)
+        return true
+    }
+
+    fun updateSecretLimit(nationId: Long, amount: Int): Boolean {
+        val nation = nationRepository.findById(nationId).orElse(null) ?: return false
+        nation.secretLimit = amount.toShort()
+        nationRepository.save(nation)
+        return true
+    }
+
+    fun updateNotice(nationId: Long, notice: String, authorGeneral: General? = null): Boolean {
+        val nation = nationRepository.findById(nationId).orElse(null) ?: return false
+        val sanitizedNotice = sanitizeHtml(notice)
+        nation.meta["notice"] = sanitizedNotice
+        nation.meta["nationNotice"] = mutableMapOf<String, Any>(
+            "date" to java.time.OffsetDateTime.now().toString(),
+            "msg" to sanitizedNotice,
+            "author" to (authorGeneral?.name ?: ""),
+            "authorID" to (authorGeneral?.id ?: 0L),
+        )
         nationRepository.save(nation)
         return true
     }
 
     fun updateScoutMsg(nationId: Long, scoutMsg: String): Boolean {
         val nation = nationRepository.findById(nationId).orElse(null) ?: return false
-        nation.meta["scoutMsg"] = scoutMsg
+        val sanitizedScoutMsg = sanitizeHtml(scoutMsg)
+        nation.meta["scoutMsg"] = sanitizedScoutMsg
+        nation.meta["scout_msg"] = sanitizedScoutMsg
         nationRepository.save(nation)
         return true
+    }
+
+    fun updateBlockScout(nationId: Long, value: Boolean): MutationResult {
+        val nation = nationRepository.findById(nationId).orElse(null) ?: return MutationResult(success = false)
+        val world = worldStateRepository.findById(nation.worldId.toShort()).orElse(null)
+            ?: return MutationResult(success = false)
+        if (world.config["blockChangeScout"] == true) {
+            return MutationResult(success = false, reason = "임관 설정을 바꿀 수 없도록 설정되어 있습니다.")
+        }
+
+        nation.scoutLevel = if (value) 1 else 0
+        nationRepository.save(nation)
+        return MutationResult(success = true)
+    }
+
+    fun updateBlockWar(nationId: Long, value: Boolean): MutationResult {
+        val nation = nationRepository.findById(nationId).orElse(null) ?: return MutationResult(success = false)
+        val availableCnt = readInt(nation.meta["available_war_setting_cnt"]) ?: 0
+        if (availableCnt <= 0) {
+            return MutationResult(success = false, reason = "잔여 횟수가 부족합니다.")
+        }
+
+        nation.warState = if (value) 1 else 0
+        nation.meta["available_war_setting_cnt"] = availableCnt - 1
+        nationRepository.save(nation)
+        return MutationResult(success = true, availableCnt = availableCnt - 1)
     }
 
     // -- Officers --
@@ -165,6 +259,26 @@ class NationService(
         }
         return result
     }
+
+    private fun readNationNoticeMessage(nation: Nation): String {
+        val legacyNotice = readStringAnyMap(nation.meta["nationNotice"])["msg"] as? String
+        return legacyNotice ?: (nation.meta["notice"] as? String ?: "")
+    }
+
+    private fun readNationScoutMessage(nation: Nation): String {
+        return nation.meta["scout_msg"] as? String
+            ?: (nation.meta["scoutMsg"] as? String ?: "")
+    }
+
+    private fun readInt(raw: Any?): Int? {
+        return when (raw) {
+            is Number -> raw.toInt()
+            is String -> raw.toIntOrNull()
+            else -> null
+        }
+    }
+
+    private fun sanitizeHtml(raw: String): String = HtmlUtils.htmlEscape(raw)
 
     /**
      * Recalculate war front status for all cities of a nation.

@@ -7,6 +7,7 @@ enum class ArmType(val code: Int, val displayName: String) {
     CAVALRY(3, "기병"),
     WIZARD(4, "귀병"),
     SIEGE(5, "차병"),
+    MISC(6, "특수"),
 }
 
 enum class CrewType(

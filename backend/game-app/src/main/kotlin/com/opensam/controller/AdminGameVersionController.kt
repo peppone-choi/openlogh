@@ -1,5 +1,6 @@
 package com.opensam.controller
 
+import com.opensam.dto.GameVersionInfo
 import com.opensam.service.AdminAuthorizationService
 import com.opensam.service.WorldService
 import org.springframework.http.HttpStatus
@@ -19,19 +20,6 @@ class AdminGameVersionController(
     private val worldService: WorldService,
     private val adminAuthorizationService: AdminAuthorizationService,
 ) {
-    data class GameVersionInfo(
-        val commitSha: String,
-        val gameVersion: String,
-        val jarPath: String,
-        val port: Int,
-        val worldIds: List<Int>,
-        val alive: Boolean,
-        val pid: Long,
-        val baseUrl: String,
-        val containerId: String?,
-        val imageTag: String?,
-    )
-
     private fun currentLoginId(): String? = SecurityContextHolder.getContext().authentication?.name
 
     @GetMapping

@@ -28,8 +28,10 @@ data class CommandEnv(
      */
     fun isTechLimited(currentTech: Double): Boolean {
         val relYear = year - startYear
-        val limit = relYear * 1000.0 // Simplified; actual formula from legacy
-        return currentTech >= limit
+        // Legacy: techLevel = floor(tech / 1000), relMaxTech = floor(relYear / 5) + 1
+        val techLevel = kotlin.math.floor(currentTech / 1000.0).toInt().coerceIn(0, 12)
+        val relMaxTech = (relYear / 5 + 1).coerceIn(1, 12)
+        return techLevel >= relMaxTech
     }
 }
 

@@ -28,7 +28,7 @@ class WarUnitCity(
 
     override fun getBaseDefence(): Double {
         val base = (city.def + city.wall * 9) / 500.0 + 200.0
-        return base * 1.5 * defenceMultiplier
+        return base * defenceMultiplier
     }
 
     fun applyResults() {
