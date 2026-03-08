@@ -1,6 +1,7 @@
 package com.opensam.controller
 
 import com.opensam.dto.ChangePasswordRequest
+import com.opensam.dto.DeleteAccountRequest
 import com.opensam.dto.UpdateSettingsRequest
 import com.opensam.engine.RealtimeService
 import com.opensam.service.AccountService
@@ -36,9 +37,11 @@ class AccountController(
     }
 
     @DeleteMapping
-    fun deleteAccount(): ResponseEntity<Void> {
+    fun deleteAccount(@RequestBody(required = false) request: DeleteAccountRequest?): ResponseEntity<Void> {
         val loginId = getLoginId() ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
-        if (!accountService.deleteAccount(loginId)) return ResponseEntity.notFound().build()
+        val password = request?.password?.trim()
+        if (password.isNullOrEmpty()) return ResponseEntity.badRequest().build()
+        if (!accountService.deleteAccount(loginId, password)) return ResponseEntity.badRequest().build()
         return ResponseEntity.noContent().build()
     }
 
@@ -55,6 +58,8 @@ class AccountController(
                 preOpenDelete = request.preOpenDelete,
                 borderReturn = request.borderReturn,
                 customCss = request.customCss,
+                thirdUse = request.thirdUse,
+                picture = request.picture,
             )) {
             return ResponseEntity.notFound().build()
         }

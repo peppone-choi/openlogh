@@ -28,11 +28,11 @@ data class InheritanceActionCost(
     val buff: List<Int> = listOf(0, 200, 600, 1200, 2000, 3000),
     val resetTurnTime: Int = 100,
     val resetSpecialWar: Int = 200,
-    val randomUnique: Int = 300,
-    val nextSpecial: Int = 500,
-    val minSpecificUnique: Int = 500,
-    val checkOwner: Int = 50,
-    val bornStatPoint: Int = 500,
+    val randomUnique: Int = 3000,
+    val nextSpecial: Int = 4000,
+    val minSpecificUnique: Int = 5000,
+    val checkOwner: Int = 1000,
+    val bornStatPoint: Int = 1000,
 )
 
 data class SpecialWarOption(

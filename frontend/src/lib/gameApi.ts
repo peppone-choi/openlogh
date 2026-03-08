@@ -134,6 +134,8 @@ export const generalApi = {
             intel: number;
             politics: number;
             charm: number;
+            ego?: string;
+            personality?: string;
         }
     ) => api.post<General>(`/worlds/${worldId}/pool`, payload),
     updatePoolGeneral: (

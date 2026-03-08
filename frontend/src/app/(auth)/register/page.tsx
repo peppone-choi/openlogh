@@ -16,7 +16,7 @@ import api from '@/lib/api';
 
 const registerSchema = z
     .object({
-        loginId: z.string().min(3, '아이디는 3자 이상이어야 합니다'),
+        loginId: z.string().min(4, '아이디는 4자 이상이어야 합니다'),
         displayName: z.string().min(2, '닉네임은 2자 이상이어야 합니다'),
         password: z.string().min(6, '비밀번호는 6자 이상이어야 합니다'),
         confirmPassword: z.string(),
@@ -188,7 +188,7 @@ export default function RegisterPage() {
 
     // Debounced duplicate checkers
     const checkLoginIdDup = useCallback(async (value: string) => {
-        if (!value || value.length < 3) {
+        if (!value || value.length < 4) {
             setLoginIdStatus('idle');
             setLoginIdMsg('');
             return;

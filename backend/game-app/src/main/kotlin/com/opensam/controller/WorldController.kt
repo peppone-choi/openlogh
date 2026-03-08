@@ -175,15 +175,12 @@ class WorldController(
         val world = worldService.getWorld(id)
             ?: return ResponseEntity.notFound().build()
         val scenarioCode = body?.scenarioCode ?: world.scenarioCode
-        val reset = scenarioService.initializeWorld(
+        val reset = scenarioService.reinitializeWorld(
+            existingWorld = world,
             scenarioCode = scenarioCode,
             tickSeconds = world.tickSeconds.toInt(),
-            commitSha = world.commitSha,
-            gameVersion = world.gameVersion,
             extendEnabled = body?.extend ?: parseBooleanFlag(world.config["extend"] ?: world.config["extendedGeneral"]),
         )
-        reset.name = world.name
-        worldService.deleteWorld(id)
         return ResponseEntity.ok(WorldStateResponse.from(reset))
     }
 }

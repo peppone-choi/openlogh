@@ -4,10 +4,10 @@ import { useEffect, useState, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from 'sonner';
-import { useAuthStore } from '@/stores/authStore';
+import { OTP_TICKET_STORAGE_KEY, useAuthStore } from '@/stores/authStore';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -17,7 +17,7 @@ import { sha512 } from 'js-sha512';
 import api from '@/lib/api';
 
 const loginSchema = z.object({
-    loginId: z.string().min(3, '아이디는 3자 이상이어야 합니다'),
+    loginId: z.string().min(4, '아이디는 4자 이상이어야 합니다'),
     password: z.string().min(6, '비밀번호는 6자 이상이어야 합니다'),
 });
 
@@ -103,9 +103,10 @@ function OtpModal({
 
 export default function LoginPage() {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const login = useAuthStore((s) => s.login);
     const loginWithToken = useAuthStore((s) => s.loginWithToken);
-    const loginWithOtp = useAuthStore((s) => s.loginWithOtp);
+    const verifyOtp = useAuthStore((s) => s.verifyOtp);
     const registerUser = useAuthStore((s) => s.register);
     const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
     const isInitialized = useAuthStore((s) => s.isInitialized);
@@ -118,8 +119,7 @@ export default function LoginPage() {
     const [otpOpen, setOtpOpen] = useState(false);
     const [otpLoading, setOtpLoading] = useState(false);
     const [otpValidUntil, setOtpValidUntil] = useState('');
-    const [pendingLoginId, setPendingLoginId] = useState('');
-    const [pendingPassword, setPendingPassword] = useState('');
+    const [pendingOtpTicket, setPendingOtpTicket] = useState('');
 
     // Server map
     const [showServerMap, setShowServerMap] = useState(false);
@@ -204,7 +204,7 @@ export default function LoginPage() {
 
             // Also try the store's loginWithToken for session setup
             if (loginWithToken) {
-                await loginWithToken(token);
+                await loginWithToken(loginData.nextToken?.[1] ?? token);
             }
             router.push('/lobby');
         } catch {
@@ -218,24 +218,39 @@ export default function LoginPage() {
         attemptAutoLogin();
     }, [attemptAutoLogin]);
 
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+        const storedTicket = sessionStorage.getItem(OTP_TICKET_STORAGE_KEY);
+        const queryTicket = searchParams.get('otpTicket');
+        const otpTicket = queryTicket || storedTicket;
+        if (!otpTicket) return;
+
+        setPendingOtpTicket(otpTicket);
+        setOtpOpen(true);
+    }, [searchParams]);
+
     const onSubmit = async (data: LoginForm) => {
         try {
             const result = await login(data.loginId, data.password);
             // If server signals OTP is required
-            if (result && typeof result === 'object' && 'otpRequired' in result && result.otpRequired) {
-                setPendingLoginId(data.loginId);
-                setPendingPassword(data.password);
+            if (result && typeof result === 'object' && 'otpRequired' in result && result.otpRequired && result.otpTicket) {
+                if (typeof window !== 'undefined') {
+                    sessionStorage.setItem(OTP_TICKET_STORAGE_KEY, result.otpTicket);
+                }
+                setPendingOtpTicket(result.otpTicket);
                 setOtpOpen(true);
                 return;
             }
             router.push('/lobby');
         } catch (err: unknown) {
             const errObj = err as {
-                response?: { data?: { message?: string; error?: string; otpRequired?: boolean } };
+                response?: { data?: { message?: string; error?: string; otpRequired?: boolean; otpTicket?: string } };
             };
-            if (errObj?.response?.data?.otpRequired) {
-                setPendingLoginId(data.loginId);
-                setPendingPassword(data.password);
+            if (errObj?.response?.data?.otpRequired && errObj?.response?.data?.otpTicket) {
+                if (typeof window !== 'undefined') {
+                    sessionStorage.setItem(OTP_TICKET_STORAGE_KEY, errObj.response.data.otpTicket);
+                }
+                setPendingOtpTicket(errObj.response.data.otpTicket);
                 setOtpOpen(true);
                 return;
             }
@@ -245,18 +260,21 @@ export default function LoginPage() {
     };
 
     const handleOtpSubmit = async (otpCode: string) => {
-        if (!loginWithOtp) {
+        if (!verifyOtp || !pendingOtpTicket) {
             toast.error('OTP 인증이 지원되지 않습니다.');
             return;
         }
         setOtpLoading(true);
         try {
-            const result = await loginWithOtp(pendingLoginId, pendingPassword, otpCode);
+            const result = await verifyOtp(pendingOtpTicket, otpCode);
             // Legacy parity: show validUntil from OTP response
             const validUntil = (result as { validUntil?: string } | undefined)?.validUntil;
             if (validUntil) {
                 toast.success(`로그인되었습니다. ${validUntil}까지 유효합니다.`);
                 setOtpValidUntil(validUntil);
+            }
+            if (typeof window !== 'undefined') {
+                sessionStorage.removeItem(OTP_TICKET_STORAGE_KEY);
             }
             setOtpOpen(false);
             router.push('/lobby');
@@ -272,6 +290,10 @@ export default function LoginPage() {
             toast.error(message);
             // Legacy parity: if reset flag, close OTP modal
             if (errData?.reset) {
+                if (typeof window !== 'undefined') {
+                    sessionStorage.removeItem(OTP_TICKET_STORAGE_KEY);
+                }
+                setPendingOtpTicket('');
                 setOtpOpen(false);
             }
         } finally {
@@ -282,8 +304,8 @@ export default function LoginPage() {
     // Legacy parity: "가입 & 로그인" combined button from core2026 HomeView
     const handleQuickRegister = async () => {
         const values = getValues();
-        if (!values.loginId || values.loginId.length < 3) {
-            toast.error('아이디는 3자 이상이어야 합니다');
+        if (!values.loginId || values.loginId.length < 4) {
+            toast.error('아이디는 4자 이상이어야 합니다');
             return;
         }
         if (!values.password || values.password.length < 6) {

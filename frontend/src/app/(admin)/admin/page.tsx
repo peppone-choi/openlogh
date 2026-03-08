@@ -629,22 +629,13 @@ export default function AdminDashboardPage() {
                                                 </Badge>
                                             </TableCell>
                                             <TableCell>
-                                                <Badge variant={w.config?.locked ? 'destructive' : 'outline'}>
-                                                    {w.config?.locked ? '잠금' : '운영중'}
+                                                <Badge variant={w.meta?.gatewayActive ? 'outline' : 'destructive'}>
+                                                    {w.meta?.gatewayActive ? '운영중' : '비활성'}
                                                 </Badge>
                                             </TableCell>
                                             <TableCell>
                                                 <div className="flex flex-wrap gap-1">
-                                                    {w.config?.locked ? (
-                                                        <Button
-                                                            size="sm"
-                                                            variant="outline"
-                                                            onClick={() => handleWorldAction(w.id, 'open')}
-                                                        >
-                                                            <Play className="size-3.5 mr-1" />
-                                                            오픈
-                                                        </Button>
-                                                    ) : (
+                                                    {w.meta?.gatewayActive ? (
                                                         <Button
                                                             size="sm"
                                                             variant="outline"
@@ -652,6 +643,15 @@ export default function AdminDashboardPage() {
                                                         >
                                                             <Pause className="size-3.5 mr-1" />
                                                             폐쇄
+                                                        </Button>
+                                                    ) : (
+                                                        <Button
+                                                            size="sm"
+                                                            variant="outline"
+                                                            onClick={() => handleWorldAction(w.id, 'open')}
+                                                        >
+                                                            <Play className="size-3.5 mr-1" />
+                                                            오픈
                                                         </Button>
                                                     )}
                                                     <Button

@@ -39,6 +39,14 @@ class AccountOAuthService(
         val callbackUri: String,
     )
 
+    private data class KakaoLinkProfile(
+        val externalId: String,
+        val accessToken: String,
+        val accessTokenValidUntil: OffsetDateTime,
+        val refreshToken: String?,
+        val refreshTokenValidUntil: OffsetDateTime?,
+    )
+
     fun getOAuthProviders(userId: Long): List<OAuthProviderInfo> {
         val user = findUser(userId)
         return getProviderEntries(user).mapNotNull { entry ->
@@ -103,7 +111,8 @@ class AccountOAuthService(
             throw ResponseStatusException(HttpStatus.FORBIDDEN, "Kakao OAuth is not configured")
         }
 
-        val externalId = fetchKakaoUserId(code, redirectUri)
+        val profile = fetchKakaoProfile(code, redirectUri)
+        val externalId = profile.externalId
 
         val existingOwner = appUserRepository.findAll().firstOrNull { candidate ->
             getProviderEntries(candidate).any {
@@ -123,7 +132,11 @@ class AccountOAuthService(
             "provider" to provider,
             "externalId" to externalId,
             "linkedAt" to now,
+            "accessToken" to profile.accessToken,
+            "accessTokenValidUntil" to profile.accessTokenValidUntil.toString(),
         )
+        profile.refreshToken?.let { newEntry["refreshToken"] = it }
+        profile.refreshTokenValidUntil?.let { newEntry["refreshTokenValidUntil"] = it.toString() }
 
         if (existingIdx >= 0) providers[existingIdx] = newEntry
         else providers.add(newEntry)
@@ -157,7 +170,7 @@ class AccountOAuthService(
         appUserRepository.save(user)
     }
 
-    private fun fetchKakaoUserId(code: String, redirectUri: String): String {
+    private fun fetchKakaoProfile(code: String, redirectUri: String): KakaoLinkProfile {
         val form = "grant_type=authorization_code" +
             "&client_id=${urlEncode(kakaoRestApiKey)}" +
             "&redirect_uri=${urlEncode(redirectUri)}" +
@@ -172,8 +185,14 @@ class AccountOAuthService(
             throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Failed to exchange oauth token")
         }
 
-        val accessToken = mapper.readTree(tokenRes.body())["access_token"]?.asText()
+        val tokenJson = mapper.readTree(tokenRes.body())
+        val accessToken = tokenJson["access_token"]?.asText()
             ?: throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid oauth token response")
+        val accessTokenValidUntil = OffsetDateTime.now().plusSeconds(tokenJson["expires_in"]?.asLong() ?: 0)
+        val refreshToken = tokenJson["refresh_token"]?.asText()
+        val refreshTokenValidUntil = tokenJson["refresh_token_expires_in"]?.asLong()?.let {
+            OffsetDateTime.now().plusSeconds(it)
+        }
 
         val meReq = HttpRequest.newBuilder(URI.create("https://kapi.kakao.com/v2/user/me"))
             .header("Authorization", "Bearer $accessToken")
@@ -184,8 +203,16 @@ class AccountOAuthService(
             throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Failed to fetch oauth user")
         }
 
-        return mapper.readTree(meRes.body())["id"]?.asText()
+        val externalId = mapper.readTree(meRes.body())["id"]?.asText()
             ?: throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid oauth user payload")
+
+        return KakaoLinkProfile(
+            externalId = externalId,
+            accessToken = accessToken,
+            accessTokenValidUntil = accessTokenValidUntil,
+            refreshToken = refreshToken,
+            refreshTokenValidUntil = refreshTokenValidUntil,
+        )
     }
 
     private fun findUser(userId: Long): AppUser {

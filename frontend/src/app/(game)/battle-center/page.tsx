@@ -603,7 +603,8 @@ function GeneralSupplementCard({ general }: { general: General }) {
             <CardContent className="text-xs space-y-1">
                 <div className="grid grid-cols-2 gap-x-4 gap-y-1">
                     <div>
-                        <span className="text-muted-foreground">성격:</span> {getPersonalityName(general.personalCode) || '-'}
+                        <span className="text-muted-foreground">성격:</span>{' '}
+                        {getPersonalityName(general.personalCode) || '-'}
                     </div>
                     <div>
                         <span className="text-muted-foreground">전투특기:</span> {general.special2Code || '-'}

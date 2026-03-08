@@ -1,8 +1,11 @@
 package com.opensam.gateway.controller
 
 import com.opensam.gateway.service.AuthService
+import com.opensam.shared.dto.LoginByTokenRequest
 import com.opensam.shared.dto.LoginRequest
+import com.opensam.shared.dto.OtpVerifyRequest
 import com.opensam.shared.dto.RegisterRequest
+import com.opensam.shared.dto.TokenLoginRequest
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -23,6 +26,14 @@ data class OAuthRegisterRequest(
     val code: String,
     val redirectUri: String,
     val displayName: String? = null,
+    val agreeTerms: Boolean? = null,
+    val agreePrivacy: Boolean? = null,
+    val agreeThirdUse: Boolean? = null,
+)
+
+data class DupCheckRequest(
+    val field: String,
+    val value: String,
 )
 
 @RestController
@@ -45,6 +56,21 @@ class AuthController(
     fun login(@Valid @RequestBody request: LoginRequest): ResponseEntity<Any> {
         return try {
             ResponseEntity.ok(authService.login(request))
+        } catch (e: AuthService.OtpRequiredException) {
+            ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
+                mapOf(
+                    "otpRequired" to true,
+                    "otpTicket" to e.otpTicket,
+                    "error" to e.message,
+                ),
+            )
+        } catch (e: AuthService.OtpValidationException) {
+            ResponseEntity.badRequest().body(
+                mapOf(
+                    "reset" to e.reset,
+                    "reason" to e.message,
+                ),
+            )
         } catch (e: IllegalStateException) {
             ResponseEntity.status(HttpStatus.FORBIDDEN).body(mapOf("error" to (e.message ?: "forbidden")))
         } catch (e: IllegalArgumentException) {
@@ -52,10 +78,75 @@ class AuthController(
         }
     }
 
+    @PostMapping("/nonce")
+    fun nonce(): ResponseEntity<Any> = ResponseEntity.ok(authService.requestLoginNonce())
+
+    @PostMapping("/login-by-token")
+    fun loginByToken(@Valid @RequestBody request: LoginByTokenRequest): ResponseEntity<Any> {
+        return ResponseEntity.ok(authService.loginByToken(request))
+    }
+
+    @PostMapping("/token-login")
+    fun tokenLogin(@Valid @RequestBody request: TokenLoginRequest): ResponseEntity<Any> {
+        return try {
+            ResponseEntity.ok(authService.tokenLogin(request))
+        } catch (e: AuthService.OtpRequiredException) {
+            ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
+                mapOf(
+                    "otpRequired" to true,
+                    "otpTicket" to e.otpTicket,
+                    "error" to e.message,
+                ),
+            )
+        } catch (e: IllegalStateException) {
+            ResponseEntity.status(HttpStatus.FORBIDDEN).body(mapOf("error" to (e.message ?: "forbidden")))
+        } catch (e: IllegalArgumentException) {
+            ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(mapOf("error" to (e.message ?: "invalid token")))
+        }
+    }
+
+    @PostMapping("/otp/verify")
+    fun verifyOtp(@Valid @RequestBody request: OtpVerifyRequest): ResponseEntity<Any> {
+        return try {
+            ResponseEntity.ok(authService.verifyOtp(request.otpTicket, request.otpCode))
+        } catch (e: AuthService.OtpValidationException) {
+            ResponseEntity.badRequest().body(
+                mapOf(
+                    "reset" to e.reset,
+                    "reason" to e.message,
+                ),
+            )
+        } catch (e: IllegalStateException) {
+            ResponseEntity.status(HttpStatus.FORBIDDEN).body(mapOf("error" to (e.message ?: "forbidden")))
+        } catch (e: IllegalArgumentException) {
+            ResponseEntity.badRequest().body(mapOf("error" to (e.message ?: "bad request")))
+        }
+    }
+
+    @PostMapping("/check-dup")
+    fun checkDup(@RequestBody request: DupCheckRequest): ResponseEntity<Map<String, Any>> {
+        val reason = authService.checkDup(request.field, request.value)
+        return ResponseEntity.ok(
+            if (reason == null) {
+                mapOf("result" to true)
+            } else {
+                mapOf("result" to false, "reason" to reason)
+            },
+        )
+    }
+
     @PostMapping("/oauth/login")
     fun oauthLogin(@RequestBody request: OAuthLoginRequest): ResponseEntity<Any> {
         return try {
             ResponseEntity.ok(authService.oauthLogin(request.provider, request.code, request.redirectUri))
+        } catch (e: AuthService.OtpRequiredException) {
+            ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
+                mapOf(
+                    "otpRequired" to true,
+                    "otpTicket" to e.otpTicket,
+                    "error" to e.message,
+                ),
+            )
         } catch (e: IllegalStateException) {
             ResponseEntity.status(HttpStatus.FORBIDDEN).body(mapOf("error" to (e.message ?: "forbidden")))
         } catch (e: IllegalArgumentException) {
@@ -67,7 +158,25 @@ class AuthController(
     fun oauthRegister(@RequestBody request: OAuthRegisterRequest): ResponseEntity<Any> {
         return try {
             ResponseEntity.status(HttpStatus.CREATED)
-                .body(authService.oauthRegister(request.provider, request.code, request.redirectUri, request.displayName))
+                .body(
+                    authService.oauthRegister(
+                        request.provider,
+                        request.code,
+                        request.redirectUri,
+                        request.displayName,
+                        request.agreeTerms,
+                        request.agreePrivacy,
+                        request.agreeThirdUse,
+                    )
+                )
+        } catch (e: AuthService.OtpRequiredException) {
+            ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
+                mapOf(
+                    "otpRequired" to true,
+                    "otpTicket" to e.otpTicket,
+                    "error" to e.message,
+                ),
+            )
         } catch (e: IllegalStateException) {
             ResponseEntity.status(HttpStatus.FORBIDDEN).body(mapOf("error" to (e.message ?: "forbidden")))
         } catch (e: IllegalArgumentException) {

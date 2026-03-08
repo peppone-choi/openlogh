@@ -177,32 +177,19 @@ class WorldController(
                 authorizationHeader = httpServletRequest.getHeader(HttpHeaders.AUTHORIZATION),
             )
 
-            gameOrchestrator.detachWorld(id.toLong())
-            worldService.deleteWorld(id)
+            world.name = resetWorld.name
+            world.scenarioCode = resetWorld.scenarioCode
+            world.commitSha = resetWorld.commitSha
+            world.gameVersion = resetWorld.gameVersion
+            world.currentYear = resetWorld.currentYear
+            world.currentMonth = resetWorld.currentMonth
+            world.tickSeconds = resetWorld.tickSeconds
+            world.realtimeMode = resetWorld.realtimeMode
+            world.commandPointRegenRate = resetWorld.commandPointRegenRate
+            world.config = resetWorld.config.toMutableMap()
+            world.meta["gatewayActive"] = true
 
-            gameOrchestrator.attachWorld(
-                worldId = resetWorld.id.toLong(),
-                request = AttachWorldProcessRequest(
-                    commitSha = resetWorld.commitSha,
-                    gameVersion = resetWorld.gameVersion,
-                ),
-            )
-
-            val newWorld = WorldState(
-                id = resetWorld.id,
-                name = resetWorld.name,
-                scenarioCode = resetWorld.scenarioCode,
-                commitSha = resetWorld.commitSha,
-                gameVersion = resetWorld.gameVersion,
-                currentYear = resetWorld.currentYear,
-                currentMonth = resetWorld.currentMonth,
-                tickSeconds = resetWorld.tickSeconds,
-                realtimeMode = resetWorld.realtimeMode,
-                commandPointRegenRate = resetWorld.commandPointRegenRate,
-                config = resetWorld.config.toMutableMap(),
-                meta = mutableMapOf("gatewayActive" to true),
-            )
-            val saved = worldService.save(newWorld)
+            val saved = worldService.save(world)
             ResponseEntity.ok(WorldStateResponse.from(saved))
         } catch (_: IllegalArgumentException) {
             ResponseEntity.badRequest().build()

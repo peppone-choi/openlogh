@@ -200,11 +200,7 @@ const OfficerLevelMapByNationLevel: Record<number, Record<number, string>> = {
     },
 };
 
-export function formatOfficerLevelText(
-    officerLevel: number,
-    nationLevel?: number,
-    hasNation?: boolean,
-): string {
+export function formatOfficerLevelText(officerLevel: number, nationLevel?: number, hasNation?: boolean): string {
     if (officerLevel <= 0 && hasNation) return '일반';
 
     if (officerLevel < 5) {
@@ -424,7 +420,7 @@ export const CREW_TYPE_NAMES: Record<number, string> = {
 export const BASE_CREW_TYPES: Record<number, string> = Object.fromEntries(
     Object.entries(CREW_TYPE_NAMES)
         .filter(([k]) => Number(k) <= 11)
-        .map(([k, v]) => [Number(k), v]),
+        .map(([k, v]) => [Number(k), v])
 );
 
 export function getCrewTypeName(crewTypeStr: string): string {
@@ -432,10 +428,25 @@ export function getCrewTypeName(crewTypeStr: string): string {
     return CREW_TYPE_NAMES[code] ?? crewTypeStr;
 }
 
-// --- Personality names (personalCode → Korean) ---
+// --- Personality names (legacy che_* codes + compatibility aliases) ---
+
+export const LEGACY_PERSONALITY_OPTIONS: { code: string; label: string; info: string }[] = [
+    { code: 'Random', label: '랜덤', info: '성향을 무작위로 선택합니다.' },
+    { code: 'che_안전', label: '안전', info: '사기 -5, 징·모병 비용 -20%' },
+    { code: 'che_유지', label: '유지', info: '훈련 -5, 징·모병 비용 -20%' },
+    { code: 'che_재간', label: '재간', info: '명성 -10%, 징·모병 비용 -20%' },
+    { code: 'che_출세', label: '출세', info: '명성 +10%, 징·모병 비용 +20%' },
+    { code: 'che_할거', label: '할거', info: '명성 -10%, 훈련 +5' },
+    { code: 'che_정복', label: '정복', info: '명성 -10%, 사기 +5' },
+    { code: 'che_패권', label: '패권', info: '훈련 +5, 징·모병 비용 +20%' },
+    { code: 'che_의협', label: '의협', info: '사기 +5, 징·모병 비용 +20%' },
+    { code: 'che_대의', label: '대의', info: '명성 +10%, 훈련 -5' },
+    { code: 'che_왕좌', label: '왕좌', info: '명성 +10%, 사기 -5' },
+];
 
 export const PERSONALITY_NAMES: Record<string, string> = {
-    Random: '랜덤',
+    ...Object.fromEntries(LEGACY_PERSONALITY_OPTIONS.map((option) => [option.code, option.label])),
+    None: '-',
     Normal: '일반',
     Brave: '호전',
     Calm: '냉정',

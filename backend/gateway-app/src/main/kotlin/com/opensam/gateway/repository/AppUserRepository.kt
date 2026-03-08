@@ -11,6 +11,7 @@ import java.time.OffsetDateTime
 interface AppUserRepository : JpaRepository<AppUser, Long> {
     fun findByLoginId(loginId: String): AppUser?
     fun existsByLoginId(loginId: String): Boolean
+    fun existsByDisplayName(displayName: String): Boolean
 
     @Modifying
     @Transactional

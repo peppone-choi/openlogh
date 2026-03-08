@@ -609,7 +609,11 @@ export default function PersonnelPage() {
                                         disabled={actionLoading}
                                         onClick={() => {
                                             if (appointGeneral > 0 && appointCity !== -1) {
-                                                handleAppoint(level, appointGeneral, appointCity > 0 ? appointCity : undefined);
+                                                handleAppoint(
+                                                    level,
+                                                    appointGeneral,
+                                                    appointCity > 0 ? appointCity : undefined
+                                                );
                                             }
                                         }}
                                     >

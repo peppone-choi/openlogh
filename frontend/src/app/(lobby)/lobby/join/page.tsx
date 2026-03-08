@@ -14,7 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { CITY_LEVEL_NAMES } from '@/lib/game-utils';
+import { CITY_LEVEL_NAMES, LEGACY_PERSONALITY_OPTIONS } from '@/lib/game-utils';
 import type { InheritanceInfo, Nation } from '@/types';
 
 const TOTAL_STAT_POINTS = 350;
@@ -47,29 +47,23 @@ const CREW_TYPES: { code: number; label: string }[] = [
     { code: 3, label: '수군' },
 ];
 
-// Personality list matching legacy character system
-const PERSONALITIES: { key: string; name: string; info: string }[] = [
-    { key: 'Random', name: '랜덤', info: '성격을 랜덤으로 선택합니다.' },
-    { key: 'Normal', name: '일반', info: '특별한 보정이 없습니다.' },
-    { key: 'Brave', name: '호전', info: '전투에 적극적입니다.' },
-    { key: 'Calm', name: '냉정', info: '냉정하게 판단합니다.' },
-    { key: 'Loyal', name: '충성', info: '충성심이 높습니다.' },
-    { key: 'Timid', name: '소심', info: '소극적으로 행동합니다.' },
-    { key: 'Reckless', name: '저돌', info: '무모하게 돌진합니다.' },
-    { key: 'Ambition', name: '야망', info: '큰 야망을 품고 있습니다.' },
-];
+const PERSONALITIES = LEGACY_PERSONALITY_OPTIONS.map((option) => ({
+    key: option.code,
+    name: option.label,
+    info: option.info,
+}));
 
 // Famous general presets for quick character creation (랜덤 장수 프리셋)
 const GENERAL_PRESETS: {
     name: string;
-    stats: Record<StatKey, number>;
-    personality: string;
-    crewType: number;
+        stats: Record<StatKey, number>;
+        personality: string;
+        crewType: number;
 }[] = [
     {
         name: '관우형',
         stats: { leadership: 90, strength: 97, intel: 75, politics: 50, charm: 38 },
-        personality: 'Loyal',
+        personality: 'che_의협',
         crewType: 2,
     },
     {
@@ -81,7 +75,7 @@ const GENERAL_PRESETS: {
             politics: 95,
             charm: 80,
         },
-        personality: 'Calm',
+        personality: 'che_왕좌',
         crewType: 0,
     },
     {
@@ -93,25 +87,25 @@ const GENERAL_PRESETS: {
             politics: 20,
             charm: 30,
         },
-        personality: 'Reckless',
+        personality: 'che_패권',
         crewType: 2,
     },
     {
         name: '조조형',
         stats: { leadership: 96, strength: 72, intel: 91, politics: 65, charm: 26 },
-        personality: 'Ambition',
+        personality: 'che_출세',
         crewType: 2,
     },
     {
         name: '유비형',
         stats: { leadership: 75, strength: 65, intel: 62, politics: 78, charm: 70 },
-        personality: 'Normal',
+        personality: 'che_대의',
         crewType: 0,
     },
     {
         name: '손권형',
         stats: { leadership: 80, strength: 55, intel: 76, politics: 72, charm: 67 },
-        personality: 'Calm',
+        personality: 'che_안전',
         crewType: 3,
     },
 ];
@@ -189,6 +183,7 @@ export default function LobbyJoinPage() {
 
     const inheritBonusSum = inheritBonusStat.reduce((a, b) => a + b, 0);
     const inheritBonusValid = inheritBonusSum === 0 || (inheritBonusSum >= 3 && inheritBonusSum <= 5);
+    const selectedInheritSpecial = inheritInfo?.availableSpecialWar?.[inheritSpecial];
 
     const adjustStat = (key: StatKey, delta: number) => {
         setStats((prev) => {
@@ -637,7 +632,18 @@ export default function LobbyJoinPage() {
                                             className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm"
                                         >
                                             <option value="">선택 안함</option>
+                                            {Object.entries(inheritInfo.availableSpecialWar ?? {}).map(([code, info]) => (
+                                                <option key={code} value={code}>
+                                                    {info.title}
+                                                </option>
+                                            ))}
                                         </select>
+                                        {selectedInheritSpecial && (
+                                            <p
+                                                className="text-xs text-muted-foreground"
+                                                dangerouslySetInnerHTML={{ __html: selectedInheritSpecial.info }}
+                                            />
+                                        )}
                                     </div>
 
                                     <div className="space-y-2">

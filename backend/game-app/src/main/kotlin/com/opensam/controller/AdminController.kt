@@ -123,7 +123,7 @@ class AdminController(
         return try {
             val loginId = currentLoginId() ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
             val resolvedWorldId = adminAuthorizationService.resolveWorldIdOrThrow(loginId, worldId, PERMISSION_OPEN_CLOSE)
-            if (!adminService.timeControl(resolvedWorldId, request.year, request.month, request.locked)) {
+            if (!adminService.timeControl(resolvedWorldId, request)) {
                 return ResponseEntity.notFound().build()
             }
             ResponseEntity.ok().build()

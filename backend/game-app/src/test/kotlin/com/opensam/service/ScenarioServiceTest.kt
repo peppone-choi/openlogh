@@ -8,6 +8,7 @@ import com.opensam.entity.WorldState
 import com.opensam.model.CityConst
 import com.opensam.model.ScenarioData
 import com.opensam.repository.*
+import jakarta.persistence.EntityManager
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -33,6 +34,7 @@ class ScenarioServiceTest {
     private lateinit var generalRepository: GeneralRepository
     private lateinit var diplomacyRepository: DiplomacyRepository
     private lateinit var mapService: MapService
+    private lateinit var entityManager: EntityManager
 
     @BeforeEach
     fun setUp() {
@@ -43,6 +45,7 @@ class ScenarioServiceTest {
         generalRepository = mock(GeneralRepository::class.java)
         diplomacyRepository = mock(DiplomacyRepository::class.java)
         mapService = mock(MapService::class.java)
+        entityManager = mock(EntityManager::class.java)
 
         service = ScenarioService(
             objectMapper = objectMapper,
@@ -54,6 +57,7 @@ class ScenarioServiceTest {
             generalRepository = generalRepository,
             diplomacyRepository = diplomacyRepository,
             mapService = mapService,
+            entityManager = entityManager,
         )
 
         parseGeneral = ScenarioService::class.java.getDeclaredMethod(

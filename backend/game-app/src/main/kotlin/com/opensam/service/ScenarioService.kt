@@ -6,6 +6,7 @@ import com.opensam.entity.*
 import com.opensam.model.ScenarioData
 import com.opensam.model.ScenarioInfo
 import com.opensam.repository.*
+import jakarta.persistence.EntityManager
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver
@@ -25,6 +26,7 @@ class ScenarioService(
     private val generalRepository: GeneralRepository,
     private val diplomacyRepository: DiplomacyRepository,
     private val mapService: MapService,
+    private val entityManager: EntityManager,
 ) {
     private val scenarios = mutableMapOf<String, ScenarioData>()
     private val log = LoggerFactory.getLogger(javaClass)
@@ -262,6 +264,152 @@ class ScenarioService(
         }
 
         return world
+    }
+
+    @Transactional
+    fun reinitializeWorld(
+        existingWorld: WorldState,
+        scenarioCode: String,
+        tickSeconds: Int = existingWorld.tickSeconds,
+        extendEnabled: Boolean? = null,
+    ): WorldState {
+        val worldId = existingWorld.id.toLong()
+        log.info("[World {}] Reinitializing with scenario '{}'", worldId, scenarioCode)
+
+        val tables = listOf(
+            "general_turn", "nation_turn", "troop", "diplomacy",
+            "bet_entry", "betting", "auction_bid", "auction",
+            "board_comment", "board", "vote_cast", "vote",
+            "tournament", "rank_data", "world_history", "yearbook_history",
+            "general_access_log", "general_record", "traffic_snapshot",
+            "message", "event", "nation_flag",
+            "general", "city", "nation",
+        )
+        for (table in tables) {
+            entityManager.createNativeQuery("DELETE FROM $table WHERE world_id = :wid")
+                .setParameter("wid", worldId)
+                .executeUpdate()
+        }
+        entityManager.flush()
+
+        val scenario = getScenario(scenarioCode)
+        val mapName = scenario.map?.mapName ?: "che"
+        val extendedGeneralEnabled = extendEnabled ?: readExtendedGeneralFlag(scenario.const)
+        val hiddenSeed = java.util.UUID.randomUUID().toString()
+        val initRandom = Random(hiddenSeed.hashCode().toLong())
+
+        existingWorld.scenarioCode = scenarioCode
+        existingWorld.currentYear = scenario.startYear.toShort()
+        existingWorld.currentMonth = 1
+        existingWorld.tickSeconds = tickSeconds
+        existingWorld.config = mutableMapOf(
+            "mapCode" to mapName,
+            "startyear" to scenario.startYear,
+            "hiddenSeed" to hiddenSeed,
+            "extend" to extendedGeneralEnabled,
+            "extendedGeneral" to if (extendedGeneralEnabled) 1 else 0,
+        )
+        existingWorld.meta = mutableMapOf()
+        existingWorld.updatedAt = OffsetDateTime.now()
+        worldStateRepository.save(existingWorld)
+
+        val mapCities = try { mapService.getCities(mapName) } catch (_: Exception) { mapService.getCities("che") }
+        val cityNameToId = mutableMapOf<String, Long>()
+        for (mc in mapCities) {
+            val init = CITY_LEVEL_INIT[mc.level] ?: DEFAULT_CITY_INIT
+            val city = cityRepository.save(
+                City(
+                    worldId = worldId,
+                    name = mc.name,
+                    level = mc.level.toShort(),
+                    pop = init.pop,
+                    popMax = mc.population,
+                    agri = init.agri,
+                    agriMax = mc.agriculture,
+                    comm = init.comm,
+                    commMax = mc.commerce,
+                    secu = init.secu,
+                    secuMax = mc.security,
+                    trust = 50f,
+                    def = init.def,
+                    defMax = mc.defence,
+                    wall = init.wall,
+                    wallMax = mc.wall,
+                    region = mc.region.toShort(),
+                )
+            )
+            cityNameToId[mc.name] = city.id
+        }
+        val allCityIds = cityNameToId.values.toList()
+
+        val nationIdxToDbId = mutableMapOf<Int, Long>()
+        val nationCityIds = mutableMapOf<Long, MutableList<Long>>()
+        for ((idx, nationRow) in scenario.nation.withIndex()) {
+            val nationIdx = idx + 1
+            val nation = parseNation(nationRow, worldId)
+            val nationCityNames = readStringList(nationRow.getOrNull(8))
+            val nationCities = nationCityNames.mapNotNull { cityNameToId[it] }
+            if (nationCities.isNotEmpty()) {
+                nation.capitalCityId = nationCities.first()
+            }
+            val saved = nationRepository.save(nation)
+            nationIdxToDbId[nationIdx] = saved.id
+            nationCityIds[saved.id] = nationCities.toMutableList()
+            for (cid in nationCities) {
+                cityRepository.findById(cid).ifPresent { c ->
+                    c.nationId = saved.id
+                    cityRepository.save(c)
+                }
+            }
+        }
+
+        var delayedNpcCount = 0
+        for (generalRow in scenario.general) {
+            val general = parseGeneral(generalRow, worldId, nationIdxToDbId, nationCityIds, cityNameToId, allCityIds, initRandom, scenario.startYear, 2)
+            if (shouldSpawnScenarioGeneral(general, scenario.startYear)) generalRepository.save(general) else delayedNpcCount++
+        }
+        if (extendedGeneralEnabled) {
+            for (generalRow in scenario.generalEx) {
+                val general = parseGeneral(generalRow, worldId, nationIdxToDbId, nationCityIds, cityNameToId, allCityIds, initRandom, scenario.startYear, 2)
+                if (shouldSpawnScenarioGeneral(general, scenario.startYear)) generalRepository.save(general) else delayedNpcCount++
+            }
+        }
+        for (generalRow in scenario.generalNeutral) {
+            val general = parseGeneral(generalRow, worldId, nationIdxToDbId, nationCityIds, cityNameToId, allCityIds, initRandom, scenario.startYear, 6)
+            if (shouldSpawnScenarioGeneral(general, scenario.startYear)) generalRepository.save(general) else delayedNpcCount++
+        }
+        if (delayedNpcCount > 0) log.info("[World {}] Delayed {} underage scenario NPC(s) for future yearly spawn", worldId, delayedNpcCount)
+
+        for ((_, nationDbId) in nationIdxToDbId) {
+            val ruler = generalRepository.findByWorldId(worldId)
+                .filter { it.nationId == nationDbId && it.officerLevel >= 12 }
+                .maxByOrNull { it.officerLevel }
+            if (ruler != null) {
+                nationRepository.findById(nationDbId).ifPresent { n ->
+                    n.chiefGeneralId = ruler.id
+                    nationRepository.save(n)
+                }
+            }
+        }
+
+        for (diploRow in scenario.diplomacy) {
+            if (diploRow.size >= 4) {
+                val srcIdx = (diploRow[0] as Number).toInt()
+                val destIdx = (diploRow[1] as Number).toInt()
+                val stateType = (diploRow[2] as Number).toInt()
+                val term = (diploRow[3] as Number).toInt()
+                val srcId = nationIdxToDbId[srcIdx + 1]
+                val destId = nationIdxToDbId[destIdx + 1]
+                if (srcId != null && destId != null) {
+                    diplomacyRepository.save(Diplomacy(worldId = worldId, srcNationId = srcId, destNationId = destId,
+                        stateCode = when (stateType) { 0 -> "전쟁"; 1 -> "선전포고"; 7 -> "불가침"; else -> "통상" },
+                        term = term.toShort()))
+                }
+            }
+        }
+
+        log.info("[World {}] Reinitialized successfully (same ID preserved)", worldId)
+        return existingWorld
     }
 
     private fun parseNation(row: List<Any>, worldId: Long): Nation {

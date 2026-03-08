@@ -14,8 +14,6 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { formatInjury, BASE_CREW_TYPES } from '@/lib/game-utils';
 
-
-
 // Known item/weapon/horse/book codes from legacy — these are used as dropdown options.
 // In production these would come from game const store; we provide common ones here.
 const WEAPON_CODES = [

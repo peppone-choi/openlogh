@@ -309,7 +309,9 @@ export default function NpcListPage() {
                                             <NationBadge name={nation?.name} color={nation?.color} />
                                         </TableCell>
                                         <TableCell className="text-xs">{cityMap.get(g.cityId)?.name ?? '-'}</TableCell>
-                                        <TableCell className="text-xs">{getPersonalityName(g.personalCode) ?? '-'}</TableCell>
+                                        <TableCell className="text-xs">
+                                            {getPersonalityName(g.personalCode) ?? '-'}
+                                        </TableCell>
                                         <TableCell className="text-xs tabular-nums">{storageCount ?? '-'}</TableCell>
                                         <TableCell className="text-xs whitespace-nowrap">{specialFull}</TableCell>
                                         <TableCell className="font-medium tabular-nums">{totalStats}</TableCell>

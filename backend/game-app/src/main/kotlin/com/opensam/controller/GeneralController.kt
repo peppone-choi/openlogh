@@ -102,10 +102,8 @@ class GeneralController(
     ): ResponseEntity<GeneralResponse> {
         val loginId = SecurityContextHolder.getContext().authentication?.name
             ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
-        val general = generalService.buildPoolGeneral(
-            worldId, loginId, request.name,
-            request.leadership, request.strength, request.intel, request.politics, request.charm,
-        ) ?: return ResponseEntity.badRequest().build()
+        val general = generalService.buildPoolGeneral(worldId, loginId, request)
+            ?: return ResponseEntity.badRequest().build()
         return ResponseEntity.status(HttpStatus.CREATED).body(GeneralResponse.from(general))
     }
 

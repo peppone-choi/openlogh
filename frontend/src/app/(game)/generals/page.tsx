@@ -390,7 +390,9 @@ export default function GeneralsPage() {
                                                     ? ` / ${g.special2Code}`
                                                     : ''}
                                             </TableCell>
-                                            <TableCell className="text-xs">{getPersonalityName(g.personalCode) ?? '-'}</TableCell>
+                                            <TableCell className="text-xs">
+                                                {getPersonalityName(g.personalCode) ?? '-'}
+                                            </TableCell>
                                             <TableCell>{g.age ?? '-'}</TableCell>
                                             <TableCell className="text-xs">
                                                 {CREW_TYPE_NAMES[g.crewType] ?? g.crewType}

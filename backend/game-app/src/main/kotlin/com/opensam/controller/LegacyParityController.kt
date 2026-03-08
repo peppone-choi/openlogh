@@ -53,9 +53,8 @@ class LegacyParityController(
     ): ResponseEntity<Any> {
         val loginId = currentLoginId() ?: return unauthorized()
         val userId = generalService.getCurrentUserId(loginId) ?: return unauthorized()
-        // Find general by userId (any world – caller must be leader)
         return ResponseEntity.ok(
-            permissionService.setPermission(request.requesterId, request.isAmbassador, request.generalIds)
+            permissionService.setPermission(userId, nationId, request.isAmbassador, request.generalIds)
         )
     }
 
@@ -128,6 +127,6 @@ class LegacyParityController(
 
     private fun currentLoginId(): String? = SecurityContextHolder.getContext().authentication?.name
 
-private fun unauthorized(): ResponseEntity<Any> =
+    private fun unauthorized(): ResponseEntity<Any> =
         ResponseEntity.status(401).body(mapOf("result" to false, "reason" to "Unauthorized"))
 }

@@ -4,6 +4,7 @@ import com.opensam.repository.AppUserRepository
 import com.opensam.repository.GeneralRepository
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
+import java.time.OffsetDateTime
 
 @Service
 class AccountService(
@@ -19,11 +20,16 @@ class AccountService(
         return true
     }
 
-    fun deleteAccount(loginId: String): Boolean {
+    fun deleteAccount(loginId: String, password: String): Boolean {
         val user = appUserRepository.findByLoginId(loginId) ?: return false
-        val generals = generalRepository.findByUserId(user.id)
-        generals.forEach { generalRepository.delete(it) }
-        appUserRepository.delete(user)
+        if (!passwordEncoder.matches(password, user.passwordHash)) return false
+        if (user.meta["deleteRequestedAt"] != null) return false
+
+        val now = OffsetDateTime.now()
+        val deleteAfter = now.plusMonths(1)
+        user.meta["deleteRequestedAt"] = now.toString()
+        user.meta["deleteAfter"] = deleteAfter.toString()
+        appUserRepository.save(user)
         return true
     }
 
@@ -37,12 +43,36 @@ class AccountService(
         preOpenDelete: Boolean?,
         borderReturn: Boolean?,
         customCss: String?,
+        thirdUse: Boolean?,
+        picture: String?,
     ): Boolean {
         val user = appUserRepository.findByLoginId(loginId) ?: return false
         val generals = generalRepository.findByUserId(user.id)
+        var userChanged = false
+
+        thirdUse?.let {
+            user.meta["thirdUse"] = it
+            userChanged = true
+        }
+
+        picture?.let {
+            if (it.isBlank()) {
+                user.meta.remove("picture")
+                user.meta.remove("imageServer")
+            } else {
+                user.meta["picture"] = it
+                user.meta["imageServer"] = 0
+            }
+            userChanged = true
+        }
+
         generals.forEach { gen ->
             defenceTrain?.let { gen.defenceTrain = it.toShort() }
             tournamentState?.let { gen.tournamentState = it.toShort() }
+            picture?.let {
+                gen.picture = it
+                gen.imageServer = 0
+            }
 
             val meta = gen.meta.toMutableMap()
             potionThreshold?.let { meta["potionThreshold"] = it }
@@ -54,6 +84,9 @@ class AccountService(
             gen.meta = meta
 
             generalRepository.save(gen)
+        }
+        if (userChanged) {
+            appUserRepository.save(user)
         }
         return true
     }
@@ -84,6 +117,8 @@ class AccountService(
 
     fun getDetailedInfo(loginId: String): Map<String, Any?>? {
         val user = appUserRepository.findByLoginId(loginId) ?: return null
+        val oauthEntry = (user.meta["oauthProviders"] as? List<*>)
+            ?.firstOrNull() as? Map<*, *>
         return mapOf(
             "loginId" to user.loginId,
             "displayName" to user.displayName,
@@ -92,8 +127,8 @@ class AccountService(
             "joinDate" to user.createdAt.toString(),
             "lastLoginAt" to user.lastLoginAt?.toString(),
             "thirdUse" to (user.meta["thirdUse"] as? Boolean ?: false),
-            "oauthType" to (user.meta["oauthProviders"] as? List<*>)?.firstOrNull()?.toString(),
-            "tokenValidUntil" to user.meta["oauthExpiresAt"],
+            "oauthType" to oauthEntry?.get("provider")?.toString()?.uppercase(),
+            "tokenValidUntil" to (oauthEntry?.get("tokenValidUntil") ?: oauthEntry?.get("accessTokenValidUntil") ?: user.meta["oauthExpiresAt"]),
             "acl" to user.meta["acl"],
         )
     }

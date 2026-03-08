@@ -723,7 +723,9 @@ export default function NationCitiesPage() {
                                                                                 {g.intel}
                                                                             </td>
                                                                             <td className="text-right py-0.5 px-1">
-                                                                                {CREW_TYPE_NAMES[g.crewType] ?? g.crewType ?? '-'}
+                                                                                {CREW_TYPE_NAMES[g.crewType] ??
+                                                                                    g.crewType ??
+                                                                                    '-'}
                                                                             </td>
                                                                             <td className="text-right py-0.5 px-1">
                                                                                 {(g.crew ?? 0).toLocaleString()}

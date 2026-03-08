@@ -18,6 +18,7 @@ import { LoadingState } from '@/components/game/loading-state';
 import { EmptyState } from '@/components/game/empty-state';
 import { GeneralPortrait } from '@/components/game/general-portrait';
 import { StatBar } from '@/components/game/stat-bar';
+import { LEGACY_PERSONALITY_OPTIONS } from '@/lib/game-utils';
 
 const STAT_TOTAL = 350;
 const STAT_MIN = 10;
@@ -39,16 +40,10 @@ const STAT_COLORS: Record<StatKey, string> = {
     charm: 'bg-purple-500',
 };
 
-const EGO_OPTIONS: { value: string; label: string }[] = [
-    { value: 'Random', label: '랜덤' },
-    { value: 'Normal', label: '일반' },
-    { value: 'Brave', label: '호전' },
-    { value: 'Calm', label: '냉정' },
-    { value: 'Loyal', label: '충성' },
-    { value: 'Timid', label: '소심' },
-    { value: 'Reckless', label: '저돌' },
-    { value: 'Ambition', label: '야망' },
-];
+const EGO_OPTIONS = LEGACY_PERSONALITY_OPTIONS.map((option) => ({
+    value: option.code,
+    label: option.label,
+}));
 
 export default function LobbySelectPoolPage() {
     const router = useRouter();

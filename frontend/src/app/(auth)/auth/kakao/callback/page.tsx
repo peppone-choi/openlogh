@@ -3,7 +3,7 @@
 import { Suspense, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
-import { useAuthStore } from '@/stores/authStore';
+import { OTP_TICKET_STORAGE_KEY, useAuthStore } from '@/stores/authStore';
 import { accountApi } from '@/lib/gameApi';
 import { LoadingState } from '@/components/game/loading-state';
 
@@ -32,7 +32,13 @@ function KakaoCallbackPageContent() {
 
             try {
                 if (mode === 'register') {
-                    await registerWithOAuth(provider, code, redirectUri, '');
+                    const result = await registerWithOAuth(provider, code, redirectUri, '');
+                    if (result && typeof result === 'object' && 'otpRequired' in result && result.otpRequired && result.otpTicket) {
+                        sessionStorage.setItem(OTP_TICKET_STORAGE_KEY, result.otpTicket);
+                        toast.error('인증 코드를 입력해주세요.');
+                        router.replace('/login?otp=1');
+                        return;
+                    }
                     toast.success('카카오 가입이 완료되었습니다.');
                     router.replace('/lobby');
                     return;
@@ -45,10 +51,29 @@ function KakaoCallbackPageContent() {
                     return;
                 }
 
-                await loginWithOAuth(provider, code, redirectUri);
+                const result = await loginWithOAuth(provider, code, redirectUri);
+                if (result && typeof result === 'object' && 'otpRequired' in result && result.otpRequired && result.otpTicket) {
+                    sessionStorage.setItem(OTP_TICKET_STORAGE_KEY, result.otpTicket);
+                    toast.error('인증 코드를 입력해주세요.');
+                    router.replace('/login?otp=1');
+                    return;
+                }
                 toast.success('카카오 로그인 성공');
                 router.replace('/lobby');
-            } catch {
+            } catch (err: unknown) {
+                const errData = (
+                    err as {
+                        response?: {
+                            data?: { otpRequired?: boolean; otpTicket?: string; error?: string; reason?: string };
+                        };
+                    }
+                )?.response?.data;
+                if (errData?.otpRequired && errData.otpTicket) {
+                    sessionStorage.setItem(OTP_TICKET_STORAGE_KEY, errData.otpTicket);
+                    toast.error(errData.error ?? errData.reason ?? '인증 코드를 입력해주세요.');
+                    router.replace('/login?otp=1');
+                    return;
+                }
                 if (mode === 'register') {
                     toast.error('카카오 가입에 실패했습니다.');
                     router.replace('/register');

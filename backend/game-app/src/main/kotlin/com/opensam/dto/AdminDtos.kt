@@ -9,7 +9,22 @@ data class AdminUserAction(
     val grade: Int? = null,
 )
 
-data class TimeControlRequest(val year: Int? = null, val month: Int? = null, val locked: Boolean? = null)
+data class ResourceDistributionRequest(
+    val gold: Int = 0,
+    val rice: Int = 0,
+    val target: String = "all",
+)
+
+data class TimeControlRequest(
+    val year: Int? = null,
+    val month: Int? = null,
+    val startYear: Int? = null,
+    val locked: Boolean? = null,
+    val turnTerm: Int? = null,
+    val distribute: ResourceDistributionRequest? = null,
+    val auctionSync: Boolean? = null,
+    val auctionCloseMinutes: Int? = null,
+)
 
 data class NationStatistic(
     val nationId: Long, val name: String, val color: String, val level: Int,
@@ -41,6 +56,7 @@ data class AdminGeneralSummary(
     val experience: Int,
     val npcState: Int,
     val blockState: Int,
+    val killTurn: Int?,
 )
 
 data class AdminUserSummary(

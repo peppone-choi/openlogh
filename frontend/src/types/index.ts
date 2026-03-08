@@ -21,6 +21,8 @@ export interface OAuthProviderInfo {
 export interface AuthResponse {
     token: string;
     user: User;
+    nextToken?: [number, string];
+    validUntil?: string;
 }
 
 // World
@@ -1151,6 +1153,8 @@ export interface AccountSettings {
     borderReturn?: boolean;
     customCss?: string;
     autoNationTurn?: boolean;
+    thirdUse?: boolean;
+    picture?: string;
 }
 
 // Admin
@@ -1188,6 +1192,7 @@ export interface AdminGeneral {
     experience: number;
     npcState: number;
     blockState: number;
+    killTurn: number | null;
 }
 
 export interface TimeControlRequest {

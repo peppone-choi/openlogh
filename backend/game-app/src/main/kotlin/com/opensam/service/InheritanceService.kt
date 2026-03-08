@@ -12,6 +12,7 @@ import com.opensam.dto.InheritanceLogEntry
 import com.opensam.dto.ResetStatsRequest
 import com.opensam.dto.SpecialWarOption
 import com.opensam.dto.UniqueItemOption
+import com.opensam.engine.modifier.TraitSpecRegistry
 import com.opensam.entity.AppUser
 import com.opensam.repository.AppUserRepository
 import com.opensam.repository.CityRepository
@@ -23,40 +24,18 @@ class InheritanceService(
     private val appUserRepository: AppUserRepository,
     private val cityRepository: CityRepository,
     private val generalRepository: GeneralRepository,
+    private val gameConstService: GameConstService,
 ) {
     companion object {
         // Cumulative buff level costs: index = level (0 = free, 1..5)
         private val BUFF_LEVEL_COSTS = listOf(0, 200, 600, 1200, 2000, 3000)
         private const val MAX_BUFF_LEVEL = 5
 
-        // Action costs (defaults, can be overridden by game config)
-        private const val INHERIT_SPECIAL_COST = 500
-        private const val INHERIT_CITY_COST = 300
-        private const val RANDOM_UNIQUE_COST = 300
-        private const val CHECK_OWNER_COST = 50
-        private const val MIN_SPECIFIC_UNIQUE_COST = 500
-        private const val BORN_STAT_POINT_COST = 500
-
         // Valid combat buff types
         val COMBAT_BUFF_TYPES = setOf(
             "warAvoidRatio", "warCriticalRatio", "warMagicTrialProb",
             "warAvoidRatioOppose", "warCriticalRatioOppose", "warMagicTrialProbOppose",
             "domesticSuccessProb", "domesticFailProb",
-        )
-
-
-        // Available special war options (should come from game config/static data in production)
-        val AVAILABLE_SPECIAL_WAR = mapOf(
-            "저격" to SpecialWarOption("저격", "전투 시 상대 장수를 직접 공격하여 부상을 입힙니다."),
-            "돌격" to SpecialWarOption("돌격", "전투 시 공격력이 크게 증가합니다."),
-            "급습" to SpecialWarOption("급습", "전투 시 선제 공격을 할 수 있습니다."),
-            "매복" to SpecialWarOption("매복", "수비 시 추가 피해를 줍니다."),
-            "연사" to SpecialWarOption("연사", "궁병 계열 병종의 공격 횟수가 증가합니다."),
-            "반계" to SpecialWarOption("반계", "상대의 계략을 되돌려 줍니다."),
-            "화공" to SpecialWarOption("화공", "화공 계략의 성공률과 위력이 증가합니다."),
-            "치료" to SpecialWarOption("치료", "전투 후 아군 부상자를 치료합니다."),
-            "수비" to SpecialWarOption("수비", "수비전 시 방어력이 크게 증가합니다."),
-            "위압" to SpecialWarOption("위압", "전투 시 상대 사기를 감소시킵니다."),
         )
 
         // Available unique items (should come from game config/static data in production)
@@ -83,6 +62,21 @@ class InheritanceService(
             return b
         }
     }
+
+    private val availableSpecialWar: Map<String, SpecialWarOption> = TraitSpecRegistry.war
+        .associate { it.key to SpecialWarOption(it.name, it.info) }
+
+    private fun inheritSpecialCost(): Int = gameConstService.getInt("inheritSpecificSpecialPoint")
+
+    private fun inheritCityCost(): Int = gameConstService.getInt("inheritBornCityPoint")
+
+    private fun randomUniqueCost(): Int = gameConstService.getInt("inheritItemRandomPoint")
+
+    private fun checkOwnerCost(): Int = gameConstService.getInt("inheritCheckOwnerPoint")
+
+    private fun minSpecificUniqueCost(): Int = gameConstService.getInt("inheritItemUniqueMinPoint")
+
+    private fun bornStatPointCost(): Int = gameConstService.getInt("inheritBornStatPoint")
 
     fun getInheritance(worldId: Long, loginId: String): InheritanceInfo? {
         val user = appUserRepository.findByLoginId(loginId) ?: return null
@@ -118,11 +112,11 @@ class InheritanceService(
             buff = BUFF_LEVEL_COSTS,
             resetTurnTime = fibonacciCost(100, turnResetCount),
             resetSpecialWar = fibonacciCost(200, specialWarResetCount),
-            randomUnique = RANDOM_UNIQUE_COST,
-            nextSpecial = INHERIT_SPECIAL_COST,
-            minSpecificUnique = MIN_SPECIFIC_UNIQUE_COST,
-            checkOwner = CHECK_OWNER_COST,
-            bornStatPoint = BORN_STAT_POINT_COST,
+            randomUnique = randomUniqueCost(),
+            nextSpecial = inheritSpecialCost(),
+            minSpecificUnique = minSpecificUniqueCost(),
+            checkOwner = checkOwnerCost(),
+            bornStatPoint = bornStatPointCost(),
         )
 
         // Get current general's stat if exists
@@ -153,7 +147,7 @@ class InheritanceService(
             turnResetCount = turnResetCount,
             specialWarResetCount = specialWarResetCount,
             inheritActionCost = actionCost,
-            availableSpecialWar = AVAILABLE_SPECIAL_WAR,
+            availableSpecialWar = availableSpecialWar,
             availableUnique = AVAILABLE_UNIQUE,
             availableTargetGeneral = availableTargetGeneral,
             currentStat = currentStat,
@@ -188,30 +182,33 @@ class InheritanceService(
         val user = appUserRepository.findByLoginId(loginId) ?: return null
         val points = (user.meta["inheritPoints"] as? Number)?.toInt() ?: 0
 
-        if (points < INHERIT_SPECIAL_COST) return InheritanceActionResult(error = "포인트 부족 (필요: $INHERIT_SPECIAL_COST)")
+        if (specialCode !in availableSpecialWar) return InheritanceActionResult(error = "잘못된 전투 특기")
+        val cost = inheritSpecialCost()
+        if (points < cost) return InheritanceActionResult(error = "포인트 부족 (필요: $cost)")
 
-        user.meta["inheritPoints"] = points - INHERIT_SPECIAL_COST
+        user.meta["inheritPoints"] = points - cost
         user.meta["inheritSpecificSpecialWar"] = specialCode
-        addInheritLog(user, "전투특기 지정: $specialCode", -INHERIT_SPECIAL_COST)
+        addInheritLog(user, "전투특기 지정: $specialCode", -cost)
 
         appUserRepository.save(user)
-        return InheritanceActionResult(remainingPoints = points - INHERIT_SPECIAL_COST)
+        return InheritanceActionResult(remainingPoints = points - cost)
     }
 
     fun setInheritCity(worldId: Long, loginId: String, cityId: Long): InheritanceActionResult? {
         val user = appUserRepository.findByLoginId(loginId) ?: return null
         val points = (user.meta["inheritPoints"] as? Number)?.toInt() ?: 0
 
-        if (points < INHERIT_CITY_COST) return InheritanceActionResult(error = "포인트 부족 (필요: $INHERIT_CITY_COST)")
+        val cost = inheritCityCost()
+        if (points < cost) return InheritanceActionResult(error = "포인트 부족 (필요: $cost)")
 
         val city = cityRepository.findById(cityId).orElse(null) ?: return InheritanceActionResult(error = "존재하지 않는 도시")
 
-        user.meta["inheritPoints"] = points - INHERIT_CITY_COST
+        user.meta["inheritPoints"] = points - cost
         user.meta["inheritCity"] = cityId
-        addInheritLog(user, "시작 도시 지정: ${city.name}", -INHERIT_CITY_COST)
+        addInheritLog(user, "시작 도시 지정: ${city.name}", -cost)
 
         appUserRepository.save(user)
-        return InheritanceActionResult(remainingPoints = points - INHERIT_CITY_COST)
+        return InheritanceActionResult(remainingPoints = points - cost)
     }
 
     fun resetTurn(worldId: Long, loginId: String): InheritanceActionResult? {
@@ -235,14 +232,15 @@ class InheritanceService(
         val user = appUserRepository.findByLoginId(loginId) ?: return null
         val points = (user.meta["inheritPoints"] as? Number)?.toInt() ?: 0
 
-        if (points < RANDOM_UNIQUE_COST) return InheritanceActionResult(error = "포인트 부족 (필요: $RANDOM_UNIQUE_COST)")
+        val cost = randomUniqueCost()
+        if (points < cost) return InheritanceActionResult(error = "포인트 부족 (필요: $cost)")
 
-        user.meta["inheritPoints"] = points - RANDOM_UNIQUE_COST
+        user.meta["inheritPoints"] = points - cost
         user.meta["inheritRandomUnique"] = true
-        addInheritLog(user, "랜덤 유니크 획득", -RANDOM_UNIQUE_COST)
+        addInheritLog(user, "랜덤 유니크 획득", -cost)
 
         appUserRepository.save(user)
-        return InheritanceActionResult(remainingPoints = points - RANDOM_UNIQUE_COST)
+        return InheritanceActionResult(remainingPoints = points - cost)
     }
 
     fun resetSpecialWar(worldId: Long, loginId: String): InheritanceActionResult? {
@@ -267,7 +265,7 @@ class InheritanceService(
         val points = (user.meta["inheritPoints"] as? Number)?.toInt() ?: 0
 
         val hasBonusStat = request.inheritBonusStat?.any { it > 0 } == true
-        val cost = if (hasBonusStat) BORN_STAT_POINT_COST else 0
+        val cost = if (hasBonusStat) bornStatPointCost() else 0
 
         if (points < cost) return InheritanceActionResult(error = "포인트 부족 (필요: $cost)")
 
@@ -285,10 +283,10 @@ class InheritanceService(
         general.intel = request.intel.toShort()
 
         // Apply bonus stat if present
-        if (hasBonusStat && request.inheritBonusStat != null) {
-            general.leadership = (general.leadership + request.inheritBonusStat[0]).toShort()
-            general.strength = (general.strength + request.inheritBonusStat[1]).toShort()
-            general.intel = (general.intel + request.inheritBonusStat[2]).toShort()
+        request.inheritBonusStat?.takeIf { hasBonusStat }?.let { bonusStat ->
+            general.leadership = (general.leadership + bonusStat[0]).toShort()
+            general.strength = (general.strength + bonusStat[1]).toShort()
+            general.intel = (general.intel + bonusStat[2]).toShort()
         }
 
         generalRepository.save(general)
@@ -307,7 +305,8 @@ class InheritanceService(
         val user = appUserRepository.findByLoginId(loginId) ?: return null
         val points = (user.meta["inheritPoints"] as? Number)?.toInt() ?: 0
 
-        if (points < CHECK_OWNER_COST) return CheckOwnerResponse(found = false)
+        val cost = checkOwnerCost()
+        if (points < cost) return CheckOwnerResponse(found = false)
 
         val general = when {
             request.destGeneralID != null -> generalRepository.findById(request.destGeneralID).orElse(null)
@@ -317,8 +316,8 @@ class InheritanceService(
 
         val ownerUser = general.userId?.let { appUserRepository.findById(it).orElse(null) }
 
-        user.meta["inheritPoints"] = points - CHECK_OWNER_COST
-        addInheritLog(user, "소유주 확인: ${general.name}", -CHECK_OWNER_COST)
+        user.meta["inheritPoints"] = points - cost
+        addInheritLog(user, "소유주 확인: ${general.name}", -cost)
         appUserRepository.save(user)
 
         return if (ownerUser != null) {
@@ -352,8 +351,9 @@ class InheritanceService(
         val user = appUserRepository.findByLoginId(loginId) ?: return null
         val points = (user.meta["inheritPoints"] as? Number)?.toInt() ?: 0
 
-        if (request.bidAmount < MIN_SPECIFIC_UNIQUE_COST) {
-            return InheritanceActionResult(error = "최소 입찰금: ${MIN_SPECIFIC_UNIQUE_COST}P")
+        val minBid = minSpecificUniqueCost()
+        if (request.bidAmount < minBid) {
+            return InheritanceActionResult(error = "최소 입찰금: ${minBid}P")
         }
         if (points < request.bidAmount) {
             return InheritanceActionResult(error = "포인트 부족 (필요: ${request.bidAmount})")

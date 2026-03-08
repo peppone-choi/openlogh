@@ -3,15 +3,22 @@ package com.opensam.dto
 import java.time.Instant
 
 data class CreateGeneralRequest(
-    val name: String,
-    val cityId: Long = 0,
-    val nationId: Long = 0,
+    val name: String? = null,
+    val cityId: Long? = null,
+    val nationId: Long? = 0,
     val leadership: Short = 50,
     val strength: Short = 50,
     val intel: Short = 50,
     val politics: Short = 50,
     val charm: Short = 50,
     val crewType: Short = 0,
+    val personality: String? = "Random",
+    val pic: Boolean? = null,
+    val useOwnIcon: Boolean? = null,
+    val inheritSpecial: String? = null,
+    val inheritTurntimeZone: Int? = null,
+    val inheritCity: Long? = null,
+    val inheritBonusStat: List<Int>? = null,
 )
 
 data class SelectNpcRequest(val generalId: Long)
@@ -23,6 +30,8 @@ data class BuildPoolGeneralRequest(
     val intel: Short = 70,
     val politics: Short = 70,
     val charm: Short = 70,
+    val ego: String? = null,
+    val personality: String? = null,
 )
 
 data class UpdatePoolGeneralRequest(
