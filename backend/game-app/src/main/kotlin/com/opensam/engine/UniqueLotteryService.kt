@@ -64,8 +64,11 @@ class UniqueLotteryService {
         private const val DEFAULT_MIN_MONTH_TO_ALLOW_INHERIT_ITEM = 4
     }
 
-    fun resolveUniqueConfig(configConst: Map<String, Any?>): UniqueLotteryConfig {
-        val allItems = normalizeItemPool(configConst["allItems"])
+    fun resolveUniqueConfig(
+        configConst: Map<String, Any?>,
+        itemRegistry: Map<String, ItemMeta> = emptyMap(),
+    ): UniqueLotteryConfig {
+        val allItems = normalizeItemPool(configConst["allItems"]).ifEmpty { buildDefaultUniquePool(itemRegistry) }
         return UniqueLotteryConfig(
             allItems = allItems,
             maxUniqueItemLimit = normalizeLimitTable(configConst["maxUniqueItemLimit"]),
@@ -75,21 +78,23 @@ class UniqueLotteryService {
                 readNumber(
                     configConst["minMonthToAllowInheritItem"],
                     DEFAULT_MIN_MONTH_TO_ALLOW_INHERIT_ITEM.toDouble(),
-                )
+                ),
             ).toInt().coerceAtLeast(0),
         )
     }
 
-    fun countOccupiedUniqueItems(generalItemSlots: List<GeneralItemSlots>, itemRegistry: Map<String, ItemMeta>): Map<String, Int> {
+    fun countOccupiedUniqueItems(
+        generalItemSlots: List<GeneralItemSlots>,
+        itemRegistry: Map<String, ItemMeta>,
+        config: UniqueLotteryConfig,
+    ): Map<String, Int> {
         val counts = mutableMapOf<String, Int>()
         for (items in generalItemSlots) {
-            val values = listOf(items.horse, items.weapon, items.book, items.item)
-            for (itemKey in values) {
-                if (itemKey.isNullOrBlank()) {
+            for ((slot, itemKey) in currentSlots(items)) {
+                if (itemKey == null || !isUniquePoolItem(slot, itemKey, config)) {
                     continue
                 }
-                val module = itemRegistry[itemKey]
-                if (module == null || module.buyable) {
+                if (itemRegistry[itemKey] == null) {
                     continue
                 }
                 counts[itemKey] = (counts[itemKey] ?: 0) + 1
@@ -120,6 +125,61 @@ class UniqueLotteryService {
         return DeterministicRng.create(seed, "unique_lottery")
     }
 
+    fun countOpenUniqueSlots(input: UniqueLotteryInput): Int {
+        val itemTypes = input.config.allItems.keys.toList()
+        if (itemTypes.isEmpty()) {
+            return 0
+        }
+
+        var maxCnt = itemTypes.size
+        for ((slot, itemKey) in currentSlots(input.generalItems)) {
+            if (itemKey != null && isUniquePoolItem(slot, itemKey, input.config)) {
+                maxCnt -= 1
+            }
+        }
+        return maxCnt.coerceAtLeast(0)
+    }
+
+    fun collectAvailableUniqueItems(input: UniqueLotteryInput): List<Pair<String, Int>> {
+        val invalidItemTypes = currentSlots(input.generalItems)
+            .mapNotNull { (slot, itemKey) ->
+                if (itemKey != null && isUniquePoolItem(slot, itemKey, input.config)) slot else null
+            }
+            .toSet()
+
+        val availableUnique = mutableListOf<Pair<String, Int>>()
+        for (itemType in input.config.allItems.keys) {
+            if (itemType in invalidItemTypes) {
+                continue
+            }
+            val itemEntries = input.config.allItems[itemType] ?: emptyMap()
+            for ((itemKey, rawCount) in itemEntries) {
+                if (rawCount <= 0) {
+                    continue
+                }
+                if (input.itemRegistry[itemKey] == null) {
+                    continue
+                }
+                val remain = rawCount - (input.occupiedUniqueCounts[itemKey] ?: 0)
+                if (remain > 0) {
+                    availableUnique.add(itemKey to remain)
+                }
+            }
+        }
+        return availableUnique
+    }
+
+    fun isInheritRandomUniqueAvailable(input: UniqueLotteryInput): Boolean {
+        val relMonthByInit = joinYearMonth(input.currentYear, input.currentMonth) -
+            joinYearMonth(input.initYear, input.initMonth)
+        return relMonthByInit >= input.config.minMonthToAllowInheritItem
+    }
+
+    fun slotForItem(itemKey: String, itemRegistry: Map<String, ItemMeta>): String? {
+        val meta = itemRegistry[normalizeItemKey(itemKey)] ?: return null
+        return categoryToSlot(meta.category)
+    }
+
     fun rollUniqueLottery(input: UniqueLotteryInput): String? {
         if (input.userCount <= 0) {
             return null
@@ -140,36 +200,13 @@ class UniqueLotteryService {
             maxTrialCountByYear = targetTrialCnt
         }
 
-        var trialCnt = minOf(itemTypeCnt, maxTrialCountByYear)
-        var maxCnt = itemTypeCnt
-
-        val invalidItemTypes = mutableSetOf<String>()
-        val equippedItems = listOf(
-            "horse" to input.generalItems.horse,
-            "weapon" to input.generalItems.weapon,
-            "book" to input.generalItems.book,
-            "item" to input.generalItems.item,
-        )
-
-        for ((slot, itemKey) in equippedItems) {
-            if (itemKey.isNullOrBlank()) {
-                continue
-            }
-            val module = input.itemRegistry[itemKey]
-            if (module == null || module.buyable) {
-                continue
-            }
-            invalidItemTypes.add(slot)
-            trialCnt -= 1
-            maxCnt -= 1
-        }
-
+        val maxCnt = countOpenUniqueSlots(input)
+        val trialCnt = minOf(itemTypeCnt, maxTrialCountByYear, maxCnt)
         if (trialCnt <= 0 || maxCnt <= 0) {
             return null
         }
 
-        val relMonthByInit = joinYearMonth(input.currentYear, input.currentMonth) - joinYearMonth(input.initYear, input.initMonth)
-        val availableBuyUnique = relMonthByInit >= input.config.minMonthToAllowInheritItem
+        val availableBuyUnique = isInheritRandomUniqueAvailable(input)
 
         var prob = if (input.scenarioId < 100) {
             1.0 / (input.userCount * 3.0 * itemTypeCnt)
@@ -214,28 +251,7 @@ class UniqueLotteryService {
             return null
         }
 
-        val availableUnique = mutableListOf<Pair<String, Int>>()
-        for (itemType in itemTypes) {
-            if (itemType in invalidItemTypes) {
-                continue
-            }
-            val itemEntries = input.config.allItems[itemType] ?: emptyMap()
-            for ((itemKey, rawCount) in itemEntries) {
-                val count = rawCount
-                if (count <= 0) {
-                    continue
-                }
-                val module = input.itemRegistry[itemKey]
-                if (module == null || module.buyable) {
-                    continue
-                }
-                val remain = count - (input.occupiedUniqueCounts[itemKey] ?: 0)
-                if (remain > 0) {
-                    availableUnique.add(itemKey to remain)
-                }
-            }
-        }
-
+        val availableUnique = collectAvailableUniqueItems(input)
         if (availableUnique.isEmpty()) {
             return null
         }
@@ -310,6 +326,65 @@ class UniqueLotteryService {
         }
 
         return if (result.isNotEmpty()) result else DEFAULT_MAX_UNIQUE_ITEM_LIMIT
+    }
+
+    private fun buildDefaultUniquePool(itemRegistry: Map<String, ItemMeta>): Map<String, Map<String, Int>> {
+        if (itemRegistry.isEmpty()) {
+            return emptyMap()
+        }
+
+        val result = linkedMapOf<String, MutableMap<String, Int>>(
+            "horse" to linkedMapOf(),
+            "weapon" to linkedMapOf(),
+            "book" to linkedMapOf(),
+            "item" to linkedMapOf(),
+        )
+
+        for ((itemKey, meta) in itemRegistry) {
+            val slot = categoryToSlot(meta.category) ?: continue
+            val count = when (slot) {
+                "horse", "weapon", "book" -> if (meta.grade >= 7) 2 else 0
+                "item" -> if (!meta.buyable) 1 else 0
+                else -> 0
+            }
+            if (count > 0) {
+                result.getOrPut(slot) { linkedMapOf() }[itemKey] = count
+            }
+        }
+
+        return result.filterValues { it.isNotEmpty() }
+    }
+
+    private fun currentSlots(items: GeneralItemSlots): List<Pair<String, String?>> {
+        return listOf(
+            "horse" to normalizeNullableItemKey(items.horse),
+            "weapon" to normalizeNullableItemKey(items.weapon),
+            "book" to normalizeNullableItemKey(items.book),
+            "item" to normalizeNullableItemKey(items.item),
+        )
+    }
+
+    private fun categoryToSlot(category: String): String? {
+        return when (category) {
+            "horse" -> "horse"
+            "weapon" -> "weapon"
+            "book" -> "book"
+            "misc" -> "item"
+            else -> null
+        }
+    }
+
+    private fun isUniquePoolItem(slot: String, itemKey: String, config: UniqueLotteryConfig): Boolean {
+        return (config.allItems[slot]?.get(itemKey) ?: 0) > 0
+    }
+
+    private fun normalizeItemKey(itemKey: String): String {
+        return if (itemKey == "None") "" else itemKey
+    }
+
+    private fun normalizeNullableItemKey(itemKey: String?): String? {
+        val normalized = itemKey?.takeUnless { it == "None" }?.takeUnless { it.isBlank() } ?: return null
+        return normalized
     }
 
     private fun readNumber(value: Any?, fallback: Double): Double {

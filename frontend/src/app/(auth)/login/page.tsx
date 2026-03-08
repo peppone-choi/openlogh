@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { Suspense, useEffect, useState, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -101,7 +101,7 @@ function OtpModal({
     );
 }
 
-export default function LoginPage() {
+function LoginPageContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const login = useAuthStore((s) => s.login);
@@ -479,5 +479,13 @@ export default function LoginPage() {
                 validUntil={otpValidUntil}
             />
         </>
+    );
+}
+
+export default function LoginPage() {
+    return (
+        <Suspense fallback={<div className="w-full max-w-md p-8 text-sm text-muted-foreground">로그인 정보를 불러오는 중...</div>}>
+            <LoginPageContent />
+        </Suspense>
     );
 }

@@ -12,33 +12,43 @@ import com.opensam.dto.InheritanceLogEntry
 import com.opensam.dto.ResetStatsRequest
 import com.opensam.dto.SpecialWarOption
 import com.opensam.dto.UniqueItemOption
+import com.opensam.engine.DeterministicRng
 import com.opensam.engine.modifier.TraitSpecRegistry
 import com.opensam.entity.AppUser
+import com.opensam.entity.General
+import com.opensam.entity.WorldState
 import com.opensam.repository.AppUserRepository
 import com.opensam.repository.CityRepository
 import com.opensam.repository.GeneralRepository
+import com.opensam.repository.WorldStateRepository
 import org.springframework.stereotype.Service
+import java.time.OffsetDateTime
+import kotlin.math.floor
 
 @Service
 class InheritanceService(
     private val appUserRepository: AppUserRepository,
     private val cityRepository: CityRepository,
     private val generalRepository: GeneralRepository,
+    private val worldStateRepository: WorldStateRepository,
     private val gameConstService: GameConstService,
 ) {
     companion object {
-        // Cumulative buff level costs: index = level (0 = free, 1..5)
         private val BUFF_LEVEL_COSTS = listOf(0, 200, 600, 1200, 2000, 3000)
         private const val MAX_BUFF_LEVEL = 5
+        private const val RESET_ATTR_BASE = 1000
 
-        // Valid combat buff types
         val COMBAT_BUFF_TYPES = setOf(
-            "warAvoidRatio", "warCriticalRatio", "warMagicTrialProb",
-            "warAvoidRatioOppose", "warCriticalRatioOppose", "warMagicTrialProbOppose",
-            "domesticSuccessProb", "domesticFailProb",
+            "warAvoidRatio",
+            "warCriticalRatio",
+            "warMagicTrialProb",
+            "warAvoidRatioOppose",
+            "warCriticalRatioOppose",
+            "warMagicTrialProbOppose",
+            "domesticSuccessProb",
+            "domesticFailProb",
         )
 
-        // Available unique items (should come from game config/static data in production)
         val AVAILABLE_UNIQUE = mapOf(
             "적토마" to UniqueItemOption("적토마", "적토마", "이동력 +3, 회피 확률 증가"),
             "의천검" to UniqueItemOption("의천검", "의천검", "무력 +7"),
@@ -49,18 +59,6 @@ class InheritanceService(
             "맹덕신서" to UniqueItemOption("맹덕신서", "맹덕신서", "통솔 +7"),
             "둔갑천서" to UniqueItemOption("둔갑천서", "둔갑천서", "계략 성공률 대폭 증가"),
         )
-
-        private fun fibonacciCost(base: Int, count: Int): Int {
-            if (count <= 0) return base
-            var a = base
-            var b = base
-            for (i in 0 until count) {
-                val next = a + b
-                a = b
-                b = next
-            }
-            return b
-        }
     }
 
     private val availableSpecialWar: Map<String, SpecialWarOption> = TraitSpecRegistry.war
@@ -101,17 +99,17 @@ class InheritanceService(
             )
         }
 
-        // Point breakdown
         val rawBreakdown = readStringAnyMap(user.meta["inheritPointBreakdown"])
         val pointBreakdown = rawBreakdown.mapValues { (it.value as? Number)?.toInt() ?: 0 }
 
-        val turnResetCount = (user.meta["inheritTurnResetCount"] as? Number)?.toInt() ?: 0
-        val specialWarResetCount = (user.meta["inheritSpecialWarResetCount"] as? Number)?.toInt() ?: 0
+        val general = generalRepository.findByWorldIdAndUserId(worldId, user.id!!).firstOrNull()
+        val turnResetCount = readResetCount(general?.meta?.get("inheritResetTurnTime"))
+        val specialWarResetCount = readResetCount(general?.meta?.get("inheritResetSpecialWar"))
 
         val actionCost = InheritanceActionCost(
             buff = BUFF_LEVEL_COSTS,
-            resetTurnTime = fibonacciCost(100, turnResetCount),
-            resetSpecialWar = fibonacciCost(200, specialWarResetCount),
+            resetTurnTime = resetAttrCost(turnResetCount),
+            resetSpecialWar = resetAttrCost(specialWarResetCount),
             randomUnique = randomUniqueCost(),
             nextSpecial = inheritSpecialCost(),
             minSpecificUnique = minSpecificUniqueCost(),
@@ -119,8 +117,6 @@ class InheritanceService(
             bornStatPoint = bornStatPointCost(),
         )
 
-        // Get current general's stat if exists
-        val general = generalRepository.findByWorldIdAndUserId(worldId, user.id!!).firstOrNull()
         val currentStat = general?.let {
             CurrentStat(
                 leadership = it.leadership.toInt(),
@@ -131,7 +127,6 @@ class InheritanceService(
             )
         }
 
-        // Available target generals for owner check (all non-NPC generals in world)
         val allGenerals = generalRepository.findByWorldId(worldId)
         val availableTargetGeneral = allGenerals
             .filter { it.npcState < 2 && it.id != general?.id }
@@ -153,7 +148,6 @@ class InheritanceService(
             currentStat = currentStat,
         )
     }
-
 
     fun buyInheritBuff(worldId: Long, loginId: String, request: BuyInheritBuffRequest): InheritanceActionResult? {
         val user = appUserRepository.findByLoginId(loginId) ?: return null
@@ -180,16 +174,26 @@ class InheritanceService(
 
     fun setInheritSpecial(worldId: Long, loginId: String, specialCode: String): InheritanceActionResult? {
         val user = appUserRepository.findByLoginId(loginId) ?: return null
-        val points = (user.meta["inheritPoints"] as? Number)?.toInt() ?: 0
+        val general = findOwnedGeneral(worldId, user) ?: return InheritanceActionResult(error = "장수를 찾을 수 없습니다")
+        val world = findWorld(worldId) ?: return InheritanceActionResult(error = "월드를 찾을 수 없습니다")
+        if (isWorldUnited(world)) return InheritanceActionResult(error = "이미 천하가 통일되었습니다.")
 
+        val points = (user.meta["inheritPoints"] as? Number)?.toInt() ?: 0
         if (specialCode !in availableSpecialWar) return InheritanceActionResult(error = "잘못된 전투 특기")
+        if (general.special2Code == specialCode) return InheritanceActionResult(error = "이미 그 특기를 보유하고 있습니다.")
+
+        val pending = general.meta["inheritSpecificSpecialWar"] as? String
+        if (pending == specialCode) return InheritanceActionResult(error = "이미 그 특기를 예약하였습니다.")
+        if (pending != null) return InheritanceActionResult(error = "이미 예약한 특기가 있습니다.")
+
         val cost = inheritSpecialCost()
         if (points < cost) return InheritanceActionResult(error = "포인트 부족 (필요: $cost)")
 
         user.meta["inheritPoints"] = points - cost
-        user.meta["inheritSpecificSpecialWar"] = specialCode
-        addInheritLog(user, "전투특기 지정: $specialCode", -cost)
+        general.meta["inheritSpecificSpecialWar"] = specialCode
 
+        addInheritLog(user, "전투특기 지정: ${availableSpecialWar[specialCode]?.title ?: specialCode}", -cost)
+        generalRepository.save(general)
         appUserRepository.save(user)
         return InheritanceActionResult(remainingPoints = points - cost)
     }
@@ -213,49 +217,85 @@ class InheritanceService(
 
     fun resetTurn(worldId: Long, loginId: String): InheritanceActionResult? {
         val user = appUserRepository.findByLoginId(loginId) ?: return null
-        val points = (user.meta["inheritPoints"] as? Number)?.toInt() ?: 0
-        val resetCount = (user.meta["inheritTurnResetCount"] as? Number)?.toInt() ?: 0
-        val cost = fibonacciCost(100, resetCount)
+        val general = findOwnedGeneral(worldId, user) ?: return InheritanceActionResult(error = "장수를 찾을 수 없습니다")
+        val world = findWorld(worldId) ?: return InheritanceActionResult(error = "월드를 찾을 수 없습니다")
+        if (isWorldUnited(world)) return InheritanceActionResult(error = "이미 천하가 통일되었습니다.")
 
+        val points = (user.meta["inheritPoints"] as? Number)?.toInt() ?: 0
+        val resetCount = readResetCount(general.meta["inheritResetTurnTime"])
+        val cost = resetAttrCost(resetCount)
         if (points < cost) return InheritanceActionResult(error = "포인트 부족 (필요: $cost)")
 
+        val turnBaseSeconds = rollResetTurnBaseSeconds(world, user.id!!, general)
         user.meta["inheritPoints"] = points - cost
-        user.meta["inheritTurnResetCount"] = resetCount + 1
-        user.meta["inheritResetTurn"] = true
-        addInheritLog(user, "턴 시간 초기화 (${resetCount + 1}회차)", -cost)
+        general.meta["inheritResetTurnTime"] = resetCount
+        general.meta["nextTurnTimeBase"] = turnBaseSeconds
 
+        addInheritLog(user, "턴 시간 초기화 (${resetCount + 1}회차)", -cost)
+        generalRepository.save(general)
         appUserRepository.save(user)
         return InheritanceActionResult(remainingPoints = points - cost)
     }
 
     fun buyRandomUnique(worldId: Long, loginId: String): InheritanceActionResult? {
         val user = appUserRepository.findByLoginId(loginId) ?: return null
-        val points = (user.meta["inheritPoints"] as? Number)?.toInt() ?: 0
+        val general = findOwnedGeneral(worldId, user) ?: return InheritanceActionResult(error = "장수를 찾을 수 없습니다")
+        val world = findWorld(worldId) ?: return InheritanceActionResult(error = "월드를 찾을 수 없습니다")
+        if (isWorldUnited(world)) return InheritanceActionResult(error = "이미 천하가 통일되었습니다.")
 
+        if (general.meta["inheritRandomUnique"] != null) {
+            return InheritanceActionResult(error = "이미 구입 명령을 내렸습니다. 다음 턴까지 기다려주세요.")
+        }
+
+        val points = (user.meta["inheritPoints"] as? Number)?.toInt() ?: 0
         val cost = randomUniqueCost()
         if (points < cost) return InheritanceActionResult(error = "포인트 부족 (필요: $cost)")
 
         user.meta["inheritPoints"] = points - cost
-        user.meta["inheritRandomUnique"] = true
+        general.meta["inheritRandomUnique"] = OffsetDateTime.now().toString()
         addInheritLog(user, "랜덤 유니크 획득", -cost)
 
+        generalRepository.save(general)
         appUserRepository.save(user)
         return InheritanceActionResult(remainingPoints = points - cost)
     }
 
+    fun refundRandomUniquePurchase(general: General): Boolean {
+        val userId = general.userId ?: return false
+        val user = appUserRepository.findById(userId).orElse(null) ?: return false
+        val currentPoints = (user.meta["inheritPoints"] as? Number)?.toInt() ?: 0
+        val refund = randomUniqueCost()
+        user.meta["inheritPoints"] = currentPoints + refund
+        addInheritLog(user, "랜덤 유니크 구매 환불", refund)
+        appUserRepository.save(user)
+        return true
+    }
+
     fun resetSpecialWar(worldId: Long, loginId: String): InheritanceActionResult? {
         val user = appUserRepository.findByLoginId(loginId) ?: return null
-        val points = (user.meta["inheritPoints"] as? Number)?.toInt() ?: 0
-        val resetCount = (user.meta["inheritSpecialWarResetCount"] as? Number)?.toInt() ?: 0
-        val cost = fibonacciCost(200, resetCount)
+        val general = findOwnedGeneral(worldId, user) ?: return InheritanceActionResult(error = "장수를 찾을 수 없습니다")
+        val world = findWorld(worldId) ?: return InheritanceActionResult(error = "월드를 찾을 수 없습니다")
+        if (isWorldUnited(world)) return InheritanceActionResult(error = "이미 천하가 통일되었습니다.")
 
+        if (general.special2Code == "None") {
+            return InheritanceActionResult(error = "이미 전투 특기가 공란입니다.")
+        }
+
+        val points = (user.meta["inheritPoints"] as? Number)?.toInt() ?: 0
+        val resetCount = readResetCount(general.meta["inheritResetSpecialWar"])
+        val cost = resetAttrCost(resetCount)
         if (points < cost) return InheritanceActionResult(error = "포인트 부족 (필요: $cost)")
 
+        val prevSpecials = getOrCreateMutableStringList(general.meta, "prev_special2")
+        prevSpecials.add(general.special2Code)
+        general.meta["prev_special2"] = prevSpecials
+        general.meta["inheritResetSpecialWar"] = resetCount
+        general.special2Code = "None"
+
         user.meta["inheritPoints"] = points - cost
-        user.meta["inheritSpecialWarResetCount"] = resetCount + 1
-        // Actual reset of special war would be done by game engine
         addInheritLog(user, "전투특기 초기화 (${resetCount + 1}회차)", -cost)
 
+        generalRepository.save(general)
         appUserRepository.save(user)
         return InheritanceActionResult(remainingPoints = points - cost)
     }
@@ -269,7 +309,6 @@ class InheritanceService(
 
         if (points < cost) return InheritanceActionResult(error = "포인트 부족 (필요: $cost)")
 
-        // Check if already reset this season
         if (user.meta["inheritStatResetDone"] == true) {
             return InheritanceActionResult(error = "이미 이번 시즌에 능력치를 초기화했습니다")
         }
@@ -277,12 +316,10 @@ class InheritanceService(
         val general = generalRepository.findByWorldIdAndUserId(worldId, user.id!!).firstOrNull()
             ?: return InheritanceActionResult(error = "장수를 찾을 수 없습니다")
 
-        // Update general stats
         general.leadership = request.leadership.toShort()
         general.strength = request.strength.toShort()
         general.intel = request.intel.toShort()
 
-        // Apply bonus stat if present
         request.inheritBonusStat?.takeIf { hasBonusStat }?.let { bonusStat ->
             general.leadership = (general.leadership + bonusStat[0]).toShort()
             general.strength = (general.strength + bonusStat[1]).toShort()
@@ -370,10 +407,7 @@ class InheritanceService(
         return InheritanceActionResult(remainingPoints = points - request.bidAmount)
     }
 
-    /**
-     * Accrue inheritance points for a user based on their general's actions.
-     */
-    fun accruePoints(general: com.opensam.entity.General, key: String, amount: Int) {
+    fun accruePoints(general: General, key: String, amount: Int) {
         if (general.npcState >= 2) return
         val userId = general.userId ?: return
         val user = appUserRepository.findById(userId).orElse(null) ?: return
@@ -398,13 +432,72 @@ class InheritanceService(
         appUserRepository.save(user)
     }
 
+    private fun findOwnedGeneral(worldId: Long, user: AppUser): General? {
+        return generalRepository.findByWorldIdAndUserId(worldId, user.id!!).firstOrNull()
+    }
+
+    private fun findWorld(worldId: Long): WorldState? {
+        return worldStateRepository.findById(worldId.toShort()).orElse(null)
+    }
+
+    private fun isWorldUnited(world: WorldState): Boolean {
+        val unified = (world.config["isunited"] as? Number)?.toInt()
+            ?: (world.config["isUnited"] as? Number)?.toInt()
+            ?: 0
+        return unified != 0
+    }
+
+    private fun readResetCount(raw: Any?): Int {
+        val level = (raw as? Number)?.toInt() ?: return 0
+        return level + 1
+    }
+
+    private fun resetAttrCost(resetCount: Int): Int {
+        if (resetCount <= 1) {
+            return RESET_ATTR_BASE
+        }
+        var prev = RESET_ATTR_BASE
+        var current = RESET_ATTR_BASE
+        for (index in 2..resetCount) {
+            val next = prev + current
+            prev = current
+            current = next
+            if (index == resetCount) {
+                return current
+            }
+        }
+        return current
+    }
+
+    private fun rollResetTurnBaseSeconds(world: WorldState, userId: Long, general: General): Double {
+        val hiddenSeed = (world.config["hiddenSeed"] as? String) ?: world.id.toString()
+        val seedSource = general.meta["nextTurnTimeBase"] ?: general.turnTime.toString()
+        val rng = DeterministicRng.create(hiddenSeed, "ResetTurnTime", userId, seedSource.toString())
+        return floor(rng.nextDouble() * world.tickSeconds.toDouble() * 1000.0) / 1000.0
+    }
+
+    private fun getOrCreateMutableStringList(container: MutableMap<String, Any>, key: String): MutableList<String> {
+        val result = mutableListOf<String>()
+        val current = container[key]
+        if (current is Iterable<*>) {
+            current.forEach { entry ->
+                val value = entry as? String ?: return@forEach
+                result.add(value)
+            }
+        }
+        container[key] = result
+        return result
+    }
+
     private fun addInheritLog(user: AppUser, action: String, amount: Int) {
         val log = getOrCreateMutableStringAnyMapList(user.meta, "inheritLog")
-        log.add(mapOf(
-            "action" to action,
-            "amount" to amount,
-            "date" to java.time.OffsetDateTime.now().toString(),
-        ))
+        log.add(
+            mapOf(
+                "action" to action,
+                "amount" to amount,
+                "date" to OffsetDateTime.now().toString(),
+            ),
+        )
         if (log.size > 50) {
             user.meta["inheritLog"] = log.takeLast(50).toMutableList()
         } else {

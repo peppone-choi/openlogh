@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { Suspense, useEffect, useState, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useWorldStore } from '@/stores/worldStore';
 import { useGeneralStore } from '@/stores/generalStore';
@@ -23,7 +23,7 @@ import { formatLog } from '@/lib/formatLog';
 
 const PAGE_SIZE = 20;
 
-export default function BoardPage() {
+function BoardPageContent() {
     const searchParams = useSearchParams();
     const isSecretParam = searchParams.get('secret') === 'true';
 
@@ -336,6 +336,20 @@ export default function BoardPage() {
                 </TabsContent>
             </Tabs>
         </div>
+    );
+}
+
+export default function BoardPage() {
+    return (
+        <Suspense
+            fallback={
+                <div className="p-4">
+                    <LoadingState message="게시판을 불러오는 중..." />
+                </div>
+            }
+        >
+            <BoardPageContent />
+        </Suspense>
     );
 }
 

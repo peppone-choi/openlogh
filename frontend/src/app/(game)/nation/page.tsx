@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { Suspense, useEffect, useState, useMemo, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useWorldStore } from '@/stores/worldStore';
 import { useGeneralStore } from '@/stores/generalStore';
@@ -89,7 +89,7 @@ const CITY_SORTS: SortOpt<City>[] = [
 
 // ── Main component ──────────────────────────────────────────────────
 
-export default function NationPage() {
+function NationPageContent() {
     const currentWorld = useWorldStore((s) => s.currentWorld);
     const myGeneral = useGeneralStore((s) => s.myGeneral);
     const fetchMyGeneral = useGeneralStore((s) => s.fetchMyGeneral);
@@ -1077,6 +1077,20 @@ export default function NationPage() {
                 )}
             </Tabs>
         </div>
+    );
+}
+
+export default function NationPage() {
+    return (
+        <Suspense
+            fallback={
+                <div className="p-4">
+                    <LoadingState message="국가 정보를 불러오는 중..." />
+                </div>
+            }
+        >
+            <NationPageContent />
+        </Suspense>
     );
 }
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { Suspense, useEffect, useState, useMemo, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { UserPlus, ArrowLeft, Crown } from 'lucide-react';
 import { useWorldStore } from '@/stores/worldStore';
@@ -9,6 +9,7 @@ import { useGameStore } from '@/stores/gameStore';
 import { inheritanceApi, generalApi, nationApi } from '@/lib/gameApi';
 import { toast } from 'sonner';
 import { PageHeader } from '@/components/game/page-header';
+import { LoadingState } from '@/components/game/loading-state';
 import { StatBar } from '@/components/game/stat-bar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -112,7 +113,7 @@ const GENERAL_PRESETS: {
 
 type StatPreset = 'balanced' | 'random' | 'leadership' | 'strength' | 'intel';
 
-export default function LobbyJoinPage() {
+function LobbyJoinPageContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const mode = searchParams.get('mode'); // 'found' (건국) or 'rise' (거병)
@@ -747,5 +748,19 @@ export default function LobbyJoinPage() {
                 </CardContent>
             </Card>
         </div>
+    );
+}
+
+export default function LobbyJoinPage() {
+    return (
+        <Suspense
+            fallback={
+                <div className="p-4">
+                    <LoadingState message="장수 생성 정보를 불러오는 중..." />
+                </div>
+            }
+        >
+            <LobbyJoinPageContent />
+        </Suspense>
     );
 }

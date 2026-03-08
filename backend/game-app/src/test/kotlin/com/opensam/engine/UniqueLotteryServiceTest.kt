@@ -92,10 +92,33 @@ class UniqueLotteryServiceTest {
             GeneralItemSlots(horse = null, weapon = null, book = "buyableItem", item = null),
         )
 
-        val counts = service.countOccupiedUniqueItems(generals, itemRegistry)
+        val config = service.resolveUniqueConfig(
+            mapOf(
+                "allItems" to mapOf(
+                    "weapon" to mapOf("uniqueItem" to 1),
+                    "book" to emptyMap<String, Int>(),
+                ),
+            ),
+        )
+        val counts = service.countOccupiedUniqueItems(generals, itemRegistry, config)
 
         assertEquals(1, counts["uniqueItem"])
         assertEquals(null, counts["buyableItem"])
+    }
+
+    @Test
+    fun `builds default legacy unique pool from item registry when config omits allItems`() {
+        val itemRegistry = mapOf(
+            "weapon7" to buildItem(code = "weapon7", category = "weapon", buyable = true).copy(grade = 7),
+            "miscUnique" to buildItem(code = "miscUnique", category = "misc", buyable = false),
+            "weapon2" to buildItem(code = "weapon2", category = "weapon", buyable = true).copy(grade = 2),
+        )
+
+        val config = service.resolveUniqueConfig(emptyMap(), itemRegistry)
+
+        assertEquals(2, config.allItems["weapon"]?.get("weapon7"))
+        assertEquals(1, config.allItems["item"]?.get("miscUnique"))
+        assertEquals(null, config.allItems["weapon"]?.get("weapon2"))
     }
 
     private fun buildSingleWeaponRegistry(): Map<String, ItemMeta> {

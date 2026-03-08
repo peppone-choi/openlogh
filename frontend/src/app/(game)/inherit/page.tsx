@@ -151,13 +151,13 @@ export default function InheritPage() {
     // Derived costs from server
     const actionCost: InheritanceActionCost = info?.inheritActionCost ?? {
         buff: FALLBACK_BUFF_LEVEL_COSTS,
-        resetTurnTime: fibonacciCost(100, info?.turnResetCount ?? 0),
-        resetSpecialWar: fibonacciCost(200, info?.specialWarResetCount ?? 0),
-        randomUnique: 300,
-        nextSpecial: 500,
-        minSpecificUnique: 500,
-        checkOwner: 50,
-        bornStatPoint: 500,
+        resetTurnTime: fibonacciCost(1000, info?.turnResetCount ?? 0),
+        resetSpecialWar: fibonacciCost(1000, info?.specialWarResetCount ?? 0),
+        randomUnique: 3000,
+        nextSpecial: 4000,
+        minSpecificUnique: 5000,
+        checkOwner: 1000,
+        bornStatPoint: 1000,
     };
 
     const fetchInfo = useCallback(async () => {

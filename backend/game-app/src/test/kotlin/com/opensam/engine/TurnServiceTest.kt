@@ -12,6 +12,7 @@ import com.opensam.entity.WorldState
 import com.opensam.repository.*
 import com.opensam.service.InheritanceService
 import com.opensam.service.ScenarioService
+import com.opensam.engine.UniqueLotteryService
 import org.mockito.ArgumentCaptor
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
@@ -39,6 +40,7 @@ class TurnServiceTest {
     private lateinit var npcSpawnService: NpcSpawnService
     private lateinit var unificationService: UnificationService
     private lateinit var inheritanceService: InheritanceService
+    private lateinit var uniqueLotteryService: UniqueLotteryService
     private lateinit var generalAI: GeneralAI
     private lateinit var nationAI: NationAI
 
@@ -65,6 +67,7 @@ class TurnServiceTest {
         npcSpawnService = mock(NpcSpawnService::class.java)
         unificationService = mock(UnificationService::class.java)
         inheritanceService = mock(InheritanceService::class.java)
+        uniqueLotteryService = mock(UniqueLotteryService::class.java)
         generalAI = mock(GeneralAI::class.java)
         nationAI = mock(NationAI::class.java)
 
@@ -100,6 +103,7 @@ class TurnServiceTest {
             mock(WorldService::class.java),
             mock(com.opensam.service.NationService::class.java),
             mock(com.opensam.engine.war.BattleService::class.java),
+            uniqueLotteryService,
         )
         // Default: worldStateRepository.save returns the argument
         `when`(worldStateRepository.save(anyNonNull<WorldState>())).thenAnswer { it.arguments[0] }
@@ -357,5 +361,31 @@ class TurnServiceTest {
 
         assertDoesNotThrow { service.processWorld(world) }
         assertEquals(7.toShort(), world.currentMonth, "Month should still advance")
+    }
+
+    @Test
+    fun `processWorld preserves per general turn offset for blocked generals`() {
+        val updatedAt = OffsetDateTime.now().withNano(0).minusSeconds(400)
+        val world = createWorld(year = 200, month = 6, tickSeconds = 300, updatedAt = updatedAt)
+        val originalTurnTime = updatedAt.plusSeconds(180)
+        val general = General(
+            id = 1,
+            worldId = 1,
+            name = "봉쇄장수",
+            nationId = 1,
+            cityId = 1,
+            blockState = 2,
+            turnTime = originalTurnTime,
+        )
+
+        `when`(generalRepository.findByWorldId(1L)).thenReturn(listOf(general))
+        `when`(generalRepository.findById(1L)).thenReturn(java.util.Optional.of(general))
+        `when`(cityRepository.findById(1L)).thenReturn(java.util.Optional.empty())
+
+        service.processWorld(world)
+
+        val captor = ArgumentCaptor.forClass(General::class.java)
+        verify(generalRepository, atLeastOnce()).save(captor.capture())
+        assertTrue(captor.allValues.any { it.id == 1L && it.turnTime == originalTurnTime.plusSeconds(300) })
     }
 }

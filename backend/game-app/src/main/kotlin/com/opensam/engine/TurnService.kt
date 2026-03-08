@@ -5,6 +5,7 @@ import com.opensam.command.CommandExecutor
 import com.opensam.command.CommandRegistry
 import com.opensam.engine.ai.GeneralAI
 import com.opensam.engine.ai.NationAI
+import com.opensam.engine.modifier.ItemModifiers
 import com.opensam.engine.modifier.ModifierService
 import com.opensam.engine.turn.cqrs.persist.JpaWorldPortFactory
 import com.opensam.engine.turn.cqrs.persist.toEntity
@@ -18,11 +19,10 @@ import com.opensam.entity.WorldState
 import com.opensam.repository.*
 import com.opensam.service.AuctionService
 import com.opensam.service.InheritanceService
+import com.opensam.service.NationService
 import com.opensam.service.ScenarioService
 import com.opensam.service.TournamentService
-import com.opensam.service.TrafficService
 import com.opensam.service.WorldService
-import com.opensam.service.NationService
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import kotlinx.coroutines.runBlocking
 import org.slf4j.LoggerFactory
@@ -30,7 +30,9 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.Duration
+import java.time.Instant
 import java.time.OffsetDateTime
+import kotlin.math.roundToLong
 
 /**
  * 턴 서비스: 월드의 전체 턴 파이프라인을 실행한다.
@@ -73,6 +75,7 @@ class TurnService @Autowired constructor(
     private val worldService: WorldService,
     private val nationService: NationService,
     private val battleService: BattleService,
+    private val uniqueLotteryService: UniqueLotteryService,
 ) {
     constructor(
         worldStateRepository: WorldStateRepository,
@@ -102,6 +105,7 @@ class TurnService @Autowired constructor(
         worldService: WorldService,
         nationService: NationService,
         battleService: BattleService,
+        uniqueLotteryService: UniqueLotteryService,
     ) : this(
         worldStateRepository = worldStateRepository,
         generalRepository = generalRepository,
@@ -135,6 +139,7 @@ class TurnService @Autowired constructor(
         worldService = worldService,
         nationService = nationService,
         battleService = battleService,
+        uniqueLotteryService = uniqueLotteryService,
     )
 
     private val logger = LoggerFactory.getLogger(TurnService::class.java)
@@ -341,7 +346,7 @@ class TurnService @Autowired constructor(
                             general.killTurn = kt.toShort()
                         }
                     }
-                    general.turnTime = targetTime
+                    general.turnTime = calculateNextGeneralTurnTime(general, world.tickSeconds)
                     general.updatedAt = OffsetDateTime.now()
                     ports.putGeneral(general.toSnapshot())
                     continue
@@ -496,8 +501,12 @@ class TurnService @Autowired constructor(
                                 logger.warn("[Turn] battleTriggered but targetCity={} is null or same nation", targetCityId)
                             }
                         }
+
+                        if (msgJson.path("tryUniqueLottery").asBoolean(false)) {
+                            tryUniqueLottery(world, ports, general, actionCode)
+                        }
                     } catch (e: Exception) {
-                        logger.warn("[Turn] Failed to process battle result: {}", e.message)
+                        logger.warn("[Turn] Failed to process command events: {}", e.message)
                     }
                 }
 
@@ -537,7 +546,7 @@ class TurnService @Autowired constructor(
                     }
                 }
 
-                general.turnTime = targetTime
+                general.turnTime = calculateNextGeneralTurnTime(general, world.tickSeconds)
                 general.updatedAt = OffsetDateTime.now()
                 ports.putGeneral(general.toSnapshot())
             } catch (e: Exception) {
@@ -564,6 +573,127 @@ class TurnService @Autowired constructor(
             realtimeMode = world.realtimeMode,
             gameStor = gameStor,
         )
+    }
+
+    private fun calculateNextGeneralTurnTime(general: com.opensam.entity.General, tickSeconds: Int): OffsetDateTime {
+        val defaultNext = general.turnTime.plusSeconds(tickSeconds.toLong())
+        val nextTurnTimeBase = readDouble(general.meta["nextTurnTimeBase"])
+        if (nextTurnTimeBase == null) {
+            return defaultNext
+        }
+
+        general.meta.remove("nextTurnTimeBase")
+        val turnBoundary = cutTurn(defaultNext, tickSeconds)
+        return turnBoundary.plusNanos((nextTurnTimeBase * 1_000_000_000L).roundToLong())
+    }
+
+    private fun tryUniqueLottery(
+        world: WorldState,
+        ports: com.opensam.engine.turn.cqrs.persist.WorldPorts,
+        general: com.opensam.entity.General,
+        actionCode: String,
+    ) {
+        if (general.npcState >= 2) {
+            return
+        }
+
+        val itemRegistry = ItemModifiers.getAllMeta()
+        val config = uniqueLotteryService.resolveUniqueConfig(world.config, itemRegistry)
+        if (config.allItems.isEmpty()) {
+            return
+        }
+
+        val acquireType = when (actionCode) {
+            "임관" -> UniqueLotteryService.UniqueAcquireType.RANDOM_RECRUIT
+            "건국", "CR건국", "무작위건국" -> UniqueLotteryService.UniqueAcquireType.FOUNDING
+            else -> UniqueLotteryService.UniqueAcquireType.ITEM
+        }
+
+        val startYear = try {
+            scenarioService.getScenario(world.scenarioCode).startYear
+        } catch (_: Exception) {
+            world.currentYear.toInt()
+        }
+        val scenarioId = world.scenarioCode.toIntOrNull() ?: 0
+        val generalItems = generalItemSlotsOf(general)
+        val allGeneralSlots = ports.allGenerals().map { generalItemSlotsOf(it.toEntity()) }
+        val occupiedUniqueCounts = uniqueLotteryService.countOccupiedUniqueItems(allGeneralSlots, itemRegistry, config)
+        val hiddenSeed = (world.config["hiddenSeed"] as? String) ?: world.id.toString()
+        val seed = uniqueLotteryService.buildGenericUniqueSeed(
+            hiddenSeed = hiddenSeed,
+            year = world.currentYear.toInt(),
+            month = world.currentMonth.toInt(),
+            generalId = general.id,
+            reason = actionCode,
+        )
+        val input = UniqueLotteryService.UniqueLotteryInput(
+            rng = uniqueLotteryService.createDeterministicRng(seed),
+            config = config,
+            itemRegistry = itemRegistry,
+            generalItems = generalItems,
+            occupiedUniqueCounts = occupiedUniqueCounts,
+            scenarioId = scenarioId,
+            userCount = ports.allGenerals().count { it.npcState.toInt() < 2 },
+            currentYear = world.currentYear.toInt(),
+            currentMonth = world.currentMonth.toInt(),
+            startYear = startYear,
+            initYear = startYear,
+            initMonth = 1,
+            acquireType = acquireType,
+            inheritRandomUnique = general.meta["inheritRandomUnique"] != null,
+        )
+
+        val reservedRandomUnique = general.meta["inheritRandomUnique"] != null
+        val availableUniqueItems = uniqueLotteryService.collectAvailableUniqueItems(input)
+        val openSlots = uniqueLotteryService.countOpenUniqueSlots(input)
+        if (reservedRandomUnique && (openSlots <= 0 || availableUniqueItems.isEmpty())) {
+            general.meta.remove("inheritRandomUnique")
+            inheritanceService.refundRandomUniquePurchase(general)
+            return
+        }
+
+        val itemKey = uniqueLotteryService.rollUniqueLottery(input) ?: return
+        val slot = uniqueLotteryService.slotForItem(itemKey, itemRegistry) ?: return
+        if (!uniqueLotteryService.applyUniqueItemGain(general, itemKey, slot)) {
+            return
+        }
+
+        if (reservedRandomUnique && uniqueLotteryService.isInheritRandomUniqueAvailable(input)) {
+            general.meta.remove("inheritRandomUnique")
+        }
+    }
+
+    private fun generalItemSlotsOf(general: com.opensam.entity.General): UniqueLotteryService.GeneralItemSlots {
+        return UniqueLotteryService.GeneralItemSlots(
+            horse = normalizeItemCode(general.horseCode),
+            weapon = normalizeItemCode(general.weaponCode),
+            book = normalizeItemCode(general.bookCode),
+            item = normalizeItemCode(general.itemCode),
+        )
+    }
+
+    private fun normalizeItemCode(code: String?): String? {
+        return code?.takeUnless { it == "None" }?.takeUnless { it.isBlank() }
+    }
+
+    private fun cutTurn(time: OffsetDateTime, tickSeconds: Int): OffsetDateTime {
+        val tick = tickSeconds.toLong().coerceAtLeast(1L)
+        val epoch = time.toEpochSecond()
+        val floored = epoch - floorMod(epoch, tick)
+        return OffsetDateTime.ofInstant(Instant.ofEpochSecond(floored), time.offset)
+    }
+
+    private fun floorMod(value: Long, mod: Long): Long {
+        val raw = value % mod
+        return if (raw >= 0) raw else raw + mod
+    }
+
+    private fun readDouble(raw: Any?): Double? {
+        return when (raw) {
+            is Number -> raw.toDouble()
+            is String -> raw.toDoubleOrNull()
+            else -> null
+        }
     }
 
     private fun advanceMonth(world: WorldState) {

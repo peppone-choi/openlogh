@@ -26,8 +26,8 @@ data class PointSource(
 
 data class InheritanceActionCost(
     val buff: List<Int> = listOf(0, 200, 600, 1200, 2000, 3000),
-    val resetTurnTime: Int = 100,
-    val resetSpecialWar: Int = 200,
+    val resetTurnTime: Int = 1000,
+    val resetSpecialWar: Int = 1000,
     val randomUnique: Int = 3000,
     val nextSpecial: Int = 4000,
     val minSpecificUnique: Int = 5000,

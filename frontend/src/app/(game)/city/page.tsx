@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
+import { Suspense, useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { useWorldStore } from '@/stores/worldStore';
 import { useGeneralStore } from '@/stores/generalStore';
 import { cityApi, generalApi, mapApi, nationApi } from '@/lib/gameApi';
@@ -101,7 +101,7 @@ function sortCities(cities: City[], sortKey: SortKey): City[] {
 
 // --- Main Component ---
 
-export default function CityPage() {
+function CityPageContent() {
     const searchParams = useSearchParams();
     const currentWorld = useWorldStore((s) => s.currentWorld);
     const myGeneral = useGeneralStore((s) => s.myGeneral);
@@ -607,6 +607,20 @@ export default function CityPage() {
 
             {sortedCities.length === 0 && <div className="text-center text-gray-500 py-8">소속 도시가 없습니다.</div>}
         </div>
+    );
+}
+
+export default function CityPage() {
+    return (
+        <Suspense
+            fallback={
+                <div className="p-4">
+                    <LoadingState message="도시 정보를 불러오는 중..." />
+                </div>
+            }
+        >
+            <CityPageContent />
+        </Suspense>
     );
 }
 

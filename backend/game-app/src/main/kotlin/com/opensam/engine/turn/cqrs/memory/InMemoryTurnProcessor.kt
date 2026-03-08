@@ -21,7 +21,9 @@ import com.opensam.service.WorldService
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.time.Duration
+import java.time.Instant
 import java.time.OffsetDateTime
+import kotlin.math.roundToLong
 
 @Service
 class InMemoryTurnProcessor(
@@ -213,7 +215,7 @@ class InMemoryTurnProcessor(
     private fun executeGeneralCommandsUntil(
         state: InMemoryWorldState,
         ports: InMemoryWorldPorts,
-        _world: WorldState,
+        world: WorldState,
         targetTime: OffsetDateTime,
     ) {
         val now = OffsetDateTime.now()
@@ -236,7 +238,7 @@ class InMemoryTurnProcessor(
                         general.killTurn = nextKillTurn.toShort()
                     }
                 }
-                general.turnTime = targetTime
+                general.turnTime = calculateNextGeneralTurnTime(general.turnTime, general.meta, world.tickSeconds)
                 general.updatedAt = now
                 ports.putGeneral(general)
                 continue
@@ -279,7 +281,7 @@ class InMemoryTurnProcessor(
                 "arg" to arg,
                 "queuedInMemory" to true,
             )
-            general.turnTime = targetTime
+            general.turnTime = calculateNextGeneralTurnTime(general.turnTime, general.meta, world.tickSeconds)
             general.updatedAt = now
             ports.putGeneral(general)
         }
@@ -317,5 +319,41 @@ class InMemoryTurnProcessor(
     companion object {
         const val EVENT_TURN_ADVANCED = "TURN_ADVANCED"
         private const val MAX_TURNS_PER_TICK = 5
+    }
+
+    private fun calculateNextGeneralTurnTime(
+        currentTurnTime: OffsetDateTime,
+        meta: MutableMap<String, Any>,
+        tickSeconds: Int,
+    ): OffsetDateTime {
+        val defaultNext = currentTurnTime.plusSeconds(tickSeconds.toLong())
+        val nextTurnTimeBase = readDouble(meta["nextTurnTimeBase"])
+        if (nextTurnTimeBase == null) {
+            return defaultNext
+        }
+
+        meta.remove("nextTurnTimeBase")
+        val turnBoundary = cutTurn(defaultNext, tickSeconds)
+        return turnBoundary.plusNanos((nextTurnTimeBase * 1_000_000_000L).roundToLong())
+    }
+
+    private fun cutTurn(time: OffsetDateTime, tickSeconds: Int): OffsetDateTime {
+        val tick = tickSeconds.toLong().coerceAtLeast(1L)
+        val epoch = time.toEpochSecond()
+        val floored = epoch - floorMod(epoch, tick)
+        return OffsetDateTime.ofInstant(Instant.ofEpochSecond(floored), time.offset)
+    }
+
+    private fun floorMod(value: Long, mod: Long): Long {
+        val raw = value % mod
+        return if (raw >= 0) raw else raw + mod
+    }
+
+    private fun readDouble(raw: Any?): Double? {
+        return when (raw) {
+            is Number -> raw.toDouble()
+            is String -> raw.toDoubleOrNull()
+            else -> null
+        }
     }
 }

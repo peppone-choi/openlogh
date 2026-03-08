@@ -73,6 +73,7 @@ class InMemoryTurnHarness {
     private val worldService: WorldService = mock(WorldService::class.java)
     private val nationService: com.opensam.service.NationService = mock(com.opensam.service.NationService::class.java)
     val battleService: BattleService = mock(BattleService::class.java)
+    private val uniqueLotteryService: UniqueLotteryService = UniqueLotteryService()
 
     val turnService = TurnService(
         worldStateRepository,
@@ -102,6 +103,7 @@ class InMemoryTurnHarness {
         worldService,
         nationService,
         battleService,
+        uniqueLotteryService,
     )
 
     init {
