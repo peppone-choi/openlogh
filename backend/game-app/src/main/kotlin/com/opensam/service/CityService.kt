@@ -92,11 +92,11 @@ class CityService(
     // ── Adjacency / Map Queries ──
 
     /**
-     * Get adjacent city IDs for a given city in a specific map.
+     * Get adjacent map city IDs for a given map city ID.
      * Delegates to MapService which holds the parsed map JSON.
      */
-    fun getAdjacentCities(mapCode: String, cityId: Long): List<Long> {
-        return mapService.getAdjacentCities(mapCode, cityId.toInt()).map { it.toLong() }
+    fun getAdjacentCities(mapCode: String, mapCityId: Int): List<Int> {
+        return mapService.getAdjacentCities(mapCode, mapCityId)
     }
 
     /**
@@ -108,9 +108,10 @@ class CityService(
 
     /**
      * Get distance between two cities on the map (BFS hop count).
+     * Takes map city IDs, not DB city IDs.
      */
-    fun getDistance(mapCode: String, fromCityId: Long, toCityId: Long): Int {
-        return mapService.getDistance(mapCode, fromCityId.toInt(), toCityId.toInt())
+    fun getDistance(mapCode: String, fromMapCityId: Int, toMapCityId: Int): Int {
+        return mapService.getDistance(mapCode, fromMapCityId, toMapCityId)
     }
 
     /**

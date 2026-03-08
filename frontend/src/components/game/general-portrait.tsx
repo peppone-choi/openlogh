@@ -24,7 +24,7 @@ export function GeneralPortrait({ picture, name, size = 'sm', className }: Gener
     const [error, setError] = useState(false);
     const src = error ? getPortraitUrl(null) : getPortraitUrl(picture);
 
-    if (picture && !error) {
+    if (!error) {
         return (
             <Avatar className={className} style={{ width: px, height: px }}>
                 <Image

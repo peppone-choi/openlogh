@@ -17,6 +17,9 @@ class City(
     @Column(nullable = false)
     var name: String = "",
 
+    @Column(name = "map_city_id", nullable = false)
+    var mapCityId: Int = 0,
+
     @Column(nullable = false)
     var level: Short = 0,
 

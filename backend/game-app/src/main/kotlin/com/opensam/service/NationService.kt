@@ -317,25 +317,25 @@ class NationService(
             }
         }
 
-        // Collect adjacent city IDs for each front type
-        val adj3 = mutableSetOf<Long>()  // adjacent to active war cities
-        val adj1 = mutableSetOf<Long>()  // adjacent to imminent war cities
-        val adj2 = mutableSetOf<Long>()  // adjacent to neutral cities (peacetime only)
+        // Collect adjacent map city IDs for each front type
+        val adj3 = mutableSetOf<Int>()  // adjacent to active war cities
+        val adj1 = mutableSetOf<Int>()  // adjacent to imminent war cities
+        val adj2 = mutableSetOf<Int>()  // adjacent to neutral cities (peacetime only)
 
-        // Find cities owned by war nations, get their adjacent city IDs
+        // Find cities owned by war nations, get their adjacent map city IDs
         for (city in allCities) {
             if (city.nationId in warNations) {
                 try {
-                    val neighbors = mapService.getAdjacentCities(mapCode, city.id.toInt())
-                    adj3.addAll(neighbors.map { it.toLong() })
+                    val neighbors = mapService.getAdjacentCities(mapCode, city.mapCityId)
+                    adj3.addAll(neighbors)
                 } catch (e: Exception) {
                     log.warn("Failed to get adjacent cities for city {}: {}", city.id, e.message)
                 }
             }
             if (city.nationId in imminentNations) {
                 try {
-                    val neighbors = mapService.getAdjacentCities(mapCode, city.id.toInt())
-                    adj1.addAll(neighbors.map { it.toLong() })
+                    val neighbors = mapService.getAdjacentCities(mapCode, city.mapCityId)
+                    adj1.addAll(neighbors)
                 } catch (e: Exception) {
                     log.warn("Failed to get adjacent cities for city {}: {}", city.id, e.message)
                 }
@@ -347,8 +347,8 @@ class NationService(
             for (city in allCities) {
                 if (city.nationId == 0L) {
                     try {
-                        val neighbors = mapService.getAdjacentCities(mapCode, city.id.toInt())
-                        adj2.addAll(neighbors.map { it.toLong() })
+                        val neighbors = mapService.getAdjacentCities(mapCode, city.mapCityId)
+                        adj2.addAll(neighbors)
                     } catch (e: Exception) {
                         log.warn("Failed to get adjacent cities for city {}: {}", city.id, e.message)
                     }
@@ -357,26 +357,26 @@ class NationService(
         }
 
         // Reset all nation cities to front=0, then set by priority (3 > 2 > 1)
-        val nationCityIds = nationCities.map { it.id }.toSet()
         for (city in nationCities) {
             city.frontState = 0
         }
         // front=1 first (lowest priority)
         for (city in nationCities) {
-            if (city.id in adj1) city.frontState = 1
+            if (city.mapCityId in adj1) city.frontState = 1
         }
         // front=2 overwrites 1
         for (city in nationCities) {
-            if (city.id in adj2) city.frontState = 2
+            if (city.mapCityId in adj2) city.frontState = 2
         }
         // front=3 overwrites all (highest priority)
         for (city in nationCities) {
-            if (city.id in adj3) city.frontState = 3
+            if (city.mapCityId in adj3) city.frontState = 3
         }
 
         cityRepository.saveAll(nationCities)
+        val nationMapIds = nationCities.map { it.mapCityId }.toSet()
         log.info("Updated front state for nation {} — adj3={}, adj1={}, adj2={}",
-            nationId, adj3.intersect(nationCityIds), adj1.intersect(nationCityIds), adj2.intersect(nationCityIds))
+            nationId, adj3.intersect(nationMapIds), adj1.intersect(nationMapIds), adj2.intersect(nationMapIds))
     }
 
     /**

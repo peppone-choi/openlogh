@@ -477,9 +477,6 @@ export default function NationsPage() {
                                                                             <th className="text-left py-1 px-1">
                                                                                 관직
                                                                             </th>
-                                                                            <th className="text-left py-1 px-1">
-                                                                                도시
-                                                                            </th>
                                                                             <th className="text-right py-1 px-1">
                                                                                 통솔
                                                                             </th>
@@ -551,10 +548,6 @@ export default function NationsPage() {
                                                                                             n.level,
                                                                                             g.nationId > 0
                                                                                         )}
-                                                                                    </td>
-                                                                                    <td className="py-1 px-1">
-                                                                                        {cityMap.get(g.cityId)?.name ??
-                                                                                            '-'}
                                                                                     </td>
                                                                                     <td className="py-1 px-1 text-right">
                                                                                         {g.leadership}
@@ -673,7 +666,6 @@ export default function NationsPage() {
                                             <thead>
                                                 <tr className="border-b border-muted/50">
                                                     <th className="text-left py-1 px-1">이름</th>
-                                                    <th className="text-left py-1 px-1">도시</th>
                                                     <th className="text-right py-1 px-1">통솔</th>
                                                     <th className="text-right py-1 px-1">무력</th>
                                                     <th className="text-right py-1 px-1">지력</th>
@@ -695,9 +687,6 @@ export default function NationsPage() {
                                                                 />
                                                                 {g.name}
                                                             </div>
-                                                        </td>
-                                                        <td className="py-1 px-1">
-                                                            {cityMap.get(g.cityId)?.name ?? '-'}
                                                         </td>
                                                         <td className="py-1 px-1 text-right">{g.leadership}</td>
                                                         <td className="py-1 px-1 text-right">{g.strength}</td>
@@ -721,36 +710,15 @@ export default function NationsPage() {
                                 {unownedCities.length === 0 ? (
                                     <p className="text-xs text-muted-foreground">없음</p>
                                 ) : (
-                                    <div className="overflow-x-auto">
-                                        <table className="w-full text-xs">
-                                            <thead>
-                                                <tr className="border-b border-muted/50">
-                                                    <th className="text-left py-1 px-1">도시</th>
-                                                    <th className="text-right py-1 px-1">인구</th>
-                                                    <th className="text-right py-1 px-1">수비</th>
-                                                    <th className="text-right py-1 px-1">성벽</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {unownedCities.map((c) => (
-                                                    <tr
-                                                        key={c.id}
-                                                        className="border-b border-muted/20 hover:bg-muted/20"
-                                                    >
-                                                        <td className="py-1 px-1 font-medium">{c.name}</td>
-                                                        <td className="py-1 px-1 text-right">
-                                                            {c.pop.toLocaleString()}
-                                                        </td>
-                                                        <td className="py-1 px-1 text-right">
-                                                            {c.def}/{c.defMax}
-                                                        </td>
-                                                        <td className="py-1 px-1 text-right">
-                                                            {c.wall}/{c.wallMax}
-                                                        </td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
+                                    <div className="flex flex-wrap gap-1 text-xs">
+                                        {unownedCities.map((c) => (
+                                            <span
+                                                key={c.id}
+                                                className="inline-flex items-center px-1.5 py-0.5 rounded border border-muted/30"
+                                            >
+                                                {c.name}
+                                            </span>
+                                        ))}
                                     </div>
                                 )}
                             </div>

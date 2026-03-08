@@ -403,6 +403,10 @@ class EconomyService @Autowired constructor(
         val cityById = cities.associateBy { it.id }
         val generalsByCity = generals.groupBy { it.cityId }
 
+        // Build map city ID <-> DB city ID lookups
+        val dbToMapId = cities.associate { it.id to it.mapCityId }
+        val mapToDbId = cities.associate { it.mapCityId to it.id }
+
         // Neutral cities are always supplied
         for (city in cities) {
             if (city.nationId == 0L) {
@@ -412,33 +416,37 @@ class EconomyService @Autowired constructor(
 
         for (nation in nations) {
             val nationCities = citiesByNation[nation.id] ?: continue
-            val supplied = mutableSetOf<Long>()
+            val suppliedMapIds = mutableSetOf<Int>()
 
             val capitalId = nation.capitalCityId
-            if (capitalId != null && cityById.containsKey(capitalId)) {
-                val queue = ArrayDeque<Long>()
-                queue.add(capitalId)
-                supplied.add(capitalId)
+            val capitalMapId = if (capitalId != null) dbToMapId[capitalId] else null
+            if (capitalMapId != null && capitalMapId != 0) {
+                val queue = ArrayDeque<Int>()
+                queue.add(capitalMapId)
+                suppliedMapIds.add(capitalMapId)
 
                 while (queue.isNotEmpty()) {
-                    val currentId = queue.removeFirst()
-                    val adjacentIds = try {
-                        mapService.getAdjacentCities(mapCode, currentId.toInt()).map { it.toLong() }
+                    val currentMapId = queue.removeFirst()
+                    val adjacentMapIds = try {
+                        mapService.getAdjacentCities(mapCode, currentMapId)
                     } catch (e: Exception) {
-                        log.warn("Failed to get adjacent cities for cityId={}: {}", currentId, e.message)
+                        log.warn("Failed to get adjacent cities for mapCityId={}: {}", currentMapId, e.message)
                         emptyList()
                     }
-                    for (adjId in adjacentIds) {
-                        if (adjId !in supplied) {
-                            val adjCity = cityById[adjId]
+                    for (adjMapId in adjacentMapIds) {
+                        if (adjMapId !in suppliedMapIds) {
+                            val adjDbId = mapToDbId[adjMapId]
+                            val adjCity = if (adjDbId != null) cityById[adjDbId] else null
                             if (adjCity != null && adjCity.nationId == nation.id) {
-                                supplied.add(adjId)
-                                queue.add(adjId)
+                                suppliedMapIds.add(adjMapId)
+                                queue.add(adjMapId)
                             }
                         }
                     }
                 }
             }
+
+            val supplied = suppliedMapIds.mapNotNull { mapToDbId[it] }.toSet()
 
             for (city in nationCities) {
                 if (city.id in supplied) {

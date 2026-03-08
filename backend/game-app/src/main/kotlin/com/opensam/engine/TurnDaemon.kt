@@ -44,7 +44,7 @@ class TurnDaemon(
         logger.debug("Daemon state: {} -> {} (reason={}, requestId={})", prev, newState, reason, requestId)
     }
 
-    @Scheduled(fixedDelayString = "\${app.turn.interval-ms:300000}")
+    @Scheduled(fixedDelayString = "\${app.turn.interval-ms:5000}")
     fun tick() {
         if (state != DaemonState.IDLE) return
         val reqId = java.util.UUID.randomUUID().toString().take(8)

@@ -95,6 +95,7 @@ data class CitySnapshot(
     val id: Long,
     val worldId: Long,
     val name: String,
+    val mapCityId: Int,
     var level: Short,
     var nationId: Long,
     var supplyState: Short,

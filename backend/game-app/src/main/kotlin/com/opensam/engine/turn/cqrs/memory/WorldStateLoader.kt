@@ -104,6 +104,7 @@ class WorldStateLoader(
                 id = city.id,
                 worldId = city.worldId,
                 name = city.name,
+                mapCityId = city.mapCityId,
                 level = city.level,
                 nationId = city.nationId,
                 supplyState = city.supplyState,

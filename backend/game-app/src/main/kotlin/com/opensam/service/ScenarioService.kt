@@ -102,6 +102,7 @@ class ScenarioService(
                 City(
                     worldId = worldId,
                     name = mc.name,
+                    mapCityId = mc.id,
                     level = mc.level.toShort(),
                     pop = init.pop,
                     popMax = mc.population,
@@ -321,6 +322,7 @@ class ScenarioService(
                 City(
                     worldId = worldId,
                     name = mc.name,
+                    mapCityId = mc.id,
                     level = mc.level.toShort(),
                     pop = init.pop,
                     popMax = mc.population,

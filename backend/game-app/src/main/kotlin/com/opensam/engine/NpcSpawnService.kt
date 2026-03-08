@@ -109,16 +109,23 @@ class NpcSpawnService(
 
         val nations = ports.allNations().map { it.toEntity() }
 
+        // Build DB city ID -> map city ID lookup
+        val dbToMapId = cities.associate { it.id to it.mapCityId }
+
         for (emptyCity in emptyCities) {
-            // Check distance from occupied cities
+            // Check distance from occupied cities using map city IDs
             val tooCloseToUser = occupiedCityIds.any { occupiedId ->
-                calcCityDistance(mapCode, emptyCity.id, occupiedId) < MIN_DIST_USER_NATION
+                val fromMap = dbToMapId[emptyCity.id] ?: return@any false
+                val toMap = dbToMapId[occupiedId] ?: return@any false
+                mapService.getDistance(mapCode, fromMap, toMap).let { it in 0 until MIN_DIST_USER_NATION }
             }
             if (tooCloseToUser) continue
 
             // Check distance from newly created NPC cities
             val tooCloseToNpc = npcCreatedCityIds.any { npcCityId ->
-                calcCityDistance(mapCode, emptyCity.id, npcCityId) < MIN_DIST_NPC_NATION
+                val fromMap = dbToMapId[emptyCity.id] ?: return@any false
+                val toMap = dbToMapId[npcCityId] ?: return@any false
+                mapService.getDistance(mapCode, fromMap, toMap).let { it in 0 until MIN_DIST_NPC_NATION }
             }
             if (tooCloseToNpc) continue
 
@@ -293,32 +300,6 @@ class NpcSpawnService(
         return nations.map { it.tech }.average().toFloat()
     }
 
-    private fun calcCityDistance(mapCode: String, cityId1: Long, cityId2: Long): Int {
-        if (cityId1 == cityId2) return 0
-        try {
-            // BFS distance
-            val visited = mutableSetOf(cityId1)
-            val queue = ArrayDeque<Pair<Long, Int>>()
-            queue.add(cityId1 to 0)
-            while (queue.isNotEmpty()) {
-                val (current, dist) = queue.removeFirst()
-                if (dist >= MIN_DIST_USER_NATION + 1) return dist
-                val adjacent = try {
-                    mapService.getAdjacentCities(mapCode, current.toInt()).map { it.toLong() }
-                } catch (_: Exception) {
-                    emptyList()
-                }
-                for (adj in adjacent) {
-                    if (adj == cityId2) return dist + 1
-                    if (adj !in visited) {
-                        visited.add(adj)
-                        queue.add(adj to dist + 1)
-                    }
-                }
-            }
-        } catch (_: Exception) {}
-        return 999
-    }
 
     /**
      * 부대장 NPC를 국가 레벨에 맞게 보충.

@@ -345,6 +345,7 @@ class JpaWorldPorts(
         id = entity.id,
         worldId = entity.worldId,
         name = entity.name,
+        mapCityId = entity.mapCityId,
         level = entity.level,
         nationId = entity.nationId,
         supplyState = entity.supplyState,
@@ -376,6 +377,7 @@ class JpaWorldPorts(
         id = snapshot.id
         worldId = snapshot.worldId
         name = snapshot.name
+        mapCityId = snapshot.mapCityId
         level = snapshot.level
         nationId = snapshot.nationId
         supplyState = snapshot.supplyState

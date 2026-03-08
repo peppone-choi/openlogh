@@ -117,6 +117,7 @@ class EconomyServiceTest {
         id = id,
         worldId = 1,
         name = "테스트도시$id",
+        mapCityId = id.toInt(),
         nationId = nationId,
         pop = pop,
         popMax = popMax,
