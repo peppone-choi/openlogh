@@ -502,7 +502,7 @@ export default function MapPage() {
                                 const seasonLabel = SEASON_LABELS[season] ?? '';
                                 if (!worldYear && !worldMonth) return null;
                                 return (
-                                    <div className="absolute top-0 left-0 right-0 z-[4] text-center py-1">
+                                    <div className="absolute top-0 left-0 right-0 z-[4] text-center py-1 pointer-events-none">
                                         <span
                                             className="text-white text-sm font-bold drop-shadow-lg"
                                             style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}
@@ -567,7 +567,7 @@ export default function MapPage() {
                                         <button
                                             key={cc.id}
                                             type="button"
-                                            className="absolute h-[30px] w-[40px] cursor-pointer appearance-none border-0 bg-transparent p-0 text-left"
+                                            className="absolute h-[30px] w-[40px] cursor-pointer appearance-none border-0 bg-transparent p-0 text-left overflow-visible"
                                             style={{ left, top }}
                                             onMouseEnter={(e) => handleCityMouseEnter(cc, e)}
                                             onMouseMove={(e) => handleCityMouseMove(cc, e)}

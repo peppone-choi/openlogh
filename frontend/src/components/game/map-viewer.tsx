@@ -188,6 +188,7 @@ export function MapViewer({
     const mapFolder = mapCode.includes('miniche') ? 'che' : mapCode === 'ludo_rathowm' ? 'ludo_rathowm' : mapCode;
     const mapBgUrl = getMapBgUrl(mapFolder, season);
     const mapRoadUrl = getMapRoadUrl(mapCode);
+    const coordScale = isPublicMode ? 1 : compact ? 500 / 700 : 1;
 
     const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
         const rect = e.currentTarget.getBoundingClientRect();
@@ -196,12 +197,20 @@ export function MapViewer({
         setTooltip((prev) => (prev ? { ...prev, x, y } : null));
     }, []);
 
-    const handleCityMouseEnter = useCallback((city: RenderCity) => {
-        const regionName = city.region != null ? (REGION_NAMES[city.region] ?? '중원') : '';
-        const levelName = CITY_LEVEL_NAMES[city.level] ?? '';
-        const prefix = regionName ? `【${regionName}|${levelName}】` : `【${levelName}】`;
-        setTooltip({ cityText: `${prefix}${city.name}`, nationText: city.nationName, x: 0, y: 0 });
-    }, []);
+    const handleCityMouseEnter = useCallback(
+        (city: RenderCity) => {
+            const regionName = city.region != null ? (REGION_NAMES[city.region] ?? '중원') : '';
+            const levelName = CITY_LEVEL_NAMES[city.level] ?? '';
+            const prefix = regionName ? `【${regionName}|${levelName}】` : `【${levelName}】`;
+            setTooltip({
+                cityText: `${prefix}${city.name}`,
+                nationText: city.nationName,
+                x: city.x * coordScale,
+                y: city.y * coordScale,
+            });
+        },
+        [coordScale]
+    );
 
     const handleCityMouseLeave = useCallback(() => {
         setTooltip(null);
@@ -255,8 +264,6 @@ export function MapViewer({
               position: 'relative' as const,
           };
 
-    const coordScale = useResponsiveScale ? 1 : compact ? 500 / 700 : 1;
-
     return (
         <div
             ref={containerRef}
@@ -265,7 +272,7 @@ export function MapViewer({
         >
             <div style={innerStyle}>
                 {yearMonth && (
-                    <div className="absolute top-0 left-0 right-0 z-[4] text-center py-1">
+                    <div className="absolute top-0 left-0 right-0 z-[4] text-center py-1 pointer-events-none">
                         <span
                             className="text-white text-sm font-bold drop-shadow-lg"
                             style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}
