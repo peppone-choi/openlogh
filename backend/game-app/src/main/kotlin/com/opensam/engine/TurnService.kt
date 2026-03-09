@@ -417,6 +417,9 @@ class TurnService @Autowired constructor(
                         )
                         if (aiAction != "Nation휴식") {
                             nationActionCode = aiAction
+                            if (aiAction == "선전포고") {
+                                nationArg = readStringAnyMap(nation.meta.remove("aiWarTarget"))
+                            }
                         }
                     }
 
@@ -469,7 +472,13 @@ class TurnService @Autowired constructor(
                 if (general.npcState >= 2 || useAutorun) {
                     // NPC generals 또는 autorun 대상: AI가 행동 결정
                     actionCode = generalAI.decideAndExecute(general, world)
-                    arg = readStringAnyMap(general.meta.remove("aiArg"))
+                    val aiArg = readStringAnyMap(general.meta.remove("aiArg"))
+                    arg = if (actionCode == "선전포고" && aiArg == null) {
+                        val warTargetId = (general.meta.remove("warTarget") as? Number)?.toLong()
+                        if (warTargetId != null) mapOf("destNationId" to warTargetId) else null
+                    } else {
+                        aiArg
+                    }
                     logger.info("[Turn] NPC {} ({}) AI decided: {}, arg={}", general.id, general.name, actionCode, arg)
                     executedTurn = null
                     // Consume any queued turns

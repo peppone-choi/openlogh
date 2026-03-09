@@ -7,6 +7,7 @@ import com.opensam.engine.turn.cqrs.persist.toSnapshot
 import com.opensam.engine.turn.cqrs.port.WorldWritePort
 import org.springframework.stereotype.Service
 
+import kotlin.math.sqrt
 import kotlin.random.Random
 
 @Service
@@ -43,7 +44,11 @@ class NationAI(
 
         // Consider war declaration before resource gate (war declaration is free)
         val allNations = ports.allNations().map { it.toEntity() }
-        if (shouldConsiderWar(nation, allNations, diplomacies, rng)) {
+        val allCities = ports.allCities().map { it.toEntity() }
+        val warTarget = pickWarTarget(nation, allNations, allCities, diplomacies, rng)
+        if (warTarget != null) {
+            nation.meta["aiWarTarget"] = mapOf("destNationId" to warTarget.id)
+            ports.putNation(nation.toSnapshot())
             return "선전포고"
         }
 
@@ -92,8 +97,11 @@ class NationAI(
             candidates.add("불가침제의")
         }
 
-        // Consider war declaration (already checked above resource gate; re-check here for candidates)
-        if (shouldConsiderWar(nation, allNations, diplomacies, rng)) {
+        // Consider war declaration via priority system (early return above handles urgent case)
+        val secondWarTarget = pickWarTarget(nation, allNations, allCities, diplomacies, rng)
+        if (secondWarTarget != null) {
+            nation.meta["aiWarTarget"] = mapOf("destNationId" to secondWarTarget.id)
+            ports.putNation(nation.toSnapshot())
             candidates.add("선전포고")
         }
 
@@ -370,26 +378,39 @@ class NationAI(
         return bestCity.id != capital.id && bestCity.pop > capital.pop * 1.5
     }
 
-    private fun shouldConsiderWar(
+    private fun pickWarTarget(
         nation: Nation,
         allNations: List<Nation>,
+        allCities: List<City>,
         diplomacies: List<Diplomacy>,
         rng: Random,
-    ): Boolean {
-        if (nation.gold < 3000 || nation.rice < 3000) return false
+    ): Nation? {
+        if (nation.gold < 3000 || nation.rice < 3000) return null
 
-        // Find nations not already in diplomacy
         val existingDiploNationIds = diplomacies
             .filter { it.srcNationId == nation.id || it.destNationId == nation.id }
             .flatMap { listOf(it.srcNationId, it.destNationId) }
             .toSet()
 
-        val targets = allNations.filter {
-            it.id != nation.id && it.id !in existingDiploNationIds && it.power < nation.power
+        val neighborNationIds = mutableSetOf<Long>()
+        for (city in allCities) {
+            if (city.nationId != nation.id && city.nationId != 0L && city.frontState > 0) {
+                neighborNationIds.add(city.nationId)
+            }
         }
 
-        // Low probability of war declaration
-        return targets.isNotEmpty() && rng.nextInt(100) < 10
+        val targets = allNations.filter {
+            it.id != nation.id &&
+                it.level > 0 &&
+                it.id !in existingDiploNationIds &&
+                it.power < nation.power &&
+                neighborNationIds.contains(it.id)
+        }
+
+        if (targets.isEmpty()) return null
+        if (rng.nextInt(100) >= 10) return null
+
+        return choiceByWeightPair(rng, targets.map { it to 1.0 / sqrt(it.power.toDouble() + 1.0) })
     }
 
     private fun mapNationPriorityToAction(priority: String): String? {

@@ -116,10 +116,10 @@ Hide_D 님이 오랜 기간 쌓아온 게임 설계, 시나리오 데이터, 전
 
 ### 원본 프로젝트
 
-| 프로젝트 | 설명 | 링크 |
-| -------- | ---- | ---- |
-| **devsam/core** | 원본 삼국지 웹 게임 (PHP) | https://storage.hided.net/gitea/devsam/core |
-| **devsam/core2026** | 차세대 버전 | https://storage.hided.net/gitea/devsam/core2026 |
+| 프로젝트            | 설명                      | 링크                                            |
+| ------------------- | ------------------------- | ----------------------------------------------- |
+| **devsam/core**     | 원본 삼국지 웹 게임 (PHP) | https://storage.hided.net/gitea/devsam/core     |
+| **devsam/core2026** | 차세대 버전               | https://storage.hided.net/gitea/devsam/core2026 |
 
 오픈삼국은 위 프로젝트의 게임 메커니즘과 데이터를 참조하여, Spring Boot(Kotlin) + Next.js 기술 스택으로 재구현한 프로젝트입니다.
 
