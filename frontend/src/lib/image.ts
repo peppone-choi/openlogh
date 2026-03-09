@@ -48,7 +48,7 @@ export function getNationBgGradient(color: string): string {
     const r = parseInt(hex.substring(0, 2), 16);
     const g = parseInt(hex.substring(2, 4), 16);
     const b = parseInt(hex.substring(4, 6), 16);
-    return `radial-gradient(circle, rgba(${r},${g},${b},0.92) 0%, rgba(${r},${g},${b},0.4) 50%, transparent 80%)`;
+    return `radial-gradient(ellipse closest-side, rgba(${r},${g},${b},0.92) 0%, rgba(${r},${g},${b},0.4) 50%, transparent 100%)`;
 }
 
 /** Animated flag GIF for supplied cities (12×12, 4 frames) */

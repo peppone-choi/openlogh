@@ -162,7 +162,11 @@ class TurnService @Autowired constructor(
             val previousYear = world.currentYear.toInt()
             val previousMonth = world.currentMonth.toInt()
 
-            executeGeneralCommandsUntil(world, nextTurnAt)
+            try {
+                executeGeneralCommandsUntil(world, nextTurnAt)
+            } catch (e: Exception) {
+                logger.error("executeGeneralCommandsUntil failed for world {}: {}", worldId, e.message, e)
+            }
 
             try {
                 eventService.dispatchEvents(world, "PRE_MONTH")
