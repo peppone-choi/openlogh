@@ -13,7 +13,9 @@ import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.time.Duration
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
@@ -58,12 +60,36 @@ class GameContainerOrchestrator(
         val worldIds: MutableSet<Long>,
     )
 
+    private data class StartingEntry(
+        val commitSha: String,
+        val gameVersion: String,
+        val imageTag: String,
+        val containerName: String,
+        val retainedWorldIds: Set<Long>,
+        val future: CompletableFuture<ManagedDockerInstance>,
+    )
+
+    private sealed interface InstanceResult {
+        data class Running(val instance: ManagedDockerInstance) : InstanceResult
+        data class Pending(val future: CompletableFuture<ManagedDockerInstance>) : InstanceResult
+    }
+
+    private sealed interface PhaseOneResult {
+        data class Running(val instance: ManagedDockerInstance) : PhaseOneResult
+        data class Pending(val future: CompletableFuture<ManagedDockerInstance>) : PhaseOneResult
+        data class StartNew(val entry: StartingEntry) : PhaseOneResult
+    }
+
     private val lock = ReentrantLock()
     private val instances = ConcurrentHashMap<String, ManagedDockerInstance>()
+    private val starting = ConcurrentHashMap<String, CompletableFuture<ManagedDockerInstance>>()
+    private val startingNames = ConcurrentHashMap<String, String>()
 
     override fun attachWorld(worldId: Long, request: AttachWorldProcessRequest): GameInstanceStatus {
         val gameVersion = resolveGameVersion(request)
         require(gameVersion.isNotEmpty()) { "gameVersion is required" }
+
+        ensureVersion(request)
 
         return lock.withLock {
             cleanupDeadInstances()
@@ -77,7 +103,8 @@ class GameContainerOrchestrator(
                 }
             }
 
-            val managed = getOrStartInstance(request)
+            val managed = instances[gameVersion]
+                ?: throw IllegalStateException("Game container not found for gameVersion=$gameVersion")
             managed.worldIds.add(worldId)
             worldRouteRegistry.attach(worldId, containerBaseUrl(managed.containerName))
             toStatus(managed)
@@ -88,11 +115,12 @@ class GameContainerOrchestrator(
         val gameVersion = resolveGameVersion(request)
         require(gameVersion.isNotEmpty()) { "gameVersion is required" }
 
-        return lock.withLock {
-            cleanupDeadInstances()
-            val managed = getOrStartInstance(request)
-            toStatus(managed)
+        val result = getOrStartInstance(request)
+        val managed = when (result) {
+            is InstanceResult.Running -> result.instance
+            is InstanceResult.Pending -> awaitStartup(result.future)
         }
+        return lock.withLock { toStatus(managed) }
     }
 
     override fun detachWorld(worldId: Long): Boolean {
@@ -139,49 +167,93 @@ class GameContainerOrchestrator(
         lock.withLock {
             instances.values.forEach { stopContainer(it) }
             instances.clear()
+            starting.clear()
+            startingNames.clear()
         }
     }
 
-    private fun getOrStartInstance(request: AttachWorldProcessRequest): ManagedDockerInstance {
+    private fun getOrStartInstance(request: AttachWorldProcessRequest): InstanceResult {
         val gameVersion = resolveGameVersion(request)
-        val existing = instances[gameVersion]
 
-        if (existing == null) {
-            return startNewContainer(request)
+        val phaseOne = lock.withLock {
+            cleanupDeadInstances()
+
+            val existing = instances[gameVersion]
+            if (existing != null && dockerIsRunning(existing.containerName)) {
+                return@withLock PhaseOneResult.Running(existing)
+            }
+
+            val inFlight = starting[gameVersion]
+            if (inFlight != null) {
+                return@withLock PhaseOneResult.Pending(inFlight)
+            }
+
+            if (existing != null) {
+                val retainedWorldIds = existing.worldIds.toSet()
+                instances.remove(gameVersion)
+                log.warn("Restarting dead container for gameVersion={}", gameVersion)
+                dockerRemove(existing.containerName)
+                return@withLock PhaseOneResult.StartNew(createStartingEntry(request, retainedWorldIds))
+            }
+
+            PhaseOneResult.StartNew(createStartingEntry(request, emptySet()))
         }
 
-        if (dockerIsRunning(existing.containerName)) {
-            return existing
+        when (phaseOne) {
+            is PhaseOneResult.Running -> return InstanceResult.Running(phaseOne.instance)
+            is PhaseOneResult.Pending -> return InstanceResult.Pending(phaseOne.future)
+            is PhaseOneResult.StartNew -> {
+                val entry = phaseOne.entry
+                try {
+                    val managed = startNewContainer(entry)
+                    lock.withLock {
+                        completeStartup(entry, managed)
+                    }
+                } catch (ex: Exception) {
+                    lock.withLock {
+                        failStartup(entry)
+                    }
+                    throw ex
+                }
+                return InstanceResult.Pending(entry.future)
+            }
         }
-
-        val retainedWorldIds = existing.worldIds.toSet()
-        instances.remove(gameVersion)
-        log.warn("Restarting dead container for gameVersion={}", gameVersion)
-
-        dockerRemove(existing.containerName)
-        val restarted = startNewContainer(request)
-        restarted.worldIds.addAll(retainedWorldIds)
-        retainedWorldIds.forEach { worldRouteRegistry.attach(it, containerBaseUrl(restarted.containerName)) }
-        return restarted
     }
 
-    private fun startNewContainer(request: AttachWorldProcessRequest): ManagedDockerInstance {
+    private fun createStartingEntry(
+        request: AttachWorldProcessRequest,
+        retainedWorldIds: Set<Long>,
+    ): StartingEntry {
         val commitSha = request.commitSha.trim().ifEmpty { "local" }
         val gameVersion = resolveGameVersion(request)
         val imageTag = request.imageTag?.takeIf { it.isNotBlank() } ?: "$imagePrefix:$gameVersion"
-        val containerName = containerName(gameVersion)
+        val cName = containerName(gameVersion)
+        val future = CompletableFuture<ManagedDockerInstance>()
+        starting[gameVersion] = future
+        startingNames[gameVersion] = cName
 
-        dockerRemove(containerName)
+        return StartingEntry(
+            commitSha = commitSha,
+            gameVersion = gameVersion,
+            imageTag = imageTag,
+            containerName = cName,
+            retainedWorldIds = retainedWorldIds,
+            future = future,
+        )
+    }
+
+    private fun startNewContainer(entry: StartingEntry): ManagedDockerInstance {
+        dockerRemove(entry.containerName)
 
         val command = listOf(
             "docker", "run", "-d",
-            "--name", containerName,
+            "--name", entry.containerName,
             "--network", dockerNetwork,
             "--label", "opensam.role=game",
             "-e", "SERVER_PORT=9001",
             "-e", "SPRING_PROFILES_ACTIVE=docker",
-            "-e", "GAME_COMMIT_SHA=$commitSha",
-            "-e", "GAME_VERSION=$gameVersion",
+            "-e", "GAME_COMMIT_SHA=${entry.commitSha}",
+            "-e", "GAME_VERSION=${entry.gameVersion}",
             "-e", "DB_HOST=$dbHost",
             "-e", "DB_PORT=$dbPort",
             "-e", "DB_NAME=$dbName",
@@ -189,10 +261,10 @@ class GameContainerOrchestrator(
             "-e", "DB_PASSWORD=$dbPassword",
             "-e", "REDIS_HOST=$redisHost",
             "-e", "REDIS_PORT=$redisPort",
-            imageTag,
+            entry.imageTag,
         )
 
-        log.info("Starting container: {} image={}", containerName, imageTag)
+        log.info("Starting container: {} image={}", entry.containerName, entry.imageTag)
 
         val process = ProcessBuilder(command)
             .redirectErrorStream(true)
@@ -201,24 +273,54 @@ class GameContainerOrchestrator(
         val output = process.inputStream.bufferedReader().readText().trim()
         val exitCode = process.waitFor(30, TimeUnit.SECONDS)
         if (!exitCode || process.exitValue() != 0) {
-            throw IllegalStateException("docker run failed for $containerName: $output")
+            throw IllegalStateException("docker run failed for ${entry.containerName}: $output")
         }
 
         val containerId = output.take(12)
 
-        waitForHealth(containerName)
+        waitForHealth(entry.containerName)
 
-        val managed = ManagedDockerInstance(
-            commitSha = commitSha,
-            gameVersion = gameVersion,
-            imageTag = imageTag,
-            containerName = containerName,
+        log.info("Container started: {} id={}", entry.containerName, containerId)
+        return ManagedDockerInstance(
+            commitSha = entry.commitSha,
+            gameVersion = entry.gameVersion,
+            imageTag = entry.imageTag,
+            containerName = entry.containerName,
             containerId = containerId,
             worldIds = mutableSetOf(),
         )
-        instances[gameVersion] = managed
-        log.info("Container started: {} id={}", containerName, containerId)
-        return managed
+    }
+
+    private fun completeStartup(entry: StartingEntry, managed: ManagedDockerInstance) {
+        starting.remove(entry.gameVersion, entry.future)
+        startingNames.remove(entry.gameVersion, entry.containerName)
+        managed.worldIds.addAll(entry.retainedWorldIds)
+        instances[entry.gameVersion] = managed
+        entry.retainedWorldIds.forEach { worldRouteRegistry.attach(it, containerBaseUrl(managed.containerName)) }
+        entry.future.complete(managed)
+    }
+
+    private fun failStartup(entry: StartingEntry) {
+        starting.remove(entry.gameVersion, entry.future)
+        startingNames.remove(entry.gameVersion, entry.containerName)
+        entry.future.completeExceptionally(
+            IllegalStateException("Failed to start container for gameVersion=${entry.gameVersion}"),
+        )
+    }
+
+    private fun awaitStartup(future: CompletableFuture<ManagedDockerInstance>): ManagedDockerInstance {
+        return try {
+            future.get()
+        } catch (ex: InterruptedException) {
+            Thread.currentThread().interrupt()
+            throw IllegalStateException("Interrupted while waiting for container startup", ex)
+        } catch (ex: ExecutionException) {
+            val cause = ex.cause
+            if (cause is RuntimeException) {
+                throw cause
+            }
+            throw IllegalStateException("Failed to start game container", cause ?: ex)
+        }
     }
 
     private fun cleanupDeadInstances() {
@@ -244,7 +346,8 @@ class GameContainerOrchestrator(
             process.waitFor(10, TimeUnit.SECONDS)
             if (process.exitValue() != 0 || output.isBlank()) return
 
-            val trackedNames = instances.values.map { it.containerName }.toSet()
+            val trackedNames = instances.values.map { it.containerName }.toMutableSet()
+            trackedNames.addAll(startingNames.values)
             output.lines()
                 .filter { it.isNotBlank() && it !in trackedNames }
                 .forEach { orphan ->

@@ -17,7 +17,9 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.time.Duration
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
@@ -43,12 +45,37 @@ class GameProcessOrchestrator(
         val worldIds: MutableSet<Long>,
     )
 
+    private data class StartingEntry(
+        val commitSha: String,
+        val gameVersion: String,
+        val jarPath: String,
+        val port: Int,
+        val javaCommand: String,
+        val retainedWorldIds: Set<Long>,
+        val future: CompletableFuture<ManagedGameInstance>,
+    )
+
+    private sealed interface InstanceResult {
+        data class Running(val instance: ManagedGameInstance) : InstanceResult
+        data class Pending(val future: CompletableFuture<ManagedGameInstance>) : InstanceResult
+    }
+
+    private sealed interface PhaseOneResult {
+        data class Running(val instance: ManagedGameInstance) : PhaseOneResult
+        data class Pending(val future: CompletableFuture<ManagedGameInstance>) : PhaseOneResult
+        data class StartNew(val entry: StartingEntry) : PhaseOneResult
+    }
+
     private val lock = ReentrantLock()
     private val instances = ConcurrentHashMap<String, ManagedGameInstance>()
+    private val starting = ConcurrentHashMap<String, CompletableFuture<ManagedGameInstance>>()
+    private val startingPorts = ConcurrentHashMap<String, Int>()
 
     override fun attachWorld(worldId: Long, request: AttachWorldProcessRequest): GameInstanceStatus {
         val commitSha = request.commitSha.trim()
         require(commitSha.isNotEmpty()) { "commitSha is required" }
+
+        ensureVersion(request)
 
         return lock.withLock {
             cleanupDeadInstances()
@@ -62,7 +89,8 @@ class GameProcessOrchestrator(
                 }
             }
 
-            val managed = getOrStartInstance(commitSha, request)
+            val managed = instances[commitSha]
+                ?: throw IllegalStateException("Game instance not found for commitSha=$commitSha")
             managed.worldIds.add(worldId)
             worldRouteRegistry.attach(worldId, baseUrl(managed.port))
             toStatus(managed)
@@ -73,11 +101,12 @@ class GameProcessOrchestrator(
         val commitSha = request.commitSha.trim()
         require(commitSha.isNotEmpty()) { "commitSha is required" }
 
-        return lock.withLock {
-            cleanupDeadInstances()
-            val managed = getOrStartInstance(commitSha, request)
-            toStatus(managed)
+        val result = getOrStartInstance(commitSha, request)
+        val managed = when (result) {
+            is InstanceResult.Running -> result.instance
+            is InstanceResult.Pending -> awaitStartup(result.future)
         }
+        return lock.withLock { toStatus(managed) }
     }
 
     override fun detachWorld(worldId: Long): Boolean {
@@ -126,47 +155,93 @@ class GameProcessOrchestrator(
         lock.withLock {
             instances.values.forEach { stopInstance(it) }
             instances.clear()
+            starting.clear()
+            startingPorts.clear()
         }
     }
 
-    private fun getOrStartInstance(commitSha: String, request: AttachWorldProcessRequest): ManagedGameInstance {
-        val existing = instances[commitSha]
-        if (existing == null) {
-            return startNewInstance(request)
+    private fun getOrStartInstance(commitSha: String, request: AttachWorldProcessRequest): InstanceResult {
+        val phaseOne = lock.withLock {
+            cleanupDeadInstances()
+
+            val existing = instances[commitSha]
+            if (existing != null && existing.process.isAlive) {
+                return@withLock PhaseOneResult.Running(existing)
+            }
+
+            val inFlight = starting[commitSha]
+            if (inFlight != null) {
+                return@withLock PhaseOneResult.Pending(inFlight)
+            }
+
+            if (existing != null) {
+                val retainedWorldIds = existing.worldIds.toSet()
+                instances.remove(commitSha)
+                log.warn("Restarting dead game instance for commitSha={}", commitSha)
+                return@withLock PhaseOneResult.StartNew(createStartingEntry(commitSha, request, retainedWorldIds))
+            }
+
+            PhaseOneResult.StartNew(createStartingEntry(commitSha, request, emptySet()))
         }
 
-        if (existing.process.isAlive) {
-            return existing
+        when (phaseOne) {
+            is PhaseOneResult.Running -> return InstanceResult.Running(phaseOne.instance)
+            is PhaseOneResult.Pending -> return InstanceResult.Pending(phaseOne.future)
+            is PhaseOneResult.StartNew -> {
+                val entry = phaseOne.entry
+                try {
+                    val managed = startNewInstance(entry)
+                    lock.withLock {
+                        completeStartup(entry, managed)
+                    }
+                } catch (ex: Exception) {
+                    lock.withLock {
+                        failStartup(entry, ex)
+                    }
+                    throw ex
+                }
+                return InstanceResult.Pending(entry.future)
+            }
         }
-
-        val retainedWorldIds = existing.worldIds.toSet()
-        instances.remove(commitSha)
-
-        log.warn("Restarting dead game instance for commitSha={}", commitSha)
-        val restarted = startNewInstance(request)
-        restarted.worldIds.addAll(retainedWorldIds)
-        retainedWorldIds.forEach { worldRouteRegistry.attach(it, baseUrl(restarted.port)) }
-        return restarted
     }
 
-    private fun startNewInstance(request: AttachWorldProcessRequest): ManagedGameInstance {
-        val commitSha = request.commitSha.trim()
+    private fun createStartingEntry(
+        commitSha: String,
+        request: AttachWorldProcessRequest,
+        retainedWorldIds: Set<Long>,
+    ): StartingEntry {
         val gameVersion = request.gameVersion.trim().ifEmpty { "dev" }
         val jarPath = resolveJarPath(commitSha, request.jarPath)
         require(Files.exists(jarPath)) { "JAR not found: $jarPath" }
 
         val port = request.port ?: allocatePort()
+        val future = CompletableFuture<ManagedGameInstance>()
+        starting[commitSha] = future
+        startingPorts[commitSha] = port
+
+        return StartingEntry(
+            commitSha = commitSha,
+            gameVersion = gameVersion,
+            jarPath = jarPath.toString(),
+            port = port,
+            javaCommand = request.javaCommand,
+            retainedWorldIds = retainedWorldIds,
+            future = future,
+        )
+    }
+
+    private fun startNewInstance(entry: StartingEntry): ManagedGameInstance {
         val logsDir = Paths.get("logs")
         Files.createDirectories(logsDir)
-        val logFile = logsDir.resolve("game-$commitSha.log").toFile()
+        val logFile = logsDir.resolve("game-${entry.commitSha}.log").toFile()
 
         val command = listOf(
-            request.javaCommand,
+            entry.javaCommand,
             "-jar",
-            jarPath.toString(),
-            "--server.port=$port",
-            "--game.commit-sha=$commitSha",
-            "--game.version=$gameVersion",
+            entry.jarPath,
+            "--server.port=${entry.port}",
+            "--game.commit-sha=${entry.commitSha}",
+            "--game.version=${entry.gameVersion}",
         )
 
         val process = ProcessBuilder(command)
@@ -175,18 +250,46 @@ class GameProcessOrchestrator(
             .redirectOutput(ProcessBuilder.Redirect.appendTo(logFile))
             .start()
 
-        waitForHealth(port, process)
+        waitForHealth(entry.port, process)
 
-        val managed = ManagedGameInstance(
-            commitSha = commitSha,
-            gameVersion = gameVersion,
-            jarPath = jarPath.toString(),
-            port = port,
+        return ManagedGameInstance(
+            commitSha = entry.commitSha,
+            gameVersion = entry.gameVersion,
+            jarPath = entry.jarPath,
+            port = entry.port,
             process = process,
             worldIds = mutableSetOf(),
         )
-        instances[commitSha] = managed
-        return managed
+    }
+
+    private fun completeStartup(entry: StartingEntry, managed: ManagedGameInstance) {
+        starting.remove(entry.commitSha, entry.future)
+        startingPorts.remove(entry.commitSha, entry.port)
+        managed.worldIds.addAll(entry.retainedWorldIds)
+        instances[entry.commitSha] = managed
+        entry.retainedWorldIds.forEach { worldRouteRegistry.attach(it, baseUrl(managed.port)) }
+        entry.future.complete(managed)
+    }
+
+    private fun failStartup(entry: StartingEntry, ex: Exception) {
+        starting.remove(entry.commitSha, entry.future)
+        startingPorts.remove(entry.commitSha, entry.port)
+        entry.future.completeExceptionally(ex)
+    }
+
+    private fun awaitStartup(future: CompletableFuture<ManagedGameInstance>): ManagedGameInstance {
+        return try {
+            future.get()
+        } catch (ex: InterruptedException) {
+            Thread.currentThread().interrupt()
+            throw IllegalStateException("Interrupted while waiting for game startup", ex)
+        } catch (ex: ExecutionException) {
+            val cause = ex.cause
+            if (cause is RuntimeException) {
+                throw cause
+            }
+            throw IllegalStateException("Failed to start game instance", cause ?: ex)
+        }
     }
 
     private fun resolveJarPath(commitSha: String, explicitJarPath: String?): Path {
@@ -197,7 +300,8 @@ class GameProcessOrchestrator(
     }
 
     private fun allocatePort(): Int {
-        val usedPorts = instances.values.map { it.port }.toSet()
+        val usedPorts = instances.values.map { it.port }.toMutableSet()
+        usedPorts.addAll(startingPorts.values)
         for (candidate in 9001..9999) {
             if (candidate !in usedPorts) return candidate
         }

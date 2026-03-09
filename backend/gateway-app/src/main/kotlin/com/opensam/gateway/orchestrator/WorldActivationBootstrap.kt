@@ -44,6 +44,36 @@ class WorldActivationBootstrap(
     }
 
     private fun restoreWithRetry(activeWorlds: List<WorldState>) {
+        val byVersion = activeWorlds.groupBy { it.commitSha to it.gameVersion }
+        log.info(
+            "Warming {} game instance(s) for {} world(s)",
+            byVersion.size, activeWorlds.size,
+        )
+
+        val warmupThreads = byVersion.map { (key, _) ->
+            val (commitSha, gameVersion) = key
+            Thread({
+                try {
+                    gameOrchestrator.ensureVersion(
+                        AttachWorldProcessRequest(commitSha = commitSha, gameVersion = gameVersion),
+                    )
+                    log.info("Warmed game instance commitSha={} gameVersion={}", commitSha, gameVersion)
+                } catch (e: Exception) {
+                    log.warn("Failed to warm game instance commitSha={} gameVersion={}: {}", commitSha, gameVersion, e.message)
+                }
+            }, "warmup-$gameVersion")
+        }
+        warmupThreads.forEach { it.start() }
+        warmupThreads.forEach {
+            try {
+                it.join()
+            } catch (_: InterruptedException) {
+                Thread.currentThread().interrupt()
+                log.warn("World restore interrupted during warmup")
+                return
+            }
+        }
+
         var remaining = activeWorlds.toList()
 
         for (attempt in 1..maxRetries) {
