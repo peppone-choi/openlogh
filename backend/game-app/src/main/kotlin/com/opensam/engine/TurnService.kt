@@ -18,6 +18,7 @@ import com.opensam.entity.Nation
 import com.opensam.entity.WorldState
 import com.opensam.repository.*
 import com.opensam.service.AuctionService
+import com.opensam.service.CommandLogDispatcher
 import com.opensam.service.InheritanceService
 import com.opensam.service.NationService
 import com.opensam.service.ScenarioService
@@ -76,6 +77,7 @@ class TurnService @Autowired constructor(
     private val nationService: NationService,
     private val battleService: BattleService,
     private val uniqueLotteryService: UniqueLotteryService,
+    private val commandLogDispatcher: CommandLogDispatcher,
 ) {
     constructor(
         worldStateRepository: WorldStateRepository,
@@ -106,6 +108,7 @@ class TurnService @Autowired constructor(
         nationService: NationService,
         battleService: BattleService,
         uniqueLotteryService: UniqueLotteryService,
+        commandLogDispatcher: CommandLogDispatcher,
     ) : this(
         worldStateRepository = worldStateRepository,
         generalRepository = generalRepository,
@@ -140,6 +143,7 @@ class TurnService @Autowired constructor(
         nationService = nationService,
         battleService = battleService,
         uniqueLotteryService = uniqueLotteryService,
+        commandLogDispatcher = commandLogDispatcher,
     )
 
     private val logger = LoggerFactory.getLogger(TurnService::class.java)
@@ -502,8 +506,21 @@ class TurnService @Autowired constructor(
                     }
                 }
 
-                // Handle battleTriggered: invoke BattleService for war resolution
-                // Legacy: after 출병 run(), StaticEventHandler calls ConquerCity/warProcess
+                if (cmdResult.logs.isNotEmpty()) {
+                    try {
+                        commandLogDispatcher.dispatchLogs(
+                            worldId = worldId,
+                            generalId = general.id,
+                            nationId = if (general.nationId != 0L) general.nationId else null,
+                            year = env.year,
+                            month = env.month,
+                            logs = cmdResult.logs,
+                        )
+                    } catch (e: Exception) {
+                        logger.warn("[Turn] Log dispatch failed for general {}: {}", general.id, e.message)
+                    }
+                }
+
                 if (cmdResult.success && cmdResult.message != null) {
                     try {
                         val msgJson = jsonMapper.readTree(cmdResult.message!!)

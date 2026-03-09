@@ -46,9 +46,11 @@ function groupContactsByNation(contacts: ContactInfo[], myGeneralId: number, las
 
 export function MessagePanel({ worldId, myGeneralId, generals }: MessagePanelProps) {
     const [messages, setMessages] = useState<Message[]>([]);
+    const [publicMessages, setPublicMessages] = useState<Message[]>([]);
     const [contacts, setContacts] = useState<ContactInfo[]>([]);
     const [destId, setDestId] = useState('');
     const [content, setContent] = useState('');
+    const [publicContent, setPublicContent] = useState('');
     const [sending, setSending] = useState(false);
     const [tab, setTab] = useState('all');
     const [recipientMode, setRecipientMode] = useState<'all' | 'nation' | 'favorites'>('all');
@@ -113,7 +115,6 @@ export function MessagePanel({ worldId, myGeneralId, generals }: MessagePanelPro
                 } else {
                     setMessages(data);
                 }
-                // Update lastSequence from latest message
                 if (data.length > 0) {
                     const maxSeq = Math.max(...data.map((m: Message) => m.id));
                     lastSequenceRef.current = maxSeq;
@@ -124,6 +125,15 @@ export function MessagePanel({ worldId, myGeneralId, generals }: MessagePanelPro
         },
         [myGeneralId]
     );
+
+    const loadPublicMessages = useCallback(async () => {
+        try {
+            const { data } = await messageApi.getByType('public', { worldId, limit: MESSAGE_PANEL_PAGE_SIZE });
+            setPublicMessages(data);
+        } catch {
+            /* ignore */
+        }
+    }, [worldId]);
 
     const loadContacts = useCallback(async () => {
         try {
@@ -137,13 +147,16 @@ export function MessagePanel({ worldId, myGeneralId, generals }: MessagePanelPro
     useEffect(() => {
         loadMessages();
         loadContacts();
-    }, [loadMessages, loadContacts]);
+        loadPublicMessages();
+    }, [loadMessages, loadContacts, loadPublicMessages]);
 
-    // Incremental polling every 2.5 seconds (only fetch new messages)
     useEffect(() => {
-        const interval = setInterval(() => loadMessages(true), 2500);
+        const interval = setInterval(() => {
+            loadMessages(true);
+            if (tab === 'public') loadPublicMessages();
+        }, 2500);
         return () => clearInterval(interval);
-    }, [loadMessages]);
+    }, [loadMessages, loadPublicMessages, tab]);
 
     const filtered = useMemo(() => {
         let result: Message[];
@@ -213,6 +226,24 @@ export function MessagePanel({ worldId, myGeneralId, generals }: MessagePanelPro
     const handleReply = (srcId: number) => {
         setDestId(String(srcId));
         saveLastContact(srcId);
+    };
+
+    const handlePublicSend = async () => {
+        if (!publicContent.trim()) return;
+        setSending(true);
+        try {
+            await messageApi.send(worldId, myGeneralId, null, publicContent.trim(), {
+                mailboxCode: 'public',
+                mailboxType: 'PUBLIC',
+                messageType: 'public_chat',
+            });
+            setPublicContent('');
+            await loadPublicMessages();
+        } catch {
+            /* ignore */
+        } finally {
+            setSending(false);
+        }
     };
 
     const handleDiplomacyRespond = async (id: number, accept: boolean) => {
@@ -355,28 +386,72 @@ export function MessagePanel({ worldId, myGeneralId, generals }: MessagePanelPro
                         <TabsTrigger value="diplomacy" className="text-xs">
                             외교
                         </TabsTrigger>
+                        <TabsTrigger value="public" className="text-xs">
+                            전체서신
+                        </TabsTrigger>
                     </TabsList>
-                    <TabsContent value={tab}>
-                        <ScrollArea className="h-52">
-                            <div className="space-y-1.5">
-                                {processedMessages.length === 0 ? (
-                                    <p className="py-4 text-center text-xs text-gray-400">서신 없음</p>
-                                ) : (
-                                    processedMessages.map((m) => (
-                                        <MessagePlate
-                                            key={m.id}
-                                            message={m}
-                                            senderGeneral={m.srcId ? (generalMap.get(m.srcId) ?? null) : null}
-                                            myGeneralId={myGeneralId}
-                                            onDelete={canDelete(m) ? handleDelete : undefined}
-                                            onReply={handleReply}
-                                            onDiplomacyRespond={handleDiplomacyRespond}
-                                        />
-                                    ))
-                                )}
+                    {tab === 'public' ? (
+                        <TabsContent value="public">
+                            <div className="flex gap-2 mb-2">
+                                <Textarea
+                                    value={publicContent}
+                                    onChange={(e) => setPublicContent(e.target.value)}
+                                    placeholder="전체 서신..."
+                                    className="h-12 resize-none text-xs"
+                                />
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={handlePublicSend}
+                                    disabled={sending || !publicContent.trim()}
+                                    className="self-end"
+                                >
+                                    전송
+                                </Button>
                             </div>
-                        </ScrollArea>
-                    </TabsContent>
+                            <ScrollArea className="h-44">
+                                <div className="space-y-1.5">
+                                    {publicMessages.length === 0 ? (
+                                        <p className="py-4 text-center text-xs text-gray-400">전체서신 없음</p>
+                                    ) : (
+                                        publicMessages.map((m) => (
+                                            <MessagePlate
+                                                key={m.id}
+                                                message={m}
+                                                senderGeneral={m.srcId ? (generalMap.get(m.srcId) ?? null) : null}
+                                                myGeneralId={myGeneralId}
+                                                onDelete={canDelete(m) ? handleDelete : undefined}
+                                                onReply={handleReply}
+                                                onDiplomacyRespond={handleDiplomacyRespond}
+                                            />
+                                        ))
+                                    )}
+                                </div>
+                            </ScrollArea>
+                        </TabsContent>
+                    ) : (
+                        <TabsContent value={tab}>
+                            <ScrollArea className="h-52">
+                                <div className="space-y-1.5">
+                                    {processedMessages.length === 0 ? (
+                                        <p className="py-4 text-center text-xs text-gray-400">서신 없음</p>
+                                    ) : (
+                                        processedMessages.map((m) => (
+                                            <MessagePlate
+                                                key={m.id}
+                                                message={m}
+                                                senderGeneral={m.srcId ? (generalMap.get(m.srcId) ?? null) : null}
+                                                myGeneralId={myGeneralId}
+                                                onDelete={canDelete(m) ? handleDelete : undefined}
+                                                onReply={handleReply}
+                                                onDiplomacyRespond={handleDiplomacyRespond}
+                                            />
+                                        ))
+                                    )}
+                                </div>
+                            </ScrollArea>
+                        </TabsContent>
+                    )}
                 </Tabs>
             </CardContent>
         </Card>

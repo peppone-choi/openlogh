@@ -1,12 +1,13 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Globe, UserPlus, Users, Bot, LogIn, Loader2, Clock, Signal, Crown, Swords, Shield } from 'lucide-react';
 import { useWorldStore } from '@/stores/worldStore';
 import { useGeneralStore } from '@/stores/generalStore';
 import { useAuthStore } from '@/stores/authStore';
 import { scenarioApi } from '@/lib/gameApi';
+import { connectWebSocket, disconnectWebSocket } from '@/lib/websocket';
 import type { Scenario, WorldState } from '@/types';
 import { ServerStatusCard } from '@/components/auth/server-status-card';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -107,7 +108,7 @@ function getActionAvailability(
 
 export default function LobbyPage() {
     const router = useRouter();
-    const { worlds, currentWorld, loading: worldsLoading, fetchWorlds, setCurrentWorld } = useWorldStore();
+    const { worlds, currentWorld, loading: worldsLoading, fetchWorlds, fetchWorld, setCurrentWorld } = useWorldStore();
     const { myGeneral, loading: generalLoading, fetchMyGeneral, clearMyGeneral } = useGeneralStore();
 
     const user = useAuthStore((s) => s.user);
@@ -117,6 +118,28 @@ export default function LobbyPage() {
     const [serverNotices, setServerNotices] = useState<Record<number, string>>({});
     const [scenarios, setScenarios] = useState<Scenario[]>([]);
     const scenarioMap = useMemo(() => new Map(scenarios.map((s) => [s.code, s.title])), [scenarios]);
+    const wsConnectedRef = useRef(false);
+    const myGeneralRef = useRef(myGeneral);
+    myGeneralRef.current = myGeneral;
+
+    useEffect(() => {
+        if (!currentWorld) return;
+        if (wsConnectedRef.current) return;
+        wsConnectedRef.current = true;
+
+        connectWebSocket(currentWorld.id, {
+            onTurnAdvance: () => {
+                fetchWorld(currentWorld.id).catch(() => {});
+                fetchWorlds().catch(() => {});
+                if (myGeneralRef.current) fetchMyGeneral(currentWorld.id).catch(() => {});
+            },
+        });
+
+        return () => {
+            disconnectWebSocket();
+            wsConnectedRef.current = false;
+        };
+    }, [currentWorld, fetchWorld, fetchWorlds, fetchMyGeneral]);
 
     useEffect(() => {
         fetchWorlds().then(() => {
@@ -329,8 +352,9 @@ export default function LobbyPage() {
                                         <div>
                                             <p className="text-xl font-bold">{myGeneral.name}</p>
                                             <p className="text-sm text-muted-foreground">
-                                                {currentWorld.scenarioCode} &middot; {currentWorld.currentYear}년{' '}
-                                                {currentWorld.currentMonth}월
+                                                {scenarioMap.get(currentWorld.scenarioCode) ||
+                                                    currentWorld.scenarioCode}{' '}
+                                                &middot; {currentWorld.currentYear}년 {currentWorld.currentMonth}월
                                             </p>
                                         </div>
                                     </div>

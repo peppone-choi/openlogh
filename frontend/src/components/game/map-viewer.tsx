@@ -140,6 +140,7 @@ export function MapViewer({
                 x: c.x,
                 y: c.y,
                 level: c.level,
+                region: c.region,
                 nationColor: c.nationColor && c.nationColor !== '#4b5563' ? c.nationColor : null,
                 nationName: c.nationName || null,
                 isCapital: c.isCapital ?? false,

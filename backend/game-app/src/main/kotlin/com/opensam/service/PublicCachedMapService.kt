@@ -82,6 +82,7 @@ class PublicCachedMapService(
                 x = mapCity.x,
                 y = mapCity.y,
                 level = mapCity.level,
+                region = mapCity.region,
                 nationName = nation?.name ?: "",
                 nationColor = nation?.color ?: "#4b5563",
                 isCapital = city.id in capitalCityIds,

@@ -17,6 +17,7 @@ import com.opensam.repository.GeneralRepository
 import com.opensam.repository.GeneralTurnRepository
 import com.opensam.repository.NationRepository
 import com.opensam.repository.WorldStateRepository
+import com.opensam.service.CommandLogDispatcher
 import com.opensam.service.GameEventService
 import com.opensam.service.ScenarioService
 import kotlinx.coroutines.runBlocking
@@ -37,6 +38,7 @@ class RealtimeService(
     private val gameEventService: GameEventService,
     private val scenarioService: ScenarioService,
     private val modifierService: ModifierService,
+    private val commandLogDispatcher: CommandLogDispatcher,
 ) {
     private val logger = LoggerFactory.getLogger(RealtimeService::class.java)
 
@@ -118,6 +120,20 @@ class RealtimeService(
                     } else {
                         commandExecutor.executeGeneralCommand(gt.actionCode, general, env, gt.arg, city, nation, rng)
                     }
+                }
+
+                if (result.logs.isNotEmpty()) {
+                    val env2 = buildCommandEnv(world)
+                    try {
+                        commandLogDispatcher.dispatchLogs(
+                            worldId = world.id.toLong(),
+                            generalId = general.id,
+                            nationId = if (general.nationId != 0L) general.nationId else null,
+                            year = env2.year,
+                            month = env2.month,
+                            logs = result.logs,
+                        )
+                    } catch (_: Exception) { }
                 }
 
                 generalTurnRepository.delete(gt)

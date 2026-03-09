@@ -548,6 +548,7 @@ export interface PublicCachedMapCity {
     x: number;
     y: number;
     level: number;
+    region?: number;
     nationName: string;
     nationColor: string;
     isCapital?: boolean;
