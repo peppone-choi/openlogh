@@ -230,7 +230,6 @@ class WorldController(
             )
 
             gameOrchestrator.detachWorld(id.toLong())
-            worldService.deleteWorld(id)
             ResponseEntity.noContent().build()
         } catch (_: IllegalArgumentException) {
             ResponseEntity.badRequest().build()

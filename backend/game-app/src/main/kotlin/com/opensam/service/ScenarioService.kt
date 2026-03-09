@@ -7,6 +7,7 @@ import com.opensam.model.ScenarioData
 import com.opensam.model.ScenarioInfo
 import com.opensam.repository.*
 import jakarta.persistence.EntityManager
+import org.hibernate.Session
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver
@@ -286,10 +287,13 @@ class ScenarioService(
             "message", "event", "nation_flag",
             "general", "city", "nation",
         )
-        for (table in tables) {
-            entityManager.createNativeQuery("DELETE FROM $table WHERE world_id = :wid")
-                .setParameter("wid", worldId)
-                .executeUpdate()
+        entityManager.unwrap(Session::class.java).doWork { connection ->
+            connection.createStatement().use { stmt ->
+                for (table in tables) {
+                    stmt.addBatch("DELETE FROM $table WHERE world_id = $worldId")
+                }
+                stmt.executeBatch()
+            }
         }
         entityManager.flush()
 

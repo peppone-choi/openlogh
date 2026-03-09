@@ -693,7 +693,7 @@ export default function MapPage() {
 
                                                 {showCityNames && (
                                                     <span
-                                                        className="pointer-events-none absolute whitespace-nowrap px-[2px] py-[1px] bg-black/55 text-[10px]"
+                                                        className="absolute whitespace-nowrap px-[2px] py-[1px] bg-black/55 text-[10px]"
                                                         style={{
                                                             left: cityNameOffsets.left,
                                                             top: cityNameOffsets.top,
