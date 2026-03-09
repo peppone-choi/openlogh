@@ -30,6 +30,8 @@ class ScenarioService(
     private val entityManager: EntityManager,
 ) {
     private val scenarios = mutableMapOf<String, ScenarioData>()
+    @Volatile
+    private var scenariosLoaded = false
     private val log = LoggerFactory.getLogger(javaClass)
 
     /** Legacy CityConstBase::$buildInit — level-based initial values for new cities. */
@@ -663,7 +665,7 @@ class ScenarioService(
     }
 
     private fun loadAllScenarios() {
-        if (scenarios.isNotEmpty()) return
+        if (scenariosLoaded) return
         val resolver = PathMatchingResourcePatternResolver()
         val resources = resolver.getResources("classpath*:data/scenarios/scenario_*.json")
         for (resource in resources) {
@@ -672,6 +674,7 @@ class ScenarioService(
             val data: ScenarioData = objectMapper.readValue(resource.inputStream)
             scenarios[code] = data
         }
+        scenariosLoaded = true
     }
 
     private fun loadDefaults(): ScenarioData {

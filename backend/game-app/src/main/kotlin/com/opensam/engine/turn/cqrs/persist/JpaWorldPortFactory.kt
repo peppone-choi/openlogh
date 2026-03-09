@@ -34,7 +34,28 @@ class JpaWorldPortFactory(
     private val generalTurnRepository: GeneralTurnRepository? = null,
     private val nationTurnRepository: NationTurnRepository? = null,
 ) {
+    private val scopedPorts = ThreadLocal<MutableMap<Long, CachingWorldPorts>?>()
+
     fun create(worldId: Long): WorldPorts {
+        val activeScope = scopedPorts.get()
+        if (activeScope != null) {
+            return activeScope.getOrPut(worldId) { CachingWorldPorts(createRaw(worldId)) }
+        }
+
+        return createRaw(worldId)
+    }
+
+    fun beginScope() {
+        if (scopedPorts.get() == null) {
+            scopedPorts.set(mutableMapOf())
+        }
+    }
+
+    fun endScope() {
+        scopedPorts.remove()
+    }
+
+    private fun createRaw(worldId: Long): WorldPorts {
         if (
             generalRepository != null && cityRepository != null && nationRepository != null &&
             troopRepository != null && diplomacyRepository != null &&

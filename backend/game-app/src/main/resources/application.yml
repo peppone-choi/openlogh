@@ -5,6 +5,11 @@ spring:
         password: opensam123
         driver-class-name: org.postgresql.Driver
 
+    task:
+        scheduling:
+            pool:
+                size: 2
+
     jpa:
         hibernate:
             ddl-auto: validate

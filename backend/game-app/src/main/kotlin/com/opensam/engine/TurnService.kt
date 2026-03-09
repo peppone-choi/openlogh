@@ -143,181 +143,215 @@ class TurnService @Autowired constructor(
     )
 
     private val logger = LoggerFactory.getLogger(TurnService::class.java)
+    private val jsonMapper = jacksonObjectMapper()
+
     private companion object {
         const val MAX_TICK_DURATION_MS = 30_000L
     }
 
     @Transactional
     fun processWorld(world: WorldState) {
-        val now = OffsetDateTime.now()
-        val tickDuration = Duration.ofSeconds(world.tickSeconds.toLong())
-        var nextTurnAt = world.updatedAt.plus(tickDuration)
-        val worldId = world.id.toLong()
-        val tickDeadline = System.currentTimeMillis() + MAX_TICK_DURATION_MS
+        worldPortFactory.beginScope()
+        try {
+            val processStartMs = System.currentTimeMillis()
+            val now = OffsetDateTime.now()
+            val tickDuration = Duration.ofSeconds(world.tickSeconds.toLong())
+            var nextTurnAt = world.updatedAt.plus(tickDuration)
+            val worldId = world.id.toLong()
+            val tickDeadline = System.currentTimeMillis() + MAX_TICK_DURATION_MS
 
-        var turnsProcessed = 0
-        while (!now.isBefore(nextTurnAt) && System.currentTimeMillis() < tickDeadline) {
-            turnsProcessed++
-            // 진행 전 이전 월 기록 (연감 스냅샷용)
-            val previousYear = world.currentYear.toInt()
-            val previousMonth = world.currentMonth.toInt()
+            var turnsProcessed = 0
+            while (!now.isBefore(nextTurnAt) && System.currentTimeMillis() < tickDeadline) {
+                turnsProcessed++
+                val iterationStartMs = System.currentTimeMillis()
+                // 진행 전 이전 월 기록 (연감 스냅샷용)
+                val previousYear = world.currentYear.toInt()
+                val previousMonth = world.currentMonth.toInt()
 
-            try {
-                executeGeneralCommandsUntil(world, nextTurnAt)
-            } catch (e: Exception) {
-                logger.error("executeGeneralCommandsUntil failed for world {}: {}", worldId, e.message, e)
-            }
-
-            try {
-                eventService.dispatchEvents(world, "PRE_MONTH")
-            } catch (e: Exception) {
-                logger.warn("EventService.dispatchEvents(PRE_MONTH) failed: ${e.message}")
-            }
-
-            try {
-                economyService.preUpdateMonthly(world)
-            } catch (e: Exception) {
-                logger.warn("EconomyService.preUpdateMonthly failed: ${e.message}")
-            }
-
-            advanceMonth(world)
-
-            // 연감 스냅샷: 매월 변경 시 이전 월의 맵/국가 상태를 기록
-            // core2026 yearbookHandler.onMonthChanged 패러티
-            try {
-                yearbookService.saveMonthlySnapshot(worldId, previousYear, previousMonth)
-            } catch (e: Exception) {
-                logger.warn("YearbookService.saveMonthlySnapshot failed: ${e.message}")
-            }
-
-            // 월드 스냅샷 기록: 히스토리 맵 재현에 사용 (world_history.event_type=snapshot)
-            try {
-                worldService.captureSnapshot(world)
-            } catch (e: Exception) {
-                logger.warn("WorldService.captureSnapshot failed: ${e.message}")
-            }
-
-            // 트래픽 스냅샷 기록 (legacy recentTraffic 패러티)
-            try {
-                val onlineCount = worldPortFactory.create(worldId).allGenerals().count { it.userId != null }
-                val snapshot = com.opensam.entity.TrafficSnapshot(
-                    worldId = worldId,
-                    year = world.currentYear,
-                    month = world.currentMonth,
-                    refresh = (world.meta["refresh"] as? Number)?.toInt() ?: 0,
-                    online = onlineCount,
-                )
-                trafficSnapshotRepository.save(snapshot)
-                // Reset per-turn refresh counter
-                world.meta["refresh"] = 0
-            } catch (e: Exception) {
-                logger.warn("TrafficSnapshot recording failed: ${e.message}")
-            }
-
-            // 1월: 연초 통계 (legacy checkStatistic 패러티)
-            if (world.currentMonth.toInt() == 1) {
                 try {
-                    economyService.processYearlyStatistics(world)
+                    val commandStartMs = System.currentTimeMillis()
+                    executeGeneralCommandsUntil(world, nextTurnAt)
+                    val commandElapsedMs = System.currentTimeMillis() - commandStartMs
+                    logger.info(
+                        "[Turn] Turn {}/{}: executeGeneralCommands took {}ms",
+                        world.currentYear,
+                        world.currentMonth,
+                        commandElapsedMs,
+                    )
                 } catch (e: Exception) {
-                    logger.warn("EconomyService.processYearlyStatistics failed: ${e.message}")
+                    logger.error("executeGeneralCommandsUntil failed for world {}: {}", worldId, e.message, e)
                 }
-            }
 
-            try {
-                eventService.dispatchEvents(world, "MONTH")
-            } catch (e: Exception) {
-                logger.warn("EventService.dispatchEvents failed: ${e.message}")
-            }
-
-            try {
-                economyService.postUpdateMonthly(world)
-            } catch (e: Exception) {
-                logger.warn("EconomyService.postUpdateMonthly failed: ${e.message}")
-            }
-
-            try {
-                economyService.processDisasterOrBoom(world)
-            } catch (e: Exception) {
-                logger.warn("EconomyService.processDisasterOrBoom failed: ${e.message}")
-            }
-
-            try {
-                economyService.randomizeCityTradeRate(world)
-            } catch (e: Exception) {
-                logger.warn("EconomyService.randomizeCityTradeRate failed: ${e.message}")
-            }
-
-            try {
-                diplomacyService.processDiplomacyTurn(world)
-            } catch (e: Exception) {
-                logger.warn("DiplomacyService.processDiplomacyTurn failed: ${e.message}")
-            }
-
-            // Recalculate war front status for all nations (legacy SetNationFront parity)
-            try {
-                nationService.recalcAllFronts(worldId)
-            } catch (e: Exception) {
-                logger.warn("NationService.recalcAllFronts failed: ${e.message}")
-            }
-
-            try {
-                resetStrategicCommandLimits(world)
-            } catch (e: Exception) {
-                logger.warn("resetStrategicCommandLimits failed: ${e.message}")
-            }
-
-            try {
-                val ports = worldPortFactory.create(worldId)
-                val generals = ports.allGenerals().map { it.toEntity() }
-                generalMaintenanceService.processGeneralMaintenance(world, generals)
-                specialAssignmentService.checkAndAssignSpecials(world, generals)
-                generals.forEach { ports.putGeneral(it.toSnapshot()) }
-
-                // Accrue inheritance points for player generals
-                for (general in generals.filter { it.npcState.toInt() == 0 }) {
-                    inheritanceService.accruePoints(general, "lived_month", 1)
+                try {
+                    eventService.dispatchEvents(world, "PRE_MONTH")
+                } catch (e: Exception) {
+                    logger.warn("EventService.dispatchEvents(PRE_MONTH) failed: ${e.message}")
                 }
-            } catch (e: Exception) {
-                logger.warn("GeneralMaintenanceService failed: ${e.message}")
+
+                try {
+                    economyService.preUpdateMonthly(world)
+                } catch (e: Exception) {
+                    logger.warn("EconomyService.preUpdateMonthly failed: ${e.message}")
+                }
+
+                advanceMonth(world)
+
+                // 연감 스냅샷: 매월 변경 시 이전 월의 맵/국가 상태를 기록
+                // core2026 yearbookHandler.onMonthChanged 패러티
+                try {
+                    yearbookService.saveMonthlySnapshot(worldId, previousYear, previousMonth)
+                } catch (e: Exception) {
+                    logger.warn("YearbookService.saveMonthlySnapshot failed: ${e.message}")
+                }
+
+                // 월드 스냅샷 기록: 히스토리 맵 재현에 사용 (world_history.event_type=snapshot)
+                try {
+                    worldService.captureSnapshot(world)
+                } catch (e: Exception) {
+                    logger.warn("WorldService.captureSnapshot failed: ${e.message}")
+                }
+
+                // 트래픽 스냅샷 기록 (legacy recentTraffic 패러티)
+                try {
+                    val onlineCount = worldPortFactory.create(worldId).allGenerals().count { it.userId != null }
+                    val snapshot = com.opensam.entity.TrafficSnapshot(
+                        worldId = worldId,
+                        year = world.currentYear,
+                        month = world.currentMonth,
+                        refresh = (world.meta["refresh"] as? Number)?.toInt() ?: 0,
+                        online = onlineCount,
+                    )
+                    trafficSnapshotRepository.save(snapshot)
+                    // Reset per-turn refresh counter
+                    world.meta["refresh"] = 0
+                } catch (e: Exception) {
+                    logger.warn("TrafficSnapshot recording failed: ${e.message}")
+                }
+
+                // 1월: 연초 통계 (legacy checkStatistic 패러티)
+                if (world.currentMonth.toInt() == 1) {
+                    try {
+                        economyService.processYearlyStatistics(world)
+                    } catch (e: Exception) {
+                        logger.warn("EconomyService.processYearlyStatistics failed: ${e.message}")
+                    }
+                }
+
+                try {
+                    eventService.dispatchEvents(world, "MONTH")
+                } catch (e: Exception) {
+                    logger.warn("EventService.dispatchEvents failed: ${e.message}")
+                }
+
+                try {
+                    economyService.postUpdateMonthly(world)
+                } catch (e: Exception) {
+                    logger.warn("EconomyService.postUpdateMonthly failed: ${e.message}")
+                }
+
+                try {
+                    economyService.processDisasterOrBoom(world)
+                } catch (e: Exception) {
+                    logger.warn("EconomyService.processDisasterOrBoom failed: ${e.message}")
+                }
+
+                try {
+                    economyService.randomizeCityTradeRate(world)
+                } catch (e: Exception) {
+                    logger.warn("EconomyService.randomizeCityTradeRate failed: ${e.message}")
+                }
+
+                try {
+                    diplomacyService.processDiplomacyTurn(world)
+                } catch (e: Exception) {
+                    logger.warn("DiplomacyService.processDiplomacyTurn failed: ${e.message}")
+                }
+
+                // Recalculate war front status for all nations (legacy SetNationFront parity)
+                try {
+                    nationService.recalcAllFronts(worldId)
+                } catch (e: Exception) {
+                    logger.warn("NationService.recalcAllFronts failed: ${e.message}")
+                }
+
+                try {
+                    resetStrategicCommandLimits(world)
+                } catch (e: Exception) {
+                    logger.warn("resetStrategicCommandLimits failed: ${e.message}")
+                }
+
+                try {
+                    val ports = worldPortFactory.create(worldId)
+                    val generals = ports.allGenerals().map { it.toEntity() }
+                    generalMaintenanceService.processGeneralMaintenance(world, generals)
+                    specialAssignmentService.checkAndAssignSpecials(world, generals)
+                    generals.forEach { ports.putGeneral(it.toSnapshot()) }
+
+                    // Accrue inheritance points for player generals
+                    for (general in generals.filter { it.npcState.toInt() == 0 }) {
+                        inheritanceService.accruePoints(general, "lived_month", 1)
+                    }
+                } catch (e: Exception) {
+                    logger.warn("GeneralMaintenanceService failed: ${e.message}")
+                }
+
+                try {
+                    npcSpawnService.checkNpcSpawn(world)
+                } catch (e: Exception) {
+                    logger.warn("NpcSpawnService.checkNpcSpawn failed: ${e.message}")
+                }
+
+                try {
+                    unificationService.checkAndSettleUnification(world)
+                } catch (e: Exception) {
+                    logger.warn("UnificationService.checkAndSettleUnification failed: ${e.message}")
+                }
+
+                world.updatedAt = nextTurnAt
+                nextTurnAt = nextTurnAt.plus(tickDuration)
+                val iterationElapsedMs = System.currentTimeMillis() - iterationStartMs
+                logger.info(
+                    "[Turn] Turn iteration completed in {}ms for world {} (to {}/{})",
+                    iterationElapsedMs,
+                    worldId,
+                    world.currentYear,
+                    world.currentMonth,
+                )
             }
 
+            // 토너먼트 처리: 자동 진행 라운드 (legacy processTournament 패러티)
             try {
-                npcSpawnService.checkNpcSpawn(world)
+                tournamentService.processTournamentTurn(worldId)
             } catch (e: Exception) {
-                logger.warn("NpcSpawnService.checkNpcSpawn failed: ${e.message}")
+                logger.warn("TournamentService.processTournamentTurn failed: ${e.message}")
             }
 
+            // 경매 처리: 만료된 경매 정리 (legacy processAuction 패러티)
             try {
-                unificationService.checkAndSettleUnification(world)
+                auctionService.processExpiredAuctions()
             } catch (e: Exception) {
-                logger.warn("UnificationService.checkAndSettleUnification failed: ${e.message}")
+                logger.warn("AuctionService.processExpiredAuctions failed: ${e.message}")
             }
 
-            world.updatedAt = nextTurnAt
-            nextTurnAt = nextTurnAt.plus(tickDuration)
+            worldStateRepository.save(world)
+            val totalElapsedMs = System.currentTimeMillis() - processStartMs
+            logger.info(
+                "[Turn] processWorld completed: {} turns in {}ms for world {}",
+                turnsProcessed,
+                totalElapsedMs,
+                worldId,
+            )
+        } finally {
+            worldPortFactory.endScope()
         }
-
-        // 토너먼트 처리: 자동 진행 라운드 (legacy processTournament 패러티)
-        try {
-            tournamentService.processTournamentTurn(worldId)
-        } catch (e: Exception) {
-            logger.warn("TournamentService.processTournamentTurn failed: ${e.message}")
-        }
-
-        // 경매 처리: 만료된 경매 정리 (legacy processAuction 패러티)
-        try {
-            auctionService.processExpiredAuctions()
-        } catch (e: Exception) {
-            logger.warn("AuctionService.processExpiredAuctions failed: ${e.message}")
-        }
-
-        worldStateRepository.save(world)
     }
 
     private fun executeGeneralCommandsUntil(world: WorldState, targetTime: OffsetDateTime) {
         val worldId = world.id.toLong()
         val ports = worldPortFactory.create(worldId)
         val generals = ports.allGenerals().map { it.toEntity() }.sortedBy { it.turnTime }
+        val cityCache = ports.allCities().associate { it.id to it.toEntity() }
+        val nationCache = ports.allNations().associate { it.id to it.toEntity() }
         val env = buildCommandEnv(world)
 
         logger.info("[Turn] executeGeneralCommands: {} generals for world {}", generals.size, worldId)
@@ -327,9 +361,9 @@ class TurnService @Autowired constructor(
                 break
             }
             try {
-                val city = ports.city(general.cityId)?.toEntity()
+                val city = cityCache[general.cityId]
                 val nation = if (general.nationId != 0L) {
-                    ports.nation(general.nationId)?.toEntity()
+                    nationCache[general.nationId]
                 } else null
 
                 firePreTurnTriggers(world, general, nation)
@@ -472,7 +506,7 @@ class TurnService @Autowired constructor(
                 // Legacy: after 출병 run(), StaticEventHandler calls ConquerCity/warProcess
                 if (cmdResult.success && cmdResult.message != null) {
                     try {
-                        val msgJson = jacksonObjectMapper().readTree(cmdResult.message!!)
+                        val msgJson = jsonMapper.readTree(cmdResult.message!!)
                         if (msgJson.path("battleTriggered").asBoolean(false)) {
                             val targetCityId = when {
                                 msgJson.path("targetCityId").isNumber -> msgJson.path("targetCityId").asLong()
