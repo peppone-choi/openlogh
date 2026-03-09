@@ -24,7 +24,7 @@ class NpcSpawnServiceTest {
         nationRepository = mock(NationRepository::class.java)
         generalRepository = mock(GeneralRepository::class.java)
         mapService = mock(MapService::class.java)
-        service = NpcSpawnService(cityRepository, nationRepository, generalRepository, mapService)
+        service = NpcSpawnService(nationRepository, cityRepository, generalRepository, mapService)
     }
 
     // ========== derivePoliticsFromStats formula ==========

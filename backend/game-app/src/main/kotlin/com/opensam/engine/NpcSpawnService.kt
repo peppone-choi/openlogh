@@ -1,53 +1,23 @@
 package com.opensam.engine
 
 import com.opensam.entity.*
-import com.opensam.engine.turn.cqrs.persist.JpaWorldPortFactory
-import com.opensam.engine.turn.cqrs.persist.toEntity
-import com.opensam.engine.turn.cqrs.persist.toSnapshot
-import com.opensam.engine.turn.cqrs.port.IdAllocator
 import com.opensam.repository.CityRepository
 import com.opensam.repository.GeneralRepository
 import com.opensam.repository.NationRepository
 import com.opensam.service.MapService
 import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
-import java.time.OffsetDateTime
-import java.util.concurrent.atomic.AtomicLong
 import kotlin.random.Random
 
 @Service
 class NpcSpawnService(
-    private val worldPortFactory: JpaWorldPortFactory,
-    private val idAllocator: IdAllocator,
+    private val nationRepository: NationRepository,
+    private val cityRepository: CityRepository,
+    private val generalRepository: GeneralRepository,
     private val mapService: MapService,
 ) {
-    @Autowired
-    constructor(
-        cityRepository: CityRepository,
-        nationRepository: NationRepository,
-        generalRepository: GeneralRepository,
-        mapService: MapService,
-    ) : this(
-        worldPortFactory = JpaWorldPortFactory(
-            generalRepository = generalRepository,
-            cityRepository = cityRepository,
-            nationRepository = nationRepository,
-        ),
-        idAllocator = object : IdAllocator {
-            private val nextGeneral = AtomicLong(1_000_000)
-            private val nextNation = AtomicLong(1_000_000)
-            override fun nextGeneralId(): Long = nextGeneral.getAndIncrement()
-            override fun nextCityId(): Long = throw UnsupportedOperationException()
-            override fun nextNationId(): Long = nextNation.getAndIncrement()
-            override fun nextTroopId(): Long = throw UnsupportedOperationException()
-            override fun nextDiplomacyId(): Long = throw UnsupportedOperationException()
-        },
-        mapService = mapService,
-    )
-
     private val log = LoggerFactory.getLogger(javaClass)
 
     companion object {
@@ -82,8 +52,7 @@ class NpcSpawnService(
      */
     private fun raiseNPCNation(world: WorldState) {
         val worldId = world.id.toLong()
-        val ports = worldPortFactory.create(worldId)
-        val cities = ports.allCities().map { it.toEntity() }
+        val cities = cityRepository.findByWorldId(worldId)
         val mapCode = (world.config["mapCode"] as? String) ?: "che"
 
         // Find empty cities at level 5-6
@@ -107,8 +76,6 @@ class NpcSpawnService(
         // Shuffle empty cities
         emptyCities.shuffle(rng)
 
-        val nations = ports.allNations().map { it.toEntity() }
-
         // Build DB city ID -> map city ID lookup
         val dbToMapId = cities.associate { it.id to it.mapCityId }
 
@@ -130,7 +97,7 @@ class NpcSpawnService(
             if (tooCloseToNpc) continue
 
             // Create NPC nation
-            val newNation = buildNpcNation(world, rng, emptyCity, avgCity, avgGenCount, avgTech)
+            buildNpcNation(world, rng, emptyCity, avgCity, avgGenCount, avgTech)
             npcCreatedCityIds.add(emptyCity.id)
         }
 
@@ -146,29 +113,29 @@ class NpcSpawnService(
         avgCity: Map<String, Int>,
         genCount: Int,
         avgTech: Float,
-    ): Nation {
+    ) {
         val worldId = world.id.toLong()
-        val ports = worldPortFactory.create(worldId)
         val year = world.currentYear.toInt()
         val color = NPC_NATION_COLORS[rng.nextInt(NPC_NATION_COLORS.size)]
 
-        val nation = Nation(
-            id = idAllocator.nextNationId(),
-            worldId = worldId,
-            name = "ⓤ${city.name}",
-            color = color,
-            capitalCityId = city.id,
-            gold = 0,
-            rice = 2000,
-            bill = 80,
-            rate = 20,
-            rateTmp = 20,
-            chiefGeneralId = 0,
-            tech = avgTech,
-            level = 2,
-            typeCode = "che_중립",
+        // Save nation — DB generates ID via @GeneratedValue(IDENTITY)
+        val nation = nationRepository.save(
+            Nation(
+                worldId = worldId,
+                name = "ⓤ${city.name}",
+                color = color,
+                capitalCityId = city.id,
+                gold = 0,
+                rice = 2000,
+                bill = 80,
+                rate = 20,
+                rateTmp = 20,
+                chiefGeneralId = 0,
+                tech = avgTech,
+                level = 2,
+                typeCode = "che_중립",
+            )
         )
-        ports.putNation(nation.toSnapshot())
 
         // Assign city to nation
         city.nationId = nation.id
@@ -180,65 +147,64 @@ class NpcSpawnService(
         city.secu = avgCity["secu"]?.coerceAtMost(city.secuMax) ?: city.secu
         city.def = avgCity["def"]?.coerceAtMost(city.defMax) ?: city.def
         city.wall = avgCity["wall"]?.coerceAtMost(city.wallMax) ?: city.wall
-        ports.putCity(city.toSnapshot())
+        cityRepository.save(city)
 
-        // Create ruler
+        // Create ruler — DB generates ID
         val rulerStats = generateNpcStats(rng, 180)
-        val ruler = General(
-            id = idAllocator.nextGeneralId(),
-            worldId = worldId,
-            name = "${city.name}태수",
-            nationId = nation.id,
-            cityId = city.id,
-            npcState = 6,
-            bornYear = (year - 20).toShort(),
-            deadYear = (year + 20).toShort(),
-            leadership = rulerStats.first.toShort(),
-            strength = rulerStats.second.toShort(),
-            intel = rulerStats.third.toShort(),
-            politics = derivePoliticsFromStats(rulerStats.first, rulerStats.second, rulerStats.third, rng).toShort(),
-            charm = deriveCharmFromStats(rulerStats.first, rulerStats.second, rulerStats.third, rng).toShort(),
-            officerLevel = 12,
-            gold = 1000,
-            rice = 1000,
-            crew = 1000,
-            crewType = rng.nextInt(1, 5).toShort(),
-            train = 80,
-            atmos = 80,
+        val ruler = generalRepository.save(
+            General(
+                worldId = worldId,
+                name = "${city.name}태수",
+                nationId = nation.id,
+                cityId = city.id,
+                npcState = 6,
+                bornYear = (year - 20).toShort(),
+                deadYear = (year + 20).toShort(),
+                leadership = rulerStats.first.toShort(),
+                strength = rulerStats.second.toShort(),
+                intel = rulerStats.third.toShort(),
+                politics = derivePoliticsFromStats(rulerStats.first, rulerStats.second, rulerStats.third, rng).toShort(),
+                charm = deriveCharmFromStats(rulerStats.first, rulerStats.second, rulerStats.third, rng).toShort(),
+                officerLevel = 12,
+                gold = 1000,
+                rice = 1000,
+                crew = 1000,
+                crewType = rng.nextInt(1, 5).toShort(),
+                train = 80,
+                atmos = 80,
+            )
         )
-        ports.putGeneral(ruler.toSnapshot())
         nation.chiefGeneralId = ruler.id
-        ports.putNation(nation.toSnapshot())
+        nationRepository.save(nation)
 
         // Create NPC generals
         val npcCount = (genCount - 1).coerceAtLeast(2)
         for (i in 1..npcCount) {
             val stats = generateNpcStats(rng, 150)
-            val npc = General(
-                id = idAllocator.nextGeneralId(),
-                worldId = worldId,
-                name = "${city.name}장수$i",
-                nationId = nation.id,
-                cityId = city.id,
-                npcState = 6,
-                bornYear = (year - 20).toShort(),
-                deadYear = (year + 10 + rng.nextInt(20)).toShort(),
-                leadership = stats.first.toShort(),
-                strength = stats.second.toShort(),
-                intel = stats.third.toShort(),
-                politics = derivePoliticsFromStats(stats.first, stats.second, stats.third, rng).toShort(),
-                charm = deriveCharmFromStats(stats.first, stats.second, stats.third, rng).toShort(),
-                gold = 1000,
-                rice = 1000,
-                crew = 500 + rng.nextInt(500),
-                crewType = rng.nextInt(1, 5).toShort(),
-                train = 70,
-                atmos = 70,
-                killTurn = 240,
+            generalRepository.save(
+                General(
+                    worldId = worldId,
+                    name = "${city.name}장수$i",
+                    nationId = nation.id,
+                    cityId = city.id,
+                    npcState = 6,
+                    bornYear = (year - 20).toShort(),
+                    deadYear = (year + 10 + rng.nextInt(20)).toShort(),
+                    leadership = stats.first.toShort(),
+                    strength = stats.second.toShort(),
+                    intel = stats.third.toShort(),
+                    politics = derivePoliticsFromStats(stats.first, stats.second, stats.third, rng).toShort(),
+                    charm = deriveCharmFromStats(stats.first, stats.second, stats.third, rng).toShort(),
+                    gold = 1000,
+                    rice = 1000,
+                    crew = 500 + rng.nextInt(500),
+                    crewType = rng.nextInt(1, 5).toShort(),
+                    train = 70,
+                    atmos = 70,
+                    killTurn = 240,
+                )
             )
-            ports.putGeneral(npc.toSnapshot())
         }
-        return nation
     }
 
     private fun derivePoliticsFromStats(leadership: Int, strength: Int, intel: Int, rng: Random): Int {
@@ -283,17 +249,16 @@ class NpcSpawnService(
     }
 
     private fun calcAvgNationGeneralCount(worldId: Long): Int {
-        val ports = worldPortFactory.create(worldId)
-        val nations = ports.allNations().map { it.toEntity() }.filter { it.level > 0 }
+        val nations = nationRepository.findByWorldId(worldId).filter { it.level > 0 }
         if (nations.isEmpty()) return 5
-        val generals = ports.allGenerals().map { it.toEntity() }
+        val generals = generalRepository.findByWorldId(worldId)
         val countsByNation = generals.groupBy { it.nationId }.mapValues { it.value.size }
         val counts = nations.mapNotNull { countsByNation[it.id] }.filter { it > 0 }
         return if (counts.isEmpty()) 5 else counts.average().toInt()
     }
 
     private fun calcAvgTech(worldId: Long): Float {
-        val nations = worldPortFactory.create(worldId).allNations().map { it.toEntity() }.filter { it.level > 0 }
+        val nations = nationRepository.findByWorldId(worldId).filter { it.level > 0 }
         if (nations.isEmpty()) return 0f
         return nations.map { it.tech }.average().toFloat()
     }
@@ -307,9 +272,8 @@ class NpcSpawnService(
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     fun provideNpcTroopLeaders(world: WorldState) {
         val worldId = world.id.toLong()
-        val ports = worldPortFactory.create(worldId)
-        val nations = ports.allNations().map { it.toEntity() }
-        val allGenerals = ports.allGenerals().map { it.toEntity() }
+        val nations = nationRepository.findByWorldId(worldId)
+        val allGenerals = generalRepository.findByWorldId(worldId)
 
         // 국가별 npcState=5 장수 수 집계
         val npc5CountByNation = allGenerals.filter { it.npcState.toInt() == 5 }
@@ -334,34 +298,34 @@ class NpcSpawnService(
 
             while (currentCount < maxCount) {
                 val nameSeq = rng.nextInt(10000)
-                val npc = General(
-                    id = idAllocator.nextGeneralId(),
-                    worldId = worldId,
-                    name = "부대장${String.format("%04d", nameSeq)}",
-                    nationId = nation.id,
-                    cityId = capitalCity,
-                    npcState = 5,
-                    affinity = 999,
-                    bornYear = (world.currentYear - 20).toShort(),
-                    deadYear = (world.currentYear + 30).toShort(),
-                    leadership = 10,
-                    strength = 10,
-                    intel = 10,
-                    politics = 10,
-                    charm = 10,
-                    gold = 0,
-                    rice = 0,
-                    crew = 0,
-                    crewType = 1,
-                    train = 0,
-                    atmos = 0,
-                    killTurn = 70,
-                    personalCode = "che_은둔",
+                val npc = generalRepository.save(
+                    General(
+                        worldId = worldId,
+                        name = "부대장${String.format("%04d", nameSeq)}",
+                        nationId = nation.id,
+                        cityId = capitalCity,
+                        npcState = 5,
+                        affinity = 999,
+                        bornYear = (world.currentYear - 20).toShort(),
+                        deadYear = (world.currentYear + 30).toShort(),
+                        leadership = 10,
+                        strength = 10,
+                        intel = 10,
+                        politics = 10,
+                        charm = 10,
+                        gold = 0,
+                        rice = 0,
+                        crew = 0,
+                        crewType = 1,
+                        train = 0,
+                        atmos = 0,
+                        killTurn = 70,
+                        personalCode = "che_은둔",
+                    )
                 )
-                ports.putGeneral(npc.toSnapshot())
                 // 부대장 = troopId가 자기 자신
                 npc.troopId = npc.id
-                ports.putGeneral(npc.toSnapshot())
+                generalRepository.save(npc)
                 currentCount++
             }
         }
@@ -374,8 +338,7 @@ class NpcSpawnService(
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     fun raiseInvader(world: WorldState) {
         val worldId = world.id.toLong()
-        val ports = worldPortFactory.create(worldId)
-        val cities = ports.allCities().map { it.toEntity() }
+        val cities = cityRepository.findByWorldId(worldId)
         val lv4Cities = cities.filter { it.level.toInt() == 4 }
         if (lv4Cities.isEmpty()) return
 
@@ -385,8 +348,8 @@ class NpcSpawnService(
             world.currentYear, world.currentMonth
         )
 
-        val existingNations = ports.allNations().map { it.toEntity() }
-        val generals = ports.allGenerals().map { it.toEntity() }
+        val existingNations = nationRepository.findByWorldId(worldId)
+        val generals = generalRepository.findByWorldId(worldId)
         val avgStatTotal = if (generals.isNotEmpty()) {
             generals.filter { it.npcState < 4 }
                 .map { it.leadership + it.strength + it.intel }
@@ -405,13 +368,13 @@ class NpcSpawnService(
                     val otherCities = cities.filter { it.nationId == nation.id && it.id != city.id }
                     if (otherCities.isNotEmpty()) {
                         nation.capitalCityId = otherCities.maxByOrNull { it.pop }?.id
-                        ports.putNation(nation.toSnapshot())
+                        nationRepository.save(nation)
                     }
                 }
                 city.nationId = 0
                 city.frontState = 0
                 city.supplyState = 1
-                ports.putCity(city.toSnapshot())
+                cityRepository.save(city)
             }
         }
 
@@ -422,24 +385,24 @@ class NpcSpawnService(
             val nationName = "ⓞ${invaderName}족"
             val npcEachCount = 10.coerceAtLeast((generals.count { it.npcState < 4 } / lv4Cities.size) * 2)
 
-            // Create invader nation
-            val nation = Nation(
-                id = idAllocator.nextNationId(),
-                worldId = worldId,
-                name = nationName,
-                color = "#800080",
-                capitalCityId = city.id,
-                gold = 9999999,
-                rice = 9999999,
-                bill = 80,
-                rate = 20,
-                rateTmp = 20,
-                chiefGeneralId = 0,
-                tech = avgTech * 1.2f,
-                level = 2,
-                typeCode = "che_병가",
+            // Create invader nation — DB generates ID
+            val nation = nationRepository.save(
+                Nation(
+                    worldId = worldId,
+                    name = nationName,
+                    color = "#800080",
+                    capitalCityId = city.id,
+                    gold = 9999999,
+                    rice = 9999999,
+                    bill = 80,
+                    rate = 20,
+                    rateTmp = 20,
+                    chiefGeneralId = 0,
+                    tech = avgTech * 1.2f,
+                    level = 2,
+                    typeCode = "che_병가",
+                )
             )
-            ports.putNation(nation.toSnapshot())
             invaderNationIds.add(nation.id)
 
             city.nationId = nation.id
@@ -447,39 +410,39 @@ class NpcSpawnService(
             city.agri = city.agriMax
             city.comm = city.commMax
             city.secu = city.secuMax
-            ports.putCity(city.toSnapshot())
+            cityRepository.save(city)
 
             // Create ruler
             val rulerLeadership = (specAvg * 1.8).toInt().coerceAtMost(100)
             val rulerStrength = (specAvg * 1.8).toInt().coerceAtMost(100)
             val rulerIntel = (specAvg * 1.2).toInt().coerceAtMost(100)
-            val ruler = General(
-                id = idAllocator.nextGeneralId(),
-                worldId = worldId,
-                name = "${invaderName}대왕",
-                nationId = nation.id,
-                cityId = city.id,
-                npcState = 9,
-                affinity = 999,
-                bornYear = (world.currentYear - 20).toShort(),
-                deadYear = (world.currentYear + 20).toShort(),
-                leadership = rulerLeadership.toShort(),
-                strength = rulerStrength.toShort(),
-                intel = rulerIntel.toShort(),
-                politics = derivePoliticsFromStats(rulerLeadership, rulerStrength, rulerIntel, rng).toShort(),
-                charm = deriveCharmFromStats(rulerLeadership, rulerStrength, rulerIntel, rng).toShort(),
-                officerLevel = 12,
-                experience = (avgExp * 1.2).toInt(),
-                gold = 99999,
-                rice = 99999,
-                crew = 5000,
-                crewType = rng.nextInt(1, 5).toShort(),
-                train = 100,
-                atmos = 100,
+            val ruler = generalRepository.save(
+                General(
+                    worldId = worldId,
+                    name = "${invaderName}대왕",
+                    nationId = nation.id,
+                    cityId = city.id,
+                    npcState = 9,
+                    affinity = 999,
+                    bornYear = (world.currentYear - 20).toShort(),
+                    deadYear = (world.currentYear + 20).toShort(),
+                    leadership = rulerLeadership.toShort(),
+                    strength = rulerStrength.toShort(),
+                    intel = rulerIntel.toShort(),
+                    politics = derivePoliticsFromStats(rulerLeadership, rulerStrength, rulerIntel, rng).toShort(),
+                    charm = deriveCharmFromStats(rulerLeadership, rulerStrength, rulerIntel, rng).toShort(),
+                    officerLevel = 12,
+                    experience = (avgExp * 1.2).toInt(),
+                    gold = 99999,
+                    rice = 99999,
+                    crew = 5000,
+                    crewType = rng.nextInt(1, 5).toShort(),
+                    train = 100,
+                    atmos = 100,
+                )
             )
-            ports.putGeneral(ruler.toSnapshot())
             nation.chiefGeneralId = ruler.id
-            ports.putNation(nation.toSnapshot())
+            nationRepository.save(nation)
 
             // Create invader generals
             for (i in 1 until npcEachCount) {
@@ -493,30 +456,30 @@ class NpcSpawnService(
                     subStat to mainStat  // strategist
                 }
 
-                val gen = General(
-                    id = idAllocator.nextGeneralId(),
-                    worldId = worldId,
-                    name = "${invaderName}장수$i",
-                    nationId = nation.id,
-                    cityId = city.id,
-                    npcState = 9,
-                    affinity = 999,
-                    bornYear = (world.currentYear - 20).toShort(),
-                    deadYear = (world.currentYear + 20).toShort(),
-                    leadership = leadership.toShort(),
-                    strength = str.toShort(),
-                    intel = intel.toShort(),
-                    politics = derivePoliticsFromStats(leadership, str, intel, rng).toShort(),
-                    charm = deriveCharmFromStats(leadership, str, intel, rng).toShort(),
-                    experience = avgExp,
-                    gold = 99999,
-                    rice = 99999,
-                    crew = 3000 + rng.nextInt(2000),
-                    crewType = rng.nextInt(1, 5).toShort(),
-                    train = 90,
-                    atmos = 90,
+                generalRepository.save(
+                    General(
+                        worldId = worldId,
+                        name = "${invaderName}장수$i",
+                        nationId = nation.id,
+                        cityId = city.id,
+                        npcState = 9,
+                        affinity = 999,
+                        bornYear = (world.currentYear - 20).toShort(),
+                        deadYear = (world.currentYear + 20).toShort(),
+                        leadership = leadership.toShort(),
+                        strength = str.toShort(),
+                        intel = intel.toShort(),
+                        politics = derivePoliticsFromStats(leadership, str, intel, rng).toShort(),
+                        charm = deriveCharmFromStats(leadership, str, intel, rng).toShort(),
+                        experience = avgExp,
+                        gold = 99999,
+                        rice = 99999,
+                        crew = 3000 + rng.nextInt(2000),
+                        crewType = rng.nextInt(1, 5).toShort(),
+                        train = 90,
+                        atmos = 90,
+                    )
                 )
-                ports.putGeneral(gen.toSnapshot())
             }
         }
 
