@@ -3034,11 +3034,11 @@ class GeneralAI(
         val nationType = rng.nextInt(3) + 1
         val nationColor = rng.nextInt(16)
 
-        // Store founding parameters in meta for the engine to process
-        val nationName = "㉿" + general.name.drop(1)
-        general.meta["foundNationName"] = nationName
-        general.meta["foundNationType"] = nationType
-        general.meta["foundNationColor"] = nationColor
+        general.meta["aiArg"] = mutableMapOf<String, Any>(
+            "nationName" to general.name,
+            "nationType" to nationType.toString(),
+            "colorType" to nationColor,
+        )
         general.meta.remove("movingTargetCityID")
 
         return "건국"

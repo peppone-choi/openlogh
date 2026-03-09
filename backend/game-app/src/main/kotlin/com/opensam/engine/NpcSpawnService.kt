@@ -63,7 +63,7 @@ class NpcSpawnService(
         )
     }
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     fun checkNpcSpawn(world: WorldState) {
         // Only check quarterly
         val month = world.currentMonth.toInt()
@@ -150,14 +150,12 @@ class NpcSpawnService(
         val worldId = world.id.toLong()
         val ports = worldPortFactory.create(worldId)
         val year = world.currentYear.toInt()
-        val nationName = "ⓤ${city.name}"
         val color = NPC_NATION_COLORS[rng.nextInt(NPC_NATION_COLORS.size)]
 
-        // Create nation
         val nation = Nation(
             id = idAllocator.nextNationId(),
             worldId = worldId,
-            name = nationName,
+            name = "ⓤ${city.name}",
             color = color,
             capitalCityId = city.id,
             gold = 0,
@@ -306,7 +304,7 @@ class NpcSpawnService(
      * Based on legacy ProvideNPCTroopLeader.php
      * npcState=5 장수를 국가별 최대치까지 생성, troopId = 자기 자신 (부대장)
      */
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     fun provideNpcTroopLeaders(world: WorldState) {
         val worldId = world.id.toLong()
         val ports = worldPortFactory.create(worldId)
@@ -373,7 +371,7 @@ class NpcSpawnService(
      * Raise invader nations in all lv4 cities.
      * Based on legacy RaiseInvader.php - called as a special event, not every turn.
      */
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     fun raiseInvader(world: WorldState) {
         val worldId = world.id.toLong()
         val ports = worldPortFactory.create(worldId)
