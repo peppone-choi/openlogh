@@ -446,14 +446,14 @@ class EconomyService @Autowired constructor(
                 }
             }
 
-            val supplied = suppliedMapIds.mapNotNull { mapToDbId[it] }.toSet()
+            val supplied = suppliedMapIds.mapNotNull { mapToDbId[it] }.toMutableSet()
+            if (capitalId != null) supplied.add(capitalId)
 
             for (city in nationCities) {
                 if (city.id in supplied) {
                     city.supplyState = 1
                 } else {
                     city.supplyState = 0
-                    // Unsupplied city: 10% stat decay
                     city.pop = (city.pop * 0.9).toInt()
                     city.trust = city.trust * 0.9F
                     city.agri = (city.agri * 0.9).toInt()
@@ -462,7 +462,6 @@ class EconomyService @Autowired constructor(
                     city.def = (city.def * 0.9).toInt()
                     city.wall = (city.wall * 0.9).toInt()
 
-                    // Unsupplied city generals: 5% crew/train/atmos decay
                     val cityGenerals = generalsByCity[city.id] ?: emptyList()
                     for (general in cityGenerals) {
                         general.crew = (general.crew * 0.95).toInt()
@@ -470,10 +469,8 @@ class EconomyService @Autowired constructor(
                         general.train = (general.train * 0.95).toInt().toShort()
                     }
 
-                    // Trust < 30: convert to neutral
-                    if (city.trust < 30) {
+                    if (city.trust < 30 && city.id != nation.capitalCityId) {
                         log.info("City {} (id={}) lost to isolation (trust={})", city.name, city.id, city.trust)
-                        // Reset officers in this city
                         for (general in cityGenerals) {
                             if (general.officerCity == city.id.toInt()) {
                                 general.officerLevel = 1

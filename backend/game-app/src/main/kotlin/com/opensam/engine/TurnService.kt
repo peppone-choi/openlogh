@@ -164,12 +164,6 @@ class TurnService @Autowired constructor(
             executeGeneralCommandsUntil(world, nextTurnAt)
 
             try {
-                updateTraffic(world)
-            } catch (e: Exception) {
-                logger.warn("updateTraffic failed: ${e.message}")
-            }
-
-            try {
                 eventService.dispatchEvents(world, "PRE_MONTH")
             } catch (e: Exception) {
                 logger.warn("EventService.dispatchEvents(PRE_MONTH) failed: ${e.message}")

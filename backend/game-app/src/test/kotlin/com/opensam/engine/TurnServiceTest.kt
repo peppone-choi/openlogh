@@ -264,30 +264,7 @@ class TurnServiceTest {
         assertEquals(expected, world.updatedAt, "updatedAt should advance by tick duration")
     }
 
-    // ========== updateTraffic (supply state recalc) ==========
-
-    @Test
-    fun `processWorld calls updateCitySupplyState each turn`() {
-        val now = OffsetDateTime.now()
-        val world = createWorld(year = 200, month = 6, tickSeconds = 300, updatedAt = now.minusSeconds(400))
-        `when`(generalRepository.findByWorldId(1L)).thenReturn(emptyList())
-
-        service.processWorld(world)
-
-        verify(economyService).updateCitySupplyState(anyNonNull())
-    }
-
-    @Test
-    fun `processWorld calls updateCitySupplyState for each catch-up turn`() {
-        val now = OffsetDateTime.now()
-        // 2 ticks elapsed
-        val world = createWorld(year = 200, month = 3, tickSeconds = 300, updatedAt = now.minusSeconds(700))
-        `when`(generalRepository.findByWorldId(1L)).thenReturn(emptyList())
-
-        service.processWorld(world)
-
-        verify(economyService, times(2)).updateCitySupplyState(anyNonNull())
-    }
+    // ========== supply recalc (via postUpdateMonthly) ==========
 
     // ========== strategic command limit reset ==========
 
@@ -351,17 +328,6 @@ class TurnServiceTest {
     }
 
     // ========== catch-up resilience ==========
-
-    @Test
-    fun `processWorld continues when updateTraffic throws`() {
-        val now = OffsetDateTime.now()
-        val world = createWorld(year = 200, month = 6, tickSeconds = 300, updatedAt = now.minusSeconds(400))
-        `when`(generalRepository.findByWorldId(1L)).thenReturn(emptyList())
-        doThrow(RuntimeException("Traffic error")).`when`(economyService).updateCitySupplyState(anyNonNull())
-
-        assertDoesNotThrow { service.processWorld(world) }
-        assertEquals(7.toShort(), world.currentMonth, "Month should still advance")
-    }
 
     @Test
     fun `processWorld preserves per general turn offset for blocked generals`() {
