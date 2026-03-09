@@ -28,6 +28,7 @@ class FormulaParityTest {
             mock(NationRepository::class.java),
             mock(GeneralRepository::class.java),
             mock(MapService::class.java),
+            mock(com.opensam.service.HistoryService::class.java),
         )
         battleEngine = BattleEngine()
     }

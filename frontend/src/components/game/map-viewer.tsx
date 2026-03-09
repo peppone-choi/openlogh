@@ -83,6 +83,18 @@ const SEASON_LABELS: Record<string, string> = {
     winter: '冬',
 };
 
+const CITY_STATE_NAMES: Record<number, string> = {
+    1: '풍작',
+    2: '호황',
+    3: '한파/폭설',
+    4: '역병',
+    5: '지진',
+    6: '태풍',
+    7: '홍수',
+    8: '메뚜기/흉년',
+    9: '황건적',
+};
+
 export function MapViewer({
     worldId,
     publicData,
@@ -100,6 +112,8 @@ export function MapViewer({
     const [tooltip, setTooltip] = useState<{
         cityText: string;
         nationText: string | null;
+        stateText: string | null;
+        stateCode: number;
         x: number;
         y: number;
     } | null>(null);
@@ -203,9 +217,12 @@ export function MapViewer({
             const regionName = city.region != null ? (REGION_NAMES[city.region] ?? '중원') : '';
             const levelName = CITY_LEVEL_NAMES[city.level] ?? '';
             const prefix = regionName ? `【${regionName}|${levelName}】` : `【${levelName}】`;
+            const stateName = city.state > 0 ? (CITY_STATE_NAMES[city.state] ?? `상태${city.state}`) : null;
             setTooltip({
                 cityText: `${prefix}${city.name}`,
                 nationText: city.nationName,
+                stateText: stateName ? `⚠ ${stateName}` : null,
+                stateCode: city.state,
                 x: city.x * coordScale,
                 y: city.y * coordScale,
             });
@@ -332,7 +349,12 @@ export function MapViewer({
                 </div>
 
                 {/* City layer */}
-                <div className="absolute inset-0 z-[3]" onMouseMove={handleMouseMove}>
+                <div
+                    className="absolute inset-0 z-[3]"
+                    onMouseMove={handleMouseMove}
+                    role="application"
+                    aria-label="city map"
+                >
                     {renderCities.map((city) => {
                         const sizes = detailMapCitySizes[city.level] || detailMapCitySizes[1];
                         const icnW = sizes[2] * coordScale;
@@ -345,13 +367,13 @@ export function MapViewer({
                         const top = city.y * coordScale - 15 * coordScale;
                         const nearRight = city.x * coordScale > innerW - 60;
 
-                        const Tag = interactive ? 'button' : 'div';
+                        const Tag = 'button';
                         const interactiveProps = interactive
                             ? {
                                   type: 'button' as const,
                                   onClick: (e: React.MouseEvent) => handleCityClick(city.id, e),
                               }
-                            : {};
+                            : { type: 'button' as const };
 
                         return (
                             <Tag
@@ -478,6 +500,23 @@ export function MapViewer({
                                 }}
                             >
                                 {tooltip.nationText}
+                            </div>
+                        )}
+                        {tooltip.stateText && (
+                            <div
+                                className="px-1 text-right"
+                                style={{
+                                    backgroundColor:
+                                        tooltip.stateCode > 0 && tooltip.stateCode <= 2
+                                            ? 'rgb(46, 143, 70)'
+                                            : 'rgb(200, 50, 50)',
+                                    lineHeight: '15px',
+                                    height: 15,
+                                    borderTop: '1px solid gray',
+                                    color: '#fff',
+                                }}
+                            >
+                                {tooltip.stateText}
                             </div>
                         )}
                     </div>

@@ -37,7 +37,7 @@ class EconomyServiceTest {
         nationRepository = mock(NationRepository::class.java)
         generalRepository = mock(GeneralRepository::class.java)
         mapService = mock(MapService::class.java)
-        service = EconomyService(cityRepository, nationRepository, generalRepository, mapService)
+        service = EconomyService(cityRepository, nationRepository, generalRepository, mapService, mock(com.opensam.service.HistoryService::class.java))
         wireRepos()
         `when`(mapService.getAdjacentCities(ArgumentMatchers.anyString(), ArgumentMatchers.anyInt())).thenReturn(emptyList())
     }

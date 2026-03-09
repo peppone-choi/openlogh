@@ -13,6 +13,7 @@ import com.opensam.engine.modifier.NationTypeModifiers
 import com.opensam.repository.CityRepository
 import com.opensam.repository.GeneralRepository
 import com.opensam.repository.NationRepository
+import com.opensam.service.HistoryService
 import com.opensam.service.MapService
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -25,20 +26,25 @@ import kotlin.math.sqrt
 @Service
 class EconomyService @Autowired constructor(
     private val worldPortFactory: JpaWorldPortFactory,
+    private val generalRepository: GeneralRepository,
     private val mapService: MapService,
+    private val historyService: HistoryService,
 ) {
     constructor(
         cityRepository: CityRepository,
         nationRepository: NationRepository,
         generalRepository: GeneralRepository,
         mapService: MapService,
+        historyService: HistoryService,
     ) : this(
         JpaWorldPortFactory(
             generalRepository = generalRepository,
             cityRepository = cityRepository,
             nationRepository = nationRepository,
         ),
+        generalRepository,
         mapService,
+        historyService,
     )
 
     private val log = LoggerFactory.getLogger(javaClass)
@@ -52,6 +58,12 @@ class EconomyService @Autowired constructor(
         // nationLevelByCityCnt[level] = minimum lv4+ city count
         private val NATION_LEVEL_THRESHOLDS = intArrayOf(0, 1, 2, 5, 8, 11, 16, 21)
     }
+
+    private data class DisasterOrBoomEntry(
+        val stateCode: Short,
+        val title: String,
+        val body: String,
+    )
 
     @Transactional
     fun processMonthly(world: WorldState) {
@@ -642,25 +654,42 @@ class EconomyService @Autowired constructor(
             return
         }
 
-        // Disaster state codes by month
-        val disasterCodes = mapOf(
-            1 to listOf(4, 5, 3, 9),    // 역병, 지진, 동해, 황건적
-            4 to listOf(7, 5, 6),        // 홍수, 지진, 태풍
-            7 to listOf(8, 5, 8),        // 메뚜기, 지진, 흉년
-            10 to listOf(3, 5, 3, 9),    // 혹한, 지진, 폭설, 황건적
+        val disasterEntries = mapOf(
+            1 to listOf(
+                DisasterOrBoomEntry(4, "【재난】", "역병이 발생하여 도시가 황폐해지고 있습니다."),
+                DisasterOrBoomEntry(5, "【재난】", "지진으로 피해가 속출하고 있습니다."),
+                DisasterOrBoomEntry(3, "【재난】", "추위가 풀리지 않아 얼어죽는 백성들이 늘어나고 있습니다."),
+                DisasterOrBoomEntry(9, "【재난】", "황건적이 출현해 도시를 습격하고 있습니다."),
+            ),
+            4 to listOf(
+                DisasterOrBoomEntry(7, "【재난】", "홍수로 인해 피해가 급증하고 있습니다."),
+                DisasterOrBoomEntry(5, "【재난】", "지진으로 피해가 속출하고 있습니다."),
+                DisasterOrBoomEntry(6, "【재난】", "태풍으로 인해 피해가 속출하고 있습니다."),
+            ),
+            7 to listOf(
+                DisasterOrBoomEntry(8, "【재난】", "메뚜기 떼가 발생하여 도시가 황폐해지고 있습니다."),
+                DisasterOrBoomEntry(5, "【재난】", "지진으로 피해가 속출하고 있습니다."),
+                DisasterOrBoomEntry(8, "【재난】", "흉년이 들어 굶어죽는 백성들이 늘어나고 있습니다."),
+            ),
+            10 to listOf(
+                DisasterOrBoomEntry(3, "【재난】", "혹한으로 도시가 황폐해지고 있습니다."),
+                DisasterOrBoomEntry(5, "【재난】", "지진으로 피해가 속출하고 있습니다."),
+                DisasterOrBoomEntry(3, "【재난】", "눈이 많이 쌓여 도시가 황폐해지고 있습니다."),
+                DisasterOrBoomEntry(9, "【재난】", "황건적이 출현해 도시를 습격하고 있습니다."),
+            ),
         )
-        val boomCodes = mapOf(
-            4 to 2,   // 호황
-            7 to 1,   // 풍작
+        val boomEntries = mapOf(
+            4 to DisasterOrBoomEntry(2, "【호황】", "호황으로 도시가 번창하고 있습니다."),
+            7 to DisasterOrBoomEntry(1, "【풍작】", "풍작으로 도시가 번창하고 있습니다."),
         )
 
         if (isGood) {
-            val stateCode = boomCodes[month]?.toShort() ?: 0
+            val entry = boomEntries[month] ?: boomEntries[4]!!
             for (city in targetCities) {
                 val secuRatio = if (city.secuMax > 0) city.secu.toDouble() / city.secuMax / 0.8 else 0.0
                 val affectRatio = 1.01 + secuRatio.coerceIn(0.0, 1.0) * 0.04
 
-                city.state = stateCode
+                city.state = entry.stateCode
                 city.pop = (city.pop * affectRatio).toInt().coerceAtMost(city.popMax)
                 city.trust = (city.trust * affectRatio.toFloat()).coerceAtMost(100F)
                 city.agri = (city.agri * affectRatio).toInt().coerceAtMost(city.agriMax)
@@ -669,14 +698,22 @@ class EconomyService @Autowired constructor(
                 city.def = (city.def * affectRatio).toInt().coerceAtMost(city.defMax)
                 city.wall = (city.wall * affectRatio).toInt().coerceAtMost(city.wallMax)
             }
+
+            val cityNames = targetCities.joinToString(" ") { it.name }
+            historyService.logWorldHistory(
+                worldId = world.id.toLong(),
+                message = "${entry.title} ${cityNames}에 ${entry.body}",
+                year = world.currentYear.toInt(),
+                month = month,
+            )
         } else {
-            val codes = disasterCodes[month] ?: disasterCodes[1]!!
-            val stateCode = codes[rng.nextInt(codes.size)].toShort()
+            val entries = disasterEntries[month] ?: disasterEntries[1]!!
+            val entry = entries[rng.nextInt(entries.size)]
             for (city in targetCities) {
                 val secuRatio = if (city.secuMax > 0) city.secu.toDouble() / city.secuMax / 0.8 else 0.0
                 val affectRatio = 0.8 + secuRatio.coerceIn(0.0, 1.0) * 0.15
 
-                city.state = stateCode
+                city.state = entry.stateCode
                 city.pop = (city.pop * affectRatio).toInt()
                 city.trust = city.trust * affectRatio.toFloat()
                 city.agri = (city.agri * affectRatio).toInt()
@@ -685,6 +722,26 @@ class EconomyService @Autowired constructor(
                 city.def = (city.def * affectRatio).toInt()
                 city.wall = (city.wall * affectRatio).toInt()
             }
+
+            val affectedCityIds = targetCities.map { it.id }
+            val generals = generalRepository.findByWorldIdAndCityIdIn(world.id.toLong(), affectedCityIds)
+            for (general in generals) {
+                if (rng.nextDouble() >= 0.3) continue
+                val injuryAmount = rng.nextInt(1, 17)
+                general.injury = (general.injury + injuryAmount).coerceAtMost(80).toShort()
+                general.crew = (general.crew * 0.98).toInt()
+                general.atmos = (general.atmos * 0.98).toInt().toShort()
+                general.train = (general.train * 0.98).toInt().toShort()
+            }
+            generalRepository.saveAll(generals)
+
+            val cityNames = targetCities.joinToString(" ") { it.name }
+            historyService.logWorldHistory(
+                worldId = world.id.toLong(),
+                message = "${entry.title} ${cityNames}에 ${entry.body}",
+                year = world.currentYear.toInt(),
+                month = month,
+            )
         }
 
         saveCities(ports, cities)
