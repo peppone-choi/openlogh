@@ -144,7 +144,7 @@ class TurnService @Autowired constructor(
 
     private val logger = LoggerFactory.getLogger(TurnService::class.java)
     private companion object {
-        const val MAX_TURNS_PER_TICK = 5
+        const val MAX_TICK_DURATION_MS = 30_000L
     }
 
     @Transactional
@@ -153,9 +153,10 @@ class TurnService @Autowired constructor(
         val tickDuration = Duration.ofSeconds(world.tickSeconds.toLong())
         var nextTurnAt = world.updatedAt.plus(tickDuration)
         val worldId = world.id.toLong()
+        val tickDeadline = System.currentTimeMillis() + MAX_TICK_DURATION_MS
 
         var turnsProcessed = 0
-        while (!now.isBefore(nextTurnAt) && turnsProcessed < MAX_TURNS_PER_TICK) {
+        while (!now.isBefore(nextTurnAt) && System.currentTimeMillis() < tickDeadline) {
             turnsProcessed++
             // 진행 전 이전 월 기록 (연감 스냅샷용)
             val previousYear = world.currentYear.toInt()
@@ -693,13 +694,11 @@ class TurnService @Autowired constructor(
     }
 
     private fun advanceMonth(world: WorldState) {
-        val nextMonth = world.currentMonth + 1
-        if (nextMonth > 12) {
-            world.currentMonth = 1
-            world.currentYear = (world.currentYear + 1).toShort()
-        } else {
-            world.currentMonth = nextMonth.toShort()
-        }
+        val startYear = (world.config["startyear"] as? Number)?.toInt() ?: world.currentYear.toInt()
+        val elapsedTurns = (world.currentYear.toInt() - startYear) * 12 + (world.currentMonth.toInt() - 1) + 1
+        val totalMonths = startYear.toLong() * 12 + elapsedTurns
+        world.currentYear = (totalMonths / 12).toShort()
+        world.currentMonth = (1 + totalMonths % 12).toShort()
     }
 
     /**

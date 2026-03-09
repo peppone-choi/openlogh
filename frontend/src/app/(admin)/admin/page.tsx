@@ -195,7 +195,7 @@ export default function AdminDashboardPage() {
             const res = await adminApi.createWorld({
                 scenarioCode: newScenario,
                 name: newWorldName.trim() || undefined,
-                turnTerm: newTurnTerm ? Number(newTurnTerm) : undefined,
+                tickSeconds: newTurnTerm ? Number(newTurnTerm) : undefined,
                 gameVersion: newGameVersion.trim() || undefined,
             });
             toast.success(`월드 생성 완료 (ID: ${res.data.id})`);
@@ -733,23 +733,23 @@ export default function AdminDashboardPage() {
                                 </div>
                             </div>
                             <div className="space-y-1">
-                                <label className="text-sm text-muted-foreground">턴 간격 (초 단위)</label>
+                                <label className="text-sm text-muted-foreground">턴 간격 (분 단위)</label>
                                 <Input
                                     type="number"
                                     value={turnTerm}
                                     onChange={(e) => setTurnTerm(e.target.value)}
-                                    placeholder="300"
+                                    placeholder="5"
                                 />
                                 <div className="flex flex-wrap gap-1 pt-1">
                                     {[
-                                        { label: '1분', value: 60 },
-                                        { label: '2분', value: 120 },
-                                        { label: '5분', value: 300 },
-                                        { label: '10분', value: 600 },
-                                        { label: '20분', value: 1200 },
-                                        { label: '30분', value: 1800 },
-                                        { label: '60분', value: 3600 },
-                                        { label: '120분', value: 7200 },
+                                        { label: '1분', value: 1 },
+                                        { label: '2분', value: 2 },
+                                        { label: '5분', value: 5 },
+                                        { label: '10분', value: 10 },
+                                        { label: '20분', value: 20 },
+                                        { label: '30분', value: 30 },
+                                        { label: '60분', value: 60 },
+                                        { label: '120분', value: 120 },
                                     ].map((p) => (
                                         <Button
                                             key={p.value}

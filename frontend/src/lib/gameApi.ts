@@ -771,7 +771,7 @@ export const adminApi = {
     createWorld: (data: {
         scenarioCode: string;
         name?: string;
-        turnTerm?: number;
+        tickSeconds?: number;
         notice?: string;
         gameVersion?: string;
     }) => api.post<CreateWorldResponse>('/worlds', data),
