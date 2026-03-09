@@ -36,6 +36,10 @@ class MapRecentService(
     @Volatile
     private var cacheByWorld: MutableMap<Long, MapRecentCacheEntry> = mutableMapOf()
 
+    fun evictCache(worldId: Long) {
+        cacheByWorld.remove(worldId)
+    }
+
     /**
      * Get the recent map snapshot for a world. Returns cached data if fresh (< 10 min).
      *

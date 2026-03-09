@@ -29,6 +29,10 @@ class PublicCachedMapService(
 
     private val cache = ConcurrentHashMap<Short, CacheEntry>()
 
+    fun evictCache(worldId: Short) {
+        cache.remove(worldId)
+    }
+
     fun getCachedMap(worldId: Short? = null): PublicCachedMapResponse {
         val now = Instant.now()
         val allWorlds = worldStateRepository.findAll().toList()

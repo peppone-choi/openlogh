@@ -6,6 +6,8 @@ import com.opensam.dto.WorldCityOwnershipSnapshotResponse
 import com.opensam.dto.WorldSnapshotResponse
 import com.opensam.dto.WorldStateResponse
 import com.opensam.service.AdminAuthorizationService
+import com.opensam.service.MapRecentService
+import com.opensam.service.PublicCachedMapService
 import com.opensam.service.ScenarioService
 import com.opensam.service.WorldService
 import jakarta.validation.Valid
@@ -21,6 +23,8 @@ class WorldController(
     private val scenarioService: ScenarioService,
     private val worldService: WorldService,
     private val adminAuthorizationService: AdminAuthorizationService,
+    private val publicCachedMapService: PublicCachedMapService,
+    private val mapRecentService: MapRecentService,
 ) {
     private fun parseBooleanFlag(raw: Any?): Boolean? {
         return when (raw) {
@@ -157,6 +161,8 @@ class WorldController(
         }
 
         worldService.deleteWorld(id)
+        publicCachedMapService.evictCache(id)
+        mapRecentService.evictCache(id.toLong())
         return ResponseEntity.noContent().build()
     }
 
@@ -181,6 +187,8 @@ class WorldController(
             tickSeconds = world.tickSeconds.toInt(),
             extendEnabled = body?.extend ?: parseBooleanFlag(world.config["extend"] ?: world.config["extendedGeneral"]),
         )
+        publicCachedMapService.evictCache(id)
+        mapRecentService.evictCache(id.toLong())
         return ResponseEntity.ok(WorldStateResponse.from(reset))
     }
 }

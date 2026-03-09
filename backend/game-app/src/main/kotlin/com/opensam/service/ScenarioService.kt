@@ -34,6 +34,23 @@ class ScenarioService(
     private var scenariosLoaded = false
     private val log = LoggerFactory.getLogger(javaClass)
 
+    /** Name→picture lookup from the reference scenario (scenario_1010) for fallback when picture is missing. */
+    private val referencePictureByName: Map<String, String> by lazy {
+        loadAllScenarios()
+        val refScenario = scenarios["scenario_1010"] ?: return@lazy emptyMap()
+        val map = mutableMapOf<String, String>()
+        for (section in listOf(refScenario.general, refScenario.generalEx, refScenario.generalNeutral)) {
+            for (row in section) {
+                val name = (row.getOrNull(1) as? String) ?: continue
+                val pic = row.getOrNull(2)
+                if (pic != null && pic.toString().isNotEmpty() && pic.toString() != "-1" && pic.toString() != "null") {
+                    map.putIfAbsent(name, pic.toString())
+                }
+            }
+        }
+        map
+    }
+
     /** Legacy CityConstBase::$buildInit — level-based initial values for new cities. */
     private data class CityInit(val pop: Int, val agri: Int, val comm: Int, val secu: Int, val def: Int, val wall: Int)
 
@@ -414,7 +431,8 @@ class ScenarioService(
     ): General {
         val affinity = (row[0] as? Number)?.toShort() ?: 0
         val name = row[1] as String
-        val picture = row[2]?.toString() ?: ""
+        val rawPic = row[2]?.toString()?.takeIf { it.isNotEmpty() && it != "null" && it != "-1" }
+        val picture = rawPic ?: referencePictureByName[name] ?: ""
 
         val nationIdx = (row[3] as? Number)?.toInt() ?: 0
         val nationId = if (nationIdx > 0) nationIdxToDbId[nationIdx] ?: 0L else 0L
