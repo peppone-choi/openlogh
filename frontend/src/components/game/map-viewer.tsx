@@ -260,7 +260,7 @@ export function MapViewer({
     return (
         <div
             ref={containerRef}
-            className={`relative overflow-hidden text-[14px] text-white ${useResponsiveScale ? 'border border-gray-800 rounded-lg' : 'w-full bg-black'}`}
+            className={`relative text-[14px] text-white ${useResponsiveScale ? 'border border-gray-800 rounded-lg' : 'w-full bg-black'}`}
             style={outerStyle}
         >
             <div style={innerStyle}>

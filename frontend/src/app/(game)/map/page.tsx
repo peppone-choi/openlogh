@@ -467,7 +467,7 @@ export default function MapPage() {
                 <div className="w-full max-w-[700px] mx-auto">
                     <div
                         ref={mapContainerRef}
-                        className="relative border border-gray-800 rounded-lg overflow-hidden"
+                        className="relative border border-gray-800 rounded-lg"
                         style={{
                             backgroundColor: currentTheme.bg,
                             aspectRatio: '700 / 500',
