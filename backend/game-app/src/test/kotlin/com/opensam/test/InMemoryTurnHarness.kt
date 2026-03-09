@@ -104,6 +104,7 @@ class InMemoryTurnHarness {
         nationService,
         battleService,
         uniqueLotteryService,
+        mock(com.opensam.service.CommandLogDispatcher::class.java),
     )
 
     init {
