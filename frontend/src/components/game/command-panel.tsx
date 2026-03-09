@@ -943,7 +943,11 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
                                 >
                                     <div className="font-mono text-gray-300 px-2 py-2 text-[11px] leading-tight">
                                         {(() => {
-                                            const ym = getTurnYearMonth(turn.turnIdx, currentWorld?.currentYear ?? 0, currentWorld?.currentMonth ?? 1);
+                                            const ym = getTurnYearMonth(
+                                                turn.turnIdx,
+                                                currentWorld?.currentYear ?? 0,
+                                                currentWorld?.currentMonth ?? 1
+                                            );
                                             return `${ym.year}년 ${ym.month}월`;
                                         })()}
                                     </div>
@@ -1050,10 +1054,18 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
                         <div className="w-full max-w-2xl rounded-md border border-gray-700 bg-background shadow-xl">
                             <div className="flex items-center justify-between border-b border-gray-700 px-4 py-2">
                                 <p className="text-sm font-semibold text-gray-100">
-                                    명령 선택 ({selectedTurnList.map((idx) => {
-                                        const ym = getTurnYearMonth(idx, currentWorld?.currentYear ?? 0, currentWorld?.currentMonth ?? 1);
-                                        return `${ym.year}년 ${ym.month}월`;
-                                    }).join(', ')})
+                                    명령 선택 (
+                                    {selectedTurnList
+                                        .map((idx) => {
+                                            const ym = getTurnYearMonth(
+                                                idx,
+                                                currentWorld?.currentYear ?? 0,
+                                                currentWorld?.currentMonth ?? 1
+                                            );
+                                            return `${ym.year}년 ${ym.month}월`;
+                                        })
+                                        .join(', ')}
+                                    )
                                 </p>
                                 <Button size="sm" variant="ghost" onClick={() => setShowSelector(false)}>
                                     닫기
