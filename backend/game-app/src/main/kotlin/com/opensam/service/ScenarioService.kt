@@ -96,86 +96,68 @@ class ScenarioService(
 
         // 1. Create cities from map data
         val mapCities = try { mapService.getCities(mapName) } catch (_: Exception) { mapService.getCities("che") }
-        val cityNameToId = mutableMapOf<String, Long>()
-        for (mc in mapCities) {
+        val cityEntities = mapCities.map { mc ->
             val init = CITY_LEVEL_INIT[mc.level] ?: DEFAULT_CITY_INIT
-            val city = cityRepository.save(
-                City(
-                    worldId = worldId,
-                    name = mc.name,
-                    mapCityId = mc.id,
-                    level = mc.level.toShort(),
-                    pop = init.pop,
-                    popMax = mc.population,
-                    agri = init.agri,
-                    agriMax = mc.agriculture,
-                    comm = init.comm,
-                    commMax = mc.commerce,
-                    secu = init.secu,
-                    secuMax = mc.security,
-                    trust = 50f,
-                    def = init.def,
-                    defMax = mc.defence,
-                    wall = init.wall,
-                    wallMax = mc.wall,
-                    region = mc.region.toShort(),
-                )
+            City(
+                worldId = worldId,
+                name = mc.name,
+                mapCityId = mc.id,
+                level = mc.level.toShort(),
+                pop = init.pop,
+                popMax = mc.population,
+                agri = init.agri,
+                agriMax = mc.agriculture,
+                comm = init.comm,
+                commMax = mc.commerce,
+                secu = init.secu,
+                secuMax = mc.security,
+                trust = 50f,
+                def = init.def,
+                defMax = mc.defence,
+                wall = init.wall,
+                wallMax = mc.wall,
+                region = mc.region.toShort(),
             )
-            cityNameToId[mc.name] = city.id
         }
+        val savedCities = cityRepository.saveAll(cityEntities)
+        val cityNameToId = savedCities.associate { it.name to it.id }
         val allCityIds = cityNameToId.values.toList()
 
         // 2. Create nations and assign cities
-        // nationIdx is 1-based: nations[0] -> idx=1, nations[1] -> idx=2, ...
-        val nationIdxToDbId = mutableMapOf<Int, Long>() // 1-based scenario idx -> DB nation id
-        val nationCityIds = mutableMapOf<Long, MutableList<Long>>() // DB nation id -> city IDs
-        for ((idx, nationRow) in scenario.nation.withIndex()) {
-            val nationIdx = idx + 1 // 1-based
+        val nationEntities = scenario.nation.map { nationRow ->
             val nation = parseNation(nationRow, worldId)
-
-            // Set capital from first city in nation's city list
             val nationCityNames = readStringList(nationRow.getOrNull(8))
             val nationCities = nationCityNames.mapNotNull { cityNameToId[it] }
             if (nationCities.isNotEmpty()) {
                 nation.capitalCityId = nationCities.first()
             }
-
-            val saved = nationRepository.save(nation)
+            nation
+        }
+        val savedNations = nationRepository.saveAll(nationEntities)
+        val nationIdxToDbId = mutableMapOf<Int, Long>()
+        val nationCityIds = mutableMapOf<Long, MutableList<Long>>()
+        val citiesToUpdate = mutableListOf<City>()
+        for ((idx, saved) in savedNations.withIndex()) {
+            val nationIdx = idx + 1
             nationIdxToDbId[nationIdx] = saved.id
+            val nationCityNames = readStringList(scenario.nation[idx].getOrNull(8))
+            val nationCities = nationCityNames.mapNotNull { cityNameToId[it] }
             nationCityIds[saved.id] = nationCities.toMutableList()
-
-            // Update cities to belong to this nation
             for (cid in nationCities) {
-                cityRepository.findById(cid).ifPresent { c ->
-                    c.nationId = saved.id
-                    cityRepository.save(c)
+                val city = savedCities.find { it.id == cid }
+                if (city != null) {
+                    city.nationId = saved.id
+                    citiesToUpdate.add(city)
                 }
             }
         }
+        if (citiesToUpdate.isNotEmpty()) cityRepository.saveAll(citiesToUpdate)
 
+        val generalsToSave = mutableListOf<General>()
         var delayedNpcCount = 0
 
-        for (generalRow in scenario.general) {
-            val general = parseGeneral(
-                row = generalRow,
-                worldId = worldId,
-                nationIdxToDbId = nationIdxToDbId,
-                nationCityIds = nationCityIds,
-                cityNameToId = cityNameToId,
-                allCityIds = allCityIds,
-                rng = initRandom,
-                startYear = scenario.startYear,
-                defaultNpcState = 2,
-            )
-            if (shouldSpawnScenarioGeneral(general, scenario.startYear)) {
-                generalRepository.save(general)
-            } else {
-                delayedNpcCount++
-            }
-        }
-
-        if (extendedGeneralEnabled) {
-            for (generalRow in scenario.generalEx) {
+        fun collectGenerals(rows: List<List<Any?>>, defaultNpcState: Short) {
+            for (generalRow in rows) {
                 val general = parseGeneral(
                     row = generalRow,
                     worldId = worldId,
@@ -185,34 +167,20 @@ class ScenarioService(
                     allCityIds = allCityIds,
                     rng = initRandom,
                     startYear = scenario.startYear,
-                    defaultNpcState = 2,
+                    defaultNpcState = defaultNpcState,
                 )
                 if (shouldSpawnScenarioGeneral(general, scenario.startYear)) {
-                    generalRepository.save(general)
+                    generalsToSave.add(general)
                 } else {
                     delayedNpcCount++
                 }
             }
         }
 
-        for (generalRow in scenario.generalNeutral) {
-            val general = parseGeneral(
-                row = generalRow,
-                worldId = worldId,
-                nationIdxToDbId = nationIdxToDbId,
-                nationCityIds = nationCityIds,
-                cityNameToId = cityNameToId,
-                allCityIds = allCityIds,
-                rng = initRandom,
-                startYear = scenario.startYear,
-                defaultNpcState = 6,
-            )
-            if (shouldSpawnScenarioGeneral(general, scenario.startYear)) {
-                generalRepository.save(general)
-            } else {
-                delayedNpcCount++
-            }
-        }
+        collectGenerals(scenario.general, 2)
+        if (extendedGeneralEnabled) collectGenerals(scenario.generalEx, 2)
+        collectGenerals(scenario.generalNeutral, 6)
+        generalRepository.saveAll(generalsToSave)
 
         if (delayedNpcCount > 0) {
             log.info(
@@ -222,48 +190,40 @@ class ScenarioService(
             )
         }
 
-        for ((nationIdx, nationDbId) in nationIdxToDbId) {
-            val ruler = generalRepository.findByWorldId(worldId)
+        val allGenerals = generalRepository.findByWorldId(worldId)
+        val nationsToUpdate = mutableListOf<Nation>()
+        for ((_, nationDbId) in nationIdxToDbId) {
+            val ruler = allGenerals
                 .filter { it.nationId == nationDbId && it.officerLevel >= 12 }
                 .maxByOrNull { it.officerLevel }
             if (ruler != null) {
-                val nation = nationRepository.findById(nationDbId).orElse(null)
+                val nation = savedNations.find { it.id == nationDbId }
                 if (nation != null) {
                     nation.chiefGeneralId = ruler.id
-                    nationRepository.save(nation)
+                    nationsToUpdate.add(nation)
                 }
             }
         }
+        if (nationsToUpdate.isNotEmpty()) nationRepository.saveAll(nationsToUpdate)
 
         // 5. Create diplomacy
-        val nationDbIds = nationIdxToDbId.values.toList()
-        for (diploRow in scenario.diplomacy) {
-            if (diploRow.size >= 4) {
-                val srcIdx = (diploRow[0] as Number).toInt()
-                val destIdx = (diploRow[1] as Number).toInt()
-                val stateType = (diploRow[2] as Number).toInt()
-                val term = (diploRow[3] as Number).toInt()
-                val srcId = nationIdxToDbId[srcIdx + 1]
-                val destId = nationIdxToDbId[destIdx + 1]
-                if (srcId != null && destId != null) {
-                    val stateCode = when (stateType) {
-                        0 -> "전쟁"
-                        1 -> "선전포고"
-                        7 -> "불가침"
-                        else -> "통상"
-                    }
-                    diplomacyRepository.save(
-                        Diplomacy(
-                            worldId = worldId,
-                            srcNationId = srcId,
-                            destNationId = destId,
-                            stateCode = stateCode,
-                            term = term.toShort(),
-                        )
-                    )
-                }
-            }
+        val diplomacies = scenario.diplomacy.mapNotNull { diploRow ->
+            if (diploRow.size < 4) return@mapNotNull null
+            val srcIdx = (diploRow[0] as Number).toInt()
+            val destIdx = (diploRow[1] as Number).toInt()
+            val stateType = (diploRow[2] as Number).toInt()
+            val term = (diploRow[3] as Number).toInt()
+            val srcId = nationIdxToDbId[srcIdx + 1] ?: return@mapNotNull null
+            val destId = nationIdxToDbId[destIdx + 1] ?: return@mapNotNull null
+            Diplomacy(
+                worldId = worldId,
+                srcNationId = srcId,
+                destNationId = destId,
+                stateCode = when (stateType) { 0 -> "전쟁"; 1 -> "선전포고"; 7 -> "불가침"; else -> "통상" },
+                term = term.toShort(),
+            )
         }
+        if (diplomacies.isNotEmpty()) diplomacyRepository.saveAll(diplomacies)
 
         return world
     }
@@ -319,100 +279,105 @@ class ScenarioService(
         worldStateRepository.save(existingWorld)
 
         val mapCities = try { mapService.getCities(mapName) } catch (_: Exception) { mapService.getCities("che") }
-        val cityNameToId = mutableMapOf<String, Long>()
-        for (mc in mapCities) {
+        val reinitCityEntities = mapCities.map { mc ->
             val init = CITY_LEVEL_INIT[mc.level] ?: DEFAULT_CITY_INIT
-            val city = cityRepository.save(
-                City(
-                    worldId = worldId,
-                    name = mc.name,
-                    mapCityId = mc.id,
-                    level = mc.level.toShort(),
-                    pop = init.pop,
-                    popMax = mc.population,
-                    agri = init.agri,
-                    agriMax = mc.agriculture,
-                    comm = init.comm,
-                    commMax = mc.commerce,
-                    secu = init.secu,
-                    secuMax = mc.security,
-                    trust = 50f,
-                    def = init.def,
-                    defMax = mc.defence,
-                    wall = init.wall,
-                    wallMax = mc.wall,
-                    region = mc.region.toShort(),
-                )
+            City(
+                worldId = worldId,
+                name = mc.name,
+                mapCityId = mc.id,
+                level = mc.level.toShort(),
+                pop = init.pop,
+                popMax = mc.population,
+                agri = init.agri,
+                agriMax = mc.agriculture,
+                comm = init.comm,
+                commMax = mc.commerce,
+                secu = init.secu,
+                secuMax = mc.security,
+                trust = 50f,
+                def = init.def,
+                defMax = mc.defence,
+                wall = init.wall,
+                wallMax = mc.wall,
+                region = mc.region.toShort(),
             )
-            cityNameToId[mc.name] = city.id
         }
+        val reinitSavedCities = cityRepository.saveAll(reinitCityEntities)
+        val cityNameToId = reinitSavedCities.associate { it.name to it.id }
         val allCityIds = cityNameToId.values.toList()
 
-        val nationIdxToDbId = mutableMapOf<Int, Long>()
-        val nationCityIds = mutableMapOf<Long, MutableList<Long>>()
-        for ((idx, nationRow) in scenario.nation.withIndex()) {
-            val nationIdx = idx + 1
+        val nationEntities = scenario.nation.map { nationRow ->
             val nation = parseNation(nationRow, worldId)
             val nationCityNames = readStringList(nationRow.getOrNull(8))
             val nationCities = nationCityNames.mapNotNull { cityNameToId[it] }
             if (nationCities.isNotEmpty()) {
                 nation.capitalCityId = nationCities.first()
             }
-            val saved = nationRepository.save(nation)
+            nation
+        }
+        val reinitSavedNations = nationRepository.saveAll(nationEntities)
+        val nationIdxToDbId = mutableMapOf<Int, Long>()
+        val nationCityIds = mutableMapOf<Long, MutableList<Long>>()
+        val reinitCitiesToUpdate = mutableListOf<City>()
+        for ((idx, saved) in reinitSavedNations.withIndex()) {
+            val nationIdx = idx + 1
             nationIdxToDbId[nationIdx] = saved.id
+            val nationCityNames = readStringList(scenario.nation[idx].getOrNull(8))
+            val nationCities = nationCityNames.mapNotNull { cityNameToId[it] }
             nationCityIds[saved.id] = nationCities.toMutableList()
             for (cid in nationCities) {
-                cityRepository.findById(cid).ifPresent { c ->
-                    c.nationId = saved.id
-                    cityRepository.save(c)
+                val city = reinitSavedCities.find { it.id == cid }
+                if (city != null) {
+                    city.nationId = saved.id
+                    reinitCitiesToUpdate.add(city)
                 }
             }
         }
+        if (reinitCitiesToUpdate.isNotEmpty()) cityRepository.saveAll(reinitCitiesToUpdate)
 
+        val generalsToSave = mutableListOf<General>()
         var delayedNpcCount = 0
-        for (generalRow in scenario.general) {
-            val general = parseGeneral(generalRow, worldId, nationIdxToDbId, nationCityIds, cityNameToId, allCityIds, initRandom, scenario.startYear, 2)
-            if (shouldSpawnScenarioGeneral(general, scenario.startYear)) generalRepository.save(general) else delayedNpcCount++
-        }
-        if (extendedGeneralEnabled) {
-            for (generalRow in scenario.generalEx) {
-                val general = parseGeneral(generalRow, worldId, nationIdxToDbId, nationCityIds, cityNameToId, allCityIds, initRandom, scenario.startYear, 2)
-                if (shouldSpawnScenarioGeneral(general, scenario.startYear)) generalRepository.save(general) else delayedNpcCount++
+        fun collectGenerals(rows: List<List<Any?>>, defaultNpcState: Short) {
+            for (generalRow in rows) {
+                val general = parseGeneral(generalRow, worldId, nationIdxToDbId, nationCityIds, cityNameToId, allCityIds, initRandom, scenario.startYear, defaultNpcState)
+                if (shouldSpawnScenarioGeneral(general, scenario.startYear)) generalsToSave.add(general) else delayedNpcCount++
             }
         }
-        for (generalRow in scenario.generalNeutral) {
-            val general = parseGeneral(generalRow, worldId, nationIdxToDbId, nationCityIds, cityNameToId, allCityIds, initRandom, scenario.startYear, 6)
-            if (shouldSpawnScenarioGeneral(general, scenario.startYear)) generalRepository.save(general) else delayedNpcCount++
-        }
+        collectGenerals(scenario.general, 2)
+        if (extendedGeneralEnabled) collectGenerals(scenario.generalEx, 2)
+        collectGenerals(scenario.generalNeutral, 6)
+        generalRepository.saveAll(generalsToSave)
         if (delayedNpcCount > 0) log.info("[World {}] Delayed {} underage scenario NPC(s) for future yearly spawn", worldId, delayedNpcCount)
 
+        val allGenerals = generalRepository.findByWorldId(worldId)
+        val reinitNationsToUpdate = mutableListOf<Nation>()
         for ((_, nationDbId) in nationIdxToDbId) {
-            val ruler = generalRepository.findByWorldId(worldId)
+            val ruler = allGenerals
                 .filter { it.nationId == nationDbId && it.officerLevel >= 12 }
                 .maxByOrNull { it.officerLevel }
             if (ruler != null) {
-                nationRepository.findById(nationDbId).ifPresent { n ->
-                    n.chiefGeneralId = ruler.id
-                    nationRepository.save(n)
+                val nation = reinitSavedNations.find { it.id == nationDbId }
+                if (nation != null) {
+                    nation.chiefGeneralId = ruler.id
+                    reinitNationsToUpdate.add(nation)
                 }
             }
         }
+        if (reinitNationsToUpdate.isNotEmpty()) nationRepository.saveAll(reinitNationsToUpdate)
 
-        for (diploRow in scenario.diplomacy) {
-            if (diploRow.size >= 4) {
-                val srcIdx = (diploRow[0] as Number).toInt()
-                val destIdx = (diploRow[1] as Number).toInt()
-                val stateType = (diploRow[2] as Number).toInt()
-                val term = (diploRow[3] as Number).toInt()
-                val srcId = nationIdxToDbId[srcIdx + 1]
-                val destId = nationIdxToDbId[destIdx + 1]
-                if (srcId != null && destId != null) {
-                    diplomacyRepository.save(Diplomacy(worldId = worldId, srcNationId = srcId, destNationId = destId,
-                        stateCode = when (stateType) { 0 -> "전쟁"; 1 -> "선전포고"; 7 -> "불가침"; else -> "통상" },
-                        term = term.toShort()))
-                }
-            }
+        val diplomacies = scenario.diplomacy.mapNotNull { diploRow ->
+            if (diploRow.size < 4) return@mapNotNull null
+            val srcIdx = (diploRow[0] as Number).toInt()
+            val destIdx = (diploRow[1] as Number).toInt()
+            val stateType = (diploRow[2] as Number).toInt()
+            val term = (diploRow[3] as Number).toInt()
+            val srcId = nationIdxToDbId[srcIdx + 1] ?: return@mapNotNull null
+            val destId = nationIdxToDbId[destIdx + 1] ?: return@mapNotNull null
+            Diplomacy(worldId = worldId, srcNationId = srcId, destNationId = destId,
+                stateCode = when (stateType) { 0 -> "전쟁"; 1 -> "선전포고"; 7 -> "불가침"; else -> "통상" },
+                term = term.toShort())
         }
+        if (diplomacies.isNotEmpty()) diplomacyRepository.saveAll(diplomacies)
 
         log.info("[World {}] Reinitialized successfully (same ID preserved)", worldId)
         return existingWorld
@@ -589,7 +554,7 @@ class ScenarioService(
             .toMutableSet()
 
         val hiddenSeed = (world.config["hiddenSeed"] as? String) ?: "${world.id}"
-        var created = 0
+        val spawnedGenerals = mutableListOf<General>()
 
         fun spawnRows(rows: List<List<Any?>>, defaultNpcState: Short, source: String) {
             for ((idx, row) in rows.withIndex()) {
@@ -612,8 +577,7 @@ class ScenarioService(
                 val key = ScenarioGeneralKey.fromGeneral(general)
                 if (!existingKeys.add(key)) continue
 
-                generalRepository.save(general)
-                created++
+                spawnedGenerals.add(general)
             }
         }
 
@@ -622,8 +586,9 @@ class ScenarioService(
             spawnRows(scenario.generalEx, 2, "generalEx")
         }
         spawnRows(scenario.generalNeutral, 6, "generalNeutral")
+        if (spawnedGenerals.isNotEmpty()) generalRepository.saveAll(spawnedGenerals)
 
-        return created
+        return spawnedGenerals.size
     }
 
     private data class ScenarioGeneralKey(

@@ -173,6 +173,7 @@ class NationService(
             .map { OfficerInfo(it.id, it.name, it.picture, it.officerLevel.toInt(), it.cityId) }
     }
 
+    @Transactional
     fun appointOfficer(nationId: Long, generalId: Long, officerLevel: Int, officerCity: Int?): Boolean {
         val general = generalRepository.findById(generalId).orElse(null) ?: return false
         

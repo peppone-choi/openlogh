@@ -14,6 +14,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchers.anyLong
+import org.mockito.ArgumentMatchers.anyList
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
 import kotlin.random.Random
@@ -265,26 +266,33 @@ class ScenarioServiceTest {
             ),
         )
 
+        @Suppress("UNCHECKED_CAST")
+        `when`(cityRepository.saveAll(anyList<City>())).thenAnswer { inv ->
+            val cities = inv.arguments[0] as List<City>
+            cities.forEach { city ->
+                if (city.id == 0L) city.id = citySeq++
+                cityStore[city.id] = city
+            }
+            cities
+        }
         `when`(cityRepository.save(any(City::class.java))).thenAnswer { inv ->
             val city = inv.arguments[0] as City
-            if (city.id == 0L) {
-                city.id = citySeq++
-            }
+            if (city.id == 0L) city.id = citySeq++
             cityStore[city.id] = city
             city
         }
-        `when`(cityRepository.findById(anyLong())).thenAnswer { inv ->
-            Optional.ofNullable(cityStore[inv.arguments[0] as Long])
+
+        @Suppress("UNCHECKED_CAST")
+        `when`(nationRepository.saveAll(anyList<Nation>())).thenAnswer { inv ->
+            val nations = inv.arguments[0] as List<Nation>
+            nations.forEach { nation ->
+                if (nation.id == 0L) nation.id = nationSeq++
+                nationStore[nation.id] = nation
+            }
+            nations
         }
 
-        `when`(nationRepository.save(any(Nation::class.java))).thenAnswer { inv ->
-            val nation = inv.arguments[0] as Nation
-            if (nation.id == 0L) {
-                nation.id = nationSeq++
-            }
-            nationStore[nation.id] = nation
-            nation
-        }
+        `when`(generalRepository.findByWorldId(1L)).thenReturn(emptyList())
 
         service.initializeWorld("test")
 
@@ -328,25 +336,31 @@ class ScenarioServiceTest {
             ),
         )
 
-        `when`(cityRepository.save(any(City::class.java))).thenAnswer { inv ->
-            val city = inv.arguments[0] as City
-            if (city.id == 0L) {
-                city.id = citySeq++
+        @Suppress("UNCHECKED_CAST")
+        `when`(cityRepository.saveAll(anyList<City>())).thenAnswer { inv ->
+            val cities = inv.arguments[0] as List<City>
+            cities.forEach { city ->
+                if (city.id == 0L) city.id = citySeq++
+                cityStore[city.id] = city
             }
-            cityStore[city.id] = city
-            city
+            cities
         }
         `when`(cityRepository.findByWorldId(1L)).thenAnswer { cityStore.values.toList() }
 
         `when`(nationRepository.findByWorldId(1L)).thenReturn(emptyList())
+        @Suppress("UNCHECKED_CAST")
+        `when`(nationRepository.saveAll(anyList<Nation>())).thenAnswer { inv ->
+            (inv.arguments[0] as List<Nation>)
+        }
 
-        `when`(generalRepository.save(any(General::class.java))).thenAnswer { inv ->
-            val general = inv.arguments[0] as General
-            if (general.id == 0L) {
-                general.id = generalSeq++
+        @Suppress("UNCHECKED_CAST")
+        `when`(generalRepository.saveAll(anyList<General>())).thenAnswer { inv ->
+            val generals = inv.arguments[0] as List<General>
+            generals.forEach { general ->
+                if (general.id == 0L) general.id = generalSeq++
+                savedGenerals.add(general)
             }
-            savedGenerals.add(general)
-            general
+            generals
         }
         `when`(generalRepository.findByWorldId(1L)).thenAnswer { savedGenerals.toList() }
 
@@ -389,25 +403,31 @@ class ScenarioServiceTest {
             ),
         )
 
-        `when`(cityRepository.save(any(City::class.java))).thenAnswer { inv ->
-            val city = inv.arguments[0] as City
-            if (city.id == 0L) {
-                city.id = citySeq++
+        @Suppress("UNCHECKED_CAST")
+        `when`(cityRepository.saveAll(anyList<City>())).thenAnswer { inv ->
+            val cities = inv.arguments[0] as List<City>
+            cities.forEach { city ->
+                if (city.id == 0L) city.id = citySeq++
+                cityStore[city.id] = city
             }
-            cityStore[city.id] = city
-            city
+            cities
         }
         `when`(cityRepository.findByWorldId(1L)).thenAnswer { cityStore.values.toList() }
 
         `when`(nationRepository.findByWorldId(1L)).thenReturn(emptyList())
+        @Suppress("UNCHECKED_CAST")
+        `when`(nationRepository.saveAll(anyList<Nation>())).thenAnswer { inv ->
+            (inv.arguments[0] as List<Nation>)
+        }
 
-        `when`(generalRepository.save(any(General::class.java))).thenAnswer { inv ->
-            val general = inv.arguments[0] as General
-            if (general.id == 0L) {
-                general.id = generalSeq++
+        @Suppress("UNCHECKED_CAST")
+        `when`(generalRepository.saveAll(anyList<General>())).thenAnswer { inv ->
+            val generals = inv.arguments[0] as List<General>
+            generals.forEach { general ->
+                if (general.id == 0L) general.id = generalSeq++
+                savedGenerals.add(general)
             }
-            savedGenerals.add(general)
-            general
+            generals
         }
         `when`(generalRepository.findByWorldId(1L)).thenAnswer { savedGenerals.toList() }
 
