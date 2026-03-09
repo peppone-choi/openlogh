@@ -51,7 +51,8 @@ class CommandService(
             throw IllegalStateException("실시간 모드에서는 예턴 예약을 사용할 수 없습니다.")
         }
 
-        generalTurnRepository.deleteByGeneralId(generalId)
+        val turnIdxList = turns.map { it.turnIdx }
+        generalTurnRepository.deleteByGeneralIdAndTurnIdxIn(generalId, turnIdxList)
         return turns.map { entry ->
             generalTurnRepository.save(
                 GeneralTurn(
@@ -143,7 +144,7 @@ class CommandService(
             command.city = city
             command.nation = nation
 
-            val check = command.checkFullCondition()
+            val check = command.checkMinCondition()
             val enabled = check is ConstraintResult.Pass
             val reason = if (check is ConstraintResult.Fail) check.reason else null
             val category = generalCategory(actionCode)
@@ -185,7 +186,7 @@ class CommandService(
             command.city = city
             command.nation = nation
 
-            val check = command.checkFullCondition()
+            val check = command.checkMinCondition()
             val enabled = check is ConstraintResult.Pass
             val reason = if (check is ConstraintResult.Fail) check.reason else null
             val category = nationCategory(actionCode)
@@ -409,7 +410,8 @@ class CommandService(
             throw IllegalStateException("실시간 모드에서는 국가 예턴 예약을 사용할 수 없습니다.")
         }
 
-        nationTurnRepository.deleteByNationIdAndOfficerLevel(nationId, general.officerLevel)
+        val turnIdxList = turns.map { it.turnIdx }
+        nationTurnRepository.deleteByNationIdAndOfficerLevelAndTurnIdxIn(nationId, general.officerLevel, turnIdxList)
         return turns.map { entry ->
             nationTurnRepository.save(
                 NationTurn(

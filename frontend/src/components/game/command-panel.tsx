@@ -124,6 +124,14 @@ function formatCountdown(totalSeconds: number): string {
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 }
 
+function getTurnYearMonth(turnIdx: number, baseYear: number, baseMonth: number) {
+    const totalMonths = baseMonth - 1 + turnIdx;
+    return {
+        year: baseYear + Math.floor(totalMonths / 12),
+        month: (totalMonths % 12) + 1,
+    };
+}
+
 function turnTargetText(turn: FilledTurn): string {
     if (turn.brief && turn.brief !== turn.actionCode) {
         return turn.brief;
@@ -893,7 +901,7 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
                 <div className="overflow-hidden rounded-md border border-gray-700">
                     <div className="grid grid-cols-[24px_68px_120px_1fr_136px] bg-[#1a1a1a] px-2 py-1.5 text-[11px] text-gray-400">
                         <div />
-                        <div>턴</div>
+                        <div>년월</div>
                         <div>명령</div>
                         <div>대상/상세</div>
                         <div className="text-right">작업</div>
@@ -933,7 +941,12 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
                                     onClick={(event) => handleTurnClick(turn.turnIdx, event)}
                                     className="contents cursor-pointer"
                                 >
-                                    <div className="font-mono text-gray-300 px-2 py-2">턴 {turn.turnIdx}</div>
+                                    <div className="font-mono text-gray-300 px-2 py-2 text-[11px] leading-tight">
+                                        {(() => {
+                                            const ym = getTurnYearMonth(turn.turnIdx, currentWorld?.currentYear ?? 0, currentWorld?.currentMonth ?? 1);
+                                            return `${ym.year}년 ${ym.month}월`;
+                                        })()}
+                                    </div>
                                     <div>
                                         {isEmpty ? (
                                             <Badge variant="outline" className="border-gray-600 text-gray-400">
@@ -1037,7 +1050,10 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
                         <div className="w-full max-w-2xl rounded-md border border-gray-700 bg-background shadow-xl">
                             <div className="flex items-center justify-between border-b border-gray-700 px-4 py-2">
                                 <p className="text-sm font-semibold text-gray-100">
-                                    명령 선택 ({selectedTurnList.join(', ')})
+                                    명령 선택 ({selectedTurnList.map((idx) => {
+                                        const ym = getTurnYearMonth(idx, currentWorld?.currentYear ?? 0, currentWorld?.currentMonth ?? 1);
+                                        return `${ym.year}년 ${ym.month}월`;
+                                    }).join(', ')})
                                 </p>
                                 <Button size="sm" variant="ghost" onClick={() => setShowSelector(false)}>
                                     닫기

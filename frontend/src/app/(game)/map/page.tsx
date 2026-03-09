@@ -577,7 +577,7 @@ export default function MapPage() {
                                         >
                                             {showNationLayer && nation?.color && (
                                                 <div
-                                                    className="absolute z-[1] rounded-full"
+                                                    className="absolute z-[1]"
                                                     style={{
                                                         background: getNationBgGradient(nation.color),
                                                         width: bgW,

@@ -404,6 +404,7 @@ class TurnService @Autowired constructor(
 
                     if (consumedNationTurn != null) {
                         nationTurnRepository.delete(consumedNationTurn)
+                        nationTurnRepository.shiftTurnsDown(general.nationId, general.officerLevel, consumedNationTurn.turnIdx)
                     }
                 }
 
@@ -506,6 +507,7 @@ class TurnService @Autowired constructor(
 
                 if (executedTurn != null) {
                     generalTurnRepository.delete(executedTurn)
+                    generalTurnRepository.shiftTurnsDown(general.id, executedTurn.turnIdx)
                 }
 
                 // Track active actions for inheritance (core2026 parity)

@@ -500,7 +500,7 @@ export default function AdminDashboardPage() {
                                     />
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-xs text-muted-foreground">턴 간격 (초)</label>
+                                    <label className="text-xs text-muted-foreground">턴 간격 (초 단위, 예: 300초 = 5분)</label>
                                     <Input
                                         type="number"
                                         value={newTurnTerm}
@@ -733,7 +733,7 @@ export default function AdminDashboardPage() {
                                 </div>
                             </div>
                             <div className="space-y-1">
-                                <label className="text-sm text-muted-foreground">턴 간격 (초)</label>
+                                <label className="text-sm text-muted-foreground">턴 간격 (초 단위)</label>
                                 <Input
                                     type="number"
                                     value={turnTerm}

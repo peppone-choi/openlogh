@@ -16,4 +16,12 @@ interface GeneralTurnRepository : JpaRepository<GeneralTurn, Long> {
     @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("DELETE FROM GeneralTurn g WHERE g.generalId = :generalId")
     fun deleteByGeneralId(generalId: Long)
+
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("DELETE FROM GeneralTurn g WHERE g.generalId = :generalId AND g.turnIdx IN :turnIdxList")
+    fun deleteByGeneralIdAndTurnIdxIn(generalId: Long, turnIdxList: Collection<Short>)
+
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("UPDATE GeneralTurn g SET g.turnIdx = g.turnIdx - 1 WHERE g.generalId = :generalId AND g.turnIdx > :consumedIdx")
+    fun shiftTurnsDown(generalId: Long, consumedIdx: Short)
 }

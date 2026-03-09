@@ -309,7 +309,7 @@ export function MapViewer({
                                 style={{ left, top, width: hitW, height: hitH }}
                             >
                                 <div
-                                    className="absolute rounded-full"
+                                    className="absolute"
                                     style={{
                                         background: getNationBgGradient(city.nationColor),
                                         width: bgW,

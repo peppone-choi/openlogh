@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { WorldState } from '@/types';
 import { worldApi } from '@/lib/gameApi';
+import { useGameStore } from './gameStore';
 
 interface WorldStore {
     worlds: WorldState[];
@@ -64,6 +65,7 @@ export const useWorldStore = create<WorldStore>((set) => ({
 
     resetWorld: async (id, scenarioCode) => {
         const { data } = await worldApi.reset(id, scenarioCode);
+        useGameStore.getState().clear();
         set((state) => ({
             worlds: state.worlds
                 .map((w) => (w.id === id ? data : w))

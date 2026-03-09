@@ -12,6 +12,7 @@ interface GameStore {
 
     loadAll: (worldId: number) => Promise<void>;
     loadMap: (mapName: string) => Promise<void>;
+    clear: () => void;
 }
 
 export const useGameStore = create<GameStore>((set) => ({
@@ -47,4 +48,6 @@ export const useGameStore = create<GameStore>((set) => ({
         const { data } = await mapApi.get(mapName);
         set({ mapData: data });
     },
+
+    clear: () => set({ cities: [], nations: [], generals: [], diplomacy: [], mapData: null }),
 }));
