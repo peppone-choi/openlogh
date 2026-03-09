@@ -7,8 +7,6 @@ import com.opensam.repository.NationRepository
 import com.opensam.service.MapService
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Propagation
-import org.springframework.transaction.annotation.Transactional
 import kotlin.random.Random
 
 @Service
@@ -33,7 +31,6 @@ class NpcSpawnService(
         )
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
     fun checkNpcSpawn(world: WorldState) {
         // Only check quarterly
         val month = world.currentMonth.toInt()
@@ -269,7 +266,6 @@ class NpcSpawnService(
      * Based on legacy ProvideNPCTroopLeader.php
      * npcState=5 장수를 국가별 최대치까지 생성, troopId = 자기 자신 (부대장)
      */
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
     fun provideNpcTroopLeaders(world: WorldState) {
         val worldId = world.id.toLong()
         val nations = nationRepository.findByWorldId(worldId)
@@ -335,7 +331,6 @@ class NpcSpawnService(
      * Raise invader nations in all lv4 cities.
      * Based on legacy RaiseInvader.php - called as a special event, not every turn.
      */
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
     fun raiseInvader(world: WorldState) {
         val worldId = world.id.toLong()
         val cities = cityRepository.findByWorldId(worldId)
