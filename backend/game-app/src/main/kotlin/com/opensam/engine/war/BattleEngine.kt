@@ -34,7 +34,7 @@ class BattleEngine {
         var cityOccupied = false
 
         // Sort defenders by battle order (highest first)
-        val sortedDefenders = defenders.sortedByDescending { it.calcBattleOrder() }
+        val sortedDefenders = defenders.sortedByDescending { it.calcBattleOrder() }.toMutableList()
 
         // Collect attacker triggers once (used across engagements)
         val attackerTriggers = collectTriggers(attacker)
@@ -42,30 +42,48 @@ class BattleEngine {
         // Track injury immunity from init triggers
         var attackerInjuryImmune = false
 
-        // Phase 1: Fight each defender general
-        for (defender in sortedDefenders) {
-            if (!attacker.continueWar()) {
-                attackerWon = false
-                break
+        val attackerCrewType = CrewType.fromCode(attacker.crewType)
+        val maxPhase = attackerCrewType?.speed ?: 7
+        var currentPhase = 0
+        val cityUnit = WarUnitCity(city)
+        var defenderIndex = 0
+        var currentDefender: WarUnit? = if (sortedDefenders.isNotEmpty()) sortedDefenders[0] else null
+        var inSiege = false
+        var defenderInitialized = false
+
+        // Unified phase loop: phase < maxPhase for generals, unlimited for siege
+        while (currentPhase < maxPhase) {
+            if (currentDefender == null) {
+                if (inSiege) break
+                currentDefender = cityUnit
+                inSiege = true
+                defenderInitialized = false
             }
-            if (!defender.isAlive) continue
 
-            val defenderTriggers = collectTriggers(defender)
+            if (!defenderInitialized) {
+                val defenderTriggers = collectTriggers(currentDefender)
 
-            // Fire battle-init triggers (once per engagement)
-            val initCtx = BattleTriggerContext(attacker = attacker, defender = defender, rng = rng)
-            for (trigger in attackerTriggers) trigger.onBattleInit(initCtx)
-            for (trigger in defenderTriggers) trigger.onBattleInit(initCtx)
-            if (initCtx.injuryImmune) attackerInjuryImmune = true
-            logs.addAll(initCtx.battleLogs)
+                val initCtx = BattleTriggerContext(
+                    attacker = attacker, defender = currentDefender, rng = rng,
+                    isVsCity = inSiege,
+                )
+                for (trigger in attackerTriggers) trigger.onBattleInit(initCtx)
+                for (trigger in defenderTriggers) trigger.onBattleInit(initCtx)
+                if (initCtx.injuryImmune) attackerInjuryImmune = true
+                logs.addAll(initCtx.battleLogs)
+                defenderInitialized = true
+            }
 
-            val phaseResult = executeCombatPhase(attacker, defender, rng, phaseNumber = 0, isVsCity = false)
+            // Execute one combat phase
+            val phaseResult = executeCombatPhase(
+                attacker, currentDefender, rng,
+                phaseNumber = currentPhase,
+                isVsCity = inSiege,
+            )
             totalAttackerDamage += phaseResult.damage.first
             totalDefenderDamage += phaseResult.damage.second
             logs.addAll(phaseResult.logs)
-
-            logs.add("<Y>${attacker.name}</> vs <Y>${defender.name}</> - " +
-                "공격 피해: ${phaseResult.damage.first}, 방어 피해: ${phaseResult.damage.second}")
+            currentPhase++
 
             // Attacker continuation check
             if (!attacker.continueWar()) {
@@ -74,44 +92,90 @@ class BattleEngine {
                 break
             }
 
-            // Defender continuation check (rice + HP)
-            if (defender is WarUnitGeneral && !defender.continueWar()) {
-                logs.add("<Y>${defender.name}</>이(가) 퇴각합니다.")
+            // Defender continuation check
+            val defenderCanContinue = if (currentDefender is WarUnitCity) {
+                // City: only HP check (no rice). In siege: continues while HP > 0
+                if (inSiege) currentDefender.hp > 0 else false
+            } else if (currentDefender is WarUnitGeneral) {
+                currentDefender.continueWar()
+            } else {
+                currentDefender.isAlive
+            }
+
+            if (!defenderCanContinue) {
+                if (currentDefender is WarUnitCity && inSiege) {
+                    // City walls defeated — city conquered!
+                    cityOccupied = true
+                    cityUnit.applyResults()
+                    logs.add("<R>${city.name}</> 점령!")
+                    break
+                } else if (currentDefender is WarUnitGeneral) {
+                    logs.add("<Y>${currentDefender.name}</>이(가) 퇴각합니다.")
+                }
+
+                // Move to next defender
+                defenderIndex++
+                if (defenderIndex < sortedDefenders.size) {
+                    currentDefender = sortedDefenders[defenderIndex]
+                    defenderInitialized = false
+                } else {
+                    // All generals eliminated — switch to siege
+                    currentDefender = null  // Will trigger siege on next iteration
+                    defenderInitialized = false
+                }
             }
         }
 
-        // Phase 2: Siege if all defender generals eliminated and attacker can continue
-        val allDefendersDown = sortedDefenders.all {
-            (it is WarUnitGeneral && !it.continueWar()) || it is WarUnitCity
-        }
-        if (attackerWon && attacker.continueWar() && allDefendersDown) {
-            val cityUnit = WarUnitCity(city)
-            var siegePhase = 0
-
-            // Fire battle-init triggers for siege engagement
-            val siegeInitCtx = BattleTriggerContext(attacker = attacker, defender = cityUnit, rng = rng, isVsCity = true)
-            for (trigger in attackerTriggers) trigger.onBattleInit(siegeInitCtx)
-            if (siegeInitCtx.injuryImmune) attackerInjuryImmune = true
-            logs.addAll(siegeInitCtx.battleLogs)
-
-            // No round cap - legacy has no siege round limit
-            while (attacker.continueWar() && cityUnit.isAlive) {
-                val phaseResult = executeCombatPhase(attacker, cityUnit, rng, phaseNumber = siegePhase, isVsCity = true)
+        // Legacy parity: siege continues beyond maxPhase — no phase cap for siege
+        if (attackerWon && inSiege && !cityOccupied && attacker.continueWar() && cityUnit.hp > 0) {
+            while (attacker.continueWar() && cityUnit.hp > 0) {
+                val phaseResult = executeCombatPhase(attacker, cityUnit, rng, phaseNumber = currentPhase, isVsCity = true)
                 totalAttackerDamage += phaseResult.damage.first
                 totalDefenderDamage += phaseResult.damage.second
                 logs.addAll(phaseResult.logs)
-                siegePhase++
+                currentPhase++
 
                 if (!attacker.continueWar()) {
                     attackerWon = false
                     break
                 }
+                if (cityUnit.hp <= 0) {
+                    cityOccupied = true
+                    cityUnit.applyResults()
+                    logs.add("<R>${city.name}</> 점령!")
+                    break
+                }
             }
+        }
 
-            if (!cityUnit.isAlive || cityUnit.hp <= 0) {
-                cityOccupied = true
-                cityUnit.applyResults()
-                logs.add("<R>${city.name}</> 점령!")
+        // If maxPhase reached without entering siege but all defenders down, try siege
+        if (attackerWon && !inSiege && !cityOccupied && attacker.continueWar()) {
+            val allDefendersDown = sortedDefenders.all { it is WarUnitGeneral && !it.continueWar() }
+            if (allDefendersDown) {
+                inSiege = true
+                val siegeInitCtx = BattleTriggerContext(attacker = attacker, defender = cityUnit, rng = rng, isVsCity = true)
+                for (trigger in attackerTriggers) trigger.onBattleInit(siegeInitCtx)
+                if (siegeInitCtx.injuryImmune) attackerInjuryImmune = true
+                logs.addAll(siegeInitCtx.battleLogs)
+
+                while (attacker.continueWar() && cityUnit.hp > 0) {
+                    val phaseResult = executeCombatPhase(attacker, cityUnit, rng, phaseNumber = currentPhase, isVsCity = true)
+                    totalAttackerDamage += phaseResult.damage.first
+                    totalDefenderDamage += phaseResult.damage.second
+                    logs.addAll(phaseResult.logs)
+                    currentPhase++
+
+                    if (!attacker.continueWar()) {
+                        attackerWon = false
+                        break
+                    }
+                    if (cityUnit.hp <= 0) {
+                        cityOccupied = true
+                        cityUnit.applyResults()
+                        logs.add("<R>${city.name}</> 점령!")
+                        break
+                    }
+                }
             }
         }
 

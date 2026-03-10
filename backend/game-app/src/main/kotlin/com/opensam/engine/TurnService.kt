@@ -381,9 +381,7 @@ class TurnService @Autowired constructor(
                     if (general.killTurn != null) {
                         val kt = general.killTurn!! - 1
                         if (kt <= 0) {
-                            general.npcState = 5
-                            general.nationId = 0
-                            general.killTurn = null
+                            generalMaintenanceService.killGeneral(general, world, generals)
                         } else {
                             general.killTurn = kt.toShort()
                         }
@@ -603,9 +601,7 @@ class TurnService @Autowired constructor(
                     } else {
                         val kt = general.killTurn!! - 1
                         if (kt <= 0) {
-                            general.npcState = 5
-                            general.nationId = 0
-                            general.killTurn = null
+                            generalMaintenanceService.killGeneral(general, world, generals)
                         } else {
                             general.killTurn = kt.toShort()
                         }

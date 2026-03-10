@@ -116,7 +116,7 @@ class GeneralMaintenanceService(
      * 장수 사망 처리: 국가에서 해제하고 npcState=5로 설정
      * legacy: General::kill() 패러티
      */
-    private fun killGeneral(general: General, world: WorldState, allGenerals: List<General>) {
+    fun killGeneral(general: General, world: WorldState, allGenerals: List<General>) {
         val originNationId = general.nationId
         val nation = originNationId.takeIf { it > 0 }?.let { nationRepository.findById(it).orElse(null) }
 
