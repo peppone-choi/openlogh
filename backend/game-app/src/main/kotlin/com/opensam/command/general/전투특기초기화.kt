@@ -40,6 +40,8 @@ open class 전투특기초기화(general: General, env: CommandEnv, arg: Map<Str
         val date = formatDate()
 
         pushLog("새로운 ${specialText}를 가질 준비가 되었습니다. <1>$date</>")
+        pushHistoryLog("새로운 ${specialText}를 가질 준비가 되었습니다. <1>$date</>")
+        pushGlobalLog("<Y>${general.name}</>${pickJosa(general.name, "이")} ${specialText} 초기화를 실행했습니다.")
 
         val currentAge = general.age.toInt()
 

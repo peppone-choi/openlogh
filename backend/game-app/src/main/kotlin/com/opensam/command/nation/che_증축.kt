@@ -59,6 +59,8 @@ class che_증축(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
         general.dedication += expDed
 
         pushLog("<G><b>${c.name}</b></>을 증축했습니다. <1>$date</>")
+        pushHistoryLog("<G><b>${c.name}</b></>을 증축했습니다. <1>$date</>")
+        pushGlobalLog("<Y>${general.name}</>${pickJosa(general.name, "이")} <G><b>${c.name}</b></>을 증축했습니다.")
         return CommandResult(true, logs)
     }
 }

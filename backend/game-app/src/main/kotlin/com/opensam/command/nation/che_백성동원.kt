@@ -40,6 +40,8 @@ class che_백성동원(general: General, env: CommandEnv, arg: Map<String, Any>?
         services?.generalRepository?.save(general)
 
         pushLog("백성동원 발동! <1>$date</>")
+        pushHistoryLog("백성동원 발동! <1>$date</>")
+        pushGlobalLog("<Y>${general.name}</>${pickJosa(general.name, "이")} 백성동원 전략을 발동했습니다.")
         return CommandResult(true, logs)
     }
 }

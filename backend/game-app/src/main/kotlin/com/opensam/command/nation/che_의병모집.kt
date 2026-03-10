@@ -50,6 +50,8 @@ class che_의병모집(general: General, env: CommandEnv, arg: Map<String, Any>?
         general.dedication += expDed
 
         pushLog("$actionName 발동! <1>$date</>")
+        pushGlobalLog("<Y>${generalName}</>${josaYi} <M>${actionName}</>${josaUl} 발동하였습니다.")
+        pushGlobalHistoryLog("<Y>${generalName}</>${josaYi} <M>${actionName}</>${josaUl} 발동했습니다.")
 
         // Broadcast to own nation generals
         val broadcastMessage = "<Y>${generalName}</>${josaYi} <M>${actionName}</>${josaUl} 발동하였습니다."

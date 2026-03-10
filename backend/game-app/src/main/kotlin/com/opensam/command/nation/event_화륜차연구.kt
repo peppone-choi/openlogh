@@ -41,8 +41,10 @@ class event_화륜차연구(general: General, env: CommandEnv, arg: Map<String, 
         val josaYi = JosaUtil.pick(generalName, "이")
 
         pushLog("<M>$actionName</> 완료")
-        pushLog("_history:<M>$actionName</> 완료")
-        pushLog("_nation_history:<Y>${generalName}</>${josaYi} <M>$actionName</> 완료")
+        pushHistoryLog("<M>$actionName</> 완료")
+        pushGlobalLog("<Y>${generalName}</>${josaYi} <M>$actionName</> 완료")
+        pushNationalHistoryLog("<Y>${generalName}</>${josaYi} <M>$actionName</> 완료")
+        pushGlobalHistoryLog("<D><b>${nation?.name ?: "국가"}</b></>의 <M>$actionName</>가 완료되었습니다.")
         return CommandResult(true, logs)
     }
 }

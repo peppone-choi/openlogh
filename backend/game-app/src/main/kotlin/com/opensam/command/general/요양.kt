@@ -21,6 +21,8 @@ class 요양(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
         val date = formatDate()
 
         pushLog("건강 회복을 위해 요양합니다. <1>$date</>")
+        pushHistoryLog("건강 회복을 위해 요양합니다. <1>$date</>")
+        pushGlobalLog("<Y>${general.name}</>${pickJosa(general.name, "이")} 요양합니다.")
 
         val exp = 10
         val ded = 7

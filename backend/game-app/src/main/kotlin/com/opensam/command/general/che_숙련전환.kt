@@ -78,6 +78,8 @@ class che_숙련전환(general: General, env: CommandEnv, arg: Map<String, Any>?
         val josaRo = if (addDexText.last().code % 28 != 0) "으로" else "로"
 
         pushLog("${srcTypeName} 숙련 ${cutDexText}${josaUl} ${destTypeName} 숙련 ${addDexText}${josaRo} 전환했습니다. <1>$date</>")
+        pushHistoryLog("${srcTypeName} 숙련 ${cutDexText}${josaUl} ${destTypeName} 숙련 ${addDexText}${josaRo} 전환했습니다. <1>$date</>")
+        pushGlobalLog("<Y>${general.name}</>${pickJosa(general.name, "이")} 숙련전환을 실행했습니다.")
 
         return CommandResult(
             success = true,

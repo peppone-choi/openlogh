@@ -99,6 +99,8 @@ class che_정착장려(general: General, env: CommandEnv, arg: Map<String, Any>?
             else -> "${actionName}${josaUl} 하여 주민이 <C>${scoreText}</>명 증가했습니다. <1>$date</>"
         }
         pushLog(logMessage)
+        pushHistoryLog(logMessage)
+        pushGlobalLog("<Y>${general.name}</>${pickJosa(general.name, "이")} ${actionName}${josaUl} 실시했습니다.")
 
         val cost = getCost()
 

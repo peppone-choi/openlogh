@@ -134,6 +134,8 @@ open class che_징병(general: General, env: CommandEnv, arg: Map<String, Any>? 
             newAtmos = defaultAtmos
         }
         pushLog(logMessage)
+        pushHistoryLog(logMessage)
+        pushGlobalLog("<Y>${general.name}</>${pickJosa(general.name, "이")} ${crewTypeName} <C>${reqCrewText}</>명을 ${actionName}했습니다.")
 
         val cost = getCost()
         val exp = reqCrew / 100

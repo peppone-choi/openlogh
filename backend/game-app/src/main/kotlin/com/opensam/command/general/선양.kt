@@ -55,6 +55,9 @@ class 선양(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
         pushLog("<Y>${destGeneralName}</>에게 군주의 자리를 물려줍니다. <1>$date</>")
         // General history log
         pushLog("[HISTORY]<D><b>${nationName}</b></>의 군주자리를 <Y>${destGeneralName}</>에게 선양")
+        pushHistoryLog("<D><b>${nationName}</b></>의 군주자리를 <Y>${destGeneralName}</>에게 선양")
+        pushGlobalLog("<Y>${generalName}</>${josaYi} <Y>${destGeneralName}</>에게 군주 자리를 선양했습니다.")
+        pushGlobalHistoryLog("<Y><b>【선양】</b></><Y>${generalName}</>${josaYi} <D><b>${nationName}</b></>의 군주 자리를 <Y>${destGeneralName}</>에게 선양했습니다.")
 
         // Legacy PHP: experience *= 0.7
         val expMultiplier = 0.7

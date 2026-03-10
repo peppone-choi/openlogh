@@ -50,6 +50,8 @@ class che_수몰(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
         general.dedication += expDed
 
         pushLog("수몰 발동! <1>$date</>")
+        pushGlobalLog("<Y>${generalName}</>${josaYi} <G><b>${dc.name}</b></>에 <M>수몰</>을 발동했습니다.")
+        pushGlobalHistoryLog("<Y>${generalName}</>${josaYi} <G><b>${dc.name}</b></>에 <M>수몰</>을 발동했습니다.")
 
         val broadcastMessage = "<Y>${generalName}</>${josaYi} <G><b>${dc.name}</b></>에 <M>수몰</>을 발동하였습니다."
 

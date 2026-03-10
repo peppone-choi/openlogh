@@ -61,6 +61,8 @@ class che_감축(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
         general.dedication += 5 * (getPreReqTurn() + 1)
 
         pushLog("<G><b>${capitalCity.name}</b></>을 감축했습니다. <1>$date</>")
+        pushHistoryLog("<G><b>${capitalCity.name}</b></>을 감축했습니다. <1>$date</>")
+        pushGlobalLog("<Y>${general.name}</>${pickJosa(general.name, "이")} <G><b>${capitalCity.name}</b></>을 감축했습니다.")
 
         return CommandResult(true, logs)
     }

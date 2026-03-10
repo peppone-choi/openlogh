@@ -56,6 +56,8 @@ class che_훈련(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
         val atmosDelta = atmosAfter - general.atmos.toInt()
 
         pushLog("훈련치가 <C>${score}</> 상승했습니다. <1>$date</>")
+        pushHistoryLog("훈련치가 <C>${score}</> 상승했습니다. <1>$date</>")
+        pushGlobalLog("<Y>${general.name}</>${pickJosa(general.name, "이")} 훈련을 실시했습니다.")
 
         val exp = 100
         val ded = 70

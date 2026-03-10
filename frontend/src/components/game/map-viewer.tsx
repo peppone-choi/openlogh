@@ -201,6 +201,21 @@ export function MapViewer({
         }
     }, [isPublicMode, publicData?.currentMonth]);
 
+    const yearMonth = useMemo(() => {
+        if (isPublicMode) {
+            return publicData.currentYear != null && publicData.currentMonth != null
+                ? { year: publicData.currentYear, month: publicData.currentMonth }
+                : null;
+        }
+        try {
+            const y = Number(localStorage.getItem('opensam:world:year'));
+            const m = Number(localStorage.getItem('opensam:world:month'));
+            return y && m ? { year: y, month: m } : null;
+        } catch {
+            return null;
+        }
+    }, [isPublicMode, publicData?.currentYear, publicData?.currentMonth]);
+
     const mapFolder = mapCode.includes('miniche') ? 'che' : mapCode === 'ludo_rathowm' ? 'ludo_rathowm' : mapCode;
     const mapBgUrl = getMapBgUrl(mapFolder, season);
     const mapRoadUrl = getMapRoadUrl(mapCode);
@@ -258,12 +273,6 @@ export function MapViewer({
           : 1;
     const innerW = useResponsiveScale ? MAP_WIDTH : compact ? 500 : MAP_WIDTH;
     const innerH = useResponsiveScale ? MAP_HEIGHT : compact ? 357.14 : MAP_HEIGHT;
-
-    const yearMonth = isPublicMode
-        ? publicData.currentYear != null && publicData.currentMonth != null
-            ? { year: publicData.currentYear, month: publicData.currentMonth }
-            : null
-        : null;
 
     const outerStyle = useResponsiveScale
         ? { backgroundColor: '#111827', aspectRatio: '700 / 500' }

@@ -53,6 +53,8 @@ class che_이호경식(general: General, env: CommandEnv, arg: Map<String, Any>?
         general.dedication += expDed
 
         pushLog("$actionName 발동! <1>$date</>")
+        pushGlobalLog("<Y>${generalName}</>${josaYi} <D><b>${destNationName}</b></>에 <M>${actionName}</>${josaUl} 발동하였습니다.")
+        pushGlobalHistoryLog("<Y>${generalName}</>${josaYi} <D><b>${destNationName}</b></>에 <M>${actionName}</>${josaUl} 발동했습니다.")
 
         // Broadcast to own nation generals
         val broadcastMessage = "<Y>${generalName}</>${josaYi} <G><b>${destNationName}</b></>에 <M>${actionName}</>${josaUl} 발동하였습니다."

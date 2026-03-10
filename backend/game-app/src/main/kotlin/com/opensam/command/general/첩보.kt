@@ -53,6 +53,7 @@ class 첩보(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
 
         // Legacy: global log visible to everyone
         pushGlobalLog("누군가가 <G><b>${destCityName}</b></>을 살피는 것 같습니다.")
+        pushHistoryLog("<G><b>${destCityName}</b></>에 첩보를 시도했습니다. <1>$date</>")
 
         // Gather city info
         val popText = String.format("%,d", dc.pop)

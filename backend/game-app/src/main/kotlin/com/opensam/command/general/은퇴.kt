@@ -31,6 +31,8 @@ class 은퇴(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
         val date = formatDate()
 
         pushLog("은퇴하였습니다. <1>$date</>")
+        pushHistoryLog("은퇴하였습니다. <1>$date</>")
+        pushGlobalLog("<Y>${general.name}</>${pickJosa(general.name, "이")} 은퇴했습니다.")
 
         // Legacy PHP: checks isunited==0 before CheckHall
         val isUnited = (env.gameStor["isunited"] as? Number)?.toInt() ?: 0

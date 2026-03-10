@@ -41,6 +41,7 @@ class che_불가침파기수락(general: General, env: CommandEnv, arg: Map<Stri
         pushHistoryLog("<D><b>${dn.name}</b></>${josaWaDest}의 불가침 파기 수락")
 
         pushGlobalActionLog("<Y>${generalName}</>${josaYiGeneral} <D><b>${dn.name}</b></>${josaWaDest}의 불가침 조약을 <M>파기</> 하였습니다.")
+        pushGlobalLog("<Y>${generalName}</>${josaYiGeneral} <D><b>${dn.name}</b></>${josaWaDest}의 불가침 조약을 파기했습니다.")
         pushGlobalHistoryLog("<Y><b>【파기】</b></><D><b>${n.name}</b></>${josaYiNation} <D><b>${dn.name}</b></>${josaWaDest}의 불가침 조약을 <M>파기</> 하였습니다.")
 
         val josaWaSrc = JosaUtil.pick(n.name, "와")

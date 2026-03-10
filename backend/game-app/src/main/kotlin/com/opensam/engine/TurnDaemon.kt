@@ -71,12 +71,7 @@ class TurnDaemon(
                 }
             }
         } finally {
-            transitionTo(DaemonState.FLUSHING, "flush_start")
-            try {
-                worldStateRepository.flush()
-            } finally {
-                transitionTo(DaemonState.IDLE, "tick_complete")
-            }
+            transitionTo(DaemonState.IDLE, "tick_complete")
         }
     }
 

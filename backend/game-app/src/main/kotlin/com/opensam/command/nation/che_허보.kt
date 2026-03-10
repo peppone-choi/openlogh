@@ -57,6 +57,8 @@ class che_허보(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
         }
 
         pushLog("$actionName 발동! <1>$date</>")
+        pushHistoryLog("$actionName 발동! <1>$date</>")
+        pushGlobalLog("<Y>${general.name}</>${pickJosa(general.name, "이")} $actionName 전략을 발동했습니다.")
         return CommandResult(true, logs)
     }
 }

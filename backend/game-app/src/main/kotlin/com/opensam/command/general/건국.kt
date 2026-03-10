@@ -68,6 +68,9 @@ class 건국(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
         val josaNationYi = JosaUtil.pick(nationName, "이")
 
         pushLog("<D><b>${nationName}</b></>${josaUl} 건국하였습니다. <1>$date</>")
+        pushHistoryLog("<D><b>${nationName}</b></>${josaUl} 건국하였습니다. <1>$date</>")
+        pushGlobalLog("<Y>${generalName}</>${josaYi} <G><b>${cityName}</b></>에 국가를 건설하였습니다.")
+        pushGlobalHistoryLog("<Y><b>【건국】</b></>${nationType} <D><b>${nationName}</b></>${josaNationYi} 새로이 등장하였습니다.")
 
         val exp = 1000
         val ded = 1000

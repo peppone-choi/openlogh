@@ -61,6 +61,8 @@ class 랜덤임관(general: General, env: CommandEnv, arg: Map<String, Any>? = n
         //   Pick nation weighted by these weights.
 
         pushLog("<D>임관할 국가를 찾고 있습니다.</> <1>$date</>")
+        pushHistoryLog("<D>임관할 국가를 찾고 있습니다.</> <1>$date</>")
+        pushGlobalLog("<Y>${generalName}</>${josaYi} 임관할 국가를 찾고 있습니다.")
 
         return CommandResult(
             success = true,

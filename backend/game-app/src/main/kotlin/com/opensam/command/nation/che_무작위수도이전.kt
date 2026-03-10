@@ -82,6 +82,9 @@ class che_무작위수도이전(general: General, env: CommandEnv, arg: Map<Stri
         general.dedication += 5 * (getPreReqTurn() + 1)
 
         pushLog("<G><b>${destCity.name}</b></>으로 국가를 옮겼습니다. <1>$date</>")
+        pushHistoryLog("<G><b>${destCity.name}</b></>으로 국가를 옮겼습니다. <1>$date</>")
+        pushGlobalLog("<Y>${general.name}</>${pickJosa(general.name, "이")} <G><b>${destCity.name}</b></>으로 수도를 옮겼습니다.")
+        pushGlobalHistoryLog("<S><b>【천도】</b></><D><b>${n.name}</b></>${pickJosa(n.name, "이")} <G><b>${destCity.name}</b></>으로 수도를 옮겼습니다.")
         return CommandResult(true, logs)
     }
 }

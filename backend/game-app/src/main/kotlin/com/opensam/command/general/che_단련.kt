@@ -64,6 +64,8 @@ class che_단련(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
             else -> "${armTypeName} 숙련도가 <C>${scoreText}</> 향상되었습니다. <1>$date</>"
         }
         pushLog(logMessage)
+        pushHistoryLog(logMessage)
+        pushGlobalLog("<Y>${general.name}</>${pickJosa(general.name, "이")} 단련을 수행했습니다.")
 
         val exp = crew / 400
         val cost = getCost()

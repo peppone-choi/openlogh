@@ -107,6 +107,9 @@ class che_초토화(general: General, env: CommandEnv, arg: Map<String, Any>? = 
         }
 
         pushLog("<G><b>${dc.name}</b></>을 초토화했습니다. <1>$date</>")
+        pushHistoryLog("<G><b>${dc.name}</b></>을 초토화했습니다. <1>$date</>")
+        pushGlobalLog("<Y>${general.name}</>${pickJosa(general.name, "이")} <G><b>${dc.name}</b></>을 초토화했습니다.")
+        pushGlobalHistoryLog("<Y>${general.name}</>${pickJosa(general.name, "이")} <G><b>${dc.name}</b></>을 초토화했습니다.")
         return CommandResult(true, logs)
     }
 }

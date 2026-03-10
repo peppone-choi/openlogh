@@ -62,6 +62,8 @@ class che_물자원조(general: General, env: CommandEnv, arg: Map<String, Any>?
         general.dedication += 5
 
         pushLog("<D><b>${dn.name}</b></>로 금<C>$actualGold</> 쌀<C>$actualRice</>을 지원했습니다. <1>$date</>")
+        pushHistoryLog("<D><b>${dn.name}</b></>로 금<C>$actualGold</> 쌀<C>$actualRice</>을 지원했습니다. <1>$date</>")
+        pushGlobalLog("<Y>${general.name}</>${pickJosa(general.name, "이")} <D><b>${dn.name}</b></>에 물자를 지원했습니다.")
         return CommandResult(true, logs)
     }
 

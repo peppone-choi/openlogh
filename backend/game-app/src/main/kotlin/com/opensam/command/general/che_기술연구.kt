@@ -87,6 +87,8 @@ class che_기술연구(general: General, env: CommandEnv, arg: Map<String, Any>?
             else -> "${actionName}${josaUl} 하여 <C>$scoreInt</> 상승했습니다. <1>$date</>"
         }
         pushLog(logMessage)
+        pushHistoryLog(logMessage)
+        pushGlobalLog("<Y>${general.name}</>${pickJosa(general.name, "이")} ${actionName}${josaUl} 수행했습니다.")
 
         // Legacy parity: TechLimit check - if tech exceeds limit, score /= 4
         val techLimitApplied = env.isTechLimited(nation?.tech?.toDouble() ?: 0.0)

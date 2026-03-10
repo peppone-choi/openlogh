@@ -30,6 +30,8 @@ class 선동(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
         pushGlobalActionLog("<G><b>${dc.name}</b></>의 백성들이 동요하고 있습니다.")
         pushLog("<G><b>${dc.name}</b></>에 ${actionName}${josa(actionName, "이")} 성공했습니다. <1>${formatDate()}</>")
         pushLog("도시의 치안이 <C>${secuAmountText}</>, 민심이 <C>${trustAmountText}</>만큼 감소하고, 장수 <C>${injuryCount}</>명이 부상 당했습니다.")
+        pushHistoryLog("<G><b>${dc.name}</b></>에 ${actionName}${josa(actionName, "이")} 성공했습니다. <1>${formatDate()}</>")
+        pushGlobalLog("<Y>${general.name}</>${pickJosa(general.name, "이")} <G><b>${dc.name}</b></>에 ${actionName}${josa(actionName, "을")} 감행했습니다.")
 
         // Return trust as Double (not Int) to preserve decimal precision.
         // The CommandResultApplicator handles trust as float.

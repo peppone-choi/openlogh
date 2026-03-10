@@ -158,6 +158,8 @@ class TurnService @Autowired constructor(
 
     @Transactional
     fun processWorld(world: WorldState) {
+        val world = worldStateRepository.findById(world.id)
+            .orElse(world)
         worldPortFactory.beginScope()
         try {
             val processStartMs = System.currentTimeMillis()

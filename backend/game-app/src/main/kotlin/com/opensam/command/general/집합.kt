@@ -33,6 +33,8 @@ class 집합(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
         val troopId = general.troopId
 
         pushLog("<G><b>${cityName}</b></>에서 집합을 실시했습니다. <1>$date</>")
+        pushHistoryLog("<G><b>${cityName}</b></>에서 집합을 실시했습니다. <1>$date</>")
+        pushGlobalLog("<Y>${general.name}</>${pickJosa(general.name, "이")} <G><b>${cityName}</b></>에서 집합을 실시했습니다.")
 
         // Legacy: members not at the city get moved + notified
         // PHP: SELECT no FROM general WHERE nation=%i AND city!=%i AND troop=%i AND no!=%i

@@ -54,6 +54,8 @@ class che_국기변경(general: General, env: CommandEnv, arg: Map<String, Any>?
         general.dedication += 5
 
         pushLog("<span style='color:$color;'><b>국기</b></span>를 변경하였습니다 <1>$date</>")
+        pushHistoryLog("<span style='color:$color;'><b>국기</b></span>를 변경하였습니다 <1>$date</>")
+        pushGlobalLog("<Y>${general.name}</>${pickJosa(general.name, "이")} 국기를 변경했습니다.")
         return CommandResult(true, logs)
     }
 }

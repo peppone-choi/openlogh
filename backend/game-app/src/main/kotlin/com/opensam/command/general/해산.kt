@@ -52,6 +52,9 @@ class 해산(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
         pushLog("세력을 해산했습니다. <1>$date</>")
         pushLog("_global:<Y>${generalName}</>${josa(generalName, "이")} 세력을 해산했습니다.")
         pushLog("_history:<D><b>${nationName}</b></>${josa(nationName, "을")} 해산")
+        pushHistoryLog("<D><b>${nationName}</b></>${josa(nationName, "을")} 해산")
+        pushGlobalLog("<Y>${generalName}</>${josa(generalName, "이")} 세력을 해산했습니다.")
+        pushGlobalHistoryLog("<Y><b>【해산】</b></><D><b>${nationName}</b></>${josa(nationName, "이")} 해산되었습니다.")
 
         return CommandResult(
             success = true,

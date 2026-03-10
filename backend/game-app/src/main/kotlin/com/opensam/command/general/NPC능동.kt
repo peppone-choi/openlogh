@@ -30,6 +30,8 @@ class NPC능동(general: General, env: CommandEnv, arg: Map<String, Any>? = null
                 ?: return CommandResult(success = false, logs = listOf("목적지가 없습니다."))
 
             pushLog("NPC 전용 명령을 이용해 도시#${destCityId}로 이동했습니다.")
+            pushHistoryLog("NPC 전용 명령을 이용해 도시#${destCityId}로 이동했습니다.")
+            pushGlobalLog("<Y>${general.name}</>${pickJosa(general.name, "이")} NPC 명령으로 이동했습니다.")
 
             return CommandResult(
                 success = true,

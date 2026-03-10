@@ -46,6 +46,8 @@ class che_피장파장(general: General, env: CommandEnv, arg: Map<String, Any>?
         val destNationGenerals = services?.generalRepository?.findByNationId(dn.id) ?: emptyList()
 
         pushLog("<G><b>${commandType}</b></> 전략의 $actionName 발동! <1>$date</>")
+        pushHistoryLog("<G><b>${commandType}</b></> 전략의 $actionName 발동! <1>$date</>")
+        pushGlobalLog("<Y>${general.name}</>${pickJosa(general.name, "이")} ${commandType} 전략의 $actionName 발동했습니다.")
         return CommandResult(true, logs)
     }
 }

@@ -199,6 +199,7 @@ class che_천도(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
         pushHistoryLog("<G><b>${dCity.name}</b></>${josaRo} <M>천도</>명령")
         pushNationalHistoryLog("<Y>${generalName}</>${josaYi} <G><b>${dCity.name}</b></>${josaRo} <M>천도</> 명령")
         pushGlobalActionLog("<Y>${generalName}</>${josaYi} <G><b>${dCity.name}</b></>${josaRo} <M>천도</>를 명령하였습니다.")
+        pushGlobalLog("<Y>${generalName}</>${josaYi} <G><b>${dCity.name}</b></>${josaRo} 천도했습니다.")
         pushGlobalHistoryLog("<S><b>【천도】</b></><D><b>${nationName}</b></>${josaYiNation} <G><b>${dCity.name}</b></>${josaRo} <M>천도</>하였습니다.")
 
         // Reset lastTurn term to 0 (completed)

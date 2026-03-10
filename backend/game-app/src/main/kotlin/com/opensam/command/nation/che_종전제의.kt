@@ -29,6 +29,9 @@ class che_종전제의(general: General, env: CommandEnv, arg: Map<String, Any>?
 
         val josaRo = JosaUtil.pick(dn.name, "로")
         pushLog("<D><b>${dn.name}</b></>${josaRo} 종전 제의 서신을 보냈습니다.<1>${formatDate()}</>")
+        pushHistoryLog("<D><b>${dn.name}</b></>${josaRo} 종전 제의 서신을 보냈습니다.")
+        pushGlobalLog("<Y>${general.name}</>${pickJosa(general.name, "이")} <D><b>${dn.name}</b></>${josaRo} 종전 제의를 보냈습니다.")
+        pushGlobalHistoryLog("<Y>${general.name}</>${pickJosa(general.name, "이")} <D><b>${dn.name}</b></>에 종전을 제의했습니다.")
 
         services!!.diplomacyService.proposeCeasefire(env.worldId, n.id, dn.id)
         general.experience += 50

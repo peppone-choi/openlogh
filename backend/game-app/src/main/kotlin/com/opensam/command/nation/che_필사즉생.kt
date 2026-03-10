@@ -60,6 +60,8 @@ class che_필사즉생(general: General, env: CommandEnv, arg: Map<String, Any>?
         if (general.atmos < ATMOS_CAP) general.atmos = ATMOS_CAP
 
         pushLog("$actionName 발동! <1>$date</>")
+        pushHistoryLog("$actionName 발동! <1>$date</>")
+        pushGlobalLog("<Y>${general.name}</>${pickJosa(general.name, "이")} $actionName 전략을 발동했습니다.")
         return CommandResult(true, logs)
     }
 }

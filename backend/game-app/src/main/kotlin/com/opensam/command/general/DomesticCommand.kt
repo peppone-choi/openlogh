@@ -127,6 +127,8 @@ abstract class DomesticCommand(
             else -> "${actionName}${josaUl} 하여 <C>$scoreInt</> 상승했습니다. <1>$date</>"
         }
         pushLog(logMessage)
+        pushHistoryLog(logMessage)
+        pushGlobalLog("<Y>${general.name}</>${pickJosa(general.name, "이")} ${actionName}${josaUl} 실행했습니다.")
 
         // Legacy parity: front line debuff with capital scaling
         var finalScore = scoreInt

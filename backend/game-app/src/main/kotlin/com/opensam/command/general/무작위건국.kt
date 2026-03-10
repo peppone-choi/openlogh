@@ -66,6 +66,7 @@ class 무작위건국(general: General, env: CommandEnv, arg: Map<String, Any>? 
         pushGlobalLog("<Y>${generalName}</>${josaYi} 국가를 건설하였습니다.")
         // Global history log
         pushGlobalLog("<Y><b>【건국】</b></>${nationType} <D><b>${nationName}</b></>${josaNationYi} 새로이 등장하였습니다.")
+        pushGlobalHistoryLog("<Y><b>【건국】</b></>${nationType} <D><b>${nationName}</b></>${josaNationYi} 새로이 등장하였습니다.")
         // General history log
         pushHistoryLog("<D><b>${nationName}</b></>${josaNationUl} 건국")
         // National history log

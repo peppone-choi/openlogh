@@ -81,6 +81,8 @@ class cr_인구이동(general: General, env: CommandEnv, arg: Map<String, Any>? 
 
         val amountText = String.format("%,d", actualAmount)
         pushLog("<G><b>${dc.name}</b></>로 인구 <C>$amountText</>명을 옮겼습니다. <1>$date</>")
+        pushHistoryLog("<G><b>${dc.name}</b></>로 인구 <C>$amountText</>명을 옮겼습니다. <1>$date</>")
+        pushGlobalLog("<Y>${general.name}</>${pickJosa(general.name, "이")} <G><b>${dc.name}</b></>로 인구를 이동시켰습니다.")
         return CommandResult(true, logs)
     }
 }

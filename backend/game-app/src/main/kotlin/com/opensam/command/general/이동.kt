@@ -49,6 +49,8 @@ class 이동(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
 
         // Legacy PHP uses JosaUtil for 로/으로
         pushLog("<G><b>${destCityName}</b></>(으)로 이동했습니다. <1>$date</>")
+        pushHistoryLog("<G><b>${destCityName}</b></>(으)로 이동했습니다. <1>$date</>")
+        pushGlobalLog("<Y>${general.name}</>${pickJosa(general.name, "이")} <G><b>${destCityName}</b></>(으)로 이동했습니다.")
 
         val exp = 50
         val cost = getCost()

@@ -54,6 +54,8 @@ class che_몰수(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
 
         destGen.betray = (destGen.betray + 1).toShort()
         pushLog("<Y>${destGen.name}</>에게서 $resName <C>$actual</>을 몰수했습니다. <1>$date</>")
+        pushHistoryLog("<Y>${destGen.name}</>에게서 $resName <C>$actual</>을 몰수했습니다. <1>$date</>")
+        pushGlobalLog("<Y>${general.name}</>${pickJosa(general.name, "이")} <Y>${destGen.name}</>의 ${resName}을 몰수했습니다.")
         return CommandResult(true, logs)
     }
 }

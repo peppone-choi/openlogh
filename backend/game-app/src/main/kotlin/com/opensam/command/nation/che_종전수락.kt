@@ -50,6 +50,7 @@ class che_종전수락(general: General, env: CommandEnv, arg: Map<String, Any>?
 
         // Global action + history
         pushGlobalActionLog("<Y>${generalName}</>${josaYiGeneral} <D><b>${destNationName}</b></>${josaWaDest} <M>종전 합의</> 하였습니다.")
+        pushGlobalLog("<Y>${generalName}</>${josaYiGeneral} <D><b>${destNationName}</b></>${josaWaDest} 종전에 합의했습니다.")
         pushGlobalHistoryLog("<Y><b>【종전】</b></><D><b>${nationName}</b></>${josaYiNation} <D><b>${destNationName}</b></>${josaWaDest} <M>종전 합의</> 하였습니다.")
 
         // Own national history

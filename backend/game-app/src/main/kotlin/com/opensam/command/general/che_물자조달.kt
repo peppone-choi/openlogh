@@ -77,6 +77,8 @@ class che_물자조달(general: General, env: CommandEnv, arg: Map<String, Any>?
             else -> "${resName}을 <C>${scoreText}</> 조달했습니다. <1>$date</>"
         }
         pushLog(logMessage)
+        pushHistoryLog(logMessage)
+        pushGlobalLog("<Y>${general.name}</>${pickJosa(general.name, "이")} 물자조달을 실행했습니다.")
 
         // random stat exp weighted by stats
         val statWeights = listOf(

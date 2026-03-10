@@ -55,6 +55,8 @@ class 탈취(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
         pushGlobalActionLog("<G><b>${dc.name}</b></>에서 금과 쌀을 도둑맞았습니다.")
         pushLog("<G><b>${dc.name}</b></>에 ${actionName}${josa(actionName, "이")} 성공했습니다. <1>${formatDate()}</>")
         pushLog("금<C>${"%,d".format(gold)}</> 쌀<C>${"%,d".format(rice)}</>을 획득했습니다.")
+        pushHistoryLog("<G><b>${dc.name}</b></>에 ${actionName}${josa(actionName, "이")} 성공했습니다. <1>${formatDate()}</>")
+        pushGlobalLog("<Y>${general.name}</>${pickJosa(general.name, "이")} <G><b>${dc.name}</b></>에서 자원을 탈취했습니다.")
 
         val nationId = general.nationId
         val nationShareGold: Int

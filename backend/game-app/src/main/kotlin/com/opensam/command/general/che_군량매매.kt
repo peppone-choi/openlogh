@@ -78,6 +78,8 @@ class che_군량매매(general: General, env: CommandEnv, arg: Map<String, Any>?
             sellAmount = sell + t
             tax = t
             pushLog("군량 <C>${buyAmount.roundToInt()}</>을 사서 자금 <C>${sellAmount.roundToInt()}</>을 썼습니다. <1>$date</>")
+            pushHistoryLog("군량 <C>${buyAmount.roundToInt()}</>을 사서 자금 <C>${sellAmount.roundToInt()}</>을 썼습니다. <1>$date</>")
+            pushGlobalLog("<Y>${general.name}</>${pickJosa(general.name, "이")} 군량을 매입했습니다.")
         } else {
             val sell = minOf(argAmount.toDouble(), currentRice.toDouble())
             var buy = sell * tradeRate
@@ -87,6 +89,8 @@ class che_군량매매(general: General, env: CommandEnv, arg: Map<String, Any>?
             sellAmount = sell
             tax = t
             pushLog("군량 <C>${sellAmount.roundToInt()}</>을 팔아 자금 <C>${buyAmount.roundToInt()}</>을 얻었습니다. <1>$date</>")
+            pushHistoryLog("군량 <C>${sellAmount.roundToInt()}</>을 팔아 자금 <C>${buyAmount.roundToInt()}</>을 얻었습니다. <1>$date</>")
+            pushGlobalLog("<Y>${general.name}</>${pickJosa(general.name, "이")} 군량을 매각했습니다.")
         }
 
         // random stat exp weighted by base stats (legacy parity)

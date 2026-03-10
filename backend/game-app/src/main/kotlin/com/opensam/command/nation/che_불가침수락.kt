@@ -36,6 +36,8 @@ class che_불가침수락(general: General, env: CommandEnv, arg: Map<String, An
         val josaWaDest = JosaUtil.pick(dn.name, "와")
         pushLog("<D><b>${dn.name}</b></>${josaWaDest} 불가침에 성공했습니다.")
         pushHistoryLog("<D><b>${dn.name}</b></>${josaWaDest} 불가침 성공")
+        pushGlobalLog("<Y>${general.name}</>${pickJosa(general.name, "이")} <D><b>${dn.name}</b></>${josaWaDest} 불가침에 합의했습니다.")
+        pushGlobalHistoryLog("<Y>${general.name}</>${pickJosa(general.name, "이")} <D><b>${dn.name}</b></>${josaWaDest} 불가침 조약을 체결했습니다.")
 
         val josaWaSrc = JosaUtil.pick(n.name, "와")
         pushDestGeneralLog("<D><b>${n.name}</b></>${josaWaSrc} 불가침에 성공했습니다.")

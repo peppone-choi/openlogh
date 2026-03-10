@@ -101,6 +101,8 @@ class 출병(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
             } else {
                 pushLog("가까운 경로에 적군 도시가 없습니다. <G><b>${resolvedCityName}</b></>${josaRo} 이동합니다. <1>$date</>")
             }
+            pushHistoryLog("<G><b>${resolvedCityName}</b></>${josaRo} 이동합니다. <1>$date</>")
+            pushGlobalLog("<Y>${general.name}</>${pickJosa(general.name, "이")} 출병 경로를 변경해 <G><b>${resolvedCityName}</b></>${josaRo} 이동합니다.")
             return CommandResult(
                 success = true,
                 logs = logs,
@@ -119,6 +121,9 @@ class 출병(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
             val josaUl = JosaUtil.pick(resolvedCityName, "을")
             pushLog("<G><b>${finalTargetCityName}</b></>${josaRo} 가기 위해 <G><b>${resolvedCityName}</b></>${josaUl} 거쳐야 합니다. <1>$date</>")
         }
+        pushHistoryLog("<G><b>${targetCityId}</b></> 방면으로 출병했습니다. <1>$date</>")
+        pushGlobalLog("<Y>${general.name}</>${pickJosa(general.name, "이")} <G><b>${finalTargetCityName}</b></> 방면으로 출병했습니다.")
+        pushGlobalHistoryLog("<Y>${general.name}</>${pickJosa(general.name, "이")} 출병을 단행했습니다.")
 
         val cost = getCost()
         val dexGain = (general.crew / 100.0).roundToInt()

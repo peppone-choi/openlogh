@@ -244,6 +244,8 @@ open class 화계(general: General, env: CommandEnv, arg: Map<String, Any>? = nu
 
         if (rng.nextDouble() >= prob) {
             pushLog("<G><b>${destCityName}</b></>에 ${actionName}${josa(actionName, "이")} 실패했습니다. <1>$date</>")
+            pushHistoryLog("<G><b>${destCityName}</b></>에 ${actionName}${josa(actionName, "이")} 실패했습니다. <1>$date</>")
+            pushGlobalLog("<Y>${general.name}</>${pickJosa(general.name, "이")} <G><b>${destCityName}</b></>에 ${actionName}${josa(actionName, "을")} 시도했으나 실패했습니다.")
 
             val exp = rng.nextInt(1, 101)
             val ded = rng.nextInt(1, 71)
@@ -271,6 +273,9 @@ open class 화계(general: General, env: CommandEnv, arg: Map<String, Any>? = nu
 
         // Build city changes JSON (non-underscore keys for destCityChanges)
         val publicCityChanges = cityChanges.filterKeys { !it.startsWith("_") }
+        pushHistoryLog("<G><b>${destCityName}</b></>에 ${actionName}${josa(actionName, "이")} 성공했습니다. <1>$date</>")
+        pushGlobalLog("<Y>${general.name}</>${pickJosa(general.name, "이")} <G><b>${destCityName}</b></>에 ${actionName}${josa(actionName, "을")} 성공했습니다.")
+        pushGlobalHistoryLog("<Y>${general.name}</>${pickJosa(general.name, "이")} <G><b>${destCityName}</b></>에 ${actionName}${josa(actionName, "을")} 감행했습니다.")
 
         // Extra metadata from affectDestCity (탈취 resource transfer etc.)
         val extraMap = cityChanges.filterKeys { it.startsWith("_") }

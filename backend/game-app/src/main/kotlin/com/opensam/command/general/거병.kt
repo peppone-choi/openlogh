@@ -41,6 +41,9 @@ class 거병(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
         // The message includes the requested name; server will prepend ㉥ if needed
 
         pushLog("거병에 성공하였습니다. <1>$date</>")
+        pushHistoryLog("<G><b>${cityName}</b></>에서 거병했습니다. <1>$date</>")
+        pushGlobalLog("<Y>${generalName}</>${josaYi} <G><b>${cityName}</b></>에서 거병했습니다.")
+        pushGlobalHistoryLog("<Y><b>【거병】</b></><D><b>${generalName}</b></>${josaYi} 세력을 결성하였습니다.")
 
         val exp = 100
         val ded = 100

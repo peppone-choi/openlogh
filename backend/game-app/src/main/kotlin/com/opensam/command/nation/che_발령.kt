@@ -40,6 +40,8 @@ class che_발령(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
         destGen.meta["last발령"] = yearMonth
 
         pushLog("<Y>${destGen.name}</>을 <G><b>${dCity.name}</b></>으로 발령했습니다. <1>$date</>")
+        pushHistoryLog("<Y>${destGen.name}</>을 <G><b>${dCity.name}</b></>으로 발령했습니다. <1>$date</>")
+        pushGlobalLog("<Y>${general.name}</>${pickJosa(general.name, "이")} <Y>${destGen.name}</>을 <G><b>${dCity.name}</b></>으로 발령했습니다.")
         return CommandResult(true, logs)
     }
 }

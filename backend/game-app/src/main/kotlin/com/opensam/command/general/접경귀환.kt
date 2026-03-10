@@ -62,6 +62,8 @@ class 접경귀환(general: General, env: CommandEnv, arg: Map<String, Any>? = n
         val destCityName = cityNameById[destCityId] ?: "알 수 없음"
 
         pushLog("<G><b>${destCityName}</b></>(으)로 접경귀환했습니다.")
+        pushHistoryLog("<G><b>${destCityName}</b></>(으)로 접경귀환했습니다.")
+        pushGlobalLog("<Y>${general.name}</>${pickJosa(general.name, "이")} <G><b>${destCityName}</b></>(으)로 접경귀환했습니다.")
 
         return CommandResult(
             success = true,

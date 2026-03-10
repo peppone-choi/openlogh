@@ -45,6 +45,9 @@ class che_국호변경(general: General, env: CommandEnv, arg: Map<String, Any>?
         general.dedication += 5
 
         pushLog("국호를 <D><b>$newName</b></>으로 변경합니다. <1>$date</>")
+        pushHistoryLog("국호를 <D><b>$newName</b></>으로 변경합니다. <1>$date</>")
+        pushGlobalLog("<Y>${general.name}</>${pickJosa(general.name, "이")} 국호를 <D><b>$newName</b></>으로 변경했습니다.")
+        pushGlobalHistoryLog("<D><b>${n.name}</b></>의 국호가 <D><b>$newName</b></>으로 변경되었습니다.")
         return CommandResult(true, logs)
     }
 }
