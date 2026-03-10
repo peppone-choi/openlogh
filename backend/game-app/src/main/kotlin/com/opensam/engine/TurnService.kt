@@ -299,9 +299,10 @@ class TurnService @Autowired constructor(
                     val generals = ports.allGenerals().map { it.toEntity() }
                     generalMaintenanceService.processGeneralMaintenance(world, generals)
                     specialAssignmentService.checkAndAssignSpecials(world, generals)
-                    generals.forEach { ports.putGeneral(it.toSnapshot()) }
+                    val aliveGenerals = generals.filter { it.npcState.toInt() != 5 || it.nationId != 0L }
+                    aliveGenerals.forEach { ports.putGeneral(it.toSnapshot()) }
 
-                    for (general in generals) {
+                    for (general in aliveGenerals) {
                         inheritanceService.accruePoints(general, "lived_month", 1)
                     }
                 } catch (e: Exception) {
@@ -373,6 +374,11 @@ class TurnService @Autowired constructor(
             if (general.turnTime >= targetTime) {
                 break
             }
+            // Skip dead generals (killGeneral sets npcState=5, nationId=0)
+            // Troop leaders also have npcState=5 but retain nationId>0
+            if (general.npcState.toInt() == 5 && general.nationId == 0L) {
+                continue
+            }
             try {
                 val city = cityCache[general.cityId]
                 val nation = if (general.nationId != 0L) {
@@ -387,6 +393,7 @@ class TurnService @Autowired constructor(
                         val kt = general.killTurn!! - 1
                         if (kt <= 0) {
                             generalMaintenanceService.killGeneral(general, world, generals)
+                            continue
                         } else {
                             general.killTurn = kt.toShort()
                         }
@@ -556,6 +563,10 @@ class TurnService @Autowired constructor(
                                 logger.info("[Turn] Battle triggered: {} ({}) attacks city {} (nation {})",
                                     general.id, general.name, targetCity.name, targetCity.nationId)
                                 val battleResult = battleService.executeBattle(general, targetCity, world)
+                                // Sync battle damage back to ports cache so subsequent
+                                // attackers this turn see the reduced def/wall
+                                ports.putCity(targetCity.toSnapshot())
+                                ports.putGeneral(general.toSnapshot())
                                 if (battleResult.cityOccupied) {
                                     general.cityId = targetCity.id
                                     ports.putGeneral(general.toSnapshot())
@@ -608,6 +619,7 @@ class TurnService @Autowired constructor(
                         val kt = general.killTurn!! - 1
                         if (kt <= 0) {
                             generalMaintenanceService.killGeneral(general, world, generals)
+                            continue
                         } else {
                             general.killTurn = kt.toShort()
                         }

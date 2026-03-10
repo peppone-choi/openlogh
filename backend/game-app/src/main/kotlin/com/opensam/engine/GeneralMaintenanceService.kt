@@ -8,6 +8,7 @@ import com.opensam.entity.WorldState
 import com.opensam.repository.CityRepository
 import com.opensam.repository.DiplomacyRepository
 import com.opensam.repository.GeneralAccessLogRepository
+import com.opensam.repository.GeneralRepository
 import com.opensam.repository.GeneralTurnRepository
 import com.opensam.repository.HallOfFameRepository
 import com.opensam.repository.NationRepository
@@ -33,6 +34,7 @@ class GeneralMaintenanceService(
     private val nationTurnRepository: NationTurnRepository,
     private val troopRepository: TroopRepository,
     private val oldGeneralRepository: OldGeneralRepository,
+    private val generalRepository: GeneralRepository,
     private val generalTurnRepository: GeneralTurnRepository,
     private val generalAccessLogRepository: GeneralAccessLogRepository,
 ) {
@@ -149,6 +151,8 @@ class GeneralMaintenanceService(
         general.blockState = 0
         general.troopId = 0
         general.commandEndTime = null
+
+        generalRepository.deleteById(general.id)
     }
 
     /**

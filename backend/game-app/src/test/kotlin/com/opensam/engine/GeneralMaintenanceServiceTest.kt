@@ -11,6 +11,7 @@ import com.opensam.entity.WorldState
 import com.opensam.repository.CityRepository
 import com.opensam.repository.DiplomacyRepository
 import com.opensam.repository.GeneralAccessLogRepository
+import com.opensam.repository.GeneralRepository
 import com.opensam.repository.GeneralTurnRepository
 import com.opensam.repository.HallOfFameRepository
 import com.opensam.repository.NationRepository
@@ -37,6 +38,7 @@ class GeneralMaintenanceServiceTest {
     private lateinit var nationTurnRepository: NationTurnRepository
     private lateinit var troopRepository: TroopRepository
     private lateinit var oldGeneralRepository: OldGeneralRepository
+    private lateinit var generalRepository: GeneralRepository
     private lateinit var generalTurnRepository: GeneralTurnRepository
     private lateinit var generalAccessLogRepository: GeneralAccessLogRepository
 
@@ -52,6 +54,7 @@ class GeneralMaintenanceServiceTest {
         nationTurnRepository = mock(NationTurnRepository::class.java)
         troopRepository = mock(TroopRepository::class.java)
         oldGeneralRepository = mock(OldGeneralRepository::class.java)
+        generalRepository = mock(GeneralRepository::class.java)
         generalTurnRepository = mock(GeneralTurnRepository::class.java)
         generalAccessLogRepository = mock(GeneralAccessLogRepository::class.java)
 
@@ -68,6 +71,7 @@ class GeneralMaintenanceServiceTest {
             nationTurnRepository,
             troopRepository,
             oldGeneralRepository,
+            generalRepository,
             generalTurnRepository,
             generalAccessLogRepository,
         )
