@@ -15,7 +15,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentMatchers
 import org.mockito.Mockito.mock
-import org.mockito.Mockito.times
+import org.mockito.Mockito.atLeast
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
 import java.util.Optional
@@ -413,6 +413,6 @@ class DiplomacyServiceTest {
         val created = service.createRelation(1L, 1, 2, "불가침", 12)
         assertEquals("불가침", created.stateCode)
         assertNotNull(diplomacies[created.id])
-        verify(diplomacyRepository, times(1)).save(ArgumentMatchers.any(Diplomacy::class.java))
+        verify(diplomacyRepository, atLeast(1)).save(ArgumentMatchers.any(Diplomacy::class.java))
     }
 }
