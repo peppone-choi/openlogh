@@ -78,6 +78,7 @@ class TurnService @Autowired constructor(
     private val battleService: BattleService,
     private val uniqueLotteryService: UniqueLotteryService,
     private val commandLogDispatcher: CommandLogDispatcher,
+    private val gameConstService: com.opensam.service.GameConstService,
 ) {
     constructor(
         worldStateRepository: WorldStateRepository,
@@ -109,6 +110,7 @@ class TurnService @Autowired constructor(
         battleService: BattleService,
         uniqueLotteryService: UniqueLotteryService,
         commandLogDispatcher: CommandLogDispatcher,
+        gameConstService: com.opensam.service.GameConstService,
     ) : this(
         worldStateRepository = worldStateRepository,
         generalRepository = generalRepository,
@@ -144,6 +146,7 @@ class TurnService @Autowired constructor(
         battleService = battleService,
         uniqueLotteryService = uniqueLotteryService,
         commandLogDispatcher = commandLogDispatcher,
+        gameConstService = gameConstService,
     )
 
     private val logger = LoggerFactory.getLogger(TurnService::class.java)
@@ -633,6 +636,12 @@ class TurnService @Autowired constructor(
             worldId = world.id.toLong(),
             realtimeMode = world.realtimeMode,
             gameStor = gameStor,
+            trainDelta = gameConstService.getDouble("trainDelta"),
+            atmosDelta = gameConstService.getDouble("atmosDelta"),
+            maxTrainByCommand = gameConstService.getInt("maxTrainByCommand"),
+            maxAtmosByCommand = gameConstService.getInt("maxAtmosByCommand"),
+            atmosSideEffectByTraining = gameConstService.getDouble("atmosSideEffectByTraining"),
+            trainSideEffectByAtmosTurn = gameConstService.getDouble("trainSideEffectByAtmosTurn"),
         )
     }
 

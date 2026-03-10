@@ -46,11 +46,14 @@ class che_사기진작(general: General, env: CommandEnv, arg: Map<String, Any>?
         val crew = general.crew
         val currentAtmos = general.atmos.toInt()
 
-        val rawScore = (leadership * 100.0 / crew) * ATMOS_DELTA
-        val maxPossible = maxOf(0, MAX_ATMOS_BY_COMMAND - currentAtmos)
+        val atmosDelta = if (env.atmosDelta > 0) env.atmosDelta else ATMOS_DELTA
+        val maxAtmos = if (env.maxAtmosByCommand > 0) env.maxAtmosByCommand else MAX_ATMOS_BY_COMMAND
+        val rawScore = (leadership * 100.0 / crew) * atmosDelta
+        val maxPossible = maxOf(0, maxAtmos - currentAtmos)
         val score = minOf(maxOf(rawScore.roundToInt(), 0), maxPossible)
 
-        val sideEffect = maxOf(0, (general.train * TRAIN_SIDE_EFFECT_RATE).toInt())
+        val trainSideEffectRate = if (env.trainSideEffectByAtmosTurn > 0) env.trainSideEffectByAtmosTurn else TRAIN_SIDE_EFFECT_RATE
+        val sideEffect = maxOf(0, (general.train * trainSideEffectRate).toInt())
 
         val scoreText = "%,d".format(score)
         pushLog("사기치가 <C>${scoreText}</> 상승했습니다. <1>$date</>")

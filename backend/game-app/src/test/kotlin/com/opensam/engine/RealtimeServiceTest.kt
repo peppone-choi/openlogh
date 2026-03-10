@@ -57,6 +57,7 @@ class RealtimeServiceTest {
             scenarioService,
             modifierService,
             mock(com.opensam.service.CommandLogDispatcher::class.java),
+            mock(com.opensam.service.GameConstService::class.java),
         )
     }
 

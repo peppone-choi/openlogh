@@ -517,6 +517,12 @@ class CommandService(
             worldId = world.id.toLong(),
             realtimeMode = world.realtimeMode,
             gameStor = gameStor,
+            trainDelta = gameConstService.getDouble("trainDelta"),
+            atmosDelta = gameConstService.getDouble("atmosDelta"),
+            maxTrainByCommand = gameConstService.getInt("maxTrainByCommand"),
+            maxAtmosByCommand = gameConstService.getInt("maxAtmosByCommand"),
+            atmosSideEffectByTraining = gameConstService.getDouble("atmosSideEffectByTraining"),
+            trainSideEffectByAtmosTurn = gameConstService.getDouble("trainSideEffectByAtmosTurn"),
         )
     }
 }

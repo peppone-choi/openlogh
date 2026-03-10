@@ -51,7 +51,8 @@ class che_훈련(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
         val score = minOf(maxOf(rawScore.roundToInt(), 0), maxPossible)
 
         // Legacy: atmos side effect = atmos * atmosSideEffectByTraining (default 0.9)
-        val atmosAfter = maxOf(0, (general.atmos * ATMOS_SIDE_EFFECT_RATE).toInt())
+        val sideEffectRate = if (env.atmosSideEffectByTraining > 0) env.atmosSideEffectByTraining else ATMOS_SIDE_EFFECT_RATE
+        val atmosAfter = maxOf(0, (general.atmos * sideEffectRate).toInt())
         val atmosDelta = atmosAfter - general.atmos.toInt()
 
         pushLog("훈련치가 <C>${score}</> 상승했습니다. <1>$date</>")

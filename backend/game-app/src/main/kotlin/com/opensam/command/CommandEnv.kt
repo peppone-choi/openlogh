@@ -20,6 +20,9 @@ data class CommandEnv(
     val maxTrainByCommand: Int = 80,
     val maxAtmosByCommand: Int = 80,
     val trainDelta: Double = 0.05,
+    val atmosDelta: Double = 0.05,
+    val atmosSideEffectByTraining: Double = 0.9,
+    val trainSideEffectByAtmosTurn: Double = 0.9,
     val killturn: Short = 0,
     val gameStor: MutableMap<String, Any> = mutableMapOf()
 ) {

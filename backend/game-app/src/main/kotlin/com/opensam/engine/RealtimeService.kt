@@ -39,6 +39,7 @@ class RealtimeService(
     private val scenarioService: ScenarioService,
     private val modifierService: ModifierService,
     private val commandLogDispatcher: CommandLogDispatcher,
+    private val gameConstService: com.opensam.service.GameConstService,
 ) {
     private val logger = LoggerFactory.getLogger(RealtimeService::class.java)
 
@@ -194,6 +195,12 @@ class RealtimeService(
             startYear = startYear,
             worldId = world.id.toLong(),
             realtimeMode = world.realtimeMode,
+            trainDelta = gameConstService.getDouble("trainDelta"),
+            atmosDelta = gameConstService.getDouble("atmosDelta"),
+            maxTrainByCommand = gameConstService.getInt("maxTrainByCommand"),
+            maxAtmosByCommand = gameConstService.getInt("maxAtmosByCommand"),
+            atmosSideEffectByTraining = gameConstService.getDouble("atmosSideEffectByTraining"),
+            trainSideEffectByAtmosTurn = gameConstService.getDouble("trainSideEffectByAtmosTurn"),
         )
     }
 

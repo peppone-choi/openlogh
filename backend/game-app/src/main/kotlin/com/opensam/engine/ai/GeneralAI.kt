@@ -1191,9 +1191,11 @@ class GeneralAI(
         nationPolicy: NpcNationPolicy, attackable: Boolean,
         warTargetNations: Map<Long, Int>, supplyCities: List<City>, backupCities: List<City>,
     ): String {
+        val hasNeutralTargets = warTargetNations.containsKey(0L)
         return if (ctx.diplomacyState == DiplomacyState.AT_WAR ||
             ctx.diplomacyState == DiplomacyState.RECRUITING ||
-            ctx.diplomacyState == DiplomacyState.IMMINENT
+            ctx.diplomacyState == DiplomacyState.IMMINENT ||
+            (hasNeutralTargets && attackable)
         ) {
             decideWarAction(ctx, rng, generalPolicy, nationPolicy, attackable, warTargetNations, supplyCities, backupCities)
         } else {
