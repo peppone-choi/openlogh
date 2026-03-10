@@ -6,14 +6,12 @@ import com.opensam.entity.WorldState
 import com.opensam.engine.turn.cqrs.persist.JpaWorldPortFactory
 import com.opensam.engine.turn.cqrs.persist.toEntity
 import com.opensam.engine.turn.cqrs.persist.toSnapshot
-import com.opensam.engine.turn.cqrs.port.IdAllocator
 import com.opensam.repository.DiplomacyRepository
 import com.opensam.repository.MessageRepository
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.util.concurrent.atomic.AtomicLong
 
 /**
  * Diplomacy state codes (legacy parity):
@@ -27,7 +25,7 @@ import java.util.concurrent.atomic.AtomicLong
 @Service
 class DiplomacyService(
     private val worldPortFactory: JpaWorldPortFactory,
-    private val idAllocator: IdAllocator,
+    private val diplomacyRepository: DiplomacyRepository,
     private val messageRepository: MessageRepository,
 ) {
     @Autowired
@@ -36,14 +34,7 @@ class DiplomacyService(
         messageRepository: MessageRepository,
     ) : this(
         worldPortFactory = JpaWorldPortFactory(diplomacyRepository = diplomacyRepository),
-        idAllocator = object : IdAllocator {
-            private val next = AtomicLong(1_000_000)
-            override fun nextGeneralId(): Long = throw UnsupportedOperationException()
-            override fun nextCityId(): Long = throw UnsupportedOperationException()
-            override fun nextNationId(): Long = throw UnsupportedOperationException()
-            override fun nextTroopId(): Long = throw UnsupportedOperationException()
-            override fun nextDiplomacyId(): Long = next.getAndIncrement()
-        },
+        diplomacyRepository = diplomacyRepository,
         messageRepository = messageRepository,
     )
 
@@ -147,17 +138,16 @@ class DiplomacyService(
         stateCode: String,
         term: Short,
     ): Diplomacy {
-        val ports = worldPortFactory.create(worldId)
         val relation = Diplomacy(
-            id = idAllocator.nextDiplomacyId(),
             worldId = worldId,
             srcNationId = srcNationId,
             destNationId = destNationId,
             stateCode = stateCode,
             term = term,
         )
-        ports.putDiplomacy(relation.toSnapshot())
-        return relation
+        val saved = diplomacyRepository.save(relation)
+        worldPortFactory.create(worldId).putDiplomacy(saved.toSnapshot())
+        return saved
     }
 
     /**
