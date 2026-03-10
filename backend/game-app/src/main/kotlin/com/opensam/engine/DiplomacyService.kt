@@ -196,10 +196,11 @@ class DiplomacyService(
             throw IllegalStateException("Non-aggression pact already exists with nation $destNationId")
         }
 
-        // Cannot propose if a proposal is already pending
+        // Return existing proposal if already pending (idempotent)
         val existingProposal = getActiveRelation(worldId, srcNationId, destNationId, "불가침제의")
         if (existingProposal != null) {
-            throw IllegalStateException("Non-aggression proposal already pending with nation $destNationId")
+            log.info("Non-aggression proposal already pending with nation {}, returning existing", destNationId)
+            return existingProposal
         }
 
         val proposal = createRelation(worldId, srcNationId, destNationId, "불가침제의", NA_PROPOSAL_TERM)

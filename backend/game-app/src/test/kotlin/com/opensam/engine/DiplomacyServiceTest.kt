@@ -253,7 +253,8 @@ class DiplomacyServiceTest {
 
         diplomacies.clear()
         seed(createDiplomacy(id = 3, stateCode = "불가침제의", term = 10))
-        assertThrows(IllegalStateException::class.java) { service.proposeNonAggression(1L, 1L, 2L) }
+        val existing = service.proposeNonAggression(1L, 1L, 2L)
+        assertEquals(3L, existing.id)
     }
 
     @Test
