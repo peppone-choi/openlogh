@@ -108,10 +108,10 @@ class WarUnitGeneral(
     }
 
     /** Legacy: HP > 0 AND rice > crew/100. */
-    override fun continueWar(): Boolean {
-        if (hp <= 0) return false
-        if (rice <= hp / 100) return false
-        return true
+    override fun continueWar(): WarContinuation {
+        if (rice <= hp / 100) return WarContinuation(false, true)
+        if (hp <= 0) return WarContinuation(false, false)
+        return WarContinuation(true, false)
     }
 
     fun consumeRice(damageDealt: Int, isAttacker: Boolean = true, vsCity: Boolean = false) {

@@ -5,6 +5,8 @@ import com.opensam.entity.City
 class WarUnitCity(
     val city: City,
 ) : WarUnit(city.name, city.nationId) {
+    var wall: Int = city.wall
+
 
     init {
         hp = city.def * 10
@@ -22,16 +24,22 @@ class WarUnitCity(
     }
 
     override fun getBaseAttack(): Double {
-        val base = (city.def + city.wall * 9) / 500.0 + 200.0
+        val base = (city.def + wall * 9) / 500.0 + 200.0
         return base * attackMultiplier
     }
 
     override fun getBaseDefence(): Double {
-        val base = (city.def + city.wall * 9) / 500.0 + 200.0
+        val base = (city.def + wall * 9) / 500.0 + 200.0
         return base * defenceMultiplier
+    }
+
+    override fun takeDamage(damage: Int) {
+        super.takeDamage(damage)
+        wall = (wall - damage / 20).coerceAtLeast(0)
     }
 
     fun applyResults() {
         city.def = (hp / 10).coerceAtLeast(0)
+        city.wall = wall.coerceAtLeast(0)
     }
 }

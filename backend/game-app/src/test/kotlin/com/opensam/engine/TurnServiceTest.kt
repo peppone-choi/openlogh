@@ -106,6 +106,7 @@ class TurnServiceTest {
             uniqueLotteryService,
             mock(com.opensam.service.CommandLogDispatcher::class.java),
             mock(com.opensam.service.GameConstService::class.java),
+            mock(GeneralAccessLogRepository::class.java),
         )
         // Default: worldStateRepository.save returns the argument
         `when`(worldStateRepository.save(anyNonNull<WorldState>())).thenAnswer { it.arguments[0] }

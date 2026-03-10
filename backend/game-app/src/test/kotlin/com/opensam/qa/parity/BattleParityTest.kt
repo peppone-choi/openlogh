@@ -438,14 +438,14 @@ class BattleParityTest {
             val gen = createGeneral(crew = 1000, rice = 5)
             val unit = WarUnitGeneral(gen, nationTech = 0f)
             // hp=1000, rice=5; 5 <= 1000/100=10 → can't continue
-            assertFalse(unit.continueWar())
+            assertFalse(unit.continueWar().canContinue)
         }
 
         @Test
         fun `continueWar true when enough rice`() {
             val gen = createGeneral(crew = 1000, rice = 100)
             val unit = WarUnitGeneral(gen, nationTech = 0f)
-            assertTrue(unit.continueWar())
+            assertTrue(unit.continueWar().canContinue)
         }
     }
 

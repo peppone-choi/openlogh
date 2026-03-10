@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import kotlin.math.ceil
 import kotlin.math.pow
+import kotlin.math.round
 import kotlin.math.sqrt
 
 @Service
@@ -545,6 +546,7 @@ class EconomyService @Autowired constructor(
 
         val citiesByNation = cities.groupBy { it.nationId }
         val generalsByNation = generals.filter { it.npcState.toInt() != 5 }.groupBy { it.nationId }
+        val hiddenSeed = (world.config["hiddenSeed"] as? String) ?: world.id.toString()
 
         for (nation in nations) {
             if (nation.level.toInt() == 0) continue
@@ -585,7 +587,15 @@ class EconomyService @Autowired constructor(
             // 경험공헌: sum(experience+dedication) / 100
             val expDed = nationGenerals.sumOf { (it.experience + it.dedication).toLong() } / 100.0
 
-            val power = ((resource + tech + cityPower + statPower + dexPower + expDed) / 10.0).toInt()
+            val rawPower = ((resource + tech + cityPower + statPower + dexPower + expDed) / 10.0)
+            val rng = DeterministicRng.create(
+                hiddenSeed,
+                "nationPower",
+                world.currentYear,
+                world.currentMonth,
+                nation.id,
+            )
+            val power = round(rawPower * rng.nextDouble(0.95, 1.05)).toInt()
 
             // 최대 국력 기록
             val prevMaxPower = (nation.meta["maxPower"] as? Number)?.toInt() ?: 0

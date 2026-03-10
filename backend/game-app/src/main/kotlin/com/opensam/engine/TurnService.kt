@@ -14,8 +14,10 @@ import com.opensam.engine.war.BattleService
 import com.opensam.engine.trigger.TriggerCaller
 import com.opensam.engine.trigger.TriggerEnv
 import com.opensam.engine.trigger.buildPreTurnTriggers
+import com.opensam.entity.City
 import com.opensam.entity.Nation
 import com.opensam.entity.WorldState
+import com.opensam.model.CrewType
 import com.opensam.repository.*
 import com.opensam.service.AuctionService
 import com.opensam.service.CommandLogDispatcher
@@ -79,6 +81,7 @@ class TurnService @Autowired constructor(
     private val uniqueLotteryService: UniqueLotteryService,
     private val commandLogDispatcher: CommandLogDispatcher,
     private val gameConstService: com.opensam.service.GameConstService,
+    private val generalAccessLogRepository: GeneralAccessLogRepository,
 ) {
     constructor(
         worldStateRepository: WorldStateRepository,
@@ -111,6 +114,7 @@ class TurnService @Autowired constructor(
         uniqueLotteryService: UniqueLotteryService,
         commandLogDispatcher: CommandLogDispatcher,
         gameConstService: com.opensam.service.GameConstService,
+        generalAccessLogRepository: GeneralAccessLogRepository,
     ) : this(
         worldStateRepository = worldStateRepository,
         generalRepository = generalRepository,
@@ -147,6 +151,7 @@ class TurnService @Autowired constructor(
         uniqueLotteryService = uniqueLotteryService,
         commandLogDispatcher = commandLogDispatcher,
         gameConstService = gameConstService,
+        generalAccessLogRepository = generalAccessLogRepository,
     )
 
     private val logger = LoggerFactory.getLogger(TurnService::class.java)
@@ -296,8 +301,7 @@ class TurnService @Autowired constructor(
                     specialAssignmentService.checkAndAssignSpecials(world, generals)
                     generals.forEach { ports.putGeneral(it.toSnapshot()) }
 
-                    // Accrue inheritance points for player generals
-                    for (general in generals.filter { it.npcState.toInt() == 0 }) {
+                    for (general in generals) {
                         inheritanceService.accruePoints(general, "lived_month", 1)
                     }
                 } catch (e: Exception) {
@@ -376,6 +380,7 @@ class TurnService @Autowired constructor(
                 } else null
 
                 firePreTurnTriggers(world, general, nation)
+                applyPerTurnCrewConsumption(general, city)
 
                 if (general.blockState >= 2) {
                     if (general.killTurn != null) {
@@ -597,7 +602,8 @@ class TurnService @Autowired constructor(
                 // KillTurn handling
                 if (general.killTurn != null) {
                     if (actionCode != "휴식" && general.npcState.toInt() == 0) {
-                        general.killTurn = null
+                        val configuredKillTurn = resolveGlobalKillTurn(world, env)
+                        general.killTurn = configuredKillTurn.toShort()
                     } else {
                         val kt = general.killTurn!! - 1
                         if (kt <= 0) {
@@ -625,6 +631,7 @@ class TurnService @Autowired constructor(
         }
 
         val mapCode = (world.config["mapCode"] as? String) ?: "che"
+        val killturn = resolveGlobalKillTurn(world, null)
         val gameStor = mutableMapOf<String, Any>("mapName" to mapCode)
 
         return CommandEnv(
@@ -640,7 +647,15 @@ class TurnService @Autowired constructor(
             maxAtmosByCommand = gameConstService.getInt("maxAtmosByCommand"),
             atmosSideEffectByTraining = gameConstService.getDouble("atmosSideEffectByTraining"),
             trainSideEffectByAtmosTurn = gameConstService.getDouble("trainSideEffectByAtmosTurn"),
+            killturn = killturn.toShort(),
         )
+    }
+
+    private fun resolveGlobalKillTurn(world: WorldState, env: CommandEnv?): Int {
+        return (world.config["killturn"] as? Number)?.toInt()
+            ?: (world.config["killTurn"] as? Number)?.toInt()
+            ?: env?.killturn?.toInt()
+            ?: 0
     }
 
     private fun calculateNextGeneralTurnTime(general: com.opensam.entity.General, tickSeconds: Int): OffsetDateTime {
@@ -785,13 +800,41 @@ class TurnService @Autowired constructor(
      * Per legacy: strategicCmdLimit decreases by 1 each turn until 0.
      */
     private fun resetStrategicCommandLimits(world: WorldState) {
-        val ports = worldPortFactory.create(world.id.toLong())
+        val worldId = world.id.toLong()
+        val ports = worldPortFactory.create(worldId)
+        val generals = ports.allGenerals().map { it.toEntity() }
         val nations = ports.allNations().map { it.toEntity() }
+        val cities = ports.allCities().map { it.toEntity() }
+
+        for (general in generals) {
+            if (general.makeLimit > 0) {
+                general.makeLimit = (general.makeLimit - 1).toShort()
+            }
+        }
+
+        val activeGeneralCountByNation = generals
+            .filter { it.npcState.toInt() != 5 && it.nationId > 0 }
+            .groupingBy { it.nationId }
+            .eachCount()
+
         for (nation in nations) {
             if (nation.strategicCmdLimit > 0) {
                 nation.strategicCmdLimit = (nation.strategicCmdLimit - 1).toShort()
             }
+            if (nation.surrenderLimit > 0) {
+                nation.surrenderLimit = (nation.surrenderLimit - 1).toShort()
+            }
+            nation.rateTmp = nation.rate
+            nation.gennum = activeGeneralCountByNation[nation.id] ?: 0
+            nation.spy = decaySpyDurations(nation.spy)
         }
+
+        transitionCityStates(cities)
+        updateDevelCost(world)
+        decayRefreshScoreTotals(worldId)
+
+        generals.forEach { ports.putGeneral(it.toSnapshot()) }
+        cities.forEach { ports.putCity(it.toSnapshot()) }
         nations.forEach { ports.putNation(it.toSnapshot()) }
     }
 
@@ -810,6 +853,74 @@ class TurnService @Autowired constructor(
                 generalId = general.id,
             )
         )
+    }
+
+    private fun applyPerTurnCrewConsumption(general: com.opensam.entity.General, city: com.opensam.entity.City?) {
+        if (general.crew <= 0) {
+            return
+        }
+
+        val crewTypeCost = CrewType.fromCode(general.crewType.toInt())?.cost ?: 0
+        val baseLoss = kotlin.math.ceil(general.crew.toDouble() * crewTypeCost / 1000.0).toInt().coerceAtLeast(1)
+        val unsupplied = city?.supplyState?.toInt() == 0
+        val crewLoss = if (unsupplied) baseLoss * 2 else baseLoss
+        general.crew = (general.crew - crewLoss).coerceAtLeast(0)
+
+        if (unsupplied) {
+            val atmosDrop = minOf(5, general.atmos.toInt())
+            general.atmos = (general.atmos - atmosDrop).toShort()
+        }
+    }
+
+    private fun transitionCityStates(cities: List<City>) {
+        for (city in cities) {
+            city.state = when (city.state.toInt()) {
+                31 -> 0
+                32 -> 31
+                33 -> 0
+                34 -> 33
+                41 -> 0
+                42 -> 41
+                43 -> 42
+                else -> city.state.toInt()
+            }.toShort()
+
+            val nextTerm = (city.term.toInt() - 1).coerceAtLeast(0)
+            city.term = nextTerm.toShort()
+            if (nextTerm == 0) {
+                city.conflict = mutableMapOf()
+            }
+        }
+    }
+
+    private fun updateDevelCost(world: WorldState) {
+        val startYear = (world.config["startyear"] as? Number)?.toInt() ?: world.currentYear.toInt()
+        val develCost = (world.currentYear.toInt() - startYear + 10) * 2
+        world.config["develCost"] = develCost
+        world.config["develcost"] = develCost
+    }
+
+    private fun decayRefreshScoreTotals(worldId: Long) {
+        val accessLogs = generalAccessLogRepository.findByWorldId(worldId)
+        if (accessLogs.isEmpty()) {
+            return
+        }
+
+        for (accessLog in accessLogs) {
+            accessLog.refreshScoreTotal = kotlin.math.floor(accessLog.refreshScoreTotal * 0.99).toInt()
+        }
+        generalAccessLogRepository.saveAll(accessLogs)
+    }
+
+    private fun decaySpyDurations(spy: MutableMap<String, Any>): MutableMap<String, Any> {
+        val nextSpy = mutableMapOf<String, Any>()
+        for ((cityId, remainRaw) in spy) {
+            val remain = (remainRaw as? Number)?.toInt() ?: continue
+            if (remain > 1) {
+                nextSpy[cityId] = remain - 1
+            }
+        }
+        return nextSpy
     }
 
     private fun readStringAnyMap(raw: Any?): Map<String, Any>? {

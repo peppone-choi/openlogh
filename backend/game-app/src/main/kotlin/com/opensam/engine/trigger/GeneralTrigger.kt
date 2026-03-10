@@ -234,8 +234,6 @@ fun buildPreTurnTriggers(
 
     // Always-present triggers
     triggers.add(InjuryReductionTrigger(general))
-    triggers.add(TroopConsumptionTrigger(general))
-
     if (modifiers.isNotEmpty()) {
         triggers.add(ModifierBridgeTrigger(general, modifiers))
     }

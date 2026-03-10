@@ -124,7 +124,8 @@ class BattleService(
 
     private fun occupyCity(city: City, attacker: General, world: WorldState, rng: Random) {
         val oldNationId = city.nationId
-        city.nationId = attacker.nationId
+        val conquerNationId = resolveConquerNationId(city, attacker.nationId)
+        city.nationId = conquerNationId
         city.trust = 0F
         city.def = (city.def * 0.3).toInt()  // Damage from siege
 
@@ -169,6 +170,44 @@ class BattleService(
         val currentScore = (conflictMap[attackerKey] as? Number)?.toInt() ?: 0
         conflictMap[attackerKey] = currentScore + 1
         city.conflict = conflictMap
+    }
+
+    private fun resolveConquerNationId(city: City, attackerNationId: Long): Long {
+        val conflictMap = city.conflict
+        if (conflictMap.isEmpty()) {
+            return attackerNationId
+        }
+
+        val cityWinner = listOf(city.id.toString(), city.mapCityId.toString())
+            .firstNotNullOfOrNull { key ->
+                val value = conflictMap[key] ?: return@firstNotNullOfOrNull null
+                when (value) {
+                    is Number -> value.toLong()
+                    is String -> value.toLongOrNull()
+                    else -> null
+                }
+            }
+        if (cityWinner != null && cityWinner > 0) {
+            return cityWinner
+        }
+
+        val legacyWinner = conflictMap.keys.firstNotNullOfOrNull { it.toLongOrNull() }
+        if (legacyWinner != null && legacyWinner > 0) {
+            return legacyWinner
+        }
+
+        val valueWinner = conflictMap.values.firstNotNullOfOrNull { value ->
+            when (value) {
+                is Number -> value.toLong()
+                is String -> value.toLongOrNull()
+                else -> null
+            }
+        }
+        if (valueWinner != null && valueWinner > 0) {
+            return valueWinner
+        }
+
+        return attackerNationId
     }
 
     /**
@@ -270,6 +309,9 @@ class BattleService(
         val nationals = generalRepository.findByNationId(nation.id)
         for (gen in nationals) {
             gen.atmos = (gen.atmos * 0.8).toInt().toShort()
+            if (gen.officerLevel >= 5) {
+                gen.cityId = newCapital.id
+            }
             generalRepository.save(gen)
         }
 

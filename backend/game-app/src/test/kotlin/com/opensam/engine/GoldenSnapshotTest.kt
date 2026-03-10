@@ -129,10 +129,10 @@ class GoldenSnapshotTest {
             year = 200,
             month = 2,
             generals = listOf(
-                GeneralState(id = 1, crew = 200, train = 62, atmos = 63, experience = 100, dedication = 70),
-                GeneralState(id = 2, crew = 300, train = 41, atmos = 58, experience = 100, dedication = 70),
-                GeneralState(id = 3, crew = 250, train = 57, atmos = 67, experience = 100, dedication = 70),
-                GeneralState(id = 4, crew = 400, train = 31, atmos = 54, experience = 100, dedication = 70),
+                GeneralState(id = 1, crew = 199, train = 62, atmos = 63, experience = 100, dedication = 70),
+                GeneralState(id = 2, crew = 299, train = 41, atmos = 58, experience = 100, dedication = 70),
+                GeneralState(id = 3, crew = 249, train = 57, atmos = 67, experience = 100, dedication = 70),
+                GeneralState(id = 4, crew = 399, train = 31, atmos = 54, experience = 100, dedication = 70),
             ),
             nations = listOf(
                 NationState(id = 1, gold = 10000, rice = 10000, strategicCmdLimit = 0),

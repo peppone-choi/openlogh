@@ -270,7 +270,7 @@ class GoldenValueTest {
             val general = createGeneral(crew = 1000)
             val unit = WarUnitGeneral(general, 0f)
             unit.hp = 0
-            assertFalse(unit.continueWar(), "hp=0 → cannot continue war (flee/escape)")
+            assertFalse(unit.continueWar().canContinue, "hp=0 → cannot continue war (flee/escape)")
         }
 
         @Test
@@ -281,7 +281,7 @@ class GoldenValueTest {
             unit.hp = 500
             unit.rice = 0
             // rice(0) <= hp/100 (5) → cannot continue
-            assertFalse(unit.continueWar(), "empty rice → cannot continue war")
+            assertFalse(unit.continueWar().canContinue, "empty rice → cannot continue war")
         }
 
         @Test
@@ -292,7 +292,7 @@ class GoldenValueTest {
             unit.hp = 500
             unit.rice = 500
             // rice(500) > hp/100 (5) → can continue
-            assertTrue(unit.continueWar(), "sufficient rice + hp → can continue")
+            assertTrue(unit.continueWar().canContinue, "sufficient rice + hp → can continue")
         }
     }
 

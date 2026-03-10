@@ -3,6 +3,11 @@ package com.opensam.engine.war
 import com.opensam.model.ArmType
 import kotlin.math.pow
 
+data class WarContinuation(
+    val canContinue: Boolean,
+    val isRiceShortage: Boolean,
+)
+
 abstract class WarUnit(
     val name: String,
     val nationId: Long,
@@ -49,7 +54,7 @@ abstract class WarUnit(
         return totalStat + totalCrew / 100.0
     }
 
-    fun takeDamage(damage: Int) {
+    open fun takeDamage(damage: Int) {
         hp -= damage
         if (hp <= 0) {
             hp = 0
@@ -57,8 +62,10 @@ abstract class WarUnit(
         }
     }
 
-    /** Returns true if this unit can continue fighting. */
-    open fun continueWar(): Boolean = hp > 0
+    open fun continueWar(): WarContinuation = WarContinuation(
+        canContinue = hp > 0,
+        isRiceShortage = false,
+    )
 
     fun beginPhase() {
         activatedSkills.clear()

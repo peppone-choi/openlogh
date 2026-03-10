@@ -2,6 +2,7 @@ package com.opensam.engine.war
 
 import com.opensam.entity.City
 import com.opensam.model.CrewType
+import kotlin.math.ceil
 import kotlin.math.round
 import kotlin.random.Random
 
@@ -86,8 +87,15 @@ class BattleEngine {
             currentPhase++
 
             // Attacker continuation check
-            if (!attacker.continueWar()) {
-                logs.add("<Y>${attacker.name}</>이(가) 퇴각합니다.")
+            val attackerContinuation = attacker.continueWar()
+            if (!attackerContinuation.canContinue) {
+                logs.add(
+                    if (attackerContinuation.isRiceShortage) {
+                        "<Y>${attacker.name}</>이(가) 쌀 부족으로 퇴각합니다."
+                    } else {
+                        "<Y>${attacker.name}</>이(가) 병력 소진으로 퇴각합니다."
+                    }
+                )
                 attackerWon = false
                 break
             }
@@ -97,7 +105,7 @@ class BattleEngine {
                 // City: only HP check (no rice). In siege: continues while HP > 0
                 if (inSiege) currentDefender.hp > 0 else false
             } else if (currentDefender is WarUnitGeneral) {
-                currentDefender.continueWar()
+                currentDefender.continueWar().canContinue
             } else {
                 currentDefender.isAlive
             }
@@ -110,7 +118,14 @@ class BattleEngine {
                     logs.add("<R>${city.name}</> 점령!")
                     break
                 } else if (currentDefender is WarUnitGeneral) {
-                    logs.add("<Y>${currentDefender.name}</>이(가) 퇴각합니다.")
+                    val defenderContinuation = currentDefender.continueWar()
+                    logs.add(
+                        if (defenderContinuation.isRiceShortage) {
+                            "<Y>${currentDefender.name}</>이(가) 쌀 부족으로 퇴각합니다."
+                        } else {
+                            "<Y>${currentDefender.name}</>이(가) 병력 소진으로 퇴각합니다."
+                        }
+                    )
                 }
 
                 // Move to next defender
@@ -127,15 +142,23 @@ class BattleEngine {
         }
 
         // Legacy parity: siege continues beyond maxPhase — no phase cap for siege
-        if (attackerWon && inSiege && !cityOccupied && attacker.continueWar() && cityUnit.hp > 0) {
-            while (attacker.continueWar() && cityUnit.hp > 0) {
+        if (attackerWon && inSiege && !cityOccupied && attacker.continueWar().canContinue && cityUnit.hp > 0) {
+            while (attacker.continueWar().canContinue && cityUnit.hp > 0) {
                 val phaseResult = executeCombatPhase(attacker, cityUnit, rng, phaseNumber = currentPhase, isVsCity = true)
                 totalAttackerDamage += phaseResult.damage.first
                 totalDefenderDamage += phaseResult.damage.second
                 logs.addAll(phaseResult.logs)
                 currentPhase++
 
-                if (!attacker.continueWar()) {
+                val attackerContinuation = attacker.continueWar()
+                if (!attackerContinuation.canContinue) {
+                    logs.add(
+                        if (attackerContinuation.isRiceShortage) {
+                            "<Y>${attacker.name}</>이(가) 쌀 부족으로 퇴각합니다."
+                        } else {
+                            "<Y>${attacker.name}</>이(가) 병력 소진으로 퇴각합니다."
+                        }
+                    )
                     attackerWon = false
                     break
                 }
@@ -149,8 +172,8 @@ class BattleEngine {
         }
 
         // If maxPhase reached without entering siege but all defenders down, try siege
-        if (attackerWon && !inSiege && !cityOccupied && attacker.continueWar()) {
-            val allDefendersDown = sortedDefenders.all { it is WarUnitGeneral && !it.continueWar() }
+        if (attackerWon && !inSiege && !cityOccupied && attacker.continueWar().canContinue) {
+            val allDefendersDown = sortedDefenders.all { it is WarUnitGeneral && !it.continueWar().canContinue }
             if (allDefendersDown) {
                 inSiege = true
                 val siegeInitCtx = BattleTriggerContext(attacker = attacker, defender = cityUnit, rng = rng, isVsCity = true)
@@ -158,14 +181,22 @@ class BattleEngine {
                 if (siegeInitCtx.injuryImmune) attackerInjuryImmune = true
                 logs.addAll(siegeInitCtx.battleLogs)
 
-                while (attacker.continueWar() && cityUnit.hp > 0) {
+                while (attacker.continueWar().canContinue && cityUnit.hp > 0) {
                     val phaseResult = executeCombatPhase(attacker, cityUnit, rng, phaseNumber = currentPhase, isVsCity = true)
                     totalAttackerDamage += phaseResult.damage.first
                     totalDefenderDamage += phaseResult.damage.second
                     logs.addAll(phaseResult.logs)
                     currentPhase++
 
-                    if (!attacker.continueWar()) {
+                    val attackerContinuation = attacker.continueWar()
+                    if (!attackerContinuation.canContinue) {
+                        logs.add(
+                            if (attackerContinuation.isRiceShortage) {
+                                "<Y>${attacker.name}</>이(가) 쌀 부족으로 퇴각합니다."
+                            } else {
+                                "<Y>${attacker.name}</>이(가) 병력 소진으로 퇴각합니다."
+                            }
+                        )
                         attackerWon = false
                         break
                     }
@@ -286,9 +317,6 @@ class BattleEngine {
             }
         }
 
-        // Random variance ±10%
-        warPower *= 0.9 + rng.nextDouble() * 0.2
-
         return WarPowerResult(
             warPower = maxOf(1.0, round(warPower)),
             opposeWarPowerMultiply = opposeWarPowerMultiply * expOpposeMultiply,
@@ -334,9 +362,12 @@ class BattleEngine {
         val attackerResult = computeWarPower(attacker, defender, rng)
         val defenderResult = computeWarPower(defender, attacker, rng)
 
+        val attackerVariedWarPower = attackerResult.warPower * (0.9 + rng.nextDouble() * 0.2)
+        val defenderVariedWarPower = defenderResult.warPower * (0.9 + rng.nextDouble() * 0.2)
+
         // Apply oppose multipliers bidirectionally (PHP: $this->oppose->setWarPowerMultiply)
-        var attackerDamage = (attackerResult.warPower / maxOf(0.01, defenderResult.opposeWarPowerMultiply)).toInt().coerceAtLeast(1)
-        var defenderDamage = (defenderResult.warPower / maxOf(0.01, attackerResult.opposeWarPowerMultiply)).toInt().coerceAtLeast(1)
+        var attackerDamage = (attackerVariedWarPower / maxOf(0.01, defenderResult.opposeWarPowerMultiply)).toInt().coerceAtLeast(1)
+        var defenderDamage = (defenderVariedWarPower / maxOf(0.01, attackerResult.opposeWarPowerMultiply)).toInt().coerceAtLeast(1)
 
         // PRE triggers: modify chances before rolls (legacy: 시도)
         for (trigger in attackerTriggers) trigger.onPreCritical(ctx)
@@ -405,6 +436,30 @@ class BattleEngine {
         if (ctx.defenceMultiplier != 1.0) {
             attackerDamage = (attackerDamage / ctx.defenceMultiplier).toInt()
         }
+
+        ctx.attackerDamage = attackerDamage
+        ctx.defenderDamage = defenderDamage
+
+        val attackerHP = attacker.hp
+        val defenderHP = defender.hp
+        var deadAttacker = defenderDamage.toDouble()
+        var deadDefender = attackerDamage.toDouble()
+
+        if (deadAttacker > attackerHP || deadDefender > defenderHP) {
+            val deadAttackerRatio = deadAttacker / maxOf(1, attackerHP)
+            val deadDefenderRatio = deadDefender / maxOf(1, defenderHP)
+
+            if (deadDefenderRatio > deadAttackerRatio) {
+                deadAttacker /= deadDefenderRatio
+                deadDefender = defenderHP.toDouble()
+            } else {
+                deadDefender /= deadAttackerRatio
+                deadAttacker = attackerHP.toDouble()
+            }
+        }
+
+        defenderDamage = minOf(ceil(deadAttacker).toInt(), attackerHP)
+        attackerDamage = minOf(ceil(deadDefender).toInt(), defenderHP)
 
         ctx.attackerDamage = attackerDamage
         ctx.defenderDamage = defenderDamage

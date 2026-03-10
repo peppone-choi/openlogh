@@ -223,13 +223,12 @@ class TriggerCallerTest {
     // ========== buildPreTurnTriggers ==========
 
     @Test
-    fun `buildPreTurnTriggers includes injury and troop triggers`() {
+    fun `buildPreTurnTriggers includes injury trigger`() {
         val general = createGeneral()
         val triggers = buildPreTurnTriggers(general)
 
-        assertEquals(2, triggers.size)
+        assertEquals(1, triggers.size)
         assertTrue(triggers.any { it is InjuryReductionTrigger })
-        assertTrue(triggers.any { it is TroopConsumptionTrigger })
     }
 
     // ========== Modifier helpers ==========

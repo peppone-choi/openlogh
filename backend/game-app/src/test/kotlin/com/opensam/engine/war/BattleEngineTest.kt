@@ -124,11 +124,11 @@ class BattleEngineTest {
         val general = createGeneral(crew = 1000, rice = 5000)
         val unit = WarUnitGeneral(general)
 
-        assertTrue(unit.continueWar())
+        assertTrue(unit.continueWar().canContinue)
 
         // Deplete rice below threshold: rice <= hp/100 => 5000 > 1000/100=10, so still fighting
         unit.rice = 5
-        assertFalse(unit.continueWar(), "Should not continue with insufficient rice")
+        assertFalse(unit.continueWar().canContinue, "Should not continue with insufficient rice")
     }
 
     @Test
@@ -137,7 +137,7 @@ class BattleEngineTest {
         val unit = WarUnitGeneral(general)
 
         unit.hp = 0
-        assertFalse(unit.continueWar())
+        assertFalse(unit.continueWar().canContinue)
     }
 
     @Test
