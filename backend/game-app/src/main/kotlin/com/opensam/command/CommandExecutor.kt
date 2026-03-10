@@ -394,6 +394,13 @@ class CommandExecutor @Autowired constructor(
         val cityNationById = allCities.associate { it.id to it.nationId }
         val citySupplyStateById = allCities.associate { it.id to it.supplyState.toInt() }
 
+        // DB city.id ↔ mapCityId bidirectional mapping
+        // mapAdjacency keys are mapCityId (from map JSON: 1,2,3...)
+        // DB city.id is auto-generated (1129, 1146...) — they don't match
+        val dbToMapId = allCities.associate { it.id to it.mapCityId.toLong() }
+        val mapToDbId = allCities.associate { it.mapCityId.toLong() to it.id }
+        val cityNationByMapId = allCities.associate { it.mapCityId.toLong() to it.nationId }
+
         val allGenerals = ports.allGenerals().map { it.toEntity() }
         val totalNpcCount = allGenerals.count { it.npcState.toInt() > 0 }
         val totalGeneralCount = allGenerals.size - totalNpcCount
@@ -433,6 +440,9 @@ class CommandExecutor @Autowired constructor(
             "mapName" to mapName,
             "mapAdjacency" to mapAdjacency,
             "cityNationById" to cityNationById,
+            "cityNationByMapId" to cityNationByMapId,
+            "dbToMapId" to dbToMapId,
+            "mapToDbId" to mapToDbId,
             "citySupplyStateById" to citySupplyStateById,
             "totalGeneralCount" to totalGeneralCount,
             "totalNpcCount" to totalNpcCount,

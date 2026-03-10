@@ -147,6 +147,9 @@ class GeneralMilitaryCommandTest {
         val env = createTestEnv()
         env.gameStor["mapAdjacency"] = mapOf(1L to listOf(2L), 2L to listOf(1L))
         env.gameStor["cityNationById"] = mapOf(1L to 1L, 2L to 0L)
+        env.gameStor["dbToMapId"] = mapOf(1L to 1L, 2L to 2L)
+        env.gameStor["mapToDbId"] = mapOf(1L to 1L, 2L to 2L)
+        env.gameStor["cityNationByMapId"] = mapOf(1L to 1L, 2L to 0L)
         env.gameStor["atWarNationIds"] = emptySet<Long>()
 
         val cmd = 출병(general, env)
@@ -322,6 +325,9 @@ class GeneralMilitaryCommandTest {
         val env = createTestEnv(develCost = 100)
         env.gameStor["mapAdjacency"] = mapOf(1L to listOf(2L), 2L to listOf(1L))
         env.gameStor["cityNationById"] = mapOf(1L to 1L, 2L to 1L)
+        env.gameStor["dbToMapId"] = mapOf(1L to 1L, 2L to 2L)
+        env.gameStor["mapToDbId"] = mapOf(1L to 1L, 2L to 2L)
+        env.gameStor["cityNationByMapId"] = mapOf(1L to 1L, 2L to 1L)
 
         val cmd = 강행(general, env)
         cmd.destCity = createTestCity().apply { id = 2 }

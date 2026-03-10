@@ -158,9 +158,10 @@ class 출병(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
      */
     private fun resolveAttackTarget(finalTargetCityId: Int, attackerNationId: Long, rng: Random): Int? {
         val adjacencyRaw = readMap(constraintEnv["mapAdjacency"]) ?: return null
-        val cityNationById = readMap(constraintEnv["cityNationById"]) ?: return null
+        val cityNationByMapIdRaw = readMap(constraintEnv["cityNationByMapId"]) ?: return null
+        val dbToMapIdRaw = readMap(constraintEnv["dbToMapId"]) ?: return null
+        val mapToDbIdRaw = readMap(constraintEnv["mapToDbId"]) ?: return null
 
-        // Build adjacency map
         val adjacency = mutableMapOf<Long, List<Long>>()
         adjacencyRaw.forEach { (k, v) ->
             val key = when (k) {
@@ -178,17 +179,17 @@ class 출병(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
             adjacency[key] = values
         }
 
-        // Allowed nations for traversal: all non-enemy nations.
-        val startCityId = general.cityId
+        val startMapCityId = when (val raw = dbToMapIdRaw[general.cityId] ?: dbToMapIdRaw[general.cityId.toString()]) {
+            is Number -> raw.toLong()
+            else -> return null
+        }
 
-        // BFS to build distance list to destination (like searchDistanceListToDest)
-        // We traverse only through cities belonging to allowed nations
         val atWarNationSet = when (val raw = constraintEnv["atWarNationIds"]) {
             is Set<*> -> raw.mapNotNull { (it as? Number)?.toLong() ?: (it as? String)?.toLongOrNull() }.toSet()
             is Iterable<*> -> raw.mapNotNull { (it as? Number)?.toLong() ?: (it as? String)?.toLongOrNull() }.toSet()
             else -> emptySet()
         }
-        val allNationIds = cityNationById.values.mapNotNull {
+        val allNationIds = cityNationByMapIdRaw.values.mapNotNull {
             when (it) {
                 is Number -> it.toLong()
                 is String -> it.toLongOrNull()
@@ -199,21 +200,17 @@ class 출병(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
         allowedNationSet.add(attackerNationId)
         allowedNationSet.add(0L)
 
-        // Traverse through own and neutral cities, collecting distance + nation of each reachable city
-        data class CityInfo(val cityId: Long, val nationId: Long, val distance: Int)
-
-        val visited = mutableSetOf(startCityId)
+        val visited = mutableSetOf(startMapCityId)
         val queue = ArrayDeque<Pair<Long, Int>>()
-        queue.addLast(startCityId to 0)
+        queue.addLast(startMapCityId to 0)
 
-        // distanceList: distance -> list of (cityId, nationId)
         val distanceList = sortedMapOf<Int, MutableList<Pair<Long, Long>>>()
 
         while (queue.isNotEmpty()) {
             val (curCity, dist) = queue.removeFirst()
             for (nextCity in adjacency[curCity].orEmpty()) {
                 if (!visited.add(nextCity)) continue
-                val nextNation = when (val raw = cityNationById[nextCity.toString()] ?: cityNationById[nextCity]) {
+                val nextNation = when (val raw = cityNationByMapIdRaw[nextCity] ?: cityNationByMapIdRaw[nextCity.toString()]) {
                     is Number -> raw.toLong()
                     else -> 0L
                 }
@@ -228,32 +225,35 @@ class 출병(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
 
         if (distanceList.isEmpty()) return null
 
-        val candidateCities = mutableListOf<Long>()
+        val candidateMapCities = mutableListOf<Long>()
         val minDist = distanceList.firstKey()
 
-        // Step 1-2: look at minDist and minDist+1 for enemy cities
         for ((dist, cities) in distanceList) {
             if (dist > minDist + 1) break
-            for ((cityId, nationId) in cities) {
+            for ((mapCityId, nationId) in cities) {
                 if (nationId != attackerNationId && nationId != 0L) {
-                    candidateCities.add(cityId)
+                    candidateMapCities.add(mapCityId)
                 }
             }
-            if (candidateCities.isNotEmpty()) break
+            if (candidateMapCities.isNotEmpty()) break
         }
 
-        // Step 3: if no enemy, pick allied cities at minDist
-        if (candidateCities.isEmpty()) {
-            for ((cityId, nationId) in distanceList[minDist].orEmpty()) {
+        if (candidateMapCities.isEmpty()) {
+            for ((mapCityId, nationId) in distanceList[minDist].orEmpty()) {
                 if (nationId == attackerNationId) {
-                    candidateCities.add(cityId)
+                    candidateMapCities.add(mapCityId)
                 }
             }
         }
 
-        if (candidateCities.isEmpty()) return null
+        if (candidateMapCities.isEmpty()) return null
 
-        return candidateCities[rng.nextInt(candidateCities.size)].toInt()
+        val chosenMapCityId = candidateMapCities[rng.nextInt(candidateMapCities.size)]
+        val dbCityId = when (val raw = mapToDbIdRaw[chosenMapCityId] ?: mapToDbIdRaw[chosenMapCityId.toString()]) {
+            is Number -> raw.toInt()
+            else -> return null
+        }
+        return dbCityId
     }
 
     private fun getCityName(cityId: Long?): String? {

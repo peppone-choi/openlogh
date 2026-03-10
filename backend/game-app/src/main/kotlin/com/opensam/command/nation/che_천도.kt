@@ -53,7 +53,8 @@ class che_천도(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
 
     private fun computeDistanceThroughOwnTerritory(srcCityId: Long, destCityId: Long): Int? {
         val adjacencyRaw = readMap(constraintEnv["mapAdjacency"]) ?: return null
-        val cityNationById = readMap(constraintEnv["cityNationById"])
+        val dbToMapIdRaw = readMap(constraintEnv["dbToMapId"])
+        val cityNationByMapIdRaw = readMap(constraintEnv["cityNationByMapId"])
 
         val nationId = general.nationId
 
@@ -74,20 +75,28 @@ class che_천도(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
             adjacency[key] = values
         }
 
-        val visited = mutableSetOf(srcCityId)
+        val srcMapId = when (val raw = dbToMapIdRaw?.get(srcCityId) ?: dbToMapIdRaw?.get(srcCityId.toString())) {
+            is Number -> raw.toLong()
+            else -> return null
+        }
+        val destMapId = when (val raw = dbToMapIdRaw?.get(destCityId) ?: dbToMapIdRaw?.get(destCityId.toString())) {
+            is Number -> raw.toLong()
+            else -> return null
+        }
+
+        val visited = mutableSetOf(srcMapId)
         val queue = ArrayDeque<Pair<Long, Int>>()
-        queue.addLast(srcCityId to 0)
+        queue.addLast(srcMapId to 0)
 
         while (queue.isNotEmpty()) {
             val (curCity, dist) = queue.removeFirst()
             for (nextCity in adjacency[curCity].orEmpty()) {
                 if (!visited.add(nextCity)) continue
                 val nextDist = dist + 1
-                if (nextCity == destCityId) return nextDist
+                if (nextCity == destMapId) return nextDist
 
-                // Only traverse through own-nation cities
-                if (cityNationById != null) {
-                    val nextNation = when (val raw = cityNationById[nextCity.toString()] ?: cityNationById[nextCity]) {
+                if (cityNationByMapIdRaw != null) {
+                    val nextNation = when (val raw = cityNationByMapIdRaw[nextCity] ?: cityNationByMapIdRaw[nextCity.toString()]) {
                         is Number -> raw.toLong()
                         else -> 0L
                     }

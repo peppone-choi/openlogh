@@ -111,6 +111,9 @@ class ConstraintChainTest {
         val env = mapOf(
             "mapAdjacency" to mapOf(1L to listOf(2L), 2L to listOf(1L)),
             "cityNationById" to mapOf(1L to 1L, 2L to 1L),
+            "dbToMapId" to mapOf(1L to 1L, 2L to 2L),
+            "mapToDbId" to mapOf(1L to 1L, 2L to 2L),
+            "cityNationByMapId" to mapOf(1L to 1L, 2L to 1L),
         )
         val result = HasRoute().test(ctx(destCity = destCity, env = env))
         assertTrue(result is ConstraintResult.Pass)
@@ -127,7 +130,11 @@ class ConstraintChainTest {
     fun `NearCity passes for adjacent city`() {
         val general = createGeneral(cityId = 1)
         val destCity = createCity().apply { id = 2 }
-        val env = mapOf("mapAdjacency" to mapOf(1L to listOf(2L), 2L to listOf(1L)))
+        val env = mapOf(
+            "mapAdjacency" to mapOf(1L to listOf(2L), 2L to listOf(1L)),
+            "dbToMapId" to mapOf(1L to 1L, 2L to 2L),
+            "cityNationByMapId" to mapOf(1L to 0L, 2L to 0L),
+        )
         val result = NearCity(1).test(ctx(general = general, destCity = destCity, env = env))
         assertTrue(result is ConstraintResult.Pass)
     }
@@ -136,7 +143,11 @@ class ConstraintChainTest {
     fun `NearCity fails when destination is too far`() {
         val general = createGeneral(cityId = 1)
         val destCity = createCity().apply { id = 3 }
-        val env = mapOf("mapAdjacency" to mapOf(1L to listOf(2L), 2L to listOf(1L, 3L), 3L to listOf(2L)))
+        val env = mapOf(
+            "mapAdjacency" to mapOf(1L to listOf(2L), 2L to listOf(1L, 3L), 3L to listOf(2L)),
+            "dbToMapId" to mapOf(1L to 1L, 2L to 2L, 3L to 3L),
+            "cityNationByMapId" to mapOf(1L to 0L, 2L to 0L, 3L to 0L),
+        )
         val result = NearCity(1).test(ctx(general = general, destCity = destCity, env = env))
         assertTrue(result is ConstraintResult.Fail)
     }
@@ -181,6 +192,9 @@ class ConstraintChainTest {
             "atWarNationIds" to setOf(2L),
             "mapAdjacency" to mapOf(1L to listOf(2L), 2L to listOf(1L, 3L), 3L to listOf(2L)),
             "cityNationById" to mapOf(1L to 1L, 2L to 0L, 3L to 2L),
+            "dbToMapId" to mapOf(1L to 1L, 2L to 2L, 3L to 3L),
+            "mapToDbId" to mapOf(1L to 1L, 2L to 2L, 3L to 3L),
+            "cityNationByMapId" to mapOf(1L to 1L, 2L to 0L, 3L to 2L),
         )
         val result = HasRouteWithEnemy().test(ctx(general = general, destCity = destCity, env = env))
         assertTrue(result is ConstraintResult.Pass)
@@ -194,6 +208,9 @@ class ConstraintChainTest {
             "atWarNationIds" to setOf(2L),
             "mapAdjacency" to mapOf(1L to listOf(3L), 3L to listOf(1L)),
             "cityNationById" to mapOf(1L to 1L, 3L to 3L),
+            "dbToMapId" to mapOf(1L to 1L, 3L to 3L),
+            "mapToDbId" to mapOf(1L to 1L, 3L to 3L),
+            "cityNationByMapId" to mapOf(1L to 1L, 3L to 3L),
         )
         val result = HasRouteWithEnemy().test(ctx(general = general, destCity = destCity, env = env))
         assertTrue(result is ConstraintResult.Fail)

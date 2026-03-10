@@ -477,19 +477,24 @@ private fun shortestDistance(
     val adjacency = readAdjacency(ctx.env["mapAdjacency"])
     if (adjacency.isEmpty()) return -1
 
-    val cityNationById = readLongMap(ctx.env["cityNationById"])
-    val visited = mutableSetOf(fromCityId)
+    val dbToMapId = readLongMap(ctx.env["dbToMapId"])
+    val cityNationByMapId = readLongMap(ctx.env["cityNationByMapId"])
+
+    val fromMapId = dbToMapId[fromCityId] ?: return -1
+    val toMapId = dbToMapId[toCityId] ?: return -1
+
+    val visited = mutableSetOf(fromMapId)
     val queue = ArrayDeque<Pair<Long, Int>>()
-    queue.addLast(fromCityId to 0)
+    queue.addLast(fromMapId to 0)
 
     while (queue.isNotEmpty()) {
         val (current, distance) = queue.removeFirst()
         for (next in adjacency[current].orEmpty()) {
             if (next in visited) continue
-            if (next == toCityId) return distance + 1
+            if (next == toMapId) return distance + 1
 
             if (allowedNationIds != null) {
-                val nationId = cityNationById[next] ?: return -1
+                val nationId = cityNationByMapId[next] ?: return -1
                 if (nationId !in allowedNationIds) continue
             }
 
@@ -938,18 +943,15 @@ fun NearNation() = object : Constraint {
         val destNationId = ctx.destNation?.id
             ?: return ConstraintResult.Fail("상대 국가 정보가 없습니다.")
 
-        val cityNationById = readLongMap(ctx.env["cityNationById"])
+        val cityNationByMapId = readLongMap(ctx.env["cityNationByMapId"])
         val adjacency = readAdjacency(ctx.env["mapAdjacency"])
 
-        // Find cities belonging to our nation
-        val myCityIds = cityNationById.filter { it.value == nationId }.keys
-        // Find cities belonging to dest nation
-        val destCityIds = cityNationById.filter { it.value == destNationId }.keys
+        val myMapCityIds = cityNationByMapId.filter { it.value == nationId }.keys
+        val destMapCityIds = cityNationByMapId.filter { it.value == destNationId }.keys
 
-        // Check if any of our cities are adjacent to any dest cities
-        for (myCityId in myCityIds) {
-            val neighbors = adjacency[myCityId].orEmpty()
-            if (neighbors.any { it in destCityIds }) {
+        for (myMapCityId in myMapCityIds) {
+            val neighbors = adjacency[myMapCityId].orEmpty()
+            if (neighbors.any { it in destMapCityIds }) {
                 return ConstraintResult.Pass
             }
         }

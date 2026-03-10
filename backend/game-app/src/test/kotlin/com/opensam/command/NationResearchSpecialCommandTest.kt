@@ -348,6 +348,9 @@ class NationResearchSpecialCommandTest {
         cmd.constraintEnv = mapOf(
             "mapAdjacency" to mapOf(1L to listOf(2L), 2L to listOf(1L)),
             "cityNationById" to mapOf(1L to 1L, 2L to 1L),
+            "dbToMapId" to mapOf(1L to 1L, 2L to 2L),
+            "mapToDbId" to mapOf(1L to 1L, 2L to 2L),
+            "cityNationByMapId" to mapOf(1L to 1L, 2L to 1L),
         )
 
         assertEquals(200, cmd.getCost().gold)
