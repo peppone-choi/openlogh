@@ -1146,12 +1146,13 @@ class GeneralAI(
         if (otherNations.isEmpty()) return null
 
         // Map-adjacency based neighbor check: only nations that share a border via connected cities
-        val myCityIds = ctx.allCities.filter { it.nationId == nation.id }.map { it.id }.toSet()
-        val cityNationMap = ctx.allCities.associate { it.id to it.nationId }
+        // mapAdjacency keys are mapCityId (from map JSON), not DB city.id
+        val myMapCityIds = ctx.allCities.filter { it.nationId == nation.id }.map { it.mapCityId.toLong() }.toSet()
+        val mapCityNationMap = ctx.allCities.associate { it.mapCityId.toLong() to it.nationId }
         val neighborNationIds = mutableSetOf<Long>()
-        for (myCityId in myCityIds) {
-            for (adjId in ctx.mapAdjacency[myCityId].orEmpty()) {
-                val adjNationId = cityNationMap[adjId] ?: continue
+        for (myMapCityId in myMapCityIds) {
+            for (adjMapId in ctx.mapAdjacency[myMapCityId].orEmpty()) {
+                val adjNationId = mapCityNationMap[adjMapId] ?: continue
                 if (adjNationId != nation.id && adjNationId != 0L) {
                     neighborNationIds.add(adjNationId)
                 }
