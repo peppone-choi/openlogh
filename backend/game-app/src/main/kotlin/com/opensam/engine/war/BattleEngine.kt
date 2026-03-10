@@ -229,6 +229,10 @@ class BattleEngine {
         for (def in sortedDefenders) {
             if (def is WarUnitGeneral) def.applyResults()
         }
+        // Always sync city battle damage (wall/def) back to entity,
+        // even when city is not conquered — damage must persist across turns.
+        // applyResults() is idempotent if already called on conquest.
+        cityUnit.applyResults()
 
         return BattleResult(
             attackerWon = attackerWon && attacker.isAlive,
