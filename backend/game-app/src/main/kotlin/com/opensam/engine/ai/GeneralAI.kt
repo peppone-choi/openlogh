@@ -1284,15 +1284,18 @@ class GeneralAI(
         if (secuRate < 0.5) return "치안강화"
 
         if (genType and GeneralType.WARRIOR.flag != 0) {
-            if (general.crew <= 0) {
+            val fullLeadership = general.leadership.toInt()
+            val goldAfterTrainCost = general.gold - fullLeadership * 3
+            val riceAfterTrainCost = general.rice - fullLeadership * 4
+            if (general.crew <= 0 && goldAfterTrainCost > 0 && riceAfterTrainCost > 0) {
                 val crewTypeCode = if (general.crewType.toInt() > 0) general.crewType.toInt() else 1100
                 general.meta["aiArg"] = mutableMapOf<String, Any>(
                     "crewType" to crewTypeCode,
-                    "amount" to general.leadership.toInt() * 100,
+                    "amount" to fullLeadership * 100,
                 )
-                return "모병"
+                return if (goldAfterTrainCost >= fullLeadership * 3 * 6) "모병" else "징병"
             }
-            if (general.train < 80) return "훈련"
+            if (general.crew > 0 && general.train < 80) return "훈련"
         }
 
         data class WeightedAction(val action: String, val weight: Double)
