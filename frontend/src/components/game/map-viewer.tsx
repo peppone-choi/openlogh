@@ -93,6 +93,7 @@ const CITY_STATE_NAMES: Record<number, string> = {
     7: '홍수',
     8: '메뚜기/흉년',
     9: '황건적',
+    43: '분쟁중',
 };
 
 export function MapViewer({

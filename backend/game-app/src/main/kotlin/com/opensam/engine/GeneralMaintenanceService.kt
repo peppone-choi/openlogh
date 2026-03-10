@@ -354,8 +354,10 @@ class GeneralMaintenanceService(
         }
 
         if (!isFictionWorld(world) && deadGeneral.npcState.toInt() > 0) {
+            // npcState 1..3 = regular NPC, 6 = NPC nation general, 9 = invader
+            // Exclude 5 (dead/troop leader, already filtered above)
             val npcCandidates = nationCandidates
-                .filter { it.npcState.toInt() in 1..3 }
+                .filter { it.npcState.toInt() >= 1 }
                 .sortedWith(
                     compareBy<General>(
                         { affinityDistance(deadGeneral.affinity.toInt(), it.affinity.toInt()) },

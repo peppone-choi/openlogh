@@ -167,10 +167,16 @@ class GeneralAI(
             if (riseResult != null) return riseResult
         }
 
-        // 사망대비: if killTurn is low, handle death preparation
+        // 사망대비: killTurn or deadYear approaching
         val killTurn = general.killTurn?.toInt()
         if (killTurn != null && killTurn <= 5 && general.npcState.toInt() >= 2) {
             return doDeathPreparation(general, nation, rng)
+        }
+        if (general.npcState.toInt() >= 2 && general.deadYear > 0.toShort()) {
+            val yearsLeft = general.deadYear - world.currentYear
+            if (yearsLeft <= 2) {
+                return doDeathPreparation(general, nation, rng)
+            }
         }
 
         val hasNeutralTargets = warTargetNations.containsKey(0L)
@@ -2022,9 +2028,22 @@ class GeneralAI(
             return if (rng.nextDouble() < 0.5) "인재탐색" else "견문"
         }
 
+        if (general.officerLevel >= 12 && nation != null) {
+            val ports = worldPortFactory.create(general.worldId)
+            val nationGenerals = ports.generalsByNation(general.nationId).map { it.toEntity() }
+            val candidates = nationGenerals.filter { gen ->
+                gen.id != general.id && gen.npcState.toInt() != 5
+            }
+            if (candidates.isNotEmpty()) {
+                val target = candidates.maxByOrNull { it.leadership + it.strength + it.intel }
+                    ?: candidates[rng.nextInt(candidates.size)]
+                general.meta["abdicateTarget"] = target.id
+                return "선양"
+            }
+        }
+
         if (general.gold + general.rice == 0) return "물자조달"
 
-        // Donate whichever resource is higher
         return if (general.gold >= general.rice) {
             general.meta["donateGold"] = general.gold
             "헌납"
@@ -2939,16 +2958,6 @@ class GeneralAI(
             general.defenceTrain = 80
         }
 
-        // Lord abdication check
-        if (general.officerLevel.toInt() == 12) {
-            val nationGenerals = worldPortFactory.create(world.id.toLong()).generalsByNation(general.nationId)
-            val ctx = buildContextForGeneral(general, world, rng)
-            if (ctx != null) {
-                val result = doAbdicate(ctx, rng)
-                if (result != null) return result
-            }
-        }
-
         // Troop leader: always rally
         if (npcType == 5) {
             if (general.nationId == 0L) {
@@ -2995,9 +3004,12 @@ class GeneralAI(
             }
         }
 
-        // Death preparation
         val killTurn = general.killTurn?.toInt()
-        if (killTurn != null && killTurn <= 5 && npcType >= 2) {
+        val deadYearApproaching = npcType >= 2
+            && general.deadYear > 0.toShort()
+            && (general.deadYear - world.currentYear) <= 2
+
+        if (npcType >= 2 && ((killTurn != null && killTurn <= 5) || deadYearApproaching)) {
             val nation = worldPortFactory.create(world.id.toLong()).nation(general.nationId)?.toEntity()
             return doDeathPreparation(general, nation, rng)
         }

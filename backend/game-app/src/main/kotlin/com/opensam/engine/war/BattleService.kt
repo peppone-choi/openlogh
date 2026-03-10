@@ -240,10 +240,11 @@ class BattleService(
             logConquestReward(world, attacker.nationId, destroyedNation.name, goldReward, riceReward)
         }
 
-        // Kill all diplomatic relations for the destroyed nation
+        destroyedNation.level = 0
+        nationRepository.save(destroyedNation)
+
         diplomacyService.killAllRelationsForNation(world.id.toLong(), destroyedNationId)
 
-        // Dispatch DESTROY_NATION event
         eventService.dispatchEvents(world, "DESTROY_NATION")
     }
 
