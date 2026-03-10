@@ -1234,10 +1234,10 @@ class GeneralAI(
         return when (priority) {
             "긴급내정" -> doUrgentDomestic(ctx, rng, nationPolicy)
             "전쟁내정" -> doWarDomestic(ctx, rng, nationPolicy)
-            "징병" -> doRecruit(ctx, rng, policy, nationPolicy)
-            "전투준비" -> doCombatPrep(ctx, rng, nationPolicy)
+            "징병" -> doRecruit(ctx, rng, policy, nationPolicy, warTargetNations)
+            "전투준비" -> doCombatPrep(ctx, rng, nationPolicy, warTargetNations)
             "출병" -> doSortie(ctx, rng, nationPolicy, attackable, warTargetNations)
-            "전방워프" -> doWarpToFront(ctx, rng, nationPolicy, attackable)
+            "전방워프" -> doWarpToFront(ctx, rng, nationPolicy, attackable, warTargetNations)
             "후방워프" -> doWarpToRear(ctx, rng, policy, nationPolicy, backupCities, supplyCities)
             "내정워프" -> doWarpToDomestic(ctx, rng, nationPolicy, supplyCities)
             "귀환" -> doReturn(ctx, rng)
@@ -1473,9 +1473,10 @@ class GeneralAI(
      */
     private fun doRecruit(
         ctx: AIContext, rng: Random, policy: NpcGeneralPolicy, nationPolicy: NpcNationPolicy,
+        warTargetNations: Map<Long, Int>,
     ): String? {
-        // Only recruit during war preparation or war
-        if (ctx.diplomacyState == DiplomacyState.PEACE || ctx.diplomacyState == DiplomacyState.DECLARED) return null
+        val hasNeutralTargets = warTargetNations.containsKey(0L)
+        if (!hasNeutralTargets && (ctx.diplomacyState == DiplomacyState.PEACE || ctx.diplomacyState == DiplomacyState.DECLARED)) return null
 
         // Per legacy: only COMMANDER type (t통솔장) can recruit
         if (ctx.generalType and GeneralType.COMMANDER.flag == 0) return null
@@ -1518,8 +1519,12 @@ class GeneralAI(
     //  do전투준비: Combat preparation (train/morale)
     // ──────────────────────────────────────────────────────────
 
-    private fun doCombatPrep(ctx: AIContext, rng: Random, nationPolicy: NpcNationPolicy): String? {
-        if (ctx.diplomacyState == DiplomacyState.PEACE || ctx.diplomacyState == DiplomacyState.DECLARED) return null
+    private fun doCombatPrep(
+        ctx: AIContext, rng: Random, nationPolicy: NpcNationPolicy,
+        warTargetNations: Map<Long, Int>,
+    ): String? {
+        val hasNeutralTargets = warTargetNations.containsKey(0L)
+        if (!hasNeutralTargets && (ctx.diplomacyState == DiplomacyState.PEACE || ctx.diplomacyState == DiplomacyState.DECLARED)) return null
 
         val general = ctx.general
         if (general.crew <= 0) return null
@@ -1538,19 +1543,24 @@ class GeneralAI(
     // ──────────────────────────────────────────────────────────
 
     /**
-     * Per legacy: only during actual war, need sufficient crew/train/atmos,
-     * must be in a front city with attackable neighbors.
+     * Per legacy: need sufficient crew/train/atmos, must be in a front city.
+     * Attacks active war targets first; falls back to empty (neutral) cities
+     * when no active war exists but attackable front cities are available.
      */
     private fun doSortie(
         ctx: AIContext, rng: Random, nationPolicy: NpcNationPolicy,
         attackable: Boolean, warTargetNations: Map<Long, Int>,
     ): String? {
         if (!attackable) return null
-        if (ctx.diplomacyState != DiplomacyState.AT_WAR) return null
+
+        val nation = ctx.nation ?: return null
+        val hasNeutralTargets = warTargetNations.containsKey(0L)
+
+        // Per legacy: allow sortie if at war OR if neutral (empty city) targets exist
+        if (ctx.diplomacyState != DiplomacyState.AT_WAR && !hasNeutralTargets) return null
 
         val general = ctx.general
         val city = ctx.city
-        val nation = ctx.nation ?: return null
 
         // Per legacy: if rice is very low and NPC, 70% chance to skip
         if (nation.rice < 1000 && general.npcState.toInt() >= 2 && rng.nextDouble() < 0.7) return null
@@ -1564,10 +1574,17 @@ class GeneralAI(
         // Must be in a front city
         if (city.frontState.toInt() == 0) return null
 
-        // Pick a target enemy city for the attack (AI provides destCityId)
-        val enemyCities = ctx.allCities.filter { it.nationId in warTargetNations.keys && it.nationId != 0L }
-        if (enemyCities.isEmpty()) return null
-        val targetCity = enemyCities[rng.nextInt(enemyCities.size)]
+        // Per legacy: prefer active war targets (state >= 2), fall back to neutral (empty) cities
+        val activeWarTargetIds = warTargetNations.filter { it.value >= 2 }.keys
+        val targetCities = if (activeWarTargetIds.isNotEmpty()) {
+            ctx.allCities.filter { it.nationId in activeWarTargetIds && it.nationId != nation.id }
+        } else {
+            // Fall back to empty/neutral cities (nationId == 0)
+            ctx.allCities.filter { it.nationId == 0L }
+        }
+        if (targetCities.isEmpty()) return null
+
+        val targetCity = targetCities[rng.nextInt(targetCities.size)]
         general.meta["aiArg"] = mutableMapOf<String, Any>("destCityId" to targetCity.id)
         return "출병"
     }
@@ -1576,9 +1593,13 @@ class GeneralAI(
     //  do전방워프: Warp to front (NPC teleport)
     // ──────────────────────────────────────────────────────────
 
-    private fun doWarpToFront(ctx: AIContext, rng: Random, nationPolicy: NpcNationPolicy, attackable: Boolean): String? {
+    private fun doWarpToFront(
+        ctx: AIContext, rng: Random, nationPolicy: NpcNationPolicy,
+        attackable: Boolean, warTargetNations: Map<Long, Int>,
+    ): String? {
         if (!attackable) return null
-        if (ctx.diplomacyState == DiplomacyState.PEACE || ctx.diplomacyState == DiplomacyState.DECLARED) return null
+        val hasNeutralTargets = warTargetNations.containsKey(0L)
+        if (!hasNeutralTargets && (ctx.diplomacyState == DiplomacyState.PEACE || ctx.diplomacyState == DiplomacyState.DECLARED)) return null
 
         // Only commanders
         if (ctx.generalType and GeneralType.COMMANDER.flag == 0) return null
