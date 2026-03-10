@@ -133,6 +133,8 @@ class GeneralAI(
             return doDeathPreparation(general, nation, rng)
         }
 
+        val hasNeutralTargets = warTargetNations.containsKey(0L)
+
         val action = try {
             when {
                 // Chiefs (officerLevel>=12) get nation-level action priority first,
@@ -144,6 +146,10 @@ class GeneralAI(
                     ctx, rng, generalPolicy, nationPolicy, attackable, warTargetNations, supplyCities, backupCities
                 )
                 diplomacyState == DiplomacyState.IMMINENT -> decideWarAction(
+                    ctx, rng, generalPolicy, nationPolicy, attackable, warTargetNations, supplyCities, backupCities
+                )
+                // Neutral (empty) cities exist and we can attack → use war routine for recruitment/sortie
+                hasNeutralTargets && attackable -> decideWarAction(
                     ctx, rng, generalPolicy, nationPolicy, attackable, warTargetNations, supplyCities, backupCities
                 )
                 else -> decidePeaceAction(
@@ -1277,9 +1283,15 @@ class GeneralAI(
         if (commRate < 0.5) return "상업투자"
         if (secuRate < 0.5) return "치안강화"
 
-        // Warrior peace behavior: if developed enough, focus on troops.
         if (genType and GeneralType.WARRIOR.flag != 0) {
-            if (general.crew <= 0) return "모병"
+            if (general.crew <= 0) {
+                val crewTypeCode = if (general.crewType.toInt() > 0) general.crewType.toInt() else 1100
+                general.meta["aiArg"] = mutableMapOf<String, Any>(
+                    "crewType" to crewTypeCode,
+                    "amount" to general.leadership.toInt() * 100,
+                )
+                return "모병"
+            }
             if (general.train < 80) return "훈련"
         }
 
