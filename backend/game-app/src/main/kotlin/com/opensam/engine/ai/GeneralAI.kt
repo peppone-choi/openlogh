@@ -108,6 +108,25 @@ class GeneralAI(
             NpcGeneralPolicy()
         }
 
+        val month = world.currentMonth.toInt()
+        if (general.npcState.toInt() >= 2) {
+            if (general.officerLevel.toInt() == 12 && nation != null) {
+                if (month in listOf(3, 6, 9, 12)) {
+                    choosePromotion(ctx, rng)
+                }
+                if (month == 12) {
+                    chooseTexRate(ctx, supplyCities)
+                    chooseGoldBillRate(ctx, supplyCities, nationPolicy)
+                }
+                if (month == 6) {
+                    chooseTexRate(ctx, supplyCities)
+                    chooseRiceBillRate(ctx, supplyCities, nationPolicy)
+                }
+            } else if (month in listOf(3, 6, 9, 12)) {
+                chooseNonLordPromotion(ctx, rng)
+            }
+        }
+
         // Check reserved command
         val reservedAction = checkReservedCommand(general)
         if (reservedAction != null) {
