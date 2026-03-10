@@ -283,8 +283,10 @@ class GeneralAITest {
         val action = invokeDoTradeResources(world, general, city, nation)
 
         assertEquals("군량매매", action)
-        assertEquals("buyRice", general.meta["tradeDirection"])
-        assertEquals(1400, general.meta["tradeAmount"])
+        @Suppress("UNCHECKED_CAST")
+        val aiArg = general.meta["aiArg"] as Map<String, Any>
+        assertEquals(true, aiArg["isBuy"])
+        assertEquals(1400, aiArg["amount"])
     }
 
     @Test

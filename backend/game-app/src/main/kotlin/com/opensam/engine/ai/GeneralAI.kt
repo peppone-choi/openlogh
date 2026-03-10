@@ -1020,8 +1020,11 @@ class GeneralAI(
 
         // Pick by weight
         val picked = choiceByWeightPairRaw(rng, candidates.map { it to it.weight }) ?: return null
-        picked.general.meta["confiscateGold"] = if (picked.isGold) picked.amount else 0
-        picked.general.meta["confiscateRice"] = if (!picked.isGold) picked.amount else 0
+        ctx.general.meta["aiArg"] = mutableMapOf<String, Any>(
+            "destGeneralId" to picked.general.id,
+            "isGold" to picked.isGold,
+            "amount" to picked.amount
+        )
         return "몰수"
     }
 
@@ -1068,7 +1071,7 @@ class GeneralAI(
         if (rng.nextDouble() > 0.15) return null
 
         val target = candidates[rng.nextInt(candidates.size)]
-        ctx.general.meta["diplomacyTarget"] = target.id
+        ctx.general.meta["aiArg"] = mutableMapOf<String, Any>("destNationId" to target.id)
         return "불가침제의"
     }
 
@@ -1201,7 +1204,7 @@ class GeneralAI(
         val bestCity = cityScores.firstOrNull()?.first ?: return null
         if (bestCity.id == capital) return null
 
-        ctx.general.meta["capitalTarget"] = bestCity.id
+        ctx.general.meta["aiArg"] = mutableMapOf<String, Any>("destCityId" to bestCity.id)
         return "천도"
     }
 
@@ -1694,7 +1697,7 @@ class GeneralAI(
         if (supplyFront.isEmpty()) return null
 
         val destCity = supplyFront[rng.nextInt(supplyFront.size)]
-        general.meta["warpTarget"] = destCity.id
+        general.meta["aiArg"] = mutableMapOf<String, Any>("destCityId" to destCity.id)
         return "이동"  // NPC능동/순간이동 maps to 이동 in Kotlin engine
     }
 
@@ -1740,7 +1743,7 @@ class GeneralAI(
             c.pop.toDouble() / c.popMax
         } ?: return null
 
-        general.meta["warpTarget"] = destCity.id
+        general.meta["aiArg"] = mutableMapOf<String, Any>("destCityId" to destCity.id)
         return "이동"
     }
 
@@ -1802,7 +1805,7 @@ class GeneralAI(
         if (candidates.isEmpty()) return null
 
         val destCity = candidates[rng.nextInt(candidates.size)]
-        ctx.general.meta["warpTarget"] = destCity.id
+        ctx.general.meta["aiArg"] = mutableMapOf<String, Any>("destCityId" to destCity.id)
         return "이동"
     }
 
@@ -1851,8 +1854,7 @@ class GeneralAI(
         if (relRice * 2.0 < relGold && relRice < 2000) {
             val amount = valueFit(((relGold - relRice) / (1.0 + deathRate)).toInt(), 100, 50000)
             if (amount >= nationPolicy.minimumResourceActionAmount) {
-                general.meta["tradeDirection"] = "buyRice"
-                general.meta["tradeAmount"] = amount
+                general.meta["aiArg"] = mutableMapOf<String, Any>("amount" to amount, "isBuy" to true)
                 return "군량매매"
             }
         }
@@ -1861,8 +1863,7 @@ class GeneralAI(
         if (relGold * 2.0 < relRice && relGold < 2000) {
             val amount = valueFit(((relRice - relGold) / (1.0 + deathRate)).toInt(), 100, 50000)
             if (amount >= nationPolicy.minimumResourceActionAmount) {
-                general.meta["tradeDirection"] = "sellRice"
-                general.meta["tradeAmount"] = amount
+                general.meta["aiArg"] = mutableMapOf<String, Any>("amount" to amount, "isBuy" to false)
                 return "군량매매"
             }
         }
@@ -1917,14 +1918,15 @@ class GeneralAI(
 
         if (!donateGold && !donateRice) return null
 
-        // Calculate donation amounts
+        // Calculate donation amounts — command accepts one resource at a time, prefer gold first
         if (donateGold) {
             val amount = max(general.gold - reqGold, nationPolicy.minimumResourceActionAmount)
-            general.meta["donateGold"] = valueFit(amount, nationPolicy.minimumResourceActionAmount, nationPolicy.maximumResourceActionAmount)
-        }
-        if (donateRice) {
+            val finalAmount = valueFit(amount, nationPolicy.minimumResourceActionAmount, nationPolicy.maximumResourceActionAmount)
+            general.meta["aiArg"] = mutableMapOf<String, Any>("isGold" to true, "amount" to finalAmount)
+        } else {
             val amount = max(general.rice - reqRice, nationPolicy.minimumResourceActionAmount)
-            general.meta["donateRice"] = valueFit(amount, nationPolicy.minimumResourceActionAmount, nationPolicy.maximumResourceActionAmount)
+            val finalAmount = valueFit(amount, nationPolicy.minimumResourceActionAmount, nationPolicy.maximumResourceActionAmount)
+            general.meta["aiArg"] = mutableMapOf<String, Any>("isGold" to false, "amount" to finalAmount)
         }
 
         return "헌납"
@@ -2037,7 +2039,7 @@ class GeneralAI(
             if (candidates.isNotEmpty()) {
                 val target = candidates.maxByOrNull { it.leadership + it.strength + it.intel }
                     ?: candidates[rng.nextInt(candidates.size)]
-                general.meta["abdicateTarget"] = target.id
+                general.meta["aiArg"] = mapOf("destGeneralId" to target.id)
                 return "선양"
             }
         }
@@ -2045,10 +2047,10 @@ class GeneralAI(
         if (general.gold + general.rice == 0) return "물자조달"
 
         return if (general.gold >= general.rice) {
-            general.meta["donateGold"] = general.gold
+            general.meta["aiArg"] = mutableMapOf<String, Any>("isGold" to true, "amount" to general.gold)
             "헌납"
         } else {
-            general.meta["donateRice"] = general.rice
+            general.meta["aiArg"] = mutableMapOf<String, Any>("isGold" to false, "amount" to general.rice)
             "헌납"
         }
     }
@@ -2464,7 +2466,7 @@ class GeneralAI(
         if (candidates.isEmpty()) return null
 
         val target = candidates[rng.nextInt(candidates.size)]
-        general.meta["abdicateTarget"] = target.id
+        general.meta["aiArg"] = mapOf("destGeneralId" to target.id)
         return "선양"
     }
 
@@ -3166,7 +3168,7 @@ class GeneralAI(
                 .filter { it.officerLevel.toInt() == 12 && it.npcState.toInt() == 9 && it.nationId != 0L }
             if (barbarianLords.isNotEmpty()) {
                 val target = barbarianLords[rng.nextInt(barbarianLords.size)]
-                general.meta["enlistNationId"] = target.nationId
+                general.meta["aiArg"] = mutableMapOf<String, Any>("destNationId" to target.nationId)
                 return "임관"
             }
         }
@@ -3206,7 +3208,7 @@ class GeneralAI(
             val currentCity = allCities.find { it.id == general.cityId } ?: return null
             val adjacentIds = getAdjacentCityIds(currentCity, allCities)
             if (adjacentIds.isEmpty()) return null
-            general.meta["moveCityId"] = adjacentIds[rng.nextInt(adjacentIds.size)]
+            general.meta["aiArg"] = mutableMapOf<String, Any>("destCityId" to adjacentIds[rng.nextInt(adjacentIds.size)])
             return "이동"
         }
 
@@ -3306,7 +3308,7 @@ class GeneralAI(
 
         if (moveOptions.isEmpty()) return null
         val destId = choiceByWeightPair(rng, moveOptions) ?: return null
-        general.meta["moveCityId"] = destId
+        general.meta["aiArg"] = mutableMapOf<String, Any>("destCityId" to destId)
         return "이동"
     }
 
@@ -3399,11 +3401,8 @@ class GeneralAI(
         // Pick one using weight
         val picked = choiceByWeightPair(rng, candidates.map { Pair(it, it.weight.toDouble()) }) ?: return null
 
-        if (picked.isGold) {
-            general.meta["donateGold"] = valueFit(picked.amount, nationPolicy.minimumResourceActionAmount, nationPolicy.maximumResourceActionAmount)
-        } else {
-            general.meta["donateRice"] = valueFit(picked.amount, nationPolicy.minimumResourceActionAmount, nationPolicy.maximumResourceActionAmount)
-        }
+        val donateAmount = valueFit(picked.amount, nationPolicy.minimumResourceActionAmount, nationPolicy.maximumResourceActionAmount)
+        general.meta["aiArg"] = mutableMapOf<String, Any>("isGold" to picked.isGold, "amount" to donateAmount)
 
         return "헌납"
     }
