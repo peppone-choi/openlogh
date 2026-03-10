@@ -1068,8 +1068,10 @@ class GeneralAI(
             logger.debug("[doDeclaration] nation={} skipped: diplomacyState={}", nation.id, ctx.diplomacyState)
             return null
         }
-        if (attackable) {
-            logger.debug("[doDeclaration] nation={} skipped: already attackable", nation.id)
+        // Only skip if there are actual enemy nation targets (not just neutral cities)
+        val hasEnemyNationTargets = warTargetNations.any { it.key != 0L }
+        if (attackable && hasEnemyNationTargets) {
+            logger.debug("[doDeclaration] nation={} skipped: already at war with enemy nations", nation.id)
             return null
         }
         if (nation.capitalCityId == null) return null
