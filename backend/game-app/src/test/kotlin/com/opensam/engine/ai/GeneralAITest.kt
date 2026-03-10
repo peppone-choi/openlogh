@@ -3,6 +3,7 @@ package com.opensam.engine.ai
 import com.opensam.engine.turn.cqrs.persist.JpaWorldPortFactory
 import com.opensam.entity.*
 import com.opensam.repository.*
+import com.opensam.service.MapService
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -18,6 +19,7 @@ class GeneralAITest {
     private lateinit var cityRepository: CityRepository
     private lateinit var nationRepository: NationRepository
     private lateinit var diplomacyRepository: DiplomacyRepository
+    private lateinit var mapService: MapService
 
     @BeforeEach
     fun setUp() {
@@ -25,12 +27,13 @@ class GeneralAITest {
         cityRepository = mock(CityRepository::class.java)
         nationRepository = mock(NationRepository::class.java)
         diplomacyRepository = mock(DiplomacyRepository::class.java)
+        mapService = mock(MapService::class.java)
         ai = GeneralAI(JpaWorldPortFactory(
             generalRepository = generalRepository,
             cityRepository = cityRepository,
             nationRepository = nationRepository,
             diplomacyRepository = diplomacyRepository,
-        ))
+        ), mapService)
     }
 
     private fun createWorld(year: Short = 200, month: Short = 3): WorldState {

@@ -15,4 +15,5 @@ data class AIContext(
     val frontCities: List<City>,
     val rearCities: List<City>,
     val nationGenerals: List<General>,
+    val mapAdjacency: Map<Long, List<Long>> = emptyMap(),
 )

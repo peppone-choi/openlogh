@@ -10,6 +10,7 @@ import com.opensam.entity.General
 import com.opensam.entity.Nation
 import com.opensam.entity.WorldState
 import org.slf4j.LoggerFactory
+import com.opensam.service.MapService
 import org.springframework.stereotype.Service
 import kotlin.math.max
 import kotlin.math.min
@@ -27,6 +28,7 @@ import kotlin.random.Random
 @Service
 class GeneralAI(
     private val worldPortFactory: JpaWorldPortFactory,
+    private val mapService: MapService,
 ) {
     private val logger = LoggerFactory.getLogger(GeneralAI::class.java)
 
@@ -88,6 +90,15 @@ class GeneralAI(
         // War target nations
         val warTargetNations = calcWarTargetNations(nation, diplomacies)
 
+        val mapName = (world.config["mapName"] as? String) ?: "che"
+        val mapAdjacency = try {
+            mapService.getCities(mapName).associate { cityConst ->
+                cityConst.id.toLong() to cityConst.connections.map { it.toLong() }
+            }
+        } catch (_: Exception) {
+            emptyMap()
+        }
+
         val ctx = AIContext(
             world = world,
             general = general,
@@ -101,6 +112,7 @@ class GeneralAI(
             frontCities = frontCities,
             rearCities = rearCities,
             nationGenerals = nationGenerals,
+            mapAdjacency = mapAdjacency,
         )
 
         val generalPolicy = if (nation != null) {
@@ -1133,15 +1145,17 @@ class GeneralAI(
 
         if (otherNations.isEmpty()) return null
 
-        // Simple neighbor check: nations that share border (have cities adjacent to ours)
+        // Map-adjacency based neighbor check: only nations that share a border via connected cities
+        val myCityIds = ctx.allCities.filter { it.nationId == nation.id }.map { it.id }.toSet()
+        val cityNationMap = ctx.allCities.associate { it.id to it.nationId }
         val neighborNationIds = mutableSetOf<Long>()
-        for (city in ctx.allCities) {
-            if (city.nationId != nation.id && city.nationId != 0L && city.frontState > 0) {
-                neighborNationIds.add(city.nationId)
+        for (myCityId in myCityIds) {
+            for (adjId in ctx.mapAdjacency[myCityId].orEmpty()) {
+                val adjNationId = cityNationMap[adjId] ?: continue
+                if (adjNationId != nation.id && adjNationId != 0L) {
+                    neighborNationIds.add(adjNationId)
+                }
             }
-        }
-        if (neighborNationIds.isEmpty()) {
-            neighborNationIds.addAll(otherNations.map { it.id })
         }
 
         val targets = otherNations.filter { neighborNationIds.contains(it.id) }
