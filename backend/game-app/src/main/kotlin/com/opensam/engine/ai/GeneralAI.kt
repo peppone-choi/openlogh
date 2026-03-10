@@ -1509,8 +1509,16 @@ class GeneralAI(
         val riceAfterTrainCost = general.rice - fullLeadership * 4
         if (goldAfterTrainCost <= 0 || riceAfterTrainCost <= 0) return null
 
-        // Legacy (line 2627): 모병 if gold >= cost * 6, else 징병
-        // Simplified: use trainCost as proxy for recruit cost
+        // Pick crew type: keep current if valid, else default to FOOTMAN (1100)
+        val crewTypeCode = if (general.crewType.toInt() > 0) general.crewType.toInt() else 1100
+        val maxAmount = fullLeadership * 100 - (if (crewTypeCode == general.crewType.toInt()) general.crew else 0)
+        if (maxAmount <= 0) return null
+
+        general.meta["aiArg"] = mutableMapOf<String, Any>(
+            "crewType" to crewTypeCode,
+            "amount" to maxAmount,
+        )
+
         val trainCost = fullLeadership * 3
         return if (goldAfterTrainCost >= trainCost * 6) "모병" else "징병"
     }
