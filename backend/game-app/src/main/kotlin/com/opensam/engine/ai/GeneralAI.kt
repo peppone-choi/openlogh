@@ -3,6 +3,7 @@ package com.opensam.engine.ai
 import com.opensam.engine.DeterministicRng
 import com.opensam.engine.turn.cqrs.persist.JpaWorldPortFactory
 import com.opensam.engine.turn.cqrs.persist.toEntity
+import com.opensam.engine.turn.cqrs.persist.toSnapshot
 import com.opensam.entity.City
 import com.opensam.entity.Diplomacy
 import com.opensam.entity.General
@@ -111,16 +112,24 @@ class GeneralAI(
         val month = world.currentMonth.toInt()
         if (general.npcState.toInt() >= 2) {
             if (general.officerLevel.toInt() == 12 && nation != null) {
+                var nationModified = false
                 if (month in listOf(3, 6, 9, 12)) {
                     choosePromotion(ctx, rng)
                 }
                 if (month == 12) {
                     chooseTexRate(ctx, supplyCities)
                     chooseGoldBillRate(ctx, supplyCities, nationPolicy)
+                    nationModified = true
+                    logger.info("Nation {} ({}) bill set to {}, rate set to {}", nation.id, nation.name, nation.bill, nation.rate)
                 }
                 if (month == 6) {
                     chooseTexRate(ctx, supplyCities)
                     chooseRiceBillRate(ctx, supplyCities, nationPolicy)
+                    nationModified = true
+                    logger.info("Nation {} ({}) riceBill set to {}, rate set to {}", nation.id, nation.name, nation.bill, nation.rate)
+                }
+                if (nationModified) {
+                    ports.putNation(nation.toSnapshot())
                 }
             } else if (month in listOf(3, 6, 9, 12)) {
                 chooseNonLordPromotion(ctx, rng)
