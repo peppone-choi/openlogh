@@ -1058,7 +1058,7 @@ class GeneralAI(
 
         val alreadyPact = diplomacies.filter {
             (it.srcNationId == nation.id || it.destNationId == nation.id) &&
-                it.stateCode == "불가침"
+                (it.stateCode == "불가침" || it.stateCode == "불가침제의")
         }.map { if (it.srcNationId == nation.id) it.destNationId else it.srcNationId }.toSet()
 
         val candidates = otherNations.filter {
