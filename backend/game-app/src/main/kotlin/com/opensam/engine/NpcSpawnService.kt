@@ -25,6 +25,8 @@ class NpcSpawnService(
             "#CC6600", "#996633", "#669966", "#336699",
             "#993366", "#CC9900", "#339966", "#666699",
         )
+        /** Base crew type IDs by armType: 보병=1100, 궁병=1200, 기병=1300, 귀병=1400 */
+        private val BASE_CREW_TYPES = intArrayOf(1100, 1200, 1300, 1400)
         // 국가 레벨별 부대장 NPC 최대 수 (레거시 ProvideNPCTroopLeader.php)
         private val MAX_NPC_TROOP_LEADERS = mapOf(
             1 to 0, 2 to 1, 3 to 3, 4 to 4, 5 to 6, 6 to 7, 7 to 9
@@ -166,7 +168,7 @@ class NpcSpawnService(
                 gold = 1000,
                 rice = 1000,
                 crew = 1000,
-                crewType = rng.nextInt(1, 5).toShort(),
+                crewType = BASE_CREW_TYPES[rng.nextInt(BASE_CREW_TYPES.size)].toShort(),
                 train = 80,
                 atmos = 80,
             )
@@ -195,7 +197,7 @@ class NpcSpawnService(
                     gold = 1000,
                     rice = 1000,
                     crew = 500 + rng.nextInt(500),
-                    crewType = rng.nextInt(1, 5).toShort(),
+                    crewType = BASE_CREW_TYPES[rng.nextInt(BASE_CREW_TYPES.size)].toShort(),
                     train = 70,
                     atmos = 70,
                     killTurn = 240,

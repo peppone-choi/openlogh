@@ -1580,8 +1580,7 @@ class GeneralAI(
         val riceAfterTrainCost = general.rice - fullLeadership * 4
         if (goldAfterTrainCost <= 0 || riceAfterTrainCost <= 0) return null
 
-        // Pick crew type: keep current if valid, else default to FOOTMAN (1100)
-        val crewTypeCode = if (general.crewType.toInt() > 0) general.crewType.toInt() else 1100
+        val crewTypeCode = pickCrewType(general, ctx.generalType)
         val maxAmount = fullLeadership * 100 - (if (crewTypeCode == general.crewType.toInt()) general.crew else 0)
         if (maxAmount <= 0) return null
 
@@ -1592,6 +1591,23 @@ class GeneralAI(
 
         val trainCost = fullLeadership * 3
         return if (goldAfterTrainCost >= trainCost * 6) "모병" else "징병"
+    }
+
+    // armType(1-4) → crewType(1100-1400) 변환, generalType 기반 병종 선택
+    private fun pickCrewType(general: General, generalType: Int): Int {
+        val current = general.crewType.toInt()
+
+        // armType 1-4 = ⓤ spawn bug → crewType 매핑
+        if (current in 1..4) return current * 100 + 1000
+
+        if (current > 1100) return current
+
+        return when (generalType) {
+            GeneralType.WARRIOR.flag -> 1300    // 기병
+            GeneralType.STRATEGIST.flag -> 1400 // 귀병
+            GeneralType.COMMANDER.flag -> 1200  // 궁병
+            else -> 1100                        // 보병
+        }
     }
 
     // ──────────────────────────────────────────────────────────
