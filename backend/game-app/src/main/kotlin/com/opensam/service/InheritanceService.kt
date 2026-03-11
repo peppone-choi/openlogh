@@ -20,16 +20,20 @@ import com.opensam.entity.WorldState
 import com.opensam.repository.AppUserRepository
 import com.opensam.repository.CityRepository
 import com.opensam.repository.GeneralRepository
+import com.opensam.repository.RankDataRepository
 import com.opensam.repository.WorldStateRepository
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import java.time.OffsetDateTime
 import kotlin.math.floor
+import kotlin.math.max
 
 @Service
 class InheritanceService(
     private val appUserRepository: AppUserRepository,
     private val cityRepository: CityRepository,
     private val generalRepository: GeneralRepository,
+    private val rankDataRepository: RankDataRepository,
     private val worldStateRepository: WorldStateRepository,
     private val gameConstService: GameConstService,
 ) {
@@ -75,6 +79,43 @@ class InheritanceService(
     private fun minSpecificUniqueCost(): Int = gameConstService.getInt("inheritItemUniqueMinPoint")
 
     private fun bornStatPointCost(): Int = gameConstService.getInt("inheritBornStatPoint")
+
+    @Transactional
+    fun forceReapplyMergedPoints(worldId: Long): Int {
+        val mergeEntries = rankDataRepository.findByWorldIdAndCategory(worldId, "inherit_earned_dyn")
+            .associateBy { (it.meta["generalId"] as? Number)?.toLong() ?: 0L }
+        val totalEntries = rankDataRepository.findByWorldIdAndCategory(worldId, "inherit_earned")
+            .associateBy { (it.meta["generalId"] as? Number)?.toLong() ?: 0L }
+
+        var updatedUsers = 0
+        val users = mutableMapOf<Long, AppUser>()
+
+        generalRepository.findByWorldId(worldId)
+            .asSequence()
+            .filter { it.npcState.toInt() == 0 && it.userId != null }
+            .forEach { general ->
+                val userId = general.userId ?: return@forEach
+                val user = users.getOrPut(userId) { appUserRepository.findById(userId).orElse(null) ?: return@forEach }
+                val targetScore = totalEntries[general.id]?.score ?: mergeEntries[general.id]?.score ?: 0
+                val breakdown = getOrCreateMutableStringAnyMap(user.meta, "inheritPointBreakdown")
+                val previousScore = (breakdown["forceRehallMerged"] as? Number)?.toInt() ?: 0
+                val appliedScore = max(previousScore, targetScore)
+                val delta = appliedScore - previousScore
+
+                if (delta > 0) {
+                    val currentPoints = (user.meta["inheritPoints"] as? Number)?.toInt() ?: 0
+                    user.meta["inheritPoints"] = currentPoints + delta
+                    addInheritLog(user, "관리자 리홀 재정산", delta)
+                    updatedUsers++
+                }
+
+                breakdown["forceRehallMerged"] = appliedScore
+                user.meta["inheritPointBreakdown"] = breakdown
+                appUserRepository.save(user)
+            }
+
+        return updatedUsers
+    }
 
     fun getInheritance(worldId: Long, loginId: String): InheritanceInfo? {
         val user = appUserRepository.findByLoginId(loginId) ?: return null

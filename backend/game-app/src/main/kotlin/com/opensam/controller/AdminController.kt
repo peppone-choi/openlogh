@@ -209,6 +209,20 @@ class AdminController(
         }
     }
 
+    @PostMapping("/force-rehall")
+    fun forceRehall(@RequestParam(required = false) worldId: Long?): ResponseEntity<Map<String, Int>> {
+        return try {
+            val loginId = currentLoginId() ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
+            val resolvedWorldId = adminAuthorizationService.resolveWorldIdOrThrow(loginId, worldId, PERMISSION_OPEN_CLOSE)
+            val result = adminService.forceRehall(resolvedWorldId) ?: return ResponseEntity.notFound().build()
+            ResponseEntity.ok(result)
+        } catch (_: AccessDeniedException) {
+            ResponseEntity.status(HttpStatus.FORBIDDEN).build()
+        } catch (e: IllegalArgumentException) {
+            ResponseEntity.badRequest().build()
+        }
+    }
+
     private fun currentLoginId(): String? {
         return SecurityContextHolder.getContext().authentication?.name
     }

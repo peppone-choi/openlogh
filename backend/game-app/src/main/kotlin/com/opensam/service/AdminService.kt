@@ -5,6 +5,7 @@ import com.opensam.dto.AdminGeneralSummary
 import com.opensam.dto.AdminUserAction
 import com.opensam.dto.AdminUserSummary
 import com.opensam.dto.AdminWorldInfo
+import com.opensam.entity.HallOfFame
 import com.opensam.dto.NationStatistic
 import com.opensam.dto.ResourceDistributionRequest
 import com.opensam.dto.TimeControlRequest
@@ -24,7 +25,10 @@ class AdminService(
     private val cityRepository: CityRepository,
     private val appUserRepository: AppUserRepository,
     private val diplomacyRepository: DiplomacyRepository,
+    private val hallOfFameRepository: HallOfFameRepository,
     private val messageRepository: MessageRepository,
+    private val eventActionService: com.opensam.engine.EventActionService,
+    private val inheritanceService: InheritanceService,
 ) {
     private companion object {
         const val GRADE_SYSTEM_ADMIN = 6
@@ -150,7 +154,7 @@ class AdminService(
     }
 
     fun getGeneralLogs(worldId: Long, id: Long): List<Any> {
-        return messageRepository.findByWorldIdAndMailboxCodeAndSrcIdOrderBySentAtDesc(worldId, "general_record", id)
+        return messageRepository.findByWorldIdAndMailboxCodeAndDestIdOrderBySentAtDesc(worldId, "general_action", id)
     }
 
     fun getDiplomacyMatrix(worldId: Long): List<Any> {
@@ -164,11 +168,35 @@ class AdminService(
             mailboxCode = "world_history",
             mailboxType = "PUBLIC",
             messageType = "admin_log",
-            payload = mutableMapOf("text" to message as Any),
-            meta = mutableMapOf("year" to (world.currentYear.toInt() as Any), "month" to (world.currentMonth.toInt() as Any)),
+            payload = mutableMapOf(
+                "message" to (message as Any),
+                "year" to (world.currentYear.toInt() as Any),
+                "month" to (world.currentMonth.toInt() as Any),
+            ),
         )
         messageRepository.save(msg)
         return true
+    }
+
+    @Transactional
+    fun forceRehall(worldId: Long): Map<String, Int>? {
+        val world = worldStateRepository.findById(worldId.toShort()).orElse(null) ?: return null
+        val isUnited = ((world.config["isunited"] as? Number)?.toInt())
+            ?: ((world.config["isUnited"] as? Number)?.toInt())
+            ?: 0
+        require(isUnited != 0) { "아직 천통하지 않았습니다" }
+
+        val generals = generalRepository.findByWorldId(worldId)
+        val eligibleHallGenerals = generals.filter { it.npcState.toInt() < 2 && it.age.toInt() >= 40 }
+        eligibleHallGenerals.forEach { upsertHallOfFame(world, it) }
+
+        eventActionService.mergeInheritPointRank(world)
+        val updatedUsers = inheritanceService.forceReapplyMergedPoints(worldId)
+
+        return mapOf(
+            "processedGenerals" to eligibleHallGenerals.size,
+            "updatedUsers" to updatedUsers,
+        )
     }
 
     fun timeControl(worldId: Long, request: TimeControlRequest): Boolean {
@@ -264,6 +292,69 @@ class AdminService(
         }
 
         return true
+    }
+
+    private fun upsertHallOfFame(world: com.opensam.entity.WorldState, general: General) {
+        val nation = nationRepository.findById(general.nationId).orElse(null)
+        val serverId = (world.config["serverId"] as? String).orEmpty().ifBlank { world.name }
+        val scenario = (world.meta["scenarioId"] as? Number)?.toInt() ?: 0
+        val season = ((world.meta["season"] as? Number)?.toInt())?.takeIf { it > 0 } ?: 1
+        val rank = general.meta["rank"] as? Map<*, *> ?: emptyMap<String, Any>()
+        val warnum = (rank["warnum"] as? Number)?.toInt() ?: 0
+        val killnum = (rank["killnum"] as? Number)?.toInt() ?: 0
+        val firenum = (rank["firenum"] as? Number)?.toInt() ?: 0
+        val killcrew = (rank["killcrew"] as? Number)?.toInt() ?: 0
+        val deathcrew = (rank["deathcrew"] as? Number)?.toInt() ?: 0
+
+        val hallValues = linkedMapOf(
+            "experience" to general.experience.toDouble(),
+            "dedication" to general.dedication.toDouble(),
+            "warnum" to warnum.toDouble(),
+            "killnum" to killnum.toDouble(),
+            "firenum" to firenum.toDouble(),
+            "winrate" to rate(killnum, warnum),
+            "killrate" to rate(killcrew, deathcrew),
+        )
+
+        for ((type, value) in hallValues) {
+            if ((type == "winrate" || type == "killrate") && warnum < 10) continue
+            if (value <= 0.0) continue
+
+            val aux = mutableMapOf<String, Any>(
+                "name" to general.name,
+                "nationName" to (nation?.name ?: "재야"),
+                "bgColor" to (nation?.color ?: "#000000"),
+                "fgColor" to (nation?.color ?: "#000000"),
+                "picture" to general.picture,
+                "imgsvr" to general.imageServer,
+            )
+
+            val existing = hallOfFameRepository.findByServerIdAndTypeAndGeneralNo(serverId, type, general.id)
+            if (existing == null) {
+                hallOfFameRepository.save(
+                    HallOfFame(
+                        serverId = serverId,
+                        season = season,
+                        scenario = scenario,
+                        generalNo = general.id,
+                        type = type,
+                        value = value,
+                        owner = general.userId?.toString(),
+                        aux = aux,
+                    )
+                )
+            } else if (value > existing.value) {
+                existing.value = value
+                existing.owner = general.userId?.toString()
+                existing.aux = aux
+                hallOfFameRepository.save(existing)
+            }
+        }
+    }
+
+    private fun rate(numerator: Int, denominator: Int): Double {
+        if (denominator <= 0) return 0.0
+        return numerator.toDouble() / denominator.toDouble()
     }
 
     private fun upsertGeneralTurn(

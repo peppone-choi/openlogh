@@ -7,6 +7,7 @@ import com.opensam.entity.WorldState
 import com.opensam.repository.AppUserRepository
 import com.opensam.repository.CityRepository
 import com.opensam.repository.GeneralRepository
+import com.opensam.repository.RankDataRepository
 import com.opensam.repository.WorldStateRepository
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -24,6 +25,7 @@ class InheritanceServiceTest {
     private lateinit var appUserRepository: AppUserRepository
     private lateinit var cityRepository: CityRepository
     private lateinit var generalRepository: GeneralRepository
+    private lateinit var rankDataRepository: RankDataRepository
     private lateinit var worldStateRepository: WorldStateRepository
     private lateinit var gameConstService: GameConstService
     private lateinit var service: InheritanceService
@@ -33,6 +35,7 @@ class InheritanceServiceTest {
         appUserRepository = mock(AppUserRepository::class.java)
         cityRepository = mock(CityRepository::class.java)
         generalRepository = mock(GeneralRepository::class.java)
+        rankDataRepository = mock(RankDataRepository::class.java)
         worldStateRepository = mock(WorldStateRepository::class.java)
         gameConstService = mock(GameConstService::class.java)
 
@@ -40,6 +43,7 @@ class InheritanceServiceTest {
             appUserRepository = appUserRepository,
             cityRepository = cityRepository,
             generalRepository = generalRepository,
+            rankDataRepository = rankDataRepository,
             worldStateRepository = worldStateRepository,
             gameConstService = gameConstService,
         )

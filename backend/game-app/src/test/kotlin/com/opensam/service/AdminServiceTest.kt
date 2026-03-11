@@ -2,6 +2,7 @@ package com.opensam.service
 
 import com.opensam.dto.ResourceDistributionRequest
 import com.opensam.dto.TimeControlRequest
+import com.opensam.engine.EventActionService
 import com.opensam.entity.General
 import com.opensam.entity.GeneralTurn
 import com.opensam.entity.WorldState
@@ -10,6 +11,7 @@ import com.opensam.repository.CityRepository
 import com.opensam.repository.DiplomacyRepository
 import com.opensam.repository.GeneralRepository
 import com.opensam.repository.GeneralTurnRepository
+import com.opensam.repository.HallOfFameRepository
 import com.opensam.repository.MessageRepository
 import com.opensam.repository.NationRepository
 import com.opensam.repository.WorldStateRepository
@@ -37,7 +39,10 @@ class AdminServiceTest {
     private lateinit var cityRepository: CityRepository
     private lateinit var appUserRepository: AppUserRepository
     private lateinit var diplomacyRepository: DiplomacyRepository
+    private lateinit var hallOfFameRepository: HallOfFameRepository
     private lateinit var messageRepository: MessageRepository
+    private lateinit var eventActionService: EventActionService
+    private lateinit var inheritanceService: InheritanceService
     private lateinit var service: AdminService
 
     @BeforeEach
@@ -49,7 +54,10 @@ class AdminServiceTest {
         cityRepository = mock(CityRepository::class.java)
         appUserRepository = mock(AppUserRepository::class.java)
         diplomacyRepository = mock(DiplomacyRepository::class.java)
+        hallOfFameRepository = mock(HallOfFameRepository::class.java)
         messageRepository = mock(MessageRepository::class.java)
+        eventActionService = mock(EventActionService::class.java)
+        inheritanceService = mock(InheritanceService::class.java)
 
         service = AdminService(
             worldStateRepository,
@@ -59,7 +67,10 @@ class AdminServiceTest {
             cityRepository,
             appUserRepository,
             diplomacyRepository,
+            hallOfFameRepository,
             messageRepository,
+            eventActionService,
+            inheritanceService,
         )
     }
 
