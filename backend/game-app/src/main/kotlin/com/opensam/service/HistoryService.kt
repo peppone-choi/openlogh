@@ -54,7 +54,7 @@ class HistoryService(
     }
 
     fun getGeneralRecords(generalId: Long): List<Message> {
-        return messageRepository.findBySrcIdAndMailboxCodeOrderBySentAtDesc(generalId, "general_record")
+        return messageRepository.findByDestIdAndMailboxCodeOrderBySentAtDesc(generalId, "general_action")
     }
 
     fun getByYearMonth(worldId: Long, year: Int, month: Int): List<Message> {

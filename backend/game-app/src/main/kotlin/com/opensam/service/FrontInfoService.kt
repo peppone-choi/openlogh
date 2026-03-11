@@ -483,9 +483,9 @@ class FrontInfoService(
     private fun buildRecentRecord(worldId: Long, myGeneral: General?, lastRecordId: Long?, lastHistoryId: Long?): RecentRecordInfo {
         val generalRecords = if (myGeneral != null) {
             val sinceId = lastRecordId ?: 0
-            messageRepository.findByWorldIdAndMailboxCodeAndIdGreaterThanOrderBySentAtDesc(
-                worldId, "general_action", sinceId
-            ).filter { it.destId == myGeneral.id }
+            messageRepository.findByDestIdAndMailboxCodeAndIdGreaterThanOrderBySentAtDesc(
+                myGeneral.id, "general_action", sinceId
+            )
         } else emptyList()
 
         val globalRecords = messageRepository.findByWorldIdAndMailboxCodeAndIdGreaterThanOrderBySentAtDesc(
