@@ -10,8 +10,10 @@ import com.opensam.engine.turn.cqrs.persist.toSnapshot
 import com.opensam.engine.turn.cqrs.port.WorldWritePort
 import com.opensam.engine.modifier.IncomeContext
 import com.opensam.engine.modifier.NationTypeModifiers
+import com.opensam.entity.Message
 import com.opensam.repository.CityRepository
 import com.opensam.repository.GeneralRepository
+import com.opensam.repository.MessageRepository
 import com.opensam.repository.NationRepository
 import com.opensam.service.HistoryService
 import com.opensam.service.MapService
@@ -28,6 +30,7 @@ import kotlin.math.sqrt
 class EconomyService @Autowired constructor(
     private val worldPortFactory: JpaWorldPortFactory,
     private val generalRepository: GeneralRepository,
+    private val messageRepository: MessageRepository,
     private val mapService: MapService,
     private val historyService: HistoryService,
 ) {
@@ -35,6 +38,7 @@ class EconomyService @Autowired constructor(
         cityRepository: CityRepository,
         nationRepository: NationRepository,
         generalRepository: GeneralRepository,
+        messageRepository: MessageRepository,
         mapService: MapService,
         historyService: HistoryService,
     ) : this(
@@ -44,6 +48,7 @@ class EconomyService @Autowired constructor(
             nationRepository = nationRepository,
         ),
         generalRepository,
+        messageRepository,
         mapService,
         historyService,
     )
@@ -779,6 +784,7 @@ class EconomyService @Autowired constructor(
 
             val affectedCityIds = targetCities.map { it.id }
             val generals = generalRepository.findByWorldIdAndCityIdIn(world.id.toLong(), affectedCityIds)
+            val injuryMessages = mutableListOf<Message>()
             for (general in generals) {
                 if (rng.nextDouble() >= 0.3) continue
                 val injuryAmount = rng.nextInt(1, 17)
@@ -786,8 +792,23 @@ class EconomyService @Autowired constructor(
                 general.crew = (general.crew * 0.98).toInt()
                 general.atmos = (general.atmos * 0.98).toInt().toShort()
                 general.train = (general.train * 0.98).toInt().toShort()
+                injuryMessages += Message(
+                    worldId = world.id.toLong(),
+                    mailboxCode = "general_action",
+                    messageType = "log",
+                    srcId = general.id,
+                    destId = general.id,
+                    payload = mutableMapOf(
+                        "message" to "재난으로 인해 <R>부상</>을 당했습니다.",
+                        "year" to world.currentYear.toInt(),
+                        "month" to month,
+                    ),
+                )
             }
             generalRepository.saveAll(generals)
+            if (injuryMessages.isNotEmpty()) {
+                messageRepository.saveAll(injuryMessages)
+            }
 
             val cityNames = targetCities.joinToString(" ") { it.name }
             historyService.logWorldHistory(

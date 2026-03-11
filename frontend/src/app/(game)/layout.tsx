@@ -103,10 +103,9 @@ export default function GameLayout({ children }: { children: React.ReactNode }) 
 
         if (!currentWorld || myGeneral === null) {
             if (prevGeneralRef.current !== null && currentWorld) {
-                toast.error(
-                    `${prevGeneralRef.current.name} 장수가 사망하였습니다. 로비로 이동합니다.`,
-                    { duration: 5000 },
-                );
+                toast.error(`${prevGeneralRef.current.name} 장수가 사망하였습니다. 로비로 이동합니다.`, {
+                    duration: 5000,
+                });
             }
             router.replace('/lobby');
         }
