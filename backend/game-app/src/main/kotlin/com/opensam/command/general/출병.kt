@@ -235,7 +235,8 @@ class 출병(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
         for ((dist, cities) in distanceList) {
             if (dist > minDist + 1) break
             for ((mapCityId, nationId) in cities) {
-                if (nationId != attackerNationId && nationId != 0L) {
+                // Legacy parity: any city not owned by attacker is a valid target (including empty cities)
+                if (nationId != attackerNationId) {
                     candidateMapCities.add(mapCityId)
                 }
             }
