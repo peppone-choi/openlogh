@@ -299,11 +299,14 @@ class TurnService @Autowired constructor(
                     val generals = ports.allGenerals().map { it.toEntity() }
                     generalMaintenanceService.processGeneralMaintenance(world, generals)
                     specialAssignmentService.checkAndAssignSpecials(world, generals)
-                    val aliveGenerals = generals.filter { it.npcState.toInt() != 5 || it.nationId != 0L }
-                    aliveGenerals.forEach { ports.putGeneral(it.toSnapshot()) }
+                    // Save ALL generals (including dead ones) to persist death state
+                    generals.forEach { ports.putGeneral(it.toSnapshot()) }
 
-                    for (general in aliveGenerals) {
-                        inheritanceService.accruePoints(general, "lived_month", 1)
+                    // Only accrue inheritance for living generals
+                    for (general in generals) {
+                        if (general.npcState.toInt() != 5) {
+                            inheritanceService.accruePoints(general, "lived_month", 1)
+                        }
                     }
                 } catch (e: Exception) {
                     logger.warn("GeneralMaintenanceService failed: ${e.message}")

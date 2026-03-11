@@ -1,5 +1,4 @@
 import { Badge } from '@/components/ui/badge';
-import { isBrightColor } from '@/lib/game-utils';
 
 interface NationBadgeProps {
     name?: string | null;
@@ -24,7 +23,7 @@ export function NationBadge({ name, color, size = 'sm' }: NationBadgeProps) {
                 className={`inline-block ${dotSize} rounded-full shrink-0`}
                 style={{ backgroundColor: color ?? '#888' }}
             />
-            <span style={{ color: color && isBrightColor(color) ? '#000' : (color ?? undefined) }}>{name}</span>
+            <span style={{ color: color ?? undefined }}>{name}</span>
         </Badge>
     );
 }
