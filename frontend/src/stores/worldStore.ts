@@ -30,6 +30,7 @@ interface WorldStore {
     ) => Promise<void>;
     deactivateWorld: (id: number) => Promise<void>;
     fetchWorld: (id: number) => Promise<void>;
+    updateWorldTime: (year: number, month: number) => void;
 }
 
 export const useWorldStore = create<WorldStore>((set) => ({
@@ -100,4 +101,11 @@ export const useWorldStore = create<WorldStore>((set) => ({
             currentWorld: state.currentWorld?.id === id ? data : state.currentWorld,
         }));
     },
+
+    updateWorldTime: (year, month) =>
+        set((state) => {
+            if (!state.currentWorld) return state;
+            if (state.currentWorld.currentYear === year && state.currentWorld.currentMonth === month) return state;
+            return { currentWorld: { ...state.currentWorld, currentYear: year, currentMonth: month } };
+        }),
 }));

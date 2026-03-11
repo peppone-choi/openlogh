@@ -150,7 +150,7 @@ object ItemModifiers {
         return when (triggerType) {
             "snipe" -> listOf(BattleTriggerRegistry.get("che_저격")!!)
             "rage" -> listOf(BattleTriggerRegistry.get("che_격노")!!)
-            "siege" -> listOf(BattleTriggerRegistry.get("che_공성")!!)
+            "siege", "siegeSkill" -> listOf(BattleTriggerRegistry.get("che_공성")!!)
             "intimidate" -> listOf(BattleTriggerRegistry.get("che_위압")!!)
             "block" -> listOf(BattleTriggerRegistry.get("che_저지")!!)
             "suppress" -> listOf(BattleTriggerRegistry.get("che_진압")!!)
@@ -158,6 +158,10 @@ object ItemModifiers {
             "plunder" -> listOf(BattleTriggerRegistry.get("che_약탈_try")!!, BattleTriggerRegistry.get("che_약탈_fire")!!)
             "counterMagic" -> listOf(BattleTriggerRegistry.get("che_백우선반계")!!)
             "siegeConsumable" -> listOf(BattleTriggerRegistry.get("che_충차")!!)
+            "charge" -> listOf(BattleTriggerRegistry.get("che_돌격")!!)
+            "demonSlayer" -> listOf(BattleTriggerRegistry.get("che_척사")!!)
+            "medicine" -> listOf(BattleTriggerRegistry.get("che_의술")!!)
+            "fortitude" -> listOf(BattleTriggerRegistry.get("che_견고")!!)
             else -> emptyList()
         }
     }
@@ -282,6 +286,30 @@ class MiscItem(
             s = s.copy(warPower = s.warPower * (1.0 + 0.6 * (1.0 - crewRatio)))
         }
 
+        if (triggerType == "charge" && s.isAttacker) {
+            s = s.copy(warPower = s.warPower * 1.05)
+        }
+
+        if (triggerType == "unmatched" && s.isAttacker) {
+            s = s.copy(warPower = s.warPower * 1.05)
+        }
+
+        if (triggerType == "demonSlayer" && isRegionalOrCityCrewType(s.opponentCrewType)) {
+            s = s.copy(warPower = s.warPower * 1.2)
+        }
+
+        if (triggerType == "cavalrySkill") {
+            s = s.copy(warPower = s.warPower * if (s.isAttacker) 1.2 else 1.1)
+        }
+
+        if (triggerType == "footmanSkill") {
+            s = s.copy(warPower = s.warPower * if (s.isAttacker) 0.9 else 0.8)
+        }
+
+        if (triggerType == "siegeSkill" && isRegionalOrCityCrewType(s.opponentCrewType)) {
+            s = s.copy(warPower = s.warPower * 2.0)
+        }
+
         return s
     }
 
@@ -297,6 +325,14 @@ class MiscItem(
         statMods["domesticSupplyScore"]?.let {
             if (c.actionCode == "조달") c = c.copy(scoreMultiplier = c.scoreMultiplier * it)
         }
+
+        if (triggerType == "recruit") {
+            when (c.actionCode) {
+                "징병", "모병" -> c = c.copy(trainMultiplier = 70.0, atmosMultiplier = 84.0)
+                "징집인구" -> c = c.copy(scoreMultiplier = 0.0)
+            }
+        }
+
         return c
     }
 
@@ -326,12 +362,18 @@ class MiscItem(
                 }
             }
         }
-        // antiRegional defence: regional opponent → their warPower * 0.85
-        if (triggerType == "antiRegional") {
-            if (isRegionalOrCityCrewType(s.opponentCrewType)) {
-                s = s.copy(warPower = s.warPower * 0.85)
-            }
+        if (triggerType == "antiRegional" && isRegionalOrCityCrewType(s.opponentCrewType)) {
+            s = s.copy(warPower = s.warPower * 0.85)
         }
+
+        if (triggerType == "demonSlayer" && isRegionalOrCityCrewType(s.opponentCrewType)) {
+            s = s.copy(warPower = s.warPower * 0.8)
+        }
+
+        if (triggerType == "footmanSkill") {
+            s = s.copy(warPower = s.warPower * if (s.isAttacker) 0.9 else 0.8)
+        }
+
         return s
     }
 

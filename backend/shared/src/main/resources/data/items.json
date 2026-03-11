@@ -690,7 +690,9 @@
             "maxUses": 1,
             "effect": "sabotageSuccess",
             "value": 0,
-            "stat": { "domesticSabotageSuccess": 0.2 }
+            "stat": {
+                "domesticSabotageSuccess": 0.2
+            }
         },
         {
             "code": "che_계략_향낭",
@@ -703,9 +705,10 @@
             "maxUses": 1,
             "effect": "sabotageSuccess",
             "value": 0,
-            "stat": { "domesticSabotageSuccess": 0.5 }
+            "stat": {
+                "domesticSabotageSuccess": 0.5
+            }
         },
-
         {
             "code": "che_의술_정력견혈산",
             "rawName": "정력견혈산",
@@ -746,7 +749,6 @@
             "rarity": 1,
             "triggerType": "medicine"
         },
-
         {
             "code": "che_보물_도기",
             "rawName": "도기",
@@ -765,7 +767,10 @@
             "buyable": false,
             "consumable": false,
             "rarity": 1,
-            "stat": { "domesticSupplySuccess": 0.2, "domesticSupplyScore": 2.0 }
+            "stat": {
+                "domesticSupplySuccess": 0.2,
+                "domesticSupplyScore": 2.0
+            }
         },
         {
             "code": "che_내정_납금박산로",
@@ -775,7 +780,9 @@
             "buyable": false,
             "consumable": false,
             "rarity": 1,
-            "stat": { "domesticSuccess": 0.15 }
+            "stat": {
+                "domesticSuccess": 0.15
+            }
         },
         {
             "code": "che_전략_평만지장도",
@@ -785,7 +792,9 @@
             "buyable": false,
             "consumable": false,
             "rarity": 1,
-            "stat": { "strategicDelay": 0.8 }
+            "stat": {
+                "strategicDelay": 0.8
+            }
         },
         {
             "code": "che_숙련_동작",
@@ -795,7 +804,9 @@
             "buyable": false,
             "consumable": false,
             "rarity": 1,
-            "stat": { "dexMultiplier": 1.2 }
+            "stat": {
+                "dexMultiplier": 1.2
+            }
         },
         {
             "code": "che_명성_구석",
@@ -805,9 +816,10 @@
             "buyable": false,
             "consumable": false,
             "rarity": 1,
-            "stat": { "expMultiplier": 1.2 }
+            "stat": {
+                "expMultiplier": 1.2
+            }
         },
-
         {
             "code": "che_척사_오악진형도",
             "rawName": "오악진형도",
@@ -836,7 +848,9 @@
             "buyable": false,
             "consumable": false,
             "rarity": 1,
-            "stat": { "leadershipPercent": 0.15 },
+            "stat": {
+                "leadershipPercent": 0.15
+            },
             "triggerType": "recruit"
         },
         {
@@ -887,7 +901,9 @@
             "buyable": false,
             "consumable": false,
             "rarity": 1,
-            "stat": { "magicSuccessDamage": 1.3 }
+            "stat": {
+                "magicSuccessDamage": 1.3
+            }
         },
         {
             "code": "che_환술_논어집해",
@@ -897,9 +913,11 @@
             "buyable": false,
             "consumable": false,
             "rarity": 1,
-            "stat": { "magicSuccessProb": 0.1, "magicSuccessDamage": 1.2 }
+            "stat": {
+                "magicSuccessProb": 0.1,
+                "magicSuccessDamage": 1.2
+            }
         },
-
         {
             "code": "che_진압_박혁론",
             "rawName": "박혁론",
@@ -918,7 +936,9 @@
             "buyable": false,
             "consumable": false,
             "rarity": 1,
-            "stat": { "injuryProb": -1.0 },
+            "stat": {
+                "injuryProb": -1.0
+            },
             "triggerType": "antiSnipe"
         },
         {
@@ -939,7 +959,9 @@
             "buyable": false,
             "consumable": false,
             "rarity": 1,
-            "stat": { "initWarPhase": 2.0 }
+            "stat": {
+                "initWarPhase": 2.0
+            }
         },
         {
             "code": "che_간파_노군입산부",
@@ -949,7 +971,10 @@
             "buyable": false,
             "consumable": false,
             "rarity": 1,
-            "opposeStat": { "dodgeChance": -0.25, "criticalChance": -0.1 }
+            "opposeStat": {
+                "dodgeChance": -0.25,
+                "criticalChance": -0.1
+            }
         },
         {
             "code": "che_불굴_상편",
@@ -971,7 +996,6 @@
             "rarity": 1,
             "triggerType": "plunder"
         },
-
         {
             "code": "che_농성_주서음부",
             "rawName": "주서음부",
@@ -980,8 +1004,13 @@
             "buyable": false,
             "consumable": false,
             "rarity": 1,
-            "stat": { "sabotageDefence": 0.3 },
-            "opposeStat": { "magicTrialProb": -0.1, "magicSuccessProb": -0.1 }
+            "stat": {
+                "sabotageDefence": 0.3
+            },
+            "opposeStat": {
+                "magicTrialProb": -0.1,
+                "magicSuccessProb": -0.1
+            }
         },
         {
             "code": "che_농성_위공자병법",
@@ -991,8 +1020,13 @@
             "buyable": false,
             "consumable": false,
             "rarity": 1,
-            "stat": { "sabotageDefence": 0.3 },
-            "opposeStat": { "magicTrialProb": -0.1, "magicSuccessProb": -0.1 }
+            "stat": {
+                "sabotageDefence": 0.3
+            },
+            "opposeStat": {
+                "magicTrialProb": -0.1,
+                "magicSuccessProb": -0.1
+            }
         },
         {
             "code": "che_계략_육도",
@@ -1022,7 +1056,6 @@
                 "domesticSabotageSuccess": 0.2
             }
         },
-
         {
             "code": "che_상성보정_과실주",
             "rawName": "과실주",
@@ -1041,7 +1074,9 @@
             "buyable": false,
             "consumable": false,
             "rarity": 1,
-            "stat": { "intel": 5.0 },
+            "stat": {
+                "intel": 5.0
+            },
             "triggerType": "progressiveStat"
         },
         {
@@ -1052,7 +1087,9 @@
             "buyable": false,
             "consumable": false,
             "rarity": 1,
-            "stat": { "strength": 5.0 },
+            "stat": {
+                "strength": 5.0
+            },
             "triggerType": "progressiveStat"
         },
         {
@@ -1063,7 +1100,9 @@
             "buyable": false,
             "consumable": false,
             "rarity": 1,
-            "stat": { "leadership": 5.0 },
+            "stat": {
+                "leadership": 5.0
+            },
             "triggerType": "progressiveStat"
         },
         {
@@ -1074,7 +1113,9 @@
             "buyable": false,
             "consumable": false,
             "rarity": 1,
-            "stat": { "bonusTrain": 15.0 }
+            "stat": {
+                "bonusTrain": 15.0
+            }
         },
         {
             "code": "che_훈련_단결도",
@@ -1084,7 +1125,9 @@
             "buyable": false,
             "consumable": false,
             "rarity": 1,
-            "stat": { "bonusTrain": 15.0 }
+            "stat": {
+                "bonusTrain": 15.0
+            }
         },
         {
             "code": "che_사기_춘화첩",
@@ -1094,7 +1137,9 @@
             "buyable": false,
             "consumable": false,
             "rarity": 1,
-            "stat": { "bonusAtmos": 15.0 }
+            "stat": {
+                "bonusAtmos": 15.0
+            }
         },
         {
             "code": "che_사기_초선화",
@@ -1104,7 +1149,9 @@
             "buyable": false,
             "consumable": false,
             "rarity": 1,
-            "stat": { "bonusAtmos": 15.0 }
+            "stat": {
+                "bonusAtmos": 15.0
+            }
         },
         {
             "code": "che_회피_태평요술",
@@ -1114,7 +1161,9 @@
             "buyable": false,
             "consumable": false,
             "rarity": 1,
-            "stat": { "dodgeChance": 0.2 }
+            "stat": {
+                "dodgeChance": 0.2
+            }
         },
         {
             "code": "che_필살_둔갑천서",
@@ -1124,9 +1173,10 @@
             "buyable": false,
             "consumable": false,
             "rarity": 1,
-            "stat": { "criticalChance": 0.2 }
+            "stat": {
+                "criticalChance": 0.2
+            }
         },
-
         {
             "code": "che_치료_도소연명",
             "rawName": "도소연명",
@@ -1177,7 +1227,6 @@
             "rarity": 1,
             "triggerType": "medicine"
         },
-
         {
             "code": "che_사기_두강주",
             "rawName": "두강주",
@@ -1186,7 +1235,9 @@
             "buyable": false,
             "consumable": false,
             "rarity": 1,
-            "stat": { "bonusAtmos": 10.0 }
+            "stat": {
+                "bonusAtmos": 10.0
+            }
         },
         {
             "code": "che_사기_보령압주",
@@ -1196,7 +1247,9 @@
             "buyable": false,
             "consumable": false,
             "rarity": 1,
-            "stat": { "bonusAtmos": 10.0 }
+            "stat": {
+                "bonusAtmos": 10.0
+            }
         },
         {
             "code": "che_사기_의적주",
@@ -1206,9 +1259,10 @@
             "buyable": false,
             "consumable": false,
             "rarity": 1,
-            "stat": { "bonusAtmos": 10.0 }
+            "stat": {
+                "bonusAtmos": 10.0
+            }
         },
-
         {
             "code": "che_훈련_과실주",
             "rawName": "과실주",
@@ -1217,7 +1271,9 @@
             "buyable": false,
             "consumable": false,
             "rarity": 1,
-            "stat": { "bonusTrain": 10.0 }
+            "stat": {
+                "bonusTrain": 10.0
+            }
         },
         {
             "code": "che_훈련_이강주",
@@ -1227,9 +1283,10 @@
             "buyable": false,
             "consumable": false,
             "rarity": 1,
-            "stat": { "bonusTrain": 10.0 }
+            "stat": {
+                "bonusTrain": 10.0
+            }
         },
-
         {
             "code": "che_반계_백우선",
             "rawName": "백우선",
@@ -1238,7 +1295,9 @@
             "buyable": false,
             "consumable": false,
             "rarity": 1,
-            "opposeStat": { "magicSuccessProb": -0.1 },
+            "opposeStat": {
+                "magicSuccessProb": -0.1
+            },
             "triggerType": "counterMagic",
             "killRice": 1.1
         },
@@ -1250,9 +1309,10 @@
             "buyable": false,
             "consumable": false,
             "rarity": 1,
-            "stat": { "dodgeChance": 0.2 }
+            "stat": {
+                "dodgeChance": 0.2
+            }
         },
-
         {
             "code": "event_빼빼로",
             "rawName": "빼빼로",
@@ -1261,7 +1321,11 @@
             "buyable": true,
             "consumable": false,
             "rarity": 0,
-            "stat": { "leadership": 1.0, "strength": 1.0, "intel": 1.0 }
+            "stat": {
+                "leadership": 1.0,
+                "strength": 1.0,
+                "intel": 1.0
+            }
         },
         {
             "code": "event_충차",
@@ -1275,6 +1339,241 @@
             "effect": "battleSiege",
             "value": 0,
             "triggerType": "siegeConsumable"
+        },
+        {
+            "code": "event_전투특기_신중",
+            "rawName": "비급(신중)",
+            "info": "[전투] 계략 100% 성공",
+            "cost": 100,
+            "buyable": true,
+            "consumable": false,
+            "rarity": 0,
+            "stat": {
+                "magicSuccessProb": 1.0
+            }
+        },
+        {
+            "code": "event_전투특기_집중",
+            "rawName": "비급(집중)",
+            "info": "[전투] 계략 성공 시 대미지 +50%",
+            "cost": 100,
+            "buyable": true,
+            "consumable": false,
+            "rarity": 0,
+            "stat": {
+                "magicSuccessDamage": 1.5
+            }
+        },
+        {
+            "code": "event_전투특기_환술",
+            "rawName": "비급(환술)",
+            "info": "[전투] 계략 성공 확률 +10%p, 대미지 +30%",
+            "cost": 100,
+            "buyable": true,
+            "consumable": false,
+            "rarity": 0,
+            "stat": {
+                "magicSuccessProb": 0.1,
+                "magicSuccessDamage": 1.3
+            }
+        },
+        {
+            "code": "event_전투특기_반계",
+            "rawName": "비급(반계)",
+            "info": "[전투] 상대 계략 성공 -10%p, 40% 반계 발동, 반목 대미지 +90%",
+            "cost": 100,
+            "buyable": true,
+            "consumable": false,
+            "rarity": 0,
+            "opposeStat": {
+                "magicSuccessProb": -0.1
+            },
+            "triggerType": "counterMagic"
+        },
+        {
+            "code": "event_전투특기_격노",
+            "rawName": "비급(격노)",
+            "info": "[전투] 상대 필살 시 격노 발동, 격노마다 대미지 20% 추가",
+            "cost": 100,
+            "buyable": true,
+            "consumable": false,
+            "rarity": 0,
+            "triggerType": "rage"
+        },
+        {
+            "code": "event_전투특기_위압",
+            "rawName": "비급(위압)",
+            "info": "[전투] 첫 페이즈 위압(적 공격·회피 불가, 사기 -5)",
+            "cost": 100,
+            "buyable": true,
+            "consumable": false,
+            "rarity": 0,
+            "triggerType": "intimidate"
+        },
+        {
+            "code": "event_전투특기_저격",
+            "rawName": "비급(저격)",
+            "info": "[전투] 새 상대 시 50% 저격 발동, 사기 +20",
+            "cost": 100,
+            "buyable": true,
+            "consumable": false,
+            "rarity": 0,
+            "triggerType": "snipe"
+        },
+        {
+            "code": "event_전투특기_의술",
+            "rawName": "비급(의술)",
+            "info": "[군사] 매 턴 부상 회복, [전투] 40% 치료 발동",
+            "cost": 100,
+            "buyable": true,
+            "consumable": false,
+            "rarity": 0,
+            "triggerType": "medicine"
+        },
+        {
+            "code": "event_전투특기_필살",
+            "rawName": "비급(필살)",
+            "info": "[전투] 필살 확률 +30%p, 필살 시 회피 불가",
+            "cost": 100,
+            "buyable": true,
+            "consumable": false,
+            "rarity": 0,
+            "stat": {
+                "criticalChance": 0.3
+            }
+        },
+        {
+            "code": "event_전투특기_견고",
+            "rawName": "비급(견고)",
+            "info": "[전투] 상대 필살 -20%p, 계략 성공 -10%p, 피해 -10%, 부상 무효",
+            "cost": 100,
+            "buyable": true,
+            "consumable": false,
+            "rarity": 0,
+            "opposeStat": {
+                "criticalChance": -0.2,
+                "magicSuccessProb": -0.1,
+                "warPower": 0.9
+            }
+        },
+        {
+            "code": "event_전투특기_신산",
+            "rawName": "비급(신산)",
+            "info": "[군사] 계략 성공 +10%p, [전투] 계략 시도 +20%p, 성공 +20%p",
+            "cost": 100,
+            "buyable": true,
+            "consumable": false,
+            "rarity": 0,
+            "stat": {
+                "magicTrialProb": 0.2,
+                "magicSuccessProb": 0.2,
+                "domesticSabotageSuccess": 0.1
+            }
+        },
+        {
+            "code": "event_전투특기_징병",
+            "rawName": "비급(징병)",
+            "info": "[군사] 통솔 +25%, 징·모병 훈련70/사기84, 징집인구 변동 없음",
+            "cost": 100,
+            "buyable": true,
+            "consumable": false,
+            "rarity": 0,
+            "stat": {
+                "leadershipPercent": 0.25
+            },
+            "triggerType": "recruit"
+        },
+        {
+            "code": "event_전투특기_돌격",
+            "rawName": "비급(돌격)",
+            "info": "[전투] 공격 시 페이즈 +2, 대미지 +5%",
+            "cost": 100,
+            "buyable": true,
+            "consumable": false,
+            "rarity": 0,
+            "stat": {
+                "initWarPhase": 2.0
+            },
+            "triggerType": "charge"
+        },
+        {
+            "code": "event_전투특기_무쌍",
+            "rawName": "비급(무쌍)",
+            "info": "[전투] 공격 시 필살 +10%p, 대미지 +5%/-2%",
+            "cost": 100,
+            "buyable": true,
+            "consumable": false,
+            "rarity": 0,
+            "stat": {
+                "criticalChance": 0.1
+            },
+            "triggerType": "unmatched"
+        },
+        {
+            "code": "event_전투특기_척사",
+            "rawName": "비급(척사)",
+            "info": "[전투] 지역·도시 병종 상대 대미지 +20%, 피해 -20%",
+            "cost": 100,
+            "buyable": true,
+            "consumable": false,
+            "rarity": 0,
+            "triggerType": "demonSlayer"
+        },
+        {
+            "code": "event_전투특기_궁병",
+            "rawName": "비급(궁병)",
+            "info": "[군사] 궁병 징·모병비 -10%, [전투] 회피 +20%p, 궁병 숙련 가산",
+            "cost": 100,
+            "buyable": true,
+            "consumable": false,
+            "rarity": 0,
+            "stat": {
+                "dodgeChance": 0.2
+            },
+            "triggerType": "archerSkill"
+        },
+        {
+            "code": "event_전투특기_기병",
+            "rawName": "비급(기병)",
+            "info": "[군사] 기병 징·모병비 -10%, [전투] 공격 +20%/수비 +10%, 기병 숙련 가산",
+            "cost": 100,
+            "buyable": true,
+            "consumable": false,
+            "rarity": 0,
+            "triggerType": "cavalrySkill"
+        },
+        {
+            "code": "event_전투특기_보병",
+            "rawName": "비급(보병)",
+            "info": "[군사] 보병 징·모병비 -10%, [전투] 피해 공격-10%/수비-20%, 보병 숙련 가산",
+            "cost": 100,
+            "buyable": true,
+            "consumable": false,
+            "rarity": 0,
+            "triggerType": "footmanSkill"
+        },
+        {
+            "code": "event_전투특기_귀병",
+            "rawName": "비급(귀병)",
+            "info": "[군사] 귀병 징·모병비 -10%, [전투] 계략 성공 +20%p, 귀병 숙련 가산",
+            "cost": 100,
+            "buyable": true,
+            "consumable": false,
+            "rarity": 0,
+            "stat": {
+                "magicSuccessProb": 0.2
+            },
+            "triggerType": "wizardSkill"
+        },
+        {
+            "code": "event_전투특기_공성",
+            "rawName": "비급(공성)",
+            "info": "[군사] 공성병 징·모병비 -10%, [전투] 성벽 공격 대미지 +100%, 공성 숙련 가산",
+            "cost": 100,
+            "buyable": true,
+            "consumable": false,
+            "rarity": 0,
+            "triggerType": "siegeSkill"
         }
     ]
 }

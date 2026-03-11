@@ -1,5 +1,6 @@
 package com.opensam.engine.war
 
+import com.opensam.model.ArmType
 import com.opensam.model.CrewType
 import kotlin.math.floor
 import kotlin.random.Random
@@ -71,6 +72,13 @@ data class BattleTriggerContext(
     var plunderGold: Int = 0,
     var plunderRice: Int = 0,
     var retreatInjuryImmune: Boolean = false,
+
+    // Preemptive fire (선제사격)
+    var preemptiveFireActivated: Boolean = false,
+    var opponentPreemptiveFire: Boolean = false,
+
+    // Annihilation bonus phase (전멸시페이즈증가)
+    var bonusPhases: Int = 0,
 )
 
 private fun Random.nextBool(probability: Double): Boolean =
@@ -855,6 +863,119 @@ object Che훈련InitTrigger : BattleTrigger {
     }
 }
 
+/**
+ * 선제사격시도: Phase 0 only. Marks preemptive fire activated.
+ * Legacy: che_선제사격시도.php — fires PRIORITY_BEGIN+50.
+ */
+object Che선제사격시도Trigger : BattleTrigger {
+    override val code = "che_선제사격시도"
+    override val priority = 50
+    override fun onBattleInit(ctx: BattleTriggerContext): BattleTriggerContext {
+        if (ctx.phaseNumber != 0) return ctx
+        if (ctx.preemptiveFireActivated) return ctx
+        ctx.preemptiveFireActivated = true
+        return ctx
+    }
+}
+
+/**
+ * 선제사격발동: Applies preemptive fire effects.
+ * Legacy: che_선제사격발동.php — fires PRIORITY_BEGIN+51.
+ * If opponent also has preemptive fire (archer), both get ×2/3 warPower.
+ * Otherwise, opponent gets ×0, self gets ×2/3, skills disabled for the phase.
+ */
+object Che선제사격발동Trigger : BattleTrigger {
+    override val code = "che_선제사격발동"
+    override val priority = 51
+    override fun onBattleInit(ctx: BattleTriggerContext): BattleTriggerContext {
+        if (!ctx.preemptiveFireActivated) return ctx
+
+        val defenderType = CrewType.fromCode(ctx.defender.crewType)
+        val defenderIsArcher = defenderType?.armType == ArmType.ARCHER
+
+        if (defenderIsArcher && ctx.opponentPreemptiveFire) {
+            ctx.attacker.attackMultiplier *= 2.0 / 3.0
+            ctx.defender.attackMultiplier *= 2.0 / 3.0
+            ctx.battleLogs.add("서로 선제 사격을 주고 받았다!")
+        } else {
+            ctx.defender.attackMultiplier *= 0.0
+            ctx.attacker.attackMultiplier *= 2.0 / 3.0
+            ctx.dodgeDisabled = true
+            ctx.criticalDisabled = true
+            ctx.magicDisabled = true
+            ctx.battleLogs.add("선제 사격을 했다!")
+        }
+        return ctx
+    }
+}
+
+/**
+ * 전멸시페이즈증가: When opponent is destroyed (phase=0) but self still has phases,
+ * add 1 bonus phase to continue the assault.
+ * Legacy: che_전멸시페이즈증가.php — PRIORITY_POST+800.
+ */
+object Che전멸시페이즈증가Trigger : BattleTrigger {
+    override val code = "che_전멸시페이즈증가"
+    override val priority = 90
+    override fun onPostDamage(ctx: BattleTriggerContext): BattleTriggerContext {
+        if (ctx.phaseNumber > 0 && !ctx.defender.isAlive) {
+            ctx.bonusPhases += 1
+            ctx.battleLogs.add("적군의 전멸에 진격이 이어집니다!")
+        }
+        return ctx
+    }
+}
+
+/**
+ * 성벽부상무효: When fighting a city, general cannot be injured.
+ * Legacy: che_성벽부상무효.php — PRIORITY_BEGIN+150.
+ */
+object Che성벽부상무효Trigger : BattleTrigger {
+    override val code = "che_성벽부상무효"
+    override val priority = 15
+    override fun onBattleInit(ctx: BattleTriggerContext): BattleTriggerContext {
+        if (ctx.isVsCity) {
+            ctx.injuryImmune = true
+        }
+        return ctx
+    }
+}
+
+/**
+ * 방어력증가5p: Defender gets ×(1/1.05) opponent warPower reduction.
+ * Legacy: che_방어력증가5p.php — PRIORITY_FINAL+200 (최후미).
+ * Only applies when self is defender (not attacker).
+ */
+object Che방어력증가5pTrigger : BattleTrigger {
+    override val code = "che_방어력증가5p"
+    override val priority = 95
+    override fun onDamageCalc(ctx: BattleTriggerContext): BattleTriggerContext {
+        ctx.defenceMultiplier *= 1.05
+        return ctx
+    }
+}
+
+/**
+ * 기병병종전투: Cavalry-specific combat adjustments.
+ * Legacy: che_기병병종전투.php — PRIORITY_FINAL+100.
+ * Defender: opponent ×1.02, self ×0.97
+ * Attacker vs city: self ×0.9
+ * Attacker vs general: opponent ×0.97, self ×1.02
+ */
+object Che기병병종전투Trigger : BattleTrigger {
+    override val code = "che_기병병종전투"
+    override val priority = 95
+    override fun onDamageCalc(ctx: BattleTriggerContext): BattleTriggerContext {
+        if (ctx.isVsCity) {
+            ctx.attackMultiplier *= 0.9
+        } else {
+            ctx.attackMultiplier *= 1.02
+            ctx.defenceMultiplier *= 1.03
+        }
+        return ctx
+    }
+}
+
 object BattleTriggerRegistry {
     private val triggers = listOf(
         // Existing
@@ -873,6 +994,9 @@ object BattleTriggerRegistry {
         Che약탈TryTrigger, Che약탈FireTrigger, Che부적Trigger, Che저지Trigger,
         Che진압Trigger, Che훈련InitTrigger, Che사기Trigger, Che퇴각부상무효Trigger,
         Che백우선반계Trigger, Che충차Trigger,
+        Che선제사격시도Trigger, Che선제사격발동Trigger,
+        Che전멸시페이즈증가Trigger, Che성벽부상무효Trigger,
+        Che방어력증가5pTrigger, Che기병병종전투Trigger,
     ).associateBy { it.code }
 
     fun get(code: String): BattleTrigger? = triggers[code]

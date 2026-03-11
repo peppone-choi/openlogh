@@ -65,11 +65,18 @@ export default function GameDashboard() {
 
     const isTabActive = (tab: string) => mobileTab === tab;
 
+    const updateWorldTime = useWorldStore((s) => s.updateWorldTime);
+
     const loadFrontInfo = useCallback(async () => {
         if (!currentWorld) return;
         try {
             const { data } = await frontApi.getInfo(currentWorld.id, lastRecordId, lastHistoryId);
             setFrontInfo(data);
+
+            // Sync live year/month from API back to world store so layout header stays current
+            if (data.global) {
+                updateWorldTime(data.global.year, data.global.month);
+            }
 
             // Track lastVoteState for vote notification
             if (data.global?.lastVote) {
@@ -94,7 +101,7 @@ export default function GameDashboard() {
         } finally {
             setLoading(false);
         }
-    }, [currentWorld, lastRecordId, lastHistoryId]);
+    }, [currentWorld, lastRecordId, lastHistoryId, updateWorldTime]);
 
     useEffect(() => {
         loadFrontInfoRef.current = loadFrontInfo;

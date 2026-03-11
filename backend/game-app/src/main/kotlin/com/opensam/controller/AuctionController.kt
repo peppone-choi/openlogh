@@ -23,6 +23,16 @@ class AuctionController(
         return ResponseEntity.ok(auctionService.listAuctions(worldId).map { MessageResponse.from(it) })
     }
 
+    @GetMapping("/auctions/{id}/detail")
+    fun getAuctionDetail(
+        @PathVariable id: Long,
+        @RequestParam generalId: Long,
+    ): ResponseEntity<Map<String, Any>> {
+        val result = auctionService.getAuctionDetail(id, generalId)
+        if (result.containsKey("error")) return ResponseEntity.badRequest().body(result)
+        return ResponseEntity.ok(result)
+    }
+
     @PostMapping("/worlds/{worldId}/auctions")
     fun createAuction(
         @PathVariable worldId: Long,

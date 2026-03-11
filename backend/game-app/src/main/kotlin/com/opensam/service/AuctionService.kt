@@ -41,6 +41,39 @@ class AuctionService(
     )
 
     @Transactional(readOnly = true)
+    fun getAuctionDetail(auctionId: Long, callerGeneralId: Long): Map<String, Any> {
+        val auction = auctionRepository.findById(auctionId).orElse(null)
+            ?: return mapOf("error" to "선택한 경매가 없습니다.")
+        val bids = auctionBidRepository.findByAuctionIdOrderByAmountDesc(auctionId)
+        val bidGeneralIds = bids.map { it.bidderGeneralId }.toSet()
+        val generalNames = generalRepository.findAllById(bidGeneralIds).associate { it.id to it.name }
+        val bidList = bids.map { bid ->
+            mapOf(
+                "generalName" to (generalNames[bid.bidderGeneralId] ?: "알 수 없음"),
+                "amount" to bid.amount,
+                "isCallerHighestBidder" to (bid.bidderGeneralId == callerGeneralId),
+                "date" to bid.createdAt.toString(),
+            )
+        }
+        return mapOf(
+            "result" to true,
+            "auction" to mapOf(
+                "id" to auction.id,
+                "finished" to (auction.status != "open"),
+                "itemCode" to auction.itemCode,
+                "isCallerHost" to (auction.hostGeneralId == callerGeneralId),
+                "hostName" to auction.hostName,
+                "closeDate" to auction.expiresAt.toString(),
+                "remainCloseDateExtensionCnt" to auction.closeDateExtensionCount,
+                "currentPrice" to auction.currentPrice,
+                "minPrice" to auction.minPrice,
+                "status" to auction.status,
+            ),
+            "bidList" to bidList,
+        )
+    }
+
+    @Transactional(readOnly = true)
     fun listAuctions(worldId: Long): List<Message> {
         return auctionRepository.findByWorldIdAndStatusOrderByCreatedAtDesc(worldId, "open").map { toMessage(it) }
     }

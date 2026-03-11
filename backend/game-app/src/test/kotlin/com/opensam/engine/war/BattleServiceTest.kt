@@ -4,6 +4,7 @@ import com.opensam.engine.DiplomacyService
 import com.opensam.engine.EventService
 import com.opensam.entity.*
 import com.opensam.repository.*
+import com.opensam.service.GameConstService
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -40,11 +41,13 @@ class BattleServiceTest {
         `when`(messageRepository.save(anyNonNull<Message>())).thenAnswer { it.arguments[0] }
 
         val modifierService = mock(com.opensam.engine.modifier.ModifierService::class.java)
+        val gameConstService = mock(GameConstService::class.java)
+        `when`(gameConstService.getInt("defaultCityWall")).thenReturn(1000)
 
         service = BattleService(
             cityRepository, generalRepository, nationRepository,
             messageRepository, eventService, diplomacyService,
-            modifierService,
+            modifierService, gameConstService,
         )
     }
 

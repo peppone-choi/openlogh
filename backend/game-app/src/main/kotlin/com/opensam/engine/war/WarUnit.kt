@@ -49,8 +49,9 @@ abstract class WarUnit(
     open fun getDexForArmType(armType: ArmType): Int = 0
 
     fun calcBattleOrder(): Double {
-        val totalStat = (leadership + strength + intel) / 3.0
-        val totalCrew = crew / 1000.0 * (train * atmos).toDouble().pow(1.5) / 10000.0
+        // Legacy: (realStat + fullStat) / 2; Kotlin has single stat set ≈ effective stats
+        val totalStat = (leadership + strength + intel).toDouble()
+        val totalCrew = crew / 1000000.0 * (train * atmos).toDouble().pow(1.5)
         return totalStat + totalCrew / 100.0
     }
 

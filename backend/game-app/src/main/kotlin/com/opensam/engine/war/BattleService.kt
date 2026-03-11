@@ -14,9 +14,11 @@ import com.opensam.repository.CityRepository
 import com.opensam.repository.GeneralRepository
 import com.opensam.repository.MessageRepository
 import com.opensam.repository.NationRepository
+import com.opensam.service.GameConstService
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import kotlin.math.roundToInt
 import kotlin.random.Random
 
 @Service
@@ -28,6 +30,7 @@ class BattleService(
     private val eventService: EventService,
     private val diplomacyService: DiplomacyService,
     private val modifierService: ModifierService,
+    private val gameConstService: GameConstService,
 ) {
     private val logger = LoggerFactory.getLogger(BattleService::class.java)
     private val battleEngine = BattleEngine()
@@ -110,11 +113,17 @@ class BattleService(
             occupyCity(targetCity, attacker, world, rng)
         }
 
-        // Update dead count
+        // Legacy: dead split 0.4 to attacker's city, 0.6 to defender's city
         val totalDead = result.attackerDamageDealt + result.defenderDamageDealt
-        targetCity.dead += totalDead / 100
+        if (totalDead > 0) {
+            val attackerCity = cityRepository.findById(attacker.cityId).orElse(null)
+            if (attackerCity != null) {
+                attackerCity.dead += (totalDead * 0.4).toInt()
+                cityRepository.save(attackerCity)
+            }
+            targetCity.dead += (totalDead * 0.6).toInt()
+        }
 
-        // Save entities
         cityRepository.save(targetCity)
         generalRepository.save(attacker)
         defenders.forEach { it.general.let { gen -> generalRepository.save(gen) } }
@@ -127,7 +136,6 @@ class BattleService(
         val conquerNationId = resolveConquerNationId(city, attacker.nationId)
         city.nationId = conquerNationId
         city.trust = 0F
-        city.def = (city.def * 0.3).toInt()  // Damage from siege
 
         // Reset city post-occupation (legacy: supply=1, term=0, conflict={}, officer_set=0)
         city.supplyState = 1
@@ -139,6 +147,16 @@ class BattleService(
         city.agri = (city.agri * 0.7).toInt()
         city.comm = (city.comm * 0.7).toInt()
         city.secu = (city.secu * 0.7).toInt()
+
+        // Legacy: city level > 3 → set def/wall to defaultCityWall; else def_max/2, wall_max/2
+        val defaultCityWall = gameConstService.getInt("defaultCityWall")
+        if (city.level > 3) {
+            city.def = defaultCityWall
+            city.wall = defaultCityWall
+        } else {
+            city.def = (city.defMax / 2.0).roundToInt()
+            city.wall = (city.wallMax / 2.0).roundToInt()
+        }
 
         // Dispatch OCCUPY_CITY event
         eventService.dispatchEvents(world, "OCCUPY_CITY")

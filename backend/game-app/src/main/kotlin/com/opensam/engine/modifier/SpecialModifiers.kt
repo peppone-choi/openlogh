@@ -296,9 +296,15 @@ object SpecialModifiers {
         },
         "che_반계" to object : ActionModifier {
             override val code = "che_반계"; override val name = "반계"
+            override fun onCalcStat(stat: StatContext) = stat.copy(
+                // Legacy: warMagicSuccessDamage += 0.9 when aux === '반목'
+                // TODO: Apply +0.9 only for 반목 context once aux/condition is supported in StatContext
+                magicSuccessDamage = stat.magicSuccessDamage + 0.9
+            )
             override fun onCalcOpposeStat(stat: StatContext) = stat.copy(
                 magicSuccessProb = stat.magicSuccessProb - 0.1
             )
+            // TODO: Add getBattlePhaseSkillTriggerList for che_반계시도, che_반계발동 triggers
         },
         "che_보병" to object : ActionModifier {
             override val code = "che_보병"; override val name = "보병"
@@ -339,7 +345,13 @@ object SpecialModifiers {
         },
         "che_공성" to object : ActionModifier {
             override val code = "che_공성"; override val name = "공성"
-            override fun onCalcStat(stat: StatContext) = stat.copy(dexMultiplier = stat.dexMultiplier * 1.1)
+            override fun onCalcStat(stat: StatContext): StatContext {
+                var s = stat.copy(dexMultiplier = stat.dexMultiplier * 1.1)
+                if (isRegionalOrCityCrewType(stat.opponentCrewType)) {
+                    s = s.copy(warPower = s.warPower * 2.0)
+                }
+                return s
+            }
             override fun onCalcDomestic(ctx: DomesticContext) = when (ctx.actionCode) {
                 in listOf("징병", "모병") -> ctx.copy(costMultiplier = ctx.costMultiplier * 0.9)
                 else -> ctx
@@ -347,20 +359,33 @@ object SpecialModifiers {
         },
         "che_돌격" to object : ActionModifier {
             override val code = "che_돌격"; override val name = "돌격"
-            override fun onCalcStat(stat: StatContext) = stat.copy(initWarPhase = stat.initWarPhase + 2.0)
+            override fun onCalcStat(stat: StatContext): StatContext {
+                var s = stat.copy(initWarPhase = stat.initWarPhase + 2.0)
+                if (s.isAttacker) {
+                    s = s.copy(warPower = s.warPower * 1.05)
+                }
+                return s
+            }
+            // TODO: trigger che_돌격지속 — extends war phases when attacking (WarUnitTrigger)
         },
         "che_무쌍" to object : ActionModifier {
             override val code = "che_무쌍"; override val name = "무쌍"
             override fun onCalcStat(stat: StatContext): StatContext {
+                var s = stat
+                if (s.isAttacker) {
+                    s = s.copy(criticalChance = s.criticalChance + 0.1)
+                }
+                // TODO: killnum needs runtime RankColumn.killnum — hardcoded 0 for now
+                // TODO: skip warPower multiplier if opponent warSpecial is also 무쌍 (needs opponent special info in StatContext)
                 val killnum = 0.0
                 val logVal = log2(maxOf(1.0, killnum / 5.0))
                 val attackMultiplier = 1.05 + logVal / 20.0
                 val defenceMultiplier = 0.98 - logVal / 50.0
-                return stat.copy(
-                    criticalChance = stat.criticalChance + 0.1,
-                    warPower = stat.warPower * attackMultiplier,
-                    dodgeChance = stat.dodgeChance - (1.0 - defenceMultiplier)
+                s = s.copy(
+                    warPower = s.warPower * attackMultiplier,
+                    dodgeChance = s.dodgeChance - (1.0 - defenceMultiplier),
                 )
+                return s
             }
         },
         "che_견고" to object : ActionModifier {
@@ -368,28 +393,42 @@ object SpecialModifiers {
             override fun onCalcOpposeStat(stat: StatContext) = stat.copy(
                 criticalChance = stat.criticalChance - 0.2,
                 magicSuccessProb = stat.magicSuccessProb - 0.1,
-                warPower = stat.warPower * 0.9
+                warPower = stat.warPower * 0.9,
             )
+            // TODO: trigger che_부상무효 — injury immunity during init + each war phase (WarUnitTrigger)
         },
         "che_위압" to object : ActionModifier {
             override val code = "che_위압"; override val name = "위압"
+            // TODO: trigger che_위압시도 (prob=0.4) + che_위압발동 — reduces opponent crew/atmos (WarUnitTrigger)
         },
         "che_저격" to object : ActionModifier {
             override val code = "che_저격"; override val name = "저격"
+            // TODO: trigger che_저격시도(prob=0.5, minDamage=20, maxDamage=40) + che_저격발동 — direct HP damage (WarUnitTrigger)
         },
         "che_필살" to object : ActionModifier {
             override val code = "che_필살"; override val name = "필살"
             override fun onCalcStat(stat: StatContext) = stat.copy(criticalChance = stat.criticalChance + 0.3)
+            // TODO: criticalDamageRange enhancement — legacy sets warCriticalDamageMin/Max via StatContext extension
+            // TODO: trigger che_필살강화_회피불가 — undodgeable critical hit (WarUnitTrigger)
         },
         "che_징병" to object : ActionModifier {
             override val code = "che_징병"; override val name = "징병"
             override fun onCalcStat(stat: StatContext) = stat.copy(leadership = stat.leadership * 1.25)
+            override fun onCalcDomestic(ctx: DomesticContext) = when (ctx.actionCode) {
+                "징병", "모병" -> ctx.copy(trainMultiplier = 70.0, atmosMultiplier = 84.0)
+                "징집인구" -> ctx.copy(scoreMultiplier = 0.0)
+                else -> ctx
+            }
         },
         "che_의술" to object : ActionModifier {
             override val code = "che_의술"; override val name = "의술"
+            // TODO: trigger che_도시치료 — preTurn city heal (GeneralTriggerCaller)
+            // TODO: trigger che_전투치료시도 + che_전투치료발동 — battle HP recovery (WarUnitTrigger)
         },
         "che_격노" to object : ActionModifier {
             override val code = "che_격노"; override val name = "격노"
+            // TODO: dynamic warPower = 1 + 0.2 * activatedSkillCount('격노') — needs battle state tracking
+            // TODO: trigger che_격노시도 + che_격노발동 — accumulating rage per war phase (WarUnitTrigger)
         },
         "che_척사" to object : ActionModifier {
             override val code = "che_척사"; override val name = "척사"
