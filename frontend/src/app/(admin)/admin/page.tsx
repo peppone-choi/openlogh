@@ -1167,6 +1167,28 @@ export default function AdminDashboardPage() {
                                 </Button>
                                 <Button
                                     size="sm"
+                                    variant="outline"
+                                    onClick={async () => {
+                                        if (
+                                            !confirm(
+                                                '강제 리홀: 천통 이후 40세 이상 장수의 명예의전당 기록과 상속 포인트를 재정산합니다. 계속할까요?'
+                                            )
+                                        )
+                                            return;
+                                        try {
+                                            const res = await adminApi.forceRehall(worldId!);
+                                            toast.success(
+                                                `강제 리홀 완료 (장수 ${res.data.processedGenerals}명, 유저 ${res.data.updatedUsers}명)`
+                                            );
+                                        } catch {
+                                            toast.error('강제 리홀 실패');
+                                        }
+                                    }}
+                                >
+                                    <Zap className="mr-1 size-4" /> 강제 리홀
+                                </Button>
+                                <Button
+                                    size="sm"
                                     variant="destructive"
                                     onClick={async () => {
                                         if (
