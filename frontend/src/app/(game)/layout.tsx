@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useMemo, useCallback } from 'react';
+import { useEffect, useMemo, useCallback, useRef } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { Toaster } from 'sonner';
+import { toast, Toaster } from 'sonner';
 import { useAuthStore } from '@/stores/authStore';
 import { useWorldStore } from '@/stores/worldStore';
 import { useGeneralStore } from '@/stores/generalStore';
@@ -96,13 +96,21 @@ export default function GameLayout({ children }: { children: React.ReactNode }) 
         }
     }, [currentWorld, fetchMyGeneral]);
 
+    const prevGeneralRef = useRef(myGeneral);
     useEffect(() => {
         if (!isAuthenticated) return;
         if (generalLoading) return;
 
         if (!currentWorld || myGeneral === null) {
+            if (prevGeneralRef.current !== null && currentWorld) {
+                toast.error(
+                    `${prevGeneralRef.current.name} 장수가 사망하였습니다. 로비로 이동합니다.`,
+                    { duration: 5000 },
+                );
+            }
             router.replace('/lobby');
         }
+        prevGeneralRef.current = myGeneral;
     }, [isAuthenticated, currentWorld, myGeneral, generalLoading, router]);
 
     const { enabled: wsEnabled, toggleRealtime } = useWebSocket();

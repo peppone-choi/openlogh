@@ -67,7 +67,8 @@ class GeneralService(
 
     fun getMyGeneral(worldId: Long, loginId: String): General? {
         val userId = getCurrentUserId(loginId) ?: return null
-        val general = generalRepository.findByWorldIdAndUserId(worldId, userId).firstOrNull() ?: return null
+        val general = generalRepository.findByWorldIdAndUserId(worldId, userId)
+            .firstOrNull { it.npcState < 5 } ?: return null
         if (general.nationId > 0L && general.officerLevel < 1) {
             general.officerLevel = 1
             general.officerCity = 0
