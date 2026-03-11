@@ -85,6 +85,14 @@ class ScenarioService(
         commitSha: String? = null,
         gameVersion: String? = null,
         extendEnabled: Boolean? = null,
+        npcMode: Int? = null,
+        fiction: Int? = null,
+        maxGeneral: Int? = null,
+        maxNation: Int? = null,
+        joinMode: String? = null,
+        blockGeneralCreate: Int? = null,
+        showImgLevel: Int? = null,
+        autorunUser: List<String>? = null,
     ): WorldState {
         val scenario = getScenario(scenarioCode)
         val resolvedCommitSha = commitSha?.takeIf { it.isNotBlank() } ?: defaultCommitSha
@@ -102,12 +110,20 @@ class ScenarioService(
                 currentYear = scenario.startYear.toShort(),
                 currentMonth = 1,
                 tickSeconds = tickSeconds,
-                config = mutableMapOf(
-                    "mapCode" to mapName,
-                    "startyear" to scenario.startYear,
-                    "hiddenSeed" to hiddenSeed,
-                    "extend" to extendedGeneralEnabled,
-                    "extendedGeneral" to if (extendedGeneralEnabled) 1 else 0,
+                config = buildInitialConfig(
+                    scenario = scenario,
+                    mapName = mapName,
+                    hiddenSeed = hiddenSeed,
+                    extendedGeneralEnabled = extendedGeneralEnabled,
+                    tickSeconds = tickSeconds,
+                    npcMode = npcMode,
+                    fiction = fiction,
+                    maxGeneral = maxGeneral,
+                    maxNation = maxNation,
+                    joinMode = joinMode,
+                    blockGeneralCreate = blockGeneralCreate,
+                    showImgLevel = showImgLevel,
+                    autorunUser = autorunUser,
                 ),
             )
         )
@@ -253,6 +269,14 @@ class ScenarioService(
         scenarioCode: String,
         tickSeconds: Int = existingWorld.tickSeconds,
         extendEnabled: Boolean? = null,
+        npcMode: Int? = null,
+        fiction: Int? = null,
+        maxGeneral: Int? = null,
+        maxNation: Int? = null,
+        joinMode: String? = null,
+        blockGeneralCreate: Int? = null,
+        showImgLevel: Int? = null,
+        autorunUser: List<String>? = null,
     ): WorldState {
         val worldId = existingWorld.id.toLong()
         log.info("[World {}] Reinitializing with scenario '{}'", worldId, scenarioCode)
@@ -286,12 +310,20 @@ class ScenarioService(
         existingWorld.currentYear = scenario.startYear.toShort()
         existingWorld.currentMonth = 1
         existingWorld.tickSeconds = tickSeconds
-        existingWorld.config = mutableMapOf(
-            "mapCode" to mapName,
-            "startyear" to scenario.startYear,
-            "hiddenSeed" to hiddenSeed,
-            "extend" to extendedGeneralEnabled,
-            "extendedGeneral" to if (extendedGeneralEnabled) 1 else 0,
+        existingWorld.config = buildInitialConfig(
+            scenario = scenario,
+            mapName = mapName,
+            hiddenSeed = hiddenSeed,
+            extendedGeneralEnabled = extendedGeneralEnabled,
+            tickSeconds = tickSeconds,
+            npcMode = npcMode,
+            fiction = fiction,
+            maxGeneral = maxGeneral,
+            maxNation = maxNation,
+            joinMode = joinMode,
+            blockGeneralCreate = blockGeneralCreate,
+            showImgLevel = showImgLevel,
+            autorunUser = autorunUser,
         )
         existingWorld.meta = mutableMapOf()
         existingWorld.updatedAt = OffsetDateTime.now()
@@ -631,6 +663,82 @@ class ScenarioService(
                 )
             }
         }
+    }
+
+    /**
+     * Build initial config map matching legacy ResetHelper::buildScenario() game_env keys.
+     * Both camelCase and lowercase variants are set for keys that the codebase reads with
+     * inconsistent casing (e.g. startYear / startyear, npcMode / npcmode).
+     */
+    private fun buildInitialConfig(
+        scenario: ScenarioData,
+        mapName: String,
+        hiddenSeed: String,
+        extendedGeneralEnabled: Boolean,
+        tickSeconds: Int,
+        npcMode: Int?,
+        fiction: Int?,
+        maxGeneral: Int?,
+        maxNation: Int?,
+        joinMode: String?,
+        blockGeneralCreate: Int?,
+        showImgLevel: Int?,
+        autorunUser: List<String>?,
+    ): MutableMap<String, Any> {
+        val turnterm = tickSeconds / 60
+        val resolvedNpcMode = npcMode ?: 0
+        val resolvedFiction = fiction ?: scenario.fiction
+        val resolvedMaxGeneral = maxGeneral
+            ?: (scenario.const["defaultMaxGeneral"] as? Number)?.toInt()
+            ?: 500
+        val resolvedMaxNation = maxNation
+            ?: (scenario.const["defaultMaxNation"] as? Number)?.toInt()
+            ?: 55
+        val resolvedJoinMode = joinMode ?: "full"
+        val resolvedBlockGeneralCreate = blockGeneralCreate ?: 0
+        val resolvedShowImgLevel = showImgLevel ?: 0
+        // Legacy formula: 4800 / turnterm, halved again (/3) when npcMode==1
+        val killturn = if (resolvedNpcMode == 1) 4800 / turnterm / 3 else 4800 / turnterm
+        // Legacy: (year - startyear + 10) * 2; at init year==startyear so develcost = 20
+        val develcost = 20
+        val unitSet = scenario.map?.unitSet ?: mapName
+
+        val config = mutableMapOf<String, Any>(
+            "mapCode" to mapName,
+            "mapName" to mapName,
+            "unitSet" to unitSet,
+            "startyear" to scenario.startYear,
+            "startYear" to scenario.startYear,
+            "hiddenSeed" to hiddenSeed,
+            "extend" to extendedGeneralEnabled,
+            "extendedGeneral" to if (extendedGeneralEnabled) 1 else 0,
+            "turnterm" to turnterm,
+            "turnTerm" to turnterm,
+            "killturn" to killturn,
+            "npcmode" to resolvedNpcMode,
+            "npcMode" to resolvedNpcMode,
+            "fiction" to resolvedFiction,
+            "isFiction" to resolvedFiction,
+            "maxGeneral" to resolvedMaxGeneral,
+            "maxNation" to resolvedMaxNation,
+            "joinMode" to resolvedJoinMode,
+            "blockGeneralCreate" to resolvedBlockGeneralCreate,
+            "showImgLevel" to resolvedShowImgLevel,
+            "isunited" to 0,
+            "isUnited" to 0,
+            "develcost" to develcost,
+            "develCost" to develcost,
+            "refreshLimit" to 30000,
+            "genius" to 5,
+            "msg" to "공지사항",
+            "serverCnt" to 1,
+            "phase" to "PHASE_NORMAL",
+            "finished" to false,
+        )
+        if (autorunUser != null) {
+            config["autorun_user"] = autorunUser
+        }
+        return config
     }
 
     private fun parseBooleanFlag(raw: Any?): Boolean? {

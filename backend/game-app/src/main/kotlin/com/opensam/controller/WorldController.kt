@@ -143,6 +143,14 @@ class WorldController(
             commitSha = request.commitSha ?: "local",
             gameVersion = request.gameVersion ?: "dev",
             extendEnabled = request.extend,
+            npcMode = request.npcMode,
+            fiction = request.fiction,
+            maxGeneral = request.maxGeneral,
+            maxNation = request.maxNation,
+            joinMode = request.joinMode,
+            blockGeneralCreate = request.blockGeneralCreate,
+            showImgLevel = request.showImgLevel,
+            autorunUser = request.autorunUser,
         )
         if (!request.name.isNullOrBlank()) {
             world.name = request.name
@@ -186,6 +194,14 @@ class WorldController(
             scenarioCode = scenarioCode,
             tickSeconds = world.tickSeconds.toInt(),
             extendEnabled = body?.extend ?: parseBooleanFlag(world.config["extend"] ?: world.config["extendedGeneral"]),
+            npcMode = body?.npcMode,
+            fiction = body?.fiction,
+            maxGeneral = body?.maxGeneral,
+            maxNation = body?.maxNation,
+            joinMode = body?.joinMode,
+            blockGeneralCreate = body?.blockGeneralCreate,
+            showImgLevel = body?.showImgLevel,
+            autorunUser = body?.autorunUser,
         )
         publicCachedMapService.evictCache(id)
         mapRecentService.evictCache(id.toLong())
