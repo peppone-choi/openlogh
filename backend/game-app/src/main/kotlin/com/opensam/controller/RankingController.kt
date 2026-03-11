@@ -21,8 +21,12 @@ class RankingController(
     }
 
     @GetMapping("/worlds/{worldId}/hall-of-fame")
-    fun hallOfFame(@PathVariable worldId: Long): ResponseEntity<List<MessageResponse>> {
-        return ResponseEntity.ok(rankingService.hallOfFame(worldId).map { MessageResponse.from(it) })
+    fun hallOfFame(
+        @PathVariable worldId: Long,
+        @RequestParam(required = false) season: Int?,
+        @RequestParam(required = false) scenario: String?,
+    ): ResponseEntity<List<MessageResponse>> {
+        return ResponseEntity.ok(rankingService.hallOfFame(worldId, season, scenario))
     }
 
     @GetMapping("/worlds/{worldId}/hall-of-fame/options")

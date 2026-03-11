@@ -1,14 +1,23 @@
 package com.opensam.service
 
 import com.opensam.dto.BestGeneralResponse
+import com.opensam.dto.MessageResponse
+import com.opensam.entity.HallOfFame
+import com.opensam.entity.Message
+import com.opensam.repository.AppUserRepository
 import com.opensam.repository.GeneralRepository
-import com.opensam.repository.MessageRepository
+import com.opensam.repository.HallOfFameRepository
+import com.opensam.repository.WorldStateRepository
 import org.springframework.stereotype.Service
+import java.time.OffsetDateTime
+import kotlin.math.roundToInt
 
 @Service
 class RankingService(
     private val generalRepository: GeneralRepository,
-    private val messageRepository: MessageRepository,
+    private val hallOfFameRepository: HallOfFameRepository,
+    private val worldStateRepository: WorldStateRepository,
+    private val appUserRepository: AppUserRepository,
 ) {
     fun bestGenerals(worldId: Long, sortBy: String, limit: Int): List<BestGeneralResponse> {
         val generals = generalRepository.findByWorldId(worldId)
@@ -25,28 +34,51 @@ class RankingService(
         return sorted.take(limit).map { BestGeneralResponse.from(it) }
     }
 
-    fun hallOfFame(worldId: Long) =
-        messageRepository.findByWorldIdAndMailboxCodeOrderBySentAtDesc(worldId, "hall_of_fame")
+    fun hallOfFame(worldId: Long, season: Int?, scenario: String?): List<MessageResponse> {
+        val world = worldStateRepository.findById(worldId.toShort()).orElse(null) ?: return emptyList()
+        val serverId = resolveServerId(world)
+        val scenarioFilter = scenario?.toIntOrNull()
+        val ownerIds = hallOfFameRepository.findByServerId(serverId)
+            .mapNotNull { it.owner?.toLongOrNull() }
+            .distinct()
+        val ownerNames = appUserRepository.findAllById(ownerIds).associate { it.id!! to (it.displayName.ifBlank { it.loginId }) }
+
+        return hallOfFameRepository.findByServerId(serverId)
+            .asSequence()
+            .filter { season == null || it.season == season }
+            .filter { scenarioFilter == null || it.scenario == scenarioFilter }
+            .sortedWith(compareBy<HallOfFame> { it.type }.thenByDescending { it.value })
+            .map { toResponse(worldId, it, ownerNames) }
+            .toList()
+    }
 
     fun hallOfFameOptions(worldId: Long): Map<String, Any> {
-        val fames = messageRepository.findByWorldIdAndMailboxCodeOrderBySentAtDesc(worldId, "hall_of_fame")
-        val seasons = fames
-            .mapNotNull { msg ->
-                val scenario = msg.payload["scenarioCode"] as? String ?: return@mapNotNull null
-                val label = msg.payload["scenarioLabel"] as? String ?: scenario
-                mapOf("code" to scenario, "label" to label)
-            }
-            .distinctBy { it["code"] }
+        val world = worldStateRepository.findById(worldId.toShort()).orElse(null) ?: return mapOf("seasons" to emptyList<Map<String, Any>>())
+        val serverId = resolveServerId(world)
+        val entries = hallOfFameRepository.findByServerId(serverId)
 
-        return mapOf(
-            "seasons" to listOf(
+        val seasons = entries
+            .groupBy { it.season }
+            .toSortedMap(compareByDescending { it })
+            .map { (seasonId, seasonEntries) ->
+                val scenarios = seasonEntries
+                    .map { it.scenario }
+                    .distinct()
+                    .sortedDescending()
+                    .map { scenarioId ->
+                        mapOf(
+                            "code" to scenarioId.toString(),
+                            "label" to scenarioId.toString(),
+                        )
+                    }
                 mapOf(
-                    "id" to worldId,
-                    "label" to "전체",
-                    "scenarios" to seasons,
+                    "id" to seasonId,
+                    "label" to "${seasonId}기",
+                    "scenarios" to scenarios,
                 )
-            )
-        )
+            }
+
+        return mapOf("seasons" to seasons)
     }
 
     fun uniqueItemOwners(worldId: Long): List<Map<String, Any?>> {
@@ -89,6 +121,60 @@ class RankingService(
                         "itemGrade" to "unique",
                     )
                 }
+        }
+    }
+
+    private fun resolveServerId(world: com.opensam.entity.WorldState): String {
+        return (world.config["serverId"] as? String).orEmpty().ifBlank { world.name }
+    }
+
+    private fun toResponse(
+        worldId: Long,
+        fame: HallOfFame,
+        ownerNames: Map<Long, String>,
+    ): MessageResponse {
+        val ownerName = fame.owner?.toLongOrNull()?.let(ownerNames::get)
+        val payload = mutableMapOf<String, Any>(
+            "category" to fame.type,
+            "type" to fame.type,
+            "generalName" to ((fame.aux["name"] as? String) ?: "-"),
+            "name" to ((fame.aux["name"] as? String) ?: "-"),
+            "nationName" to ((fame.aux["nationName"] as? String) ?: "재야"),
+            "nationColor" to ((fame.aux["bgColor"] as? String) ?: "#888888"),
+            "bgColor" to ((fame.aux["bgColor"] as? String) ?: "#888888"),
+            "value" to fame.value,
+            "printValue" to formatHallValue(fame.type, fame.value),
+            "scenario" to fame.scenario.toString(),
+            "season" to fame.season,
+            "serverName" to fame.serverId,
+            "generalId" to fame.generalNo,
+        )
+        (fame.aux["picture"] as? String)?.takeIf { it.isNotBlank() }?.let { payload["picture"] = it }
+        ownerName?.let { payload["ownerName"] = it }
+
+        return MessageResponse.from(
+            Message(
+                id = fame.id,
+                worldId = worldId,
+                mailboxCode = "hall_of_fame",
+                mailboxType = "PUBLIC",
+                messageType = "hall_of_fame",
+                srcId = fame.generalNo,
+                payload = payload,
+                meta = mutableMapOf(
+                    "season" to fame.season,
+                    "scenario" to fame.scenario,
+                ),
+                sentAt = OffsetDateTime.now(),
+            )
+        )
+    }
+
+    private fun formatHallValue(type: String, value: Double): String {
+        return when (type) {
+            "winrate", "killrate", "betrate", "ttrate", "tlrate", "tsrate", "tirate" ->
+                "${((value * 10000.0).roundToInt() / 100.0)}%"
+            else -> value.roundToInt().toString()
         }
     }
 }
