@@ -613,10 +613,16 @@ class TurnService @Autowired constructor(
                     general.meta["autorun_limit"] = currentYearMonth + pushForward
                 }
 
-                // KillTurn handling
+                // KillTurn handling — legacy TurnExecutionHelper.php lines 153-165
                 if (general.killTurn != null) {
-                    if (actionCode != "휴식" && general.npcState.toInt() == 0) {
-                        val configuredKillTurn = resolveGlobalKillTurn(world, env)
+                    val configuredKillTurn = resolveGlobalKillTurn(world, env)
+                    val isPlayer = general.npcState < 2 // 0=user, 1=빙의
+                    val shouldReset = isPlayer
+                        && general.killTurn!! <= configuredKillTurn
+                        && !useAutorun
+                        && actionCode != "휴식"
+
+                    if (shouldReset) {
                         general.killTurn = configuredKillTurn.toShort()
                     } else {
                         val kt = general.killTurn!! - 1
@@ -666,11 +672,23 @@ class TurnService @Autowired constructor(
         )
     }
 
+    /**
+     * Resolve the global killturn threshold.
+     * Legacy: killturn = 4800 / turnterm (e.g. 80 for 60-min turns).
+     * If npcmode==1 (빙의 모드), killturn is divided by 3.
+     */
     private fun resolveGlobalKillTurn(world: WorldState, env: CommandEnv?): Int {
         return (world.config["killturn"] as? Number)?.toInt()
             ?: (world.config["killTurn"] as? Number)?.toInt()
             ?: env?.killturn?.toInt()
-            ?: 0
+            ?: calcDefaultKillTurn(world)
+    }
+
+    private fun calcDefaultKillTurn(world: WorldState): Int {
+        val turnterm = (world.tickSeconds / 60).coerceAtLeast(1)
+        val base = 4800 / turnterm
+        val npcmode = (world.config["npcmode"] as? Number)?.toInt() ?: 0
+        return if (npcmode == 1) base / 3 else base
     }
 
     private fun calculateNextGeneralTurnTime(general: com.opensam.entity.General, tickSeconds: Int): OffsetDateTime {

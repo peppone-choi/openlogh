@@ -7,6 +7,7 @@ import com.opensam.repository.NationRepository
 import com.opensam.service.MapService
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import kotlin.math.ln
 import kotlin.random.Random
 
 @Service
@@ -158,7 +159,7 @@ class NpcSpawnService(
                 cityId = city.id,
                 npcState = 6,
                 bornYear = (year - 20).toShort(),
-                deadYear = (year + 20).toShort(),
+                deadYear = (year + 60).toShort(), // Legacy default: year+60 (GeneralBuilder.fillRemainSpecAsZero)
                 leadership = rulerStats.first.toShort(),
                 strength = rulerStats.second.toShort(),
                 intel = rulerStats.third.toShort(),
@@ -188,7 +189,7 @@ class NpcSpawnService(
                     cityId = city.id,
                     npcState = 6,
                     bornYear = (year - 20).toShort(),
-                    deadYear = (year + 10 + rng.nextInt(20)).toShort(),
+                    deadYear = calcLogDeadYear(year, rng).toShort(),
                     leadership = stats.first.toShort(),
                     strength = stats.second.toShort(),
                     intel = stats.third.toShort(),
@@ -204,6 +205,11 @@ class NpcSpawnService(
                 )
             )
         }
+    }
+
+    private fun calcLogDeadYear(year: Int, rng: Random): Int {
+        val rand = rng.nextInt(1, 1024).toDouble()
+        return year + 10 + (60 * (1 - ln(rand) / ln(2.0) / 10)).toInt()
     }
 
     private fun derivePoliticsFromStats(leadership: Int, strength: Int, intel: Int, rng: Random): Int {
