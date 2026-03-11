@@ -147,17 +147,13 @@ export default function MapPage() {
     const [touchTapId, setTouchTapId] = useState<number | null>(null);
     // Auto-detect season from world month (legacy: spring 1-3, summer 4-6, autumn 7-9, winter 10-12)
     const autoTheme = useMemo<MapTheme>(() => {
-        let month: number | null = null;
-        try {
-            month = Number(localStorage.getItem('opensam:world:month'));
-        } catch {}
-        if (!month) month = (currentWorld?.config as Record<string, number>)?.month ?? null;
+        const month = currentWorld?.currentMonth ?? null;
         if (!month) return 'default';
         if (month <= 3) return 'spring';
         if (month <= 6) return 'summer';
         if (month <= 9) return 'autumn';
         return 'winter';
-    }, [currentWorld]);
+    }, [currentWorld?.currentMonth]);
     const [theme, setTheme] = useState<MapTheme>('default');
     const [layers, setLayers] = useState<Set<MapLayer>>(new Set(['nations', 'troops']));
     const [historyBrowseIdx, setHistoryBrowseIdx] = useState<number | null>(null);
@@ -485,14 +481,8 @@ export default function MapPage() {
                         >
                             {/* Year/Season header like legacy "西紀 188年 4月 春" */}
                             {(() => {
-                                let worldYear: number | null = null;
-                                let worldMonth: number | null = null;
-                                try {
-                                    worldYear = Number(localStorage.getItem('opensam:world:year')) || null;
-                                } catch {}
-                                try {
-                                    worldMonth = Number(localStorage.getItem('opensam:world:month')) || null;
-                                } catch {}
+                                const worldYear = currentWorld?.currentYear ?? null;
+                                const worldMonth = currentWorld?.currentMonth ?? null;
                                 const SEASON_LABELS: Record<string, string> = {
                                     spring: '春',
                                     summer: '夏',

@@ -71,17 +71,6 @@ export default function GameDashboard() {
             const { data } = await frontApi.getInfo(currentWorld.id, lastRecordId, lastHistoryId);
             setFrontInfo(data);
 
-            // Save world year/month to localStorage for cross-page use (e.g., map season header)
-            if (data.global?.month) {
-                try {
-                    localStorage.setItem('opensam:world:month', String(data.global.month));
-                    if (data.global?.year) {
-                        localStorage.setItem('opensam:world:year', String(data.global.year));
-                    }
-                } catch {
-                    /* ignore */
-                }
-            }
             // Track lastVoteState for vote notification
             if (data.global?.lastVote) {
                 try {

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useGameStore } from '@/stores/gameStore';
+import { useWorldStore } from '@/stores/worldStore';
 import {
     GAME_CDN_ROOT,
     getNationBgGradient,
@@ -106,6 +107,7 @@ export function MapViewer({
 }: MapViewerProps) {
     const router = useRouter();
     const { cities: storeCities, nations, mapData, loadAll, loadMap } = useGameStore();
+    const currentWorld = useWorldStore((s) => s.currentWorld);
     const myGeneral = useGeneralStore((s) => s.myGeneral);
     const containerRef = useRef<HTMLDivElement>(null);
     const [mapScale, setMapScale] = useState(1);
@@ -192,14 +194,8 @@ export function MapViewer({
 
     const season = useMemo<MapSeason>(() => {
         if (isPublicMode) return getSeason(publicData.currentMonth);
-        if (typeof window === 'undefined') return 'spring';
-        try {
-            const raw = localStorage.getItem('opensam:world:month');
-            return getSeason(raw ? Number(raw) : null);
-        } catch {
-            return 'spring';
-        }
-    }, [isPublicMode, publicData?.currentMonth]);
+        return getSeason(currentWorld?.currentMonth ?? null);
+    }, [isPublicMode, publicData?.currentMonth, currentWorld?.currentMonth]);
 
     const yearMonth = useMemo(() => {
         if (isPublicMode) {
@@ -207,14 +203,10 @@ export function MapViewer({
                 ? { year: publicData.currentYear, month: publicData.currentMonth }
                 : null;
         }
-        try {
-            const y = Number(localStorage.getItem('opensam:world:year'));
-            const m = Number(localStorage.getItem('opensam:world:month'));
-            return y && m ? { year: y, month: m } : null;
-        } catch {
-            return null;
-        }
-    }, [isPublicMode, publicData?.currentYear, publicData?.currentMonth]);
+        const y = currentWorld?.currentYear;
+        const m = currentWorld?.currentMonth;
+        return y && m ? { year: y, month: m } : null;
+    }, [isPublicMode, publicData?.currentYear, publicData?.currentMonth, currentWorld?.currentYear, currentWorld?.currentMonth]);
 
     const mapFolder = mapCode.includes('miniche') ? 'che' : mapCode === 'ludo_rathowm' ? 'ludo_rathowm' : mapCode;
     const mapBgUrl = getMapBgUrl(mapFolder, season);
