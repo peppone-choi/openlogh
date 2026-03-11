@@ -77,7 +77,7 @@ class 증여(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
         // Log for the gift giver
         pushLog("<Y>${dg.name}</>에게 ${resName} <C>${amountText}</>을 증여했습니다. <1>$date</>")
         pushHistoryLog("<Y>${dg.name}</>에게 ${resName} <C>${amountText}</>을 증여했습니다. <1>$date</>")
-        pushGlobalLog("<Y>${general.name}</>${pickJosa(general.name, "이")} <Y>${dg.name}</>에게 ${resName}을 증여했습니다.")
+        pushLog("<Y>${general.name}</>${pickJosa(general.name, "이")} <Y>${dg.name}</>에게 ${resName}을 증여했습니다.")
 
         val exp = 70
         val ded = 100

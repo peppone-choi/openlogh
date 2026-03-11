@@ -101,7 +101,7 @@ class che_주민선정(general: General, env: CommandEnv, arg: Map<String, Any>?
         }
         pushLog(logMessage)
         pushHistoryLog(logMessage)
-        pushGlobalLog("<Y>${general.name}</>${pickJosa(general.name, "이")} ${actionName}${josaUl} 실시했습니다.")
+        pushLog("<Y>${general.name}</>${pickJosa(general.name, "이")} ${actionName}${josaUl} 실시했습니다.")
 
         val cost = getCost()
 

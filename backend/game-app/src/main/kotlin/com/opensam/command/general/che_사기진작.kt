@@ -58,7 +58,7 @@ class che_사기진작(general: General, env: CommandEnv, arg: Map<String, Any>?
         val scoreText = "%,d".format(score)
         pushLog("사기치가 <C>${scoreText}</> 상승했습니다. <1>$date</>")
         pushHistoryLog("사기치가 <C>${scoreText}</> 상승했습니다. <1>$date</>")
-        pushGlobalLog("<Y>${general.name}</>${pickJosa(general.name, "이")} 사기진작을 실시했습니다.")
+        pushLog("<Y>${general.name}</>${pickJosa(general.name, "이")} 사기진작을 실시했습니다.")
 
         val exp = 100
         val ded = 70

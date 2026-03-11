@@ -158,7 +158,7 @@ class 견문(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
 
         pushLog("${text} <1>$date</>")
         pushHistoryLog("${text} <1>$date</>")
-        pushGlobalLog("<Y>${general.name}</>${pickJosa(general.name, "이")} 견문을 다녀왔습니다.")
+        pushLog("<Y>${general.name}</>${pickJosa(general.name, "이")} 견문을 다녀왔습니다.")
 
         val changesJson = changes.entries.joinToString(",") { "\"${it.key}\":${it.value}" }
 

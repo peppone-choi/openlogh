@@ -60,7 +60,7 @@ class 인재탐색(general: General, env: CommandEnv, arg: Map<String, Any>? = n
         if (!foundNpc) {
             pushLog("인재를 찾을 수 없었습니다. <1>$date</>")
             pushHistoryLog("인재를 찾을 수 없었습니다. <1>$date</>")
-            pushGlobalLog("<Y>${general.name}</>${pickJosa(general.name, "이")} 인재를 탐색했지만 찾지 못했습니다.")
+            pushLog("<Y>${general.name}</>${pickJosa(general.name, "이")} 인재를 탐색했지만 찾지 못했습니다.")
             return CommandResult(
                 success = true,
                 logs = logs,
@@ -74,7 +74,7 @@ class 인재탐색(general: General, env: CommandEnv, arg: Map<String, Any>? = n
 
         pushLog("인재를 발견하였습니다! <1>$date</>")
         pushHistoryLog("인재를 발견하였습니다! <1>$date</>")
-        pushGlobalLog("<Y>${general.name}</>${pickJosa(general.name, "이")} 인재를 발견하였습니다.")
+        pushLog("<Y>${general.name}</>${pickJosa(general.name, "이")} 인재를 발견하였습니다.")
         pushGlobalHistoryLog("<Y>${general.name}</>${pickJosa(general.name, "이")} 새 인재를 발견했습니다.")
         // Legacy PHP: global action log with general name
         pushLog("[GLOBAL]<Y>${general.name}</>이(가) 인재를 발견하였습니다!")

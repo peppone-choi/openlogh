@@ -58,7 +58,7 @@ class 전투태세(general: General, env: CommandEnv, arg: Map<String, Any>? = n
         // Term == reqTurn: completion
         pushLog("전투태세 완료! ($term/$reqTurn) <1>$date</>")
         pushHistoryLog("전투태세 완료! ($term/$reqTurn) <1>$date</>")
-        pushGlobalLog("<Y>${general.name}</>${pickJosa(general.name, "이")} 전투태세를 완료했습니다.")
+        pushLog("<Y>${general.name}</>${pickJosa(general.name, "이")} 전투태세를 완료했습니다.")
 
         val exp = 100 * reqTurn
         val ded = 70 * reqTurn

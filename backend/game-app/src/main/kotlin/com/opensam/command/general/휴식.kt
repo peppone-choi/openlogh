@@ -21,7 +21,7 @@ class 휴식(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
         val date = formatDate()
         pushLog("휴식했습니다. 아무것도 실행하지 않았습니다. <1>$date</>")
         pushHistoryLog("휴식했습니다. 아무것도 실행하지 않았습니다. <1>$date</>")
-        pushGlobalLog("<Y>${general.name}</>${pickJosa(general.name, "이")} 휴식했습니다.")
+        pushLog("<Y>${general.name}</>${pickJosa(general.name, "이")} 휴식했습니다.")
         return CommandResult(success = true, logs = logs)
     }
 }

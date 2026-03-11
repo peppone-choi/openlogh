@@ -57,7 +57,7 @@ class CR맹훈련(general: General, env: CommandEnv, arg: Map<String, Any>? = nu
 
         pushLog("훈련, 사기치가 <C>${rawScore}</> 상승했습니다. <1>$date</>")
         pushHistoryLog("훈련, 사기치가 <C>${rawScore}</> 상승했습니다. <1>$date</>")
-        pushGlobalLog("<Y>${general.name}</>${pickJosa(general.name, "이")} 맹훈련을 실시했습니다.")
+        pushLog("<Y>${general.name}</>${pickJosa(general.name, "이")} 맹훈련을 실시했습니다.")
 
         return CommandResult(
             success = true,

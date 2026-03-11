@@ -58,7 +58,7 @@ class che_헌납(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
 
         pushLog("$resName <C>${amount}</>을 헌납했습니다. <1>$date</>")
         pushHistoryLog("$resName <C>${amount}</>을 헌납했습니다. <1>$date</>")
-        pushGlobalLog("<Y>${general.name}</>${pickJosa(general.name, "이")} ${resName}을 헌납했습니다.")
+        pushLog("<Y>${general.name}</>${pickJosa(general.name, "이")} ${resName}을 헌납했습니다.")
 
         val exp = 70
         val ded = 100

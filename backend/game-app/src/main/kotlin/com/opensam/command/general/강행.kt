@@ -42,7 +42,7 @@ class 강행(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
 
         pushLog("<G><b>${destCityName}</b></>${josaRo} 강행했습니다. <1>$date</>")
         pushHistoryLog("<G><b>${destCityName}</b></>${josaRo} 강행했습니다. <1>$date</>")
-        pushGlobalLog("<Y>${general.name}</>${pickJosa(general.name, "이")} <G><b>${destCityName}</b></>${josaRo} 강행했습니다.")
+        pushLog("<Y>${general.name}</>${pickJosa(general.name, "이")} <G><b>${destCityName}</b></>${josaRo} 강행했습니다.")
 
         val exp = 100
         val cost = getCost()

@@ -128,7 +128,7 @@ abstract class DomesticCommand(
         }
         pushLog(logMessage)
         pushHistoryLog(logMessage)
-        pushGlobalLog("<Y>${general.name}</>${pickJosa(general.name, "이")} ${actionName}${josaUl} 실행했습니다.")
+        pushLog("<Y>${general.name}</>${pickJosa(general.name, "이")} ${actionName}${josaUl} 실행했습니다.")
 
         // Legacy parity: front line debuff with capital scaling
         var finalScore = scoreInt

@@ -28,7 +28,7 @@ class che_소집해제(general: General, env: CommandEnv, arg: Map<String, Any>?
         // Legacy PHP: uses <R> tag for formatting
         pushLog("병사들을 <R>소집해제</>하였습니다. <1>$date</>")
         pushHistoryLog("병사들을 <R>소집해제</>하였습니다. <1>$date</>")
-        pushGlobalLog("<Y>${general.name}</>${pickJosa(general.name, "이")} 병사 소집을 해제했습니다.")
+        pushLog("<Y>${general.name}</>${pickJosa(general.name, "이")} 병사 소집을 해제했습니다.")
 
         val exp = 70
         val ded = 100

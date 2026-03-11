@@ -86,7 +86,7 @@ class 장비매매(general: General, env: CommandEnv, arg: Map<String, Any>? = n
 
         pushLog("<C>${itemName}</> 구입했습니다. <1>$date</>")
         pushHistoryLog("<C>${itemName}</> 구입했습니다. <1>$date</>")
-        pushGlobalLog("<Y>${general.name}</>${pickJosa(general.name, "이")} <C>${itemName}</> 구입했습니다.")
+        pushLog("<Y>${general.name}</>${pickJosa(general.name, "이")} <C>${itemName}</> 구입했습니다.")
 
         val exp = 10
 
@@ -118,7 +118,7 @@ class 장비매매(general: General, env: CommandEnv, arg: Map<String, Any>? = n
 
         pushLog("<C>${itemName}</> 판매했습니다. <1>$date</>")
         pushHistoryLog("<C>${itemName}</> 판매했습니다. <1>$date</>")
-        pushGlobalLog("<Y>${general.name}</>${pickJosa(general.name, "이")} <C>${itemName}</> 판매했습니다.")
+        pushLog("<Y>${general.name}</>${pickJosa(general.name, "이")} <C>${itemName}</> 판매했습니다.")
 
         // If selling a rare (non-buyable) item, push global logs
         val globalLogs = mutableListOf<String>()

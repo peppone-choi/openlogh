@@ -49,7 +49,7 @@ class 귀환(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
         val josaRo = JosaUtil.pick(destCityName, "로")
         pushLog("<G><b>${destCityName}</b></>${josaRo} 귀환했습니다. <1>$date</>")
         pushHistoryLog("<G><b>${destCityName}</b></>${josaRo} 귀환했습니다. <1>$date</>")
-        pushGlobalLog("<Y>${general.name}</>${pickJosa(general.name, "이")} <G><b>${destCityName}</b></>${josaRo} 귀환했습니다.")
+        pushLog("<Y>${general.name}</>${pickJosa(general.name, "이")} <G><b>${destCityName}</b></>${josaRo} 귀환했습니다.")
 
         val exp = 70
         val ded = 100
