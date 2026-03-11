@@ -26,6 +26,7 @@ class ScenarioService(
     private val cityRepository: CityRepository,
     private val generalRepository: GeneralRepository,
     private val diplomacyRepository: DiplomacyRepository,
+    private val eventRepository: EventRepository,
     private val mapService: MapService,
     private val entityManager: EntityManager,
 ) {
@@ -260,6 +261,14 @@ class ScenarioService(
         }
         if (diplomacies.isNotEmpty()) diplomacyRepository.saveAll(diplomacies)
 
+        if (scenario.events.isNotEmpty()) {
+            val events = convertLegacyEvents(scenario.events, worldId)
+            if (events.isNotEmpty()) {
+                eventRepository.saveAll(events)
+                log.info("[World {}] Loaded {} scenario events", worldId, events.size)
+            }
+        }
+
         return world
     }
 
@@ -429,6 +438,14 @@ class ScenarioService(
                 term = term.toShort())
         }
         if (diplomacies.isNotEmpty()) diplomacyRepository.saveAll(diplomacies)
+
+        if (scenario.events.isNotEmpty()) {
+            val events = convertLegacyEvents(scenario.events, worldId)
+            if (events.isNotEmpty()) {
+                eventRepository.saveAll(events)
+                log.info("[World {}] Loaded {} scenario events", worldId, events.size)
+            }
+        }
 
         log.info("[World {}] Reinitialized successfully (same ID preserved)", worldId)
         return existingWorld
@@ -739,6 +756,133 @@ class ScenarioService(
             config["autorun_user"] = autorunUser
         }
         return config
+    }
+
+    private fun convertLegacyEvents(scenarioEvents: List<List<Any>>, worldId: Long): List<Event> {
+        return scenarioEvents.mapNotNull { eventArr ->
+            if (eventArr.size < 4) return@mapNotNull null
+            val targetCode = eventArr[0] as? String ?: return@mapNotNull null
+            val priority = (eventArr[1] as? Number)?.toShort() ?: 0
+            val condition = convertLegacyCondition(eventArr[2])
+
+            val actions = (3 until eventArr.size).mapNotNull { i ->
+                val raw = eventArr[i]
+                if (raw is List<*>) convertLegacyAction(raw) else null
+            }
+            if (actions.isEmpty()) return@mapNotNull null
+
+            val action: Map<String, Any> = if (actions.size == 1) actions[0]
+                else mapOf("type" to "compound", "actions" to actions)
+
+            Event(
+                worldId = worldId,
+                targetCode = targetCode,
+                priority = priority,
+                condition = condition.toMutableMap(),
+                action = action.toMutableMap(),
+            )
+        }
+    }
+
+    private fun convertLegacyCondition(raw: Any): Map<String, Any> {
+        if (raw is Boolean) return mapOf("type" to if (raw) "always_true" else "always_false")
+        if (raw !is List<*> || raw.isEmpty()) return mapOf("type" to "always_true")
+        val type = raw[0] as? String ?: return mapOf("type" to "always_true")
+        return when (type) {
+            "Date" -> {
+                val cmp = raw.getOrNull(1) as? String ?: "=="
+                val year = raw.getOrNull(2) as? Number
+                val month = raw.getOrNull(3) as? Number
+                when {
+                    year == null && month != null ->
+                        mapOf("type" to "date_month", "month" to month.toInt())
+                    year != null && month != null -> when (cmp) {
+                        ">=" -> mapOf("type" to "date_after", "year" to year.toInt(), "month" to month.toInt())
+                        else -> mapOf("type" to "date", "year" to year.toInt(), "month" to month.toInt())
+                    }
+                    else -> mapOf("type" to "always_true")
+                }
+            }
+            "DateRelative" -> {
+                val yearOffset = (raw.getOrNull(2) as? Number)?.toInt() ?: 0
+                val month = (raw.getOrNull(3) as? Number)?.toInt() ?: 1
+                mapOf("type" to "date_relative", "yearOffset" to yearOffset, "month" to month)
+            }
+            "RemainNation" -> {
+                val cmp = raw.getOrNull(1) as? String ?: "<="
+                val count = (raw.getOrNull(2) as? Number)?.toInt() ?: 1
+                mapOf("type" to "remain_nation", "count" to count, "operator" to cmp)
+            }
+            "and", "or" -> {
+                val conditions = raw.drop(1).mapNotNull { it?.let { convertLegacyCondition(it) } }
+                mapOf("type" to type, "conditions" to conditions)
+            }
+            else -> {
+                log.warn("Unknown legacy condition type: {}", type)
+                mapOf("type" to "always_true")
+            }
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun convertLegacyAction(raw: List<*>): Map<String, Any>? {
+        if (raw.isEmpty()) return null
+        val name = raw[0] as? String ?: return null
+        return when (name) {
+            "CreateManyNPC" -> mapOf(
+                "type" to "create_many_npc",
+                "npcCount" to ((raw.getOrNull(1) as? Number)?.toInt() ?: 10),
+                "fillCnt" to ((raw.getOrNull(2) as? Number)?.toInt() ?: 0),
+            )
+            "RaiseNPCNation" -> mapOf("type" to "raise_npc_nation")
+            "OpenNationBetting" -> mapOf(
+                "type" to "open_nation_betting",
+                "nationCnt" to ((raw.getOrNull(1) as? Number)?.toInt() ?: 1),
+                "bonusPoint" to ((raw.getOrNull(2) as? Number)?.toInt() ?: 0),
+            )
+            "BlockScoutAction" -> mapOf("type" to "block_scout_action")
+            "UnblockScoutAction" -> mapOf("type" to "unblock_scout_action")
+            "DeleteEvent" -> mapOf("type" to "delete_self")
+            "ChangeCity" -> mapOf(
+                "type" to "change_city",
+                "target" to (raw.getOrNull(1) ?: "all"),
+                "changes" to (raw.getOrNull(2) ?: emptyMap<String, Any>()),
+            )
+            "LostUniqueItem" -> mapOf(
+                "type" to "lost_unique_item",
+                "lostProb" to ((raw.getOrNull(1) as? Number)?.toDouble() ?: 0.1),
+            )
+            "ProcessWarIncome" -> mapOf("type" to "process_war_income")
+            "MergeInheritPointRank" -> mapOf("type" to "merge_inherit_point_rank")
+            "ProcessSemiAnnual" -> mapOf(
+                "type" to "process_semi_annual",
+                "resource" to ((raw.getOrNull(1) as? String) ?: "gold"),
+            )
+            "ProcessIncome" -> mapOf(
+                "type" to "process_income",
+                "resource" to ((raw.getOrNull(1) as? String) ?: "gold"),
+            )
+            "ResetOfficerLock" -> mapOf("type" to "reset_officer_lock")
+            "RaiseDisaster" -> mapOf("type" to "raise_disaster")
+            "RandomizeCityTradeRate" -> mapOf("type" to "randomize_trade_rate")
+            "NewYear" -> mapOf("type" to "new_year")
+            "AssignGeneralSpeciality" -> mapOf("type" to "assign_general_speciality")
+            "NoticeToHistoryLog" -> mapOf(
+                "type" to "log",
+                "message" to ((raw.getOrNull(1) as? String) ?: ""),
+            )
+            "UpdateNationLevel" -> mapOf("type" to "update_nation_level")
+            "ProvideNPCTroopLeader" -> mapOf("type" to "provide_npc_troop_leader")
+            "AddGlobalBetray" -> mapOf(
+                "type" to "add_global_betray",
+                "cnt" to ((raw.getOrNull(1) as? Number)?.toInt() ?: 1),
+                "ifMax" to ((raw.getOrNull(2) as? Number)?.toInt() ?: 0),
+            )
+            else -> {
+                log.warn("Unknown legacy action: {}", name)
+                null
+            }
+        }
     }
 
     private fun parseBooleanFlag(raw: Any?): Boolean? {

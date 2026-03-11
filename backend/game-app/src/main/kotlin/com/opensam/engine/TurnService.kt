@@ -408,6 +408,7 @@ class TurnService @Autowired constructor(
                 }
 
                 // Nation command for high-ranking officers
+                var didConsumeNationTurn = false
                 if (general.officerLevel >= 5 && nation != null) {
                     val nationTurns = nationTurnRepository
                         .findByNationIdAndOfficerLevelOrderByTurnIdx(general.nationId, general.officerLevel)
@@ -469,14 +470,16 @@ class TurnService @Autowired constructor(
                     if (consumedNationTurn != null) {
                         nationTurnRepository.delete(consumedNationTurn)
                         nationTurnRepository.shiftTurnsDown(general.nationId, general.officerLevel, consumedNationTurn.turnIdx)
+                        if (general.npcState < 2) didConsumeNationTurn = true
                     }
                 }
+
+                var hasReservedTurn = didConsumeNationTurn
 
                 // General command
                 val actionCode: String
                 val arg: Map<String, Any>?
                 val executedTurn: com.opensam.entity.GeneralTurn?
-                var hasReservedTurn = false
 
                 // autorun_limit: 플레이어 장수가 일정 기간 미접속 시 AI가 대신 행동
                 // legacy TurnExecutionHelper.php lines 289-296

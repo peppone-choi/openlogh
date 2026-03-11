@@ -73,6 +73,12 @@ class EventService @Autowired constructor(
                 world.currentYear > year || (world.currentYear == year && world.currentMonth >= month)
             }
 
+            // 월만 비교 (연도 무관) — legacy Date condition with null year
+            "date_month" -> {
+                val month = (condition["month"] as? Number)?.toShort() ?: return false
+                world.currentMonth == month
+            }
+
             // 시나리오 시작년도 기준 상대 날짜 조건
             "date_relative" -> {
                 val yearOffset = (condition["yearOffset"] as? Number)?.toInt() ?: return false
@@ -100,8 +106,17 @@ class EventService @Autowired constructor(
 
             "remain_nation" -> {
                 val count = (condition["count"] as? Number)?.toInt() ?: return false
+                val op = (condition["operator"] as? String) ?: "<="
                 val nationCount = worldPortFactory.create(world.id.toLong()).allNations().size
-                nationCount <= count
+                when (op) {
+                    "==" -> nationCount == count
+                    "<=" -> nationCount <= count
+                    ">=" -> nationCount >= count
+                    "<" -> nationCount < count
+                    ">" -> nationCount > count
+                    "!=" -> nationCount != count
+                    else -> nationCount <= count
+                }
             }
 
             "and" -> {
