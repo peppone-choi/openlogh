@@ -182,7 +182,8 @@ class SelectNpcTokenService(
     }
 
     private fun isSelectableNpc(general: General): Boolean {
-        return general.userId == null && general.npcState.toInt() >= 2
+        val npc = general.npcState.toInt()
+        return general.userId == null && npc >= 2 && npc < 5
     }
 
     private fun generalsByOrderedIds(worldId: Long, ids: List<Long>): List<General> {

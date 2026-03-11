@@ -37,7 +37,7 @@ class ScenarioService(
     /** Name→picture lookup from the reference scenario (scenario_1010) for fallback when picture is missing. */
     private val referencePictureByName: Map<String, String> by lazy {
         loadAllScenarios()
-        val refScenario = scenarios["scenario_1010"] ?: return@lazy emptyMap()
+        val refScenario = scenarios["1010"] ?: return@lazy emptyMap()
         val map = mutableMapOf<String, String>()
         for (section in listOf(refScenario.general, refScenario.generalEx, refScenario.generalNeutral)) {
             for (row in section) {
