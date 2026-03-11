@@ -275,7 +275,6 @@ open class 화계(general: General, env: CommandEnv, arg: Map<String, Any>? = nu
         val publicCityChanges = cityChanges.filterKeys { !it.startsWith("_") }
         pushHistoryLog("<G><b>${destCityName}</b></>에 ${actionName}${josa(actionName, "이")} 성공했습니다. <1>$date</>")
         pushGlobalLog("<Y>${general.name}</>${pickJosa(general.name, "이")} <G><b>${destCityName}</b></>에 ${actionName}${josa(actionName, "을")} 성공했습니다.")
-        pushGlobalHistoryLog("<Y>${general.name}</>${pickJosa(general.name, "이")} <G><b>${destCityName}</b></>에 ${actionName}${josa(actionName, "을")} 감행했습니다.")
 
         // Extra metadata from affectDestCity (탈취 resource transfer etc.)
         val extraMap = cityChanges.filterKeys { it.startsWith("_") }

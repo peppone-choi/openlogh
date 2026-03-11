@@ -51,15 +51,9 @@ class 하야(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
         val newBetray = min(betrayCount + 1, MAX_BETRAY_COUNT)
         val isTroopLeader = general.troopId == general.id
 
-        // General action log
         pushLog("<D><b>${nationName}</b></>에서 하야했습니다. <1>$date</>")
-        // History log
-        pushLog("_history:<D><b>${nationName}</b></>에서 하야")
-        // Global action log
-        pushLog("_global:<Y>${generalName}</>${josa(generalName, "이")} <D><b>${nationName}</b></>에서 <R>하야</>했습니다.")
         pushHistoryLog("<D><b>${nationName}</b></>에서 하야")
         pushGlobalLog("<Y>${generalName}</>${josa(generalName, "이")} <D><b>${nationName}</b></>에서 <R>하야</>했습니다.")
-        pushGlobalHistoryLog("<Y>${generalName}</>${josa(generalName, "이")} <D><b>${nationName}</b></>에서 하야했습니다.")
 
         return CommandResult(
             success = true,

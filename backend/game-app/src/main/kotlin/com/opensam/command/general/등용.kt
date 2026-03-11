@@ -56,7 +56,6 @@ class 등용(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
         pushLog("<Y>${destName}</>에게 등용 권유 서신을 보냈습니다. <1>$date</>")
         pushHistoryLog("<Y>${destName}</>에게 등용 권유 서신을 보냈습니다. <1>$date</>")
         pushLog("<Y>${general.name}</>${pickJosa(general.name, "이")} <Y>${destName}</>에게 등용 서신을 보냈습니다.")
-        pushGlobalHistoryLog("<Y>${general.name}</>${pickJosa(general.name, "이")} <Y>${destName}</>에게 등용을 시도했습니다.")
 
         return CommandResult(
             success = true,

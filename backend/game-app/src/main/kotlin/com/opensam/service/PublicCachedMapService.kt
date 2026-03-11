@@ -72,10 +72,10 @@ class PublicCachedMapService(
 
         val nations = nationRepository.findByWorldId(worldId)
         val nationById = nations.associateBy { it.id }
-        val capitalCityIds = nations.mapNotNull { it.capitalCityId }.toSet()
         val cities = cityRepository.findByWorldId(worldId).mapNotNull { city ->
             val mapCity = mapCityByName[city.name] ?: return@mapNotNull null
             val nation = nationById[city.nationId]
+            val isCapital = nation != null && nation.capitalCityId == city.id
             PublicCachedMapCityResponse(
                 id = city.id,
                 name = city.name,
@@ -85,7 +85,7 @@ class PublicCachedMapService(
                 region = mapCity.region,
                 nationName = nation?.name ?: "",
                 nationColor = nation?.color ?: "#4b5563",
-                isCapital = city.id in capitalCityIds,
+                isCapital = isCapital,
                 supplyState = city.supplyState.toInt(),
                 state = city.state.toInt(),
             )

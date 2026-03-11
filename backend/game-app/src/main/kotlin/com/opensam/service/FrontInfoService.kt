@@ -484,7 +484,7 @@ class FrontInfoService(
         val generalRecords = if (myGeneral != null) {
             val sinceId = lastRecordId ?: 0
             messageRepository.findByWorldIdAndMailboxCodeAndIdGreaterThanOrderBySentAtDesc(
-                worldId, "general_record", sinceId
+                worldId, "general_action", sinceId
             ).filter { it.destId == myGeneral.id }
         } else emptyList()
 

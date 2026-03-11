@@ -206,7 +206,13 @@ export function MapViewer({
         const y = currentWorld?.currentYear;
         const m = currentWorld?.currentMonth;
         return y && m ? { year: y, month: m } : null;
-    }, [isPublicMode, publicData?.currentYear, publicData?.currentMonth, currentWorld?.currentYear, currentWorld?.currentMonth]);
+    }, [
+        isPublicMode,
+        publicData?.currentYear,
+        publicData?.currentMonth,
+        currentWorld?.currentYear,
+        currentWorld?.currentMonth,
+    ]);
 
     const mapFolder = mapCode.includes('miniche') ? 'che' : mapCode === 'ludo_rathowm' ? 'ludo_rathowm' : mapCode;
     const mapBgUrl = getMapBgUrl(mapFolder, season);

@@ -123,7 +123,6 @@ class 출병(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
         }
         pushHistoryLog("<G><b>${targetCityId}</b></> 방면으로 출병했습니다. <1>$date</>")
         pushLog("<Y>${general.name}</>${pickJosa(general.name, "이")} <G><b>${finalTargetCityName}</b></> 방면으로 출병했습니다.")
-        pushGlobalHistoryLog("<Y>${general.name}</>${pickJosa(general.name, "이")} 출병을 단행했습니다.")
 
         val cost = getCost()
         val dexGain = (general.crew / 100.0).roundToInt()

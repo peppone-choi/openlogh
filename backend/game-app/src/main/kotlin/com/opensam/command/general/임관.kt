@@ -53,15 +53,9 @@ class 임관(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
         // Legacy PHP: Josa 이/가
         val josaYi = if (generalName.last().code % 28 != 0) "이" else ""
 
-        // General action log
         pushLog("<D>${destNationName}</>에 임관했습니다. <1>$date</>")
-        // General history log
-        pushLog("[HISTORY]<D><b>${destNationName}</b></>에 임관")
-        // Global action log
-        pushLog("[GLOBAL]<Y>${generalName}</>${josaYi} <D><b>${destNationName}</b></>에 <S>임관</>했습니다.")
         pushHistoryLog("<D><b>${destNationName}</b></>에 임관")
         pushGlobalLog("<Y>${generalName}</>${josaYi} <D><b>${destNationName}</b></>에 <S>임관</>했습니다.")
-        pushGlobalHistoryLog("<Y>${generalName}</>${josaYi} <D><b>${destNationName}</b></>에 임관했습니다.")
 
         // Legacy PHP: move general to lord's city
         return CommandResult(
