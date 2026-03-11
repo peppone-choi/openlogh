@@ -1,6 +1,8 @@
 package com.opensam.engine.ai
 
 import com.opensam.engine.DeterministicRng
+import com.opensam.engine.LiteHashDRBG
+import com.opensam.engine.RandUtil
 import com.opensam.engine.turn.cqrs.persist.JpaWorldPortFactory
 import com.opensam.engine.turn.cqrs.persist.toEntity
 import com.opensam.engine.turn.cqrs.persist.toSnapshot
@@ -9,6 +11,8 @@ import com.opensam.entity.Diplomacy
 import com.opensam.entity.General
 import com.opensam.entity.Nation
 import com.opensam.entity.WorldState
+import com.opensam.model.ArmType
+import com.opensam.model.CrewType
 import org.slf4j.LoggerFactory
 import com.opensam.service.MapService
 import org.springframework.stereotype.Service
@@ -460,7 +464,7 @@ class GeneralAI(
 
         return when (priority) {
             // ── 부대 발령 (troop assignment) ──
-            "부대전방발령" -> doTroopFrontAssignment(ctx, rng, nationPolicy, frontCities, supplyCities)
+            "부대전방발령" -> doTroopFrontAssignment(ctx, rng, nationPolicy, frontCities, supplyCities, warTargetNations)
             "부대후방발령" -> doTroopRearAssignment(ctx, rng, nationPolicy, backupCities, supplyCities)
             "부대구출발령" -> doTroopRescueAssignment(ctx, rng, nationPolicy, supplyCities)
             "부대유저장후방발령" -> doTroopUserRearAssignment(ctx, rng, nationPolicy, backupCities, supplyCities)
@@ -515,26 +519,93 @@ class GeneralAI(
     private fun doTroopFrontAssignment(
         ctx: AIContext, rng: Random, policy: NpcNationPolicy,
         frontCities: List<City>, supplyCities: List<City>,
+        warTargetNations: Map<Long, Int>,
     ): String? {
         val nation = ctx.nation ?: return null
         if (nation.capitalCityId == null) return null
         if (frontCities.isEmpty()) return null
 
-        val troopLeaders = ctx.nationGenerals.filter { it.npcState.toInt() == 5 }
-        val frontCityIds = frontCities.map { it.id }.toSet()
+        val mapName = (ctx.world.config["mapName"] as? String) ?: "che"
+        val capitalMapCityId = ctx.allCities.find { it.id == nation.capitalCityId }?.mapCityId ?: return null
 
-        val candidates = troopLeaders.filter { leader ->
-            !frontCityIds.contains(leader.cityId)
+        val targetNationIds = warTargetNations.keys.filter { it != 0L }
+        val routeNationIds = mutableListOf(nation.id).apply { addAll(targetNationIds) }
+        val warRoute = mapService.calcAllPairsDistanceByNations(routeNationIds, ctx.allCities, mapName)
+
+        val frontCityMapIds = frontCities.map { it.mapCityId }.toSet()
+        val supplyCityMapIds = supplyCities.map { it.mapCityId }.toSet()
+        val ownCityByMapId = ctx.allCities
+            .filter { it.nationId == nation.id }
+            .associateBy { it.mapCityId }
+
+        val troopLeaders = ctx.nationGenerals.filter { it.npcState.toInt() == 5 }
+
+        val candidates = mutableListOf<Pair<Long, Long>>()
+
+        fun addRandomFront(leaderId: Long) {
+            val destCity = frontCities[rng.nextInt(frontCities.size)]
+            candidates.add(leaderId to destCity.id)
+        }
+
+        for (leader in troopLeaders) {
+            val currentCityMapId = ctx.allCities.find { it.id == leader.cityId }?.mapCityId ?: continue
+            if (currentCityMapId in frontCityMapIds) continue
+
+            val combatForce = policy.combatForce[leader.id.toInt()]
+            if (combatForce == null) {
+                addRandomFront(leader.id)
+                continue
+            }
+
+            var fromCityMapId = combatForce.first
+            var toCityMapId = combatForce.second
+
+            if (warRoute[fromCityMapId]?.containsKey(toCityMapId) != true) {
+                addRandomFront(leader.id)
+                continue
+            }
+
+            if (fromCityMapId in supplyCityMapIds && toCityMapId in supplyCityMapIds) {
+                addRandomFront(leader.id)
+                continue
+            }
+
+            if (fromCityMapId !in supplyCityMapIds) {
+                toCityMapId = fromCityMapId
+                fromCityMapId = capitalMapCityId
+            }
+
+            var targetMapCityId = fromCityMapId
+            while (targetMapCityId !in frontCityMapIds) {
+                val currentDist = warRoute[targetMapCityId]?.get(toCityMapId) ?: break
+                val neighbors = ctx.mapAdjacency[targetMapCityId.toLong()].orEmpty().map { it.toInt() }
+                val nextCandidates = neighbors.filter { neighborMapCityId ->
+                    val neighborDist = warRoute[neighborMapCityId]?.get(toCityMapId) ?: return@filter false
+                    neighborDist + 1 <= currentDist
+                }
+                if (nextCandidates.isEmpty()) break
+                targetMapCityId = if (nextCandidates.size == 1) {
+                    nextCandidates[0]
+                } else {
+                    nextCandidates[rng.nextInt(nextCandidates.size)]
+                }
+            }
+
+            val destCity = ownCityByMapId[targetMapCityId]
+            if (destCity != null && destCity.supplyState > 0) {
+                candidates.add(leader.id to destCity.id)
+            } else {
+                addRandomFront(leader.id)
+            }
         }
 
         if (candidates.isEmpty()) return null
 
-        // Pick a leader, assign to a front city
-        val target = candidates[rng.nextInt(candidates.size)]
-        val destCity = frontCities[rng.nextInt(frontCities.size)]
-
-        // Store assignment in meta for the engine to execute
-        target.meta["assignedCity"] = destCity.id
+        val (destGeneralId, destCityId) = candidates[rng.nextInt(candidates.size)]
+        ctx.general.meta["aiArg"] = mutableMapOf<String, Any>(
+            "destGeneralId" to destGeneralId,
+            "destCityId" to destCityId,
+        )
         return "발령"
     }
 
@@ -1038,6 +1109,7 @@ class GeneralAI(
     /**
      * 불가침제의: Propose non-aggression pact.
      * Per legacy: look for nations that have assisted, propose treaty.
+     * Calculates diplomatMonth = 24 * amount / income to determine proposal deadline.
      */
     private fun doNonAggressionProposal(
         ctx: AIContext, rng: Random, policy: NpcNationPolicy, supplyCities: List<City>,
@@ -1074,7 +1146,29 @@ class GeneralAI(
         if (rng.nextDouble() > 0.15) return null
 
         val target = candidates[rng.nextInt(candidates.size)]
-        ctx.general.meta["aiArg"] = mutableMapOf<String, Any>("destNationId" to target.id)
+
+        // Calculate diplomatMonth = 24 * amount / income (legacy parity)
+        // amount = target nation's power (proxy for assistance), income = nation's total income
+        val goldIncome = supplyCities.sumOf { calcCityGoldIncome(it) }.toInt()
+        val riceIncome = supplyCities.sumOf { calcCityRiceIncome(it) }.toInt()
+        val wallIncome = supplyCities.sumOf { city ->
+            if (city.supplyState > 0) (city.wall / 15) else 0
+        }
+        val income = (goldIncome + riceIncome + wallIncome).coerceAtLeast(1)
+        val amount = target.power.coerceAtLeast(1)
+        val diplomatMonth = (24.0 * amount / income).toInt()
+
+        // Calculate target year/month based on diplomatMonth
+        val currentMonth = ctx.world.currentYear * 12 + ctx.world.currentMonth - 1
+        val targetMonth = currentMonth + diplomatMonth
+        val targetYear = targetMonth / 12
+        val targetMonthOfYear = (targetMonth % 12) + 1
+
+        ctx.general.meta["aiArg"] = mutableMapOf<String, Any>(
+            "destNationId" to target.id,
+            "year" to targetYear,
+            "month" to targetMonthOfYear
+        )
         return "불가침제의"
     }
 
@@ -1585,7 +1679,7 @@ class GeneralAI(
         val riceAfterTrainCost = general.rice - fullLeadership * 4
         if (goldAfterTrainCost <= 0 || riceAfterTrainCost <= 0) return null
 
-        val crewTypeCode = pickCrewType(general, ctx.generalType)
+        val crewTypeCode = pickCrewType(general, ctx.generalType, rng, ctx.allCities, ctx.nation, ctx.world)
         val maxAmount = fullLeadership * 100 - (if (crewTypeCode == general.crewType.toInt()) general.crew else 0)
         if (maxAmount <= 0) return null
 
@@ -1598,21 +1692,96 @@ class GeneralAI(
         return if (goldAfterTrainCost >= trainCost * 6) "모병" else "징병"
     }
 
-    // armType(1-4) → crewType(1100-1400) 변환, generalType 기반 병종 선택
-    private fun pickCrewType(general: General, generalType: Int): Int {
-        val current = general.crewType.toInt()
+    private fun pickCrewType(
+        general: General,
+        generalType: Int,
+        rng: Random,
+        nationCities: List<City>,
+        nation: Nation?,
+        world: WorldState,
+    ): Int {
+        val randUtil = (rng as? LiteHashDRBG)?.let { RandUtil(it) }
 
-        // armType 1-4 = ⓤ spawn bug → crewType 매핑
-        if (current in 1..4) return current * 100 + 1000
-
-        if (current > 1100) return current
-
-        return when (generalType) {
-            GeneralType.WARRIOR.flag -> 1300    // 기병
-            GeneralType.STRATEGIST.flag -> 1400 // 귀병
-            GeneralType.COMMANDER.flag -> 1200  // 궁병
-            else -> 1100                        // 보병
+        var armTypeCode = (general.meta["armType"] as? Number)?.toInt()
+        if (armTypeCode != null) {
+            if (generalType and GeneralType.STRATEGIST.flag == 0 && armTypeCode == ArmType.WIZARD.code) {
+                armTypeCode = null
+            } else if (
+                generalType and GeneralType.WARRIOR.flag == 0 &&
+                armTypeCode in setOf(ArmType.FOOTMAN.code, ArmType.ARCHER.code, ArmType.CAVALRY.code)
+            ) {
+                armTypeCode = null
+            }
         }
+
+        if (armTypeCode == null) {
+            val fullStrength = general.strength.toInt()
+            val fullIntel = general.intel.toInt()
+
+            val dex = mapOf(
+                ArmType.FOOTMAN.code to sqrt((general.dex1 + 500).toDouble()),
+                ArmType.ARCHER.code to sqrt((general.dex2 + 500).toDouble()),
+                ArmType.CAVALRY.code to sqrt((general.dex3 + 500).toDouble()),
+                ArmType.WIZARD.code to sqrt((general.dex4 + 500).toDouble()),
+                ArmType.SIEGE.code to sqrt((general.dex5 + 500).toDouble()),
+            )
+
+            val availableArmTypes = linkedMapOf<Int, Double>()
+            if (fullStrength > fullIntel * 0.9) {
+                availableArmTypes[ArmType.FOOTMAN.code] = dex.getValue(ArmType.FOOTMAN.code) * fullStrength
+                availableArmTypes[ArmType.ARCHER.code] = dex.getValue(ArmType.ARCHER.code) * fullStrength
+                availableArmTypes[ArmType.CAVALRY.code] = dex.getValue(ArmType.CAVALRY.code) * fullStrength
+            }
+            if (fullIntel > fullStrength * 0.9) {
+                availableArmTypes[ArmType.WIZARD.code] = dex.getValue(ArmType.WIZARD.code) * fullIntel * 3
+            }
+
+            armTypeCode = if (availableArmTypes.isEmpty()) {
+                if (fullStrength >= fullIntel) ArmType.FOOTMAN.code else ArmType.WIZARD.code
+            } else {
+                randUtil?.choiceUsingWeight(availableArmTypes)
+                    ?: choiceByWeightPairRaw(rng, availableArmTypes.map { it.key to it.value })
+                    ?: ArmType.FOOTMAN.code
+            }
+        }
+
+        val nationId = nation?.id ?: general.nationId
+        val ownedCities = nationCities.filter { it.nationId == nationId }
+        val ownCityNames = ownedCities.map { it.name }.toSet()
+        val ownRegionIds = ownedCities.map { it.region.toInt() }.toSet()
+        val tech = nation?.tech?.toInt() ?: 0
+        val startYear = (world.config["startyear"] as? Number)?.toInt()
+            ?: (world.config["startYear"] as? Number)?.toInt()
+            ?: world.currentYear.toInt()
+        val relYear = maxOf(0, world.currentYear.toInt() - startYear)
+
+        val armType = ArmType.entries.firstOrNull { it.code == armTypeCode } ?: ArmType.FOOTMAN
+        val validTypes = linkedMapOf<Int, Double>()
+        for (crewType in CrewType.byArmType(armType)) {
+            if (crewType.isValidForNation(ownCityNames, ownRegionIds, relYear, tech)) {
+                validTypes[crewType.code] = crewType.pickScore(tech)
+            }
+        }
+
+        val selectedType = if (validTypes.isNotEmpty()) {
+            randUtil?.choiceUsingWeight(validTypes)
+                ?: choiceByWeightPairRaw(rng, validTypes.map { it.key to it.value })
+                ?: (CrewType.byArmType(armType).firstOrNull()?.code ?: CrewType.FOOTMAN.code)
+        } else {
+            CrewType.byArmType(armType).firstOrNull()?.code ?: CrewType.FOOTMAN.code
+        }
+
+        val currentCrewType = CrewType.fromCode(general.crewType.toInt())
+        if (currentCrewType != null && currentCrewType.isValidForNation(ownCityNames, ownRegionIds, relYear, tech)) {
+            if (currentCrewType.reqTech >= 2000) {
+                return currentCrewType.code
+            }
+            if (currentCrewType.armType != armType && currentCrewType.reqTech >= 1000) {
+                return currentCrewType.code
+            }
+        }
+
+        return selectedType
     }
 
     // ──────────────────────────────────────────────────────────

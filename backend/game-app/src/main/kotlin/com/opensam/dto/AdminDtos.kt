@@ -69,6 +69,12 @@ data class AdminUserSummary(
     val lastLoginAt: OffsetDateTime?,
 )
 
+data class BroadcastRequest(
+    val worldId: Long,
+    val generalIds: List<Long>,
+    val message: String,
+)
+
 data class GameVersionInfo(
     val commitSha: String,
     val gameVersion: String,

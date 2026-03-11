@@ -17,6 +17,7 @@ class TournamentService(
     private val generalRepository: GeneralRepository,
     private val tournamentRepository: TournamentRepository,
     private val worldStateRepository: WorldStateRepository,
+    private val inheritanceService: InheritanceService,
 ) {
     companion object {
         private const val STATE_REGISTER = 1
@@ -147,6 +148,7 @@ class TournamentService(
                 result = 0,
             )
         )
+        inheritanceService.accruePoints(general, "tournament", 1)
         syncWorldTournamentMeta(tournamentId)
         return mapOf("success" to true, "generalId" to generalId)
     }

@@ -343,4 +343,20 @@ class AdminService(
             else -> null
         }
     }
+
+    fun broadcastMessage(worldId: Long, generalIds: List<Long>, message: String) {
+        val messages = generalIds.map { generalId ->
+            com.opensam.entity.Message(
+                worldId = worldId,
+                mailboxCode = "private",
+                messageType = "admin",
+                srcId = 0,
+                destId = generalId,
+                payload = mutableMapOf(
+                    "message" to message as Any,
+                ),
+            )
+        }
+        messageRepository.saveAll(messages)
+    }
 }

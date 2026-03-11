@@ -27,6 +27,10 @@ enum class CrewType(
     val initSkillTrigger: List<String> = emptyList(),
     val phaseSkillTrigger: List<String> = emptyList(),
     val iActionList: List<String> = emptyList(),
+    val reqTech: Int = 0,
+    val reqCityNames: Set<String> = emptySet(),
+    val reqRegionNames: Set<String> = emptySet(),
+    val reqMinRelYear: Int = 0,
 ) {
     // 성벽
     CASTLE(
@@ -42,6 +46,7 @@ enum class CrewType(
         9,
         defenceCoef = mapOf("1" to 1.2),
         phaseSkillTrigger = listOf("che_선제사격시도", "che_선제사격발동"),
+        reqTech = Int.MAX_VALUE,
     ),
 
     // 보병
@@ -74,6 +79,8 @@ enum class CrewType(
         attackCoef = mapOf("2" to 1.2, "3" to 0.8, "5" to 1.2),
         defenceCoef = mapOf("2" to 0.8, "3" to 1.2, "5" to 0.8),
         phaseSkillTrigger = listOf("che_방어력증가5p"),
+        reqTech = 1000,
+        reqRegionNames = setOf("중원"),
     ),
     MARINE(
         1102,
@@ -89,6 +96,8 @@ enum class CrewType(
         attackCoef = mapOf("2" to 1.2, "3" to 0.8, "5" to 1.2),
         defenceCoef = mapOf("2" to 0.8, "3" to 1.2, "5" to 0.8),
         phaseSkillTrigger = listOf("che_방어력증가5p"),
+        reqTech = 1000,
+        reqRegionNames = setOf("오월"),
     ),
     ASSASSIN(
         1103,
@@ -104,6 +113,8 @@ enum class CrewType(
         attackCoef = mapOf("2" to 1.2, "3" to 0.8, "5" to 1.2),
         defenceCoef = mapOf("2" to 0.8, "3" to 1.2, "5" to 0.8),
         phaseSkillTrigger = listOf("che_방어력증가5p"),
+        reqTech = 2000,
+        reqCityNames = setOf("저"),
     ),
     GUARD(
         1104,
@@ -119,6 +130,8 @@ enum class CrewType(
         attackCoef = mapOf("2" to 1.2, "3" to 0.8, "5" to 1.2),
         defenceCoef = mapOf("2" to 0.8, "3" to 1.2, "5" to 0.8),
         phaseSkillTrigger = listOf("che_방어력증가5p"),
+        reqTech = 3000,
+        reqCityNames = setOf("낙양"),
     ),
     RATTAN(
         1105,
@@ -134,6 +147,8 @@ enum class CrewType(
         attackCoef = mapOf("2" to 1.2, "3" to 0.8, "5" to 1.2),
         defenceCoef = mapOf("2" to 0.8, "3" to 1.2, "5" to 0.8),
         phaseSkillTrigger = listOf("che_방어력증가5p"),
+        reqTech = 1000,
+        reqRegionNames = setOf("남중"),
     ),
     BAEKYI(
         1106,
@@ -149,6 +164,8 @@ enum class CrewType(
         attackCoef = mapOf("2" to 1.1, "3" to 0.9, "5" to 1.1),
         defenceCoef = mapOf("2" to 0.9, "3" to 1.1, "5" to 0.9),
         phaseSkillTrigger = listOf("che_방어력증가5p"),
+        reqTech = 3000,
+        reqCityNames = setOf("성도"),
     ),
 
     // 궁병
@@ -181,6 +198,8 @@ enum class CrewType(
         attackCoef = mapOf("3" to 1.2, "1" to 0.9, "5" to 1.2),
         defenceCoef = mapOf("3" to 0.8, "1" to 1.1, "5" to 0.8),
         phaseSkillTrigger = listOf("che_선제사격시도", "che_선제사격발동"),
+        reqTech = 1000,
+        reqRegionNames = setOf("동이"),
     ),
     CROSSBOW(
         1202,
@@ -196,6 +215,8 @@ enum class CrewType(
         attackCoef = mapOf("3" to 1.2, "1" to 0.8, "5" to 1.2),
         defenceCoef = mapOf("3" to 0.8, "1" to 1.2, "5" to 0.8),
         phaseSkillTrigger = listOf("che_선제사격시도", "che_선제사격발동"),
+        reqTech = 1000,
+        reqRegionNames = setOf("서촉"),
     ),
     LONGBOW(
         1203,
@@ -211,6 +232,8 @@ enum class CrewType(
         attackCoef = mapOf("3" to 1.2, "1" to 0.8, "5" to 1.2),
         defenceCoef = mapOf("3" to 0.8, "1" to 1.2, "5" to 0.8),
         phaseSkillTrigger = listOf("che_선제사격시도", "che_선제사격발동"),
+        reqTech = 3000,
+        reqCityNames = setOf("양양"),
     ),
     STONE_CROSSBOW(
         1204,
@@ -226,6 +249,8 @@ enum class CrewType(
         attackCoef = mapOf("3" to 1.2, "1" to 0.8, "5" to 1.2),
         defenceCoef = mapOf("3" to 0.8, "1" to 1.2, "5" to 0.8),
         phaseSkillTrigger = listOf("che_선제사격시도", "che_선제사격발동"),
+        reqTech = 3000,
+        reqCityNames = setOf("건업"),
     ),
 
     // 기병
@@ -258,6 +283,8 @@ enum class CrewType(
         attackCoef = mapOf("1" to 1.2, "2" to 0.8, "5" to 1.2),
         defenceCoef = mapOf("1" to 0.8, "2" to 1.2, "5" to 0.8),
         phaseSkillTrigger = listOf("che_기병병종전투"),
+        reqTech = 1000,
+        reqRegionNames = setOf("하북"),
     ),
     HEAVY_CAVALRY(
         1302,
@@ -273,6 +300,8 @@ enum class CrewType(
         attackCoef = mapOf("1" to 1.2, "2" to 0.8, "5" to 1.2),
         defenceCoef = mapOf("1" to 0.8, "2" to 1.2, "5" to 0.8),
         phaseSkillTrigger = listOf("che_기병병종전투"),
+        reqTech = 1000,
+        reqRegionNames = setOf("서북"),
     ),
     CHARGE_CAVALRY(
         1303,
@@ -288,6 +317,8 @@ enum class CrewType(
         attackCoef = mapOf("1" to 1.2, "2" to 0.8, "5" to 1.2),
         defenceCoef = mapOf("1" to 0.8, "2" to 1.2, "5" to 0.8),
         phaseSkillTrigger = listOf("che_기병병종전투"),
+        reqTech = 2000,
+        reqCityNames = setOf("흉노"),
     ),
     IRON_CAVALRY(
         1304,
@@ -303,6 +334,8 @@ enum class CrewType(
         attackCoef = mapOf("1" to 1.2, "2" to 0.8, "5" to 1.2),
         defenceCoef = mapOf("1" to 0.8, "2" to 1.2, "5" to 0.8),
         phaseSkillTrigger = listOf("che_기병병종전투"),
+        reqTech = 2000,
+        reqCityNames = setOf("강"),
     ),
     HUNTER_CAVALRY(
         1305,
@@ -318,6 +351,8 @@ enum class CrewType(
         attackCoef = mapOf("1" to 1.2, "2" to 0.8, "5" to 1.2),
         defenceCoef = mapOf("1" to 0.8, "2" to 1.2, "5" to 0.8),
         phaseSkillTrigger = listOf("che_기병병종전투"),
+        reqTech = 2000,
+        reqCityNames = setOf("산월"),
     ),
     BEAST(
         1306,
@@ -333,6 +368,8 @@ enum class CrewType(
         attackCoef = mapOf("1" to 1.2, "2" to 0.8, "5" to 1.2),
         defenceCoef = mapOf("1" to 0.8, "2" to 1.2, "5" to 0.8),
         phaseSkillTrigger = listOf("che_기병병종전투"),
+        reqTech = 2000,
+        reqCityNames = setOf("남만"),
     ),
     TIGER_CAVALRY(
         1307,
@@ -348,18 +385,20 @@ enum class CrewType(
         attackCoef = mapOf("1" to 1.2, "2" to 0.8, "5" to 1.2),
         defenceCoef = mapOf("1" to 0.8, "2" to 1.2, "5" to 0.8),
         phaseSkillTrigger = listOf("che_기병병종전투"),
+        reqTech = 3000,
+        reqCityNames = setOf("허창"),
     ),
 
     // 귀병
     WIZARD(1400, "귀병", ArmType.WIZARD, 80, 80, 7, 5, 0.5, 9, 9, attackCoef = mapOf("5" to 1.2), defenceCoef = mapOf("5" to 0.8)),
-    DIVINE_WIZARD(1401, "신귀병", ArmType.WIZARD, 80, 80, 7, 20, 0.6, 10, 10, attackCoef = mapOf("5" to 1.2), defenceCoef = mapOf("5" to 0.8)),
-    WHITE_WIZARD(1402, "백귀병", ArmType.WIZARD, 80, 130, 7, 5, 0.6, 9, 11, attackCoef = mapOf("5" to 1.2), defenceCoef = mapOf("5" to 0.8)),
-    BLACK_WIZARD(1403, "흑귀병", ArmType.WIZARD, 130, 80, 7, 5, 0.6, 11, 9, attackCoef = mapOf("5" to 1.2), defenceCoef = mapOf("5" to 0.8)),
-    EVIL_WIZARD(1404, "악귀병", ArmType.WIZARD, 130, 130, 7, 0, 0.6, 12, 12, attackCoef = mapOf("5" to 1.2), defenceCoef = mapOf("5" to 0.8)),
-    SOUTH_WIZARD(1405, "남귀병", ArmType.WIZARD, 60, 60, 7, 10, 0.8, 8, 8, attackCoef = mapOf("5" to 1.2), defenceCoef = mapOf("5" to 0.8)),
-    YELLOW_WIZARD(1406, "황귀병", ArmType.WIZARD, 110, 110, 7, 0, 0.8, 13, 10, attackCoef = mapOf("5" to 1.2), defenceCoef = mapOf("5" to 0.8)),
-    HEAVEN_WIZARD(1407, "천귀병", ArmType.WIZARD, 80, 130, 7, 15, 0.6, 11, 12, attackCoef = mapOf("5" to 1.2), defenceCoef = mapOf("5" to 0.8)),
-    DEMON_WIZARD(1408, "마귀병", ArmType.WIZARD, 130, 80, 7, 15, 0.6, 12, 11, attackCoef = mapOf("5" to 1.2), defenceCoef = mapOf("5" to 0.8)),
+    DIVINE_WIZARD(1401, "신귀병", ArmType.WIZARD, 80, 80, 7, 20, 0.6, 10, 10, attackCoef = mapOf("5" to 1.2), defenceCoef = mapOf("5" to 0.8), reqTech = 1000, reqRegionNames = setOf("초")),
+    WHITE_WIZARD(1402, "백귀병", ArmType.WIZARD, 80, 130, 7, 5, 0.6, 9, 11, attackCoef = mapOf("5" to 1.2), defenceCoef = mapOf("5" to 0.8), reqTech = 2000, reqCityNames = setOf("오환")),
+    BLACK_WIZARD(1403, "흑귀병", ArmType.WIZARD, 130, 80, 7, 5, 0.6, 11, 9, attackCoef = mapOf("5" to 1.2), defenceCoef = mapOf("5" to 0.8), reqTech = 2000, reqCityNames = setOf("왜")),
+    EVIL_WIZARD(1404, "악귀병", ArmType.WIZARD, 130, 130, 7, 0, 0.6, 12, 12, attackCoef = mapOf("5" to 1.2), defenceCoef = mapOf("5" to 0.8), reqTech = 3000, reqCityNames = setOf("장안")),
+    SOUTH_WIZARD(1405, "남귀병", ArmType.WIZARD, 60, 60, 7, 10, 0.8, 8, 8, attackCoef = mapOf("5" to 1.2), defenceCoef = mapOf("5" to 0.8), reqTech = 1000),
+    YELLOW_WIZARD(1406, "황귀병", ArmType.WIZARD, 110, 110, 7, 0, 0.8, 13, 10, attackCoef = mapOf("5" to 1.2), defenceCoef = mapOf("5" to 0.8), reqTech = 3000, reqCityNames = setOf("낙양")),
+    HEAVEN_WIZARD(1407, "천귀병", ArmType.WIZARD, 80, 130, 7, 15, 0.6, 11, 12, attackCoef = mapOf("5" to 1.2), defenceCoef = mapOf("5" to 0.8), reqTech = 3000, reqCityNames = setOf("성도")),
+    DEMON_WIZARD(1408, "마귀병", ArmType.WIZARD, 130, 80, 7, 15, 0.6, 12, 11, attackCoef = mapOf("5" to 1.2), defenceCoef = mapOf("5" to 0.8), reqTech = 3000, reqCityNames = setOf("업")),
 
     // 차병(공성)
     JEONGRAN(
@@ -378,6 +417,7 @@ enum class CrewType(
         initSkillTrigger = listOf("che_성벽부상무효"),
         phaseSkillTrigger = listOf("che_선제사격시도", "che_선제사격발동"),
         iActionList = listOf("che_성벽선제"),
+        reqMinRelYear = 3,
     ),
     RAM(
         1501,
@@ -393,6 +433,8 @@ enum class CrewType(
         attackCoef = mapOf("1" to 0.8, "2" to 0.8, "3" to 0.8, "4" to 0.8, "0" to 2.4),
         defenceCoef = mapOf("1" to 1.2, "2" to 1.2, "3" to 1.2, "4" to 1.2),
         initSkillTrigger = listOf("che_성벽부상무효"),
+        reqTech = 1000,
+        reqMinRelYear = 3,
     ),
     CATAPULT(
         1502,
@@ -410,6 +452,8 @@ enum class CrewType(
         initSkillTrigger = listOf("che_성벽부상무효"),
         phaseSkillTrigger = listOf("che_선제사격시도", "che_선제사격발동"),
         iActionList = listOf("che_성벽선제"),
+        reqTech = 3000,
+        reqCityNames = setOf("업"),
     ),
     WOODEN_OX(
         1503,
@@ -426,6 +470,8 @@ enum class CrewType(
         defenceCoef = mapOf("1" to 1.0, "2" to 1.0, "3" to 1.0, "4" to 1.0, "1106" to 1.0),
         initSkillTrigger = listOf("che_성벽부상무효"),
         phaseSkillTrigger = listOf("che_저지시도", "che_저지발동"),
+        reqTech = 3000,
+        reqCityNames = setOf("성도"),
     );
 
     fun getAttackCoef(opponent: CrewType): Double {
@@ -442,9 +488,35 @@ enum class CrewType(
 
     fun getShortName(): String = if (displayName.length <= 4) displayName else displayName.take(4)
 
+    fun isValidForNation(ownCityNames: Set<String>, ownRegionIds: Set<Int>, relYear: Int, tech: Int): Boolean {
+        if (reqTech > 0 && tech < reqTech) return false
+        if (reqMinRelYear > 0 && relYear < reqMinRelYear) return false
+        if (reqCityNames.isNotEmpty() && reqCityNames.none { it in ownCityNames }) return false
+        if (reqRegionNames.isNotEmpty()) {
+            val reqRegionIds = reqRegionNames.mapNotNull { REGION_MAP[it] }
+            if (reqRegionIds.none { it in ownRegionIds }) return false
+        }
+        return true
+    }
+
+    fun pickScore(tech: Int): Double {
+        val armPerPhase = 500.0
+        val techAbil = (tech / 1000) * 25.0
+        var score = armPerPhase + attack + defence + techAbil * 2
+        score *= (1.0 + speed / 2.0)
+        score /= maxOf(1.0 - avoid / 100.0, 0.1)
+        score *= (1.0 + magicCoef / 2.0)
+        return score
+    }
+
     companion object {
         private val byCode = entries.associateBy { it.code }
+        private val REGION_MAP = mapOf(
+            "하북" to 1, "중원" to 2, "서북" to 3, "서촉" to 4,
+            "남중" to 5, "초" to 6, "오월" to 7, "동이" to 8,
+        )
 
         fun fromCode(code: Int): CrewType? = byCode[code]
+        fun byArmType(armType: ArmType): List<CrewType> = entries.filter { it.armType == armType }
     }
 }

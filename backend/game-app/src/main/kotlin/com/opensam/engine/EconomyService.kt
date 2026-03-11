@@ -16,6 +16,7 @@ import com.opensam.repository.GeneralRepository
 import com.opensam.repository.MessageRepository
 import com.opensam.repository.NationRepository
 import com.opensam.service.HistoryService
+import com.opensam.service.InheritanceService
 import com.opensam.service.MapService
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -33,6 +34,7 @@ class EconomyService @Autowired constructor(
     private val messageRepository: MessageRepository,
     private val mapService: MapService,
     private val historyService: HistoryService,
+    private val inheritanceService: InheritanceService,
 ) {
     constructor(
         cityRepository: CityRepository,
@@ -41,6 +43,7 @@ class EconomyService @Autowired constructor(
         messageRepository: MessageRepository,
         mapService: MapService,
         historyService: HistoryService,
+        inheritanceService: InheritanceService,
     ) : this(
         JpaWorldPortFactory(
             generalRepository = generalRepository,
@@ -51,6 +54,7 @@ class EconomyService @Autowired constructor(
         messageRepository,
         mapService,
         historyService,
+        inheritanceService,
     )
 
     private val log = LoggerFactory.getLogger(javaClass)
@@ -575,6 +579,10 @@ class EconomyService @Autowired constructor(
 
                 log.info("Nation {} leveled up to {} ({}) (reward: gold={}, rice={})",
                     nation.name, newLevel, newLevelText, newLevel * 1000, newLevel * 1000)
+
+                for (general in generalsByNation[nation.id].orEmpty()) {
+                    inheritanceService.accruePoints(general, "unifier", 1)
+                }
             }
         }
     }

@@ -159,6 +159,7 @@ class TurnService @Autowired constructor(
 
     private companion object {
         const val MAX_TICK_DURATION_MS = 30_000L
+        val SABOTAGE_ACTION_CODES = setOf("화계", "선동", "파괴", "탈취", "첩보")
     }
 
     @Transactional
@@ -246,6 +247,10 @@ class TurnService @Autowired constructor(
                 if (world.currentMonth.toInt() == 1) {
                     try {
                         economyService.processYearlyStatistics(world)
+                        val yearlyPorts = worldPortFactory.create(worldId)
+                        val yearlyGenerals = yearlyPorts.allGenerals().map { it.toEntity() }
+                        accrueYearlyInheritancePoints(yearlyGenerals)
+                        yearlyGenerals.forEach { yearlyPorts.putGeneral(it.toSnapshot()) }
                     } catch (e: Exception) {
                         logger.warn("EconomyService.processYearlyStatistics failed: ${e.message}")
                     }
@@ -605,6 +610,10 @@ class TurnService @Autowired constructor(
                     inheritanceService.accruePoints(general, "active_action", 1)
                 }
 
+                if (cmdResult.success && general.npcState.toInt() == 0 && actionCode in SABOTAGE_ACTION_CODES) {
+                    inheritanceService.accruePoints(general, "sabotage", 1)
+                }
+
                 // autorun_limit 갱신: 플레이어 장수가 예약된 턴을 실행했을 때
                 // legacy TurnExecutionHelper.php lines 356-361
                 val autorunUser = world.config["autorun_user"] as? Map<*, *>
@@ -673,6 +682,29 @@ class TurnService @Autowired constructor(
             trainSideEffectByAtmosTurn = gameConstService.getDouble("trainSideEffectByAtmosTurn"),
             killturn = killturn.toShort(),
         )
+    }
+
+    private fun accrueYearlyInheritancePoints(generals: List<com.opensam.entity.General>) {
+        for (general in generals) {
+            if (general.npcState.toInt() >= 2) {
+                continue
+            }
+
+            val currentBelongYear = general.belong.toInt().coerceAtLeast(0)
+            val storedMaxBelongYear = readInt(general.meta["inherit_max_belong_year"]) ?: 0
+            if (currentBelongYear > storedMaxBelongYear) {
+                inheritanceService.accruePoints(general, "max_belong", currentBelongYear - storedMaxBelongYear)
+                general.meta["inherit_max_belong_year"] = currentBelongYear
+            }
+
+            val dexSum = general.dex1 + general.dex2 + general.dex3 + general.dex4 + general.dex5
+            val currentDexPoint = (dexSum * 0.001).toInt()
+            val storedDexPoint = readInt(general.meta["inherit_dex_point_total"]) ?: 0
+            if (currentDexPoint > storedDexPoint) {
+                inheritanceService.accruePoints(general, "dex", currentDexPoint - storedDexPoint)
+                general.meta["inherit_dex_point_total"] = currentDexPoint
+            }
+        }
     }
 
     /**
@@ -811,6 +843,14 @@ class TurnService @Autowired constructor(
         return when (raw) {
             is Number -> raw.toDouble()
             is String -> raw.toDoubleOrNull()
+            else -> null
+        }
+    }
+
+    private fun readInt(raw: Any?): Int? {
+        return when (raw) {
+            is Number -> raw.toInt()
+            is String -> raw.toIntOrNull()
             else -> null
         }
     }

@@ -5,6 +5,7 @@ import com.opensam.dto.AdminGeneralAction
 import com.opensam.dto.AdminGeneralSummary
 import com.opensam.dto.AdminUserSummary
 import com.opensam.dto.AdminUserAction
+import com.opensam.dto.BroadcastRequest
 import com.opensam.dto.NationStatistic
 import com.opensam.dto.TimeControlRequest
 import com.opensam.service.AdminAuthorizationService
@@ -188,6 +189,21 @@ class AdminController(
                 adminService.generalAction(resolvedWorldId, id, type)
             }
             ResponseEntity.ok().build()
+        } catch (_: AccessDeniedException) {
+            ResponseEntity.status(HttpStatus.FORBIDDEN).build()
+        }
+    }
+
+    @PostMapping("/broadcast")
+    fun broadcast(
+        @RequestParam(required = false) worldId: Long?,
+        @RequestBody request: BroadcastRequest,
+    ): ResponseEntity<Map<String, Boolean>> {
+        return try {
+            val loginId = currentLoginId() ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
+            val resolvedWorldId = adminAuthorizationService.resolveWorldIdOrThrow(loginId, worldId, PERMISSION_OPEN_CLOSE)
+            adminService.broadcastMessage(resolvedWorldId, request.generalIds, request.message)
+            ResponseEntity.ok(mapOf("success" to true))
         } catch (_: AccessDeniedException) {
             ResponseEntity.status(HttpStatus.FORBIDDEN).build()
         }

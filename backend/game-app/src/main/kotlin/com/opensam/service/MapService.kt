@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
+import com.opensam.entity.City
 import com.opensam.model.CityConst
 import jakarta.annotation.PostConstruct
 import org.springframework.core.io.ClassPathResource
@@ -100,6 +101,64 @@ class MapService {
 
         return -1
     }
+
+    fun calcAllPairsDistance(cityIds: List<Int>, mapName: String = "che"): Map<Int, Map<Int, Int>> {
+        if (cityIds.isEmpty()) return emptyMap()
+
+        val uniqueCityIds = cityIds.distinct()
+        val citySet = uniqueCityIds.toSet()
+        val adj = adjacencyIndex[mapName] ?: run {
+            loadMap(mapName)
+            adjacencyIndex[mapName]
+        } ?: return emptyMap()
+
+        val dist = mutableMapOf<Int, MutableMap<Int, Int>>()
+        for (cityId in uniqueCityIds) {
+            val nearList = mutableMapOf(cityId to 0)
+            for (neighbor in adj[cityId].orEmpty()) {
+                if (neighbor in citySet) {
+                    nearList[neighbor] = 1
+                }
+            }
+            dist[cityId] = nearList
+        }
+
+        for (stop in uniqueCityIds) {
+            for (from in uniqueCityIds) {
+                val fromDist = dist[from] ?: continue
+                val stopDist = fromDist[stop] ?: continue
+                for (to in uniqueCityIds) {
+                    val stopToDist = dist[stop]?.get(to) ?: continue
+                    val newDist = stopDist + stopToDist
+                    val currentDist = fromDist[to]
+                    if (currentDist == null || newDist < currentDist) {
+                        fromDist[to] = newDist
+                    }
+                }
+            }
+        }
+
+        return dist
+    }
+
+    fun calcAllPairsDistanceByNation(
+        nationIds: List<Long>,
+        allCities: List<City>,
+        mapName: String = "che",
+    ): Map<Int, Map<Int, Int>> {
+        val nationIdSet = nationIds.toSet()
+        val cityIds = allCities.asSequence()
+            .filter { it.nationId in nationIdSet }
+            .map { it.mapCityId }
+            .toList()
+        return calcAllPairsDistance(cityIds, mapName)
+    }
+
+    fun calcAllPairsDistanceByNations(
+        nationIds: List<Long>,
+        allCities: List<City>,
+        mapName: String = "che",
+    ): Map<Int, Map<Int, Int>> = calcAllPairsDistanceByNation(nationIds, allCities, mapName)
 
     private fun readListOfStringAnyMap(raw: Any?): List<Map<String, Any>> {
         if (raw !is Iterable<*>) return emptyList()

@@ -16,6 +16,7 @@ import com.opensam.repository.GeneralRepository
 import com.opensam.repository.MessageRepository
 import com.opensam.repository.NationRepository
 import com.opensam.service.GameConstService
+import com.opensam.service.InheritanceService
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -32,6 +33,7 @@ class BattleService(
     private val diplomacyService: DiplomacyService,
     private val modifierService: ModifierService,
     private val gameConstService: GameConstService,
+    private val inheritanceService: InheritanceService,
 ) {
     private val logger = LoggerFactory.getLogger(BattleService::class.java)
     private val battleEngine = BattleEngine()
@@ -138,6 +140,9 @@ class BattleService(
             targetCity = targetCity,
             result = result,
         )
+
+        inheritanceService.accruePoints(attacker, "combat", 1)
+        defenders.forEach { inheritanceService.accruePoints(it.general, "combat", 1) }
 
         return result
     }

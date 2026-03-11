@@ -3,6 +3,7 @@ package com.opensam.engine
 import com.opensam.entity.*
 import com.opensam.repository.*
 import com.opensam.service.HistoryService
+import com.opensam.service.InheritanceService
 import com.opensam.service.ScenarioService
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -28,6 +29,7 @@ class EventActionService(
     private val scenarioService: ScenarioService,
     private val specialAssignmentService: SpecialAssignmentService,
     private val rankDataRepository: RankDataRepository,
+    private val inheritanceService: InheritanceService,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -363,6 +365,7 @@ class EventActionService(
                 val general = generalRepository.findById(bet.generalId).orElse(null) ?: continue
                 general.gold += (amount * 2)  // simplified reward
                 generalRepository.save(general)
+                inheritanceService.accruePoints(general, "betting", 1)
             }
         }
 
