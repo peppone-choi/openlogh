@@ -84,8 +84,11 @@ class GeneralAI(
         }
         val generalType = classifyGeneral(general, rng, nationPolicy.minNPCWarLeadership)
 
-        // Determine attackable status (any front city with supply)
-        val attackable = frontCities.any { it.supplyState > 0 }
+        val attackable = if (frontCities.isNotEmpty()) {
+            frontCities.any { it.supplyState > 0 }
+        } else {
+            nationCities.any { it.supplyState > 0 }
+        }
 
         // War target nations
         val warTargetNations = calcWarTargetNations(nation, diplomacies)
@@ -199,7 +202,7 @@ class GeneralAI(
                     ctx, rng, generalPolicy, nationPolicy, attackable, warTargetNations, supplyCities, backupCities
                 )
                 else -> decidePeaceAction(
-                    ctx, rng, generalPolicy, nationPolicy, supplyCities, backupCities
+                    ctx, rng, generalPolicy, nationPolicy, supplyCities, backupCities, warTargetNations
                 )
             }
         } catch (e: Exception) {
@@ -1225,7 +1228,7 @@ class GeneralAI(
         ) {
             decideWarAction(ctx, rng, generalPolicy, nationPolicy, attackable, warTargetNations, supplyCities, backupCities)
         } else {
-            decidePeaceAction(ctx, rng, generalPolicy, nationPolicy, supplyCities, backupCities)
+            decidePeaceAction(ctx, rng, generalPolicy, nationPolicy, supplyCities, backupCities, warTargetNations)
         }
     }
 
@@ -1263,6 +1266,7 @@ class GeneralAI(
     private fun decidePeaceAction(
         ctx: AIContext, rng: Random, policy: NpcGeneralPolicy,
         nationPolicy: NpcNationPolicy, supplyCities: List<City>, backupCities: List<City>,
+        warTargetNations: Map<Long, Int> = emptyMap(),
     ): String {
         val general = ctx.general
         val city = ctx.city
@@ -1270,10 +1274,11 @@ class GeneralAI(
         if (general.injury > 0) return "요양"
 
         // Iterate general policy priorities
+        // Pass warTargetNations so doRecruit can see neutral targets even in peace mode
         for (priority in policy.priority) {
             if (!policy.canDo(priority)) continue
             val action = doGeneralAction(
-                priority, ctx, rng, policy, nationPolicy, false, false, emptyMap(), supplyCities, backupCities
+                priority, ctx, rng, policy, nationPolicy, false, false, warTargetNations, supplyCities, backupCities
             )
             if (action != null) return action
         }
@@ -1666,20 +1671,23 @@ class GeneralAI(
         // Need minimum crew
         if (general.crew < min((general.leadership.toInt() - 2) * 100, 500)) return null
 
-        // Must be in a front city
-        if (city.frontState.toInt() == 0) return null
+        if (city.frontState.toInt() == 0 && ctx.frontCities.isNotEmpty()) return null
 
-        // Per legacy: prefer active war targets (state >= 2), fall back to neutral (empty) cities
         val activeWarTargetIds = warTargetNations.filter { it.value >= 2 }.keys
         val targetCities = if (activeWarTargetIds.isNotEmpty()) {
             ctx.allCities.filter { it.nationId in activeWarTargetIds && it.nationId != nation.id }
         } else {
-            // Fall back to empty/neutral cities (nationId == 0)
             ctx.allCities.filter { it.nationId == 0L }
         }
         if (targetCities.isEmpty()) return null
 
-        val targetCity = targetCities[rng.nextInt(targetCities.size)]
+        val adjacent = ctx.mapAdjacency[city.mapCityId.toLong()].orEmpty().toSet()
+        val reachable = targetCities.filter { adjacent.contains(it.mapCityId.toLong()) }
+        val targetCity = if (reachable.isNotEmpty()) {
+            reachable[rng.nextInt(reachable.size)]
+        } else {
+            targetCities[rng.nextInt(targetCities.size)]
+        }
         general.meta["aiArg"] = mutableMapOf<String, Any>("destCityId" to targetCity.id)
         return "출병"
     }

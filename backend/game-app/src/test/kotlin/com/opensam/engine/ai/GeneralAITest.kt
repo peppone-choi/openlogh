@@ -713,12 +713,15 @@ class GeneralAITest {
     @Test
     fun `warrior type trains troops during peace`() {
         val world = createWorld()
-        // Warrior: strength >= leadership && strength >= intel
         val general = createGeneral(strength = 90, leadership = 50, intel = 30, crew = 500, train = 50)
         val city = createCity(nationId = 1, agri = 600, agriMax = 1000, comm = 600, commMax = 1000, secu = 600, secuMax = 1000)
         val nation = createNation()
+        val otherNation = createNation(id = 2)
+        val diplomacy = createDiplomacy(srcNationId = 1, destNationId = 2, stateCode = "동맹")
 
-        setupRepos(world, general, city, nation)
+        setupRepos(world, general, city, nation,
+            allNations = listOf(nation, otherNation),
+            diplomacies = listOf(diplomacy))
 
         val action = ai.decideAndExecute(general, world)
         assertEquals("훈련", action)
