@@ -492,7 +492,7 @@ class BattleTriggerTest {
 
     @Test
     fun `registry has 39 total triggers`() {
-        assertEquals(43, BattleTriggerRegistry.allCodes().size)
+        assertEquals(49, BattleTriggerRegistry.allCodes().size)
     }
 
     // ========== Trigger priority ordering ==========

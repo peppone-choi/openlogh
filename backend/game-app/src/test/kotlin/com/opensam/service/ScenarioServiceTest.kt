@@ -57,6 +57,7 @@ class ScenarioServiceTest {
             cityRepository = cityRepository,
             generalRepository = generalRepository,
             diplomacyRepository = diplomacyRepository,
+            eventRepository = mock(EventRepository::class.java),
             mapService = mapService,
             entityManager = entityManager,
         )

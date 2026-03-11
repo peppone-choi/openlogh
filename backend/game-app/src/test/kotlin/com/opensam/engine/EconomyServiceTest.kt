@@ -8,7 +8,9 @@ import com.opensam.entity.Nation
 import com.opensam.entity.WorldState
 import com.opensam.repository.CityRepository
 import com.opensam.repository.GeneralRepository
+import com.opensam.repository.MessageRepository
 import com.opensam.repository.NationRepository
+import com.opensam.service.InheritanceService
 import com.opensam.service.MapService
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -37,7 +39,7 @@ class EconomyServiceTest {
         nationRepository = mock(NationRepository::class.java)
         generalRepository = mock(GeneralRepository::class.java)
         mapService = mock(MapService::class.java)
-        service = EconomyService(cityRepository, nationRepository, generalRepository, mapService, mock(com.opensam.service.HistoryService::class.java))
+        service = EconomyService(cityRepository, nationRepository, generalRepository, mock(MessageRepository::class.java), mapService, mock(com.opensam.service.HistoryService::class.java), mock(InheritanceService::class.java))
         wireRepos()
         `when`(mapService.getAdjacentCities(ArgumentMatchers.anyString(), ArgumentMatchers.anyInt())).thenReturn(emptyList())
     }

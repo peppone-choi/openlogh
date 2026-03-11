@@ -3,6 +3,7 @@ package com.opensam.engine
 import com.opensam.entity.*
 import com.opensam.repository.*
 import com.opensam.service.HistoryService
+import com.opensam.service.InheritanceService
 import com.opensam.service.ScenarioService
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
@@ -32,6 +33,7 @@ class EventActionServiceTest {
     private lateinit var scenarioService: ScenarioService
     private lateinit var specialAssignmentService: SpecialAssignmentService
     private lateinit var rankDataRepository: RankDataRepository
+    private lateinit var inheritanceService: InheritanceService
 
     @Suppress("UNCHECKED_CAST")
     private fun <T> anyNonNull(): T = any<T>() as T
@@ -50,13 +52,14 @@ class EventActionServiceTest {
         scenarioService = mock(ScenarioService::class.java)
         specialAssignmentService = mock(SpecialAssignmentService::class.java)
         rankDataRepository = mock(RankDataRepository::class.java)
+        inheritanceService = mock(InheritanceService::class.java)
 
         service = EventActionService(
             generalRepository, nationRepository, cityRepository,
             eventRepository, generalTurnRepository, messageRepository,
             bettingRepository, betEntryRepository,
             historyService, scenarioService, specialAssignmentService,
-            rankDataRepository,
+            rankDataRepository, inheritanceService,
         )
     }
 

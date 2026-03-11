@@ -7,7 +7,9 @@ import com.opensam.entity.City
 import com.opensam.entity.General
 import com.opensam.repository.CityRepository
 import com.opensam.repository.GeneralRepository
+import com.opensam.repository.MessageRepository
 import com.opensam.repository.NationRepository
+import com.opensam.service.InheritanceService
 import com.opensam.service.MapService
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -27,8 +29,10 @@ class FormulaParityTest {
             mock(CityRepository::class.java),
             mock(NationRepository::class.java),
             mock(GeneralRepository::class.java),
+            mock(MessageRepository::class.java),
             mock(MapService::class.java),
             mock(com.opensam.service.HistoryService::class.java),
+            mock(InheritanceService::class.java),
         )
         battleEngine = BattleEngine()
     }

@@ -2,6 +2,7 @@ package com.opensam.engine
 
 import com.opensam.repository.CityRepository
 import com.opensam.repository.GeneralRepository
+import com.opensam.repository.MessageRepository
 import com.opensam.repository.NationRepository
 import com.opensam.service.MapService
 import org.junit.jupiter.api.Assertions.*
@@ -24,7 +25,7 @@ class NpcSpawnServiceTest {
         nationRepository = mock(NationRepository::class.java)
         generalRepository = mock(GeneralRepository::class.java)
         mapService = mock(MapService::class.java)
-        service = NpcSpawnService(nationRepository, cityRepository, generalRepository, mapService)
+        service = NpcSpawnService(nationRepository, cityRepository, generalRepository, mock(MessageRepository::class.java), mapService)
     }
 
     // ========== derivePoliticsFromStats formula ==========

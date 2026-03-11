@@ -5,6 +5,7 @@ import com.opensam.engine.EventService
 import com.opensam.entity.*
 import com.opensam.repository.*
 import com.opensam.service.GameConstService
+import com.opensam.service.InheritanceService
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -47,7 +48,7 @@ class BattleServiceTest {
         service = BattleService(
             cityRepository, generalRepository, nationRepository,
             messageRepository, eventService, diplomacyService,
-            modifierService, gameConstService,
+            modifierService, gameConstService, mock(InheritanceService::class.java),
         )
     }
 
