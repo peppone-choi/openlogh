@@ -3,6 +3,7 @@ package com.opensam.engine
 import com.opensam.entity.*
 import com.opensam.repository.CityRepository
 import com.opensam.repository.GeneralRepository
+import com.opensam.repository.MessageRepository
 import com.opensam.repository.NationRepository
 import com.opensam.service.MapService
 import org.slf4j.LoggerFactory
@@ -15,6 +16,7 @@ class NpcSpawnService(
     private val nationRepository: NationRepository,
     private val cityRepository: CityRepository,
     private val generalRepository: GeneralRepository,
+    private val messageRepository: MessageRepository,
     private val mapService: MapService,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
@@ -101,6 +103,21 @@ class NpcSpawnService(
             npcCreatedCityIds.add(emptyCity.id)
         }
 
+        for (npcCityId in npcCreatedCityIds) {
+            val npcCity = cities.find { it.id == npcCityId } ?: continue
+            messageRepository.save(
+                Message(
+                    worldId = worldId,
+                    mailboxCode = "world_history",
+                    messageType = "history",
+                    payload = mutableMapOf(
+                        "message" to "<S>◆</>ⓤ${npcCity.name}이(가) ${npcCity.name}에서 건국하였습니다.",
+                        "year" to world.currentYear.toInt(),
+                        "month" to world.currentMonth.toInt(),
+                    ),
+                )
+            )
+        }
         if (npcCreatedCityIds.isNotEmpty()) {
             log.info("Created {} NPC nations in world {}", npcCreatedCityIds.size, worldId)
         }
@@ -488,6 +505,24 @@ class NpcSpawnService(
 
         // Set mutual war declarations: 24 months
         // All existing nations vs all invader nations
+        for (invNationId in invaderNationIds) {
+            val invCity = lv4Cities.find { c -> nationRepository.findById(invNationId).orElse(null)?.capitalCityId == c.id }
+            val invNation = nationRepository.findById(invNationId).orElse(null)
+            if (invCity != null && invNation != null) {
+                messageRepository.save(
+                    Message(
+                        worldId = worldId,
+                        mailboxCode = "world_history",
+                        messageType = "history",
+                        payload = mutableMapOf(
+                            "message" to "<R>★</>${invNation.name}이(가) ${invCity.name}에 출현하였습니다!",
+                            "year" to world.currentYear.toInt(),
+                            "month" to world.currentMonth.toInt(),
+                        ),
+                    )
+                )
+            }
+        }
         if (invaderNationIds.isNotEmpty()) {
             log.info("Raised {} invader nations in world {}", invaderNationIds.size, worldId)
         }

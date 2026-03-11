@@ -56,8 +56,14 @@ class EconomyService @Autowired constructor(
         private const val BASE_POP_INCREASE = 5000
         private const val MAX_DED_LEVEL = 30
 
-        // nationLevelByCityCnt[level] = minimum lv4+ city count
         private val NATION_LEVEL_THRESHOLDS = intArrayOf(0, 1, 2, 5, 8, 11, 16, 21)
+
+        private val NATION_LEVEL_NAME = arrayOf(
+            "방랑군", "호족", "군벌", "주자사", "주목", "공", "왕", "황제"
+        )
+
+        fun getNationLevelName(level: Int): String =
+            NATION_LEVEL_NAME.getOrElse(level) { "???" }
     }
 
     private data class DisasterOrBoomEntry(
@@ -99,7 +105,7 @@ class EconomyService @Autowired constructor(
         }
 
         updateCitySupply(world, nations, cities, generals)
-        updateNationLevel(nations, cities)
+        updateNationLevel(world, nations, cities, generals)
 
         saveCities(ports, cities)
         saveNations(ports, nations)
@@ -404,7 +410,8 @@ class EconomyService @Autowired constructor(
         val ports = worldPortFactory.create(world.id.toLong())
         val cities = ports.allCities().map { it.toEntity() }
         val nations = ports.allNations().map { it.toEntity() }
-        updateNationLevel(nations, cities)
+        val generals = ports.allGenerals().map { it.toEntity() }
+        updateNationLevel(world, nations, cities, generals)
         saveNations(ports, nations)
     }
 
@@ -503,8 +510,9 @@ class EconomyService @Autowired constructor(
 
     // ── Phase A2: updateNationLevel (legacy thresholds + rewards) ──
 
-    private fun updateNationLevel(nations: List<Nation>, cities: List<City>) {
+    private fun updateNationLevel(world: WorldState, nations: List<Nation>, cities: List<City>, generals: List<General>) {
         val citiesByNation = cities.groupBy { it.nationId }
+        val generalsByNation = generals.filter { it.npcState.toInt() != 5 }.groupBy { it.nationId }
 
         for (nation in nations) {
             val nationCities = citiesByNation[nation.id] ?: continue
@@ -519,13 +527,49 @@ class EconomyService @Autowired constructor(
             }
 
             if (newLevel > nation.level.toInt()) {
-                val levelDiff = newLevel - nation.level.toInt()
+                val oldLevel = nation.level.toInt()
                 nation.level = newLevel.toShort()
-                // Level-up reward: gold and rice
                 nation.gold += newLevel * 1000
                 nation.rice += newLevel * 1000
-                log.info("Nation {} leveled up to {} (reward: gold={}, rice={})",
-                    nation.name, newLevel, newLevel * 1000, newLevel * 1000)
+
+                // Legacy parity: log 【작위】 history for nation level-up
+                val nationName = nation.name
+                val lordName = generalsByNation[nation.id]
+                    ?.firstOrNull { it.officerLevel.toInt() == 12 }?.name ?: "군주"
+                val oldLevelText = getNationLevelName(oldLevel)
+                val newLevelText = getNationLevelName(newLevel)
+
+                val globalMsg = when (newLevel) {
+                    7 -> "【작위】 ${nationName} $oldLevelText ${lordName}이(가) ${newLevelText}로 옹립되었습니다."
+                    6 -> "【작위】 ${nationName}의 ${lordName}이(가) ${newLevelText}로 책봉되었습니다."
+                    5, 4, 3 -> "【작위】 ${nationName}의 ${lordName}이(가) ${newLevelText}로 임명되었습니다."
+                    2 -> "【작위】 ${lordName}이(가) 독립하여 ${nationName}(이)라는 ${newLevelText}로 나섰습니다."
+                    else -> "【작위】 ${nationName}의 ${lordName}이(가) ${newLevelText}로 승격되었습니다."
+                }
+                val nationMsg = when (newLevel) {
+                    7 -> "${nationName} $oldLevelText ${lordName}이(가) ${newLevelText}로 옹립"
+                    6 -> "${nationName}의 ${lordName}이(가) ${newLevelText}로 책봉"
+                    5, 4, 3 -> "${nationName}의 ${lordName}이(가) ${newLevelText}로 임명됨"
+                    2 -> "${lordName}이(가) 독립하여 ${nationName}(이)라는 ${newLevelText}로 나서다"
+                    else -> "${nationName}의 ${lordName}이(가) ${newLevelText}로 승격됨"
+                }
+
+                historyService.logWorldHistory(
+                    worldId = world.id.toLong(),
+                    message = globalMsg,
+                    year = world.currentYear.toInt(),
+                    month = world.currentMonth.toInt(),
+                )
+                historyService.logNationHistory(
+                    worldId = world.id.toLong(),
+                    nationId = nation.id,
+                    message = nationMsg,
+                    year = world.currentYear.toInt(),
+                    month = world.currentMonth.toInt(),
+                )
+
+                log.info("Nation {} leveled up to {} ({}) (reward: gold={}, rice={})",
+                    nation.name, newLevel, newLevelText, newLevel * 1000, newLevel * 1000)
             }
         }
     }

@@ -7,6 +7,7 @@ import com.opensam.engine.modifier.ActionModifier
 import com.opensam.engine.modifier.ModifierService
 import com.opensam.engine.modifier.StatContext
 import com.opensam.entity.City
+import com.opensam.model.CrewType
 import com.opensam.entity.General
 import com.opensam.entity.Message
 import com.opensam.entity.WorldState
@@ -128,7 +129,146 @@ class BattleService(
         generalRepository.save(attacker)
         defenders.forEach { it.general.let { gen -> generalRepository.save(gen) } }
 
+        // ── Battle log persistence (legacy parity: pushBattleResultTemplate) ──
+        persistBattleLogs(
+            world = world,
+            attacker = attacker,
+            attackerUnit = attackerUnit,
+            defenders = defenderEntries.map { it.first },
+            targetCity = targetCity,
+            result = result,
+        )
+
         return result
+    }
+
+    private fun persistBattleLogs(
+        world: WorldState,
+        attacker: General,
+        attackerUnit: WarUnitGeneral,
+        defenders: List<WarUnitGeneral>,
+        targetCity: City,
+        result: BattleResult,
+    ) {
+        val worldId = world.id.toLong()
+        val year = world.currentYear.toInt()
+        val month = world.currentMonth.toInt()
+        val attackerCrewType = CrewType.fromCode(attacker.crewType.toInt())
+
+        val messages = mutableListOf<Message>()
+
+        fun buildSummary(
+            me: General, meUnit: WarUnitGeneral, meCrewType: CrewType?,
+            opp: String, oppCrewType: CrewType?, oppRemain: Int, oppKilled: Int,
+            warTypeStr: String,
+        ): String {
+            val meName = me.name
+            val meTypeName = meCrewType?.displayName ?: "병종${me.crewType}"
+            val meRemain = meUnit.hp
+            val meKilled = -(meUnit.maxHp - meUnit.hp)
+            val oppTypeName = oppCrewType?.displayName ?: "?"
+            return "【${meTypeName}】${meName} ${meRemain}(${meKilled}) ${warTypeStr} 【${oppTypeName}】${opp} ${oppRemain}(${-oppKilled})"
+        }
+
+        val primaryDefender = defenders.firstOrNull()
+        val defenderName = primaryDefender?.general?.name ?: targetCity.name
+        val defenderCrewType = primaryDefender?.let { CrewType.fromCode(it.crewType) }
+        val defenderRemain = primaryDefender?.hp ?: 0
+        val defenderKilled = primaryDefender?.let { it.maxHp - it.hp } ?: 0
+
+        val attackSummary = buildSummary(
+            me = attacker, meUnit = attackerUnit, meCrewType = attackerCrewType,
+            opp = defenderName, oppCrewType = defenderCrewType,
+            oppRemain = defenderRemain, oppKilled = defenderKilled,
+            warTypeStr = "→",
+        )
+
+        // battle_result for attacker (legacy: pushGeneralBattleResultLog)
+        messages += Message(
+            worldId = worldId,
+            mailboxCode = "battle_result",
+            messageType = "log",
+            srcId = attacker.id,
+            destId = attacker.id,
+            payload = mutableMapOf("message" to "<S>◆</>$year 년 ${month}월:$attackSummary", "year" to year, "month" to month),
+        )
+
+        // battle_detail for attacker — all phase logs (legacy: pushGeneralBattleDetailLog)
+        val detailText = result.attackerLogs.joinToString("\n")
+        if (detailText.isNotBlank()) {
+            messages += Message(
+                worldId = worldId,
+                mailboxCode = "battle_detail",
+                messageType = "log",
+                srcId = attacker.id,
+                destId = attacker.id,
+                payload = mutableMapOf("message" to detailText, "year" to year, "month" to month),
+            )
+        }
+
+        // general_action for attacker (legacy: pushBattleResultTemplate also pushes to generalActionLog)
+        messages += Message(
+            worldId = worldId,
+            mailboxCode = "general_action",
+            messageType = "log",
+            srcId = attacker.id,
+            destId = attacker.id,
+            payload = mutableMapOf("message" to "<S>◆</>$year 년 ${month}월:$attackSummary", "year" to year, "month" to month),
+        )
+
+        // Defender battle logs (for each general defender)
+        for (defUnit in defenders) {
+            val defGen = defUnit.general
+            val defCrewType = CrewType.fromCode(defGen.crewType.toInt())
+
+            val defenseSummary = buildSummary(
+                me = defGen, meUnit = defUnit, meCrewType = defCrewType,
+                opp = attacker.name, oppCrewType = attackerCrewType,
+                oppRemain = attackerUnit.hp, oppKilled = attackerUnit.maxHp - attackerUnit.hp,
+                warTypeStr = "←",
+            )
+
+            messages += Message(
+                worldId = worldId,
+                mailboxCode = "battle_result",
+                messageType = "log",
+                srcId = defGen.id,
+                destId = defGen.id,
+                payload = mutableMapOf("message" to "<S>◆</>$year 년 ${month}월:$defenseSummary", "year" to year, "month" to month),
+            )
+
+            messages += Message(
+                worldId = worldId,
+                mailboxCode = "battle_detail",
+                messageType = "log",
+                srcId = defGen.id,
+                destId = defGen.id,
+                payload = mutableMapOf("message" to detailText, "year" to year, "month" to month),
+            )
+
+            messages += Message(
+                worldId = worldId,
+                mailboxCode = "general_action",
+                messageType = "log",
+                srcId = defGen.id,
+                destId = defGen.id,
+                payload = mutableMapOf("message" to "<S>◆</>$year 년 ${month}월:$defenseSummary", "year" to year, "month" to month),
+            )
+        }
+
+        // world_record: global action log (legacy: pushGlobalActionLog for battle)
+        val globalSummary = "${attacker.name}이(가) ${targetCity.name}에서 전투 (${if (result.attackerWon) "승리" else "패배"})"
+        messages += Message(
+            worldId = worldId,
+            mailboxCode = "world_record",
+            messageType = "log",
+            srcId = attacker.id,
+            payload = mutableMapOf("message" to "<C>●</>$month 월:$globalSummary", "year" to year, "month" to month),
+        )
+
+        if (messages.isNotEmpty()) {
+            messageRepository.saveAll(messages)
+        }
     }
 
     private fun occupyCity(city: City, attacker: General, world: WorldState, rng: Random) {
