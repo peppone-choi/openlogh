@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 
 const api = axios.create({
     baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api',
@@ -27,7 +27,21 @@ api.interceptors.response.use(
                 window.location.href = '/login';
             }
         }
-        return Promise.reject(error);
+
+        const apiError = error as AxiosError<
+            | { error?: string; message?: string; errors?: Record<string, string> }
+            | undefined
+        >;
+        const payload = apiError.response?.data;
+        if (apiError.response?.status === 400) {
+            const validationErrors = payload?.errors ? Object.values(payload.errors).filter(Boolean) : [];
+            const message = payload?.error || payload?.message || validationErrors[0];
+            if (message) {
+                apiError.message = message;
+            }
+        }
+
+        return Promise.reject(apiError);
     }
 );
 
