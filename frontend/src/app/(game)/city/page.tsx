@@ -153,7 +153,7 @@ function CityPageContent() {
         try {
             const [nationsRes, citiesRes, generalsRes, mapRes, myNationRes] = await Promise.all([
                 nationApi.listByWorld(currentWorld.id),
-                cityApi.listByWorld(currentWorld.id),
+                cityApi.listVisibleByWorld(currentWorld.id),
                 generalApi.listByWorld(currentWorld.id),
                 mapApi.get(mapCode),
                 myGeneral.nationId > 0 ? nationApi.get(myGeneral.nationId) : Promise.resolve({ data: null }),

@@ -1,9 +1,11 @@
 package com.opensam.service
 
 import com.opensam.entity.City
+import com.opensam.entity.General
 import com.opensam.model.CityConst
 import com.opensam.repository.CityRepository
 import com.opensam.repository.GeneralRepository
+import com.opensam.repository.NationRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import kotlin.math.roundToInt
@@ -13,6 +15,7 @@ class CityService(
     private val cityRepository: CityRepository,
     private val mapService: MapService,
     private val generalRepository: GeneralRepository,
+    private val nationRepository: NationRepository,
 ) {
     companion object {
         // Region codes matching legacy CityConstBase::$regionMap
@@ -71,6 +74,27 @@ class CityService(
 
     fun listByWorld(worldId: Long): List<City> {
         return cityRepository.findByWorldId(worldId)
+    }
+
+    fun listByWorldMaskedForGeneral(worldId: Long, general: General): List<City> {
+        val cities = cityRepository.findByWorldId(worldId)
+        if (general.worldId != worldId) return cities.map(::toMaskedView)
+        val canSeeAllMilitary = general.permission == "spy"
+        val visibleCityIds = if (canSeeAllMilitary || general.nationId <= 0L) {
+            emptySet()
+        } else {
+            nationRepository.findById(general.nationId).orElse(null)
+                ?.let { extractVisibleCityIds(it.spy) }
+                ?: emptySet()
+        }
+
+        return cities.map { city ->
+            if (isCityVisibleToGeneral(city, general, canSeeAllMilitary, visibleCityIds)) {
+                city
+            } else {
+                toMaskedView(city)
+            }
+        }
     }
 
     fun getById(id: Long): City? {
@@ -332,5 +356,87 @@ class CityService(
      */
     fun getLowTrustCities(worldId: Long, threshold: Float = 30f): List<City> {
         return cityRepository.findByWorldId(worldId).filter { it.trust < threshold && it.nationId != 0L }
+    }
+
+    private fun isCityVisibleToGeneral(
+        city: City,
+        general: General,
+        canSeeAllMilitary: Boolean,
+        visibleCityIds: Set<Long>,
+    ): Boolean {
+        if (city.nationId == 0L) return true
+        if (city.nationId == general.nationId) return true
+        if (canSeeAllMilitary) return true
+        return visibleCityIds.contains(city.id)
+    }
+
+    private fun extractVisibleCityIds(spyInfo: Map<String, Any>): Set<Long> {
+        val result = mutableSetOf<Long>()
+        for ((rawKey, rawValue) in spyInfo) {
+            val keyDigits = rawKey.filter { it.isDigit() }
+            if (keyDigits.isNotBlank()) {
+                keyDigits.toLongOrNull()?.let { cityId ->
+                    if (cityId > 0L && isTruthySpyValue(rawValue)) {
+                        result.add(cityId)
+                    }
+                }
+            }
+
+            when (rawValue) {
+                is Number -> if (rawValue.toLong() > 0L) result.add(rawValue.toLong())
+                is String -> rawValue.toLongOrNull()?.let { if (it > 0L) result.add(it) }
+                is List<*> -> rawValue.forEach { item ->
+                    when (item) {
+                        is Number -> if (item.toLong() > 0L) result.add(item.toLong())
+                        is String -> item.toLongOrNull()?.let { if (it > 0L) result.add(it) }
+                    }
+                }
+            }
+        }
+        return result
+    }
+
+    private fun isTruthySpyValue(value: Any?): Boolean {
+        return when (value) {
+            is Boolean -> value
+            is Number -> value.toInt() > 0
+            is String -> value.toIntOrNull()?.let { it > 0 } ?: value.equals("true", ignoreCase = true)
+            is List<*> -> value.isNotEmpty()
+            else -> value != null
+        }
+    }
+
+    private fun toMaskedView(city: City): City {
+        return City(
+            id = city.id,
+            worldId = city.worldId,
+            name = city.name,
+            mapCityId = city.mapCityId,
+            level = city.level,
+            nationId = city.nationId,
+            supplyState = 0,
+            frontState = 0,
+            pop = 0,
+            popMax = 0,
+            agri = 0,
+            agriMax = 0,
+            comm = 0,
+            commMax = 0,
+            secu = 0,
+            secuMax = 0,
+            trust = 0f,
+            trade = 0,
+            dead = 0,
+            def = 0,
+            defMax = 0,
+            wall = 0,
+            wallMax = 0,
+            officerSet = 0,
+            state = city.state,
+            region = city.region,
+            term = city.term,
+            conflict = mutableMapOf(),
+            meta = city.meta.toMutableMap(),
+        )
     }
 }

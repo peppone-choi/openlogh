@@ -115,6 +115,7 @@ export const nationApi = {
 // City API
 export const cityApi = {
     listByWorld: (worldId: number) => api.get<City[]>(`/worlds/${worldId}/cities`),
+    listVisibleByWorld: (worldId: number) => api.get<City[]>(`/worlds/${worldId}/cities/visible`),
     get: (id: number) => api.get<City>(`/cities/${id}`),
     listByNation: (nationId: number) => api.get<City[]>(`/nations/${nationId}/cities`),
 };
