@@ -58,6 +58,8 @@ class 선양(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
         pushHistoryLog("<D><b>${nationName}</b></>의 군주자리를 <Y>${destGeneralName}</>에게 선양")
         pushGlobalLog("<Y>${generalName}</>${josaYi} <Y>${destGeneralName}</>에게 군주 자리를 선양했습니다.")
         pushGlobalHistoryLog("<Y><b>【선양】</b></><Y>${generalName}</>${josaYi} <D><b>${nationName}</b></>의 군주 자리를 <Y>${destGeneralName}</>에게 선양했습니다.")
+        pushLog("_destGeneralLog:${dg.id}:<Y>${generalName}</>에게서 군주의 자리를 물려받습니다.")
+        pushLog("_destGeneralHistory:${dg.id}:<D><b>${nationName}</b></>의 군주자리를 물려 받음")
 
         // Legacy PHP: experience *= 0.7
         val expMultiplier = 0.7
@@ -65,7 +67,7 @@ class 선양(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
         return CommandResult(
             success = true,
             logs = logs,
-            message = """{"statChanges":{"officerLevel":1,"officerCity":0,"experienceMultiplier":$expMultiplier},"destGeneralChanges":{"generalId":${dg.id},"officerLevel":12,"officerCity":0},"destGeneralLogs":["<Y>${generalName}</>에게서 군주의 자리를 물려받습니다.","[HISTORY]<D><b>${nationName}</b></>의 군주자리를 물려 받음"]}"""
+            message = """{"statChanges":{"officerLevel":1,"officerCity":0,"experienceMultiplier":$expMultiplier},"nationChanges":{"chiefGeneralId":${dg.id}},"destGeneralChanges":{"generalId":${dg.id},"officerLevel":12,"officerCity":0}}"""
         )
     }
 }

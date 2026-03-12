@@ -158,6 +158,10 @@ object CommandResultApplicator {
     private fun applyStatChanges(general: General, changes: Map<String, Any>) {
         for ((key, rawValue) in changes) {
             val value = (rawValue as? Number) ?: continue
+            if (key == "experienceMultiplier") {
+                general.experience = maxOf(0, (general.experience * value.toDouble()).toInt())
+                continue
+            }
             if (key in SET_FIELDS) {
                 applyStatSet(general, key, value.toInt())
             } else {
@@ -230,6 +234,7 @@ object CommandResultApplicator {
                 "rice" -> nation.rice = maxOf(0, nation.rice + value)
                 "tech" -> nation.tech = maxOf(0f, nation.tech + value)
                 "power" -> nation.power = maxOf(0, nation.power + value)
+                "chiefGeneralId" -> nation.chiefGeneralId = value.toLong()
             }
         }
     }
