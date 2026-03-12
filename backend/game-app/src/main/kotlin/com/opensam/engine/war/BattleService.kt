@@ -16,6 +16,7 @@ import com.opensam.repository.GeneralRepository
 import com.opensam.repository.MessageRepository
 import com.opensam.repository.NationRepository
 import com.opensam.service.GameConstService
+import com.opensam.service.HistoryService
 import com.opensam.service.InheritanceService
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -33,6 +34,7 @@ class BattleService(
     private val diplomacyService: DiplomacyService,
     private val modifierService: ModifierService,
     private val gameConstService: GameConstService,
+    private val historyService: HistoryService,
     private val inheritanceService: InheritanceService,
 ) {
     private val logger = LoggerFactory.getLogger(BattleService::class.java)
@@ -442,6 +444,8 @@ class BattleService(
             logConquestReward(world, attacker.nationId, destroyedNation.name, goldReward, riceReward)
         }
 
+        logNationDestroyed(world, attackerNation?.name ?: attacker.name, attacker.nationId, destroyedNation.name)
+
         destroyedNation.level = 0
         nationRepository.save(destroyedNation)
 
@@ -548,6 +552,31 @@ class BattleService(
                 ),
             )
         )
+    }
+
+    private fun logNationDestroyed(
+        world: WorldState,
+        attackerNationName: String,
+        attackerNationId: Long,
+        destroyedNationName: String,
+    ) {
+        val year = world.currentYear.toInt()
+        val month = world.currentMonth.toInt()
+        historyService.logWorldHistory(
+            world.id.toLong(),
+            "【멸망】 ${destroyedNationName} 세력이 ${attackerNationName}에게 정복되어 멸망했습니다.",
+            year,
+            month,
+        )
+        if (attackerNationId > 0L) {
+            historyService.logNationHistory(
+                world.id.toLong(),
+                attackerNationId,
+                "${destroyedNationName} 정복",
+                year,
+                month,
+            )
+        }
     }
 
     /**

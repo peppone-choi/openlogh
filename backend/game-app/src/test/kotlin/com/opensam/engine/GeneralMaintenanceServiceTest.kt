@@ -17,6 +17,7 @@ import com.opensam.repository.NationRepository
 import com.opensam.repository.NationTurnRepository
 import com.opensam.repository.OldGeneralRepository
 import com.opensam.repository.TroopRepository
+import com.opensam.service.HistoryService
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -39,6 +40,7 @@ class GeneralMaintenanceServiceTest {
     private lateinit var oldGeneralRepository: OldGeneralRepository
     private lateinit var generalTurnRepository: GeneralTurnRepository
     private lateinit var generalAccessLogRepository: GeneralAccessLogRepository
+    private lateinit var historyService: HistoryService
 
     @BeforeEach
     fun setUp() {
@@ -54,6 +56,7 @@ class GeneralMaintenanceServiceTest {
         oldGeneralRepository = mock(OldGeneralRepository::class.java)
         generalTurnRepository = mock(GeneralTurnRepository::class.java)
         generalAccessLogRepository = mock(GeneralAccessLogRepository::class.java)
+        historyService = mock(HistoryService::class.java)
 
         `when`(troopRepository.findById(anyLong())).thenReturn(Optional.empty())
         `when`(oldGeneralRepository.findByServerIdAndGeneralNo(anyString(), anyLong())).thenReturn(null)
@@ -70,6 +73,7 @@ class GeneralMaintenanceServiceTest {
             oldGeneralRepository,
             generalTurnRepository,
             generalAccessLogRepository,
+            historyService,
         )
     }
 
@@ -414,5 +418,7 @@ class GeneralMaintenanceServiceTest {
         assertTrue(diplomacy.isDead)
         assertFalse(diplomacy.isShowing)
         verify(nationTurnRepository).delete(nationTurn)
+        verify(historyService).logWorldHistory(eq(1L), contains("멸망"), eq(200), eq(6))
+        verify(historyService).logNationHistory(eq(1L), eq(1L), contains("사망"), eq(200), eq(6))
     }
 }

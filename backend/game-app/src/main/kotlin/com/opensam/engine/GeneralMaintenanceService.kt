@@ -15,6 +15,7 @@ import com.opensam.repository.NationTurnRepository
 import com.opensam.repository.OldGeneralRepository
 import com.opensam.repository.TroopRepository
 import com.opensam.service.GameConstService
+import com.opensam.service.HistoryService
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import kotlin.math.abs
@@ -35,6 +36,7 @@ class GeneralMaintenanceService(
     private val oldGeneralRepository: OldGeneralRepository,
     private val generalTurnRepository: GeneralTurnRepository,
     private val generalAccessLogRepository: GeneralAccessLogRepository,
+    private val historyService: HistoryService,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -284,6 +286,8 @@ class GeneralMaintenanceService(
     }
 
     private fun collapseNation(world: WorldState, nation: Nation, deadGeneral: General, allGenerals: List<General>) {
+        logNationCollapse(world, nation, deadGeneral)
+
         allGenerals.asSequence()
             .filter { it.nationId == nation.id && it.id != deadGeneral.id }
             .forEach { general ->
@@ -321,6 +325,24 @@ class GeneralMaintenanceService(
         nation.gennum = 0
         nation.power = 0
         nation.level = 0
+    }
+
+    private fun logNationCollapse(world: WorldState, nation: Nation, deadGeneral: General) {
+        val year = world.currentYear.toInt()
+        val month = world.currentMonth.toInt()
+        historyService.logWorldHistory(
+            world.id.toLong(),
+            "【멸망】 ${nation.name} 세력이 군주 ${deadGeneral.name}의 사망으로 멸망했습니다.",
+            year,
+            month,
+        )
+        historyService.logNationHistory(
+            world.id.toLong(),
+            nation.id,
+            "군주 ${deadGeneral.name}의 사망으로 세력이 멸망했습니다.",
+            year,
+            month,
+        )
     }
 
     private fun disbandLedTroop(general: General, allGenerals: List<General>) {

@@ -5,6 +5,7 @@ import com.opensam.engine.EventService
 import com.opensam.entity.*
 import com.opensam.repository.*
 import com.opensam.service.GameConstService
+import com.opensam.service.HistoryService
 import com.opensam.service.InheritanceService
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
@@ -23,6 +24,7 @@ class BattleServiceTest {
     private lateinit var messageRepository: MessageRepository
     private lateinit var eventService: EventService
     private lateinit var diplomacyService: DiplomacyService
+    private lateinit var historyService: HistoryService
 
     @Suppress("UNCHECKED_CAST")
     private fun <T> anyNonNull(): T = org.mockito.Mockito.any<T>() as T
@@ -35,6 +37,7 @@ class BattleServiceTest {
         messageRepository = mock(MessageRepository::class.java)
         eventService = mock(EventService::class.java)
         diplomacyService = mock(DiplomacyService::class.java)
+        historyService = mock(HistoryService::class.java)
 
         `when`(cityRepository.save(anyNonNull<City>())).thenAnswer { it.arguments[0] }
         `when`(generalRepository.save(anyNonNull<General>())).thenAnswer { it.arguments[0] }
@@ -48,7 +51,7 @@ class BattleServiceTest {
         service = BattleService(
             cityRepository, generalRepository, nationRepository,
             messageRepository, eventService, diplomacyService,
-            modifierService, gameConstService, mock(InheritanceService::class.java),
+            modifierService, gameConstService, historyService, mock(InheritanceService::class.java),
         )
     }
 
@@ -192,6 +195,8 @@ class BattleServiceTest {
         if (result.cityOccupied) {
             verify(eventService).dispatchEvents(world, "OCCUPY_CITY")
             verify(eventService).dispatchEvents(world, "DESTROY_NATION")
+            verify(historyService).logWorldHistory(eq(1L), contains("멸망"), eq(200), eq(3))
+            verify(historyService).logNationHistory(eq(1L), eq(1L), contains("정복"), eq(200), eq(3))
         }
     }
 
