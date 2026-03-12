@@ -50,7 +50,7 @@ class HistoryService(
     }
 
     fun getWorldRecords(worldId: Long): List<Message> {
-        return messageRepository.findByWorldIdAndMailboxCodeOrderBySentAtDesc(worldId, "general_record")
+        return messageRepository.findByWorldIdAndMailboxCodeOrderBySentAtDesc(worldId, "world_record")
     }
 
     fun getGeneralRecords(generalId: Long): List<Message> {

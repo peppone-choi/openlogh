@@ -29,7 +29,7 @@ interface MessageRepository : JpaRepository<Message, Long> {
             SELECT *
             FROM message m
             WHERE m.world_id = :worldId
-              AND m.mailbox_code IN ('world_history', 'general_record')
+              AND m.mailbox_code IN ('world_history', 'world_record')
               AND CAST(m.payload->>'year' AS integer) = :year
               AND CAST(m.payload->>'month' AS integer) = :month
             ORDER BY m.sent_at ASC, m.id ASC
@@ -48,7 +48,7 @@ interface MessageRepository : JpaRepository<Message, Long> {
             SELECT *
             FROM message m
             WHERE m.world_id = :worldId
-              AND m.mailbox_code IN ('world_history', 'general_record')
+              AND m.mailbox_code IN ('world_history', 'world_record')
               AND CAST(m.payload->>'year' AS integer) = :year
             ORDER BY m.sent_at DESC, m.id DESC
             """,
