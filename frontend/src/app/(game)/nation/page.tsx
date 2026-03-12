@@ -28,6 +28,7 @@ import {
     CITY_LEVEL_NAMES,
     NATION_LEVEL_LABELS,
 } from '@/lib/game-utils';
+import { formatLog } from '@/lib/formatLog';
 import {
     calcCityGoldIncome,
     calcCityRiceIncome,
@@ -1068,7 +1069,7 @@ function NationPageContent() {
                                                                 <span className="text-muted-foreground mr-2">
                                                                     {msg.sentAt}
                                                                 </span>
-                                                                {text}
+                                                                {formatLog(text)}
                                                             </div>
                                                         );
                                                     })}

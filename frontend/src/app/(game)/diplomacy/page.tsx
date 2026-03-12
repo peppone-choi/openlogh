@@ -20,6 +20,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { formatLog } from '@/lib/formatLog';
 
 const STATE_LABELS: Record<string, string> = {
     war: '전쟁',
@@ -914,7 +915,7 @@ export default function DiplomacyPage() {
                                                 <span className="shrink-0 text-xs text-muted-foreground mt-0.5 w-24">
                                                     {date ? formatDate(date) : '-'}
                                                 </span>
-                                                <span className="text-sm">{msg}</span>
+                                                <span className="text-sm">{formatLog(msg)}</span>
                                             </div>
                                         );
                                     })}
