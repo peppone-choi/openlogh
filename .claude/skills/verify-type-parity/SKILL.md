@@ -29,9 +29,9 @@ description: FE TypeScript 타입 ↔ BE Kotlin DTO/Entity 간 strict 타입 매
 | ----------------------------------------------------- | ------------------------------- |
 | `frontend/src/types/index.ts`                         | 프론트엔드 공유 타입 정의       |
 | `frontend/src/lib/gameApi.ts`                         | API 클라이언트 (응답 타입 사용) |
-| `backend/src/main/kotlin/com/opensam/dto/*.kt`        | 백엔드 공유 DTO                 |
-| `backend/src/main/kotlin/com/opensam/entity/*.kt`     | JPA 엔티티                      |
-| `backend/src/main/kotlin/com/opensam/controller/*.kt` | 인라인 DTO 탐지 대상            |
+| `backend/game-app/src/main/kotlin/com/opensam/dto/*.kt`        | 백엔드 공유 DTO                 |
+| `backend/game-app/src/main/kotlin/com/opensam/entity/*.kt`     | JPA 엔티티                      |
+| `backend/game-app/src/main/kotlin/com/opensam/controller/*.kt` | 인라인 DTO 탐지 대상            |
 
 ## Workflow
 
@@ -76,12 +76,12 @@ grep -n "api\.\(get\|post\|put\|delete\|patch\)<{" frontend/src/lib/gameApi.ts 2
 
 ### Step 3: Controller 인라인 DTO 탐지
 
-**파일:** `backend/src/main/kotlin/com/opensam/controller/*.kt`
+**파일:** `backend/game-app/src/main/kotlin/com/opensam/controller/*.kt`
 
 **검사:** Controller 파일 내에 `data class`가 정의되어 있는지 찾습니다.
 
 ```bash
-grep -rn "^data class\|^  data class" backend/src/main/kotlin/com/opensam/controller/ 2>/dev/null
+grep -rn "^data class\|^  data class" backend/game-app/src/main/kotlin/com/opensam/controller/ 2>/dev/null
 ```
 
 각 발견에 대해:
@@ -94,13 +94,13 @@ grep -rn "^data class\|^  data class" backend/src/main/kotlin/com/opensam/contro
 
 ### Step 4: 백엔드 DTO ↔ 프론트엔드 타입 1:1 매칭
 
-**파일:** `backend/src/main/kotlin/com/opensam/dto/*.kt`, `frontend/src/types/index.ts`
+**파일:** `backend/game-app/src/main/kotlin/com/opensam/dto/*.kt`, `frontend/src/types/index.ts`
 
 **검사:** 백엔드 dto/ 패키지의 모든 data class에 대응하는 프론트엔드 TypeScript 타입이 존재하는지 확인합니다.
 
 ```bash
 # 백엔드 DTO 클래스 목록
-grep -rn "^data class" backend/src/main/kotlin/com/opensam/dto/ 2>/dev/null
+grep -rn "^data class" backend/game-app/src/main/kotlin/com/opensam/dto/ 2>/dev/null
 
 # 프론트엔드 타입 목록
 grep -n "^export interface\|^export type" frontend/src/types/index.ts 2>/dev/null
@@ -117,13 +117,13 @@ grep -n "^export interface\|^export type" frontend/src/types/index.ts 2>/dev/nul
 
 ### Step 5: 핵심 엔티티 필드 매칭
 
-**파일:** `backend/src/main/kotlin/com/opensam/entity/General.kt`, `frontend/src/types/index.ts`
+**파일:** `backend/game-app/src/main/kotlin/com/opensam/entity/General.kt`, `frontend/src/types/index.ts`
 
 **검사:** General/City/Nation/Troop/Diplomacy 등 핵심 엔티티의 직렬화 대상 필드가 프론트엔드 타입에 모두 존재하는지 확인합니다.
 
 ```bash
 # General 엔티티 필드 추출
-grep -n "var " backend/src/main/kotlin/com/opensam/entity/General.kt 2>/dev/null
+grep -n "var " backend/game-app/src/main/kotlin/com/opensam/entity/General.kt 2>/dev/null
 
 # TS General 인터페이스 필드 추출
 grep -A 80 "export interface General " frontend/src/types/index.ts 2>/dev/null | head -80
@@ -146,7 +146,7 @@ grep -A 80 "export interface General " frontend/src/types/index.ts 2>/dev/null |
 
 ```bash
 # 백엔드 날짜 필드
-grep -rn "OffsetDateTime\|LocalDateTime\|Instant" backend/src/main/kotlin/com/opensam/entity/ 2>/dev/null
+grep -rn "OffsetDateTime\|LocalDateTime\|Instant" backend/game-app/src/main/kotlin/com/opensam/entity/ 2>/dev/null
 
 # 프론트엔드에서 대응 필드의 타입
 grep -n "createdAt\|updatedAt\|sentAt\|turnTime\|commandEndTime\|startedAt" frontend/src/types/index.ts 2>/dev/null

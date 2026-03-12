@@ -1749,6 +1749,8 @@ class GeneralAI(
         val ownedCities = nationCities.filter { it.nationId == nationId }
         val ownCityNames = ownedCities.map { it.name }.toSet()
         val ownRegionIds = ownedCities.map { it.region.toInt() }.toSet()
+        val mapName = (world.config["mapName"] as? String) ?: "che"
+        val regionNameToId = mapService.getRegions(mapName).entries.associate { (regionId, regionName) -> regionName to regionId }
         val tech = nation?.tech?.toInt() ?: 0
         val startYear = (world.config["startyear"] as? Number)?.toInt()
             ?: (world.config["startYear"] as? Number)?.toInt()
@@ -1758,7 +1760,7 @@ class GeneralAI(
         val armType = ArmType.entries.firstOrNull { it.code == armTypeCode } ?: ArmType.FOOTMAN
         val validTypes = linkedMapOf<Int, Double>()
         for (crewType in CrewType.byArmType(armType)) {
-            if (crewType.isValidForNation(ownCityNames, ownRegionIds, relYear, tech)) {
+            if (crewType.isValidForNation(ownCityNames, ownRegionIds, relYear, tech, regionNameToId)) {
                 validTypes[crewType.code] = crewType.pickScore(tech)
             }
         }
@@ -1772,7 +1774,7 @@ class GeneralAI(
         }
 
         val currentCrewType = CrewType.fromCode(general.crewType.toInt())
-        if (currentCrewType != null && currentCrewType.isValidForNation(ownCityNames, ownRegionIds, relYear, tech)) {
+        if (currentCrewType != null && currentCrewType.isValidForNation(ownCityNames, ownRegionIds, relYear, tech, regionNameToId)) {
             if (currentCrewType.reqTech >= 2000) {
                 return currentCrewType.code
             }

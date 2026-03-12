@@ -81,6 +81,19 @@ cd frontend
 pnpm build
 ```
 
+### 공통 검증 파이프라인
+
+```bash
+# 1회 설치: 커밋 훅 등록
+./scripts/verify/install-hooks.sh
+
+# 커밋 전 빠른 검증
+./verify pre-commit
+
+# CI와 동일한 전체 검증
+./verify ci
+```
+
 ## Docker 배포
 
 운영 배포는 배포 전용 저장소([opensamguk-deploy](https://github.com/peppone-choi/opensamguk-deploy))를 사용합니다.

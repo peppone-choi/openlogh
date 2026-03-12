@@ -32,11 +32,11 @@ argument-hint: "[선택사항: 특정 verify 스킬 이름]"
 | 1   | `verify-entity-parity`   | Entity/Type/Schema 정합성, 5-stat, 필드 네이밍 검증                                      |
 | 2   | `verify-command-parity`  | 레거시 PHP 93개 커맨드(55 장수 + 38 국가) 구현 상태 추적                                 |
 | 3   | `verify-resource-parity` | 레거시 게임 리소스(시나리오, 맵, 도시, 관직, 병종) 존재 확인                             |
-| 4   | `verify-logic-parity`    | core2026/레거시 대비 게임 로직 동일 결과 확인                                            |
-| 5   | `verify-game-tests`      | 백엔드 게임 엔진 테스트 존재/통과 확인                                                   |
-| 6   | `verify-frontend-parity` | 레거시/SPA plan 대비 프론트엔드 페이지, 출력 정보, UI 확인                               |
-| 7   | `verify-docs-parity`     | docs/architecture 문서 의도 대비 구현 반영 확인                                          |
-| 8   | `verify-daemon-parity`   | NPC AI + 턴 데몬 레거시/docs 대비 동작 확인                                              |
+| 4   | `verify-logic-parity`    | 레거시 PHP 대비 게임 로직 동일 결과 확인                                                 |
+| 5   | `verify-game-tests`      | 백엔드/프론트엔드 테스트 러너와 커밋 전 검증 파이프라인 확인                             |
+| 6   | `verify-frontend-parity` | 레거시 PHP 대비 프론트엔드 페이지, 출력 정보, UI, parity 스크립트 확인                   |
+| 7   | `verify-docs-parity`     | `README.md`와 `CLAUDE.md`의 개발/검증/아키텍처 문서 의도 대비 구현 반영 확인             |
+| 8   | `verify-daemon-parity`   | NPC AI + 턴 데몬 레거시 PHP 대비 동작 확인                                               |
 | 9   | `verify-npc-data`        | 시나리오 NPC 장수 삼국지14 기준 5-stat(통무지정매) 최신화 확인                           |
 | 10  | `verify-architecture`    | 백엔드 TDD/DDD/클린-레이어드 아키텍처, 레포지토리 패턴 준수                              |
 | 11  | `verify-api-parity`      | 풀스택 1:1 메서드-레벨 패러티 (Controller-Service-Repo, FE-BE 엔드포인트, 스텁/데드코드) |

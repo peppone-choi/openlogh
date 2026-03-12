@@ -1,5 +1,9 @@
 package com.opensam.engine
 
+import com.opensam.entity.City
+import com.opensam.entity.General
+import com.opensam.entity.Nation
+import com.opensam.entity.WorldState
 import com.opensam.repository.CityRepository
 import com.opensam.repository.GeneralRepository
 import com.opensam.repository.MessageRepository
@@ -8,6 +12,7 @@ import com.opensam.service.MapService
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.*
 import kotlin.random.Random
 
@@ -221,5 +226,95 @@ class NpcSpawnServiceTest {
 
         // Should have at least some variance (not all the same value)
         assertTrue(results.size > 1, "Random variance should produce different results")
+    }
+
+    @Test
+    fun `npc nation ruler uses fixed killTurn while followers use lifespan derived killTurn`() {
+        val world = WorldState(
+            id = 1,
+            name = "test-world",
+            scenarioCode = "test",
+            currentYear = 200,
+            currentMonth = 4,
+            config = mutableMapOf("hiddenSeed" to "seed"),
+        )
+        val city = City(
+            id = 10,
+            worldId = 1,
+            name = "허창",
+            mapCityId = 10,
+            level = 5,
+            pop = 6000,
+            popMax = 10000,
+            agri = 500,
+            agriMax = 1000,
+            comm = 500,
+            commMax = 1000,
+            secu = 500,
+            secuMax = 1000,
+            def = 500,
+            defMax = 1000,
+            wall = 500,
+            wallMax = 1000,
+        )
+
+        var nextNationId = 100L
+        var nextGeneralId = 1000L
+        val savedGenerals = mutableListOf<General>()
+
+        `when`(nationRepository.save(any(Nation::class.java))).thenAnswer { invocation ->
+            val nation = invocation.arguments[0] as Nation
+            if (nation.id == 0L) {
+                nation.id = nextNationId++
+            }
+            nation
+        }
+        `when`(cityRepository.save(any(City::class.java))).thenAnswer { invocation -> invocation.arguments[0] as City }
+        `when`(generalRepository.save(any(General::class.java))).thenAnswer { invocation ->
+            val general = invocation.arguments[0] as General
+            if (general.id == 0L) {
+                general.id = nextGeneralId++
+            }
+            savedGenerals += general
+            general
+        }
+
+        val method = NpcSpawnService::class.java.getDeclaredMethod(
+            "buildNpcNation",
+            WorldState::class.java,
+            Random::class.java,
+            City::class.java,
+            Map::class.java,
+            Int::class.javaPrimitiveType,
+            Float::class.javaPrimitiveType,
+        )
+        method.isAccessible = true
+
+        method.invoke(
+            service,
+            world,
+            Random(42),
+            city,
+            mapOf(
+                "pop" to 6000,
+                "agri" to 500,
+                "comm" to 500,
+                "secu" to 500,
+                "def" to 500,
+                "wall" to 500,
+            ),
+            4,
+            0f,
+        )
+
+        assertEquals(4, savedGenerals.size)
+
+        val ruler = savedGenerals.first()
+        val followers = savedGenerals.drop(1)
+
+        assertEquals(12.toShort(), ruler.officerLevel)
+        assertEquals(240.toShort(), ruler.killTurn)
+        assertTrue(followers.all { it.killTurn == null }, "Followers should use deadYear-derived lifespan, not fixed killTurn")
+        assertTrue(followers.all { it.deadYear > world.currentYear }, "Followers should still have finite deadYear lifespan")
     }
 }

@@ -16,6 +16,7 @@ class MapService {
 
     private val maps = mutableMapOf<String, List<CityConst>>()
     private val adjacencyIndex = mutableMapOf<String, Map<Int, List<Int>>>()
+    private val regionNames = mutableMapOf<String, Map<Int, String>>()
 
     @PostConstruct
     fun init() {
@@ -28,6 +29,7 @@ class MapService {
         val data: Map<String, Any> = mapper.readValue(resource.inputStream, object : TypeReference<Map<String, Any>>() {})
 
         val rawCities = readListOfStringAnyMap(data["cities"])
+        val rawRegions = data["regions"] as? Map<*, *> ?: emptyMap<Any, Any>()
 
         val cities = rawCities.map { raw ->
             CityConst(
@@ -49,6 +51,10 @@ class MapService {
 
         maps[mapName] = cities
         adjacencyIndex[mapName] = cities.associate { it.id to it.connections }
+        regionNames[mapName] = rawRegions.entries.mapNotNull { entry ->
+            val regionId = entry.key?.toString()?.toIntOrNull() ?: return@mapNotNull null
+            entry.value?.toString()?.let { regionId to it }
+        }.toMap()
     }
 
     fun getCities(mapName: String): List<CityConst> {
@@ -69,6 +75,15 @@ class MapService {
         val adj = adjacencyIndex[mapName] ?: throw IllegalArgumentException("Unknown map: $mapName")
         return adj[cityId] ?: emptyList()
     }
+
+    fun getRegions(mapName: String): Map<Int, String> {
+        if (!regionNames.containsKey(mapName)) {
+            loadMap(mapName)
+        }
+        return regionNames[mapName] ?: throw IllegalArgumentException("Unknown map: $mapName")
+    }
+
+    fun getRegionName(mapName: String, regionId: Int): String? = getRegions(mapName)[regionId]
 
     fun getMapJson(mapName: String): JsonNode? {
         val resource = ClassPathResource("data/maps/$mapName.json")

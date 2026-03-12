@@ -488,12 +488,18 @@ enum class CrewType(
 
     fun getShortName(): String = if (displayName.length <= 4) displayName else displayName.take(4)
 
-    fun isValidForNation(ownCityNames: Set<String>, ownRegionIds: Set<Int>, relYear: Int, tech: Int): Boolean {
+    fun isValidForNation(
+        ownCityNames: Set<String>,
+        ownRegionIds: Set<Int>,
+        relYear: Int,
+        tech: Int,
+        regionNameToId: Map<String, Int> = REGION_MAP,
+    ): Boolean {
         if (reqTech > 0 && tech < reqTech) return false
         if (reqMinRelYear > 0 && relYear < reqMinRelYear) return false
         if (reqCityNames.isNotEmpty() && reqCityNames.none { it in ownCityNames }) return false
         if (reqRegionNames.isNotEmpty()) {
-            val reqRegionIds = reqRegionNames.mapNotNull { REGION_MAP[it] }
+            val reqRegionIds = reqRegionNames.mapNotNull { regionNameToId[it] }
             if (reqRegionIds.none { it in ownRegionIds }) return false
         }
         return true

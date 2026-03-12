@@ -1,4 +1,5 @@
 import axios, { AxiosError } from 'axios';
+import { applyApiErrorMessage, type ApiErrorPayload } from '@/lib/api-error';
 
 const api = axios.create({
     baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api',
@@ -28,20 +29,7 @@ api.interceptors.response.use(
             }
         }
 
-        const apiError = error as AxiosError<
-            | { error?: string; message?: string; errors?: Record<string, string> }
-            | undefined
-        >;
-        const payload = apiError.response?.data;
-        if (apiError.response?.status === 400) {
-            const validationErrors = payload?.errors ? Object.values(payload.errors).filter(Boolean) : [];
-            const message = payload?.error || payload?.message || validationErrors[0];
-            if (message) {
-                apiError.message = message;
-            }
-        }
-
-        return Promise.reject(apiError);
+        return Promise.reject(applyApiErrorMessage(error as AxiosError<ApiErrorPayload | undefined>));
     }
 );
 

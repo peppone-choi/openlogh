@@ -35,6 +35,14 @@ cd backend && ./gradlew :game-app:bootRun
 cd frontend && pnpm dev
 ```
 
+### Verification
+
+```bash
+./scripts/verify/install-hooks.sh
+./verify pre-commit
+./verify ci
+```
+
 ### Docker (DB services)
 
 ```bash
@@ -113,7 +121,7 @@ docker-compose up -d
 - `verify-command-parity` - 레거시 PHP 93개 커맨드(55 장수 + 38 국가) 구현 상태 추적
 - `verify-resource-parity` - 레거시 게임 리소스(시나리오, 맵, 도시, 관직, 병종) 존재 확인
 - `verify-logic-parity` - core2026/레거시 대비 게임 로직 동일 결과 확인
-- `verify-game-tests` - 백엔드 게임 엔진 테스트 존재/통과 확인
+- `verify-game-tests` - 백엔드/프론트엔드 테스트 러너와 커밋 전 검증 파이프라인 확인
 - `verify-frontend-parity` - 레거시/SPA plan 대비 프론트엔드 페이지, 출력 정보, UI 확인
 - `verify-docs-parity` - docs/architecture 문서 의도 대비 구현 반영 확인
 - `verify-daemon-parity` - NPC AI + 턴 데몬 레거시/docs 대비 동작 확인

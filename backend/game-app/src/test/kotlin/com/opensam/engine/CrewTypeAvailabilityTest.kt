@@ -3,6 +3,7 @@ package com.opensam.engine
 import com.opensam.entity.City
 import com.opensam.entity.General
 import com.opensam.entity.Nation
+import com.opensam.model.CrewType
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -137,5 +138,21 @@ class CrewTypeAvailabilityTest {
         assertTrue(service.isCrewTypeAvailable(unitSet, 1100, context))
         assertTrue(service.isCrewTypeAvailable(unitSet, 1200, context))
         assertFalse(service.isCrewTypeAvailable(unitSet, 1300, context))
+    }
+
+    @Test
+    fun `crew type region requirements follow map specific region ids`() {
+        val habukCrewType = CrewType.entries.first { it.reqRegionNames == setOf("하북") }
+
+        assertFalse(habukCrewType.isValidForNation(emptySet(), setOf(4), relYear = 10, tech = 5000))
+        assertTrue(
+            habukCrewType.isValidForNation(
+                ownCityNames = emptySet(),
+                ownRegionIds = setOf(4),
+                relYear = 10,
+                tech = 5000,
+                regionNameToId = mapOf("하북" to 4),
+            ),
+        )
     }
 }

@@ -28,15 +28,15 @@ description: 백엔드 TDD/DDD/클린-레이어드 아키텍처, 레포지토리
 
 | File                                              | Purpose                       |
 | ------------------------------------------------- | ----------------------------- |
-| `backend/src/main/kotlin/com/opensam/controller/` | 컨트롤러 레이어 (구현 대상)   |
-| `backend/src/main/kotlin/com/opensam/service/`    | 서비스 레이어 (구현 대상)     |
-| `backend/src/main/kotlin/com/opensam/repository/` | 레포지토리 레이어 (구현 대상) |
-| `backend/src/main/kotlin/com/opensam/entity/`     | 도메인 엔티티                 |
-| `backend/src/main/kotlin/com/opensam/dto/`        | DTO (구현 대상)               |
-| `backend/src/main/kotlin/com/opensam/config/`     | 설정 (구현 대상)              |
-| `backend/src/main/kotlin/com/opensam/command/`    | 게임 커맨드 (도메인 로직)     |
-| `backend/src/main/kotlin/com/opensam/engine/`     | 게임 엔진 (도메인 로직)       |
-| `backend/src/test/kotlin/com/opensam/`            | 테스트 루트 (구현 대상)       |
+| `backend/game-app/src/main/kotlin/com/opensam/controller/` | 컨트롤러 레이어 (구현 대상)   |
+| `backend/game-app/src/main/kotlin/com/opensam/service/`    | 서비스 레이어 (구현 대상)     |
+| `backend/game-app/src/main/kotlin/com/opensam/repository/` | 레포지토리 레이어 (구현 대상) |
+| `backend/game-app/src/main/kotlin/com/opensam/entity/`     | 도메인 엔티티                 |
+| `backend/game-app/src/main/kotlin/com/opensam/dto/`        | DTO (구현 대상)               |
+| `backend/game-app/src/main/kotlin/com/opensam/config/`     | 설정 (구현 대상)              |
+| `backend/game-app/src/main/kotlin/com/opensam/command/`    | 게임 커맨드 (도메인 로직)     |
+| `backend/game-app/src/main/kotlin/com/opensam/engine/`     | 게임 엔진 (도메인 로직)       |
+| `backend/game-app/src/test/kotlin/com/opensam/`            | 테스트 루트 (구현 대상)       |
 
 ## Workflow
 
@@ -46,7 +46,7 @@ description: 백엔드 TDD/DDD/클린-레이어드 아키텍처, 레포지토리
 
 ```bash
 # 최상위 패키지 구조 확인
-ls backend/src/main/kotlin/com/opensam/ 2>/dev/null
+ls backend/game-app/src/main/kotlin/com/opensam/ 2>/dev/null
 ```
 
 기대 패키지 구조:
@@ -80,14 +80,14 @@ com.opensam/
 
 ```bash
 # Repository → Controller 역방향 의존 검사
-grep -rn "import.*controller" backend/src/main/kotlin/com/opensam/repository/ 2>/dev/null
-grep -rn "import.*controller" backend/src/main/kotlin/com/opensam/service/ 2>/dev/null
+grep -rn "import.*controller" backend/game-app/src/main/kotlin/com/opensam/repository/ 2>/dev/null
+grep -rn "import.*controller" backend/game-app/src/main/kotlin/com/opensam/service/ 2>/dev/null
 
 # Service → Controller 역방향 의존 검사
-grep -rn "import.*controller" backend/src/main/kotlin/com/opensam/service/ 2>/dev/null
+grep -rn "import.*controller" backend/game-app/src/main/kotlin/com/opensam/service/ 2>/dev/null
 
 # Entity → Controller/Service 역방향 의존 검사
-grep -rn "import.*controller\|import.*service" backend/src/main/kotlin/com/opensam/entity/ 2>/dev/null
+grep -rn "import.*controller\|import.*service" backend/game-app/src/main/kotlin/com/opensam/entity/ 2>/dev/null
 ```
 
 **PASS:** 역방향 의존성 없음
@@ -99,11 +99,11 @@ grep -rn "import.*controller\|import.*service" backend/src/main/kotlin/com/opens
 
 ```bash
 # Controller 파일 목록
-ls backend/src/main/kotlin/com/opensam/controller/ 2>/dev/null
+ls backend/game-app/src/main/kotlin/com/opensam/controller/ 2>/dev/null
 
 # Controller에서 비즈니스 로직 징후 검색
-grep -rn "repository\.\|Repository\b" backend/src/main/kotlin/com/opensam/controller/ 2>/dev/null
-grep -rn "\.save\b\|\.delete\b\|\.findBy" backend/src/main/kotlin/com/opensam/controller/ 2>/dev/null
+grep -rn "repository\.\|Repository\b" backend/game-app/src/main/kotlin/com/opensam/controller/ 2>/dev/null
+grep -rn "\.save\b\|\.delete\b\|\.findBy" backend/game-app/src/main/kotlin/com/opensam/controller/ 2>/dev/null
 ```
 
 **허용:** Controller가 Service를 주입받아 호출
@@ -118,13 +118,13 @@ grep -rn "\.save\b\|\.delete\b\|\.findBy" backend/src/main/kotlin/com/opensam/co
 
 ```bash
 # Service 파일 목록
-ls backend/src/main/kotlin/com/opensam/service/ 2>/dev/null
+ls backend/game-app/src/main/kotlin/com/opensam/service/ 2>/dev/null
 
 # Service에서 @Service 어노테이션 확인
-grep -rn "@Service" backend/src/main/kotlin/com/opensam/service/ 2>/dev/null
+grep -rn "@Service" backend/game-app/src/main/kotlin/com/opensam/service/ 2>/dev/null
 
 # Service에서 Repository 주입 확인
-grep -rn "Repository" backend/src/main/kotlin/com/opensam/service/ 2>/dev/null
+grep -rn "Repository" backend/game-app/src/main/kotlin/com/opensam/service/ 2>/dev/null
 ```
 
 **허용:** Service가 Repository를 주입받아 데이터 접근
@@ -132,7 +132,7 @@ grep -rn "Repository" backend/src/main/kotlin/com/opensam/service/ 2>/dev/null
 
 ```bash
 # Service에서 HTTP 관련 import 검사
-grep -rn "import.*servlet\|import.*http\|@RequestMapping\|@GetMapping\|@PostMapping" backend/src/main/kotlin/com/opensam/service/ 2>/dev/null
+grep -rn "import.*servlet\|import.*http\|@RequestMapping\|@GetMapping\|@PostMapping" backend/game-app/src/main/kotlin/com/opensam/service/ 2>/dev/null
 ```
 
 **PASS:** Service가 비즈니스 로직만 포함하고 HTTP 관련 코드 없음
@@ -144,13 +144,13 @@ grep -rn "import.*servlet\|import.*http\|@RequestMapping\|@GetMapping\|@PostMapp
 
 ```bash
 # Repository 인터페이스 목록
-grep -rn "interface.*Repository" backend/src/main/kotlin/com/opensam/repository/ 2>/dev/null
+grep -rn "interface.*Repository" backend/game-app/src/main/kotlin/com/opensam/repository/ 2>/dev/null
 
 # JpaRepository/CrudRepository 상속 확인
-grep -rn "JpaRepository\|CrudRepository" backend/src/main/kotlin/com/opensam/repository/ 2>/dev/null
+grep -rn "JpaRepository\|CrudRepository" backend/game-app/src/main/kotlin/com/opensam/repository/ 2>/dev/null
 
 # Service/Controller에서 EntityManager 직접 사용 검사
-grep -rn "EntityManager\|@PersistenceContext\|em\.\|entityManager\." backend/src/main/kotlin/com/opensam/service/ backend/src/main/kotlin/com/opensam/controller/ 2>/dev/null
+grep -rn "EntityManager\|@PersistenceContext\|em\.\|entityManager\." backend/game-app/src/main/kotlin/com/opensam/service/ backend/game-app/src/main/kotlin/com/opensam/controller/ 2>/dev/null
 ```
 
 **허용:** Repository 내부에서 @Query, EntityManager 사용
@@ -165,10 +165,10 @@ grep -rn "EntityManager\|@PersistenceContext\|em\.\|entityManager\." backend/src
 
 ```bash
 # Entity에서 허용되는 import (JPA 어노테이션만)
-grep -rn "^import" backend/src/main/kotlin/com/opensam/entity/ 2>/dev/null | grep -v "jakarta.persistence\|kotlin\|java.time\|java.util\|com.opensam.entity"
+grep -rn "^import" backend/game-app/src/main/kotlin/com/opensam/entity/ 2>/dev/null | grep -v "jakarta.persistence\|kotlin\|java.time\|java.util\|com.opensam.entity"
 
 # 도메인 로직(command/engine)에서 Spring 의존 검사
-grep -rn "import.*springframework" backend/src/main/kotlin/com/opensam/command/ backend/src/main/kotlin/com/opensam/engine/ 2>/dev/null
+grep -rn "import.*springframework" backend/game-app/src/main/kotlin/com/opensam/command/ backend/game-app/src/main/kotlin/com/opensam/engine/ 2>/dev/null
 ```
 
 **허용:** Entity에서 JPA 어노테이션(`jakarta.persistence`), Kotlin 표준 라이브러리
@@ -183,10 +183,10 @@ grep -rn "import.*springframework" backend/src/main/kotlin/com/opensam/command/ 
 
 ```bash
 # Controller에서 Entity 직접 반환 검사
-grep -rn "fun.*:.*Entity\|fun.*:.*General\b\|fun.*:.*Nation\b\|fun.*:.*City\b" backend/src/main/kotlin/com/opensam/controller/ 2>/dev/null
+grep -rn "fun.*:.*Entity\|fun.*:.*General\b\|fun.*:.*Nation\b\|fun.*:.*City\b" backend/game-app/src/main/kotlin/com/opensam/controller/ 2>/dev/null
 
 # DTO 존재 확인
-ls backend/src/main/kotlin/com/opensam/dto/ 2>/dev/null
+ls backend/game-app/src/main/kotlin/com/opensam/dto/ 2>/dev/null
 ```
 
 **PASS:** Controller가 DTO를 반환하고 Entity를 직접 노출하지 않음
@@ -198,12 +198,12 @@ ls backend/src/main/kotlin/com/opensam/dto/ 2>/dev/null
 
 ```bash
 # 테스트 디렉토리 구조
-ls backend/src/test/kotlin/com/opensam/ 2>/dev/null
+ls backend/game-app/src/test/kotlin/com/opensam/ 2>/dev/null
 
 # 레이어별 테스트 존재 확인
-ls backend/src/test/kotlin/com/opensam/controller/ 2>/dev/null
-ls backend/src/test/kotlin/com/opensam/service/ 2>/dev/null
-ls backend/src/test/kotlin/com/opensam/repository/ 2>/dev/null
+ls backend/game-app/src/test/kotlin/com/opensam/controller/ 2>/dev/null
+ls backend/game-app/src/test/kotlin/com/opensam/service/ 2>/dev/null
+ls backend/game-app/src/test/kotlin/com/opensam/repository/ 2>/dev/null
 ```
 
 기대 테스트 구조:
@@ -214,7 +214,7 @@ ls backend/src/test/kotlin/com/opensam/repository/ 2>/dev/null
 
 ```bash
 # 테스트 어노테이션 검사
-grep -rn "@WebMvcTest\|@DataJpaTest\|@SpringBootTest\|@Test\|@MockBean" backend/src/test/kotlin/com/opensam/ 2>/dev/null | head -20
+grep -rn "@WebMvcTest\|@DataJpaTest\|@SpringBootTest\|@Test\|@MockBean" backend/game-app/src/test/kotlin/com/opensam/ 2>/dev/null | head -20
 ```
 
 **PASS:** 각 레이어에 테스트 존재

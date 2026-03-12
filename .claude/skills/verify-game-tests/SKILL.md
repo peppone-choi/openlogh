@@ -1,19 +1,20 @@
 ---
 name: verify-game-tests
-description: 백엔드 게임 엔진 테스트가 작성되어 있고 모두 통과하는지 확인합니다. core2026 테스트를 참조. 엔진 로직 구현/수정 후 사용.
+description: 백엔드/프론트엔드 테스트 러너와 커밋 전 검증 파이프라인이 존재하고 모두 통과하는지 확인합니다. 엔진 로직 또는 프론트엔드 동작 수정 후 사용.
 ---
 
 # Game Tests 검증
 
 ## Purpose
 
-백엔드 게임 엔진의 테스트 커버리지와 통과 여부를 검증합니다:
+백엔드/프론트엔드 테스트 커버리지와 통과 여부를 검증합니다:
 
 1. **커맨드 테스트 존재** — 구현된 각 커맨드에 대한 단위 테스트가 존재하는지 확인
 2. **엔진 테스트 존재** — 턴 실행, 전투, 경제 등 엔진 모듈에 대한 테스트가 존재하는지 확인
-3. **엣지케이스 커버** — core2026 테스트에서 다루는 엣지케이스가 새 테스트에도 포함되는지 확인
+3. **엣지케이스 커버** — 현재 테스트가 핵심 게임/프론트엔드 엣지케이스를 포함하는지 확인
 4. **테스트 통과** — 모든 테스트가 통과하는지 확인
-5. **테스트 네이밍** — 테스트가 무엇을 검증하는지 명확한 이름을 가지는지 확인
+5. **커밋 전 게이트** — `./verify pre-commit`이 테스트와 패러티 검증을 실제로 실행하는지 확인
+6. **테스트 네이밍** — 테스트가 무엇을 검증하는지 명확한 이름을 가지는지 확인
 
 ## When to Run
 
@@ -27,23 +28,28 @@ description: 백엔드 게임 엔진 테스트가 작성되어 있고 모두 통
 
 | File                                                         | Purpose                        |
 | ------------------------------------------------------------ | ------------------------------ |
-| `core2026/packages/logic/src/ai/__tests__/GeneralAI.test.ts` | core2026 AI 테스트 (참조)      |
-| `core2026/docs/testing-policy.md`                            | core2026 테스트 정책 (참조)    |
-| `backend/src/test/kotlin/com/opensam/`                       | 백엔드 테스트 루트 (구현 대상) |
-| `backend/src/test/kotlin/com/opensam/command/general/`       | 장수 커맨드 테스트 (구현 대상) |
-| `backend/src/test/kotlin/com/opensam/command/nation/`        | 국가 커맨드 테스트 (구현 대상) |
-| `backend/src/test/kotlin/com/opensam/engine/`                | 엔진 테스트 (구현 대상)        |
+| `backend/game-app/src/test/kotlin/com/opensam/`              | 게임 앱 테스트 루트            |
+| `backend/gateway-app/src/test/kotlin/com/opensam/gateway/`   | 게이트웨이 테스트 루트         |
+| `frontend/src/**/*.test.ts`                                   | 프론트엔드 단위 테스트         |
+| `frontend/vitest.config.ts`                                   | 프론트엔드 테스트 러너 설정    |
+| `frontend/package.json`                                       | 프론트엔드 test/typecheck 스크립트 |
+| `verify`                                                      | 공통 검증 엔트리포인트         |
+| `scripts/verify/run.sh`                                       | 프로필별 검증 파이프라인       |
+| `scripts/verify/tdd-gate.sh`                                  | staged 기반 TDD 게이트         |
+| `.github/workflows/verify.yml`                                | CI 검증 워크플로               |
+| `.githooks/pre-commit`                                        | 커밋 전 훅 템플릿             |
 
 ## Workflow
 
-### Step 1: core2026 테스트 정책 확인
+### Step 1: 현재 테스트 러너/게이트 설정 확인
 
-**파일:** `core2026/docs/testing-policy.md`
+**파일:** `frontend/package.json`, `frontend/vitest.config.ts`, `verify`, `scripts/verify/run.sh`, `.githooks/pre-commit`
 
-**검사:** core2026의 테스트 정책을 읽어 참조 기준을 파악합니다.
+**검사:** 프론트엔드 테스트 러너와 공통 검증 게이트가 실제로 정의되어 있는지 확인합니다.
 
 ```bash
-cat core2026/docs/testing-policy.md 2>/dev/null || echo "testing-policy.md not found"
+grep -n '"test"\|"typecheck"' frontend/package.json 2>/dev/null
+ls frontend/vitest.config.ts verify scripts/verify/run.sh scripts/verify/tdd-gate.sh .githooks/pre-commit 2>/dev/null
 ```
 
 ### Step 2: 구현된 커맨드 대비 테스트 존재 확인
@@ -52,12 +58,12 @@ cat core2026/docs/testing-policy.md 2>/dev/null || echo "testing-policy.md not f
 
 ```bash
 # 구현된 커맨드 목록
-GENERAL_CMDS=$(ls backend/src/main/kotlin/com/opensam/command/general/ 2>/dev/null | sed 's/.kt$//')
-NATION_CMDS=$(ls backend/src/main/kotlin/com/opensam/command/nation/ 2>/dev/null | sed 's/.kt$//')
+GENERAL_CMDS=$(ls backend/game-app/src/main/kotlin/com/opensam/command/general/ 2>/dev/null | sed 's/.kt$//')
+NATION_CMDS=$(ls backend/game-app/src/main/kotlin/com/opensam/command/nation/ 2>/dev/null | sed 's/.kt$//')
 
 # 각 커맨드에 대한 테스트 존재 확인
 for cmd in $GENERAL_CMDS; do
-  if ls backend/src/test/kotlin/com/opensam/command/general/${cmd}Test.kt 2>/dev/null; then
+  if ls backend/game-app/src/test/kotlin/com/opensam/command/general/${cmd}Test.kt 2>/dev/null; then
     echo "PASS: ${cmd}"
   else
     echo "MISSING: ${cmd}"
@@ -74,7 +80,7 @@ done
 
 ```bash
 # 엔진 테스트 파일 검색
-ls backend/src/test/kotlin/com/opensam/engine/ 2>/dev/null
+ls backend/game-app/src/test/kotlin/com/opensam/engine/ 2>/dev/null
 ```
 
 필수 테스트 대상 모듈:
@@ -90,14 +96,14 @@ ls backend/src/test/kotlin/com/opensam/engine/ 2>/dev/null
 
 ### Step 4: 엣지케이스 커버리지 확인
 
-**검사:** core2026 테스트에서 다루는 엣지케이스가 새 테스트에도 포함되는지 확인합니다.
+**검사:** 현재 테스트가 핵심 엣지케이스와 프론트엔드 검증 포인트를 포함하는지 확인합니다.
 
 ```bash
-# core2026 테스트에서 엣지케이스 패턴 추출
-grep -rn "it\(\|describe\(\|test\(" core2026/packages/logic/src/**/__tests__/ 2>/dev/null
-
 # 백엔드 테스트에서 유사 패턴 검색
-grep -rn "@Test\|fun.*test\|should" backend/src/test/kotlin/com/opensam/ 2>/dev/null
+grep -rn "@Test\|fun.*test\|should" backend/game-app/src/test/kotlin/com/opensam/ 2>/dev/null
+
+# 프론트엔드 테스트 파일 검색
+find frontend/src -name "*.test.ts" -o -name "*.spec.ts" 2>/dev/null
 ```
 
 주요 엣지케이스 카테고리:
@@ -117,9 +123,11 @@ grep -rn "@Test\|fun.*test\|should" backend/src/test/kotlin/com/opensam/ 2>/dev/
 
 ```bash
 cd backend && ./gradlew test 2>&1 | tail -20
+cd frontend && pnpm test --run && pnpm typecheck
+./verify pre-commit
 ```
 
-**PASS:** 모든 테스트 통과 (BUILD SUCCESSFUL)
+**PASS:** 백엔드 테스트, 프론트엔드 테스트/타입체크, pre-commit 게이트 통과
 **FAIL:** 실패한 테스트 존재 — 실패 내용을 상세히 기록
 
 ### Step 6: 테스트 커버리지 보고서
@@ -164,6 +172,6 @@ cd backend && ./gradlew test 2>&1 | tail -20
 
 1. **미구현 커맨드의 테스트 없음** — 아직 구현되지 않은 커맨드에 대한 테스트는 불필요; verify-command-parity에서 구현 상태 추적
 2. **통합 테스트 vs 단위 테스트** — 커맨드별 단위 테스트 대신 시나리오 기반 통합 테스트로 커버하는 것도 허용
-3. **core2026 테스트 없음** — core2026에 테스트 파일이 거의 없으므로, core2026 테스트 부재가 새 프로젝트의 테스트 부재를 정당화하지는 않음
+3. **외부 참조 테스트 없음** — 외부 레퍼런스 저장소가 없어도 현재 프로젝트의 테스트와 게이트만으로 검증 가능해야 함
 4. **테스트 실행 환경** — Docker(DB/Redis)가 실행 중이 아니어서 통합 테스트가 실패하는 경우, 단위 테스트만 실행하여 보고
 5. **프로젝트 초기** — 백엔드 소스가 아직 없는 초기 단계에서는 전체를 SKIP으로 보고하되, 테스트 디렉토리 구조가 준비되어 있는지는 확인

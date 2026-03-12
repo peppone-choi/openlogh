@@ -27,11 +27,11 @@ description: 풀스택 1:1 메서드-레벨 패러티를 검증합니다. Contro
 
 | File                                                  | Purpose                        |
 | ----------------------------------------------------- | ------------------------------ |
-| `backend/src/main/kotlin/com/opensam/controller/*.kt` | 모든 REST 컨트롤러             |
-| `backend/src/main/kotlin/com/opensam/service/*.kt`    | 모든 서비스 클래스             |
-| `backend/src/main/kotlin/com/opensam/repository/*.kt` | 모든 JPA 레포지토리            |
-| `backend/src/main/kotlin/com/opensam/dto/*.kt`        | 요청/응답 DTO                  |
-| `backend/src/main/kotlin/com/opensam/entity/*.kt`     | JPA 엔티티                     |
+| `backend/game-app/src/main/kotlin/com/opensam/controller/*.kt` | 모든 REST 컨트롤러             |
+| `backend/game-app/src/main/kotlin/com/opensam/service/*.kt`    | 모든 서비스 클래스             |
+| `backend/game-app/src/main/kotlin/com/opensam/repository/*.kt` | 모든 JPA 레포지토리            |
+| `backend/game-app/src/main/kotlin/com/opensam/dto/*.kt`        | 요청/응답 DTO                  |
+| `backend/game-app/src/main/kotlin/com/opensam/entity/*.kt`     | JPA 엔티티                     |
 | `frontend/src/lib/gameApi.ts`                         | 모든 API 클라이언트 메서드     |
 | `frontend/src/lib/api.ts`                             | Axios 인스턴스 (baseURL 설정)  |
 | `frontend/src/types/index.ts`                         | TypeScript 타입 정의           |
@@ -42,19 +42,19 @@ description: 풀스택 1:1 메서드-레벨 패러티를 검증합니다. Contro
 
 ### Step 1: 백엔드 엔드포인트 카탈로그 구축
 
-**파일:** `backend/src/main/kotlin/com/opensam/controller/*.kt`
+**파일:** `backend/game-app/src/main/kotlin/com/opensam/controller/*.kt`
 
 **검사:** 모든 Controller 파일을 읽고, 클래스-레벨 `@RequestMapping` 프리픽스를 포함하여 모든 `@GetMapping`, `@PostMapping`, `@PutMapping`, `@DeleteMapping`, `@PatchMapping`의 전체 경로를 추출합니다.
 
 ```bash
 # Controller 파일 목록
-ls backend/src/main/kotlin/com/opensam/controller/ 2>/dev/null
+ls backend/game-app/src/main/kotlin/com/opensam/controller/ 2>/dev/null
 
 # 클래스-레벨 @RequestMapping 추출
-grep -rn "@RequestMapping" backend/src/main/kotlin/com/opensam/controller/ 2>/dev/null
+grep -rn "@RequestMapping" backend/game-app/src/main/kotlin/com/opensam/controller/ 2>/dev/null
 
 # 메서드-레벨 매핑 추출
-grep -rn "@GetMapping\|@PostMapping\|@PutMapping\|@DeleteMapping\|@PatchMapping" backend/src/main/kotlin/com/opensam/controller/ 2>/dev/null
+grep -rn "@GetMapping\|@PostMapping\|@PutMapping\|@DeleteMapping\|@PatchMapping" backend/game-app/src/main/kotlin/com/opensam/controller/ 2>/dev/null
 ```
 
 각 엔드포인트에 대해 기록:
@@ -110,19 +110,19 @@ grep -n "export.*=.*async\|async.*(" frontend/src/lib/gameApi.ts 2>/dev/null
 
 ### Step 4: Controller -> Service 체인 검증
 
-**파일:** `backend/src/main/kotlin/com/opensam/controller/*.kt`, `backend/src/main/kotlin/com/opensam/service/*.kt`
+**파일:** `backend/game-app/src/main/kotlin/com/opensam/controller/*.kt`, `backend/game-app/src/main/kotlin/com/opensam/service/*.kt`
 
 **검사:** 각 Controller의 모든 엔드포인트 메서드가 Service 메서드를 호출하는지 확인합니다.
 
 ```bash
 # Controller 파일 각각을 읽어서 Service 호출 확인
-for f in backend/src/main/kotlin/com/opensam/controller/*.kt; do
+for f in backend/game-app/src/main/kotlin/com/opensam/controller/*.kt; do
   echo "=== $(basename $f) ==="
   grep -n "Service\|service\." "$f" 2>/dev/null
 done
 
 # Service 파일의 public 메서드 목록
-grep -rn "fun " backend/src/main/kotlin/com/opensam/service/ 2>/dev/null | grep -v "private\|internal"
+grep -rn "fun " backend/game-app/src/main/kotlin/com/opensam/service/ 2>/dev/null | grep -v "private\|internal"
 ```
 
 각 Controller 메서드에 대해:
@@ -184,7 +184,7 @@ grep -rn "gameApi\." frontend/src/app/ frontend/src/stores/ frontend/src/compone
 
 > **상세 검증:** 이 단계의 심층 검증은 `verify-type-parity` 스킬이 담당합니다. 여기서는 기본 구조 호환성만 확인합니다.
 
-**파일:** `frontend/src/types/index.ts`, `backend/src/main/kotlin/com/opensam/dto/*.kt`, `backend/src/main/kotlin/com/opensam/entity/*.kt`
+**파일:** `frontend/src/types/index.ts`, `backend/game-app/src/main/kotlin/com/opensam/dto/*.kt`, `backend/game-app/src/main/kotlin/com/opensam/entity/*.kt`
 
 **검사:** 프론트엔드 TypeScript 타입과 백엔드 DTO/엔티티 필드 구조가 호환되는지 확인합니다.
 
@@ -193,10 +193,10 @@ grep -rn "gameApi\." frontend/src/app/ frontend/src/stores/ frontend/src/compone
 grep -n "interface\|type " frontend/src/types/index.ts 2>/dev/null
 
 # 백엔드 DTO 클래스 필드 추출
-grep -rn "val \|var " backend/src/main/kotlin/com/opensam/dto/ 2>/dev/null
+grep -rn "val \|var " backend/game-app/src/main/kotlin/com/opensam/dto/ 2>/dev/null
 
 # 백엔드 @RequestBody DTO 사용 확인
-grep -rn "@RequestBody" backend/src/main/kotlin/com/opensam/controller/ 2>/dev/null
+grep -rn "@RequestBody" backend/game-app/src/main/kotlin/com/opensam/controller/ 2>/dev/null
 ```
 
 주요 확인 사항:

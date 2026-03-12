@@ -16,6 +16,7 @@ import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchers.anyLong
 import org.mockito.ArgumentMatchers.anyList
 import org.mockito.Mockito.mock
+import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
 import kotlin.random.Random
 import java.lang.reflect.Method
@@ -34,6 +35,7 @@ class ScenarioServiceTest {
     private lateinit var cityRepository: CityRepository
     private lateinit var generalRepository: GeneralRepository
     private lateinit var diplomacyRepository: DiplomacyRepository
+    private lateinit var historyService: HistoryService
     private lateinit var mapService: MapService
     private lateinit var entityManager: EntityManager
 
@@ -45,6 +47,7 @@ class ScenarioServiceTest {
         cityRepository = mock(CityRepository::class.java)
         generalRepository = mock(GeneralRepository::class.java)
         diplomacyRepository = mock(DiplomacyRepository::class.java)
+        historyService = mock(HistoryService::class.java)
         mapService = mock(MapService::class.java)
         entityManager = mock(EntityManager::class.java)
 
@@ -59,6 +62,7 @@ class ScenarioServiceTest {
             diplomacyRepository = diplomacyRepository,
             eventRepository = mock(EventRepository::class.java),
             mapService = mapService,
+            historyService = historyService,
             entityManager = entityManager,
         )
 
@@ -444,5 +448,82 @@ class ScenarioServiceTest {
         val onDue = service.spawnScenarioNpcGeneralsForYear(world)
         assertEquals(1, onDue)
         assertTrue(savedGenerals.any { it.name == "지연등장" && it.age == 14.toShort() })
+    }
+
+    @Test
+    fun `initializeWorld maps diplomacy indices without offset and seeds scenario history`() {
+        val scenario = ScenarioData(
+            title = "반동탁연합",
+            startYear = 187,
+            nation = listOf(
+                listOf("동탁", "#111111", 10000, 10000, "", 0, "법가", 5, listOf("낙양")),
+                listOf("원소", "#222222", 10000, 10000, "", 0, "법가", 2, listOf("남피")),
+                listOf("조조", "#333333", 10000, 10000, "", 0, "병가", 2, listOf("진류")),
+            ),
+            diplomacy = listOf(listOf(1, 2, 1, 36)),
+            history = listOf("<C>●</>190년 1월:<L><b>【역사모드2】</b></>반동탁연합 결성"),
+        )
+
+        val scenariosField = ScenarioService::class.java.getDeclaredField("scenarios")
+        scenariosField.isAccessible = true
+        @Suppress("UNCHECKED_CAST")
+        val scenarios = scenariosField.get(service) as MutableMap<String, ScenarioData>
+        scenarios["diplo-test"] = scenario
+
+        val cityStore = mutableMapOf<Long, City>()
+        var citySeq = 1L
+        val nationStore = mutableMapOf<Long, Nation>()
+        var nationSeq = 1L
+        val capturedDiplomacies = mutableListOf<com.opensam.entity.Diplomacy>()
+
+        `when`(worldStateRepository.save(any(WorldState::class.java))).thenAnswer { inv ->
+            val world = inv.arguments[0] as WorldState
+            world.id = 1
+            world
+        }
+        `when`(mapService.getCities("che")).thenReturn(
+            listOf(
+                CityConst(1, "낙양", 8, 1, 1000, 100, 100, 100, 100, 100, 10, 10, emptyList()),
+                CityConst(2, "남피", 8, 1, 1000, 100, 100, 100, 100, 100, 10, 10, emptyList()),
+                CityConst(3, "진류", 8, 1, 1000, 100, 100, 100, 100, 100, 10, 10, emptyList()),
+            ),
+        )
+        @Suppress("UNCHECKED_CAST")
+        `when`(cityRepository.saveAll(anyList<City>())).thenAnswer { inv ->
+            val cities = inv.arguments[0] as List<City>
+            cities.forEach { city ->
+                if (city.id == 0L) city.id = citySeq++
+                cityStore[city.id] = city
+            }
+            cities
+        }
+        @Suppress("UNCHECKED_CAST")
+        `when`(nationRepository.saveAll(anyList<Nation>())).thenAnswer { inv ->
+            val nations = inv.arguments[0] as List<Nation>
+            nations.forEach { nation ->
+                if (nation.id == 0L) nation.id = nationSeq++
+                nationStore[nation.id] = nation
+            }
+            nations
+        }
+        @Suppress("UNCHECKED_CAST")
+        `when`(diplomacyRepository.saveAll(anyList<com.opensam.entity.Diplomacy>())).thenAnswer { inv ->
+            val diplomacies = inv.arguments[0] as List<com.opensam.entity.Diplomacy>
+            capturedDiplomacies += diplomacies
+            diplomacies
+        }
+        `when`(generalRepository.saveAll(anyList<General>())).thenAnswer { inv -> inv.arguments[0] as List<General> }
+        `when`(generalRepository.findByWorldId(1L)).thenReturn(emptyList())
+
+        service.initializeWorld("diplo-test")
+
+        assertEquals(1, capturedDiplomacies.size)
+        val diplomacy = capturedDiplomacies.single()
+        assertEquals(nationStore.values.first { it.name == "동탁" }.id, diplomacy.srcNationId)
+        assertEquals(nationStore.values.first { it.name == "원소" }.id, diplomacy.destNationId)
+        assertEquals("선전포고", diplomacy.stateCode)
+        assertEquals(36.toShort(), diplomacy.term)
+
+        verify(historyService).logWorldHistory(1L, scenario.history.single(), 190, 1)
     }
 }

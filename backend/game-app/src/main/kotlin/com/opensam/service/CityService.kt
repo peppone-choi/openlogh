@@ -333,8 +333,12 @@ class CityService(
     /**
      * Get the region name for a region code.
      */
+    fun getRegionName(mapCode: String, regionCode: Int): String {
+        return mapService.getRegionName(mapCode, regionCode) ?: REGION_NAMES[regionCode] ?: "미상"
+    }
+
     fun getRegionName(regionCode: Int): String {
-        return REGION_NAMES[regionCode] ?: "미상"
+        return getRegionName("che", regionCode)
     }
 
     /**

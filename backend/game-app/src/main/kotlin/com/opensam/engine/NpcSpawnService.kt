@@ -190,6 +190,7 @@ class NpcSpawnService(
                 crewType = BASE_CREW_TYPES[rng.nextInt(BASE_CREW_TYPES.size)].toShort(),
                 train = 80,
                 atmos = 80,
+                killTurn = 240,
             )
         )
         nation.chiefGeneralId = ruler.id
@@ -219,7 +220,6 @@ class NpcSpawnService(
                     crewType = BASE_CREW_TYPES[rng.nextInt(BASE_CREW_TYPES.size)].toShort(),
                     train = 70,
                     atmos = 70,
-                    killTurn = 240,
                 )
             )
         }

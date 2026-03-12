@@ -28,6 +28,7 @@ class ScenarioService(
     private val diplomacyRepository: DiplomacyRepository,
     private val eventRepository: EventRepository,
     private val mapService: MapService,
+    private val historyService: HistoryService,
     private val entityManager: EntityManager,
 ) {
     private val scenarios = mutableMapOf<String, ScenarioData>()
@@ -66,6 +67,7 @@ class ScenarioService(
         8 to CityInit(150000, 1000, 1000, 1000, 5000, 5000),
     )
     private val DEFAULT_CITY_INIT = CityInit(50000, 1000, 1000, 1000, 1000, 1000)
+    private val historyYearMonthRegex = Regex("(\\d+)년\\s*(\\d+)월")
 
     fun listScenarios(): List<ScenarioInfo> {
         loadAllScenarios()
@@ -243,23 +245,10 @@ class ScenarioService(
         if (nationsToUpdate.isNotEmpty()) nationRepository.saveAll(nationsToUpdate)
 
         // 5. Create diplomacy
-        val diplomacies = scenario.diplomacy.mapNotNull { diploRow ->
-            if (diploRow.size < 4) return@mapNotNull null
-            val srcIdx = (diploRow[0] as Number).toInt()
-            val destIdx = (diploRow[1] as Number).toInt()
-            val stateType = (diploRow[2] as Number).toInt()
-            val term = (diploRow[3] as Number).toInt()
-            val srcId = nationIdxToDbId[srcIdx + 1] ?: return@mapNotNull null
-            val destId = nationIdxToDbId[destIdx + 1] ?: return@mapNotNull null
-            Diplomacy(
-                worldId = worldId,
-                srcNationId = srcId,
-                destNationId = destId,
-                stateCode = when (stateType) { 0 -> "전쟁"; 1 -> "선전포고"; 7 -> "불가침"; else -> "통상" },
-                term = term.toShort(),
-            )
-        }
+        val diplomacies = buildScenarioDiplomacies(scenario.diplomacy, nationIdxToDbId, worldId)
         if (diplomacies.isNotEmpty()) diplomacyRepository.saveAll(diplomacies)
+
+        seedScenarioHistory(worldId, scenario.history, scenario.startYear, 1)
 
         if (scenario.events.isNotEmpty()) {
             val events = convertLegacyEvents(scenario.events, worldId)
@@ -425,19 +414,10 @@ class ScenarioService(
         }
         if (reinitNationsToUpdate.isNotEmpty()) nationRepository.saveAll(reinitNationsToUpdate)
 
-        val diplomacies = scenario.diplomacy.mapNotNull { diploRow ->
-            if (diploRow.size < 4) return@mapNotNull null
-            val srcIdx = (diploRow[0] as Number).toInt()
-            val destIdx = (diploRow[1] as Number).toInt()
-            val stateType = (diploRow[2] as Number).toInt()
-            val term = (diploRow[3] as Number).toInt()
-            val srcId = nationIdxToDbId[srcIdx + 1] ?: return@mapNotNull null
-            val destId = nationIdxToDbId[destIdx + 1] ?: return@mapNotNull null
-            Diplomacy(worldId = worldId, srcNationId = srcId, destNationId = destId,
-                stateCode = when (stateType) { 0 -> "전쟁"; 1 -> "선전포고"; 7 -> "불가침"; else -> "통상" },
-                term = term.toShort())
-        }
+        val diplomacies = buildScenarioDiplomacies(scenario.diplomacy, nationIdxToDbId, worldId)
         if (diplomacies.isNotEmpty()) diplomacyRepository.saveAll(diplomacies)
+
+        seedScenarioHistory(worldId, scenario.history, scenario.startYear, 1)
 
         if (scenario.events.isNotEmpty()) {
             val events = convertLegacyEvents(scenario.events, worldId)
@@ -449,6 +429,43 @@ class ScenarioService(
 
         log.info("[World {}] Reinitialized successfully (same ID preserved)", worldId)
         return existingWorld
+    }
+
+    private fun buildScenarioDiplomacies(
+        diplomacyRows: List<List<Any>>,
+        nationIdxToDbId: Map<Int, Long>,
+        worldId: Long,
+    ): List<Diplomacy> {
+        return diplomacyRows.mapNotNull { diploRow ->
+            if (diploRow.size < 4) return@mapNotNull null
+            val srcIdx = (diploRow[0] as Number).toInt()
+            val destIdx = (diploRow[1] as Number).toInt()
+            val stateType = (diploRow[2] as Number).toInt()
+            val term = (diploRow[3] as Number).toInt()
+            val srcId = nationIdxToDbId[srcIdx] ?: return@mapNotNull null
+            val destId = nationIdxToDbId[destIdx] ?: return@mapNotNull null
+            Diplomacy(
+                worldId = worldId,
+                srcNationId = srcId,
+                destNationId = destId,
+                stateCode = when (stateType) {
+                    0 -> "전쟁"
+                    1 -> "선전포고"
+                    7 -> "불가침"
+                    else -> "통상"
+                },
+                term = term.toShort(),
+            )
+        }
+    }
+
+    private fun seedScenarioHistory(worldId: Long, historyLines: List<String>, defaultYear: Int, defaultMonth: Int) {
+        for (line in historyLines) {
+            val match = historyYearMonthRegex.find(line)
+            val year = match?.groupValues?.getOrNull(1)?.toIntOrNull() ?: defaultYear
+            val month = match?.groupValues?.getOrNull(2)?.toIntOrNull() ?: defaultMonth
+            historyService.logWorldHistory(worldId, line, year, month)
+        }
     }
 
     private fun parseNation(row: List<Any>, worldId: Long): Nation {
