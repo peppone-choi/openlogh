@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { formatOfficerLevelText, NATION_LEVEL_LABELS } from '@/lib/game-utils';
+import { formatLog } from '@/lib/formatLog';
 import type { Message, YearbookSummary } from '@/types';
 
 export default function EmperorPage() {
@@ -542,7 +543,7 @@ export default function EmperorPage() {
                                                         className="rounded border border-muted/20 p-2 text-xs"
                                                     >
                                                         <span className="text-muted-foreground mr-2">{msg.sentAt}</span>
-                                                        {text}
+                                                        {formatLog(text)}
                                                     </div>
                                                 );
                                             })}
@@ -611,20 +612,30 @@ export default function EmperorPage() {
                                     ))}
                                 </TableBody>
                             </Table>
-                            {yearbook.keyEvents.length > 0 && (
-                                <div className="space-y-1">
-                                    <h5 className="text-xs font-semibold text-amber-400">주요 사건</h5>
-                                    {yearbook.keyEvents.map((ev) => {
-                                        const raw = ev.payload?.content;
-                                        const text = typeof raw === 'string' ? raw : JSON.stringify(ev.payload ?? {});
-                                        return (
-                                            <div key={ev.id} className="rounded border border-muted/20 p-2 text-xs">
-                                                {text}
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            )}
+                            <div className="space-y-2">
+                                <h5 className="text-xs font-semibold text-amber-400">중원 정세</h5>
+                                {yearbook.globalHistory.length === 0 ? (
+                                    <div className="text-xs text-muted-foreground">기록 없음</div>
+                                ) : (
+                                    yearbook.globalHistory.map((text) => (
+                                        <div key={`yh-${text}`} className="rounded border border-muted/20 p-2 text-xs">
+                                            {formatLog(text)}
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                            <div className="space-y-2">
+                                <h5 className="text-xs font-semibold text-amber-400">장수 동향</h5>
+                                {yearbook.globalAction.length === 0 ? (
+                                    <div className="text-xs text-muted-foreground">기록 없음</div>
+                                ) : (
+                                    yearbook.globalAction.map((text) => (
+                                        <div key={`ya-${text}`} className="rounded border border-muted/20 p-2 text-xs">
+                                            {formatLog(text)}
+                                        </div>
+                                    ))
+                                )}
+                            </div>
                         </div>
                     )}
                 </CardContent>

@@ -320,6 +320,8 @@ export interface YearbookSummary {
     year: number;
     month: number;
     nations: YearbookNationSummary[];
+    globalHistory: string[];
+    globalAction: string[];
     keyEvents: Message[];
 }
 

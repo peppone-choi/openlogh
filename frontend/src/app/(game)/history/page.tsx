@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { MapViewer } from '@/components/game/map-viewer';
+import { formatLog } from '@/lib/formatLog';
 
 type EventType = 'war' | 'diplomacy' | 'nation' | 'general' | 'city' | 'other';
 
@@ -494,21 +495,35 @@ export default function HistoryPage() {
                                             </div>
                                         ))}
                                     </div>
-                                    <div className="pt-1 border-t border-border">
-                                        <div className="text-[11px] text-muted-foreground mb-1">주요 사건</div>
-                                        {yearbook.keyEvents.length === 0 ? (
-                                            <div className="text-[11px] text-muted-foreground">
-                                                해당 연도의 주요 사건이 없습니다.
-                                            </div>
-                                        ) : (
-                                            <div className="space-y-1">
-                                                {yearbook.keyEvents.slice(0, 5).map((event) => (
-                                                    <div key={event.id} className="text-[11px] text-muted-foreground">
-                                                        {getDateLabel(event)} - {getEventText(event)}
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        )}
+                                    <div className="pt-1 border-t border-border space-y-2">
+                                        <div>
+                                            <div className="text-[11px] text-muted-foreground mb-1">중원 정세</div>
+                                            {yearbook.globalHistory.length === 0 ? (
+                                                <div className="text-[11px] text-muted-foreground">기록 없음</div>
+                                            ) : (
+                                                <div className="space-y-1">
+                                                    {yearbook.globalHistory.slice(0, 5).map((event) => (
+                                                        <div key={`gh-${event}`} className="text-[11px] text-muted-foreground">
+                                                            {formatLog(event)}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div>
+                                            <div className="text-[11px] text-muted-foreground mb-1">장수 동향</div>
+                                            {yearbook.globalAction.length === 0 ? (
+                                                <div className="text-[11px] text-muted-foreground">기록 없음</div>
+                                            ) : (
+                                                <div className="space-y-1">
+                                                    {yearbook.globalAction.slice(0, 5).map((event) => (
+                                                        <div key={`ga-${event}`} className="text-[11px] text-muted-foreground">
+                                                            {formatLog(event)}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             )}
@@ -593,7 +608,7 @@ export default function HistoryPage() {
                                                             {EVENT_LABELS[event.type]}
                                                         </Badge>
                                                         <span className="text-xs leading-relaxed break-all">
-                                                            {event.text}
+                                                            {formatLog(event.text)}
                                                         </span>
                                                     </div>
                                                 </div>
