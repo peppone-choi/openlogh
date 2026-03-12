@@ -5,21 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { PublicCachedMapResponse } from '@/types';
 import { MapViewer } from '@/components/game/map-viewer';
+import { formatGameLogDate } from '@/lib/gameLogDate';
 import { formatLog } from '@/lib/formatLog';
 import { publicApi } from '@/lib/gameApi';
-
-function formatDateTime(value: string): string {
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) {
-        return '-';
-    }
-    return date.toLocaleString('ko-KR', {
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-    });
-}
 
 function LoadingCard() {
     return (
@@ -129,9 +117,11 @@ export function ServerStatusCard() {
                         <ul className="space-y-1">
                             {data.history.map((item) => (
                                 <li key={item.id} className="text-sm leading-relaxed text-zinc-200">
-                                    <span className="mr-2 text-xs text-muted-foreground">
-                                        {formatDateTime(item.sentAt)}
-                                    </span>
+                                    {formatGameLogDate(item) && (
+                                        <span className="mr-2 text-xs text-muted-foreground">
+                                            [{formatGameLogDate(item)}]
+                                        </span>
+                                    )}
                                     <span>{formatLog(item.text)}</span>
                                 </li>
                             ))}

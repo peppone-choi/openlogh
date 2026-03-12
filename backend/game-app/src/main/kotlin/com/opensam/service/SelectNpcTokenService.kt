@@ -37,6 +37,7 @@ class SelectNpcTokenService(
     )
 
     fun generateToken(worldId: Long, userId: Long): NpcTokenResponse {
+        ensureNpcModeEnabled(worldId)
         ensureUserHasNoGeneral(worldId, userId)
         val now = Instant.now()
         val validitySeconds = validitySeconds(worldId)
@@ -55,6 +56,7 @@ class SelectNpcTokenService(
     }
 
     fun refreshToken(worldId: Long, userId: Long, nonce: String, keepIds: List<Long>): NpcTokenResponse {
+        ensureNpcModeEnabled(worldId)
         ensureUserHasNoGeneral(worldId, userId)
         val current = loadToken(worldId, userId) ?: throw IllegalStateException("토큰이 만료되었습니다.")
         if (current.nonce != nonce) {
@@ -100,6 +102,7 @@ class SelectNpcTokenService(
     }
 
     fun selectNpc(worldId: Long, userId: Long, nonce: String, generalId: Long): SelectNpcResult {
+        ensureNpcModeEnabled(worldId)
         ensureUserHasNoGeneral(worldId, userId)
         val token = loadToken(worldId, userId) ?: throw IllegalStateException("토큰이 만료되었습니다.")
         if (token.nonce != nonce) {
@@ -142,6 +145,20 @@ class SelectNpcTokenService(
     private fun ensureUserHasNoGeneral(worldId: Long, userId: Long) {
         if (generalRepository.findByWorldIdAndUserId(worldId, userId).any { it.npcState.toInt() < 5 }) {
             throw IllegalStateException("이미 장수를 보유하고 있습니다.")
+        }
+    }
+
+    private fun ensureNpcModeEnabled(worldId: Long) {
+        val world = worldStateRepository.findById(worldId.toShort()).orElseThrow {
+            IllegalArgumentException("월드를 찾을 수 없습니다.")
+        }
+        val npcMode = ((world.config["npcMode"] as? Number)?.toInt())
+            ?: ((world.config["npcmode"] as? Number)?.toInt())
+            ?: ((world.config["npcMode"] as? String)?.toIntOrNull())
+            ?: ((world.config["npcmode"] as? String)?.toIntOrNull())
+            ?: 0
+        if (npcMode <= 0) {
+            throw IllegalStateException("NPC 모드가 비활성화된 서버입니다.")
         }
     }
 

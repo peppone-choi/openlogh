@@ -14,6 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { formatGameLogDate } from '@/lib/gameLogDate';
 import { formatOfficerLevelText, NATION_LEVEL_LABELS } from '@/lib/game-utils';
 import { formatLog } from '@/lib/formatLog';
 import type { Message, YearbookSummary } from '@/types';
@@ -542,7 +543,11 @@ export default function EmperorPage() {
                                                         key={msg.id}
                                                         className="rounded border border-muted/20 p-2 text-xs"
                                                     >
-                                                        <span className="text-muted-foreground mr-2">{msg.sentAt}</span>
+                                                        {formatGameLogDate(msg) && (
+                                                            <span className="text-muted-foreground mr-2">
+                                                                [{formatGameLogDate(msg)}]
+                                                            </span>
+                                                        )}
                                                         {formatLog(text)}
                                                     </div>
                                                 );

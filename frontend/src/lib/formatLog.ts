@@ -14,32 +14,28 @@ const COLOR_MAP: Record<string, string> = {
     W: '#f8fafc',
 };
 
-/**
- * Parse log text with color/style tags into React nodes.
- * Supports: <R>, <B>, <G>, <M>, <C>, <L>, <S>, <O>, <D>, <Y>, <W> (colors)
- *           <1> (small text), <R1>, <B1> etc. (color + small), </> (close)
- * Matches legacy formatLog exactly.
- */
-const TAG_REGEX = /<([RBGMCLSODYW]1?|1|\/)>/g;
+const TAG_REGEX = /<([RBGMCLSODYW]1?|1|\/|b|\/b)>/g;
 
 export function formatLog(text: string): ReactNode[] {
     const parts: ReactNode[] = [];
     let lastIndex = 0;
     let currentColor: string | null = null;
     let small = false;
+    let bold = false;
     let key = 0;
 
     // Reset regex state
     TAG_REGEX.lastIndex = 0;
 
-    let match;
-    while ((match = TAG_REGEX.exec(text)) !== null) {
+    let match: RegExpExecArray | null = TAG_REGEX.exec(text);
+    while (match !== null) {
         if (match.index > lastIndex) {
             const segment = text.slice(lastIndex, match.index);
-            if (currentColor || small) {
+            if (currentColor || small || bold) {
                 const style: Record<string, string> = {};
                 if (currentColor) style.color = currentColor;
                 if (small) style.fontSize = '0.9em';
+                if (bold) style.fontWeight = '700';
                 parts.push(createElement('span', { key: key++, style }, segment));
             } else {
                 parts.push(segment);
@@ -50,6 +46,11 @@ export function formatLog(text: string): ReactNode[] {
         if (tag === '/') {
             currentColor = null;
             small = false;
+            bold = false;
+        } else if (tag === 'b') {
+            bold = true;
+        } else if (tag === '/b') {
+            bold = false;
         } else if (tag === '1') {
             small = true;
         } else if (tag.length === 2) {
@@ -62,14 +63,16 @@ export function formatLog(text: string): ReactNode[] {
         }
 
         lastIndex = match.index + match[0].length;
+        match = TAG_REGEX.exec(text);
     }
 
     if (lastIndex < text.length) {
         const segment = text.slice(lastIndex);
-        if (currentColor || small) {
+        if (currentColor || small || bold) {
             const style: Record<string, string> = {};
             if (currentColor) style.color = currentColor;
             if (small) style.fontSize = '0.9em';
+            if (bold) style.fontWeight = '700';
             parts.push(createElement('span', { key: key++, style }, segment));
         } else {
             parts.push(segment);
@@ -79,10 +82,6 @@ export function formatLog(text: string): ReactNode[] {
     return parts;
 }
 
-/**
- * HTML string version of formatLog for dangerouslySetInnerHTML usage.
- * Supports compound tags like <R1> (color + small).
- */
 export function formatLogHtml(text: string): string {
     const result: string[] = [];
     let lastIndex = 0;
@@ -90,14 +89,18 @@ export function formatLogHtml(text: string): string {
     // Reset regex state
     TAG_REGEX.lastIndex = 0;
 
-    let match;
-    while ((match = TAG_REGEX.exec(text)) !== null) {
+    let match: RegExpExecArray | null = TAG_REGEX.exec(text);
+    while (match !== null) {
         const { 0: fullMatch, 1: tag, index } = match;
         if (lastIndex !== index) {
             result.push(text.slice(lastIndex, index));
         }
 
         if (tag === '/') {
+            result.push('</span>');
+        } else if (tag === 'b') {
+            result.push('<span style="font-weight:700">');
+        } else if (tag === '/b') {
             result.push('</span>');
         } else if (tag === '1') {
             result.push('<span style="font-size:0.9em">');
@@ -113,6 +116,7 @@ export function formatLogHtml(text: string): string {
         }
 
         lastIndex = index + fullMatch.length;
+        match = TAG_REGEX.exec(text);
     }
 
     if (lastIndex !== text.length) {

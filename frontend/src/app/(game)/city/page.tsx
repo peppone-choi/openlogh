@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useState, useMemo, useCallback, useRef } from 'react';
+import { Suspense, useEffect, useState, useMemo, useCallback } from 'react';
 import { useWorldStore } from '@/stores/worldStore';
 import { useGeneralStore } from '@/stores/generalStore';
 import { cityApi, generalApi, mapApi, nationApi } from '@/lib/gameApi';
@@ -117,7 +117,6 @@ function CityPageContent() {
     const [sortKey, setSortKey] = useState<SortKey>('trade');
     const [expandedCityId, setExpandedCityId] = useState<number | null>(null);
     const [filterCityId, setFilterCityId] = useState<number>(0); // 0 = all
-    const defaultCityAppliedRef = useRef(false);
 
     const requestedCityId = useMemo(() => {
         const raw = searchParams.get('id');
@@ -140,12 +139,10 @@ function CityPageContent() {
     }, [requestedCityId]);
 
     useEffect(() => {
-        if (defaultCityAppliedRef.current) return;
         if (requestedCityId != null) return;
         if (!myGeneral?.cityId || myGeneral.cityId <= 0) return;
         setFilterCityId(myGeneral.cityId);
         setExpandedCityId(myGeneral.cityId);
-        defaultCityAppliedRef.current = true;
     }, [requestedCityId, myGeneral?.cityId]);
 
     const loadCityData = useCallback(async () => {
@@ -259,7 +256,7 @@ function CityPageContent() {
 
     return (
         <div className="legacy-page-wrap pb-16 lg:pb-0">
-            <PageHeader title="현재 도시" />
+            <PageHeader title={requestedCityId != null ? '도시정보' : '현재 도시'} />
 
             {/* Controls: sort + city filter */}
             <div className="legacy-bg0 border-b border-gray-600 px-2 py-1.5 text-sm flex flex-wrap items-center gap-3">
@@ -370,27 +367,39 @@ function CityPageContent() {
                                 {/* Row 1: pop, popRate, trust, trade, supply */}
                                 <LabelCell>주민</LabelCell>
                                 <ValueCell>
-                                    {city.pop.toLocaleString()}/{city.popMax.toLocaleString()}
+                                    {isVisible ? `${city.pop.toLocaleString()}/${city.popMax.toLocaleString()}` : '?'}
                                 </ValueCell>
                                 <LabelCell>인구율</LabelCell>
                                 <ValueCell>
-                                    <SammoBar
-                                        height={7}
-                                        percent={city.popMax > 0 ? (city.pop / city.popMax) * 100 : 0}
-                                    />
-                                    <span>{popRate}%</span>
+                                    {isVisible ? (
+                                        <>
+                                            <SammoBar
+                                                height={7}
+                                                percent={city.popMax > 0 ? (city.pop / city.popMax) * 100 : 0}
+                                            />
+                                            <span>{popRate}%</span>
+                                        </>
+                                    ) : (
+                                        <span>?</span>
+                                    )}
                                 </ValueCell>
                                 <LabelCell>민심</LabelCell>
                                 <ValueCell>
-                                    <SammoBar height={7} percent={city.trust} />
-                                    <span>
-                                        {city.trust.toLocaleString(undefined, {
-                                            maximumFractionDigits: 1,
-                                        })}
-                                    </span>
+                                    {isVisible ? (
+                                        <>
+                                            <SammoBar height={7} percent={city.trust} />
+                                            <span>
+                                                {city.trust.toLocaleString(undefined, {
+                                                    maximumFractionDigits: 1,
+                                                })}
+                                            </span>
+                                        </>
+                                    ) : (
+                                        <span>?</span>
+                                    )}
                                 </ValueCell>
                                 <LabelCell>시세</LabelCell>
-                                <ValueCell>{tradeText}</ValueCell>
+                                <ValueCell>{isVisible ? tradeText : '?'}</ValueCell>
                                 <LabelCell>보급</LabelCell>
                                 <SupplyCell state={city.supplyState} hidden={!isVisible} />
 
@@ -443,11 +452,11 @@ function CityPageContent() {
 
                                 {/* Row 2: agri, comm, secu, def, wall */}
                                 <LabelCell>농업</LabelCell>
-                                <StatValueCell val={city.agri} max={city.agriMax} kind="agri" perTurn={100} />
+                                <StatValueCell val={city.agri} max={city.agriMax} hidden={!isVisible} kind="agri" perTurn={100} />
                                 <LabelCell>상업</LabelCell>
-                                <StatValueCell val={city.comm} max={city.commMax} kind="comm" perTurn={100} />
+                                <StatValueCell val={city.comm} max={city.commMax} hidden={!isVisible} kind="comm" perTurn={100} />
                                 <LabelCell>치안</LabelCell>
-                                <StatValueCell val={city.secu} max={city.secuMax} kind="secu" perTurn={100} />
+                                <StatValueCell val={city.secu} max={city.secuMax} hidden={!isVisible} kind="secu" perTurn={100} />
                                 <LabelCell>수비</LabelCell>
                                 <StatValueCell
                                     val={city.def}

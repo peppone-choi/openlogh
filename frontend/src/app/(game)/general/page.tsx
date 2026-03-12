@@ -537,9 +537,6 @@ export default function GeneralPage() {
                             ) : (
                                 biographyRows.map((row) => (
                                     <div key={row.id} className="rounded border p-2 text-sm">
-                                        <div className="text-xs text-muted-foreground mb-1">
-                                            {new Date(row.sentAt).toLocaleString('ko-KR')}
-                                        </div>
                                         <div className="break-all">{row.text}</div>
                                     </div>
                                 ))

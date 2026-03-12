@@ -98,6 +98,8 @@ class PublicCachedMapService(
                     id = message.id,
                     sentAt = message.sentAt,
                     text = message.payload["message"]?.toString() ?: "",
+                    year = (message.payload["year"] as? Number)?.toInt(),
+                    month = (message.payload["month"] as? Number)?.toInt(),
                 )
             }
 

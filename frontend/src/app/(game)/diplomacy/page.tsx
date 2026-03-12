@@ -6,10 +6,8 @@ import { useGeneralStore } from '@/stores/generalStore';
 import { useGameStore } from '@/stores/gameStore';
 import { diplomacyLetterApi, historyApi } from '@/lib/gameApi';
 import { subscribeWebSocket } from '@/lib/websocket';
-import type { Message, Nation, Diplomacy } from '@/types';
-import { Handshake, Send, Globe, History, ArrowRight, Map as MapIcon } from 'lucide-react';
-
-import { MapViewer } from '@/components/game/map-viewer';
+import type { Message, Diplomacy } from '@/types';
+import { Handshake, Send, History, ArrowRight } from 'lucide-react';
 import { PageHeader } from '@/components/game/page-header';
 import { LoadingState } from '@/components/game/loading-state';
 import { EmptyState } from '@/components/game/empty-state';
@@ -20,6 +18,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { formatGameLogDate } from '@/lib/gameLogDate';
 import { formatLog } from '@/lib/formatLog';
 
 const STATE_LABELS: Record<string, string> = {
@@ -40,15 +39,6 @@ const STATE_BADGE_VARIANT: Record<string, 'destructive' | 'default' | 'secondary
     neutral: 'outline',
 };
 
-const STATE_COLORS: Record<string, string> = {
-    war: '#dc2626',
-    alliance: '#16a34a',
-    nonaggression: '#2563eb',
-    ceasefire: '#ca8a04',
-    ceasefire_proposal: '#ca8a04',
-    neutral: '#555',
-};
-
 const LETTER_TYPES = [
     { value: 'alliance', label: '동맹' },
     { value: 'nonaggression', label: '불가침' },
@@ -59,7 +49,7 @@ const LETTER_TYPES = [
 export default function DiplomacyPage() {
     const currentWorld = useWorldStore((s) => s.currentWorld);
     const { myGeneral, fetchMyGeneral } = useGeneralStore();
-    const { nations, diplomacy, generals, cities, mapData, loading, loadAll } = useGameStore();
+    const { nations, diplomacy, generals, loading, loadAll } = useGameStore();
 
     // Letter state
     const [letters, setLetters] = useState<Message[]>([]);
@@ -122,16 +112,6 @@ export default function DiplomacyPage() {
 
     const activeDiplomacy = useMemo(() => diplomacy.filter((d) => !d.isDead), [diplomacy]);
 
-    // Build NxN diplomacy lookup: key = "srcId-destId" → stateCode
-    const diplomacyLookup = useMemo(() => {
-        const map = new Map<string, string>();
-        for (const d of activeDiplomacy) {
-            map.set(`${d.srcNationId}-${d.destNationId}`, d.stateCode);
-            map.set(`${d.destNationId}-${d.srcNationId}`, d.stateCode);
-        }
-        return map;
-    }, [activeDiplomacy]);
-
     // Group diplomacy by state for Tab 1
     const grouped = useMemo(() => {
         const groups: Record<string, Diplomacy[]> = {};
@@ -142,23 +122,6 @@ export default function DiplomacyPage() {
         }
         return groups;
     }, [activeDiplomacy]);
-
-    // Nation stats for power comparison
-    const nationStats = useMemo(() => {
-        return nations.map((n) => {
-            const nationGenerals = generals.filter((g) => g.nationId === n.id);
-            const nationCities = cities.filter((c) => c.nationId === n.id);
-            const totalPop = nationCities.reduce((sum, c) => sum + c.pop, 0);
-            const totalCrew = nationGenerals.reduce((sum, g) => sum + g.crew, 0);
-            return {
-                nation: n,
-                genCount: nationGenerals.length,
-                cityCount: nationCities.length,
-                totalPop,
-                totalCrew,
-            };
-        });
-    }, [nations, generals, cities]);
 
     // Filter diplomacy-related history
     const diplomacyHistory = useMemo(() => {
@@ -261,17 +224,13 @@ export default function DiplomacyPage() {
 
     return (
         <div className="space-y-0 max-w-4xl mx-auto">
-            <PageHeader icon={Handshake} title="외교" />
+            <PageHeader icon={Handshake} title="외교부" />
 
             <Tabs defaultValue="letters" className="legacy-page-wrap">
                 <TabsList className="w-full justify-start border-b border-gray-600">
                     <TabsTrigger value="letters">
                         <Handshake className="size-3.5 mr-1" />
                         외교부
-                    </TabsTrigger>
-                    <TabsTrigger value="global">
-                        <Globe className="size-3.5 mr-1" />
-                        중원정보
                     </TabsTrigger>
                     <TabsTrigger value="history">
                         <History className="size-3.5 mr-1" />
@@ -369,8 +328,11 @@ export default function DiplomacyPage() {
                             </CardHeader>
                             <CardContent className="space-y-3">
                                 <div>
-                                    <label className="block text-xs text-muted-foreground mb-1">대상 국가</label>
+                                    <label htmlFor="destNationId" className="block text-xs text-muted-foreground mb-1">
+                                        대상 국가
+                                    </label>
                                     <select
+                                        id="destNationId"
                                         value={destNationId}
                                         onChange={(e) => setDestNationId(e.target.value)}
                                         className="h-9 w-full min-w-0 rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] md:text-sm"
@@ -384,8 +346,11 @@ export default function DiplomacyPage() {
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="block text-xs text-muted-foreground mb-1">유형</label>
+                                    <label htmlFor="letterType" className="block text-xs text-muted-foreground mb-1">
+                                        유형
+                                    </label>
                                     <select
+                                        id="letterType"
                                         value={letterType}
                                         onChange={(e) => setLetterType(e.target.value)}
                                         className="h-9 w-full min-w-0 rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] md:text-sm"
@@ -399,7 +364,7 @@ export default function DiplomacyPage() {
                                 </div>
                                 <div>
                                     <div className="flex items-center justify-between mb-1">
-                                        <label className="text-xs text-muted-foreground">
+                                        <label htmlFor="letterContent" className="text-xs text-muted-foreground">
                                             공개 내용 {showDualContent ? '(모든 국가에 공개)' : '(선택)'}
                                         </label>
                                         <button
@@ -411,6 +376,7 @@ export default function DiplomacyPage() {
                                         </button>
                                     </div>
                                     <Textarea
+                                        id="letterContent"
                                         value={letterContent}
                                         onChange={(e) => setLetterContent(e.target.value)}
                                         placeholder={showDualContent ? '공개적으로 보이는 내용...' : '서신 내용...'}
@@ -419,10 +385,14 @@ export default function DiplomacyPage() {
                                 </div>
                                 {showDualContent && (
                                     <div>
-                                        <label className="block text-xs text-muted-foreground mb-1">
+                                        <label
+                                            htmlFor="letterDiplomaticContent"
+                                            className="block text-xs text-muted-foreground mb-1"
+                                        >
                                             외교 전용 내용 (당사국만 열람)
                                         </label>
                                         <Textarea
+                                            id="letterDiplomaticContent"
                                             value={letterDiplomaticContent}
                                             onChange={(e) => setLetterDiplomaticContent(e.target.value)}
                                             placeholder="외교 당사국만 볼 수 있는 비밀 내용..."
@@ -799,95 +769,6 @@ export default function DiplomacyPage() {
                     </Card>
                 </TabsContent>
 
-                {/* Tab 2: 중원정보 — Global Diplomacy Matrix + Nation Power */}
-                <TabsContent value="global" className="mt-4 space-y-4 px-2">
-                    {/* NxN Diplomacy Matrix */}
-                    <Card>
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-sm">외교 관계도</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <DiplomacyMatrix
-                                nations={nations}
-                                diplomacyLookup={diplomacyLookup}
-                                myNationId={myGeneral?.nationId}
-                            />
-                        </CardContent>
-                    </Card>
-
-                    {/* Territory Map */}
-                    {cities.length > 0 && mapData && (
-                        <Card>
-                            <CardHeader className="pb-2">
-                                <CardTitle className="text-sm flex items-center gap-1">
-                                    <MapIcon className="size-3.5" />
-                                    세력 지도
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <MapViewer worldId={currentWorld.id} compact />
-                            </CardContent>
-                        </Card>
-                    )}
-
-                    {/* Conflict / 분쟁 Areas */}
-                    <ConflictAreaCard nations={nations} cities={cities} nationMap={nationMap} diplomacy={diplomacy} />
-
-                    {/* Nation Power Comparison */}
-                    <Card>
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-sm">국력 비교</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            {nationStats.length === 0 ? (
-                                <p className="text-xs text-muted-foreground">국가가 없습니다.</p>
-                            ) : (
-                                <div className="overflow-x-auto">
-                                    <table className="w-full text-xs">
-                                        <thead>
-                                            <tr className="border-b border-gray-700">
-                                                <th className="text-left py-1.5 px-2">국가</th>
-                                                <th className="text-right py-1.5 px-2">장수</th>
-                                                <th className="text-right py-1.5 px-2">도시</th>
-                                                <th className="text-right py-1.5 px-2">인구</th>
-                                                <th className="text-right py-1.5 px-2">병력</th>
-                                                <th className="text-right py-1.5 px-2">기술</th>
-                                                <th className="text-right py-1.5 px-2">국력</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {nationStats
-                                                .sort((a, b) => b.nation.power - a.nation.power)
-                                                .map(({ nation: n, genCount, cityCount, totalPop, totalCrew }) => (
-                                                    <tr
-                                                        key={n.id}
-                                                        className="border-b border-gray-800 hover:bg-gray-900/50"
-                                                    >
-                                                        <td className="py-1.5 px-2">
-                                                            <NationBadge name={n.name} color={n.color} />
-                                                        </td>
-                                                        <td className="text-right py-1.5 px-2">{genCount}</td>
-                                                        <td className="text-right py-1.5 px-2">{cityCount}</td>
-                                                        <td className="text-right py-1.5 px-2">
-                                                            {totalPop.toLocaleString()}
-                                                        </td>
-                                                        <td className="text-right py-1.5 px-2">
-                                                            {totalCrew.toLocaleString()}
-                                                        </td>
-                                                        <td className="text-right py-1.5 px-2">{n.tech}</td>
-                                                        <td className="text-right py-1.5 px-2 font-bold">
-                                                            {n.power.toLocaleString()}
-                                                        </td>
-                                                    </tr>
-                                                ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-
                 {/* Tab 3: 외교 기록 — History */}
                 <TabsContent value="history" className="mt-4 space-y-4 px-2">
                     <Card>
@@ -906,14 +787,13 @@ export default function DiplomacyPage() {
                                             (record.payload?.content as string) ??
                                             (record.payload?.message as string) ??
                                             '';
-                                        const date = record.sentAt ?? record.validUntil ?? '';
                                         return (
                                             <div
                                                 key={record.id}
                                                 className="flex items-start gap-3 rounded border border-gray-800 px-3 py-2"
                                             >
                                                 <span className="shrink-0 text-xs text-muted-foreground mt-0.5 w-24">
-                                                    {date ? formatDate(date) : '-'}
+                                                    {formatGameLogDate(record) ?? '-'}
                                                 </span>
                                                 <span className="text-sm">{formatLog(msg)}</span>
                                             </div>
@@ -927,241 +807,4 @@ export default function DiplomacyPage() {
             </Tabs>
         </div>
     );
-}
-
-// Informative state chars (shown for own nation's relations — more detail)
-const INFORMATIVE_STATE_CHAR: Record<string, string> = {
-    war: '★',
-    ceasefire: '△',
-    ceasefire_proposal: '▽',
-    alliance: '@',
-    nonaggression: '●',
-    neutral: 'ㆍ',
-};
-
-// Neutral state chars (shown for other nations — less detail)
-const NEUTRAL_STATE_CHAR: Record<string, string> = {
-    war: '★',
-    ceasefire: '△',
-    ceasefire_proposal: '△',
-    alliance: '@',
-    nonaggression: 'ㆍ',
-    neutral: 'ㆍ',
-};
-
-/** NxN diplomacy relationship matrix */
-function DiplomacyMatrix({
-    nations,
-    diplomacyLookup,
-    myNationId,
-}: {
-    nations: Nation[];
-    diplomacyLookup: Map<string, string>;
-    myNationId?: number;
-}) {
-    if (nations.length === 0) return <p className="text-xs text-muted-foreground">국가가 없습니다.</p>;
-
-    return (
-        <div className="overflow-x-auto">
-            <table className="text-xs border-collapse">
-                <thead>
-                    <tr>
-                        <th className="p-1" />
-                        {nations.map((n) => (
-                            <th
-                                key={n.id}
-                                className="p-1 text-center font-normal"
-                                style={{ color: n.color || undefined }}
-                            >
-                                <span className="[writing-mode:vertical-lr] whitespace-nowrap">{n.name}</span>
-                            </th>
-                        ))}
-                    </tr>
-                </thead>
-                <tbody>
-                    {nations.map((row) => (
-                        <tr key={row.id}>
-                            <td
-                                className="p-1 pr-2 text-right whitespace-nowrap font-bold"
-                                style={{ color: row.color || undefined }}
-                            >
-                                {row.name}
-                            </td>
-                            {nations.map((col) => {
-                                if (row.id === col.id) {
-                                    return (
-                                        <td
-                                            key={col.id}
-                                            className="p-1 text-center"
-                                            style={{ backgroundColor: '#222' }}
-                                        >
-                                            -
-                                        </td>
-                                    );
-                                }
-                                const state = diplomacyLookup.get(`${row.id}-${col.id}`);
-                                const bg = state ? (STATE_COLORS[state] ?? '#555') : '#1a1a1a';
-                                const label = state ? (STATE_LABELS[state] ?? state) : '';
-                                // Use informative chars for own nation's row/column, neutral for others
-                                const isMyRelation =
-                                    myNationId != null && (row.id === myNationId || col.id === myNationId);
-                                const charMap = isMyRelation ? INFORMATIVE_STATE_CHAR : NEUTRAL_STATE_CHAR;
-                                const stateChar = state ? (charMap[state] ?? label.charAt(0)) : '';
-                                return (
-                                    <td
-                                        key={col.id}
-                                        className="p-1 text-center border border-gray-800"
-                                        style={{
-                                            backgroundColor: bg + '33',
-                                            color: bg,
-                                        }}
-                                        title={`${row.name} → ${col.name}: ${label || '중립'}`}
-                                    >
-                                        {stateChar ? (
-                                            <span className="font-bold">{stateChar}</span>
-                                        ) : (
-                                            <span className="text-gray-600">-</span>
-                                        )}
-                                    </td>
-                                );
-                            })}
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-            {/* Legend */}
-            <div className="flex flex-wrap gap-3 mt-3 text-xs">
-                {Object.entries(STATE_LABELS).map(([code, label]) => (
-                    <span key={code} className="flex items-center gap-1">
-                        <span
-                            className="inline-block size-2.5 rounded-sm"
-                            style={{ backgroundColor: STATE_COLORS[code] ?? '#555' }}
-                        />
-                        <span className="font-bold" style={{ color: STATE_COLORS[code] ?? '#555' }}>
-                            {INFORMATIVE_STATE_CHAR[code] ?? ''}
-                        </span>
-                        {label}
-                    </span>
-                ))}
-            </div>
-        </div>
-    );
-}
-
-/** Shows territory overview with war-state conflict indicators */
-function ConflictAreaCard({
-    nations,
-    cities,
-    nationMap,
-    diplomacy,
-}: {
-    nations: Nation[];
-    cities: { id: number; nationId: number; name?: string }[];
-    nationMap: Map<number, Nation>;
-    diplomacy: Diplomacy[];
-}) {
-    // Group cities by nation
-    const nationCities = new Map<number, typeof cities>();
-    for (const c of cities) {
-        if (!c.nationId) continue;
-        const list = nationCities.get(c.nationId) ?? [];
-        list.push(c);
-        nationCities.set(c.nationId, list);
-    }
-
-    // Find war pairs from diplomacy data
-    const warPairs: {
-        src: Nation;
-        dest: Nation;
-        srcCount: number;
-        destCount: number;
-    }[] = [];
-    for (const d of diplomacy) {
-        if (d.stateCode === 'war' && !d.isDead) {
-            const src = nationMap.get(d.srcNationId);
-            const dest = nationMap.get(d.destNationId);
-            if (src && dest) {
-                warPairs.push({
-                    src,
-                    dest,
-                    srcCount: nationCities.get(src.id)?.length ?? 0,
-                    destCount: nationCities.get(dest.id)?.length ?? 0,
-                });
-            }
-        }
-    }
-
-    const nationList = nations.filter((n) => (nationCities.get(n.id)?.length ?? 0) > 0);
-
-    if (nationList.length < 2) {
-        return null;
-    }
-
-    const totalCities = cities.filter((c) => c.nationId > 0).length;
-
-    return (
-        <Card>
-            <CardHeader className="pb-2">
-                <CardTitle className="text-sm">세력 영토 분쟁 현황</CardTitle>
-            </CardHeader>
-            <CardContent>
-                {/* Active war conflict zones */}
-                {warPairs.length > 0 && (
-                    <div className="mb-3 space-y-2">
-                        <div className="text-xs font-medium text-red-400 flex items-center gap-1">
-                            ⚔️ 교전 중인 세력
-                        </div>
-                        {warPairs.map((wp, i) => (
-                            <div
-                                key={i}
-                                className="flex items-center gap-2 rounded border border-red-900/50 bg-red-950/20 px-3 py-2 text-xs"
-                            >
-                                <NationBadge name={wp.src.name} color={wp.src.color} />
-                                <span className="text-muted-foreground">({wp.srcCount}도시)</span>
-                                <span className="text-red-400 font-bold">⚔</span>
-                                <NationBadge name={wp.dest.name} color={wp.dest.color} />
-                                <span className="text-muted-foreground">({wp.destCount}도시)</span>
-                            </div>
-                        ))}
-                    </div>
-                )}
-
-                {/* Territory bar chart */}
-                <div className="space-y-2">
-                    {nationList
-                        .sort((a, b) => (nationCities.get(b.id)?.length ?? 0) - (nationCities.get(a.id)?.length ?? 0))
-                        .map((n) => {
-                            const count = nationCities.get(n.id)?.length ?? 0;
-                            const pct = totalCities > 0 ? Math.round((count / totalCities) * 100) : 0;
-                            const atWar = warPairs.some((wp) => wp.src.id === n.id || wp.dest.id === n.id);
-                            return (
-                                <div key={n.id} className="space-y-1">
-                                    <div className="flex items-center gap-2 text-xs">
-                                        <NationBadge name={n.name} color={n.color} />
-                                        <span className="text-muted-foreground">{count}개 도시</span>
-                                        <span className="text-muted-foreground">({pct}%)</span>
-                                        {atWar && <span className="text-red-400 text-[10px]">⚔ 교전</span>}
-                                    </div>
-                                    <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
-                                        <div
-                                            className={`h-full rounded-full ${atWar ? 'animate-pulse' : ''}`}
-                                            style={{ width: `${pct}%`, backgroundColor: n.color }}
-                                        />
-                                    </div>
-                                </div>
-                            );
-                        })}
-                </div>
-            </CardContent>
-        </Card>
-    );
-}
-
-function formatDate(iso: string): string {
-    try {
-        const d = new Date(iso);
-        return `${d.getMonth() + 1}/${d.getDate()} ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
-    } catch {
-        return iso;
-    }
 }

@@ -21,11 +21,18 @@ interface NavItem {
     href: string;
     label: string;
     require?: NavRequire;
+    cond?: 'npcMode';
 }
 
 interface NavSection {
     label: string;
     items: NavItem[];
+}
+
+function isNpcModeEnabled(config: Record<string, unknown> | null | undefined): boolean {
+    const raw = config?.npcMode ?? config?.npcmode;
+    const numeric = typeof raw === 'number' ? raw : typeof raw === 'string' ? Number(raw) : 0;
+    return Number.isFinite(numeric) && numeric > 0;
 }
 
 // Legacy MainControlBar.vue parity — exact order from legacy-core/hwe/ts/components/MainControlBar.vue
@@ -46,7 +53,7 @@ const navSections: NavSection[] = [
             { href: '/nation', label: '세력정보', require: 'nation' },
             { href: '/nation-cities', label: '세력도시', require: 'nation' },
             { href: '/nation-generals', label: '세력장수', require: 'nation' },
-            { href: '/diplomacy', label: '중원정보' },
+            { href: '/global-diplomacy', label: '중원정보' },
             { href: '/city', label: '현재도시' },
             { href: '/battle', label: '감찰부', require: 'secret' },
             { href: '/inherit', label: '유산관리' },
@@ -59,16 +66,17 @@ const navSections: NavSection[] = [
         // Legacy GlobalMenu.php parity — exact order from legacy-core/hwe/sammo/GlobalMenu.php
         label: '정보',
         items: [
+            { href: '/nation-betting', label: '천통국 베팅' },
             { href: '/nations', label: '세력일람' },
             { href: '/generals', label: '장수일람' },
             { href: '/best-generals', label: '명장일람' },
             { href: '/hall-of-fame', label: '명예의전당' },
             { href: '/emperor', label: '왕조일람' },
             { href: '/history', label: '연감' },
-            { href: '/battle-simulator', label: '전투시뮬' },
-            { href: '/traffic', label: '접속현황' },
-            { href: '/npc-list', label: 'NPC일람' },
-            { href: '/vote', label: '투표' },
+            { href: '/battle-simulator', label: '전투 시뮬레이터' },
+            { href: '/traffic', label: '접속량정보' },
+            { href: '/npc-list', label: '빙의일람', cond: 'npcMode' },
+            { href: '/vote', label: '설문조사' },
         ],
     },
 ];
@@ -172,19 +180,20 @@ export default function GameLayout({ children }: { children: React.ReactNode }) 
     const inNation = officerLevel >= 1;
     const showSecret = inNation && officerLevel >= 2;
 
-    const navItems = useMemo(() => {
-        const items: NavItem[] = [];
-
-        for (const section of navSections) {
-            for (const item of section.items) {
-                if (item.require === 'nation' && !inNation) continue;
-                if (item.require === 'secret' && !showSecret) continue;
-                items.push(item);
-            }
-        }
-
-        return items;
-    }, [inNation, showSecret]);
+    const filteredSections = useMemo(() => {
+        const npcMode = isNpcModeEnabled(currentWorld?.config as Record<string, unknown> | undefined);
+        return navSections
+            .map((section) => ({
+                ...section,
+                items: section.items.filter((item) => {
+                    if (item.require === 'nation' && !inNation) return false;
+                    if (item.require === 'secret' && !showSecret) return false;
+                    if (item.cond === 'npcMode' && !npcMode) return false;
+                    return true;
+                }),
+            }))
+            .filter((section) => section.items.length > 0);
+    }, [currentWorld, inNation, showSecret]);
 
     // Render guard: block only during initial load.
     // myGeneral keeps its value during re-fetches (not reset to null),
@@ -255,21 +264,43 @@ export default function GameLayout({ children }: { children: React.ReactNode }) 
                     </div>
                 </div>
 
-                <div className="mb-[1px] grid grid-cols-3 gap-[1px] bg-gray-600 sm:grid-cols-5 md:grid-cols-7 lg:grid-cols-10">
-                    {navItems.map((item) => {
-                        const active = pathname === item.href.split('?')[0];
+                <div className="mb-[1px] flex flex-wrap gap-[1px] bg-gray-600 p-[1px]">
+                    {filteredSections.map((section) => {
+                        const sectionActive = section.items.some((item) => pathname === item.href.split('?')[0]);
                         return (
-                            <Button
-                                key={`${item.href}-${item.label}`}
-                                variant="outline"
-                                size="sm"
-                                asChild
-                                className={`h-7 border-0 px-1 text-[11px] font-bold ${
-                                    active ? 'bg-[#141c65] text-white' : 'bg-[#00582c] text-white hover:bg-[#006a33]'
-                                }`}
-                            >
-                                <Link href={item.href}>{item.label}</Link>
-                            </Button>
+                            <details key={section.label} className="group relative">
+                                <summary
+                                    className={`flex h-7 cursor-pointer list-none items-center justify-center px-3 text-[11px] font-bold text-white marker:hidden ${
+                                        sectionActive
+                                            ? 'bg-[#141c65]'
+                                            : 'bg-[#00582c] hover:bg-[#006a33]'
+                                    }`}
+                                >
+                                    {section.label}
+                                </summary>
+                                <div className="absolute left-0 top-full z-30 mt-[1px] min-w-[320px] border border-gray-600 bg-[#0b0b0b] p-1 shadow-lg">
+                                    <div className="grid grid-cols-2 gap-[1px] bg-gray-600 lg:grid-cols-3">
+                                        {section.items.map((item) => {
+                                            const active = pathname === item.href.split('?')[0];
+                                            return (
+                                                <Button
+                                                    key={`${section.label}-${item.href}-${item.label}`}
+                                                    variant="outline"
+                                                    size="sm"
+                                                    asChild
+                                                    className={`h-7 border-0 px-2 text-[11px] font-bold ${
+                                                        active
+                                                            ? 'bg-[#141c65] text-white'
+                                                            : 'bg-[#00582c] text-white hover:bg-[#006a33]'
+                                                    }`}
+                                                >
+                                                    <Link href={item.href}>{item.label}</Link>
+                                                </Button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            </details>
                         );
                     })}
                 </div>

@@ -28,6 +28,7 @@ import {
     CITY_LEVEL_NAMES,
     NATION_LEVEL_LABELS,
 } from '@/lib/game-utils';
+import { formatGameLogDate } from '@/lib/gameLogDate';
 import { formatLog } from '@/lib/formatLog';
 import {
     calcCityGoldIncome,
@@ -1066,9 +1067,11 @@ function NationPageContent() {
                                                                 key={msg.id}
                                                                 className="rounded border border-muted/20 p-2 text-xs"
                                                             >
-                                                                <span className="text-muted-foreground mr-2">
-                                                                    {msg.sentAt}
-                                                                </span>
+                                                                {formatGameLogDate(msg) && (
+                                                                    <span className="text-muted-foreground mr-2">
+                                                                        [{formatGameLogDate(msg)}]
+                                                                    </span>
+                                                                )}
                                                                 {formatLog(text)}
                                                             </div>
                                                         );

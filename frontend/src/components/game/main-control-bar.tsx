@@ -31,7 +31,7 @@ const CONTROLS: CtrlItem[] = [
     { href: '/nation', label: '세력정보', require: 'nation' },
     { href: '/nation-cities', label: '세력도시', require: 'nation' },
     { href: '/nation-generals', label: '세력장수', require: 'nation' },
-    { href: '/diplomacy', label: '중원정보' },
+    { href: '/global-diplomacy', label: '중원정보' },
     { href: '/city', label: '현재도시' },
     { href: '/battle', label: '감찰부', require: 'secret' },
     { href: '/inherit', label: '유산관리' },

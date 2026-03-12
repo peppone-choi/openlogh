@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useGeneralStore } from '@/stores/generalStore';
+import { useWorldStore } from '@/stores/worldStore';
 
 interface GameBottomBarProps {
     onRefresh?: () => void;
@@ -14,6 +15,13 @@ interface NavItem {
     href: string;
     label: string;
     require?: NavRequire;
+    cond?: 'npcMode';
+}
+
+function isNpcModeEnabled(config: Record<string, unknown> | null | undefined): boolean {
+    const raw = config?.npcMode ?? config?.npcmode;
+    const numeric = typeof raw === 'number' ? raw : typeof raw === 'string' ? Number(raw) : 0;
+    return Number.isFinite(numeric) && numeric > 0;
 }
 
 const NATION_MENU: NavItem[] = [
@@ -30,7 +38,7 @@ const NATION_MENU: NavItem[] = [
     { href: '/nation', label: '세력정보', require: 'nation' },
     { href: '/nation-cities', label: '세력도시', require: 'nation' },
     { href: '/nation-generals', label: '세력장수', require: 'nation' },
-    { href: '/diplomacy', label: '중원정보' },
+    { href: '/global-diplomacy', label: '중원정보' },
     { href: '/city', label: '현재도시' },
     { href: '/battle', label: '감찰부', require: 'secret' },
     { href: '/inherit', label: '유산관리' },
@@ -41,20 +49,22 @@ const NATION_MENU: NavItem[] = [
 
 /* ── Legacy GlobalMenuDropdown parity: 정보 메뉴 items ── */
 const GLOBAL_MENU: NavItem[] = [
+    { href: '/nation-betting', label: '천통국 베팅' },
     { href: '/nations', label: '세력일람' },
     { href: '/generals', label: '장수일람' },
     { href: '/best-generals', label: '명장일람' },
     { href: '/hall-of-fame', label: '명예의전당' },
     { href: '/emperor', label: '왕조일람' },
     { href: '/history', label: '연감' },
-    { href: '/battle-simulator', label: '전투시뮬' },
-    { href: '/traffic', label: '접속현황' },
-    { href: '/npc-list', label: 'NPC일람' },
-    { href: '/vote', label: '투표' },
+    { href: '/battle-simulator', label: '전투 시뮬레이터' },
+    { href: '/traffic', label: '접속량정보' },
+    { href: '/npc-list', label: '빙의일람', cond: 'npcMode' },
+    { href: '/vote', label: '설문조사' },
 ];
 
 /* ── Legacy 빠른 이동: scroll-to-section items ── */
 interface QuickNavItem {
+    key: string;
     label: string;
     selector?: string;
     header?: boolean;
@@ -63,27 +73,27 @@ interface QuickNavItem {
 }
 
 const QUICK_NAV: QuickNavItem[] = [
-    { label: '국가 정보', header: true },
-    { label: '', divider: true },
-    { label: '방침', selector: '.nationNotice' },
-    { label: '명령', selector: '.reservedCommandZone' },
-    { label: '국가', selector: '.nationInfo' },
-    { label: '장수', selector: '.generalInfo' },
-    { label: '도시', selector: '.cityInfo' },
-    { label: '동향 정보', header: true },
-    { label: '', divider: true },
-    { label: '지도', selector: '.mapView' },
-    { label: '동향', selector: '.PublicRecord' },
-    { label: '개인', selector: '.GeneralLog' },
-    { label: '정세', selector: '.WorldHistory' },
-    { label: '', divider: true },
-    { label: '메시지', header: true },
-    { label: '', divider: true },
-    { label: '전체', selector: '.PublicTalk' },
-    { label: '국가', selector: '.NationalTalk' },
-    { label: '개인', selector: '.PrivateTalk' },
-    { label: '외교', selector: '.DiplomacyTalk' },
-    { label: '로비로', lobby: true },
+    { key: 'header-nation', label: '국가 정보', header: true },
+    { key: 'divider-nation', label: '', divider: true },
+    { key: 'notice', label: '방침', selector: '.nationNotice' },
+    { key: 'commands', label: '명령', selector: '.reservedCommandZone' },
+    { key: 'nation', label: '국가', selector: '.nationInfo' },
+    { key: 'general', label: '장수', selector: '.generalInfo' },
+    { key: 'city', label: '도시', selector: '.cityInfo' },
+    { key: 'header-record', label: '동향 정보', header: true },
+    { key: 'divider-record', label: '', divider: true },
+    { key: 'map', label: '지도', selector: '.mapView' },
+    { key: 'public-record', label: '동향', selector: '.PublicRecord' },
+    { key: 'general-log', label: '개인', selector: '.GeneralLog' },
+    { key: 'world-history', label: '정세', selector: '.WorldHistory' },
+    { key: 'divider-message', label: '', divider: true },
+    { key: 'header-message', label: '메시지', header: true },
+    { key: 'divider-message-2', label: '', divider: true },
+    { key: 'public-talk', label: '전체', selector: '.PublicTalk' },
+    { key: 'national-talk', label: '국가', selector: '.NationalTalk' },
+    { key: 'private-talk', label: '개인', selector: '.PrivateTalk' },
+    { key: 'diplomacy-talk', label: '외교', selector: '.DiplomacyTalk' },
+    { key: 'lobby', label: '로비로', lobby: true },
 ];
 
 function scrollToSelector(selector: string) {
@@ -97,7 +107,9 @@ export function GameBottomBar({ onRefresh }: GameBottomBarProps) {
     const [openMenu, setOpenMenu] = useState<string | null>(null);
     const barRef = useRef<HTMLDivElement>(null);
 
+    const currentWorld = useWorldStore((s) => s.currentWorld);
     const myGeneral = useGeneralStore((s) => s.myGeneral);
+    const npcMode = isNpcModeEnabled(currentWorld?.config as Record<string, unknown> | undefined);
     const officerLevel = myGeneral?.officerLevel ?? 0;
     const inNation = officerLevel >= 1;
     const showSecret = officerLevel >= 2 || Number(myGeneral?.permission ?? 0) >= 1;
@@ -126,13 +138,14 @@ export function GameBottomBar({ onRefresh }: GameBottomBarProps) {
     }
 
     const filteredNation = NATION_MENU.filter(isVisible);
+    const filteredGlobal = GLOBAL_MENU.filter((item) => !(item.cond === 'npcMode' && !npcMode));
 
     return (
         <div ref={barRef} className="fixed bottom-0 left-0 right-0 z-40 lg:hidden">
             {/* ── Dropup panels ── */}
             {openMenu === 'global' && (
                 <DropupPanel columns={3}>
-                    {GLOBAL_MENU.map((item) => (
+                    {filteredGlobal.map((item) => (
                         <Link
                             key={item.href}
                             href={item.href}
@@ -147,9 +160,9 @@ export function GameBottomBar({ onRefresh }: GameBottomBarProps) {
 
             {openMenu === 'nation' && (
                 <DropupPanel columns={3}>
-                    {filteredNation.map((item, i) => (
+                    {filteredNation.map((item) => (
                         <Link
-                            key={`${item.href}-${i}`}
+                            key={`${item.href}-${item.label}`}
                             href={item.href}
                             className="block px-3 py-1.5 text-sm hover:bg-muted/50"
                             onClick={() => setOpenMenu(null)}
@@ -162,14 +175,14 @@ export function GameBottomBar({ onRefresh }: GameBottomBarProps) {
 
             {openMenu === 'quick' && (
                 <DropupPanel columns={3}>
-                    {QUICK_NAV.map((item, i) => {
+                    {QUICK_NAV.map((item) => {
                         if (item.divider) {
-                            return <div key={`d-${i}`} className="col-span-3 border-t border-gray-600 my-0.5" />;
+                            return <div key={item.key} className="col-span-3 border-t border-gray-600 my-0.5" />;
                         }
                         if (item.header) {
                             return (
                                 <div
-                                    key={`h-${i}`}
+                                    key={item.key}
                                     className="col-span-3 px-3 py-1 text-xs text-muted-foreground font-bold"
                                 >
                                     {item.label}
@@ -179,7 +192,7 @@ export function GameBottomBar({ onRefresh }: GameBottomBarProps) {
                         if (item.lobby) {
                             return (
                                 <button
-                                    key="lobby"
+                                    key={item.key}
                                     type="button"
                                     className="col-span-3 mx-2 my-1 px-3 py-1.5 text-sm text-center bg-muted/50 hover:bg-muted rounded"
                                     onClick={() => {
@@ -193,7 +206,7 @@ export function GameBottomBar({ onRefresh }: GameBottomBarProps) {
                         }
                         return (
                             <button
-                                key={`q-${i}`}
+                                key={item.key}
                                 type="button"
                                 className="block w-full text-left px-3 py-1.5 text-sm hover:bg-muted/50"
                                 onClick={() => {

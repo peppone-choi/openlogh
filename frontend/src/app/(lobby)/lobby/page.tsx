@@ -25,10 +25,8 @@ function getServerPhase(w: WorldState): {
     const meta = w.meta ?? {};
     if (meta.finished || meta.isFinished) return { label: '종료', color: 'text-gray-400', icon: Shield };
     if (meta.isLocked || meta.locked) return { label: '잠김', color: 'text-yellow-400', icon: Shield };
-    // 가오픈/reserved distinction (legacy parity: entrance.ts)
     if (meta.isReserved || meta.reserved) return { label: '가오픈', color: 'text-orange-400', icon: Clock };
-    if (w.realtimeMode) return { label: '실시간', color: 'text-green-400', icon: Signal };
-    return { label: '턴제', color: 'text-cyan-400', icon: Clock };
+    return { label: '오픈', color: 'text-green-400', icon: Signal };
 }
 
 /** Derive player/capacity counts from world metadata */
@@ -52,9 +50,11 @@ function getActionAvailability(
     hasGeneral: boolean
 ): {
     canJoin: boolean;
+    canPossessNpc: boolean;
     canFound: boolean;
     canRise: boolean;
     joinReason?: string;
+    npcReason?: string;
     foundReason?: string;
     riseReason?: string;
 } {
@@ -68,9 +68,11 @@ function getActionAvailability(
     if (hasGeneral) {
         return {
             canJoin: false,
+            canPossessNpc: false,
             canFound: false,
             canRise: false,
             joinReason: '이미 장수가 있습니다',
+            npcReason: '이미 장수가 있습니다',
             foundReason: '이미 장수가 있습니다',
             riseReason: '이미 장수가 있습니다',
         };
@@ -79,15 +81,18 @@ function getActionAvailability(
     if (isFinished) {
         return {
             canJoin: false,
+            canPossessNpc: false,
             canFound: false,
             canRise: false,
             joinReason: '종료된 서버',
+            npcReason: '종료된 서버',
             foundReason: '종료된 서버',
             riseReason: '종료된 서버',
         };
     }
 
     const joinMode = (config.joinMode as string) ?? (meta.joinMode as string) ?? 'normal';
+    const npcMode = Number(config.npcMode ?? config.npcmode ?? meta.npcMode ?? meta.npcmode ?? 0);
 
     // Legacy parity: block_general_create bitfield check
     const blockBits = (meta.blockGeneralCreate as number) ?? (config.blockGeneralCreate as number) ?? 0;
@@ -98,9 +103,19 @@ function getActionAvailability(
 
     return {
         canJoin: !isLocked && !isFull && !blockCreate,
+        canPossessNpc: !isLocked && !isFull && !blockNpc && npcMode > 0,
         canFound: !isLocked && !isFull && !blockFound && joinMode !== 'noFound',
         canRise: !isLocked && !isFull && !blockRise && joinMode !== 'noRise',
         joinReason: isLocked ? '서버 잠김' : isFull ? '정원 초과' : undefined,
+        npcReason: isLocked
+            ? '서버 잠김'
+            : isFull
+              ? '정원 초과'
+              : blockNpc
+                ? '빙의 불가'
+                : npcMode <= 0
+                  ? 'NPC모드 불가'
+                  : undefined,
         foundReason: isLocked ? '서버 잠김' : isFull ? '정원 초과' : joinMode === 'noFound' ? '건국 불가' : undefined,
         riseReason: isLocked ? '서버 잠김' : isFull ? '정원 초과' : joinMode === 'noRise' ? '거병 불가' : undefined,
     };
@@ -458,11 +473,11 @@ export default function LobbyPage() {
                                 {/* NPC 빙의 */}
                                 <Card
                                     className={`transition-colors ${
-                                        actionAvailability?.canJoin
+                                        actionAvailability?.canPossessNpc
                                             ? 'cursor-pointer hover:border-primary/50'
                                             : 'opacity-50 cursor-not-allowed'
                                     }`}
-                                    onClick={() => actionAvailability?.canJoin && router.push('/lobby/select-npc')}
+                                    onClick={() => actionAvailability?.canPossessNpc && router.push('/lobby/select-npc')}
                                 >
                                     <CardContent className="flex items-center gap-4 py-4">
                                         <div className="flex items-center justify-center size-10 rounded-lg bg-primary/10 text-primary">
@@ -471,11 +486,11 @@ export default function LobbyPage() {
                                         <div className="flex-1">
                                             <p className="font-medium">NPC 빙의</p>
                                             <p className="text-xs text-muted-foreground">
-                                                {actionAvailability?.joinReason ??
+                                                {actionAvailability?.npcReason ??
                                                     '빈 NPC 장수를 인수하여 플레이합니다.'}
                                             </p>
                                         </div>
-                                        {actionAvailability?.canJoin && (
+                                        {actionAvailability?.canPossessNpc && (
                                             <Badge variant="secondary" className="text-[10px]">
                                                 가능
                                             </Badge>

@@ -14,6 +14,7 @@ import { ErrorState } from '@/components/game/error-state';
 import { GeneralPortrait } from '@/components/game/general-portrait';
 import { NationBadge } from '@/components/game/nation-badge';
 import { SammoBar } from '@/components/game/sammo-bar';
+import { formatGameLogDate } from '@/lib/gameLogDate';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -373,7 +374,7 @@ export default function GeneralDetailPage() {
                         <div className="space-y-1 max-h-60 overflow-y-auto">
                             {records.slice(0, 30).map((r) => (
                                 <div key={r.id} className="border-b border-gray-600/30 px-1 py-0.5 text-xs">
-                                    <span className="text-gray-400">[{r.sentAt?.substring(0, 10)}]</span>{' '}
+                                    {formatGameLogDate(r) && <span className="text-gray-400">[{formatGameLogDate(r)}]</span>}{' '}
                                     {(r.payload.message as string) ?? ''}
                                 </div>
                             ))}
