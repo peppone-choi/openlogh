@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { adminApi } from '@/lib/gameApi';
+import { formatLog } from '@/lib/formatLog';
 import { toast } from 'sonner';
 import type { AdminGeneral, Message } from '@/types';
 import { cn } from '@/lib/utils';
@@ -114,7 +115,7 @@ function LogEntry({ log, selected, onSelect }: { log: Message; selected: boolean
                             <span className="text-xs font-mono text-muted-foreground">#{log.id}</span>
                             <span className="text-xs text-muted-foreground">{log.messageType}</span>
                         </div>
-                        <p className="text-sm break-all">{extractDisplayMessage(log)}</p>
+                        <p className="text-sm break-all">{formatLog(extractDisplayMessage(log))}</p>
                     </div>
                     <div className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
                         <Clock className="size-3" />
@@ -316,7 +317,7 @@ export default function AdminLogsPage() {
                                         </div>
                                         <div>
                                             <p className="text-xs font-medium mb-1">본문</p>
-                                            <p className="text-sm break-all">{extractDisplayMessage(selectedLog)}</p>
+                                            <p className="text-sm break-all">{formatLog(extractDisplayMessage(selectedLog))}</p>
                                         </div>
                                         <div>
                                             <p className="text-xs font-medium mb-1">payload</p>
