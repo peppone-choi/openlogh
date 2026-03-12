@@ -34,6 +34,14 @@ class YearbookHistory(
     @Column(columnDefinition = "jsonb", nullable = false)
     var nations: MutableList<Map<String, Any>> = mutableListOf(),
 
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "global_history", columnDefinition = "jsonb", nullable = false)
+    var globalHistory: MutableList<String> = mutableListOf(),
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "global_action", columnDefinition = "jsonb", nullable = false)
+    var globalAction: MutableList<String> = mutableListOf(),
+
     @Column(nullable = false)
     var hash: String = "",
 

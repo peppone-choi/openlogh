@@ -17,6 +17,8 @@ data class YearbookSummaryResponse(
     val year: Int,
     val month: Int,
     val nations: List<YearbookNationSummary>,
+    val globalHistory: List<String>,
+    val globalAction: List<String>,
     val keyEvents: List<MessageResponse>,
 ) {
     companion object {
@@ -49,6 +51,8 @@ data class YearbookSummaryResponse(
                 year = yearbook.year.toInt(),
                 month = yearbook.month.toInt(),
                 nations = nations,
+                globalHistory = yearbook.globalHistory,
+                globalAction = yearbook.globalAction,
                 keyEvents = keyEvents.map { MessageResponse.from(it) },
             )
         }

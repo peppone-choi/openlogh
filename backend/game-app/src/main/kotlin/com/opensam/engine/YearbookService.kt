@@ -6,6 +6,7 @@ import com.opensam.entity.WorldState
 import com.opensam.entity.YearbookHistory
 import com.opensam.repository.CityRepository
 import com.opensam.repository.GeneralRepository
+import com.opensam.repository.MessageRepository
 import com.opensam.repository.NationRepository
 import com.opensam.repository.WorldStateRepository
 import com.opensam.repository.YearbookHistoryRepository
@@ -22,6 +23,7 @@ class YearbookService(
     private val cityRepository: CityRepository,
     private val nationRepository: NationRepository,
     private val generalRepository: GeneralRepository,
+    private val messageRepository: MessageRepository,
     private val yearbookHistoryRepository: YearbookHistoryRepository,
     private val objectMapper: ObjectMapper,
 ) {
@@ -71,6 +73,7 @@ class YearbookService(
 
         val map = buildMapSnapshot(world, year, month)
         val nations = buildNationSnapshot(world)
+        val monthlyLogs = buildMonthlyLogs(worldId, year, month)
         val hash = buildHash(map, nations)
 
         val yearShort = year.toShort()
@@ -80,6 +83,8 @@ class YearbookService(
 
         entity.map = objectMapper.convertValue(map, object : TypeReference<MutableMap<String, Any>>() {})
         entity.nations = objectMapper.convertValue(nations, object : TypeReference<MutableList<Map<String, Any>>>() {})
+        entity.globalHistory = monthlyLogs.first.toMutableList()
+        entity.globalAction = monthlyLogs.second.toMutableList()
         entity.hash = hash
         entity.updatedAt = OffsetDateTime.now()
 
@@ -209,5 +214,21 @@ class YearbookService(
         val payload = objectMapper.writeValueAsString(mapOf("map" to map, "nations" to nations))
         val digest = MessageDigest.getInstance("SHA-256").digest(payload.toByteArray(Charsets.UTF_8))
         return digest.joinToString("") { "%02x".format(it) }
+    }
+
+    private fun buildMonthlyLogs(worldId: Long, year: Int, month: Int): Pair<List<String>, List<String>> {
+        val messages = messageRepository.findByWorldIdAndYearAndMonthOrderBySentAtAsc(worldId, year, month)
+        val globalHistory = mutableListOf<String>()
+        val globalAction = mutableListOf<String>()
+
+        for (message in messages) {
+            val text = message.payload["message"] as? String ?: continue
+            when (message.mailboxCode) {
+                "world_history" -> globalHistory += text
+                "world_record" -> globalAction += text
+            }
+        }
+
+        return globalHistory to globalAction
     }
 }

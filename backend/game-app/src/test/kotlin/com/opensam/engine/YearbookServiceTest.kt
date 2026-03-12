@@ -20,6 +20,7 @@ class YearbookServiceTest {
     private lateinit var cityRepository: CityRepository
     private lateinit var nationRepository: NationRepository
     private lateinit var generalRepository: GeneralRepository
+    private lateinit var messageRepository: MessageRepository
     private lateinit var yearbookHistoryRepository: YearbookHistoryRepository
 
     @Suppress("UNCHECKED_CAST")
@@ -31,6 +32,7 @@ class YearbookServiceTest {
         cityRepository = mock(CityRepository::class.java)
         nationRepository = mock(NationRepository::class.java)
         generalRepository = mock(GeneralRepository::class.java)
+        messageRepository = mock(MessageRepository::class.java)
         yearbookHistoryRepository = mock(YearbookHistoryRepository::class.java)
 
         service = YearbookService(
@@ -38,9 +40,13 @@ class YearbookServiceTest {
             cityRepository,
             nationRepository,
             generalRepository,
+            messageRepository,
             yearbookHistoryRepository,
             ObjectMapper(),
         )
+
+        `when`(messageRepository.findByWorldIdAndYearAndMonthOrderBySentAtAsc(anyLong(), anyInt(), anyInt()))
+            .thenReturn(emptyList())
     }
 
     private fun createWorld(): WorldState {
