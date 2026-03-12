@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { PublicCachedMapResponse } from '@/types';
 import { MapViewer } from '@/components/game/map-viewer';
+import { formatLog } from '@/lib/formatLog';
 import { publicApi } from '@/lib/gameApi';
 
 function formatDateTime(value: string): string {
@@ -121,7 +122,7 @@ export function ServerStatusCard() {
                 )}
 
                 <div>
-                    <h3 className="mb-2 text-sm font-semibold">최근 동향</h3>
+                    <h3 className="mb-2 text-sm font-semibold">중원 정세</h3>
                     {!data?.available || data.history.length === 0 ? (
                         <p className="text-sm text-muted-foreground">표시할 기록이 없습니다</p>
                     ) : (
@@ -131,7 +132,7 @@ export function ServerStatusCard() {
                                     <span className="mr-2 text-xs text-muted-foreground">
                                         {formatDateTime(item.sentAt)}
                                     </span>
-                                    <span>{item.text}</span>
+                                    <span>{formatLog(item.text)}</span>
                                 </li>
                             ))}
                         </ul>
