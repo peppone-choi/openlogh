@@ -140,7 +140,7 @@ class SelectNpcTokenService(
     }
 
     private fun ensureUserHasNoGeneral(worldId: Long, userId: Long) {
-        if (generalRepository.findByWorldIdAndUserId(worldId, userId).isNotEmpty()) {
+        if (generalRepository.findByWorldIdAndUserId(worldId, userId).any { it.npcState.toInt() < 5 }) {
             throw IllegalStateException("이미 장수를 보유하고 있습니다.")
         }
     }

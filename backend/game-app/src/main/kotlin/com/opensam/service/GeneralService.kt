@@ -248,8 +248,7 @@ class GeneralService(
 
     fun possessNpc(worldId: Long, loginId: String, generalId: Long): General? {
         val userId = getCurrentUserId(loginId) ?: return null
-        val existing = generalRepository.findByWorldIdAndUserId(worldId, userId)
-        if (existing.isNotEmpty()) return null
+        if (hasActiveGeneral(worldId, userId)) return null
         val general = generalRepository.findById(generalId).orElse(null) ?: return null
         if (general.worldId != worldId || general.npcState.toInt() == 0 || general.userId != null) return null
         general.userId = userId
@@ -265,8 +264,7 @@ class GeneralService(
     @Transactional
     fun selectFromPool(worldId: Long, loginId: String, generalId: Long): General? {
         val userId = getCurrentUserId(loginId) ?: return null
-        val existing = generalRepository.findByWorldIdAndUserId(worldId, userId)
-        if (existing.isNotEmpty()) return null
+        if (hasActiveGeneral(worldId, userId)) return null
         val general = generalRepository.findById(generalId).orElse(null) ?: return null
         if (general.worldId != worldId || general.npcState.toInt() != 5 || general.userId != null) return null
         general.userId = userId
@@ -279,7 +277,7 @@ class GeneralService(
         val user = appUserRepository.findByLoginId(loginId) ?: return null
         val userId = user.id ?: return null
         validateFiveStats(request.leadership, request.strength, request.intel, request.politics, request.charm)
-        if (generalRepository.findByWorldIdAndUserId(worldId, userId).isNotEmpty()) return null
+        if (hasActiveGeneral(worldId, userId)) return null
 
         val rng = createJoinRng(
             world = worldStateRepository.findById(worldId.toShort()).orElseGet { WorldState(id = worldId.toShort()) },
@@ -344,7 +342,7 @@ class GeneralService(
             throw IllegalArgumentException("장수 직접 생성이 불가능한 모드입니다.")
         }
 
-        if (generalRepository.findByWorldIdAndUserId(worldId, userId).isNotEmpty()) {
+        if (hasActiveGeneral(worldId, userId)) {
             throw IllegalArgumentException("이미 등록하셨습니다!")
         }
 
@@ -363,6 +361,10 @@ class GeneralService(
         return readBoolean(world.meta["blockCustomGeneralName"])
             ?: readBoolean(world.config["blockCustomGeneralName"])
             ?: false
+    }
+
+    private fun hasActiveGeneral(worldId: Long, userId: Long): Boolean {
+        return generalRepository.findByWorldIdAndUserId(worldId, userId).any { it.npcState.toInt() < 5 }
     }
 
     private fun validateFiveStats(

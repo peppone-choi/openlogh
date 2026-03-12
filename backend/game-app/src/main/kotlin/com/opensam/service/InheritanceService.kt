@@ -143,7 +143,7 @@ class InheritanceService(
         val rawBreakdown = readStringAnyMap(user.meta["inheritPointBreakdown"])
         val pointBreakdown = rawBreakdown.mapValues { (it.value as? Number)?.toInt() ?: 0 }
 
-        val general = generalRepository.findByWorldIdAndUserId(worldId, user.id!!).firstOrNull()
+        val general = generalRepository.findByWorldIdAndUserId(worldId, user.id!!).firstOrNull { it.npcState.toInt() < 5 }
         val turnResetCount = readResetCount(general?.meta?.get("inheritResetTurnTime"))
         val specialWarResetCount = readResetCount(general?.meta?.get("inheritResetSpecialWar"))
 
@@ -354,7 +354,7 @@ class InheritanceService(
             return InheritanceActionResult(error = "이미 이번 시즌에 능력치를 초기화했습니다")
         }
 
-        val general = generalRepository.findByWorldIdAndUserId(worldId, user.id!!).firstOrNull()
+        val general = generalRepository.findByWorldIdAndUserId(worldId, user.id!!).firstOrNull { it.npcState.toInt() < 5 }
             ?: return InheritanceActionResult(error = "장수를 찾을 수 없습니다")
 
         general.leadership = request.leadership.toShort()
@@ -474,7 +474,7 @@ class InheritanceService(
     }
 
     private fun findOwnedGeneral(worldId: Long, user: AppUser): General? {
-        return generalRepository.findByWorldIdAndUserId(worldId, user.id!!).firstOrNull()
+        return generalRepository.findByWorldIdAndUserId(worldId, user.id!!).firstOrNull { it.npcState.toInt() < 5 }
     }
 
     private fun findWorld(worldId: Long): WorldState? {

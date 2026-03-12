@@ -142,6 +142,7 @@ class GeneralMaintenanceService(
         }
 
         general.npcState = 5
+        general.userId = null
         general.nationId = 0
         general.officerLevel = 0
         general.officerCity = 0
