@@ -37,9 +37,10 @@ class NpcSpawnService(
     }
 
     fun checkNpcSpawn(world: WorldState) {
-        // Only check quarterly
-        val month = world.currentMonth.toInt()
-        if (month != 1 && month != 4 && month != 7 && month != 10) return
+        if (!isNpcNationSpawnEnabled(world)) {
+            log.info("NPC nation spawning disabled for world {}", world.id)
+            return
+        }
 
         try {
             raiseNPCNation(world)
@@ -357,6 +358,11 @@ class NpcSpawnService(
      * Based on legacy RaiseInvader.php - called as a special event, not every turn.
      */
     fun raiseInvader(world: WorldState) {
+        if (!isInvaderSpawnEnabled(world)) {
+            log.info("Invader spawning disabled for world {}", world.id)
+            return
+        }
+
         val worldId = world.id.toLong()
         val cities = cityRepository.findByWorldId(worldId)
         val lv4Cities = cities.filter { it.level.toInt() == 4 }
@@ -525,6 +531,23 @@ class NpcSpawnService(
         }
         if (invaderNationIds.isNotEmpty()) {
             log.info("Raised {} invader nations in world {}", invaderNationIds.size, worldId)
+        }
+    }
+
+    private fun isNpcNationSpawnEnabled(world: WorldState): Boolean {
+        return readBoolean(world.config["allowNpcNationSpawn"], defaultValue = true)
+    }
+
+    private fun isInvaderSpawnEnabled(world: WorldState): Boolean {
+        return readBoolean(world.config["allowInvaderSpawn"], defaultValue = true)
+    }
+
+    private fun readBoolean(raw: Any?, defaultValue: Boolean): Boolean {
+        return when (raw) {
+            is Boolean -> raw
+            is Number -> raw.toInt() != 0
+            is String -> raw.equals("true", ignoreCase = true) || raw == "1"
+            else -> defaultValue
         }
     }
 }

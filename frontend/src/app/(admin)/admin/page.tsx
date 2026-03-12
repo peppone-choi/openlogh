@@ -80,6 +80,8 @@ export default function AdminDashboardPage() {
     const [reserveOpen, setReserveOpen] = useState('');
     const [preReserveOpen, setPreReserveOpen] = useState('');
     const [allowConscript, setAllowConscript] = useState(true);
+    const [allowNpcNationSpawn, setAllowNpcNationSpawn] = useState(true);
+    const [allowInvaderSpawn, setAllowInvaderSpawn] = useState(true);
 
     // Create world form
     const [showCreateForm, setShowCreateForm] = useState(false);
@@ -168,6 +170,8 @@ export default function AdminDashboardPage() {
                             setReserveOpen(String(cfg?.reserveOpen ?? ''));
                             setPreReserveOpen(String(cfg?.preReserveOpen ?? ''));
                             setAllowConscript(cfg?.allowConscript !== false);
+                            setAllowNpcNationSpawn(cfg?.allowNpcNationSpawn !== false);
+                            setAllowInvaderSpawn(cfg?.allowInvaderSpawn !== false);
                         }
                     })
                     .catch(() => {
@@ -316,6 +320,8 @@ export default function AdminDashboardPage() {
                     reserveOpen: reserveOpen || undefined,
                     preReserveOpen: preReserveOpen || undefined,
                     allowConscript,
+                    allowNpcNationSpawn,
+                    allowInvaderSpawn,
                 },
                 worldId
             );
@@ -929,6 +935,16 @@ export default function AdminDashboardPage() {
                                             label: '확장 NPC',
                                             checked: extend,
                                             onChange: setExtend,
+                                        },
+                                        {
+                                            label: 'NPC 건국 이벤트',
+                                            checked: allowNpcNationSpawn,
+                                            onChange: setAllowNpcNationSpawn,
+                                        },
+                                        {
+                                            label: '이민족 이벤트',
+                                            checked: allowInvaderSpawn,
+                                            onChange: setAllowInvaderSpawn,
                                         },
                                     ].map((opt) => (
                                         <label

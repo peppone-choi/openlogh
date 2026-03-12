@@ -318,12 +318,6 @@ class TurnService @Autowired constructor(
                 }
 
                 try {
-                    npcSpawnService.checkNpcSpawn(world)
-                } catch (e: Exception) {
-                    logger.warn("NpcSpawnService.checkNpcSpawn failed: ${e.message}")
-                }
-
-                try {
                     unificationService.checkAndSettleUnification(world)
                 } catch (e: Exception) {
                     logger.warn("UnificationService.checkAndSettleUnification failed: ${e.message}")
@@ -373,7 +367,7 @@ class TurnService @Autowired constructor(
         val ports = worldPortFactory.create(worldId)
         val generals = ports.allGenerals().map { it.toEntity() }.sortedBy { it.turnTime }
         val cityCache = ports.allCities().associate { it.id to it.toEntity() }
-        val nationCache = ports.allNations().associate { it.id to it.toEntity() }
+        val nationCache = ports.allNations().associate { it.id to it.toEntity() }.toMutableMap()
         val env = buildCommandEnv(world)
 
         logger.info("[Turn] executeGeneralCommands: {} generals for world {}", generals.size, worldId)
@@ -397,13 +391,21 @@ class TurnService @Autowired constructor(
                 applyPerTurnCrewConsumption(general, city)
 
                 if (general.blockState >= 2) {
-                    if (general.killTurn != null) {
-                        val kt = general.killTurn!! - 1
-                        if (kt <= 0) {
-                            generalMaintenanceService.killGeneral(general, world, generals)
-                            continue
-                        } else {
-                            general.killTurn = kt.toShort()
+                        if (general.killTurn != null) {
+                            val kt = general.killTurn!! - 1
+                            if (kt <= 0) {
+                                val previousNationId = general.nationId
+                                generalMaintenanceService.killGeneral(general, world, generals)
+                                generals.forEach { ports.putGeneral(it.toSnapshot()) }
+                                if (previousNationId > 0L) {
+                                    nationRepository.findById(previousNationId).orElse(null)?.let {
+                                        nationCache[previousNationId] = it
+                                        ports.putNation(it.toSnapshot())
+                                    }
+                                }
+                                continue
+                            } else {
+                                general.killTurn = kt.toShort()
                         }
                     }
                     general.turnTime = calculateNextGeneralTurnTime(general, world.tickSeconds)
@@ -639,7 +641,15 @@ class TurnService @Autowired constructor(
                     } else {
                         val kt = general.killTurn!! - 1
                         if (kt <= 0) {
+                            val previousNationId = general.nationId
                             generalMaintenanceService.killGeneral(general, world, generals)
+                            generals.forEach { ports.putGeneral(it.toSnapshot()) }
+                            if (previousNationId > 0L) {
+                                nationRepository.findById(previousNationId).orElse(null)?.let {
+                                    nationCache[previousNationId] = it
+                                    ports.putNation(it.toSnapshot())
+                                }
+                            }
                             continue
                         } else {
                             general.killTurn = kt.toShort()
@@ -889,7 +899,7 @@ class TurnService @Autowired constructor(
         }
 
         val activeGeneralCountByNation = generals
-            .filter { it.npcState.toInt() != 5 && it.nationId > 0 }
+            .filter { !(it.npcState.toInt() == 5 && it.nationId == 0L) && it.nationId > 0 }
             .groupingBy { it.nationId }
             .eachCount()
 

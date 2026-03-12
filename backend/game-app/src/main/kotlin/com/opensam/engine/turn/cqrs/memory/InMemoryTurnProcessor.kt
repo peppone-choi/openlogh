@@ -163,12 +163,6 @@ class InMemoryTurnProcessor(
             }
 
             try {
-                npcSpawnService.checkNpcSpawn(world)
-            } catch (e: Exception) {
-                logger.warn("NpcSpawnService.checkNpcSpawn failed: ${e.message}")
-            }
-
-            try {
                 unificationService.checkAndSettleUnification(world)
             } catch (e: Exception) {
                 logger.warn("UnificationService.checkAndSettleUnification failed: ${e.message}")
@@ -225,9 +219,15 @@ class InMemoryTurnProcessor(
                 if (killTurn != null) {
                     val nextKillTurn = killTurn - 1
                     if (nextKillTurn <= 0) {
-                        general.npcState = 5
-                        general.nationId = 0
-                        general.killTurn = null
+                        val deadGeneral = general.copy(userId = null)
+                        deadGeneral.npcState = 5
+                        deadGeneral.nationId = 0
+                        deadGeneral.officerLevel = 0
+                        deadGeneral.officerCity = 0
+                        deadGeneral.killTurn = null
+                        deadGeneral.updatedAt = now
+                        ports.putGeneral(deadGeneral)
+                        continue
                     } else {
                         general.killTurn = nextKillTurn.toShort()
                     }

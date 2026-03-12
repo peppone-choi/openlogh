@@ -734,6 +734,8 @@ class ScenarioService(
             "killturn" to killturn,
             "npcmode" to resolvedNpcMode,
             "npcMode" to resolvedNpcMode,
+            "allowNpcNationSpawn" to true,
+            "allowInvaderSpawn" to true,
             "fiction" to resolvedFiction,
             "isFiction" to resolvedFiction,
             "maxGeneral" to resolvedMaxGeneral,
