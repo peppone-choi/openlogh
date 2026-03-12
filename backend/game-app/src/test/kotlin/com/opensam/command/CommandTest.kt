@@ -142,7 +142,7 @@ class CommandTest {
 
         assertTrue(result.success)
         assertTrue(result.logs.isNotEmpty())
-        assertTrue(result.logs[0].contains("휴식"))
+        assertTrue(result.logs[0].contains("아무것도 실행하지 않았습니다"))
     }
 
     @Test
