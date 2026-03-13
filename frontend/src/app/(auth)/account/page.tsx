@@ -11,11 +11,10 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import type { AccountDetailedInfo, OAuthProviderInfo } from '@/types';
 import { Link2, Unlink, Loader2, ShieldAlert, AlertTriangle, X, Upload, Trash2, RefreshCw, Info } from 'lucide-react';
+import { isKakaoOauthEnabled } from '@/lib/auth-features';
 
 const OAUTH_PROVIDERS = [
     { id: 'kakao', name: '카카오', color: '#FEE500', textColor: '#000' },
-    { id: 'google', name: '구글', color: '#4285F4', textColor: '#fff' },
-    { id: 'naver', name: '네이버', color: '#03C75A', textColor: '#fff' },
 ] as const;
 
 function AccountPageContent() {
@@ -70,6 +69,11 @@ function AccountPageContent() {
     const [deleteError, setDeleteError] = useState('');
 
     const fetchOAuthProviders = useCallback(async () => {
+        if (!isKakaoOauthEnabled) {
+            setOauthProviders([]);
+            setOauthLoading(false);
+            return;
+        }
         setOauthLoading(true);
         try {
             const { data } = await accountApi.getOAuthProviders();
@@ -94,6 +98,7 @@ function AccountPageContent() {
     }, [fetchOAuthProviders]);
 
     useEffect(() => {
+        if (!isKakaoOauthEnabled) return;
         const oauthStatus = searchParams.get('oauth');
         if (!oauthStatus) return;
 
@@ -443,98 +448,106 @@ function AccountPageContent() {
                         </div>
                     </div>
 
-                    {/* OAuth 연동 */}
-                    <div className="space-y-3 rounded-md border p-3">
-                        <h2 className="text-sm font-semibold text-muted-foreground flex items-center gap-1">
-                            <Link2 className="size-4" />
-                            OAuth 토큰 연동
-                        </h2>
-                        <p className="text-xs text-muted-foreground">
-                            소셜 계정을 연동하여 간편 로그인을 사용할 수 있습니다.
-                        </p>
-
-                        {oauthLoading ? (
-                            <div className="flex items-center gap-2 text-xs text-muted-foreground py-2">
-                                <Loader2 className="size-3 animate-spin" />
-                                연동 정보 로딩 중...
-                            </div>
-                        ) : (
-                            <div className="space-y-2">
-                                {OAUTH_PROVIDERS.map((provider) => {
-                                    const isLinked = linkedProviderIds.has(provider.id);
-                                    const linkedInfo = oauthProviders.find((p) => p.provider === provider.id);
-                                    const isActionLoading = oauthActionLoading === provider.id;
-
-                                    return (
-                                        <div
-                                            key={provider.id}
-                                            className="flex items-center justify-between rounded-md border px-3 py-2"
-                                        >
-                                            <div className="flex items-center gap-2">
-                                                <span
-                                                    className="inline-flex items-center justify-center size-6 rounded text-xs font-bold"
-                                                    style={{
-                                                        backgroundColor: provider.color,
-                                                        color: provider.textColor,
-                                                    }}
-                                                >
-                                                    {provider.name[0]}
-                                                </span>
-                                                <div>
-                                                    <span className="text-sm font-medium">{provider.name}</span>
-                                                    {isLinked && linkedInfo && (
-                                                        <p className="text-[10px] text-muted-foreground">
-                                                            연동됨 · {linkedInfo.linkedAt.substring(0, 10)}
-                                                        </p>
-                                                    )}
-                                                </div>
-                                            </div>
-                                            {isLinked ? (
-                                                <Button
-                                                    size="sm"
-                                                    variant="outline"
-                                                    className="text-xs h-7"
-                                                    onClick={() => handleUnlinkOAuth(provider.id)}
-                                                    disabled={isActionLoading}
-                                                >
-                                                    {isActionLoading ? (
-                                                        <Loader2 className="size-3 animate-spin" />
-                                                    ) : (
-                                                        <>
-                                                            <Unlink className="size-3 mr-1" />
-                                                            해제
-                                                        </>
-                                                    )}
-                                                </Button>
-                                            ) : (
-                                                <Button
-                                                    size="sm"
-                                                    className="text-xs h-7"
-                                                    onClick={() => handleLinkOAuth(provider.id)}
-                                                    disabled={isActionLoading}
-                                                >
-                                                    {isActionLoading ? (
-                                                        <Loader2 className="size-3 animate-spin" />
-                                                    ) : (
-                                                        <>
-                                                            <Link2 className="size-3 mr-1" />
-                                                            연동
-                                                        </>
-                                                    )}
-                                                </Button>
-                                            )}
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        )}
-
-                        {oauthMsg && (
-                            <p className={`text-xs ${oauthMsg.includes('실패') ? 'text-red-400' : 'text-green-400'}`}>
-                                {oauthMsg}
+                    {isKakaoOauthEnabled ? (
+                        <div className="space-y-3 rounded-md border p-3">
+                            <h2 className="text-sm font-semibold text-muted-foreground flex items-center gap-1">
+                                <Link2 className="size-4" />
+                                OAuth 토큰 연동
+                            </h2>
+                            <p className="text-xs text-muted-foreground">
+                                소셜 계정을 연동하여 간편 로그인을 사용할 수 있습니다.
                             </p>
-                        )}
-                    </div>
+
+                            {oauthLoading ? (
+                                <div className="flex items-center gap-2 text-xs text-muted-foreground py-2">
+                                    <Loader2 className="size-3 animate-spin" />
+                                    연동 정보 로딩 중...
+                                </div>
+                            ) : (
+                                <div className="space-y-2">
+                                    {OAUTH_PROVIDERS.map((provider) => {
+                                        const isLinked = linkedProviderIds.has(provider.id);
+                                        const linkedInfo = oauthProviders.find((p) => p.provider === provider.id);
+                                        const isActionLoading = oauthActionLoading === provider.id;
+
+                                        return (
+                                            <div
+                                                key={provider.id}
+                                                className="flex items-center justify-between rounded-md border px-3 py-2"
+                                            >
+                                                <div className="flex items-center gap-2">
+                                                    <span
+                                                        className="inline-flex items-center justify-center size-6 rounded text-xs font-bold"
+                                                        style={{
+                                                            backgroundColor: provider.color,
+                                                            color: provider.textColor,
+                                                        }}
+                                                    >
+                                                        {provider.name[0]}
+                                                    </span>
+                                                    <div>
+                                                        <span className="text-sm font-medium">{provider.name}</span>
+                                                        {isLinked && linkedInfo && (
+                                                            <p className="text-[10px] text-muted-foreground">
+                                                                연동됨 · {linkedInfo.linkedAt.substring(0, 10)}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                {isLinked ? (
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        className="text-xs h-7"
+                                                        onClick={() => handleUnlinkOAuth(provider.id)}
+                                                        disabled={isActionLoading}
+                                                    >
+                                                        {isActionLoading ? (
+                                                            <Loader2 className="size-3 animate-spin" />
+                                                        ) : (
+                                                            <>
+                                                                <Unlink className="size-3 mr-1" />
+                                                                해제
+                                                            </>
+                                                        )}
+                                                    </Button>
+                                                ) : (
+                                                    <Button
+                                                        size="sm"
+                                                        className="text-xs h-7"
+                                                        onClick={() => handleLinkOAuth(provider.id)}
+                                                        disabled={isActionLoading}
+                                                    >
+                                                        {isActionLoading ? (
+                                                            <Loader2 className="size-3 animate-spin" />
+                                                        ) : (
+                                                            <>
+                                                                <Link2 className="size-3 mr-1" />
+                                                                연동
+                                                            </>
+                                                        )}
+                                                    </Button>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+
+                            {oauthMsg && (
+                                <p className={`text-xs ${oauthMsg.includes('실패') ? 'text-red-400' : 'text-green-400'}`}>
+                                    {oauthMsg}
+                                </p>
+                            )}
+                        </div>
+                    ) : (
+                        <div className="space-y-2 rounded-md border p-3">
+                            <h2 className="text-sm font-semibold text-muted-foreground">OAuth 토큰 연동</h2>
+                            <p className="text-xs text-muted-foreground">
+                                카카오 OAuth 연동은 현재 점검 중입니다.
+                            </p>
+                        </div>
+                    )}
 
                     {/* 휴가 모드 */}
                     <div className="space-y-2 rounded-md border p-3">

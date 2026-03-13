@@ -15,6 +15,8 @@ import { ServerStatusCard } from '@/components/auth/server-status-card';
 import { ShieldCheck, X, Map as MapIcon } from 'lucide-react';
 import { sha512 } from 'js-sha512';
 import api from '@/lib/api';
+import { extractAuthErrorMessage } from '@/lib/auth-error';
+import { isKakaoOauthEnabled } from '@/lib/auth-features';
 
 const loginSchema = z.object({
     loginId: z.string().min(4, '아이디는 4자 이상이어야 합니다'),
@@ -28,6 +30,10 @@ const KAKAO_CLIENT_ID = process.env.NEXT_PUBLIC_KAKAO_CLIENT_ID ?? '';
 const KAKAO_REDIRECT_URI = typeof window !== 'undefined' ? `${window.location.origin}/auth/kakao/callback` : '';
 
 function startKakaoLogin() {
+    if (!isKakaoOauthEnabled) {
+        toast.error('카카오 로그인은 현재 점검 중입니다. 일반 로그인으로 이용해주세요.');
+        return;
+    }
     if (!KAKAO_CLIENT_ID) {
         toast.error('카카오 로그인이 아직 설정되지 않았습니다.');
         return;
@@ -250,7 +256,7 @@ function LoginPageContent() {
             router.push('/lobby');
         } catch (err: unknown) {
             const errObj = err as {
-                response?: { data?: { message?: string; error?: string; otpRequired?: boolean; otpTicket?: string } };
+                response?: { data?: { otpRequired?: boolean; otpTicket?: string } };
             };
             if (errObj?.response?.data?.otpRequired && errObj?.response?.data?.otpTicket) {
                 if (typeof window !== 'undefined') {
@@ -260,8 +266,7 @@ function LoginPageContent() {
                 setOtpOpen(true);
                 return;
             }
-            const message = errObj?.response?.data?.message || errObj?.response?.data?.error || '로그인에 실패했습니다';
-            toast.error(message);
+            toast.error(extractAuthErrorMessage(err, '로그인에 실패했습니다'));
         }
     };
 
@@ -328,10 +333,7 @@ function LoginPageContent() {
                 await registerUser(values.loginId, displayName, values.password);
                 router.push('/lobby');
             } catch (err: unknown) {
-                const message =
-                    (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
-                    '가입에 실패했습니다';
-                toast.error(message);
+                toast.error(extractAuthErrorMessage(err, '가입에 실패했습니다'));
             } finally {
                 setQuickRegistering(false);
             }
@@ -406,32 +408,33 @@ function LoginPageContent() {
                         </div>
                     </form>
 
-                    {/* Kakao OAuth login (legacy parity: oauth_kakao/) */}
-                    <div className="mt-4">
-                        <div className="relative flex items-center justify-center my-3">
-                            <div className="absolute inset-0 flex items-center">
-                                <div className="w-full border-t border-muted" />
+                    {isKakaoOauthEnabled && (
+                        <div className="mt-4">
+                            <div className="relative flex items-center justify-center my-3">
+                                <div className="absolute inset-0 flex items-center">
+                                    <div className="w-full border-t border-muted" />
+                                </div>
+                                <span className="relative bg-card px-2 text-xs text-muted-foreground">또는</span>
                             </div>
-                            <span className="relative bg-card px-2 text-xs text-muted-foreground">또는</span>
-                        </div>
-                        <Button
-                            type="button"
-                            variant="outline"
-                            className="w-full bg-[#FEE500] hover:bg-[#FDD800] text-[#191919] border-[#FEE500] hover:border-[#FDD800] font-medium"
-                            onClick={startKakaoLogin}
-                        >
-                            <svg
-                                className="mr-2 size-4"
-                                viewBox="0 0 24 24"
-                                fill="currentColor"
-                                aria-hidden="true"
-                                focusable="false"
+                            <Button
+                                type="button"
+                                variant="outline"
+                                className="w-full bg-[#FEE500] hover:bg-[#FDD800] text-[#191919] border-[#FEE500] hover:border-[#FDD800] font-medium"
+                                onClick={startKakaoLogin}
                             >
-                                <path d="M12 3C6.477 3 2 6.463 2 10.691c0 2.726 1.818 5.122 4.558 6.48-.152.543-.98 3.503-.998 3.712 0 0-.02.166.088.229.108.063.234.03.234.03.308-.043 3.57-2.33 4.132-2.724.643.09 1.307.137 1.986.137 5.523 0 10-3.463 10-7.864C22 6.463 17.523 3 12 3" />
-                            </svg>
-                            카카오 로그인
-                        </Button>
-                    </div>
+                                <svg
+                                    className="mr-2 size-4"
+                                    viewBox="0 0 24 24"
+                                    fill="currentColor"
+                                    aria-hidden="true"
+                                    focusable="false"
+                                >
+                                    <path d="M12 3C6.477 3 2 6.463 2 10.691c0 2.726 1.818 5.122 4.558 6.48-.152.543-.98 3.503-.998 3.712 0 0-.02.166.088.229.108.063.234.03.234.03.308-.043 3.57-2.33 4.132-2.724.643.09 1.307.137 1.986.137 5.523 0 10-3.463 10-7.864C22 6.463 17.523 3 12 3" />
+                                </svg>
+                                카카오 로그인
+                            </Button>
+                        </div>
+                    )}
 
                     <p className="mt-4 text-center text-sm text-muted-foreground">
                         계정이 없으신가요?{' '}

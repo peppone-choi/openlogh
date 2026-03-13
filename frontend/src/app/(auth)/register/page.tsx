@@ -13,6 +13,8 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { X, FileText, Shield, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import api from '@/lib/api';
+import { extractAuthErrorMessage } from '@/lib/auth-error';
+import { isKakaoOauthEnabled } from '@/lib/auth-features';
 
 const registerSchema = z
     .object({
@@ -146,21 +148,6 @@ function AgreementModal({
                 </div>
             </Card>
         </div>
-    );
-}
-
-/* ── Kakao OAuth ── */
-const KAKAO_CLIENT_ID = process.env.NEXT_PUBLIC_KAKAO_CLIENT_ID ?? '';
-
-function getKakaoRegisterUrl() {
-    if (!KAKAO_CLIENT_ID) return '';
-    const redirectUri =
-        typeof window !== 'undefined' ? `${window.location.origin}/auth/kakao/callback?mode=register` : '';
-    return (
-        `https://kauth.kakao.com/oauth/authorize` +
-        `?client_id=${KAKAO_CLIENT_ID}` +
-        `&redirect_uri=${encodeURIComponent(redirectUri)}` +
-        `&response_type=code`
     );
 }
 
@@ -301,22 +288,8 @@ export default function RegisterPage() {
                 );
                 return;
             }
-            const message = errData?.message || '회원가입에 실패했습니다';
-            toast.error(message);
+            toast.error(extractAuthErrorMessage(err, '회원가입에 실패했습니다'));
         }
-    };
-
-    const handleKakaoRegister = () => {
-        if (!allAgreed) {
-            toast.error('이용약관과 개인정보 처리방침에 동의해주세요.');
-            return;
-        }
-        const url = getKakaoRegisterUrl();
-        if (!url) {
-            toast.error('카카오 회원가입이 아직 설정되지 않았습니다.');
-            return;
-        }
-        window.location.href = url;
     };
 
     return (
@@ -494,32 +467,19 @@ export default function RegisterPage() {
                         </Button>
                     </form>
 
-                    {/* OAuth register */}
-                    <div className="mt-4">
-                        <div className="relative flex items-center justify-center my-3">
-                            <div className="absolute inset-0 flex items-center">
-                                <div className="w-full border-t border-muted" />
+                    {!isKakaoOauthEnabled && (
+                        <div className="mt-4">
+                            <div className="relative flex items-center justify-center my-3">
+                                <div className="absolute inset-0 flex items-center">
+                                    <div className="w-full border-t border-muted" />
+                                </div>
+                                <span className="relative bg-card px-2 text-xs text-muted-foreground">또는</span>
                             </div>
-                            <span className="relative bg-card px-2 text-xs text-muted-foreground">또는</span>
-                        </div>
-                        <Button
-                            type="button"
-                            variant="outline"
-                            className="w-full bg-[#FEE500] hover:bg-[#FDD800] text-[#191919] border-[#FEE500] hover:border-[#FDD800] font-medium"
-                            onClick={handleKakaoRegister}
-                            disabled={!allAgreed}
-                        >
-                            <svg className="mr-2 size-4" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M12 3C6.477 3 2 6.463 2 10.691c0 2.726 1.818 5.122 4.558 6.48-.152.543-.98 3.503-.998 3.712 0 0-.02.166.088.229.108.063.234.03.234.03.308-.043 3.57-2.33 4.132-2.724.643.09 1.307.137 1.986.137 5.523 0 10-3.463 10-7.864C22 6.463 17.523 3 12 3" />
-                            </svg>
-                            카카오로 가입하기
-                        </Button>
-                        {!allAgreed && (
-                            <p className="mt-1 text-[11px] text-muted-foreground text-center">
-                                약관 동의 후 카카오 가입이 가능합니다.
+                            <p className="text-[11px] text-muted-foreground text-center">
+                                카카오 회원가입은 현재 일시 중단되었습니다.
                             </p>
-                        )}
-                    </div>
+                        </div>
+                    )}
 
                     <p className="mt-4 text-center text-sm text-muted-foreground">
                         이미 계정이 있으신가요?{' '}

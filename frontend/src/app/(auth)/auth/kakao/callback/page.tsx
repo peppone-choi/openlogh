@@ -6,6 +6,8 @@ import { toast } from 'sonner';
 import { OTP_TICKET_STORAGE_KEY, useAuthStore } from '@/stores/authStore';
 import { accountApi } from '@/lib/gameApi';
 import { LoadingState } from '@/components/game/loading-state';
+import { isKakaoOauthEnabled } from '@/lib/auth-features';
+import { extractAuthErrorMessage } from '@/lib/auth-error';
 
 function KakaoCallbackPageContent() {
     const router = useRouter();
@@ -18,6 +20,12 @@ function KakaoCallbackPageContent() {
             const code = searchParams.get('code');
             const mode = searchParams.get('mode');
             const provider = searchParams.get('provider') ?? 'kakao';
+
+            if (!isKakaoOauthEnabled) {
+                toast.error('카카오 로그인은 현재 점검 중입니다. 일반 로그인으로 이용해주세요.');
+                router.replace(mode === 'link' ? '/account' : '/login');
+                return;
+            }
 
             if (!code) {
                 toast.error('카카오 인증 코드가 없습니다.');
@@ -87,18 +95,18 @@ function KakaoCallbackPageContent() {
                     return;
                 }
                 if (mode === 'register') {
-                    toast.error('카카오 가입에 실패했습니다.');
+                    toast.error(extractAuthErrorMessage(err, '카카오 가입에 실패했습니다.'));
                     router.replace('/register');
                     return;
                 }
 
                 if (mode === 'link') {
-                    toast.error('카카오 계정 연동에 실패했습니다.');
+                    toast.error(extractAuthErrorMessage(err, '카카오 계정 연동에 실패했습니다.'));
                     router.replace(`/account?oauth=link_failed&provider=${encodeURIComponent(provider)}`);
                     return;
                 }
 
-                toast.error('카카오 로그인에 실패했습니다.');
+                toast.error(extractAuthErrorMessage(err, '카카오 로그인에 실패했습니다.'));
                 router.replace('/login');
             }
         };

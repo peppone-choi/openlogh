@@ -270,6 +270,66 @@ class AuthServiceTest {
         assertNotNull(response.nextToken)
     }
 
+    @Test
+    fun `kakao disabled allows password login for linked user`() {
+        val now = OffsetDateTime.now()
+        val user = AppUser(
+            id = 21,
+            loginId = "kakao_user",
+            displayName = "카카오유저",
+            passwordHash = "encoded",
+            meta = mutableMapOf(
+                "oauthProviders" to mutableListOf(
+                    mutableMapOf(
+                        "provider" to "kakao",
+                        "externalId" to "123",
+                        "linkedAt" to now.toString(),
+                        "accessToken" to "access",
+                        "refreshToken" to "refresh",
+                        "accessTokenValidUntil" to now.plusMinutes(10).toString(),
+                        "refreshTokenValidUntil" to now.plusDays(10).toString(),
+                    ),
+                ),
+            ),
+        )
+        `when`(appUserRepository.findByLoginId("kakao_user")).thenReturn(user)
+        `when`(passwordEncoder.matches("secret123", "encoded")).thenReturn(true)
+        `when`(jwtUtil.generateToken(21L, "kakao_user", "카카오유저", "USER", 1)).thenReturn("jwt")
+
+        val kakaoDisabledService = AuthService(
+            appUserRepository,
+            passwordEncoder,
+            jwtUtil,
+            systemSettingsService,
+            "",
+            "",
+            false,
+        )
+
+        val response = kakaoDisabledService.login(LoginRequest("kakao_user", "secret123"))
+
+        assertEquals("jwt", response.token)
+    }
+
+    @Test
+    fun `kakao disabled rejects oauth login`() {
+        val kakaoDisabledService = AuthService(
+            appUserRepository,
+            passwordEncoder,
+            jwtUtil,
+            systemSettingsService,
+            "",
+            "",
+            false,
+        )
+
+        val ex = assertThrows(IllegalStateException::class.java) {
+            kakaoDisabledService.oauthLogin("kakao", "oauth-code", "http://localhost:3000/auth/kakao/callback")
+        }
+
+        assertEquals("Kakao OAuth is temporarily disabled", ex.message)
+    }
+
     private fun sha512(value: String): String {
         val digest = MessageDigest.getInstance("SHA-512").digest(value.toByteArray(StandardCharsets.UTF_8))
         return digest.joinToString("") { "%02x".format(it) }

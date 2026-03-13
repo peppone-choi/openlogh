@@ -91,8 +91,8 @@ class GeneralService(
 
     @Transactional
     fun createGeneral(worldId: Long, loginId: String, request: CreateGeneralRequest): General? {
-        val user = appUserRepository.findByLoginId(loginId) ?: return null
-        val userId = user.id ?: return null
+        val user = findUserByLoginId(loginId)
+        val userId = user.id ?: throw IllegalArgumentException("계정 정보를 확인할 수 없습니다. 다시 로그인해주세요.")
         val world = worldStateRepository.findById(worldId.toShort()).orElseThrow {
             IllegalArgumentException("월드를 찾을 수 없습니다.")
         }
@@ -274,8 +274,8 @@ class GeneralService(
 
     @Transactional
     fun buildPoolGeneral(worldId: Long, loginId: String, request: BuildPoolGeneralRequest): General? {
-        val user = appUserRepository.findByLoginId(loginId) ?: return null
-        val userId = user.id ?: return null
+        val user = findUserByLoginId(loginId)
+        val userId = user.id ?: throw IllegalArgumentException("계정 정보를 확인할 수 없습니다. 다시 로그인해주세요.")
         validateFiveStats(request.leadership, request.strength, request.intel, request.politics, request.charm)
         if (hasActiveGeneral(worldId, userId)) return null
 
@@ -332,6 +332,14 @@ class GeneralService(
 
     fun getCurrentUserId(loginId: String): Long? {
         return appUserRepository.findByLoginId(loginId)?.id
+            ?: appUserRepository.findByLoginIdIgnoreCase(loginId.trim())?.id
+    }
+
+    private fun findUserByLoginId(loginId: String): com.opensam.entity.AppUser {
+        val normalized = loginId.trim()
+        return appUserRepository.findByLoginId(normalized)
+            ?: appUserRepository.findByLoginIdIgnoreCase(normalized)
+            ?: throw IllegalArgumentException("계정 정보를 찾을 수 없습니다. 다시 로그인해주세요.")
     }
 
     private fun ensureCreateAllowed(world: WorldState, worldId: Long, userId: Long) {

@@ -35,6 +35,7 @@ class AuthService(
     private val systemSettingsService: SystemSettingsService,
     @Value("\${KAKAO_REST_API_KEY:}") private val kakaoRestApiKey: String,
     @Value("\${APP_WEB_URL:}") private val appWebUrl: String,
+    @Value("\${auth.oauth.kakao-enabled:true}") private val kakaoOauthEnabled: Boolean = true,
 ) {
     private val http = HttpClient.newBuilder().build()
     private val mapper = ObjectMapper()
@@ -161,6 +162,7 @@ class AuthService(
 
     fun verifyOtp(otpTicket: String, otpCode: String): AuthResponse {
         ensureLoginAllowed()
+        ensureKakaoOauthEnabled()
 
         val otpContext = findUserByOtpTicket(otpTicket)
             ?: throw OtpValidationException(reset = true, message = "인증 코드를 입력할 수 있는 상태가 아닙니다.")
@@ -172,6 +174,7 @@ class AuthService(
 
     fun oauthLogin(provider: String, code: String, redirectUri: String): AuthResponse {
         ensureLoginAllowed()
+        ensureKakaoOauthEnabled()
         require(provider.lowercase() == "kakao") { "Unsupported oauth provider" }
 
         val profile = fetchKakaoProfile(code, redirectUri)
@@ -194,6 +197,7 @@ class AuthService(
         agreeThirdUse: Boolean? = null,
     ): AuthResponse {
         ensureJoinAllowed()
+        ensureKakaoOauthEnabled()
         require(provider.lowercase() == "kakao") { "Unsupported oauth provider" }
         if (agreeTerms == false) {
             throw IllegalArgumentException("약관에 동의해야 가입하실 수 있습니다.")
@@ -235,6 +239,7 @@ class AuthService(
     }
 
     private fun fetchKakaoProfile(code: String, redirectUri: String): KakaoProfile {
+        ensureKakaoOauthEnabled()
         if (kakaoRestApiKey.isBlank()) {
             throw IllegalStateException("Kakao OAuth is not configured")
         }
@@ -341,6 +346,9 @@ class AuthService(
     }
 
     private fun handleKakaoOtpFlow(user: AppUser, otpCode: String?): OffsetDateTime? {
+        if (!kakaoOauthEnabled) {
+            return null
+        }
         val providerContext = getKakaoProvider(user) ?: return null
         val provider = refreshKakaoAccessToken(providerContext.provider, user)
         val tokenValidUntil = parseOffsetDateTime(provider["tokenValidUntil"]?.toString())
@@ -542,6 +550,12 @@ class AuthService(
         val flags = systemSettingsService.getAuthFlags()
         if (!flags.allowLogin) {
             throw IllegalStateException("Login is disabled")
+        }
+    }
+
+    private fun ensureKakaoOauthEnabled() {
+        if (!kakaoOauthEnabled) {
+            throw IllegalStateException("Kakao OAuth is temporarily disabled")
         }
     }
 

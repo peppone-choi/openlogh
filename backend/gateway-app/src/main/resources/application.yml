@@ -45,3 +45,7 @@ gateway:
         health-timeout-ms: ${GATEWAY_HEALTH_TIMEOUT_MS:180000}
         restore-max-retries: ${GATEWAY_RESTORE_MAX_RETRIES:3}
         restore-retry-delay-ms: ${GATEWAY_RESTORE_RETRY_DELAY_MS:30000}
+
+auth:
+    oauth:
+        kakao-enabled: false

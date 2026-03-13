@@ -22,6 +22,7 @@ class AccountOAuthService(
     private val appUserRepository: AppUserRepository,
     @Value("\${KAKAO_REST_API_KEY:}") private val kakaoRestApiKey: String,
     @Value("\${OAUTH_ACCOUNT_LINK_CALLBACK_URI:}") private val configuredCallbackUri: String,
+    @Value("\${auth.oauth.kakao-enabled:true}") private val kakaoOauthEnabled: Boolean = true,
 ) {
     private val mapper = ObjectMapper()
     private val http = HttpClient.newBuilder().build()
@@ -64,6 +65,7 @@ class AccountOAuthService(
         if (provider != "kakao") {
             throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Unsupported oauth provider")
         }
+        ensureKakaoOauthEnabled()
         if (kakaoRestApiKey.isBlank()) {
             throw ResponseStatusException(HttpStatus.FORBIDDEN, "Kakao OAuth is not configured")
         }
@@ -107,6 +109,7 @@ class AccountOAuthService(
         if (provider != "kakao") {
             throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Unsupported oauth provider")
         }
+        ensureKakaoOauthEnabled()
         if (kakaoRestApiKey.isBlank()) {
             throw ResponseStatusException(HttpStatus.FORBIDDEN, "Kakao OAuth is not configured")
         }
@@ -228,4 +231,10 @@ class AccountOAuthService(
     }
 
     private fun urlEncode(value: String): String = URLEncoder.encode(value, StandardCharsets.UTF_8)
+
+    private fun ensureKakaoOauthEnabled() {
+        if (!kakaoOauthEnabled) {
+            throw ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Kakao OAuth is temporarily disabled")
+        }
+    }
 }

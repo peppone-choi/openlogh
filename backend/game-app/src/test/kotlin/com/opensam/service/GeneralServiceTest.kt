@@ -16,6 +16,7 @@ import com.opensam.repository.WorldStateRepository
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -254,5 +255,75 @@ class GeneralServiceTest {
         assertEquals("che_왕좌", general?.personalCode)
         assertEquals("/icons/pool.png", general?.picture)
         assertEquals(2.toShort(), general?.imageServer)
+    }
+
+    @Test
+    fun `createGeneral finds user with case insensitive login id`() {
+        val user = AppUser(
+            id = 4,
+            loginId = "user",
+            displayName = "유저",
+            passwordHash = "encoded",
+            meta = mutableMapOf(),
+        )
+        val world = WorldState(
+            id = 1,
+            currentYear = 180,
+            currentMonth = 1,
+            tickSeconds = 300,
+            config = mutableMapOf("hiddenSeed" to "seed"),
+            meta = mutableMapOf(),
+        )
+        val city = City(id = 10, worldId = 1, name = "허창", level = 5, nationId = 0)
+
+        `when`(appUserRepository.findByLoginId("USER")).thenReturn(null)
+        `when`(appUserRepository.findByLoginIdIgnoreCase("USER")).thenReturn(user)
+        `when`(worldStateRepository.findById(1.toShort())).thenReturn(Optional.of(world))
+        `when`(generalRepository.findByWorldIdAndUserId(1L, 4L)).thenReturn(emptyList())
+        `when`(generalRepository.findByWorldId(1L)).thenReturn(emptyList())
+        `when`(generalRepository.findByNameAndWorldId("신장수", 1L)).thenReturn(null)
+        `when`(cityRepository.findById(10L)).thenReturn(Optional.of(city))
+
+        val general = service.createGeneral(
+            1L,
+            "USER",
+            CreateGeneralRequest(
+                name = "신장수",
+                cityId = 10L,
+                leadership = 70,
+                strength = 70,
+                intel = 70,
+                politics = 70,
+                charm = 70,
+                crewType = 0,
+            ),
+        )
+
+        assertNotNull(general)
+        assertEquals(4L, general?.userId)
+    }
+
+    @Test
+    fun `createGeneral returns clear error when user not found`() {
+        `when`(appUserRepository.findByLoginId("ghost")).thenReturn(null)
+        `when`(appUserRepository.findByLoginIdIgnoreCase("ghost")).thenReturn(null)
+
+        val ex = assertThrows(IllegalArgumentException::class.java) {
+            service.createGeneral(
+                1L,
+                "ghost",
+                CreateGeneralRequest(
+                    name = "신장수",
+                    cityId = 10L,
+                    leadership = 70,
+                    strength = 70,
+                    intel = 70,
+                    politics = 70,
+                    charm = 70,
+                ),
+            )
+        }
+
+        assertEquals("계정 정보를 찾을 수 없습니다. 다시 로그인해주세요.", ex.message)
     }
 }
