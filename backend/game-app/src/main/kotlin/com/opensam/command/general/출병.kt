@@ -15,10 +15,7 @@ import kotlin.random.Random
  *
  * Route-finding (BFS-based shortest path to destCity):
  *  1. Among shortest-distance and shortest+1 cities, find enemy cities → attack
- *  2. If no enemy found, pick the nearest allied city → fallback to 이동 (move)
- *
- * The `alternative` mechanism is implemented via getAlternativeCommand():
- * if HasRouteWithEnemy constraint fails, CommandExecutor re-dispatches as 이동.
+ *  2. If no enemy found, pick the nearest allied city → fallback to 이동 (inside run())
  */
 class 출병(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
     : GeneralCommand(general, env, arg) {
@@ -61,12 +58,6 @@ class 출병(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
 
     override fun getPreReqTurn() = 0
     override fun getPostReqTurn() = 0
-
-    /**
-     * 출병은 경로상 적군 도시를 찾지 못하면 이동으로 대체한다.
-     * HasRouteWithEnemy 실패 시 CommandExecutor가 이동으로 재디스패치한다.
-     */
-    override fun getAlternativeCommand(): String? = "이동"
 
     /**
      * 출병 실행:
