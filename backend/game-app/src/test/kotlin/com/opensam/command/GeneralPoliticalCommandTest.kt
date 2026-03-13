@@ -5,9 +5,16 @@ import com.opensam.command.general.*
 import com.opensam.entity.City
 import com.opensam.entity.General
 import com.opensam.entity.Nation
+import com.opensam.engine.DiplomacyService
+import com.opensam.engine.modifier.ModifierService
+import com.opensam.repository.CityRepository
+import com.opensam.repository.GeneralRepository
+import com.opensam.repository.NationRepository
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
+import org.mockito.Mockito.mock
+import org.mockito.Mockito.`when`
 import java.time.OffsetDateTime
 import kotlin.random.Random
 
@@ -34,6 +41,7 @@ class GeneralPoliticalCommandTest {
         dedication: Int = 0,
         age: Short = 20,
         npcState: Short = 0,
+        affinity: Short = 0,
         makeLimit: Short = 0,
         specialCode: String = "None",
         special2Code: String = "None",
@@ -61,6 +69,7 @@ class GeneralPoliticalCommandTest {
             dedication = dedication,
             age = age,
             npcState = npcState,
+            affinity = affinity,
             makeLimit = makeLimit,
             specialCode = specialCode,
             special2Code = special2Code,
@@ -130,6 +139,29 @@ class GeneralPoliticalCommandTest {
 
     private val fixedRng = Random(42)
 
+    private fun createMockServices(
+        allNations: List<Nation>,
+        allGenerals: List<General>,
+    ): CommandServices {
+        val generalRepository = mock(GeneralRepository::class.java)
+        val cityRepository = mock(CityRepository::class.java)
+        val nationRepository = mock(NationRepository::class.java)
+        val diplomacyService = mock(DiplomacyService::class.java)
+        val modifierService = mock(ModifierService::class.java)
+
+        `when`(generalRepository.findByWorldId(1L)).thenReturn(allGenerals)
+        `when`(nationRepository.findByWorldId(1L)).thenReturn(allNations)
+        `when`(nationRepository.save(org.mockito.Mockito.any(Nation::class.java))).thenAnswer { it.arguments[0] as Nation }
+
+        return CommandServices(
+            generalRepository = generalRepository,
+            cityRepository = cityRepository,
+            nationRepository = nationRepository,
+            diplomacyService = diplomacyService,
+            modifierService = modifierService,
+        )
+    }
+
     @Test
     fun `등용 should pass constraints and run`() {
         val general = createTestGeneral(gold = 1000, nationId = 1, cityId = 1)
@@ -172,14 +204,49 @@ class GeneralPoliticalCommandTest {
 
     @Test
     fun `랜덤임관 should pass constraints and run`() {
-        val general = createTestGeneral(nationId = 0, makeLimit = 0)
-        val env = createTestEnv()
+        val general = createTestGeneral(nationId = 0, makeLimit = 0, npcState = 2, affinity = 20)
+        val env = createTestEnv().copy(scenario = 1500)
         val cmd = 랜덤임관(general, env)
+
+        val nationA = createTestNation(id = 10, capitalCityId = 101).apply { gennum = 2; scoutLevel = 0 }
+        val nationB = createTestNation(id = 11, capitalCityId = 102).apply { gennum = 3; scoutLevel = 0 }
+        val lordA = createTestGeneral(id = 1001, nationId = 10, officerLevel = 12, cityId = 201, affinity = 22)
+        val lordB = createTestGeneral(id = 1002, nationId = 11, officerLevel = 12, cityId = 202, affinity = 120)
+        cmd.services = createMockServices(
+            allNations = listOf(nationA, nationB),
+            allGenerals = listOf(lordA, lordB),
+        )
 
         assertTrue(cmd.checkFullCondition() is ConstraintResult.Pass)
         val result = runBlocking { cmd.run(fixedRng) }
         assertTrue(result.success)
-        assertTrue(result.message!!.contains("randomJoin"))
+        assertTrue(result.message!!.contains("\"statChanges\""))
+        assertTrue(result.message!!.contains("\"nation\":10"))
+        assertTrue(result.message!!.contains("\"officerLevel\":1"))
+        assertTrue(result.message!!.contains("\"officerCity\":0"))
+        assertTrue(result.message!!.contains("\"belong\":1"))
+        assertTrue(result.message!!.contains("\"troop\":0"))
+        assertTrue(result.message!!.contains("\"cityId\":\"201\""))
+        assertTrue(result.message!!.contains("\"nationChanges\":{\"gennum\":1}"))
+        assertTrue(result.message!!.contains("\"tryUniqueLottery\":true"))
+    }
+
+    @Test
+    fun `랜덤임관 should fail when no eligible nation exists`() {
+        val general = createTestGeneral(nationId = 0, makeLimit = 0)
+        val env = createTestEnv()
+        val cmd = 랜덤임관(general, env)
+
+        val blockedNation = createTestNation(id = 20).apply { scoutLevel = 1 }
+        cmd.services = createMockServices(
+            allNations = listOf(blockedNation),
+            allGenerals = emptyList(),
+        )
+
+        assertTrue(cmd.checkFullCondition() is ConstraintResult.Pass)
+        val result = runBlocking { cmd.run(fixedRng) }
+        assertFalse(result.success)
+        assertTrue(result.logs.any { it.contains("임관 가능한 국가가 없습니다") })
     }
 
     @Test
