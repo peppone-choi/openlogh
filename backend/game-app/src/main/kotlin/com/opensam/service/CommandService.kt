@@ -53,6 +53,7 @@ class CommandService(
 
         val turnIdxList = turns.map { it.turnIdx }
         generalTurnRepository.deleteByGeneralIdAndTurnIdxIn(generalId, turnIdxList)
+        generalTurnRepository.flush()
         return turns.map { entry ->
             generalTurnRepository.save(
                 GeneralTurn(
@@ -412,6 +413,7 @@ class CommandService(
 
         val turnIdxList = turns.map { it.turnIdx }
         nationTurnRepository.deleteByNationIdAndOfficerLevelAndTurnIdxIn(nationId, general.officerLevel, turnIdxList)
+        nationTurnRepository.flush()
         return turns.map { entry ->
             nationTurnRepository.save(
                 NationTurn(

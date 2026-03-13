@@ -164,6 +164,29 @@ class CommandServiceTest {
     }
 
     @Test
+    fun `reserveGeneralTurns flushes after delete to prevent DuplicateKeyException`() {
+        val general = createGeneral()
+        val world = WorldState(id = 1, name = "world", scenarioCode = "test", realtimeMode = false)
+        val turns = listOf(
+            com.opensam.dto.TurnEntry(turnIdx = 0, actionCode = "모병", arg = mapOf("crewType" to 1300, "amount" to 4500)),
+        )
+
+        `when`(generalRepository.findById(1L)).thenReturn(Optional.of(general))
+        `when`(worldStateRepository.findById(1)).thenReturn(Optional.of(world))
+        `when`(generalTurnRepository.save(org.mockito.ArgumentMatchers.any(GeneralTurn::class.java))).thenAnswer { it.arguments[0] }
+
+        val result = service.reserveGeneralTurns(1L, turns)
+
+        val inOrder = org.mockito.Mockito.inOrder(generalTurnRepository)
+        inOrder.verify(generalTurnRepository).deleteByGeneralIdAndTurnIdxIn(1L, listOf(0.toShort()))
+        inOrder.verify(generalTurnRepository).flush()
+        inOrder.verify(generalTurnRepository).save(org.mockito.ArgumentMatchers.any(GeneralTurn::class.java))
+
+        assertEquals(1, result.size)
+        assertEquals("모병", result[0].actionCode)
+    }
+
+    @Test
     fun `repeatNationTurns rejects mismatched nation before mutating`() {
         val general = createGeneral(officerLevel = 5)
         val world = WorldState(id = 1, name = "world", scenarioCode = "test", realtimeMode = false)
