@@ -301,13 +301,15 @@ class TurnService @Autowired constructor(
 
                 try {
                     val ports = worldPortFactory.create(worldId)
-                    val generals = ports.allGenerals().map { it.toEntity() }
+                    val beforeSnapshots = ports.allGenerals().associateBy { it.id }
+                    val generals = beforeSnapshots.values.map { it.toEntity() }
                     generalMaintenanceService.processGeneralMaintenance(world, generals)
                     specialAssignmentService.checkAndAssignSpecials(world, generals)
-                    // Save ALL generals (including dead ones) to persist death state
-                    generals.forEach { ports.putGeneral(it.toSnapshot()) }
+                    for (g in generals) {
+                        val snap = g.toSnapshot()
+                        if (snap != beforeSnapshots[g.id]) ports.putGeneral(snap)
+                    }
 
-                    // Only accrue inheritance for living generals
                     for (general in generals) {
                         if (general.npcState.toInt() != 5) {
                             inheritanceService.accruePoints(general, "lived_month", 1)
@@ -888,9 +890,16 @@ class TurnService @Autowired constructor(
     private fun resetStrategicCommandLimits(world: WorldState) {
         val worldId = world.id.toLong()
         val ports = worldPortFactory.create(worldId)
-        val generals = ports.allGenerals().map { it.toEntity() }
-        val nations = ports.allNations().map { it.toEntity() }
-        val cities = ports.allCities().map { it.toEntity() }
+        val generalSnapshots = ports.allGenerals()
+        val generals = generalSnapshots.map { it.toEntity() }
+        val nationSnapshots = ports.allNations()
+        val nations = nationSnapshots.map { it.toEntity() }
+        val citySnapshots = ports.allCities()
+        val cities = citySnapshots.map { it.toEntity() }
+
+        val originalGenerals = generalSnapshots.associateBy { it.id }
+        val originalNations = nationSnapshots.associateBy { it.id }
+        val originalCities = citySnapshots.associateBy { it.id }
 
         for (general in generals) {
             if (general.makeLimit > 0) {
@@ -919,8 +928,14 @@ class TurnService @Autowired constructor(
         updateDevelCost(world)
         decayRefreshScoreTotals(worldId)
 
-        generals.forEach { ports.putGeneral(it.toSnapshot()) }
-        cities.forEach { ports.putCity(it.toSnapshot()) }
+        for (g in generals) {
+            val snap = g.toSnapshot()
+            if (snap != originalGenerals[g.id]) ports.putGeneral(snap)
+        }
+        for (c in cities) {
+            val snap = c.toSnapshot()
+            if (snap != originalCities[c.id]) ports.putCity(snap)
+        }
         nations.forEach { ports.putNation(it.toSnapshot()) }
     }
 

@@ -13,9 +13,7 @@ import type { AccountDetailedInfo, OAuthProviderInfo } from '@/types';
 import { Link2, Unlink, Loader2, ShieldAlert, AlertTriangle, X, Upload, Trash2, RefreshCw, Info } from 'lucide-react';
 import { isKakaoOauthEnabled } from '@/lib/auth-features';
 
-const OAUTH_PROVIDERS = [
-    { id: 'kakao', name: '카카오', color: '#FEE500', textColor: '#000' },
-] as const;
+const OAUTH_PROVIDERS = [{ id: 'kakao', name: '카카오', color: '#FEE500', textColor: '#000' }] as const;
 
 function AccountPageContent() {
     const router = useRouter();
@@ -535,7 +533,9 @@ function AccountPageContent() {
                             )}
 
                             {oauthMsg && (
-                                <p className={`text-xs ${oauthMsg.includes('실패') ? 'text-red-400' : 'text-green-400'}`}>
+                                <p
+                                    className={`text-xs ${oauthMsg.includes('실패') ? 'text-red-400' : 'text-green-400'}`}
+                                >
                                     {oauthMsg}
                                 </p>
                             )}
@@ -543,9 +543,7 @@ function AccountPageContent() {
                     ) : (
                         <div className="space-y-2 rounded-md border p-3">
                             <h2 className="text-sm font-semibold text-muted-foreground">OAuth 토큰 연동</h2>
-                            <p className="text-xs text-muted-foreground">
-                                카카오 OAuth 연동은 현재 점검 중입니다.
-                            </p>
+                            <p className="text-xs text-muted-foreground">카카오 OAuth 연동은 현재 점검 중입니다.</p>
                         </div>
                     )}
 

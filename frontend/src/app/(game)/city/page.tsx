@@ -452,11 +452,29 @@ function CityPageContent() {
 
                                 {/* Row 2: agri, comm, secu, def, wall */}
                                 <LabelCell>농업</LabelCell>
-                                <StatValueCell val={city.agri} max={city.agriMax} hidden={!isVisible} kind="agri" perTurn={100} />
+                                <StatValueCell
+                                    val={city.agri}
+                                    max={city.agriMax}
+                                    hidden={!isVisible}
+                                    kind="agri"
+                                    perTurn={100}
+                                />
                                 <LabelCell>상업</LabelCell>
-                                <StatValueCell val={city.comm} max={city.commMax} hidden={!isVisible} kind="comm" perTurn={100} />
+                                <StatValueCell
+                                    val={city.comm}
+                                    max={city.commMax}
+                                    hidden={!isVisible}
+                                    kind="comm"
+                                    perTurn={100}
+                                />
                                 <LabelCell>치안</LabelCell>
-                                <StatValueCell val={city.secu} max={city.secuMax} hidden={!isVisible} kind="secu" perTurn={100} />
+                                <StatValueCell
+                                    val={city.secu}
+                                    max={city.secuMax}
+                                    hidden={!isVisible}
+                                    kind="secu"
+                                    perTurn={100}
+                                />
                                 <LabelCell>수비</LabelCell>
                                 <StatValueCell
                                     val={city.def}

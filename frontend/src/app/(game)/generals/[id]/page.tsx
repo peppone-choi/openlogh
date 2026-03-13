@@ -374,7 +374,9 @@ export default function GeneralDetailPage() {
                         <div className="space-y-1 max-h-60 overflow-y-auto">
                             {records.slice(0, 30).map((r) => (
                                 <div key={r.id} className="border-b border-gray-600/30 px-1 py-0.5 text-xs">
-                                    {formatGameLogDate(r) && <span className="text-gray-400">[{formatGameLogDate(r)}]</span>}{' '}
+                                    {formatGameLogDate(r) && (
+                                        <span className="text-gray-400">[{formatGameLogDate(r)}]</span>
+                                    )}{' '}
                                     {(r.payload.message as string) ?? ''}
                                 </div>
                             ))}

@@ -2,7 +2,11 @@ import { describe, expect, it } from 'vitest';
 import type { AxiosError } from 'axios';
 import { applyApiErrorMessage, type ApiErrorPayload } from '@/lib/api-error';
 
-function createAxiosError(status: number, data: ApiErrorPayload | undefined, message = 'Request failed'): AxiosError<ApiErrorPayload | undefined> {
+function createAxiosError(
+    status: number,
+    data: ApiErrorPayload | undefined,
+    message = 'Request failed'
+): AxiosError<ApiErrorPayload | undefined> {
     return {
         name: 'AxiosError',
         message,

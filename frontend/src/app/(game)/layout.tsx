@@ -271,9 +271,7 @@ export default function GameLayout({ children }: { children: React.ReactNode }) 
                             <details key={section.label} className="group relative">
                                 <summary
                                     className={`flex h-7 cursor-pointer list-none items-center justify-center px-3 text-[11px] font-bold text-white marker:hidden ${
-                                        sectionActive
-                                            ? 'bg-[#141c65]'
-                                            : 'bg-[#00582c] hover:bg-[#006a33]'
+                                        sectionActive ? 'bg-[#141c65]' : 'bg-[#00582c] hover:bg-[#006a33]'
                                     }`}
                                 >
                                     {section.label}

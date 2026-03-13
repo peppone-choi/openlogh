@@ -317,7 +317,9 @@ export default function AdminLogsPage() {
                                         </div>
                                         <div>
                                             <p className="text-xs font-medium mb-1">본문</p>
-                                            <p className="text-sm break-all">{formatLog(extractDisplayMessage(selectedLog))}</p>
+                                            <p className="text-sm break-all">
+                                                {formatLog(extractDisplayMessage(selectedLog))}
+                                            </p>
                                         </div>
                                         <div>
                                             <p className="text-xs font-medium mb-1">payload</p>

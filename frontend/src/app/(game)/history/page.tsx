@@ -503,7 +503,10 @@ export default function HistoryPage() {
                                             ) : (
                                                 <div className="space-y-1">
                                                     {yearbook.globalHistory.slice(0, 5).map((event) => (
-                                                        <div key={`gh-${event}`} className="text-[11px] text-muted-foreground">
+                                                        <div
+                                                            key={`gh-${event}`}
+                                                            className="text-[11px] text-muted-foreground"
+                                                        >
                                                             {formatLog(event)}
                                                         </div>
                                                     ))}
@@ -517,7 +520,10 @@ export default function HistoryPage() {
                                             ) : (
                                                 <div className="space-y-1">
                                                     {yearbook.globalAction.slice(0, 5).map((event) => (
-                                                        <div key={`ga-${event}`} className="text-[11px] text-muted-foreground">
+                                                        <div
+                                                            key={`ga-${event}`}
+                                                            className="text-[11px] text-muted-foreground"
+                                                        >
                                                             {formatLog(event)}
                                                         </div>
                                                     ))}

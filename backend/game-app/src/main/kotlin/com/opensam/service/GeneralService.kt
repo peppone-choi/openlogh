@@ -498,8 +498,20 @@ class GeneralService(
     }
 
     private fun createInitialTurnTime(world: WorldState, rng: Random, inheritTurntimeZone: Int?): OffsetDateTime {
-        val turnMinutes = (world.tickSeconds / 60).coerceAtLeast(1)
+        val tickSeconds = world.tickSeconds.toLong().coerceAtLeast(1L)
         val now = OffsetDateTime.now()
+
+        // For fast-tick worlds (< 60s), place within the next few ticks
+        // to avoid hour-long delays before first turn processing.
+        if (tickSeconds < 60) {
+            val slotCount = (60 / tickSeconds).toInt().coerceAtLeast(1)
+            val slot = inheritTurntimeZone?.coerceIn(0, slotCount - 1)
+                ?: rng.nextInt(slotCount)
+            return now.plusSeconds((slot + 1) * tickSeconds)
+        }
+
+        // Standard tick worlds (>= 60s): legacy hour-aligned slot allocation
+        val turnMinutes = (tickSeconds / 60).toInt().coerceAtLeast(1)
         val baseHour = now
             .withMinute(0)
             .withSecond(0)

@@ -788,11 +788,8 @@ export const adminApi = {
             ...(scenarioCode ? { scenarioCode } : {}),
             ...(gameVersion ? { gameVersion } : {}),
         }),
-    forceRehall: (worldId?: number) => api.post<{ processedGenerals: number; updatedUsers: number }>(
-        '/admin/force-rehall',
-        {},
-        wq(worldId)
-    ),
+    forceRehall: (worldId?: number) =>
+        api.post<{ processedGenerals: number; updatedUsers: number }>('/admin/force-rehall', {}, wq(worldId)),
     writeLog: (message: string, worldId?: number) => api.post<void>('/admin/write-log', { message }, wq(worldId)),
 
     // Gateway-local admin ops (entrance/system)

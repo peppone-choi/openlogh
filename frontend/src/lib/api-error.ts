@@ -6,7 +6,9 @@ export interface ApiErrorPayload {
     errors?: Record<string, string>;
 }
 
-export function applyApiErrorMessage(error: AxiosError<ApiErrorPayload | undefined>): AxiosError<ApiErrorPayload | undefined> {
+export function applyApiErrorMessage(
+    error: AxiosError<ApiErrorPayload | undefined>
+): AxiosError<ApiErrorPayload | undefined> {
     if (error.response?.status !== 400) {
         return error;
     }

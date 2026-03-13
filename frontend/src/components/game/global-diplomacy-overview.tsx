@@ -126,7 +126,10 @@ export function GlobalDiplomacyOverview({
                                         .slice()
                                         .sort((a, b) => b.nation.power - a.nation.power)
                                         .map(({ nation, genCount, cityCount, totalPop, totalCrew }) => (
-                                            <tr key={nation.id} className="border-b border-gray-800 hover:bg-gray-900/50">
+                                            <tr
+                                                key={nation.id}
+                                                className="border-b border-gray-800 hover:bg-gray-900/50"
+                                            >
                                                 <td className="px-2 py-1.5">
                                                     <NationBadge name={nation.name} color={nation.color} />
                                                 </td>
@@ -190,7 +193,11 @@ function DiplomacyMatrix({
                             {nations.map((col) => {
                                 if (row.id === col.id) {
                                     return (
-                                        <td key={col.id} className="p-1 text-center" style={{ backgroundColor: '#222' }}>
+                                        <td
+                                            key={col.id}
+                                            className="p-1 text-center"
+                                            style={{ backgroundColor: '#222' }}
+                                        >
                                             -
                                         </td>
                                     );
@@ -198,7 +205,8 @@ function DiplomacyMatrix({
                                 const state = diplomacyLookup.get(`${row.id}-${col.id}`);
                                 const bg = state ? (STATE_COLORS[state] ?? '#555') : '#1a1a1a';
                                 const label = state ? (STATE_LABELS[state] ?? state) : '';
-                                const isMyRelation = myNationId != null && (row.id === myNationId || col.id === myNationId);
+                                const isMyRelation =
+                                    myNationId != null && (row.id === myNationId || col.id === myNationId);
                                 const charMap = isMyRelation ? INFORMATIVE_STATE_CHAR : NEUTRAL_STATE_CHAR;
                                 const stateChar = state ? (charMap[state] ?? label.charAt(0)) : '';
                                 return (
@@ -208,7 +216,11 @@ function DiplomacyMatrix({
                                         style={{ backgroundColor: `${bg}33`, color: bg }}
                                         title={`${row.name} → ${col.name}: ${label || '중립'}`}
                                     >
-                                        {stateChar ? <span className="font-bold">{stateChar}</span> : <span className="text-gray-600">-</span>}
+                                        {stateChar ? (
+                                            <span className="font-bold">{stateChar}</span>
+                                        ) : (
+                                            <span className="text-gray-600">-</span>
+                                        )}
                                     </td>
                                 );
                             })}
@@ -219,7 +231,10 @@ function DiplomacyMatrix({
             <div className="mt-3 flex flex-wrap gap-3 text-xs">
                 {Object.entries(STATE_LABELS).map(([code, label]) => (
                     <span key={code} className="flex items-center gap-1">
-                        <span className="inline-block size-2.5 rounded-sm" style={{ backgroundColor: STATE_COLORS[code] ?? '#555' }} />
+                        <span
+                            className="inline-block size-2.5 rounded-sm"
+                            style={{ backgroundColor: STATE_COLORS[code] ?? '#555' }}
+                        />
                         <span className="font-bold" style={{ color: STATE_COLORS[code] ?? '#555' }}>
                             {INFORMATIVE_STATE_CHAR[code] ?? ''}
                         </span>
@@ -279,7 +294,9 @@ function ConflictAreaCard({
             <CardContent>
                 {warPairs.length > 0 && (
                     <div className="mb-3 space-y-2">
-                        <div className="flex items-center gap-1 text-xs font-medium text-red-400">⚔️ 교전 중인 세력</div>
+                        <div className="flex items-center gap-1 text-xs font-medium text-red-400">
+                            ⚔️ 교전 중인 세력
+                        </div>
                         {warPairs.map((pair) => (
                             <div
                                 key={`${pair.src.id}-${pair.dest.id}`}
@@ -302,7 +319,9 @@ function ConflictAreaCard({
                         .map((nation) => {
                             const count = nationCities.get(nation.id)?.length ?? 0;
                             const pct = totalCities > 0 ? Math.round((count / totalCities) * 100) : 0;
-                            const atWar = warPairs.some((pair) => pair.src.id === nation.id || pair.dest.id === nation.id);
+                            const atWar = warPairs.some(
+                                (pair) => pair.src.id === nation.id || pair.dest.id === nation.id
+                            );
                             return (
                                 <div key={nation.id} className="space-y-1">
                                     <div className="flex items-center gap-2 text-xs">

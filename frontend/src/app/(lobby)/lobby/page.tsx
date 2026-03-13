@@ -477,7 +477,9 @@ export default function LobbyPage() {
                                             ? 'cursor-pointer hover:border-primary/50'
                                             : 'opacity-50 cursor-not-allowed'
                                     }`}
-                                    onClick={() => actionAvailability?.canPossessNpc && router.push('/lobby/select-npc')}
+                                    onClick={() =>
+                                        actionAvailability?.canPossessNpc && router.push('/lobby/select-npc')
+                                    }
                                 >
                                     <CardContent className="flex items-center gap-4 py-4">
                                         <div className="flex items-center justify-center size-10 rounded-lg bg-primary/10 text-primary">

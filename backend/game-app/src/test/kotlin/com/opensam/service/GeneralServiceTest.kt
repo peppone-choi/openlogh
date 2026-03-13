@@ -304,6 +304,57 @@ class GeneralServiceTest {
     }
 
     @Test
+    fun `createGeneral in fast tick world sets turnTime within next minute`() {
+        val user = AppUser(
+            id = 5,
+            loginId = "user",
+            displayName = "유저",
+            passwordHash = "encoded",
+            meta = mutableMapOf(),
+        )
+        val world = WorldState(
+            id = 1,
+            currentYear = 180,
+            currentMonth = 1,
+            tickSeconds = 30,
+            config = mutableMapOf("hiddenSeed" to "seed"),
+            meta = mutableMapOf(),
+        )
+        val city = City(id = 10, worldId = 1, name = "허창", level = 5, nationId = 0)
+
+        `when`(appUserRepository.findByLoginId("user")).thenReturn(user)
+        `when`(worldStateRepository.findById(1.toShort())).thenReturn(Optional.of(world))
+        `when`(generalRepository.findByWorldIdAndUserId(1L, 5L)).thenReturn(emptyList())
+        `when`(generalRepository.findByWorldId(1L)).thenReturn(emptyList())
+        `when`(generalRepository.findByNameAndWorldId("고속장수", 1L)).thenReturn(null)
+        `when`(cityRepository.findById(10L)).thenReturn(Optional.of(city))
+
+        val before = java.time.OffsetDateTime.now()
+        val general = service.createGeneral(
+            1L,
+            "user",
+            CreateGeneralRequest(
+                name = "고속장수",
+                cityId = 10L,
+                leadership = 70,
+                strength = 70,
+                intel = 70,
+                politics = 70,
+                charm = 70,
+            ),
+        )
+        val after = java.time.OffsetDateTime.now()
+
+        assertNotNull(general)
+        val turnTime = general!!.turnTime
+        assertTrue(turnTime.isAfter(before), "turnTime should be after now")
+        assertTrue(
+            turnTime.isBefore(after.plusSeconds(61)),
+            "turnTime should be within ~60s of creation, got ${java.time.Duration.between(before, turnTime).seconds}s",
+        )
+    }
+
+    @Test
     fun `createGeneral returns clear error when user not found`() {
         `when`(appUserRepository.findByLoginId("ghost")).thenReturn(null)
         `when`(appUserRepository.findByLoginIdIgnoreCase("ghost")).thenReturn(null)
