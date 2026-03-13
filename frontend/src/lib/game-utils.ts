@@ -423,8 +423,15 @@ export const BASE_CREW_TYPES: Record<number, string> = Object.fromEntries(
         .map(([k, v]) => [Number(k), v])
 );
 
+export function parseCrewTypeCode(crewTypeRaw: string | number | null | undefined): number {
+    if (typeof crewTypeRaw === 'number') return crewTypeRaw;
+    if (!crewTypeRaw) return 0;
+    const matched = String(crewTypeRaw).match(/(\d+)$/);
+    return matched ? Number(matched[1]) : 0;
+}
+
 export function getCrewTypeName(crewTypeStr: string): string {
-    const code = parseInt(crewTypeStr.replace('che_', '')) || 0;
+    const code = parseCrewTypeCode(crewTypeStr);
     return CREW_TYPE_NAMES[code] ?? crewTypeStr;
 }
 

@@ -13,6 +13,7 @@ import {
     ageColor,
     isValidObjKey,
     getCrewTypeName,
+    parseCrewTypeCode,
 } from '@/lib/game-utils';
 import { getPortraitUrl, getCrewTypeIconUrl } from '@/lib/image';
 
@@ -175,7 +176,7 @@ export function GeneralBasicCard({ general, nation, turnTerm, lastExecuted }: Ge
                         gridRow: '4 / 7',
                         width: 64,
                         height: 64,
-                        backgroundImage: `url('${getCrewTypeIconUrl(parseInt(general.crewtype.replace('che_', '')) || 0)}')`,
+                        backgroundImage: `url('${getCrewTypeIconUrl(parseCrewTypeCode(general.crewtype))}')`,
                         backgroundSize: 'contain',
                         backgroundRepeat: 'no-repeat',
                     }}

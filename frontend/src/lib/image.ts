@@ -12,10 +12,13 @@ export const ICON_CDN_ROOT = `${CDN_ROOT}/icons`;
 
 export function getPortraitUrl(picture?: string | null): string {
     if (!picture) return `${ICON_CDN_ROOT}/0.jpg`;
+    const normalized = picture.trim().replace(/^\/+/, '');
+    if (!normalized || normalized === 'default.jpg') return `${ICON_CDN_ROOT}/0.jpg`;
     // picture is a numeric string (e.g. "1146") — append .jpg
-    if (/^\d+$/.test(picture)) return `${ICON_CDN_ROOT}/${picture}.jpg`;
+    if (/^\d+$/.test(normalized)) return `${ICON_CDN_ROOT}/${normalized}.jpg`;
+    if (/^\d+\.jpg$/i.test(normalized)) return `${ICON_CDN_ROOT}/${normalized}`;
     // Already has extension or is a full path
-    return `${CDN_BASE}${picture}`;
+    return `${CDN_BASE}${normalized}`;
 }
 
 export function getMapAssetUrl(asset: string): string {
@@ -31,7 +34,8 @@ export function getEventIcon(state: number): string {
 }
 
 export function getCrewTypeIconUrl(crewType: number): string {
-    return `${GAME_CDN_ROOT}/crewtype${crewType}.png`;
+    const normalizedCrewType = crewType >= 1000 ? crewType : 1100 + Math.max(0, crewType) * 100;
+    return `${GAME_CDN_ROOT}/crewtype${normalizedCrewType}.png`;
 }
 
 export function getSammoBarBg(height: number): string {

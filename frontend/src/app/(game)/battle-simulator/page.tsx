@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { formatInjury, BASE_CREW_TYPES } from '@/lib/game-utils';
+import { formatInjury, BASE_CREW_TYPES, parseCrewTypeCode } from '@/lib/game-utils';
 
 // Known item/weapon/horse/book codes from legacy — these are used as dropdown options.
 // In production these would come from game const store; we provide common ones here.
@@ -275,7 +275,10 @@ function UnitBuilder({
                     strength: (d.strength as number) ?? unit.strength,
                     intel: (d.intel as number) ?? unit.intel,
                     crew: (d.crew as number) ?? unit.crew,
-                    crewType: (d.crewtype as number) ?? (d.crewType as number) ?? unit.crewType,
+                    crewType:
+                        parseCrewTypeCode(d.crewtype as string | number | null | undefined) ||
+                        parseCrewTypeCode(d.crewType as string | number | null | undefined) ||
+                        unit.crewType,
                     train: (d.train as number) ?? unit.train,
                     atmos: (d.atmos as number) ?? unit.atmos,
                     weaponCode: (d.weapon as string) ?? (d.weaponCode as string) ?? '',
@@ -363,7 +366,10 @@ function UnitBuilder({
                     strength: (d.strength as number) ?? unit.strength,
                     intel: (d.intel as number) ?? unit.intel,
                     crew: (d.crew as number) ?? unit.crew,
-                    crewType: (d.crewtype as number) ?? unit.crewType,
+                    crewType:
+                        parseCrewTypeCode(d.crewtype as string | number | null | undefined) ||
+                        parseCrewTypeCode(d.crewType as string | number | null | undefined) ||
+                        unit.crewType,
                     train: (d.train as number) ?? unit.train,
                     atmos: (d.atmos as number) ?? unit.atmos,
                     weaponCode: (d.weapon as string) ?? '',
