@@ -1,5 +1,7 @@
 package com.opensam.command
 
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
 import com.opensam.command.constraint.ConstraintResult
 import com.opensam.entity.City
 import com.opensam.entity.General
@@ -32,6 +34,8 @@ class CommandExecutor @Autowired constructor(
     private val statChangeService: StatChangeService,
     private val modifierService: ModifierService,
 ) {
+    private val mapper = jacksonObjectMapper()
+
     constructor(
         commandRegistry: CommandRegistry,
         generalRepository: GeneralRepository,
@@ -70,6 +74,7 @@ class CommandExecutor @Autowired constructor(
         rng: Random = Random.Default
     ): CommandResult {
         var effectiveArg = arg
+        var effectiveNation = nation
         val schema = commandRegistry.getGeneralSchema(actionCode)
         if (schema != ArgSchema.NONE && !effectiveArg.isNullOrEmpty()) {
             val validated = schema.parse(effectiveArg)
@@ -82,7 +87,7 @@ class CommandExecutor @Autowired constructor(
 
         val command = commandRegistry.createGeneralCommand(actionCode, general, env, effectiveArg)
         command.city = city
-        command.nation = nation
+        command.nation = effectiveNation
         command.services = CommandServices(generalRepository, cityRepository, nationRepository, diplomacyService, modifierService = modifierService)
         hydrateCommandForConstraintCheck(command, general, env, effectiveArg)
 
@@ -96,7 +101,7 @@ class CommandExecutor @Autowired constructor(
         if (conditionResult is ConstraintResult.Fail) {
             val altCode = command.getAlternativeCommand()
             if (altCode != null && altCode != actionCode) {
-                return executeGeneralCommand(altCode, general, env, effectiveArg, city, nation, rng)
+                return executeGeneralCommand(altCode, general, env, effectiveArg, city, effectiveNation, rng)
             }
             return CommandResult(success = false, logs = listOf(conditionResult.reason))
         }
@@ -126,8 +131,10 @@ class CommandExecutor @Autowired constructor(
         // 성공/실패 모두 적용 — 계략 실패 등에서도 비용/경험치 변동이 있으므로.
         var finalResult = result
         if (result.message != null) {
+            effectiveNation = ensureNationContextForFounding(result.message, general, city, effectiveNation)
+            command.nation = effectiveNation
             CommandResultApplicator.apply(
-                result.copy(success = true), general, city, nation,
+                result.copy(success = true), general, city, effectiveNation,
                 destGeneral = command.destGeneral,
                 destCity = command.destCity,
                 destNation = command.destNation,
@@ -140,7 +147,7 @@ class CommandExecutor @Autowired constructor(
             finalResult = result.copy(logs = result.logs + statChangeResult.logs)
         }
 
-        saveModifiedEntities(general, city, nation, command)
+        saveModifiedEntities(general, city, effectiveNation, command)
 
         applyGeneralCooldown(actionCode, command.getPostReqTurn(), general, env)
         return finalResult
@@ -438,6 +445,7 @@ class CommandExecutor @Autowired constructor(
         return mapOf(
             "worldId" to worldId,
             "mapName" to mapName,
+            "openingPartYears" to 3,
             "mapAdjacency" to mapAdjacency,
             "cityNationById" to cityNationById,
             "cityNationByMapId" to cityNationByMapId,
@@ -450,6 +458,121 @@ class CommandExecutor @Autowired constructor(
             "atWarNationIds" to atWarNationIds,
             "joinActionLimit" to 12,
         )
+    }
+
+    private fun ensureNationContextForFounding(
+        message: String?,
+        general: General,
+        city: City?,
+        nation: Nation?,
+    ): Nation? {
+        if (message.isNullOrBlank()) return nation
+
+        val json = runCatching { mapper.readValue<Map<String, Any>>(message) }.getOrNull() ?: return nation
+        val nationChanges = readStringAnyMap(json["nationChanges"])
+        val nationFoundation = readStringAnyMap(json["nationFoundation"])
+        val cityChanges = readStringAnyMap(json["cityChanges"])
+        val claimCity = readBooleanValue(cityChanges["claimCity"]) == true
+
+        var effectiveNation = nation
+        if (effectiveNation == null) {
+            val createWandering = readBooleanValue(nationChanges["createWanderingNation"]) == true
+            val foundNation = readBooleanValue(nationChanges["foundNation"]) == true || nationFoundation.isNotEmpty()
+
+            if (createWandering || foundNation) {
+                val nationName = (nationChanges["nationName"] as? String)
+                    ?: (nationFoundation["name"] as? String)
+                    ?: general.name
+                val nationTypeRaw = (nationChanges["nationType"] as? String)
+                    ?: (nationFoundation["type"] as? String)
+                val capitalCityId = readIntValue(nationChanges["capital"])?.toLong()
+                    ?: readIntValue(nationFoundation["capitalCityId"])?.toLong()
+                    ?: general.cityId
+                val colorType = readIntValue(nationChanges["colorType"])
+                    ?: readIntValue(nationFoundation["colorType"])
+                val level = readIntValue(nationChanges["level"])
+                    ?: if (createWandering) 0 else 1
+                val secretLimit = readIntValue(nationChanges["secretLimit"]) ?: 3
+
+                val createdNation = nationRepository.save(
+                    Nation(
+                        worldId = general.worldId,
+                        name = nationName,
+                        color = resolveNationColor(colorType),
+                        capitalCityId = capitalCityId,
+                        chiefGeneralId = general.id,
+                        secretLimit = secretLimit.toShort(),
+                        level = level.toShort(),
+                        typeCode = resolveNationTypeCode(nationTypeRaw, createWandering),
+                        gennum = 1,
+                    )
+                )
+
+                val aux = readStringAnyMap(nationChanges["aux"]).toMutableMap()
+                readIntValue(nationChanges["can_국기변경"])?.let { aux["can_국기변경"] = it }
+                readIntValue(nationChanges["can_무작위수도이전"])?.let { aux["can_무작위수도이전"] = it }
+                readIntValue(nationFoundation["can_국기변경"])?.let { aux["can_국기변경"] = it }
+                if (aux.isNotEmpty()) {
+                    createdNation.meta.putAll(aux)
+                }
+
+                effectiveNation = createdNation
+                general.nationId = createdNation.id
+                if (general.officerLevel < 12) {
+                    general.officerLevel = 12
+                }
+            }
+        }
+
+        if (effectiveNation != null && nationFoundation.isNotEmpty()) {
+            (nationFoundation["name"] as? String)?.takeIf { it.isNotBlank() }?.let { effectiveNation.name = it }
+            (nationFoundation["type"] as? String)?.let { effectiveNation.typeCode = resolveNationTypeCode(it, false) }
+            readIntValue(nationFoundation["colorType"])?.let { effectiveNation.color = resolveNationColor(it) }
+            readIntValue(nationFoundation["capitalCityId"])?.toLong()?.let { effectiveNation.capitalCityId = it }
+            readIntValue(nationFoundation["can_국기변경"])?.let { effectiveNation.meta["can_국기변경"] = it }
+        }
+
+        if (claimCity && city != null) {
+            val nationIdForClaim = effectiveNation?.id ?: general.nationId
+            if (nationIdForClaim > 0L) {
+                city.nationId = nationIdForClaim
+            }
+        }
+
+        return effectiveNation
+    }
+
+    private fun readBooleanValue(raw: Any?): Boolean? {
+        return when (raw) {
+            is Boolean -> raw
+            is Number -> raw.toInt() != 0
+            is String -> when (raw.trim().lowercase()) {
+                "1", "true", "yes", "on" -> true
+                "0", "false", "no", "off" -> false
+                else -> null
+            }
+            else -> null
+        }
+    }
+
+    private fun readIntValue(raw: Any?): Int? {
+        return when (raw) {
+            is Number -> raw.toInt()
+            is String -> raw.toIntOrNull()
+            else -> null
+        }
+    }
+
+    private fun resolveNationTypeCode(raw: String?, createWandering: Boolean): String {
+        if (createWandering) return "che_중립"
+        val normalized = raw?.trim().orEmpty()
+        if (normalized.isBlank()) return "che_군벌"
+        return if (normalized.startsWith("che_")) normalized else "che_$normalized"
+    }
+
+    private fun resolveNationColor(colorType: Int?): String {
+        if (colorType == null) return NATION_COLORS.first()
+        return NATION_COLORS.getOrElse(colorType) { NATION_COLORS.first() }
     }
 
     private fun extractLong(arg: Map<String, Any>, vararg keys: String): Long? {
@@ -498,5 +621,15 @@ class CommandExecutor @Autowired constructor(
 
     companion object {
         private const val GENERAL_NEXT_EXECUTE_KEY = "next_execute"
+
+        private val NATION_COLORS = listOf(
+            "#FF0000", "#800000", "#A0522D", "#FF6347", "#FFA500",
+            "#FFDAB9", "#FFD700", "#FFFF00", "#7CFC00", "#00FF00",
+            "#808000", "#008000", "#2E8B57", "#008080", "#20B2AA",
+            "#6495ED", "#7FFFD4", "#AFEEEE", "#87CEEB", "#00FFFF",
+            "#00BFFF", "#0000FF", "#000080", "#483D8B", "#7B68EE",
+            "#BA55D3", "#800080", "#FF00FF", "#FFC0CB", "#F5F5DC",
+            "#E0FFFF", "#FFFFFF", "#A9A9A9",
+        )
     }
 }

@@ -86,6 +86,14 @@ object ArgSchemas {
         )
     )
 
+    val foundNation = ArgSchema(
+        listOf(
+            Field("nationName", aliases = listOf("name", "text", "value"), required = true, parser = ::parseString),
+            Field("nationType", required = false, defaultValue = "군벌", parser = ::parseString),
+            Field("colorType", required = false, defaultValue = 0, parser = ::parseInt),
+        )
+    )
+
     val destCityOptional = ArgSchema(
         listOf(
             Field(
@@ -210,8 +218,8 @@ val COMMAND_SCHEMAS: Map<String, ArgSchema> = mapOf(
     "하야" to ArgSchemas.none,
     "은퇴" to ArgSchemas.none,
 
-    "건국" to ArgSchemas.textInput,
-    "무작위건국" to ArgSchemas.none,
+    "건국" to ArgSchemas.foundNation,
+    "무작위건국" to ArgSchemas.foundNation,
     "모반시도" to ArgSchemas.none,
     "선양" to ArgSchemas.destGeneral,
     "해산" to ArgSchemas.none,
@@ -227,7 +235,7 @@ val COMMAND_SCHEMAS: Map<String, ArgSchema> = mapOf(
     "전투특기초기화" to ArgSchemas.none,
 
     "NPC능동" to ArgSchemas.destCityOptional,
-    "CR건국" to ArgSchemas.none,
+    "CR건국" to ArgSchemas.foundNation,
     "CR맹훈련" to ArgSchemas.none,
 
     "Nation휴식" to ArgSchemas.none,

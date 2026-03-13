@@ -242,7 +242,8 @@ fun HasRouteWithEnemy() = object : Constraint {
 fun NotOpeningPart(relYear: Int) = object : Constraint {
     override val name = "NotOpeningPart"
     override fun test(ctx: ConstraintContext): ConstraintResult {
-        return if (relYear >= 1) ConstraintResult.Pass
+        val openingPartYears = (ctx.env["openingPartYears"] as? Number)?.toInt() ?: 3
+        return if (relYear >= openingPartYears) ConstraintResult.Pass
         else ConstraintResult.Fail("오프닝 기간에는 사용할 수 없습니다.")
     }
 }
@@ -250,8 +251,32 @@ fun NotOpeningPart(relYear: Int) = object : Constraint {
 fun BeOpeningPart(relYear: Int) = object : Constraint {
     override val name = "BeOpeningPart"
     override fun test(ctx: ConstraintContext): ConstraintResult {
-        return if (relYear < 1) ConstraintResult.Pass
+        val openingPartYears = (ctx.env["openingPartYears"] as? Number)?.toInt() ?: 3
+        return if (relYear < openingPartYears) ConstraintResult.Pass
         else ConstraintResult.Fail("오프닝 기간에만 사용할 수 있습니다.")
+    }
+}
+
+fun BeLordOrUnaffiliated() = object : Constraint {
+    override val name = "BeLordOrUnaffiliated"
+    override fun test(ctx: ConstraintContext): ConstraintResult {
+        if (ctx.general.nationId == 0L) {
+            return ConstraintResult.Pass
+        }
+        return if (ctx.general.officerLevel >= 12.toShort()) ConstraintResult.Pass
+        else ConstraintResult.Fail("군주만 사용할 수 있습니다.")
+    }
+}
+
+fun UnaffiliatedOrWanderingNation() = object : Constraint {
+    override val name = "UnaffiliatedOrWanderingNation"
+    override fun test(ctx: ConstraintContext): ConstraintResult {
+        if (ctx.general.nationId == 0L) {
+            return ConstraintResult.Pass
+        }
+        val nation = ctx.nation ?: return ConstraintResult.Fail("국가 정보가 없습니다.")
+        return if (nation.level <= 0.toShort()) ConstraintResult.Pass
+        else ConstraintResult.Fail("정식 국가가 아니어야합니다.")
     }
 }
 
@@ -600,16 +625,24 @@ fun ConstructableCity() = object : Constraint {
     override val name = "ConstructableCity"
     override fun test(ctx: ConstraintContext): ConstraintResult {
         val city = ctx.city ?: return ConstraintResult.Fail("도시 정보가 없습니다.")
-        // Legacy: city must be neutral or owned by this wandering nation
-        return if (city.nationId == 0L || city.nationId == ctx.general.nationId) ConstraintResult.Pass
-        else ConstraintResult.Fail("건국할 수 없는 도시입니다.")
+        if (city.nationId != 0L) {
+            return ConstraintResult.Fail("공백지가 아닙니다.")
+        }
+        return if (city.level.toInt() in 5..6) ConstraintResult.Pass
+        else ConstraintResult.Fail("중, 소 도시에만 가능합니다.")
     }
 }
 
 fun ReqNationGenCount(minCount: Int) = object : Constraint {
     override val name = "ReqNationGenCount"
     override fun test(ctx: ConstraintContext): ConstraintResult {
-        val nation = ctx.nation ?: return ConstraintResult.Fail("국가 정보가 없습니다.")
+        val nation = ctx.nation
+        if (nation == null) {
+            if (ctx.general.nationId == 0L) {
+                return ConstraintResult.Pass
+            }
+            return ConstraintResult.Fail("국가 정보가 없습니다.")
+        }
         val genNum = (nation.meta["gennum"] as? Number)?.toInt() ?: 0
         return if (genNum >= minCount) ConstraintResult.Pass
         else ConstraintResult.Fail("수하 장수가 ${minCount}명 이상이어야 합니다. (현재: $genNum)")
@@ -1113,7 +1146,13 @@ fun ReqDestNationGeneralMatch() = object : Constraint {
 fun ReqNationGeneralCount(minCount: Int) = object : Constraint {
     override val name = "ReqNationGeneralCount"
     override fun test(ctx: ConstraintContext): ConstraintResult {
-        val nation = ctx.nation ?: return ConstraintResult.Fail("국가 정보가 없습니다.")
+        val nation = ctx.nation
+        if (nation == null) {
+            if (ctx.general.nationId == 0L) {
+                return ConstraintResult.Pass
+            }
+            return ConstraintResult.Fail("국가 정보가 없습니다.")
+        }
         val gennum = nation.gennum
         return if (gennum >= minCount) ConstraintResult.Pass
         else ConstraintResult.Fail("장수가 ${minCount}명 이상이어야 합니다. (현재: ${gennum}명)")

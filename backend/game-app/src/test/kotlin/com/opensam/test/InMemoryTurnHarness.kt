@@ -279,6 +279,9 @@ class InMemoryTurnHarness {
         }
         `when`(nationRepository.save(org.mockito.Mockito.any(Nation::class.java))).thenAnswer {
             val nation = it.arguments[0] as Nation
+            if (nation.id <= 0L) {
+                nation.id = (nations.keys.maxOrNull() ?: 0L) + 1L
+            }
             nations[nation.id] = nation
             nation
         }

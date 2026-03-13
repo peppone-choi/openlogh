@@ -54,7 +54,15 @@ object CommandResultApplicator {
         readStringAnyMap(json["statChanges"])?.let { applyStatChanges(general, it) }
 
         readStringAnyMap(json["cityChanges"])?.let {
-            if (city != null) applyCityChanges(city, it)
+            if (city != null) {
+                applyCityChanges(city, it)
+                if (readBoolean(it["claimCity"]) == true) {
+                    val claimNationId = nation?.id ?: general.nationId
+                    if (claimNationId > 0L) {
+                        city.nationId = claimNationId
+                    }
+                }
+            }
         }
 
         readStringAnyMap(json["nationChanges"])?.let {
@@ -228,15 +236,57 @@ object CommandResultApplicator {
 
     private fun applyNationChanges(nation: Nation, changes: Map<String, Any>) {
         for ((key, rawValue) in changes) {
-            val value = (rawValue as? Number)?.toInt() ?: continue
             when (key) {
-                "gold" -> nation.gold = maxOf(0, nation.gold + value)
-                "rice" -> nation.rice = maxOf(0, nation.rice + value)
-                "tech" -> nation.tech = maxOf(0f, nation.tech + value)
-                "power" -> nation.power = maxOf(0, nation.power + value)
-                "chiefGeneralId" -> nation.chiefGeneralId = value.toLong()
+                "gold" -> (rawValue as? Number)?.toInt()?.let { nation.gold = maxOf(0, nation.gold + it) }
+                "rice" -> (rawValue as? Number)?.toInt()?.let { nation.rice = maxOf(0, nation.rice + it) }
+                "tech" -> (rawValue as? Number)?.toInt()?.let { nation.tech = maxOf(0f, nation.tech + it) }
+                "power" -> (rawValue as? Number)?.toInt()?.let { nation.power = maxOf(0, nation.power + it) }
+                "chiefGeneralId" -> (rawValue as? Number)?.toLong()?.let { nation.chiefGeneralId = it }
+                "nationName", "name" -> (rawValue as? String)?.takeIf { it.isNotBlank() }?.let { nation.name = it }
+                "nationType", "type", "typeCode" -> (rawValue as? String)?.let { nation.typeCode = normalizeNationTypeCode(it) }
+                "level" -> (rawValue as? Number)?.toInt()?.let { nation.level = it.toShort() }
+                "capital", "capitalCityId" -> (rawValue as? Number)?.toLong()?.let { nation.capitalCityId = it }
+                "color" -> (rawValue as? String)?.takeIf { it.isNotBlank() }?.let { nation.color = it }
+                "colorType" -> {
+                    val idx = (rawValue as? Number)?.toInt() ?: (rawValue as? String)?.toIntOrNull()
+                    if (idx != null) {
+                        nation.color = resolveNationColor(idx)
+                    }
+                }
+                "secretLimit" -> (rawValue as? Number)?.toInt()?.let { nation.secretLimit = it.toShort() }
+                "can_국기변경" -> (rawValue as? Number)?.toInt()?.let { nation.meta["can_국기변경"] = it }
+                "can_무작위수도이전" -> (rawValue as? Number)?.toInt()?.let { nation.meta["can_무작위수도이전"] = it }
+                "aux" -> {
+                    val aux = readStringAnyMap(rawValue) ?: emptyMap()
+                    if (aux.isNotEmpty()) {
+                        nation.meta.putAll(aux)
+                    }
+                }
             }
         }
+    }
+
+    private fun readBoolean(raw: Any?): Boolean? {
+        return when (raw) {
+            is Boolean -> raw
+            is Number -> raw.toInt() != 0
+            is String -> when (raw.trim().lowercase()) {
+                "1", "true", "yes", "on" -> true
+                "0", "false", "no", "off" -> false
+                else -> null
+            }
+            else -> null
+        }
+    }
+
+    private fun normalizeNationTypeCode(raw: String): String {
+        val trimmed = raw.trim()
+        if (trimmed.isBlank()) return "che_군벌"
+        return if (trimmed.startsWith("che_")) trimmed else "che_$trimmed"
+    }
+
+    private fun resolveNationColor(colorType: Int): String {
+        return NATION_COLORS.getOrElse(colorType) { NATION_COLORS.first() }
     }
 
     /** 병종 숙련도 변경. crewType → dex1~5 매핑. */
@@ -291,4 +341,14 @@ object CommandResultApplicator {
         container[key] = created
         return created
     }
+
+    private val NATION_COLORS = listOf(
+        "#FF0000", "#800000", "#A0522D", "#FF6347", "#FFA500",
+        "#FFDAB9", "#FFD700", "#FFFF00", "#7CFC00", "#00FF00",
+        "#808000", "#008000", "#2E8B57", "#008080", "#20B2AA",
+        "#6495ED", "#7FFFD4", "#AFEEEE", "#87CEEB", "#00FFFF",
+        "#00BFFF", "#0000FF", "#000080", "#483D8B", "#7B68EE",
+        "#BA55D3", "#800080", "#FF00FF", "#FFC0CB", "#F5F5DC",
+        "#E0FFFF", "#FFFFFF", "#A9A9A9",
+    )
 }

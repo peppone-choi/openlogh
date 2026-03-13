@@ -18,7 +18,7 @@ class 건국(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
         val relYear = env.year - env.startYear
         val nationName = arg?.get("nationName") as? String ?: ""
         listOf(
-            BeLord(),
+            BeLordOrUnaffiliated(),
             WanderingNation(),
             ReqNationGenCount(2),
             BeOpeningPart(relYear + 1),
@@ -33,7 +33,7 @@ class 건국(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
         val relYear = env.year - env.startYear
         listOf(
             BeOpeningPart(relYear + 1),
-            ReqNationValue("level", "국가규모", "==", 0, "정식 국가가 아니어야합니다."),
+            UnaffiliatedOrWanderingNation(),
             NoPenalty("noFoundNation"),
         )
     }
