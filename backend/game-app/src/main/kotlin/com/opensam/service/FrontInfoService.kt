@@ -5,6 +5,10 @@ import com.opensam.entity.City
 import com.opensam.entity.General
 import com.opensam.entity.Message
 import com.opensam.entity.Nation
+import com.opensam.engine.modifier.ItemModifiers
+import com.opensam.engine.modifier.NationTypeModifiers
+import com.opensam.engine.modifier.PersonalityModifiers
+import com.opensam.engine.modifier.SpecialModifiers
 import com.opensam.repository.*
 import org.springframework.stereotype.Service
 import kotlin.math.ceil
@@ -343,13 +347,13 @@ class FrontInfoService(
             crewtype = g.crewType.toString(),
             train = g.train.toInt(),
             atmos = g.atmos.toInt(),
-            weapon = g.weaponCode,
-            book = g.bookCode,
-            horse = g.horseCode,
-            item = g.itemCode,
-            personal = g.personalCode,
-            specialDomestic = g.specialCode,
-            specialWar = g.special2Code,
+            weapon = resolveItemDisplayName(g.weaponCode),
+            book = resolveItemDisplayName(g.bookCode),
+            horse = resolveItemDisplayName(g.horseCode),
+            item = resolveItemDisplayName(g.itemCode),
+            personal = PersonalityModifiers.get(g.personalCode)?.name ?: stripCodePrefix(g.personalCode),
+            specialDomestic = SpecialModifiers.get(g.specialCode)?.name ?: stripCodePrefix(g.specialCode),
+            specialWar = SpecialModifiers.get(g.special2Code)?.name ?: stripCodePrefix(g.special2Code),
             specage = g.specAge.toInt(),
             specage2 = g.spec2Age.toInt(),
             age = g.age.toInt(),
@@ -436,9 +440,17 @@ class FrontInfoService(
     }
 
     private fun resolveNationTypeName(typeCode: String): String {
-        val suffix = typeCode.substringAfter("_", "")
-        return suffix.ifEmpty { typeCode }
+        NationTypeModifiers.get(typeCode)?.name?.let { return it }
+        return stripCodePrefix(typeCode)
     }
+
+    private fun resolveItemDisplayName(code: String): String {
+        ItemModifiers.getMeta(code)?.rawName?.let { return it }
+        if (code.contains("_")) return code.substringAfterLast("_")
+        return code
+    }
+
+    private fun stripCodePrefix(code: String): String = code.removePrefix("che_")
 
     private val NATION_TYPE_PROS_CONS = mapOf(
         "che_중립" to ("" to ""),

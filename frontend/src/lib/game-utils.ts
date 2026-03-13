@@ -435,6 +435,13 @@ export function getCrewTypeName(crewTypeStr: string): string {
     return CREW_TYPE_NAMES[code] ?? crewTypeStr;
 }
 
+// --- Display name utilities (strip legacy che_* prefixes) ---
+
+/** Strip `che_` prefix from raw code for UI display (e.g. `che_유가` → `유가`). */
+export function stripCodePrefix(code: string): string {
+    return code.replace(/^che_/, '');
+}
+
 // --- Personality names (legacy che_* codes + compatibility aliases) ---
 
 export const LEGACY_PERSONALITY_OPTIONS: { code: string; label: string; info: string }[] = [

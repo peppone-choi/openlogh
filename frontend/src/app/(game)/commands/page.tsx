@@ -565,7 +565,7 @@ function CommandsPageInner() {
                     description={
                         mode === 'nation'
                             ? '국가 턴 명령을 예약합니다.'
-                            : '12턴 예약, 다중 선택, 저장 액션을 이용해 명령을 빠르게 편성합니다.'
+                            : '30턴 예약, 다중 선택, 저장 액션을 이용해 명령을 빠르게 편성합니다.'
                     }
                 />
                 <div className="flex items-center gap-2">

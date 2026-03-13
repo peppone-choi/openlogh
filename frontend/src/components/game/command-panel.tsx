@@ -10,18 +10,20 @@ import {
     type DragEvent,
 } from 'react';
 import { useRouter } from 'next/navigation';
-import { Clock3, Copy, Pencil, Trash2, GripVertical, ClipboardCopy } from 'lucide-react';
+import { Clock3, Copy, Pencil, Trash2, GripVertical, ClipboardCopy, ChevronDown, ChevronUp } from 'lucide-react';
 import { useHotkeys } from '@/hooks/useHotkeys';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { commandApi, realtimeApi } from '@/lib/gameApi';
+import { subscribeWebSocket } from '@/lib/websocket';
 import { useWorldStore } from '@/stores/worldStore';
 import { COMMAND_ARGS } from '@/components/game/command-arg-form';
 import { CommandSelectForm } from '@/components/game/command-select-form';
 import type { CommandArg, CommandTableEntry, GeneralTurn, JsonObject, RealtimeStatus } from '@/types';
 
-const TURN_COUNT = 12;
+const MAX_TURN_COUNT = 30;
+const COLLAPSED_TURN_COUNT = 12;
 
 interface CommandPanelProps {
     generalId: number;
@@ -161,8 +163,10 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
     const [storedActions, setStoredActions] = useState<StoredAction[]>([]);
     const [selectedStoredAction, setSelectedStoredAction] = useState('');
     const [recentActions, setRecentActions] = useState<RecentAction[]>([]);
+    const [expanded, setExpanded] = useState(false);
 
     const lastTurnRef = useRef(0);
+    const visibleCount = expanded ? MAX_TURN_COUNT : COLLAPSED_TURN_COUNT;
 
     const filledTurns = useMemo<FilledTurn[]>(() => {
         const byIndex = new Map<number, GeneralTurn>();
@@ -170,7 +174,7 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
             byIndex.set(turn.turnIdx, turn);
         }
 
-        return Array.from({ length: TURN_COUNT }, (_, turnIdx) => {
+        return Array.from({ length: MAX_TURN_COUNT }, (_, turnIdx) => {
             const existing = byIndex.get(turnIdx);
             return {
                 turnIdx,
@@ -317,6 +321,14 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
         return () => window.clearInterval(intervalId);
     }, [realtimeMode, loadRealtimeStatus]);
 
+    useEffect(() => {
+        if (!currentWorld) return;
+        const unsubscribe = subscribeWebSocket(`/topic/world/${currentWorld.id}/turn`, () => {
+            void loadTurns();
+        });
+        return unsubscribe;
+    }, [currentWorld, loadTurns]);
+
     const applyToTurns = useCallback(
         async (turnList: number[], actionCode: string, arg?: CommandArg) => {
             await Promise.all(
@@ -349,13 +361,13 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
         const selectedSet = new Set(sortedSelected);
         // Collect non-selected turns after minTurn, in order
         const remaining: FilledTurn[] = [];
-        for (let i = 0; i < TURN_COUNT; i++) {
+        for (let i = 0; i < MAX_TURN_COUNT; i++) {
             if (i < minTurn || selectedSet.has(i)) continue;
             remaining.push(filledTurns[i]);
         }
         // Place remaining turns starting at minTurn, fill rest with empty
         const ops: Promise<unknown>[] = [];
-        for (let i = minTurn; i < TURN_COUNT; i++) {
+        for (let i = minTurn; i < MAX_TURN_COUNT; i++) {
             const rIdx = i - minTurn;
             if (rIdx < remaining.length && remaining[rIdx].actionCode !== '휴식') {
                 ops.push(
@@ -381,7 +393,7 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
         if (src.actionCode === '휴식') return;
 
         const ops: Promise<unknown>[] = [];
-        for (let i = srcIdx + 1; i < TURN_COUNT; i++) {
+        for (let i = srcIdx + 1; i < MAX_TURN_COUNT; i++) {
             if (filledTurns[i].actionCode === '휴식') {
                 ops.push(
                     commandApi.reserveCommand(generalId, {
@@ -406,12 +418,12 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
         const insertCount = sortedSelected.length;
         // Collect all turns from minTurn that are not empty
         const existing: FilledTurn[] = [];
-        for (let i = minTurn; i < TURN_COUNT; i++) {
+        for (let i = minTurn; i < MAX_TURN_COUNT; i++) {
             existing.push(filledTurns[i]);
         }
         // New layout: insertCount empty slots, then existing turns (truncated to fit)
         const ops: Promise<unknown>[] = [];
-        for (let i = minTurn; i < TURN_COUNT; i++) {
+        for (let i = minTurn; i < MAX_TURN_COUNT; i++) {
             const offset = i - minTurn;
             if (offset < insertCount) {
                 ops.push(commandApi.deleteReservedCommand(generalId, i));
@@ -575,7 +587,7 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
         const anchor = selectedTurnList[0];
         const validItems = clipboard
             .map((item) => ({ ...item, target: anchor + item.offset }))
-            .filter((item) => item.target >= 0 && item.target < TURN_COUNT);
+            .filter((item) => item.target >= 0 && item.target < MAX_TURN_COUNT);
 
         if (validItems.length === 0) return;
 
@@ -628,7 +640,7 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
         const anchor = selectedTurnList[0];
         const validItems = stored.items
             .map((item) => ({ ...item, target: anchor + item.offset }))
-            .filter((item) => item.target >= 0 && item.target < TURN_COUNT);
+            .filter((item) => item.target >= 0 && item.target < MAX_TURN_COUNT);
 
         await Promise.all(
             validItems.map((item) =>
@@ -669,7 +681,7 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
         ...Array.from({ length: 9 }, (_, i) => ({
             key: String(i + 1),
             handler: () => {
-                if (i < TURN_COUNT) {
+                if (i < MAX_TURN_COUNT) {
                     setSelectedTurns(new Set([i]));
                     setLastClickedTurn(i);
                 }
@@ -742,7 +754,7 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
         <Card className="border-gray-700">
             <CardHeader className="space-y-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                    <CardTitle className="text-base">12턴 예약 편집</CardTitle>
+                    <CardTitle className="text-base">{visibleCount}턴 예약 편집</CardTitle>
                     <div className="flex items-center gap-2 text-xs text-gray-300">
                         <Clock3 className="size-3.5 text-amber-300" />
                         <span>{serverClock}</span>
@@ -860,7 +872,7 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
                         className="h-6 text-[10px] px-1.5"
                         onClick={() => {
                             const s = new Set<number>();
-                            for (let i = 0; i < TURN_COUNT; i += 2) s.add(i);
+                            for (let i = 0; i < MAX_TURN_COUNT; i += 2) s.add(i);
                             setSelectedTurns(s);
                         }}
                     >
@@ -872,7 +884,7 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
                         className="h-6 text-[10px] px-1.5"
                         onClick={() => {
                             const s = new Set<number>();
-                            for (let i = 1; i < TURN_COUNT; i += 2) s.add(i);
+                            for (let i = 1; i < MAX_TURN_COUNT; i += 2) s.add(i);
                             setSelectedTurns(s);
                         }}
                     >
@@ -884,7 +896,7 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
                         className="h-6 text-[10px] px-1.5"
                         onClick={() => {
                             const s = new Set<number>();
-                            for (let i = 0; i < TURN_COUNT; i++) s.add(i);
+                            for (let i = 0; i < MAX_TURN_COUNT; i++) s.add(i);
                             setSelectedTurns(s);
                         }}
                     >
@@ -907,7 +919,7 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
                         <div className="text-right">작업</div>
                     </div>
 
-                    {filledTurns.map((turn) => {
+                    {filledTurns.slice(0, visibleCount).map((turn) => {
                         const isSelected = selectedTurns.has(turn.turnIdx);
                         const isEmpty = turn.actionCode === '휴식';
                         const isDragTarget =
@@ -1016,6 +1028,25 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
                         );
                     })}
                 </div>
+
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full mt-1 h-7 text-[11px] text-gray-400"
+                    onClick={() => setExpanded((prev) => !prev)}
+                >
+                    {expanded ? (
+                        <>
+                            <ChevronUp className="size-3 mr-1" />
+                            접기 ({COLLAPSED_TURN_COUNT}턴)
+                        </>
+                    ) : (
+                        <>
+                            <ChevronDown className="size-3 mr-1" />
+                            펼치기 ({MAX_TURN_COUNT}턴)
+                        </>
+                    )}
+                </Button>
 
                 {/* Recent actions quick-apply bar */}
                 {recentActions.length > 0 && !realtimeMode && (

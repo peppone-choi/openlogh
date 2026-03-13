@@ -27,6 +27,7 @@ import {
     CREW_TYPE_NAMES,
     CITY_LEVEL_NAMES,
     NATION_LEVEL_LABELS,
+    stripCodePrefix,
 } from '@/lib/game-utils';
 import { formatGameLogDate } from '@/lib/gameLogDate';
 import { formatLog } from '@/lib/formatLog';
@@ -357,7 +358,7 @@ function NationPageContent() {
                                 <Badge variant="secondary">
                                     {NATION_LEVEL_LABELS[nation.level] ?? `Lv.${nation.level}`}
                                 </Badge>
-                                <Badge variant="outline">{nation.typeCode}</Badge>
+                                <Badge variant="outline">{stripCodePrefix(nation.typeCode)}</Badge>
                                 {capitalCity && (
                                     <Badge variant="outline" className="text-cyan-400">
                                         수도: {capitalCity.name}

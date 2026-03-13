@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { formatOfficerLevelText, NATION_LEVEL_LABELS } from '@/lib/game-utils';
+import { formatOfficerLevelText, NATION_LEVEL_LABELS, stripCodePrefix } from '@/lib/game-utils';
 
 type UserType = '통' | '무' | '지' | '만능' | '평범' | '무지' | '무능';
 
@@ -338,7 +338,7 @@ export default function NationsPage() {
                                                 className="cursor-help underline decoration-dotted"
                                                 title={n.typeCode}
                                             >
-                                                {n.typeCode.replace(/^che_/, '')}
+                                                {stripCodePrefix(n.typeCode)}
                                             </span>
                                         </TableCell>
                                     </TableRow>
