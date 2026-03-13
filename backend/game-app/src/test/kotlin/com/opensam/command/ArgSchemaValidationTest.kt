@@ -39,6 +39,16 @@ class ArgSchemaValidationTest {
     }
 
     @Test
+    fun `foundNation schema defaults nationType to legacy che_도적`() {
+        val validated = ArgSchemas.foundNation.parse(mapOf("nationName" to "테스트국"))
+
+        assertTrue(validated.ok())
+        assertEquals("테스트국", validated.stringOrNull("nationName"))
+        assertEquals("che_도적", validated.stringOrNull("nationType"))
+        assertEquals(0, validated.intOrNull("colorType"))
+    }
+
+    @Test
     fun `all registered commands have schema entries`() {
         val registry = CommandRegistry()
         val registered = registry.getGeneralCommandNames() + registry.getNationCommandNames()

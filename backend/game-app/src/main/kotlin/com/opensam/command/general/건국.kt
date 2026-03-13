@@ -58,7 +58,7 @@ class 건국(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
         }
 
         val nationName = arg?.get("nationName") as? String ?: "신생국"
-        val nationType = arg?.get("nationType") as? String ?: "군벌"
+        val nationType = arg?.get("nationType") as? String ?: "che_도적"
         val colorType = arg?.get("colorType") ?: 0
         val cityName = city?.name ?: "알 수 없음"
         val generalName = general.name

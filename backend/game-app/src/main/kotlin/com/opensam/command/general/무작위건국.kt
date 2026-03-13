@@ -55,7 +55,7 @@ class 무작위건국(general: General, env: CommandEnv, arg: Map<String, Any>? 
         }
 
         val nationName = arg?.get("nationName") as? String ?: "신생국"
-        val nationType = arg?.get("nationType") as? String ?: "군벌"
+        val nationType = arg?.get("nationType") as? String ?: "che_도적"
         val colorType = arg?.get("colorType") ?: 0
         val josaNationUl = pickJosa(nationName, "을")
         val josaNationYi = pickJosa(nationName, "이")

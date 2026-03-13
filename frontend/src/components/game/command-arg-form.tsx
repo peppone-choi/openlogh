@@ -43,11 +43,19 @@ const ITEM_TYPE_OPTIONS = [
 ];
 
 const NATION_TYPE_OPTIONS = [
-    { value: '군벌', label: '군벌' },
-    { value: '문치', label: '문치' },
-    { value: '무치', label: '무치' },
-    { value: '상업', label: '상업' },
-    { value: '농업', label: '농업' },
+    { value: 'che_도적', label: '도적' },
+    { value: 'che_명가', label: '명가' },
+    { value: 'che_음양가', label: '음양가' },
+    { value: 'che_종횡가', label: '종횡가' },
+    { value: 'che_불가', label: '불가' },
+    { value: 'che_오두미도', label: '오두미도' },
+    { value: 'che_태평도', label: '태평도' },
+    { value: 'che_도가', label: '도가' },
+    { value: 'che_묵가', label: '묵가' },
+    { value: 'che_덕가', label: '덕가' },
+    { value: 'che_병가', label: '병가' },
+    { value: 'che_유가', label: '유가' },
+    { value: 'che_법가', label: '법가' },
 ];
 
 const COLOR_TYPE_OPTIONS = [
