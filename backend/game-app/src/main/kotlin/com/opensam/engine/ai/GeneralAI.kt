@@ -130,8 +130,11 @@ class GeneralAI(
         }
 
         val month = world.currentMonth.toInt()
-        if (general.npcState.toInt() >= 2) {
-            if (general.officerLevel.toInt() == 12 && nation != null) {
+        if (general.npcState.toInt() >= 2 && nation != null) {
+            if (month in listOf(3, 6, 9, 12)) {
+                autoPromoteLord(ctx.nationGenerals, ports)
+            }
+            if (general.officerLevel.toInt() == 12) {
                 var nationModified = false
                 if (month in listOf(3, 6, 9, 12)) {
                     choosePromotion(ctx, rng, ports)
@@ -2667,6 +2670,33 @@ class GeneralAI(
     }
 
     // ──────────────────────────────────────────────────────────
+    //  autoPromoteLord: Auto-promote when nation has no lord
+    // ──────────────────────────────────────────────────────────
+
+    /**
+     * When a nation has no lord (officerLevel 12), promote the best NPC general.
+     * This prevents a permanent deadlock where choosePromotion can never run
+     * because it requires an existing lord.
+     *
+     * Selection priority: highest (leadership + strength + intel) among NPC generals.
+     */
+    fun autoPromoteLord(nationGenerals: List<General>, ports: WorldWritePort): General? {
+        val hasLord = nationGenerals.any { it.officerLevel.toInt() == 12 }
+        if (hasLord) return null
+
+        val candidate = nationGenerals
+            .filter { it.npcState.toInt() >= 2 && it.npcState.toInt() != 5 }
+            .maxByOrNull { it.leadership.toInt() + it.strength.toInt() + it.intel.toInt() }
+            ?: return null
+
+        candidate.officerLevel = 12
+        candidate.officerCity = 0
+        ports.putGeneral(candidate.toSnapshot())
+        logger.info("Auto-promoted {} ({}) to lord (officerLevel=12) for lordless nation", candidate.id, candidate.name)
+        return candidate
+    }
+
+    // ──────────────────────────────────────────────────────────
     //  choosePromotion: Assign officer positions (lord-level)
     // ──────────────────────────────────────────────────────────
 
@@ -3039,6 +3069,9 @@ class GeneralAI(
 
         // Periodic tasks for NPC lords
         if (general.npcState.toInt() >= 2) {
+            if (month in listOf(3, 6, 9, 12)) {
+                autoPromoteLord(ctx.nationGenerals, ports)
+            }
             if (general.officerLevel.toInt() == 12) {
                 if (month in listOf(3, 6, 9, 12)) {
                     choosePromotion(ctx, rng, ports)

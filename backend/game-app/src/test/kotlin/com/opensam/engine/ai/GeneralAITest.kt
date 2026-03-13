@@ -934,4 +934,30 @@ class GeneralAITest {
         assertTrue(flags and GeneralType.COMMANDER.flag == 0,
             "Should not have COMMANDER flag")
     }
+
+    @Test
+    fun `autoPromoteLord promotes best NPC when nation has no lord`() {
+        val mockPorts = mock(WorldWritePort::class.java)
+        val gen1 = createGeneral(id = 1, leadership = 80, strength = 70, intel = 60, officerLevel = 0)
+        val gen2 = createGeneral(id = 2, leadership = 90, strength = 80, intel = 70, officerLevel = 0)
+        val gen3 = createGeneral(id = 3, leadership = 50, strength = 40, intel = 30, officerLevel = 1)
+
+        val result = ai.autoPromoteLord(listOf(gen1, gen2, gen3), mockPorts)
+
+        assertNotNull(result)
+        assertEquals(2L, result!!.id)
+        assertEquals(12, result.officerLevel.toInt())
+    }
+
+    @Test
+    fun `autoPromoteLord does nothing when lord exists`() {
+        val mockPorts = mock(WorldWritePort::class.java)
+        val lord = createGeneral(id = 1, officerLevel = 12)
+        val gen2 = createGeneral(id = 2, leadership = 90, strength = 80, intel = 70, officerLevel = 0)
+
+        val result = ai.autoPromoteLord(listOf(lord, gen2), mockPorts)
+
+        assertNull(result)
+        verifyNoInteractions(mockPorts)
+    }
 }
