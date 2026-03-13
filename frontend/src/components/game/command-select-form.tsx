@@ -5,9 +5,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { commandApi, realtimeApi } from '@/lib/gameApi';
 import { CommandArgForm, COMMAND_ARGS } from '@/components/game/command-arg-form';
-import type { CommandArg, CommandResult, CommandTableEntry } from '@/types';
+import type { CommandArg, CommandTableEntry } from '@/types';
 
 interface CommandSelectFormProps {
     commandTable: Record<string, CommandTableEntry[]>;
@@ -26,30 +25,12 @@ export function CommandSelectForm({
 }: CommandSelectFormProps) {
     const [selectedCmd, setSelectedCmd] = useState('');
     const [pendingArg, setPendingArg] = useState<CommandArg | undefined>();
-    const [result, setResult] = useState<CommandResult | null>(null);
-    const [executing, setExecuting] = useState(false);
-
     const categories = Object.keys(commandTable);
     const hasArgForm = !!(selectedCmd && COMMAND_ARGS[selectedCmd]);
 
     const handleReserve = (arg?: CommandArg) => {
         if (!selectedCmd) return;
         onSelect(selectedCmd, arg);
-    };
-
-    const handleExecute = async (arg?: CommandArg) => {
-        if (!selectedCmd) return;
-        setExecuting(true);
-        try {
-            const { data } = realtimeMode
-                ? await realtimeApi.execute(generalId, selectedCmd, arg)
-                : await commandApi.execute(generalId, selectedCmd, arg);
-            setResult(data);
-        } catch {
-            /* ignore */
-        } finally {
-            setExecuting(false);
-        }
     };
 
     const handleArgSubmit = (arg: CommandArg) => {
@@ -59,7 +40,6 @@ export function CommandSelectForm({
     const handleSelectCmd = (actionCode: string) => {
         setSelectedCmd(actionCode);
         setPendingArg(undefined);
-        setResult(null);
     };
 
     return (
@@ -108,42 +88,18 @@ export function CommandSelectForm({
                         {hasArgForm && <CommandArgForm actionCode={selectedCmd} onSubmit={handleArgSubmit} />}
 
                         <div className="flex gap-2">
-                            {!realtimeMode && (
-                                <Button
-                                    size="sm"
-                                    onClick={() => handleReserve(pendingArg)}
-                                    disabled={hasArgForm && !pendingArg}
-                                >
-                                    예약
-                                </Button>
-                            )}
                             <Button
                                 size="sm"
-                                variant="secondary"
-                                onClick={() => handleExecute(pendingArg)}
-                                disabled={executing || (hasArgForm && !pendingArg)}
+                                onClick={() => handleReserve(pendingArg)}
+                                disabled={hasArgForm && !pendingArg}
                             >
-                                {executing ? '요청중...' : realtimeMode ? '실시간 실행 요청' : '즉시실행'}
+                                예약
                             </Button>
                             <Button size="sm" variant="ghost" onClick={onCancel}>
                                 취소
                             </Button>
                         </div>
-                        {realtimeMode && (
-                            <p className="text-[11px] text-gray-400">
-                                실시간 모드에서는 예턴 예약이 비활성화되며, 커맨드 포인트를 소모해 실행 요청 후
-                                지연시간이 지나면 자동 실행됩니다.
-                            </p>
-                        )}
                     </>
-                )}
-
-                {result && (
-                    <div className={`text-xs p-2 rounded ${result.success ? 'bg-green-900/30' : 'bg-red-900/30'}`}>
-                        {result.logs.map((log, i) => (
-                            <p key={i}>{log}</p>
-                        ))}
-                    </div>
                 )}
             </CardContent>
         </Card>

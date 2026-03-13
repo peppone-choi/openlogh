@@ -304,7 +304,7 @@ class GeneralServiceTest {
     }
 
     @Test
-    fun `createGeneral in fast tick world sets turnTime within next minute`() {
+    fun `createGeneral sets turnTime relative to world updatedAt not wall clock`() {
         val user = AppUser(
             id = 5,
             loginId = "user",
@@ -312,13 +312,15 @@ class GeneralServiceTest {
             passwordHash = "encoded",
             meta = mutableMapOf(),
         )
+        val worldUpdatedAt = java.time.OffsetDateTime.now().minusSeconds(5)
         val world = WorldState(
             id = 1,
             currentYear = 180,
             currentMonth = 1,
-            tickSeconds = 30,
+            tickSeconds = 60,
             config = mutableMapOf("hiddenSeed" to "seed"),
             meta = mutableMapOf(),
+            updatedAt = worldUpdatedAt,
         )
         val city = City(id = 10, worldId = 1, name = "허창", level = 5, nationId = 0)
 
@@ -326,15 +328,14 @@ class GeneralServiceTest {
         `when`(worldStateRepository.findById(1.toShort())).thenReturn(Optional.of(world))
         `when`(generalRepository.findByWorldIdAndUserId(1L, 5L)).thenReturn(emptyList())
         `when`(generalRepository.findByWorldId(1L)).thenReturn(emptyList())
-        `when`(generalRepository.findByNameAndWorldId("고속장수", 1L)).thenReturn(null)
+        `when`(generalRepository.findByNameAndWorldId("턴타임장수", 1L)).thenReturn(null)
         `when`(cityRepository.findById(10L)).thenReturn(Optional.of(city))
 
-        val before = java.time.OffsetDateTime.now()
         val general = service.createGeneral(
             1L,
             "user",
             CreateGeneralRequest(
-                name = "고속장수",
+                name = "턴타임장수",
                 cityId = 10L,
                 leadership = 70,
                 strength = 70,
@@ -343,14 +344,14 @@ class GeneralServiceTest {
                 charm = 70,
             ),
         )
-        val after = java.time.OffsetDateTime.now()
 
         assertNotNull(general)
         val turnTime = general!!.turnTime
-        assertTrue(turnTime.isAfter(before), "turnTime should be after now")
+        val earliest = worldUpdatedAt
+        val latest = worldUpdatedAt.plusSeconds(2 * 60)
         assertTrue(
-            turnTime.isBefore(after.plusSeconds(61)),
-            "turnTime should be within ~60s of creation, got ${java.time.Duration.between(before, turnTime).seconds}s",
+            !turnTime.isBefore(earliest) && turnTime.isBefore(latest),
+            "turnTime should be within [updatedAt, updatedAt+2*tick), got offset=${java.time.Duration.between(worldUpdatedAt, turnTime).seconds}s",
         )
     }
 

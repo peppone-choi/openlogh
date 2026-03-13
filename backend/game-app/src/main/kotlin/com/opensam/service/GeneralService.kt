@@ -497,34 +497,25 @@ class GeneralService(
         return (world.config["startYear"] as? Number)?.toInt() ?: gameConstService.getInt("defaultStartYear")
     }
 
+    // Parity: getRandTurn($rng, $env['turnterm'], new DateTimeImmutable($env['turntime']))
     private fun createInitialTurnTime(world: WorldState, rng: Random, inheritTurntimeZone: Int?): OffsetDateTime {
         val tickSeconds = world.tickSeconds.toLong().coerceAtLeast(1L)
+        val baseDateTime = world.updatedAt
+
+        val randSeconds = if (inheritTurntimeZone != null) {
+            inheritTurntimeZone.toLong().coerceIn(0, tickSeconds - 1)
+        } else {
+            rng.nextLong(tickSeconds)
+        }
+
+        var candidate = baseDateTime.plusSeconds(randSeconds)
+
+        // Parity: Join.php:374-376
         val now = OffsetDateTime.now()
-
-        // For fast-tick worlds (< 60s), place within the next few ticks
-        // to avoid hour-long delays before first turn processing.
-        if (tickSeconds < 60) {
-            val slotCount = (60 / tickSeconds).toInt().coerceAtLeast(1)
-            val slot = inheritTurntimeZone?.coerceIn(0, slotCount - 1)
-                ?: rng.nextInt(slotCount)
-            return now.plusSeconds((slot + 1) * tickSeconds)
-        }
-
-        // Standard tick worlds (>= 60s): legacy hour-aligned slot allocation
-        val turnMinutes = (tickSeconds / 60).toInt().coerceAtLeast(1)
-        val baseHour = now
-            .withMinute(0)
-            .withSecond(0)
-            .withNano(0)
-
-        val slotCount = (60 / turnMinutes).coerceAtLeast(1)
-        val slot = inheritTurntimeZone?.coerceIn(0, slotCount - 1) ?: rng.nextInt(slotCount)
-        var candidate = baseHour.plusMinutes((slot * turnMinutes).toLong())
-            .plusSeconds(rng.nextLong((turnMinutes * 60).toLong()))
-
         if (!candidate.isAfter(now)) {
-            candidate = candidate.plusHours(1)
+            candidate = candidate.plusSeconds(tickSeconds)
         }
+
         return candidate
     }
 
