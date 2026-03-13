@@ -17,6 +17,10 @@ class CityService(
     private val generalRepository: GeneralRepository,
     private val nationRepository: NationRepository,
 ) {
+    private val canonicalRegionByCityName: Map<String, Short> by lazy {
+        mapService.getCities("che").associate { it.name to it.region.toShort() }
+    }
+
     companion object {
         // Region codes matching legacy CityConstBase::$regionMap
         const val REGION_HABUK = 1    // 하북
@@ -111,6 +115,10 @@ class CityService(
 
     fun saveAll(cities: List<City>): List<City> {
         return cityRepository.saveAll(cities)
+    }
+
+    fun canonicalRegionForDisplay(city: City): Short {
+        return canonicalRegionByCityName[city.name] ?: city.region
     }
 
     // ── Adjacency / Map Queries ──

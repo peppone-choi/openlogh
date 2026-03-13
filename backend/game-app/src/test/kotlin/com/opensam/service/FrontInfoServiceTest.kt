@@ -32,6 +32,7 @@ class FrontInfoServiceTest {
     private lateinit var troopRepository: TroopRepository
     private lateinit var officerRankService: OfficerRankService
     private lateinit var scenarioService: ScenarioService
+    private lateinit var cityService: CityService
     private lateinit var service: FrontInfoService
 
     @BeforeEach
@@ -45,6 +46,7 @@ class FrontInfoServiceTest {
         troopRepository = mock(TroopRepository::class.java)
         officerRankService = mock(OfficerRankService::class.java)
         scenarioService = mock(ScenarioService::class.java)
+        cityService = mock(CityService::class.java)
 
         service = FrontInfoService(
             worldStateRepository,
@@ -56,6 +58,7 @@ class FrontInfoServiceTest {
             troopRepository,
             officerRankService,
             scenarioService,
+            cityService,
         )
     }
 
@@ -88,6 +91,7 @@ class FrontInfoServiceTest {
         `when`(nationRepository.findByWorldId(1)).thenReturn(listOf(nation))
         `when`(cityRepository.findById(5)).thenReturn(Optional.of(city))
         `when`(cityRepository.findByWorldId(1)).thenReturn(listOf(city))
+        `when`(cityService.canonicalRegionForDisplay(city)).thenReturn(city.region)
         `when`(scenarioService.getScenario("test")).thenReturn(ScenarioData(title = "테스트 시나리오"))
         `when`(officerRankService.getRankTitle(0, 1)).thenReturn("무품관")
         `when`(messageRepository.findByDestIdAndMailboxCodeAndIdGreaterThanOrderBySentAtDesc(11, "general_action", 0)).thenReturn(emptyList())

@@ -21,6 +21,7 @@ class FrontInfoService(
     private val troopRepository: TroopRepository,
     private val officerRankService: OfficerRankService,
     private val scenarioService: ScenarioService,
+    private val cityService: CityService,
 ) {
     companion object {
         private const val MAX_DED_LEVEL = 10
@@ -262,7 +263,7 @@ class FrontInfoService(
             id = c.id,
             name = c.name,
             level = c.level.toInt(),
-            region = c.region.toInt(),
+            region = cityService.canonicalRegionForDisplay(c).toInt(),
             nationInfo = nationInfo,
             trust = c.trust.toInt(),
             pop = listOf(c.pop, c.popMax),

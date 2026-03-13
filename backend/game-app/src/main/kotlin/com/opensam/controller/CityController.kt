@@ -16,7 +16,11 @@ class CityController(
 ) {
     @GetMapping("/worlds/{worldId}/cities")
     fun listByWorld(@PathVariable worldId: Long): ResponseEntity<List<CityResponse>> {
-        return ResponseEntity.ok(cityService.listByWorld(worldId).map { CityResponse.from(it) })
+        return ResponseEntity.ok(
+            cityService.listByWorld(worldId).map { city ->
+                CityResponse.from(city, cityService.canonicalRegionForDisplay(city))
+            },
+        )
     }
 
     @GetMapping("/worlds/{worldId}/cities/visible")
@@ -25,18 +29,26 @@ class CityController(
             ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
         val myGeneral = generalService.getMyGeneral(worldId, loginId)
             ?: return ResponseEntity.status(HttpStatus.FORBIDDEN).build()
-        return ResponseEntity.ok(cityService.listByWorldMaskedForGeneral(worldId, myGeneral).map { CityResponse.from(it) })
+        return ResponseEntity.ok(
+            cityService.listByWorldMaskedForGeneral(worldId, myGeneral).map { city ->
+                CityResponse.from(city, cityService.canonicalRegionForDisplay(city))
+            },
+        )
     }
 
     @GetMapping("/cities/{id}")
     fun getById(@PathVariable id: Long): ResponseEntity<CityResponse> {
         val city = cityService.getById(id)
             ?: return ResponseEntity.notFound().build()
-        return ResponseEntity.ok(CityResponse.from(city))
+        return ResponseEntity.ok(CityResponse.from(city, cityService.canonicalRegionForDisplay(city)))
     }
 
     @GetMapping("/nations/{nationId}/cities")
     fun listByNation(@PathVariable nationId: Long): ResponseEntity<List<CityResponse>> {
-        return ResponseEntity.ok(cityService.listByNation(nationId).map { CityResponse.from(it) })
+        return ResponseEntity.ok(
+            cityService.listByNation(nationId).map { city ->
+                CityResponse.from(city, cityService.canonicalRegionForDisplay(city))
+            },
+        )
     }
 }

@@ -238,7 +238,7 @@ data class CityResponse(
     val meta: Map<String, Any>,
 ) {
     companion object {
-        fun from(e: City) = CityResponse(
+        fun from(e: City, regionOverride: Short? = null) = CityResponse(
             id = e.id,
             worldId = e.worldId,
             name = e.name,
@@ -263,7 +263,7 @@ data class CityResponse(
             wallMax = e.wallMax,
             officerSet = e.officerSet,
             state = e.state,
-            region = e.region,
+            region = regionOverride ?: e.region,
             term = e.term,
             conflict = e.conflict,
             meta = e.meta,
