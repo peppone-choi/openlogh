@@ -339,7 +339,7 @@ class FrontInfoService(
             gold = g.gold,
             rice = g.rice,
             crew = g.crew,
-            crewtype = "che_${g.crewType}",
+            crewtype = g.crewType.toString(),
             train = g.train.toInt(),
             atmos = g.atmos.toInt(),
             weapon = g.weaponCode,
