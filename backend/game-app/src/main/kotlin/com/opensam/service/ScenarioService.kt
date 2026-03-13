@@ -719,7 +719,7 @@ class ScenarioService(
         showImgLevel: Int?,
         autorunUser: List<String>?,
     ): MutableMap<String, Any> {
-        val turnterm = tickSeconds / 60
+        val turnterm = (tickSeconds / 60).coerceAtLeast(1)
         val resolvedNpcMode = npcMode ?: 0
         val resolvedFiction = fiction ?: scenario.fiction
         val resolvedMaxGeneral = maxGeneral

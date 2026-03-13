@@ -376,6 +376,59 @@ class ScenarioServiceTest {
     }
 
     @Test
+    fun `initializeWorld clamps turnterm to at least one when tick seconds is under a minute`() {
+        val scenario = ScenarioData(
+            title = "고속 턴",
+            startYear = 180,
+        )
+
+        val scenariosField = ScenarioService::class.java.getDeclaredField("scenarios")
+        scenariosField.isAccessible = true
+        @Suppress("UNCHECKED_CAST")
+        val scenarios = scenariosField.get(service) as MutableMap<String, ScenarioData>
+        scenarios["fast-turn"] = scenario
+
+        var citySeq = 1L
+
+        `when`(worldStateRepository.save(any(WorldState::class.java))).thenAnswer { inv ->
+            val world = inv.arguments[0] as WorldState
+            world.id = 1
+            world
+        }
+
+        `when`(mapService.getCities("che")).thenReturn(
+            listOf(
+                CityConst(1, "낙양", 8, 1, 1000, 100, 100, 100, 100, 100, 10, 10, emptyList()),
+            ),
+        )
+
+        @Suppress("UNCHECKED_CAST")
+        `when`(cityRepository.saveAll(anyList<City>())).thenAnswer { inv ->
+            val cities = inv.arguments[0] as List<City>
+            cities.forEach { city ->
+                if (city.id == 0L) city.id = citySeq++
+            }
+            cities
+        }
+
+        @Suppress("UNCHECKED_CAST")
+        `when`(nationRepository.saveAll(anyList<Nation>())).thenAnswer { inv ->
+            inv.arguments[0] as List<Nation>
+        }
+        @Suppress("UNCHECKED_CAST")
+        `when`(generalRepository.saveAll(anyList<General>())).thenAnswer { inv ->
+            inv.arguments[0] as List<General>
+        }
+        `when`(generalRepository.findByWorldId(1L)).thenReturn(emptyList())
+
+        val world = service.initializeWorld("fast-turn", tickSeconds = 30)
+
+        assertEquals(30, world.tickSeconds)
+        assertEquals(1, (world.config["turnterm"] as Number).toInt())
+        assertEquals(4800, (world.config["killturn"] as Number).toInt())
+    }
+
+    @Test
     fun `spawnScenarioNpcGeneralsForYear spawns delayed NPC on due year`() {
         val scenario = ScenarioData(
             title = "연차 등장",
