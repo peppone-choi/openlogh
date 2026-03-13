@@ -442,10 +442,15 @@ class CommandExecutor @Autowired constructor(
                 .toSet()
         }
 
+        val openingPartYears = (env.gameStor["openingPartYears"] as? Number)?.toInt()
+            ?: (env.gameStor["openingPartYear"] as? Number)?.toInt()
+            ?: 3
+        val joinActionLimit = (env.gameStor["joinActionLimit"] as? Number)?.toInt() ?: 12
+
         return mapOf(
             "worldId" to worldId,
             "mapName" to mapName,
-            "openingPartYears" to 3,
+            "openingPartYears" to openingPartYears,
             "mapAdjacency" to mapAdjacency,
             "cityNationById" to cityNationById,
             "cityNationByMapId" to cityNationByMapId,
@@ -456,7 +461,7 @@ class CommandExecutor @Autowired constructor(
             "totalNpcCount" to totalNpcCount,
             "troopMemberExistsByTroopId" to troopMemberExistsByTroopId,
             "atWarNationIds" to atWarNationIds,
-            "joinActionLimit" to 12,
+            "joinActionLimit" to joinActionLimit,
         )
     }
 
@@ -472,7 +477,9 @@ class CommandExecutor @Autowired constructor(
         val nationChanges = readStringAnyMap(json["nationChanges"])
         val nationFoundation = readStringAnyMap(json["nationFoundation"])
         val cityChanges = readStringAnyMap(json["cityChanges"])
+        val findRandomCity = readStringAnyMap(json["findRandomCity"])
         val claimCity = readBooleanValue(cityChanges["claimCity"]) == true
+        val moveAllNationGenerals = readBooleanValue(json["moveAllNationGenerals"]) == true
 
         var effectiveNation = nation
         if (effectiveNation == null) {
@@ -532,6 +539,28 @@ class CommandExecutor @Autowired constructor(
             readIntValue(nationFoundation["can_국기변경"])?.let { effectiveNation.meta["can_국기변경"] = it }
         }
 
+        if (effectiveNation != null) {
+            val randomFoundingCity = resolveRandomFoundingCity(findRandomCity, general.worldId)
+            if (randomFoundingCity != null) {
+                effectiveNation.capitalCityId = randomFoundingCity.id
+                randomFoundingCity.nationId = effectiveNation.id
+                if (city?.id == randomFoundingCity.id) {
+                    city.nationId = effectiveNation.id
+                } else {
+                    cityRepository.save(randomFoundingCity)
+                }
+
+                if (moveAllNationGenerals) {
+                    val nationGenerals = generalRepository.findByWorldIdAndNationId(general.worldId, effectiveNation.id)
+                    nationGenerals.forEach { it.cityId = randomFoundingCity.id }
+                    general.cityId = randomFoundingCity.id
+                    if (nationGenerals.isNotEmpty()) {
+                        generalRepository.saveAll(nationGenerals)
+                    }
+                }
+            }
+        }
+
         if (claimCity && city != null) {
             val nationIdForClaim = effectiveNation?.id ?: general.nationId
             if (nationIdForClaim > 0L) {
@@ -573,6 +602,22 @@ class CommandExecutor @Autowired constructor(
     private fun resolveNationColor(colorType: Int?): String {
         if (colorType == null) return NATION_COLORS.first()
         return NATION_COLORS.getOrElse(colorType) { NATION_COLORS.first() }
+    }
+
+    private fun resolveRandomFoundingCity(findRandomCity: Map<String, Any>, worldId: Long): City? {
+        if (findRandomCity.isEmpty()) return null
+        val query = (findRandomCity["query"] as? String)?.trim().orEmpty()
+        if (query.isNotBlank() && query != "neutral_constructable") {
+            return null
+        }
+
+        val levelMin = readIntValue(findRandomCity["levelMin"]) ?: 5
+        val levelMax = readIntValue(findRandomCity["levelMax"]) ?: 6
+        val candidates = cityRepository.findByWorldId(worldId).filter { city ->
+            city.nationId == 0L && city.level.toInt() in levelMin..levelMax
+        }
+        if (candidates.isEmpty()) return null
+        return candidates.random()
     }
 
     private fun extractLong(arg: Map<String, Any>, vararg keys: String): Long? {

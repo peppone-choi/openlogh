@@ -509,6 +509,8 @@ class CommandService(
         val mapName = (world.config["mapCode"] as? String)?.trim().orEmpty().ifBlank { "che" }
         gameStor["mapName"] = mapName
         gameStor["maxGeneral"] = (world.config["maxGeneral"] as? Number)?.toInt() ?: 500
+        gameStor["openingPartYears"] = gameConstService.getInt("openingPartYear")
+        gameStor["joinActionLimit"] = gameConstService.getInt("joinActionLimit")
 
         return CommandEnv(
             year = world.currentYear.toInt(),

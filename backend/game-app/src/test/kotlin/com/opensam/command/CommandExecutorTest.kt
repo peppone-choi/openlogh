@@ -196,4 +196,107 @@ class CommandExecutorTest {
         assertEquals(1.toShort(), foundedNation.level)
         assertEquals("che_군벌", foundedNation.typeCode)
     }
+
+    @Test
+    fun `executeGeneralCommand random founding moves nation generals to random neutral city`() = runBlocking {
+        val harness = InMemoryTurnHarness()
+        val world = WorldState(
+            id = 1,
+            scenarioCode = "test",
+            currentYear = 180,
+            currentMonth = 2,
+            tickSeconds = 300,
+            config = mutableMapOf("startyear" to 180),
+        )
+        val nation = Nation(
+            id = 10,
+            worldId = 1,
+            name = "방랑국",
+            level = 0,
+            gennum = 2,
+            chiefGeneralId = 1,
+        )
+        val currentCity = City(
+            id = 1,
+            worldId = 1,
+            name = "현재도시",
+            level = 7,
+            nationId = 0,
+            supplyState = 1,
+        )
+        val candidateCityA = City(
+            id = 2,
+            worldId = 1,
+            name = "후보A",
+            level = 5,
+            nationId = 0,
+            supplyState = 1,
+        )
+        val candidateCityB = City(
+            id = 3,
+            worldId = 1,
+            name = "후보B",
+            level = 6,
+            nationId = 0,
+            supplyState = 1,
+        )
+        val general = General(
+            id = 1,
+            worldId = 1,
+            name = "군주",
+            nationId = 10,
+            cityId = 1,
+            officerLevel = 12,
+            turnTime = OffsetDateTime.now(),
+        )
+        val subordinate = General(
+            id = 2,
+            worldId = 1,
+            name = "부하",
+            nationId = 10,
+            cityId = 1,
+            officerLevel = 2,
+            turnTime = OffsetDateTime.now(),
+        )
+        val env = CommandEnv(
+            year = 180,
+            month = 2,
+            startYear = 180,
+            worldId = 1,
+        )
+
+        harness.putWorld(world)
+        harness.putNation(nation)
+        harness.putCity(currentCity)
+        harness.putCity(candidateCityA)
+        harness.putCity(candidateCityB)
+        harness.putGeneral(general)
+        harness.putGeneral(subordinate)
+
+        val result = harness.commandExecutor.executeGeneralCommand(
+            actionCode = "무작위건국",
+            general = general,
+            env = env,
+            arg = mapOf(
+                "nationName" to "신국",
+                "nationType" to "군벌",
+                "colorType" to 1,
+            ),
+            city = currentCity,
+            nation = nation,
+        )
+
+        assertTrue(result.success)
+
+        val movedCityId = general.cityId
+        assertTrue(movedCityId == 2L || movedCityId == 3L)
+        assertEquals(movedCityId, subordinate.cityId)
+
+        val updatedNation = harness.nationRepository.findById(10).orElseThrow()
+        assertEquals(movedCityId, updatedNation.capitalCityId)
+        assertEquals(1.toShort(), updatedNation.level)
+
+        val selectedCity = harness.cityRepository.findById(movedCityId).orElseThrow()
+        assertEquals(10L, selectedCity.nationId)
+    }
 }
