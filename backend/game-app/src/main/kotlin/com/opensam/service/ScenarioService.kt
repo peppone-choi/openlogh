@@ -472,6 +472,8 @@ class ScenarioService(
         // Format: [name, color, gold, rice, description, tech, type, level, [cities]]
         val typeRaw = row[6].toString()
         val typeCode = if (typeRaw.contains("_")) typeRaw else "che_$typeRaw"
+        // Parity: Nation.php:130 — $nationStor->scout_msg = $this->infoText
+        val description = row.getOrNull(4)?.toString() ?: ""
         return Nation(
             worldId = worldId,
             name = row[0] as String,
@@ -481,6 +483,10 @@ class ScenarioService(
             tech = (row[5] as Number).toFloat(),
             typeCode = typeCode,
             level = (row[7] as Number).toShort(),
+            meta = mutableMapOf<String, Any>(
+                "scoutMsg" to description,
+                "scout_msg" to description,
+            ),
         )
     }
 

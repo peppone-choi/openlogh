@@ -579,4 +579,37 @@ class ScenarioServiceTest {
 
         verify(historyService).logWorldHistory(1L, scenario.history.single(), 190, 1)
     }
+
+    @Test
+    fun `parseNation sets scoutMsg from scenario description`() {
+        val parseNation = ScenarioService::class.java.getDeclaredMethod(
+            "parseNation",
+            List::class.java,
+            Long::class.javaPrimitiveType,
+        )
+        parseNation.isAccessible = true
+
+        val row: List<Any> = listOf("후한", "#FF0000", 5000, 3000, "후한왕조", 100, "중립", 7, listOf("낙양"))
+        val nation = parseNation.invoke(service, row, 1L) as Nation
+
+        assertEquals("후한", nation.name)
+        assertEquals("후한왕조", nation.meta["scoutMsg"])
+        assertEquals("후한왕조", nation.meta["scout_msg"])
+    }
+
+    @Test
+    fun `parseNation handles missing description gracefully`() {
+        val parseNation = ScenarioService::class.java.getDeclaredMethod(
+            "parseNation",
+            List::class.java,
+            Long::class.javaPrimitiveType,
+        )
+        parseNation.isAccessible = true
+
+        val row: List<Any> = listOf("황건적", "#FFFF00", 0, 2000, "", 50, "도적", 0, listOf<String>())
+        val nation = parseNation.invoke(service, row, 1L) as Nation
+
+        assertEquals("황건적", nation.name)
+        assertEquals("", nation.meta["scoutMsg"])
+    }
 }
