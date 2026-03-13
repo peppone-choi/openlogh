@@ -41,6 +41,8 @@ class 장수대상임관(general: General, env: CommandEnv, arg: Map<String, Any
     override fun getPostReqTurn() = 0
 
     override suspend fun run(rng: Random): CommandResult {
+        val commandServices = services
+            ?: return CommandResult(success = false, logs = listOf("커맨드 서비스가 없습니다."))
         val date = formatDate()
         val dn = destNation!!
         val destNationName = dn.name
@@ -51,14 +53,16 @@ class 장수대상임관(general: General, env: CommandEnv, arg: Map<String, Any
         pushHistoryLog("<D><b>${destNationName}</b></>에 임관")
         pushGlobalLog("<Y>${generalName}</>${pickJosa(generalName, "이")} <D><b>${destNationName}</b></>에 <S>임관</>했습니다.")
 
-        // Legacy parity: gennum < initialNationGenLimit → exp 700, else 100
-        val gennum = services?.generalRepository?.findByNationId(dn.id)?.size ?: 0
+        val gennum = commandServices.generalRepository.findByNationId(dn.id)?.size ?: 0
         val exp = if (gennum < INITIAL_NATION_GEN_LIMIT) 700 else 100
+
+        dn.gennum += 1
+        commandServices.nationRepository.save(dn)
 
         return CommandResult(
             success = true,
             logs = logs,
-            message = """{"statChanges":{"nation":${dn.id},"officerLevel":1,"officerCity":0,"belong":1,"city":$destCityId,"experience":$exp},"nationChanges":{"nationId":${dn.id},"gennum":1}}"""
+            message = """{"statChanges":{"nation":${dn.id},"officerLevel":1,"officerCity":0,"belong":1,"city":$destCityId,"experience":$exp}}"""
         )
     }
 }

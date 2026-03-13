@@ -41,13 +41,15 @@ class 임관(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
     override fun getPostReqTurn() = 0
 
     override suspend fun run(rng: Random): CommandResult {
+        val commandServices = services
+            ?: return CommandResult(success = false, logs = listOf("커맨드 서비스가 없습니다."))
         val date = formatDate()
         val dn = destNation ?: return CommandResult(success = false, logs = listOf("대상 국가가 없습니다."))
         val destNationName = dn.name
         val generalName = general.name
 
         // Legacy PHP: gennum < initialNationGenLimit → exp 700, else 100
-        val gennum = services?.generalRepository?.findByNationId(dn.id)?.size ?: 0
+        val gennum = commandServices.generalRepository.findByNationId(dn.id)?.size ?: 0
         val exp = if (gennum < INITIAL_NATION_GEN_LIMIT) 700 else 100
 
         // Legacy PHP: Josa 이/가
@@ -57,11 +59,16 @@ class 임관(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
         pushHistoryLog("<D><b>${destNationName}</b></>에 임관")
         pushGlobalLog("<Y>${generalName}</>${josaYi} <D><b>${destNationName}</b></>에 <S>임관</>했습니다.")
 
+        // Directly increment dest nation gennum (Applicator doesn't handle gennum,
+        // and nationChanges applies to source nation which is null for wanderers)
+        dn.gennum += 1
+        commandServices.nationRepository.save(dn)
+
         // Legacy PHP: move general to lord's city
         return CommandResult(
             success = true,
             logs = logs,
-            message = """{"statChanges":{"nation":${dn.id},"officerLevel":1,"officerCity":0,"belong":1,"troop":0,"experience":$exp},"nationChanges":{"gennum":1},"moveToCityOfLord":true,"inheritanceBonus":1,"tryUniqueLottery":true}"""
+            message = """{"statChanges":{"nation":${dn.id},"officerLevel":1,"officerCity":0,"belong":1,"troop":0,"experience":$exp},"moveToCityOfLord":true,"inheritanceBonus":1,"tryUniqueLottery":true}"""
         )
     }
 }

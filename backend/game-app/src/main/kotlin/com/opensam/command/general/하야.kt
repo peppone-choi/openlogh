@@ -36,10 +36,10 @@ class 하야(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
 
     override suspend fun run(rng: Random): CommandResult {
         val date = formatDate()
-        val nationName = nation?.name ?: "소속국"
+        val currentNation = nation
+        val nationName = currentNation?.name ?: "소속국"
         val generalName = general.name
 
-        // Legacy: experience * (1 - 0.1 * betray), dedication * (1 - 0.1 * betray)
         val betrayCount = general.betray.toInt()
         val penaltyRate = 0.1 * betrayCount
         val newExp = floor(general.experience * (1.0 - penaltyRate)).toInt()
@@ -55,13 +55,17 @@ class 하야(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
         pushHistoryLog("<D><b>${nationName}</b></>에서 하야")
         pushGlobalLog("<Y>${generalName}</>${josa(generalName, "이")} <D><b>${nationName}</b></>에서 <R>하야</>했습니다.")
 
+        if (currentNation != null) {
+            currentNation.gennum = max(0, currentNation.gennum - 1)
+        }
+
         return CommandResult(
             success = true,
             logs = logs,
             message = buildString {
                 append("""{"statChanges":{"experience":${-expLoss},"dedication":${-dedLoss}""")
                 append(""","gold":${-goldToNation},"rice":${-riceToNation},"betray":${newBetray - betrayCount}}""")
-                append(""","nationChanges":{"gold":$goldToNation,"rice":$riceToNation,"gennum":-1}""")
+                append(""","nationChanges":{"gold":$goldToNation,"rice":$riceToNation}""")
                 append(""","leaveNation":true,"resetOfficer":true""")
                 append(""","setPermission":"normal","setBelong":0,"setMakeLimit":12""")
                 append(""","disbandTroop":$isTroopLeader""")

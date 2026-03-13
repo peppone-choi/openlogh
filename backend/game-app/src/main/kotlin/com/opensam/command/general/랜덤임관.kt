@@ -105,7 +105,7 @@ class 랜덤임관(general: General, env: CommandEnv, arg: Map<String, Any>? = n
         return CommandResult(
             success = true,
             logs = logs,
-            message = """{"statChanges":{"nation":${destNation.id},"officerLevel":1,"officerCity":0,"belong":1,"troop":0,"experience":$exp,"cityId":"$lordCityId"},"nationChanges":{"gennum":1},"inheritanceBonus":1,"tryUniqueLottery":true}"""
+            message = """{"statChanges":{"nation":${destNation.id},"officerLevel":1,"officerCity":0,"belong":1,"troop":0,"experience":$exp,"cityId":"$lordCityId"},"inheritanceBonus":1,"tryUniqueLottery":true}"""
         )
     }
 

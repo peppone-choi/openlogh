@@ -190,16 +190,27 @@ class GeneralPoliticalCommandTest {
     }
 
     @Test
-    fun `임관 should pass constraints and run`() {
+    fun `임관 should pass constraints run and increment dest nation gennum`() {
         val general = createTestGeneral(nationId = 0, makeLimit = 0)
         val env = createTestEnv()
+        val destNation = createTestNation(id = 3).apply { gennum = 5 }
         val cmd = 임관(general, env)
-        cmd.destNation = createTestNation(id = 3)
+        cmd.destNation = destNation
+        cmd.services = createMockServices(
+            allNations = listOf(destNation),
+            allGenerals = emptyList(),
+        )
+        `when`(cmd.services!!.generalRepository.findByNationId(3L)).thenReturn(listOf(
+            createTestGeneral(id = 100, nationId = 3),
+            createTestGeneral(id = 101, nationId = 3),
+        ))
 
         assertTrue(cmd.checkFullCondition() is ConstraintResult.Pass)
         val result = runBlocking { cmd.run(fixedRng) }
         assertTrue(result.success)
         assertTrue(result.logs[0].contains("임관"))
+        assertEquals(6, destNation.gennum)
+        assertFalse(result.message!!.contains("gennum"))
     }
 
     @Test
@@ -227,7 +238,7 @@ class GeneralPoliticalCommandTest {
         assertTrue(result.message!!.contains("\"belong\":1"))
         assertTrue(result.message!!.contains("\"troop\":0"))
         assertTrue(result.message!!.contains("\"cityId\":\"201\""))
-        assertTrue(result.message!!.contains("\"nationChanges\":{\"gennum\":1}"))
+        assertFalse(result.message!!.contains("gennum"))
         assertTrue(result.message!!.contains("\"tryUniqueLottery\":true"))
     }
 
@@ -250,17 +261,27 @@ class GeneralPoliticalCommandTest {
     }
 
     @Test
-    fun `장수대상임관 should pass constraints and run`() {
+    fun `장수대상임관 should pass constraints run and increment dest nation gennum`() {
         val general = createTestGeneral(nationId = 0, makeLimit = 0)
         val env = createTestEnv()
+        val destNation = createTestNation(id = 4, capitalCityId = 9).apply { gennum = 3 }
         val cmd = 장수대상임관(general, env)
-        cmd.destNation = createTestNation(id = 4, capitalCityId = 9)
+        cmd.destNation = destNation
         cmd.destGeneral = createTestGeneral(id = 2, cityId = 7, nationId = 4)
+        cmd.services = createMockServices(
+            allNations = listOf(destNation),
+            allGenerals = emptyList(),
+        )
+        `when`(cmd.services!!.generalRepository.findByNationId(4L)).thenReturn(listOf(
+            createTestGeneral(id = 100, nationId = 4),
+        ))
 
         assertTrue(cmd.checkFullCondition() is ConstraintResult.Pass)
         val result = runBlocking { cmd.run(fixedRng) }
         assertTrue(result.success)
         assertTrue(result.message!!.contains("\"city\":7"))
+        assertEquals(4, destNation.gennum)
+        assertFalse(result.message!!.contains("gennum"))
     }
 
     @Test
