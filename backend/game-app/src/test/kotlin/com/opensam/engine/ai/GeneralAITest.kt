@@ -1,6 +1,7 @@
 package com.opensam.engine.ai
 
 import com.opensam.engine.turn.cqrs.persist.JpaWorldPortFactory
+import com.opensam.engine.turn.cqrs.port.WorldWritePort
 import com.opensam.entity.*
 import com.opensam.repository.*
 import com.opensam.service.MapService
@@ -379,9 +380,11 @@ class GeneralAITest {
         val city = createCity(nationId = 1)
         val nation = createNation(level = 1)
 
+        val mockPorts = mock(WorldWritePort::class.java)
         ai.choosePromotion(
             buildPromotionContext(world, lord, city, nation, listOf(lord, almostEligibleChief, freshUser)),
             FixedRandomBooleans(false),
+            mockPorts,
         )
 
         assertEquals("normal", almostEligibleChief.permission)
@@ -401,9 +404,11 @@ class GeneralAITest {
         val city = createCity(nationId = 1)
         val nation = createNation(level = 1)
 
+        val mockPorts = mock(WorldWritePort::class.java)
         ai.choosePromotion(
             buildPromotionContext(world, lord, city, nation, listOf(lord, penalizedChief)),
             FixedRandomBooleans(false),
+            mockPorts,
         )
 
         assertEquals("normal", penalizedChief.permission)

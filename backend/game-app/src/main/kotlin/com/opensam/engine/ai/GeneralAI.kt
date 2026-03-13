@@ -6,6 +6,7 @@ import com.opensam.engine.RandUtil
 import com.opensam.engine.turn.cqrs.persist.JpaWorldPortFactory
 import com.opensam.engine.turn.cqrs.persist.toEntity
 import com.opensam.engine.turn.cqrs.persist.toSnapshot
+import com.opensam.engine.turn.cqrs.port.WorldWritePort
 import com.opensam.entity.City
 import com.opensam.entity.Diplomacy
 import com.opensam.entity.General
@@ -133,7 +134,7 @@ class GeneralAI(
             if (general.officerLevel.toInt() == 12 && nation != null) {
                 var nationModified = false
                 if (month in listOf(3, 6, 9, 12)) {
-                    choosePromotion(ctx, rng)
+                    choosePromotion(ctx, rng, ports)
                 }
                 if (month == 12) {
                     chooseTexRate(ctx, supplyCities)
@@ -151,7 +152,7 @@ class GeneralAI(
                     ports.putNation(nation.toSnapshot())
                 }
             } else if (month in listOf(3, 6, 9, 12)) {
-                chooseNonLordPromotion(ctx, rng)
+                chooseNonLordPromotion(ctx, rng, ports)
             }
         }
 
@@ -2674,7 +2675,7 @@ class GeneralAI(
      * Sets officer_level for generals based on stats and availability.
      * Runs at months 3, 6, 9, 12 for NPC lords.
      */
-    fun choosePromotion(ctx: AIContext, rng: Random) {
+    fun choosePromotion(ctx: AIContext, rng: Random, ports: WorldWritePort) {
         val nation = ctx.nation ?: return
         val nationGenerals = ctx.nationGenerals
         val general = ctx.general
@@ -2729,6 +2730,7 @@ class GeneralAI(
                 pick.officerLevel = 11
                 pick.officerCity = 0
                 pick.permission = "ambassador"
+                ports.putGeneral(pick.toSnapshot())
                 nextChiefs[11] = pick
                 chiefGenerals[11] = pick
                 userChiefCnt++
@@ -2784,10 +2786,12 @@ class GeneralAI(
             if (oldChief != null && oldChief.id != newChief.id) {
                 oldChief.officerLevel = 1
                 oldChief.officerCity = 0
+                ports.putGeneral(oldChief.toSnapshot())
             }
 
             newChief.officerLevel = chiefLevel.toShort()
             newChief.officerCity = 0
+            ports.putGeneral(newChief.toSnapshot())
             nextChiefs[chiefLevel] = newChief
             chiefGenerals[chiefLevel] = newChief
         }
@@ -2801,7 +2805,7 @@ class GeneralAI(
      * Per legacy chooseNonLordPromotion: Fill empty officer positions with any available general.
      * Less sophisticated than choosePromotion - just fills vacancies.
      */
-    fun chooseNonLordPromotion(ctx: AIContext, rng: Random) {
+    fun chooseNonLordPromotion(ctx: AIContext, rng: Random, ports: WorldWritePort) {
         val nation = ctx.nation ?: return
         val nationGenerals = ctx.nationGenerals
         val general = ctx.general
@@ -2858,6 +2862,7 @@ class GeneralAI(
 
             picked.officerLevel = chiefLevel.toShort()
             picked.officerCity = 0
+            ports.putGeneral(picked.toSnapshot())
             chiefGenerals[chiefLevel] = picked
         }
     }
@@ -3036,7 +3041,7 @@ class GeneralAI(
         if (general.npcState.toInt() >= 2) {
             if (general.officerLevel.toInt() == 12) {
                 if (month in listOf(3, 6, 9, 12)) {
-                    choosePromotion(ctx, rng)
+                    choosePromotion(ctx, rng, ports)
                 }
                 if (month == 12) {
                     chooseTexRate(ctx, supplyCities)
@@ -3047,7 +3052,7 @@ class GeneralAI(
                     chooseRiceBillRate(ctx, supplyCities, nationPolicy)
                 }
             } else if (month in listOf(3, 6, 9, 12)) {
-                chooseNonLordPromotion(ctx, rng)
+                chooseNonLordPromotion(ctx, rng, ports)
             }
         }
 
