@@ -376,8 +376,8 @@ class CityService(
         canSeeAllMilitary: Boolean,
         visibleCityIds: Set<Long>,
     ): Boolean {
-        if (city.nationId == 0L) return true
-        if (city.nationId == general.nationId) return true
+        if (city.nationId == general.nationId && general.nationId > 0L) return true
+        if (city.id == general.cityId.toLong()) return true
         if (canSeeAllMilitary) return true
         return visibleCityIds.contains(city.id)
     }

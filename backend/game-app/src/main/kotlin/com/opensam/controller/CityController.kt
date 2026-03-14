@@ -40,7 +40,15 @@ class CityController(
     fun getById(@PathVariable id: Long): ResponseEntity<CityResponse> {
         val city = cityService.getById(id)
             ?: return ResponseEntity.notFound().build()
-        return ResponseEntity.ok(CityResponse.from(city, cityService.canonicalRegionForDisplay(city)))
+        val loginId = SecurityContextHolder.getContext().authentication?.name
+        val maskedCity = if (loginId != null) {
+            val myGeneral = generalService.getMyGeneral(city.worldId, loginId)
+            if (myGeneral != null) {
+                cityService.listByWorldMaskedForGeneral(city.worldId, myGeneral)
+                    .find { it.id == id } ?: city
+            } else city
+        } else city
+        return ResponseEntity.ok(CityResponse.from(maskedCity, cityService.canonicalRegionForDisplay(maskedCity)))
     }
 
     @GetMapping("/nations/{nationId}/cities")

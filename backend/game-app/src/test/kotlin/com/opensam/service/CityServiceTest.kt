@@ -1,6 +1,7 @@
 package com.opensam.service
 
 import com.opensam.entity.City
+import com.opensam.entity.General
 import com.opensam.model.CityConst
 import com.opensam.repository.CityRepository
 import com.opensam.repository.GeneralRepository
@@ -10,6 +11,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
+import java.time.OffsetDateTime
 
 class CityServiceTest {
     private lateinit var cityRepository: CityRepository
@@ -55,5 +57,39 @@ class CityServiceTest {
         val canonicalRegion = cityService.canonicalRegionForDisplay(city)
 
         assertEquals(1.toShort(), canonicalRegion)
+    }
+
+    @Test
+    fun `neutral city is masked for generals with a nation`() {
+        val neutralCity = City(id = 1, worldId = 1, name = "낙양", nationId = 0, agri = 500, comm = 300)
+        val myCity = City(id = 2, worldId = 1, name = "서주", nationId = 10, agri = 400, comm = 200)
+        `when`(cityRepository.findByWorldId(1L)).thenReturn(listOf(neutralCity, myCity))
+
+        val general = General(
+            id = 1, worldId = 1, name = "장수", nationId = 10, cityId = 2,
+            turnTime = OffsetDateTime.now(),
+        )
+
+        val result = cityService.listByWorldMaskedForGeneral(1L, general)
+        val maskedNeutral = result.find { it.id == 1L }!!
+        val ownCity = result.find { it.id == 2L }!!
+
+        assertEquals(0, maskedNeutral.agri, "Neutral city agri should be masked")
+        assertEquals(0, maskedNeutral.comm, "Neutral city comm should be masked")
+        assertEquals(400, ownCity.agri, "Own nation city should not be masked")
+    }
+
+    @Test
+    fun `own city is visible even if neutral general`() {
+        val city = City(id = 1, worldId = 1, name = "낙양", nationId = 0, agri = 500)
+        `when`(cityRepository.findByWorldId(1L)).thenReturn(listOf(city))
+
+        val general = General(
+            id = 1, worldId = 1, name = "장수", nationId = 0, cityId = 1,
+            turnTime = OffsetDateTime.now(),
+        )
+
+        val result = cityService.listByWorldMaskedForGeneral(1L, general)
+        assertEquals(500, result.first().agri, "General's own city should be fully visible")
     }
 }

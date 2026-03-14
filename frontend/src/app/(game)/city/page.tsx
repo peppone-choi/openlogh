@@ -252,11 +252,8 @@ function CityPageContent() {
     }, [generals]);
 
     const sortedCities = useMemo(() => {
-        if (filterCityId > 0) {
-            const filtered = cities.filter((c) => c.id === filterCityId);
-            if (filtered.length > 0) return sortCities(filtered, sortKey);
-        }
-        return sortCities(cities, sortKey);
+        const base = filterCityId > 0 ? cities.filter((c) => c.id === filterCityId) : cities;
+        return sortCities(base, sortKey);
     }, [cities, sortKey, filterCityId]);
 
     const toggleExpand = useCallback((cityId: number) => {

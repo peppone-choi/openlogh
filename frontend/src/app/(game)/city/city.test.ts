@@ -1,24 +1,31 @@
 import { describe, expect, it } from 'vitest';
 
 describe('city page filter logic', () => {
-    it('falls back to all cities when filterCityId matches nothing', () => {
+    it('returns empty when filterCityId matches nothing', () => {
         const cities = [{ id: 1 }, { id: 2 }, { id: 3 }];
         const filterCityId = 999;
 
-        const filtered = cities.filter((c) => c.id === filterCityId);
-        const result = filtered.length > 0 ? filtered : cities;
+        const base = filterCityId > 0 ? cities.filter((c) => c.id === filterCityId) : cities;
 
-        expect(result).toHaveLength(3);
+        expect(base).toHaveLength(0);
     });
 
-    it('returns matching city when filterCityId exists', () => {
+    it('returns only matching city when filterCityId exists', () => {
         const cities = [{ id: 1 }, { id: 2 }, { id: 3 }];
         const filterCityId = 2;
 
-        const filtered = cities.filter((c) => c.id === filterCityId);
-        const result = filtered.length > 0 ? filtered : cities;
+        const base = filterCityId > 0 ? cities.filter((c) => c.id === filterCityId) : cities;
 
-        expect(result).toHaveLength(1);
-        expect(result[0].id).toBe(2);
+        expect(base).toHaveLength(1);
+        expect(base[0].id).toBe(2);
+    });
+
+    it('returns all cities when no filterCityId set', () => {
+        const cities = [{ id: 1 }, { id: 2 }, { id: 3 }];
+        const filterCityId = 0;
+
+        const base = filterCityId > 0 ? cities.filter((c) => c.id === filterCityId) : cities;
+
+        expect(base).toHaveLength(3);
     });
 });
