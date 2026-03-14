@@ -311,7 +311,7 @@ class TurnService @Autowired constructor(
                     }
 
                     for (general in generals) {
-                        if (general.npcState.toInt() != 5) {
+                        if (general.npcState.toInt() != 5 && general.npcState != EmperorConstants.NPC_STATE_EMPEROR) {
                             inheritanceService.accruePoints(general, "lived_month", 1)
                         }
                     }
@@ -381,6 +381,12 @@ class TurnService @Autowired constructor(
             // Skip dead generals (killGeneral sets npcState=5, nationId=0)
             // Troop leaders also have npcState=5 but retain nationId>0
             if (general.npcState.toInt() == 5 && general.nationId == 0L) {
+                continue
+            }
+            if (general.npcState == EmperorConstants.NPC_STATE_EMPEROR) {
+                general.turnTime = calculateNextGeneralTurnTime(general, world.tickSeconds)
+                general.updatedAt = OffsetDateTime.now()
+                ports.putGeneral(general.toSnapshot())
                 continue
             }
             try {

@@ -106,7 +106,10 @@ class GeneralMaintenanceService(
             }
 
             // === NPC 장수 수명 체크 (deadYear) ===
-            if (general.npcState >= 2 && world.currentYear >= general.deadYear) {
+            if (general.npcState >= 2 &&
+                general.npcState != EmperorConstants.NPC_STATE_EMPEROR &&
+                world.currentYear >= general.deadYear
+            ) {
                 killGeneral(general, world, generals)
                 log.info("장수 {} (id={}): 수명 만료로 사망 (deadYear={})",
                     general.name, general.id, general.deadYear)

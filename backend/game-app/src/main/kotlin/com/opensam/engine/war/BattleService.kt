@@ -2,6 +2,7 @@ package com.opensam.engine.war
 
 import com.opensam.engine.DeterministicRng
 import com.opensam.engine.DiplomacyService
+import com.opensam.engine.EmperorConstants
 import com.opensam.engine.EventService
 import com.opensam.engine.modifier.ActionModifier
 import com.opensam.engine.modifier.ModifierService
@@ -57,6 +58,10 @@ class BattleService(
         targetCity: City,
         world: WorldState,
     ): BattleResult {
+        if (attacker.npcState == EmperorConstants.NPC_STATE_EMPEROR) {
+            return BattleResult(attackerWon = false)
+        }
+
         val hiddenSeed = (world.config["hiddenSeed"] as? String) ?: "default"
         val rng = DeterministicRng.create(
             hiddenSeed, "ConquerCity",
@@ -76,7 +81,11 @@ class BattleService(
 
         // Get defenders in the city
         val defenderEntries = generalRepository.findByCityId(targetCity.id)
-            .filter { it.nationId == targetCity.nationId && it.crew > 0 }
+            .filter {
+                it.nationId == targetCity.nationId &&
+                    it.crew > 0 &&
+                    it.npcState != EmperorConstants.NPC_STATE_EMPEROR
+            }
             .map { gen ->
                 val defNation = nationRepository.findById(gen.nationId).orElse(null)
                 val unit = WarUnitGeneral(

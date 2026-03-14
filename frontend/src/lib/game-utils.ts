@@ -296,7 +296,8 @@ const SPECIAL_NATION_TYPE_MAP: Record<string, string> = {
 
 export function getSpecialNationKey(typeCode: string | undefined | null): string | null {
     if (!typeCode) return null;
-    return SPECIAL_NATION_TYPE_MAP[typeCode] ?? null;
+    const stripped = typeCode.startsWith('che_') ? typeCode.slice(4) : typeCode;
+    return SPECIAL_NATION_TYPE_MAP[stripped] ?? null;
 }
 
 export function formatOfficerLevelText(

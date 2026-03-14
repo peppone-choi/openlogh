@@ -60,9 +60,15 @@
         [
             1,
             2,
-            1
+            1,
+            999
         ]
     ],
+    "emperor": {
+        "generalName": "영제",
+        "nationIdx": 1,
+        "status": "enthroned"
+    },
     "general": [
         [
             1,

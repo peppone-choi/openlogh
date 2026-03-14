@@ -2,6 +2,7 @@ package com.opensam.service
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import com.opensam.engine.EmperorConstants
 import com.opensam.entity.*
 import com.opensam.model.ScenarioData
 import com.opensam.model.ScenarioInfo
@@ -248,6 +249,14 @@ class ScenarioService(
         val diplomacies = buildScenarioDiplomacies(scenario.diplomacy, nationIdxToDbId, worldId)
         if (diplomacies.isNotEmpty()) diplomacyRepository.saveAll(diplomacies)
 
+        applyScenarioEmperorSettings(
+            scenario = scenario,
+            world = world,
+            nationIdxToDbId = nationIdxToDbId,
+            nations = savedNations,
+            generals = allGenerals,
+        )
+
         seedScenarioHistory(worldId, scenario.history, scenario.startYear, 1)
 
         if (scenario.events.isNotEmpty()) {
@@ -417,6 +426,14 @@ class ScenarioService(
         val diplomacies = buildScenarioDiplomacies(scenario.diplomacy, nationIdxToDbId, worldId)
         if (diplomacies.isNotEmpty()) diplomacyRepository.saveAll(diplomacies)
 
+        applyScenarioEmperorSettings(
+            scenario = scenario,
+            world = existingWorld,
+            nationIdxToDbId = nationIdxToDbId,
+            nations = reinitSavedNations,
+            generals = allGenerals,
+        )
+
         seedScenarioHistory(worldId, scenario.history, scenario.startYear, 1)
 
         if (scenario.events.isNotEmpty()) {
@@ -457,6 +474,31 @@ class ScenarioService(
                 term = term.toShort(),
             )
         }
+    }
+
+    private fun applyScenarioEmperorSettings(
+        scenario: ScenarioData,
+        world: WorldState,
+        nationIdxToDbId: Map<Int, Long>,
+        nations: List<Nation>,
+        generals: List<General>,
+    ) {
+        val emperorConfig = scenario.emperor ?: return
+        val generalName = emperorConfig["generalName"]?.toString()?.takeIf { it.isNotBlank() } ?: return
+        val nationIdx = parseInt(emperorConfig["nationIdx"]) ?: return
+        val nationId = nationIdxToDbId[nationIdx] ?: return
+        val emperorStatus = emperorConfig["status"]?.toString() ?: EmperorConstants.EMPEROR_ENTHRONED
+
+        val emperorGeneral = generals.firstOrNull { it.name == generalName && it.nationId == nationId } ?: return
+        emperorGeneral.meta[EmperorConstants.GENERAL_EMPEROR_STATUS] = emperorStatus
+        emperorGeneral.npcState = EmperorConstants.NPC_STATE_EMPEROR
+
+        world.meta[EmperorConstants.WORLD_EMPEROR_SYSTEM] = true
+        world.meta[EmperorConstants.WORLD_EMPEROR_GENERAL_ID] = emperorGeneral.id
+
+        val emperorNation = nations.firstOrNull { it.id == nationId } ?: return
+        emperorNation.meta[EmperorConstants.NATION_IMPERIAL_STATUS] = EmperorConstants.STATUS_EMPEROR
+        emperorNation.meta[EmperorConstants.NATION_EMPEROR_TYPE] = EmperorConstants.TYPE_LEGITIMATE
     }
 
     private fun seedScenarioHistory(worldId: Long, historyLines: List<String>, defaultYear: Int, defaultMonth: Int) {
@@ -985,5 +1027,13 @@ class ScenarioService(
     private fun readStringList(raw: Any?): List<String> {
         if (raw !is Collection<*>) return emptyList()
         return raw.mapNotNull { it as? String }
+    }
+
+    private fun parseInt(raw: Any?): Int? {
+        return when (raw) {
+            is Number -> raw.toInt()
+            is String -> raw.toIntOrNull()
+            else -> null
+        }
     }
 }

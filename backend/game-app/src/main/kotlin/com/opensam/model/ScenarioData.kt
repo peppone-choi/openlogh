@@ -12,6 +12,7 @@ data class ScenarioData(
     val history: List<String> = emptyList(),
     val nation: List<List<Any>> = emptyList(),
     val diplomacy: List<List<Any>> = emptyList(),
+    val emperor: Map<String, Any>? = null,
     val general: List<List<Any?>> = emptyList(),
     @JsonProperty("general_ex")
     val generalEx: List<List<Any?>> = emptyList(),

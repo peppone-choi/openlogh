@@ -125,7 +125,9 @@ class EconomyService @Autowired constructor(
 
     private fun processIncome(world: WorldState, nations: List<Nation>, cities: List<City>, generals: List<General>) {
         val citiesByNation = cities.groupBy { it.nationId }
-        val generalsByNation = generals.filter { it.npcState.toInt() != 5 }.groupBy { it.nationId }
+        val generalsByNation = generals
+            .filter { it.npcState.toInt() != 5 && it.npcState != EmperorConstants.NPC_STATE_EMPEROR }
+            .groupBy { it.nationId }
 
         // Count officers (officer_level 2-4) per city who are in their assigned city
         val officerCountByCity = generals
@@ -521,7 +523,9 @@ class EconomyService @Autowired constructor(
 
     private fun updateNationLevel(world: WorldState, nations: List<Nation>, cities: List<City>, generals: List<General>) {
         val citiesByNation = cities.groupBy { it.nationId }
-        val generalsByNation = generals.filter { it.npcState.toInt() != 5 }.groupBy { it.nationId }
+        val generalsByNation = generals
+            .filter { it.npcState.toInt() != 5 && it.npcState != EmperorConstants.NPC_STATE_EMPEROR }
+            .groupBy { it.nationId }
 
         for (nation in nations) {
             val nationCities = citiesByNation[nation.id] ?: continue
@@ -602,7 +606,9 @@ class EconomyService @Autowired constructor(
         val generals = ports.allGenerals().map { it.toEntity() }
 
         val citiesByNation = cities.groupBy { it.nationId }
-        val generalsByNation = generals.filter { it.npcState.toInt() != 5 }.groupBy { it.nationId }
+        val generalsByNation = generals
+            .filter { it.npcState.toInt() != 5 && it.npcState != EmperorConstants.NPC_STATE_EMPEROR }
+            .groupBy { it.nationId }
         val hiddenSeed = (world.config["hiddenSeed"] as? String) ?: world.id.toString()
 
         for (nation in nations) {

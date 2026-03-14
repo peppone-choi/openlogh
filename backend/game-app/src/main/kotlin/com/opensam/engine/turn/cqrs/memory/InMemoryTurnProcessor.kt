@@ -214,6 +214,13 @@ class InMemoryTurnProcessor(
                 break
             }
 
+            if (general.npcState == com.opensam.engine.EmperorConstants.NPC_STATE_EMPEROR) {
+                general.turnTime = calculateNextGeneralTurnTime(general.turnTime, general.meta, world.tickSeconds)
+                general.updatedAt = now
+                ports.putGeneral(general)
+                continue
+            }
+
             if (general.blockState >= 2) {
                 val killTurn = general.killTurn
                 if (killTurn != null) {

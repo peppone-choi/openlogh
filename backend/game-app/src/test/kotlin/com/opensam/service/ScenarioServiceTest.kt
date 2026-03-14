@@ -612,4 +612,62 @@ class ScenarioServiceTest {
         assertEquals("황건적", nation.name)
         assertEquals("", nation.meta["scoutMsg"])
     }
+
+    @Test
+    fun `applyScenarioEmperorSettings sets emperor meta when config present`() {
+        val applyMethod = ScenarioService::class.java.getDeclaredMethod(
+            "applyScenarioEmperorSettings",
+            com.opensam.model.ScenarioData::class.java,
+            WorldState::class.java,
+            Map::class.java,
+            List::class.java,
+            List::class.java,
+        )
+        applyMethod.isAccessible = true
+
+        val world = WorldState(id = 1, name = "test", scenarioCode = "test")
+        val nation = Nation(id = 100L, worldId = 1, name = "한")
+        val general = General(
+            worldId = 1, name = "영제", nationId = 100L, cityId = 1L,
+            npcState = 2, officerLevel = 20,
+        )
+
+        val scenario = com.opensam.model.ScenarioData(
+            title = "test",
+            startYear = 184,
+            emperor = mapOf("generalName" to "영제", "nationIdx" to 1, "status" to "enthroned"),
+        )
+
+        val nationIdxToDbId = mapOf(1 to 100L)
+
+        applyMethod.invoke(service, scenario, world, nationIdxToDbId, listOf(nation), listOf(general))
+
+        assertEquals(true, world.meta[com.opensam.engine.EmperorConstants.WORLD_EMPEROR_SYSTEM])
+        assertEquals(com.opensam.engine.EmperorConstants.NPC_STATE_EMPEROR, general.npcState)
+        assertEquals("enthroned", general.meta[com.opensam.engine.EmperorConstants.GENERAL_EMPEROR_STATUS])
+        assertEquals("emperor", nation.meta[com.opensam.engine.EmperorConstants.NATION_IMPERIAL_STATUS])
+        assertEquals("legitimate", nation.meta[com.opensam.engine.EmperorConstants.NATION_EMPEROR_TYPE])
+    }
+
+    @Test
+    fun `applyScenarioEmperorSettings skips when no emperor config`() {
+        val applyMethod = ScenarioService::class.java.getDeclaredMethod(
+            "applyScenarioEmperorSettings",
+            com.opensam.model.ScenarioData::class.java,
+            WorldState::class.java,
+            Map::class.java,
+            List::class.java,
+            List::class.java,
+        )
+        applyMethod.isAccessible = true
+
+        val world = WorldState(id = 1, name = "test", scenarioCode = "test")
+        val scenario = com.opensam.model.ScenarioData(
+            title = "test", startYear = 225, emperor = null,
+        )
+
+        applyMethod.invoke(service, scenario, world, emptyMap<Int, Long>(), emptyList<Nation>(), emptyList<General>())
+
+        assertNull(world.meta[com.opensam.engine.EmperorConstants.WORLD_EMPEROR_SYSTEM])
+    }
 }

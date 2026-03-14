@@ -94,8 +94,8 @@ describe('officer level text with ruler level 20', () => {
 });
 
 describe('황건(태평도) special officer ranks', () => {
-    it('getSpecialNationKey maps 태평도 to 황건', () => {
-        expect(getSpecialNationKey('태평도')).toBe('황건');
+    it('getSpecialNationKey maps che_태평도 to 황건', () => {
+        expect(getSpecialNationKey('che_태평도')).toBe('황건');
     });
 
     it('getSpecialNationKey returns null for non-special types', () => {
