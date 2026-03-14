@@ -10,6 +10,7 @@ import com.opensam.dto.NationStatistic
 import com.opensam.dto.TimeControlRequest
 import com.opensam.service.AdminAuthorizationService
 import com.opensam.service.AdminService
+import com.opensam.service.SelectPoolService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.AccessDeniedException
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.*
 class AdminController(
     private val adminService: AdminService,
     private val adminAuthorizationService: AdminAuthorizationService,
+    private val selectPoolService: SelectPoolService,
 ) {
     private companion object {
         const val PERMISSION_OPEN_CLOSE = "openClose"
@@ -239,5 +241,76 @@ class AdminController(
             out.add(value)
         }
         return out
+    }
+
+    @GetMapping("/select-pool")
+    fun listSelectPools(@RequestParam(required = false) worldId: Long?): ResponseEntity<Any> {
+        return try {
+            val loginId = currentLoginId() ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
+            val resolvedWorldId = adminAuthorizationService.resolveWorldIdOrThrow(loginId, worldId, PERMISSION_OPEN_CLOSE)
+            ResponseEntity.ok(selectPoolService.listAll(resolvedWorldId))
+        } catch (_: AccessDeniedException) {
+            ResponseEntity.status(HttpStatus.FORBIDDEN).build()
+        }
+    }
+
+    @PostMapping("/select-pool")
+    fun createSelectPool(
+        @RequestParam(required = false) worldId: Long?,
+        @RequestBody body: Map<String, Any>,
+    ): ResponseEntity<Any> {
+        return try {
+            val loginId = currentLoginId() ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
+            val resolvedWorldId = adminAuthorizationService.resolveWorldIdOrThrow(loginId, worldId, PERMISSION_OPEN_CLOSE)
+            val uniqueName = (body["uniqueName"] as? String) ?: return ResponseEntity.badRequest().build()
+            ResponseEntity.status(HttpStatus.CREATED).body(selectPoolService.create(resolvedWorldId, uniqueName, body))
+        } catch (_: AccessDeniedException) {
+            ResponseEntity.status(HttpStatus.FORBIDDEN).build()
+        }
+    }
+
+    @PostMapping("/select-pool/bulk")
+    fun bulkCreateSelectPool(
+        @RequestParam(required = false) worldId: Long?,
+        @RequestBody entries: List<Map<String, Any>>,
+    ): ResponseEntity<Any> {
+        return try {
+            val loginId = currentLoginId() ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
+            val resolvedWorldId = adminAuthorizationService.resolveWorldIdOrThrow(loginId, worldId, PERMISSION_OPEN_CLOSE)
+            ResponseEntity.status(HttpStatus.CREATED).body(selectPoolService.bulkCreate(resolvedWorldId, entries))
+        } catch (_: AccessDeniedException) {
+            ResponseEntity.status(HttpStatus.FORBIDDEN).build()
+        }
+    }
+
+    @PutMapping("/select-pool/{id}")
+    fun updateSelectPool(
+        @PathVariable id: Long,
+        @RequestParam(required = false) worldId: Long?,
+        @RequestBody body: Map<String, Any>,
+    ): ResponseEntity<Any> {
+        return try {
+            val loginId = currentLoginId() ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
+            adminAuthorizationService.resolveWorldIdOrThrow(loginId, worldId, PERMISSION_OPEN_CLOSE)
+            val updated = selectPoolService.update(id, body) ?: return ResponseEntity.notFound().build()
+            ResponseEntity.ok(updated)
+        } catch (_: AccessDeniedException) {
+            ResponseEntity.status(HttpStatus.FORBIDDEN).build()
+        }
+    }
+
+    @DeleteMapping("/select-pool/{id}")
+    fun deleteSelectPool(
+        @PathVariable id: Long,
+        @RequestParam(required = false) worldId: Long?,
+    ): ResponseEntity<Void> {
+        return try {
+            val loginId = currentLoginId() ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
+            adminAuthorizationService.resolveWorldIdOrThrow(loginId, worldId, PERMISSION_OPEN_CLOSE)
+            if (selectPoolService.delete(id)) ResponseEntity.noContent().build()
+            else ResponseEntity.notFound().build()
+        } catch (_: AccessDeniedException) {
+            ResponseEntity.status(HttpStatus.FORBIDDEN).build()
+        }
     }
 }
