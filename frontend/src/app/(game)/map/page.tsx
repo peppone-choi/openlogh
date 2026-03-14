@@ -647,8 +647,8 @@ export default function MapPage() {
                                                                 <div
                                                                     className="absolute"
                                                                     style={{
-                                                                        right: -1,
-                                                                        top: 0,
+                                                                        right: -6,
+                                                                        top: -6,
                                                                         width: 10,
                                                                         height: 10,
                                                                     }}

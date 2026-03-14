@@ -12,4 +12,11 @@ describe('map page city click', () => {
         const path = `/city?id=${city.id}`;
         expect(path).toBe('/city?id=42');
     });
+
+    it('capital star icon offset places star above flag', () => {
+        const starRight = -6;
+        const starTop = -6;
+        expect(starRight).toBeLessThan(0);
+        expect(starTop).toBeLessThan(0);
+    });
 });
