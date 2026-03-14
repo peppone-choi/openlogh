@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.opensam.entity.City
 import com.opensam.entity.General
 import com.opensam.entity.Nation
+import com.opensam.entity.SelectPool
 import com.opensam.entity.WorldState
 import com.opensam.model.CityConst
 import com.opensam.model.ScenarioData
@@ -35,6 +36,7 @@ class ScenarioServiceTest {
     private lateinit var cityRepository: CityRepository
     private lateinit var generalRepository: GeneralRepository
     private lateinit var diplomacyRepository: DiplomacyRepository
+    private lateinit var selectPoolRepository: SelectPoolRepository
     private lateinit var historyService: HistoryService
     private lateinit var mapService: MapService
     private lateinit var entityManager: EntityManager
@@ -51,6 +53,8 @@ class ScenarioServiceTest {
         mapService = mock(MapService::class.java)
         entityManager = mock(EntityManager::class.java)
 
+        selectPoolRepository = mock(SelectPoolRepository::class.java)
+
         service = ScenarioService(
             objectMapper = objectMapper,
             defaultCommitSha = "test-sha",
@@ -63,6 +67,7 @@ class ScenarioServiceTest {
             eventRepository = mock(EventRepository::class.java),
             mapService = mapService,
             historyService = historyService,
+            selectPoolRepository = selectPoolRepository,
             entityManager = entityManager,
         )
 
@@ -647,6 +652,27 @@ class ScenarioServiceTest {
         assertEquals("enthroned", general.meta[com.opensam.engine.EmperorConstants.GENERAL_EMPEROR_STATUS])
         assertEquals("emperor", nation.meta[com.opensam.engine.EmperorConstants.NATION_IMPERIAL_STATUS])
         assertEquals("legitimate", nation.meta[com.opensam.engine.EmperorConstants.NATION_EMPEROR_TYPE])
+    }
+
+    @Test
+    fun `seedGeneralPool invokes repository saveAll with parsed entries`() {
+        val seedMethod = ScenarioService::class.java.getDeclaredMethod("seedGeneralPool", Long::class.javaPrimitiveType)
+        seedMethod.isAccessible = true
+
+        val captured = mutableListOf<SelectPool>()
+        `when`(selectPoolRepository.saveAll(any<List<SelectPool>>())).thenAnswer { invocation ->
+            @Suppress("UNCHECKED_CAST")
+            val items = invocation.getArgument<List<SelectPool>>(0)
+            captured.addAll(items)
+            items
+        }
+
+        seedMethod.invoke(service, 999L)
+
+        assertTrue(captured.isNotEmpty())
+        assertEquals(999L, captured.first().worldId)
+        assertTrue(captured.first().info.containsKey("generalName"))
+        verify(selectPoolRepository).deleteByWorldId(999L)
     }
 
     @Test

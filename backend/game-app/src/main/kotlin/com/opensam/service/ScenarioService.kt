@@ -30,6 +30,7 @@ class ScenarioService(
     private val eventRepository: EventRepository,
     private val mapService: MapService,
     private val historyService: HistoryService,
+    private val selectPoolRepository: com.opensam.repository.SelectPoolRepository,
     private val entityManager: EntityManager,
 ) {
     private val scenarios = mutableMapOf<String, ScenarioData>()
@@ -258,6 +259,7 @@ class ScenarioService(
         )
 
         seedScenarioHistory(worldId, scenario.history, scenario.startYear, 1)
+        seedGeneralPool(worldId)
 
         if (scenario.events.isNotEmpty()) {
             val events = convertLegacyEvents(scenario.events, worldId)
@@ -500,6 +502,36 @@ class ScenarioService(
         val emperorNation = nations.firstOrNull { it.id == nationId } ?: return
         emperorNation.meta[EmperorConstants.NATION_IMPERIAL_STATUS] = EmperorConstants.STATUS_EMPEROR
         emperorNation.meta[EmperorConstants.NATION_EMPEROR_TYPE] = EmperorConstants.TYPE_LEGITIMATE
+    }
+
+    private fun seedGeneralPool(worldId: Long) {
+        try {
+            val resource = org.springframework.core.io.ClassPathResource("data/general_pool.json")
+            if (!resource.exists()) return
+            val json = com.fasterxml.jackson.module.kotlin.jacksonObjectMapper().readValue(
+                resource.inputStream,
+                Map::class.java,
+            )
+            val columns = (json["columns"] as? List<*>)?.map { it.toString() } ?: return
+            val data = json["data"] as? List<*> ?: return
+
+            selectPoolRepository.deleteByWorldId(worldId)
+
+            val pools = data.mapNotNull { row ->
+                if (row !is List<*> || row.size != columns.size) return@mapNotNull null
+                val info = mutableMapOf<String, Any>()
+                columns.forEachIndexed { idx, col -> row[idx]?.let { info[col] = it } }
+                val uniqueName = info["generalName"]?.toString() ?: return@mapNotNull null
+                info["uniqueName"] = uniqueName
+                SelectPool(worldId = worldId, uniqueName = uniqueName, info = info)
+            }
+            if (pools.isNotEmpty()) {
+                selectPoolRepository.saveAll(pools)
+                log.info("[World {}] Loaded {} general pool entries", worldId, pools.size)
+            }
+        } catch (e: Exception) {
+            log.warn("[World {}] Failed to load general pool: {}", worldId, e.message)
+        }
     }
 
     private fun seedScenarioHistory(worldId: Long, historyLines: List<String>, defaultYear: Int, defaultMonth: Int) {
