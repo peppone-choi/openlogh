@@ -1,5 +1,6 @@
 package com.opensam.engine
 
+import com.opensam.entity.City
 import com.opensam.entity.Emperor
 import com.opensam.entity.GameHistory
 import com.opensam.entity.General
@@ -68,6 +69,10 @@ class UnificationService(
         }
 
         world.config["isUnited"] = 2
+
+        val currentLimit = (world.config["refreshLimit"] as? Number)?.toInt() ?: 30000
+        world.config["refreshLimit"] = currentLimit * 100
+
         val logText = "【통일】${winner.name}이 전토를 통일하였습니다."
         logger.info("World {} united by nation {} ({})", worldId, winner.name, winner.id)
         messageRepository.save(
@@ -86,6 +91,35 @@ class UnificationService(
         settleInheritance(world, winner.id)
         settleHallOfFame(world, winner.id)
         settleDynasty(world, winner.id, winner.name)
+        sendInvaderWarning(world, winner.id, cities)
+    }
+
+    private fun sendInvaderWarning(world: WorldState, winnerNationId: Long, cities: List<City>) {
+        val hasLv4City = cities.any { it.level.toInt() == 4 }
+        if (!hasLv4City) return
+
+        val generals = generalRepository.findByWorldId(world.id.toLong())
+        val chiefs = generals
+            .filter { it.nationId == winnerNationId && it.officerLevel >= 5 && it.npcState.toInt() < 2 }
+            .sortedByDescending { it.officerLevel }
+            .take(2)
+
+        for (chief in chiefs) {
+            messageRepository.save(
+                Message(
+                    worldId = world.id.toLong(),
+                    mailboxCode = "general_action",
+                    messageType = "notice",
+                    destId = chief.id,
+                    payload = mutableMapOf(
+                        "message" to "<R>【경고】</> 이민족이 출현할 조짐이 보입니다. 대비하십시오.",
+                        "year" to world.currentYear.toInt(),
+                        "month" to world.currentMonth.toInt(),
+                    )
+                )
+            )
+        }
+        logger.info("Sent invader warning to {} chiefs in world {}", chiefs.size, world.id)
     }
 
     private fun settleInheritance(world: WorldState, winnerNationId: Long) {

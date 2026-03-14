@@ -135,6 +135,7 @@ class UnificationServiceTest {
         service.checkAndSettleUnification(world)
 
         assertEquals(2, world.config["isUnited"], "Should mark as united with value 2")
+        assertEquals(3000000, world.config["refreshLimit"], "Should multiply refreshLimit by 100")
         verify(messageRepository).save(anyNonNull())
     }
 
