@@ -444,18 +444,24 @@ function LobbyJoinPageContent() {
                         {/* City */}
                         <div className="space-y-1">
                             <label className="block text-sm text-muted-foreground">시작 도시</label>
-                            <select
-                                value={cityId}
-                                onChange={(e) => setCityId(Number(e.target.value))}
-                                className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm"
-                            >
-                                <option value="">도시 선택</option>
-                                {filteredCities.map((c) => (
-                                    <option key={c.id} value={c.id}>
-                                        {c.name} ({CITY_LEVEL_NAMES[c.level] ?? c.level})
-                                    </option>
-                                ))}
-                            </select>
+                            {nationId === 0 ? (
+                                <select
+                                    value={cityId}
+                                    onChange={(e) => setCityId(Number(e.target.value))}
+                                    className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm"
+                                >
+                                    <option value="">도시 선택</option>
+                                    {filteredCities.map((c) => (
+                                        <option key={c.id} value={c.id}>
+                                            {c.name} ({CITY_LEVEL_NAMES[c.level] ?? c.level})
+                                        </option>
+                                    ))}
+                                </select>
+                            ) : (
+                                <div className="text-sm text-muted-foreground p-2 border border-input rounded-md bg-muted/50">
+                                    국가 소속 시 도시는 자동 배정됩니다.
+                                </div>
+                            )}
                         </div>
 
                         {/* Crew Type */}

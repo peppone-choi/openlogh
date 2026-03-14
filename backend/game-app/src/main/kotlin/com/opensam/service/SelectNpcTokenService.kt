@@ -39,6 +39,15 @@ class SelectNpcTokenService(
     fun generateToken(worldId: Long, userId: Long): NpcTokenResponse {
         ensureNpcModeEnabled(worldId)
         ensureUserHasNoGeneral(worldId, userId)
+
+        val existing = loadToken(worldId, userId)
+        if (existing != null && Instant.now().isBefore(existing.validUntil)) {
+            val existingCards = loadNpcCards(worldId, existing.generalIds)
+            if (existingCards.isNotEmpty()) {
+                return toResponse(worldId, existing, existingCards)
+            }
+        }
+
         val now = Instant.now()
         val validitySeconds = validitySeconds(worldId)
         val cooldownSeconds = pickMoreCooldownSeconds(worldId)
@@ -160,6 +169,11 @@ class SelectNpcTokenService(
         if (npcMode <= 0) {
             throw IllegalStateException("NPC 모드가 비활성화된 서버입니다.")
         }
+    }
+
+    private fun loadNpcCards(worldId: Long, ids: List<Long>): List<General> {
+        if (ids.isEmpty()) return emptyList()
+        return generalRepository.findAllById(ids).filter { it.worldId == worldId }
     }
 
     private fun drawNpcCards(worldId: Long, count: Int, excludeIds: Set<Long>): List<General> {
