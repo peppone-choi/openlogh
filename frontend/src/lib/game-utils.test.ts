@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { getCrewTypeName, getNationTypeLabel, parseCrewTypeCode, stripCodePrefix } from '@/lib/game-utils';
+import {
+    REGION_NAMES,
+    CITY_LEVEL_NAMES,
+    getCrewTypeName,
+    getNationTypeLabel,
+    parseCrewTypeCode,
+    stripCodePrefix,
+} from '@/lib/game-utils';
 
 describe('crew type parsing', () => {
     it('parses legacy prefixed crew type', () => {

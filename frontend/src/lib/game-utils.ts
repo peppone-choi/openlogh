@@ -501,14 +501,14 @@ export function getPersonalityName(code: string | undefined | null): string {
 // --- Region names ---
 
 export const REGION_NAMES: Record<number, string> = {
-    1: '하북(북부)',
-    2: '중원(중부)',
-    3: '서북(서부)',
-    4: '서촉(서남부)',
-    5: '남중(최남단)',
-    6: '초(중남부)',
-    7: '오월(동남부)',
-    8: '동이(동북부)',
+    1: '하북',
+    2: '중원',
+    3: '서북',
+    4: '서촉',
+    5: '남중',
+    6: '초',
+    7: '오월',
+    8: '동이',
 };
 
 // --- Stat color (ability value → color) ---
@@ -547,14 +547,14 @@ export const NATION_LEVEL_LABELS: Record<number, string> = {
 // --- City level names ---
 
 export const CITY_LEVEL_NAMES: Record<number, string> = {
-    1: '수(초소)',
-    2: '진(진지)',
-    3: '관(관문)',
-    4: '이(향촌)',
-    5: '소(소도시)',
-    6: '중(중도시)',
-    7: '대(대도시)',
-    8: '특(특별시)',
+    1: '수',
+    2: '진',
+    3: '관',
+    4: '이',
+    5: '소',
+    6: '중',
+    7: '대',
+    8: '특',
 };
 
 // --- City level badge (legacy getCityLevelList) ---
