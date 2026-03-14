@@ -16,6 +16,7 @@ import { PageHeader } from '@/components/game/page-header';
 import { LoadingState } from '@/components/game/loading-state';
 import { EmptyState } from '@/components/game/empty-state';
 import { GeneralPortrait } from '@/components/game/general-portrait';
+import { isBrightColor } from '@/lib/game-utils';
 import { generalApi, nationApi } from '@/lib/gameApi';
 import type { General, Nation } from '@/types';
 
@@ -205,7 +206,7 @@ export default function LobbySelectNpcPage() {
                                                     className="text-xs"
                                                     style={{
                                                         backgroundColor: npc.nationColor,
-                                                        color: 'white',
+                                                        color: isBrightColor(npc.nationColor) ? 'black' : 'white',
                                                     }}
                                                 >
                                                     {npc.nationName}
