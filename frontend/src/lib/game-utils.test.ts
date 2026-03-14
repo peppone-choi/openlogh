@@ -2,8 +2,10 @@ import { describe, expect, it } from 'vitest';
 import {
     REGION_NAMES,
     CITY_LEVEL_NAMES,
+    NATION_LEVEL_LABELS,
     getCrewTypeName,
     getNationTypeLabel,
+    formatOfficerLevelText,
     parseCrewTypeCode,
     stripCodePrefix,
 } from '@/lib/game-utils';
@@ -59,5 +61,33 @@ describe('getNationTypeLabel', () => {
 
     it('falls back to stripCodePrefix for unknown types', () => {
         expect(getNationTypeLabel('che_커스텀')).toBe('커스텀');
+    });
+});
+
+describe('nation level labels (10 levels)', () => {
+    it('has 10 nation levels from 0 to 9', () => {
+        expect(Object.keys(NATION_LEVEL_LABELS)).toHaveLength(10);
+        expect(NATION_LEVEL_LABELS[0]).toBe('방랑군');
+        expect(NATION_LEVEL_LABELS[1]).toBe('도위');
+        expect(NATION_LEVEL_LABELS[9]).toBe('황제');
+    });
+});
+
+describe('officer level text with ruler level 20', () => {
+    it('returns 군주 for officer level 20 with default map', () => {
+        expect(formatOfficerLevelText(20)).toBe('군주');
+    });
+
+    it('returns 황제 for officer level 20 at nation level 9', () => {
+        expect(formatOfficerLevelText(20, 9)).toBe('황제');
+    });
+
+    it('returns 방주 for officer level 20 at nation level 0', () => {
+        expect(formatOfficerLevelText(20, 0)).toBe('방주');
+    });
+
+    it('returns default name for low officer levels regardless of nation level', () => {
+        expect(formatOfficerLevelText(4, 9)).toBe('태수');
+        expect(formatOfficerLevelText(1, 9)).toBe('일반');
     });
 });

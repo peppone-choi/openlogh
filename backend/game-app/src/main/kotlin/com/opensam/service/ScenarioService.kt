@@ -232,7 +232,7 @@ class ScenarioService(
         val nationsToUpdate = mutableListOf<Nation>()
         for ((_, nationDbId) in nationIdxToDbId) {
             val ruler = allGenerals
-                .filter { it.nationId == nationDbId && it.officerLevel >= 12 }
+                .filter { it.nationId == nationDbId && it.officerLevel >= 20 }
                 .maxByOrNull { it.officerLevel }
             if (ruler != null) {
                 val nation = savedNations.find { it.id == nationDbId }
@@ -402,7 +402,7 @@ class ScenarioService(
         val reinitNationsToUpdate = mutableListOf<Nation>()
         for ((_, nationDbId) in nationIdxToDbId) {
             val ruler = allGenerals
-                .filter { it.nationId == nationDbId && it.officerLevel >= 12 }
+                .filter { it.nationId == nationDbId && it.officerLevel >= 20 }
                 .maxByOrNull { it.officerLevel }
             if (ruler != null) {
                 val nation = reinitSavedNations.find { it.id == nationDbId }

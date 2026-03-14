@@ -134,7 +134,7 @@ class GeneralAI(
             if (month in listOf(3, 6, 9, 12)) {
                 autoPromoteLord(ctx.nationGenerals, ports)
             }
-            if (general.officerLevel.toInt() == 12) {
+            if (general.officerLevel.toInt() == 20) {
                 var nationModified = false
                 if (month in listOf(3, 6, 9, 12)) {
                     choosePromotion(ctx, rng, ports)
@@ -194,9 +194,9 @@ class GeneralAI(
 
         val action = try {
             when {
-                // Chiefs (officerLevel>=12) get nation-level action priority first,
+                // Chiefs (officerLevel>=20) get nation-level action priority first,
                 // then fall through to general-level actions if nothing applies.
-                general.officerLevel >= 12 && nation != null -> decideChiefAction(
+                general.officerLevel >= 20 && nation != null -> decideChiefAction(
                     ctx, rng, nationPolicy, generalPolicy, attackable, warTargetNations, supplyCities, backupCities
                 )
                 diplomacyState == DiplomacyState.AT_WAR || diplomacyState == DiplomacyState.RECRUITING -> decideWarAction(
@@ -251,8 +251,8 @@ class GeneralAI(
     private fun decideWandererAction(general: General, world: WorldState, rng: Random): String {
         if (general.injury > 0) return "요양"
 
-        // NPC lords (officerLevel==12) with no nation do 방랑군이동 / 건국
-        if (general.npcState.toInt() >= 2 && general.officerLevel.toInt() == 12) {
+        // NPC lords (officerLevel==20) with no nation do 방랑군이동 / 건국
+        if (general.npcState.toInt() >= 2 && general.officerLevel.toInt() == 20) {
             // Try 건국 first (per legacy do건국)
             if (general.makeLimit.toInt() == 0) {
                 val result = doFoundNation(general, rng)
@@ -1119,7 +1119,7 @@ class GeneralAI(
         ctx: AIContext, rng: Random, policy: NpcNationPolicy, supplyCities: List<City>,
     ): String? {
         val nation = ctx.nation ?: return null
-        if (ctx.general.officerLevel < 12) return null
+        if (ctx.general.officerLevel < 20) return null
         if (supplyCities.isEmpty()) return null
 
         // Check for potential allies among non-hostile neighbors
@@ -1185,7 +1185,7 @@ class GeneralAI(
         attackable: Boolean, warTargetNations: Map<Long, Int>, supplyCities: List<City>,
     ): String? {
         val nation = ctx.nation ?: return null
-        if (ctx.general.officerLevel < 12) return null
+        if (ctx.general.officerLevel < 20) return null
         if (ctx.diplomacyState != DiplomacyState.PEACE) {
             logger.debug("[doDeclaration] nation={} skipped: diplomacyState={}", nation.id, ctx.diplomacyState)
             return null
@@ -2185,8 +2185,8 @@ class GeneralAI(
         val occupiedCityIds = mutableSetOf<Long>()
         // Cities belonging to a nation
         allCities.filter { it.nationId != 0L }.forEach { occupiedCityIds.add(it.id) }
-        // Cities where a lord (officer_level=12) is located in a neutral city
-        allGenerals.filter { it.officerLevel.toInt() == 12 }.forEach { gen ->
+        // Cities where a lord (officer_level=20) is located in a neutral city
+        allGenerals.filter { it.officerLevel.toInt() == 20 }.forEach { gen ->
             val city = allCities.find { it.id == gen.cityId }
             if (city != null && city.nationId == 0L) occupiedCityIds.add(city.id)
         }
@@ -2229,7 +2229,7 @@ class GeneralAI(
             return if (rng.nextDouble() < 0.5) "인재탐색" else "견문"
         }
 
-        if (general.officerLevel >= 12 && nation != null) {
+        if (general.officerLevel >= 20 && nation != null) {
             val ports = worldPortFactory.create(general.worldId)
             val nationGenerals = ports.generalsByNation(general.nationId).map { it.toEntity() }
             val candidates = nationGenerals.filter { gen ->
@@ -2656,7 +2656,7 @@ class GeneralAI(
      */
     private fun doAbdicate(ctx: AIContext, rng: Random): String? {
         val general = ctx.general
-        if (general.officerLevel.toInt() != 12) return null
+        if (general.officerLevel.toInt() != 20) return null
 
         // Find a non-troop general in the same nation to abdicate to
         val candidates = ctx.nationGenerals.filter { gen ->
@@ -2674,14 +2674,14 @@ class GeneralAI(
     // ──────────────────────────────────────────────────────────
 
     /**
-     * When a nation has no lord (officerLevel 12), promote the best NPC general.
+     * When a nation has no lord (officerLevel 20), promote the best NPC general.
      * This prevents a permanent deadlock where choosePromotion can never run
      * because it requires an existing lord.
      *
      * Selection priority: highest (leadership + strength + intel) among NPC generals.
      */
     fun autoPromoteLord(nationGenerals: List<General>, ports: WorldWritePort): General? {
-        val hasLord = nationGenerals.any { it.officerLevel.toInt() == 12 }
+        val hasLord = nationGenerals.any { it.officerLevel.toInt() == 20 }
         if (hasLord) return null
 
         val candidate = nationGenerals
@@ -2689,10 +2689,10 @@ class GeneralAI(
             .maxByOrNull { it.leadership.toInt() + it.strength.toInt() + it.intel.toInt() }
             ?: return null
 
-        candidate.officerLevel = 12
+        candidate.officerLevel = 20
         candidate.officerCity = 0
         ports.putGeneral(candidate.toSnapshot())
-        logger.info("Auto-promoted {} ({}) to lord (officerLevel=12) for lordless nation", candidate.id, candidate.name)
+        logger.info("Auto-promoted {} ({}) to lord (officerLevel=20) for lordless nation", candidate.id, candidate.name)
         return candidate
     }
 
@@ -2715,7 +2715,7 @@ class GeneralAI(
         // Track which chief levels are filled
         val chiefGenerals = mutableMapOf<Int, General>()
         for (gen in nationGenerals) {
-            if (gen.officerLevel.toInt() in minChiefLevel..12 && gen.id != general.id) {
+            if (gen.officerLevel.toInt() in minChiefLevel..20 && gen.id != general.id) {
                 chiefGenerals[gen.officerLevel.toInt()] = gen
             }
         }
@@ -2728,7 +2728,7 @@ class GeneralAI(
         val minNPCKillturn = 36
         var userChiefCnt = 0
 
-        for (level in minChiefLevel until 12) {
+        for (level in minChiefLevel until 20) {
             val chief = chiefGenerals[level] ?: continue
             // Per legacy: also check !hasPenalty(NoAmbassador)
             if (chief.npcState.toInt() < 2
@@ -2845,7 +2845,7 @@ class GeneralAI(
 
         val chiefGenerals = mutableMapOf<Int, General>()
         for (gen in nationGenerals) {
-            if (gen.officerLevel.toInt() in minChiefLevel..12 && gen.id != general.id) {
+            if (gen.officerLevel.toInt() in minChiefLevel..20 && gen.id != general.id) {
                 chiefGenerals[gen.officerLevel.toInt()] = gen
             }
         }
@@ -2863,7 +2863,7 @@ class GeneralAI(
             gen.npcState.toInt() < 2 && gen.officerLevel.toInt() == 1
         }
 
-        for (chiefLevel in minChiefLevel until 12) {
+        for (chiefLevel in minChiefLevel until 20) {
             if (chiefGenerals.containsKey(chiefLevel)) continue
             if (general.officerLevel.toInt() == chiefLevel) continue
 
@@ -3072,7 +3072,7 @@ class GeneralAI(
             if (month in listOf(3, 6, 9, 12)) {
                 autoPromoteLord(ctx.nationGenerals, ports)
             }
-            if (general.officerLevel.toInt() == 12) {
+            if (general.officerLevel.toInt() == 20) {
                 if (month in listOf(3, 6, 9, 12)) {
                     choosePromotion(ctx, rng, ports)
                 }
@@ -3221,7 +3221,7 @@ class GeneralAI(
         }
 
         // NPC lord without capital: found nation or wander
-        if (npcType >= 2 && general.officerLevel.toInt() == 12) {
+        if (npcType >= 2 && general.officerLevel.toInt() == 20) {
             val nation = worldPortFactory.create(world.id.toLong()).nation(general.nationId)?.toEntity()
             if (nation != null && nation.capitalCityId == null) {
                 val yearsFromInit = world.currentYear - ((world.config["startyear"] as? Number)?.toInt() ?: world.currentYear.toInt())
@@ -3400,7 +3400,7 @@ class GeneralAI(
         // Barbarians (npcType 9) join other barbarian nations directly
         if (general.npcState.toInt() == 9) {
             val barbarianLords = ports.allGenerals().map { it.toEntity() }
-                .filter { it.officerLevel.toInt() == 12 && it.npcState.toInt() == 9 && it.nationId != 0L }
+                .filter { it.officerLevel.toInt() == 20 && it.npcState.toInt() == 9 && it.nationId != 0L }
             if (barbarianLords.isNotEmpty()) {
                 val target = barbarianLords[rng.nextInt(barbarianLords.size)]
                 general.meta["aiArg"] = mutableMapOf<String, Any>("destNationId" to target.nationId)
@@ -3468,14 +3468,14 @@ class GeneralAI(
         val currentCity = allCities.find { it.id == general.cityId } ?: return null
 
         // Check if we're the only lord here at a major city
-        val lordsHere = allGenerals.count { it.officerLevel.toInt() == 12 && it.cityId == general.cityId }
+        val lordsHere = allGenerals.count { it.officerLevel.toInt() == 20 && it.cityId == general.cityId }
         if (lordsHere <= 1 && currentCity.level.toInt() in 5..6) {
             return null // Stay here, can try founding
         }
 
         // Build set of occupied cities (by lords or nations)
         val lordCityIds = allGenerals
-            .filter { it.officerLevel.toInt() == 12 }
+            .filter { it.officerLevel.toInt() == 20 }
             .map { it.cityId }.toSet()
         val nationCityIds = allCities
             .filter { it.nationId != 0L }

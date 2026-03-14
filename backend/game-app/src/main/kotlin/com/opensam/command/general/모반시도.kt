@@ -40,7 +40,7 @@ class 모반시도(general: General, env: CommandEnv, arg: Map<String, Any>? = n
         return CommandResult(
             success = true,
             logs = logs,
-            message = """{"statChanges":{"officerLevel":12,"officerCity":0},"rebellionResult":{"success":true},"lordChanges":{"officerLevel":1,"officerCity":0,"experienceMultiplier":0.7},"lordLogs":{"action":"<Y>${generalName}</>에게 군주의 자리를 뺏겼습니다.","history":"<D><b>${generalName}</b></>의 모반으로 인해 <D><b>${nationName}</b></>의 군주자리를 박탈당함"}}"""
+            message = """{"statChanges":{"officerLevel":20,"officerCity":0},"rebellionResult":{"success":true},"lordChanges":{"officerLevel":1,"officerCity":0,"experienceMultiplier":0.7},"lordLogs":{"action":"<Y>${generalName}</>에게 군주의 자리를 뺏겼습니다.","history":"<D><b>${generalName}</b></>의 모반으로 인해 <D><b>${nationName}</b></>의 군주자리를 박탈당함"}}"""
         )
     }
 }

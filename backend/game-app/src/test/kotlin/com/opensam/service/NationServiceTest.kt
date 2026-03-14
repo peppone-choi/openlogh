@@ -115,7 +115,7 @@ class NationServiceTest {
             userId = 8,
             nationId = 1,
             name = "군주",
-            officerLevel = 12,
+            officerLevel = 20,
             penalty = mutableMapOf("noChief" to true),
             turnTime = OffsetDateTime.now(),
         )

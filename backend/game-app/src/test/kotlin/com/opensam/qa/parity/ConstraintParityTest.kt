@@ -231,26 +231,26 @@ class ConstraintParityTest {
     inner class OfficerParity {
 
         @Test
-        fun `BeChief passes at level 12`() {
-            val gen = createGeneral(officerLevel = 12)
+        fun `BeChief passes at level 20`() {
+            val gen = createGeneral(officerLevel = 20)
             assertEquals(ConstraintResult.Pass, BeChief().test(ctx(gen)))
         }
 
         @Test
-        fun `BeChief fails below 12`() {
+        fun `BeChief fails below 20`() {
             val gen = createGeneral(officerLevel = 11)
             assertTrue(BeChief().test(ctx(gen)) is ConstraintResult.Fail)
         }
 
         @Test
-        fun `NotChief passes below 12`() {
+        fun `NotChief passes below 20`() {
             val gen = createGeneral(officerLevel = 5)
             assertEquals(ConstraintResult.Pass, NotChief().test(ctx(gen)))
         }
 
         @Test
-        fun `NotChief fails at 12`() {
-            val gen = createGeneral(officerLevel = 12)
+        fun `NotChief fails at 20`() {
+            val gen = createGeneral(officerLevel = 20)
             assertTrue(NotChief().test(ctx(gen)) is ConstraintResult.Fail)
         }
     }

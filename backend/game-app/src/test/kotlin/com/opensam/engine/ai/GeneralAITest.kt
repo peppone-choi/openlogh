@@ -368,7 +368,7 @@ class GeneralAITest {
         val world = createWorld().apply {
             config["turnterm"] = 60
         }
-        val lord = createGeneral(id = 1, officerLevel = 12, npcState = 2, nationId = 1)
+        val lord = createGeneral(id = 1, officerLevel = 20, npcState = 2, nationId = 1)
         val almostEligibleChief = createGeneral(id = 2, officerLevel = 11, npcState = 0, nationId = 1).apply {
             killTurn = 495
             permission = "normal"
@@ -395,7 +395,7 @@ class GeneralAITest {
         val world = createWorld().apply {
             config["turnterm"] = 60
         }
-        val lord = createGeneral(id = 1, officerLevel = 12, npcState = 2, nationId = 1)
+        val lord = createGeneral(id = 1, officerLevel = 20, npcState = 2, nationId = 1)
         val penalizedChief = createGeneral(id = 2, officerLevel = 11, npcState = 0, nationId = 1).apply {
             killTurn = 500
             permission = "normal"
@@ -751,7 +751,7 @@ class GeneralAITest {
     @Test
     fun `chief uses priority loop and falls through to general action during peace`() {
         val world = createWorld()
-        val chief = createGeneral(id = 1, officerLevel = 12, crew = 2000)
+        val chief = createGeneral(id = 1, officerLevel = 20, crew = 2000)
         val unassigned = createGeneral(id = 2, officerLevel = 0, npcState = 2)
         val city = createCity(nationId = 1)
         val nation = createNation()
@@ -770,7 +770,7 @@ class GeneralAITest {
     @Test
     fun `chief iterates nation priorities before general action`() {
         val world = createWorld()
-        val chief = createGeneral(id = 1, officerLevel = 12, crew = 2000)
+        val chief = createGeneral(id = 1, officerLevel = 20, crew = 2000)
         val assigned = createGeneral(id = 2, officerLevel = 3, npcState = 2)
         val city = createCity(nationId = 1)
         city.level = 3
@@ -946,13 +946,13 @@ class GeneralAITest {
 
         assertNotNull(result)
         assertEquals(2L, result!!.id)
-        assertEquals(12, result.officerLevel.toInt())
+        assertEquals(20, result.officerLevel.toInt())
     }
 
     @Test
     fun `autoPromoteLord does nothing when lord exists`() {
         val mockPorts = mock(WorldWritePort::class.java)
-        val lord = createGeneral(id = 1, officerLevel = 12)
+        val lord = createGeneral(id = 1, officerLevel = 20)
         val gen2 = createGeneral(id = 2, leadership = 90, strength = 80, intel = 70, officerLevel = 0)
 
         val result = ai.autoPromoteLord(listOf(lord, gen2), mockPorts)

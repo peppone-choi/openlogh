@@ -61,7 +61,7 @@ class 랜덤임관(general: General, env: CommandEnv, arg: Map<String, Any>? = n
 
         val lordByNationId = generalsByNationId.mapNotNull { (nationId, nationGenerals) ->
             nationGenerals
-                .firstOrNull { it.officerLevel.toInt() == 12 }
+                .firstOrNull { it.officerLevel.toInt() == 20 }
                 ?.let { nationId to it }
         }.toMap()
 

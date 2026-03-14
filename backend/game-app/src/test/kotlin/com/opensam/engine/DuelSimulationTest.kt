@@ -88,7 +88,7 @@ class DuelSimulationTest {
         val baseTurnTime = OffsetDateTime.now().minusSeconds(120)
         val dongKing = General(
             id = 11, worldId = 1, name = "동왕", nationId = 1, cityId = 1,
-            officerLevel = 12, npcState = if (userKing) 0 else 2, crew = 2000, train = 100, atmos = 100,
+            officerLevel = 20, npcState = if (userKing) 0 else 2, crew = 2000, train = 100, atmos = 100,
             leadership = 95, strength = 90, intel = 80, turnTime = baseTurnTime,
         )
         val dongOfficer = General(
@@ -98,7 +98,7 @@ class DuelSimulationTest {
         )
         val seoKing = General(
             id = 21, worldId = 1, name = "서왕", nationId = 2, cityId = 2,
-            officerLevel = 12, npcState = 2, crew = 1800, train = 100, atmos = 100,
+            officerLevel = 20, npcState = 2, crew = 1800, train = 100, atmos = 100,
             leadership = 92, strength = 88, intel = 84, turnTime = baseTurnTime.plusSeconds(2),
         )
 
@@ -130,9 +130,9 @@ class DuelSimulationTest {
         `when`(scenarioService.getScenario("test")).thenReturn(ScenarioData(startYear = 190))
 
         harness.queueGeneralTurn(generalId = 11, actionCode = "출병", arg = mutableMapOf("destCityId" to 2L))
-        harness.queueNationTurn(nationId = 1, officerLevel = 12, actionCode = "Nation휴식")
+        harness.queueNationTurn(nationId = 1, officerLevel = 20, actionCode = "Nation휴식")
         harness.queueNationTurn(nationId = 1, officerLevel = 8, actionCode = "Nation휴식")
-        harness.queueNationTurn(nationId = 2, officerLevel = 12, actionCode = "Nation휴식")
+        harness.queueNationTurn(nationId = 2, officerLevel = 20, actionCode = "Nation휴식")
 
         return Fixture(harness, world, city2, dongKing)
     }

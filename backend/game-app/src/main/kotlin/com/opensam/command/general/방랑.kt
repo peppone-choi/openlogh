@@ -58,7 +58,7 @@ class 방랑(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
         return CommandResult(
             success = true,
             logs = logs,
-            message = """{"becomeWanderer":true,"nationChanges":{"name":"$generalName","color":"#330000","level":0,"typeCode":"None","tech":0,"capitalCityId":null},"releaseAllCities":true,"resetDiplomacy":true,"allNationGenerals":{"makeLimit":12,"officerLevel":{"resetBelow":12},"officerCity":0}}"""
+            message = """{"becomeWanderer":true,"nationChanges":{"name":"$generalName","color":"#330000","level":0,"typeCode":"None","tech":0,"capitalCityId":null},"releaseAllCities":true,"resetDiplomacy":true,"allNationGenerals":{"makeLimit":12,"officerLevel":{"resetBelow":20},"officerCity":0}}"""
         )
     }
 }

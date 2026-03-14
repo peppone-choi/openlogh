@@ -24,7 +24,7 @@ class NationCommandTest {
         id: Long = 1,
         nationId: Long = 1,
         cityId: Long = 1,
-        officerLevel: Short = 12,
+        officerLevel: Short = 20,
         gold: Int = 1000,
         rice: Int = 1000,
     ): General = General(
@@ -109,7 +109,7 @@ class NationCommandTest {
         assertTrue(r1 is ConstraintResult.Fail)
         assertTrue((r1 as ConstraintResult.Fail).reason.contains("군주"))
 
-        val chief = createGeneral(officerLevel = 12)
+        val chief = createGeneral(officerLevel = 20)
         val cmd2 = che_선전포고(chief, env())
         cmd2.city = createCity()
         cmd2.nation = createNation()
@@ -120,7 +120,7 @@ class NationCommandTest {
 
     @Test
     fun `선전포고 fails during opening period`() {
-        val general = createGeneral(officerLevel = 12)
+        val general = createGeneral(officerLevel = 20)
         val cmd = che_선전포고(general, env(year = 191, startYear = 191))
         cmd.city = createCity()
         cmd.nation = createNation(id = 1)
@@ -133,7 +133,7 @@ class NationCommandTest {
 
     @Test
     fun `포상 requires friendly destination general`() {
-        val chief = createGeneral(officerLevel = 12, nationId = 1)
+        val chief = createGeneral(officerLevel = 20, nationId = 1)
         val cmd = che_포상(chief, env(), mapOf("isGold" to true, "amount" to 1000))
         cmd.city = createCity(nationId = 1)
         cmd.nation = createNation(id = 1)
@@ -150,7 +150,7 @@ class NationCommandTest {
 
     @Test
     fun `포상 runs and writes reward log`() {
-        val chief = createGeneral(officerLevel = 12, nationId = 1)
+        val chief = createGeneral(officerLevel = 20, nationId = 1)
         val cmd = che_포상(chief, env(), mapOf("isGold" to false, "amount" to 1234))
         cmd.city = createCity(nationId = 1)
         cmd.nation = createNation(id = 1)
@@ -181,7 +181,7 @@ class NationCommandTest {
         assertTrue(r1 is ConstraintResult.Fail)
         assertTrue((r1 as ConstraintResult.Fail).reason.contains("군주"))
 
-        val chief = createGeneral(officerLevel = 12, nationId = 1)
+        val chief = createGeneral(officerLevel = 20, nationId = 1)
         val cmd2 = che_초토화(chief, env())
         cmd2.city = createCity(nationId = 1)
         cmd2.destCity = createCity(id = 2, nationId = 2)
@@ -192,7 +192,7 @@ class NationCommandTest {
 
     @Test
     fun `초토화 runs and emits action log`() {
-        val chief = createGeneral(officerLevel = 12, nationId = 1)
+        val chief = createGeneral(officerLevel = 20, nationId = 1)
         val cmd = che_초토화(chief, env())
         cmd.city = createCity(nationId = 1)
         cmd.destCity = createCity(id = 2, nationId = 1)
@@ -207,7 +207,7 @@ class NationCommandTest {
 
     @Test
     fun `극병연구 requires nation resource threshold and has expected cost`() {
-        val chief = createGeneral(officerLevel = 12)
+        val chief = createGeneral(officerLevel = 20)
 
         val lowGoldNation = createNation(gold = 100000, rice = 200000)
         val cmd1 = event_극병연구(chief, env())
@@ -233,7 +233,7 @@ class NationCommandTest {
 
     @Test
     fun `극병연구 runs and emits completion log`() {
-        val chief = createGeneral(officerLevel = 12)
+        val chief = createGeneral(officerLevel = 20)
         val cmd = event_극병연구(chief, env())
         cmd.city = createCity()
         cmd.nation = createNation(gold = 200000, rice = 200000)
@@ -248,7 +248,7 @@ class NationCommandTest {
 
     @Test
     fun `nation strategic command fails when strategic limit is active`() {
-        val chief = createGeneral(officerLevel = 12)
+        val chief = createGeneral(officerLevel = 20)
         val cmd = che_필사즉생(chief, env())
         cmd.city = createCity()
         cmd.nation = createNation(strategicCmdLimit = 5)

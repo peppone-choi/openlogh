@@ -39,7 +39,7 @@ class NationResearchSpecialCommandTest {
         id: Long = 1,
         nationId: Long = 1,
         cityId: Long = 1,
-        officerLevel: Short = 12,
+        officerLevel: Short = 20,
         gold: Int = 1000,
         rice: Int = 1000,
     ): General = General(
@@ -128,7 +128,7 @@ class NationResearchSpecialCommandTest {
         assertTrue(nonChiefResult is ConstraintResult.Fail)
         assertTrue((nonChiefResult as ConstraintResult.Fail).reason.contains("군주"))
 
-        val chief = createGeneral(officerLevel = 12)
+        val chief = createGeneral(officerLevel = 20)
 
         val lowGoldCmd = commandFactory(chief, env())
         lowGoldCmd.city = createCity()
@@ -279,7 +279,7 @@ class NationResearchSpecialCommandTest {
 
         `when`(cityRepository.findById(2L)).thenReturn(Optional.of(targetCity))
 
-        val cmd = che_무작위수도이전(createGeneral(officerLevel = 12), commandEnv)
+        val cmd = che_무작위수도이전(createGeneral(officerLevel = 20), commandEnv)
         cmd.city = createCity(id = 1, nationId = 1)
         cmd.nation = nation
         cmd.services = services
@@ -301,7 +301,7 @@ class NationResearchSpecialCommandTest {
 
     @Test
     fun `부대탈퇴지시 checks constraints cost and successful run`() {
-        val failCmd = che_부대탈퇴지시(createGeneral(officerLevel = 12), env())
+        val failCmd = che_부대탈퇴지시(createGeneral(officerLevel = 20), env())
         val fail = failCmd.checkFullCondition()
         assertTrue(fail is ConstraintResult.Fail)
         assertTrue((fail as ConstraintResult.Fail).reason.contains("대상 장수"))
@@ -309,7 +309,7 @@ class NationResearchSpecialCommandTest {
         val target = createGeneral(id = 2, nationId = 1)
         target.troopId = 99
 
-        val cmd = che_부대탈퇴지시(createGeneral(officerLevel = 12), env())
+        val cmd = che_부대탈퇴지시(createGeneral(officerLevel = 20), env())
         cmd.destGeneral = target
 
         assertEquals(0, cmd.getCost().gold)
@@ -327,7 +327,7 @@ class NationResearchSpecialCommandTest {
 
     @Test
     fun `인구이동 checks constraints cost and successful run`() {
-        val failCmd = cr_인구이동(createGeneral(officerLevel = 12), env(), mapOf("amount" to 20000))
+        val failCmd = cr_인구이동(createGeneral(officerLevel = 20), env(), mapOf("amount" to 20000))
         failCmd.city = createCity(id = 1, nationId = 1)
         failCmd.nation = createNation(id = 1, gold = 10000, rice = 10000)
         val fail = failCmd.checkFullCondition()
@@ -341,7 +341,7 @@ class NationResearchSpecialCommandTest {
         toCity.pop = 1000
         toCity.popMax = 60000
 
-        val cmd = cr_인구이동(createGeneral(officerLevel = 12), env(), mapOf("amount" to 20000))
+        val cmd = cr_인구이동(createGeneral(officerLevel = 20), env(), mapOf("amount" to 20000))
         cmd.city = fromCity
         cmd.destCity = toCity
         cmd.nation = nation

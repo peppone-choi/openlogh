@@ -40,7 +40,7 @@ class NationDiplomacyStrategicCommandTest {
         id: Long = 1,
         nationId: Long = 1,
         cityId: Long = 1,
-        officerLevel: Short = 12,
+        officerLevel: Short = 20,
         gold: Int = 1000,
         rice: Int = 1000,
     ): General = General(
@@ -155,7 +155,7 @@ class NationDiplomacyStrategicCommandTest {
         val failed = nonChief.checkFullCondition()
         assertTrue(failed is ConstraintResult.Fail)
 
-        val general = createGeneral(officerLevel = 12)
+        val general = createGeneral(officerLevel = 20)
         val cmd = che_종전제의(general, env())
         val mocks = createMockServicesBundle()
         cmd.services = mocks.services
@@ -181,7 +181,7 @@ class NationDiplomacyStrategicCommandTest {
         val failed = cmd1.checkFullCondition()
         assertTrue(failed is ConstraintResult.Fail)
 
-        val general = createGeneral(officerLevel = 12)
+        val general = createGeneral(officerLevel = 20)
         val cmd = che_종전수락(general, env())
         val mocks = createMockServicesBundle()
         cmd.services = mocks.services
@@ -206,7 +206,7 @@ class NationDiplomacyStrategicCommandTest {
         val failed = cmd1.checkFullCondition()
         assertTrue(failed is ConstraintResult.Fail)
 
-        val general = createGeneral(officerLevel = 12)
+        val general = createGeneral(officerLevel = 20)
         val cmd = che_불가침제의(general, env())
         val mocks = createMockServicesBundle()
         cmd.services = mocks.services
@@ -233,7 +233,7 @@ class NationDiplomacyStrategicCommandTest {
         val failed = cmd1.checkFullCondition()
         assertTrue(failed is ConstraintResult.Fail)
 
-        val general = createGeneral(officerLevel = 12)
+        val general = createGeneral(officerLevel = 20)
         val cmd = che_불가침수락(general, env())
         val mocks = createMockServicesBundle()
         cmd.services = mocks.services
@@ -261,7 +261,7 @@ class NationDiplomacyStrategicCommandTest {
         val failed = nonChief.checkFullCondition()
         assertTrue(failed is ConstraintResult.Fail)
 
-        val general = createGeneral(officerLevel = 12)
+        val general = createGeneral(officerLevel = 20)
         val cmd = che_불가침파기제의(general, env())
         val mocks = createMockServicesBundle()
         cmd.services = mocks.services
@@ -287,7 +287,7 @@ class NationDiplomacyStrategicCommandTest {
         val failed = cmd1.checkFullCondition()
         assertTrue(failed is ConstraintResult.Fail)
 
-        val general = createGeneral(officerLevel = 12)
+        val general = createGeneral(officerLevel = 20)
         val cmd = che_불가침파기수락(general, env())
         val mocks = createMockServicesBundle()
         cmd.services = mocks.services
@@ -320,7 +320,7 @@ class NationDiplomacyStrategicCommandTest {
         val failed = nonChief.checkFullCondition()
         assertTrue(failed is ConstraintResult.Fail)
 
-        val general = createGeneral(officerLevel = 12)
+        val general = createGeneral(officerLevel = 20)
         val cmd = che_급습(general, env())
         val mocks = createMockServicesBundle()
         val relations = listOf(
@@ -354,7 +354,7 @@ class NationDiplomacyStrategicCommandTest {
         assertEquals(2, cmdMeta.getPreReqTurn())
         assertEquals(20, cmdMeta.getPostReqTurn())
 
-        val cmdFail = che_수몰(createGeneral(officerLevel = 12), env())
+        val cmdFail = che_수몰(createGeneral(officerLevel = 20), env())
         cmdFail.city = createCity(nationId = 1)
         cmdFail.nation = createNation(id = 1)
         cmdFail.destCity = createCity(id = 2, nationId = 2)
@@ -362,7 +362,7 @@ class NationDiplomacyStrategicCommandTest {
         val failed = cmdFail.checkFullCondition()
         assertTrue(failed is ConstraintResult.Fail)
 
-        val general = createGeneral(officerLevel = 12)
+        val general = createGeneral(officerLevel = 20)
         val cmd = che_수몰(general, env())
         val nation = createNation(id = 1)
         val destCity = createCity(id = 2, nationId = 2, def = 800, wall = 600, pop = 10000)
@@ -397,7 +397,7 @@ class NationDiplomacyStrategicCommandTest {
         val failed = cmdFail.checkFullCondition()
         assertTrue(failed is ConstraintResult.Fail)
 
-        val general = createGeneral(officerLevel = 12)
+        val general = createGeneral(officerLevel = 20)
         val cmd = che_허보(general, env())
         val nation = createNation(id = 1)
         val destCity = createCity(id = 2, nationId = 2)
@@ -441,7 +441,7 @@ class NationDiplomacyStrategicCommandTest {
         val failed = cmdFail.checkFullCondition()
         assertTrue(failed is ConstraintResult.Fail)
 
-        val cmd = che_의병모집(createGeneral(officerLevel = 12), env(year = 200, startYear = 190))
+        val cmd = che_의병모집(createGeneral(officerLevel = 20), env(year = 200, startYear = 190))
         val nation = createNation(id = 1)
         val city = createCity(id = 1, nationId = 1, pop = 30000)
         val mocks = createMockServicesBundle()
@@ -474,7 +474,7 @@ class NationDiplomacyStrategicCommandTest {
         val failed = cmdFail.checkFullCondition()
         assertTrue(failed is ConstraintResult.Fail)
 
-        val cmd = che_이호경식(createGeneral(officerLevel = 12), env())
+        val cmd = che_이호경식(createGeneral(officerLevel = 20), env())
         val nation = createNation(id = 1)
         val destNation = createNation(id = 2)
         val targetNation = createNation(id = 3, level = 5)
@@ -510,7 +510,7 @@ class NationDiplomacyStrategicCommandTest {
         val failed = cmdFail.checkFullCondition()
         assertTrue(failed is ConstraintResult.Fail)
 
-        val cmd = che_피장파장(createGeneral(officerLevel = 12), env())
+        val cmd = che_피장파장(createGeneral(officerLevel = 20), env())
         val nation = createNation(id = 1, strategicCmdLimit = 0)
         val destNation = createNation(id = 2, strategicCmdLimit = 5)
         cmd.city = createCity(nationId = 1)

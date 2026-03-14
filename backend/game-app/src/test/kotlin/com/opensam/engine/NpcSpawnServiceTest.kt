@@ -312,7 +312,7 @@ class NpcSpawnServiceTest {
         val ruler = savedGenerals.first()
         val followers = savedGenerals.drop(1)
 
-        assertEquals(12.toShort(), ruler.officerLevel)
+        assertEquals(20.toShort(), ruler.officerLevel)
         assertEquals(240.toShort(), ruler.killTurn)
         assertTrue(followers.all { it.killTurn == null }, "Followers should use deadYear-derived lifespan, not fixed killTurn")
         assertTrue(followers.all { it.deadYear > world.currentYear }, "Followers should still have finite deadYear lifespan")

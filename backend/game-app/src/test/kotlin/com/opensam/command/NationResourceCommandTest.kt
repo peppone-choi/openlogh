@@ -36,7 +36,7 @@ class NationResourceCommandTest {
         id: Long = 1,
         nationId: Long = 1,
         cityId: Long = 1,
-        officerLevel: Short = 12,
+        officerLevel: Short = 20,
         gold: Int = 1000,
         rice: Int = 1000,
     ): General = General(
@@ -132,7 +132,7 @@ class NationResourceCommandTest {
         val fail = failCmd.checkFullCondition()
         assertTrue(fail is ConstraintResult.Fail)
 
-        val chief = createGeneral(officerLevel = 12, nationId = 1)
+        val chief = createGeneral(officerLevel = 20, nationId = 1)
         val nation = createNation(id = 1, gold = 10000, rice = 10000)
         val target = createGeneral(id = 2, nationId = 1, gold = 1500, rice = 2000)
         val cmd = che_몰수(chief, env(), mapOf("isGold" to true, "amount" to 500))
@@ -159,7 +159,7 @@ class NationResourceCommandTest {
         val fail = failCmd.checkFullCondition()
         assertTrue(fail is ConstraintResult.Fail)
 
-        val chief = createGeneral(officerLevel = 12)
+        val chief = createGeneral(officerLevel = 20)
         val nation = createNation(id = 1, gold = 10000, rice = 10000)
         val city = createCity(nationId = 1)
         city.level = 2
@@ -180,7 +180,7 @@ class NationResourceCommandTest {
 
     @Test
     fun `증축 fails with low nation resource and runs with level up and max increase`() {
-        val chief = createGeneral(officerLevel = 12)
+        val chief = createGeneral(officerLevel = 20)
         val failCmd = che_증축(chief, env())
         failCmd.city = createCity(nationId = 1)
         failCmd.nation = createNation(id = 1, gold = 2000, rice = 3000)
@@ -208,7 +208,7 @@ class NationResourceCommandTest {
 
     @Test
     fun `발령 fails without destination general and runs to move officer city`() {
-        val chief = createGeneral(officerLevel = 12)
+        val chief = createGeneral(officerLevel = 20)
         val failCmd = che_발령(chief, env())
         failCmd.city = createCity(nationId = 1)
         failCmd.nation = createNation(id = 1)
@@ -243,7 +243,7 @@ class NationResourceCommandTest {
         val fail = failCmd.checkFullCondition()
         assertTrue(fail is ConstraintResult.Fail)
 
-        val chief = createGeneral(officerLevel = 12)
+        val chief = createGeneral(officerLevel = 20)
         val nation = createNation(id = 1, gold = 10000, rice = 10000)
         nation.capitalCityId = 1
         val cmd = che_천도(chief, env())
@@ -263,7 +263,7 @@ class NationResourceCommandTest {
 
     @Test
     fun `백성동원 fails when strategic command is blocked and runs with NPC saves`() {
-        val chief = createGeneral(officerLevel = 12)
+        val chief = createGeneral(officerLevel = 20)
         val failCmd = che_백성동원(chief, env())
         failCmd.city = createCity(nationId = 1)
         failCmd.destCity = createCity(id = 2, nationId = 1)
@@ -301,7 +301,7 @@ class NationResourceCommandTest {
 
     @Test
     fun `물자원조 fails for same destination nation and runs with resource transfer`() {
-        val chief = createGeneral(officerLevel = 12, nationId = 1)
+        val chief = createGeneral(officerLevel = 20, nationId = 1)
         val failCmd = che_물자원조(chief, env(), mapOf("goldAmount" to 500, "riceAmount" to 600))
         failCmd.city = createCity(nationId = 1)
         failCmd.nation = createNation(id = 1, gold = 10000, rice = 10000)
@@ -336,7 +336,7 @@ class NationResourceCommandTest {
         assertTrue(fail is ConstraintResult.Fail)
 
         val nation = createNation(id = 1)
-        val cmd = che_국기변경(createGeneral(officerLevel = 12), env(), mapOf("colorType" to "blue"))
+        val cmd = che_국기변경(createGeneral(officerLevel = 20), env(), mapOf("colorType" to "blue"))
         cmd.city = createCity(nationId = 1)
         cmd.nation = nation
 
@@ -357,7 +357,7 @@ class NationResourceCommandTest {
         assertTrue(fail is ConstraintResult.Fail)
 
         val nation = createNation(id = 1)
-        val cmd = che_국호변경(createGeneral(officerLevel = 12), env(), mapOf("nationName" to "신국호"))
+        val cmd = che_국호변경(createGeneral(officerLevel = 20), env(), mapOf("nationName" to "신국호"))
         cmd.city = createCity(nationId = 1)
         cmd.nation = nation
 

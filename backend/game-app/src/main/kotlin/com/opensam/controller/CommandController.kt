@@ -108,7 +108,7 @@ class CommandController(
     @GetMapping("/nations/{nationId}/turns")
     fun listNationTurns(
         @PathVariable nationId: Long,
-        @RequestParam(defaultValue = "12") officerLevel: Short,
+        @RequestParam(defaultValue = "20") officerLevel: Short,
     ): ResponseEntity<List<NationTurnResponse>> {
         return ResponseEntity.ok(
             commandService.listNationTurns(nationId, officerLevel).map { NationTurnResponse.from(it) }

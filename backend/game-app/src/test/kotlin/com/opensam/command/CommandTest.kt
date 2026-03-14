@@ -406,7 +406,7 @@ class CommandTest {
     @Test
     fun `건국 should fail during opening part`() {
         // startYear=190, year=200 => relYear=10, BeOpeningPart(11) checks relYear < 1 => false => Fail
-        val general = createTestGeneral(nationId = 1, officerLevel = 12)
+        val general = createTestGeneral(nationId = 1, officerLevel = 20)
         val env = createTestEnv(year = 200, startYear = 190)
         val nation = createTestNation(level = 0)
         val cmd = 건국(general, env)
@@ -419,7 +419,7 @@ class CommandTest {
 
     @Test
     fun `건국 should check BeLord constraint`() {
-        // general with officerLevel < 12 should fail BeLord
+        // general with officerLevel < 20 should fail BeLord
         val general = createTestGeneral(nationId = 1, officerLevel = 5)
         val env = createTestEnv(year = 190, startYear = 190)
         val nation = createTestNation(level = 0)
@@ -433,7 +433,7 @@ class CommandTest {
     @Test
     fun `건국 run should fail in first turn`() {
         // yearMonth = startYear*12 + month <= initYearMonth = startYear*12 + 1
-        val general = createTestGeneral(nationId = 1, officerLevel = 12)
+        val general = createTestGeneral(nationId = 1, officerLevel = 20)
         val env = createTestEnv(year = 190, month = 1, startYear = 190)
         val cmd = 건국(general, env)
 
@@ -444,7 +444,7 @@ class CommandTest {
 
     @Test
     fun `건국 run should succeed after first turn`() {
-        val general = createTestGeneral(nationId = 1, officerLevel = 12, cityId = 5)
+        val general = createTestGeneral(nationId = 1, officerLevel = 20, cityId = 5)
         val env = createTestEnv(year = 190, month = 2, startYear = 190)
         val city = createTestCity()
         val cmd = 건국(general, env, mapOf("nationName" to "신한", "nationType" to "군벌"))
@@ -504,7 +504,7 @@ class CommandTest {
 
     @Test
     fun `하야 should fail for lord`() {
-        val general = createTestGeneral(officerLevel = 12)
+        val general = createTestGeneral(officerLevel = 20)
         val env = createTestEnv()
         val cmd = 하야(general, env)
 

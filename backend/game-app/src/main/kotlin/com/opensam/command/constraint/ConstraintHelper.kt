@@ -82,7 +82,7 @@ fun RemainCityCapacity(cityKey: String, actionName: String) = object : Constrain
 fun BeChief() = object : Constraint {
     override val name = "BeChief"
     override fun test(ctx: ConstraintContext): ConstraintResult {
-        return if (ctx.general.officerLevel >= 12.toShort()) ConstraintResult.Pass
+        return if (ctx.general.officerLevel >= 20.toShort()) ConstraintResult.Pass
         else ConstraintResult.Fail("군주만 사용할 수 있습니다.")
     }
 }
@@ -194,7 +194,7 @@ fun ReqGeneralAtmosMargin(maxAtmos: Int) = object : Constraint {
 fun BeLord() = object : Constraint {
     override val name = "BeLord"
     override fun test(ctx: ConstraintContext): ConstraintResult {
-        return if (ctx.general.officerLevel >= 12.toShort()) ConstraintResult.Pass
+        return if (ctx.general.officerLevel >= 20.toShort()) ConstraintResult.Pass
         else ConstraintResult.Fail("군주만 사용할 수 있습니다.")
     }
 }
@@ -263,7 +263,7 @@ fun BeLordOrUnaffiliated() = object : Constraint {
         if (ctx.general.nationId == 0L) {
             return ConstraintResult.Pass
         }
-        return if (ctx.general.officerLevel >= 12.toShort()) ConstraintResult.Pass
+        return if (ctx.general.officerLevel >= 20.toShort()) ConstraintResult.Pass
         else ConstraintResult.Fail("군주만 사용할 수 있습니다.")
     }
 }
@@ -410,7 +410,7 @@ fun ReqGeneralStatValue(statGetter: (com.opensam.entity.General) -> Number, disp
 fun NotLord() = object : Constraint {
     override val name = "NotLord"
     override fun test(ctx: ConstraintContext): ConstraintResult {
-        return if (ctx.general.officerLevel < 12.toShort()) ConstraintResult.Pass
+        return if (ctx.general.officerLevel < 20.toShort()) ConstraintResult.Pass
         else ConstraintResult.Fail("군주는 사용할 수 없습니다.")
     }
 }
@@ -789,7 +789,7 @@ fun AllowRebellion() = object : Constraint {
     override fun test(ctx: ConstraintContext): ConstraintResult {
         val general = ctx.general
         if (general.nationId == 0L) return ConstraintResult.Fail("재야입니다.")
-        if (general.officerLevel >= 12.toShort()) return ConstraintResult.Fail("이미 군주입니다.")
+        if (general.officerLevel >= 20.toShort()) return ConstraintResult.Fail("이미 군주입니다.")
 
         val killturn = (ctx.env["killturn"] as? Number)?.toInt()
             ?: return ConstraintResult.Fail("턴 정보가 없습니다.")
@@ -813,7 +813,7 @@ fun AllowRebellion() = object : Constraint {
 fun NotChief() = object : Constraint {
     override val name = "NotChief"
     override fun test(ctx: ConstraintContext): ConstraintResult {
-        return if (ctx.general.officerLevel < 12.toShort()) ConstraintResult.Pass
+        return if (ctx.general.officerLevel < 20.toShort()) ConstraintResult.Pass
         else ConstraintResult.Fail("군주는 사용할 수 없습니다.")
     }
 }

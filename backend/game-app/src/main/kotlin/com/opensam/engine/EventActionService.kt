@@ -92,7 +92,7 @@ class EventActionService(
 
         // Find ruler and set to wander
         val generals = generalRepository.findByNationId(nationId)
-        val ruler = generals.find { it.officerLevel.toInt() == 12 }
+        val ruler = generals.find { it.officerLevel.toInt() == 20 }
         if (ruler != null) {
             val turns = generalTurnRepository.findByGeneralIdOrderByTurnIdx(ruler.id)
             if (turns.isNotEmpty()) {
@@ -277,7 +277,7 @@ class EventActionService(
             // Count nations with player rulers and calculate how many more NPCs needed
             val generals = generalRepository.findByWorldId(world.id.toLong())
             val playerNations = generals
-                .filter { it.npcState < 3 && it.officerLevel.toInt() == 12 }
+                .filter { it.npcState < 3 && it.officerLevel.toInt() == 20 }
                 .map { it.nationId }
                 .distinct()
 

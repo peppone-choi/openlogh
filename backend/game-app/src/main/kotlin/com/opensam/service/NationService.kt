@@ -186,7 +186,7 @@ class NationService(
             throw IllegalStateException("관직 레벨은 1-11 사이여야 합니다.")
         }
         
-        if (officerLevel == 12) {
+        if (officerLevel == 20) {
             throw IllegalStateException("군주는 유일하며 임명할 수 없습니다.")
         }
 

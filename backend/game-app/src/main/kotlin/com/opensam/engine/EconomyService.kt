@@ -544,7 +544,7 @@ class EconomyService @Autowired constructor(
                 // Legacy parity: log 【작위】 history for nation level-up
                 val nationName = nation.name
                 val lordName = generalsByNation[nation.id]
-                    ?.firstOrNull { it.officerLevel.toInt() == 12 }?.name ?: "군주"
+                    ?.firstOrNull { it.officerLevel.toInt() == 20 }?.name ?: "군주"
                 val oldLevelText = getNationLevelName(oldLevel)
                 val newLevelText = getNationLevelName(newLevel)
 

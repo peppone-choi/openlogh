@@ -125,7 +125,7 @@ class CommandExecutorTest {
 
         assertTrue(result.success)
         assertNotEquals(0L, general.nationId)
-        assertEquals(12.toShort(), general.officerLevel)
+        assertEquals(20.toShort(), general.officerLevel)
 
         val nations = harness.nationRepository.findByWorldId(1)
         assertEquals(1, nations.size)
@@ -187,7 +187,7 @@ class CommandExecutorTest {
 
         assertTrue(result.success)
         assertNotEquals(0L, general.nationId)
-        assertEquals(12.toShort(), general.officerLevel)
+        assertEquals(20.toShort(), general.officerLevel)
         assertEquals(general.nationId, city.nationId)
 
         val foundedNation = harness.nationRepository.findById(general.nationId).orElse(null)
@@ -246,7 +246,7 @@ class CommandExecutorTest {
             name = "군주",
             nationId = 10,
             cityId = 1,
-            officerLevel = 12,
+            officerLevel = 20,
             turnTime = OffsetDateTime.now(),
         )
         val subordinate = General(

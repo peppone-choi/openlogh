@@ -67,7 +67,7 @@ class 선양(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
         return CommandResult(
             success = true,
             logs = logs,
-            message = """{"statChanges":{"officerLevel":1,"officerCity":0,"experienceMultiplier":$expMultiplier},"nationChanges":{"chiefGeneralId":${dg.id}},"destGeneralChanges":{"generalId":${dg.id},"officerLevel":12,"officerCity":0}}"""
+            message = """{"statChanges":{"officerLevel":1,"officerCity":0,"experienceMultiplier":$expMultiplier},"nationChanges":{"chiefGeneralId":${dg.id}},"destGeneralChanges":{"generalId":${dg.id},"officerLevel":20,"officerCity":0}}"""
         )
     }
 }

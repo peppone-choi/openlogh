@@ -305,7 +305,7 @@ class GeneralMaintenanceServiceTest {
             age = 40,
             killTurn = 0,
             nationId = 1,
-            officerLevel = 12,
+            officerLevel = 20,
             troopId = 10,
         )
         val successor = createGeneral(
@@ -337,7 +337,7 @@ class GeneralMaintenanceServiceTest {
         assertNull(dead.killTurn)
         assertEquals(0L, dead.troopId)
 
-        assertEquals(12.toShort(), successor.officerLevel)
+        assertEquals(20.toShort(), successor.officerLevel)
         assertEquals(0, successor.officerCity)
         assertEquals(0L, successor.troopId)
         assertEquals(0L, member.troopId)
@@ -386,7 +386,7 @@ class GeneralMaintenanceServiceTest {
             id = 11,
             worldId = 1,
             nationId = 1,
-            officerLevel = 12,
+            officerLevel = 20,
             turnIdx = 0,
             actionCode = "Nation휴식",
         )
@@ -395,7 +395,7 @@ class GeneralMaintenanceServiceTest {
             age = 40,
             killTurn = 0,
             nationId = 1,
-            officerLevel = 12,
+            officerLevel = 20,
         )
 
         `when`(nationRepository.findById(1L)).thenReturn(Optional.of(nation))

@@ -47,13 +47,13 @@ class PermissionServiceTest {
 
     @Test
     fun `setPermission applies legacy candidate filters`() {
-        val leader = general(id = 1, userId = 10, nationId = 1, officerLevel = 12)
+        val leader = general(id = 1, userId = 10, nationId = 1, officerLevel = 20)
         val eligible = general(id = 2, nationId = 1)
         val noChief = general(id = 3, nationId = 1).apply {
             penalty = mutableMapOf("noChief" to true)
         }
         val existingAuditor = general(id = 4, nationId = 1, permission = "auditor")
-        val ruler = general(id = 5, nationId = 1, officerLevel = 12)
+        val ruler = general(id = 5, nationId = 1, officerLevel = 20)
 
         `when`(generalRepository.findByUserId(10L)).thenReturn(listOf(leader))
         `when`(generalRepository.findByNationId(1L)).thenReturn(listOf(leader, eligible, noChief, existingAuditor, ruler))
@@ -77,7 +77,7 @@ class PermissionServiceTest {
 
     @Test
     fun `setPermission clears existing target permission when selection is empty`() {
-        val leader = general(id = 1, userId = 10, nationId = 1, officerLevel = 12)
+        val leader = general(id = 1, userId = 10, nationId = 1, officerLevel = 20)
         val ambassador = general(id = 2, nationId = 1, permission = "ambassador")
 
         `when`(generalRepository.findByUserId(10L)).thenReturn(listOf(leader))
@@ -97,7 +97,7 @@ class PermissionServiceTest {
 
     @Test
     fun `setPermission rejects more than two ambassadors`() {
-        val leader = general(id = 1, userId = 10, nationId = 1, officerLevel = 12)
+        val leader = general(id = 1, userId = 10, nationId = 1, officerLevel = 20)
 
         `when`(generalRepository.findByUserId(10L)).thenReturn(listOf(leader))
 

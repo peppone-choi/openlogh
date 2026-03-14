@@ -525,8 +525,8 @@ class CommandExecutor @Autowired constructor(
 
                 effectiveNation = createdNation
                 general.nationId = createdNation.id
-                if (general.officerLevel < 12) {
-                    general.officerLevel = 12
+                if (general.officerLevel < 20) {
+                    general.officerLevel = 20
                 }
             }
         }

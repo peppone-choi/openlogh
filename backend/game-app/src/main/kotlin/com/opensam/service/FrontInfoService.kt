@@ -141,7 +141,7 @@ class FrontInfoService(
         val crewMax = myNationGens.filter { it.npcState.toInt() != 5 }.sumOf { it.leadership.toInt() * 100 }
 
         val topChiefs = mutableMapOf<Int, TopChiefInfo?>()
-        topChiefs[12] = null
+        topChiefs[20] = null
         topChiefs[11] = null
         myNationGens.filter { it.officerLevel >= 11 }.forEach { g ->
             topChiefs[g.officerLevel.toInt()] = TopChiefInfo(
@@ -229,7 +229,7 @@ class FrontInfoService(
             crew = NationCrewInfo(generalCnt = 0, now = 0, max = 0),
             onlineGen = "",
             notice = null,
-            topChiefs = mapOf(12 to null, 11 to null),
+            topChiefs = mapOf(20 to null, 11 to null),
             diplomaticLimit = 0,
             strategicCmdLimit = 0,
             impossibleStrategicCommand = emptyList(),
@@ -390,7 +390,7 @@ class FrontInfoService(
     private fun calcPermission(g: General): Int {
         if (g.nationId <= 0) return -1
         if (g.officerLevel.toInt() == 0) return -1
-        if (g.officerLevel.toInt() == 12) return 4
+        if (g.officerLevel.toInt() == 20) return 4
         if (g.permission == "ambassador") return 4
         if (g.permission == "auditor") return 3
         if (g.officerLevel >= 5) return 2
@@ -400,7 +400,7 @@ class FrontInfoService(
 
     private fun calcLeadershipBonus(officerLevel: Int, nationLevel: Int): Int {
         return when {
-            officerLevel == 12 -> nationLevel * 2
+            officerLevel == 20 -> nationLevel * 2
             officerLevel >= 5 -> nationLevel
             else -> 0
         }

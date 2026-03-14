@@ -30,7 +30,7 @@ class 등용수락(general: General, env: CommandEnv, arg: Map<String, Any>? = n
                 AllowJoinDestNation(relYear),
                 ReqDestNationValue("level", "국가규모", ">", 0, "방랑군에는 임관할 수 없습니다."),
                 DifferentDestNation(),
-                ReqGeneralStatValue({ 12 - it.officerLevel.toInt() }, "직위(군주 불가)", 1),
+                ReqGeneralStatValue({ 20 - it.officerLevel.toInt() }, "직위(군주 불가)", 1),
             )
         }
 

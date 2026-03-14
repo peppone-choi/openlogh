@@ -122,10 +122,10 @@ class GeneralMaintenanceService(
         val originNationId = general.nationId
         val nation = originNationId.takeIf { it > 0 }?.let { nationRepository.findById(it).orElse(null) }
 
-        if ((general.officerLevel.toInt() == 12 || nation?.chiefGeneralId == general.id) && originNationId > 0) {
+        if ((general.officerLevel.toInt() == 20 || nation?.chiefGeneralId == general.id) && originNationId > 0) {
             val successor = selectNextRuler(world, general, allGenerals)
             if (successor != null) {
-                successor.officerLevel = 12
+                successor.officerLevel = 20
                 successor.officerCity = 0
                 if (nation != null) {
                     nation.chiefGeneralId = successor.id
@@ -370,7 +370,7 @@ class GeneralMaintenanceService(
         val nationCandidates = allGenerals.filter {
             it.id != deadGeneral.id &&
                 it.nationId == deadGeneral.nationId &&
-                it.officerLevel.toInt() != 12 &&
+                it.officerLevel.toInt() != 20 &&
                 it.npcState.toInt() != 5
         }
         if (nationCandidates.isEmpty()) {

@@ -367,7 +367,7 @@ class GeneralMilitaryCommandTest {
         val result = runBlocking { cmd.run(fixedRng) }
         assertTrue(result.success)
         assertTrue(result.message!!.contains("\"createWanderingNation\":true"))
-        assertTrue(result.message!!.contains("\"officerLevel\":12"))
+        assertTrue(result.message!!.contains("\"officerLevel\":20"))
     }
 
     @Test
@@ -567,7 +567,7 @@ class GeneralMilitaryCommandTest {
 
     @Test
     fun `방랑 should succeed and become wandering nation`() {
-        val general = createTestGeneral(nationId = 1, officerLevel = 12)
+        val general = createTestGeneral(nationId = 1, officerLevel = 20)
         val env = createTestEnv(year = 200, startYear = 190)
         val cmd = 방랑(general, env)
 

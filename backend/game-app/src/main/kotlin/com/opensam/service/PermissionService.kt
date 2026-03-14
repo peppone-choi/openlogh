@@ -16,7 +16,7 @@ class PermissionService(
 
     /**
      * Sets ambassador or auditor permissions for specified generals.
-     * Only the nation leader (officer_level=12) can do this.
+     * Only the nation leader (officer_level=20) can do this.
      *
      * @param userId the authenticated user making the request
      * @param nationId the nation being modified
@@ -29,7 +29,7 @@ class PermissionService(
             .firstOrNull { it.nationId == nationId && it.npcState.toInt() == 0 }
             ?: return PermissionResult(false, "장수를 찾을 수 없습니다.")
 
-        if (requester.officerLevel.toInt() != 12) {
+        if (requester.officerLevel.toInt() != 20) {
             return PermissionResult(false, "군주가 아닙니다")
         }
 
@@ -55,7 +55,7 @@ class PermissionService(
         // Set new permissions
         val assignableIds = nationGenerals.asSequence()
             .filter { it.id in generalIds }
-            .filter { it.officerLevel.toInt() != 12 }
+            .filter { it.officerLevel.toInt() != 20 }
             .filter { it.permission == "normal" }
             .filter { checkSecretMaxPermission(it.penalty) >= targetLevel }
             .map { it.id }

@@ -288,7 +288,7 @@ class ConstraintTest {
 
     @Test
     fun `BeLord passes for lord`() {
-        val general = createGeneral(officerLevel = 12)
+        val general = createGeneral(officerLevel = 20)
         val result = BeLord().test(ctx(general = general))
         assertTrue(result is ConstraintResult.Pass)
     }
@@ -301,8 +301,8 @@ class ConstraintTest {
     }
 
     @Test
-    fun `BeChief passes for officer level 12 or above`() {
-        val general = createGeneral(officerLevel = 12)
+    fun `BeChief passes for officer level 20 or above`() {
+        val general = createGeneral(officerLevel = 20)
         val result = BeChief().test(ctx(general = general))
         assertTrue(result is ConstraintResult.Pass)
     }
@@ -318,7 +318,7 @@ class ConstraintTest {
 
     @Test
     fun `NotLord fails for lord`() {
-        val general = createGeneral(officerLevel = 12)
+        val general = createGeneral(officerLevel = 20)
         val result = NotLord().test(ctx(general = general))
         assertTrue(result is ConstraintResult.Fail)
         assertTrue((result as ConstraintResult.Fail).reason.contains("군주"))

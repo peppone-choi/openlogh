@@ -221,8 +221,8 @@ class GeneralPoliticalCommandTest {
 
         val nationA = createTestNation(id = 10, capitalCityId = 101).apply { gennum = 2; scoutLevel = 0 }
         val nationB = createTestNation(id = 11, capitalCityId = 102).apply { gennum = 3; scoutLevel = 0 }
-        val lordA = createTestGeneral(id = 1001, nationId = 10, officerLevel = 12, cityId = 201, affinity = 22)
-        val lordB = createTestGeneral(id = 1002, nationId = 11, officerLevel = 12, cityId = 202, affinity = 120)
+        val lordA = createTestGeneral(id = 1001, nationId = 10, officerLevel = 20, cityId = 201, affinity = 22)
+        val lordB = createTestGeneral(id = 1002, nationId = 11, officerLevel = 20, cityId = 202, affinity = 120)
         cmd.services = createMockServices(
             allNations = listOf(nationA, nationB),
             allGenerals = listOf(lordA, lordB),
@@ -298,7 +298,7 @@ class GeneralPoliticalCommandTest {
 
     @Test
     fun `무작위건국 should fail opening constraint and still run`() {
-        val general = createTestGeneral(officerLevel = 12, makeLimit = 0)
+        val general = createTestGeneral(officerLevel = 20, makeLimit = 0)
         val env = createTestEnv(year = 190, month = 2, startYear = 190)
         val cmd = 무작위건국(general, env, mapOf("nationName" to "신국", "nationType" to "군벌", "colorType" to 1))
         cmd.nation = createTestNation(level = 0)
@@ -311,7 +311,7 @@ class GeneralPoliticalCommandTest {
 
     @Test
     fun `모반시도 should fail constraints and still run execution`() {
-        val general = createTestGeneral(nationId = 1, officerLevel = 12)
+        val general = createTestGeneral(nationId = 1, officerLevel = 20)
         val env = createTestEnv()
         val cmd = 모반시도(general, env)
         cmd.city = createTestCity(nationId = 1, supplyState = 1)
@@ -339,7 +339,7 @@ class GeneralPoliticalCommandTest {
 
     @Test
     fun `선양 should pass for lord and run`() {
-        val general = createTestGeneral(nationId = 1, officerLevel = 12)
+        val general = createTestGeneral(nationId = 1, officerLevel = 20)
         val env = createTestEnv()
         val cmd = 선양(general, env)
         cmd.nation = createTestNation(id = 1)
@@ -353,7 +353,7 @@ class GeneralPoliticalCommandTest {
 
     @Test
     fun `해산 should pass lord constraint and run`() {
-        val general = createTestGeneral(officerLevel = 12)
+        val general = createTestGeneral(officerLevel = 20)
         val env = createTestEnv(year = 190, month = 2, startYear = 190)
         val cmd = 해산(general, env)
         cmd.nation = createTestNation(level = 0)
@@ -440,7 +440,7 @@ class GeneralPoliticalCommandTest {
 
     @Test
     fun `CR건국 should fail opening constraint and still run`() {
-        val general = createTestGeneral(officerLevel = 12, nationId = 1, cityId = 1, makeLimit = 0)
+        val general = createTestGeneral(officerLevel = 20, nationId = 1, cityId = 1, makeLimit = 0)
         val env = createTestEnv(year = 190, month = 2, startYear = 190)
         val cmd = CR건국(general, env, mapOf("nationName" to "신한", "nationType" to "군벌", "colorType" to 2))
         cmd.nation = createTestNation(level = 0)

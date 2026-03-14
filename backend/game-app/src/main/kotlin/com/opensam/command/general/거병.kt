@@ -54,7 +54,7 @@ class 거병(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
         return CommandResult(
             success = true,
             logs = logs,
-            message = """{"statChanges":{"experience":$exp,"dedication":$ded,"belong":1,"officerLevel":12,"officerCity":0},"nationChanges":{"createWanderingNation":true,"nationName":"$nationName","secretLimit":$secretLimit},"historyLog":{"global":"<Y><b>【거병】</b></><D><b>${generalName}</b></>${josaYi} 세력을 결성하였습니다.","globalAction":"<Y>${generalName}</>${josaYi} <G><b>${cityName}</b></>에 거병하였습니다.","general":"<G><b>${cityName}</b></>에서 거병","nation":"<Y>${generalName}</>${josaYi} <G><b>${cityName}</b></>에서 거병"},"inheritancePoint":{"active_action":1}}"""
+            message = """{"statChanges":{"experience":$exp,"dedication":$ded,"belong":1,"officerLevel":20,"officerCity":0},"nationChanges":{"createWanderingNation":true,"nationName":"$nationName","secretLimit":$secretLimit},"historyLog":{"global":"<Y><b>【거병】</b></><D><b>${generalName}</b></>${josaYi} 세력을 결성하였습니다.","globalAction":"<Y>${generalName}</>${josaYi} <G><b>${cityName}</b></>에 거병하였습니다.","general":"<G><b>${cityName}</b></>에서 거병","nation":"<Y>${generalName}</>${josaYi} <G><b>${cityName}</b></>에서 거병"},"inheritancePoint":{"active_action":1}}"""
         )
     }
 }
