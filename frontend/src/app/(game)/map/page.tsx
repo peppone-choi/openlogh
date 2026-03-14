@@ -427,7 +427,7 @@ export default function MapPage() {
             if (rtCity) saveCityInfo(rtCity.id);
             router.push(`/city?id=${rtCity?.id ?? cc.id}`);
         },
-        [cityByNameMap, router, saveCityInfo],
+        [cityByNameMap, router, saveCityInfo]
     );
 
     const handleCityTouch = useCallback(
