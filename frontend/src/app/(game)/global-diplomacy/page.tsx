@@ -18,7 +18,8 @@ export default function GlobalDiplomacyPage() {
         if (!currentWorld) return;
         if (!myGeneral) fetchMyGeneral(currentWorld.id).catch(() => {});
         loadAll(currentWorld.id);
-    }, [currentWorld, myGeneral, fetchMyGeneral, loadAll]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [currentWorld?.id]);
 
     const nationStats = useMemo(
         () =>
