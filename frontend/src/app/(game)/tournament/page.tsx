@@ -142,7 +142,7 @@ export default function TournamentPage() {
     const generalMap = useMemo(() => new Map(generals.map((g) => [g.id, g])), [generals]);
     const nationMap = useMemo(() => new Map(nations.map((n) => [n.id, n])), [nations]);
 
-    const isAdmin = myGeneral && (myGeneral.officerLevel ?? 0) >= 12;
+    const isAdmin = myGeneral && (myGeneral.officerLevel ?? 0) >= 20;
 
     const handleAdvancePhase = async () => {
         if (!currentWorld || !isAdmin) return;

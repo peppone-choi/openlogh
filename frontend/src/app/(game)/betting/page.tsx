@@ -513,7 +513,7 @@ export default function BettingPage() {
                 )}
 
                 {/* Phase Gate Control (admin) */}
-                {myGeneral && (myGeneral.officerLevel ?? 0) >= 12 && (
+                {myGeneral && (myGeneral.officerLevel ?? 0) >= 20 && (
                     <Card>
                         <CardContent className="py-2 px-4">
                             <div className="flex items-center justify-between">

@@ -12,7 +12,7 @@ import { NationBadge } from '@/components/game/nation-badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { formatOfficerLevelText, isOfficerSet, formatCityLevelBadge } from '@/lib/game-utils';
+import { formatOfficerLevelText, isOfficerSet, formatCityLevelBadge, getSpecialNationKey } from '@/lib/game-utils';
 import { nationManagementApi } from '@/lib/gameApi';
 import type { General, Nation } from '@/types';
 
@@ -48,7 +48,7 @@ function PermissionSelector({
         setSelected(current.map((g) => g.id));
     }, [nGens]); // eslint-disable-line react-hooks/exhaustive-deps
 
-    const candidates = nGens.filter((g) => g.officerLevel !== 12 && g.id !== myGen.id);
+    const candidates = nGens.filter((g) => g.officerLevel !== 20 && g.id !== myGen.id);
 
     const handleSave = async () => {
         if (!nat) return;
@@ -121,12 +121,12 @@ type OfficerSlot = {
     statRequirement: 'strength' | 'intel' | 'any';
 };
 
-function getNationChiefLevel(nationLevel: number): number {
-    if (nationLevel >= 7) return 5;
-    if (nationLevel >= 5) return 7;
-    if (nationLevel >= 3) return 9;
-    if (nationLevel >= 1) return 11;
-    return 11;
+function getNationChiefLevel(nationLevel: number, nationTypeCode?: string): number {
+    if (getSpecialNationKey(nationTypeCode)) return 8;
+    if (nationLevel >= 9) return 5;
+    if (nationLevel >= 8) return 7;
+    if (nationLevel >= 7) return 9;
+    return 13;
 }
 
 export default function PersonnelPage() {
@@ -158,9 +158,10 @@ export default function PersonnelPage() {
 
     const meLevel = myGeneral?.officerLevel ?? 0;
     const nationLevel = nation?.level ?? 0;
-    const minChiefLevel = getNationChiefLevel(nationLevel);
+    const nationTypeCode = nation?.typeCode;
+    const minChiefLevel = getNationChiefLevel(nationLevel, nationTypeCode);
     const canManage = meLevel >= 5;
-    const isKing = meLevel === 12;
+    const isKing = meLevel === 20;
 
     // All generals in my nation (excluding the king for appointment candidates)
     const nationGenerals = useMemo(() => {
@@ -182,16 +183,16 @@ export default function PersonnelPage() {
 
     // Candidates for officer appointment
     const candidatesStrength = useMemo(
-        () => nationGenerals.filter((g) => g.officerLevel !== 12 && g.strength >= chiefStatMin),
+        () => nationGenerals.filter((g) => g.officerLevel !== 20 && g.strength >= chiefStatMin),
         [nationGenerals, chiefStatMin]
     );
 
     const candidatesIntel = useMemo(
-        () => nationGenerals.filter((g) => g.officerLevel !== 12 && g.intel >= chiefStatMin),
+        () => nationGenerals.filter((g) => g.officerLevel !== 20 && g.intel >= chiefStatMin),
         [nationGenerals, chiefStatMin]
     );
 
-    const candidatesAny = useMemo(() => nationGenerals.filter((g) => g.officerLevel !== 12), [nationGenerals]);
+    const candidatesAny = useMemo(() => nationGenerals.filter((g) => g.officerLevel !== 20), [nationGenerals]);
 
     // Officer slots for the nation
     const officerSlots = useMemo<OfficerSlot[]>(() => {
@@ -203,11 +204,11 @@ export default function PersonnelPage() {
             }
         });
 
-        for (let level = 12; level >= minChiefLevel; level--) {
+        for (let level = 19; level >= minChiefLevel; level--) {
             const statReq: 'strength' | 'intel' | 'any' = level === 11 ? 'any' : level % 2 === 0 ? 'strength' : 'intel';
             slots.push({
                 level,
-                label: formatOfficerLevelText(level, nationLevel),
+                label: formatOfficerLevelText(level, nationLevel, false, nationTypeCode),
                 general: generalByLevel.get(level) ?? null,
                 isLocked: isOfficerSet(chiefSet, level),
                 statRequirement: statReq,
@@ -391,7 +392,7 @@ export default function PersonnelPage() {
                 <CardContent className="space-y-2">
                     {(() => {
                         const rows: React.ReactElement[] = [];
-                        for (let i = 12; i >= minChiefLevel; i -= 2) {
+                        for (let i = 19; i >= minChiefLevel; i -= 2) {
                             const slot1 = officerSlots.find((s) => s.level === i);
                             const slot2 = officerSlots.find((s) => s.level === i - 1);
                             rows.push(
@@ -463,7 +464,7 @@ export default function PersonnelPage() {
                     </CardHeader>
                     <CardContent className="space-y-3">
                         {officerSlots
-                            .filter((slot) => slot.level >= minChiefLevel && slot.level < 12)
+                            .filter((slot) => slot.level >= minChiefLevel && slot.level < 20)
                             .map((slot) => {
                                 const candidates = getCandidatesForLevel(slot.level);
                                 const locked = slot.isLocked && meLevel < 12;
@@ -510,7 +511,7 @@ export default function PersonnelPage() {
                                                     {g.officerLevel === slot.level
                                                         ? ' (현재)'
                                                         : g.officerLevel > 1
-                                                          ? ` (${formatOfficerLevelText(g.officerLevel, nationLevel)})`
+                                                          ? ` (${formatOfficerLevelText(g.officerLevel, nationLevel, false, nationTypeCode)})`
                                                           : ''}
                                                 </option>
                                             ))}
@@ -550,7 +551,7 @@ export default function PersonnelPage() {
                     </CardHeader>
                     <CardContent className="space-y-3">
                         {[4, 3, 2].map((level) => {
-                            const levelLabel = formatOfficerLevelText(level, nationLevel);
+                            const levelLabel = formatOfficerLevelText(level, nationLevel, false, nationTypeCode);
                             const candidates =
                                 level === 3 ? candidatesIntel : level === 4 ? candidatesStrength : candidatesAny;
                             const nationCities = cities.filter((c) => c.nationId === myGeneral.nationId);
@@ -637,9 +638,9 @@ export default function PersonnelPage() {
                             <thead>
                                 <tr className="border-b border-muted/50">
                                     <th className="text-left py-1 px-2 w-32">도시</th>
-                                    <th className="text-left py-1 px-2">{formatOfficerLevelText(4, nationLevel)}</th>
-                                    <th className="text-left py-1 px-2">{formatOfficerLevelText(3, nationLevel)}</th>
-                                    <th className="text-left py-1 px-2">{formatOfficerLevelText(2, nationLevel)}</th>
+                                    <th className="text-left py-1 px-2">{formatOfficerLevelText(4, nationLevel, false, nationTypeCode)}</th>
+                                    <th className="text-left py-1 px-2">{formatOfficerLevelText(3, nationLevel, false, nationTypeCode)}</th>
+                                    <th className="text-left py-1 px-2">{formatOfficerLevelText(2, nationLevel, false, nationTypeCode)}</th>
                                 </tr>
                             </thead>
                             <tbody>

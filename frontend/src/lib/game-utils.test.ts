@@ -6,6 +6,7 @@ import {
     getCrewTypeName,
     getNationTypeLabel,
     formatOfficerLevelText,
+    getSpecialNationKey,
     parseCrewTypeCode,
     stripCodePrefix,
 } from '@/lib/game-utils';
@@ -89,5 +90,35 @@ describe('officer level text with ruler level 20', () => {
     it('returns default name for low officer levels regardless of nation level', () => {
         expect(formatOfficerLevelText(4, 9)).toBe('태수');
         expect(formatOfficerLevelText(1, 9)).toBe('일반');
+    });
+});
+
+describe('황건(태평도) special officer ranks', () => {
+    it('getSpecialNationKey maps 태평도 to 황건', () => {
+        expect(getSpecialNationKey('태평도')).toBe('황건');
+    });
+
+    it('getSpecialNationKey returns null for non-special types', () => {
+        expect(getSpecialNationKey('유가')).toBeNull();
+        expect(getSpecialNationKey(undefined)).toBeNull();
+        expect(getSpecialNationKey(null)).toBeNull();
+    });
+
+    it('returns 천공장군 for officer level 20 with 태평도 type', () => {
+        expect(formatOfficerLevelText(20, 2, false, '태평도')).toBe('천공장군');
+    });
+
+    it('returns 지공장군 for level 19 and 인공장군 for level 18', () => {
+        expect(formatOfficerLevelText(19, 2, false, '태평도')).toBe('지공장군');
+        expect(formatOfficerLevelText(18, 2, false, '태평도')).toBe('인공장군');
+    });
+
+    it('uses 황건 ranks regardless of nationLevel', () => {
+        expect(formatOfficerLevelText(20, 9, false, '태평도')).toBe('천공장군');
+        expect(formatOfficerLevelText(17, 0, false, '태평도')).toBe('신상사');
+    });
+
+    it('falls back to default for levels below 황건 rank map', () => {
+        expect(formatOfficerLevelText(5, 2, false, '태평도')).toBe('졸장');
     });
 });

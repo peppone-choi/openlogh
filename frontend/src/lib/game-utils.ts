@@ -270,11 +270,53 @@ const OfficerLevelMapByNationLevel: Record<number, Record<number, string>> = {
     },
 };
 
-export function formatOfficerLevelText(officerLevel: number, nationLevel?: number, hasNation?: boolean): string {
+// --- Special nation officer maps (황건 etc.) ---
+
+const SpecialNationOfficerMap: Record<string, Record<number, string>> = {
+    황건: {
+        20: '천공장군',
+        19: '지공장군',
+        18: '인공장군',
+        17: '신상사',
+        16: '신상사',
+        15: '대방거수',
+        14: '대방거수',
+        13: '방두좨주',
+        12: '방두좨주',
+        11: '소방거수',
+        10: '소방거수',
+        9: '좨주',
+        8: '좨주',
+    },
+};
+
+const SPECIAL_NATION_TYPE_MAP: Record<string, string> = {
+    태평도: '황건',
+};
+
+export function getSpecialNationKey(typeCode: string | undefined | null): string | null {
+    if (!typeCode) return null;
+    return SPECIAL_NATION_TYPE_MAP[typeCode] ?? null;
+}
+
+export function formatOfficerLevelText(
+    officerLevel: number,
+    nationLevel?: number,
+    hasNation?: boolean,
+    nationTypeCode?: string,
+): string {
     if (officerLevel <= 0 && hasNation) return '일반';
 
     if (officerLevel < 5) {
         return OfficerLevelMapDefault[officerLevel] ?? '???';
+    }
+
+    const specialKey = getSpecialNationKey(nationTypeCode);
+    if (specialKey) {
+        const specialMap = SpecialNationOfficerMap[specialKey];
+        if (specialMap) {
+            return specialMap[officerLevel] ?? OfficerLevelMapDefault[officerLevel] ?? '???';
+        }
     }
 
     const nationMap =

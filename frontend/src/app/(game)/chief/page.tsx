@@ -515,7 +515,7 @@ export default function ChiefPage() {
     const npcGenerals = nationGenerals.filter((g) => g.npcState > 0);
     const playerGenerals = nationGenerals.filter((g) => g.npcState === 0);
     const totalCrew = nationGenerals.reduce((sum, g) => sum + g.crew, 0);
-    const isChief = myGeneral.officerLevel === 12;
+    const isChief = myGeneral.officerLevel === 20;
 
     return (
         <div className="p-4 space-y-4 max-w-3xl mx-auto">
