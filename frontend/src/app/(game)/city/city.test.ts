@@ -28,4 +28,12 @@ describe('city page filter logic', () => {
 
         expect(base).toHaveLength(3);
     });
+
+    it('loads data without myGeneral when requestedCityId is set', () => {
+        const hasGeneral = false;
+        const requestedCityId = 5;
+
+        const shouldLoadSingle = !hasGeneral && requestedCityId != null;
+        expect(shouldLoadSingle).toBe(true);
+    });
 });

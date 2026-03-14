@@ -146,21 +146,28 @@ function CityPageContent() {
     }, [requestedCityId, myGeneral?.cityId]);
 
     const loadCityData = useCallback(async () => {
-        if (!currentWorld || !myGeneral) return;
+        if (!currentWorld) return;
 
         const mapCode = (currentWorld.config as Record<string, string>)?.mapCode ?? 'che';
 
         try {
+            const hasGeneral = !!myGeneral;
             const [nationsRes, citiesRes, generalsRes, mapRes, myNationRes] = await Promise.all([
                 nationApi.listByWorld(currentWorld.id),
-                cityApi.listVisibleByWorld(currentWorld.id),
+                hasGeneral
+                    ? cityApi.listVisibleByWorld(currentWorld.id)
+                    : requestedCityId != null
+                      ? cityApi.get(requestedCityId).then((r) => ({ data: r.data ? [r.data] : [] }))
+                      : Promise.resolve({ data: [] as City[] }),
                 generalApi.listByWorld(currentWorld.id),
                 mapApi.get(mapCode),
-                myGeneral.nationId > 0 ? nationApi.get(myGeneral.nationId) : Promise.resolve({ data: null }),
+                hasGeneral && myGeneral.nationId > 0
+                    ? nationApi.get(myGeneral.nationId)
+                    : Promise.resolve({ data: null }),
             ]);
 
             let allCities = citiesRes.data;
-            if (requestedCityId != null && !allCities.some((c) => c.id === requestedCityId)) {
+            if (hasGeneral && requestedCityId != null && !allCities.some((c) => c.id === requestedCityId)) {
                 try {
                     const singleRes = await cityApi.get(requestedCityId);
                     if (singleRes.data) allCities = [singleRes.data, ...allCities];
