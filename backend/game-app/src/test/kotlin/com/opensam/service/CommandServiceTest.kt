@@ -187,6 +187,47 @@ class CommandServiceTest {
     }
 
     @Test
+    fun `general command categories match legacy 6-group structure`() {
+        val legacyCategories = setOf("개인", "내정", "군사", "인사", "계략", "국가")
+        val testCases = mapOf(
+            "휴식" to "개인", "요양" to "개인", "단련" to "개인",
+            "농지개간" to "내정", "상업투자" to "내정", "기술연구" to "내정",
+            "징병" to "군사", "모병" to "군사", "출병" to "군사", "첩보" to "군사",
+            "이동" to "인사", "강행" to "인사", "등용" to "인사", "임관" to "인사",
+            "선동" to "계략", "탈취" to "계략", "파괴" to "계략", "화계" to "계략",
+            "건국" to "국가", "거병" to "국가", "증여" to "국가", "헌납" to "국가",
+        )
+        for ((code, expected) in testCases) {
+            val method = service.javaClass.getDeclaredMethod("generalCategory", String::class.java)
+            method.isAccessible = true
+            val actual = method.invoke(service, code) as String
+            assertEquals(expected, actual, "Command '$code' should be in category '$expected' but was '$actual'")
+            assertTrue(legacyCategories.contains(actual), "Category '$actual' is not in legacy categories")
+        }
+    }
+
+    @Test
+    fun `nation command categories match legacy 7-group structure`() {
+        val legacyCategories = setOf("휴식", "인사", "외교", "특수", "전략", "기타", "연구")
+        val testCases = mapOf(
+            "Nation휴식" to "휴식",
+            "발령" to "인사", "포상" to "인사", "몰수" to "인사",
+            "선전포고" to "외교", "불가침제의" to "외교", "종전제의" to "외교",
+            "초토화" to "특수", "천도" to "특수", "증축" to "특수",
+            "필사즉생" to "전략", "급습" to "전략", "수몰" to "전략",
+            "국기변경" to "기타", "국호변경" to "기타",
+            "극병연구" to "연구", "화시병연구" to "연구",
+        )
+        for ((code, expected) in testCases) {
+            val method = service.javaClass.getDeclaredMethod("nationCategory", String::class.java)
+            method.isAccessible = true
+            val actual = method.invoke(service, code) as String
+            assertEquals(expected, actual, "Nation command '$code' should be in '$expected' but was '$actual'")
+            assertTrue(legacyCategories.contains(actual), "Category '$actual' is not in legacy categories")
+        }
+    }
+
+    @Test
     fun `repeatNationTurns rejects mismatched nation before mutating`() {
         val general = createGeneral(officerLevel = 5)
         val world = WorldState(id = 1, name = "world", scenarioCode = "test", realtimeMode = false)
