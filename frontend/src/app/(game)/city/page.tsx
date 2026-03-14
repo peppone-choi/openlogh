@@ -159,8 +159,18 @@ function CityPageContent() {
                 myGeneral.nationId > 0 ? nationApi.get(myGeneral.nationId) : Promise.resolve({ data: null }),
             ]);
 
+            let allCities = citiesRes.data;
+            if (requestedCityId != null && !allCities.some((c) => c.id === requestedCityId)) {
+                try {
+                    const singleRes = await cityApi.get(requestedCityId);
+                    if (singleRes.data) allCities = [singleRes.data, ...allCities];
+                } catch {
+                    /* city not found — ignore */
+                }
+            }
+
             setNations(nationsRes.data);
-            setCities(citiesRes.data);
+            setCities(allCities);
             setGenerals(generalsRes.data);
             setNation(myNationRes.data);
 
@@ -174,7 +184,7 @@ function CityPageContent() {
         } finally {
             setLoading(false);
         }
-    }, [currentWorld, myGeneral]);
+    }, [currentWorld, myGeneral, requestedCityId]);
 
     useEffect(() => {
         loadCityData();
@@ -242,8 +252,11 @@ function CityPageContent() {
     }, [generals]);
 
     const sortedCities = useMemo(() => {
-        const base = filterCityId > 0 ? cities.filter((c) => c.id === filterCityId) : cities;
-        return sortCities(base, sortKey);
+        if (filterCityId > 0) {
+            const filtered = cities.filter((c) => c.id === filterCityId);
+            if (filtered.length > 0) return sortCities(filtered, sortKey);
+        }
+        return sortCities(cities, sortKey);
     }, [cities, sortKey, filterCityId]);
 
     const toggleExpand = useCallback((cityId: number) => {

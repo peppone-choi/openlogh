@@ -3294,12 +3294,14 @@ class GeneralAI(
      * Higher nation level = more officer slots available.
      */
     private fun getNationChiefLevel(nationLevel: Int): Int {
-        return when {
-            nationLevel >= 7 -> 5
-            nationLevel >= 5 -> 6
-            nationLevel >= 3 -> 7
-            nationLevel >= 2 -> 8
-            else -> 9
+        return when (nationLevel) {
+            7 -> 5
+            6 -> 5
+            5 -> 7
+            4 -> 7
+            3 -> 9
+            2 -> 9
+            else -> 11
         }
     }
 

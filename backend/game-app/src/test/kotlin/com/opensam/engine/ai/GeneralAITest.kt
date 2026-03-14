@@ -960,4 +960,19 @@ class GeneralAITest {
         assertNull(result)
         verifyNoInteractions(mockPorts)
     }
+
+    @Test
+    fun `getNationChiefLevel matches legacy exact mapping`() {
+        val method = GeneralAI::class.java.getDeclaredMethod("getNationChiefLevel", Int::class.java)
+        method.isAccessible = true
+
+        assertEquals(5, method.invoke(ai, 7), "Emperor (7) should return 5")
+        assertEquals(5, method.invoke(ai, 6), "King (6) should return 5")
+        assertEquals(7, method.invoke(ai, 5), "Duke (5) should return 7")
+        assertEquals(7, method.invoke(ai, 4), "Marquis (4) should return 7")
+        assertEquals(9, method.invoke(ai, 3), "Prefect (3) should return 9")
+        assertEquals(9, method.invoke(ai, 2), "Prefect (2) should return 9")
+        assertEquals(11, method.invoke(ai, 1), "Below (1) should return 11")
+        assertEquals(11, method.invoke(ai, 0), "Below (0) should return 11")
+    }
 }
