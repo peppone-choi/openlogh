@@ -51,16 +51,16 @@ export function formatGeneralTypeCall(
     if (leadership < 40) {
         if (strength + intel < 40) return '아둔';
         if (intel >= chiefStatMin && strength < intel * 0.8) return '학자';
-        if (strength >= chiefStatMin && intel < strength * 0.8) return '장사';
+        if (strength >= chiefStatMin && intel < strength * 0.8) return '장사(무투파)';
         return '명사';
     }
 
     const maxStat = Math.max(leadership, strength, intel);
     const sum2Stat = Math.min(leadership + strength, strength + intel, intel + leadership);
-    if (maxStat >= chiefStatMin + statGradeLevel && sum2Stat >= maxStat * 1.7) return '만능';
-    if (strength >= chiefStatMin - statGradeLevel && intel < strength * 0.8) return '용장';
-    if (intel >= chiefStatMin - statGradeLevel && strength < intel * 0.8) return '명장';
-    if (leadership >= chiefStatMin - statGradeLevel && strength + intel < leadership) return '차장';
+    if (maxStat >= chiefStatMin + statGradeLevel && sum2Stat >= maxStat * 1.7) return '만능(균형형)';
+    if (strength >= chiefStatMin - statGradeLevel && intel < strength * 0.8) return '용장(무력형)';
+    if (intel >= chiefStatMin - statGradeLevel && strength < intel * 0.8) return '명장(지력형)';
+    if (leadership >= chiefStatMin - statGradeLevel && strength + intel < leadership) return '차장(통솔형)';
     return '평범';
 }
 
@@ -305,8 +305,8 @@ const honorMap: [number, string][] = [
     [31360, '세계적'],
     [40960, '유명'],
     [45000, '명사'],
-    [51840, '호걸'],
-    [55000, '효웅'],
+    [51840, '호걸(영웅호걸)'],
+    [55000, '효웅(패자)'],
     [64000, '영웅'],
     [77440, '구세주'],
 ];
@@ -372,36 +372,36 @@ export const CREW_TYPE_NAMES: Record<number, string> = {
     0: '보병',
     1: '궁병',
     2: '기병',
-    3: '귀병',
-    4: '차병',
-    5: '노병',
-    6: '연노병',
+    3: '귀병(계략부대)',
+    4: '차병(공성병기)',
+    5: '노병(석궁부대)',
+    6: '연노병(연발석궁)',
     7: '근위기병',
-    8: '무당병',
-    9: '서량기병',
-    10: '등갑병',
+    8: '무당병(주술부대)',
+    9: '서량기병(서역기마)',
+    10: '등갑병(등나무갑옷)',
     11: '수군',
     1100: '보병',
-    1101: '청주병',
+    1101: '청주병(조조 정예)',
     1102: '수병',
     1103: '자객병',
     1104: '근위병',
-    1105: '등갑병',
-    1106: '백이병',
+    1105: '등갑병(등나무갑옷)',
+    1106: '백이병(유비 친위대)',
     1200: '궁병',
     1201: '궁기병',
-    1202: '연노병',
+    1202: '연노병(연발석궁)',
     1203: '강궁병',
     1204: '석궁병',
     1300: '기병',
-    1301: '백마병',
+    1301: '백마병(공손찬 정예)',
     1302: '중장기병',
     1303: '돌격기병',
-    1304: '철기병',
+    1304: '철기병(중갑기병)',
     1305: '수렵기병',
-    1306: '맹수병',
-    1307: '호표기병',
-    1400: '귀병',
+    1306: '맹수병(맹수조련)',
+    1307: '호표기병(조조 친위대)',
+    1400: '귀병(계략부대)',
     1401: '신귀병',
     1402: '백귀병',
     1403: '흑귀병',
@@ -410,10 +410,10 @@ export const CREW_TYPE_NAMES: Record<number, string> = {
     1406: '황귀병',
     1407: '천귀병',
     1408: '마귀병',
-    1500: '정란',
-    1501: '충차',
-    1502: '벽력거',
-    1503: '목우',
+    1500: '정란(공성사다리)',
+    1501: '충차(성문파괴차)',
+    1502: '벽력거(투석기)',
+    1503: '목우(보급차량)',
 };
 
 /** Base crew type subset (0-11) for dropdowns / UI selectors */
@@ -440,6 +440,29 @@ export function getCrewTypeName(crewTypeStr: string): string {
 /** Strip `che_` prefix from raw code for UI display (e.g. `che_유가` → `유가`). */
 export function stripCodePrefix(code: string): string {
     return code.replace(/^che_/, '');
+}
+
+// --- Nation type labels (제자백가 + descriptions) ---
+
+const NATION_TYPE_LABELS: Record<string, string> = {
+    che_도적: '도적(약탈형)',
+    che_명가: '명가(논리학파)',
+    che_음양가: '음양가(자연철학)',
+    che_종횡가: '종횡가(외교학파)',
+    che_불가: '불가(불교)',
+    che_오두미도: '오두미도(도교종파)',
+    che_태평도: '태평도(도교종파)',
+    che_도가: '도가(노자·장자)',
+    che_묵가: '묵가(겸애학파)',
+    che_덕가: '덕가(덕치주의)',
+    che_병가: '병가(군사학파)',
+    che_유가: '유가(유교)',
+    che_법가: '법가(법치주의)',
+};
+
+/** Get nation type display label with explanation (e.g. `che_유가` → `유가(유교)`). */
+export function getNationTypeLabel(typeCode: string): string {
+    return NATION_TYPE_LABELS[typeCode] ?? stripCodePrefix(typeCode);
 }
 
 // --- Personality names (legacy che_* codes + compatibility aliases) ---
@@ -478,14 +501,14 @@ export function getPersonalityName(code: string | undefined | null): string {
 // --- Region names ---
 
 export const REGION_NAMES: Record<number, string> = {
-    1: '하북',
-    2: '중원',
-    3: '서북',
-    4: '서촉',
-    5: '남중',
-    6: '초',
-    7: '오월',
-    8: '동이',
+    1: '하북(북부)',
+    2: '중원(중부)',
+    3: '서북(서부)',
+    4: '서촉(서남부)',
+    5: '남중(최남단)',
+    6: '초(중남부)',
+    7: '오월(동남부)',
+    8: '동이(동북부)',
 };
 
 // --- Stat color (ability value → color) ---
@@ -511,12 +534,12 @@ export function trustColor(trust: number): string {
 // --- Nation level labels ---
 
 export const NATION_LEVEL_LABELS: Record<number, string> = {
-    0: '두목',
-    1: '영주',
+    0: '두목(산적우두머리)',
+    1: '영주(지방호족)',
     2: '군벌',
-    3: '주자사',
-    4: '주목',
-    5: '공',
+    3: '주자사(감찰관)',
+    4: '주목(주 총독)',
+    5: '공(제후)',
     6: '왕',
     7: '황제',
 };
@@ -524,14 +547,14 @@ export const NATION_LEVEL_LABELS: Record<number, string> = {
 // --- City level names ---
 
 export const CITY_LEVEL_NAMES: Record<number, string> = {
-    1: '수',
-    2: '진',
-    3: '관',
-    4: '이',
-    5: '소',
-    6: '중',
-    7: '대',
-    8: '특',
+    1: '수(초소)',
+    2: '진(진지)',
+    3: '관(관문)',
+    4: '이(향촌)',
+    5: '소(소도시)',
+    6: '중(중도시)',
+    7: '대(대도시)',
+    8: '특(특별시)',
 };
 
 // --- City level badge (legacy getCityLevelList) ---
@@ -589,7 +612,7 @@ export function calcTournamentTerm(turnTerm: number): number {
 
 // --- Tournament type & step formatting (legacy formatTournament) ---
 
-const TOURNAMENT_TYPE_MAP = ['전력전', '통솔전', '일기토', '설전'];
+const TOURNAMENT_TYPE_MAP = ['전력전(전투력 대결)', '통솔전(지휘력 대결)', '일기토(1:1 무력전)', '설전(1:1 지력전)'];
 
 export function formatTournamentType(type: number | null | undefined): string {
     if (type === null || type === undefined) return '?';

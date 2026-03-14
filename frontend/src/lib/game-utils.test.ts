@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getCrewTypeName, parseCrewTypeCode, stripCodePrefix } from '@/lib/game-utils';
+import { getCrewTypeName, getNationTypeLabel, parseCrewTypeCode, stripCodePrefix } from '@/lib/game-utils';
 
 describe('crew type parsing', () => {
     it('parses legacy prefixed crew type', () => {
@@ -37,5 +37,18 @@ describe('stripCodePrefix', () => {
     it('returns code unchanged when no che_ prefix', () => {
         expect(stripCodePrefix('농업')).toBe('농업');
         expect(stripCodePrefix('호전')).toBe('호전');
+    });
+});
+
+describe('getNationTypeLabel', () => {
+    it('returns label with explanation for known types', () => {
+        expect(getNationTypeLabel('che_유가')).toBe('유가(유교)');
+        expect(getNationTypeLabel('che_법가')).toBe('법가(법치주의)');
+        expect(getNationTypeLabel('che_병가')).toBe('병가(군사학파)');
+        expect(getNationTypeLabel('che_도적')).toBe('도적(약탈형)');
+    });
+
+    it('falls back to stripCodePrefix for unknown types', () => {
+        expect(getNationTypeLabel('che_커스텀')).toBe('커스텀');
     });
 });

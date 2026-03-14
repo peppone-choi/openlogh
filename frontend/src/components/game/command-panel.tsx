@@ -1081,23 +1081,10 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
                 )}
 
                 {showSelector && (
-                    <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 p-4">
-                        <div className="w-full max-w-2xl rounded-md border border-gray-700 bg-background shadow-xl">
-                            <div className="flex items-center justify-between border-b border-gray-700 px-4 py-2">
-                                <p className="text-sm font-semibold text-gray-100">
-                                    명령 선택 (
-                                    {selectedTurnList
-                                        .map((idx) => {
-                                            const ym = getTurnYearMonth(
-                                                idx,
-                                                currentWorld?.currentYear ?? 0,
-                                                currentWorld?.currentMonth ?? 1
-                                            );
-                                            return `${ym.year}년 ${ym.month}월`;
-                                        })
-                                        .join(', ')}
-                                    )
-                                </p>
+                    <div className="fixed inset-0 z-50 flex items-end sm:items-start justify-center bg-black/60 sm:p-4">
+                        <div className="w-full max-w-2xl rounded-t-xl sm:rounded-md border border-gray-700 bg-background shadow-xl max-h-[85vh] sm:max-h-[80vh] overflow-y-auto">
+                            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-700 px-4 py-2 bg-background">
+                                <p className="text-sm font-semibold text-gray-100">명령 선택 ({selectedCount}턴)</p>
                                 <Button size="sm" variant="ghost" onClick={() => setShowSelector(false)}>
                                     닫기
                                 </Button>

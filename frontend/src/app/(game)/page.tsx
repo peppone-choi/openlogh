@@ -47,8 +47,8 @@ export default function GameDashboard() {
     const { myGeneral } = useGeneralStore();
     const { generals } = useGameStore();
     const [frontInfo, setFrontInfo] = useState<FrontInfoResponse | null>(null);
-    const [lastRecordId, setLastRecordId] = useState<number | undefined>();
-    const [lastHistoryId, setLastHistoryId] = useState<number | undefined>();
+    const lastRecordIdRef = useRef<number | undefined>(undefined);
+    const lastHistoryIdRef = useRef<number | undefined>(undefined);
     const [loading, setLoading] = useState(true);
     const loadFrontInfoRef = useRef<() => Promise<void>>(async () => {});
 
@@ -70,7 +70,7 @@ export default function GameDashboard() {
     const loadFrontInfo = useCallback(async () => {
         if (!currentWorld) return;
         try {
-            const { data } = await frontApi.getInfo(currentWorld.id, lastRecordId, lastHistoryId);
+            const { data } = await frontApi.getInfo(currentWorld.id, lastRecordIdRef.current, lastHistoryIdRef.current);
             setFrontInfo(data);
 
             // Sync live year/month from API back to world store so layout header stays current
@@ -94,14 +94,14 @@ export default function GameDashboard() {
 
             const lastRecord = data.recentRecord.general[0]?.id;
             const lastHistory = data.recentRecord.history[0]?.id;
-            if (lastRecord) setLastRecordId(lastRecord);
-            if (lastHistory) setLastHistoryId(lastHistory);
+            if (lastRecord) lastRecordIdRef.current = lastRecord;
+            if (lastHistory) lastHistoryIdRef.current = lastHistory;
         } catch {
             /* ignore */
         } finally {
             setLoading(false);
         }
-    }, [currentWorld, lastRecordId, lastHistoryId, updateWorldTime]);
+    }, [currentWorld, updateWorldTime]);
 
     useEffect(() => {
         loadFrontInfoRef.current = loadFrontInfo;

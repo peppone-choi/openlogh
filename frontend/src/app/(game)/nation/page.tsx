@@ -28,6 +28,7 @@ import {
     CITY_LEVEL_NAMES,
     NATION_LEVEL_LABELS,
     stripCodePrefix,
+    getNationTypeLabel,
 } from '@/lib/game-utils';
 import { formatGameLogDate } from '@/lib/gameLogDate';
 import { formatLog } from '@/lib/formatLog';
@@ -358,7 +359,7 @@ function NationPageContent() {
                                 <Badge variant="secondary">
                                     {NATION_LEVEL_LABELS[nation.level] ?? `Lv.${nation.level}`}
                                 </Badge>
-                                <Badge variant="outline">{stripCodePrefix(nation.typeCode)}</Badge>
+                                <Badge variant="outline">{getNationTypeLabel(nation.typeCode)}</Badge>
                                 {capitalCity && (
                                     <Badge variant="outline" className="text-cyan-400">
                                         수도: {capitalCity.name}

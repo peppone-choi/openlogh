@@ -38,6 +38,10 @@ export function CommandSelectForm({
     };
 
     const handleSelectCmd = (actionCode: string) => {
+        if (!COMMAND_ARGS[actionCode]) {
+            onSelect(actionCode);
+            return;
+        }
         setSelectedCmd(actionCode);
         setPendingArg(undefined);
     };
@@ -58,41 +62,44 @@ export function CommandSelectForm({
                             <div className="flex flex-wrap gap-1">
                                 {commandTable[cat]
                                     .filter((cmd) => !cmd.actionCode.startsWith('NPC'))
-                                    .map((cmd) => (
-                                        <Badge
-                                            key={cmd.actionCode}
-                                            variant={selectedCmd === cmd.actionCode ? 'default' : 'secondary'}
-                                            className={`cursor-pointer text-xs ${
-                                                !cmd.enabled ? 'opacity-40 cursor-not-allowed' : ''
-                                            }`}
-                                            onClick={() => {
-                                                if (cmd.enabled) handleSelectCmd(cmd.actionCode);
-                                            }}
-                                            title={cmd.reason ?? undefined}
-                                        >
-                                            {cmd.name}
-                                            {realtimeMode && (
-                                                <span className="ml-1 text-[10px] text-gray-300">
-                                                    ({cmd.commandPointCost}CP/{cmd.durationSeconds}s)
-                                                </span>
-                                            )}
-                                        </Badge>
-                                    ))}
+                                    .map((cmd) => {
+                                        const needsArgs = !!COMMAND_ARGS[cmd.actionCode];
+                                        return (
+                                            <Badge
+                                                key={cmd.actionCode}
+                                                variant={selectedCmd === cmd.actionCode ? 'default' : 'secondary'}
+                                                className={`cursor-pointer text-xs ${
+                                                    !cmd.enabled ? 'opacity-40 cursor-not-allowed' : ''
+                                                }`}
+                                                onClick={() => {
+                                                    if (cmd.enabled) handleSelectCmd(cmd.actionCode);
+                                                }}
+                                                title={
+                                                    cmd.reason ??
+                                                    (needsArgs ? '클릭하여 세부 설정' : '클릭하여 즉시 예약')
+                                                }
+                                            >
+                                                {cmd.name}
+                                                {needsArgs && <span className="ml-0.5 text-amber-300">⚙</span>}
+                                                {realtimeMode && (
+                                                    <span className="ml-1 text-[10px] text-gray-300">
+                                                        ({cmd.commandPointCost}CP/{cmd.durationSeconds}s)
+                                                    </span>
+                                                )}
+                                            </Badge>
+                                        );
+                                    })}
                             </div>
                         </TabsContent>
                     ))}
                 </Tabs>
 
-                {selectedCmd && (
+                {selectedCmd && hasArgForm && (
                     <>
-                        {hasArgForm && <CommandArgForm actionCode={selectedCmd} onSubmit={handleArgSubmit} />}
+                        <CommandArgForm actionCode={selectedCmd} onSubmit={handleArgSubmit} />
 
                         <div className="flex gap-2">
-                            <Button
-                                size="sm"
-                                onClick={() => handleReserve(pendingArg)}
-                                disabled={hasArgForm && !pendingArg}
-                            >
+                            <Button size="sm" onClick={() => handleReserve(pendingArg)} disabled={!pendingArg}>
                                 예약
                             </Button>
                             <Button size="sm" variant="ghost" onClick={onCancel}>
