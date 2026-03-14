@@ -275,4 +275,12 @@ class CommandServiceTest {
             )
         }
     }
+
+    @Test
+    fun `world config openingPartYears key is recognized by CommandService`() {
+        val world = WorldState(id = 1, name = "world", scenarioCode = "test", realtimeMode = false)
+        world.config["openingPartYears"] = 0
+        val value = (world.config["openingPartYears"] as? Number)?.toInt()
+        assertEquals(0, value)
+    }
 }

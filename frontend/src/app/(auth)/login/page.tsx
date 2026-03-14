@@ -436,11 +436,8 @@ function LoginPageContent() {
                         </div>
                     )}
 
-                    <p className="mt-4 text-center text-sm text-muted-foreground">
-                        계정이 없으신가요?{' '}
-                        <Link href="/register" className="text-primary hover:underline">
-                            회원가입
-                        </Link>
+                    <p className="mt-4 text-center text-xs text-muted-foreground">
+                        가입 버튼으로 바로 계정을 생성할 수 있습니다.
                     </p>
                 </CardContent>
             </Card>

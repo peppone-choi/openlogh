@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*
 @RequestMapping("/api")
 class HistoryController(
     private val historyService: HistoryService,
+    private val worldStateRepository: com.opensam.repository.WorldStateRepository,
 ) {
     @GetMapping("/worlds/{worldId}/history")
     fun getWorldHistory(
@@ -22,7 +23,15 @@ class HistoryController(
         } else {
             historyService.getWorldHistory(worldId)
         }
-        return ResponseEntity.ok(data.map { MessageResponse.from(it) })
+        val world = worldStateRepository.findById(worldId.toShort()).orElse(null)
+        val currentYear = world?.currentYear?.toInt() ?: Int.MAX_VALUE
+        val currentMonth = world?.currentMonth?.toInt() ?: 12
+        val filtered = data.filter { msg ->
+            val msgYear = (msg.payload["year"] as? Number)?.toInt() ?: 0
+            val msgMonth = (msg.payload["month"] as? Number)?.toInt() ?: 1
+            msgYear < currentYear || (msgYear == currentYear && msgMonth <= currentMonth)
+        }
+        return ResponseEntity.ok(filtered.map { MessageResponse.from(it) })
     }
 
     @GetMapping("/worlds/{worldId}/records")
