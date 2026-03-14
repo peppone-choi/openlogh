@@ -80,12 +80,12 @@ class che_기술연구(general: General, env: CommandEnv, arg: Map<String, Any>?
         val exp = (score * 0.7).toInt()
         val ded = scoreInt
 
-        val josaUl = pickJosa(actionName, "을")
-        val logMessage = when (pick) {
-            "fail" -> "${actionName}${josaUl} <span class='ev_failed'>실패</span>하여 <C>$scoreInt</> 상승했습니다. <1>$date</>"
-            "success" -> "${actionName}${josaUl} <S>성공</>하여 <C>$scoreInt</> 상승했습니다. <1>$date</>"
-            else -> "${actionName}${josaUl} 하여 <C>$scoreInt</> 상승했습니다. <1>$date</>"
-        }
+         val josaUl = pickJosa(actionName, "을")
+         val logMessage = when (pick) {
+             "fail" -> "${actionName}${josaUl} <R>실패</>하여 <C>$scoreInt</> 상승했습니다. <1>$date</>"
+             "success" -> "${actionName}${josaUl} <S>성공</>하여 <C>$scoreInt</> 상승했습니다. <1>$date</>"
+             else -> "${actionName}${josaUl} 하여 <C>$scoreInt</> 상승했습니다. <1>$date</>"
+         }
         pushLog(logMessage)
         pushHistoryLog(logMessage)
         pushLog("<Y>${general.name}</>${pickJosa(general.name, "이")} ${actionName}${josaUl} 수행했습니다.")

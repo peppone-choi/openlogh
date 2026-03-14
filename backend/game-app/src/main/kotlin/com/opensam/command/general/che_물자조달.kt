@@ -70,12 +70,12 @@ class che_물자조달(general: General, env: CommandEnv, arg: Map<String, Any>?
         val exp = (finalScore * EXP_RATE).roundToInt()
         val ded = (finalScore * DED_RATE).roundToInt()
 
-        val scoreText = "%,d".format(finalScore)
-        val logMessage = when (pick) {
-            "fail" -> "조달을 <span class='ev_failed'>실패</span>하여 ${resName}을 <C>${scoreText}</> 조달했습니다. <1>$date</>"
-            "success" -> "조달을 <S>성공</>하여 ${resName}을 <C>${scoreText}</> 조달했습니다. <1>$date</>"
-            else -> "${resName}을 <C>${scoreText}</> 조달했습니다. <1>$date</>"
-        }
+         val scoreText = "%,d".format(finalScore)
+         val logMessage = when (pick) {
+             "fail" -> "조달을 <R>실패</>하여 ${resName}을 <C>${scoreText}</> 조달했습니다. <1>$date</>"
+             "success" -> "조달을 <S>성공</>하여 ${resName}을 <C>${scoreText}</> 조달했습니다. <1>$date</>"
+             else -> "${resName}을 <C>${scoreText}</> 조달했습니다. <1>$date</>"
+         }
         pushLog(logMessage)
         pushHistoryLog(logMessage)
         pushLog("<Y>${general.name}</>${pickJosa(general.name, "이")} 물자조달을 실행했습니다.")

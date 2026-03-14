@@ -299,4 +299,37 @@ class CommandExecutorTest {
         val selectedCity = harness.cityRepository.findById(movedCityId).orElseThrow()
         assertEquals(10L, selectedCity.nationId)
     }
+
+    @Test
+    fun `cooldown failure log includes command name with color tag`() = runBlocking {
+        val harness = InMemoryTurnHarness()
+        val world = WorldState(
+            id = 1, scenarioCode = "test", currentYear = 180, currentMonth = 1, tickSeconds = 300,
+            config = mutableMapOf("startyear" to 180),
+        )
+        val nation = Nation(id = 1, worldId = 1, name = "테스트국가", level = 1)
+        val city = City(id = 1, worldId = 1, name = "도시", nationId = 1, supplyState = 1)
+        val general = General(
+            id = 1, worldId = 1, name = "장수", nationId = 1, cityId = 1,
+            turnTime = OffsetDateTime.now(),
+        ).apply {
+            meta["next_execute"] = mutableMapOf<String, Any>("che_농지개간" to (180 * 12 + 5))
+        }
+        val env = CommandEnv(year = 180, month = 1, startYear = 180, worldId = 1)
+
+        harness.putWorld(world)
+        harness.putNation(nation)
+        harness.putCity(city)
+        harness.putGeneral(general)
+
+        val result = harness.commandExecutor.executeGeneralCommand(
+            actionCode = "che_농지개간", general = general, env = env, city = city, nation = nation,
+        )
+
+        assertTrue(!result.success, "Command should fail due to cooldown")
+        assertTrue(result.logs.isNotEmpty())
+        val log = result.logs.first()
+        assertTrue(log.contains("<R>"), "Cooldown log should contain <R> tag: $log")
+        assertTrue(log.contains("쿨다운"), "Cooldown log should mention cooldown: $log")
+    }
 }

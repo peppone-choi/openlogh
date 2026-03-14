@@ -122,7 +122,7 @@ abstract class DomesticCommand(
 
         val josaUl = pickJosa(actionName, "을")
         val logMessage = when (pick) {
-            "fail" -> "${actionName}${josaUl} <span class='ev_failed'>실패</span>하여 <C>$scoreInt</> 상승했습니다. <1>$date</>"
+            "fail" -> "${actionName}${josaUl} <R>실패</>하여 <C>$scoreInt</> 상승했습니다. <1>$date</>"
             "success" -> "${actionName}${josaUl} <S>성공</>하여 <C>$scoreInt</> 상승했습니다. <1>$date</>"
             else -> "${actionName}${josaUl} 하여 <C>$scoreInt</> 상승했습니다. <1>$date</>"
         }

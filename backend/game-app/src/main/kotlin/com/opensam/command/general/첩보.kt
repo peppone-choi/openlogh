@@ -158,8 +158,8 @@ class 첩보(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
             techDiff >= -1000 -> "<G>▼</>열위"
             else -> "<C>↓</>미미"
         }
-        val destNationName = destNation.name
-        return "【<span class='ev_notice'>${destNationName}</span>】아국대비기술:${techText}"
+         val destNationName = destNation.name
+         return "【<Y>${destNationName}</>】아국대비기술:${techText}"
     }
 
     private fun readAdjacency(raw: Any?): Map<Long, List<Long>> {

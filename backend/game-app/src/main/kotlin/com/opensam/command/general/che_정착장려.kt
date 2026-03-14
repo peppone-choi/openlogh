@@ -92,12 +92,12 @@ class che_정착장려(general: General, env: CommandEnv, arg: Map<String, Any>?
         val popIncrease = (score * SCORE_MULTIPLIER).roundToInt()
         val scoreText = String.format("%,d", popIncrease)
 
-        val josaUl = pickJosa(actionName, "을")
-        val logMessage = when (pick) {
-            "fail" -> "${actionName}${josaUl} <span class='ev_failed'>실패</span>하여 주민이 <C>${scoreText}</>명 증가했습니다. <1>$date</>"
-            "success" -> "${actionName}${josaUl} <S>성공</>하여 주민이 <C>${scoreText}</>명 증가했습니다. <1>$date</>"
-            else -> "${actionName}${josaUl} 하여 주민이 <C>${scoreText}</>명 증가했습니다. <1>$date</>"
-        }
+         val josaUl = pickJosa(actionName, "을")
+         val logMessage = when (pick) {
+             "fail" -> "${actionName}${josaUl} <R>실패</>하여 주민이 <C>${scoreText}</>명 증가했습니다. <1>$date</>"
+             "success" -> "${actionName}${josaUl} <S>성공</>하여 주민이 <C>${scoreText}</>명 증가했습니다. <1>$date</>"
+             else -> "${actionName}${josaUl} 하여 주민이 <C>${scoreText}</>명 증가했습니다. <1>$date</>"
+         }
         pushLog(logMessage)
         pushHistoryLog(logMessage)
         pushLog("<Y>${general.name}</>${pickJosa(general.name, "이")} ${actionName}${josaUl} 실시했습니다.")

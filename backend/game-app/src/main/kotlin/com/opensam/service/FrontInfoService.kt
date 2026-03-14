@@ -519,11 +519,16 @@ class FrontInfoService(
         )
     }
 
-    private fun toRecordEntry(m: Message) = RecordEntry(
-        id = m.id,
-        message = (m.payload["message"] as? String) ?: "",
-        date = m.sentAt.toString(),
-    )
+    private fun toRecordEntry(m: Message): RecordEntry {
+        val year = (m.payload["year"] as? Number)?.toInt()
+        val month = (m.payload["month"] as? Number)?.toInt()
+        val date = if (year != null && month != null) "${year}년 ${month}월" else ""
+        return RecordEntry(
+            id = m.id,
+            message = (m.payload["message"] as? String) ?: "",
+            date = date,
+        )
+    }
 
     private fun readStringAnyMap(raw: Any?): Map<String, Any> {
         return readStringAnyMapOrNull(raw) ?: emptyMap()

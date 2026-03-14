@@ -59,10 +59,10 @@ class che_단련(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
         val armTypeName = getCrewTypeName(general.crewType.toInt()) ?: "병사"
 
         val logMessage = when (pick) {
-            "fail" -> "단련이 <span class='ev_failed'>지지부진</span>하여 ${armTypeName} 숙련도가 <C>${scoreText}</> 향상되었습니다. <1>$date</>"
-            "success" -> "단련이 <S>일취월장</>하여 ${armTypeName} 숙련도가 <C>${scoreText}</> 향상되었습니다. <1>$date</>"
-            else -> "${armTypeName} 숙련도가 <C>${scoreText}</> 향상되었습니다. <1>$date</>"
-        }
+             "fail" -> "단련이 <R>지지부진</>하여 ${armTypeName} 숙련도가 <C>${scoreText}</> 향상되었습니다. <1>$date</>"
+             "success" -> "단련이 <S>일취월장</>하여 ${armTypeName} 숙련도가 <C>${scoreText}</> 향상되었습니다. <1>$date</>"
+             else -> "${armTypeName} 숙련도가 <C>${scoreText}</> 향상되었습니다. <1>$date</>"
+         }
         pushLog(logMessage)
         pushHistoryLog(logMessage)
         pushLog("<Y>${general.name}</>${pickJosa(general.name, "이")} 단련을 수행했습니다.")

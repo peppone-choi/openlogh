@@ -80,7 +80,7 @@ class CommandExecutor @Autowired constructor(
             val validated = schema.parse(effectiveArg)
             if (!validated.ok()) {
                 val msg = validated.errors.joinToString("; ") { it.message }
-                return CommandResult(success = false, logs = listOf("인자 오류: $msg"))
+                return CommandResult(success = false, logs = listOf("<R>$actionCode</>을(를) 실패하여 휴식합니다. - 인자 오류: $msg"))
             }
             effectiveArg = validated.toLegacyMap(schema)
         }
@@ -103,7 +103,7 @@ class CommandExecutor @Autowired constructor(
             if (altCode != null && altCode != actionCode) {
                 return executeGeneralCommand(altCode, general, env, effectiveArg, city, effectiveNation, rng)
             }
-            return CommandResult(success = false, logs = listOf(conditionResult.reason))
+            return CommandResult(success = false, logs = listOf("<R>${command.actionName}</>을(를) 실패하여 휴식합니다. - ${conditionResult.reason}"))
         }
 
         val preReq = command.getPreReqTurn()
@@ -174,7 +174,7 @@ class CommandExecutor @Autowired constructor(
         }
 
         val command = commandRegistry.createNationCommand(actionCode, general, env, effectiveArg)
-            ?: return CommandResult(success = false, logs = listOf("알 수 없는 국가 명령: $actionCode"))
+            ?: return CommandResult(success = false, logs = listOf("<R>$actionCode</> - 알 수 없는 국가 명령"))
         command.city = city
         command.nation = nation
         command.services = CommandServices(generalRepository, cityRepository, nationRepository, diplomacyService, modifierService = modifierService)
@@ -187,7 +187,7 @@ class CommandExecutor @Autowired constructor(
 
         val conditionResult = command.checkFullCondition()
         if (conditionResult is ConstraintResult.Fail) {
-            return CommandResult(success = false, logs = listOf(conditionResult.reason))
+            return CommandResult(success = false, logs = listOf("<R>${command.actionName}</> 실패 - ${conditionResult.reason}"))
         }
 
         val preReq = command.getPreReqTurn()
@@ -251,7 +251,7 @@ class CommandExecutor @Autowired constructor(
             val remain = blockedUntil - nowTurn
             return CommandResult(
                 success = false,
-                logs = listOf("해당 명령은 쿨다운 중입니다. (${remain}턴 남음)"),
+                logs = listOf("<R>$actionCode</>을(를) 실패하여 휴식합니다. - 쿨다운 중 (${remain}턴 남음)"),
             )
         }
         return null
@@ -279,7 +279,7 @@ class CommandExecutor @Autowired constructor(
             val remain = blockedUntil - nowTurn
             return CommandResult(
                 success = false,
-                logs = listOf("해당 국가 명령은 쿨다운 중입니다. (${remain}턴 남음)"),
+                logs = listOf("<R>$actionCode</> 실패 - 쿨다운 중 (${remain}턴 남음)"),
             )
         }
         return null
