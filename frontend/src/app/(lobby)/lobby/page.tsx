@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { Globe, UserPlus, Users, Bot, LogIn, Loader2, Clock, Signal, Crown, Swords, Shield } from 'lucide-react';
+import { Globe, UserPlus, Users, Bot, LogIn, Loader2, Clock, Signal, Shield } from 'lucide-react';
 import { useWorldStore } from '@/stores/worldStore';
 import { useGeneralStore } from '@/stores/generalStore';
 import { useAuthStore } from '@/stores/authStore';
@@ -51,12 +51,8 @@ function getActionAvailability(
 ): {
     canJoin: boolean;
     canPossessNpc: boolean;
-    canFound: boolean;
-    canRise: boolean;
     joinReason?: string;
     npcReason?: string;
-    foundReason?: string;
-    riseReason?: string;
 } {
     const meta = w.meta ?? {};
     const config = w.config ?? {};
@@ -69,12 +65,8 @@ function getActionAvailability(
         return {
             canJoin: false,
             canPossessNpc: false,
-            canFound: false,
-            canRise: false,
             joinReason: '이미 장수가 있습니다',
             npcReason: '이미 장수가 있습니다',
-            foundReason: '이미 장수가 있습니다',
-            riseReason: '이미 장수가 있습니다',
         };
     }
 
@@ -82,12 +74,8 @@ function getActionAvailability(
         return {
             canJoin: false,
             canPossessNpc: false,
-            canFound: false,
-            canRise: false,
             joinReason: '종료된 서버',
             npcReason: '종료된 서버',
-            foundReason: '종료된 서버',
-            riseReason: '종료된 서버',
         };
     }
 
@@ -98,14 +86,10 @@ function getActionAvailability(
     const blockBits = (meta.blockGeneralCreate as number) ?? (config.blockGeneralCreate as number) ?? 0;
     const blockCreate = !!(blockBits & 1);
     const blockNpc = !!(blockBits & 2);
-    const blockFound = !!(blockBits & 4);
-    const blockRise = !!(blockBits & 8);
 
     return {
         canJoin: !isLocked && !isFull && !blockCreate,
         canPossessNpc: !isLocked && !isFull && !blockNpc && npcMode > 0,
-        canFound: !isLocked && !isFull && !blockFound && joinMode !== 'noFound',
-        canRise: !isLocked && !isFull && !blockRise && joinMode !== 'noRise',
         joinReason: isLocked ? '서버 잠김' : isFull ? '정원 초과' : undefined,
         npcReason: isLocked
             ? '서버 잠김'
@@ -116,8 +100,6 @@ function getActionAvailability(
                 : npcMode <= 0
                   ? 'NPC모드 불가'
                   : undefined,
-        foundReason: isLocked ? '서버 잠김' : isFull ? '정원 초과' : joinMode === 'noFound' ? '건국 불가' : undefined,
-        riseReason: isLocked ? '서버 잠김' : isFull ? '정원 초과' : joinMode === 'noRise' ? '거병 불가' : undefined,
     };
 }
 
@@ -443,120 +425,49 @@ export default function LobbyPage() {
                                     </CardContent>
                                 </Card>
 
-                                {/* 풀에서 선택 */}
-                                <Card
-                                    className={`transition-colors ${
-                                        actionAvailability?.canJoin
-                                            ? 'cursor-pointer hover:border-primary/50'
-                                            : 'opacity-50 cursor-not-allowed'
-                                    }`}
-                                    onClick={() => actionAvailability?.canJoin && router.push('/lobby/select-pool')}
-                                >
-                                    <CardContent className="flex items-center gap-4 py-4">
-                                        <div className="flex items-center justify-center size-10 rounded-lg bg-primary/10 text-primary">
-                                            <Users className="size-5" />
-                                        </div>
-                                        <div className="flex-1">
-                                            <p className="font-medium">풀에서 선택</p>
-                                            <p className="text-xs text-muted-foreground">
-                                                {actionAvailability?.joinReason ?? '등록된 장수 중 하나를 선택합니다.'}
-                                            </p>
-                                        </div>
-                                        {actionAvailability?.canJoin && (
+                                {actionAvailability?.canPossessNpc && (
+                                    <Card
+                                        className="transition-colors cursor-pointer hover:border-primary/50"
+                                        onClick={() => router.push('/lobby/select-npc')}
+                                    >
+                                        <CardContent className="flex items-center gap-4 py-4">
+                                            <div className="flex items-center justify-center size-10 rounded-lg bg-primary/10 text-primary">
+                                                <Bot className="size-5" />
+                                            </div>
+                                            <div className="flex-1">
+                                                <p className="font-medium">NPC 빙의</p>
+                                                <p className="text-xs text-muted-foreground">
+                                                    기존 NPC 장수를 인수하여 플레이합니다.
+                                                </p>
+                                            </div>
                                             <Badge variant="secondary" className="text-[10px]">
                                                 가능
                                             </Badge>
-                                        )}
-                                    </CardContent>
-                                </Card>
+                                        </CardContent>
+                                    </Card>
+                                )}
 
-                                {/* NPC 빙의 */}
-                                <Card
-                                    className={`transition-colors ${
-                                        actionAvailability?.canPossessNpc
-                                            ? 'cursor-pointer hover:border-primary/50'
-                                            : 'opacity-50 cursor-not-allowed'
-                                    }`}
-                                    onClick={() =>
-                                        actionAvailability?.canPossessNpc && router.push('/lobby/select-npc')
-                                    }
-                                >
-                                    <CardContent className="flex items-center gap-4 py-4">
-                                        <div className="flex items-center justify-center size-10 rounded-lg bg-primary/10 text-primary">
-                                            <Bot className="size-5" />
-                                        </div>
-                                        <div className="flex-1">
-                                            <p className="font-medium">NPC 빙의</p>
-                                            <p className="text-xs text-muted-foreground">
-                                                {actionAvailability?.npcReason ??
-                                                    '빈 NPC 장수를 인수하여 플레이합니다.'}
-                                            </p>
-                                        </div>
-                                        {actionAvailability?.canPossessNpc && (
+                                {actionAvailability?.canJoin && (
+                                    <Card
+                                        className="transition-colors cursor-pointer hover:border-primary/50"
+                                        onClick={() => router.push('/lobby/select-pool')}
+                                    >
+                                        <CardContent className="flex items-center gap-4 py-4">
+                                            <div className="flex items-center justify-center size-10 rounded-lg bg-primary/10 text-primary">
+                                                <Users className="size-5" />
+                                            </div>
+                                            <div className="flex-1">
+                                                <p className="font-medium">장수 선택</p>
+                                                <p className="text-xs text-muted-foreground">
+                                                    등록된 장수 중 하나를 선택하여 시작합니다.
+                                                </p>
+                                            </div>
                                             <Badge variant="secondary" className="text-[10px]">
                                                 가능
                                             </Badge>
-                                        )}
-                                    </CardContent>
-                                </Card>
-
-                                {/* 건국 */}
-                                <Card
-                                    className={`transition-colors ${
-                                        actionAvailability?.canFound
-                                            ? 'cursor-pointer hover:border-yellow-500/50 border-yellow-500/20'
-                                            : 'opacity-50 cursor-not-allowed'
-                                    }`}
-                                    onClick={() =>
-                                        actionAvailability?.canFound && router.push('/lobby/join?mode=found')
-                                    }
-                                >
-                                    <CardContent className="flex items-center gap-4 py-4">
-                                        <div className="flex items-center justify-center size-10 rounded-lg bg-yellow-500/10 text-yellow-500">
-                                            <Crown className="size-5" />
-                                        </div>
-                                        <div className="flex-1">
-                                            <p className="font-medium">건국</p>
-                                            <p className="text-xs text-muted-foreground">
-                                                {actionAvailability?.foundReason ??
-                                                    '새로운 국가를 세우고 군주로 시작합니다.'}
-                                            </p>
-                                        </div>
-                                        {actionAvailability?.canFound && (
-                                            <Badge variant="outline" className="text-[10px] text-yellow-400">
-                                                가능
-                                            </Badge>
-                                        )}
-                                    </CardContent>
-                                </Card>
-
-                                {/* 거병 */}
-                                <Card
-                                    className={`transition-colors ${
-                                        actionAvailability?.canRise
-                                            ? 'cursor-pointer hover:border-red-500/50 border-red-500/20'
-                                            : 'opacity-50 cursor-not-allowed'
-                                    }`}
-                                    onClick={() => actionAvailability?.canRise && router.push('/lobby/join?mode=rise')}
-                                >
-                                    <CardContent className="flex items-center gap-4 py-4">
-                                        <div className="flex items-center justify-center size-10 rounded-lg bg-red-500/10 text-red-500">
-                                            <Swords className="size-5" />
-                                        </div>
-                                        <div className="flex-1">
-                                            <p className="font-medium">거병</p>
-                                            <p className="text-xs text-muted-foreground">
-                                                {actionAvailability?.riseReason ??
-                                                    '반란을 일으켜 독립 세력으로 시작합니다.'}
-                                            </p>
-                                        </div>
-                                        {actionAvailability?.canRise && (
-                                            <Badge variant="outline" className="text-[10px] text-red-400">
-                                                가능
-                                            </Badge>
-                                        )}
-                                    </CardContent>
-                                </Card>
+                                        </CardContent>
+                                    </Card>
+                                )}
                             </div>
                         </div>
                     )}

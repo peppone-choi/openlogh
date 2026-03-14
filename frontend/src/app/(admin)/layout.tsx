@@ -110,9 +110,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                             asChild
                             className="w-full justify-start gap-2 text-muted-foreground"
                         >
-                            <Link href="/">
+                            <Link href="/lobby">
                                 <LogOut className="size-4" />
-                                게임으로
+                                로비로
                             </Link>
                         </Button>
                     </nav>

@@ -121,4 +121,12 @@ describe('황건(태평도) special officer ranks', () => {
     it('falls back to default for levels below 황건 rank map', () => {
         expect(formatOfficerLevelText(5, 2, false, '태평도')).toBe('졸장');
     });
+
+    it('handles che_ prefixed typeCode via getSpecialNationKey', () => {
+        expect(getSpecialNationKey('che_태평도')).toBe('황건');
+    });
+
+    it('returns 황건 rank with che_ prefixed typeCode in formatOfficerLevelText', () => {
+        expect(formatOfficerLevelText(20, 2, false, 'che_태평도')).toBe('천공장군');
+    });
 });

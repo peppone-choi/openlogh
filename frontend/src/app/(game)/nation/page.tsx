@@ -531,7 +531,12 @@ function NationPageContent() {
                                                         </div>
                                                     </TableCell>
                                                     <TableCell className="text-center text-xs whitespace-nowrap">
-                                                        {formatOfficerLevelText(g.officerLevel, nation.level, true, nation.typeCode)}
+                                                        {formatOfficerLevelText(
+                                                            g.officerLevel,
+                                                            nation.level,
+                                                            true,
+                                                            nation.typeCode
+                                                        )}
                                                     </TableCell>
                                                     <TableCell className="text-center text-xs">
                                                         {g.npcState > 0 ? (

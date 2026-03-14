@@ -638,9 +638,15 @@ export default function PersonnelPage() {
                             <thead>
                                 <tr className="border-b border-muted/50">
                                     <th className="text-left py-1 px-2 w-32">도시</th>
-                                    <th className="text-left py-1 px-2">{formatOfficerLevelText(4, nationLevel, false, nationTypeCode)}</th>
-                                    <th className="text-left py-1 px-2">{formatOfficerLevelText(3, nationLevel, false, nationTypeCode)}</th>
-                                    <th className="text-left py-1 px-2">{formatOfficerLevelText(2, nationLevel, false, nationTypeCode)}</th>
+                                    <th className="text-left py-1 px-2">
+                                        {formatOfficerLevelText(4, nationLevel, false, nationTypeCode)}
+                                    </th>
+                                    <th className="text-left py-1 px-2">
+                                        {formatOfficerLevelText(3, nationLevel, false, nationTypeCode)}
+                                    </th>
+                                    <th className="text-left py-1 px-2">
+                                        {formatOfficerLevelText(2, nationLevel, false, nationTypeCode)}
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody>

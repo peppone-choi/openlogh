@@ -304,7 +304,7 @@ export function formatOfficerLevelText(
     officerLevel: number,
     nationLevel?: number,
     hasNation?: boolean,
-    nationTypeCode?: string,
+    nationTypeCode?: string
 ): string {
     if (officerLevel <= 0 && hasNation) return '일반';
 
