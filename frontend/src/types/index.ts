@@ -1200,6 +1200,17 @@ export interface AdminGeneral {
     killTurn: number | null;
 }
 
+export interface SelectPoolEntry {
+    id: number;
+    worldId: number;
+    uniqueName: string;
+    ownerId: number | null;
+    generalId: number | null;
+    reservedUntil: string | null;
+    info: Record<string, unknown>;
+    createdAt: string;
+}
+
 export interface TimeControlRequest {
     year?: number;
     month?: number;

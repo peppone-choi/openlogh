@@ -74,6 +74,7 @@ import type {
     TurnRunResult,
     TurnStateResult,
     WorldSummary,
+    SelectPoolEntry,
 } from '@/types';
 
 // World API
@@ -799,6 +800,15 @@ export const adminApi = {
     scrub: (type: 'scrub_old_user' | 'scrub_blocked_user' | 'scrub_deleted' | 'scrub_icon') =>
         api.post<ScrubResponse>('/admin/scrub', { type }),
     resetPassword: (userId: number) => api.post<ResetPasswordResponse>(`/admin/users/${userId}/reset-password`, {}),
+
+    listSelectPools: (worldId?: number) => api.get<SelectPoolEntry[]>('/admin/select-pool', wq(worldId)),
+    createSelectPool: (data: Partial<SelectPoolEntry>, worldId?: number) =>
+        api.post<SelectPoolEntry>('/admin/select-pool', data, wq(worldId)),
+    bulkCreateSelectPool: (entries: Partial<SelectPoolEntry>[], worldId?: number) =>
+        api.post<SelectPoolEntry[]>('/admin/select-pool/bulk', entries, wq(worldId)),
+    updateSelectPool: (id: number, data: Partial<SelectPoolEntry>, worldId?: number) =>
+        api.put<SelectPoolEntry>(`/admin/select-pool/${id}`, data, wq(worldId)),
+    deleteSelectPool: (id: number, worldId?: number) => api.delete<void>(`/admin/select-pool/${id}`, wq(worldId)),
 };
 
 // Turn Daemon API (game-app direct — proxied through gateway)
