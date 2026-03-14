@@ -13,6 +13,8 @@ class 접경귀환(general: General, env: CommandEnv, arg: Map<String, Any>? = n
 
     override val actionName = "접경귀환"
 
+    override val minConditionConstraints: List<Constraint> = listOf(NotBeNeutral())
+
     override val fullConditionConstraints: List<Constraint> = listOf(
         NotBeNeutral(),
         NotWanderingNation(),

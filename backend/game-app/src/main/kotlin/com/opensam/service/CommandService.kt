@@ -145,9 +145,9 @@ class CommandService(
             command.city = city
             command.nation = nation
 
-            val check = command.checkMinCondition()
-            val enabled = check is ConstraintResult.Pass
-            val reason = if (check is ConstraintResult.Fail) check.reason else null
+            val minCheck = command.checkMinCondition()
+            if (minCheck is ConstraintResult.Fail) continue
+
             val category = generalCategory(actionCode)
 
             categories.getOrPut(category) { mutableListOf() }.add(
@@ -155,8 +155,8 @@ class CommandService(
                     actionCode = actionCode,
                     name = command.actionName,
                     category = category,
-                    enabled = enabled,
-                    reason = reason,
+                    enabled = true,
+                    reason = null,
                     durationSeconds = command.getDuration(),
                     commandPointCost = command.getCommandPointCost(),
                 )

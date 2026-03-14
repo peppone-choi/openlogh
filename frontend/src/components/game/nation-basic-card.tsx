@@ -60,13 +60,13 @@ export function NationBasicCard({ nation, global }: NationBasicCardProps) {
             </Body>
 
             {/* 군주/참모 */}
-            <Head>{formatOfficerLevelText(12, nationLevel)}</Head>
-            <Body style={{ color: getNPCColor(nation.topChiefs[12]?.npc ?? 1) }}>
-                {nation.topChiefs[12]?.name ?? '-'}
+            <Head>{formatOfficerLevelText(20, nationLevel, false, nation.typeCode)}</Head>
+            <Body style={{ color: getNPCColor(nation.topChiefs[20]?.npc ?? 1) }}>
+                {nation.topChiefs[20]?.name ?? '-'}
             </Body>
-            <Head>{formatOfficerLevelText(11, nationLevel)}</Head>
-            <Body style={{ color: getNPCColor(nation.topChiefs[11]?.npc ?? 1) }}>
-                {nation.topChiefs[11]?.name ?? '-'}
+            <Head>{formatOfficerLevelText(19, nationLevel, false, nation.typeCode)}</Head>
+            <Body style={{ color: getNPCColor(nation.topChiefs[19]?.npc ?? 1) }}>
+                {nation.topChiefs[19]?.name ?? '-'}
             </Body>
 
             {/* 총 주민 */}

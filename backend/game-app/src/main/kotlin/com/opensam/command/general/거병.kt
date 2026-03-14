@@ -14,6 +14,11 @@ class 거병(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
 
     override val actionName = "거병"
 
+    override val minConditionConstraints: List<Constraint> by lazy {
+        val relYear = env.year - env.startYear
+        listOf(BeNeutral(), BeOpeningPart(relYear + 1))
+    }
+
     override val fullConditionConstraints: List<Constraint>
         get() {
             val relYear = env.year - env.startYear

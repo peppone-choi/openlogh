@@ -32,6 +32,8 @@ class 랜덤임관(general: General, env: CommandEnv, arg: Map<String, Any>? = n
 
     override val actionName = "무작위 국가로 임관"
 
+    override val minConditionConstraints = listOf(BeNeutral())
+
     override val fullConditionConstraints = listOf(
         BeNeutral(),
         AllowJoinAction(),

@@ -23,6 +23,9 @@ abstract class DomesticCommand(
 
     open val debuffFront: Double = 0.5
 
+    override val minConditionConstraints: List<Constraint>
+        get() = listOf(NotBeNeutral(), OccupiedCity())
+
     override val fullConditionConstraints: List<Constraint>
         get() {
             val cost = getCost()

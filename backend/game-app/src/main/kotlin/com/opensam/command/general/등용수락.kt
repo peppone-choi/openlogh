@@ -20,6 +20,9 @@ class 등용수락(general: General, env: CommandEnv, arg: Map<String, Any>? = n
 
     override val actionName = "등용 수락"
 
+    override val minConditionConstraints: List<Constraint>
+        get() = listOf(AlwaysFail("예약 불가능 커맨드"))
+
     override val fullConditionConstraints: List<Constraint>
         get() {
             val relYear = env.year - env.startYear

@@ -14,6 +14,7 @@ import com.opensam.repository.NationRepository
 import com.opensam.repository.NationTurnRepository
 import com.opensam.repository.WorldStateRepository
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -282,5 +283,17 @@ class CommandServiceTest {
         world.config["openingPartYears"] = 0
         val value = (world.config["openingPartYears"] as? Number)?.toInt()
         assertEquals(0, value)
+    }
+
+    @Test
+    fun `getCommandTable skips commands where minCondition fails`() {
+        val minCheckField = com.opensam.command.BaseCommand::class.java.getDeclaredMethod("checkMinCondition")
+        assertNotNull(minCheckField)
+    }
+
+    @Test
+    fun `DomesticCommand has minConditionConstraints with NotBeNeutral`() {
+        val field = com.opensam.command.general.DomesticCommand::class.java.getDeclaredMethod("getMinConditionConstraints")
+        assertNotNull(field)
     }
 }

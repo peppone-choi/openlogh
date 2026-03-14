@@ -763,6 +763,7 @@ export interface NationFrontInfo {
     name: string;
     color: string;
     level: number;
+    typeCode?: string;
     type: NationTypeInfo;
     gold: number;
     rice: number;

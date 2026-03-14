@@ -13,6 +13,8 @@ class 집합(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
 
     override val actionName = "집합"
 
+    override val minConditionConstraints: List<Constraint> = listOf(NotBeNeutral())
+
     override val fullConditionConstraints: List<Constraint> = listOf(
         NotBeNeutral(),
         OccupiedCity(),

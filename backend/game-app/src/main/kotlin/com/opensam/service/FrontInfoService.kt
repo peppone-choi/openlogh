@@ -142,8 +142,8 @@ class FrontInfoService(
 
         val topChiefs = mutableMapOf<Int, TopChiefInfo?>()
         topChiefs[20] = null
-        topChiefs[11] = null
-        myNationGens.filter { it.officerLevel >= 11 }.forEach { g ->
+        topChiefs[19] = null
+        myNationGens.filter { it.officerLevel >= 19 }.forEach { g ->
             topChiefs[g.officerLevel.toInt()] = TopChiefInfo(
                 officerLevel = g.officerLevel.toInt(),
                 no = g.id,
@@ -229,7 +229,7 @@ class FrontInfoService(
             crew = NationCrewInfo(generalCnt = 0, now = 0, max = 0),
             onlineGen = "",
             notice = null,
-            topChiefs = mapOf(20 to null, 11 to null),
+            topChiefs = mapOf(20 to null, 19 to null),
             diplomaticLimit = 0,
             strategicCmdLimit = 0,
             impossibleStrategicCommand = emptyList(),

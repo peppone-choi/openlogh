@@ -33,7 +33,7 @@ class 건국(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
         val relYear = env.year - env.startYear
         listOf(
             BeOpeningPart(relYear + 1),
-            UnaffiliatedOrWanderingNation(),
+            ReqNationValue("level", "국가규모", "==", 0, "이미 국가에 소속되어 있습니다."),
             NoPenalty("noFoundNation"),
         )
     }
