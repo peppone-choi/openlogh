@@ -7,6 +7,7 @@ import {
     getNationTypeLabel,
     formatOfficerLevelText,
     getSpecialNationKey,
+    getPersonalityName,
     parseCrewTypeCode,
     stripCodePrefix,
 } from '@/lib/game-utils';
@@ -128,5 +129,16 @@ describe('황건(태평도) special officer ranks', () => {
 
     it('returns 황건 rank with che_ prefixed typeCode in formatOfficerLevelText', () => {
         expect(formatOfficerLevelText(20, 2, false, 'che_태평도')).toBe('천공장군');
+    });
+});
+
+describe('personality and specialty labels', () => {
+    it('personality None shows 미설정', () => {
+        expect(getPersonalityName('None')).toBe('미설정');
+    });
+
+    it('personality null/undefined shows -', () => {
+        expect(getPersonalityName(null)).toBe('-');
+        expect(getPersonalityName(undefined)).toBe('-');
     });
 });

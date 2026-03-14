@@ -371,8 +371,8 @@ export default function AdminDashboardPage() {
         { name: 'RaiseNPCNation', label: 'NPC 건국', description: 'NPC 국가 생성' },
         {
             name: 'RegNeutralNPC',
-            label: '중립 NPC 배치',
-            description: '중립 NPC 장수를 빈 도시에 배치',
+            label: '재야 NPC 배치',
+            description: '재야 NPC 장수를 빈 도시에 배치',
         },
         {
             name: 'NoticeToHistoryLog',

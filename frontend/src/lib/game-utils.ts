@@ -596,7 +596,7 @@ export const LEGACY_PERSONALITY_OPTIONS: { code: string; label: string; info: st
 
 export const PERSONALITY_NAMES: Record<string, string> = {
     ...Object.fromEntries(LEGACY_PERSONALITY_OPTIONS.map((option) => [option.code, option.label])),
-    None: '-',
+    None: '미설정',
     Normal: '일반',
     Brave: '호전',
     Calm: '냉정',

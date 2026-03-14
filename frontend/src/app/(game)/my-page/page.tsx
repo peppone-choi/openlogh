@@ -467,7 +467,7 @@ export default function MyPage() {
                                 </div>
                                 <div className="mt-2 flex flex-wrap gap-1">
                                     <Badge variant={g.specialCode === 'None' ? 'outline' : 'secondary'}>
-                                        특기: {g.specialCode === 'None' ? '없음' : g.specialCode}
+                                        특기: {g.specialCode === 'None' ? '습득전' : g.specialCode}
                                     </Badge>
                                     <Badge variant={g.special2Code === 'None' ? 'outline' : 'secondary'}>
                                         특기2: {g.special2Code === 'None' ? '없음' : g.special2Code}
