@@ -400,7 +400,7 @@ function LoginPageContent() {
                                 className="flex-1"
                                 onClick={handleQuickRegister}
                             >
-                                {quickRegistering ? '가입 중...' : registerMode ? '가입 확인' : '가입 & 로그인'}
+                                {quickRegistering ? '가입 중...' : registerMode ? '가입 확인' : '가입'}
                             </Button>
                             <Button type="submit" disabled={isSubmitting || quickRegistering} className="flex-[2]">
                                 {isSubmitting ? '로그인 중...' : '로그인'}
