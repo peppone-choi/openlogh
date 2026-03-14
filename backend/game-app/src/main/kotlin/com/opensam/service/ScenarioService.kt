@@ -483,6 +483,8 @@ class ScenarioService(
         nations: List<Nation>,
         generals: List<General>,
     ) {
+        world.meta[EmperorConstants.WORLD_EMPEROR_SYSTEM] = true
+
         val emperorConfig = scenario.emperor ?: return
         val generalName = emperorConfig["generalName"]?.toString()?.takeIf { it.isNotBlank() } ?: return
         val nationIdx = parseInt(emperorConfig["nationIdx"]) ?: return
@@ -493,7 +495,6 @@ class ScenarioService(
         emperorGeneral.meta[EmperorConstants.GENERAL_EMPEROR_STATUS] = emperorStatus
         emperorGeneral.npcState = EmperorConstants.NPC_STATE_EMPEROR
 
-        world.meta[EmperorConstants.WORLD_EMPEROR_SYSTEM] = true
         world.meta[EmperorConstants.WORLD_EMPEROR_GENERAL_ID] = emperorGeneral.id
 
         val emperorNation = nations.firstOrNull { it.id == nationId } ?: return

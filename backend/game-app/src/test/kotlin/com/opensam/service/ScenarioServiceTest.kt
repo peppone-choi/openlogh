@@ -650,7 +650,7 @@ class ScenarioServiceTest {
     }
 
     @Test
-    fun `applyScenarioEmperorSettings skips when no emperor config`() {
+    fun `applyScenarioEmperorSettings enables system even without emperor config`() {
         val applyMethod = ScenarioService::class.java.getDeclaredMethod(
             "applyScenarioEmperorSettings",
             com.opensam.model.ScenarioData::class.java,
@@ -668,6 +668,7 @@ class ScenarioServiceTest {
 
         applyMethod.invoke(service, scenario, world, emptyMap<Int, Long>(), emptyList<Nation>(), emptyList<General>())
 
-        assertNull(world.meta[com.opensam.engine.EmperorConstants.WORLD_EMPEROR_SYSTEM])
+        assertEquals(true, world.meta[com.opensam.engine.EmperorConstants.WORLD_EMPEROR_SYSTEM])
+        assertNull(world.meta[com.opensam.engine.EmperorConstants.WORLD_EMPEROR_GENERAL_ID])
     }
 }
