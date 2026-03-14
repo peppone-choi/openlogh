@@ -129,4 +129,26 @@ class TurnDaemonTest {
 
         verify(turnService).processWorld(world)
     }
+
+    @Test
+    fun `tick skips locked world`() {
+        val world = createWorld()
+        world.config["locked"] = true
+        `when`(worldStateRepository.findByCommitSha("test-sha")).thenReturn(listOf(world))
+
+        daemon.tick()
+
+        verify(turnService, never()).processWorld(world)
+    }
+
+    @Test
+    fun `tick processes unlocked world`() {
+        val world = createWorld()
+        world.config["locked"] = false
+        `when`(worldStateRepository.findByCommitSha("test-sha")).thenReturn(listOf(world))
+
+        daemon.tick()
+
+        verify(turnService).processWorld(world)
+    }
 }

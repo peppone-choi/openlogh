@@ -55,6 +55,7 @@ class TurnDaemon(
                 .filter { shouldProcessWorld(it.meta["gatewayActive"]) }
 
             for (world in worlds) {
+                if (isWorldLocked(world)) continue
                 try {
                     if (world.realtimeMode) {
                         realtimeService.processCompletedCommands(world)
@@ -89,6 +90,16 @@ class TurnDaemon(
             is Boolean -> value
             is Number -> value.toInt() != 0
             is String -> value.equals("true", ignoreCase = true) || value == "1"
+            else -> false
+        }
+    }
+
+    private fun isWorldLocked(world: com.opensam.entity.WorldState): Boolean {
+        val locked = world.config["locked"] ?: world.meta["locked"] ?: world.meta["isLocked"]
+        return when (locked) {
+            is Boolean -> locked
+            is Number -> locked.toInt() != 0
+            is String -> locked.equals("true", ignoreCase = true) || locked == "1"
             else -> false
         }
     }
