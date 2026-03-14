@@ -31,6 +31,8 @@ describe('crew type parsing', () => {
 
     it('resolves crew type display name with map-prefixed code', () => {
         expect(getCrewTypeName('cr_1300')).toBe('기병');
+        expect(getCrewTypeName('cr_1500')).toBe('정란');
+        expect(getCrewTypeName('3')).toBe('귀병');
     });
 });
 
