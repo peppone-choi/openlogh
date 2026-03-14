@@ -420,9 +420,15 @@ export default function MapPage() {
         scheduleTooltipHide();
     }, [scheduleTooltipHide]);
 
-    const handleCityClick = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
-        e.stopPropagation();
-    }, []);
+    const handleCityClick = useCallback(
+        (cc: CityConst, e: React.MouseEvent<HTMLButtonElement>) => {
+            e.stopPropagation();
+            const rtCity = cityByNameMap.get(cc.name);
+            if (rtCity) saveCityInfo(rtCity.id);
+            router.push(`/city?id=${rtCity?.id ?? cc.id}`);
+        },
+        [cityByNameMap, router, saveCityInfo],
+    );
 
     const handleCityTouch = useCallback(
         (cc: CityConst, e: React.TouchEvent<HTMLButtonElement>) => {
@@ -563,7 +569,7 @@ export default function MapPage() {
                                             onMouseMove={(e) => handleCityMouseMove(cc, e)}
                                             onMouseLeave={handleCityMouseLeave}
                                             onTouchEnd={(e) => handleCityTouch(cc, e)}
-                                            onClick={handleCityClick}
+                                            onClick={(e) => handleCityClick(cc, e)}
                                         >
                                             {showNationLayer && nation?.color && (
                                                 <div
