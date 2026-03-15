@@ -180,29 +180,43 @@ class NationResourceCommandTest {
 
     @Test
     fun `증축 fails with low nation resource and runs with level up and max increase`() {
+        // cost = develCost(100) * 500 + 60000 = 110000
+        // basegold=0, baserice=2000 → need 110000 gold, 112000 rice
         val chief = createGeneral(officerLevel = 20)
         val failCmd = che_증축(chief, env())
         failCmd.city = createCity(nationId = 1)
         failCmd.nation = createNation(id = 1, gold = 2000, rice = 3000)
+        failCmd.destCity = createCity(id = 1, nationId = 1).also { it.level = 5 }
         val fail = failCmd.checkFullCondition()
         assertTrue(fail is ConstraintResult.Fail)
 
-        val nation = createNation(id = 1, gold = 10000, rice = 10000)
+        val nation = createNation(id = 1, gold = 200000, rice = 200000)
         val city = createCity(nationId = 1)
-        city.level = 2
+        city.level = 5
         city.popMax = 40000
+        city.agriMax = 1000
+        city.commMax = 1000
+        city.secuMax = 1000
+        city.defMax = 1000
+        city.wallMax = 1000
         val cmd = che_증축(chief, env())
         cmd.city = city
+        cmd.destCity = city
         cmd.nation = nation
 
         val check = cmd.checkFullCondition()
         assertTrue(check is ConstraintResult.Pass)
         val result = runBlocking { cmd.run(fixedRng) }
         assertTrue(result.success)
-        assertEquals(3, city.level.toInt())
-        assertEquals(50000, city.popMax)
-        assertEquals(8500, nation.gold)
-        assertEquals(8500, nation.rice)
+        assertEquals(6, city.level.toInt())
+        assertEquals(140000, city.popMax)
+        assertEquals(3000, city.agriMax)
+        assertEquals(3000, city.commMax)
+        assertEquals(3000, city.secuMax)
+        assertEquals(3000, city.defMax)
+        assertEquals(3000, city.wallMax)
+        assertEquals(90000, nation.gold)
+        assertEquals(90000, nation.rice)
         assertTrue(result.logs.any { it.contains("증축") })
     }
 

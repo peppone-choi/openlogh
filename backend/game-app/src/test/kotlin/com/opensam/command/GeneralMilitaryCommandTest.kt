@@ -431,7 +431,8 @@ class GeneralMilitaryCommandTest {
 
     @Test
     fun `첩보 should fail for friendly destination city`() {
-        val general = createTestGeneral(nationId = 1, gold = 100, rice = 100)
+        // cost = develCost(100) * 3 = 300
+        val general = createTestGeneral(nationId = 1, gold = 500, rice = 500)
         val env = createTestEnv()
         val cmd = 첩보(general, env)
         cmd.destCity = createTestCity(nationId = 1).apply { id = 2 }
@@ -443,7 +444,8 @@ class GeneralMilitaryCommandTest {
 
     @Test
     fun `첩보 should return spy result and consume resources`() {
-        val general = createTestGeneral(nationId = 1, gold = 100, rice = 100)
+        // cost = develCost(100) * 3 = 300
+        val general = createTestGeneral(nationId = 1, gold = 500, rice = 500)
         val env = createTestEnv()
         val cmd = 첩보(general, env)
         cmd.destCity = createTestCity(nationId = 2, pop = 12000, trust = 75f).apply { id = 2 }
@@ -454,8 +456,8 @@ class GeneralMilitaryCommandTest {
         val result = runBlocking { cmd.run(fixedRng) }
         assertTrue(result.success)
         assertTrue(result.message!!.contains("\"spyResult\""))
-        assertTrue(result.message!!.contains("\"gold\":-15"))
-        assertTrue(result.message!!.contains("\"rice\":-15"))
+        assertTrue(result.message!!.contains("\"gold\":-300"))
+        assertTrue(result.message!!.contains("\"rice\":-300"))
     }
 
     @Test
