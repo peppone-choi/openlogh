@@ -1,9 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-    Collapsible,
-    CollapsibleTrigger,
-    CollapsibleContent,
-} from './collapsible';
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from './collapsible';
 
 describe('Collapsible', () => {
     it('exports Collapsible components', () => {

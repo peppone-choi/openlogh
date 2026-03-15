@@ -12,7 +12,7 @@ import { CITY_LEVEL_NAMES } from '@/lib/game-utils';
 import { CrewTypeBrowser } from './crew-type-browser';
 import { EquipmentBrowser } from './equipment-browser';
 import { DeploymentSelector } from './deployment-selector';
-import { MapCitySelector } from './map-city-selector';
+import { MapViewer } from './map-viewer';
 
 /** Arg schema for each command that requires user input */
 type ArgField =
@@ -507,6 +507,7 @@ interface CommandArgFormProps {
 export function CommandArgForm({ actionCode, onSubmit }: CommandArgFormProps) {
     const { cities, nations, generals } = useGameStore();
     const { myGeneral } = useGeneralStore();
+    const { currentWorld } = useWorldStore();
     const [valuesByCommand, setValuesByCommand] = useState<Record<string, Record<string, string>>>({});
     const [mapSelectorOpen, setMapSelectorOpen] = useState(false);
     const [mapSelectorField, setMapSelectorField] = useState<string | null>(null);
@@ -611,41 +612,44 @@ export function CommandArgForm({ actionCode, onSubmit }: CommandArgFormProps) {
                 const list: City[] = showAllCities ? sortedCities : myCities;
                 const selectedCity = cities.find((c) => c.id === Number(values[field.key]));
                 return (
-                    <div key={field.key} className="flex gap-2">
-                        <Button
-                            type="button"
-                            variant="outline"
-                            className="flex-1 justify-start text-xs"
-                            onClick={() => {
-                                setMapSelectorField(field.key);
-                                setMapSelectorOpen(true);
-                            }}
-                        >
-                            {selectedCity
-                                ? `${selectedCity.name} (${CITY_LEVEL_NAMES[selectedCity.level] ?? selectedCity.level})`
-                                : `${field.label} 선택...`}
-                        </Button>
-                        <select
-                            value={values[field.key] ?? ''}
-                            onChange={(e) => setValue(field.key, e.target.value)}
-                            className="w-24 bg-background border border-input rounded-md px-2 py-1.5 text-xs"
-                        >
-                            <option value="">직접 선택</option>
-                            {list.map((c) => {
-                                const nation = nations.find((n) => n.id === c.nationId);
-                                const nationTag = nation ? ` [${nation.name}]` : c.nationId === 0 ? ' [공백]' : '';
-                                const isMyCity = myGeneral && c.nationId === myGeneral.nationId;
-                                return (
-                                    <option
-                                        key={c.id}
-                                        value={c.id}
-                                        style={isMyCity ? { fontWeight: 'bold' } : undefined}
-                                    >
-                                        {c.name} ({CITY_LEVEL_NAMES[c.level] ?? c.level}){nationTag}
-                                    </option>
-                                );
-                            })}
-                        </select>
+                    <div key={field.key} className="space-y-2">
+                        <div className="flex items-center gap-2">
+                            <span className="text-xs font-medium">
+                                {selectedCity
+                                    ? `${selectedCity.name} (${CITY_LEVEL_NAMES[selectedCity.level] ?? selectedCity.level})`
+                                    : `${field.label} 미선택`}
+                            </span>
+                            <select
+                                value={values[field.key] ?? ''}
+                                onChange={(e) => setValue(field.key, e.target.value)}
+                                className="flex-1 bg-background border border-input rounded-md px-2 py-1 text-xs"
+                            >
+                                <option value="">직접 선택</option>
+                                {list.map((c) => {
+                                    const nation = nations.find((n) => n.id === c.nationId);
+                                    const nationTag = nation ? ` [${nation.name}]` : c.nationId === 0 ? ' [공백]' : '';
+                                    const isMyCity = myGeneral && c.nationId === myGeneral.nationId;
+                                    return (
+                                        <option
+                                            key={c.id}
+                                            value={c.id}
+                                            style={isMyCity ? { fontWeight: 'bold' } : undefined}
+                                        >
+                                            {c.name} ({CITY_LEVEL_NAMES[c.level] ?? c.level}){nationTag}
+                                        </option>
+                                    );
+                                })}
+                            </select>
+                        </div>
+                        <div className="w-full max-w-md mx-auto">
+                            <div style={{ width: '100%', height: '200px' }}>
+                                <MapViewer
+                                    worldId={currentWorld?.id ?? 0}
+                                    compact
+                                    onCitySelect={(cityId: number) => setValue(field.key, cityId.toString())}
+                                />
+                            </div>
+                        </div>
                     </div>
                 );
             }
@@ -757,25 +761,15 @@ export function CommandArgForm({ actionCode, onSubmit }: CommandArgFormProps) {
             <p className="text-xs text-muted-foreground">명령 인자</p>
             {fields.map((field) => (
                 <div key={field.key} className="space-y-0.5">
-                    <label className="text-[10px] text-muted-foreground font-medium">{field.label}</label>
-                    {renderField(field)}
+                    <label htmlFor={`arg-${field.key}`} className="text-[10px] text-muted-foreground font-medium">
+                        {field.label}
+                    </label>
+                    <div id={`arg-${field.key}`}>{renderField(field)}</div>
                 </div>
             ))}
             <Button size="sm" onClick={handleSubmit} className="w-full">
-                확인
+                예약
             </Button>
-
-            {mapSelectorOpen && mapSelectorField && (
-                <MapCitySelector
-                    open={mapSelectorOpen}
-                    onOpenChange={setMapSelectorOpen}
-                    onSelect={(cityId) => {
-                        setValue(mapSelectorField, cityId.toString());
-                        setMapSelectorOpen(false);
-                    }}
-                    title="도시 선택"
-                />
-            )}
         </div>
     );
 }

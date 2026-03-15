@@ -450,7 +450,7 @@ export default function MapPage() {
         [buildTooltip, clearTooltipHideTimer, touchTapId, tooltip, router, saveCityInfo, cityByNameMap]
     );
 
-    if (!mapData) {
+    if (!mapData || !mapData.cities || !Array.isArray(mapData.cities)) {
         return <div className="flex items-center justify-center h-64 text-gray-500">지도를 불러오는 중...</div>;
     }
 

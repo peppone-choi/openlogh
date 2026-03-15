@@ -90,17 +90,15 @@ function ProcessingContent() {
 
                         <CommandArgForm actionCode={command} onSubmit={handleFormSubmit} />
 
-                        <div className="flex gap-2 pt-2">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => router.push('/commands')}
-                                disabled={isSubmitting}
-                                className="flex-1"
-                            >
-                                취소
-                            </Button>
-                        </div>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => router.push('/commands')}
+                            disabled={isSubmitting}
+                            className="w-full mt-2"
+                        >
+                            취소
+                        </Button>
                     </CardContent>
                 </Card>
             </div>

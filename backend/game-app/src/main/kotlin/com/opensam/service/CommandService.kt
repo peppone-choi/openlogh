@@ -146,7 +146,8 @@ class CommandService(
             command.nation = nation
 
             val minCheck = command.checkMinCondition()
-            if (minCheck is ConstraintResult.Fail) continue
+            val enabled = minCheck is ConstraintResult.Pass
+            val reason = if (minCheck is ConstraintResult.Fail) minCheck.reason else null
 
             val category = generalCategory(actionCode)
 
@@ -155,8 +156,8 @@ class CommandService(
                     actionCode = actionCode,
                     name = command.actionName,
                     category = category,
-                    enabled = true,
-                    reason = null,
+                    enabled = enabled,
+                    reason = reason,
                     durationSeconds = command.getDuration(),
                     commandPointCost = command.getCommandPointCost(),
                 )

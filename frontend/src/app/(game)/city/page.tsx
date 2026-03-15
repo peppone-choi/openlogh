@@ -228,6 +228,7 @@ function CityPageContent() {
     const canSeeMilitary = useCallback(
         (city: City) => {
             if (!myGeneral) return false;
+            if (city.id === myGeneral.cityId) return true;
             if (city.nationId === 0 || city.nationId === myGeneral.nationId) return true;
             if (myGeneral.permission === 'spy') return true;
             return spyVisibleCityIds.has(city.id);

@@ -286,7 +286,7 @@ class CommandServiceTest {
     }
 
     @Test
-    fun `getCommandTable skips commands where minCondition fails`() {
+    fun `getCommandTable shows disabled commands when minCondition fails`() {
         val minCheckField = com.opensam.command.BaseCommand::class.java.getDeclaredMethod("checkMinCondition")
         assertNotNull(minCheckField)
     }

@@ -297,38 +297,34 @@ export default function GameDashboard() {
                 ))}
             </div>
 
-            <div className="h-[calc(100vh-14rem)] flex flex-col gap-4">
-                <div className="h-[60%]">
-                    <div className="grid grid-cols-[60%_40%] gap-2 h-full">
-                        <div className="overflow-hidden">
-                            <MapViewer worldId={currentWorld.id} mapCode={mapCode} />
-                        </div>
-                        <div className="overflow-auto">
-                            {myGeneral && (
-                                <CommandPanel generalId={myGeneral.id} realtimeMode={currentWorld.realtimeMode} />
-                            )}
-                        </div>
+            <div className="flex flex-col gap-4 pb-4">
+                <div className="flex gap-2">
+                    <div style={{ width: '700px', height: '500px' }}>
+                        <MapViewer worldId={currentWorld.id} mapCode={mapCode} />
+                    </div>
+                    <div className="flex-1 overflow-y-auto" style={{ maxHeight: '500px' }}>
+                        {myGeneral && (
+                            <CommandPanel generalId={myGeneral.id} realtimeMode={currentWorld.realtimeMode} />
+                        )}
                     </div>
                 </div>
 
-                <div className="h-[40%] flex flex-col gap-2">
-                    <div className="h-1/2 grid grid-cols-2 gap-2">
-                        <div className="overflow-auto">
-                            <GeneralBasicCard
-                                general={frontInfo?.general ?? null}
-                                nation={frontInfo?.nation ?? null}
-                                turnTerm={global?.turnTerm}
-                                lastExecuted={global?.lastExecuted}
-                            />
-                        </div>
-                        <div className="overflow-auto">
-                            <CityBasicCard city={frontInfo?.city ?? null} region={frontInfo?.city?.region} />
-                        </div>
+                <div className="grid grid-cols-2 gap-2">
+                    <div>
+                        <GeneralBasicCard
+                            general={frontInfo?.general ?? null}
+                            nation={frontInfo?.nation ?? null}
+                            turnTerm={global?.turnTerm}
+                            lastExecuted={global?.lastExecuted}
+                        />
                     </div>
+                    <div>
+                        <CityBasicCard city={frontInfo?.city ?? null} region={frontInfo?.city?.region} />
+                    </div>
+                </div>
 
-                    <div className="h-1/2 overflow-auto">
-                        <NationBasicCard nation={frontInfo?.nation ?? null} global={global} />
-                    </div>
+                <div>
+                    <NationBasicCard nation={frontInfo?.nation ?? null} global={global} />
                 </div>
             </div>
 

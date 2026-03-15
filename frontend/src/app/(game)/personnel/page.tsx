@@ -204,7 +204,7 @@ export default function PersonnelPage() {
             }
         });
 
-        for (let level = 19; level >= minChiefLevel; level--) {
+        for (let level = 20; level >= minChiefLevel; level--) {
             const statReq: 'strength' | 'intel' | 'any' = level === 11 ? 'any' : level % 2 === 0 ? 'strength' : 'intel';
             slots.push({
                 level,
@@ -392,7 +392,7 @@ export default function PersonnelPage() {
                 <CardContent className="space-y-2">
                     {(() => {
                         const rows: React.ReactElement[] = [];
-                        for (let i = 19; i >= minChiefLevel; i -= 2) {
+                        for (let i = 20; i >= minChiefLevel; i -= 2) {
                             const slot1 = officerSlots.find((s) => s.level === i);
                             const slot2 = officerSlots.find((s) => s.level === i - 1);
                             rows.push(
@@ -464,7 +464,7 @@ export default function PersonnelPage() {
                     </CardHeader>
                     <CardContent className="space-y-3">
                         {officerSlots
-                            .filter((slot) => slot.level >= minChiefLevel && slot.level < 20)
+                            .filter((slot) => slot.level >= minChiefLevel && slot.level <= 20)
                             .map((slot) => {
                                 const candidates = getCandidatesForLevel(slot.level);
                                 const locked = slot.isLocked && meLevel < 12;

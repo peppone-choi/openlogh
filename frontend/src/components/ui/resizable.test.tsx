@@ -1,9 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-    ResizablePanelGroup,
-    ResizablePanel,
-    ResizableHandle,
-} from './resizable';
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from './resizable';
 
 describe('Resizable', () => {
     it('exports Resizable components', () => {
