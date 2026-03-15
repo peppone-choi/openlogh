@@ -58,6 +58,8 @@ class 건국(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
         }
 
         val nationName = arg?.get("nationName") as? String ?: "신생국"
+        val abbreviation = (arg?.get("abbreviation") as? String)?.take(2)?.ifBlank { null }
+            ?: nationName.take(1)
         val nationType = arg?.get("nationType") as? String ?: "che_도적"
         val colorType = arg?.get("colorType") ?: 0
         val cityName = city?.name ?: "알 수 없음"
@@ -78,7 +80,7 @@ class 건국(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
         return CommandResult(
             success = true,
             logs = logs,
-            message = """{"statChanges":{"experience":$exp,"dedication":$ded},"nationChanges":{"foundNation":true,"nationName":"$nationName","nationType":"$nationType","colorType":$colorType,"level":1,"capital":${general.cityId},"can_국기변경":1},"cityChanges":{"claimCity":true},"historyLog":{"global":"<Y><b>【건국】</b></>${nationType} <D><b>${nationName}</b></>${josaNationYi} 새로이 등장하였습니다.","globalAction":"<Y>${generalName}</>${josaYi} <G><b>${cityName}</b></>에 국가를 건설하였습니다.","general":"<D><b>${nationName}</b></>${josaUl} 건국","nation":"<Y>${generalName}</>${josaYi} <D><b>${nationName}</b></>${josaUl} 건국"},"inheritancePoint":{"active_action":1,"unifier":250}}"""
+            message = """{"statChanges":{"experience":$exp,"dedication":$ded},"nationChanges":{"foundNation":true,"nationName":"$nationName","abbreviation":"$abbreviation","nationType":"$nationType","colorType":$colorType,"level":1,"capital":${general.cityId},"can_국기변경":1},"cityChanges":{"claimCity":true},"historyLog":{"global":"<Y><b>【건국】</b></>${nationType} <D><b>${nationName}</b></>${josaNationYi} 새로이 등장하였습니다.","globalAction":"<Y>${generalName}</>${josaYi} <G><b>${cityName}</b></>에 국가를 건설하였습니다.","general":"<D><b>${nationName}</b></>${josaUl} 건국","nation":"<Y>${generalName}</>${josaYi} <D><b>${nationName}</b></>${josaUl} 건국"},"inheritancePoint":{"active_action":1,"unifier":250}}"""
         )
     }
 }

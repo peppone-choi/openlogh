@@ -166,7 +166,7 @@ class ScenarioService(
         // 2. Create nations and assign cities
         val nationEntities = scenario.nation.map { nationRow ->
             val nation = parseNation(nationRow, worldId)
-            val nationCityNames = readStringList(nationRow.getOrNull(8))
+            val nationCityNames = readStringList(nationRow.lastOrNull { it is List<*> })
             val nationCities = nationCityNames.mapNotNull { cityNameToId[it] }
             if (nationCities.isNotEmpty()) {
                 nation.capitalCityId = nationCities.first()
@@ -180,7 +180,7 @@ class ScenarioService(
         for ((idx, saved) in savedNations.withIndex()) {
             val nationIdx = idx + 1
             nationIdxToDbId[nationIdx] = saved.id
-            val nationCityNames = readStringList(scenario.nation[idx].getOrNull(8))
+            val nationCityNames = readStringList(scenario.nation[idx].lastOrNull { it is List<*> })
             val nationCities = nationCityNames.mapNotNull { cityNameToId[it] }
             nationCityIds[saved.id] = nationCities.toMutableList()
             for (cid in nationCities) {
@@ -547,15 +547,33 @@ class ScenarioService(
         }
     }
 
+    private val TWO_CHAR_SURNAMES = setOf(
+        "공손", "사마", "제갈", "하후", "선우", "황보", "독고", "남궁", "동방", "황건",
+    )
+
+    private val SPECIAL_ABBR = mapOf(
+        "한나라" to "한", "헌제" to "헌", "소제" to "소", "영제" to "영",
+    )
+
+    private fun deriveAbbreviation(nationName: String): String {
+        SPECIAL_ABBR[nationName]?.let { return it }
+        val twoChar = nationName.take(2)
+        if (twoChar in TWO_CHAR_SURNAMES) return twoChar
+        return nationName.take(1)
+    }
+
     private fun parseNation(row: List<Any>, worldId: Long): Nation {
         // Format: [name, color, gold, rice, description, tech, type, level, [cities]]
         val typeRaw = row[6].toString()
         val typeCode = if (typeRaw.contains("_")) typeRaw else "che_$typeRaw"
         // Parity: Nation.php:130 — $nationStor->scout_msg = $this->infoText
         val description = row.getOrNull(4)?.toString() ?: ""
+        val nationName = row[0] as String
+        val explicitAbbr = row.getOrNull(9)?.toString()?.takeIf { it.isNotBlank() && it != "null" }
         return Nation(
             worldId = worldId,
-            name = row[0] as String,
+            name = nationName,
+            abbreviation = explicitAbbr ?: deriveAbbreviation(nationName),
             color = row[1] as String,
             gold = (row[2] as Number).toInt(),
             rice = (row[3] as Number).toInt(),

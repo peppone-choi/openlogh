@@ -699,6 +699,31 @@ class ScenarioServiceTest {
     }
 
     @Test
+    fun `deriveAbbreviation handles two-char surnames and special names`() {
+        val method = ScenarioService::class.java.getDeclaredMethod("deriveAbbreviation", String::class.java)
+        method.isAccessible = true
+        assertEquals("유", method.invoke(service, "유비"))
+        assertEquals("조", method.invoke(service, "조조"))
+        assertEquals("공손", method.invoke(service, "공손찬"))
+        assertEquals("사마", method.invoke(service, "사마의"))
+        assertEquals("한", method.invoke(service, "한나라"))
+        assertEquals("헌", method.invoke(service, "헌제"))
+        assertEquals("황건", method.invoke(service, "황건적"))
+    }
+
+    @Test
+    fun `nation city list uses lastOrNull for List element`() {
+        val nationRow = listOf("테스트", "#FFF", 1000, 1000, "설명", 100, "유가", 3, listOf("장안", "낙양"))
+        val cities = nationRow.lastOrNull { it is List<*> }
+        assertNotNull(cities)
+        assertEquals(listOf("장안", "낙양"), cities)
+
+        val nationRowWithAbbr = listOf("테스트", "#FFF", 1000, 1000, "설명", 100, "유가", 3, "테", listOf("장안", "낙양"))
+        val cities2 = nationRowWithAbbr.lastOrNull { it is List<*> }
+        assertEquals(listOf("장안", "낙양"), cities2)
+    }
+
+    @Test
     fun `Nation abbreviation field defaults to empty string`() {
         val nation = Nation(id = 1, worldId = 1, name = "유비군")
         assertEquals("", nation.abbreviation)
