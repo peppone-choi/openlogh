@@ -560,6 +560,54 @@ export default function MessagesPage() {
                                                 </Button>
                                             </div>
                                         )}
+                                        {m.messageType === 'recruitment' &&
+                                            m.payload.action === 'scout' &&
+                                            m.meta.used !== true &&
+                                            myGeneral && (
+                                                <div className="flex gap-2 mt-2">
+                                                    <Button
+                                                        size="sm"
+                                                        variant="default"
+                                                        className="bg-green-700 hover:bg-green-600 text-xs h-7"
+                                                        onClick={async (e) => {
+                                                            e.stopPropagation();
+                                                            try {
+                                                                const res = await messageApi.acceptRecruitment(
+                                                                    m.id,
+                                                                    myGeneral.id
+                                                                );
+                                                                alert(`${res.data.nationName}(으)로 임관하였습니다.`);
+                                                                await fetchMyGeneral(currentWorld!.id);
+                                                                fetchMessages();
+                                                            } catch (err: unknown) {
+                                                                const msg =
+                                                                    err instanceof Error
+                                                                        ? err.message
+                                                                        : '등용 수락 실패';
+                                                                alert(msg);
+                                                            }
+                                                        }}
+                                                    >
+                                                        등용 수락
+                                                    </Button>
+                                                    <Button
+                                                        size="sm"
+                                                        variant="destructive"
+                                                        className="text-xs h-7"
+                                                        onClick={async (e) => {
+                                                            e.stopPropagation();
+                                                            try {
+                                                                await messageApi.declineRecruitment(m.id, myGeneral.id);
+                                                                fetchMessages();
+                                                            } catch {
+                                                                alert('등용 거절 실패');
+                                                            }
+                                                        }}
+                                                    >
+                                                        거절
+                                                    </Button>
+                                                </div>
+                                            )}
                                     </CardContent>
                                 </Card>
                             );

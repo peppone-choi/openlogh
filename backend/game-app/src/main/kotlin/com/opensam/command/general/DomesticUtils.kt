@@ -14,9 +14,10 @@ import kotlin.random.Random
  */
 object DomesticUtils {
 
-    /**
-     * Legacy: getDomesticExpLevelBonus(explevel) = 1 + explevel / 500
-     */
+    fun statBonus(statValue: Int, weight: Double = 1.0): Double {
+        return 1.0 + (statValue - 50) / 500.0 * weight
+    }
+
     fun getDomesticExpLevelBonus(expLevel: Int): Double {
         return 1.0 + expLevel / 500.0
     }

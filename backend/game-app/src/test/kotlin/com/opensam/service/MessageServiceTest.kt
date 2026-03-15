@@ -27,7 +27,8 @@ class MessageServiceTest {
         boardCommentRepository = mock(BoardCommentRepository::class.java)
         generalRepository = mock(GeneralRepository::class.java)
         nationRepository = mock(NationRepository::class.java)
-        service = MessageService(messageRepository, boardCommentRepository, generalRepository, nationRepository)
+        val worldStateRepository = mock(com.opensam.repository.WorldStateRepository::class.java)
+        service = MessageService(messageRepository, boardCommentRepository, generalRepository, nationRepository, worldStateRepository)
     }
 
     @Test

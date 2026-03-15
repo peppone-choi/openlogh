@@ -54,6 +54,7 @@ class InMemoryTurnHarness {
     private val modifierService: ModifierService = mock(ModifierService::class.java)
 
     val commandRegistry = CommandRegistry()
+    private val messageService: com.opensam.service.MessageService = mock(com.opensam.service.MessageService::class.java)
     val commandExecutor = CommandExecutor(
         commandRegistry,
         generalRepository,
@@ -64,6 +65,7 @@ class InMemoryTurnHarness {
         mapService,
         statChangeService,
         modifierService,
+        messageService,
     )
 
     private val yearbookService: YearbookService = mock(YearbookService::class.java)

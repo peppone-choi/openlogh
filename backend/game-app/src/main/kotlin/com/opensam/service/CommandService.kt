@@ -488,6 +488,7 @@ class CommandService(
         "Nation휴식" -> "휴식"
         "발령", "포상", "몰수", "부대탈퇴지시" -> "인사"
         "물자원조", "불가침제의", "불가침수락", "선전포고", "종전제의", "종전수락", "불가침파기제의", "불가침파기수락" -> "외교"
+        "칭제", "천자맞이", "선양요구", "신속", "독립선언" -> "황제"
         "초토화", "천도", "증축", "감축" -> "특수"
         "필사즉생", "백성동원", "수몰", "허보", "의병모집", "이호경식", "급습", "피장파장" -> "전략"
         "국기변경", "국호변경", "인구이동", "무작위수도이전" -> "기타"
@@ -499,10 +500,11 @@ class CommandService(
         "휴식" -> 1
         "인사" -> 2
         "외교" -> 3
-        "특수" -> 4
-        "전략" -> 5
-        "기타" -> 6
-        "연구" -> 7
+        "황제" -> 4
+        "특수" -> 5
+        "전략" -> 6
+        "기타" -> 7
+        "연구" -> 8
         else -> 99
     }
 
@@ -514,6 +516,8 @@ class CommandService(
         gameStor["openingPartYears"] = (world.config["openingPartYears"] as? Number)?.toInt()
             ?: gameConstService.getInt("openingPartYear")
         gameStor["joinActionLimit"] = gameConstService.getInt("joinActionLimit")
+        gameStor["emperorSystem"] = (world.meta["emperorSystem"] as? Boolean) ?: false
+        (world.meta["emperorGeneralId"] as? Number)?.toLong()?.let { gameStor["emperorGeneralId"] = it }
 
         return CommandEnv(
             year = world.currentYear.toInt(),

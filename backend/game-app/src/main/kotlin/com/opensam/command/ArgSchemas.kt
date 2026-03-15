@@ -259,6 +259,12 @@ val COMMAND_SCHEMAS: Map<String, ArgSchema> = mapOf(
     "불가침파기제의" to ArgSchemas.destNation,
     "불가침파기수락" to ArgSchemas.destNation,
 
+    "칭제" to ArgSchemas.none,
+    "천자맞이" to ArgSchemas.none,
+    "선양요구" to ArgSchemas.none,
+    "신속" to ArgSchemas.destNation,
+    "독립선언" to ArgSchemas.none,
+
     "급습" to ArgSchemas.destCity,
     "수몰" to ArgSchemas.destCity,
     "허보" to ArgSchemas.destNation,

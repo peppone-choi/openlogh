@@ -339,6 +339,10 @@ export const messageApi = {
     getContacts: (worldId: number) => api.get<ContactInfo[]>(`/worlds/${worldId}/contacts`),
     respondDiplomacy: (messageId: number, accept: boolean) =>
         api.post<void>(`/messages/${messageId}/diplomacy-respond`, { accept }),
+    acceptRecruitment: (messageId: number, generalId: number) =>
+        api.post<{ nationName: string }>(`/messages/${messageId}/accept-recruitment`, null, { params: { generalId } }),
+    declineRecruitment: (messageId: number, generalId: number) =>
+        api.post<void>(`/messages/${messageId}/decline-recruitment`, null, { params: { generalId } }),
     delete: (id: number) => api.delete<void>(`/messages/${id}`),
     markAsRead: (id: number) => api.patch<void>(`/messages/${id}/read`),
     getRecent: (sequence: number) => api.get<Message[]>('/messages/recent', { params: { sequence } }),

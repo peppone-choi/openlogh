@@ -657,4 +657,244 @@ class ConstraintTest {
         assertTrue(result is ConstraintResult.Fail)
         assertTrue((result as ConstraintResult.Fail).reason.contains("지력"))
     }
+
+    // ========== EmperorSystemActive ==========
+
+    @Test
+    fun `EmperorSystemActive passes when emperor system is active`() {
+        val context = ConstraintContext(general = createGeneral(), env = mapOf("emperorSystem" to true))
+        val result = EmperorSystemActive().test(context)
+        assertTrue(result is ConstraintResult.Pass)
+    }
+
+    @Test
+    fun `EmperorSystemActive fails when emperor system is inactive`() {
+        val context = ConstraintContext(general = createGeneral(), env = mapOf("emperorSystem" to false))
+        val result = EmperorSystemActive().test(context)
+        assertTrue(result is ConstraintResult.Fail)
+        assertTrue((result as ConstraintResult.Fail).reason.contains("황제 시스템"))
+    }
+
+    // ========== NationNotExempt ==========
+
+    @Test
+    fun `NationNotExempt passes when nation is not exempt`() {
+        val nation = createNation()
+        nation.meta["imperialStatus"] = "independent"
+        val result = NationNotExempt().test(ctx(nation = nation))
+        assertTrue(result is ConstraintResult.Pass)
+    }
+
+    @Test
+    fun `NationNotExempt fails when nation is exempt`() {
+        val nation = createNation()
+        nation.meta["imperialStatus"] = "exempt"
+        val result = NationNotExempt().test(ctx(nation = nation))
+        assertTrue(result is ConstraintResult.Fail)
+        assertTrue((result as ConstraintResult.Fail).reason.contains("독자적 체계"))
+    }
+
+    // ========== NationIsIndependent ==========
+
+    @Test
+    fun `NationIsIndependent passes when nation is independent`() {
+        val nation = createNation()
+        nation.meta["imperialStatus"] = "independent"
+        val result = NationIsIndependent().test(ctx(nation = nation))
+        assertTrue(result is ConstraintResult.Pass)
+    }
+
+    @Test
+    fun `NationIsIndependent fails when nation is not independent`() {
+        val nation = createNation()
+        nation.meta["imperialStatus"] = "vassal"
+        val result = NationIsIndependent().test(ctx(nation = nation))
+        assertTrue(result is ConstraintResult.Fail)
+        assertTrue((result as ConstraintResult.Fail).reason.contains("독립 세력"))
+    }
+
+    // ========== NationIsVassal ==========
+
+    @Test
+    fun `NationIsVassal passes when nation is vassal`() {
+        val nation = createNation()
+        nation.meta["imperialStatus"] = "vassal"
+        val result = NationIsVassal().test(ctx(nation = nation))
+        assertTrue(result is ConstraintResult.Pass)
+    }
+
+    @Test
+    fun `NationIsVassal fails when nation is not vassal`() {
+        val nation = createNation()
+        nation.meta["imperialStatus"] = "independent"
+        val result = NationIsVassal().test(ctx(nation = nation))
+        assertTrue(result is ConstraintResult.Fail)
+        assertTrue((result as ConstraintResult.Fail).reason.contains("제후국"))
+    }
+
+    // ========== NationNotEmperor ==========
+
+    @Test
+    fun `NationNotEmperor passes when nation is not emperor`() {
+        val nation = createNation()
+        nation.meta["imperialStatus"] = "independent"
+        val result = NationNotEmperor().test(ctx(nation = nation))
+        assertTrue(result is ConstraintResult.Pass)
+    }
+
+    @Test
+    fun `NationNotEmperor fails when nation is emperor`() {
+        val nation = createNation()
+        nation.meta["imperialStatus"] = "emperor"
+        val result = NationNotEmperor().test(ctx(nation = nation))
+        assertTrue(result is ConstraintResult.Fail)
+        assertTrue((result as ConstraintResult.Fail).reason.contains("황제국"))
+    }
+
+    // ========== NationIsEmperor ==========
+
+    @Test
+    fun `NationIsEmperor passes when nation is emperor`() {
+        val nation = createNation()
+        nation.meta["imperialStatus"] = "emperor"
+        val result = NationIsEmperor().test(ctx(nation = nation))
+        assertTrue(result is ConstraintResult.Pass)
+    }
+
+    @Test
+    fun `NationIsEmperor fails when nation is not emperor`() {
+        val nation = createNation()
+        nation.meta["imperialStatus"] = "independent"
+        val result = NationIsEmperor().test(ctx(nation = nation))
+        assertTrue(result is ConstraintResult.Fail)
+        assertTrue((result as ConstraintResult.Fail).reason.contains("황제국이 아닙니다"))
+    }
+
+    // ========== DestNationIsEmperor ==========
+
+    @Test
+    fun `DestNationIsEmperor passes when dest nation is emperor`() {
+        val destNation = createNation(id = 2)
+        destNation.meta["imperialStatus"] = "emperor"
+        val result = DestNationIsEmperor().test(ctx(destNation = destNation))
+        assertTrue(result is ConstraintResult.Pass)
+    }
+
+    @Test
+    fun `DestNationIsEmperor fails when dest nation is not emperor`() {
+        val destNation = createNation(id = 2)
+        destNation.meta["imperialStatus"] = "independent"
+        val result = DestNationIsEmperor().test(ctx(destNation = destNation))
+        assertTrue(result is ConstraintResult.Fail)
+        assertTrue((result as ConstraintResult.Fail).reason.contains("황제국이 아닙니다"))
+    }
+
+    // ========== NationHasEmperorGeneral ==========
+
+    @Test
+    fun `NationHasEmperorGeneral passes when nation is emperor with legitimate emperor`() {
+        val nation = createNation()
+        nation.meta["imperialStatus"] = "emperor"
+        nation.meta["emperorType"] = "legitimate"
+        val result = NationHasEmperorGeneral().test(ctx(nation = nation))
+        assertTrue(result is ConstraintResult.Pass)
+    }
+
+    @Test
+    fun `NationHasEmperorGeneral fails when nation is not emperor`() {
+        val nation = createNation()
+        nation.meta["imperialStatus"] = "independent"
+        val result = NationHasEmperorGeneral().test(ctx(nation = nation))
+        assertTrue(result is ConstraintResult.Fail)
+        assertTrue((result as ConstraintResult.Fail).reason.contains("황제국이 아닙니다"))
+    }
+
+    @Test
+    fun `NationHasEmperorGeneral fails when emperor type is not legitimate`() {
+        val nation = createNation()
+        nation.meta["imperialStatus"] = "emperor"
+        nation.meta["emperorType"] = "self-proclaimed"
+        val result = NationHasEmperorGeneral().test(ctx(nation = nation))
+        assertTrue(result is ConstraintResult.Fail)
+        assertTrue((result as ConstraintResult.Fail).reason.contains("정통 황제"))
+    }
+
+    // ========== WanderingEmperorExists ==========
+
+    @Test
+    fun `WanderingEmperorExists passes when wandering emperor city id is positive`() {
+        val context = ConstraintContext(general = createGeneral(), env = mapOf("wanderingEmperorCityId" to 5L))
+        val result = WanderingEmperorExists().test(context)
+        assertTrue(result is ConstraintResult.Pass)
+    }
+
+    @Test
+    fun `WanderingEmperorExists fails when wandering emperor city id is zero`() {
+        val context = ConstraintContext(general = createGeneral(), env = mapOf("wanderingEmperorCityId" to 0L))
+        val result = WanderingEmperorExists().test(context)
+        assertTrue(result is ConstraintResult.Fail)
+        assertTrue((result as ConstraintResult.Fail).reason.contains("유랑 중인 천자"))
+    }
+
+    @Test
+    fun `WanderingEmperorExists fails when wandering emperor city id is missing`() {
+        val context = ConstraintContext(general = createGeneral(), env = emptyMap())
+        val result = WanderingEmperorExists().test(context)
+        assertTrue(result is ConstraintResult.Fail)
+    }
+
+    // ========== WanderingEmperorInTerritory ==========
+
+    @Test
+    fun `WanderingEmperorInTerritory passes when emperor is in nation territory`() {
+        val general = createGeneral(nationId = 1)
+        val env = mapOf(
+            "wanderingEmperorCityId" to 5L,
+            "cityNationById" to mapOf(5L to 1L),
+        )
+        val context = ConstraintContext(general = general, env = env)
+        val result = WanderingEmperorInTerritory().test(context)
+        assertTrue(result is ConstraintResult.Pass)
+    }
+
+    @Test
+    fun `WanderingEmperorInTerritory fails when emperor is not in territory`() {
+        val general = createGeneral(nationId = 1)
+        val env = mapOf(
+            "wanderingEmperorCityId" to 5L,
+            "cityNationById" to mapOf(5L to 2L),
+            "mapAdjacency" to emptyMap<Long, List<Long>>(),
+            "dbToMapId" to mapOf(5L to 100L),
+            "cityNationByMapId" to emptyMap<Long, Long>(),
+        )
+        val context = ConstraintContext(general = general, env = env)
+        val result = WanderingEmperorInTerritory().test(context)
+        assertTrue(result is ConstraintResult.Fail)
+        assertTrue((result as ConstraintResult.Fail).reason.contains("천자가 아국 영토"))
+    }
+
+    // ========== ReqNationCityCount ==========
+
+    @Test
+    fun `ReqNationCityCount passes when nation has enough cities`() {
+        val general = createGeneral(nationId = 1)
+        val env = mapOf(
+            "cityNationById" to mapOf(1L to 1L, 2L to 1L, 3L to 1L, 4L to 2L),
+        )
+        val context = ConstraintContext(general = general, env = env)
+        val result = ReqNationCityCount(3).test(context)
+        assertTrue(result is ConstraintResult.Pass)
+    }
+
+    @Test
+    fun `ReqNationCityCount fails when nation has fewer cities than required`() {
+        val general = createGeneral(nationId = 1)
+        val env = mapOf(
+            "cityNationById" to mapOf(1L to 1L, 2L to 2L, 3L to 2L),
+        )
+        val context = ConstraintContext(general = general, env = env)
+        val result = ReqNationCityCount(5).test(context)
+        assertTrue(result is ConstraintResult.Fail)
+        assertTrue((result as ConstraintResult.Fail).reason.contains("도시가"))
+    }
 }

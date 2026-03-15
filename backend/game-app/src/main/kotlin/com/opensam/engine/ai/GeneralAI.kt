@@ -178,16 +178,10 @@ class GeneralAI(
             if (riseResult != null) return riseResult
         }
 
-        // 사망대비: killTurn or deadYear approaching
+        // Legacy: NPC사망대비 — only killTurn countdown, not deadYear (deadYear sets initial killTurn only)
         val killTurn = general.killTurn?.toInt()
         if (killTurn != null && killTurn <= 5 && general.npcState.toInt() >= 2) {
             return doDeathPreparation(general, nation, rng)
-        }
-        if (general.npcState.toInt() >= 2 && general.deadYear > 0.toShort()) {
-            val yearsLeft = general.deadYear - world.currentYear
-            if (yearsLeft <= 2) {
-                return doDeathPreparation(general, nation, rng)
-            }
         }
 
         val hasNeutralTargets = warTargetNations.containsKey(0L)
@@ -3240,11 +3234,7 @@ class GeneralAI(
         }
 
         val killTurn = general.killTurn?.toInt()
-        val deadYearApproaching = npcType >= 2
-            && general.deadYear > 0.toShort()
-            && (general.deadYear - world.currentYear) <= 2
-
-        if (npcType >= 2 && ((killTurn != null && killTurn <= 5) || deadYearApproaching)) {
+        if (npcType >= 2 && killTurn != null && killTurn <= 5) {
             val nation = worldPortFactory.create(world.id.toLong()).nation(general.nationId)?.toEntity()
             return doDeathPreparation(general, nation, rng)
         }

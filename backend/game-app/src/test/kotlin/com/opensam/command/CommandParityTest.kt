@@ -226,10 +226,14 @@ class CommandParityTest {
         strength: Int = 70,
         intel: Int = 70,
         statKey: String = "intel",
+        politics: Int = 60,
     ): DomesticExpected {
         val rng = LiteHashDRBG.build(seed)
         val trustApplied = maxOf(50f, trust).toDouble()
         var score = (stat * (trustApplied / 100.0) * (0.8 + rng.nextDouble() * 0.4)).toInt()
+        score = maxOf(1, score)
+        val politicsBonus = 1.0 + (politics - 50) / 500.0
+        score = (score * politicsBonus).toInt()
         score = maxOf(1, score)
 
         // Legacy CriticalRatioDomestic

@@ -1112,6 +1112,163 @@ private fun asLong(raw: Any?): Long? {
     }
 }
 
+// ========== Emperor/Vassal constraints ==========
+
+fun EmperorSystemActive() = object : Constraint {
+    override val name = "EmperorSystemActive"
+    override fun test(ctx: ConstraintContext): ConstraintResult {
+        val active = ctx.env["emperorSystem"] as? Boolean ?: false
+        return if (active) ConstraintResult.Pass
+        else ConstraintResult.Fail("황제 시스템이 활성화되지 않은 서버입니다.")
+    }
+}
+
+fun NationNotExempt() = object : Constraint {
+    override val name = "NationNotExempt"
+    override fun test(ctx: ConstraintContext): ConstraintResult {
+        val nation = ctx.nation ?: return ConstraintResult.Fail("국가 정보가 없습니다.")
+        val status = nation.meta["imperialStatus"] as? String ?: "independent"
+        return if (status != "exempt") ConstraintResult.Pass
+        else ConstraintResult.Fail("독자적 체계를 사용하는 세력입니다.")
+    }
+}
+
+fun NationIsIndependent() = object : Constraint {
+    override val name = "NationIsIndependent"
+    override fun test(ctx: ConstraintContext): ConstraintResult {
+        val nation = ctx.nation ?: return ConstraintResult.Fail("국가 정보가 없습니다.")
+        val status = nation.meta["imperialStatus"] as? String ?: "independent"
+        return if (status == "independent") ConstraintResult.Pass
+        else ConstraintResult.Fail("독립 세력만 사용할 수 있습니다.")
+    }
+}
+
+fun NationIsVassal() = object : Constraint {
+    override val name = "NationIsVassal"
+    override fun test(ctx: ConstraintContext): ConstraintResult {
+        val nation = ctx.nation ?: return ConstraintResult.Fail("국가 정보가 없습니다.")
+        val status = nation.meta["imperialStatus"] as? String ?: "independent"
+        return if (status == "vassal") ConstraintResult.Pass
+        else ConstraintResult.Fail("제후국만 사용할 수 있습니다.")
+    }
+}
+
+fun NationNotEmperor() = object : Constraint {
+    override val name = "NationNotEmperor"
+    override fun test(ctx: ConstraintContext): ConstraintResult {
+        val nation = ctx.nation ?: return ConstraintResult.Fail("국가 정보가 없습니다.")
+        val status = nation.meta["imperialStatus"] as? String ?: "independent"
+        return if (status != "emperor") ConstraintResult.Pass
+        else ConstraintResult.Fail("이미 황제국입니다.")
+    }
+}
+
+fun NationIsEmperor() = object : Constraint {
+    override val name = "NationIsEmperor"
+    override fun test(ctx: ConstraintContext): ConstraintResult {
+        val nation = ctx.nation ?: return ConstraintResult.Fail("국가 정보가 없습니다.")
+        val status = nation.meta["imperialStatus"] as? String ?: "independent"
+        return if (status == "emperor") ConstraintResult.Pass
+        else ConstraintResult.Fail("황제국이 아닙니다.")
+    }
+}
+
+fun DestNationIsEmperor() = object : Constraint {
+    override val name = "DestNationIsEmperor"
+    override fun test(ctx: ConstraintContext): ConstraintResult {
+        val dn = ctx.destNation ?: return ConstraintResult.Fail("대상 국가를 찾을 수 없습니다.")
+        val status = dn.meta["imperialStatus"] as? String ?: "independent"
+        return if (status == "emperor") ConstraintResult.Pass
+        else ConstraintResult.Fail("대상 국가가 황제국이 아닙니다.")
+    }
+}
+
+fun NationHasEmperorGeneral() = object : Constraint {
+    override val name = "NationHasEmperorGeneral"
+    override fun test(ctx: ConstraintContext): ConstraintResult {
+        val nation = ctx.nation ?: return ConstraintResult.Fail("국가 정보가 없습니다.")
+        val status = nation.meta["imperialStatus"] as? String ?: "independent"
+        if (status != "emperor") return ConstraintResult.Fail("황제국이 아닙니다.")
+        val emperorType = nation.meta["emperorType"] as? String ?: ""
+        if (emperorType != "legitimate") return ConstraintResult.Fail("정통 황제를 보유하고 있지 않습니다.")
+        return ConstraintResult.Pass
+    }
+}
+
+fun WanderingEmperorExists() = object : Constraint {
+    override val name = "WanderingEmperorExists"
+    override fun test(ctx: ConstraintContext): ConstraintResult {
+        val wanderingCityId = (ctx.env["wanderingEmperorCityId"] as? Number)?.toLong()
+        return if (wanderingCityId != null && wanderingCityId > 0) ConstraintResult.Pass
+        else ConstraintResult.Fail("유랑 중인 천자가 없습니다.")
+    }
+}
+
+fun WanderingEmperorInTerritory() = object : Constraint {
+    override val name = "WanderingEmperorInTerritory"
+    override fun test(ctx: ConstraintContext): ConstraintResult {
+        val wanderingCityId = (ctx.env["wanderingEmperorCityId"] as? Number)?.toLong()
+            ?: return ConstraintResult.Fail("유랑 중인 천자가 없습니다.")
+        val nationId = ctx.general.nationId
+        val cityNationById = readLongMapFromEnv(ctx.env["cityNationById"])
+        val cityNation = cityNationById[wanderingCityId]
+        if (cityNation == nationId) return ConstraintResult.Pass
+        val adjacency = readAdjacencyFromEnv(ctx.env["mapAdjacency"])
+        val dbToMapId = readLongMapFromEnv(ctx.env["dbToMapId"])
+        val cityNationByMapId = readLongMapFromEnv(ctx.env["cityNationByMapId"])
+        val wanderingMapId = dbToMapId[wanderingCityId] ?: return ConstraintResult.Fail("천자가 아국 영토에 없습니다.")
+        val neighbors = adjacency[wanderingMapId].orEmpty()
+        val myMapCityIds = cityNationByMapId.filter { it.value == nationId }.keys
+        val adjacent = neighbors.any { it in myMapCityIds }
+        return if (adjacent) ConstraintResult.Pass
+        else ConstraintResult.Fail("천자가 아국 영토 또는 인접 도시에 없습니다.")
+    }
+}
+
+fun ReqNationCityCount(minCount: Int) = object : Constraint {
+    override val name = "ReqNationCityCount"
+    override fun test(ctx: ConstraintContext): ConstraintResult {
+        val nationId = ctx.general.nationId
+        val cityNationById = readLongMapFromEnv(ctx.env["cityNationById"])
+        val count = cityNationById.values.count { it == nationId }
+        return if (count >= minCount) ConstraintResult.Pass
+        else ConstraintResult.Fail("도시가 ${minCount}개 이상이어야 합니다. (현재: ${count}개)")
+    }
+}
+
+private fun readLongMapFromEnv(raw: Any?): Map<Long, Long> {
+    if (raw !is Map<*, *>) return emptyMap()
+    val result = mutableMapOf<Long, Long>()
+    raw.forEach { (k, v) ->
+        val key = asLongFromEnv(k) ?: return@forEach
+        val value = asLongFromEnv(v) ?: return@forEach
+        result[key] = value
+    }
+    return result
+}
+
+private fun readAdjacencyFromEnv(raw: Any?): Map<Long, List<Long>> {
+    if (raw !is Map<*, *>) return emptyMap()
+    val result = mutableMapOf<Long, List<Long>>()
+    raw.forEach { (k, v) ->
+        val key = asLongFromEnv(k) ?: return@forEach
+        val values = when (v) {
+            is Iterable<*> -> v.mapNotNull { asLongFromEnv(it) }
+            else -> emptyList()
+        }
+        result[key] = values
+    }
+    return result
+}
+
+private fun asLongFromEnv(raw: Any?): Long? {
+    return when (raw) {
+        is Number -> raw.toLong()
+        is String -> raw.toLongOrNull()
+        else -> null
+    }
+}
+
 // ========== Additional constraints ==========
 
 /**

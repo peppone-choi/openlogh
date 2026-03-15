@@ -18,6 +18,7 @@ class MessageService(
     private val boardCommentRepository: BoardCommentRepository,
     private val generalRepository: GeneralRepository,
     private val nationRepository: NationRepository,
+    private val worldStateRepository: com.opensam.repository.WorldStateRepository,
 ) {
     companion object {
         const val MAILBOX_PUBLIC = "PUBLIC"
@@ -329,6 +330,125 @@ class MessageService(
             content = comment.content,
             createdAt = comment.createdAt,
         )
+    }
+
+    @Transactional
+    fun acceptRecruitment(messageId: Long, receiverGeneralId: Long): String {
+        val message = messageRepository.findById(messageId).orElseThrow {
+            IllegalArgumentException("메시지를 찾을 수 없습니다: $messageId")
+        }
+
+        if (message.messageType != "recruitment") throw IllegalStateException("등용장이 아닙니다.")
+        if (message.destId != receiverGeneralId) throw IllegalStateException("수신자가 아닙니다.")
+        val used = message.meta["used"] as? Boolean ?: false
+        if (used) throw IllegalStateException("이미 사용된 등용장입니다.")
+
+        val action = message.payload["action"] as? String
+        if (action != "scout") throw IllegalStateException("유효하지 않은 등용장입니다.")
+
+        val fromNationId = (message.payload["fromNationId"] as? Number)?.toLong()
+            ?: throw IllegalStateException("국가 정보가 없습니다.")
+        val fromGeneralId = (message.payload["fromGeneralId"] as? Number)?.toLong()
+            ?: throw IllegalStateException("등용자 정보가 없습니다.")
+
+        val receiver = generalRepository.findById(receiverGeneralId).orElseThrow {
+            IllegalArgumentException("장수를 찾을 수 없습니다.")
+        }
+
+        if (receiver.officerLevel >= 20) throw IllegalStateException("군주는 등용장을 수락할 수 없습니다.")
+
+        val destNation = nationRepository.findById(fromNationId).orElse(null)
+            ?: throw IllegalStateException("대상 국가가 존재하지 않습니다.")
+        if (destNation.level <= 0) throw IllegalStateException("방랑군에는 임관할 수 없습니다.")
+
+        val world = worldStateRepository.findById(receiver.worldId.toShort()).orElse(null)
+        if (world != null) {
+            val startYear = (world.config["startyear"] as? Number)?.toInt() ?: world.currentYear.toInt()
+            val openingPartYears = (world.config["openingPartYears"] as? Number)?.toInt() ?: 3
+            val relYear = world.currentYear.toInt() - startYear
+            if (relYear < openingPartYears) {
+                val genCount = generalRepository.findByWorldIdAndNationId(world.id.toLong(), fromNationId).size
+                val genLimit = (world.config["initialNationGenLimit"] as? Number)?.toInt() ?: 10
+                if (genCount >= genLimit) {
+                    throw IllegalStateException("임관이 제한되고 있습니다. (개방 기간 중 국가당 최대 ${genLimit}명)")
+                }
+            }
+        }
+
+        val oldNationId = receiver.nationId
+        val isTroopLeader = receiver.troopId == receiver.id
+
+        if (oldNationId != 0L && receiver.gold > 1000) {
+            receiver.gold = 1000
+        }
+        if (oldNationId != 0L && receiver.rice > 1000) {
+            receiver.rice = 1000
+        }
+
+        if (oldNationId != 0L) {
+            val penalty = 0.1 * receiver.betray
+            receiver.experience = maxOf(0, (receiver.experience * (1 - penalty)).toInt())
+            receiver.dedication = maxOf(0, (receiver.dedication * (1 - penalty)).toInt())
+            receiver.betray = minOf(receiver.betray + 1, 10).toShort()
+        } else {
+            receiver.experience += 100
+            receiver.dedication += 100
+        }
+
+        receiver.nationId = fromNationId
+        receiver.cityId = destNation.capitalCityId ?: receiver.cityId
+        receiver.officerLevel = 1
+        receiver.officerCity = 0
+        receiver.permission = "normal"
+        receiver.belong = 1
+        receiver.troopId = 0
+
+        if (isTroopLeader) {
+            generalRepository.findByTroopId(receiverGeneralId).forEach { member ->
+                if (member.id != receiverGeneralId) {
+                    member.troopId = 0
+                    generalRepository.save(member)
+                }
+            }
+        }
+
+        generalRepository.save(receiver)
+
+        message.meta["used"] = true
+        messageRepository.save(message)
+
+        invalidateOtherScoutMessages(receiverGeneralId, messageId)
+
+        val recruiter = generalRepository.findById(fromGeneralId).orElse(null)
+        if (recruiter != null) {
+            recruiter.experience += 100
+            recruiter.dedication += 100
+            generalRepository.save(recruiter)
+        }
+
+        return destNation.name
+    }
+
+    @Transactional
+    fun declineRecruitment(messageId: Long, receiverGeneralId: Long) {
+        val message = messageRepository.findById(messageId).orElseThrow {
+            IllegalArgumentException("메시지를 찾을 수 없습니다: $messageId")
+        }
+        if (message.messageType != "recruitment") throw IllegalStateException("등용장이 아닙니다.")
+        if (message.destId != receiverGeneralId) throw IllegalStateException("수신자가 아닙니다.")
+
+        message.meta["used"] = true
+        messageRepository.save(message)
+    }
+
+    private fun invalidateOtherScoutMessages(generalId: Long, exceptMessageId: Long) {
+        val pendingScouts = messageRepository.findByDestIdAndMailboxTypeAndMessageTypeOrderBySentAtDesc(
+            generalId, MAILBOX_PRIVATE, "recruitment"
+        )
+        pendingScouts.filter { it.id != exceptMessageId && (it.meta["used"] as? Boolean) != true }.forEach { msg ->
+            msg.meta["used"] = true
+            messageRepository.save(msg)
+        }
     }
 
     private fun resolveMailboxType(mailboxType: String?, mailboxCode: String): String {

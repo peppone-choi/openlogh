@@ -97,6 +97,24 @@ class MessageController(
         return ResponseEntity.ok().build()
     }
 
+    @PostMapping("/{id}/accept-recruitment")
+    fun acceptRecruitment(
+        @PathVariable id: Long,
+        @RequestParam generalId: Long,
+    ): ResponseEntity<Map<String, String>> {
+        val nationName = messageService.acceptRecruitment(id, generalId)
+        return ResponseEntity.ok(mapOf("nationName" to nationName))
+    }
+
+    @PostMapping("/{id}/decline-recruitment")
+    fun declineRecruitment(
+        @PathVariable id: Long,
+        @RequestParam generalId: Long,
+    ): ResponseEntity<Void> {
+        messageService.declineRecruitment(id, generalId)
+        return ResponseEntity.ok().build()
+    }
+
     private fun <T> requireParam(value: T?, name: String): T {
         return value ?: throw IllegalArgumentException("$name is required")
     }

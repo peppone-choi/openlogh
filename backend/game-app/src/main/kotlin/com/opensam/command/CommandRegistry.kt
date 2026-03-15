@@ -130,6 +130,13 @@ class CommandRegistry {
         registerNationCommand("화륜차연구") { g, e, a -> event_화륜차연구(g, e, a) }
         registerNationCommand("화시병연구") { g, e, a -> event_화시병연구(g, e, a) }
 
+        // Emperor/Vassal (5)
+        registerNationCommand("칭제") { g, e, a -> che_칭제(g, e, a) }
+        registerNationCommand("천자맞이") { g, e, a -> che_천자맞이(g, e, a) }
+        registerNationCommand("선양요구") { g, e, a -> che_선양요구(g, e, a) }
+        registerNationCommand("신속") { g, e, a -> che_신속(g, e, a) }
+        registerNationCommand("독립선언") { g, e, a -> che_독립선언(g, e, a) }
+
         // Special
         registerNationCommand("무작위수도이전") { g, e, a -> che_무작위수도이전(g, e, a) }
         registerNationCommand("부대탈퇴지시") { g, e, a -> che_부대탈퇴지시(g, e, a) }

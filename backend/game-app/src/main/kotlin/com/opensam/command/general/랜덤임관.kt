@@ -158,7 +158,8 @@ class 랜덤임관(general: General, env: CommandEnv, arg: Map<String, Any>? = n
                     warpower += (killcrew / deathcrew.coerceAtLeast(1.0)) * npcCoef * leadership
                 }
 
-                develpower += (sqrt(nationGeneral.intel.toDouble() * nationGeneral.strength.toDouble()) * 2.0 + leadership / 2.0) / 5.0
+                develpower += (sqrt(nationGeneral.intel.toDouble() * nationGeneral.strength.toDouble()) * 2.0 + leadership / 2.0) / 5.0 *
+                    DomesticUtils.statBonus(nationGeneral.charm.toInt(), 0.5)
             }
 
             var calcCnt = warpower + develpower

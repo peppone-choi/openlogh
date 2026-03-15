@@ -289,7 +289,7 @@ function LobbyJoinPageContent() {
             setError('이름을 입력해주세요.');
             return;
         }
-        if (cityId === '') {
+        if (nationId === 0 && cityId === '') {
             setError('도시를 선택해주세요.');
             return;
         }

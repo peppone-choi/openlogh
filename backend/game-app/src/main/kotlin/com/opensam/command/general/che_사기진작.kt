@@ -48,7 +48,7 @@ class che_사기진작(general: General, env: CommandEnv, arg: Map<String, Any>?
 
         val atmosDelta = if (env.atmosDelta > 0) env.atmosDelta else ATMOS_DELTA
         val maxAtmos = if (env.maxAtmosByCommand > 0) env.maxAtmosByCommand else MAX_ATMOS_BY_COMMAND
-        val rawScore = (leadership * 100.0 / crew) * atmosDelta
+        val rawScore = (leadership * 100.0 / crew) * atmosDelta * DomesticUtils.statBonus(general.charm.toInt())
         val maxPossible = maxOf(0, maxAtmos - currentAtmos)
         val score = minOf(maxOf(rawScore.roundToInt(), 0), maxPossible)
 

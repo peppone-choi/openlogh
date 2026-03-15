@@ -52,7 +52,8 @@ export default function LobbySelectNpcPage() {
         ? Math.max(0, Math.ceil((new Date(token.pickMoreAfter).getTime() - nowMs) / 1000))
         : 0;
     const tokenExpired = !!token && validRemaining === 0;
-    const refreshDisabled = !token || refreshing || selectingId !== null || (!tokenExpired && refreshRemaining > 0);
+    const refreshDisabled =
+        loading || !token || refreshing || selectingId !== null || (!tokenExpired && refreshRemaining > 0);
 
     useEffect(() => {
         const interval = setInterval(() => setNowMs(Date.now()), 1000);

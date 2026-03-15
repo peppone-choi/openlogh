@@ -61,21 +61,22 @@ function WorldSelector() {
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
     const router = useRouter();
     const pathname = usePathname();
-    const { user, isAuthenticated, initAuth, logout } = useAuthStore();
+    const { user, isAuthenticated, isInitialized, initAuth, logout } = useAuthStore();
     const isAdmin = isAuthenticated && user?.role === 'ADMIN';
 
     useEffect(() => {
         initAuth();
     }, [initAuth]);
     useEffect(() => {
+        if (!isInitialized) return;
         if (!isAuthenticated) {
             router.replace('/login');
         } else if (!isAdmin) {
             router.replace('/');
         }
-    }, [isAuthenticated, isAdmin, router]);
+    }, [isInitialized, isAuthenticated, isAdmin, router]);
 
-    if (!isAdmin) return null;
+    if (!isInitialized || !isAdmin) return null;
 
     return (
         <AdminWorldProvider>

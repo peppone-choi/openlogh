@@ -33,6 +33,7 @@ class CommandExecutor @Autowired constructor(
     private val mapService: MapService,
     private val statChangeService: StatChangeService,
     private val modifierService: ModifierService,
+    private val messageService: com.opensam.service.MessageService,
 ) {
     private val mapper = jacksonObjectMapper()
 
@@ -46,6 +47,7 @@ class CommandExecutor @Autowired constructor(
         mapService: MapService,
         statChangeService: StatChangeService,
         modifierService: ModifierService,
+        messageService: com.opensam.service.MessageService,
     ) : this(
         commandRegistry = commandRegistry,
         worldPortFactory = JpaWorldPortFactory(
@@ -62,6 +64,7 @@ class CommandExecutor @Autowired constructor(
         mapService = mapService,
         statChangeService = statChangeService,
         modifierService = modifierService,
+        messageService = messageService,
     )
 
     suspend fun executeGeneralCommand(
@@ -88,7 +91,7 @@ class CommandExecutor @Autowired constructor(
         val command = commandRegistry.createGeneralCommand(actionCode, general, env, effectiveArg)
         command.city = city
         command.nation = effectiveNation
-        command.services = CommandServices(generalRepository, cityRepository, nationRepository, diplomacyService, modifierService = modifierService)
+        command.services = CommandServices(generalRepository, cityRepository, nationRepository, diplomacyService, messageService = messageService, modifierService = modifierService)
         hydrateCommandForConstraintCheck(command, general, env, effectiveArg)
 
         val cooldown = checkGeneralCooldown(actionCode, general, env)
@@ -177,7 +180,7 @@ class CommandExecutor @Autowired constructor(
             ?: return CommandResult(success = false, logs = listOf("<R>$actionCode</> - 알 수 없는 국가 명령"))
         command.city = city
         command.nation = nation
-        command.services = CommandServices(generalRepository, cityRepository, nationRepository, diplomacyService, modifierService = modifierService)
+        command.services = CommandServices(generalRepository, cityRepository, nationRepository, diplomacyService, messageService = messageService, modifierService = modifierService)
         hydrateCommandForConstraintCheck(command, general, env, effectiveArg)
 
         val cooldown = checkNationCooldown(actionCode, general, nation, env)
@@ -447,7 +450,11 @@ class CommandExecutor @Autowired constructor(
             ?: 3
         val joinActionLimit = (env.gameStor["joinActionLimit"] as? Number)?.toInt() ?: 12
 
-        return mapOf(
+        val wanderingEmperor = allGenerals.firstOrNull {
+            it.npcState.toInt() == 10 && (it.meta["emperorStatus"] as? String) == "wandering"
+        }
+
+        val result = mutableMapOf<String, Any>(
             "worldId" to worldId,
             "mapName" to mapName,
             "openingPartYears" to openingPartYears,
@@ -463,6 +470,11 @@ class CommandExecutor @Autowired constructor(
             "atWarNationIds" to atWarNationIds,
             "joinActionLimit" to joinActionLimit,
         )
+        if (wanderingEmperor != null) {
+            result["wanderingEmperorCityId"] = wanderingEmperor.cityId
+            result["wanderingEmperorGeneralId"] = wanderingEmperor.id
+        }
+        return result
     }
 
     private fun ensureNationContextForFounding(

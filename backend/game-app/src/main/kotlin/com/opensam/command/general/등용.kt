@@ -50,17 +50,37 @@ class 등용(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
 
     override suspend fun run(rng: Random): CommandResult {
         val date = formatDate()
-        val destName = destGeneral?.name ?: "알 수 없음"
+        val dg = destGeneral ?: return CommandResult(false, listOf("대상 장수를 찾을 수 없습니다."))
+        val destName = dg.name
         val cost = getCost()
+        val nationName = nation?.name ?: "알 수 없음"
+        val josaRo = pickJosa(nationName, "로")
+
+        services?.messageService?.sendMessage(
+            worldId = env.worldId,
+            mailboxCode = "personal",
+            mailboxType = "PRIVATE",
+            messageType = "recruitment",
+            srcId = general.id,
+            destId = dg.id,
+            payload = mapOf(
+                "action" to "scout",
+                "fromGeneralId" to general.id,
+                "fromGeneralName" to general.name,
+                "fromNationId" to general.nationId,
+                "fromNationName" to nationName,
+                "text" to "${nationName}${josaRo} 망명 권유 서신",
+            ),
+        )
 
         pushLog("<Y>${destName}</>에게 등용 권유 서신을 보냈습니다. <1>$date</>")
-        pushHistoryLog("<Y>${destName}</>에게 등용 권유 서신을 보냈습니다. <1>$date</>")
-        pushLog("<Y>${general.name}</>${pickJosa(general.name, "이")} <Y>${destName}</>에게 등용 서신을 보냈습니다.")
+        pushHistoryLog("<Y>${destName}</>에게 등용 서신 발송")
+        pushLog("_destGeneralLog:${dg.id}:<Y>${general.name}</>${pickJosa(general.name, "이")} 등용 서신을 보냈습니다.")
 
         return CommandResult(
             success = true,
             logs = logs,
-            message = """{"statChanges":{"gold":${-cost.gold},"experience":100,"dedication":200,"leadershipExp":1},"scoutMessage":{"fromGeneralId":"${general.id}","toGeneralId":"${arg?.get("destGeneralID")}"}}"""
+            message = """{"statChanges":{"gold":${-cost.gold},"experience":100,"dedication":200,"leadershipExp":1}}"""
         )
     }
 }

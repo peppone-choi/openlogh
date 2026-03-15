@@ -94,6 +94,8 @@ const CITY_STATE_NAMES: Record<number, string> = {
     7: '홍수',
     8: '메뚜기/흉년',
     9: '황건적',
+    32: '파괴',
+    42: '교전중',
     43: '분쟁중',
 };
 

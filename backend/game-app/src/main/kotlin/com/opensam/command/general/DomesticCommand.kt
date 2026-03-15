@@ -64,7 +64,7 @@ abstract class DomesticCommand(
             DomesticUtils.getDomesticExpLevelBonus(general.expLevel.toInt()) *
             (0.8 + rng.nextDouble() * 0.4)
 
-        // Apply onCalcDomestic 'score' modifier
+        score *= DomesticUtils.statBonus(general.politics.toInt())
         score *= DomesticUtils.applyModifier(services, general, nation, actionKey, "score", 1.0)
         score = max(1.0, score)
         var scoreIntWork = score.toInt()

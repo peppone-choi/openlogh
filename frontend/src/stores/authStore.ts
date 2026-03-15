@@ -55,8 +55,16 @@ interface AuthState {
     initAuth: () => void;
 }
 
+function decodeBase64Url(base64url: string): string {
+    const base64 = base64url.replace(/-/g, '+').replace(/_/g, '/');
+    const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), '=');
+    const binary = atob(padded);
+    const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
+    return new TextDecoder().decode(bytes);
+}
+
 function parseTokenUser(token: string): User {
-    const payload = JSON.parse(atob(token.split('.')[1]));
+    const payload = JSON.parse(decodeBase64Url(token.split('.')[1]));
     return {
         id: payload.userId,
         loginId: payload.sub,
