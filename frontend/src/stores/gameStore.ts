@@ -25,13 +25,14 @@ export const useGameStore = create<GameStore>((set) => ({
 
     loadAll: async (worldId) => {
         set({ loading: true });
+        const withTimeout = <T>(promise: Promise<T>, ms = 10000): Promise<T> =>
+            Promise.race([promise, new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), ms))]);
         try {
-            // Load each independently so one failure doesn't block others
             const results = await Promise.allSettled([
-                cityApi.listByWorld(worldId),
-                nationApi.listByWorld(worldId),
-                generalApi.listByWorld(worldId),
-                diplomacyApi.listByWorld(worldId),
+                withTimeout(cityApi.listByWorld(worldId)),
+                withTimeout(nationApi.listByWorld(worldId)),
+                withTimeout(generalApi.listByWorld(worldId)),
+                withTimeout(diplomacyApi.listByWorld(worldId)),
             ]);
             const patch: Partial<GameStore> = {};
             if (results[0].status === 'fulfilled') patch.cities = results[0].value.data;
