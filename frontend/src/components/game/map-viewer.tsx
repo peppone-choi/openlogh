@@ -52,6 +52,11 @@ interface MapViewerProps {
         state?: number;
         level?: number;
     }[];
+
+    /** Callback when city clicked (for command arg selection) - overrides default navigation */
+    onCitySelect?: (cityId: number) => void;
+    /** Callback when nation clicked (for command arg selection) */
+    onNationSelect?: (nationId: number) => void;
 }
 
 const detailMapCitySizes: Record<number, number[]> = {
@@ -111,6 +116,8 @@ export function MapViewer({
     compact = false,
     interactive = true,
     overrideCities,
+    onCitySelect,
+    onNationSelect,
 }: MapViewerProps) {
     const router = useRouter();
     const { cities: storeCities, nations, generals, mapData, loadAll, loadMap } = useGameStore();
@@ -186,7 +193,7 @@ export function MapViewer({
             const rt = rtMap.get(cc.name);
             const nation = rt?.nationId ? nationMap.get(rt.nationId) : null;
             return {
-                id: cc.id,
+                id: rt?.id ?? cc.id,
                 name: cc.name,
                 x: cc.x,
                 y: cc.y,
@@ -264,9 +271,13 @@ export function MapViewer({
         (cityId: number, e: React.MouseEvent) => {
             if (!interactive) return;
             e.stopPropagation();
-            router.push(`/city?id=${cityId}`);
+            if (onCitySelect) {
+                onCitySelect(cityId);
+            } else {
+                router.push(`/city?id=${cityId}`);
+            }
         },
-        [interactive, router]
+        [interactive, router, onCitySelect]
     );
 
     if (!isPublicMode && !mapData) {

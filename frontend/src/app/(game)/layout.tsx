@@ -1,8 +1,7 @@
 'use client';
 
-import { useEffect, useMemo, useCallback, useRef } from 'react';
+import { useEffect, useMemo, useCallback, useRef, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import Link from 'next/link';
 import { toast, Toaster } from 'sonner';
 import { useAuthStore } from '@/stores/authStore';
 import { useWorldStore } from '@/stores/worldStore';
@@ -10,10 +9,11 @@ import { useGeneralStore } from '@/stores/generalStore';
 import { useWebSocket } from '@/hooks/useWebSocket';
 import { useHotkeys } from '@/hooks/useHotkeys';
 import { useSoundEffects } from '@/hooks/useSoundEffects';
-import { TurnTimer } from '@/components/game/turn-timer';
-import { Button } from '@/components/ui/button';
-import { ResourceDisplay } from '@/components/game/resource-display';
-import { GeneralPortrait } from '@/components/game/general-portrait';
+import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
+import { AppSidebar } from '@/components/app-sidebar';
+import { TopBar } from '@/components/top-bar';
+import { MobileMenuSheet } from '@/components/mobile-menu-sheet';
+import { ResponsiveSheet } from '@/components/responsive-sheet';
 
 type NavRequire = 'nation' | 'secret';
 
@@ -195,118 +195,34 @@ export default function GameLayout({ children }: { children: React.ReactNode }) 
             .filter((section) => section.items.length > 0);
     }, [currentWorld, inNation, showSecret]);
 
+    const [messageSheetOpen, setMessageSheetOpen] = useState(false);
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
     // Render guard: block only during initial load.
     // myGeneral keeps its value during re-fetches (not reset to null),
     // so children stay mounted when pages call fetchMyGeneral.
     if (!isAuthenticated || !currentWorld || myGeneral === null) return null;
 
     return (
-        <div className="min-h-screen legacy-bg0 text-white">
-            <div className="legacy-page-wrap px-1 pb-2">
-                <div className="mb-[1px] border border-gray-600 bg-[#0b0b0b] px-2 py-1">
-                    <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
-                        <div className="flex items-center gap-2">
-                            {currentWorld && (
-                                <>
-                                    <span>
-                                        {currentWorld.currentYear}년 {currentWorld.currentMonth}월
-                                    </span>
-                                    <TurnTimer />
-                                </>
-                            )}
-                            <button
-                                type="button"
-                                onClick={toggleRealtime}
-                                className={`border px-1 py-0 text-[10px] ${
-                                    wsEnabled
-                                        ? 'border-[#006a33] bg-[#00331a] text-[#7cff91]'
-                                        : 'border-gray-600 bg-[#111] text-gray-300'
-                                }`}
-                            >
-                                {wsEnabled ? '실시간 ON' : '실시간 OFF'}
-                            </button>
-                            <button
-                                type="button"
-                                onClick={toggleSound}
-                                className={`border px-1 py-0 text-[10px] ${
-                                    soundEnabled
-                                        ? 'border-[#6a5a00] bg-[#332e00] text-[#ffe07c]'
-                                        : 'border-gray-600 bg-[#111] text-gray-300'
-                                }`}
-                            >
-                                {soundEnabled ? '🔊 ON' : '🔇 OFF'}
-                            </button>
-                        </div>
+        <SidebarProvider defaultOpen>
+            <AppSidebar />
+            <SidebarInset>
+                <TopBar
+                    onMessageClick={() => setMessageSheetOpen(true)}
+                    onMobileMenuClick={() => setMobileMenuOpen(true)}
+                />
+                <main className="flex flex-1 flex-col gap-4 p-4">{children}</main>
+            </SidebarInset>
 
-                        {myGeneral && (
-                            <div className="flex items-center gap-2">
-                                <GeneralPortrait picture={myGeneral.picture} name={myGeneral.name} size="sm" />
-                                <span className="font-bold text-yellow-300">{myGeneral.name}</span>
-                                <ResourceDisplay gold={myGeneral.gold} rice={myGeneral.rice} crew={myGeneral.crew} />
-                            </div>
-                        )}
+            <ResponsiveSheet open={messageSheetOpen} onOpenChange={setMessageSheetOpen} title="메시지">
+                <div className="p-4">메시지 기능 준비 중...</div>
+            </ResponsiveSheet>
 
-                        <div className="flex items-center gap-1">
-                            <Button variant="outline" size="sm" asChild>
-                                <Link href="/lobby">로비로</Link>
-                            </Button>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => {
-                                    logout();
-                                    router.replace('/login');
-                                }}
-                            >
-                                로그아웃
-                            </Button>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="mb-[1px] flex flex-wrap gap-[1px] bg-gray-600 p-[1px]">
-                    {filteredSections.map((section) => {
-                        const sectionActive = section.items.some((item) => pathname === item.href.split('?')[0]);
-                        return (
-                            <details key={section.label} className="group relative">
-                                <summary
-                                    className={`flex h-7 cursor-pointer list-none items-center justify-center px-3 text-[11px] font-bold text-white marker:hidden ${
-                                        sectionActive ? 'bg-[#141c65]' : 'bg-[#00582c] hover:bg-[#006a33]'
-                                    }`}
-                                >
-                                    {section.label}
-                                </summary>
-                                <div className="absolute left-0 top-full z-30 mt-[1px] min-w-[320px] border border-gray-600 bg-[#0b0b0b] p-1 shadow-lg">
-                                    <div className="grid grid-cols-2 gap-[1px] bg-gray-600 lg:grid-cols-3">
-                                        {section.items.map((item) => {
-                                            const active = pathname === item.href.split('?')[0];
-                                            return (
-                                                <Button
-                                                    key={`${section.label}-${item.href}-${item.label}`}
-                                                    variant="outline"
-                                                    size="sm"
-                                                    asChild
-                                                    className={`h-7 border-0 px-2 text-[11px] font-bold ${
-                                                        active
-                                                            ? 'bg-[#141c65] text-white'
-                                                            : 'bg-[#00582c] text-white hover:bg-[#006a33]'
-                                                    }`}
-                                                >
-                                                    <Link href={item.href}>{item.label}</Link>
-                                                </Button>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-                            </details>
-                        );
-                    })}
-                </div>
-
-                <main>{children}</main>
-            </div>
+            <MobileMenuSheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+                <AppSidebar />
+            </MobileMenuSheet>
 
             <Toaster position="top-right" theme="dark" />
-        </div>
+        </SidebarProvider>
     );
 }

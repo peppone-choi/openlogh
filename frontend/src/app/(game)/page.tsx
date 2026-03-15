@@ -17,6 +17,7 @@ import { MessagePanel } from '@/components/game/message-panel';
 import { GameBottomBar } from '@/components/game/game-bottom-bar';
 import { LoadingState } from '@/components/game/loading-state';
 import { Button } from '@/components/ui/button';
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import { toast } from 'sonner';
 import { formatLog } from '@/lib/formatLog';
 
@@ -296,63 +297,38 @@ export default function GameDashboard() {
                 ))}
             </div>
 
-            {/* ===== Main game board (legacy ingameBoard grid) ===== */}
-            <div className="ingameBoard" style={{ display: 'grid' }}>
-                {/* Map */}
-                <div className={`mapView ${isTabActive('map') ? '' : 'max-lg:hidden'}`}>
-                    <MapViewer worldId={currentWorld.id} mapCode={mapCode} />
-                </div>
-
-                {/* Commands */}
-                <div className={`reservedCommandZone ${isTabActive('commands') ? '' : 'max-lg:hidden'}`}>
-                    {myGeneral && <CommandPanel generalId={myGeneral.id} realtimeMode={currentWorld.realtimeMode} />}
-                </div>
-
-                {/* Action buttons */}
-                <div className={`actionPlate p-2 ${isTabActive('commands') ? '' : 'max-lg:hidden'}`}>
-                    <div className="flex gap-1">
-                        <Button variant="outline" size="sm" className="flex-[8]" onClick={loadFrontInfo}>
-                            갱 신
-                        </Button>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            className="flex-[4]"
-                            onClick={() => (window.location.href = '/lobby')}
-                        >
-                            로비로
-                        </Button>
+            <div className="h-[calc(100vh-14rem)] flex flex-col gap-4">
+                <div className="h-[60%]">
+                    <div className="grid grid-cols-[60%_40%] gap-2 h-full">
+                        <div className="overflow-hidden">
+                            <MapViewer worldId={currentWorld.id} mapCode={mapCode} />
+                        </div>
+                        <div className="overflow-auto">
+                            {myGeneral && (
+                                <CommandPanel generalId={myGeneral.id} realtimeMode={currentWorld.realtimeMode} />
+                            )}
+                        </div>
                     </div>
                 </div>
 
-                {/* City info */}
-                <div className={`cityInfo ${isTabActive('status') ? '' : 'max-lg:hidden'}`}>
-                    <CityBasicCard city={frontInfo?.city ?? null} region={frontInfo?.city?.region} />
-                </div>
+                <div className="h-[40%] flex flex-col gap-2">
+                    <div className="h-1/2 grid grid-cols-2 gap-2">
+                        <div className="overflow-auto">
+                            <GeneralBasicCard
+                                general={frontInfo?.general ?? null}
+                                nation={frontInfo?.nation ?? null}
+                                turnTerm={global?.turnTerm}
+                                lastExecuted={global?.lastExecuted}
+                            />
+                        </div>
+                        <div className="overflow-auto">
+                            <CityBasicCard city={frontInfo?.city ?? null} region={frontInfo?.city?.region} />
+                        </div>
+                    </div>
 
-                {/* Controls toolbar */}
-                <div
-                    className={`generalCommandToolbar whitespace-nowrap ${isTabActive('commands') ? '' : 'max-lg:hidden'}`}
-                >
-                    <MainControlBar />
-                </div>
-
-                {/* Nation info */}
-                <div className={`nationInfo ${isTabActive('status') ? '' : 'max-lg:hidden'}`}>
-                    <NationBasicCard nation={frontInfo?.nation ?? null} global={global} />
-                </div>
-
-                {/* General info */}
-                <div
-                    className={`generalInfo ${isTabActive('status') ? '' : 'max-lg:hidden'}`}
-                    style={{ width: '100%', maxWidth: 500 }}
-                >
-                    <GeneralBasicCard
-                        general={frontInfo?.general ?? null}
-                        nation={frontInfo?.nation ?? null}
-                        turnTerm={global?.turnTerm}
-                        lastExecuted={global?.lastExecuted}
-                    />
+                    <div className="h-1/2 overflow-auto">
+                        <NationBasicCard nation={frontInfo?.nation ?? null} global={global} />
+                    </div>
                 </div>
             </div>
 
