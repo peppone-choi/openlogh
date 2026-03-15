@@ -110,6 +110,9 @@ export function GeneralBasicCard({ general, nation, turnTerm, lastExecuted }: Ge
                         lineHeight: 'calc(64px / 3)',
                     }}
                 >
+                    {general.npc === 10 && (
+                        <img src="/icons/emperor.png" alt="황제" width={14} height={14} className="inline-block align-middle mr-0.5" />
+                    )}
                     {general.name} 【
                     {general.officerCity > 0 && general.officerLevel >= 2 && general.officerLevel <= 4 && (
                         <>{general.officerCity} </>

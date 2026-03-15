@@ -32,6 +32,7 @@ interface RenderCity {
     supplyState: number;
     state: number;
     isMyCity: boolean;
+    isEmperorCity: boolean;
 }
 
 interface MapViewerProps {
@@ -94,8 +95,12 @@ const CITY_STATE_NAMES: Record<number, string> = {
     7: '홍수',
     8: '메뚜기/흉년',
     9: '황건적',
+    31: '파괴',
     32: '파괴',
-    42: '교전중',
+    33: '약탈',
+    34: '약탈',
+    41: '분쟁중',
+    42: '분쟁중',
     43: '분쟁중',
 };
 
@@ -108,7 +113,7 @@ export function MapViewer({
     overrideCities,
 }: MapViewerProps) {
     const router = useRouter();
-    const { cities: storeCities, nations, mapData, loadAll, loadMap } = useGameStore();
+    const { cities: storeCities, nations, generals, mapData, loadAll, loadMap } = useGameStore();
     const currentWorld = useWorldStore((s) => s.currentWorld);
     const myGeneral = useGeneralStore((s) => s.myGeneral);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -119,6 +124,7 @@ export function MapViewer({
         nationText: string | null;
         stateText: string | null;
         stateCode: number;
+        isEmperorCity: boolean;
         x: number;
         y: number;
     } | null>(null);
@@ -150,6 +156,7 @@ export function MapViewer({
     }, [isPublicMode]);
 
     const nationMap = useMemo(() => new Map(nations.map((n) => [n.id, n])), [nations]);
+    const emperorCityId = useMemo(() => generals.find((g) => g.npcState === 10)?.cityId ?? -1, [generals]);
 
     const renderCities = useMemo<RenderCity[]>(() => {
         if (isPublicMode) {
@@ -166,6 +173,7 @@ export function MapViewer({
                 supplyState: c.supplyState ?? 1,
                 state: c.state ?? 0,
                 isMyCity: false,
+                isEmperorCity: false,
             }));
         }
 
@@ -190,9 +198,10 @@ export function MapViewer({
                 supplyState: rt?.supplyState ?? 0,
                 state: (rt as { state?: number })?.state ?? 0,
                 isMyCity: myGeneral?.cityId != null && rt?.id === myGeneral.cityId,
+                isEmperorCity: rt?.id === emperorCityId,
             };
         });
-    }, [isPublicMode, publicData, storeCities, overrideCities, mapData, nationMap, myGeneral?.cityId]);
+    }, [isPublicMode, publicData, storeCities, overrideCities, mapData, nationMap, myGeneral?.cityId, emperorCityId]);
 
     const season = useMemo<MapSeason>(() => {
         if (isPublicMode) return getSeason(publicData.currentMonth);
@@ -239,6 +248,7 @@ export function MapViewer({
                 nationText: city.nationName,
                 stateText: stateName ? `⚠ ${stateName}` : null,
                 stateCode: city.state,
+                isEmperorCity: city.isEmperorCity,
                 x: city.x * coordScale,
                 y: city.y * coordScale,
             });
@@ -501,14 +511,14 @@ export function MapViewer({
                         </div>
                         {tooltip.nationText && (
                             <div
-                                className="px-1 text-right"
-                                style={{
-                                    backgroundColor: 'rgb(30, 164, 255)',
-                                    lineHeight: '15px',
-                                    height: 15,
-                                    borderTop: '1px solid gray',
-                                }}
+                                className="text-xs font-bold flex items-center gap-1"
+                                style={{ textShadow: '0 0 4px rgba(0,0,0,0.8)' }}
                             >
+                                {tooltip.isEmperorCity ? (
+                                    <img src="/icons/emperor.png" alt="황제" width={12} height={12} />
+                                ) : (
+                                    <span className="inline-block w-2 h-2 rounded-full" />
+                                )}
                                 {tooltip.nationText}
                             </div>
                         )}
