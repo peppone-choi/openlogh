@@ -38,7 +38,7 @@ export default function GlobalDiplomacyPage() {
     );
 
     if (!currentWorld) return <div className="p-4 text-muted-foreground">월드를 선택해주세요.</div>;
-    if (loading) return <LoadingState />;
+    if (loading && nations.length === 0) return <LoadingState />;
 
     return (
         <div className="mx-auto max-w-4xl space-y-0">

@@ -38,7 +38,10 @@ class che_국호변경(general: General, env: CommandEnv, arg: Map<String, Any>?
             return CommandResult(false, logs, "이미 같은 국호를 가진 곳이 있습니다")
         }
 
+        val newAbbr = (arg?.get("abbreviation") as? String)?.take(2)?.ifBlank { null }
+            ?: newName.take(1)
         n.name = newName
+        n.abbreviation = newAbbr
         n.meta["can_국호변경"] = 0
 
         general.experience += 5

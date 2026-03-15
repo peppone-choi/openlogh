@@ -42,6 +42,12 @@ class NationService(
         return nationRepository.findById(id).orElse(null)
     }
 
+    fun updateAbbreviation(nationId: Long, abbreviation: String): Nation? {
+        val nation = nationRepository.findById(nationId).orElse(null) ?: return null
+        nation.abbreviation = abbreviation.take(2)
+        return nationRepository.save(nation)
+    }
+
     // -- Policy --
 
     fun getPolicy(nationId: Long): NationPolicyInfo? {

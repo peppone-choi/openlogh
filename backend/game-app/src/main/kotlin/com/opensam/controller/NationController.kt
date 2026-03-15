@@ -21,4 +21,18 @@ class NationController(
             ?: return ResponseEntity.notFound().build()
         return ResponseEntity.ok(NationResponse.from(nation))
     }
+
+    data class UpdateAbbreviationRequest(val abbreviation: String)
+
+    @PatchMapping("/nations/{id}/abbreviation")
+    fun updateAbbreviation(
+        @PathVariable id: Long,
+        @RequestBody request: UpdateAbbreviationRequest,
+    ): ResponseEntity<NationResponse> {
+        val abbr = request.abbreviation.take(2)
+        if (abbr.isBlank()) return ResponseEntity.badRequest().build()
+        val nation = nationService.updateAbbreviation(id, abbr)
+            ?: return ResponseEntity.notFound().build()
+        return ResponseEntity.ok(NationResponse.from(nation))
+    }
 }

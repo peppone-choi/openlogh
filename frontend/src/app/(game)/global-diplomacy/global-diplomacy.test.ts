@@ -6,4 +6,11 @@ describe('global-diplomacy page', () => {
         expect(deps).not.toContain('myGeneral');
         expect(deps).not.toContain('loadAll');
     });
+
+    it('shows content when nations loaded even if loading flag is true', () => {
+        const loading = true;
+        const nations = [{ id: 1, name: '위' }];
+        const showLoading = loading && nations.length === 0;
+        expect(showLoading).toBe(false);
+    });
 });

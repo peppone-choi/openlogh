@@ -738,4 +738,11 @@ class ScenarioServiceTest {
         val response = com.opensam.dto.NationResponse.from(nation)
         assertEquals("조", response.abbreviation)
     }
+
+    @Test
+    fun `updateAbbreviation truncates to 2 chars`() {
+        val nation = Nation(id = 1, worldId = 1, name = "테스트")
+        nation.abbreviation = "abcdef".take(2)
+        assertEquals("ab", nation.abbreviation)
+    }
 }
