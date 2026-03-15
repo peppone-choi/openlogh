@@ -309,7 +309,11 @@ export default function GameDashboard() {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
+                    <div className="space-y-2">
+                        <CityBasicCard city={frontInfo?.city ?? null} region={frontInfo?.city?.region} />
+                        <NationBasicCard nation={frontInfo?.nation ?? null} global={global} />
+                    </div>
                     <div>
                         <GeneralBasicCard
                             general={frontInfo?.general ?? null}
@@ -318,13 +322,6 @@ export default function GameDashboard() {
                             lastExecuted={global?.lastExecuted}
                         />
                     </div>
-                    <div>
-                        <CityBasicCard city={frontInfo?.city ?? null} region={frontInfo?.city?.region} />
-                    </div>
-                </div>
-
-                <div>
-                    <NationBasicCard nation={frontInfo?.nation ?? null} global={global} />
                 </div>
             </div>
 

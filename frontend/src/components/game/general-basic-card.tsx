@@ -35,6 +35,8 @@ export function GeneralBasicCard({ general, nation, turnTerm, lastExecuted }: Ge
     const leadershipEff = calcInjury(general.leadership, general.injury);
     const strengthEff = calcInjury(general.strength, general.injury);
     const intelEff = calcInjury(general.intel, general.injury);
+    const politicsEff = calcInjury(general.politics, general.injury);
+    const charmEff = calcInjury(general.charm, general.injury);
 
     const [expCur, expMax] = nextExpLevelRemain(general.experience, general.explevel);
     const expPercent = expMax > 0 ? (expCur / expMax) * 100 : 0;
@@ -82,7 +84,7 @@ export function GeneralBasicCard({ general, nation, turnTerm, lastExecuted }: Ge
                 style={{
                     display: 'grid',
                     gridTemplateColumns: '64px repeat(3, 2fr 5fr)',
-                    gridTemplateRows: 'repeat(9, calc(64px / 3))',
+                    gridTemplateRows: 'repeat(10, calc(64px / 3))',
                     textAlign: 'center',
                 }}
             >
@@ -162,21 +164,40 @@ export function GeneralBasicCard({ general, nation, turnTerm, lastExecuted }: Ge
                     </div>
                 </Cell>
 
-                {/* Row 3: 명마/무기/서적 */}
+                {/* Row 3: 정치/매력 */}
+                <Cell head>정치</Cell>
+                <Cell>
+                    <div className="flex items-center gap-1">
+                        <span style={{ color: injuryInfo.color }}>{politicsEff}</span>
+                        <div className="flex-1">
+                            <SammoBar height={10} percent={(general.politicsExp / statUpThreshold) * 100} />
+                        </div>
+                    </div>
+                </Cell>
+                <Cell head>매력</Cell>
+                <Cell>
+                    <div className="flex items-center gap-1">
+                        <span style={{ color: injuryInfo.color }}>{charmEff}</span>
+                        <div className="flex-1">
+                            <SammoBar height={10} percent={(general.charmExp / statUpThreshold) * 100} />
+                        </div>
+                    </div>
+                </Cell>
+                <Cell head>서적</Cell>
+                <Cell>{isValidObjKey(general.book) ? general.book : '-'}</Cell>
+
+                {/* Row 4: 명마/무기/서적→도구 merged */}
                 <Cell head>명마</Cell>
                 <Cell>{isValidObjKey(general.horse) ? general.horse : '-'}</Cell>
                 <Cell head>무기</Cell>
                 <Cell>{isValidObjKey(general.weapon) ? general.weapon : '-'}</Cell>
-                <Cell head>서적</Cell>
-                <Cell>{isValidObjKey(general.book) ? general.book : '-'}</Cell>
+                <Cell head>도구</Cell>
+                <Cell>{isValidObjKey(general.item) ? general.item : '-'}</Cell>
 
-                {/* Row 4: 자금/군량/도구 */}
                 <Cell head>자금</Cell>
                 <Cell>{general.gold.toLocaleString()}</Cell>
                 <Cell head>군량</Cell>
                 <Cell>{general.rice.toLocaleString()}</Cell>
-                <Cell head>도구</Cell>
-                <Cell>{isValidObjKey(general.item) ? general.item : '-'}</Cell>
 
                 {/* Crew type icon - spans 3 rows */}
                 <div

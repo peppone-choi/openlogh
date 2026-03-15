@@ -120,7 +120,7 @@ export default function NpcListPage() {
     if (loading) return <LoadingState />;
 
     return (
-        <div className="p-4 space-y-4">
+        <div className="p-4 space-y-4 max-w-5xl mx-auto">
             <PageHeader icon={Bot} title="빙의일람" />
 
             <div className="flex gap-2 flex-wrap items-center">

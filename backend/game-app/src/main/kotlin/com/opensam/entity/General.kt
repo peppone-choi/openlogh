@@ -72,8 +72,14 @@ class General(
     @Column(nullable = false)
     var politics: Short = 50,
 
+    @Column(name = "politics_exp", nullable = false)
+    var politicsExp: Short = 0,
+
     @Column(nullable = false)
     var charm: Short = 50,
+
+    @Column(name = "charm_exp", nullable = false)
+    var charmExp: Short = 0,
 
     @Column(name = "dex_1", nullable = false)
     var dex1: Int = 0,

@@ -641,14 +641,12 @@ export function CommandArgForm({ actionCode, onSubmit }: CommandArgFormProps) {
                                 })}
                             </select>
                         </div>
-                        <div className="w-full max-w-md mx-auto">
-                            <div style={{ width: '100%', height: '200px' }}>
-                                <MapViewer
-                                    worldId={currentWorld?.id ?? 0}
-                                    compact
-                                    onCitySelect={(cityId: number) => setValue(field.key, cityId.toString())}
-                                />
-                            </div>
+                        <div className="w-full max-w-lg mx-auto overflow-hidden rounded">
+                            <MapViewer
+                                worldId={currentWorld?.id ?? 0}
+                                compact
+                                onCitySelect={(cityId: number) => setValue(field.key, cityId.toString())}
+                            />
                         </div>
                     </div>
                 );

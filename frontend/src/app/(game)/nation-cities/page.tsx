@@ -286,7 +286,7 @@ export default function NationCitiesPage() {
     ];
 
     return (
-        <div className="p-4 space-y-4">
+        <div className="p-4 space-y-4 max-w-5xl mx-auto">
             <PageHeader icon={Building2} title="세력 도시" />
 
             <Card>

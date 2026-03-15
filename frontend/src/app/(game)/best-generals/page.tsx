@@ -394,7 +394,7 @@ export default function BestGeneralsPage() {
     const isStatGroup = groupKey === 'stats';
 
     return (
-        <div className="p-4 space-y-4">
+        <div className="p-4 space-y-4 max-w-5xl mx-auto">
             <PageHeader icon={Medal} title="명장일람" />
 
             {/* NPC toggle */}

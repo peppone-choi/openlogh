@@ -461,7 +461,7 @@ export default function InheritPage() {
     if (loading) return <div className="p-4 text-muted-foreground">로딩 중...</div>;
 
     return (
-        <div className="p-4 space-y-6 max-w-2xl mx-auto">
+        <div className="p-4 space-y-6 max-w-3xl mx-auto">
             <PageHeader icon={Gift} title="유산 포인트" />
 
             {/* Point Summary with Detailed Breakdown */}

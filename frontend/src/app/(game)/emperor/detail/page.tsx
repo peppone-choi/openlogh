@@ -52,7 +52,7 @@ export default function EmperorDetailPage() {
 
     if (!emperorNation) {
         return (
-            <div className="p-4 space-y-6 max-w-2xl mx-auto">
+            <div className="p-4 space-y-6 max-w-3xl mx-auto">
                 <PageHeader icon={Crown} title="황제 상세" />
                 <Card>
                     <CardContent>
@@ -64,7 +64,7 @@ export default function EmperorDetailPage() {
     }
 
     return (
-        <div className="p-4 space-y-6 max-w-2xl mx-auto">
+        <div className="p-4 space-y-6 max-w-3xl mx-auto">
             <PageHeader icon={Crown} title="황제 상세" />
 
             {/* Emperor nation info */}

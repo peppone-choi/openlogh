@@ -103,7 +103,7 @@ export default function SpyPage() {
     const myNation = myGeneral?.nationId ? nationMap.get(myGeneral.nationId) : null;
 
     return (
-        <div className="p-4 space-y-4">
+        <div className="p-4 space-y-4 max-w-5xl mx-auto">
             <PageHeader icon={Eye} title="암행부" />
 
             <div className="flex items-center gap-2 text-sm text-muted-foreground">

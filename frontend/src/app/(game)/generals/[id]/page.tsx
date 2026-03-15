@@ -116,7 +116,7 @@ export default function GeneralDetailPage() {
     ];
 
     return (
-        <div className="p-4 space-y-6 max-w-2xl mx-auto">
+        <div className="p-4 space-y-6 max-w-3xl mx-auto">
             <PageHeader icon={User} title="장수 상세" />
 
             {/* Basic info */}

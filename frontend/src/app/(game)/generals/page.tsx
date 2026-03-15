@@ -197,7 +197,7 @@ export default function GeneralsPage() {
     const columns = showExtended ? [...BASE_COLUMNS, ...EXT_COLUMNS] : BASE_COLUMNS;
 
     return (
-        <div className="p-4 space-y-4">
+        <div className="p-4 space-y-4 max-w-5xl mx-auto">
             <PageHeader icon={Users} title="장수일람" />
 
             {/* Filters */}

@@ -70,7 +70,7 @@ function ProcessingContent() {
         };
 
         return (
-            <div className="p-4 space-y-4 max-w-lg mx-auto">
+            <div className="p-4 space-y-4 max-w-3xl mx-auto">
                 <PageHeader icon={ClipboardList} title={`명령 인수 입력 — ${command}`} />
                 <Card>
                     <CardContent className="space-y-4 pt-4">

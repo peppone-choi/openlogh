@@ -156,7 +156,7 @@ export default function NationBettingPage() {
     const canBet = activeBetting && !activeBetting.finished && !selectedEventYM;
 
     return (
-        <div className="p-4 space-y-4">
+        <div className="p-4 space-y-4 max-w-4xl mx-auto">
             <PageHeader icon={Trophy} title="국가 베팅장" />
 
             {/* Betting Event List */}

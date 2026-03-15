@@ -192,7 +192,7 @@ export default function NationFinancePage() {
     if (!nation) return <div className="p-4 text-muted-foreground">국가 정보를 불러올 수 없습니다.</div>;
 
     return (
-        <div className="p-4 space-y-4">
+        <div className="p-4 space-y-4 max-w-5xl mx-auto">
             <PageHeader icon={Landmark} title="내무부" />
 
             {/* Diplomacy Table */}

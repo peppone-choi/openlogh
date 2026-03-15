@@ -351,7 +351,7 @@ export default function PersonnelPage() {
     }
 
     return (
-        <div className="p-4 space-y-4 max-w-5xl mx-auto">
+        <div className="p-4 space-y-4 max-w-6xl mx-auto">
             <PageHeader icon={Shield} title="인사부" />
 
             {message && (

@@ -333,7 +333,7 @@ export default function InternalAffairsPage() {
     if (!myGeneral?.nationId) return <div className="p-4 text-muted-foreground">소속 국가가 없습니다.</div>;
 
     return (
-        <div className="p-4 space-y-6 max-w-2xl mx-auto">
+        <div className="p-4 space-y-6 max-w-3xl mx-auto">
             <PageHeader icon={Landmark} title="내무부" />
 
             {msg && <p className="text-sm text-green-400">{msg}</p>}

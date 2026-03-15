@@ -339,7 +339,7 @@ function NationPageContent() {
     const fmtDiff = (v: number) => (v >= 0 ? `+${v.toLocaleString()}` : v.toLocaleString());
 
     return (
-        <div className="space-y-3 max-w-5xl">
+        <div className="space-y-3 max-w-6xl mx-auto">
             <PageHeader icon={Flag} title={nation.name} />
 
             <Tabs value={activeTab} onValueChange={handleTabChange}>

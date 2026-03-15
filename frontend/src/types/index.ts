@@ -143,7 +143,9 @@ export interface General {
     intel: number;
     intelExp: number;
     politics: number;
+    politicsExp: number;
     charm: number;
+    charmExp: number;
     dex1: number;
     dex2: number;
     dex3: number;
@@ -704,7 +706,9 @@ export interface GeneralFrontInfo {
     intel: number;
     intelExp: number;
     politics: number;
+    politicsExp: number;
     charm: number;
+    charmExp: number;
     experience: number;
     dedication: number;
     explevel: number;

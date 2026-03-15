@@ -814,7 +814,7 @@ export default function NpcPage() {
     }
 
     return (
-        <div className="p-4 space-y-4 max-w-3xl mx-auto">
+        <div className="p-4 space-y-4 max-w-5xl mx-auto">
             <PageHeader icon={Bot} title="NPC 정책" />
 
             <Tabs defaultValue="list">

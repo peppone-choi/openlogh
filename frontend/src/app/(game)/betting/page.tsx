@@ -456,7 +456,7 @@ export default function BettingPage() {
     if (loading) return <LoadingState />;
 
     return (
-        <div className="space-y-0">
+        <div className="space-y-0 max-w-4xl mx-auto">
             <PageHeader icon={Coins} title="베팅장" />
 
             <div className="legacy-page-wrap space-y-2 py-2">

@@ -22,6 +22,10 @@ class StatChangeServiceTest {
         strengthExp: Short = 0,
         intel: Short = 50,
         intelExp: Short = 0,
+        politics: Short = 50,
+        politicsExp: Short = 0,
+        charm: Short = 50,
+        charmExp: Short = 0,
     ): General {
         return General(
             id = 1,
@@ -35,6 +39,10 @@ class StatChangeServiceTest {
             strengthExp = strengthExp,
             intel = intel,
             intelExp = intelExp,
+            politics = politics,
+            politicsExp = politicsExp,
+            charm = charm,
+            charmExp = charmExp,
             turnTime = OffsetDateTime.now(),
         )
     }

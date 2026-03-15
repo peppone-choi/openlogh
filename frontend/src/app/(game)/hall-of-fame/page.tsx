@@ -265,7 +265,7 @@ export default function HallOfFamePage() {
     const hasData = availableCategories.length > 0;
 
     return (
-        <div className="p-4 space-y-4">
+        <div className="p-4 space-y-4 max-w-4xl mx-auto">
             <PageHeader icon={Award} title="명예의 전당" />
 
             {/* Season / Scenario selectors */}

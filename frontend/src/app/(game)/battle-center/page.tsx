@@ -183,7 +183,7 @@ export default function BattleCenterPage() {
     const compareNation = compareGeneral ? nationMap.get(compareGeneral.nationId) : null;
 
     return (
-        <div className="space-y-4 max-w-5xl mx-auto">
+        <div className="space-y-4 max-w-6xl mx-auto">
             <PageHeader icon={Swords} title="감찰부" description="장수별 전투 기록 및 상세 정보" />
 
             {/* Navigation bar */}
