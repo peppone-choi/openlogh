@@ -178,6 +178,7 @@ function MemberRow({
     troopId,
     cityName,
     leaderCityId,
+    nationLevel,
     onKick,
 }: {
     g: General;
@@ -185,6 +186,7 @@ function MemberRow({
     isTroopLeader: boolean;
     troopId: number;
     cityName?: string;
+    nationLevel?: number;
     leaderCityId?: number;
     onKick: (troopId: number, generalId: number) => void;
 }) {
@@ -211,7 +213,7 @@ function MemberRow({
                                 )}
                             </div>
                             <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5 flex-wrap">
-                                <span>{formatOfficerLevelText(g.officerLevel, undefined, g.nationId > 0)}</span>
+                                <span>{formatOfficerLevelText(g.officerLevel, nationLevel, g.nationId > 0)}</span>
                                 <span>
                                     {CREW_TYPE_NAMES[g.crewType] ?? g.crewType} {g.crew.toLocaleString()}
                                 </span>
@@ -331,6 +333,8 @@ function MemberRow({
 export default function TroopPage() {
     const currentWorld = useWorldStore((s) => s.currentWorld);
     const { myGeneral, fetchMyGeneral } = useGeneralStore();
+    const nations = useGameStore((s) => s.nations);
+    const myNation = nations.find((n) => n.id === myGeneral?.nationId);
     const { generals, cities, loadAll } = useGameStore();
     const [troops, setTroops] = useState<Troop[]>([]);
     const [loading, setLoading] = useState(true);
@@ -591,6 +595,7 @@ export default function TroopPage() {
                                             troopId={t.id}
                                             cityName={cityMap.get(leader.cityId)?.name}
                                             leaderCityId={leader.cityId}
+                                            nationLevel={myNation?.level}
                                             onKick={handleKick}
                                         />
                                     )}
@@ -614,6 +619,7 @@ export default function TroopPage() {
                                                 troopId={t.id}
                                                 cityName={cityMap.get(m.cityId)?.name}
                                                 leaderCityId={leader?.cityId}
+                                                nationLevel={myNation?.level}
                                                 onKick={handleKick}
                                             />
                                         ))}

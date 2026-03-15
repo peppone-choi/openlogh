@@ -152,6 +152,11 @@
     "fiction": 2,
     "nation": [],
     "diplomacy": [],
+    "emperor": {
+        "generalName": "헌제",
+        "nationIdx": 0,
+        "status": "wandering"
+    },
     "general": [
         [0, "아회남", null, 0, null, 65, 74, 26, 33, 44, 0, 160, 300],
         [0, "이적", null, 0, null, 29, 23, 77, 86, 85, 0, 160, 300],

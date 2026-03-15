@@ -489,9 +489,11 @@ class ScenarioService(
 
         val emperorConfig = scenario.emperor ?: return
         val generalName = emperorConfig["generalName"]?.toString()?.takeIf { it.isNotBlank() } ?: return
-        val nationIdx = parseInt(emperorConfig["nationIdx"]) ?: return
-        val nationId = nationIdxToDbId[nationIdx] ?: return
+        val nationIdx = parseInt(emperorConfig["nationIdx"]) ?: 0
         val emperorStatus = emperorConfig["status"]?.toString() ?: EmperorConstants.EMPEROR_ENTHRONED
+
+        val isWandering = emperorStatus == EmperorConstants.EMPEROR_WANDERING || nationIdx == 0
+        val nationId = if (isWandering) 0L else (nationIdxToDbId[nationIdx] ?: return)
 
         val emperorGeneral = generals.firstOrNull { it.name == generalName && it.nationId == nationId } ?: return
         emperorGeneral.meta[EmperorConstants.GENERAL_EMPEROR_STATUS] = emperorStatus
@@ -499,9 +501,11 @@ class ScenarioService(
 
         world.meta[EmperorConstants.WORLD_EMPEROR_GENERAL_ID] = emperorGeneral.id
 
-        val emperorNation = nations.firstOrNull { it.id == nationId } ?: return
-        emperorNation.meta[EmperorConstants.NATION_IMPERIAL_STATUS] = EmperorConstants.STATUS_EMPEROR
-        emperorNation.meta[EmperorConstants.NATION_EMPEROR_TYPE] = EmperorConstants.TYPE_LEGITIMATE
+        if (!isWandering) {
+            val emperorNation = nations.firstOrNull { it.id == nationId } ?: return
+            emperorNation.meta[EmperorConstants.NATION_IMPERIAL_STATUS] = EmperorConstants.STATUS_EMPEROR
+            emperorNation.meta[EmperorConstants.NATION_EMPEROR_TYPE] = EmperorConstants.TYPE_LEGITIMATE
+        }
     }
 
     private fun seedGeneralPool(worldId: Long) {

@@ -697,4 +697,20 @@ class ScenarioServiceTest {
         assertEquals(true, world.meta[com.opensam.engine.EmperorConstants.WORLD_EMPEROR_SYSTEM])
         assertNull(world.meta[com.opensam.engine.EmperorConstants.WORLD_EMPEROR_GENERAL_ID])
     }
+
+    @Test
+    fun `Nation abbreviation field defaults to empty string`() {
+        val nation = Nation(id = 1, worldId = 1, name = "유비군")
+        assertEquals("", nation.abbreviation)
+        nation.abbreviation = "유"
+        assertEquals("유", nation.abbreviation)
+    }
+
+    @Test
+    fun `NationResponse includes abbreviation from entity`() {
+        val nation = Nation(id = 1, worldId = 1, name = "조조군")
+        nation.abbreviation = "조"
+        val response = com.opensam.dto.NationResponse.from(nation)
+        assertEquals("조", response.abbreviation)
+    }
 }

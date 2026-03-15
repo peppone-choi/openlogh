@@ -40,3 +40,27 @@ describe('CITY_STATE_NAMES', () => {
         }
     });
 });
+
+describe('nation abbreviation in tooltip', () => {
+    function resolveAbbr(nationAbbr: string | null, nationName: string | null): string {
+        return nationAbbr || nationName?.slice(0, 2) || '';
+    }
+
+    it('uses abbreviation field when available', () => {
+        expect(resolveAbbr('유', '유비군')).toBe('유');
+    });
+
+    it('falls back to name slice when abbreviation is empty', () => {
+        expect(resolveAbbr('', '조조군')).toBe('조조');
+    });
+
+    it('supports 2-char abbreviations', () => {
+        const abbr = resolveAbbr('공손', '공손찬군');
+        expect(abbr).toBe('공손');
+        expect(abbr.length).toBe(2);
+    });
+
+    it('returns empty string when both are null', () => {
+        expect(resolveAbbr(null, null)).toBe('');
+    });
+});

@@ -18,6 +18,9 @@ class Nation(
     @Column(nullable = false)
     var name: String = "",
 
+    @Column(nullable = false, length = 2)
+    var abbreviation: String = "",
+
     @Column(nullable = false)
     var color: String = "",
 

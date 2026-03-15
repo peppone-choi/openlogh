@@ -14,6 +14,11 @@
     "fiction": 1,
     "nation": [],
     "diplomacy": [],
+    "emperor": {
+        "generalName": "헌제",
+        "nationIdx": 0,
+        "status": "wandering"
+    },
     "general": [
         [
             1,

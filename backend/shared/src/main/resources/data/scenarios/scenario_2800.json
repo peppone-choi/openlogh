@@ -52,6 +52,11 @@
         ["타이 제국", "#20B2AA", 30000, 60000, "타이지역과 동남아의 강국", 0, "법가", 5, ["남해", "교지"]]
     ],
     "diplomacy": [],
+    "emperor": {
+        "generalName": "헌제",
+        "nationIdx": 3,
+        "status": "enthroned"
+    },
     "general": [
         [
             1,

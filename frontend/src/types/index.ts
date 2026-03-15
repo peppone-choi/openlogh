@@ -59,6 +59,7 @@ export interface Nation {
     id: number;
     worldId: number;
     name: string;
+    abbreviation: string;
     color: string;
     capitalCityId: number | null;
     gold: number;
