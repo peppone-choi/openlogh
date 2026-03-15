@@ -13,7 +13,7 @@ import {
     getMapBgUrl,
     getMapRoadUrl,
 } from '@/lib/image';
-import { REGION_NAMES, CITY_LEVEL_NAMES } from '@/lib/game-utils';
+import { REGION_NAMES, CITY_LEVEL_NAMES, isBrightColor } from '@/lib/game-utils';
 import { useGeneralStore } from '@/stores/generalStore';
 import { FactionFlag } from '@/components/game/faction-flag';
 import type { PublicCachedMapResponse } from '@/types';
@@ -507,81 +507,85 @@ export function MapViewer({
                     })}
                 </div>
 
-                {tooltip && (() => {
-                    const abbr = tooltip.nationAbbr || tooltip.nationText?.slice(0, 2) || '';
-                    const flagSize = 16;
-                    return (
-                        <div
-                            className="absolute z-[16] pointer-events-none whitespace-nowrap text-[13px] rounded overflow-hidden shadow-lg"
-                            style={{
-                                top: Math.min(tooltip.y + 30, (useResponsiveScale ? MAP_HEIGHT : innerH) - 50),
-                                left: Math.min(tooltip.x + 10, (useResponsiveScale ? MAP_WIDTH : innerW) - 140),
-                                border: '1px solid rgba(255,255,255,0.15)',
-                                minWidth: 120,
-                            }}
-                        >
+                {tooltip &&
+                    (() => {
+                        const abbr = tooltip.nationAbbr || tooltip.nationText?.slice(0, 2) || '';
+                        const flagSize = 16;
+                        const textColor = tooltip.nationColor && isBrightColor(tooltip.nationColor) ? 'black' : 'white';
+                        return (
                             <div
-                                className="px-1.5 font-medium text-white"
+                                className="absolute z-[16] pointer-events-none whitespace-nowrap text-[13px] rounded overflow-hidden shadow-lg"
                                 style={{
-                                    backgroundColor: 'rgb(30, 140, 230)',
-                                    lineHeight: '18px',
-                                    height: 18,
+                                    top: Math.min(tooltip.y + 30, (useResponsiveScale ? MAP_HEIGHT : innerH) - 50),
+                                    left: Math.min(tooltip.x + 10, (useResponsiveScale ? MAP_WIDTH : innerW) - 140),
+                                    border: '1px solid rgba(255,255,255,0.15)',
+                                    minWidth: 120,
                                 }}
                             >
-                                {tooltip.cityText}
-                            </div>
-                            {tooltip.nationText && (
                                 <div
-                                    className="px-1.5 flex items-center gap-1.5 text-white font-bold"
+                                    className="px-1.5 font-medium text-white"
                                     style={{
-                                        backgroundColor: 'rgba(20, 20, 30, 0.92)',
-                                        lineHeight: '20px',
-                                        height: 20,
-                                        borderTop: '1px solid rgba(255,255,255,0.08)',
+                                        backgroundColor: 'rgb(30, 140, 230)',
+                                        lineHeight: '18px',
+                                        height: 18,
                                     }}
                                 >
-                                    {tooltip.isEmperorCity ? (
-                                        <img src="/icons/emperor.png" alt="황제" width={14} height={14} />
-                                    ) : (
-                                        <span
-                                            className="inline-flex items-center justify-center text-white font-bold shrink-0"
-                                            style={{
-                                                width: flagSize,
-                                                height: flagSize,
-                                                backgroundColor: tooltip.nationColor ?? '#666',
-                                                fontSize: abbr.length > 1 ? 7 : 10,
-                                                lineHeight: 1,
-                                                borderRadius: 2,
-                                                textShadow: '0 1px 2px rgba(0,0,0,0.5)',
-                                            }}
-                                        >
-                                            {abbr}
+                                    {tooltip.cityText}
+                                </div>
+                                {tooltip.nationText && (
+                                    <div
+                                        className="px-1.5 flex items-center gap-1.5 text-white font-bold"
+                                        style={{
+                                            backgroundColor: 'rgba(20, 20, 30, 0.92)',
+                                            lineHeight: '20px',
+                                            height: 20,
+                                            borderTop: '1px solid rgba(255,255,255,0.08)',
+                                        }}
+                                    >
+                                        {tooltip.isEmperorCity ? (
+                                            <img src="/icons/emperor.png" alt="황제" width={14} height={14} />
+                                        ) : (
+                                            <span
+                                                className="inline-flex items-center justify-center font-bold shrink-0"
+                                                style={{
+                                                    width: flagSize,
+                                                    height: flagSize,
+                                                    backgroundColor: tooltip.nationColor ?? '#666',
+                                                    color: textColor,
+                                                    fontSize: abbr.length > 1 ? 7 : 10,
+                                                    lineHeight: 1,
+                                                    borderRadius: 2,
+                                                    textShadow:
+                                                        textColor === 'black' ? 'none' : '0 1px 2px rgba(0,0,0,0.5)',
+                                                }}
+                                            >
+                                                {abbr}
+                                            </span>
+                                        )}
+                                        <span style={{ textShadow: '0 0 4px rgba(0,0,0,0.8)' }}>
+                                            {tooltip.nationText}
                                         </span>
-                                    )}
-                                    <span style={{ textShadow: '0 0 4px rgba(0,0,0,0.8)' }}>
-                                        {tooltip.nationText}
-                                    </span>
-                                </div>
-                            )}
-                            {tooltip.stateText && (
-                                <div
-                                    className="px-1.5 text-right text-white"
-                                    style={{
-                                        backgroundColor:
-                                            tooltip.stateCode > 0 && tooltip.stateCode <= 2
-                                                ? 'rgb(46, 143, 70)'
-                                                : 'rgb(180, 40, 40)',
-                                        lineHeight: '17px',
-                                        height: 17,
-                                        borderTop: '1px solid rgba(255,255,255,0.08)',
-                                    }}
-                                >
-                                    {tooltip.stateText}
-                                </div>
-                            )}
-                        </div>
-                    );
-                })()}
+                                    </div>
+                                )}
+                                {tooltip.stateText && (
+                                    <div
+                                        className="px-1.5 text-right text-white"
+                                        style={{
+                                            backgroundColor:
+                                                tooltip.stateCode > 0 && tooltip.stateCode <= 2
+                                                    ? 'rgb(46, 143, 70)'
+                                                    : 'rgb(180, 40, 40)',
+                                            lineHeight: '17px',
+                                            height: 17,
+                                            borderTop: '1px solid rgba(255,255,255,0.08)',
+                                        }}
+                                    >
+                                        {tooltip.stateText}
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })()}
 
                 <button
                     type="button"

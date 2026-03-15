@@ -169,7 +169,19 @@ export default function NationGeneralsPage() {
                                             >
                                                 <GeneralPortrait picture={g.picture} name={g.name} size="sm" />
                                                 <div>
-                                                    <div>{g.name}</div>
+                                                    <div className="flex items-center gap-1">
+                                                        {g.npcState === 10 && (
+                                                            <div className="relative size-4">
+                                                                <div className="absolute inset-0 bg-yellow-100 rounded-full" />
+                                                                <img
+                                                                    src="/icons/emperor.png"
+                                                                    className="relative size-4"
+                                                                    alt="황제"
+                                                                />
+                                                            </div>
+                                                        )}
+                                                        {g.name}
+                                                    </div>
                                                     {city && (
                                                         <div className="text-[10px] text-muted-foreground">
                                                             {city.name}

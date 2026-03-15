@@ -26,7 +26,10 @@ export const useGameStore = create<GameStore>((set) => ({
     loadAll: async (worldId) => {
         set({ loading: true });
         const withTimeout = <T>(promise: Promise<T>, ms = 10000): Promise<T> =>
-            Promise.race([promise, new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), ms))]);
+            Promise.race([
+                promise,
+                new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), ms)),
+            ]);
         try {
             const results = await Promise.allSettled([
                 withTimeout(cityApi.listByWorld(worldId)),

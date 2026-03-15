@@ -455,7 +455,8 @@ export default function MapPage() {
     }
 
     const serverName = currentWorld?.name ?? '삼국지';
-    const getHistoryBullet = (text: string) => {
+    const getHistoryBullet = (text: string | undefined) => {
+        if (!text) return '●';
         if (text.includes('【대회】') || text.includes('【안내】')) return '◆';
         return '●';
     };

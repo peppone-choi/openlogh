@@ -373,6 +373,16 @@ export default function GeneralsPage() {
                                     <TableCell className="font-medium">
                                         <div className="flex items-center gap-2">
                                             <GeneralPortrait picture={g.picture} name={g.name} size="sm" />
+                                            {g.npcState === 10 && (
+                                                <div className="relative size-4">
+                                                    <div className="absolute inset-0 bg-yellow-100 rounded-full" />
+                                                    <img
+                                                        src="/icons/emperor.png"
+                                                        className="relative size-4"
+                                                        alt="황제"
+                                                    />
+                                                </div>
+                                            )}
                                             {g.name}
                                         </div>
                                     </TableCell>
