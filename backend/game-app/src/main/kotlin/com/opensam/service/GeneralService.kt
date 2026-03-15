@@ -123,7 +123,7 @@ class GeneralService(
             null
         }
 
-        val finalCityId = inheritCity ?: request.cityId ?: pickRandomStartCity(worldId, world)
+        val finalCityId = inheritCity ?: request.cityId ?: pickRandomStartCity(worldId, world, nationId)
         val city = cityRepository.findById(finalCityId).orElseThrow {
             IllegalArgumentException("도시를 찾을 수 없습니다.")
         }.also {
@@ -552,12 +552,21 @@ class GeneralService(
         user.meta["inheritPoints"] = currentPoints - pointsToSpend
     }
 
-    private fun pickRandomStartCity(worldId: Long, world: WorldState): Long {
-        val cities = cityRepository.findByWorldId(worldId)
-            .filter { it.level.toInt() in 5..6 && it.nationId == 0L }
-            .ifEmpty {
-                cityRepository.findByWorldId(worldId).filter { it.level.toInt() in 5..6 }
-            }
+    private fun pickRandomStartCity(worldId: Long, world: WorldState, nationId: Long): Long {
+        val allCities = cityRepository.findByWorldId(worldId)
+        
+        val cities = if (nationId > 0L) {
+            allCities.filter { it.nationId == nationId }
+                .ifEmpty {
+                    allCities.filter { it.level.toInt() in 5..6 && it.nationId == 0L }
+                }
+        } else {
+            allCities.filter { it.level.toInt() in 5..6 && it.nationId == 0L }
+                .ifEmpty {
+                    allCities.filter { it.level.toInt() in 5..6 }
+                }
+        }
+        
         if (cities.isEmpty()) {
             throw IllegalArgumentException("시작 가능한 도시가 없습니다.")
         }

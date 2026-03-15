@@ -125,9 +125,17 @@ class CommandLogDispatcher(
         year: Int,
         month: Int,
     ): Message {
+        val mailboxType = when (mailboxCode) {
+            "general_action", "general_record" -> "PRIVATE"
+            "nation_history" -> "NATIONAL"
+            "world_record", "world_history" -> "PUBLIC"
+            else -> "PUBLIC"
+        }
+        
         return Message(
             worldId = worldId,
             mailboxCode = mailboxCode,
+            mailboxType = mailboxType,
             messageType = "log",
             srcId = srcId,
             destId = destId,
