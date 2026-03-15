@@ -111,7 +111,13 @@ export function GeneralBasicCard({ general, nation, turnTerm, lastExecuted }: Ge
                     }}
                 >
                     {general.npc === 10 && (
-                        <img src="/icons/emperor.png" alt="황제" width={14} height={14} className="inline-block align-middle mr-0.5" />
+                        <img
+                            src="/icons/emperor.png"
+                            alt="황제"
+                            width={14}
+                            height={14}
+                            className="inline-block align-middle mr-0.5"
+                        />
                     )}
                     {general.name} 【
                     {general.officerCity > 0 && general.officerLevel >= 2 && general.officerLevel <= 4 && (
