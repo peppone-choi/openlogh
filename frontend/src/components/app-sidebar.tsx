@@ -72,7 +72,6 @@ const navItems = [
         title: '중원',
         icon: MapIcon,
         items: [
-            { title: '전체맵', url: '/map' },
             { title: '중원정보', url: '/global-diplomacy' },
             { title: '세력일람', url: '/nations' },
             { title: '장수일람', url: '/generals' },
