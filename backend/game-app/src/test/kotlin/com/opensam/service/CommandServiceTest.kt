@@ -296,4 +296,29 @@ class CommandServiceTest {
         val field = com.opensam.command.general.DomesticCommand::class.java.getDeclaredMethod("getMinConditionConstraints")
         assertNotNull(field)
     }
+
+    @Test
+    fun `scenario command name normalization strips prefixes`() {
+        val rawNames = listOf("휴식", "che_이동", "cr_건국", "che_농지개간")
+        val normalized = rawNames.map { it.removePrefix("che_").removePrefix("cr_") }.toSet()
+
+        assertTrue("휴식" in normalized)
+        assertTrue("이동" in normalized)
+        assertTrue("건국" in normalized)
+        assertTrue("농지개간" in normalized)
+        assertEquals(4, normalized.size)
+    }
+
+    @Test
+    fun `world config stores available command whitelist from scenario`() {
+        val world = WorldState(id = 1, name = "world", scenarioCode = "test", realtimeMode = false)
+        val whitelist = mapOf("개인" to listOf("휴식", "che_이동"))
+        world.config["availableGeneralCommand"] = whitelist
+
+        @Suppress("UNCHECKED_CAST")
+        val stored = world.config["availableGeneralCommand"] as? Map<String, List<String>>
+        assertNotNull(stored)
+        assertEquals(1, stored!!.size)
+        assertEquals(listOf("휴식", "che_이동"), stored["개인"])
+    }
 }

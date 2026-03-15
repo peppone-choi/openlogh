@@ -135,12 +135,15 @@ class CommandService(
         val nation = if (general.nationId != 0L) nationRepository.findById(general.nationId).orElse(null) else null
         val env = createCommandEnv(world)
 
+        val allowedCommands = extractAllowedCommands(world.config, "availableGeneralCommand")
+
         val categories = linkedMapOf<String, MutableList<CommandTableEntry>>()
         val actionCodes = commandRegistry.getGeneralCommandNames().toList().sortedWith(
             compareBy<String>({ generalCategoryOrder(generalCategory(it)) }, { it })
         )
 
         for (actionCode in actionCodes) {
+            if (allowedCommands != null && actionCode !in allowedCommands) continue
             val command = commandRegistry.createGeneralCommand(actionCode, general, env, null)
             command.city = city
             command.nation = nation
@@ -178,12 +181,15 @@ class CommandService(
         val nation = if (general.nationId != 0L) nationRepository.findById(general.nationId).orElse(null) else null
         val env = createCommandEnv(world)
 
+        val allowedCommands = extractAllowedCommands(world.config, "availableChiefCommand")
+
         val categories = linkedMapOf<String, MutableList<CommandTableEntry>>()
         val actionCodes = commandRegistry.getNationCommandNames().toList().sortedWith(
             compareBy<String>({ nationCategoryOrder(nationCategory(it)) }, { it })
         )
 
         for (actionCode in actionCodes) {
+            if (allowedCommands != null && actionCode !in allowedCommands) continue
             val command = commandRegistry.createNationCommand(actionCode, general, env, null) ?: continue
             command.city = city
             command.nation = nation
@@ -507,6 +513,15 @@ class CommandService(
         "기타" -> 7
         "연구" -> 8
         else -> 99
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun extractAllowedCommands(config: Map<String, Any>, key: String): Set<String>? {
+        val raw = config[key] ?: return null
+        val categoryMap = raw as? Map<String, List<String>> ?: return null
+        return categoryMap.values.flatten()
+            .map { it.removePrefix("che_").removePrefix("cr_") }
+            .toSet()
     }
 
     private fun createCommandEnv(world: com.opensam.entity.WorldState): CommandEnv {

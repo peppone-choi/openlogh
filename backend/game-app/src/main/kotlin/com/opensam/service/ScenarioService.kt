@@ -855,6 +855,8 @@ class ScenarioService(
         if (autorunUser != null) {
             config["autorun_user"] = autorunUser
         }
+        scenario.const["availableGeneralCommand"]?.let { config["availableGeneralCommand"] = it }
+        scenario.const["availableChiefCommand"]?.let { config["availableChiefCommand"] = it }
         return config
     }
 
