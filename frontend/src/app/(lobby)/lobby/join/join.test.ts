@@ -14,21 +14,20 @@ describe('lobby join page', () => {
     });
 });
 
-describe('lobby join scout message nation abbreviation', () => {
-    it('displays full abbreviation for single-char nations', () => {
-        const mockNation = { abbreviation: '조' };
-        expect(mockNation.abbreviation).toBe('조');
+describe('lobby join scout message nation name display', () => {
+    it('displays full nation name in recruitment badge', () => {
+        const mockNation = { name: '조조군', abbreviation: '조' };
+        expect(mockNation.name).toBe('조조군');
     });
 
-    it('displays full abbreviation for two-char nations', () => {
-        const mockNation = { abbreviation: '공손' };
-        expect(mockNation.abbreviation).toBe('공손');
-        expect(mockNation.abbreviation.length).toBe(2);
+    it('displays full name for two-char surname nations', () => {
+        const mockNation = { name: '공손찬군', abbreviation: '공손' };
+        expect(mockNation.name).toBe('공손찬군');
     });
 
-    it('handles undefined abbreviation gracefully', () => {
-        const mockNation = { abbreviation: undefined };
-        const display = mockNation.abbreviation || '재야';
+    it('handles undefined name gracefully', () => {
+        const mockNation = { name: undefined, abbreviation: '조' };
+        const display = mockNation.name || '재야';
         expect(display).toBe('재야');
     });
 });
