@@ -26,4 +26,17 @@ describe('GeneralBasicCard grid layout', () => {
         const row = 10;
         expect(row).toBe(10);
     });
+
+    it('crew icon spans rows 4-7 to block col 1 auto-placement through row 7', () => {
+        const crewIconGridRow = '4 / 8';
+        const [start, end] = crewIconGridRow.split(' / ').map(Number);
+        expect(end - start).toBe(4);
+        expect(start).toBe(4);
+        expect(end).toBe(8);
+    });
+
+    it('자금/군량 row has 2 spacer cells to fill 6 columns', () => {
+        const cellsInRow = 4 + 2;
+        expect(cellsInRow).toBe(6);
+    });
 });

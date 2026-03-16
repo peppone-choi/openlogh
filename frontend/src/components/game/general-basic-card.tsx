@@ -198,12 +198,15 @@ export function GeneralBasicCard({ general, nation, turnTerm, lastExecuted }: Ge
                 <Cell>{general.gold.toLocaleString()}</Cell>
                 <Cell head>군량</Cell>
                 <Cell>{general.rice.toLocaleString()}</Cell>
+                {/* Spacers to fill row 5 cols 6-7 */}
+                <Cell />
+                <Cell />
 
-                {/* Crew type icon - spans 3 rows */}
+                {/* Crew type icon - spans 4 rows to block col 1 through row 7 */}
                 <div
                     className="border-l border-t border-gray-600"
                     style={{
-                        gridRow: '4 / 7',
+                        gridRow: '4 / 8',
                         width: 64,
                         height: 64,
                         backgroundImage: `url('${getCrewTypeIconUrl(parseCrewTypeCode(general.crewtype))}')`,
