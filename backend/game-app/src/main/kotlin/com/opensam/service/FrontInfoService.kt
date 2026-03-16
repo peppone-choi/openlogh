@@ -10,6 +10,7 @@ import com.opensam.engine.modifier.NationTypeModifiers
 import com.opensam.engine.modifier.PersonalityModifiers
 import com.opensam.engine.modifier.SpecialModifiers
 import com.opensam.repository.*
+import com.opensam.entity.Record
 import org.springframework.stereotype.Service
 import kotlin.math.ceil
 import kotlin.math.sqrt
@@ -21,6 +22,7 @@ class FrontInfoService(
     private val nationRepository: NationRepository,
     private val cityRepository: CityRepository,
     private val messageRepository: MessageRepository,
+    private val recordRepository: RecordRepository,
     private val appUserRepository: AppUserRepository,
     private val troopRepository: TroopRepository,
     private val officerRankService: OfficerRankService,
@@ -498,16 +500,16 @@ class FrontInfoService(
     private fun buildRecentRecord(worldId: Long, myGeneral: General?, lastRecordId: Long?, lastHistoryId: Long?): RecentRecordInfo {
         val generalRecords = if (myGeneral != null) {
             val sinceId = lastRecordId ?: 0
-            messageRepository.findByDestIdAndMailboxCodeAndIdGreaterThanOrderBySentAtDesc(
+            recordRepository.findByDestIdAndRecordTypeAndIdGreaterThanOrderByCreatedAtDesc(
                 myGeneral.id, "general_action", sinceId
             )
         } else emptyList()
 
-        val globalRecords = messageRepository.findByWorldIdAndMailboxCodeAndIdGreaterThanOrderBySentAtDesc(
+        val globalRecords = recordRepository.findByWorldIdAndRecordTypeAndIdGreaterThanOrderByCreatedAtDesc(
             worldId, "world_record", lastRecordId ?: 0
         )
 
-        val historyRecords = messageRepository.findByWorldIdAndMailboxCodeAndIdGreaterThanOrderBySentAtDesc(
+        val historyRecords = recordRepository.findByWorldIdAndRecordTypeAndIdGreaterThanOrderByCreatedAtDesc(
             worldId, "world_history", lastHistoryId ?: 0
         )
 
@@ -521,13 +523,11 @@ class FrontInfoService(
         )
     }
 
-    private fun toRecordEntry(m: Message): RecordEntry {
-        val year = (m.payload["year"] as? Number)?.toInt()
-        val month = (m.payload["month"] as? Number)?.toInt()
-        val date = if (year != null && month != null) "${year}년 ${month}월" else ""
+    private fun toRecordEntry(r: Record): RecordEntry {
+        val date = if (r.year > 0 && r.month > 0) "${r.year}년 ${r.month}월" else ""
         return RecordEntry(
-            id = m.id,
-            message = (m.payload["message"] as? String) ?: "",
+            id = r.id,
+            message = (r.payload["message"] as? String) ?: "",
             date = date,
         )
     }

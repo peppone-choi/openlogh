@@ -1,28 +1,27 @@
 package com.opensam.service
 
-import com.opensam.entity.Message
+import com.opensam.entity.Record
 import com.opensam.entity.YearbookHistory
-import com.opensam.repository.MessageRepository
+import com.opensam.repository.RecordRepository
 import com.opensam.repository.YearbookHistoryRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 @Service
 class HistoryService(
-    private val messageRepository: MessageRepository,
+    private val recordRepository: RecordRepository,
     private val yearbookHistoryRepository: YearbookHistoryRepository,
 ) {
     @Transactional
     fun logWorldHistory(worldId: Long, message: String, year: Int, month: Int) {
-        messageRepository.save(
-            Message(
+        recordRepository.save(
+            Record(
                 worldId = worldId,
-                mailboxCode = "world_history",
-                messageType = "history",
+                recordType = "world_history",
+                year = year,
+                month = month,
                 payload = mutableMapOf(
                     "message" to message,
-                    "year" to year,
-                    "month" to month,
                 ),
             )
         )
@@ -30,35 +29,34 @@ class HistoryService(
 
     @Transactional
     fun logNationHistory(worldId: Long, nationId: Long, message: String, year: Int, month: Int) {
-        messageRepository.save(
-            Message(
+        recordRepository.save(
+            Record(
                 worldId = worldId,
-                mailboxCode = "nation_history",
-                messageType = "history",
+                recordType = "nation_history",
                 destId = nationId,
+                year = year,
+                month = month,
                 payload = mutableMapOf(
                     "message" to message,
-                    "year" to year,
-                    "month" to month,
                 ),
             )
         )
     }
 
-    fun getWorldHistory(worldId: Long): List<Message> {
-        return messageRepository.findByWorldIdAndMailboxCodeOrderBySentAtDesc(worldId, "world_history")
+    fun getWorldHistory(worldId: Long): List<Record> {
+        return recordRepository.findByWorldIdAndRecordTypeOrderByCreatedAtDesc(worldId, "world_history")
     }
 
-    fun getWorldRecords(worldId: Long): List<Message> {
-        return messageRepository.findByWorldIdAndMailboxCodeOrderBySentAtDesc(worldId, "world_record")
+    fun getWorldRecords(worldId: Long): List<Record> {
+        return recordRepository.findByWorldIdAndRecordTypeOrderByCreatedAtDesc(worldId, "world_record")
     }
 
-    fun getGeneralRecords(generalId: Long): List<Message> {
-        return messageRepository.findByDestIdAndMailboxCodeOrderBySentAtDesc(generalId, "general_action")
+    fun getGeneralRecords(generalId: Long): List<Record> {
+        return recordRepository.findByDestIdAndRecordTypeOrderByCreatedAtDesc(generalId, "general_action")
     }
 
-    fun getByYearMonth(worldId: Long, year: Int, month: Int): List<Message> {
-        return messageRepository.findByWorldIdAndYearAndMonthOrderBySentAtAsc(worldId, year, month)
+    fun getByYearMonth(worldId: Long, year: Int, month: Int): List<Record> {
+        return recordRepository.findByWorldIdAndYearAndMonth(worldId, year, month)
     }
 
     fun getYearbook(worldId: Long, year: Int): YearbookHistory? {
@@ -70,9 +68,5 @@ class HistoryService(
             }
         }
         return null
-    }
-
-    fun getYearKeyEvents(worldId: Long, year: Int, limit: Int = 10): List<Message> {
-        return messageRepository.findByWorldIdAndYearOrderBySentAtDesc(worldId, year).take(limit)
     }
 }

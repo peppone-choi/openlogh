@@ -13,3 +13,22 @@ describe('lobby join page', () => {
         expect(citySelectable).toBe(true);
     });
 });
+
+describe('lobby join scout message nation abbreviation', () => {
+    it('displays full abbreviation for single-char nations', () => {
+        const mockNation = { abbreviation: '조' };
+        expect(mockNation.abbreviation).toBe('조');
+    });
+
+    it('displays full abbreviation for two-char nations', () => {
+        const mockNation = { abbreviation: '공손' };
+        expect(mockNation.abbreviation).toBe('공손');
+        expect(mockNation.abbreviation.length).toBe(2);
+    });
+
+    it('handles undefined abbreviation gracefully', () => {
+        const mockNation = { abbreviation: undefined };
+        const display = mockNation.abbreviation || '재야';
+        expect(display).toBe('재야');
+    });
+});

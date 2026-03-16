@@ -6,7 +6,7 @@ import com.opensam.dto.PublicCachedMapResponse
 import com.opensam.dto.PublicWorldSummary
 import com.opensam.entity.WorldState
 import com.opensam.repository.CityRepository
-import com.opensam.repository.MessageRepository
+import com.opensam.repository.RecordRepository
 import com.opensam.repository.NationRepository
 import com.opensam.repository.WorldStateRepository
 import org.springframework.stereotype.Service
@@ -17,10 +17,11 @@ import java.util.concurrent.ConcurrentHashMap
 @Service
 class PublicCachedMapService(
     private val worldStateRepository: WorldStateRepository,
-    private val cityRepository: CityRepository,
     private val nationRepository: NationRepository,
-    private val messageRepository: MessageRepository,
+    private val cityRepository: CityRepository,
+    private val recordRepository: RecordRepository,
     private val mapService: MapService,
+    private val cityService: CityService,
 ) {
     private data class CacheEntry(
         val expiresAt: Instant,
@@ -91,15 +92,15 @@ class PublicCachedMapService(
             )
         }
 
-        val history = messageRepository.findByWorldIdAndMailboxCodeOrderBySentAtDesc(worldId, "world_history")
+        val history = recordRepository.findByWorldIdAndRecordTypeOrderByCreatedAtDesc(worldId, "world_history")
             .take(10)
-            .map { message ->
+            .map { record ->
                 PublicCachedMapHistoryResponse(
-                    id = message.id,
-                    sentAt = message.sentAt,
-                    text = message.payload["message"]?.toString() ?: "",
-                    year = (message.payload["year"] as? Number)?.toInt(),
-                    month = (message.payload["month"] as? Number)?.toInt(),
+                    id = record.id,
+                    sentAt = record.createdAt,
+                    text = record.payload["message"]?.toString() ?: "",
+                    year = record.year.toInt(),
+                    month = record.month.toInt(),
                 )
             }
 

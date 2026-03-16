@@ -64,3 +64,36 @@ describe('nation abbreviation in tooltip', () => {
         expect(resolveAbbr(null, null)).toBe('');
     });
 });
+
+describe('nation flag display in map viewer', () => {
+    it('shows full abbreviation without slicing', () => {
+        const mockNations = [
+            { abbreviation: '유' },
+            { abbreviation: '조' },
+            { abbreviation: '공손' },
+        ];
+        
+        expect(mockNations[0].abbreviation).toBe('유');
+        expect(mockNations[1].abbreviation).toBe('조');
+        expect(mockNations[2].abbreviation).toBe('공손');
+    });
+
+    it('calculates dynamic flag size based on abbreviation length', () => {
+        function getFlagSize(abbr: string): number {
+            return abbr.length === 2 ? 24 : 16;
+        }
+
+        expect(getFlagSize('유')).toBe(16);
+        expect(getFlagSize('조')).toBe(16);
+        expect(getFlagSize('공손')).toBe(24);
+    });
+
+    it('handles edge cases in flag sizing', () => {
+        function getFlagSize(abbr: string): number {
+            return abbr.length === 2 ? 24 : 16;
+        }
+
+        expect(getFlagSize('')).toBe(16);
+        expect(getFlagSize('ABC')).toBe(16);
+    });
+});

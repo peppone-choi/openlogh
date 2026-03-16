@@ -353,7 +353,7 @@ function LobbyJoinPageContent() {
                                     className="px-2 py-1 text-xs font-bold text-black rounded shrink-0"
                                     style={{ backgroundColor: n.color }}
                                 >
-                                    {n.name}
+                                    {n.abbreviation}
                                 </div>
                                 <p className="text-xs text-muted-foreground">{scoutMessages[n.id]}</p>
                             </div>

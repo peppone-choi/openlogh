@@ -1,6 +1,6 @@
 package com.opensam.controller
 
-import com.opensam.dto.MessageResponse
+import com.opensam.dto.RecordResponse
 import com.opensam.dto.YearbookSummaryResponse
 import com.opensam.service.HistoryService
 import org.springframework.http.ResponseEntity
@@ -17,7 +17,7 @@ class HistoryController(
         @PathVariable worldId: Long,
         @RequestParam(required = false) year: Int?,
         @RequestParam(required = false) month: Int?,
-    ): ResponseEntity<List<MessageResponse>> {
+    ): ResponseEntity<List<RecordResponse>> {
         val data = if (year != null && month != null) {
             historyService.getByYearMonth(worldId, year, month)
         } else {
@@ -26,22 +26,20 @@ class HistoryController(
         val world = worldStateRepository.findById(worldId.toShort()).orElse(null)
         val currentYear = world?.currentYear?.toInt() ?: Int.MAX_VALUE
         val currentMonth = world?.currentMonth?.toInt() ?: 12
-        val filtered = data.filter { msg ->
-            val msgYear = (msg.payload["year"] as? Number)?.toInt() ?: 0
-            val msgMonth = (msg.payload["month"] as? Number)?.toInt() ?: 1
-            msgYear < currentYear || (msgYear == currentYear && msgMonth <= currentMonth)
+        val filtered = data.filter { record ->
+            record.year < currentYear || (record.year == currentYear && record.month <= currentMonth)
         }
-        return ResponseEntity.ok(filtered.map { MessageResponse.from(it) })
+        return ResponseEntity.ok(filtered.map { RecordResponse.from(it) })
     }
 
     @GetMapping("/worlds/{worldId}/records")
-    fun getWorldRecords(@PathVariable worldId: Long): ResponseEntity<List<MessageResponse>> {
-        return ResponseEntity.ok(historyService.getWorldRecords(worldId).map { MessageResponse.from(it) })
+    fun getWorldRecords(@PathVariable worldId: Long): ResponseEntity<List<RecordResponse>> {
+        return ResponseEntity.ok(historyService.getWorldRecords(worldId).map { RecordResponse.from(it) })
     }
 
     @GetMapping("/generals/{generalId}/records")
-    fun getGeneralRecords(@PathVariable generalId: Long): ResponseEntity<List<MessageResponse>> {
-        return ResponseEntity.ok(historyService.getGeneralRecords(generalId).map { MessageResponse.from(it) })
+    fun getGeneralRecords(@PathVariable generalId: Long): ResponseEntity<List<RecordResponse>> {
+        return ResponseEntity.ok(historyService.getGeneralRecords(generalId).map { RecordResponse.from(it) })
     }
 
     @GetMapping("/worlds/{worldId}/history/yearbook")
@@ -50,7 +48,6 @@ class HistoryController(
         @RequestParam year: Int,
     ): ResponseEntity<YearbookSummaryResponse> {
         val yearbook = historyService.getYearbook(worldId, year) ?: return ResponseEntity.notFound().build()
-        val keyEvents = historyService.getYearKeyEvents(worldId, year)
-        return ResponseEntity.ok(YearbookSummaryResponse.from(worldId, yearbook, keyEvents))
+        return ResponseEntity.ok(YearbookSummaryResponse.from(worldId, yearbook))
     }
 }

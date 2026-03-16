@@ -460,3 +460,29 @@ data class BestGeneralResponse(
         )
     }
 }
+
+data class RecordResponse(
+    val id: Long,
+    val worldId: Long,
+    val recordType: String,
+    val srcId: Long?,
+    val destId: Long?,
+    val year: Int,
+    val month: Int,
+    val payload: Map<String, Any>,
+    val createdAt: OffsetDateTime,
+) {
+    companion object {
+        fun from(e: Record) = RecordResponse(
+            id = e.id,
+            worldId = e.worldId,
+            recordType = e.recordType,
+            srcId = e.srcId,
+            destId = e.destId,
+            year = e.year,
+            month = e.month,
+            payload = e.payload,
+            createdAt = e.createdAt,
+        )
+    }
+}

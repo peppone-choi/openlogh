@@ -1,7 +1,7 @@
 package com.opensam.service
 
 import com.opensam.repository.CityRepository
-import com.opensam.repository.MessageRepository
+import com.opensam.repository.RecordRepository
 import com.opensam.repository.NationRepository
 import com.opensam.repository.WorldStateRepository
 import org.springframework.stereotype.Service
@@ -22,10 +22,11 @@ import java.time.Instant
 @Service
 class MapRecentService(
     private val worldStateRepository: WorldStateRepository,
-    private val cityRepository: CityRepository,
     private val nationRepository: NationRepository,
-    private val messageRepository: MessageRepository,
+    private val cityRepository: CityRepository,
+    private val recordRepository: RecordRepository,
     private val mapService: MapService,
+    private val cityService: CityService,
 ) {
     data class MapRecentCacheEntry(
         val etag: String,
@@ -116,15 +117,15 @@ class MapRecentService(
         }
 
         // Get recent history (last 10 entries)
-        val historyMessages = messageRepository.findByWorldIdAndMailboxCodeOrderBySentAtDesc(worldId, "world_history")
+        val historyRecords = recordRepository.findByWorldIdAndRecordTypeOrderByCreatedAtDesc(worldId, "world_history")
             .take(10)
-        val history = historyMessages.map { msg ->
+        val history = historyRecords.map { record ->
             mapOf(
-                "id" to msg.id,
-                "message" to (msg.payload["message"]?.toString() ?: ""),
-                "year" to (msg.payload["year"] ?: 0),
-                "month" to (msg.payload["month"] ?: 0),
-                "sentAt" to msg.sentAt.toString(),
+                "id" to record.id,
+                "message" to (record.payload["message"]?.toString() ?: ""),
+                "year" to record.year.toInt(),
+                "month" to record.month.toInt(),
+                "sentAt" to record.createdAt.toString(),
             )
         }
 

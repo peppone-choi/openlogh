@@ -19,13 +19,11 @@ data class YearbookSummaryResponse(
     val nations: List<YearbookNationSummary>,
     val globalHistory: List<String>,
     val globalAction: List<String>,
-    val keyEvents: List<MessageResponse>,
 ) {
     companion object {
         fun from(
             worldId: Long,
             yearbook: YearbookHistory,
-            keyEvents: List<Message>,
         ): YearbookSummaryResponse {
             val nations = yearbook.nations.map { nation ->
                 val cities = (nation["cities"] as? List<*>)
@@ -53,7 +51,6 @@ data class YearbookSummaryResponse(
                 nations = nations,
                 globalHistory = yearbook.globalHistory,
                 globalAction = yearbook.globalAction,
-                keyEvents = keyEvents.map { MessageResponse.from(it) },
             )
         }
     }

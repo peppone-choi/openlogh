@@ -509,8 +509,8 @@ export function MapViewer({
 
                 {tooltip &&
                     (() => {
-                        const abbr = (tooltip.nationAbbr || tooltip.nationText || '').slice(0, 1);
-                        const flagSize = 16;
+                        const abbr = tooltip.nationAbbr || tooltip.nationText || '';
+                        const flagSize = abbr.length > 1 ? 24 : 16;
                         const textColor = tooltip.nationColor && isBrightColor(tooltip.nationColor) ? 'black' : 'white';
                         return (
                             <div

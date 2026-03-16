@@ -21,6 +21,24 @@ interface RecordRepository : JpaRepository<Record, Long> {
         beforeId: Long
     ): List<Record>
 
+    fun findByWorldIdAndRecordTypeAndIdGreaterThanOrderByCreatedAtDesc(
+        worldId: Long,
+        recordType: String,
+        sinceId: Long
+    ): List<Record>
+
+    fun findByDestIdAndRecordTypeAndIdGreaterThanOrderByCreatedAtDesc(
+        destId: Long,
+        recordType: String,
+        sinceId: Long
+    ): List<Record>
+
+    fun findByWorldIdAndYearAndMonth(
+        worldId: Long,
+        year: Int,
+        month: Int
+    ): List<Record>
+
     @Query(
         """
         SELECT r FROM Record r 
