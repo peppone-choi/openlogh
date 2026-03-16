@@ -84,7 +84,7 @@ export function GeneralBasicCard({ general, nation, turnTerm, lastExecuted }: Ge
                 style={{
                     display: 'grid',
                     gridTemplateColumns: '64px repeat(3, 2fr 5fr)',
-                    gridTemplateRows: 'repeat(10, calc(64px / 3))',
+                    gridTemplateRows: 'repeat(11, calc(64px / 3))',
                     textAlign: 'center',
                 }}
             >
@@ -236,40 +236,67 @@ export function GeneralBasicCard({ general, nation, turnTerm, lastExecuted }: Ge
                         : `${Math.max(general.age + 1, general.specage2)}세`}
                 </Cell>
 
-                {/* Row 7: Lv + exp bar + 연령 */}
-                <div className="border-t border-gray-600" style={{ gridColumn: '1 / 3' }}>
-                    <div className="legacy-bg1 text-center">Lv.{general.explevel}</div>
+                {/* Row 7: Lv + exp bar + 연령 — explicit row to avoid overflow */}
+                <div
+                    className="border-t border-gray-600 legacy-bg1 text-center"
+                    style={{ gridRow: 8, gridColumn: '1 / 3' }}
+                >
+                    Lv.{general.explevel}
                 </div>
-                <div className="border-t border-gray-600 flex items-center px-1" style={{ gridColumn: '3 / 6' }}>
+                <div
+                    className="border-t border-gray-600 flex items-center px-1"
+                    style={{ gridRow: 8, gridColumn: '3 / 6' }}
+                >
                     <SammoBar height={10} percent={expPercent} />
                 </div>
-                <Cell head>연령</Cell>
-                <Cell>
+                <div
+                    className="border-t border-gray-600 border-l legacy-bg1 text-center"
+                    style={{ gridRow: 8, gridColumn: 6 }}
+                >
+                    연령
+                </div>
+                <div className="border-t border-gray-600 text-center" style={{ gridRow: 8, gridColumn: 7 }}>
                     <span style={{ color: ageColor(general.age) }}>{general.age}세</span>
-                </Cell>
+                </div>
 
-                {/* Row 8: 수비 + 삭턴 + 실행 */}
-                <Cell head>수비</Cell>
-                <Cell wide={2}>
+                {/* Row 9: 수비 + 삭턴 + 실행 */}
+                <div className="border-t border-gray-600 border-l legacy-bg1 text-center" style={{ gridRow: 9 }}>
+                    수비
+                </div>
+                <div className="border-t border-gray-600" style={{ gridRow: 9, gridColumn: 'span 2' }}>
                     {general.defenceTrain === 999 ? (
                         <span style={{ color: 'red' }}>수비 안함</span>
                     ) : (
                         <span style={{ color: 'limegreen' }}>수비 함(훈사{general.defenceTrain})</span>
                     )}
-                </Cell>
-                <Cell head>삭턴</Cell>
-                <Cell>{general.killturn ?? '-'} 턴</Cell>
-                <Cell head>실행</Cell>
-                <Cell>{nextExecText}</Cell>
+                </div>
+                <div className="border-t border-gray-600 border-l legacy-bg1 text-center" style={{ gridRow: 9 }}>
+                    삭턴
+                </div>
+                <div className="border-t border-gray-600 text-center" style={{ gridRow: 9 }}>
+                    {general.killturn ?? '-'} 턴
+                </div>
+                <div className="border-t border-gray-600 border-l legacy-bg1 text-center" style={{ gridRow: 9 }}>
+                    실행
+                </div>
+                <div className="border-t border-gray-600 text-center" style={{ gridRow: 9 }}>
+                    {nextExecText}
+                </div>
 
-                {/* Row 9: 부대 + 벌점 */}
-                <Cell head>부대</Cell>
-                <Cell wide={2}>{general.troopInfo ? general.troopInfo.name : '-'}</Cell>
-                <Cell head>벌점</Cell>
-                <Cell wide={3}>
+                {/* Row 10: 부대 + 벌점 */}
+                <div className="border-t border-gray-600 border-l legacy-bg1 text-center" style={{ gridRow: 10 }}>
+                    부대
+                </div>
+                <div className="border-t border-gray-600" style={{ gridRow: 10, gridColumn: 'span 2' }}>
+                    {general.troopInfo ? general.troopInfo.name : '-'}
+                </div>
+                <div className="border-t border-gray-600 border-l legacy-bg1 text-center" style={{ gridRow: 10 }}>
+                    벌점
+                </div>
+                <div className="border-t border-gray-600" style={{ gridRow: 10, gridColumn: 'span 3' }}>
                     {formatRefreshScore(general.refreshScoreTotal ?? 0)}{' '}
                     {(general.refreshScoreTotal ?? 0).toLocaleString()}점({general.refreshScore ?? 0})
-                </Cell>
+                </div>
             </div>
 
             <div className="border-t border-gray-600 px-1 py-1.5 text-xs">
