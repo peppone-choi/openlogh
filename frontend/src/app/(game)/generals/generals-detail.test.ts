@@ -30,22 +30,27 @@ describe('officer text (generals detail page)', () => {
     });
 });
 
-describe('emperor badge style', () => {
-    const EMPEROR_BADGE_COLOR = '#f0c040';
+describe('emperor icon with yellow background', () => {
+    const EMPEROR_BG_COLOR = '#f0c040';
+    const EMPEROR_ICON = '/icons/emperor.png';
 
-    it('uses yellow background for emperor badge', () => {
-        expect(EMPEROR_BADGE_COLOR).toBe('#f0c040');
+    it('uses yellow background for emperor icon container', () => {
+        expect(EMPEROR_BG_COLOR).toBe('#f0c040');
     });
 
-    it('emperor badge is shown for npcState 10', () => {
+    it('uses emperor.png icon', () => {
+        expect(EMPEROR_ICON).toBe('/icons/emperor.png');
+    });
+
+    it('emperor icon is shown for npcState 10', () => {
         const npcState = 10;
-        const showBadge = npcState === 10;
-        expect(showBadge).toBe(true);
+        const showIcon = npcState === 10;
+        expect(showIcon).toBe(true);
     });
 
-    it('emperor badge is not shown for other npcState', () => {
+    it('emperor icon is not shown for other npcState', () => {
         const npcState: number = 2;
-        const showBadge = npcState === 10;
-        expect(showBadge).toBe(false);
+        const showIcon = npcState === 10;
+        expect(showIcon).toBe(false);
     });
 });

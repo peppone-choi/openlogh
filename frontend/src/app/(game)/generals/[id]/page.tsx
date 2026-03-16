@@ -134,10 +134,10 @@ export default function GeneralDetailPage() {
                             <div className="flex items-center gap-2">
                                 {general.npcState === 10 && (
                                     <span
-                                        className="px-1.5 py-0.5 text-xs font-bold text-black rounded-sm"
+                                        className="inline-flex items-center rounded-sm px-0.5"
                                         style={{ backgroundColor: '#f0c040' }}
                                     >
-                                        황제
+                                        <img src="/icons/emperor.png" alt="황제" width={18} height={18} />
                                     </span>
                                 )}
                                 <h2 className="text-lg font-bold" style={{ color: npcColor }}>

@@ -533,10 +533,10 @@ export function MapViewer({
                                     {tooltip.cityText}
                                     {tooltip.isEmperorCity && (
                                         <span
-                                            className="ml-1 px-1 py-0.5 text-[9px] font-bold text-black rounded-sm"
+                                            className="ml-1 inline-flex items-center rounded-sm px-0.5"
                                             style={{ backgroundColor: '#f0c040' }}
                                         >
-                                            황제
+                                            <img src="/icons/emperor.png" alt="황제" width={14} height={14} />
                                         </span>
                                     )}
                                 </div>
