@@ -1,23 +1,19 @@
 import { describe, expect, it } from 'vitest';
+import { CITY_STATE_NAMES, getSeason, MAP_WIDTH, MAP_HEIGHT } from '@/lib/map-constants';
 
-const CITY_STATE_NAMES: Record<number, string> = {
-    1: '풍작',
-    2: '호황',
-    3: '한파/폭설',
-    4: '역병',
-    5: '지진',
-    6: '태풍',
-    7: '홍수',
-    8: '메뚜기/흉년',
-    9: '황건적',
-    31: '파괴',
-    32: '파괴',
-    33: '약탈',
-    34: '약탈',
-    41: '분쟁중',
-    42: '분쟁중',
-    43: '분쟁중',
-};
+describe('map-constants', () => {
+    it('MAP dimensions are 700x500', () => {
+        expect(MAP_WIDTH).toBe(700);
+        expect(MAP_HEIGHT).toBe(500);
+    });
+
+    it('getSeason returns correct season for each month', () => {
+        expect(getSeason(1)).toBe('spring');
+        expect(getSeason(4)).toBe('summer');
+        expect(getSeason(7)).toBe('fall');
+        expect(getSeason(10)).toBe('winter');
+    });
+});
 
 describe('CITY_STATE_NAMES', () => {
     it('covers all TurnService transition states', () => {

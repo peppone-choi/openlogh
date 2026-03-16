@@ -7,20 +7,16 @@ import { useGeneralStore } from '@/stores/generalStore';
 import { mapRecentApi } from '@/lib/gameApi';
 import { subscribeWebSocket } from '@/lib/websocket';
 import { formatLog } from '@/lib/formatLog';
-import type { CityConst, PublicCachedMapHistory } from '@/types';
+import type { PublicCachedMapHistory } from '@/types';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import {
-    getCityLevelIcon,
-    getEventIcon,
-    getMapBgUrl,
-    getMapRoadUrl,
-    getNationBgGradient,
-    getSpecialEventIcon,
-} from '@/lib/image';
-import { FactionFlag } from '@/components/game/faction-flag';
 import { CITY_LEVEL_NAMES, CREW_TYPE_NAMES } from '@/lib/game-utils';
+import { MAP_WIDTH, MAP_HEIGHT } from '@/lib/map-constants';
+import type { MapSeason } from '@/lib/map-constants';
+import { MapCanvas } from '@/components/game/map-canvas';
+import type { RenderCity, CityOverlay } from '@/components/game/map-canvas';
+import { DetailTooltip } from '@/components/game/map-tooltips';
 
 type MapTheme = 'default' | 'spring' | 'summer' | 'autumn' | 'winter';
 const MAP_THEMES: {
@@ -63,49 +59,6 @@ const MAP_THEMES: {
 
 type MapLayer = 'nations' | 'troops' | 'supply' | 'terrain';
 
-interface CityTooltip {
-    cityId: number;
-    cityName: string;
-    nationName: string;
-    nationColor: string;
-    isVisible: boolean;
-    level: number;
-    pop: number;
-    agri: string;
-    comm: string;
-    secu: string;
-    def: string;
-    wall: string;
-    trust: number;
-    generals: {
-        name: string;
-        nationColor: string;
-        crew: number;
-        crewType: string;
-        isForeign: boolean;
-    }[];
-    screenX: number;
-    screenY: number;
-}
-
-type MapSeason = 'spring' | 'summer' | 'fall' | 'winter';
-
-const detailMapCitySizes: Record<number, number[]> = {
-    1: [48, 45, 16, 15, -8, -4],
-    2: [60, 42, 20, 14, -8, -4],
-    3: [42, 42, 14, 14, -8, -4],
-    4: [60, 45, 20, 15, -6, -3],
-    5: [72, 48, 24, 16, -6, -4],
-    6: [78, 54, 26, 18, -6, -4],
-    7: [84, 60, 28, 20, -6, -4],
-    8: [96, 72, 32, 24, -6, -3],
-};
-
-const MAP_WIDTH = 700;
-const MAP_HEIGHT = 500;
-const CITY_HIT_WIDTH = 40;
-const CITY_HIT_HEIGHT = 30;
-const CITY_RING_SIZE = 20;
 const CITY_NAME_MARGIN = 6;
 const CITY_NAME_HEIGHT = 14;
 const CITY_NAME_CHAR_WIDTH = 10;
@@ -117,7 +70,7 @@ function clamp(value: number, min: number, max: number): number {
     return value;
 }
 
-function getCityNameOffsets(city: CityConst, markerLeft: number, markerTop: number) {
+function getCityNameOffsets(city: { name: string; x: number; y: number }, markerLeft: number, markerTop: number) {
     const estimatedWidth = city.name.length * CITY_NAME_CHAR_WIDTH + CITY_NAME_PADDING;
     const rightX = city.x + 8;
     const leftX = city.x - estimatedWidth - 8;
@@ -142,10 +95,10 @@ export default function MapPage() {
     const { cities, nations, generals, mapData, loadAll, loadMap } = useGameStore();
     const myGeneral = useGeneralStore((s) => s.myGeneral);
     const fetchMyGeneral = useGeneralStore((s) => s.fetchMyGeneral);
-    const [tooltip, setTooltip] = useState<CityTooltip | null>(null);
     const [history, setHistory] = useState<PublicCachedMapHistory[]>([]);
     const [touchTapId, setTouchTapId] = useState<number | null>(null);
-    // Auto-detect season from world month (legacy: spring 1-3, summer 4-6, autumn 7-9, winter 10-12)
+
+    // Auto-detect season from world month
     const autoTheme = useMemo<MapTheme>(() => {
         const month = currentWorld?.currentMonth ?? null;
         if (!month) return 'default';
@@ -162,13 +115,11 @@ export default function MapPage() {
 
     const [isAutoTheme, setIsAutoTheme] = useState(true);
     const [showCityNames, setShowCityNames] = useState(true);
-    const tooltipHideTimerRef = useRef<number | null>(null);
-    const mapContainerRef = useRef<HTMLDivElement>(null);
-    const [mapScale, setMapScale] = useState(1);
+
     const selectedTheme = isAutoTheme ? autoTheme : theme;
     const currentTheme = MAP_THEMES.find((t) => t.key === selectedTheme) ?? MAP_THEMES[0];
     const mapCode = ((currentWorld?.config as Record<string, string>)?.mapCode ?? 'che').trim() || 'che';
-    const mapFolder = mapCode.includes('miniche') ? 'che' : mapCode === 'ludo_rathowm' ? 'ludo_rathowm' : mapCode;
+
     const season = useMemo<MapSeason>(() => {
         const themeForSeason = selectedTheme === 'default' ? autoTheme : selectedTheme;
         if (themeForSeason === 'spring') return 'spring';
@@ -178,46 +129,7 @@ export default function MapPage() {
         return 'spring';
     }, [selectedTheme, autoTheme]);
     const showSeasonBackground = isAutoTheme || selectedTheme !== 'default';
-    const mapBgUrl = showSeasonBackground ? getMapBgUrl(mapFolder, season) : null;
-    const mapRoadUrl = getMapRoadUrl(mapCode);
 
-    const clearTooltipHideTimer = useCallback(() => {
-        if (tooltipHideTimerRef.current !== null) {
-            window.clearTimeout(tooltipHideTimerRef.current);
-            tooltipHideTimerRef.current = null;
-        }
-    }, []);
-
-    const scheduleTooltipHide = useCallback(() => {
-        clearTooltipHideTimer();
-        tooltipHideTimerRef.current = window.setTimeout(() => {
-            setTooltip((prev) => {
-                if (prev && touchTapId === prev.cityId) return prev;
-                return null;
-            });
-        }, 120);
-    }, [clearTooltipHideTimer, touchTapId]);
-
-    useEffect(() => {
-        return () => {
-            if (tooltipHideTimerRef.current !== null) {
-                window.clearTimeout(tooltipHideTimerRef.current);
-            }
-        };
-    }, []);
-
-    // Measure map container width to scale the 700×500 coordinate space
-    useEffect(() => {
-        const el = mapContainerRef.current;
-        if (!el) return;
-        const ro = new ResizeObserver((entries) => {
-            for (const entry of entries) {
-                setMapScale(entry.contentRect.width / MAP_WIDTH);
-            }
-        });
-        ro.observe(el);
-        return () => ro.disconnect();
-    }, []);
     const toggleLayer = (layer: MapLayer) => {
         setLayers((prev) => {
             const next = new Set(prev);
@@ -256,7 +168,6 @@ export default function MapPage() {
     }, [currentWorld, loadAll]);
 
     const nationMap = useMemo(() => new Map(nations.map((n) => [n.id, n])), [nations]);
-
     const cityMap = useMemo(() => new Map(cities.map((c) => [c.id, c])), [cities]);
 
     const myNation = useMemo(() => {
@@ -316,7 +227,7 @@ export default function MapPage() {
         return map;
     }, [generals]);
 
-    // Identify cities with foreign troops (troops from a different nation than the city owner)
+    // Identify cities with foreign troops
     const foreignTroopCities = useMemo(() => {
         const result = new Set<number>();
         for (const [cityId, gens] of cityGeneralData) {
@@ -359,36 +270,102 @@ export default function MapPage() {
         [cityMap, nationMap, canViewCityInfo]
     );
 
+    // Build RenderCity array from mapData + runtime cities
+    const renderCities = useMemo<RenderCity[]>(() => {
+        if (!mapData?.cities) return [];
+        return mapData.cities.map((cc) => {
+            const rtCity = cityByNameMap.get(cc.name);
+            const nation = rtCity?.nationId ? nationMap.get(rtCity.nationId) : null;
+            const showNationLayer = layers.has('nations') && !!nation;
+            const isMyCity = myGeneral?.cityId != null && rtCity?.id === myGeneral.cityId;
+
+            return {
+                id: rtCity?.id ?? cc.id,
+                name: cc.name,
+                x: cc.x,
+                y: cc.y,
+                level: cc.level,
+                region: cc.region,
+                nationColor: showNationLayer ? (nation?.color ?? null) : null,
+                nationName: showNationLayer ? (nation?.name ?? null) : null,
+                nationAbbr: showNationLayer ? nation?.abbreviation || nation?.name?.slice(0, 1) || null : null,
+                isCapital: showNationLayer && !!rtCity && nation!.capitalCityId === rtCity.id,
+                supplyState: rtCity?.supplyState ?? 0,
+                state: rtCity?.state ?? 0,
+                isMyCity,
+                isEmperorCity: false,
+            };
+        });
+    }, [mapData, cityByNameMap, nationMap, layers, myGeneral?.cityId]);
+
+    // Build cityOverlays for troops/supply/terrain layers
+    const cityOverlays = useMemo(() => {
+        const overlays = new Map<number, CityOverlay>();
+        if (!mapData?.cities) return overlays;
+        for (const cc of mapData.cities) {
+            const rtCity = cityByNameMap.get(cc.name);
+            if (!rtCity) continue;
+            const overlay: CityOverlay = {};
+            if (layers.has('troops')) {
+                overlay.generalCount = cityGeneralData.get(rtCity.id)?.length ?? 0;
+                overlay.hasForeignTroops = foreignTroopCities.has(rtCity.id);
+            }
+            if (layers.has('supply') && rtCity.supplyState !== 1) {
+                overlay.isSupplyBroken = true;
+            }
+            if (layers.has('terrain')) {
+                overlay.terrainLevel = rtCity.level;
+            }
+            if (overlay.generalCount || overlay.hasForeignTroops || overlay.isSupplyBroken || overlay.terrainLevel) {
+                overlays.set(rtCity.id, overlay);
+            }
+        }
+        return overlays;
+    }, [mapData, cityByNameMap, layers, cityGeneralData, foreignTroopCities]);
+
+    // Year/month for header
+    const yearMonth = useMemo(() => {
+        const y = currentWorld?.currentYear;
+        const m = currentWorld?.currentMonth;
+        return y && m ? { year: y, month: m } : null;
+    }, [currentWorld?.currentYear, currentWorld?.currentMonth]);
+
+    // Custom city name positioning for full map page
+    const cityNamePositionFn = useCallback((city: RenderCity, markerLeft: number, markerTop: number) => {
+        return getCityNameOffsets(city, markerLeft, markerTop);
+    }, []);
+
+    // Build tooltip using DetailTooltip
     const buildTooltip = useCallback(
-        (cc: CityConst, screenX: number, screenY: number): CityTooltip => {
-            const city = cityByNameMap.get(cc.name);
-            const nation = city?.nationId ? nationMap.get(city.nationId) : null;
-            const cityGens = cityGeneralData.get(city?.id ?? -1) ?? [];
-            const isVisible = city ? canViewCityInfo(city.id) : false;
+        (city: RenderCity, screenX: number, screenY: number) => {
+            const rtCity = cityByNameMap.get(city.name);
+            const nation = rtCity?.nationId ? nationMap.get(rtCity.nationId) : null;
+            const cityGens = cityGeneralData.get(rtCity?.id ?? -1) ?? [];
+            const isVisible = rtCity ? canViewCityInfo(rtCity.id) : false;
             const generalsInfo = isVisible
                 ? cityGens.map((g) => ({
                       name: g.name,
                       nationColor: nationMap.get(g.nationId)?.color ?? '#555',
                       crew: g.crew,
                       crewType: CREW_TYPE_NAMES[g.crewType] ?? `${g.crewType}`,
-                      isForeign: city ? g.nationId !== city.nationId : false,
+                      isForeign: rtCity ? g.nationId !== rtCity.nationId : false,
                   }))
                 : [];
 
             return {
-                cityId: cc.id,
-                cityName: cc.name,
+                cityId: rtCity?.id ?? city.id,
+                cityName: city.name,
                 nationName: nation?.name ?? '공백지',
                 nationColor: nation?.color ?? '#555',
                 isVisible,
-                level: city?.level ?? cc.level,
-                pop: city?.pop ?? 0,
-                agri: city && isVisible ? `${city.agri}/${city.agriMax}` : '?',
-                comm: city && isVisible ? `${city.comm}/${city.commMax}` : '?',
-                secu: city && isVisible ? `${city.secu}/${city.secuMax}` : '?',
-                def: city && isVisible ? `${city.def}/${city.defMax}` : '?',
-                wall: city && isVisible ? `${city.wall}/${city.wallMax}` : '?',
-                trust: city?.trust ?? 0,
+                level: rtCity?.level ?? city.level,
+                pop: rtCity?.pop ?? 0,
+                agri: rtCity && isVisible ? `${rtCity.agri}/${rtCity.agriMax}` : '?',
+                comm: rtCity && isVisible ? `${rtCity.comm}/${rtCity.commMax}` : '?',
+                secu: rtCity && isVisible ? `${rtCity.secu}/${rtCity.secuMax}` : '?',
+                def: rtCity && isVisible ? `${rtCity.def}/${rtCity.defMax}` : '?',
+                wall: rtCity && isVisible ? `${rtCity.wall}/${rtCity.wallMax}` : '?',
+                trust: rtCity?.trust ?? 0,
                 generals: generalsInfo,
                 screenX,
                 screenY,
@@ -397,57 +374,55 @@ export default function MapPage() {
         [cityByNameMap, nationMap, cityGeneralData, canViewCityInfo]
     );
 
-    const handleCityMouseEnter = useCallback(
-        (cc: CityConst, e: React.MouseEvent<HTMLButtonElement>) => {
-            e.stopPropagation();
-            clearTooltipHideTimer();
-            setTouchTapId(null);
-            const rtCity = cityByNameMap.get(cc.name);
-            if (rtCity) saveCityInfo(rtCity.id);
-            setTooltip(buildTooltip(cc, e.clientX, e.clientY));
+    const renderTooltipFn = useCallback(
+        (city: RenderCity, pos: { x: number; y: number }) => {
+            const data = buildTooltip(city, pos.x, pos.y);
+            return (
+                <DetailTooltip
+                    cityId={data.cityId}
+                    cityName={data.cityName}
+                    nationName={data.nationName}
+                    nationColor={data.nationColor}
+                    isVisible={data.isVisible}
+                    level={data.level}
+                    pop={data.pop}
+                    agri={data.agri}
+                    comm={data.comm}
+                    secu={data.secu}
+                    def={data.def}
+                    wall={data.wall}
+                    trust={data.trust}
+                    generals={data.generals}
+                    position={pos}
+                />
+            );
         },
-        [buildTooltip, clearTooltipHideTimer, saveCityInfo, cityByNameMap]
+        [buildTooltip]
     );
 
-    const handleCityMouseMove = useCallback((cc: CityConst, e: React.MouseEvent<HTMLButtonElement>) => {
-        setTooltip((prev) => {
-            if (!prev || prev.cityId !== cc.id) return prev;
-            return { ...prev, screenX: e.clientX, screenY: e.clientY };
-        });
-    }, []);
-
-    const handleCityMouseLeave = useCallback(() => {
-        scheduleTooltipHide();
-    }, [scheduleTooltipHide]);
-
     const handleCityClick = useCallback(
-        (cc: CityConst, e: React.MouseEvent<HTMLButtonElement>) => {
-            e.stopPropagation();
-            const rtCity = cityByNameMap.get(cc.name);
+        (cityId: number, _e: React.MouseEvent) => {
+            // Find the city by id from renderCities or cityByNameMap
+            const rtCity = cities.find((c) => c.id === cityId);
             if (rtCity) saveCityInfo(rtCity.id);
-            router.push(`/city?id=${rtCity?.id ?? cc.id}`);
+            router.push(`/city?id=${cityId}`);
         },
-        [cityByNameMap, router, saveCityInfo]
+        [cities, router, saveCityInfo]
     );
 
     const handleCityTouch = useCallback(
-        (cc: CityConst, e: React.TouchEvent<HTMLButtonElement>) => {
-            clearTooltipHideTimer();
-            e.preventDefault();
-            e.stopPropagation();
-            const rtCity = cityByNameMap.get(cc.name);
-            if (touchTapId === cc.id && tooltip?.cityId === cc.id) {
+        (cityId: number) => {
+            const rtCity = cities.find((c) => c.id === cityId);
+            if (touchTapId === cityId) {
                 if (rtCity) saveCityInfo(rtCity.id);
-                router.push(`/city?id=${rtCity?.id ?? cc.id}`);
+                router.push(`/city?id=${cityId}`);
                 setTouchTapId(null);
             } else {
-                const touch = e.touches[0] ?? e.changedTouches[0];
                 if (rtCity) saveCityInfo(rtCity.id);
-                setTooltip(buildTooltip(cc, touch?.clientX ?? 0, touch?.clientY ?? 0));
-                setTouchTapId(cc.id);
+                setTouchTapId(cityId);
             }
         },
-        [buildTooltip, clearTooltipHideTimer, touchTapId, tooltip, router, saveCityInfo, cityByNameMap]
+        [cities, touchTapId, router, saveCityInfo]
     );
 
     if (!mapData || !mapData.cities || !Array.isArray(mapData.cities)) {
@@ -468,337 +443,36 @@ export default function MapPage() {
             </CardHeader>
             <CardContent className="space-y-3">
                 <div className="w-full max-w-[700px] mx-auto">
-                    <div
-                        ref={mapContainerRef}
-                        className="relative border border-gray-800 rounded-lg"
-                        style={{
-                            backgroundColor: currentTheme.bg,
-                            aspectRatio: '700 / 500',
-                        }}
-                    >
-                        {/* Scaled inner div: 700×500 coordinate space scaled to fit container */}
-                        <div
-                            style={{
-                                width: MAP_WIDTH,
-                                height: MAP_HEIGHT,
-                                transform: `scale(${mapScale})`,
-                                transformOrigin: 'top left',
-                                position: 'relative',
-                            }}
-                        >
-                            {/* Year/Season header like legacy "西紀 188年 4月 春" */}
-                            {(() => {
-                                const worldYear = currentWorld?.currentYear ?? null;
-                                const worldMonth = currentWorld?.currentMonth ?? null;
-                                const SEASON_LABELS: Record<string, string> = {
-                                    spring: '春',
-                                    summer: '夏',
-                                    fall: '秋',
-                                    winter: '冬',
-                                };
-                                const seasonLabel = SEASON_LABELS[season] ?? '';
-                                if (!worldYear && !worldMonth) return null;
-                                return (
-                                    <div className="absolute top-0 left-0 right-0 z-[4] text-center py-1 pointer-events-none">
-                                        <span
-                                            className="text-white text-sm font-bold drop-shadow-lg"
-                                            style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}
-                                        >
-                                            西紀 {worldYear ?? '?'}年 {worldMonth ?? '?'}月 {seasonLabel}
-                                        </span>
-                                    </div>
-                                );
-                            })()}
-
-                            {mapBgUrl && (
-                                <div
-                                    className="absolute inset-0 z-0 bg-no-repeat bg-center"
-                                    style={{
-                                        backgroundImage: `url('${mapBgUrl}')`,
-                                        backgroundSize: `${MAP_WIDTH}px ${MAP_HEIGHT}px`,
-                                    }}
-                                />
-                            )}
-                            <div
-                                className="absolute inset-0 z-[1] bg-no-repeat bg-center"
-                                style={{
-                                    backgroundImage: `url('${mapRoadUrl}')`,
-                                    backgroundSize: `${MAP_WIDTH}px ${MAP_HEIGHT}px`,
-                                }}
-                            />
-
+                    <MapCanvas
+                        cities={renderCities}
+                        mapCode={mapCode}
+                        season={season}
+                        yearMonth={yearMonth}
+                        showNames={showCityNames}
+                        onShowNamesChange={setShowCityNames}
+                        interactive
+                        showNationBlotch={layers.has('nations')}
+                        showSeasonBackground={showSeasonBackground}
+                        cityOverlays={cityOverlays}
+                        renderTooltip={renderTooltipFn}
+                        tooltipTrigger="hover-delayed"
+                        tooltipHideDelay={120}
+                        onCityClick={handleCityClick}
+                        onCityTouch={handleCityTouch}
+                        cityNamePosition={cityNamePositionFn}
+                        cityNameColor={currentTheme.text}
+                        themeColors={{ bg: currentTheme.bg }}
+                        dismissOverlay={
                             <button
                                 type="button"
                                 aria-label="지도 툴팁 닫기"
-                                className="absolute inset-0 z-[2] border-0 bg-transparent p-0"
+                                className="absolute inset-0 border-0 bg-transparent p-0"
                                 onClick={() => {
-                                    clearTooltipHideTimer();
-                                    setTooltip(null);
                                     setTouchTapId(null);
                                 }}
                             />
-
-                            {/* SVG connection lines removed — road overlay image already shows connections */}
-
-                            <div className="absolute inset-0 z-[3]">
-                                {mapData.cities.map((cc) => {
-                                    const rtCity = cityByNameMap.get(cc.name);
-                                    const nation = rtCity?.nationId ? nationMap.get(rtCity.nationId) : null;
-                                    const sizes = detailMapCitySizes[cc.level] ?? detailMapCitySizes[1];
-                                    const [bgW, bgH, icnW, icnH, flagR, flagT] = sizes;
-                                    const left = cc.x - 20;
-                                    const top = cc.y - 15;
-                                    const cityNameOffsets = getCityNameOffsets(cc, left, top);
-                                    const hasForeignTroops =
-                                        layers.has('troops') && foreignTroopCities.has(rtCity?.id ?? -1);
-                                    const genCount = layers.has('troops')
-                                        ? (cityGeneralData.get(rtCity?.id ?? -1)?.length ?? 0)
-                                        : 0;
-                                    const isSupplyBroken = layers.has('supply') && !!rtCity && rtCity.supplyState !== 1;
-                                    const terrainLevel = layers.has('terrain') && rtCity ? rtCity.level : 0;
-                                    const showNationLayer = layers.has('nations') && !!nation;
-                                    const showCapital = !!nation && !!rtCity && nation.capitalCityId === rtCity.id;
-                                    const isMyCity = myGeneral?.cityId != null && rtCity?.id === myGeneral.cityId;
-
-                                    return (
-                                        <button
-                                            key={cc.id}
-                                            type="button"
-                                            className="absolute h-[30px] w-[40px] cursor-pointer appearance-none border-0 bg-transparent p-0 text-left overflow-visible"
-                                            style={{ left, top }}
-                                            onMouseEnter={(e) => handleCityMouseEnter(cc, e)}
-                                            onMouseMove={(e) => handleCityMouseMove(cc, e)}
-                                            onMouseLeave={handleCityMouseLeave}
-                                            onTouchEnd={(e) => handleCityTouch(cc, e)}
-                                            onClick={(e) => handleCityClick(cc, e)}
-                                        >
-                                            {showNationLayer && nation?.color && (
-                                                <div
-                                                    className="absolute z-[1]"
-                                                    style={{
-                                                        background: getNationBgGradient(nation.color),
-                                                        width: bgW,
-                                                        height: bgH,
-                                                        left: (CITY_HIT_WIDTH - bgW) / 2,
-                                                        top: (CITY_HIT_HEIGHT - bgH) / 2,
-                                                    }}
-                                                />
-                                            )}
-
-                                            {hasForeignTroops && (
-                                                <span
-                                                    className="absolute z-[3] animate-spin rounded-full border-2 border-dashed border-red-500"
-                                                    style={{
-                                                        width: CITY_RING_SIZE + 8,
-                                                        height: CITY_RING_SIZE + 8,
-                                                        left: (CITY_HIT_WIDTH - (CITY_RING_SIZE + 8)) / 2,
-                                                        top: (CITY_HIT_HEIGHT - (CITY_RING_SIZE + 8)) / 2,
-                                                    }}
-                                                />
-                                            )}
-
-                                            {isSupplyBroken && (
-                                                <span
-                                                    className="absolute z-[3] rounded-full border border-dashed border-amber-500"
-                                                    style={{
-                                                        width: CITY_RING_SIZE + 12,
-                                                        height: CITY_RING_SIZE + 12,
-                                                        left: (CITY_HIT_WIDTH - (CITY_RING_SIZE + 12)) / 2,
-                                                        top: (CITY_HIT_HEIGHT - (CITY_RING_SIZE + 12)) / 2,
-                                                    }}
-                                                />
-                                            )}
-
-                                            <div className="absolute z-[2] w-full h-full">
-                                                <div
-                                                    className="absolute"
-                                                    style={{
-                                                        width: icnW,
-                                                        height: icnH,
-                                                        left: (CITY_HIT_WIDTH - icnW) / 2,
-                                                        top: (CITY_HIT_HEIGHT - icnH) / 2,
-                                                    }}
-                                                >
-                                                    <img
-                                                        src={getCityLevelIcon(cc.level)}
-                                                        className="w-full h-full block"
-                                                        alt={`${cc.name} 레벨 ${cc.level}`}
-                                                    />
-
-                                                    {isMyCity && (
-                                                        <div className="absolute -inset-[2px] rounded-[33%] border-[4px] border-solid border-red-500 animate-pulse" />
-                                                    )}
-
-                                                    {showNationLayer && nation && (
-                                                        <div
-                                                            className="absolute"
-                                                            style={{
-                                                                right: flagR,
-                                                                top: flagT,
-                                                                width: 12,
-                                                                height: 12,
-                                                            }}
-                                                        >
-                                                            <FactionFlag
-                                                                color={nation.color}
-                                                                supplied={(rtCity?.supplyState ?? 0) > 0}
-                                                                className="w-full h-full block"
-                                                            />
-                                                            {showCapital && (
-                                                                <div
-                                                                    className="absolute"
-                                                                    style={{
-                                                                        right: -6,
-                                                                        top: -6,
-                                                                        width: 10,
-                                                                        height: 10,
-                                                                    }}
-                                                                >
-                                                                    <img
-                                                                        src={getSpecialEventIcon(51)}
-                                                                        className="w-full h-full block"
-                                                                        alt="수도"
-                                                                    />
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    )}
-                                                </div>
-
-                                                {rtCity && rtCity.state > 0 && (
-                                                    <div className="absolute left-0" style={{ top: 5 }}>
-                                                        <img
-                                                            src={getEventIcon(rtCity.state)}
-                                                            className="object-contain"
-                                                            style={{ width: 10 }}
-                                                            alt={`도시 상태 ${rtCity.state}`}
-                                                        />
-                                                    </div>
-                                                )}
-
-                                                {genCount > 0 && (
-                                                    <span className="absolute -right-1 -top-1 z-[5] min-w-4 h-4 rounded-full bg-black/90 border border-gray-500 px-1 text-[9px] leading-4 text-white text-center font-bold">
-                                                        {genCount}
-                                                    </span>
-                                                )}
-
-                                                {terrainLevel > 0 && (
-                                                    <span className="absolute -left-1 -top-1 z-[5] rounded bg-purple-900/80 border border-purple-400 px-1 text-[8px] leading-3 text-purple-100">
-                                                        Lv{terrainLevel}
-                                                    </span>
-                                                )}
-
-                                                {showCityNames && (
-                                                    <span
-                                                        className="absolute whitespace-nowrap px-[2px] py-[1px] bg-black/55 text-[10px]"
-                                                        style={{
-                                                            left: cityNameOffsets.left,
-                                                            top: cityNameOffsets.top,
-                                                            color: currentTheme.text,
-                                                        }}
-                                                    >
-                                                        {cc.name}
-                                                    </span>
-                                                )}
-                                            </div>
-                                        </button>
-                                    );
-                                })}
-                            </div>
-
-                            {/* City name toggle button — legacy style */}
-                            <button
-                                type="button"
-                                className="absolute bottom-2 right-2 z-[5] px-2 py-1 text-[11px] rounded bg-blue-600 hover:bg-blue-700 text-white border-0 cursor-pointer shadow"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    setShowCityNames((v) => !v);
-                                }}
-                            >
-                                {showCityNames ? '도시명 표기 끄기' : '도시명 표기 켜기'}
-                            </button>
-                        </div>
-
-                        {tooltip && (
-                            <div
-                                className="fixed z-50 bg-gray-800 border border-gray-700 rounded-lg p-3 shadow-lg text-sm space-y-1 max-w-xs"
-                                style={{
-                                    left: tooltip.screenX + 12,
-                                    top: tooltip.screenY - 10,
-                                }}
-                            >
-                                <div className="font-semibold flex items-center gap-2">
-                                    <span
-                                        className="w-3 h-3 rounded-full"
-                                        style={{ backgroundColor: tooltip.nationColor }}
-                                    />
-                                    {tooltip.cityName}
-                                </div>
-                                <div className="text-gray-400">소속: {tooltip.nationName}</div>
-                                <div className="text-gray-400">
-                                    레벨: {CITY_LEVEL_NAMES[tooltip.level] ?? tooltip.level}
-                                </div>
-                                <div className="text-gray-400">
-                                    인구: {tooltip.isVisible ? tooltip.pop.toLocaleString() : '?'}
-                                </div>
-                                <div className="text-gray-400">농업: {tooltip.agri}</div>
-                                <div className="text-gray-400">상업: {tooltip.comm}</div>
-                                <div className="text-gray-400">치안: {tooltip.secu}</div>
-                                <div className="text-gray-400">수비: {tooltip.def}</div>
-                                <div className="text-gray-400">성벽: {tooltip.wall}</div>
-                                <div className="text-gray-400">민심: {tooltip.isVisible ? tooltip.trust : '?'}</div>
-
-                                {/* Link to city detail */}
-                                <button
-                                    type="button"
-                                    className="w-full text-center text-xs text-cyan-400 hover:text-cyan-300 border border-gray-600 rounded px-2 py-1 mt-1"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        router.push(`/city?id=${tooltip.cityId}`);
-                                    }}
-                                >
-                                    도시 상세 보기
-                                </button>
-
-                                {tooltip.isVisible ? (
-                                    tooltip.generals.length > 0 && (
-                                        <div className="border-t border-gray-700 pt-1 mt-1">
-                                            <div className="text-gray-300 font-medium text-xs mb-0.5">
-                                                주둔 장수 ({tooltip.generals.length}명)
-                                            </div>
-                                            <div className="max-h-32 overflow-y-auto space-y-0.5">
-                                                {tooltip.generals.map((g) => (
-                                                    <div
-                                                        key={`${g.name}:${g.crewType}:${g.crew}`}
-                                                        className="flex items-center gap-1.5 text-xs"
-                                                    >
-                                                        <span
-                                                            className="w-2 h-2 rounded-full shrink-0"
-                                                            style={{ backgroundColor: g.nationColor }}
-                                                        />
-                                                        <span
-                                                            className={
-                                                                g.isForeign ? 'text-red-400 font-bold' : 'text-gray-300'
-                                                            }
-                                                        >
-                                                            {g.name}
-                                                        </span>
-                                                        <span className="text-muted-foreground ml-auto">
-                                                            {g.crewType} {g.crew.toLocaleString()}
-                                                        </span>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )
-                                ) : (
-                                    <div className="border-t border-gray-700 pt-1 mt-1 text-xs text-yellow-300">
-                                        첩보 부족: 자국 도시 또는 첩보 확보 도시만 상세 정보를 볼 수 있습니다.
-                                    </div>
-                                )}
-                            </div>
-                        )}
-                    </div>
+                        }
+                    />
                 </div>
 
                 <div className="mx-auto flex w-full max-w-[700px] flex-wrap items-center gap-1.5 text-xs">
