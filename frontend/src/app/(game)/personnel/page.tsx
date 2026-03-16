@@ -255,6 +255,9 @@ export default function PersonnelPage() {
             }));
     }, [nationGenerals]);
 
+    // Emperor general (npcState === 10) in the same nation
+    const emperor = useMemo(() => nationGenerals.find((g) => g.npcState === 10) ?? null, [nationGenerals]);
+
     // City officer list
     const cityOfficers = useMemo(() => {
         const nationCities = cities.filter((c) => c.nationId === myGeneral?.nationId);
@@ -380,6 +383,19 @@ export default function PersonnelPage() {
                     </div>
                 </CardContent>
             </Card>
+
+            {/* Emperor Section */}
+            {emperor && (
+                <div className="flex justify-center">
+                    <div className="flex flex-col items-center gap-1 rounded border border-yellow-500/40 bg-yellow-500/5 px-6 py-3">
+                        <GeneralPortrait picture={emperor.picture} name={emperor.name} size="sm" />
+                        <span className="text-sm font-medium">{emperor.name}</span>
+                        <Badge variant="outline" className="text-[10px] border-yellow-500 text-yellow-400">
+                            황제
+                        </Badge>
+                    </div>
+                </div>
+            )}
 
             {/* Officer Display — portraits paired */}
             <Card>
@@ -511,7 +527,7 @@ export default function PersonnelPage() {
                                                     {g.officerLevel === slot.level
                                                         ? ' (현재)'
                                                         : g.officerLevel > 1
-                                                          ? ` (${formatOfficerLevelText(g.officerLevel, nationLevel, false, nationTypeCode)})`
+                                                          ? ` (${formatOfficerLevelText(g.officerLevel, nationLevel, false, nationTypeCode, g.npcState)})`
                                                           : ''}
                                                 </option>
                                             ))}

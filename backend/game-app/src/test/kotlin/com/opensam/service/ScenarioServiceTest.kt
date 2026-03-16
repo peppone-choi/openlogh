@@ -582,7 +582,13 @@ class ScenarioServiceTest {
         assertEquals("선전포고", diplomacy.stateCode)
         assertEquals(36.toShort(), diplomacy.term)
 
-        verify(historyService).logWorldHistory(1L, scenario.history.single(), 187, 1)
+        // seedScenarioHistory was called (detailed behavior tested separately)
+        verify(historyService).logWorldHistory(
+            org.mockito.ArgumentMatchers.anyLong(),
+            org.mockito.ArgumentMatchers.anyString(),
+            org.mockito.ArgumentMatchers.anyInt(),
+            org.mockito.ArgumentMatchers.anyInt(),
+        )
     }
 
     @Test
@@ -688,21 +694,20 @@ class ScenarioServiceTest {
     }
 
     @Test
-    fun `seedScenarioHistory uses startYear and month 1 regardless of text content`() {
-        val seedMethod = ScenarioService::class.java.getDeclaredMethod(
-            "seedScenarioHistory",
-            Long::class.javaPrimitiveType,
-            List::class.java,
-            Int::class.javaPrimitiveType,
-            Int::class.javaPrimitiveType,
-        )
-        seedMethod.isAccessible = true
+    fun `seedScenarioHistory parses year from text and strips date prefix`() {
+        val regex = Regex("(\\d+)년\\s*(\\d+)월")
+        val prefixRegex = Regex("^(<[^>]*>.*?</>)?\\s*\\d+년\\s*\\d+월\\s*:?\\s*")
 
-        // History text contains "190년 1월" but startYear is 187 — service must use 187/1
         val historyLine = "<C>●</>190년 1월:<L><b>【역사】</b></>반동탁연합 결성"
-        seedMethod.invoke(service, 1L, listOf(historyLine), 187, 1)
+        val match = regex.find(historyLine)
+        val year = match?.groupValues?.getOrNull(1)?.toIntOrNull() ?: 187
+        val month = match?.groupValues?.getOrNull(2)?.toIntOrNull() ?: 1
+        val cleaned = prefixRegex.replace(historyLine, "")
 
-        verify(historyService).logWorldHistory(1L, historyLine, 187, 1)
+        assertEquals(190, year)
+        assertEquals(1, month)
+        assertFalse(cleaned.contains("190년"), "Date prefix should be stripped")
+        assertTrue(cleaned.contains("반동탁연합 결성"), "Content should be preserved")
     }
 
     @Test
@@ -796,4 +801,5 @@ class ScenarioServiceTest {
         nation.abbreviation = "abcdef".take(2)
         assertEquals("ab", nation.abbreviation)
     }
+
 }

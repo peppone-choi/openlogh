@@ -197,7 +197,9 @@ export default function NationGeneralsPage() {
                                                         {formatOfficerLevelText(
                                                             g.officerLevel,
                                                             nation?.level,
-                                                            g.nationId > 0
+                                                            g.nationId > 0,
+                                                            undefined,
+                                                            g.npcState
                                                         )}
                                                     </span>
                                                 )}

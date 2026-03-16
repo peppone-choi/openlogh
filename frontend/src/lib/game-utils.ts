@@ -313,8 +313,10 @@ export function formatOfficerLevelText(
     officerLevel: number,
     nationLevel?: number,
     hasNation?: boolean,
-    nationTypeCode?: string
+    nationTypeCode?: string,
+    npcState?: number
 ): string {
+    if (npcState === 10) return '황제';
     if (officerLevel <= 0 && hasNation) return '일반';
 
     if (officerLevel < 5) {
@@ -679,6 +681,16 @@ export const NATION_LEVEL_LABELS: Record<number, string> = {
     8: '왕',
     9: '황제',
 };
+
+/** Get nation level label respecting special nation types (e.g. 황건적 → 천공장군 instead of 황제) */
+export function getNationLevelLabel(level: number, typeCode?: string): string {
+    const specialKey = getSpecialNationKey(typeCode);
+    if (specialKey && level >= 9) {
+        const specialMap = SpecialNationOfficerMap[specialKey];
+        if (specialMap?.[20]) return specialMap[20];
+    }
+    return NATION_LEVEL_LABELS[level] ?? `Lv.${level}`;
+}
 
 // --- City level names ---
 

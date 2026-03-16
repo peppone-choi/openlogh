@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { formatOfficerLevelText, NATION_LEVEL_LABELS, stripCodePrefix, getNationTypeLabel } from '@/lib/game-utils';
+import { formatOfficerLevelText, getNationLevelLabel, stripCodePrefix, getNationTypeLabel } from '@/lib/game-utils';
 
 type UserType = '통' | '무' | '지' | '만능' | '평범' | '무지' | '무능';
 
@@ -332,7 +332,9 @@ export default function NationsPage() {
                                         <TableCell>{capital?.name ?? '-'}</TableCell>
 
                                         <TableCell>
-                                            <Badge variant="secondary">{NATION_LEVEL_LABELS[n.level] ?? n.level}</Badge>
+                                            <Badge variant="secondary">
+                                                {getNationLevelLabel(n.level, n.typeCode)}
+                                            </Badge>
                                         </TableCell>
 
                                         <TableCell>
@@ -563,7 +565,8 @@ export default function NationsPage() {
                                                                                             g.officerLevel,
                                                                                             n.level,
                                                                                             g.nationId > 0,
-                                                                                            n.typeCode
+                                                                                            n.typeCode,
+                                                                                            g.npcState
                                                                                         )}
                                                                                     </td>
                                                                                     <td className="py-1 px-1 text-right">

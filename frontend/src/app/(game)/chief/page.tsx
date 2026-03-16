@@ -1078,7 +1078,8 @@ export default function ChiefPage() {
                                                             g.officerLevel,
                                                             nation?.level,
                                                             true,
-                                                            nation?.typeCode
+                                                            nation?.typeCode,
+                                                            g.npcState
                                                         )}
                                                     </td>
                                                     <td className="px-2 py-1 text-xs">{city?.name ?? '-'}</td>

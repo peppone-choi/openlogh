@@ -213,7 +213,15 @@ function MemberRow({
                                 )}
                             </div>
                             <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5 flex-wrap">
-                                <span>{formatOfficerLevelText(g.officerLevel, nationLevel, g.nationId > 0)}</span>
+                                <span>
+                                    {formatOfficerLevelText(
+                                        g.officerLevel,
+                                        nationLevel,
+                                        g.nationId > 0,
+                                        undefined,
+                                        g.npcState
+                                    )}
+                                </span>
                                 <span>
                                     {CREW_TYPE_NAMES[g.crewType] ?? g.crewType} {g.crew.toLocaleString()}
                                 </span>

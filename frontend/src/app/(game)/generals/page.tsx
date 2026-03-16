@@ -394,7 +394,8 @@ export default function GeneralsPage() {
                                             g.officerLevel,
                                             nation?.level,
                                             g.nationId > 0,
-                                            nation?.typeCode
+                                            nation?.typeCode,
+                                            g.npcState
                                         )}
                                     </TableCell>
                                     <TableCell style={g.injury > 0 ? { color: 'red' } : undefined}>

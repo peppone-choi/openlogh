@@ -708,7 +708,13 @@ function GarrisonTable({
                     {generals.map((gen) => {
                         const npcColor = getNPCColor(gen.npcState);
                         const injury = formatInjury(gen.injury);
-                        const officerText = formatOfficerLevelText(gen.officerLevel, nationLevel, gen.nationId > 0);
+                        const officerText = formatOfficerLevelText(
+                            gen.officerLevel,
+                            nationLevel,
+                            gen.nationId > 0,
+                            undefined,
+                            gen.npcState
+                        );
                         const defText = formatDefenceTrain(gen.defenceTrain);
                         const isOwnNation = myNationId != null && gen.nationId === myNationId;
                         const turnTimeText =

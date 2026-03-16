@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { formatGameLogDate } from '@/lib/gameLogDate';
-import { formatOfficerLevelText, NATION_LEVEL_LABELS, stripCodePrefix, getNationTypeLabel } from '@/lib/game-utils';
+import { formatOfficerLevelText, getNationLevelLabel, stripCodePrefix, getNationTypeLabel } from '@/lib/game-utils';
 import { formatLog } from '@/lib/formatLog';
 import type { Message, YearbookSummary } from '@/types';
 
@@ -311,7 +311,8 @@ export default function EmperorPage() {
                                                                     g.officerLevel,
                                                                     emperorNation.level,
                                                                     true,
-                                                                    emperorNation.typeCode
+                                                                    emperorNation.typeCode,
+                                                                    g.npcState
                                                                 )}
                                                             </Badge>
                                                         </div>
@@ -353,7 +354,8 @@ export default function EmperorPage() {
                                                                         g.officerLevel,
                                                                         emperorNation.level,
                                                                         true,
-                                                                        emperorNation.typeCode
+                                                                        emperorNation.typeCode,
+                                                                        g.npcState
                                                                     )}
                                                                 </Badge>
                                                                 {officerCityName && (
@@ -429,7 +431,7 @@ export default function EmperorPage() {
                                             <Badge variant="outline">{n.level}</Badge>
                                         </TableCell>
                                         <TableCell className="text-muted-foreground">
-                                            {NATION_LEVEL_LABELS[n.level] ?? n.level}
+                                            {getNationLevelLabel(n.level, n.typeCode)}
                                         </TableCell>
                                         <TableCell>{getNationTypeLabel(n.typeCode)}</TableCell>
                                         <TableCell className="text-right tabular-nums">

@@ -15,7 +15,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { PageHeader } from '@/components/game/page-header';
 import { LoadingState } from '@/components/game/loading-state';
 import { NationBadge } from '@/components/game/nation-badge';
-import { NATION_LEVEL_LABELS } from '@/lib/game-utils';
+import { getNationLevelLabel } from '@/lib/game-utils';
 import {
     calcCityGoldIncome,
     calcCityRiceIncome,
@@ -412,9 +412,7 @@ export default function NationFinancePage() {
 
                     {/* Summary badges */}
                     <div className="flex flex-wrap gap-2 text-xs">
-                        <Badge variant="secondary">
-                            국력: {NATION_LEVEL_LABELS[nation.level] ?? `Lv.${nation.level}`}
-                        </Badge>
+                        <Badge variant="secondary">국력: {getNationLevelLabel(nation.level, nation.typeCode)}</Badge>
                         <Badge variant="secondary">도시: {cities.length}개</Badge>
                         <Badge variant="secondary">장수: {generals.filter((g) => g.npcState !== 5).length}명</Badge>
                         <Badge variant="secondary">기술: {nation.tech}</Badge>

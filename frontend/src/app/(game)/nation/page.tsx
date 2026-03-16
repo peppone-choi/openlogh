@@ -26,7 +26,7 @@ import {
     REGION_NAMES,
     CREW_TYPE_NAMES,
     CITY_LEVEL_NAMES,
-    NATION_LEVEL_LABELS,
+    getNationLevelLabel,
     stripCodePrefix,
     getNationTypeLabel,
 } from '@/lib/game-utils';
@@ -357,7 +357,7 @@ function NationPageContent() {
                             <div className="flex flex-wrap items-center gap-2 mb-3">
                                 <NationBadge name={nation.name} color={nation.color} />
                                 <Badge variant="secondary">
-                                    {NATION_LEVEL_LABELS[nation.level] ?? `Lv.${nation.level}`}
+                                    {getNationLevelLabel(nation.level, nation.typeCode) ?? `Lv.${nation.level}`}
                                 </Badge>
                                 <Badge variant="outline">{getNationTypeLabel(nation.typeCode)}</Badge>
                                 {capitalCity && (
@@ -439,7 +439,9 @@ function NationPageContent() {
                                 <VCell>{generals.length}명</VCell>
 
                                 <LCell>작 위</LCell>
-                                <VCell>{NATION_LEVEL_LABELS[nation.level] ?? `Lv.${nation.level}`}</VCell>
+                                <VCell>
+                                    {getNationLevelLabel(nation.level, nation.typeCode) ?? `Lv.${nation.level}`}
+                                </VCell>
                                 <LCell>전 쟁</LCell>
                                 <VCell>
                                     {nation.warState ? (
@@ -535,7 +537,8 @@ function NationPageContent() {
                                                             g.officerLevel,
                                                             nation.level,
                                                             true,
-                                                            nation.typeCode
+                                                            nation.typeCode,
+                                                            g.npcState
                                                         )}
                                                     </TableCell>
                                                     <TableCell className="text-center text-xs">

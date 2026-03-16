@@ -5,6 +5,7 @@ import com.opensam.entity.City
 import com.opensam.entity.General
 import com.opensam.entity.Message
 import com.opensam.entity.Nation
+import com.opensam.engine.EmperorConstants
 import com.opensam.engine.modifier.ItemModifiers
 import com.opensam.engine.modifier.NationTypeModifiers
 import com.opensam.engine.modifier.PersonalityModifiers
@@ -326,11 +327,12 @@ class FrontInfoService(
             city = g.cityId,
             troop = g.troopId,
             officerLevel = officerLevel,
-            officerLevelText = officerRankService.getRankTitle(
-                officerLevel = officerLevel,
-                nationLevel = nationLevel,
-                officerRankKey = officerRankKey
-            ),
+            officerLevelText = if (g.npcState == EmperorConstants.NPC_STATE_EMPEROR) "황제"
+                else officerRankService.getRankTitle(
+                    officerLevel = officerLevel,
+                    nationLevel = nationLevel,
+                    officerRankKey = officerRankKey
+                ),
             officerCity = g.officerCity,
             permission = permission,
             lbonus = calcLeadershipBonus(officerLevel, nationLevel),

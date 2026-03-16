@@ -1,0 +1,422 @@
+{
+    "version": "1.0.0",
+    "lastScanned": 1773647413374,
+    "projectRoot": "/Users/apple/Desktop/opensamguk",
+    "techStack": {
+        "languages": [],
+        "frameworks": [],
+        "packageManager": null,
+        "runtime": null
+    },
+    "build": {
+        "buildCommand": null,
+        "testCommand": null,
+        "lintCommand": null,
+        "devCommand": null,
+        "scripts": {}
+    },
+    "conventions": {
+        "namingStyle": null,
+        "importStyle": null,
+        "testPattern": null,
+        "fileOrganization": null
+    },
+    "structure": {
+        "isMonorepo": false,
+        "workspaces": [],
+        "mainDirectories": ["docs", "scripts"],
+        "gitBranches": {
+            "defaultBranch": "main",
+            "branchingStrategy": null
+        }
+    },
+    "customNotes": [],
+    "directoryMap": {
+        "backend": {
+            "path": "backend",
+            "purpose": null,
+            "fileCount": 7,
+            "lastAccessed": 1773647412919,
+            "keyFiles": ["Dockerfile", "build.gradle.kts", "gradle.properties", "gradlew", "gradlew.bat"]
+        },
+        "docs": {
+            "path": "docs",
+            "purpose": "Documentation",
+            "fileCount": 0,
+            "lastAccessed": 1773647412923,
+            "keyFiles": []
+        },
+        "frontend": {
+            "path": "frontend",
+            "purpose": null,
+            "fileCount": 17,
+            "lastAccessed": 1773647412925,
+            "keyFiles": ["Dockerfile", "README.md", "components.json", "eslint.config.mjs", "next-env.d.ts"]
+        },
+        "legacy-core": {
+            "path": "legacy-core",
+            "purpose": null,
+            "fileCount": 24,
+            "lastAccessed": 1773647412932,
+            "keyFiles": ["403.html", "LICENSE", "README.md", "api.php", "composer.json"]
+        },
+        "legacy-docker": {
+            "path": "legacy-docker",
+            "purpose": null,
+            "fileCount": 1,
+            "lastAccessed": 1773647412933,
+            "keyFiles": ["account.env"]
+        },
+        "legacy-docker-src": {
+            "path": "legacy-docker-src",
+            "purpose": null,
+            "fileCount": 2,
+            "lastAccessed": 1773647412934,
+            "keyFiles": ["README.md"]
+        },
+        "nginx": {
+            "path": "nginx",
+            "purpose": null,
+            "fileCount": 1,
+            "lastAccessed": 1773647412934,
+            "keyFiles": ["nginx.conf"]
+        },
+        "parity-screenshots": {
+            "path": "parity-screenshots",
+            "purpose": null,
+            "fileCount": 11,
+            "lastAccessed": 1773647412935,
+            "keyFiles": [
+                "parity-links-legacy.png",
+                "parity-links-new.png",
+                "parity-main-legacy.png",
+                "parity-main-new.png",
+                "parity-pages-legacy.png"
+            ]
+        },
+        "scripts": {
+            "path": "scripts",
+            "purpose": "Build/utility scripts",
+            "fileCount": 0,
+            "lastAccessed": 1773647412935,
+            "keyFiles": []
+        },
+        "frontend/docs": {
+            "path": "frontend/docs",
+            "purpose": "Documentation",
+            "fileCount": 1,
+            "lastAccessed": 1773647412938,
+            "keyFiles": ["phase3-page-classification.md"]
+        },
+        "legacy-docker/app": {
+            "path": "legacy-docker/app",
+            "purpose": "Application code",
+            "fileCount": 2,
+            "lastAccessed": 1773647412945,
+            "keyFiles": ["id_ecdsa", "known_hosts"]
+        }
+    },
+    "hotPaths": [
+        {
+            "path": "backend/game-app/src/main/kotlin/com/opensam/service/ScenarioService.kt",
+            "accessCount": 31,
+            "lastAccessed": 1773659810028,
+            "type": "file"
+        },
+        {
+            "path": "backend/game-app/src/test/kotlin/com/opensam/engine/EventServiceTest.kt",
+            "accessCount": 21,
+            "lastAccessed": 1773650807869,
+            "type": "file"
+        },
+        {
+            "path": "frontend",
+            "accessCount": 16,
+            "lastAccessed": 1773654034271,
+            "type": "directory"
+        },
+        {
+            "path": "frontend/src/lib/game-utils.ts",
+            "accessCount": 15,
+            "lastAccessed": 1773659301228,
+            "type": "file"
+        },
+        {
+            "path": "frontend/src/app/(game)/emperor/page.tsx",
+            "accessCount": 14,
+            "lastAccessed": 1773659691289,
+            "type": "file"
+        },
+        {
+            "path": "backend",
+            "accessCount": 13,
+            "lastAccessed": 1773659142468,
+            "type": "directory"
+        },
+        {
+            "path": "frontend/src/app/(game)/nations/page.tsx",
+            "accessCount": 13,
+            "lastAccessed": 1773659641989,
+            "type": "file"
+        },
+        {
+            "path": "backend/game-app/src/main/kotlin/com/opensam/service/MessageService.kt",
+            "accessCount": 10,
+            "lastAccessed": 1773655515054,
+            "type": "file"
+        },
+        {
+            "path": "frontend/src/app/(game)/generals/[id]/page.tsx",
+            "accessCount": 10,
+            "lastAccessed": 1773659082985,
+            "type": "file"
+        },
+        {
+            "path": "frontend/src/types/index.ts",
+            "accessCount": 9,
+            "lastAccessed": 1773654037853,
+            "type": "file"
+        },
+        {
+            "path": "frontend/src/app/(lobby)/lobby/join/page.tsx",
+            "accessCount": 8,
+            "lastAccessed": 1773658825040,
+            "type": "file"
+        },
+        {
+            "path": "backend/game-app/src/main/kotlin/com/opensam/service/FrontInfoService.kt",
+            "accessCount": 8,
+            "lastAccessed": 1773659198659,
+            "type": "file"
+        },
+        {
+            "path": "frontend/src/lib/gameApi.ts",
+            "accessCount": 7,
+            "lastAccessed": 1773654051944,
+            "type": "file"
+        },
+        {
+            "path": "frontend/src/app/(game)/generals/page.tsx",
+            "accessCount": 7,
+            "lastAccessed": 1773659193624,
+            "type": "file"
+        },
+        {
+            "path": "frontend/src/app/(game)/emperor/detail/page.tsx",
+            "accessCount": 7,
+            "lastAccessed": 1773659601833,
+            "type": "file"
+        },
+        {
+            "path": "backend/game-app/src/main/kotlin",
+            "accessCount": 5,
+            "lastAccessed": 1773653951017,
+            "type": "directory"
+        },
+        {
+            "path": "frontend/src/app/(game)/my-page/page.tsx",
+            "accessCount": 5,
+            "lastAccessed": 1773659243483,
+            "type": "directory"
+        },
+        {
+            "path": "frontend/src/components/game/map-viewer.test.ts",
+            "accessCount": 4,
+            "lastAccessed": 1773655528933,
+            "type": "file"
+        },
+        {
+            "path": "frontend/src/app/(game)/general/page.tsx",
+            "accessCount": 4,
+            "lastAccessed": 1773659217150,
+            "type": "file"
+        },
+        {
+            "path": "frontend/src/app/(game)/troop/page.tsx",
+            "accessCount": 4,
+            "lastAccessed": 1773659328579,
+            "type": "file"
+        },
+        {
+            "path": "frontend/src/app/(game)/city/page.tsx",
+            "accessCount": 4,
+            "lastAccessed": 1773659356335,
+            "type": "file"
+        },
+        {
+            "path": "backend/game-app/src/main/kotlin/com/opensam/service",
+            "accessCount": 4,
+            "lastAccessed": 1773659775723,
+            "type": "directory"
+        },
+        {
+            "path": "backend/game-app/src/main/kotlin/com/opensam/service/OfficerRankService.kt",
+            "accessCount": 3,
+            "lastAccessed": 1773648140660,
+            "type": "file"
+        },
+        {
+            "path": "backend/game-app/src/main/kotlin/com/opensam/engine/UnificationService.kt",
+            "accessCount": 3,
+            "lastAccessed": 1773649923827,
+            "type": "file"
+        },
+        {
+            "path": "backend/game-app/src/test/kotlin/com/opensam/service/HistoryServiceTest.kt",
+            "accessCount": 3,
+            "lastAccessed": 1773650461490,
+            "type": "file"
+        },
+        {
+            "path": "frontend/src/components/game/nation-badge.tsx",
+            "accessCount": 3,
+            "lastAccessed": 1773653931581,
+            "type": "file"
+        },
+        {
+            "path": "backend/game-app/src/main/kotlin/com/opensam/entity",
+            "accessCount": 3,
+            "lastAccessed": 1773656534561,
+            "type": "directory"
+        },
+        {
+            "path": "backend/shared/src/main/resources/data/officer_ranks.json",
+            "accessCount": 2,
+            "lastAccessed": 1773647798476,
+            "type": "file"
+        },
+        {
+            "path": "backend/game-app/src/main/kotlin/com/opensam/service/NationService.kt",
+            "accessCount": 2,
+            "lastAccessed": 1773648133129,
+            "type": "file"
+        },
+        {
+            "path": "backend/game-app/src/main/kotlin/com/opensam/controller/CommandController.kt",
+            "accessCount": 2,
+            "lastAccessed": 1773648158936,
+            "type": "file"
+        },
+        {
+            "path": "backend/game-app/src/main/kotlin/com/opensam/service/AdminService.kt",
+            "accessCount": 2,
+            "lastAccessed": 1773648854575,
+            "type": "file"
+        },
+        {
+            "path": "backend/game-app/src/test/kotlin/com/opensam/service/AdminServiceTest.kt",
+            "accessCount": 2,
+            "lastAccessed": 1773648863860,
+            "type": "file"
+        },
+        {
+            "path": "backend/game-app/src/main/kotlin/com/opensam/engine/EventService.kt",
+            "accessCount": 2,
+            "lastAccessed": 1773649918950,
+            "type": "file"
+        },
+        {
+            "path": "backend/game-app/src/main/kotlin/com/opensam/engine/war/BattleService.kt",
+            "accessCount": 2,
+            "lastAccessed": 1773649925280,
+            "type": "file"
+        },
+        {
+            "path": "backend/game-app/src/test/kotlin/com/opensam/engine/UnificationServiceTest.kt",
+            "accessCount": 2,
+            "lastAccessed": 1773650319982,
+            "type": "file"
+        },
+        {
+            "path": "backend/game-app/src/main/kotlin/com/opensam/controller/MessageController.kt",
+            "accessCount": 2,
+            "lastAccessed": 1773653929230,
+            "type": "file"
+        },
+        {
+            "path": "backend/game-app/src/main/kotlin/com/opensam/entity/Emperor.kt",
+            "accessCount": 2,
+            "lastAccessed": 1773653934713,
+            "type": "file"
+        },
+        {
+            "path": "backend/game-app/src/main/kotlin/com/opensam/engine/EmperorConstants.kt",
+            "accessCount": 2,
+            "lastAccessed": 1773654406222,
+            "type": "file"
+        },
+        {
+            "path": "frontend/src/lib/api.ts",
+            "accessCount": 1,
+            "lastAccessed": 1773647732707,
+            "type": "file"
+        },
+        {
+            "path": "backend/game-app/src/main/kotlin/com/opensam/engine/NpcSpawnService.kt",
+            "accessCount": 1,
+            "lastAccessed": 1773647733570,
+            "type": "file"
+        },
+        {
+            "path": "backend/game-app/src/main/kotlin/com/opensam/service/GeneralService.kt",
+            "accessCount": 1,
+            "lastAccessed": 1773647735354,
+            "type": "file"
+        },
+        {
+            "path": "backend/game-app/src/main/kotlin/com/opensam/controller/GeneralController.kt",
+            "accessCount": 1,
+            "lastAccessed": 1773647757273,
+            "type": "file"
+        },
+        {
+            "path": "backend/game-app/src/main/kotlin/com/opensam/entity/General.kt",
+            "accessCount": 1,
+            "lastAccessed": 1773647757772,
+            "type": "file"
+        },
+        {
+            "path": "backend/game-app/src/main/kotlin/com/opensam/command/nation/che_칭제.kt",
+            "accessCount": 1,
+            "lastAccessed": 1773648137729,
+            "type": "file"
+        },
+        {
+            "path": "backend/game-app/src/main/kotlin/com/opensam/command/nation/che_천자맞이.kt",
+            "accessCount": 1,
+            "lastAccessed": 1773648138003,
+            "type": "file"
+        },
+        {
+            "path": "backend/game-app/src/main/kotlin/com/opensam/command/nation/che_선양요구.kt",
+            "accessCount": 1,
+            "lastAccessed": 1773648138084,
+            "type": "file"
+        },
+        {
+            "path": "backend/game-app/src/main/kotlin/com/opensam/controller",
+            "accessCount": 1,
+            "lastAccessed": 1773648146003,
+            "type": "directory"
+        },
+        {
+            "path": "backend/game-app/src/main/kotlin/com/opensam/command/constraint/ConstraintHelper.kt",
+            "accessCount": 1,
+            "lastAccessed": 1773648150162,
+            "type": "file"
+        },
+        {
+            "path": "legacy-core/hwe/sammo/Event/Action/UpdateNationLevel.php",
+            "accessCount": 1,
+            "lastAccessed": 1773648155257,
+            "type": "file"
+        },
+        {
+            "path": "legacy-core/hwe/a_emperior.php",
+            "accessCount": 1,
+            "lastAccessed": 1773648174274,
+            "type": "file"
+        }
+    ],
+    "userDirectives": []
+}

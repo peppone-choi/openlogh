@@ -294,7 +294,7 @@ class ScenarioService(
             "board_comment", "board", "vote_cast", "vote",
             "tournament", "rank_data", "world_history", "yearbook_history",
             "general_access_log", "general_record", "traffic_snapshot",
-            "message", "event", "nation_flag",
+            "records", "message", "event", "nation_flag",
             "general", "city", "nation",
         )
         entityManager.unwrap(Session::class.java).doWork { connection ->
@@ -540,9 +540,17 @@ class ScenarioService(
         }
     }
 
+    private val historyDateRegex = Regex("(\\d+)년\\s*(\\d+)월")
+    private val historyDatePrefixRegex = Regex("^(<[^>]*>.*?</>)?\\s*\\d+년\\s*\\d+월\\s*:?\\s*")
+
     private fun seedScenarioHistory(worldId: Long, historyLines: List<String>, defaultYear: Int, defaultMonth: Int) {
         for (line in historyLines) {
-            historyService.logWorldHistory(worldId, line, defaultYear, defaultMonth)
+            // Parse year/month from text, strip date prefix to avoid double display
+            val match = historyDateRegex.find(line)
+            val year = match?.groupValues?.getOrNull(1)?.toIntOrNull() ?: defaultYear
+            val month = match?.groupValues?.getOrNull(2)?.toIntOrNull() ?: defaultMonth
+            val cleaned = historyDatePrefixRegex.replace(line, "")
+            historyService.logWorldHistory(worldId, cleaned.ifBlank { line }, year, month)
         }
     }
 

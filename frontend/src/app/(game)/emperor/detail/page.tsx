@@ -138,7 +138,8 @@ export default function EmperorDetailPage() {
                                                 g.officerLevel,
                                                 emperorNation.level,
                                                 true,
-                                                emperorNation.typeCode
+                                                emperorNation.typeCode,
+                                                g.npcState
                                             )}
                                         </Badge>
                                     </div>

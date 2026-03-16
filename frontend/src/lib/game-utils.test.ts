@@ -8,6 +8,7 @@ import {
     formatOfficerLevelText,
     getSpecialNationKey,
     getPersonalityName,
+    getNationLevelLabel,
     parseCrewTypeCode,
     stripCodePrefix,
 } from '@/lib/game-utils';
@@ -129,6 +130,30 @@ describe('황건(태평도) special officer ranks', () => {
 
     it('returns 황건 rank with che_ prefixed typeCode in formatOfficerLevelText', () => {
         expect(formatOfficerLevelText(20, 2, false, 'che_태평도')).toBe('천공장군');
+    });
+
+    it('returns 황제 when npcState is 10', () => {
+        expect(formatOfficerLevelText(1, 9, true, undefined, 10)).toBe('황제');
+    });
+
+    it('does not return 황제 for normal npcState', () => {
+        expect(formatOfficerLevelText(1, 9, true)).toBe('일반');
+    });
+});
+
+describe('getNationLevelLabel', () => {
+    it('returns 황제 for level 9 default', () => {
+        expect(getNationLevelLabel(9)).toBe('황제');
+    });
+
+    it('returns 천공장군 for level 9 황건적', () => {
+        expect(getNationLevelLabel(9, '태평도')).toBe('천공장군');
+        expect(getNationLevelLabel(9, 'che_태평도')).toBe('천공장군');
+    });
+
+    it('returns normal label for non-special nations', () => {
+        expect(getNationLevelLabel(8, 'che_유가')).toBe('왕');
+        expect(getNationLevelLabel(0)).toBe('방랑군');
     });
 });
 
