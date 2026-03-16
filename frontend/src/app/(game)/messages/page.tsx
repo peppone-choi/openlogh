@@ -472,15 +472,6 @@ export default function MessagesPage() {
                     <EmptyState icon={Mail} title="서신이 없습니다." />
                 ) : (
                     [...inbox]
-                        .filter((m) => {
-                            const msg = String(m.payload?.message ?? '');
-                            const content = String(m.payload?.content ?? '');
-
-                            if (msg.startsWith('[HISTORY]') || msg.startsWith('[GLOBAL]')) return false;
-                            if (content.startsWith('[HISTORY]') || content.startsWith('[GLOBAL]')) return false;
-
-                            return true;
-                        })
                         .sort((a, b) => new Date(b.sentAt).getTime() - new Date(a.sentAt).getTime())
                         .map((m) => {
                             const senderGeneral = m.srcId ? generalMap.get(m.srcId) : null;
