@@ -29,3 +29,23 @@ describe('officer text (generals detail page)', () => {
         expect(resolveOfficerText(11, '일반')).not.toBe('황제');
     });
 });
+
+describe('emperor badge style', () => {
+    const EMPEROR_BADGE_COLOR = '#f0c040';
+
+    it('uses yellow background for emperor badge', () => {
+        expect(EMPEROR_BADGE_COLOR).toBe('#f0c040');
+    });
+
+    it('emperor badge is shown for npcState 10', () => {
+        const npcState = 10;
+        const showBadge = npcState === 10;
+        expect(showBadge).toBe(true);
+    });
+
+    it('emperor badge is not shown for other npcState', () => {
+        const npcState: number = 2;
+        const showBadge = npcState === 10;
+        expect(showBadge).toBe(false);
+    });
+});

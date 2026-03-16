@@ -390,9 +390,12 @@ export default function PersonnelPage() {
                     <div className="flex flex-col items-center gap-1 rounded border border-yellow-500/40 bg-yellow-500/5 px-6 py-3">
                         <GeneralPortrait picture={emperor.picture} name={emperor.name} size="sm" />
                         <span className="text-sm font-medium">{emperor.name}</span>
-                        <Badge variant="outline" className="text-[10px] border-yellow-500 text-yellow-400">
+                        <span
+                            className="px-1.5 py-0.5 text-xs font-bold text-black rounded-sm"
+                            style={{ backgroundColor: '#f0c040' }}
+                        >
                             황제
-                        </Badge>
+                        </span>
                     </div>
                 </div>
             )}

@@ -531,6 +531,14 @@ export function MapViewer({
                                     }}
                                 >
                                     {tooltip.cityText}
+                                    {tooltip.isEmperorCity && (
+                                        <span
+                                            className="ml-1 px-1 py-0.5 text-[9px] font-bold text-black rounded-sm"
+                                            style={{ backgroundColor: '#f0c040' }}
+                                        >
+                                            황제
+                                        </span>
+                                    )}
                                 </div>
                                 {tooltip.nationText && (
                                     <div
@@ -542,26 +550,22 @@ export function MapViewer({
                                             borderTop: '1px solid rgba(255,255,255,0.08)',
                                         }}
                                     >
-                                        {tooltip.isEmperorCity ? (
-                                            <img src="/icons/emperor.png" alt="황제" width={14} height={14} />
-                                        ) : (
-                                            <span
-                                                className="inline-flex items-center justify-center font-bold shrink-0"
-                                                style={{
-                                                    width: flagSize,
-                                                    height: flagSize,
-                                                    backgroundColor: tooltip.nationColor ?? '#666',
-                                                    color: textColor,
-                                                    fontSize: 10,
-                                                    lineHeight: 1,
-                                                    borderRadius: 2,
-                                                    textShadow:
-                                                        textColor === 'black' ? 'none' : '0 1px 2px rgba(0,0,0,0.5)',
-                                                }}
-                                            >
-                                                {abbr}
-                                            </span>
-                                        )}
+                                        <span
+                                            className="inline-flex items-center justify-center font-bold shrink-0"
+                                            style={{
+                                                width: flagSize,
+                                                height: flagSize,
+                                                backgroundColor: tooltip.nationColor ?? '#666',
+                                                color: textColor,
+                                                fontSize: 10,
+                                                lineHeight: 1,
+                                                borderRadius: 2,
+                                                textShadow:
+                                                    textColor === 'black' ? 'none' : '0 1px 2px rgba(0,0,0,0.5)',
+                                            }}
+                                        >
+                                            {abbr}
+                                        </span>
                                         <span style={{ textShadow: '0 0 4px rgba(0,0,0,0.8)' }}>
                                             {tooltip.nationText}
                                         </span>
