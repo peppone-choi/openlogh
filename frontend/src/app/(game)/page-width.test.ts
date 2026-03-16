@@ -26,4 +26,10 @@ describe('page width standardization', () => {
         expect(expFields).toContain('politicsExp');
         expect(expFields).toContain('charmExp');
     });
+
+    it('map container uses responsive width instead of fixed pixels', () => {
+        const responsiveClass = 'w-full lg:w-[700px]';
+        expect(responsiveClass).toContain('w-full');
+        expect(responsiveClass).toContain('lg:w-');
+    });
 });

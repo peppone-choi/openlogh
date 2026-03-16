@@ -279,12 +279,14 @@ export default function GameDashboard() {
             </div>
 
             {/* ===== Mobile Tabs ===== */}
-            <div className="lg:hidden flex border-t border-b border-gray-600">
+            <div className="lg:hidden flex gap-1 p-1 border-t border-b border-border bg-card/50">
                 {mobileTabs.map((tab) => (
                     <button
                         key={tab.key}
-                        className={`flex-1 py-1.5 text-xs font-bold text-center border-r border-gray-600 last:border-r-0 ${
-                            mobileTab === tab.key ? 'bg-[#00582c] text-white' : 'bg-[#111] text-gray-400'
+                        className={`flex-1 py-1.5 text-xs font-bold text-center rounded-md transition-all duration-150 ${
+                            mobileTab === tab.key
+                                ? 'bg-primary text-white shadow-sm shadow-primary/30'
+                                : 'text-muted-foreground hover:bg-accent'
                         }`}
                         onClick={() => setMobileTab(tab.key)}
                     >
@@ -293,12 +295,12 @@ export default function GameDashboard() {
                 ))}
             </div>
 
-            <div className="flex flex-col gap-4 pb-4">
-                <div className="flex gap-2">
-                    <div style={{ width: '700px', height: '500px' }}>
+            <div className="flex flex-col gap-3 pb-4">
+                <div className="flex flex-col lg:flex-row gap-2">
+                    <div className="w-full lg:w-[700px] shrink-0" style={{ aspectRatio: '700 / 500' }}>
                         <MapViewer worldId={currentWorld.id} mapCode={mapCode} />
                     </div>
-                    <div className="flex-1 overflow-y-auto" style={{ maxHeight: '500px' }}>
+                    <div className="flex-1 overflow-y-auto lg:max-h-[500px]">
                         {myGeneral && (
                             <CommandPanel generalId={myGeneral.id} realtimeMode={currentWorld.realtimeMode} />
                         )}
@@ -325,7 +327,7 @@ export default function GameDashboard() {
             {frontInfo && (
                 <div className={`grid grid-cols-1 lg:grid-cols-2 ${isTabActive('world') ? '' : 'max-lg:hidden'}`}>
                     <div>
-                        <div className="legacy-bg1 text-center border-t border-b border-gray-600 text-xs font-bold py-0.5">
+                        <div className="text-center border-t border-b border-border text-xs font-semibold py-1 bg-secondary/10 text-secondary tracking-wide">
                             장수 동향
                         </div>
                         {frontInfo.recentRecord.global.length === 0 ? (
@@ -339,7 +341,7 @@ export default function GameDashboard() {
                         )}
                     </div>
                     <div>
-                        <div className="legacy-bg1 text-center border-t border-b border-gray-600 text-xs font-bold py-0.5">
+                        <div className="text-center border-t border-b border-border text-xs font-semibold py-1 bg-secondary/10 text-secondary tracking-wide">
                             개인 기록
                         </div>
                         {frontInfo.recentRecord.general.length === 0 ? (
@@ -353,7 +355,7 @@ export default function GameDashboard() {
                         )}
                     </div>
                     <div className="col-span-1 lg:col-span-2">
-                        <div className="legacy-bg1 text-center border-t border-b border-gray-600 text-xs font-bold py-0.5">
+                        <div className="text-center border-t border-b border-border text-xs font-semibold py-1 bg-primary/10 text-primary tracking-wide">
                             중원 정세
                         </div>
                         {frontInfo.recentRecord.history.length === 0 ? (
@@ -372,18 +374,18 @@ export default function GameDashboard() {
             {/* ===== Nation Power Summary ===== */}
             {global && global.onlineNations.length > 0 && (
                 <div className={`${isTabActive('world') ? '' : 'max-lg:hidden'}`}>
-                    <div className="legacy-bg1 text-center border-t border-b border-gray-600 text-xs font-bold py-0.5">
+                    <div className="text-center border-t border-b border-border text-xs font-semibold py-1 bg-game-gold/10 text-game-gold tracking-wide">
                         세력 현황
                     </div>
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-px bg-gray-600/30">
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-1 p-1">
                         {global.onlineNations
                             .sort((a, b) => b.genCount - a.genCount)
                             .map((n) => (
-                                <div key={n.id} className="bg-[#111] px-2 py-1.5 flex items-center gap-2">
-                                    <span
-                                        className="inline-block size-3 rounded-full shrink-0"
-                                        style={{ backgroundColor: n.color }}
-                                    />
+                                <div
+                                    key={n.id}
+                                    className="rounded-md px-2.5 py-2 flex items-center gap-2 transition-colors hover:bg-accent/50"
+                                    style={{ borderLeft: `3px solid ${n.color}` }}
+                                >
                                     <div className="min-w-0 flex-1">
                                         <p className="text-xs font-medium truncate">{n.name}</p>
                                         <p className="text-[10px] text-muted-foreground">장수 {n.genCount}명</p>
@@ -397,7 +399,7 @@ export default function GameDashboard() {
             {/* ===== General Status Summary ===== */}
             {frontInfo?.general && (
                 <div className={`${isTabActive('status') ? '' : 'max-lg:hidden'}`}>
-                    <div className="legacy-bg1 text-center border-t border-b border-gray-600 text-xs font-bold py-0.5">
+                    <div className="text-center border-t border-b border-border text-xs font-semibold py-1 bg-primary/10 text-primary tracking-wide">
                         내 장수 요약
                     </div>
                     <div className="grid grid-cols-3 lg:grid-cols-6 text-center text-[11px] border-b border-gray-600">
