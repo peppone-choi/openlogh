@@ -125,22 +125,16 @@ describe('nation flag display in map viewer', () => {
         expect(mockNations[2].abbreviation).toBe('공손');
     });
 
-    it('calculates dynamic flag size based on abbreviation length', () => {
-        function getFlagSize(abbr: string): number {
-            return abbr.length === 2 ? 24 : 16;
-        }
-
-        expect(getFlagSize('유')).toBe(16);
-        expect(getFlagSize('조')).toBe(16);
-        expect(getFlagSize('공손')).toBe(24);
+    it('uses fixed 16px flag size for all abbreviations', () => {
+        const flagSize = 16;
+        expect(flagSize).toBe(16);
     });
 
-    it('handles edge cases in flag sizing', () => {
-        function getFlagSize(abbr: string): number {
-            return abbr.length === 2 ? 24 : 16;
+    it('compresses font for 2-char abbreviations', () => {
+        function getFontSize(abbr: string): number {
+            return abbr.length > 1 ? 8 : 10;
         }
-
-        expect(getFlagSize('')).toBe(16);
-        expect(getFlagSize('ABC')).toBe(16);
+        expect(getFontSize('유')).toBe(10);
+        expect(getFontSize('공손')).toBe(8);
     });
 });

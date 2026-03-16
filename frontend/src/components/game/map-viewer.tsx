@@ -510,7 +510,7 @@ export function MapViewer({
                 {tooltip &&
                     (() => {
                         const abbr = tooltip.nationAbbr || (tooltip.nationText ? tooltip.nationText.slice(0, 1) : '');
-                        const flagSize = abbr.length > 1 ? 24 : 16;
+                        const flagSize = 16;
                         const textColor = tooltip.nationColor && isBrightColor(tooltip.nationColor) ? 'black' : 'white';
                         return (
                             <div
@@ -557,7 +557,8 @@ export function MapViewer({
                                                 height: flagSize,
                                                 backgroundColor: tooltip.nationColor ?? '#666',
                                                 color: textColor,
-                                                fontSize: 10,
+                                                fontSize: abbr.length > 1 ? 8 : 10,
+                                                letterSpacing: abbr.length > 1 ? '-1px' : undefined,
                                                 lineHeight: 1,
                                                 borderRadius: 2,
                                                 textShadow:

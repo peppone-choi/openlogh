@@ -237,8 +237,9 @@ export function GeneralBasicCard({ general, nation, turnTerm, lastExecuted }: Ge
                 </Cell>
 
                 {/* Row 7: Lv + exp bar + 연령 */}
-                <Cell head>Lv</Cell>
-                <Cell>{general.explevel}</Cell>
+                <div className="border-t border-gray-600" style={{ gridColumn: '1 / 3' }}>
+                    <div className="legacy-bg1 text-center">Lv.{general.explevel}</div>
+                </div>
                 <div className="border-t border-gray-600 flex items-center px-1" style={{ gridColumn: '3 / 6' }}>
                     <SammoBar height={10} percent={expPercent} />
                 </div>
