@@ -3,8 +3,8 @@ package com.opensam.engine
 import com.opensam.entity.*
 import com.opensam.repository.CityRepository
 import com.opensam.repository.GeneralRepository
-import com.opensam.repository.MessageRepository
 import com.opensam.repository.NationRepository
+import com.opensam.service.HistoryService
 import com.opensam.service.MapService
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -16,7 +16,7 @@ class NpcSpawnService(
     private val nationRepository: NationRepository,
     private val cityRepository: CityRepository,
     private val generalRepository: GeneralRepository,
-    private val messageRepository: MessageRepository,
+    private val historyService: HistoryService,
     private val mapService: MapService,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
@@ -106,17 +106,11 @@ class NpcSpawnService(
 
         for (npcCityId in npcCreatedCityIds) {
             val npcCity = cities.find { it.id == npcCityId } ?: continue
-            messageRepository.save(
-                Message(
-                    worldId = worldId,
-                    mailboxCode = "world_history",
-                    messageType = "history",
-                    payload = mutableMapOf(
-                        "message" to "<S>◆</>ⓤ${npcCity.name}이(가) ${npcCity.name}에서 건국하였습니다.",
-                        "year" to world.currentYear.toInt(),
-                        "month" to world.currentMonth.toInt(),
-                    ),
-                )
+            historyService.logWorldHistory(
+                worldId = worldId,
+                message = "<S>◆</>ⓤ${npcCity.name}이(가) ${npcCity.name}에서 건국하였습니다.",
+                year = world.currentYear.toInt(),
+                month = world.currentMonth.toInt(),
             )
         }
         if (npcCreatedCityIds.isNotEmpty()) {
@@ -515,17 +509,11 @@ class NpcSpawnService(
             val invCity = lv4Cities.find { c -> nationRepository.findById(invNationId).orElse(null)?.capitalCityId == c.id }
             val invNation = nationRepository.findById(invNationId).orElse(null)
             if (invCity != null && invNation != null) {
-                messageRepository.save(
-                    Message(
-                        worldId = worldId,
-                        mailboxCode = "world_history",
-                        messageType = "history",
-                        payload = mutableMapOf(
-                            "message" to "<R>★</>${invNation.name}이(가) ${invCity.name}에 출현하였습니다!",
-                            "year" to world.currentYear.toInt(),
-                            "month" to world.currentMonth.toInt(),
-                        ),
-                    )
+                historyService.logWorldHistory(
+                    worldId = worldId,
+                    message = "<R>★</>${invNation.name}이(가) ${invCity.name}에 출현하였습니다!",
+                    year = world.currentYear.toInt(),
+                    month = world.currentMonth.toInt(),
                 )
             }
         }

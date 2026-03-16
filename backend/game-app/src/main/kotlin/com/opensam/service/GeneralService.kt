@@ -267,6 +267,11 @@ class GeneralService(
         if (hasActiveGeneral(worldId, userId)) return null
         val general = generalRepository.findById(generalId).orElse(null) ?: return null
         if (general.worldId != worldId || general.npcState.toInt() != 5 || general.userId != null) return null
+        
+        if (general.officerLevel.toInt() == 20) {
+            throw IllegalStateException("황제는 플레이할 수 없습니다.")
+        }
+        
         general.userId = userId
         general.npcState = 0
         return generalRepository.save(general)

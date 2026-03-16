@@ -286,15 +286,31 @@ export default function NationsPage() {
                                                 <NationBadge name={n.name} color={n.color} />
                                                 {officers &&
                                                     (() => {
-                                                        const levels = [12, 11, 10, 9, 8, 7, 6, 5];
-                                                        const filled = levels.filter((lv) => officers.byLevel[lv]);
+                                                        const allLevels = [
+                                                            20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5,
+                                                        ];
+                                                        const filled = allLevels.filter((lv) => {
+                                                            if (!officers.byLevel[lv]) return false;
+                                                            const title = formatOfficerLevelText(
+                                                                lv,
+                                                                n.level,
+                                                                true,
+                                                                n.typeCode
+                                                            );
+                                                            return title !== '???' && !title.startsWith('제');
+                                                        });
                                                         return filled.length > 0 ? (
                                                             <div className="text-[10px] text-muted-foreground mt-0.5 pl-1">
                                                                 {filled.map((lv, i) => (
                                                                     <span key={lv}>
                                                                         {i > 0 && ' / '}
-                                                                        {formatOfficerLevelText(lv, n.level)}:{' '}
-                                                                        {officers.byLevel[lv].name}
+                                                                        {formatOfficerLevelText(
+                                                                            lv,
+                                                                            n.level,
+                                                                            true,
+                                                                            n.typeCode
+                                                                        )}
+                                                                        : {officers.byLevel[lv].name}
                                                                     </span>
                                                                 ))}
                                                                 {officers.ambassadors.length > 0 && (
@@ -546,7 +562,8 @@ export default function NationsPage() {
                                                                                         {formatOfficerLevelText(
                                                                                             g.officerLevel,
                                                                                             n.level,
-                                                                                            g.nationId > 0
+                                                                                            g.nationId > 0,
+                                                                                            n.typeCode
                                                                                         )}
                                                                                     </td>
                                                                                     <td className="py-1 px-1 text-right">

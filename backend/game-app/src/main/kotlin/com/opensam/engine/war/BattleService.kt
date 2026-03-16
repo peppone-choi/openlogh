@@ -523,19 +523,17 @@ class BattleService(
     }
 
     private fun logConquest(city: City, attacker: General, world: WorldState) {
-        messageRepository.save(
-            Message(
-                worldId = world.id.toLong(),
-                mailboxCode = "world_history",
-                messageType = "city_conquered",
-                payload = mutableMapOf(
-                    "cityName" to city.name,
-                    "attackerName" to attacker.name,
-                    "attackerNationId" to attacker.nationId,
-                    "year" to world.currentYear.toInt(),
-                    "month" to world.currentMonth.toInt(),
-                ),
-            )
+        val nation = nationRepository.findById(attacker.nationId).orElse(null)
+        val message = if (nation != null) {
+            "${nation.name}의 ${attacker.name}이(가) ${city.name}을(를) 점령하였습니다"
+        } else {
+            "${attacker.name}이(가) ${city.name}을(를) 점령하였습니다"
+        }
+        historyService.logWorldHistory(
+            worldId = world.id.toLong(),
+            message = message,
+            year = world.currentYear.toInt(),
+            month = world.currentMonth.toInt(),
         )
     }
 

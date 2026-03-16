@@ -15,6 +15,7 @@ import com.opensam.repository.HallOfFameRepository
 import com.opensam.repository.MessageRepository
 import com.opensam.repository.NationRepository
 import com.opensam.repository.WorldStateRepository
+import com.opensam.service.HistoryService
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -58,6 +59,7 @@ class AdminServiceTest {
         messageRepository = mock(MessageRepository::class.java)
         eventActionService = mock(EventActionService::class.java)
         inheritanceService = mock(InheritanceService::class.java)
+        val historyService = mock(HistoryService::class.java)
 
         service = AdminService(
             worldStateRepository,
@@ -71,6 +73,7 @@ class AdminServiceTest {
             messageRepository,
             eventActionService,
             inheritanceService,
+            historyService,
         )
     }
 

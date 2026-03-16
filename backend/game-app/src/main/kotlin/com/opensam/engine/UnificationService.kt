@@ -10,6 +10,7 @@ import com.opensam.entity.OldGeneral
 import com.opensam.entity.OldNation
 import com.opensam.entity.WorldState
 import com.opensam.repository.AppUserRepository
+import com.opensam.service.HistoryService
 import com.opensam.repository.CityRepository
 import com.opensam.repository.EmperorRepository
 import com.opensam.repository.GameHistoryRepository
@@ -36,6 +37,7 @@ class UnificationService(
     private val oldGeneralRepository: OldGeneralRepository,
     private val gameHistoryRepository: GameHistoryRepository,
     private val messageRepository: MessageRepository,
+    private val historyService: HistoryService,
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
 
@@ -73,19 +75,13 @@ class UnificationService(
         val currentLimit = (world.config["refreshLimit"] as? Number)?.toInt() ?: 30000
         world.config["refreshLimit"] = currentLimit * 100
 
-        val logText = "【통일】${winner.name}이 전토를 통일하였습니다."
+        val logText = "【통일】${winner.name}이(가) 전토를 통일하였습니다."
         logger.info("World {} united by nation {} ({})", worldId, winner.name, winner.id)
-        messageRepository.save(
-            Message(
-                worldId = worldId,
-                mailboxCode = "world_history",
-                messageType = "history",
-                payload = mutableMapOf(
-                    "message" to logText,
-                    "year" to world.currentYear.toInt(),
-                    "month" to world.currentMonth.toInt(),
-                )
-            )
+        historyService.logWorldHistory(
+            worldId = worldId,
+            message = logText,
+            year = world.currentYear.toInt(),
+            month = world.currentMonth.toInt(),
         )
 
         settleInheritance(world, winner.id)

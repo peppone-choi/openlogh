@@ -21,6 +21,15 @@ export function isBrightColor(color: string): boolean {
     return cv.r * 0.299 + cv.g * 0.587 + cv.b * 0.114 > 140;
 }
 
+/**
+ * Returns appropriate text color for readability against a background color.
+ * Bright backgrounds get dark text, dark backgrounds keep the original color.
+ */
+export function getContrastTextColor(bgColor: string | null | undefined): string | undefined {
+    if (!bgColor) return undefined;
+    return isBrightColor(bgColor) ? '#000000' : bgColor;
+}
+
 // --- Injury ---
 
 export function calcInjury(baseStat: number, injury: number): number {
@@ -320,12 +329,24 @@ export function formatOfficerLevelText(
         }
     }
 
-    const nationMap =
-        nationLevel === undefined
-            ? OfficerLevelMapDefault
-            : (OfficerLevelMapByNationLevel[nationLevel] ?? OfficerLevelMapDefault);
+    if (nationLevel === undefined) {
+        return OfficerLevelMapDefault[officerLevel] ?? '???';
+    }
 
-    return nationMap[officerLevel] ?? OfficerLevelMapDefault[officerLevel] ?? '???';
+    const nationMap = OfficerLevelMapByNationLevel[nationLevel];
+    if (!nationMap) {
+        return OfficerLevelMapDefault[officerLevel] ?? '???';
+    }
+
+    return nationMap[officerLevel] ?? findLowestNationRank(nationMap) ?? '???';
+}
+
+function findLowestNationRank(ranks: Record<number, string>): string | undefined {
+    const keys = Object.keys(ranks)
+        .map(Number)
+        .filter((k) => !isNaN(k));
+    if (keys.length === 0) return undefined;
+    return ranks[Math.min(...keys)];
 }
 
 // --- Age color (legacy parity: 3-color based on retirementYear) ---

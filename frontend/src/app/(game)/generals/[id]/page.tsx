@@ -79,7 +79,12 @@ export default function GeneralDetailPage() {
 
     const injuryInfo = formatInjury(general.injury);
     const typeCall = formatGeneralTypeCall(general.leadership, general.strength, general.intel);
-    const officerText = formatOfficerLevelText(general.officerLevel, nation?.level, general.nationId > 0);
+    const officerText = formatOfficerLevelText(
+        general.officerLevel,
+        nation?.level,
+        general.nationId > 0,
+        nation?.typeCode
+    );
     const dexValues = [general.dex1, general.dex2, general.dex3, general.dex4, general.dex5];
     const honorText = formatHonor(general.experience);
     const npcColor = getNPCColor(general.npcState);

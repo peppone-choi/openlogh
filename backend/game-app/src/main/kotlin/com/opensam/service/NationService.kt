@@ -182,18 +182,30 @@ class NationService(
     @Transactional
     fun appointOfficer(nationId: Long, generalId: Long, officerLevel: Int, officerCity: Int?): Boolean {
         val general = generalRepository.findById(generalId).orElse(null) ?: return false
+        val nation = nationRepository.findById(nationId).orElse(null) ?: return false
         
-        // Validation checks
         if (general.nationId != nationId) {
             throw IllegalStateException("장수가 해당 국가에 속하지 않습니다.")
         }
         
-        if (officerLevel < 1 || officerLevel > 11) {
-            throw IllegalStateException("관직 레벨은 1-11 사이여야 합니다.")
+        if (officerLevel < 1 || officerLevel > 20) {
+            throw IllegalStateException("관직 레벨은 1-20 사이여야 합니다.")
         }
         
         if (officerLevel == 20) {
             throw IllegalStateException("군주는 유일하며 임명할 수 없습니다.")
+        }
+
+        val officerRankKey = nation.meta["officerRankKey"] as? String
+        val isAvailable = officerRankService.isOfficerLevelAvailable(
+            officerLevel = officerLevel,
+            nationLevel = nation.level.toInt(),
+            officerRankKey = officerRankKey
+        )
+        
+        if (!isAvailable) {
+            val nationTitle = officerRankService.getNationTitle(nation.level.toInt()) ?: "레벨 ${nation.level}"
+            throw IllegalStateException("${nationTitle} 국가에서는 해당 관직을 임명할 수 없습니다.")
         }
 
         if (officerLevel >= 5) {

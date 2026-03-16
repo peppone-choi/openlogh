@@ -2,5 +2,8 @@
     "permissions": {
         "allow": ["Bash(*)", "Read(*)", "Write(*)", "Edit(*)"],
         "deny": []
+    },
+    "enabledPlugins": {
+        "oh-my-claudecode@omc": true
     }
 }

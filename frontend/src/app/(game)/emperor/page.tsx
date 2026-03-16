@@ -44,7 +44,10 @@ export default function EmperorPage() {
             .catch(() => setRecords([]));
     }, [currentWorld, loadAll]);
 
-    const emperorNation = useMemo(() => nations.find((n) => n.level >= 7), [nations]);
+    const emperorNation = useMemo(
+        () => nations.find((n) => n.level >= 9 || n.meta?.imperialStatus === 'emperor'),
+        [nations]
+    );
 
     const chiefGeneral = useMemo(
         () => (emperorNation ? generals.find((g) => g.id === emperorNation.chiefGeneralId) : null),
@@ -306,7 +309,9 @@ export default function EmperorPage() {
                                                             <Badge variant="outline" className="ml-1 text-[10px]">
                                                                 {formatOfficerLevelText(
                                                                     g.officerLevel,
-                                                                    emperorNation.level
+                                                                    emperorNation.level,
+                                                                    true,
+                                                                    emperorNation.typeCode
                                                                 )}
                                                             </Badge>
                                                         </div>
@@ -346,7 +351,9 @@ export default function EmperorPage() {
                                                                 <Badge variant="outline" className="ml-1 text-[10px]">
                                                                     {formatOfficerLevelText(
                                                                         g.officerLevel,
-                                                                        emperorNation.level
+                                                                        emperorNation.level,
+                                                                        true,
+                                                                        emperorNation.typeCode
                                                                     )}
                                                                 </Badge>
                                                                 {officerCityName && (

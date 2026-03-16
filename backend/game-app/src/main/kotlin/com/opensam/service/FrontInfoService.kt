@@ -100,7 +100,7 @@ class FrontInfoService(
         )
 
         val nationLevel = nation?.level?.toInt() ?: 0
-        val generalInfo = myGeneral?.let { toGeneralFrontInfo(it, nationLevel, allGenerals) }
+        val generalInfo = myGeneral?.let { toGeneralFrontInfo(it, nationLevel, allGenerals, nationsById) }
 
         val allCities = cityRepository.findByWorldId(worldId)
         val nationInfo = if (myGeneral != null && nation != null && nation.id > 0) {
@@ -283,11 +283,10 @@ class FrontInfoService(
         )
     }
 
-    private fun toGeneralFrontInfo(g: General, nationLevel: Int, allGenerals: List<General>): GeneralFrontInfo {
+    private fun toGeneralFrontInfo(g: General, nationLevel: Int, allGenerals: List<General>, nations: Map<Long, Nation>): GeneralFrontInfo {
         val officerLevel = g.officerLevel.toInt()
         val dedLevel = calcDedLevel(g.dedication)
 
-        // Permission level (numeric, like legacy)
         val permission = calcPermission(g)
 
         // Troop info
@@ -314,6 +313,9 @@ class FrontInfoService(
         val dexMeta = g.meta["dex"]
         val dex = readStringAnyMap(dexMeta)
 
+        val generalNation = if (g.nationId != 0L) nations[g.nationId] else null
+        val officerRankKey = generalNation?.meta?.get("officerRankKey") as? String
+
         return GeneralFrontInfo(
             no = g.id,
             name = g.name,
@@ -324,7 +326,11 @@ class FrontInfoService(
             city = g.cityId,
             troop = g.troopId,
             officerLevel = officerLevel,
-            officerLevelText = officerRankService.getRankTitle(officerLevel, nationLevel),
+            officerLevelText = officerRankService.getRankTitle(
+                officerLevel = officerLevel,
+                nationLevel = nationLevel,
+                officerRankKey = officerRankKey
+            ),
             officerCity = g.officerCity,
             permission = permission,
             lbonus = calcLeadershipBonus(officerLevel, nationLevel),

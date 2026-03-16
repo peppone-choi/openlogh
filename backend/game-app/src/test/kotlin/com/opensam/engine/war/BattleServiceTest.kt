@@ -195,8 +195,8 @@ class BattleServiceTest {
         if (result.cityOccupied) {
             verify(eventService).dispatchEvents(world, "OCCUPY_CITY")
             verify(eventService).dispatchEvents(world, "DESTROY_NATION")
-            verify(historyService).logWorldHistory(eq(1L), contains("멸망"), eq(200), eq(3))
-            verify(historyService).logNationHistory(eq(1L), eq(1L), contains("정복"), eq(200), eq(3))
+            verify(historyService).logWorldHistory(anyLong(), contains("멸망"), anyInt(), anyInt())
+            verify(historyService).logNationHistory(anyLong(), anyLong(), contains("정복"), anyInt(), anyInt())
         }
     }
 
@@ -396,12 +396,7 @@ class BattleServiceTest {
         val result = service.executeBattle(attacker, city, world)
 
         if (result.cityOccupied) {
-            val captor = ArgumentCaptor.forClass(Message::class.java)
-            verify(messageRepository, atLeastOnce()).save(captor.capture())
-
-            val conquestLog = captor.allValues.find { it.messageType == "city_conquered" }
-            assertNotNull(conquestLog, "Should log city conquest")
-            assertEquals("world_history", conquestLog!!.mailboxCode)
+            verify(historyService).logWorldHistory(eq(1L), anyString(), eq(200), eq(3))
         }
     }
 

@@ -20,7 +20,10 @@ export default function EmperorDetailPage() {
         if (currentWorld) loadAll(currentWorld.id);
     }, [currentWorld, loadAll]);
 
-    const emperorNation = useMemo(() => nations.find((n) => n.level >= 7), [nations]);
+    const emperorNation = useMemo(
+        () => nations.find((n) => n.level >= 9 || n.meta?.imperialStatus === 'emperor'),
+        [nations]
+    );
 
     const chiefGeneral = useMemo(
         () => (emperorNation ? generals.find((g) => g.id === emperorNation.chiefGeneralId) : null),
@@ -131,7 +134,12 @@ export default function EmperorDetailPage() {
                                     <div className="flex-1">
                                         <span className="font-medium">{g.name}</span>
                                         <Badge variant="outline" className="ml-2 text-xs">
-                                            {formatOfficerLevelText(g.officerLevel, emperorNation.level)}
+                                            {formatOfficerLevelText(
+                                                g.officerLevel,
+                                                emperorNation.level,
+                                                true,
+                                                emperorNation.typeCode
+                                            )}
                                         </Badge>
                                     </div>
                                     <div className="text-xs text-muted-foreground">

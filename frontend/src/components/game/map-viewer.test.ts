@@ -67,12 +67,8 @@ describe('nation abbreviation in tooltip', () => {
 
 describe('nation flag display in map viewer', () => {
     it('shows full abbreviation without slicing', () => {
-        const mockNations = [
-            { abbreviation: '유' },
-            { abbreviation: '조' },
-            { abbreviation: '공손' },
-        ];
-        
+        const mockNations = [{ abbreviation: '유' }, { abbreviation: '조' }, { abbreviation: '공손' }];
+
         expect(mockNations[0].abbreviation).toBe('유');
         expect(mockNations[1].abbreviation).toBe('조');
         expect(mockNations[2].abbreviation).toBe('공손');

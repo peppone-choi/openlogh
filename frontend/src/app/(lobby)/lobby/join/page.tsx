@@ -464,22 +464,6 @@ function LobbyJoinPageContent() {
                             )}
                         </div>
 
-                        {/* Crew Type */}
-                        <div className="space-y-1">
-                            <label className="block text-sm text-muted-foreground">병종</label>
-                            <select
-                                value={crewType}
-                                onChange={(e) => setCrewType(Number(e.target.value))}
-                                className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm"
-                            >
-                                {CREW_TYPES.map((ct) => (
-                                    <option key={ct.code} value={ct.code}>
-                                        {ct.label}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-
                         {/* Stat Presets - legacy parity from core2026 JoinView */}
                         <div className="space-y-3">
                             <div className="flex items-center justify-between">
@@ -541,7 +525,6 @@ function LobbyJoinPageContent() {
                                             onClick={() => {
                                                 setStats(preset.stats);
                                                 setPersonality(preset.personality);
-                                                setCrewType(preset.crewType);
                                             }}
                                         >
                                             {preset.name}
@@ -557,7 +540,6 @@ function LobbyJoinPageContent() {
                                                 GENERAL_PRESETS[Math.floor(Math.random() * GENERAL_PRESETS.length)];
                                             setStats(pick.stats);
                                             setPersonality(pick.personality);
-                                            setCrewType(pick.crewType);
                                             toast.info(`${pick.name} 프리셋이 적용되었습니다.`);
                                         }}
                                     >

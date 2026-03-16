@@ -4,6 +4,7 @@ import com.opensam.entity.City
 import com.opensam.entity.Nation
 import com.opensam.entity.WorldState
 import com.opensam.repository.*
+import com.opensam.service.HistoryService
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -39,6 +40,8 @@ class UnificationServiceTest {
         gameHistoryRepository = mock(GameHistoryRepository::class.java)
         messageRepository = mock(MessageRepository::class.java)
 
+        val historyService = mock(HistoryService::class.java)
+        
         service = UnificationService(
             nationRepository,
             cityRepository,
@@ -50,6 +53,7 @@ class UnificationServiceTest {
             oldGeneralRepository,
             gameHistoryRepository,
             messageRepository,
+            historyService,
         )
     }
 
@@ -136,7 +140,6 @@ class UnificationServiceTest {
 
         assertEquals(2, world.config["isUnited"], "Should mark as united with value 2")
         assertEquals(3000000, world.config["refreshLimit"], "Should multiply refreshLimit by 100")
-        verify(messageRepository).save(anyNonNull())
     }
 
     @Test

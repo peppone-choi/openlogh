@@ -17,6 +17,7 @@ class EventService @Autowired constructor(
     private val eventRepository: EventRepository,
     private val worldPortFactory: JpaWorldPortFactory,
     private val messageRepository: MessageRepository,
+    private val historyService: com.opensam.service.HistoryService,
     private val economyService: EconomyService,
     private val npcSpawnService: NpcSpawnService,
     private val scenarioService: ScenarioService,
@@ -26,6 +27,7 @@ class EventService @Autowired constructor(
         eventRepository: EventRepository,
         nationRepository: NationRepository,
         messageRepository: MessageRepository,
+        historyService: com.opensam.service.HistoryService,
         economyService: EconomyService,
         npcSpawnService: NpcSpawnService,
         scenarioService: ScenarioService,
@@ -34,6 +36,7 @@ class EventService @Autowired constructor(
         eventRepository = eventRepository,
         worldPortFactory = JpaWorldPortFactory(nationRepository = nationRepository),
         messageRepository = messageRepository,
+        historyService = historyService,
         economyService = economyService,
         npcSpawnService = npcSpawnService,
         scenarioService = scenarioService,
@@ -151,17 +154,11 @@ class EventService @Autowired constructor(
             "log" -> {
                 val message = action["message"] as? String ?: ""
                 log.info("[World {}] History: {}", world.id, message)
-                messageRepository.save(
-                    Message(
-                        worldId = world.id.toLong(),
-                        mailboxCode = "world_history",
-                        messageType = "history",
-                        payload = mutableMapOf(
-                            "message" to message,
-                            "year" to world.currentYear.toInt(),
-                            "month" to world.currentMonth.toInt(),
-                        ),
-                    )
+                historyService.logWorldHistory(
+                    worldId = world.id.toLong(),
+                    message = message,
+                    year = world.currentYear.toInt(),
+                    month = world.currentMonth.toInt(),
                 )
             }
 

@@ -79,7 +79,9 @@ class MessageService(
         } else {
             messageRepository.findByWorldIdAndMailboxTypeOrderBySentAtDesc(worldId, MAILBOX_PUBLIC)
         }
-        return applyLimit(messages, limit)
+        // Exclude world_history records (should be in Record table, not Message)
+        val filtered = messages.filter { it.mailboxCode != "world_history" }
+        return applyLimit(filtered, limit)
     }
 
     fun getNationalMessages(nationId: Long, beforeId: Long? = null, limit: Int? = null): List<Message> {

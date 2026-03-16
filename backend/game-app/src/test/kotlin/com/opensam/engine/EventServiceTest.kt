@@ -6,6 +6,7 @@ import com.opensam.entity.WorldState
 import com.opensam.repository.EventRepository
 import com.opensam.repository.MessageRepository
 import com.opensam.repository.NationRepository
+import com.opensam.service.HistoryService
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -18,6 +19,7 @@ class EventServiceTest {
     private lateinit var eventRepository: EventRepository
     private lateinit var nationRepository: NationRepository
     private lateinit var messageRepository: MessageRepository
+    private lateinit var historyService: HistoryService
     private lateinit var economyService: EconomyService
 
     /** Mockito `any()` returns null which breaks Kotlin non-null params. This helper casts it. */
@@ -29,6 +31,7 @@ class EventServiceTest {
         eventRepository = mock(EventRepository::class.java)
         nationRepository = mock(NationRepository::class.java)
         messageRepository = mock(MessageRepository::class.java)
+        historyService = mock(HistoryService::class.java)
         economyService = mock(EconomyService::class.java)
 
         // Default: messageRepository.save returns the argument
@@ -38,7 +41,7 @@ class EventServiceTest {
         val scenarioService = mock(com.opensam.service.ScenarioService::class.java)
 
         val eventActionService = mock(com.opensam.engine.EventActionService::class.java)
-        service = EventService(eventRepository, nationRepository, messageRepository, economyService, npcSpawnService, scenarioService, eventActionService)
+        service = EventService(eventRepository, nationRepository, messageRepository, historyService, economyService, npcSpawnService, scenarioService, eventActionService)
     }
 
     private fun createWorld(year: Short = 200, month: Short = 3): WorldState {
@@ -85,7 +88,7 @@ class EventServiceTest {
 
         service.dispatchEvents(world, "turn_start")
 
-        verify(messageRepository).save(any())
+        verify(historyService).logWorldHistory(anyLong(), anyString(), anyInt(), anyInt())
     }
 
     @Test
@@ -121,7 +124,7 @@ class EventServiceTest {
 
         service.dispatchEvents(world, "turn_start")
 
-        verify(messageRepository).save(any())
+        verify(historyService).logWorldHistory(anyLong(), anyString(), anyInt(), anyInt())
     }
 
     @Test
@@ -157,7 +160,7 @@ class EventServiceTest {
 
         service.dispatchEvents(world, "turn_start")
 
-        verify(messageRepository).save(any())
+        verify(historyService).logWorldHistory(anyLong(), anyString(), anyInt(), anyInt())
     }
 
     // ========== dispatchEvents: action execution ==========
@@ -177,10 +180,7 @@ class EventServiceTest {
 
         service.dispatchEvents(world, "turn_start")
 
-        val captor = ArgumentCaptor.forClass(Message::class.java)
-        verify(messageRepository).save(captor.capture())
-        assertEquals("world_history", captor.value.mailboxCode)
-        assertEquals("history", captor.value.messageType)
+        verify(historyService).logWorldHistory(anyLong(), anyString(), anyInt(), anyInt())
     }
 
     @Test
@@ -247,7 +247,7 @@ class EventServiceTest {
 
         service.dispatchEvents(world, "turn_start")
 
-        verify(messageRepository, times(2)).save(any())
+        verify(historyService, times(2)).logWorldHistory(anyLong(), anyString(), anyInt(), anyInt())
     }
 
     // ========== dispatchEvents: empty events ==========
@@ -284,7 +284,7 @@ class EventServiceTest {
 
         service.dispatchEvents(world, "turn_start")
 
-        verify(messageRepository).save(any())
+        verify(historyService).logWorldHistory(anyLong(), anyString(), anyInt(), anyInt())
     }
 
     // ========== New action types: economy delegations ==========

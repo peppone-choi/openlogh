@@ -29,6 +29,7 @@ class AdminService(
     private val messageRepository: MessageRepository,
     private val eventActionService: com.opensam.engine.EventActionService,
     private val inheritanceService: InheritanceService,
+    private val historyService: HistoryService,
 ) {
     private companion object {
         const val GRADE_SYSTEM_ADMIN = 6
@@ -163,18 +164,12 @@ class AdminService(
 
     fun writeLog(worldId: Long, message: String): Boolean {
         val world = worldStateRepository.findById(worldId.toShort()).orElse(null) ?: return false
-        val msg = com.opensam.entity.Message(
+        historyService.logWorldHistory(
             worldId = worldId,
-            mailboxCode = "world_history",
-            mailboxType = "PUBLIC",
-            messageType = "admin_log",
-            payload = mutableMapOf(
-                "message" to (message as Any),
-                "year" to (world.currentYear.toInt() as Any),
-                "month" to (world.currentMonth.toInt() as Any),
-            ),
+            message = message,
+            year = world.currentYear.toInt(),
+            month = world.currentMonth.toInt(),
         )
-        messageRepository.save(msg)
         return true
     }
 

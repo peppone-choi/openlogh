@@ -868,7 +868,7 @@ export default function ChiefPage() {
                                 chiefOverviewRows.map((group) => (
                                     <div key={group.level} className="space-y-1.5">
                                         <div className="text-xs font-semibold text-muted-foreground">
-                                            {formatOfficerLevelText(group.level, nation?.level)}
+                                            {formatOfficerLevelText(group.level, nation?.level, true, nation?.typeCode)}
                                         </div>
                                         <div className="space-y-1">
                                             {group.officers.map((officer) => (
@@ -960,7 +960,12 @@ export default function ChiefPage() {
                                                                     className={`text-sm font-medium ${isMe ? 'text-yellow-300' : ''}`}
                                                                 >
                                                                     {nation
-                                                                        ? formatOfficerLevelText(lv, nation.level)
+                                                                        ? formatOfficerLevelText(
+                                                                              lv,
+                                                                              nation.level,
+                                                                              true,
+                                                                              nation.typeCode
+                                                                          )
                                                                         : `Lv.${lv}`}
                                                                 </div>
                                                                 <div className="text-[10px] text-muted-foreground">
@@ -1069,7 +1074,12 @@ export default function ChiefPage() {
                                                         </div>
                                                     </td>
                                                     <td className="px-2 py-1 text-xs">
-                                                        {formatOfficerLevelText(g.officerLevel, nation?.level)}
+                                                        {formatOfficerLevelText(
+                                                            g.officerLevel,
+                                                            nation?.level,
+                                                            true,
+                                                            nation?.typeCode
+                                                        )}
                                                     </td>
                                                     <td className="px-2 py-1 text-xs">{city?.name ?? '-'}</td>
                                                     <td className="px-2 py-1 text-xs text-right tabular-nums">

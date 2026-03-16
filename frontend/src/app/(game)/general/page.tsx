@@ -160,7 +160,7 @@ export default function GeneralPage() {
     const commandName = getCurrentCommandName(g.lastTurn);
     const commandTarget = getCurrentCommandTarget(g.lastTurn, city?.name);
     const commandEta = formatEta(g.commandEndTime);
-    const officerText = formatOfficerLevelText(g.officerLevel, nationLevel, g.nationId > 0);
+    const officerText = formatOfficerLevelText(g.officerLevel, nationLevel, g.nationId > 0, nation?.typeCode);
     const injuryInfo = formatInjury(g.injury);
     const typeCall = formatGeneralTypeCall(g.leadership, g.strength, g.intel);
     const honorText = formatHonor(g.experience);

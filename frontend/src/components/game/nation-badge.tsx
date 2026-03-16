@@ -1,4 +1,5 @@
 import { Badge } from '@/components/ui/badge';
+import { getContrastTextColor } from '@/lib/game-utils';
 
 interface NationBadgeProps {
     name?: string | null;
@@ -16,6 +17,7 @@ export function NationBadge({ name, color, size = 'sm' }: NationBadgeProps) {
     }
 
     const dotSize = size === 'sm' ? 'size-2' : 'size-2.5';
+    const textColor = getContrastTextColor(color);
 
     return (
         <Badge variant="outline" className="gap-1.5" style={color ? { borderColor: color } : undefined}>
@@ -23,7 +25,7 @@ export function NationBadge({ name, color, size = 'sm' }: NationBadgeProps) {
                 className={`inline-block ${dotSize} rounded-full shrink-0`}
                 style={{ backgroundColor: color ?? '#888' }}
             />
-            <span style={{ color: color ?? undefined }}>{name}</span>
+            <span style={{ color: textColor }}>{name}</span>
         </Badge>
     );
 }

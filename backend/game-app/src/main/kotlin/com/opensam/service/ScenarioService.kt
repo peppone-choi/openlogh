@@ -563,13 +563,21 @@ class ScenarioService(
     }
 
     private fun parseNation(row: List<Any>, worldId: Long): Nation {
-        // Format: [name, color, gold, rice, description, tech, type, level, [cities]]
         val typeRaw = row[6].toString()
         val typeCode = if (typeRaw.contains("_")) typeRaw else "che_$typeRaw"
-        // Parity: Nation.php:130 — $nationStor->scout_msg = $this->infoText
         val description = row.getOrNull(4)?.toString() ?: ""
         val nationName = row[0] as String
         val explicitAbbr = row.getOrNull(9)?.toString()?.takeIf { it.isNotBlank() && it != "null" }
+        val specialKey = row.getOrNull(10)?.toString()?.takeIf { it.isNotBlank() && it != "null" }
+        
+        val meta = mutableMapOf<String, Any>(
+            "scoutMsg" to description,
+            "scout_msg" to description,
+        )
+        if (specialKey != null) {
+            meta["officerRankKey"] = specialKey
+        }
+        
         return Nation(
             worldId = worldId,
             name = nationName,
@@ -580,10 +588,7 @@ class ScenarioService(
             tech = (row[5] as Number).toFloat(),
             typeCode = typeCode,
             level = (row[7] as Number).toShort(),
-            meta = mutableMapOf<String, Any>(
-                "scoutMsg" to description,
-                "scout_msg" to description,
-            ),
+            meta = meta,
         )
     }
 

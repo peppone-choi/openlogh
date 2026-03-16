@@ -200,7 +200,7 @@ export default function MyPage() {
     const g = myGeneral;
     const nationLevel = nation?.level ?? 0;
     const injuryInfo = formatInjury(g.injury);
-    const officerText = formatOfficerLevelText(g.officerLevel, nationLevel, g.nationId > 0);
+    const officerText = formatOfficerLevelText(g.officerLevel, nationLevel, g.nationId > 0, nation?.typeCode);
     const typeCall = formatGeneralTypeCall(g.leadership, g.strength, g.intel);
     const honorText = formatHonor(g.experience);
     const [expCur, expMax] = nextExpLevelRemain(g.experience, g.expLevel ?? 0);

@@ -11,6 +11,7 @@ import com.opensam.repository.CityRepository
 import com.opensam.repository.GeneralRepository
 import com.opensam.repository.MessageRepository
 import com.opensam.repository.NationRepository
+import com.opensam.repository.RecordRepository
 import com.opensam.repository.TroopRepository
 import com.opensam.repository.WorldStateRepository
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -54,6 +55,7 @@ class FrontInfoServiceTest {
             nationRepository,
             cityRepository,
             messageRepository,
+            mock(RecordRepository::class.java),
             appUserRepository,
             troopRepository,
             officerRankService,
