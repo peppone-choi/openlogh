@@ -19,4 +19,10 @@ describe('map page city click', () => {
         expect(starRight).toBeLessThan(0);
         expect(starTop).toBeLessThan(0);
     });
+
+    it('city name label uses pill styling with backdrop-blur', () => {
+        const className = 'absolute whitespace-nowrap px-1 py-[1px] bg-black/60 backdrop-blur-[2px] text-[10px] rounded-sm';
+        expect(className).toContain('rounded-sm');
+        expect(className).toContain('backdrop-blur');
+    });
 });

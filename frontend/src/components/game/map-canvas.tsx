@@ -423,7 +423,7 @@ export function MapCanvas({
                                         {/* City name (default positioning) */}
                                         {showNames && !cityNamePosition && (
                                             <span
-                                                className="absolute whitespace-nowrap px-[2px] py-[1px] bg-black/55 text-[10px]"
+                                                className="absolute whitespace-nowrap px-1 py-[1px] bg-black/60 backdrop-blur-[2px] text-[10px] rounded-sm"
                                                 style={
                                                     nearRight
                                                         ? { right: '70%', bottom: -10, color: cityNameColor }
@@ -464,7 +464,7 @@ export function MapCanvas({
                                     {/* City name (custom positioning for full map page) */}
                                     {showNames && cityNamePosition && (
                                         <span
-                                            className="absolute whitespace-nowrap px-[2px] py-[1px] bg-black/55 text-[10px]"
+                                            className="absolute whitespace-nowrap px-1 py-[1px] bg-black/60 backdrop-blur-[2px] text-[10px] rounded-sm"
                                             style={{
                                                 ...cityNamePosition(city, left, top),
                                                 color: cityNameColor,
