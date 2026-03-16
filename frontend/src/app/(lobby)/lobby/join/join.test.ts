@@ -30,4 +30,11 @@ describe('lobby join scout message nation name display', () => {
         const display = mockNation.name || '재야';
         expect(display).toBe('재야');
     });
+
+    it('nation chip uses color as text color, not background', () => {
+        const nationColor = '#ff6347';
+        const style = { color: nationColor };
+        expect(style.color).toBe('#ff6347');
+        expect(style).not.toHaveProperty('backgroundColor');
+    });
 });

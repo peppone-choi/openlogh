@@ -350,8 +350,8 @@ function LobbyJoinPageContent() {
                         {nationsWithScout.map((n) => (
                             <div key={n.id} className="flex gap-3 items-start border border-input rounded p-2">
                                 <div
-                                    className="px-2 py-1 text-xs font-bold text-black rounded shrink-0"
-                                    style={{ backgroundColor: n.color }}
+                                    className="px-2 py-1 text-xs font-bold rounded shrink-0 border border-gray-600"
+                                    style={{ color: n.color }}
                                 >
                                     {n.name}
                                 </div>
