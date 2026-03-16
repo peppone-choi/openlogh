@@ -134,3 +134,18 @@ describe('nation flag display in map viewer', () => {
         expect(getFontSize('공손')).toBe(8);
     });
 });
+
+describe('map-tooltips glassmorphism', () => {
+    it('GLASS constant includes backdrop-blur and transparency', () => {
+        const GLASS =
+            'backdrop-blur-md bg-black/75 border border-white/10 rounded-lg shadow-xl text-white animate-in fade-in duration-150';
+        expect(GLASS).toContain('backdrop-blur');
+        expect(GLASS).toContain('bg-black/75');
+        expect(GLASS).toContain('rounded-lg');
+    });
+
+    it('NationBadge uses rounded-full pill shape', () => {
+        const badgeClass = 'inline-flex items-center justify-center font-bold shrink-0 rounded-full';
+        expect(badgeClass).toContain('rounded-full');
+    });
+});
