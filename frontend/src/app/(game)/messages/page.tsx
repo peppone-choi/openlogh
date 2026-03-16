@@ -531,7 +531,9 @@ export default function MessagesPage() {
                                             </Button>
                                         </div>
                                         <p className="text-sm">
-                                            {(m.payload.content as string) ?? JSON.stringify(m.payload)}
+                                            {(m.payload.content as string) ??
+                                                (m.payload.text as string) ??
+                                                JSON.stringify(m.payload)}
                                         </p>
                                         {/* Diplomacy action buttons (수락/거절) */}
                                         {m.mailboxType === 'DIPLOMACY' && m.meta.responded !== true && (

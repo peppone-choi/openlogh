@@ -79,8 +79,8 @@ class MessageService(
         } else {
             messageRepository.findByWorldIdAndMailboxTypeOrderBySentAtDesc(worldId, MAILBOX_PUBLIC)
         }
-        // Exclude world_history records (should be in Record table, not Message)
-        val filtered = messages.filter { it.mailboxCode != "world_history" }
+        // Only include user-written public messages (exclude system records with unrecognized mailboxCodes)
+        val filtered = messages.filter { it.mailboxCode in setOf("public", "board", "public_chat") }
         return applyLimit(filtered, limit)
     }
 
@@ -191,6 +191,7 @@ class MessageService(
                 name = gen.name,
                 nationId = gen.nationId,
                 nationName = nations[gen.nationId]?.name ?: "",
+                nationColor = nations[gen.nationId]?.color,
                 picture = gen.picture,
             )
         }

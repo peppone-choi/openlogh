@@ -26,7 +26,7 @@ export function MessagePlate({
     onDiplomacyRespond,
 }: MessagePlateProps) {
     const isSent = message.srcId === myGeneralId;
-    const content = (message.payload.content as string) ?? '';
+    const content = (message.payload.content as string) ?? (message.payload.text as string) ?? '';
     const isDiplomacy = message.messageType === 'diplomacy';
     const responded = message.payload.responded as boolean | undefined;
 

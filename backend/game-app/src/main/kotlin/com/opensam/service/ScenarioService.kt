@@ -69,8 +69,6 @@ class ScenarioService(
         8 to CityInit(150000, 1000, 1000, 1000, 5000, 5000),
     )
     private val DEFAULT_CITY_INIT = CityInit(50000, 1000, 1000, 1000, 1000, 1000)
-    private val historyYearMonthRegex = Regex("(\\d+)년\\s*(\\d+)월")
-
     fun listScenarios(): List<ScenarioInfo> {
         loadAllScenarios()
         return scenarios.map { (code, data) ->
@@ -505,6 +503,10 @@ class ScenarioService(
             val emperorNation = nations.firstOrNull { it.id == nationId } ?: return
             emperorNation.meta[EmperorConstants.NATION_IMPERIAL_STATUS] = EmperorConstants.STATUS_EMPEROR
             emperorNation.meta[EmperorConstants.NATION_EMPEROR_TYPE] = EmperorConstants.TYPE_LEGITIMATE
+            // Ensure emperor is placed at nation capital
+            if (emperorNation.capitalCityId != null && emperorNation.capitalCityId!! > 0) {
+                emperorGeneral.cityId = emperorNation.capitalCityId!!
+            }
         }
     }
 
@@ -540,10 +542,7 @@ class ScenarioService(
 
     private fun seedScenarioHistory(worldId: Long, historyLines: List<String>, defaultYear: Int, defaultMonth: Int) {
         for (line in historyLines) {
-            val match = historyYearMonthRegex.find(line)
-            val year = match?.groupValues?.getOrNull(1)?.toIntOrNull() ?: defaultYear
-            val month = match?.groupValues?.getOrNull(2)?.toIntOrNull() ?: defaultMonth
-            historyService.logWorldHistory(worldId, line, year, month)
+            historyService.logWorldHistory(worldId, line, defaultYear, defaultMonth)
         }
     }
 

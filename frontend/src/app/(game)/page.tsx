@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { useWorldStore } from '@/stores/worldStore';
 import { useGeneralStore } from '@/stores/generalStore';
-import { useGameStore } from '@/stores/gameStore';
 import { frontApi } from '@/lib/gameApi';
 import { subscribeWebSocket } from '@/lib/websocket';
 import type { FrontInfoResponse } from '@/types';
@@ -13,7 +12,6 @@ import { CityBasicCard } from '@/components/game/city-basic-card';
 import { NationBasicCard } from '@/components/game/nation-basic-card';
 import { GeneralBasicCard } from '@/components/game/general-basic-card';
 import { MainControlBar } from '@/components/game/main-control-bar';
-import { MessagePanel } from '@/components/game/message-panel';
 import { GameBottomBar } from '@/components/game/game-bottom-bar';
 import { LoadingState } from '@/components/game/loading-state';
 import { Button } from '@/components/ui/button';
@@ -46,7 +44,6 @@ function formatAutorunMode(mode?: number): string {
 export default function GameDashboard() {
     const { currentWorld } = useWorldStore();
     const { myGeneral } = useGeneralStore();
-    const { generals } = useGameStore();
     const [frontInfo, setFrontInfo] = useState<FrontInfoResponse | null>(null);
     const lastRecordIdRef = useRef<number | undefined>(undefined);
     const lastHistoryIdRef = useRef<number | undefined>(undefined);
@@ -54,14 +51,13 @@ export default function GameDashboard() {
     const loadFrontInfoRef = useRef<() => Promise<void>>(async () => {});
 
     const [showVersionModal, setShowVersionModal] = useState(false);
-    const [mobileTab, setMobileTab] = useState<'map' | 'commands' | 'status' | 'world' | 'messages'>('map');
+    const [mobileTab, setMobileTab] = useState<'map' | 'commands' | 'status' | 'world'>('map');
 
     const mobileTabs = [
         { key: 'map', label: '지도' },
         { key: 'commands', label: '명령' },
         { key: 'status', label: '상태' },
         { key: 'world', label: '동향' },
-        { key: 'messages', label: '메시지' },
     ] as const;
 
     const isTabActive = (tab: string) => mobileTab === tab;
@@ -470,13 +466,6 @@ export default function GameDashboard() {
                             </span>
                         </div>
                     </div>
-                </div>
-            )}
-
-            {/* ===== Message panel ===== */}
-            {myGeneral && (
-                <div className={`mt-2 ${isTabActive('messages') ? '' : 'max-lg:hidden'}`}>
-                    <MessagePanel worldId={currentWorld.id} myGeneralId={myGeneral.id} generals={generals} />
                 </div>
             )}
 

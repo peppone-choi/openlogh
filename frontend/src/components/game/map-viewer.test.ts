@@ -65,6 +65,57 @@ describe('nation abbreviation in tooltip', () => {
     });
 });
 
+describe('nationAbbr resolution (map viewer renderCities)', () => {
+    // Mirrors: nation?.abbreviation || nation?.name?.slice(0, 1) || null
+    function resolveNationAbbr(abbreviation: string | undefined, name: string | undefined): string | null {
+        return abbreviation || name?.slice(0, 1) || null;
+    }
+
+    it('uses abbreviation when present', () => {
+        expect(resolveNationAbbr('유', '유비군')).toBe('유');
+    });
+
+    it('falls back to first char of name when abbreviation is empty string', () => {
+        expect(resolveNationAbbr('', '조조군')).toBe('조');
+    });
+
+    it('falls back to first char of name when abbreviation is undefined', () => {
+        expect(resolveNationAbbr(undefined, '손권군')).toBe('손');
+    });
+
+    it('returns null when both abbreviation and name are absent', () => {
+        expect(resolveNationAbbr(undefined, undefined)).toBeNull();
+    });
+});
+
+describe('tooltip abbr fallback (map viewer tooltip render)', () => {
+    // Mirrors: tooltip.nationAbbr || (tooltip.nationText ? tooltip.nationText.slice(0, 1) : '')
+    function resolveTooltipAbbr(nationAbbr: string | null, nationText: string | null): string {
+        return nationAbbr || (nationText ? nationText.slice(0, 1) : '');
+    }
+
+    it('uses nationAbbr when set', () => {
+        expect(resolveTooltipAbbr('유', '유비군')).toBe('유');
+    });
+
+    it('falls back to first char of nationText when nationAbbr is null', () => {
+        const abbr = resolveTooltipAbbr(null, '유비군');
+        expect(abbr).toBe('유');
+        expect(abbr).not.toBe('유비군');
+    });
+
+    it('abbr is never the full nation name', () => {
+        const nationName = '황건적무리';
+        const abbr = resolveTooltipAbbr(null, nationName);
+        expect(abbr).not.toBe(nationName);
+        expect(abbr.length).toBe(1);
+    });
+
+    it('returns empty string when both are null', () => {
+        expect(resolveTooltipAbbr(null, null)).toBe('');
+    });
+});
+
 describe('nation flag display in map viewer', () => {
     it('shows full abbreviation without slicing', () => {
         const mockNations = [{ abbreviation: '유' }, { abbreviation: '조' }, { abbreviation: '공손' }];

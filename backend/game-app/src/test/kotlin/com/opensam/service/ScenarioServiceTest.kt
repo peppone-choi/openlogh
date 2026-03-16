@@ -582,7 +582,7 @@ class ScenarioServiceTest {
         assertEquals("선전포고", diplomacy.stateCode)
         assertEquals(36.toShort(), diplomacy.term)
 
-        verify(historyService).logWorldHistory(1L, scenario.history.single(), 190, 1)
+        verify(historyService).logWorldHistory(1L, scenario.history.single(), 187, 1)
     }
 
     @Test
@@ -619,6 +619,39 @@ class ScenarioServiceTest {
     }
 
     @Test
+    fun `applyScenarioEmperorSettings places emperor at nation capital`() {
+        val applyMethod = ScenarioService::class.java.getDeclaredMethod(
+            "applyScenarioEmperorSettings",
+            com.opensam.model.ScenarioData::class.java,
+            WorldState::class.java,
+            Map::class.java,
+            List::class.java,
+            List::class.java,
+        )
+        applyMethod.isAccessible = true
+
+        val world = WorldState(id = 1, name = "test", scenarioCode = "test")
+        val nation = Nation(id = 100L, worldId = 1, name = "한")
+        nation.capitalCityId = 55L
+        val general = General(
+            worldId = 1, name = "헌제", nationId = 100L, cityId = 1L,
+            npcState = 2, officerLevel = 20,
+        )
+
+        val scenario = com.opensam.model.ScenarioData(
+            title = "test",
+            startYear = 184,
+            emperor = mapOf("generalName" to "헌제", "nationIdx" to 1, "status" to "enthroned"),
+        )
+
+        val nationIdxToDbId = mapOf(1 to 100L)
+
+        applyMethod.invoke(service, scenario, world, nationIdxToDbId, listOf(nation), listOf(general))
+
+        assertEquals(55L, general.cityId)
+    }
+
+    @Test
     fun `applyScenarioEmperorSettings sets emperor meta when config present`() {
         val applyMethod = ScenarioService::class.java.getDeclaredMethod(
             "applyScenarioEmperorSettings",
@@ -652,6 +685,24 @@ class ScenarioServiceTest {
         assertEquals("enthroned", general.meta[com.opensam.engine.EmperorConstants.GENERAL_EMPEROR_STATUS])
         assertEquals("emperor", nation.meta[com.opensam.engine.EmperorConstants.NATION_IMPERIAL_STATUS])
         assertEquals("legitimate", nation.meta[com.opensam.engine.EmperorConstants.NATION_EMPEROR_TYPE])
+    }
+
+    @Test
+    fun `seedScenarioHistory uses startYear and month 1 regardless of text content`() {
+        val seedMethod = ScenarioService::class.java.getDeclaredMethod(
+            "seedScenarioHistory",
+            Long::class.javaPrimitiveType,
+            List::class.java,
+            Int::class.javaPrimitiveType,
+            Int::class.javaPrimitiveType,
+        )
+        seedMethod.isAccessible = true
+
+        // History text contains "190년 1월" but startYear is 187 — service must use 187/1
+        val historyLine = "<C>●</>190년 1월:<L><b>【역사】</b></>반동탁연합 결성"
+        seedMethod.invoke(service, 1L, listOf(historyLine), 187, 1)
+
+        verify(historyService).logWorldHistory(1L, historyLine, 187, 1)
     }
 
     @Test

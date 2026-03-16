@@ -205,7 +205,7 @@ export function MapViewer({
                 region: cc.region,
                 nationColor: nation?.color ?? null,
                 nationName: nation?.name ?? null,
-                nationAbbr: nation?.abbreviation || null,
+                nationAbbr: nation?.abbreviation || nation?.name?.slice(0, 1) || null,
                 isCapital: !!(rt && nation?.capitalCityId === rt.id),
                 supplyState: rt?.supplyState ?? 0,
                 state: (rt as { state?: number })?.state ?? 0,
@@ -509,7 +509,7 @@ export function MapViewer({
 
                 {tooltip &&
                     (() => {
-                        const abbr = tooltip.nationAbbr || tooltip.nationText || '';
+                        const abbr = tooltip.nationAbbr || (tooltip.nationText ? tooltip.nationText.slice(0, 1) : '');
                         const flagSize = abbr.length > 1 ? 24 : 16;
                         const textColor = tooltip.nationColor && isBrightColor(tooltip.nationColor) ? 'black' : 'white';
                         return (

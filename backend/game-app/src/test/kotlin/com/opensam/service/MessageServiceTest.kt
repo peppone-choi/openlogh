@@ -7,6 +7,7 @@ import com.opensam.repository.MessageRepository
 import com.opensam.repository.NationRepository
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
@@ -107,7 +108,11 @@ class MessageServiceTest {
 
     @Test
     fun `getPublicMessages loads older page with limit`() {
-        val messages = listOf(message(8), message(7), message(6))
+        val messages = listOf(
+            message(8, mailboxType = MessageService.MAILBOX_PUBLIC, mailboxCode = "public"),
+            message(7, mailboxType = MessageService.MAILBOX_PUBLIC, mailboxCode = "public"),
+            message(6, mailboxType = MessageService.MAILBOX_PUBLIC, mailboxCode = "public"),
+        )
         `when`(messageRepository.findByWorldIdAndMailboxTypeAndIdLessThanOrderBySentAtDesc(1L, MessageService.MAILBOX_PUBLIC, 9L))
             .thenReturn(messages)
 
@@ -142,6 +147,52 @@ class MessageServiceTest {
         assertThrows(IllegalArgumentException::class.java) {
             service.getDiplomacyMessages(1L, 3, 10L, 15)
         }
+    }
+
+    @Test
+    fun `getContacts includes nationColor from nation lookup`() {
+        val nation = com.opensam.entity.Nation(id = 7L, worldId = 1, name = "위")
+        nation.color = "#FF0000"
+        val gen = general(id = 5L, nationId = 7L, officerLevel = 1)
+
+        `when`(generalRepository.findByWorldId(1L)).thenReturn(listOf(gen))
+        `when`(nationRepository.findByWorldId(1L)).thenReturn(listOf(nation))
+
+        val result = service.getContacts(1L)
+
+        assertEquals(1, result.size)
+        assertEquals("#FF0000", result.first().nationColor)
+        assertEquals("위", result.first().nationName)
+    }
+
+    @Test
+    fun `getContacts returns null nationColor for general without nation`() {
+        val gen = general(id = 3L, nationId = 0L, officerLevel = 1)
+
+        `when`(generalRepository.findByWorldId(1L)).thenReturn(listOf(gen))
+        `when`(nationRepository.findByWorldId(1L)).thenReturn(emptyList())
+
+        val result = service.getContacts(1L)
+
+        assertEquals(1, result.size)
+        assertEquals(null, result.first().nationColor)
+        assertEquals("", result.first().nationName)
+    }
+
+    @Test
+    fun `getPublicMessages filters out unrecognized mailboxCodes`() {
+        val publicMsg = message(1L, mailboxType = MessageService.MAILBOX_PUBLIC, mailboxCode = "public")
+        val boardMsg = message(2L, mailboxType = MessageService.MAILBOX_PUBLIC, mailboxCode = "board")
+        val chatMsg = message(3L, mailboxType = MessageService.MAILBOX_PUBLIC, mailboxCode = "public_chat")
+        val actionMsg = message(4L, mailboxType = MessageService.MAILBOX_PUBLIC, mailboxCode = "general_action")
+
+        `when`(messageRepository.findByWorldIdAndMailboxTypeOrderBySentAtDesc(1L, MessageService.MAILBOX_PUBLIC))
+            .thenReturn(listOf(publicMsg, boardMsg, chatMsg, actionMsg))
+
+        val result = service.getPublicMessages(1L)
+
+        assertEquals(setOf(1L, 2L, 3L), result.map { it.id }.toSet())
+        assertTrue(result.none { it.id == 4L })
     }
 
     private fun general(id: Long, nationId: Long, officerLevel: Short): com.opensam.entity.General {
