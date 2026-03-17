@@ -16,12 +16,12 @@ export function RecordZone({ generalRecords, globalRecords, historyRecords }: Re
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <RecordColumn title="장수동향" records={globalRecords} />
             <RecordColumn title="개인기록" records={generalRecords} />
-            <RecordColumn title="중원정세" records={historyRecords} />
+            <RecordColumn title="중원정세" records={historyRecords} stripYear />
         </div>
     );
 }
 
-function RecordColumn({ title, records }: { title: string; records: RecordEntry[] }) {
+function RecordColumn({ title, records, stripYear }: { title: string; records: RecordEntry[]; stripYear?: boolean }) {
     return (
         <Card>
             <CardHeader className="pb-2">
@@ -33,12 +33,15 @@ function RecordColumn({ title, records }: { title: string; records: RecordEntry[
                         {records.length === 0 ? (
                             <p className="text-xs text-muted-foreground">기록 없음</p>
                         ) : (
-                            records.map((r) => (
-                                <div key={r.id} className="text-xs leading-relaxed">
-                                    <span className="text-muted-foreground mr-1">[{r.date}]</span>
-                                    {formatLog(r.message)}
-                                </div>
-                            ))
+                            records.map((r) => {
+                                const message = stripYear ? r.message.replace(/\d+년\s+\d+월:/g, '') : r.message;
+                                return (
+                                    <div key={r.id} className="text-xs leading-relaxed">
+                                        <span className="text-muted-foreground mr-1">[{r.date}]</span>
+                                        {formatLog(message)}
+                                    </div>
+                                );
+                            })
                         )}
                     </div>
                 </ScrollArea>
