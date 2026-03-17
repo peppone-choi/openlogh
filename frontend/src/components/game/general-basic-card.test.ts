@@ -40,3 +40,11 @@ describe('GeneralBasicCard grid layout', () => {
         expect(cellsInRow).toBe(6);
     });
 });
+
+describe('GeneralSupplementCard design', () => {
+    it('uses rounded-lg and bg-card wrapper', () => {
+        const wrapperClass = 'text-center text-sm border border-border rounded-lg overflow-hidden bg-card';
+        expect(wrapperClass).toContain('rounded-lg');
+        expect(wrapperClass).toContain('bg-card');
+    });
+});

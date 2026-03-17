@@ -31,7 +31,7 @@ export function GeneralSupplementCard({ general, showCommandList = false }: Gene
         showCommandList && general.reservedCommand ? Object.values(general.reservedCommand).slice(0, 5) : [];
 
     return (
-        <div className="text-center text-sm border border-border">
+        <div className="text-center text-sm border border-border rounded-lg overflow-hidden bg-card">
             {/* Stats section */}
             <div className="grid grid-cols-6 bg-muted/30">
                 <div className="col-span-6 bg-muted/50 font-medium py-0.5">추가 정보</div>
