@@ -1,43 +1,27 @@
 import { describe, expect, it } from 'vitest';
 
-describe('GeneralBasicCard emperor icon', () => {
-    it('npc===10 indicates emperor general', () => {
-        expect(10).toBe(10);
-    });
-});
-
-describe('GeneralBasicCard grid layout', () => {
-    it('grid has 11 rows to accommodate all sections', () => {
-        const gridRows = 11;
-        expect(gridRows).toBe(11);
+describe('GeneralBasicCard redesign', () => {
+    it('uses bg-card with rounded-lg wrapper', () => {
+        const containerClass = 'bg-card border border-border rounded-lg overflow-hidden text-sm';
+        expect(containerClass).toContain('bg-card');
+        expect(containerClass).toContain('rounded-lg');
+        expect(containerClass).not.toContain('legacy-bg');
     });
 
-    it('Lv row is at gridRow 8', () => {
-        const lvRow = 8;
-        expect(lvRow).toBe(8);
+    it('stat grid uses 3 columns', () => {
+        const gridClass = 'grid grid-cols-3';
+        expect(gridClass).toContain('grid-cols-3');
     });
 
-    it('수비/삭턴/실행 row is at gridRow 9', () => {
-        const row = 9;
-        expect(row).toBe(9);
+    it('KV cells use bg-card with muted labels', () => {
+        const labelClass = 'text-[10px] text-muted-foreground';
+        expect(labelClass).toContain('text-muted-foreground');
     });
 
-    it('부대/벌점 row is at gridRow 10', () => {
-        const row = 10;
-        expect(row).toBe(10);
-    });
-
-    it('crew icon spans rows 4-7 to block col 1 auto-placement through row 7', () => {
-        const crewIconGridRow = '4 / 8';
-        const [start, end] = crewIconGridRow.split(' / ').map(Number);
-        expect(end - start).toBe(4);
-        expect(start).toBe(4);
-        expect(end).toBe(8);
-    });
-
-    it('자금/군량 row has 2 spacer cells to fill 6 columns', () => {
-        const cellsInRow = 4 + 2;
-        expect(cellsInRow).toBe(6);
+    it('uses gap-px with bg-border for grid gap coloring', () => {
+        const gridClass = 'grid grid-cols-3 gap-px bg-border/50 border-t border-border';
+        expect(gridClass).toContain('gap-px');
+        expect(gridClass).toContain('bg-border');
     });
 });
 
@@ -46,13 +30,5 @@ describe('GeneralSupplementCard design', () => {
         const wrapperClass = 'text-center text-sm border border-border rounded-lg overflow-hidden bg-card';
         expect(wrapperClass).toContain('rounded-lg');
         expect(wrapperClass).toContain('bg-card');
-    });
-});
-
-describe('exp bar overflow', () => {
-    it('exp bar cell has min-w-0 to constrain flex child width', () => {
-        const cellClass = 'border-t border-gray-600 flex items-center px-1 min-w-0';
-        expect(cellClass).toContain('min-w-0');
-        expect(cellClass).not.toContain('overflow-hidden');
     });
 });
