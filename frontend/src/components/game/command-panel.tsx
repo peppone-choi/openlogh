@@ -120,12 +120,6 @@ function parseRecentActions(raw: string): RecentAction[] {
         .filter((v): v is RecentAction => v !== null);
 }
 
-function formatCountdown(totalSeconds: number): string {
-    const minutes = Math.floor(totalSeconds / 60);
-    const seconds = totalSeconds % 60;
-    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-}
-
 function getTurnYearMonth(turnIdx: number, baseYear: number, baseMonth: number) {
     const totalMonths = baseMonth - 1 + turnIdx;
     return {
@@ -158,14 +152,12 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
     const [showSelector, setShowSelector] = useState(false);
     const [realtimeStatus, setRealtimeStatus] = useState<RealtimeStatus | null>(null);
     const [serverClock, setServerClock] = useState('');
-    const [remaining, setRemaining] = useState(0);
     const [clipboard, setClipboard] = useState<ClipboardItem[] | null>(null);
     const [storedActions, setStoredActions] = useState<StoredAction[]>([]);
     const [selectedStoredAction, setSelectedStoredAction] = useState('');
     const [recentActions, setRecentActions] = useState<RecentAction[]>([]);
     const [expanded, setExpanded] = useState(false);
 
-    const lastTurnRef = useRef(0);
     const visibleCount = expanded ? MAX_TURN_COUNT : COLLAPSED_TURN_COUNT;
 
     const filledTurns = useMemo<FilledTurn[]>(() => {
@@ -209,29 +201,6 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
         const intervalId = window.setInterval(updateClock, 1000);
         return () => window.clearInterval(intervalId);
     }, []);
-
-    useEffect(() => {
-        void turnSignature;
-        lastTurnRef.current = Date.now();
-    }, [turnSignature]);
-
-    useEffect(() => {
-        if (!currentWorld?.tickSeconds || currentWorld.tickSeconds <= 0) {
-            window.setTimeout(() => setRemaining(0), 0);
-            return;
-        }
-
-        const tickMs = currentWorld.tickSeconds * 1000;
-        const update = () => {
-            const elapsed = Date.now() - lastTurnRef.current;
-            const remainMs = Math.max(0, tickMs - elapsed);
-            setRemaining(Math.ceil(remainMs / 1000));
-        };
-
-        update();
-        const intervalId = window.setInterval(update, 1000);
-        return () => window.clearInterval(intervalId);
-    }, [currentWorld?.tickSeconds]);
 
     useEffect(() => {
         if (typeof window === 'undefined') return;
@@ -758,11 +727,6 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
                     <div className="flex items-center gap-2 text-xs text-gray-300">
                         <Clock3 className="size-3.5 text-amber-300" />
                         <span>{serverClock}</span>
-                        {currentWorld?.tickSeconds ? (
-                            <Badge variant="secondary" className="text-[11px]">
-                                다음 턴 {formatCountdown(remaining)}
-                            </Badge>
-                        ) : null}
                         {realtimeMode && realtimeStatus ? (
                             <Badge variant="outline" className="text-[11px] text-cyan-300">
                                 CP {realtimeStatus.commandPoints} / 대기 {realtimeStatus.remainingSeconds}s

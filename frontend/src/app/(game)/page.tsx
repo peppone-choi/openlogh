@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
+import { RefreshCw } from 'lucide-react';
 import { useWorldStore } from '@/stores/worldStore';
 import { useGeneralStore } from '@/stores/generalStore';
 import { frontApi } from '@/lib/gameApi';
@@ -276,6 +277,14 @@ export default function GameDashboard() {
                         dangerouslySetInnerHTML={{ __html: frontInfo.nation.notice.msg }}
                     />
                 )}
+            </div>
+
+            {/* ===== Desktop Refresh Button ===== */}
+            <div className="hidden lg:flex justify-end border-t border-gray-600 px-2 py-1.5">
+                <Button onClick={loadFrontInfo} variant="outline" size="sm" className="gap-1">
+                    <RefreshCw className="h-3.5 w-3.5" />
+                    갱신
+                </Button>
             </div>
 
             {/* ===== Mobile Tabs ===== */}
