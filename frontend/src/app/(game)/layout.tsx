@@ -212,7 +212,7 @@ export default function GameLayout({ children }: { children: React.ReactNode }) 
                     onMessageClick={() => setMessageSheetOpen(true)}
                     onMobileMenuClick={() => setMobileMenuOpen(true)}
                 />
-                <main className="flex flex-1 flex-col gap-4 px-2 py-4 pb-16 lg:pb-4">{children}</main>
+                <main className="flex flex-1 flex-col gap-4 px-2 py-4 pb-20 lg:pb-4">{children}</main>
             </SidebarInset>
 
             <ResponsiveSheet open={messageSheetOpen} onOpenChange={setMessageSheetOpen} title="메시지">

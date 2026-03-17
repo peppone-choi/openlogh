@@ -7,6 +7,7 @@ import { User } from 'lucide-react';
 import { getPortraitUrl } from '@/lib/image';
 
 const sizes = {
+    xs: 28,
     sm: 32,
     md: 48,
     lg: 80,

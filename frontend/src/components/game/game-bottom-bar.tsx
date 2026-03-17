@@ -2,6 +2,9 @@
 
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { Home, Map as MapIcon, Castle, ScrollText, MoreHorizontal, RefreshCw } from 'lucide-react';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { useGeneralStore } from '@/stores/generalStore';
 import { useWorldStore } from '@/stores/worldStore';
 
@@ -103,9 +106,25 @@ function scrollToSelector(selector: string) {
     }
 }
 
+/* ── Tab configuration ── */
+interface TabConfig {
+    id: string;
+    label: string;
+    icon: React.ComponentType<{ className?: string }>;
+    href?: string;
+}
+
+const TABS: TabConfig[] = [
+    { id: 'home', label: '홈', icon: Home, href: '/' },
+    { id: 'map', label: '지도', icon: MapIcon, href: '/map' },
+    { id: 'nation', label: '국가', icon: Castle, href: '/nation' },
+    { id: 'info', label: '정보', icon: ScrollText, href: '/generals' },
+    { id: 'more', label: '더보기', icon: MoreHorizontal },
+];
+
 export function GameBottomBar({ onRefresh }: GameBottomBarProps) {
-    const [openMenu, setOpenMenu] = useState<string | null>(null);
-    const barRef = useRef<HTMLDivElement>(null);
+    const [sheetOpen, setSheetOpen] = useState(false);
+    const pathname = usePathname();
 
     const currentWorld = useWorldStore((s) => s.currentWorld);
     const myGeneral = useGeneralStore((s) => s.myGeneral);
@@ -121,168 +140,232 @@ export function GameBottomBar({ onRefresh }: GameBottomBarProps) {
         return true;
     }
 
-    // Close menu on outside click
-    useEffect(() => {
-        if (!openMenu) return;
-        function handleClick(e: MouseEvent) {
-            if (barRef.current && !barRef.current.contains(e.target as Node)) {
-                setOpenMenu(null);
-            }
-        }
-        document.addEventListener('mousedown', handleClick);
-        return () => document.removeEventListener('mousedown', handleClick);
-    }, [openMenu]);
-
-    function toggle(menu: string) {
-        setOpenMenu((prev) => (prev === menu ? null : menu));
-    }
-
     const filteredNation = NATION_MENU.filter(isVisible);
     const filteredGlobal = GLOBAL_MENU.filter((item) => !(item.cond === 'npcMode' && !npcMode));
 
+    // Determine active tab based on pathname
+    function getActiveTabId(): string {
+        if (pathname === '/' || pathname === '/dashboard') return 'home';
+        if (pathname.startsWith('/map')) return 'map';
+        if (
+            pathname.startsWith('/nation') ||
+            pathname.startsWith('/board') ||
+            pathname.startsWith('/troop') ||
+            pathname.startsWith('/diplomacy') ||
+            pathname.startsWith('/personnel') ||
+            pathname.startsWith('/internal-affairs') ||
+            pathname.startsWith('/chief') ||
+            pathname.startsWith('/npc-control') ||
+            pathname.startsWith('/spy') ||
+            pathname.startsWith('/nation-cities') ||
+            pathname.startsWith('/nation-generals')
+        )
+            return 'nation';
+        if (
+            pathname.startsWith('/generals') ||
+            pathname.startsWith('/nations') ||
+            pathname.startsWith('/best-generals') ||
+            pathname.startsWith('/hall-of-fame') ||
+            pathname.startsWith('/emperor') ||
+            pathname.startsWith('/history') ||
+            pathname.startsWith('/battle-simulator') ||
+            pathname.startsWith('/traffic') ||
+            pathname.startsWith('/npc-list') ||
+            pathname.startsWith('/vote') ||
+            pathname.startsWith('/nation-betting')
+        )
+            return 'info';
+        return '';
+    }
+
+    const activeTabId = getActiveTabId();
+
     return (
-        <div ref={barRef} className="fixed bottom-0 left-0 right-0 z-40 lg:hidden">
-            {/* ── Dropup panels ── */}
-            {openMenu === 'global' && (
-                <DropupPanel columns={3}>
-                    {filteredGlobal.map((item) => (
-                        <Link
-                            key={item.href}
-                            href={item.href}
-                            className="block px-3 py-1.5 text-sm hover:bg-muted/50"
-                            onClick={() => setOpenMenu(null)}
-                        >
-                            {item.label}
-                        </Link>
-                    ))}
-                </DropupPanel>
-            )}
+        <>
+            {/* ── Bottom Navigation Bar ── */}
+            <nav className="fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-card/95 backdrop-blur-md border-t border-border">
+                <div className="flex items-stretch h-16">
+                    {TABS.map((tab) => {
+                        const isActive = activeTabId === tab.id;
+                        const Icon = tab.icon;
 
-            {openMenu === 'nation' && (
-                <DropupPanel columns={3}>
-                    {filteredNation.map((item) => (
-                        <Link
-                            key={`${item.href}-${item.label}`}
-                            href={item.href}
-                            className="block px-3 py-1.5 text-sm hover:bg-muted/50"
-                            onClick={() => setOpenMenu(null)}
-                        >
-                            {item.label}
-                        </Link>
-                    ))}
-                </DropupPanel>
-            )}
-
-            {openMenu === 'quick' && (
-                <DropupPanel columns={3}>
-                    {QUICK_NAV.map((item) => {
-                        if (item.divider) {
-                            return <div key={item.key} className="col-span-3 border-t border-gray-600 my-0.5" />;
-                        }
-                        if (item.header) {
+                        if (tab.id === 'more') {
                             return (
-                                <div
-                                    key={item.key}
-                                    className="col-span-3 px-3 py-1 text-xs text-muted-foreground font-bold"
-                                >
-                                    {item.label}
-                                </div>
+                                <Sheet key={tab.id} open={sheetOpen} onOpenChange={setSheetOpen}>
+                                    <SheetTrigger asChild>
+                                        <button
+                                            type="button"
+                                            className={`flex-1 flex flex-col items-center justify-center gap-0.5 transition-all duration-150 ${
+                                                isActive
+                                                    ? 'text-primary'
+                                                    : 'text-muted-foreground hover:text-foreground'
+                                            }`}
+                                        >
+                                            <Icon
+                                                className={`transition-all duration-150 ${
+                                                    isActive ? 'w-6 h-6' : 'w-5 h-5'
+                                                }`}
+                                            />
+                                            <span
+                                                className={`text-[10px] transition-all duration-150 ${
+                                                    isActive ? 'font-bold' : 'font-medium'
+                                                }`}
+                                            >
+                                                {tab.label}
+                                            </span>
+                                            {isActive && (
+                                                <span className="absolute bottom-1 w-1 h-1 rounded-full bg-primary" />
+                                            )}
+                                        </button>
+                                    </SheetTrigger>
+                                    <SheetContent
+                                        side="bottom"
+                                        className="h-[80vh] max-h-[600px] px-4 pb-[env(safe-area-inset-bottom)]"
+                                    >
+                                        <SheetHeader className="pb-2">
+                                            <SheetTitle className="text-left">메뉴</SheetTitle>
+                                        </SheetHeader>
+                                        <div className="overflow-y-auto h-full pb-4">
+                                            {/* Refresh Button */}
+                                            <button
+                                                type="button"
+                                                className="w-full mb-4 flex items-center justify-center gap-2 py-3 bg-primary/10 hover:bg-primary/20 text-primary rounded-lg transition-colors"
+                                                onClick={() => {
+                                                    setSheetOpen(false);
+                                                    onRefresh?.();
+                                                }}
+                                            >
+                                                <RefreshCw className="w-4 h-4" />
+                                                <span className="font-medium">갱신</span>
+                                            </button>
+
+                                            {/* Quick Navigation Section */}
+                                            <div className="mb-4">
+                                                <h3 className="text-xs font-bold text-muted-foreground mb-2 px-1">
+                                                    빠른 이동
+                                                </h3>
+                                                <div className="grid grid-cols-3 gap-1">
+                                                    {QUICK_NAV.map((item) => {
+                                                        if (item.divider) {
+                                                            return (
+                                                                <div
+                                                                    key={item.key}
+                                                                    className="col-span-3 border-t border-border my-1"
+                                                                />
+                                                            );
+                                                        }
+                                                        if (item.header) {
+                                                            return (
+                                                                <div
+                                                                    key={item.key}
+                                                                    className="col-span-3 text-xs font-bold text-muted-foreground px-1 py-1"
+                                                                >
+                                                                    {item.label}
+                                                                </div>
+                                                            );
+                                                        }
+                                                        if (item.lobby) {
+                                                            return (
+                                                                <button
+                                                                    key={item.key}
+                                                                    type="button"
+                                                                    className="col-span-3 mx-1 my-1 py-3 text-sm text-center bg-muted/50 hover:bg-muted rounded-lg transition-colors"
+                                                                    onClick={() => {
+                                                                        setSheetOpen(false);
+                                                                        window.location.href = '/lobby';
+                                                                    }}
+                                                                >
+                                                                    로비로
+                                                                </button>
+                                                            );
+                                                        }
+                                                        return (
+                                                            <button
+                                                                key={item.key}
+                                                                type="button"
+                                                                className="px-2 py-3 text-sm text-left hover:bg-muted/50 rounded-lg transition-colors min-h-[44px]"
+                                                                onClick={() => {
+                                                                    if (item.selector) {
+                                                                        scrollToSelector(item.selector);
+                                                                    }
+                                                                    setSheetOpen(false);
+                                                                }}
+                                                            >
+                                                                {item.label}
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+
+                                            {/* Nation Menu Section */}
+                                            <div className="mb-4">
+                                                <h3 className="text-xs font-bold text-muted-foreground mb-2 px-1">
+                                                    국가 메뉴
+                                                </h3>
+                                                <div className="grid grid-cols-3 gap-1">
+                                                    {filteredNation.map((item) => (
+                                                        <Link
+                                                            key={`${item.href}-${item.label}`}
+                                                            href={item.href}
+                                                            className="px-2 py-3 text-sm hover:bg-muted/50 rounded-lg transition-colors min-h-[44px] flex items-center"
+                                                            onClick={() => setSheetOpen(false)}
+                                                        >
+                                                            {item.label}
+                                                        </Link>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            {/* Global Menu Section */}
+                                            <div>
+                                                <h3 className="text-xs font-bold text-muted-foreground mb-2 px-1">
+                                                    외부 메뉴
+                                                </h3>
+                                                <div className="grid grid-cols-3 gap-1">
+                                                    {filteredGlobal.map((item) => (
+                                                        <Link
+                                                            key={item.href}
+                                                            href={item.href}
+                                                            className="px-2 py-3 text-sm hover:bg-muted/50 rounded-lg transition-colors min-h-[44px] flex items-center"
+                                                            onClick={() => setSheetOpen(false)}
+                                                        >
+                                                            {item.label}
+                                                        </Link>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </SheetContent>
+                                </Sheet>
                             );
                         }
-                        if (item.lobby) {
-                            return (
-                                <button
-                                    key={item.key}
-                                    type="button"
-                                    className="col-span-3 mx-2 my-1 px-3 py-1.5 text-sm text-center bg-muted/50 hover:bg-muted rounded"
-                                    onClick={() => {
-                                        setOpenMenu(null);
-                                        window.location.href = '/lobby';
-                                    }}
-                                >
-                                    로비로
-                                </button>
-                            );
-                        }
+
+                        // Regular navigation tabs
                         return (
-                            <button
-                                key={item.key}
-                                type="button"
-                                className="block w-full text-left px-3 py-1.5 text-sm hover:bg-muted/50"
-                                onClick={() => {
-                                    if (item.selector) scrollToSelector(item.selector);
-                                    setOpenMenu(null);
-                                }}
+                            <Link
+                                key={tab.id}
+                                href={tab.href || '#'}
+                                className={`flex-1 flex flex-col items-center justify-center gap-0.5 transition-all duration-150 relative ${
+                                    isActive ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
+                                }`}
                             >
-                                {item.label}
-                            </button>
+                                <Icon className={`transition-all duration-150 ${isActive ? 'w-6 h-6' : 'w-5 h-5'}`} />
+                                <span
+                                    className={`text-[10px] transition-all duration-150 ${
+                                        isActive ? 'font-bold' : 'font-medium'
+                                    }`}
+                                >
+                                    {tab.label}
+                                </span>
+                                {isActive && <span className="absolute bottom-1 w-1 h-1 rounded-full bg-primary" />}
+                            </Link>
                         );
                     })}
-                </DropupPanel>
-            )}
-
-            {/* ── Bottom bar buttons ── */}
-            <div className="border-t border-border bg-card flex">
-                <BottomBtn label="외부 메뉴" active={openMenu === 'global'} onClick={() => toggle('global')} />
-                <BottomBtn
-                    label="국가 메뉴"
-                    active={openMenu === 'nation'}
-                    onClick={() => toggle('nation')}
-                    className="bg-[#00582c]"
-                />
-                <BottomBtn label="빠른 이동" active={openMenu === 'quick'} onClick={() => toggle('quick')} />
-                <button
-                    type="button"
-                    className="flex-1 border-l border-gray-600 bg-[#00582c] py-2.5 text-center text-sm font-bold text-white hover:bg-[#006a33]"
-                    onClick={() => {
-                        setOpenMenu(null);
-                        onRefresh?.();
-                    }}
-                >
-                    갱신
-                </button>
-            </div>
-        </div>
-    );
-}
-
-/* ── Sub-components ── */
-
-function DropupPanel({ columns, children }: { columns: number; children: React.ReactNode }) {
-    return (
-        <div
-            className="border-t border-gray-600 bg-[#111] overflow-y-auto"
-            style={{
-                maxHeight: 'calc(100vh - 50px)',
-                display: 'grid',
-                gridTemplateColumns: `repeat(${columns}, 1fr)`,
-            }}
-        >
-            {children}
-        </div>
-    );
-}
-
-function BottomBtn({
-    label,
-    active,
-    onClick,
-    className,
-}: {
-    label: string;
-    active: boolean;
-    onClick: () => void;
-    className?: string;
-}) {
-    return (
-        <button
-            type="button"
-            className={`flex-1 border-l border-gray-600 py-2.5 text-center text-sm font-bold ${
-                active ? 'bg-[#141c65] text-white' : 'bg-[#111] text-white hover:bg-[#1c1c1c]'
-            } ${className ?? ''}`}
-            onClick={onClick}
-        >
-            {label}
-        </button>
+                </div>
+                {/* Safe area padding */}
+                <div className="h-[env(safe-area-inset-bottom)]" />
+            </nav>
+        </>
     );
 }

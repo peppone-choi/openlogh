@@ -362,22 +362,24 @@ function NationCommandPanel({
         <div className="space-y-3">
             <Card>
                 <CardContent className="pt-4 space-y-3">
-                    <div className="flex flex-wrap items-center gap-2">
-                        <Button type="button" size="sm" variant="outline" onClick={copySelected}>
-                            <Copy className="size-3.5 mr-1" /> 복사
-                        </Button>
-                        <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            onClick={pasteClipboard}
-                            disabled={!clipboard}
-                        >
-                            <ClipboardPaste className="size-3.5 mr-1" /> 붙여넣기
-                        </Button>
-                        <div className="h-6 w-px bg-border mx-1" />
+                    <div className="flex flex-col md:flex-row flex-wrap items-stretch md:items-center gap-2">
+                        <div className="flex items-center gap-2">
+                            <Button type="button" size="sm" variant="outline" onClick={copySelected}>
+                                <Copy className="size-3.5 mr-1" /> 복사
+                            </Button>
+                            <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                onClick={pasteClipboard}
+                                disabled={!clipboard}
+                            >
+                                <ClipboardPaste className="size-3.5 mr-1" /> 붙여넣기
+                            </Button>
+                        </div>
+                        <div className="hidden md:block h-6 w-px bg-border mx-1" />
                         <Input
-                            className="h-8 w-36"
+                            className="h-8 w-full md:w-36"
                             value={presetName}
                             onChange={(e) => setPresetName(e.target.value)}
                             placeholder="프리셋 이름"

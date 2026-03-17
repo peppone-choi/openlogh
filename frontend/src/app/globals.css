@@ -727,4 +727,45 @@
     .mobile-safe-bottom {
         padding-bottom: env(safe-area-inset-bottom, 0);
     }
+
+    .scrollbar-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+    .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+    }
+
+    .game-glass {
+        background: rgba(15, 21, 32, 0.92);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+    }
+
+    .game-glow-primary {
+        box-shadow: 0 0 12px rgba(16, 185, 129, 0.15);
+    }
+
+    .game-glow-blue {
+        box-shadow: 0 0 12px rgba(59, 130, 246, 0.15);
+    }
+
+    .game-gradient-card {
+        background: linear-gradient(135deg, rgba(15, 21, 32, 1) 0%, rgba(26, 36, 54, 1) 100%);
+    }
+}
+
+/* ── Mobile Game Bottom Bar ── */
+@media (max-width: 1023px) {
+    .game-bottom-bar {
+        padding-bottom: env(safe-area-inset-bottom, 0);
+    }
+}
+
+/* ── Mobile Touch Target Minimums ── */
+@media (max-width: 768px) {
+    .game-touch-target {
+        min-height: 44px;
+        min-width: 44px;
+    }
 }

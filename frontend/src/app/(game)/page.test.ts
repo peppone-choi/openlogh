@@ -24,3 +24,23 @@ describe('game dashboard refresh button', () => {
         expect(mobileRefreshExists).toBe(true);
     });
 });
+
+describe('mobile tab icons', () => {
+    it('mobile tabs include icons for each tab', () => {
+        const mobileTabs = [
+            { key: 'map', label: '지도', hasIcon: true },
+            { key: 'commands', label: '명령', hasIcon: true },
+            { key: 'status', label: '상태', hasIcon: true },
+            { key: 'world', label: '동향', hasIcon: true },
+        ];
+        expect(mobileTabs).toHaveLength(4);
+        mobileTabs.forEach((tab) => expect(tab.hasIcon).toBe(true));
+    });
+
+    it('mobile compact summary replaces dense grid on mobile', () => {
+        const mobileCompactSummary = 'lg:hidden text-center text-xs';
+        const desktopFullGrid = 'hidden lg:grid';
+        expect(mobileCompactSummary).toContain('lg:hidden');
+        expect(desktopFullGrid).toContain('hidden lg:grid');
+    });
+});

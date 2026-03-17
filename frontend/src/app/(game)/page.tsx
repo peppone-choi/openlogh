@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, Map as MapIcon, Swords, User, ScrollText } from 'lucide-react';
 import { useWorldStore } from '@/stores/worldStore';
 import { useGeneralStore } from '@/stores/generalStore';
 import { frontApi } from '@/lib/gameApi';
@@ -54,10 +54,10 @@ export default function GameDashboard() {
     const [mobileTab, setMobileTab] = useState<'map' | 'commands' | 'status' | 'world'>('map');
 
     const mobileTabs = [
-        { key: 'map', label: '지도' },
-        { key: 'commands', label: '명령' },
-        { key: 'status', label: '상태' },
-        { key: 'world', label: '동향' },
+        { key: 'map', label: '지도', icon: MapIcon },
+        { key: 'commands', label: '명령', icon: Swords },
+        { key: 'status', label: '상태', icon: User },
+        { key: 'world', label: '동향', icon: ScrollText },
     ] as const;
 
     const isTabActive = (tab: string) => mobileTab === tab;
@@ -147,11 +147,17 @@ export default function GameDashboard() {
             {/* ===== GameInfo header (legacy GameInfo.vue parity) ===== */}
             {global && (
                 <>
-                    <h3 className="text-center font-bold py-1 text-sm">
+                    {/* Mobile compact summary line */}
+                    <div className="lg:hidden text-center text-xs py-1.5 bg-card/50 border-y border-border">
+                        {global.scenarioText} | {global.year}年 {global.month}月 | 접속{' '}
+                        {(global.onlineUserCnt ?? 0).toLocaleString()}명
+                    </div>
+                    {/* Desktop full header */}
+                    <h3 className="hidden lg:block text-center font-bold py-1 text-sm">
                         {global.scenarioText}{' '}
                         {global.serverCnt > 0 && <span className="text-muted-foreground">{global.serverCnt}기</span>}
                     </h3>
-                    <div className="grid grid-cols-4 md:grid-cols-12 text-center text-[11px] border-t border-b border-gray-600 bg-[#111]">
+                    <div className="hidden lg:grid grid-cols-4 md:grid-cols-12 text-center text-[11px] border-t border-b border-gray-600 bg-[#111]">
                         <div
                             className="col-span-4 md:col-span-8 lg:col-span-4 border-r border-b border-gray-600 py-1"
                             style={{ color: 'cyan' }}
@@ -229,7 +235,7 @@ export default function GameDashboard() {
                                 <span style={{ color: 'magenta' }}>진행중인 거래 없음</span>
                             )}
                         </div>
-                        <div className="col-span-6 lg:col-span-4 py-1">
+                        <div className="col-span-4 md:col-span-6 lg:col-span-4 py-1">
                             {global.lastVote ? (
                                 <span style={{ color: 'cyan' }}>
                                     <a href="/vote" className="underline">
@@ -246,7 +252,7 @@ export default function GameDashboard() {
 
             {/* ===== Online nations bar ===== */}
             {global && (
-                <div className="border-t border-gray-600 px-2 py-1 text-xs">
+                <div className="border-t border-gray-600 px-2 py-1 text-xs overflow-x-auto whitespace-nowrap lg:whitespace-normal lg:overflow-visible scrollbar-hide">
                     접속중인 국가:{' '}
                     {global.onlineNations.map((n) => (
                         <span key={n.id} className="mr-2">
@@ -288,19 +294,24 @@ export default function GameDashboard() {
 
             {/* ===== Mobile Tabs ===== */}
             <div className="lg:hidden flex gap-1 p-1 border-t border-b border-border bg-card/50">
-                {mobileTabs.map((tab) => (
-                    <button
-                        key={tab.key}
-                        className={`flex-1 py-1.5 text-xs font-bold text-center rounded-md transition-all duration-150 ${
-                            mobileTab === tab.key
-                                ? 'bg-primary text-white shadow-sm shadow-primary/30'
-                                : 'text-muted-foreground hover:bg-accent'
-                        }`}
-                        onClick={() => setMobileTab(tab.key)}
-                    >
-                        {tab.label}
-                    </button>
-                ))}
+                {mobileTabs.map((tab) => {
+                    const Icon = tab.icon;
+                    return (
+                        <button
+                            key={tab.key}
+                            type="button"
+                            className={`flex-1 py-2 text-xs font-bold text-center rounded-full transition-all duration-150 flex items-center justify-center gap-1 ${
+                                mobileTab === tab.key
+                                    ? 'bg-gradient-to-r from-primary/80 to-primary text-white shadow-md shadow-primary/20'
+                                    : 'bg-card border border-border text-muted-foreground'
+                            }`}
+                            onClick={() => setMobileTab(tab.key)}
+                        >
+                            <Icon className="h-3.5 w-3.5" />
+                            {tab.label}
+                        </button>
+                    );
+                })}
             </div>
 
             <div className="flex flex-col gap-3 pb-4">
@@ -410,7 +421,7 @@ export default function GameDashboard() {
                     <div className="text-center border-t border-b border-border text-xs font-semibold py-1 bg-primary/10 text-primary tracking-wide">
                         내 장수 요약
                     </div>
-                    <div className="grid grid-cols-3 lg:grid-cols-6 text-center text-[11px] border-b border-gray-600">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 text-center text-xs border-b border-gray-600">
                         <div className="border-r border-gray-600/50 py-1">
                             <span className="text-muted-foreground">전투</span>{' '}
                             <span className="text-cyan-400">
@@ -441,22 +452,22 @@ export default function GameDashboard() {
                             <span className="text-yellow-400">{frontInfo.general.honorText}</span>
                         </div>
                     </div>
-                    <div className="grid grid-cols-5 text-center text-[11px] border-b border-gray-600">
-                        <div className="border-r border-gray-600/50 py-1">
+                    <div className="grid grid-cols-2 md:grid-cols-5 text-center text-xs border-b border-gray-600">
+                        <div className="border-r border-gray-600/50 py-1 lg:border-b-0 border-b border-gray-600/30">
                             <span className="text-muted-foreground">숙련</span>{' '}
                             <span className="text-cyan-300">
                                 보{frontInfo.general.dex1} 궁{frontInfo.general.dex2} 기{frontInfo.general.dex3} 공
                                 {frontInfo.general.dex4} 수{frontInfo.general.dex5}
                             </span>
                         </div>
-                        <div className="border-r border-gray-600/50 py-1 col-span-2">
+                        <div className="border-r border-gray-600/50 py-1 lg:col-span-2 lg:border-b-0 border-b border-gray-600/30">
                             <span className="text-muted-foreground">특기</span>{' '}
                             <span className="text-green-300">
                                 {frontInfo.general.personal || '-'} / {frontInfo.general.specialDomestic || '-'} /{' '}
                                 {frontInfo.general.specialWar || '-'}
                             </span>
                         </div>
-                        <div className="border-r border-gray-600/50 py-1">
+                        <div className="border-r border-gray-600/50 py-1 lg:border-b-0 border-b border-gray-600/30">
                             <span className="text-muted-foreground">아이템</span>{' '}
                             <span className="text-yellow-300">
                                 {[
@@ -548,7 +559,7 @@ export default function GameDashboard() {
             <style jsx>{`
                 #container {
                     width: 100%;
-                    max-width: 500px;
+                    max-width: 100%;
                     margin: 0 auto;
                 }
 
