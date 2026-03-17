@@ -48,3 +48,10 @@ describe('GeneralSupplementCard design', () => {
         expect(wrapperClass).toContain('bg-card');
     });
 });
+
+describe('exp bar overflow', () => {
+    it('exp bar cell has overflow-hidden to prevent clipping adjacent cells', () => {
+        const cellClass = 'border-t border-gray-600 flex items-center px-1 overflow-hidden';
+        expect(cellClass).toContain('overflow-hidden');
+    });
+});

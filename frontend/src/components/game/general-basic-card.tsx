@@ -247,7 +247,7 @@ export function GeneralBasicCard({ general, nation, turnTerm, lastExecuted }: Ge
                     Lv.{general.explevel}
                 </div>
                 <div
-                    className="border-t border-gray-600 flex items-center px-1"
+                    className="border-t border-gray-600 flex items-center px-1 overflow-hidden"
                     style={{ gridRow: 8, gridColumn: '3 / 6' }}
                 >
                     <SammoBar height={10} percent={expPercent} />
