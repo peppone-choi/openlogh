@@ -31,9 +31,9 @@ export function NationBasicCard({ nation, global }: NationBasicCardProps) {
 
     return (
         <div
-            className="legacy-bg2 border-r border-b border-gray-600 text-sm"
+            className="bg-card border border-border rounded-lg overflow-hidden text-sm"
             style={{
-                width: 500,
+                maxWidth: 500,
                 display: 'grid',
                 gridTemplateColumns: '7fr 18fr 7fr 18fr',
                 gridTemplateRows: `repeat(10, calc(192px / 10))`,
@@ -41,7 +41,7 @@ export function NationBasicCard({ nation, global }: NationBasicCardProps) {
         >
             {/* Name header */}
             <div
-                className="border-l border-t border-gray-600 text-center font-bold"
+                className="text-center font-bold"
                 style={{
                     gridColumn: '1 / span 4',
                     backgroundColor: nation.color,
@@ -181,7 +181,7 @@ export function NationBasicCard({ nation, global }: NationBasicCardProps) {
 function Head({ children }: { children: React.ReactNode }) {
     return (
         <div
-            className="legacy-bg1 flex items-center justify-center border-l border-t border-gray-600 text-center"
+            className="bg-muted flex items-center justify-center border-t border-border text-center text-muted-foreground text-xs"
             style={{ lineHeight: 'calc(193px / 10)' }}
         >
             {children}
@@ -192,7 +192,7 @@ function Head({ children }: { children: React.ReactNode }) {
 function Body({ wide, style, children }: { wide?: number; style?: React.CSSProperties; children: React.ReactNode }) {
     return (
         <div
-            className="border-t border-gray-600 text-center flex items-center justify-center"
+            className="border-t border-border text-center flex items-center justify-center"
             style={{
                 lineHeight: 'calc(193px / 10)',
                 ...(wide ? { gridColumn: `span ${wide}` } : {}),

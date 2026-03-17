@@ -22,7 +22,7 @@ export function CityBasicCard({ city, region }: CityBasicCardProps) {
 
     return (
         <div
-            className="legacy-bg2 border-r border-b border-gray-600 text-sm"
+            className="bg-card border border-border rounded-lg overflow-hidden text-sm"
             style={{
                 display: 'grid',
                 gridTemplateColumns: '1fr 1fr 1fr 1fr',
@@ -30,7 +30,7 @@ export function CityBasicCard({ city, region }: CityBasicCardProps) {
         >
             {/* City name header */}
             <div
-                className="border-t border-l border-gray-600 font-bold text-center"
+                className="font-bold text-center"
                 style={{
                     gridColumn: '1 / 5',
                     color: textColor,
@@ -43,7 +43,7 @@ export function CityBasicCard({ city, region }: CityBasicCardProps) {
 
             {/* Nation name */}
             <div
-                className="border-t border-l border-gray-600 font-bold text-center"
+                className="border-t border-border/30 font-bold text-center text-[13px]"
                 style={{
                     gridColumn: '1 / 5',
                     color: textColor,
@@ -123,14 +123,14 @@ function StatPanel({
 }) {
     return (
         <div
-            className="border-t border-l border-gray-600"
+            className="border-t border-border"
             style={{
                 display: 'grid',
                 gridTemplateColumns: headRatio ?? '1fr 2fr',
                 ...(colSpan ? { gridColumn: colSpan } : {}),
             }}
         >
-            <div className="legacy-bg1 flex items-center justify-center">{label}</div>
+            <div className="bg-muted flex items-center justify-center text-muted-foreground text-xs">{label}</div>
             <div>{children}</div>
         </div>
     );
@@ -138,8 +138,8 @@ function StatPanel({
 
 function OfficerCell({ label, npc, name }: { label: string; npc: number; name?: string }) {
     return (
-        <div className="border-t border-l border-gray-600" style={{ display: 'grid', gridTemplateColumns: '1fr 2fr' }}>
-            <div className="legacy-bg1 flex items-center justify-center">{label}</div>
+        <div className="border-t border-border" style={{ display: 'grid', gridTemplateColumns: '1fr 2fr' }}>
+            <div className="bg-muted flex items-center justify-center text-muted-foreground text-xs">{label}</div>
             <div className="flex items-center justify-center" style={{ color: getNPCColor(npc) }}>
                 {name ?? '-'}
             </div>
