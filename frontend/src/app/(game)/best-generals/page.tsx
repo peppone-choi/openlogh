@@ -450,129 +450,141 @@ export default function BestGeneralsPage() {
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>슬롯</TableHead>
-                                    <TableHead>아이템</TableHead>
-                                    <TableHead>등급</TableHead>
-                                    <TableHead>보유자</TableHead>
-                                    <TableHead>소속</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {uniqueItems.map((item) => (
-                                    <TableRow key={item.slot}>
-                                        <TableCell className="text-xs text-muted-foreground">
-                                            {item.slotLabel}
-                                        </TableCell>
-                                        <TableCell className="font-medium text-purple-300">{item.itemName}</TableCell>
-                                        <TableCell>
-                                            <Badge variant="outline" className="text-amber-400 border-amber-400/40">
-                                                {item.itemGrade}
-                                            </Badge>
-                                        </TableCell>
-                                        <TableCell>{item.generalName}</TableCell>
-                                        <TableCell>
-                                            <NationBadge name={item.nationName} color={item.nationColor} />
-                                        </TableCell>
+                        <div className="overflow-x-auto">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>슬롯</TableHead>
+                                        <TableHead>아이템</TableHead>
+                                        <TableHead>등급</TableHead>
+                                        <TableHead>보유자</TableHead>
+                                        <TableHead>소속</TableHead>
                                     </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
+                                </TableHeader>
+                                <TableBody>
+                                    {uniqueItems.map((item) => (
+                                        <TableRow key={item.slot}>
+                                            <TableCell className="text-xs text-muted-foreground">
+                                                {item.slotLabel}
+                                            </TableCell>
+                                            <TableCell className="font-medium text-purple-300">
+                                                {item.itemName}
+                                            </TableCell>
+                                            <TableCell>
+                                                <Badge variant="outline" className="text-amber-400 border-amber-400/40">
+                                                    {item.itemGrade}
+                                                </Badge>
+                                            </TableCell>
+                                            <TableCell>{item.generalName}</TableCell>
+                                            <TableCell>
+                                                <NationBadge name={item.nationName} color={item.nationColor} />
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </div>
                     </CardContent>
                 </Card>
             )}
 
             {/* Rankings table */}
-            <Table>
-                <TableHeader>
-                    <TableRow>
-                        <TableHead className="w-12">#</TableHead>
-                        <TableHead>이름</TableHead>
-                        <TableHead>소속</TableHead>
-                        {isStatGroup ? (
-                            <>
-                                <TableHead>통솔</TableHead>
-                                <TableHead>무력</TableHead>
-                                <TableHead>지력</TableHead>
-                                <TableHead>정치</TableHead>
-                                <TableHead>매력</TableHead>
-                                <TableHead>총합</TableHead>
-                            </>
-                        ) : (
-                            <TableHead>{category.label}</TableHead>
-                        )}
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {ranked.map((g, idx) => {
-                        const nation = nationMap.get(g.nationId);
-                        const total = g.leadership + g.strength + g.intel + g.politics + g.charm;
-
-                        return (
-                            <TableRow key={g.id}>
-                                <TableCell>{rankMedal(idx)}</TableCell>
-                                <TableCell className="font-medium">
-                                    <div className="flex items-center gap-2">
-                                        <GeneralPortrait picture={g.picture} name={g.name} size="sm" />
-                                        {g.name}
-                                    </div>
-                                </TableCell>
-                                <TableCell>
-                                    <NationBadge name={nation?.name} color={nation?.color} />
-                                </TableCell>
-                                {isStatGroup ? (
-                                    <>
-                                        <TableCell
-                                            className={categoryKey === 'leadership' ? 'text-amber-400 font-medium' : ''}
-                                        >
-                                            {g.leadership}
-                                        </TableCell>
-                                        <TableCell
-                                            className={categoryKey === 'strength' ? 'text-amber-400 font-medium' : ''}
-                                        >
-                                            {g.strength}
-                                        </TableCell>
-                                        <TableCell
-                                            className={categoryKey === 'intel' ? 'text-amber-400 font-medium' : ''}
-                                        >
-                                            {g.intel}
-                                        </TableCell>
-                                        <TableCell
-                                            className={categoryKey === 'politics' ? 'text-amber-400 font-medium' : ''}
-                                        >
-                                            {g.politics}
-                                        </TableCell>
-                                        <TableCell
-                                            className={categoryKey === 'charm' ? 'text-amber-400 font-medium' : ''}
-                                        >
-                                            {g.charm}
-                                        </TableCell>
-                                        <TableCell
-                                            className={categoryKey === 'total' ? 'text-amber-400 font-medium' : ''}
-                                        >
-                                            {total}
-                                        </TableCell>
-                                    </>
-                                ) : (
-                                    <TableCell className="text-amber-400 font-medium">
-                                        {formatValue(g.__value, category.valueType)}
-                                        {dexLabel(categoryKey, g.__value)}
-                                    </TableCell>
-                                )}
-                            </TableRow>
-                        );
-                    })}
-                    {ranked.length === 0 && (
+            <div className="overflow-x-auto">
+                <Table>
+                    <TableHeader>
                         <TableRow>
-                            <TableCell colSpan={isStatGroup ? 9 : 4} className="text-center text-muted-foreground">
-                                데이터가 없습니다.
-                            </TableCell>
+                            <TableHead className="w-12">#</TableHead>
+                            <TableHead>이름</TableHead>
+                            <TableHead>소속</TableHead>
+                            {isStatGroup ? (
+                                <>
+                                    <TableHead>통솔</TableHead>
+                                    <TableHead>무력</TableHead>
+                                    <TableHead>지력</TableHead>
+                                    <TableHead>정치</TableHead>
+                                    <TableHead>매력</TableHead>
+                                    <TableHead>총합</TableHead>
+                                </>
+                            ) : (
+                                <TableHead>{category.label}</TableHead>
+                            )}
                         </TableRow>
-                    )}
-                </TableBody>
-            </Table>
+                    </TableHeader>
+                    <TableBody>
+                        {ranked.map((g, idx) => {
+                            const nation = nationMap.get(g.nationId);
+                            const total = g.leadership + g.strength + g.intel + g.politics + g.charm;
+
+                            return (
+                                <TableRow key={g.id}>
+                                    <TableCell>{rankMedal(idx)}</TableCell>
+                                    <TableCell className="font-medium">
+                                        <div className="flex items-center gap-2">
+                                            <GeneralPortrait picture={g.picture} name={g.name} size="sm" />
+                                            {g.name}
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>
+                                        <NationBadge name={nation?.name} color={nation?.color} />
+                                    </TableCell>
+                                    {isStatGroup ? (
+                                        <>
+                                            <TableCell
+                                                className={
+                                                    categoryKey === 'leadership' ? 'text-amber-400 font-medium' : ''
+                                                }
+                                            >
+                                                {g.leadership}
+                                            </TableCell>
+                                            <TableCell
+                                                className={
+                                                    categoryKey === 'strength' ? 'text-amber-400 font-medium' : ''
+                                                }
+                                            >
+                                                {g.strength}
+                                            </TableCell>
+                                            <TableCell
+                                                className={categoryKey === 'intel' ? 'text-amber-400 font-medium' : ''}
+                                            >
+                                                {g.intel}
+                                            </TableCell>
+                                            <TableCell
+                                                className={
+                                                    categoryKey === 'politics' ? 'text-amber-400 font-medium' : ''
+                                                }
+                                            >
+                                                {g.politics}
+                                            </TableCell>
+                                            <TableCell
+                                                className={categoryKey === 'charm' ? 'text-amber-400 font-medium' : ''}
+                                            >
+                                                {g.charm}
+                                            </TableCell>
+                                            <TableCell
+                                                className={categoryKey === 'total' ? 'text-amber-400 font-medium' : ''}
+                                            >
+                                                {total}
+                                            </TableCell>
+                                        </>
+                                    ) : (
+                                        <TableCell className="text-amber-400 font-medium">
+                                            {formatValue(g.__value, category.valueType)}
+                                            {dexLabel(categoryKey, g.__value)}
+                                        </TableCell>
+                                    )}
+                                </TableRow>
+                            );
+                        })}
+                        {ranked.length === 0 && (
+                            <TableRow>
+                                <TableCell colSpan={isStatGroup ? 9 : 4} className="text-center text-muted-foreground">
+                                    데이터가 없습니다.
+                                </TableCell>
+                            </TableRow>
+                        )}
+                    </TableBody>
+                </Table>
+            </div>
         </div>
     );
 }

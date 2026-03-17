@@ -54,6 +54,11 @@ export function TopBar({ onMessageClick, onMobileMenuClick }: TopBarProps) {
                 <div className="hidden md:block">
                     <ResourceDisplay gold={myGeneral.gold} rice={myGeneral.rice} crew={myGeneral.crew} />
                 </div>
+                <div className="flex md:hidden items-center gap-1.5 text-[10px]">
+                    <span className="text-yellow-400">{myGeneral.gold.toLocaleString()}</span>
+                    <span className="text-muted-foreground">/</span>
+                    <span className="text-green-400">{myGeneral.rice.toLocaleString()}</span>
+                </div>
 
                 <Button variant="ghost" size="icon" onClick={onMessageClick} aria-label="메시지">
                     <Bell className="h-5 w-5" />

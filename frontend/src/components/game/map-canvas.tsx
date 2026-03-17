@@ -209,7 +209,7 @@ export function MapCanvas({
     return (
         <div
             ref={containerRef}
-            className={`relative text-[14px] text-white ${useResponsive ? 'border border-gray-800 rounded-lg' : 'w-full bg-black'} ${className ?? ''}`}
+            className={`relative text-[14px] text-white overflow-hidden ${useResponsive ? 'border border-gray-800 rounded-lg' : 'w-full bg-black'} ${className ?? ''}`}
             style={outerStyle}
         >
             <div style={innerStyle}>

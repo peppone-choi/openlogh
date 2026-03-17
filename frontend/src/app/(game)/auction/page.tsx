@@ -487,20 +487,22 @@ export default function AuctionPage() {
                             {activeBuyRice.length === 0 && activeOtherResource.length === 0 ? (
                                 <p className="text-xs text-muted-foreground">진행중인 쌀 구매 경매가 없습니다.</p>
                             ) : (
-                                <ResourceAuctionTable
-                                    auctions={[
-                                        ...activeBuyRice,
-                                        ...activeOtherResource.filter((a) => p(a).item === 'rice'),
-                                    ]}
-                                    myId={myGeneral?.id}
-                                    bidAmounts={bidAmounts}
-                                    setBidAmounts={setBidAmounts}
-                                    onBid={handleBid}
-                                    bidding={bidding}
-                                    genMap={genMap}
-                                    unitLabel="쌀"
-                                    bidUnitLabel="금"
-                                />
+                                <div className="overflow-x-auto">
+                                    <ResourceAuctionTable
+                                        auctions={[
+                                            ...activeBuyRice,
+                                            ...activeOtherResource.filter((a) => p(a).item === 'rice'),
+                                        ]}
+                                        myId={myGeneral?.id}
+                                        bidAmounts={bidAmounts}
+                                        setBidAmounts={setBidAmounts}
+                                        onBid={handleBid}
+                                        bidding={bidding}
+                                        genMap={genMap}
+                                        unitLabel="쌀"
+                                        bidUnitLabel="금"
+                                    />
+                                </div>
                             )}
                         </CardContent>
                     </Card>
@@ -514,17 +516,19 @@ export default function AuctionPage() {
                             {activeSellRice.length === 0 ? (
                                 <p className="text-xs text-muted-foreground">진행중인 쌀 판매 경매가 없습니다.</p>
                             ) : (
-                                <ResourceAuctionTable
-                                    auctions={activeSellRice}
-                                    myId={myGeneral?.id}
-                                    bidAmounts={bidAmounts}
-                                    setBidAmounts={setBidAmounts}
-                                    onBid={handleBid}
-                                    bidding={bidding}
-                                    genMap={genMap}
-                                    unitLabel="금"
-                                    bidUnitLabel="쌀"
-                                />
+                                <div className="overflow-x-auto">
+                                    <ResourceAuctionTable
+                                        auctions={activeSellRice}
+                                        myId={myGeneral?.id}
+                                        bidAmounts={bidAmounts}
+                                        setBidAmounts={setBidAmounts}
+                                        onBid={handleBid}
+                                        bidding={bidding}
+                                        genMap={genMap}
+                                        unitLabel="금"
+                                        bidUnitLabel="쌀"
+                                    />
+                                </div>
                             )}
                         </CardContent>
                     </Card>

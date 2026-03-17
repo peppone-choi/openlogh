@@ -390,85 +390,87 @@ export default function BattlePage() {
                             {sortedMilitary.length === 0 ? (
                                 <EmptyState icon={Shield} title="군사 데이터가 없습니다." />
                             ) : (
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead>국가</TableHead>
-                                            <TableHead
-                                                className="cursor-pointer select-none text-right"
-                                                onClick={() => handleSort('totalCrew')}
-                                            >
-                                                총 병력
-                                                <SortIndicator active={sortKey === 'totalCrew'} />
-                                            </TableHead>
-                                            <TableHead
-                                                className="cursor-pointer select-none text-right"
-                                                onClick={() => handleSort('generalCount')}
-                                            >
-                                                장수
-                                                <SortIndicator active={sortKey === 'generalCount'} />
-                                            </TableHead>
-                                            <TableHead
-                                                className="cursor-pointer select-none text-right"
-                                                onClick={() => handleSort('avgTrain')}
-                                            >
-                                                평균훈련
-                                                <SortIndicator active={sortKey === 'avgTrain'} />
-                                            </TableHead>
-                                            <TableHead
-                                                className="cursor-pointer select-none text-right"
-                                                onClick={() => handleSort('avgAtmos')}
-                                            >
-                                                평균사기
-                                                <SortIndicator active={sortKey === 'avgAtmos'} />
-                                            </TableHead>
-                                            <TableHead
-                                                className="cursor-pointer select-none text-right"
-                                                onClick={() => handleSort('totalPower')}
-                                            >
-                                                전투력
-                                                <SortIndicator active={sortKey === 'totalPower'} />
-                                            </TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {sortedMilitary.map((row) => (
-                                            <TableRow key={row.nation.id}>
-                                                <TableCell>
-                                                    <NationBadge name={row.nation.name} color={row.nation.color} />
-                                                </TableCell>
-                                                <TableCell className="text-right">
-                                                    <div className="flex items-center justify-end gap-2">
-                                                        <div className="w-20 h-2 bg-gray-800 rounded-full overflow-hidden">
-                                                            <div
-                                                                className="h-full rounded-full"
-                                                                style={{
-                                                                    width: `${(row.totalCrew / maxCrew) * 100}%`,
-                                                                    backgroundColor: row.nation.color,
-                                                                }}
-                                                            />
-                                                        </div>
-                                                        <span className="w-16 text-right tabular-nums">
-                                                            {row.totalCrew.toLocaleString()}
-                                                        </span>
-                                                    </div>
-                                                </TableCell>
-                                                <TableCell className="text-right tabular-nums">
-                                                    {row.generalCount}명
-                                                </TableCell>
-                                                <TableCell className="text-right tabular-nums">
-                                                    {row.avgTrain}
-                                                </TableCell>
-                                                <TableCell className="text-right tabular-nums">
-                                                    {row.avgAtmos}
-                                                </TableCell>
-                                                <TableCell className="text-right tabular-nums font-bold">
-                                                    {row.totalPower.toLocaleString()}
-                                                </TableCell>
+                                <div className="overflow-x-auto">
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead>국가</TableHead>
+                                                <TableHead
+                                                    className="cursor-pointer select-none text-right"
+                                                    onClick={() => handleSort('totalCrew')}
+                                                >
+                                                    총 병력
+                                                    <SortIndicator active={sortKey === 'totalCrew'} />
+                                                </TableHead>
+                                                <TableHead
+                                                    className="cursor-pointer select-none text-right"
+                                                    onClick={() => handleSort('generalCount')}
+                                                >
+                                                    장수
+                                                    <SortIndicator active={sortKey === 'generalCount'} />
+                                                </TableHead>
+                                                <TableHead
+                                                    className="cursor-pointer select-none text-right"
+                                                    onClick={() => handleSort('avgTrain')}
+                                                >
+                                                    평균훈련
+                                                    <SortIndicator active={sortKey === 'avgTrain'} />
+                                                </TableHead>
+                                                <TableHead
+                                                    className="cursor-pointer select-none text-right"
+                                                    onClick={() => handleSort('avgAtmos')}
+                                                >
+                                                    평균사기
+                                                    <SortIndicator active={sortKey === 'avgAtmos'} />
+                                                </TableHead>
+                                                <TableHead
+                                                    className="cursor-pointer select-none text-right"
+                                                    onClick={() => handleSort('totalPower')}
+                                                >
+                                                    전투력
+                                                    <SortIndicator active={sortKey === 'totalPower'} />
+                                                </TableHead>
                                             </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {sortedMilitary.map((row) => (
+                                                <TableRow key={row.nation.id}>
+                                                    <TableCell>
+                                                        <NationBadge name={row.nation.name} color={row.nation.color} />
+                                                    </TableCell>
+                                                    <TableCell className="text-right">
+                                                        <div className="flex items-center justify-end gap-2">
+                                                            <div className="w-20 h-2 bg-gray-800 rounded-full overflow-hidden">
+                                                                <div
+                                                                    className="h-full rounded-full"
+                                                                    style={{
+                                                                        width: `${(row.totalCrew / maxCrew) * 100}%`,
+                                                                        backgroundColor: row.nation.color,
+                                                                    }}
+                                                                />
+                                                            </div>
+                                                            <span className="w-16 text-right tabular-nums">
+                                                                {row.totalCrew.toLocaleString()}
+                                                            </span>
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell className="text-right tabular-nums">
+                                                        {row.generalCount}명
+                                                    </TableCell>
+                                                    <TableCell className="text-right tabular-nums">
+                                                        {row.avgTrain}
+                                                    </TableCell>
+                                                    <TableCell className="text-right tabular-nums">
+                                                        {row.avgAtmos}
+                                                    </TableCell>
+                                                    <TableCell className="text-right tabular-nums font-bold">
+                                                        {row.totalPower.toLocaleString()}
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                </div>
                             )}
                         </CardContent>
                     </Card>
@@ -537,34 +539,36 @@ export default function BattlePage() {
                                                 <div className="text-xs text-muted-foreground mb-1">
                                                     주둔 장수 ({cityGenerals.length}명)
                                                 </div>
-                                                <Table>
-                                                    <TableHeader>
-                                                        <TableRow>
-                                                            <TableHead>이름</TableHead>
-                                                            <TableHead className="text-right">병력</TableHead>
-                                                            <TableHead className="text-right">훈련</TableHead>
-                                                            <TableHead className="text-right">사기</TableHead>
-                                                        </TableRow>
-                                                    </TableHeader>
-                                                    <TableBody>
-                                                        {cityGenerals.map((g) => (
-                                                            <TableRow key={g.id}>
-                                                                <TableCell className="py-1">
-                                                                    <span className="text-sm">{g.name}</span>
-                                                                </TableCell>
-                                                                <TableCell className="text-right py-1 tabular-nums">
-                                                                    {g.crew.toLocaleString()}
-                                                                </TableCell>
-                                                                <TableCell className="text-right py-1 tabular-nums">
-                                                                    {g.train}
-                                                                </TableCell>
-                                                                <TableCell className="text-right py-1 tabular-nums">
-                                                                    {g.atmos}
-                                                                </TableCell>
+                                                <div className="overflow-x-auto">
+                                                    <Table>
+                                                        <TableHeader>
+                                                            <TableRow>
+                                                                <TableHead>이름</TableHead>
+                                                                <TableHead className="text-right">병력</TableHead>
+                                                                <TableHead className="text-right">훈련</TableHead>
+                                                                <TableHead className="text-right">사기</TableHead>
                                                             </TableRow>
-                                                        ))}
-                                                    </TableBody>
-                                                </Table>
+                                                        </TableHeader>
+                                                        <TableBody>
+                                                            {cityGenerals.map((g) => (
+                                                                <TableRow key={g.id}>
+                                                                    <TableCell className="py-1">
+                                                                        <span className="text-sm">{g.name}</span>
+                                                                    </TableCell>
+                                                                    <TableCell className="text-right py-1 tabular-nums">
+                                                                        {g.crew.toLocaleString()}
+                                                                    </TableCell>
+                                                                    <TableCell className="text-right py-1 tabular-nums">
+                                                                        {g.train}
+                                                                    </TableCell>
+                                                                    <TableCell className="text-right py-1 tabular-nums">
+                                                                        {g.atmos}
+                                                                    </TableCell>
+                                                                </TableRow>
+                                                            ))}
+                                                        </TableBody>
+                                                    </Table>
+                                                </div>
                                             </div>
                                         )}
                                     </CardContent>

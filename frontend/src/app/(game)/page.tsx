@@ -13,7 +13,6 @@ import { CityBasicCard } from '@/components/game/city-basic-card';
 import { NationBasicCard } from '@/components/game/nation-basic-card';
 import { GeneralBasicCard } from '@/components/game/general-basic-card';
 import { MainControlBar } from '@/components/game/main-control-bar';
-import { GameBottomBar } from '@/components/game/game-bottom-bar';
 import { LoadingState } from '@/components/game/loading-state';
 import { Button } from '@/components/ui/button';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
@@ -144,7 +143,7 @@ export default function GameDashboard() {
     const mapCode = (currentWorld.config as Record<string, string>)?.mapCode ?? 'che';
 
     return (
-        <div id="container" className="pb-16 lg:pb-0">
+        <div id="container">
             {/* ===== GameInfo header (legacy GameInfo.vue parity) ===== */}
             {global && (
                 <>
@@ -152,34 +151,34 @@ export default function GameDashboard() {
                         {global.scenarioText}{' '}
                         {global.serverCnt > 0 && <span className="text-muted-foreground">{global.serverCnt}기</span>}
                     </h3>
-                    <div className="grid grid-cols-12 text-center text-[11px] border-t border-b border-gray-600 bg-[#111]">
+                    <div className="grid grid-cols-4 md:grid-cols-12 text-center text-[11px] border-t border-b border-gray-600 bg-[#111]">
                         <div
-                            className="col-span-8 lg:col-span-4 border-r border-b border-gray-600 py-1"
+                            className="col-span-4 md:col-span-8 lg:col-span-4 border-r border-b border-gray-600 py-1"
                             style={{ color: 'cyan' }}
                         >
                             {global.scenarioText}
                         </div>
                         <div
-                            className="col-span-4 lg:col-span-2 border-r border-b border-gray-600 py-1"
+                            className="col-span-2 md:col-span-4 lg:col-span-2 border-r border-b border-gray-600 py-1"
                             style={{ color: 'cyan' }}
                         >
                             NPC 수, 상성: {global.extendedGeneral ? '확장' : '표준'}{' '}
                             {global.isFiction ? '가상' : '사실'}
                         </div>
                         <div
-                            className="col-span-4 lg:col-span-2 border-r border-b border-gray-600 py-1"
+                            className="col-span-2 md:col-span-4 lg:col-span-2 border-r border-b border-gray-600 py-1"
                             style={{ color: 'cyan' }}
                         >
                             NPC선택: {['불가능', '가능', '선택 생성'][global.npcMode] ?? '불가능'}
                         </div>
                         <div
-                            className="col-span-4 lg:col-span-2 border-r border-b border-gray-600 py-1"
+                            className="col-span-2 md:col-span-4 lg:col-span-2 border-r border-b border-gray-600 py-1"
                             style={{ color: 'cyan' }}
                         >
                             토너먼트: 경기당 {Math.max(1, Math.round((global.turnTerm * 5) / 20))}분
                         </div>
                         <div
-                            className="col-span-4 lg:col-span-2 border-b border-gray-600 py-1"
+                            className="col-span-2 md:col-span-4 lg:col-span-2 border-b border-gray-600 py-1"
                             style={{ color: 'cyan' }}
                         >
                             기타 설정:{' '}
@@ -188,22 +187,22 @@ export default function GameDashboard() {
                             )}
                         </div>
 
-                        <div className="col-span-8 lg:col-span-4 border-r border-b border-gray-600 py-1">
+                        <div className="col-span-4 md:col-span-8 lg:col-span-4 border-r border-b border-gray-600 py-1">
                             현재: {global.year}年 {global.month}月 ({global.turnTerm}분 턴 서버)
                         </div>
-                        <div className="col-span-4 lg:col-span-2 border-r border-b border-gray-600 py-1">
+                        <div className="col-span-2 md:col-span-4 lg:col-span-2 border-r border-b border-gray-600 py-1">
                             접속자: {(global.onlineUserCnt ?? 0).toLocaleString()}명
                         </div>
-                        <div className="col-span-4 lg:col-span-2 border-r border-b border-gray-600 py-1">
+                        <div className="col-span-2 md:col-span-4 lg:col-span-2 border-r border-b border-gray-600 py-1">
                             턴당 갱신횟수: {global.apiLimit?.toLocaleString()}회
                         </div>
-                        <div className="col-span-8 lg:col-span-4 border-b border-gray-600 py-1">
+                        <div className="col-span-4 md:col-span-8 lg:col-span-4 border-b border-gray-600 py-1">
                             등록 장수: 유저 {genCounts.user.toLocaleString()} /{' '}
                             {(global.generalCntLimit ?? Infinity).toLocaleString()} +{' '}
                             <span style={{ color: 'cyan' }}>NPC {genCounts.npc.toLocaleString()} 명</span>
                         </div>
 
-                        <div className="col-span-6 lg:col-span-4 border-r border-gray-600 py-1">
+                        <div className="col-span-4 md:col-span-6 lg:col-span-4 border-r border-gray-600 py-1">
                             {global.isTournamentActive ? (
                                 <span style={{ color: 'cyan' }}>
                                     ↑{formatTournamentType(global.tournamentType)} 진행중
@@ -214,12 +213,12 @@ export default function GameDashboard() {
                             )}
                         </div>
                         <div
-                            className="col-span-6 lg:col-span-2 border-r border-gray-600 py-1"
+                            className="col-span-2 md:col-span-6 lg:col-span-2 border-r border-gray-600 py-1"
                             style={{ color: global.isLocked ? 'magenta' : 'cyan' }}
                         >
                             동작 시각: {global.lastExecuted?.substring(5) ?? '-'}
                         </div>
-                        <div className="col-span-6 lg:col-span-2 border-r border-gray-600 py-1">
+                        <div className="col-span-2 md:col-span-6 lg:col-span-2 border-r border-gray-600 py-1">
                             {global.auctionCount ? (
                                 <span style={{ color: 'cyan' }}>
                                     <a href="/auction" className="underline">
@@ -544,9 +543,6 @@ export default function GameDashboard() {
                     </div>
                 </div>
             )}
-
-            {/* ===== Mobile bottom bar ===== */}
-            <GameBottomBar onRefresh={loadFrontInfo} />
 
             {/* ===== Responsive grid styles for ingameBoard ===== */}
             <style jsx>{`

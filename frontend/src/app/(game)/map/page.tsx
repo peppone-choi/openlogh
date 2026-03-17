@@ -437,12 +437,12 @@ export default function MapPage() {
     };
 
     return (
-        <Card className="w-full max-w-[750px] mx-auto">
+        <Card className="w-full max-w-[750px] mx-auto overflow-hidden">
             <CardHeader className="pb-2">
                 <CardTitle className="text-lg">{serverName} 현황</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-                <div className="w-full max-w-[700px] mx-auto">
+                <div className="w-full max-w-[700px] mx-auto overflow-hidden">
                     <MapCanvas
                         cities={renderCities}
                         mapCode={mapCode}
@@ -475,7 +475,7 @@ export default function MapPage() {
                     />
                 </div>
 
-                <div className="mx-auto flex w-full max-w-[700px] flex-wrap items-center gap-1.5 text-xs">
+                <div className="mx-auto flex w-full max-w-[700px] flex-wrap items-center gap-1.5 text-xs px-1">
                     <span className="text-muted-foreground">테마</span>
                     <select
                         className="h-7 rounded border border-border bg-background px-1.5 text-xs"

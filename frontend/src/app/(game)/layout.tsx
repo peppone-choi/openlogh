@@ -14,6 +14,7 @@ import { AppSidebar } from '@/components/app-sidebar';
 import { TopBar } from '@/components/top-bar';
 import { MobileMenuSheet } from '@/components/mobile-menu-sheet';
 import { ResponsiveSheet } from '@/components/responsive-sheet';
+import { GameBottomBar } from '@/components/game/game-bottom-bar';
 
 type NavRequire = 'nation' | 'secret';
 
@@ -211,7 +212,7 @@ export default function GameLayout({ children }: { children: React.ReactNode }) 
                     onMessageClick={() => setMessageSheetOpen(true)}
                     onMobileMenuClick={() => setMobileMenuOpen(true)}
                 />
-                <main className="flex flex-1 flex-col gap-4 px-2 py-4">{children}</main>
+                <main className="flex flex-1 flex-col gap-4 px-2 py-4 pb-16 lg:pb-4">{children}</main>
             </SidebarInset>
 
             <ResponsiveSheet open={messageSheetOpen} onOpenChange={setMessageSheetOpen} title="메시지">
@@ -221,6 +222,8 @@ export default function GameLayout({ children }: { children: React.ReactNode }) 
             <MobileMenuSheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
                 <AppSidebar />
             </MobileMenuSheet>
+
+            <GameBottomBar />
 
             <Toaster position="top-right" theme="dark" />
         </SidebarProvider>

@@ -693,6 +693,14 @@
     .general-select-card {
         width: calc(50% - 6px);
     }
+
+    [data-slot='card-content'] {
+        padding: 10px;
+    }
+
+    [data-slot='button'] {
+        min-height: 44px;
+    }
 }
 
 @media (max-width: 480px) {
@@ -705,10 +713,18 @@
     }
 
     [data-slot='card-content'] {
-        padding: 4px;
+        padding: 8px;
     }
 
     [data-slot='card-header'] {
-        padding: 0 4px;
+        padding: 0 8px;
+        min-height: 44px;
+    }
+}
+
+/* ── Mobile Utilities ── */
+@layer utilities {
+    .mobile-safe-bottom {
+        padding-bottom: env(safe-area-inset-bottom, 0);
     }
 }

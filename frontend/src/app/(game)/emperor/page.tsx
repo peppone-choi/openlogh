@@ -407,46 +407,48 @@ export default function EmperorPage() {
                     <CardTitle className="text-base">국가 작위 현황</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>국가</TableHead>
-                                <TableHead>레벨</TableHead>
-                                <TableHead>칭호</TableHead>
-                                <TableHead>성향</TableHead>
-                                <TableHead className="text-right">국력</TableHead>
-                                <TableHead className="text-right">장수</TableHead>
-                                <TableHead className="text-right">속령</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {[...nations]
-                                .sort((a, b) => b.level - a.level || b.power - a.power)
-                                .map((n) => (
-                                    <TableRow key={n.id}>
-                                        <TableCell>
-                                            <NationBadge name={n.name} color={n.color} />
-                                        </TableCell>
-                                        <TableCell>
-                                            <Badge variant="outline">{n.level}</Badge>
-                                        </TableCell>
-                                        <TableCell className="text-muted-foreground">
-                                            {getNationLevelLabel(n.level, n.typeCode)}
-                                        </TableCell>
-                                        <TableCell>{getNationTypeLabel(n.typeCode)}</TableCell>
-                                        <TableCell className="text-right tabular-nums">
-                                            {n.power.toLocaleString()}
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            {generals.filter((g) => g.nationId === n.id).length}
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            {cities.filter((c) => c.nationId === n.id).length}
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                        </TableBody>
-                    </Table>
+                    <div className="overflow-x-auto">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>국가</TableHead>
+                                    <TableHead>레벨</TableHead>
+                                    <TableHead>칭호</TableHead>
+                                    <TableHead>성향</TableHead>
+                                    <TableHead className="text-right">국력</TableHead>
+                                    <TableHead className="text-right">장수</TableHead>
+                                    <TableHead className="text-right">속령</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {[...nations]
+                                    .sort((a, b) => b.level - a.level || b.power - a.power)
+                                    .map((n) => (
+                                        <TableRow key={n.id}>
+                                            <TableCell>
+                                                <NationBadge name={n.name} color={n.color} />
+                                            </TableCell>
+                                            <TableCell>
+                                                <Badge variant="outline">{n.level}</Badge>
+                                            </TableCell>
+                                            <TableCell className="text-muted-foreground">
+                                                {getNationLevelLabel(n.level, n.typeCode)}
+                                            </TableCell>
+                                            <TableCell>{getNationTypeLabel(n.typeCode)}</TableCell>
+                                            <TableCell className="text-right tabular-nums">
+                                                {n.power.toLocaleString()}
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                {generals.filter((g) => g.nationId === n.id).length}
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                {cities.filter((c) => c.nationId === n.id).length}
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                            </TableBody>
+                        </Table>
+                    </div>
                 </CardContent>
             </Card>
 
@@ -492,28 +494,30 @@ export default function EmperorPage() {
                             <p className="text-sm text-muted-foreground">황제 재위 이력 데이터가 없습니다.</p>
                         ) : (
                             <div className="max-h-[400px] overflow-y-auto">
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead>국가</TableHead>
-                                            <TableHead>황제명</TableHead>
-                                            <TableHead>성향</TableHead>
-                                            <TableHead>재위 기간</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {emperorHistory.map((row, idx) => (
-                                            <TableRow key={`${row.nationName}-${row.emperorName}-${idx}`}>
-                                                <TableCell>{row.nationName}</TableCell>
-                                                <TableCell>{row.emperorName}</TableCell>
-                                                <TableCell>{getNationTypeLabel(row.typeCode)}</TableCell>
-                                                <TableCell className="text-xs text-muted-foreground">
-                                                    {row.reign}
-                                                </TableCell>
+                                <div className="overflow-x-auto">
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead>국가</TableHead>
+                                                <TableHead>황제명</TableHead>
+                                                <TableHead>성향</TableHead>
+                                                <TableHead>재위 기간</TableHead>
                                             </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {emperorHistory.map((row, idx) => (
+                                                <TableRow key={`${row.nationName}-${row.emperorName}-${idx}`}>
+                                                    <TableCell>{row.nationName}</TableCell>
+                                                    <TableCell>{row.emperorName}</TableCell>
+                                                    <TableCell>{getNationTypeLabel(row.typeCode)}</TableCell>
+                                                    <TableCell className="text-xs text-muted-foreground">
+                                                        {row.reign}
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                </div>
                             </div>
                         )}
                     </CardContent>
@@ -602,30 +606,32 @@ export default function EmperorPage() {
                             <h4 className="text-sm font-semibold">
                                 {yearbook.year}년 {yearbook.month}월 현황
                             </h4>
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>국가</TableHead>
-                                        <TableHead className="text-right">속령</TableHead>
-                                        <TableHead className="text-right">장수</TableHead>
-                                        <TableHead>도시</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {yearbook.nations.map((yn) => (
-                                        <TableRow key={yn.id}>
-                                            <TableCell>
-                                                <NationBadge name={yn.name} color={yn.color} />
-                                            </TableCell>
-                                            <TableCell className="text-right">{yn.territoryCount}</TableCell>
-                                            <TableCell className="text-right">{yn.generalCount ?? '-'}</TableCell>
-                                            <TableCell className="text-xs text-muted-foreground">
-                                                {yn.cities.join(', ')}
-                                            </TableCell>
+                            <div className="overflow-x-auto">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>국가</TableHead>
+                                            <TableHead className="text-right">속령</TableHead>
+                                            <TableHead className="text-right">장수</TableHead>
+                                            <TableHead>도시</TableHead>
                                         </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {yearbook.nations.map((yn) => (
+                                            <TableRow key={yn.id}>
+                                                <TableCell>
+                                                    <NationBadge name={yn.name} color={yn.color} />
+                                                </TableCell>
+                                                <TableCell className="text-right">{yn.territoryCount}</TableCell>
+                                                <TableCell className="text-right">{yn.generalCount ?? '-'}</TableCell>
+                                                <TableCell className="text-xs text-muted-foreground">
+                                                    {yn.cities.join(', ')}
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </div>
                             <div className="space-y-2">
                                 <h5 className="text-xs font-semibold text-amber-400">중원 정세</h5>
                                 {yearbook.globalHistory.length === 0 ? (

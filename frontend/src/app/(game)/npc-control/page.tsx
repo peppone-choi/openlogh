@@ -831,44 +831,46 @@ export default function NpcPage() {
                     {npcGenerals.length === 0 ? (
                         <EmptyState icon={Bot} title="관리 가능한 NPC 장수가 없습니다." />
                     ) : (
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>이름</TableHead>
-                                    <TableHead>도시</TableHead>
-                                    <TableHead className="text-right">병력</TableHead>
-                                    <TableHead>병종</TableHead>
-                                    <TableHead className="text-right">훈련</TableHead>
-                                    <TableHead className="text-right">사기</TableHead>
-                                    <TableHead>NPC</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {npcGenerals.map((g) => {
-                                    const city = cityMap.get(g.cityId);
-                                    return (
-                                        <TableRow key={g.id}>
-                                            <TableCell className="font-medium">
-                                                <div className="flex items-center gap-2">
-                                                    <GeneralPortrait picture={g.picture} name={g.name} size="sm" />
-                                                    {g.name}
-                                                </div>
-                                            </TableCell>
-                                            <TableCell>{city?.name ?? '-'}</TableCell>
-                                            <TableCell className="text-right tabular-nums">
-                                                {g.crew.toLocaleString()}
-                                            </TableCell>
-                                            <TableCell>{CREW_TYPE_NAMES[g.crewType] ?? g.crewType}</TableCell>
-                                            <TableCell className="text-right tabular-nums">{g.train}</TableCell>
-                                            <TableCell className="text-right tabular-nums">{g.atmos}</TableCell>
-                                            <TableCell>
-                                                <Badge variant="secondary">{g.npcState}</Badge>
-                                            </TableCell>
-                                        </TableRow>
-                                    );
-                                })}
-                            </TableBody>
-                        </Table>
+                        <div className="overflow-x-auto">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>이름</TableHead>
+                                        <TableHead>도시</TableHead>
+                                        <TableHead className="text-right">병력</TableHead>
+                                        <TableHead>병종</TableHead>
+                                        <TableHead className="text-right">훈련</TableHead>
+                                        <TableHead className="text-right">사기</TableHead>
+                                        <TableHead>NPC</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {npcGenerals.map((g) => {
+                                        const city = cityMap.get(g.cityId);
+                                        return (
+                                            <TableRow key={g.id}>
+                                                <TableCell className="font-medium">
+                                                    <div className="flex items-center gap-2">
+                                                        <GeneralPortrait picture={g.picture} name={g.name} size="sm" />
+                                                        {g.name}
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell>{city?.name ?? '-'}</TableCell>
+                                                <TableCell className="text-right tabular-nums">
+                                                    {g.crew.toLocaleString()}
+                                                </TableCell>
+                                                <TableCell>{CREW_TYPE_NAMES[g.crewType] ?? g.crewType}</TableCell>
+                                                <TableCell className="text-right tabular-nums">{g.train}</TableCell>
+                                                <TableCell className="text-right tabular-nums">{g.atmos}</TableCell>
+                                                <TableCell>
+                                                    <Badge variant="secondary">{g.npcState}</Badge>
+                                                </TableCell>
+                                            </TableRow>
+                                        );
+                                    })}
+                                </TableBody>
+                            </Table>
+                        </div>
                     )}
                 </TabsContent>
 
