@@ -14,6 +14,10 @@ interface NationTurnRepository : JpaRepository<NationTurn, Long> {
     fun deleteByWorldId(worldId: Long)
 
     @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("DELETE FROM NationTurn n WHERE n.nationId = :nationId")
+    fun deleteByNationId(nationId: Long)
+
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("DELETE FROM NationTurn n WHERE n.nationId = :nationId AND n.officerLevel = :officerLevel")
     fun deleteByNationIdAndOfficerLevel(nationId: Long, officerLevel: Short)
 

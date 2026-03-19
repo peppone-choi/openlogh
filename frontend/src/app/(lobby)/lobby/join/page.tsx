@@ -279,7 +279,7 @@ function LobbyJoinPageContent() {
 
     // Nations with scout messages for recruitment display
     const nationsWithScout = useMemo(() => {
-        return nations.filter((n) => scoutMessages[n.id] && scoutMessages[n.id].trim().length > 0);
+        return nations.filter((n) => n.level > 0 && scoutMessages[n.id] && scoutMessages[n.id].trim().length > 0);
     }, [nations, scoutMessages]);
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -430,11 +430,13 @@ function LobbyJoinPageContent() {
                                 className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm"
                             >
                                 <option value={0}>재야 (무소속)</option>
-                                {nations.map((n) => (
-                                    <option key={n.id} value={n.id}>
-                                        {n.name}
-                                    </option>
-                                ))}
+                                {nations
+                                    .filter((n) => n.level > 0)
+                                    .map((n) => (
+                                        <option key={n.id} value={n.id}>
+                                            {n.name}
+                                        </option>
+                                    ))}
                             </select>
                             <p className="text-xs text-muted-foreground">
                                 재야로 시작하면 게임 내에서 건국/거병/임관이 가능합니다.

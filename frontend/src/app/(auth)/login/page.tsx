@@ -113,12 +113,8 @@ function LoginPageContent() {
     const login = useAuthStore((s) => s.login);
     const loginWithToken = useAuthStore((s) => s.loginWithToken);
     const verifyOtp = useAuthStore((s) => s.verifyOtp);
-    const registerUser = useAuthStore((s) => s.register);
     const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
     const isInitialized = useAuthStore((s) => s.isInitialized);
-    const [registerMode, setRegisterMode] = useState(false);
-    const [displayName, setDisplayName] = useState('');
-    const [quickRegistering, setQuickRegistering] = useState(false);
     const [autoLogging, setAutoLogging] = useState(false);
 
     // OTP state
@@ -312,36 +308,6 @@ function LoginPageContent() {
         }
     };
 
-    // Legacy parity: "가입 & 로그인" combined button from core2026 HomeView
-    const handleQuickRegister = async () => {
-        const values = getValues();
-        if (!values.loginId || values.loginId.length < 4) {
-            toast.error('아이디는 4자 이상이어야 합니다');
-            return;
-        }
-        if (!values.password || values.password.length < 6) {
-            toast.error('비밀번호는 6자 이상이어야 합니다');
-            return;
-        }
-        if (registerMode) {
-            if (!displayName || displayName.length < 2) {
-                toast.error('닉네임은 2자 이상이어야 합니다');
-                return;
-            }
-            setQuickRegistering(true);
-            try {
-                await registerUser(values.loginId, displayName, values.password);
-                router.push('/lobby');
-            } catch (err: unknown) {
-                toast.error(extractAuthErrorMessage(err, '가입에 실패했습니다'));
-            } finally {
-                setQuickRegistering(false);
-            }
-        } else {
-            setRegisterMode(true);
-        }
-    };
-
     return (
         <>
             <Card className="w-full max-w-md p-8">
@@ -376,33 +342,11 @@ function LoginPageContent() {
                                 <p className="mt-1 text-sm text-destructive">{errors.password.message}</p>
                             )}
                         </div>
-                        {registerMode && (
-                            <div>
-                                <label
-                                    htmlFor="quick-display-name"
-                                    className="mb-1 block text-sm text-muted-foreground"
-                                >
-                                    닉네임
-                                </label>
-                                <Input
-                                    id="quick-display-name"
-                                    value={displayName}
-                                    onChange={(e) => setDisplayName(e.target.value)}
-                                    placeholder="닉네임을 입력하세요"
-                                />
-                            </div>
-                        )}
                         <div className="flex gap-2 pt-1">
-                            <Button
-                                type="button"
-                                variant="secondary"
-                                disabled={isSubmitting || quickRegistering}
-                                className="flex-1"
-                                onClick={handleQuickRegister}
-                            >
-                                {quickRegistering ? '가입 중...' : registerMode ? '가입 확인' : '가입'}
+                            <Button type="button" variant="secondary" className="flex-1" asChild>
+                                <Link href="/register">회원가입</Link>
                             </Button>
-                            <Button type="submit" disabled={isSubmitting || quickRegistering} className="flex-[2]">
+                            <Button type="submit" disabled={isSubmitting} className="flex-[2]">
                                 {isSubmitting ? '로그인 중...' : '로그인'}
                             </Button>
                         </div>
@@ -435,10 +379,6 @@ function LoginPageContent() {
                             </Button>
                         </div>
                     )}
-
-                    <p className="mt-4 text-center text-xs text-muted-foreground">
-                        가입 버튼으로 바로 계정을 생성할 수 있습니다.
-                    </p>
                 </CardContent>
             </Card>
             <ServerStatusCard />

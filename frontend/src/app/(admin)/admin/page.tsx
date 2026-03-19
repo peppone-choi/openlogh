@@ -9,24 +9,43 @@ import {
     Play,
     Pause,
     RotateCcw,
+    RotateCw,
     MessageSquarePlus,
     Info,
     Zap,
     Server,
     AlertTriangle,
     GitBranch,
+    Clock,
+    Coins,
+    Wheat,
+    Timer,
+    Gavel,
+    Lock,
+    Unlock,
+    Activity,
 } from 'lucide-react';
 import { PageHeader } from '@/components/game/page-header';
 import { LoadingState } from '@/components/game/loading-state';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { adminApi, adminEventApi, worldApi, scenarioApi, gameVersionApi } from '@/lib/gameApi';
+import { adminApi, adminEventApi, worldApi, scenarioApi, gameVersionApi, turnApi } from '@/lib/gameApi';
 import { toast } from 'sonner';
 import type { WorldState, Scenario, AdminDashboard } from '@/types';
 import { useAdminWorld } from '@/contexts/AdminWorldContext';
+
+const TURN_PRESETS = [1, 2, 5, 10, 20, 30, 60, 120];
+
+const DAEMON_STATE_CONFIG: Record<string, { label: string; color: string; icon: typeof Activity }> = {
+    IDLE: { label: '대기', color: 'bg-green-500/20 text-green-400 border-green-500/40', icon: Activity },
+    RUNNING: { label: '실행중', color: 'bg-blue-500/20 text-blue-400 border-blue-500/40', icon: RotateCw },
+    PAUSED: { label: '일시정지', color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/40', icon: Pause },
+    FLUSHING: { label: '정리중', color: 'bg-orange-500/20 text-orange-400 border-orange-500/40', icon: RotateCw },
+    STOPPING: { label: '중지중', color: 'bg-red-500/20 text-red-400 border-red-500/40', icon: Pause },
+};
 
 export default function AdminDashboardPage() {
     const { worldId, refreshWorlds: refreshWorldsContext } = useAdminWorld();
@@ -48,6 +67,20 @@ export default function AdminDashboardPage() {
     const [eventLoading, setEventLoading] = useState<string | null>(null);
     const [eventLogMsg, setEventLogMsg] = useState('');
     const [eventDeleteId, setEventDeleteId] = useState('');
+
+    const [daemonState, setDaemonState] = useState<string>('UNKNOWN');
+    const [daemonReason, setDaemonReason] = useState<string>('');
+    const [daemonLoading, setDaemonLoading] = useState(false);
+    const [lastTurnTime, setLastTurnTime] = useState('');
+    const [customTurnTerm, setCustomTurnTerm] = useState('');
+    const [year, setYear] = useState('');
+    const [month, setMonth] = useState('');
+    const [startYear, setStartYear] = useState('');
+    const [goldAmount, setGoldAmount] = useState('');
+    const [riceAmount, setRiceAmount] = useState('');
+    const [distributeTarget, setDistributeTarget] = useState<'all' | 'nations'>('all');
+    const [auctionSyncEnabled, setAuctionSyncEnabled] = useState(false);
+    const [auctionCloseMinutes, setAuctionCloseMinutes] = useState('60');
 
     // Global (gateway) system flags
     const [allowLogin, setAllowLogin] = useState<boolean | null>(null);
@@ -97,6 +130,125 @@ export default function AdminDashboardPage() {
         name: string;
     } | null>(null);
     const [resetScenario, setResetScenario] = useState('');
+
+    const fetchDaemonStatus = useCallback(async () => {
+        try {
+            const { data } = await turnApi.getStatus();
+            setDaemonState(data.state ?? 'UNKNOWN');
+            setDaemonReason(data.reason ?? '');
+        } catch {
+            setDaemonState('UNREACHABLE');
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchDaemonStatus();
+        const interval = setInterval(fetchDaemonStatus, 5000);
+        return () => clearInterval(interval);
+    }, [fetchDaemonStatus]);
+
+    const handleDaemonAction = useCallback(
+        async (action: 'run' | 'pause' | 'resume') => {
+            setDaemonLoading(true);
+            try {
+                if (action === 'run') {
+                    const { data } = await turnApi.run();
+                    toast.success(data.result === 'triggered' ? '턴 실행 트리거됨' : `결과: ${data.result}`);
+                } else if (action === 'pause') {
+                    await turnApi.pause();
+                    toast.success('턴 데몬 일시정지됨');
+                } else {
+                    await turnApi.resume();
+                    toast.success('턴 데몬 재개됨');
+                }
+                await fetchDaemonStatus();
+            } catch {
+                toast.error('턴 데몬 제어 실패');
+            } finally {
+                setDaemonLoading(false);
+            }
+        },
+        [fetchDaemonStatus]
+    );
+
+    const handleTimeSubmit = useCallback(async () => {
+        try {
+            await adminApi.timeControl(
+                {
+                    year: year ? Number(year) : undefined,
+                    month: month ? Number(month) : undefined,
+                    startYear: startYear ? Number(startYear) : undefined,
+                    locked,
+                },
+                worldId
+            );
+            toast.success('시간 설정이 변경되었습니다.');
+        } catch {
+            toast.error('변경 실패');
+        }
+    }, [year, month, startYear, locked, worldId]);
+
+    const handleTurnTermChange = useCallback(
+        async (minutes: number) => {
+            try {
+                await adminApi.timeControl({ turnTerm: minutes }, worldId);
+                setTurnTerm(String(minutes));
+                toast.success(`턴 시간이 ${minutes}분으로 변경되었습니다.`);
+            } catch {
+                toast.error('턴 시간 변경 실패');
+            }
+        },
+        [worldId]
+    );
+
+    const handleCustomTurnTerm = useCallback(async () => {
+        const minutes = Number(customTurnTerm);
+        if (!minutes || minutes < 1 || minutes > 1440) {
+            toast.error('1~1440분 사이의 값을 입력하세요.');
+            return;
+        }
+        await handleTurnTermChange(minutes);
+        setCustomTurnTerm('');
+    }, [customTurnTerm, handleTurnTermChange]);
+
+    const handleDistribute = useCallback(async () => {
+        const gold = Number(goldAmount) || 0;
+        const rice = Number(riceAmount) || 0;
+        if (gold === 0 && rice === 0) {
+            toast.error('금 또는 쌀 수량을 입력하세요.');
+            return;
+        }
+        try {
+            await adminApi.timeControl(
+                {
+                    distribute: { gold, rice, target: distributeTarget },
+                },
+                worldId
+            );
+            toast.success(
+                `금 ${gold.toLocaleString()}, 쌀 ${rice.toLocaleString()} 지급 완료 (${distributeTarget === 'all' ? '전체 장수' : '국가별'})`
+            );
+            setGoldAmount('');
+            setRiceAmount('');
+        } catch {
+            toast.error('지급 실패');
+        }
+    }, [goldAmount, riceAmount, distributeTarget, worldId]);
+
+    const handleAuctionSync = useCallback(async () => {
+        try {
+            await adminApi.timeControl(
+                {
+                    auctionSync: auctionSyncEnabled,
+                    auctionCloseMinutes: Number(auctionCloseMinutes) || 60,
+                },
+                worldId
+            );
+            toast.success('경매 시간 설정이 변경되었습니다.');
+        } catch {
+            toast.error('경매 시간 설정 실패');
+        }
+    }, [auctionSyncEnabled, auctionCloseMinutes, worldId]);
 
     const loadWorlds = useCallback(() => {
         worldApi
@@ -172,6 +324,12 @@ export default function AdminDashboardPage() {
                             setAllowConscript(cfg?.allowConscript !== false);
                             setAllowNpcNationSpawn(cfg?.allowNpcNationSpawn !== false);
                             setAllowInvaderSpawn(cfg?.allowInvaderSpawn !== false);
+                            setYear(String(d.currentWorld.year ?? ''));
+                            setMonth(String(d.currentWorld.month ?? ''));
+                            setStartYear(String(cfg?.startyear ?? ''));
+                            setLastTurnTime(String(cfg?.turntime ?? ''));
+                            setAuctionSyncEnabled(Boolean(cfg?.auctionSync));
+                            setAuctionCloseMinutes(String(cfg?.auctionCloseMinutes ?? 60));
                         }
                     })
                     .catch(() => {
@@ -293,8 +451,6 @@ export default function AdminDashboardPage() {
             await adminApi.updateSettings(
                 {
                     notice,
-                    turnTerm: turnTerm ? Number(turnTerm) : undefined,
-                    locked,
                     maxGeneral: maxGeneral ? Number(maxGeneral) : undefined,
                     maxNation: maxNation ? Number(maxNation) : undefined,
                     npcMode: Number(npcMode),
@@ -740,49 +896,273 @@ export default function AdminDashboardPage() {
                                     </Button>
                                 </div>
                             </div>
-                            <div className="space-y-1">
-                                <label className="text-sm text-muted-foreground">턴 간격 (분 단위)</label>
-                                <Input
-                                    type="number"
-                                    value={turnTerm}
-                                    onChange={(e) => setTurnTerm(e.target.value)}
-                                    placeholder="5"
-                                />
-                                <div className="flex flex-wrap gap-1 pt-1">
-                                    {[
-                                        { label: '1분', value: 1 },
-                                        { label: '2분', value: 2 },
-                                        { label: '5분', value: 5 },
-                                        { label: '10분', value: 10 },
-                                        { label: '20분', value: 20 },
-                                        { label: '30분', value: 30 },
-                                        { label: '60분', value: 60 },
-                                        { label: '120분', value: 120 },
-                                    ].map((p) => (
+                            <Card className="border-muted">
+                                <CardHeader className="py-3">
+                                    <CardTitle className="flex items-center gap-2 text-sm">
+                                        <Activity className="size-4" />턴 데몬
+                                    </CardTitle>
+                                    <CardDescription className="flex items-center gap-2">
+                                        상태:{' '}
+                                        {(() => {
+                                            const cfg = DAEMON_STATE_CONFIG[daemonState];
+                                            if (!cfg) return <Badge variant="outline">{daemonState}</Badge>;
+                                            const DIcon = cfg.icon;
+                                            return (
+                                                <span
+                                                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs border ${cfg.color}`}
+                                                >
+                                                    <DIcon
+                                                        className={`size-3 ${daemonState === 'RUNNING' ? 'animate-spin' : ''}`}
+                                                    />
+                                                    {cfg.label}
+                                                </span>
+                                            );
+                                        })()}
+                                        {daemonReason && (
+                                            <span className="text-xs text-muted-foreground">({daemonReason})</span>
+                                        )}
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent className="space-y-2 pt-0">
+                                    <div className="flex gap-2">
                                         <Button
-                                            key={p.value}
+                                            variant="outline"
                                             size="sm"
-                                            variant={turnTerm === String(p.value) ? 'default' : 'outline'}
-                                            onClick={() => setTurnTerm(String(p.value))}
-                                            className="text-xs"
+                                            disabled={daemonLoading || daemonState === 'RUNNING'}
+                                            onClick={() => handleDaemonAction('run')}
+                                            className="border-green-500/40 text-green-400 hover:bg-green-500/10"
                                         >
-                                            {p.label}
+                                            <Play className="size-3.5 mr-1" /> 수동 실행
                                         </Button>
-                                    ))}
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <input
-                                    type="checkbox"
-                                    checked={locked}
-                                    onChange={(e) => setLocked(e.target.checked)}
-                                    id="locked"
-                                    className="accent-red-400"
-                                />
-                                <label htmlFor="locked" className="text-sm">
-                                    서버 잠금
-                                </label>
-                            </div>
+                                        {daemonState === 'PAUSED' ? (
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                disabled={daemonLoading}
+                                                onClick={() => handleDaemonAction('resume')}
+                                                className="border-blue-500/40 text-blue-400 hover:bg-blue-500/10"
+                                            >
+                                                <Play className="size-3.5 mr-1" /> 재개
+                                            </Button>
+                                        ) : (
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                disabled={daemonLoading || daemonState === 'PAUSED'}
+                                                onClick={() => handleDaemonAction('pause')}
+                                                className="border-yellow-500/40 text-yellow-400 hover:bg-yellow-500/10"
+                                            >
+                                                <Pause className="size-3.5 mr-1" /> 일시정지
+                                            </Button>
+                                        )}
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            disabled={daemonLoading}
+                                            onClick={fetchDaemonStatus}
+                                        >
+                                            <RotateCw className={`size-3.5 ${daemonLoading ? 'animate-spin' : ''}`} />
+                                        </Button>
+                                    </div>
+                                </CardContent>
+                            </Card>
+
+                            <Card className="border-muted">
+                                <CardHeader className="py-3">
+                                    <CardTitle className="flex items-center gap-2 text-sm">
+                                        <Clock className="size-4" />
+                                        게임 시간
+                                    </CardTitle>
+                                    {lastTurnTime && <CardDescription>최근 갱신: {lastTurnTime}</CardDescription>}
+                                </CardHeader>
+                                <CardContent className="space-y-3 pt-0">
+                                    <div className="grid grid-cols-3 gap-3">
+                                        <div className="space-y-1">
+                                            <span className="text-xs text-muted-foreground">시작 년도</span>
+                                            <Input
+                                                type="number"
+                                                value={startYear}
+                                                onChange={(e) => setStartYear(e.target.value)}
+                                            />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <span className="text-xs text-muted-foreground">현재 년</span>
+                                            <Input
+                                                type="number"
+                                                value={year}
+                                                onChange={(e) => setYear(e.target.value)}
+                                            />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <span className="text-xs text-muted-foreground">현재 월</span>
+                                            <Input
+                                                type="number"
+                                                value={month}
+                                                onChange={(e) => setMonth(e.target.value)}
+                                                min={1}
+                                                max={12}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        <button
+                                            type="button"
+                                            onClick={() => setLocked(!locked)}
+                                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm transition-colors ${locked ? 'bg-red-500/20 text-red-400 border border-red-500/40' : 'bg-green-500/20 text-green-400 border border-green-500/40'}`}
+                                        >
+                                            {locked ? <Lock className="size-3.5" /> : <Unlock className="size-3.5" />}
+                                            {locked ? '서버 잠금됨' : '서버 열림'}
+                                        </button>
+                                    </div>
+                                    <Button
+                                        onClick={handleTimeSubmit}
+                                        size="sm"
+                                        className="bg-red-400 hover:bg-red-500 text-white"
+                                    >
+                                        시간 설정 적용
+                                    </Button>
+                                </CardContent>
+                            </Card>
+
+                            <Card className="border-muted">
+                                <CardHeader className="py-3">
+                                    <CardTitle className="flex items-center gap-2 text-sm">
+                                        <Timer className="size-4" />턴 시간 조정
+                                    </CardTitle>
+                                    <CardDescription>
+                                        현재: <Badge variant="secondary">{turnTerm}분</Badge>
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent className="space-y-3 pt-0">
+                                    <div className="flex flex-wrap gap-2">
+                                        {TURN_PRESETS.map((min) => (
+                                            <Button
+                                                key={min}
+                                                variant={turnTerm === String(min) ? 'default' : 'outline'}
+                                                size="sm"
+                                                onClick={() => handleTurnTermChange(min)}
+                                            >
+                                                {min}분턴
+                                            </Button>
+                                        ))}
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Input
+                                            type="number"
+                                            placeholder="분 단위 직접 입력 (1~1440)"
+                                            value={customTurnTerm}
+                                            onChange={(e) => setCustomTurnTerm(e.target.value)}
+                                            min={1}
+                                            max={1440}
+                                            className="w-56"
+                                        />
+                                        <Button variant="outline" size="sm" onClick={handleCustomTurnTerm}>
+                                            적용
+                                        </Button>
+                                    </div>
+                                </CardContent>
+                            </Card>
+
+                            <Card className="border-muted">
+                                <CardHeader className="py-3">
+                                    <CardTitle className="flex items-center gap-2 text-sm">
+                                        <Coins className="size-4 text-amber-400" />
+                                        금쌀 지급
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent className="space-y-3 pt-0">
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div className="space-y-1">
+                                            <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                                <Coins className="size-3 text-amber-400" /> 금
+                                            </span>
+                                            <Input
+                                                type="number"
+                                                placeholder="0"
+                                                value={goldAmount}
+                                                onChange={(e) => setGoldAmount(e.target.value)}
+                                            />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                                <Wheat className="size-3 text-green-400" /> 쌀
+                                            </span>
+                                            <Input
+                                                type="number"
+                                                placeholder="0"
+                                                value={riceAmount}
+                                                onChange={(e) => setRiceAmount(e.target.value)}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <div className="flex border border-gray-600 rounded-md overflow-hidden">
+                                            {(['all', 'nations'] as const).map((target) => (
+                                                <button
+                                                    type="button"
+                                                    key={target}
+                                                    onClick={() => setDistributeTarget(target)}
+                                                    className={`px-3 py-1.5 text-xs transition-colors ${distributeTarget === target ? 'bg-[#141c65] text-white' : 'text-gray-400 hover:text-white'}`}
+                                                >
+                                                    {target === 'all' ? '전체 장수' : '국가별'}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Button
+                                            onClick={handleDistribute}
+                                            variant="outline"
+                                            size="sm"
+                                            className="border-amber-500/40 text-amber-400 hover:bg-amber-500/10"
+                                        >
+                                            <Coins className="size-4 mr-1" /> 지급 실행
+                                        </Button>
+                                        <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                            <AlertTriangle className="size-3" /> 되돌릴 수 없습니다
+                                        </span>
+                                    </div>
+                                </CardContent>
+                            </Card>
+
+                            <Card className="border-muted">
+                                <CardHeader className="py-3">
+                                    <CardTitle className="flex items-center gap-2 text-sm">
+                                        <Gavel className="size-4 text-purple-400" />
+                                        경매 시간 동기
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent className="space-y-3 pt-0">
+                                    <div className="flex items-center gap-3">
+                                        <button
+                                            type="button"
+                                            onClick={() => setAuctionSyncEnabled(!auctionSyncEnabled)}
+                                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm transition-colors ${auctionSyncEnabled ? 'bg-purple-500/20 text-purple-400 border border-purple-500/40' : 'bg-muted text-muted-foreground border border-muted'}`}
+                                        >
+                                            {auctionSyncEnabled ? '동기화 활성' : '동기화 비활성'}
+                                        </button>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <span className="text-xs text-muted-foreground">경매 마감 시간 (분)</span>
+                                        <Input
+                                            type="number"
+                                            value={auctionCloseMinutes}
+                                            onChange={(e) => setAuctionCloseMinutes(e.target.value)}
+                                            min={1}
+                                            max={10080}
+                                            className="w-40"
+                                        />
+                                    </div>
+                                    <Button
+                                        onClick={handleAuctionSync}
+                                        variant="outline"
+                                        size="sm"
+                                        className="border-purple-500/40 text-purple-400 hover:bg-purple-500/10"
+                                    >
+                                        <Gavel className="size-4 mr-1" /> 경매 설정 적용
+                                    </Button>
+                                </CardContent>
+                            </Card>
 
                             <div className="border-t pt-4 mt-4 space-y-3">
                                 <h4 className="text-sm font-medium">게임 규칙</h4>

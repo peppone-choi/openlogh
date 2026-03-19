@@ -14,7 +14,6 @@ import {
     BarChart3,
     ScrollText,
     Handshake,
-    Clock,
     UserCog,
     Container,
     LogOut,
@@ -28,7 +27,6 @@ const adminNav = [
     { href: '/admin/logs', label: '로그', icon: ScrollText },
     { href: '/admin/diplomacy', label: '외교', icon: Handshake },
     { href: '/admin/select-pool', label: '장수 풀', icon: Users },
-    { href: '/admin/time-control', label: '시간 제어', icon: Clock },
     { href: '/admin/users', label: '유저 관리', icon: UserCog },
     { href: '/admin/game-versions', label: '게임 버전', icon: Container },
 ];

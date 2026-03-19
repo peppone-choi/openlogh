@@ -12,10 +12,14 @@ import com.opensam.model.CrewType
 import com.opensam.entity.General
 import com.opensam.entity.Message
 import com.opensam.entity.WorldState
+import com.opensam.entity.OldNation
 import com.opensam.repository.CityRepository
 import com.opensam.repository.GeneralRepository
 import com.opensam.repository.MessageRepository
 import com.opensam.repository.NationRepository
+import com.opensam.repository.NationTurnRepository
+import com.opensam.repository.OldNationRepository
+import com.opensam.repository.TroopRepository
 import com.opensam.service.GameConstService
 import com.opensam.service.HistoryService
 import com.opensam.service.InheritanceService
@@ -31,6 +35,9 @@ class BattleService(
     private val generalRepository: GeneralRepository,
     private val nationRepository: NationRepository,
     private val messageRepository: MessageRepository,
+    private val oldNationRepository: OldNationRepository,
+    private val troopRepository: TroopRepository,
+    private val nationTurnRepository: NationTurnRepository,
     private val eventService: EventService,
     private val diplomacyService: DiplomacyService,
     private val modifierService: ModifierService,
@@ -384,14 +391,7 @@ class BattleService(
         return attackerNationId
     }
 
-    /**
-     * Handle nation destruction (legacy ConquerCity nation collapse path).
-     * - Release all generals (gold/rice/exp/dedication penalties)
-     * - NPC generals queue for auto-join to attacker
-     * - Distribute conquest rewards
-     * - Kill all diplomatic relations
-     * - Dispatch DESTROY_NATION event
-     */
+    // Legacy parity: func.php deleteNation() — hard-delete nation after archiving
     private fun destroyNation(
         destroyedNationId: Long,
         attacker: General,
@@ -421,10 +421,12 @@ class BattleService(
             totalGoldLoss += goldLoss
             totalRiceLoss += riceLoss
 
-            // Release from nation
+            // Release from nation (legacy: nation=0, officer_level=0, officer_city=0, belong=0, troop=0)
             gen.nationId = 0
             gen.officerLevel = 0
             gen.officerCity = 0
+            gen.belong = 0
+            gen.troop = 0
 
             // NPC auto-join to attacker nation (legacy: npcState 2-8 except 5, gated by joinRuinedNPCProp)
             if (gen.npcState in NPC_AUTO_JOIN_STATES && rng.nextDouble() < JOIN_RUINED_NPC_PROP) {
@@ -455,10 +457,47 @@ class BattleService(
 
         logNationDestroyed(world, attackerNation?.name ?: attacker.name, attacker.nationId, destroyedNation.name)
 
-        destroyedNation.level = 0
-        nationRepository.save(destroyedNation)
+        // Legacy: set all cities to neutral (nation=0, front=0)
+        val cities = cityRepository.findByNationId(destroyedNationId)
+        for (city in cities) {
+            city.nationId = 0
+            city.frontState = 0
+            cityRepository.save(city)
+        }
 
+        // Legacy: delete all troops of the nation
+        val troops = troopRepository.findByNationId(destroyedNationId)
+        if (troops.isNotEmpty()) {
+            troopRepository.deleteAll(troops)
+        }
+
+        // Kill all diplomatic relations
         diplomacyService.killAllRelationsForNation(world.id.toLong(), destroyedNationId)
+
+        // Legacy: delete nation turns
+        nationTurnRepository.deleteByNationId(destroyedNationId)
+
+        // Legacy: archive nation data to old_nation before deletion
+        oldNationRepository.save(
+            OldNation(
+                serverId = world.id.toString(),
+                nation = destroyedNationId,
+                data = mutableMapOf(
+                    "name" to destroyedNation.name,
+                    "color" to destroyedNation.color,
+                    "level" to destroyedNation.level,
+                    "gold" to destroyedNation.gold,
+                    "rice" to destroyedNation.rice,
+                    "tech" to destroyedNation.tech,
+                    "gennum" to destroyedNation.gennum,
+                    "generals" to generals.map { it.id },
+                ),
+                date = java.time.OffsetDateTime.now(),
+            )
+        )
+
+        // Legacy: hard-delete nation from DB (not soft delete)
+        nationRepository.delete(destroyedNation)
 
         eventService.dispatchEvents(world, "DESTROY_NATION")
     }
