@@ -24,7 +24,8 @@ class WorldService(
 
     companion object {
         // Game phases (legacy GameConst parity)
-        const val PHASE_OPENING = "opening"      // 초반 제한 기간
+        const val PHASE_PRE_OPEN = "pre_open"    // 가오픈: 장수 생성/삭제, 사전 거병만 가능
+        const val PHASE_OPENING = "opening"      // 초반 제한 기간 (정식 오픈 직후)
         const val PHASE_NORMAL = "normal"         // 일반 진행
         const val PHASE_ENDING = "ending"         // 통일 임박
         const val PHASE_FINISHED = "finished"     // 게임 종료
@@ -86,21 +87,23 @@ class WorldService(
      * Legacy parity: opening period, normal play, ending (single nation remaining).
      */
     fun getGamePhase(world: WorldState): String {
-        // Check if game is explicitly finished
         val finished = world.config["finished"] as? Boolean ?: false
         if (finished) return PHASE_FINISHED
 
-        // Check if locked (admin paused)
         val locked = world.config["locked"] as? Boolean ?: false
         if (locked) return world.config["phase"] as? String ?: PHASE_NORMAL
 
+        val opentime = (world.config["opentime"] as? String)?.let {
+            try { OffsetDateTime.parse(it) } catch (_: Exception) { null }
+        }
+        if (opentime != null && OffsetDateTime.now().isBefore(opentime)) {
+            return PHASE_PRE_OPEN
+        }
+
         val startYear = (world.config["startYear"] as? Number)?.toInt() ?: world.currentYear.toInt()
         val yearsElapsed = world.currentYear.toInt() - startYear
-
-        // Opening period
         if (yearsElapsed < OPENING_PART_YEARS) return PHASE_OPENING
 
-        // Check remaining nations for ending
         val nationCount = nationRepository.findByWorldId(world.id.toLong()).count { it.level > 0 }
         if (nationCount <= 1) return PHASE_ENDING
 

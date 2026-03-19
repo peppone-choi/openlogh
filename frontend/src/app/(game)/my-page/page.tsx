@@ -734,16 +734,22 @@ export default function MyPage() {
                                         거병 전에 장수를 삭제하고 새로 시작합니다.
                                     </p>
 
-                                    <label className="flex items-center gap-2 cursor-pointer">
-                                        <input
-                                            type="checkbox"
-                                            checked={preOpenDelete}
-                                            onChange={(e) => setPreOpenDelete(e.target.checked)}
-                                            className="rounded border-gray-600"
-                                        />
-                                        <span className="text-sm">가오픈 삭제</span>
-                                    </label>
-                                    <p className="text-xs text-muted-foreground ml-6">가오픈 시 장수를 삭제합니다.</p>
+                                    {currentWorld?.meta?.phase === 'pre_open' && (
+                                        <>
+                                            <label className="flex items-center gap-2 cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={preOpenDelete}
+                                                    onChange={(e) => setPreOpenDelete(e.target.checked)}
+                                                    className="rounded border-gray-600"
+                                                />
+                                                <span className="text-sm">가오픈 삭제</span>
+                                            </label>
+                                            <p className="text-xs text-muted-foreground ml-6">
+                                                가오픈 시 장수를 삭제합니다.
+                                            </p>
+                                        </>
+                                    )}
 
                                     <label className="flex items-center gap-2 cursor-pointer">
                                         <input

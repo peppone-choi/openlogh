@@ -7,6 +7,7 @@ import com.opensam.engine.RealtimeService
 import com.opensam.service.AccountService
 import com.opensam.service.GeneralService
 import com.opensam.service.IconSyncService
+import com.opensam.service.WorldService
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
@@ -24,6 +25,7 @@ class AccountController(
     private val iconSyncService: IconSyncService,
     private val generalService: GeneralService,
     private val realtimeService: RealtimeService,
+    private val worldService: WorldService,
 ) {
     private fun getLoginId(): String? = SecurityContextHolder.getContext().authentication?.name
 
@@ -120,6 +122,10 @@ class AccountController(
         val loginId = getLoginId() ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
         val general = generalService.getMyActiveGeneral(loginId)
             ?: return ResponseEntity.badRequest().build()
+        val world = worldService.getWorld(general.worldId.toShort())
+        if (world != null && worldService.getGamePhase(world) != WorldService.PHASE_PRE_OPEN) {
+            return ResponseEntity.badRequest().body(mapOf("error" to "게임이 시작되었습니다."))
+        }
         val result = realtimeService.submitCommand(general.id, "거병", null)
         return ResponseEntity.ok(result)
     }
@@ -138,6 +144,10 @@ class AccountController(
         val loginId = getLoginId() ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
         val general = generalService.getMyActiveGeneral(loginId)
             ?: return ResponseEntity.badRequest().build()
+        val world = worldService.getWorld(general.worldId.toShort())
+        if (world != null && worldService.getGamePhase(world) != WorldService.PHASE_PRE_OPEN) {
+            return ResponseEntity.badRequest().body(mapOf("error" to "게임이 시작되었습니다."))
+        }
         val result = realtimeService.submitCommand(general.id, "사전거병삭제", null)
         return ResponseEntity.ok(result)
     }
