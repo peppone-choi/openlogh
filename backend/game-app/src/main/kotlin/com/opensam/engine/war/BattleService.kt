@@ -426,7 +426,7 @@ class BattleService(
             gen.officerLevel = 0
             gen.officerCity = 0
             gen.belong = 0
-            gen.troop = 0
+            gen.troopId = 0
 
             // NPC auto-join to attacker nation (legacy: npcState 2-8 except 5, gated by joinRuinedNPCProp)
             if (gen.npcState in NPC_AUTO_JOIN_STATES && rng.nextDouble() < JOIN_RUINED_NPC_PROP) {

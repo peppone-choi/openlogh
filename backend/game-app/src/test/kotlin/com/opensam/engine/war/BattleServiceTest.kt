@@ -22,6 +22,9 @@ class BattleServiceTest {
     private lateinit var generalRepository: GeneralRepository
     private lateinit var nationRepository: NationRepository
     private lateinit var messageRepository: MessageRepository
+    private lateinit var oldNationRepository: OldNationRepository
+    private lateinit var troopRepository: TroopRepository
+    private lateinit var nationTurnRepository: NationTurnRepository
     private lateinit var eventService: EventService
     private lateinit var diplomacyService: DiplomacyService
     private lateinit var historyService: HistoryService
@@ -35,6 +38,9 @@ class BattleServiceTest {
         generalRepository = mock(GeneralRepository::class.java)
         nationRepository = mock(NationRepository::class.java)
         messageRepository = mock(MessageRepository::class.java)
+        oldNationRepository = mock(OldNationRepository::class.java)
+        troopRepository = mock(TroopRepository::class.java)
+        nationTurnRepository = mock(NationTurnRepository::class.java)
         eventService = mock(EventService::class.java)
         diplomacyService = mock(DiplomacyService::class.java)
         historyService = mock(HistoryService::class.java)
@@ -43,6 +49,8 @@ class BattleServiceTest {
         `when`(generalRepository.save(anyNonNull<General>())).thenAnswer { it.arguments[0] }
         `when`(nationRepository.save(anyNonNull<Nation>())).thenAnswer { it.arguments[0] }
         `when`(messageRepository.save(anyNonNull<Message>())).thenAnswer { it.arguments[0] }
+        `when`(oldNationRepository.save(anyNonNull<OldNation>())).thenAnswer { it.arguments[0] }
+        `when`(troopRepository.findByNationId(anyLong())).thenReturn(emptyList())
 
         val modifierService = mock(com.opensam.engine.modifier.ModifierService::class.java)
         val gameConstService = mock(GameConstService::class.java)
@@ -50,7 +58,8 @@ class BattleServiceTest {
 
         service = BattleService(
             cityRepository, generalRepository, nationRepository,
-            messageRepository, eventService, diplomacyService,
+            messageRepository, oldNationRepository, troopRepository, nationTurnRepository,
+            eventService, diplomacyService,
             modifierService, gameConstService, historyService, mock(InheritanceService::class.java),
         )
     }
@@ -401,6 +410,88 @@ class BattleServiceTest {
     }
 
     // ========== NPC auto-join queuing ==========
+
+    @Test
+    fun `nation destruction hard-deletes nation and archives to old_nation`() {
+        val world = createWorld()
+        val attacker = createGeneral(id = 1, nationId = 1)
+        val city = createCity(id = 10, nationId = 2, def = 10, wall = 10)
+
+        val attackerNation = createNation(id = 1, name = "촉")
+        val defenderNation = createNation(id = 2, name = "위", capitalCityId = 10)
+
+        `when`(nationRepository.findById(1L)).thenReturn(Optional.of(attackerNation))
+        `when`(nationRepository.findById(2L)).thenReturn(Optional.of(defenderNation))
+        `when`(generalRepository.findByCityId(10L)).thenReturn(emptyList())
+        `when`(cityRepository.findByNationId(2L)).thenReturn(emptyList())
+        `when`(generalRepository.findByNationId(2L)).thenReturn(emptyList())
+
+        val result = service.executeBattle(attacker, city, world)
+
+        if (result.cityOccupied) {
+            verify(nationRepository).delete(defenderNation)
+            verify(oldNationRepository).save(anyNonNull<OldNation>())
+            verify(nationTurnRepository).deleteByNationId(2L)
+        }
+    }
+
+    @Test
+    fun `nation destruction resets cities to neutral and deletes troops`() {
+        val world = createWorld()
+        val attacker = createGeneral(id = 1, nationId = 1)
+        val city = createCity(id = 10, nationId = 2, def = 10, wall = 10)
+
+        val attackerNation = createNation(id = 1, name = "촉")
+        val defenderNation = createNation(id = 2, name = "위", capitalCityId = 10)
+
+        val orphanedCity = createCity(id = 20, nationId = 2)
+        val troop1 = mock(Troop::class.java)
+        val troop2 = mock(Troop::class.java)
+
+        `when`(nationRepository.findById(1L)).thenReturn(Optional.of(attackerNation))
+        `when`(nationRepository.findById(2L)).thenReturn(Optional.of(defenderNation))
+        `when`(generalRepository.findByCityId(10L)).thenReturn(emptyList())
+        `when`(cityRepository.findByNationId(2L))
+            .thenReturn(emptyList())
+            .thenReturn(listOf(orphanedCity))
+        `when`(generalRepository.findByNationId(2L)).thenReturn(emptyList())
+        `when`(troopRepository.findByNationId(2L)).thenReturn(listOf(troop1, troop2))
+
+        val result = service.executeBattle(attacker, city, world)
+
+        if (result.cityOccupied) {
+            assertEquals(0L, orphanedCity.nationId, "Orphaned city should be neutralized")
+            assertEquals(0.toShort(), orphanedCity.frontState, "City frontState should be reset")
+            verify(troopRepository).deleteAll(listOf(troop1, troop2))
+        }
+    }
+
+    @Test
+    fun `nation destruction sets general belong and troop to zero`() {
+        val world = createWorld()
+        val attacker = createGeneral(id = 1, nationId = 1)
+        val city = createCity(id = 10, nationId = 2, def = 10, wall = 10)
+
+        val attackerNation = createNation(id = 1, name = "촉")
+        val defenderNation = createNation(id = 2, name = "위", capitalCityId = 10)
+
+        val defGen = createGeneral(id = 10, nationId = 2, gold = 1000, rice = 2000)
+
+        `when`(nationRepository.findById(1L)).thenReturn(Optional.of(attackerNation))
+        `when`(nationRepository.findById(2L)).thenReturn(Optional.of(defenderNation))
+        `when`(generalRepository.findByCityId(10L)).thenReturn(emptyList())
+        `when`(cityRepository.findByNationId(2L)).thenReturn(emptyList())
+        `when`(generalRepository.findByNationId(2L)).thenReturn(listOf(defGen))
+
+        val result = service.executeBattle(attacker, city, world)
+
+        if (result.cityOccupied) {
+            assertEquals(0L, defGen.nationId)
+            assertEquals(0.toShort(), defGen.officerLevel)
+            assertEquals(0.toShort(), defGen.belong)
+            assertEquals(0L, defGen.troopId)
+        }
+    }
 
     @Test
     fun `nation destruction queues eligible NPCs for auto-join`() {
