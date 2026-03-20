@@ -900,173 +900,6 @@ export default function AdminDashboardPage() {
                             <Card className="border-muted">
                                 <CardHeader className="py-3">
                                     <CardTitle className="flex items-center gap-2 text-sm">
-                                        <Activity className="size-4" />턴 데몬
-                                    </CardTitle>
-                                    <CardDescription className="flex items-center gap-2">
-                                        상태:{' '}
-                                        {(() => {
-                                            const cfg = DAEMON_STATE_CONFIG[daemonState];
-                                            if (!cfg) return <Badge variant="outline">{daemonState}</Badge>;
-                                            const DIcon = cfg.icon;
-                                            return (
-                                                <span
-                                                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs border ${cfg.color}`}
-                                                >
-                                                    <DIcon
-                                                        className={`size-3 ${daemonState === 'RUNNING' ? 'animate-spin' : ''}`}
-                                                    />
-                                                    {cfg.label}
-                                                </span>
-                                            );
-                                        })()}
-                                        {daemonReason && (
-                                            <span className="text-xs text-muted-foreground">({daemonReason})</span>
-                                        )}
-                                    </CardDescription>
-                                </CardHeader>
-                                <CardContent className="space-y-2 pt-0">
-                                    <div className="flex gap-2">
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            disabled={daemonLoading || daemonState === 'RUNNING'}
-                                            onClick={() => handleDaemonAction('run')}
-                                            className="border-green-500/40 text-green-400 hover:bg-green-500/10"
-                                        >
-                                            <Play className="size-3.5 mr-1" /> 수동 실행
-                                        </Button>
-                                        {daemonState === 'PAUSED' ? (
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                disabled={daemonLoading}
-                                                onClick={() => handleDaemonAction('resume')}
-                                                className="border-blue-500/40 text-blue-400 hover:bg-blue-500/10"
-                                            >
-                                                <Play className="size-3.5 mr-1" /> 재개
-                                            </Button>
-                                        ) : (
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                disabled={daemonLoading || daemonState === 'PAUSED'}
-                                                onClick={() => handleDaemonAction('pause')}
-                                                className="border-yellow-500/40 text-yellow-400 hover:bg-yellow-500/10"
-                                            >
-                                                <Pause className="size-3.5 mr-1" /> 일시정지
-                                            </Button>
-                                        )}
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            disabled={daemonLoading}
-                                            onClick={fetchDaemonStatus}
-                                        >
-                                            <RotateCw className={`size-3.5 ${daemonLoading ? 'animate-spin' : ''}`} />
-                                        </Button>
-                                    </div>
-                                </CardContent>
-                            </Card>
-
-                            <Card className="border-muted">
-                                <CardHeader className="py-3">
-                                    <CardTitle className="flex items-center gap-2 text-sm">
-                                        <Clock className="size-4" />
-                                        게임 시간
-                                    </CardTitle>
-                                    {lastTurnTime && <CardDescription>최근 갱신: {lastTurnTime}</CardDescription>}
-                                </CardHeader>
-                                <CardContent className="space-y-3 pt-0">
-                                    <div className="grid grid-cols-3 gap-3">
-                                        <div className="space-y-1">
-                                            <span className="text-xs text-muted-foreground">시작 년도</span>
-                                            <Input
-                                                type="number"
-                                                value={startYear}
-                                                onChange={(e) => setStartYear(e.target.value)}
-                                            />
-                                        </div>
-                                        <div className="space-y-1">
-                                            <span className="text-xs text-muted-foreground">현재 년</span>
-                                            <Input
-                                                type="number"
-                                                value={year}
-                                                onChange={(e) => setYear(e.target.value)}
-                                            />
-                                        </div>
-                                        <div className="space-y-1">
-                                            <span className="text-xs text-muted-foreground">현재 월</span>
-                                            <Input
-                                                type="number"
-                                                value={month}
-                                                onChange={(e) => setMonth(e.target.value)}
-                                                min={1}
-                                                max={12}
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center gap-3">
-                                        <button
-                                            type="button"
-                                            onClick={() => setLocked(!locked)}
-                                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm transition-colors ${locked ? 'bg-red-500/20 text-red-400 border border-red-500/40' : 'bg-green-500/20 text-green-400 border border-green-500/40'}`}
-                                        >
-                                            {locked ? <Lock className="size-3.5" /> : <Unlock className="size-3.5" />}
-                                            {locked ? '서버 잠금됨' : '서버 열림'}
-                                        </button>
-                                    </div>
-                                    <Button
-                                        onClick={handleTimeSubmit}
-                                        size="sm"
-                                        className="bg-red-400 hover:bg-red-500 text-white"
-                                    >
-                                        시간 설정 적용
-                                    </Button>
-                                </CardContent>
-                            </Card>
-
-                            <Card className="border-muted">
-                                <CardHeader className="py-3">
-                                    <CardTitle className="flex items-center gap-2 text-sm">
-                                        <Timer className="size-4" />턴 시간 조정
-                                    </CardTitle>
-                                    <CardDescription>
-                                        현재: <Badge variant="secondary">{turnTerm}분</Badge>
-                                    </CardDescription>
-                                </CardHeader>
-                                <CardContent className="space-y-3 pt-0">
-                                    <div className="flex flex-wrap gap-2">
-                                        {TURN_PRESETS.map((min) => (
-                                            <Button
-                                                key={min}
-                                                variant={turnTerm === String(min) ? 'default' : 'outline'}
-                                                size="sm"
-                                                onClick={() => handleTurnTermChange(min)}
-                                            >
-                                                {min}분턴
-                                            </Button>
-                                        ))}
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <Input
-                                            type="number"
-                                            placeholder="분 단위 직접 입력 (1~1440)"
-                                            value={customTurnTerm}
-                                            onChange={(e) => setCustomTurnTerm(e.target.value)}
-                                            min={1}
-                                            max={1440}
-                                            className="w-56"
-                                        />
-                                        <Button variant="outline" size="sm" onClick={handleCustomTurnTerm}>
-                                            적용
-                                        </Button>
-                                    </div>
-                                </CardContent>
-                            </Card>
-
-                            <Card className="border-muted">
-                                <CardHeader className="py-3">
-                                    <CardTitle className="flex items-center gap-2 text-sm">
                                         <Coins className="size-4 text-amber-400" />
                                         금쌀 지급
                                     </CardTitle>
@@ -1538,6 +1371,240 @@ export default function AdminDashboardPage() {
                                     </p>
                                 </div>
                             </div>
+                            <Card className="border-muted">
+                                <CardHeader className="py-3">
+                                    <CardTitle className="flex items-center gap-2 text-sm">
+                                        <Activity className="size-4" />턴 데몬
+                                    </CardTitle>
+                                    <CardDescription className="flex items-center gap-2">
+                                        상태:{' '}
+                                        {(() => {
+                                            const cfg = DAEMON_STATE_CONFIG[daemonState];
+                                            if (!cfg) return <Badge variant="outline">{daemonState}</Badge>;
+                                            const DIcon = cfg.icon;
+                                            return (
+                                                <span
+                                                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs border ${cfg.color}`}
+                                                >
+                                                    <DIcon
+                                                        className={`size-3 ${daemonState === 'RUNNING' ? 'animate-spin' : ''}`}
+                                                    />
+                                                    {cfg.label}
+                                                </span>
+                                            );
+                                        })()}
+                                        {daemonReason && (
+                                            <span className="text-xs text-muted-foreground">({daemonReason})</span>
+                                        )}
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent className="space-y-2 pt-0">
+                                    <div className="flex gap-2">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            disabled={daemonLoading || daemonState === 'RUNNING'}
+                                            onClick={() => handleDaemonAction('run')}
+                                            className="border-green-500/40 text-green-400 hover:bg-green-500/10"
+                                        >
+                                            <Play className="size-3.5 mr-1" /> 수동 실행
+                                        </Button>
+                                        {daemonState === 'PAUSED' ? (
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                disabled={daemonLoading}
+                                                onClick={() => handleDaemonAction('resume')}
+                                                className="border-blue-500/40 text-blue-400 hover:bg-blue-500/10"
+                                            >
+                                                <Play className="size-3.5 mr-1" /> 재개
+                                            </Button>
+                                        ) : (
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                disabled={daemonLoading || daemonState === 'PAUSED'}
+                                                onClick={() => handleDaemonAction('pause')}
+                                                className="border-yellow-500/40 text-yellow-400 hover:bg-yellow-500/10"
+                                            >
+                                                <Pause className="size-3.5 mr-1" /> 일시정지
+                                            </Button>
+                                        )}
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            disabled={daemonLoading}
+                                            onClick={fetchDaemonStatus}
+                                        >
+                                            <RotateCw className={`size-3.5 ${daemonLoading ? 'animate-spin' : ''}`} />
+                                        </Button>
+                                    </div>
+                                </CardContent>
+                            </Card>
+
+                            <Card className="border-muted">
+                                <CardHeader className="py-3">
+                                    <CardTitle className="flex items-center gap-2 text-sm">
+                                        <Clock className="size-4" />
+                                        게임 시간
+                                    </CardTitle>
+                                    {lastTurnTime && <CardDescription>최근 갱신: {lastTurnTime}</CardDescription>}
+                                </CardHeader>
+                                <CardContent className="space-y-3 pt-0">
+                                    <div className="grid grid-cols-3 gap-3">
+                                        <div className="space-y-1">
+                                            <span className="text-xs text-muted-foreground">시작 년도</span>
+                                            <Input
+                                                type="number"
+                                                value={startYear}
+                                                onChange={(e) => setStartYear(e.target.value)}
+                                            />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <span className="text-xs text-muted-foreground">현재 년</span>
+                                            <Input
+                                                type="number"
+                                                value={year}
+                                                onChange={(e) => setYear(e.target.value)}
+                                            />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <span className="text-xs text-muted-foreground">현재 월</span>
+                                            <Input
+                                                type="number"
+                                                value={month}
+                                                onChange={(e) => setMonth(e.target.value)}
+                                                min={1}
+                                                max={12}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        <button
+                                            type="button"
+                                            onClick={() => setLocked(!locked)}
+                                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm transition-colors ${locked ? 'bg-red-500/20 text-red-400 border border-red-500/40' : 'bg-green-500/20 text-green-400 border border-green-500/40'}`}
+                                        >
+                                            {locked ? <Lock className="size-3.5" /> : <Unlock className="size-3.5" />}
+                                            {locked ? '서버 잠금됨' : '서버 열림'}
+                                        </button>
+                                    </div>
+                                    <Button
+                                        onClick={handleTimeSubmit}
+                                        size="sm"
+                                        className="bg-red-400 hover:bg-red-500 text-white"
+                                    >
+                                        시간 설정 적용
+                                    </Button>
+                                </CardContent>
+                            </Card>
+
+                            <Card className="border-muted">
+                                <CardHeader className="py-3">
+                                    <CardTitle className="flex items-center gap-2 text-sm">
+                                        <Timer className="size-4" />턴 시간 조정
+                                    </CardTitle>
+                                    <CardDescription>
+                                        현재: <Badge variant="secondary">{turnTerm}분</Badge>
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent className="space-y-3 pt-0">
+                                    <div className="flex flex-wrap gap-2">
+                                        {TURN_PRESETS.map((min) => (
+                                            <Button
+                                                key={min}
+                                                variant={turnTerm === String(min) ? 'default' : 'outline'}
+                                                size="sm"
+                                                onClick={() => handleTurnTermChange(min)}
+                                            >
+                                                {min}분턴
+                                            </Button>
+                                        ))}
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Input
+                                            type="number"
+                                            placeholder="분 단위 직접 입력 (1~1440)"
+                                            value={customTurnTerm}
+                                            onChange={(e) => setCustomTurnTerm(e.target.value)}
+                                            min={1}
+                                            max={1440}
+                                            className="w-56"
+                                        />
+                                        <Button variant="outline" size="sm" onClick={handleCustomTurnTerm}>
+                                            적용
+                                        </Button>
+                                    </div>
+                                </CardContent>
+                            </Card>
+
+                            <Card className="border-muted">
+                                <CardHeader className="py-3">
+                                    <CardTitle className="flex items-center gap-2 text-sm">
+                                        <Globe className="size-4" />
+                                        서버 페이즈
+                                    </CardTitle>
+                                    <CardDescription>
+                                        현재:{' '}
+                                        <Badge variant="secondary">
+                                            {(() => {
+                                                const w = worlds.find((w) => w.id === worldId);
+                                                const opentime = w?.config?.opentime as string | undefined;
+                                                if (opentime && new Date(opentime) > new Date()) return '가오픈';
+                                                return '정식오픈';
+                                            })()}
+                                        </Badge>
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent className="space-y-3 pt-0">
+                                    <div className="flex gap-2">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={async () => {
+                                                const futureDate = new Date();
+                                                futureDate.setFullYear(futureDate.getFullYear() + 1);
+                                                try {
+                                                    await adminApi.updateSettings(
+                                                        { opentime: futureDate.toISOString() },
+                                                        worldId
+                                                    );
+                                                    toast.success('가오픈 상태로 전환되었습니다.');
+                                                    loadWorlds();
+                                                } catch {
+                                                    toast.error('페이즈 전환 실패');
+                                                }
+                                            }}
+                                            className="border-orange-500/40 text-orange-400 hover:bg-orange-500/10"
+                                        >
+                                            가오픈 전환
+                                        </Button>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={async () => {
+                                                try {
+                                                    await adminApi.updateSettings(
+                                                        { opentime: new Date().toISOString() },
+                                                        worldId
+                                                    );
+                                                    toast.success('정식오픈 상태로 전환되었습니다.');
+                                                    loadWorlds();
+                                                } catch {
+                                                    toast.error('페이즈 전환 실패');
+                                                }
+                                            }}
+                                            className="border-green-500/40 text-green-400 hover:bg-green-500/10"
+                                        >
+                                            정식오픈 전환
+                                        </Button>
+                                    </div>
+                                    <p className="text-xs text-muted-foreground">
+                                        가오픈: 장수 생성/삭제, 사전 거병만 가능. 정식오픈: 모든 기능 활성화.
+                                    </p>
+                                </CardContent>
+                            </Card>
+
                             <div className="flex flex-wrap gap-2">
                                 <Button
                                     size="sm"
