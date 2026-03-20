@@ -268,30 +268,39 @@ class EconomyService @Autowired constructor(
     // ── Phase A2: processSemiAnnual (legacy formula) ──
 
     private fun processSemiAnnual(world: WorldState, nations: List<Nation>, cities: List<City>, generals: List<General>) {
-        // 1. Decay all city stats by 1% and reset dead
-        for (city in cities) {
-            city.dead = 0
-            city.agri = (city.agri * 0.99).toInt()
-            city.comm = (city.comm * 0.99).toInt()
-            city.secu = (city.secu * 0.99).toInt()
-            city.def = (city.def * 0.99).toInt()
-            city.wall = (city.wall * 0.99).toInt()
+        // 1. Reset dead and apply decay only to non-supplied cities
+        // Legacy: supplied nation cities get growth only (no 0.99 pre-decay)
+        // Neutral cities get exactly one 0.99 decay
+        val suppliedNationCityIds = mutableSetOf<Long>()
+        val citiesByNation = cities.filter { it.nationId != 0L }.groupBy { it.nationId }
+        for ((_, nationCities) in citiesByNation) {
+            for (city in nationCities) {
+                if (city.supplyState.toInt() == 1) suppliedNationCityIds.add(city.id)
+            }
         }
 
-        // 2. Neutral city handling: reset trust to 50, apply additional 0.99 decay (legacy double-decay)
         for (city in cities) {
+            city.dead = 0
             if (city.nationId == 0L) {
+                // Neutral city: trust reset + single 0.99 decay
                 city.trust = 50F
                 city.agri = (city.agri * 0.99).toInt()
                 city.comm = (city.comm * 0.99).toInt()
                 city.secu = (city.secu * 0.99).toInt()
                 city.def = (city.def * 0.99).toInt()
                 city.wall = (city.wall * 0.99).toInt()
+            } else if (!suppliedNationCityIds.contains(city.id)) {
+                // Non-supplied nation city: 0.99 decay
+                city.agri = (city.agri * 0.99).toInt()
+                city.comm = (city.comm * 0.99).toInt()
+                city.secu = (city.secu * 0.99).toInt()
+                city.def = (city.def * 0.99).toInt()
+                city.wall = (city.wall * 0.99).toInt()
             }
+            // Supplied nation cities: no decay (growth applied below)
         }
 
-        // 3. Population and infrastructure growth per nation (supplied cities only)
-        val citiesByNation = cities.filter { it.nationId != 0L }.groupBy { it.nationId }
+        // 2. Population and infrastructure growth per nation (supplied cities only)
         val nationMap = nations.associateBy { it.id }
 
         for ((nationId, nationCities) in citiesByNation) {

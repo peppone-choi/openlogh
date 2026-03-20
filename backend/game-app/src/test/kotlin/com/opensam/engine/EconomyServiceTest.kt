@@ -296,6 +296,41 @@ class EconomyServiceTest {
         assertEquals(5, nations[1L]!!.level.toInt())
     }
 
+    // ── Legacy parity: semi-annual decay logic ──
+
+    @Test
+    fun `semiAnnual supplied nation city gets growth without pre-decay`() {
+        // Legacy popIncrease(): supplied nation cities only get growth (no 0.99 pre-decay)
+        // genericRatio = (20 - taxRate) / 200 = (20 - 10) / 200 = 0.05
+        val w = world(month = 1)
+        seed(
+            w,
+            listOf(city(agri = 1000, agriMax = 10000, secu = 0, secuMax = 1000, supplyState = 1)),
+            listOf(nation(rateTmp = 10, bill = 0)),
+            listOf(general(gold = 0, rice = 0, dedication = 0)),
+        )
+        service.processMonthly(w)
+        // Legacy: min(10000, floor(1000 * 1.05)) = 1050
+        // Bug: floor(floor(1000 * 0.99) * 1.05) = floor(990 * 1.05) = 1039
+        assertEquals(1050, cities[1L]!!.agri)
+    }
+
+    @Test
+    fun `semiAnnual neutral city stats decay exactly once`() {
+        // Legacy popIncrease(): neutral cities (nation=0) decay by 0.99 exactly once
+        val w = world(month = 1)
+        seed(
+            w,
+            listOf(city(id = 1, nationId = 0, agri = 1000, agriMax = 10000)),
+            emptyList(),
+            emptyList(),
+        )
+        service.processMonthly(w)
+        // Legacy: floor(1000 * 0.99) = 990
+        // Bug: floor(floor(1000 * 0.99) * 0.99) = floor(990 * 0.99) = 980
+        assertEquals(990, cities[1L]!!.agri)
+    }
+
     @Test
     fun `capital city produces more income than non capital`() {
         val w = world(month = 3)

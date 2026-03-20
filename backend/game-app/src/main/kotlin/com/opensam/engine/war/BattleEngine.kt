@@ -27,6 +27,8 @@ class BattleEngine {
         defenders: List<WarUnit>,
         city: City,
         rng: Random,
+        year: Int = 200,
+        startYear: Int = 180,
     ): BattleResult {
         val logs = mutableListOf<String>()
         var totalAttackerDamage = 0
@@ -46,7 +48,7 @@ class BattleEngine {
         val attackerCrewType = CrewType.fromCode(attacker.crewType)
         val maxPhase = attackerCrewType?.speed ?: 7
         var currentPhase = 0
-        val cityUnit = WarUnitCity(city)
+        val cityUnit = WarUnitCity(city, year, startYear)
         var defenderIndex = 0
         var currentDefender: WarUnit? = if (sortedDefenders.isNotEmpty()) sortedDefenders[0] else null
         var inSiege = false
@@ -62,6 +64,12 @@ class BattleEngine {
             }
 
             if (!defenderInitialized) {
+                // PHP process_war.php: addTrain(1) for both sides at start of each new engagement
+                attacker.train = (attacker.train + 1).coerceAtMost(110)
+                if (currentDefender is WarUnitGeneral) {
+                    currentDefender.train = (currentDefender.train + 1).coerceAtMost(110)
+                }
+
                 val defenderTriggers = collectTriggers(currentDefender)
 
                 val initCtx = BattleTriggerContext(
@@ -370,8 +378,10 @@ class BattleEngine {
         val defenderVariedWarPower = defenderResult.warPower * (0.9 + rng.nextDouble() * 0.2)
 
         // Apply oppose multipliers bidirectionally (PHP: $this->oppose->setWarPowerMultiply)
-        var attackerDamage = (attackerVariedWarPower / maxOf(0.01, defenderResult.opposeWarPowerMultiply)).toInt().coerceAtLeast(1)
-        var defenderDamage = (defenderVariedWarPower / maxOf(0.01, attackerResult.opposeWarPowerMultiply)).toInt().coerceAtLeast(1)
+        // attackerResult.opposeWarPowerMultiply = defender.defenceCoef(attacker.armType) → boosts attacker damage
+        // defenderResult.opposeWarPowerMultiply = attacker.defenceCoef(defender.armType) → boosts defender damage
+        var attackerDamage = (attackerVariedWarPower * attackerResult.opposeWarPowerMultiply).toInt().coerceAtLeast(1)
+        var defenderDamage = (defenderVariedWarPower * defenderResult.opposeWarPowerMultiply).toInt().coerceAtLeast(1)
 
         // PRE triggers: modify chances before rolls (legacy: 시도)
         for (trigger in attackerTriggers) trigger.onPreCritical(ctx)

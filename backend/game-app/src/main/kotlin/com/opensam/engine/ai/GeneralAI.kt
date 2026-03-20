@@ -53,6 +53,14 @@ class GeneralAI(
             return "집합"
         }
 
+        // Legacy parity: reserved command checked BEFORE nationId==0 wanderer routing.
+        // chooseGeneralTurn in legacy PHP checks reserved command after npcType==5, before nationId==0.
+        val earlyReserved = checkReservedCommand(general)
+        if (earlyReserved != null) {
+            logger.debug("General {} ({}) using reserved command (early): {}", general.id, general.name, earlyReserved)
+            return earlyReserved
+        }
+
         // Wanderers (nationId=0) have limited options
         if (general.nationId == 0L) {
             return decideWandererAction(general, world, rng)
@@ -157,13 +165,6 @@ class GeneralAI(
             } else if (month in listOf(3, 6, 9, 12)) {
                 chooseNonLordPromotion(ctx, rng, ports)
             }
-        }
-
-        // Check reserved command
-        val reservedAction = checkReservedCommand(general)
-        if (reservedAction != null) {
-            logger.debug("General {} ({}) using reserved command: {}", general.id, general.name, reservedAction)
-            return reservedAction
         }
 
         // Injury check
@@ -352,13 +353,15 @@ class GeneralAI(
 
         if (s >= i) {
             flags = flags or GeneralType.WARRIOR.flag
-            if (i > 0 && s > 0 && i.toDouble() / s >= 0.8 && rng.nextInt(100) < 50) {
+            // Legacy: nextBool(intel/strength/2) — probability is stat-ratio based (0.4–0.5), not fixed 50%
+            if (i > 0 && s > 0 && i.toDouble() / s >= 0.8 && rng.nextDouble() < i.toDouble() / s.toDouble() / 2.0) {
                 flags = flags or GeneralType.STRATEGIST.flag
             }
         }
         if (i > s) {
             flags = flags or GeneralType.STRATEGIST.flag
-            if (s > 0 && i > 0 && s.toDouble() / i >= 0.8 && rng.nextInt(100) < 50) {
+            // Legacy: nextBool(strength/intel/2) — probability is stat-ratio based (0.4–0.5), not fixed 50%
+            if (s > 0 && i > 0 && s.toDouble() / i >= 0.8 && rng.nextDouble() < s.toDouble() / i.toDouble() / 2.0) {
                 flags = flags or GeneralType.WARRIOR.flag
             }
         }
@@ -2174,6 +2177,11 @@ class GeneralAI(
         val ports = worldPortFactory.create(worldId)
         val allCities = ports.allCities().map { it.toEntity() }
         val allGenerals = ports.allGenerals().map { it.toEntity() }
+
+        // Legacy parity: if general is NOT at a major city (level 5-6), 50% chance to skip.
+        // PHP do거병: if ($currentCityLevel < 5 || 6 < $currentCityLevel) && $this->rng->nextBool(0.5)
+        val currentCityLevel = allCities.find { it.id == general.cityId }?.level?.toInt() ?: 5
+        if ((currentCityLevel < 5 || currentCityLevel > 6) && rng.nextDouble() >= 0.5) return null
 
         // Per legacy: check for nearby unoccupied major city (level 5-6) within distance 3
         val occupiedCityIds = mutableSetOf<Long>()

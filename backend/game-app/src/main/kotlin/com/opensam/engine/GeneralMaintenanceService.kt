@@ -19,6 +19,8 @@ import com.opensam.service.HistoryService
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import kotlin.math.abs
+import kotlin.math.ceil
+import kotlin.math.sqrt
 
 /**
  * 장수 유지보수: 매 턴 장수 나이/경험/헌신/부상/은퇴/사망 처리
@@ -94,10 +96,18 @@ class GeneralMaintenanceService(
 
             // === 기본 월간 경험치 ===
             general.experience += 10
+            val newExpLevel = calcExpLevel(general.experience).toShort()
+            if (general.expLevel != newExpLevel) {
+                general.expLevel = newExpLevel
+            }
 
             // === 헌신도 감쇠 ===
             if (general.dedication > 0) {
                 general.dedication = (general.dedication * 0.99).toInt()
+                val newDedLevel = calcDedLevel(general.dedication).toShort()
+                if (general.dedLevel != newDedLevel) {
+                    general.dedLevel = newDedLevel
+                }
             }
 
             // === 부상 자연회복 ===
@@ -408,6 +418,27 @@ class GeneralMaintenanceService(
         return nationCandidates
             .sortedWith(compareByDescending<General> { it.dedication }.thenBy { it.id })
             .firstOrNull()
+    }
+
+    /**
+     * Legacy: getExpLevel() in func_converter.php
+     * exp < 1000: exp / 100; else: toInt(sqrt(exp/10)), clamped 0–255
+     */
+    private fun calcExpLevel(experience: Int): Int {
+        val level = if (experience < 1000) {
+            experience / 100
+        } else {
+            sqrt(experience / 10.0).toInt()
+        }
+        return level.coerceIn(0, 255)
+    }
+
+    /**
+     * Legacy: getDedLevel() in func_converter.php
+     * ceil(sqrt(dedication) / 10), clamped 0–30
+     */
+    private fun calcDedLevel(dedication: Int): Int {
+        return ceil(sqrt(dedication.toDouble()) / 10).toInt().coerceIn(0, 30)
     }
 
     private fun affinityDistance(base: Int, other: Int): Int {

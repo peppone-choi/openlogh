@@ -354,6 +354,60 @@ class GeneralMaintenanceServiceTest {
         assertEquals(20006, captor.value.lastYearMonth)
     }
 
+    // ===== expLevel / dedLevel parity tests (legacy: addExperience/addDedication update level) =====
+
+    @Test
+    fun `expLevel updates when experience crosses level boundary`() {
+        val world = createWorld(month = 3)
+        // 990/100 = 9; after +10: sqrt(1000/10).toInt() = sqrt(100).toInt() = 10
+        val general = createGeneral(experience = 990)
+        general.expLevel = 9
+
+        service.processGeneralMaintenance(world, listOf(general))
+
+        assertEquals(1000, general.experience)
+        assertEquals(10.toShort(), general.expLevel)
+    }
+
+    @Test
+    fun `expLevel unchanged when experience stays in same level range`() {
+        val world = createWorld(month = 3)
+        // 980/100 = 9; 990/100 = 9 — same level
+        val general = createGeneral(experience = 980)
+        general.expLevel = 9
+
+        service.processGeneralMaintenance(world, listOf(general))
+
+        assertEquals(990, general.experience)
+        assertEquals(9.toShort(), general.expLevel)
+    }
+
+    @Test
+    fun `dedLevel updates when dedication decay crosses level boundary`() {
+        val world = createWorld(month = 3)
+        // 8182 * 0.99 = 8100; ceil(sqrt(8182)/10)=10, ceil(sqrt(8100)/10)=9
+        val general = createGeneral(dedication = 8182)
+        general.dedLevel = 10
+
+        service.processGeneralMaintenance(world, listOf(general))
+
+        assertEquals(8100, general.dedication)
+        assertEquals(9.toShort(), general.dedLevel)
+    }
+
+    @Test
+    fun `dedLevel unchanged when dedication decay stays in same level range`() {
+        val world = createWorld(month = 3)
+        // 1000 * 0.99 = 990; ceil(sqrt(1000)/10)=ceil(3.16)=4, ceil(sqrt(990)/10)=ceil(3.14)=4
+        val general = createGeneral(dedication = 1000)
+        general.dedLevel = 4
+
+        service.processGeneralMaintenance(world, listOf(general))
+
+        assertEquals(990, general.dedication)
+        assertEquals(4.toShort(), general.dedLevel)
+    }
+
     @Test
     fun `killGeneral collapses nation when no successor exists`() {
         val world = createWorld(year = 200, month = 6)

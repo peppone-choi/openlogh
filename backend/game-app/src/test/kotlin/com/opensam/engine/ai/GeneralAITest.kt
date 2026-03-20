@@ -975,4 +975,107 @@ class GeneralAITest {
         assertEquals(11, method.invoke(ai, 1), "Below (1) should return 11")
         assertEquals(11, method.invoke(ai, 0), "Below (0) should return 11")
     }
+
+    // ========== Legacy parity: wanderer reserved command ==========
+
+    @Test
+    fun `wanderer uses reserved command before wanderer-specific logic (legacy parity)`() {
+        // Legacy PHP chooseGeneralTurn: reserved command checked BEFORE nationId==0 routing.
+        // Kotlin bug: nationId==0 routes directly to decideWandererAction, skipping reserved command.
+        val world = createWorld()
+        val general = createGeneral(nationId = 0, injury = 0)
+        general.meta["reservedCommand"] = "물자조달"
+
+        val action = ai.decideAndExecute(general, world)
+
+        assertEquals("물자조달", action, "Wanderer should use reserved command per legacy order")
+        assertNull(general.meta["reservedCommand"], "Reserved command should be cleared after use")
+    }
+
+    // ========== Legacy parity: classifyGeneral stat-ratio probability ==========
+
+    @Test
+    fun `classifyGeneral uses stat-ratio probability not fixed 50 percent for hybrid warrior`() {
+        // Legacy PHP calcGenType: nextBool(intel/strength/2) for warrior-base hybrid.
+        // strength=100, intel=80: ratio=0.8, prob = 0.8/2 = 0.4 (40%)
+        // With nextDouble()=0.45: 0.45 > 0.4 → legacy: NO STRATEGIST added
+        // Kotlin bug: uses nextInt(100)<50 (50% fixed) — nextBits=0 gives 0 < 50 → STRATEGIST added (wrong)
+        val general = createGeneral(strength = 100, intel = 80, leadership = 30)
+        val flags = ai.classifyGeneral(general, FixedRandom(0.45), 40)
+
+        assertTrue(flags and GeneralType.WARRIOR.flag != 0, "Should have WARRIOR flag")
+        assertTrue(
+            flags and GeneralType.STRATEGIST.flag == 0,
+            "Should NOT have STRATEGIST: legacy prob=0.4, random=0.45 > 0.4 → no hybrid type"
+        )
+    }
+
+    @Test
+    fun `classifyGeneral uses stat-ratio probability not fixed 50 percent for hybrid strategist`() {
+        // Legacy PHP: nextBool(strength/intel/2) for strategist-base hybrid.
+        // intel=100, strength=80: ratio=0.8, prob = 0.8/2 = 0.4 (40%)
+        // With nextDouble()=0.45: 0.45 > 0.4 → legacy: NO WARRIOR added
+        val general = createGeneral(intel = 100, strength = 80, leadership = 30)
+        val flags = ai.classifyGeneral(general, FixedRandom(0.45), 40)
+
+        assertTrue(flags and GeneralType.STRATEGIST.flag != 0, "Should have STRATEGIST flag")
+        assertTrue(
+            flags and GeneralType.WARRIOR.flag == 0,
+            "Should NOT have WARRIOR: legacy prob=0.4, random=0.45 > 0.4 → no hybrid type"
+        )
+    }
+
+    // ========== Legacy parity: doRise current city level check ==========
+
+    @Test
+    fun `doRise skips 50 percent of time when general at non-major city (legacy parity)`() {
+        // Legacy PHP do거병: if currentCityLevel < 5 or > 6, nextBool(0.5) skip.
+        // When random > 0.5 at a small city, legacy returns null.
+        // Kotlin bug: no current city level check → proceeds even at small city.
+        val world = createWorld(year = 181, month = 3).apply {
+            config["startyear"] = 180
+        }
+        val general = createGeneral(
+            nationId = 0, cityId = 1, leadership = 80, strength = 80, intel = 80, npcState = 2,
+        )
+        val smallCity = createCity(id = 1, nationId = 0).apply { level = 3 }
+        val openMajorCity = createCity(id = 2, nationId = 0).apply { level = 5 }
+
+        setupRepos(
+            world, general, smallCity, null,
+            allCities = listOf(smallCity, openMajorCity),
+            allGenerals = listOf(general),
+            allNations = emptyList(),
+        )
+
+        // random=0.9 > 0.5 → legacy: city level check fires, skip → null
+        // Kotlin (current): no city level check → threshold=0.9*70=63 < 80 passes, → "거병"
+        val action = invokeDoRise(world, general, FixedRandom(0.9, 0.0))
+        assertNull(action, "Should return null when at non-major city and random > 0.5 (legacy parity)")
+    }
+
+    @Test
+    fun `doRise proceeds when at non-major city and random below 0-5 (legacy parity)`() {
+        // With random <= 0.5, legacy city level check does NOT skip (nextBool(0.5) = false)
+        val world = createWorld(year = 181, month = 3).apply {
+            config["startyear"] = 180
+        }
+        val general = createGeneral(
+            nationId = 0, cityId = 1, leadership = 80, strength = 80, intel = 80, npcState = 2,
+        )
+        val smallCity = createCity(id = 1, nationId = 0).apply { level = 3 }
+        val openMajorCity = createCity(id = 2, nationId = 0).apply { level = 5 }
+
+        setupRepos(
+            world, general, smallCity, null,
+            allCities = listOf(smallCity, openMajorCity),
+            allGenerals = listOf(general),
+            allNations = emptyList(),
+        )
+
+        // random=0.3 < 0.5 → legacy: city level check does NOT skip
+        // threshold = 0.3 * 70 = 21 < 80 → passes; final prob: 0.0 < 0.015 → "거병"
+        val action = invokeDoRise(world, general, FixedRandom(0.3, 0.0))
+        assertEquals("거병", action, "Should proceed to 거병 when random <= 0.5 at non-major city")
+    }
 }
