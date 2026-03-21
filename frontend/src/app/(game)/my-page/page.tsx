@@ -233,6 +233,59 @@ export default function MyPage() {
     });
     const hasPenalty = penaltyEntries.length > 0;
 
+    const opentimeVal = (currentWorld?.config as Record<string, string>)?.opentime;
+    const isPreOpen = opentimeVal ? new Date() < new Date(opentimeVal) : false;
+
+    if (isPreOpen) {
+        return (
+            <div className="p-4 space-y-4 max-w-4xl mx-auto">
+                <PageHeader icon={User} title="내 정보" />
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="text-yellow-400">가오픈 기간입니다</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                        <p className="text-sm text-muted-foreground">
+                            정식 오픈 전까지는 사전 거병과 장수 삭제만 가능합니다.
+                        </p>
+                        <div className="flex gap-2 flex-wrap">
+                            <Button
+                                onClick={async () => {
+                                    if (!confirm('사전 거병을 신청하시겠습니까?')) return;
+                                    try {
+                                        await accountApi.buildNationCandidate();
+                                        toast.success('사전 거병이 신청되었습니다.');
+                                    } catch {
+                                        toast.error('사전 거병 신청에 실패했습니다.');
+                                    }
+                                }}
+                            >
+                                <Swords className="mr-2 h-4 w-4" />
+                                사전 거병
+                            </Button>
+                            <Button
+                                variant="destructive"
+                                onClick={async () => {
+                                    if (!confirm('장수를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) return;
+                                    try {
+                                        await accountApi.dieOnPrestart();
+                                        toast.success('장수가 삭제되었습니다.');
+                                        if (currentWorld) fetchMyGeneral(currentWorld.id);
+                                    } catch {
+                                        toast.error('장수 삭제에 실패했습니다.');
+                                    }
+                                }}
+                            >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                장수 삭제
+                            </Button>
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
+        );
+    }
+
     return (
         <div className="p-4 space-y-4 max-w-4xl mx-auto">
             <PageHeader icon={User} title="내 정보" />

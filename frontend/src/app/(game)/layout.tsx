@@ -204,6 +204,14 @@ export default function GameLayout({ children }: { children: React.ReactNode }) 
     // so children stay mounted when pages call fetchMyGeneral.
     if (!isAuthenticated || !currentWorld || myGeneral === null) return null;
 
+    // Pre-open phase: only allow /my-page (사전 거병, 장수 삭제)
+    const opentime = (currentWorld?.config as Record<string, string>)?.opentime;
+    const isPreOpen = opentime ? new Date() < new Date(opentime) : false;
+    if (isPreOpen && pathname !== '/my-page') {
+        router.replace('/my-page');
+        return null;
+    }
+
     return (
         <SidebarProvider defaultOpen>
             <AppSidebar />

@@ -199,73 +199,77 @@ function LobbyJoinPageContent() {
         setStats((prev) => ({ ...prev, [key]: clamped }));
     };
 
-    // Stat presets - legacy parity from core2026 JoinView
+    // Stat presets - legacy parity: ratio-based random distribution (generalStats.ts)
+    // Each preset assigns random weights per stat, then distributes total proportionally.
+    // Results vary on every click, unlike fixed formulas.
     const applyPreset = useCallback((preset: StatPreset) => {
-        const base = Math.floor(TOTAL_STAT_POINTS / 5);
-        const r = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
+        /** Distribute TOTAL_STAT_POINTS by random weights, clamped to [STAT_MIN, STAT_MAX]. */
+        function distribute(weights: number[]): Record<StatKey, number> {
+            const total = weights.reduce((a, b) => a + b, 0);
+            const vals = weights.map((w) => Math.floor((w / total) * TOTAL_STAT_POINTS));
+            // Fill remainder into the first stat
+            let sum = vals.reduce((a, b) => a + b, 0);
+            for (let i = 0; sum < TOTAL_STAT_POINTS; i = (i + 1) % 5) {
+                vals[i]++;
+                sum++;
+            }
+            // Clamp and redistribute overflow/underflow
+            for (let pass = 0; pass < 10; pass++) {
+                let valid = true;
+                for (let i = 0; i < 5; i++) {
+                    if (vals[i] < STAT_MIN) {
+                        const deficit = STAT_MIN - vals[i];
+                        vals[i] = STAT_MIN;
+                        vals[(i + 1) % 5] -= deficit;
+                        valid = false;
+                    }
+                    if (vals[i] > STAT_MAX) {
+                        const excess = vals[i] - STAT_MAX;
+                        vals[i] = STAT_MAX;
+                        vals[(i + 1) % 5] += excess;
+                        valid = false;
+                    }
+                }
+                if (valid) break;
+            }
+            return {
+                leadership: vals[0],
+                strength: vals[1],
+                intel: vals[2],
+                politics: vals[3],
+                charm: vals[4],
+            };
+        }
+
+        const rw = (max: number) => Math.random() * max;
 
         switch (preset) {
             case 'balanced': {
-                const remainder = TOTAL_STAT_POINTS - base * 5;
-                setStats({
-                    leadership: base + (remainder > 0 ? 1 : 0),
-                    strength: base + (remainder > 1 ? 1 : 0),
-                    intel: base + (remainder > 2 ? 1 : 0),
-                    politics: base + (remainder > 3 ? 1 : 0),
-                    charm: base,
-                });
+                // All stats get similar random weights → roughly even but varied
+                const result = distribute([rw(6) + 3, rw(6) + 3, rw(6) + 3, rw(6) + 3, rw(6) + 3]);
+                setStats(result);
                 break;
             }
             case 'random': {
-                for (let attempt = 0; attempt < 100; attempt++) {
-                    const vals = STAT_KEYS.map(() => r(STAT_MIN, STAT_MAX));
-                    const sum = vals.reduce((a, b) => a + b, 0);
-                    if (sum === TOTAL_STAT_POINTS) {
-                        setStats({
-                            leadership: vals[0],
-                            strength: vals[1],
-                            intel: vals[2],
-                            politics: vals[3],
-                            charm: vals[4],
-                        });
-                        return;
-                    }
-                }
-                // Fallback: distribute evenly with random variation
-                const vals = STAT_KEYS.map(() => base);
-                let remain = TOTAL_STAT_POINTS - vals.reduce((a, b) => a + b, 0);
-                while (remain > 0) {
-                    const idx = r(0, 4);
-                    if (vals[idx] < STAT_MAX) {
-                        vals[idx]++;
-                        remain--;
-                    }
-                }
-                setStats({
-                    leadership: vals[0],
-                    strength: vals[1],
-                    intel: vals[2],
-                    politics: vals[3],
-                    charm: vals[4],
-                });
+                // Fully random weights → wildly different each time
+                const result = distribute([rw(65) + 10, rw(65) + 10, rw(65) + 10, rw(65) + 10, rw(65) + 10]);
+                setStats(result);
                 break;
             }
-            case 'leadership':
-            case 'strength':
+            case 'leadership': {
+                // Legacy pattern: focus stats get 0~6 weight, others get 0~1
+                const result = distribute([rw(6), rw(2), rw(2), rw(1), rw(1)]);
+                setStats(result);
+                break;
+            }
+            case 'strength': {
+                const result = distribute([rw(2), rw(6), rw(1), rw(1), rw(2)]);
+                setStats(result);
+                break;
+            }
             case 'intel': {
-                const focusValue = Math.min(STAT_MAX, STAT_MIN + Math.floor(TOTAL_STAT_POINTS * 0.3));
-                const remain = TOTAL_STAT_POINTS - focusValue;
-                const side = Math.floor(remain / 4);
-                const last = remain - side * 3;
-                const newStats: Record<StatKey, number> = {
-                    leadership: side,
-                    strength: side,
-                    intel: side,
-                    politics: side,
-                    charm: last,
-                };
-                newStats[preset] = focusValue;
-                setStats(newStats);
+                const result = distribute([rw(1), rw(1), rw(6), rw(2), rw(2)]);
+                setStats(result);
                 break;
             }
         }

@@ -147,6 +147,17 @@ class TurnDaemonTest {
     }
 
     @Test
+    fun `tick skips world in pre_open phase`() {
+        val world = createWorld()
+        world.config["opentime"] = OffsetDateTime.now().plusHours(1).toString()
+        `when`(worldStateRepository.findByCommitSha("test-sha")).thenReturn(listOf(world))
+
+        daemon.tick()
+
+        verify(turnService, never()).processWorld(world)
+    }
+
+    @Test
     fun `tick processes unlocked world`() {
         val world = createWorld()
         world.config["locked"] = false

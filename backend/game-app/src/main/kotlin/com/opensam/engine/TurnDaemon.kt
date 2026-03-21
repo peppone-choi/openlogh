@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
+import java.time.OffsetDateTime
 
 /**
  * 턴 데몬: 주기적으로 월드를 순회하며 턴을 처리한다.
@@ -57,6 +58,7 @@ class TurnDaemon(
                 .filter { shouldProcessWorld(it.meta["gatewayActive"]) }
 
             for (world in worlds) {
+                if (isPreOpen(world)) continue
                 if (isWorldLocked(world)) continue
                 try {
                     if (world.realtimeMode) {
@@ -103,6 +105,15 @@ class TurnDaemon(
             is Number -> value.toInt() != 0
             is String -> value.equals("true", ignoreCase = true) || value == "1"
             else -> false
+        }
+    }
+
+    private fun isPreOpen(world: com.opensam.entity.WorldState): Boolean {
+        val opentime = (world.config["opentime"] as? String) ?: return false
+        return try {
+            OffsetDateTime.now().isBefore(OffsetDateTime.parse(opentime))
+        } catch (_: Exception) {
+            false
         }
     }
 
