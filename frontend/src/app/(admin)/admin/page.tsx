@@ -123,6 +123,31 @@ export default function AdminDashboardPage() {
     const [newTurnTerm, setNewTurnTerm] = useState('300');
     const [newGameVersion, setNewGameVersion] = useState('latest');
     const [creating, setCreating] = useState(false);
+    // Create/Reset form — extended config fields
+    const [formExtend, setFormExtend] = useState(false);
+    const [formNpcMode, setFormNpcMode] = useState('1');
+    const [formFiction, setFormFiction] = useState('');
+    const [formMaxGeneral, setFormMaxGeneral] = useState('500');
+    const [formMaxNation, setFormMaxNation] = useState('55');
+    const [formJoinMode, setFormJoinMode] = useState('full');
+    const [formBlockGeneralCreate, setFormBlockGeneralCreate] = useState(false);
+    const [formShowImgLevel, setFormShowImgLevel] = useState(false);
+    const [formRealtimeMode, setFormRealtimeMode] = useState(false);
+    const [formCommandPointRegenRate, setFormCommandPointRegenRate] = useState('');
+    const [formIsFiction, setFormIsFiction] = useState(false);
+    const [formBettingActive, setFormBettingActive] = useState(false);
+    const [formTournamentAuto, setFormTournamentAuto] = useState(false);
+    const [formAllowDomestic, setFormAllowDomestic] = useState(true);
+    const [formAllowTeleport, setFormAllowTeleport] = useState(true);
+    const [formAllowRecruit, setFormAllowRecruit] = useState(true);
+    const [formAllowTraining, setFormAllowTraining] = useState(true);
+    const [formAllowMoraleBoost, setFormAllowMoraleBoost] = useState(true);
+    const [formAllowDispatch, setFormAllowDispatch] = useState(true);
+    const [formAllowConscript, setFormAllowConscript] = useState(true);
+    const [formAllowNpcNationSpawn, setFormAllowNpcNationSpawn] = useState(true);
+    const [formAllowInvaderSpawn, setFormAllowInvaderSpawn] = useState(true);
+    const [formPreReserveOpen, setFormPreReserveOpen] = useState('');
+    const [formOpentime, setFormOpentime] = useState('');
 
     // Reset dialog
     const [resetTarget, setResetTarget] = useState<{
@@ -130,6 +155,7 @@ export default function AdminDashboardPage() {
         name: string;
     } | null>(null);
     const [resetScenario, setResetScenario] = useState('');
+    const [resetOpentime, setResetOpentime] = useState('');
 
     const fetchDaemonStatus = useCallback(async () => {
         try {
@@ -359,6 +385,30 @@ export default function AdminDashboardPage() {
                 name: newWorldName.trim() || undefined,
                 tickSeconds: newTurnTerm ? Number(newTurnTerm) : undefined,
                 gameVersion: newGameVersion.trim() || undefined,
+                extend: formExtend,
+                npcMode: Number(formNpcMode),
+                fiction: formFiction ? Number(formFiction) : undefined,
+                isFiction: formIsFiction,
+                maxGeneral: formMaxGeneral ? Number(formMaxGeneral) : undefined,
+                maxNation: formMaxNation ? Number(formMaxNation) : undefined,
+                joinMode: formJoinMode,
+                blockGeneralCreate: formBlockGeneralCreate ? 1 : 0,
+                showImgLevel: formShowImgLevel ? 1 : 0,
+                realtimeMode: formRealtimeMode,
+                commandPointRegenRate: formCommandPointRegenRate ? Number(formCommandPointRegenRate) : undefined,
+                bettingActive: formBettingActive,
+                tournamentAuto: formTournamentAuto,
+                allowDomestic: formAllowDomestic,
+                allowTeleport: formAllowTeleport,
+                allowRecruit: formAllowRecruit,
+                allowTraining: formAllowTraining,
+                allowMoraleBoost: formAllowMoraleBoost,
+                allowDispatch: formAllowDispatch,
+                allowConscript: formAllowConscript,
+                allowNpcNationSpawn: formAllowNpcNationSpawn,
+                allowInvaderSpawn: formAllowInvaderSpawn,
+                opentime: formOpentime ? new Date(formOpentime).toISOString() : undefined,
+                preReserveOpen: formPreReserveOpen ? new Date(formPreReserveOpen).toISOString() : undefined,
             });
             toast.success(`월드 생성 완료 (ID: ${res.data.id})`);
             setNewWorldName('');
@@ -412,7 +462,31 @@ export default function AdminDashboardPage() {
         if (!resetTarget) return;
         if (!confirm(`월드 "${resetTarget.name}"을 정말 리셋하시겠습니까? 모든 데이터가 초기화됩니다.`)) return;
         try {
-            await adminApi.resetWorld(resetTarget.id, resetScenario || undefined, newGameVersion.trim() || undefined);
+            await adminApi.resetWorld(resetTarget.id, resetScenario || undefined, newGameVersion.trim() || undefined, {
+                extend: formExtend,
+                npcMode: Number(formNpcMode),
+                fiction: formFiction ? Number(formFiction) : undefined,
+                isFiction: formIsFiction,
+                maxGeneral: formMaxGeneral ? Number(formMaxGeneral) : undefined,
+                maxNation: formMaxNation ? Number(formMaxNation) : undefined,
+                joinMode: formJoinMode,
+                blockGeneralCreate: formBlockGeneralCreate ? 1 : 0,
+                showImgLevel: formShowImgLevel ? 1 : 0,
+                realtimeMode: formRealtimeMode,
+                commandPointRegenRate: formCommandPointRegenRate ? Number(formCommandPointRegenRate) : undefined,
+                bettingActive: formBettingActive,
+                tournamentAuto: formTournamentAuto,
+                allowDomestic: formAllowDomestic,
+                allowTeleport: formAllowTeleport,
+                allowRecruit: formAllowRecruit,
+                allowTraining: formAllowTraining,
+                allowMoraleBoost: formAllowMoraleBoost,
+                allowDispatch: formAllowDispatch,
+                allowConscript: formAllowConscript,
+                allowNpcNationSpawn: formAllowNpcNationSpawn,
+                allowInvaderSpawn: formAllowInvaderSpawn,
+                opentime: resetOpentime ? new Date(resetOpentime).toISOString() : undefined,
+            });
             toast.success(`월드 #${resetTarget.id} 리셋 완료`);
             setResetTarget(null);
             loadWorlds();
@@ -636,59 +710,277 @@ export default function AdminDashboardPage() {
                 <CardContent className="space-y-4">
                     {/* Create Form */}
                     {showCreateForm && (
-                        <div className="p-4 border rounded-md space-y-3 bg-muted/20">
+                        <div className="p-4 border rounded-md space-y-4 bg-muted/20">
                             <h4 className="text-sm font-medium">새 월드 생성</h4>
-                            <div className="grid grid-cols-2 gap-3">
-                                <div className="space-y-1">
-                                    <label className="text-xs text-muted-foreground">시나리오</label>
-                                    <select
-                                        value={newScenario}
-                                        onChange={(e) => setNewScenario(e.target.value)}
-                                        className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm"
-                                    >
-                                        <option value="">시나리오 선택</option>
-                                        {scenarios.map((s) => (
-                                            <option key={s.code} value={s.code}>
-                                                {s.title} ({s.startYear}년)
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="text-xs text-muted-foreground">월드 이름</label>
-                                    <Input
-                                        value={newWorldName}
-                                        onChange={(e) => setNewWorldName(e.target.value)}
-                                        placeholder="선택사항"
-                                    />
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="text-xs text-muted-foreground">
-                                        턴 간격 (초 단위, 예: 300초 = 5분)
-                                    </label>
-                                    <Input
-                                        type="number"
-                                        value={newTurnTerm}
-                                        onChange={(e) => setNewTurnTerm(e.target.value)}
-                                        placeholder="300"
-                                    />
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="text-xs text-muted-foreground">게임 버전</label>
-                                    <select
-                                        value={newGameVersion}
-                                        onChange={(e) => setNewGameVersion(e.target.value)}
-                                        className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm"
-                                    >
-                                        <option value="latest">latest</option>
-                                        {availableVersions
-                                            .filter((v) => v !== 'latest')
-                                            .map((v) => (
-                                                <option key={v} value={v}>
-                                                    {v}
+                            {/* 기본 설정 */}
+                            <div>
+                                <p className="text-xs text-muted-foreground mb-2 font-medium">기본 설정</p>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="space-y-1">
+                                        <label className="text-xs text-muted-foreground">시나리오</label>
+                                        <select
+                                            value={newScenario}
+                                            onChange={(e) => setNewScenario(e.target.value)}
+                                            className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm"
+                                        >
+                                            <option value="">시나리오 선택</option>
+                                            {scenarios.map((s) => (
+                                                <option key={s.code} value={s.code}>
+                                                    {s.title} ({s.startYear}년)
                                                 </option>
                                             ))}
-                                    </select>
+                                        </select>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-xs text-muted-foreground">월드 이름</label>
+                                        <Input
+                                            value={newWorldName}
+                                            onChange={(e) => setNewWorldName(e.target.value)}
+                                            placeholder="선택사항"
+                                        />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-xs text-muted-foreground">턴 간격 (초, 예: 300)</label>
+                                        <Input
+                                            type="number"
+                                            value={newTurnTerm}
+                                            onChange={(e) => setNewTurnTerm(e.target.value)}
+                                            placeholder="300"
+                                        />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-xs text-muted-foreground">게임 버전</label>
+                                        <select
+                                            value={newGameVersion}
+                                            onChange={(e) => setNewGameVersion(e.target.value)}
+                                            className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm"
+                                        >
+                                            <option value="latest">latest</option>
+                                            {availableVersions
+                                                .filter((v) => v !== 'latest')
+                                                .map((v) => (
+                                                    <option key={v} value={v}>
+                                                        {v}
+                                                    </option>
+                                                ))}
+                                        </select>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-xs text-muted-foreground">가오픈 일시</label>
+                                        <input
+                                            type="datetime-local"
+                                            value={formPreReserveOpen}
+                                            onChange={(e) => setFormPreReserveOpen(e.target.value)}
+                                            className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm"
+                                        />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-xs text-muted-foreground">정식오픈 일시</label>
+                                        <input
+                                            type="datetime-local"
+                                            value={formOpentime}
+                                            onChange={(e) => setFormOpentime(e.target.value)}
+                                            className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                            {/* 게임 설정 */}
+                            <div>
+                                <p className="text-xs text-muted-foreground mb-2 font-medium">게임 설정</p>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="space-y-1">
+                                        <label className="text-xs text-muted-foreground">NPC 모드</label>
+                                        <select
+                                            value={formNpcMode}
+                                            onChange={(e) => setFormNpcMode(e.target.value)}
+                                            className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm"
+                                        >
+                                            <option value="0">0 - 없음</option>
+                                            <option value="1">1 - 빙의모드</option>
+                                        </select>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-xs text-muted-foreground">가입 모드</label>
+                                        <select
+                                            value={formJoinMode}
+                                            onChange={(e) => setFormJoinMode(e.target.value)}
+                                            className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm"
+                                        >
+                                            <option value="full">full - 전체</option>
+                                            <option value="npc_only">npc_only - NPC만</option>
+                                        </select>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-xs text-muted-foreground">최대 장수 수</label>
+                                        <Input
+                                            type="number"
+                                            value={formMaxGeneral}
+                                            onChange={(e) => setFormMaxGeneral(e.target.value)}
+                                            placeholder="500"
+                                        />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-xs text-muted-foreground">최대 국가 수</label>
+                                        <Input
+                                            type="number"
+                                            value={formMaxNation}
+                                            onChange={(e) => setFormMaxNation(e.target.value)}
+                                            placeholder="55"
+                                        />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-xs text-muted-foreground">가상 모드 (fiction)</label>
+                                        <Input
+                                            type="number"
+                                            value={formFiction}
+                                            onChange={(e) => setFormFiction(e.target.value)}
+                                            placeholder="시나리오 기본값"
+                                        />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-xs text-muted-foreground">커맨드 포인트 재생율</label>
+                                        <Input
+                                            type="number"
+                                            value={formCommandPointRegenRate}
+                                            onChange={(e) => setFormCommandPointRegenRate(e.target.value)}
+                                            placeholder="기본값"
+                                        />
+                                    </div>
+                                    <label className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm">
+                                        <span className="text-xs text-muted-foreground">확장 장수 활성화</span>
+                                        <input
+                                            type="checkbox"
+                                            checked={formExtend}
+                                            onChange={(e) => setFormExtend(e.target.checked)}
+                                        />
+                                    </label>
+                                    <label className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm">
+                                        <span className="text-xs text-muted-foreground">가상 모드 (isFiction)</span>
+                                        <input
+                                            type="checkbox"
+                                            checked={formIsFiction}
+                                            onChange={(e) => setFormIsFiction(e.target.checked)}
+                                        />
+                                    </label>
+                                    <label className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm">
+                                        <span className="text-xs text-muted-foreground">실시간 모드</span>
+                                        <input
+                                            type="checkbox"
+                                            checked={formRealtimeMode}
+                                            onChange={(e) => setFormRealtimeMode(e.target.checked)}
+                                        />
+                                    </label>
+                                    <label className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm">
+                                        <span className="text-xs text-muted-foreground">베팅 활성화</span>
+                                        <input
+                                            type="checkbox"
+                                            checked={formBettingActive}
+                                            onChange={(e) => setFormBettingActive(e.target.checked)}
+                                        />
+                                    </label>
+                                    <label className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm">
+                                        <span className="text-xs text-muted-foreground">토너먼트 자동</span>
+                                        <input
+                                            type="checkbox"
+                                            checked={formTournamentAuto}
+                                            onChange={(e) => setFormTournamentAuto(e.target.checked)}
+                                        />
+                                    </label>
+                                </div>
+                            </div>
+                            {/* 제한 설정 */}
+                            <div>
+                                <p className="text-xs text-muted-foreground mb-2 font-medium">제한 설정</p>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <label className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm">
+                                        <span className="text-xs text-muted-foreground">장수 생성 차단</span>
+                                        <input
+                                            type="checkbox"
+                                            checked={formBlockGeneralCreate}
+                                            onChange={(e) => setFormBlockGeneralCreate(e.target.checked)}
+                                        />
+                                    </label>
+                                    <label className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm">
+                                        <span className="text-xs text-muted-foreground">이미지 레벨 표시</span>
+                                        <input
+                                            type="checkbox"
+                                            checked={formShowImgLevel}
+                                            onChange={(e) => setFormShowImgLevel(e.target.checked)}
+                                        />
+                                    </label>
+                                    <label className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm">
+                                        <span className="text-xs text-muted-foreground">징병 허용</span>
+                                        <input
+                                            type="checkbox"
+                                            checked={formAllowConscript}
+                                            onChange={(e) => setFormAllowConscript(e.target.checked)}
+                                        />
+                                    </label>
+                                    <label className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm">
+                                        <span className="text-xs text-muted-foreground">NPC 국가 스폰</span>
+                                        <input
+                                            type="checkbox"
+                                            checked={formAllowNpcNationSpawn}
+                                            onChange={(e) => setFormAllowNpcNationSpawn(e.target.checked)}
+                                        />
+                                    </label>
+                                    <label className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm">
+                                        <span className="text-xs text-muted-foreground">이민족 스폰</span>
+                                        <input
+                                            type="checkbox"
+                                            checked={formAllowInvaderSpawn}
+                                            onChange={(e) => setFormAllowInvaderSpawn(e.target.checked)}
+                                        />
+                                    </label>
+                                    <label className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm">
+                                        <span className="text-xs text-muted-foreground">내정 허용</span>
+                                        <input
+                                            type="checkbox"
+                                            checked={formAllowDomestic}
+                                            onChange={(e) => setFormAllowDomestic(e.target.checked)}
+                                        />
+                                    </label>
+                                    <label className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm">
+                                        <span className="text-xs text-muted-foreground">이동 허용</span>
+                                        <input
+                                            type="checkbox"
+                                            checked={formAllowTeleport}
+                                            onChange={(e) => setFormAllowTeleport(e.target.checked)}
+                                        />
+                                    </label>
+                                    <label className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm">
+                                        <span className="text-xs text-muted-foreground">모집 허용</span>
+                                        <input
+                                            type="checkbox"
+                                            checked={formAllowRecruit}
+                                            onChange={(e) => setFormAllowRecruit(e.target.checked)}
+                                        />
+                                    </label>
+                                    <label className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm">
+                                        <span className="text-xs text-muted-foreground">훈련 허용</span>
+                                        <input
+                                            type="checkbox"
+                                            checked={formAllowTraining}
+                                            onChange={(e) => setFormAllowTraining(e.target.checked)}
+                                        />
+                                    </label>
+                                    <label className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm">
+                                        <span className="text-xs text-muted-foreground">사기 고양 허용</span>
+                                        <input
+                                            type="checkbox"
+                                            checked={formAllowMoraleBoost}
+                                            onChange={(e) => setFormAllowMoraleBoost(e.target.checked)}
+                                        />
+                                    </label>
+                                    <label className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm">
+                                        <span className="text-xs text-muted-foreground">파견 허용</span>
+                                        <input
+                                            type="checkbox"
+                                            checked={formAllowDispatch}
+                                            onChange={(e) => setFormAllowDispatch(e.target.checked)}
+                                        />
+                                    </label>
                                 </div>
                             </div>
                             <div className="flex gap-2">
@@ -704,7 +996,7 @@ export default function AdminDashboardPage() {
 
                     {/* Reset Dialog */}
                     {resetTarget && (
-                        <div className="p-4 border border-destructive/50 rounded-md space-y-3 bg-destructive/5">
+                        <div className="p-4 border border-destructive/50 rounded-md space-y-4 bg-destructive/5">
                             <h4 className="text-sm font-medium flex items-center gap-2">
                                 <RotateCcw className="size-4" />
                                 월드 리셋: {resetTarget.name}
@@ -712,37 +1004,248 @@ export default function AdminDashboardPage() {
                             <p className="text-xs text-muted-foreground">
                                 시나리오를 선택하면 해당 시나리오로 월드가 초기화됩니다. 모든 진행 상황이 삭제됩니다.
                             </p>
-                            <div className="grid grid-cols-2 gap-3">
-                                <div className="space-y-1">
-                                    <label className="text-xs text-muted-foreground">시나리오</label>
-                                    <select
-                                        value={resetScenario}
-                                        onChange={(e) => setResetScenario(e.target.value)}
-                                        className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm"
-                                    >
-                                        {scenarios.map((s) => (
-                                            <option key={s.code} value={s.code}>
-                                                {s.title} ({s.startYear}년)
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="text-xs text-muted-foreground">게임 버전</label>
-                                    <select
-                                        value={newGameVersion}
-                                        onChange={(e) => setNewGameVersion(e.target.value)}
-                                        className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm"
-                                    >
-                                        <option value="latest">latest</option>
-                                        {availableVersions
-                                            .filter((v) => v !== 'latest')
-                                            .map((v) => (
-                                                <option key={v} value={v}>
-                                                    {v}
+                            {/* 기본 설정 */}
+                            <div>
+                                <p className="text-xs text-muted-foreground mb-2 font-medium">기본 설정</p>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="space-y-1">
+                                        <label className="text-xs text-muted-foreground">시나리오</label>
+                                        <select
+                                            value={resetScenario}
+                                            onChange={(e) => setResetScenario(e.target.value)}
+                                            className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm"
+                                        >
+                                            {scenarios.map((s) => (
+                                                <option key={s.code} value={s.code}>
+                                                    {s.title} ({s.startYear}년)
                                                 </option>
                                             ))}
-                                    </select>
+                                        </select>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-xs text-muted-foreground">게임 버전</label>
+                                        <select
+                                            value={newGameVersion}
+                                            onChange={(e) => setNewGameVersion(e.target.value)}
+                                            className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm"
+                                        >
+                                            <option value="latest">latest</option>
+                                            {availableVersions
+                                                .filter((v) => v !== 'latest')
+                                                .map((v) => (
+                                                    <option key={v} value={v}>
+                                                        {v}
+                                                    </option>
+                                                ))}
+                                        </select>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-xs text-muted-foreground">정식오픈 일시</label>
+                                        <input
+                                            type="datetime-local"
+                                            value={resetOpentime}
+                                            onChange={(e) => setResetOpentime(e.target.value)}
+                                            className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                            {/* 게임 설정 */}
+                            <div>
+                                <p className="text-xs text-muted-foreground mb-2 font-medium">게임 설정</p>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="space-y-1">
+                                        <label className="text-xs text-muted-foreground">NPC 모드</label>
+                                        <select
+                                            value={formNpcMode}
+                                            onChange={(e) => setFormNpcMode(e.target.value)}
+                                            className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm"
+                                        >
+                                            <option value="0">0 - 없음</option>
+                                            <option value="1">1 - 빙의모드</option>
+                                        </select>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-xs text-muted-foreground">가입 모드</label>
+                                        <select
+                                            value={formJoinMode}
+                                            onChange={(e) => setFormJoinMode(e.target.value)}
+                                            className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm"
+                                        >
+                                            <option value="full">full - 전체</option>
+                                            <option value="npc_only">npc_only - NPC만</option>
+                                        </select>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-xs text-muted-foreground">최대 장수 수</label>
+                                        <Input
+                                            type="number"
+                                            value={formMaxGeneral}
+                                            onChange={(e) => setFormMaxGeneral(e.target.value)}
+                                            placeholder="500"
+                                        />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-xs text-muted-foreground">최대 국가 수</label>
+                                        <Input
+                                            type="number"
+                                            value={formMaxNation}
+                                            onChange={(e) => setFormMaxNation(e.target.value)}
+                                            placeholder="55"
+                                        />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-xs text-muted-foreground">가상 모드 (fiction)</label>
+                                        <Input
+                                            type="number"
+                                            value={formFiction}
+                                            onChange={(e) => setFormFiction(e.target.value)}
+                                            placeholder="시나리오 기본값"
+                                        />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-xs text-muted-foreground">커맨드 포인트 재생율</label>
+                                        <Input
+                                            type="number"
+                                            value={formCommandPointRegenRate}
+                                            onChange={(e) => setFormCommandPointRegenRate(e.target.value)}
+                                            placeholder="기본값"
+                                        />
+                                    </div>
+                                    <label className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm">
+                                        <span className="text-xs text-muted-foreground">확장 장수 활성화</span>
+                                        <input
+                                            type="checkbox"
+                                            checked={formExtend}
+                                            onChange={(e) => setFormExtend(e.target.checked)}
+                                        />
+                                    </label>
+                                    <label className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm">
+                                        <span className="text-xs text-muted-foreground">가상 모드 (isFiction)</span>
+                                        <input
+                                            type="checkbox"
+                                            checked={formIsFiction}
+                                            onChange={(e) => setFormIsFiction(e.target.checked)}
+                                        />
+                                    </label>
+                                    <label className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm">
+                                        <span className="text-xs text-muted-foreground">실시간 모드</span>
+                                        <input
+                                            type="checkbox"
+                                            checked={formRealtimeMode}
+                                            onChange={(e) => setFormRealtimeMode(e.target.checked)}
+                                        />
+                                    </label>
+                                    <label className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm">
+                                        <span className="text-xs text-muted-foreground">베팅 활성화</span>
+                                        <input
+                                            type="checkbox"
+                                            checked={formBettingActive}
+                                            onChange={(e) => setFormBettingActive(e.target.checked)}
+                                        />
+                                    </label>
+                                    <label className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm">
+                                        <span className="text-xs text-muted-foreground">토너먼트 자동</span>
+                                        <input
+                                            type="checkbox"
+                                            checked={formTournamentAuto}
+                                            onChange={(e) => setFormTournamentAuto(e.target.checked)}
+                                        />
+                                    </label>
+                                </div>
+                            </div>
+                            {/* 제한 설정 */}
+                            <div>
+                                <p className="text-xs text-muted-foreground mb-2 font-medium">제한 설정</p>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <label className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm">
+                                        <span className="text-xs text-muted-foreground">장수 생성 차단</span>
+                                        <input
+                                            type="checkbox"
+                                            checked={formBlockGeneralCreate}
+                                            onChange={(e) => setFormBlockGeneralCreate(e.target.checked)}
+                                        />
+                                    </label>
+                                    <label className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm">
+                                        <span className="text-xs text-muted-foreground">이미지 레벨 표시</span>
+                                        <input
+                                            type="checkbox"
+                                            checked={formShowImgLevel}
+                                            onChange={(e) => setFormShowImgLevel(e.target.checked)}
+                                        />
+                                    </label>
+                                    <label className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm">
+                                        <span className="text-xs text-muted-foreground">징병 허용</span>
+                                        <input
+                                            type="checkbox"
+                                            checked={formAllowConscript}
+                                            onChange={(e) => setFormAllowConscript(e.target.checked)}
+                                        />
+                                    </label>
+                                    <label className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm">
+                                        <span className="text-xs text-muted-foreground">NPC 국가 스폰</span>
+                                        <input
+                                            type="checkbox"
+                                            checked={formAllowNpcNationSpawn}
+                                            onChange={(e) => setFormAllowNpcNationSpawn(e.target.checked)}
+                                        />
+                                    </label>
+                                    <label className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm">
+                                        <span className="text-xs text-muted-foreground">이민족 스폰</span>
+                                        <input
+                                            type="checkbox"
+                                            checked={formAllowInvaderSpawn}
+                                            onChange={(e) => setFormAllowInvaderSpawn(e.target.checked)}
+                                        />
+                                    </label>
+                                    <label className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm">
+                                        <span className="text-xs text-muted-foreground">내정 허용</span>
+                                        <input
+                                            type="checkbox"
+                                            checked={formAllowDomestic}
+                                            onChange={(e) => setFormAllowDomestic(e.target.checked)}
+                                        />
+                                    </label>
+                                    <label className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm">
+                                        <span className="text-xs text-muted-foreground">이동 허용</span>
+                                        <input
+                                            type="checkbox"
+                                            checked={formAllowTeleport}
+                                            onChange={(e) => setFormAllowTeleport(e.target.checked)}
+                                        />
+                                    </label>
+                                    <label className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm">
+                                        <span className="text-xs text-muted-foreground">모집 허용</span>
+                                        <input
+                                            type="checkbox"
+                                            checked={formAllowRecruit}
+                                            onChange={(e) => setFormAllowRecruit(e.target.checked)}
+                                        />
+                                    </label>
+                                    <label className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm">
+                                        <span className="text-xs text-muted-foreground">훈련 허용</span>
+                                        <input
+                                            type="checkbox"
+                                            checked={formAllowTraining}
+                                            onChange={(e) => setFormAllowTraining(e.target.checked)}
+                                        />
+                                    </label>
+                                    <label className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm">
+                                        <span className="text-xs text-muted-foreground">사기 고양 허용</span>
+                                        <input
+                                            type="checkbox"
+                                            checked={formAllowMoraleBoost}
+                                            onChange={(e) => setFormAllowMoraleBoost(e.target.checked)}
+                                        />
+                                    </label>
+                                    <label className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm">
+                                        <span className="text-xs text-muted-foreground">파견 허용</span>
+                                        <input
+                                            type="checkbox"
+                                            checked={formAllowDispatch}
+                                            onChange={(e) => setFormAllowDispatch(e.target.checked)}
+                                        />
+                                    </label>
                                 </div>
                             </div>
                             <div className="flex gap-2">

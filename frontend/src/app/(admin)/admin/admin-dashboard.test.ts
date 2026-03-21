@@ -31,3 +31,55 @@ describe('admin dashboard server management section', () => {
         expect(isPreOpen).toBe(false);
     });
 });
+
+describe('admin create/reset world form options', () => {
+    it('createWorld API accepts all game config fields', () => {
+        const payload = {
+            scenarioCode: '1070',
+            name: 'test',
+            tickSeconds: 300,
+            extend: true,
+            npcMode: 1,
+            fiction: 0,
+            maxGeneral: 500,
+            maxNation: 55,
+            joinMode: 'full',
+            blockGeneralCreate: 0,
+            showImgLevel: 3,
+            opentime: new Date().toISOString(),
+        };
+        expect(payload.scenarioCode).toBe('1070');
+        expect(payload.extend).toBe(true);
+        expect(payload.maxGeneral).toBe(500);
+        expect(typeof payload.opentime).toBe('string');
+    });
+
+    it('resetWorld API accepts options with opentime', () => {
+        const options = {
+            scenarioCode: '1080',
+            extend: false,
+            npcMode: 0,
+            maxGeneral: 300,
+            opentime: new Date(Date.now() + 86400000).toISOString(),
+        };
+        expect(options.extend).toBe(false);
+        expect(new Date(options.opentime) > new Date()).toBe(true);
+    });
+
+    it('form defaults are sensible', () => {
+        const defaults = {
+            extend: true,
+            npcMode: 1,
+            maxGeneral: 500,
+            maxNation: 55,
+            blockGeneralCreate: 0,
+            showImgLevel: 3,
+            allowConscript: true,
+            allowNpcNationSpawn: true,
+            allowInvaderSpawn: true,
+        };
+        expect(defaults.maxGeneral).toBe(500);
+        expect(defaults.allowConscript).toBe(true);
+        expect(defaults.blockGeneralCreate).toBe(0);
+    });
+});

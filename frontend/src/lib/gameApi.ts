@@ -780,6 +780,30 @@ export const adminApi = {
         tickSeconds?: number;
         notice?: string;
         gameVersion?: string;
+        extend?: boolean;
+        npcMode?: number;
+        fiction?: number;
+        maxGeneral?: number;
+        maxNation?: number;
+        joinMode?: string;
+        blockGeneralCreate?: number;
+        showImgLevel?: number;
+        opentime?: string;
+        preReserveOpen?: string;
+        realtimeMode?: boolean;
+        commandPointRegenRate?: number;
+        isFiction?: boolean;
+        bettingActive?: boolean;
+        tournamentAuto?: boolean;
+        allowDomestic?: boolean;
+        allowTeleport?: boolean;
+        allowRecruit?: boolean;
+        allowTraining?: boolean;
+        allowMoraleBoost?: boolean;
+        allowDispatch?: boolean;
+        allowConscript?: boolean;
+        allowNpcNationSpawn?: boolean;
+        allowInvaderSpawn?: boolean;
     }) => api.post<CreateWorldResponse>('/worlds', data),
     deleteWorld: (worldId: number) => api.delete<void>(`/worlds/${worldId}`),
     listWorlds: () => api.get<AdminWorldListEntry[]>('/admin/worlds'),
@@ -788,10 +812,40 @@ export const adminApi = {
     activateWorld: (worldId: number, data?: { gameVersion?: string }) =>
         api.post<void>(`/worlds/${worldId}/activate`, data ?? {}),
     deactivateWorld: (worldId: number) => api.post<void>(`/worlds/${worldId}/deactivate`, {}),
-    resetWorld: (worldId: number, scenarioCode?: string, gameVersion?: string) =>
+    resetWorld: (
+        worldId: number,
+        scenarioCode?: string,
+        gameVersion?: string,
+        options?: {
+            extend?: boolean;
+            npcMode?: number;
+            fiction?: number;
+            maxGeneral?: number;
+            maxNation?: number;
+            joinMode?: string;
+            blockGeneralCreate?: number;
+            showImgLevel?: number;
+            opentime?: string;
+            realtimeMode?: boolean;
+            commandPointRegenRate?: number;
+            isFiction?: boolean;
+            bettingActive?: boolean;
+            tournamentAuto?: boolean;
+            allowDomestic?: boolean;
+            allowTeleport?: boolean;
+            allowRecruit?: boolean;
+            allowTraining?: boolean;
+            allowMoraleBoost?: boolean;
+            allowDispatch?: boolean;
+            allowConscript?: boolean;
+            allowNpcNationSpawn?: boolean;
+            allowInvaderSpawn?: boolean;
+        }
+    ) =>
         api.post<void>(`/worlds/${worldId}/reset`, {
             ...(scenarioCode ? { scenarioCode } : {}),
             ...(gameVersion ? { gameVersion } : {}),
+            ...(options ?? {}),
         }),
     forceRehall: (worldId?: number) =>
         api.post<{ processedGenerals: number; updatedUsers: number }>('/admin/force-rehall', {}, wq(worldId)),
