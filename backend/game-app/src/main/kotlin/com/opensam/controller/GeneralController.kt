@@ -8,6 +8,7 @@ import com.opensam.dto.SelectNpcRequest
 import com.opensam.dto.UpdatePoolGeneralRequest
 import com.opensam.service.FrontInfoService
 import com.opensam.service.GeneralService
+import com.opensam.service.WorldService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.context.SecurityContextHolder
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.*
 class GeneralController(
     private val generalService: GeneralService,
     private val frontInfoService: FrontInfoService,
+    private val worldService: WorldService,
 ) {
     @GetMapping("/worlds/{worldId}/front-info")
     fun getFrontInfo(
@@ -66,6 +68,10 @@ class GeneralController(
         @PathVariable worldId: Long,
         @RequestBody request: CreateGeneralRequest,
     ): ResponseEntity<GeneralResponse> {
+        val world = worldService.getWorld(worldId.toShort())
+            ?: return ResponseEntity.notFound().build()
+        if (worldService.getGamePhase(world) == WorldService.PHASE_CLOSED)
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build()
         val loginId = SecurityContextHolder.getContext().authentication?.name
             ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
         val general = generalService.createGeneral(worldId, loginId, request)
@@ -83,6 +89,10 @@ class GeneralController(
         @PathVariable worldId: Long,
         @RequestBody request: SelectNpcRequest,
     ): ResponseEntity<GeneralResponse> {
+        val world = worldService.getWorld(worldId.toShort())
+            ?: return ResponseEntity.notFound().build()
+        if (worldService.getGamePhase(world) == WorldService.PHASE_CLOSED)
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build()
         val loginId = SecurityContextHolder.getContext().authentication?.name
             ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
         val general = generalService.possessNpc(worldId, loginId, request.generalId)
@@ -127,6 +137,10 @@ class GeneralController(
         @PathVariable worldId: Long,
         @RequestBody request: SelectNpcRequest,
     ): ResponseEntity<GeneralResponse> {
+        val world = worldService.getWorld(worldId.toShort())
+            ?: return ResponseEntity.notFound().build()
+        if (worldService.getGamePhase(world) == WorldService.PHASE_CLOSED)
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build()
         val loginId = SecurityContextHolder.getContext().authentication?.name
             ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
         val general = generalService.selectFromPool(worldId, loginId, request.generalId)

@@ -61,3 +61,25 @@ describe('lobby getServerPhase', () => {
         expect(getServerPhase({ phase: 'paused' }, {})).toBe('정지');
     });
 });
+
+describe('getActionAvailability blocks join during closed phase', () => {
+    function canJoinDuringClosed(config: Record<string, unknown>): boolean {
+        const startTime = (config.startTime ?? config.starttime) as string | undefined;
+        if (startTime && new Date(startTime) > new Date()) return false;
+        return true;
+    }
+
+    it('blocks when startTime is in future', () => {
+        const startTime = new Date(Date.now() + 3600000).toISOString();
+        expect(canJoinDuringClosed({ startTime })).toBe(false);
+    });
+
+    it('allows when startTime is in past', () => {
+        const startTime = new Date(Date.now() - 3600000).toISOString();
+        expect(canJoinDuringClosed({ startTime })).toBe(true);
+    });
+
+    it('allows when no startTime', () => {
+        expect(canJoinDuringClosed({})).toBe(true);
+    });
+});

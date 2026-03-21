@@ -100,6 +100,17 @@ function getActionAvailability(
         };
     }
 
+    // 폐쇄 상태: startTime이 미래이면 참가 불가
+    const startTime = (config.startTime ?? config.starttime) as string | undefined;
+    if (startTime && new Date(startTime) > new Date()) {
+        return {
+            canJoin: false,
+            canPossessNpc: false,
+            joinReason: '서버 폐쇄 중',
+            npcReason: '서버 폐쇄 중',
+        };
+    }
+
     const joinMode = (config.joinMode as string) ?? (meta.joinMode as string) ?? 'normal';
     const npcMode = Number(config.npcMode ?? config.npcmode ?? meta.npcMode ?? meta.npcmode ?? 0);
 
