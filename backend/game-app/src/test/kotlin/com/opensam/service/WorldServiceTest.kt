@@ -66,13 +66,13 @@ class WorldServiceTest {
     }
 
     @Test
-    fun `getGamePhase returns RESERVED when startTime is in the future`() {
+    fun `getGamePhase returns CLOSED when startTime is in the future`() {
         val future = java.time.OffsetDateTime.now().plusHours(2).toString()
         val world = createWorld(mutableMapOf("startTime" to future, "opentime" to java.time.OffsetDateTime.now().plusDays(1).toString()))
 
         val phase = service.getGamePhase(world)
 
-        assertEquals(WorldService.PHASE_RESERVED, phase)
+        assertEquals(WorldService.PHASE_CLOSED, phase)
     }
 
     @Test

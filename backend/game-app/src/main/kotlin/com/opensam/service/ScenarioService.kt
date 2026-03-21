@@ -893,7 +893,7 @@ class ScenarioService(
             "genius" to 5,
             "msg" to "공지사항",
             "serverCnt" to 1,
-            "phase" to "PHASE_NORMAL",
+            "phase" to "normal",
             "finished" to false,
         )
         // opentime = 정식 오픈 시각. 가오픈은 startTime~opentime 사이.

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { Globe, UserPlus, Users, Bot, LogIn, Loader2, Clock, Signal, Shield } from 'lucide-react';
+import { Globe, UserPlus, Users, Bot, LogIn, Loader2, Clock, Signal, Shield, Ban, Trophy, Pause } from 'lucide-react';
 import { useWorldStore } from '@/stores/worldStore';
 import { useGeneralStore } from '@/stores/generalStore';
 import { useAuthStore } from '@/stores/authStore';
@@ -16,22 +16,37 @@ import { Badge } from '@/components/ui/badge';
 import { GeneralPortrait } from '@/components/game/general-portrait';
 import { StatBar } from '@/components/game/stat-bar';
 
-/** Derive server phase from world metadata */
+/** Derive server phase from world metadata (legacy parity: 폐쇄/가오픈/오픈/통일/정지/종료) */
 function getServerPhase(w: WorldState): {
     label: string;
     color: string;
     icon: typeof Shield;
+    startTime?: string;
+    opentime?: string;
 } {
     const meta = w.meta ?? {};
     const config = (w.config ?? {}) as Record<string, unknown>;
+    const startTime = config.startTime as string | undefined;
+    const opentime = config.opentime as string | undefined;
+
     if (meta.finished || meta.isFinished) return { label: '종료', color: 'text-gray-400', icon: Shield };
     if (meta.isLocked || meta.locked) return { label: '잠김', color: 'text-yellow-400', icon: Shield };
+
+    // isunited check (legacy: 1=천하통일, 2=정지)
+    const phase = meta.phase as string | undefined;
+    if (phase === 'united') return { label: '통일', color: 'text-yellow-400', icon: Trophy };
+    if (phase === 'paused') return { label: '정지', color: 'text-red-400', icon: Pause };
+
     const now = new Date();
-    const startTime = config.startTime as string | undefined;
-    if (startTime && new Date(startTime) > now) return { label: '예약중', color: 'text-blue-400', icon: Clock };
-    const opentime = config.opentime as string | undefined;
-    if (meta.phase === 'pre_open' || meta.phase === 'reserved' || (opentime && new Date(opentime) > now))
-        return { label: '가오픈', color: 'text-orange-400', icon: Clock };
+
+    // 가오픈 시작 전 = 폐쇄
+    if (startTime && new Date(startTime) > now)
+        return { label: '폐쇄', color: 'text-red-500', icon: Ban, startTime, opentime };
+
+    // 가오픈 기간 (startTime ~ opentime)
+    if (phase === 'pre_open' || phase === 'closed' || (opentime && new Date(opentime) > now))
+        return { label: '가오픈', color: 'text-orange-400', icon: Clock, startTime, opentime };
+
     return { label: '오픈', color: 'text-green-400', icon: Signal };
 }
 
@@ -274,6 +289,25 @@ export default function LobbyPage() {
                                                     {w.tickSeconds ? `${Math.round(w.tickSeconds / 60)}분 턴` : '턴제'}
                                                 </span>
                                             </div>
+
+                                            {/* 가오픈/오픈 일시 (legacy parity: serverReservedTemplate) */}
+                                            {(phase.label === '폐쇄' || phase.label === '가오픈') &&
+                                                (phase.startTime || phase.opentime) && (
+                                                    <div className="text-[11px] space-y-0.5">
+                                                        {phase.startTime && phase.label === '폐쇄' && (
+                                                            <p className="text-orange-400">
+                                                                가오픈 일시:{' '}
+                                                                {new Date(phase.startTime).toLocaleString('ko-KR')}
+                                                            </p>
+                                                        )}
+                                                        {phase.opentime && (
+                                                            <p className="text-green-400">
+                                                                오픈 일시:{' '}
+                                                                {new Date(phase.opentime).toLocaleString('ko-KR')}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                )}
 
                                             {/* Extended server info (legacy parity: entrance.ts per-server detail) */}
                                             <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-muted-foreground">

@@ -1308,9 +1308,74 @@ export default function AdminDashboardPage() {
                                                 </Badge>
                                             </TableCell>
                                             <TableCell>
-                                                <Badge variant={w.meta?.gatewayActive ? 'outline' : 'destructive'}>
-                                                    {w.meta?.gatewayActive ? '운영중' : '비활성'}
-                                                </Badge>
+                                                <div className="flex flex-col gap-1">
+                                                    <Badge variant={w.meta?.gatewayActive ? 'outline' : 'destructive'}>
+                                                        {w.meta?.gatewayActive ? '운영중' : '비활성'}
+                                                    </Badge>
+                                                    {(() => {
+                                                        const phase = w.meta?.phase as string | undefined;
+                                                        const config = (w.config ?? {}) as Record<string, unknown>;
+                                                        const now = new Date();
+                                                        const startTime = config.startTime as string | undefined;
+                                                        const opentime = config.opentime as string | undefined;
+                                                        let phaseLabel = '';
+                                                        let phaseColor = '';
+                                                        if (w.meta?.finished || w.meta?.isFinished) {
+                                                            phaseLabel = '종료';
+                                                            phaseColor = 'text-gray-400';
+                                                        } else if (phase === 'united') {
+                                                            phaseLabel = '통일';
+                                                            phaseColor = 'text-yellow-400';
+                                                        } else if (phase === 'paused') {
+                                                            phaseLabel = '정지';
+                                                            phaseColor = 'text-red-400';
+                                                        } else if (startTime && new Date(startTime) > now) {
+                                                            phaseLabel = '폐쇄';
+                                                            phaseColor = 'text-red-500';
+                                                        } else if (
+                                                            phase === 'pre_open' ||
+                                                            phase === 'closed' ||
+                                                            (opentime && new Date(opentime) > now)
+                                                        ) {
+                                                            phaseLabel = '가오픈';
+                                                            phaseColor = 'text-orange-400';
+                                                        } else {
+                                                            phaseLabel = '오픈';
+                                                            phaseColor = 'text-green-400';
+                                                        }
+                                                        return (
+                                                            <>
+                                                                <Badge
+                                                                    variant="outline"
+                                                                    className={`text-[10px] ${phaseColor}`}
+                                                                >
+                                                                    {phaseLabel}
+                                                                </Badge>
+                                                                {(phaseLabel === '폐쇄' || phaseLabel === '가오픈') &&
+                                                                    (startTime || opentime) && (
+                                                                        <div className="text-[9px] text-muted-foreground mt-0.5">
+                                                                            {startTime && phaseLabel === '폐쇄' && (
+                                                                                <div>
+                                                                                    가오픈:{' '}
+                                                                                    {new Date(startTime).toLocaleString(
+                                                                                        'ko-KR'
+                                                                                    )}
+                                                                                </div>
+                                                                            )}
+                                                                            {opentime && (
+                                                                                <div>
+                                                                                    오픈:{' '}
+                                                                                    {new Date(opentime).toLocaleString(
+                                                                                        'ko-KR'
+                                                                                    )}
+                                                                                </div>
+                                                                            )}
+                                                                        </div>
+                                                                    )}
+                                                            </>
+                                                        );
+                                                    })()}
+                                                </div>
                                             </TableCell>
                                             <TableCell>
                                                 <div className="flex flex-wrap gap-1">

@@ -23,12 +23,14 @@ class WorldService(
     private val log = LoggerFactory.getLogger(WorldService::class.java)
 
     companion object {
-        // Game phases (legacy GameConst parity)
-        const val PHASE_RESERVED = "reserved"    // 예약중: startTime 전, 참가 불가
+        // Game phases (legacy parity: .htaccess + isunited + reserved_open)
+        const val PHASE_CLOSED = "closed"        // 폐쇄: startTime 전, 참가 불가
         const val PHASE_PRE_OPEN = "pre_open"    // 가오픈: 장수 생성/삭제, 사전 거병만 가능
         const val PHASE_OPENING = "opening"      // 초반 제한 기간 (정식 오픈 직후)
         const val PHASE_NORMAL = "normal"         // 일반 진행
         const val PHASE_ENDING = "ending"         // 통일 임박
+        const val PHASE_UNITED = "united"         // 천하통일 (isunited=1)
+        const val PHASE_PAUSED = "paused"         // 정지 (isunited=2)
         const val PHASE_FINISHED = "finished"     // 게임 종료
 
         // Seasons by month (삼국지 legacy)
@@ -96,12 +98,12 @@ class WorldService(
 
         val now = OffsetDateTime.now()
 
-        // startTime: 가오픈 시작 시각. 이전이면 예약중(reserved).
+        // startTime: 가오픈 시작 시각. 이전이면 폐쇄(closed).
         val startTime = (world.config["startTime"] as? String)?.let {
             try { OffsetDateTime.parse(it) } catch (_: Exception) { null }
         }
         if (startTime != null && now.isBefore(startTime)) {
-            return PHASE_RESERVED
+            return PHASE_CLOSED
         }
 
         // opentime: 정식 오픈 시각. startTime~opentime 사이면 가오픈(pre_open).
@@ -111,6 +113,13 @@ class WorldService(
         if (opentime != null && now.isBefore(opentime)) {
             return PHASE_PRE_OPEN
         }
+
+        // isunited: 레거시 parity — 1=천하통일, 2=정지
+        val isunited = (world.config["isunited"] as? Number)?.toInt()
+            ?: (world.config["isUnited"] as? Number)?.toInt()
+            ?: 0
+        if (isunited == 1) return PHASE_UNITED
+        if (isunited == 2) return PHASE_PAUSED
 
         val startYear = (world.config["startYear"] as? Number)?.toInt() ?: world.currentYear.toInt()
         val yearsElapsed = world.currentYear.toInt() - startYear

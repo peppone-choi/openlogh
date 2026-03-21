@@ -4,19 +4,21 @@ describe('lobby getServerPhase', () => {
     function getServerPhase(meta: Record<string, unknown>, config: Record<string, unknown>) {
         if (meta.finished || meta.isFinished) return '종료';
         if (meta.isLocked || meta.locked) return '잠김';
+        const phase = meta.phase as string | undefined;
+        if (phase === 'united') return '통일';
+        if (phase === 'paused') return '정지';
         const now = new Date();
         const startTime = config.startTime as string | undefined;
-        if (startTime && new Date(startTime) > now) return '예약중';
+        if (startTime && new Date(startTime) > now) return '폐쇄';
         const opentime = config.opentime as string | undefined;
-        if (meta.phase === 'pre_open' || meta.phase === 'reserved' || (opentime && new Date(opentime) > now))
-            return '가오픈';
+        if (phase === 'pre_open' || phase === 'closed' || (opentime && new Date(opentime) > now)) return '가오픈';
         return '오픈';
     }
 
-    it('detects reserved when startTime is in future', () => {
+    it('detects closed when startTime is in future', () => {
         const startTime = new Date(Date.now() + 3600000).toISOString();
         const opentime = new Date(Date.now() + 7200000).toISOString();
-        expect(getServerPhase({}, { startTime, opentime })).toBe('예약중');
+        expect(getServerPhase({}, { startTime, opentime })).toBe('폐쇄');
     });
 
     it('detects pre_open via config.opentime in future', () => {
@@ -49,5 +51,13 @@ describe('lobby getServerPhase', () => {
 
     it('detects locked', () => {
         expect(getServerPhase({ locked: true }, {})).toBe('잠김');
+    });
+
+    it('detects united via meta.phase', () => {
+        expect(getServerPhase({ phase: 'united' }, {})).toBe('통일');
+    });
+
+    it('detects paused via meta.phase', () => {
+        expect(getServerPhase({ phase: 'paused' }, {})).toBe('정지');
     });
 });
