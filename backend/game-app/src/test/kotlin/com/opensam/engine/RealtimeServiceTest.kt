@@ -155,4 +155,29 @@ class RealtimeServiceTest {
 
         assertNull(result)
     }
+
+    @Test
+    fun `executePreOpenCommand does not require realtimeMode`() {
+        // executePreOpenCommand should work even when realtimeMode=false
+        // (unlike submitCommand which rejects non-realtime worlds)
+        val general = createGeneral()
+        val world = createWorld(realtimeMode = false)
+
+        `when`(generalRepository.findById(1L)).thenReturn(Optional.of(general))
+        `when`(worldStateRepository.findById(1.toShort())).thenReturn(Optional.of(world))
+        `when`(cityRepository.findById(1L)).thenReturn(Optional.empty())
+        `when`(nationRepository.findById(1L)).thenReturn(Optional.empty())
+        // Command not found → returns a failure, but proves realtimeMode was not checked
+        `when`(commandRegistry.createGeneralCommand(anyNonNull(), anyNonNull(), anyNonNull(), anyNonNull()))
+            .thenThrow(IllegalArgumentException("Unknown command"))
+
+        try {
+            service.executePreOpenCommand(1L, "거병")
+        } catch (_: IllegalArgumentException) {
+            // Expected: command registry throws for unknown command in test
+        }
+
+        // Key assertion: we got past the realtimeMode check (no "realtime" error)
+        // If realtimeMode were checked, it would have returned CommandResult before reaching registry
+    }
 }

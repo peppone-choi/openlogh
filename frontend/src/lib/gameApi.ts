@@ -789,7 +789,7 @@ export const adminApi = {
         blockGeneralCreate?: number;
         showImgLevel?: number;
         opentime?: string;
-        preReserveOpen?: string;
+        startTime?: string;
         realtimeMode?: boolean;
         commandPointRegenRate?: number;
         isFiction?: boolean;
@@ -826,6 +826,7 @@ export const adminApi = {
             blockGeneralCreate?: number;
             showImgLevel?: number;
             opentime?: string;
+            startTime?: string;
             realtimeMode?: boolean;
             commandPointRegenRate?: number;
             isFiction?: boolean;

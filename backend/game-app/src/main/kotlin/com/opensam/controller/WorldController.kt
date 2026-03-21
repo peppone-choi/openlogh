@@ -151,6 +151,8 @@ class WorldController(
             blockGeneralCreate = request.blockGeneralCreate,
             showImgLevel = request.showImgLevel,
             autorunUser = request.autorunUser,
+            startTime = request.startTime,
+            opentime = request.opentime,
         )
         if (!request.name.isNullOrBlank()) {
             world.name = request.name
@@ -202,6 +204,8 @@ class WorldController(
             blockGeneralCreate = body?.blockGeneralCreate,
             showImgLevel = body?.showImgLevel,
             autorunUser = body?.autorunUser,
+            startTime = body?.startTime,
+            opentime = body?.opentime,
         )
         publicCachedMapService.evictCache(id)
         mapRecentService.evictCache(id.toLong())

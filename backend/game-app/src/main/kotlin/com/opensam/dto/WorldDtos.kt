@@ -17,6 +17,8 @@ data class CreateWorldRequest(
     val blockGeneralCreate: Int? = null,
     val showImgLevel: Int? = null,
     val autorunUser: List<String>? = null,
+    val startTime: String? = null,
+    val opentime: String? = null,
 )
 
 data class ResetWorldRequest(
@@ -30,6 +32,8 @@ data class ResetWorldRequest(
     val blockGeneralCreate: Int? = null,
     val showImgLevel: Int? = null,
     val autorunUser: List<String>? = null,
+    val startTime: String? = null,
+    val opentime: String? = null,
 )
 
 data class WorldCityOwnershipSnapshotResponse(

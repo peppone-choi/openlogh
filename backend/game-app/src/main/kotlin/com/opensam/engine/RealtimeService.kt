@@ -87,6 +87,62 @@ class RealtimeService(
         return scheduleCommand(general, world, actionCode, arg, isNationCommand = true)
     }
 
+    /**
+     * Execute a command immediately during pre-open phase.
+     * Legacy parity: BuildNationCandidate / DieOnPrestart run instantly,
+     * bypassing realtimeMode check and scheduling (turn daemon skips pre-open worlds).
+     */
+    @Transactional
+    fun executePreOpenCommand(generalId: Long, actionCode: String, arg: Map<String, Any>? = null): CommandResult {
+        val general = generalRepository.findById(generalId).orElseThrow {
+            IllegalArgumentException("General not found: $generalId")
+        }
+        val world = worldStateRepository.findById(general.worldId.toShort()).orElseThrow {
+            IllegalArgumentException("World not found: ${general.worldId}")
+        }
+        val env = buildCommandEnv(world)
+        val city = cityRepository.findById(general.cityId).orElse(null)
+        val nation = if (general.nationId != 0L) {
+            nationRepository.findById(general.nationId).orElse(null)
+        } else null
+
+        val command = commandRegistry.createGeneralCommand(actionCode, general, env, arg)
+        command.city = city
+        command.nation = nation
+        commandExecutor.hydrateCommandForConstraintCheck(command, general, env, arg)
+
+        val conditionResult = command.checkFullCondition()
+        if (conditionResult is ConstraintResult.Fail) {
+            return CommandResult(success = false, logs = listOf(conditionResult.reason))
+        }
+
+        val result = runBlocking {
+            commandExecutor.executeGeneralCommand(actionCode, general, env, arg, city, nation)
+        }
+
+        if (result.logs.isNotEmpty()) {
+            try {
+                commandLogDispatcher.dispatchLogs(
+                    worldId = world.id.toLong(),
+                    generalId = general.id,
+                    nationId = if (general.nationId != 0L) general.nationId else null,
+                    year = env.year,
+                    month = env.month,
+                    logs = result.logs,
+                )
+            } catch (_: Exception) { }
+        }
+
+        gameEventService.sendToGeneral(general.id, mapOf(
+            "type" to "command_completed",
+            "actionCode" to actionCode,
+            "success" to result.success,
+            "logs" to result.logs,
+        ))
+
+        return result
+    }
+
     @Transactional
     fun processCompletedCommands(world: WorldState) {
         val now = OffsetDateTime.now()

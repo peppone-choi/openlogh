@@ -17,6 +17,10 @@ data class CreateWorldRequest(
     val blockGeneralCreate: Int? = null,
     val showImgLevel: Int? = null,
     val autorunUser: List<String>? = null,
+    /** 가오픈 시작 시각 (ISO 8601). null이면 즉시 가오픈. */
+    val startTime: String? = null,
+    /** 정식 오픈 시각 (ISO 8601). null이면 기본 +3년. */
+    val opentime: String? = null,
 )
 
 data class ResetWorldRequest(
@@ -30,4 +34,8 @@ data class ResetWorldRequest(
     val blockGeneralCreate: Int? = null,
     val showImgLevel: Int? = null,
     val autorunUser: List<String>? = null,
+    /** 가오픈 시작 시각 (ISO 8601). null이면 즉시 가오픈. */
+    val startTime: String? = null,
+    /** 정식 오픈 시각 (ISO 8601). null이면 기본 +3년. */
+    val opentime: String? = null,
 )

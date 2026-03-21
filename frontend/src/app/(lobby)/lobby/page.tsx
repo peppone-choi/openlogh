@@ -26,8 +26,11 @@ function getServerPhase(w: WorldState): {
     const config = (w.config ?? {}) as Record<string, unknown>;
     if (meta.finished || meta.isFinished) return { label: '종료', color: 'text-gray-400', icon: Shield };
     if (meta.isLocked || meta.locked) return { label: '잠김', color: 'text-yellow-400', icon: Shield };
+    const now = new Date();
+    const startTime = config.startTime as string | undefined;
+    if (startTime && new Date(startTime) > now) return { label: '예약중', color: 'text-blue-400', icon: Clock };
     const opentime = config.opentime as string | undefined;
-    if (meta.phase === 'pre_open' || meta.isReserved || meta.reserved || (opentime && new Date(opentime) > new Date()))
+    if (meta.phase === 'pre_open' || meta.phase === 'reserved' || (opentime && new Date(opentime) > now))
         return { label: '가오픈', color: 'text-orange-400', icon: Clock };
     return { label: '오픈', color: 'text-green-400', icon: Signal };
 }

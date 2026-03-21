@@ -24,6 +24,7 @@ class WorldService(
 
     companion object {
         // Game phases (legacy GameConst parity)
+        const val PHASE_RESERVED = "reserved"    // 예약중: startTime 전, 참가 불가
         const val PHASE_PRE_OPEN = "pre_open"    // 가오픈: 장수 생성/삭제, 사전 거병만 가능
         const val PHASE_OPENING = "opening"      // 초반 제한 기간 (정식 오픈 직후)
         const val PHASE_NORMAL = "normal"         // 일반 진행
@@ -93,10 +94,21 @@ class WorldService(
         val locked = world.config["locked"] as? Boolean ?: false
         if (locked) return world.config["phase"] as? String ?: PHASE_NORMAL
 
+        val now = OffsetDateTime.now()
+
+        // startTime: 가오픈 시작 시각. 이전이면 예약중(reserved).
+        val startTime = (world.config["startTime"] as? String)?.let {
+            try { OffsetDateTime.parse(it) } catch (_: Exception) { null }
+        }
+        if (startTime != null && now.isBefore(startTime)) {
+            return PHASE_RESERVED
+        }
+
+        // opentime: 정식 오픈 시각. startTime~opentime 사이면 가오픈(pre_open).
         val opentime = (world.config["opentime"] as? String)?.let {
             try { OffsetDateTime.parse(it) } catch (_: Exception) { null }
         }
-        if (opentime != null && OffsetDateTime.now().isBefore(opentime)) {
+        if (opentime != null && now.isBefore(opentime)) {
             return PHASE_PRE_OPEN
         }
 

@@ -126,7 +126,7 @@ class AccountController(
         if (world != null && worldService.getGamePhase(world) != WorldService.PHASE_PRE_OPEN) {
             return ResponseEntity.badRequest().body(mapOf("error" to "게임이 시작되었습니다."))
         }
-        val result = realtimeService.submitCommand(general.id, "거병", null)
+        val result = realtimeService.executePreOpenCommand(general.id, "거병")
         return ResponseEntity.ok(result)
     }
 
@@ -148,7 +148,7 @@ class AccountController(
         if (world != null && worldService.getGamePhase(world) != WorldService.PHASE_PRE_OPEN) {
             return ResponseEntity.badRequest().body(mapOf("error" to "게임이 시작되었습니다."))
         }
-        val result = realtimeService.submitCommand(general.id, "사전거병삭제", null)
+        val result = realtimeService.executePreOpenCommand(general.id, "사전거병삭제")
         return ResponseEntity.ok(result)
     }
 }

@@ -96,6 +96,8 @@ class ScenarioService(
         blockGeneralCreate: Int? = null,
         showImgLevel: Int? = null,
         autorunUser: List<String>? = null,
+        startTime: String? = null,
+        opentime: String? = null,
     ): WorldState {
         val scenario = getScenario(scenarioCode)
         val resolvedCommitSha = commitSha?.takeIf { it.isNotBlank() } ?: defaultCommitSha
@@ -127,6 +129,8 @@ class ScenarioService(
                     blockGeneralCreate = blockGeneralCreate,
                     showImgLevel = showImgLevel,
                     autorunUser = autorunUser,
+                    startTime = startTime,
+                    opentime = opentime,
                 ),
             )
         )
@@ -284,6 +288,8 @@ class ScenarioService(
         blockGeneralCreate: Int? = null,
         showImgLevel: Int? = null,
         autorunUser: List<String>? = null,
+        startTime: String? = null,
+        opentime: String? = null,
     ): WorldState {
         val worldId = existingWorld.id.toLong()
         log.info("[World {}] Reinitializing with scenario '{}'", worldId, scenarioCode)
@@ -331,6 +337,8 @@ class ScenarioService(
             blockGeneralCreate = blockGeneralCreate,
             showImgLevel = showImgLevel,
             autorunUser = autorunUser,
+            startTime = startTime,
+            opentime = opentime,
         )
         existingWorld.meta = mutableMapOf()
         existingWorld.updatedAt = OffsetDateTime.now()
@@ -833,6 +841,8 @@ class ScenarioService(
         blockGeneralCreate: Int?,
         showImgLevel: Int?,
         autorunUser: List<String>?,
+        startTime: String? = null,
+        opentime: String? = null,
     ): MutableMap<String, Any> {
         val turnterm = (tickSeconds / 60).coerceAtLeast(1)
         val resolvedNpcMode = npcMode ?: 0
@@ -886,9 +896,13 @@ class ScenarioService(
             "phase" to "PHASE_NORMAL",
             "finished" to false,
         )
-        // Default to 가오픈: opentime far in the future → pre_open phase.
-        // Admin transitions to 정식오픈 by setting opentime to now/past.
-        config["opentime"] = java.time.OffsetDateTime.now().plusYears(3).toString()
+        // opentime = 정식 오픈 시각. 가오픈은 startTime~opentime 사이.
+        // startTime이 미래면 예약중(reserved), startTime~opentime이면 가오픈(pre_open).
+        config["opentime"] = opentime
+            ?: java.time.OffsetDateTime.now().plusYears(3).toString()
+        if (startTime != null) {
+            config["startTime"] = startTime
+        }
 
         if (autorunUser != null) {
             config["autorun_user"] = autorunUser

@@ -1,22 +1,39 @@
 import { describe, expect, it } from 'vitest';
 
-describe('game layout pre_open redirect', () => {
-    function shouldRedirectPreOpen(opentime: string | undefined, pathname: string): boolean {
-        const isPreOpen = opentime ? new Date() < new Date(opentime) : false;
-        return isPreOpen && pathname !== '/my-page';
+describe('game layout phase redirect', () => {
+    function shouldRedirect(
+        config: { startTime?: string; opentime?: string },
+        pathname: string
+    ): string | null {
+        const now = new Date();
+        if (config.startTime && now < new Date(config.startTime)) return '/lobby';
+        const isPreOpen = config.opentime ? now < new Date(config.opentime) : false;
+        if (isPreOpen && pathname !== '/my-page') return '/my-page';
+        return null;
     }
 
-    it('redirects non-my-page paths during pre_open', () => {
+    it('redirects to lobby when reserved (startTime in future)', () => {
+        const startTime = new Date(Date.now() + 3600000).toISOString();
+        const opentime = new Date(Date.now() + 7200000).toISOString();
+        expect(shouldRedirect({ startTime, opentime }, '/map')).toBe('/lobby');
+    });
+
+    it('redirects to my-page during pre_open for non-my-page paths', () => {
         const opentime = new Date(Date.now() + 3600000).toISOString();
-        expect(shouldRedirectPreOpen(opentime, '/commands')).toBe(true);
+        expect(shouldRedirect({ opentime }, '/commands')).toBe('/my-page');
     });
 
     it('allows my-page during pre_open', () => {
         const opentime = new Date(Date.now() + 3600000).toISOString();
-        expect(shouldRedirectPreOpen(opentime, '/my-page')).toBe(false);
+        expect(shouldRedirect({ opentime }, '/my-page')).toBeNull();
     });
 
-    it('allows all paths when not pre_open', () => {
-        expect(shouldRedirectPreOpen(undefined, '/commands')).toBe(false);
+    it('allows all paths when fully open', () => {
+        expect(shouldRedirect({}, '/commands')).toBeNull();
+    });
+
+    it('allows all paths when opentime has passed', () => {
+        const opentime = new Date(Date.now() - 3600000).toISOString();
+        expect(shouldRedirect({ opentime }, '/map')).toBeNull();
     });
 });

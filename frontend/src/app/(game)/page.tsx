@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { RefreshCw, Map as MapIcon, Swords, User, ScrollText } from 'lucide-react';
 import { useWorldStore } from '@/stores/worldStore';
 import { useGeneralStore } from '@/stores/generalStore';
+import { useGameStore } from '@/stores/gameStore';
 import { frontApi } from '@/lib/gameApi';
 import { subscribeWebSocket } from '@/lib/websocket';
 import type { FrontInfoResponse } from '@/types';
@@ -63,6 +64,11 @@ export default function GameDashboard() {
     const isTabActive = (tab: string) => mobileTab === tab;
 
     const updateWorldTime = useWorldStore((s) => s.updateWorldTime);
+    const loadAll = useGameStore((s) => s.loadAll);
+
+    useEffect(() => {
+        if (currentWorld) loadAll(currentWorld.id);
+    }, [currentWorld, loadAll]);
 
     const loadFrontInfo = useCallback(async () => {
         if (!currentWorld) return;

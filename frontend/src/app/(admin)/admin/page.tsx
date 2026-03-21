@@ -156,6 +156,7 @@ export default function AdminDashboardPage() {
     } | null>(null);
     const [resetScenario, setResetScenario] = useState('');
     const [resetOpentime, setResetOpentime] = useState('');
+    const [resetStartTime, setResetStartTime] = useState('');
 
     const fetchDaemonStatus = useCallback(async () => {
         try {
@@ -408,7 +409,7 @@ export default function AdminDashboardPage() {
                 allowNpcNationSpawn: formAllowNpcNationSpawn,
                 allowInvaderSpawn: formAllowInvaderSpawn,
                 opentime: formOpentime ? new Date(formOpentime).toISOString() : undefined,
-                preReserveOpen: formPreReserveOpen ? new Date(formPreReserveOpen).toISOString() : undefined,
+                startTime: formPreReserveOpen ? new Date(formPreReserveOpen).toISOString() : undefined,
             });
             toast.success(`월드 생성 완료 (ID: ${res.data.id})`);
             setNewWorldName('');
@@ -486,6 +487,7 @@ export default function AdminDashboardPage() {
                 allowNpcNationSpawn: formAllowNpcNationSpawn,
                 allowInvaderSpawn: formAllowInvaderSpawn,
                 opentime: resetOpentime ? new Date(resetOpentime).toISOString() : undefined,
+                startTime: resetStartTime ? new Date(resetStartTime).toISOString() : undefined,
             });
             toast.success(`월드 #${resetTarget.id} 리셋 완료`);
             setResetTarget(null);
@@ -1038,6 +1040,15 @@ export default function AdminDashboardPage() {
                                                     </option>
                                                 ))}
                                         </select>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-xs text-muted-foreground">가오픈 일시</label>
+                                        <input
+                                            type="datetime-local"
+                                            value={resetStartTime}
+                                            onChange={(e) => setResetStartTime(e.target.value)}
+                                            className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm"
+                                        />
                                     </div>
                                     <div className="space-y-1">
                                         <label className="text-xs text-muted-foreground">정식오픈 일시</label>
@@ -2052,6 +2063,8 @@ export default function AdminDashboardPage() {
                                         <Badge variant="secondary">
                                             {(() => {
                                                 const w = worlds.find((w) => w.id === worldId);
+                                                const st = w?.config?.startTime as string | undefined;
+                                                if (st && new Date(st) > new Date()) return '예약중';
                                                 const opentime = w?.config?.opentime as string | undefined;
                                                 if (opentime && new Date(opentime) > new Date()) return '가오픈';
                                                 return '정식오픈';
