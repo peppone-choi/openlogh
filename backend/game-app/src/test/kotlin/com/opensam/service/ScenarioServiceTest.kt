@@ -434,15 +434,15 @@ class ScenarioServiceTest {
     }
 
     @Test
-    fun `newly created world config contains future opentime for pre_open`() {
+    fun `explicit opentime enables pre_open phase detection`() {
         // Verify the OffsetDateTime-based opentime pattern works for pre_open detection
-        val futureOpentime = java.time.OffsetDateTime.now().plusYears(3).toString()
+        val futureOpentime = java.time.OffsetDateTime.now().plusHours(1).toString()
         val parsed = java.time.OffsetDateTime.parse(futureOpentime)
         assertTrue(parsed.isAfter(java.time.OffsetDateTime.now()), "opentime should be in the future")
 
         // Simulate WorldService.getGamePhase logic
         val isPreOpen = java.time.OffsetDateTime.now().isBefore(parsed)
-        assertTrue(isPreOpen, "world should be in pre_open phase")
+        assertTrue(isPreOpen, "world should be in pre_open phase when opentime is explicitly set")
     }
 
     @Test

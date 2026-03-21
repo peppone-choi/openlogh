@@ -143,6 +143,8 @@ class AdminServiceTest {
                 auctionCloseMinutes = 45,
                 opentime = "2026-04-01T00:00:00Z",
                 startTime = "2026-03-25T00:00:00Z",
+                reserveOpen = "2026-04-01T00:00",
+                preReserveOpen = "2026-03-25T00:00",
             )
         )
 
@@ -159,6 +161,8 @@ class AdminServiceTest {
         assertEquals(45, world.config["auctionCloseMinutes"])
         assertEquals("2026-04-01T00:00:00Z", world.config["opentime"])
         assertEquals("2026-03-25T00:00:00Z", world.config["startTime"])
+        assertEquals("2026-04-01T00:00", world.config["reserveOpen"])
+        assertEquals("2026-03-25T00:00", world.config["preReserveOpen"])
         assertEquals(150, general1.gold)
         assertEquals(275, general1.rice)
         assertEquals(350, general2.gold)

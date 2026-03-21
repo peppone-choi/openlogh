@@ -898,8 +898,9 @@ class ScenarioService(
         )
         // opentime = 정식 오픈 시각. 가오픈은 startTime~opentime 사이.
         // startTime이 미래면 예약중(reserved), startTime~opentime이면 가오픈(pre_open).
-        config["opentime"] = opentime
-            ?: java.time.OffsetDateTime.now().plusYears(3).toString()
+        if (opentime != null) {
+            config["opentime"] = opentime
+        }
         if (startTime != null) {
             config["startTime"] = startTime
         }

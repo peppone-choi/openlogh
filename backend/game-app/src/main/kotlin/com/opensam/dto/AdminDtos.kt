@@ -26,6 +26,8 @@ data class TimeControlRequest(
     val auctionCloseMinutes: Int? = null,
     val opentime: String? = null,
     val startTime: String? = null,
+    val reserveOpen: String? = null,
+    val preReserveOpen: String? = null,
 )
 
 data class NationStatistic(
