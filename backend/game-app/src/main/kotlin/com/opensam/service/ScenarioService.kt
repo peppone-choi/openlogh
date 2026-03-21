@@ -886,6 +886,10 @@ class ScenarioService(
             "phase" to "PHASE_NORMAL",
             "finished" to false,
         )
+        // Default to 가오픈: opentime far in the future → pre_open phase.
+        // Admin transitions to 정식오픈 by setting opentime to now/past.
+        config["opentime"] = java.time.OffsetDateTime.now().plusYears(3).toString()
+
         if (autorunUser != null) {
             config["autorun_user"] = autorunUser
         }

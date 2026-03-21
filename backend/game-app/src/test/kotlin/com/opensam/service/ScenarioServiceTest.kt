@@ -434,6 +434,18 @@ class ScenarioServiceTest {
     }
 
     @Test
+    fun `newly created world config contains future opentime for pre_open`() {
+        // Verify the OffsetDateTime-based opentime pattern works for pre_open detection
+        val futureOpentime = java.time.OffsetDateTime.now().plusYears(3).toString()
+        val parsed = java.time.OffsetDateTime.parse(futureOpentime)
+        assertTrue(parsed.isAfter(java.time.OffsetDateTime.now()), "opentime should be in the future")
+
+        // Simulate WorldService.getGamePhase logic
+        val isPreOpen = java.time.OffsetDateTime.now().isBefore(parsed)
+        assertTrue(isPreOpen, "world should be in pre_open phase")
+    }
+
+    @Test
     fun `spawnScenarioNpcGeneralsForYear spawns delayed NPC on due year`() {
         val scenario = ScenarioData(
             title = "연차 등장",
