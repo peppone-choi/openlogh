@@ -47,6 +47,14 @@ const DAEMON_STATE_CONFIG: Record<string, { label: string; color: string; icon: 
     STOPPING: { label: '중지중', color: 'bg-red-500/20 text-red-400 border-red-500/40', icon: Pause },
 };
 
+/** datetime-local 포맷으로 현재시각 + hours 시간 후 반환 (로컬 시간) */
+function futureLocal(hours: number): string {
+    const d = new Date(Date.now() + hours * 3600_000);
+    d.setMinutes(0, 0, 0);
+    const p = (n: number) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+
 export default function AdminDashboardPage() {
     const { worldId, refreshWorlds: refreshWorldsContext } = useAdminWorld();
     // Gateway-level world list (always available)
@@ -146,8 +154,8 @@ export default function AdminDashboardPage() {
     const [formAllowConscript, setFormAllowConscript] = useState(true);
     const [formAllowNpcNationSpawn, setFormAllowNpcNationSpawn] = useState(true);
     const [formAllowInvaderSpawn, setFormAllowInvaderSpawn] = useState(true);
-    const [formPreReserveOpen, setFormPreReserveOpen] = useState('');
-    const [formOpentime, setFormOpentime] = useState('');
+    const [formPreReserveOpen, setFormPreReserveOpen] = useState(() => futureLocal(1));
+    const [formOpentime, setFormOpentime] = useState(() => futureLocal(24));
 
     // Reset dialog
     const [resetTarget, setResetTarget] = useState<{
@@ -155,8 +163,8 @@ export default function AdminDashboardPage() {
         name: string;
     } | null>(null);
     const [resetScenario, setResetScenario] = useState('');
-    const [resetOpentime, setResetOpentime] = useState('');
-    const [resetStartTime, setResetStartTime] = useState('');
+    const [resetOpentime, setResetOpentime] = useState(() => futureLocal(24));
+    const [resetStartTime, setResetStartTime] = useState(() => futureLocal(1));
 
     const fetchDaemonStatus = useCallback(async () => {
         try {
