@@ -47,6 +47,15 @@ const DAEMON_STATE_CONFIG: Record<string, { label: string; color: string; icon: 
     STOPPING: { label: '중지중', color: 'bg-red-500/20 text-red-400 border-red-500/40', icon: Pause },
 };
 
+/** ISO 문자열을 datetime-local 포맷 (로컬 시간)으로 변환 */
+function toLocalDatetime(iso: string | undefined | null): string {
+    if (!iso) return '';
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return '';
+    const p = (n: number) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+
 /** datetime-local 포맷으로 현재시각 + hours 시간 후 반환 (로컬 시간) */
 function futureLocal(hours: number): string {
     const d = new Date(Date.now() + hours * 3600_000);
@@ -354,8 +363,13 @@ export default function AdminDashboardPage() {
                             setExtend(cfg?.extend !== false);
                             setShowImgLevel(Number(cfg?.showImgLevel ?? 3));
                             setAutorunMinutes(Number(cfg?.autorunMinutes ?? 0));
-                            setReserveOpen(String(cfg?.reserveOpen ?? ''));
-                            setPreReserveOpen(String(cfg?.preReserveOpen ?? ''));
+                            setReserveOpen(
+                                String(cfg?.reserveOpen ?? '') || toLocalDatetime(cfg?.opentime as string | undefined)
+                            );
+                            setPreReserveOpen(
+                                String(cfg?.preReserveOpen ?? '') ||
+                                    toLocalDatetime(cfg?.startTime as string | undefined)
+                            );
                             setAllowConscript(cfg?.allowConscript !== false);
                             setAllowNpcNationSpawn(cfg?.allowNpcNationSpawn !== false);
                             setAllowInvaderSpawn(cfg?.allowInvaderSpawn !== false);
