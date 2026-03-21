@@ -6,7 +6,7 @@ import { useWorldStore } from '@/stores/worldStore';
 import { useGeneralStore } from '@/stores/generalStore';
 import { accountApi, historyApi, cityApi, nationApi, frontApi, itemApi, generalLogApi } from '@/lib/gameApi';
 import type { City, Nation, Message, GeneralFrontInfo } from '@/types';
-import { User, Settings, ScrollText, Trash2, Swords } from 'lucide-react';
+import { User, Settings, ScrollText, Trash2, Swords, ArrowLeft, RefreshCw } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -239,6 +239,22 @@ export default function MyPage() {
     if (isPreOpen) {
         return (
             <div className="p-4 space-y-4 max-w-4xl mx-auto">
+                <div className="flex items-center gap-2">
+                    <Button variant="ghost" size="sm" onClick={() => router.push('/')}>
+                        <ArrowLeft className="size-4 mr-1" />
+                        돌아가기
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                            if (currentWorld) fetchMyGeneral(currentWorld.id);
+                        }}
+                    >
+                        <RefreshCw className="size-4 mr-1" />
+                        갱신
+                    </Button>
+                </div>
                 <PageHeader icon={User} title="내 정보" />
                 <Card>
                     <CardHeader>
