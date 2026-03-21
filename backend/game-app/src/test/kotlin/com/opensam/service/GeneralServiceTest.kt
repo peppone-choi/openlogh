@@ -356,6 +356,95 @@ class GeneralServiceTest {
     }
 
     @Test
+    fun `createGeneral uses global killTurn instead of hardcoded value`() {
+        val user = AppUser(
+            id = 6,
+            loginId = "user",
+            displayName = "유저",
+            passwordHash = "encoded",
+            meta = mutableMapOf(),
+        )
+        // tickSeconds=300 → turnterm=5 → killTurn=4800/5=960
+        val world = WorldState(
+            id = 1,
+            currentYear = 180,
+            currentMonth = 1,
+            tickSeconds = 300,
+            config = mutableMapOf("hiddenSeed" to "seed"),
+            meta = mutableMapOf(),
+        )
+        val city = City(id = 10, worldId = 1, name = "허창", level = 5, nationId = 0)
+
+        `when`(appUserRepository.findByLoginId("user")).thenReturn(user)
+        `when`(worldStateRepository.findById(1.toShort())).thenReturn(Optional.of(world))
+        `when`(generalRepository.findByWorldIdAndUserId(1L, 6L)).thenReturn(emptyList())
+        `when`(generalRepository.findByWorldId(1L)).thenReturn(emptyList())
+        `when`(generalRepository.findByNameAndWorldId("삭턴장수", 1L)).thenReturn(null)
+        `when`(cityRepository.findById(10L)).thenReturn(Optional.of(city))
+
+        val general = service.createGeneral(
+            1L,
+            "user",
+            CreateGeneralRequest(
+                name = "삭턴장수",
+                cityId = 10L,
+                leadership = 70,
+                strength = 70,
+                intel = 70,
+                politics = 70,
+                charm = 70,
+            ),
+        )
+
+        assertNotNull(general)
+        assertEquals(960.toShort(), general?.killTurn, "killTurn should be 4800/turnterm(5)=960, not hardcoded 6")
+    }
+
+    @Test
+    fun `createGeneral uses config killturn when set`() {
+        val user = AppUser(
+            id = 7,
+            loginId = "user",
+            displayName = "유저",
+            passwordHash = "encoded",
+            meta = mutableMapOf(),
+        )
+        val world = WorldState(
+            id = 1,
+            currentYear = 180,
+            currentMonth = 1,
+            tickSeconds = 300,
+            config = mutableMapOf("hiddenSeed" to "seed", "killturn" to 100),
+            meta = mutableMapOf(),
+        )
+        val city = City(id = 10, worldId = 1, name = "허창", level = 5, nationId = 0)
+
+        `when`(appUserRepository.findByLoginId("user")).thenReturn(user)
+        `when`(worldStateRepository.findById(1.toShort())).thenReturn(Optional.of(world))
+        `when`(generalRepository.findByWorldIdAndUserId(1L, 7L)).thenReturn(emptyList())
+        `when`(generalRepository.findByWorldId(1L)).thenReturn(emptyList())
+        `when`(generalRepository.findByNameAndWorldId("설정장수", 1L)).thenReturn(null)
+        `when`(cityRepository.findById(10L)).thenReturn(Optional.of(city))
+
+        val general = service.createGeneral(
+            1L,
+            "user",
+            CreateGeneralRequest(
+                name = "설정장수",
+                cityId = 10L,
+                leadership = 70,
+                strength = 70,
+                intel = 70,
+                politics = 70,
+                charm = 70,
+            ),
+        )
+
+        assertNotNull(general)
+        assertEquals(100.toShort(), general?.killTurn, "killTurn should use config value when set")
+    }
+
+    @Test
     fun `createGeneral returns clear error when user not found`() {
         `when`(appUserRepository.findByLoginId("ghost")).thenReturn(null)
         `when`(appUserRepository.findByLoginIdIgnoreCase("ghost")).thenReturn(null)

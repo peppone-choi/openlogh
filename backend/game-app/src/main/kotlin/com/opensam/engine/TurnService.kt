@@ -175,6 +175,27 @@ class TurnService @Autowired constructor(
             val worldId = world.id.toLong()
             val tickDeadline = System.currentTimeMillis() + MAX_TICK_DURATION_MS
 
+            // 가오픈→정식 오픈 전환 시: 전체 장수 killTurn을 global 값으로 리셋
+            // 가오픈 중 생성된 장수의 killTurn이 너무 낮아 정식 오픈 직후 삭턴 사망하는 것을 방지
+            if (world.meta["openKillTurnReset"] != true) {
+                val globalKillTurn = resolveGlobalKillTurn(world, null)
+                val allGenerals = generalRepository.findByWorldId(worldId)
+                var resetCount = 0
+                for (general in allGenerals) {
+                    if (general.npcState.toInt() == 5) continue
+                    val currentKt = general.killTurn?.toInt() ?: continue
+                    if (currentKt < globalKillTurn) {
+                        general.killTurn = globalKillTurn.toShort()
+                        resetCount++
+                    }
+                }
+                if (resetCount > 0) {
+                    generalRepository.saveAll(allGenerals)
+                    logger.info("[Turn] 가오픈→오픈 전환: {}명 장수 killTurn을 {}로 리셋", resetCount, globalKillTurn)
+                }
+                world.meta["openKillTurnReset"] = true
+            }
+
             var turnsProcessed = 0
             while (!now.isBefore(nextTurnAt) && System.currentTimeMillis() < tickDeadline) {
                 turnsProcessed++

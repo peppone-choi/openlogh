@@ -332,6 +332,60 @@ class TurnServiceTest {
 
     // ========== catch-up resilience ==========
 
+    // ========== 가오픈→오픈 killTurn 리셋 ==========
+
+    @Test
+    fun `processWorld resets low killTurn on first open after pre-open`() {
+        val now = OffsetDateTime.now()
+        val world = createWorld(year = 200, month = 6, tickSeconds = 3600, updatedAt = now.minusSeconds(4000))
+        // tickSeconds=3600 → turnterm=60 → globalKillTurn=4800/60=80
+        // meta에 openKillTurnReset 없음 → 리셋 발생해야 함
+
+        val general = General(
+            id = 1, worldId = 1, name = "가오픈장수", nationId = 1, cityId = 1,
+            killTurn = 6, npcState = 0, turnTime = now.plusSeconds(100),
+        )
+        `when`(generalRepository.findByWorldId(1L)).thenReturn(listOf(general))
+
+        service.processWorld(world)
+
+        assertEquals(80.toShort(), general.killTurn, "killTurn should be reset to global value (80)")
+        assertEquals(true, world.meta["openKillTurnReset"], "openKillTurnReset flag should be set")
+    }
+
+    @Test
+    fun `processWorld does not reset killTurn when flag already set`() {
+        val now = OffsetDateTime.now()
+        val world = createWorld(year = 200, month = 6, tickSeconds = 3600, updatedAt = now.minusSeconds(4000))
+        world.meta["openKillTurnReset"] = true
+
+        val general = General(
+            id = 1, worldId = 1, name = "기존장수", nationId = 1, cityId = 1,
+            killTurn = 6, npcState = 0, turnTime = now.plusSeconds(100),
+        )
+        `when`(generalRepository.findByWorldId(1L)).thenReturn(listOf(general))
+
+        service.processWorld(world)
+
+        assertEquals(6.toShort(), general.killTurn, "killTurn should NOT be reset when flag already set")
+    }
+
+    @Test
+    fun `processWorld does not lower existing high killTurn on reset`() {
+        val now = OffsetDateTime.now()
+        val world = createWorld(year = 200, month = 6, tickSeconds = 3600, updatedAt = now.minusSeconds(4000))
+
+        val general = General(
+            id = 1, worldId = 1, name = "NPC장수", nationId = 1, cityId = 1,
+            killTurn = 200, npcState = 2, turnTime = now.plusSeconds(100),
+        )
+        `when`(generalRepository.findByWorldId(1L)).thenReturn(listOf(general))
+
+        service.processWorld(world)
+
+        assertEquals(200.toShort(), general.killTurn, "killTurn above global should not be lowered")
+    }
+
     @Test
     fun `processWorld preserves per general turn offset for blocked generals`() {
         val updatedAt = OffsetDateTime.now().withNano(0).minusSeconds(400)

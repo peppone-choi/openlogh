@@ -194,7 +194,7 @@ class GeneralService(
                 crewType = request.crewType,
                 ownerName = user.displayName,
                 turnTime = createInitialTurnTime(world, rng, request.inheritTurntimeZone),
-                killTurn = 6,
+                killTurn = resolveKillTurn(world).toShort(),
                 age = age,
                 startAge = age,
                 betray = if (relYear >= 4) 2 else 0,
@@ -600,6 +600,23 @@ class GeneralService(
         is Number -> value.toInt()
         is String -> value.toIntOrNull()
         else -> null
+    }
+
+    /**
+     * Legacy parity: killturn = 4800 / turnterm.
+     * npcmode==1 (빙의 모드)이면 1/3.
+     */
+    private fun resolveKillTurn(world: WorldState): Int {
+        return (world.config["killturn"] as? Number)?.toInt()
+            ?: (world.config["killTurn"] as? Number)?.toInt()
+            ?: calcDefaultKillTurn(world)
+    }
+
+    private fun calcDefaultKillTurn(world: WorldState): Int {
+        val turnterm = (world.tickSeconds / 60).coerceAtLeast(1)
+        val base = 4800 / turnterm
+        val npcmode = (world.config["npcmode"] as? Number)?.toInt() ?: 0
+        return if (npcmode == 1) base / 3 else base
     }
 
     private fun readBoolean(value: Any?): Boolean? = when (value) {
