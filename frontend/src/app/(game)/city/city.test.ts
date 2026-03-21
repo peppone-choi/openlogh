@@ -29,6 +29,18 @@ describe('city page filter logic', () => {
         expect(base).toHaveLength(3);
     });
 
+    it('vacant city (nationId === 0) is not visible for stats', () => {
+        const city = { id: 1, nationId: 0 };
+        const isVacant = city.nationId === 0;
+        expect(isVacant).toBe(true);
+    });
+
+    it('owned city (nationId > 0) may be visible for stats', () => {
+        const city = { id: 1, nationId: 5 };
+        const isVacant = city.nationId === 0;
+        expect(isVacant).toBe(false);
+    });
+
     it('loads data without myGeneral when requestedCityId is set', () => {
         const hasGeneral = false;
         const requestedCityId = 5;

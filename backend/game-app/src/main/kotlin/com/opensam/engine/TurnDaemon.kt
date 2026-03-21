@@ -2,6 +2,7 @@ package com.opensam.engine
 
 import com.opensam.repository.WorldStateRepository
 import com.opensam.engine.turn.cqrs.TurnCoordinator
+import com.opensam.service.GameEventService
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.scheduling.annotation.Scheduled
@@ -20,6 +21,7 @@ class TurnDaemon(
     @Value("\${game.commit-sha:local}") private val processCommitSha: String,
     @Value("\${opensam.cqrs.enabled:false}") private val cqrsEnabled: Boolean,
     private val worldStateRepository: WorldStateRepository,
+    private val gameEventService: GameEventService,
 ) {
     enum class DaemonState { IDLE, RUNNING, FLUSHING, PAUSED, STOPPING }
 
@@ -61,10 +63,20 @@ class TurnDaemon(
                         realtimeService.processCompletedCommands(world)
                         realtimeService.regenerateCommandPoints(world)
                     } else {
+                        val prevYear = world.currentYear.toInt()
+                        val prevMonth = world.currentMonth.toInt()
                         if (cqrsEnabled) {
                             turnCoordinator.processWorld(world)
                         } else {
                             turnService.processWorld(world)
+                            // Legacy path doesn't broadcast — notify frontend of turn advance
+                            if (world.currentYear.toInt() != prevYear || world.currentMonth.toInt() != prevMonth) {
+                                gameEventService.broadcastTurnAdvance(
+                                    world.id.toLong(),
+                                    world.currentYear.toInt(),
+                                    world.currentMonth.toInt(),
+                                )
+                            }
                         }
                     }
                 } catch (e: Exception) {

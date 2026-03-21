@@ -48,23 +48,24 @@ export function MapViewer({
     onNationSelect,
 }: MapViewerProps) {
     const router = useRouter();
-    const { cities: storeCities, nations, generals, mapData, loadAll, loadMap } = useGameStore();
+    const { cities: storeCities, nations, generals, mapData, loadMap } = useGameStore();
     const currentWorld = useWorldStore((s) => s.currentWorld);
     const myGeneral = useGeneralStore((s) => s.myGeneral);
     const [showNames, setShowNames] = useState(!compact);
 
     const isPublicMode = !!publicData;
-    const mapCode = useMemo(
-        () => mapCodeProp ?? (isPublicMode ? (publicData.mapCode ?? 'che').trim() || 'che' : 'che'),
-        [mapCodeProp, isPublicMode, publicData?.mapCode]
-    );
+    const mapCode = useMemo(() => {
+        if (mapCodeProp) return mapCodeProp;
+        if (isPublicMode) return (publicData.mapCode ?? 'che').trim() || 'che';
+        const worldMapCode = (currentWorld?.config as Record<string, string>)?.mapCode;
+        return worldMapCode?.trim() || 'che';
+    }, [mapCodeProp, isPublicMode, publicData?.mapCode, currentWorld?.config]);
 
     useEffect(() => {
         if (!isPublicMode && worldId != null) {
-            loadAll(worldId);
             loadMap(mapCode);
         }
-    }, [worldId, mapCode, loadAll, loadMap, isPublicMode]);
+    }, [mapCode, loadMap, isPublicMode, worldId]);
 
     const nationMap = useMemo(() => new Map(nations.map((n) => [n.id, n])), [nations]);
     const emperorCityId = useMemo(() => generals.find((g) => g.npcState === 10)?.cityId ?? -1, [generals]);

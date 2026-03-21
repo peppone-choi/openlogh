@@ -135,6 +135,29 @@ describe('nation flag display in map viewer', () => {
     });
 });
 
+describe('MapViewer mapCode resolution', () => {
+    it('uses world config mapCode when no prop is given', () => {
+        const config = { mapCode: 'miniche' } as Record<string, string>;
+        const mapCodeProp = undefined;
+        const mapCode = (mapCodeProp ?? config.mapCode?.trim()) || 'che';
+        expect(mapCode).toBe('miniche');
+    });
+
+    it('falls back to che when world config has no mapCode', () => {
+        const config = {} as Record<string, string>;
+        const mapCodeProp = undefined;
+        const mapCode = (mapCodeProp ?? config.mapCode?.trim()) || 'che';
+        expect(mapCode).toBe('che');
+    });
+
+    it('uses prop over world config', () => {
+        const config = { mapCode: 'miniche' } as Record<string, string>;
+        const mapCodeProp = 'cr';
+        const mapCode = (mapCodeProp ?? config.mapCode?.trim()) || 'che';
+        expect(mapCode).toBe('cr');
+    });
+});
+
 describe('map-tooltips glassmorphism', () => {
     it('GLASS constant includes backdrop-blur and transparency', () => {
         const GLASS =

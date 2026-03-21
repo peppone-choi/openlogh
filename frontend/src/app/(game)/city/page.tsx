@@ -315,7 +315,8 @@ function CityPageContent() {
                 const isCapital = nation?.capitalCityId === city.id;
                 const owner = nationMap.get(city.nationId);
                 const isMyNationCity = city.nationId === myGeneral?.nationId;
-                const isVisible = canSeeMilitary(city);
+                const isVacant = city.nationId === 0;
+                const isVisible = canSeeMilitary(city) && !isVacant;
                 const nationColor = owner?.color ?? '#888';
                 const textColor = isBrightColor(nationColor) ? 'black' : 'white';
                 const regionText = REGION_NAMES[city.region] ?? '';

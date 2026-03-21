@@ -122,7 +122,7 @@ function LobbyJoinPageContent() {
     const { cities, nations, loadAll } = useGameStore();
 
     const [name, setName] = useState('');
-    const [cityId, setCityId] = useState<number | ''>('');
+    const [cityId, setCityId] = useState<number | 'random'>('random');
     const [nationId, setNationId] = useState<number>(0);
     const [crewType, setCrewType] = useState(0);
     const [personality, setPersonality] = useState('Random');
@@ -289,7 +289,7 @@ function LobbyJoinPageContent() {
             setError('이름을 입력해주세요.');
             return;
         }
-        if (nationId === 0 && cityId === '') {
+        if (nationId === 0 && cityId !== 'random' && !cityId) {
             setError('도시를 선택해주세요.');
             return;
         }
@@ -307,7 +307,7 @@ function LobbyJoinPageContent() {
         try {
             await generalApi.create(currentWorld.id, {
                 name: blockCustomName ? undefined : name.trim(),
-                cityId,
+                cityId: cityId === 'random' ? undefined : cityId,
                 nationId: isFoundMode ? null : nationId || null,
                 crewType,
                 personality,
@@ -447,18 +447,34 @@ function LobbyJoinPageContent() {
                         <div className="space-y-1">
                             <label className="block text-sm text-muted-foreground">시작 도시</label>
                             {nationId === 0 ? (
-                                <select
-                                    value={cityId}
-                                    onChange={(e) => setCityId(Number(e.target.value))}
-                                    className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm"
-                                >
-                                    <option value="">도시 선택</option>
-                                    {filteredCities.map((c) => (
-                                        <option key={c.id} value={c.id}>
-                                            {c.name} ({CITY_LEVEL_NAMES[c.level] ?? c.level})
-                                        </option>
-                                    ))}
-                                </select>
+                                (() => {
+                                    const randomOnly = !!(
+                                        (currentWorld.config as Record<string, unknown>)?.randomStartCity ??
+                                        (currentWorld.meta as Record<string, unknown>)?.randomStartCity
+                                    );
+                                    return randomOnly ? (
+                                        <div className="text-sm text-muted-foreground p-2 border border-input rounded-md bg-muted/50">
+                                            이 서버에서는 랜덤 도시 배정만 가능합니다.
+                                        </div>
+                                    ) : (
+                                        <select
+                                            value={cityId}
+                                            onChange={(e) =>
+                                                setCityId(
+                                                    e.target.value === 'random' ? 'random' : Number(e.target.value)
+                                                )
+                                            }
+                                            className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm"
+                                        >
+                                            <option value="random">랜덤 배치</option>
+                                            {filteredCities.map((c) => (
+                                                <option key={c.id} value={c.id}>
+                                                    {c.name} ({CITY_LEVEL_NAMES[c.level] ?? c.level})
+                                                </option>
+                                            ))}
+                                        </select>
+                                    );
+                                })()
                             ) : (
                                 <div className="text-sm text-muted-foreground p-2 border border-input rounded-md bg-muted/50">
                                     국가 소속 시 도시는 자동 배정됩니다.

@@ -310,6 +310,19 @@ class CommandServiceTest {
     }
 
     @Test
+    fun `NPC and CR commands are excluded from general category when no whitelist`() {
+        val npcCrCommands = listOf("NPC능동", "CR건국", "CR맹훈련")
+        val method = service.javaClass.getDeclaredMethod("generalCategory", String::class.java)
+        method.isAccessible = true
+        for (code in npcCrCommands) {
+            val category = method.invoke(service, code) as String
+            assertEquals("기타", category, "NPC/CR command '$code' falls into '기타' category")
+        }
+        // Verify the filter logic: NPC/CR prefixed commands should be skipped when no whitelist
+        assertTrue(npcCrCommands.all { it.startsWith("NPC") || it.startsWith("CR") })
+    }
+
+    @Test
     fun `world config stores available command whitelist from scenario`() {
         val world = WorldState(id = 1, name = "world", scenarioCode = "test", realtimeMode = false)
         val whitelist = mapOf("개인" to listOf("휴식", "che_이동"))

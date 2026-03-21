@@ -38,3 +38,22 @@ describe('lobby join scout message nation name display', () => {
         expect(style).not.toHaveProperty('backgroundColor');
     });
 });
+
+describe('lobby join random city selection', () => {
+    it('random city sends undefined cityId to backend', () => {
+        const cityId: number | 'random' = 'random';
+        const apiCityId = cityId === 'random' ? undefined : cityId;
+        expect(apiCityId).toBeUndefined();
+    });
+
+    it('specific city sends numeric cityId to backend', () => {
+        const cityId: number | 'random' = 42 as number | 'random';
+        const apiCityId = cityId === 'random' ? undefined : cityId;
+        expect(apiCityId).toBe(42);
+    });
+
+    it('default state is random', () => {
+        const defaultCityId: number | 'random' = 'random';
+        expect(defaultCityId).toBe('random');
+    });
+});

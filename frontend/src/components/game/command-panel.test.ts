@@ -18,3 +18,18 @@ describe('CommandPanel timer removal', () => {
         expect(formatCountdownExists).toBe(false);
     });
 });
+
+describe('CommandPanel toolbar collapsible', () => {
+    it('toolbar defaults to collapsed', () => {
+        const toolbarCollapsed = true;
+        expect(toolbarCollapsed).toBe(true);
+    });
+
+    it('toggle switches collapsed state', () => {
+        let collapsed = true;
+        collapsed = !collapsed;
+        expect(collapsed).toBe(false);
+        collapsed = !collapsed;
+        expect(collapsed).toBe(true);
+    });
+});

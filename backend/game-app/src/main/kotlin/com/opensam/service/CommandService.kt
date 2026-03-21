@@ -144,6 +144,8 @@ class CommandService(
 
         for (actionCode in actionCodes) {
             if (allowedCommands != null && actionCode !in allowedCommands) continue
+            // NPC/CR commands are scenario-specific; hide when no whitelist is configured
+            if (allowedCommands == null && (actionCode.startsWith("NPC") || actionCode.startsWith("CR"))) continue
             val command = commandRegistry.createGeneralCommand(actionCode, general, env, null)
             command.city = city
             command.nation = nation

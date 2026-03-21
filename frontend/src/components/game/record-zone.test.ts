@@ -13,3 +13,23 @@ describe('RecordZone stripYear logic', () => {
         expect(stripped).toBe('조조가 허창으로 이동하였습니다.');
     });
 });
+
+describe('RecordZone stripYear date prefix', () => {
+    it('should strip year from date prefix, keeping month', () => {
+        const date = '180년 1월';
+        const stripped = date.replace(/\d+년\s*/, '');
+        expect(stripped).toBe('1월');
+    });
+
+    it('should handle date without year gracefully', () => {
+        const date = '3월';
+        const stripped = date.replace(/\d+년\s*/, '');
+        expect(stripped).toBe('3월');
+    });
+
+    it('should return empty string if date is only year', () => {
+        const date = '180년 ';
+        const stripped = date.replace(/\d+년\s*/, '');
+        expect(stripped).toBe('');
+    });
+});

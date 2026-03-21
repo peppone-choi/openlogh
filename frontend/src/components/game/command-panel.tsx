@@ -157,6 +157,7 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
     const [selectedStoredAction, setSelectedStoredAction] = useState('');
     const [recentActions, setRecentActions] = useState<RecentAction[]>([]);
     const [expanded, setExpanded] = useState(false);
+    const [toolbarCollapsed, setToolbarCollapsed] = useState(true);
 
     const visibleCount = expanded ? MAX_TURN_COUNT : COLLAPSED_TURN_COUNT;
 
@@ -735,7 +736,21 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
                     </div>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-1.5">
+                <div>
+                    <button
+                        type="button"
+                        className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground transition-colors py-1"
+                        onClick={() => setToolbarCollapsed((v) => !v)}
+                    >
+                        {toolbarCollapsed ? <ChevronDown className="size-3" /> : <ChevronUp className="size-3" />}
+                        도구 모음
+                    </button>
+                </div>
+
+                <div
+                    className="flex flex-wrap items-center gap-1.5 overflow-hidden transition-all duration-200"
+                    style={{ maxHeight: toolbarCollapsed ? '0px' : '500px', opacity: toolbarCollapsed ? 0 : 1 }}
+                >
                     <Button size="sm" variant="outline" disabled={realtimeMode} onClick={() => setShowSelector(true)}>
                         선택 채우기
                     </Button>

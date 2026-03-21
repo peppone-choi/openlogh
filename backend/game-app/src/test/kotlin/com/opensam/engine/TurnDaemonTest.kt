@@ -3,6 +3,7 @@ package com.opensam.engine
 import com.opensam.engine.turn.cqrs.TurnCoordinator
 import com.opensam.entity.WorldState
 import com.opensam.repository.WorldStateRepository
+import com.opensam.service.GameEventService
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -16,6 +17,7 @@ class TurnDaemonTest {
     private lateinit var turnCoordinator: TurnCoordinator
     private lateinit var realtimeService: RealtimeService
     private lateinit var worldStateRepository: WorldStateRepository
+    private lateinit var gameEventService: GameEventService
 
     @Suppress("UNCHECKED_CAST")
     private fun <T> anyNonNull(): T = any<T>() as T
@@ -26,6 +28,7 @@ class TurnDaemonTest {
         turnCoordinator = mock(TurnCoordinator::class.java)
         realtimeService = mock(RealtimeService::class.java)
         worldStateRepository = mock(WorldStateRepository::class.java)
+        gameEventService = mock(GameEventService::class.java)
 
         daemon = TurnDaemon(
             turnService,
@@ -34,6 +37,7 @@ class TurnDaemonTest {
             "test-sha",
             false,
             worldStateRepository,
+            gameEventService,
         )
     }
 
@@ -89,6 +93,7 @@ class TurnDaemonTest {
             "test-sha",
             true,
             worldStateRepository,
+            gameEventService,
         )
         cqrsDaemon.tick()
 
@@ -150,5 +155,30 @@ class TurnDaemonTest {
         daemon.tick()
 
         verify(turnService).processWorld(world)
+    }
+
+    @Test
+    fun `tick broadcasts turn advance after legacy turnService when month changes`() {
+        val world = createWorld()
+        `when`(worldStateRepository.findByCommitSha("test-sha")).thenReturn(listOf(world))
+        doAnswer {
+            world.currentYear = 200
+            world.currentMonth = 7
+            null
+        }.`when`(turnService).processWorld(world)
+
+        daemon.tick()
+
+        verify(gameEventService).broadcastTurnAdvance(1L, 200, 7)
+    }
+
+    @Test
+    fun `tick does not broadcast when month unchanged`() {
+        val world = createWorld()
+        `when`(worldStateRepository.findByCommitSha("test-sha")).thenReturn(listOf(world))
+
+        daemon.tick()
+
+        verify(gameEventService, never()).broadcastTurnAdvance(anyLong(), anyInt(), anyInt())
     }
 }

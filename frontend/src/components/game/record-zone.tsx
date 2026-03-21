@@ -35,9 +35,10 @@ function RecordColumn({ title, records, stripYear }: { title: string; records: R
                         ) : (
                             records.map((r) => {
                                 const message = stripYear ? r.message.replace(/\d+년\s+\d+월:/g, '') : r.message;
+                                const date = stripYear ? r.date.replace(/\d+년\s*/, '') : r.date;
                                 return (
                                     <div key={r.id} className="text-xs leading-relaxed">
-                                        <span className="text-muted-foreground mr-1">[{r.date}]</span>
+                                        {date && <span className="text-muted-foreground mr-1">[{date}]</span>}
                                         {formatLog(message)}
                                     </div>
                                 );
