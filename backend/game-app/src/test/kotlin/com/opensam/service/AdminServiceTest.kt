@@ -141,6 +141,8 @@ class AdminServiceTest {
                 distribute = ResourceDistributionRequest(gold = 50, rice = 75, target = "all"),
                 auctionSync = true,
                 auctionCloseMinutes = 45,
+                opentime = "2026-04-01T00:00:00Z",
+                startTime = "2026-03-25T00:00:00Z",
             )
         )
 
@@ -155,6 +157,8 @@ class AdminServiceTest {
         assertEquals(10, world.config["turnterm"])
         assertEquals(true, world.config["auctionSync"])
         assertEquals(45, world.config["auctionCloseMinutes"])
+        assertEquals("2026-04-01T00:00:00Z", world.config["opentime"])
+        assertEquals("2026-03-25T00:00:00Z", world.config["startTime"])
         assertEquals(150, general1.gold)
         assertEquals(275, general1.rice)
         assertEquals(350, general2.gold)

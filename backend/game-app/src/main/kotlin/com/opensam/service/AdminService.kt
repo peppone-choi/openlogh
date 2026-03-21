@@ -212,6 +212,8 @@ class AdminService(
         }
         request.auctionSync?.let { world.config["auctionSync"] = it }
         request.auctionCloseMinutes?.let { world.config["auctionCloseMinutes"] = it.coerceAtLeast(1) }
+        request.opentime?.let { world.config["opentime"] = it }
+        request.startTime?.let { world.config["startTime"] = it }
         request.distribute?.let {
             if (!applyResourceDistribution(worldId, it)) {
                 return false

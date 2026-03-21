@@ -552,6 +552,7 @@ export default function AdminDashboardPage() {
                     reserveOpen: reserveOpen || undefined,
                     preReserveOpen: preReserveOpen || undefined,
                     opentime: reserveOpen ? new Date(reserveOpen).toISOString() : undefined,
+                    startTime: preReserveOpen ? new Date(preReserveOpen).toISOString() : undefined,
                     allowConscript,
                     allowNpcNationSpawn,
                     allowInvaderSpawn,

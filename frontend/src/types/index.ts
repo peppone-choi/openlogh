@@ -1226,6 +1226,10 @@ export interface TimeControlRequest {
     distribute?: { gold: number; rice: number; target: string };
     auctionSync?: boolean;
     auctionCloseMinutes?: number;
+    opentime?: string;
+    startTime?: string;
+    reserveOpen?: string;
+    preReserveOpen?: string;
 }
 
 // Admin World List Entry

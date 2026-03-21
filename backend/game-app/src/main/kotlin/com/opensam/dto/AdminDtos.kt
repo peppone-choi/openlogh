@@ -24,6 +24,8 @@ data class TimeControlRequest(
     val distribute: ResourceDistributionRequest? = null,
     val auctionSync: Boolean? = null,
     val auctionCloseMinutes: Int? = null,
+    val opentime: String? = null,
+    val startTime: String? = null,
 )
 
 data class NationStatistic(
