@@ -30,7 +30,8 @@ class che_불가침파기제의(general: General, env: CommandEnv, arg: Map<Stri
         val josaRo = JosaUtil.pick(dn.name, "로")
         pushLog("<D><b>${dn.name}</b></>${josaRo} 불가침 파기 제의 서신을 보냈습니다.<1>${formatDate()}</>")
         pushHistoryLog("<D><b>${dn.name}</b></>${josaRo} 불가침 파기 제의 서신을 보냈습니다.")
-        pushGlobalLog("<Y>${general.name}</>${pickJosa(general.name, "이")} <D><b>${dn.name}</b></>${josaRo} 불가침 파기를 제의했습니다.")
+        pushNationalHistoryLog("<Y>${general.name}</>${pickJosa(general.name, "이")} <D><b>${dn.name}</b></>${josaRo} 불가침 파기를 제의했습니다.")
+        pushDestNationalHistoryLog("<D><b>${n.name}</b></>의 <Y>${general.name}</>${pickJosa(general.name, "이")} 아국에 불가침 파기를 제의했습니다.")
         pushGlobalHistoryLog("<Y>${general.name}</>${pickJosa(general.name, "이")} <D><b>${dn.name}</b></>에 불가침 파기를 제의했습니다.")
 
         services!!.diplomacyService.proposeBreakNonAggression(env.worldId, n.id, dn.id)

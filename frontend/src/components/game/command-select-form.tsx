@@ -24,17 +24,12 @@ export function CommandSelectForm({
     generalId,
 }: CommandSelectFormProps) {
     const [selectedCmd, setSelectedCmd] = useState('');
-    const [pendingArg, setPendingArg] = useState<CommandArg | undefined>();
     const categories = Object.keys(commandTable);
     const hasArgForm = !!(selectedCmd && COMMAND_ARGS[selectedCmd]);
 
-    const handleReserve = (arg?: CommandArg) => {
+    const handleArgSubmit = (arg: CommandArg) => {
         if (!selectedCmd) return;
         onSelect(selectedCmd, arg);
-    };
-
-    const handleArgSubmit = (arg: CommandArg) => {
-        setPendingArg(arg);
     };
 
     const handleSelectCmd = (actionCode: string) => {
@@ -43,7 +38,6 @@ export function CommandSelectForm({
             return;
         }
         setSelectedCmd(actionCode);
-        setPendingArg(undefined);
     };
 
     return (
@@ -69,11 +63,9 @@ export function CommandSelectForm({
                                                 key={cmd.actionCode}
                                                 variant={selectedCmd === cmd.actionCode ? 'default' : 'secondary'}
                                                 className={`cursor-pointer text-xs ${
-                                                    !cmd.enabled ? 'opacity-40 cursor-not-allowed' : ''
+                                                    !cmd.enabled ? 'border border-red-500/50 text-red-400' : ''
                                                 }`}
-                                                onClick={() => {
-                                                    if (cmd.enabled) handleSelectCmd(cmd.actionCode);
-                                                }}
+                                                onClick={() => handleSelectCmd(cmd.actionCode)}
                                                 title={
                                                     cmd.reason ??
                                                     (needsArgs ? '클릭하여 세부 설정' : '클릭하여 즉시 예약')
@@ -97,11 +89,7 @@ export function CommandSelectForm({
                 {selectedCmd && hasArgForm && (
                     <>
                         <CommandArgForm actionCode={selectedCmd} onSubmit={handleArgSubmit} />
-
                         <div className="flex gap-2">
-                            <Button size="sm" onClick={() => handleReserve(pendingArg)} disabled={!pendingArg}>
-                                예약
-                            </Button>
                             <Button size="sm" variant="ghost" onClick={onCancel}>
                                 취소
                             </Button>

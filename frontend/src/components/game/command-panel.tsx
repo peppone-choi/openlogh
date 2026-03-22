@@ -1060,8 +1060,14 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
                 )}
 
                 {showSelector && (
-                    <div className="fixed inset-0 z-50 flex items-end sm:items-start justify-center bg-black/60 sm:p-4">
-                        <div className="w-full max-w-2xl rounded-t-xl sm:rounded-md border border-gray-700 bg-background shadow-xl max-h-[85vh] sm:max-h-[80vh] overflow-y-auto">
+                    <div
+                        className="fixed inset-0 z-50 flex items-end sm:items-start justify-center bg-black/60 sm:p-4"
+                        onClick={() => setShowSelector(false)}
+                    >
+                        <div
+                            className="w-full max-w-2xl rounded-t-xl sm:rounded-md border border-gray-700 bg-background shadow-xl max-h-[85vh] sm:max-h-[80vh] overflow-y-auto"
+                            onClick={(e) => e.stopPropagation()}
+                        >
                             <div className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-700 px-4 py-2 bg-background">
                                 <p className="text-sm font-semibold text-gray-100">명령 선택 ({selectedCount}턴)</p>
                                 <Button size="sm" variant="ghost" onClick={() => setShowSelector(false)}>

@@ -54,7 +54,6 @@ class che_선전포고(general: General, env: CommandEnv, arg: Map<String, Any>?
 
         // Global action log
         pushGlobalActionLog("<Y>${generalName}</>${josaYi} <D><b>${destNationName}</b></>에 <M>선전 포고</> 하였습니다.")
-        pushGlobalLog("<Y>${generalName}</>${josaYi} <D><b>${destNationName}</b></>에 선전 포고 했습니다.")
         // Global history log
         pushGlobalHistoryLog("<R><b>【선포】</b></><D><b>${nationName}</b></>${josaYiNation} <D><b>${destNationName}</b></>에 선전 포고 하였습니다.")
 

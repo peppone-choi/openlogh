@@ -86,8 +86,8 @@ export default function GameLayout({ children }: { children: React.ReactNode }) 
     const router = useRouter();
     const pathname = usePathname();
     const { isAuthenticated, isInitialized, initAuth, logout } = useAuthStore();
-    const { currentWorld } = useWorldStore();
-    const { myGeneral, loading: generalLoading, fetchMyGeneral } = useGeneralStore();
+    const { currentWorld, isHydrated: worldHydrated } = useWorldStore();
+    const { myGeneral, loading: generalLoading, fetchMyGeneral, isHydrated: generalHydrated } = useGeneralStore();
 
     useEffect(() => {
         initAuth();
@@ -108,6 +108,7 @@ export default function GameLayout({ children }: { children: React.ReactNode }) 
     const prevGeneralRef = useRef(myGeneral);
     useEffect(() => {
         if (!isAuthenticated) return;
+        if (!worldHydrated || !generalHydrated) return;
         if (generalLoading) return;
 
         if (!currentWorld || myGeneral === null) {
@@ -119,7 +120,7 @@ export default function GameLayout({ children }: { children: React.ReactNode }) 
             router.replace('/lobby');
         }
         prevGeneralRef.current = myGeneral;
-    }, [isAuthenticated, currentWorld, myGeneral, generalLoading, router]);
+    }, [isAuthenticated, currentWorld, myGeneral, generalLoading, worldHydrated, generalHydrated, router]);
 
     const { enabled: wsEnabled, toggleRealtime } = useWebSocket();
     const { soundEnabled, toggleSound } = useSoundEffects();
@@ -199,9 +200,10 @@ export default function GameLayout({ children }: { children: React.ReactNode }) 
     const [messageSheetOpen, setMessageSheetOpen] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-    // Render guard: block only during initial load.
+    // Render guard: block during initial load and store hydration.
     // myGeneral keeps its value during re-fetches (not reset to null),
     // so children stay mounted when pages call fetchMyGeneral.
+    if (!isInitialized || !worldHydrated || !generalHydrated) return null;
     if (!isAuthenticated || !currentWorld || myGeneral === null) return null;
 
     // Reserved phase (startTime 전): 접근 불가 → 로비로
