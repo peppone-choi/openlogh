@@ -265,20 +265,28 @@ export default function MyPage() {
                             정식 오픈 전까지는 사전 거병과 장수 삭제만 가능합니다.
                         </p>
                         <div className="flex gap-2 flex-wrap">
-                            <Button
-                                onClick={async () => {
-                                    if (!confirm('사전 거병을 신청하시겠습니까?')) return;
-                                    try {
-                                        await accountApi.buildNationCandidate();
-                                        toast.success('사전 거병이 신청되었습니다.');
-                                    } catch {
-                                        toast.error('사전 거병 신청에 실패했습니다.');
-                                    }
-                                }}
-                            >
-                                <Swords className="mr-2 h-4 w-4" />
-                                사전 거병
-                            </Button>
+                            {myGeneral.nationId !== 0 ? (
+                                <Button disabled variant="secondary">
+                                    <Swords className="mr-2 h-4 w-4" />
+                                    사전 거병 완료
+                                </Button>
+                            ) : (
+                                <Button
+                                    onClick={async () => {
+                                        if (!confirm('사전 거병을 신청하시겠습니까?')) return;
+                                        try {
+                                            await accountApi.buildNationCandidate();
+                                            toast.success('사전 거병이 신청되었습니다.');
+                                            if (currentWorld) fetchMyGeneral(currentWorld.id);
+                                        } catch {
+                                            toast.error('사전 거병 신청에 실패했습니다.');
+                                        }
+                                    }}
+                                >
+                                    <Swords className="mr-2 h-4 w-4" />
+                                    사전 거병
+                                </Button>
+                            )}
                             <Button
                                 variant="destructive"
                                 onClick={async () => {

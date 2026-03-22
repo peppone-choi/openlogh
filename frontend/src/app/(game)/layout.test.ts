@@ -1,10 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 describe('game layout phase redirect', () => {
-    function shouldRedirect(
-        config: { startTime?: string; opentime?: string },
-        pathname: string
-    ): string | null {
+    function shouldRedirect(config: { startTime?: string; opentime?: string }, pathname: string): string | null {
         const now = new Date();
         if (config.startTime && now < new Date(config.startTime)) return '/lobby';
         const isPreOpen = config.opentime ? now < new Date(config.opentime) : false;

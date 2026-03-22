@@ -3,6 +3,8 @@
 import { usePathname, useRouter } from 'next/navigation';
 import type { LucideIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useWorldStore } from '@/stores/worldStore';
+import { useGeneralStore } from '@/stores/generalStore';
 
 interface PageHeaderProps {
     icon?: LucideIcon;
@@ -13,6 +15,8 @@ interface PageHeaderProps {
 export function PageHeader({ title, description }: PageHeaderProps) {
     const router = useRouter();
     const pathname = usePathname();
+    const { currentWorld, fetchWorld } = useWorldStore();
+    const { fetchMyGeneral } = useGeneralStore();
 
     const isMainPage = pathname === '/';
 
@@ -47,7 +51,13 @@ export function PageHeader({ title, description }: PageHeaderProps) {
                     variant="outline"
                     size="sm"
                     className="h-full border-0 border-r border-gray-600"
-                    onClick={() => window.location.reload()}
+                    onClick={() => {
+                        if (currentWorld) {
+                            fetchMyGeneral(currentWorld.id);
+                            fetchWorld(currentWorld.id);
+                        }
+                        router.refresh();
+                    }}
                 >
                     갱신
                 </Button>
