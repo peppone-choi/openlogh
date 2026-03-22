@@ -449,7 +449,7 @@ export default function NationsPage() {
                                                                                     {byType[t].map((g, i) => (
                                                                                         <span
                                                                                             key={g.id}
-                                                                                            className={`${g.npcState >= 2 ? 'text-cyan-400' : ''} ${g.killTurn != null ? 'line-through opacity-60' : ''}`}
+                                                                                            className={`${g.npcState >= 2 ? 'text-cyan-400' : ''} ${g.killTurn != null && g.killTurn <= 0 ? 'line-through opacity-60' : ''}`}
                                                                                             style={
                                                                                                 g.penalty &&
                                                                                                 Object.keys(g.penalty)
@@ -460,13 +460,15 @@ export default function NationsPage() {
                                                                                                     : undefined
                                                                                             }
                                                                                             title={
-                                                                                                g.killTurn != null
+                                                                                                g.killTurn != null &&
+                                                                                                g.killTurn <= 0
                                                                                                     ? `사망 예정: ${g.killTurn}턴`
                                                                                                     : undefined
                                                                                             }
                                                                                         >
                                                                                             {g.name}
-                                                                                            {g.killTurn != null
+                                                                                            {g.killTurn != null &&
+                                                                                            g.killTurn <= 0
                                                                                                 ? '†'
                                                                                                 : ''}
                                                                                             {i < byType[t].length - 1
@@ -533,23 +535,26 @@ export default function NationsPage() {
                                                                                                     g.npcState > 0
                                                                                                         ? 'text-gray-400'
                                                                                                         : ''
-                                                                                                } ${g.killTurn != null ? 'line-through text-red-400/60' : ''}`}
+                                                                                                } ${g.killTurn != null && g.killTurn <= 0 ? 'line-through text-red-400/60' : ''}`}
                                                                                                 title={
-                                                                                                    g.killTurn != null
+                                                                                                    g.killTurn !=
+                                                                                                        null &&
+                                                                                                    g.killTurn <= 0
                                                                                                         ? `사망 예정: ${g.killTurn}턴`
                                                                                                         : undefined
                                                                                                 }
                                                                                             >
                                                                                                 {g.name}
                                                                                             </span>
-                                                                                            {g.killTurn != null && (
-                                                                                                <span
-                                                                                                    className="text-[9px] text-red-400"
-                                                                                                    title={`사망 예정 턴: ${g.killTurn}`}
-                                                                                                >
-                                                                                                    †
-                                                                                                </span>
-                                                                                            )}
+                                                                                            {g.killTurn != null &&
+                                                                                                g.killTurn <= 0 && (
+                                                                                                    <span
+                                                                                                        className="text-[9px] text-red-400"
+                                                                                                        title={`사망 예정 턴: ${g.killTurn}`}
+                                                                                                    >
+                                                                                                        †
+                                                                                                    </span>
+                                                                                                )}
                                                                                             {g.npcState > 0 && (
                                                                                                 <Badge
                                                                                                     variant="outline"
