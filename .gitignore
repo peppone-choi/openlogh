@@ -35,6 +35,11 @@ frontend/.next/
 frontend/node_modules/
 frontend/out/
 
+# Plugin state
+.bkit/
+.omc/
+**/.omc/
+
 # Local automation artifacts
 .playwright-mcp/
 backend/.kotlin/
