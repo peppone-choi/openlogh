@@ -28,6 +28,7 @@ import com.opensam.service.InheritanceService
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import kotlin.math.hypot
 import kotlin.math.roundToInt
 import kotlin.random.Random
 
@@ -90,10 +91,14 @@ class BattleService(
         val attackerModifiers = modifierService.getModifiers(attacker, attackerNation)
 
         // Get defenders in the city
+        // C9: PHP also requires rice > crew/100, train >= defence_train, atmos >= defence_train
         val defenderEntries = generalRepository.findByCityId(targetCity.id)
             .filter {
                 it.nationId == targetCity.nationId &&
                     it.crew > 0 &&
+                    it.rice > it.crew / 100 &&
+                    it.train >= it.defenceTrain &&
+                    it.atmos >= it.defenceTrain &&
                     it.npcState != EmperorConstants.NPC_STATE_EMPEROR
             }
             .map { gen ->
@@ -521,14 +526,30 @@ class BattleService(
 
     /**
      * Relocate capital when the capital city is captured but nation survives.
-     * Legacy: pick closest city with highest pop, halve nation gold/rice, 20% morale loss.
+     * C10: Legacy picks closest city to old capital (by positionX/Y in meta), not highest pop.
+     * Falls back to highest pop if coordinates are unavailable.
+     * Also halves nation gold/rice, 20% morale loss.
      */
     private fun relocateCapital(
         nation: com.opensam.entity.Nation,
         remainingCities: List<City>,
         world: WorldState,
     ) {
-        val newCapital = remainingCities.maxByOrNull { it.pop } ?: return
+        // C10: PHP picks the CLOSEST city to the old capital, not highest population.
+        val oldCapital = nation.capitalCityId?.let { cityRepository.findById(it).orElse(null) }
+        val oldX = (oldCapital?.meta?.get("positionX") as? Number)?.toDouble()
+        val oldY = (oldCapital?.meta?.get("positionY") as? Number)?.toDouble()
+        val newCapital = if (oldX != null && oldY != null) {
+            remainingCities.minWithOrNull(
+                compareBy<City> {
+                    val x = (it.meta["positionX"] as? Number)?.toDouble()
+                    val y = (it.meta["positionY"] as? Number)?.toDouble()
+                    if (x != null && y != null) hypot(x - oldX, y - oldY) else Double.MAX_VALUE
+                }.thenByDescending { it.pop }
+            )
+        } else {
+            remainingCities.maxByOrNull { it.pop }
+        } ?: return
 
         logger.info("Nation {} relocates capital to {}", nation.name, newCapital.name)
 

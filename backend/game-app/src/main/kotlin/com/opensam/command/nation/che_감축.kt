@@ -6,11 +6,13 @@ import com.opensam.command.CommandResult
 import com.opensam.command.NationCommand
 import com.opensam.command.constraint.*
 import com.opensam.entity.General
+import com.opensam.service.CityService.Companion.EXPAND_CITY_COST_COEF
+import com.opensam.service.CityService.Companion.EXPAND_CITY_DEFAULT_COST
+import com.opensam.service.CityService.Companion.EXPAND_CITY_DEVEL_INCREASE
+import com.opensam.service.CityService.Companion.EXPAND_CITY_POP_INCREASE
+import com.opensam.service.CityService.Companion.EXPAND_CITY_WALL_INCREASE
 import kotlin.math.max
 import kotlin.random.Random
-
-private const val POP_INCREASE = 10000
-private const val FIXED_COST = 500
 
 class che_감축(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
     : NationCommand(general, env, arg) {
@@ -24,8 +26,12 @@ class che_감축(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
         // Capital level > 4 and > original level checked in run()
     )
 
+    // PHP: amount = develcost * expandCityCostCoef + expandCityDefaultCost / 2
+    private fun getCostAmount(): Int = env.develCost * EXPAND_CITY_COST_COEF + EXPAND_CITY_DEFAULT_COST / 2
+
     override fun getCost(): CommandCost {
-        return CommandCost(gold = FIXED_COST, rice = FIXED_COST)
+        val amount = getCostAmount()
+        return CommandCost(gold = amount, rice = amount)
     }
 
     override fun getPreReqTurn() = 5
@@ -46,12 +52,24 @@ class che_감축(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
         }
 
         capitalCity.level = (capitalCity.level - 1).toShort()
-        capitalCity.pop = max(capitalCity.pop - POP_INCREASE, 0)
-        capitalCity.popMax -= POP_INCREASE
+        // PHP reduces all 6 stats and their maxes
+        capitalCity.pop = max(capitalCity.pop - EXPAND_CITY_POP_INCREASE, 0)
+        capitalCity.popMax -= EXPAND_CITY_POP_INCREASE
+        capitalCity.agri = max(capitalCity.agri - EXPAND_CITY_DEVEL_INCREASE, 0)
+        capitalCity.agriMax -= EXPAND_CITY_DEVEL_INCREASE
+        capitalCity.comm = max(capitalCity.comm - EXPAND_CITY_DEVEL_INCREASE, 0)
+        capitalCity.commMax -= EXPAND_CITY_DEVEL_INCREASE
+        capitalCity.secu = max(capitalCity.secu - EXPAND_CITY_DEVEL_INCREASE, 0)
+        capitalCity.secuMax -= EXPAND_CITY_DEVEL_INCREASE
+        capitalCity.def = max(capitalCity.def - EXPAND_CITY_WALL_INCREASE, 0)
+        capitalCity.defMax -= EXPAND_CITY_WALL_INCREASE
+        capitalCity.wall = max(capitalCity.wall - EXPAND_CITY_WALL_INCREASE, 0)
+        capitalCity.wallMax -= EXPAND_CITY_WALL_INCREASE
 
+        // PHP refunds the cost back to the nation (gold/rice +)
         val cost = getCost()
-        n.gold -= cost.gold
-        n.rice -= cost.rice
+        n.gold += cost.gold
+        n.rice += cost.rice
 
         // Increment capset (nation meta)
         val capset = (n.meta["capset"] as? Number)?.toInt() ?: 0

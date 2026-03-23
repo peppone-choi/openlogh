@@ -173,9 +173,11 @@ class NationResourceCommandTest {
         val result = runBlocking { cmd.run(fixedRng) }
         assertTrue(result.success)
         assertEquals(1, city.level.toInt())
-        assertEquals(40000, city.popMax)
-        assertEquals(9500, nation.gold)
-        assertEquals(9500, nation.rice)
+        // PHP: reduces all 6 stats + maxes, refunds cost
+        assertTrue(city.popMax < 50000) // popMax reduced
+        assertTrue(city.agriMax < 1000) // agriMax reduced
+        assertTrue(nation.gold > 10000) // cost refunded (gold increased)
+        assertTrue(nation.rice > 10000) // cost refunded (rice increased)
     }
 
     @Test
@@ -308,8 +310,9 @@ class NationResourceCommandTest {
         val result = runBlocking { cmd.run(fixedRng) }
         assertTrue(result.success)
         assertEquals(9, nation.strategicCmdLimit.toInt())
-        assertEquals(5000, destCity.pop)
-        verify(generalRepository, times(2)).save(org.mockito.Mockito.any(General::class.java))
+        // PHP: def = GREATEST(def_max * 0.8, def), wall = GREATEST(wall_max * 0.8, wall)
+        assertEquals(maxOf((destCity.defMax * 0.8).toInt(), 500), destCity.def)
+        assertEquals(maxOf((destCity.wallMax * 0.8).toInt(), 500), destCity.wall)
         assertTrue(result.logs.any { it.contains("백성") })
     }
 

@@ -18,7 +18,8 @@ class che_종전수락(general: General, env: CommandEnv, arg: Map<String, Any>?
 
     override val fullConditionConstraints = listOf(
         BeChief(), NotBeNeutral(), ExistsDestNation(), ExistsDestGeneral(),
-        ReqDestNationGeneralMatch()
+        ReqDestNationGeneralMatch(),
+        AllowDiplomacyBetweenStatus(listOf(0, 1), "교전 또는 선전포고 상태가 아닙니다.")
     )
 
     override fun getCost() = CommandCost()
@@ -60,9 +61,6 @@ class che_종전수락(general: General, env: CommandEnv, arg: Map<String, Any>?
         pushDestGeneralLog("<D><b>${nationName}</b></>${josaWaSrc} 종전에 성공했습니다.")
         pushDestGeneralHistoryLog("<D><b>${nationName}</b></>${josaWaSrc} 종전 성공")
         pushDestNationalHistoryLogFor(dn.id, "<D><b>${nationName}</b></>${josaWaSrc} 종전")
-
-        general.experience += 50
-        general.dedication += 50
 
         return CommandResult(true, logs)
     }

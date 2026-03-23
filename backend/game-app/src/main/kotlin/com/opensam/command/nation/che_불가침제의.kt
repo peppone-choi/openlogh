@@ -27,6 +27,7 @@ class che_불가침제의(general: General, env: CommandEnv, arg: Map<String, An
             }
             return listOf(
                 BeChief(), NotBeNeutral(), ExistsDestNation(), DifferentDestNation(),
+                DisallowDiplomacyBetweenStatus(mapOf(0 to "교전 중입니다.", 1 to "선전포고 상태입니다.")),
             )
         }
 
@@ -45,8 +46,6 @@ class che_불가침제의(general: General, env: CommandEnv, arg: Map<String, An
         pushDestNationalHistoryLog("<D><b>${n.name}</b></>의 <Y>${general.name}</>${pickJosa(general.name, "이")} 아국에 불가침을 제의했습니다.")
 
         services!!.diplomacyService.proposeNonAggression(env.worldId, n.id, dn.id)
-        general.experience += 50
-        general.dedication += 50
 
         return CommandResult(true, logs)
     }

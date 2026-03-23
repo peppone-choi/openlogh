@@ -218,6 +218,14 @@ class BattleEngine {
             }
         }
 
+        // TODO C7 (battle experience - PHP parity):
+        // PHP awards experience during/after battle (process_war.php):
+        //   - Per-phase: damage/50 exp to attacker; defenders get 0.8x multiplier
+        //   - City capture: +1000 exp to attacker
+        //   - Win/lose stat exp: +1 to stat based on armType (leadership/strength/intel)
+        //   - Atmos boost on win: attacker.atmos *= 1.1, defender.atmos *= 1.05
+        // Requires tracking per-phase damage totals and wiring exp/stat increments through applyResults().
+
         // Injury check: fire onInjuryCheck triggers before wound roll
         val injuryCtx = BattleTriggerContext(attacker = attacker, defender = attacker, rng = rng)
         for (trigger in attackerTriggers) trigger.onInjuryCheck(injuryCtx)
@@ -230,6 +238,18 @@ class BattleEngine {
                 val woundAmount = rng.nextInt(10, 81)  // [10, 80] inclusive
                 attacker.injury = (attacker.injury + woundAmount).coerceAtMost(80)
                 logs.add("<Y>${attacker.name}</>이(가) 부상을 입었습니다.")
+            }
+        }
+
+        // C8: PHP process_war.php calls tryWound() for BOTH attacker AND all defenders.
+        // Apply injury check to each defender general (same 5% chance, [10,80] range, cap 80).
+        for (def in sortedDefenders) {
+            if (def is WarUnitGeneral && def.isAlive) {
+                if (rng.nextDouble() < 0.05) {
+                    val woundAmount = rng.nextInt(10, 81)  // [10, 80] inclusive
+                    def.injury = (def.injury + woundAmount).coerceAtMost(80)
+                    logs.add("<Y>${def.name}</>이(가) 부상을 입었습니다.")
+                }
             }
         }
 

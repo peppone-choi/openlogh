@@ -19,7 +19,8 @@ class che_불가침수락(general: General, env: CommandEnv, arg: Map<String, An
     override val fullConditionConstraints = listOf(
         BeChief(), NotBeNeutral(), OccupiedCity(), SuppliedCity(),
         ExistsDestNation(), ExistsDestGeneral(),
-        ReqDestNationGeneralMatch()
+        ReqDestNationGeneralMatch(),
+        DisallowDiplomacyBetweenStatus(mapOf(0 to "교전 중입니다.", 1 to "선전포고 상태입니다.")),
     )
 
     override fun getCost() = CommandCost()
@@ -42,9 +43,6 @@ class che_불가침수락(general: General, env: CommandEnv, arg: Map<String, An
 
         pushDestGeneralLog("<D><b>${n.name}</b></>${josaWaSrc} 불가침에 성공했습니다.")
         pushDestGeneralHistoryLog("<D><b>${n.name}</b></>${josaWaSrc} 불가침 성공")
-
-        general.experience += 50
-        general.dedication += 50
 
         return CommandResult(true, logs)
     }

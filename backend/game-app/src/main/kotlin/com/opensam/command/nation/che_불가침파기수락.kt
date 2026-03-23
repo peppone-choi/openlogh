@@ -18,7 +18,8 @@ class che_불가침파기수락(general: General, env: CommandEnv, arg: Map<Stri
 
     override val fullConditionConstraints = listOf(
         BeChief(), NotBeNeutral(), ExistsDestNation(), ExistsDestGeneral(),
-        ReqDestNationGeneralMatch()
+        ReqDestNationGeneralMatch(),
+        AllowDiplomacyBetweenStatus(listOf(7), "불가침 상태가 아닙니다.")
     )
 
     override fun getCost() = CommandCost()
@@ -46,9 +47,6 @@ class che_불가침파기수락(general: General, env: CommandEnv, arg: Map<Stri
         val josaWaSrc = JosaUtil.pick(n.name, "와")
         pushDestGeneralLog("<D><b>${n.name}</b></>${josaWaSrc}의 불가침 파기에 성공했습니다.")
         pushDestGeneralHistoryLog("<D><b>${n.name}</b></>${josaWaSrc}의 불가침 파기 성공")
-
-        general.experience += 50
-        general.dedication += 50
 
         return CommandResult(true, logs)
     }

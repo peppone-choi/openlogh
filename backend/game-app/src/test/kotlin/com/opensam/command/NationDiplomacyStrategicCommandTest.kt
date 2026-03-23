@@ -162,6 +162,7 @@ class NationDiplomacyStrategicCommandTest {
         cmd.city = createCity(nationId = 1, supplyState = 1)
         cmd.nation = createNation(id = 1)
         cmd.destNation = createNation(id = 2)
+        cmd.constraintEnv = mapOf("diplomacy_1_2" to 0) // at war
 
         val check = cmd.checkFullCondition()
         assertTrue(check is ConstraintResult.Pass)
@@ -169,8 +170,6 @@ class NationDiplomacyStrategicCommandTest {
         val result = runBlocking { cmd.run(fixedRng) }
         assertTrue(result.success)
         verify(mocks.diplomacyService).proposeCeasefire(1, 1, 2)
-        assertEquals(50, general.experience)
-        assertEquals(50, general.dedication)
     }
 
     @Test
@@ -188,6 +187,7 @@ class NationDiplomacyStrategicCommandTest {
         cmd.nation = createNation(id = 1)
         cmd.destNation = createNation(id = 2)
         cmd.destGeneral = createGeneral(id = 10, nationId = 2)
+        cmd.constraintEnv = mapOf("diplomacy_1_2" to 0) // at war
 
         val check = cmd.checkFullCondition()
         assertTrue(check is ConstraintResult.Pass)
@@ -195,8 +195,6 @@ class NationDiplomacyStrategicCommandTest {
         val result = runBlocking { cmd.run(fixedRng) }
         assertTrue(result.success)
         verify(mocks.diplomacyService).acceptCeasefire(1, 1, 2)
-        assertEquals(50, general.experience)
-        assertEquals(50, general.dedication)
     }
 
     @Test
@@ -212,6 +210,7 @@ class NationDiplomacyStrategicCommandTest {
         cmd.services = mocks.services
         cmd.nation = createNation(id = 1)
         cmd.destNation = createNation(id = 2)
+        cmd.constraintEnv = mapOf("diplomacy_1_2" to 2) // peace (not at war)
 
         val check = cmd.checkFullCondition()
         assertTrue(check is ConstraintResult.Pass)
@@ -219,8 +218,6 @@ class NationDiplomacyStrategicCommandTest {
         val result = runBlocking { cmd.run(fixedRng) }
         assertTrue(result.success)
         verify(mocks.diplomacyService).proposeNonAggression(1, 1, 2)
-        assertEquals(50, general.experience)
-        assertEquals(50, general.dedication)
     }
 
     @Test
@@ -241,6 +238,7 @@ class NationDiplomacyStrategicCommandTest {
         cmd.nation = createNation(id = 1)
         cmd.destNation = createNation(id = 2)
         cmd.destGeneral = createGeneral(id = 10, nationId = 2)
+        cmd.constraintEnv = mapOf("diplomacy_1_2" to 2) // peace (not at war)
 
         val check = cmd.checkFullCondition()
         assertTrue(check is ConstraintResult.Pass)
@@ -248,8 +246,6 @@ class NationDiplomacyStrategicCommandTest {
         val result = runBlocking { cmd.run(fixedRng) }
         assertTrue(result.success)
         verify(mocks.diplomacyService).acceptNonAggression(1, 1, 2)
-        assertEquals(50, general.experience)
-        assertEquals(50, general.dedication)
     }
 
     @Test
@@ -268,6 +264,7 @@ class NationDiplomacyStrategicCommandTest {
         cmd.city = createCity(nationId = 1, supplyState = 1)
         cmd.nation = createNation(id = 1)
         cmd.destNation = createNation(id = 2)
+        cmd.constraintEnv = mapOf("diplomacy_1_2" to 7) // non-aggression pact
 
         val check = cmd.checkFullCondition()
         assertTrue(check is ConstraintResult.Pass)
@@ -275,8 +272,6 @@ class NationDiplomacyStrategicCommandTest {
         val result = runBlocking { cmd.run(fixedRng) }
         assertTrue(result.success)
         verify(mocks.diplomacyService).proposeBreakNonAggression(1, 1, 2)
-        assertEquals(50, general.experience)
-        assertEquals(50, general.dedication)
     }
 
     @Test
@@ -294,6 +289,7 @@ class NationDiplomacyStrategicCommandTest {
         cmd.nation = createNation(id = 1)
         cmd.destNation = createNation(id = 2)
         cmd.destGeneral = createGeneral(id = 10, nationId = 2)
+        cmd.constraintEnv = mapOf("diplomacy_1_2" to 7) // non-aggression pact
 
         val check = cmd.checkFullCondition()
         assertTrue(check is ConstraintResult.Pass)
@@ -301,8 +297,6 @@ class NationDiplomacyStrategicCommandTest {
         val result = runBlocking { cmd.run(fixedRng) }
         assertTrue(result.success)
         verify(mocks.diplomacyService).acceptBreakNonAggression(1, 1, 2)
-        assertEquals(50, general.experience)
-        assertEquals(50, general.dedication)
     }
 
     @Test
@@ -477,9 +471,9 @@ class NationDiplomacyStrategicCommandTest {
         val cmd = che_이호경식(createGeneral(officerLevel = 20), env())
         val nation = createNation(id = 1)
         val destNation = createNation(id = 2)
-        val targetNation = createNation(id = 3, level = 5)
         val mocks = createMockServicesBundle()
-        `when`(mocks.nationRepository.findByWorldId(1)).thenReturn(listOf(nation, destNation, targetNation))
+        // PHP: sets diplomacy state=1 (declared), term = if(state==0) 3 else term+3
+        `when`(mocks.diplomacyService.getDiplomacyState(1, 1, 2)).thenReturn(null)
 
         cmd.services = mocks.services
         cmd.city = createCity(nationId = 1)
@@ -492,7 +486,7 @@ class NationDiplomacyStrategicCommandTest {
         val result = runBlocking { cmd.run(fixedRng) }
         assertTrue(result.success)
         assertEquals(9, nation.strategicCmdLimit.toInt())
-        verify(mocks.diplomacyService).declareWar(1, 2, 3)
+        verify(mocks.diplomacyService).setDiplomacyState(1, 1, 2, state = 1, term = 3)
     }
 
     @Test

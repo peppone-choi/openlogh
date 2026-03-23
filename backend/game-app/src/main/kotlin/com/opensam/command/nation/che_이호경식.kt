@@ -75,13 +75,13 @@ class che_이호경식(general: General, env: CommandEnv, arg: Map<String, Any>?
         // Strategic command limit
         n.strategicCmdLimit = STRATEGIC_GLOBAL_DELAY.toShort()
 
-        val targetNation = services!!.nationRepository
-            .findByWorldId(env.worldId)
-            .filter { it.id != n.id && it.id != dn.id }
-            .maxByOrNull { it.level }
-        if (targetNation != null) {
-            services!!.diplomacyService.declareWar(env.worldId, dn.id, targetNation.id)
-        }
+        // PHP: term = IF(state=0, 3, term+3), state=1 (declared)
+        // Get current diplomacy state between the two nations
+        val currentDiplomacy = services!!.diplomacyService.getDiplomacyState(env.worldId, n.id, dn.id)
+        val currentState = currentDiplomacy?.state ?: 2 // default neutral
+        val currentTerm = currentDiplomacy?.term ?: 0
+        val newTerm = if (currentState == 0) 3 else currentTerm + 3
+        services!!.diplomacyService.setDiplomacyState(env.worldId, n.id, dn.id, state = 1, term = newTerm)
 
         // Update nation fronts
         services!!.nationService?.setNationFront(env.worldId, n.id)
