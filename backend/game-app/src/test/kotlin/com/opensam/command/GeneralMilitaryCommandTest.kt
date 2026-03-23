@@ -372,7 +372,7 @@ class GeneralMilitaryCommandTest {
 
     @Test
     fun `전투태세 should fail when train margin is insufficient`() {
-        val general = createTestGeneral(nationId = 1, crew = 1000, train = 70, atmos = 50, gold = 1000)
+        val general = createTestGeneral(nationId = 1, crew = 1000, train = 90, atmos = 50, gold = 1000)
         val env = createTestEnv()
         val cmd = 전투태세(general, env)
         cmd.city = createTestCity(nationId = 1)
@@ -394,7 +394,7 @@ class GeneralMilitaryCommandTest {
 
         val result = runBlocking { cmd.run(fixedRng) }
         assertTrue(result.success)
-        assertTrue(result.message!!.contains("\"setMin\":75"))
+        assertTrue(result.message!!.contains("\"setMin\":95"))
         assertTrue(result.message!!.contains("\"leadershipExp\":3"))
     }
 
@@ -413,8 +413,9 @@ class GeneralMilitaryCommandTest {
 
     @Test
     fun `화계 should execute with fixed rng and consume resources`() {
-        val general = createTestGeneral(nationId = 1, cityId = 1, gold = 1000, rice = 1000, intel = 100)
+        val general = createTestGeneral(nationId = 1, cityId = 1, gold = 5000, rice = 5000, intel = 100)
         val env = createTestEnv()
+        env.gameStor["mapAdjacency"] = mapOf(1L to listOf(2L), 2L to listOf(1L))
         val cmd = 화계(general, env)
         cmd.city = createTestCity(nationId = 1, supplyState = 1)
         cmd.destCity = createTestCity(nationId = 2, agri = 600, comm = 600).apply { id = 2 }
@@ -424,8 +425,8 @@ class GeneralMilitaryCommandTest {
 
         val result = runBlocking { cmd.run(fixedRng) }
         assertTrue(result.success)
-        assertTrue(result.message!!.contains("\"gold\":-25"))
-        assertTrue(result.message!!.contains("\"rice\":-25"))
+        assertTrue(result.message!!.contains("\"gold\":-500"))
+        assertTrue(result.message!!.contains("\"rice\":-500"))
         assertTrue(result.message!!.contains("\"destCityChanges\""))
     }
 
@@ -477,6 +478,7 @@ class GeneralMilitaryCommandTest {
     fun `선동 should succeed and modify secu trust with fixed rng`() {
         val general = createTestGeneral(nationId = 1, cityId = 1, gold = 1000, rice = 1000, leadership = 100)
         val env = createTestEnv()
+        env.gameStor["mapAdjacency"] = mapOf(1L to listOf(2L), 2L to listOf(1L))
         val cmd = 선동(general, env)
         cmd.city = createTestCity(nationId = 1, supplyState = 1)
         cmd.destCity = createTestCity(nationId = 2, secu = 700, trust = 90f).apply { id = 2 }
@@ -508,6 +510,7 @@ class GeneralMilitaryCommandTest {
     fun `탈취 should succeed and include destination city changes`() {
         val general = createTestGeneral(nationId = 1, cityId = 1, gold = 1000, rice = 1000, strength = 100)
         val env = createTestEnv()
+        env.gameStor["mapAdjacency"] = mapOf(1L to listOf(2L), 2L to listOf(1L))
         val cmd = 탈취(general, env)
         cmd.city = createTestCity(nationId = 1, supplyState = 1)
         cmd.destCity = createTestCity(nationId = 2, agri = 700, agriMax = 1000, comm = 700, commMax = 1000).apply {
@@ -542,6 +545,7 @@ class GeneralMilitaryCommandTest {
     fun `파괴 should succeed and reduce defense and wall`() {
         val general = createTestGeneral(nationId = 1, cityId = 1, gold = 1000, rice = 1000, strength = 100)
         val env = createTestEnv()
+        env.gameStor["mapAdjacency"] = mapOf(1L to listOf(2L), 2L to listOf(1L))
         val cmd = 파괴(general, env)
         cmd.city = createTestCity(nationId = 1, supplyState = 1)
         cmd.destCity = createTestCity(nationId = 2, def = 700, wall = 700).apply { id = 2 }

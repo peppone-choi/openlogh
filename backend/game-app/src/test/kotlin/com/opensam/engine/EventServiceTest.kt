@@ -88,7 +88,7 @@ class EventServiceTest {
 
         service.dispatchEvents(world, "turn_start")
 
-        verify(historyService).logWorldHistory(anyLong(), anyString(), anyInt(), anyInt(), any())
+        verify(historyService).logWorldHistory(anyLong(), anyString(), anyInt(), anyInt(), eq(false))
     }
 
     @Test
@@ -124,7 +124,7 @@ class EventServiceTest {
 
         service.dispatchEvents(world, "turn_start")
 
-        verify(historyService).logWorldHistory(anyLong(), anyString(), anyInt(), anyInt(), any())
+        verify(historyService).logWorldHistory(anyLong(), anyString(), anyInt(), anyInt(), eq(false))
     }
 
     @Test
@@ -160,7 +160,7 @@ class EventServiceTest {
 
         service.dispatchEvents(world, "turn_start")
 
-        verify(historyService).logWorldHistory(anyLong(), anyString(), anyInt(), anyInt(), any())
+        verify(historyService).logWorldHistory(anyLong(), anyString(), anyInt(), anyInt(), eq(false))
     }
 
     // ========== dispatchEvents: action execution ==========
@@ -180,7 +180,7 @@ class EventServiceTest {
 
         service.dispatchEvents(world, "turn_start")
 
-        verify(historyService).logWorldHistory(anyLong(), anyString(), anyInt(), anyInt(), any())
+        verify(historyService).logWorldHistory(anyLong(), anyString(), anyInt(), anyInt(), eq(false))
     }
 
     @Test
@@ -247,7 +247,7 @@ class EventServiceTest {
 
         service.dispatchEvents(world, "turn_start")
 
-        verify(historyService, times(2)).logWorldHistory(anyLong(), anyString(), anyInt(), anyInt())
+        verify(historyService, times(2)).logWorldHistory(anyLong(), anyString(), anyInt(), anyInt(), eq(false))
     }
 
     // ========== dispatchEvents: empty events ==========
@@ -284,7 +284,7 @@ class EventServiceTest {
 
         service.dispatchEvents(world, "turn_start")
 
-        verify(historyService).logWorldHistory(anyLong(), anyString(), anyInt(), anyInt(), any())
+        verify(historyService).logWorldHistory(anyLong(), anyString(), anyInt(), anyInt(), eq(false))
     }
 
     // ========== New action types: economy delegations ==========

@@ -204,8 +204,8 @@ class NpcAiParityTest {
         @Test
         fun `default general policy values match legacy`() {
             val policy = NpcGeneralPolicy()
-            assertEquals(500, policy.minWarCrew, "Legacy default minWarCrew=500")
-            assertEquals(80, policy.properWarTrainAtmos, "Legacy default properWarTrainAtmos=80")
+            assertEquals(1500, policy.minWarCrew, "Legacy default minWarCrew=1500")
+            assertEquals(90, policy.properWarTrainAtmos, "Legacy default properWarTrainAtmos=90")
             assertTrue(policy.canDo("징병"))
             assertTrue(policy.canDo("출병"))
             assertTrue(policy.canDo("일반내정"))

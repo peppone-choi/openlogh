@@ -13,8 +13,8 @@ class NpcGeneralPolicy(
     val priority: List<String> = DEFAULT_GENERAL_PRIORITY,
     val enabledActions: Set<String> = DEFAULT_ENABLED_ACTIONS,
     val limitActions: Set<String> = emptySet(),
-    val minWarCrew: Int = 500,
-    val properWarTrainAtmos: Int = 80,
+    val minWarCrew: Int = 1500,
+    val properWarTrainAtmos: Int = 90,
 ) {
     fun canDo(action: String): Boolean = action in enabledActions
     fun isLimitAction(action: String): Boolean = action in limitActions
@@ -275,8 +275,8 @@ object NpcPolicyBuilder {
         return NpcGeneralPolicy(
             priority = readStringList(raw["priority"])
                 ?: NpcGeneralPolicy.DEFAULT_GENERAL_PRIORITY,
-            minWarCrew = (raw["minWarCrew"] as? Number)?.toInt() ?: 500,
-            properWarTrainAtmos = (raw["properWarTrainAtmos"] as? Number)?.toInt() ?: 80,
+            minWarCrew = (raw["minWarCrew"] as? Number)?.toInt() ?: 1500,
+            properWarTrainAtmos = (raw["properWarTrainAtmos"] as? Number)?.toInt() ?: 90,
         )
     }
 

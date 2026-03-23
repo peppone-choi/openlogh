@@ -9,8 +9,8 @@ import com.opensam.entity.General
 import kotlin.math.round
 import kotlin.random.Random
 
-private const val DEFAULT_MAX_TRAIN_BY_COMMAND = 80
-private const val DEFAULT_MAX_ATMOS_BY_COMMAND = 80
+private const val DEFAULT_MAX_TRAIN_BY_COMMAND = 100
+private const val DEFAULT_MAX_ATMOS_BY_COMMAND = 100
 
 class CR맹훈련(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
     : GeneralCommand(general, env, arg) {

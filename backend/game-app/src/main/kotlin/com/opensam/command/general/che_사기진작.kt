@@ -9,9 +9,9 @@ import com.opensam.entity.General
 import kotlin.math.roundToInt
 import kotlin.random.Random
 
-private const val MAX_ATMOS_BY_COMMAND = 80
-private const val ATMOS_DELTA = 0.05
-private const val TRAIN_SIDE_EFFECT_RATE = 0.9
+private const val MAX_ATMOS_BY_COMMAND = 100
+private const val ATMOS_DELTA = 30.0
+private const val TRAIN_SIDE_EFFECT_RATE = 1.0
 
 class che_사기진작(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
     : GeneralCommand(general, env, arg) {

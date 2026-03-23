@@ -14,8 +14,8 @@ class NpcPolicyTest {
         assertTrue(policy.canDo("전방워프"))
         assertFalse(policy.canDo("한계징병"))
         assertFalse(policy.canDo("고급병종"))
-        assertEquals(500, policy.minWarCrew)
-        assertEquals(80, policy.properWarTrainAtmos)
+        assertEquals(1500, policy.minWarCrew)
+        assertEquals(90, policy.properWarTrainAtmos)
     }
 
     @Test

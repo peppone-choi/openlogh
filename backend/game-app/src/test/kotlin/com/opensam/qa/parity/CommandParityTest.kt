@@ -48,8 +48,8 @@ class CommandParityTest {
             val result = runCmd(che_훈련(gen, createEnv()), "train_1")
             assertTrue(result.success)
             val json = mapper.readTree(result.message)
-            // 100 * 100 / 100 * 0.05 = 5, clamped to min(5, 80-0)=5
-            assertEquals(5, json["statChanges"]["train"].asInt())
+            // 100 * 100 / 100 * 30.0 = 3000, clamped to min(3000, 100-0)=100
+            assertEquals(100, json["statChanges"]["train"].asInt())
         }
 
         @Test
@@ -58,13 +58,13 @@ class CommandParityTest {
             val result = runCmd(che_훈련(gen, createEnv()), "train_2")
             assertTrue(result.success)
             val json = mapper.readTree(result.message)
-            // max possible = 80-79 = 1; raw = 5, clamped to 1
-            assertEquals(1, json["statChanges"]["train"].asInt())
+            // max possible = 100-79 = 21; raw = 3000, clamped to 21
+            assertEquals(21, json["statChanges"]["train"].asInt())
         }
 
         @Test
         fun `training at max gives zero`() {
-            val gen = createGeneral(leadership = 100, crew = 100, train = 80, atmos = 80)
+            val gen = createGeneral(leadership = 100, crew = 100, train = 100, atmos = 80)
             val result = runCmd(che_훈련(gen, createEnv()), "train_3")
             assertTrue(result.success)
             val json = mapper.readTree(result.message)
@@ -73,13 +73,13 @@ class CommandParityTest {
 
         @Test
         fun `atmos side effect matches legacy formula`() {
-            // Legacy: sideEffect = valueFit(atmos * atmosSideEffectByTraining, 0)
-            // Kotlin: atmosAfter = max(0, (atmos * 0.9).toInt()); delta = atmosAfter - atmos
+            // atmosSideEffectByTraining = 1.0 (no side effect)
+            // atmosAfter = max(0, (atmos * 1.0).toInt()); delta = atmosAfter - atmos = 0
             val gen = createGeneral(leadership = 80, crew = 200, train = 60, atmos = 100)
             val result = runCmd(che_훈련(gen, createEnv()), "train_4")
             val json = mapper.readTree(result.message)
-            // atmosAfter = (100 * 0.9).toInt() = 90; delta = 90 - 100 = -10
-            assertEquals(-10, json["statChanges"]["atmos"].asInt())
+            // atmosAfter = (100 * 1.0).toInt() = 100; delta = 100 - 100 = 0
+            assertEquals(0, json["statChanges"]["atmos"].asInt())
         }
 
         @Test
@@ -309,14 +309,14 @@ class CommandParityTest {
     inner class MoraleParity {
 
         @Test
-        fun `morale boost reduces train as side effect`() {
-            // Legacy: train side effect = train * trainSideEffectByAtmos (0.9)
+        fun `morale boost has no train side effect`() {
+            // trainSideEffectByAtmosTurn = 1.0 (no side effect)
             val gen = createGeneral(leadership = 80, crew = 200, atmos = 60, train = 80)
             val result = runCmd(che_사기진작(gen, createEnv()), "morale_1")
             assertTrue(result.success)
             val json = mapper.readTree(result.message)
-            // trainAfter = max(0, (80 * 0.9).toInt()) = 72; delta = 72-80 = -8
-            assertEquals(-8, json["statChanges"]["train"].asInt())
+            // trainAfter = max(0, (80 * 1.0).toInt()) = 80; delta = 80-80 = 0
+            assertEquals(0, json["statChanges"]["train"].asInt())
         }
     }
 

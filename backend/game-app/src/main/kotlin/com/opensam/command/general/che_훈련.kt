@@ -10,9 +10,9 @@ import kotlin.math.roundToInt
 import kotlin.random.Random
 
 // Default values; prefer env.maxTrainByCommand and env.trainDelta when available
-private const val DEFAULT_MAX_TRAIN_BY_COMMAND = 80
-private const val DEFAULT_TRAIN_DELTA = 0.05
-private const val ATMOS_SIDE_EFFECT_RATE = 0.9
+private const val DEFAULT_MAX_TRAIN_BY_COMMAND = 100
+private const val DEFAULT_TRAIN_DELTA = 30.0
+private const val ATMOS_SIDE_EFFECT_RATE = 1.0
 
 class che_훈련(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
     : GeneralCommand(general, env, arg) {

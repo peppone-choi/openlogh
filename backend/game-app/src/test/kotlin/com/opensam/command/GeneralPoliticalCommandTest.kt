@@ -164,7 +164,7 @@ class GeneralPoliticalCommandTest {
 
     @Test
     fun `등용 should pass constraints and run`() {
-        val general = createTestGeneral(gold = 1000, nationId = 1, cityId = 1)
+        val general = createTestGeneral(gold = 2000, nationId = 1, cityId = 1)
         val env = createTestEnv()
         val cmd = 등용(general, env, mapOf("destGeneralID" to 2L))
         cmd.city = createTestCity(nationId = 1, supplyState = 1)

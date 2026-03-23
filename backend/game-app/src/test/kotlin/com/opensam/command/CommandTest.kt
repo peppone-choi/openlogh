@@ -325,7 +325,7 @@ class CommandTest {
     fun `모병 should succeed with enough resources`() {
         val general = createTestGeneral(gold = 5000, rice = 5000, leadership = 50)
         val env = createTestEnv()
-        val city = createTestCity(pop = 10000)
+        val city = createTestCity(pop = 50000)
         val arg = mapOf<String, Any>("amount" to 500, "crewType" to 0)
         val cmd = che_모병(general, env, arg)
         cmd.city = city
@@ -473,7 +473,7 @@ class CommandTest {
 
     @Test
     fun `훈련 should fail when train is already at max`() {
-        val general = createTestGeneral(crew = 1000, train = 80)
+        val general = createTestGeneral(crew = 1000, train = 100)
         val env = createTestEnv()
         val city = createTestCity()
         val cmd = che_훈련(general, env)

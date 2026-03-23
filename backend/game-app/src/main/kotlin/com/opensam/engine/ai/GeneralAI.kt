@@ -742,7 +742,7 @@ class GeneralAI(
         // Generals in supply cities with low population ratio, needing crew
         val candidates = npcWarGenerals.filter { gen ->
             if (!supplyCityIds.contains(gen.cityId)) return@filter false
-            if (gen.crew >= 500) return@filter false // minWarCrew
+            if (gen.crew >= policy.minWarCrew) return@filter false
             val genCity = ctx.allCities.find { it.id == gen.cityId } ?: return@filter false
             genCity.popMax > 0 &&
                 genCity.pop.toDouble() / genCity.popMax < policy.safeRecruitCityPopulationRatio
@@ -1237,7 +1237,7 @@ class GeneralAI(
         }
 
         trialProp /= 4.0
-        trialProp = trialProp.pow(1.5)
+        trialProp = trialProp.pow(6.0)
 
         if (rng.nextDouble() >= trialProp) {
             logger.debug("[doDeclaration] nation={} skipped: trialProp={} too low", nation.id, trialProp)
@@ -1843,7 +1843,7 @@ class GeneralAI(
         // Need minimum crew
         if (general.crew < min((general.leadership.toInt() - 2) * 100, 500)) return null
 
-        if (city.frontState.toInt() == 0 && ctx.frontCities.isNotEmpty()) return null
+        if (city.frontState.toInt() < 2 && ctx.frontCities.isNotEmpty()) return null
 
         val activeWarTargetIds = warTargetNations.filter { it.value >= 2 }.keys
         val targetCities = if (activeWarTargetIds.isNotEmpty()) {
@@ -1880,7 +1880,7 @@ class GeneralAI(
         if (ctx.generalType and GeneralType.COMMANDER.flag == 0) return null
 
         val general = ctx.general
-        if (general.crew < 500) return null  // minWarCrew
+        if (general.crew < nationPolicy.minWarCrew) return null
 
         // Already at front
         if (ctx.city.frontState > 0) return null
@@ -1913,7 +1913,7 @@ class GeneralAI(
 
         val general = ctx.general
         // Already have enough crew
-        if (general.crew >= 500) return null  // minWarCrew
+        if (general.crew >= nationPolicy.minWarCrew) return null
 
         // Check if current city has enough population
         val city = ctx.city
@@ -2301,7 +2301,7 @@ class GeneralAI(
             // City population ratio check
             if (city.popMax > 0 && city.pop.toDouble() / city.popMax >= policy.safeRecruitCityPopulationRatio) return@filter false
             // Crew check
-            if (gen.crew >= 500) return@filter false  // minWarCrew
+            if (gen.crew >= policy.minWarCrew) return@filter false
 
             true
         }

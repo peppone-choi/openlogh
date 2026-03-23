@@ -9,8 +9,8 @@ import com.opensam.entity.General
 import kotlin.math.roundToInt
 import kotlin.random.Random
 
-private const val MAX_TRAIN_BY_COMMAND = 80
-private const val MAX_ATMOS_BY_COMMAND = 80
+private const val MAX_TRAIN_BY_COMMAND = 100
+private const val MAX_ATMOS_BY_COMMAND = 100
 private const val PRE_REQ_TURN = 3
 
 class 전투태세(general: General, env: CommandEnv, arg: Map<String, Any>? = null)

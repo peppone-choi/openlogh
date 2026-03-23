@@ -345,7 +345,7 @@ class EventActionServiceTest {
 
             service.newYear(createWorld(year = 220))
 
-            verify(historyService).logWorldHistory(anyLong(), anyString(), anyInt(), anyInt(), any())
+            verify(historyService).logWorldHistory(anyLong(), anyString(), anyInt(), anyInt(), eq(false))
         }
     }
 

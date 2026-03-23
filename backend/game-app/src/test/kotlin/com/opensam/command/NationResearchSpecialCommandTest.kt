@@ -193,8 +193,8 @@ class NationResearchSpecialCommandTest {
     fun `산저병 연구 command validates constraints timing cost and run`() {
         assertResearchCommand(
             actionLabel = "산저병 연구",
-            expectedCost = 100000,
-            expectedPreReqTurn = 23,
+            expectedCost = 50000,
+            expectedPreReqTurn = 11,
             nationMetaKey = "can_산저병사용",
             commandFactory = ::event_산저병연구,
         )
@@ -226,8 +226,8 @@ class NationResearchSpecialCommandTest {
     fun `음귀병 연구 command validates constraints timing cost and run`() {
         assertResearchCommand(
             actionLabel = "음귀병 연구",
-            expectedCost = 100000,
-            expectedPreReqTurn = 23,
+            expectedCost = 50000,
+            expectedPreReqTurn = 11,
             nationMetaKey = "can_음귀병사용",
             commandFactory = ::event_음귀병연구,
         )
@@ -248,8 +248,8 @@ class NationResearchSpecialCommandTest {
     fun `화시병 연구 command validates constraints timing cost and run`() {
         assertResearchCommand(
             actionLabel = "화시병 연구",
-            expectedCost = 100000,
-            expectedPreReqTurn = 23,
+            expectedCost = 50000,
+            expectedPreReqTurn = 11,
             nationMetaKey = "can_화시병사용",
             commandFactory = ::event_화시병연구,
         )

@@ -45,8 +45,10 @@ class CommandParityTest {
         assertEquals(first.message, second.message)
 
         val json = mapper.readTree(first.message)
-        assertEquals(2, json["statChanges"]["train"].asInt())
-        assertEquals(-7, json["statChanges"]["atmos"].asInt())
+        // leadership=80, crew=200, train=60: rawScore=80*100/200*30.0=1200, clamped to min(1200, 100-60)=40
+        assertEquals(40, json["statChanges"]["train"].asInt())
+        // atmosSideEffectByTraining=1.0: atmosAfter=(70*1.0).toInt()=70, delta=0
+        assertEquals(0, json["statChanges"]["atmos"].asInt())
         assertEquals(100, json["statChanges"]["experience"].asInt())
         assertEquals(70, json["statChanges"]["dedication"].asInt())
     }
@@ -54,7 +56,7 @@ class CommandParityTest {
     @Test
     fun `che_징병 parity and determinism`() {
         val general = createGeneral(leadership = 50, crew = 0, crewType = 0, train = 0, atmos = 0)
-        val city = createCity(nationId = 1, pop = 10000)
+        val city = createCity(nationId = 1, pop = 50000)
         val env = createEnv()
         val arg = mapOf<String, Any>("amount" to 500, "crewType" to 0)
 
@@ -134,8 +136,10 @@ class CommandParityTest {
 
         val json = mapper.readTree(first.message)
         assertEquals(-2, json["statChanges"]["gold"].asInt())
-        assertEquals(2, json["statChanges"]["atmos"].asInt())
-        assertEquals(-8, json["statChanges"]["train"].asInt())
+        // leadership=80, crew=200, atmos=70: rawScore=80*100/200*30.0*statBonus(60)=40*30*1.02=1224, clamped to min(1224,100-70)=30
+        assertEquals(30, json["statChanges"]["atmos"].asInt())
+        // trainSideEffectByAtmosTurn=1.0: sideEffect=(80*1.0).toInt()=80, delta=80-80=0
+        assertEquals(0, json["statChanges"]["train"].asInt())
         assertEquals(100, json["statChanges"]["experience"].asInt())
         assertEquals(70, json["statChanges"]["dedication"].asInt())
     }
@@ -432,7 +436,7 @@ class CommandParityTest {
         val modified = createGeneral(leadership = 50, crew = 0, crewType = 0).apply {
             personalCode = "che_안전"
         }
-        val city = createCity(nationId = 1, pop = 10000)
+        val city = createCity(nationId = 1, pop = 50000)
         val env = createEnv()
         val arg = mapOf<String, Any>("amount" to 500, "crewType" to 0)
 
@@ -462,7 +466,7 @@ class CommandParityTest {
         val modified = createGeneral(leadership = 50, crew = 0, crewType = 0).apply {
             personalCode = "che_안전"
         }
-        val city = createCity(nationId = 1, pop = 10000)
+        val city = createCity(nationId = 1, pop = 50000)
         val env = createEnv()
         val arg = mapOf<String, Any>("amount" to 500, "crewType" to 0)
 

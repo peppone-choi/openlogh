@@ -206,7 +206,7 @@ class BattleServiceTest {
         if (result.cityOccupied) {
             verify(eventService).dispatchEvents(world, "OCCUPY_CITY")
             verify(eventService).dispatchEvents(world, "DESTROY_NATION")
-            verify(historyService).logWorldHistory(anyLong(), contains("멸망"), anyInt(), anyInt(), any())
+            verify(historyService).logWorldHistory(anyLong(), contains("멸망"), anyInt(), anyInt(), eq(false))
             verify(historyService).logNationHistory(anyLong(), anyLong(), contains("정복"), anyInt(), anyInt())
         }
     }
@@ -407,7 +407,7 @@ class BattleServiceTest {
         val result = service.executeBattle(attacker, city, world)
 
         if (result.cityOccupied) {
-            verify(historyService).logWorldHistory(eq(1L), anyString(), eq(200), eq(3), any())
+            verify(historyService).logWorldHistory(eq(1L), anyString(), eq(200), eq(3), eq(false))
         }
     }
 

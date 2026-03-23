@@ -334,8 +334,8 @@ class IndividualCommandTest {
     }
 
     @Test
-    fun `훈련 should cap train at 80`() {
-        val general = createTestGeneral(crew = 1000, train = 79, leadership = 80, nationId = 1)
+    fun `훈련 should cap train at 100`() {
+        val general = createTestGeneral(crew = 1000, train = 99, leadership = 80, nationId = 1)
         val env = createTestEnv()
         val city = createTestCity()
         val cmd = che_훈련(general, env)
@@ -344,7 +344,7 @@ class IndividualCommandTest {
         val result = runBlocking { cmd.run(fixedRng) }
 
         assertTrue(result.success)
-        // Should only increase by max 1 (to reach 80)
+        // Should only increase by max 1 (to reach 100)
         assertNotNull(result.message)
     }
 
@@ -405,7 +405,7 @@ class IndividualCommandTest {
     fun `모병 should increase crew count`() {
         val general = createTestGeneral(crew = 0, leadership = 50, gold = 5000, rice = 5000, nationId = 1)
         val env = createTestEnv()
-        val city = createTestCity(pop = 10000)
+        val city = createTestCity(pop = 50000)
         val arg = mapOf<String, Any>("amount" to 500, "crewType" to 0)
         val cmd = che_모병(general, env, arg)
         cmd.city = city
@@ -423,7 +423,7 @@ class IndividualCommandTest {
     fun `모병 should set default train and atmos for new crew`() {
         val general = createTestGeneral(crew = 0, leadership = 50, gold = 5000, rice = 5000, nationId = 1)
         val env = createTestEnv()
-        val city = createTestCity(pop = 10000)
+        val city = createTestCity(pop = 50000)
         val arg = mapOf<String, Any>("amount" to 500, "crewType" to 0)
         val cmd = che_모병(general, env, arg)
         cmd.city = city
@@ -441,7 +441,7 @@ class IndividualCommandTest {
     fun `모병 should merge train and atmos when adding to same crew type`() {
         val general = createTestGeneral(crew = 1000, crewType = 1, train = 80, atmos = 80, leadership = 50, gold = 5000, rice = 5000, nationId = 1)
         val env = createTestEnv()
-        val city = createTestCity(pop = 10000)
+        val city = createTestCity(pop = 50000)
         val arg = mapOf<String, Any>("amount" to 500, "crewType" to 1)
         val cmd = che_모병(general, env, arg)
         cmd.city = city
@@ -457,7 +457,7 @@ class IndividualCommandTest {
     fun `모병 should consume gold and rice`() {
         val general = createTestGeneral(crew = 0, leadership = 50, gold = 5000, rice = 5000, nationId = 1)
         val env = createTestEnv()
-        val city = createTestCity(pop = 10000)
+        val city = createTestCity(pop = 50000)
         val arg = mapOf<String, Any>("amount" to 500, "crewType" to 0)
         val cmd = che_모병(general, env, arg)
         cmd.city = city
@@ -475,7 +475,7 @@ class IndividualCommandTest {
     fun `모병 should decrease city population`() {
         val general = createTestGeneral(crew = 0, leadership = 50, gold = 5000, rice = 5000, nationId = 1)
         val env = createTestEnv()
-        val city = createTestCity(pop = 10000)
+        val city = createTestCity(pop = 50000)
         val arg = mapOf<String, Any>("amount" to 500, "crewType" to 0)
         val cmd = che_모병(general, env, arg)
         cmd.city = city
@@ -493,7 +493,7 @@ class IndividualCommandTest {
     fun `징병 should increase crew count with lower train and atmos than 모병`() {
         val general = createTestGeneral(crew = 0, leadership = 50, gold = 5000, rice = 5000, nationId = 1)
         val env = createTestEnv()
-        val city = createTestCity(pop = 10000)
+        val city = createTestCity(pop = 50000)
         val arg = mapOf<String, Any>("amount" to 500, "crewType" to 0)
         val cmd = che_징병(general, env, arg)
         cmd.city = city
@@ -514,7 +514,7 @@ class IndividualCommandTest {
     fun `징병 should be cheaper than 모병`() {
         val general = createTestGeneral(crew = 0, leadership = 50, gold = 5000, rice = 5000, nationId = 1)
         val env = createTestEnv()
-        val city = createTestCity(pop = 10000)
+        val city = createTestCity(pop = 50000)
         val arg = mapOf<String, Any>("amount" to 500, "crewType" to 0)
         val cmd = che_징병(general, env, arg)
         cmd.city = city

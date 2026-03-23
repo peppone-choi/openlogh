@@ -15,7 +15,7 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.random.Random
 
-private const val SABOTAGE_DEFAULT_PROB = 0.2
+private const val SABOTAGE_DEFAULT_PROB = 0.35
 private const val MAX_SUCCESS_PROB = 0.5
 private const val INJURY_MAX = 80
 private const val INJURY_PROB_DEFAULT = 0.3
@@ -56,7 +56,7 @@ open class 화계(general: General, env: CommandEnv, arg: Map<String, Any>? = nu
         }
 
     override fun getCost(): CommandCost {
-        val cost = (env.develCost * 0.25).toInt()
+        val cost = env.develCost * 5
         return CommandCost(gold = cost, rice = cost)
     }
 
@@ -232,7 +232,7 @@ open class 화계(general: General, env: CommandEnv, arg: Map<String, Any>? = nu
         val destCityName = dc.name
 
         // Distance factor (legacy: searchDistance, default 99 if not found)
-        val dist = getDistanceTo(dc.id) ?: 1
+        val dist = getDistanceTo(dc.id) ?: 99
 
         val attackProb = calcAttackProb()
         val defenceProb = calcDefenceProb()
