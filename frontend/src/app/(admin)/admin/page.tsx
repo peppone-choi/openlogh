@@ -457,6 +457,17 @@ export default function AdminDashboardPage() {
         }
     };
 
+    const handleToggleLock = async (wId: number, currentlyLocked: boolean) => {
+        const next = !currentlyLocked;
+        try {
+            await adminApi.updateSettings({ locked: next }, wId);
+            toast.success(next ? '턴 정지됨' : '턴 재개됨');
+            loadWorlds();
+        } catch {
+            toast.error('턴 상태 변경 실패');
+        }
+    };
+
     const handleWorldAction = async (worldId: number, action: 'open' | 'close') => {
         const labels = { open: '오픈', close: '폐쇄' };
         try {
@@ -1335,6 +1346,16 @@ export default function AdminDashboardPage() {
                                                     <Badge variant={w.meta?.gatewayActive ? 'outline' : 'destructive'}>
                                                         {w.meta?.gatewayActive ? '운영중' : '비활성'}
                                                     </Badge>
+                                                    {Boolean(
+                                                        (w.config as Record<string, unknown> | undefined)?.locked
+                                                    ) && (
+                                                        <Badge
+                                                            variant="outline"
+                                                            className="text-orange-400 border-orange-400/40"
+                                                        >
+                                                            <Lock className="size-3 mr-0.5" />턴 정지
+                                                        </Badge>
+                                                    )}
                                                     {(() => {
                                                         const phase = w.meta?.phase as string | undefined;
                                                         const config = (w.config ?? {}) as Record<string, unknown>;
@@ -1421,6 +1442,38 @@ export default function AdminDashboardPage() {
                                                             오픈
                                                         </Button>
                                                     )}
+                                                    <Button
+                                                        size="sm"
+                                                        variant={
+                                                            Boolean(
+                                                                (w.config as Record<string, unknown> | undefined)
+                                                                    ?.locked
+                                                            )
+                                                                ? 'default'
+                                                                : 'outline'
+                                                        }
+                                                        onClick={() =>
+                                                            handleToggleLock(
+                                                                w.id,
+                                                                Boolean(
+                                                                    (w.config as Record<string, unknown> | undefined)
+                                                                        ?.locked
+                                                                )
+                                                            )
+                                                        }
+                                                    >
+                                                        {Boolean(
+                                                            (w.config as Record<string, unknown> | undefined)?.locked
+                                                        ) ? (
+                                                            <>
+                                                                <Unlock className="size-3.5 mr-1" />턴 재개
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <Lock className="size-3.5 mr-1" />턴 정지
+                                                            </>
+                                                        )}
+                                                    </Button>
                                                     <Button
                                                         size="sm"
                                                         variant="secondary"

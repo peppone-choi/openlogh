@@ -30,7 +30,8 @@ function getServerPhase(w: WorldState): {
     const opentime = config.opentime as string | undefined;
 
     if (meta.finished || meta.isFinished) return { label: '종료', color: 'text-gray-400', icon: Shield };
-    if (meta.isLocked || meta.locked) return { label: '잠김', color: 'text-yellow-400', icon: Shield };
+    if (meta.isLocked || meta.locked || config.locked)
+        return { label: '턴 정지', color: 'text-orange-400', icon: Pause };
 
     // isunited check (legacy: 1=천하통일, 2=정지)
     const phase = meta.phase as string | undefined;
@@ -78,7 +79,7 @@ function getActionAvailability(
     const meta = w.meta ?? {};
     const config = w.config ?? {};
     const isFinished = !!(meta.finished || meta.isFinished);
-    const isLocked = !!(meta.isLocked || meta.locked);
+    const isLocked = !!(meta.isLocked || meta.locked || (w.config as Record<string, unknown> | undefined)?.locked);
     const playerInfo = getPlayerInfo(w);
     const isFull = playerInfo.current >= playerInfo.max;
 
