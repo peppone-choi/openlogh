@@ -88,7 +88,7 @@ class EventServiceTest {
 
         service.dispatchEvents(world, "turn_start")
 
-        verify(historyService).logWorldHistory(anyLong(), anyString(), anyInt(), anyInt())
+        verify(historyService).logWorldHistory(anyLong(), anyString(), anyInt(), anyInt(), any())
     }
 
     @Test
@@ -124,7 +124,7 @@ class EventServiceTest {
 
         service.dispatchEvents(world, "turn_start")
 
-        verify(historyService).logWorldHistory(anyLong(), anyString(), anyInt(), anyInt())
+        verify(historyService).logWorldHistory(anyLong(), anyString(), anyInt(), anyInt(), any())
     }
 
     @Test
@@ -160,7 +160,7 @@ class EventServiceTest {
 
         service.dispatchEvents(world, "turn_start")
 
-        verify(historyService).logWorldHistory(anyLong(), anyString(), anyInt(), anyInt())
+        verify(historyService).logWorldHistory(anyLong(), anyString(), anyInt(), anyInt(), any())
     }
 
     // ========== dispatchEvents: action execution ==========
@@ -180,7 +180,7 @@ class EventServiceTest {
 
         service.dispatchEvents(world, "turn_start")
 
-        verify(historyService).logWorldHistory(anyLong(), anyString(), anyInt(), anyInt())
+        verify(historyService).logWorldHistory(anyLong(), anyString(), anyInt(), anyInt(), any())
     }
 
     @Test
@@ -284,7 +284,7 @@ class EventServiceTest {
 
         service.dispatchEvents(world, "turn_start")
 
-        verify(historyService).logWorldHistory(anyLong(), anyString(), anyInt(), anyInt())
+        verify(historyService).logWorldHistory(anyLong(), anyString(), anyInt(), anyInt(), any())
     }
 
     // ========== New action types: economy delegations ==========

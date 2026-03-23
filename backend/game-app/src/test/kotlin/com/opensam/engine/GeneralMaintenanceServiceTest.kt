@@ -472,7 +472,7 @@ class GeneralMaintenanceServiceTest {
         assertTrue(diplomacy.isDead)
         assertFalse(diplomacy.isShowing)
         verify(nationTurnRepository).delete(nationTurn)
-        verify(historyService).logWorldHistory(eq(1L), contains("멸망"), eq(200), eq(6))
+        verify(historyService).logWorldHistory(eq(1L), contains("멸망"), eq(200), eq(6), any())
         verify(historyService).logNationHistory(eq(1L), eq(1L), contains("사망"), eq(200), eq(6))
     }
 }
