@@ -6,7 +6,9 @@ import com.opensam.dto.NpcTokenResponse
 import com.opensam.dto.SelectNpcResult
 import com.opensam.dto.GeneralResponse
 import com.opensam.entity.General
+import com.opensam.entity.GeneralTurn
 import com.opensam.repository.GeneralRepository
+import com.opensam.repository.GeneralTurnRepository
 import com.opensam.repository.NationRepository
 import com.opensam.repository.WorldStateRepository
 import org.springframework.data.redis.core.StringRedisTemplate
@@ -23,8 +25,10 @@ import kotlin.random.Random
 @Service
 class SelectNpcTokenService(
     private val generalRepository: GeneralRepository,
+    private val generalTurnRepository: GeneralTurnRepository,
     private val nationRepository: NationRepository,
     private val worldStateRepository: WorldStateRepository,
+    private val gameConstService: GameConstService,
     private val redisTemplate: StringRedisTemplate,
     private val objectMapper: ObjectMapper,
 ) {
@@ -147,6 +151,21 @@ class SelectNpcTokenService(
         general.updatedAt = OffsetDateTime.now()
 
         val saved = generalRepository.save(general)
+
+        // Initialize turn queue so the possessed NPC can execute reserved commands
+        val maxTurn = gameConstService.getInt("maxTurn")
+        generalTurnRepository.saveAll(
+            (0 until maxTurn).map { turnIdx ->
+                GeneralTurn(
+                    worldId = worldId,
+                    generalId = saved.id,
+                    turnIdx = turnIdx.toShort(),
+                    actionCode = "휴식",
+                    brief = "휴식",
+                )
+            },
+        )
+
         deleteToken(worldId, userId)
         return SelectNpcResult(success = true, general = GeneralResponse.from(saved))
     }

@@ -96,12 +96,13 @@ class PublicCachedMapService(
         val history = recordRepository.findByWorldIdAndRecordTypeOrderByCreatedAtDesc(worldId, "world_history")
             .take(10)
             .map { record ->
+                val isScenarioInit = record.payload["scenarioInit"] == true
                 PublicCachedMapHistoryResponse(
                     id = record.id,
                     sentAt = record.createdAt,
                     text = record.payload["message"]?.toString() ?: "",
-                    year = record.year.toInt(),
-                    month = record.month.toInt(),
+                    year = if (isScenarioInit) null else record.year.toInt(),
+                    month = if (isScenarioInit) null else record.month.toInt(),
                 )
             }
 
