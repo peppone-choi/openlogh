@@ -1,0 +1,127 @@
+services:
+    postgres:
+        image: postgres:16-alpine
+        container_name: openlogh-postgres
+        restart: unless-stopped
+        environment:
+            POSTGRES_DB: ${DB_NAME:-openlogh}
+            POSTGRES_USER: ${DB_USER:-openlogh}
+            POSTGRES_PASSWORD: ${DB_PASSWORD:-openlogh123}
+            POSTGRES_INITDB_ARGS: '--encoding=UTF8 --locale=C.UTF-8'
+        ports:
+            - '${DB_PORT:-5432}:5432'
+        volumes:
+            - postgres-data:/var/lib/postgresql/data
+        networks:
+            - openlogh-net
+        healthcheck:
+            test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-openlogh}']
+            interval: 5s
+            timeout: 5s
+            retries: 5
+
+    redis:
+        image: redis:7-alpine
+        container_name: openlogh-redis
+        restart: unless-stopped
+        ports:
+            - '${REDIS_PORT:-6379}:6379'
+        volumes:
+            - redis-data:/data
+        networks:
+            - openlogh-net
+        healthcheck:
+            test: ['CMD', 'redis-cli', 'ping']
+            interval: 5s
+            timeout: 5s
+            retries: 5
+
+    bootstrap:
+        image: ghcr.io/peppone-choi/openlogh-game:${TAG:-latest}
+        container_name: openlogh-bootstrap
+        environment:
+            SPRING_PROFILES_ACTIVE: docker
+            DB_HOST: postgres
+            DB_PORT: 5432
+            DB_NAME: ${DB_NAME:-openlogh}
+            DB_USER: ${DB_USER:-openlogh}
+            DB_PASSWORD: ${DB_PASSWORD:-openlogh123}
+            REDIS_HOST: redis
+            REDIS_PORT: 6379
+            JWT_SECRET: ${JWT_SECRET:-openlogh-jwt-secret-key-must-be-at-least-256-bits-long-for-hs256}
+        command:
+            - '--spring.main.web-application-type=none'
+            - '--spring.task.scheduling.enabled=false'
+            - '--app.bootstrap.exit-on-ready=true'
+        depends_on:
+            postgres:
+                condition: service_healthy
+            redis:
+                condition: service_healthy
+        networks:
+            - openlogh-net
+        restart: 'no'
+
+    gateway:
+        image: ghcr.io/peppone-choi/openlogh-gateway:${TAG:-latest}
+        container_name: openlogh-gateway
+        restart: unless-stopped
+        environment:
+            SPRING_PROFILES_ACTIVE: docker
+            DB_HOST: postgres
+            DB_PORT: 5432
+            DB_NAME: ${DB_NAME:-openlogh}
+            DB_USER: ${DB_USER:-openlogh}
+            DB_PASSWORD: ${DB_PASSWORD:-openlogh123}
+            REDIS_HOST: redis
+            REDIS_PORT: 6379
+            JWT_SECRET: ${JWT_SECRET:-openlogh-jwt-secret-key-must-be-at-least-256-bits-long-for-hs256}
+            DOCKER_NETWORK: openlogh-net
+            DOCKER_IMAGE_PREFIX: ghcr.io/peppone-choi/openlogh-game
+            ADMIN_BOOTSTRAP_ENABLED: ${ADMIN_BOOTSTRAP_ENABLED:-true}
+            ADMIN_LOGIN_ID: ${ADMIN_LOGIN_ID:-admin}
+            ADMIN_PASSWORD: ${ADMIN_PASSWORD:-CHANGE_ME_ADMIN_PASSWORD}
+            ADMIN_DISPLAY_NAME: ${ADMIN_DISPLAY_NAME:-관리자}
+            ADMIN_GRADE: ${ADMIN_GRADE:-5}
+        ports:
+            - '8080:8080'
+        volumes:
+            - /var/run/docker.sock:/var/run/docker.sock
+        depends_on:
+            bootstrap:
+                condition: service_completed_successfully
+            postgres:
+                condition: service_healthy
+            redis:
+                condition: service_healthy
+        networks:
+            - openlogh-net
+
+    frontend:
+        image: ghcr.io/peppone-choi/openlogh-frontend:${TAG:-latest}
+        container_name: openlogh-frontend
+        restart: unless-stopped
+        networks:
+            - openlogh-net
+
+    nginx:
+        image: nginx:alpine
+        container_name: openlogh-nginx
+        restart: unless-stopped
+        ports:
+            - '${HTTP_PORT:-80}:80'
+        volumes:
+            - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+        depends_on:
+            - gateway
+            - frontend
+        networks:
+            - openlogh-net
+
+volumes:
+    postgres-data:
+    redis-data:
+
+networks:
+    openlogh-net:
+        driver: bridge

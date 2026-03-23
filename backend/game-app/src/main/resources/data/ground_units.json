@@ -1,0 +1,77 @@
+{
+    "groundUnitTypes": [
+        {
+            "code": "armored",
+            "nameKo": "장갑병",
+            "nameJp": "装甲兵",
+            "nameEn": "Armored Infantry",
+            "shipsPerUnit": 300,
+            "attack": 80,
+            "defense": 90,
+            "speed": 40,
+            "capacity": 0,
+            "cost": 1000,
+            "maintenanceCost": 50,
+            "crewRequired": 300,
+            "allowedPlanetTypes": ["normal"],
+            "description": "중장갑 지상전 부대. 강력한 방어력을 가지지만 통상 행성 지형에서만 운용 가능하다. 대형 차량을 운용하기 위해 특수 지형에는 전개할 수 없다.",
+            "descriptionEn": "Heavy armored ground unit. High defensive capability but restricted to normal planet terrain only. Cannot deploy in fortress or special terrain due to large vehicle requirements."
+        },
+        {
+            "code": "armoredGrenadier",
+            "nameKo": "장갑척탄병",
+            "nameJp": "装甲擲弾兵",
+            "nameEn": "Armored Grenadier",
+            "shipsPerUnit": 300,
+            "attack": 90,
+            "defense": 80,
+            "speed": 60,
+            "capacity": 0,
+            "cost": 1200,
+            "maintenanceCost": 60,
+            "crewRequired": 300,
+            "allowedPlanetTypes": ["normal", "fortress", "gas", "special"],
+            "description": "경장갑 기동 돌격 부대. 모든 지형에서 운용 가능하며 요새 돌격에도 투입된다. 제국군의 정예 육전 부대로 장갑척탄병총감부가 총괄한다.",
+            "descriptionEn": "Light armored assault unit. Deployable in all terrain types including fortresses. The Empire's elite ground forces, overseen by the Armored Grenadier Command."
+        },
+        {
+            "code": "lightInfantry",
+            "nameKo": "경장육전병",
+            "nameJp": "軽装陸戦兵",
+            "nameEn": "Light Infantry",
+            "shipsPerUnit": 300,
+            "attack": 70,
+            "defense": 60,
+            "speed": 80,
+            "capacity": 0,
+            "cost": 800,
+            "maintenanceCost": 40,
+            "crewRequired": 300,
+            "allowedPlanetTypes": ["normal", "fortress", "gas", "special"],
+            "description": "경장비 다목적 육전 부대. 모든 지형에서 운용 가능하며 기동성이 뛰어나다. 공격력과 방어력은 낮으나 신속한 전개가 가능해 다양한 임무에 활용된다.",
+            "descriptionEn": "Lightly equipped multi-purpose ground unit. Deployable in all terrain. Lower attack/defense than armored units but superior mobility and flexibility."
+        }
+    ],
+    "planetTypeRestrictions": {
+        "normal": {
+            "nameKo": "통상 행성",
+            "allowed": ["armored", "armoredGrenadier", "lightInfantry"],
+            "description": "일반 행성 지표면. 3종 모두 참전 가능."
+        },
+        "fortress": {
+            "nameKo": "요새",
+            "allowed": ["armoredGrenadier", "lightInfantry"],
+            "description": "이제르론·가이에스부르크 등 이동 요새. 장갑병의 대형 차량 운용 불가."
+        },
+        "gas": {
+            "nameKo": "가스 행성",
+            "allowed": ["armoredGrenadier", "lightInfantry"],
+            "description": "가스 행성 등 특수 환경. 장갑병의 운용 불가."
+        },
+        "special": {
+            "nameKo": "특수 지형",
+            "allowed": ["armoredGrenadier", "lightInfantry"],
+            "description": "기타 특수 지형. 장갑척탄병과 경장육전병만 참전 가능."
+        }
+    }
+}

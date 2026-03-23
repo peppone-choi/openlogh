@@ -1,0 +1,218 @@
+{
+    "title": "제국 내전 - 리프슈타트 전쟁 (宇宙歴797年)",
+    "startYear": 797,
+    "startMonth": 3,
+    "map": {
+        "mapName": "logh_galaxy"
+    },
+    "history": [
+        "<C>●</>宇宙歴797年 3月:<L><b>【제국 내전 시나리오】</b> 은하제국 내부에서 귀족 연합 '리프슈타트 동맹'이 결성되었다. 브라운슈바이크 공작과 리텐하임 후작을 중심으로 한 귀족 세력이 라인하르트 폰 로엔그람에 맞서 봉기한다.</>",
+        "<C>●</>宇宙歴797年:<L>라인하르트는 이 내전을 기회로 삼아 귀족 세력을 일거에 분쇄하려 한다. 오딘을 중심으로 한 로엔그람 진영과 리프슈타트를 거점으로 한 귀족 연합이 제국 영내에서 격돌한다.</>"
+    ],
+    "factions": [
+        {
+            "idx": 0,
+            "code": "empire",
+            "name": "Lohengramm Faction",
+            "nameKo": "로엔그람 진영",
+            "color": "#C0A050",
+            "funds": 450000,
+            "supplies": 280000,
+            "taxRate": 30,
+            "conscriptionRate": 20,
+            "techLevel": 9,
+            "militaryPower": 85000,
+            "factionRank": 9,
+            "capitalSystemId": 26,
+            "controlledSystems": [26, 27, 29, 31, 32, 36, 38, 39, 40],
+            "sovereign": {
+                "characterId": "reinhard_lohengramm",
+                "title": "Reichsmarschall",
+                "titleKo": "제국원수"
+            }
+        },
+        {
+            "idx": 1,
+            "code": "lippstadt_league",
+            "name": "Lippstadt League",
+            "nameKo": "리프슈타트 귀족 연합",
+            "color": "#8040C0",
+            "funds": 350000,
+            "supplies": 250000,
+            "taxRate": 35,
+            "conscriptionRate": 18,
+            "techLevel": 7,
+            "militaryPower": 90000,
+            "factionRank": 8,
+            "capitalSystemId": 24,
+            "controlledSystems": [20, 21, 23, 24, 25, 28, 30, 33, 34, 35, 37],
+            "sovereign": {
+                "characterId": "braunschweig",
+                "title": "Duke",
+                "titleKo": "공작"
+            }
+        },
+        {
+            "idx": 2,
+            "code": "alliance",
+            "name": "Free Planets Alliance",
+            "nameKo": "자유행성동맹",
+            "color": "#4080C0",
+            "funds": 310000,
+            "supplies": 230000,
+            "taxRate": 28,
+            "conscriptionRate": 12,
+            "techLevel": 7,
+            "militaryPower": 72000,
+            "factionRank": 8,
+            "capitalSystemId": 1,
+            "controlledSystems": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+            "sovereign": {
+                "characterId": "bucock",
+                "title": "Fleet Admiral",
+                "titleKo": "우주함대사령관"
+            }
+        },
+        {
+            "idx": 3,
+            "code": "fezzan",
+            "name": "Fezzan Dominion",
+            "nameKo": "페잔 자치령",
+            "color": "#40A060",
+            "funds": 1200000,
+            "supplies": 200000,
+            "taxRate": 12,
+            "conscriptionRate": 3,
+            "techLevel": 7,
+            "militaryPower": 11000,
+            "factionRank": 7,
+            "capitalSystemId": 17,
+            "controlledSystems": [17, 18, 19],
+            "sovereign": {
+                "characterId": "rubinsky",
+                "title": "Landesherr",
+                "titleKo": "자치령주"
+            }
+        }
+    ],
+    "civilWarContext": {
+        "lippstadtLeague": {
+            "leaders": ["braunschweig", "littenheim", "flegel"],
+            "totalShips": 3000000,
+            "note": "귀족 연합은 수적 우세에도 불구하고 지휘 통일이 안 되어 있다."
+        },
+        "lohengrammFaction": {
+            "leaders": ["reinhard_lohengramm", "kircheis", "mittermeyer", "reuenthal"],
+            "note": "라인하르트의 뛰어난 지휘관들이 귀족 연합을 압도하고 있다."
+        },
+        "allianceStance": {
+            "note": "동맹은 제국 내전을 관망 중이다. 이제르론 요새에서 경계를 강화하고 있다."
+        }
+    },
+    "iserlohnControl": {
+        "systemId": 13,
+        "controllerFaction": "alliance",
+        "fortressType": "iserlohn",
+        "note": "이제르론 요새는 자유행성동맹이 계속 점령 중이다."
+    },
+    "const": {
+        "turnDurationHours": 1,
+        "commandPointRecoveryMinutes": 5,
+        "maxFleetUnits": 60,
+        "lippstadtCoordinationPenalty": 0.15,
+        "nobleFactionMoralePenalty": true,
+        "victoryConditions": {
+            "captureCapital": true,
+            "minSystemThreshold": 3,
+            "timeLimitTurns": 1800
+        }
+    },
+    "initialEvents": [
+        [
+            true,
+            [
+                "ChangeStarSystem",
+                "empire",
+                {
+                    "production": "92%",
+                    "commerce": "88%",
+                    "security": "82%",
+                    "approval": 78
+                }
+            ],
+            [
+                "ChangeStarSystem",
+                "lippstadt_league",
+                {
+                    "production": "80%",
+                    "commerce": "75%",
+                    "security": "70%",
+                    "approval": 55,
+                    "note": "귀족 통치 지역 민심 불안"
+                }
+            ],
+            [
+                "ChangeStarSystem",
+                "alliance",
+                {
+                    "production": "85%",
+                    "commerce": "82%",
+                    "security": "78%",
+                    "approval": 68
+                }
+            ]
+        ]
+    ],
+    "events": [
+        ["month", 900, ["Date", ">=", 797, 6], ["LippstadtMoraleDecay", 0.95], ["DeleteEvent"]],
+        [
+            "destroy_faction",
+            1000,
+            ["and", ["Date", ">=", 798, 1], ["RemainFaction", "==", 2]],
+            ["BlockScoutAction"],
+            ["DeleteEvent"]
+        ]
+    ],
+    "officers": [
+        [0, "reinhard_lohengramm", 26, 9, "Odin"],
+        [0, "kircheis", 26, 8, "Odin"],
+        [0, "mittermeyer", 31, 8, "Mittermeyer"],
+        [0, "reuenthal", 30, 8, "Reuenthal"],
+        [0, "bittenfeld", 38, 7, "Bittenfeld"],
+        [0, "muller", 39, 7, "Kessler"],
+        [0, "eisenach", 32, 7, "Kircheis"],
+        [0, "wahlen", 40, 7, "Wahlen"],
+        [0, "lutz", 27, 7, "Gaiesburg System"],
+        [0, "kempff", 36, 7, "Merkatz"],
+        [0, "kessler", 26, 7, "Odin"],
+        [0, "oberstein", 26, 6, "Odin"],
+        [0, "hilde", 26, 5, "Odin"],
+        [0, "fahrenheit", 32, 7, "Kircheis"],
+        [0, "mecklinger", 26, 7, "Odin"],
+        [0, "seeckt", 27, 6, "Gaiesburg System"],
+        [0, "steinmetz", 22, 6, "Rentenberg"],
+        [1, "braunschweig", 28, 7, "Braunschweig"],
+        [1, "littenheim", 33, 6, "Littenheim"],
+        [1, "flegel", 34, 5, "Flegel"],
+        [1, "ansbach", 28, 5, "Braunschweig"],
+        [1, "merkatz", 24, 8, "Lippstadt"],
+        [1, "stulpnagel", 35, 6, "Stülpnagel"],
+        [1, "muckenburger", 24, 8, "Lippstadt"],
+        [1, "grillparzer", 24, 5, "Lippstadt"],
+        [1, "rücke", 24, 5, "Lippstadt"],
+        [1, "modane", 20, 6, "Neue Land"],
+        [1, "landsberg", 21, 4, "Westerland"],
+        [2, "yang_wenli", 13, 8, "Iserlohn"],
+        [2, "schönkopf", 13, 7, "Iserlohn"],
+        [2, "frederica", 13, 4, "Iserlohn"],
+        [2, "cazerne", 1, 6, "Heinessen"],
+        [2, "attenborough", 10, 7, "Van-Fleet"],
+        [2, "bucock", 1, 9, "Heinessen"],
+        [2, "d_greenhill", 1, 7, "Heinessen"],
+        [2, "murai", 13, 5, "Iserlohn"],
+        [2, "julian", 13, 3, "Iserlohn"],
+        [3, "rubinsky", 17, 10, "Fezzan"],
+        [3, "dominique", 17, 7, "Fezzan"],
+        [3, "boris_konev", 17, 5, "Fezzan"]
+    ]
+}

@@ -1,0 +1,787 @@
+'use client';
+
+import React, { useEffect, useState } from 'react';
+import { useWorldStore } from '@/stores/worldStore';
+import { useOfficerStore } from '@/stores/officerStore';
+import { planetApi, diplomacyApi, officerApi, factionApi, nationManagementApi, nationPolicyApi } from '@/lib/gameApi';
+import type { StarSystem, Diplomacy, Officer, Faction } from '@/types';
+import { REGION_NAMES, CITY_LEVEL_BADGES, getShipClassName } from '@/lib/game-utils';
+import { Building2, Crown, Search } from 'lucide-react';
+import { PageHeader } from '@/components/game/page-header';
+import { LoadingState } from '@/components/game/loading-state';
+import { EmptyState } from '@/components/game/empty-state';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { NationBadge } from '@/components/game/nation-badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+    calcPlanetFundsIncome,
+    calcPlanetSuppliesIncome,
+    calcPlanetFortressSuppliesIncome,
+    calcPlanetWarFundsIncome,
+    getBill,
+    countCityOfficers,
+} from '@/lib/income-calc';
+
+type SortKey =
+    | 'name'
+    | 'level'
+    | 'pop'
+    | 'popRatio'
+    | 'agri'
+    | 'comm'
+    | 'secu'
+    | 'def'
+    | 'wall'
+    | 'trust'
+    | 'trade'
+    | 'region'
+    | 'supplyState'
+    | 'generalCount';
+
+/** Color-code a stat value by percentage of max (green >= 80%, yellow >= 50%, red < 50%) */
+function statColor(val: number, max: number): string {
+    if (max <= 0) return 'text-muted-foreground';
+    const ratio = val / max;
+    if (ratio >= 0.8) return 'text-green-400';
+    if (ratio >= 0.5) return 'text-yellow-400';
+    return 'text-red-400';
+}
+
+/** Remaining capacity warning */
+function remainingWarning(val: number, max: number): string | null {
+    if (max <= 0) return null;
+    const remain = max - val;
+    const ratio = remain / max;
+    if (ratio <= 0.1) return `[잔여 ${remain.toLocaleString()}]`;
+    return null;
+}
+
+const OFFICER_TITLES: Record<number, string> = {
+    4: '태수',
+    3: '군사',
+    2: '종사',
+};
+
+export default function NationCitiesPage() {
+    const currentWorld = useWorldStore((s) => s.currentWorld);
+    const myGeneral = useOfficerStore((s) => s.myGeneral);
+    const fetchMyGeneral = useOfficerStore((s) => s.fetchMyGeneral);
+
+    const [cities, setCities] = useState<StarSystem[] | null>(null);
+    const [allNations, setAllNations] = useState<Faction[]>([]);
+    const [myNation, setMyNation] = useState<Faction | null>(null);
+    const [nationGenerals, setNationGenerals] = useState<Officer[]>([]);
+    const [diplomacyList, setDiplomacyList] = useState<Diplomacy[]>([]);
+    const [rate, setRate] = useState(20);
+    const [bill, setBill] = useState(100);
+    const [savingPolicy, setSavingPolicy] = useState(false);
+    const [saveMsg, setSaveMsg] = useState('');
+    const [error, setError] = useState<string | null>(null);
+    const [sortKey, setSortKey] = useState<SortKey>('name');
+    const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+    const [cityFilter, setCityFilter] = useState('');
+    const [appointMode, setAppointMode] = useState(false);
+    const [appointCity, setAppointCity] = useState<number | null>(null);
+    const [appointLevel, setAppointLevel] = useState<number>(4);
+    const [appointGeneralId, setAppointGeneralId] = useState<string>('');
+    const [appointSaving, setAppointSaving] = useState(false);
+    const [expandedCities, setExpandedCities] = useState<Set<number>>(new Set());
+
+    useEffect(() => {
+        if (!currentWorld) return;
+        if (!myGeneral) {
+            fetchMyGeneral(currentWorld.id).catch(() => setError('제독 정보를 불러올 수 없습니다.'));
+        }
+    }, [currentWorld, myGeneral, fetchMyGeneral]);
+
+    useEffect(() => {
+        if (!myGeneral?.nationId || !currentWorld) return;
+        Promise.all([
+            planetApi.listByFaction(myGeneral.nationId),
+            factionApi.listByWorld(currentWorld.id),
+            factionApi.get(myGeneral.nationId),
+            officerApi.listByFaction(myGeneral.nationId),
+            diplomacyApi.listByNation(currentWorld.id, myGeneral.nationId),
+            nationPolicyApi.getPolicy(myGeneral.nationId),
+        ])
+            .then(([cityRes, allNationsRes, myNationRes, nationGeneralsRes, diplomacyRes, policyRes]) => {
+                setCities(cityRes.data);
+                setAllNations(allNationsRes.data);
+                setMyNation(myNationRes.data);
+                setNationGenerals(nationGeneralsRes.data);
+                setDiplomacyList(diplomacyRes.data);
+                setRate(Number(policyRes.data.rate) || 20);
+                setBill(Number(policyRes.data.bill) || 100);
+            })
+            .catch(() => setError('국가 행성 정보를 불러올 수 없습니다.'));
+    }, [myGeneral?.nationId, currentWorld]);
+
+    const handleSavePolicy = async () => {
+        if (!myGeneral?.nationId) return;
+        setSavingPolicy(true);
+        setSaveMsg('');
+        try {
+            await nationPolicyApi.updatePolicy(myGeneral.nationId, { rate, bill });
+            setSaveMsg('정책이 저장되었습니다.');
+        } catch {
+            setSaveMsg('정책 저장에 실패했습니다.');
+        } finally {
+            setSavingPolicy(false);
+        }
+    };
+
+    const handleAppoint = async () => {
+        if (!myGeneral?.nationId || !appointCity || !appointGeneralId) return;
+        setAppointSaving(true);
+        try {
+            await nationManagementApi.appointOfficer(myGeneral.nationId, {
+                generalId: Number(appointGeneralId),
+                officerLevel: appointLevel,
+                officerCity: appointCity,
+            });
+            setSaveMsg('관직 임명 완료');
+            setAppointCity(null);
+            setAppointGeneralId('');
+            // Reload generals
+            const res = await officerApi.listByFaction(myGeneral.nationId);
+            setNationGenerals(res.data);
+        } catch {
+            setSaveMsg('관직 임명 실패');
+        } finally {
+            setAppointSaving(false);
+        }
+    };
+
+    const getCityOfficers = (cityId: number) => {
+        return nationGenerals
+            .filter(
+                (g) => g.cityId === cityId && g.officerCity === cityId && g.officerLevel >= 2 && g.officerLevel <= 4
+            )
+            .sort((a, b) => b.officerLevel - a.officerLevel);
+    };
+
+    const getUnassignedGenerals = () => {
+        return nationGenerals.filter((g) => g.officerLevel < 2);
+    };
+
+    const toggleSort = (key: SortKey) => {
+        if (sortKey === key) {
+            setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+        } else {
+            setSortKey(key);
+            setSortDir('desc');
+        }
+    };
+
+    const arrow = (key: SortKey) => (sortKey === key ? (sortDir === 'asc' ? ' ▲' : ' ▼') : '');
+
+    const filtered = (cities ?? []).filter((c) =>
+        cityFilter ? c.name.toLowerCase().includes(cityFilter.toLowerCase()) : true
+    );
+
+    const getGeneralCount = (cityId: number) => nationGenerals.filter((g) => g.cityId === cityId).length;
+
+    const sorted = [...filtered].sort((a, b) => {
+        let cmp = 0;
+        if (sortKey === 'name') {
+            cmp = a.name.localeCompare(b.name);
+        } else if (sortKey === 'generalCount') {
+            cmp = getGeneralCount(a.id) - getGeneralCount(b.id);
+        } else if (sortKey === 'popRatio') {
+            const ra = a.popMax > 0 ? a.pop / a.popMax : 0;
+            const rb = b.popMax > 0 ? b.pop / b.popMax : 0;
+            cmp = ra - rb;
+        } else {
+            cmp = (a[sortKey] as number) - (b[sortKey] as number);
+        }
+        return sortDir === 'asc' ? cmp : -cmp;
+    });
+
+    const nationMap = new Map(allNations.map((n) => [n.id, n]));
+
+    const diplomacyRows = diplomacyList
+        .filter((d) => !d.isDead)
+        .map((d) => {
+            const otherNationId = d.srcNationId === myGeneral?.nationId ? d.destNationId : d.srcNationId;
+            return {
+                id: d.id,
+                nation: nationMap.get(otherNationId),
+                relation: d.stateCode,
+                term: d.term,
+            };
+        });
+
+    const budgetRows = sorted.map((c) => {
+        const officerCnt = countCityOfficers(nationGenerals, c.id);
+        const goldCity = calcPlanetFundsIncome(
+            c,
+            officerCnt,
+            myNation?.capitalCityId === c.id,
+            myNation?.level ?? 0,
+            myNation?.typeCode ?? ''
+        );
+        const goldWar = calcPlanetWarFundsIncome(c, myNation?.typeCode ?? '');
+        const riceCity = calcPlanetSuppliesIncome(
+            c,
+            officerCnt,
+            myNation?.capitalCityId === c.id,
+            myNation?.level ?? 0,
+            myNation?.typeCode ?? ''
+        );
+        const riceWall = calcPlanetFortressSuppliesIncome(
+            c,
+            officerCnt,
+            myNation?.capitalCityId === c.id,
+            myNation?.level ?? 0,
+            myNation?.typeCode ?? ''
+        );
+        const expense = nationGenerals
+            .filter((g) => g.cityId === c.id)
+            .reduce((sum, g) => sum + getBill(g.dedication), 0);
+
+        return {
+            city: c,
+            goldIncome: goldCity + goldWar,
+            riceIncome: riceCity + riceWall,
+            expense,
+            goldNet: goldCity + goldWar - expense,
+        };
+    });
+
+    const totalGoldIncome = budgetRows.reduce((sum, row) => sum + row.goldIncome, 0);
+    const totalRiceIncome = budgetRows.reduce((sum, row) => sum + row.riceIncome, 0);
+    const totalExpense = budgetRows.reduce((sum, row) => sum + row.expense, 0);
+
+    if (!currentWorld) return <LoadingState message="월드를 선택해주세요." />;
+    if (myGeneral?.nationId && cities === null) return <LoadingState />;
+    if (error) return <div className="p-4 text-red-400">{error}</div>;
+    if (!myGeneral?.nationId)
+        return (
+            <div className="p-4">
+                <EmptyState
+                    icon={Building2}
+                    title="소속 진영이 없습니다."
+                    description="진영에 가입한 후 이용할 수 있습니다."
+                />
+            </div>
+        );
+
+    const columns: { key: SortKey; label: string }[] = [
+        { key: 'name', label: '이름' },
+        { key: 'region', label: '지역' },
+        { key: 'level', label: '레벨' },
+        { key: 'pop', label: '인구' },
+        { key: 'trust', label: '민심' },
+        { key: 'trade', label: '시세' },
+        { key: 'agri', label: '농업' },
+        { key: 'comm', label: '상업' },
+        { key: 'secu', label: '치안' },
+        { key: 'def', label: '수비' },
+        { key: 'wall', label: '성벽' },
+        { key: 'supplyState', label: '보급' },
+    ];
+
+    return (
+        <div className="p-4 space-y-4 max-w-5xl mx-auto">
+            <PageHeader icon={Building2} title="세력 행성" />
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>국가 정책 편집</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                    <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                            <label htmlFor="nation-policy-rate" className="text-xs text-muted-foreground">
+                                교역율 (5-30)
+                            </label>
+                            <Input
+                                id="nation-policy-rate"
+                                type="number"
+                                min={5}
+                                max={30}
+                                value={rate}
+                                onChange={(e) => setRate(Number(e.target.value))}
+                            />
+                        </div>
+                        <div className="space-y-1">
+                            <label htmlFor="nation-policy-bill" className="text-xs text-muted-foreground">
+                                세율 (20-200)
+                            </label>
+                            <Input
+                                id="nation-policy-bill"
+                                type="number"
+                                min={20}
+                                max={200}
+                                value={bill}
+                                onChange={(e) => setBill(Number(e.target.value))}
+                            />
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Button onClick={handleSavePolicy} disabled={savingPolicy}>
+                            {savingPolicy ? '저장 중...' : '정책 저장'}
+                        </Button>
+                        {saveMsg && <span className="text-xs text-muted-foreground">{saveMsg}</span>}
+                    </div>
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>외교 관계 개요</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    {diplomacyRows.length === 0 ? (
+                        <p className="text-sm text-muted-foreground">외교 관계가 없습니다.</p>
+                    ) : (
+                        <div className="overflow-x-auto">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>국가</TableHead>
+                                        <TableHead>관계</TableHead>
+                                        <TableHead className="text-right">잔여 턴</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {diplomacyRows.map((row) => (
+                                        <TableRow key={row.id}>
+                                            <TableCell>
+                                                <NationBadge name={row.nation?.name} color={row.nation?.color} />
+                                            </TableCell>
+                                            <TableCell>
+                                                <Badge
+                                                    variant={
+                                                        row.relation === 'alliance'
+                                                            ? 'default'
+                                                            : row.relation === 'war'
+                                                              ? 'destructive'
+                                                              : row.relation === 'nonaggression'
+                                                                ? 'secondary'
+                                                                : 'outline'
+                                                    }
+                                                >
+                                                    {row.relation === 'alliance'
+                                                        ? '동맹'
+                                                        : row.relation === 'war'
+                                                          ? '적대'
+                                                          : row.relation === 'nonaggression'
+                                                            ? '불가침'
+                                                            : row.relation}
+                                                </Badge>
+                                            </TableCell>
+                                            <TableCell className="text-right tabular-nums">{row.term}</TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>도시별 예산 계산</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                    <div className="text-sm grid grid-cols-2 gap-2">
+                        <div>금 총수입: +{totalGoldIncome.toLocaleString()}</div>
+                        <div>쌀 총수입: +{totalRiceIncome.toLocaleString()}</div>
+                        <div>총지출(녹봉): -{totalExpense.toLocaleString()}</div>
+                        <div className={totalGoldIncome - totalExpense >= 0 ? 'text-green-400' : 'text-red-400'}>
+                            금 순수익: {(totalGoldIncome - totalExpense).toLocaleString()}
+                        </div>
+                    </div>
+                    <div className="overflow-x-auto">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>도시</TableHead>
+                                    <TableHead className="text-right">금수입</TableHead>
+                                    <TableHead className="text-right">쌀수입</TableHead>
+                                    <TableHead className="text-right">지출</TableHead>
+                                    <TableHead className="text-right">금순익</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {budgetRows.map((row) => (
+                                    <TableRow key={row.city.id}>
+                                        <TableCell>{row.city.name}</TableCell>
+                                        <TableCell className="text-right tabular-nums">
+                                            {row.goldIncome.toLocaleString()}
+                                        </TableCell>
+                                        <TableCell className="text-right tabular-nums">
+                                            {row.riceIncome.toLocaleString()}
+                                        </TableCell>
+                                        <TableCell className="text-right tabular-nums">
+                                            {row.expense.toLocaleString()}
+                                        </TableCell>
+                                        <TableCell
+                                            className={`text-right tabular-nums ${row.goldNet >= 0 ? 'text-green-400' : 'text-red-400'}`}
+                                        >
+                                            {row.goldNet.toLocaleString()}
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </div>
+                </CardContent>
+            </Card>
+
+            {/* City filter + appointment mode toggle */}
+            <div className="flex items-center gap-3 flex-wrap">
+                <div className="relative w-48">
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                    <Input
+                        placeholder="행성 검색..."
+                        value={cityFilter}
+                        onChange={(e) => setCityFilter(e.target.value)}
+                        className="pl-8"
+                    />
+                </div>
+                <Button
+                    variant={appointMode ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setAppointMode(!appointMode)}
+                >
+                    {appointMode ? '관직 임명 모드 ON' : '관직 임명 모드'}
+                </Button>
+            </div>
+
+            {(cities ?? []).length === 0 ? (
+                <EmptyState icon={Building2} title="보유 도시가 없습니다." />
+            ) : (
+                <div className="overflow-x-auto">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                {columns.map((col) => (
+                                    <TableHead
+                                        key={col.key}
+                                        className="cursor-pointer hover:text-foreground"
+                                        onClick={() => toggleSort(col.key)}
+                                    >
+                                        {col.label}
+                                        {arrow(col.key)}
+                                    </TableHead>
+                                ))}
+                                <TableHead className="text-right">자금수입</TableHead>
+                                <TableHead className="text-right">군량수입</TableHead>
+                                <TableHead className="text-right">둔전수입</TableHead>
+                                <TableHead>관직</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {sorted.map((c) => {
+                                const officers = getCityOfficers(c.id);
+                                const isCapital = myNation?.capitalCityId === c.id;
+                                const officerCnt = countCityOfficers(nationGenerals, c.id);
+                                const cityGoldIncome = myNation
+                                    ? Math.round(
+                                          (calcPlanetFundsIncome(
+                                              c,
+                                              officerCnt,
+                                              isCapital,
+                                              myNation.level,
+                                              myNation.typeCode
+                                          ) *
+                                              rate) /
+                                              20
+                                      )
+                                    : null;
+                                const cityRiceIncome = myNation
+                                    ? Math.round(
+                                          (calcPlanetSuppliesIncome(
+                                              c,
+                                              officerCnt,
+                                              isCapital,
+                                              myNation.level,
+                                              myNation.typeCode
+                                          ) *
+                                              rate) /
+                                              20
+                                      )
+                                    : null;
+                                const cityWallIncome = myNation
+                                    ? Math.round(
+                                          (calcPlanetFortressSuppliesIncome(
+                                              c,
+                                              officerCnt,
+                                              isCapital,
+                                              myNation.level,
+                                              myNation.typeCode
+                                          ) *
+                                              rate) /
+                                              20
+                                      )
+                                    : null;
+                                return (
+                                    <React.Fragment key={c.id}>
+                                        <TableRow>
+                                            <TableCell className="font-medium">
+                                                <span className="flex items-center gap-1">
+                                                    {isCapital && <Crown className="size-4 text-amber-400" />}
+                                                    <button
+                                                        type="button"
+                                                        className="hover:text-cyan-400 underline-offset-2 hover:underline text-left"
+                                                        onClick={() => {
+                                                            setExpandedCities((prev) => {
+                                                                const next = new Set(prev);
+                                                                if (next.has(c.id)) next.delete(c.id);
+                                                                else next.add(c.id);
+                                                                return next;
+                                                            });
+                                                        }}
+                                                    >
+                                                        {c.name}
+                                                    </button>
+                                                    <span className="text-[10px] text-muted-foreground">
+                                                        ({getGeneralCount(c.id)})
+                                                    </span>
+                                                </span>
+                                            </TableCell>
+                                            <TableCell>
+                                                <span className="text-xs text-muted-foreground">
+                                                    {REGION_NAMES[c.region] ?? `지역${c.region}`}
+                                                </span>
+                                            </TableCell>
+                                            <TableCell>{CITY_LEVEL_BADGES[c.level] ?? c.level}</TableCell>
+                                            <TableCell>
+                                                {c.pop.toLocaleString()}/{c.popMax.toLocaleString()}
+                                            </TableCell>
+                                            <TableCell>{c.trust}</TableCell>
+                                            <TableCell>{c.trade}%</TableCell>
+                                            <TableCell className={statColor(c.agri, c.agriMax)}>
+                                                {c.agri.toLocaleString()}/{c.agriMax.toLocaleString()}
+                                                {remainingWarning(c.agri, c.agriMax) && (
+                                                    <span className="text-[9px] text-yellow-500 block">
+                                                        {remainingWarning(c.agri, c.agriMax)}
+                                                    </span>
+                                                )}
+                                            </TableCell>
+                                            <TableCell className={statColor(c.comm, c.commMax)}>
+                                                {c.comm.toLocaleString()}/{c.commMax.toLocaleString()}
+                                                {remainingWarning(c.comm, c.commMax) && (
+                                                    <span className="text-[9px] text-yellow-500 block">
+                                                        {remainingWarning(c.comm, c.commMax)}
+                                                    </span>
+                                                )}
+                                            </TableCell>
+                                            <TableCell className={statColor(c.secu, c.secuMax)}>
+                                                {c.secu.toLocaleString()}/{c.secuMax.toLocaleString()}
+                                                {remainingWarning(c.secu, c.secuMax) && (
+                                                    <span className="text-[9px] text-yellow-500 block">
+                                                        {remainingWarning(c.secu, c.secuMax)}
+                                                    </span>
+                                                )}
+                                            </TableCell>
+                                            <TableCell className={statColor(c.def, c.defMax)}>
+                                                {c.def.toLocaleString()}/{c.defMax.toLocaleString()}
+                                                {remainingWarning(c.def, c.defMax) && (
+                                                    <span className="text-[9px] text-yellow-500 block">
+                                                        {remainingWarning(c.def, c.defMax)}
+                                                    </span>
+                                                )}
+                                            </TableCell>
+                                            <TableCell className={statColor(c.wall, c.wallMax)}>
+                                                {c.wall.toLocaleString()}/{c.wallMax.toLocaleString()}
+                                                {remainingWarning(c.wall, c.wallMax) && (
+                                                    <span className="text-[9px] text-yellow-500 block">
+                                                        {remainingWarning(c.wall, c.wallMax)}
+                                                    </span>
+                                                )}
+                                            </TableCell>
+                                            <TableCell>
+                                                <Badge variant={c.supplyState === 1 ? 'default' : 'destructive'}>
+                                                    {c.supplyState === 1 ? '보급' : '단절'}
+                                                </Badge>
+                                            </TableCell>
+                                            <TableCell className="text-right tabular-nums">
+                                                {cityGoldIncome == null ? '-' : cityGoldIncome.toLocaleString()}
+                                            </TableCell>
+                                            <TableCell className="text-right tabular-nums">
+                                                {cityRiceIncome == null ? '-' : cityRiceIncome.toLocaleString()}
+                                            </TableCell>
+                                            <TableCell className="text-right tabular-nums">
+                                                {cityWallIncome == null ? '-' : cityWallIncome.toLocaleString()}
+                                            </TableCell>
+                                            <TableCell>
+                                                <div className="space-y-1">
+                                                    {officers.length > 0 ? (
+                                                        officers.map((o) => (
+                                                            <div key={o.id} className="text-xs flex items-center gap-1">
+                                                                <Badge variant="outline" className="text-[10px] px-1">
+                                                                    {OFFICER_TITLES[o.officerLevel] ??
+                                                                        `Lv${o.officerLevel}`}
+                                                                </Badge>
+                                                                <span>{o.name}</span>
+                                                            </div>
+                                                        ))
+                                                    ) : (
+                                                        <span className="text-xs text-muted-foreground">-</span>
+                                                    )}
+                                                    {appointMode && (
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            className="text-xs h-6 px-2"
+                                                            onClick={() =>
+                                                                setAppointCity(appointCity === c.id ? null : c.id)
+                                                            }
+                                                        >
+                                                            {appointCity === c.id ? '취소' : '+ 임명'}
+                                                        </Button>
+                                                    )}
+                                                    {appointMode && appointCity === c.id && (
+                                                        <div className="mt-1 space-y-1 p-2 border rounded bg-background">
+                                                            <Select
+                                                                value={String(appointLevel)}
+                                                                onValueChange={(v: string) =>
+                                                                    setAppointLevel(Number(v))
+                                                                }
+                                                            >
+                                                                <SelectTrigger className="h-7 text-xs">
+                                                                    <SelectValue />
+                                                                </SelectTrigger>
+                                                                <SelectContent>
+                                                                    <SelectItem value="4">태수</SelectItem>
+                                                                    <SelectItem value="3">군사</SelectItem>
+                                                                    <SelectItem value="2">종사</SelectItem>
+                                                                </SelectContent>
+                                                            </Select>
+                                                            <Select
+                                                                value={appointGeneralId}
+                                                                onValueChange={setAppointGeneralId}
+                                                            >
+                                                                <SelectTrigger className="h-7 text-xs">
+                                                                    <SelectValue placeholder="제독 선택" />
+                                                                </SelectTrigger>
+                                                                <SelectContent>
+                                                                    {getUnassignedGenerals().map((g) => (
+                                                                        <SelectItem key={g.id} value={String(g.id)}>
+                                                                            {g.name} (통{g.leadership}/무{g.strength}/지
+                                                                            {g.intel})
+                                                                        </SelectItem>
+                                                                    ))}
+                                                                </SelectContent>
+                                                            </Select>
+                                                            <Button
+                                                                size="sm"
+                                                                className="h-6 text-xs"
+                                                                disabled={!appointGeneralId || appointSaving}
+                                                                onClick={handleAppoint}
+                                                            >
+                                                                {appointSaving ? '임명 중...' : '임명'}
+                                                            </Button>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </TableCell>
+                                        </TableRow>
+                                        {/* Expanded: generals in this city */}
+                                        {expandedCities.has(c.id) && (
+                                            <TableRow className="bg-gray-900/50">
+                                                <TableCell colSpan={16} className="py-2">
+                                                    <div className="text-xs space-y-1 pl-4">
+                                                        <div className="font-medium text-muted-foreground mb-1">
+                                                            배치 제독 (
+                                                            {nationGenerals.filter((g) => g.cityId === c.id).length}
+                                                            명)
+                                                        </div>
+                                                        {nationGenerals.filter((g) => g.cityId === c.id).length ===
+                                                        0 ? (
+                                                            <span className="text-muted-foreground">
+                                                                배치된 제독가 없습니다.
+                                                            </span>
+                                                        ) : (
+                                                            <table className="w-full text-xs">
+                                                                <thead>
+                                                                    <tr className="border-b border-gray-700">
+                                                                        <th className="text-left py-0.5 px-1">제독</th>
+                                                                        <th className="text-left py-0.5 px-1">관직</th>
+                                                                        <th className="text-right py-0.5 px-1">통솔</th>
+                                                                        <th className="text-right py-0.5 px-1">무력</th>
+                                                                        <th className="text-right py-0.5 px-1">지력</th>
+                                                                        <th className="text-right py-0.5 px-1">병종</th>
+                                                                        <th className="text-right py-0.5 px-1">병력</th>
+                                                                        <th className="text-right py-0.5 px-1">훈련</th>
+                                                                        <th className="text-right py-0.5 px-1">사기</th>
+                                                                        <th className="text-right py-0.5 px-1">금</th>
+                                                                        <th className="text-right py-0.5 px-1">쌀</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody>
+                                                                    {nationGenerals
+                                                                        .filter((g) => g.cityId === c.id)
+                                                                        .sort((a, b) => b.officerLevel - a.officerLevel)
+                                                                        .map((g) => (
+                                                                            <tr
+                                                                                key={g.id}
+                                                                                className="border-b border-gray-800"
+                                                                            >
+                                                                                <td className="py-0.5 px-1">
+                                                                                    {g.name}
+                                                                                </td>
+                                                                                <td className="py-0.5 px-1">
+                                                                                    {OFFICER_TITLES[g.officerLevel] ??
+                                                                                        (g.officerLevel > 0
+                                                                                            ? `Lv${g.officerLevel}`
+                                                                                            : '-')}
+                                                                                </td>
+                                                                                <td className="text-right py-0.5 px-1">
+                                                                                    {g.leadership}
+                                                                                </td>
+                                                                                <td className="text-right py-0.5 px-1">
+                                                                                    {g.strength}
+                                                                                </td>
+                                                                                <td className="text-right py-0.5 px-1">
+                                                                                    {g.intel}
+                                                                                </td>
+                                                                                <td className="text-right py-0.5 px-1">
+                                                                                    {getShipClassName(
+                                                                                        String(g.crewType)
+                                                                                    ) ??
+                                                                                        g.crewType ??
+                                                                                        '-'}
+                                                                                </td>
+                                                                                <td className="text-right py-0.5 px-1">
+                                                                                    {(g.crew ?? 0).toLocaleString()}
+                                                                                </td>
+                                                                                <td className="text-right py-0.5 px-1">
+                                                                                    {g.train ?? '-'}
+                                                                                </td>
+                                                                                <td className="text-right py-0.5 px-1">
+                                                                                    {g.atmos ?? '-'}
+                                                                                </td>
+                                                                                <td className="text-right py-0.5 px-1">
+                                                                                    {(g.gold ?? 0).toLocaleString()}
+                                                                                </td>
+                                                                                <td className="text-right py-0.5 px-1">
+                                                                                    {(g.rice ?? 0).toLocaleString()}
+                                                                                </td>
+                                                                            </tr>
+                                                                        ))}
+                                                                </tbody>
+                                                            </table>
+                                                        )}
+                                                    </div>
+                                                </TableCell>
+                                            </TableRow>
+                                        )}
+                                    </React.Fragment>
+                                );
+                            })}
+                        </TableBody>
+                    </Table>
+                </div>
+            )}
+        </div>
+    );
+}

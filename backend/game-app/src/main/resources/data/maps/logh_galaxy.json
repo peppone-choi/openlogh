@@ -1,0 +1,3130 @@
+{
+    "name": "logh_galaxy",
+    "version": "1.0",
+    "description": "Legend of the Galactic Heroes galaxy map with 80 star systems",
+    "mapWidth": 130,
+    "mapHeight": 80,
+    "regions": {
+        "alliance_core": "동맹 핵심",
+        "alliance_frontier": "동맹 변경",
+        "iserlohn_corridor": "이제르론 회랑",
+        "fezzan_corridor": "페잔 자치령",
+        "empire_frontier": "제국 변경",
+        "empire_core": "제국 핵심"
+    },
+    "starSystems": [
+        {
+            "id": 1,
+            "name": "Sirius",
+            "nameKo": "시리우스",
+            "nameJp": "シリウス",
+            "x": 118,
+            "y": 5,
+            "faction": "empire",
+            "level": 4,
+            "region": "empire_core",
+            "populationMax": 6000000,
+            "productionMax": 2500,
+            "commerceMax": 2500,
+            "securityMax": 3000,
+            "orbitalDefenseMax": 3000,
+            "fortressMax": 0,
+            "planets": [
+                {
+                    "name": "Potro",
+                    "nameKo": "포트로",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Emmeya",
+                    "nameKo": "엠메야",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Nommo",
+                    "nameKo": "논모",
+                    "type": "barren"
+                },
+                {
+                    "name": "Londrina",
+                    "nameKo": "론드리나",
+                    "type": "gas_giant"
+                }
+            ],
+            "connections": [3, 4, 11],
+            "special": null
+        },
+        {
+            "id": 2,
+            "name": "Marovia",
+            "nameKo": "마로비아",
+            "nameJp": "マロビア",
+            "x": 28,
+            "y": 8,
+            "faction": "alliance",
+            "level": 2,
+            "region": "alliance_core",
+            "populationMax": 1200000,
+            "productionMax": 600,
+            "commerceMax": 700,
+            "securityMax": 900,
+            "orbitalDefenseMax": 900,
+            "fortressMax": 0,
+            "planets": [],
+            "connections": [5, 9, 16],
+            "special": null
+        },
+        {
+            "id": 3,
+            "name": "Solar System",
+            "nameKo": "태양계",
+            "nameJp": "太陽系",
+            "x": 108,
+            "y": 5,
+            "faction": "empire",
+            "level": 3,
+            "region": "empire_core",
+            "populationMax": 3000000,
+            "productionMax": 1500,
+            "commerceMax": 1500,
+            "securityMax": 2000,
+            "orbitalDefenseMax": 2000,
+            "fortressMax": 0,
+            "planets": [
+                {
+                    "name": "Mercury",
+                    "nameKo": "수성",
+                    "type": "barren"
+                },
+                {
+                    "name": "Venus",
+                    "nameKo": "금성",
+                    "type": "barren"
+                },
+                {
+                    "name": "Earth",
+                    "nameKo": "지구",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Mars",
+                    "nameKo": "화성",
+                    "type": "barren"
+                }
+            ],
+            "connections": [1, 4, 13],
+            "special": null
+        },
+        {
+            "id": 4,
+            "name": "Vega",
+            "nameKo": "베가",
+            "nameJp": "ベガ",
+            "x": 112,
+            "y": 8,
+            "faction": "empire",
+            "level": 3,
+            "region": "empire_core",
+            "populationMax": 2500000,
+            "productionMax": 1200,
+            "commerceMax": 1200,
+            "securityMax": 1800,
+            "orbitalDefenseMax": 1800,
+            "fortressMax": 0,
+            "planets": [
+                {
+                    "name": "Orpheus",
+                    "nameKo": "오르페우스",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Eurydike",
+                    "nameKo": "에우리디케",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Acrisios",
+                    "nameKo": "아크리시오스",
+                    "type": "barren"
+                },
+                {
+                    "name": "Persephone",
+                    "nameKo": "페르세포네",
+                    "type": "ice"
+                }
+            ],
+            "connections": [1, 3, 13],
+            "special": null
+        },
+        {
+            "id": 5,
+            "name": "Shiva",
+            "nameKo": "시바",
+            "nameJp": "シヴァ",
+            "x": 35,
+            "y": 12,
+            "faction": "alliance",
+            "level": 3,
+            "region": "alliance_core",
+            "populationMax": 2200000,
+            "productionMax": 1000,
+            "commerceMax": 1100,
+            "securityMax": 1500,
+            "orbitalDefenseMax": 1500,
+            "fortressMax": 0,
+            "planets": [
+                {
+                    "name": "Parvati",
+                    "nameKo": "파르바티",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Ganga",
+                    "nameKo": "강가",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Nandi",
+                    "nameKo": "난디",
+                    "type": "barren"
+                },
+                {
+                    "name": "Ananta",
+                    "nameKo": "아난타",
+                    "type": "gas_giant"
+                }
+            ],
+            "connections": [2, 7, 8],
+            "special": null
+        },
+        {
+            "id": 6,
+            "name": "Bifröst",
+            "nameKo": "비프뢰스트",
+            "nameJp": "ビフロスト",
+            "x": 80,
+            "y": 10,
+            "faction": "empire",
+            "level": 4,
+            "region": "empire_frontier",
+            "populationMax": 4000000,
+            "productionMax": 2000,
+            "commerceMax": 1500,
+            "securityMax": 3500,
+            "orbitalDefenseMax": 3500,
+            "fortressMax": 0,
+            "planets": [
+                {
+                    "name": "Heimdall",
+                    "nameKo": "헤임달",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Himinbjörg",
+                    "nameKo": "히민비요르그",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Burtgang",
+                    "nameKo": "부르트강",
+                    "type": "barren"
+                },
+                {
+                    "name": "Gjallarhorn",
+                    "nameKo": "걀라르호른",
+                    "type": "ice"
+                }
+            ],
+            "connections": [10, 19, 20],
+            "special": null
+        },
+        {
+            "id": 7,
+            "name": "Hadat",
+            "nameKo": "하다트",
+            "nameJp": "ハダト",
+            "x": 32,
+            "y": 15,
+            "faction": "alliance",
+            "level": 2,
+            "region": "alliance_core",
+            "populationMax": 1000000,
+            "productionMax": 500,
+            "commerceMax": 550,
+            "securityMax": 800,
+            "orbitalDefenseMax": 800,
+            "fortressMax": 0,
+            "planets": [
+                {
+                    "name": "Shampur",
+                    "nameKo": "샴푸르",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Belasi",
+                    "nameKo": "벨라시",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Anjar",
+                    "nameKo": "안자르",
+                    "type": "barren"
+                }
+            ],
+            "connections": [5, 9, 12],
+            "special": null
+        },
+        {
+            "id": 8,
+            "name": "Dagon",
+            "nameKo": "다곤",
+            "nameJp": "ダゴン",
+            "x": 42,
+            "y": 13,
+            "faction": "alliance",
+            "level": 2,
+            "region": "alliance_frontier",
+            "populationMax": 900000,
+            "productionMax": 450,
+            "commerceMax": 500,
+            "securityMax": 700,
+            "orbitalDefenseMax": 700,
+            "fortressMax": 0,
+            "planets": [
+                {
+                    "name": "Dagon I",
+                    "nameKo": "다곤 1",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Dagon II",
+                    "nameKo": "다곤 2",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Dagon III",
+                    "nameKo": "다곤 3",
+                    "type": "barren"
+                },
+                {
+                    "name": "Dagon IV",
+                    "nameKo": "다곤 4",
+                    "type": "barren"
+                }
+            ],
+            "connections": [5, 12, 14],
+            "special": null
+        },
+        {
+            "id": 9,
+            "name": "Fara-Fara",
+            "nameKo": "파라-파라",
+            "nameJp": "ファラ＝ファラ",
+            "x": 26,
+            "y": 15,
+            "faction": "alliance",
+            "level": 2,
+            "region": "alliance_core",
+            "populationMax": 1100000,
+            "productionMax": 550,
+            "commerceMax": 600,
+            "securityMax": 850,
+            "orbitalDefenseMax": 850,
+            "fortressMax": 0,
+            "planets": [
+                {
+                    "name": "Aram Badar",
+                    "nameKo": "아람 바다르",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Ramul",
+                    "nameKo": "라물",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Misenum",
+                    "nameKo": "미세눔",
+                    "type": "barren"
+                },
+                {
+                    "name": "Aswan",
+                    "nameKo": "아스완",
+                    "type": "barren"
+                }
+            ],
+            "connections": [2, 7, 16],
+            "special": null
+        },
+        {
+            "id": 10,
+            "name": "Volsorn",
+            "nameKo": "볼소른",
+            "nameJp": "ヴォルソーン",
+            "x": 90,
+            "y": 13,
+            "faction": "empire",
+            "level": 3,
+            "region": "empire_frontier",
+            "populationMax": 2000000,
+            "productionMax": 1000,
+            "commerceMax": 1000,
+            "securityMax": 1500,
+            "orbitalDefenseMax": 1500,
+            "fortressMax": 0,
+            "planets": [
+                {
+                    "name": "Vestra",
+                    "nameKo": "베스트라",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Volsorn",
+                    "nameKo": "볼소른",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Weißenbach",
+                    "nameKo": "바이젠바흐",
+                    "type": "barren"
+                },
+                {
+                    "name": "Vol",
+                    "nameKo": "볼",
+                    "type": "ice"
+                }
+            ],
+            "connections": [6, 15, 20],
+            "special": null
+        },
+        {
+            "id": 11,
+            "name": "Castrop",
+            "nameKo": "카스트로프",
+            "nameJp": "カストロプ",
+            "x": 120,
+            "y": 15,
+            "faction": "empire",
+            "level": 3,
+            "region": "empire_core",
+            "populationMax": 2500000,
+            "productionMax": 1200,
+            "commerceMax": 1200,
+            "securityMax": 1800,
+            "orbitalDefenseMax": 1800,
+            "fortressMax": 0,
+            "planets": [
+                {
+                    "name": "Castrop",
+                    "nameKo": "카스트로프",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Niederwindenborn",
+                    "nameKo": "니더빈덴보른",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Voldingborg",
+                    "nameKo": "볼딩보르",
+                    "type": "barren"
+                },
+                {
+                    "name": "Mariendorf",
+                    "nameKo": "마리엔도르프",
+                    "type": "barren"
+                }
+            ],
+            "connections": [1, 13, 27],
+            "special": null
+        },
+        {
+            "id": 12,
+            "name": "Elgon",
+            "nameKo": "엘곤",
+            "nameJp": "エルゴン",
+            "x": 40,
+            "y": 17,
+            "faction": "alliance",
+            "level": 2,
+            "region": "alliance_frontier",
+            "populationMax": 950000,
+            "productionMax": 480,
+            "commerceMax": 520,
+            "securityMax": 750,
+            "orbitalDefenseMax": 750,
+            "fortressMax": 0,
+            "planets": [
+                {
+                    "name": "Kamorok",
+                    "nameKo": "카모로크",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Butandiga",
+                    "nameKo": "부탄디가",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Mubale",
+                    "nameKo": "무발레",
+                    "type": "barren"
+                },
+                {
+                    "name": "Kampala",
+                    "nameKo": "캄팔라",
+                    "type": "barren"
+                }
+            ],
+            "connections": [7, 8, 14, 21],
+            "special": null
+        },
+        {
+            "id": 13,
+            "name": "Willenstein",
+            "nameKo": "빌렌슈타인",
+            "nameJp": "ヴィレンシュタイン",
+            "x": 105,
+            "y": 15,
+            "faction": "empire",
+            "level": 3,
+            "region": "empire_core",
+            "populationMax": 2200000,
+            "productionMax": 1100,
+            "commerceMax": 1100,
+            "securityMax": 1600,
+            "orbitalDefenseMax": 1600,
+            "fortressMax": 0,
+            "planets": [
+                {
+                    "name": "Witzighausen",
+                    "nameKo": "비치하우젠",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Weißenhorn",
+                    "nameKo": "바이젠호른",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Gräfeltshöfen",
+                    "nameKo": "그래펠츠회펜",
+                    "type": "barren"
+                },
+                {
+                    "name": "Obenhausen",
+                    "nameKo": "오벤하우젠",
+                    "type": "barren"
+                }
+            ],
+            "connections": [3, 4, 11, 15, 26],
+            "special": null
+        },
+        {
+            "id": 14,
+            "name": "Astarte",
+            "nameKo": "아스타테",
+            "nameJp": "アスタルテ",
+            "x": 48,
+            "y": 20,
+            "faction": "alliance",
+            "level": 3,
+            "region": "alliance_frontier",
+            "populationMax": 2000000,
+            "productionMax": 950,
+            "commerceMax": 1000,
+            "securityMax": 1400,
+            "orbitalDefenseMax": 1400,
+            "fortressMax": 0,
+            "planets": [
+                {
+                    "name": "Astarte I",
+                    "nameKo": "아스타테 1",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Astarte II",
+                    "nameKo": "아스타테 2",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Astarte III",
+                    "nameKo": "아스타테 3",
+                    "type": "barren"
+                },
+                {
+                    "name": "Astarte IV",
+                    "nameKo": "아스타테 4",
+                    "type": "barren"
+                }
+            ],
+            "connections": [8, 12, 17, 24],
+            "special": null
+        },
+        {
+            "id": 15,
+            "name": "Linderhof",
+            "nameKo": "린더호프",
+            "nameJp": "リンダーホフ",
+            "x": 97,
+            "y": 18,
+            "faction": "empire",
+            "level": 3,
+            "region": "empire_frontier",
+            "populationMax": 2100000,
+            "productionMax": 1050,
+            "commerceMax": 1050,
+            "securityMax": 1600,
+            "orbitalDefenseMax": 1600,
+            "fortressMax": 0,
+            "planets": [
+                {
+                    "name": "Neuschwanstein",
+                    "nameKo": "노이슈반슈타인",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Chiemsee",
+                    "nameKo": "킴제",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Hohenschwangau",
+                    "nameKo": "호헨슈반가우",
+                    "type": "barren"
+                },
+                {
+                    "name": "Oberammergau",
+                    "nameKo": "오버암머가우",
+                    "type": "barren"
+                }
+            ],
+            "connections": [10, 13, 20, 26],
+            "special": null
+        },
+        {
+            "id": 16,
+            "name": "Lofoten",
+            "nameKo": "로포텐",
+            "nameJp": "ロフォーテン",
+            "x": 22,
+            "y": 22,
+            "faction": "alliance",
+            "level": 3,
+            "region": "alliance_core",
+            "populationMax": 1800000,
+            "productionMax": 850,
+            "commerceMax": 900,
+            "securityMax": 1300,
+            "orbitalDefenseMax": 1300,
+            "fortressMax": 0,
+            "planets": [
+                {
+                    "name": "Ludmilla Base",
+                    "nameKo": "루드밀라 기지",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Alstad",
+                    "nameKo": "알스타드",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Balstad",
+                    "nameKo": "발스타드",
+                    "type": "barren"
+                },
+                {
+                    "name": "Svolvær",
+                    "nameKo": "스볼베르",
+                    "type": "ice"
+                }
+            ],
+            "connections": [2, 9, 22, 23],
+            "special": null
+        },
+        {
+            "id": 17,
+            "name": "Van Fleet",
+            "nameKo": "반 플리트",
+            "nameJp": "ヴァン・フリート",
+            "x": 52,
+            "y": 22,
+            "faction": "alliance",
+            "level": 3,
+            "region": "iserlohn_corridor",
+            "populationMax": 1600000,
+            "productionMax": 800,
+            "commerceMax": 850,
+            "securityMax": 1500,
+            "orbitalDefenseMax": 1500,
+            "fortressMax": 0,
+            "planets": [
+                {
+                    "name": "Van Fleet I",
+                    "nameKo": "반 플리트 1",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Van Fleet II",
+                    "nameKo": "반 플리트 2",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Van Fleet III",
+                    "nameKo": "반 플리트 3",
+                    "type": "barren"
+                },
+                {
+                    "name": "Van Fleet IV",
+                    "nameKo": "반 플리트 4",
+                    "type": "barren"
+                }
+            ],
+            "connections": [14, 18, 24, 25],
+            "special": null
+        },
+        {
+            "id": 18,
+            "name": "Iserlohn",
+            "nameKo": "이제를론",
+            "nameJp": "イゼルローン",
+            "x": 65,
+            "y": 20,
+            "faction": "empire",
+            "level": 5,
+            "region": "iserlohn_corridor",
+            "populationMax": 100000,
+            "productionMax": 500,
+            "commerceMax": 200,
+            "securityMax": 8000,
+            "orbitalDefenseMax": 8000,
+            "fortressMax": 5000,
+            "planets": [
+                {
+                    "name": "Iserlohn Fortress",
+                    "nameKo": "이제를론 요새",
+                    "type": "fortress"
+                }
+            ],
+            "connections": [17, 19, 24],
+            "special": "iserlohn_fortress"
+        },
+        {
+            "id": 19,
+            "name": "Amritsar",
+            "nameKo": "암리처",
+            "nameJp": "アムリッツァー",
+            "x": 78,
+            "y": 22,
+            "faction": "empire",
+            "level": 3,
+            "region": "iserlohn_corridor",
+            "populationMax": 1800000,
+            "productionMax": 900,
+            "commerceMax": 900,
+            "securityMax": 1800,
+            "orbitalDefenseMax": 1800,
+            "fortressMax": 0,
+            "planets": [
+                {
+                    "name": "Kleingelt",
+                    "nameKo": "클라인겔트",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Morgen",
+                    "nameKo": "모르겐",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Dank",
+                    "nameKo": "당크",
+                    "type": "barren"
+                },
+                {
+                    "name": "Hafen",
+                    "nameKo": "하펜",
+                    "type": "barren"
+                }
+            ],
+            "connections": [6, 18, 20, 32],
+            "special": null
+        },
+        {
+            "id": 20,
+            "name": "Dverg",
+            "nameKo": "드베르그",
+            "nameJp": "ドヴェルグ",
+            "x": 88,
+            "y": 22,
+            "faction": "empire",
+            "level": 3,
+            "region": "empire_frontier",
+            "populationMax": 2000000,
+            "productionMax": 1000,
+            "commerceMax": 1000,
+            "securityMax": 1600,
+            "orbitalDefenseMax": 1600,
+            "fortressMax": 0,
+            "planets": [
+                {
+                    "name": "Gleipnir",
+                    "nameKo": "글레이프니르",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Ivaldi",
+                    "nameKo": "이발디",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Regin",
+                    "nameKo": "레긴",
+                    "type": "barren"
+                },
+                {
+                    "name": "Kaval",
+                    "nameKo": "카발",
+                    "type": "barren"
+                }
+            ],
+            "connections": [6, 10, 15, 19, 28],
+            "special": null
+        },
+        {
+            "id": 21,
+            "name": "Doria",
+            "nameKo": "도리아",
+            "nameJp": "ドーリア",
+            "x": 38,
+            "y": 25,
+            "faction": "alliance",
+            "level": 3,
+            "region": "alliance_core",
+            "populationMax": 1900000,
+            "productionMax": 900,
+            "commerceMax": 950,
+            "securityMax": 1400,
+            "orbitalDefenseMax": 1400,
+            "fortressMax": 0,
+            "planets": [
+                {
+                    "name": "Montecapraro",
+                    "nameKo": "몬테카프라로",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Castagnola",
+                    "nameKo": "카스타뇰라",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Bievetta",
+                    "nameKo": "비에베타",
+                    "type": "barren"
+                },
+                {
+                    "name": "Borghese",
+                    "nameKo": "보르게제",
+                    "type": "barren"
+                }
+            ],
+            "connections": [12, 25, 29, 30],
+            "special": null
+        },
+        {
+            "id": 22,
+            "name": "Chiron",
+            "nameKo": "시론",
+            "nameJp": "ケイロン",
+            "x": 12,
+            "y": 25,
+            "faction": "alliance",
+            "level": 3,
+            "region": "alliance_core",
+            "populationMax": 1700000,
+            "productionMax": 820,
+            "commerceMax": 870,
+            "securityMax": 1200,
+            "orbitalDefenseMax": 1200,
+            "fortressMax": 0,
+            "planets": [
+                {
+                    "name": "Neptis",
+                    "nameKo": "넵티스",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Jalain",
+                    "nameKo": "잘라인",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Anubis",
+                    "nameKo": "아누비스",
+                    "type": "barren"
+                },
+                {
+                    "name": "Osiris",
+                    "nameKo": "오시리스",
+                    "type": "barren"
+                }
+            ],
+            "connections": [16, 23, 35],
+            "special": null
+        },
+        {
+            "id": 23,
+            "name": "Kerim",
+            "nameKo": "케림",
+            "nameJp": "ケリム",
+            "x": 22,
+            "y": 28,
+            "faction": "alliance",
+            "level": 3,
+            "region": "alliance_core",
+            "populationMax": 2000000,
+            "productionMax": 1000,
+            "commerceMax": 1050,
+            "securityMax": 1500,
+            "orbitalDefenseMax": 1500,
+            "fortressMax": 0,
+            "planets": [
+                {
+                    "name": "Cassina",
+                    "nameKo": "카시나",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Bafra",
+                    "nameKo": "바프라",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Ayudin",
+                    "nameKo": "아유딘",
+                    "type": "barren"
+                },
+                {
+                    "name": "Palas",
+                    "nameKo": "팔라스",
+                    "type": "barren"
+                }
+            ],
+            "connections": [16, 22, 29, 36],
+            "special": null
+        },
+        {
+            "id": 24,
+            "name": "Altmühl",
+            "nameKo": "알트뮐",
+            "nameJp": "アルトミュール",
+            "x": 55,
+            "y": 25,
+            "faction": "alliance",
+            "level": 3,
+            "region": "iserlohn_corridor",
+            "populationMax": 1500000,
+            "productionMax": 750,
+            "commerceMax": 800,
+            "securityMax": 1400,
+            "orbitalDefenseMax": 1400,
+            "fortressMax": 0,
+            "planets": [
+                {
+                    "name": "Kapcelanka",
+                    "nameKo": "카프첼란카",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Vaubdzif",
+                    "nameKo": "바우브지프",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Edirne",
+                    "nameKo": "에디르네",
+                    "type": "barren"
+                },
+                {
+                    "name": "Regnitza",
+                    "nameKo": "레그니차",
+                    "type": "barren"
+                }
+            ],
+            "connections": [14, 17, 18, 25, 33],
+            "special": null
+        },
+        {
+            "id": 25,
+            "name": "Tiamat",
+            "nameKo": "티아매트",
+            "nameJp": "ティアマット",
+            "x": 48,
+            "y": 28,
+            "faction": "alliance",
+            "level": 3,
+            "region": "alliance_frontier",
+            "populationMax": 1800000,
+            "productionMax": 880,
+            "commerceMax": 930,
+            "securityMax": 1300,
+            "orbitalDefenseMax": 1300,
+            "fortressMax": 0,
+            "planets": [
+                {
+                    "name": "Tiamat I",
+                    "nameKo": "티아매트 1",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Tiamat II",
+                    "nameKo": "티아매트 2",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Tiamat III",
+                    "nameKo": "티아매트 3",
+                    "type": "barren"
+                },
+                {
+                    "name": "Tiamat IV",
+                    "nameKo": "티아매트 4",
+                    "type": "barren"
+                }
+            ],
+            "connections": [17, 21, 24, 30, 33],
+            "special": null
+        },
+        {
+            "id": 26,
+            "name": "Heinsberg",
+            "nameKo": "하인스베르크",
+            "nameJp": "ハインスベルク",
+            "x": 105,
+            "y": 28,
+            "faction": "empire",
+            "level": 3,
+            "region": "empire_core",
+            "populationMax": 2300000,
+            "productionMax": 1150,
+            "commerceMax": 1150,
+            "securityMax": 1700,
+            "orbitalDefenseMax": 1700,
+            "fortressMax": 0,
+            "planets": [
+                {
+                    "name": "Landerath",
+                    "nameKo": "란데라트",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Dassel",
+                    "nameKo": "다셀",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Mühlenark",
+                    "nameKo": "뮐레나르크",
+                    "type": "barren"
+                }
+            ],
+            "connections": [13, 15, 27, 28, 38],
+            "special": null
+        },
+        {
+            "id": 27,
+            "name": "Vanaheim",
+            "nameKo": "바나하임",
+            "nameJp": "ヴァナヘイム",
+            "x": 110,
+            "y": 28,
+            "faction": "empire",
+            "level": 3,
+            "region": "empire_core",
+            "populationMax": 2100000,
+            "productionMax": 1050,
+            "commerceMax": 1050,
+            "securityMax": 1600,
+            "orbitalDefenseMax": 1600,
+            "fortressMax": 0,
+            "planets": [
+                {
+                    "name": "Einherjar",
+                    "nameKo": "에인헤르야르",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Noatun",
+                    "nameKo": "노아툰",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Njord",
+                    "nameKo": "뇨르드",
+                    "type": "barren"
+                },
+                {
+                    "name": "Frey",
+                    "nameKo": "프레이",
+                    "type": "barren"
+                }
+            ],
+            "connections": [11, 26, 31],
+            "special": null
+        },
+        {
+            "id": 28,
+            "name": "Javanhar",
+            "nameKo": "야반할",
+            "nameJp": "ヤヴァンハル",
+            "x": 92,
+            "y": 28,
+            "faction": "empire",
+            "level": 3,
+            "region": "empire_frontier",
+            "populationMax": 1900000,
+            "productionMax": 950,
+            "commerceMax": 950,
+            "securityMax": 1400,
+            "orbitalDefenseMax": 1400,
+            "fortressMax": 0,
+            "planets": [
+                {
+                    "name": "Halbald",
+                    "nameKo": "할발트",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Rügen",
+                    "nameKo": "뤼겐",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Wismar",
+                    "nameKo": "비스마르",
+                    "type": "barren"
+                },
+                {
+                    "name": "Schwerin",
+                    "nameKo": "슈베린",
+                    "type": "barren"
+                }
+            ],
+            "connections": [20, 26, 32, 37],
+            "special": null
+        },
+        {
+            "id": 29,
+            "name": "Jamshid",
+            "nameKo": "잠시드",
+            "nameJp": "ジャムシード",
+            "x": 30,
+            "y": 32,
+            "faction": "alliance",
+            "level": 3,
+            "region": "alliance_core",
+            "populationMax": 1700000,
+            "productionMax": 820,
+            "commerceMax": 870,
+            "securityMax": 1200,
+            "orbitalDefenseMax": 1200,
+            "fortressMax": 0,
+            "planets": [
+                {
+                    "name": "Takht-e Jamshid",
+                    "nameKo": "탁흐테 잠시드",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Kaffa",
+                    "nameKo": "카파",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Muhabbat",
+                    "nameKo": "무하바트",
+                    "type": "barren"
+                },
+                {
+                    "name": "Avadana",
+                    "nameKo": "아바다나",
+                    "type": "barren"
+                }
+            ],
+            "connections": [21, 23, 30, 39],
+            "special": null
+        },
+        {
+            "id": 30,
+            "name": "El Facil",
+            "nameKo": "엘 파실",
+            "nameJp": "エル・ファシル",
+            "x": 40,
+            "y": 32,
+            "faction": "alliance",
+            "level": 4,
+            "region": "alliance_core",
+            "populationMax": 4500000,
+            "productionMax": 2000,
+            "commerceMax": 2500,
+            "securityMax": 2500,
+            "orbitalDefenseMax": 2500,
+            "fortressMax": 0,
+            "planets": [
+                {
+                    "name": "Cartagena",
+                    "nameKo": "카르타헤나",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Las Casitas",
+                    "nameKo": "라스 카시타스",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Santa Ana",
+                    "nameKo": "산타 아나",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Salvador",
+                    "nameKo": "살바도르",
+                    "type": "barren"
+                }
+            ],
+            "connections": [21, 25, 29, 34],
+            "special": null
+        },
+        {
+            "id": 31,
+            "name": "Niflheim",
+            "nameKo": "니플하임",
+            "nameJp": "ニフルヘイム",
+            "x": 108,
+            "y": 32,
+            "faction": "empire",
+            "level": 3,
+            "region": "empire_core",
+            "populationMax": 2200000,
+            "productionMax": 1100,
+            "commerceMax": 1100,
+            "securityMax": 1700,
+            "orbitalDefenseMax": 1700,
+            "fortressMax": 0,
+            "planets": [
+                {
+                    "name": "Elivagar",
+                    "nameKo": "엘리바가르",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Gjöll",
+                    "nameKo": "겔",
+                    "type": "ice"
+                },
+                {
+                    "name": "Hvergelmir",
+                    "nameKo": "흐베르겔미르",
+                    "type": "gas_giant"
+                }
+            ],
+            "connections": [26, 27, 40, 42],
+            "special": null
+        },
+        {
+            "id": 32,
+            "name": "Vanstad",
+            "nameKo": "반스타드",
+            "nameJp": "ヴァンスタッド",
+            "x": 78,
+            "y": 35,
+            "faction": "empire",
+            "level": 2,
+            "region": "empire_frontier",
+            "populationMax": 1000000,
+            "productionMax": 500,
+            "commerceMax": 500,
+            "securityMax": 900,
+            "orbitalDefenseMax": 900,
+            "fortressMax": 0,
+            "planets": [
+                {
+                    "name": "Labunstrup",
+                    "nameKo": "라분스트루프",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Regsted",
+                    "nameKo": "레그스테드",
+                    "type": "barren"
+                },
+                {
+                    "name": "Faldgarde",
+                    "nameKo": "팔드가르데",
+                    "type": "barren"
+                }
+            ],
+            "connections": [19, 28, 37, 45],
+            "special": null
+        },
+        {
+            "id": 33,
+            "name": "Arlesheim",
+            "nameKo": "알레스하임",
+            "nameJp": "アルレスハイム",
+            "x": 55,
+            "y": 35,
+            "faction": "alliance",
+            "level": 3,
+            "region": "alliance_frontier",
+            "populationMax": 1900000,
+            "productionMax": 930,
+            "commerceMax": 980,
+            "securityMax": 1400,
+            "orbitalDefenseMax": 1400,
+            "fortressMax": 0,
+            "planets": [
+                {
+                    "name": "Arlesheim I",
+                    "nameKo": "알레스하임 1",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Arlesheim II",
+                    "nameKo": "알레스하임 2",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Arlesheim III",
+                    "nameKo": "알레스하임 3",
+                    "type": "barren"
+                },
+                {
+                    "name": "Arlesheim IV",
+                    "nameKo": "알레스하임 4",
+                    "type": "barren"
+                }
+            ],
+            "connections": [24, 25, 30, 34, 41],
+            "special": null
+        },
+        {
+            "id": 34,
+            "name": "Dragonia",
+            "nameKo": "드라고니아",
+            "nameJp": "ドラゴニア",
+            "x": 52,
+            "y": 38,
+            "faction": "alliance",
+            "level": 2,
+            "region": "alliance_frontier",
+            "populationMax": 1100000,
+            "productionMax": 550,
+            "commerceMax": 580,
+            "securityMax": 850,
+            "orbitalDefenseMax": 850,
+            "fortressMax": 0,
+            "planets": [
+                {
+                    "name": "Dragonia I",
+                    "nameKo": "드라고니아 1",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Dragonia II",
+                    "nameKo": "드라고니아 2",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Dragonia III",
+                    "nameKo": "드라고니아 3",
+                    "type": "barren"
+                }
+            ],
+            "connections": [30, 33, 41, 43, 44],
+            "special": null
+        },
+        {
+            "id": 35,
+            "name": "Lumbini",
+            "nameKo": "룸비니",
+            "nameJp": "ルンビニー",
+            "x": 12,
+            "y": 38,
+            "faction": "alliance",
+            "level": 2,
+            "region": "alliance_core",
+            "populationMax": 900000,
+            "productionMax": 450,
+            "commerceMax": 480,
+            "securityMax": 700,
+            "orbitalDefenseMax": 700,
+            "fortressMax": 0,
+            "planets": [
+                {
+                    "name": "Bhaktapur",
+                    "nameKo": "박타푸르",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Karaiya",
+                    "nameKo": "카라이야",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Bhadgaon",
+                    "nameKo": "바드가온",
+                    "type": "barren"
+                }
+            ],
+            "connections": [22, 36, 46],
+            "special": null
+        },
+        {
+            "id": 36,
+            "name": "Bharat",
+            "nameKo": "바라트",
+            "nameJp": "バーラト",
+            "x": 22,
+            "y": 40,
+            "faction": "alliance",
+            "level": 5,
+            "region": "alliance_core",
+            "populationMax": 10000000,
+            "productionMax": 5000,
+            "commerceMax": 5000,
+            "securityMax": 5000,
+            "orbitalDefenseMax": 5000,
+            "fortressMax": 2000,
+            "planets": [
+                {
+                    "name": "Terneuzen",
+                    "nameKo": "테르뇌젠",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Kasba Nagum",
+                    "nameKo": "카스바 나굼",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Heinessen",
+                    "nameKo": "하이네센",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Srinagar",
+                    "nameKo": "스리나가르",
+                    "type": "habitable"
+                }
+            ],
+            "connections": [23, 35, 39, 46, 47],
+            "special": "alliance_capital"
+        },
+        {
+            "id": 37,
+            "name": "Altair",
+            "nameKo": "알타이르",
+            "nameJp": "アルタイル",
+            "x": 88,
+            "y": 38,
+            "faction": "empire",
+            "level": 3,
+            "region": "empire_frontier",
+            "populationMax": 2000000,
+            "productionMax": 1000,
+            "commerceMax": 1000,
+            "securityMax": 1600,
+            "orbitalDefenseMax": 1600,
+            "fortressMax": 0,
+            "planets": [
+                {
+                    "name": "Catalaunum",
+                    "nameKo": "카탈라우눔",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Antinous",
+                    "nameKo": "안티노우스",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Thermopylae",
+                    "nameKo": "테르모필라이",
+                    "type": "barren"
+                },
+                {
+                    "name": "Altair",
+                    "nameKo": "알타이르",
+                    "type": "barren"
+                }
+            ],
+            "connections": [28, 32, 38, 45, 48],
+            "special": null
+        },
+        {
+            "id": 38,
+            "name": "Wehrla",
+            "nameKo": "벨라",
+            "nameJp": "ヴェーラ",
+            "x": 98,
+            "y": 38,
+            "faction": "empire",
+            "level": 3,
+            "region": "empire_core",
+            "populationMax": 2100000,
+            "productionMax": 1050,
+            "commerceMax": 1050,
+            "securityMax": 1600,
+            "orbitalDefenseMax": 1600,
+            "fortressMax": 0,
+            "planets": [
+                {
+                    "name": "Markt",
+                    "nameKo": "마르크트",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Jacobi",
+                    "nameKo": "야코비",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Stefani",
+                    "nameKo": "스테파니",
+                    "type": "barren"
+                }
+            ],
+            "connections": [26, 28, 37, 42],
+            "special": null
+        },
+        {
+            "id": 39,
+            "name": "Lucas",
+            "nameKo": "류카스",
+            "nameJp": "ルーカス",
+            "x": 32,
+            "y": 42,
+            "faction": "alliance",
+            "level": 2,
+            "region": "alliance_core",
+            "populationMax": 1000000,
+            "productionMax": 500,
+            "commerceMax": 530,
+            "securityMax": 800,
+            "orbitalDefenseMax": 800,
+            "fortressMax": 0,
+            "planets": [
+                {
+                    "name": "Zacharias",
+                    "nameKo": "자카리아스",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Incobane",
+                    "nameKo": "인코베인",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Valmy",
+                    "nameKo": "발미",
+                    "type": "barren"
+                }
+            ],
+            "connections": [29, 36, 43, 47, 52],
+            "special": null
+        },
+        {
+            "id": 40,
+            "name": "Luitpolding",
+            "nameKo": "루이트폴딩",
+            "nameJp": "ルイトポルディング",
+            "x": 118,
+            "y": 38,
+            "faction": "empire",
+            "level": 3,
+            "region": "empire_core",
+            "populationMax": 2400000,
+            "productionMax": 1200,
+            "commerceMax": 1200,
+            "securityMax": 1800,
+            "orbitalDefenseMax": 1800,
+            "fortressMax": 0,
+            "planets": [
+                {
+                    "name": "Luitpold",
+                    "nameKo": "루이트폴트",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Berthold",
+                    "nameKo": "베르톨트",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Arnulf",
+                    "nameKo": "아르눌프",
+                    "type": "barren"
+                }
+            ],
+            "connections": [27, 31, 53],
+            "special": null
+        },
+        {
+            "id": 41,
+            "name": "Palantia",
+            "nameKo": "팔란티아",
+            "nameJp": "パランティア",
+            "x": 58,
+            "y": 42,
+            "faction": "alliance",
+            "level": 3,
+            "region": "alliance_frontier",
+            "populationMax": 1800000,
+            "productionMax": 880,
+            "commerceMax": 930,
+            "securityMax": 1300,
+            "orbitalDefenseMax": 1300,
+            "fortressMax": 0,
+            "planets": [
+                {
+                    "name": "Palantia I",
+                    "nameKo": "팔란티아 1",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Palantia II",
+                    "nameKo": "팔란티아 2",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Palantia III",
+                    "nameKo": "팔란티아 3",
+                    "type": "barren"
+                },
+                {
+                    "name": "Palantia IV",
+                    "nameKo": "팔란티아 4",
+                    "type": "barren"
+                }
+            ],
+            "connections": [33, 34, 44, 49, 50],
+            "special": null
+        },
+        {
+            "id": 42,
+            "name": "Valhalla",
+            "nameKo": "발할라",
+            "nameJp": "ヴァルハラ",
+            "x": 102,
+            "y": 42,
+            "faction": "empire",
+            "level": 5,
+            "region": "empire_core",
+            "populationMax": 10000000,
+            "productionMax": 5000,
+            "commerceMax": 5000,
+            "securityMax": 5000,
+            "orbitalDefenseMax": 5000,
+            "fortressMax": 2000,
+            "planets": [
+                {
+                    "name": "Soest",
+                    "nameKo": "조스트",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Odin",
+                    "nameKo": "오딘",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Thor",
+                    "nameKo": "토르",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Valgrind",
+                    "nameKo": "발그린드",
+                    "type": "barren"
+                }
+            ],
+            "connections": [31, 38, 48, 51, 54],
+            "special": "empire_capital"
+        },
+        {
+            "id": 43,
+            "name": "Lantemario",
+            "nameKo": "란테마리오",
+            "nameJp": "ランテマリオ",
+            "x": 42,
+            "y": 45,
+            "faction": "alliance",
+            "level": 2,
+            "region": "alliance_frontier",
+            "populationMax": 1100000,
+            "productionMax": 550,
+            "commerceMax": 580,
+            "securityMax": 850,
+            "orbitalDefenseMax": 850,
+            "fortressMax": 0,
+            "planets": [
+                {
+                    "name": "Rujevit",
+                    "nameKo": "루에비트",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Svantovit",
+                    "nameKo": "스반토비트",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Yarovit",
+                    "nameKo": "야로비트",
+                    "type": "barren"
+                }
+            ],
+            "connections": [30, 34, 39, 44, 49],
+            "special": null
+        },
+        {
+            "id": 44,
+            "name": "Forseti",
+            "nameKo": "포르세티",
+            "nameJp": "フォルセティ",
+            "x": 52,
+            "y": 45,
+            "faction": "alliance",
+            "level": 2,
+            "region": "alliance_frontier",
+            "populationMax": 800000,
+            "productionMax": 400,
+            "commerceMax": 420,
+            "securityMax": 650,
+            "orbitalDefenseMax": 650,
+            "fortressMax": 0,
+            "planets": [],
+            "connections": [34, 41, 43, 49, 50, 55],
+            "special": null
+        },
+        {
+            "id": 45,
+            "name": "Trabach",
+            "nameKo": "트라바흐",
+            "nameJp": "トラバッハ",
+            "x": 82,
+            "y": 45,
+            "faction": "empire",
+            "level": 3,
+            "region": "empire_frontier",
+            "populationMax": 1800000,
+            "productionMax": 900,
+            "commerceMax": 900,
+            "securityMax": 1500,
+            "orbitalDefenseMax": 1500,
+            "fortressMax": 0,
+            "planets": [
+                {
+                    "name": "Wolfelsdorf",
+                    "nameKo": "볼펠스도르프",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Falkenweiler",
+                    "nameKo": "팔켄바일러",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Sternenberg",
+                    "nameKo": "스테른넨베르크",
+                    "type": "barren"
+                },
+                {
+                    "name": "Traben",
+                    "nameKo": "트라벤",
+                    "type": "barren"
+                }
+            ],
+            "connections": [32, 37, 48, 56, 60],
+            "special": null
+        },
+        {
+            "id": 46,
+            "name": "Thanatos",
+            "nameKo": "타나토스",
+            "nameJp": "タナトス",
+            "x": 15,
+            "y": 48,
+            "faction": "alliance",
+            "level": 2,
+            "region": "alliance_core",
+            "populationMax": 900000,
+            "productionMax": 450,
+            "commerceMax": 480,
+            "securityMax": 700,
+            "orbitalDefenseMax": 700,
+            "fortressMax": 0,
+            "planets": [
+                {
+                    "name": "Econia",
+                    "nameKo": "에코니아",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Proskinas",
+                    "nameKo": "프로스키나스",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Masjid",
+                    "nameKo": "마스지드",
+                    "type": "barren"
+                },
+                {
+                    "name": "Ker",
+                    "nameKo": "케르",
+                    "type": "barren"
+                }
+            ],
+            "connections": [35, 36, 57, 59],
+            "special": null
+        },
+        {
+            "id": 47,
+            "name": "Vermilion",
+            "nameKo": "버밀리언",
+            "nameJp": "ヴァーミリオン",
+            "x": 28,
+            "y": 48,
+            "faction": "alliance",
+            "level": 3,
+            "region": "alliance_core",
+            "populationMax": 1600000,
+            "productionMax": 780,
+            "commerceMax": 820,
+            "securityMax": 1200,
+            "orbitalDefenseMax": 1200,
+            "fortressMax": 0,
+            "planets": [
+                {
+                    "name": "Ecron",
+                    "nameKo": "에크론",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Loton",
+                    "nameKo": "로톤",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Cascade",
+                    "nameKo": "캐스케이드",
+                    "type": "barren"
+                }
+            ],
+            "connections": [36, 39, 52, 62],
+            "special": null
+        },
+        {
+            "id": 48,
+            "name": "Alvis",
+            "nameKo": "알비스",
+            "nameJp": "アルヴィース",
+            "x": 92,
+            "y": 48,
+            "faction": "empire",
+            "level": 3,
+            "region": "empire_frontier",
+            "populationMax": 2000000,
+            "productionMax": 1000,
+            "commerceMax": 1000,
+            "securityMax": 1600,
+            "orbitalDefenseMax": 1600,
+            "fortressMax": 0,
+            "planets": [
+                {
+                    "name": "Bilskirnir",
+                    "nameKo": "빌스키르니르",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Thrud",
+                    "nameKo": "트루드",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Untergrün",
+                    "nameKo": "운터그뤼른",
+                    "type": "barren"
+                },
+                {
+                    "name": "Vangal",
+                    "nameKo": "방갈",
+                    "type": "barren"
+                }
+            ],
+            "connections": [37, 42, 45, 58, 60],
+            "special": null
+        },
+        {
+            "id": 49,
+            "name": "Mar Adetta",
+            "nameKo": "마르 아데타",
+            "nameJp": "マル・アデッタ",
+            "x": 48,
+            "y": 50,
+            "faction": "alliance",
+            "level": 3,
+            "region": "alliance_frontier",
+            "populationMax": 1700000,
+            "productionMax": 830,
+            "commerceMax": 880,
+            "securityMax": 1300,
+            "orbitalDefenseMax": 1300,
+            "fortressMax": 0,
+            "planets": [
+                {
+                    "name": "Baracet",
+                    "nameKo": "바라체트",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Averanos",
+                    "nameKo": "아베라노스",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Farnese",
+                    "nameKo": "파르네제",
+                    "type": "barren"
+                },
+                {
+                    "name": "Mantova",
+                    "nameKo": "만토바",
+                    "type": "barren"
+                }
+            ],
+            "connections": [41, 43, 44, 50, 55, 61],
+            "special": null
+        },
+        {
+            "id": 50,
+            "name": "Firezard",
+            "nameKo": "파이어자드",
+            "nameJp": "ファイアザード",
+            "x": 55,
+            "y": 50,
+            "faction": "alliance",
+            "level": 2,
+            "region": "alliance_frontier",
+            "populationMax": 900000,
+            "productionMax": 450,
+            "commerceMax": 480,
+            "securityMax": 700,
+            "orbitalDefenseMax": 700,
+            "fortressMax": 0,
+            "planets": [
+                {
+                    "name": "Firezard I",
+                    "nameKo": "파이어자드 1",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Firezard II",
+                    "nameKo": "파이어자드 2",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Firezard III",
+                    "nameKo": "파이어자드 3",
+                    "type": "barren"
+                }
+            ],
+            "connections": [41, 44, 49, 55],
+            "special": null
+        },
+        {
+            "id": 51,
+            "name": "Asgard",
+            "nameKo": "아스가르드",
+            "nameJp": "アースガルズ",
+            "x": 108,
+            "y": 48,
+            "faction": "empire",
+            "level": 4,
+            "region": "empire_core",
+            "populationMax": 5500000,
+            "productionMax": 2200,
+            "commerceMax": 2200,
+            "securityMax": 3200,
+            "orbitalDefenseMax": 3200,
+            "fortressMax": 0,
+            "planets": [
+                {
+                    "name": "Mimir",
+                    "nameKo": "미미르",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Ginnungagap",
+                    "nameKo": "긴눙가가프",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Teutoburg",
+                    "nameKo": "토이토부르크",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Idavellir",
+                    "nameKo": "이다벨리르",
+                    "type": "barren"
+                }
+            ],
+            "connections": [40, 42, 53, 54, 66],
+            "special": null
+        },
+        {
+            "id": 52,
+            "name": "Tassili",
+            "nameKo": "타실리",
+            "nameJp": "タッシリ",
+            "x": 32,
+            "y": 52,
+            "faction": "alliance",
+            "level": 2,
+            "region": "alliance_core",
+            "populationMax": 950000,
+            "productionMax": 480,
+            "commerceMax": 510,
+            "securityMax": 750,
+            "orbitalDefenseMax": 750,
+            "fortressMax": 0,
+            "planets": [
+                {
+                    "name": "Tassili n'Ajjer",
+                    "nameKo": "타실리 나제르",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Adrar Souf",
+                    "nameKo": "아드라르 수프",
+                    "type": "barren"
+                },
+                {
+                    "name": "Tuareg",
+                    "nameKo": "투아레그",
+                    "type": "barren"
+                }
+            ],
+            "connections": [39, 47, 62],
+            "special": null
+        },
+        {
+            "id": 53,
+            "name": "Wormsgau",
+            "nameKo": "보름스가우",
+            "nameJp": "ヴォルムスガウ",
+            "x": 122,
+            "y": 48,
+            "faction": "empire",
+            "level": 3,
+            "region": "empire_core",
+            "populationMax": 2000000,
+            "productionMax": 1000,
+            "commerceMax": 1000,
+            "securityMax": 1500,
+            "orbitalDefenseMax": 1500,
+            "fortressMax": 0,
+            "planets": [
+                {
+                    "name": "Werner",
+                    "nameKo": "베르너",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Konrad",
+                    "nameKo": "콘라트",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Bruno",
+                    "nameKo": "브루노",
+                    "type": "barren"
+                },
+                {
+                    "name": "Liudolf",
+                    "nameKo": "리우돌프",
+                    "type": "barren"
+                }
+            ],
+            "connections": [40, 51, 63],
+            "special": null
+        },
+        {
+            "id": 54,
+            "name": "Schantau",
+            "nameKo": "샨타우",
+            "nameJp": "シャンタウ",
+            "x": 105,
+            "y": 52,
+            "faction": "empire",
+            "level": 3,
+            "region": "empire_core",
+            "populationMax": 2300000,
+            "productionMax": 1150,
+            "commerceMax": 1150,
+            "securityMax": 1700,
+            "orbitalDefenseMax": 1700,
+            "fortressMax": 0,
+            "planets": [
+                {
+                    "name": "Knesdorf",
+                    "nameKo": "크네스도르프",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Hakendorf",
+                    "nameKo": "하켄도르프",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Neuenkirchen",
+                    "nameKo": "노이엔키르헨",
+                    "type": "barren"
+                },
+                {
+                    "name": "Seedorf",
+                    "nameKo": "제도르프",
+                    "type": "barren"
+                }
+            ],
+            "connections": [42, 51, 58, 65, 66],
+            "special": null
+        },
+        {
+            "id": 55,
+            "name": "Chandalua",
+            "nameKo": "샨달루아",
+            "nameJp": "シャンダルア",
+            "x": 52,
+            "y": 55,
+            "faction": "alliance",
+            "level": 2,
+            "region": "alliance_frontier",
+            "populationMax": 850000,
+            "productionMax": 425,
+            "commerceMax": 450,
+            "securityMax": 680,
+            "orbitalDefenseMax": 680,
+            "fortressMax": 0,
+            "planets": [
+                {
+                    "name": "Chandalua I",
+                    "nameKo": "샨달루아 1",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Chandalua II",
+                    "nameKo": "샨달루아 2",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Chandalua III",
+                    "nameKo": "샨달루아 3",
+                    "type": "barren"
+                }
+            ],
+            "connections": [44, 49, 50, 61, 68],
+            "special": null
+        },
+        {
+            "id": 56,
+            "name": "Armentobel",
+            "nameKo": "아르멘토벨",
+            "nameJp": "アルメントーベル",
+            "x": 78,
+            "y": 58,
+            "faction": "empire",
+            "level": 3,
+            "region": "empire_frontier",
+            "populationMax": 1700000,
+            "productionMax": 850,
+            "commerceMax": 850,
+            "securityMax": 1400,
+            "orbitalDefenseMax": 1400,
+            "fortressMax": 0,
+            "planets": [
+                {
+                    "name": "Bickenbach",
+                    "nameKo": "비켄바흐",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Gernsheim",
+                    "nameKo": "게른스하임",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Alsbach",
+                    "nameKo": "알스바흐",
+                    "type": "barren"
+                },
+                {
+                    "name": "Kleeberg",
+                    "nameKo": "클레에베르크",
+                    "type": "barren"
+                }
+            ],
+            "connections": [45, 60, 64, 67, 70],
+            "special": null
+        },
+        {
+            "id": 57,
+            "name": "Rio Verde",
+            "nameKo": "리오 베르데",
+            "nameJp": "リオ・ベルデ",
+            "x": 18,
+            "y": 55,
+            "faction": "alliance",
+            "level": 2,
+            "region": "alliance_core",
+            "populationMax": 1000000,
+            "productionMax": 500,
+            "commerceMax": 530,
+            "securityMax": 800,
+            "orbitalDefenseMax": 800,
+            "fortressMax": 0,
+            "planets": [
+                {
+                    "name": "Mesa del Agua",
+                    "nameKo": "메사 델 아과",
+                    "type": "habitable"
+                },
+                {
+                    "name": "San Carlos",
+                    "nameKo": "산 카를로스",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Llano Blanco",
+                    "nameKo": "야노 블랑코",
+                    "type": "barren"
+                },
+                {
+                    "name": "Isla Blanca",
+                    "nameKo": "이슬라 블랑카",
+                    "type": "barren"
+                }
+            ],
+            "connections": [46, 59, 62],
+            "special": null
+        },
+        {
+            "id": 58,
+            "name": "Altena",
+            "nameKo": "알테나",
+            "nameJp": "アルテナ",
+            "x": 95,
+            "y": 55,
+            "faction": "empire",
+            "level": 3,
+            "region": "empire_frontier",
+            "populationMax": 1900000,
+            "productionMax": 950,
+            "commerceMax": 950,
+            "securityMax": 1500,
+            "orbitalDefenseMax": 1500,
+            "fortressMax": 0,
+            "planets": [
+                {
+                    "name": "Werde",
+                    "nameKo": "베르데",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Nachrodt",
+                    "nameKo": "나흐로트",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Neuenrade",
+                    "nameKo": "노이엔라데",
+                    "type": "barren"
+                },
+                {
+                    "name": "Hemtfeld",
+                    "nameKo": "헴트펠트",
+                    "type": "barren"
+                }
+            ],
+            "connections": [48, 54, 60, 65],
+            "special": null
+        },
+        {
+            "id": 59,
+            "name": "Eleuthera",
+            "nameKo": "엘리세라",
+            "nameJp": "エレウテラ",
+            "x": 10,
+            "y": 55,
+            "faction": "alliance",
+            "level": 2,
+            "region": "alliance_core",
+            "populationMax": 700000,
+            "productionMax": 350,
+            "commerceMax": 370,
+            "securityMax": 560,
+            "orbitalDefenseMax": 560,
+            "fortressMax": 0,
+            "planets": [
+                {
+                    "name": "Cortellazzo",
+                    "nameKo": "코르텔라초",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Ponte Crepaldo",
+                    "nameKo": "폰테 크레팔도",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Krukkid",
+                    "nameKo": "크루키드",
+                    "type": "barren"
+                },
+                {
+                    "name": "Andros",
+                    "nameKo": "안드로스",
+                    "type": "barren"
+                }
+            ],
+            "connections": [46, 57],
+            "special": null
+        },
+        {
+            "id": 60,
+            "name": "Freya",
+            "nameKo": "프레이야",
+            "nameJp": "フレイヤ",
+            "x": 85,
+            "y": 58,
+            "faction": "empire",
+            "level": 4,
+            "region": "empire_frontier",
+            "populationMax": 600000,
+            "productionMax": 1500,
+            "commerceMax": 800,
+            "securityMax": 3500,
+            "orbitalDefenseMax": 4500,
+            "fortressMax": 3000,
+            "planets": [
+                {
+                    "name": "Folkvang",
+                    "nameKo": "폴크방",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Fensalir",
+                    "nameKo": "펜살리르",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Brisingamen",
+                    "nameKo": "브리싱가멘",
+                    "type": "barren"
+                },
+                {
+                    "name": "Rentenberg Fortress",
+                    "nameKo": "렌텐베르크 요새",
+                    "type": "fortress"
+                }
+            ],
+            "connections": [45, 48, 56, 58, 67],
+            "special": "rentenberg_fortress"
+        },
+        {
+            "id": 61,
+            "name": "Gandharva",
+            "nameKo": "간다르바",
+            "nameJp": "ガンダルヴァ",
+            "x": 45,
+            "y": 58,
+            "faction": "alliance",
+            "level": 3,
+            "region": "alliance_frontier",
+            "populationMax": 1700000,
+            "productionMax": 830,
+            "commerceMax": 880,
+            "securityMax": 1300,
+            "orbitalDefenseMax": 1300,
+            "fortressMax": 0,
+            "planets": [
+                {
+                    "name": "Urvashi",
+                    "nameKo": "우르바시",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Kartikeya",
+                    "nameKo": "카르티케야",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Agastya",
+                    "nameKo": "아가스티야",
+                    "type": "barren"
+                },
+                {
+                    "name": "Varuna",
+                    "nameKo": "바루나",
+                    "type": "barren"
+                }
+            ],
+            "connections": [49, 55, 68, 71, 75],
+            "special": null
+        },
+        {
+            "id": 62,
+            "name": "Raigarh",
+            "nameKo": "라이갈",
+            "nameJp": "ライガル",
+            "x": 25,
+            "y": 60,
+            "faction": "alliance",
+            "level": 2,
+            "region": "alliance_core",
+            "populationMax": 900000,
+            "productionMax": 450,
+            "commerceMax": 480,
+            "securityMax": 700,
+            "orbitalDefenseMax": 700,
+            "fortressMax": 0,
+            "planets": [
+                {
+                    "name": "Singala",
+                    "nameKo": "싱갈라",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Milpala",
+                    "nameKo": "밀팔라",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Ayuara",
+                    "nameKo": "아유아라",
+                    "type": "barren"
+                }
+            ],
+            "connections": [47, 52, 57, 69, 77],
+            "special": null
+        },
+        {
+            "id": 63,
+            "name": "Winstingen",
+            "nameKo": "빈스팅겐",
+            "nameJp": "ヴィンスティンゲン",
+            "x": 118,
+            "y": 55,
+            "faction": "empire",
+            "level": 2,
+            "region": "empire_core",
+            "populationMax": 1200000,
+            "productionMax": 600,
+            "commerceMax": 600,
+            "securityMax": 950,
+            "orbitalDefenseMax": 950,
+            "fortressMax": 0,
+            "planets": [
+                {
+                    "name": "Formar",
+                    "nameKo": "포르마르",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Witt",
+                    "nameKo": "비트",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Isenburg",
+                    "nameKo": "이젠부르크",
+                    "type": "barren"
+                }
+            ],
+            "connections": [40, 53, 72],
+            "special": null
+        },
+        {
+            "id": 64,
+            "name": "Phezzan",
+            "nameKo": "페잔",
+            "nameJp": "フェザーン",
+            "x": 68,
+            "y": 62,
+            "faction": "fezzan",
+            "level": 4,
+            "region": "fezzan_corridor",
+            "populationMax": 8000000,
+            "productionMax": 3000,
+            "commerceMax": 8000,
+            "securityMax": 3000,
+            "orbitalDefenseMax": 2000,
+            "fortressMax": 0,
+            "planets": [
+                {
+                    "name": "Gila",
+                    "nameKo": "지라",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Liudolfink",
+                    "nameKo": "리우돌핑크",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Zariel",
+                    "nameKo": "자리엘",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Phezzan",
+                    "nameKo": "페잔",
+                    "type": "habitable"
+                }
+            ],
+            "connections": [56, 67, 68, 70],
+            "special": "fezzan_capital"
+        },
+        {
+            "id": 65,
+            "name": "Waldemar",
+            "nameKo": "발데마르",
+            "nameJp": "ヴァルデマー",
+            "x": 105,
+            "y": 62,
+            "faction": "empire",
+            "level": 3,
+            "region": "empire_core",
+            "populationMax": 2200000,
+            "productionMax": 1100,
+            "commerceMax": 1100,
+            "securityMax": 1700,
+            "orbitalDefenseMax": 1700,
+            "fortressMax": 0,
+            "planets": [
+                {
+                    "name": "Ufa",
+                    "nameKo": "우파",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Paul",
+                    "nameKo": "파울",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Linke",
+                    "nameKo": "링케",
+                    "type": "barren"
+                }
+            ],
+            "connections": [54, 58, 66, 74],
+            "special": null
+        },
+        {
+            "id": 66,
+            "name": "Wittelsbach",
+            "nameKo": "비텔스바흐",
+            "nameJp": "ヴィッテルスバッハ",
+            "x": 110,
+            "y": 62,
+            "faction": "empire",
+            "level": 3,
+            "region": "empire_core",
+            "populationMax": 2400000,
+            "productionMax": 1200,
+            "commerceMax": 1200,
+            "securityMax": 1800,
+            "orbitalDefenseMax": 1800,
+            "fortressMax": 0,
+            "planets": [
+                {
+                    "name": "Residenz",
+                    "nameKo": "레지덴츠",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Nymphenburg",
+                    "nameKo": "님펜부르크",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Viktualien",
+                    "nameKo": "빅투알리엔",
+                    "type": "barren"
+                }
+            ],
+            "connections": [51, 54, 65, 72],
+            "special": null
+        },
+        {
+            "id": 67,
+            "name": "Eisenherz",
+            "nameKo": "아이젠헤르츠",
+            "nameJp": "アイゼンヘルツ",
+            "x": 78,
+            "y": 65,
+            "faction": "empire",
+            "level": 4,
+            "region": "empire_frontier",
+            "populationMax": 800000,
+            "productionMax": 2000,
+            "commerceMax": 1000,
+            "securityMax": 4000,
+            "orbitalDefenseMax": 5000,
+            "fortressMax": 4000,
+            "planets": [
+                {
+                    "name": "Hinterwild",
+                    "nameKo": "힌터빌트",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Gaiesburg Fortress",
+                    "nameKo": "가이에스부르크 요새",
+                    "type": "fortress"
+                },
+                {
+                    "name": "Radomer",
+                    "nameKo": "라도머",
+                    "type": "barren"
+                },
+                {
+                    "name": "Gotha",
+                    "nameKo": "고타",
+                    "type": "barren"
+                }
+            ],
+            "connections": [56, 60, 64, 70, 73],
+            "special": "gaiesburg_fortress"
+        },
+        {
+            "id": 68,
+            "name": "Polevit",
+            "nameKo": "폴레비트",
+            "nameJp": "ポレヴィト",
+            "x": 55,
+            "y": 65,
+            "faction": "alliance",
+            "level": 2,
+            "region": "alliance_frontier",
+            "populationMax": 900000,
+            "productionMax": 450,
+            "commerceMax": 480,
+            "securityMax": 700,
+            "orbitalDefenseMax": 700,
+            "fortressMax": 0,
+            "planets": [
+                {
+                    "name": "Ruzhiana",
+                    "nameKo": "루지아나",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Chernobog",
+                    "nameKo": "체르노보크",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Svarog",
+                    "nameKo": "스바로그",
+                    "type": "barren"
+                },
+                {
+                    "name": "Polevik",
+                    "nameKo": "폴레비크",
+                    "type": "barren"
+                }
+            ],
+            "connections": [55, 61, 64, 71, 75],
+            "special": null
+        },
+        {
+            "id": 69,
+            "name": "Tripura",
+            "nameKo": "트리플라",
+            "nameJp": "トリプラ",
+            "x": 35,
+            "y": 68,
+            "faction": "alliance",
+            "level": 2,
+            "region": "alliance_frontier",
+            "populationMax": 800000,
+            "productionMax": 400,
+            "commerceMax": 420,
+            "securityMax": 640,
+            "orbitalDefenseMax": 640,
+            "fortressMax": 0,
+            "planets": [
+                {
+                    "name": "Palmerend",
+                    "nameKo": "팔머엔드",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Agartala",
+                    "nameKo": "아가르탈라",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Kalyanpur",
+                    "nameKo": "칼리안푸르",
+                    "type": "barren"
+                },
+                {
+                    "name": "Isfahan",
+                    "nameKo": "이스파한",
+                    "type": "barren"
+                }
+            ],
+            "connections": [62, 75, 77, 78],
+            "special": null
+        },
+        {
+            "id": 70,
+            "name": "Jötunheim",
+            "nameKo": "예툰하임",
+            "nameJp": "ヨトゥンヘイム",
+            "x": 82,
+            "y": 68,
+            "faction": "empire",
+            "level": 3,
+            "region": "empire_frontier",
+            "populationMax": 1600000,
+            "productionMax": 800,
+            "commerceMax": 800,
+            "securityMax": 1300,
+            "orbitalDefenseMax": 1300,
+            "fortressMax": 0,
+            "planets": [
+                {
+                    "name": "Utgard",
+                    "nameKo": "우트가르드",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Jötunheim",
+                    "nameKo": "예툰하임",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Elivagar",
+                    "nameKo": "엘리바가르",
+                    "type": "ice"
+                }
+            ],
+            "connections": [56, 67, 73, 76],
+            "special": null
+        },
+        {
+            "id": 71,
+            "name": "Baratrup",
+            "nameKo": "바라트루프",
+            "nameJp": "バラトルップ",
+            "x": 52,
+            "y": 68,
+            "faction": "alliance",
+            "level": 1,
+            "region": "alliance_frontier",
+            "populationMax": 400000,
+            "productionMax": 200,
+            "commerceMax": 220,
+            "securityMax": 350,
+            "orbitalDefenseMax": 350,
+            "fortressMax": 0,
+            "planets": [
+                {
+                    "name": "Baratrup I",
+                    "nameKo": "바라트루프 1",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Baratrup II",
+                    "nameKo": "바라트루프 2",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Baratrup III",
+                    "nameKo": "바라트루프 3",
+                    "type": "barren"
+                }
+            ],
+            "connections": [61, 68, 75],
+            "special": null
+        },
+        {
+            "id": 72,
+            "name": "Rammelsberg",
+            "nameKo": "람멜스베르크",
+            "nameJp": "ランメルスベルク",
+            "x": 112,
+            "y": 68,
+            "faction": "empire",
+            "level": 3,
+            "region": "empire_core",
+            "populationMax": 2100000,
+            "productionMax": 1050,
+            "commerceMax": 1050,
+            "securityMax": 1600,
+            "orbitalDefenseMax": 1600,
+            "fortressMax": 0,
+            "planets": [
+                {
+                    "name": "Halsbrücke",
+                    "nameKo": "할스브뤼케",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Hartenstein",
+                    "nameKo": "하르텐슈타인",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Himmelsfürst",
+                    "nameKo": "히멜스퓌르스트",
+                    "type": "barren"
+                },
+                {
+                    "name": "Schlema",
+                    "nameKo": "슐레마",
+                    "type": "barren"
+                }
+            ],
+            "connections": [63, 66, 74],
+            "special": null
+        },
+        {
+            "id": 73,
+            "name": "Braunschweig",
+            "nameKo": "브라운슈바이크",
+            "nameJp": "ブラウンシュヴァイク",
+            "x": 82,
+            "y": 72,
+            "faction": "empire",
+            "level": 3,
+            "region": "empire_frontier",
+            "populationMax": 2000000,
+            "productionMax": 1000,
+            "commerceMax": 1000,
+            "securityMax": 1500,
+            "orbitalDefenseMax": 1500,
+            "fortressMax": 0,
+            "planets": [
+                {
+                    "name": "Westerland",
+                    "nameKo": "베스터란트",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Wedel",
+                    "nameKo": "베델",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Schöpenstedt",
+                    "nameKo": "쇠펜슈테트",
+                    "type": "barren"
+                },
+                {
+                    "name": "Volkenrode",
+                    "nameKo": "폴켄로데",
+                    "type": "barren"
+                }
+            ],
+            "connections": [67, 70, 76, 80],
+            "special": null
+        },
+        {
+            "id": 74,
+            "name": "Littenheim",
+            "nameKo": "리텐하임",
+            "nameJp": "リッテンハイム",
+            "x": 100,
+            "y": 72,
+            "faction": "empire",
+            "level": 4,
+            "region": "empire_core",
+            "populationMax": 5000000,
+            "productionMax": 2000,
+            "commerceMax": 2000,
+            "securityMax": 3000,
+            "orbitalDefenseMax": 3000,
+            "fortressMax": 0,
+            "planets": [
+                {
+                    "name": "Ingenheim",
+                    "nameKo": "인겐하임",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Duntzenheim",
+                    "nameKo": "둔첸하임",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Altenheim",
+                    "nameKo": "알텐하임",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Rogendorf",
+                    "nameKo": "로겐도르프",
+                    "type": "barren"
+                }
+            ],
+            "connections": [65, 72, 76, 79],
+            "special": null
+        },
+        {
+            "id": 75,
+            "name": "Melkart",
+            "nameKo": "멜카르트",
+            "nameJp": "メルカルト",
+            "x": 48,
+            "y": 72,
+            "faction": "alliance",
+            "level": 2,
+            "region": "alliance_frontier",
+            "populationMax": 850000,
+            "productionMax": 425,
+            "commerceMax": 450,
+            "securityMax": 680,
+            "orbitalDefenseMax": 680,
+            "fortressMax": 0,
+            "planets": [
+                {
+                    "name": "Ashur",
+                    "nameKo": "아슈르",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Nergal",
+                    "nameKo": "네르갈",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Baal Zaphon",
+                    "nameKo": "바알 자폰",
+                    "type": "barren"
+                }
+            ],
+            "connections": [61, 68, 69, 71, 78],
+            "special": null
+        },
+        {
+            "id": 76,
+            "name": "Kiphoiser",
+            "nameKo": "키포이저",
+            "nameJp": "キポイザー",
+            "x": 88,
+            "y": 75,
+            "faction": "empire",
+            "level": 4,
+            "region": "empire_frontier",
+            "populationMax": 500000,
+            "productionMax": 1200,
+            "commerceMax": 600,
+            "securityMax": 3000,
+            "orbitalDefenseMax": 4000,
+            "fortressMax": 2000,
+            "planets": [
+                {
+                    "name": "Garmisch Fortress",
+                    "nameKo": "가르미슈 요새",
+                    "type": "fortress"
+                },
+                {
+                    "name": "Rohrbach",
+                    "nameKo": "로어바흐",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Wagenbach",
+                    "nameKo": "바겐바흐",
+                    "type": "barren"
+                },
+                {
+                    "name": "Waltenkirchen",
+                    "nameKo": "발텐키르헨",
+                    "type": "barren"
+                }
+            ],
+            "connections": [70, 73, 74, 79, 80],
+            "special": "garmisch_fortress"
+        },
+        {
+            "id": 77,
+            "name": "Polyn",
+            "nameKo": "폴린",
+            "nameJp": "ポリン",
+            "x": 22,
+            "y": 72,
+            "faction": "alliance",
+            "level": 2,
+            "region": "alliance_frontier",
+            "populationMax": 750000,
+            "productionMax": 380,
+            "commerceMax": 400,
+            "securityMax": 600,
+            "orbitalDefenseMax": 600,
+            "fortressMax": 0,
+            "planets": [
+                {
+                    "name": "Elden",
+                    "nameKo": "엘든",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Bereket",
+                    "nameKo": "베레케트",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Kirnis",
+                    "nameKo": "키르니스",
+                    "type": "barren"
+                },
+                {
+                    "name": "Dayan Khan Base",
+                    "nameKo": "다얀 칸 기지",
+                    "type": "habitable"
+                }
+            ],
+            "connections": [62, 69, 78],
+            "special": null
+        },
+        {
+            "id": 78,
+            "name": "Schpara",
+            "nameKo": "슈팔라",
+            "nameJp": "シュパラ",
+            "x": 32,
+            "y": 72,
+            "faction": "alliance",
+            "level": 2,
+            "region": "alliance_frontier",
+            "populationMax": 800000,
+            "productionMax": 400,
+            "commerceMax": 420,
+            "securityMax": 640,
+            "orbitalDefenseMax": 640,
+            "fortressMax": 0,
+            "planets": [
+                {
+                    "name": "Arnkipa",
+                    "nameKo": "아른키파",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Visca Grande",
+                    "nameKo": "비스카 그란데",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Ciudad Rodrigo",
+                    "nameKo": "시우다드 로드리고",
+                    "type": "barren"
+                },
+                {
+                    "name": "Vyshkov",
+                    "nameKo": "비시코프",
+                    "type": "barren"
+                }
+            ],
+            "connections": [69, 75, 77],
+            "special": null
+        },
+        {
+            "id": 79,
+            "name": "Baldur",
+            "nameKo": "발두르",
+            "nameJp": "バルドル",
+            "x": 98,
+            "y": 78,
+            "faction": "empire",
+            "level": 3,
+            "region": "empire_frontier",
+            "populationMax": 1800000,
+            "productionMax": 900,
+            "commerceMax": 900,
+            "securityMax": 1400,
+            "orbitalDefenseMax": 1400,
+            "fortressMax": 0,
+            "planets": [
+                {
+                    "name": "Breidablik",
+                    "nameKo": "브레이다블리크",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Hringhorni",
+                    "nameKo": "흐링호르니",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Glitnir",
+                    "nameKo": "글리트니르",
+                    "type": "barren"
+                },
+                {
+                    "name": "Höd",
+                    "nameKo": "회드",
+                    "type": "barren"
+                }
+            ],
+            "connections": [74, 76],
+            "special": null
+        },
+        {
+            "id": 80,
+            "name": "Forgen",
+            "nameKo": "포르겐",
+            "nameJp": "フォルゲン",
+            "x": 78,
+            "y": 78,
+            "faction": "empire",
+            "level": 2,
+            "region": "empire_frontier",
+            "populationMax": 1000000,
+            "productionMax": 500,
+            "commerceMax": 500,
+            "securityMax": 800,
+            "orbitalDefenseMax": 800,
+            "fortressMax": 0,
+            "planets": [
+                {
+                    "name": "Schwangau",
+                    "nameKo": "슈반가우",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Füssen",
+                    "nameKo": "퓌센",
+                    "type": "habitable"
+                },
+                {
+                    "name": "Bodelsberg",
+                    "nameKo": "보델스베르크",
+                    "type": "barren"
+                }
+            ],
+            "connections": [67, 70, 73, 76],
+            "special": null
+        }
+    ]
+}

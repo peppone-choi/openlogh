@@ -1,0 +1,11 @@
+**/build/
+**/.gradle/
+**/.kotlin/
+.idea/
+*.iml
+.DS_Store
+.playwright-mcp/
+**/src/test/
+scripts/
+artifacts/
+logs/

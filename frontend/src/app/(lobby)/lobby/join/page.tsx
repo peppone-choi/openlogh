@@ -1,0 +1,764 @@
+'use client';
+
+import { Suspense, useEffect, useState, useMemo, useCallback } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { UserPlus, ArrowLeft, Crown } from 'lucide-react';
+import { useWorldStore } from '@/stores/worldStore';
+import { useOfficerStore } from '@/stores/officerStore';
+import { useGameStore } from '@/stores/gameStore';
+import { inheritanceApi, officerApi, factionApi } from '@/lib/gameApi';
+import { toast } from 'sonner';
+import { PageHeader } from '@/components/game/page-header';
+import { LoadingState } from '@/components/game/loading-state';
+import { StatBar } from '@/components/game/stat-bar';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { PLANET_LEVEL_NAMES, LEGACY_PERSONALITY_OPTIONS } from '@/lib/game-utils';
+import type { InheritanceInfo, Faction } from '@/types';
+
+const TOTAL_STAT_POINTS = 350;
+const STAT_MIN = 10;
+const STAT_MAX = 100;
+
+const STAT_KEYS = ['leadership', 'strength', 'intel', 'politics', 'charm'] as const;
+type StatKey = (typeof STAT_KEYS)[number];
+
+const STAT_LABELS: Record<StatKey, string> = {
+    leadership: '통솔',
+    strength: '무력',
+    intel: '지력',
+    politics: '정치',
+    charm: '매력',
+};
+
+const STAT_COLORS: Record<StatKey, string> = {
+    leadership: 'bg-red-500',
+    strength: 'bg-orange-500',
+    intel: 'bg-blue-500',
+    politics: 'bg-green-500',
+    charm: 'bg-purple-500',
+};
+
+const CREW_TYPES: { code: number; label: string }[] = [
+    { code: 0, label: '보병' },
+    { code: 1, label: '궁병' },
+    { code: 2, label: '기병' },
+    { code: 3, label: '수군' },
+];
+
+const PERSONALITIES = LEGACY_PERSONALITY_OPTIONS.map((option) => ({
+    key: option.code,
+    name: option.label,
+    info: option.info,
+}));
+
+// Famous general presets for quick character creation (랜덤 제독 프리셋)
+const GENERAL_PRESETS: {
+    name: string;
+    stats: Record<StatKey, number>;
+    personality: string;
+    crewType: number;
+}[] = [
+    {
+        name: '관우형',
+        stats: { leadership: 90, strength: 97, intel: 75, politics: 50, charm: 38 },
+        personality: 'che_의협',
+        crewType: 2,
+    },
+    {
+        name: '제갈량형',
+        stats: {
+            leadership: 55,
+            strength: 20,
+            intel: 100,
+            politics: 95,
+            charm: 80,
+        },
+        personality: 'che_왕좌',
+        crewType: 0,
+    },
+    {
+        name: '여포형',
+        stats: {
+            leadership: 70,
+            strength: 100,
+            intel: 25,
+            politics: 20,
+            charm: 30,
+        },
+        personality: 'che_패권',
+        crewType: 2,
+    },
+    {
+        name: '조조형',
+        stats: { leadership: 96, strength: 72, intel: 91, politics: 65, charm: 26 },
+        personality: 'che_출세',
+        crewType: 2,
+    },
+    {
+        name: '유비형',
+        stats: { leadership: 75, strength: 65, intel: 62, politics: 78, charm: 70 },
+        personality: 'che_대의',
+        crewType: 0,
+    },
+    {
+        name: '손권형',
+        stats: { leadership: 80, strength: 55, intel: 76, politics: 72, charm: 67 },
+        personality: 'che_안전',
+        crewType: 3,
+    },
+];
+
+type StatPreset = 'balanced' | 'random' | 'leadership' | 'strength' | 'intel';
+
+function LobbyJoinPageContent() {
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const isFoundMode = false;
+    const { currentWorld } = useWorldStore();
+    const { fetchMyGeneral } = useOfficerStore();
+    const { cities, nations, loadAll } = useGameStore();
+
+    const [name, setName] = useState('');
+    const [cityId, setCityId] = useState<number | 'random'>('random');
+    const [nationId, setNationId] = useState<number>(0);
+    const [crewType, setCrewType] = useState(0);
+    const [personality, setPersonality] = useState('Random');
+    const [stats, setStats] = useState<Record<StatKey, number>>({
+        leadership: 70,
+        strength: 70,
+        intel: 70,
+        politics: 70,
+        charm: 70,
+    });
+    const [useOwnIcon, setUseOwnIcon] = useState(false);
+    const [blockCustomName, setBlockCustomName] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    // Inheritance point system (유산 포인트) - legacy parity
+    const [inheritInfo, setInheritInfo] = useState<InheritanceInfo | null>(null);
+    const [inheritSpecial, setInheritSpecial] = useState('');
+    const [inheritCity, setInheritCity] = useState<number | ''>('');
+    const [inheritBonusStat, setInheritBonusStat] = useState<[number, number, number]>([0, 0, 0]);
+
+    // Nation scout messages for recruitment display
+    const [scoutMessages, setScoutMessages] = useState<Record<number, string>>({});
+
+    useEffect(() => {
+        if (currentWorld) {
+            // Check blockCustomGeneralName from world config/meta (legacy parity: PageJoin.vue)
+            const meta = currentWorld.meta ?? {};
+            const config = currentWorld.config ?? {};
+            setBlockCustomName(!!(meta.blockCustomGeneralName || config.blockCustomGeneralName));
+
+            loadAll(currentWorld.id);
+
+            // Load inheritance info
+            inheritanceApi
+                .getInfo(currentWorld.id)
+                .then(({ data }) => setInheritInfo(data))
+                .catch(() => {});
+
+            // Load scout messages from nations
+            factionApi
+                .listByWorld(currentWorld.id)
+                .then(({ data: nationList }) => {
+                    const msgs: Record<number, string> = {};
+                    for (const n of nationList) {
+                        if (n.meta && typeof n.meta === 'object' && 'scoutMsg' in n.meta) {
+                            msgs[n.id] = String(n.meta.scoutMsg);
+                        }
+                    }
+                    setScoutMessages(msgs);
+                })
+                .catch(() => {});
+        }
+    }, [currentWorld, loadAll]);
+
+    const totalUsed = useMemo(() => STAT_KEYS.reduce((sum, k) => sum + stats[k], 0), [stats]);
+    const remaining = TOTAL_STAT_POINTS - totalUsed;
+
+    const inheritBonusSum = inheritBonusStat.reduce((a, b) => a + b, 0);
+    const inheritBonusValid = inheritBonusSum === 0 || (inheritBonusSum >= 3 && inheritBonusSum <= 5);
+    const selectedInheritSpecial = inheritInfo?.availableSpecialWar?.[inheritSpecial];
+
+    const adjustStat = (key: StatKey, delta: number) => {
+        setStats((prev) => {
+            const next = Math.max(STAT_MIN, Math.min(STAT_MAX, prev[key] + delta));
+            const newTotal = STAT_KEYS.reduce((s, k) => s + (k === key ? next : prev[k]), 0);
+            if (newTotal > TOTAL_STAT_POINTS) return prev;
+            return { ...prev, [key]: next };
+        });
+    };
+
+    const handleStatInput = (key: StatKey, value: number) => {
+        const clamped = Math.max(STAT_MIN, Math.min(STAT_MAX, value));
+        setStats((prev) => ({ ...prev, [key]: clamped }));
+    };
+
+    // Stat presets - legacy parity: ratio-based random distribution (generalStats.ts)
+    // Each preset assigns random weights per stat, then distributes total proportionally.
+    // Results vary on every click, unlike fixed formulas.
+    const applyPreset = useCallback((preset: StatPreset) => {
+        /** Distribute TOTAL_STAT_POINTS by random weights, clamped to [STAT_MIN, STAT_MAX]. */
+        function distribute(weights: number[]): Record<StatKey, number> {
+            const total = weights.reduce((a, b) => a + b, 0);
+            const vals = weights.map((w) => Math.floor((w / total) * TOTAL_STAT_POINTS));
+            // Fill remainder into the first stat
+            let sum = vals.reduce((a, b) => a + b, 0);
+            for (let i = 0; sum < TOTAL_STAT_POINTS; i = (i + 1) % 5) {
+                vals[i]++;
+                sum++;
+            }
+            // Clamp and redistribute overflow/underflow
+            for (let pass = 0; pass < 10; pass++) {
+                let valid = true;
+                for (let i = 0; i < 5; i++) {
+                    if (vals[i] < STAT_MIN) {
+                        const deficit = STAT_MIN - vals[i];
+                        vals[i] = STAT_MIN;
+                        vals[(i + 1) % 5] -= deficit;
+                        valid = false;
+                    }
+                    if (vals[i] > STAT_MAX) {
+                        const excess = vals[i] - STAT_MAX;
+                        vals[i] = STAT_MAX;
+                        vals[(i + 1) % 5] += excess;
+                        valid = false;
+                    }
+                }
+                if (valid) break;
+            }
+            return {
+                leadership: vals[0],
+                strength: vals[1],
+                intel: vals[2],
+                politics: vals[3],
+                charm: vals[4],
+            };
+        }
+
+        const rw = (max: number) => Math.random() * max;
+
+        switch (preset) {
+            case 'balanced': {
+                // All stats get similar random weights → roughly even but varied
+                const result = distribute([rw(6) + 3, rw(6) + 3, rw(6) + 3, rw(6) + 3, rw(6) + 3]);
+                setStats(result);
+                break;
+            }
+            case 'random': {
+                // Fully random weights → wildly different each time
+                const result = distribute([rw(65) + 10, rw(65) + 10, rw(65) + 10, rw(65) + 10, rw(65) + 10]);
+                setStats(result);
+                break;
+            }
+            case 'leadership': {
+                // Legacy pattern: focus stats get 0~6 weight, others get 0~1
+                const result = distribute([rw(6), rw(2), rw(2), rw(1), rw(1)]);
+                setStats(result);
+                break;
+            }
+            case 'strength': {
+                const result = distribute([rw(2), rw(6), rw(1), rw(1), rw(2)]);
+                setStats(result);
+                break;
+            }
+            case 'intel': {
+                const result = distribute([rw(1), rw(1), rw(6), rw(2), rw(2)]);
+                setStats(result);
+                break;
+            }
+        }
+    }, []);
+
+    // Filter cities by selected nation
+    const filteredCities = useMemo(() => {
+        if (nationId === 0) return cities;
+        return cities.filter((c) => c.nationId === nationId || c.nationId === 0);
+    }, [cities, nationId]);
+
+    // Nations with scout messages for recruitment display
+    const nationsWithScout = useMemo(() => {
+        return nations.filter((n) => n.level > 0 && scoutMessages[n.id] && scoutMessages[n.id].trim().length > 0);
+    }, [nations, scoutMessages]);
+
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        if (!currentWorld) return;
+        if (!blockCustomName && !name.trim()) {
+            setError('이름을 입력해주세요.');
+            return;
+        }
+        if (nationId === 0 && cityId !== 'random' && !cityId) {
+            setError('도시를 선택해주세요.');
+            return;
+        }
+        if (remaining !== 0) {
+            setError(`능력치 합계가 ${TOTAL_STAT_POINTS}이어야 합니다. (현재: ${totalUsed})`);
+            return;
+        }
+        if (!inheritBonusValid) {
+            setError('보너스 능력치는 합 0 또는 3~5 사이여야 합니다.');
+            return;
+        }
+
+        setSubmitting(true);
+        setError(null);
+        try {
+            await officerApi.create(currentWorld.id, {
+                name: blockCustomName ? undefined : name.trim(),
+                cityId: cityId === 'random' ? undefined : cityId,
+                nationId: isFoundMode ? null : nationId || null,
+                crewType,
+                personality,
+                ...stats,
+                useOwnIcon,
+                pic: useOwnIcon,
+                inheritSpecial: inheritSpecial || undefined,
+                inheritCity: inheritCity || undefined,
+                inheritBonusStat: inheritBonusSum > 0 ? inheritBonusStat : undefined,
+            });
+            await fetchMyGeneral(currentWorld.id);
+            router.push('/');
+        } catch (err: unknown) {
+            const msg = err instanceof Error ? err.message : '제독 생성에 실패했습니다.';
+            setError(msg);
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    if (!currentWorld) return <div className="p-4 text-muted-foreground">월드를 선택해주세요.</div>;
+
+    return (
+        <div className="p-4 max-w-2xl mx-auto space-y-6">
+            <Button variant="ghost" size="sm" onClick={() => router.push('/lobby')} className="mb-2">
+                <ArrowLeft className="size-4 mr-1" /> 로비로 돌아가기
+            </Button>
+
+            <PageHeader icon={UserPlus} title="제독 생성" />
+
+            {error && <div className="text-sm px-3 py-2 rounded bg-destructive/20 text-destructive">{error}</div>}
+
+            {/* Nation Recruitment Messages (임관 권유) - legacy parity from v_join.php & core2026 JoinView */}
+            {nationsWithScout.length > 0 && (
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="text-sm">국가 임관 권유</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                        {nationsWithScout.map((n) => (
+                            <div key={n.id} className="flex gap-3 items-start border border-input rounded p-2">
+                                <div
+                                    className="px-2 py-1 text-xs font-bold rounded shrink-0 border border-gray-600"
+                                    style={{ color: n.color }}
+                                >
+                                    {n.name}
+                                </div>
+                                <p className="text-xs text-muted-foreground">{scoutMessages[n.id]}</p>
+                            </div>
+                        ))}
+                    </CardContent>
+                </Card>
+            )}
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>제독 정보 입력</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <form onSubmit={handleSubmit} className="space-y-5">
+                        {/* Name */}
+                        <div className="space-y-1">
+                            <label className="block text-sm text-muted-foreground">제독명</label>
+                            {blockCustomName ? (
+                                <div className="text-sm text-muted-foreground p-2 border border-input rounded-md bg-muted/50">
+                                    이 서버에서는 커스텀 제독명을 사용할 수 없습니다. (서버 설정에 의해 자동 배정됩니다)
+                                </div>
+                            ) : (
+                                <Input
+                                    type="text"
+                                    value={name}
+                                    onChange={(e) => setName(e.target.value)}
+                                    maxLength={20}
+                                    placeholder="제독 이름 입력"
+                                />
+                            )}
+                        </div>
+
+                        {/* 전콘 사용 (legacy parity: PageJoin.vue) */}
+                        <div className="space-y-1">
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={useOwnIcon}
+                                    onChange={(e) => setUseOwnIcon(e.target.checked)}
+                                    className="rounded border-gray-600"
+                                />
+                                <span className="text-sm">전콘 사용</span>
+                            </label>
+                            <p className="text-xs text-muted-foreground ml-6">
+                                계정에 등록된 프로필 이미지(전콘)를 제독 초상화로 사용합니다.
+                            </p>
+                        </div>
+
+                        {/* Personality - legacy parity from core2026 JoinView */}
+                        <div className="space-y-1">
+                            <label className="block text-sm text-muted-foreground">성격</label>
+                            <select
+                                value={personality}
+                                onChange={(e) => setPersonality(e.target.value)}
+                                className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm"
+                            >
+                                {PERSONALITIES.map((p) => (
+                                    <option key={p.key} value={p.key}>
+                                        {p.name}
+                                    </option>
+                                ))}
+                            </select>
+                            <p className="text-xs text-muted-foreground">
+                                {PERSONALITIES.find((p) => p.key === personality)?.info}
+                            </p>
+                        </div>
+
+                        {/* Nation — hidden in found/rise mode (건국/거병 always starts as 재야) */}
+                        <div className="space-y-1">
+                            <label className="block text-sm text-muted-foreground">소속 국가</label>
+                            <select
+                                value={nationId}
+                                onChange={(e) => setNationId(Number(e.target.value))}
+                                className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm"
+                            >
+                                <option value={0}>재야 (무소속)</option>
+                                {nations
+                                    .filter((n) => n.level > 0)
+                                    .map((n) => (
+                                        <option key={n.id} value={n.id}>
+                                            {n.name}
+                                        </option>
+                                    ))}
+                            </select>
+                            <p className="text-xs text-muted-foreground">
+                                재야로 시작하면 게임 내에서 건국/거병/임관이 가능합니다.
+                            </p>
+                        </div>
+
+                        {/* City */}
+                        <div className="space-y-1">
+                            <label className="block text-sm text-muted-foreground">시작 행성</label>
+                            {nationId === 0 ? (
+                                (() => {
+                                    const randomOnly = !!(
+                                        (currentWorld.config as Record<string, unknown>)?.randomStartCity ??
+                                        (currentWorld.meta as Record<string, unknown>)?.randomStartCity
+                                    );
+                                    return randomOnly ? (
+                                        <div className="text-sm text-muted-foreground p-2 border border-input rounded-md bg-muted/50">
+                                            이 서버에서는 랜덤 도시 배정만 가능합니다.
+                                        </div>
+                                    ) : (
+                                        <select
+                                            value={cityId}
+                                            onChange={(e) =>
+                                                setCityId(
+                                                    e.target.value === 'random' ? 'random' : Number(e.target.value)
+                                                )
+                                            }
+                                            className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm"
+                                        >
+                                            <option value="random">랜덤 배치</option>
+                                            {filteredCities.map((c) => (
+                                                <option key={c.id} value={c.id}>
+                                                    {c.name} ({PLANET_LEVEL_NAMES[c.level] ?? c.level})
+                                                </option>
+                                            ))}
+                                        </select>
+                                    );
+                                })()
+                            ) : (
+                                <div className="text-sm text-muted-foreground p-2 border border-input rounded-md bg-muted/50">
+                                    국가 소속 시 도시는 자동 배정됩니다.
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Stat Presets - legacy parity from core2026 JoinView */}
+                        <div className="space-y-3">
+                            <div className="flex items-center justify-between">
+                                <label className="text-sm text-muted-foreground">
+                                    능력치 배분 (합계 {TOTAL_STAT_POINTS})
+                                </label>
+                                <Badge
+                                    variant={remaining === 0 ? 'default' : remaining > 0 ? 'secondary' : 'destructive'}
+                                    className={remaining === 0 ? 'bg-green-600' : remaining > 0 ? 'bg-amber-600' : ''}
+                                >
+                                    남은: {remaining}
+                                </Badge>
+                            </div>
+
+                            <div className="flex flex-wrap gap-2">
+                                <Button type="button" variant="outline" size="sm" onClick={() => applyPreset('random')}>
+                                    랜덤형
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => applyPreset('leadership')}
+                                >
+                                    통솔형
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => applyPreset('strength')}
+                                >
+                                    무력형
+                                </Button>
+                                <Button type="button" variant="outline" size="sm" onClick={() => applyPreset('intel')}>
+                                    지력형
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => applyPreset('balanced')}
+                                >
+                                    균형형
+                                </Button>
+                            </div>
+
+                            {/* 랜덤 제독 프리셋 (legacy parity: quick general templates) */}
+                            <div className="space-y-1">
+                                <label className="text-xs text-muted-foreground">유명 제독 프리셋</label>
+                                <div className="flex flex-wrap gap-2">
+                                    {GENERAL_PRESETS.map((preset) => (
+                                        <Button
+                                            key={preset.name}
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            className="text-xs"
+                                            onClick={() => {
+                                                setStats(preset.stats);
+                                                setPersonality(preset.personality);
+                                            }}
+                                        >
+                                            {preset.name}
+                                        </Button>
+                                    ))}
+                                    <Button
+                                        type="button"
+                                        variant="secondary"
+                                        size="sm"
+                                        className="text-xs"
+                                        onClick={() => {
+                                            const pick =
+                                                GENERAL_PRESETS[Math.floor(Math.random() * GENERAL_PRESETS.length)];
+                                            setStats(pick.stats);
+                                            setPersonality(pick.personality);
+                                            toast.info(`${pick.name} 프리셋이 적용되었습니다.`);
+                                        }}
+                                    >
+                                        🎲 랜덤 프리셋
+                                    </Button>
+                                </div>
+                            </div>
+
+                            {STAT_KEYS.map((key) => (
+                                <div key={key} className="space-y-1">
+                                    <div className="flex items-center gap-2">
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="icon-xs"
+                                            onClick={() => adjustStat(key, -5)}
+                                        >
+                                            -
+                                        </Button>
+                                        <div className="flex-1">
+                                            <StatBar
+                                                label={STAT_LABELS[key]}
+                                                value={stats[key]}
+                                                max={STAT_MAX}
+                                                color={STAT_COLORS[key]}
+                                            />
+                                        </div>
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="icon-xs"
+                                            onClick={() => adjustStat(key, 5)}
+                                        >
+                                            +
+                                        </Button>
+                                        <Input
+                                            type="number"
+                                            min={STAT_MIN}
+                                            max={STAT_MAX}
+                                            value={stats[key]}
+                                            onChange={(e) => handleStatInput(key, Number(e.target.value))}
+                                            className="w-14 text-center"
+                                        />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Inheritance Points (유산 포인트) - legacy parity from v_join.php & core2026 JoinView */}
+                        {inheritInfo && inheritInfo.points > 0 && (
+                            <Card className="border-amber-500/30">
+                                <CardHeader className="pb-2">
+                                    <CardTitle className="text-sm">유산 포인트 옵션</CardTitle>
+                                </CardHeader>
+                                <CardContent className="space-y-3">
+                                    <div className="flex justify-between text-xs">
+                                        <span>보유 포인트: {inheritInfo.points}</span>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <label className="block text-xs text-muted-foreground">전투 특기 선택</label>
+                                        <select
+                                            value={inheritSpecial}
+                                            onChange={(e) => setInheritSpecial(e.target.value)}
+                                            className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm"
+                                        >
+                                            <option value="">선택 안함</option>
+                                            {Object.entries(inheritInfo.availableSpecialWar ?? {}).map(
+                                                ([code, info]) => (
+                                                    <option key={code} value={code}>
+                                                        {info.title}
+                                                    </option>
+                                                )
+                                            )}
+                                        </select>
+                                        {selectedInheritSpecial && (
+                                            <p
+                                                className="text-xs text-muted-foreground"
+                                                dangerouslySetInnerHTML={{ __html: selectedInheritSpecial.info }}
+                                            />
+                                        )}
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <label className="block text-xs text-muted-foreground">
+                                            시작 행성 지정 (유산)
+                                        </label>
+                                        <select
+                                            value={inheritCity}
+                                            onChange={(e) =>
+                                                setInheritCity(e.target.value ? Number(e.target.value) : '')
+                                            }
+                                            className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm"
+                                        >
+                                            <option value="">랜덤 배치</option>
+                                            {cities.map((c) => (
+                                                <option key={c.id} value={c.id}>
+                                                    {c.name} ({PLANET_LEVEL_NAMES[c.level] ?? c.level})
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <label className="block text-xs text-muted-foreground">
+                                            보너스 능력치 (합 0 또는 3~5)
+                                        </label>
+                                        <div className="grid grid-cols-3 gap-2">
+                                            <div>
+                                                <span className="text-xs">통솔</span>
+                                                <Input
+                                                    type="number"
+                                                    min={0}
+                                                    max={5}
+                                                    value={inheritBonusStat[0]}
+                                                    onChange={(e) =>
+                                                        setInheritBonusStat([
+                                                            Number(e.target.value),
+                                                            inheritBonusStat[1],
+                                                            inheritBonusStat[2],
+                                                        ])
+                                                    }
+                                                    className="text-center"
+                                                />
+                                            </div>
+                                            <div>
+                                                <span className="text-xs">무력</span>
+                                                <Input
+                                                    type="number"
+                                                    min={0}
+                                                    max={5}
+                                                    value={inheritBonusStat[1]}
+                                                    onChange={(e) =>
+                                                        setInheritBonusStat([
+                                                            inheritBonusStat[0],
+                                                            Number(e.target.value),
+                                                            inheritBonusStat[2],
+                                                        ])
+                                                    }
+                                                    className="text-center"
+                                                />
+                                            </div>
+                                            <div>
+                                                <span className="text-xs">지력</span>
+                                                <Input
+                                                    type="number"
+                                                    min={0}
+                                                    max={5}
+                                                    value={inheritBonusStat[2]}
+                                                    onChange={(e) =>
+                                                        setInheritBonusStat([
+                                                            inheritBonusStat[0],
+                                                            inheritBonusStat[1],
+                                                            Number(e.target.value),
+                                                        ])
+                                                    }
+                                                    className="text-center"
+                                                />
+                                            </div>
+                                        </div>
+                                        <p className="text-xs text-muted-foreground">보너스 합: {inheritBonusSum}</p>
+                                        {!inheritBonusValid && (
+                                            <p className="text-xs text-red-400">
+                                                보너스 능력치는 합 3~5 사이여야 합니다.
+                                            </p>
+                                        )}
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        )}
+
+                        {/* Submit */}
+                        <div className="flex gap-2">
+                            <Button type="submit" disabled={submitting || remaining !== 0} className="flex-1">
+                                {submitting ? '생성중...' : '제독 생성'}
+                            </Button>
+                            <Button type="button" variant="outline" onClick={() => applyPreset('balanced')}>
+                                다시 입력
+                            </Button>
+                        </div>
+                    </form>
+                </CardContent>
+            </Card>
+        </div>
+    );
+}
+
+export default function LobbyJoinPage() {
+    return (
+        <Suspense
+            fallback={
+                <div className="p-4">
+                    <LoadingState message="제독 생성 정보를 불러오는 중..." />
+                </div>
+            }
+        >
+            <LobbyJoinPageContent />
+        </Suspense>
+    );
+}

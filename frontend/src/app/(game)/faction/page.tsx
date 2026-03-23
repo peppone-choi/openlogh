@@ -1,0 +1,1226 @@
+'use client';
+
+import { Suspense, useEffect, useState, useMemo, useCallback } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { useWorldStore } from '@/stores/worldStore';
+import { useOfficerStore } from '@/stores/officerStore';
+import { factionApi, officerApi, planetApi, nationPolicyApi, diplomacyApi, historyApi } from '@/lib/gameApi';
+import { subscribeWebSocket } from '@/lib/websocket';
+import type { Faction, Officer, StarSystem, NationPolicyInfo, Diplomacy, Message } from '@/types';
+import { ChevronDown, ChevronRight, Flag } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { PageHeader } from '@/components/game/page-header';
+import { LoadingState } from '@/components/game/loading-state';
+import { NationBadge } from '@/components/game/nation-badge';
+import { GeneralPortrait } from '@/components/game/general-portrait';
+import {
+    formatOfficerLevelText,
+    getNPCColor,
+    REGION_NAMES,
+    getShipClassName,
+    CITY_LEVEL_BADGES,
+    getNationLevelLabel,
+    stripCodePrefix,
+    getNationTypeLabel,
+} from '@/lib/game-utils';
+import { formatGameLogDate } from '@/lib/gameLogDate';
+import { formatLog } from '@/lib/formatLog';
+import {
+    calcPlanetFundsIncome,
+    calcPlanetSuppliesIncome,
+    calcPlanetFortressSuppliesIncome,
+    calcPlanetWarFundsIncome,
+    getDedLevel,
+    getBill,
+} from '@/lib/income-calc';
+
+// ── Constants ──────────────────────────────────────────────────────
+
+const DIP_STATE_LABELS: Record<string, { label: string; color: string }> = {
+    normal: { label: '통상', color: 'gray' },
+    nowar: { label: '불가침', color: 'cyan' },
+    alliance: { label: '동맹', color: 'limegreen' },
+    war: { label: '교전', color: 'red' },
+};
+
+// ── Sort options ────────────────────────────────────────────────────
+
+type SortOpt<T> = { label: string; key: string; fn: (a: T, b: T) => number };
+
+const GEN_SORTS: SortOpt<Officer>[] = [
+    {
+        label: '관직순',
+        key: 'officer',
+        fn: (a, b) => b.officerLevel - a.officerLevel,
+    },
+    { label: '헌신순', key: 'ded', fn: (a, b) => b.dedication - a.dedication },
+    { label: '경험순', key: 'exp', fn: (a, b) => b.experience - a.experience },
+    { label: '통솔순', key: 'lead', fn: (a, b) => b.leadership - a.leadership },
+    { label: '지휘순', key: 'str', fn: (a, b) => b.strength - a.strength },
+    { label: '정보순', key: 'int', fn: (a, b) => b.intel - a.intel },
+    { label: '정치순', key: 'pol', fn: (a, b) => b.politics - a.politics },
+    { label: '운영순', key: 'cha', fn: (a, b) => b.charm - a.charm },
+    { label: '자금순', key: 'gold', fn: (a, b) => b.gold - a.gold },
+    { label: '물자순', key: 'rice', fn: (a, b) => b.rice - a.rice },
+    { label: '함선순', key: 'crew', fn: (a, b) => b.crew - a.crew },
+    { label: '훈련순', key: 'train', fn: (a, b) => b.train - a.train },
+    { label: '사기순', key: 'atmos', fn: (a, b) => b.atmos - a.atmos },
+    { label: 'NPC순', key: 'npc', fn: (a, b) => a.npcState - b.npcState },
+    { label: '이름순', key: 'name', fn: (a, b) => a.name.localeCompare(b.name) },
+];
+
+const CITY_SORTS: SortOpt<StarSystem>[] = [
+    { label: '이름순', key: 'name', fn: (a, b) => a.name.localeCompare(b.name) },
+    { label: '레벨순', key: 'level', fn: (a, b) => b.level - a.level },
+    { label: '인구순', key: 'pop', fn: (a, b) => b.pop - a.pop },
+    { label: '민심순', key: 'trust', fn: (a, b) => b.trust - a.trust },
+    { label: '농업순', key: 'agri', fn: (a, b) => b.agri - a.agri },
+    { label: '상업순', key: 'comm', fn: (a, b) => b.comm - a.comm },
+    { label: '치안순', key: 'secu', fn: (a, b) => b.secu - a.secu },
+    { label: '수비순', key: 'def', fn: (a, b) => b.def - a.def },
+    { label: '성벽순', key: 'wall', fn: (a, b) => b.wall - a.wall },
+    { label: '지역순', key: 'region', fn: (a, b) => a.region - b.region },
+    { label: '인구최대순', key: 'popMax', fn: (a, b) => b.popMax - a.popMax },
+    { label: '수비최대순', key: 'defMax', fn: (a, b) => b.defMax - a.defMax },
+];
+
+// ── Main component ──────────────────────────────────────────────────
+
+function NationPageContent() {
+    const currentWorld = useWorldStore((s) => s.currentWorld);
+    const myGeneral = useOfficerStore((s) => s.myGeneral);
+    const fetchMyGeneral = useOfficerStore((s) => s.fetchMyGeneral);
+    const searchParams = useSearchParams();
+    const router = useRouter();
+
+    const [nation, setNation] = useState<Faction | null>(null);
+    const [generals, setGenerals] = useState<Officer[]>([]);
+    const [cities, setCities] = useState<StarSystem[]>([]);
+    const [allNations, setAllNations] = useState<Faction[]>([]);
+    const [diplomacyList, setDiplomacyList] = useState<Diplomacy[]>([]);
+    const [, setPolicy] = useState<NationPolicyInfo | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [generalSort, setGeneralSort] = useState('officer');
+    const [citySort, setCitySort] = useState('name');
+    const [nationHistoryLogs, setNationHistoryLogs] = useState<Message[]>([]);
+    const [showNationChronicle, setShowNationChronicle] = useState(false);
+
+    // 내무부 edit state
+    const [editNotice, setEditNotice] = useState('');
+    const [editRate, setEditRate] = useState(20);
+    const [editBill, setEditBill] = useState(100);
+    const [editSecretLimit, setEditSecretLimit] = useState(12);
+    const [saving, setSaving] = useState(false);
+
+    const tabParam = searchParams.get('tab');
+    const validTabs = ['info', 'generals', 'cities', 'admin'];
+    const activeTab = validTabs.includes(tabParam ?? '') ? tabParam! : 'info';
+    const isOfficer = (myGeneral?.officerLevel ?? 0) >= 5;
+
+    useEffect(() => {
+        if (!currentWorld || myGeneral) return;
+        fetchMyGeneral(currentWorld.id).catch(() => setError('제독 정보를 불러올 수 없습니다.'));
+    }, [currentWorld, myGeneral, fetchMyGeneral]);
+
+    const loadNationData = useCallback(async () => {
+        if (!myGeneral?.nationId || !currentWorld) return;
+        const nId = myGeneral.nationId;
+        const wId = currentWorld.id;
+        const off = myGeneral.officerLevel >= 5;
+
+        const base = [factionApi.get(nId), officerApi.listByFaction(nId), planetApi.listByFaction(nId)];
+        const extra = off
+            ? [nationPolicyApi.getPolicy(nId), diplomacyApi.listByNation(wId, nId), factionApi.listByWorld(wId)]
+            : [];
+
+        try {
+            const res = await Promise.all([...base, ...extra]);
+            const nationData = (res[0] as { data: Faction }).data;
+            setNation(nationData);
+            setGenerals((res[1] as { data: Officer[] }).data);
+            setCities((res[2] as { data: StarSystem[] }).data);
+
+            const historyRes = await historyApi.getWorldHistory(wId);
+            const logs = historyRes.data.filter((msg) => {
+                const payload = msg.payload;
+                const text =
+                    typeof payload?.content === 'string'
+                        ? payload.content
+                        : typeof payload?.description === 'string'
+                          ? payload.description
+                          : typeof payload?.message === 'string'
+                            ? payload.message
+                            : '';
+
+                const payloadNationId =
+                    typeof payload?.nationId === 'number'
+                        ? payload.nationId
+                        : typeof payload?.srcNationId === 'number'
+                          ? payload.srcNationId
+                          : typeof payload?.destNationId === 'number'
+                            ? payload.destNationId
+                            : null;
+
+                const payloadNationName =
+                    typeof payload?.nationName === 'string'
+                        ? payload.nationName
+                        : typeof payload?.srcNationName === 'string'
+                          ? payload.srcNationName
+                          : typeof payload?.destNationName === 'string'
+                            ? payload.destNationName
+                            : null;
+
+                return (
+                    msg.srcId === nId ||
+                    msg.destId === nId ||
+                    payloadNationId === nId ||
+                    payloadNationName === nationData.name ||
+                    text.includes(nationData.name)
+                );
+            });
+            setNationHistoryLogs(logs);
+
+            if (off) {
+                const pol = (res[3] as { data: NationPolicyInfo }).data;
+                setPolicy(pol);
+                setEditNotice(pol.notice ?? '');
+                setEditRate(pol.rate ?? 20);
+                setEditBill(pol.bill ?? 100);
+                setEditSecretLimit(pol.secretLimit ?? 12);
+                setDiplomacyList((res[4] as { data: Diplomacy[] }).data);
+                setAllNations((res[5] as { data: Faction[] }).data);
+            }
+        } catch {
+            setError('진영 정보를 불러올 수 없습니다.');
+            setNationHistoryLogs([]);
+        } finally {
+            setLoading(false);
+        }
+    }, [myGeneral?.nationId, myGeneral?.officerLevel, currentWorld]);
+
+    useEffect(() => {
+        loadNationData();
+    }, [loadNationData]);
+
+    useEffect(() => {
+        if (!currentWorld || !myGeneral?.nationId) return;
+        return subscribeWebSocket(`/topic/world/${currentWorld.id}/turn`, () => {
+            loadNationData();
+        });
+    }, [currentWorld, myGeneral?.nationId, loadNationData]);
+
+    const handleTabChange = (value: string) => {
+        router.replace(value === 'info' ? '/nation' : `/nation?tab=${value}`, {
+            scroll: false,
+        });
+    };
+
+    // ── Income calculations ──────────────────────────────────────────
+
+    const officerCntByCity = useMemo(() => {
+        const m = new Map<number, number>();
+        generals.forEach((g) => {
+            if (g.officerLevel >= 2 && g.officerLevel <= 4 && g.officerCity > 0 && g.cityId === g.officerCity) {
+                m.set(g.officerCity, (m.get(g.officerCity) || 0) + 1);
+            }
+        });
+        return m;
+    }, [generals]);
+
+    const income = useMemo(() => {
+        if (!nation || !cities.length) {
+            return { goldCity: 0, goldWar: 0, riceCity: 0, riceWall: 0, outcome: 0 };
+        }
+        let gcBase = 0,
+            rcBase = 0,
+            rwBase = 0,
+            gw = 0;
+        cities.forEach((c) => {
+            const cnt = officerCntByCity.get(c.id) || 0;
+            const cap = c.id === nation.capitalCityId;
+            gcBase += calcPlanetFundsIncome(c, cnt, cap, nation.level, nation.typeCode);
+            rcBase += calcPlanetSuppliesIncome(c, cnt, cap, nation.level, nation.typeCode);
+            rwBase += calcPlanetFortressSuppliesIncome(c, cnt, cap, nation.level, nation.typeCode);
+            gw += calcPlanetWarFundsIncome(c, nation.typeCode);
+        });
+        const goldCity = Math.round((gcBase * nation.rate) / 20);
+        const riceCity = Math.round((rcBase * nation.rate) / 20);
+        const riceWall = Math.round((rwBase * nation.rate) / 20);
+        const baseOut = generals.filter((g) => g.npcState !== 5).reduce((s, g) => s + getBill(g.dedication), 0);
+        const outcome = Math.round((baseOut * nation.bill) / 100);
+        return { goldCity, goldWar: gw, riceCity, riceWall, outcome };
+    }, [nation, cities, generals, officerCntByCity]);
+
+    // ── Policy save ──────────────────────────────────────────────────
+
+    const saveNotice = useCallback(async () => {
+        if (!nation) return;
+        setSaving(true);
+        try {
+            await nationPolicyApi.updateNotice(nation.id, editNotice);
+        } finally {
+            setSaving(false);
+        }
+    }, [nation, editNotice]);
+
+    const savePolicy = useCallback(
+        async (field: string, value: unknown) => {
+            if (!nation) return;
+            setSaving(true);
+            try {
+                if (field === 'blockWar') {
+                    await nationPolicyApi.setBlockWar(nation.id, value as boolean);
+                } else if (field === 'blockScout') {
+                    await nationPolicyApi.setBlockScout(nation.id, value as boolean);
+                } else {
+                    await nationPolicyApi.updatePolicy(nation.id, { [field]: value });
+                }
+            } finally {
+                setSaving(false);
+            }
+        },
+        [nation]
+    );
+
+    // ── Sorted data ──────────────────────────────────────────────────
+
+    const sortedGenerals = useMemo(() => {
+        const opt = GEN_SORTS.find((o) => o.key === generalSort);
+        return opt ? [...generals].sort(opt.fn) : generals;
+    }, [generals, generalSort]);
+
+    const sortedCities = useMemo(() => {
+        const opt = CITY_SORTS.find((o) => o.key === citySort);
+        return opt ? [...cities].sort(opt.fn) : cities;
+    }, [cities, citySort]);
+
+    const cityOfficers = useMemo(() => {
+        const m = new Map<number, { taesu?: Officer; gunsa?: Officer; jongsa?: Officer }>();
+        generals.forEach((g) => {
+            if (g.officerCity > 0 && g.officerLevel >= 2 && g.officerLevel <= 4) {
+                const e = m.get(g.officerCity) || {};
+                if (g.officerLevel === 4) e.taesu = g;
+                else if (g.officerLevel === 3) e.gunsa = g;
+                else if (g.officerLevel === 2) e.jongsa = g;
+                m.set(g.officerCity, e);
+            }
+        });
+        return m;
+    }, [generals]);
+
+    // ── Render guards ────────────────────────────────────────────────
+
+    if (!currentWorld) return <LoadingState message="월드를 선택해주세요." />;
+    if (loading) return <LoadingState />;
+    if (error) return <div className="p-4 text-red-400">{error}</div>;
+    if (!myGeneral?.nationId) return <div className="p-4 text-muted-foreground">소속 진영이 없습니다.</div>;
+    if (!nation) return <LoadingState message="진영 정보가 없습니다." />;
+
+    // ── Derived ──────────────────────────────────────────────────────
+
+    const capitalCity = cities.find((c) => c.id === nation.capitalCityId);
+    const totalCrew = generals.reduce((s, g) => s + g.crew, 0);
+    const maxCrew = generals.filter((g) => g.npcState !== 5).reduce((s, g) => s + g.leadership * 100, 0);
+    const totalPop = cities.reduce((s, c) => s + c.pop, 0);
+    const maxPop = cities.reduce((s, c) => s + c.popMax, 0);
+    const { goldCity, goldWar, riceCity, riceWall, outcome } = income;
+    const totalGold = goldCity + goldWar;
+    const totalRice = riceCity + riceWall;
+    const goldDiff = totalGold - outcome;
+    const riceDiff = totalRice - outcome;
+    const fmtDiff = (v: number) => (v >= 0 ? `+${v.toLocaleString()}` : v.toLocaleString());
+
+    return (
+        <div className="space-y-3 max-w-6xl mx-auto">
+            <PageHeader icon={Flag} title={nation.name} />
+
+            <Tabs value={activeTab} onValueChange={handleTabChange}>
+                <TabsList>
+                    <TabsTrigger value="info">진영정보</TabsTrigger>
+                    <TabsTrigger value="generals">진영제독 ({generals.length})</TabsTrigger>
+                    <TabsTrigger value="cities">진영성계 ({cities.length})</TabsTrigger>
+                    {isOfficer && <TabsTrigger value="admin">내무부</TabsTrigger>}
+                </TabsList>
+
+                {/* ── Tab 1: 세력정보 ── */}
+                <TabsContent value="info">
+                    <Card>
+                        <CardContent>
+                            <div className="flex flex-wrap items-center gap-2 mb-3">
+                                <NationBadge name={nation.name} color={nation.color} />
+                                <Badge variant="secondary">
+                                    {getNationLevelLabel(nation.level, nation.typeCode) ?? `Lv.${nation.level}`}
+                                </Badge>
+                                <Badge variant="outline">{getNationTypeLabel(nation.typeCode)}</Badge>
+                                {capitalCity && (
+                                    <Badge variant="outline" className="text-cyan-400">
+                                        수도: {capitalCity.name}
+                                    </Badge>
+                                )}
+                            </div>
+
+                            {/* Legacy-style 4-col info grid */}
+                            <div
+                                className="grid text-xs border border-gray-600"
+                                style={{ gridTemplateColumns: '6rem 1fr 6rem 1fr' }}
+                            >
+                                <LCell>총주민</LCell>
+                                <VCell>
+                                    {totalPop.toLocaleString()} / {maxPop.toLocaleString()}
+                                </VCell>
+                                <LCell>총함선</LCell>
+                                <VCell>
+                                    {totalCrew.toLocaleString()} / {maxCrew.toLocaleString()}
+                                </VCell>
+
+                                <LCell>국 고</LCell>
+                                <VCell className="text-yellow-400">{nation.gold.toLocaleString()}</VCell>
+                                <LCell>물 자</LCell>
+                                <VCell className="text-green-400">{nation.rice.toLocaleString()}</VCell>
+
+                                <LCell>세금/단기</LCell>
+                                <VCell>
+                                    +{goldCity.toLocaleString()} / +{goldWar.toLocaleString()}
+                                </VCell>
+                                <LCell>물자/둔전</LCell>
+                                <VCell>
+                                    +{riceCity.toLocaleString()} / +{riceWall.toLocaleString()}
+                                </VCell>
+
+                                <LCell>수입/지출</LCell>
+                                <VCell>
+                                    <span className="text-green-400">+{totalGold.toLocaleString()}</span>
+                                    {' / '}
+                                    <span className="text-red-400">-{outcome.toLocaleString()}</span>
+                                </VCell>
+                                <LCell>수입/지출</LCell>
+                                <VCell>
+                                    <span className="text-green-400">+{totalRice.toLocaleString()}</span>
+                                    {' / '}
+                                    <span className="text-red-400">-{outcome.toLocaleString()}</span>
+                                </VCell>
+
+                                <LCell>국고 예산</LCell>
+                                <VCell>
+                                    {(nation.gold + goldDiff).toLocaleString()}{' '}
+                                    <span className={goldDiff >= 0 ? 'text-green-400' : 'text-red-400'}>
+                                        ({fmtDiff(goldDiff)})
+                                    </span>
+                                </VCell>
+                                <LCell>물자 예산</LCell>
+                                <VCell>
+                                    {(nation.rice + riceDiff).toLocaleString()}{' '}
+                                    <span className={riceDiff >= 0 ? 'text-green-400' : 'text-red-400'}>
+                                        ({fmtDiff(riceDiff)})
+                                    </span>
+                                </VCell>
+
+                                <LCell>세 율</LCell>
+                                <VCell>{nation.rate}%</VCell>
+                                <LCell>지급률</LCell>
+                                <VCell>{nation.bill}%</VCell>
+
+                                <LCell>군사력</LCell>
+                                <VCell>{nation.power.toLocaleString()}</VCell>
+                                <LCell>기술력</LCell>
+                                <VCell>{Math.floor(nation.tech).toLocaleString()}</VCell>
+
+                                <LCell>속 령</LCell>
+                                <VCell>{cities.length}개</VCell>
+                                <LCell>제 독</LCell>
+                                <VCell>{generals.length}명</VCell>
+
+                                <LCell>작 위</LCell>
+                                <VCell>
+                                    {getNationLevelLabel(nation.level, nation.typeCode) ?? `Lv.${nation.level}`}
+                                </VCell>
+                                <LCell>전 쟁</LCell>
+                                <VCell>
+                                    {nation.warState ? (
+                                        <span className="text-red-400">교전중</span>
+                                    ) : (
+                                        <span className="text-green-400">평화</span>
+                                    )}
+                                </VCell>
+                            </div>
+
+                            {/* City list */}
+                            <div className="mt-2 text-xs">
+                                <span className="text-muted-foreground">속령일람: </span>
+                                {cities.map((c, i) => (
+                                    <span key={c.id}>
+                                        {i > 0 && ', '}
+                                        <span className={c.id === nation.capitalCityId ? 'text-cyan-400' : ''}>
+                                            {c.name}
+                                        </span>
+                                    </span>
+                                ))}
+                            </div>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
+                {/* ── Tab 2: 진영제독 ── */}
+                <TabsContent value="generals">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center justify-between">
+                                <span>진영제독 ({generals.length}명)</span>
+                                <Select value={generalSort} onValueChange={setGeneralSort}>
+                                    <SelectTrigger size="sm" className="w-28">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {GEN_SORTS.map((o) => (
+                                            <SelectItem key={o.key} value={o.key}>
+                                                {o.label}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            {generals.length === 0 ? (
+                                <p className="text-sm text-muted-foreground">제독이 없습니다.</p>
+                            ) : (
+                                <div className="overflow-x-auto">
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead>이름</TableHead>
+                                                <TableHead className="text-center">관직</TableHead>
+                                                <TableHead className="text-center">NPC</TableHead>
+                                                <TableHead className="text-center">통</TableHead>
+                                                <TableHead className="text-center">지휘</TableHead>
+                                                <TableHead className="text-center">정보</TableHead>
+                                                <TableHead className="text-center">정</TableHead>
+                                                <TableHead className="text-center">운영</TableHead>
+                                                <TableHead className="text-right">함선</TableHead>
+                                                <TableHead className="text-center">함종</TableHead>
+                                                <TableHead className="text-center">훈련</TableHead>
+                                                <TableHead className="text-center">사기</TableHead>
+                                                <TableHead className="text-right">자금</TableHead>
+                                                <TableHead className="text-right">물자</TableHead>
+                                                <TableHead className="text-right">헌신</TableHead>
+                                                <TableHead className="text-right">경험</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {sortedGenerals.map((g) => (
+                                                <TableRow key={g.id}>
+                                                    <TableCell>
+                                                        <div className="flex items-center gap-1.5">
+                                                            <GeneralPortrait
+                                                                picture={g.picture}
+                                                                name={g.name}
+                                                                size="sm"
+                                                            />
+                                                            <span
+                                                                className="font-medium whitespace-nowrap"
+                                                                style={{ color: getNPCColor(g.npcState) }}
+                                                            >
+                                                                {g.name}
+                                                            </span>
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell className="text-center text-xs whitespace-nowrap">
+                                                        {formatOfficerLevelText(
+                                                            g.officerLevel,
+                                                            nation.level,
+                                                            true,
+                                                            nation.typeCode,
+                                                            g.npcState
+                                                        )}
+                                                    </TableCell>
+                                                    <TableCell className="text-center text-xs">
+                                                        {g.npcState > 0 ? (
+                                                            <span style={{ color: getNPCColor(g.npcState) }}>NPC</span>
+                                                        ) : (
+                                                            '유저'
+                                                        )}
+                                                    </TableCell>
+                                                    <TableCell className="text-center tabular-nums">
+                                                        {g.leadership}
+                                                    </TableCell>
+                                                    <TableCell className="text-center tabular-nums">
+                                                        {g.strength}
+                                                    </TableCell>
+                                                    <TableCell className="text-center tabular-nums">
+                                                        {g.intel}
+                                                    </TableCell>
+                                                    <TableCell className="text-center tabular-nums">
+                                                        {g.politics}
+                                                    </TableCell>
+                                                    <TableCell className="text-center tabular-nums">
+                                                        {g.charm}
+                                                    </TableCell>
+                                                    <TableCell className="text-right tabular-nums">
+                                                        {g.crew.toLocaleString()}
+                                                    </TableCell>
+                                                    <TableCell className="text-center text-xs">
+                                                        {getShipClassName(String(g.crewType)) ?? '?'}
+                                                    </TableCell>
+                                                    <TableCell className="text-center tabular-nums">
+                                                        {g.train}
+                                                    </TableCell>
+                                                    <TableCell className="text-center tabular-nums">
+                                                        {g.atmos}
+                                                    </TableCell>
+                                                    <TableCell className="text-right tabular-nums text-yellow-400">
+                                                        {g.gold.toLocaleString()}
+                                                    </TableCell>
+                                                    <TableCell className="text-right tabular-nums text-green-400">
+                                                        {g.rice.toLocaleString()}
+                                                    </TableCell>
+                                                    <TableCell className="text-right tabular-nums">
+                                                        {g.dedication.toLocaleString()}
+                                                    </TableCell>
+                                                    <TableCell className="text-right tabular-nums">
+                                                        {g.experience.toLocaleString()}
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
+                {/* ── Tab 3: 진영성계 ── */}
+                <TabsContent value="cities">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center justify-between">
+                                <span>진영성계 ({cities.length}개)</span>
+                                <Select value={citySort} onValueChange={setCitySort}>
+                                    <SelectTrigger size="sm" className="w-32">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {CITY_SORTS.map((o) => (
+                                            <SelectItem key={o.key} value={o.key}>
+                                                {o.label}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            {cities.length === 0 ? (
+                                <p className="text-sm text-muted-foreground">성계가 없습니다.</p>
+                            ) : (
+                                <div className="overflow-x-auto">
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead>이름</TableHead>
+                                                <TableHead className="text-center">레벨</TableHead>
+                                                <TableHead className="text-center">지역</TableHead>
+                                                <TableHead className="text-right">인구</TableHead>
+                                                <TableHead className="text-center">지지도</TableHead>
+                                                <TableHead className="text-right">생산</TableHead>
+                                                <TableHead className="text-right">교역</TableHead>
+                                                <TableHead className="text-center">치안</TableHead>
+                                                <TableHead className="text-right">궤도방어</TableHead>
+                                                <TableHead className="text-right">요새</TableHead>
+                                                <TableHead className="text-center">행성총독</TableHead>
+                                                <TableHead className="text-center">함대사령관</TableHead>
+                                                <TableHead className="text-center">행정관</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {sortedCities.map((c) => {
+                                                const off = cityOfficers.get(c.id);
+                                                return (
+                                                    <TableRow
+                                                        key={c.id}
+                                                        className={
+                                                            c.id === nation.capitalCityId
+                                                                ? 'border-l-2 border-l-cyan-400'
+                                                                : ''
+                                                        }
+                                                    >
+                                                        <TableCell className="font-medium whitespace-nowrap">
+                                                            {c.name}
+                                                            {c.id === nation.capitalCityId && (
+                                                                <span className="text-cyan-400 text-xs ml-1">
+                                                                    (수도)
+                                                                </span>
+                                                            )}
+                                                        </TableCell>
+                                                        <TableCell className="text-center">
+                                                            {CITY_LEVEL_BADGES[c.level] ?? c.level}
+                                                        </TableCell>
+                                                        <TableCell className="text-center text-xs">
+                                                            {REGION_NAMES[c.region] ?? c.region}
+                                                        </TableCell>
+                                                        <TableCell className="text-right tabular-nums">
+                                                            {c.pop.toLocaleString()}
+                                                            <span className="text-muted-foreground">
+                                                                /{c.popMax.toLocaleString()}
+                                                            </span>
+                                                        </TableCell>
+                                                        <TableCell className="text-center tabular-nums">
+                                                            {c.trust}
+                                                        </TableCell>
+                                                        <TableCell className="text-right tabular-nums">
+                                                            {c.agri}
+                                                            <span className="text-muted-foreground">/{c.agriMax}</span>
+                                                        </TableCell>
+                                                        <TableCell className="text-right tabular-nums">
+                                                            {c.comm}
+                                                            <span className="text-muted-foreground">/{c.commMax}</span>
+                                                        </TableCell>
+                                                        <TableCell className="text-center tabular-nums">
+                                                            {c.secu}
+                                                            <span className="text-muted-foreground">/{c.secuMax}</span>
+                                                        </TableCell>
+                                                        <TableCell className="text-right tabular-nums">
+                                                            {c.def}
+                                                            <span className="text-muted-foreground">/{c.defMax}</span>
+                                                        </TableCell>
+                                                        <TableCell className="text-right tabular-nums">
+                                                            {c.wall}
+                                                            <span className="text-muted-foreground">/{c.wallMax}</span>
+                                                        </TableCell>
+                                                        <TableCell className="text-center text-xs whitespace-nowrap">
+                                                            {off?.taesu ? (
+                                                                <span
+                                                                    style={{
+                                                                        color: getNPCColor(off.taesu.npcState),
+                                                                    }}
+                                                                >
+                                                                    {off.taesu.name}
+                                                                </span>
+                                                            ) : (
+                                                                '-'
+                                                            )}
+                                                        </TableCell>
+                                                        <TableCell className="text-center text-xs whitespace-nowrap">
+                                                            {off?.gunsa ? (
+                                                                <span
+                                                                    style={{
+                                                                        color: getNPCColor(off.gunsa.npcState),
+                                                                    }}
+                                                                >
+                                                                    {off.gunsa.name}
+                                                                </span>
+                                                            ) : (
+                                                                '-'
+                                                            )}
+                                                        </TableCell>
+                                                        <TableCell className="text-center text-xs whitespace-nowrap">
+                                                            {off?.jongsa ? (
+                                                                <span
+                                                                    style={{
+                                                                        color: getNPCColor(off.jongsa.npcState),
+                                                                    }}
+                                                                >
+                                                                    {off.jongsa.name}
+                                                                </span>
+                                                            ) : (
+                                                                '-'
+                                                            )}
+                                                        </TableCell>
+                                                    </TableRow>
+                                                );
+                                            })}
+                                        </TableBody>
+                                    </Table>
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
+                {/* ── Tab 4: 내무부 ── */}
+                {isOfficer && (
+                    <TabsContent value="admin">
+                        <div className="space-y-3">
+                            {/* Nation Notice with formatting */}
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>국가 공지</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    {myGeneral.officerLevel >= 5 && (
+                                        <div className="flex gap-1 mb-1">
+                                            {[
+                                                {
+                                                    tag: '**',
+                                                    label: 'B',
+                                                    title: '굵게',
+                                                    cls: 'font-bold',
+                                                },
+                                                {
+                                                    tag: '__',
+                                                    label: 'I',
+                                                    title: '기울임',
+                                                    cls: 'italic',
+                                                },
+                                                {
+                                                    tag: '~~',
+                                                    label: 'S',
+                                                    title: '취소선',
+                                                    cls: 'line-through',
+                                                },
+                                                {
+                                                    tag: '# ',
+                                                    label: 'H',
+                                                    title: '제목',
+                                                    cls: 'font-bold text-base',
+                                                },
+                                            ].map((fmt) => (
+                                                <Button
+                                                    key={fmt.tag}
+                                                    type="button"
+                                                    size="sm"
+                                                    variant="ghost"
+                                                    className={`h-7 w-7 p-0 text-xs ${fmt.cls}`}
+                                                    title={fmt.title}
+                                                    onClick={() => {
+                                                        const ta = document.getElementById(
+                                                            'notice-textarea'
+                                                        ) as HTMLTextAreaElement | null;
+                                                        if (!ta) return;
+                                                        const start = ta.selectionStart;
+                                                        const end = ta.selectionEnd;
+                                                        const sel = editNotice.slice(start, end);
+                                                        const isHeading = fmt.tag === '# ';
+                                                        const wrapped = isHeading
+                                                            ? `\n${fmt.tag}${sel || fmt.title}\n`
+                                                            : `${fmt.tag}${sel || fmt.title}${fmt.tag}`;
+                                                        const next =
+                                                            editNotice.slice(0, start) +
+                                                            wrapped +
+                                                            editNotice.slice(end);
+                                                        setEditNotice(next);
+                                                        setTimeout(() => {
+                                                            ta.focus();
+                                                            const cursor = start + wrapped.length;
+                                                            ta.setSelectionRange(cursor, cursor);
+                                                        }, 0);
+                                                    }}
+                                                >
+                                                    {fmt.label}
+                                                </Button>
+                                            ))}
+                                            <span className="text-[10px] text-muted-foreground self-center ml-1">
+                                                **굵게** / __기울임__ / ~~취소선~~
+                                            </span>
+                                        </div>
+                                    )}
+                                    <Textarea
+                                        id="notice-textarea"
+                                        value={editNotice}
+                                        onChange={(e) => setEditNotice(e.target.value)}
+                                        rows={5}
+                                        placeholder="국가 공지사항을 입력하세요... (마크다운 지원)"
+                                        disabled={myGeneral.officerLevel < 5}
+                                        className="font-mono text-sm"
+                                    />
+                                    {editNotice && (
+                                        <div className="mt-2 p-2 rounded bg-muted/30 border border-gray-700 text-sm">
+                                            <span className="text-[10px] text-muted-foreground block mb-1">
+                                                미리보기:
+                                            </span>
+                                            <NoticePreview text={editNotice} />
+                                        </div>
+                                    )}
+                                    {myGeneral.officerLevel >= 5 && (
+                                        <Button size="sm" className="mt-2" onClick={saveNotice} disabled={saving}>
+                                            공지 저장
+                                        </Button>
+                                    )}
+                                </CardContent>
+                            </Card>
+
+                            {/* Policy Controls */}
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>정책 설정</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <PolicyField
+                                            label="세율 (5~30%)"
+                                            value={editRate}
+                                            min={5}
+                                            max={30}
+                                            unit="%"
+                                            editable={myGeneral.officerLevel >= 5}
+                                            saving={saving}
+                                            onChange={setEditRate}
+                                            onSave={() => savePolicy('rate', editRate)}
+                                        />
+                                        <PolicyField
+                                            label="지급률 (20~200%)"
+                                            value={editBill}
+                                            min={20}
+                                            max={200}
+                                            unit="%"
+                                            editable={myGeneral.officerLevel >= 5}
+                                            saving={saving}
+                                            onChange={setEditBill}
+                                            onSave={() => savePolicy('bill', editBill)}
+                                        />
+                                        <PolicyField
+                                            label="기밀 권한 (사관년도)"
+                                            value={editSecretLimit}
+                                            min={1}
+                                            max={99}
+                                            unit="년"
+                                            editable={myGeneral.officerLevel >= 5}
+                                            saving={saving}
+                                            onChange={setEditSecretLimit}
+                                            onSave={() => savePolicy('secretLimit', editSecretLimit)}
+                                        />
+                                    </div>
+
+                                    {myGeneral.officerLevel >= 5 && (
+                                        <div className="flex gap-3 mt-4 pt-3 border-t border-gray-600">
+                                            <Button
+                                                size="sm"
+                                                variant={nation.scoutLevel ? 'destructive' : 'outline'}
+                                                onClick={() => savePolicy('blockScout', !nation.scoutLevel)}
+                                                disabled={saving}
+                                            >
+                                                임관 {nation.scoutLevel ? '금지중 → 허가' : '허가중 → 금지'}
+                                            </Button>
+                                            <Button
+                                                size="sm"
+                                                variant={nation.warState ? 'destructive' : 'outline'}
+                                                onClick={() => savePolicy('blockWar', !nation.warState)}
+                                                disabled={saving}
+                                            >
+                                                전쟁 {nation.warState ? '금지중 → 허가' : '허가중 → 금지'}
+                                            </Button>
+                                        </div>
+                                    )}
+                                </CardContent>
+                            </Card>
+
+                            {/* Income/Expense Detail */}
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>수입/지출 상세</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="grid grid-cols-2 gap-4 text-sm">
+                                        <div className="space-y-1">
+                                            <h4 className="font-medium text-yellow-400">금 수입</h4>
+                                            <IncomeRow label="세금 (도시)" value={goldCity} />
+                                            <IncomeRow label="단기 (전쟁)" value={goldWar} />
+                                            <div className="flex justify-between font-medium border-t border-gray-600 pt-1">
+                                                <span>합계</span>
+                                                <span>+{totalGold.toLocaleString()}</span>
+                                            </div>
+                                        </div>
+                                        <div className="space-y-1">
+                                            <h4 className="font-medium text-green-400">쌀 수입</h4>
+                                            <IncomeRow label="세곡 (농업)" value={riceCity} />
+                                            <IncomeRow label="둔전 (성벽)" value={riceWall} />
+                                            <div className="flex justify-between font-medium border-t border-gray-600 pt-1">
+                                                <span>합계</span>
+                                                <span>+{totalRice.toLocaleString()}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="mt-3 pt-3 border-t border-gray-600 text-sm space-y-1">
+                                        <div className="flex justify-between">
+                                            <span className="text-muted-foreground">지출 (녹봉)</span>
+                                            <span className="text-red-400">-{outcome.toLocaleString()}</span>
+                                        </div>
+                                        <div className="flex justify-between font-medium">
+                                            <span>금 순수익</span>
+                                            <span className={goldDiff >= 0 ? 'text-green-400' : 'text-red-400'}>
+                                                {fmtDiff(goldDiff)}
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between font-medium">
+                                            <span>쌀 순수익</span>
+                                            <span className={riceDiff >= 0 ? 'text-green-400' : 'text-red-400'}>
+                                                {fmtDiff(riceDiff)}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+
+                            {/* Diplomatic Relations */}
+                            {diplomacyList.length > 0 && (
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle>외교 관계</CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="overflow-x-auto">
+                                            <Table>
+                                                <TableHeader>
+                                                    <TableRow>
+                                                        <TableHead>국가</TableHead>
+                                                        <TableHead className="text-center">관계</TableHead>
+                                                        <TableHead className="text-center">잔여기한</TableHead>
+                                                    </TableRow>
+                                                </TableHeader>
+                                                <TableBody>
+                                                    {diplomacyList
+                                                        .filter((d) => d.destNationId !== nation.id && !d.isDead)
+                                                        .map((d) => {
+                                                            const dest = allNations.find(
+                                                                (n) => n.id === d.destNationId
+                                                            );
+                                                            const info = DIP_STATE_LABELS[d.stateCode] ?? {
+                                                                label: d.stateCode,
+                                                                color: 'gray',
+                                                            };
+                                                            return (
+                                                                <TableRow key={d.id}>
+                                                                    <TableCell>
+                                                                        <NationBadge
+                                                                            name={dest?.name}
+                                                                            color={dest?.color}
+                                                                        />
+                                                                    </TableCell>
+                                                                    <TableCell className="text-center">
+                                                                        <span style={{ color: info.color }}>
+                                                                            {info.label}
+                                                                        </span>
+                                                                    </TableCell>
+                                                                    <TableCell className="text-center tabular-nums">
+                                                                        {d.term > 0 ? (
+                                                                            <div>
+                                                                                <span>{d.term}개월</span>
+                                                                                {currentWorld && (
+                                                                                    <span className="block text-[10px] text-muted-foreground">
+                                                                                        (~
+                                                                                        {(() => {
+                                                                                            const endMonth =
+                                                                                                ((currentWorld.currentMonth +
+                                                                                                    d.term -
+                                                                                                    1) %
+                                                                                                    12) +
+                                                                                                1;
+                                                                                            const endYear =
+                                                                                                currentWorld.currentYear +
+                                                                                                Math.floor(
+                                                                                                    (currentWorld.currentMonth +
+                                                                                                        d.term -
+                                                                                                        1) /
+                                                                                                        12
+                                                                                                );
+                                                                                            return `${endYear}년 ${endMonth}월`;
+                                                                                        })()}
+                                                                                        )
+                                                                                    </span>
+                                                                                )}
+                                                                            </div>
+                                                                        ) : (
+                                                                            '-'
+                                                                        )}
+                                                                    </TableCell>
+                                                                </TableRow>
+                                                            );
+                                                        })}
+                                                </TableBody>
+                                            </Table>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            )}
+
+                            <Card>
+                                <CardHeader
+                                    className="cursor-pointer"
+                                    onClick={() => setShowNationChronicle((prev) => !prev)}
+                                >
+                                    <CardTitle className="flex items-center gap-2">
+                                        국가열전 ({nationHistoryLogs.length}건)
+                                        {showNationChronicle ? (
+                                            <ChevronDown className="size-4 ml-auto" />
+                                        ) : (
+                                            <ChevronRight className="size-4 ml-auto" />
+                                        )}
+                                    </CardTitle>
+                                </CardHeader>
+                                {showNationChronicle && (
+                                    <CardContent>
+                                        {nationHistoryLogs.length === 0 ? (
+                                            <p className="text-sm text-muted-foreground">국가열전 기록이 없습니다.</p>
+                                        ) : (
+                                            <div className="max-h-72 overflow-y-auto border border-gray-700 rounded">
+                                                <div className="space-y-1 p-2">
+                                                    {nationHistoryLogs.map((msg) => {
+                                                        const text =
+                                                            typeof msg.payload?.content === 'string'
+                                                                ? msg.payload.content
+                                                                : typeof msg.payload?.description === 'string'
+                                                                  ? msg.payload.description
+                                                                  : typeof msg.payload?.message === 'string'
+                                                                    ? msg.payload.message
+                                                                    : JSON.stringify(msg.payload ?? {});
+
+                                                        return (
+                                                            <div
+                                                                key={msg.id}
+                                                                className="rounded border border-muted/20 p-2 text-xs"
+                                                            >
+                                                                {formatGameLogDate(msg) && (
+                                                                    <span className="text-muted-foreground mr-2">
+                                                                        [{formatGameLogDate(msg)}]
+                                                                    </span>
+                                                                )}
+                                                                {formatLog(text)}
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </CardContent>
+                                )}
+                            </Card>
+                        </div>
+                    </TabsContent>
+                )}
+            </Tabs>
+        </div>
+    );
+}
+
+export default function NationPage() {
+    return (
+        <Suspense
+            fallback={
+                <div className="p-4">
+                    <LoadingState message="진영 정보를 불러오는 중..." />
+                </div>
+            }
+        >
+            <NationPageContent />
+        </Suspense>
+    );
+}
+
+// ── Sub-components ──────────────────────────────────────────────────
+
+function LCell({ children }: { children: React.ReactNode }) {
+    return (
+        <div className="legacy-bg1 px-2 py-1 text-center border-t border-r border-gray-600 whitespace-nowrap">
+            {children}
+        </div>
+    );
+}
+
+function VCell({ children, className }: { children: React.ReactNode; className?: string }) {
+    return (
+        <div className={`px-2 py-1 text-center tabular-nums border-t border-r border-gray-600 ${className ?? ''}`}>
+            {children}
+        </div>
+    );
+}
+
+function IncomeRow({ label, value }: { label: string; value: number }) {
+    return (
+        <div className="flex justify-between">
+            <span className="text-muted-foreground">{label}</span>
+            <span>+{value.toLocaleString()}</span>
+        </div>
+    );
+}
+
+function NoticePreview({ text }: { text: string }) {
+    const lines = text.split('\n');
+    return (
+        <div className="space-y-0.5">
+            {lines.map((line, i) => {
+                let content = line;
+                const isHeading = content.startsWith('# ');
+                if (isHeading) content = content.slice(2);
+                // Apply inline formatting
+                const parts: React.ReactNode[] = [];
+                const regex = /(\*\*(.+?)\*\*|__(.+?)__|~~(.+?)~~)/g;
+                let lastIdx = 0;
+                let match: RegExpExecArray | null;
+                let key = 0;
+                while ((match = regex.exec(content)) !== null) {
+                    if (match.index > lastIdx) {
+                        parts.push(content.slice(lastIdx, match.index));
+                    }
+                    if (match[2]) parts.push(<strong key={key++}>{match[2]}</strong>);
+                    else if (match[3]) parts.push(<em key={key++}>{match[3]}</em>);
+                    else if (match[4]) parts.push(<s key={key++}>{match[4]}</s>);
+                    lastIdx = match.index + match[0].length;
+                }
+                if (lastIdx < content.length) parts.push(content.slice(lastIdx));
+                if (parts.length === 0) parts.push('\u00A0');
+
+                if (isHeading) {
+                    return (
+                        <div key={i} className="font-bold text-base text-yellow-300">
+                            {parts}
+                        </div>
+                    );
+                }
+                return <div key={i}>{parts}</div>;
+            })}
+        </div>
+    );
+}
+
+function PolicyField({
+    label,
+    value,
+    min,
+    max,
+    unit,
+    editable,
+    saving,
+    onChange,
+    onSave,
+}: {
+    label: string;
+    value: number;
+    min: number;
+    max: number;
+    unit: string;
+    editable: boolean;
+    saving: boolean;
+    onChange: (v: number) => void;
+    onSave: () => void;
+}) {
+    return (
+        <div className="space-y-1">
+            <label className="text-xs text-muted-foreground">{label}</label>
+            <div className="flex items-center gap-2">
+                <Input
+                    type="number"
+                    min={min}
+                    max={max}
+                    value={value}
+                    onChange={(e) => onChange(Number(e.target.value))}
+                    className="w-20"
+                    disabled={!editable}
+                />
+                <span className="text-sm">{unit}</span>
+                {editable && (
+                    <Button size="sm" variant="outline" onClick={onSave} disabled={saving}>
+                        적용
+                    </Button>
+                )}
+            </div>
+        </div>
+    );
+}

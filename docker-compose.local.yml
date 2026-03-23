@@ -1,0 +1,34 @@
+# Local build override for docker-compose.yml
+# Usage: docker-compose -f docker-compose.yml -f docker-compose.local.yml up --build
+#
+# This overrides the pre-built ghcr.io images with local builds from source.
+
+services:
+    bootstrap:
+        image: openlogh-game:local
+        build:
+            context: ./backend
+            dockerfile: Dockerfile
+            args:
+                MODULE: game-app
+
+    gateway:
+        image: openlogh-gateway:local
+        build:
+            context: ./backend
+            dockerfile: Dockerfile
+            args:
+                MODULE: gateway-app
+        environment:
+            DOCKER_IMAGE_PREFIX: openlogh-game
+
+    frontend:
+        image: openlogh-frontend:local
+        build:
+            context: ./frontend
+            dockerfile: Dockerfile
+            args:
+                NEXT_PUBLIC_API_URL: /api
+                NEXT_PUBLIC_WS_URL: ''
+        ports:
+            - '3000:3000'

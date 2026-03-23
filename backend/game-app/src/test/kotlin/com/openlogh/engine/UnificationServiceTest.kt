@@ -1,0 +1,156 @@
+package com.openlogh.engine
+
+import com.openlogh.entity.*
+import com.openlogh.repository.*
+import com.openlogh.service.HistoryService
+import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.mockito.Mockito.*
+
+class UnificationServiceTest {
+
+    private lateinit var service: UnificationService
+    private lateinit var factionRepository: FactionRepository
+    private lateinit var planetRepository: PlanetRepository
+    private lateinit var officerRepository: OfficerRepository
+    private lateinit var appUserRepository: AppUserRepository
+    private lateinit var hallOfFameRepository: HallOfFameRepository
+    private lateinit var sovereignRepository: SovereignRepository
+    private lateinit var oldFactionRepository: OldFactionRepository
+    private lateinit var oldOfficerRepository: OldOfficerRepository
+    private lateinit var gameHistoryRepository: GameHistoryRepository
+    private lateinit var messageRepository: MessageRepository
+
+    @Suppress("UNCHECKED_CAST")
+    private fun <T> anyNonNull(): T = any<T>() as T
+
+    @BeforeEach
+    fun setUp() {
+        factionRepository = mock(FactionRepository::class.java)
+        planetRepository = mock(PlanetRepository::class.java)
+        officerRepository = mock(OfficerRepository::class.java)
+        appUserRepository = mock(AppUserRepository::class.java)
+        hallOfFameRepository = mock(HallOfFameRepository::class.java)
+        sovereignRepository = mock(SovereignRepository::class.java)
+        oldFactionRepository = mock(OldFactionRepository::class.java)
+        oldOfficerRepository = mock(OldOfficerRepository::class.java)
+        gameHistoryRepository = mock(GameHistoryRepository::class.java)
+        messageRepository = mock(MessageRepository::class.java)
+
+        val historyService = mock(HistoryService::class.java)
+
+        service = UnificationService(
+            factionRepository,
+            planetRepository,
+            officerRepository,
+            appUserRepository,
+            hallOfFameRepository,
+            sovereignRepository,
+            oldFactionRepository,
+            oldOfficerRepository,
+            gameHistoryRepository,
+            messageRepository,
+            historyService,
+        )
+    }
+
+    private fun createWorld(isUnited: Int = 0): SessionState {
+        return SessionState(
+            id = 1,
+            name = "테스트서버",
+            scenarioCode = "test",
+            currentYear = 200,
+            currentMonth = 6,
+            tickSeconds = 300,
+            config = mutableMapOf("isUnited" to isUnited),
+        )
+    }
+
+    @Test
+    fun `checkAndSettleUnification skips if already united`() {
+        val world = createWorld(isUnited = 1)
+
+        service.checkAndSettleUnification(world)
+
+        verify(factionRepository, never()).findBySessionId(anyLong())
+    }
+
+    @Test
+    fun `checkAndSettleUnification skips if multiple active nations`() {
+        val world = createWorld()
+        val factions = listOf(
+            Faction(id = 1, sessionId = 1, name = "위", color = "#FF0000", factionRank = 7),
+            Faction(id = 2, sessionId = 1, name = "촉", color = "#00FF00", factionRank = 5),
+        )
+        `when`(factionRepository.findBySessionId(1L)).thenReturn(factions)
+
+        service.checkAndSettleUnification(world)
+
+        assertEquals(0, world.config["isUnited"], "Should not mark as united")
+    }
+
+    @Test
+    fun `checkAndSettleUnification skips if single nation but not all cities owned`() {
+        val world = createWorld()
+        val factions = listOf(
+            Faction(id = 1, sessionId = 1, name = "위", color = "#FF0000", factionRank = 7),
+            Faction(id = 2, sessionId = 1, name = "촉", color = "#00FF00", factionRank = 0),
+        )
+        val planets = listOf(
+            Planet(id = 1, sessionId = 1, name = "낙양", factionId = 1),
+            Planet(id = 2, sessionId = 1, name = "성도", factionId = 0),
+        )
+        `when`(factionRepository.findBySessionId(1L)).thenReturn(factions)
+        `when`(planetRepository.findBySessionId(1L)).thenReturn(planets)
+
+        service.checkAndSettleUnification(world)
+
+        assertEquals(0, world.config["isUnited"], "Should not mark as united when cities unowned")
+    }
+
+    @Test
+    fun `checkAndSettleUnification marks united when single active nation owns all cities`() {
+        val world = createWorld()
+        val factions = listOf(
+            Faction(id = 1, sessionId = 1, name = "위", color = "#FF0000", factionRank = 7),
+            Faction(id = 2, sessionId = 1, name = "촉", color = "#00FF00", factionRank = 0),
+        )
+        val planets = listOf(
+            Planet(id = 1, sessionId = 1, name = "낙양", factionId = 1),
+            Planet(id = 2, sessionId = 1, name = "허창", factionId = 1),
+        )
+        `when`(factionRepository.findBySessionId(1L)).thenReturn(factions)
+        `when`(planetRepository.findBySessionId(1L)).thenReturn(planets)
+        `when`(officerRepository.findBySessionId(1L)).thenReturn(emptyList())
+        `when`(messageRepository.findBySessionIdAndMailboxCodeAndDestIdOrderBySentAtDesc(anyLong(), anyString(), anyLong()))
+            .thenReturn(emptyList())
+        `when`(messageRepository.save(anyNonNull())).thenAnswer { it.arguments[0] }
+        `when`(gameHistoryRepository.findByServerId(anyString())).thenReturn(null)
+        `when`(gameHistoryRepository.save(anyNonNull())).thenAnswer { it.arguments[0] }
+        `when`(gameHistoryRepository.count()).thenReturn(0)
+        `when`(oldFactionRepository.findByServerIdAndNation(anyString(), anyLong())).thenReturn(null)
+        `when`(oldFactionRepository.save(anyNonNull())).thenAnswer { it.arguments[0] }
+        `when`(oldFactionRepository.findByServerId(anyString())).thenReturn(emptyList())
+        `when`(sovereignRepository.save(anyNonNull())).thenAnswer { it.arguments[0] }
+
+        service.checkAndSettleUnification(world)
+
+        assertEquals(2, world.config["isUnited"], "Should mark as united with value 2")
+        assertEquals(3000000, world.config["refreshLimit"], "Should multiply refreshLimit by 100")
+    }
+
+    @Test
+    fun `checkAndSettleUnification skips when no cities exist`() {
+        val world = createWorld()
+        val factions = listOf(
+            Faction(id = 1, sessionId = 1, name = "위", color = "#FF0000", factionRank = 7),
+        )
+        `when`(factionRepository.findBySessionId(1L)).thenReturn(factions)
+        `when`(planetRepository.findBySessionId(1L)).thenReturn(emptyList())
+
+        service.checkAndSettleUnification(world)
+
+        assertEquals(0, world.config["isUnited"], "Should not unite when no cities")
+    }
+}

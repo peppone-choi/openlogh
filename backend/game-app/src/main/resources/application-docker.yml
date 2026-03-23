@@ -1,0 +1,13 @@
+spring:
+    datasource:
+        url: jdbc:postgresql://${DB_HOST:postgres}:${DB_PORT:5432}/${DB_NAME:openlogh}
+        username: ${DB_USER:openlogh}
+        password: ${DB_PASSWORD:openlogh123}
+    data:
+        redis:
+            host: ${REDIS_HOST:redis}
+            port: ${REDIS_PORT:6379}
+
+app:
+    jwt:
+        secret: ${JWT_SECRET:openlogh-jwt-secret-key-must-be-at-least-256-bits-long-for-hs256}

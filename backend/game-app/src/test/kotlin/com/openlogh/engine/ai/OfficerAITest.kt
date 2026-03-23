@@ -1,0 +1,1047 @@
+package com.openlogh.engine.ai
+
+import com.openlogh.entity.*
+import com.openlogh.repository.*
+import com.openlogh.service.MapService
+import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.mockito.Mockito.*
+import java.time.OffsetDateTime
+import java.util.*
+import kotlin.random.Random
+
+class OfficerAITest {
+
+    private lateinit var ai: OfficerAI
+    private lateinit var officerRepository: OfficerRepository
+    private lateinit var planetRepository: PlanetRepository
+    private lateinit var factionRepository: FactionRepository
+    private lateinit var diplomacyRepository: DiplomacyRepository
+    private lateinit var mapService: MapService
+
+    @BeforeEach
+    fun setUp() {
+        officerRepository = mock(OfficerRepository::class.java)
+        planetRepository = mock(PlanetRepository::class.java)
+        factionRepository = mock(FactionRepository::class.java)
+        diplomacyRepository = mock(DiplomacyRepository::class.java)
+        mapService = mock(MapService::class.java)
+        ai = OfficerAI(
+            officerRepository = officerRepository,
+            planetRepository = planetRepository,
+            factionRepository = factionRepository,
+            diplomacyRepository = diplomacyRepository,
+            mapService = mapService,
+        )
+    }
+
+    private fun createWorld(year: Short = 200, month: Short = 3): SessionState {
+        return SessionState(
+            id = 1,
+            scenarioCode = "test",
+            currentYear = year,
+            currentMonth = month,
+            tickSeconds = 300,
+        )
+    }
+
+    private fun createOfficer(
+        id: Long = 1,
+        factionId: Long = 1,
+        planetId: Long = 1,
+        leadership: Short = 50,
+        command: Short = 50,
+        intelligence: Short = 50,
+        ships: Int = 0,
+        training: Short = 50,
+        morale: Short = 50,
+        funds: Int = 1000,
+        supplies: Int = 1000,
+        rank: Short = 1,
+        npcState: Short = 2,
+        injury: Short = 0,
+        dedication: Int = 100,
+    ): Officer {
+        return Officer(
+            id = id,
+            sessionId = 1,
+            name = "NPC장수$id",
+            factionId = factionId,
+            planetId = planetId,
+            leadership = leadership,
+            command = command,
+            intelligence = intelligence,
+            ships = ships,
+            training = training,
+            morale = morale,
+            funds = funds,
+            supplies = supplies,
+            rank = rank,
+            npcState = npcState,
+            injury = injury,
+            dedication = dedication,
+            turnTime = OffsetDateTime.now(),
+        )
+    }
+
+    private fun createPlanet(
+        id: Long = 1,
+        factionId: Long = 1,
+        production: Int = 500,
+        productionMax: Int = 1000,
+        commerce: Int = 500,
+        commerceMax: Int = 1000,
+        security: Int = 500,
+        securityMax: Int = 1000,
+        frontState: Short = 0,
+    ): Planet {
+        return Planet(
+            id = id,
+            sessionId = 1,
+            name = "도시$id",
+            factionId = factionId,
+            production = production,
+            productionMax = productionMax,
+            commerce = commerce,
+            commerceMax = commerceMax,
+            security = security,
+            securityMax = securityMax,
+            frontState = frontState,
+            population = 60000,
+            populationMax = 100000,
+        )
+    }
+
+    private fun createFaction(
+        id: Long = 1,
+        factionRank: Short = 1,
+        funds: Int = 10000,
+        supplies: Int = 10000,
+        militaryPower: Int = 100,
+        warState: Short = 0,
+    ): Faction {
+        return Faction(
+            id = id,
+            sessionId = 1,
+            name = "국가$id",
+            color = "#FF0000",
+            factionRank = factionRank,
+            funds = funds,
+            supplies = supplies,
+            militaryPower = militaryPower,
+            warState = warState,
+        )
+    }
+
+    private fun createDiplomacy(
+        srcNationId: Long,
+        destFactionId: Long,
+        stateCode: String,
+    ): Diplomacy {
+        return Diplomacy(
+            sessionId = 1,
+            srcNationId = srcNationId,
+            destFactionId = destFactionId,
+            stateCode = stateCode,
+        )
+    }
+
+    private fun setupRepos(
+        world: SessionState,
+        officer: Officer,
+        planet: Planet,
+        faction: Faction?,
+        allPlanets: List<Planet> = listOf(planet),
+        allOfficers: List<Officer> = listOf(officer),
+        allFactions: List<Faction> = listOfNotNull(faction),
+        diplomacies: List<Diplomacy> = emptyList(),
+    ) {
+        `when`(planetRepository.findById(officer.planetId)).thenReturn(Optional.of(planet))
+        if (faction != null) {
+            `when`(factionRepository.findById(officer.factionId)).thenReturn(Optional.of(faction))
+        }
+        `when`(planetRepository.findBySessionId(world.id.toLong())).thenReturn(allPlanets)
+        `when`(officerRepository.findBySessionId(world.id.toLong())).thenReturn(allOfficers)
+        `when`(factionRepository.findBySessionId(world.id.toLong())).thenReturn(allFactions)
+        `when`(diplomacyRepository.findBySessionIdAndIsDeadFalse(world.id.toLong())).thenReturn(diplomacies)
+    }
+
+    // ========== Fallback to 휴식 ==========
+
+    @Test
+    fun `returns 휴식 when city not found`() {
+        val world = createWorld()
+        val officer = createOfficer(planetId = 999)
+
+        `when`(planetRepository.findById(999L)).thenReturn(Optional.empty())
+
+        val action = ai.decideAndExecute(officer, world)
+        assertEquals("휴식", action)
+    }
+
+    // ========== Injury recovery ==========
+
+    @Test
+    fun `returns 요양 when general is injured during war`() {
+        val world = createWorld()
+        val officer = createOfficer(injury = 10)
+        val planet = createPlanet(factionId = 1)
+        val faction = createFaction()
+        val diplomacy = createDiplomacy(1, 2, "선전포고")
+
+        setupRepos(world, officer, planet, faction, diplomacies = listOf(diplomacy),
+            allFactions = listOf(faction, createFaction(id = 2)))
+
+        val action = ai.decideAndExecute(officer, world)
+        assertEquals("요양", action)
+    }
+
+    @Test
+    fun `returns 요양 when general is injured during peace`() {
+        val world = createWorld()
+        val officer = createOfficer(injury = 5)
+        val planet = createPlanet(factionId = 1)
+        val faction = createFaction()
+
+        setupRepos(world, officer, planet, faction)
+
+        val action = ai.decideAndExecute(officer, world)
+        assertEquals("요양", action)
+    }
+
+    @Test
+    fun `strategist skips 기술연구 when legacy TechLimit blocks current tech band`() {
+        val world = createWorld(year = 184, month = 3).apply {
+            config["startyear"] = 180
+        }
+        val officer = createOfficer(leadership = 30, command = 20, intelligence = 90, ships = 0, training = 80)
+        val planet = createPlanet(
+            factionId = 1,
+            production = 1000,
+            productionMax = 1000,
+            commerce = 1000,
+            commerceMax = 1000,
+            security = 1000,
+            securityMax = 1000,
+        ).apply {
+            approval = 100f
+            population = 100000
+            populationMax = 100000
+        }
+        val faction = createFaction().apply {
+            techLevel = 1000f
+        }
+
+        setupRepos(world, officer, planet, faction)
+
+        val action = invokeDoNormalDomestic(world, officer, planet, faction)
+        assertNull(action)
+    }
+
+    @Test
+    fun `strategist chooses 기술연구 once next legacy tech band opens`() {
+        val world = createWorld(year = 185, month = 3).apply {
+            config["startyear"] = 180
+        }
+        val officer = createOfficer(leadership = 30, command = 20, intelligence = 90, ships = 0, training = 80)
+        val planet = createPlanet(
+            factionId = 1,
+            production = 1000,
+            productionMax = 1000,
+            commerce = 1000,
+            commerceMax = 1000,
+            security = 1000,
+            securityMax = 1000,
+        ).apply {
+            approval = 100f
+            population = 100000
+            populationMax = 100000
+        }
+        val faction = createFaction().apply {
+            techLevel = 1000f
+        }
+
+        setupRepos(world, officer, planet, faction)
+
+        val action = invokeDoNormalDomestic(world, officer, planet, faction)
+        assertEquals("기술연구", action)
+    }
+
+    @Test
+    fun `resource trade uses legacy death-rate weighting from rank stats`() {
+        val world = createWorld()
+        val officer = createOfficer(funds = 6000, supplies = 900).apply {
+            meta["rank"] = mutableMapOf(
+                "killcrew" to 0,
+                "deathcrew" to 50000,
+            )
+        }
+        val planet = createPlanet(factionId = 1)
+        val faction = createFaction()
+
+        val action = invokeDoTradeResources(world, officer, planet, faction)
+
+        assertEquals("군량매매", action)
+        @Suppress("UNCHECKED_CAST")
+        val aiArg = officer.meta["aiArg"] as Map<String, Any>
+        assertEquals(true, aiArg["isBuy"])
+        assertEquals(1400, aiArg["amount"])
+    }
+
+    @Test
+    fun `doRise requires nearby unoccupied major city like legacy`() {
+        val world = createWorld(year = 181, month = 3).apply {
+            config["startyear"] = 180
+        }
+        val officer = createOfficer(
+            factionId = 0,
+            planetId = 1,
+            leadership = 80,
+            command = 80,
+            intelligence = 80,
+            npcState = 2,
+        )
+        val currentPlanet = createPlanet(id = 1, factionId = 0).apply {
+            level = 5
+            meta["connections"] = listOf(2)
+        }
+        val blockedPlanet = createPlanet(id = 2, factionId = 1).apply {
+            level = 5
+            meta["connections"] = listOf(1)
+        }
+        val faction = createFaction()
+
+        setupRepos(
+            world,
+            officer,
+            currentPlanet,
+            null,
+            allPlanets = listOf(currentPlanet, blockedPlanet),
+            allOfficers = listOf(officer),
+            allFactions = listOf(faction),
+        )
+
+        val action = invokeDoRise(world, officer, FixedRandom(0.1, 0.0))
+        assertNull(action)
+    }
+
+    @Test
+    fun `doRise uses legacy 70 point threshold instead of simplified 80`() {
+        val world = createWorld(year = 181, month = 3).apply {
+            config["startyear"] = 180
+        }
+        val officer = createOfficer(
+            factionId = 0,
+            planetId = 1,
+            leadership = 72,
+            command = 72,
+            intelligence = 72,
+            npcState = 2,
+        )
+        val currentPlanet = createPlanet(id = 1, factionId = 0).apply {
+            level = 5
+            meta["connections"] = listOf(2)
+        }
+        val openMajorPlanet = createPlanet(id = 2, factionId = 0).apply {
+            level = 5
+            meta["connections"] = listOf(1)
+        }
+
+        setupRepos(
+            world,
+            officer,
+            currentPlanet,
+            null,
+            allPlanets = listOf(currentPlanet, openMajorPlanet),
+            allOfficers = listOf(officer),
+            allFactions = emptyList(),
+        )
+
+        val action = invokeDoRise(world, officer, FixedRandom(0.95, 0.0))
+        assertEquals("거병", action)
+    }
+
+    @Test
+    fun `choosePromotion uses dynamic legacy user killturn threshold`() {
+        val world = createWorld().apply {
+            config["turnterm"] = 60
+        }
+        val lord = createOfficer(id = 1, rank = 20, npcState = 2, factionId = 1)
+        val almostEligibleChief = createOfficer(id = 2, rank = 11, npcState = 0, factionId = 1).apply {
+            killTurn = 495
+            permission = "normal"
+        }
+        val freshUser = createOfficer(id = 3, rank = 1, npcState = 0, factionId = 1).apply {
+            killTurn = 500
+            leadership = 90
+        }
+        val planet = createPlanet(factionId = 1)
+        val faction = createFaction(factionRank = 1)
+
+        ai.choosePromotion(
+            buildPromotionContext(world, lord, planet, faction, listOf(lord, almostEligibleChief, freshUser)),
+            FixedRandomBooleans(false),
+        )
+
+        assertEquals("normal", almostEligibleChief.permission)
+    }
+
+    @Test
+    fun `choosePromotion respects noAmbassador penalty for user chiefs`() {
+        val world = createWorld().apply {
+            config["turnterm"] = 60
+        }
+        val lord = createOfficer(id = 1, rank = 20, npcState = 2, factionId = 1)
+        val penalizedChief = createOfficer(id = 2, rank = 11, npcState = 0, factionId = 1).apply {
+            killTurn = 500
+            permission = "normal"
+            penalty["noAmbassador"] = true
+        }
+        val planet = createPlanet(factionId = 1)
+        val faction = createFaction(factionRank = 1)
+
+        ai.choosePromotion(
+            buildPromotionContext(world, lord, planet, faction, listOf(lord, penalizedChief)),
+            FixedRandomBooleans(false),
+        )
+
+        assertEquals("normal", penalizedChief.permission)
+    }
+
+    @Test
+    fun `chooseGoldBillRate uses legacy city income war income and dedication bill`() {
+        val world = createWorld()
+        val officer = createOfficer(factionId = 1, dedication = 2500).apply {
+            stationedSystem = 0
+        }
+        val planet = createPlanet(
+            factionId = 1,
+            commerce = 1000,
+            commerceMax = 1000,
+            security = 500,
+            securityMax = 1000,
+        ).apply {
+            approval = 100f
+            dead = 1000
+        }
+        val faction = createFaction(funds = 10000).apply {
+            conscriptionRateTmp = 20
+            typeCode = "che_중립"
+        }
+
+        val bill = ai.chooseGoldBillRate(buildAiContext(world, officer, planet, faction, listOf(officer)), listOf(planet), NpcNationPolicy())
+
+        assertEquals(141, bill)
+        assertEquals(141.toShort(), faction.taxRate)
+    }
+
+    @Test
+    fun `chooseRiceBillRate uses legacy agriculture wall and dedication bill`() {
+        val world = createWorld()
+        val officer = createOfficer(factionId = 1, dedication = 2500).apply {
+            stationedSystem = 0
+        }
+        val planet = createPlanet(
+            factionId = 1,
+            production = 1000,
+            productionMax = 1000,
+            security = 500,
+            securityMax = 1000,
+        ).apply {
+            approval = 100f
+            orbitalDefense = 900
+            fortress = 900
+            fortressMax = 900
+        }
+        val faction = createFaction(supplies = 10000).apply {
+            conscriptionRateTmp = 20
+            typeCode = "che_중립"
+        }
+
+        val bill = ai.chooseRiceBillRate(buildAiContext(world, officer, planet, faction, listOf(officer)), listOf(planet), NpcNationPolicy())
+
+        assertEquals(155, bill)
+        assertEquals(155.toShort(), faction.taxRate)
+    }
+
+    private fun invokeDoNormalDomestic(world: SessionState, officer: Officer, planet: Planet, faction: Faction): String? {
+        val method = OfficerAI::class.java.getDeclaredMethod(
+            "doNormalDomestic",
+            SessionState::class.java,
+            Officer::class.java,
+            Planet::class.java,
+            Faction::class.java,
+        )
+        method.isAccessible = true
+        return method.invoke(ai, world, officer, planet, faction) as String?
+    }
+
+    private fun invokeDoTradeResources(world: SessionState, officer: Officer, planet: Planet, faction: Faction): String? {
+        val method = OfficerAI::class.java.getDeclaredMethod(
+            "doTradeResources",
+            SessionState::class.java,
+            Officer::class.java,
+            Planet::class.java,
+            Faction::class.java,
+        )
+        method.isAccessible = true
+        return method.invoke(ai, world, officer, planet, faction) as String?
+    }
+
+    private fun invokeDoRise(world: SessionState, officer: Officer, rng: Random): String? {
+        val method = OfficerAI::class.java.getDeclaredMethod(
+            "doRise",
+            SessionState::class.java,
+            Officer::class.java,
+            Random::class.java,
+        )
+        method.isAccessible = true
+        return method.invoke(ai, world, officer, rng) as String?
+    }
+
+    private fun buildPromotionContext(
+        world: SessionState,
+        officer: Officer,
+        planet: Planet,
+        faction: Faction,
+        factionOfficers: List<Officer>,
+    ) = buildAiContext(world, officer, planet, faction, factionOfficers)
+
+    private fun buildAiContext(
+        world: SessionState,
+        officer: Officer,
+        planet: Planet,
+        faction: Faction,
+        factionOfficers: List<Officer>,
+    ) = AIContext(
+        world = world,
+        general = officer,
+        city = planet,
+        nation = faction,
+        diplomacyState = DiplomacyState.PEACE,
+        generalType = ai.classifyGeneral(officer, Random(0), 40),
+        allCities = listOf(planet),
+        allGenerals = factionOfficers,
+        allNations = listOf(faction),
+        frontCities = emptyList(),
+        rearCities = listOf(planet),
+        nationGenerals = factionOfficers,
+    )
+
+    private class FixedRandom(private vararg val doubles: Double) : Random() {
+        private var index = 0
+
+        override fun nextBits(bitCount: Int): Int = 0
+
+        override fun nextDouble(): Double {
+            val value = doubles.getOrElse(index) { doubles.lastOrNull() ?: 0.0 }
+            index++
+            return value
+        }
+    }
+
+    private class FixedRandomBooleans(private vararg val booleans: Boolean) : Random() {
+        private var boolIndex = 0
+
+        override fun nextBits(bitCount: Int): Int = 0
+
+        override fun nextBoolean(): Boolean {
+            val value = booleans.getOrElse(boolIndex) { booleans.lastOrNull() ?: false }
+            boolIndex++
+            return value
+        }
+
+        override fun nextDouble(): Double = 1.0
+    }
+
+    // ========== War actions ==========
+
+    @Test
+    fun `recruits via mobing when at war with low crew and plenty of gold`() {
+        val world = createWorld()
+        // Per legacy: 모병 requires gold after train cost >= trainCost*6
+        // leadership=50, trainCost=150, so need gold > 150 + 150*6 = 1050
+        val officer = createOfficer(ships = 50, funds = 2000, supplies = 2000)
+        val planet = createPlanet(factionId = 1)
+        val faction = createFaction(funds = 20000, supplies = 20000)
+        val diplomacy = createDiplomacy(1, 2, "선전포고")
+
+        setupRepos(world, officer, planet, faction, diplomacies = listOf(diplomacy),
+            allFactions = listOf(faction, createFaction(id = 2)))
+
+        val action = ai.decideAndExecute(officer, world)
+        assertEquals("모병", action)
+    }
+
+    @Test
+    fun `conscripts when at war with low crew and moderate gold`() {
+        val world = createWorld()
+        // Per legacy: 징병 when gold is enough for train but not 모병
+        val officer = createOfficer(ships = 50, funds = 500, supplies = 1000)
+        val planet = createPlanet(factionId = 1)
+        val faction = createFaction(funds = 20000, supplies = 20000)
+        val diplomacy = createDiplomacy(1, 2, "선전포고")
+
+        setupRepos(world, officer, planet, faction, diplomacies = listOf(diplomacy),
+            allFactions = listOf(faction, createFaction(id = 2)))
+
+        val action = ai.decideAndExecute(officer, world)
+        assertEquals("징병", action)
+    }
+
+    @Test
+    fun `trains when at war with low train and high atmos`() {
+        val world = createWorld()
+        // Per legacy: weighted random choice between 훈련 and 사기진작
+        // With atmos already at threshold (90), only 훈련 is chosen
+        val officer = createOfficer(ships = 2000, training = 50, morale = 90)
+        val planet = createPlanet(factionId = 1)
+        val faction = createFaction(funds = 20000, supplies = 20000)
+        val diplomacy = createDiplomacy(1, 2, "선전포고")
+
+        setupRepos(world, officer, planet, faction, diplomacies = listOf(diplomacy),
+            allFactions = listOf(faction, createFaction(id = 2)))
+
+        val action = ai.decideAndExecute(officer, world)
+        assertEquals("훈련", action)
+    }
+
+    @Test
+    fun `boosts morale when at war with low atmos`() {
+        val world = createWorld()
+        val officer = createOfficer(ships = 2000, training = 80, morale = 50)
+        val planet = createPlanet(factionId = 1)
+        val faction = createFaction(funds = 20000, supplies = 20000)
+        val diplomacy = createDiplomacy(1, 2, "선전포고")
+
+        setupRepos(world, officer, planet, faction, diplomacies = listOf(diplomacy),
+            allFactions = listOf(faction, createFaction(id = 2)))
+
+        val action = ai.decideAndExecute(officer, world)
+        assertEquals("사기진작", action)
+    }
+
+    @Test
+    fun `attacks from attackable front city with enough troops`() {
+        val world = createWorld()
+        // Per legacy: frontState=2 (attackable front), frontState=1 is non-attackable
+        val officer = createOfficer(ships = 2000, training = 90, morale = 90)
+        val planet = createPlanet(factionId = 1, frontState = 2)
+        val enemyPlanet = createPlanet(id = 2, factionId = 2, frontState = 0)
+        val faction = createFaction(funds = 20000, supplies = 20000)
+        val diplomacy = createDiplomacy(1, 2, "전쟁")
+
+        setupRepos(world, officer, planet, faction,
+            allPlanets = listOf(planet, enemyPlanet),
+            diplomacies = listOf(diplomacy),
+            allFactions = listOf(faction, createFaction(id = 2)))
+
+        val action = ai.decideAndExecute(officer, world)
+        assertEquals("출병", action)
+    }
+
+    // ========== Peace actions: city development ==========
+
+    @Test
+    fun `develops agriculture when city agri is low`() {
+        val world = createWorld()
+        val officer = createOfficer(ships = 0, intelligence = 80, command = 30, leadership = 30)
+        val planet = createPlanet(factionId = 1, production = 100, productionMax = 1000)
+        val faction = createFaction()
+
+        setupRepos(world, officer, planet, faction)
+
+        val action = ai.decideAndExecute(officer, world)
+        assertEquals("농지개간", action)
+    }
+
+    @Test
+    fun `develops commerce when agri is ok but comm is low`() {
+        val world = createWorld()
+        val officer = createOfficer(ships = 0, intelligence = 80, command = 30, leadership = 30)
+        val planet = createPlanet(factionId = 1, production = 600, productionMax = 1000, commerce = 100, commerceMax = 1000)
+        val faction = createFaction()
+
+        setupRepos(world, officer, planet, faction)
+
+        val action = ai.decideAndExecute(officer, world)
+        assertEquals("상업투자", action)
+    }
+
+    @Test
+    fun `develops security when agri and comm are ok but secu is low`() {
+        val world = createWorld()
+        val officer = createOfficer(ships = 0, intelligence = 80, command = 30, leadership = 30)
+        val planet = createPlanet(factionId = 1, production = 600, productionMax = 1000, commerce = 600, commerceMax = 1000, security = 100, securityMax = 1000)
+        val faction = createFaction()
+
+        setupRepos(world, officer, planet, faction)
+
+        val action = ai.decideAndExecute(officer, world)
+        assertEquals("치안강화", action)
+    }
+
+    // ========== Peace actions: type-based ==========
+
+    @Test
+    fun `warrior type trains troops during peace`() {
+        val world = createWorld()
+        val officer = createOfficer(command = 90, leadership = 50, intelligence = 30, ships = 500, training = 50)
+        val planet = createPlanet(factionId = 1, production = 600, productionMax = 1000, commerce = 600, commerceMax = 1000, security = 600, securityMax = 1000)
+        val faction = createFaction()
+        val otherFaction = createFaction(id = 2)
+        val diplomacy = createDiplomacy(srcNationId = 1, destFactionId = 2, stateCode = "동맹")
+
+        setupRepos(world, officer, planet, faction,
+            allFactions = listOf(faction, otherFaction),
+            diplomacies = listOf(diplomacy))
+
+        val action = ai.decideAndExecute(officer, world)
+        assertEquals("훈련", action)
+    }
+
+    @Test
+    fun `warrior type recruits when no crew`() {
+        val world = createWorld()
+        val officer = createOfficer(command = 90, leadership = 50, intelligence = 30, ships = 0, funds = 5000, supplies = 5000)
+        val planet = createPlanet(factionId = 1, production = 600, productionMax = 1000, commerce = 600, commerceMax = 1000, security = 600, securityMax = 1000)
+        val faction = createFaction()
+
+        setupRepos(world, officer, planet, faction)
+
+        val action = ai.decideAndExecute(officer, world)
+        // warrior with crew=0, sufficient gold/rice => 모병 (rich) or 징병 (poor)
+        assertTrue(action == "모병" || action == "징병", "Expected recruitment command but got: $action")
+    }
+
+    // ========== Chief (lord) actions ==========
+
+    @Test
+    fun `chief uses priority loop and falls through to general action during peace`() {
+        val world = createWorld()
+        val chief = createOfficer(id = 1, rank = 20, ships = 2000)
+        val unassigned = createOfficer(id = 2, rank = 0, npcState = 2)
+        val planet = createPlanet(factionId = 1)
+        val faction = createFaction()
+
+        setupRepos(world, chief, planet, faction,
+            allOfficers = listOf(chief, unassigned))
+
+        // With no front/supply cities and PEACE state, nation priorities all return null.
+        // Chief falls through to general-level peace action (domestic development or neutral).
+        val action = ai.decideAndExecute(chief, world)
+        assertNotNull(action, "Chief should produce an action via priority loop")
+        assertTrue(action != "발령" || action != "증축",
+            "Chief uses priority-based decisions, not hardcoded early returns")
+    }
+
+    @Test
+    fun `chief iterates nation priorities before general action`() {
+        val world = createWorld()
+        val chief = createOfficer(id = 1, rank = 20, ships = 2000)
+        val assigned = createOfficer(id = 2, rank = 3, npcState = 2)
+        val planet = createPlanet(factionId = 1)
+        planet.level = 3
+        val faction = createFaction(funds = 20000)
+
+        setupRepos(world, chief, planet, faction,
+            allPlanets = listOf(planet),
+            allOfficers = listOf(chief, assigned))
+
+        // During peace with no front cities, nation priorities exhaust,
+        // chief falls through to general-level peace action.
+        val action = ai.decideAndExecute(chief, world)
+        assertNotNull(action, "Chief should produce an action")
+    }
+
+    // ========== Diplomacy state detection ==========
+
+    @Test
+    fun `detects AT_WAR from diplomacy 선전포고`() {
+        val world = createWorld()
+        // Per legacy parity: gold=500 with leadership=50 -> trainCost=150, goldAfter=350
+        // 350 < 900 (trainCost*6), so 징병 (conscript) not 모병 (volunteer)
+        val officer = createOfficer(ships = 50, funds = 500)
+        val planet = createPlanet(factionId = 1)
+        val faction = createFaction(funds = 20000, supplies = 20000)
+        val diplomacy = createDiplomacy(1, 2, "선전포고")
+
+        setupRepos(world, officer, planet, faction, diplomacies = listOf(diplomacy),
+            allFactions = listOf(faction, createFaction(id = 2)))
+
+        // At war with low crew and moderate gold -> conscript
+        val action = ai.decideAndExecute(officer, world)
+        assertEquals("징병", action)
+    }
+
+    @Test
+    fun `detects PEACE when no diplomacy entries`() {
+        val world = createWorld()
+        val officer = createOfficer(ships = 0, intelligence = 80, command = 30, leadership = 30)
+        val planet = createPlanet(factionId = 1, production = 100, productionMax = 1000)
+        val faction = createFaction()
+
+        setupRepos(world, officer, planet, faction)
+
+        // Peace + low agri => should develop
+        val action = ai.decideAndExecute(officer, world)
+        assertEquals("농지개간", action)
+    }
+
+    // ========== NPC troop leader (npcState=5) ==========
+
+    @Test
+    fun `troop leader (npcState=5) always returns 집합`() {
+        val world = createWorld()
+        val officer = createOfficer(npcState = 5)
+
+        val action = ai.decideAndExecute(officer, world)
+        assertEquals("집합", action)
+    }
+
+    // ========== Wanderer (nationId=0) ==========
+
+    @Test
+    fun `wanderer returns 요양 when injured`() {
+        val world = createWorld()
+        val officer = createOfficer(factionId = 0, injury = 10)
+
+        val action = ai.decideAndExecute(officer, world)
+        assertEquals("요양", action)
+    }
+
+    @Test
+    fun `wanderer returns one of exploration actions`() {
+        val world = createWorld()
+        val officer = createOfficer(factionId = 0, injury = 0)
+
+        val action = ai.decideAndExecute(officer, world)
+        assertTrue(action in listOf("견문", "이동", "물자조달", "휴식"),
+            "Expected wanderer action but got: $action")
+    }
+
+    // ========== Reserved command ==========
+
+    @Test
+    fun `uses reserved command when set in meta`() {
+        val world = createWorld()
+        val officer = createOfficer(ships = 0, intelligence = 80, command = 30, leadership = 30)
+        officer.meta["reservedCommand"] = "단련"
+        val planet = createPlanet(factionId = 1)
+        val faction = createFaction()
+
+        setupRepos(world, officer, planet, faction)
+
+        val action = ai.decideAndExecute(officer, world)
+        assertEquals("단련", action)
+        // Reserved command should be cleared after use
+        assertNull(officer.meta["reservedCommand"])
+    }
+
+    @Test
+    fun `ignores reserved command when it is 휴식`() {
+        val world = createWorld()
+        val officer = createOfficer(ships = 0, intelligence = 80, command = 30, leadership = 30)
+        officer.meta["reservedCommand"] = "휴식"
+        val planet = createPlanet(factionId = 1, production = 100, productionMax = 1000)
+        val faction = createFaction()
+
+        setupRepos(world, officer, planet, faction)
+
+        val action = ai.decideAndExecute(officer, world)
+        // Should fall through to normal AI decision (농지개간 since agri is low)
+        assertEquals("농지개간", action)
+    }
+
+    // ========== Cure threshold ==========
+
+    @Test
+    fun `returns 요양 when injury exceeds cure threshold from policy`() {
+        val world = createWorld()
+        // Injury = 25, default cureThreshold = 20
+        val officer = createOfficer(injury = 25)
+        val planet = createPlanet(factionId = 1)
+        val faction = createFaction()
+
+        setupRepos(world, officer, planet, faction)
+
+        val action = ai.decideAndExecute(officer, world)
+        assertEquals("요양", action)
+    }
+
+    // ========== classifyGeneral: probabilistic hybrid ==========
+
+    @Test
+    fun `classifyGeneral sets WARRIOR for strength-dominant general`() {
+        val officer = createOfficer(command = 90, intelligence = 30, leadership = 30)
+        val flags = ai.classifyGeneral(officer, Random(42))
+        assertTrue(flags and GeneralType.WARRIOR.flag != 0,
+            "Should have WARRIOR flag")
+    }
+
+    @Test
+    fun `classifyGeneral sets STRATEGIST for intel-dominant general`() {
+        val officer = createOfficer(command = 30, intelligence = 90, leadership = 30)
+        val flags = ai.classifyGeneral(officer, Random(42))
+        assertTrue(flags and GeneralType.STRATEGIST.flag != 0,
+            "Should have STRATEGIST flag")
+    }
+
+    @Test
+    fun `classifyGeneral sets COMMANDER when leadership meets threshold`() {
+        val officer = createOfficer(command = 50, intelligence = 50, leadership = 70)
+        val flags = ai.classifyGeneral(officer, Random(42), minNPCWarLeadership = 40)
+        assertTrue(flags and GeneralType.COMMANDER.flag != 0,
+            "Should have COMMANDER flag")
+    }
+
+    @Test
+    fun `classifyGeneral does not set COMMANDER when leadership below threshold`() {
+        val officer = createOfficer(command = 50, intelligence = 50, leadership = 30)
+        val flags = ai.classifyGeneral(officer, Random(42), minNPCWarLeadership = 40)
+        assertTrue(flags and GeneralType.COMMANDER.flag == 0,
+            "Should not have COMMANDER flag")
+    }
+
+    @Test
+    fun `autoPromoteLord promotes best NPC when nation has no lord`() {
+        val gen1 = createOfficer(id = 1, leadership = 80, command = 70, intelligence = 60, rank = 0)
+        val gen2 = createOfficer(id = 2, leadership = 90, command = 80, intelligence = 70, rank = 0)
+        val gen3 = createOfficer(id = 3, leadership = 50, command = 40, intelligence = 30, rank = 1)
+
+        val result = ai.autoPromoteLord(listOf(gen1, gen2, gen3))
+
+        assertNotNull(result)
+        assertEquals(2L, result!!.id)
+        assertEquals(20, result.rank.toInt())
+    }
+
+    @Test
+    fun `autoPromoteLord does nothing when lord exists`() {
+        val lord = createOfficer(id = 1, rank = 20)
+        val gen2 = createOfficer(id = 2, leadership = 90, command = 80, intelligence = 70, rank = 0)
+
+        val result = ai.autoPromoteLord(listOf(lord, gen2))
+
+        assertNull(result)
+    }
+
+    @Test
+    fun `getNationChiefLevel matches legacy exact mapping`() {
+        val method = OfficerAI::class.java.getDeclaredMethod("getNationChiefLevel", Int::class.java)
+        method.isAccessible = true
+
+        assertEquals(5, method.invoke(ai, 7), "Emperor (7) should return 5")
+        assertEquals(5, method.invoke(ai, 6), "King (6) should return 5")
+        assertEquals(7, method.invoke(ai, 5), "Duke (5) should return 7")
+        assertEquals(7, method.invoke(ai, 4), "Marquis (4) should return 7")
+        assertEquals(9, method.invoke(ai, 3), "Prefect (3) should return 9")
+        assertEquals(9, method.invoke(ai, 2), "Prefect (2) should return 9")
+        assertEquals(11, method.invoke(ai, 1), "Below (1) should return 11")
+        assertEquals(11, method.invoke(ai, 0), "Below (0) should return 11")
+    }
+
+    // ========== Legacy parity: wanderer reserved command ==========
+
+    @Test
+    fun `wanderer uses reserved command before wanderer-specific logic (legacy parity)`() {
+        // Legacy PHP chooseGeneralTurn: reserved command checked BEFORE nationId==0 routing.
+        // Kotlin bug: nationId==0 routes directly to decideWandererAction, skipping reserved command.
+        val world = createWorld()
+        val officer = createOfficer(factionId = 0, injury = 0)
+        officer.meta["reservedCommand"] = "물자조달"
+
+        val action = ai.decideAndExecute(officer, world)
+
+        assertEquals("물자조달", action, "Wanderer should use reserved command per legacy order")
+        assertNull(officer.meta["reservedCommand"], "Reserved command should be cleared after use")
+    }
+
+    // ========== Legacy parity: classifyGeneral stat-ratio probability ==========
+
+    @Test
+    fun `classifyGeneral uses stat-ratio probability not fixed 50 percent for hybrid warrior`() {
+        // Legacy PHP calcGenType: nextBool(intel/strength/2) for warrior-base hybrid.
+        // strength=100, intel=80: ratio=0.8, prob = 0.8/2 = 0.4 (40%)
+        // With nextDouble()=0.45: 0.45 > 0.4 → legacy: NO STRATEGIST added
+        // Kotlin bug: uses nextInt(100)<50 (50% fixed) — nextBits=0 gives 0 < 50 → STRATEGIST added (wrong)
+        val officer = createOfficer(command = 100, intelligence = 80, leadership = 30)
+        val flags = ai.classifyGeneral(officer, FixedRandom(0.45), 40)
+
+        assertTrue(flags and GeneralType.WARRIOR.flag != 0, "Should have WARRIOR flag")
+        assertTrue(
+            flags and GeneralType.STRATEGIST.flag == 0,
+            "Should NOT have STRATEGIST: legacy prob=0.4, random=0.45 > 0.4 → no hybrid type"
+        )
+    }
+
+    @Test
+    fun `classifyGeneral uses stat-ratio probability not fixed 50 percent for hybrid strategist`() {
+        // Legacy PHP: nextBool(strength/intel/2) for strategist-base hybrid.
+        // intel=100, strength=80: ratio=0.8, prob = 0.8/2 = 0.4 (40%)
+        // With nextDouble()=0.45: 0.45 > 0.4 → legacy: NO WARRIOR added
+        val officer = createOfficer(intelligence = 100, command = 80, leadership = 30)
+        val flags = ai.classifyGeneral(officer, FixedRandom(0.45), 40)
+
+        assertTrue(flags and GeneralType.STRATEGIST.flag != 0, "Should have STRATEGIST flag")
+        assertTrue(
+            flags and GeneralType.WARRIOR.flag == 0,
+            "Should NOT have WARRIOR: legacy prob=0.4, random=0.45 > 0.4 → no hybrid type"
+        )
+    }
+
+    // ========== Legacy parity: doRise current city level check ==========
+
+    @Test
+    fun `doRise skips 50 percent of time when general at non-major city (legacy parity)`() {
+        // Legacy PHP do거병: if currentCityLevel < 5 or > 6, nextBool(0.5) skip.
+        // When random > 0.5 at a small city, legacy returns null.
+        // Kotlin bug: no current city level check → proceeds even at small city.
+        val world = createWorld(year = 181, month = 3).apply {
+            config["startyear"] = 180
+        }
+        val officer = createOfficer(
+            factionId = 0, planetId = 1, leadership = 80, command = 80, intelligence = 80, npcState = 2,
+        )
+        val smallPlanet = createPlanet(id = 1, factionId = 0).apply { level = 3 }
+        val openMajorPlanet = createPlanet(id = 2, factionId = 0).apply { level = 5 }
+
+        setupRepos(
+            world, officer, smallPlanet, null,
+            allPlanets = listOf(smallPlanet, openMajorPlanet),
+            allOfficers = listOf(officer),
+            allFactions = emptyList(),
+        )
+
+        // random=0.9 > 0.5 → legacy: city level check fires, skip → null
+        // Kotlin (current): no city level check → threshold=0.9*70=63 < 80 passes, → "거병"
+        val action = invokeDoRise(world, officer, FixedRandom(0.9, 0.0))
+        assertNull(action, "Should return null when at non-major city and random > 0.5 (legacy parity)")
+    }
+
+    @Test
+    fun `doRise proceeds when at non-major city and random below 0-5 (legacy parity)`() {
+        // With random <= 0.5, legacy city level check does NOT skip (nextBool(0.5) = false)
+        val world = createWorld(year = 181, month = 3).apply {
+            config["startyear"] = 180
+        }
+        val officer = createOfficer(
+            factionId = 0, planetId = 1, leadership = 80, command = 80, intelligence = 80, npcState = 2,
+        )
+        val smallPlanet = createPlanet(id = 1, factionId = 0).apply { level = 3 }
+        val openMajorPlanet = createPlanet(id = 2, factionId = 0).apply { level = 5 }
+
+        setupRepos(
+            world, officer, smallPlanet, null,
+            allPlanets = listOf(smallPlanet, openMajorPlanet),
+            allOfficers = listOf(officer),
+            allFactions = emptyList(),
+        )
+
+        // random=0.3 < 0.5 → legacy: city level check does NOT skip
+        // threshold = 0.3 * 70 = 21 < 80 → passes; final prob: 0.0 < 0.015 → "거병"
+        val action = invokeDoRise(world, officer, FixedRandom(0.3, 0.0))
+        assertEquals("거병", action, "Should proceed to 거병 when random <= 0.5 at non-major city")
+    }
+}

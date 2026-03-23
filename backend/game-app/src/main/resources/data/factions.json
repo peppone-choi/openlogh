@@ -1,0 +1,66 @@
+[
+    {
+        "code": "empire",
+        "nameKo": "은하제국",
+        "nameEn": "Galactic Empire",
+        "type": "empire",
+        "capital": "odin",
+        "color": "#C0A050",
+        "sovereignTitle": "Kaiser",
+        "sovereignTitleKo": "황제",
+        "description": "루돌프 폰 골덴바움이 창건한 은하제국. 강력한 황제 전제정치와 귀족 체계를 기반으로 하며, 수도 오딘을 중심으로 은하 서쪽 절반을 지배한다.",
+        "defaultStats": {
+            "taxRate": 35,
+            "conscriptionRate": 20,
+            "techLevel": 8
+        }
+    },
+    {
+        "code": "alliance",
+        "nameKo": "자유행성동맹",
+        "nameEn": "Free Planets Alliance",
+        "type": "alliance",
+        "capital": "heinessen",
+        "color": "#4080C0",
+        "sovereignTitle": "Supreme Council Chairman",
+        "sovereignTitleKo": "최고평의회 의장",
+        "description": "아르레 하이네센이 이끈 탈출자들이 세운 민주공화국. 수도 하이네센을 중심으로 은하 동쪽을 지배하며, 제국과 군사적 대치 상태에 있다.",
+        "defaultStats": {
+            "taxRate": 28,
+            "conscriptionRate": 15,
+            "techLevel": 7
+        }
+    },
+    {
+        "code": "fezzan",
+        "nameKo": "페잔 자치령",
+        "nameEn": "Fezzan Dominion",
+        "type": "fezzan",
+        "capital": "fezzan",
+        "color": "#40A060",
+        "sovereignTitle": "Landesherr",
+        "sovereignTitleKo": "자치령주",
+        "description": "제국과 동맹 사이의 유일한 자유 항로를 보유한 중립 교역 자치령. 양 세력으로부터 자치권을 인정받으며 교역으로 막대한 부를 축적한다.",
+        "defaultStats": {
+            "taxRate": 15,
+            "conscriptionRate": 5,
+            "techLevel": 7
+        }
+    },
+    {
+        "code": "rebel",
+        "nameKo": "반란군",
+        "nameEn": "Rebel Forces",
+        "type": "rebel",
+        "capital": null,
+        "color": "#A04040",
+        "sovereignTitle": "Commander",
+        "sovereignTitleKo": "사령관",
+        "description": "제국 내부 반란 세력 또는 독립 군벌. 쿠데타, 귀족 반란, 독립 운동 등 다양한 형태로 존재한다.",
+        "defaultStats": {
+            "taxRate": 25,
+            "conscriptionRate": 30,
+            "techLevel": 5
+        }
+    }
+]

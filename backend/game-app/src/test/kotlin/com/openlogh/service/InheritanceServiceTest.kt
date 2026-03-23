@@ -1,0 +1,166 @@
+package com.openlogh.service
+
+import com.openlogh.engine.modifier.TraitSpecRegistry
+import com.openlogh.entity.*
+import com.openlogh.repository.AppUserRepository
+import com.openlogh.repository.PlanetRepository
+import com.openlogh.repository.OfficerRepository
+import com.openlogh.repository.RankDataRepository
+import com.openlogh.repository.SessionStateRepository
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.mockito.Mockito.any
+import org.mockito.Mockito.mock
+import org.mockito.Mockito.`when`
+import java.time.OffsetDateTime
+import java.util.Optional
+
+class InheritanceServiceTest {
+    private lateinit var appUserRepository: AppUserRepository
+    private lateinit var planetRepository: PlanetRepository
+    private lateinit var officerRepository: OfficerRepository
+    private lateinit var rankDataRepository: RankDataRepository
+    private lateinit var sessionStateRepository: SessionStateRepository
+    private lateinit var gameConstService: GameConstService
+    private lateinit var service: InheritanceService
+
+    @BeforeEach
+    fun setUp() {
+        appUserRepository = mock(AppUserRepository::class.java)
+        planetRepository = mock(PlanetRepository::class.java)
+        officerRepository = mock(OfficerRepository::class.java)
+        rankDataRepository = mock(RankDataRepository::class.java)
+        sessionStateRepository = mock(SessionStateRepository::class.java)
+        gameConstService = mock(GameConstService::class.java)
+
+        service = InheritanceService(
+            appUserRepository = appUserRepository,
+            planetRepository = planetRepository,
+            officerRepository = officerRepository,
+            rankDataRepository = rankDataRepository,
+            sessionStateRepository = sessionStateRepository,
+            gameConstService = gameConstService,
+        )
+
+        `when`(gameConstService.getInt("inheritSpecificSpecialPoint")).thenReturn(4000)
+        `when`(gameConstService.getInt("inheritBornCityPoint")).thenReturn(1000)
+        `when`(gameConstService.getInt("inheritItemRandomPoint")).thenReturn(3000)
+        `when`(gameConstService.getInt("inheritCheckOwnerPoint")).thenReturn(1000)
+        `when`(gameConstService.getInt("inheritItemUniqueMinPoint")).thenReturn(5000)
+        `when`(gameConstService.getInt("inheritBornStatPoint")).thenReturn(1000)
+
+        `when`(appUserRepository.save(any(AppUser::class.java))).thenAnswer { it.arguments[0] }
+        `when`(officerRepository.save(any(Officer::class.java))).thenAnswer { it.arguments[0] }
+    }
+
+    @Test
+    fun `resetTurn stores next turn base on current officer`() {
+        val user = createUser(points = 5000)
+        val officer = createOfficer(userId = user.id)
+        val world = createWorld()
+        stubOwnership(user, officer, world)
+
+        val result = service.resetTurn(world.id.toLong(), user.loginId)
+
+        assertNull(result?.error)
+        assertEquals(4000, result?.remainingPoints)
+        assertEquals(4000, user.meta["inheritPoints"])
+        assertEquals(0, officer.meta["inheritResetTurnTime"])
+        assertNotNull(officer.meta["nextTurnTimeBase"])
+    }
+
+    @Test
+    fun `setInheritSpecial reserves special on current officer instead of user meta`() {
+        val user = createUser(points = 5000)
+        val officer = createOfficer(userId = user.id)
+        val world = createWorld()
+        stubOwnership(user, officer, world)
+        val specialCode = TraitSpecRegistry.war.first().key
+
+        val result = service.setInheritSpecial(world.id.toLong(), user.loginId, specialCode)
+
+        assertNull(result?.error)
+        assertEquals(1000, user.meta["inheritPoints"])
+        assertEquals(specialCode, officer.meta["inheritSpecificSpecialWar"])
+        assertEquals(null, user.meta["inheritSpecificSpecialWar"])
+    }
+
+    @Test
+    fun `buyRandomUnique stores reservation on current officer and rejects duplicate`() {
+        val user = createUser(points = 7000)
+        val officer = createOfficer(userId = user.id)
+        val world = createWorld()
+        stubOwnership(user, officer, world)
+
+        val first = service.buyRandomUnique(world.id.toLong(), user.loginId)
+        val second = service.buyRandomUnique(world.id.toLong(), user.loginId)
+
+        assertNull(first?.error)
+        assertEquals(4000, first?.remainingPoints)
+        assertNotNull(officer.meta["inheritRandomUnique"])
+        assertTrue(second?.error?.contains("이미 구입 명령") == true)
+    }
+
+    @Test
+    fun `resetSpecialWar clears current special and tracks previous special list`() {
+        val user = createUser(points = 5000)
+        val officer = createOfficer(userId = user.id).apply {
+            special2Code = "che_저격"
+        }
+        val world = createWorld()
+        stubOwnership(user, officer, world)
+
+        val result = service.resetSpecialWar(world.id.toLong(), user.loginId)
+
+        assertNull(result?.error)
+        assertEquals(4000, result?.remainingPoints)
+        assertEquals("None", officer.special2Code)
+        assertEquals(0, officer.meta["inheritResetSpecialWar"])
+        assertEquals(listOf("che_저격"), officer.meta["prev_special2"])
+    }
+
+    private fun stubOwnership(user: AppUser, officer: Officer, world: SessionState) {
+        `when`(appUserRepository.findByLoginId(user.loginId)).thenReturn(user)
+        `when`(appUserRepository.findById(user.id)).thenReturn(Optional.of(user))
+        `when`(officerRepository.findBySessionIdAndUserId(world.id.toLong(), user.id)).thenReturn(listOf(officer))
+        `when`(sessionStateRepository.findById(world.id)).thenReturn(Optional.of(world))
+    }
+
+    private fun createUser(points: Int): AppUser {
+        return AppUser(
+            id = 1,
+            loginId = "tester",
+            displayName = "Tester",
+            passwordHash = "hash",
+            meta = mutableMapOf("inheritPoints" to points),
+        )
+    }
+
+    private fun createOfficer(userId: Long): Officer {
+        return Officer(
+            id = 10,
+            sessionId = 1,
+            userId = userId,
+            name = "장수",
+            factionId = 1,
+            planetId = 1,
+            turnTime = OffsetDateTime.parse("2026-03-08T10:05:00+09:00"),
+        )
+    }
+
+    private fun createWorld(): SessionState {
+        return SessionState(
+            id = 1,
+            scenarioCode = "1",
+            tickSeconds = 300,
+            config = mutableMapOf(
+                "hiddenSeed" to "seed",
+                "isunited" to 0,
+            ),
+        )
+    }
+}

@@ -1,0 +1,77 @@
+# Reference sources (not part of this project's source)
+core2026/
+legacy/
+/legacy
+docs/
+tmp/
+
+# OS
+.DS_Store
+*.swp
+*.swo
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Backend build
+backend/build/
+backend/**/build/
+backend/.gradle/
+backend/.gradle-home/
+backend/**/.gradle/
+backend/**/.kotlin/
+*.jar
+*.war
+
+# Frontend build
+frontend/.next/
+frontend/node_modules/
+frontend/out/
+
+# Local automation artifacts
+.playwright-mcp/
+backend/.kotlin/
+backend/.proj-cache/
+backend/.tmp/
+
+# Local screenshots
+*.png
+*.log
+!frontend/**/*.png
+# OpenClaw/local agent artifacts
+.cache/
+.clawhub/
+.openclaw/
+.pnpm-store/
+.npm/
+frontend/.npm/
+.gradle/
+/memory/
+skills/
+AGENTS.md
+BOOTSTRAP.md
+HEARTBEAT.md
+IDENTITY.md
+SOUL.md
+TOOLS.md
+USER.md
+*.xlsx
+.local/
+.localnode/
+.pki/
+qa/results/parity-gate/
+qa/results/report.json
+backend/logs/
+ref_core/
+ref_core2026/
+
+# Legacy core (parity reference, not project source)
+legacy-core/
+legacy-docker-src/

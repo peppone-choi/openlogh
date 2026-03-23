@@ -1,0 +1,12 @@
+-- V33: Rename sovereign columns to LOGH terminology
+ALTER TABLE sovereign RENAME COLUMN nation_count TO faction_count;
+ALTER TABLE sovereign RENAME COLUMN nation_name TO faction_name;
+ALTER TABLE sovereign RENAME COLUMN nation_hist TO faction_hist;
+ALTER TABLE sovereign RENAME COLUMN gen_count TO officer_count;
+ALTER TABLE sovereign RENAME COLUMN gennum TO officer_num;
+ALTER TABLE sovereign RENAME COLUMN citynum TO planet_num;
+ALTER TABLE sovereign RENAME COLUMN gold TO funds;
+ALTER TABLE sovereign RENAME COLUMN rice TO supplies;
+ALTER TABLE sovereign RENAME COLUMN pop TO population;
+ALTER TABLE sovereign RENAME COLUMN poprate TO population_rate;
+ALTER TABLE sovereign RENAME COLUMN server_id TO session_id;

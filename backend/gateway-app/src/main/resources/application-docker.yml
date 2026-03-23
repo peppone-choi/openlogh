@@ -1,0 +1,24 @@
+spring:
+    datasource:
+        url: jdbc:postgresql://${DB_HOST:postgres}:${DB_PORT:5432}/${DB_NAME:openlogh}
+        username: ${DB_USER:openlogh}
+        password: ${DB_PASSWORD:openlogh123}
+    data:
+        redis:
+            host: ${REDIS_HOST:redis}
+            port: ${REDIS_PORT:6379}
+
+app:
+    jwt:
+        secret: ${JWT_SECRET:openlogh-jwt-secret-key-must-be-at-least-256-bits-long-for-hs256}
+
+gateway:
+    orchestrator:
+        restore-active-worlds: ${GATEWAY_RESTORE_ACTIVE_WORLDS:true}
+        health-timeout-ms: ${GATEWAY_HEALTH_TIMEOUT_MS:180000}
+        restore-max-retries: ${GATEWAY_RESTORE_MAX_RETRIES:3}
+        restore-retry-delay-ms: ${GATEWAY_RESTORE_RETRY_DELAY_MS:30000}
+    docker:
+        enabled: true
+        network: ${DOCKER_NETWORK:openlogh-net}
+        image-prefix: ${DOCKER_IMAGE_PREFIX:openlogh/game-app}
