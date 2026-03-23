@@ -106,6 +106,12 @@ export default function GameDashboard() {
         }
     }, [currentWorld, updateWorldTime]);
 
+    const handleRefresh = useCallback(async () => {
+        lastRecordIdRef.current = undefined;
+        lastHistoryIdRef.current = undefined;
+        await loadFrontInfo();
+    }, [loadFrontInfo]);
+
     useEffect(() => {
         loadFrontInfoRef.current = loadFrontInfo;
     }, [loadFrontInfo]);
@@ -292,7 +298,7 @@ export default function GameDashboard() {
 
             {/* ===== Desktop Refresh Button ===== */}
             <div className="hidden lg:flex justify-end border-t border-gray-600 px-2 py-1.5">
-                <Button onClick={loadFrontInfo} variant="outline" size="sm" className="gap-1">
+                <Button onClick={handleRefresh} variant="outline" size="sm" className="gap-1">
                     <RefreshCw className="h-3.5 w-3.5" />
                     갱신
                 </Button>
