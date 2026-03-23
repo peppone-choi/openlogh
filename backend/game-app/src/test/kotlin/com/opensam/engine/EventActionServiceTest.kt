@@ -406,6 +406,21 @@ class EventActionServiceTest {
         }
 
         @Test
+        fun `pop gain from dead capped at popMax`() {
+            // dead=50000, pop=49900, popMax=50000 → gain=10000 but capped to 100
+            val city = createCity(nationId = 1, pop = 49900, popMax = 50000, dead = 50000)
+            `when`(cityRepository.findByWorldId(anyLong())).thenReturn(listOf(city))
+            `when`(cityRepository.saveAll(anyNonNull<List<City>>())).thenReturn(listOf(city))
+            `when`(nationRepository.findByWorldId(anyLong())).thenReturn(emptyList())
+            `when`(nationRepository.saveAll(anyNonNull<List<Nation>>())).thenReturn(emptyList())
+
+            service.processWarIncome(createWorld())
+
+            assertTrue(city.pop <= 50000, "pop should not exceed popMax")
+            assertEquals(0, city.dead)
+        }
+
+        @Test
         fun `zero dead means no pop change`() {
             val city = createCity(pop = 10000, dead = 0)
             `when`(cityRepository.findByWorldId(anyLong())).thenReturn(listOf(city))

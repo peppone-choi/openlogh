@@ -309,14 +309,6 @@ class TurnService @Autowired constructor(
                     logger.warn("updateTraffic failed: ${e.message}")
                 }
 
-                // H6: resetStrategicCommandLimits (preUpdateMonthly decay) — before advanceMonth
-                // Legacy: strategicCmdLimit/spy/city state decay runs in preUpdateMonthly, before turnDate advances
-                try {
-                    resetStrategicCommandLimits(world)
-                } catch (e: Exception) {
-                    logger.warn("resetStrategicCommandLimits failed: ${e.message}")
-                }
-
                 // C2: Step 200 — PRE_MONTH events directly before advanceMonth (legacy: PreMonth before turnDate)
                 // Pipeline step 200 (PreMonthEventStep) has shouldSkip=true to avoid double-execution.
                 try {
@@ -331,6 +323,14 @@ class TurnService @Autowired constructor(
                     economyService.preUpdateMonthly(world)
                 } catch (e: Exception) {
                     logger.warn("EconomyPreUpdate failed: ${e.message}")
+                }
+
+                // H6: resetStrategicCommandLimits — after PRE_MONTH events + preUpdateMonthly, before advanceMonth
+                // Legacy: runs inside postUpdateMonthly() after PreMonth events, before turnDate advances
+                try {
+                    resetStrategicCommandLimits(world)
+                } catch (e: Exception) {
+                    logger.warn("resetStrategicCommandLimits failed: ${e.message}")
                 }
 
                 // C2: Step 400 — Advance month after pre-update steps (legacy: turnDate advances after preUpdateMonthly)

@@ -725,10 +725,11 @@ class EventActionService(
             nation.gold += income
         }
 
-        // 20% of dead troops return as pop
+        // 20% of dead troops return as pop (capped at popMax)
         for (city in cities) {
             if (city.dead > 0) {
                 val popGain = (city.dead * 0.2).toInt()
+                    .coerceAtMost((city.popMax - city.pop).coerceAtLeast(0))
                 city.pop += popGain
                 city.dead = 0
             }
