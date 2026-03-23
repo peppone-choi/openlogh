@@ -22,6 +22,7 @@ class BattleServiceTest {
     private lateinit var generalRepository: GeneralRepository
     private lateinit var nationRepository: NationRepository
     private lateinit var messageRepository: MessageRepository
+    private lateinit var recordRepository: RecordRepository
     private lateinit var oldNationRepository: OldNationRepository
     private lateinit var troopRepository: TroopRepository
     private lateinit var nationTurnRepository: NationTurnRepository
@@ -38,6 +39,7 @@ class BattleServiceTest {
         generalRepository = mock(GeneralRepository::class.java)
         nationRepository = mock(NationRepository::class.java)
         messageRepository = mock(MessageRepository::class.java)
+        recordRepository = mock(RecordRepository::class.java)
         oldNationRepository = mock(OldNationRepository::class.java)
         troopRepository = mock(TroopRepository::class.java)
         nationTurnRepository = mock(NationTurnRepository::class.java)
@@ -58,7 +60,7 @@ class BattleServiceTest {
 
         service = BattleService(
             cityRepository, generalRepository, nationRepository,
-            messageRepository, oldNationRepository, troopRepository, nationTurnRepository,
+            messageRepository, recordRepository, oldNationRepository, troopRepository, nationTurnRepository,
             eventService, diplomacyService,
             modifierService, gameConstService, historyService, mock(InheritanceService::class.java),
         )
