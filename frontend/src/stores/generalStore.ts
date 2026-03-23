@@ -49,9 +49,16 @@ export const useGeneralStore = create<GeneralStore>()(
             name: 'general-store',
             storage: createJSONStorage(() => sessionStorage),
             partialize: (state) => ({ myGeneral: state.myGeneral }),
-            onRehydrateStorage: () => () => {
-                useGeneralStore.setState({ isHydrated: true });
-            },
         }
     )
 );
+
+// Reliably detect hydration completion (onRehydrateStorage can misfire in Next.js App Router)
+if (typeof window !== 'undefined') {
+    useGeneralStore.persist.onFinishHydration(() => {
+        useGeneralStore.setState({ isHydrated: true });
+    });
+    if (useGeneralStore.persist.hasHydrated()) {
+        useGeneralStore.setState({ isHydrated: true });
+    }
+}

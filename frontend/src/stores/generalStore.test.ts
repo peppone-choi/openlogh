@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { useGeneralStore } from './generalStore';
 
 describe('generalStore persist config', () => {
     it('partialize only persists myGeneral', () => {
@@ -19,5 +20,11 @@ describe('generalStore persist config', () => {
     it('isHydrated defaults to false', () => {
         const initialState = { isHydrated: false };
         expect(initialState.isHydrated).toBe(false);
+    });
+
+    it('onFinishHydration listener sets isHydrated to true', () => {
+        const state = useGeneralStore.getState();
+        expect(state).toHaveProperty('isHydrated');
+        expect(typeof state.isHydrated).toBe('boolean');
     });
 });

@@ -119,9 +119,16 @@ export const useWorldStore = create<WorldStore>()(
             name: 'world-store',
             storage: createJSONStorage(() => sessionStorage),
             partialize: (state) => ({ currentWorld: state.currentWorld }),
-            onRehydrateStorage: () => () => {
-                useWorldStore.setState({ isHydrated: true });
-            },
         }
     )
 );
+
+// Reliably detect hydration completion (onRehydrateStorage can misfire in Next.js App Router)
+if (typeof window !== 'undefined') {
+    useWorldStore.persist.onFinishHydration(() => {
+        useWorldStore.setState({ isHydrated: true });
+    });
+    if (useWorldStore.persist.hasHydrated()) {
+        useWorldStore.setState({ isHydrated: true });
+    }
+}
