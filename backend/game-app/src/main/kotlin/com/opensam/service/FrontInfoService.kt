@@ -532,7 +532,8 @@ class FrontInfoService(
     }
 
     private fun toRecordEntry(r: Record): RecordEntry {
-        val date = if (r.year > 0 && r.month > 0) "${r.year}년 ${r.month}월" else ""
+        val isScenarioInit = r.payload["scenarioInit"] == true
+        val date = if (!isScenarioInit && r.year > 0 && r.month > 0) "${r.year}년 ${r.month}월" else ""
         return RecordEntry(
             id = r.id,
             message = (r.payload["message"] as? String) ?: "",

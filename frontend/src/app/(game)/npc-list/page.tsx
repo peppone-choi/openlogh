@@ -283,16 +283,6 @@ export default function NpcListPage() {
                                                         풀
                                                     </Badge>
                                                 )}
-                                                {g.npcState >= 5 && (
-                                                    <Badge className="text-[10px] bg-indigo-600/60 text-indigo-200">
-                                                        악령
-                                                    </Badge>
-                                                )}
-                                                {g.npcState >= 2 && g.npcState < 5 && (
-                                                    <Badge className="text-[10px] bg-amber-700/60 text-amber-200">
-                                                        희생
-                                                    </Badge>
-                                                )}
                                             </div>
                                         </TableCell>
                                         <TableCell className="text-sm">

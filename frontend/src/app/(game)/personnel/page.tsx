@@ -483,7 +483,7 @@ export default function PersonnelPage() {
                     </CardHeader>
                     <CardContent className="space-y-3">
                         {officerSlots
-                            .filter((slot) => slot.level >= minChiefLevel && slot.level <= 20)
+                            .filter((slot) => slot.level >= minChiefLevel && slot.level < 20)
                             .map((slot) => {
                                 const candidates = getCandidatesForLevel(slot.level);
                                 const locked = slot.isLocked && meLevel < 12;

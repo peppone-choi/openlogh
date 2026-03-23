@@ -388,7 +388,7 @@ export default function GameDashboard() {
                         ) : (
                             frontInfo.recentRecord.history.slice(0, 15).map((r) => (
                                 <div key={r.id} className="border-b border-gray-600/30 px-2 py-0.5 text-xs">
-                                    <span className="text-gray-400">[{r.date}]</span> {formatLog(r.message)}
+                                    {r.date && <span className="text-gray-400">[{r.date}]</span>} {formatLog(r.message)}
                                 </div>
                             ))
                         )}

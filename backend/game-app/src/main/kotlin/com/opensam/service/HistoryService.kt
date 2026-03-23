@@ -13,16 +13,16 @@ class HistoryService(
     private val yearbookHistoryRepository: YearbookHistoryRepository,
 ) {
     @Transactional
-    fun logWorldHistory(worldId: Long, message: String, year: Int, month: Int) {
+    fun logWorldHistory(worldId: Long, message: String, year: Int, month: Int, scenarioInit: Boolean = false) {
+        val payload = mutableMapOf<String, Any>("message" to message)
+        if (scenarioInit) payload["scenarioInit"] = true
         recordRepository.save(
             Record(
                 worldId = worldId,
                 recordType = "world_history",
                 year = year,
                 month = month,
-                payload = mutableMapOf(
-                    "message" to message,
-                ),
+                payload = payload,
             )
         )
     }

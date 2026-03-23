@@ -57,6 +57,9 @@ const navItems = [
             { title: '인사부', url: '/personnel' },
             { title: '내무부', url: '/internal-affairs', requireSecret: true as const },
             { title: '사령부', url: '/chief', requireSecret: true as const },
+            { title: 'NPC정책', url: '/npc-control', requireSecret: true as const },
+            { title: '암행부', url: '/spy', requireSecret: true as const },
+            { title: '감찰부', url: '/battle', requireSecret: true as const },
         ],
     },
     {
@@ -76,6 +79,7 @@ const navItems = [
             { title: '세력일람', url: '/nations' },
             { title: '장수일람', url: '/generals' },
             { title: '명장일람', url: '/best-generals' },
+            { title: 'NPC일람', url: '/npc-list', requireNpcMode: true as const },
         ],
     },
     {
@@ -112,10 +116,6 @@ const navItems = [
         icon: Settings,
         items: [
             { title: '서버정보', url: '/traffic' },
-            { title: 'NPC정책', url: '/npc-control', requireSecret: true as const },
-            { title: '암행부', url: '/spy', requireSecret: true as const },
-            { title: '감찰부', url: '/battle', requireSecret: true as const },
-            { title: 'NPC일람', url: '/npc-list', requireNpcMode: true as const },
             { title: '설문조사', url: '/vote' },
         ],
     },

@@ -558,7 +558,7 @@ class ScenarioService(
             val year = match?.groupValues?.getOrNull(1)?.toIntOrNull() ?: defaultYear
             val month = match?.groupValues?.getOrNull(2)?.toIntOrNull() ?: defaultMonth
             val cleaned = historyDatePrefixRegex.replace(line, "")
-            historyService.logWorldHistory(worldId, cleaned.ifBlank { line }, year, month)
+            historyService.logWorldHistory(worldId, cleaned.ifBlank { line }, year, month, scenarioInit = true)
         }
     }
 
