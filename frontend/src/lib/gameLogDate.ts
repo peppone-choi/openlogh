@@ -6,6 +6,9 @@ export function formatGameLogDate(source: {
 }): string | null {
     const payload = (source.payload as Record<string, unknown> | null | undefined) ?? null;
     const meta = (source.meta as Record<string, unknown> | null | undefined) ?? null;
+
+    if (payload?.scenarioInit === true) return null;
+
     const year = readNumber(source.year) ?? readNumber(payload?.year) ?? readNumber(meta?.year);
     const month = readNumber(source.month) ?? readNumber(payload?.month) ?? readNumber(meta?.month);
 

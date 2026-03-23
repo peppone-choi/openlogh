@@ -530,8 +530,7 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
         setSelectedTurns(new Set([turnIdx]));
         setLastClickedTurn(turnIdx);
 
-        const clicked = filledTurns[turnIdx];
-        if (clicked.actionCode === '휴식' && !realtimeMode) {
+        if (!realtimeMode) {
             setShowSelector(true);
         }
     };
