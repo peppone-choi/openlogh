@@ -8,8 +8,9 @@ package com.opensam.engine.modifier
  * using the mapping: new_level = round(legacy_level * 20 / 12).
  *
  * Three effects from legacy:
- *   1. Leadership bonus: level 20 → nationLevel*2, level 5-19 → nationLevel*1, else 0
+ *   1. Leadership bonus: level 20 → nationLevel*2, level 8-19 → nationLevel*1, else 0
  *      (applied externally via calcLeadershipBonus; this modifier handles stat context)
+ *      Legacy threshold: officerLevel >= 5 out of 12 → scaled to >= 8 out of 20
  *   2. Domestic score ×1.05 for specific officer levels per command type
  *   3. War power multiplier / opponent war power multiplier per level bracket
  *
@@ -36,7 +37,7 @@ class OfficerLevelModifier(
     // ── Leadership bonus (onCalcStat) ─────────────────────────────────────
     private val leadershipBonus: Double = when {
         officerLevel == 20 -> (nationLevel * 2).toDouble()
-        officerLevel >= 5  -> nationLevel.toDouble()
+        officerLevel >= 8  -> nationLevel.toDouble()
         else               -> 0.0
     }
 
