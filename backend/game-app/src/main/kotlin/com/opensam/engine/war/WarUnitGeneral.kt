@@ -19,6 +19,12 @@ class WarUnitGeneral(
     /** Atmos bonus from city-level attacker bonuses (legacy: WarUnitGeneral constructor). */
     var atmosBonus: Int = 0
 
+    // C7: battle experience accumulators — written to general in applyResults()
+    /** Level experience accumulated during battle (PHP: addLevelExp). */
+    var pendingLevelExp: Int = 0
+    /** Stat experience amount accumulated during battle (PHP: addStatExp). */
+    var pendingStatExp: Int = 0
+
     init {
         crew = general.crew
         train = general.train.toInt()
@@ -144,5 +150,24 @@ class WarUnitGeneral(
         general.train = train.toShort()
         general.atmos = atmos.toShort()
         general.injury = injury.toShort()
+
+        // C7: apply accumulated battle experience
+        if (pendingLevelExp > 0) {
+            general.experience += pendingLevelExp
+        }
+        if (pendingStatExp > 0) {
+            // PHP addStatExp: armType FOOTMAN/CAVALRY → strength, WIZARD → intel, SIEGE → leadership, MISC → all three
+            val unitCrewType = CrewType.fromCode(crewType)
+            when (unitCrewType?.armType) {
+                ArmType.WIZARD -> general.intelExp = (general.intelExp + pendingStatExp).toShort()
+                ArmType.SIEGE -> general.leadershipExp = (general.leadershipExp + pendingStatExp).toShort()
+                ArmType.MISC -> {
+                    general.leadershipExp = (general.leadershipExp + pendingStatExp).toShort()
+                    general.strengthExp = (general.strengthExp + pendingStatExp).toShort()
+                    general.intelExp = (general.intelExp + pendingStatExp).toShort()
+                }
+                else -> general.strengthExp = (general.strengthExp + pendingStatExp).toShort()  // FOOTMAN, CAVALRY, ARCHER
+            }
+        }
     }
 }

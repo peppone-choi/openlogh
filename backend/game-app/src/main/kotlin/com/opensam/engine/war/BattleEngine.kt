@@ -33,6 +33,10 @@ class BattleEngine {
         val logs = mutableListOf<String>()
         var totalAttackerDamage = 0
         var totalDefenderDamage = 0
+        // C7: track damage dealt to accumulate level exp (PHP: damage/50)
+        var attackerDamageDealtForExp = 0
+        // Map each defender WarUnitGeneral to the damage dealt TO them (for their exp)
+        val defenderDamageDealtForExp = mutableMapOf<WarUnitGeneral, Int>()
         var attackerWon = true
         var cityOccupied = false
 
@@ -93,6 +97,12 @@ class BattleEngine {
             totalDefenderDamage += phaseResult.damage.second
             logs.addAll(phaseResult.logs)
             currentPhase++
+            // C7: accumulate level exp: damage/50 per phase
+            attackerDamageDealtForExp += phaseResult.damage.second
+            if (currentDefender is WarUnitGeneral) {
+                defenderDamageDealtForExp[currentDefender] =
+                    (defenderDamageDealtForExp[currentDefender] ?: 0) + phaseResult.damage.first
+            }
 
             // Attacker continuation check
             val attackerContinuation = attacker.continueWar()
@@ -157,6 +167,8 @@ class BattleEngine {
                 totalDefenderDamage += phaseResult.damage.second
                 logs.addAll(phaseResult.logs)
                 currentPhase++
+                // C7: accumulate exp (siege: no general defender, only attacker gains)
+                attackerDamageDealtForExp += phaseResult.damage.second
 
                 val attackerContinuation = attacker.continueWar()
                 if (!attackerContinuation.canContinue) {
@@ -195,6 +207,8 @@ class BattleEngine {
                     totalDefenderDamage += phaseResult.damage.second
                     logs.addAll(phaseResult.logs)
                     currentPhase++
+                    // C7: accumulate exp (siege: only attacker gains)
+                    attackerDamageDealtForExp += phaseResult.damage.second
 
                     val attackerContinuation = attacker.continueWar()
                     if (!attackerContinuation.canContinue) {
@@ -218,13 +232,41 @@ class BattleEngine {
             }
         }
 
-        // TODO C7 (battle experience - PHP parity):
-        // PHP awards experience during/after battle (process_war.php):
-        //   - Per-phase: damage/50 exp to attacker; defenders get 0.8x multiplier
-        //   - City capture: +1000 exp to attacker
-        //   - Win/lose stat exp: +1 to stat based on armType (leadership/strength/intel)
-        //   - Atmos boost on win: attacker.atmos *= 1.1, defender.atmos *= 1.05
-        // Requires tracking per-phase damage totals and wiring exp/stat increments through applyResults().
+        // C7: Apply battle experience (PHP process_war.php parity)
+        // Per-phase level exp: damage/50; defenders get 0.8x multiplier
+        attacker.pendingLevelExp += attackerDamageDealtForExp / 50
+        for ((defUnit, damageReceived) in defenderDamageDealtForExp) {
+            defUnit.pendingLevelExp += (damageReceived / 50 * 0.8).toInt()
+        }
+
+        // City capture: +1000 exp to attacker
+        if (cityOccupied) {
+            attacker.pendingLevelExp += 1000
+        }
+
+        // Win/lose stat exp (+1 based on armType) and atmos boost
+        if (attackerWon && attacker.isAlive) {
+            // PHP addWin(): atmos *= 1.1, addStatExp(1)
+            attacker.atmos = (attacker.atmos * 1.1).toInt().coerceAtMost(100)
+            attacker.pendingStatExp += 1
+            // Defenders that survived also get atmos *= 1.05 and stat exp on their side
+            for (def in sortedDefenders) {
+                if (def is WarUnitGeneral) {
+                    def.atmos = (def.atmos * 1.05).toInt().coerceAtMost(100)
+                    def.pendingStatExp += 1
+                }
+            }
+        } else {
+            // Attacker lost: defenders won — apply win bonuses to defenders
+            for (def in sortedDefenders) {
+                if (def is WarUnitGeneral) {
+                    def.atmos = (def.atmos * 1.1).toInt().coerceAtMost(100)
+                    def.pendingStatExp += 1
+                }
+            }
+            attacker.atmos = (attacker.atmos * 1.05).toInt().coerceAtMost(100)
+            attacker.pendingStatExp += 1
+        }
 
         // Injury check: fire onInjuryCheck triggers before wound roll
         val injuryCtx = BattleTriggerContext(attacker = attacker, defender = attacker, rng = rng)

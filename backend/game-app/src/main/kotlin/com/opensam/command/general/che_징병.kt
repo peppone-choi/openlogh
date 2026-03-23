@@ -122,16 +122,20 @@ open class che_징병(general: General, env: CommandEnv, arg: Map<String, Any>? 
         val newAtmos: Int
         val logMessage: String
 
+        // Legacy: setTrain/setAtmos = onCalcDomestic(actionName, 'train'/'atmos', default)
+        val setTrain = DomesticUtils.applyModifier(services, general, nation, actionName, "train", defaultTrain.toDouble()).toInt()
+        val setAtmos = DomesticUtils.applyModifier(services, general, nation, actionName, "atmos", defaultAtmos.toDouble()).toInt()
+
         if (crewTypeId == currCrewTypeId && currCrew > 0) {
             logMessage = "${crewTypeName} <C>${reqCrewText}</>명을 추가${actionName}했습니다. <1>$date</>"
-            newTrain = (currCrew * general.train + reqCrew * defaultTrain) / (currCrew + reqCrew)
-            newAtmos = (currCrew * general.atmos + reqCrew * defaultAtmos) / (currCrew + reqCrew)
+            newTrain = (currCrew * general.train + reqCrew * setTrain) / (currCrew + reqCrew)
+            newAtmos = (currCrew * general.atmos + reqCrew * setAtmos) / (currCrew + reqCrew)
             newCrew = currCrew + reqCrew
         } else {
             logMessage = "${crewTypeName} <C>${reqCrewText}</>명을 ${actionName}했습니다. <1>$date</>"
             newCrew = reqCrew
-            newTrain = defaultTrain
-            newAtmos = defaultAtmos
+            newTrain = setTrain
+            newAtmos = setAtmos
         }
         pushLog(logMessage)
         pushHistoryLog(logMessage)

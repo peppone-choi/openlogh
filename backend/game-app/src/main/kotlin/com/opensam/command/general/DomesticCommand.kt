@@ -5,10 +5,12 @@ import com.opensam.command.CommandEnv
 import com.opensam.command.CommandResult
 import com.opensam.command.GeneralCommand
 import com.opensam.command.constraint.*
+import com.opensam.engine.modifier.StatContext
 import com.opensam.entity.General
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
+import kotlin.math.roundToInt
 import kotlin.random.Random
 
 abstract class DomesticCommand(
@@ -40,18 +42,31 @@ abstract class DomesticCommand(
             )
         }
 
-    override fun getCost() = CommandCost(gold = env.develCost)
+    override fun getCost(): CommandCost {
+        // Legacy: onCalcDomestic(actionKey, 'cost', develcost)
+        val gold = DomesticUtils.applyModifier(services, general, nation, actionKey, "cost", env.develCost.toDouble())
+        return CommandCost(gold = gold.roundToInt())
+    }
     override fun getPreReqTurn() = 0
     override fun getPostReqTurn() = 0
     override fun getDuration() = 300
 
-    protected fun getStat(): Int = when (statKey) {
-        "leadership" -> general.leadership.toInt()
-        "strength" -> general.strength.toInt()
-        "intel" -> general.intel.toInt()
-        "politics" -> general.politics.toInt()
-        "charm" -> general.charm.toInt()
-        else -> general.intel.toInt()
+    protected fun getStat(): Int {
+        val mods = services?.modifierService?.getModifiers(general, nation) ?: emptyList()
+        val base = StatContext(
+            leadership = general.leadership.toDouble(),
+            strength = general.strength.toDouble(),
+            intel = general.intel.toDouble(),
+        )
+        val modified = services?.modifierService?.applyStatModifiers(mods, base) ?: base
+        return when (statKey) {
+            "leadership" -> modified.leadership.toInt()
+            "strength" -> modified.strength.toInt()
+            "intel" -> modified.intel.toInt()
+            "politics" -> general.politics.toInt()
+            "charm" -> general.charm.toInt()
+            else -> modified.intel.toInt()
+        }
     }
 
     override suspend fun run(rng: Random): CommandResult {
@@ -70,9 +85,17 @@ abstract class DomesticCommand(
         var scoreIntWork = score.toInt()
 
         // Legacy parity: CriticalRatioDomestic — ratio = avg(leadership,strength,intel) / stat
-        val leadership = general.leadership.toDouble()
-        val strength = general.strength.toDouble()
-        val intel = general.intel.toDouble()
+        // Use modified stats (same modifier pass as getStat)
+        val mods = services?.modifierService?.getModifiers(general, nation) ?: emptyList()
+        val baseStatCtx = StatContext(
+            leadership = general.leadership.toDouble(),
+            strength = general.strength.toDouble(),
+            intel = general.intel.toDouble(),
+        )
+        val modifiedStatCtx = services?.modifierService?.applyStatModifiers(mods, baseStatCtx) ?: baseStatCtx
+        val leadership = modifiedStatCtx.leadership
+        val strength = modifiedStatCtx.strength
+        val intel = modifiedStatCtx.intel
         val avg = (leadership + strength + intel) / 3.0
         val statValue = when (statKey) {
             "leadership" -> leadership

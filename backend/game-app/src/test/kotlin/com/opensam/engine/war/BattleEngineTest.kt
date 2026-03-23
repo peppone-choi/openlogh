@@ -494,6 +494,23 @@ class BattleEngineTest {
         }
     }
 
+    // ========== C7: pendingLevelExp accumulation ==========
+
+    @Test
+    fun `pendingLevelExp accumulates during battle`() {
+        val rng = Random(42)
+        val attackerGeneral = createGeneral(id = 1, nationId = 1, strength = 80, leadership = 80, crew = 5000, rice = 50000, train = 80, atmos = 80)
+        val defenderGeneral = createGeneral(id = 2, nationId = 2, strength = 50, leadership = 50, crew = 2000, rice = 20000)
+        val city = createCity(nationId = 2)
+
+        val attacker = WarUnitGeneral(attackerGeneral)
+        val defender = WarUnitGeneral(defenderGeneral)
+
+        engine.resolveBattle(attacker, listOf(defender), city, rng)
+
+        assertTrue(attacker.pendingLevelExp > 0, "Attacker pendingLevelExp should accumulate during battle")
+    }
+
     @Test
     fun `resolveBattle deterministic with same seed`() {
         val attackerGen1 = createGeneral(id = 1, nationId = 1, strength = 70, crew = 3000, rice = 50000)

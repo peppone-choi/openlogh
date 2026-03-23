@@ -40,17 +40,27 @@ class che_물자조달(general: General, env: CommandEnv, arg: Map<String, Any>?
         val resourceType = if (rng.nextDouble() < 0.5) "gold" else "rice"
         val resName = if (resourceType == "gold") "금" else "쌀"
 
-        var score = (leadership + strength + intel) * (0.8 + rng.nextDouble() * 0.4)
+        // Legacy: score = (lead+str+intel) * getDomesticExpLevelBonus(explevel) * rng(0.8,1.2)
+        var score = (leadership + strength + intel).toDouble() *
+            DomesticUtils.getDomesticExpLevelBonus(general.expLevel.toInt()) *
+            (0.8 + rng.nextDouble() * 0.4)
 
-        val criticalRoll = rng.nextDouble()
-        val pick: String
-        val multiplier: Double
-        when {
-            criticalRoll < 0.3 -> { pick = "fail"; multiplier = 0.5 }
-            criticalRoll > 0.9 -> { pick = "success"; multiplier = 1.5 }
-            else -> { pick = "normal"; multiplier = 1.0 }
-        }
-        score *= multiplier
+        // Legacy: successRatio/failRatio via onCalcDomestic, then weighted choice
+        var successRatio = DomesticUtils.applyModifier(services, general, nation, "조달", "success", 0.1)
+        var failRatio = DomesticUtils.applyModifier(services, general, nation, "조달", "fail", 0.3)
+        val normalRatio = 1.0 - failRatio - successRatio
+
+        val pick = DomesticUtils.choiceUsingWeight(rng, mapOf(
+            "fail" to failRatio,
+            "success" to successRatio,
+            "normal" to normalRatio
+        ))
+
+        // Legacy: CriticalScoreEx — success=[2.2,3.0), fail=[0.2,0.4), normal=1.0
+        score *= DomesticUtils.criticalScoreEx(rng, pick)
+
+        // Legacy: onCalcDomestic('조달', 'score', score)
+        score = DomesticUtils.applyModifier(services, general, nation, "조달", "score", score)
 
         val c = city
         if (c != null && (c.frontState.toInt() == 1 || c.frontState.toInt() == 3)) {

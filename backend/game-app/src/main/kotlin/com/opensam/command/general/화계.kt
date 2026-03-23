@@ -63,10 +63,19 @@ open class 화계(general: General, env: CommandEnv, arg: Map<String, Any>? = nu
     override fun getPreReqTurn() = 0
     override fun getPostReqTurn() = 0
 
-    protected fun getStatScore(): Int = when (statType) {
-        "leadership" -> general.leadership.toInt()
-        "strength" -> general.strength.toInt()
-        else -> general.intel.toInt()
+    protected fun getStatScore(): Int {
+        val mods = services?.modifierService?.getModifiers(general, nation) ?: emptyList()
+        val base = StatContext(
+            leadership = general.leadership.toDouble(),
+            strength = general.strength.toDouble(),
+            intel = general.intel.toDouble(),
+        )
+        val modified = services?.modifierService?.applyStatModifiers(mods, base) ?: base
+        return when (statType) {
+            "leadership" -> modified.leadership.toInt()
+            "strength" -> modified.strength.toInt()
+            else -> modified.intel.toInt()
+        }
     }
 
     protected fun getStatExpKey(): String = when (statType) {
