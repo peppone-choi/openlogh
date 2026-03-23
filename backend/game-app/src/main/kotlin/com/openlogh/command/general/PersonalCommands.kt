@@ -17,7 +17,7 @@ class 퇴역(general: General, env: CommandEnv, arg: Map<String, Any>? = null) :
     override val actionName = "퇴역"
 
     override fun checkFullCondition(): ConstraintResult {
-        if (general.nationId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
+        if (general.factionId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
         return ConstraintResult.Pass
     }
 
@@ -36,7 +36,7 @@ class 지원전환(general: General, env: CommandEnv, arg: Map<String, Any>? = n
     override val actionName = "지원전환"
 
     override fun checkFullCondition(): ConstraintResult {
-        if (general.nationId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
+        if (general.factionId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
         return ConstraintResult.Pass
     }
 
@@ -55,9 +55,9 @@ class 망명(general: General, env: CommandEnv, arg: Map<String, Any>? = null) :
     override val actionName = "망명"
 
     override fun checkFullCondition(): ConstraintResult {
-        if (general.nationId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
+        if (general.factionId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
         val dn = destNation ?: return ConstraintResult.Fail("목적지 국가가 없습니다.")
-        if (dn.id == general.nationId) return ConstraintResult.Fail("현재 소속 국가입니다.")
+        if (dn.id == general.factionId) return ConstraintResult.Fail("현재 소속 국가입니다.")
         return ConstraintResult.Pass
     }
 
@@ -80,16 +80,16 @@ class 회견(general: General, env: CommandEnv, arg: Map<String, Any>? = null) :
 
     override fun checkFullCondition(): ConstraintResult {
         val dg = destGeneral ?: return ConstraintResult.Fail("대상 장수가 없습니다.")
-        if (dg.cityId != general.cityId) return ConstraintResult.Fail("같은 행성에 있어야 합니다.")
+        if (dg.planetId != general.planetId) return ConstraintResult.Fail("같은 행성에 있어야 합니다.")
         if (dg.id == general.id) return ConstraintResult.Fail("자기 자신과는 회견할 수 없습니다.")
         return ConstraintResult.Pass
     }
 
     override suspend fun run(rng: Random): CommandResult {
         val dg = destGeneral!!
-        val friendshipDelta = max(1, (general.charm.toInt() * 0.05).toInt())
+        val friendshipDelta = max(1, (general.administration.toInt() * 0.05).toInt())
         val msg = personalMapper.writeValueAsString(mapOf(
-            "statChanges" to mapOf("experience" to 20, "charmExp" to 1),
+            "statChanges" to mapOf("experience" to 20, "administrationExp" to 1),
             "mutualFriendshipDelta" to friendshipDelta,
             "targetOfficerId" to dg.id.toString(),
         ))
@@ -103,21 +103,21 @@ class 수강(general: General, env: CommandEnv, arg: Map<String, Any>? = null) :
     override val actionName = "수강"
 
     override fun checkFullCondition(): ConstraintResult {
-        if (general.nationId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
+        if (general.factionId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
         city ?: return ConstraintResult.Fail("행성 정보가 없습니다.")
         return ConstraintResult.Pass
     }
 
     override suspend fun run(rng: Random): CommandResult {
-        val intelValue = general.intel.toInt()
+        val intelValue = general.intelligence.toInt()
         val score = (intelValue * (0.8 + rng.nextDouble() * 0.4)).toInt()
         val roll = rng.nextInt(5)
         val statExpKey = when (roll) {
             0 -> "leadershipExp"
-            1 -> "strengthExp"
-            2 -> "intelExp"
+            1 -> "commandExp"
+            2 -> "intelligenceExp"
             3 -> "politicsExp"
-            else -> "charmExp"
+            else -> "administrationExp"
         }
         val msg = personalMapper.writeValueAsString(mapOf(
             "statChanges" to mapOf("experience" to score, statExpKey to 2),
@@ -132,7 +132,7 @@ class 반의(general: General, env: CommandEnv, arg: Map<String, Any>? = null) :
     override val actionName = "반의"
 
     override fun checkFullCondition(): ConstraintResult {
-        if (general.nationId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
+        if (general.factionId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
         return ConstraintResult.Pass
     }
 
@@ -152,9 +152,9 @@ class 모의(general: General, env: CommandEnv, arg: Map<String, Any>? = null) :
     override val actionName = "모의"
 
     override fun checkFullCondition(): ConstraintResult {
-        if (general.nationId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
+        if (general.factionId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
         val dg = destGeneral ?: return ConstraintResult.Fail("대상 장수가 없습니다.")
-        if (dg.cityId != general.cityId) return ConstraintResult.Fail("같은 행성에 있어야 합니다.")
+        if (dg.planetId != general.planetId) return ConstraintResult.Fail("같은 행성에 있어야 합니다.")
         return ConstraintResult.Pass
     }
 
@@ -175,18 +175,18 @@ class 설득(general: General, env: CommandEnv, arg: Map<String, Any>? = null) :
     override val actionName = "설득"
 
     override fun checkFullCondition(): ConstraintResult {
-        if (general.nationId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
+        if (general.factionId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
         destGeneral ?: return ConstraintResult.Fail("대상 장수가 없습니다.")
         return ConstraintResult.Pass
     }
 
     override suspend fun run(rng: Random): CommandResult {
         val dg = destGeneral!!
-        val charmValue = general.charm.toInt()
+        val charmValue = general.administration.toInt()
         val successChance = (charmValue / 200.0).coerceIn(0.1, 0.9)
         val success = rng.nextDouble() < successChance
         val msg = personalMapper.writeValueAsString(mapOf(
-            "statChanges" to mapOf("experience" to 40, "charmExp" to 1),
+            "statChanges" to mapOf("experience" to 40, "administrationExp" to 1),
             "persuasionTarget" to dg.id.toString(),
             "persuasionSuccess" to success,
         ))
@@ -201,7 +201,7 @@ class 반란참가(general: General, env: CommandEnv, arg: Map<String, Any>? = n
     override val actionName = "반란참가"
 
     override fun checkFullCondition(): ConstraintResult {
-        if (general.nationId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
+        if (general.factionId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
         return ConstraintResult.Pass
     }
 
@@ -222,16 +222,16 @@ class 자금투입(general: General, env: CommandEnv, arg: Map<String, Any>? = n
     private val amount: Int get() = (arg?.get("amount") as? Number)?.toInt() ?: 0
 
     override fun checkFullCondition(): ConstraintResult {
-        if (general.nationId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
-        if (general.gold < amount) return ConstraintResult.Fail("자금이 부족합니다.")
+        if (general.factionId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
+        if (general.funds < amount) return ConstraintResult.Fail("자금이 부족합니다.")
         return ConstraintResult.Pass
     }
 
     override suspend fun run(rng: Random): CommandResult {
-        val actualAmount = amount.coerceAtMost(general.gold)
+        val actualAmount = amount.coerceAtMost(general.funds)
         val targetType = arg?.get("targetType") as? String ?: "planet"
         val msg = personalMapper.writeValueAsString(mapOf(
-            "statChanges" to mapOf("gold" to -actualAmount, "experience" to 30, "politicsExp" to 1),
+            "statChanges" to mapOf("funds" to -actualAmount, "experience" to 30, "politicsExp" to 1),
             "fundInjection" to mapOf("amount" to actualAmount, "targetType" to targetType),
         ))
         return CommandResult(true, listOf("${formatDate()} ${actualAmount}의 자금을 투입했습니다."), message = msg)
@@ -246,7 +246,7 @@ class 기함구매(general: General, env: CommandEnv, arg: Map<String, Any>? = n
     private val flagshipCode: String get() = arg?.get("flagshipCode") as? String ?: ""
 
     override fun checkFullCondition(): ConstraintResult {
-        if (general.nationId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
+        if (general.factionId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
         if (flagshipCode.isEmpty()) return ConstraintResult.Fail("기함 코드가 없습니다.")
         return ConstraintResult.Pass
     }

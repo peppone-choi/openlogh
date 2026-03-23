@@ -13,8 +13,8 @@ class NationTurnController(
     private val factionTurnRepository: FactionTurnRepository,
     private val factionRepository: FactionRepository,
 ) {
-    // GET /api/nations/{nationId}/turns — 국가 턴 목록
-    @GetMapping("/nations/{nationId}/turns")
+    // GET /api/factions/{nationId}/turns — 국가 턴 목록
+    @GetMapping("/factions/{nationId}/turns")
     fun getNationTurns(
         @PathVariable nationId: Long,
         @RequestParam(required = false, defaultValue = "0") officerLevel: Short,
@@ -23,8 +23,8 @@ class NationTurnController(
         return ResponseEntity.ok(turns.map { FactionTurnResponse.from(it) })
     }
 
-    // POST /api/nations/{nationId}/turns — 국가 턴 예약
-    @PostMapping("/nations/{nationId}/turns")
+    // POST /api/factions/{nationId}/turns — 국가 턴 예약
+    @PostMapping("/factions/{nationId}/turns")
     fun reserveNationTurns(
         @PathVariable nationId: Long,
         @RequestParam(required = false) generalId: Long?,
@@ -61,8 +61,8 @@ class NationTurnController(
         return ResponseEntity.ok(updated.map { FactionTurnResponse.from(it) })
     }
 
-    // POST /api/nations/{nationId}/turns/push — 국가 턴 밀기
-    @PostMapping("/nations/{nationId}/turns/push")
+    // POST /api/factions/{nationId}/turns/push — 국가 턴 밀기
+    @PostMapping("/factions/{nationId}/turns/push")
     fun pushNationTurns(
         @PathVariable nationId: Long,
         @RequestParam(required = false) generalId: Long?,
@@ -90,8 +90,8 @@ class NationTurnController(
         return ResponseEntity.ok(updated.map { FactionTurnResponse.from(it) })
     }
 
-    // POST /api/nations/{nationId}/turns/repeat — 국가 턴 반복
-    @PostMapping("/nations/{nationId}/turns/repeat")
+    // POST /api/factions/{nationId}/turns/repeat — 국가 턴 반복
+    @PostMapping("/factions/{nationId}/turns/repeat")
     fun repeatNationTurns(
         @PathVariable nationId: Long,
         @RequestParam(required = false) generalId: Long?,

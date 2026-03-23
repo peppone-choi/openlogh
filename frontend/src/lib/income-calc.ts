@@ -23,10 +23,10 @@ export function calcPlanetFundsIncome(
     typeCode: string
 ): number {
     if (!city.supplyState) return 0;
-    if (city.commMax <= 0) return 0;
-    const trustRatio = city.trust / 200 + 0.5;
-    let v = (city.pop * (city.comm / city.commMax) * trustRatio) / 30;
-    v *= 1 + (city.secuMax > 0 ? city.secu / city.secuMax / 10 : 0);
+    if (city.commerceMax <= 0) return 0;
+    const trustRatio = city.approval / 200 + 0.5;
+    let v = (city.population * (city.commerce / city.commerceMax) * trustRatio) / 30;
+    v *= 1 + (city.securityMax > 0 ? city.security / city.securityMax / 10 : 0);
     v *= Math.pow(1.05, officerCnt);
     if (isCapital && nationLevel > 0) v *= 1 + 1 / (3 * nationLevel);
     v *= getIncomeModifier(typeCode, 'funds');
@@ -41,10 +41,10 @@ export function calcPlanetSuppliesIncome(
     typeCode: string
 ): number {
     if (!city.supplyState) return 0;
-    if (city.agriMax <= 0) return 0;
-    const trustRatio = city.trust / 200 + 0.5;
-    let v = (city.pop * (city.agri / city.agriMax) * trustRatio) / 30;
-    v *= 1 + (city.secuMax > 0 ? city.secu / city.secuMax / 10 : 0);
+    if (city.productionMax <= 0) return 0;
+    const trustRatio = city.approval / 200 + 0.5;
+    let v = (city.population * (city.production / city.productionMax) * trustRatio) / 30;
+    v *= 1 + (city.securityMax > 0 ? city.security / city.securityMax / 10 : 0);
     v *= Math.pow(1.05, officerCnt);
     if (isCapital && nationLevel > 0) v *= 1 + 1 / (3 * nationLevel);
     v *= getIncomeModifier(typeCode, 'supplies');
@@ -59,9 +59,9 @@ export function calcPlanetFortressSuppliesIncome(
     typeCode: string
 ): number {
     if (!city.supplyState) return 0;
-    if (city.wallMax <= 0) return 0;
-    let v = (city.def * city.wall) / city.wallMax / 3;
-    v *= 1 + (city.secuMax > 0 ? city.secu / city.secuMax / 10 : 0);
+    if (city.fortressMax <= 0) return 0;
+    let v = (city.orbitalDefense * city.fortress) / city.fortressMax / 3;
+    v *= 1 + (city.securityMax > 0 ? city.security / city.securityMax / 10 : 0);
     v *= Math.pow(1.05, officerCnt);
     if (isCapital && nationLevel > 0) v *= 1 + 1 / (3 * nationLevel);
     v *= getIncomeModifier(typeCode, 'supplies');

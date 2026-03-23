@@ -118,15 +118,15 @@ export default function MyPage() {
             .then(({ data }) => setFrontInfo(data.general))
             .catch(() => {});
 
-        if (myGeneral.cityId) {
+        if (myGeneral.planetId) {
             planetApi
-                .get(myGeneral.cityId)
+                .get(myGeneral.planetId)
                 .then(({ data }) => setCity(data))
                 .catch(() => {});
         }
-        if (myGeneral.nationId) {
+        if (myGeneral.factionId) {
             factionApi
-                .get(myGeneral.nationId)
+                .get(myGeneral.factionId)
                 .then(({ data }) => setNation(data))
                 .catch(() => {});
         }
@@ -198,16 +198,16 @@ export default function MyPage() {
     if (!myGeneral) return <LoadingState message="제독 정보가 없습니다." />;
 
     const g = myGeneral;
-    const nationLevel = nation?.level ?? 0;
+    const nationLevel = nation?.factionRank ?? 0;
     const injuryInfo = formatInjury(g.injury);
     const officerText = formatOfficerLevelText(
         g.officerLevel,
         nationLevel,
-        g.nationId > 0,
-        nation?.typeCode,
+        g.factionId > 0,
+        nation?.factionType,
         g.npcState
     );
-    const typeCall = formatGeneralTypeCall(g.leadership, g.strength, g.intel);
+    const typeCall = formatGeneralTypeCall(g.leadership, g.command, g.intelligence);
     const honorText = formatHonor(g.experience);
     const [expCur, expMax] = nextExpLevelRemain(g.experience, g.expLevel ?? 0);
     const npcColor = getNPCColor(g.npcState);
@@ -380,14 +380,14 @@ export default function MyPage() {
                                     },
                                     {
                                         label: '무력',
-                                        value: g.strength,
-                                        exp: g.strengthExp,
+                                        value: g.command,
+                                        exp: g.commandExp,
                                         color: 'orange',
                                     },
                                     {
                                         label: '지력',
-                                        value: g.intel,
-                                        exp: g.intelExp,
+                                        value: g.intelligence,
+                                        exp: g.intelligenceExp,
                                         color: 'dodgerblue',
                                     },
                                     {
@@ -398,7 +398,7 @@ export default function MyPage() {
                                     },
                                     {
                                         label: '매력',
-                                        value: g.charm,
+                                        value: g.administration,
                                         exp: 0,
                                         color: 'mediumpurple',
                                     },
@@ -430,30 +430,30 @@ export default function MyPage() {
                                 <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
                                     <div>
                                         <span className="text-muted-foreground">자금:</span>{' '}
-                                        <span className="text-yellow-400">{numberWithCommas(g.gold)}</span>
+                                        <span className="text-yellow-400">{numberWithCommas(g.funds)}</span>
                                     </div>
                                     <div>
                                         <span className="text-muted-foreground">군량:</span>{' '}
-                                        <span className="text-green-400">{numberWithCommas(g.rice)}</span>
+                                        <span className="text-green-400">{numberWithCommas(g.supplies)}</span>
                                     </div>
                                     <div>
                                         <span className="text-muted-foreground">함선:</span>{' '}
-                                        <span className="text-white">{numberWithCommas(g.crew)}</span>
+                                        <span className="text-white">{numberWithCommas(g.ships)}</span>
                                     </div>
                                     <div>
                                         <span className="text-muted-foreground">병종:</span>{' '}
-                                        <span className="text-cyan-300">{SHIP_CLASS_NAMES[g.crewType] ?? '보병'}</span>
+                                        <span className="text-cyan-300">{SHIP_CLASS_NAMES[g.shipClass] ?? '보병'}</span>
                                     </div>
                                     <div>
                                         <span className="text-muted-foreground">훈련:</span>{' '}
-                                        <span className={g.train >= 80 ? 'text-cyan-400' : 'text-white'}>
-                                            {g.train}
+                                        <span className={g.training >= 80 ? 'text-cyan-400' : 'text-white'}>
+                                            {g.training}
                                         </span>
                                     </div>
                                     <div>
                                         <span className="text-muted-foreground">사기:</span>{' '}
-                                        <span className={g.atmos >= 80 ? 'text-cyan-400' : 'text-white'}>
-                                            {g.atmos}
+                                        <span className={g.morale >= 80 ? 'text-cyan-400' : 'text-white'}>
+                                            {g.morale}
                                         </span>
                                     </div>
                                     <div>

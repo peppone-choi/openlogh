@@ -63,9 +63,12 @@ export default function GeneralDetailPage() {
         fetchData();
     }, [fetchData]);
 
-    const nation = useMemo(() => (general ? nations.find((n) => n.id === general.nationId) : null), [general, nations]);
+    const nation = useMemo(
+        () => (general ? nations.find((n) => n.id === general.factionId) : null),
+        [general, nations]
+    );
 
-    const city = useMemo(() => (general ? cities.find((c) => c.id === general.cityId) : null), [general, cities]);
+    const city = useMemo(() => (general ? cities.find((c) => c.id === general.planetId) : null), [general, cities]);
 
     if (!currentWorld) return <div className="p-4 text-muted-foreground">월드를 선택해주세요.</div>;
     if (loading) return <LoadingState />;
@@ -78,12 +81,12 @@ export default function GeneralDetailPage() {
         );
 
     const injuryInfo = formatInjury(general.injury);
-    const typeCall = formatGeneralTypeCall(general.leadership, general.strength, general.intel);
+    const typeCall = formatGeneralTypeCall(general.leadership, general.command, general.intelligence);
     const officerText = formatOfficerLevelText(
         general.officerLevel,
-        nation?.level,
-        general.nationId > 0,
-        nation?.typeCode,
+        nation?.factionRank,
+        general.factionId > 0,
+        nation?.factionType,
         general.npcState
     );
     const dexValues = [general.dex1, general.dex2, general.dex3, general.dex4, general.dex5];
@@ -109,16 +112,16 @@ export default function GeneralDetailPage() {
         },
         {
             label: '지휘',
-            base: general.strength,
-            effective: calcInjury(general.strength, general.injury),
+            base: general.command,
+            effective: calcInjury(general.command, general.injury),
         },
         {
             label: '정보',
-            base: general.intel,
-            effective: calcInjury(general.intel, general.injury),
+            base: general.intelligence,
+            effective: calcInjury(general.intelligence, general.injury),
         },
         { label: '정치', base: general.politics, effective: general.politics },
-        { label: '운영', base: general.charm, effective: general.charm },
+        { label: '운영', base: general.administration, effective: general.administration },
     ];
 
     return (
@@ -155,7 +158,7 @@ export default function GeneralDetailPage() {
                                     )}
                                 </p>
                                 <p>
-                                    행성: {city?.name ?? `#${general.cityId}`} | 연령:{' '}
+                                    행성: {city?.name ?? `#${general.planetId}`} | 연령:{' '}
                                     <span style={{ color: ageColor(general.age) }}>{general.age}세</span>
                                 </p>
                                 <p>
@@ -229,18 +232,24 @@ export default function GeneralDetailPage() {
                             label="함종"
                             value={
                                 <span className="text-cyan-300">
-                                    {SHIP_CLASS_NAMES[general.crewType] ?? `${general.crewType}`}
+                                    {SHIP_CLASS_NAMES[general.shipClass] ?? `${general.shipClass}`}
                                 </span>
                             }
                         />
-                        <Row label="함선" value={general.crew.toLocaleString()} />
+                        <Row label="함선" value={general.ships.toLocaleString()} />
                         <Row
                             label="훈련"
-                            value={<span className={general.train >= 80 ? 'text-cyan-400' : ''}>{general.train}</span>}
+                            value={
+                                <span className={general.training >= 80 ? 'text-cyan-400' : ''}>
+                                    {general.training}
+                                </span>
+                            }
                         />
                         <Row
                             label="사기"
-                            value={<span className={general.atmos >= 80 ? 'text-cyan-400' : ''}>{general.atmos}</span>}
+                            value={
+                                <span className={general.morale >= 80 ? 'text-cyan-400' : ''}>{general.morale}</span>
+                            }
                         />
                         <Row
                             label="기함"
@@ -284,11 +293,11 @@ export default function GeneralDetailPage() {
                         />
                         <Row
                             label="자금"
-                            value={<span className="text-yellow-400">{numberWithCommas(general.gold)}</span>}
+                            value={<span className="text-yellow-400">{numberWithCommas(general.funds)}</span>}
                         />
                         <Row
                             label="군량"
-                            value={<span className="text-green-400">{numberWithCommas(general.rice)}</span>}
+                            value={<span className="text-green-400">{numberWithCommas(general.supplies)}</span>}
                         />
                         <Row label="계급" value={`Lv.${general.dedLevel ?? 0} (${general.dedication})`} />
                     </div>

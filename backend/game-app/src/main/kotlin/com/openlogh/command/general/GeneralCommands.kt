@@ -25,13 +25,13 @@ abstract class DomesticCommand(
     abstract val statKey: String
     open val debuffFront: Double = 0.5
 
-    override fun getCost(): CommandCost = CommandCost(gold = env.develCost)
+    override fun getCost(): CommandCost = CommandCost(funds =env.develCost)
 
     override fun checkFullCondition(): ConstraintResult {
-        if (general.nationId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
+        if (general.factionId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
         val c = city ?: return ConstraintResult.Fail("도시 정보가 없습니다.")
         if (c.supplyState.toInt() == 0) return ConstraintResult.Fail("보급 상태가 아닙니다.")
-        if (general.gold < getCost().gold) return ConstraintResult.Fail("자금이 부족합니다.")
+        if (general.funds < getCost().funds) return ConstraintResult.Fail("자금이 부족합니다.")
 
         val (current, maxVal) = getCityValues(c)
         if (current >= maxVal) return ConstraintResult.Fail("이미 최대치입니다.")
@@ -50,10 +50,10 @@ abstract class DomesticCommand(
 
     private fun getStatValue(): Int = when (statKey) {
         "leadership" -> general.leadership.toInt()
-        "strength" -> general.strength.toInt()
-        "intel" -> general.intel.toInt()
+        "command", "strength" -> general.command.toInt()
+        "intelligence", "intel" -> general.intelligence.toInt()
         "politics" -> general.politics.toInt()
-        "charm" -> general.charm.toInt()
+        "administration", "charm" -> general.administration.toInt()
         else -> 50
     }
 
@@ -70,7 +70,7 @@ abstract class DomesticCommand(
         score = max(1, score)
 
         // Critical ratio
-        val avg = (general.leadership + general.strength + general.intel) / 3.0
+        val avg = (general.leadership + general.command + general.intelligence) / 3.0
         val statVal = getStatValue().toDouble()
         val ratio = min(avg / statVal, 1.2)
         var failRatio = (Math.pow(ratio / 1.2, 1.4) - 0.3).coerceIn(0.0, 0.5)
@@ -109,16 +109,16 @@ abstract class DomesticCommand(
 
         val statExpKey = when (statKey) {
             "leadership" -> "leadershipExp"
-            "strength" -> "strengthExp"
-            "intel" -> "intelExp"
+            "command", "strength" -> "commandExp"
+            "intelligence", "intel" -> "intelligenceExp"
             "politics" -> "politicsExp"
-            "charm" -> "charmExp"
-            else -> "intelExp"
+            "administration", "charm" -> "administrationExp"
+            else -> "intelligenceExp"
         }
         val exp = (score * 0.7).toInt()
 
         val statChanges = mutableMapOf<String, Any>(
-            "gold" to -getCost().gold,
+            "funds" to -getCost().funds,
             "experience" to exp,
             "dedication" to score,
             statExpKey to 1,
@@ -172,32 +172,32 @@ class 휴식(
 class che_농지개간(general: General, env: CommandEnv, arg: Map<String, Any>? = null) : DomesticCommand(general, env, arg) {
     override val actionName = "농지개간"
     override val cityKey = "agri"
-    override val statKey = "intel"
+    override val statKey = "intelligence"
 }
 
 class che_상업투자(general: General, env: CommandEnv, arg: Map<String, Any>? = null) : DomesticCommand(general, env, arg) {
     override val actionName = "상업투자"
     override val cityKey = "comm"
-    override val statKey = "intel"
+    override val statKey = "intelligence"
 }
 
 class che_치안강화(general: General, env: CommandEnv, arg: Map<String, Any>? = null) : DomesticCommand(general, env, arg) {
     override val actionName = "치안강화"
     override val cityKey = "secu"
-    override val statKey = "strength"
+    override val statKey = "command"
     override val debuffFront = 1.0
 }
 
 class che_수비강화(general: General, env: CommandEnv, arg: Map<String, Any>? = null) : DomesticCommand(general, env, arg) {
     override val actionName = "수비강화"
     override val cityKey = "def"
-    override val statKey = "strength"
+    override val statKey = "command"
 }
 
 class che_성벽보수(general: General, env: CommandEnv, arg: Map<String, Any>? = null) : DomesticCommand(general, env, arg) {
     override val actionName = "성벽보수"
     override val cityKey = "wall"
-    override val statKey = "strength"
+    override val statKey = "command"
     override val debuffFront = 0.25
 }
 
@@ -206,13 +206,13 @@ class che_정착장려(general: General, env: CommandEnv, arg: Map<String, Any>?
     override val cityKey = "pop"
     override val statKey = "leadership"
 
-    override fun getCost(): CommandCost = CommandCost(rice = env.develCost)
+    override fun getCost(): CommandCost = CommandCost(supplies =env.develCost)
 
     override fun checkFullCondition(): ConstraintResult {
-        if (general.nationId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
+        if (general.factionId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
         val c = city ?: return ConstraintResult.Fail("도시 정보가 없습니다.")
         if (c.supplyState.toInt() == 0) return ConstraintResult.Fail("보급 상태가 아닙니다.")
-        if (general.rice < getCost().rice) return ConstraintResult.Fail("군량이 부족합니다.")
+        if (general.supplies < getCost().supplies) return ConstraintResult.Fail("군량이 부족합니다.")
         if (c.pop >= c.popMax) return ConstraintResult.Fail("이미 최대치입니다.")
         return ConstraintResult.Pass
     }
@@ -221,17 +221,17 @@ class che_정착장려(general: General, env: CommandEnv, arg: Map<String, Any>?
 class che_주민선정(general: General, env: CommandEnv, arg: Map<String, Any>? = null) : BaseCommand(general, env, arg) {
     override val actionName = "주민선정"
 
-    override fun getCost(): CommandCost = CommandCost(rice = env.develCost)
+    override fun getCost(): CommandCost = CommandCost(supplies =env.develCost)
 
     override fun checkFullCondition(): ConstraintResult {
-        if (general.nationId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
+        if (general.factionId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
         val c = city ?: return ConstraintResult.Fail("도시 정보가 없습니다.")
         if (c.trust >= 100f) return ConstraintResult.Fail("이미 최대치입니다.")
         return ConstraintResult.Pass
     }
 
     override suspend fun run(rng: Random): CommandResult {
-        val score = (general.charm.toInt() * (0.8 + rng.nextDouble() * 0.4)).toInt()
+        val score = (general.administration.toInt() * (0.8 + rng.nextDouble() * 0.4)).toInt()
         val c = city!!
         val newTrust = min(100f, c.trust + score * 0.1f)
         val delta = newTrust - c.trust
@@ -245,7 +245,7 @@ class che_주민선정(general: General, env: CommandEnv, arg: Map<String, Any>?
         }
 
         val msg = mapper.writeValueAsString(mapOf(
-            "statChanges" to mapOf("rice" to -getCost().rice, "experience" to score, "dedication" to score, "charmExp" to 1),
+            "statChanges" to mapOf("supplies" to -getCost().supplies, "experience" to score, "dedication" to score, "administrationExp" to 1),
             "cityChanges" to mapOf("trust" to delta),
             "criticalResult" to pick,
         ))
@@ -256,16 +256,16 @@ class che_주민선정(general: General, env: CommandEnv, arg: Map<String, Any>?
 class che_기술연구(general: General, env: CommandEnv, arg: Map<String, Any>? = null) : BaseCommand(general, env, arg) {
     override val actionName = "기술연구"
 
-    override fun getCost(): CommandCost = CommandCost(gold = env.develCost)
+    override fun getCost(): CommandCost = CommandCost(funds =env.develCost)
 
     override fun checkFullCondition(): ConstraintResult {
-        if (general.nationId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
-        if (general.gold < getCost().gold) return ConstraintResult.Fail("자금이 부족합니다.")
+        if (general.factionId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
+        if (general.funds < getCost().funds) return ConstraintResult.Fail("자금이 부족합니다.")
         return ConstraintResult.Pass
     }
 
     override suspend fun run(rng: Random): CommandResult {
-        val score = (general.intel.toInt() * (0.8 + rng.nextDouble() * 0.4)).toInt()
+        val score = (general.intelligence.toInt() * (0.8 + rng.nextDouble() * 0.4)).toInt()
         val techDelta = if (env.isTechLimited(nation?.techLevel?.toDouble() ?: 0.0)) {
             (score / 4).toDouble() / 10.0
         } else {
@@ -280,7 +280,7 @@ class che_기술연구(general: General, env: CommandEnv, arg: Map<String, Any>?
         }
 
         val msg = mapper.writeValueAsString(mapOf(
-            "statChanges" to mapOf("gold" to -getCost().gold, "experience" to score, "dedication" to score, "intelExp" to 1),
+            "statChanges" to mapOf("funds" to -getCost().funds, "experience" to score, "dedication" to score, "intelligenceExp" to 1),
             "nationChanges" to mapOf("tech" to techDelta),
             "criticalResult" to pick,
         ))
@@ -298,14 +298,14 @@ class che_모병(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
 
     private fun maxCrew(): Int {
         val cap = general.leadership.toInt() * 100
-        val currentCrew = if (general.crewType.toInt() == crewType) general.crew else 0
+        val currentCrew = if (general.shipClass.toInt() == crewType) general.ships else 0
         return min(amount, max(0, cap - currentCrew))
     }
 
     override fun getCost(): CommandCost {
         val mc = maxCrew()
         val baseCost = mc / 10
-        var cost = CommandCost(gold = baseCost * 2, rice = baseCost / 10)
+        var cost = CommandCost(funds = baseCost * 2, supplies = baseCost / 10)
         services?.modifierService?.let { mod ->
             cost = mod.onCalcDomesticCost(general.personalCode, cost)
         }
@@ -313,39 +313,39 @@ class che_모병(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
     }
 
     override fun checkFullCondition(): ConstraintResult {
-        if (general.nationId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
+        if (general.factionId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
         val c = city ?: return ConstraintResult.Fail("도시 정보가 없습니다.")
         if (c.supplyState.toInt() == 0) return ConstraintResult.Fail("보급 상태가 아닙니다.")
         val cost = getCost()
-        if (general.gold < cost.gold) return ConstraintResult.Fail("자금이 부족합니다.")
+        if (general.funds < cost.funds) return ConstraintResult.Fail("자금이 부족합니다.")
         return ConstraintResult.Pass
     }
 
     override suspend fun run(rng: Random): CommandResult {
         val mc = maxCrew()
-        val isSame = general.crewType.toInt() == crewType
+        val isSame = general.shipClass.toInt() == crewType
         val cost = getCost()
 
-        val statChanges = mutableMapOf<String, Any>("gold" to -cost.gold, "rice" to -cost.rice)
+        val statChanges = mutableMapOf<String, Any>("funds" to -cost.funds, "supplies" to -cost.supplies)
 
-        if (isSame && general.crew > 0) {
-            val oldCrew = general.crew
+        if (isSame && general.ships > 0) {
+            val oldCrew = general.ships
             val newCrew = oldCrew + mc
-            val newTrain = ((general.train * oldCrew + 70 * mc) / newCrew.toDouble()).roundToInt().toShort()
-            val newAtmos = ((general.atmos * oldCrew + 70 * mc) / newCrew.toDouble()).roundToInt().toShort()
-            statChanges["crew"] = mc
-            statChanges["train"] = (newTrain - general.train).toInt()
-            statChanges["atmos"] = (newAtmos - general.atmos).toInt()
+            val newTrain = ((general.training * oldCrew + 70 * mc) / newCrew.toDouble()).roundToInt().toShort()
+            val newAtmos = ((general.morale * oldCrew + 70 * mc) / newCrew.toDouble()).roundToInt().toShort()
+            statChanges["ships"] = mc
+            statChanges["training"] = (newTrain - general.training).toInt()
+            statChanges["morale"] = (newAtmos - general.morale).toInt()
             val msg = mapper.writeValueAsString(mapOf(
                 "statChanges" to statChanges,
                 "cityChanges" to mapOf("pop" to -mc),
             ))
             return CommandResult(true, listOf("${formatDate()} 추가모병 ${mc}명을 모병했습니다."), message = msg)
         } else {
-            statChanges["crew"] = mc
-            statChanges["crewType"] = crewType
-            statChanges["train"] = (70 - general.train.toInt())
-            statChanges["atmos"] = (70 - general.atmos.toInt())
+            statChanges["ships"] = mc
+            statChanges["shipClass"] = crewType
+            statChanges["training"] = (70 - general.training.toInt())
+            statChanges["morale"] = (70 - general.morale.toInt())
             val msg = mapper.writeValueAsString(mapOf(
                 "statChanges" to statChanges,
                 "cityChanges" to mapOf("pop" to -mc),
@@ -363,14 +363,14 @@ class che_징병(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
 
     private fun maxCrew(): Int {
         val cap = general.leadership.toInt() * 100
-        val currentCrew = if (general.crewType.toInt() == crewType) general.crew else 0
+        val currentCrew = if (general.shipClass.toInt() == crewType) general.ships else 0
         return min(amount, max(0, cap - currentCrew))
     }
 
     override fun getCost(): CommandCost {
         val mc = maxCrew()
         val baseCost = mc / 10
-        var cost = CommandCost(gold = baseCost, rice = mc / 100)
+        var cost = CommandCost(funds = baseCost, supplies = mc / 100)
         services?.modifierService?.let { mod ->
             cost = mod.onCalcDomesticCost(general.personalCode, cost)
         }
@@ -378,7 +378,7 @@ class che_징병(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
     }
 
     override fun checkFullCondition(): ConstraintResult {
-        if (general.nationId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
+        if (general.factionId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
         val c = city ?: return ConstraintResult.Fail("도시 정보가 없습니다.")
         if (c.supplyState.toInt() == 0) return ConstraintResult.Fail("보급 상태가 아닙니다.")
         return ConstraintResult.Pass
@@ -387,22 +387,22 @@ class che_징병(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
     override suspend fun run(rng: Random): CommandResult {
         val mc = maxCrew()
         val cost = getCost()
-        val isSame = general.crewType.toInt() == crewType
-        val statChanges = mutableMapOf<String, Any>("gold" to -cost.gold, "rice" to -cost.rice)
+        val isSame = general.shipClass.toInt() == crewType
+        val statChanges = mutableMapOf<String, Any>("funds" to -cost.funds, "supplies" to -cost.supplies)
 
-        if (isSame && general.crew > 0) {
-            val oldCrew = general.crew
+        if (isSame && general.ships > 0) {
+            val oldCrew = general.ships
             val newCrew = oldCrew + mc
-            val newTrain = ((general.train * oldCrew + 40 * mc) / newCrew).toShort()
-            val newAtmos = ((general.atmos * oldCrew + 40 * mc) / newCrew).toShort()
-            statChanges["crew"] = mc
-            statChanges["train"] = (newTrain - general.train).toInt()
-            statChanges["atmos"] = (newAtmos - general.atmos).toInt()
+            val newTrain = ((general.training * oldCrew + 40 * mc) / newCrew).toShort()
+            val newAtmos = ((general.morale * oldCrew + 40 * mc) / newCrew).toShort()
+            statChanges["ships"] = mc
+            statChanges["training"] = (newTrain - general.training).toInt()
+            statChanges["morale"] = (newAtmos - general.morale).toInt()
         } else {
-            statChanges["crew"] = mc
-            statChanges["crewType"] = crewType
-            statChanges["train"] = (40 - general.train.toInt())
-            statChanges["atmos"] = (40 - general.atmos.toInt())
+            statChanges["ships"] = mc
+            statChanges["shipClass"] = crewType
+            statChanges["training"] = (40 - general.training.toInt())
+            statChanges["morale"] = (40 - general.morale.toInt())
         }
 
         val msg = mapper.writeValueAsString(mapOf(
@@ -417,23 +417,23 @@ class che_훈련(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
     override val actionName = "훈련"
 
     override fun checkFullCondition(): ConstraintResult {
-        if (general.nationId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
-        if (general.crew == 0) return ConstraintResult.Fail("병사가 없습니다.")
-        if (general.train >= 80.toShort()) return ConstraintResult.Fail("훈련도가 이미 최대치입니다.")
+        if (general.factionId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
+        if (general.ships == 0) return ConstraintResult.Fail("병사가 없습니다.")
+        if (general.training >= 80.toShort()) return ConstraintResult.Fail("훈련도가 이미 최대치입니다.")
         return ConstraintResult.Pass
     }
 
     override suspend fun run(rng: Random): CommandResult {
         val leadershipValue = general.leadership.toInt()
-        val oldTrain = general.train.toInt()
-        val rawDelta = (leadershipValue * 100.0 / general.crew * 0.05).toInt()
+        val oldTrain = general.training.toInt()
+        val rawDelta = (leadershipValue * 100.0 / general.ships * 0.05).toInt()
         val trainDelta = min(80 - oldTrain, max(0, rawDelta))
-        val atmosAfter = max(0, (general.atmos.toInt() * 0.9).toInt())
-        val atmosDelta = atmosAfter - general.atmos.toInt()
+        val atmosAfter = max(0, (general.morale.toInt() * 0.9).toInt())
+        val atmosDelta = atmosAfter - general.morale.toInt()
 
         val statChanges = mutableMapOf<String, Any>(
-            "train" to trainDelta,
-            "atmos" to atmosDelta,
+            "training" to trainDelta,
+            "morale" to atmosDelta,
             "experience" to 100,
             "dedication" to 70,
             "leadershipExp" to 1,
@@ -452,22 +452,22 @@ class che_사기진작(general: General, env: CommandEnv, arg: Map<String, Any>?
     override val actionName = "사기진작"
 
     override fun checkFullCondition(): ConstraintResult {
-        if (general.nationId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
-        if (general.crew == 0) return ConstraintResult.Fail("병사가 없습니다.")
-        if (general.atmos >= 100.toShort()) return ConstraintResult.Fail("사기가 이미 최대치입니다.")
+        if (general.factionId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
+        if (general.ships == 0) return ConstraintResult.Fail("병사가 없습니다.")
+        if (general.morale >= 100.toShort()) return ConstraintResult.Fail("사기가 이미 최대치입니다.")
         return ConstraintResult.Pass
     }
 
     override suspend fun run(rng: Random): CommandResult {
-        val crew = general.crew
+        val crew = general.ships
         val goldCost = max(1, crew / 100)
         val atmosDelta = max(1, (general.leadership.toInt() * 0.03).toInt())
         val trainDelta = -(max(1, (general.leadership.toInt() * 0.1).toInt()))
 
         val statChanges = mutableMapOf<String, Any>(
-            "gold" to -goldCost,
-            "atmos" to atmosDelta,
-            "train" to trainDelta,
+            "funds" to -goldCost,
+            "morale" to atmosDelta,
+            "training" to trainDelta,
             "experience" to 100,
             "dedication" to 70,
         )
@@ -481,14 +481,14 @@ class che_소집해제(general: General, env: CommandEnv, arg: Map<String, Any>?
     override val actionName = "소집해제"
 
     override fun checkFullCondition(): ConstraintResult {
-        if (general.crew == 0) return ConstraintResult.Fail("병사가 없습니다.")
+        if (general.ships == 0) return ConstraintResult.Fail("병사가 없습니다.")
         return ConstraintResult.Pass
     }
 
     override suspend fun run(rng: Random): CommandResult {
-        val pop = general.crew
+        val pop = general.ships
         val msg = mapper.writeValueAsString(mapOf(
-            "statChanges" to mapOf("crew" to -pop, "train" to -(general.train.toInt()), "atmos" to -(general.atmos.toInt())),
+            "statChanges" to mapOf("ships" to -pop, "training" to -(general.training.toInt()), "morale" to -(general.morale.toInt())),
             "cityChanges" to mapOf("pop" to pop),
         ))
         return CommandResult(true, listOf("${formatDate()} 소집해제 ${pop}명을 해산했습니다."), message = msg)
@@ -498,13 +498,13 @@ class che_소집해제(general: General, env: CommandEnv, arg: Map<String, Any>?
 class che_숙련전환(general: General, env: CommandEnv, arg: Map<String, Any>? = null) : BaseCommand(general, env, arg) {
     override val actionName = "숙련전환"
 
-    override fun getCost(): CommandCost = CommandCost(gold = env.develCost, rice = env.develCost)
+    override fun getCost(): CommandCost = CommandCost(funds = env.develCost, supplies = env.develCost)
 
     override fun checkFullCondition(): ConstraintResult {
         if (arg == null) return ConstraintResult.Pass // arg check is in run()
-        if (general.nationId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
-        if (general.gold < getCost().gold) return ConstraintResult.Fail("자금이 부족합니다.")
-        if (general.rice < getCost().rice) return ConstraintResult.Fail("군량이 부족합니다.")
+        if (general.factionId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
+        if (general.funds < getCost().funds) return ConstraintResult.Fail("자금이 부족합니다.")
+        if (general.supplies < getCost().supplies) return ConstraintResult.Fail("군량이 부족합니다.")
         return ConstraintResult.Pass
     }
 
@@ -532,7 +532,7 @@ class che_물자조달(general: General, env: CommandEnv, arg: Map<String, Any>?
     override val actionName = "물자조달"
 
     override fun checkFullCondition(): ConstraintResult {
-        if (general.nationId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
+        if (general.factionId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
         val c = city ?: return ConstraintResult.Fail("도시 정보가 없습니다.")
         if (c.supplyState.toInt() == 0) return ConstraintResult.Fail("보급 상태가 아닙니다.")
         return ConstraintResult.Pass
@@ -540,7 +540,7 @@ class che_물자조달(general: General, env: CommandEnv, arg: Map<String, Any>?
 
     override suspend fun run(rng: Random): CommandResult {
         val c = city ?: return CommandResult(false, listOf("${formatDate()} 도시 정보 없음"))
-        val stat = general.charm.toInt()
+        val stat = general.administration.toInt()
         val trust = max(50f, c.trust).toDouble()
 
         var score = (stat * (trust / 100.0) * (0.8 + rng.nextDouble() * 0.4)).toInt()
@@ -550,7 +550,7 @@ class che_물자조달(general: General, env: CommandEnv, arg: Map<String, Any>?
         score = max(1, score)
 
         // Critical ratio
-        val avg = (general.leadership + general.strength + general.intel) / 3.0
+        val avg = (general.leadership + general.command + general.intelligence) / 3.0
         val statVal = stat.toDouble()
         val ratio = min(avg / statVal, 1.2)
         var failRatio = (Math.pow(ratio / 1.2, 1.4) - 0.3).coerceIn(0.0, 0.5)
@@ -578,7 +578,7 @@ class che_물자조달(general: General, env: CommandEnv, arg: Map<String, Any>?
         if (fs == 1 || fs == 3) score = (score * 0.5).toInt()
 
         val isGold = rng.nextBoolean()
-        val resourceKey = if (isGold) "gold" else "rice"
+        val resourceKey = if (isGold) "funds" else "supplies"
         val statChanges = mapOf(resourceKey to score)
         val nationChanges = mapOf(resourceKey to score)
         val payload = mapOf("statChanges" to statChanges, "nationChanges" to nationChanges, "criticalResult" to pick)
@@ -594,13 +594,13 @@ class che_군량매매(general: General, env: CommandEnv, arg: Map<String, Any>?
     private val amount: Int get() = (arg?.get("amount") as? Number)?.toInt() ?: 0
 
     override fun checkFullCondition(): ConstraintResult {
-        if (general.nationId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
+        if (general.factionId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
         val c = city ?: return ConstraintResult.Fail("도시 정보가 없습니다.")
         if (c.trade <= 0) return ConstraintResult.Fail("교역로가 없습니다.")
         if (buyRice) {
-            if (general.gold < amount) return ConstraintResult.Fail("자금이 부족합니다.")
+            if (general.funds < amount) return ConstraintResult.Fail("자금이 부족합니다.")
         } else {
-            if (general.rice < amount) return ConstraintResult.Fail("군량이 부족합니다.")
+            if (general.supplies < amount) return ConstraintResult.Fail("군량이 부족합니다.")
         }
         return ConstraintResult.Pass
     }
@@ -615,12 +615,12 @@ class che_군량매매(general: General, env: CommandEnv, arg: Map<String, Any>?
         val nationTax: Map<String, Int>
         if (buyRice) {
             val goldCost = tradeAmount + tax
-            statChanges = mapOf("gold" to -goldCost, "rice" to tradeAmount)
-            nationTax = mapOf("gold" to tax)
+            statChanges = mapOf("funds" to -goldCost, "supplies" to tradeAmount)
+            nationTax = mapOf("funds" to tax)
         } else {
             val riceCost = tradeAmount + tax
-            statChanges = mapOf("rice" to -riceCost, "gold" to tradeAmount)
-            nationTax = mapOf("rice" to tax)
+            statChanges = mapOf("supplies" to -riceCost, "funds" to tradeAmount)
+            nationTax = mapOf("supplies" to tax)
         }
 
         val payload = mapOf("statChanges" to statChanges, "nationTax" to nationTax)
@@ -636,18 +636,18 @@ class che_헌납(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
     private val amount: Int get() = (arg?.get("amount") as? Number)?.toInt() ?: 0
 
     override fun checkFullCondition(): ConstraintResult {
-        if (general.nationId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
-        if (isGold && general.gold < amount) return ConstraintResult.Fail("자금이 부족합니다.")
-        if (!isGold && general.rice < amount) return ConstraintResult.Fail("군량이 부족합니다.")
+        if (general.factionId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
+        if (isGold && general.funds < amount) return ConstraintResult.Fail("자금이 부족합니다.")
+        if (!isGold && general.supplies < amount) return ConstraintResult.Fail("군량이 부족합니다.")
         return ConstraintResult.Pass
     }
 
     override suspend fun run(rng: Random): CommandResult {
         val label = if (isGold) "금" else "쌀"
-        val available = if (isGold) general.gold else general.rice
+        val available = if (isGold) general.funds else general.supplies
         val actualAmount = amount.coerceAtMost(available)
-        val statChanges = if (isGold) mapOf("gold" to -actualAmount) else mapOf("rice" to -actualAmount)
-        val nationChanges = if (isGold) mapOf("gold" to actualAmount) else mapOf("rice" to actualAmount)
+        val statChanges = if (isGold) mapOf("funds" to -actualAmount) else mapOf("supplies" to -actualAmount)
+        val nationChanges = if (isGold) mapOf("funds" to actualAmount) else mapOf("supplies" to actualAmount)
         val msg = mapper.writeValueAsString(mapOf("statChanges" to statChanges, "nationChanges" to nationChanges))
         return CommandResult(true, listOf("${formatDate()} ${label} ${actualAmount}을(를) 헌납했습니다."), message = msg)
     }
@@ -656,10 +656,10 @@ class che_헌납(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
 class che_단련(general: General, env: CommandEnv, arg: Map<String, Any>? = null) : BaseCommand(general, env, arg) {
     override val actionName = "단련"
 
-    override fun getCost(): CommandCost = CommandCost(gold = env.develCost, rice = env.develCost)
+    override fun getCost(): CommandCost = CommandCost(funds = env.develCost, supplies = env.develCost)
 
     override fun checkFullCondition(): ConstraintResult {
-        if (general.nationId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
+        if (general.factionId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
         return ConstraintResult.Pass
     }
 
@@ -673,28 +673,28 @@ class che_단련(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
             else -> { pick = "normal"; multiplier = 2 }
         }
 
-        val baseScore = (general.crew.toDouble() * general.train * general.atmos) / 200000.0
+        val baseScore = (general.ships.toDouble() * general.training * general.morale) / 200000.0
         val score = (baseScore * multiplier).roundToInt()
 
-        val totalWeight = general.leadership + general.strength + general.intel
+        val totalWeight = general.leadership + general.command + general.intelligence
         var roll = rng.nextDouble() * totalWeight
         val incStat: String
         when {
             run { roll -= general.leadership; roll < 0 } -> incStat = "leadershipExp"
-            run { roll -= general.strength; roll < 0 } -> incStat = "strengthExp"
-            else -> incStat = "intelExp"
+            run { roll -= general.command; roll < 0 } -> incStat = "commandExp"
+            else -> incStat = "intelligenceExp"
         }
 
         val statChanges = mutableMapOf<String, Any>(
-            "gold" to -getCost().gold,
-            "rice" to -getCost().rice,
+            "funds" to -getCost().funds,
+            "supplies" to -getCost().supplies,
             "experience" to 2,
             incStat to 1,
         )
 
         val msg = mapper.writeValueAsString(mapOf(
             "statChanges" to statChanges,
-            "dexChanges" to mapOf("crewType" to general.crewType.toInt(), "amount" to score),
+            "dexChanges" to mapOf("shipClass" to general.shipClass.toInt(), "amount" to score),
             "criticalResult" to pick,
         ))
         return CommandResult(true, listOf("${formatDate()} 단련을 실시했습니다."), message = msg)
@@ -707,18 +707,18 @@ class 출병(general: General, env: CommandEnv, arg: Map<String, Any>? = null) :
     override val actionName = "출병"
 
     override fun checkFullCondition(): ConstraintResult {
-        if (general.nationId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
-        if (general.crew == 0) return ConstraintResult.Fail("병사가 없습니다.")
+        if (general.factionId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
+        if (general.ships == 0) return ConstraintResult.Fail("병사가 없습니다.")
         val dc = destCity ?: return ConstraintResult.Fail("목적지 도시가 없습니다.")
-        if (dc.id == general.cityId) return ConstraintResult.Fail("같은 도시로는 출병할 수 없습니다.")
+        if (dc.id == general.planetId) return ConstraintResult.Fail("같은 도시로는 출병할 수 없습니다.")
         return ConstraintResult.Pass
     }
 
     override suspend fun run(rng: Random): CommandResult {
         val dc = destCity!!
-        val riceCost = general.crew / 100
+        val riceCost = general.ships / 100
         val msg = mapper.writeValueAsString(mapOf(
-            "statChanges" to mapOf("rice" to -riceCost),
+            "statChanges" to mapOf("supplies" to -riceCost),
             "battleTriggered" to true,
             "targetCityId" to dc.id.toString(),
         ))
@@ -731,15 +731,15 @@ class 이동(general: General, env: CommandEnv, arg: Map<String, Any>? = null) :
 
     override suspend fun run(rng: Random): CommandResult {
         val dc = destCity ?: return CommandResult(false, listOf("${formatDate()} 목적지가 없습니다."))
-        val oldAtmos = general.atmos.toInt()
+        val oldAtmos = general.morale.toInt()
         val newAtmos = max(20, oldAtmos - 5)
         val atmosDelta = newAtmos - oldAtmos
         val goldCost = env.develCost
         val msg = mapper.writeValueAsString(mapOf(
             "statChanges" to mapOf(
-                "cityId" to dc.id.toString(),
-                "atmos" to atmosDelta,
-                "gold" to -goldCost,
+                "planetId" to dc.id.toString(),
+                "morale" to atmosDelta,
+                "funds" to -goldCost,
             ),
         ))
         return CommandResult(true, listOf("${formatDate()} 이동했습니다."), message = msg)
@@ -751,7 +751,7 @@ class 집합(general: General, env: CommandEnv, arg: Map<String, Any>? = null) :
 
     @Suppress("UNCHECKED_CAST")
     override fun checkFullCondition(): ConstraintResult {
-        val troopId = if (general.troopId == general.id) general.id else general.troopId
+        val troopId = if (general.fleetId == general.id) general.id else general.fleetId
         if (troopId != general.id) return ConstraintResult.Fail("부대장만 사용할 수 있습니다.")
         val memberExists = env.gameStor["troopMemberExistsByTroopId"] as? Map<Long, Boolean> ?: emptyMap()
         if (memberExists[troopId] != true) return ConstraintResult.Fail("부대원이 없습니다.")
@@ -765,8 +765,8 @@ class 집합(general: General, env: CommandEnv, arg: Map<String, Any>? = null) :
         if (svc != null) {
             val members = svc.generalRepository.findByTroopId(general.id)
             for (m in members) {
-                if (m.id != general.id && m.cityId != general.cityId) {
-                    m.cityId = general.cityId
+                if (m.id != general.id && m.planetId != general.planetId) {
+                    m.planetId = general.planetId
                     movedCount++
                     movedGenerals.add(m)
                 }
@@ -787,7 +787,7 @@ class 귀환(general: General, env: CommandEnv, arg: Map<String, Any>? = null) :
 
     override fun checkFullCondition(): ConstraintResult {
         val n = nation ?: return ConstraintResult.Fail("소속 국가가 없습니다.")
-        if (general.cityId == n.capitalCityId) return ConstraintResult.Fail("수도에서는 사용할 수 없습니다.")
+        if (general.planetId == n.capitalCityId) return ConstraintResult.Fail("수도에서는 사용할 수 없습니다.")
         return ConstraintResult.Pass
     }
 
@@ -806,7 +806,7 @@ class 접경귀환(general: General, env: CommandEnv, arg: Map<String, Any>? = n
 
     override fun checkFullCondition(): ConstraintResult {
         val c = city ?: return ConstraintResult.Fail("도시 정보가 없습니다.")
-        if (c.nationId == general.nationId) return ConstraintResult.Fail("아군 도시에서는 사용할 수 없습니다.")
+        if (c.factionId == general.factionId) return ConstraintResult.Fail("아군 도시에서는 사용할 수 없습니다.")
         return ConstraintResult.Pass
     }
 
@@ -817,9 +817,9 @@ class 접경귀환(general: General, env: CommandEnv, arg: Map<String, Any>? = n
         val citySupplyById = env.gameStor["citySupplyStateById"] as? Map<Long, Int> ?: emptyMap()
 
         // BFS to find nearest supplied friendly city
-        val visited = mutableSetOf(general.cityId)
+        val visited = mutableSetOf(general.planetId)
         val queue = ArrayDeque<Long>()
-        queue.add(general.cityId)
+        queue.add(general.planetId)
         var targetCityId: Long? = null
 
         while (queue.isNotEmpty()) {
@@ -829,7 +829,7 @@ class 접경귀환(general: General, env: CommandEnv, arg: Map<String, Any>? = n
                 if (neighbor !in visited) {
                     visited.add(neighbor)
                     val ownerNation = cityNationById[neighbor] ?: 0L
-                    if (ownerNation == general.nationId) {
+                    if (ownerNation == general.factionId) {
                         val supply = citySupplyById[neighbor] ?: 0
                         if (supply > 0) {
                             targetCityId = neighbor
@@ -862,7 +862,7 @@ class 강행(general: General, env: CommandEnv, arg: Map<String, Any>? = null) :
         val dc = destCity ?: return ConstraintResult.Fail("목적지 도시가 없습니다.")
         val mapAdj = env.gameStor["mapAdjacency"] as? Map<Long, List<Long>> ?: emptyMap()
         val dbToMapId = env.gameStor["dbToMapId"] as? Map<Long, Long> ?: emptyMap()
-        val srcMapId = dbToMapId[general.cityId]
+        val srcMapId = dbToMapId[general.planetId]
         val destMapId = dbToMapId[dc.id]
         if (srcMapId == null || destMapId == null) return ConstraintResult.Fail("거리를 계산할 수 없습니다.")
         val neighbors = mapAdj[srcMapId] ?: emptyList()
@@ -874,10 +874,10 @@ class 강행(general: General, env: CommandEnv, arg: Map<String, Any>? = null) :
         val dc = destCity!!
         val msg = mapper.writeValueAsString(mapOf(
             "statChanges" to mapOf(
-                "cityId" to dc.id.toString(),
-                "gold" to -500,
-                "train" to -5,
-                "atmos" to -5,
+                "planetId" to dc.id.toString(),
+                "funds" to -500,
+                "training" to -5,
+                "morale" to -5,
             ),
         ))
         return CommandResult(true, listOf("${formatDate()} 강행군을 실시했습니다."), message = msg)
@@ -888,7 +888,7 @@ class 거병(general: General, env: CommandEnv, arg: Map<String, Any>? = null) :
     override val actionName = "거병"
 
     override fun checkFullCondition(): ConstraintResult {
-        if (general.nationId != 0L) return ConstraintResult.Fail("재야 상태가 아닙니다.")
+        if (general.factionId != 0L) return ConstraintResult.Fail("재야 상태가 아닙니다.")
         return ConstraintResult.Pass
     }
 
@@ -905,9 +905,9 @@ class 전투태세(general: General, env: CommandEnv, arg: Map<String, Any>? = n
     override val actionName = "전투태세"
 
     override fun checkFullCondition(): ConstraintResult {
-        if (general.nationId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
-        if (general.crew == 0) return ConstraintResult.Fail("병사가 없습니다.")
-        if (general.train >= 70.toShort()) return ConstraintResult.Fail("훈련도가 충분합니다.")
+        if (general.factionId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
+        if (general.ships == 0) return ConstraintResult.Fail("병사가 없습니다.")
+        if (general.training >= 70.toShort()) return ConstraintResult.Fail("훈련도가 충분합니다.")
         return ConstraintResult.Pass
     }
 
@@ -928,11 +928,11 @@ class 화계(general: General, env: CommandEnv, arg: Map<String, Any>? = null) :
     override val actionName = "화계"
 
     override fun checkFullCondition(): ConstraintResult {
-        if (general.nationId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
+        if (general.factionId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
         val c = city ?: return ConstraintResult.Fail("도시 정보가 없습니다.")
         if (c.supplyState.toInt() == 0) return ConstraintResult.Fail("보급 상태가 아닙니다.")
         val dc = destCity ?: return ConstraintResult.Fail("목적지 도시가 없습니다.")
-        if (dc.nationId == 0L) return ConstraintResult.Fail("공백지에는 사용할 수 없습니다.")
+        if (dc.factionId == 0L) return ConstraintResult.Fail("공백지에는 사용할 수 없습니다.")
         return ConstraintResult.Pass
     }
 
@@ -940,11 +940,11 @@ class 화계(general: General, env: CommandEnv, arg: Map<String, Any>? = null) :
         val dc = destCity!!
         val goldCost = env.develCost / 4
         val riceCost = env.develCost / 4
-        val score = (general.intel.toInt() * (0.8 + rng.nextDouble() * 0.4)).toInt()
+        val score = (general.intelligence.toInt() * (0.8 + rng.nextDouble() * 0.4)).toInt()
         val agriDelta = -min(dc.agri, score)
         val commDelta = -min(dc.comm, score)
         val msg = mapper.writeValueAsString(mapOf(
-            "statChanges" to mapOf("gold" to -goldCost, "rice" to -riceCost, "experience" to score, "intelExp" to 1),
+            "statChanges" to mapOf("funds" to -goldCost, "supplies" to -riceCost, "experience" to score, "intelligenceExp" to 1),
             "destCityChanges" to mapOf("agri" to agriDelta, "comm" to commDelta),
         ))
         return CommandResult(true, listOf("${formatDate()} 화계를 실시했습니다."), message = msg)
@@ -956,10 +956,10 @@ class 첩보(general: General, env: CommandEnv, arg: Map<String, Any>? = null) :
 
     override fun checkFullCondition(): ConstraintResult {
         val dc = destCity ?: return ConstraintResult.Fail("목적지 도시가 없습니다.")
-        if (dc.nationId == general.nationId) return ConstraintResult.Fail("아군 도시에는 사용할 수 없습니다.")
+        if (dc.factionId == general.factionId) return ConstraintResult.Fail("아군 도시에는 사용할 수 없습니다.")
         val costAmount = env.develCost * 3
-        if (general.gold < costAmount) return ConstraintResult.Fail("자금이 부족합니다.")
-        if (general.rice < costAmount) return ConstraintResult.Fail("군량이 부족합니다.")
+        if (general.funds < costAmount) return ConstraintResult.Fail("자금이 부족합니다.")
+        if (general.supplies < costAmount) return ConstraintResult.Fail("군량이 부족합니다.")
         return ConstraintResult.Pass
     }
 
@@ -967,7 +967,7 @@ class 첩보(general: General, env: CommandEnv, arg: Map<String, Any>? = null) :
         val dc = destCity!!
         val costAmount = env.develCost * 3
         val msg = mapper.writeValueAsString(mapOf(
-            "statChanges" to mapOf("gold" to -costAmount, "rice" to -costAmount, "experience" to 50, "intelExp" to 1),
+            "statChanges" to mapOf("funds" to -costAmount, "supplies" to -costAmount, "experience" to 50, "intelligenceExp" to 1),
             "spyResult" to mapOf("pop" to dc.pop, "trust" to dc.trust),
         ))
         return CommandResult(true, listOf("${formatDate()} 첩보 활동을 했습니다."), message = msg)
@@ -978,11 +978,11 @@ class 선동(general: General, env: CommandEnv, arg: Map<String, Any>? = null) :
     override val actionName = "선동"
 
     override fun checkFullCondition(): ConstraintResult {
-        if (general.nationId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
+        if (general.factionId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
         val c = city ?: return ConstraintResult.Fail("도시 정보가 없습니다.")
         if (c.supplyState.toInt() == 0) return ConstraintResult.Fail("보급 상태가 아닙니다.")
         val dc = destCity ?: return ConstraintResult.Fail("목적지 도시가 없습니다.")
-        if (dc.nationId == 0L) return ConstraintResult.Fail("공백지에는 사용할 수 없습니다.")
+        if (dc.factionId == 0L) return ConstraintResult.Fail("공백지에는 사용할 수 없습니다.")
         return ConstraintResult.Pass
     }
 
@@ -1003,21 +1003,21 @@ class 탈취(general: General, env: CommandEnv, arg: Map<String, Any>? = null) :
     override val actionName = "탈취"
 
     override fun checkFullCondition(): ConstraintResult {
-        if (general.nationId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
+        if (general.factionId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
         val c = city ?: return ConstraintResult.Fail("도시 정보가 없습니다.")
         if (c.supplyState.toInt() == 0) return ConstraintResult.Fail("보급 상태가 아닙니다.")
         val dc = destCity ?: return ConstraintResult.Fail("목적지 도시가 없습니다.")
-        if (dc.nationId == 0L) return ConstraintResult.Fail("공백지에는 사용할 수 없습니다.")
+        if (dc.factionId == 0L) return ConstraintResult.Fail("공백지에는 사용할 수 없습니다.")
         return ConstraintResult.Pass
     }
 
     override suspend fun run(rng: Random): CommandResult {
         val dc = destCity!!
-        val score = (general.strength.toInt() * (0.8 + rng.nextDouble() * 0.4)).toInt()
+        val score = (general.command.toInt() * (0.8 + rng.nextDouble() * 0.4)).toInt()
         val commDelta = -min(dc.comm, score)
         val agriDelta = -min(dc.agri, score)
         val msg = mapper.writeValueAsString(mapOf(
-            "statChanges" to mapOf("experience" to score, "strengthExp" to 1),
+            "statChanges" to mapOf("experience" to score, "commandExp" to 1),
             "destCityChanges" to mapOf("comm" to commDelta, "agri" to agriDelta),
         ))
         return CommandResult(true, listOf("${formatDate()} 탈취를 실시했습니다."), message = msg)
@@ -1028,21 +1028,21 @@ class 파괴(general: General, env: CommandEnv, arg: Map<String, Any>? = null) :
     override val actionName = "파괴"
 
     override fun checkFullCondition(): ConstraintResult {
-        if (general.nationId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
+        if (general.factionId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
         val c = city ?: return ConstraintResult.Fail("도시 정보가 없습니다.")
         if (c.supplyState.toInt() == 0) return ConstraintResult.Fail("보급 상태가 아닙니다.")
         val dc = destCity ?: return ConstraintResult.Fail("목적지 도시가 없습니다.")
-        if (dc.nationId == 0L) return ConstraintResult.Fail("공백지에는 사용할 수 없습니다.")
+        if (dc.factionId == 0L) return ConstraintResult.Fail("공백지에는 사용할 수 없습니다.")
         return ConstraintResult.Pass
     }
 
     override suspend fun run(rng: Random): CommandResult {
         val dc = destCity!!
-        val score = (general.strength.toInt() * (0.8 + rng.nextDouble() * 0.4)).toInt()
+        val score = (general.command.toInt() * (0.8 + rng.nextDouble() * 0.4)).toInt()
         val defDelta = -min(dc.def, score)
         val wallDelta = -min(dc.wall, score)
         val msg = mapper.writeValueAsString(mapOf(
-            "statChanges" to mapOf("experience" to score, "strengthExp" to 1),
+            "statChanges" to mapOf("experience" to score, "commandExp" to 1),
             "destCityChanges" to mapOf("def" to defDelta, "wall" to wallDelta),
         ))
         return CommandResult(true, listOf("${formatDate()} 파괴 공작을 실시했습니다."), message = msg)
@@ -1095,17 +1095,17 @@ class 견문(general: General, env: CommandEnv, arg: Map<String, Any>? = null) :
         val roll = rng.nextInt(5)
         when (roll) {
             0 -> statChanges["leadershipExp"] = 1
-            1 -> statChanges["strengthExp"] = 1
-            2 -> statChanges["intelExp"] = 1
+            1 -> statChanges["commandExp"] = 1
+            2 -> statChanges["intelligenceExp"] = 1
             3 -> statChanges["politicsExp"] = 1
-            4 -> statChanges["charmExp"] = 1
+            4 -> statChanges["administrationExp"] = 1
         }
 
-        // Random gold/rice change
+        // Random funds/supplies change
         val goldDelta = rng.nextInt(201) - 100
         val riceDelta = rng.nextInt(201) - 100
-        if (goldDelta != 0) statChanges["gold"] = goldDelta
-        if (riceDelta != 0) statChanges["rice"] = riceDelta
+        if (goldDelta != 0) statChanges["funds"] = goldDelta
+        if (riceDelta != 0) statChanges["supplies"] = riceDelta
 
         // Small chance of injury
         val injuryRoll = rng.nextDouble()
@@ -1126,7 +1126,7 @@ class 등용(general: General, env: CommandEnv, arg: Map<String, Any>? = null) :
     override val actionName = "등용"
 
     override fun checkFullCondition(): ConstraintResult {
-        if (general.nationId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
+        if (general.factionId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
         return ConstraintResult.Pass
     }
 
@@ -1141,7 +1141,7 @@ class 등용수락(general: General, env: CommandEnv, arg: Map<String, Any>? = n
 
 
     override fun checkFullCondition(): ConstraintResult {
-        if (general.nationId != 0L) return ConstraintResult.Fail("이미 소속 국가가 있습니다.")
+        if (general.factionId != 0L) return ConstraintResult.Fail("이미 소속 국가가 있습니다.")
         return ConstraintResult.Pass
     }
 
@@ -1160,7 +1160,7 @@ class 임관(general: General, env: CommandEnv, arg: Map<String, Any>? = null) :
 
 
     override fun checkFullCondition(): ConstraintResult {
-        if (general.nationId != 0L) return ConstraintResult.Fail("이미 소속 국가가 있습니다.")
+        if (general.factionId != 0L) return ConstraintResult.Fail("이미 소속 국가가 있습니다.")
         if (destNation == null) return ConstraintResult.Fail("대상 국가가 없습니다.")
         return ConstraintResult.Pass
     }
@@ -1179,7 +1179,7 @@ class 랜덤임관(general: General, env: CommandEnv, arg: Map<String, Any>? = n
     override val actionName = "랜덤임관"
 
     override fun checkFullCondition(): ConstraintResult {
-        if (general.nationId != 0L) return ConstraintResult.Fail("이미 소속 국가가 있습니다.")
+        if (general.factionId != 0L) return ConstraintResult.Fail("이미 소속 국가가 있습니다.")
         return ConstraintResult.Pass
     }
 
@@ -1193,7 +1193,7 @@ class 랜덤임관(general: General, env: CommandEnv, arg: Map<String, Any>? = n
 
         data class Candidate(val nation: Nation, val lord: General?, val distance: Int)
         val candidates = nations.map { n ->
-            val lord = lords.find { it.nationId == n.id }
+            val lord = lords.find { it.factionId == n.id }
             val dist = if (lord != null) kotlin.math.abs(general.affinity - lord.affinity).toInt() else 999
             Candidate(n, lord, dist)
         }.sortedBy { it.distance }
@@ -1206,7 +1206,7 @@ class 랜덤임관(general: General, env: CommandEnv, arg: Map<String, Any>? = n
             "officerCity" to 0,
             "belong" to 1,
             "troop" to 0,
-            "cityId" to (chosen.lord?.cityId?.toString() ?: "0"),
+            "planetId" to (chosen.lord?.planetId?.toString() ?: "0"),
             "tryUniqueLottery" to true,
         ))
         return CommandResult(true, listOf("${formatDate()} 랜덤 임관했습니다."), message = msg)
@@ -1219,7 +1219,7 @@ class 장수대상임관(general: General, env: CommandEnv, arg: Map<String, Any
     override var destGeneral: General? = null
 
     override fun checkFullCondition(): ConstraintResult {
-        if (general.nationId != 0L) return ConstraintResult.Fail("이미 소속 국가가 있습니다.")
+        if (general.factionId != 0L) return ConstraintResult.Fail("이미 소속 국가가 있습니다.")
         if (destNation == null) return ConstraintResult.Fail("대상 국가가 없습니다.")
         return ConstraintResult.Pass
     }
@@ -1230,7 +1230,7 @@ class 장수대상임관(general: General, env: CommandEnv, arg: Map<String, Any
         dn.gennum += 1
         val msg = mapper.writeValueAsString(mapOf(
             "statChanges" to mapOf("experience" to 50, "dedication" to 50),
-            "city" to (dg?.cityId ?: 0),
+            "city" to (dg?.planetId ?: 0),
         ))
         return CommandResult(true, listOf("${formatDate()} 장수대상 임관했습니다."), message = msg)
     }
@@ -1240,7 +1240,7 @@ class 하야(general: General, env: CommandEnv, arg: Map<String, Any>? = null) :
     override val actionName = "하야"
 
     override fun checkFullCondition(): ConstraintResult {
-        if (general.nationId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
+        if (general.factionId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
         if (general.officerLevel >= 20.toShort()) return ConstraintResult.Fail("군주는 하야할 수 없습니다.")
         return ConstraintResult.Pass
     }
@@ -1379,10 +1379,10 @@ class 해산(general: General, env: CommandEnv, arg: Map<String, Any>? = null) :
 class 인재탐색(general: General, env: CommandEnv, arg: Map<String, Any>? = null) : BaseCommand(general, env, arg) {
     override val actionName = "인재탐색"
 
-    override fun getCost(): CommandCost = CommandCost(gold = 100)
+    override fun getCost(): CommandCost = CommandCost(funds =100)
 
     override suspend fun run(rng: Random): CommandResult {
-        val msg = mapper.writeValueAsString(mapOf("statChanges" to mapOf("gold" to -100, "experience" to 10)))
+        val msg = mapper.writeValueAsString(mapOf("statChanges" to mapOf("funds" to -100, "experience" to 10)))
         return CommandResult(true, listOf("${formatDate()} 인재를 탐색했습니다."), message = msg)
     }
 }
@@ -1392,7 +1392,7 @@ class 증여(general: General, env: CommandEnv, arg: Map<String, Any>? = null) :
     override var destGeneral: General? = null
 
     override fun checkFullCondition(): ConstraintResult {
-        if (general.nationId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
+        if (general.factionId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
         if (destGeneral == null) return ConstraintResult.Fail("대상 장수가 없습니다.")
         return ConstraintResult.Pass
     }
@@ -1401,8 +1401,8 @@ class 증여(general: General, env: CommandEnv, arg: Map<String, Any>? = null) :
         val isGold = arg?.get("isGold") as? Boolean ?: true
         val amount = (arg?.get("amount") as? Number)?.toInt() ?: 0
         val msg = mapper.writeValueAsString(mapOf(
-            "statChanges" to if (isGold) mapOf("gold" to -amount) else mapOf("rice" to -amount),
-            "destGeneralChanges" to if (isGold) mapOf("gold" to amount) else mapOf("rice" to amount),
+            "statChanges" to if (isGold) mapOf("funds" to -amount) else mapOf("supplies" to -amount),
+            "destGeneralChanges" to if (isGold) mapOf("funds" to amount) else mapOf("supplies" to amount),
         ))
         return CommandResult(true, listOf("${formatDate()} 증여했습니다."), message = msg)
     }
@@ -1472,7 +1472,7 @@ class CR건국(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
 
     override fun checkFullCondition(): ConstraintResult {
         if (general.officerLevel < 20.toShort()) return ConstraintResult.Fail("군주 등급이 아닙니다.")
-        if (general.nationId != 0L) return ConstraintResult.Fail("이미 소속 국가가 있습니다.")
+        if (general.factionId != 0L) return ConstraintResult.Fail("이미 소속 국가가 있습니다.")
         val relYear = env.year - env.startYear
         if (relYear >= 1) return ConstraintResult.Fail("오프닝 기간이 지났습니다.")
         return ConstraintResult.Pass
@@ -1492,17 +1492,17 @@ class CR맹훈련(general: General, env: CommandEnv, arg: Map<String, Any>? = nu
     override val actionName = "CR맹훈련"
 
     override fun checkFullCondition(): ConstraintResult {
-        if (general.nationId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
-        if (general.crew == 0) return ConstraintResult.Fail("병사가 없습니다.")
+        if (general.factionId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
+        if (general.ships == 0) return ConstraintResult.Fail("병사가 없습니다.")
         return ConstraintResult.Pass
     }
 
     override suspend fun run(rng: Random): CommandResult {
-        val riceCost = general.crew / 2
+        val riceCost = general.ships / 2
         val msg = mapper.writeValueAsString(mapOf(
             "statChanges" to mapOf(
-                "rice" to -riceCost,
-                "train" to 5,
+                "supplies" to -riceCost,
+                "training" to 5,
                 "experience" to 100,
             ),
         ))

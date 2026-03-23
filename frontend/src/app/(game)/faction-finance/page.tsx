@@ -49,26 +49,26 @@ export default function NationFinancePage() {
     const [editBill, setEditBill] = useState(100);
     const [editSecretLimit, setEditSecretLimit] = useState(12);
 
-    const isLeader = myGeneral && nation && (myGeneral.officerLevel >= 5 || myGeneral.id === nation.chiefGeneralId);
+    const isLeader = myGeneral && nation && (myGeneral.officerLevel >= 5 || myGeneral.id === nation.supremeCommanderId);
 
     const loadData = useCallback(async () => {
-        if (!currentWorld || !myGeneral || !myGeneral.nationId) return;
+        if (!currentWorld || !myGeneral || !myGeneral.factionId) return;
         setLoading(true);
         try {
             const [nationRes, citiesRes, generalsRes, allNationsRes, dipRes] = await Promise.all([
-                factionApi.get(myGeneral.nationId),
-                planetApi.listByFaction(myGeneral.nationId),
-                officerApi.listByFaction(myGeneral.nationId),
+                factionApi.get(myGeneral.factionId),
+                planetApi.listByFaction(myGeneral.factionId),
+                officerApi.listByFaction(myGeneral.factionId),
                 factionApi.listByWorld(currentWorld.id),
-                diplomacyApi.listByNation(currentWorld.id, myGeneral.nationId),
+                diplomacyApi.listByNation(currentWorld.id, myGeneral.factionId),
             ]);
             setNation(nationRes.data);
             setCities(citiesRes.data);
             setGenerals(generalsRes.data);
             setAllNations(allNationsRes.data);
             setDiplomacy(dipRes.data);
-            setEditRate(nationRes.data.rate);
-            setEditBill(nationRes.data.bill);
+            setEditRate(nationRes.data.conscriptionRate);
+            setEditBill(nationRes.data.taxRate);
             setEditSecretLimit(nationRes.data.secretLimit);
         } catch {
             /* ignore */
@@ -113,17 +113,17 @@ export default function NationFinancePage() {
         let gw = 0;
         cities.forEach((c) => {
             const cnt = officerCntByCity.get(c.id) || 0;
-            const cap = c.id === nation.capitalCityId;
-            gcBase += calcPlanetFundsIncome(c, cnt, cap, nation.level, nation.typeCode);
-            rcBase += calcPlanetSuppliesIncome(c, cnt, cap, nation.level, nation.typeCode);
-            rwBase += calcPlanetFortressSuppliesIncome(c, cnt, cap, nation.level, nation.typeCode);
-            gw += calcPlanetWarFundsIncome(c, nation.typeCode);
+            const cap = c.id === nation.capitalPlanetId;
+            gcBase += calcPlanetFundsIncome(c, cnt, cap, nation.factionRank, nation.factionType);
+            rcBase += calcPlanetSuppliesIncome(c, cnt, cap, nation.factionRank, nation.factionType);
+            rwBase += calcPlanetFortressSuppliesIncome(c, cnt, cap, nation.factionRank, nation.factionType);
+            gw += calcPlanetWarFundsIncome(c, nation.factionType);
         });
-        const goldCity = Math.round((gcBase * nation.rate) / 20);
-        const riceCity = Math.round((rcBase * nation.rate) / 20);
-        const riceWall = Math.round((rwBase * nation.rate) / 20);
+        const goldCity = Math.round((gcBase * nation.conscriptionRate) / 20);
+        const riceCity = Math.round((rcBase * nation.conscriptionRate) / 20);
+        const riceWall = Math.round((rwBase * nation.conscriptionRate) / 20);
         const baseOut = generals.filter((g) => g.npcState !== 5).reduce((s, g) => s + getBill(g.dedication), 0);
-        const outcome = Math.round((baseOut * nation.bill) / 100);
+        const outcome = Math.round((baseOut * nation.taxRate) / 100);
         return { goldCity, goldWar: gw, riceCity, riceWall, outcome };
     }, [nation, cities, generals, officerCntByCity]);
 
@@ -181,7 +181,7 @@ export default function NationFinancePage() {
     };
 
     if (!currentWorld) return <div className="p-4 text-muted-foreground">월드를 선택해주세요.</div>;
-    if (!myGeneral || !myGeneral.nationId)
+    if (!myGeneral || !myGeneral.factionId)
         return <div className="p-4 text-muted-foreground">진영에 소속되어있지 않습니다.</div>;
     if (loading)
         return (
@@ -254,7 +254,7 @@ export default function NationFinancePage() {
                     <CardContent className="px-4 pb-3 space-y-1 text-sm">
                         <div className="flex justify-between">
                             <span className="text-muted-foreground">현재</span>
-                            <span>{nation.gold.toLocaleString()}</span>
+                            <span>{nation.funds.toLocaleString()}</span>
                         </div>
                         <div className="flex justify-between">
                             <span className="text-muted-foreground">단기수입</span>
@@ -273,7 +273,7 @@ export default function NationFinancePage() {
                         <div className="flex justify-between font-medium border-t border-gray-700 pt-1">
                             <span>국고 예산</span>
                             <span>
-                                {(nation.gold + totalGoldIncome - outcome).toLocaleString()} (
+                                {(nation.funds + totalGoldIncome - outcome).toLocaleString()} (
                                 {totalGoldIncome >= outcome ? '+' : ''}
                                 {(totalGoldIncome - outcome).toLocaleString()})
                             </span>
@@ -289,7 +289,7 @@ export default function NationFinancePage() {
                     <CardContent className="px-4 pb-3 space-y-1 text-sm">
                         <div className="flex justify-between">
                             <span className="text-muted-foreground">현재</span>
-                            <span>{nation.rice.toLocaleString()}</span>
+                            <span>{nation.supplies.toLocaleString()}</span>
                         </div>
                         <div className="flex justify-between">
                             <span className="text-muted-foreground">둔전수입</span>
@@ -308,7 +308,7 @@ export default function NationFinancePage() {
                         <div className="flex justify-between font-medium border-t border-gray-700 pt-1">
                             <span>국고 예산</span>
                             <span>
-                                {(nation.rice + totalRiceIncome - outcome).toLocaleString()} (
+                                {(nation.supplies + totalRiceIncome - outcome).toLocaleString()} (
                                 {totalRiceIncome >= outcome ? '+' : ''}
                                 {(totalRiceIncome - outcome).toLocaleString()})
                             </span>
@@ -343,7 +343,11 @@ export default function NationFinancePage() {
                                         <Button size="sm" onClick={saveRate}>
                                             변경
                                         </Button>
-                                        <Button size="sm" variant="outline" onClick={() => setEditRate(nation.rate)}>
+                                        <Button
+                                            size="sm"
+                                            variant="outline"
+                                            onClick={() => setEditRate(nation.conscriptionRate)}
+                                        >
                                             취소
                                         </Button>
                                     </>
@@ -370,7 +374,7 @@ export default function NationFinancePage() {
                                         <Button size="sm" onClick={saveBill}>
                                             변경
                                         </Button>
-                                        <Button size="sm" variant="outline" onClick={() => setEditBill(nation.bill)}>
+                                        <Button size="sm" variant="outline" onClick={() => setEditBill(nation.taxRate)}>
                                             취소
                                         </Button>
                                     </>
@@ -412,10 +416,12 @@ export default function NationFinancePage() {
 
                     {/* Summary badges */}
                     <div className="flex flex-wrap gap-2 text-xs">
-                        <Badge variant="secondary">국력: {getNationLevelLabel(nation.level, nation.typeCode)}</Badge>
+                        <Badge variant="secondary">
+                            국력: {getNationLevelLabel(nation.factionRank, nation.factionType)}
+                        </Badge>
                         <Badge variant="secondary">행성: {cities.length}개</Badge>
                         <Badge variant="secondary">제독: {generals.filter((g) => g.npcState !== 5).length}명</Badge>
-                        <Badge variant="secondary">기술: {nation.tech}</Badge>
+                        <Badge variant="secondary">기술: {nation.techLevel}</Badge>
                     </div>
                 </CardContent>
             </Card>

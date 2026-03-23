@@ -18,8 +18,8 @@ class 완전수리(
     override val actionName = "완전수리"
 
     override fun checkFullCondition(): ConstraintResult {
-        if (general.nationId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
-        if (general.troopId == 0L) return ConstraintResult.Fail("소속 함대가 없습니다.")
+        if (general.factionId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
+        if (general.fleetId == 0L) return ConstraintResult.Fail("소속 함대가 없습니다.")
         return ConstraintResult.Pass
     }
 
@@ -45,8 +45,8 @@ class 완전보급(
     private val amount: Int get() = (arg?.get("amount") as? Number)?.toInt() ?: 1000
 
     override fun checkFullCondition(): ConstraintResult {
-        if (general.nationId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
-        if (general.troopId == 0L) return ConstraintResult.Fail("소속 함대가 없습니다.")
+        if (general.factionId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
+        if (general.fleetId == 0L) return ConstraintResult.Fail("소속 함대가 없습니다.")
         return ConstraintResult.Pass
     }
 
@@ -79,8 +79,8 @@ class 재편성(
     override val actionName = "재편성"
 
     override fun checkFullCondition(): ConstraintResult {
-        if (general.nationId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
-        if (general.troopId == 0L) return ConstraintResult.Fail("소속 함대가 없습니다.")
+        if (general.factionId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
+        if (general.fleetId == 0L) return ConstraintResult.Fail("소속 함대가 없습니다.")
         return ConstraintResult.Pass
     }
 
@@ -112,7 +112,7 @@ class 반출입(
     private val isExport: Boolean get() = arg?.get("isExport") as? Boolean ?: true
 
     override fun checkFullCondition(): ConstraintResult {
-        if (general.nationId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
+        if (general.factionId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
         return ConstraintResult.Pass
     }
 

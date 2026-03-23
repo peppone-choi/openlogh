@@ -13,13 +13,13 @@ import java.time.OffsetDateTime
 class DiplomacyLetterController(
     private val messageRepository: MessageRepository,
 ) {
-    @GetMapping("/nations/{nationId}/diplomacy-letters")
+    @GetMapping("/factions/{nationId}/diplomacy-letters")
     fun list(@PathVariable nationId: Long): ResponseEntity<List<Message>> {
         val letters = messageRepository.findBySessionIdAndMailboxCodeOrderBySentAtDesc(nationId, "diplomacy")
         return ResponseEntity.ok(letters)
     }
 
-    @PostMapping("/nations/{nationId}/diplomacy-letters")
+    @PostMapping("/factions/{nationId}/diplomacy-letters")
     fun send(
         @PathVariable nationId: Long,
         @RequestBody req: SendLetterRequest,

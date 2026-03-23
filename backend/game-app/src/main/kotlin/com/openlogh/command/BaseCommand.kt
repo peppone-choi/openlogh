@@ -29,9 +29,9 @@ abstract class BaseCommand(
 
     open fun checkFullCondition(): ConstraintResult {
         val ctx = ConstraintContext(
-            general = general,
-            city = city,
-            nation = nation,
+            officer = general,
+            planet = city,
+            faction = nation,
             destGeneral = destGeneral,
             destCity = destCity,
             destNation = destNation,

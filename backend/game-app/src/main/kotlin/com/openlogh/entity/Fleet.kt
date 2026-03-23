@@ -16,7 +16,7 @@ class Fleet(
     var sessionId: Long = 0,
 
     @Column(name = "leader_officer_id", nullable = false)
-    var leaderGeneralId: Long = 0,
+    var leaderOfficerId: Long = 0,
 
     @Column(name = "faction_id", nullable = false)
     var factionId: Long = 0,
@@ -155,10 +155,10 @@ class Fleet(
     @Column(name = "updated_at", nullable = false)
     var updatedAt: OffsetDateTime = OffsetDateTime.now(),
 ) {
-    /** Compat alias for leaderGeneralId */
-    var leaderOfficerId: Long
-        get() = leaderGeneralId
-        set(value) { leaderGeneralId = value }
+    /** Compat alias for old leaderGeneralId name */
+    var leaderGeneralId: Long
+        get() = leaderOfficerId
+        set(value) { leaderOfficerId = value }
 
     /** 전투함 총 수 (기함 제외) */
     fun totalCombatShips(): Int = battleships + cruisers + destroyers + carriers

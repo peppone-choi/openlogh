@@ -137,7 +137,7 @@ export default function GeneralsPage() {
     const sorted = useMemo(() => {
         const filtered = generals.filter((g) => {
             if (search && !g.name.toLowerCase().includes(search.toLowerCase())) return false;
-            if (nationFilter !== 'all' && String(g.nationId) !== nationFilter) return false;
+            if (nationFilter !== 'all' && String(g.factionId) !== nationFilter) return false;
             if (npcFilter === 'user' && g.npcState >= 2) return false;
             if (npcFilter === 'npc' && g.npcState < 2) return false;
             return true;
@@ -148,15 +148,15 @@ export default function GeneralsPage() {
             if (sortKey === 'name') {
                 cmp = a.name.localeCompare(b.name);
             } else if (sortKey === 'nation') {
-                const na = nationMap.get(a.nationId)?.name ?? '';
-                const nb = nationMap.get(b.nationId)?.name ?? '';
+                const na = nationMap.get(a.factionId)?.name ?? '';
+                const nb = nationMap.get(b.factionId)?.name ?? '';
                 cmp = na.localeCompare(nb);
             } else if (sortKey === 'city') {
-                const ca = cityMap.get(a.cityId)?.name ?? '';
-                const cb = cityMap.get(b.cityId)?.name ?? '';
+                const ca = cityMap.get(a.planetId)?.name ?? '';
+                const cb = cityMap.get(b.planetId)?.name ?? '';
                 cmp = ca.localeCompare(cb);
             } else if (sortKey === 'totalStats') {
-                cmp = a.leadership + a.strength + a.intel - (b.leadership + b.strength + b.intel);
+                cmp = a.leadership + a.command + a.intelligence - (b.leadership + b.command + b.intelligence);
             } else if (sortKey === 'age') {
                 cmp = (a.age ?? 0) - (b.age ?? 0);
             } else if (sortKey === 'special') {
@@ -278,16 +278,16 @@ export default function GeneralsPage() {
             {(() => {
                 const effective = sorted.filter((g) => g.npcState !== 5);
                 const effCount = effective.length || 1;
-                const totalGold = effective.reduce((s, g) => s + g.gold, 0);
-                const totalRice = effective.reduce((s, g) => s + g.rice, 0);
-                const crewTotal = effective.reduce((s, g) => s + g.crew, 0);
-                const withCrew = effective.filter((g) => g.crew > 0);
-                const t90 = withCrew.filter((g) => g.train >= 90 && g.atmos >= 90);
-                const t80 = withCrew.filter((g) => g.train >= 80 && g.atmos >= 80);
-                const t60 = withCrew.filter((g) => g.train >= 60 && g.atmos >= 60);
-                const crew90 = t90.reduce((s, g) => s + g.crew, 0);
-                const crew80 = t80.reduce((s, g) => s + g.crew, 0);
-                const crew60 = t60.reduce((s, g) => s + g.crew, 0);
+                const totalGold = effective.reduce((s, g) => s + g.funds, 0);
+                const totalRice = effective.reduce((s, g) => s + g.supplies, 0);
+                const crewTotal = effective.reduce((s, g) => s + g.ships, 0);
+                const withCrew = effective.filter((g) => g.ships > 0);
+                const t90 = withCrew.filter((g) => g.training >= 90 && g.morale >= 90);
+                const t80 = withCrew.filter((g) => g.training >= 80 && g.morale >= 80);
+                const t60 = withCrew.filter((g) => g.training >= 60 && g.morale >= 60);
+                const crew90 = t90.reduce((s, g) => s + g.ships, 0);
+                const crew80 = t80.reduce((s, g) => s + g.ships, 0);
+                const crew60 = t60.reduce((s, g) => s + g.ships, 0);
                 return (
                     <div className="grid grid-cols-4 gap-px bg-gray-700 rounded overflow-hidden text-xs">
                         <div className="bg-muted/30 px-2 py-1 text-center">
@@ -362,7 +362,7 @@ export default function GeneralsPage() {
                     </TableHeader>
                     <TableBody>
                         {sorted.map((g) => {
-                            const nation = nationMap.get(g.nationId);
+                            const nation = nationMap.get(g.factionId);
                             return (
                                 <TableRow
                                     key={g.id}
@@ -392,9 +392,9 @@ export default function GeneralsPage() {
                                     <TableCell className="text-xs whitespace-nowrap">
                                         {formatOfficerLevelText(
                                             g.officerLevel,
-                                            nation?.level,
-                                            g.nationId > 0,
-                                            nation?.typeCode,
+                                            nation?.factionRank,
+                                            g.factionId > 0,
+                                            nation?.factionType,
                                             g.npcState
                                         )}
                                     </TableCell>
@@ -402,13 +402,15 @@ export default function GeneralsPage() {
                                         {g.leadership}
                                     </TableCell>
                                     <TableCell style={g.injury > 0 ? { color: 'red' } : undefined}>
-                                        {g.strength}
+                                        {g.command}
                                     </TableCell>
-                                    <TableCell style={g.injury > 0 ? { color: 'red' } : undefined}>{g.intel}</TableCell>
+                                    <TableCell style={g.injury > 0 ? { color: 'red' } : undefined}>
+                                        {g.intelligence}
+                                    </TableCell>
                                     <TableCell>{g.politics}</TableCell>
-                                    <TableCell>{g.charm}</TableCell>
-                                    <TableCell>{g.leadership + g.strength + g.intel}</TableCell>
-                                    <TableCell>{g.crew.toLocaleString()}</TableCell>
+                                    <TableCell>{g.administration}</TableCell>
+                                    <TableCell>{g.leadership + g.command + g.intelligence}</TableCell>
+                                    <TableCell>{g.ships.toLocaleString()}</TableCell>
                                     <TableCell>{g.expLevel}</TableCell>
                                     {showExtended && (
                                         <>
@@ -423,12 +425,12 @@ export default function GeneralsPage() {
                                             </TableCell>
                                             <TableCell>{g.age ?? '-'}</TableCell>
                                             <TableCell className="text-xs">
-                                                {SHIP_CLASS_NAMES[g.crewType] ?? g.crewType}
+                                                {SHIP_CLASS_NAMES[g.shipClass] ?? g.shipClass}
                                             </TableCell>
-                                            <TableCell>{g.train}</TableCell>
-                                            <TableCell>{g.atmos}</TableCell>
-                                            <TableCell>{g.gold.toLocaleString()}</TableCell>
-                                            <TableCell>{g.rice.toLocaleString()}</TableCell>
+                                            <TableCell>{g.training}</TableCell>
+                                            <TableCell>{g.morale}</TableCell>
+                                            <TableCell>{g.funds.toLocaleString()}</TableCell>
+                                            <TableCell>{g.supplies.toLocaleString()}</TableCell>
                                             <TableCell>{g.dedication.toLocaleString()}</TableCell>
                                             <TableCell>{g.killTurn ?? '-'}</TableCell>
                                             <TableCell>

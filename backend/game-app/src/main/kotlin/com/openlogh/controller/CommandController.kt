@@ -18,15 +18,15 @@ class CommandController(
     private val realtimeService: RealtimeService,
     private val commandRegistry: CommandRegistry,
 ) {
-    // GET /api/generals/{id}/turns — 예약된 턴 목록
-    @GetMapping("/generals/{id}/turns")
+    // GET /api/officers/{id}/turns — 예약된 턴 목록
+    @GetMapping("/officers/{id}/turns")
     fun getGeneralTurns(@PathVariable id: Long): ResponseEntity<List<OfficerTurnResponse>> {
         val turns = officerTurnRepository.findByOfficerIdOrderByTurnIdx(id)
         return ResponseEntity.ok(turns.map { OfficerTurnResponse.from(it) })
     }
 
-    // POST /api/generals/{id}/turns — 턴 예약
-    @PostMapping("/generals/{id}/turns")
+    // POST /api/officers/{id}/turns — 턴 예약
+    @PostMapping("/officers/{id}/turns")
     fun reserveGeneralTurns(
         @PathVariable id: Long,
         @RequestBody request: ReserveTurnsRequest,
@@ -60,8 +60,8 @@ class CommandController(
         return ResponseEntity.ok(updated.map { OfficerTurnResponse.from(it) })
     }
 
-    // POST /api/generals/{id}/turns/push — 턴 밀기
-    @PostMapping("/generals/{id}/turns/push")
+    // POST /api/officers/{id}/turns/push — 턴 밀기
+    @PostMapping("/officers/{id}/turns/push")
     fun pushTurns(
         @PathVariable id: Long,
         @RequestBody request: PushRequest,
@@ -87,8 +87,8 @@ class CommandController(
         return ResponseEntity.ok(updated.map { OfficerTurnResponse.from(it) })
     }
 
-    // POST /api/generals/{id}/turns/repeat — 턴 반복
-    @PostMapping("/generals/{id}/turns/repeat")
+    // POST /api/officers/{id}/turns/repeat — 턴 반복
+    @PostMapping("/officers/{id}/turns/repeat")
     fun repeatTurns(
         @PathVariable id: Long,
         @RequestBody request: RepeatRequest,
@@ -111,8 +111,8 @@ class CommandController(
         return ResponseEntity.ok(updated.map { OfficerTurnResponse.from(it) })
     }
 
-    // GET /api/generals/{id}/command-table — 개인 커맨드 테이블
-    @GetMapping("/generals/{id}/command-table")
+    // GET /api/officers/{id}/command-table — 개인 커맨드 테이블
+    @GetMapping("/officers/{id}/command-table")
     fun getCommandTable(@PathVariable id: Long): ResponseEntity<Map<String, List<CommandTableEntry>>> {
         val names = commandRegistry.getGeneralCommandNames()
         val entries = names.map { name ->
@@ -126,8 +126,8 @@ class CommandController(
         return ResponseEntity.ok(mapOf("general" to entries))
     }
 
-    // GET /api/generals/{id}/nation-command-table — 국가 커맨드 테이블
-    @GetMapping("/generals/{id}/nation-command-table")
+    // GET /api/officers/{id}/nation-command-table — 국가 커맨드 테이블
+    @GetMapping("/officers/{id}/nation-command-table")
     fun getNationCommandTable(@PathVariable id: Long): ResponseEntity<Map<String, List<CommandTableEntry>>> {
         val names = commandRegistry.getNationCommandNames()
         val entries = names.map { name ->
@@ -141,8 +141,8 @@ class CommandController(
         return ResponseEntity.ok(mapOf("nation" to entries))
     }
 
-    // POST /api/generals/{id}/execute — 실시간 커맨드 실행
-    @PostMapping("/generals/{id}/execute")
+    // POST /api/officers/{id}/execute — 실시간 커맨드 실행
+    @PostMapping("/officers/{id}/execute")
     fun executeCommand(
         @PathVariable id: Long,
         @RequestBody request: ExecuteRequest,
@@ -151,8 +151,8 @@ class CommandController(
         return ResponseEntity.ok(result)
     }
 
-    // POST /api/generals/{id}/execute-nation — 실시간 국가 커맨드 실행
-    @PostMapping("/generals/{id}/execute-nation")
+    // POST /api/officers/{id}/execute-nation — 실시간 국가 커맨드 실행
+    @PostMapping("/officers/{id}/execute-nation")
     fun executeNationCommand(
         @PathVariable id: Long,
         @RequestBody request: ExecuteRequest,

@@ -132,7 +132,7 @@ class AuctionController(
         return ResponseEntity.ok(MarketPriceResponse(goldPerRice = 1.0, ricePerGold = 1.0))
     }
 
-    @PostMapping("/worlds/{worldId}/market/buy-rice")
+    @PostMapping("/worlds/{worldId}/market/buy-supplies")
     fun buyRice(
         @PathVariable worldId: Long,
         @RequestBody req: MarketTradeRequest,
@@ -141,7 +141,7 @@ class AuctionController(
         return ResponseEntity.ok(MarketBuyRiceResponse(success = true, amount = req.amount, cost = req.amount))
     }
 
-    @PostMapping("/worlds/{worldId}/market/sell-rice")
+    @PostMapping("/worlds/{worldId}/market/sell-supplies")
     fun sellRice(
         @PathVariable worldId: Long,
         @RequestBody req: MarketTradeRequest,

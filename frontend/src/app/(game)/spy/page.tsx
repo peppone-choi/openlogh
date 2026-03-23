@@ -31,14 +31,14 @@ export default function SpyPage() {
     }, [currentWorld, fetchMyGeneral, loadAll]);
 
     useEffect(() => {
-        if (!myGeneral?.nationId) {
+        if (!myGeneral?.factionId) {
             setTroopNameMap(new Map());
             return;
         }
 
         setTroopLoading(true);
         troopApi
-            .listByNation(myGeneral.nationId)
+            .listByNation(myGeneral.factionId)
             .then(({ data }) => {
                 const nextMap = new Map<number, string>();
                 data.forEach((row) => {
@@ -52,29 +52,29 @@ export default function SpyPage() {
             .finally(() => {
                 setTroopLoading(false);
             });
-    }, [myGeneral?.nationId]);
+    }, [myGeneral?.factionId]);
 
     const cityMap = useMemo(() => new Map(cities.map((c) => [c.id, c.name])), [cities]);
     const nationMap = useMemo(() => new Map(nations.map((n) => [n.id, n])), [nations]);
 
     const nationGenerals = useMemo(() => {
-        if (!myGeneral?.nationId) return [];
+        if (!myGeneral?.factionId) return [];
         return generals
-            .filter((g) => g.nationId === myGeneral.nationId)
+            .filter((g) => g.factionId === myGeneral.factionId)
             .sort((a, b) => (a.turnTime ?? '').localeCompare(b.turnTime ?? ''));
     }, [generals, myGeneral?.nationId]);
 
     const summary = useMemo(() => {
         const effective = nationGenerals.filter((g) => g.npcState !== 5);
         const effCount = effective.length || 1;
-        const withCrew = effective.filter((g) => g.crew > 0);
-        const totalGold = effective.reduce((sum, g) => sum + g.gold, 0);
-        const totalRice = effective.reduce((sum, g) => sum + g.rice, 0);
-        const crewTotal = effective.reduce((sum, g) => sum + g.crew, 0);
+        const withCrew = effective.filter((g) => g.ships > 0);
+        const totalGold = effective.reduce((sum, g) => sum + g.funds, 0);
+        const totalRice = effective.reduce((sum, g) => sum + g.supplies, 0);
+        const crewTotal = effective.reduce((sum, g) => sum + g.ships, 0);
 
-        const t90 = withCrew.filter((g) => g.train >= 90 && g.atmos >= 90);
-        const t80 = withCrew.filter((g) => g.train >= 80 && g.atmos >= 80);
-        const t60 = withCrew.filter((g) => g.train >= 60 && g.atmos >= 60);
+        const t90 = withCrew.filter((g) => g.training >= 90 && g.morale >= 90);
+        const t80 = withCrew.filter((g) => g.training >= 80 && g.morale >= 80);
+        const t60 = withCrew.filter((g) => g.training >= 60 && g.morale >= 60);
 
         return {
             totalGold,
@@ -83,11 +83,11 @@ export default function SpyPage() {
             avgRice: totalRice / effCount,
             crewTotal,
             effCount,
-            crew90: t90.reduce((sum, g) => sum + g.crew, 0),
+            crew90: t90.reduce((sum, g) => sum + g.ships, 0),
             gen90: t90.length,
-            crew80: t80.reduce((sum, g) => sum + g.crew, 0),
+            crew80: t80.reduce((sum, g) => sum + g.ships, 0),
             gen80: t80.length,
-            crew60: t60.reduce((sum, g) => sum + g.crew, 0),
+            crew60: t60.reduce((sum, g) => sum + g.ships, 0),
             gen60: t60.length,
         };
     }, [nationGenerals]);
@@ -100,7 +100,7 @@ export default function SpyPage() {
             </div>
         );
 
-    const myNation = myGeneral?.nationId ? nationMap.get(myGeneral.nationId) : null;
+    const myNation = myGeneral?.factionId ? nationMap.get(myGeneral.factionId) : null;
 
     return (
         <div className="p-4 space-y-4 max-w-5xl mx-auto">
@@ -181,16 +181,16 @@ export default function SpyPage() {
                                 <TableCell className="font-medium" style={{ color: getNPCColor(g.npcState) }}>
                                     {g.name}
                                 </TableCell>
-                                <TableCell>{cityMap.get(g.cityId) ?? '-'}</TableCell>
-                                <TableCell>{g.gold.toLocaleString()}</TableCell>
-                                <TableCell>{g.rice.toLocaleString()}</TableCell>
-                                <TableCell>{SHIP_CLASS_NAMES[g.crewType] ?? String(g.crewType)}</TableCell>
-                                <TableCell>{g.crew.toLocaleString()}</TableCell>
-                                <TableCell>{g.train}</TableCell>
-                                <TableCell>{g.atmos}</TableCell>
+                                <TableCell>{cityMap.get(g.planetId) ?? '-'}</TableCell>
+                                <TableCell>{g.funds.toLocaleString()}</TableCell>
+                                <TableCell>{g.supplies.toLocaleString()}</TableCell>
+                                <TableCell>{SHIP_CLASS_NAMES[g.shipClass] ?? String(g.shipClass)}</TableCell>
+                                <TableCell>{g.ships.toLocaleString()}</TableCell>
+                                <TableCell>{g.training}</TableCell>
+                                <TableCell>{g.morale}</TableCell>
                                 <TableCell>{g.killTurn ?? '-'}</TableCell>
                                 <TableCell className="tabular-nums">{formatTurnTime(g.turnTime)}</TableCell>
-                                <TableCell>{g.troopId ? (troopNameMap.get(g.troopId) ?? '-') : '-'}</TableCell>
+                                <TableCell>{g.fleetId ? (troopNameMap.get(g.fleetId) ?? '-') : '-'}</TableCell>
                             </TableRow>
                         ))}
                         {nationGenerals.length === 0 && (

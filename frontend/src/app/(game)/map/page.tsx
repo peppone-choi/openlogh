@@ -171,8 +171,8 @@ export default function MapPage() {
     const cityMap = useMemo(() => new Map(cities.map((c) => [c.id, c])), [cities]);
 
     const myNation = useMemo(() => {
-        if (!myGeneral || myGeneral.nationId <= 0) return null;
-        return nationMap.get(myGeneral.nationId) ?? null;
+        if (!myGeneral || myGeneral.factionId <= 0) return null;
+        return nationMap.get(myGeneral.factionId) ?? null;
     }, [myGeneral, nationMap]);
 
     const spyVisibleCityIds = useMemo(() => {
@@ -201,7 +201,7 @@ export default function MapPage() {
             const city = cityMap.get(cityId);
             if (!city || !myGeneral) return false;
             if (myGeneral.permission === 'spy') return true;
-            if (myGeneral.nationId > 0 && city.nationId === myGeneral.nationId) {
+            if (myGeneral.factionId > 0 && city.factionId === myGeneral.factionId) {
                 return true;
             }
             return spyVisibleCityIds.has(city.id);
@@ -213,15 +213,15 @@ export default function MapPage() {
 
     // Build per-city general counts by nation (for troop indicators)
     const cityGeneralData = useMemo(() => {
-        const map = new Map<number, { nationId: number; name: string; crew: number; crewType: number }[]>();
+        const map = new Map<number, { factionId: number; name: string; ships: number; shipClass: number }[]>();
         for (const g of generals) {
-            if (g.nationId <= 0 || g.crew <= 0) continue;
-            if (!map.has(g.cityId)) map.set(g.cityId, []);
-            map.get(g.cityId)!.push({
-                nationId: g.nationId,
+            if (g.factionId <= 0 || g.ships <= 0) continue;
+            if (!map.has(g.planetId)) map.set(g.planetId, []);
+            map.get(g.planetId)!.push({
+                factionId: g.factionId,
                 name: g.name,
-                crew: g.crew,
-                crewType: g.crewType,
+                ships: g.ships,
+                shipClass: g.shipClass,
             });
         }
         return map;
@@ -234,7 +234,7 @@ export default function MapPage() {
             const city = cityMap.get(cityId);
             if (!city) continue;
             for (const g of gens) {
-                if (g.nationId !== city.nationId && city.nationId > 0) {
+                if (g.factionId !== city.factionId && city.factionId > 0) {
                     result.add(cityId);
                     break;
                 }
@@ -248,7 +248,7 @@ export default function MapPage() {
         (cityId: number) => {
             const city = cityMap.get(cityId);
             if (!city) return;
-            const nation = city.nationId ? nationMap.get(city.nationId) : null;
+            const nation = city.factionId ? nationMap.get(city.factionId) : null;
             const isVisible = canViewCityInfo(cityId);
             try {
                 localStorage.setItem(
@@ -258,7 +258,7 @@ export default function MapPage() {
                         name: city.name ?? '',
                         nationName: nation?.name ?? '공백지',
                         nationColor: nation?.color ?? '#555',
-                        pop: isVisible ? city.pop : 0,
+                        pop: isVisible ? city.population : 0,
                         level: city.level,
                         ts: Date.now(),
                     })
@@ -275,9 +275,9 @@ export default function MapPage() {
         if (!mapData?.cities) return [];
         return mapData.cities.map((cc) => {
             const rtCity = cityByNameMap.get(cc.name);
-            const nation = rtCity?.nationId ? nationMap.get(rtCity.nationId) : null;
+            const nation = rtCity?.factionId ? nationMap.get(rtCity.factionId) : null;
             const showNationLayer = layers.has('nations') && !!nation;
-            const isMyCity = myGeneral?.cityId != null && rtCity?.id === myGeneral.cityId;
+            const isMyCity = myGeneral?.planetId != null && rtCity?.id === myGeneral.planetId;
 
             return {
                 id: rtCity?.id ?? cc.id,
@@ -289,7 +289,7 @@ export default function MapPage() {
                 nationColor: showNationLayer ? (nation?.color ?? null) : null,
                 nationName: showNationLayer ? (nation?.name ?? null) : null,
                 nationAbbr: showNationLayer ? nation?.abbreviation || nation?.name?.slice(0, 1) || null : null,
-                isCapital: showNationLayer && !!rtCity && nation!.capitalCityId === rtCity.id,
+                isCapital: showNationLayer && !!rtCity && nation!.capitalPlanetId === rtCity.id,
                 supplyState: rtCity?.supplyState ?? 0,
                 state: rtCity?.state ?? 0,
                 isMyCity,
@@ -339,16 +339,16 @@ export default function MapPage() {
     const buildTooltip = useCallback(
         (city: RenderCity, screenX: number, screenY: number) => {
             const rtCity = cityByNameMap.get(city.name);
-            const nation = rtCity?.nationId ? nationMap.get(rtCity.nationId) : null;
+            const nation = rtCity?.factionId ? nationMap.get(rtCity.factionId) : null;
             const cityGens = cityGeneralData.get(rtCity?.id ?? -1) ?? [];
             const isVisible = rtCity ? canViewCityInfo(rtCity.id) : false;
             const generalsInfo = isVisible
                 ? cityGens.map((g) => ({
                       name: g.name,
-                      nationColor: nationMap.get(g.nationId)?.color ?? '#555',
-                      crew: g.crew,
-                      crewType: SHIP_CLASS_NAMES[g.crewType] ?? `${g.crewType}`,
-                      isForeign: rtCity ? g.nationId !== rtCity.nationId : false,
+                      nationColor: nationMap.get(g.factionId)?.color ?? '#555',
+                      crew: g.ships,
+                      crewType: SHIP_CLASS_NAMES[g.shipClass] ?? `${g.shipClass}`,
+                      isForeign: rtCity ? g.factionId !== rtCity.factionId : false,
                   }))
                 : [];
 
@@ -359,13 +359,13 @@ export default function MapPage() {
                 nationColor: nation?.color ?? '#555',
                 isVisible,
                 level: rtCity?.level ?? city.level,
-                pop: rtCity?.pop ?? 0,
-                agri: rtCity && isVisible ? `${rtCity.agri}/${rtCity.agriMax}` : '?',
-                comm: rtCity && isVisible ? `${rtCity.comm}/${rtCity.commMax}` : '?',
-                secu: rtCity && isVisible ? `${rtCity.secu}/${rtCity.secuMax}` : '?',
-                def: rtCity && isVisible ? `${rtCity.def}/${rtCity.defMax}` : '?',
-                wall: rtCity && isVisible ? `${rtCity.wall}/${rtCity.wallMax}` : '?',
-                trust: rtCity?.trust ?? 0,
+                pop: rtCity?.population ?? 0,
+                agri: rtCity && isVisible ? `${rtCity.production}/${rtCity.productionMax}` : '?',
+                comm: rtCity && isVisible ? `${rtCity.commerce}/${rtCity.commerceMax}` : '?',
+                secu: rtCity && isVisible ? `${rtCity.security}/${rtCity.securityMax}` : '?',
+                def: rtCity && isVisible ? `${rtCity.orbitalDefense}/${rtCity.orbitalDefenseMax}` : '?',
+                wall: rtCity && isVisible ? `${rtCity.fortress}/${rtCity.fortressMax}` : '?',
+                trust: rtCity?.approval ?? 0,
                 generals: generalsInfo,
                 screenX,
                 screenY,

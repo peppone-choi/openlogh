@@ -35,7 +35,7 @@ class 발탁(
     override fun checkFullCondition(): ConstraintResult {
         if (general.officerLevel < 20.toShort()) return ConstraintResult.Fail("군주급 이상만 사용할 수 있습니다")
         val dg = destGeneral ?: return ConstraintResult.Fail("대상 장수가 없습니다")
-        if (dg.nationId != general.nationId) return ConstraintResult.Fail("아군 장수가 아닙니다")
+        if (dg.factionId != general.factionId) return ConstraintResult.Fail("아군 장수가 아닙니다")
         return ConstraintResult.Pass
     }
 
@@ -65,7 +65,7 @@ class 강등(
     override fun checkFullCondition(): ConstraintResult {
         if (general.officerLevel < 20.toShort()) return ConstraintResult.Fail("군주급 이상만 사용할 수 있습니다")
         val dg = destGeneral ?: return ConstraintResult.Fail("대상 장수가 없습니다")
-        if (dg.nationId != general.nationId) return ConstraintResult.Fail("아군 장수가 아닙니다")
+        if (dg.factionId != general.factionId) return ConstraintResult.Fail("아군 장수가 아닙니다")
         if (dg.rank <= 0.toShort()) return ConstraintResult.Fail("이미 최하위 계급입니다")
         return ConstraintResult.Pass
     }
@@ -99,7 +99,7 @@ class 서작(
         val n = nation ?: return ConstraintResult.Fail("국가 정보가 없습니다")
         if (n.factionType != "empire") return ConstraintResult.Fail("제국 전용 커맨드입니다")
         val dg = destGeneral ?: return ConstraintResult.Fail("대상 장수가 없습니다")
-        if (dg.nationId != general.nationId) return ConstraintResult.Fail("아군 장수가 아닙니다")
+        if (dg.factionId != general.factionId) return ConstraintResult.Fail("아군 장수가 아닙니다")
         if (peerageCode !in NOBLE_RANKS) return ConstraintResult.Fail("유효하지 않은 작위 코드입니다")
         return ConstraintResult.Pass
     }
@@ -128,7 +128,7 @@ class 서훈(
     override fun checkFullCondition(): ConstraintResult {
         if (general.officerLevel < 20.toShort()) return ConstraintResult.Fail("군주급 이상만 사용할 수 있습니다")
         val dg = destGeneral ?: return ConstraintResult.Fail("대상 장수가 없습니다")
-        if (dg.nationId != general.nationId) return ConstraintResult.Fail("아군 장수가 아닙니다")
+        if (dg.factionId != general.factionId) return ConstraintResult.Fail("아군 장수가 아닙니다")
         return ConstraintResult.Pass
     }
 
@@ -154,12 +154,12 @@ class 사임(
     override val actionName = "사임"
 
     override fun checkFullCondition(): ConstraintResult {
-        if (general.nationId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다")
+        if (general.factionId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다")
         return ConstraintResult.Pass
     }
 
     override suspend fun run(rng: Random): CommandResult {
-        general.troopId = 0
+        general.fleetId = 0
         general.dedication = 0
         return CommandResult(
             success = true,
@@ -183,7 +183,7 @@ class 봉토수여(
         val n = nation ?: return ConstraintResult.Fail("국가 정보가 없습니다")
         if (n.factionType != "empire") return ConstraintResult.Fail("제국 전용 커맨드입니다")
         val dg = destGeneral ?: return ConstraintResult.Fail("대상 장수가 없습니다")
-        if (dg.nationId != general.nationId) return ConstraintResult.Fail("아군 장수가 아닙니다")
+        if (dg.factionId != general.factionId) return ConstraintResult.Fail("아군 장수가 아닙니다")
         if (dg.peerage == "none" || dg.peerage == "knight") return ConstraintResult.Fail("남작 이상 작위가 필요합니다")
         val dc = destCity ?: return ConstraintResult.Fail("봉토로 지정할 행성이 없습니다")
         if (dc.factionId != general.factionId) return ConstraintResult.Fail("아군 행성이 아닙니다")

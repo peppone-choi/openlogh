@@ -62,31 +62,35 @@ function sortCities(cities: StarSystem[], sortKey: SortKey): StarSystem[] {
     const sorted = [...cities];
     switch (sortKey) {
         case 'pop':
-            sorted.sort((a, b) => b.pop - a.pop);
+            sorted.sort((a, b) => b.population - a.population);
             break;
         case 'popRate':
-            sorted.sort((a, b) => (b.popMax > 0 ? b.pop / b.popMax : 0) - (a.popMax > 0 ? a.pop / a.popMax : 0));
+            sorted.sort(
+                (a, b) =>
+                    (b.populationMax > 0 ? b.population / b.populationMax : 0) -
+                    (a.populationMax > 0 ? a.population / a.populationMax : 0)
+            );
             break;
         case 'trust':
-            sorted.sort((a, b) => b.trust - a.trust);
+            sorted.sort((a, b) => b.approval - a.approval);
             break;
         case 'agri':
-            sorted.sort((a, b) => b.agri - a.agri);
+            sorted.sort((a, b) => b.production - a.production);
             break;
         case 'comm':
-            sorted.sort((a, b) => b.comm - a.comm);
+            sorted.sort((a, b) => b.commerce - a.commerce);
             break;
         case 'secu':
-            sorted.sort((a, b) => b.secu - a.secu);
+            sorted.sort((a, b) => b.security - a.security);
             break;
         case 'def':
-            sorted.sort((a, b) => b.def - a.def);
+            sorted.sort((a, b) => b.orbitalDefense - a.orbitalDefense);
             break;
         case 'wall':
-            sorted.sort((a, b) => b.wall - a.wall);
+            sorted.sort((a, b) => b.fortress - a.fortress);
             break;
         case 'trade':
-            sorted.sort((a, b) => (b.trade ?? 0) - (a.trade ?? 0));
+            sorted.sort((a, b) => (b.tradeRoute ?? 0) - (a.tradeRoute ?? 0));
             break;
         case 'region':
             sorted.sort((a, b) => {
@@ -145,9 +149,9 @@ function CityPageContent() {
 
     useEffect(() => {
         if (requestedCityId != null) return;
-        if (!myGeneral?.cityId || myGeneral.cityId <= 0) return;
-        setFilterCityId(myGeneral.cityId);
-        setExpandedCityId(myGeneral.cityId);
+        if (!myGeneral?.planetId || myGeneral.planetId <= 0) return;
+        setFilterCityId(myGeneral.planetId);
+        setExpandedCityId(myGeneral.planetId);
     }, [requestedCityId, myGeneral?.cityId]);
 
     const loadCityData = useCallback(async () => {
@@ -166,8 +170,8 @@ function CityPageContent() {
                       : Promise.resolve({ data: [] as StarSystem[] }),
                 officerApi.listByWorld(currentWorld.id),
                 mapApi.get(mapCode),
-                hasGeneral && myGeneral.nationId > 0
-                    ? factionApi.get(myGeneral.nationId)
+                hasGeneral && myGeneral.factionId > 0
+                    ? factionApi.get(myGeneral.factionId)
                     : Promise.resolve({ data: null }),
             ]);
 
@@ -233,8 +237,8 @@ function CityPageContent() {
     const canSeeMilitary = useCallback(
         (city: StarSystem) => {
             if (!myGeneral) return false;
-            if (city.id === myGeneral.cityId) return true;
-            if (city.nationId === 0 || city.nationId === myGeneral.nationId) return true;
+            if (city.id === myGeneral.planetId) return true;
+            if (city.factionId === 0 || city.factionId === myGeneral.factionId) return true;
             if (myGeneral.permission === 'spy') return true;
             return spyVisibleCityIds.has(city.id);
         },
@@ -258,8 +262,8 @@ function CityPageContent() {
     const generalsByCity = useMemo(() => {
         const map: Record<number, Officer[]> = {};
         for (const gen of generals) {
-            if (!map[gen.cityId]) map[gen.cityId] = [];
-            map[gen.cityId].push(gen);
+            if (!map[gen.planetId]) map[gen.planetId] = [];
+            map[gen.planetId].push(gen);
         }
         return map;
     }, [generals]);
@@ -308,7 +312,7 @@ function CityPageContent() {
                         {cities.map((c) => (
                             <option key={c.id} value={c.id}>
                                 {c.name}
-                                {nation?.capitalCityId === c.id ? ' [수도]' : ''}
+                                {nation?.capitalPlanetId === c.id ? ' [수도]' : ''}
                             </option>
                         ))}
                     </select>
@@ -317,23 +321,24 @@ function CityPageContent() {
 
             {/* City list */}
             {sortedCities.map((city, idx) => {
-                const isCapital = nation?.capitalCityId === city.id;
-                const owner = nationMap.get(city.nationId);
-                const isMyNationCity = city.nationId === myGeneral?.nationId;
-                const isVacant = city.nationId === 0;
+                const isCapital = nation?.capitalPlanetId === city.id;
+                const owner = nationMap.get(city.factionId);
+                const isMyNationCity = city.factionId === myGeneral?.factionId;
+                const isVacant = city.factionId === 0;
                 const isVisible = canSeeMilitary(city) && !isVacant;
                 const nationColor = owner?.color ?? '#888';
                 const textColor = isBrightColor(nationColor) ? 'black' : 'white';
                 const regionText = REGION_NAMES[city.region] ?? '';
                 const levelText = CITY_LEVEL_BADGES[city.level] ?? `Lv.${city.level}`;
-                const popRate = city.popMax > 0 ? ((city.pop / city.popMax) * 100).toFixed(1) : '0';
-                const tradeText = city.trade != null ? `${city.trade}%` : '-';
+                const popRate =
+                    city.populationMax > 0 ? ((city.population / city.populationMax) * 100).toFixed(1) : '0';
+                const tradeText = city.tradeRoute != null ? `${city.tradeRoute}%` : '-';
 
                 const officers = officersByCity[city.id] ?? {};
                 const cityGens = generalsByCity[city.id] ?? [];
                 const cityIncomeOfficerCnt = countCityOfficers(cityGens, city.id);
                 const defendingGeneral =
-                    officers[4] ?? [...cityGens].sort((a, b) => b.leadership - a.leadership || b.crew - a.crew)[0];
+                    officers[4] ?? [...cityGens].sort((a, b) => b.leadership - a.leadership || b.ships - a.ships)[0];
                 const isExpanded = expandedCityId === city.id;
                 const adjacentIds = adjacencyMap.get(city.id) ?? [];
                 const adjacentCities = adjacentIds
@@ -391,7 +396,9 @@ function CityPageContent() {
                                 {/* Row 1: pop, popRate, trust, trade, supply */}
                                 <LabelCell>주민</LabelCell>
                                 <ValueCell>
-                                    {isVisible ? `${city.pop.toLocaleString()}/${city.popMax.toLocaleString()}` : '?'}
+                                    {isVisible
+                                        ? `${city.population.toLocaleString()}/${city.populationMax.toLocaleString()}`
+                                        : '?'}
                                 </ValueCell>
                                 <LabelCell>인구율</LabelCell>
                                 <ValueCell>
@@ -399,7 +406,11 @@ function CityPageContent() {
                                         <>
                                             <LoghBar
                                                 height={7}
-                                                percent={city.popMax > 0 ? (city.pop / city.popMax) * 100 : 0}
+                                                percent={
+                                                    city.populationMax > 0
+                                                        ? (city.population / city.populationMax) * 100
+                                                        : 0
+                                                }
                                             />
                                             <span>{popRate}%</span>
                                         </>
@@ -411,9 +422,9 @@ function CityPageContent() {
                                 <ValueCell>
                                     {isVisible ? (
                                         <>
-                                            <LoghBar height={7} percent={city.trust} />
+                                            <LoghBar height={7} percent={city.approval} />
                                             <span>
-                                                {city.trust.toLocaleString(undefined, {
+                                                {city.approval.toLocaleString(undefined, {
                                                     maximumFractionDigits: 1,
                                                 })}
                                             </span>
@@ -436,10 +447,10 @@ function CityPageContent() {
                                                     city,
                                                     cityIncomeOfficerCnt,
                                                     isCapital,
-                                                    nation.level,
-                                                    nation.typeCode
+                                                    nation.factionRank,
+                                                    nation.factionType
                                                 ) *
-                                                    nation.rate) /
+                                                    nation.conscriptionRate) /
                                                 20
                                             ).toLocaleString(undefined, { maximumFractionDigits: 0 })}
                                         </ValueCell>
@@ -450,10 +461,10 @@ function CityPageContent() {
                                                     city,
                                                     cityIncomeOfficerCnt,
                                                     isCapital,
-                                                    nation.level,
-                                                    nation.typeCode
+                                                    nation.factionRank,
+                                                    nation.factionType
                                                 ) *
-                                                    nation.rate) /
+                                                    nation.conscriptionRate) /
                                                 20
                                             ).toLocaleString(undefined, { maximumFractionDigits: 0 })}
                                         </ValueCell>
@@ -464,10 +475,10 @@ function CityPageContent() {
                                                     city,
                                                     cityIncomeOfficerCnt,
                                                     isCapital,
-                                                    nation.level,
-                                                    nation.typeCode
+                                                    nation.factionRank,
+                                                    nation.factionType
                                                 ) *
-                                                    nation.rate) /
+                                                    nation.conscriptionRate) /
                                                 20
                                             ).toLocaleString(undefined, { maximumFractionDigits: 0 })}
                                         </ValueCell>
@@ -477,40 +488,40 @@ function CityPageContent() {
                                 {/* Row 2: agri, comm, secu, def, wall */}
                                 <LabelCell>생산</LabelCell>
                                 <StatValueCell
-                                    val={city.agri}
-                                    max={city.agriMax}
+                                    val={city.production}
+                                    max={city.productionMax}
                                     hidden={!isVisible}
                                     kind="agri"
                                     perTurn={100}
                                 />
                                 <LabelCell>교역</LabelCell>
                                 <StatValueCell
-                                    val={city.comm}
-                                    max={city.commMax}
+                                    val={city.commerce}
+                                    max={city.commerceMax}
                                     hidden={!isVisible}
                                     kind="comm"
                                     perTurn={100}
                                 />
                                 <LabelCell>치안</LabelCell>
                                 <StatValueCell
-                                    val={city.secu}
-                                    max={city.secuMax}
+                                    val={city.security}
+                                    max={city.securityMax}
                                     hidden={!isVisible}
                                     kind="secu"
                                     perTurn={100}
                                 />
                                 <LabelCell>궤도방어</LabelCell>
                                 <StatValueCell
-                                    val={city.def}
-                                    max={city.defMax}
+                                    val={city.orbitalDefense}
+                                    max={city.orbitalDefenseMax}
                                     hidden={!isVisible}
                                     kind="def"
                                     perTurn={70}
                                 />
                                 <LabelCell>요새</LabelCell>
                                 <StatValueCell
-                                    val={city.wall}
-                                    max={city.wallMax}
+                                    val={city.fortress}
+                                    max={city.fortressMax}
                                     hidden={!isVisible}
                                     kind="wall"
                                     perTurn={70}
@@ -532,10 +543,10 @@ function CityPageContent() {
                                 <ValueCell>{isVisible && defendingGeneral ? defendingGeneral.name : '?'}</ValueCell>
                                 <LabelCell>주둔함선</LabelCell>
                                 <ValueCell>
-                                    {isVisible ? cityGens.reduce((sum, g) => sum + g.crew, 0).toLocaleString() : '?'}
+                                    {isVisible ? cityGens.reduce((sum, g) => sum + g.ships, 0).toLocaleString() : '?'}
                                 </ValueCell>
                                 <LabelCell>성벽/수비</LabelCell>
-                                <ValueCell>{isVisible ? `${city.wall}/${city.def}` : '?'}</ValueCell>
+                                <ValueCell>{isVisible ? `${city.fortress}/${city.orbitalDefense}` : '?'}</ValueCell>
                                 <LabelCell>인접 도시</LabelCell>
                                 <div className="border-t border-l border-gray-600 px-1 py-0.5 col-span-4 text-xs">
                                     {adjacentCities.length === 0 ? (
@@ -585,25 +596,25 @@ function CityPageContent() {
                                 {isVisible &&
                                     isMyNationCity &&
                                     (() => {
-                                        const myNationId = myGeneral?.nationId ?? 0;
+                                        const myNationId = myGeneral?.factionId ?? 0;
                                         const enemyGens = cityGens.filter(
-                                            (g) => g.nationId !== 0 && g.nationId !== myNationId
+                                            (g) => g.factionId !== 0 && g.factionId !== myNationId
                                         );
-                                        const enemyCrew = enemyGens.reduce((s, g) => s + g.crew, 0);
-                                        const enemyArmed = enemyGens.filter((g) => g.crew > 0).length;
-                                        const allyGens = cityGens.filter((g) => g.nationId === myNationId);
-                                        const crewTotal = allyGens.reduce((s, g) => s + g.crew, 0);
-                                        const armedTotal = allyGens.filter((g) => g.crew > 0).length;
-                                        const withCrew = allyGens.filter((g) => g.crew > 0);
-                                        const t90 = withCrew.filter((g) => Math.min(g.train, g.atmos) >= 90);
-                                        const t60 = withCrew.filter((g) => Math.min(g.train, g.atmos) >= 60);
-                                        const crew90 = t90.reduce((s, g) => s + g.crew, 0);
-                                        const crew60 = t60.reduce((s, g) => s + g.crew, 0);
+                                        const enemyCrew = enemyGens.reduce((s, g) => s + g.ships, 0);
+                                        const enemyArmed = enemyGens.filter((g) => g.ships > 0).length;
+                                        const allyGens = cityGens.filter((g) => g.factionId === myNationId);
+                                        const crewTotal = allyGens.reduce((s, g) => s + g.ships, 0);
+                                        const armedTotal = allyGens.filter((g) => g.ships > 0).length;
+                                        const withCrew = allyGens.filter((g) => g.ships > 0);
+                                        const t90 = withCrew.filter((g) => Math.min(g.training, g.morale) >= 90);
+                                        const t60 = withCrew.filter((g) => Math.min(g.training, g.morale) >= 60);
+                                        const crew90 = t90.reduce((s, g) => s + g.ships, 0);
+                                        const crew60 = t60.reduce((s, g) => s + g.ships, 0);
                                         const defReady = withCrew.filter(
-                                            (g) => Math.min(g.train, g.atmos) >= g.defenceTrain
+                                            (g) => Math.min(g.training, g.morale) >= g.defenceTrain
                                         );
-                                        const crewDef = defReady.reduce((s, g) => s + g.crew, 0);
-                                        const totalCrew = cityGens.reduce((s, g) => s + g.crew, 0);
+                                        const crewDef = defReady.reduce((s, g) => s + g.ships, 0);
+                                        const totalCrew = cityGens.reduce((s, g) => s + g.ships, 0);
                                         return (
                                             <>
                                                 <LabelCell>적국 함선</LabelCell>
@@ -647,8 +658,8 @@ function CityPageContent() {
                             {isExpanded && cityGens.length > 0 && isVisible && (
                                 <GarrisonTable
                                     generals={cityGens}
-                                    nationLevel={nation?.level}
-                                    myNationId={myGeneral?.nationId}
+                                    nationLevel={nation?.factionRank}
+                                    myNationId={myGeneral?.factionId}
                                 />
                             )}
                         </div>
@@ -717,12 +728,12 @@ function GarrisonTable({
                         const officerText = formatOfficerLevelText(
                             gen.officerLevel,
                             nationLevel,
-                            gen.nationId > 0,
+                            gen.factionId > 0,
                             undefined,
                             gen.npcState
                         );
                         const defText = formatDefenceTrain(gen.defenceTrain);
-                        const isOwnNation = myNationId != null && gen.nationId === myNationId;
+                        const isOwnNation = myNationId != null && gen.factionId === myNationId;
                         const turnTimeText =
                             isOwnNation && gen.turnTime
                                 ? new Date(gen.turnTime).toLocaleString('ko-KR', {
@@ -743,22 +754,26 @@ function GarrisonTable({
                                     {officerText}
                                 </td>
                                 <td className="border-l border-gray-600 px-1 py-0.5 whitespace-nowrap">
-                                    {getShipClassName(String(gen.crewType)) ?? '보병'}
+                                    {getShipClassName(String(gen.shipClass)) ?? '보병'}
                                 </td>
                                 <td className="border-l border-gray-600 px-1 py-0.5 tabular-nums">
-                                    {gen.crew.toLocaleString()}
+                                    {gen.ships.toLocaleString()}
                                 </td>
-                                <td className="border-l border-gray-600 px-1 py-0.5 tabular-nums">{gen.train}</td>
-                                <td className="border-l border-gray-600 px-1 py-0.5 tabular-nums">{gen.atmos}</td>
+                                <td className="border-l border-gray-600 px-1 py-0.5 tabular-nums">{gen.training}</td>
+                                <td className="border-l border-gray-600 px-1 py-0.5 tabular-nums">{gen.morale}</td>
                                 <td className="border-l border-gray-600 px-1 py-0.5">{defText}</td>
                                 <td className="border-l border-gray-600 px-1 py-0.5" style={{ color: injury.color }}>
                                     {injury.text}
                                 </td>
                                 <td className="border-l border-gray-600 px-1 py-0.5 tabular-nums">{gen.leadership}</td>
-                                <td className="border-l border-gray-600 px-1 py-0.5 tabular-nums">{gen.strength}</td>
-                                <td className="border-l border-gray-600 px-1 py-0.5 tabular-nums">{gen.intel}</td>
+                                <td className="border-l border-gray-600 px-1 py-0.5 tabular-nums">{gen.command}</td>
+                                <td className="border-l border-gray-600 px-1 py-0.5 tabular-nums">
+                                    {gen.intelligence}
+                                </td>
                                 <td className="border-l border-gray-600 px-1 py-0.5 tabular-nums">{gen.politics}</td>
-                                <td className="border-l border-gray-600 px-1 py-0.5 tabular-nums">{gen.charm}</td>
+                                <td className="border-l border-gray-600 px-1 py-0.5 tabular-nums">
+                                    {gen.administration}
+                                </td>
                                 <td className="border-l border-gray-600 px-1 py-0.5 whitespace-nowrap">
                                     {turnTimeText}
                                 </td>
@@ -766,10 +781,10 @@ function GarrisonTable({
                                     {commandText}
                                 </td>
                                 <td className="border-l border-gray-600 px-1 py-0.5 tabular-nums">
-                                    {gen.gold.toLocaleString()}
+                                    {gen.funds.toLocaleString()}
                                 </td>
                                 <td className="border-l border-r border-gray-600 px-1 py-0.5 tabular-nums">
-                                    {gen.rice.toLocaleString()}
+                                    {gen.supplies.toLocaleString()}
                                 </td>
                             </tr>
                         );

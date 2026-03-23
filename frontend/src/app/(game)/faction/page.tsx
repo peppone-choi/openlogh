@@ -63,15 +63,15 @@ const GEN_SORTS: SortOpt<Officer>[] = [
     { label: '헌신순', key: 'ded', fn: (a, b) => b.dedication - a.dedication },
     { label: '경험순', key: 'exp', fn: (a, b) => b.experience - a.experience },
     { label: '통솔순', key: 'lead', fn: (a, b) => b.leadership - a.leadership },
-    { label: '지휘순', key: 'str', fn: (a, b) => b.strength - a.strength },
-    { label: '정보순', key: 'int', fn: (a, b) => b.intel - a.intel },
+    { label: '지휘순', key: 'str', fn: (a, b) => b.command - a.command },
+    { label: '정보순', key: 'int', fn: (a, b) => b.intelligence - a.intelligence },
     { label: '정치순', key: 'pol', fn: (a, b) => b.politics - a.politics },
-    { label: '운영순', key: 'cha', fn: (a, b) => b.charm - a.charm },
-    { label: '자금순', key: 'gold', fn: (a, b) => b.gold - a.gold },
-    { label: '물자순', key: 'rice', fn: (a, b) => b.rice - a.rice },
-    { label: '함선순', key: 'crew', fn: (a, b) => b.crew - a.crew },
-    { label: '훈련순', key: 'train', fn: (a, b) => b.train - a.train },
-    { label: '사기순', key: 'atmos', fn: (a, b) => b.atmos - a.atmos },
+    { label: '운영순', key: 'cha', fn: (a, b) => b.administration - a.administration },
+    { label: '자금순', key: 'gold', fn: (a, b) => b.funds - a.funds },
+    { label: '물자순', key: 'rice', fn: (a, b) => b.supplies - a.supplies },
+    { label: '함선순', key: 'crew', fn: (a, b) => b.ships - a.ships },
+    { label: '훈련순', key: 'train', fn: (a, b) => b.training - a.training },
+    { label: '사기순', key: 'atmos', fn: (a, b) => b.morale - a.morale },
     { label: 'NPC순', key: 'npc', fn: (a, b) => a.npcState - b.npcState },
     { label: '이름순', key: 'name', fn: (a, b) => a.name.localeCompare(b.name) },
 ];
@@ -79,16 +79,16 @@ const GEN_SORTS: SortOpt<Officer>[] = [
 const CITY_SORTS: SortOpt<StarSystem>[] = [
     { label: '이름순', key: 'name', fn: (a, b) => a.name.localeCompare(b.name) },
     { label: '레벨순', key: 'level', fn: (a, b) => b.level - a.level },
-    { label: '인구순', key: 'pop', fn: (a, b) => b.pop - a.pop },
-    { label: '민심순', key: 'trust', fn: (a, b) => b.trust - a.trust },
-    { label: '농업순', key: 'agri', fn: (a, b) => b.agri - a.agri },
-    { label: '상업순', key: 'comm', fn: (a, b) => b.comm - a.comm },
-    { label: '치안순', key: 'secu', fn: (a, b) => b.secu - a.secu },
-    { label: '수비순', key: 'def', fn: (a, b) => b.def - a.def },
-    { label: '성벽순', key: 'wall', fn: (a, b) => b.wall - a.wall },
+    { label: '인구순', key: 'pop', fn: (a, b) => b.population - a.population },
+    { label: '민심순', key: 'trust', fn: (a, b) => b.approval - a.approval },
+    { label: '농업순', key: 'agri', fn: (a, b) => b.production - a.production },
+    { label: '상업순', key: 'comm', fn: (a, b) => b.commerce - a.commerce },
+    { label: '치안순', key: 'secu', fn: (a, b) => b.security - a.security },
+    { label: '수비순', key: 'def', fn: (a, b) => b.orbitalDefense - a.orbitalDefense },
+    { label: '성벽순', key: 'wall', fn: (a, b) => b.fortress - a.fortress },
     { label: '지역순', key: 'region', fn: (a, b) => a.region - b.region },
-    { label: '인구최대순', key: 'popMax', fn: (a, b) => b.popMax - a.popMax },
-    { label: '수비최대순', key: 'defMax', fn: (a, b) => b.defMax - a.defMax },
+    { label: '인구최대순', key: 'popMax', fn: (a, b) => b.populationMax - a.populationMax },
+    { label: '수비최대순', key: 'defMax', fn: (a, b) => b.orbitalDefenseMax - a.orbitalDefenseMax },
 ];
 
 // ── Main component ──────────────────────────────────────────────────
@@ -131,8 +131,8 @@ function NationPageContent() {
     }, [currentWorld, myGeneral, fetchMyGeneral]);
 
     const loadNationData = useCallback(async () => {
-        if (!myGeneral?.nationId || !currentWorld) return;
-        const nId = myGeneral.nationId;
+        if (!myGeneral?.factionId || !currentWorld) return;
+        const nId = myGeneral.factionId;
         const wId = currentWorld.id;
         const off = myGeneral.officerLevel >= 5;
 
@@ -204,18 +204,18 @@ function NationPageContent() {
         } finally {
             setLoading(false);
         }
-    }, [myGeneral?.nationId, myGeneral?.officerLevel, currentWorld]);
+    }, [myGeneral?.factionId, myGeneral?.officerLevel, currentWorld]);
 
     useEffect(() => {
         loadNationData();
     }, [loadNationData]);
 
     useEffect(() => {
-        if (!currentWorld || !myGeneral?.nationId) return;
+        if (!currentWorld || !myGeneral?.factionId) return;
         return subscribeWebSocket(`/topic/world/${currentWorld.id}/turn`, () => {
             loadNationData();
         });
-    }, [currentWorld, myGeneral?.nationId, loadNationData]);
+    }, [currentWorld, myGeneral?.factionId, loadNationData]);
 
     const handleTabChange = (value: string) => {
         router.replace(value === 'info' ? '/nation' : `/nation?tab=${value}`, {
@@ -245,17 +245,17 @@ function NationPageContent() {
             gw = 0;
         cities.forEach((c) => {
             const cnt = officerCntByCity.get(c.id) || 0;
-            const cap = c.id === nation.capitalCityId;
-            gcBase += calcPlanetFundsIncome(c, cnt, cap, nation.level, nation.typeCode);
-            rcBase += calcPlanetSuppliesIncome(c, cnt, cap, nation.level, nation.typeCode);
-            rwBase += calcPlanetFortressSuppliesIncome(c, cnt, cap, nation.level, nation.typeCode);
-            gw += calcPlanetWarFundsIncome(c, nation.typeCode);
+            const cap = c.id === nation.capitalPlanetId;
+            gcBase += calcPlanetFundsIncome(c, cnt, cap, nation.factionRank, nation.factionType);
+            rcBase += calcPlanetSuppliesIncome(c, cnt, cap, nation.factionRank, nation.factionType);
+            rwBase += calcPlanetFortressSuppliesIncome(c, cnt, cap, nation.factionRank, nation.factionType);
+            gw += calcPlanetWarFundsIncome(c, nation.factionType);
         });
-        const goldCity = Math.round((gcBase * nation.rate) / 20);
-        const riceCity = Math.round((rcBase * nation.rate) / 20);
-        const riceWall = Math.round((rwBase * nation.rate) / 20);
+        const goldCity = Math.round((gcBase * nation.conscriptionRate) / 20);
+        const riceCity = Math.round((rcBase * nation.conscriptionRate) / 20);
+        const riceWall = Math.round((rwBase * nation.conscriptionRate) / 20);
         const baseOut = generals.filter((g) => g.npcState !== 5).reduce((s, g) => s + getBill(g.dedication), 0);
-        const outcome = Math.round((baseOut * nation.bill) / 100);
+        const outcome = Math.round((baseOut * nation.taxRate) / 100);
         return { goldCity, goldWar: gw, riceCity, riceWall, outcome };
     }, [nation, cities, generals, officerCntByCity]);
 
@@ -321,16 +321,16 @@ function NationPageContent() {
     if (!currentWorld) return <LoadingState message="월드를 선택해주세요." />;
     if (loading) return <LoadingState />;
     if (error) return <div className="p-4 text-red-400">{error}</div>;
-    if (!myGeneral?.nationId) return <div className="p-4 text-muted-foreground">소속 진영이 없습니다.</div>;
+    if (!myGeneral?.factionId) return <div className="p-4 text-muted-foreground">소속 진영이 없습니다.</div>;
     if (!nation) return <LoadingState message="진영 정보가 없습니다." />;
 
     // ── Derived ──────────────────────────────────────────────────────
 
-    const capitalCity = cities.find((c) => c.id === nation.capitalCityId);
-    const totalCrew = generals.reduce((s, g) => s + g.crew, 0);
+    const capitalCity = cities.find((c) => c.id === nation.capitalPlanetId);
+    const totalCrew = generals.reduce((s, g) => s + g.ships, 0);
     const maxCrew = generals.filter((g) => g.npcState !== 5).reduce((s, g) => s + g.leadership * 100, 0);
-    const totalPop = cities.reduce((s, c) => s + c.pop, 0);
-    const maxPop = cities.reduce((s, c) => s + c.popMax, 0);
+    const totalPop = cities.reduce((s, c) => s + c.population, 0);
+    const maxPop = cities.reduce((s, c) => s + c.populationMax, 0);
     const { goldCity, goldWar, riceCity, riceWall, outcome } = income;
     const totalGold = goldCity + goldWar;
     const totalRice = riceCity + riceWall;
@@ -357,9 +357,10 @@ function NationPageContent() {
                             <div className="flex flex-wrap items-center gap-2 mb-3">
                                 <NationBadge name={nation.name} color={nation.color} />
                                 <Badge variant="secondary">
-                                    {getNationLevelLabel(nation.level, nation.typeCode) ?? `Lv.${nation.level}`}
+                                    {getNationLevelLabel(nation.factionRank, nation.factionType) ??
+                                        `Lv.${nation.factionRank}`}
                                 </Badge>
-                                <Badge variant="outline">{getNationTypeLabel(nation.typeCode)}</Badge>
+                                <Badge variant="outline">{getNationTypeLabel(nation.factionType)}</Badge>
                                 {capitalCity && (
                                     <Badge variant="outline" className="text-cyan-400">
                                         수도: {capitalCity.name}
@@ -382,9 +383,9 @@ function NationPageContent() {
                                 </VCell>
 
                                 <LCell>국 고</LCell>
-                                <VCell className="text-yellow-400">{nation.gold.toLocaleString()}</VCell>
+                                <VCell className="text-yellow-400">{nation.funds.toLocaleString()}</VCell>
                                 <LCell>물 자</LCell>
-                                <VCell className="text-green-400">{nation.rice.toLocaleString()}</VCell>
+                                <VCell className="text-green-400">{nation.supplies.toLocaleString()}</VCell>
 
                                 <LCell>세금/단기</LCell>
                                 <VCell>
@@ -410,28 +411,28 @@ function NationPageContent() {
 
                                 <LCell>국고 예산</LCell>
                                 <VCell>
-                                    {(nation.gold + goldDiff).toLocaleString()}{' '}
+                                    {(nation.funds + goldDiff).toLocaleString()}{' '}
                                     <span className={goldDiff >= 0 ? 'text-green-400' : 'text-red-400'}>
                                         ({fmtDiff(goldDiff)})
                                     </span>
                                 </VCell>
                                 <LCell>물자 예산</LCell>
                                 <VCell>
-                                    {(nation.rice + riceDiff).toLocaleString()}{' '}
+                                    {(nation.supplies + riceDiff).toLocaleString()}{' '}
                                     <span className={riceDiff >= 0 ? 'text-green-400' : 'text-red-400'}>
                                         ({fmtDiff(riceDiff)})
                                     </span>
                                 </VCell>
 
                                 <LCell>세 율</LCell>
-                                <VCell>{nation.rate}%</VCell>
+                                <VCell>{nation.conscriptionRate}%</VCell>
                                 <LCell>지급률</LCell>
-                                <VCell>{nation.bill}%</VCell>
+                                <VCell>{nation.taxRate}%</VCell>
 
                                 <LCell>군사력</LCell>
-                                <VCell>{nation.power.toLocaleString()}</VCell>
+                                <VCell>{nation.militaryPower.toLocaleString()}</VCell>
                                 <LCell>기술력</LCell>
-                                <VCell>{Math.floor(nation.tech).toLocaleString()}</VCell>
+                                <VCell>{Math.floor(nation.techLevel).toLocaleString()}</VCell>
 
                                 <LCell>속 령</LCell>
                                 <VCell>{cities.length}개</VCell>
@@ -440,7 +441,8 @@ function NationPageContent() {
 
                                 <LCell>작 위</LCell>
                                 <VCell>
-                                    {getNationLevelLabel(nation.level, nation.typeCode) ?? `Lv.${nation.level}`}
+                                    {getNationLevelLabel(nation.factionRank, nation.factionType) ??
+                                        `Lv.${nation.factionRank}`}
                                 </VCell>
                                 <LCell>전 쟁</LCell>
                                 <VCell>
@@ -458,7 +460,7 @@ function NationPageContent() {
                                 {cities.map((c, i) => (
                                     <span key={c.id}>
                                         {i > 0 && ', '}
-                                        <span className={c.id === nation.capitalCityId ? 'text-cyan-400' : ''}>
+                                        <span className={c.id === nation.capitalPlanetId ? 'text-cyan-400' : ''}>
                                             {c.name}
                                         </span>
                                     </span>
@@ -535,9 +537,9 @@ function NationPageContent() {
                                                     <TableCell className="text-center text-xs whitespace-nowrap">
                                                         {formatOfficerLevelText(
                                                             g.officerLevel,
-                                                            nation.level,
+                                                            nation.factionRank,
                                                             true,
-                                                            nation.typeCode,
+                                                            nation.factionType,
                                                             g.npcState
                                                         )}
                                                     </TableCell>
@@ -552,34 +554,34 @@ function NationPageContent() {
                                                         {g.leadership}
                                                     </TableCell>
                                                     <TableCell className="text-center tabular-nums">
-                                                        {g.strength}
+                                                        {g.command}
                                                     </TableCell>
                                                     <TableCell className="text-center tabular-nums">
-                                                        {g.intel}
+                                                        {g.intelligence}
                                                     </TableCell>
                                                     <TableCell className="text-center tabular-nums">
                                                         {g.politics}
                                                     </TableCell>
                                                     <TableCell className="text-center tabular-nums">
-                                                        {g.charm}
+                                                        {g.administration}
                                                     </TableCell>
                                                     <TableCell className="text-right tabular-nums">
-                                                        {g.crew.toLocaleString()}
+                                                        {g.ships.toLocaleString()}
                                                     </TableCell>
                                                     <TableCell className="text-center text-xs">
-                                                        {getShipClassName(String(g.crewType)) ?? '?'}
+                                                        {getShipClassName(String(g.shipClass)) ?? '?'}
                                                     </TableCell>
                                                     <TableCell className="text-center tabular-nums">
-                                                        {g.train}
+                                                        {g.training}
                                                     </TableCell>
                                                     <TableCell className="text-center tabular-nums">
-                                                        {g.atmos}
+                                                        {g.morale}
                                                     </TableCell>
                                                     <TableCell className="text-right tabular-nums text-yellow-400">
-                                                        {g.gold.toLocaleString()}
+                                                        {g.funds.toLocaleString()}
                                                     </TableCell>
                                                     <TableCell className="text-right tabular-nums text-green-400">
-                                                        {g.rice.toLocaleString()}
+                                                        {g.supplies.toLocaleString()}
                                                     </TableCell>
                                                     <TableCell className="text-right tabular-nums">
                                                         {g.dedication.toLocaleString()}
@@ -647,14 +649,14 @@ function NationPageContent() {
                                                     <TableRow
                                                         key={c.id}
                                                         className={
-                                                            c.id === nation.capitalCityId
+                                                            c.id === nation.capitalPlanetId
                                                                 ? 'border-l-2 border-l-cyan-400'
                                                                 : ''
                                                         }
                                                     >
                                                         <TableCell className="font-medium whitespace-nowrap">
                                                             {c.name}
-                                                            {c.id === nation.capitalCityId && (
+                                                            {c.id === nation.capitalPlanetId && (
                                                                 <span className="text-cyan-400 text-xs ml-1">
                                                                     (수도)
                                                                 </span>
@@ -667,33 +669,43 @@ function NationPageContent() {
                                                             {REGION_NAMES[c.region] ?? c.region}
                                                         </TableCell>
                                                         <TableCell className="text-right tabular-nums">
-                                                            {c.pop.toLocaleString()}
+                                                            {c.population.toLocaleString()}
                                                             <span className="text-muted-foreground">
-                                                                /{c.popMax.toLocaleString()}
+                                                                /{c.populationMax.toLocaleString()}
                                                             </span>
                                                         </TableCell>
                                                         <TableCell className="text-center tabular-nums">
-                                                            {c.trust}
+                                                            {c.approval}
                                                         </TableCell>
                                                         <TableCell className="text-right tabular-nums">
-                                                            {c.agri}
-                                                            <span className="text-muted-foreground">/{c.agriMax}</span>
+                                                            {c.production}
+                                                            <span className="text-muted-foreground">
+                                                                /{c.productionMax}
+                                                            </span>
                                                         </TableCell>
                                                         <TableCell className="text-right tabular-nums">
-                                                            {c.comm}
-                                                            <span className="text-muted-foreground">/{c.commMax}</span>
+                                                            {c.commerce}
+                                                            <span className="text-muted-foreground">
+                                                                /{c.commerceMax}
+                                                            </span>
                                                         </TableCell>
                                                         <TableCell className="text-center tabular-nums">
-                                                            {c.secu}
-                                                            <span className="text-muted-foreground">/{c.secuMax}</span>
+                                                            {c.security}
+                                                            <span className="text-muted-foreground">
+                                                                /{c.securityMax}
+                                                            </span>
                                                         </TableCell>
                                                         <TableCell className="text-right tabular-nums">
-                                                            {c.def}
-                                                            <span className="text-muted-foreground">/{c.defMax}</span>
+                                                            {c.orbitalDefense}
+                                                            <span className="text-muted-foreground">
+                                                                /{c.orbitalDefenseMax}
+                                                            </span>
                                                         </TableCell>
                                                         <TableCell className="text-right tabular-nums">
-                                                            {c.wall}
-                                                            <span className="text-muted-foreground">/{c.wallMax}</span>
+                                                            {c.fortress}
+                                                            <span className="text-muted-foreground">
+                                                                /{c.fortressMax}
+                                                            </span>
                                                         </TableCell>
                                                         <TableCell className="text-center text-xs whitespace-nowrap">
                                                             {off?.taesu ? (

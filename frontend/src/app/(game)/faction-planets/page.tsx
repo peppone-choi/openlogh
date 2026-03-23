@@ -99,7 +99,7 @@ export default function NationCitiesPage() {
     }, [currentWorld, myGeneral, fetchMyGeneral]);
 
     useEffect(() => {
-        if (!myGeneral?.nationId || !currentWorld) return;
+        if (!myGeneral?.factionId || !currentWorld) return;
         Promise.all([
             planetApi.listByFaction(myGeneral.nationId),
             factionApi.listByWorld(currentWorld.id),
@@ -118,10 +118,10 @@ export default function NationCitiesPage() {
                 setBill(Number(policyRes.data.bill) || 100);
             })
             .catch(() => setError('국가 행성 정보를 불러올 수 없습니다.'));
-    }, [myGeneral?.nationId, currentWorld]);
+    }, [myGeneral?.factionId, currentWorld]);
 
     const handleSavePolicy = async () => {
-        if (!myGeneral?.nationId) return;
+        if (!myGeneral?.factionId) return;
         setSavingPolicy(true);
         setSaveMsg('');
         try {
@@ -135,7 +135,7 @@ export default function NationCitiesPage() {
     };
 
     const handleAppoint = async () => {
-        if (!myGeneral?.nationId || !appointCity || !appointGeneralId) return;
+        if (!myGeneral?.factionId || !appointCity || !appointGeneralId) return;
         setAppointSaving(true);
         try {
             await nationManagementApi.appointOfficer(myGeneral.nationId, {
@@ -159,7 +159,7 @@ export default function NationCitiesPage() {
     const getCityOfficers = (cityId: number) => {
         return nationGenerals
             .filter(
-                (g) => g.cityId === cityId && g.officerCity === cityId && g.officerLevel >= 2 && g.officerLevel <= 4
+                (g) => g.planetId === cityId && g.officerCity === cityId && g.officerLevel >= 2 && g.officerLevel <= 4
             )
             .sort((a, b) => b.officerLevel - a.officerLevel);
     };
@@ -183,7 +183,7 @@ export default function NationCitiesPage() {
         cityFilter ? c.name.toLowerCase().includes(cityFilter.toLowerCase()) : true
     );
 
-    const getGeneralCount = (cityId: number) => nationGenerals.filter((g) => g.cityId === cityId).length;
+    const getGeneralCount = (cityId: number) => nationGenerals.filter((g) => g.planetId === cityId).length;
 
     const sorted = [...filtered].sort((a, b) => {
         let cmp = 0;
@@ -192,8 +192,8 @@ export default function NationCitiesPage() {
         } else if (sortKey === 'generalCount') {
             cmp = getGeneralCount(a.id) - getGeneralCount(b.id);
         } else if (sortKey === 'popRatio') {
-            const ra = a.popMax > 0 ? a.pop / a.popMax : 0;
-            const rb = b.popMax > 0 ? b.pop / b.popMax : 0;
+            const ra = a.populationMax > 0 ? a.population / a.populationMax : 0;
+            const rb = b.populationMax > 0 ? b.population / b.populationMax : 0;
             cmp = ra - rb;
         } else {
             cmp = (a[sortKey] as number) - (b[sortKey] as number);
@@ -206,7 +206,7 @@ export default function NationCitiesPage() {
     const diplomacyRows = diplomacyList
         .filter((d) => !d.isDead)
         .map((d) => {
-            const otherNationId = d.srcNationId === myGeneral?.nationId ? d.destNationId : d.srcNationId;
+            const otherNationId = d.srcNationId === myGeneral?.factionId ? d.destNationId : d.srcNationId;
             return {
                 id: d.id,
                 nation: nationMap.get(otherNationId),
@@ -220,27 +220,27 @@ export default function NationCitiesPage() {
         const goldCity = calcPlanetFundsIncome(
             c,
             officerCnt,
-            myNation?.capitalCityId === c.id,
-            myNation?.level ?? 0,
-            myNation?.typeCode ?? ''
+            myNation?.capitalPlanetId === c.id,
+            myNation?.factionRank ?? 0,
+            myNation?.factionType ?? ''
         );
-        const goldWar = calcPlanetWarFundsIncome(c, myNation?.typeCode ?? '');
+        const goldWar = calcPlanetWarFundsIncome(c, myNation?.factionType ?? '');
         const riceCity = calcPlanetSuppliesIncome(
             c,
             officerCnt,
-            myNation?.capitalCityId === c.id,
-            myNation?.level ?? 0,
-            myNation?.typeCode ?? ''
+            myNation?.capitalPlanetId === c.id,
+            myNation?.factionRank ?? 0,
+            myNation?.factionType ?? ''
         );
         const riceWall = calcPlanetFortressSuppliesIncome(
             c,
             officerCnt,
-            myNation?.capitalCityId === c.id,
-            myNation?.level ?? 0,
-            myNation?.typeCode ?? ''
+            myNation?.capitalPlanetId === c.id,
+            myNation?.factionRank ?? 0,
+            myNation?.factionType ?? ''
         );
         const expense = nationGenerals
-            .filter((g) => g.cityId === c.id)
+            .filter((g) => g.planetId === c.id)
             .reduce((sum, g) => sum + getBill(g.dedication), 0);
 
         return {
@@ -257,9 +257,9 @@ export default function NationCitiesPage() {
     const totalExpense = budgetRows.reduce((sum, row) => sum + row.expense, 0);
 
     if (!currentWorld) return <LoadingState message="월드를 선택해주세요." />;
-    if (myGeneral?.nationId && cities === null) return <LoadingState />;
+    if (myGeneral?.factionId && cities === null) return <LoadingState />;
     if (error) return <div className="p-4 text-red-400">{error}</div>;
-    if (!myGeneral?.nationId)
+    if (!myGeneral?.factionId)
         return (
             <div className="p-4">
                 <EmptyState
@@ -554,47 +554,48 @@ export default function NationCitiesPage() {
                                             </TableCell>
                                             <TableCell>{CITY_LEVEL_BADGES[c.level] ?? c.level}</TableCell>
                                             <TableCell>
-                                                {c.pop.toLocaleString()}/{c.popMax.toLocaleString()}
+                                                {c.population.toLocaleString()}/{c.populationMax.toLocaleString()}
                                             </TableCell>
-                                            <TableCell>{c.trust}</TableCell>
-                                            <TableCell>{c.trade}%</TableCell>
-                                            <TableCell className={statColor(c.agri, c.agriMax)}>
-                                                {c.agri.toLocaleString()}/{c.agriMax.toLocaleString()}
-                                                {remainingWarning(c.agri, c.agriMax) && (
+                                            <TableCell>{c.approval}</TableCell>
+                                            <TableCell>{c.tradeRoute}%</TableCell>
+                                            <TableCell className={statColor(c.production, c.productionMax)}>
+                                                {c.production.toLocaleString()}/{c.productionMax.toLocaleString()}
+                                                {remainingWarning(c.production, c.productionMax) && (
                                                     <span className="text-[9px] text-yellow-500 block">
-                                                        {remainingWarning(c.agri, c.agriMax)}
+                                                        {remainingWarning(c.production, c.productionMax)}
                                                     </span>
                                                 )}
                                             </TableCell>
-                                            <TableCell className={statColor(c.comm, c.commMax)}>
-                                                {c.comm.toLocaleString()}/{c.commMax.toLocaleString()}
-                                                {remainingWarning(c.comm, c.commMax) && (
+                                            <TableCell className={statColor(c.commerce, c.commerceMax)}>
+                                                {c.commerce.toLocaleString()}/{c.commerceMax.toLocaleString()}
+                                                {remainingWarning(c.commerce, c.commerceMax) && (
                                                     <span className="text-[9px] text-yellow-500 block">
-                                                        {remainingWarning(c.comm, c.commMax)}
+                                                        {remainingWarning(c.commerce, c.commerceMax)}
                                                     </span>
                                                 )}
                                             </TableCell>
-                                            <TableCell className={statColor(c.secu, c.secuMax)}>
-                                                {c.secu.toLocaleString()}/{c.secuMax.toLocaleString()}
-                                                {remainingWarning(c.secu, c.secuMax) && (
+                                            <TableCell className={statColor(c.security, c.securityMax)}>
+                                                {c.security.toLocaleString()}/{c.securityMax.toLocaleString()}
+                                                {remainingWarning(c.security, c.securityMax) && (
                                                     <span className="text-[9px] text-yellow-500 block">
-                                                        {remainingWarning(c.secu, c.secuMax)}
+                                                        {remainingWarning(c.security, c.securityMax)}
                                                     </span>
                                                 )}
                                             </TableCell>
-                                            <TableCell className={statColor(c.def, c.defMax)}>
-                                                {c.def.toLocaleString()}/{c.defMax.toLocaleString()}
-                                                {remainingWarning(c.def, c.defMax) && (
+                                            <TableCell className={statColor(c.orbitalDefense, c.orbitalDefenseMax)}>
+                                                {c.orbitalDefense.toLocaleString()}/
+                                                {c.orbitalDefenseMax.toLocaleString()}
+                                                {remainingWarning(c.orbitalDefense, c.orbitalDefenseMax) && (
                                                     <span className="text-[9px] text-yellow-500 block">
-                                                        {remainingWarning(c.def, c.defMax)}
+                                                        {remainingWarning(c.orbitalDefense, c.orbitalDefenseMax)}
                                                     </span>
                                                 )}
                                             </TableCell>
-                                            <TableCell className={statColor(c.wall, c.wallMax)}>
-                                                {c.wall.toLocaleString()}/{c.wallMax.toLocaleString()}
-                                                {remainingWarning(c.wall, c.wallMax) && (
+                                            <TableCell className={statColor(c.fortress, c.fortressMax)}>
+                                                {c.fortress.toLocaleString()}/{c.fortressMax.toLocaleString()}
+                                                {remainingWarning(c.fortress, c.fortressMax) && (
                                                     <span className="text-[9px] text-yellow-500 block">
-                                                        {remainingWarning(c.wall, c.wallMax)}
+                                                        {remainingWarning(c.fortress, c.fortressMax)}
                                                     </span>
                                                 )}
                                             </TableCell>

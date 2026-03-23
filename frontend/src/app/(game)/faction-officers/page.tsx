@@ -67,13 +67,13 @@ export default function NationGeneralsPage() {
     const [hiddenCols, setHiddenCols] = useState<Set<ColumnKey>>(new Set());
 
     const fetchData = useCallback(() => {
-        if (!myGeneral?.nationId) return;
+        if (!myGeneral?.factionId) return;
         setLoading(true);
         setError(false);
         Promise.all([
-            officerApi.listByFaction(myGeneral.nationId),
-            factionApi.get(myGeneral.nationId),
-            troopApi.listByNation(myGeneral.nationId),
+            officerApi.listByFaction(myGeneral.factionId),
+            factionApi.get(myGeneral.factionId),
+            troopApi.listByNation(myGeneral.factionId),
         ])
             .then(([gRes, nRes, tRes]) => {
                 setGenerals(gRes.data);
@@ -82,7 +82,7 @@ export default function NationGeneralsPage() {
             })
             .catch(() => setError(true))
             .finally(() => setLoading(false));
-    }, [myGeneral?.nationId]);
+    }, [myGeneral?.factionId]);
 
     useEffect(() => {
         fetchData();
@@ -158,8 +158,8 @@ export default function NationGeneralsPage() {
                         </TableHeader>
                         <TableBody>
                             {generals.map((g) => {
-                                const troop = g.troopId ? troopMap.get(g.troopId) : null;
-                                const city = cityMap.get(g.cityId);
+                                const troop = g.fleetId ? troopMap.get(g.fleetId) : null;
+                                const city = cityMap.get(g.planetId);
                                 return (
                                     <TableRow key={g.id}>
                                         <TableCell className="font-medium">
@@ -196,8 +196,8 @@ export default function NationGeneralsPage() {
                                                     <span className="text-muted-foreground">
                                                         {formatOfficerLevelText(
                                                             g.officerLevel,
-                                                            nation?.level,
-                                                            g.nationId > 0,
+                                                            nation?.factionRank,
+                                                            g.factionId > 0,
                                                             undefined,
                                                             g.npcState
                                                         )}
@@ -208,19 +208,20 @@ export default function NationGeneralsPage() {
                                                         className="tabular-nums"
                                                         style={g.injury > 0 ? { color: 'red' } : undefined}
                                                     >
-                                                        통{g.leadership}/무{g.strength}/지{g.intel}/정{g.politics}/매
-                                                        {g.charm}
+                                                        통{g.leadership}/무{g.command}/지{g.intelligence}/정{g.politics}
+                                                        /매
+                                                        {g.administration}
                                                     </span>
                                                 )}
                                                 {col.key === 'crew' && (
                                                     <span className="tabular-nums">
-                                                        {SHIP_CLASS_NAMES[g.crewType] ?? g.crewType}{' '}
-                                                        {g.crew.toLocaleString()}
+                                                        {SHIP_CLASS_NAMES[g.shipClass] ?? g.shipClass}{' '}
+                                                        {g.ships.toLocaleString()}
                                                     </span>
                                                 )}
                                                 {col.key === 'train' && (
                                                     <span className="tabular-nums">
-                                                        훈{g.train}/사{g.atmos}
+                                                        훈{g.training}/사{g.morale}
                                                     </span>
                                                 )}
                                                 {col.key === 'troop' &&
@@ -234,12 +235,12 @@ export default function NationGeneralsPage() {
                                                     ))}
                                                 {col.key === 'gold' && (
                                                     <span className="tabular-nums text-yellow-400">
-                                                        {g.gold.toLocaleString()}
+                                                        {g.funds.toLocaleString()}
                                                     </span>
                                                 )}
                                                 {col.key === 'rice' && (
                                                     <span className="tabular-nums text-green-400">
-                                                        {g.rice.toLocaleString()}
+                                                        {g.supplies.toLocaleString()}
                                                     </span>
                                                 )}
                                                 {col.key === 'level' && (

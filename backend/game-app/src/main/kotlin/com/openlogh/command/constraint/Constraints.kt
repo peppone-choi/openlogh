@@ -14,7 +14,7 @@ sealed class ConstraintResult {
 // ========== NotBeNeutral ==========
 class NotBeNeutral : Constraint {
     override fun test(ctx: ConstraintContext): ConstraintResult {
-        return if (ctx.general.nationId != 0L) ConstraintResult.Pass
+        return if (ctx.officer.factionId != 0L) ConstraintResult.Pass
         else ConstraintResult.Fail("소속 국가가 없습니다")
     }
 }
@@ -22,7 +22,7 @@ class NotBeNeutral : Constraint {
 // ========== BeNeutral ==========
 class BeNeutral : Constraint {
     override fun test(ctx: ConstraintContext): ConstraintResult {
-        return if (ctx.general.nationId == 0L) ConstraintResult.Pass
+        return if (ctx.officer.factionId == 0L) ConstraintResult.Pass
         else ConstraintResult.Fail("재야 상태가 아닙니다")
     }
 }
@@ -30,9 +30,9 @@ class BeNeutral : Constraint {
 // ========== OccupiedCity ==========
 class OccupiedCity(private val allowNeutral: Boolean = false) : Constraint {
     override fun test(ctx: ConstraintContext): ConstraintResult {
-        val city = ctx.city ?: return ConstraintResult.Fail("도시 정보가 없습니다")
-        if (allowNeutral && city.nationId == 0L) return ConstraintResult.Pass
-        return if (city.nationId == ctx.general.nationId) ConstraintResult.Pass
+        val city = ctx.planet ?: return ConstraintResult.Fail("도시 정보가 없습니다")
+        if (allowNeutral && city.factionId == 0L) return ConstraintResult.Pass
+        return if (city.factionId == ctx.officer.factionId) ConstraintResult.Pass
         else ConstraintResult.Fail("아군 도시가 아닙니다")
     }
 }
@@ -40,7 +40,7 @@ class OccupiedCity(private val allowNeutral: Boolean = false) : Constraint {
 // ========== SuppliedCity ==========
 class SuppliedCity : Constraint {
     override fun test(ctx: ConstraintContext): ConstraintResult {
-        val city = ctx.city ?: return ConstraintResult.Fail("도시 정보가 없습니다")
+        val city = ctx.planet ?: return ConstraintResult.Fail("도시 정보가 없습니다")
         return if (city.supplyState > 0) ConstraintResult.Pass
         else ConstraintResult.Fail("보급이 차단된 도시입니다")
     }
@@ -49,7 +49,7 @@ class SuppliedCity : Constraint {
 // ========== ReqGeneralGold ==========
 class ReqGeneralGold(private val amount: Int) : Constraint {
     override fun test(ctx: ConstraintContext): ConstraintResult {
-        val gold = ctx.general.gold
+        val gold = ctx.officer.funds
         return if (gold >= amount) ConstraintResult.Pass
         else ConstraintResult.Fail("자금이 부족합니다 (필요: ${amount}, 보유: ${gold})")
     }
@@ -58,7 +58,7 @@ class ReqGeneralGold(private val amount: Int) : Constraint {
 // ========== ReqGeneralRice ==========
 class ReqGeneralRice(private val amount: Int) : Constraint {
     override fun test(ctx: ConstraintContext): ConstraintResult {
-        val rice = ctx.general.rice
+        val rice = ctx.officer.supplies
         return if (rice >= amount) ConstraintResult.Pass
         else ConstraintResult.Fail("군량이 부족합니다 (필요: ${amount}, 보유: ${rice})")
     }
@@ -67,7 +67,7 @@ class ReqGeneralRice(private val amount: Int) : Constraint {
 // ========== ReqGeneralCrew ==========
 class ReqGeneralCrew(private val minCrew: Int = 1) : Constraint {
     override fun test(ctx: ConstraintContext): ConstraintResult {
-        return if (ctx.general.crew >= minCrew) ConstraintResult.Pass
+        return if (ctx.officer.ships >= minCrew) ConstraintResult.Pass
         else ConstraintResult.Fail("병사가 부족합니다 (필요: ${minCrew})")
     }
 }
@@ -75,7 +75,7 @@ class ReqGeneralCrew(private val minCrew: Int = 1) : Constraint {
 // ========== RemainCityCapacity ==========
 class RemainCityCapacity(private val key: String, private val label: String) : Constraint {
     override fun test(ctx: ConstraintContext): ConstraintResult {
-        val city = ctx.city ?: return ConstraintResult.Fail("도시 정보가 없습니다")
+        val city = ctx.planet ?: return ConstraintResult.Fail("도시 정보가 없습니다")
         val (current, max) = when (key) {
             "agri" -> city.agri to city.agriMax
             "comm" -> city.comm to city.commMax
@@ -93,7 +93,7 @@ class RemainCityCapacity(private val key: String, private val label: String) : C
 // ========== BeLord ==========
 class BeLord : Constraint {
     override fun test(ctx: ConstraintContext): ConstraintResult {
-        return if (ctx.general.officerLevel >= 20) ConstraintResult.Pass
+        return if (ctx.officer.officerLevel >= 20) ConstraintResult.Pass
         else ConstraintResult.Fail("군주만 사용할 수 있습니다")
     }
 }
@@ -101,7 +101,7 @@ class BeLord : Constraint {
 // ========== BeChief ==========
 class BeChief : Constraint {
     override fun test(ctx: ConstraintContext): ConstraintResult {
-        return if (ctx.general.officerLevel >= 20) ConstraintResult.Pass
+        return if (ctx.officer.officerLevel >= 20) ConstraintResult.Pass
         else ConstraintResult.Fail("군주급 이상만 사용할 수 있습니다")
     }
 }
@@ -109,7 +109,7 @@ class BeChief : Constraint {
 // ========== NotLord ==========
 class NotLord : Constraint {
     override fun test(ctx: ConstraintContext): ConstraintResult {
-        return if (ctx.general.officerLevel < 20) ConstraintResult.Pass
+        return if (ctx.officer.officerLevel < 20) ConstraintResult.Pass
         else ConstraintResult.Fail("군주는 사용할 수 없습니다")
     }
 }
@@ -117,7 +117,7 @@ class NotLord : Constraint {
 // ========== NotChief (alias for NotLord) ==========
 class NotChief : Constraint {
     override fun test(ctx: ConstraintContext): ConstraintResult {
-        return if (ctx.general.officerLevel < 20) ConstraintResult.Pass
+        return if (ctx.officer.officerLevel < 20) ConstraintResult.Pass
         else ConstraintResult.Fail("군주는 사용할 수 없습니다")
     }
 }
@@ -125,7 +125,7 @@ class NotChief : Constraint {
 // ========== ReqOfficerLevel ==========
 class ReqOfficerLevel(private val level: Int) : Constraint {
     override fun test(ctx: ConstraintContext): ConstraintResult {
-        return if (ctx.general.officerLevel >= level) ConstraintResult.Pass
+        return if (ctx.officer.officerLevel >= level) ConstraintResult.Pass
         else ConstraintResult.Fail("관직 레벨이 부족합니다 (필요: ${level})")
     }
 }
@@ -133,7 +133,7 @@ class ReqOfficerLevel(private val level: Int) : Constraint {
 // ========== ReqGeneralTrainMargin ==========
 class ReqGeneralTrainMargin(private val max: Int) : Constraint {
     override fun test(ctx: ConstraintContext): ConstraintResult {
-        return if (ctx.general.train < max) ConstraintResult.Pass
+        return if (ctx.officer.training < max) ConstraintResult.Pass
         else ConstraintResult.Fail("훈련이 이미 최대치입니다 (${max})")
     }
 }
@@ -141,7 +141,7 @@ class ReqGeneralTrainMargin(private val max: Int) : Constraint {
 // ========== ReqGeneralAtmosMargin ==========
 class ReqGeneralAtmosMargin(private val max: Int) : Constraint {
     override fun test(ctx: ConstraintContext): ConstraintResult {
-        return if (ctx.general.atmos < max) ConstraintResult.Pass
+        return if (ctx.officer.morale < max) ConstraintResult.Pass
         else ConstraintResult.Fail("사기가 이미 최대치입니다 (${max})")
     }
 }
@@ -149,8 +149,8 @@ class ReqGeneralAtmosMargin(private val max: Int) : Constraint {
 // ========== MustBeTroopLeader ==========
 class MustBeTroopLeader : Constraint {
     override fun test(ctx: ConstraintContext): ConstraintResult {
-        val g = ctx.general
-        return if (g.troopId == 0L || g.troopId == g.id) ConstraintResult.Pass
+        val g = ctx.officer
+        return if (g.fleetId == 0L || g.fleetId == g.id) ConstraintResult.Pass
         else ConstraintResult.Fail("부대장만 사용할 수 있습니다")
     }
 }
@@ -159,7 +159,7 @@ class MustBeTroopLeader : Constraint {
 class NotSameDestCity : Constraint {
     override fun test(ctx: ConstraintContext): ConstraintResult {
         val destCity = ctx.destCity ?: return ConstraintResult.Fail("목적지 도시 정보가 없습니다")
-        return if (ctx.general.cityId != destCity.id) ConstraintResult.Pass
+        return if (ctx.officer.planetId != destCity.id) ConstraintResult.Pass
         else ConstraintResult.Fail("같은 도시로는 이동할 수 없습니다")
     }
 }
@@ -167,8 +167,8 @@ class NotSameDestCity : Constraint {
 // ========== ReqNationGold ==========
 class ReqNationGold(private val amount: Int) : Constraint {
     override fun test(ctx: ConstraintContext): ConstraintResult {
-        val nation = ctx.nation ?: return ConstraintResult.Fail("국가 정보가 없습니다")
-        val gold = nation.gold
+        val nation = ctx.faction ?: return ConstraintResult.Fail("국가 정보가 없습니다")
+        val gold = nation.funds
         return if (gold >= amount) ConstraintResult.Pass
         else ConstraintResult.Fail("국고 자금이 부족합니다 (필요: ${amount}, 보유: ${gold})")
     }
@@ -177,8 +177,8 @@ class ReqNationGold(private val amount: Int) : Constraint {
 // ========== ReqNationRice ==========
 class ReqNationRice(private val amount: Int) : Constraint {
     override fun test(ctx: ConstraintContext): ConstraintResult {
-        val nation = ctx.nation ?: return ConstraintResult.Fail("국가 정보가 없습니다")
-        val rice = nation.rice
+        val nation = ctx.faction ?: return ConstraintResult.Fail("국가 정보가 없습니다")
+        val rice = nation.supplies
         return if (rice >= amount) ConstraintResult.Pass
         else ConstraintResult.Fail("병량이 부족합니다 (필요: ${amount}, 보유: ${rice})")
     }
@@ -196,7 +196,7 @@ class ExistsDestGeneral : Constraint {
 class FriendlyDestGeneral : Constraint {
     override fun test(ctx: ConstraintContext): ConstraintResult {
         val dest = ctx.destGeneral ?: return ConstraintResult.Fail("대상 장수가 존재하지 않습니다")
-        return if (ctx.general.nationId == dest.nationId) ConstraintResult.Pass
+        return if (ctx.officer.factionId == dest.factionId) ConstraintResult.Pass
         else ConstraintResult.Fail("아군 장수가 아닙니다")
     }
 }
@@ -204,7 +204,7 @@ class FriendlyDestGeneral : Constraint {
 // ========== WanderingNation ==========
 class WanderingNation : Constraint {
     override fun test(ctx: ConstraintContext): ConstraintResult {
-        val nation = ctx.nation ?: return ConstraintResult.Pass
+        val nation = ctx.faction ?: return ConstraintResult.Pass
         return if (nation.level <= 0.toShort()) ConstraintResult.Pass
         else ConstraintResult.Fail("방랑군 상태가 아닙니다")
     }
@@ -236,7 +236,7 @@ class AlwaysFail(private val reason: String) : Constraint {
 // ========== MustBeNPC ==========
 class MustBeNPC : Constraint {
     override fun test(ctx: ConstraintContext): ConstraintResult {
-        return if (ctx.general.npcState > 0) ConstraintResult.Pass
+        return if (ctx.officer.npcState > 0) ConstraintResult.Pass
         else ConstraintResult.Fail("NPC만 사용할 수 있습니다")
     }
 }
@@ -244,8 +244,8 @@ class MustBeNPC : Constraint {
 // ========== NotCapital ==========
 class NotCapital : Constraint {
     override fun test(ctx: ConstraintContext): ConstraintResult {
-        val nation = ctx.nation ?: return ConstraintResult.Pass
-        return if (ctx.general.cityId != nation.capitalCityId) ConstraintResult.Pass
+        val nation = ctx.faction ?: return ConstraintResult.Pass
+        return if (ctx.officer.planetId != nation.capitalCityId) ConstraintResult.Pass
         else ConstraintResult.Fail("수도에서는 사용할 수 없습니다")
     }
 }
@@ -253,7 +253,7 @@ class NotCapital : Constraint {
 // ========== AvailableStrategicCommand ==========
 class AvailableStrategicCommand : Constraint {
     override fun test(ctx: ConstraintContext): ConstraintResult {
-        val nation = ctx.nation ?: return ConstraintResult.Fail("국가 정보가 없습니다")
+        val nation = ctx.faction ?: return ConstraintResult.Fail("국가 정보가 없습니다")
         return if (nation.strategicCmdLimit <= 0) ConstraintResult.Pass
         else ConstraintResult.Fail("전략 명령 횟수가 남아있습니다")
     }
@@ -262,7 +262,7 @@ class AvailableStrategicCommand : Constraint {
 // ========== ReqGeneralAge ==========
 class ReqGeneralAge(private val minAge: Int) : Constraint {
     override fun test(ctx: ConstraintContext): ConstraintResult {
-        return if (ctx.general.age >= minAge) ConstraintResult.Pass
+        return if (ctx.officer.age >= minAge) ConstraintResult.Pass
         else ConstraintResult.Fail("나이가 부족합니다 (필요: ${minAge}세)")
     }
 }
@@ -270,8 +270,8 @@ class ReqGeneralAge(private val minAge: Int) : Constraint {
 // ========== NeutralCity ==========
 class NeutralCity : Constraint {
     override fun test(ctx: ConstraintContext): ConstraintResult {
-        val city = ctx.city ?: return ConstraintResult.Fail("도시 정보가 없습니다")
-        return if (city.nationId == 0L) ConstraintResult.Pass
+        val city = ctx.planet ?: return ConstraintResult.Fail("도시 정보가 없습니다")
+        return if (city.factionId == 0L) ConstraintResult.Pass
         else ConstraintResult.Fail("공백지가 아닙니다")
     }
 }
@@ -279,7 +279,7 @@ class NeutralCity : Constraint {
 // ========== RemainCityTrust ==========
 class RemainCityTrust(private val max: Int) : Constraint {
     override fun test(ctx: ConstraintContext): ConstraintResult {
-        val city = ctx.city ?: return ConstraintResult.Fail("도시 정보가 없습니다")
+        val city = ctx.planet ?: return ConstraintResult.Fail("도시 정보가 없습니다")
         return if (city.trust < max) ConstraintResult.Pass
         else ConstraintResult.Fail("민심이 이미 최대치입니다")
     }
@@ -292,7 +292,7 @@ class ReqGeneralStatValue(
     private val minValue: Int,
 ) : Constraint {
     override fun test(ctx: ConstraintContext): ConstraintResult {
-        val value = statFn(ctx.general)
+        val value = statFn(ctx.officer)
         return if (value >= minValue) ConstraintResult.Pass
         else ConstraintResult.Fail("${label}이(가) 부족합니다 (필요: ${minValue}, 보유: ${value})")
     }
@@ -310,7 +310,7 @@ class EmperorSystemActive : Constraint {
 // ========== NationNotExempt ==========
 class NationNotExempt : Constraint {
     override fun test(ctx: ConstraintContext): ConstraintResult {
-        val nation = ctx.nation ?: return ConstraintResult.Fail("국가 정보가 없습니다")
+        val nation = ctx.faction ?: return ConstraintResult.Fail("국가 정보가 없습니다")
         val status = nation.meta["imperialStatus"] as? String ?: "independent"
         return if (status != "exempt") ConstraintResult.Pass
         else ConstraintResult.Fail("독자적 체계를 갖추고 있어 사용할 수 없습니다")
@@ -320,7 +320,7 @@ class NationNotExempt : Constraint {
 // ========== NationIsIndependent ==========
 class NationIsIndependent : Constraint {
     override fun test(ctx: ConstraintContext): ConstraintResult {
-        val nation = ctx.nation ?: return ConstraintResult.Fail("국가 정보가 없습니다")
+        val nation = ctx.faction ?: return ConstraintResult.Fail("국가 정보가 없습니다")
         val status = nation.meta["imperialStatus"] as? String ?: "independent"
         return if (status == "independent") ConstraintResult.Pass
         else ConstraintResult.Fail("독립 세력이 아닙니다")
@@ -330,7 +330,7 @@ class NationIsIndependent : Constraint {
 // ========== NationIsVassal ==========
 class NationIsVassal : Constraint {
     override fun test(ctx: ConstraintContext): ConstraintResult {
-        val nation = ctx.nation ?: return ConstraintResult.Fail("국가 정보가 없습니다")
+        val nation = ctx.faction ?: return ConstraintResult.Fail("국가 정보가 없습니다")
         val status = nation.meta["imperialStatus"] as? String ?: "independent"
         return if (status == "vassal") ConstraintResult.Pass
         else ConstraintResult.Fail("제후국이 아닙니다")
@@ -340,7 +340,7 @@ class NationIsVassal : Constraint {
 // ========== NationNotEmperor ==========
 class NationNotEmperor : Constraint {
     override fun test(ctx: ConstraintContext): ConstraintResult {
-        val nation = ctx.nation ?: return ConstraintResult.Fail("국가 정보가 없습니다")
+        val nation = ctx.faction ?: return ConstraintResult.Fail("국가 정보가 없습니다")
         val status = nation.meta["imperialStatus"] as? String ?: "independent"
         return if (status != "emperor") ConstraintResult.Pass
         else ConstraintResult.Fail("황제국은 사용할 수 없습니다")
@@ -350,7 +350,7 @@ class NationNotEmperor : Constraint {
 // ========== NationIsEmperor ==========
 class NationIsEmperor : Constraint {
     override fun test(ctx: ConstraintContext): ConstraintResult {
-        val nation = ctx.nation ?: return ConstraintResult.Fail("국가 정보가 없습니다")
+        val nation = ctx.faction ?: return ConstraintResult.Fail("국가 정보가 없습니다")
         val status = nation.meta["imperialStatus"] as? String ?: "independent"
         return if (status == "emperor") ConstraintResult.Pass
         else ConstraintResult.Fail("황제국이 아닙니다")
@@ -370,7 +370,7 @@ class DestNationIsEmperor : Constraint {
 // ========== NationHasEmperorGeneral ==========
 class NationHasEmperorGeneral : Constraint {
     override fun test(ctx: ConstraintContext): ConstraintResult {
-        val nation = ctx.nation ?: return ConstraintResult.Fail("국가 정보가 없습니다")
+        val nation = ctx.faction ?: return ConstraintResult.Fail("국가 정보가 없습니다")
         val status = nation.meta["imperialStatus"] as? String ?: "independent"
         if (status != "emperor") return ConstraintResult.Fail("황제국이 아닙니다")
         val emperorType = nation.meta["emperorType"] as? String ?: "none"
@@ -396,7 +396,7 @@ class WanderingEmperorInTerritory : Constraint {
         if (emperorCityId <= 0) return ConstraintResult.Fail("유랑 중인 천자가 없습니다")
 
         val cityNationById = ctx.env["cityNationById"] as? Map<Long, Long> ?: emptyMap()
-        val nationId = ctx.general.nationId
+        val nationId = ctx.officer.factionId
 
         // Direct territory check
         if (cityNationById[emperorCityId] == nationId) return ConstraintResult.Pass
@@ -422,7 +422,7 @@ class ReqNationCityCount(private val minCount: Int) : Constraint {
     @Suppress("UNCHECKED_CAST")
     override fun test(ctx: ConstraintContext): ConstraintResult {
         val cityNationById = ctx.env["cityNationById"] as? Map<Long, Long> ?: emptyMap()
-        val nationId = ctx.general.nationId
+        val nationId = ctx.officer.factionId
         val count = cityNationById.values.count { it == nationId }
         return if (count >= minCount) ConstraintResult.Pass
         else ConstraintResult.Fail("도시가 부족합니다 (필요: ${minCount}, 보유: ${count})")
@@ -434,8 +434,8 @@ class HasRoute : Constraint {
     @Suppress("UNCHECKED_CAST")
     override fun test(ctx: ConstraintContext): ConstraintResult {
         val destCity = ctx.destCity ?: return ConstraintResult.Fail("목적지 정보가 없습니다")
-        val city = ctx.city
-        val srcCityId = city?.id ?: ctx.general.cityId
+        val city = ctx.planet
+        val srcCityId = city?.id ?: ctx.officer.planetId
 
         val mapAdjacency = ctx.env["mapAdjacency"] as? Map<Long, List<Long>> ?: emptyMap()
         val dbToMapId = ctx.env["dbToMapId"] as? Map<Long, Long> ?: emptyMap()
@@ -471,7 +471,7 @@ class NearCity(private val maxDist: Int) : Constraint {
     @Suppress("UNCHECKED_CAST")
     override fun test(ctx: ConstraintContext): ConstraintResult {
         val destCity = ctx.destCity ?: return ConstraintResult.Fail("목적지 정보가 없습니다")
-        val srcCityId = ctx.general.cityId
+        val srcCityId = ctx.officer.planetId
 
         val mapAdjacency = ctx.env["mapAdjacency"] as? Map<Long, List<Long>> ?: emptyMap()
         val dbToMapId = ctx.env["dbToMapId"] as? Map<Long, Long> ?: emptyMap()
@@ -508,8 +508,8 @@ class NearCity(private val maxDist: Int) : Constraint {
 class ReqTroopMembers : Constraint {
     @Suppress("UNCHECKED_CAST")
     override fun test(ctx: ConstraintContext): ConstraintResult {
-        val g = ctx.general
-        val troopId = if (g.troopId == g.id) g.id else g.troopId
+        val g = ctx.officer
+        val troopId = if (g.fleetId == g.id) g.id else g.fleetId
         val memberExists = ctx.env["troopMemberExistsByTroopId"] as? Map<Long, Boolean> ?: emptyMap()
         return if (memberExists[troopId] == true) ConstraintResult.Pass
         else ConstraintResult.Fail("부대원이 없습니다")
@@ -519,7 +519,7 @@ class ReqTroopMembers : Constraint {
 // ========== AllowWar ==========
 class AllowWar : Constraint {
     override fun test(ctx: ConstraintContext): ConstraintResult {
-        val nation = ctx.nation ?: return ConstraintResult.Fail("국가 정보가 없습니다")
+        val nation = ctx.faction ?: return ConstraintResult.Fail("국가 정보가 없습니다")
         return if (nation.warState <= 0) ConstraintResult.Pass
         else ConstraintResult.Fail("전쟁 금지 상태입니다")
     }
@@ -532,16 +532,16 @@ class HasRouteWithEnemy : Constraint {
         val destCity = ctx.destCity ?: return ConstraintResult.Fail("목적지 정보가 없습니다")
         val atWarNationIds = ctx.env["atWarNationIds"] as? Set<Long> ?: emptySet()
 
-        if (destCity.nationId !in atWarNationIds) {
+        if (destCity.factionId !in atWarNationIds) {
             return ConstraintResult.Fail("교전중인 국가가 아닙니다")
         }
 
-        val srcCityId = ctx.general.cityId
+        val srcCityId = ctx.officer.planetId
         val mapAdjacency = ctx.env["mapAdjacency"] as? Map<Long, List<Long>> ?: emptyMap()
         val dbToMapId = ctx.env["dbToMapId"] as? Map<Long, Long> ?: emptyMap()
         val mapToDbId = ctx.env["mapToDbId"] as? Map<Long, Long> ?: emptyMap()
         val cityNationByMapId = ctx.env["cityNationByMapId"] as? Map<Long, Long> ?: emptyMap()
-        val nationId = ctx.general.nationId
+        val nationId = ctx.officer.factionId
 
         val srcMapId = dbToMapId[srcCityId] ?: return ConstraintResult.Fail("경로를 찾을 수 없습니다")
         val destMapId = dbToMapId[destCity.id] ?: return ConstraintResult.Fail("경로를 찾을 수 없습니다")
@@ -573,7 +573,7 @@ class HasRouteWithEnemy : Constraint {
 // ========== AllowJoinAction ==========
 class AllowJoinAction : Constraint {
     override fun test(ctx: ConstraintContext): ConstraintResult {
-        val g = ctx.general
+        val g = ctx.officer
         if (g.makeLimit <= 0) return ConstraintResult.Pass
         val limit = (ctx.env["joinActionLimit"] as? Number)?.toInt() ?: 12
         return ConstraintResult.Fail("${limit}턴 후에 가능합니다")
@@ -585,10 +585,10 @@ class BattleGroundCity : Constraint {
     @Suppress("UNCHECKED_CAST")
     override fun test(ctx: ConstraintContext): ConstraintResult {
         val destCity = ctx.destCity ?: return ConstraintResult.Fail("목적지 정보가 없습니다")
-        if (destCity.nationId == 0L) return ConstraintResult.Pass
-        if (destCity.nationId == ctx.general.nationId) return ConstraintResult.Pass
+        if (destCity.factionId == 0L) return ConstraintResult.Pass
+        if (destCity.factionId == ctx.officer.factionId) return ConstraintResult.Pass
         val atWarNationIds = ctx.env["atWarNationIds"] as? Set<Long> ?: emptySet()
-        return if (destCity.nationId in atWarNationIds) ConstraintResult.Pass
+        return if (destCity.factionId in atWarNationIds) ConstraintResult.Pass
         else ConstraintResult.Fail("교전중인 국가의 도시가 아닙니다")
     }
 }
@@ -596,7 +596,7 @@ class BattleGroundCity : Constraint {
 // ========== AllowDiplomacy ==========
 class AllowDiplomacy(private val minLevel: Int) : Constraint {
     override fun test(ctx: ConstraintContext): ConstraintResult {
-        return if (ctx.general.officerLevel >= minLevel) ConstraintResult.Pass
+        return if (ctx.officer.officerLevel >= minLevel) ConstraintResult.Pass
         else ConstraintResult.Fail("외교 권한이 없습니다 (필요 관직: ${minLevel})")
     }
 }
@@ -604,8 +604,8 @@ class AllowDiplomacy(private val minLevel: Int) : Constraint {
 // ========== NotInjured ==========
 class NotInjured(private val maxInjury: Int = 0) : Constraint {
     override fun test(ctx: ConstraintContext): ConstraintResult {
-        return if (ctx.general.injury <= maxInjury) ConstraintResult.Pass
-        else ConstraintResult.Fail("부상 상태에서는 사용할 수 없습니다 (부상: ${ctx.general.injury})")
+        return if (ctx.officer.injury <= maxInjury) ConstraintResult.Pass
+        else ConstraintResult.Fail("부상 상태에서는 사용할 수 없습니다 (부상: ${ctx.officer.injury})")
     }
 }
 
@@ -616,7 +616,7 @@ class ReqCityCapacity(
     private val reqAmount: Int,
 ) : Constraint {
     override fun test(ctx: ConstraintContext): ConstraintResult {
-        val city = ctx.city ?: return ConstraintResult.Fail("도시 정보가 없습니다")
+        val city = ctx.planet ?: return ConstraintResult.Fail("도시 정보가 없습니다")
         val value = when (field) {
             "pop" -> city.pop
             "agri" -> city.agri
@@ -631,10 +631,10 @@ class ReqCityCapacity(
 // ========== ReqGeneralCrewMargin ==========
 class ReqGeneralCrewMargin(private val targetCrewType: Int) : Constraint {
     override fun test(ctx: ConstraintContext): ConstraintResult {
-        val gen = ctx.general
-        if (gen.crewType.toInt() != targetCrewType) return ConstraintResult.Pass
+        val gen = ctx.officer
+        if (gen.shipClass.toInt() != targetCrewType) return ConstraintResult.Pass
         val maxCrew = gen.leadership * 100
-        return if (gen.crew < maxCrew) ConstraintResult.Pass
+        return if (gen.ships < maxCrew) ConstraintResult.Pass
         else ConstraintResult.Fail("병력이 이미 최대치입니다")
     }
 }

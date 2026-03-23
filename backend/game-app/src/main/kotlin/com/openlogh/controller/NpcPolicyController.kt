@@ -9,7 +9,7 @@ import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.*
 
 @RestController
-@RequestMapping("/api/nations/{nationId}")
+@RequestMapping("/api/factions/{nationId}")
 class NpcPolicyController(
     private val factionRepository: FactionRepository,
     private val factionService: FactionService,

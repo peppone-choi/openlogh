@@ -17,7 +17,7 @@ class 작전계획(general: General, env: CommandEnv, arg: Map<String, Any>? = n
     override val actionName = "작전계획"
 
     override fun checkFullCondition(): ConstraintResult {
-        if (general.nationId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
+        if (general.factionId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
         return ConstraintResult.Pass
     }
 
@@ -41,7 +41,7 @@ class 작전철회(general: General, env: CommandEnv, arg: Map<String, Any>? = n
     override val actionName = "작전철회"
 
     override fun checkFullCondition(): ConstraintResult {
-        if (general.nationId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
+        if (general.factionId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
         return ConstraintResult.Pass
     }
 
@@ -62,7 +62,7 @@ class 발령(general: General, env: CommandEnv, arg: Map<String, Any>? = null) :
     override val actionName = "발령"
 
     override fun checkFullCondition(): ConstraintResult {
-        if (general.nationId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
+        if (general.factionId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
         destGeneral ?: return ConstraintResult.Fail("대상 장수가 없습니다.")
         return ConstraintResult.Pass
     }
@@ -87,16 +87,16 @@ class 강의(general: General, env: CommandEnv, arg: Map<String, Any>? = null) :
     override val actionName = "강의"
 
     override fun checkFullCondition(): ConstraintResult {
-        if (general.nationId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
+        if (general.factionId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
         return ConstraintResult.Pass
     }
 
     override suspend fun run(rng: Random): CommandResult {
-        val intelValue = general.intel.toInt()
+        val intelValue = general.intelligence.toInt()
         val score = (intelValue * (0.8 + rng.nextDouble() * 0.4)).toInt()
         val targetId = destGeneral?.id?.toString() ?: (arg?.get("studentId") as? String ?: "0")
         val msg = cmdMapper.writeValueAsString(mapOf(
-            "statChanges" to mapOf("experience" to score / 2, "intelExp" to 1),
+            "statChanges" to mapOf("experience" to score / 2, "intelligenceExp" to 1),
             "lectureResult" to mapOf(
                 "studentId" to targetId,
                 "score" to score,
@@ -112,7 +112,7 @@ class 수송계획(general: General, env: CommandEnv, arg: Map<String, Any>? = n
     override val actionName = "수송계획"
 
     override fun checkFullCondition(): ConstraintResult {
-        if (general.nationId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
+        if (general.factionId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
         destCity ?: return ConstraintResult.Fail("목적지 행성이 없습니다.")
         return ConstraintResult.Pass
     }
@@ -139,7 +139,7 @@ class 수송중지(general: General, env: CommandEnv, arg: Map<String, Any>? = n
     override val actionName = "수송중지"
 
     override fun checkFullCondition(): ConstraintResult {
-        if (general.nationId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
+        if (general.factionId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
         return ConstraintResult.Pass
     }
 

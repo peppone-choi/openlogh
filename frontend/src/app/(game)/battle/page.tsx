@@ -424,13 +424,13 @@ export default function BattlePage() {
             { totalCrew: number; generalCount: number; totalTrain: number; totalAtmos: number }
         >();
         for (const g of generals) {
-            if (g.nationId === 0 || g.crew <= 0) continue;
-            const entry = map.get(g.nationId) ?? { totalCrew: 0, generalCount: 0, totalTrain: 0, totalAtmos: 0 };
-            entry.totalCrew += g.crew;
+            if (g.factionId === 0 || g.ships <= 0) continue;
+            const entry = map.get(g.factionId) ?? { totalCrew: 0, generalCount: 0, totalTrain: 0, totalAtmos: 0 };
+            entry.totalCrew += g.ships;
             entry.generalCount += 1;
-            entry.totalTrain += g.train;
-            entry.totalAtmos += g.atmos;
-            map.set(g.nationId, entry);
+            entry.totalTrain += g.training;
+            entry.totalAtmos += g.morale;
+            map.set(g.factionId, entry);
         }
         const rows: MilitaryRow[] = [];
         for (const n of nations) {
@@ -465,10 +465,10 @@ export default function BattlePage() {
     const generalsByCity = useMemo(() => {
         const map = new Map<number, General[]>();
         for (const g of generals) {
-            if (g.crew <= 0) continue;
-            const list = map.get(g.cityId) ?? [];
+            if (g.ships <= 0) continue;
+            const list = map.get(g.planetId) ?? [];
             list.push(g);
-            map.set(g.cityId, list);
+            map.set(g.planetId, list);
         }
         return map;
     }, [generals]);
@@ -567,11 +567,11 @@ export default function BattlePage() {
                                                 <div className="text-xs text-muted-foreground flex gap-4">
                                                     <span>
                                                         {src?.name ?? '?'}: 도시{' '}
-                                                        {cities.filter((c) => c.nationId === w.srcNationId).length}개
+                                                        {cities.filter((c) => c.factionId === w.srcNationId).length}개
                                                     </span>
                                                     <span>
                                                         {dest?.name ?? '?'}: 도시{' '}
-                                                        {cities.filter((c) => c.nationId === w.destNationId).length}개
+                                                        {cities.filter((c) => c.factionId === w.destNationId).length}개
                                                     </span>
                                                 </div>
                                             </div>
@@ -747,9 +747,12 @@ export default function BattlePage() {
                     ) : (
                         frontCities.map((c) => {
                             const cityGenerals = generalsByCity.get(c.id) ?? [];
-                            const ownerNation = nations.find((n) => n.id === c.nationId);
-                            const wallPercent = c.wallMax > 0 ? Math.round((c.wall / c.wallMax) * 100) : 0;
-                            const defPercent = c.defMax > 0 ? Math.round((c.def / c.defMax) * 100) : 0;
+                            const ownerNation = nations.find((n) => n.id === c.factionId);
+                            const wallPercent = c.fortressMax > 0 ? Math.round((c.fortress / c.fortressMax) * 100) : 0;
+                            const defPercent =
+                                c.orbitalDefenseMax > 0
+                                    ? Math.round((c.orbitalDefense / c.orbitalDefenseMax) * 100)
+                                    : 0;
                             return (
                                 <Card key={c.id}>
                                     <CardHeader className="pb-2">

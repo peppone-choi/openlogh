@@ -23,7 +23,7 @@ class 야회(
     override val actionName = "야회"
 
     override fun checkFullCondition(): ConstraintResult {
-        if (general.nationId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
+        if (general.factionId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
         val c = city ?: return ConstraintResult.Fail("행성 정보가 없습니다.")
         if (c.factionId != general.factionId) return ConstraintResult.Fail("아군 행성이 아닙니다.")
         return ConstraintResult.Pass
@@ -59,7 +59,7 @@ class 수렵(
     override val actionName = "수렵"
 
     override fun checkFullCondition(): ConstraintResult {
-        if (general.nationId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
+        if (general.factionId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
         val c = city ?: return ConstraintResult.Fail("행성 정보가 없습니다.")
         if (c.fiefOfficerId != general.id) return ConstraintResult.Fail("봉토 영주만 사용할 수 있습니다.")
         return ConstraintResult.Pass
@@ -102,7 +102,7 @@ class 회담(
     override val actionName = "회담"
 
     override fun checkFullCondition(): ConstraintResult {
-        if (general.nationId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
+        if (general.factionId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
         if (destGeneral == null) return ConstraintResult.Fail("대상 장수가 없습니다.")
         return ConstraintResult.Pass
     }
@@ -134,7 +134,7 @@ class 담화(
     override val actionName = "담화"
 
     override fun checkFullCondition(): ConstraintResult {
-        if (general.nationId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
+        if (general.factionId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
         if (destGeneral == null) return ConstraintResult.Fail("대상 장수가 없습니다.")
         return ConstraintResult.Pass
     }
@@ -176,7 +176,7 @@ class 연설(
     override val actionName = "연설"
 
     override fun checkFullCondition(): ConstraintResult {
-        if (general.nationId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
+        if (general.factionId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
         val c = city ?: return ConstraintResult.Fail("행성 정보가 없습니다.")
         if (c.factionId != general.factionId) return ConstraintResult.Fail("아군 행성이 아닙니다.")
         return ConstraintResult.Pass

@@ -14,8 +14,8 @@ class FleetController(
     private val fleetRepository: FleetRepository,
     private val officerRepository: OfficerRepository,
 ) {
-    // GET /api/nations/{nationId}/troops — 진영의 함대 목록 (멤버 포함)
-    @GetMapping("/nations/{nationId}/troops")
+    // GET /api/factions/{nationId}/fleets — 진영의 함대 목록 (멤버 포함)
+    @GetMapping("/factions/{nationId}/fleets")
     fun listByFaction(@PathVariable nationId: Long): ResponseEntity<List<FleetWithMembers>> {
         val fleets = fleetRepository.findByFactionId(nationId)
         val result = fleets.map { fleet ->
@@ -28,8 +28,8 @@ class FleetController(
         return ResponseEntity.ok(result)
     }
 
-    // POST /api/troops — 함대 생성
-    @PostMapping("/troops")
+    // POST /api/fleets — 함대 생성
+    @PostMapping("/fleets")
     fun create(@RequestBody request: CreateFleetRequest): ResponseEntity<FleetResponse> {
         val leader = officerRepository.findById(request.leaderOfficerId).orElse(null)
             ?: return ResponseEntity.notFound().build()
@@ -51,8 +51,8 @@ class FleetController(
         return ResponseEntity.status(HttpStatus.CREATED).body(FleetResponse.from(saved))
     }
 
-    // POST /api/troops/{id}/join — 함대 합류
-    @PostMapping("/troops/{id}/join")
+    // POST /api/fleets/{id}/join — 함대 합류
+    @PostMapping("/fleets/{id}/join")
     fun join(
         @PathVariable id: Long,
         @RequestBody request: FleetActionRequest,
@@ -67,8 +67,8 @@ class FleetController(
         return ResponseEntity.ok().build()
     }
 
-    // POST /api/troops/{id}/exit — 함대 이탈
-    @PostMapping("/troops/{id}/exit")
+    // POST /api/fleets/{id}/exit — 함대 이탈
+    @PostMapping("/fleets/{id}/exit")
     fun exit(
         @PathVariable id: Long,
         @RequestBody request: FleetActionRequest,
@@ -81,8 +81,8 @@ class FleetController(
         return ResponseEntity.ok().build()
     }
 
-    // POST /api/troops/{id}/kick — 함대 추방
-    @PostMapping("/troops/{id}/kick")
+    // POST /api/fleets/{id}/kick — 함대 추방
+    @PostMapping("/fleets/{id}/kick")
     fun kick(
         @PathVariable id: Long,
         @RequestBody request: FleetActionRequest,
@@ -95,8 +95,8 @@ class FleetController(
         return ResponseEntity.ok().build()
     }
 
-    // PATCH /api/troops/{id} — 함대 이름 변경
-    @PatchMapping("/troops/{id}")
+    // PATCH /api/fleets/{id} — 함대 이름 변경
+    @PatchMapping("/fleets/{id}")
     fun rename(
         @PathVariable id: Long,
         @RequestBody request: RenameFleetRequest,
@@ -109,8 +109,8 @@ class FleetController(
         return ResponseEntity.ok(FleetResponse.from(saved))
     }
 
-    // DELETE /api/troops/{id} — 함대 해산
-    @DeleteMapping("/troops/{id}")
+    // DELETE /api/fleets/{id} — 함대 해산
+    @DeleteMapping("/fleets/{id}")
     fun disband(@PathVariable id: Long): ResponseEntity<Void> {
         val fleet = fleetRepository.findById(id).orElse(null)
             ?: return ResponseEntity.notFound().build()

@@ -82,7 +82,15 @@ export interface Faction {
     tech_level: number;
     military_power: number;
     faction_rank: number;
+    factionRank: number;
     faction_type: string;
+    factionType: string;
+    taxRate: number;
+    conscriptionRate: number;
+    techLevel: number;
+    militaryPower: number;
+    capitalPlanetId: number | null;
+    supremeCommanderId: number;
     /** Spy intel map: star system ID (string) → spy level (number) */
     spy: Record<string, number>;
     meta: Record<string, unknown>;
@@ -123,8 +131,10 @@ export interface StarSystem {
     securityMax: number;
     approval: number;
     trade_route: number;
+    tradeRoute: number;
     dead: number;
     orbital_defense: number;
+    orbitalDefense: number;
     orbitalDefenseMax: number;
     fortress: number;
     fortressMax: number;
@@ -171,6 +181,7 @@ export interface Officer {
     /** @deprecated use factionId */
     nationId: number;
     starSystemId: number;
+    planetId: number;
     /** @deprecated use starSystemId */
     cityId: number;
     fleetId: number;

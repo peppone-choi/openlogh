@@ -140,22 +140,22 @@ class CommandExecutor(
         for ((key, rawValue) in changes) {
             val value = (rawValue as? Number)?.toInt() ?: continue
             when (key) {
-                "gold" -> general.gold += value
-                "rice" -> general.rice += value
-                "crew" -> general.crew += value
-                "crewType" -> general.crewType = value.toShort()
-                "train" -> general.train = (general.train + value).toShort()
-                "atmos" -> general.atmos = (general.atmos + value).toShort()
+                "funds", "gold" -> general.funds += value
+                "supplies", "rice" -> general.supplies += value
+                "ships", "crew" -> general.ships += value
+                "shipClass", "crewType" -> general.shipClass = value.toShort()
+                "training", "train" -> general.training = (general.training + value).toShort()
+                "morale", "atmos" -> general.morale = (general.morale + value).toShort()
                 "injury" -> general.injury = (general.injury + value).coerceAtLeast(0).toShort()
                 "experience" -> general.experience += value
                 "dedication" -> general.dedication += value
-                "officerLevel" -> general.officerLevel = (general.officerLevel + value).toShort()
+                "officerLevel" -> general.rank = (general.rank + value).toShort()
                 "betray" -> general.betray = (general.betray + value).toShort()
                 "leadershipExp" -> general.leadershipExp = (general.leadershipExp + value).toShort()
-                "strengthExp" -> general.strengthExp = (general.strengthExp + value).toShort()
-                "intelExp" -> general.intelExp = (general.intelExp + value).toShort()
+                "strengthExp", "commandExp" -> general.commandExp = (general.commandExp + value).toShort()
+                "intelExp", "intelligenceExp" -> general.intelligenceExp = (general.intelligenceExp + value).toShort()
                 "politicsExp" -> general.politicsExp = (general.politicsExp + value).toShort()
-                "charmExp" -> general.charmExp = (general.charmExp + value).toShort()
+                "charmExp", "administrationExp" -> general.administrationExp = (general.administrationExp + value).toShort()
             }
         }
     }
@@ -186,8 +186,8 @@ class CommandExecutor(
         for ((key, rawValue) in changes) {
             val value = (rawValue as? Number)?.toInt() ?: continue
             when (key) {
-                "gold" -> nation.gold += value
-                "rice" -> nation.rice += value
+                "funds", "gold" -> nation.funds += value
+                "supplies", "rice" -> nation.supplies += value
             }
         }
     }

@@ -49,9 +49,9 @@ class che_포상(
         val dg = destGeneral!!
         val label = if (isGold) "금" else "쌀"
         if (isGold) {
-            dg.gold += amount
+            dg.funds += amount
         } else {
-            dg.rice += amount
+            dg.supplies += amount
         }
         return CommandResult(
             success = true,
@@ -81,13 +81,13 @@ class che_몰수(
         val dg = destGeneral!!
         val n = nation!!
         if (isGold) {
-            val take = min(amount, dg.gold)
-            dg.gold -= take
-            n.gold += take
+            val take = min(amount, dg.funds)
+            dg.funds -= take
+            n.funds += take
         } else {
-            val take = min(amount, dg.rice)
-            dg.rice -= take
-            n.rice += take
+            val take = min(amount, dg.supplies)
+            dg.supplies -= take
+            n.supplies += take
         }
         dg.betray = (dg.betray + 1).toShort()
         val label = if (isGold) "금" else "쌀"
@@ -117,8 +117,8 @@ class che_감축(
         val n = nation!!
         c.level = (c.level - 1).toShort()
         c.popMax = max(10000, c.popMax - 10000)
-        n.gold -= 500
-        n.rice -= 500
+        n.funds -= 500
+        n.supplies -= 500
         return CommandResult(
             success = true,
             logs = listOf("${formatDate()} ${c.name}을(를) 감축했습니다."),
@@ -140,15 +140,15 @@ class che_증축(
 
     override fun getCost(): CommandCost {
         val cost = totalCost()
-        return CommandCost(gold = cost, rice = cost)
+        return CommandCost(funds = cost, supplies = cost)
     }
 
     override fun checkFullCondition(): ConstraintResult {
         if (general.officerLevel < 20.toShort()) return ConstraintResult.Fail("군주급 이상만 사용할 수 있습니다")
         val n = nation ?: return ConstraintResult.Fail("국가 정보가 없습니다")
         val cost = getCost()
-        if (n.gold < cost.gold) return ConstraintResult.Fail("국고 자금이 부족합니다")
-        if (n.rice < cost.rice) return ConstraintResult.Fail("병량이 부족합니다")
+        if (n.funds < cost.gold) return ConstraintResult.Fail("국고 자금이 부족합니다")
+        if (n.supplies < cost.rice) return ConstraintResult.Fail("병량이 부족합니다")
         return ConstraintResult.Pass
     }
 
@@ -163,8 +163,8 @@ class che_증축(
         c.secuMax += 2000
         c.defMax += 2000
         c.wallMax += 2000
-        n.gold -= cost.gold
-        n.rice -= cost.rice
+        n.funds -= cost.gold
+        n.supplies -= cost.rice
         return CommandResult(
             success = true,
             logs = listOf("${formatDate()} ${c.name}을(를) 증축했습니다."),
@@ -216,8 +216,8 @@ class che_천도(
         val dc = destCity!!
         val n = nation!!
         n.capitalCityId = dc.id
-        n.gold -= 2000
-        n.rice -= 2000
+        n.funds -= 2000
+        n.supplies -= 2000
         return CommandResult(
             success = true,
             logs = listOf("${formatDate()} ${dc.name}(으)로 천도했습니다."),
@@ -298,10 +298,10 @@ class che_물자원조(
     override suspend fun run(rng: Random): CommandResult {
         val n = nation!!
         val dn = destNation!!
-        n.gold -= goldAmount
-        n.rice -= riceAmount
-        dn.gold += goldAmount
-        dn.rice += riceAmount
+        n.funds -= goldAmount
+        n.supplies -= riceAmount
+        dn.funds += goldAmount
+        dn.supplies += riceAmount
         return CommandResult(
             success = true,
             logs = listOf("${formatDate()} ${dn.name}에 물자를 지원했습니다."),
@@ -856,15 +856,15 @@ abstract class ResearchCommand(
     override fun checkFullCondition(): ConstraintResult {
         if (general.officerLevel < 20.toShort()) return ConstraintResult.Fail("군주급 이상만 사용할 수 있습니다")
         val n = nation ?: return ConstraintResult.Fail("국가 정보가 없습니다")
-        if (n.gold <= costAmount) return ConstraintResult.Fail("국고 자금이 부족합니다")
-        if (n.rice <= costAmount) return ConstraintResult.Fail("병량이 부족합니다")
+        if (n.funds <= costAmount) return ConstraintResult.Fail("국고 자금이 부족합니다")
+        if (n.supplies <= costAmount) return ConstraintResult.Fail("병량이 부족합니다")
         return ConstraintResult.Pass
     }
 
     override suspend fun run(rng: Random): CommandResult {
         val n = nation!!
-        n.gold -= costAmount
-        n.rice -= costAmount
+        n.funds -= costAmount
+        n.supplies -= costAmount
         n.meta[nationMetaKey] = 1
         general.experience = 100
         general.dedication = 100
@@ -1019,7 +1019,7 @@ class cr_인구이동(
 
     override fun getCost(): CommandCost {
         val cost = amount / 100
-        return CommandCost(gold = cost, rice = cost)
+        return CommandCost(funds = cost, supplies = cost)
     }
 
     override fun checkFullCondition(): ConstraintResult {
@@ -1033,8 +1033,8 @@ class cr_인구이동(
         val c = city!!
         val dc = destCity!!
         val cost = getCost()
-        n.gold -= cost.gold
-        n.rice -= cost.rice
+        n.funds -= cost.gold
+        n.supplies -= cost.rice
         c.pop -= amount
         dc.pop += amount
         return CommandResult(
