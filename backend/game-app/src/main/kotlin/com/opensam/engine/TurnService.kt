@@ -302,11 +302,11 @@ class TurnService @Autowired constructor(
                     logger.error("executeGeneralCommandsUntil failed for world {}: {}", worldId, e.message, e)
                 }
 
-                // C3: updateTraffic — legacy ordering: after commands, before PreMonth
+                // C3: recalculateCitySupply — legacy ordering: after commands, before PreMonth
                 try {
-                    updateTraffic(world)
+                    recalculateCitySupply(world)
                 } catch (e: Exception) {
-                    logger.warn("updateTraffic failed: ${e.message}")
+                    logger.warn("recalculateCitySupply failed: ${e.message}")
                 }
 
                 // C2: Step 200 — PRE_MONTH events directly before advanceMonth (legacy: PreMonth before turnDate)
@@ -932,8 +932,9 @@ class TurnService @Autowired constructor(
     /**
      * Recalculate city supply state (traffic/supply routes) per turn.
      * Delegates to EconomyService which already has BFS-based supply logic.
+     * Renamed from updateTraffic to clarify the actual operation.
      */
-    private fun updateTraffic(world: WorldState) {
+    private fun recalculateCitySupply(world: WorldState) {
         economyService.updateCitySupplyState(world)
     }
 
@@ -970,7 +971,9 @@ class TurnService @Autowired constructor(
      * TODO: implement tournament trigger condition check.
      */
     private fun triggerTournament(@Suppress("UNUSED_PARAMETER") world: WorldState) {
-        // TODO: legacy triggerTournament — tournamentService.checkAndTriggerTournament(world)
+        // Legacy: tournament==0 && tnmt_trig && 40% chance → startTournament(tnmt_type)
+        // TODO: implement auto-tournament trigger condition check via tournamentService
+        logger.debug("TODO: triggerTournament not yet implemented for world {}", world.id)
     }
 
     /**
@@ -979,7 +982,9 @@ class TurnService @Autowired constructor(
      * TODO: implement auction auto-registration condition check.
      */
     private fun registerAuction(@Suppress("UNUSED_PARAMETER") world: WorldState) {
-        // TODO: legacy registerAuction — auctionService.checkAndRegisterAuctions(world)
+        // Legacy: probability-based neutral buyRice/sellRice auction registration based on avg gold/rice
+        // TODO: implement auto-auction registration via auctionService
+        logger.debug("TODO: registerAuction not yet implemented for world {}", world.id)
     }
 
     /**

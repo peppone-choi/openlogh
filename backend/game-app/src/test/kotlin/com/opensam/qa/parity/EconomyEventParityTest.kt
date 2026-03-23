@@ -700,6 +700,19 @@ class EconomyEventParityTest {
         }
 
         @Test
+        @DisplayName("Non-qualifying city trade resets to 100")
+        fun `non-qualifying city trade resets`() {
+            val c = city(level = 2, trade = 105)  // level 2 has prob=0, trade should reset
+            val n = nation()
+            val g = general()
+            seed(listOf(c), listOf(n), listOf(g))
+
+            service.randomizeCityTradeRate(world())
+
+            assertThat(cities[1L]!!.trade).isEqualTo(100)
+        }
+
+        @Test
         @DisplayName("Level 8 cities always get randomized (prob = 1.0), range [95, 105]")
         fun `level 8 always randomized in range`() {
             val cityList = (1..20L).map { city(id = it, level = 8, trade = 100) }

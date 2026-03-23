@@ -855,6 +855,8 @@ class EconomyService @Autowired constructor(
             val prob = probByLevel[city.level.toInt()] ?: 0.0
             if (prob > 0 && rng.nextDouble() < prob) {
                 city.trade = rng.nextInt(95, 106)  // 95~105 inclusive
+            } else {
+                city.trade = 100  // 확률 미달: 기본값으로 리셋
             }
         }
 
