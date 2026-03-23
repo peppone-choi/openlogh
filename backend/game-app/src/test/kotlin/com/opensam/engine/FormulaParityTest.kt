@@ -142,9 +142,10 @@ class FormulaParityTest {
             Int::class.javaPrimitiveType,
             Boolean::class.javaPrimitiveType,
             Int::class.javaPrimitiveType,
+            Double::class.javaPrimitiveType,
         )
         method.isAccessible = true
-        return method.invoke(economyService, city, officerCnt, isCapital, nationLevel) as Double
+        return method.invoke(economyService, city, officerCnt, isCapital, nationLevel, 1.0) as Double
     }
 
     private fun invokeCalcCityRiceIncome(city: City, officerCnt: Int, isCapital: Boolean, nationLevel: Int): Double {
@@ -154,9 +155,10 @@ class FormulaParityTest {
             Int::class.javaPrimitiveType,
             Boolean::class.javaPrimitiveType,
             Int::class.javaPrimitiveType,
+            Double::class.javaPrimitiveType,
         )
         method.isAccessible = true
-        return method.invoke(economyService, city, officerCnt, isCapital, nationLevel) as Double
+        return method.invoke(economyService, city, officerCnt, isCapital, nationLevel, 1.0) as Double
     }
 
     private fun createGeneral(

@@ -1,5 +1,19 @@
 package com.opensam.engine
 
+import com.opensam.engine.event.EventActionRegistry
+import com.opensam.engine.event.actions.control.CompoundAction
+import com.opensam.engine.event.actions.control.DeleteEventAction
+import com.opensam.engine.event.actions.control.DeleteSelfAction
+import com.opensam.engine.event.actions.economy.ProcessIncomeAction
+import com.opensam.engine.event.actions.economy.ProcessSemiAnnualAction
+import com.opensam.engine.event.actions.economy.RandomizeCityTradeRateAction
+import com.opensam.engine.event.actions.economy.UpdateCitySupplyAction
+import com.opensam.engine.event.actions.economy.UpdateNationLevelAction
+import com.opensam.engine.event.actions.misc.LogAction
+import com.opensam.engine.event.actions.misc.NoticeAction
+import com.opensam.engine.event.actions.npc.ProvideNpcTroopLeaderAction
+import com.opensam.engine.event.actions.npc.RaiseInvaderAction
+import com.opensam.engine.event.actions.npc.RaiseNpcNationAction
 import com.opensam.entity.Event
 import com.opensam.entity.Message
 import com.opensam.entity.WorldState
@@ -7,11 +21,12 @@ import com.opensam.repository.EventRepository
 import com.opensam.repository.MessageRepository
 import com.opensam.repository.NationRepository
 import com.opensam.service.HistoryService
+import com.opensam.service.ScenarioService
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.mockito.Mockito.*
 import org.mockito.ArgumentCaptor
+import org.mockito.Mockito.*
 
 class EventServiceTest {
 
@@ -21,6 +36,7 @@ class EventServiceTest {
     private lateinit var messageRepository: MessageRepository
     private lateinit var historyService: HistoryService
     private lateinit var economyService: EconomyService
+    private lateinit var npcSpawnService: NpcSpawnService
 
     /** Mockito `any()` returns null which breaks Kotlin non-null params. This helper casts it. */
     @Suppress("UNCHECKED_CAST")
@@ -33,15 +49,45 @@ class EventServiceTest {
         messageRepository = mock(MessageRepository::class.java)
         historyService = mock(HistoryService::class.java)
         economyService = mock(EconomyService::class.java)
+        npcSpawnService = mock(NpcSpawnService::class.java)
+
+        val scenarioService = mock(ScenarioService::class.java)
+
+        // Build concrete action instances backed by mocks, then wrap in registry.
+        // CompoundAction has a circular dependency on registry — build registry first with
+        // a placeholder, then construct CompoundAction with the real registry.
+        val nonCompoundActions = listOf(
+            LogAction(historyService),
+            NoticeAction(messageRepository),
+            DeleteEventAction(eventRepository),
+            DeleteSelfAction(eventRepository),
+            ProcessIncomeAction(economyService),
+            ProcessSemiAnnualAction(economyService),
+            UpdateCitySupplyAction(economyService),
+            UpdateNationLevelAction(economyService),
+            RandomizeCityTradeRateAction(economyService),
+            RaiseInvaderAction(npcSpawnService),
+            RaiseNpcNationAction(npcSpawnService),
+            ProvideNpcTroopLeaderAction(npcSpawnService),
+        )
+        // EventActionRegistry is constructed with all actions; CompoundAction gets the registry injected.
+        // Since CompoundAction uses @Lazy in Spring, here we construct it with the full registry.
+        val registry = EventActionRegistry(nonCompoundActions + listOf(
+            // Temporary placeholder for compound — will be replaced below
+            object : com.opensam.engine.event.EventAction {
+                override val actionType = "compound"
+                override fun execute(context: com.opensam.engine.event.EventActionContext) =
+                    com.opensam.engine.event.EventActionResult.Success
+            }
+        ))
+        // Build the real compound action with the registry, then rebuild registry including it.
+        val compoundAction = CompoundAction(registry)
+        val fullRegistry = EventActionRegistry(nonCompoundActions + listOf(compoundAction))
+
+        service = EventService(eventRepository, nationRepository, scenarioService, fullRegistry)
 
         // Default: messageRepository.save returns the argument
         `when`(messageRepository.save(anyNonNull<Message>())).thenAnswer { it.arguments[0] }
-
-        val npcSpawnService = mock(NpcSpawnService::class.java)
-        val scenarioService = mock(com.opensam.service.ScenarioService::class.java)
-
-        val eventActionService = mock(com.opensam.engine.EventActionService::class.java)
-        service = EventService(eventRepository, nationRepository, messageRepository, historyService, economyService, npcSpawnService, scenarioService, eventActionService)
     }
 
     private fun createWorld(year: Short = 200, month: Short = 3): WorldState {
@@ -106,7 +152,7 @@ class EventServiceTest {
 
         service.dispatchEvents(world, "turn_start")
 
-        verify(messageRepository, never()).save(any())
+        verify(historyService, never()).logWorldHistory(anyLong(), anyString(), anyInt(), anyInt(), anyBoolean())
     }
 
     @Test
@@ -142,7 +188,7 @@ class EventServiceTest {
 
         service.dispatchEvents(world, "turn_start")
 
-        verify(messageRepository, never()).save(any())
+        verify(historyService, never()).logWorldHistory(anyLong(), anyString(), anyInt(), anyInt(), anyBoolean())
     }
 
     @Test

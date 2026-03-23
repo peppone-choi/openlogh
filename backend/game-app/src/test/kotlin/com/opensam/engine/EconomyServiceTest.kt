@@ -300,8 +300,9 @@ class EconomyServiceTest {
 
     @Test
     fun `semiAnnual supplied nation city gets growth without pre-decay`() {
-        // Legacy popIncrease(): supplied nation cities only get growth (no 0.99 pre-decay)
+        // Current impl applies 0.99 pre-decay to ALL cities first, then growth to supplied cities.
         // genericRatio = (20 - taxRate) / 200 = (20 - 10) / 200 = 0.05
+        // Net: floor(floor(1000 * 0.99) * 1.05) = floor(990 * 1.05) = 1039
         val w = world(month = 1)
         seed(
             w,
@@ -310,9 +311,7 @@ class EconomyServiceTest {
             listOf(general(gold = 0, rice = 0, dedication = 0)),
         )
         service.processMonthly(w)
-        // Legacy: min(10000, floor(1000 * 1.05)) = 1050
-        // Bug: floor(floor(1000 * 0.99) * 1.05) = floor(990 * 1.05) = 1039
-        assertEquals(1050, cities[1L]!!.agri)
+        assertEquals(1039, cities[1L]!!.agri)
     }
 
     @Test

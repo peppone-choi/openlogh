@@ -7,6 +7,13 @@ import com.opensam.engine.war.BattleService
 import com.opensam.engine.ai.GeneralAI
 import com.opensam.engine.ai.NationAI
 import com.opensam.engine.modifier.ModifierService
+import com.opensam.engine.turn.TurnPipeline
+import com.opensam.engine.turn.cqrs.persist.JpaWorldPortFactory
+import com.opensam.engine.turn.steps.DiplomacyStep
+import com.opensam.engine.turn.steps.DisasterAndTradeStep
+import com.opensam.engine.turn.steps.EconomyPostUpdateStep
+import com.opensam.engine.turn.steps.GeneralMaintenanceStep
+import com.opensam.engine.turn.steps.UnificationCheckStep
 import com.opensam.repository.TrafficSnapshotRepository
 import com.opensam.service.WorldService
 import com.opensam.entity.*
@@ -76,6 +83,18 @@ class InMemoryTurnHarness {
     private val nationService: com.opensam.service.NationService = mock(com.opensam.service.NationService::class.java)
     val battleService: BattleService = mock(BattleService::class.java)
     private val uniqueLotteryService: UniqueLotteryService = UniqueLotteryService()
+    private val worldPortFactory: JpaWorldPortFactory = JpaWorldPortFactory(
+        generalRepository = generalRepository,
+        cityRepository = cityRepository,
+        nationRepository = nationRepository,
+    )
+    private val turnPipeline: TurnPipeline = TurnPipeline(listOf(
+        EconomyPostUpdateStep(economyService),
+        DisasterAndTradeStep(economyService),
+        DiplomacyStep(diplomacyService),
+        GeneralMaintenanceStep(generalMaintenanceService, specialAssignmentService, inheritanceService, worldPortFactory),
+        UnificationCheckStep(unificationService),
+    ))
 
     val turnService = TurnService(
         worldStateRepository,
@@ -109,6 +128,7 @@ class InMemoryTurnHarness {
         mock(com.opensam.service.CommandLogDispatcher::class.java),
         mock(com.opensam.service.GameConstService::class.java),
         mock(com.opensam.repository.GeneralAccessLogRepository::class.java),
+        turnPipeline,
     )
 
     init {

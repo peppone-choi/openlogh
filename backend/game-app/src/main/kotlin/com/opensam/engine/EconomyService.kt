@@ -123,7 +123,8 @@ class EconomyService @Autowired constructor(
 
     // ── Phase A1: processIncome (legacy formula) ──
 
-    private fun processIncome(world: WorldState, nations: List<Nation>, cities: List<City>, generals: List<General>) {
+    // resourceType: "gold" = gold only, "rice" = rice only, null/"all" = both (legacy: gold spring, rice autumn)
+    private fun processIncome(world: WorldState, nations: List<Nation>, cities: List<City>, generals: List<General>, resourceType: String = "all") {
         val citiesByNation = cities.groupBy { it.nationId }
         val generalsByNation = generals
             .filter { it.npcState.toInt() != 5 && it.npcState != EmperorConstants.NPC_STATE_EMPEROR }
@@ -137,11 +138,15 @@ class EconomyService @Autowired constructor(
 
         for (nation in nations) {
             val nationCities = citiesByNation[nation.id] ?: continue
-            val nationGenerals = generalsByNation[nation.id] ?: continue
+            val nationGenerals = generalsByNation[nation.id] ?: emptyList()
             val taxRate = nation.rateTmp.toDouble()
             val nationLevel = nation.level.toInt().coerceAtLeast(1)
 
-            // Calculate city-level income
+            // Get nation type modifier (applied per-city, legacy parity: onCalcNationalIncome per city)
+            val nationTypeMod = NationTypeModifiers.get(nation.typeCode)
+            val baseIncomeCtx = if (nationTypeMod != null) nationTypeMod.onCalcIncome(IncomeContext()) else IncomeContext()
+
+            // Calculate city-level income with per-city modifier (H1)
             var totalGoldIncome = 0.0
             var totalRiceIncome = 0.0
 
@@ -150,25 +155,22 @@ class EconomyService @Autowired constructor(
                 val officerCnt = officerCountByCity[city.id] ?: 0
                 val isCapital = city.id == nation.capitalCityId
 
-                totalGoldIncome += calcCityGoldIncome(city, officerCnt, isCapital, nationLevel)
-                totalRiceIncome += calcCityRiceIncome(city, officerCnt, isCapital, nationLevel)
-                totalRiceIncome += calcCityWallIncome(city, officerCnt, isCapital, nationLevel)
-            }
-
-            // Apply nation type income modifiers
-            val nationTypeMod = NationTypeModifiers.get(nation.typeCode)
-            var incomeCtx = IncomeContext()
-            if (nationTypeMod != null) {
-                incomeCtx = nationTypeMod.onCalcIncome(incomeCtx)
+                if (resourceType != "rice") {
+                    totalGoldIncome += calcCityGoldIncome(city, officerCnt, isCapital, nationLevel, baseIncomeCtx.goldMultiplier)
+                }
+                if (resourceType != "gold") {
+                    totalRiceIncome += calcCityRiceIncome(city, officerCnt, isCapital, nationLevel, baseIncomeCtx.riceMultiplier)
+                    totalRiceIncome += calcCityWallIncome(city, officerCnt, isCapital, nationLevel, baseIncomeCtx.riceMultiplier)
+                }
             }
 
             // Apply tax rate multiplier
-            val goldIncome = (totalGoldIncome * taxRate / 20 * incomeCtx.goldMultiplier).toInt()
-            val riceIncome = (totalRiceIncome * taxRate / 20 * incomeCtx.riceMultiplier).toInt()
+            val goldIncome = (totalGoldIncome * taxRate / 20).toInt()
+            val riceIncome = (totalRiceIncome * taxRate / 20).toInt()
 
             // Add income to nation treasury
-            nation.gold += goldIncome
-            nation.rice += riceIncome
+            if (resourceType != "rice") nation.gold += goldIncome
+            if (resourceType != "gold") nation.rice += riceIncome
 
             // Calculate bill/salary
             val totalBill = nationGenerals.sumOf { getBill(it.dedication) }
@@ -208,7 +210,7 @@ class EconomyService @Autowired constructor(
         }
     }
 
-    private fun calcCityGoldIncome(city: City, officerCnt: Int, isCapital: Boolean, nationLevel: Int): Double {
+    private fun calcCityGoldIncome(city: City, officerCnt: Int, isCapital: Boolean, nationLevel: Int, multiplier: Double = 1.0): Double {
         if (city.commMax == 0) return 0.0
         val trustRatio = city.trust / 200.0 + 0.5
         var income = city.pop.toDouble() * city.comm / city.commMax * trustRatio / 30
@@ -217,10 +219,10 @@ class EconomyService @Autowired constructor(
         if (isCapital) {
             income *= 1 + 1.0 / 3 / nationLevel
         }
-        return income
+        return income * multiplier
     }
 
-    private fun calcCityRiceIncome(city: City, officerCnt: Int, isCapital: Boolean, nationLevel: Int): Double {
+    private fun calcCityRiceIncome(city: City, officerCnt: Int, isCapital: Boolean, nationLevel: Int, multiplier: Double = 1.0): Double {
         if (city.agriMax == 0) return 0.0
         val trustRatio = city.trust / 200.0 + 0.5
         var income = city.pop.toDouble() * city.agri / city.agriMax * trustRatio / 30
@@ -229,10 +231,10 @@ class EconomyService @Autowired constructor(
         if (isCapital) {
             income *= 1 + 1.0 / 3 / nationLevel
         }
-        return income
+        return income * multiplier
     }
 
-    private fun calcCityWallIncome(city: City, officerCnt: Int, isCapital: Boolean, nationLevel: Int): Double {
+    private fun calcCityWallIncome(city: City, officerCnt: Int, isCapital: Boolean, nationLevel: Int, multiplier: Double = 1.0): Double {
         if (city.wallMax == 0) return 0.0
         var income = city.def.toDouble() * city.wall / city.wallMax / 3
         income *= 1 + city.secu.toDouble() / city.secuMax.coerceAtLeast(1) / 10
@@ -240,7 +242,7 @@ class EconomyService @Autowired constructor(
         if (isCapital) {
             income *= 1 + 1.0 / 3 / nationLevel
         }
-        return income
+        return income * multiplier
     }
 
     private fun getDedLevel(dedication: Int): Int {
@@ -268,36 +270,24 @@ class EconomyService @Autowired constructor(
     // ── Phase A2: processSemiAnnual (legacy formula) ──
 
     private fun processSemiAnnual(world: WorldState, nations: List<Nation>, cities: List<City>, generals: List<General>) {
-        // 1. Reset dead and apply decay only to non-supplied cities
-        // Legacy: supplied nation cities get growth only (no 0.99 pre-decay)
-        // Neutral cities get exactly one 0.99 decay
-        val suppliedNationCityIds = mutableSetOf<Long>()
+        // 1. Reset dead and apply 0.99 decay to ALL cities unconditionally
+        // Legacy ProcessSemiAnnual.php:75-82: decay is applied to ALL cities first,
+        // then popIncrease() applies growth ONLY to supplied nation cities.
+        // Neutral cities additionally get trust reset to 50.
         val citiesByNation = cities.filter { it.nationId != 0L }.groupBy { it.nationId }
-        for ((_, nationCities) in citiesByNation) {
-            for (city in nationCities) {
-                if (city.supplyState.toInt() == 1) suppliedNationCityIds.add(city.id)
-            }
-        }
 
         for (city in cities) {
             city.dead = 0
+            // 0.99 decay on ALL cities (legacy parity: ProcessSemiAnnual.php:75-82)
+            city.agri = (city.agri * 0.99).toInt()
+            city.comm = (city.comm * 0.99).toInt()
+            city.secu = (city.secu * 0.99).toInt()
+            city.def = (city.def * 0.99).toInt()
+            city.wall = (city.wall * 0.99).toInt()
             if (city.nationId == 0L) {
-                // Neutral city: trust reset + single 0.99 decay
+                // Neutral city: trust reset to 50 (legacy func_time_event.php:43)
                 city.trust = 50F
-                city.agri = (city.agri * 0.99).toInt()
-                city.comm = (city.comm * 0.99).toInt()
-                city.secu = (city.secu * 0.99).toInt()
-                city.def = (city.def * 0.99).toInt()
-                city.wall = (city.wall * 0.99).toInt()
-            } else if (!suppliedNationCityIds.contains(city.id)) {
-                // Non-supplied nation city: 0.99 decay
-                city.agri = (city.agri * 0.99).toInt()
-                city.comm = (city.comm * 0.99).toInt()
-                city.secu = (city.secu * 0.99).toInt()
-                city.def = (city.def * 0.99).toInt()
-                city.wall = (city.wall * 0.99).toInt()
             }
-            // Supplied nation cities: no decay (growth applied below)
         }
 
         // 2. Population and infrastructure growth per nation (supplied cities only)

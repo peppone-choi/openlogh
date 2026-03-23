@@ -42,6 +42,11 @@ class ModifierService {
             ItemModifiers.get(general.itemCode)?.let { modifiers.add(it) }
         }
 
+        // 6. Officer level (legacy: TriggerOfficerLevel — leadership bonus, score bonus, war power)
+        if (general.officerLevel > 0 && nation != null) {
+            modifiers.add(OfficerLevelModifier(general.officerLevel.toInt(), nation.level.toInt()))
+        }
+
         return modifiers
     }
 

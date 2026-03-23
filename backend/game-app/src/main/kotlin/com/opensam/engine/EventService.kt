@@ -1,10 +1,10 @@
 package com.opensam.engine
 
-import com.opensam.entity.Message
 import com.opensam.entity.WorldState
+import com.opensam.engine.event.EventActionContext
+import com.opensam.engine.event.EventActionRegistry
 import com.opensam.engine.turn.cqrs.persist.JpaWorldPortFactory
 import com.opensam.repository.EventRepository
-import com.opensam.repository.MessageRepository
 import com.opensam.repository.NationRepository
 import com.opensam.service.ScenarioService
 import org.slf4j.LoggerFactory
@@ -16,31 +16,19 @@ import org.springframework.transaction.annotation.Transactional
 class EventService @Autowired constructor(
     private val eventRepository: EventRepository,
     private val worldPortFactory: JpaWorldPortFactory,
-    private val messageRepository: MessageRepository,
-    private val historyService: com.opensam.service.HistoryService,
-    private val economyService: EconomyService,
-    private val npcSpawnService: NpcSpawnService,
     private val scenarioService: ScenarioService,
-    private val eventActionService: EventActionService,
+    private val eventActionRegistry: EventActionRegistry,
 ) {
     constructor(
         eventRepository: EventRepository,
         nationRepository: NationRepository,
-        messageRepository: MessageRepository,
-        historyService: com.opensam.service.HistoryService,
-        economyService: EconomyService,
-        npcSpawnService: NpcSpawnService,
         scenarioService: ScenarioService,
-        eventActionService: EventActionService,
+        eventActionRegistry: EventActionRegistry,
     ) : this(
         eventRepository = eventRepository,
         worldPortFactory = JpaWorldPortFactory(nationRepository = nationRepository),
-        messageRepository = messageRepository,
-        historyService = historyService,
-        economyService = economyService,
-        npcSpawnService = npcSpawnService,
         scenarioService = scenarioService,
-        eventActionService = eventActionService,
+        eventActionRegistry = eventActionRegistry,
     )
 
     private val log = LoggerFactory.getLogger(EventService::class.java)
@@ -150,194 +138,12 @@ class EventService @Autowired constructor(
     }
 
     private fun executeAction(action: Map<String, Any>, world: WorldState, currentEventId: Long = 0) {
-        when (val type = action["type"] as? String) {
-            "log" -> {
-                val message = action["message"] as? String ?: ""
-                log.info("[World {}] History: {}", world.id, message)
-                historyService.logWorldHistory(
-                    worldId = world.id.toLong(),
-                    message = message,
-                    year = world.currentYear.toInt(),
-                    month = world.currentMonth.toInt(),
-                )
-            }
-
-            "delete_event" -> {
-                val eventId = (action["eventId"] as? Number)?.toLong() ?: return
-                eventRepository.deleteById(eventId)
-                log.info("[World {}] Deleted event #{}", world.id, eventId)
-            }
-
-            "delete_self" -> {
-                if (currentEventId > 0) {
-                    eventRepository.deleteById(currentEventId)
-                    log.info("[World {}] Event #{} deleted itself", world.id, currentEventId)
-                }
-            }
-
-            "notice" -> {
-                val message = action["message"] as? String ?: ""
-                messageRepository.save(
-                    Message(
-                        worldId = world.id.toLong(),
-                        mailboxCode = "notice",
-                        messageType = "notice",
-                        payload = mutableMapOf(
-                            "message" to message,
-                            "year" to world.currentYear.toInt(),
-                            "month" to world.currentMonth.toInt(),
-                        ),
-                    )
-                )
-                log.info("[World {}] Notice: {}", world.id, message)
-            }
-
-            // Economy-related actions delegating to EconomyService
-            "process_income" -> {
-                economyService.processIncomeEvent(world)
-                log.info("[World {}] Event action: process_income", world.id)
-            }
-
-            "process_semi_annual" -> {
-                economyService.processSemiAnnualEvent(world)
-                log.info("[World {}] Event action: process_semi_annual", world.id)
-            }
-
-            "update_city_supply" -> {
-                economyService.updateCitySupplyState(world)
-                log.info("[World {}] Event action: update_city_supply", world.id)
-            }
-
-            "update_nation_level" -> {
-                economyService.updateNationLevelEvent(world)
-                log.info("[World {}] Event action: update_nation_level", world.id)
-            }
-
-            "randomize_trade_rate" -> {
-                economyService.randomizeCityTradeRate(world)
-                log.info("[World {}] Event action: randomize_trade_rate", world.id)
-            }
-
-            "raise_invader" -> {
-                npcSpawnService.raiseInvader(world)
-                log.info("[World {}] Event action: raise_invader", world.id)
-            }
-
-            "raise_npc_nation" -> {
-                npcSpawnService.checkNpcSpawn(world)
-                log.info("[World {}] Event action: raise_npc_nation", world.id)
-            }
-
-            "provide_npc_troop_leader" -> {
-                npcSpawnService.provideNpcTroopLeaders(world)
-                log.info("[World {}] Event action: provide_npc_troop_leader", world.id)
-            }
-
-            // Compound action: execute multiple sub-actions sequentially
-            "compound" -> {
-                val actions = readStringAnyMapList(action["actions"]) ?: return
-                for (subAction in actions) {
-                    executeAction(subAction, world, currentEventId)
-                }
-            }
-
-            // ── 19 ported event actions from PHP legacy ──
-
-            "add_global_betray" -> {
-                val cnt = (action["cnt"] as? Number)?.toInt() ?: 1
-                val ifMax = (action["ifMax"] as? Number)?.toInt() ?: 0
-                eventActionService.addGlobalBetray(world, cnt, ifMax)
-            }
-
-            "assign_general_speciality" -> {
-                eventActionService.assignGeneralSpeciality(world)
-            }
-
-            "auto_delete_invader" -> {
-                val nationId = (action["nationId"] as? Number)?.toLong() ?: return
-                eventActionService.autoDeleteInvader(world, nationId, currentEventId)
-            }
-
-            "block_scout_action" -> {
-                val blockChangeScout = action["blockChangeScout"] as? Boolean
-                eventActionService.blockScoutAction(world, blockChangeScout)
-            }
-
-            "unblock_scout_action" -> {
-                val blockChangeScout = action["blockChangeScout"] as? Boolean
-                eventActionService.unblockScoutAction(world, blockChangeScout)
-            }
-
-            "change_city" -> {
-                val target = action["target"]
-                val changes = readStringAnyMap(action["changes"]) ?: return
-                eventActionService.changeCity(world, target, changes)
-            }
-
-            "create_admin_npc" -> {
-                eventActionService.createAdminNPC(world)
-            }
-
-            "create_many_npc" -> {
-                val npcCount = (action["npcCount"] as? Number)?.toInt() ?: 10
-                val fillCnt = (action["fillCnt"] as? Number)?.toInt() ?: 0
-                eventActionService.createManyNPC(world, npcCount, fillCnt)
-            }
-
-            "finish_nation_betting" -> {
-                val bettingId = (action["bettingId"] as? Number)?.toLong() ?: return
-                eventActionService.finishNationBetting(world, bettingId)
-            }
-
-            "open_nation_betting" -> {
-                val nationCnt = (action["nationCnt"] as? Number)?.toInt() ?: 1
-                val bonusPoint = (action["bonusPoint"] as? Number)?.toInt() ?: 0
-                eventActionService.openNationBetting(world, nationCnt, bonusPoint)
-            }
-
-            "invader_ending" -> {
-                eventActionService.invaderEnding(world, currentEventId)
-            }
-
-            "lost_unique_item" -> {
-                val lostProb = (action["lostProb"] as? Number)?.toDouble() ?: 0.1
-                eventActionService.lostUniqueItem(world, lostProb)
-            }
-
-            "merge_inherit_point_rank" -> {
-                eventActionService.mergeInheritPointRank(world)
-            }
-
-            "new_year" -> {
-                eventActionService.newYear(world)
-            }
-
-            "process_war_income" -> {
-                eventActionService.processWarIncome(world)
-            }
-
-            "raise_disaster" -> {
-                economyService.processDisasterOrBoom(world)
-            }
-
-            "reg_npc" -> {
-                val params = action.filterKeys { it != "type" }.toMap()
-                eventActionService.regNPC(world, params)
-            }
-
-            "reg_neutral_npc" -> {
-                val params = action.filterKeys { it != "type" }.toMap()
-                eventActionService.regNeutralNPC(world, params)
-            }
-
-            "reset_officer_lock" -> {
-                eventActionService.resetOfficerLock(world)
-            }
-
-            else -> {
-                log.warn("[World {}] Unknown action type: {}", world.id, type)
-            }
+        val type = action["type"] as? String ?: run {
+            log.warn("[World {}] Event action missing 'type' field", world.id)
+            return
         }
+        val context = EventActionContext(world = world, params = action, currentEventId = currentEventId)
+        eventActionRegistry.resolve(type).execute(context)
     }
 
     private fun readStringAnyMap(raw: Any?): Map<String, Any>? {

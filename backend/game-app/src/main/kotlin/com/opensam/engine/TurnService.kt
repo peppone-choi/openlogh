@@ -82,7 +82,9 @@ class TurnService @Autowired constructor(
     private val commandLogDispatcher: CommandLogDispatcher,
     private val gameConstService: com.opensam.service.GameConstService,
     private val generalAccessLogRepository: GeneralAccessLogRepository,
+    private val turnPipeline: com.opensam.engine.turn.TurnPipeline,
 ) {
+    /** Test-only constructor: omits turnPipeline, uses an empty no-op pipeline. */
     constructor(
         worldStateRepository: WorldStateRepository,
         generalRepository: GeneralRepository,
@@ -137,6 +139,74 @@ class TurnService @Autowired constructor(
         auctionService = auctionService,
         tournamentService = tournamentService,
         trafficSnapshotRepository = trafficSnapshotRepository,
+        generalAI = generalAI,
+        nationAI = nationAI,
+        modifierService = modifierService,
+        worldService = worldService,
+        nationService = nationService,
+        battleService = battleService,
+        uniqueLotteryService = uniqueLotteryService,
+        commandLogDispatcher = commandLogDispatcher,
+        gameConstService = gameConstService,
+        generalAccessLogRepository = generalAccessLogRepository,
+        turnPipeline = com.opensam.engine.turn.TurnPipeline(emptyList()),
+    )
+
+    constructor(
+        worldStateRepository: WorldStateRepository,
+        generalRepository: GeneralRepository,
+        generalTurnRepository: GeneralTurnRepository,
+        nationTurnRepository: NationTurnRepository,
+        cityRepository: CityRepository,
+        nationRepository: NationRepository,
+        commandExecutor: CommandExecutor,
+        commandRegistry: CommandRegistry,
+        scenarioService: ScenarioService,
+        economyService: EconomyService,
+        eventService: EventService,
+        diplomacyService: DiplomacyService,
+        generalMaintenanceService: GeneralMaintenanceService,
+        specialAssignmentService: SpecialAssignmentService,
+        npcSpawnService: NpcSpawnService,
+        unificationService: UnificationService,
+        inheritanceService: InheritanceService,
+        yearbookService: YearbookService,
+        auctionService: AuctionService,
+        tournamentService: TournamentService,
+        trafficSnapshotRepository: com.opensam.repository.TrafficSnapshotRepository,
+        generalAI: GeneralAI,
+        nationAI: NationAI,
+        modifierService: ModifierService,
+        worldService: WorldService,
+        nationService: NationService,
+        battleService: BattleService,
+        uniqueLotteryService: UniqueLotteryService,
+        commandLogDispatcher: CommandLogDispatcher,
+        gameConstService: com.opensam.service.GameConstService,
+        generalAccessLogRepository: GeneralAccessLogRepository,
+        turnPipeline: com.opensam.engine.turn.TurnPipeline,
+    ) : this(
+        worldStateRepository = worldStateRepository,
+        generalRepository = generalRepository,
+        generalTurnRepository = generalTurnRepository,
+        nationTurnRepository = nationTurnRepository,
+        cityRepository = cityRepository,
+        nationRepository = nationRepository,
+        commandExecutor = commandExecutor,
+        commandRegistry = commandRegistry,
+        scenarioService = scenarioService,
+        economyService = economyService,
+        eventService = eventService,
+        diplomacyService = diplomacyService,
+        generalMaintenanceService = generalMaintenanceService,
+        specialAssignmentService = specialAssignmentService,
+        npcSpawnService = npcSpawnService,
+        unificationService = unificationService,
+        inheritanceService = inheritanceService,
+        yearbookService = yearbookService,
+        auctionService = auctionService,
+        tournamentService = tournamentService,
+        trafficSnapshotRepository = trafficSnapshotRepository,
         worldPortFactory = JpaWorldPortFactory(
             generalRepository = generalRepository,
             cityRepository = cityRepository,
@@ -152,6 +222,7 @@ class TurnService @Autowired constructor(
         commandLogDispatcher = commandLogDispatcher,
         gameConstService = gameConstService,
         generalAccessLogRepository = generalAccessLogRepository,
+        turnPipeline = turnPipeline,
     )
 
     private val logger = LoggerFactory.getLogger(TurnService::class.java)
@@ -196,6 +267,19 @@ class TurnService @Autowired constructor(
                 world.meta["openKillTurnReset"] = true
             }
 
+            // M-online: 월간 루프 진입 전 per-tick 온라인/오버헤드 갱신
+            // Legacy: daemon.ts per-tick updateOnline() + CheckOverhead() before monthly loop
+            try {
+                updateOnline(world)
+            } catch (e: Exception) {
+                logger.warn("updateOnline failed: ${e.message}")
+            }
+            try {
+                checkOverhead(world)
+            } catch (e: Exception) {
+                logger.warn("checkOverhead failed: ${e.message}")
+            }
+
             var turnsProcessed = 0
             while (!now.isBefore(nextTurnAt) && System.currentTimeMillis() < tickDeadline) {
                 turnsProcessed++
@@ -218,132 +302,74 @@ class TurnService @Autowired constructor(
                     logger.error("executeGeneralCommandsUntil failed for world {}: {}", worldId, e.message, e)
                 }
 
+                // C3: updateTraffic — legacy ordering: after commands, before PreMonth
                 try {
-                    eventService.dispatchEvents(world, "PRE_MONTH")
+                    updateTraffic(world)
                 } catch (e: Exception) {
-                    logger.warn("EventService.dispatchEvents(PRE_MONTH) failed: ${e.message}")
+                    logger.warn("updateTraffic failed: ${e.message}")
                 }
 
-                try {
-                    economyService.preUpdateMonthly(world)
-                } catch (e: Exception) {
-                    logger.warn("EconomyService.preUpdateMonthly failed: ${e.message}")
-                }
-
-                advanceMonth(world)
-
-                // 연감 스냅샷: 매월 변경 시 이전 월의 맵/국가 상태를 기록
-                // core2026 yearbookHandler.onMonthChanged 패러티
-                try {
-                    yearbookService.saveMonthlySnapshot(worldId, previousYear, previousMonth)
-                } catch (e: Exception) {
-                    logger.warn("YearbookService.saveMonthlySnapshot failed: ${e.message}")
-                }
-
-                // 월드 스냅샷 기록: 히스토리 맵 재현에 사용 (world_history.event_type=snapshot)
-                try {
-                    worldService.captureSnapshot(world)
-                } catch (e: Exception) {
-                    logger.warn("WorldService.captureSnapshot failed: ${e.message}")
-                }
-
-                // 트래픽 스냅샷 기록 (legacy recentTraffic 패러티)
-                try {
-                    val onlineCount = worldPortFactory.create(worldId).allGenerals().count { it.userId != null }
-                    val snapshot = com.opensam.entity.TrafficSnapshot(
-                        worldId = worldId,
-                        year = world.currentYear,
-                        month = world.currentMonth,
-                        refresh = (world.meta["refresh"] as? Number)?.toInt() ?: 0,
-                        online = onlineCount,
-                    )
-                    trafficSnapshotRepository.save(snapshot)
-                    // Reset per-turn refresh counter
-                    world.meta["refresh"] = 0
-                } catch (e: Exception) {
-                    logger.warn("TrafficSnapshot recording failed: ${e.message}")
-                }
-
-                // 1월: 연초 통계 (legacy checkStatistic 패러티)
-                if (world.currentMonth.toInt() == 1) {
-                    try {
-                        economyService.processYearlyStatistics(world)
-                        val yearlyPorts = worldPortFactory.create(worldId)
-                        val yearlyGenerals = yearlyPorts.allGenerals().map { it.toEntity() }
-                        accrueYearlyInheritancePoints(yearlyGenerals)
-                        yearlyGenerals.forEach { yearlyPorts.putGeneral(it.toSnapshot()) }
-                    } catch (e: Exception) {
-                        logger.warn("EconomyService.processYearlyStatistics failed: ${e.message}")
-                    }
-                }
-
-                try {
-                    eventService.dispatchEvents(world, "MONTH")
-                } catch (e: Exception) {
-                    logger.warn("EventService.dispatchEvents failed: ${e.message}")
-                }
-
-                try {
-                    economyService.postUpdateMonthly(world)
-                } catch (e: Exception) {
-                    logger.warn("EconomyService.postUpdateMonthly failed: ${e.message}")
-                }
-
-                try {
-                    economyService.processDisasterOrBoom(world)
-                } catch (e: Exception) {
-                    logger.warn("EconomyService.processDisasterOrBoom failed: ${e.message}")
-                }
-
-                try {
-                    economyService.randomizeCityTradeRate(world)
-                } catch (e: Exception) {
-                    logger.warn("EconomyService.randomizeCityTradeRate failed: ${e.message}")
-                }
-
-                try {
-                    diplomacyService.processDiplomacyTurn(world)
-                } catch (e: Exception) {
-                    logger.warn("DiplomacyService.processDiplomacyTurn failed: ${e.message}")
-                }
-
-                // Recalculate war front status for all nations (legacy SetNationFront parity)
-                try {
-                    nationService.recalcAllFronts(worldId)
-                } catch (e: Exception) {
-                    logger.warn("NationService.recalcAllFronts failed: ${e.message}")
-                }
-
+                // H6: resetStrategicCommandLimits (preUpdateMonthly decay) — before advanceMonth
+                // Legacy: strategicCmdLimit/spy/city state decay runs in preUpdateMonthly, before turnDate advances
                 try {
                     resetStrategicCommandLimits(world)
                 } catch (e: Exception) {
                     logger.warn("resetStrategicCommandLimits failed: ${e.message}")
                 }
 
+                // C2: Step 200 — PRE_MONTH events directly before advanceMonth (legacy: PreMonth before turnDate)
+                // Pipeline step 200 (PreMonthEventStep) has shouldSkip=true to avoid double-execution.
                 try {
-                    val ports = worldPortFactory.create(worldId)
-                    val beforeSnapshots = ports.allGenerals().associateBy { it.id }
-                    val generals = beforeSnapshots.values.map { it.toEntity() }
-                    generalMaintenanceService.processGeneralMaintenance(world, generals)
-                    specialAssignmentService.checkAndAssignSpecials(world, generals)
-                    for (g in generals) {
-                        val snap = g.toSnapshot()
-                        if (snap != beforeSnapshots[g.id]) ports.putGeneral(snap)
-                    }
-
-                    for (general in generals) {
-                        if (general.npcState.toInt() != 5 && general.npcState != EmperorConstants.NPC_STATE_EMPEROR) {
-                            inheritanceService.accruePoints(general, "lived_month", 1)
-                        }
-                    }
+                    eventService.dispatchEvents(world, "PRE_MONTH")
                 } catch (e: Exception) {
-                    logger.warn("GeneralMaintenanceService failed: ${e.message}")
+                    logger.warn("PreMonthEvent failed: ${e.message}")
                 }
 
+                // C2: Step 300 — economy pre-update directly before advanceMonth (legacy: preUpdateMonthly before turnDate)
+                // Pipeline step 300 (EconomyPreUpdateStep) has shouldSkip=true to avoid double-execution.
                 try {
-                    unificationService.checkAndSettleUnification(world)
+                    economyService.preUpdateMonthly(world)
                 } catch (e: Exception) {
-                    logger.warn("UnificationService.checkAndSettleUnification failed: ${e.message}")
+                    logger.warn("EconomyPreUpdate failed: ${e.message}")
+                }
+
+                // C2: Step 400 — Advance month after pre-update steps (legacy: turnDate advances after preUpdateMonthly)
+                advanceMonth(world)
+
+                // Step 500–1700: Pipeline handles all post-advanceMonth steps.
+                // Steps 200/300 skipped in pipeline (shouldSkip=true); step 1400 is a no-op marker.
+                val turnContext = com.opensam.engine.turn.TurnContext(
+                    world = world,
+                    worldId = worldId,
+                    year = world.currentYear.toInt(),
+                    month = world.currentMonth.toInt(),
+                    previousYear = previousYear,
+                    previousMonth = previousMonth,
+                    nextTurnAt = nextTurnAt,
+                )
+                turnPipeline.execute(turnContext)
+
+                // H7: postUpdateMonthly — functions present in legacy but previously missing
+                // Called after pipeline (postUpdateMonthly position: step 1000–1600 range)
+                try {
+                    checkWander(world)
+                } catch (e: Exception) {
+                    logger.warn("checkWander failed: ${e.message}")
+                }
+                try {
+                    triggerTournament(world)
+                } catch (e: Exception) {
+                    logger.warn("triggerTournament failed: ${e.message}")
+                }
+                try {
+                    registerAuction(world)
+                } catch (e: Exception) {
+                    logger.warn("registerAuction failed: ${e.message}")
+                }
+                try {
+                    updateGeneralNumber(world)
+                } catch (e: Exception) {
+                    logger.warn("updateGeneralNumber failed: ${e.message}")
                 }
 
                 world.updatedAt = nextTurnAt
@@ -415,8 +441,9 @@ class TurnService @Autowired constructor(
                 val nation = if (general.nationId != 0L) {
                     nationCache[general.nationId]
                 } else null
+                val cityMates = generals.filter { it.cityId == general.cityId && it.id != general.id }
 
-                firePreTurnTriggers(world, general, nation)
+                firePreTurnTriggers(world, general, nation, cityMates)
                 applyPerTurnCrewConsumption(general, city)
 
                 if (general.blockState >= 2) {
@@ -911,6 +938,62 @@ class TurnService @Autowired constructor(
     }
 
     /**
+     * M-online: Update online status bookkeeping per tick.
+     * Legacy: daemon.ts updateOnline() — updates online general count in world state.
+     * TODO: implement per-tick online count update if needed beyond TrafficSnapshotStep(700).
+     */
+    private fun updateOnline(@Suppress("UNUSED_PARAMETER") world: WorldState) {
+        // TODO: legacy updateOnline() per-tick online count snapshot
+    }
+
+    /**
+     * M-online: Check overhead (resource/process overhead) per tick.
+     * Legacy: daemon.ts CheckOverhead() — guards against runaway processes.
+     * TODO: implement overhead guard if needed.
+     */
+    private fun checkOverhead(@Suppress("UNUSED_PARAMETER") world: WorldState) {
+        // TODO: legacy CheckOverhead() per-tick overhead guard
+    }
+
+    /**
+     * H7: Check wander nations for auto-dissolution.
+     * Legacy: postUpdateMonthly — 재야 세력이 건국 후 startYear+2 이상 경과시 자동 해산.
+     * TODO: implement full wander dissolution logic.
+     */
+    private fun checkWander(@Suppress("UNUSED_PARAMETER") world: WorldState) {
+        // TODO: legacy checkWander — dissolve wander nations where world.year >= foundYear + 2
+    }
+
+    /**
+     * H7: Trigger monthly tournament check.
+     * Legacy: postUpdateMonthly — 특정 월에 토너먼트 시작 조건 체크.
+     * TODO: implement tournament trigger condition check.
+     */
+    private fun triggerTournament(@Suppress("UNUSED_PARAMETER") world: WorldState) {
+        // TODO: legacy triggerTournament — tournamentService.checkAndTriggerTournament(world)
+    }
+
+    /**
+     * H7: Register monthly auction entries.
+     * Legacy: postUpdateMonthly — 특정 조건에서 자동 경매 등록.
+     * TODO: implement auction auto-registration condition check.
+     */
+    private fun registerAuction(@Suppress("UNUSED_PARAMETER") world: WorldState) {
+        // TODO: legacy registerAuction — auctionService.checkAndRegisterAuctions(world)
+    }
+
+    /**
+     * H7: Update nation general count and refresh static nation info.
+     * Legacy: postUpdateMonthly — updateGeneralNumber / refreshNationStaticInfo.
+     * Note: gennum is already updated in resetStrategicCommandLimits; this placeholder
+     * covers any additional static info refresh needed.
+     * TODO: implement refreshNationStaticInfo if additional fields need updating.
+     */
+    private fun updateGeneralNumber(@Suppress("UNUSED_PARAMETER") world: WorldState) {
+        // TODO: legacy refreshNationStaticInfo — nationService.refreshNationGenCount(world)
+    }
+
+    /**
      * Decrement strategic command limits for all nations each turn.
      * Per legacy: strategicCmdLimit decreases by 1 each turn until 0.
      */
@@ -966,9 +1049,14 @@ class TurnService @Autowired constructor(
         nations.forEach { ports.putNation(it.toSnapshot()) }
     }
 
-    private fun firePreTurnTriggers(world: WorldState, general: com.opensam.entity.General, nation: Nation?) {
+    private fun firePreTurnTriggers(
+        world: WorldState,
+        general: com.opensam.entity.General,
+        nation: Nation?,
+        cityMates: List<com.opensam.entity.General> = emptyList(),
+    ) {
         val modifiers = modifierService.getModifiers(general, nation)
-        val triggers = buildPreTurnTriggers(general, modifiers)
+        val triggers = buildPreTurnTriggers(general, modifiers, cityMates)
         if (triggers.isEmpty()) return
 
         val caller = TriggerCaller()

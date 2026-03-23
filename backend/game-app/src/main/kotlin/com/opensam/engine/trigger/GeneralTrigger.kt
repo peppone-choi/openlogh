@@ -187,6 +187,45 @@ class ModifierBridgeTrigger(
 }
 
 /**
+ * 도시치료: A general with medical skill heals injured generals in the same city each turn.
+ * Legacy: GeneralTrigger/che_도시치료.php (priority 10010)
+ *
+ * - First heals the triggering general's own injury (if any).
+ * - Then iterates city-mates with injury > 10, healing each with 50% probability.
+ * - Nation=0 generals only heal other nation=0 generals; others heal anyone.
+ */
+class CityHealTrigger(
+    private val general: General,
+    private val cityMates: List<General>,
+    private val rng: java.util.Random = java.util.Random(),
+) : GeneralTrigger {
+    override val uniqueId = "도시치료_${general.id}"
+    override val priority = TriggerPriority.BEGIN + 10  // 10010
+
+    override fun action(env: TriggerEnv): Boolean {
+        // Heal self
+        if (general.injury > 0) {
+            general.injury = 0
+        }
+
+        // Heal city-mates with injury > 10, 50% chance each
+        val patients = if (general.nationId == 0L) {
+            cityMates.filter { it.id != general.id && it.nationId == 0L && it.injury > 10 }
+        } else {
+            cityMates.filter { it.id != general.id && it.injury > 10 }
+        }
+
+        for (patient in patients) {
+            if (rng.nextDouble() < 0.5) {
+                patient.injury = 0
+            }
+        }
+
+        return true
+    }
+}
+
+/**
  * 아이템치료: Medicine items auto-heal injury when injury >= threshold.
  * Legacy: GeneralTrigger/che_아이템치료.php
  *
@@ -214,12 +253,21 @@ class MedicineHealTrigger(
 /**
  * Build the pre-turn trigger list for a general.
  * Legacy: TurnExecutionHelper::preprocessCommand()
+ *
+ * @param cityMates Other generals currently in the same city (used by CityHealTrigger).
+ *                  Pass an empty list when city-mates are unavailable (e.g. realtime path).
  */
 fun buildPreTurnTriggers(
     general: General,
     modifiers: List<ActionModifier> = emptyList(),
+    cityMates: List<General> = emptyList(),
 ): List<GeneralTrigger> {
     val triggers = mutableListOf<GeneralTrigger>()
+
+    // City heal trigger (before injury reduction so self-heal counts)
+    if (cityMates.isNotEmpty()) {
+        triggers.add(CityHealTrigger(general, cityMates))
+    }
 
     // Medicine item pre-turn heal (before injury reduction)
     val itemCode = general.itemCode

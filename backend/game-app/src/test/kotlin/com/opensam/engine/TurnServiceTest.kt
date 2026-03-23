@@ -4,6 +4,12 @@ import com.opensam.command.CommandExecutor
 import com.opensam.command.CommandRegistry
 import com.opensam.engine.ai.GeneralAI
 import com.opensam.engine.ai.NationAI
+import com.opensam.engine.turn.TurnPipeline
+import com.opensam.engine.turn.cqrs.persist.JpaWorldPortFactory
+import com.opensam.engine.turn.steps.DiplomacyStep
+import com.opensam.engine.turn.steps.DisasterAndTradeStep
+import com.opensam.engine.turn.steps.EconomyPostUpdateStep
+import com.opensam.engine.turn.steps.GeneralMaintenanceStep
 import com.opensam.repository.TrafficSnapshotRepository
 import com.opensam.service.WorldService
 import com.opensam.entity.General
@@ -74,6 +80,20 @@ class TurnServiceTest {
         val yearbookService = mock(YearbookService::class.java)
         val auctionService = mock(com.opensam.service.AuctionService::class.java)
         val tournamentService = mock(com.opensam.service.TournamentService::class.java)
+        val worldPortFactory = JpaWorldPortFactory(
+            generalRepository = generalRepository,
+            cityRepository = cityRepository,
+            nationRepository = nationRepository,
+        )
+
+        // Build a real pipeline with the steps that the tests verify,
+        // backed by the mocked service instances defined above.
+        val pipeline = TurnPipeline(listOf(
+            EconomyPostUpdateStep(economyService),
+            DisasterAndTradeStep(economyService),
+            DiplomacyStep(diplomacyService),
+            GeneralMaintenanceStep(generalMaintenanceService, specialAssignmentService, inheritanceService, worldPortFactory),
+        ))
 
         service = TurnService(
             worldStateRepository,
@@ -107,6 +127,7 @@ class TurnServiceTest {
             mock(com.opensam.service.CommandLogDispatcher::class.java),
             mock(com.opensam.service.GameConstService::class.java),
             mock(GeneralAccessLogRepository::class.java),
+            pipeline,
         )
         // Default: worldStateRepository.save returns the argument
         `when`(worldStateRepository.save(anyNonNull<WorldState>())).thenAnswer { it.arguments[0] }
