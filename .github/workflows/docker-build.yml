@@ -117,53 +117,8 @@ jobs:
                   cache-from: type=gha,scope=frontend
                   cache-to: type=gha,mode=max,scope=frontend
 
-    build-backend:
-        runs-on: ubuntu-latest
-        services:
-            postgres:
-                image: postgres:16-alpine
-                env:
-                    POSTGRES_DB: opensam_test
-                    POSTGRES_USER: opensam
-                    POSTGRES_PASSWORD: opensam123
-                ports:
-                    - 5432:5432
-                options: >-
-                    --health-cmd "pg_isready -U opensam"
-                    --health-interval 5s
-                    --health-timeout 5s
-                    --health-retries 5
-            redis:
-                image: redis:7-alpine
-                ports:
-                    - 6379:6379
-                options: >-
-                    --health-cmd "redis-cli ping"
-                    --health-interval 5s
-                    --health-timeout 5s
-                    --health-retries 5
-        steps:
-            - uses: actions/checkout@v4
-
-            - uses: actions/setup-java@v4
-              with:
-                  distribution: corretto
-                  java-version: '17'
-
-            - uses: gradle/actions/setup-gradle@v4
-
-            - name: Build backend
-              working-directory: backend
-              env:
-                  SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/opensam_test
-                  SPRING_DATASOURCE_USERNAME: opensam
-                  SPRING_DATASOURCE_PASSWORD: opensam123
-                  SPRING_REDIS_HOST: localhost
-                  SPRING_REDIS_PORT: 6379
-              run: ./gradlew build --no-daemon
-
     deploy:
-        needs: [build-gateway, build-game, build-frontend, build-backend]
+        needs: [build-gateway, build-game, build-frontend]
         runs-on: ubuntu-latest
         steps:
             - name: Deploy to EC2
