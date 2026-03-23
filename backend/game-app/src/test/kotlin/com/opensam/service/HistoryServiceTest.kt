@@ -95,12 +95,15 @@ class HistoryServiceTest {
     @Test
     fun `getByYearMonth should query record repository`() {
         val mockRecords = listOf(mock(Record::class.java))
-        `when`(recordRepository.findByWorldIdAndYearAndMonth(1L, 187, 1))
-            .thenReturn(mockRecords)
+        `when`(recordRepository.findByWorldIdAndRecordTypeInAndYearAndMonthOrderByCreatedAtDesc(
+            1L, listOf("world_history", "world_record"), 187, 1
+        )).thenReturn(mockRecords)
 
         val result = historyService.getByYearMonth(1L, 187, 1)
 
         assertEquals(mockRecords, result)
-        verify(recordRepository).findByWorldIdAndYearAndMonth(1L, 187, 1)
+        verify(recordRepository).findByWorldIdAndRecordTypeInAndYearAndMonthOrderByCreatedAtDesc(
+            1L, listOf("world_history", "world_record"), 187, 1
+        )
     }
 }

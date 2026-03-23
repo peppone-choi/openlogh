@@ -42,7 +42,7 @@ class che_부대탈퇴지시(general: General, env: CommandEnv, arg: Map<String,
         destGen.troopId = 0
         pushLog("<Y>$destGeneralName</>에게 부대 탈퇴를 지시했습니다.")
         pushHistoryLog("<Y>$destGeneralName</>에게 부대 탈퇴를 지시했습니다.")
-        pushGlobalLog("<Y>${general.name}</>${pickJosa(general.name, "이")} <Y>$destGeneralName</>에게 부대 탈퇴를 지시했습니다.")
+        pushDestGeneralLog("부대 탈퇴를 지시받았습니다.")
         return CommandResult(true, logs)
     }
 }

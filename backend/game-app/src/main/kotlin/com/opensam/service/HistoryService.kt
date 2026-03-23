@@ -56,7 +56,9 @@ class HistoryService(
     }
 
     fun getByYearMonth(worldId: Long, year: Int, month: Int): List<Record> {
-        return recordRepository.findByWorldIdAndYearAndMonth(worldId, year, month)
+        return recordRepository.findByWorldIdAndRecordTypeInAndYearAndMonthOrderByCreatedAtDesc(
+            worldId, listOf("world_history", "world_record"), year, month
+        )
     }
 
     fun getYearbook(worldId: Long, year: Int): YearbookHistory? {

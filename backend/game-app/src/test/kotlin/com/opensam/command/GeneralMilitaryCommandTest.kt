@@ -272,7 +272,7 @@ class GeneralMilitaryCommandTest {
 
         val result = runBlocking { cmd.run(fixedRng) }
         assertTrue(result.success)
-        assertTrue(result.message!!.contains("\"moveTo\":\"7\""))
+        assertTrue(result.message!!.contains("\"city\":7"))
     }
 
     @Test

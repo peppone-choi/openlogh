@@ -86,6 +86,7 @@ class PublicCachedMapService(
                 region = mapCity.region,
                 nationName = nation?.name ?: "",
                 nationColor = nation?.color ?: "#4b5563",
+                nationAbbr = nation?.abbreviation?.ifBlank { null },
                 isCapital = isCapital,
                 supplyState = city.supplyState.toInt(),
                 state = city.state.toInt(),

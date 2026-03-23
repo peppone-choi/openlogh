@@ -39,7 +39,6 @@ class che_불가침수락(general: General, env: CommandEnv, arg: Map<String, An
         pushHistoryLog("<D><b>${dn.name}</b></>${josaWaDest} 불가침 성공")
         pushNationalHistoryLog("<Y>${general.name}</>${pickJosa(general.name, "이")} <D><b>${dn.name}</b></>${josaWaDest} 불가침에 합의했습니다.")
         pushDestNationalHistoryLog("<D><b>${n.name}</b></>${josaWaSrc} 불가침 조약을 체결했습니다.")
-        pushGlobalHistoryLog("<Y>${general.name}</>${pickJosa(general.name, "이")} <D><b>${dn.name}</b></>${josaWaDest} 불가침 조약을 체결했습니다.")
 
         pushDestGeneralLog("<D><b>${n.name}</b></>${josaWaSrc} 불가침에 성공했습니다.")
         pushDestGeneralHistoryLog("<D><b>${n.name}</b></>${josaWaSrc} 불가침 성공")

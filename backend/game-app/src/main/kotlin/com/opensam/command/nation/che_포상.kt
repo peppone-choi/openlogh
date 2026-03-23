@@ -81,7 +81,8 @@ class che_포상(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
         val amountText = String.format("%,d", amount)
         pushLog("<Y>${destGen.name}</>에게 $resName <C>$amountText</>을 수여했습니다. <1>$date</>")
         pushHistoryLog("<Y>${destGen.name}</>에게 $resName <C>$amountText</>을 수여했습니다. <1>$date</>")
-        pushGlobalLog("<Y>${general.name}</>${pickJosa(general.name, "이")} <Y>${destGen.name}</>에게 ${resName}을 포상했습니다.")
+        pushNationalHistoryLog("<Y>${general.name}</>${pickJosa(general.name, "이")} <Y>${destGen.name}</>에게 ${resName}을 포상했습니다.")
+        pushDestGeneralLog("${resName} <C>$amountText</>을 포상받았습니다. <1>$date</>")
         return CommandResult(true, logs)
     }
 }

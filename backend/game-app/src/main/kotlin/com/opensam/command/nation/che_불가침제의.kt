@@ -43,7 +43,6 @@ class che_불가침제의(general: General, env: CommandEnv, arg: Map<String, An
         pushHistoryLog("<D><b>${dn.name}</b></>${josaRo} 불가침 제의 서신을 보냈습니다.")
         pushNationalHistoryLog("<Y>${general.name}</>${pickJosa(general.name, "이")} <D><b>${dn.name}</b></>${josaRo} 불가침 제의를 보냈습니다.")
         pushDestNationalHistoryLog("<D><b>${n.name}</b></>의 <Y>${general.name}</>${pickJosa(general.name, "이")} 아국에 불가침을 제의했습니다.")
-        pushGlobalHistoryLog("<Y>${general.name}</>${pickJosa(general.name, "이")} <D><b>${dn.name}</b></>에 불가침을 제의했습니다.")
 
         services!!.diplomacyService.proposeNonAggression(env.worldId, n.id, dn.id)
         general.experience += 50

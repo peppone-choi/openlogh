@@ -39,6 +39,13 @@ interface RecordRepository : JpaRepository<Record, Long> {
         month: Int
     ): List<Record>
 
+    fun findByWorldIdAndRecordTypeInAndYearAndMonthOrderByCreatedAtDesc(
+        worldId: Long,
+        recordType: List<String>,
+        year: Int,
+        month: Int
+    ): List<Record>
+
     @Query(
         """
         SELECT r FROM Record r 

@@ -11,6 +11,7 @@ data class PublicCachedMapCityResponse(
     val region: Int? = null,
     val nationName: String,
     val nationColor: String,
+    val nationAbbr: String? = null,
     val isCapital: Boolean = false,
     val supplyState: Int = 1,
     val state: Int = 0,
