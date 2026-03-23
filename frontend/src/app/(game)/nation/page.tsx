@@ -6,7 +6,7 @@ import { useWorldStore } from '@/stores/worldStore';
 import { useGeneralStore } from '@/stores/generalStore';
 import { nationApi, generalApi, cityApi, nationPolicyApi, diplomacyApi, historyApi } from '@/lib/gameApi';
 import { subscribeWebSocket } from '@/lib/websocket';
-import type { Nation, General, City, NationPolicyInfo, Diplomacy, Message } from '@/types';
+import type { Nation, General, City, NationPolicyInfo, Diplomacy, GameRecord } from '@/types';
 import { ChevronDown, ChevronRight, Flag } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -110,7 +110,7 @@ function NationPageContent() {
     const [error, setError] = useState<string | null>(null);
     const [generalSort, setGeneralSort] = useState('officer');
     const [citySort, setCitySort] = useState('name');
-    const [nationHistoryLogs, setNationHistoryLogs] = useState<Message[]>([]);
+    const [nationHistoryLogs, setNationHistoryLogs] = useState<GameRecord[]>([]);
     const [showNationChronicle, setShowNationChronicle] = useState(false);
 
     // 내무부 edit state
@@ -148,45 +148,8 @@ function NationPageContent() {
             setGenerals((res[1] as { data: General[] }).data);
             setCities((res[2] as { data: City[] }).data);
 
-            const historyRes = await historyApi.getWorldHistory(wId);
-            const logs = historyRes.data.filter((msg) => {
-                const payload = msg.payload;
-                const text =
-                    typeof payload?.content === 'string'
-                        ? payload.content
-                        : typeof payload?.description === 'string'
-                          ? payload.description
-                          : typeof payload?.message === 'string'
-                            ? payload.message
-                            : '';
-
-                const payloadNationId =
-                    typeof payload?.nationId === 'number'
-                        ? payload.nationId
-                        : typeof payload?.srcNationId === 'number'
-                          ? payload.srcNationId
-                          : typeof payload?.destNationId === 'number'
-                            ? payload.destNationId
-                            : null;
-
-                const payloadNationName =
-                    typeof payload?.nationName === 'string'
-                        ? payload.nationName
-                        : typeof payload?.srcNationName === 'string'
-                          ? payload.srcNationName
-                          : typeof payload?.destNationName === 'string'
-                            ? payload.destNationName
-                            : null;
-
-                return (
-                    msg.srcId === nId ||
-                    msg.destId === nId ||
-                    payloadNationId === nId ||
-                    payloadNationName === nationData.name ||
-                    text.includes(nationData.name)
-                );
-            });
-            setNationHistoryLogs(logs);
+            const historyRes = await historyApi.getNationHistory(nId);
+            setNationHistoryLogs(historyRes.data);
 
             if (off) {
                 const pol = (res[3] as { data: NationPolicyInfo }).data;
@@ -1064,13 +1027,9 @@ function NationPageContent() {
                                                 <div className="space-y-1 p-2">
                                                     {nationHistoryLogs.map((msg) => {
                                                         const text =
-                                                            typeof msg.payload?.content === 'string'
-                                                                ? msg.payload.content
-                                                                : typeof msg.payload?.description === 'string'
-                                                                  ? msg.payload.description
-                                                                  : typeof msg.payload?.message === 'string'
-                                                                    ? msg.payload.message
-                                                                    : JSON.stringify(msg.payload ?? {});
+                                                            typeof msg.payload.message === 'string'
+                                                                ? msg.payload.message
+                                                                : JSON.stringify(msg.payload);
 
                                                         return (
                                                             <div

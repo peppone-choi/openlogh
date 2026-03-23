@@ -11,6 +11,7 @@ import com.opensam.entity.City
 import com.opensam.model.CrewType
 import com.opensam.entity.General
 import com.opensam.entity.Message
+import com.opensam.entity.Record
 import com.opensam.entity.WorldState
 import com.opensam.entity.OldNation
 import com.opensam.repository.CityRepository
@@ -19,6 +20,7 @@ import com.opensam.repository.MessageRepository
 import com.opensam.repository.NationRepository
 import com.opensam.repository.NationTurnRepository
 import com.opensam.repository.OldNationRepository
+import com.opensam.repository.RecordRepository
 import com.opensam.repository.TroopRepository
 import com.opensam.service.GameConstService
 import com.opensam.service.HistoryService
@@ -35,6 +37,7 @@ class BattleService(
     private val generalRepository: GeneralRepository,
     private val nationRepository: NationRepository,
     private val messageRepository: MessageRepository,
+    private val recordRepository: RecordRepository,
     private val oldNationRepository: OldNationRepository,
     private val troopRepository: TroopRepository,
     private val nationTurnRepository: NationTurnRepository,
@@ -291,6 +294,20 @@ class BattleService(
 
         if (messages.isNotEmpty()) {
             messageRepository.saveAll(messages)
+
+            // Dual-write to records table so FrontInfoService and history page can read battle logs
+            val records = messages.map { msg ->
+                Record(
+                    worldId = msg.worldId,
+                    recordType = msg.mailboxCode,
+                    srcId = msg.srcId,
+                    destId = msg.destId,
+                    year = (msg.payload["year"] as? Int) ?: year,
+                    month = (msg.payload["month"] as? Int) ?: month,
+                    payload = msg.payload,
+                )
+            }
+            recordRepository.saveAll(records)
         }
     }
 

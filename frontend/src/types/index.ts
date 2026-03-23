@@ -1284,6 +1284,19 @@ export interface TurnStateResult {
     state: string;
 }
 
+// Game Record (returned by /api/records/*)
+export interface GameRecord {
+    id: number;
+    worldId: number;
+    recordType: string;
+    srcId: number | null;
+    destId: number | null;
+    year: number;
+    month: number;
+    payload: Record<string, unknown>;
+    createdAt: string;
+}
+
 // General Log (battle center)
 export interface GeneralLogEntry {
     id: number;

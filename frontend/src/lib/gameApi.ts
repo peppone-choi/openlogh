@@ -75,6 +75,7 @@ import type {
     TurnStateResult,
     WorldSummary,
     SelectPoolEntry,
+    GameRecord,
 } from '@/types';
 
 // World API
@@ -373,6 +374,7 @@ export const historyApi = {
         }),
     getWorldRecords: (worldId: number) => api.get<Message[]>(`/worlds/${worldId}/records`),
     getGeneralRecords: (generalId: number) => api.get<Message[]>(`/generals/${generalId}/records`),
+    getNationHistory: (nationId: number) => api.get<GameRecord[]>('/records/nation-history', { params: { nationId } }),
 };
 
 export const generalLogApi = {
