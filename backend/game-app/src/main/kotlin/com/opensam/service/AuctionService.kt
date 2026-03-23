@@ -719,6 +719,47 @@ class AuctionService(
         )
     }
 
+    /**
+     * 턴 파이프라인에서 호출: 시스템(중립) 자원 경매를 직접 등록한다.
+     * Legacy func_auction.php:registerAuction 패러티 — hostGeneralId=0 (더미 장수).
+     * 실제 장수 조회 없이 Auction 엔티티를 직접 생성한다.
+     */
+    @Transactional
+    fun openSystemResourceAuction(
+        worldId: Long,
+        subType: String,
+        amount: Int,
+        closeTurnCnt: Int,
+        startBidAmount: Int,
+        finishBidAmount: Int,
+    ) {
+        val world = worldStateRepository.findById(worldId.toShort()).orElse(null) ?: return
+        val now = OffsetDateTime.now()
+        val turnSeconds = world.tickSeconds.toLong().coerceAtLeast(60L)
+        val closeDate = now.plusSeconds(turnSeconds * closeTurnCnt)
+        val auction = Auction(
+            worldId = worldId,
+            sellerGeneralId = 0L,
+            type = RESOURCE_AUCTION_TYPE,
+            subType = subType,
+            itemCode = subType,
+            amount = amount,
+            minPrice = startBidAmount,
+            startBidAmount = startBidAmount,
+            finishBidAmount = finishBidAmount,
+            currentPrice = 0,
+            buyerGeneralId = null,
+            hostGeneralId = 0L,
+            hostName = "시스템",
+            closeDateExtensionCount = 3,
+            status = "open",
+            createdAt = now,
+            expiresAt = closeDate,
+            meta = mutableMapOf("closeTurnCnt" to closeTurnCnt),
+        )
+        auctionRepository.save(auction)
+    }
+
     @Scheduled(fixedDelayString = "\${app.auction.expire-interval-ms:60000}")
     @Transactional
     fun processExpiredAuctions() {

@@ -49,6 +49,8 @@ class TurnServiceTest {
     private lateinit var uniqueLotteryService: UniqueLotteryService
     private lateinit var generalAI: GeneralAI
     private lateinit var nationAI: NationAI
+    private lateinit var auctionService: com.opensam.service.AuctionService
+    private lateinit var tournamentService: com.opensam.service.TournamentService
 
     /** Mockito `any()` returns null which breaks Kotlin non-null params. This helper casts it. */
     @Suppress("UNCHECKED_CAST")
@@ -78,8 +80,8 @@ class TurnServiceTest {
         nationAI = mock(NationAI::class.java)
 
         val yearbookService = mock(YearbookService::class.java)
-        val auctionService = mock(com.opensam.service.AuctionService::class.java)
-        val tournamentService = mock(com.opensam.service.TournamentService::class.java)
+        auctionService = mock(com.opensam.service.AuctionService::class.java)
+        tournamentService = mock(com.opensam.service.TournamentService::class.java)
         val worldPortFactory = JpaWorldPortFactory(
             generalRepository = generalRepository,
             cityRepository = cityRepository,
@@ -405,6 +407,36 @@ class TurnServiceTest {
         service.processWorld(world)
 
         assertEquals(200.toShort(), general.killTurn, "killTurn above global should not be lowered")
+    }
+
+    // ========== triggerTournament ==========
+
+    @Test
+    fun `triggerTournament delegates to tournamentService checkAndTriggerTournament`() {
+        val now = OffsetDateTime.now()
+        val world = createWorld(year = 200, month = 6, tickSeconds = 300, updatedAt = now.minusSeconds(400))
+        `when`(generalRepository.findByWorldId(1L)).thenReturn(emptyList())
+
+        service.processWorld(world)
+
+        // checkAndTriggerTournament should be called once per turn processed
+        verify(tournamentService, atLeastOnce()).checkAndTriggerTournament(anyNonNull())
+    }
+
+    // ========== registerAuction ==========
+
+    @Test
+    fun `registerAuction queries active auctions and may open system auction`() {
+        val now = OffsetDateTime.now()
+        val world = createWorld(year = 200, month = 6, tickSeconds = 300, updatedAt = now.minusSeconds(400))
+        `when`(generalRepository.findByWorldId(1L)).thenReturn(emptyList())
+        // Return empty list so both probabilities are at 1/5 (neutral counts = 0)
+        `when`(auctionService.listActiveAuctions(1L)).thenReturn(emptyList())
+
+        service.processWorld(world)
+
+        // listActiveAuctions must be called to check neutral auction counts
+        verify(auctionService, atLeastOnce()).listActiveAuctions(1L)
     }
 
     @Test

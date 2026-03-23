@@ -452,6 +452,35 @@ class TournamentService(
         worldStateRepository.save(world)
     }
 
+    /**
+     * 턴 파이프라인에서 호출: 자동 토너먼트 시작 조건 체크.
+     * Legacy func.php:triggerTournament 패러티:
+     *   - tournament != 0 (이미 진행 중) → 무시
+     *   - tnmt_auto=false (수동) → 무시
+     *   - 40% 확률로 시작
+     *   - tnmt_pattern 큐에서 type 결정 (0=전력전 40%, 1=통솔전, 2=일기토, 3=설전 각 20%)
+     */
+    @Transactional
+    fun checkAndTriggerTournament(world: com.opensam.entity.WorldState) {
+        val state = (world.meta["tournamentState"] as? Number)?.toInt() ?: 0
+        if (state != 0) return
+
+        val isAuto = (world.meta["tournamentAuto"] as? Boolean) ?: false
+        if (!isAuto) return
+
+        if (Math.random() >= 0.4) return
+
+        @Suppress("UNCHECKED_CAST")
+        val pattern = (world.meta["tnmt_pattern"] as? MutableList<Int>)?.toMutableList()
+            ?: mutableListOf(0, 0, 1, 2, 3).also { it.shuffle() }
+
+        val type = pattern.removeLastOrNull() ?: 0
+        world.meta["tnmt_pattern"] = pattern
+        worldStateRepository.save(world)
+
+        createTournament(world.id.toLong(), type)
+    }
+
     private fun readAnyMutableList(raw: Any?): MutableList<Any> {
         if (raw !is Iterable<*>) return mutableListOf()
         return raw.mapNotNull { it }.toMutableList()

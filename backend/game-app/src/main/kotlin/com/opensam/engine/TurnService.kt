@@ -967,24 +967,63 @@ class TurnService @Autowired constructor(
 
     /**
      * H7: Trigger monthly tournament check.
-     * Legacy: postUpdateMonthly — 특정 월에 토너먼트 시작 조건 체크.
-     * TODO: implement tournament trigger condition check.
+     * Legacy func.php:triggerTournament 패러티:
+     *   tournament==0 && tnmt_auto && 40% chance → tnmt_pattern 큐에서 타입 선택 후 startTournament
      */
-    private fun triggerTournament(@Suppress("UNUSED_PARAMETER") world: WorldState) {
-        // Legacy: tournament==0 && tnmt_trig && 40% chance → startTournament(tnmt_type)
-        // TODO: implement auto-tournament trigger condition check via tournamentService
-        logger.debug("TODO: triggerTournament not yet implemented for world {}", world.id)
+    private fun triggerTournament(world: WorldState) {
+        tournamentService.checkAndTriggerTournament(world)
     }
 
     /**
      * H7: Register monthly auction entries.
-     * Legacy: postUpdateMonthly — 특정 조건에서 자동 경매 등록.
-     * TODO: implement auction auto-registration condition check.
+     * Legacy func_auction.php:registerAuction 패러티:
+     *   - 비NPC 장수 평균 금/쌀 계산 (클램프 1000~20000)
+     *   - 중립 buyRice 경매 수 기반 확률로 쌀 판매(시스템→구매자) 경매 등록
+     *   - 중립 sellRice 경매 수 기반 확률로 쌀 구매(시스템←판매자) 경매 등록
      */
-    private fun registerAuction(@Suppress("UNUSED_PARAMETER") world: WorldState) {
-        // Legacy: probability-based neutral buyRice/sellRice auction registration based on avg gold/rice
-        // TODO: implement auto-auction registration via auctionService
-        logger.debug("TODO: registerAuction not yet implemented for world {}", world.id)
+    private fun registerAuction(world: WorldState) {
+        val worldId = world.id.toLong()
+        val generals = generalRepository.findByWorldId(worldId)
+        val humanGenerals = generals.filter { it.npcState.toInt() < 2 }
+
+        val avgGold = if (humanGenerals.isEmpty()) 1000.0
+            else humanGenerals.map { it.gold.toDouble() }.average()
+        val avgRice = if (humanGenerals.isEmpty()) 1000.0
+            else humanGenerals.map { it.rice.toDouble() }.average()
+
+        val clampedGold = avgGold.coerceIn(1000.0, 20000.0)
+        val clampedRice = avgRice.coerceIn(1000.0, 20000.0)
+
+        val openAuctions = auctionService.listActiveAuctions(worldId)
+            .filter { it.hostGeneralId == 0L }
+        val neutralBuyRiceCnt = openAuctions.count { it.subType == "buyRice" }
+        val neutralSellRiceCnt = openAuctions.count { it.subType == "sellRice" }
+
+        val rng = java.util.Random()
+
+        // 쌀 판매 경매 등록 (시스템이 쌀을 팔고 금을 받음 → buyRice subtype)
+        if (rng.nextDouble() < 1.0 / (neutralBuyRiceCnt + 5)) {
+            val mul = rng.nextInt(5) + 1
+            val amount = (clampedRice / 20.0 * mul).toLong().coerceAtLeast(100).coerceAtMost(10000).toInt()
+            val startBid = (clampedGold / 20.0 * 0.9 * mul)
+                .coerceIn(amount * 0.8, amount * 1.2)
+                .toLong().coerceAtLeast(100).toInt()
+            val finishBid = (amount * 2.0).toLong().coerceAtLeast((startBid * 1.1).toLong()).toInt()
+            val term = rng.nextInt(10) + 3
+            auctionService.openSystemResourceAuction(worldId, "buyRice", amount, term, startBid, finishBid)
+        }
+
+        // 쌀 구매 경매 등록 (시스템이 쌀을 사고 금을 줌 → sellRice subtype)
+        if (rng.nextDouble() < 1.0 / (neutralSellRiceCnt + 5)) {
+            val mul = rng.nextInt(5) + 1
+            val amount = (clampedGold / 20.0 * mul).toLong().coerceAtLeast(100).coerceAtMost(10000).toInt()
+            val startBid = (clampedRice / 20.0 * 1.1 * mul)
+                .coerceIn(amount * 0.8, amount * 1.2)
+                .toLong().coerceAtLeast(100).toInt()
+            val finishBid = (amount * 2.0).toLong().coerceAtLeast((startBid * 1.1).toLong()).toInt()
+            val term = rng.nextInt(10) + 3
+            auctionService.openSystemResourceAuction(worldId, "sellRice", amount, term, startBid, finishBid)
+        }
     }
 
     /**
