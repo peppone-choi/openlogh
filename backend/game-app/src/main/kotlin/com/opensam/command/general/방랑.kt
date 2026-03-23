@@ -12,6 +12,7 @@ class 방랑(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
     : GeneralCommand(general, env, arg) {
 
     override val actionName = "방랑"
+    override val canDisplay = false
 
     override val fullConditionConstraints: List<Constraint>
         get() {

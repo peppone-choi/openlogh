@@ -12,6 +12,7 @@ class 접경귀환(general: General, env: CommandEnv, arg: Map<String, Any>? = n
     : GeneralCommand(general, env, arg) {
 
     override val actionName = "접경귀환"
+    override val canDisplay = false
 
     override val minConditionConstraints: List<Constraint> = listOf(NotBeNeutral())
 

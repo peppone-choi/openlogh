@@ -12,6 +12,7 @@ class 모반시도(general: General, env: CommandEnv, arg: Map<String, Any>? = n
     : GeneralCommand(general, env, arg) {
 
     override val actionName = "모반시도"
+    override val canDisplay = false
 
     override val minConditionConstraints = listOf(NotBeNeutral(), BeChief(), NotLord())
 

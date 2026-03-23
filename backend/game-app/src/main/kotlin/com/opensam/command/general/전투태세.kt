@@ -17,6 +17,7 @@ class 전투태세(general: General, env: CommandEnv, arg: Map<String, Any>? = n
     : GeneralCommand(general, env, arg) {
 
     override val actionName = "전투태세"
+    override val canDisplay = false
 
     override val fullConditionConstraints: List<Constraint>
         get() {
