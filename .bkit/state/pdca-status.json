@@ -1,6 +1,6 @@
 {
     "version": "3.0",
-    "lastUpdated": "2026-03-24T09:53:26.509Z",
+    "lastUpdated": "2026-03-24T14:31:52.432Z",
     "activeFeatures": [
         "engine",
         "war",
@@ -35,7 +35,16 @@
         "dto",
         "join",
         "inherit",
-        "(game)"
+        "(game)",
+        "3d-battle",
+        "camera",
+        "terrain",
+        "battle-3d",
+        "units",
+        "hud",
+        "effects",
+        "battle-simulator",
+        "map-3d"
     ],
     "primaryFeature": "engine",
     "features": {
@@ -48,7 +57,7 @@
             "documents": {},
             "timestamps": {
                 "started": "2026-03-23T07:03:03.192Z",
-                "lastUpdated": "2026-03-24T09:32:18.376Z"
+                "lastUpdated": "2026-03-24T10:24:48.577Z"
             },
             "lastFile": "/Users/apple/Desktop/opensamguk/backend/game-app/src/main/kotlin/com/opensam/engine/TurnService.kt"
         },
@@ -61,9 +70,9 @@
             "documents": {},
             "timestamps": {
                 "started": "2026-03-23T07:03:30.290Z",
-                "lastUpdated": "2026-03-23T10:49:00.167Z"
+                "lastUpdated": "2026-03-24T13:13:22.427Z"
             },
-            "lastFile": "/Users/apple/Desktop/opensamguk/backend/game-app/src/test/kotlin/com/opensam/engine/war/BattleEngineTest.kt"
+            "lastFile": "/Users/apple/Desktop/opensamguk/backend/game-app/src/main/kotlin/com/opensam/engine/war/BattleEngine.kt"
         },
         "service": {
             "phase": "do",
@@ -74,9 +83,9 @@
             "documents": {},
             "timestamps": {
                 "started": "2026-03-23T07:03:46.614Z",
-                "lastUpdated": "2026-03-24T08:31:40.530Z"
+                "lastUpdated": "2026-03-24T13:14:33.558Z"
             },
-            "lastFile": "/Users/apple/Desktop/opensamguk/backend/game-app/src/main/kotlin/com/opensam/service/CommandService.kt"
+            "lastFile": "/Users/apple/Desktop/opensamguk/backend/game-app/src/main/kotlin/com/opensam/service/BattleSimService.kt"
         },
         "general": {
             "phase": "do",
@@ -113,7 +122,7 @@
             "documents": {},
             "timestamps": {
                 "started": "2026-03-23T07:40:21.882Z",
-                "lastUpdated": "2026-03-24T09:53:26.509Z"
+                "lastUpdated": "2026-03-24T10:24:03.648Z"
             },
             "lastFile": "/Users/apple/Desktop/opensamguk/backend/game-app/src/main/kotlin/com/opensam/command/CommandExecutor.kt"
         },
@@ -217,9 +226,9 @@
             "documents": {},
             "timestamps": {
                 "started": "2026-03-23T11:46:41.223Z",
-                "lastUpdated": "2026-03-24T05:33:37.100Z"
+                "lastUpdated": "2026-03-24T14:31:52.432Z"
             },
-            "lastFile": "/Users/apple/Desktop/opensamguk/frontend/src/components/game/nation-basic-card.test.ts"
+            "lastFile": "/Users/apple/Desktop/opensamguk/frontend/src/components/game/map-viewer.tsx"
         },
         "trigger": {
             "phase": "do",
@@ -269,9 +278,9 @@
             "documents": {},
             "timestamps": {
                 "started": "2026-03-24T00:32:24.227Z",
-                "lastUpdated": "2026-03-24T03:17:30.857Z"
+                "lastUpdated": "2026-03-24T14:27:36.507Z"
             },
-            "lastFile": "/Users/apple/Desktop/opensamguk/frontend/src/lib/gameApi.ts"
+            "lastFile": "/Users/apple/Desktop/opensamguk/frontend/src/lib/map3d-utils.ts"
         },
         "city": {
             "phase": "do",
@@ -349,9 +358,9 @@
             "documents": {},
             "timestamps": {
                 "started": "2026-03-24T01:50:23.956Z",
-                "lastUpdated": "2026-03-24T02:26:16.191Z"
+                "lastUpdated": "2026-03-24T13:14:19.176Z"
             },
-            "lastFile": "/Users/apple/Desktop/opensamguk/frontend/src/stores/tutorialStore.test.ts"
+            "lastFile": "/Users/apple/Desktop/opensamguk/frontend/src/stores/battle3dStore.ts"
         },
         "create": {
             "phase": "do",
@@ -388,9 +397,9 @@
             "documents": {},
             "timestamps": {
                 "started": "2026-03-24T01:58:20.466Z",
-                "lastUpdated": "2026-03-24T01:58:20.466Z"
+                "lastUpdated": "2026-03-24T13:48:04.687Z"
             },
-            "lastFile": "/Users/apple/Desktop/opensamguk/frontend/src/app/(tutorial)/tutorial/battle/page.tsx"
+            "lastFile": "/Users/apple/Desktop/opensamguk/frontend/src/app/(game)/battle/page.tsx"
         },
         "diplomacy": {
             "phase": "do",
@@ -440,9 +449,9 @@
             "documents": {},
             "timestamps": {
                 "started": "2026-03-24T03:11:24.354Z",
-                "lastUpdated": "2026-03-24T03:11:24.354Z"
+                "lastUpdated": "2026-03-24T13:11:57.585Z"
             },
-            "lastFile": "/Users/apple/Desktop/opensamguk/backend/game-app/src/main/kotlin/com/opensam/dto/InheritanceDtos.kt"
+            "lastFile": "/Users/apple/Desktop/opensamguk/backend/game-app/src/main/kotlin/com/opensam/dto/BattleSimDtos.kt"
         },
         "join": {
             "phase": "do",
@@ -482,6 +491,142 @@
                 "lastUpdated": "2026-03-24T03:28:34.485Z"
             },
             "lastFile": "/Users/apple/Desktop/opensamguk/frontend/src/app/(game)/page.tsx"
+        },
+        "3d-battle": {
+            "phase": "do",
+            "phaseNumber": 3,
+            "matchRate": null,
+            "iterationCount": 0,
+            "requirements": [],
+            "documents": {
+                "plan": "docs/01-plan/features/3d-battle.plan.md",
+                "design": "docs/02-design/features/3d-battle.design.md"
+            },
+            "timestamps": {
+                "started": "2026-03-24T12:00:00.000Z",
+                "lastUpdated": "2026-03-24T13:00:00.000Z"
+            },
+            "lastFile": "frontend/src/components/battle-3d/Battle3DScene.tsx"
+        },
+        "3d-map": {
+            "phase": "do",
+            "phaseNumber": 3,
+            "matchRate": null,
+            "iterationCount": 0,
+            "requirements": [],
+            "documents": {
+                "plan": "docs/01-plan/features/3d-map.plan.md",
+                "design": "docs/02-design/features/3d-map.design.md"
+            },
+            "timestamps": {
+                "started": "2026-03-24T14:00:00.000Z",
+                "lastUpdated": "2026-03-24T16:00:00.000Z"
+            },
+            "lastFile": "docs/02-design/features/3d-map.design.md"
+        },
+        "camera": {
+            "phase": "do",
+            "phaseNumber": 3,
+            "matchRate": null,
+            "iterationCount": 0,
+            "requirements": [],
+            "documents": {},
+            "timestamps": {
+                "started": "2026-03-24T13:11:26.130Z",
+                "lastUpdated": "2026-03-24T13:17:45.622Z"
+            },
+            "lastFile": "/Users/apple/Desktop/opensamguk/frontend/src/components/battle-3d/camera/CameraController.tsx"
+        },
+        "terrain": {
+            "phase": "do",
+            "phaseNumber": 3,
+            "matchRate": null,
+            "iterationCount": 0,
+            "requirements": [],
+            "documents": {},
+            "timestamps": {
+                "started": "2026-03-24T13:11:48.625Z",
+                "lastUpdated": "2026-03-24T13:18:19.401Z"
+            },
+            "lastFile": "/Users/apple/Desktop/opensamguk/frontend/src/components/battle-3d/terrain/TerrainGenerator.tsx"
+        },
+        "battle-3d": {
+            "phase": "do",
+            "phaseNumber": 3,
+            "matchRate": null,
+            "iterationCount": 0,
+            "requirements": [],
+            "documents": {},
+            "timestamps": {
+                "started": "2026-03-24T13:14:08.734Z",
+                "lastUpdated": "2026-03-24T13:35:48.545Z"
+            },
+            "lastFile": "/Users/apple/Desktop/opensamguk/frontend/src/components/battle-3d/Battle3DScene.tsx"
+        },
+        "units": {
+            "phase": "do",
+            "phaseNumber": 3,
+            "matchRate": null,
+            "iterationCount": 0,
+            "requirements": [],
+            "documents": {},
+            "timestamps": {
+                "started": "2026-03-24T13:20:53.547Z",
+                "lastUpdated": "2026-03-24T13:22:01.067Z"
+            },
+            "lastFile": "/Users/apple/Desktop/opensamguk/frontend/src/components/battle-3d/units/UnitManager.tsx"
+        },
+        "hud": {
+            "phase": "do",
+            "phaseNumber": 3,
+            "matchRate": null,
+            "iterationCount": 0,
+            "requirements": [],
+            "documents": {},
+            "timestamps": {
+                "started": "2026-03-24T13:21:38.514Z",
+                "lastUpdated": "2026-03-24T13:23:17.052Z"
+            },
+            "lastFile": "/Users/apple/Desktop/opensamguk/frontend/src/components/battle-3d/hud/BattleHUD.tsx"
+        },
+        "effects": {
+            "phase": "do",
+            "phaseNumber": 3,
+            "matchRate": null,
+            "iterationCount": 0,
+            "requirements": [],
+            "documents": {},
+            "timestamps": {
+                "started": "2026-03-24T13:22:24.783Z",
+                "lastUpdated": "2026-03-24T13:23:44.235Z"
+            },
+            "lastFile": "/Users/apple/Desktop/opensamguk/frontend/src/components/battle-3d/effects/ParticleManager.tsx"
+        },
+        "battle-simulator": {
+            "phase": "do",
+            "phaseNumber": 3,
+            "matchRate": null,
+            "iterationCount": 0,
+            "requirements": [],
+            "documents": {},
+            "timestamps": {
+                "started": "2026-03-24T13:25:31.097Z",
+                "lastUpdated": "2026-03-24T13:45:48.846Z"
+            },
+            "lastFile": "/Users/apple/Desktop/opensamguk/frontend/src/app/(game)/battle-simulator/page.tsx"
+        },
+        "map-3d": {
+            "phase": "do",
+            "phaseNumber": 3,
+            "matchRate": null,
+            "iterationCount": 0,
+            "requirements": [],
+            "documents": {},
+            "timestamps": {
+                "started": "2026-03-24T14:29:28.646Z",
+                "lastUpdated": "2026-03-24T14:30:27.016Z"
+            },
+            "lastFile": "/Users/apple/Desktop/opensamguk/frontend/src/components/map-3d/MapHUD.tsx"
         }
     },
     "pipeline": {
@@ -492,7 +637,7 @@
     "session": {
         "startedAt": "2026-03-23T06:31:12.665Z",
         "onboardingCompleted": false,
-        "lastActivity": "2026-03-24T09:53:26.509Z"
+        "lastActivity": "2026-03-24T14:31:52.432Z"
     },
     "history": [
         {
@@ -2574,6 +2719,426 @@
         {
             "timestamp": "2026-03-24T09:53:26.509Z",
             "feature": "command",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T10:13:12.382Z",
+            "feature": "engine",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T10:21:47.731Z",
+            "feature": "command",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T10:22:35.876Z",
+            "feature": "command",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T10:23:22.796Z",
+            "feature": "command",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T10:24:03.648Z",
+            "feature": "command",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T10:24:48.577Z",
+            "feature": "engine",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T13:08:42.305Z",
+            "feature": "frontend",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T13:09:12.389Z",
+            "feature": "frontend",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T13:11:26.130Z",
+            "feature": "camera",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T13:11:48.625Z",
+            "feature": "terrain",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T13:11:57.585Z",
+            "feature": "dto",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T13:11:58.238Z",
+            "feature": "frontend",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T13:12:33.904Z",
+            "feature": "camera",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T13:12:48.780Z",
+            "feature": "frontend",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T13:12:58.271Z",
+            "feature": "terrain",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T13:13:22.427Z",
+            "feature": "war",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T13:13:48.026Z",
+            "feature": "frontend",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T13:13:56.123Z",
+            "feature": "service",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T13:14:08.734Z",
+            "feature": "battle-3d",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T13:14:19.176Z",
+            "feature": "stores",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T13:14:33.558Z",
+            "feature": "service",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T13:14:59.296Z",
+            "feature": "battle-3d",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T13:15:23.796Z",
+            "feature": "frontend",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T13:16:08.807Z",
+            "feature": "frontend",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T13:17:22.143Z",
+            "feature": "camera",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T13:17:45.623Z",
+            "feature": "camera",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T13:18:19.401Z",
+            "feature": "terrain",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T13:18:43.462Z",
+            "feature": "frontend",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T13:20:53.547Z",
+            "feature": "units",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T13:21:16.253Z",
+            "feature": "units",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T13:21:38.514Z",
+            "feature": "hud",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T13:22:01.067Z",
+            "feature": "units",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T13:22:08.100Z",
+            "feature": "hud",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T13:22:24.783Z",
+            "feature": "effects",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T13:22:43.311Z",
+            "feature": "hud",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T13:23:05.353Z",
+            "feature": "effects",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T13:23:17.052Z",
+            "feature": "hud",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T13:23:44.235Z",
+            "feature": "effects",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T13:23:51.030Z",
+            "feature": "frontend",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T13:24:25.155Z",
+            "feature": "battle",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T13:24:58.939Z",
+            "feature": "battle",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T13:25:31.097Z",
+            "feature": "battle-simulator",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T13:26:03.762Z",
+            "feature": "battle-simulator",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T13:26:47.388Z",
+            "feature": "battle-simulator",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T13:35:03.957Z",
+            "feature": "battle-3d",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T13:35:48.545Z",
+            "feature": "battle-3d",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T13:36:56.937Z",
+            "feature": "battle",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T13:37:46.810Z",
+            "feature": "battle",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T13:38:54.534Z",
+            "feature": "battle",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T13:39:54.553Z",
+            "feature": "battle",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T13:40:42.244Z",
+            "feature": "battle",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T13:44:45.105Z",
+            "feature": "battle-simulator",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T13:45:16.309Z",
+            "feature": "battle-simulator",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T13:45:48.846Z",
+            "feature": "battle-simulator",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T13:46:29.978Z",
+            "feature": "battle",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T13:47:08.862Z",
+            "feature": "battle",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T13:47:38.758Z",
+            "feature": "battle",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T13:48:04.687Z",
+            "feature": "battle",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T14:27:36.507Z",
+            "feature": "frontend",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T14:29:28.647Z",
+            "feature": "map-3d",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T14:29:35.774Z",
+            "feature": "map-3d",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T14:29:49.056Z",
+            "feature": "map-3d",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T14:29:58.398Z",
+            "feature": "map-3d",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T14:30:13.286Z",
+            "feature": "map-3d",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T14:30:16.600Z",
+            "feature": "map-3d",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T14:30:27.016Z",
+            "feature": "map-3d",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T14:30:49.752Z",
+            "feature": "game",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T14:31:08.857Z",
+            "feature": "game",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T14:31:31.695Z",
+            "feature": "game",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T14:31:52.432Z",
+            "feature": "game",
             "phase": "do",
             "action": "updated"
         }

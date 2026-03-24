@@ -1046,8 +1046,19 @@ export interface BattleSimResult {
     defendersRemaining?: number[];
 }
 
+export interface BattlePhaseDetail {
+    phase: number;
+    attackerHp: number;
+    defenderHp: number;
+    attackerDamage: number;
+    defenderDamage: number;
+    defenderIndex: number;
+    events: string[];
+}
+
 export interface BattleSimResponse extends BattleSimResult {
     repeatSummary?: BattleSimRepeatResult;
+    phaseDetails?: BattlePhaseDetail[];
 }
 
 // Nation Policy

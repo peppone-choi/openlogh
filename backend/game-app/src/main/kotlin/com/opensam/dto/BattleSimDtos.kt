@@ -42,6 +42,17 @@ data class SimulateRequest(
     val defenderCity: SimCityInfo = SimCityInfo(),
     val terrain: String = "plain",
     val weather: String = "clear",
+    val detailed: Boolean = false,
+)
+
+data class BattlePhaseDetail(
+    val phase: Int,
+    val attackerHp: Int,
+    val defenderHp: Int,
+    val attackerDamage: Int,
+    val defenderDamage: Int,
+    val defenderIndex: Int = 0,
+    val events: List<String> = emptyList(),
 )
 
 data class SimulateResult(
@@ -53,4 +64,5 @@ data class SimulateResult(
     val terrain: String,
     val weather: String,
     val logs: List<String>,
+    val phaseDetails: List<BattlePhaseDetail>? = null,
 )

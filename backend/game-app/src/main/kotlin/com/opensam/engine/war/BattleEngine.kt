@@ -314,6 +314,291 @@ class BattleEngine {
         )
     }
 
+    data class BattleResultWithPhases(
+        val battleResult: BattleResult,
+        val phaseDetails: List<com.opensam.dto.BattlePhaseDetail>,
+    )
+
+    fun resolveBattleWithPhases(
+        attacker: WarUnitGeneral,
+        defenders: List<WarUnit>,
+        city: City,
+        rng: Random,
+        year: Int = 200,
+        startYear: Int = 180,
+    ): BattleResultWithPhases {
+        val phaseDetails = mutableListOf<com.opensam.dto.BattlePhaseDetail>()
+        val logs = mutableListOf<String>()
+        var totalAttackerDamage = 0
+        var totalDefenderDamage = 0
+        var attackerDamageDealtForExp = 0
+        val defenderDamageDealtForExp = mutableMapOf<WarUnitGeneral, Int>()
+        var attackerWon = true
+        var cityOccupied = false
+
+        val sortedDefenders = defenders.sortedByDescending { it.calcBattleOrder() }.toMutableList()
+        val attackerTriggers = collectTriggers(attacker)
+        var attackerInjuryImmune = false
+
+        val attackerCrewType = CrewType.fromCode(attacker.crewType)
+        val maxPhase = attackerCrewType?.speed ?: 7
+        var currentPhase = 0
+        val cityUnit = WarUnitCity(city, year, startYear)
+        var defenderIndex = 0
+        var currentDefender: WarUnit? = if (sortedDefenders.isNotEmpty()) sortedDefenders[0] else null
+        var inSiege = false
+        var defenderInitialized = false
+
+        while (currentPhase < maxPhase) {
+            if (currentDefender == null) {
+                if (inSiege) break
+                currentDefender = cityUnit
+                inSiege = true
+                defenderInitialized = false
+            }
+
+            if (!defenderInitialized) {
+                attacker.train = (attacker.train + 1).coerceAtMost(110)
+                if (currentDefender is WarUnitGeneral) {
+                    currentDefender.train = (currentDefender.train + 1).coerceAtMost(110)
+                }
+                val defenderTriggers = collectTriggers(currentDefender)
+                val initCtx = BattleTriggerContext(attacker = attacker, defender = currentDefender, rng = rng, isVsCity = inSiege)
+                for (trigger in attackerTriggers) trigger.onBattleInit(initCtx)
+                for (trigger in defenderTriggers) trigger.onBattleInit(initCtx)
+                if (initCtx.injuryImmune) attackerInjuryImmune = true
+                logs.addAll(initCtx.battleLogs)
+                defenderInitialized = true
+            }
+
+            val attackerHpBefore = attacker.hp
+            val defenderHpBefore = currentDefender!!.hp
+
+            val phaseResult = executeCombatPhase(attacker, currentDefender, rng, phaseNumber = currentPhase, isVsCity = inSiege)
+            totalAttackerDamage += phaseResult.damage.first
+            totalDefenderDamage += phaseResult.damage.second
+            logs.addAll(phaseResult.logs)
+
+            phaseDetails.add(com.opensam.dto.BattlePhaseDetail(
+                phase = currentPhase,
+                attackerHp = attackerHpBefore,
+                defenderHp = defenderHpBefore,
+                attackerDamage = phaseResult.damage.second,
+                defenderDamage = phaseResult.damage.first,
+                defenderIndex = defenderIndex,
+                events = phaseResult.logs.toList(),
+            ))
+
+            currentPhase++
+            attackerDamageDealtForExp += phaseResult.damage.second
+            if (currentDefender is WarUnitGeneral) {
+                defenderDamageDealtForExp[currentDefender] =
+                    (defenderDamageDealtForExp[currentDefender] ?: 0) + phaseResult.damage.first
+            }
+
+            val attackerContinuation = attacker.continueWar()
+            if (!attackerContinuation.canContinue) {
+                logs.add(
+                    if (attackerContinuation.isRiceShortage) {
+                        "<Y>${attacker.name}</>이(가) 쌀 부족으로 퇴각합니다."
+                    } else {
+                        "<Y>${attacker.name}</>이(가) 병력 소진으로 퇴각합니다."
+                    }
+                )
+                attackerWon = false
+                break
+            }
+
+            val defenderCanContinue = if (currentDefender is WarUnitCity) {
+                if (inSiege) currentDefender.hp > 0 else false
+            } else if (currentDefender is WarUnitGeneral) {
+                currentDefender.continueWar().canContinue
+            } else {
+                currentDefender.isAlive
+            }
+
+            if (!defenderCanContinue) {
+                if (currentDefender is WarUnitCity && inSiege) {
+                    cityOccupied = true
+                    cityUnit.applyResults()
+                    logs.add("<R>${city.name}</> 점령!")
+                    break
+                } else if (currentDefender is WarUnitGeneral) {
+                    val defenderContinuation = currentDefender.continueWar()
+                    logs.add(
+                        if (defenderContinuation.isRiceShortage) {
+                            "<Y>${currentDefender.name}</>이(가) 쌀 부족으로 퇴각합니다."
+                        } else {
+                            "<Y>${currentDefender.name}</>이(가) 병력 소진으로 퇴각합니다."
+                        }
+                    )
+                }
+                defenderIndex++
+                if (defenderIndex < sortedDefenders.size) {
+                    currentDefender = sortedDefenders[defenderIndex]
+                    defenderInitialized = false
+                } else {
+                    currentDefender = null
+                    defenderInitialized = false
+                }
+            }
+        }
+
+        if (attackerWon && inSiege && !cityOccupied && attacker.continueWar().canContinue && cityUnit.hp > 0) {
+            while (attacker.continueWar().canContinue && cityUnit.hp > 0) {
+                val attackerHpBefore = attacker.hp
+                val defenderHpBefore = cityUnit.hp
+                val phaseResult = executeCombatPhase(attacker, cityUnit, rng, phaseNumber = currentPhase, isVsCity = true)
+                totalAttackerDamage += phaseResult.damage.first
+                totalDefenderDamage += phaseResult.damage.second
+                logs.addAll(phaseResult.logs)
+                phaseDetails.add(com.opensam.dto.BattlePhaseDetail(
+                    phase = currentPhase,
+                    attackerHp = attackerHpBefore,
+                    defenderHp = defenderHpBefore,
+                    attackerDamage = phaseResult.damage.second,
+                    defenderDamage = phaseResult.damage.first,
+                    defenderIndex = defenderIndex,
+                    events = phaseResult.logs.toList(),
+                ))
+                currentPhase++
+                attackerDamageDealtForExp += phaseResult.damage.second
+
+                val attackerContinuation = attacker.continueWar()
+                if (!attackerContinuation.canContinue) {
+                    logs.add(
+                        if (attackerContinuation.isRiceShortage) {
+                            "<Y>${attacker.name}</>이(가) 쌀 부족으로 퇴각합니다."
+                        } else {
+                            "<Y>${attacker.name}</>이(가) 병력 소진으로 퇴각합니다."
+                        }
+                    )
+                    attackerWon = false
+                    break
+                }
+                if (cityUnit.hp <= 0) {
+                    cityOccupied = true
+                    cityUnit.applyResults()
+                    logs.add("<R>${city.name}</> 점령!")
+                    break
+                }
+            }
+        }
+
+        if (attackerWon && !inSiege && !cityOccupied && attacker.continueWar().canContinue) {
+            val allDefendersDown = sortedDefenders.all { it is WarUnitGeneral && !it.continueWar().canContinue }
+            if (allDefendersDown) {
+                inSiege = true
+                val siegeInitCtx = BattleTriggerContext(attacker = attacker, defender = cityUnit, rng = rng, isVsCity = true)
+                for (trigger in attackerTriggers) trigger.onBattleInit(siegeInitCtx)
+                if (siegeInitCtx.injuryImmune) attackerInjuryImmune = true
+                logs.addAll(siegeInitCtx.battleLogs)
+
+                while (attacker.continueWar().canContinue && cityUnit.hp > 0) {
+                    val attackerHpBefore = attacker.hp
+                    val defenderHpBefore = cityUnit.hp
+                    val phaseResult = executeCombatPhase(attacker, cityUnit, rng, phaseNumber = currentPhase, isVsCity = true)
+                    totalAttackerDamage += phaseResult.damage.first
+                    totalDefenderDamage += phaseResult.damage.second
+                    logs.addAll(phaseResult.logs)
+                    phaseDetails.add(com.opensam.dto.BattlePhaseDetail(
+                        phase = currentPhase,
+                        attackerHp = attackerHpBefore,
+                        defenderHp = defenderHpBefore,
+                        attackerDamage = phaseResult.damage.second,
+                        defenderDamage = phaseResult.damage.first,
+                        defenderIndex = defenderIndex,
+                        events = phaseResult.logs.toList(),
+                    ))
+                    currentPhase++
+                    attackerDamageDealtForExp += phaseResult.damage.second
+
+                    val attackerContinuation = attacker.continueWar()
+                    if (!attackerContinuation.canContinue) {
+                        logs.add(
+                            if (attackerContinuation.isRiceShortage) {
+                                "<Y>${attacker.name}</>이(가) 쌀 부족으로 퇴각합니다."
+                            } else {
+                                "<Y>${attacker.name}</>이(가) 병력 소진으로 퇴각합니다."
+                            }
+                        )
+                        attackerWon = false
+                        break
+                    }
+                    if (cityUnit.hp <= 0) {
+                        cityOccupied = true
+                        cityUnit.applyResults()
+                        logs.add("<R>${city.name}</> 점령!")
+                        break
+                    }
+                }
+            }
+        }
+
+        attacker.pendingLevelExp += attackerDamageDealtForExp / 50
+        for ((defUnit, damageReceived) in defenderDamageDealtForExp) {
+            defUnit.pendingLevelExp += (damageReceived / 50 * 0.8).toInt()
+        }
+        if (cityOccupied) attacker.pendingLevelExp += 1000
+
+        if (attackerWon && attacker.isAlive) {
+            attacker.atmos = (attacker.atmos * 1.1).toInt().coerceAtMost(100)
+            attacker.pendingStatExp += 1
+            for (def in sortedDefenders) {
+                if (def is WarUnitGeneral) {
+                    def.atmos = (def.atmos * 1.05).toInt().coerceAtMost(100)
+                    def.pendingStatExp += 1
+                }
+            }
+        } else {
+            for (def in sortedDefenders) {
+                if (def is WarUnitGeneral) {
+                    def.atmos = (def.atmos * 1.1).toInt().coerceAtMost(100)
+                    def.pendingStatExp += 1
+                }
+            }
+            attacker.atmos = (attacker.atmos * 1.05).toInt().coerceAtMost(100)
+            attacker.pendingStatExp += 1
+        }
+
+        val injuryCtx = BattleTriggerContext(attacker = attacker, defender = attacker, rng = rng)
+        for (trigger in attackerTriggers) trigger.onInjuryCheck(injuryCtx)
+        val effectiveInjuryImmune = attackerInjuryImmune || injuryCtx.injuryImmune
+
+        if (!effectiveInjuryImmune && attacker.isAlive) {
+            if (rng.nextDouble() < 0.05) {
+                val woundAmount = rng.nextInt(10, 81)
+                attacker.injury = (attacker.injury + woundAmount).coerceAtMost(80)
+                logs.add("<Y>${attacker.name}</>이(가) 부상을 입었습니다.")
+            }
+        }
+        for (def in sortedDefenders) {
+            if (def is WarUnitGeneral && def.isAlive) {
+                if (rng.nextDouble() < 0.05) {
+                    val woundAmount = rng.nextInt(10, 81)
+                    def.injury = (def.injury + woundAmount).coerceAtMost(80)
+                    logs.add("<Y>${def.name}</>이(가) 부상을 입었습니다.")
+                }
+            }
+        }
+
+        attacker.applyResults()
+        for (def in sortedDefenders) {
+            if (def is WarUnitGeneral) def.applyResults()
+        }
+        cityUnit.applyResults()
+
+        val battleResult = BattleResult(
+            attackerWon = attackerWon && attacker.isAlive,
+            attackerLogs = logs,
+            defenderLogs = logs.toMutableList(),
+            attackerDamageDealt = totalAttackerDamage,
+            defenderDamageDealt = totalDefenderDamage,
+            cityOccupied = cityOccupied,
+        )
+        return BattleResultWithPhases(battleResult = battleResult, phaseDetails = phaseDetails)
+    }
+
     /**
      * War power result with bidirectional multipliers.
      * Legacy parity: PHP returns both myWarPowerMultiply and opposeWarPowerMultiply

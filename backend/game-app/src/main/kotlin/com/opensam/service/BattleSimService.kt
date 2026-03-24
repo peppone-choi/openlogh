@@ -1,5 +1,6 @@
 package com.opensam.service
 
+import com.opensam.dto.BattlePhaseDetail
 import com.opensam.dto.SimulateRequest
 import com.opensam.dto.SimulateResult
 import com.opensam.engine.LiteHashDRBG
@@ -65,7 +66,14 @@ class BattleSimService {
         }
 
         val randomSeed = request.attacker.name + request.defender.name + terrainKey + weatherKey
-        val result = battleEngine.resolveBattle(attackerUnit, defenderUnits, city, LiteHashDRBG.build(randomSeed))
+        val rng = LiteHashDRBG.build(randomSeed)
+
+        val (result, phaseDetails) = if (request.detailed) {
+            val r = battleEngine.resolveBattleWithPhases(attackerUnit, defenderUnits, city, rng)
+            r.battleResult to r.phaseDetails
+        } else {
+            battleEngine.resolveBattle(attackerUnit, defenderUnits, city, rng) to null
+        }
 
         val logs = mutableListOf<String>()
         logs.add("=== 전투 시뮬레이터(BattleEngine) ===")
@@ -96,6 +104,7 @@ class BattleSimService {
             terrain = terrainKey,
             weather = weatherKey,
             logs = logs,
+            phaseDetails = phaseDetails,
         )
     }
 

@@ -719,6 +719,7 @@ export const battleSimApi = {
             month?: number;
             seed?: string;
             repeatCount?: number;
+            detailed?: boolean;
         }
     ) =>
         api.post<BattleSimResponse>('/battle/simulate', {
