@@ -1,0 +1,61 @@
+import type { Nation } from '@/types';
+
+const now = new Date().toISOString();
+
+export const MOCK_NATION_SHU: Nation = {
+    id: -1,
+    worldId: -1,
+    name: '촉',
+    abbreviation: '촉',
+    color: '#DD0000',
+    capitalCityId: -1,
+    gold: 10000,
+    rice: 10000,
+    bill: 100,
+    rate: 20,
+    rateTmp: 0,
+    secretLimit: 5,
+    chiefGeneralId: -1,
+    scoutLevel: 0,
+    warState: 0,
+    strategicCmdLimit: 3,
+    surrenderLimit: 0,
+    tech: 1000,
+    power: 500,
+    level: 5,
+    typeCode: 'che_ren',
+    spy: {},
+    meta: {},
+    createdAt: now,
+    updatedAt: now,
+};
+
+export const MOCK_NATION_WEI: Nation = {
+    id: -2,
+    worldId: -1,
+    name: '위',
+    abbreviation: '위',
+    color: '#0044DD',
+    capitalCityId: -3,
+    gold: 12000,
+    rice: 12000,
+    bill: 100,
+    rate: 20,
+    rateTmp: 0,
+    secretLimit: 5,
+    chiefGeneralId: -4,
+    scoutLevel: 0,
+    warState: 0,
+    strategicCmdLimit: 3,
+    surrenderLimit: 0,
+    tech: 1200,
+    power: 600,
+    level: 5,
+    typeCode: 'che_ren',
+    spy: {},
+    meta: {},
+    createdAt: now,
+    updatedAt: now,
+};
+
+export const MOCK_NATIONS: Nation[] = [MOCK_NATION_SHU, MOCK_NATION_WEI];

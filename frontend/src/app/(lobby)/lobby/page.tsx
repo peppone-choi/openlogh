@@ -2,7 +2,21 @@
 
 import { useEffect, useRef, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { Globe, UserPlus, Users, Bot, LogIn, Loader2, Clock, Signal, Shield, Ban, Trophy, Pause } from 'lucide-react';
+import {
+    Globe,
+    UserPlus,
+    Users,
+    Bot,
+    LogIn,
+    Loader2,
+    Clock,
+    Signal,
+    Shield,
+    Ban,
+    Trophy,
+    Pause,
+    GraduationCap,
+} from 'lucide-react';
 import { useWorldStore } from '@/stores/worldStore';
 import { useGeneralStore } from '@/stores/generalStore';
 import { useAuthStore } from '@/stores/authStore';
@@ -525,6 +539,27 @@ export default function LobbyPage() {
                     )}
                 </div>
             </div>
+
+            {/* Tutorial */}
+            <Card
+                className="transition-colors cursor-pointer hover:border-primary/50 border-dashed border-2"
+                onClick={() => router.push('/tutorial')}
+            >
+                <CardContent className="flex items-center gap-4 py-4">
+                    <div className="flex items-center justify-center size-10 rounded-lg bg-amber-500/10 text-amber-500">
+                        <GraduationCap className="size-5" />
+                    </div>
+                    <div className="flex-1">
+                        <p className="font-medium">튜토리얼</p>
+                        <p className="text-xs text-muted-foreground">
+                            게임의 전체 흐름을 체험해 보세요. (서버 참여 불필요)
+                        </p>
+                    </div>
+                    <Badge variant="secondary" className="text-[10px]">
+                        NEW
+                    </Badge>
+                </CardContent>
+            </Card>
 
             {/* Multi-account warning */}
             <Card>
