@@ -10,6 +10,7 @@ import com.openlogh.dto.FactionStatistic
 import com.openlogh.dto.TimeControlRequest
 import com.openlogh.service.AdminAuthorizationService
 import com.openlogh.service.AdminService
+import com.openlogh.service.SessionRestartService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.AccessDeniedException
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.*
 class AdminController(
     private val adminService: AdminService,
     private val adminAuthorizationService: AdminAuthorizationService,
+    private val sessionRestartService: SessionRestartService,
 ) {
     private companion object {
         const val PERMISSION_OPEN_CLOSE = "openClose"
@@ -220,6 +222,20 @@ class AdminController(
             ResponseEntity.status(HttpStatus.FORBIDDEN).build()
         } catch (e: IllegalArgumentException) {
             ResponseEntity.badRequest().build()
+        }
+    }
+
+    @PostMapping("/session/{id}/restart")
+    fun restartSession(
+        @PathVariable id: Long,
+    ): ResponseEntity<Map<String, Boolean>> {
+        return try {
+            val loginId = currentLoginId() ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
+            adminAuthorizationService.requireGlobalAdmin(loginId)
+            sessionRestartService.restartSession(id)
+            ResponseEntity.ok(mapOf("success" to true))
+        } catch (_: AccessDeniedException) {
+            ResponseEntity.status(HttpStatus.FORBIDDEN).build()
         }
     }
 

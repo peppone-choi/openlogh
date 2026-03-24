@@ -5,6 +5,7 @@ package com.openlogh.command
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.openlogh.engine.CommandPointService
+import com.openlogh.engine.CoupExecutionService
 import com.openlogh.engine.organization.CommandGating
 import com.openlogh.engine.organization.PositionCardType
 import com.openlogh.entity.*
@@ -21,6 +22,7 @@ class CommandExecutor(
     private val planetRepository: PlanetRepository? = null,
     private val officerRepository: OfficerRepository? = null,
     private val commandPointService: CommandPointService? = null,
+    private val coupExecutionService: CoupExecutionService? = null,
 ) {
     private val mapper = jacksonObjectMapper()
 
@@ -124,6 +126,11 @@ class CommandExecutor(
         // Handle special: createWanderingNation (거병)
         if (parsed["createWanderingNation"] == true) {
             handleCreateWanderingNation(general, env)
+        }
+
+        // Handle special: coup execution (반란 성공 시)
+        if (parsed["joinCoup"] == true || parsed["becomeCoupLeader"] == true) {
+            handleCoupExecution(general, env, parsed)
         }
 
         // Handle special: nation foundation
@@ -268,6 +275,20 @@ class CommandExecutor(
                 repo.save(saved)
             }
         }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun handleCoupExecution(general: General, env: CommandEnv, parsed: Map<String, Any>) {
+        val service = coupExecutionService ?: return
+        // Only trigger coup when explicitly becoming coup leader with enough support
+        if (parsed["becomeCoupLeader"] != true) return
+        val coupStep = (parsed["coupStep"] as? Number)?.toInt() ?: 0
+        if (coupStep < 1) return
+
+        // Mark rebellion intent in officer meta; actual coup execution requires
+        // enough conspirators (checked on subsequent turns by the turn engine)
+        general.meta["rebellionIntent"] = coupStep
+        general.meta["coupLeader"] = true
     }
 
     private fun formatDate(env: CommandEnv): String =

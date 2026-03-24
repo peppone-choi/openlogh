@@ -4,6 +4,7 @@ import com.openlogh.dto.*
 import com.openlogh.repository.AppUserRepository
 import com.openlogh.repository.OfficerRepository
 import com.openlogh.service.OfficerService
+import com.openlogh.service.ReregistrationService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.context.SecurityContextHolder
@@ -15,6 +16,7 @@ class SelectPoolController(
     private val officerRepository: OfficerRepository,
     private val appUserRepository: AppUserRepository,
     private val officerService: OfficerService,
+    private val reregistrationService: ReregistrationService,
 ) {
     // GET /api/worlds/{worldId}/pool — 추첨 풀 장교 목록
     @GetMapping("/worlds/{worldId}/pool")
@@ -87,6 +89,15 @@ class SelectPoolController(
         val existing = officerRepository.findBySessionIdAndUserId(worldId, user.id)
         if (existing.isNotEmpty()) {
             return ResponseEntity.badRequest().body(mapOf("error" to "Already have an officer"))
+        }
+
+        // Re-registration restriction check (Feature 1.7)
+        val reregCheck = reregistrationService.canReregister(
+            worldId, user.id, officer.factionId, officer.personalCode,
+        )
+        if (!reregCheck.allowed) {
+            return ResponseEntity.badRequest()
+                .body(mapOf("error" to (reregCheck.reason ?: "재가입 제한")))
         }
 
         officer.userId = user.id

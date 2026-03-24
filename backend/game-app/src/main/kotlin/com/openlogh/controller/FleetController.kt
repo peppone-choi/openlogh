@@ -2,6 +2,7 @@ package com.openlogh.controller
 
 import com.openlogh.dto.*
 import com.openlogh.entity.Fleet
+import com.openlogh.engine.fleet.TransportExecutionService
 import com.openlogh.repository.FleetRepository
 import com.openlogh.repository.OfficerRepository
 import org.springframework.http.HttpStatus
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.*
 class FleetController(
     private val fleetRepository: FleetRepository,
     private val officerRepository: OfficerRepository,
+    private val transportExecutionService: TransportExecutionService,
 ) {
     // GET /api/factions/{nationId}/fleets — 진영의 함대 목록 (멤버 포함)
     @GetMapping("/factions/{nationId}/fleets")
@@ -107,6 +109,51 @@ class FleetController(
         fleet.name = request.name
         val saved = fleetRepository.save(fleet)
         return ResponseEntity.ok(FleetResponse.from(saved))
+    }
+
+    // POST /api/fleets/{id}/transport-plan — 수송 계획 생성
+    @PostMapping("/fleets/{id}/transport-plan")
+    fun createTransportPlan(
+        @PathVariable id: Long,
+        @RequestBody body: Map<String, Any>,
+    ): ResponseEntity<Any> {
+        val sourcePlanetId = (body["sourcePlanetId"] as? Number)?.toLong()
+            ?: return ResponseEntity.badRequest().body(mapOf("error" to "sourcePlanetId required"))
+        val destinationPlanetId = (body["destinationPlanetId"] as? Number)?.toLong()
+            ?: return ResponseEntity.badRequest().body(mapOf("error" to "destinationPlanetId required"))
+        val cargoShips = (body["cargoShips"] as? Number)?.toInt() ?: 0
+        val cargoSupplies = (body["cargoSupplies"] as? Number)?.toInt() ?: 0
+        val cargoFunds = (body["cargoFunds"] as? Number)?.toInt() ?: 0
+
+        val result = transportExecutionService.createTransportPlan(
+            id, sourcePlanetId, destinationPlanetId, cargoShips, cargoSupplies, cargoFunds,
+        )
+        return if (result.success) {
+            ResponseEntity.status(HttpStatus.CREATED).body(mapOf("success" to true))
+        } else {
+            ResponseEntity.badRequest().body(mapOf("error" to (result.reason ?: "수송 계획 생성 실패")))
+        }
+    }
+
+    // GET /api/fleets/{id}/transport-status — 수송 상태 조회
+    @GetMapping("/fleets/{id}/transport-status")
+    fun getTransportStatus(@PathVariable id: Long): ResponseEntity<Any> {
+        val fleet = fleetRepository.findById(id).orElse(null)
+            ?: return ResponseEntity.notFound().build()
+        val plan = fleet.meta["transportPlan"]
+            ?: return ResponseEntity.ok(mapOf("hasTransport" to false))
+        return ResponseEntity.ok(mapOf("hasTransport" to true, "transportPlan" to plan))
+    }
+
+    // DELETE /api/fleets/{id}/transport-plan — 수송 계획 취소
+    @DeleteMapping("/fleets/{id}/transport-plan")
+    fun cancelTransportPlan(@PathVariable id: Long): ResponseEntity<Any> {
+        val success = transportExecutionService.cancelTransport(id)
+        return if (success) {
+            ResponseEntity.ok(mapOf("success" to true))
+        } else {
+            ResponseEntity.badRequest().body(mapOf("error" to "수송 계획 취소 실패"))
+        }
     }
 
     // DELETE /api/fleets/{id} — 함대 해산

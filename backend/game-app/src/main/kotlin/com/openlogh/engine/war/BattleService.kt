@@ -1,6 +1,8 @@
 package com.openlogh.engine.war
 
 import com.openlogh.engine.DiplomacyService
+import com.openlogh.engine.SafeZoneService
+import com.openlogh.engine.fleet.CrewGradeService
 import kotlin.math.hypot
 import com.openlogh.engine.EventService
 import com.openlogh.engine.modifier.ModifierService
@@ -35,6 +37,8 @@ class BattleService(
     private val historyService: HistoryService,
     private val inheritanceService: InheritanceService,
     private val tacticalSessionManager: TacticalSessionManager,
+    private val safeZoneService: SafeZoneService,
+    private val crewGradeService: CrewGradeService,
 ) {
     companion object {
         private val log = LoggerFactory.getLogger(BattleService::class.java)
@@ -134,6 +138,12 @@ class BattleService(
     }
 
     fun executeBattle(attacker: Officer, city: Planet, world: SessionState): BattleResult {
+        // SafeZoneService: skip battle if attacker is in safe zone (Feature 13.3)
+        if (safeZoneService.isProtectedFromDeath(attacker)) {
+            log.info("Officer {} in safe zone, skipping battle", attacker.id)
+            return noBattle()
+        }
+
         val attackerFaction = factionRepository.findById(attacker.factionId).orElse(null)
             ?: return noBattle()
         val defenderFaction = factionRepository.findById(city.factionId).orElse(null)
@@ -141,12 +151,26 @@ class BattleService(
 
         val defenders = officerRepository.findByCityId(city.id)
             .filter { it.factionId == city.factionId && it.ships > 0 }
+            // SafeZoneService: exclude safe-zone defenders from combat
+            .filter { !safeZoneService.isProtectedFromDeath(it) }
             .map { WarUnitGeneral(it, defenderFaction.techLevel) }
 
         val attackerUnit = WarUnitGeneral(attacker, attackerFaction.techLevel)
 
         val rng = Random(generateSeed(world))
         val result = engine.resolveBattle(attackerUnit, defenders, city, rng)
+
+        // CrewGradeService: check for crew grade promotion after battle (gin7 6.9)
+        val attackerFleets = fleetRepository.findByFactionId(attackerFaction.id)
+            .filter { it.leaderGeneralId == attacker.id }
+        for (fleet in attackerFleets) {
+            val newGrade = crewGradeService.checkGradePromotion(fleet, fleet.training.toInt())
+            if (newGrade != null) {
+                fleet.crewGrade = newGrade.code
+                fleetRepository.save(fleet)
+                log.info("Fleet {} crew promoted to {}", fleet.id, newGrade.code)
+            }
+        }
 
         if (result.cityOccupied) {
             handleCityOccupation(city, attacker, attackerFaction, defenderFaction, world)

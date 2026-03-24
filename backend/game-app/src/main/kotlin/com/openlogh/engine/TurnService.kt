@@ -10,6 +10,8 @@ import com.openlogh.engine.modifier.ModifierService
 import com.openlogh.engine.modifier.OfficerLevelModifier
 import com.openlogh.engine.FezzanNeutralityService
 import com.openlogh.engine.SafeZoneService
+import com.openlogh.engine.CoupExecutionService
+import com.openlogh.engine.fleet.TransportExecutionService
 import com.openlogh.engine.planet.PlanetProductionService
 import com.openlogh.engine.war.BattleService
 import com.openlogh.entity.SessionState
@@ -61,6 +63,8 @@ class TurnService(
     private val safeZoneService: SafeZoneService,
     private val planetProductionService: PlanetProductionService,
     private val fezzanNeutralityService: FezzanNeutralityService,
+    private val transportExecutionService: TransportExecutionService,
+    private val coupExecutionService: CoupExecutionService,
 ) {
     companion object {
         private val log = LoggerFactory.getLogger(TurnService::class.java)
@@ -106,6 +110,8 @@ class TurnService(
             tryRun("ageGrowthService.processMonthlyGrowth") { ageGrowthService.processMonthlyGrowth(world) }
             tryRun("planetProductionService.processMonthlyProduction") { planetProductionService.processMonthlyProduction(world) }
             tryRun("fezzanNeutralityService.processPenaltyDecay") { fezzanNeutralityService.processPenaltyDecay(sessionId, world.currentYear.toInt(), world.currentMonth.toInt()) }
+            tryRun("transportExecutionService.processTransports") { transportExecutionService.processTransports(sessionId) }
+            tryRun("coupExecution") { processCoupAttempts(world, sessionId, officers) }
             tryRun("officerLevelModifier.applyMonthlyModifiers") { officerLevelModifier.applyMonthlyModifiers(officers, world) }
             tryRun("tournamentService.processTournament") { tournamentService.processTournament(world) }
             tryRun("auctionService.processAuctions") { auctionService.processAuctions(world) }
@@ -299,6 +305,41 @@ class TurnService(
                     currentRank, officer.experience, rankSlotAvailable = hasSlot)) {
                 officerLevelModifier.applyPromotionEffects(officer)
                 log.debug("Auto-promotion: {} rank {} → {}", officer.name, currentRank, targetRank)
+            }
+        }
+    }
+
+    /**
+     * Check for officers with enough coup supporters and execute coups.
+     */
+    private fun processCoupAttempts(world: SessionState, sessionId: Long, officers: List<com.openlogh.entity.Officer>) {
+        val coupLeaders = officers.filter { it.meta["coupLeader"] == true }
+        for (leader in coupLeaders) {
+            // Count conspirators at same system
+            val conspirators = officers.filter {
+                it.id != leader.id &&
+                it.stationedSystem == leader.stationedSystem &&
+                it.meta["conspiracyTarget"]?.toString() == leader.id.toString()
+            }
+            // Need at least 2 conspirators to trigger coup
+            if (conspirators.size >= 2) {
+                val rebelFaction = factionRepository.findBySessionId(sessionId)
+                    .firstOrNull { it.factionType == "rebel" && it.supremeCommanderId == leader.id }
+                if (rebelFaction != null) {
+                    coupExecutionService.executeCoup(
+                        sessionId = sessionId,
+                        coupLeaderOfficerId = leader.id,
+                        targetFactionId = leader.factionId,
+                        rebelFactionId = rebelFaction.id,
+                        stationedSystem = leader.stationedSystem,
+                    )
+                    // Clear coup flags
+                    leader.meta.remove("coupLeader")
+                    leader.meta.remove("rebellionIntent")
+                    for (c in conspirators) {
+                        c.meta.remove("conspiracyTarget")
+                    }
+                }
             }
         }
     }

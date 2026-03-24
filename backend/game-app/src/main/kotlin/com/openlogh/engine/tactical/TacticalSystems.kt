@@ -160,8 +160,21 @@ object CommandRangeSystem {
     /** 지휘 능력치 1당 추가 확대 속도 */
     private const val COMMAND_EXPANSION_PER_POINT = 0.5
 
-    /** 장교 스탯으로 커맨드 레인지 생성 */
+    /** 장교 스탯으로 커맨드 레인지 생성 (delegates to CommandRangeService for flagship awareness) */
     fun createForOfficer(officer: OfficerStats): CommandRange {
+        // Use CommandRangeService for flagship-aware range calculation (gin7 10.12)
+        val flagshipCode = officer.flagshipCode
+        if (flagshipCode.isNotBlank() && flagshipCode != "None") {
+            val fleetRange = CommandRangeService.createForFleet(
+                fleetId = 0, officerId = 0,
+                commandStat = officer.command, flagshipCode = flagshipCode,
+            )
+            return CommandRange(
+                currentRadius = 0.0,
+                maxRadius = fleetRange.maxRadius,
+                expansionRate = fleetRange.expansionRate,
+            )
+        }
         return CommandRange(
             currentRadius = 0.0,
             maxRadius = BASE_MAX_RADIUS + officer.command * COMMAND_RADIUS_PER_POINT,

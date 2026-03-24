@@ -4,6 +4,7 @@ import com.openlogh.dto.CreateOfficerRequest
 import com.openlogh.dto.OfficerResponse
 import com.openlogh.repository.AppUserRepository
 import com.openlogh.repository.OfficerRepository
+import com.openlogh.service.CharacterDeletionService
 import com.openlogh.service.OfficerService
 import com.openlogh.service.WorldService
 import org.springframework.http.HttpStatus
@@ -18,6 +19,7 @@ class OfficerController(
     private val officerRepository: OfficerRepository,
     private val appUserRepository: AppUserRepository,
     private val worldService: WorldService,
+    private val characterDeletionService: CharacterDeletionService,
 ) {
     // GET /api/worlds/{worldId}/officers — 세계의 장교 목록
     @GetMapping("/worlds/{worldId}/officers")
@@ -71,6 +73,33 @@ class OfficerController(
         } catch (e: IllegalArgumentException) {
             ResponseEntity.badRequest().body(mapOf("error" to (e.message ?: "bad request")))
         }
+    }
+
+    // DELETE /api/officers/{id} — 캐릭터 삭제
+    @DeleteMapping("/officers/{id}")
+    fun deleteOfficer(@PathVariable id: Long): ResponseEntity<Any> {
+        val loginId = currentLoginId()
+            ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
+        val user = appUserRepository.findByLoginId(loginId)
+            ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
+
+        val officer = officerRepository.findById(id).orElse(null)
+            ?: return ResponseEntity.notFound().build()
+
+        // Only the owner can delete their own character
+        if (officer.userId != user.id) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(mapOf("error" to "본인의 캐릭터만 삭제할 수 있습니다."))
+        }
+
+        val check = characterDeletionService.canDelete(officer)
+        if (!check.allowed) {
+            return ResponseEntity.badRequest()
+                .body(mapOf("error" to (check.reason ?: "삭제 조건을 충족하지 않습니다.")))
+        }
+
+        characterDeletionService.deleteCharacter(officer)
+        return ResponseEntity.ok(mapOf("success" to true))
     }
 
     private fun currentLoginId(): String? =

@@ -5,6 +5,7 @@ package com.openlogh.command.general
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.openlogh.command.*
 import com.openlogh.command.constraint.ConstraintResult
+import com.openlogh.engine.espionage.EspionageEngine
 import com.openlogh.entity.*
 import kotlin.math.max
 import kotlin.math.min
@@ -986,11 +987,23 @@ class 첩보(general: General, env: CommandEnv, arg: Map<String, Any>? = null) :
     override suspend fun run(rng: Random): CommandResult {
         val dc = destCity!!
         val costAmount = env.develCost * 3
+
+        // Use EspionageEngine for intelligence gathering (gin7 9.7)
+        val intelOps = (general.meta["intelOps"] as? Number)?.toInt() ?: general.intelligence.toInt()
+        val gathered = EspionageEngine.gatherIntel(
+            intelOps = intelOps,
+            intelligenceStat = general.intelligence.toInt(),
+            rng = rng,
+        )
+
         val msg = mapper.writeValueAsString(mapOf(
             "statChanges" to mapOf("funds" to -costAmount, "supplies" to -costAmount, "experience" to 50, "intelligenceExp" to 1),
             "spyResult" to mapOf("pop" to dc.pop, "trust" to dc.trust),
+            "intelGathered" to gathered,
         ))
-        return CommandResult(true, listOf("${formatDate()} 첩보 활동을 했습니다."), message = msg)
+        val categories = gathered.keys.joinToString(", ")
+        val intelMsg = if (gathered.isNotEmpty()) " 수집 정보: $categories" else " 유효한 정보를 수집하지 못했습니다."
+        return CommandResult(true, listOf("${formatDate()} 첩보 활동을 했습니다.$intelMsg"), message = msg)
     }
 }
 

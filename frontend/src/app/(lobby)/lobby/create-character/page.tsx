@@ -330,7 +330,9 @@ export default function CreateCharacterPage() {
                         {/* Stat Distribution */}
                         <div className="space-y-3">
                             <div className="flex items-center justify-between">
-                                <label className="block text-sm text-muted-foreground">능력치 배분 (합계 {TOTAL_STAT_POINTS})</label>
+                                <label className="block text-sm text-muted-foreground">
+                                    능력치 배분 (합계 {TOTAL_STAT_POINTS})
+                                </label>
                                 <Badge
                                     variant={remaining === 0 ? 'default' : remaining > 0 ? 'secondary' : 'destructive'}
                                     className={remaining === 0 ? 'bg-green-600' : remaining > 0 ? 'bg-amber-600' : ''}

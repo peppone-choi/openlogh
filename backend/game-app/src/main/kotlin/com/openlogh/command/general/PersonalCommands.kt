@@ -6,6 +6,9 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.openlogh.command.*
 import com.openlogh.command.constraint.ConstraintResult
 import com.openlogh.entity.*
+import com.openlogh.service.CompatibilityType
+import com.openlogh.service.ProposalOfficerData
+import com.openlogh.service.ProposalService
 import kotlin.math.max
 import kotlin.random.Random
 
@@ -182,16 +185,34 @@ class 설득(general: General, env: CommandEnv, arg: Map<String, Any>? = null) :
 
     override suspend fun run(rng: Random): CommandResult {
         val dg = destGeneral!!
-        val charmValue = general.administration.toInt()
-        val successChance = (charmValue / 200.0).coerceIn(0.1, 0.9)
-        val success = rng.nextDouble() < successChance
+
+        // Use ProposalService for acceptance probability (gin7 4.4)
+        val proposerData = ProposalOfficerData(
+            officerId = general.id, name = general.name,
+            rank = general.rank.toInt(), politics = general.politics.toInt(),
+        )
+        val targetData = ProposalOfficerData(
+            officerId = dg.id, name = dg.name,
+            rank = dg.rank.toInt(), politics = dg.politics.toInt(),
+        )
+        val friendship = (general.meta["friendship_${dg.id}"] as? Number)?.toInt() ?: 50
+        val compatCode = general.meta["compat_${dg.id}"] as? String ?: "neutral"
+        val result = ProposalService.evaluateProposal(
+            proposer = proposerData,
+            target = targetData,
+            friendship = friendship,
+            compatibility = CompatibilityType.fromCode(compatCode),
+            rng = rng,
+        )
+
         val msg = personalMapper.writeValueAsString(mapOf(
             "statChanges" to mapOf("experience" to 40, "administrationExp" to 1),
             "persuasionTarget" to dg.id.toString(),
-            "persuasionSuccess" to success,
+            "persuasionSuccess" to result.accepted,
+            "persuasionProbability" to result.probability,
         ))
-        val resultMsg = if (success) "설득에 성공했습니다." else "설득에 실패했습니다."
-        return CommandResult(true, listOf("${formatDate()} $resultMsg"), message = msg)
+        val resultMsg = if (result.accepted) "설득에 성공했습니다." else "설득에 실패했습니다."
+        return CommandResult(true, listOf("${formatDate()} $resultMsg (확률: ${String.format("%.1f", result.probability * 100)}%)"), message = msg)
     }
 }
 

@@ -4,6 +4,7 @@ package com.openlogh.command.nation
 
 import com.openlogh.command.*
 import com.openlogh.command.constraint.ConstraintResult
+import com.openlogh.engine.espionage.ArrestAuthorityService
 import com.openlogh.entity.*
 import kotlin.math.max
 import kotlin.math.min
@@ -152,7 +153,22 @@ class 처단(
     private val isExecute: Boolean get() = arg?.get("isExecute") as? Boolean ?: true
 
     override fun checkFullCondition(): ConstraintResult {
-        if (general.officerLevel < 20.toShort()) return ConstraintResult.Fail("군주급 이상만 사용할 수 있습니다")
+        // ArrestAuthorityService: authority check (gin7 4.8, 9.9)
+        // Sovereign (rank 20+) can always execute; others need arrest authority role
+        if (general.officerLevel < 20.toShort()) {
+            // Check if officer has arrest authority role (헌병총감, 내무상서, etc.)
+            val authorityRoles = setOf(
+                ArrestAuthorityService.ROLE_MILITARY_POLICE_CHIEF,
+                ArrestAuthorityService.ROLE_INTERIOR_MINISTER,
+                ArrestAuthorityService.ROLE_JUSTICE_MINISTER,
+                ArrestAuthorityService.ROLE_MP_COMMANDER,
+                ArrestAuthorityService.ROLE_LAW_ORDER_CHAIR,
+            )
+            val hasAuthority = general.personalCode in authorityRoles ||
+                general.specialCode in authorityRoles ||
+                general.special2Code in authorityRoles
+            if (!hasAuthority) return ConstraintResult.Fail("처단 권한이 없습니다 (군주급 또는 체포 권한 보유자만 가능)")
+        }
         val dg = destGeneral ?: return ConstraintResult.Fail("대상 장수가 없습니다")
         if (dg.blockState <= 0.toShort()) return ConstraintResult.Fail("체포된 인물이 아닙니다")
         return ConstraintResult.Pass
