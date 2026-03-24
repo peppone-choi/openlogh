@@ -732,6 +732,9 @@ class TurnService @Autowired constructor(
                 general.turnTime = calculateNextGeneralTurnTime(general, world.tickSeconds)
                 general.updatedAt = OffsetDateTime.now()
                 ports.putGeneral(general.toSnapshot())
+                if (nation != null) {
+                    ports.putNation(nation.toSnapshot())
+                }
             } catch (e: Exception) {
                 logger.error("Error processing general ${general.id}: ${e.message}", e)
             }
