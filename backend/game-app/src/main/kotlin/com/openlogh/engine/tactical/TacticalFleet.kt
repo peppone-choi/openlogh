@@ -11,6 +11,7 @@ data class OfficerStats(
     val defense: Int,
     val fighterSkill: Int = 30,   // 공전: 함재기 공격력
     val groundCombat: Int = 30,   // 육전: 강습양륙/지상전 효율
+    val flagshipCode: String = "None",
 )
 
 data class TacticalFleet(

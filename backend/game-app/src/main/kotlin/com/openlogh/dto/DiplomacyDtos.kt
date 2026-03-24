@@ -11,7 +11,7 @@ data class DiplomacyRespondWithActionRequest(
 data class DiplomacyDto(
     val id: Long,
     val sessionId: Long,
-    val srcNationId: Long,
+    val srcFactionId: Long,
     val destFactionId: Long,
     val stateCode: String,
     val term: Int,
@@ -22,7 +22,7 @@ data class DiplomacyDto(
         fun from(d: Diplomacy) = DiplomacyDto(
             id = d.id,
             sessionId = d.sessionId,
-            srcNationId = d.srcNationId,
+            srcFactionId = d.srcFactionId,
             destFactionId = d.destFactionId,
             stateCode = d.stateCode,
             term = d.term.toInt(),

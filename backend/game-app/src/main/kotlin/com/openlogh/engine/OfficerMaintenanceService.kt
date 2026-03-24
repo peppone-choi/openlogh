@@ -230,7 +230,7 @@ class OfficerMaintenanceService(
         // Kill all diplomacy
         val diplomacies = diplomacyRepository.findBySessionId(sessionId)
         for (d in diplomacies) {
-            if (d.srcNationId == factionId || d.destFactionId == factionId) {
+            if (d.srcFactionId == factionId || d.destFactionId == factionId) {
                 d.isDead = true
                 d.isShowing = false
                 diplomacyRepository.save(d)

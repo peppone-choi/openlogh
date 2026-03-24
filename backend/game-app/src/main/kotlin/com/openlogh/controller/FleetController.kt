@@ -38,7 +38,7 @@ class FleetController(
 
         val fleet = Fleet(
             sessionId = request.sessionId,
-            leaderGeneralId = request.leaderOfficerId,
+            leaderOfficerId = request.leaderOfficerId,
             factionId = request.factionId,
             name = request.name,
             fleetType = request.fleetType,

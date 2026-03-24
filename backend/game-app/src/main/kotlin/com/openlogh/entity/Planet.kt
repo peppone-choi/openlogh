@@ -78,6 +78,9 @@ class Planet(
     @Column(name = "fortress_max", nullable = false)
     var fortressMax: Int = 0,
 
+    @Column(nullable = false)
+    var supplies: Int = 0,
+
     @Column(name = "garrison_set", nullable = false)
     var garrisonSet: Int = 0,
 

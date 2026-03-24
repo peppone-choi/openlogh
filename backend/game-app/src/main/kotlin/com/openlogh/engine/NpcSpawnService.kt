@@ -92,7 +92,7 @@ class NpcSpawnService(
 
             if (factionOfficers.size < minOfficers) {
                 val deficit = minOfficers - factionOfficers.size
-                val capitalPlanet = planetRepository.findById(faction.capitalPlanetId).orElse(null) ?: continue
+                val capitalPlanet = planetRepository.findById(faction.capitalPlanetId ?: continue).orElse(null) ?: continue
 
                 for (i in 0 until deficit) {
                     val leadership = rng.nextInt(35, 70).toShort()

@@ -39,7 +39,7 @@ class OfficerAI(
     fun calcDiplomacyState(faction: Faction?, diplomacies: List<Diplomacy>): DiplomacyState {
         if (faction == null) return DiplomacyState.PEACE
         if (faction.warState > 0) return DiplomacyState.AT_WAR
-        val relevant = diplomacies.filter { it.srcNationId == faction.id || it.destFactionId == faction.id }
+        val relevant = diplomacies.filter { it.srcFactionId == faction.id || it.destFactionId == faction.id }
         if (relevant.any { it.stateCode == "선전포고" }) return DiplomacyState.AT_WAR
         if (relevant.any { it.stateCode == "종전제의" }) {
             val totalShips = officerRepository.findByWorldIdAndNationId(faction.sessionId, faction.id).sumOf { it.ships }
@@ -84,7 +84,7 @@ class OfficerAI(
         val sessionId = world.id.toLong()
         val diplomacies = diplomacyRepository.findBySessionIdAndIsDeadFalse(sessionId)
         val isAtWar = diplomacies.any {
-            (it.srcNationId == officer.factionId || it.destFactionId == officer.factionId) &&
+            (it.srcFactionId == officer.factionId || it.destFactionId == officer.factionId) &&
                 it.stateCode in listOf("전쟁", "선전포고")
         }
 
