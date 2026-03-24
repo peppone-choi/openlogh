@@ -25,3 +25,10 @@ describe('NationBadge text color', () => {
         expect(textColor).toBe('#222222');
     });
 });
+
+describe('NationBasicCard tutorial support', () => {
+    it('has data-tutorial="nation-card" attribute on root', () => {
+        const src = require('fs').readFileSync(require('path').resolve(__dirname, 'nation-basic-card.tsx'), 'utf-8');
+        expect(src).toContain('data-tutorial="nation-card"');
+    });
+});

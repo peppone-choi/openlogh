@@ -194,8 +194,8 @@ export function getTutorialMockResponse(method: string | undefined, url: string 
     if (!method || !url) return undefined;
 
     const m = method.toUpperCase();
-    // Normalize world IDs to -1
-    const normalizedUrl = url.replace(/\/worlds\/\d+/, '/worlds/-1');
+    // Normalize world/general IDs to -1
+    const normalizedUrl = url.replace(/\/worlds\/\d+/, '/worlds/-1').replace(/\/generals\/\d+/, '/generals/-1');
 
     const key = `${m}:${normalizedUrl}`;
 
@@ -207,6 +207,10 @@ export function getTutorialMockResponse(method: string | undefined, url: string 
         'GET:/worlds/-1/diplomacy': MOCK_DIPLOMACY,
         'GET:/worlds/-1/front-info': MOCK_FRONT_INFO,
         'GET:/worlds/-1/commands/general/table': MOCK_COMMAND_TABLE,
+        // CommandPanel API mocks
+        'GET:/generals/-1/turns': [],
+        'GET:/generals/-1/command-table': MOCK_COMMAND_TABLE,
+        'POST:/generals/-1/turns': { success: true, data: [] },
     };
 
     // Direct match

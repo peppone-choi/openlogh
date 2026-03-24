@@ -2,6 +2,13 @@ import { describe, expect, it } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
 
+describe('CommandPanel tutorial support', () => {
+    it('has data-tutorial="command-panel" attribute on root Card', () => {
+        const src = require('fs').readFileSync(require('path').resolve(__dirname, 'command-panel.tsx'), 'utf-8');
+        expect(src).toContain('data-tutorial="command-panel"');
+    });
+});
+
 describe('CommandPanel timer removal', () => {
     it('no longer displays duplicate turn timer badge', () => {
         const hasDuplicateTimer = false;

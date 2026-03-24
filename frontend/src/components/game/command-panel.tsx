@@ -720,7 +720,7 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
     ]);
 
     return (
-        <Card className="border-gray-700">
+        <Card className="border-gray-700" data-tutorial="command-panel">
             <CardHeader className="space-y-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                     <CardTitle className="text-base">{visibleCount}턴 예약 편집</CardTitle>

@@ -79,7 +79,11 @@ export function GeneralBasicCard({ general, nation, turnTerm, lastExecuted }: Ge
     }
 
     return (
-        <div className="bg-card border border-border rounded-lg overflow-hidden text-sm" style={{ maxWidth: 500 }}>
+        <div
+            className="bg-card border border-border rounded-lg overflow-hidden text-sm"
+            data-tutorial="general-card"
+            style={{ maxWidth: 500 }}
+        >
             <div className="flex items-stretch">
                 <div
                     className="shrink-0"

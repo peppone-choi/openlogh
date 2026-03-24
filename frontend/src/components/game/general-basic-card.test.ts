@@ -13,6 +13,11 @@ describe('GeneralBasicCard redesign', () => {
         expect(gridClass).toContain('grid-cols-3');
     });
 
+    it('has data-tutorial="general-card" attribute on root', () => {
+        const src = require('fs').readFileSync(require('path').resolve(__dirname, 'general-basic-card.tsx'), 'utf-8');
+        expect(src).toContain('data-tutorial="general-card"');
+    });
+
     it('KV cells use bg-card with muted labels', () => {
         const labelClass = 'text-[10px] text-muted-foreground';
         expect(labelClass).toContain('text-muted-foreground');

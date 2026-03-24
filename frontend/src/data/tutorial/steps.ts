@@ -57,8 +57,9 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
         phase: 'internal',
         route: '/tutorial/main',
         title: '메인 화면',
-        description: '왼쪽 사이드바에서 각종 메뉴를 이용할 수 있습니다. 상단에는 현재 턴과 국가 정보가 표시됩니다.',
-        targetSelector: '[data-tutorial="sidebar"]',
+        description:
+            '지도에서 각 도시의 소속과 상태를 확인할 수 있습니다. 우측에는 턴 예약 패널이 있으며, 하단에는 도시/국가/장수 정보가 표시됩니다.',
+        targetSelector: '[data-tutorial="map-viewer"]',
     },
     {
         id: 5,
@@ -66,7 +67,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
         route: '/tutorial/command',
         title: '커맨드 -- 개간 선택',
         description:
-            '커맨드 페이지에서 이번 턴에 수행할 행동을 선택합니다. 먼저 "개간"을 선택해 도시 농업 수치를 높여봅시다.',
+            '턴 예약 편집 패널에서 이번 턴에 수행할 행동을 선택합니다. 빈 턴 슬롯을 클릭하고 "개간"을 선택해 도시 농업 수치를 높여봅시다.',
         targetSelector: '[data-tutorial="command-panel"]',
         action: 'click',
     },
@@ -84,7 +85,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
         title: '도시 정보',
         description:
             '도시의 농업/상업/인구/치안 등 다양한 수치를 확인할 수 있습니다. 내정 커맨드로 이 수치들을 높여 국력을 키웁니다.',
-        targetSelector: '[data-tutorial="city-stats"]',
+        targetSelector: '[data-tutorial="city-card"]',
     },
 
     // Phase 4: 전투

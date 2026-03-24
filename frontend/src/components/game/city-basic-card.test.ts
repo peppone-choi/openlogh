@@ -13,4 +13,9 @@ describe('CityBasicCard design', () => {
         expect(headClass).toContain('bg-muted');
         expect(headClass).not.toContain('legacy-bg1');
     });
+
+    it('has data-tutorial="city-card" attribute on root', () => {
+        const src = require('fs').readFileSync(require('path').resolve(__dirname, 'city-basic-card.tsx'), 'utf-8');
+        expect(src).toContain('data-tutorial="city-card"');
+    });
 });
