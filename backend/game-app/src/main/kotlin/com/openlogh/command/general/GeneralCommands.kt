@@ -319,6 +319,10 @@ class che_모병(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
         if (c.supplyState.toInt() == 0) return ConstraintResult.Fail("보급 상태가 아닙니다.")
         val cost = getCost()
         if (general.funds < cost.funds) return ConstraintResult.Fail("자금이 부족합니다.")
+        // PlanetFacilityService: 조병공창 보유 행성에서만 함선 건조 가능 (gin7 §5.5)
+        services?.planetFacilityService?.let { facilityService ->
+            if (!facilityService.hasShipyard(c)) return ConstraintResult.Fail("조병공창이 없습니다.")
+        }
         return ConstraintResult.Pass
     }
 

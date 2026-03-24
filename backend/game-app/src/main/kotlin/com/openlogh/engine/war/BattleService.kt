@@ -3,6 +3,7 @@ package com.openlogh.engine.war
 import com.openlogh.engine.DiplomacyService
 import com.openlogh.engine.SafeZoneService
 import com.openlogh.engine.fleet.CrewGradeService
+import com.openlogh.engine.planet.PlanetTypeRules
 import kotlin.math.hypot
 import com.openlogh.engine.EventService
 import com.openlogh.engine.modifier.ModifierService
@@ -39,6 +40,7 @@ class BattleService(
     private val tacticalSessionManager: TacticalSessionManager,
     private val safeZoneService: SafeZoneService,
     private val crewGradeService: CrewGradeService,
+    private val planetTypeRules: PlanetTypeRules,
 ) {
     companion object {
         private val log = LoggerFactory.getLogger(BattleService::class.java)
@@ -149,10 +151,19 @@ class BattleService(
         val defenderFaction = factionRepository.findById(city.factionId).orElse(null)
             ?: return noBattle()
 
+        val planetType = planetTypeRules.getPlanetType(city)
         val defenders = officerRepository.findByCityId(city.id)
             .filter { it.factionId == city.factionId && it.ships > 0 }
             // SafeZoneService: exclude safe-zone defenders from combat
             .filter { !safeZoneService.isProtectedFromDeath(it) }
+            // PlanetTypeRules: exclude unit types that cannot deploy on this planet type (gin7 §5.14)
+            .filter { officer ->
+                val unitTypeCode = officer.meta["groundUnitType"] as? String ?: "light_infantry"
+                val unitType = PlanetTypeRules.GroundUnitType.entries.firstOrNull {
+                    it.name.equals(unitTypeCode, ignoreCase = true)
+                } ?: PlanetTypeRules.GroundUnitType.LIGHT_INFANTRY
+                planetTypeRules.canDeployGroundUnit(planetType, unitType)
+            }
             .map { WarUnitGeneral(it, defenderFaction.techLevel) }
 
         val attackerUnit = WarUnitGeneral(attacker, attackerFaction.techLevel)

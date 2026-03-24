@@ -5,6 +5,7 @@ package com.openlogh.command.general
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.openlogh.command.*
 import com.openlogh.command.constraint.ConstraintResult
+import com.openlogh.engine.GridEntryValidator
 import com.openlogh.entity.*
 import kotlin.math.max
 import kotlin.math.min
@@ -152,6 +153,20 @@ class che_지상작전개시(general: General, env: CommandEnv, arg: Map<String,
         if (general.factionId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
         val dc = destCity ?: return ConstraintResult.Fail("목적지 행성이 없습니다.")
         if (dc.factionId == general.factionId) return ConstraintResult.Fail("아군 행성에는 작전을 개시할 수 없습니다.")
+        // GridEntryValidator: 그리드 진입 제한 확인 (gin7 §5.3)
+        services?.gridEntryValidator?.let { validator ->
+            @Suppress("UNCHECKED_CAST")
+            val factionUnitsRaw = arg?.get("gridFactionUnits") as? Map<Long, Int>
+            if (factionUnitsRaw != null) {
+                val fleet = com.openlogh.entity.Fleet().also { f ->
+                    f.factionId = general.factionId
+                    f.battleships = (general.ships / 300).coerceAtLeast(1)
+                }
+                val gridState = GridEntryValidator.GridState(factionUnitsRaw)
+                val entry = validator.canEnterGrid(fleet, gridState)
+                if (!entry.allowed) return ConstraintResult.Fail("그리드 진입 불가: ${entry.reason}")
+            }
+        }
         return ConstraintResult.Pass
     }
 

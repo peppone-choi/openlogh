@@ -13,6 +13,7 @@ import kotlin.random.Random
 class TacticalSessionManager(
     private val officerRepository: OfficerRepository,
     private val fleetRepository: FleetRepository,
+    private val commandDistributionService: CommandDistributionService = CommandDistributionService(),
 ) {
     companion object {
         private val log = LoggerFactory.getLogger(TacticalSessionManager::class.java)
@@ -46,6 +47,10 @@ class TacticalSessionManager(
 
         val attackerFleets = buildFleets(attackerOfficerIds, unitIdCounter)
         val defenderFleets = buildFleets(defenderOfficerIds, unitIdCounter)
+
+        // Assign command priority for all officers in this battle (gin7 §10.20)
+        val allOfficers = officerRepository.findAllById(attackerOfficerIds + defenderOfficerIds)
+        commandDistributionService.assignCommandPriority(allOfficers)
 
         if (attackerFleets.isEmpty() || defenderFleets.isEmpty()) {
             log.warn("Cannot create tactical session: empty fleets. attackers={}, defenders={}",

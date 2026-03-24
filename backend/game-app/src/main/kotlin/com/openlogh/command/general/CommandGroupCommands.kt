@@ -114,6 +114,15 @@ class 수송계획(general: General, env: CommandEnv, arg: Map<String, Any>? = n
     override fun checkFullCondition(): ConstraintResult {
         if (general.factionId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
         destCity ?: return ConstraintResult.Fail("목적지 행성이 없습니다.")
+        // FleetFormationRules: 인구 비례 함대 편성 한도 확인 (gin7 §6.12)
+        services?.fleetFormationRules?.let { rules ->
+            val totalPop = (arg?.get("factionTotalPopulation") as? Number)?.toLong() ?: 0L
+            val limits = rules.maxFleetsByPopulation(totalPop)
+            val currentTransports = (arg?.get("currentTransportCount") as? Number)?.toInt() ?: 0
+            if (currentTransports >= limits.transports) {
+                return ConstraintResult.Fail("수송함대 편성 한도를 초과했습니다. (한도: ${limits.transports})")
+            }
+        }
         return ConstraintResult.Pass
     }
 

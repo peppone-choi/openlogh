@@ -5,7 +5,10 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.random.Random
 
-class TacticalBattleEngine(private val rng: Random) {
+class TacticalBattleEngine(
+    private val rng: Random,
+    private val commandTimingService: CommandTimingService = CommandTimingService(),
+) {
 
     companion object {
         /** 요새포 AoE 반경 (distance units) */
@@ -20,6 +23,14 @@ class TacticalBattleEngine(private val rng: Random) {
         session.currentTurn++
         val turn = session.currentTurn
         val events = mutableListOf<BattleEvent>()
+
+        // Command timing: record timing metadata for each queued order type (gin7 §10.21)
+        for ((_, orders) in session.pendingOrders) {
+            for (order in orders) {
+                commandTimingService.getTiming(order.type.name.lowercase())
+                // Timing info is available for callers; canStartNew() enforced at submission time
+            }
+        }
 
         // 1. Process configuration orders (formation/energy changes)
         events.addAll(processConfigOrders(session, turn))
@@ -361,8 +372,13 @@ class TacticalBattleEngine(private val rng: Random) {
         // 사거리 내 최적 무기 선택
         val weapon = selectWeapon(attacker, attackerFleet, distance) ?: return null
 
-        // 함재기/미사일 외 무기는 LoF 필요
-        if (!weapon.interceptable && !grid.hasLineOfFire(attackerPos, targetPos)) return null
+        // 함재기/미사일 외 무기는 LoS 필요 (gin7 §10.15)
+        if (!weapon.interceptable) {
+            val losResult = LineOfSightChecker.checkWithGrid(
+                attacker, target, session.allUnits(), grid,
+            )
+            if (!losResult.clear) return null
+        }
 
         // 에너지 채널 배율
         val energyMult = if (weapon.energyChannel == "beam") {

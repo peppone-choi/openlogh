@@ -107,7 +107,11 @@ class 수강(general: General, env: CommandEnv, arg: Map<String, Any>? = null) :
 
     override fun checkFullCondition(): ConstraintResult {
         if (general.factionId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
-        city ?: return ConstraintResult.Fail("행성 정보가 없습니다.")
+        val c = city ?: return ConstraintResult.Fail("행성 정보가 없습니다.")
+        // PlanetFacilityService: 사관학교 보유 행성에서만 수강 가능 (gin7 §5.5)
+        services?.planetFacilityService?.let { facilityService ->
+            if (!facilityService.hasAcademy(c)) return ConstraintResult.Fail("사관학교가 없습니다.")
+        }
         return ConstraintResult.Pass
     }
 
