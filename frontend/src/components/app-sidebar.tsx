@@ -14,6 +14,7 @@ import {
     Settings,
     ChevronDown,
     Wallet,
+    Truck,
 } from 'lucide-react';
 import {
     Sidebar,
@@ -106,6 +107,11 @@ const navItems = [
         title: '재무',
         icon: Wallet,
         items: [{ title: '사적 구좌', url: '/private-funds' }],
+    },
+    {
+        title: '병참',
+        icon: Truck,
+        items: [{ title: '수송 계획', url: '/transport' }],
     },
     {
         title: '부가',

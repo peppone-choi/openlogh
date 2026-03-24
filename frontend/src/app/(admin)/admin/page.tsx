@@ -2210,6 +2210,8 @@ export default function AdminDashboardPage() {
                             </Card>
 
                             <div className="flex flex-wrap gap-2">
+                                {/* 세션 재시작 */}
+                                <SessionRestartButton worldId={worldId} onComplete={loadWorlds} />
                                 <Button
                                     size="sm"
                                     variant="destructive"
@@ -2296,6 +2298,68 @@ export default function AdminDashboardPage() {
                     )}
                 </CardContent>
             </Card>
+        </div>
+    );
+}
+
+// ---------------------------------------------------------------------------
+// 세션 재시작 버튼 (admin dashboard)
+// ---------------------------------------------------------------------------
+function SessionRestartButton({ worldId, onComplete }: { worldId: number | undefined; onComplete: () => void }) {
+    const [showConfirm, setShowConfirm] = useState(false);
+    const [restarting, setRestarting] = useState(false);
+
+    const handleRestart = async () => {
+        if (!worldId) return;
+        setRestarting(true);
+        try {
+            await adminApi.resetWorld(worldId);
+            toast.success('세션이 재시작되었습니다.');
+            setShowConfirm(false);
+            onComplete();
+        } catch {
+            toast.error('세션 재시작에 실패했습니다.');
+        } finally {
+            setRestarting(false);
+        }
+    };
+
+    if (!showConfirm) {
+        return (
+            <Button size="sm" variant="outline" onClick={() => setShowConfirm(true)}>
+                <RotateCw className="mr-1 size-4" /> 세션 재시작
+            </Button>
+        );
+    }
+
+    return (
+        <div className="border border-yellow-500/50 rounded-md p-3 space-y-2 bg-yellow-500/10 w-full">
+            <p className="text-sm font-semibold text-yellow-400 flex items-center gap-1">
+                <AlertTriangle className="size-4" /> 세션을 재시작하시겠습니까?
+            </p>
+            <p className="text-xs text-muted-foreground">
+                현재 진행중인 게임 세션이 재시작됩니다. 진행중인 턴 처리가 중단될 수 있습니다.
+            </p>
+            <div className="flex gap-2">
+                <Button
+                    size="sm"
+                    variant="destructive"
+                    disabled={restarting}
+                    onClick={handleRestart}
+                    className="flex-1"
+                >
+                    {restarting ? '재시작 중...' : '재시작 확인'}
+                </Button>
+                <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={restarting}
+                    onClick={() => setShowConfirm(false)}
+                    className="flex-1"
+                >
+                    취소
+                </Button>
+            </div>
         </div>
     );
 }

@@ -43,6 +43,43 @@ class InheritanceService(
 
     fun processInheritance(world: SessionState) {}
 
+    /**
+     * Feature 2.9 - Character Inheritance 60-year cap.
+     * Officers aged 60+ cannot be inherited. Throws if cap is exceeded.
+     * Returns the proportional experience to carry over to the successor.
+     */
+    fun checkAgeCapForInheritance(officer: Officer): Int {
+        if (officer.age >= 60) {
+            throw IllegalStateException("60세 이상은 인계 불가 (현재 나이: ${officer.age})")
+        }
+        // Carry over experience proportional to remaining life: scale by (60 - age) / 40
+        val ageRatio = (60 - officer.age).toDouble() / 40.0
+        val carryOver = (officer.experience * ageRatio * 0.5).toInt()
+        return maxOf(0, carryOver)
+    }
+
+    /**
+     * Execute inheritance from dying officer to new character, respecting the 60-year cap.
+     * Returns the experience points to award to the new officer, or null if inheritance is blocked.
+     */
+    fun executeInheritanceTransfer(fromOfficer: Officer): InheritanceTransfer? {
+        return try {
+            val carryOverExp = checkAgeCapForInheritance(fromOfficer)
+            val inheritScore = getInheritanceScore(fromOfficer)
+            InheritanceTransfer(
+                carryOverExperience = carryOverExp,
+                inheritanceScore = inheritScore,
+            )
+        } catch (e: IllegalStateException) {
+            null
+        }
+    }
+
+    data class InheritanceTransfer(
+        val carryOverExperience: Int,
+        val inheritanceScore: Int,
+    )
+
     fun resetTurn(sessionId: Long, loginId: String): InheritanceActionResult? {
         val (user, officer, _) = findOwnership(sessionId, loginId) ?: return null
 

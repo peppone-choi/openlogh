@@ -342,6 +342,19 @@ function LobbyJoinPageContent() {
 
             <PageHeader icon={UserPlus} title="제독 생성" />
 
+            {/* Link to custom character creation */}
+            <div className="flex items-center gap-2 p-3 border border-border rounded-md bg-muted/30">
+                <span className="text-sm text-muted-foreground">커스텀 캐릭터를 직접 설계하려면:</span>
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => router.push('/lobby/create-character')}
+                >
+                    캐릭터 직접 생성
+                </Button>
+            </div>
+
             {error && <div className="text-sm px-3 py-2 rounded bg-destructive/20 text-destructive">{error}</div>}
 
             {/* Nation Recruitment Messages (임관 권유) - legacy parity from v_join.php & core2026 JoinView */}

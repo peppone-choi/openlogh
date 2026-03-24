@@ -935,6 +935,14 @@ export default function MyPage() {
                                     >
                                         사전종료
                                     </Button>
+                                    {/* 캐릭터 삭제: rank ≤ 4 only (대령 이하) */}
+                                    {g.officerLevel <= 4 && (
+                                        <DeleteCharacterButton
+                                            onDeleted={() => {
+                                                if (currentWorld) fetchMyGeneral(currentWorld.id);
+                                            }}
+                                        />
+                                    )}
                                 </CardContent>
                             </Card>
 
@@ -1313,6 +1321,60 @@ function RecordList({ records, pageSize = 20 }: { records: Message[]; pageSize?:
                     ))}
                 </div>
             </ScrollArea>
+        </div>
+    );
+}
+
+// ---------------------------------------------------------------------------
+// 캐릭터 삭제 버튼 (rank ≤ 4, 대령 이하만 표시)
+// ---------------------------------------------------------------------------
+function DeleteCharacterButton({ onDeleted }: { onDeleted: () => void }) {
+    const [showConfirm, setShowConfirm] = useState(false);
+    const [deleting, setDeleting] = useState(false);
+
+    const handleDelete = async () => {
+        setDeleting(true);
+        try {
+            await accountApi.dieOnPrestart();
+            toast.success('캐릭터가 삭제되었습니다.');
+            setShowConfirm(false);
+            onDeleted();
+        } catch {
+            toast.error('캐릭터 삭제에 실패했습니다.');
+        } finally {
+            setDeleting(false);
+        }
+    };
+
+    if (!showConfirm) {
+        return (
+            <Button variant="destructive" className="w-full" onClick={() => setShowConfirm(true)}>
+                <Trash2 className="mr-2 size-4" />
+                캐릭터 삭제
+            </Button>
+        );
+    }
+
+    return (
+        <div className="border border-destructive/50 rounded-md p-3 space-y-2 bg-destructive/10">
+            <p className="text-sm font-semibold text-destructive">정말 캐릭터를 삭제하시겠습니까?</p>
+            <p className="text-xs text-muted-foreground">
+                이 작업은 되돌릴 수 없습니다. 캐릭터의 모든 데이터가 삭제됩니다.
+            </p>
+            <div className="flex gap-2">
+                <Button variant="destructive" size="sm" disabled={deleting} onClick={handleDelete} className="flex-1">
+                    {deleting ? '삭제 중...' : '삭제 확인'}
+                </Button>
+                <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={deleting}
+                    onClick={() => setShowConfirm(false)}
+                    className="flex-1"
+                >
+                    취소
+                </Button>
+            </div>
         </div>
     );
 }
