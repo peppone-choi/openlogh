@@ -20,6 +20,7 @@ interface GeneralPortraitProps {
     className?: string;
 }
 
+/** @deprecated Use OfficerPortrait from officer-portrait.tsx */
 export function GeneralPortrait({ picture, name, size = 'sm', className }: GeneralPortraitProps) {
     const px = sizes[size];
     const [error, setError] = useState(false);
@@ -48,3 +49,6 @@ export function GeneralPortrait({ picture, name, size = 'sm', className }: Gener
         </Avatar>
     );
 }
+
+/** Preferred name — re-exports GeneralPortrait as OfficerPortrait */
+export { GeneralPortrait as OfficerPortrait };

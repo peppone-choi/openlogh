@@ -13,8 +13,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/game/page-header';
 import { LoadingState } from '@/components/game/loading-state';
-import { GeneralPortrait } from '@/components/game/general-portrait';
-import { NationBadge } from '@/components/game/nation-badge';
+import { OfficerPortrait } from '@/components/game/officer-portrait';
+import { FactionBadge } from '@/components/game/faction-badge';
 import { LoghBar } from '@/components/game/logh-bar';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
@@ -241,13 +241,13 @@ export default function GeneralPage() {
                     <Card>
                         <CardContent className="pt-6 space-y-4">
                             <div className="flex gap-4 items-start">
-                                <GeneralPortrait picture={g.picture} name={g.name} size="lg" />
+                                <OfficerPortrait picture={g.picture} name={g.name} size="lg" />
                                 <div className="space-y-1 flex-1">
                                     <p className="text-lg font-bold" style={{ color: npcColor }}>
                                         {g.name}
                                     </p>
                                     <div className="flex items-center gap-2 flex-wrap">
-                                        <NationBadge name={faction?.name} color={faction?.color} />
+                                        <FactionBadge name={faction?.name} color={faction?.color} />
                                         <Badge variant="outline">{officerText}</Badge>
                                     </div>
                                     <p className="text-sm">
@@ -660,7 +660,7 @@ function FactionOfficersList({
                                         onClick={() => onOfficerClick(g.id)}
                                     >
                                         <TableCell className="p-1">
-                                            <GeneralPortrait picture={g.picture} name={g.name} size="sm" />
+                                            <OfficerPortrait picture={g.picture} name={g.name} size="sm" />
                                         </TableCell>
                                         <TableCell className="font-medium" style={{ color: npcColor }}>
                                             {g.name}

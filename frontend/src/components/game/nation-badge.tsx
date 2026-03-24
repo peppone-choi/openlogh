@@ -33,3 +33,8 @@ export function getNationColorStyle(color?: string | null): React.CSSProperties 
     if (!color) return {};
     return { '--nation-color': color } as React.CSSProperties;
 }
+
+/** @deprecated Use FactionBadge from faction-badge.tsx */
+export { NationBadge as FactionBadge };
+/** @deprecated Use getFactionColorStyle from faction-badge.tsx */
+export { getNationColorStyle as getFactionColorStyle };

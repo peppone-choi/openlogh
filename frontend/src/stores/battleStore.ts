@@ -19,6 +19,14 @@ export interface EnergyAllocation {
     beam: number;
     gun: number;
     shield: number;
+    /** Front shield energy (4-directional) */
+    shieldFront?: number;
+    /** Rear shield energy (4-directional) */
+    shieldRear?: number;
+    /** Left shield energy (4-directional) */
+    shieldLeft?: number;
+    /** Right shield energy (4-directional) */
+    shieldRight?: number;
     engine: number;
     warp: number;
     sensor: number;

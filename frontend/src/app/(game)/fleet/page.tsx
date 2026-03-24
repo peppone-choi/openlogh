@@ -4,9 +4,21 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useWorldStore } from '@/stores/worldStore';
 import { useOfficerStore } from '@/stores/officerStore';
 import { useGameStore } from '@/stores/gameStore';
-import { troopApi } from '@/lib/gameApi';
+import { fleetApi, troopApi } from '@/lib/gameApi';
 import type { Troop, General } from '@/types';
-import { Shield, Plus, Swords, Clock, FileText, MapPin, Activity, ChevronDown, ChevronUp } from 'lucide-react';
+import {
+    Shield,
+    Plus,
+    Swords,
+    Clock,
+    FileText,
+    MapPin,
+    Activity,
+    ChevronDown,
+    ChevronUp,
+    GitBranch,
+    AlertTriangle,
+} from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -338,6 +350,102 @@ function MemberRow({
     );
 }
 
+// ─── Fleet Hierarchy Tree ────────────────────────────────────────────────────
+
+function FleetHierarchy({
+    troops,
+    generalMap,
+    cityMap,
+}: {
+    troops: Troop[];
+    generalMap: Map<number, General>;
+    cityMap: Map<number, { id: number; name: string }>;
+}) {
+    if (troops.length < 2) return null;
+
+    // Build parent-child relationships from meta.parentFleetId
+    const childMap = new Map<number, Troop[]>();
+    const rootTroops: Troop[] = [];
+
+    for (const t of troops) {
+        const meta = t.meta as Record<string, unknown> | undefined;
+        const parentId = meta?.parentFleetId as number | undefined;
+        if (parentId && troops.some((p) => p.id === parentId)) {
+            const children = childMap.get(parentId) ?? [];
+            children.push(t);
+            childMap.set(parentId, children);
+        } else {
+            rootTroops.push(t);
+        }
+    }
+
+    // If no hierarchy data, show flat list as tree
+    const renderNode = (t: Troop, depth: number) => {
+        const leader = generalMap.get(t.leaderGeneralId);
+        const memberCount = troops.length; // simplified
+        const children = childMap.get(t.id) ?? [];
+        const leaderCity = leader ? cityMap.get(leader.cityId) : undefined;
+
+        return (
+            <div key={t.id} style={{ marginLeft: depth * 20 }} className="py-1">
+                <div className="flex items-center gap-2 text-xs">
+                    <GitBranch className="size-3 text-blue-400 shrink-0" />
+                    <span className="font-medium">{t.name}</span>
+                    {leader && <span className="text-muted-foreground">({leader.name})</span>}
+                    {leaderCity && (
+                        <span className="text-muted-foreground flex items-center gap-0.5">
+                            <MapPin className="size-2.5" />
+                            {leaderCity.name}
+                        </span>
+                    )}
+                </div>
+                {children.map((child) => renderNode(child, depth + 1))}
+            </div>
+        );
+    };
+
+    return (
+        <Card className="border-blue-900/30">
+            <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2">
+                    <GitBranch className="size-4 text-blue-400" />
+                    함대 계층 구조
+                </CardTitle>
+            </CardHeader>
+            <CardContent>{rootTroops.map((t) => renderNode(t, 0))}</CardContent>
+        </Card>
+    );
+}
+
+// ─── Commander-Fleet Separation Indicator ────────────────────────────────────
+
+function CommanderFleetSeparation({
+    leader,
+    cityMap,
+}: {
+    leader: General;
+    cityMap: Map<number, { id: number; name: string }>;
+}) {
+    // Check if commander's city differs from where fleet is operating
+    // In the current data model, we compare leader.cityId with a known fleet location
+    const leaderCity = cityMap.get(leader.cityId);
+    const meta = leader.meta as Record<string, unknown> | undefined;
+    const fleetLocationId = meta?.fleetLocationId as number | undefined;
+
+    if (!fleetLocationId || fleetLocationId === leader.cityId) return null;
+
+    const fleetCity = cityMap.get(fleetLocationId);
+
+    return (
+        <div className="flex items-center gap-1.5 text-[10px] text-orange-400 bg-orange-950/20 rounded px-2 py-1">
+            <AlertTriangle className="size-3 shrink-0" />
+            <span>사령관: {leaderCity?.name ?? '?'}</span>
+            <span>/</span>
+            <span>함대: {fleetCity?.name ?? `위치#${fleetLocationId}`}</span>
+        </div>
+    );
+}
+
 export default function TroopPage() {
     const currentWorld = useWorldStore((s) => s.currentWorld);
     const { myOfficer, fetchMyGeneral } = useOfficerStore();
@@ -485,6 +593,9 @@ export default function TroopPage() {
                 </Card>
             )}
 
+            {/* Fleet Hierarchy Tree */}
+            <FleetHierarchy troops={troops} generalMap={generalMap} cityMap={cityMap} />
+
             {/* My current troop highlight */}
             {myTroop && (
                 <Card className="border-blue-800">
@@ -596,16 +707,19 @@ export default function TroopPage() {
                                 <div className="space-y-1">
                                     {/* Leader first */}
                                     {leader && (
-                                        <MemberRow
-                                            g={leader}
-                                            isLeader={true}
-                                            isTroopLeader={isLeader}
-                                            troopId={t.id}
-                                            cityName={cityMap.get(leader.cityId)?.name}
-                                            leaderCityId={leader.cityId}
-                                            nationLevel={myNation?.level}
-                                            onKick={handleKick}
-                                        />
+                                        <>
+                                            <MemberRow
+                                                g={leader}
+                                                isLeader={true}
+                                                isTroopLeader={isLeader}
+                                                troopId={t.id}
+                                                cityName={cityMap.get(leader.cityId)?.name}
+                                                leaderCityId={leader.cityId}
+                                                nationLevel={myNation?.level}
+                                                onKick={handleKick}
+                                            />
+                                            <CommanderFleetSeparation leader={leader} cityMap={cityMap} />
+                                        </>
                                     )}
                                     {reservedCommands.length > 0 && (
                                         <span className="text-xs text-muted-foreground">

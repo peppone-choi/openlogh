@@ -1,11 +1,12 @@
 'use client';
 
-import { Bell, LogOut } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Bell, LogOut, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { TurnTimer } from '@/components/game/turn-timer';
 import { ResourceDisplay } from '@/components/game/resource-display';
-import { GeneralPortrait } from '@/components/game/general-portrait';
+import { OfficerPortrait } from '@/components/game/officer-portrait';
 import { useWorldStore } from '@/stores/worldStore';
 import { useOfficerStore } from '@/stores/officerStore';
 import { useRouter } from 'next/navigation';
@@ -14,6 +15,32 @@ function formatCompact(n: number): string {
     if (n >= 10000) return `${(n / 10000).toFixed(1)}만`;
     if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
     return n.toLocaleString();
+}
+
+/** Format game date as "우주력 XXX년 X월" */
+function formatGameDate(year?: number, month?: number): string {
+    if (!year) return '';
+    const monthStr = month ? ` ${month}월` : '';
+    return `우주력 ${year}년${monthStr}`;
+}
+
+/** CP recovery countdown (every 5 real-time minutes) */
+function useCpCountdown() {
+    const [remaining, setRemaining] = useState(0);
+    useEffect(() => {
+        const CP_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
+        const update = () => {
+            const now = Date.now();
+            const elapsed = now % CP_INTERVAL_MS;
+            setRemaining(Math.ceil((CP_INTERVAL_MS - elapsed) / 1000));
+        };
+        update();
+        const interval = setInterval(update, 1000);
+        return () => clearInterval(interval);
+    }, []);
+    const m = Math.floor(remaining / 60);
+    const s = remaining % 60;
+    return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
 interface TopBarProps {
@@ -25,6 +52,7 @@ export function TopBar({ onMessageClick, onMobileMenuClick }: TopBarProps) {
     const router = useRouter();
     const { currentWorld } = useWorldStore();
     const { myOfficer } = useOfficerStore();
+    const cpCountdown = useCpCountdown();
 
     if (!currentWorld || !myOfficer) return null;
 
@@ -32,6 +60,8 @@ export function TopBar({ onMessageClick, onMobileMenuClick }: TopBarProps) {
         currentWorld.currentYear && currentWorld.currentMonth
             ? `${currentWorld.currentYear}년 ${currentWorld.currentMonth}월`
             : '';
+    const gameDate = formatGameDate(currentWorld.currentYear, currentWorld.currentMonth);
+    const timeRatio = currentWorld.tickSeconds ? `${Math.round(86400 / currentWorld.tickSeconds)}x` : '';
 
     return (
         <header
@@ -48,7 +78,7 @@ export function TopBar({ onMessageClick, onMobileMenuClick }: TopBarProps) {
                 onClick={() => router.push('/general')}
                 aria-label="제독 정보"
             >
-                <GeneralPortrait picture={myOfficer.picture} name={myOfficer.name} size="xs" />
+                <OfficerPortrait picture={myOfficer.picture} name={myOfficer.name} size="xs" />
                 <div className="flex flex-col min-w-0 items-start">
                     <span className="text-xs font-medium truncate max-w-[80px]">{myOfficer.name}</span>
                     {worldDate && <span className="text-[10px] text-muted-foreground">{worldDate}</span>}
@@ -60,11 +90,19 @@ export function TopBar({ onMessageClick, onMobileMenuClick }: TopBarProps) {
                 <span className="tracking-tight" style={{ color: 'var(--empire-gold)' }}>
                     오픈LOGH
                 </span>
-                {worldDate && <span className="text-muted-foreground text-xs">| {worldDate}</span>}
+                {gameDate && <span className="text-muted-foreground text-xs font-mono">| {gameDate}</span>}
+                {timeRatio && <span className="text-[10px] text-muted-foreground/60 font-mono">({timeRatio})</span>}
             </div>
 
-            <div className="mx-auto md:mx-auto">
+            <div className="mx-auto md:mx-auto flex items-center gap-3">
                 <TurnTimer />
+                <div
+                    className="hidden lg:flex items-center gap-1 text-[10px] text-muted-foreground font-mono"
+                    title="CP 회복까지"
+                >
+                    <Zap className="size-3 text-amber-500/60" />
+                    <span className="tabular-nums">{cpCountdown}</span>
+                </div>
             </div>
 
             <div className="flex items-center gap-3">
@@ -94,7 +132,7 @@ export function TopBar({ onMessageClick, onMobileMenuClick }: TopBarProps) {
                 </Button>
 
                 <div className="hidden md:block">
-                    <GeneralPortrait picture={myOfficer.picture} name={myOfficer.name} size="sm" />
+                    <OfficerPortrait picture={myOfficer.picture} name={myOfficer.name} size="sm" />
                 </div>
 
                 <Button variant="ghost" size="sm" onClick={() => router.push('/lobby')}>

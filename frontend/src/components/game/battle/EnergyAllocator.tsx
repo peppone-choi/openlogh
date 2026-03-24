@@ -32,7 +32,7 @@ const CHANNELS: EnergyChannel[] = [
     {
         key: 'shield',
         label: 'SHIELD',
-        sublabel: '방어막',
+        sublabel: '방어막 (총합)',
         color: '#4FC3F7',
         trackColor: 'bg-sky-400',
         effectFn: (p) => `피해감소 +${(p * 1.5).toFixed(0)}%`,
@@ -118,7 +118,7 @@ export function EnergyAllocator({ value, onChange, onPreset }: EnergyAllocatorPr
                                     >
                                         {ch.label}
                                     </span>
-                                    <span className="text-[8px] text-gray-600 truncate">{ch.effectFn(pct)}</span>
+                                    <span className="text-[8px] text-gray-600 truncate">{ch.effectFn(pct ?? 0)}</span>
                                 </div>
                                 <span className="text-[11px] font-mono font-bold text-gray-300 w-8 text-right tabular-nums shrink-0">
                                     {pct}%
@@ -172,6 +172,73 @@ export function EnergyAllocator({ value, onChange, onPreset }: EnergyAllocatorPr
                     </div>
                     <div className="text-[7px] font-mono text-gray-700">색적 (자동 배분)</div>
                 </div>
+
+                {/* 4-Directional Shield Distribution */}
+                <DirectionalShields totalShield={value.shield} />
+            </div>
+        </div>
+    );
+}
+
+// ─── 4-Directional Shield Sub-component ──────────────────────────────────────
+
+interface DirectionalShieldsProps {
+    totalShield: number;
+}
+
+interface ShieldDirection {
+    key: string;
+    label: string;
+    labelKr: string;
+}
+
+const SHIELD_DIRS: ShieldDirection[] = [
+    { key: 'front', label: 'F', labelKr: '전' },
+    { key: 'rear', label: 'R', labelKr: '후' },
+    { key: 'left', label: 'L', labelKr: '좌' },
+    { key: 'right', label: 'Rt', labelKr: '우' },
+];
+
+function DirectionalShields({ totalShield }: DirectionalShieldsProps) {
+    // Default: even distribution
+    const perDir = totalShield > 0 ? Math.round(totalShield / 4) : 0;
+    // Remainder goes to front
+    const frontVal = totalShield - perDir * 3;
+
+    const values: Record<string, number> = {
+        front: Math.max(0, frontVal),
+        rear: perDir,
+        left: perDir,
+        right: perDir,
+    };
+
+    if (totalShield <= 0) return null;
+
+    return (
+        <div className="space-y-1 pt-1 border-t border-gray-800/50 mt-1">
+            <div className="flex items-center justify-between">
+                <span className="text-[8px] font-mono text-sky-600 tracking-wider uppercase">방향별 실드 배분</span>
+                <span className="text-[8px] font-mono text-gray-600">합계: {totalShield}%</span>
+            </div>
+            <div className="grid grid-cols-4 gap-1">
+                {SHIELD_DIRS.map((dir) => {
+                    const val = values[dir.key] ?? 0;
+                    const pct = totalShield > 0 ? (val / totalShield) * 100 : 25;
+                    return (
+                        <div key={dir.key} className="text-center space-y-0.5">
+                            <div className="text-[8px] font-mono text-sky-500/70">
+                                {dir.labelKr}({dir.label})
+                            </div>
+                            <div className="relative h-2 rounded-full bg-gray-800/80 overflow-hidden">
+                                <div
+                                    className="absolute inset-y-0 left-0 rounded-full bg-sky-400 transition-all duration-100"
+                                    style={{ width: `${pct}%`, opacity: 0.7 }}
+                                />
+                            </div>
+                            <div className="text-[9px] font-mono text-sky-300/80 tabular-nums">{val}%</div>
+                        </div>
+                    );
+                })}
             </div>
         </div>
     );
