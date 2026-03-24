@@ -13,6 +13,7 @@ import {
     Gamepad2,
     Settings,
     ChevronDown,
+    Wallet,
 } from 'lucide-react';
 import {
     Sidebar,
@@ -98,7 +99,13 @@ const navItems = [
             { title: '회의실', url: '/board', requireNation: true as const },
             { title: '기밀실', url: '/board?secret=true', requireSecret: true as const },
             { title: '메시지', url: '/messages' },
+            { title: '메신저', url: '/messenger', requireNation: true as const },
         ],
+    },
+    {
+        title: '재무',
+        icon: Wallet,
+        items: [{ title: '사적 구좌', url: '/private-funds' }],
     },
     {
         title: '부가',

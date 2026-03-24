@@ -26,6 +26,14 @@ import {
     calcPlanetFortressSuppliesIncome,
     countCityOfficers,
 } from '@/lib/income-calc';
+import { deriveFacilities, PlanetFacilities } from '@/components/game/planet-facilities';
+
+/** Inline wrapper for the planet facilities section */
+function PlanetFacilitiesInline({ meta }: { meta: Record<string, unknown> | undefined }) {
+    const facilities = deriveFacilities(meta).filter((f) => f.status !== 'unavailable');
+    if (facilities.length === 0) return null;
+    return <PlanetFacilities meta={meta} facilities={facilities} />;
+}
 
 // --- Sort ---
 
@@ -654,6 +662,13 @@ function CityPageContent() {
                                         );
                                     })()}
                             </div>
+
+                            {/* ===== Planet Facilities ===== */}
+                            {isExpanded && isVisible && (
+                                <div className="p-2">
+                                    <PlanetFacilitiesInline meta={city.meta} />
+                                </div>
+                            )}
 
                             {/* ===== Expanded garrison table ===== */}
                             {isExpanded && cityGens.length > 0 && isVisible && (

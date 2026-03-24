@@ -29,6 +29,7 @@ import { LoadingState } from '@/components/game/loading-state';
 import { EmptyState } from '@/components/game/empty-state';
 import { GeneralPortrait } from '@/components/game/general-portrait';
 import { SHIP_CLASS_NAMES, formatOfficerLevelText, isValidObjKey } from '@/lib/game-utils';
+import { FleetLimitsBadge, calcFleetLimits } from '@/components/game/fleet-limits-badge';
 
 function formatTurnClock(turnTime?: string): string {
     if (!turnTime) return '';
@@ -484,6 +485,29 @@ export default function TroopPage() {
 
     const cityMap = useMemo(() => new Map(cities.map((c) => [c.id, c])), [cities]);
 
+    const fleetLimits = useMemo(() => {
+        const factionCities = cities.filter((c) => c.factionId === myOfficer?.factionId);
+        const totalPop = factionCities.reduce((s, c) => s + (c.population ?? 0), 0);
+        const maxLimits = calcFleetLimits(totalPop);
+        // Count troop types from meta.troopType; default all to 'fleet' if unset
+        let fleetCount = 0;
+        let patrolCount = 0;
+        let groundCount = 0;
+        for (const t of troops) {
+            const meta = t.meta as Record<string, unknown> | undefined;
+            const type = (meta?.troopType as string | undefined) ?? 'fleet';
+            if (type === 'patrol') patrolCount++;
+            else if (type === 'ground') groundCount++;
+            else fleetCount++;
+        }
+        return {
+            fleets: fleetCount,
+            patrols: patrolCount,
+            groundUnits: groundCount,
+            ...maxLimits,
+        };
+    }, [cities, myOfficer?.factionId, troops]);
+
     const troopMembers = useMemo(() => {
         const map = new Map<number, General[]>();
         for (const t of troops) {
@@ -559,6 +583,9 @@ export default function TroopPage() {
         <div className="p-4 space-y-4 max-w-3xl mx-auto">
             <div className="flex items-center justify-between">
                 <PageHeader icon={Shield} title="부대 편성" />
+            </div>
+            <FleetLimitsBadge limits={fleetLimits} />
+            <div className="flex items-center justify-between">
                 {!myTroop && (
                     <Button
                         onClick={() => setShowCreate(!showCreate)}
