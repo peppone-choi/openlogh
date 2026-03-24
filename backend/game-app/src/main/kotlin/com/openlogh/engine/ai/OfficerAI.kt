@@ -8,12 +8,13 @@ import com.openlogh.entity.Planet
 import com.openlogh.entity.SessionState
 import com.openlogh.repository.*
 import com.openlogh.service.MapService
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.util.*
 import kotlin.random.Random
 
 @Service
-class OfficerAI(
+class OfficerAI @Autowired constructor(
     private val officerRepository: OfficerRepository,
     private val planetRepository: PlanetRepository,
     private val factionRepository: FactionRepository,
