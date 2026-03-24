@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
+describe('tutorial entry point', () => {
+    it('tutorial button is commented out (hidden)', () => {
+        const src = require('fs').readFileSync(require('path').resolve(__dirname, 'page.tsx'), 'utf-8');
+        expect(src).toContain('개편 완료 전까지 숨김');
+        expect(src).not.toMatch(/(?<!\{\/\*[\s\S]*?)onClick=\{[^}]*\/tutorial/);
+    });
+});
+
 describe('lobby getServerPhase', () => {
     function getServerPhase(meta: Record<string, unknown>, config: Record<string, unknown>) {
         if (meta.finished || meta.isFinished) return '종료';

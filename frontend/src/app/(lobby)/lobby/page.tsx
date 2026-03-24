@@ -2,21 +2,7 @@
 
 import { useEffect, useRef, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import {
-    Globe,
-    UserPlus,
-    Users,
-    Bot,
-    LogIn,
-    Loader2,
-    Clock,
-    Signal,
-    Shield,
-    Ban,
-    Trophy,
-    Pause,
-    GraduationCap,
-} from 'lucide-react';
+import { Globe, UserPlus, Users, Bot, LogIn, Loader2, Clock, Signal, Shield, Ban, Trophy, Pause } from 'lucide-react';
 import { useWorldStore } from '@/stores/worldStore';
 import { useGeneralStore } from '@/stores/generalStore';
 import { useAuthStore } from '@/stores/authStore';
@@ -540,7 +526,7 @@ export default function LobbyPage() {
                 </div>
             </div>
 
-            {/* Tutorial */}
+            {/* Tutorial — 개편 완료 전까지 숨김
             <Card
                 className="transition-colors cursor-pointer hover:border-primary/50 border-dashed border-2"
                 onClick={() => router.push('/tutorial')}
@@ -560,6 +546,7 @@ export default function LobbyPage() {
                     </Badge>
                 </CardContent>
             </Card>
+            */}
 
             {/* Multi-account warning */}
             <Card>
