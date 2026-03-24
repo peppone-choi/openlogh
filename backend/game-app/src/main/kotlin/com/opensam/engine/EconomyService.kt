@@ -65,10 +65,10 @@ class EconomyService @Autowired constructor(
         private const val BASE_POP_INCREASE = 5000
         private const val MAX_DED_LEVEL = 30
 
-        private val NATION_LEVEL_THRESHOLDS = intArrayOf(0, 1, 2, 5, 8, 11, 16, 21)
+        private val NATION_LEVEL_THRESHOLDS = intArrayOf(0, 1, 2, 4, 6, 9, 12, 16, 20, 25)
 
         private val NATION_LEVEL_NAME = arrayOf(
-            "방랑군", "호족", "군벌", "주자사", "주목", "공", "왕", "황제"
+            "방랑군", "도위", "주자사", "주목", "중랑장", "대장군", "대사마", "공", "왕", "황제"
         )
 
         fun getNationLevelName(level: Int): String =
@@ -552,16 +552,16 @@ class EconomyService @Autowired constructor(
                 val newLevelText = getNationLevelName(newLevel)
 
                 val globalMsg = when (newLevel) {
-                    7 -> "【작위】 ${nationName} $oldLevelText ${lordName}이(가) ${newLevelText}로 옹립되었습니다."
-                    6 -> "【작위】 ${nationName}의 ${lordName}이(가) ${newLevelText}로 책봉되었습니다."
-                    5, 4, 3 -> "【작위】 ${nationName}의 ${lordName}이(가) ${newLevelText}로 임명되었습니다."
+                    9 -> "【작위】 ${nationName} $oldLevelText ${lordName}이(가) ${newLevelText}로 옹립되었습니다."
+                    8 -> "【작위】 ${nationName}의 ${lordName}이(가) ${newLevelText}로 책봉되었습니다."
+                    in 3..7 -> "【작위】 ${nationName}의 ${lordName}이(가) ${newLevelText}로 임명되었습니다."
                     2 -> "【작위】 ${lordName}이(가) 독립하여 ${nationName}(이)라는 ${newLevelText}로 나섰습니다."
                     else -> "【작위】 ${nationName}의 ${lordName}이(가) ${newLevelText}로 승격되었습니다."
                 }
                 val nationMsg = when (newLevel) {
-                    7 -> "${nationName} $oldLevelText ${lordName}이(가) ${newLevelText}로 옹립"
-                    6 -> "${nationName}의 ${lordName}이(가) ${newLevelText}로 책봉"
-                    5, 4, 3 -> "${nationName}의 ${lordName}이(가) ${newLevelText}로 임명됨"
+                    9 -> "${nationName} $oldLevelText ${lordName}이(가) ${newLevelText}로 옹립"
+                    8 -> "${nationName}의 ${lordName}이(가) ${newLevelText}로 책봉"
+                    in 3..7 -> "${nationName}의 ${lordName}이(가) ${newLevelText}로 임명됨"
                     2 -> "${lordName}이(가) 독립하여 ${nationName}(이)라는 ${newLevelText}로 나서다"
                     else -> "${nationName}의 ${lordName}이(가) ${newLevelText}로 승격됨"
                 }

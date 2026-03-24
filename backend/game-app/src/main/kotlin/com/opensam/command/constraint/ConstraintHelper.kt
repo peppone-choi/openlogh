@@ -1195,6 +1195,16 @@ fun NationHasEmperorGeneral() = object : Constraint {
     }
 }
 
+fun NationIsRegent() = object : Constraint {
+    override val name = "NationIsRegent"
+    override fun test(ctx: ConstraintContext): ConstraintResult {
+        val nation = ctx.nation ?: return ConstraintResult.Fail("국가 정보가 없습니다.")
+        val status = nation.meta["imperialStatus"] as? String ?: "independent"
+        return if (status == "regent") ConstraintResult.Pass
+        else ConstraintResult.Fail("협천자 상태가 아닙니다. 먼저 천자맞이를 수행하세요.")
+    }
+}
+
 fun WanderingEmperorExists() = object : Constraint {
     override val name = "WanderingEmperorExists"
     override fun test(ctx: ConstraintContext): ConstraintResult {

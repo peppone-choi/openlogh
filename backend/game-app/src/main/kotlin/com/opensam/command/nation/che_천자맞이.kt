@@ -48,7 +48,7 @@ class che_천자맞이(general: General, env: CommandEnv, arg: Map<String, Any>?
         emperorGeneral.meta[EmperorConstants.GENERAL_EMPEROR_STATUS] = EmperorConstants.EMPEROR_ENTHRONED
         services!!.generalRepository.save(emperorGeneral)
 
-        n.meta[EmperorConstants.NATION_IMPERIAL_STATUS] = EmperorConstants.STATUS_EMPEROR
+        n.meta[EmperorConstants.NATION_IMPERIAL_STATUS] = EmperorConstants.STATUS_REGENT
         n.meta[EmperorConstants.NATION_EMPEROR_TYPE] = EmperorConstants.TYPE_LEGITIMATE
 
         val emperorName = emperorGeneral.name

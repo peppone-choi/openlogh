@@ -11,6 +11,7 @@ object EmperorConstants {
     const val GENERAL_EMPEROR_STATUS = "emperorStatus"
 
     const val STATUS_EMPEROR = "emperor"
+    const val STATUS_REGENT = "regent"
     const val STATUS_VASSAL = "vassal"
     const val STATUS_INDEPENDENT = "independent"
     const val STATUS_EXEMPT = "exempt"

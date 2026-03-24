@@ -24,8 +24,8 @@ class che_칭제(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
 
     override val fullConditionConstraints = listOf(
         BeChief(), NotBeNeutral(), OccupiedCity(),
-        EmperorSystemActive(), NationNotExempt(), NationNotEmperor(), NationIsIndependent(),
-        ReqNationValue("level", "국가 규모", ">=", 6, "왕(6) 이상의 작위가 필요합니다."),
+        EmperorSystemActive(), NationNotExempt(), NationNotEmperor(),
+        ReqNationValue("level", "국가 규모", ">=", 8, "왕(8) 이상의 작위가 필요합니다."),
         ReqNationCityCount(20),
     )
 

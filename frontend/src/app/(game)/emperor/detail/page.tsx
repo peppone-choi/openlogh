@@ -21,7 +21,10 @@ export default function EmperorDetailPage() {
     }, [currentWorld, loadAll]);
 
     const emperorNation = useMemo(
-        () => nations.find((n) => n.level >= 9 || n.meta?.imperialStatus === 'emperor'),
+        () =>
+            nations.find(
+                (n) => n.level >= 9 || n.meta?.imperialStatus === 'emperor' || n.meta?.imperialStatus === 'regent'
+            ),
         [nations]
     );
 
@@ -76,7 +79,9 @@ export default function EmperorDetailPage() {
                     <CardTitle className="flex items-center gap-2">
                         <Crown className="size-5 text-amber-400" />
                         <NationBadge name={emperorNation.name} color={emperorNation.color} />
-                        <Badge variant="secondary">황제국</Badge>
+                        <Badge variant="secondary">
+                            {emperorNation.meta?.imperialStatus === 'regent' ? '협천자' : '황제국'}
+                        </Badge>
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">

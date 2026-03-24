@@ -23,9 +23,8 @@ class che_선양요구(general: General, env: CommandEnv, arg: Map<String, Any>?
 
     override val fullConditionConstraints = listOf(
         BeChief(), NotBeNeutral(), OccupiedCity(),
-        EmperorSystemActive(), NationNotExempt(),
-        NationIsEmperor(), NationHasEmperorGeneral(),
-        ReqNationValue("level", "국가 규모", ">=", 6, "왕(6) 이상의 작위가 필요합니다."),
+        EmperorSystemActive(), NationNotExempt(), NationIsRegent(),
+        ReqNationValue("level", "국가 규모", ">=", 8, "왕(8) 이상의 작위가 필요합니다."),
         ReqNationCityCount(20),
     )
 
@@ -50,6 +49,7 @@ class che_선양요구(general: General, env: CommandEnv, arg: Map<String, Any>?
         emperorGeneral.npcState = 0
         services!!.generalRepository.save(emperorGeneral)
 
+        n.meta[EmperorConstants.NATION_IMPERIAL_STATUS] = EmperorConstants.STATUS_EMPEROR
         n.meta[EmperorConstants.NATION_EMPEROR_TYPE] = EmperorConstants.TYPE_LEGITIMATE
 
         pushLog("<C><b>${emperorName}</b></>에게 선양을 받아 제위에 올랐습니다. <1>${formatDate()}</>")

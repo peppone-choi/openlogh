@@ -653,31 +653,35 @@ class EconomyFormulaParityTest {
 
     // ────────────────────────────────────────────────────────────────────────
     // 9. Nation Level System
-    // Legacy UpdateNationLevel.php:41-50 thresholds:
-    //   [0]=0, [1]=1, [2]=2, [3]=5, [4]=8, [5]=11, [6]=16, [7]=21
+    // 10-level system (officer_ranks.json 기준):
+    //   [0]=0, [1]=1, [2]=2, [3]=4, [4]=6, [5]=9, [6]=12, [7]=16, [8]=20, [9]=25
     //   Level only increases. Reward: newLevel * 1000 gold + rice.
     // ────────────────────────────────────────────────────────────────────────
 
     @Nested
-    @DisplayName("Nation Level — UpdateNationLevel.php:41")
+    @DisplayName("Nation Level — 10-level system (officer_ranks.json)")
     inner class NationLevelSystem {
 
         @ParameterizedTest
         @CsvSource(
-            "0, 0",    // 0 high cities -> level 0
-            "1, 1",    // 1 high city -> level 1
-            "2, 2",    // 2 high cities -> level 2
-            "4, 2",    // 4 high cities -> still level 2 (next threshold is 5)
-            "5, 3",    // 5 high cities -> level 3
-            "7, 3",    // 7 -> still level 3
-            "8, 4",    // 8 -> level 4
-            "10, 4",   // 10 -> still level 4
-            "11, 5",   // 11 -> level 5
-            "15, 5",   // 15 -> still level 5
-            "16, 6",   // 16 -> level 6
-            "20, 6",   // 20 -> still level 6
-            "21, 7",   // 21 -> level 7 (emperor)
-            "30, 7",   // 30 -> still level 7 (max)
+            "0, 0",    // 0 high cities -> level 0 (방랑군)
+            "1, 1",    // 1 high city -> level 1 (도위)
+            "2, 2",    // 2 high cities -> level 2 (주자사)
+            "3, 2",    // 3 high cities -> still level 2 (next threshold is 4)
+            "4, 3",    // 4 high cities -> level 3 (주목)
+            "5, 3",    // 5 -> still level 3
+            "6, 4",    // 6 -> level 4 (중랑장)
+            "8, 4",    // 8 -> still level 4
+            "9, 5",    // 9 -> level 5 (대장군)
+            "11, 5",   // 11 -> still level 5
+            "12, 6",   // 12 -> level 6 (대사마)
+            "15, 6",   // 15 -> still level 6
+            "16, 7",   // 16 -> level 7 (공)
+            "19, 7",   // 19 -> still level 7
+            "20, 8",   // 20 -> level 8 (왕)
+            "24, 8",   // 24 -> still level 8
+            "25, 9",   // 25 -> level 9 (황제)
+            "30, 9",   // 30 -> still level 9 (max)
         )
         @DisplayName("Nation level by high city count matches threshold table")
         fun `nation level by high city count`(highCityCount: Int, expectedLevel: Int) {
