@@ -22,7 +22,7 @@ class DiplomacyController(
         @PathVariable worldId: Long,
         @PathVariable nationId: Long,
     ): ResponseEntity<List<DiplomacyDto>> {
-        val items = diplomacyRepository.findBySessionIdAndSrcNationIdOrDestFactionId(worldId, nationId, nationId)
+        val items = diplomacyRepository.findBySessionIdAndSrcFactionIdOrDestFactionId(worldId, nationId, nationId)
         return ResponseEntity.ok(items.map { DiplomacyDto.from(it) })
     }
 

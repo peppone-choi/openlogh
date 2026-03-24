@@ -149,7 +149,7 @@ class DiplomacyService(
     }
 
     fun killAllRelationsForNation(sessionId: Long, factionId: Long) {
-        val relations = diplomacyRepository.findBySessionIdAndSrcNationIdOrDestFactionId(sessionId, factionId, factionId)
+        val relations = diplomacyRepository.findBySessionIdAndSrcFactionIdOrDestFactionId(sessionId, factionId, factionId)
         for (d in relations) { if (!d.isDead) d.isDead = true }
         diplomacyRepository.saveAll(relations)
     }
@@ -164,7 +164,7 @@ class DiplomacyService(
     }
 
     fun getRelationsForNation(sessionId: Long, factionId: Long): List<Diplomacy> {
-        return diplomacyRepository.findBySessionIdAndSrcNationIdOrDestFactionId(sessionId, factionId, factionId)
+        return diplomacyRepository.findBySessionIdAndSrcFactionIdOrDestFactionId(sessionId, factionId, factionId)
             .filter { !it.isDead }
     }
 
@@ -174,7 +174,7 @@ class DiplomacyService(
     }
 
     private fun findActiveBetween(sessionId: Long, factionA: Long, factionB: Long): List<Diplomacy> {
-        return diplomacyRepository.findBySessionIdAndSrcNationIdOrDestFactionId(sessionId, factionA, factionB)
+        return diplomacyRepository.findBySessionIdAndSrcFactionIdOrDestFactionId(sessionId, factionA, factionB)
             .filter { !it.isDead }
     }
 }
