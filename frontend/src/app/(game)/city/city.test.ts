@@ -41,6 +41,24 @@ describe('city page filter logic', () => {
         expect(isVacant).toBe(false);
     });
 
+    it('own city is visible even when vacant (nationId === 0)', () => {
+        const city = { id: 10, nationId: 0 };
+        const myGeneralCityId = 10;
+        const isVacant = city.nationId === 0;
+        const isMyCity = city.id === myGeneralCityId;
+        const isVisible = isMyCity || !isVacant;
+        expect(isVisible).toBe(true);
+    });
+
+    it('other vacant city is not visible', () => {
+        const city = { id: 20, nationId: 0 };
+        const myGeneralCityId = 10;
+        const isVacant = city.nationId === 0;
+        const isMyCity = city.id === myGeneralCityId;
+        const isVisible = isMyCity || !isVacant;
+        expect(isVisible).toBe(false);
+    });
+
     it('loads data without myGeneral when requestedCityId is set', () => {
         const hasGeneral = false;
         const requestedCityId = 5;

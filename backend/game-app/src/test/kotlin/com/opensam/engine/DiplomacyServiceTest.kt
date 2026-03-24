@@ -402,6 +402,33 @@ class DiplomacyServiceTest {
     }
 
     @Test
+    fun `sendDiplomaticMessage includes content in payload for non-aggression proposal`() {
+        service.proposeNonAggression(1L, 1L, 2L)
+
+        val msg = messages.values.find { it.messageType == DiplomacyService.MSG_NON_AGGRESSION_PROPOSAL }
+        assertNotNull(msg)
+        val content = msg!!.payload["content"] as? String
+        assertNotNull(content)
+        assertTrue(content!!.contains("불가침"))
+        assertEquals("diplomacy", msg.mailboxCode)
+        assertEquals(1L, msg.srcId)
+        assertEquals(2L, msg.destId)
+    }
+
+    @Test
+    fun `sendDiplomaticMessage includes content in payload for ceasefire proposal`() {
+        seed(createDiplomacy(id = 1, stateCode = "전쟁", term = 10))
+
+        service.proposeCeasefire(1L, 1L, 2L)
+
+        val msg = messages.values.find { it.messageType == DiplomacyService.MSG_CEASEFIRE_PROPOSAL }
+        assertNotNull(msg)
+        val content = msg!!.payload["content"] as? String
+        assertNotNull(content)
+        assertTrue(content!!.contains("종전"))
+    }
+
+    @Test
     fun `getRelations returns world relations and createRelation persists`() {
         seed(
             createDiplomacy(id = 1, srcNationId = 1, destNationId = 2, stateCode = "불가침", term = 10),

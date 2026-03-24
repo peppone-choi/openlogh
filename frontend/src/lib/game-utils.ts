@@ -581,22 +581,22 @@ export function stripCodePrefix(code: string): string {
 // --- Nation type labels (제자백가 + descriptions) ---
 
 const NATION_TYPE_LABELS: Record<string, string> = {
-    che_도적: '도적(약탈형)',
-    che_명가: '명가(논리학파)',
-    che_음양가: '음양가(자연철학)',
-    che_종횡가: '종횡가(외교학파)',
-    che_불가: '불가(불교)',
-    che_오두미도: '오두미도(도교종파)',
-    che_태평도: '태평도(도교종파)',
-    che_도가: '도가(노자·장자)',
-    che_묵가: '묵가(겸애학파)',
-    che_덕가: '덕가(덕치주의)',
-    che_병가: '병가(군사학파)',
-    che_유가: '유가(유교)',
-    che_법가: '법가(법치주의)',
+    che_도적: '도적',
+    che_명가: '명가',
+    che_음양가: '음양가',
+    che_종횡가: '종횡가',
+    che_불가: '불가',
+    che_오두미도: '오두미도',
+    che_태평도: '태평도',
+    che_도가: '도가',
+    che_묵가: '묵가',
+    che_덕가: '덕가',
+    che_병가: '병가',
+    che_유가: '유가',
+    che_법가: '법가',
 };
 
-/** Get nation type display label with explanation (e.g. `che_유가` → `유가(유교)`). */
+/** Get nation type display label (e.g. `che_유가` → `유가`). */
 export function getNationTypeLabel(typeCode: string): string {
     return NATION_TYPE_LABELS[typeCode] ?? stripCodePrefix(typeCode);
 }

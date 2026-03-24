@@ -13,6 +13,17 @@ import {
     stripCodePrefix,
 } from '@/lib/game-utils';
 
+describe('nation type labels have no parentheses', () => {
+    it('getNationTypeLabel returns label without parentheses', () => {
+        const types = ['che_도적', 'che_유가', 'che_법가', 'che_덕가', 'che_병가'];
+        for (const t of types) {
+            const label = getNationTypeLabel(t);
+            expect(label).not.toContain('(');
+            expect(label).not.toContain(')');
+        }
+    });
+});
+
 describe('crew type parsing', () => {
     it('parses legacy prefixed crew type', () => {
         expect(parseCrewTypeCode('che_0')).toBe(0);
@@ -55,11 +66,11 @@ describe('stripCodePrefix', () => {
 });
 
 describe('getNationTypeLabel', () => {
-    it('returns label with explanation for known types', () => {
-        expect(getNationTypeLabel('che_유가')).toBe('유가(유교)');
-        expect(getNationTypeLabel('che_법가')).toBe('법가(법치주의)');
-        expect(getNationTypeLabel('che_병가')).toBe('병가(군사학파)');
-        expect(getNationTypeLabel('che_도적')).toBe('도적(약탈형)');
+    it('returns label without parentheses for known types', () => {
+        expect(getNationTypeLabel('che_유가')).toBe('유가');
+        expect(getNationTypeLabel('che_법가')).toBe('법가');
+        expect(getNationTypeLabel('che_병가')).toBe('병가');
+        expect(getNationTypeLabel('che_도적')).toBe('도적');
     });
 
     it('falls back to stripCodePrefix for unknown types', () => {

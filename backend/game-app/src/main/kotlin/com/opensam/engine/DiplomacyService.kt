@@ -501,7 +501,14 @@ class DiplomacyService(
             else -> "diplomacy_$action"
         }
 
+        val content = when (action) {
+            "non_aggression" -> "불가침 제의가 도착했습니다. 외교부에서 확인해주세요."
+            "cancel_non_aggression" -> "불가침 파기 제의가 도착했습니다. 외교부에서 확인해주세요."
+            "stop_war" -> "종전 제의가 도착했습니다. 외교부에서 확인해주세요."
+            else -> "외교 알림이 도착했습니다. 외교부에서 확인해주세요."
+        }
         val payload = mutableMapOf<String, Any>(
+            "content" to content,
             "srcNationId" to srcNationId,
             "destNationId" to destNationId,
             "srcGeneralId" to srcGeneralId,
@@ -530,6 +537,12 @@ class DiplomacyService(
         messageType: String,
         diplomacyId: Long,
     ) {
+        val content = when (messageType) {
+            MSG_NON_AGGRESSION_PROPOSAL -> "불가침 제의가 도착했습니다. 외교부에서 확인해주세요."
+            MSG_NON_AGGRESSION_BREAK -> "불가침 파기 제의가 도착했습니다. 외교부에서 확인해주세요."
+            MSG_CEASEFIRE_PROPOSAL -> "종전 제의가 도착했습니다. 외교부에서 확인해주세요."
+            else -> "외교 문서 #${diplomacyId}이(가) 도착했습니다. 외교부에서 확인해주세요."
+        }
         messageRepository.save(
             Message(
                 worldId = worldId,
@@ -538,6 +551,7 @@ class DiplomacyService(
                 srcId = srcNationId,
                 destId = destNationId,
                 payload = mutableMapOf(
+                    "content" to content,
                     "srcNationId" to srcNationId,
                     "destNationId" to destNationId,
                     "diplomacyId" to diplomacyId,

@@ -44,19 +44,19 @@ const ITEM_TYPE_OPTIONS = [
 ];
 
 const NATION_TYPE_OPTIONS = [
-    { value: 'che_도적', label: '도적(약탈형)' },
-    { value: 'che_명가', label: '명가(논리학파)' },
-    { value: 'che_음양가', label: '음양가(자연철학)' },
-    { value: 'che_종횡가', label: '종횡가(외교학파)' },
-    { value: 'che_불가', label: '불가(불교)' },
-    { value: 'che_오두미도', label: '오두미도(도교종파)' },
-    { value: 'che_태평도', label: '태평도(도교종파)' },
-    { value: 'che_도가', label: '도가(노자·장자)' },
-    { value: 'che_묵가', label: '묵가(겸애학파)' },
-    { value: 'che_덕가', label: '덕가(덕치주의)' },
-    { value: 'che_병가', label: '병가(군사학파)' },
-    { value: 'che_유가', label: '유가(유교)' },
-    { value: 'che_법가', label: '법가(법치주의)' },
+    { value: 'che_도적', label: '도적' },
+    { value: 'che_명가', label: '명가' },
+    { value: 'che_음양가', label: '음양가' },
+    { value: 'che_종횡가', label: '종횡가' },
+    { value: 'che_불가', label: '불가' },
+    { value: 'che_오두미도', label: '오두미도' },
+    { value: 'che_태평도', label: '태평도' },
+    { value: 'che_도가', label: '도가' },
+    { value: 'che_묵가', label: '묵가' },
+    { value: 'che_덕가', label: '덕가' },
+    { value: 'che_병가', label: '병가' },
+    { value: 'che_유가', label: '유가' },
+    { value: 'che_법가', label: '법가' },
 ];
 
 const COLOR_TYPE_OPTIONS = [
