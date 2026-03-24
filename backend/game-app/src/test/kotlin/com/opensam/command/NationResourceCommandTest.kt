@@ -278,6 +278,53 @@ class NationResourceCommandTest {
     }
 
     @Test
+    fun `천도 back to original city succeeds after first move`() {
+        val chief = createGeneral(officerLevel = 20)
+        val nation = createNation(id = 1, gold = 10000, rice = 10000)
+        nation.capitalCityId = 1
+        val cityA = createCity(id = 1, nationId = 1)
+        val cityB = createCity(id = 2, nationId = 1)
+
+        // First move: A → B
+        val cmd1 = che_천도(chief, env())
+        cmd1.city = cityA
+        cmd1.destCity = cityB
+        cmd1.nation = nation
+        val r1 = runBlocking { cmd1.run(fixedRng) }
+        assertTrue(r1.success)
+        assertEquals(2L, nation.capitalCityId)
+
+        // Second move: B → A (back to original)
+        val cmd2 = che_천도(chief, env())
+        cmd2.city = cityB
+        cmd2.destCity = cityA
+        cmd2.nation = nation
+        val check2 = cmd2.checkFullCondition()
+        assertTrue(check2 is ConstraintResult.Pass, "Constraints should pass for return 천도: $check2")
+        val r2 = runBlocking { cmd2.run(fixedRng) }
+        assertTrue(r2.success, "Return 천도 should succeed")
+        assertEquals(1L, nation.capitalCityId)
+        assertEquals(6000, nation.gold)
+        assertEquals(6000, nation.rice)
+    }
+
+    @Test
+    fun `천도 to current capital fails with already-capital message`() {
+        val chief = createGeneral(officerLevel = 20)
+        val nation = createNation(id = 1, gold = 10000, rice = 10000)
+        nation.capitalCityId = 1
+
+        val cmd = che_천도(chief, env())
+        cmd.city = createCity(id = 1, nationId = 1)
+        cmd.destCity = createCity(id = 1, nationId = 1)
+        cmd.nation = nation
+        val check = cmd.checkFullCondition()
+        assertTrue(check is ConstraintResult.Pass)
+        val result = runBlocking { cmd.run(fixedRng) }
+        assertTrue(!result.success)
+    }
+
+    @Test
     fun `백성동원 fails when strategic command is blocked and runs with NPC saves`() {
         val chief = createGeneral(officerLevel = 20)
         val failCmd = che_백성동원(chief, env())

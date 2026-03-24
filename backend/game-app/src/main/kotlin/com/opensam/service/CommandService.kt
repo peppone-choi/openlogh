@@ -67,6 +67,7 @@ class CommandService(
         }
     }
 
+    @Transactional
     fun executeCommand(generalId: Long, actionCode: String, arg: Map<String, Any>?): CommandResult? {
         val general = generalRepository.findById(generalId).orElse(null) ?: return null
         val world = worldStateRepository.findById(general.worldId.toShort()).orElse(null) ?: return null
@@ -93,9 +94,12 @@ class CommandService(
             )
         }
         generalRepository.save(general)
+        if (nation != null) nationRepository.save(nation)
+        if (city != null) cityRepository.save(city)
         return result
     }
 
+    @Transactional
     fun executeNationCommand(generalId: Long, actionCode: String, arg: Map<String, Any>?): CommandResult? {
         val general = generalRepository.findById(generalId).orElse(null) ?: return null
         if (general.officerLevel < 5) {
@@ -125,6 +129,8 @@ class CommandService(
             )
         }
         generalRepository.save(general)
+        if (nation != null) nationRepository.save(nation)
+        if (city != null) cityRepository.save(city)
         return result
     }
 

@@ -507,7 +507,7 @@ class TurnService @Autowired constructor(
 
                     if (nationActionCode != null && commandRegistry.hasNationCommand(nationActionCode)) {
                         try {
-                            runBlocking {
+                            val nationCmdResult = runBlocking {
                                 commandExecutor.executeNationCommand(
                                     nationActionCode,
                                     general,
@@ -524,6 +524,18 @@ class TurnService @Autowired constructor(
                                         nationActionCode,
                                     )
                                 )
+                            }
+                            if (nationCmdResult.logs.isNotEmpty()) {
+                                try {
+                                    commandLogDispatcher.dispatchLogs(
+                                        worldId = worldId,
+                                        generalId = general.id,
+                                        nationId = if (general.nationId != 0L) general.nationId else null,
+                                        year = env.year,
+                                        month = env.month,
+                                        logs = nationCmdResult.logs,
+                                    )
+                                } catch (_: Exception) { }
                             }
                         } catch (e: Exception) {
                             logger.warn("Nation command $nationActionCode failed for general ${general.id}: ${e.message}")
