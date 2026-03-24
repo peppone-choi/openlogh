@@ -185,6 +185,7 @@ export interface General {
     commandPoints: number;
     commandEndTime: string | null;
     lastTurn: LastTurnInfo;
+    destCityId?: number | null;
     meta: Record<string, unknown>;
     penalty: Record<string, unknown>;
     picture: string;
