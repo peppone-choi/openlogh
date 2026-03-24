@@ -15,6 +15,7 @@ import { CompactTooltip } from '@/components/game/map-tooltips';
 import type { PublicCachedMapResponse } from '@/types';
 import { isWebGLSupported } from '@/lib/battle3d-utils';
 import { MapHUD } from '@/components/map-3d/MapHUD';
+import { MapTransition } from '@/components/map-3d/MapTransition';
 
 const Map3DScene = dynamic(() => import('@/components/map-3d/Map3DScene').then((m) => ({ default: m.Map3DScene })), {
     ssr: false,
@@ -195,21 +196,41 @@ export function MapViewer({
         );
     }
 
-    if (viewMode === '3d' && webglOk) {
+    if (webglOk) {
         return (
             <div className={`relative ${compact ? 'h-48' : 'h-[500px]'}`}>
-                <Map3DScene
-                    mapCode={mapCode}
-                    season={season}
-                    cities={renderCities}
-                    onCityClick={(cityId) => {
-                        if (onCitySelect) {
-                            onCitySelect(cityId);
-                        } else {
-                            router.push(`/city?id=${cityId}`);
-                        }
-                    }}
-                    className="w-full h-full"
+                <MapTransition
+                    viewMode={viewMode}
+                    children2D={
+                        <MapCanvas
+                            cities={renderCities}
+                            mapCode={mapCode}
+                            season={season}
+                            yearMonth={yearMonth}
+                            showNames={showNames}
+                            onShowNamesChange={setShowNames}
+                            interactive={interactive}
+                            compact={compact}
+                            renderTooltip={renderTooltipFn}
+                            onCityClick={handleCityClick}
+                            useResponsiveScale={isPublicMode}
+                        />
+                    }
+                    children3D={
+                        <Map3DScene
+                            mapCode={mapCode}
+                            season={season}
+                            cities={renderCities}
+                            onCityClick={(cityId) => {
+                                if (onCitySelect) {
+                                    onCitySelect(cityId);
+                                } else {
+                                    router.push(`/city?id=${cityId}`);
+                                }
+                            }}
+                            className="w-full h-full"
+                        />
+                    }
                 />
                 <MapHUD viewMode={viewMode} onViewModeChange={setViewMode} season={season} mapCode={mapCode} />
             </div>
@@ -231,7 +252,6 @@ export function MapViewer({
                 onCityClick={handleCityClick}
                 useResponsiveScale={isPublicMode}
             />
-            {webglOk && <MapHUD viewMode={viewMode} onViewModeChange={setViewMode} season={season} mapCode={mapCode} />}
         </div>
     );
 }

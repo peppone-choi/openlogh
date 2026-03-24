@@ -14,6 +14,7 @@ import { NationTerritory } from './NationTerritory';
 import { SeasonalAtmosphere } from './SeasonalAtmosphere';
 import { TroopMarkers } from './TroopMarkers';
 import { WarEffects } from './WarEffects';
+import { Minimap } from './Minimap';
 
 interface Map3DSceneProps {
     mapCode: string;
@@ -49,7 +50,7 @@ export function Map3DScene({
     const ambientIntensity = SEASON_AMBIENT_INTENSITY[season] ?? 0.5;
 
     return (
-        <div className={className} style={{ minHeight: '400px' }}>
+        <div className={className} style={{ minHeight: '400px', position: 'relative' }}>
             <Canvas shadows dpr={[1, 2]} camera={{ position: [0, 25, 30], fov: 50 }}>
                 <SeasonalAtmosphere season={season} />
 
@@ -88,6 +89,7 @@ export function Map3DScene({
 
                 <CameraController mode="3d" />
             </Canvas>
+            <Minimap mapCode={mapCode} season={season} cities={cities} />
         </div>
     );
 }
