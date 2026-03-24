@@ -53,6 +53,8 @@ class TurnService(
     private val commandPointService: CommandPointService,
     private val ageGrowthService: AgeGrowthService,
     private val officerLevelModifier: OfficerLevelModifier,
+    private val victoryService: com.openlogh.service.VictoryService,
+    private val rankLadderService: com.openlogh.service.RankLadderService,
 ) {
     companion object {
         private val log = LoggerFactory.getLogger(TurnService::class.java)
@@ -198,6 +200,13 @@ class TurnService(
 
             // Unification check
             tryRun("unificationService.checkAndSettleUnification") { unificationService.checkAndSettleUnification(world) }
+
+            // Victory conditions check
+            tryRun("victoryService.checkVictoryConditions") { victoryService.checkVictoryConditions(world) }
+
+            // Rank ladder: auto-promotion and auto-demotion
+            tryRun("rankLadderService.processAutoPromotion") { rankLadderService.processAutoPromotion(sessionId) }
+            tryRun("rankLadderService.processAutoDemotion") { rankLadderService.processAutoDemotion(sessionId) }
         }
 
         // Save world state after all ticks
