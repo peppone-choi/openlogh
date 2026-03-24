@@ -585,7 +585,7 @@ class ScenarioServiceTest {
 
         assertEquals(1, capturedDiplomacies.size)
         val diplomacy = capturedDiplomacies.single()
-        assertEquals(factionStore.values.first { it.name == "동탁" }.id, diplomacy.srcNationId)
+        assertEquals(factionStore.values.first { it.name == "동탁" }.id, diplomacy.srcFactionId)
         assertEquals(factionStore.values.first { it.name == "원소" }.id, diplomacy.destNationId)
         assertEquals("선전포고", diplomacy.stateCode)
         assertEquals(36.toShort(), diplomacy.term)

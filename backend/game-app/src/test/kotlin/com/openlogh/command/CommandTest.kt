@@ -150,8 +150,8 @@ class CommandTest {
         val cmd = 휴식(general, env)
         val cost = cmd.getCost()
 
-        assertEquals(0, cost.gold)
-        assertEquals(0, cost.rice)
+        assertEquals(0, cost.funds)
+        assertEquals(0, cost.supplies)
     }
 
     @Test
@@ -247,8 +247,8 @@ class CommandTest {
         val cmd = che_농지개간(general, env)
         val cost = cmd.getCost()
 
-        assertEquals(150, cost.gold)
-        assertEquals(0, cost.rice)
+        assertEquals(150, cost.funds)
+        assertEquals(0, cost.supplies)
     }
 
     @Test
@@ -348,7 +348,7 @@ class CommandTest {
         val cost = cmd.getCost()
         // maxCrew should be min(99999, max(0, 10*100 - 0)) = 1000
         // baseCost = 1000/10 = 100, gold = 100*2 = 200
-        assertEquals(200, cost.gold)
+        assertEquals(200, cost.funds)
     }
 
     @Test
@@ -362,7 +362,7 @@ class CommandTest {
 
         // maxCrew = min(500, max(0, 50*100 - 2000)) = min(500, 3000) = 500
         val cost = cmd.getCost()
-        assertEquals(100, cost.gold) // 500/10 * 2 = 100
+        assertEquals(100, cost.funds) // 500/10 * 2 = 100
     }
 
     @Test

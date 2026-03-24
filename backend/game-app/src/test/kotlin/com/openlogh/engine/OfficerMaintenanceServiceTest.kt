@@ -296,7 +296,7 @@ class OfficerMaintenanceServiceTest {
         val fleet = Fleet(
             id = 10,
             sessionId = 1,
-            leaderGeneralId = 1,
+            leaderOfficerId = 1,
             factionId = 1,
             name = "중군",
         )

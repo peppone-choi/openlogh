@@ -86,7 +86,7 @@ class DiplomacyServiceTest {
             val src = inv.arguments[1] as Long
             val dest = inv.arguments[2] as Long
             diplomacies.values
-                .filter { it.sessionId == sessionId && (it.srcNationId == src || it.destFactionId == dest) }
+                .filter { it.sessionId == sessionId && (it.srcFactionId == src || it.destFactionId == dest) }
                 .map { cloneDiplomacy(it) }
         }
     }
@@ -134,7 +134,7 @@ class DiplomacyServiceTest {
         return Diplomacy(
             id = d.id,
             sessionId = d.sessionId,
-            srcNationId = d.srcNationId,
+            srcFactionId = d.srcFactionId,
             destFactionId = d.destFactionId,
             stateCode = d.stateCode,
             term = d.term,

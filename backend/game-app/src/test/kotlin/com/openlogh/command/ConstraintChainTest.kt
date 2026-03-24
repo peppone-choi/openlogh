@@ -53,7 +53,7 @@ class ConstraintChainTest {
         nation: Nation? = null,
         destCity: City? = null,
         env: Map<String, Any> = emptyMap(),
-    ) = ConstraintContext(general = general, city = city, nation = nation, destCity = destCity, env = env)
+    ) = ConstraintContext(officer = general, planet = city, faction = nation, destCity = destCity, env = env)
 
     // ========== ConstraintChain.testAll ==========
 

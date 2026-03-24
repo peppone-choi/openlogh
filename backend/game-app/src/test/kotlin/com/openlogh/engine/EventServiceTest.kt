@@ -38,8 +38,8 @@ class EventServiceTest {
         val npcSpawnService = mock(NpcSpawnService::class.java)
         val scenarioService = mock(com.openlogh.service.ScenarioService::class.java)
 
-        val eventActionService = mock(com.openlogh.engine.EventActionService::class.java)
-        service = EventService(eventRepository, factionRepository, messageRepository, historyService, economyService, npcSpawnService, scenarioService, eventActionService)
+        val eventActionRegistry = mock(com.openlogh.engine.EventActionRegistry::class.java)
+        service = EventService(eventRepository, factionRepository, messageRepository, historyService, eventActionRegistry)
     }
 
     private fun createWorld(year: Short = 200, month: Short = 3): SessionState {

@@ -63,6 +63,9 @@ class BattleServiceTest {
             eventService, diplomacyService,
             modifierService, gameConstService, gameEventService, historyService,
             mock(InheritanceService::class.java), tacticalSessionManager,
+            mock(com.openlogh.engine.SafeZoneService::class.java),
+            mock(com.openlogh.engine.fleet.CrewGradeService::class.java),
+            mock(com.openlogh.engine.planet.PlanetTypeRules::class.java),
         )
     }
 

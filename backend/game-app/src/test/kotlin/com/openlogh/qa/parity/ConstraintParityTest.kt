@@ -450,9 +450,9 @@ class ConstraintParityTest {
         destNation: Nation? = null,
         env: Map<String, Any> = emptyMap(),
     ) = ConstraintContext(
-        general = general,
-        city = city,
-        nation = nation,
+        officer = general,
+        planet = city,
+        faction = nation,
         destGeneral = destGeneral,
         destCity = destCity,
         destNation = destNation,

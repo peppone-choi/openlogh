@@ -445,9 +445,9 @@ class CommandParityTest {
         val modCost = cmdMod.getCost()
 
         // Modifier reduces gold cost by 20%
-        assertTrue(modCost.gold < baseCost.gold,
-            "Modifier should reduce gold cost: base=${baseCost.gold} mod=${modCost.gold}")
-        assertEquals((baseCost.gold * 0.8).roundToInt(), modCost.gold,
+        assertTrue(modCost.funds < baseCost.funds,
+            "Modifier should reduce gold cost: base=${baseCost.funds} mod=${modCost.funds}")
+        assertEquals((baseCost.funds * 0.8).roundToInt(), modCost.funds,
             "Gold cost should be reduced to 80% of base")
     }
 
@@ -474,10 +474,10 @@ class CommandParityTest {
         val baseCost = cmdBase.getCost()
         val modCost = cmdMod.getCost()
 
-        assertTrue(modCost.gold < baseCost.gold,
-            "모병 modifier should reduce gold cost: base=${baseCost.gold} mod=${modCost.gold}")
+        assertTrue(modCost.funds < baseCost.funds,
+            "모병 modifier should reduce gold cost: base=${baseCost.funds} mod=${modCost.funds}")
         // 모병 uses costOffset=2 but modifier still applies
-        assertEquals((baseCost.gold * 0.8).roundToInt(), modCost.gold,
+        assertEquals((baseCost.funds * 0.8).roundToInt(), modCost.funds,
             "모병 gold cost should be reduced to 80% of base")
     }
 

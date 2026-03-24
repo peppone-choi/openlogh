@@ -108,9 +108,9 @@ class ConstraintTest {
         destCity: City? = null,
         destNation: Nation? = null,
     ) = ConstraintContext(
-        general = general,
-        city = city,
-        nation = nation,
+        officer = general,
+        planet = city,
+        faction = nation,
         destGeneral = destGeneral,
         destCity = destCity,
         destNation = destNation,
@@ -660,14 +660,14 @@ class ConstraintTest {
 
     @Test
     fun `EmperorSystemActive passes when emperor system is active`() {
-        val context = ConstraintContext(general = createGeneral(), env = mapOf("emperorSystem" to true))
+        val context = ConstraintContext(officer = createGeneral(), env = mapOf("emperorSystem" to true))
         val result = EmperorSystemActive().test(context)
         assertTrue(result is ConstraintResult.Pass)
     }
 
     @Test
     fun `EmperorSystemActive fails when emperor system is inactive`() {
-        val context = ConstraintContext(general = createGeneral(), env = mapOf("emperorSystem" to false))
+        val context = ConstraintContext(officer =createGeneral(), env = mapOf("emperorSystem" to false))
         val result = EmperorSystemActive().test(context)
         assertTrue(result is ConstraintResult.Fail)
         assertTrue((result as ConstraintResult.Fail).reason.contains("황제 시스템"))
@@ -821,14 +821,14 @@ class ConstraintTest {
 
     @Test
     fun `WanderingEmperorExists passes when wandering emperor city id is positive`() {
-        val context = ConstraintContext(general = createGeneral(), env = mapOf("wanderingEmperorCityId" to 5L))
+        val context = ConstraintContext(officer =createGeneral(), env = mapOf("wanderingEmperorCityId" to 5L))
         val result = WanderingEmperorExists().test(context)
         assertTrue(result is ConstraintResult.Pass)
     }
 
     @Test
     fun `WanderingEmperorExists fails when wandering emperor city id is zero`() {
-        val context = ConstraintContext(general = createGeneral(), env = mapOf("wanderingEmperorCityId" to 0L))
+        val context = ConstraintContext(officer =createGeneral(), env = mapOf("wanderingEmperorCityId" to 0L))
         val result = WanderingEmperorExists().test(context)
         assertTrue(result is ConstraintResult.Fail)
         assertTrue((result as ConstraintResult.Fail).reason.contains("유랑 중인 천자"))
@@ -836,7 +836,7 @@ class ConstraintTest {
 
     @Test
     fun `WanderingEmperorExists fails when wandering emperor city id is missing`() {
-        val context = ConstraintContext(general = createGeneral(), env = emptyMap())
+        val context = ConstraintContext(officer =createGeneral(), env = emptyMap())
         val result = WanderingEmperorExists().test(context)
         assertTrue(result is ConstraintResult.Fail)
     }
@@ -850,7 +850,7 @@ class ConstraintTest {
             "wanderingEmperorCityId" to 5L,
             "cityNationById" to mapOf(5L to 1L),
         )
-        val context = ConstraintContext(general = general, env = env)
+        val context = ConstraintContext(officer =general, env = env)
         val result = WanderingEmperorInTerritory().test(context)
         assertTrue(result is ConstraintResult.Pass)
     }
@@ -865,7 +865,7 @@ class ConstraintTest {
             "dbToMapId" to mapOf(5L to 100L),
             "cityNationByMapId" to emptyMap<Long, Long>(),
         )
-        val context = ConstraintContext(general = general, env = env)
+        val context = ConstraintContext(officer =general, env = env)
         val result = WanderingEmperorInTerritory().test(context)
         assertTrue(result is ConstraintResult.Fail)
         assertTrue((result as ConstraintResult.Fail).reason.contains("천자가 아국 영토"))
@@ -879,7 +879,7 @@ class ConstraintTest {
         val env = mapOf(
             "cityNationById" to mapOf(1L to 1L, 2L to 1L, 3L to 1L, 4L to 2L),
         )
-        val context = ConstraintContext(general = general, env = env)
+        val context = ConstraintContext(officer =general, env = env)
         val result = ReqNationCityCount(3).test(context)
         assertTrue(result is ConstraintResult.Pass)
     }
@@ -890,7 +890,7 @@ class ConstraintTest {
         val env = mapOf(
             "cityNationById" to mapOf(1L to 1L, 2L to 2L, 3L to 2L),
         )
-        val context = ConstraintContext(general = general, env = env)
+        val context = ConstraintContext(officer =general, env = env)
         val result = ReqNationCityCount(5).test(context)
         assertTrue(result is ConstraintResult.Fail)
         assertTrue((result as ConstraintResult.Fail).reason.contains("도시가"))

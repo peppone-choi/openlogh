@@ -10,7 +10,15 @@ import java.time.OffsetDateTime
 
 class DeterministicReplayParityTest {
 
-    private val processor = InMemoryTurnProcessor()
+    private val processor = InMemoryTurnProcessor(
+        org.mockito.Mockito.mock(com.openlogh.engine.EconomyService::class.java),
+        org.mockito.Mockito.mock(com.openlogh.engine.EventService::class.java),
+        org.mockito.Mockito.mock(com.openlogh.engine.OfficerMaintenanceService::class.java),
+        org.mockito.Mockito.mock(com.openlogh.engine.CommandPointService::class.java),
+        org.mockito.Mockito.mock(com.openlogh.engine.AgeGrowthService::class.java),
+        org.mockito.Mockito.mock(com.openlogh.engine.UnificationService::class.java),
+        org.mockito.Mockito.mock(com.openlogh.engine.modifier.OfficerLevelModifier::class.java),
+    )
 
     @Test
     fun `processor runs without crashing on empty world state`() {

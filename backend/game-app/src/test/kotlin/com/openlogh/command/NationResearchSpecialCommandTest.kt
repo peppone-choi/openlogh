@@ -150,8 +150,8 @@ class NationResearchSpecialCommandTest {
         val successCondition = successCmd.checkFullCondition()
         assertTrue(successCondition is ConstraintResult.Pass)
         assertEquals(expectedPreReqTurn, successCmd.getPreReqTurn())
-        assertEquals(expectedCost, successCmd.getCost().gold)
-        assertEquals(expectedCost, successCmd.getCost().rice)
+        assertEquals(expectedCost, successCmd.getCost().funds)
+        assertEquals(expectedCost, successCmd.getCost().supplies)
 
         val beforeGold = successNation.gold
         val beforeRice = successNation.rice
@@ -282,8 +282,8 @@ class NationResearchSpecialCommandTest {
         cmd.nation = nation
         cmd.services = services
 
-        assertEquals(0, cmd.getCost().gold)
-        assertEquals(0, cmd.getCost().rice)
+        assertEquals(0, cmd.getCost().funds)
+        assertEquals(0, cmd.getCost().supplies)
         assertEquals(1, cmd.getPreReqTurn())
 
         val check = cmd.checkFullCondition()
@@ -310,8 +310,8 @@ class NationResearchSpecialCommandTest {
         val cmd = che_부대탈퇴지시(createGeneral(officerLevel = 20), env())
         cmd.destGeneral = target
 
-        assertEquals(0, cmd.getCost().gold)
-        assertEquals(0, cmd.getCost().rice)
+        assertEquals(0, cmd.getCost().funds)
+        assertEquals(0, cmd.getCost().supplies)
         assertEquals(0, cmd.getPreReqTurn())
 
         val check = cmd.checkFullCondition()
@@ -351,8 +351,8 @@ class NationResearchSpecialCommandTest {
             "cityNationByMapId" to mapOf(1L to 1L, 2L to 1L),
         )
 
-        assertEquals(200, cmd.getCost().gold)
-        assertEquals(200, cmd.getCost().rice)
+        assertEquals(200, cmd.getCost().funds)
+        assertEquals(200, cmd.getCost().supplies)
         assertEquals(0, cmd.getPreReqTurn())
 
         val check = cmd.checkFullCondition()

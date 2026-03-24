@@ -123,6 +123,13 @@ class InMemoryTurnHarness {
         com.openlogh.engine.CommandPointService(officerRepository),
         com.openlogh.engine.AgeGrowthService(officerRepository),
         com.openlogh.engine.modifier.OfficerLevelModifier(),
+        mock(com.openlogh.service.VictoryService::class.java),
+        mock(com.openlogh.service.RankLadderService::class.java),
+        mock(com.openlogh.engine.SafeZoneService::class.java),
+        mock(com.openlogh.engine.planet.PlanetProductionService::class.java),
+        mock(com.openlogh.engine.FezzanNeutralityService::class.java),
+        mock(com.openlogh.engine.fleet.TransportExecutionService::class.java),
+        mock(com.openlogh.engine.CoupExecutionService::class.java),
     )
 
     init {

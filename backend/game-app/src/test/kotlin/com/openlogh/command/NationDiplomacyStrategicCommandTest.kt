@@ -305,8 +305,8 @@ class NationDiplomacyStrategicCommandTest {
     @Test
     fun `급습 validates strategic metadata constraint and run`() {
         val cmdMeta = che_급습(createGeneral(), env())
-        assertEquals(0, cmdMeta.getCost().gold)
-        assertEquals(0, cmdMeta.getCost().rice)
+        assertEquals(0, cmdMeta.getCost().funds)
+        assertEquals(0, cmdMeta.getCost().supplies)
         assertEquals(0, cmdMeta.getPreReqTurn())
         assertEquals(40, cmdMeta.getPostReqTurn())
 
@@ -346,8 +346,8 @@ class NationDiplomacyStrategicCommandTest {
     @Test
     fun `수몰 validates strategic metadata constraint and run`() {
         val cmdMeta = che_수몰(createGeneral(), env())
-        assertEquals(0, cmdMeta.getCost().gold)
-        assertEquals(0, cmdMeta.getCost().rice)
+        assertEquals(0, cmdMeta.getCost().funds)
+        assertEquals(0, cmdMeta.getCost().supplies)
         assertEquals(2, cmdMeta.getPreReqTurn())
         assertEquals(20, cmdMeta.getPostReqTurn())
 
@@ -383,8 +383,8 @@ class NationDiplomacyStrategicCommandTest {
     @Test
     fun `허보 validates strategic metadata constraint and run`() {
         val cmdMeta = che_허보(createGeneral(), env())
-        assertEquals(0, cmdMeta.getCost().gold)
-        assertEquals(0, cmdMeta.getCost().rice)
+        assertEquals(0, cmdMeta.getCost().funds)
+        assertEquals(0, cmdMeta.getCost().supplies)
         assertEquals(1, cmdMeta.getPreReqTurn())
         assertEquals(20, cmdMeta.getPostReqTurn())
 
@@ -427,8 +427,8 @@ class NationDiplomacyStrategicCommandTest {
     @Test
     fun `의병모집 validates strategic metadata constraint and run`() {
         val cmdMeta = che_의병모집(createGeneral(), env())
-        assertEquals(0, cmdMeta.getCost().gold)
-        assertEquals(0, cmdMeta.getCost().rice)
+        assertEquals(0, cmdMeta.getCost().funds)
+        assertEquals(0, cmdMeta.getCost().supplies)
         assertEquals(2, cmdMeta.getPreReqTurn())
         assertEquals(100, cmdMeta.getPostReqTurn())
 
@@ -460,8 +460,8 @@ class NationDiplomacyStrategicCommandTest {
     @Test
     fun `이호경식 validates strategic metadata constraint and run`() {
         val cmdMeta = che_이호경식(createGeneral(), env())
-        assertEquals(0, cmdMeta.getCost().gold)
-        assertEquals(0, cmdMeta.getCost().rice)
+        assertEquals(0, cmdMeta.getCost().funds)
+        assertEquals(0, cmdMeta.getCost().supplies)
         assertEquals(0, cmdMeta.getPreReqTurn())
         assertEquals(126, cmdMeta.getPostReqTurn())
 
@@ -495,8 +495,8 @@ class NationDiplomacyStrategicCommandTest {
     @Test
     fun `피장파장 validates strategic metadata constraint and run`() {
         val cmdMeta = che_피장파장(createGeneral(), env())
-        assertEquals(0, cmdMeta.getCost().gold)
-        assertEquals(0, cmdMeta.getCost().rice)
+        assertEquals(0, cmdMeta.getCost().funds)
+        assertEquals(0, cmdMeta.getCost().supplies)
         assertEquals(1, cmdMeta.getPreReqTurn())
         assertEquals(8, cmdMeta.getPostReqTurn())
 

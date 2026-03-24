@@ -89,7 +89,7 @@ class EdgeCaseTest {
     )
 
     private fun constraintCtx(gen: General, city: City? = null) =
-        ConstraintContext(general = gen, city = city)
+        ConstraintContext(officer = gen, planet = city)
 
     // ─── 1. General with 0 troops: ReqGeneralCrew blocks ────────────────────
 

@@ -107,6 +107,14 @@ class TurnServiceTest {
             mock(OfficerAccessLogRepository::class.java),
             CommandPointService(officerRepository),
             AgeGrowthService(officerRepository),
+            mock(com.openlogh.engine.modifier.OfficerLevelModifier::class.java),
+            mock(com.openlogh.service.VictoryService::class.java),
+            mock(com.openlogh.service.RankLadderService::class.java),
+            mock(com.openlogh.engine.SafeZoneService::class.java),
+            mock(com.openlogh.engine.planet.PlanetProductionService::class.java),
+            mock(com.openlogh.engine.FezzanNeutralityService::class.java),
+            mock(com.openlogh.engine.fleet.TransportExecutionService::class.java),
+            mock(com.openlogh.engine.CoupExecutionService::class.java),
         )
         // Default: sessionStateRepository.save returns the argument
         `when`(sessionStateRepository.save(anyNonNull<SessionState>())).thenAnswer { it.arguments[0] }

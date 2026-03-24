@@ -225,8 +225,8 @@ class NationCommandTest {
 
         val cmd3 = event_극병연구(chief, env())
         assertEquals(23, cmd3.getPreReqTurn())
-        assertEquals(100000, cmd3.getCost().gold)
-        assertEquals(100000, cmd3.getCost().rice)
+        assertEquals(100000, cmd3.getCost().funds)
+        assertEquals(100000, cmd3.getCost().supplies)
     }
 
     @Test

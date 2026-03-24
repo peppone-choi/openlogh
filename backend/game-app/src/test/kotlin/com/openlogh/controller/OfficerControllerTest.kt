@@ -33,7 +33,7 @@ class OfficerControllerTest {
         officerRepository = mock(OfficerRepository::class.java)
         appUserRepository = mock(AppUserRepository::class.java)
         worldService = mock(WorldService::class.java)
-        controller = OfficerController(officerService, officerRepository, appUserRepository, worldService)
+        controller = OfficerController(officerService, officerRepository, appUserRepository, worldService, mock(com.openlogh.service.CharacterDeletionService::class.java))
 
         SecurityContextHolder.getContext().authentication =
             UsernamePasswordAuthenticationToken("testuser", null)
