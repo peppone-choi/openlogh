@@ -157,7 +157,7 @@ class GeneralService(
         )
         applyJoinInheritCost(user, pointsToSpend)
 
-        val bonusStat = inheritBonusStat ?: randomBornBonus(rng, request.leadership.toInt(), request.strength.toInt(), request.intel.toInt())
+        val bonusStat = inheritBonusStat ?: randomBornBonus(rng, request.leadership.toInt(), request.strength.toInt(), request.intel.toInt(), request.politics.toInt(), request.charm.toInt())
         val relYear = (world.currentYear.toInt() - getStartYear(world)).coerceAtLeast(0)
         val age = (20 + bonusStat.sum() * 2 - rng.nextInt(0, 2)).toShort()
         val specAge = calcSpecAge(age.toInt(), relYear)
@@ -183,8 +183,8 @@ class GeneralService(
                 leadership = (request.leadership + bonusStat[0]).toShort(),
                 strength = (request.strength + bonusStat[1]).toShort(),
                 intel = (request.intel + bonusStat[2]).toShort(),
-                politics = request.politics,
-                charm = request.charm,
+                politics = (request.politics + bonusStat[3]).toShort(),
+                charm = (request.charm + bonusStat[4]).toShort(),
                 experience = experience,
                 officerLevel = if (nationId > 0L) 1 else 0,
                 officerCity = 0,
@@ -398,8 +398,8 @@ class GeneralService(
 
     private fun normalizeInheritBonusStat(raw: List<Int>?): List<Int>? {
         if (raw == null) return null
-        if (raw.size != 3) {
-            throw IllegalArgumentException("보너스 능력치는 3개 항목이어야 합니다.")
+        if (raw.size != 5) {
+            throw IllegalArgumentException("보너스 능력치는 5개 항목이어야 합니다.")
         }
         if (raw.any { it < 0 }) {
             throw IllegalArgumentException("보너스 능력치는 음수일 수 없습니다.")
@@ -435,20 +435,24 @@ class GeneralService(
         throw IllegalArgumentException("성격이 잘못 지정되었습니다.")
     }
 
-    private fun randomBornBonus(rng: Random, leadership: Int, strength: Int, intel: Int): List<Int> {
+    private fun randomBornBonus(rng: Random, leadership: Int, strength: Int, intel: Int, politics: Int, charm: Int): List<Int> {
         val totalBonus = rng.nextInt(3, 6)
         var addLeadership = 0
         var addStrength = 0
         var addIntel = 0
-        val weights = listOf(leadership, strength, intel)
+        var addPolitics = 0
+        var addCharm = 0
+        val weights = listOf(leadership, strength, intel, politics, charm)
         repeat(totalBonus) {
             when (choiceUsingWeight(rng, weights)) {
                 0 -> addLeadership += 1
                 1 -> addStrength += 1
-                else -> addIntel += 1
+                2 -> addIntel += 1
+                3 -> addPolitics += 1
+                else -> addCharm += 1
             }
         }
-        return listOf(addLeadership, addStrength, addIntel)
+        return listOf(addLeadership, addStrength, addIntel, addPolitics, addCharm)
     }
 
     private fun choiceUsingWeight(rng: Random, weights: List<Int>): Int {

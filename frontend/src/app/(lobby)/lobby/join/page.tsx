@@ -142,7 +142,7 @@ function LobbyJoinPageContent() {
     const [inheritInfo, setInheritInfo] = useState<InheritanceInfo | null>(null);
     const [inheritSpecial, setInheritSpecial] = useState('');
     const [inheritCity, setInheritCity] = useState<number | ''>('');
-    const [inheritBonusStat, setInheritBonusStat] = useState<[number, number, number]>([0, 0, 0]);
+    const [inheritBonusStat, setInheritBonusStat] = useState<[number, number, number, number, number]>([0, 0, 0, 0, 0]);
 
     // Nation scout messages for recruitment display
     const [scoutMessages, setScoutMessages] = useState<Record<number, string>>({});
@@ -669,58 +669,38 @@ function LobbyJoinPageContent() {
                                         <label className="block text-xs text-muted-foreground">
                                             보너스 능력치 (합 0 또는 3~5)
                                         </label>
-                                        <div className="grid grid-cols-3 gap-2">
-                                            <div>
-                                                <span className="text-xs">통솔</span>
-                                                <Input
-                                                    type="number"
-                                                    min={0}
-                                                    max={5}
-                                                    value={inheritBonusStat[0]}
-                                                    onChange={(e) =>
-                                                        setInheritBonusStat([
-                                                            Number(e.target.value),
-                                                            inheritBonusStat[1],
-                                                            inheritBonusStat[2],
-                                                        ])
-                                                    }
-                                                    className="text-center"
-                                                />
-                                            </div>
-                                            <div>
-                                                <span className="text-xs">무력</span>
-                                                <Input
-                                                    type="number"
-                                                    min={0}
-                                                    max={5}
-                                                    value={inheritBonusStat[1]}
-                                                    onChange={(e) =>
-                                                        setInheritBonusStat([
-                                                            inheritBonusStat[0],
-                                                            Number(e.target.value),
-                                                            inheritBonusStat[2],
-                                                        ])
-                                                    }
-                                                    className="text-center"
-                                                />
-                                            </div>
-                                            <div>
-                                                <span className="text-xs">지력</span>
-                                                <Input
-                                                    type="number"
-                                                    min={0}
-                                                    max={5}
-                                                    value={inheritBonusStat[2]}
-                                                    onChange={(e) =>
-                                                        setInheritBonusStat([
-                                                            inheritBonusStat[0],
-                                                            inheritBonusStat[1],
-                                                            Number(e.target.value),
-                                                        ])
-                                                    }
-                                                    className="text-center"
-                                                />
-                                            </div>
+                                        <div className="grid grid-cols-5 gap-2">
+                                            {(
+                                                [
+                                                    [0, '통솔'],
+                                                    [1, '무력'],
+                                                    [2, '지력'],
+                                                    [3, '정치'],
+                                                    [4, '매력'],
+                                                ] as const
+                                            ).map(([idx, label]) => (
+                                                <div key={idx}>
+                                                    <span className="text-xs">{label}</span>
+                                                    <Input
+                                                        type="number"
+                                                        min={0}
+                                                        max={5}
+                                                        value={inheritBonusStat[idx]}
+                                                        onChange={(e) => {
+                                                            const next = [...inheritBonusStat] as [
+                                                                number,
+                                                                number,
+                                                                number,
+                                                                number,
+                                                                number,
+                                                            ];
+                                                            next[idx] = Number(e.target.value);
+                                                            setInheritBonusStat(next);
+                                                        }}
+                                                        className="text-center"
+                                                    />
+                                                </div>
+                                            ))}
                                         </div>
                                         <p className="text-xs text-muted-foreground">보너스 합: {inheritBonusSum}</p>
                                         {!inheritBonusValid && (

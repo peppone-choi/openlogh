@@ -572,7 +572,9 @@ export const inheritanceApi = {
             leadership: number;
             strength: number;
             intel: number;
-            inheritBonusStat?: [number, number, number];
+            politics: number;
+            charm: number;
+            inheritBonusStat?: [number, number, number, number, number];
         }
     ) => api.post<InheritanceActionResult>(`/worlds/${worldId}/inheritance/reset-stats`, stats),
     checkOwner: (worldId: number, generalIdOrName: string | number) =>

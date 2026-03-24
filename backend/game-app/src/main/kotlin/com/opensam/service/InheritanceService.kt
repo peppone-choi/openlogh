@@ -360,11 +360,15 @@ class InheritanceService(
         general.leadership = request.leadership.toShort()
         general.strength = request.strength.toShort()
         general.intel = request.intel.toShort()
+        general.politics = request.politics.toShort()
+        general.charm = request.charm.toShort()
 
         request.inheritBonusStat?.takeIf { hasBonusStat }?.let { bonusStat ->
             general.leadership = (general.leadership + bonusStat[0]).toShort()
             general.strength = (general.strength + bonusStat[1]).toShort()
             general.intel = (general.intel + bonusStat[2]).toShort()
+            general.politics = (general.politics + bonusStat[3]).toShort()
+            general.charm = (general.charm + bonusStat[4]).toShort()
         }
 
         generalRepository.save(general)
@@ -373,7 +377,7 @@ class InheritanceService(
             user.meta["inheritPoints"] = points - cost
         }
         user.meta["inheritStatResetDone"] = true
-        addInheritLog(user, "능력치 초기화 (통${request.leadership}/무${request.strength}/지${request.intel})", -cost)
+        addInheritLog(user, "능력치 초기화 (통${request.leadership}/무${request.strength}/지${request.intel}/정${request.politics}/매${request.charm})", -cost)
 
         appUserRepository.save(user)
         return InheritanceActionResult(remainingPoints = points - cost)

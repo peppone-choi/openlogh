@@ -69,6 +69,8 @@ data class ResetStatsRequest(
     val leadership: Int,
     val strength: Int,
     val intel: Int,
+    val politics: Int = 0,
+    val charm: Int = 0,
     val inheritBonusStat: List<Int>? = null,
 )
 

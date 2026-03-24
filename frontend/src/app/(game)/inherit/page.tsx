@@ -133,7 +133,9 @@ export default function InheritPage() {
     const [statLeadership, setStatLeadership] = useState(0);
     const [statStrength, setStatStrength] = useState(0);
     const [statIntel, setStatIntel] = useState(0);
-    const [bonusStat, setBonusStat] = useState<[number, number, number]>([0, 0, 0]);
+    const [statPolitics, setStatPolitics] = useState(0);
+    const [statCharm, setStatCharm] = useState(0);
+    const [bonusStat, setBonusStat] = useState<[number, number, number, number, number]>([0, 0, 0, 0, 0]);
 
     // Owner check (by ID dropdown)
     const [targetOwnerId, setTargetOwnerId] = useState<string>('');
@@ -323,12 +325,12 @@ export default function InheritPage() {
     };
 
     /* ── Stat reset with inheritBonusStat ── */
-    const bonusStatTotal = bonusStat[0] + bonusStat[1] + bonusStat[2];
+    const bonusStatTotal = bonusStat.reduce((a, b) => a + b, 0);
     const bonusStatRemaining = MAX_INHERIT_BONUS_STAT_TOTAL - bonusStatTotal;
     const bonusStatValid = bonusStatTotal === 0 || bonusStatTotal === MAX_INHERIT_BONUS_STAT_TOTAL;
     const requiredResetStatPoint = bonusStatTotal > 0 ? actionCost.bornStatPoint : 0;
 
-    const updateBonusStat = (index: 0 | 1 | 2, nextRaw: number) => {
+    const updateBonusStat = (index: 0 | 1 | 2 | 3 | 4, nextRaw: number) => {
         const requested = Number.isFinite(nextRaw) ? Math.trunc(nextRaw) : 0;
         setBonusStat((prev) => {
             const otherTotal = prev.reduce((sum, value, idx) => {
@@ -336,9 +338,9 @@ export default function InheritPage() {
             }, 0);
             const maxForIndex = Math.max(0, MAX_INHERIT_BONUS_STAT_TOTAL - otherTotal);
             const nextValue = Math.max(0, Math.min(maxForIndex, requested));
-            if (index === 0) return [nextValue, prev[1], prev[2]];
-            if (index === 1) return [prev[0], nextValue, prev[2]];
-            return [prev[0], prev[1], nextValue];
+            const next = [...prev] as [number, number, number, number, number];
+            next[index] = nextValue;
+            return next;
         });
     };
 
@@ -361,11 +363,15 @@ export default function InheritPage() {
                 leadership: number;
                 strength: number;
                 intel: number;
-                inheritBonusStat: [number, number, number];
+                politics: number;
+                charm: number;
+                inheritBonusStat: [number, number, number, number, number];
             } = {
                 leadership: statLeadership,
                 strength: statStrength,
                 intel: statIntel,
+                politics: statPolitics,
+                charm: statCharm,
                 inheritBonusStat: bonusStat,
             };
             await inheritanceApi.resetStats(currentWorld.id, payload);
@@ -760,100 +766,79 @@ export default function InheritPage() {
                             <p className="text-sm text-muted-foreground">시즌 당 1회에 한해 능력치를 초기화합니다.</p>
                             <div className="space-y-2">
                                 <p className="text-xs font-medium">기본 능력치</p>
-                                <div className="grid grid-cols-3 gap-2">
-                                    <div className="space-y-1">
-                                        <label
-                                            htmlFor="inherit-reset-leadership"
-                                            className="text-xs text-muted-foreground"
-                                        >
-                                            통솔
-                                        </label>
-                                        <Input
-                                            id="inherit-reset-leadership"
-                                            type="number"
-                                            min={currentStat?.statMin ?? 0}
-                                            max={currentStat?.statMax ?? 100}
-                                            value={statLeadership}
-                                            onChange={(e) => setStatLeadership(Number(e.target.value))}
-                                        />
-                                    </div>
-                                    <div className="space-y-1">
-                                        <label
-                                            htmlFor="inherit-reset-strength"
-                                            className="text-xs text-muted-foreground"
-                                        >
-                                            무력
-                                        </label>
-                                        <Input
-                                            id="inherit-reset-strength"
-                                            type="number"
-                                            min={currentStat?.statMin ?? 0}
-                                            max={currentStat?.statMax ?? 100}
-                                            value={statStrength}
-                                            onChange={(e) => setStatStrength(Number(e.target.value))}
-                                        />
-                                    </div>
-                                    <div className="space-y-1">
-                                        <label htmlFor="inherit-reset-intel" className="text-xs text-muted-foreground">
-                                            지력
-                                        </label>
-                                        <Input
-                                            id="inherit-reset-intel"
-                                            type="number"
-                                            min={currentStat?.statMin ?? 0}
-                                            max={currentStat?.statMax ?? 100}
-                                            value={statIntel}
-                                            onChange={(e) => setStatIntel(Number(e.target.value))}
-                                        />
-                                    </div>
+                                <div className="grid grid-cols-5 gap-2">
+                                    {(
+                                        [
+                                            {
+                                                id: 'leadership',
+                                                label: '통솔',
+                                                value: statLeadership,
+                                                setter: setStatLeadership,
+                                            },
+                                            {
+                                                id: 'strength',
+                                                label: '무력',
+                                                value: statStrength,
+                                                setter: setStatStrength,
+                                            },
+                                            { id: 'intel', label: '지력', value: statIntel, setter: setStatIntel },
+                                            {
+                                                id: 'politics',
+                                                label: '정치',
+                                                value: statPolitics,
+                                                setter: setStatPolitics,
+                                            },
+                                            { id: 'charm', label: '매력', value: statCharm, setter: setStatCharm },
+                                        ] as const
+                                    ).map((stat) => (
+                                        <div key={stat.id} className="space-y-1">
+                                            <label
+                                                htmlFor={`inherit-reset-${stat.id}`}
+                                                className="text-xs text-muted-foreground"
+                                            >
+                                                {stat.label}
+                                            </label>
+                                            <Input
+                                                id={`inherit-reset-${stat.id}`}
+                                                type="number"
+                                                min={currentStat?.statMin ?? 0}
+                                                max={currentStat?.statMax ?? 100}
+                                                value={stat.value}
+                                                onChange={(e) => stat.setter(Number(e.target.value))}
+                                            />
+                                        </div>
+                                    ))}
                                 </div>
                                 <p className="text-xs font-medium mt-2">추가 능력치 (보너스)</p>
-                                <div className="grid grid-cols-3 gap-2">
-                                    <div className="space-y-1">
-                                        <label
-                                            htmlFor="inherit-bonus-leadership"
-                                            className="text-xs text-muted-foreground"
-                                        >
-                                            통솔
-                                        </label>
-                                        <Input
-                                            id="inherit-bonus-leadership"
-                                            type="number"
-                                            min={0}
-                                            max={MAX_INHERIT_BONUS_STAT_TOTAL}
-                                            value={bonusStat[0]}
-                                            onChange={(e) => updateBonusStat(0, Number(e.target.value))}
-                                        />
-                                    </div>
-                                    <div className="space-y-1">
-                                        <label
-                                            htmlFor="inherit-bonus-strength"
-                                            className="text-xs text-muted-foreground"
-                                        >
-                                            무력
-                                        </label>
-                                        <Input
-                                            id="inherit-bonus-strength"
-                                            type="number"
-                                            min={0}
-                                            max={MAX_INHERIT_BONUS_STAT_TOTAL}
-                                            value={bonusStat[1]}
-                                            onChange={(e) => updateBonusStat(1, Number(e.target.value))}
-                                        />
-                                    </div>
-                                    <div className="space-y-1">
-                                        <label htmlFor="inherit-bonus-intel" className="text-xs text-muted-foreground">
-                                            지력
-                                        </label>
-                                        <Input
-                                            id="inherit-bonus-intel"
-                                            type="number"
-                                            min={0}
-                                            max={MAX_INHERIT_BONUS_STAT_TOTAL}
-                                            value={bonusStat[2]}
-                                            onChange={(e) => updateBonusStat(2, Number(e.target.value))}
-                                        />
-                                    </div>
+                                <div className="grid grid-cols-5 gap-2">
+                                    {(
+                                        [
+                                            [0, 'leadership', '통솔'],
+                                            [1, 'strength', '무력'],
+                                            [2, 'intel', '지력'],
+                                            [3, 'politics', '정치'],
+                                            [4, 'charm', '매력'],
+                                        ] as [number, string, string][]
+                                    ).map(([idx, id, label]) => (
+                                        <div key={id} className="space-y-1">
+                                            <label
+                                                htmlFor={`inherit-bonus-${id}`}
+                                                className="text-xs text-muted-foreground"
+                                            >
+                                                {label}
+                                            </label>
+                                            <Input
+                                                id={`inherit-bonus-${id}`}
+                                                type="number"
+                                                min={0}
+                                                max={MAX_INHERIT_BONUS_STAT_TOTAL}
+                                                value={bonusStat[idx]}
+                                                onChange={(e) =>
+                                                    updateBonusStat(idx as 0 | 1 | 2 | 3 | 4, Number(e.target.value))
+                                                }
+                                            />
+                                        </div>
+                                    ))}
                                 </div>
                                 <div className="flex items-center justify-between pt-1">
                                     <span className="text-xs text-muted-foreground">

@@ -138,7 +138,7 @@ class GeneralServiceTest {
                 personality = "che_대의",
                 pic = true,
                 inheritSpecial = "che_저격",
-                inheritBonusStat = listOf(2, 1, 0),
+                inheritBonusStat = listOf(2, 1, 0, 1, 1),
             ),
         )
 
