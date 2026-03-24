@@ -211,7 +211,9 @@ class CommandExecutor @Autowired constructor(
         }
 
         // 국가 커맨드는 run()에서 직접 엔티티를 수정한다
+        logger.info("[NationCmd] {} for general {} ENTERING run(), nation.capitalCityId={}", actionCode, general.id, nation?.capitalCityId)
         val result = command.run(rng)
+        logger.info("[NationCmd] {} for general {} run() returned success={}, nation.capitalCityId={}", actionCode, general.id, result.success, nation?.capitalCityId)
         if (nation != null) {
             setNationLastTurn(
                 nation,

@@ -1,0 +1,20 @@
+[
+    {
+        "timestamp": "2026-03-23T23:36:10.945Z",
+        "errorType": "unknown",
+        "category": "unknown",
+        "severity": "low",
+        "agentId": null,
+        "agentType": null,
+        "message": ""
+    },
+    {
+        "timestamp": "2026-03-24T00:11:55.119Z",
+        "errorType": "unknown",
+        "category": "unknown",
+        "severity": "low",
+        "agentId": null,
+        "agentType": null,
+        "message": ""
+    }
+]

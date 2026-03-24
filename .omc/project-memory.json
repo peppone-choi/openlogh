@@ -1,6 +1,6 @@
 {
     "version": "1.0.0",
-    "lastScanned": 1774172692039,
+    "lastScanned": 1774263959235,
     "projectRoot": "/Users/apple/Desktop/opensamguk",
     "techStack": {
         "languages": [],
@@ -36,56 +36,56 @@
             "path": "backend",
             "purpose": null,
             "fileCount": 7,
-            "lastAccessed": 1774172691241,
+            "lastAccessed": 1774263958317,
             "keyFiles": ["Dockerfile", "build.gradle.kts", "gradle.properties", "gradlew", "gradlew.bat"]
         },
         "docs": {
             "path": "docs",
             "purpose": "Documentation",
             "fileCount": 0,
-            "lastAccessed": 1774172691244,
+            "lastAccessed": 1774263958320,
             "keyFiles": []
         },
         "frontend": {
             "path": "frontend",
             "purpose": null,
             "fileCount": 17,
-            "lastAccessed": 1774172691245,
+            "lastAccessed": 1774263958322,
             "keyFiles": ["Dockerfile", "README.md", "components.json", "eslint.config.mjs", "next-env.d.ts"]
         },
         "legacy-core": {
             "path": "legacy-core",
             "purpose": null,
             "fileCount": 24,
-            "lastAccessed": 1774172691247,
+            "lastAccessed": 1774263958326,
             "keyFiles": ["403.html", "LICENSE", "README.md", "api.php", "composer.json"]
         },
         "legacy-docker": {
             "path": "legacy-docker",
             "purpose": null,
             "fileCount": 1,
-            "lastAccessed": 1774172691248,
+            "lastAccessed": 1774263958327,
             "keyFiles": ["account.env"]
         },
         "legacy-docker-src": {
             "path": "legacy-docker-src",
             "purpose": null,
             "fileCount": 2,
-            "lastAccessed": 1774172691249,
+            "lastAccessed": 1774263958329,
             "keyFiles": ["README.md"]
         },
         "nginx": {
             "path": "nginx",
             "purpose": null,
             "fileCount": 1,
-            "lastAccessed": 1774172691249,
+            "lastAccessed": 1774263958331,
             "keyFiles": ["nginx.conf"]
         },
         "parity-screenshots": {
             "path": "parity-screenshots",
             "purpose": null,
             "fileCount": 11,
-            "lastAccessed": 1774172691250,
+            "lastAccessed": 1774263958332,
             "keyFiles": [
                 "parity-links-legacy.png",
                 "parity-links-new.png",
@@ -98,323 +98,323 @@
             "path": "scripts",
             "purpose": "Build/utility scripts",
             "fileCount": 0,
-            "lastAccessed": 1774172691251,
+            "lastAccessed": 1774263958333,
             "keyFiles": []
         },
         "frontend/docs": {
             "path": "frontend/docs",
             "purpose": "Documentation",
             "fileCount": 1,
-            "lastAccessed": 1774172691252,
+            "lastAccessed": 1774263958341,
             "keyFiles": ["phase3-page-classification.md"]
         },
         "legacy-docker/app": {
             "path": "legacy-docker/app",
             "purpose": "Application code",
             "fileCount": 2,
-            "lastAccessed": 1774172691253,
+            "lastAccessed": 1774263958342,
             "keyFiles": ["id_ecdsa", "known_hosts"]
         }
     },
     "hotPaths": [
         {
+            "path": "backend/game-app/src/main/kotlin/com/opensam/engine/TurnService.kt",
+            "accessCount": 124,
+            "lastAccessed": 1774344962607,
+            "type": "file"
+        },
+        {
+            "path": "backend/game-app/src/main/kotlin/com/opensam/engine/EconomyService.kt",
+            "accessCount": 84,
+            "lastAccessed": 1774344296500,
+            "type": "file"
+        },
+        {
             "path": "backend",
-            "accessCount": 32,
-            "lastAccessed": 1774255447392,
+            "accessCount": 28,
+            "lastAccessed": 1774338104285,
+            "type": "directory"
+        },
+        {
+            "path": "backend/game-app/src/main/kotlin/com/opensam/engine/EventActionService.kt",
+            "accessCount": 26,
+            "lastAccessed": 1774338559490,
+            "type": "file"
+        },
+        {
+            "path": "backend/game-app/src/main/kotlin",
+            "accessCount": 26,
+            "lastAccessed": 1774343879865,
+            "type": "directory"
+        },
+        {
+            "path": "backend/game-app/src/main/kotlin/com/opensam/engine/EventService.kt",
+            "accessCount": 21,
+            "lastAccessed": 1774271388123,
+            "type": "file"
+        },
+        {
+            "path": "legacy-core",
+            "accessCount": 19,
+            "lastAccessed": 1774338201752,
             "type": "directory"
         },
         {
             "path": "legacy-core/hwe",
-            "accessCount": 29,
-            "lastAccessed": 1774250065358,
+            "accessCount": 18,
+            "lastAccessed": 1774314177065,
             "type": "directory"
         },
         {
-            "path": "legacy-core",
-            "accessCount": 28,
-            "lastAccessed": 1774250003569,
-            "type": "directory"
-        },
-        {
-            "path": "frontend/src",
-            "accessCount": 24,
-            "lastAccessed": 1774243074111,
-            "type": "directory"
-        },
-        {
-            "path": "backend/game-app/src/main/kotlin/com/opensam/command/nation/che_불가침수락.kt",
-            "accessCount": 12,
-            "lastAccessed": 1774255838434,
-            "type": "file"
-        },
-        {
-            "path": "backend/game-app/src/main/kotlin/com/opensam/command/nation/che_종전제의.kt",
+            "path": "docs/01-plan/features/legacy-parity-phase2.plan.md",
             "accessCount": 9,
-            "lastAccessed": 1774255445836,
+            "lastAccessed": 1774266895236,
             "type": "file"
         },
         {
-            "path": "backend/game-app/src/main/kotlin/com/opensam/command/nation/che_불가침제의.kt",
+            "path": "legacy-core/hwe/sammo/Event/Action/ProcessIncome.php",
             "accessCount": 9,
-            "lastAccessed": 1774255610649,
+            "lastAccessed": 1774267091271,
             "type": "file"
         },
         {
-            "path": "backend/game-app/src/main/kotlin/com/opensam/command/nation/che_불가침파기제의.kt",
-            "accessCount": 9,
-            "lastAccessed": 1774255888686,
-            "type": "file"
-        },
-        {
-            "path": "frontend/src/stores/generalStore.ts",
-            "accessCount": 7,
-            "lastAccessed": 1774237767077,
-            "type": "file"
-        },
-        {
-            "path": "frontend",
-            "accessCount": 7,
-            "lastAccessed": 1774239193665,
+            "path": "legacy-core/hwe/sammo",
+            "accessCount": 8,
+            "lastAccessed": 1774314169886,
             "type": "directory"
         },
         {
-            "path": "backend/game-app/src/main/kotlin/com/opensam/service/HistoryService.kt",
-            "accessCount": 7,
-            "lastAccessed": 1774249159030,
-            "type": "file"
-        },
-        {
-            "path": "backend/game-app/src/main/kotlin/com/opensam/command/BaseCommand.kt",
-            "accessCount": 7,
-            "lastAccessed": 1774253855752,
-            "type": "file"
-        },
-        {
-            "path": "frontend/src/components/game/command-select-form.tsx",
+            "path": "backend/game-app/src/main/kotlin/com/opensam/engine/trigger/GeneralTrigger.kt",
             "accessCount": 6,
-            "lastAccessed": 1774179715024,
+            "lastAccessed": 1774268033519,
             "type": "file"
         },
         {
-            "path": "frontend/src/stores/worldStore.ts",
+            "path": "backend/game-app/src/test/kotlin/com/opensam/engine/EconomyServiceTest.kt",
             "accessCount": 6,
-            "lastAccessed": 1774237736702,
+            "lastAccessed": 1774268912406,
             "type": "file"
         },
         {
-            "path": "backend/game-app/src/main/kotlin/com/opensam/command/nation/che_몰수.kt",
-            "accessCount": 6,
-            "lastAccessed": 1774250037095,
-            "type": "file"
-        },
-        {
-            "path": "backend/game-app/src/main/kotlin/com/opensam/command/nation/che_선전포고.kt",
-            "accessCount": 6,
-            "lastAccessed": 1774255432030,
-            "type": "file"
-        },
-        {
-            "path": "backend/game-app/src/main/kotlin/com/opensam/command/nation/che_종전수락.kt",
-            "accessCount": 6,
-            "lastAccessed": 1774255496358,
-            "type": "file"
-        },
-        {
-            "path": "backend/game-app/src/main/kotlin/com/opensam/command/nation/che_불가침파기수락.kt",
-            "accessCount": 6,
-            "lastAccessed": 1774255933922,
-            "type": "file"
-        },
-        {
-            "path": "frontend/src/app/(game)/layout.tsx",
+            "path": "legacy-core/hwe/func_time_event.php",
             "accessCount": 5,
-            "lastAccessed": 1774239119768,
+            "lastAccessed": 1774267145642,
             "type": "file"
         },
         {
-            "path": "backend/game-app/src/main/kotlin/com/opensam/command/general/귀환.kt",
-            "accessCount": 5,
-            "lastAccessed": 1774249955602,
-            "type": "file"
-        },
-        {
-            "path": "frontend/src/stores/worldStore.test.ts",
+            "path": "legacy-core/src/daemon.ts",
             "accessCount": 4,
-            "lastAccessed": 1774237959102,
+            "lastAccessed": 1774267068588,
             "type": "file"
         },
         {
-            "path": "frontend/src/stores/generalStore.test.ts",
+            "path": "backend/game-app/src/main/kotlin/com/opensam/engine/war/BattleTrigger.kt",
             "accessCount": 4,
-            "lastAccessed": 1774237983839,
+            "lastAccessed": 1774267175950,
             "type": "file"
         },
         {
-            "path": "frontend/src/stores/authStore.ts",
+            "path": "backend/game-app/src/main/kotlin/com/opensam/engine/trigger/TriggerCaller.kt",
+            "accessCount": 4,
+            "lastAccessed": 1774267803926,
+            "type": "file"
+        },
+        {
+            "path": "legacy-core/hwe/func_process.php",
+            "accessCount": 4,
+            "lastAccessed": 1774272444537,
+            "type": "file"
+        },
+        {
+            "path": "docs/04-report/legacy-parity.report.md",
             "accessCount": 3,
-            "lastAccessed": 1774236924137,
+            "lastAccessed": 1774266890941,
             "type": "file"
         },
         {
-            "path": "legacy-core/hwe/func_history.php",
+            "path": "legacy-core/hwe/sammo/TriggerOfficerLevel.php",
             "accessCount": 3,
-            "lastAccessed": 1774240364168,
+            "lastAccessed": 1774272413305,
             "type": "file"
         },
         {
-            "path": "backend/game-app/src/main/kotlin/com/opensam/controller/HistoryController.kt",
+            "path": "backend/game-app/src/main/kotlin/com/opensam/controller/MessageController.kt",
             "accessCount": 3,
-            "lastAccessed": 1774240763835,
+            "lastAccessed": 1774311630423,
             "type": "file"
         },
         {
-            "path": "legacy-core/hwe/sammo/Command/Nation/che_몰수.php",
-            "accessCount": 3,
-            "lastAccessed": 1774250036017,
-            "type": "file"
-        },
-        {
-            "path": "frontend/src/components/game/command-select-form.test.ts",
+            "path": "backend/game-app/src/main/kotlin/com/opensam/controller/AuctionController.kt",
             "accessCount": 2,
-            "lastAccessed": 1774179810091,
+            "lastAccessed": 1774267106553,
             "type": "file"
         },
         {
-            "path": "frontend/src/components/game/command-panel.test.ts",
+            "path": "backend/game-app/src/main/kotlin/com/opensam/controller/CommandController.kt",
             "accessCount": 2,
-            "lastAccessed": 1774179907184,
+            "lastAccessed": 1774267106856,
             "type": "file"
         },
         {
-            "path": "frontend/src/app/(game)/layout.test.ts",
+            "path": "backend/game-app/src/main/kotlin/com/opensam/controller/GeneralController.kt",
             "accessCount": 2,
-            "lastAccessed": 1774179956877,
+            "lastAccessed": 1774267107439,
             "type": "file"
         },
         {
-            "path": "legacy-core/hwe/sammo/API/Global/GetRecentRecord.php",
+            "path": "backend/game-app/src/main/kotlin/com/opensam/controller/MapController.kt",
             "accessCount": 2,
-            "lastAccessed": 1774233668489,
+            "lastAccessed": 1774267107708,
             "type": "file"
         },
         {
-            "path": "frontend/src/components/game/record-zone.tsx",
+            "path": "backend/game-app/src/main/kotlin/com/opensam/controller/NationController.kt",
             "accessCount": 2,
-            "lastAccessed": 1774240361295,
+            "lastAccessed": 1774267108153,
             "type": "file"
         },
         {
-            "path": "backend/game-app/src/main/kotlin/com/opensam/command/CommandExecutor.kt",
+            "path": "backend/game-app/src/main/kotlin/com/opensam/controller/TroopController.kt",
             "accessCount": 2,
-            "lastAccessed": 1774242594846,
+            "lastAccessed": 1774267109724,
             "type": "file"
         },
         {
-            "path": "legacy-core/hwe/sammo/Command/General/che_귀환.php",
+            "path": "backend/game-app/src/main/kotlin/com/opensam/controller/VoteController.kt",
             "accessCount": 2,
-            "lastAccessed": 1774249955197,
+            "lastAccessed": 1774267110328,
             "type": "file"
         },
         {
-            "path": "backend/game-app/src/main/kotlin/com/opensam/command/general/접경귀환.kt",
+            "path": "backend/game-app/src/main/kotlin/com/opensam/controller/InheritanceController.kt",
             "accessCount": 2,
-            "lastAccessed": 1774249956938,
+            "lastAccessed": 1774267110502,
             "type": "file"
         },
         {
-            "path": "backend/game-app/src/main/kotlin/com/opensam/service/CommandService.kt",
+            "path": "backend/game-app/src/main/kotlin/com/opensam/controller/PublicController.kt",
             "accessCount": 2,
-            "lastAccessed": 1774250001900,
+            "lastAccessed": 1774267110892,
             "type": "file"
         },
         {
-            "path": "backend/game-app/src/main/kotlin/com/opensam/command/nation/che_천도.kt",
+            "path": "legacy-core/hwe/sammo/BaseGeneralTrigger.php",
             "accessCount": 2,
-            "lastAccessed": 1774250017206,
+            "lastAccessed": 1774267144021,
             "type": "file"
         },
         {
-            "path": "backend/game-app/src/main/kotlin/com/opensam/command/nation/che_무작위수도이전.kt",
+            "path": "legacy-core/hwe/sammo/BaseWarUnitTrigger.php",
             "accessCount": 2,
-            "lastAccessed": 1774250017813,
+            "lastAccessed": 1774267144500,
             "type": "file"
         },
         {
-            "path": "backend/game-app/src/main/kotlin/com/opensam/command/CommandResultApplicator.kt",
-            "accessCount": 1,
-            "lastAccessed": 1774172764176,
+            "path": "backend/game-app/src/test/kotlin/com/opensam/engine/trigger/TriggerCallerTest.kt",
+            "accessCount": 2,
+            "lastAccessed": 1774267854573,
             "type": "file"
         },
         {
-            "path": "frontend/src/stores/authStore.test.ts",
+            "path": "docs/01-plan/features/legacy-parity.plan.md",
             "accessCount": 1,
-            "lastAccessed": 1774179703504,
+            "lastAccessed": 1774263979117,
             "type": "file"
         },
         {
-            "path": "frontend/src/app/(game)/page.test.ts",
+            "path": "legacy-core/hwe/sammo/ObjectTrigger.php",
             "accessCount": 1,
-            "lastAccessed": 1774179703827,
+            "lastAccessed": 1774264674832,
             "type": "file"
         },
         {
-            "path": "legacy-core/hwe/v_history.php",
+            "path": "legacy-core/hwe/sammo/TriggerCaller.php",
             "accessCount": 1,
-            "lastAccessed": 1774231628020,
+            "lastAccessed": 1774264678282,
             "type": "file"
         },
         {
-            "path": "legacy-core/hwe/sammo/API/Global/GetDiplomacy.php",
+            "path": "legacy-core/hwe/sammo/WarUnitTriggerCaller.php",
             "accessCount": 1,
-            "lastAccessed": 1774231632419,
+            "lastAccessed": 1774264678515,
             "type": "file"
         },
         {
-            "path": "legacy-core/hwe/sammo/API/Global/GetHistory.php",
+            "path": "legacy-core/hwe/sammo/GeneralTriggerCaller.php",
             "accessCount": 1,
-            "lastAccessed": 1774231632507,
+            "lastAccessed": 1774264678705,
             "type": "file"
         },
         {
-            "path": "backend/game-app/src/main/kotlin/com/opensam/entity/Event.kt",
+            "path": "legacy-core/hwe/sammo/WarUnitTrigger/che_필살발동.php",
             "accessCount": 1,
-            "lastAccessed": 1774231634272,
+            "lastAccessed": 1774264681553,
             "type": "file"
         },
         {
-            "path": "backend/game-app/src/main/kotlin/com/opensam/entity/GeneralAccessLog.kt",
+            "path": "legacy-core/hwe/sammo/WarUnitTrigger/che_계략발동.php",
             "accessCount": 1,
-            "lastAccessed": 1774231634707,
+            "lastAccessed": 1774264682082,
             "type": "file"
         },
         {
-            "path": "backend/game-app/src/main/kotlin/com/opensam/entity/WorldHistory.kt",
+            "path": "legacy-core/hwe/sammo/WarUnitTrigger/che_회피발동.php",
             "accessCount": 1,
-            "lastAccessed": 1774231634854,
+            "lastAccessed": 1774264682138,
             "type": "file"
         },
         {
-            "path": "backend/game-app/src/main/kotlin/com/opensam/entity/GameHistory.kt",
+            "path": "legacy-core/hwe/sammo/GeneralTrigger/che_부상경감.php",
             "accessCount": 1,
-            "lastAccessed": 1774231635143,
+            "lastAccessed": 1774264682342,
             "type": "file"
         },
         {
-            "path": "legacy-core/hwe/sammo/API/InheritAction/GetMoreLog.php",
+            "path": "legacy-core/api.php",
             "accessCount": 1,
-            "lastAccessed": 1774231636907,
+            "lastAccessed": 1774264686586,
             "type": "file"
         },
         {
-            "path": "legacy-core/hwe/sammo/API/General/GetFrontInfo.php",
+            "path": "legacy-core/src/sammo/APIHelper.php",
             "accessCount": 1,
-            "lastAccessed": 1774231636981,
+            "lastAccessed": 1774264690867,
             "type": "file"
         },
         {
-            "path": "backend/game-app/src/main/kotlin/com/opensam/service/GameEventService.kt",
+            "path": "legacy-core/hwe/proc.php",
             "accessCount": 1,
-            "lastAccessed": 1774231639544,
+            "lastAccessed": 1774264696389,
+            "type": "file"
+        },
+        {
+            "path": "legacy-core/hwe/j_autoreset.php",
+            "accessCount": 1,
+            "lastAccessed": 1774264696617,
+            "type": "file"
+        },
+        {
+            "path": "legacy-core/hwe/sammo/TriggerInheritBuff.php",
+            "accessCount": 1,
+            "lastAccessed": 1774264697733,
+            "type": "file"
+        },
+        {
+            "path": "legacy-core/hwe/sammo/WarUnitTrigger/che_필살시도.php",
+            "accessCount": 1,
+            "lastAccessed": 1774264700397,
+            "type": "file"
+        },
+        {
+            "path": "legacy-core/hwe/sammo/WarUnitTrigger/WarActivateSkills.php",
+            "accessCount": 1,
+            "lastAccessed": 1774264700834,
+            "type": "file"
+        },
+        {
+            "path": "legacy-core/hwe/sammo/WarUnitTrigger/능력치변경.php",
+            "accessCount": 1,
+            "lastAccessed": 1774264701057,
             "type": "file"
         }
     ],

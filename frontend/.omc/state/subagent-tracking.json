@@ -1,0 +1,24 @@
+{
+    "agents": [
+        {
+            "agent_id": "a92c09637c9295e7f",
+            "agent_type": "oh-my-claudecode:explore",
+            "started_at": "2026-03-23T04:24:00.933Z",
+            "parent_mode": "none",
+            "status": "running"
+        },
+        {
+            "agent_id": "a2f1c6ec1c925778b",
+            "agent_type": "bkit:gap-detector",
+            "started_at": "2026-03-24T02:11:34.025Z",
+            "parent_mode": "none",
+            "status": "completed",
+            "completed_at": "2026-03-24T02:14:10.072Z",
+            "duration_ms": 156047
+        }
+    ],
+    "total_spawned": 2,
+    "total_completed": 1,
+    "total_failed": 0,
+    "last_updated": "2026-03-24T02:14:10.175Z"
+}

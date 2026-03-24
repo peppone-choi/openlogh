@@ -1,0 +1,4 @@
+{"t":0,"agent":"system","event":"keyword_detected","keyword":"ultrapilot"}
+{"t":0,"agent":"system","event":"mode_change","mode_from":"none","mode_to":"ultrapilot"}
+{"t":0,"agent":"a8ebf98","agent_type":"Explore","event":"agent_start","parent_mode":"none"}
+{"t":0,"agent":"a8ebf98","agent_type":"Explore","event":"agent_stop","success":true,"duration_ms":42167}

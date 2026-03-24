@@ -1,0 +1,2597 @@
+{
+    "version": "3.0",
+    "lastUpdated": "2026-03-24T09:53:26.509Z",
+    "activeFeatures": [
+        "engine",
+        "war",
+        "service",
+        "general",
+        "ai",
+        "command",
+        "parity",
+        "nation",
+        "turn",
+        "event",
+        "steps",
+        "economy",
+        "npc",
+        "game",
+        "trigger",
+        "modifier",
+        "test",
+        "frontend",
+        "city",
+        "constraint",
+        "emperor",
+        "detail",
+        "tutorial",
+        "stores",
+        "create",
+        "main",
+        "battle",
+        "diplomacy",
+        "complete",
+        "lobby",
+        "dto",
+        "join",
+        "inherit",
+        "(game)"
+    ],
+    "primaryFeature": "engine",
+    "features": {
+        "engine": {
+            "phase": "do",
+            "phaseNumber": 3,
+            "matchRate": null,
+            "iterationCount": 0,
+            "requirements": [],
+            "documents": {},
+            "timestamps": {
+                "started": "2026-03-23T07:03:03.192Z",
+                "lastUpdated": "2026-03-24T09:32:18.376Z"
+            },
+            "lastFile": "/Users/apple/Desktop/opensamguk/backend/game-app/src/main/kotlin/com/opensam/engine/TurnService.kt"
+        },
+        "war": {
+            "phase": "do",
+            "phaseNumber": 3,
+            "matchRate": null,
+            "iterationCount": 0,
+            "requirements": [],
+            "documents": {},
+            "timestamps": {
+                "started": "2026-03-23T07:03:30.290Z",
+                "lastUpdated": "2026-03-23T10:49:00.167Z"
+            },
+            "lastFile": "/Users/apple/Desktop/opensamguk/backend/game-app/src/test/kotlin/com/opensam/engine/war/BattleEngineTest.kt"
+        },
+        "service": {
+            "phase": "do",
+            "phaseNumber": 3,
+            "matchRate": null,
+            "iterationCount": 0,
+            "requirements": [],
+            "documents": {},
+            "timestamps": {
+                "started": "2026-03-23T07:03:46.614Z",
+                "lastUpdated": "2026-03-24T08:31:40.530Z"
+            },
+            "lastFile": "/Users/apple/Desktop/opensamguk/backend/game-app/src/main/kotlin/com/opensam/service/CommandService.kt"
+        },
+        "general": {
+            "phase": "do",
+            "phaseNumber": 3,
+            "matchRate": null,
+            "iterationCount": 0,
+            "requirements": [],
+            "documents": {},
+            "timestamps": {
+                "started": "2026-03-23T07:37:54.867Z",
+                "lastUpdated": "2026-03-23T10:48:05.858Z"
+            },
+            "lastFile": "/Users/apple/Desktop/opensamguk/backend/game-app/src/main/kotlin/com/opensam/command/general/화계.kt"
+        },
+        "ai": {
+            "phase": "do",
+            "phaseNumber": 3,
+            "matchRate": null,
+            "iterationCount": 0,
+            "requirements": [],
+            "documents": {},
+            "timestamps": {
+                "started": "2026-03-23T07:38:05.660Z",
+                "lastUpdated": "2026-03-23T08:25:38.623Z"
+            },
+            "lastFile": "/Users/apple/Desktop/opensamguk/backend/game-app/src/main/kotlin/com/opensam/engine/ai/GeneralAI.kt"
+        },
+        "command": {
+            "phase": "do",
+            "phaseNumber": 3,
+            "matchRate": null,
+            "iterationCount": 0,
+            "requirements": [],
+            "documents": {},
+            "timestamps": {
+                "started": "2026-03-23T07:40:21.882Z",
+                "lastUpdated": "2026-03-24T09:53:26.509Z"
+            },
+            "lastFile": "/Users/apple/Desktop/opensamguk/backend/game-app/src/main/kotlin/com/opensam/command/CommandExecutor.kt"
+        },
+        "parity": {
+            "phase": "do",
+            "phaseNumber": 3,
+            "matchRate": null,
+            "iterationCount": 0,
+            "requirements": [],
+            "documents": {},
+            "timestamps": {
+                "started": "2026-03-23T07:52:48.800Z",
+                "lastUpdated": "2026-03-24T01:11:00.279Z"
+            },
+            "lastFile": "/Users/apple/Desktop/opensamguk/backend/game-app/src/test/kotlin/com/opensam/qa/parity/EconomyFormulaParityTest.kt"
+        },
+        "nation": {
+            "phase": "do",
+            "phaseNumber": 3,
+            "matchRate": null,
+            "iterationCount": 0,
+            "requirements": [],
+            "documents": {},
+            "timestamps": {
+                "started": "2026-03-23T08:25:05.932Z",
+                "lastUpdated": "2026-03-24T01:59:52.514Z"
+            },
+            "lastFile": "/Users/apple/Desktop/opensamguk/frontend/src/app/(tutorial)/tutorial/nation/page.tsx"
+        },
+        "turn": {
+            "phase": "do",
+            "phaseNumber": 3,
+            "matchRate": null,
+            "iterationCount": 0,
+            "requirements": [],
+            "documents": {},
+            "timestamps": {
+                "started": "2026-03-23T11:29:42.554Z",
+                "lastUpdated": "2026-03-23T11:48:07.329Z"
+            },
+            "lastFile": "/Users/apple/Desktop/opensamguk/backend/game-app/src/main/kotlin/com/opensam/engine/turn/TurnStep.kt"
+        },
+        "event": {
+            "phase": "do",
+            "phaseNumber": 3,
+            "matchRate": null,
+            "iterationCount": 0,
+            "requirements": [],
+            "documents": {},
+            "timestamps": {
+                "started": "2026-03-23T11:29:45.887Z",
+                "lastUpdated": "2026-03-23T11:41:19.380Z"
+            },
+            "lastFile": "/Users/apple/Desktop/opensamguk/backend/game-app/src/main/kotlin/com/opensam/engine/event/EventActionRegistry.kt"
+        },
+        "steps": {
+            "phase": "do",
+            "phaseNumber": 3,
+            "matchRate": null,
+            "iterationCount": 0,
+            "requirements": [],
+            "documents": {},
+            "timestamps": {
+                "started": "2026-03-23T11:38:37.375Z",
+                "lastUpdated": "2026-03-23T12:10:31.528Z"
+            },
+            "lastFile": "/Users/apple/Desktop/opensamguk/backend/game-app/src/main/kotlin/com/opensam/engine/turn/steps/EconomyPreUpdateStep.kt"
+        },
+        "economy": {
+            "phase": "do",
+            "phaseNumber": 3,
+            "matchRate": null,
+            "iterationCount": 0,
+            "requirements": [],
+            "documents": {},
+            "timestamps": {
+                "started": "2026-03-23T11:42:00.405Z",
+                "lastUpdated": "2026-03-23T11:44:15.202Z"
+            },
+            "lastFile": "/Users/apple/Desktop/opensamguk/backend/game-app/src/main/kotlin/com/opensam/engine/event/actions/economy/UpdateCitySupplyAction.kt"
+        },
+        "npc": {
+            "phase": "do",
+            "phaseNumber": 3,
+            "matchRate": null,
+            "iterationCount": 0,
+            "requirements": [],
+            "documents": {},
+            "timestamps": {
+                "started": "2026-03-23T11:44:37.771Z",
+                "lastUpdated": "2026-03-23T11:46:21.519Z"
+            },
+            "lastFile": "/Users/apple/Desktop/opensamguk/backend/game-app/src/main/kotlin/com/opensam/engine/event/actions/npc/CreateManyNpcAction.kt"
+        },
+        "game": {
+            "phase": "do",
+            "phaseNumber": 3,
+            "matchRate": null,
+            "iterationCount": 0,
+            "requirements": [],
+            "documents": {},
+            "timestamps": {
+                "started": "2026-03-23T11:46:41.223Z",
+                "lastUpdated": "2026-03-24T05:33:37.100Z"
+            },
+            "lastFile": "/Users/apple/Desktop/opensamguk/frontend/src/components/game/nation-basic-card.test.ts"
+        },
+        "trigger": {
+            "phase": "do",
+            "phaseNumber": 3,
+            "matchRate": null,
+            "iterationCount": 0,
+            "requirements": [],
+            "documents": {},
+            "timestamps": {
+                "started": "2026-03-23T12:11:42.077Z",
+                "lastUpdated": "2026-03-23T12:12:13.201Z"
+            },
+            "lastFile": "/Users/apple/Desktop/opensamguk/backend/game-app/src/main/kotlin/com/opensam/engine/trigger/GeneralTrigger.kt"
+        },
+        "modifier": {
+            "phase": "do",
+            "phaseNumber": 3,
+            "matchRate": null,
+            "iterationCount": 0,
+            "requirements": [],
+            "documents": {},
+            "timestamps": {
+                "started": "2026-03-23T12:17:49.514Z",
+                "lastUpdated": "2026-03-23T13:54:49.984Z"
+            },
+            "lastFile": "/Users/apple/Desktop/opensamguk/backend/game-app/src/test/kotlin/com/opensam/engine/modifier/OfficerLevelModifierTest.kt"
+        },
+        "test": {
+            "phase": "do",
+            "phaseNumber": 3,
+            "matchRate": null,
+            "iterationCount": 0,
+            "requirements": [],
+            "documents": {},
+            "timestamps": {
+                "started": "2026-03-23T12:28:09.127Z",
+                "lastUpdated": "2026-03-23T12:28:51.002Z"
+            },
+            "lastFile": "/Users/apple/Desktop/opensamguk/backend/game-app/src/test/kotlin/com/opensam/test/InMemoryTurnHarness.kt"
+        },
+        "frontend": {
+            "phase": "do",
+            "phaseNumber": 3,
+            "matchRate": null,
+            "iterationCount": 0,
+            "requirements": [],
+            "documents": {},
+            "timestamps": {
+                "started": "2026-03-24T00:32:24.227Z",
+                "lastUpdated": "2026-03-24T03:17:30.857Z"
+            },
+            "lastFile": "/Users/apple/Desktop/opensamguk/frontend/src/lib/gameApi.ts"
+        },
+        "city": {
+            "phase": "do",
+            "phaseNumber": 3,
+            "matchRate": null,
+            "iterationCount": 0,
+            "requirements": [],
+            "documents": {},
+            "timestamps": {
+                "started": "2026-03-24T00:36:53.895Z",
+                "lastUpdated": "2026-03-24T03:44:15.898Z"
+            },
+            "lastFile": "/Users/apple/Desktop/opensamguk/frontend/src/app/(tutorial)/tutorial/city/page.tsx"
+        },
+        "constraint": {
+            "phase": "do",
+            "phaseNumber": 3,
+            "matchRate": null,
+            "iterationCount": 0,
+            "requirements": [],
+            "documents": {},
+            "timestamps": {
+                "started": "2026-03-24T01:38:30.853Z",
+                "lastUpdated": "2026-03-24T01:38:30.853Z"
+            },
+            "lastFile": "/Users/apple/Desktop/opensamguk/backend/game-app/src/main/kotlin/com/opensam/command/constraint/ConstraintHelper.kt"
+        },
+        "emperor": {
+            "phase": "do",
+            "phaseNumber": 3,
+            "matchRate": null,
+            "iterationCount": 0,
+            "requirements": [],
+            "documents": {},
+            "timestamps": {
+                "started": "2026-03-24T01:40:57.067Z",
+                "lastUpdated": "2026-03-24T01:52:20.574Z"
+            },
+            "lastFile": "/Users/apple/Desktop/opensamguk/frontend/src/app/(game)/emperor/emperor.test.ts"
+        },
+        "detail": {
+            "phase": "do",
+            "phaseNumber": 3,
+            "matchRate": null,
+            "iterationCount": 0,
+            "requirements": [],
+            "documents": {},
+            "timestamps": {
+                "started": "2026-03-24T01:41:24.212Z",
+                "lastUpdated": "2026-03-24T01:42:31.487Z"
+            },
+            "lastFile": "/Users/apple/Desktop/opensamguk/frontend/src/app/(game)/emperor/detail/page.tsx"
+        },
+        "tutorial": {
+            "phase": "do",
+            "phaseNumber": 3,
+            "matchRate": null,
+            "iterationCount": 0,
+            "requirements": [],
+            "documents": {},
+            "timestamps": {
+                "started": "2026-03-24T01:47:02.468Z",
+                "lastUpdated": "2026-03-24T05:31:31.245Z"
+            },
+            "lastFile": "/Users/apple/Desktop/opensamguk/frontend/src/app/(tutorial)/tutorial/tutorial-v2.test.ts",
+            "previousPhase": "check",
+            "autoAdvanced": true
+        },
+        "stores": {
+            "phase": "do",
+            "phaseNumber": 3,
+            "matchRate": null,
+            "iterationCount": 0,
+            "requirements": [],
+            "documents": {},
+            "timestamps": {
+                "started": "2026-03-24T01:50:23.956Z",
+                "lastUpdated": "2026-03-24T02:26:16.191Z"
+            },
+            "lastFile": "/Users/apple/Desktop/opensamguk/frontend/src/stores/tutorialStore.test.ts"
+        },
+        "create": {
+            "phase": "do",
+            "phaseNumber": 3,
+            "matchRate": null,
+            "iterationCount": 0,
+            "requirements": [],
+            "documents": {},
+            "timestamps": {
+                "started": "2026-03-24T01:55:28.405Z",
+                "lastUpdated": "2026-03-24T01:55:28.406Z"
+            },
+            "lastFile": "/Users/apple/Desktop/opensamguk/frontend/src/app/(tutorial)/tutorial/create/page.tsx"
+        },
+        "main": {
+            "phase": "do",
+            "phaseNumber": 3,
+            "matchRate": null,
+            "iterationCount": 0,
+            "requirements": [],
+            "documents": {},
+            "timestamps": {
+                "started": "2026-03-24T01:56:20.683Z",
+                "lastUpdated": "2026-03-24T03:29:07.096Z"
+            },
+            "lastFile": "/Users/apple/Desktop/opensamguk/frontend/src/app/(tutorial)/tutorial/main/page.tsx"
+        },
+        "battle": {
+            "phase": "do",
+            "phaseNumber": 3,
+            "matchRate": null,
+            "iterationCount": 0,
+            "requirements": [],
+            "documents": {},
+            "timestamps": {
+                "started": "2026-03-24T01:58:20.466Z",
+                "lastUpdated": "2026-03-24T01:58:20.466Z"
+            },
+            "lastFile": "/Users/apple/Desktop/opensamguk/frontend/src/app/(tutorial)/tutorial/battle/page.tsx"
+        },
+        "diplomacy": {
+            "phase": "do",
+            "phaseNumber": 3,
+            "matchRate": null,
+            "iterationCount": 0,
+            "requirements": [],
+            "documents": {},
+            "timestamps": {
+                "started": "2026-03-24T01:58:57.581Z",
+                "lastUpdated": "2026-03-24T01:58:57.581Z"
+            },
+            "lastFile": "/Users/apple/Desktop/opensamguk/frontend/src/app/(tutorial)/tutorial/diplomacy/page.tsx"
+        },
+        "complete": {
+            "phase": "do",
+            "phaseNumber": 3,
+            "matchRate": null,
+            "iterationCount": 0,
+            "requirements": [],
+            "documents": {},
+            "timestamps": {
+                "started": "2026-03-24T02:00:28.890Z",
+                "lastUpdated": "2026-03-24T02:00:28.891Z"
+            },
+            "lastFile": "/Users/apple/Desktop/opensamguk/frontend/src/app/(tutorial)/tutorial/complete/page.tsx"
+        },
+        "lobby": {
+            "phase": "do",
+            "phaseNumber": 3,
+            "matchRate": null,
+            "iterationCount": 0,
+            "requirements": [],
+            "documents": {},
+            "timestamps": {
+                "started": "2026-03-24T02:01:44.507Z",
+                "lastUpdated": "2026-03-24T05:44:29.270Z"
+            },
+            "lastFile": "/Users/apple/Desktop/opensamguk/frontend/src/app/(lobby)/lobby/lobby.test.ts"
+        },
+        "dto": {
+            "phase": "do",
+            "phaseNumber": 3,
+            "matchRate": null,
+            "iterationCount": 0,
+            "requirements": [],
+            "documents": {},
+            "timestamps": {
+                "started": "2026-03-24T03:11:24.354Z",
+                "lastUpdated": "2026-03-24T03:11:24.354Z"
+            },
+            "lastFile": "/Users/apple/Desktop/opensamguk/backend/game-app/src/main/kotlin/com/opensam/dto/InheritanceDtos.kt"
+        },
+        "join": {
+            "phase": "do",
+            "phaseNumber": 3,
+            "matchRate": null,
+            "iterationCount": 0,
+            "requirements": [],
+            "documents": {},
+            "timestamps": {
+                "started": "2026-03-24T03:12:55.072Z",
+                "lastUpdated": "2026-03-24T03:50:53.862Z"
+            },
+            "lastFile": "/Users/apple/Desktop/opensamguk/frontend/src/app/(lobby)/lobby/join/join.test.ts"
+        },
+        "inherit": {
+            "phase": "do",
+            "phaseNumber": 3,
+            "matchRate": null,
+            "iterationCount": 0,
+            "requirements": [],
+            "documents": {},
+            "timestamps": {
+                "started": "2026-03-24T03:14:43.321Z",
+                "lastUpdated": "2026-03-24T03:19:52.334Z"
+            },
+            "lastFile": "/Users/apple/Desktop/opensamguk/frontend/src/app/(game)/inherit/page.tsx"
+        },
+        "(game)": {
+            "phase": "do",
+            "phaseNumber": 3,
+            "matchRate": null,
+            "iterationCount": 0,
+            "requirements": [],
+            "documents": {},
+            "timestamps": {
+                "started": "2026-03-24T03:28:34.485Z",
+                "lastUpdated": "2026-03-24T03:28:34.485Z"
+            },
+            "lastFile": "/Users/apple/Desktop/opensamguk/frontend/src/app/(game)/page.tsx"
+        }
+    },
+    "pipeline": {
+        "currentPhase": 1,
+        "level": "Dynamic",
+        "phaseHistory": []
+    },
+    "session": {
+        "startedAt": "2026-03-23T06:31:12.665Z",
+        "onboardingCompleted": false,
+        "lastActivity": "2026-03-24T09:53:26.509Z"
+    },
+    "history": [
+        {
+            "timestamp": "2026-03-23T07:03:03.192Z",
+            "feature": "engine",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T07:03:08.815Z",
+            "feature": "engine",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T07:03:19.677Z",
+            "feature": "engine",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T07:03:30.290Z",
+            "feature": "war",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T07:03:39.456Z",
+            "feature": "war",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T07:03:46.614Z",
+            "feature": "service",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T07:06:41.113Z",
+            "feature": "engine",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T07:06:45.505Z",
+            "feature": "engine",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T07:06:49.954Z",
+            "feature": "engine",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T07:06:54.382Z",
+            "feature": "war",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T07:06:58.990Z",
+            "feature": "war",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T07:07:14.534Z",
+            "feature": "engine",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T07:37:54.867Z",
+            "feature": "general",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T07:38:00.249Z",
+            "feature": "general",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T07:38:05.660Z",
+            "feature": "ai",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T07:38:53.704Z",
+            "feature": "general",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T07:39:00.291Z",
+            "feature": "general",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T07:39:06.242Z",
+            "feature": "general",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T07:39:14.987Z",
+            "feature": "ai",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T07:39:24.147Z",
+            "feature": "ai",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T07:39:35.627Z",
+            "feature": "ai",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T07:39:42.363Z",
+            "feature": "ai",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T07:39:49.380Z",
+            "feature": "ai",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T07:39:57.579Z",
+            "feature": "ai",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T07:40:21.882Z",
+            "feature": "command",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T07:40:29.381Z",
+            "feature": "general",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T07:40:54.598Z",
+            "feature": "general",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T07:40:59.397Z",
+            "feature": "general",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T07:41:07.532Z",
+            "feature": "general",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T07:44:27.331Z",
+            "feature": "ai",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T07:45:21.577Z",
+            "feature": "ai",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T07:52:02.796Z",
+            "feature": "ai",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T07:52:48.800Z",
+            "feature": "parity",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T07:53:37.742Z",
+            "feature": "command",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T07:54:42.323Z",
+            "feature": "command",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T07:55:52.337Z",
+            "feature": "parity",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T07:56:46.732Z",
+            "feature": "parity",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T07:57:26.823Z",
+            "feature": "command",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T07:58:17.470Z",
+            "feature": "command",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T07:59:42.968Z",
+            "feature": "command",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T08:00:50.491Z",
+            "feature": "command",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T08:02:02.526Z",
+            "feature": "command",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T08:02:56.210Z",
+            "feature": "engine",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T08:04:01.098Z",
+            "feature": "command",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T08:05:37.114Z",
+            "feature": "command",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T08:06:48.888Z",
+            "feature": "command",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T08:07:58.292Z",
+            "feature": "command",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T08:09:04.793Z",
+            "feature": "command",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T08:17:54.467Z",
+            "feature": "command",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T08:19:02.067Z",
+            "feature": "command",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T08:19:47.290Z",
+            "feature": "command",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T08:20:34.714Z",
+            "feature": "command",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T08:25:05.932Z",
+            "feature": "nation",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T08:25:38.623Z",
+            "feature": "ai",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T08:26:25.248Z",
+            "feature": "nation",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T08:26:54.163Z",
+            "feature": "nation",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T08:29:06.655Z",
+            "feature": "command",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T08:29:34.922Z",
+            "feature": "command",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T08:30:02.864Z",
+            "feature": "command",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T08:43:43.328Z",
+            "feature": "nation",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T08:44:05.694Z",
+            "feature": "nation",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T08:44:28.305Z",
+            "feature": "nation",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T08:44:29.880Z",
+            "feature": "nation",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T08:44:56.076Z",
+            "feature": "nation",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T08:45:00.005Z",
+            "feature": "nation",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T08:45:06.082Z",
+            "feature": "war",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T08:45:57.663Z",
+            "feature": "nation",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T08:46:13.263Z",
+            "feature": "nation",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T08:46:16.586Z",
+            "feature": "war",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T08:46:50.291Z",
+            "feature": "nation",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T08:47:10.845Z",
+            "feature": "nation",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T08:47:13.428Z",
+            "feature": "war",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T08:47:28.111Z",
+            "feature": "nation",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T08:48:27.612Z",
+            "feature": "nation",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T08:48:37.804Z",
+            "feature": "war",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T08:48:41.043Z",
+            "feature": "nation",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T08:49:35.554Z",
+            "feature": "nation",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T08:49:38.834Z",
+            "feature": "war",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T08:49:43.842Z",
+            "feature": "nation",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T08:50:38.244Z",
+            "feature": "nation",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T08:51:28.256Z",
+            "feature": "nation",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T08:52:13.621Z",
+            "feature": "nation",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T09:17:40.447Z",
+            "feature": "war",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T09:19:54.469Z",
+            "feature": "war",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T09:21:42.930Z",
+            "feature": "war",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T09:23:53.214Z",
+            "feature": "war",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T09:31:22.182Z",
+            "feature": "nation",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T09:33:35.945Z",
+            "feature": "nation",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T09:36:45.365Z",
+            "feature": "nation",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T09:39:43.212Z",
+            "feature": "nation",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T09:42:58.366Z",
+            "feature": "nation",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T09:45:22.073Z",
+            "feature": "nation",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T09:46:43.560Z",
+            "feature": "nation",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T09:47:58.792Z",
+            "feature": "nation",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T09:49:50.979Z",
+            "feature": "nation",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T09:52:05.021Z",
+            "feature": "nation",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T09:53:13.503Z",
+            "feature": "nation",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T10:00:16.910Z",
+            "feature": "nation",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T10:03:33.985Z",
+            "feature": "command",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T10:04:02.945Z",
+            "feature": "command",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T10:04:28.102Z",
+            "feature": "command",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T10:04:59.171Z",
+            "feature": "command",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T10:05:26.169Z",
+            "feature": "command",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T10:05:58.826Z",
+            "feature": "command",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T10:11:00.133Z",
+            "feature": "war",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T10:11:28.639Z",
+            "feature": "war",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T10:14:59.534Z",
+            "feature": "command",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T10:15:34.289Z",
+            "feature": "command",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T10:16:30.234Z",
+            "feature": "command",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T10:23:46.299Z",
+            "feature": "general",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T10:24:14.060Z",
+            "feature": "general",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T10:24:42.510Z",
+            "feature": "general",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T10:25:11.337Z",
+            "feature": "general",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T10:25:45.758Z",
+            "feature": "general",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T10:32:07.928Z",
+            "feature": "war",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T10:32:33.815Z",
+            "feature": "general",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T10:32:43.295Z",
+            "feature": "war",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T10:33:12.144Z",
+            "feature": "general",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T10:33:17.787Z",
+            "feature": "war",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T10:33:47.094Z",
+            "feature": "general",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T10:34:04.521Z",
+            "feature": "war",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T10:34:32.271Z",
+            "feature": "general",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T10:34:50.165Z",
+            "feature": "war",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T10:35:30.745Z",
+            "feature": "war",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T10:36:45.278Z",
+            "feature": "war",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T10:46:14.880Z",
+            "feature": "general",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T10:46:57.706Z",
+            "feature": "general",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T10:47:34.712Z",
+            "feature": "general",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T10:48:05.858Z",
+            "feature": "general",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T10:49:00.167Z",
+            "feature": "war",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T10:49:58.918Z",
+            "feature": "command",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T11:29:42.554Z",
+            "feature": "turn",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T11:29:45.887Z",
+            "feature": "event",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T11:35:37.692Z",
+            "feature": "parity",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T11:37:25.429Z",
+            "feature": "parity",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T11:38:03.083Z",
+            "feature": "turn",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T11:38:37.375Z",
+            "feature": "steps",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T11:39:01.691Z",
+            "feature": "steps",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T11:39:30.468Z",
+            "feature": "steps",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T11:39:57.940Z",
+            "feature": "steps",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T11:40:36.341Z",
+            "feature": "steps",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T11:41:04.657Z",
+            "feature": "steps",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T11:41:19.380Z",
+            "feature": "event",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T11:41:22.669Z",
+            "feature": "steps",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T11:41:32.833Z",
+            "feature": "steps",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T11:41:56.265Z",
+            "feature": "steps",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T11:42:00.405Z",
+            "feature": "economy",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T11:42:23.985Z",
+            "feature": "steps",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T11:42:26.189Z",
+            "feature": "economy",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T11:42:30.719Z",
+            "feature": "steps",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T11:42:45.081Z",
+            "feature": "steps",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T11:42:47.666Z",
+            "feature": "economy",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T11:43:05.955Z",
+            "feature": "steps",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T11:43:08.105Z",
+            "feature": "economy",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T11:43:20.406Z",
+            "feature": "steps",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T11:43:24.957Z",
+            "feature": "steps",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T11:43:27.304Z",
+            "feature": "economy",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T11:43:42.102Z",
+            "feature": "steps",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T11:43:45.012Z",
+            "feature": "parity",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T11:43:48.198Z",
+            "feature": "steps",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T11:43:51.088Z",
+            "feature": "economy",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T11:44:15.202Z",
+            "feature": "economy",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T11:44:29.590Z",
+            "feature": "steps",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T11:44:37.771Z",
+            "feature": "npc",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T11:44:55.191Z",
+            "feature": "npc",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T11:45:11.850Z",
+            "feature": "npc",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T11:45:12.657Z",
+            "feature": "parity",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T11:45:30.033Z",
+            "feature": "npc",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T11:45:41.997Z",
+            "feature": "engine",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T11:45:47.081Z",
+            "feature": "npc",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T11:46:04.698Z",
+            "feature": "npc",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T11:46:10.970Z",
+            "feature": "engine",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T11:46:21.519Z",
+            "feature": "npc",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T11:46:31.735Z",
+            "feature": "parity",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T11:46:33.988Z",
+            "feature": "engine",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T11:46:41.223Z",
+            "feature": "game",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T11:47:11.997Z",
+            "feature": "engine",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T11:47:19.876Z",
+            "feature": "engine",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T11:47:56.872Z",
+            "feature": "engine",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T11:48:07.329Z",
+            "feature": "turn",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T12:09:12.106Z",
+            "feature": "engine",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T12:09:48.434Z",
+            "feature": "engine",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T12:10:01.510Z",
+            "feature": "steps",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T12:10:31.528Z",
+            "feature": "steps",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T12:10:51.192Z",
+            "feature": "engine",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T12:11:42.077Z",
+            "feature": "trigger",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T12:12:13.201Z",
+            "feature": "trigger",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T12:12:13.261Z",
+            "feature": "engine",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T12:12:53.137Z",
+            "feature": "engine",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T12:13:10.437Z",
+            "feature": "engine",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T12:13:27.118Z",
+            "feature": "engine",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T12:14:25.675Z",
+            "feature": "engine",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T12:15:55.937Z",
+            "feature": "engine",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T12:17:49.514Z",
+            "feature": "modifier",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T12:18:26.105Z",
+            "feature": "modifier",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T12:18:32.283Z",
+            "feature": "engine",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T12:23:42.699Z",
+            "feature": "engine",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T12:25:52.256Z",
+            "feature": "engine",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T12:26:37.389Z",
+            "feature": "engine",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T12:27:12.604Z",
+            "feature": "parity",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T12:27:44.226Z",
+            "feature": "parity",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T12:28:09.127Z",
+            "feature": "test",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T12:28:32.188Z",
+            "feature": "engine",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T12:28:51.002Z",
+            "feature": "test",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T12:29:35.396Z",
+            "feature": "engine",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T12:36:54.255Z",
+            "feature": "parity",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T12:37:22.558Z",
+            "feature": "parity",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T12:37:49.028Z",
+            "feature": "parity",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T12:38:20.994Z",
+            "feature": "parity",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T12:38:48.670Z",
+            "feature": "parity",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T12:39:19.470Z",
+            "feature": "parity",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T12:39:46.747Z",
+            "feature": "parity",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T12:40:18.962Z",
+            "feature": "parity",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T12:40:49.434Z",
+            "feature": "parity",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T12:48:17.360Z",
+            "feature": "parity",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T12:48:51.643Z",
+            "feature": "parity",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T12:49:25.509Z",
+            "feature": "parity",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T13:02:53.131Z",
+            "feature": "engine",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T13:03:21.328Z",
+            "feature": "engine",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T13:06:51.790Z",
+            "feature": "engine",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T13:10:52.345Z",
+            "feature": "engine",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T13:11:10.852Z",
+            "feature": "engine",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T13:11:36.031Z",
+            "feature": "engine",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T13:11:55.237Z",
+            "feature": "engine",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T13:12:22.728Z",
+            "feature": "engine",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T13:14:15.866Z",
+            "feature": "parity",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T13:19:31.341Z",
+            "feature": "service",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T13:20:04.422Z",
+            "feature": "service",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T13:20:46.284Z",
+            "feature": "engine",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T13:21:25.403Z",
+            "feature": "engine",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T13:22:00.144Z",
+            "feature": "engine",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T13:22:22.735Z",
+            "feature": "engine",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T13:27:33.258Z",
+            "feature": "modifier",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T13:27:55.700Z",
+            "feature": "modifier",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-23T13:54:49.984Z",
+            "feature": "modifier",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T00:26:18.701Z",
+            "feature": "engine",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T00:26:55.648Z",
+            "feature": "engine",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T00:32:24.227Z",
+            "feature": "frontend",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T00:32:45.482Z",
+            "feature": "game",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T00:33:54.775Z",
+            "feature": "frontend",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T00:34:16.682Z",
+            "feature": "frontend",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T00:34:45.553Z",
+            "feature": "game",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T00:35:05.893Z",
+            "feature": "game",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T00:35:44.117Z",
+            "feature": "frontend",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T00:36:53.895Z",
+            "feature": "city",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T00:41:26.940Z",
+            "feature": "engine",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T00:45:32.450Z",
+            "feature": "city",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T00:45:54.233Z",
+            "feature": "frontend",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T00:46:13.284Z",
+            "feature": "game",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T00:47:00.871Z",
+            "feature": "frontend",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T01:06:18.868Z",
+            "feature": "engine",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T01:07:01.267Z",
+            "feature": "engine",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T01:07:30.286Z",
+            "feature": "nation",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T01:07:51.685Z",
+            "feature": "nation",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T01:11:00.279Z",
+            "feature": "parity",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T01:38:02.388Z",
+            "feature": "engine",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T01:38:30.853Z",
+            "feature": "constraint",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T01:38:50.528Z",
+            "feature": "nation",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T01:39:09.946Z",
+            "feature": "nation",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T01:39:27.937Z",
+            "feature": "nation",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T01:39:46.637Z",
+            "feature": "nation",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T01:40:57.067Z",
+            "feature": "emperor",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T01:41:24.212Z",
+            "feature": "detail",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T01:42:07.905Z",
+            "feature": "emperor",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T01:42:31.487Z",
+            "feature": "detail",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T01:47:02.468Z",
+            "feature": "tutorial",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T01:47:16.658Z",
+            "feature": "nation",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T01:47:36.677Z",
+            "feature": "tutorial",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T01:48:03.567Z",
+            "feature": "tutorial",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T01:48:24.702Z",
+            "feature": "tutorial",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T01:48:46.968Z",
+            "feature": "tutorial",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T01:49:07.560Z",
+            "feature": "tutorial",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T01:49:27.028Z",
+            "feature": "tutorial",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T01:49:49.874Z",
+            "feature": "tutorial",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T01:50:23.956Z",
+            "feature": "stores",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T01:50:44.440Z",
+            "feature": "frontend",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T01:51:25.028Z",
+            "feature": "tutorial",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T01:51:46.710Z",
+            "feature": "tutorial",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T01:52:08.696Z",
+            "feature": "tutorial",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T01:52:20.574Z",
+            "feature": "emperor",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T01:52:38.133Z",
+            "feature": "tutorial",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T01:53:24.140Z",
+            "feature": "tutorial",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T01:54:03.384Z",
+            "feature": "tutorial",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T01:54:37.188Z",
+            "feature": "tutorial",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T01:55:28.406Z",
+            "feature": "create",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T01:56:20.683Z",
+            "feature": "main",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T01:56:54.169Z",
+            "feature": "command",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T01:57:36.727Z",
+            "feature": "city",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T01:58:20.466Z",
+            "feature": "battle",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T01:58:57.581Z",
+            "feature": "diplomacy",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T01:59:52.514Z",
+            "feature": "nation",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T02:00:28.891Z",
+            "feature": "complete",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T02:01:44.508Z",
+            "feature": "lobby",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T02:02:45.942Z",
+            "feature": "lobby",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T02:03:41.375Z",
+            "feature": "tutorial",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T02:04:24.113Z",
+            "feature": "tutorial",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T02:06:40.280Z",
+            "feature": "frontend",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T02:07:35.303Z",
+            "feature": "frontend",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T02:15:12.727Z",
+            "feature": "tutorial",
+            "phase": "act",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T02:24:43.502Z",
+            "feature": "stores",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T02:26:16.191Z",
+            "feature": "stores",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T03:09:25.491Z",
+            "feature": "service",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T03:09:59.819Z",
+            "feature": "service",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T03:10:25.372Z",
+            "feature": "service",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T03:10:59.736Z",
+            "feature": "service",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T03:11:24.354Z",
+            "feature": "dto",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T03:11:50.691Z",
+            "feature": "service",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T03:12:25.693Z",
+            "feature": "service",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T03:12:55.072Z",
+            "feature": "join",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T03:13:54.157Z",
+            "feature": "join",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T03:14:43.321Z",
+            "feature": "inherit",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T03:15:32.579Z",
+            "feature": "inherit",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T03:16:36.247Z",
+            "feature": "inherit",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T03:17:30.857Z",
+            "feature": "frontend",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T03:18:26.324Z",
+            "feature": "inherit",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T03:19:52.334Z",
+            "feature": "inherit",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T03:27:53.744Z",
+            "feature": "game",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T03:28:34.485Z",
+            "feature": "(game)",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T03:29:07.096Z",
+            "feature": "main",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T03:30:12.750Z",
+            "feature": "game",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T03:30:48.813Z",
+            "feature": "game",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T03:31:19.083Z",
+            "feature": "game",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T03:31:48.259Z",
+            "feature": "game",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T03:33:45.770Z",
+            "feature": "tutorial",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T03:35:31.708Z",
+            "feature": "tutorial",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T03:36:13.715Z",
+            "feature": "tutorial",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T03:36:56.892Z",
+            "feature": "tutorial",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T03:43:42.907Z",
+            "feature": "command",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T03:44:15.898Z",
+            "feature": "city",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T03:50:53.862Z",
+            "feature": "join",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T05:31:04.421Z",
+            "feature": "game",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T05:31:31.245Z",
+            "feature": "tutorial",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T05:31:53.123Z",
+            "feature": "game",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T05:32:51.061Z",
+            "feature": "game",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T05:33:17.156Z",
+            "feature": "game",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T05:33:37.100Z",
+            "feature": "game",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T05:41:50.299Z",
+            "feature": "lobby",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T05:43:33.769Z",
+            "feature": "lobby",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T05:44:29.271Z",
+            "feature": "lobby",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T08:31:40.530Z",
+            "feature": "service",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T08:32:39.905Z",
+            "feature": "engine",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T08:45:42.947Z",
+            "feature": "command",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T09:32:18.376Z",
+            "feature": "engine",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T09:32:58.790Z",
+            "feature": "command",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T09:33:52.448Z",
+            "feature": "command",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T09:34:26.270Z",
+            "feature": "command",
+            "phase": "do",
+            "action": "updated"
+        },
+        {
+            "timestamp": "2026-03-24T09:53:26.509Z",
+            "feature": "command",
+            "phase": "do",
+            "action": "updated"
+        }
+    ],
+    "stateMachine": {
+        "defaultWorkflow": "default",
+        "activeWorkflows": {},
+        "totalTransitions": 0
+    },
+    "automation": {
+        "globalLevel": 2,
+        "trustScore": 40,
+        "pendingApprovals": 0,
+        "lastGateResult": null
+    },
+    "team": {
+        "enabled": true,
+        "stateFile": ".bkit/runtime/agent-state.json",
+        "eventsFile": ".bkit/runtime/agent-events.jsonl"
+    }
+}
