@@ -605,14 +605,14 @@ export function getNationTypeLabel(typeCode: string): string {
 
 export const LEGACY_PERSONALITY_OPTIONS: { code: string; label: string; info: string }[] = [
     { code: 'Random', label: '랜덤', info: '성향을 무작위로 선택합니다.' },
-    { code: 'che_안전', label: '안전', info: '사기 -5, 징·모병 비용 -20%' },
-    { code: 'che_유지', label: '유지', info: '훈련 -5, 징·모병 비용 -20%' },
-    { code: 'che_재간', label: '재간', info: '명성 -10%, 징·모병 비용 -20%' },
-    { code: 'che_출세', label: '출세', info: '명성 +10%, 징·모병 비용 +20%' },
+    { code: 'che_안전', label: '안전', info: '사기 -5, 징·함선 징집 비용 -20%' },
+    { code: 'che_유지', label: '유지', info: '훈련 -5, 징·함선 징집 비용 -20%' },
+    { code: 'che_재간', label: '재간', info: '명성 -10%, 징·함선 징집 비용 -20%' },
+    { code: 'che_출세', label: '출세', info: '명성 +10%, 징·함선 징집 비용 +20%' },
     { code: 'che_할거', label: '할거', info: '명성 -10%, 훈련 +5' },
     { code: 'che_정복', label: '정복', info: '명성 -10%, 사기 +5' },
-    { code: 'che_패권', label: '패권', info: '훈련 +5, 징·모병 비용 +20%' },
-    { code: 'che_의협', label: '의협', info: '사기 +5, 징·모병 비용 +20%' },
+    { code: 'che_패권', label: '패권', info: '훈련 +5, 징·함선 징집 비용 +20%' },
+    { code: 'che_의협', label: '의협', info: '사기 +5, 징·함선 징집 비용 +20%' },
     { code: 'che_대의', label: '대의', info: '명성 +10%, 훈련 -5' },
     { code: 'che_왕좌', label: '왕좌', info: '명성 +10%, 사기 -5' },
 ];
@@ -638,7 +638,7 @@ export function getPersonalityName(code: string | undefined | null): string {
 
 export const REGION_NAMES: Record<number, string> = {
     1: '하북',
-    2: '중원',
+    2: '은하',
     3: '서북',
     4: '서촉',
     5: '남중',
@@ -732,7 +732,7 @@ export function isOfficerSet(officerSet: number, reqOfficerLevel: number): boole
 
 export function formatCityName(cityId: number, cityMap: Map<number, { name: string }>): string {
     const city = cityMap.get(cityId);
-    if (!city) return `도시#${cityId}`;
+    if (!city) return `행성#${cityId}`;
     return city.name;
 }
 
