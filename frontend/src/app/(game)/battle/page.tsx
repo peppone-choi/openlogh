@@ -27,8 +27,8 @@ import { OrderPanel } from '@/components/game/battle/OrderPanel';
 import { TurnTimer } from '@/components/game/battle/TurnTimer';
 import { BattleResult } from '@/components/game/battle/BattleResult';
 
-// Dynamic import — Konva uses canvas API not available on server
-const BattleCanvas = dynamic(() => import('@/components/game/battle/BattleCanvas').then((m) => m.BattleCanvas), {
+// Dynamic import — Three.js/R3F requires browser APIs not available on server
+const BattleCanvas = dynamic(() => import('@/components/game/battle/BattleCanvas3D').then((m) => m.BattleCanvas3D), {
     ssr: false,
     loading: () => (
         <div className="bg-[#02020a] rounded border border-amber-900/20" style={{ width: '100%', height: 480 }} />
@@ -771,7 +771,7 @@ export default function BattlePage() {
                                         <div className="grid grid-cols-2 gap-3">
                                             <div className="space-y-1">
                                                 <div className="flex justify-between text-xs">
-                                                    <span className="text-muted-foreground">성벽</span>
+                                                    <span className="text-muted-foreground">요새 방어</span>
                                                     <span>
                                                         {c.wall}/{c.wallMax} ({wallPercent}%)
                                                     </span>

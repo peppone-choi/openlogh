@@ -420,7 +420,7 @@ export default function GameDashboard() {
             {global && global.onlineNations.length > 0 && (
                 <div className={`${isTabActive('world') ? '' : 'max-lg:hidden'}`}>
                     <div className="text-center border-t border-b border-border text-xs font-semibold py-1 bg-game-gold/10 text-game-gold tracking-wide">
-                        세력 현황
+                        진영 현황
                     </div>
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-1 p-1">
                         {global.onlineNations

@@ -346,7 +346,7 @@ export default function MyPage() {
                                         </p>
                                         {nation && (
                                             <div className="flex items-center gap-1">
-                                                <span className="text-sm text-muted-foreground">세력:</span>
+                                                <span className="text-sm text-muted-foreground">진영:</span>
                                                 <NationBadge name={nation.name} color={nation.color} />
                                             </div>
                                         )}
@@ -433,7 +433,7 @@ export default function MyPage() {
                                         <span className="text-yellow-400">{numberWithCommas(g.funds)}</span>
                                     </div>
                                     <div>
-                                        <span className="text-muted-foreground">군량:</span>{' '}
+                                        <span className="text-muted-foreground">물자:</span>{' '}
                                         <span className="text-green-400">{numberWithCommas(g.supplies)}</span>
                                     </div>
                                     <div>

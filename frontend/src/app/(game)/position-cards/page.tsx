@@ -88,7 +88,7 @@ const POSITION_CARD_CATALOG: Record<string, PositionCard> = {
         name: '내무관',
         category: 'administrative',
         grantedBy: '원수/의장',
-        permissions: ['행성 개발', '세율 조정', '치안 유지'],
+        permissions: ['행성 개발', '세율 조정', '보안 유지'],
         cpType: 'PCP',
         description: '행성 내정 관리 권한.',
     },

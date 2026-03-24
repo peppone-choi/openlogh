@@ -89,7 +89,7 @@ export function GlobalDiplomacyOverview({
                     <CardHeader className="pb-2">
                         <CardTitle className="flex items-center gap-1 text-sm">
                             <MapIcon className="size-3.5" />
-                            세력 지도
+                            진영 지도
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -289,13 +289,13 @@ function ConflictAreaCard({
     return (
         <Card>
             <CardHeader className="pb-2">
-                <CardTitle className="text-sm">세력 영토 분쟁 현황</CardTitle>
+                <CardTitle className="text-sm">진영 영토 분쟁 현황</CardTitle>
             </CardHeader>
             <CardContent>
                 {warPairs.length > 0 && (
                     <div className="mb-3 space-y-2">
                         <div className="flex items-center gap-1 text-xs font-medium text-red-400">
-                            ⚔️ 교전 중인 세력
+                            ⚔️ 교전 중인 진영
                         </div>
                         {warPairs.map((pair) => (
                             <div

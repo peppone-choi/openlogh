@@ -165,7 +165,7 @@ export default function SpyPage() {
                             <TableHead>이름</TableHead>
                             <TableHead>도시</TableHead>
                             <TableHead>자금</TableHead>
-                            <TableHead>군량</TableHead>
+                            <TableHead>물자</TableHead>
                             <TableHead>병종</TableHead>
                             <TableHead>병사</TableHead>
                             <TableHead>훈련</TableHead>

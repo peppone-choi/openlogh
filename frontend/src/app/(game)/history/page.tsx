@@ -497,7 +497,7 @@ export default function HistoryPage() {
                                     </div>
                                     <div className="pt-1 border-t border-border space-y-2">
                                         <div>
-                                            <div className="text-[11px] text-muted-foreground mb-1">중원 정세</div>
+                                            <div className="text-[11px] text-muted-foreground mb-1">은하 정세</div>
                                             {yearbook.globalHistory.length === 0 ? (
                                                 <div className="text-[11px] text-muted-foreground">기록 없음</div>
                                             ) : (
@@ -545,7 +545,7 @@ export default function HistoryPage() {
                                 variant={historyView === view ? 'default' : 'outline'}
                                 onClick={() => setHistoryView(view)}
                             >
-                                {view === 'all' ? '전체' : view === 'global' ? '중원 정세' : '제독 동향'}
+                                {view === 'all' ? '전체' : view === 'global' ? '은하 정세' : '제독 동향'}
                             </Button>
                         ))}
                     </div>

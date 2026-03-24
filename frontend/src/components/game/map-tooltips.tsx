@@ -157,10 +157,10 @@ export function DetailTooltip({
                 <span>인구: {isVisible ? pop.toLocaleString() : '?'}</span>
                 <span>농업: {agri}</span>
                 <span>상업: {comm}</span>
-                <span>치안: {secu}</span>
+                <span>보안: {secu}</span>
                 <span>수비: {def}</span>
-                <span>성벽: {wall}</span>
-                <span>민심: {isVisible ? trust : '?'}</span>
+                <span>요새: {wall}</span>
+                <span>지지도: {isVisible ? trust : '?'}</span>
             </div>
 
             <button

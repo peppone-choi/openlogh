@@ -296,7 +296,7 @@ export default function GeneralDetailPage() {
                             value={<span className="text-yellow-400">{numberWithCommas(general.funds)}</span>}
                         />
                         <Row
-                            label="군량"
+                            label="물자"
                             value={<span className="text-green-400">{numberWithCommas(general.supplies)}</span>}
                         />
                         <Row label="계급" value={`Lv.${general.dedLevel ?? 0} (${general.dedication})`} />

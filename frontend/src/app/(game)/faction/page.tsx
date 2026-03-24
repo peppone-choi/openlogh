@@ -80,12 +80,12 @@ const CITY_SORTS: SortOpt<StarSystem>[] = [
     { label: '이름순', key: 'name', fn: (a, b) => a.name.localeCompare(b.name) },
     { label: '레벨순', key: 'level', fn: (a, b) => b.level - a.level },
     { label: '인구순', key: 'pop', fn: (a, b) => b.population - a.population },
-    { label: '민심순', key: 'trust', fn: (a, b) => b.approval - a.approval },
+    { label: '지지도순', key: 'trust', fn: (a, b) => b.approval - a.approval },
     { label: '농업순', key: 'agri', fn: (a, b) => b.production - a.production },
     { label: '상업순', key: 'comm', fn: (a, b) => b.commerce - a.commerce },
-    { label: '치안순', key: 'secu', fn: (a, b) => b.security - a.security },
+    { label: '보안순', key: 'secu', fn: (a, b) => b.security - a.security },
     { label: '수비순', key: 'def', fn: (a, b) => b.orbitalDefense - a.orbitalDefense },
-    { label: '성벽순', key: 'wall', fn: (a, b) => b.fortress - a.fortress },
+    { label: '요새순', key: 'wall', fn: (a, b) => b.fortress - a.fortress },
     { label: '지역순', key: 'region', fn: (a, b) => a.region - b.region },
     { label: '인구최대순', key: 'popMax', fn: (a, b) => b.populationMax - a.populationMax },
     { label: '수비최대순', key: 'defMax', fn: (a, b) => b.orbitalDefenseMax - a.orbitalDefenseMax },
@@ -350,7 +350,7 @@ function NationPageContent() {
                     {isOfficer && <TabsTrigger value="admin">내무부</TabsTrigger>}
                 </TabsList>
 
-                {/* ── Tab 1: 세력정보 ── */}
+                {/* ── Tab 1: 진영정보 ── */}
                 <TabsContent value="info">
                     <Card>
                         <CardContent>
@@ -634,7 +634,7 @@ function NationPageContent() {
                                                 <TableHead className="text-center">지지도</TableHead>
                                                 <TableHead className="text-right">생산</TableHead>
                                                 <TableHead className="text-right">교역</TableHead>
-                                                <TableHead className="text-center">치안</TableHead>
+                                                <TableHead className="text-center">보안</TableHead>
                                                 <TableHead className="text-right">궤도방어</TableHead>
                                                 <TableHead className="text-right">요새</TableHead>
                                                 <TableHead className="text-center">행성총독</TableHead>
@@ -943,7 +943,7 @@ function NationPageContent() {
                                         <div className="space-y-1">
                                             <h4 className="font-medium text-green-400">쌀 수입</h4>
                                             <IncomeRow label="세곡 (농업)" value={riceCity} />
-                                            <IncomeRow label="둔전 (성벽)" value={riceWall} />
+                                            <IncomeRow label="둔전 (요새)" value={riceWall} />
                                             <div className="flex justify-between font-medium border-t border-gray-600 pt-1">
                                                 <span>합계</span>
                                                 <span>+{totalRice.toLocaleString()}</span>

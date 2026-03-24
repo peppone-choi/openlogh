@@ -283,7 +283,7 @@ export default function CreateCharacterPage() {
 
                         {/* Faction (Empire / Alliance) */}
                         <div className="space-y-1.5">
-                            <label className="block text-sm text-muted-foreground">출신 세력</label>
+                            <label className="block text-sm text-muted-foreground">출신 진영</label>
                             <div className="flex gap-3">
                                 {(['empire', 'alliance'] as const).map((f) => (
                                     <Button

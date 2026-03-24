@@ -524,7 +524,7 @@ export default function AdminDashboardPage() {
         if (!logMessage.trim()) return;
         try {
             await adminApi.writeLog(logMessage.trim(), worldId);
-            toast.success('중원정세 로그가 추가되었습니다.');
+            toast.success('은하 정세 로그가 추가되었습니다.');
             setLogMessage('');
         } catch {
             toast.error('로그 쓰기 실패');
@@ -632,8 +632,8 @@ export default function AdminDashboardPage() {
         },
         {
             name: 'NoticeToHistoryLog',
-            label: '중원정세 기록',
-            description: '중원정세에 메시지 기록',
+            label: '은하 정세 기록',
+            description: '은하 정세에 메시지 기록',
             needsArg: 'message',
         },
         {
@@ -1485,12 +1485,12 @@ export default function AdminDashboardPage() {
                                 />
                             </div>
                             <div className="space-y-1">
-                                <label className="text-sm text-muted-foreground">중원정세 추가</label>
+                                <label className="text-sm text-muted-foreground">은하 정세 추가</label>
                                 <div className="flex gap-2">
                                     <Input
                                         value={logMessage}
                                         onChange={(e) => setLogMessage(e.target.value)}
-                                        placeholder="중원정세 메시지 입력"
+                                        placeholder="은하 정세 메시지 입력"
                                         onKeyDown={(e) => e.key === 'Enter' && handleWriteLog()}
                                     />
                                     <Button size="sm" variant="outline" onClick={handleWriteLog}>
@@ -1793,7 +1793,7 @@ export default function AdminDashboardPage() {
                                             onChange: setAllowTeleport,
                                         },
                                         {
-                                            label: '모병',
+                                            label: '함선 건조',
                                             checked: allowRecruit,
                                             onChange: setAllowRecruit,
                                         },
@@ -1813,7 +1813,7 @@ export default function AdminDashboardPage() {
                                             onChange: setAllowMoraleBoost,
                                         },
                                         {
-                                            label: '출병',
+                                            label: '함대 출격',
                                             checked: allowDispatch,
                                             onChange: setAllowDispatch,
                                         },
@@ -1892,7 +1892,7 @@ export default function AdminDashboardPage() {
                             {/* NoticeToHistoryLog with message input */}
                             <div className="flex gap-2 items-end">
                                 <div className="flex-1 space-y-1">
-                                    <label className="text-xs text-muted-foreground">중원정세 기록</label>
+                                    <label className="text-xs text-muted-foreground">은하 정세 기록</label>
                                     <Input
                                         value={eventLogMsg}
                                         onChange={(e) => setEventLogMsg(e.target.value)}

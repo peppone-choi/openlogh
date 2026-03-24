@@ -87,7 +87,7 @@ const EMPIRE_ORG: OrgNode = {
                 {
                     title: 'Ministry of Internal Affairs',
                     titleKr: '내무성',
-                    description: '내정 및 치안',
+                    description: '내정 및 보안',
                     rankRequired: '내무상서',
                 },
                 {

@@ -275,19 +275,19 @@ export default function NationCitiesPage() {
         { key: 'region', label: '지역' },
         { key: 'level', label: '레벨' },
         { key: 'pop', label: '인구' },
-        { key: 'trust', label: '민심' },
+        { key: 'trust', label: '지지도' },
         { key: 'trade', label: '시세' },
         { key: 'agri', label: '농업' },
         { key: 'comm', label: '상업' },
-        { key: 'secu', label: '치안' },
+        { key: 'secu', label: '보안' },
         { key: 'def', label: '수비' },
-        { key: 'wall', label: '성벽' },
+        { key: 'wall', label: '요새' },
         { key: 'supplyState', label: '보급' },
     ];
 
     return (
         <div className="p-4 space-y-4 max-w-5xl mx-auto">
-            <PageHeader icon={Building2} title="세력 행성" />
+            <PageHeader icon={Building2} title="진영 행성" />
 
             <Card>
                 <CardHeader>
@@ -473,7 +473,7 @@ export default function NationCitiesPage() {
                                     </TableHead>
                                 ))}
                                 <TableHead className="text-right">자금수입</TableHead>
-                                <TableHead className="text-right">군량수입</TableHead>
+                                <TableHead className="text-right">물자수입</TableHead>
                                 <TableHead className="text-right">둔전수입</TableHead>
                                 <TableHead>관직</TableHead>
                             </TableRow>

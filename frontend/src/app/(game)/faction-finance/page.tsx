@@ -284,7 +284,7 @@ export default function NationFinancePage() {
                 {/* Rice Budget */}
                 <Card>
                     <CardHeader className="py-2 px-4">
-                        <CardTitle className="text-sm">군량 예산</CardTitle>
+                        <CardTitle className="text-sm">물자 예산</CardTitle>
                     </CardHeader>
                     <CardContent className="px-4 pb-3 space-y-1 text-sm">
                         <div className="flex justify-between">

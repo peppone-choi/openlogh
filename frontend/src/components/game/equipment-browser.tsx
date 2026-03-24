@@ -359,7 +359,7 @@ export function EquipmentBrowser({ commandName, citySecu, gold, onSubmit }: Equi
                 <span className="text-red-400"> 붉은색</span>은 현재 구입 불가.
                 <div className="mt-1 flex gap-3">
                     <span>
-                        치안: <strong>{currentSecu.toLocaleString()}</strong>
+                        보안: <strong>{currentSecu.toLocaleString()}</strong>
                     </span>
                     <span>
                         자금: <strong className="text-amber-300">{currentGold.toLocaleString()}금</strong>
@@ -437,7 +437,7 @@ export function EquipmentBrowser({ commandName, citySecu, gold, onSubmit }: Equi
                                             {item.intel && <span>지력+{item.intel}</span>}
                                             {item.leadership && <span>통솔+{item.leadership}</span>}
                                             {item.speed && <span>속도+{item.speed}</span>}
-                                            <span className="ml-auto">치안 {item.reqSecu}+</span>
+                                            <span className="ml-auto">보안 {item.reqSecu}+</span>
                                         </div>
                                     </button>
                                 );

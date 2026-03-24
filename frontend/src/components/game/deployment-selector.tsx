@@ -214,7 +214,7 @@ export function DeploymentSelector({ onSubmit }: DeploymentSelectorProps) {
                                                 <div className="flex gap-2 mt-0.5 text-[10px] text-muted-foreground">
                                                     <span>인구 {(city.pop ?? 0).toLocaleString()}</span>
                                                     <span>방어 {(city.def ?? 0).toLocaleString()}</span>
-                                                    <span>치안 {city.secu ?? 0}</span>
+                                                    <span>보안 {city.secu ?? 0}</span>
                                                 </div>
                                             </button>
                                         );

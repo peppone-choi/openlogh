@@ -58,7 +58,7 @@ const SORT_OPTIONS: { value: SortKey; label: string }[] = [
     { value: 'trust', label: '지지도' },
     { value: 'agri', label: '생산' },
     { value: 'comm', label: '교역' },
-    { value: 'secu', label: '치안' },
+    { value: 'secu', label: '보안' },
     { value: 'def', label: '궤도방어' },
     { value: 'wall', label: '요새' },
     { value: 'trade', label: '항로' },
@@ -463,7 +463,7 @@ function CityPageContent() {
                                                 20
                                             ).toLocaleString(undefined, { maximumFractionDigits: 0 })}
                                         </ValueCell>
-                                        <LabelCell>군량 수입</LabelCell>
+                                        <LabelCell>물자 수입</LabelCell>
                                         <ValueCell>
                                             {(
                                                 (calcPlanetSuppliesIncome(
@@ -511,7 +511,7 @@ function CityPageContent() {
                                     kind="comm"
                                     perTurn={100}
                                 />
-                                <LabelCell>치안</LabelCell>
+                                <LabelCell>보안</LabelCell>
                                 <StatValueCell
                                     val={city.security}
                                     max={city.securityMax}
@@ -554,7 +554,7 @@ function CityPageContent() {
                                 <ValueCell>
                                     {isVisible ? cityGens.reduce((sum, g) => sum + g.ships, 0).toLocaleString() : '?'}
                                 </ValueCell>
-                                <LabelCell>성벽/수비</LabelCell>
+                                <LabelCell>요새/궤도방어</LabelCell>
                                 <ValueCell>{isVisible ? `${city.fortress}/${city.orbitalDefense}` : '?'}</ValueCell>
                                 <LabelCell>인접 도시</LabelCell>
                                 <div className="border-t border-l border-gray-600 px-1 py-0.5 col-span-4 text-xs">
@@ -734,7 +734,7 @@ function GarrisonTable({
                         <Th>턴시간</Th>
                         <Th>명령</Th>
                         <Th>자금</Th>
-                        <Th>군량</Th>
+                        <Th>물자</Th>
                     </tr>
                 </thead>
                 <tbody>

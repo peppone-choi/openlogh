@@ -500,7 +500,7 @@ function UnitBuilder({
                 {/* Injury / Rice */}
                 <div className="flex flex-wrap gap-2">
                     <NumberField label="부상" value={unit.injury} onChange={(v) => set('injury', v)} min={0} max={80} />
-                    <NumberField label="군량" value={unit.rice} onChange={(v) => set('rice', v)} min={0} step={1000} />
+                    <NumberField label="물자" value={unit.rice} onChange={(v) => set('rice', v)} min={0} step={1000} />
                     <span className="text-xs text-muted-foreground self-center">
                         상태:{' '}
                         <span style={{ color: formatInjury(unit.injury).color }}>{formatInjury(unit.injury).text}</span>
@@ -1000,7 +1000,7 @@ export default function BattleSimulatorPage() {
                                     step={10}
                                 />
                                 <NumberField
-                                    label="성벽"
+                                    label="요새 방어"
                                     value={cityDef.wall}
                                     onChange={(v) => setCityDef({ ...cityDef, wall: v })}
                                     min={0}

@@ -207,7 +207,7 @@ const POLICY_CATEGORIES: {
                 step: 5,
                 min: 20,
                 max: 100,
-                hint: '훈련/사기진작 기준치. 이보다 같거나 높으면 출병합니다.',
+                hint: '훈련/사기진작 기준치. 이보다 같거나 높으면 함대를 출격합니다.',
             },
             {
                 key: 'cureThreshold',

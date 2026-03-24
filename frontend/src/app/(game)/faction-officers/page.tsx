@@ -107,11 +107,11 @@ export default function NationGeneralsPage() {
 
     if (!currentWorld || !myOfficer) return <div className="p-4 text-muted-foreground">월드를 선택해주세요.</div>;
     if (loading) return <LoadingState />;
-    if (error) return <ErrorState title="세력 제독 정보를 불러오지 못했습니다." onRetry={fetchData} />;
+    if (error) return <ErrorState title="진영 제독 정보를 불러오지 못했습니다." onRetry={fetchData} />;
 
     return (
         <div className="p-4 space-y-4 max-w-5xl mx-auto">
-            <PageHeader icon={Users} title="세력제독" />
+            <PageHeader icon={Users} title="진영 제독" />
             {nation && (
                 <p className="text-sm text-muted-foreground">
                     <span

@@ -16,7 +16,7 @@ export function RecordZone({ generalRecords, globalRecords, historyRecords }: Re
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <RecordColumn title="제독동향" records={globalRecords} />
             <RecordColumn title="개인기록" records={generalRecords} />
-            <RecordColumn title="중원정세" records={historyRecords} stripYear />
+            <RecordColumn title="은하 정세" records={historyRecords} stripYear />
         </div>
     );
 }

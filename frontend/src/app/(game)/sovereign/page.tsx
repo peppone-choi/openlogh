@@ -633,7 +633,7 @@ export default function EmperorPage() {
                                 </Table>
                             </div>
                             <div className="space-y-2">
-                                <h5 className="text-xs font-semibold text-amber-400">중원 정세</h5>
+                                <h5 className="text-xs font-semibold text-amber-400">은하 정세</h5>
                                 {yearbook.globalHistory.length === 0 ? (
                                     <div className="text-xs text-muted-foreground">기록 없음</div>
                                 ) : (

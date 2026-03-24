@@ -91,7 +91,7 @@ export function PlanetBasicCard({ city, region }: PlanetBasicCardProps) {
                     {commerce[0].toLocaleString()} / {commerce[1].toLocaleString()}
                 </CellText>
             </StatPanel>
-            <StatPanel label="치안">
+            <StatPanel label="보안">
                 <LoghBar height={7} percent={(security[0] / security[1]) * 100} />
                 <CellText>
                     {security[0].toLocaleString()} / {security[1].toLocaleString()}

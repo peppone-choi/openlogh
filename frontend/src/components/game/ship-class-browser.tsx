@@ -424,7 +424,7 @@ const CREW_TYPES: CrewTypeData[] = [
         cost: 14,
         riceCost: 5,
         magicCoef: 0,
-        info: ['기본 공성 병기', '성벽에 강함', '선제사격'],
+        info: ['기본 공성 병기', '요새에 강함', '선제사격'],
     },
     {
         code: 1501,
@@ -437,7 +437,7 @@ const CREW_TYPES: CrewTypeData[] = [
         cost: 18,
         riceCost: 5,
         magicCoef: 0,
-        info: ['성벽 특화 공성', '성벽에 매우 강함'],
+        info: ['요새 특화 공성', '요새에 매우 강함'],
     },
     {
         code: 1502,
@@ -450,7 +450,7 @@ const CREW_TYPES: CrewTypeData[] = [
         cost: 20,
         riceCost: 5,
         magicCoef: 0,
-        info: ['최강 공성 병기', '성벽에 강함', '선제사격'],
+        info: ['최강 공성 병기', '요새에 강함', '선제사격'],
     },
     {
         code: 1503,
@@ -557,7 +557,7 @@ export function ShipClassBrowser({ commandName, onSubmit }: ShipClassBrowserProp
             {/* Header info */}
             <div className="rounded-md bg-amber-900/20 border border-amber-800/40 px-3 py-2 text-xs text-amber-200/90">
                 {commandName === '모병'
-                    ? '모병은 가격 2배의 자금이 소요됩니다. 훈련·사기가 높습니다.'
+                    ? '함선 건조는 가격 2배의 자금이 소요됩니다. 훈련·사기가 높습니다.'
                     : '징병은 저렴하지만 훈련·사기가 낮습니다. 도시 인구가 감소합니다.'}
             </div>
 
