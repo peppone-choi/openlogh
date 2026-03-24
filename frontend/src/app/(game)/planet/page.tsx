@@ -113,7 +113,7 @@ function sortCities(cities: StarSystem[], sortKey: SortKey): StarSystem[] {
 function CityPageContent() {
     const searchParams = useSearchParams();
     const currentWorld = useWorldStore((s) => s.currentWorld);
-    const myGeneral = useOfficerStore((s) => s.myGeneral);
+    const myOfficer = useOfficerStore((s) => s.myOfficer);
     const fetchMyGeneral = useOfficerStore((s) => s.fetchMyGeneral);
 
     const [nation, setNation] = useState<Faction | null>(null);
@@ -136,10 +136,10 @@ function CityPageContent() {
 
     useEffect(() => {
         if (!currentWorld) return;
-        if (!myGeneral) {
+        if (!myOfficer) {
             fetchMyGeneral(currentWorld.id).catch(() => setError('제독 정보를 불러올 수 없습니다.'));
         }
-    }, [currentWorld, myGeneral, fetchMyGeneral]);
+    }, [currentWorld, myOfficer, fetchMyGeneral]);
 
     useEffect(() => {
         if (requestedCityId == null) return;
@@ -149,10 +149,10 @@ function CityPageContent() {
 
     useEffect(() => {
         if (requestedCityId != null) return;
-        if (!myGeneral?.planetId || myGeneral.planetId <= 0) return;
-        setFilterCityId(myGeneral.planetId);
-        setExpandedCityId(myGeneral.planetId);
-    }, [requestedCityId, myGeneral?.cityId]);
+        if (!myOfficer?.planetId || myOfficer.planetId <= 0) return;
+        setFilterCityId(myOfficer.planetId);
+        setExpandedCityId(myOfficer.planetId);
+    }, [requestedCityId, myOfficer?.cityId]);
 
     const loadCityData = useCallback(async () => {
         if (!currentWorld) return;
@@ -160,7 +160,7 @@ function CityPageContent() {
         const mapCode = (currentWorld.config as Record<string, string>)?.mapCode ?? 'che';
 
         try {
-            const hasGeneral = !!myGeneral;
+            const hasGeneral = !!myOfficer;
             const [nationsRes, citiesRes, generalsRes, mapRes, myNationRes] = await Promise.all([
                 factionApi.listByWorld(currentWorld.id),
                 hasGeneral
@@ -170,8 +170,8 @@ function CityPageContent() {
                       : Promise.resolve({ data: [] as StarSystem[] }),
                 officerApi.listByWorld(currentWorld.id),
                 mapApi.get(mapCode),
-                hasGeneral && myGeneral.factionId > 0
-                    ? factionApi.get(myGeneral.factionId)
+                hasGeneral && myOfficer.factionId > 0
+                    ? factionApi.get(myOfficer.factionId)
                     : Promise.resolve({ data: null }),
             ]);
 
@@ -200,18 +200,18 @@ function CityPageContent() {
         } finally {
             setLoading(false);
         }
-    }, [currentWorld, myGeneral, requestedCityId]);
+    }, [currentWorld, myOfficer, requestedCityId]);
 
     useEffect(() => {
         loadCityData();
     }, [loadCityData]);
 
     useEffect(() => {
-        if (!currentWorld || !myGeneral) return;
+        if (!currentWorld || !myOfficer) return;
         return subscribeWebSocket(`/topic/world/${currentWorld.id}/turn`, () => {
             loadCityData();
         });
-    }, [currentWorld, myGeneral, loadCityData]);
+    }, [currentWorld, myOfficer, loadCityData]);
 
     const nationMap = useMemo(() => new Map(nations.map((n) => [n.id, n])), [nations]);
 
@@ -236,13 +236,13 @@ function CityPageContent() {
 
     const canSeeMilitary = useCallback(
         (city: StarSystem) => {
-            if (!myGeneral) return false;
-            if (city.id === myGeneral.planetId) return true;
-            if (city.factionId === 0 || city.factionId === myGeneral.factionId) return true;
-            if (myGeneral.permission === 'spy') return true;
+            if (!myOfficer) return false;
+            if (city.id === myOfficer.planetId) return true;
+            if (city.factionId === 0 || city.factionId === myOfficer.factionId) return true;
+            if (myOfficer.permission === 'spy') return true;
             return spyVisibleCityIds.has(city.id);
         },
-        [myGeneral, spyVisibleCityIds]
+        [myOfficer, spyVisibleCityIds]
     );
 
     // Officers grouped by officerCity (level 2-4: 종사, 군사, 태수)
@@ -323,9 +323,9 @@ function CityPageContent() {
             {sortedCities.map((city, idx) => {
                 const isCapital = nation?.capitalPlanetId === city.id;
                 const owner = nationMap.get(city.factionId);
-                const isMyNationCity = city.factionId === myGeneral?.factionId;
+                const isMyNationCity = city.factionId === myOfficer?.factionId;
                 const isVacant = city.factionId === 0;
-                const isMyCity = city.id === myGeneral?.planetId;
+                const isMyCity = city.id === myOfficer?.planetId;
                 const isVisible = isMyCity || (canSeeMilitary(city) && !isVacant);
                 const nationColor = owner?.color ?? '#888';
                 const textColor = isBrightColor(nationColor) ? 'black' : 'white';
@@ -597,7 +597,7 @@ function CityPageContent() {
                                 {isVisible &&
                                     isMyNationCity &&
                                     (() => {
-                                        const myNationId = myGeneral?.factionId ?? 0;
+                                        const myNationId = myOfficer?.factionId ?? 0;
                                         const enemyGens = cityGens.filter(
                                             (g) => g.factionId !== 0 && g.factionId !== myNationId
                                         );
@@ -660,7 +660,7 @@ function CityPageContent() {
                                 <GarrisonTable
                                     generals={cityGens}
                                     nationLevel={nation?.factionRank}
-                                    myNationId={myGeneral?.factionId}
+                                    myNationId={myOfficer?.factionId}
                                 />
                             )}
                         </div>

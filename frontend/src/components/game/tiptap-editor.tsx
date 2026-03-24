@@ -58,6 +58,7 @@ export function TipTapEditor({
     const [imageFile, setImageFile] = useState<File | null>(null);
 
     const editor = useEditor({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         extensions: [
             StarterKit,
             Underline,
@@ -66,7 +67,7 @@ export function TipTapEditor({
             Color.configure({ types: ['textStyle'] }),
             Image.configure({ inline: true }),
             Link,
-        ],
+        ] as any[],
         content: value,
         editable,
         onUpdate: ({ editor }: { editor: NonNullable<ReturnType<typeof useEditor>> }) => {
@@ -104,14 +105,16 @@ export function TipTapEditor({
                     reader.readAsDataURL(imageFile);
                 });
                 const path = await onUploadImage(base64);
-                editor.chain().focus().setImage({ src: path }).run();
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                (editor.chain().focus() as any).setImage({ src: path }).run();
             } catch (e) {
                 console.error('Image upload failed:', e);
                 alert('이미지 업로드에 실패했습니다.');
                 return;
             }
         } else if (imageLink) {
-            editor.chain().focus().setImage({ src: imageLink }).run();
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (editor.chain().focus() as any).setImage({ src: imageLink }).run();
         } else {
             alert('업로드할 이미지를 선택하거나, 이미지 주소를 입력해주세요.');
             return;
@@ -250,21 +253,21 @@ export function TipTapEditor({
                     <ToolBtn
                         tooltip="왼쪽 정렬"
                         active={editor.isActive({ textAlign: 'left' })}
-                        onClick={() => editor.chain().focus().setTextAlign('left').run()}
+                        onClick={() => (editor.chain().focus() as any).setTextAlign('left').run()}
                     >
                         <AlignLeft className="h-4 w-4" />
                     </ToolBtn>
                     <ToolBtn
                         tooltip="가운데 정렬"
                         active={editor.isActive({ textAlign: 'center' })}
-                        onClick={() => editor.chain().focus().setTextAlign('center').run()}
+                        onClick={() => (editor.chain().focus() as any).setTextAlign('center').run()}
                     >
                         <AlignCenter className="h-4 w-4" />
                     </ToolBtn>
                     <ToolBtn
                         tooltip="오른쪽 정렬"
                         active={editor.isActive({ textAlign: 'right' })}
-                        onClick={() => editor.chain().focus().setTextAlign('right').run()}
+                        onClick={() => (editor.chain().focus() as any).setTextAlign('right').run()}
                     >
                         <AlignRight className="h-4 w-4" />
                     </ToolBtn>

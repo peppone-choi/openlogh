@@ -306,25 +306,25 @@ interface EquipmentBrowserProps {
 }
 
 export function EquipmentBrowser({ commandName, citySecu, gold, onSubmit }: EquipmentBrowserProps) {
-    const { myGeneral } = useOfficerStore();
+    const { myOfficer } = useOfficerStore();
     const [search, setSearch] = useState('');
     const [selectedCategory, setSelectedCategory] = useState<ItemCategory | 'sell'>('weapon');
     const [selectedItem, setSelectedItem] = useState<EquipmentItem | null>(null);
     const [mode, setMode] = useState<'buy' | 'sell'>('buy');
 
-    const currentGold = gold ?? myGeneral?.gold ?? 0;
+    const currentGold = gold ?? myOfficer?.gold ?? 0;
     const currentSecu = citySecu ?? 100;
 
     // Owned items from general
     const ownedItems = useMemo(() => {
-        if (!myGeneral) return {};
+        if (!myOfficer) return {};
         return {
-            weapon: myGeneral.weaponCode,
-            book: myGeneral.bookCode,
-            horse: myGeneral.horseCode,
-            item: myGeneral.itemCode,
+            weapon: myOfficer.weaponCode,
+            book: myOfficer.bookCode,
+            horse: myOfficer.horseCode,
+            item: myOfficer.itemCode,
         };
-    }, [myGeneral]);
+    }, [myOfficer]);
 
     const filteredItems = useMemo(() => {
         if (selectedCategory === 'sell') return [];

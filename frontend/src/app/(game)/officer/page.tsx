@@ -45,7 +45,7 @@ type TabKey = 'profile' | 'nation-generals';
 export default function GeneralPage() {
     const router = useRouter();
     const currentWorld = useWorldStore((s) => s.currentWorld);
-    const { myGeneral, loading: myGeneralLoading, fetchMyGeneral } = useOfficerStore();
+    const { myOfficer, loading: myOfficerLoading, fetchMyGeneral } = useOfficerStore();
     const [frontInfo, setFrontInfo] = useState<OfficerFrontInfo | null>(null);
     const [faction, setFaction] = useState<Faction | null>(null);
     const [starSystem, setStarSystem] = useState<StarSystem | null>(null);
@@ -64,10 +64,10 @@ export default function GeneralPage() {
     }, [currentWorld, fetchMyGeneral]);
 
     const loadGeneralData = useCallback(async () => {
-        if (!currentWorld || !myGeneral) return;
+        if (!currentWorld || !myOfficer) return;
 
-        const starSystemId = myGeneral.starSystemId ?? myGeneral.cityId;
-        const factionId = myGeneral.factionId ?? myGeneral.nationId;
+        const starSystemId = myOfficer.starSystemId ?? myOfficer.cityId;
+        const factionId = myOfficer.factionId ?? myOfficer.nationId;
 
         const starSystemPromise =
             starSystemId > 0
@@ -87,7 +87,7 @@ export default function GeneralPage() {
         try {
             const [officerFront, history, starSystemData, factionData] = await Promise.all([
                 frontApi.getInfo(currentWorld.id).then((res) => res.data.general ?? res.data.officer),
-                historyApi.getGeneralRecords(myGeneral.id).then((res) => res.data),
+                historyApi.getGeneralRecords(myOfficer.id).then((res) => res.data),
                 starSystemPromise,
                 factionPromise,
             ]);
@@ -98,14 +98,14 @@ export default function GeneralPage() {
         } catch {
             setError('나의 제독 정보를 불러오지 못했습니다.');
         }
-    }, [currentWorld, myGeneral]);
+    }, [currentWorld, myOfficer]);
 
     useEffect(() => {
         loadGeneralData();
     }, [loadGeneralData]);
 
     const loadFactionOfficers = useCallback(async () => {
-        const factionId = myGeneral?.factionId ?? myGeneral?.nationId;
+        const factionId = myOfficer?.factionId ?? myOfficer?.nationId;
         if (!factionId || factionId <= 0) return;
         setFactionOfficersLoading(true);
         try {
@@ -120,7 +120,7 @@ export default function GeneralPage() {
         } finally {
             setFactionOfficersLoading(false);
         }
-    }, [myGeneral?.factionId, myGeneral?.nationId]);
+    }, [myOfficer?.factionId, myOfficer?.nationId]);
 
     useEffect(() => {
         if (activeTab === 'nation-generals') {
@@ -129,12 +129,12 @@ export default function GeneralPage() {
     }, [activeTab, loadFactionOfficers]);
 
     useEffect(() => {
-        if (!currentWorld || !myGeneral) return;
+        if (!currentWorld || !myOfficer) return;
         return subscribeWebSocket(`/topic/world/${currentWorld.id}/turn`, () => {
             fetchMyGeneral(currentWorld.id).catch(() => {});
             loadGeneralData();
         });
-    }, [currentWorld, myGeneral, fetchMyGeneral, loadGeneralData]);
+    }, [currentWorld, myOfficer, fetchMyGeneral, loadGeneralData]);
 
     const biographyRows = useMemo(
         () =>
@@ -153,13 +153,13 @@ export default function GeneralPage() {
     );
 
     if (!currentWorld) return <LoadingState message="월드를 선택해주세요." />;
-    if (myGeneralLoading || (myGeneral && !frontInfo && !error)) {
+    if (myOfficerLoading || (myOfficer && !frontInfo && !error)) {
         return <LoadingState />;
     }
     if (error) return <div className="p-4 text-red-400">{error}</div>;
-    if (!myGeneral) return <LoadingState message="제독 정보가 없습니다." />;
+    if (!myOfficer) return <LoadingState message="제독 정보가 없습니다." />;
 
-    const g = myGeneral;
+    const g = myOfficer;
     const fi = frontInfo;
     const factionRank = faction?.faction_rank ?? 0;
     const commandName = getCurrentCommandName(g.lastTurn);

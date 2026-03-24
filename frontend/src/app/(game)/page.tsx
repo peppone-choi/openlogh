@@ -13,6 +13,7 @@ import { CommandPanel } from '@/components/game/command-panel';
 import { CityBasicCard } from '@/components/game/city-basic-card';
 import { NationBasicCard } from '@/components/game/nation-basic-card';
 import { GeneralBasicCard } from '@/components/game/general-basic-card';
+import { CpDisplay } from '@/components/game/cp-display';
 import { MainControlBar } from '@/components/game/main-control-bar';
 import { LoadingState } from '@/components/game/loading-state';
 import { Button } from '@/components/ui/button';
@@ -44,7 +45,7 @@ function formatAutorunMode(mode?: number): string {
 
 export default function GameDashboard() {
     const { currentWorld } = useWorldStore();
-    const { myGeneral } = useOfficerStore();
+    const { myOfficer } = useOfficerStore();
     const [frontInfo, setFrontInfo] = useState<FrontInfoResponse | null>(null);
     const lastRecordIdRef = useRef<number | undefined>(undefined);
     const lastHistoryIdRef = useRef<number | undefined>(undefined);
@@ -335,8 +336,8 @@ export default function GameDashboard() {
                         <MapViewer worldId={currentWorld.id} mapCode={mapCode} />
                     </div>
                     <div className="flex-1 overflow-y-auto lg:max-h-[500px]">
-                        {myGeneral && (
-                            <CommandPanel generalId={myGeneral.id} realtimeMode={currentWorld.realtimeMode} />
+                        {myOfficer && (
+                            <CommandPanel generalId={myOfficer.id} realtimeMode={currentWorld.realtimeMode} />
                         )}
                     </div>
                 </div>
@@ -346,13 +347,23 @@ export default function GameDashboard() {
                         <CityBasicCard city={frontInfo?.city ?? null} region={frontInfo?.city?.region} />
                         <NationBasicCard nation={frontInfo?.nation ?? null} global={global} />
                     </div>
-                    <div>
+                    <div className="space-y-2">
                         <GeneralBasicCard
                             general={frontInfo?.general ?? null}
                             nation={frontInfo?.nation ?? null}
                             turnTerm={global?.turnTerm}
                             lastExecuted={global?.lastExecuted}
                         />
+                        {frontInfo?.general && (
+                            <div className="border border-gray-700/50 bg-gray-900/30 rounded p-2">
+                                <CpDisplay
+                                    pcp={frontInfo.general.pcp ?? Math.floor(frontInfo.general.commandPoints / 2)}
+                                    mcp={frontInfo.general.mcp ?? Math.ceil(frontInfo.general.commandPoints / 2)}
+                                    turnTerm={global?.turnTerm}
+                                    lastExecuted={global?.lastExecuted}
+                                />
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

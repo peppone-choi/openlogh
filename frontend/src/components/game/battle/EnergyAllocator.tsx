@@ -45,6 +45,14 @@ const CHANNELS: EnergyChannel[] = [
         trackColor: 'bg-emerald-400',
         effectFn: (p) => `이동력 +${p}%, 회피 +${(p * 0.5).toFixed(0)}%`,
     },
+    {
+        key: 'warp',
+        label: 'WARP',
+        sublabel: '워프',
+        color: '#CE93D8',
+        trackColor: 'bg-purple-400',
+        effectFn: (p) => `철퇴 속도 +${p}%, 워프 충전 -${(p * 0.8).toFixed(0)}%`,
+    },
 ];
 
 type PresetKey = 'attack' | 'defense' | 'mobility' | 'balanced' | 'recon';
@@ -54,11 +62,11 @@ const PRESETS: {
     label: string;
     values: Omit<EnergyAllocation, 'sensor'>;
 }[] = [
-    { key: 'attack', label: '공격형', values: { beam: 40, gun: 30, shield: 10, engine: 10 } },
-    { key: 'defense', label: '방어형', values: { beam: 10, gun: 10, shield: 50, engine: 10 } },
-    { key: 'mobility', label: '기동형', values: { beam: 20, gun: 10, shield: 10, engine: 50 } },
-    { key: 'balanced', label: '균형형', values: { beam: 20, gun: 20, shield: 20, engine: 20 } },
-    { key: 'recon', label: '색적형', values: { beam: 15, gun: 15, shield: 10, engine: 10 } },
+    { key: 'attack', label: '공격형', values: { beam: 35, gun: 25, shield: 10, engine: 10, warp: 5 } },
+    { key: 'defense', label: '방어형', values: { beam: 10, gun: 10, shield: 40, engine: 10, warp: 10 } },
+    { key: 'mobility', label: '기동형', values: { beam: 15, gun: 10, shield: 10, engine: 35, warp: 15 } },
+    { key: 'balanced', label: '균형형', values: { beam: 15, gun: 15, shield: 15, engine: 15, warp: 15 } },
+    { key: 'recon', label: '색적형', values: { beam: 10, gun: 10, shield: 10, engine: 10, warp: 10 } },
 ];
 
 interface EnergyAllocatorProps {
@@ -68,7 +76,7 @@ interface EnergyAllocatorProps {
 }
 
 export function EnergyAllocator({ value, onChange, onPreset }: EnergyAllocatorProps) {
-    const manualTotal = value.beam + value.gun + value.shield + value.engine;
+    const manualTotal = value.beam + value.gun + value.shield + value.engine + value.warp;
     const sensorVal = Math.max(0, 100 - manualTotal);
     const totalOk = manualTotal <= 100;
 

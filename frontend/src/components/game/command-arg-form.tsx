@@ -505,7 +505,7 @@ interface CommandArgFormProps {
 
 export function CommandArgForm({ actionCode, onSubmit }: CommandArgFormProps) {
     const { cities, nations, generals } = useGameStore();
-    const { myGeneral } = useOfficerStore();
+    const { myOfficer } = useOfficerStore();
     const { currentWorld } = useWorldStore();
     const [valuesByCommand, setValuesByCommand] = useState<Record<string, Record<string, string>>>({});
     const [mapSelectorOpen, setMapSelectorOpen] = useState(false);
@@ -517,15 +517,15 @@ export function CommandArgForm({ actionCode, onSubmit }: CommandArgFormProps) {
 
     // Sort cities by nation ownership for better UX
     const sortedCities = useMemo(() => {
-        if (!myGeneral) return cities;
+        if (!myOfficer) return cities;
         const myCities: City[] = [];
         const otherCities: City[] = [];
         for (const c of cities) {
-            if (c.nationId === myGeneral.nationId) myCities.push(c);
+            if (c.nationId === myOfficer.nationId) myCities.push(c);
             else otherCities.push(c);
         }
         return [...myCities, ...otherCities];
-    }, [cities, myGeneral]);
+    }, [cities, myOfficer]);
 
     if (!fields) {
         // No args needed - auto-submit
@@ -601,7 +601,7 @@ export function CommandArgForm({ actionCode, onSubmit }: CommandArgFormProps) {
     };
 
     // Filter cities to own nation for some commands
-    const myCities = myGeneral ? cities.filter((c) => c.nationId === myGeneral.nationId) : cities;
+    const myCities = myOfficer ? cities.filter((c) => c.nationId === myOfficer.nationId) : cities;
 
     const renderField = (field: ArgField) => {
         switch (field.type) {
@@ -627,7 +627,7 @@ export function CommandArgForm({ actionCode, onSubmit }: CommandArgFormProps) {
                                 {list.map((c) => {
                                     const nation = nations.find((n) => n.id === c.nationId);
                                     const nationTag = nation ? ` [${nation.name}]` : c.nationId === 0 ? ' [공백]' : '';
-                                    const isMyCity = myGeneral && c.nationId === myGeneral.nationId;
+                                    const isMyCity = myOfficer && c.nationId === myOfficer.nationId;
                                     return (
                                         <option
                                             key={c.id}
@@ -651,7 +651,7 @@ export function CommandArgForm({ actionCode, onSubmit }: CommandArgFormProps) {
                 );
             }
             case 'nation': {
-                const list: Nation[] = nations.filter((n) => !myGeneral || n.id !== myGeneral.nationId);
+                const list: Nation[] = nations.filter((n) => !myOfficer || n.id !== myOfficer.nationId);
                 return (
                     <select
                         key={field.key}
@@ -669,7 +669,7 @@ export function CommandArgForm({ actionCode, onSubmit }: CommandArgFormProps) {
                 );
             }
             case 'general': {
-                const list: General[] = generals.filter((g) => !myGeneral || g.id !== myGeneral.id);
+                const list: General[] = generals.filter((g) => !myOfficer || g.id !== myOfficer.id);
                 return (
                     <select
                         key={field.key}

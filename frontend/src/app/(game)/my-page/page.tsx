@@ -69,7 +69,7 @@ const TOURNAMENT_OPTIONS = [
 export default function MyPage() {
     const router = useRouter();
     const currentWorld = useWorldStore((s) => s.currentWorld);
-    const { myGeneral, loading, fetchMyGeneral } = useOfficerStore();
+    const { myOfficer, loading, fetchMyGeneral } = useOfficerStore();
     const [frontInfo, setFrontInfo] = useState<GeneralFrontInfo | null>(null);
     const [city, setCity] = useState<StarSystem | null>(null);
     const [nation, setNation] = useState<Faction | null>(null);
@@ -101,16 +101,16 @@ export default function MyPage() {
     }, [currentWorld, fetchMyGeneral]);
 
     useEffect(() => {
-        if (!myGeneral || !currentWorld) return;
+        if (!myOfficer || !currentWorld) return;
         // Initialize settings from general data
-        setDefenceTrain(myGeneral.defenceTrain ?? 80);
-        setTournamentState(myGeneral.tournamentState ?? 0);
-        setPotionThreshold((myGeneral.meta?.potionThreshold as number) ?? 100);
-        setAutoNationTurn((myGeneral.meta?.autoNationTurn as boolean) ?? false);
-        setPreRiseDelete((myGeneral.meta?.preRiseDelete as boolean) ?? false);
-        setPreOpenDelete((myGeneral.meta?.preOpenDelete as boolean) ?? false);
-        setBorderReturn((myGeneral.meta?.borderReturn as boolean) ?? false);
-        setCustomCss((myGeneral.meta?.customCss as string) ?? '');
+        setDefenceTrain(myOfficer.defenceTrain ?? 80);
+        setTournamentState(myOfficer.tournamentState ?? 0);
+        setPotionThreshold((myOfficer.meta?.potionThreshold as number) ?? 100);
+        setAutoNationTurn((myOfficer.meta?.autoNationTurn as boolean) ?? false);
+        setPreRiseDelete((myOfficer.meta?.preRiseDelete as boolean) ?? false);
+        setPreOpenDelete((myOfficer.meta?.preOpenDelete as boolean) ?? false);
+        setBorderReturn((myOfficer.meta?.borderReturn as boolean) ?? false);
+        setCustomCss((myOfficer.meta?.customCss as string) ?? '');
 
         // Fetch front info for dex/battle stats
         frontApi
@@ -118,20 +118,20 @@ export default function MyPage() {
             .then(({ data }) => setFrontInfo(data.general))
             .catch(() => {});
 
-        if (myGeneral.planetId) {
+        if (myOfficer.planetId) {
             planetApi
-                .get(myGeneral.planetId)
+                .get(myOfficer.planetId)
                 .then(({ data }) => setCity(data))
                 .catch(() => {});
         }
-        if (myGeneral.factionId) {
+        if (myOfficer.factionId) {
             factionApi
-                .get(myGeneral.factionId)
+                .get(myOfficer.factionId)
                 .then(({ data }) => setNation(data))
                 .catch(() => {});
         }
         historyApi
-            .getGeneralRecords(myGeneral.id)
+            .getGeneralRecords(myOfficer.id)
             .then(({ data }) => {
                 setRecords(data);
                 // Split records by type if payload has type info
@@ -149,7 +149,7 @@ export default function MyPage() {
                 setHistoryRecords(history);
             })
             .catch(() => {});
-    }, [myGeneral, currentWorld]);
+    }, [myOfficer, currentWorld]);
 
     const handleSaveSettings = useCallback(async () => {
         setSaving(true);
@@ -195,9 +195,9 @@ export default function MyPage() {
     if (!currentWorld) return <LoadingState message="월드를 선택해주세요." />;
     if (loading) return <LoadingState />;
     if (error) return <div className="p-4 text-red-400">{error}</div>;
-    if (!myGeneral) return <LoadingState message="제독 정보가 없습니다." />;
+    if (!myOfficer) return <LoadingState message="제독 정보가 없습니다." />;
 
-    const g = myGeneral;
+    const g = myOfficer;
     const nationLevel = nation?.factionRank ?? 0;
     const injuryInfo = formatInjury(g.injury);
     const officerText = formatOfficerLevelText(

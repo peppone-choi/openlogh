@@ -68,7 +68,7 @@ const OFFICER_TITLES: Record<number, string> = {
 
 export default function NationCitiesPage() {
     const currentWorld = useWorldStore((s) => s.currentWorld);
-    const myGeneral = useOfficerStore((s) => s.myGeneral);
+    const myOfficer = useOfficerStore((s) => s.myOfficer);
     const fetchMyGeneral = useOfficerStore((s) => s.fetchMyGeneral);
 
     const [cities, setCities] = useState<StarSystem[] | null>(null);
@@ -93,20 +93,20 @@ export default function NationCitiesPage() {
 
     useEffect(() => {
         if (!currentWorld) return;
-        if (!myGeneral) {
+        if (!myOfficer) {
             fetchMyGeneral(currentWorld.id).catch(() => setError('제독 정보를 불러올 수 없습니다.'));
         }
-    }, [currentWorld, myGeneral, fetchMyGeneral]);
+    }, [currentWorld, myOfficer, fetchMyGeneral]);
 
     useEffect(() => {
-        if (!myGeneral?.factionId || !currentWorld) return;
+        if (!myOfficer?.factionId || !currentWorld) return;
         Promise.all([
-            planetApi.listByFaction(myGeneral.nationId),
+            planetApi.listByFaction(myOfficer.nationId),
             factionApi.listByWorld(currentWorld.id),
-            factionApi.get(myGeneral.nationId),
-            officerApi.listByFaction(myGeneral.nationId),
-            diplomacyApi.listByNation(currentWorld.id, myGeneral.nationId),
-            nationPolicyApi.getPolicy(myGeneral.nationId),
+            factionApi.get(myOfficer.nationId),
+            officerApi.listByFaction(myOfficer.nationId),
+            diplomacyApi.listByNation(currentWorld.id, myOfficer.nationId),
+            nationPolicyApi.getPolicy(myOfficer.nationId),
         ])
             .then(([cityRes, allNationsRes, myNationRes, nationGeneralsRes, diplomacyRes, policyRes]) => {
                 setCities(cityRes.data);
@@ -118,14 +118,14 @@ export default function NationCitiesPage() {
                 setBill(Number(policyRes.data.bill) || 100);
             })
             .catch(() => setError('국가 행성 정보를 불러올 수 없습니다.'));
-    }, [myGeneral?.factionId, currentWorld]);
+    }, [myOfficer?.factionId, currentWorld]);
 
     const handleSavePolicy = async () => {
-        if (!myGeneral?.factionId) return;
+        if (!myOfficer?.factionId) return;
         setSavingPolicy(true);
         setSaveMsg('');
         try {
-            await nationPolicyApi.updatePolicy(myGeneral.nationId, { rate, bill });
+            await nationPolicyApi.updatePolicy(myOfficer.nationId, { rate, bill });
             setSaveMsg('정책이 저장되었습니다.');
         } catch {
             setSaveMsg('정책 저장에 실패했습니다.');
@@ -135,10 +135,10 @@ export default function NationCitiesPage() {
     };
 
     const handleAppoint = async () => {
-        if (!myGeneral?.factionId || !appointCity || !appointGeneralId) return;
+        if (!myOfficer?.factionId || !appointCity || !appointGeneralId) return;
         setAppointSaving(true);
         try {
-            await nationManagementApi.appointOfficer(myGeneral.nationId, {
+            await nationManagementApi.appointOfficer(myOfficer.nationId, {
                 generalId: Number(appointGeneralId),
                 officerLevel: appointLevel,
                 officerCity: appointCity,
@@ -147,7 +147,7 @@ export default function NationCitiesPage() {
             setAppointCity(null);
             setAppointGeneralId('');
             // Reload generals
-            const res = await officerApi.listByFaction(myGeneral.nationId);
+            const res = await officerApi.listByFaction(myOfficer.nationId);
             setNationGenerals(res.data);
         } catch {
             setSaveMsg('관직 임명 실패');
@@ -206,7 +206,7 @@ export default function NationCitiesPage() {
     const diplomacyRows = diplomacyList
         .filter((d) => !d.isDead)
         .map((d) => {
-            const otherNationId = d.srcNationId === myGeneral?.factionId ? d.destNationId : d.srcNationId;
+            const otherNationId = d.srcNationId === myOfficer?.factionId ? d.destNationId : d.srcNationId;
             return {
                 id: d.id,
                 nation: nationMap.get(otherNationId),
@@ -257,9 +257,9 @@ export default function NationCitiesPage() {
     const totalExpense = budgetRows.reduce((sum, row) => sum + row.expense, 0);
 
     if (!currentWorld) return <LoadingState message="월드를 선택해주세요." />;
-    if (myGeneral?.factionId && cities === null) return <LoadingState />;
+    if (myOfficer?.factionId && cities === null) return <LoadingState />;
     if (error) return <div className="p-4 text-red-400">{error}</div>;
-    if (!myGeneral?.factionId)
+    if (!myOfficer?.factionId)
         return (
             <div className="p-4">
                 <EmptyState

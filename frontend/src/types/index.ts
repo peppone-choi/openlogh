@@ -244,6 +244,10 @@ export interface Officer {
     special2Code: string;
     spec2Age: number;
     commandPoints: number;
+    /** Political Command Points (정략 커맨드 포인트) */
+    pcp: number;
+    /** Military Command Points (군사 커맨드 포인트) */
+    mcp: number;
     commandEndTime: string | null;
     lastTurn: LastTurnInfo;
     meta: Record<string, unknown>;
@@ -967,6 +971,10 @@ export interface OfficerFrontInfo {
     turntime: string;
     recentWar: string | null;
     commandPoints: number;
+    /** Political Command Points (정략 커맨드 포인트) */
+    pcp: number;
+    /** Military Command Points (군사 커맨드 포인트) */
+    mcp: number;
     commandEndTime: string | null;
     ownerName: string | null;
     refreshScoreTotal: number | null;

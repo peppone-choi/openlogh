@@ -96,7 +96,7 @@ function getTournamentStatValue(
 
 export default function TournamentPage() {
     const { currentWorld } = useWorldStore();
-    const { myGeneral } = useOfficerStore();
+    const { myOfficer } = useOfficerStore();
     const { generals, nations, loadAll } = useGameStore();
     const [info, setInfo] = useState<TournamentInfo | null>(null);
     const [bettingInfo, setBettingInfo] = useState<BettingInfo | null>(null);
@@ -127,9 +127,9 @@ export default function TournamentPage() {
     }, [load]);
 
     const handleRegister = async () => {
-        if (!currentWorld || !myGeneral) return;
+        if (!currentWorld || !myOfficer) return;
         try {
-            await tournamentApi.register(currentWorld.id, myGeneral.id);
+            await tournamentApi.register(currentWorld.id, myOfficer.id);
             await load();
         } catch {
             /* ignore */
@@ -142,7 +142,7 @@ export default function TournamentPage() {
     const generalMap = useMemo(() => new Map(generals.map((g) => [g.id, g])), [generals]);
     const nationMap = useMemo(() => new Map(nations.map((n) => [n.id, n])), [nations]);
 
-    const isAdmin = myGeneral && (myGeneral.officerLevel ?? 0) >= 20;
+    const isAdmin = myOfficer && (myOfficer.officerLevel ?? 0) >= 20;
 
     const handleAdvancePhase = async () => {
         if (!currentWorld || !isAdmin) return;
@@ -165,7 +165,7 @@ export default function TournamentPage() {
         }
     };
 
-    const isRegistered = myGeneral && info?.participants.includes(myGeneral.id);
+    const isRegistered = myOfficer && info?.participants.includes(myOfficer.id);
     const tournamentType =
         TOURNAMENT_TYPES.find((t) => t.code === (globalInfo?.tournamentType ?? 0)) ?? TOURNAMENT_TYPES[0];
 
@@ -402,7 +402,7 @@ export default function TournamentPage() {
                         </div>
 
                         {/* Registration */}
-                        {info?.state === 1 && myGeneral && !isRegistered && (
+                        {info?.state === 1 && myOfficer && !isRegistered && (
                             <div className="mt-3 flex items-center gap-2">
                                 <Button size="sm" onClick={handleRegister}>
                                     참가 등록

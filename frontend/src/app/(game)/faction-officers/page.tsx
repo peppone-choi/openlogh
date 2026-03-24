@@ -57,7 +57,7 @@ const ALL_COLUMNS: {
 
 export default function NationGeneralsPage() {
     const currentWorld = useWorldStore((s) => s.currentWorld);
-    const { myGeneral } = useOfficerStore();
+    const { myOfficer } = useOfficerStore();
     const { cities } = useGameStore();
     const [generals, setGenerals] = useState<Officer[]>([]);
     const [nation, setNation] = useState<Faction | null>(null);
@@ -67,13 +67,13 @@ export default function NationGeneralsPage() {
     const [hiddenCols, setHiddenCols] = useState<Set<ColumnKey>>(new Set());
 
     const fetchData = useCallback(() => {
-        if (!myGeneral?.factionId) return;
+        if (!myOfficer?.factionId) return;
         setLoading(true);
         setError(false);
         Promise.all([
-            officerApi.listByFaction(myGeneral.factionId),
-            factionApi.get(myGeneral.factionId),
-            troopApi.listByNation(myGeneral.factionId),
+            officerApi.listByFaction(myOfficer.factionId),
+            factionApi.get(myOfficer.factionId),
+            troopApi.listByNation(myOfficer.factionId),
         ])
             .then(([gRes, nRes, tRes]) => {
                 setGenerals(gRes.data);
@@ -82,7 +82,7 @@ export default function NationGeneralsPage() {
             })
             .catch(() => setError(true))
             .finally(() => setLoading(false));
-    }, [myGeneral?.factionId]);
+    }, [myOfficer?.factionId]);
 
     useEffect(() => {
         fetchData();
@@ -91,7 +91,7 @@ export default function NationGeneralsPage() {
     const troopMap = useMemo(() => new Map(troops.map((t) => [t.id, t])), [troops]);
     const cityMap = useMemo(() => new Map(cities.map((c) => [c.id, c])), [cities]);
 
-    const myOfficerLevel = myGeneral?.officerLevel ?? 0;
+    const myOfficerLevel = myOfficer?.officerLevel ?? 0;
     const visibleColumns = ALL_COLUMNS.filter(
         (col) => col.minOfficerLevel <= myOfficerLevel && !hiddenCols.has(col.key)
     );
@@ -105,7 +105,7 @@ export default function NationGeneralsPage() {
         });
     };
 
-    if (!currentWorld || !myGeneral) return <div className="p-4 text-muted-foreground">월드를 선택해주세요.</div>;
+    if (!currentWorld || !myOfficer) return <div className="p-4 text-muted-foreground">월드를 선택해주세요.</div>;
     if (loading) return <LoadingState />;
     if (error) return <ErrorState title="세력 제독 정보를 불러오지 못했습니다." onRetry={fetchData} />;
 

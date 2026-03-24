@@ -171,7 +171,7 @@ const DIPLOMACY_STATES: Record<string, { label: string; color: string }> = {
 
 export default function InternalAffairsPage() {
     const currentWorld = useWorldStore((s) => s.currentWorld);
-    const { myGeneral, fetchMyGeneral } = useOfficerStore();
+    const { myOfficer, fetchMyGeneral } = useOfficerStore();
     const { cities, nations, generals, diplomacy, loadAll } = useGameStore();
     const [loading, setLoading] = useState(true);
 
@@ -191,8 +191,8 @@ export default function InternalAffairsPage() {
     useEffect(() => {
         if (!currentWorld) return;
         loadAll(currentWorld.id);
-        if (!myGeneral) fetchMyGeneral(currentWorld.id).catch(() => {});
-    }, [currentWorld, myGeneral, fetchMyGeneral, loadAll]);
+        if (!myOfficer) fetchMyGeneral(currentWorld.id).catch(() => {});
+    }, [currentWorld, myOfficer, fetchMyGeneral, loadAll]);
 
     useEffect(() => {
         if (!currentWorld) return;
@@ -206,19 +206,19 @@ export default function InternalAffairsPage() {
 
     // Diplomacy for my nation
     const myDiplomacy = useMemo(() => {
-        if (!myGeneral?.nationId) return [];
+        if (!myOfficer?.nationId) return [];
         return diplomacy.filter(
-            (d) => (d.srcNationId === myGeneral.nationId || d.destNationId === myGeneral.nationId) && !d.isDead
+            (d) => (d.srcNationId === myOfficer.nationId || d.destNationId === myOfficer.nationId) && !d.isDead
         );
-    }, [diplomacy, myGeneral?.nationId]);
+    }, [diplomacy, myOfficer?.nationId]);
 
     // Financial calculator
     const myCities = useMemo(() => {
-        if (!myGeneral?.nationId) return [];
-        return cities.filter((c) => c.nationId === myGeneral.nationId);
-    }, [cities, myGeneral?.nationId]);
+        if (!myOfficer?.nationId) return [];
+        return cities.filter((c) => c.nationId === myOfficer.nationId);
+    }, [cities, myOfficer?.nationId]);
 
-    const myNation = myGeneral?.nationId ? nationMap.get(myGeneral.nationId) : null;
+    const myNation = myOfficer?.nationId ? nationMap.get(myOfficer.nationId) : null;
 
     const allNations = useMemo(() => {
         const cityCountByNation = new Map<number, number>();
@@ -264,9 +264,9 @@ export default function InternalAffairsPage() {
     }, [myCities, myNation?.bill]);
 
     useEffect(() => {
-        if (!myGeneral?.nationId) return;
+        if (!myOfficer?.nationId) return;
         nationPolicyApi
-            .getPolicy(myGeneral.nationId)
+            .getPolicy(myOfficer.nationId)
             .then(({ data }) => {
                 setRate((data.rate as number) ?? 15);
                 setBill((data.bill as number) ?? 100);
@@ -279,21 +279,21 @@ export default function InternalAffairsPage() {
             })
             .catch(() => {})
             .finally(() => setLoading(false));
-    }, [myGeneral?.nationId]);
+    }, [myOfficer?.nationId]);
 
     const handleSavePolicy = async () => {
-        if (!myGeneral?.nationId) return;
+        if (!myOfficer?.nationId) return;
         setSaving(true);
         setMsg('');
         try {
-            await nationPolicyApi.updatePolicy(myGeneral.nationId, {
+            await nationPolicyApi.updatePolicy(myOfficer.nationId, {
                 rate,
                 bill,
                 secretLimit,
                 strategicCmdLimit,
             });
-            await nationPolicyApi.setBlockWar(myGeneral.nationId, blockWar);
-            await nationPolicyApi.setBlockScout(myGeneral.nationId, blockScout);
+            await nationPolicyApi.setBlockWar(myOfficer.nationId, blockWar);
+            await nationPolicyApi.setBlockScout(myOfficer.nationId, blockScout);
             setMsg('정책이 저장되었습니다.');
         } catch {
             setMsg('저장에 실패했습니다.');
@@ -303,10 +303,10 @@ export default function InternalAffairsPage() {
     };
 
     const handleSaveNotice = async () => {
-        if (!myGeneral?.nationId) return;
+        if (!myOfficer?.nationId) return;
         setSaving(true);
         try {
-            await nationPolicyApi.updateNotice(myGeneral.nationId, notice);
+            await nationPolicyApi.updateNotice(myOfficer.nationId, notice);
             setMsg('공지가 저장되었습니다.');
         } catch {
             setMsg('저장에 실패했습니다.');
@@ -316,10 +316,10 @@ export default function InternalAffairsPage() {
     };
 
     const handleSaveScoutMsg = async () => {
-        if (!myGeneral?.nationId) return;
+        if (!myOfficer?.nationId) return;
         setSaving(true);
         try {
-            await nationPolicyApi.updateScoutMsg(myGeneral.nationId, scoutMsg);
+            await nationPolicyApi.updateScoutMsg(myOfficer.nationId, scoutMsg);
             setMsg('정찰 메시지가 저장되었습니다.');
         } catch {
             setMsg('저장에 실패했습니다.');
@@ -330,7 +330,7 @@ export default function InternalAffairsPage() {
 
     if (!currentWorld) return <div className="p-4 text-muted-foreground">월드를 선택해주세요.</div>;
     if (loading) return <LoadingState />;
-    if (!myGeneral?.nationId) return <div className="p-4 text-muted-foreground">소속 진영이 없습니다.</div>;
+    if (!myOfficer?.nationId) return <div className="p-4 text-muted-foreground">소속 진영이 없습니다.</div>;
 
     return (
         <div className="p-4 space-y-6 max-w-3xl mx-auto">
@@ -461,7 +461,7 @@ export default function InternalAffairsPage() {
                                 <div className="space-y-2">
                                     {myDiplomacy.map((d) => {
                                         const otherId =
-                                            d.srcNationId === myGeneral!.nationId ? d.destNationId : d.srcNationId;
+                                            d.srcNationId === myOfficer!.nationId ? d.destNationId : d.srcNationId;
                                         const otherNation = nationMap.get(otherId);
                                         const stateInfo = DIPLOMACY_STATES[d.stateCode] ?? {
                                             label: d.stateCode,

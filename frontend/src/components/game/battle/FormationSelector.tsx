@@ -100,6 +100,19 @@ const FORMATIONS: FormationDef[] = [
         ],
         description: '광역 분산 전개. 대규모 광역 공격에 높은 생존율.',
     },
+    {
+        id: 'dispersed_release',
+        label: '대열해제',
+        sublabel: 'Formation Release',
+        stat: '자유행동 통제 ↓',
+        svgPath: 'M8,6 L14,10 M26,6 L32,10 M20,14 L20,20 M6,18 L12,14 M28,18 L34,14 M14,22 L8,26 M26,22 L32,26',
+        effects: [
+            { label: '유닛 독립행동', value: '+50%', positive: true },
+            { label: '기회 사격', value: '+20%', positive: true },
+            { label: '지휘 통제', value: '-40%', positive: false },
+        ],
+        description: '대열 해제. 유닛이 자유 행동하여 기회주의적 전투 수행.',
+    },
 ];
 
 interface FormationSelectorProps {

@@ -93,7 +93,7 @@ export default function MapPage() {
     const router = useRouter();
     const { currentWorld } = useWorldStore();
     const { cities, nations, generals, mapData, loadAll, loadMap } = useGameStore();
-    const myGeneral = useOfficerStore((s) => s.myGeneral);
+    const myOfficer = useOfficerStore((s) => s.myOfficer);
     const fetchMyGeneral = useOfficerStore((s) => s.fetchMyGeneral);
     const [history, setHistory] = useState<PublicCachedMapHistory[]>([]);
     const [touchTapId, setTouchTapId] = useState<number | null>(null);
@@ -171,9 +171,9 @@ export default function MapPage() {
     const cityMap = useMemo(() => new Map(cities.map((c) => [c.id, c])), [cities]);
 
     const myNation = useMemo(() => {
-        if (!myGeneral || myGeneral.factionId <= 0) return null;
-        return nationMap.get(myGeneral.factionId) ?? null;
-    }, [myGeneral, nationMap]);
+        if (!myOfficer || myOfficer.factionId <= 0) return null;
+        return nationMap.get(myOfficer.factionId) ?? null;
+    }, [myOfficer, nationMap]);
 
     const spyVisibleCityIds = useMemo(() => {
         const result = new Set<number>();
@@ -199,14 +199,14 @@ export default function MapPage() {
     const canViewCityInfo = useCallback(
         (cityId: number) => {
             const city = cityMap.get(cityId);
-            if (!city || !myGeneral) return false;
-            if (myGeneral.permission === 'spy') return true;
-            if (myGeneral.factionId > 0 && city.factionId === myGeneral.factionId) {
+            if (!city || !myOfficer) return false;
+            if (myOfficer.permission === 'spy') return true;
+            if (myOfficer.factionId > 0 && city.factionId === myOfficer.factionId) {
                 return true;
             }
             return spyVisibleCityIds.has(city.id);
         },
-        [cityMap, myGeneral, spyVisibleCityIds]
+        [cityMap, myOfficer, spyVisibleCityIds]
     );
 
     const cityByNameMap = useMemo(() => new Map(cities.map((c) => [c.name, c])), [cities]);
@@ -277,7 +277,7 @@ export default function MapPage() {
             const rtCity = cityByNameMap.get(cc.name);
             const nation = rtCity?.factionId ? nationMap.get(rtCity.factionId) : null;
             const showNationLayer = layers.has('nations') && !!nation;
-            const isMyCity = myGeneral?.planetId != null && rtCity?.id === myGeneral.planetId;
+            const isMyCity = myOfficer?.planetId != null && rtCity?.id === myOfficer.planetId;
 
             return {
                 id: rtCity?.id ?? cc.id,
@@ -296,7 +296,7 @@ export default function MapPage() {
                 isEmperorCity: false,
             };
         });
-    }, [mapData, cityByNameMap, nationMap, layers, myGeneral?.cityId]);
+    }, [mapData, cityByNameMap, nationMap, layers, myOfficer?.cityId]);
 
     // Build cityOverlays for troops/supply/terrain layers
     const cityOverlays = useMemo(() => {

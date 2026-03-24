@@ -1,7 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import {
-    REGION_NAMES,
-    PLANET_LEVEL_NAMES,
     NATION_LEVEL_LABELS,
     getShipClassName,
     getNationTypeLabel,

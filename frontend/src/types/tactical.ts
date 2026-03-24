@@ -27,6 +27,7 @@ export interface EnergyConfig {
     gun: number;
     shield: number;
     engine: number;
+    warp: number;
     sensor: number;
 }
 

@@ -3,7 +3,7 @@ import type { TacticalFleet, BattleEvent, TacticalBattleResult, Obstacle } from 
 
 // ─── Type exports (used by battle UI components & canvas) ────────────────────
 
-export type Formation = 'spindle' | 'crane_wing' | 'wheel' | 'echelon' | 'square' | 'dispersed';
+export type Formation = 'spindle' | 'crane_wing' | 'wheel' | 'echelon' | 'square' | 'dispersed' | 'dispersed_release';
 export type BattleOrder = 'breakthrough' | 'pin_down' | 'flank' | 'retreat' | 'hold' | 'pursue';
 export type FactionType = 'empire' | 'alliance' | 'fezzan' | 'rebel';
 export type ShipClass = 'battleship' | 'cruiser' | 'destroyer' | 'carrier' | 'transport';
@@ -20,6 +20,7 @@ export interface EnergyAllocation {
     gun: number;
     shield: number;
     engine: number;
+    warp: number;
     sensor: number;
 }
 
@@ -166,7 +167,7 @@ export function toLegacyFleet(fleet: TacticalFleet, isMyFleet: boolean): BattleF
         y: fleetCenterY(fleet),
         faction: fleet.factionType,
         formation: (fleet.formation as Formation) ?? 'spindle',
-        energy: fleet.energy,
+        energy: { ...fleet.energy, warp: fleet.energy?.warp ?? 0 } as EnergyAllocation,
         isMyFleet,
     };
 }
@@ -220,7 +221,7 @@ export function toLegacyLog(events: BattleEvent[]): BattleLogEntry[] {
 
 // ─── Default values ──────────────────────────────────────────────────────────
 
-const DEFAULT_ENERGY: EnergyAllocation = { beam: 20, gun: 20, shield: 20, engine: 20, sensor: 20 };
+const DEFAULT_ENERGY: EnergyAllocation = { beam: 20, gun: 15, shield: 15, engine: 15, warp: 15, sensor: 20 };
 
 // ─── Store interface ─────────────────────────────────────────────────────────
 
@@ -409,7 +410,7 @@ export const useBattleStore = create<BattleStore>((set, get) => ({
             factionId: 1,
             factionType: 'empire',
             formation: 'spindle',
-            energy: { beam: 30, gun: 20, shield: 20, engine: 20, sensor: 10 },
+            energy: { beam: 25, gun: 20, shield: 15, engine: 15, warp: 15, sensor: 10 },
             morale: 95,
             maxMorale: 100,
             units: [
@@ -439,7 +440,7 @@ export const useBattleStore = create<BattleStore>((set, get) => ({
             factionId: 2,
             factionType: 'alliance',
             formation: 'crane_wing',
-            energy: { beam: 20, gun: 25, shield: 25, engine: 20, sensor: 10 },
+            energy: { beam: 20, gun: 20, shield: 20, engine: 15, warp: 15, sensor: 10 },
             morale: 88,
             maxMorale: 100,
             units: [
@@ -520,7 +521,7 @@ export const useBattleStore = create<BattleStore>((set, get) => ({
             pendingOrders: [],
             isReady: false,
             pendingFormation: 'spindle',
-            pendingEnergy: { beam: 30, gun: 20, shield: 20, engine: 20, sensor: 10 },
+            pendingEnergy: { beam: 25, gun: 20, shield: 15, engine: 15, warp: 15, sensor: 10 },
             pendingOrder: null,
             commandSubmitted: false,
             battleLog: initLog,
@@ -590,10 +591,10 @@ export const useBattleStore = create<BattleStore>((set, get) => ({
             const cur = get().pendingEnergy;
             const clamped = Math.max(0, Math.min(80, Math.round(value)));
             const next = { ...cur, [key]: clamped };
-            const manual = next.beam + next.gun + next.shield + next.engine;
+            const manual = next.beam + next.gun + next.shield + next.engine + next.warp;
             if (manual > 100) {
                 const excess = manual - 100;
-                const otherKeys = (['beam', 'gun', 'shield', 'engine'] as const).filter((k) => k !== key);
+                const otherKeys = (['beam', 'gun', 'shield', 'engine', 'warp'] as const).filter((k) => k !== key);
                 const othersTotal = otherKeys.reduce((s, k) => s + next[k], 0);
                 if (othersTotal > 0) {
                     for (const k of otherKeys) {
@@ -626,6 +627,7 @@ export const useBattleStore = create<BattleStore>((set, get) => ({
                                   gun: energy.gun ?? f.energy.gun,
                                   shield: energy.shield ?? f.energy.shield,
                                   engine: energy.engine ?? f.energy.engine,
+                                  warp: energy.warp ?? f.energy.warp,
                                   sensor: energy.sensor ?? f.energy.sensor,
                               },
                           }

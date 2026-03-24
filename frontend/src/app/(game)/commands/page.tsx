@@ -534,17 +534,17 @@ function CommandsPageInner() {
     const searchParams = useSearchParams();
     const initialMode = searchParams.get('mode') === 'nation' ? 'nation' : 'general';
     const currentWorld = useWorldStore((s) => s.currentWorld);
-    const { myGeneral, fetchMyGeneral } = useOfficerStore();
+    const { myOfficer, fetchMyGeneral } = useOfficerStore();
     const [mode, setMode] = useState<'general' | 'nation'>(initialMode);
 
     useEffect(() => {
         if (!currentWorld) return;
-        if (!myGeneral) {
+        if (!myOfficer) {
             fetchMyGeneral(currentWorld.id).catch(() => {});
         }
-    }, [currentWorld, myGeneral, fetchMyGeneral]);
+    }, [currentWorld, myOfficer, fetchMyGeneral]);
 
-    const isChief = (myGeneral?.officerLevel ?? 0) >= 5;
+    const isChief = (myOfficer?.officerLevel ?? 0) >= 5;
 
     if (!currentWorld) {
         return (
@@ -554,7 +554,7 @@ function CommandsPageInner() {
         );
     }
 
-    if (!myGeneral) {
+    if (!myOfficer) {
         return <LoadingState message="명령 정보를 불러오는 중..." />;
     }
 
@@ -586,13 +586,13 @@ function CommandsPageInner() {
             </div>
 
             {mode === 'general' ? (
-                <CommandPanel generalId={myGeneral.id} realtimeMode={currentWorld.realtimeMode} />
+                <CommandPanel generalId={myOfficer.id} realtimeMode={currentWorld.realtimeMode} />
             ) : (
-                myGeneral.nationId > 0 && (
+                myOfficer.nationId > 0 && (
                     <NationCommandPanel
-                        nationId={myGeneral.nationId}
-                        generalId={myGeneral.id}
-                        officerLevel={myGeneral.officerLevel}
+                        nationId={myOfficer.nationId}
+                        generalId={myOfficer.id}
+                        officerLevel={myOfficer.officerLevel}
                     />
                 )
             )}

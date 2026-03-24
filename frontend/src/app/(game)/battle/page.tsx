@@ -314,7 +314,7 @@ export default function BattlePage() {
     const currentWorld = useWorldStore((s) => s.currentWorld);
     const { cities, nations, generals, diplomacy, loading, loadAll } = useGameStore();
 
-    const { myGeneral, fetchMyGeneral } = useOfficerStore();
+    const { myOfficer, fetchMyGeneral } = useOfficerStore();
     const [sortKey, setSortKey] = useState<SortKey>('totalCrew');
     const [sortAsc, setSortAsc] = useState(false);
     const [personalLogs, setPersonalLogs] = useState<{ id: number; message: string; date: string }[]>([]);
@@ -335,9 +335,9 @@ export default function BattlePage() {
     useEffect(() => {
         if (currentWorld) {
             loadAll(currentWorld.id);
-            if (!myGeneral) fetchMyGeneral(currentWorld.id).catch(() => {});
+            if (!myOfficer) fetchMyGeneral(currentWorld.id).catch(() => {});
         }
-    }, [currentWorld, loadAll, myGeneral, fetchMyGeneral]);
+    }, [currentWorld, loadAll, myOfficer, fetchMyGeneral]);
 
     // Subscribe to real-time battle events
     useEffect(() => {
@@ -348,10 +348,10 @@ export default function BattlePage() {
     }, [currentWorld, handleBattleEvent]);
 
     const loadPersonalLogs = async () => {
-        if (!myGeneral || !currentWorld) return;
+        if (!myOfficer || !currentWorld) return;
         setPersonalLoading(true);
         try {
-            const { data } = await generalLogApi.getOldLogs(myGeneral.id, myGeneral.id, 'battleResult');
+            const { data } = await generalLogApi.getOldLogs(myOfficer.id, myOfficer.id, 'battleResult');
             setPersonalLogs(data.logs ?? []);
             setPersonalLogsLoaded(true);
         } catch {
@@ -363,12 +363,12 @@ export default function BattlePage() {
 
     const loadGeneralLogs = useCallback(
         async (targetGeneralId: number) => {
-            if (!myGeneral) return;
+            if (!myOfficer) return;
             setGeneralLogsLoading(true);
             try {
                 const entries = await Promise.all(
                     GENERAL_LOG_SECTIONS.map(async ({ type }) => {
-                        const { data } = await generalLogApi.getOldLogs(myGeneral.id, targetGeneralId, type);
+                        const { data } = await generalLogApi.getOldLogs(myOfficer.id, targetGeneralId, type);
                         return [type, data.logs ?? []] as const;
                     })
                 );
@@ -384,7 +384,7 @@ export default function BattlePage() {
                 setGeneralLogsLoading(false);
             }
         },
-        [myGeneral]
+        [myOfficer]
     );
 
     useEffect(() => {
@@ -395,20 +395,20 @@ export default function BattlePage() {
     }, [currentWorld, loadAll]);
 
     useEffect(() => {
-        if (!myGeneral || generals.length === 0) return;
+        if (!myOfficer || generals.length === 0) return;
         const targetExists = selectedGeneralId !== null && generals.some((general) => general.id === selectedGeneralId);
         if (!targetExists) {
-            const defaultGeneralId = generals.some((general) => general.id === myGeneral.id)
-                ? myGeneral.id
+            const defaultGeneralId = generals.some((general) => general.id === myOfficer.id)
+                ? myOfficer.id
                 : generals[0].id;
             setSelectedGeneralId(defaultGeneralId);
         }
-    }, [generals, myGeneral, selectedGeneralId]);
+    }, [generals, myOfficer, selectedGeneralId]);
 
     useEffect(() => {
-        if (!myGeneral || selectedGeneralId === null) return;
+        if (!myOfficer || selectedGeneralId === null) return;
         void loadGeneralLogs(selectedGeneralId);
-    }, [myGeneral, selectedGeneralId, loadGeneralLogs]);
+    }, [myOfficer, selectedGeneralId, loadGeneralLogs]);
 
     const wars = useMemo(() => diplomacy.filter((d) => d.stateCode === 'war' && !d.isDead), [diplomacy]);
     const warHistory = useMemo(() => diplomacy.filter((d) => d.stateCode === 'war'), [diplomacy]);
@@ -515,7 +515,7 @@ export default function BattlePage() {
                     <TabsTrigger value="wars">전쟁 현황</TabsTrigger>
                     <TabsTrigger value="military">군사력</TabsTrigger>
                     <TabsTrigger value="frontline">전선</TabsTrigger>
-                    {myGeneral && (
+                    {myOfficer && (
                         <TabsTrigger
                             value="personal"
                             onClick={() => {
@@ -525,7 +525,7 @@ export default function BattlePage() {
                             내 전투기록
                         </TabsTrigger>
                     )}
-                    {myGeneral && <TabsTrigger value="general-logs">제독 기록</TabsTrigger>}
+                    {myOfficer && <TabsTrigger value="general-logs">제독 기록</TabsTrigger>}
                 </TabsList>
 
                 {/* Tab: Live Battle */}
@@ -843,13 +843,13 @@ export default function BattlePage() {
                 </TabsContent>
 
                 {/* Tab 4: Personal Battle Log */}
-                {myGeneral && (
+                {myOfficer && (
                     <TabsContent value="personal" className="mt-4 space-y-4">
                         <Card>
                             <CardHeader className="pb-2">
                                 <CardTitle className="flex items-center gap-2 text-sm">
                                     <User className="size-4" />
-                                    {myGeneral.name}의 전투 기록
+                                    {myOfficer.name}의 전투 기록
                                     <div className="ml-auto flex items-center gap-2">
                                         <span className="text-xs text-muted-foreground">로그 스타일:</span>
                                         <select
@@ -909,7 +909,7 @@ export default function BattlePage() {
                 )}
 
                 {/* Tab 5: General Logs */}
-                {myGeneral && (
+                {myOfficer && (
                     <TabsContent value="general-logs" className="mt-4 space-y-4">
                         <Card>
                             <CardHeader className="pb-2">

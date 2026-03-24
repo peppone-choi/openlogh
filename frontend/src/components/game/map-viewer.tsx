@@ -50,7 +50,7 @@ export function MapViewer({
     const router = useRouter();
     const { cities: storeCities, nations, generals, mapData, loadMap } = useGameStore();
     const currentWorld = useWorldStore((s) => s.currentWorld);
-    const myGeneral = useOfficerStore((s) => s.myGeneral);
+    const myOfficer = useOfficerStore((s) => s.myOfficer);
     const [showNames, setShowNames] = useState(!compact);
 
     const isPublicMode = !!publicData;
@@ -111,11 +111,11 @@ export function MapViewer({
                 isCapital: !!(rt && nation?.capitalCityId === rt.id),
                 supplyState: rt?.supplyState ?? 0,
                 state: (rt as { state?: number })?.state ?? 0,
-                isMyCity: myGeneral?.cityId != null && rt?.id === myGeneral.cityId,
+                isMyCity: myOfficer?.cityId != null && rt?.id === myOfficer.cityId,
                 isEmperorCity: rt?.id === emperorCityId,
             };
         });
-    }, [isPublicMode, publicData, storeCities, overrideCities, mapData, nationMap, myGeneral?.cityId, emperorCityId]);
+    }, [isPublicMode, publicData, storeCities, overrideCities, mapData, nationMap, myOfficer?.cityId, emperorCityId]);
 
     const season = useMemo<MapSeason>(() => {
         if (isPublicMode) return getSeason(publicData.currentMonth);

@@ -4,13 +4,18 @@ import type { StarSystem, Faction, Officer, Diplomacy, MapData } from '@/types';
 import { planetApi, factionApi, officerApi, diplomacyApi, mapApi } from '@/lib/gameApi';
 
 interface GameStore {
-    cities: StarSystem[];
-    nations: Faction[];
-    generals: Officer[];
+    starSystems: StarSystem[];
+    factions: Faction[];
+    officers: Officer[];
     diplomacy: Diplomacy[];
     mapData: MapData | null;
     loading: boolean;
     isHydrated: boolean;
+
+    // Deprecated aliases
+    /** @deprecated use starSystems */ cities: StarSystem[];
+    /** @deprecated use factions */ nations: Faction[];
+    /** @deprecated use officers */ generals: Officer[];
 
     loadAll: (worldId: number) => Promise<void>;
     loadMap: (mapName: string) => Promise<void>;
@@ -21,14 +26,25 @@ let _inflightLoadAll: { worldId: number; promise: Promise<void> } | null = null;
 
 export const useGameStore = create<GameStore>()(
     persist(
-        (set) => ({
-            cities: [],
-            nations: [],
-            generals: [],
+        (set, get) => ({
+            starSystems: [],
+            factions: [],
+            officers: [],
             diplomacy: [],
             mapData: null,
             loading: false,
             isHydrated: false,
+
+            // Deprecated aliases — getters that proxy to new names
+            get cities() {
+                return get().starSystems;
+            },
+            get nations() {
+                return get().factions;
+            },
+            get generals() {
+                return get().officers;
+            },
 
             loadAll: (worldId) => {
                 if (_inflightLoadAll && _inflightLoadAll.worldId === worldId) {
@@ -48,10 +64,11 @@ export const useGameStore = create<GameStore>()(
                             withTimeout(officerApi.listByWorld(worldId)),
                             withTimeout(diplomacyApi.listByWorld(worldId)),
                         ]);
-                        const patch: Partial<GameStore> = {};
-                        if (results[0].status === 'fulfilled') patch.cities = results[0].value.data;
-                        if (results[1].status === 'fulfilled') patch.nations = results[1].value.data;
-                        if (results[2].status === 'fulfilled') patch.generals = results[2].value.data;
+                        const patch: Partial<Pick<GameStore, 'starSystems' | 'factions' | 'officers' | 'diplomacy'>> =
+                            {};
+                        if (results[0].status === 'fulfilled') patch.starSystems = results[0].value.data;
+                        if (results[1].status === 'fulfilled') patch.factions = results[1].value.data;
+                        if (results[2].status === 'fulfilled') patch.officers = results[2].value.data;
                         if (results[3].status === 'fulfilled') patch.diplomacy = results[3].value.data;
                         set(patch);
                     } finally {
@@ -68,15 +85,15 @@ export const useGameStore = create<GameStore>()(
                 set({ mapData: data });
             },
 
-            clear: () => set({ cities: [], nations: [], generals: [], diplomacy: [], mapData: null }),
+            clear: () => set({ starSystems: [], factions: [], officers: [], diplomacy: [], mapData: null }),
         }),
         {
             name: 'openlogh:game',
             storage: typeof window !== 'undefined' ? createJSONStorage(() => sessionStorage) : undefined,
             partialize: (state) => ({
-                cities: state.cities,
-                nations: state.nations,
-                generals: state.generals,
+                starSystems: state.starSystems,
+                factions: state.factions,
+                officers: state.officers,
             }),
             onRehydrateStorage: () => (state) => {
                 if (state) state.isHydrated = true;

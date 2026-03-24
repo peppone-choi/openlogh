@@ -250,13 +250,13 @@ function UnitBuilder({
     unit,
     onChange,
     generals,
-    myGeneralId,
+    myOfficerId,
 }: {
     title: string;
     unit: UnitFormState;
     onChange: (u: UnitFormState) => void;
     generals: General[];
-    myGeneralId: number | null;
+    myOfficerId: number | null;
 }) {
     const set = <K extends keyof UnitFormState>(key: K, val: UnitFormState[K]) => onChange({ ...unit, [key]: val });
 
@@ -353,10 +353,10 @@ function UnitBuilder({
     }, []);
 
     const handleLoadGeneral = async (targetId: number) => {
-        if (!myGeneralId) return;
+        if (!myOfficerId) return;
         setLoadingGeneral(true);
         try {
-            const { data } = await simulatorExportApi.exportGeneral(myGeneralId, targetId);
+            const { data } = await simulatorExportApi.exportGeneral(myOfficerId, targetId);
             if (data.result && data.data) {
                 const d = data.data;
                 onChange({
@@ -413,7 +413,7 @@ function UnitBuilder({
                     {title}
                     <span className="text-[9px] text-muted-foreground ml-1">(JSON 드래그&amp;드롭 가능)</span>
                     {/* General picker */}
-                    {generals.length > 0 && myGeneralId && (
+                    {generals.length > 0 && myOfficerId && (
                         <select
                             onChange={(e) => {
                                 const id = Number(e.target.value);
@@ -667,7 +667,7 @@ function UnitBuilder({
 
 export default function BattleSimulatorPage() {
     const currentWorld = useWorldStore((s) => s.currentWorld);
-    const { myGeneral, fetchMyGeneral } = useOfficerStore();
+    const { myOfficer, fetchMyGeneral } = useOfficerStore();
     const { generals, nations, loadAll } = useGameStore();
 
     const [year, setYear] = useState(currentWorld?.currentYear ?? 200);
@@ -702,9 +702,9 @@ export default function BattleSimulatorPage() {
     useEffect(() => {
         if (currentWorld) {
             loadAll(currentWorld.id);
-            if (!myGeneral) fetchMyGeneral(currentWorld.id).catch(() => {});
+            if (!myOfficer) fetchMyGeneral(currentWorld.id).catch(() => {});
         }
-    }, [currentWorld, loadAll, myGeneral, fetchMyGeneral]);
+    }, [currentWorld, loadAll, myOfficer, fetchMyGeneral]);
 
     const handleSimulate = async () => {
         setRunning(true);
@@ -950,7 +950,7 @@ export default function BattleSimulatorPage() {
                     unit={attacker}
                     onChange={setAttacker}
                     generals={generals}
-                    myGeneralId={myGeneral?.id ?? null}
+                    myOfficerId={myOfficer?.id ?? null}
                 />
                 <div className="space-y-4">
                     {defenders.map((def, idx) => (
@@ -963,7 +963,7 @@ export default function BattleSimulatorPage() {
                                 unit={def}
                                 onChange={(u) => setDefenders((prev) => prev.map((d, i) => (i === idx ? u : d)))}
                                 generals={generals}
-                                myGeneralId={myGeneral?.id ?? null}
+                                myOfficerId={myOfficer?.id ?? null}
                             />
                             {defenders.length > 1 && (
                                 <Button

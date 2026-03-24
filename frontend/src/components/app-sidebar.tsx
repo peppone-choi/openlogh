@@ -52,6 +52,7 @@ const navItems = [
             { title: '진영제독', url: '/faction-officers' },
             { title: '진영행성', url: '/faction-planets' },
             { title: '함대편성', url: '/fleet' },
+            { title: '요새관리', url: '/fortress' },
             { title: '외교부', url: '/diplomacy', requireSecret: true as const },
             { title: '인사부', url: '/personnel' },
             { title: '내무부', url: '/internal-affairs', requireSecret: true as const },
@@ -64,6 +65,7 @@ const navItems = [
         items: [
             { title: '내정보&설정', url: '/my-page' },
             { title: '내제독', url: '/officer' },
+            { title: '직무권한카드', url: '/position-cards' },
             { title: '유산관리', url: '/inherit' },
         ],
     },

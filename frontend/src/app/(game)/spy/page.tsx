@@ -19,7 +19,7 @@ function formatTurnTime(turnTime: string | null | undefined): string {
 
 export default function SpyPage() {
     const currentWorld = useWorldStore((s) => s.currentWorld);
-    const { myGeneral, fetchMyGeneral } = useOfficerStore();
+    const { myOfficer, fetchMyGeneral } = useOfficerStore();
     const { generals, cities, nations, loading, loadAll } = useGameStore();
     const [troopNameMap, setTroopNameMap] = useState<Map<number, string>>(new Map());
     const [troopLoading, setTroopLoading] = useState(false);
@@ -31,14 +31,14 @@ export default function SpyPage() {
     }, [currentWorld, fetchMyGeneral, loadAll]);
 
     useEffect(() => {
-        if (!myGeneral?.factionId) {
+        if (!myOfficer?.factionId) {
             setTroopNameMap(new Map());
             return;
         }
 
         setTroopLoading(true);
         troopApi
-            .listByNation(myGeneral.factionId)
+            .listByNation(myOfficer.factionId)
             .then(({ data }) => {
                 const nextMap = new Map<number, string>();
                 data.forEach((row) => {
@@ -52,17 +52,17 @@ export default function SpyPage() {
             .finally(() => {
                 setTroopLoading(false);
             });
-    }, [myGeneral?.factionId]);
+    }, [myOfficer?.factionId]);
 
     const cityMap = useMemo(() => new Map(cities.map((c) => [c.id, c.name])), [cities]);
     const nationMap = useMemo(() => new Map(nations.map((n) => [n.id, n])), [nations]);
 
     const nationGenerals = useMemo(() => {
-        if (!myGeneral?.factionId) return [];
+        if (!myOfficer?.factionId) return [];
         return generals
-            .filter((g) => g.factionId === myGeneral.factionId)
+            .filter((g) => g.factionId === myOfficer.factionId)
             .sort((a, b) => (a.turnTime ?? '').localeCompare(b.turnTime ?? ''));
-    }, [generals, myGeneral?.nationId]);
+    }, [generals, myOfficer?.nationId]);
 
     const summary = useMemo(() => {
         const effective = nationGenerals.filter((g) => g.npcState !== 5);
@@ -100,7 +100,7 @@ export default function SpyPage() {
             </div>
         );
 
-    const myNation = myGeneral?.factionId ? nationMap.get(myGeneral.factionId) : null;
+    const myNation = myOfficer?.factionId ? nationMap.get(myOfficer.factionId) : null;
 
     return (
         <div className="p-4 space-y-4 max-w-5xl mx-auto">

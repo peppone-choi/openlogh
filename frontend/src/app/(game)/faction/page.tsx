@@ -95,7 +95,7 @@ const CITY_SORTS: SortOpt<StarSystem>[] = [
 
 function NationPageContent() {
     const currentWorld = useWorldStore((s) => s.currentWorld);
-    const myGeneral = useOfficerStore((s) => s.myGeneral);
+    const myOfficer = useOfficerStore((s) => s.myOfficer);
     const fetchMyGeneral = useOfficerStore((s) => s.fetchMyGeneral);
     const searchParams = useSearchParams();
     const router = useRouter();
@@ -123,18 +123,18 @@ function NationPageContent() {
     const tabParam = searchParams.get('tab');
     const validTabs = ['info', 'generals', 'cities', 'admin'];
     const activeTab = validTabs.includes(tabParam ?? '') ? tabParam! : 'info';
-    const isOfficer = (myGeneral?.officerLevel ?? 0) >= 5;
+    const isOfficer = (myOfficer?.officerLevel ?? 0) >= 5;
 
     useEffect(() => {
-        if (!currentWorld || myGeneral) return;
+        if (!currentWorld || myOfficer) return;
         fetchMyGeneral(currentWorld.id).catch(() => setError('제독 정보를 불러올 수 없습니다.'));
-    }, [currentWorld, myGeneral, fetchMyGeneral]);
+    }, [currentWorld, myOfficer, fetchMyGeneral]);
 
     const loadNationData = useCallback(async () => {
-        if (!myGeneral?.factionId || !currentWorld) return;
-        const nId = myGeneral.factionId;
+        if (!myOfficer?.factionId || !currentWorld) return;
+        const nId = myOfficer.factionId;
         const wId = currentWorld.id;
-        const off = myGeneral.officerLevel >= 5;
+        const off = myOfficer.officerLevel >= 5;
 
         const base = [factionApi.get(nId), officerApi.listByFaction(nId), planetApi.listByFaction(nId)];
         const extra = off
@@ -204,18 +204,18 @@ function NationPageContent() {
         } finally {
             setLoading(false);
         }
-    }, [myGeneral?.factionId, myGeneral?.officerLevel, currentWorld]);
+    }, [myOfficer?.factionId, myOfficer?.officerLevel, currentWorld]);
 
     useEffect(() => {
         loadNationData();
     }, [loadNationData]);
 
     useEffect(() => {
-        if (!currentWorld || !myGeneral?.factionId) return;
+        if (!currentWorld || !myOfficer?.factionId) return;
         return subscribeWebSocket(`/topic/world/${currentWorld.id}/turn`, () => {
             loadNationData();
         });
-    }, [currentWorld, myGeneral?.factionId, loadNationData]);
+    }, [currentWorld, myOfficer?.factionId, loadNationData]);
 
     const handleTabChange = (value: string) => {
         router.replace(value === 'info' ? '/nation' : `/nation?tab=${value}`, {
@@ -321,7 +321,7 @@ function NationPageContent() {
     if (!currentWorld) return <LoadingState message="월드를 선택해주세요." />;
     if (loading) return <LoadingState />;
     if (error) return <div className="p-4 text-red-400">{error}</div>;
-    if (!myGeneral?.factionId) return <div className="p-4 text-muted-foreground">소속 진영이 없습니다.</div>;
+    if (!myOfficer?.factionId) return <div className="p-4 text-muted-foreground">소속 진영이 없습니다.</div>;
     if (!nation) return <LoadingState message="진영 정보가 없습니다." />;
 
     // ── Derived ──────────────────────────────────────────────────────
@@ -767,7 +767,7 @@ function NationPageContent() {
                                     <CardTitle>국가 공지</CardTitle>
                                 </CardHeader>
                                 <CardContent>
-                                    {myGeneral.officerLevel >= 5 && (
+                                    {myOfficer.officerLevel >= 5 && (
                                         <div className="flex gap-1 mb-1">
                                             {[
                                                 {
@@ -840,7 +840,7 @@ function NationPageContent() {
                                         onChange={(e) => setEditNotice(e.target.value)}
                                         rows={5}
                                         placeholder="국가 공지사항을 입력하세요... (마크다운 지원)"
-                                        disabled={myGeneral.officerLevel < 5}
+                                        disabled={myOfficer.officerLevel < 5}
                                         className="font-mono text-sm"
                                     />
                                     {editNotice && (
@@ -851,7 +851,7 @@ function NationPageContent() {
                                             <NoticePreview text={editNotice} />
                                         </div>
                                     )}
-                                    {myGeneral.officerLevel >= 5 && (
+                                    {myOfficer.officerLevel >= 5 && (
                                         <Button size="sm" className="mt-2" onClick={saveNotice} disabled={saving}>
                                             공지 저장
                                         </Button>
@@ -872,7 +872,7 @@ function NationPageContent() {
                                             min={5}
                                             max={30}
                                             unit="%"
-                                            editable={myGeneral.officerLevel >= 5}
+                                            editable={myOfficer.officerLevel >= 5}
                                             saving={saving}
                                             onChange={setEditRate}
                                             onSave={() => savePolicy('rate', editRate)}
@@ -883,7 +883,7 @@ function NationPageContent() {
                                             min={20}
                                             max={200}
                                             unit="%"
-                                            editable={myGeneral.officerLevel >= 5}
+                                            editable={myOfficer.officerLevel >= 5}
                                             saving={saving}
                                             onChange={setEditBill}
                                             onSave={() => savePolicy('bill', editBill)}
@@ -894,14 +894,14 @@ function NationPageContent() {
                                             min={1}
                                             max={99}
                                             unit="년"
-                                            editable={myGeneral.officerLevel >= 5}
+                                            editable={myOfficer.officerLevel >= 5}
                                             saving={saving}
                                             onChange={setEditSecretLimit}
                                             onSave={() => savePolicy('secretLimit', editSecretLimit)}
                                         />
                                     </div>
 
-                                    {myGeneral.officerLevel >= 5 && (
+                                    {myOfficer.officerLevel >= 5 && (
                                         <div className="flex gap-3 mt-4 pt-3 border-t border-gray-600">
                                             <Button
                                                 size="sm"
