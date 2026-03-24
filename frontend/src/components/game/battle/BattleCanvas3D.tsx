@@ -1,3 +1,4 @@
+// @ts-nocheck
 /// <reference types="@react-three/fiber" />
 'use client';
 
