@@ -17,6 +17,7 @@ import com.opensam.repository.GeneralRepository
 import com.opensam.repository.NationRepository
 import com.opensam.engine.modifier.ModifierService
 import com.opensam.service.MapService
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import kotlin.random.Random
@@ -185,11 +186,13 @@ class CommandExecutor @Autowired constructor(
 
         val cooldown = checkNationCooldown(actionCode, general, nation, env)
         if (cooldown != null) {
+            logger.info("[NationCmd] {} for general {} BLOCKED by cooldown", actionCode, general.id)
             return cooldown
         }
 
         val conditionResult = command.checkFullCondition()
         if (conditionResult is ConstraintResult.Fail) {
+            logger.info("[NationCmd] {} for general {} FAILED constraint: {}", actionCode, general.id, conditionResult.reason)
             return CommandResult(success = false, logs = listOf("<R>${command.actionName}</> 실패 - ${conditionResult.reason}"))
         }
 
@@ -677,6 +680,7 @@ class CommandExecutor @Autowired constructor(
     }
 
     companion object {
+        private val logger = LoggerFactory.getLogger(CommandExecutor::class.java)
         private const val GENERAL_NEXT_EXECUTE_KEY = "next_execute"
 
         private val NATION_COLORS = listOf(

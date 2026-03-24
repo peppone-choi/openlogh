@@ -601,6 +601,10 @@ class TurnService @Autowired constructor(
                 val rng = DeterministicRng.create(
                     generalHiddenSeed, "generalCommand", general.id, world.currentYear, world.currentMonth, actionCode
                 )
+                if (commandRegistry.hasNationCommand(actionCode)) {
+                    logger.info("[Turn] General {} action '{}' is nation command, officerLevel={}, nation={}, routing to executeNationCommand={}",
+                        general.id, actionCode, general.officerLevel, nation?.id, (general.officerLevel >= 5 && nation != null))
+                }
                 val cmdResult = if (commandRegistry.hasNationCommand(actionCode) && general.officerLevel >= 5 && nation != null) {
                     runBlocking {
                         commandExecutor.executeNationCommand(actionCode, general, env, arg, city, nation, rng)
