@@ -449,7 +449,7 @@ export default function NationsPage() {
                                                                                     {byType[t].map((g, i) => (
                                                                                         <span
                                                                                             key={g.id}
-                                                                                            className={`${g.npcState >= 2 ? 'text-cyan-400' : ''} ${g.killTurn != null ? 'line-through opacity-60' : ''}`}
+                                                                                            className={`${g.npcState >= 2 ? 'text-cyan-400' : ''} ${g.killTurn != null && g.killTurn <= 0 ? 'line-through opacity-60' : ''}`}
                                                                                             style={
                                                                                                 g.penalty &&
                                                                                                 Object.keys(g.penalty)
@@ -533,7 +533,7 @@ export default function NationsPage() {
                                                                                                     g.npcState > 0
                                                                                                         ? 'text-gray-400'
                                                                                                         : ''
-                                                                                                } ${g.killTurn != null ? 'line-through text-red-400/60' : ''}`}
+                                                                                                } ${g.killTurn != null && g.killTurn <= 0 ? 'line-through text-red-400/60' : ''}`}
                                                                                                 title={
                                                                                                     g.killTurn != null
                                                                                                         ? `사망 예정: ${g.killTurn}턴`

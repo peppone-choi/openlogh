@@ -6,7 +6,6 @@ import com.openlogh.repository.EventRepository
 import com.openlogh.repository.FactionRepository
 import com.openlogh.repository.MessageRepository
 import com.openlogh.service.HistoryService
-import com.openlogh.service.ScenarioService
 import org.springframework.stereotype.Service
 
 @Service
@@ -15,10 +14,7 @@ class EventService(
     private val factionRepository: FactionRepository,
     private val messageRepository: MessageRepository,
     private val historyService: HistoryService,
-    private val economyService: EconomyService,
-    private val npcSpawnService: NpcSpawnService,
-    private val scenarioService: ScenarioService,
-    private val eventActionService: EventActionService,
+    private val eventActionRegistry: EventActionRegistry,
 ) {
     fun dispatchEvents(world: SessionState, phase: String) {
         val sessionId = world.id.toLong()
@@ -57,10 +53,14 @@ class EventService(
 
     @Suppress("UNCHECKED_CAST")
     private fun executeAction(world: SessionState, eventId: Long, action: Map<String, Any>) {
-        when (action["type"] as? String) {
+        val type = action["type"] as? String ?: return
+
+        // Handle actions that need direct repository access (log, notice, delete)
+        when (type) {
             "log" -> {
                 val message = action["message"] as? String ?: ""
                 historyService.logWorldHistory(world.id.toLong(), message, world.currentYear.toInt(), world.currentMonth.toInt())
+                return
             }
             "notice" -> {
                 val message = action["message"] as? String ?: ""
@@ -70,26 +70,20 @@ class EventService(
                     messageType = "notice",
                     payload = mutableMapOf("message" to message),
                 ))
+                return
             }
             "delete_event" -> {
                 val targetEventId = (action["eventId"] as Number).toLong()
                 eventRepository.deleteById(targetEventId)
+                return
             }
-            "delete_self" -> eventRepository.deleteById(eventId)
-            "process_income" -> economyService.processIncomeEvent(world)
-            "process_semi_annual" -> economyService.processSemiAnnualEvent(world)
-            "update_city_supply" -> economyService.updateCitySupplyState(world)
-            "update_nation_level" -> economyService.updateNationLevelEvent(world)
-            "randomize_trade_rate" -> economyService.randomizeCityTradeRate(world)
-            "compound" -> {
-                val subActions = action["actions"] as? List<Map<String, Any>> ?: return
-                for (sub in subActions) {
-                    executeAction(world, eventId, sub)
-                }
+            "delete_self" -> {
+                eventRepository.deleteById(eventId)
+                return
             }
-            "raise_invader" -> { /* stub - future implementation */ }
-            "raise_npc_nation" -> { /* stub - future implementation */ }
-            "provide_npc_troop_leader" -> { /* stub - future implementation */ }
         }
+
+        // Delegate all other actions to the registry
+        eventActionRegistry.execute(world, eventId, action)
     }
 }

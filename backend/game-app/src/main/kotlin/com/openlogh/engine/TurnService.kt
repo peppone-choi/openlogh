@@ -7,6 +7,7 @@ import com.openlogh.command.CommandServices
 import com.openlogh.engine.ai.OfficerAI
 import com.openlogh.engine.ai.FactionAI
 import com.openlogh.engine.modifier.ModifierService
+import com.openlogh.engine.modifier.OfficerLevelModifier
 import com.openlogh.engine.war.BattleService
 import com.openlogh.entity.SessionState
 import com.openlogh.repository.*
@@ -51,6 +52,7 @@ class TurnService(
     private val officerAccessLogRepository: OfficerAccessLogRepository,
     private val commandPointService: CommandPointService,
     private val ageGrowthService: AgeGrowthService,
+    private val officerLevelModifier: OfficerLevelModifier,
 ) {
     companion object {
         private val log = LoggerFactory.getLogger(TurnService::class.java)
@@ -94,6 +96,9 @@ class TurnService(
             tryRun("officerMaintenanceService") { officerMaintenanceService.processOfficerMaintenance(world, officers) }
             tryRun("commandPointService.recoverAllCp") { commandPointService.recoverAllCp(sessionId) }
             tryRun("ageGrowthService.processMonthlyGrowth") { ageGrowthService.processMonthlyGrowth(world) }
+            tryRun("officerLevelModifier.applyMonthlyModifiers") { officerLevelModifier.applyMonthlyModifiers(officers, world) }
+            tryRun("tournamentService.processTournament") { tournamentService.processTournament(world) }
+            tryRun("auctionService.processAuctions") { auctionService.processAuctions(world) }
             tryRun("doctrineAndPromotion") { processDoctrineAndPromotion(world, sessionId, officers) }
 
             val services = CommandServices(
@@ -270,11 +275,13 @@ class TurnService(
         for (officer in officers) {
             if (officer.factionId == 0L) continue
             val currentRank = officer.rank.toInt()
+            val targetRank = currentRank + 1
+            val factionOfficers = officers.filter { it.factionId == officer.factionId }
+            val hasSlot = officerLevelModifier.hasRankSlot(targetRank, factionOfficers)
             if (com.openlogh.engine.strategic.AutoPromotionSystem.canPromote(
-                    currentRank, officer.experience, rankSlotAvailable = true)) {
-                officer.rank = (currentRank + 1).toShort()
-                officer.experience = 0 // 승진 시 공적 리셋
-                log.debug("Auto-promotion: {} rank {} → {}", officer.name, currentRank, currentRank + 1)
+                    currentRank, officer.experience, rankSlotAvailable = hasSlot)) {
+                officerLevelModifier.applyPromotionEffects(officer)
+                log.debug("Auto-promotion: {} rank {} → {}", officer.name, currentRank, targetRank)
             }
         }
     }

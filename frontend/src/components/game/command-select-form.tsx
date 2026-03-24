@@ -16,13 +16,7 @@ interface CommandSelectFormProps {
     generalId: number;
 }
 
-export function CommandSelectForm({
-    commandTable,
-    onSelect,
-    onCancel,
-    realtimeMode,
-    generalId,
-}: CommandSelectFormProps) {
+export function CommandSelectForm({ commandTable, onSelect, onCancel, realtimeMode }: CommandSelectFormProps) {
     const [selectedCmd, setSelectedCmd] = useState('');
     const [pendingArg, setPendingArg] = useState<CommandArg | undefined>();
     const categories = Object.keys(commandTable);
@@ -69,7 +63,9 @@ export function CommandSelectForm({
                                                 key={cmd.actionCode}
                                                 variant={selectedCmd === cmd.actionCode ? 'default' : 'secondary'}
                                                 className={`cursor-pointer text-xs ${
-                                                    !cmd.enabled ? 'opacity-40 cursor-not-allowed' : ''
+                                                    !cmd.enabled
+                                                        ? 'border-red-500/50 text-red-400 cursor-not-allowed'
+                                                        : ''
                                                 }`}
                                                 onClick={() => {
                                                     if (cmd.enabled) handleSelectCmd(cmd.actionCode);

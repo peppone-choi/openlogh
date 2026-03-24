@@ -10,6 +10,8 @@ abstract class BaseCommand(
     val arg: Map<String, Any>? = null,
 ) {
     abstract val actionName: String
+    open val canDisplay: Boolean = true
+    open val isReservable: Boolean = true
 
     open var city: City? = null
     open var nation: Nation? = null

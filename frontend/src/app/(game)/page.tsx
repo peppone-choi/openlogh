@@ -292,7 +292,16 @@ export default function GameDashboard() {
 
             {/* ===== Desktop Refresh Button ===== */}
             <div className="hidden lg:flex justify-end border-t border-gray-600 px-2 py-1.5">
-                <Button onClick={loadFrontInfo} variant="outline" size="sm" className="gap-1">
+                <Button
+                    onClick={() => {
+                        lastRecordIdRef.current = undefined;
+                        lastHistoryIdRef.current = undefined;
+                        void loadFrontInfo();
+                    }}
+                    variant="outline"
+                    size="sm"
+                    className="gap-1"
+                >
                     <RefreshCw className="h-3.5 w-3.5" />
                     갱신
                 </Button>
@@ -360,7 +369,7 @@ export default function GameDashboard() {
                         ) : (
                             frontInfo.recentRecord.global.slice(0, 15).map((r) => (
                                 <div key={r.id} className="border-b border-gray-600/30 px-2 py-0.5 text-xs">
-                                    <span className="text-gray-400">[{r.date}]</span> {formatLog(r.message)}
+                                    {r.date && <span className="text-gray-400">[{r.date}]</span>} {formatLog(r.message)}
                                 </div>
                             ))
                         )}
@@ -374,7 +383,7 @@ export default function GameDashboard() {
                         ) : (
                             frontInfo.recentRecord.general.slice(0, 15).map((r) => (
                                 <div key={r.id} className="border-b border-gray-600/30 px-2 py-0.5 text-xs">
-                                    <span className="text-gray-400">[{r.date}]</span> {formatLog(r.message)}
+                                    {r.date && <span className="text-gray-400">[{r.date}]</span>} {formatLog(r.message)}
                                 </div>
                             ))
                         )}
@@ -388,7 +397,7 @@ export default function GameDashboard() {
                         ) : (
                             frontInfo.recentRecord.history.slice(0, 15).map((r) => (
                                 <div key={r.id} className="border-b border-gray-600/30 px-2 py-0.5 text-xs">
-                                    <span className="text-gray-400">[{r.date}]</span> {formatLog(r.message)}
+                                    {r.date && <span className="text-gray-400">[{r.date}]</span>} {formatLog(r.message)}
                                 </div>
                             ))
                         )}

@@ -1,8 +1,10 @@
 package com.openlogh.engine.war
 
 import com.openlogh.entity.Planet
+import com.openlogh.model.ArmType
 import com.openlogh.model.ShipClass
 import kotlin.math.max
+import kotlin.math.min
 import kotlin.random.Random
 
 class BattleEngine {
@@ -33,6 +35,10 @@ class BattleEngine {
         var totalDefenderDamageDealt = 0
         var attackerWon = true
 
+        // C7: track damage dealt for experience calculation
+        var attackerDamageDealtForExp = 0
+        var defenderDamageDealtForExp = 0
+
         val sortedDefenders = defenders.sortedByDescending { it.calcBattleOrder() }
 
         for (defender in sortedDefenders) {
@@ -59,6 +65,16 @@ class BattleEngine {
                 totalAttackerDamageDealt += aDmg
                 totalDefenderDamageDealt += dDmg
 
+                // C7: accumulate exp-damage per phase
+                attackerDamageDealtForExp += aDmg
+                defenderDamageDealtForExp += dDmg
+
+                // C7: grant level exp per phase (attacker full, defenders 0.8x)
+                attacker.officer.experience += aDmg / 50
+                if (defender is WarUnitGeneral) {
+                    defender.officer.experience += (dDmg * 0.8 / 50).toInt()
+                }
+
                 attacker.morale -= 1
                 defender.morale -= 3
 
@@ -73,6 +89,16 @@ class BattleEngine {
 
         if (!attacker.continueWar().canContinue) {
             attackerWon = false
+        }
+
+        // C8: Defender injury — after battle resolution, 5% chance per defender officer
+        for (defender in sortedDefenders) {
+            if (defender is WarUnitGeneral) {
+                if (rng.nextDouble() < 0.05) {
+                    val woundAmount = 10 + rng.nextInt(71) // random [10, 80]
+                    defender.officer.injury = minOf(defender.officer.injury + woundAmount, 80).toShort()
+                }
+            }
         }
 
         var cityOccupied = false
@@ -93,6 +119,10 @@ class BattleEngine {
                 )
                 totalAttackerDamageDealt += aDmg
                 totalDefenderDamageDealt += dDmg
+                attackerDamageDealtForExp += aDmg
+
+                // C7: phase exp during city assault
+                attacker.officer.experience += aDmg / 50
 
                 attacker.morale -= 1
                 attacker.consumeRice(aDmg, vsCity = true)
@@ -103,9 +133,35 @@ class BattleEngine {
 
             if (!cityUnit.isAlive) {
                 cityOccupied = true
+                // C7: planet capture bonus exp
+                attacker.officer.experience += 1000
             }
 
             cityUnit.applyResults()
+        }
+
+        // C7: Win/loss morale bonuses
+        if (attackerWon) {
+            attacker.morale = (attacker.morale * 1.1).toInt()
+            for (defender in sortedDefenders) {
+                defender.morale = (defender.morale * 1.05).toInt()
+            }
+        } else {
+            for (defender in sortedDefenders) {
+                defender.morale = (defender.morale * 1.1).toInt()
+            }
+            attacker.morale = (attacker.morale * 1.05).toInt()
+        }
+
+        // C7: Stat exp +1 routed by armType
+        val atkArmType = resolveShipClass(attacker.officer.shipClass).armType
+        when (atkArmType) {
+            ArmType.FOOTMAN -> attacker.officer.commandExp = (attacker.officer.commandExp + 1).toShort()
+            ArmType.ARCHER  -> attacker.officer.intelligenceExp = (attacker.officer.intelligenceExp + 1).toShort()
+            ArmType.CAVALRY -> attacker.officer.mobilityExp = (attacker.officer.mobilityExp + 1).toShort()
+            ArmType.WIZARD  -> attacker.officer.intelligenceExp = (attacker.officer.intelligenceExp + 1).toShort()
+            ArmType.SIEGE   -> attacker.officer.attackExp = (attacker.officer.attackExp + 1).toShort()
+            else            -> attacker.officer.commandExp = (attacker.officer.commandExp + 1).toShort()
         }
 
         attacker.applyResults()

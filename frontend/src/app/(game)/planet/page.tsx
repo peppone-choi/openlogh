@@ -325,7 +325,8 @@ function CityPageContent() {
                 const owner = nationMap.get(city.factionId);
                 const isMyNationCity = city.factionId === myGeneral?.factionId;
                 const isVacant = city.factionId === 0;
-                const isVisible = canSeeMilitary(city) && !isVacant;
+                const isMyCity = city.id === myGeneral?.planetId;
+                const isVisible = isMyCity || (canSeeMilitary(city) && !isVacant);
                 const nationColor = owner?.color ?? '#888';
                 const textColor = isBrightColor(nationColor) ? 'black' : 'white';
                 const regionText = REGION_NAMES[city.region] ?? '';

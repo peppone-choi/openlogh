@@ -23,6 +23,103 @@ class NpcSpawnService(
 ) {
     fun processSpawns(world: SessionState) {}
 
+    /**
+     * Raise an invader NPC force at a neutral/border planet.
+     * gin7: 이민족 침략 이벤트.
+     */
+    @Suppress("UNCHECKED_CAST")
+    fun raiseInvader(world: SessionState, params: Map<String, Any>) {
+        val sessionId = world.id.toLong()
+        val rng = Random(world.currentYear * 100L + world.currentMonth)
+        val planets = planetRepository.findBySessionId(sessionId)
+        val neutralPlanets = planets.filter { it.factionId == 0L }
+        val targetPlanet = neutralPlanets.randomOrNull() ?: planets.randomOrNull() ?: return
+
+        val count = (params["count"] as? Number)?.toInt() ?: 3
+        val cityParams = (params["cityParams"] as? Map<String, Any>) ?: emptyMap()
+
+        buildNpcNation(world, rng, targetPlanet, cityParams, count, 1.0f)
+        historyService.logWorldHistory(
+            sessionId,
+            "이민족 세력이 ${targetPlanet.name}에 출현했습니다.",
+            world.currentYear.toInt(),
+            world.currentMonth.toInt(),
+        )
+    }
+
+    /**
+     * Create an NPC nation at a specified or random planet.
+     * gin7: NPC 국가 생성 이벤트.
+     */
+    @Suppress("UNCHECKED_CAST")
+    fun raiseNpcNation(world: SessionState, params: Map<String, Any>) {
+        val sessionId = world.id.toLong()
+        val rng = Random(world.currentYear * 100L + world.currentMonth + 7)
+        val planets = planetRepository.findBySessionId(sessionId)
+
+        val cityName = params["city"] as? String
+        val targetPlanet = if (cityName != null) {
+            planets.find { it.name == cityName }
+        } else {
+            planets.filter { it.factionId == 0L }.randomOrNull()
+        } ?: return
+
+        val count = (params["count"] as? Number)?.toInt() ?: 5
+        val cityParams = (params["cityParams"] as? Map<String, Any>) ?: emptyMap()
+
+        buildNpcNation(world, rng, targetPlanet, cityParams, count, 0.8f)
+        historyService.logWorldHistory(
+            sessionId,
+            "새로운 세력이 ${targetPlanet.name}에서 건국되었습니다.",
+            world.currentYear.toInt(),
+            world.currentMonth.toInt(),
+        )
+    }
+
+    /**
+     * Provide NPC troop leaders to factions that lack commanders.
+     * gin7: 지휘관 부족 시 NPC 자동 보충.
+     */
+    fun provideNpcTroopLeader(world: SessionState, params: Map<String, Any>) {
+        val sessionId = world.id.toLong()
+        val rng = Random(world.currentYear * 100L + world.currentMonth + 13)
+        val factions = factionRepository.findBySessionId(sessionId)
+        val officers = officerRepository.findBySessionId(sessionId)
+
+        for (faction in factions) {
+            val factionOfficers = officers.filter { it.factionId == faction.id }
+            val minOfficers = (params["minOfficers"] as? Number)?.toInt() ?: 5
+
+            if (factionOfficers.size < minOfficers) {
+                val deficit = minOfficers - factionOfficers.size
+                val capitalPlanet = planetRepository.findById(faction.capitalPlanetId).orElse(null) ?: continue
+
+                for (i in 0 until deficit) {
+                    val leadership = rng.nextInt(35, 70).toShort()
+                    val command = rng.nextInt(35, 70).toShort()
+                    val intelligence = rng.nextInt(35, 70).toShort()
+                    val politics = derivePoliticsFromStats(leadership.toInt(), command.toInt(), intelligence.toInt(), rng).toShort()
+                    val administration = deriveCharmFromStats(leadership.toInt(), command.toInt(), intelligence.toInt(), rng).toShort()
+
+                    officerRepository.save(Officer(
+                        sessionId = sessionId,
+                        name = "지휘관_${faction.id}_${factionOfficers.size + i + 1}",
+                        factionId = faction.id,
+                        planetId = capitalPlanet.id,
+                        leadership = leadership,
+                        command = command,
+                        intelligence = intelligence,
+                        politics = politics,
+                        administration = administration,
+                        age = rng.nextInt(22, 45).toShort(),
+                        npcState = 3,
+                        rank = rng.nextInt(1, 5).toShort(),
+                    ))
+                }
+            }
+        }
+    }
+
     private fun derivePoliticsFromStats(leadership: Int, strength: Int, intel: Int, rng: Random): Int {
         val base = intel * 0.4 + leadership * 0.3
         val variance = rng.nextInt(-15, 16)

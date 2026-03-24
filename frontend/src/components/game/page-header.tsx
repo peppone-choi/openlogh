@@ -3,6 +3,8 @@
 import { usePathname, useRouter } from 'next/navigation';
 import type { LucideIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useWorldStore } from '@/stores/worldStore';
+import { useOfficerStore } from '@/stores/officerStore';
 
 interface PageHeaderProps {
     icon?: LucideIcon;
@@ -13,8 +15,17 @@ interface PageHeaderProps {
 export function PageHeader({ icon: Icon, title, description }: PageHeaderProps) {
     const router = useRouter();
     const pathname = usePathname();
+    const { currentWorld, fetchWorld } = useWorldStore();
+    const { fetchMyOfficer } = useOfficerStore();
 
     const isMainPage = pathname === '/';
+
+    const handleRefresh = async () => {
+        if (currentWorld) {
+            await Promise.all([fetchMyOfficer(currentWorld.id), fetchWorld(currentWorld.id)]);
+        }
+        router.refresh();
+    };
 
     return (
         <div className="space-y-1 legacy-page-wrap">
@@ -49,7 +60,7 @@ export function PageHeader({ icon: Icon, title, description }: PageHeaderProps) 
                     size="sm"
                     className="h-full rounded-none border-r font-mono text-xs tracking-wide"
                     style={{ borderColor: 'rgba(201,168,76,0.25)', color: 'rgba(201,168,76,0.7)' }}
-                    onClick={() => window.location.reload()}
+                    onClick={() => void handleRefresh()}
                 >
                     갱신
                 </Button>

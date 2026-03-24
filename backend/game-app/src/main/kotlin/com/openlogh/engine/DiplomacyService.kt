@@ -65,10 +65,11 @@ class DiplomacyService(
             sessionId = sessionId, srcNationId = srcFactionId, destFactionId = destFactionId,
             stateCode = "불가침제의", term = 12,
         ))
+        val nonAggressionContent = "불가침 제의가 도착했습니다. 외교부에서 확인해주세요."
         messageRepository.save(Message(
             sessionId = sessionId, mailboxCode = "diplomacy",
             messageType = MSG_NON_AGGRESSION_PROPOSAL, srcId = srcFactionId, destId = destFactionId,
-            payload = mutableMapOf("srcNationId" to srcFactionId, "destNationId" to destFactionId),
+            payload = mutableMapOf("content" to nonAggressionContent, "srcNationId" to srcFactionId, "destNationId" to destFactionId),
         ))
         return proposal
     }
@@ -90,10 +91,11 @@ class DiplomacyService(
             sessionId = sessionId, srcNationId = srcFactionId, destFactionId = destFactionId,
             stateCode = "불가침파기제의", term = 12,
         ))
+        val breakContent = "불가침 파기 제의가 도착했습니다. 외교부에서 확인해주세요."
         messageRepository.save(Message(
             sessionId = sessionId, mailboxCode = "diplomacy",
             messageType = MSG_BREAK_NON_AGGRESSION_PROPOSAL, srcId = srcFactionId, destId = destFactionId,
-            payload = mutableMapOf("srcNationId" to srcFactionId, "destNationId" to destFactionId),
+            payload = mutableMapOf("content" to breakContent, "srcNationId" to srcFactionId, "destNationId" to destFactionId),
         ))
         return proposal
     }
@@ -114,10 +116,11 @@ class DiplomacyService(
             sessionId = sessionId, srcNationId = srcFactionId, destFactionId = destFactionId,
             stateCode = "종전제의", term = 12,
         ))
+        val ceasefireContent = "종전 제의가 도착했습니다. 외교부에서 확인해주세요."
         messageRepository.save(Message(
             sessionId = sessionId, mailboxCode = "diplomacy",
             messageType = MSG_CEASEFIRE_PROPOSAL, srcId = srcFactionId, destId = destFactionId,
-            payload = mutableMapOf("srcNationId" to srcFactionId, "destNationId" to destFactionId),
+            payload = mutableMapOf("content" to ceasefireContent, "srcNationId" to srcFactionId, "destNationId" to destFactionId),
         ))
         return proposal
     }

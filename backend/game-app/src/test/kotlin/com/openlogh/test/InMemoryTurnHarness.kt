@@ -122,6 +122,7 @@ class InMemoryTurnHarness {
         mock(com.openlogh.repository.OfficerAccessLogRepository::class.java),
         com.openlogh.engine.CommandPointService(officerRepository),
         com.openlogh.engine.AgeGrowthService(officerRepository),
+        com.openlogh.engine.modifier.OfficerLevelModifier(),
     )
 
     init {

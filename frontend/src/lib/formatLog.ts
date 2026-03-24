@@ -1,15 +1,15 @@
 import { createElement, type ReactNode } from 'react';
 
 const COLOR_MAP: Record<string, string> = {
-    R: '#ef4444',
-    B: '#3b82f6',
-    G: '#22c55e',
+    R: 'red',
+    B: 'blue',
+    G: 'green',
     M: '#a855f7',
     C: '#06b6d4',
     L: '#84cc16',
     S: '#94a3b8',
     O: '#f97316',
-    D: '#6b7280',
+    D: 'orangered',
     Y: '#eab308',
     W: '#f8fafc',
 };

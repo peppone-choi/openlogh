@@ -116,9 +116,22 @@ class che_감축(
         val c = city!!
         val n = nation!!
         c.level = (c.level - 1).toShort()
-        c.popMax = max(10000, c.popMax - 10000)
-        n.funds -= 500
-        n.supplies -= 500
+        // Reduce ALL 6 planet stats and their maxes
+        c.populationMax = max(10000, c.populationMax - 10000)
+        c.population = min(c.population, c.populationMax)
+        c.productionMax = max(0, c.productionMax - 2000)
+        c.production = min(c.production, c.productionMax)
+        c.commerceMax = max(0, c.commerceMax - 2000)
+        c.commerce = min(c.commerce, c.commerceMax)
+        c.securityMax = max(0, c.securityMax - 2000)
+        c.security = min(c.security, c.securityMax)
+        c.orbitalDefenseMax = max(0, c.orbitalDefenseMax - 2000)
+        c.orbitalDefense = min(c.orbitalDefense, c.orbitalDefenseMax)
+        c.fortressMax = max(0, c.fortressMax - 2000)
+        c.fortress = min(c.fortress, c.fortressMax)
+        // Refund cost to faction
+        n.funds += 500
+        n.supplies += 500
         return CommandResult(
             success = true,
             logs = listOf("${formatDate()} ${c.name}을(를) 감축했습니다."),
@@ -232,6 +245,8 @@ class che_백성동원(
 ) : NationCommand(general, env, arg) {
     override val actionName = "백성동원"
 
+    override fun getPreReqTurn(): Int = 1
+
     override fun checkFullCondition(): ConstraintResult {
         if (general.officerLevel < 20.toShort()) return ConstraintResult.Fail("군주급 이상만 사용할 수 있습니다")
         val n = nation ?: return ConstraintResult.Fail("국가 정보가 없습니다")
@@ -242,37 +257,33 @@ class che_백성동원(
     override suspend fun run(rng: Random): CommandResult {
         val n = nation!!
         val dc = destCity ?: city!!
-        val popToRecruit = dc.pop / 5 * 4
-        dc.pop -= popToRecruit
+
+        // Boost orbital defense and fortress to 80% of max (no pop reduction)
+        dc.orbitalDefense = max((dc.orbitalDefenseMax * 0.8).toInt(), dc.orbitalDefense)
+        dc.fortress = max((dc.fortressMax * 0.8).toInt(), dc.fortress)
 
         n.strategicCmdLimit = 9
 
-        // Create NPC soldiers
+        // Scaled exp/ded: +5 * (getPreReqTurn() + 1)
+        val expGain = 5 * (getPreReqTurn() + 1)
+        general.experience += expGain
+        general.dedication += expGain
+
+        // Broadcast to faction officers via meta log entry
         val svc = services
         if (svc != null) {
-            val npc1 = Officer(
-                sessionId = general.sessionId,
-                name = "의용군1",
-                factionId = general.factionId,
-                planetId = dc.id,
-                ships = popToRecruit / 2,
-                turnTime = java.time.OffsetDateTime.now(),
-            )
-            val npc2 = Officer(
-                sessionId = general.sessionId,
-                name = "의용군2",
-                factionId = general.factionId,
-                planetId = dc.id,
-                ships = popToRecruit / 2,
-                turnTime = java.time.OffsetDateTime.now(),
-            )
-            svc.generalRepository.save(npc1)
-            svc.generalRepository.save(npc2)
+            val factionOfficers = svc.generalRepository.findByNationId(general.factionId)
+            for (officer in factionOfficers) {
+                if (officer.id != general.id) {
+                    officer.meta["lastBroadcast"] = "${general.name}이(가) ${dc.name}에서 백성동원을 실행했습니다."
+                    svc.generalRepository.save(officer)
+                }
+            }
         }
 
         return CommandResult(
             success = true,
-            logs = listOf("${formatDate()} ${dc.name}에서 백성을 동원했습니다."),
+            logs = listOf("${formatDate()} ${dc.name}에서 백성동원을 실행했습니다."),
         )
     }
 }
@@ -398,12 +409,12 @@ class che_종전제의(
         return ConstraintResult.Pass
     }
 
+    override fun getConstraints(): List<Constraint> = listOf(AllowDiplomacy(20))
+
     override suspend fun run(rng: Random): CommandResult {
         val n = nation!!
         val dn = destNation!!
         services?.diplomacyService?.proposeCeasefire(general.worldId, n.id, dn.id)
-        general.experience += 50
-        general.dedication += 50
         return CommandResult(
             success = true,
             logs = listOf("${formatDate()} ${dn.name}에 종전을 제의했습니다."),
@@ -418,6 +429,8 @@ class che_종전수락(
 ) : NationCommand(general, env, arg) {
     override val actionName = "종전수락"
 
+    override fun getConstraints(): List<Constraint> = listOf(AllowDiplomacy(20))
+
     override fun checkFullCondition(): ConstraintResult {
         if (general.officerLevel < 20.toShort()) return ConstraintResult.Fail("군주급 이상만 사용할 수 있습니다")
         if (destNation == null) return ConstraintResult.Fail("대상 국가가 없습니다")
@@ -429,8 +442,6 @@ class che_종전수락(
         val n = nation!!
         val dn = destNation!!
         services?.diplomacyService?.acceptCeasefire(general.worldId, n.id, dn.id)
-        general.experience += 50
-        general.dedication += 50
         return CommandResult(
             success = true,
             logs = listOf("${formatDate()} ${dn.name}과(와) 종전을 수락했습니다."),
@@ -445,6 +456,8 @@ class che_불가침제의(
 ) : NationCommand(general, env, arg) {
     override val actionName = "불가침제의"
 
+    override fun getConstraints(): List<Constraint> = listOf(AllowDiplomacy(20))
+
     override fun checkFullCondition(): ConstraintResult {
         if (general.officerLevel < 20.toShort()) return ConstraintResult.Fail("군주급 이상만 사용할 수 있습니다")
         if (destNation == null) return ConstraintResult.Fail("대상 국가가 없습니다")
@@ -455,8 +468,6 @@ class che_불가침제의(
         val n = nation!!
         val dn = destNation!!
         services?.diplomacyService?.proposeNonAggression(general.worldId, n.id, dn.id)
-        general.experience += 50
-        general.dedication += 50
         return CommandResult(
             success = true,
             logs = listOf("${formatDate()} ${dn.name}에 불가침을 제의했습니다."),
@@ -471,6 +482,8 @@ class che_불가침수락(
 ) : NationCommand(general, env, arg) {
     override val actionName = "불가침수락"
 
+    override fun getConstraints(): List<Constraint> = listOf(AllowDiplomacy(20))
+
     override fun checkFullCondition(): ConstraintResult {
         if (general.officerLevel < 20.toShort()) return ConstraintResult.Fail("군주급 이상만 사용할 수 있습니다")
         val c = city ?: return ConstraintResult.Fail("도시 정보가 없습니다")
@@ -484,8 +497,6 @@ class che_불가침수락(
         val n = nation!!
         val dn = destNation!!
         services?.diplomacyService?.acceptNonAggression(general.worldId, n.id, dn.id)
-        general.experience += 50
-        general.dedication += 50
         return CommandResult(
             success = true,
             logs = listOf("${formatDate()} ${dn.name}과(와) 불가침을 수락했습니다."),
@@ -500,6 +511,8 @@ class che_불가침파기제의(
 ) : NationCommand(general, env, arg) {
     override val actionName = "불가침파기제의"
 
+    override fun getConstraints(): List<Constraint> = listOf(AllowDiplomacy(20))
+
     override fun checkFullCondition(): ConstraintResult {
         if (general.officerLevel < 20.toShort()) return ConstraintResult.Fail("군주급 이상만 사용할 수 있습니다")
         if (destNation == null) return ConstraintResult.Fail("대상 국가가 없습니다")
@@ -510,8 +523,6 @@ class che_불가침파기제의(
         val n = nation!!
         val dn = destNation!!
         services?.diplomacyService?.proposeBreakNonAggression(general.worldId, n.id, dn.id)
-        general.experience += 50
-        general.dedication += 50
         return CommandResult(
             success = true,
             logs = listOf("${formatDate()} ${dn.name}에 불가침파기를 제의했습니다."),
@@ -526,6 +537,8 @@ class che_불가침파기수락(
 ) : NationCommand(general, env, arg) {
     override val actionName = "불가침파기수락"
 
+    override fun getConstraints(): List<Constraint> = listOf(AllowDiplomacy(20))
+
     override fun checkFullCondition(): ConstraintResult {
         if (general.officerLevel < 20.toShort()) return ConstraintResult.Fail("군주급 이상만 사용할 수 있습니다")
         if (destNation == null) return ConstraintResult.Fail("대상 국가가 없습니다")
@@ -537,8 +550,6 @@ class che_불가침파기수락(
         val n = nation!!
         val dn = destNation!!
         services?.diplomacyService?.acceptBreakNonAggression(general.worldId, n.id, dn.id)
-        general.experience += 50
-        general.dedication += 50
         return CommandResult(
             success = true,
             logs = listOf("${formatDate()} ${dn.name}과(와) 불가침을 파기했습니다."),
@@ -745,13 +756,23 @@ class che_이호경식(
         val dn = destNation!!
         n.strategicCmdLimit = 9
 
-        // Find a third nation to provoke war between destNation and them
+        // C: Set diplomacy state=선전포고 (declared), adjust term
         val svc = services
         if (svc != null) {
-            val allNations = svc.nationRepository.findByWorldId(general.worldId)
-            val target = allNations.firstOrNull { it.id != n.id && it.id != dn.id && it.level > 0 }
-            if (target != null) {
-                svc.diplomacyService.declareWar(general.worldId, dn.id, target.id)
+            val sessionId = general.worldId
+            val existing = svc.diplomacyService.getRelationsForNation(sessionId, dn.id)
+                .filter { rel ->
+                    (rel.srcFactionId == n.id && rel.destFactionId == dn.id) ||
+                    (rel.srcFactionId == dn.id && rel.destFactionId == n.id)
+                }
+            val currentState = existing.firstOrNull { !it.isDead }
+            if (currentState == null || currentState.stateCode == "평화") {
+                // state==0 (peace): term = 3
+                svc.diplomacyService.createRelation(sessionId, n.id, dn.id, "선전포고", 3)
+            } else {
+                // state already exists: term = term + 3
+                val newTerm = (currentState.term + 3).toInt()
+                svc.diplomacyService.createRelation(sessionId, n.id, dn.id, "선전포고", newTerm)
             }
         }
 

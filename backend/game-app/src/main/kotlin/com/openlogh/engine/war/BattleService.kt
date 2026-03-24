@@ -1,6 +1,7 @@
 package com.openlogh.engine.war
 
 import com.openlogh.engine.DiplomacyService
+import kotlin.math.hypot
 import com.openlogh.engine.EventService
 import com.openlogh.engine.modifier.ModifierService
 import com.openlogh.engine.tactical.TacticalSessionManager
@@ -66,8 +67,14 @@ class BattleService(
 
             if (attackers.isEmpty()) continue
 
-            // 행성 수비 장교 (방어측)
-            val defenders = officers.filter { it.factionId == planet.factionId && it.ships > 0 }
+            // 행성 수비 장교 (방어측) — C9: qualification filters
+            val defenders = officers.filter {
+                it.factionId == planet.factionId &&
+                it.ships > 0 &&
+                it.supplies > it.ships / 100 &&
+                it.training >= it.defenceTrain &&
+                it.morale >= it.defenceTrain
+            }
 
             // 한 명이라도 온라인(플레이어)이면 전술 전투 세션 생성
             val anyOnline = attackers.any { it.userId != null } || defenders.any { it.userId != null }
@@ -207,7 +214,24 @@ class BattleService(
         remainingCities: List<Planet>,
         world: SessionState,
     ) {
-        val newCapital = remainingCities.maxByOrNull { it.population } ?: return
+        // C10: relocate to closest planet by coordinates; fall back to highest population
+        val capitalId = defenderFaction.capitalPlanetId
+        val oldCapital = if (capitalId != null) planetRepository.findById(capitalId).orElse(null) else null
+        val newCapital = if (oldCapital != null) {
+            val ox = (oldCapital.meta["x"] as? Number)?.toDouble()
+            val oy = (oldCapital.meta["y"] as? Number)?.toDouble()
+            if (ox != null && oy != null) {
+                remainingCities.minByOrNull { p ->
+                    val px = (p.meta["x"] as? Number)?.toDouble() ?: Double.MAX_VALUE
+                    val py = (p.meta["y"] as? Number)?.toDouble() ?: Double.MAX_VALUE
+                    hypot(px - ox, py - oy)
+                }
+            } else {
+                remainingCities.maxByOrNull { it.population }
+            }
+        } else {
+            remainingCities.maxByOrNull { it.population }
+        } ?: return
         defenderFaction.capitalPlanetId = newCapital.id
 
         defenderFaction.funds /= 2

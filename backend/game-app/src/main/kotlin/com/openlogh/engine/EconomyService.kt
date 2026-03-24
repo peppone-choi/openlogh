@@ -118,9 +118,17 @@ class EconomyService(
         factionMap: Map<Long, Faction>,
         officers: List<Officer>,
     ) {
+        // C: 0.99 decay on ALL planets first
         for (planet in planets) {
-            if (planet.factionId != 0L) {
-                // Supplied nation planet: growth without pre-decay
+            planet.production = floor(planet.production * 0.99).toInt()
+            planet.commerce = floor(planet.commerce * 0.99).toInt()
+            planet.security = floor(planet.security * 0.99).toInt()
+            planet.population = floor(planet.population * 0.99).toInt()
+        }
+
+        // Then growth only for supplied faction planets
+        for (planet in planets) {
+            if (planet.factionId != 0L && planet.supplyState.toInt() != 0) {
                 val faction = factionMap[planet.factionId]
                 val taxRate = faction?.conscriptionRateTmp?.toInt() ?: 10
                 val genericRatio = (20 - taxRate) / 200.0
@@ -130,18 +138,12 @@ class EconomyService(
                 val doctrine = com.openlogh.engine.doctrine.FactionDoctrine.fromMeta(faction?.meta ?: emptyMap())
                 val prodMod = 1.0 + (doctrine?.getProductionModifier() ?: 0.0)
                 val commMod = 1.0 + (doctrine?.getCommerceModifier() ?: 0.0)
-                val techMod = 1.0 + (doctrine?.getTechModifier() ?: 0.0)
 
                 planet.production = min(planet.productionMax, floor(planet.production * growthMultiplier * prodMod).toInt())
                 planet.commerce = min(planet.commerceMax, floor(planet.commerce * growthMultiplier * commMod).toInt())
                 planet.security = min(planet.securityMax, floor(planet.security * growthMultiplier).toInt())
                 planet.population = min(planet.populationMax, floor(planet.population * growthMultiplier).toInt())
-            } else {
-                // Neutral planet: decay by 0.99
-                planet.production = floor(planet.production * 0.99).toInt()
-                planet.commerce = floor(planet.commerce * 0.99).toInt()
-                planet.security = floor(planet.security * 0.99).toInt()
-                planet.population = floor(planet.population * 0.99).toInt()
+            } else if (planet.factionId == 0L) {
                 planet.approval = 50f
             }
         }
@@ -220,8 +222,13 @@ class EconomyService(
         val sessionId = world.id.toLong()
         val planets = planetRepository.findBySessionId(sessionId)
         for (planet in planets) {
-            val variation = (-5..5).random()
-            planet.tradeRoute = (planet.tradeRoute + variation).coerceIn(80, 120)
+            if (planet.factionId != 0L && planet.supplyState.toInt() != 0) {
+                val variation = (-5..5).random()
+                planet.tradeRoute = (planet.tradeRoute + variation).coerceIn(80, 120)
+            } else {
+                // Non-qualifying planets reset trade_route to 100
+                planet.tradeRoute = 100
+            }
             planetRepository.save(planet)
         }
     }
