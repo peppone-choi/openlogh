@@ -70,30 +70,50 @@ export function buildHeightMap(imageData: ImageData, segmentsX: number, segments
     return heightMap;
 }
 
-/** 도시 주변 평탄화 — 반경 내 vertex를 도시 높이로 */
+/** 도시 레벨별 평탄화 반경 (세그먼트 단위) */
+function getCityFlattenRadius(level: number): number {
+    if (level <= 2) return 2; // 수/진: 소형
+    if (level <= 4) return 3; // 관/이: 중형
+    if (level <= 6) return 4; // 소/중도시
+    return 5; // 대/특도시
+}
+
+/** 도시 주변 평탄화 — 반경 내 vertex를 부드럽게 낮추고 평탄하게 */
 export function flattenAroundCities(
     heightMap: Float32Array,
     segmentsX: number,
     segmentsZ: number,
-    cities: RenderCity[],
-    radius: number = 2
+    cities: RenderCity[]
 ): void {
     for (const city of cities) {
-        // 도시 좌표를 세그먼트 인덱스로 변환
         const cix = Math.round((city.x / 700) * segmentsX);
         const ciz = Math.round((city.y / 500) * segmentsZ);
+        const radius = getCityFlattenRadius(city.level);
 
-        // 도시 위치의 기본 높이 (약간 높게)
+        // 도시 위치 높이: 산악이면 낮추고, 수역이면 올림 → 적정 범위로 클램프
         const centerIdx = ciz * (segmentsX + 1) + cix;
-        const cityHeight = Math.max(heightMap[centerIdx] ?? 0.3, 0.3);
+        const rawHeight = heightMap[centerIdx] ?? 0.3;
+        const cityHeight = Math.max(Math.min(rawHeight, 1.0), 0.2); // 0.2~1.0 범위로 제한
 
+        // 내부 영역: 완전 평탄화
+        const innerRadius = Math.max(1, radius - 1);
         for (let dz = -radius; dz <= radius; dz++) {
             for (let dx = -radius; dx <= radius; dx++) {
                 const ix = cix + dx;
                 const iz = ciz + dz;
                 if (ix < 0 || ix > segmentsX || iz < 0 || iz > segmentsZ) continue;
-                if (dx * dx + dz * dz > radius * radius) continue;
-                heightMap[iz * (segmentsX + 1) + ix] = cityHeight;
+                const dist = Math.sqrt(dx * dx + dz * dz);
+                if (dist > radius) continue;
+
+                const idx = iz * (segmentsX + 1) + ix;
+                if (dist <= innerRadius) {
+                    // 내부: 완전히 cityHeight로
+                    heightMap[idx] = cityHeight;
+                } else {
+                    // 외곽: 기존 높이와 cityHeight 사이를 부드럽게 보간
+                    const t = (dist - innerRadius) / (radius - innerRadius);
+                    heightMap[idx] = cityHeight + (heightMap[idx] - cityHeight) * t;
+                }
             }
         }
     }
