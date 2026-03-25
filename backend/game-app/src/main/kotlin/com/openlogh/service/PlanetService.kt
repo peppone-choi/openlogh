@@ -15,7 +15,7 @@ class PlanetService(
     private val factionRepository: FactionRepository,
 ) {
     fun canonicalRegionForDisplay(planet: Planet): Short {
-        val cities = mapService.getCities("che")
+        val cities = mapService.getCities("logh")
         val mapCity = cities.find { it.name == planet.name }
         return mapCity?.region?.toShort() ?: planet.region
     }

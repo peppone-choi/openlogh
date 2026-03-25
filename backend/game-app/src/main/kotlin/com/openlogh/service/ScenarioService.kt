@@ -103,7 +103,7 @@ class ScenarioService(
         val resolvedCommitSha = commitSha?.takeIf { it.isNotBlank() } ?: defaultCommitSha
         val resolvedGameVersion = gameVersion?.takeIf { it.isNotBlank() } ?: defaultGameVersion
 
-        val mapName = scenario.map?.mapName ?: "che"
+        val mapName = scenario.map?.mapName ?: "logh"
         val extendedGeneralEnabled = extendEnabled ?: readExtendedGeneralFlag(scenario.const)
         val hiddenSeed = java.util.UUID.randomUUID().toString()
         val initRandom = Random(hiddenSeed.hashCode().toLong())
@@ -137,7 +137,7 @@ class ScenarioService(
         val sessionId = world.id.toLong()
 
         // 1. Create cities from map data
-        val mapCities = try { mapService.getCities(mapName) } catch (_: Exception) { mapService.getCities("che") }
+        val mapCities = try { mapService.getCities(mapName) } catch (_: Exception) { mapService.getCities("logh") }
         val cityEntities = mapCities.map { mc ->
             val init = CITY_LEVEL_INIT[mc.level] ?: DEFAULT_CITY_INIT
             Planet(
@@ -314,7 +314,7 @@ class ScenarioService(
         entityManager.flush()
 
         val scenario = getScenario(scenarioCode)
-        val mapName = scenario.map?.mapName ?: "che"
+        val mapName = scenario.map?.mapName ?: "logh"
         val extendedGeneralEnabled = extendEnabled ?: readExtendedGeneralFlag(scenario.const)
         val hiddenSeed = java.util.UUID.randomUUID().toString()
         val initRandom = Random(hiddenSeed.hashCode().toLong())
@@ -344,7 +344,7 @@ class ScenarioService(
         existingWorld.updatedAt = OffsetDateTime.now()
         worldStateRepository.save(existingWorld)
 
-        val mapCities = try { mapService.getCities(mapName) } catch (_: Exception) { mapService.getCities("che") }
+        val mapCities = try { mapService.getCities(mapName) } catch (_: Exception) { mapService.getCities("logh") }
         val reinitCityEntities = mapCities.map { mc ->
             val init = CITY_LEVEL_INIT[mc.level] ?: DEFAULT_CITY_INIT
             Planet(
@@ -736,7 +736,7 @@ class ScenarioService(
         val mapName =
             (world.config["mapCode"] as? String)
                 ?: scenario.map?.mapName
-                ?: "che"
+                ?: "logh"
         val extendedGeneralEnabled =
             parseBooleanFlag(world.config["extend"] ?: world.config["extendedGeneral"])
                 ?: readExtendedGeneralFlag(scenario.const)

@@ -33,8 +33,8 @@ class ScenarioData(
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class ScenarioMap(
-    val mapName: String = "che",
-    val unitSet: String = "che",
+    val mapName: String = "logh",
+    val unitSet: String = "logh",
     val scenarioEffect: String? = null,
 )
 
