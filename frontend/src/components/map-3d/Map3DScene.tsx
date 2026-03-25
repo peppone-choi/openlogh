@@ -4,7 +4,7 @@ import { Suspense, useState, useCallback } from 'react';
 import { Canvas } from '@react-three/fiber';
 import type { MapSeason } from '@/lib/map-constants';
 import type { RenderCity } from '@/components/game/map-canvas';
-import type { General, Nation, Diplomacy } from '@/types';
+import type { General, Nation, Diplomacy, CityConst } from '@/types';
 import { SEASON_LIGHT_COLOR, SEASON_AMBIENT_INTENSITY, buildCityPositions } from '@/lib/map3d-utils';
 import { CameraController } from '@/components/battle-3d/camera/CameraController';
 import { TerrainFromImage } from './TerrainFromImage';
@@ -23,6 +23,7 @@ interface Map3DSceneProps {
     generals?: General[];
     nations?: Nation[];
     diplomacy?: Diplomacy[];
+    mapData?: { cities: CityConst[] };
     onCityClick?: (cityId: number) => void;
     className?: string;
 }
@@ -34,6 +35,7 @@ export function Map3DScene({
     generals,
     nations,
     diplomacy,
+    mapData,
     onCityClick,
     className,
 }: Map3DSceneProps) {
@@ -80,7 +82,12 @@ export function Map3DScene({
                     {positions && <NationTerritory cities={cities} cityPositions={positions} />}
                     {positions && <CityInteraction cities={cities} positions={positions} onCityClick={onCityClick} />}
                     {positions && generals && generals.length > 0 && (
-                        <TroopMarkers generals={generals} cityPositions={positions} nations={nations ?? []} />
+                        <TroopMarkers
+                            generals={generals}
+                            cityPositions={positions}
+                            nations={nations ?? []}
+                            mapData={mapData}
+                        />
                     )}
                     {positions && diplomacy && diplomacy.length > 0 && (
                         <WarEffects cities={cities} cityPositions={positions} diplomacy={diplomacy} />

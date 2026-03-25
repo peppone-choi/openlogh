@@ -221,6 +221,9 @@ export function MapViewer({
                             mapCode={mapCode}
                             season={season}
                             cities={renderCities}
+                            generals={isPublicMode ? undefined : generals}
+                            nations={isPublicMode ? undefined : nations}
+                            mapData={isPublicMode ? undefined : (mapData ?? undefined)}
                             onCityClick={(cityId) => {
                                 if (onCitySelect) {
                                     onCitySelect(cityId);
