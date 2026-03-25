@@ -89,20 +89,18 @@ class WorldController(
 
             val response = worldService.getWorld(created.id)?.let { WorldStateResponse.from(it) } ?: created
             ResponseEntity.status(HttpStatus.CREATED).body(response)
-        } catch (_: IllegalArgumentException) {
+        } catch (e: IllegalArgumentException) {
+            log.error("createWorld IllegalArgumentException: {}", e.message, e)
             ResponseEntity.badRequest().build()
-        } catch (_: IllegalStateException) {
+        } catch (e: IllegalStateException) {
+            log.error("createWorld IllegalStateException: {}", e.message, e)
             ResponseEntity.status(HttpStatus.CONFLICT).build()
-        } catch (_: WebClientResponseException.Unauthorized) {
-            ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
-        } catch (_: WebClientResponseException.Forbidden) {
-            ResponseEntity.status(HttpStatus.FORBIDDEN).build()
-        } catch (_: WebClientResponseException.BadRequest) {
-            ResponseEntity.badRequest().build()
-        } catch (_: WebClientResponseException.NotFound) {
-            ResponseEntity.status(HttpStatus.NOT_FOUND).build()
-        } catch (_: WebClientResponseException) {
-            ResponseEntity.status(HttpStatus.BAD_GATEWAY).build()
+        } catch (e: WebClientResponseException) {
+            log.error("createWorld WebClientResponseException: {} {}", e.statusCode, e.responseBodyAsString, e)
+            ResponseEntity.status(e.statusCode).build()
+        } catch (e: Exception) {
+            log.error("createWorld unexpected error: {}", e.message, e)
+            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build()
         }
     }
 
