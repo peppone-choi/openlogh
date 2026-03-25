@@ -19,16 +19,16 @@ function formatTurnTime(turnTime: string | null | undefined): string {
 
 export default function SpyPage() {
     const currentWorld = useWorldStore((s) => s.currentWorld);
-    const { myOfficer, fetchMyGeneral } = useOfficerStore();
-    const { generals, cities, nations, loading, loadAll } = useGameStore();
+    const { myOfficer, fetchMyOfficer } = useOfficerStore();
+    const { officers, starSystems, factions, loading, loadAll } = useGameStore();
     const [troopNameMap, setTroopNameMap] = useState<Map<number, string>>(new Map());
     const [troopLoading, setTroopLoading] = useState(false);
 
     useEffect(() => {
         if (!currentWorld) return;
-        fetchMyGeneral(currentWorld.id).catch(() => {});
+        fetchMyOfficer(currentWorld.id).catch(() => {});
         loadAll(currentWorld.id);
-    }, [currentWorld, fetchMyGeneral, loadAll]);
+    }, [currentWorld, fetchMyOfficer, loadAll]);
 
     useEffect(() => {
         if (!myOfficer?.factionId) {
@@ -54,15 +54,15 @@ export default function SpyPage() {
             });
     }, [myOfficer?.factionId]);
 
-    const cityMap = useMemo(() => new Map(cities.map((c) => [c.id, c.name])), [cities]);
-    const nationMap = useMemo(() => new Map(nations.map((n) => [n.id, n])), [nations]);
+    const cityMap = useMemo(() => new Map(starSystems.map((c) => [c.id, c.name])), [starSystems]);
+    const nationMap = useMemo(() => new Map(factions.map((n) => [n.id, n])), [factions]);
 
     const nationGenerals = useMemo(() => {
         if (!myOfficer?.factionId) return [];
-        return generals
+        return officers
             .filter((g) => g.factionId === myOfficer.factionId)
             .sort((a, b) => (a.turnTime ?? '').localeCompare(b.turnTime ?? ''));
-    }, [generals, myOfficer?.nationId]);
+    }, [officers, myOfficer?.factionId]);
 
     const summary = useMemo(() => {
         const effective = nationGenerals.filter((g) => g.npcState !== 5);
@@ -100,14 +100,14 @@ export default function SpyPage() {
             </div>
         );
 
-    const myNation = myOfficer?.factionId ? nationMap.get(myOfficer.factionId) : null;
+    const myFaction = myOfficer?.factionId ? nationMap.get(myOfficer.factionId) : null;
 
     return (
         <div className="p-4 space-y-4 max-w-5xl mx-auto">
             <PageHeader icon={Eye} title="암행부" />
 
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Badge variant="secondary">{myNation?.name ?? '무소속'}</Badge>
+                <Badge variant="secondary">{myFaction?.name ?? '무소속'}</Badge>
                 <span>소속 제독 {nationGenerals.length}명</span>
             </div>
 

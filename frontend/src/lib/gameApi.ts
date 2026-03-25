@@ -850,10 +850,10 @@ export const adminApi = {
         extend?: boolean;
         npcMode?: number;
         fiction?: number;
-        maxGeneral?: number;
-        maxNation?: number;
+        maxOfficer?: number;
+        maxFaction?: number;
         joinMode?: string;
-        blockGeneralCreate?: number;
+        blockOfficerCreate?: number;
         showImgLevel?: number;
         opentime?: string;
         startTime?: string;
@@ -890,10 +890,10 @@ export const adminApi = {
             extend?: boolean;
             npcMode?: number;
             fiction?: number;
-            maxGeneral?: number;
-            maxNation?: number;
+            maxOfficer?: number;
+            maxFaction?: number;
             joinMode?: string;
-            blockGeneralCreate?: number;
+            blockOfficerCreate?: number;
             showImgLevel?: number;
             opentime?: string;
             startTime?: string;

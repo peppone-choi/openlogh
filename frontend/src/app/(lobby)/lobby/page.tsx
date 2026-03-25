@@ -115,7 +115,12 @@ function getActionAvailability(
     const npcMode = Number(config.npcMode ?? config.npcmode ?? meta.npcMode ?? meta.npcmode ?? 0);
 
     // Legacy parity: block_general_create bitfield check
-    const blockBits = (meta.blockGeneralCreate as number) ?? (config.blockGeneralCreate as number) ?? 0;
+    const blockBits =
+        (meta.blockOfficerCreate as number) ??
+        (meta.blockGeneralCreate as number) ??
+        (config.blockOfficerCreate as number) ??
+        (config.blockGeneralCreate as number) ??
+        0;
     const blockCreate = !!(blockBits & 1);
     const blockNpc = !!(blockBits & 2);
 
@@ -224,7 +229,7 @@ export default function LobbyPage() {
             <div className="grid gap-6 lg:grid-cols-[1fr_1fr]">
                 {/* LEFT PANEL: World List with Status Indicators */}
                 <div className="space-y-4">
-                    <h2 className="text-lg font-semibold flex items-center gap-2">
+                    <h2 className="game-font text-lg font-semibold flex items-center gap-2">
                         <Globe className="size-5" />
                         서버 목록
                     </h2>
@@ -392,7 +397,7 @@ export default function LobbyPage() {
                     ) : myGeneral ? (
                         /* General exists - show preview + enter button */
                         <div className="space-y-4">
-                            <h2 className="text-lg font-semibold">내 제독</h2>
+                            <h2 className="game-font text-lg font-semibold">내 제독</h2>
                             <Card>
                                 <CardContent className="space-y-4 pt-4">
                                     <div className="flex items-center gap-4">
@@ -408,8 +413,8 @@ export default function LobbyPage() {
                                     </div>
                                     <div className="space-y-1">
                                         <StatBar label="통솔" value={myGeneral.leadership} color="bg-red-500" />
-                                        <StatBar label="무력" value={myGeneral.strength} color="bg-orange-500" />
-                                        <StatBar label="지력" value={myGeneral.intel} color="bg-blue-500" />
+                                        <StatBar label="지휘" value={myGeneral.command} color="bg-orange-500" />
+                                        <StatBar label="정보" value={myGeneral.intelligence} color="bg-blue-500" />
                                         <StatBar label="정치" value={myGeneral.politics} color="bg-green-500" />
                                         <StatBar label="매력" value={myGeneral.charm} color="bg-purple-500" />
                                     </div>
@@ -423,7 +428,7 @@ export default function LobbyPage() {
                     ) : (
                         /* No general - dynamic action matrix based on server state */
                         <div className="space-y-4">
-                            <h2 className="text-lg font-semibold">제독 선택</h2>
+                            <h2 className="game-font text-lg font-semibold">제독 선택</h2>
 
                             {/* Server state summary */}
                             {currentWorld && (
@@ -539,7 +544,7 @@ export default function LobbyPage() {
             {/* Account Management */}
             <Card>
                 <CardHeader>
-                    <CardTitle className="text-center text-sm tracking-widest">계 정 관 리</CardTitle>
+                    <CardTitle className="game-font text-center text-sm tracking-widest">계 정 관 리</CardTitle>
                 </CardHeader>
                 <CardContent className="flex justify-center gap-3">
                     <Button variant="outline" onClick={() => router.push('/account')}>

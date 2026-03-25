@@ -65,7 +65,7 @@ export function PageHeader({ icon: Icon, title, description }: PageHeaderProps) 
                     갱신
                 </Button>
                 <h2
-                    className="m-0 flex items-center justify-center gap-1.5 text-sm font-bold tracking-widest font-mono"
+                    className="game-font m-0 flex items-center justify-center gap-1.5 text-sm font-bold tracking-widest"
                     style={{ color: 'var(--empire-gold, #c9a84c)' }}
                 >
                     {Icon && <Icon className="h-3.5 w-3.5 shrink-0" style={{ color: 'var(--empire-gold, #c9a84c)' }} />}

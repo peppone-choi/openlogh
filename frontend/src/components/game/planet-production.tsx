@@ -22,16 +22,16 @@ export function PlanetProduction({ planet }: PlanetProductionProps) {
     const meta = planet.meta ?? {};
 
     // Monthly ship production (함선 생산): based on production stat
-    const production = planet.production ?? planet.agri ?? 0;
-    const productionMax = planet.productionMax ?? planet.agriMax ?? 1;
+    const production = planet.production ?? 0;
+    const productionMax = planet.productionMax ?? 1;
     const productionRate = productionMax > 0 ? production / productionMax : 0;
 
     // Monthly ship units produced (전함 기준 유닛 수)
     const monthlyShips = Math.floor(productionRate * 3);
 
     // Monthly supplies production (물자 생산): based on commerce
-    const commerce = planet.commerce ?? planet.comm ?? 0;
-    const commerceMax = planet.commerceMax ?? planet.commMax ?? 1;
+    const commerce = planet.commerce ?? 0;
+    const commerceMax = planet.commerceMax ?? 1;
     const commerceRate = commerceMax > 0 ? commerce / commerceMax : 0;
     const monthlySupplies = Math.floor(commerceRate * 500);
 
@@ -39,13 +39,13 @@ export function PlanetProduction({ planet }: PlanetProductionProps) {
     const monthlyGroundUnits = typeof meta.monthlyGroundUnits === 'number' ? meta.monthlyGroundUnits : 0;
 
     // Orbital defense restoration
-    const orbitalDefense = planet.orbital_defense ?? planet.orbitalDefense ?? planet.def ?? 0;
-    const orbitalDefenseMax = planet.orbitalDefenseMax ?? planet.defMax ?? 1;
+    const orbitalDefense = planet.orbital_defense ?? planet.orbitalDefense ?? 0;
+    const orbitalDefenseMax = planet.orbitalDefenseMax ?? 1;
     const monthlyOrbitalRestore = orbitalDefense < orbitalDefenseMax ? Math.floor(orbitalDefenseMax * 0.05) : 0;
 
     // Fortress repair
-    const fortress = planet.fortress ?? planet.wall ?? 0;
-    const fortressMax = planet.fortressMax ?? planet.wallMax ?? 1;
+    const fortress = planet.fortress ?? 0;
+    const fortressMax = planet.fortressMax ?? 1;
     const monthlyFortressRepair = fortress < fortressMax ? Math.floor(fortressMax * 0.03) : 0;
 
     const items: ProductionItem[] = [

@@ -21,7 +21,7 @@ function ProcessingContent() {
     const turnListStr = searchParams.get('turnList');
     const isNationCommand = searchParams.get('nation') === 'true';
     const currentWorld = useWorldStore((s) => s.currentWorld);
-    const { myGeneral } = useOfficerStore();
+    const { myOfficer } = useOfficerStore();
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const isFormMode = Boolean(command && turnListStr);
@@ -48,7 +48,7 @@ function ProcessingContent() {
     // Form mode: command argument form
     if (isFormMode && command) {
         const handleFormSubmit = async (arg: CommandArg) => {
-            if (!myGeneral) return;
+            if (!myOfficer) return;
             setIsSubmitting(true);
             try {
                 const turns = turnList.map((turnIdx) => ({
@@ -56,11 +56,11 @@ function ProcessingContent() {
                     actionCode: command,
                     arg,
                 }));
-                if (isNationCommand && myGeneral.nationId) {
-                    await commandApi.reserveNation(myGeneral.nationId, myGeneral.id, turns);
+                if (isNationCommand && myOfficer.factionId) {
+                    await commandApi.reserveNation(myOfficer.factionId, myOfficer.id, turns);
                     router.push('/commands?mode=nation');
                 } else {
-                    await commandApi.reserve(myGeneral.id, turns);
+                    await commandApi.reserve(myOfficer.id, turns);
                     router.push('/commands');
                 }
             } catch (error) {

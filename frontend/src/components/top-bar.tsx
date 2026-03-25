@@ -87,7 +87,7 @@ export function TopBar({ onMessageClick, onMobileMenuClick }: TopBarProps) {
 
             <SidebarTrigger className="hidden md:flex" />
             <div className="hidden md:flex items-center gap-2 text-sm font-semibold">
-                <span className="tracking-tight" style={{ color: 'var(--empire-gold)' }}>
+                <span className="game-font tracking-tight" style={{ color: 'var(--empire-gold)' }}>
                     오픈LOGH
                 </span>
                 {gameDate && <span className="text-muted-foreground text-xs font-mono">| {gameDate}</span>}

@@ -221,12 +221,12 @@ export default function LobbySelectNpcPage() {
                                                 <span>{npc.leadership}</span>
                                             </div>
                                             <div className="flex justify-between">
-                                                <span className="text-muted-foreground">무력</span>
-                                                <span>{npc.strength}</span>
+                                                <span className="text-muted-foreground">지휘</span>
+                                                <span>{npc.command}</span>
                                             </div>
                                             <div className="flex justify-between">
-                                                <span className="text-muted-foreground">지력</span>
-                                                <span>{npc.intel}</span>
+                                                <span className="text-muted-foreground">정보</span>
+                                                <span>{npc.intelligence}</span>
                                             </div>
                                             <div className="flex justify-between">
                                                 <span className="text-muted-foreground">정치</span>
@@ -360,8 +360,8 @@ export default function LobbySelectNpcPage() {
                                         </td>
                                         <td className="px-2 py-1 text-center">{g.expLevel}</td>
                                         <td className="px-2 py-1 text-center">{g.leadership}</td>
-                                        <td className="px-2 py-1 text-center">{g.strength}</td>
-                                        <td className="px-2 py-1 text-center">{g.intel}</td>
+                                        <td className="px-2 py-1 text-center">{g.command}</td>
+                                        <td className="px-2 py-1 text-center">{g.intelligence}</td>
                                         <td className="px-2 py-1 text-center">{g.politics}</td>
                                         <td className="px-2 py-1 text-center">{g.charm}</td>
                                         <td className="px-2 py-1 text-center">{g.experience}</td>

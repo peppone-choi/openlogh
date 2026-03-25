@@ -5,7 +5,7 @@ import { useWorldStore } from '@/stores/worldStore';
 import { useOfficerStore } from '@/stores/officerStore';
 import { useGameStore } from '@/stores/gameStore';
 import { fleetApi, troopApi } from '@/lib/gameApi';
-import type { Troop, General } from '@/types';
+import type { Fleet, Officer } from '@/types';
 import {
     Shield,
     Plus,
@@ -27,7 +27,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { PageHeader } from '@/components/game/page-header';
 import { LoadingState } from '@/components/game/loading-state';
 import { EmptyState } from '@/components/game/empty-state';
-import { GeneralPortrait } from '@/components/game/general-portrait';
+import { OfficerPortrait } from '@/components/game/officer-portrait';
 import { SHIP_CLASS_NAMES, formatOfficerLevelText, isValidObjKey } from '@/lib/game-utils';
 import { FleetLimitsBadge, calcFleetLimits } from '@/components/game/fleet-limits-badge';
 
@@ -64,10 +64,10 @@ function parseReservedCommandBrief(brief?: string): string[] {
     return [normalized];
 }
 
-function TurnBrief({ members }: { members: General[] }) {
-    const totalCrew = members.reduce((s, g) => s + g.crew, 0);
-    const avgTrain = members.length > 0 ? Math.round(members.reduce((s, g) => s + g.train, 0) / members.length) : 0;
-    const avgAtmos = members.length > 0 ? Math.round(members.reduce((s, g) => s + g.atmos, 0) / members.length) : 0;
+function TurnBrief({ members }: { members: Officer[] }) {
+    const totalCrew = members.reduce((s, g) => s + g.ships, 0);
+    const avgTrain = members.length > 0 ? Math.round(members.reduce((s, g) => s + g.training, 0) / members.length) : 0;
+    const avgAtmos = members.length > 0 ? Math.round(members.reduce((s, g) => s + g.morale, 0) / members.length) : 0;
     const injuredCount = members.filter((g) => g.injury > 0).length;
     const lowCrewCount = members.filter((g) => g.crew < 3000).length;
     const readyCount = members.filter((g) => !g.commandEndTime || new Date(g.commandEndTime) <= new Date()).length;
@@ -113,7 +113,7 @@ function TurnBrief({ members }: { members: General[] }) {
     );
 }
 
-function CommandTimeline({ members }: { members: General[] }) {
+function CommandTimeline({ members }: { members: Officer[] }) {
     const [expanded, setExpanded] = useState(false);
     const sorted = [...members].sort((a, b) => {
         const ta = a.commandEndTime ? new Date(a.commandEndTime).getTime() : 0;
@@ -164,10 +164,10 @@ function CommandTimeline({ members }: { members: General[] }) {
     );
 }
 
-function TroopSummary({ members }: { members: General[] }) {
-    const totalCrew = members.reduce((s, g) => s + g.crew, 0);
-    const avgTrain = members.length > 0 ? Math.round(members.reduce((s, g) => s + g.train, 0) / members.length) : 0;
-    const avgAtmos = members.length > 0 ? Math.round(members.reduce((s, g) => s + g.atmos, 0) / members.length) : 0;
+function TroopSummary({ members }: { members: Officer[] }) {
+    const totalCrew = members.reduce((s, g) => s + g.ships, 0);
+    const avgTrain = members.length > 0 ? Math.round(members.reduce((s, g) => s + g.training, 0) / members.length) : 0;
+    const avgAtmos = members.length > 0 ? Math.round(members.reduce((s, g) => s + g.morale, 0) / members.length) : 0;
 
     return (
         <div className="flex items-center gap-4 text-xs text-muted-foreground border-t border-gray-800 pt-2 mt-2">
@@ -194,7 +194,7 @@ function MemberRow({
     nationLevel,
     onKick,
 }: {
-    g: General;
+    g: Officer;
     isLeader: boolean;
     isTroopLeader: boolean;
     troopId: number;
@@ -203,14 +203,14 @@ function MemberRow({
     leaderCityId?: number;
     onKick: (troopId: number, generalId: number) => void;
 }) {
-    const isDifferentCity = leaderCityId != null && g.cityId !== leaderCityId;
+    const isDifferentCity = leaderCityId != null && g.starSystemId !== leaderCityId;
 
     return (
         <TooltipProvider delayDuration={200}>
             <Tooltip>
                 <TooltipTrigger asChild>
                     <div className="flex items-center gap-3 rounded bg-muted/50 px-3 py-2 text-sm cursor-default hover:bg-muted/80 transition-colors">
-                        <GeneralPortrait picture={g.picture} name={g.name} size="sm" />
+                        <OfficerPortrait picture={g.picture} name={g.name} size="sm" />
                         <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
                                 <span className="font-medium truncate">{g.name}</span>
@@ -236,10 +236,10 @@ function MemberRow({
                                     )}
                                 </span>
                                 <span>
-                                    {SHIP_CLASS_NAMES[g.crewType] ?? g.crewType} {g.crew.toLocaleString()}
+                                    {SHIP_CLASS_NAMES[g.shipClass] ?? g.shipClass} {g.ships.toLocaleString()}
                                 </span>
-                                <span>훈{g.train}</span>
-                                <span>사{g.atmos}</span>
+                                <span>훈{g.training}</span>
+                                <span>사{g.morale}</span>
                                 {cityName && (
                                     <span
                                         className={`flex items-center gap-0.5 ${isDifferentCity ? 'text-orange-400' : ''}`}
@@ -295,30 +295,30 @@ function MemberRow({
                         <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
                             <span className="text-muted-foreground">통솔</span>
                             <span className="tabular-nums">{g.leadership}</span>
-                            <span className="text-muted-foreground">무력</span>
-                            <span className="tabular-nums">{g.strength}</span>
-                            <span className="text-muted-foreground">지력</span>
-                            <span className="tabular-nums">{g.intel}</span>
+                            <span className="text-muted-foreground">지휘</span>
+                            <span className="tabular-nums">{g.command}</span>
+                            <span className="text-muted-foreground">정보</span>
+                            <span className="tabular-nums">{g.intelligence}</span>
                             <span className="text-muted-foreground">정치</span>
                             <span className="tabular-nums">{g.politics ?? '-'}</span>
-                            <span className="text-muted-foreground">매력</span>
-                            <span className="tabular-nums">{g.charm ?? '-'}</span>
+                            <span className="text-muted-foreground">운영</span>
+                            <span className="tabular-nums">{g.administration ?? '-'}</span>
                         </div>
                         <div className="border-t border-gray-700 pt-1 grid grid-cols-2 gap-x-4 gap-y-0.5">
-                            <span className="text-muted-foreground">병종</span>
-                            <span>{SHIP_CLASS_NAMES[g.crewType] ?? g.crewType}</span>
-                            <span className="text-muted-foreground">병력</span>
-                            <span className="tabular-nums">{g.crew.toLocaleString()}</span>
+                            <span className="text-muted-foreground">함종</span>
+                            <span>{SHIP_CLASS_NAMES[g.shipClass] ?? g.shipClass}</span>
+                            <span className="text-muted-foreground">함선</span>
+                            <span className="tabular-nums">{g.ships.toLocaleString()}</span>
                             <span className="text-muted-foreground">훈련</span>
-                            <span className="tabular-nums">{g.train}</span>
+                            <span className="tabular-nums">{g.training}</span>
                             <span className="text-muted-foreground">사기</span>
-                            <span className="tabular-nums">{g.atmos}</span>
+                            <span className="tabular-nums">{g.morale}</span>
                             <span className="text-muted-foreground">수비훈</span>
                             <span className="tabular-nums">{g.defenceTrain ?? '-'}</span>
-                            <span className="text-muted-foreground">금</span>
-                            <span className="tabular-nums">{g.gold?.toLocaleString() ?? '-'}</span>
-                            <span className="text-muted-foreground">쌀</span>
-                            <span className="tabular-nums">{g.rice?.toLocaleString() ?? '-'}</span>
+                            <span className="text-muted-foreground">자금</span>
+                            <span className="tabular-nums">{g.funds?.toLocaleString() ?? '-'}</span>
+                            <span className="text-muted-foreground">물자</span>
+                            <span className="tabular-nums">{g.supplies?.toLocaleString() ?? '-'}</span>
                             {cityName && (
                                 <>
                                     <span className="text-muted-foreground">도시</span>
@@ -358,15 +358,15 @@ function FleetHierarchy({
     generalMap,
     cityMap,
 }: {
-    troops: Troop[];
-    generalMap: Map<number, General>;
+    troops: Fleet[];
+    generalMap: Map<number, Officer>;
     cityMap: Map<number, { id: number; name: string }>;
 }) {
     if (troops.length < 2) return null;
 
     // Build parent-child relationships from meta.parentFleetId
-    const childMap = new Map<number, Troop[]>();
-    const rootTroops: Troop[] = [];
+    const childMap = new Map<number, Fleet[]>();
+    const rootTroops: Fleet[] = [];
 
     for (const t of troops) {
         const meta = t.meta as Record<string, unknown> | undefined;
@@ -381,11 +381,11 @@ function FleetHierarchy({
     }
 
     // If no hierarchy data, show flat list as tree
-    const renderNode = (t: Troop, depth: number) => {
-        const leader = generalMap.get(t.leaderGeneralId);
+    const renderNode = (t: Fleet, depth: number) => {
+        const leader = generalMap.get(t.leaderOfficerId);
         const memberCount = troops.length; // simplified
         const children = childMap.get(t.id) ?? [];
-        const leaderCity = leader ? cityMap.get(leader.cityId) : undefined;
+        const leaderCity = leader ? cityMap.get(leader.starSystemId) : undefined;
 
         return (
             <div key={t.id} style={{ marginLeft: depth * 20 }} className="py-1">
@@ -424,16 +424,16 @@ function CommanderFleetSeparation({
     leader,
     cityMap,
 }: {
-    leader: General;
+    leader: Officer;
     cityMap: Map<number, { id: number; name: string }>;
 }) {
     // Check if commander's city differs from where fleet is operating
-    // In the current data model, we compare leader.cityId with a known fleet location
-    const leaderCity = cityMap.get(leader.cityId);
+    // In the current data model, we compare leader.starSystemId with a known fleet location
+    const leaderCity = cityMap.get(leader.starSystemId);
     const meta = leader.meta as Record<string, unknown> | undefined;
     const fleetLocationId = meta?.fleetLocationId as number | undefined;
 
-    if (!fleetLocationId || fleetLocationId === leader.cityId) return null;
+    if (!fleetLocationId || fleetLocationId === leader.starSystemId) return null;
 
     const fleetCity = cityMap.get(fleetLocationId);
 
@@ -449,11 +449,11 @@ function CommanderFleetSeparation({
 
 export default function TroopPage() {
     const currentWorld = useWorldStore((s) => s.currentWorld);
-    const { myOfficer, fetchMyGeneral } = useOfficerStore();
-    const nations = useGameStore((s) => s.nations);
-    const myNation = nations.find((n) => n.id === myOfficer?.nationId);
-    const { generals, cities, loadAll } = useGameStore();
-    const [troops, setTroops] = useState<Troop[]>([]);
+    const { myOfficer, fetchMyOfficer } = useOfficerStore();
+    const factions = useGameStore((s) => s.factions);
+    const myNation = factions.find((n) => n.id === myOfficer?.factionId);
+    const { officers, starSystems, loadAll } = useGameStore();
+    const [troops, setTroops] = useState<Fleet[]>([]);
     const [loading, setLoading] = useState(true);
     const [showCreate, setShowCreate] = useState(false);
     const [newName, setNewName] = useState('');
@@ -463,30 +463,30 @@ export default function TroopPage() {
 
     useEffect(() => {
         if (!currentWorld) return;
-        if (!myOfficer) fetchMyGeneral(currentWorld.id).catch(() => {});
+        if (!myOfficer) fetchMyOfficer(currentWorld.id).catch(() => {});
         loadAll(currentWorld.id);
-    }, [currentWorld, myOfficer, fetchMyGeneral, loadAll]);
+    }, [currentWorld, myOfficer, fetchMyOfficer, loadAll]);
 
     const fetchTroops = useCallback(async () => {
-        if (!myOfficer?.nationId) return;
+        if (!myOfficer?.factionId) return;
         try {
-            const { data } = await troopApi.listByNation(myOfficer.nationId);
+            const { data } = await troopApi.listByNation(myOfficer.factionId);
             setTroops(data.map((tw) => tw.fleet));
         } finally {
             setLoading(false);
         }
-    }, [myOfficer?.nationId]);
+    }, [myOfficer?.factionId]);
 
     useEffect(() => {
         void fetchTroops();
     }, [fetchTroops]);
 
-    const generalMap = useMemo(() => new Map(generals.map((g) => [g.id, g])), [generals]);
+    const generalMap = useMemo(() => new Map(officers.map((g) => [g.id, g])), [officers]);
 
-    const cityMap = useMemo(() => new Map(cities.map((c) => [c.id, c])), [cities]);
+    const cityMap = useMemo(() => new Map(starSystems.map((c) => [c.id, c])), [starSystems]);
 
     const fleetLimits = useMemo(() => {
-        const factionCities = cities.filter((c) => c.factionId === myOfficer?.factionId);
+        const factionCities = starSystems.filter((c) => c.factionId === myOfficer?.factionId);
         const totalPop = factionCities.reduce((s, c) => s + (c.population ?? 0), 0);
         const maxLimits = calcFleetLimits(totalPop);
         // Count troop types from meta.troopType; default all to 'fleet' if unset
@@ -506,27 +506,27 @@ export default function TroopPage() {
             groundUnits: groundCount,
             ...maxLimits,
         };
-    }, [cities, myOfficer?.factionId, troops]);
+    }, [starSystems, myOfficer?.factionId, troops]);
 
     const troopMembers = useMemo(() => {
-        const map = new Map<number, General[]>();
+        const map = new Map<number, Officer[]>();
         for (const t of troops) {
             map.set(
                 t.id,
-                generals.filter((g) => g.troopId === t.id)
+                officers.filter((g) => g.fleetId === t.id)
             );
         }
         return map;
-    }, [troops, generals]);
+    }, [troops, officers]);
 
     const handleCreate = async () => {
-        if (!currentWorld || !myOfficer?.nationId || !newName.trim()) return;
+        if (!currentWorld || !myOfficer?.factionId || !newName.trim()) return;
         setSaving(true);
         try {
             await troopApi.create({
                 worldId: currentWorld.id,
                 leaderOfficerId: myOfficer.id,
-                factionId: myOfficer.nationId,
+                factionId: myOfficer.factionId,
                 name: newName.trim(),
             });
             setNewName('');
@@ -541,14 +541,14 @@ export default function TroopPage() {
         if (!myOfficer) return;
         await troopApi.join(troopId, myOfficer.id);
         await fetchTroops();
-        if (currentWorld) fetchMyGeneral(currentWorld.id);
+        if (currentWorld) fetchMyOfficer(currentWorld.id);
     };
 
     const handleExit = async (troopId: number) => {
         if (!myOfficer) return;
         await troopApi.exit(troopId, myOfficer.id);
         await fetchTroops();
-        if (currentWorld) fetchMyGeneral(currentWorld.id);
+        if (currentWorld) fetchMyOfficer(currentWorld.id);
     };
 
     const handleDisband = async (troopId: number) => {
@@ -573,10 +573,10 @@ export default function TroopPage() {
 
     if (!currentWorld) return <div className="p-4 text-muted-foreground">월드를 선택해주세요.</div>;
     if (loading) return <LoadingState />;
-    if (!myOfficer?.nationId) return <div className="p-4 text-muted-foreground">소속 진영이 없습니다.</div>;
+    if (!myOfficer?.factionId) return <div className="p-4 text-muted-foreground">소속 진영이 없습니다.</div>;
 
     const myTroop = troops.find(
-        (t) => t.leaderGeneralId === myOfficer.id || (troopMembers.get(t.id) ?? []).some((m) => m.id === myOfficer.id)
+        (t) => t.leaderOfficerId === myOfficer.id || (troopMembers.get(t.id) ?? []).some((m) => m.id === myOfficer.id)
     );
 
     return (
@@ -640,10 +640,10 @@ export default function TroopPage() {
                 <EmptyState icon={Shield} title="부대가 없습니다." />
             ) : (
                 troops.map((t) => {
-                    const leader = generalMap.get(t.leaderGeneralId);
+                    const leader = generalMap.get(t.leaderOfficerId);
                     const members = troopMembers.get(t.id) ?? [];
                     const reservedCommands = parseReservedCommandBrief(t.reservedCommandBrief);
-                    const isLeader = myOfficer.id === t.leaderGeneralId;
+                    const isLeader = myOfficer.id === t.leaderOfficerId;
                     const isMember = members.some((m) => m.id === myOfficer.id);
                     const canRename = isLeader && (myOfficer.officerLevel ?? 0) >= 4;
 
@@ -740,8 +740,8 @@ export default function TroopPage() {
                                                 isLeader={true}
                                                 isTroopLeader={isLeader}
                                                 troopId={t.id}
-                                                cityName={cityMap.get(leader.cityId)?.name}
-                                                leaderCityId={leader.cityId}
+                                                cityName={cityMap.get(leader.starSystemId)?.name}
+                                                leaderCityId={leader.starSystemId}
                                                 nationLevel={myNation?.level}
                                                 onKick={handleKick}
                                             />
@@ -758,7 +758,7 @@ export default function TroopPage() {
                                     )}
                                     {/* Other members */}
                                     {members
-                                        .filter((m) => m.id !== t.leaderGeneralId)
+                                        .filter((m) => m.id !== t.leaderOfficerId)
                                         .map((m) => (
                                             <MemberRow
                                                 key={m.id}
@@ -766,8 +766,8 @@ export default function TroopPage() {
                                                 isLeader={false}
                                                 isTroopLeader={isLeader}
                                                 troopId={t.id}
-                                                cityName={cityMap.get(m.cityId)?.name}
-                                                leaderCityId={leader?.cityId}
+                                                cityName={cityMap.get(m.starSystemId)?.name}
+                                                leaderCityId={leader?.starSystemId}
                                                 nationLevel={myNation?.level}
                                                 onKick={handleKick}
                                             />

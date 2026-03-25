@@ -180,12 +180,12 @@ export function AppSidebar() {
         <Sidebar collapsible="icon">
             <SidebarHeader>
                 <div
-                    className="group-data-[collapsible=icon]:hidden px-3 py-2 font-bold text-sm tracking-widest uppercase border-b border-border"
+                    className="game-font group-data-[collapsible=icon]:hidden px-3 py-2 font-bold text-sm tracking-widest uppercase border-b border-border"
                     style={{ color: 'var(--empire-gold)', letterSpacing: '0.12em' }}
                 >
                     Open LOGH
                 </div>
-                <div className="group-data-[collapsible=icon]:hidden px-3 pb-1.5 text-[10px] text-muted-foreground tracking-widest">
+                <div className="game-font group-data-[collapsible=icon]:hidden px-3 pb-1.5 text-[10px] text-muted-foreground tracking-widest">
                     은하영웅전설
                 </div>
             </SidebarHeader>
@@ -215,7 +215,7 @@ export function AppSidebar() {
                                 <SidebarGroupLabel asChild>
                                     <CollapsibleTrigger className="flex w-full items-center gap-2">
                                         <item.icon className="h-4 w-4" />
-                                        <span>{item.title}</span>
+                                        <span className="game-font">{item.title}</span>
                                         <ChevronDown className="ml-auto h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-180" />
                                     </CollapsibleTrigger>
                                 </SidebarGroupLabel>

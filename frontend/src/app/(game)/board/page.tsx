@@ -29,7 +29,7 @@ function BoardPageContent() {
 
     const currentWorld = useWorldStore((s) => s.currentWorld);
     const myOfficer = useOfficerStore((s) => s.myOfficer);
-    const { generals, nations, loadAll } = useGameStore();
+    const { officers, factions, loadAll } = useGameStore();
 
     const [tab, setTab] = useState(isSecretParam ? 'secret' : 'public');
     const [publicPosts, setPublicPosts] = useState<Message[]>([]);
@@ -43,9 +43,9 @@ function BoardPageContent() {
     const [commentsByPost, setCommentsByPost] = useState<Record<number, BoardComment[]>>({});
     const [commentLoadingByPost, setCommentLoadingByPost] = useState<Record<number, boolean>>({});
 
-    const generalMap = useMemo(() => new Map(generals.map((g) => [g.id, g])), [generals]);
+    const generalMap = useMemo(() => new Map(officers.map((g) => [g.id, g])), [officers]);
 
-    const nationMap = useMemo(() => new Map(nations.map((n) => [n.id, n])), [nations]);
+    const nationMap = useMemo(() => new Map(factions.map((n) => [n.id, n])), [factions]);
 
     const canAccessSecret = (myOfficer?.officerLevel ?? 0) >= 2;
     const isSecret = tab === 'secret';
@@ -53,32 +53,32 @@ function BoardPageContent() {
     const visiblePosts = posts.slice(0, visibleCount);
     const hasMore = visibleCount < posts.length;
 
-    // Load game data (generals/nations) for name lookups
+    // Load game data (officers/factions) for name lookups
     useEffect(() => {
-        if (currentWorld && generals.length === 0) {
+        if (currentWorld && officers.length === 0) {
             loadAll(currentWorld.id);
         }
-    }, [currentWorld, generals.length, loadAll]);
+    }, [currentWorld, officers.length, loadAll]);
 
     const loadPublic = useCallback(async () => {
-        if (!currentWorld || !myOfficer?.nationId) return;
+        if (!currentWorld || !myOfficer?.factionId) return;
         try {
-            const { data } = await messageApi.getBoard(currentWorld.id, myOfficer.nationId);
+            const { data } = await messageApi.getBoard(currentWorld.id, myOfficer.factionId);
             setPublicPosts(data);
         } catch {
             /* ignore */
         }
-    }, [currentWorld, myOfficer?.nationId]);
+    }, [currentWorld, myOfficer?.factionId]);
 
     const loadSecret = useCallback(async () => {
-        if (!currentWorld || !myOfficer?.nationId || !canAccessSecret) return;
+        if (!currentWorld || !myOfficer?.factionId || !canAccessSecret) return;
         try {
-            const { data } = await messageApi.getSecretBoard(currentWorld.id, myOfficer.nationId);
+            const { data } = await messageApi.getSecretBoard(currentWorld.id, myOfficer.factionId);
             setSecretPosts(data);
         } catch {
             /* ignore */
         }
-    }, [currentWorld, myOfficer?.nationId, canAccessSecret]);
+    }, [currentWorld, myOfficer?.factionId, canAccessSecret]);
 
     const loadPosts = useCallback(async () => {
         setLoading(true);
@@ -127,7 +127,7 @@ function BoardPageContent() {
                 await messageApi.postSecretBoard(
                     currentWorld.id,
                     myOfficer.id,
-                    myOfficer.nationId,
+                    myOfficer.factionId,
                     content.trim(),
                     title.trim() || undefined
                 );
@@ -136,7 +136,7 @@ function BoardPageContent() {
                 await messageApi.postBoard(
                     currentWorld.id,
                     myOfficer.id,
-                    myOfficer.nationId,
+                    myOfficer.factionId,
                     content.trim(),
                     title.trim() || undefined
                 );
@@ -223,7 +223,7 @@ function BoardPageContent() {
 
                 <TabsContent value={tab} className="mt-4 space-y-4">
                     {/* Compose form */}
-                    {myOfficer && myOfficer.nationId > 0 && (!isSecret || canAccessSecret) && (
+                    {myOfficer && myOfficer.factionId > 0 && (!isSecret || canAccessSecret) && (
                         <Card>
                             <CardContent className="space-y-2">
                                 <div className="flex items-center gap-2 text-xs text-muted-foreground">

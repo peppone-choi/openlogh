@@ -144,8 +144,8 @@ export default function LobbySelectPoolPage() {
         setSelectedForUpdate(g);
         setUpdateStats({
             leadership: g.leadership,
-            strength: g.strength,
-            intel: g.intel,
+            strength: g.command,
+            intel: g.intelligence,
             politics: g.politics,
             charm: g.charm,
         });
@@ -221,8 +221,8 @@ export default function LobbySelectPoolPage() {
                                         </div>
                                         <div className="space-y-1">
                                             <StatBar label="통솔" value={g.leadership} color="bg-red-500" />
-                                            <StatBar label="무력" value={g.strength} color="bg-orange-500" />
-                                            <StatBar label="지력" value={g.intel} color="bg-blue-500" />
+                                            <StatBar label="지휘" value={g.command} color="bg-orange-500" />
+                                            <StatBar label="정보" value={g.intelligence} color="bg-blue-500" />
                                             <StatBar label="정치" value={g.politics} color="bg-green-500" />
                                             <StatBar label="매력" value={g.charm} color="bg-purple-500" />
                                         </div>
@@ -437,7 +437,8 @@ export default function LobbySelectPoolPage() {
                                         <div className="flex-1 min-w-0">
                                             <p className="font-semibold text-sm">{g.name}</p>
                                             <p className="text-xs text-muted-foreground">
-                                                통{g.leadership} 무{g.strength} 지{g.intel} 정{g.politics} 매{g.charm}
+                                                통{g.leadership} 지휘{g.command} 정보{g.intelligence} 정{g.politics}{' '}
+                                                운영{g.administration}
                                             </p>
                                         </div>
                                         <Settings2 className="size-4 text-muted-foreground" />

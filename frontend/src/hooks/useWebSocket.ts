@@ -10,7 +10,7 @@ import { playSoundEffect } from '@/hooks/useSoundEffects';
 export function useWebSocket() {
     const currentWorld = useWorldStore((s) => s.currentWorld);
     const fetchWorld = useWorldStore((s) => s.fetchWorld);
-    const fetchMyGeneral = useOfficerStore((s) => s.fetchMyGeneral);
+    const fetchMyOfficer = useOfficerStore((s) => s.fetchMyOfficer);
     const connectedRef = useRef(false);
     const [enabled, setEnabled] = useState(true);
 
@@ -27,7 +27,7 @@ export function useWebSocket() {
                 playSoundEffect('turnComplete');
                 // Refresh world and general state after turn advance
                 fetchWorld(currentWorld.id).catch(() => {});
-                fetchMyGeneral(currentWorld.id).catch(() => {});
+                fetchMyOfficer(currentWorld.id).catch(() => {});
             },
             onBattle: (data) => {
                 toast.warning(`⚔️ 전투 발생: ${data.message || '전투 알림'}`, {
@@ -53,7 +53,7 @@ export function useWebSocket() {
             disconnectWebSocket();
             connectedRef.current = false;
         };
-    }, [currentWorld, enabled, fetchWorld, fetchMyGeneral]);
+    }, [currentWorld, enabled, fetchWorld, fetchMyOfficer]);
 
     const toggleRealtime = useCallback(() => {
         setEnabled((prev) => {
