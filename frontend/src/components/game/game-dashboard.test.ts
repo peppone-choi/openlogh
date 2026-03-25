@@ -22,3 +22,26 @@ describe('GameDashboard extraction', () => {
         expect(src).toContain('data-tutorial="mobile-tabs"');
     });
 });
+
+describe('GameDashboard WebSocket subscriptions', () => {
+    it('subscribes to /update topic for world-wide events', () => {
+        expect(src).toContain('/topic/world/${currentWorld.id}/update');
+    });
+
+    it('subscribes to /command topic for command changes', () => {
+        expect(src).toContain('/topic/world/${currentWorld.id}/command');
+    });
+
+    it('subscribes to /turn topic', () => {
+        expect(src).toContain('/topic/world/${currentWorld.id}/turn');
+    });
+
+    it('subscribes to /message topic', () => {
+        expect(src).toContain('/topic/world/${currentWorld.id}/message');
+    });
+
+    it('uses debounced reload for WebSocket events', () => {
+        expect(src).toContain('useDebouncedCallback');
+        expect(src).toContain('debouncedReload');
+    });
+});

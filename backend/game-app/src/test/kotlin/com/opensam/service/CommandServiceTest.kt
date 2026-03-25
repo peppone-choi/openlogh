@@ -323,6 +323,46 @@ class CommandServiceTest {
     }
 
     @Test
+    fun `reserveGeneralTurns fires CommandEvent with reserved type`() {
+        val gameEventService = mock(GameEventService::class.java)
+        val general = createGeneral()
+        val world = WorldState(id = 1, name = "world", scenarioCode = "test", realtimeMode = false)
+        val turns = listOf(
+            com.opensam.dto.TurnEntry(turnIdx = 0, actionCode = "휴식", arg = null),
+        )
+
+        `when`(generalRepository.findById(1L)).thenReturn(Optional.of(general))
+        `when`(worldStateRepository.findById(1)).thenReturn(Optional.of(world))
+        `when`(generalTurnRepository.save(org.mockito.ArgumentMatchers.any(GeneralTurn::class.java))).thenAnswer { it.arguments[0] }
+
+        val serviceWithEvent = CommandService(
+            generalTurnRepository = generalTurnRepository,
+            nationTurnRepository = nationTurnRepository,
+            generalRepository = generalRepository,
+            cityRepository = cityRepository,
+            nationRepository = nationRepository,
+            worldStateRepository = worldStateRepository,
+            appUserRepository = appUserRepository,
+            commandExecutor = commandExecutor,
+            commandRegistry = commandRegistry,
+            realtimeService = realtimeService,
+            gameConstService = gameConstService,
+            gameEventService = gameEventService,
+        )
+
+        serviceWithEvent.reserveGeneralTurns(1L, turns)
+
+        verify(gameEventService).fireCommand(
+            worldId = 1L,
+            year = world.currentYear,
+            month = world.currentMonth,
+            generalId = 1L,
+            commandEventType = "reserved",
+            detail = mapOf("turnCount" to 1),
+        )
+    }
+
+    @Test
     fun `world config stores available command whitelist from scenario`() {
         val world = WorldState(id = 1, name = "world", scenarioCode = "test", realtimeMode = false)
         val whitelist = mapOf("개인" to listOf("휴식", "che_이동"))

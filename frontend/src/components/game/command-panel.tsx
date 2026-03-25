@@ -1,17 +1,10 @@
 'use client';
 
-import {
-    useCallback,
-    useEffect,
-    useMemo,
-    useRef,
-    useState,
-    type MouseEvent as ReactMouseEvent,
-    type DragEvent,
-} from 'react';
+import { useCallback, useEffect, useMemo, useState, type MouseEvent as ReactMouseEvent, type DragEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { Clock3, Copy, Pencil, Trash2, GripVertical, ClipboardCopy, ChevronDown, ChevronUp } from 'lucide-react';
 import { useHotkeys } from '@/hooks/useHotkeys';
+import { useDebouncedCallback } from '@/hooks/useDebouncedCallback';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/8bit/card';
 import { Button } from '@/components/ui/8bit/button';
 import { Badge } from '@/components/ui/8bit/badge';
@@ -184,7 +177,6 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
 
     const localStorageKey = `opensam:stored-actions:${generalId}`;
     const recentActionsKey = `opensam:recent-actions:${generalId}`;
-    const turnSignature = `${currentWorld?.currentYear ?? 0}-${currentWorld?.currentMonth ?? 0}`;
 
     useEffect(() => {
         const updateClock = () => {
@@ -291,13 +283,26 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
         return () => window.clearInterval(intervalId);
     }, [realtimeMode, loadRealtimeStatus]);
 
+    const debouncedLoadTurns = useDebouncedCallback(
+        useCallback(() => {
+            void loadTurns();
+        }, [loadTurns]),
+        500
+    );
+
     useEffect(() => {
         if (!currentWorld) return;
-        const unsubscribe = subscribeWebSocket(`/topic/world/${currentWorld.id}/turn`, () => {
-            void loadTurns();
+        const unsubTurn = subscribeWebSocket(`/topic/world/${currentWorld.id}/turn`, () => {
+            debouncedLoadTurns();
         });
-        return unsubscribe;
-    }, [currentWorld, loadTurns]);
+        const unsubCommand = subscribeWebSocket(`/topic/world/${currentWorld.id}/command`, () => {
+            debouncedLoadTurns();
+        });
+        return () => {
+            unsubTurn();
+            unsubCommand();
+        };
+    }, [currentWorld, debouncedLoadTurns]);
 
     const applyToTurns = useCallback(
         async (turnList: number[], actionCode: string, arg?: CommandArg) => {

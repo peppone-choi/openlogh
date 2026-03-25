@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
+import { useDebouncedCallback } from '@/hooks/useDebouncedCallback';
 import { RefreshCw, Map as MapIcon, Swords, User, ScrollText } from 'lucide-react';
 import { useWorldStore } from '@/stores/worldStore';
 import { useGeneralStore } from '@/stores/generalStore';
@@ -118,21 +119,36 @@ export function GameDashboard() {
         loadFrontInfo();
     }, [loadFrontInfo]);
 
+    const debouncedReload = useDebouncedCallback(
+        useCallback(() => {
+            loadFrontInfoRef.current().catch(() => {});
+        }, []),
+        500
+    );
+
     useEffect(() => {
         if (!currentWorld) return;
 
         const unsubTurn = subscribeWebSocket(`/topic/world/${currentWorld.id}/turn`, () => {
-            loadFrontInfoRef.current().catch(() => {});
+            debouncedReload();
         });
         const unsubMessage = subscribeWebSocket(`/topic/world/${currentWorld.id}/message`, () => {
-            loadFrontInfoRef.current().catch(() => {});
+            debouncedReload();
+        });
+        const unsubUpdate = subscribeWebSocket(`/topic/world/${currentWorld.id}/update`, () => {
+            debouncedReload();
+        });
+        const unsubCommand = subscribeWebSocket(`/topic/world/${currentWorld.id}/command`, () => {
+            debouncedReload();
         });
 
         return () => {
             unsubTurn();
             unsubMessage();
+            unsubUpdate();
+            unsubCommand();
         };
-    }, [currentWorld]);
+    }, [currentWorld, debouncedReload]);
 
     // Compute user / NPC gen counts from genCount array
     const genCounts = useMemo(() => {

@@ -85,6 +85,7 @@ class TurnService @Autowired constructor(
     private val generalAccessLogRepository: GeneralAccessLogRepository,
     private val turnPipeline: com.opensam.engine.turn.TurnPipeline,
     private val fieldBattleTrigger: FieldBattleTrigger,
+    private val gameEventService: com.opensam.service.GameEventService? = null,
 ) {
     /** Test-only constructor: omits turnPipeline, uses an empty no-op pipeline. */
     constructor(
@@ -552,6 +553,14 @@ class TurnService @Autowired constructor(
                         nationTurnRepository.delete(consumedNationTurn)
                         nationTurnRepository.shiftTurnsDown(general.nationId, general.officerLevel, consumedNationTurn.turnIdx)
                         if (general.npcState < 2) didConsumeNationTurn = true
+                        gameEventService?.fireCommand(
+                            worldId = worldId,
+                            year = world.currentYear,
+                            month = world.currentMonth,
+                            generalId = general.id,
+                            commandEventType = "consumed",
+                            detail = mapOf("actionCode" to (nationActionCode ?: ""), "nationId" to general.nationId),
+                        )
                     }
                 }
 
@@ -689,6 +698,14 @@ class TurnService @Autowired constructor(
                 if (executedTurn != null) {
                     generalTurnRepository.delete(executedTurn)
                     generalTurnRepository.shiftTurnsDown(general.id, executedTurn.turnIdx)
+                    gameEventService?.fireCommand(
+                        worldId = worldId,
+                        year = world.currentYear,
+                        month = world.currentMonth,
+                        generalId = general.id,
+                        commandEventType = "consumed",
+                        detail = mapOf("actionCode" to actionCode),
+                    )
                 }
 
                 // Track active actions for inheritance (core2026 parity)

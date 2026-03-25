@@ -28,6 +28,7 @@ class CommandService(
     private val commandRegistry: CommandRegistry,
     private val realtimeService: RealtimeService,
     private val gameConstService: GameConstService,
+    private val gameEventService: GameEventService? = null,
 ) {
     fun verifyOwnership(generalId: Long, loginId: String): Boolean {
         val user = appUserRepository.findByLoginId(loginId) ?: return false
@@ -54,7 +55,7 @@ class CommandService(
         val turnIdxList = turns.map { it.turnIdx }
         generalTurnRepository.deleteByGeneralIdAndTurnIdxIn(generalId, turnIdxList)
         generalTurnRepository.flush()
-        return turns.map { entry ->
+        val saved = turns.map { entry ->
             generalTurnRepository.save(
                 GeneralTurn(
                     worldId = general.worldId,
@@ -65,6 +66,15 @@ class CommandService(
                 )
             )
         }
+        gameEventService?.fireCommand(
+            worldId = general.worldId,
+            year = world.currentYear,
+            month = world.currentMonth,
+            generalId = generalId,
+            commandEventType = "reserved",
+            detail = mapOf("turnCount" to saved.size),
+        )
+        return saved
     }
 
     @Transactional
@@ -429,7 +439,7 @@ class CommandService(
         val turnIdxList = turns.map { it.turnIdx }
         nationTurnRepository.deleteByNationIdAndOfficerLevelAndTurnIdxIn(nationId, general.officerLevel, turnIdxList)
         nationTurnRepository.flush()
-        return turns.map { entry ->
+        val saved = turns.map { entry ->
             nationTurnRepository.save(
                 NationTurn(
                     worldId = general.worldId,
@@ -441,6 +451,15 @@ class CommandService(
                 )
             )
         }
+        gameEventService?.fireCommand(
+            worldId = general.worldId,
+            year = world.currentYear,
+            month = world.currentMonth,
+            generalId = generalId,
+            commandEventType = "reserved",
+            detail = mapOf("turnCount" to saved.size, "nationId" to nationId),
+        )
+        return saved
     }
 
     private fun buildFullNationTurnQueue(general: com.opensam.entity.General, existing: List<NationTurn>, maxChiefTurn: Int): MutableList<NationTurn> {

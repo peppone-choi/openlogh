@@ -111,6 +111,19 @@ class GeneralEvent(
     }
 }
 
+class CommandEvent(
+    source: Any, worldId: Long, year: Short, month: Short,
+    val generalId: Long,
+    val commandEventType: String, // "reserved", "consumed", "cleared"
+    val detail: Map<String, Any> = emptyMap(),
+) : GameEvent(source, worldId, year, month, "command") {
+    override fun toPayload() = super.toPayload().apply {
+        put("generalId", generalId)
+        put("commandEventType", commandEventType)
+        putAll(detail)
+    }
+}
+
 @Service
 class GameEventService(
     private val messagingTemplate: SimpMessagingTemplate,
@@ -142,6 +155,11 @@ class GameEventService(
             "/topic/world/$worldId/turn",
             mapOf("year" to year, "month" to month)
         )
+    }
+
+    fun broadcastCommand(worldId: Long, generalId: Long, data: Any) {
+        messagingTemplate.convertAndSend("/topic/world/$worldId/command", data)
+        sendToGeneral(generalId, data)
     }
 
     // ── Event Publishing (Spring ApplicationEvent system) ──
@@ -217,6 +235,17 @@ class GameEventService(
         publish(GeneralEvent(this, worldId, year, month, generalId, nationId, generalEventType, detail))
     }
 
+    /**
+     * Convenience: fire a command event.
+     */
+    fun fireCommand(
+        worldId: Long, year: Short, month: Short,
+        generalId: Long, commandEventType: String,
+        detail: Map<String, Any> = emptyMap(),
+    ) {
+        publish(CommandEvent(this, worldId, year, month, generalId, commandEventType, detail))
+    }
+
     // ── Event Listener: Persist to DB + broadcast via WebSocket ──
 
     @EventListener
@@ -253,6 +282,9 @@ class GameEventService(
             is GeneralEvent -> {
                 sendToGeneral(event.generalId, payload)
                 broadcastWorldUpdate(event.worldId, payload)
+            }
+            is CommandEvent -> {
+                broadcastCommand(event.worldId, event.generalId, payload)
             }
             else -> {
                 broadcastWorldUpdate(event.worldId, payload)

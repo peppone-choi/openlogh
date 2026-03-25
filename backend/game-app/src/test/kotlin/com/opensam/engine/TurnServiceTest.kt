@@ -11,8 +11,10 @@ import com.opensam.engine.turn.steps.DisasterAndTradeStep
 import com.opensam.engine.turn.steps.EconomyPostUpdateStep
 import com.opensam.engine.turn.steps.GeneralMaintenanceStep
 import com.opensam.repository.TrafficSnapshotRepository
+import com.opensam.service.GameEventService
 import com.opensam.service.WorldService
 import com.opensam.entity.General
+import com.opensam.entity.GeneralTurn
 import com.opensam.entity.Nation
 import com.opensam.entity.WorldState
 import com.opensam.repository.*
@@ -464,5 +466,107 @@ class TurnServiceTest {
         val captor = ArgumentCaptor.forClass(General::class.java)
         verify(generalRepository, atLeastOnce()).save(captor.capture())
         assertTrue(captor.allValues.any { it.id == 1L && it.turnTime == originalTurnTime.plusSeconds(300) })
+    }
+
+    @Test
+    fun `processWorld fires fireCommand consumed after consuming a nation turn`() {
+        val gameEventService = mock(GameEventService::class.java)
+        val now = OffsetDateTime.now()
+        val world = createWorld(year = 200, month = 6, tickSeconds = 300, updatedAt = now.minusSeconds(400))
+
+        // Officer-level 5 general whose turnTime is well before nextTurnAt (updatedAt+tick = now-100s)
+        val general = General(
+            id = 1,
+            worldId = 1,
+            name = "대신",
+            nationId = 1,
+            cityId = 1,
+            officerLevel = 5,
+            npcState = 0,
+            turnTime = now.minusSeconds(500),
+        )
+        val nation = com.opensam.entity.Nation(id = 1, worldId = 1, name = "위", color = "#FF0000")
+        val nationTurnEntry = com.opensam.entity.NationTurn(
+            worldId = 1,
+            nationId = 1,
+            officerLevel = 5,
+            turnIdx = 0,
+            actionCode = "Nation휴식",
+            brief = "Nation휴식",
+        )
+
+        `when`(generalRepository.findByWorldId(1L)).thenReturn(listOf(general))
+        `when`(nationRepository.findByWorldId(1L)).thenReturn(listOf(nation))
+        // nationCache is populated via cityCache/nationCache inside executeGeneralCommandsUntil
+        `when`(nationRepository.findById(1L)).thenReturn(java.util.Optional.of(nation))
+        `when`(nationTurnRepository.findByNationIdAndOfficerLevelOrderByTurnIdx(1L, 5)).thenReturn(listOf(nationTurnEntry))
+        `when`(generalTurnRepository.findByGeneralIdOrderByTurnIdx(1L)).thenReturn(emptyList())
+        `when`(cityRepository.findByWorldId(1L)).thenReturn(emptyList())
+        // hasNationCommand("Nation휴식") must return true so nationActionCode is set
+        `when`(commandRegistry.hasNationCommand("Nation휴식")).thenReturn(true)
+
+        val yearbookService = mock(YearbookService::class.java)
+        val worldPortFactory = JpaWorldPortFactory(
+            generalRepository = generalRepository,
+            cityRepository = cityRepository,
+            nationRepository = nationRepository,
+        )
+        val pipeline = TurnPipeline(listOf(
+            EconomyPostUpdateStep(economyService),
+            DisasterAndTradeStep(economyService),
+            DiplomacyStep(diplomacyService),
+            GeneralMaintenanceStep(generalMaintenanceService, specialAssignmentService, inheritanceService, worldPortFactory),
+        ))
+
+        val serviceWithEvent = TurnService(
+            worldStateRepository = worldStateRepository,
+            generalRepository = generalRepository,
+            generalTurnRepository = generalTurnRepository,
+            nationTurnRepository = nationTurnRepository,
+            cityRepository = cityRepository,
+            nationRepository = nationRepository,
+            commandExecutor = commandExecutor,
+            commandRegistry = commandRegistry,
+            scenarioService = scenarioService,
+            economyService = economyService,
+            eventService = eventService,
+            diplomacyService = diplomacyService,
+            generalMaintenanceService = generalMaintenanceService,
+            specialAssignmentService = specialAssignmentService,
+            npcSpawnService = npcSpawnService,
+            unificationService = unificationService,
+            inheritanceService = inheritanceService,
+            yearbookService = yearbookService,
+            auctionService = auctionService,
+            tournamentService = tournamentService,
+            trafficSnapshotRepository = mock(TrafficSnapshotRepository::class.java),
+            worldPortFactory = worldPortFactory,
+            generalAI = generalAI,
+            nationAI = nationAI,
+            modifierService = mock(com.opensam.engine.modifier.ModifierService::class.java),
+            worldService = mock(WorldService::class.java),
+            nationService = mock(com.opensam.service.NationService::class.java),
+            battleService = mock(com.opensam.engine.war.BattleService::class.java),
+            uniqueLotteryService = uniqueLotteryService,
+            commandLogDispatcher = mock(com.opensam.service.CommandLogDispatcher::class.java),
+            gameConstService = mock(com.opensam.service.GameConstService::class.java),
+            generalAccessLogRepository = mock(GeneralAccessLogRepository::class.java),
+            turnPipeline = pipeline,
+            fieldBattleTrigger = mock(com.opensam.engine.war.FieldBattleTrigger::class.java),
+            gameEventService = gameEventService,
+        )
+        `when`(worldStateRepository.save(anyNonNull<WorldState>())).thenAnswer { it.arguments[0] }
+
+        serviceWithEvent.processWorld(world)
+
+        // Commands execute before month advances: month is still 6 at time of fireCommand
+        verify(gameEventService).fireCommand(
+            worldId = 1L,
+            year = 200.toShort(),
+            month = 6.toShort(),
+            generalId = 1L,
+            commandEventType = "consumed",
+            detail = mapOf("actionCode" to "Nation휴식", "nationId" to 1L),
+        )
     }
 }

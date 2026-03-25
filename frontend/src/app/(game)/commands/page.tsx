@@ -14,6 +14,8 @@ import { Input } from '@/components/ui/8bit/input';
 import { useWorldStore } from '@/stores/worldStore';
 import { useGeneralStore } from '@/stores/generalStore';
 import { commandApi } from '@/lib/gameApi';
+import { subscribeWebSocket } from '@/lib/websocket';
+import { useDebouncedCallback } from '@/hooks/useDebouncedCallback';
 import type { CommandArg, CommandTableEntry, NationTurn } from '@/types';
 
 /** Server clock display */
@@ -125,6 +127,7 @@ function NationCommandPanel({
     const [dragOver, setDragOver] = useState<number | null>(null);
     const [presetName, setPresetName] = useState('');
 
+    const currentWorld = useWorldStore((s) => s.currentWorld);
     const presetKey = `opensam:commands:nation-presets:${nationId}`;
 
     const loadData = useCallback(async () => {
@@ -146,6 +149,27 @@ function NationCommandPanel({
     useEffect(() => {
         loadData();
     }, [loadData]);
+
+    const debouncedLoadData = useDebouncedCallback(
+        useCallback(() => {
+            loadData().catch(() => {});
+        }, [loadData]),
+        500
+    );
+
+    useEffect(() => {
+        if (!currentWorld) return;
+        const unsubTurn = subscribeWebSocket(`/topic/world/${currentWorld.id}/turn`, () => {
+            debouncedLoadData();
+        });
+        const unsubCommand = subscribeWebSocket(`/topic/world/${currentWorld.id}/command`, () => {
+            debouncedLoadData();
+        });
+        return () => {
+            unsubTurn();
+            unsubCommand();
+        };
+    }, [currentWorld, debouncedLoadData]);
 
     useEffect(() => {
         if (typeof window === 'undefined') return;
@@ -543,6 +567,28 @@ function CommandsPageInner() {
             fetchMyGeneral(currentWorld.id).catch(() => {});
         }
     }, [currentWorld, myGeneral, fetchMyGeneral]);
+
+    const debouncedFetchGeneral = useDebouncedCallback(
+        useCallback(() => {
+            if (!currentWorld) return;
+            fetchMyGeneral(currentWorld.id).catch(() => {});
+        }, [currentWorld, fetchMyGeneral]),
+        500
+    );
+
+    useEffect(() => {
+        if (!currentWorld) return;
+        const unsubTurn = subscribeWebSocket(`/topic/world/${currentWorld.id}/turn`, () => {
+            debouncedFetchGeneral();
+        });
+        const unsubCommand = subscribeWebSocket(`/topic/world/${currentWorld.id}/command`, () => {
+            debouncedFetchGeneral();
+        });
+        return () => {
+            unsubTurn();
+            unsubCommand();
+        };
+    }, [currentWorld, debouncedFetchGeneral]);
 
     const isChief = (myGeneral?.officerLevel ?? 0) >= 5;
 

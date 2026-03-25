@@ -54,3 +54,20 @@ describe('CommandPanel backdrop click to close', () => {
         expect(source).toContain('stopPropagation');
     });
 });
+
+describe('CommandPanel WebSocket subscriptions', () => {
+    const source = fs.readFileSync(path.resolve(__dirname, 'command-panel.tsx'), 'utf-8');
+
+    it('subscribes to /command topic for real-time command updates', () => {
+        expect(source).toContain('/topic/world/${currentWorld.id}/command');
+    });
+
+    it('subscribes to /turn topic for turn advance updates', () => {
+        expect(source).toContain('/topic/world/${currentWorld.id}/turn');
+    });
+
+    it('uses debounced callback for WebSocket event handling', () => {
+        expect(source).toContain('useDebouncedCallback');
+        expect(source).toContain('debouncedLoadTurns');
+    });
+});
