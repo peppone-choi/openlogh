@@ -38,9 +38,9 @@ class CommandRegistryTest {
     // ========== General Commands ==========
 
     @Test
-    fun `registry should have 57 general commands`() {
+    fun `registry should have 58 general commands`() {
         val names = registry.getGeneralCommandNames()
-        assertEquals(57, names.size, "Expected 57 general commands but got ${names.size}: $names")
+        assertEquals(58, names.size, "Expected 58 general commands but got ${names.size}: $names")
     }
 
     @Test

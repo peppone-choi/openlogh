@@ -210,6 +210,18 @@ class General(
     @Column(name = "command_end_time")
     var commandEndTime: OffsetDateTime? = null,
 
+    @Column(name = "pos_x", nullable = false)
+    var posX: Float = 0f,
+
+    @Column(name = "pos_y", nullable = false)
+    var posY: Float = 0f,
+
+    @Column(name = "dest_x")
+    var destX: Float? = null,
+
+    @Column(name = "dest_y")
+    var destY: Float? = null,
+
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "last_turn", columnDefinition = "jsonb", nullable = false)
     var lastTurn: MutableMap<String, Any> = mutableMapOf(),

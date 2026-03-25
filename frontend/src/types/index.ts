@@ -197,6 +197,10 @@ export interface General {
     expLevel: number;
     createdAt: string;
     updatedAt: string;
+    posX: number;
+    posY: number;
+    destX?: number | null;
+    destY?: number | null;
     warnum?: number;
     killnum?: number;
     deathnum?: number;

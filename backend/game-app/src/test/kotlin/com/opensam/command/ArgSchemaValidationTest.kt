@@ -53,8 +53,8 @@ class ArgSchemaValidationTest {
         val registry = CommandRegistry()
         val registered = registry.getGeneralCommandNames() + registry.getNationCommandNames()
 
-        assertEquals(100, registered.size)
-        assertEquals(100, COMMAND_SCHEMAS.size)
+        assertEquals(101, registered.size)
+        assertEquals(101, COMMAND_SCHEMAS.size)
         assertTrue(registered.all { it in COMMAND_SCHEMAS.keys })
     }
 }

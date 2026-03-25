@@ -24,6 +24,12 @@ private fun parseBool(x: Any?): Boolean? = when (x) {
     else -> null
 }
 
+private fun parseFloat(x: Any?): Float? = when (x) {
+    is Number -> x.toFloat()
+    is String -> x.toFloatOrNull()
+    else -> null
+}
+
 object ArgSchemas {
     val none = ArgSchema.NONE
 
@@ -159,6 +165,13 @@ object ArgSchemas {
         )
     )
 
+    val coords = ArgSchema(
+        listOf(
+            Field("destX", required = true, parser = ::parseFloat),
+            Field("destY", required = true, parser = ::parseFloat),
+        )
+    )
+
     val diplomacyWithTerm = ArgSchema(
         listOf(
             Field(
@@ -236,6 +249,7 @@ val COMMAND_SCHEMAS: Map<String, ArgSchema> = mapOf(
 
     "요격" to ArgSchemas.destCity,
     "순찰" to ArgSchemas.none,
+    "좌표이동" to ArgSchemas.coords,
 
     "NPC능동" to ArgSchemas.destCityOptional,
     "CR건국" to ArgSchemas.foundNation,

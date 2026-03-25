@@ -22,6 +22,7 @@ type ArgField =
     | { type: 'number'; key: string; label: string; placeholder?: string }
     | { type: 'boolean'; key: string; label: string }
     | { type: 'text'; key: string; label: string; placeholder?: string }
+    | { type: 'coordinate'; key: string; label: string }
     | {
           type: 'select';
           key: string;
@@ -328,6 +329,9 @@ const COMMAND_ARGS: Record<string, ArgField[]> = {
     // Field battle
     요격: [{ type: 'city', key: 'destCityId', label: '매복 방면 (인접 도시)' }],
 
+    // Open-world movement
+    좌표이동: [{ type: 'coordinate', key: 'dest', label: '목표 지점 (맵 클릭)' }],
+
     // === No-arg General Commands ===
     // Default
     휴식: [],
@@ -482,6 +486,7 @@ const COMMAND_HELP: Record<string, string> = {
     화시병연구: '화시병을 연구합니다.',
     요격: '인접 도시 방면 도로에 매복하여 적 부대를 요격합니다.',
     순찰: '주둔 도시 인근 도로를 순찰하여 적 부대를 자동 감지합니다.',
+    좌표이동: '맵의 원하는 지점으로 자유롭게 이동합니다. 도로 위가 더 빠릅니다.',
 };
 
 /** Commands that target cities (shown with distance sorting) */
@@ -517,6 +522,8 @@ export function CommandArgForm({ actionCode, onSubmit }: CommandArgFormProps) {
     const [valuesByCommand, setValuesByCommand] = useState<Record<string, Record<string, string>>>({});
     const [mapSelectorOpen, setMapSelectorOpen] = useState(false);
     const [mapSelectorField, setMapSelectorField] = useState<string | null>(null);
+    const [coordX, setCoordX] = useState<string>('');
+    const [coordY, setCoordY] = useState<string>('');
 
     const fields = COMMAND_ARGS[actionCode];
     const values = valuesByCommand[actionCode] ?? {};
@@ -587,6 +594,15 @@ export function CommandArgForm({ actionCode, onSubmit }: CommandArgFormProps) {
     const handleSubmit = () => {
         const arg: CommandArg = {};
         for (const field of fields) {
+            if (field.type === 'coordinate') {
+                const x = Number(coordX);
+                const y = Number(coordY);
+                if (coordX && coordY && !isNaN(x) && !isNaN(y)) {
+                    arg['destX'] = x;
+                    arg['destY'] = y;
+                }
+                continue;
+            }
             const raw = values[field.key];
             if (!raw && raw !== '0') continue;
             if (
@@ -751,6 +767,43 @@ export function CommandArgForm({ actionCode, onSubmit }: CommandArgFormProps) {
                         placeholder={field.placeholder ?? field.label}
                         className="text-xs h-8"
                     />
+                );
+            case 'coordinate':
+                return (
+                    <div key={field.key} className="space-y-1">
+                        <div className="flex items-center gap-2">
+                            <Input
+                                type="number"
+                                value={coordX}
+                                onChange={(e) => setCoordX(e.target.value)}
+                                placeholder="X 좌표"
+                                className="text-xs h-8 w-24"
+                            />
+                            <Input
+                                type="number"
+                                value={coordY}
+                                onChange={(e) => setCoordY(e.target.value)}
+                                placeholder="Y 좌표"
+                                className="text-xs h-8 w-24"
+                            />
+                            {coordX && coordY && (
+                                <span className="text-[10px] text-muted-foreground">
+                                    ({coordX}, {coordY})
+                                </span>
+                            )}
+                        </div>
+                        <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            className="h-7 text-xs"
+                            onClick={() => {
+                                /* map-click integration: caller sets coordinateSelectMode on MapCanvas */
+                            }}
+                        >
+                            맵에서 선택
+                        </Button>
+                    </div>
                 );
         }
     };

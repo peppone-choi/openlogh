@@ -59,6 +59,7 @@ class CommandRegistry {
         registerGeneralCommand("방랑") { g, e, a -> 방랑(g, e, a) }
         registerGeneralCommand("요격") { g, e, a -> 요격(g, e, a) }
         registerGeneralCommand("순찰") { g, e, a -> 순찰(g, e, a) }
+        registerGeneralCommand("좌표이동") { g, e, a -> 좌표이동(g, e, a) }
 
         // Political (19)
         registerGeneralCommand("등용") { g, e, a -> 등용(g, e, a) }

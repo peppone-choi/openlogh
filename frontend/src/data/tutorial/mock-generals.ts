@@ -75,6 +75,8 @@ const BASE_GENERAL: Omit<
     expLevel: 1,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
+    posX: 0,
+    posY: 0,
 };
 
 /** 유저 장수 — 유비 (촉 군주) */

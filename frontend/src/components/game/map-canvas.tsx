@@ -11,6 +11,8 @@ import {
 } from '@/lib/image';
 import { FactionFlag } from '@/components/game/faction-flag';
 import { detailMapCitySizes, MAP_WIDTH, MAP_HEIGHT, SEASON_LABELS, type MapSeason } from '@/lib/map-constants';
+import { UnitMarkers } from '@/components/game/unit-markers';
+import type { UnitMarker } from '@/components/game/unit-markers';
 
 // --- RenderCity: normalized shape consumed by the canvas ---
 export interface RenderCity {
@@ -66,6 +68,11 @@ export interface MapCanvasProps {
     dismissOverlay?: React.ReactNode;
     /** Interception markers to render between city pairs */
     interceptions?: { generalName: string; nationColor: string; fromCityId: number; toCityId: number }[];
+    /** When true, cursor becomes crosshair and clicks call onCoordinateSelect */
+    coordinateSelectMode?: boolean;
+    onCoordinateSelect?: (x: number, y: number) => void;
+    /** Unit markers to overlay on the map */
+    unitMarkers?: UnitMarker[];
 }
 
 // Constants for full map page overlays
@@ -97,6 +104,9 @@ export function MapCanvas({
     useResponsiveScale: useResponsiveScaleProp,
     dismissOverlay,
     interceptions,
+    coordinateSelectMode,
+    onCoordinateSelect,
+    unitMarkers,
 }: MapCanvasProps) {
     const containerRef = useRef<HTMLDivElement>(null);
     const [mapScale, setMapScale] = useState(1);
@@ -209,11 +219,25 @@ export function MapCanvas({
               position: 'relative',
           };
 
+    const handleMapClick = useCallback(
+        (e: React.MouseEvent<HTMLDivElement>) => {
+            if (!coordinateSelectMode || !onCoordinateSelect) return;
+            const rect = e.currentTarget.getBoundingClientRect();
+            const rawX = e.clientX - rect.left + e.currentTarget.scrollLeft;
+            const rawY = e.clientY - rect.top + e.currentTarget.scrollTop;
+            const x = Math.round(rawX / mapScale);
+            const y = Math.round(rawY / mapScale);
+            onCoordinateSelect(x, y);
+        },
+        [coordinateSelectMode, onCoordinateSelect, mapScale]
+    );
+
     return (
         <div
             ref={containerRef}
             className={`relative text-[14px] text-white overflow-hidden ${useResponsive ? 'border border-gray-800 rounded-lg' : 'w-full bg-black'} ${className ?? ''}`}
-            style={outerStyle}
+            style={{ ...outerStyle, cursor: coordinateSelectMode ? 'crosshair' : undefined }}
+            onClick={coordinateSelectMode ? handleMapClick : undefined}
         >
             <div style={innerStyle}>
                 {/* Year/Season header */}
@@ -505,6 +529,13 @@ export function MapCanvas({
                         </div>
                     );
                 })}
+
+                {/* Unit markers */}
+                {unitMarkers && unitMarkers.length > 0 && (
+                    <div className="absolute inset-0 z-[4] pointer-events-none">
+                        <UnitMarkers markers={unitMarkers} mapScale={mapScale} />
+                    </div>
+                )}
 
                 {/* Tooltip */}
                 {hoveredCity && renderTooltip?.(hoveredCity.city, { x: hoveredCity.x, y: hoveredCity.y })}
