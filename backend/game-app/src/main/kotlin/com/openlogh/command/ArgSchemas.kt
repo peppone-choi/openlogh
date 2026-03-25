@@ -140,68 +140,8 @@ object ArgSchemas {
         ),
     ))
 
-    val recruit = ArgSchema(listOf(
-        FieldDef(name = "amount", type = FieldType.INT, required = false, default = 0),
-        FieldDef(name = "crewType", type = FieldType.INT, required = true),
-    ))
-
-    val trade = ArgSchema(listOf(
-        FieldDef(name = "amount", type = FieldType.INT, required = false, default = 0),
-        FieldDef(name = "isBuy", type = FieldType.BOOL, required = false, default = true),
-    ))
-
-    val foundNation = ArgSchema(listOf(
-        FieldDef(name = "nationName", type = FieldType.STRING, required = false, default = "신국"),
-        FieldDef(name = "nationType", type = FieldType.STRING, required = false, default = "che_도적"),
-        FieldDef(name = "colorType", type = FieldType.INT, required = false, default = 0),
-    ))
-
-    val donation = ArgSchema(listOf(
-        FieldDef(name = "isGold", type = FieldType.BOOL, required = false, default = true),
-        FieldDef(name = "amount", type = FieldType.INT, required = false, default = 0),
-    ))
-
-    val gift = ArgSchema(listOf(
-        FieldDef(name = "isGold", type = FieldType.BOOL, required = false, default = true),
-        FieldDef(name = "amount", type = FieldType.INT, required = false, default = 0),
-        FieldDef(name = "destGeneralId", type = FieldType.LONG, required = false),
-    ))
-
-    val nationResource = ArgSchema(listOf(
-        FieldDef(name = "goldAmount", type = FieldType.INT, required = false, default = 0),
-        FieldDef(name = "riceAmount", type = FieldType.INT, required = false, default = 0),
-    ))
-
-    val nationName = ArgSchema(listOf(
-        FieldDef(name = "nationName", type = FieldType.STRING, required = false, default = ""),
-    ))
-
-    val color = ArgSchema(listOf(
-        FieldDef(name = "colorType", type = FieldType.STRING, required = false, default = ""),
-    ))
-
     val rate = ArgSchema(listOf(
         FieldDef(name = "rate", type = FieldType.INT, required = false, default = 0),
-    ))
-
-    val population = ArgSchema(listOf(
-        FieldDef(name = "amount", type = FieldType.INT, required = false, default = 0),
-        FieldDef(
-            name = "destCityId",
-            type = FieldType.LONG,
-            required = false,
-            aliases = listOf("cityId"),
-        ),
-    ))
-
-    val equipment = ArgSchema(listOf(
-        FieldDef(name = "slot", type = FieldType.STRING, required = false, default = "weapon"),
-        FieldDef(name = "itemCode", type = FieldType.STRING, required = false, default = ""),
-        FieldDef(name = "isBuy", type = FieldType.BOOL, required = false, default = true),
-    ))
-
-    val npcAction = ArgSchema(listOf(
-        FieldDef(name = "optionText", type = FieldType.STRING, required = false, default = "행동"),
     ))
 
     val destCityAndGeneral = ArgSchema(listOf(
@@ -215,138 +155,28 @@ object ArgSchemas {
     ))
 }
 
-// ========== COMMAND_SCHEMAS: 151 entries (94 general + 57 nation) ==========
+// ========== COMMAND_SCHEMAS: LOGH commands only ==========
 
 val COMMAND_SCHEMAS: Map<String, ArgSchema> = mapOf(
-    // ===== General Commands (55) =====
-    // Default (1)
+    // ===== Default (1) =====
     "휴식" to ArgSchemas.empty,
 
-    // Civil / Domestic (18)
-    "농지개간" to ArgSchemas.empty,
-    "상업투자" to ArgSchemas.empty,
-    "치안강화" to ArgSchemas.empty,
-    "수비강화" to ArgSchemas.empty,
-    "성벽보수" to ArgSchemas.empty,
-    "정착장려" to ArgSchemas.empty,
-    "주민선정" to ArgSchemas.empty,
-    "기술연구" to ArgSchemas.empty,
-    "모병" to ArgSchemas.recruit,
-    "징병" to ArgSchemas.recruit,
-    "훈련" to ArgSchemas.empty,
-    "사기진작" to ArgSchemas.empty,
-    "소집해제" to ArgSchemas.empty,
-    "숙련전환" to ArgSchemas.empty,
-    "물자조달" to ArgSchemas.empty,
-    "군량매매" to ArgSchemas.trade,
-    "헌납" to ArgSchemas.donation,
-    "단련" to ArgSchemas.empty,
-
-    // Military (15)
-    "출병" to ArgSchemas.destCity,
-    "이동" to ArgSchemas.destCity,
-    "집합" to ArgSchemas.destCity,
-    "귀환" to ArgSchemas.empty,
-    "접경귀환" to ArgSchemas.empty,
-    "강행" to ArgSchemas.destCity,
-    "거병" to ArgSchemas.empty,
-    "전투태세" to ArgSchemas.empty,
-    "화계" to ArgSchemas.destCity,
-    "첩보" to ArgSchemas.destCity,
-    "선동" to ArgSchemas.destCity,
-    "탈취" to ArgSchemas.destCity,
-    "파괴" to ArgSchemas.destCity,
-    "요양" to ArgSchemas.empty,
-    "방랑" to ArgSchemas.empty,
-
-    // Political (18)
-    "견문" to ArgSchemas.empty,
-    "등용" to ArgSchemas.destGeneral,
-    "등용수락" to ArgSchemas.destNation,
-    "임관" to ArgSchemas.destNation,
-    "랜덤임관" to ArgSchemas.empty,
-    "장수대상임관" to ArgSchemas.destNationAndGeneral,
-    "하야" to ArgSchemas.empty,
-    "은퇴" to ArgSchemas.empty,
-    "건국" to ArgSchemas.foundNation,
-    "무작위건국" to ArgSchemas.foundNation,
-    "모반시도" to ArgSchemas.empty,
-    "선양" to ArgSchemas.destGeneral,
-    "해산" to ArgSchemas.empty,
-    "인재탐색" to ArgSchemas.empty,
-    "증여" to ArgSchemas.gift,
-    "장비매매" to ArgSchemas.equipment,
-    "내정특기초기화" to ArgSchemas.empty,
-    "전투특기초기화" to ArgSchemas.empty,
-
-    // Special (3)
-    "NPC능동" to ArgSchemas.npcAction,
-    "CR건국" to ArgSchemas.foundNation,
-    "CR맹훈련" to ArgSchemas.empty,
-
-    // ===== Nation Commands (43) =====
-    // Default (1)
-    "Nation휴식" to ArgSchemas.empty,
-
-    // Resource management (10)
-    "포상" to ArgSchemas.donation,
-    "몰수" to ArgSchemas.donation,
-    "감축" to ArgSchemas.destCity,
-    "증축" to ArgSchemas.destCity,
-    "발령" to ArgSchemas.destCityAndGeneral,
-    "천도" to ArgSchemas.destCity,
-    "백성동원" to ArgSchemas.destCity,
-    "물자원조" to ArgSchemas.nationResource,
-    "국기변경" to ArgSchemas.color,
-    "국호변경" to ArgSchemas.nationName,
-
-    // Diplomacy (7)
-    "선전포고" to ArgSchemas.destNation,
-    "종전제의" to ArgSchemas.destNation,
-    "종전수락" to ArgSchemas.destNationAndGeneral,
-    "불가침제의" to ArgSchemas.destNation,
-    "불가침수락" to ArgSchemas.destNationAndGeneral,
-    "불가침파기제의" to ArgSchemas.destNation,
-    "불가침파기수락" to ArgSchemas.destNationAndGeneral,
-
-    // Strategic (8)
-    "급습" to ArgSchemas.destNation,
-    "수몰" to ArgSchemas.destCity,
-    "허보" to ArgSchemas.destCity,
-    "초토화" to ArgSchemas.destCity,
-    "필사즉생" to ArgSchemas.empty,
-    "이호경식" to ArgSchemas.destNation,
-    "피장파장" to ArgSchemas.destNation,
-    "의병모집" to ArgSchemas.empty,
-
-    // Research (9)
-    "극병연구" to ArgSchemas.empty,
-    "대검병연구" to ArgSchemas.empty,
-    "무희연구" to ArgSchemas.empty,
-    "산저병연구" to ArgSchemas.empty,
-    "상병연구" to ArgSchemas.empty,
-    "원융노병연구" to ArgSchemas.empty,
-    "음귀병연구" to ArgSchemas.empty,
-    "화륜차연구" to ArgSchemas.empty,
-    "화시병연구" to ArgSchemas.empty,
-
-    // Special (3)
-    "무작위수도이전" to ArgSchemas.empty,
-    "부대탈퇴지시" to ArgSchemas.destGeneral,
-    "인구이동" to ArgSchemas.population,
-
-    // Additional (5)
-    "세율변경" to ArgSchemas.rate,
-    "징병률변경" to ArgSchemas.rate,
-    "국가해산" to ArgSchemas.empty,
-    "항복" to ArgSchemas.destNation,
-    "외교초기화" to ArgSchemas.empty,
-
-    // ===== New General Commands (39) =====
+    // ===== Operations / MCP (25) =====
+    "워프항행" to ArgSchemas.empty,
+    "성계내항행" to ArgSchemas.destCity,
     "연료보급" to ArgSchemas.empty,
+    "정찰" to ArgSchemas.destCity,
+    "군기유지" to ArgSchemas.empty,
     "기본훈련" to ArgSchemas.empty,
     "특수훈련" to ArgSchemas.empty,
     "맹훈련" to ArgSchemas.empty,
+    "육전훈련" to ArgSchemas.empty,
+    "공전훈련" to ArgSchemas.empty,
+    "경계출동" to ArgSchemas.empty,
+    "무력진압" to ArgSchemas.empty,
+    "분열행진" to ArgSchemas.empty,
+    "징발" to ArgSchemas.empty,
+    "특별경비" to ArgSchemas.empty,
     "정비" to ArgSchemas.empty,
     "지상작전개시" to ArgSchemas.destCity,
     "지상전투개시" to ArgSchemas.destCity,
@@ -355,91 +185,57 @@ val COMMAND_SCHEMAS: Map<String, ArgSchema> = mapOf(
     "후퇴" to ArgSchemas.empty,
     "육전대출격" to ArgSchemas.empty,
     "육전대철수" to ArgSchemas.empty,
-    "정찰" to ArgSchemas.destCity,
+    "육전전술훈련" to ArgSchemas.empty,
+    "공전전술훈련" to ArgSchemas.empty,
+
+    // ===== Personal / PCP (16) =====
     "퇴역" to ArgSchemas.empty,
     "지원전환" to ArgSchemas.empty,
     "망명" to ArgSchemas.destNation,
     "회견" to ArgSchemas.destGeneral,
     "수강" to ArgSchemas.empty,
+    "기함구매" to ArgSchemas.empty,
+    "자금투입" to ArgSchemas.empty,
+    "귀환설정" to ArgSchemas.destCity,
+    "원거리이동" to ArgSchemas.destCity,
+    "근거리이동" to ArgSchemas.empty,
+    "병기연습" to ArgSchemas.empty,
     "반의" to ArgSchemas.empty,
     "모의" to ArgSchemas.empty,
     "설득" to ArgSchemas.destGeneral,
     "반란참가" to ArgSchemas.empty,
-    "자금투입" to ArgSchemas.empty,
-    "기함구매" to ArgSchemas.empty,
+    "반란" to ArgSchemas.empty,
+
+    // ===== Command / Leadership (8) =====
     "작전계획" to ArgSchemas.empty,
-    "작전철회" to ArgSchemas.empty,
     "장수발령" to ArgSchemas.destCityAndGeneral,
+    "작전철회" to ArgSchemas.empty,
+    "부대결성" to ArgSchemas.empty,
+    "부대해산" to ArgSchemas.empty,
     "강의" to ArgSchemas.empty,
     "수송계획" to ArgSchemas.empty,
     "수송중지" to ArgSchemas.empty,
+
+    // ===== Logistics (6) =====
+    "재편성" to ArgSchemas.empty,
     "완전수리" to ArgSchemas.empty,
     "완전보급" to ArgSchemas.empty,
-    "재편성" to ArgSchemas.empty,
     "반출입" to ArgSchemas.empty,
+    "보충" to ArgSchemas.empty,
+    "할당" to ArgSchemas.empty,
+
+    // ===== Influence / Social (5) =====
     "야회" to ArgSchemas.empty,
     "수렵" to ArgSchemas.empty,
     "회담" to ArgSchemas.empty,
     "담화" to ArgSchemas.empty,
     "연설" to ArgSchemas.empty,
 
-    // ===== New Nation Commands (14) =====
-    "발탁" to ArgSchemas.destGeneral,
-    "강등" to ArgSchemas.destGeneral,
-    "서작" to ArgSchemas.destGeneral,
-    "서훈" to ArgSchemas.destGeneral,
-    "사임" to ArgSchemas.empty,
-    "봉토수여" to ArgSchemas.destCityAndGeneral,
-    "봉토직할" to ArgSchemas.destCity,
-    "국가목표설정" to ArgSchemas.empty,
-    "납입률변경" to ArgSchemas.rate,
-    "관세율변경" to ArgSchemas.rate,
-    "분배" to ArgSchemas.empty,
-    "처단" to ArgSchemas.destGeneral,
-    "외교" to ArgSchemas.destNation,
-    "통치목표" to ArgSchemas.empty,
-
-    // ===== P0 General Commands (5) =====
-    "워프항행" to ArgSchemas.empty,
-    "성계내항행" to ArgSchemas.destCity,
-    "부대결성" to ArgSchemas.empty,
-    "부대해산" to ArgSchemas.empty,
-    "보충" to ArgSchemas.empty,
-
-    // ===== P0 Nation Commands (3) =====
-    "승진" to ArgSchemas.destGeneral,
-    "임명" to ArgSchemas.destGeneral,
-    "파면" to ArgSchemas.destGeneral,
-
-    // ===== P1 General Commands (16) =====
-    "할당" to ArgSchemas.empty,
+    // ===== Personal (proposal/order) (2) =====
     "제안" to ArgSchemas.destGeneral,
     "명령" to ArgSchemas.destGeneral,
-    "귀환설정" to ArgSchemas.destCity,
-    "원거리이동" to ArgSchemas.destCity,
-    "근거리이동" to ArgSchemas.empty,
-    "반란" to ArgSchemas.empty,
-    "군기유지" to ArgSchemas.empty,
-    "경계출동" to ArgSchemas.empty,
-    "무력진압" to ArgSchemas.empty,
-    "분열행진" to ArgSchemas.empty,
-    "징발" to ArgSchemas.empty,
-    "육전훈련" to ArgSchemas.empty,
-    "공전훈련" to ArgSchemas.empty,
 
-    // ===== P1 Nation Commands (2) =====
-    "예산편성" to ArgSchemas.empty,
-    "제안공작" to ArgSchemas.destGeneral,
-
-    // ===== P2 General Commands (6) =====
-    "특별경비" to ArgSchemas.empty,
-    "통신방해" to ArgSchemas.empty,
-    "위장함대" to ArgSchemas.empty,
-    "병기연습" to ArgSchemas.empty,
-    "육전전술훈련" to ArgSchemas.empty,
-    "공전전술훈련" to ArgSchemas.empty,
-
-    // ===== Espionage General Commands (13) =====
+    // ===== Espionage / Intelligence (15) =====
     "일제수색" to ArgSchemas.empty,
     "체포허가" to ArgSchemas.destGeneral,
     "집행명령" to ArgSchemas.destGeneral,
@@ -453,4 +249,50 @@ val COMMAND_SCHEMAS: Map<String, ArgSchema> = mapOf(
     "파괴공작" to ArgSchemas.empty,
     "선동공작" to ArgSchemas.destCity,
     "귀환공작" to ArgSchemas.empty,
+    "통신방해" to ArgSchemas.empty,
+    "위장함대" to ArgSchemas.empty,
+
+    // ===== Nation: Default (1) =====
+    "Nation휴식" to ArgSchemas.empty,
+
+    // ===== Nation: Personnel (10) =====
+    "승진" to ArgSchemas.destGeneral,
+    "발탁" to ArgSchemas.destGeneral,
+    "강등" to ArgSchemas.destGeneral,
+    "서작" to ArgSchemas.destGeneral,
+    "서훈" to ArgSchemas.destGeneral,
+    "임명" to ArgSchemas.destGeneral,
+    "파면" to ArgSchemas.destGeneral,
+    "사임" to ArgSchemas.empty,
+    "봉토수여" to ArgSchemas.destCityAndGeneral,
+    "봉토직할" to ArgSchemas.destCity,
+
+    // ===== Nation: Political (9) =====
+    "국가목표설정" to ArgSchemas.empty,
+    "납입률변경" to ArgSchemas.rate,
+    "관세율변경" to ArgSchemas.rate,
+    "분배" to ArgSchemas.empty,
+    "처단" to ArgSchemas.destGeneral,
+    "외교" to ArgSchemas.destNation,
+    "통치목표" to ArgSchemas.empty,
+    "예산편성" to ArgSchemas.empty,
+    "제안공작" to ArgSchemas.destGeneral,
+
+    // ===== Nation: Diplomacy (7) =====
+    "선전포고" to ArgSchemas.destNation,
+    "불가침제의" to ArgSchemas.destNation,
+    "불가침수락" to ArgSchemas.destNationAndGeneral,
+    "불가침파기제의" to ArgSchemas.destNation,
+    "불가침파기수락" to ArgSchemas.destNationAndGeneral,
+    "종전제의" to ArgSchemas.destNation,
+    "종전수락" to ArgSchemas.destNationAndGeneral,
+
+    // ===== Nation: Resource / Administration (7) =====
+    "감축" to ArgSchemas.destCity,
+    "주민동원" to ArgSchemas.destCity,
+    "외교공작" to ArgSchemas.destNation,
+    "세율변경" to ArgSchemas.rate,
+    "징병률변경" to ArgSchemas.rate,
+    "국가해산" to ArgSchemas.empty,
+    "항복" to ArgSchemas.destNation,
 )
