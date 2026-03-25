@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.reactive.function.client.WebClient
+import org.slf4j.LoggerFactory
 import org.springframework.web.reactive.function.client.WebClientResponseException
 
 @RestController
@@ -31,6 +32,9 @@ class WorldController(
     private val gameOrchestrator: GameOrchestrator,
     private val webClientBuilder: WebClient.Builder,
 ) {
+    companion object {
+        private val log = LoggerFactory.getLogger(WorldController::class.java)
+    }
     @GetMapping
     fun listWorlds(): ResponseEntity<List<WorldStateResponse>> {
         return ResponseEntity.ok(worldService.listWorlds().map { WorldStateResponse.from(it) })
