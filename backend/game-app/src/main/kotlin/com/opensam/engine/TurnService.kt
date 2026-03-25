@@ -11,6 +11,7 @@ import com.opensam.engine.turn.cqrs.persist.JpaWorldPortFactory
 import com.opensam.engine.turn.cqrs.persist.toEntity
 import com.opensam.engine.turn.cqrs.persist.toSnapshot
 import com.opensam.engine.war.BattleService
+import com.opensam.engine.war.FieldBattleTrigger
 import com.opensam.engine.trigger.TriggerCaller
 import com.opensam.engine.trigger.TriggerEnv
 import com.opensam.engine.trigger.buildPreTurnTriggers
@@ -83,6 +84,7 @@ class TurnService @Autowired constructor(
     private val gameConstService: com.opensam.service.GameConstService,
     private val generalAccessLogRepository: GeneralAccessLogRepository,
     private val turnPipeline: com.opensam.engine.turn.TurnPipeline,
+    private val fieldBattleTrigger: FieldBattleTrigger,
 ) {
     /** Test-only constructor: omits turnPipeline, uses an empty no-op pipeline. */
     constructor(
@@ -117,6 +119,7 @@ class TurnService @Autowired constructor(
         commandLogDispatcher: CommandLogDispatcher,
         gameConstService: com.opensam.service.GameConstService,
         generalAccessLogRepository: GeneralAccessLogRepository,
+        fieldBattleTrigger: FieldBattleTrigger,
     ) : this(
         worldStateRepository = worldStateRepository,
         generalRepository = generalRepository,
@@ -150,6 +153,7 @@ class TurnService @Autowired constructor(
         gameConstService = gameConstService,
         generalAccessLogRepository = generalAccessLogRepository,
         turnPipeline = com.opensam.engine.turn.TurnPipeline(emptyList()),
+        fieldBattleTrigger = fieldBattleTrigger,
     )
 
     constructor(
@@ -185,6 +189,7 @@ class TurnService @Autowired constructor(
         gameConstService: com.opensam.service.GameConstService,
         generalAccessLogRepository: GeneralAccessLogRepository,
         turnPipeline: com.opensam.engine.turn.TurnPipeline,
+        fieldBattleTrigger: FieldBattleTrigger,
     ) : this(
         worldStateRepository = worldStateRepository,
         generalRepository = generalRepository,
@@ -223,6 +228,7 @@ class TurnService @Autowired constructor(
         gameConstService = gameConstService,
         generalAccessLogRepository = generalAccessLogRepository,
         turnPipeline = turnPipeline,
+        fieldBattleTrigger = fieldBattleTrigger,
     )
 
     private val logger = LoggerFactory.getLogger(TurnService::class.java)
@@ -597,6 +603,8 @@ class TurnService @Autowired constructor(
                     }
                 }
 
+                val fromCityId = general.cityId
+
                 val generalHiddenSeed = (world.config["hiddenSeed"] as? String) ?: "${world.id}"
                 val rng = DeterministicRng.create(
                     generalHiddenSeed, "generalCommand", general.id, world.currentYear, world.currentMonth, actionCode
@@ -667,6 +675,14 @@ class TurnService @Autowired constructor(
                         }
                     } catch (e: Exception) {
                         logger.warn("[Turn] Failed to process command events: {}", e.message)
+                    }
+                }
+
+                if (cmdResult.success) {
+                    try {
+                        fieldBattleTrigger.checkAndTrigger(general, actionCode, fromCityId, generals, world)
+                    } catch (e: Exception) {
+                        logger.warn("[Turn] FieldBattle trigger failed for general {}: {}", general.id, e.message)
                     }
                 }
 

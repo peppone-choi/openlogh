@@ -11,6 +11,7 @@ import type { MapSeason } from '@/lib/map-constants';
 import { MapCanvas } from '@/components/game/map-canvas';
 import type { RenderCity } from '@/components/game/map-canvas';
 import { CompactTooltip } from '@/components/game/map-tooltips';
+import { getInterceptionMarkers } from '@/lib/interception-utils';
 import type { PublicCachedMapResponse } from '@/types';
 
 interface MapViewerProps {
@@ -117,6 +118,13 @@ export function MapViewer({
         });
     }, [isPublicMode, publicData, storeCities, overrideCities, mapData, nationMap, myGeneral?.cityId, emperorCityId]);
 
+    const nationColorMap = useMemo(() => new Map(nations.map((n) => [n.id, n.color])), [nations]);
+
+    const interceptions = useMemo(() => {
+        if (isPublicMode || !myGeneral || myGeneral.nationId <= 0) return [];
+        return getInterceptionMarkers(generals, myGeneral.nationId, nationColorMap);
+    }, [isPublicMode, generals, myGeneral, nationColorMap]);
+
     const season = useMemo<MapSeason>(() => {
         if (isPublicMode) return getSeason(publicData.currentMonth);
         return getSeason(currentWorld?.currentMonth ?? null);
@@ -199,6 +207,7 @@ export function MapViewer({
             renderTooltip={renderTooltipFn}
             onCityClick={handleCityClick}
             useResponsiveScale={isPublicMode}
+            interceptions={interceptions}
         />
     );
 }

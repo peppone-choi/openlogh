@@ -129,6 +129,7 @@ class InMemoryTurnHarness {
         mock(com.opensam.service.GameConstService::class.java),
         mock(com.opensam.repository.GeneralAccessLogRepository::class.java),
         turnPipeline,
+        mock(com.opensam.engine.war.FieldBattleTrigger::class.java),
     )
 
     init {

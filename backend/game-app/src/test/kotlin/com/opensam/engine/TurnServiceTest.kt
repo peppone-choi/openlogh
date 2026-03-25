@@ -130,6 +130,7 @@ class TurnServiceTest {
             mock(com.opensam.service.GameConstService::class.java),
             mock(GeneralAccessLogRepository::class.java),
             pipeline,
+            mock(com.opensam.engine.war.FieldBattleTrigger::class.java),
         )
         // Default: worldStateRepository.save returns the argument
         `when`(worldStateRepository.save(anyNonNull<WorldState>())).thenAnswer { it.arguments[0] }

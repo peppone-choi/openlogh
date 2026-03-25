@@ -17,6 +17,7 @@ import type { MapSeason } from '@/lib/map-constants';
 import { MapCanvas } from '@/components/game/map-canvas';
 import type { RenderCity, CityOverlay } from '@/components/game/map-canvas';
 import { DetailTooltip } from '@/components/game/map-tooltips';
+import { getInterceptionMarkers } from '@/lib/interception-utils';
 
 type MapTheme = 'default' | 'spring' | 'summer' | 'autumn' | 'winter';
 const MAP_THEMES: {
@@ -323,6 +324,15 @@ export default function MapPage() {
         return overlays;
     }, [mapData, cityByNameMap, layers, cityGeneralData, foreignTroopCities]);
 
+    // Build nation color map for interception markers
+    const nationColorMap = useMemo(() => new Map(nations.map((n) => [n.id, n.color])), [nations]);
+
+    // Interception markers (own nation only)
+    const interceptions = useMemo(() => {
+        if (!myGeneral || myGeneral.nationId <= 0) return [];
+        return getInterceptionMarkers(generals, myGeneral.nationId, nationColorMap);
+    }, [generals, myGeneral, nationColorMap]);
+
     // Year/month for header
     const yearMonth = useMemo(() => {
         const y = currentWorld?.currentYear;
@@ -462,6 +472,7 @@ export default function MapPage() {
                         cityNamePosition={cityNamePositionFn}
                         cityNameColor={currentTheme.text}
                         themeColors={{ bg: currentTheme.bg }}
+                        interceptions={interceptions}
                         dismissOverlay={
                             <button
                                 type="button"
