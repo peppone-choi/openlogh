@@ -325,6 +325,9 @@ const COMMAND_ARGS: Record<string, ArgField[]> = {
         { type: 'number', key: 'amount', label: '이동 인구' },
     ],
 
+    // Field battle
+    요격: [{ type: 'city', key: 'destCityId', label: '매복 방면 (인접 도시)' }],
+
     // === No-arg General Commands ===
     // Default
     휴식: [],
@@ -477,6 +480,8 @@ const COMMAND_HELP: Record<string, string> = {
     음귀병연구: '음귀병을 연구합니다.',
     화륜차연구: '화륜차를 연구합니다.',
     화시병연구: '화시병을 연구합니다.',
+    요격: '인접 도시 방면 도로에 매복하여 적 부대를 요격합니다.',
+    순찰: '주둔 도시 인근 도로를 순찰하여 적 부대를 자동 감지합니다.',
 };
 
 /** Commands that target cities (shown with distance sorting) */
@@ -497,6 +502,7 @@ const CITY_TARGET_COMMANDS = new Set([
     'NPC능동',
     '발령',
     '인구이동',
+    '요격',
 ]);
 
 interface CommandArgFormProps {

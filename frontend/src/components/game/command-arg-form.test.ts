@@ -1,5 +1,23 @@
 import { describe, expect, it } from 'vitest';
 
+// Mirror of COMMAND_ARGS entries relevant to field battle
+const FIELD_BATTLE_COMMAND_ARGS: Record<string, { type: string; key: string; label: string }[]> = {
+    요격: [{ type: 'city', key: 'destCityId', label: '매복 방면 (인접 도시)' }],
+};
+
+describe('field battle command args', () => {
+    it('요격 has destCityId city field', () => {
+        const fields = FIELD_BATTLE_COMMAND_ARGS['요격'];
+        expect(fields).toBeDefined();
+        expect(fields).toHaveLength(1);
+        expect(fields[0]).toMatchObject({ type: 'city', key: 'destCityId' });
+    });
+
+    it('순찰 has no args (undefined in COMMAND_ARGS)', () => {
+        expect(FIELD_BATTLE_COMMAND_ARGS['순찰']).toBeUndefined();
+    });
+});
+
 const LEGACY_AVAILABLE_NATION_TYPES = [
     'che_도적',
     'che_명가',

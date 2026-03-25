@@ -129,6 +129,13 @@ export default function BattlePage() {
     }, [currentWorld, loadAll]);
 
     useEffect(() => {
+        if (!currentWorld) return;
+        return subscribeWebSocket(`/topic/world/${currentWorld.id}/field-battle`, () => {
+            loadAll(currentWorld.id);
+        });
+    }, [currentWorld, loadAll]);
+
+    useEffect(() => {
         if (!myGeneral || generals.length === 0) return;
         const targetExists = selectedGeneralId !== null && generals.some((general) => general.id === selectedGeneralId);
         if (!targetExists) {

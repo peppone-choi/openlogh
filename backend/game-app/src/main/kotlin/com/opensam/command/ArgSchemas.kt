@@ -234,6 +234,9 @@ val COMMAND_SCHEMAS: Map<String, ArgSchema> = mapOf(
     "내정특기초기화" to ArgSchemas.none,
     "전투특기초기화" to ArgSchemas.none,
 
+    "요격" to ArgSchemas.destCity,
+    "순찰" to ArgSchemas.none,
+
     "NPC능동" to ArgSchemas.destCityOptional,
     "CR건국" to ArgSchemas.foundNation,
     "CR맹훈련" to ArgSchemas.none,

@@ -64,6 +64,8 @@ export interface MapCanvasProps {
     useResponsiveScale?: boolean;
     /** Extra elements to render on the dismiss layer (z-[2]) */
     dismissOverlay?: React.ReactNode;
+    /** Interception markers to render between city pairs */
+    interceptions?: { generalName: string; nationColor: string; fromCityId: number; toCityId: number }[];
 }
 
 // Constants for full map page overlays
@@ -94,6 +96,7 @@ export function MapCanvas({
     themeColors,
     useResponsiveScale: useResponsiveScaleProp,
     dismissOverlay,
+    interceptions,
 }: MapCanvasProps) {
     const containerRef = useRef<HTMLDivElement>(null);
     const [mapScale, setMapScale] = useState(1);
@@ -478,6 +481,30 @@ export function MapCanvas({
                         );
                     })}
                 </div>
+
+                {/* Interception markers */}
+                {interceptions?.map((intercept, idx) => {
+                    const fromCity = cities.find((c) => c.id === intercept.fromCityId);
+                    const toCity = cities.find((c) => c.id === intercept.toCityId);
+                    if (!fromCity || !toCity) return null;
+                    const midX = (fromCity.x + toCity.x) / 2;
+                    const midY = (fromCity.y + toCity.y) / 2;
+                    return (
+                        <div
+                            key={idx}
+                            style={{
+                                position: 'absolute',
+                                left: `${midX * coordScale}px`,
+                                top: `${midY * coordScale}px`,
+                                transform: 'translate(-50%, -50%)',
+                                zIndex: 5,
+                            }}
+                            className="text-[10px] px-1 py-0.5 rounded bg-red-900/80 text-white border border-red-500/50 whitespace-nowrap pointer-events-none"
+                        >
+                            ⚔️ {intercept.generalName}
+                        </div>
+                    );
+                })}
 
                 {/* Tooltip */}
                 {hoveredCity && renderTooltip?.(hoveredCity.city, { x: hoveredCity.x, y: hoveredCity.y })}

@@ -353,7 +353,7 @@ export default function LobbySelectNpcPage() {
                                         <td className="px-2 py-1 text-center">{g.age}</td>
                                         <td className="px-2 py-1">
                                             {nat ? (
-                                                <span style={{ color: nat.color }}>{nat.abbreviation}</span>
+                                                <span style={{ color: nat.color }}>{nat.name}</span>
                                             ) : (
                                                 <span className="text-muted-foreground">재야</span>
                                             )}
