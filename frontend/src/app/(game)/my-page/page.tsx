@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useWorldStore } from '@/stores/worldStore';
 import { useOfficerStore } from '@/stores/officerStore';
-import { accountApi, historyApi, planetApi, factionApi, frontApi, itemApi, generalLogApi } from '@/lib/gameApi';
+import { accountApi, historyApi, planetApi, factionApi, frontApi, itemApi, officerLogApi } from '@/lib/gameApi';
 import type { StarSystem, Faction, Message, GeneralFrontInfo } from '@/types';
 import { User, Settings, ScrollText, Trash2, Swords, ArrowLeft, RefreshCw } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,7 +14,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { PageHeader } from '@/components/game/page-header';
 import { LoadingState } from '@/components/game/loading-state';
-import { GeneralPortrait } from '@/components/game/general-portrait';
+import { OfficerPortrait } from '@/components/game/officer-portrait';
 import { NationBadge } from '@/components/game/nation-badge';
 import { LoghBar } from '@/components/game/logh-bar';
 import { toast } from 'sonner';
@@ -69,7 +69,7 @@ const TOURNAMENT_OPTIONS = [
 export default function MyPage() {
     const router = useRouter();
     const currentWorld = useWorldStore((s) => s.currentWorld);
-    const { myOfficer, loading, fetchMyGeneral } = useOfficerStore();
+    const { myOfficer, loading, fetchMyOfficer } = useOfficerStore();
     const [frontInfo, setFrontInfo] = useState<GeneralFrontInfo | null>(null);
     const [city, setCity] = useState<StarSystem | null>(null);
     const [nation, setNation] = useState<Faction | null>(null);
@@ -97,8 +97,8 @@ export default function MyPage() {
 
     useEffect(() => {
         if (!currentWorld) return;
-        fetchMyGeneral(currentWorld.id).catch(() => setError('제독 정보를 불러올 수 없습니다.'));
-    }, [currentWorld, fetchMyGeneral]);
+        fetchMyOfficer(currentWorld.id).catch(() => setError('제독 정보를 불러올 수 없습니다.'));
+    }, [currentWorld, fetchMyOfficer]);
 
     useEffect(() => {
         if (!myOfficer || !currentWorld) return;
@@ -186,11 +186,11 @@ export default function MyPage() {
         try {
             await accountApi.toggleVacation();
             toast.success('휴가 상태가 전환되었습니다.');
-            if (currentWorld) fetchMyGeneral(currentWorld.id);
+            if (currentWorld) fetchMyOfficer(currentWorld.id);
         } catch {
             toast.error('휴가 전환에 실패했습니다.');
         }
-    }, [currentWorld, fetchMyGeneral]);
+    }, [currentWorld, fetchMyOfficer]);
 
     if (!currentWorld) return <LoadingState message="월드를 선택해주세요." />;
     if (loading) return <LoadingState />;
@@ -248,7 +248,7 @@ export default function MyPage() {
                         variant="ghost"
                         size="sm"
                         onClick={() => {
-                            if (currentWorld) fetchMyGeneral(currentWorld.id);
+                            if (currentWorld) fetchMyOfficer(currentWorld.id);
                         }}
                     >
                         <RefreshCw className="size-4 mr-1" />
@@ -286,7 +286,7 @@ export default function MyPage() {
                                     try {
                                         await accountApi.dieOnPrestart();
                                         toast.success('제독가 삭제되었습니다.');
-                                        if (currentWorld) fetchMyGeneral(currentWorld.id);
+                                        if (currentWorld) fetchMyOfficer(currentWorld.id);
                                     } catch {
                                         toast.error('제독 삭제에 실패했습니다.');
                                     }
@@ -321,7 +321,7 @@ export default function MyPage() {
                         <Card>
                             <CardContent className="pt-4 space-y-3">
                                 <div className="flex gap-4 items-start">
-                                    <GeneralPortrait picture={g.picture} name={g.name} size="lg" />
+                                    <OfficerPortrait picture={g.picture} name={g.name} size="lg" />
                                     <div className="space-y-1 flex-1">
                                         <p className="text-lg font-bold" style={{ color: npcColor }}>
                                             {g.name}
@@ -895,7 +895,7 @@ export default function MyPage() {
                                             try {
                                                 await accountApi.buildNationCandidate();
                                                 toast.success('거병후보로 등록되었습니다.');
-                                                if (currentWorld) fetchMyGeneral(currentWorld.id);
+                                                if (currentWorld) fetchMyOfficer(currentWorld.id);
                                             } catch {
                                                 toast.error('거병후보 등록에 실패했습니다.');
                                             }
@@ -911,7 +911,7 @@ export default function MyPage() {
                                             try {
                                                 await accountApi.instantRetreat();
                                                 toast.success('즉시퇴각이 완료되었습니다.');
-                                                if (currentWorld) fetchMyGeneral(currentWorld.id);
+                                                if (currentWorld) fetchMyOfficer(currentWorld.id);
                                             } catch {
                                                 toast.error('즉시퇴각에 실패했습니다.');
                                             }
@@ -939,7 +939,7 @@ export default function MyPage() {
                                     {g.officerLevel <= 4 && (
                                         <DeleteCharacterButton
                                             onDeleted={() => {
-                                                if (currentWorld) fetchMyGeneral(currentWorld.id);
+                                                if (currentWorld) fetchMyOfficer(currentWorld.id);
                                             }}
                                         />
                                     )}
@@ -1064,7 +1064,7 @@ function LogTabContent({
             setOldLogsLoading(true);
             try {
                 const lastId = reset ? undefined : oldLogs.length > 0 ? oldLogs[oldLogs.length - 1].id : undefined;
-                const { data } = await generalLogApi.getOldLogs(generalId, generalId, logType, lastId);
+                const { data } = await officerLogApi.getOldLogs(generalId, generalId, logType, lastId);
                 if (data.result && data.logs) {
                     if (reset) {
                         setOldLogs(data.logs);

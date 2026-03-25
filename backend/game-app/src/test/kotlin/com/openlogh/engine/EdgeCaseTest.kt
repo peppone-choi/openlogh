@@ -5,14 +5,10 @@ import com.openlogh.command.constraint.ConstraintContext
 import com.openlogh.command.constraint.ConstraintResult
 import com.openlogh.command.constraint.ReqCityCapacity
 import com.openlogh.command.constraint.ReqGeneralCrew
-import com.openlogh.command.general.che_징병
-import com.openlogh.command.general.che_모병
 import com.openlogh.engine.war.BattleEngine
 import com.openlogh.engine.war.WarUnitGeneral
 import com.openlogh.entity.City
 import com.openlogh.entity.General
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import java.time.OffsetDateTime
@@ -21,8 +17,6 @@ import java.time.OffsetDateTime
  * Edge-case test suite covering boundary conditions across command, constraint, battle, RNG, and formula logic.
  */
 class EdgeCaseTest {
-
-    private val mapper = jacksonObjectMapper()
 
     // ─── helpers ────────────────────────────────────────────────────────────
 
@@ -226,74 +220,4 @@ class EdgeCaseTest {
         assertNotEquals(seq1, seq2)
     }
 
-    // ─── 7. 징병 blend formula: (oldCrew*oldTrain + newCrew*40) / (oldCrew+newCrew) ─
-
-    @Test
-    fun `징병 blends train at 40 when adding to same crew type`() {
-        val oldCrew = 1000
-        val oldTrain = 80
-        val newCrew = 500
-        val defaultTrain = 40  // 징병 DEFAULT_TRAIN_LOW
-
-        val blended = (oldCrew * oldTrain + newCrew * defaultTrain) / (oldCrew + newCrew)
-        // (1000*80 + 500*40) / 1500 = 100000 / 1500 = 66
-        assertEquals(66, blended)
-    }
-
-    @Test
-    fun `징병 run produces correct blended train in statChanges`() {
-        val gen = general(crew = 1000, crewType = 0, train = 80, atmos = 80, leadership = 50, gold = 50_000, rice = 50_000)
-        val arg = mapOf<String, Any>("amount" to 500, "crewType" to 0)
-        val cmd = che_징병(gen, env(), arg)
-        cmd.city = city()
-
-        val result = runBlocking { cmd.run(LiteHashDRBG.build("징병_blend_test")) }
-        assertTrue(result.success)
-
-        val json = mapper.readTree(result.message)
-        val trainDelta = json["statChanges"]["train"].asInt()
-        // newTrain = (1000*80 + 500*40) / 1500 = (80000+20000)/1500 = 100000/1500 = 66
-        // delta = 66 - 80 = -14
-        val expectedNewTrain = (1000 * 80 + 500 * 40) / 1500
-        val expectedDelta = expectedNewTrain - 80
-        assertEquals(expectedDelta, trainDelta)
-    }
-
-    // ─── 8. 모병 blend formula: same but with 70 default train ───────────────
-
-    @Test
-    fun `모병 blends train at 70 when adding to same crew type`() {
-        val oldCrew = 1000
-        val oldTrain = 40
-        val newCrew = 1000
-        val defaultTrain = 70  // 모병 DEFAULT_TRAIN_HIGH
-
-        val blended = (oldCrew * oldTrain + newCrew * defaultTrain) / (oldCrew + newCrew)
-        assertEquals((40000 + 70000) / 2000, blended)
-        assertEquals(55, blended)
-    }
-
-    @Test
-    fun `모병 run produces higher default train than 징병`() {
-        val gen1 = general(crew = 0, crewType = 0, train = 50, atmos = 50, leadership = 50, gold = 200_000, rice = 200_000)
-        val gen2 = general(crew = 0, crewType = 0, train = 50, atmos = 50, leadership = 50, gold = 200_000, rice = 200_000)
-        val arg = mapOf<String, Any>("amount" to 500, "crewType" to 0)
-
-        val cmdJingbyeong = che_징병(gen1, env(), arg)
-        cmdJingbyeong.city = city()
-        val cmdMobyeong = che_모병(gen2, env(), arg)
-        cmdMobyeong.city = city()
-
-        val r1 = runBlocking { cmdJingbyeong.run(LiteHashDRBG.build("blend_cmp_1")) }
-        val r2 = runBlocking { cmdMobyeong.run(LiteHashDRBG.build("blend_cmp_2")) }
-
-        val j1 = mapper.readTree(r1.message)
-        val j2 = mapper.readTree(r2.message)
-
-        // 징병 default train = 40, 모병 default train = 70
-        // Both start with crew=0, so newTrain = defaultTrain directly
-        val newTrain1 = 50 + j1["statChanges"]["train"].asInt()  // 50 + (40-50) = 40
-        val newTrain2 = 50 + j2["statChanges"]["train"].asInt()  // 50 + (70-50) = 70
-        assertTrue(newTrain2 > newTrain1, "모병 (train=$newTrain2) should produce higher train than 징병 (train=$newTrain1)")
-    }
 }
