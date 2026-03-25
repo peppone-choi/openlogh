@@ -47,8 +47,19 @@
     --radius-4xl: calc(var(--radius) + 16px);
 }
 
+@font-face {
+    font-family: 'DungGeunMo';
+    src:
+        url('/fonts/DungGeunMo.woff2') format('woff2'),
+        url('/fonts/DungGeunMo.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
 :root {
-    --font-legacy: 'Pretendard', 'Inter', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', sans-serif;
+    --font-legacy:
+        'DungGeunMo', 'Pretendard', 'Inter', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', sans-serif;
     --radius: 0.625rem;
     --background: #080c14;
     --foreground: #e8ecf4;
