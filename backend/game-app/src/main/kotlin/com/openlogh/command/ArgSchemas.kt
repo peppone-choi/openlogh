@@ -398,4 +398,59 @@ val COMMAND_SCHEMAS: Map<String, ArgSchema> = mapOf(
     "처단" to ArgSchemas.destGeneral,
     "외교" to ArgSchemas.destNation,
     "통치목표" to ArgSchemas.empty,
+
+    // ===== P0 General Commands (5) =====
+    "워프항행" to ArgSchemas.empty,
+    "성계내항행" to ArgSchemas.destCity,
+    "부대결성" to ArgSchemas.empty,
+    "부대해산" to ArgSchemas.empty,
+    "보충" to ArgSchemas.empty,
+
+    // ===== P0 Nation Commands (3) =====
+    "승진" to ArgSchemas.destGeneral,
+    "임명" to ArgSchemas.destGeneral,
+    "파면" to ArgSchemas.destGeneral,
+
+    // ===== P1 General Commands (16) =====
+    "할당" to ArgSchemas.empty,
+    "제안" to ArgSchemas.destGeneral,
+    "명령" to ArgSchemas.destGeneral,
+    "귀환설정" to ArgSchemas.destCity,
+    "원거리이동" to ArgSchemas.destCity,
+    "근거리이동" to ArgSchemas.empty,
+    "반란" to ArgSchemas.empty,
+    "군기유지" to ArgSchemas.empty,
+    "경계출동" to ArgSchemas.empty,
+    "무력진압" to ArgSchemas.empty,
+    "분열행진" to ArgSchemas.empty,
+    "징발" to ArgSchemas.empty,
+    "육전훈련" to ArgSchemas.empty,
+    "공전훈련" to ArgSchemas.empty,
+
+    // ===== P1 Nation Commands (2) =====
+    "예산편성" to ArgSchemas.empty,
+    "제안공작" to ArgSchemas.destGeneral,
+
+    // ===== P2 General Commands (6) =====
+    "특별경비" to ArgSchemas.empty,
+    "통신방해" to ArgSchemas.empty,
+    "위장함대" to ArgSchemas.empty,
+    "병기연습" to ArgSchemas.empty,
+    "육전전술훈련" to ArgSchemas.empty,
+    "공전전술훈련" to ArgSchemas.empty,
+
+    // ===== Espionage General Commands (13) =====
+    "일제수색" to ArgSchemas.empty,
+    "체포허가" to ArgSchemas.destGeneral,
+    "집행명령" to ArgSchemas.destGeneral,
+    "체포명령" to ArgSchemas.destGeneral,
+    "사열" to ArgSchemas.empty,
+    "습격" to ArgSchemas.destGeneral,
+    "감시" to ArgSchemas.destGeneral,
+    "잠입공작" to ArgSchemas.destCity,
+    "탈출공작" to ArgSchemas.empty,
+    "정보공작" to ArgSchemas.empty,
+    "파괴공작" to ArgSchemas.empty,
+    "선동공작" to ArgSchemas.destCity,
+    "귀환공작" to ArgSchemas.empty,
 )

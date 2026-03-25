@@ -2,11 +2,15 @@
 
 package com.openlogh.command.general
 
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.openlogh.command.*
 import com.openlogh.command.constraint.ConstraintResult
 import com.openlogh.entity.*
+import kotlin.math.max
 import kotlin.math.min
 import kotlin.random.Random
+
+private val logMapper = jacksonObjectMapper()
 
 // ========== 완전수리 (Full Repair) MCP 640 ==========
 
@@ -133,6 +137,45 @@ class 반출입(
         return CommandResult(
             success = true,
             logs = listOf("${formatDate()} <C>반출입</C> ${label} 완료했습니다."),
+        )
+    }
+}
+
+// ========== 보충 (Replenishment) MCP 160 ==========
+// 손실 유닛을 동일 함종으로 보충. 1함종씩만.
+
+class 보충(
+    general: General,
+    env: CommandEnv,
+    arg: Map<String, Any>? = null,
+) : BaseCommand(general, env, arg) {
+    override val actionName = "보충"
+
+    private val shipType: String get() = arg?.get("shipType") as? String ?: "battleship"
+    private val amount: Int get() = (arg?.get("amount") as? Number)?.toInt() ?: 0
+
+    override fun checkFullCondition(): ConstraintResult {
+        if (general.factionId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
+        if (general.fleetId == 0L) return ConstraintResult.Fail("소속 함대가 없습니다.")
+        if (amount <= 0) return ConstraintResult.Fail("보충 수량이 유효하지 않습니다.")
+        return ConstraintResult.Pass
+    }
+
+    override suspend fun run(rng: Random): CommandResult {
+        // 실제 함종별 보충은 호출자(턴 엔진)가 Fleet 엔티티에서 처리
+        val supplyCost = max(1, amount * 10)
+        val msg = logMapper.writeValueAsString(mapOf(
+            "statChanges" to mapOf("supplies" to -supplyCost, "experience" to 30),
+            "replenishment" to mapOf(
+                "shipType" to shipType,
+                "amount" to amount,
+                "fleetId" to general.fleetId.toString(),
+            ),
+        ))
+        return CommandResult(
+            success = true,
+            logs = listOf("${formatDate()} <C>보충</C>: ${shipType} ${amount}유닛을 보충했습니다."),
+            message = msg,
         )
     }
 }

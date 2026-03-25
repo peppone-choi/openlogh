@@ -276,3 +276,69 @@ class 통치목표(
         )
     }
 }
+
+// ========== 예산편성 (Budget Planning) PCP 320 ==========
+// 국가 예산 관리. 부문별 예산 배분.
+
+class 예산편성(
+    general: General,
+    env: CommandEnv,
+    arg: Map<String, Any>? = null,
+) : NationCommand(general, env, arg) {
+    override val actionName = "예산편성"
+
+    private val militaryPct: Int get() = (arg?.get("militaryPct") as? Number)?.toInt() ?: 40
+    private val economyPct: Int get() = (arg?.get("economyPct") as? Number)?.toInt() ?: 30
+    private val welfarePct: Int get() = (arg?.get("welfarePct") as? Number)?.toInt() ?: 30
+
+    override fun checkFullCondition(): ConstraintResult {
+        if (general.officerLevel < 20.toShort()) return ConstraintResult.Fail("군주급 이상만 사용할 수 있습니다")
+        val n = nation ?: return ConstraintResult.Fail("국가 정보가 없습니다")
+        val total = militaryPct + economyPct + welfarePct
+        if (total != 100) return ConstraintResult.Fail("예산 배분 합계가 100%여야 합니다 (현재: $total%)")
+        return ConstraintResult.Pass
+    }
+
+    override suspend fun run(rng: Random): CommandResult {
+        val n = nation!!
+        n.meta["budget_military"] = militaryPct
+        n.meta["budget_economy"] = economyPct
+        n.meta["budget_welfare"] = welfarePct
+        general.experience += 50
+        return CommandResult(
+            success = true,
+            logs = listOf("${formatDate()} 예산을 편성했습니다. (군사: ${militaryPct}%, 경제: ${economyPct}%, 복지: ${welfarePct}%)"),
+        )
+    }
+}
+
+// ========== 제안공작 (Forced Proposal) PCP 320 ==========
+// 정치공작 1,000 소모하여 제안 강제 수락.
+
+class 제안공작(
+    general: General,
+    env: CommandEnv,
+    arg: Map<String, Any>? = null,
+) : NationCommand(general, env, arg) {
+    override val actionName = "제안공작"
+
+    private val proposalContent: String get() = arg?.get("proposalContent") as? String ?: ""
+
+    override fun checkFullCondition(): ConstraintResult {
+        if (general.factionId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다")
+        val dg = destGeneral ?: return ConstraintResult.Fail("대상 장수가 없습니다")
+        if (dg.factionId != general.factionId) return ConstraintResult.Fail("같은 국가 소속이어야 합니다")
+        if (general.politicalOps < 1000) return ConstraintResult.Fail("정치공작이 부족합니다 (필요: 1000, 보유: ${general.politicalOps})")
+        return ConstraintResult.Pass
+    }
+
+    override suspend fun run(rng: Random): CommandResult {
+        val dg = destGeneral!!
+        general.politicalOps -= 1000
+        general.experience += 50
+        return CommandResult(
+            success = true,
+            logs = listOf("${formatDate()} 제안 공작으로 ${dg.name}에게 제안을 강제 수락시켰습니다. (정치공작 -1000)"),
+        )
+    }
+}

@@ -320,7 +320,10 @@ class CommandExecutor(
         if (strategicDef != null) return strategicDef.cpType
 
         // 군사 관련 커맨드는 MCP, 나머지는 PCP
-        val militaryKeywords = listOf("공격", "출병", "이동", "훈련", "모병", "징병", "정찰", "연료")
+        val militaryKeywords = listOf("공격", "출병", "이동", "훈련", "모병", "징병", "정찰", "연료",
+            "워프", "항행", "군기", "경계", "진압", "행진", "징발", "부대", "보충", "할당",
+            "통신", "위장", "병기", "수색", "습격", "감시", "잠입", "탈출", "정보공작", "파괴", "선동", "귀환공작",
+            "체포명령", "사열", "특별경비")
         return if (militaryKeywords.any { actionCode.contains(it) }) {
             CommandPointService.CpType.MCP
         } else {

@@ -161,3 +161,104 @@ class 수송중지(general: General, env: CommandEnv, arg: Map<String, Any>? = n
         return CommandResult(true, listOf("${formatDate()} 수송을 중지했습니다."), message = msg)
     }
 }
+
+// ========== 부대결성 (Fleet Formation) - MCP 320 ==========
+
+class 부대결성(general: General, env: CommandEnv, arg: Map<String, Any>? = null) : BaseCommand(general, env, arg) {
+    override val actionName = "부대결성"
+
+    private val fleetName: String get() = arg?.get("fleetName") as? String ?: "${general.name}함대"
+    private val fleetType: String get() = arg?.get("fleetType") as? String ?: "fleet"
+
+    override fun checkFullCondition(): ConstraintResult {
+        if (general.factionId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
+        if (general.fleetId != 0L) return ConstraintResult.Fail("이미 함대에 소속되어 있습니다.")
+        // FleetFormationRules: 인구 비례 함대 편성 한도 확인 (gin7 §6.12)
+        services?.fleetFormationRules?.let { rules ->
+            val totalPop = (arg?.get("factionTotalPopulation") as? Number)?.toLong() ?: 0L
+            val limits = rules.maxFleetsByPopulation(totalPop)
+            val currentFleets = (arg?.get("currentFleetCount") as? Number)?.toInt() ?: 0
+            val maxCount = when (fleetType) {
+                "fleet" -> limits.fleets
+                "transport" -> limits.transports
+                "patrol" -> limits.patrols
+                "ground" -> limits.groundForces
+                else -> limits.fleets
+            }
+            if (currentFleets >= maxCount) {
+                return ConstraintResult.Fail("${fleetType} 편성 한도를 초과했습니다. (한도: $maxCount)")
+            }
+        }
+        return ConstraintResult.Pass
+    }
+
+    override suspend fun run(rng: Random): CommandResult {
+        // Fleet 엔티티 생성은 호출자(턴 엔진)가 처리. 여기서는 이벤트 메시지를 반환.
+        val msg = cmdMapper.writeValueAsString(mapOf(
+            "statChanges" to mapOf("experience" to 50),
+            "fleetFormation" to mapOf(
+                "fleetName" to fleetName,
+                "fleetType" to fleetType,
+                "leaderOfficerId" to general.id.toString(),
+                "factionId" to general.factionId.toString(),
+                "planetId" to general.planetId.toString(),
+            ),
+        ))
+        return CommandResult(true, listOf("${formatDate()} ${fleetName}을(를) 결성했습니다."), message = msg)
+    }
+}
+
+// ========== 부대해산 (Fleet Dissolution) - MCP 160 ==========
+
+class 부대해산(general: General, env: CommandEnv, arg: Map<String, Any>? = null) : BaseCommand(general, env, arg) {
+    override val actionName = "부대해산"
+
+    override fun checkFullCondition(): ConstraintResult {
+        if (general.factionId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
+        if (general.fleetId == 0L) return ConstraintResult.Fail("소속 함대가 없습니다.")
+        return ConstraintResult.Pass
+    }
+
+    override suspend fun run(rng: Random): CommandResult {
+        val fleetId = general.fleetId
+        // Fleet 엔티티 삭제 및 소속 유닛 행성 창고 반환은 호출자가 처리.
+        val msg = cmdMapper.writeValueAsString(mapOf(
+            "statChanges" to mapOf("experience" to 20),
+            "fleetDissolution" to mapOf(
+                "fleetId" to fleetId.toString(),
+                "returnToPlanetId" to general.planetId.toString(),
+            ),
+        ))
+        return CommandResult(true, listOf("${formatDate()} 부대를 해산했습니다. 소속 유닛은 행성 창고로 반환됩니다."), message = msg)
+    }
+}
+
+// ========== 할당 (Unit Assignment: planet warehouse → fleet) - MCP 160 ==========
+
+class 할당(general: General, env: CommandEnv, arg: Map<String, Any>? = null) : BaseCommand(general, env, arg) {
+    override val actionName = "할당"
+
+    private val unitType: String get() = arg?.get("unitType") as? String ?: "battleship"
+    private val amount: Int get() = (arg?.get("amount") as? Number)?.toInt() ?: 0
+
+    override fun checkFullCondition(): ConstraintResult {
+        if (general.factionId == 0L) return ConstraintResult.Fail("소속 국가가 없습니다.")
+        if (general.fleetId == 0L) return ConstraintResult.Fail("소속 함대가 없습니다.")
+        if (amount <= 0) return ConstraintResult.Fail("할당 수량이 유효하지 않습니다.")
+        return ConstraintResult.Pass
+    }
+
+    override suspend fun run(rng: Random): CommandResult {
+        // 실제 유닛 이동은 호출자(턴 엔진)가 처리
+        val msg = cmdMapper.writeValueAsString(mapOf(
+            "statChanges" to mapOf("experience" to 20),
+            "unitAssignment" to mapOf(
+                "unitType" to unitType,
+                "amount" to amount,
+                "fromPlanetId" to general.planetId.toString(),
+                "toFleetId" to general.fleetId.toString(),
+            ),
+        ))
+        return CommandResult(true, listOf("${formatDate()} ${unitType} ${amount}유닛을 함대에 할당했습니다."), message = msg)
+    }
+}

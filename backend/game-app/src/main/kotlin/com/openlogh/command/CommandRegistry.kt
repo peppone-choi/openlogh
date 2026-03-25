@@ -125,6 +125,60 @@ class CommandRegistry {
         "회담" to { g, e, a -> 회담(g, e, a) },
         "담화" to { g, e, a -> 담화(g, e, a) },
         "연설" to { g, e, a -> 연설(g, e, a) },
+
+        // P0: Operations (2) — Warp & Inter-system
+        "워프항행" to { g, e, a -> che_워프항행(g, e, a) },
+        "성계내항행" to { g, e, a -> che_성계내항행(g, e, a) },
+
+        // P0: Command Group (2) — Fleet formation/dissolution
+        "부대결성" to { g, e, a -> 부대결성(g, e, a) },
+        "부대해산" to { g, e, a -> 부대해산(g, e, a) },
+
+        // P0: Logistics (1) — Replenishment
+        "보충" to { g, e, a -> 보충(g, e, a) },
+
+        // P1: Command Group (1) — Assignment
+        "할당" to { g, e, a -> 할당(g, e, a) },
+
+        // P1: Personal (7) — Proposal, Order, Return, Movement, Rebellion
+        "제안" to { g, e, a -> 제안(g, e, a) },
+        "명령" to { g, e, a -> 명령(g, e, a) },
+        "귀환설정" to { g, e, a -> 귀환설정(g, e, a) },
+        "원거리이동" to { g, e, a -> 원거리이동(g, e, a) },
+        "근거리이동" to { g, e, a -> 근거리이동(g, e, a) },
+        "반란" to { g, e, a -> 반란(g, e, a) },
+
+        // P1: Operations (9) — Discipline, security, training, etc.
+        "군기유지" to { g, e, a -> che_군기유지(g, e, a) },
+        "경계출동" to { g, e, a -> che_경계출동(g, e, a) },
+        "무력진압" to { g, e, a -> che_무력진압(g, e, a) },
+        "분열행진" to { g, e, a -> che_분열행진(g, e, a) },
+        "징발" to { g, e, a -> che_징발(g, e, a) },
+        "육전훈련" to { g, e, a -> che_육전훈련(g, e, a) },
+        "공전훈련" to { g, e, a -> che_공전훈련(g, e, a) },
+
+        // P2: Operations (6) — Special guard, comms, decoy, war game, tactics
+        "특별경비" to { g, e, a -> che_특별경비(g, e, a) },
+        "통신방해" to { g, e, a -> che_통신방해(g, e, a) },
+        "위장함대" to { g, e, a -> che_위장함대(g, e, a) },
+        "병기연습" to { g, e, a -> che_병기연습(g, e, a) },
+        "육전전술훈련" to { g, e, a -> che_육전전술훈련(g, e, a) },
+        "공전전술훈련" to { g, e, a -> che_공전전술훈련(g, e, a) },
+
+        // Espionage (13) — All espionage commands
+        "일제수색" to { g, e, a -> che_일제수색(g, e, a) },
+        "체포허가" to { g, e, a -> che_체포허가(g, e, a) },
+        "집행명령" to { g, e, a -> che_집행명령(g, e, a) },
+        "체포명령" to { g, e, a -> che_체포명령(g, e, a) },
+        "사열" to { g, e, a -> che_사열(g, e, a) },
+        "습격" to { g, e, a -> che_습격(g, e, a) },
+        "감시" to { g, e, a -> che_감시(g, e, a) },
+        "잠입공작" to { g, e, a -> che_잠입공작(g, e, a) },
+        "탈출공작" to { g, e, a -> che_탈출공작(g, e, a) },
+        "정보공작" to { g, e, a -> che_정보공작(g, e, a) },
+        "파괴공작" to { g, e, a -> che_파괴공작(g, e, a) },
+        "선동공작" to { g, e, a -> che_선동공작(g, e, a) },
+        "귀환공작" to { g, e, a -> che_귀환공작(g, e, a) },
     )
 
     private val nationCommands: Map<String, NationCommandFactory> = mapOf(
@@ -202,6 +256,15 @@ class CommandRegistry {
         "처단" to { g, e, a -> 처단(g, e, a) },
         "외교" to { g, e, a -> 외교(g, e, a) },
         "통치목표" to { g, e, a -> 통치목표(g, e, a) },
+
+        // P0: Personnel (3) — Promotion, Appointment, Dismissal
+        "승진" to { g, e, a -> 승진(g, e, a) },
+        "임명" to { g, e, a -> 임명(g, e, a) },
+        "파면" to { g, e, a -> 파면(g, e, a) },
+
+        // P1: National Politics (2) — Budget, Forced Proposal
+        "예산편성" to { g, e, a -> 예산편성(g, e, a) },
+        "제안공작" to { g, e, a -> 제안공작(g, e, a) },
     )
 
     fun getGeneralCommandNames(): Set<String> = generalCommands.keys
