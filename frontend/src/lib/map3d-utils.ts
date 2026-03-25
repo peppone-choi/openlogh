@@ -162,17 +162,17 @@ export function createHeightLookup(
 // ─── 도시 모델 크기 ───
 
 export function getCityScale(level: number): number {
-    if (level <= 2) return 0.6;
-    if (level <= 4) return 0.8;
-    if (level <= 6) return 1.0;
-    return 1.3;
+    if (level <= 2) return 0.2;
+    if (level <= 4) return 0.25;
+    if (level <= 6) return 0.3;
+    return 0.4;
 }
 
 export function getCityHeight(level: number): number {
-    if (level <= 2) return 0.8;
-    if (level <= 4) return 1.2;
-    if (level <= 6) return 1.6;
-    return 2.0;
+    if (level <= 2) return 0.25;
+    if (level <= 4) return 0.35;
+    if (level <= 6) return 0.5;
+    return 0.6;
 }
 
 // ─── 계절 조명 ───

@@ -48,26 +48,26 @@ describe('cityToWorld', () => {
 });
 
 describe('getCityScale', () => {
-    it('level 1 → 0.6', () => {
-        expect(getCityScale(1)).toBe(0.6);
+    it('level 1 → 0.2', () => {
+        expect(getCityScale(1)).toBe(0.2);
     });
 
-    it('level 5 → 1.0', () => {
-        expect(getCityScale(5)).toBe(1.0);
+    it('level 5 → 0.3', () => {
+        expect(getCityScale(5)).toBe(0.3);
     });
 
-    it('level 8 → 1.3', () => {
-        expect(getCityScale(8)).toBe(1.3);
+    it('level 8 → 0.4', () => {
+        expect(getCityScale(8)).toBe(0.4);
     });
 });
 
 describe('getCityHeight', () => {
-    it('level 1 → 0.8', () => {
-        expect(getCityHeight(1)).toBe(0.8);
+    it('level 1 → 0.25', () => {
+        expect(getCityHeight(1)).toBe(0.25);
     });
 
-    it('level 7 → 2.0', () => {
-        expect(getCityHeight(7)).toBe(2.0);
+    it('level 7 → 0.6', () => {
+        expect(getCityHeight(7)).toBe(0.6);
     });
 });
 
