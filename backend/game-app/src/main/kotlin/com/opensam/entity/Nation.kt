@@ -34,13 +34,13 @@ class Nation(
     var rice: Int = 0,
 
     @Column(nullable = false)
-    var bill: Short = 0,
+    var bill: Short = 100,
 
     @Column(nullable = false)
-    var rate: Short = 0,
+    var rate: Short = 15,
 
     @Column(name = "rate_tmp", nullable = false)
-    var rateTmp: Short = 0,
+    var rateTmp: Short = 15,
 
     @Column(name = "secret_limit", nullable = false)
     var secretLimit: Short = 3,

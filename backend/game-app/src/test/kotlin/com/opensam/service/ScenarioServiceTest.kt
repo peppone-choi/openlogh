@@ -622,6 +622,23 @@ class ScenarioServiceTest {
     }
 
     @Test
+    fun `parseNation sets legacy default bill 100 rate 15 rateTmp 15`() {
+        val parseNation = ScenarioService::class.java.getDeclaredMethod(
+            "parseNation",
+            List::class.java,
+            Long::class.javaPrimitiveType,
+        )
+        parseNation.isAccessible = true
+
+        val row: List<Any> = listOf("위", "#0000FF", 10000, 10000, "위나라", 1500, "중립", 7, listOf("허창"))
+        val nation = parseNation.invoke(service, row, 1L) as Nation
+
+        assertEquals(100.toShort(), nation.bill, "bill should match legacy default 100")
+        assertEquals(15.toShort(), nation.rate, "rate should match legacy default 15")
+        assertEquals(15.toShort(), nation.rateTmp, "rateTmp should match legacy default 15")
+    }
+
+    @Test
     fun `parseNation handles missing description gracefully`() {
         val parseNation = ScenarioService::class.java.getDeclaredMethod(
             "parseNation",
