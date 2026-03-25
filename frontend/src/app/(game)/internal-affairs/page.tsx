@@ -74,7 +74,7 @@ function RichTextEditor({
     }, [exec]);
 
     return (
-        <div className="border rounded-md overflow-hidden">
+        <div className="border rounded-none overflow-hidden">
             <div className="flex items-center gap-1 p-1 border-b bg-muted/30">
                 <Button
                     type="button"
@@ -394,7 +394,7 @@ export default function InternalAffairsPage() {
                                 </div>
                             </div>
                             <div className="grid grid-cols-2 gap-4">
-                                <div className="flex items-center justify-between rounded-md border p-3">
+                                <div className="flex items-center justify-between rounded-none border p-3">
                                     <div className="space-y-0.5">
                                         <span className="text-sm font-medium">전쟁 차단</span>
                                         <p className="text-xs text-muted-foreground">
@@ -403,7 +403,7 @@ export default function InternalAffairsPage() {
                                     </div>
                                     <Switch checked={blockWar} onCheckedChange={setBlockWar} />
                                 </div>
-                                <div className="flex items-center justify-between rounded-md border p-3">
+                                <div className="flex items-center justify-between rounded-none border p-3">
                                     <div className="space-y-0.5">
                                         <span className="text-sm font-medium">임관 금지</span>
                                         <p className="text-xs text-muted-foreground">타 장수의 임관을 제한합니다</p>
@@ -412,13 +412,13 @@ export default function InternalAffairsPage() {
                                 </div>
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                                <div className="rounded-md border p-3 space-y-1">
+                                <div className="rounded-none border p-3 space-y-1">
                                     <div className="text-muted-foreground">전쟁금지 잔여횟수</div>
                                     <div className="text-sm font-semibold tabular-nums">
                                         {nationFrontInfo ? `${nationFrontInfo.prohibitWar}회` : '-'}
                                     </div>
                                 </div>
-                                <div className="rounded-md border p-3 space-y-1">
+                                <div className="rounded-none border p-3 space-y-1">
                                     <div className="text-muted-foreground">임관금지 상태</div>
                                     <div className="text-sm font-semibold">
                                         {blockScout ? '금지' : '허용'}
@@ -427,7 +427,7 @@ export default function InternalAffairsPage() {
                                 </div>
                             </div>
                             {nationFrontInfo?.impossibleStrategicCommand?.length ? (
-                                <div className="rounded-md border p-3 text-xs space-y-1">
+                                <div className="rounded-none border p-3 text-xs space-y-1">
                                     <div className="text-muted-foreground">현재 불가능한 전략 명령</div>
                                     <div className="flex flex-wrap gap-1">
                                         {nationFrontInfo.impossibleStrategicCommand.map((cmd) => (
@@ -574,14 +574,14 @@ export default function InternalAffairsPage() {
                                 </div>
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                                <div className="rounded-md border p-3">
+                                <div className="rounded-none border p-3">
                                     <div className="text-muted-foreground">금 세부</div>
                                     <div className="mt-1 space-y-0.5">
                                         <div>단기수입: -</div>
                                         <div>세금(추정): {financeSummary.totalGoldIncome.toLocaleString()}</div>
                                     </div>
                                 </div>
-                                <div className="rounded-md border p-3">
+                                <div className="rounded-none border p-3">
                                     <div className="text-muted-foreground">쌀 세부</div>
                                     <div className="mt-1 space-y-0.5">
                                         <div>둔전수입: -</div>

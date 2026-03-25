@@ -644,7 +644,7 @@ export function CommandArgForm({ actionCode, onSubmit }: CommandArgFormProps) {
                             <select
                                 value={values[field.key] ?? ''}
                                 onChange={(e) => setValue(field.key, e.target.value)}
-                                className="flex-1 bg-background border border-input rounded-md px-2 py-1 text-xs"
+                                className="flex-1 bg-background border border-input rounded-none px-2 py-1 text-xs"
                             >
                                 <option value="">직접 선택</option>
                                 {list.map((c) => {
@@ -680,7 +680,7 @@ export function CommandArgForm({ actionCode, onSubmit }: CommandArgFormProps) {
                         key={field.key}
                         value={values[field.key] ?? ''}
                         onChange={(e) => setValue(field.key, e.target.value)}
-                        className="w-full bg-background border border-input rounded-md px-2 py-1.5 text-xs"
+                        className="w-full bg-background border border-input rounded-none px-2 py-1.5 text-xs"
                     >
                         <option value="">{field.label}...</option>
                         {list.map((n) => (
@@ -698,7 +698,7 @@ export function CommandArgForm({ actionCode, onSubmit }: CommandArgFormProps) {
                         key={field.key}
                         value={values[field.key] ?? ''}
                         onChange={(e) => setValue(field.key, e.target.value)}
-                        className="w-full bg-background border border-input rounded-md px-2 py-1.5 text-xs"
+                        className="w-full bg-background border border-input rounded-none px-2 py-1.5 text-xs"
                     >
                         <option value="">{field.label}...</option>
                         {list.map((g) => {
@@ -724,7 +724,7 @@ export function CommandArgForm({ actionCode, onSubmit }: CommandArgFormProps) {
                         key={field.key}
                         value={values[field.key] ?? ''}
                         onChange={(e) => setValue(field.key, e.target.value)}
-                        className="w-full bg-background border border-input rounded-md px-2 py-1.5 text-xs"
+                        className="w-full bg-background border border-input rounded-none px-2 py-1.5 text-xs"
                     >
                         <option value="">{field.label}...</option>
                         {field.options.map((o) => (
@@ -811,7 +811,7 @@ export function CommandArgForm({ actionCode, onSubmit }: CommandArgFormProps) {
     return (
         <div className="space-y-2">
             {helpText && (
-                <div className="rounded-md bg-amber-900/20 border border-amber-800/40 px-3 py-2 text-xs text-amber-200/90">
+                <div className="rounded-none bg-amber-900/20 border border-amber-800/40 px-3 py-2 text-xs text-amber-200/90">
                     {helpText}
                 </div>
             )}

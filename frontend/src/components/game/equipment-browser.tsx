@@ -354,7 +354,7 @@ export function EquipmentBrowser({ commandName, citySecu, gold, onSubmit }: Equi
     return (
         <div className="space-y-3">
             {/* Header info */}
-            <div className="rounded-md bg-amber-900/20 border border-amber-800/40 px-3 py-2 text-xs text-amber-200/90">
+            <div className="rounded-none bg-amber-900/20 border border-amber-800/40 px-3 py-2 text-xs text-amber-200/90">
                 장비를 구입하거나 매각합니다.
                 <span className="text-red-400"> 붉은색</span>은 현재 구입 불가.
                 <div className="mt-1 flex gap-3">
@@ -412,7 +412,7 @@ export function EquipmentBrowser({ commandName, citySecu, gold, onSubmit }: Equi
                                         key={item.code}
                                         onClick={() => handleSelect(item)}
                                         className={cn(
-                                            'w-full text-left px-3 py-2 rounded-md border text-xs transition-colors',
+                                            'w-full text-left px-3 py-2 rounded-none border text-xs transition-colors',
                                             unavailable
                                                 ? 'border-red-800/40 text-red-400/80 bg-red-950/20'
                                                 : isSelected
@@ -466,7 +466,7 @@ export function EquipmentBrowser({ commandName, citySecu, gold, onSubmit }: Equi
                                         setSelectedItem(ownedItem ?? null);
                                     }}
                                     className={cn(
-                                        'w-full text-left px-3 py-2 rounded-md border text-xs',
+                                        'w-full text-left px-3 py-2 rounded-none border text-xs',
                                         isEmpty
                                             ? 'border-border/30 text-muted-foreground/50 cursor-not-allowed'
                                             : 'border-border hover:border-amber-700/50 hover:bg-amber-900/10'
@@ -491,7 +491,7 @@ export function EquipmentBrowser({ commandName, citySecu, gold, onSubmit }: Equi
 
             {/* Selected item detail */}
             {selectedItem && (
-                <div className="rounded-md border border-amber-800/40 bg-amber-950/20 px-3 py-2 text-xs">
+                <div className="rounded-none border border-amber-800/40 bg-amber-950/20 px-3 py-2 text-xs">
                     <div className="flex justify-between items-center">
                         <span className="font-medium text-amber-200">{selectedItem.name}</span>
                         <Badge variant="outline" className="text-[9px]">

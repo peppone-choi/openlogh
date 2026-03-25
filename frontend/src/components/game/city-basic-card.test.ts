@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
 describe('CityBasicCard design', () => {
-    it('uses bg-card with rounded-lg instead of legacy-bg2', () => {
-        const containerClass = 'bg-card border border-border rounded-lg overflow-hidden text-sm';
+    it('uses bg-card with rounded-none instead of legacy-bg2 (8bit retro)', () => {
+        const containerClass = 'bg-card border border-foreground/15 rounded-none overflow-hidden text-sm';
         expect(containerClass).toContain('bg-card');
-        expect(containerClass).toContain('rounded-lg');
+        expect(containerClass).toContain('rounded-none');
         expect(containerClass).not.toContain('legacy-bg2');
     });
 

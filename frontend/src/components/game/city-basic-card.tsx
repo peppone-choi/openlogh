@@ -22,7 +22,7 @@ export function CityBasicCard({ city, region }: CityBasicCardProps) {
 
     return (
         <div
-            className="bg-card border border-border rounded-lg overflow-hidden text-sm"
+            className="bg-card border border-foreground/15 rounded-none retro overflow-hidden text-sm"
             data-tutorial="city-card"
             style={{
                 display: 'grid',

@@ -159,7 +159,7 @@ export function GameDashboard() {
                 <>
                     {/* Mobile compact summary line */}
                     <div className="lg:hidden text-center text-xs py-1.5 bg-card/50 border-y border-border">
-                        {global.scenarioText} | {global.year}年 {global.month}月 | 접속{' '}
+                        {global.scenarioText} | {global.year}년 {global.month}월 | 접속{' '}
                         {(global.onlineUserCnt ?? 0).toLocaleString()}명
                     </div>
                     {/* Desktop full header */}
@@ -204,7 +204,7 @@ export function GameDashboard() {
                         </div>
 
                         <div className="col-span-4 md:col-span-8 lg:col-span-4 border-r border-b border-gray-600 py-1">
-                            현재: {global.year}年 {global.month}月 ({global.turnTerm}분 턴 서버)
+                            현재: {global.year}년 {global.month}월 ({global.turnTerm}분 턴 서버)
                         </div>
                         <div className="col-span-2 md:col-span-4 lg:col-span-2 border-r border-b border-gray-600 py-1">
                             접속자: {(global.onlineUserCnt ?? 0).toLocaleString()}명
@@ -419,7 +419,7 @@ export function GameDashboard() {
                             .map((n) => (
                                 <div
                                     key={n.id}
-                                    className="rounded-md px-2.5 py-2 flex items-center gap-2 transition-colors hover:bg-accent/50"
+                                    className="rounded-none px-2.5 py-2 flex items-center gap-2 transition-colors hover:bg-accent/50"
                                     style={{ borderLeft: `3px solid ${n.color}` }}
                                 >
                                     <div className="min-w-0 flex-1">
@@ -525,7 +525,7 @@ export function GameDashboard() {
                     onClick={() => setShowVersionModal(false)}
                 >
                     <div
-                        className="bg-[#222] border border-gray-600 rounded-lg p-4 max-w-sm w-full mx-4 space-y-2"
+                        className="bg-[#222] border border-gray-600 rounded-none p-4 max-w-sm w-full mx-4 space-y-2"
                         onClick={(e) => e.stopPropagation()}
                     >
                         <h3 className="text-sm font-bold text-center">버전 정보</h3>
@@ -540,8 +540,8 @@ export function GameDashboard() {
                                 <span className="text-muted-foreground">턴 주기:</span> {global?.turnTerm}분
                             </p>
                             <p>
-                                <span className="text-muted-foreground">게임 시간:</span> {global?.year}年{' '}
-                                {global?.month}月
+                                <span className="text-muted-foreground">게임 시간:</span> {global?.year}년{' '}
+                                {global?.month}월
                             </p>
                             <p>
                                 <span className="text-muted-foreground">최종 실행:</span> {global?.lastExecuted ?? '-'}

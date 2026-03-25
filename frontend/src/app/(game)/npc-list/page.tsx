@@ -137,7 +137,7 @@ export default function NpcListPage() {
                 <select
                     value={nationFilter}
                     onChange={(e) => setNationFilter(e.target.value)}
-                    className="h-9 min-w-0 rounded-md border border-input bg-transparent px-3 py-1 text-sm"
+                    className="h-9 min-w-0 rounded-none border border-input bg-transparent px-3 py-1 text-sm"
                 >
                     <option value="">전체 국가</option>
                     {nations.map((n) => (
@@ -155,7 +155,7 @@ export default function NpcListPage() {
                         setSortKey(key);
                         setSortDir(key === 'name' || key === 'nation' ? 'asc' : 'desc');
                     }}
-                    className="h-9 min-w-0 rounded-md border border-input bg-transparent px-3 py-1 text-sm"
+                    className="h-9 min-w-0 rounded-none border border-input bg-transparent px-3 py-1 text-sm"
                 >
                     {SORT_OPTIONS.map((o) => (
                         <option key={o.key} value={o.key}>

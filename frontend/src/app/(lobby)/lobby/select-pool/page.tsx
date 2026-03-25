@@ -275,7 +275,7 @@ export default function LobbySelectPoolPage() {
                                     id="pool-custom-ego"
                                     value={customEgo}
                                     onChange={(e) => setCustomEgo(e.target.value)}
-                                    className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm"
+                                    className="w-full px-3 py-2 bg-background border border-input rounded-none text-sm"
                                 >
                                     {EGO_OPTIONS.map((ego) => (
                                         <option key={ego.value} value={ego.value}>

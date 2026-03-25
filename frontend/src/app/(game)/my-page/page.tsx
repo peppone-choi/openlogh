@@ -699,7 +699,7 @@ export default function MyPage() {
                                     <select
                                         value={defenceTrain}
                                         onChange={(e) => setDefenceTrain(Number(e.target.value))}
-                                        className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm"
+                                        className="w-full px-3 py-2 bg-background border border-input rounded-none text-sm"
                                     >
                                         {DEFENCE_PRESETS.map((p) => (
                                             <option key={p.value} value={p.value}>
@@ -718,7 +718,7 @@ export default function MyPage() {
                                     <select
                                         value={tournamentState}
                                         onChange={(e) => setTournamentState(Number(e.target.value))}
-                                        className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm"
+                                        className="w-full px-3 py-2 bg-background border border-input rounded-none text-sm"
                                     >
                                         {TOURNAMENT_OPTIONS.map((o) => (
                                             <option key={o.value} value={o.value}>
@@ -734,7 +734,7 @@ export default function MyPage() {
                                     <select
                                         value={autoNationTurn ? '1' : '0'}
                                         onChange={(e) => setAutoNationTurn(e.target.value === '1')}
-                                        className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm"
+                                        className="w-full px-3 py-2 bg-background border border-input rounded-none text-sm"
                                     >
                                         <option value="0">사용 안함</option>
                                         <option value="1">자동 실행</option>
@@ -782,7 +782,7 @@ export default function MyPage() {
                                     <select
                                         value={potionThreshold}
                                         onChange={(e) => setPotionThreshold(Number(e.target.value))}
-                                        className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm"
+                                        className="w-full px-3 py-2 bg-background border border-input rounded-none text-sm"
                                     >
                                         {POTION_OPTIONS.map((o) => (
                                             <option key={o.value} value={o.value}>
@@ -859,7 +859,7 @@ export default function MyPage() {
                                         value={customCss}
                                         onChange={(e) => setCustomCss(e.target.value)}
                                         placeholder={`/* 예: */\n.card { border-color: gold; }\n.text-cyan-400 { color: #ff6600; }`}
-                                        className="w-full h-32 px-3 py-2 bg-background border border-input rounded-md text-xs font-mono resize-y"
+                                        className="w-full h-32 px-3 py-2 bg-background border border-input rounded-none text-xs font-mono resize-y"
                                     />
                                     {cssPreview && customCss && (
                                         <div className="border border-dashed border-yellow-600 rounded p-3">

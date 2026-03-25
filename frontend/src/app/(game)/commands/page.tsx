@@ -388,7 +388,7 @@ function NationCommandPanel({
                             <Save className="size-3.5 mr-1" /> 저장
                         </Button>
                         <select
-                            className="h-8 rounded-md border border-input bg-background px-2 text-sm"
+                            className="h-8 rounded-none border border-input bg-background px-2 text-sm"
                             value={selectedPreset}
                             onChange={(e) => setSelectedPreset(e.target.value)}
                         >

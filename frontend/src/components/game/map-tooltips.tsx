@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { CITY_LEVEL_NAMES } from '@/lib/game-utils';
 
 const GLASS =
-    'backdrop-blur-md bg-black/75 border border-white/10 rounded-lg shadow-xl text-white animate-in fade-in duration-150';
+    'backdrop-blur-md bg-black/75 border border-foreground/15 rounded-none shadow-xl text-white animate-in fade-in duration-150';
 
 interface NationBadgeProps {
     abbr: string;

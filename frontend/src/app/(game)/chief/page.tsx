@@ -600,7 +600,7 @@ export default function ChiefPage() {
                                         <select
                                             value={selectedPreset}
                                             onChange={(e) => setSelectedPreset(e.target.value)}
-                                            className="h-8 min-w-[120px] rounded-md border border-input bg-background px-2 text-xs"
+                                            className="h-8 min-w-[120px] rounded-none border border-input bg-background px-2 text-xs"
                                         >
                                             <option value="">프리셋 선택</option>
                                             {nationPresets.map((p) => (

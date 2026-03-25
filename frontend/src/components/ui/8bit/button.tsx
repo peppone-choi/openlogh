@@ -64,25 +64,25 @@ function Button({ children, asChild, ...props }: BitButtonProps) {
                     {variant !== 'ghost' && variant !== 'link' && size !== 'icon' && (
                         <>
                             {/* Pixelated border */}
-                            <div className="absolute -top-1.5 w-1/2 left-1.5 h-1.5 bg-foreground dark:bg-ring" />
-                            <div className="absolute -top-1.5 w-1/2 right-1.5 h-1.5 bg-foreground dark:bg-ring" />
-                            <div className="absolute -bottom-1.5 w-1/2 left-1.5 h-1.5 bg-foreground dark:bg-ring" />
-                            <div className="absolute -bottom-1.5 w-1/2 right-1.5 h-1.5 bg-foreground dark:bg-ring" />
-                            <div className="absolute top-0 left-0 size-1.5 bg-foreground dark:bg-ring" />
-                            <div className="absolute top-0 right-0 size-1.5 bg-foreground dark:bg-ring" />
-                            <div className="absolute bottom-0 left-0 size-1.5 bg-foreground dark:bg-ring" />
-                            <div className="absolute bottom-0 right-0 size-1.5 bg-foreground dark:bg-ring" />
-                            <div className="absolute top-1.5 -left-1.5 h-[calc(100%-12px)] w-1.5 bg-foreground dark:bg-ring" />
-                            <div className="absolute top-1.5 -right-1.5 h-[calc(100%-12px)] w-1.5 bg-foreground dark:bg-ring" />
+                            <div className="absolute -top-0.5 w-1/2 left-0.5 h-0.5 bg-foreground/20" />
+                            <div className="absolute -top-0.5 w-1/2 right-0.5 h-0.5 bg-foreground/20" />
+                            <div className="absolute -bottom-0.5 w-1/2 left-0.5 h-0.5 bg-foreground/20" />
+                            <div className="absolute -bottom-0.5 w-1/2 right-0.5 h-0.5 bg-foreground/20" />
+                            <div className="absolute top-0 left-0 size-0.5 bg-foreground/20" />
+                            <div className="absolute top-0 right-0 size-0.5 bg-foreground/20" />
+                            <div className="absolute bottom-0 left-0 size-0.5 bg-foreground/20" />
+                            <div className="absolute bottom-0 right-0 size-0.5 bg-foreground/20" />
+                            <div className="absolute top-0.5 -left-0.5 h-[calc(100%-4px)] w-0.5 bg-foreground/20" />
+                            <div className="absolute top-0.5 -right-0.5 h-[calc(100%-4px)] w-0.5 bg-foreground/20" />
                             {variant !== 'outline' && (
                                 <>
                                     {/* Top shadow */}
-                                    <div className="absolute top-0 left-0 w-full h-1.5 bg-foreground/20" />
-                                    <div className="absolute top-1.5 left-0 w-3 h-1.5 bg-foreground/20" />
+                                    <div className="absolute top-0 left-0 w-full h-0.5 bg-foreground/8" />
+                                    <div className="absolute top-0.5 left-0 w-1 h-0.5 bg-foreground/8" />
 
                                     {/* Bottom shadow */}
-                                    <div className="absolute bottom-0 left-0 w-full h-1.5 bg-foreground/20" />
-                                    <div className="absolute bottom-1.5 right-0 w-3 h-1.5 bg-foreground/20" />
+                                    <div className="absolute bottom-0 left-0 w-full h-0.5 bg-foreground/8" />
+                                    <div className="absolute bottom-0.5 right-0 w-1 h-0.5 bg-foreground/8" />
                                 </>
                             )}
                         </>
@@ -90,12 +90,12 @@ function Button({ children, asChild, ...props }: BitButtonProps) {
 
                     {size === 'icon' && (
                         <>
-                            <div className="absolute top-0 left-0 w-full h-[5px] md:h-1.5 bg-foreground dark:bg-ring pointer-events-none" />
-                            <div className="absolute bottom-0 w-full h-[5px] md:h-1.5 bg-foreground dark:bg-ring pointer-events-none" />
-                            <div className="absolute top-1 -left-1 w-[5px] md:w-1.5 h-1/2 bg-foreground dark:bg-ring pointer-events-none" />
-                            <div className="absolute bottom-1 -left-1 w-[5px] md:w-1.5 h-1/2 bg-foreground dark:bg-ring pointer-events-none" />
-                            <div className="absolute top-1 -right-1 w-[5px] md:w-1.5 h-1/2 bg-foreground dark:bg-ring pointer-events-none" />
-                            <div className="absolute bottom-1 -right-1 w-[5px] md:w-1.5 h-1/2 bg-foreground dark:bg-ring pointer-events-none" />
+                            <div className="absolute top-0 left-0 w-full h-px md:h-0.5 bg-foreground/20 pointer-events-none" />
+                            <div className="absolute bottom-0 w-full h-px md:h-0.5 bg-foreground/20 pointer-events-none" />
+                            <div className="absolute top-0.5 -left-0.5 w-px md:w-0.5 h-1/2 bg-foreground/20 pointer-events-none" />
+                            <div className="absolute bottom-0.5 -left-0.5 w-px md:w-0.5 h-1/2 bg-foreground/20 pointer-events-none" />
+                            <div className="absolute top-0.5 -right-0.5 w-px md:w-0.5 h-1/2 bg-foreground/20 pointer-events-none" />
+                            <div className="absolute bottom-0.5 -right-0.5 w-px md:w-0.5 h-1/2 bg-foreground/20 pointer-events-none" />
                         </>
                     )}
                 </span>
@@ -106,25 +106,25 @@ function Button({ children, asChild, ...props }: BitButtonProps) {
                     {variant !== 'ghost' && variant !== 'link' && size !== 'icon' && (
                         <>
                             {/* Pixelated border */}
-                            <div className="absolute -top-1.5 w-1/2 left-1.5 h-1.5 bg-foreground dark:bg-ring" />
-                            <div className="absolute -top-1.5 w-1/2 right-1.5 h-1.5 bg-foreground dark:bg-ring" />
-                            <div className="absolute -bottom-1.5 w-1/2 left-1.5 h-1.5 bg-foreground dark:bg-ring" />
-                            <div className="absolute -bottom-1.5 w-1/2 right-1.5 h-1.5 bg-foreground dark:bg-ring" />
-                            <div className="absolute top-0 left-0 size-1.5 bg-foreground dark:bg-ring" />
-                            <div className="absolute top-0 right-0 size-1.5 bg-foreground dark:bg-ring" />
-                            <div className="absolute bottom-0 left-0 size-1.5 bg-foreground dark:bg-ring" />
-                            <div className="absolute bottom-0 right-0 size-1.5 bg-foreground dark:bg-ring" />
-                            <div className="absolute top-1.5 -left-1.5 h-[calc(100%-12px)] w-1.5 bg-foreground dark:bg-ring" />
-                            <div className="absolute top-1.5 -right-1.5 h-[calc(100%-12px)] w-1.5 bg-foreground dark:bg-ring" />
+                            <div className="absolute -top-0.5 w-1/2 left-0.5 h-0.5 bg-foreground/20" />
+                            <div className="absolute -top-0.5 w-1/2 right-0.5 h-0.5 bg-foreground/20" />
+                            <div className="absolute -bottom-0.5 w-1/2 left-0.5 h-0.5 bg-foreground/20" />
+                            <div className="absolute -bottom-0.5 w-1/2 right-0.5 h-0.5 bg-foreground/20" />
+                            <div className="absolute top-0 left-0 size-0.5 bg-foreground/20" />
+                            <div className="absolute top-0 right-0 size-0.5 bg-foreground/20" />
+                            <div className="absolute bottom-0 left-0 size-0.5 bg-foreground/20" />
+                            <div className="absolute bottom-0 right-0 size-0.5 bg-foreground/20" />
+                            <div className="absolute top-0.5 -left-0.5 h-[calc(100%-4px)] w-0.5 bg-foreground/20" />
+                            <div className="absolute top-0.5 -right-0.5 h-[calc(100%-4px)] w-0.5 bg-foreground/20" />
                             {variant !== 'outline' && (
                                 <>
                                     {/* Top shadow */}
-                                    <div className="absolute top-0 left-0 w-full h-1.5 bg-foreground/20" />
-                                    <div className="absolute top-1.5 left-0 w-3 h-1.5 bg-foreground/20" />
+                                    <div className="absolute top-0 left-0 w-full h-0.5 bg-foreground/8" />
+                                    <div className="absolute top-0.5 left-0 w-1 h-0.5 bg-foreground/8" />
 
                                     {/* Bottom shadow */}
-                                    <div className="absolute bottom-0 left-0 w-full h-1.5 bg-foreground/20" />
-                                    <div className="absolute bottom-1.5 right-0 w-3 h-1.5 bg-foreground/20" />
+                                    <div className="absolute bottom-0 left-0 w-full h-0.5 bg-foreground/8" />
+                                    <div className="absolute bottom-0.5 right-0 w-1 h-0.5 bg-foreground/8" />
                                 </>
                             )}
                         </>
@@ -132,12 +132,12 @@ function Button({ children, asChild, ...props }: BitButtonProps) {
 
                     {size === 'icon' && (
                         <>
-                            <div className="absolute top-0 left-0 w-full h-[5px] md:h-1.5 bg-foreground dark:bg-ring pointer-events-none" />
-                            <div className="absolute bottom-0 w-full h-[5px] md:h-1.5 bg-foreground dark:bg-ring pointer-events-none" />
-                            <div className="absolute top-1 -left-1 w-[5px] md:w-1.5 h-1/2 bg-foreground dark:bg-ring pointer-events-none" />
-                            <div className="absolute bottom-1 -left-1 w-[5px] md:w-1.5 h-1/2 bg-foreground dark:bg-ring pointer-events-none" />
-                            <div className="absolute top-1 -right-1 w-[5px] md:w-1.5 h-1/2 bg-foreground dark:bg-ring pointer-events-none" />
-                            <div className="absolute bottom-1 -right-1 w-[5px] md:w-1.5 h-1/2 bg-foreground dark:bg-ring pointer-events-none" />
+                            <div className="absolute top-0 left-0 w-full h-px md:h-0.5 bg-foreground/20 pointer-events-none" />
+                            <div className="absolute bottom-0 w-full h-px md:h-0.5 bg-foreground/20 pointer-events-none" />
+                            <div className="absolute top-0.5 -left-0.5 w-px md:w-0.5 h-1/2 bg-foreground/20 pointer-events-none" />
+                            <div className="absolute bottom-0.5 -left-0.5 w-px md:w-0.5 h-1/2 bg-foreground/20 pointer-events-none" />
+                            <div className="absolute top-0.5 -right-0.5 w-px md:w-0.5 h-1/2 bg-foreground/20 pointer-events-none" />
+                            <div className="absolute bottom-0.5 -right-0.5 w-px md:w-0.5 h-1/2 bg-foreground/20 pointer-events-none" />
                         </>
                     )}
                 </>

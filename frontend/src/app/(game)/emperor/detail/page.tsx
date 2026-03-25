@@ -134,7 +134,7 @@ export default function EmperorDetailPage() {
                         {nationGenerals
                             .filter((g) => g.officerLevel >= 5)
                             .map((g) => (
-                                <div key={g.id} className="flex items-center gap-3 rounded-lg border p-2">
+                                <div key={g.id} className="flex items-center gap-3 rounded-none border p-2">
                                     <GeneralPortrait picture={g.picture} name={g.name} size="sm" />
                                     <div className="flex-1">
                                         <span className="font-medium">{g.name}</span>

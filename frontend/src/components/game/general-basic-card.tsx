@@ -80,7 +80,7 @@ export function GeneralBasicCard({ general, nation, turnTerm, lastExecuted }: Ge
 
     return (
         <div
-            className="bg-card border border-border rounded-lg overflow-hidden text-sm"
+            className="bg-card border border-foreground/15 rounded-none retro overflow-hidden text-sm"
             data-tutorial="general-card"
             style={{ maxWidth: 500 }}
         >

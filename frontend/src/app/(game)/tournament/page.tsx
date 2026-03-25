@@ -72,7 +72,7 @@ const ROUND_NAMES: Record<number, string> = {
     4: '결승',
 };
 
-const GROUP_LABELS = ['一', '二', '三', '四', '五', '六', '七', '八'];
+const GROUP_LABELS = ['1조', '2조', '3조', '4조', '5조', '6조', '7조', '8조'];
 
 function getTournamentStatValue(
     general: { leadership: number; strength: number; intel: number } | undefined,

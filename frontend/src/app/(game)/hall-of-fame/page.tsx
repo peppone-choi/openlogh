@@ -122,7 +122,7 @@ function HallFrame({ categoryLabel, entries }: { categoryLabel: string; entries:
                     {entries.slice(0, 10).map((entry, idx) => (
                         <div
                             key={`${entry.generalName}-${idx}`}
-                            className="flex-shrink-0 w-[100px] flex flex-col items-center text-center rounded-lg border p-2 space-y-1"
+                            className="flex-shrink-0 w-[100px] flex flex-col items-center text-center rounded-none border p-2 space-y-1"
                             style={{
                                 borderColor:
                                     idx < 3 ? (idx === 0 ? '#f59e0b' : idx === 1 ? '#9ca3af' : '#b45309') : undefined,

@@ -768,7 +768,7 @@ export default function AuctionPage() {
                                     <div className="space-y-1">
                                         <p className="text-xs text-muted-foreground">아이템 종류</p>
                                         <select
-                                            className="h-8 w-full rounded-md border border-input bg-transparent px-2 text-xs"
+                                            className="h-8 w-full rounded-none border border-input bg-transparent px-2 text-xs"
                                             value={itemType}
                                             onChange={(e) => setItemType(e.target.value)}
                                         >

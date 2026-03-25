@@ -815,7 +815,7 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
                     <select
                         value={selectedStoredAction}
                         onChange={(event) => setSelectedStoredAction(event.target.value)}
-                        className="h-8 min-w-[140px] rounded-md border border-input bg-background px-2 text-xs"
+                        className="h-8 min-w-[140px] rounded-none border border-input bg-background px-2 text-xs"
                     >
                         <option value="">저장 액션 선택</option>
                         {storedActions.map((item) => (
@@ -888,7 +888,7 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
             </CardHeader>
 
             <CardContent>
-                <div className="overflow-hidden rounded-md border border-gray-700">
+                <div className="overflow-hidden rounded-none border border-gray-700">
                     <div className="grid grid-cols-[24px_68px_120px_1fr_136px] bg-[#1a1a1a] px-2 py-1.5 text-[11px] text-gray-400">
                         <div />
                         <div>년월</div>
@@ -1064,7 +1064,7 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
                         onClick={() => setShowSelector(false)}
                     >
                         <div
-                            className="w-full max-w-2xl rounded-t-xl sm:rounded-md border border-gray-700 bg-background shadow-xl max-h-[85vh] sm:max-h-[80vh] overflow-y-auto"
+                            className="w-full max-w-2xl rounded-none border border-gray-700 bg-background shadow-xl max-h-[85vh] sm:max-h-[80vh] overflow-y-auto"
                             onClick={(e) => e.stopPropagation()}
                         >
                             <div className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-700 px-4 py-2 bg-background">

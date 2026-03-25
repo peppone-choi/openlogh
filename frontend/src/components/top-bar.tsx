@@ -66,13 +66,13 @@ export function TopBar({ onMessageClick, onMobileMenuClick }: TopBarProps) {
                 <div className="flex md:hidden items-center gap-2">
                     <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-yellow-500/20">
                         <div className="w-3.5 h-3.5 rounded-full bg-yellow-500 flex items-center justify-center">
-                            <span className="text-[8px] text-yellow-950 font-bold">金</span>
+                            <span className="text-[8px] text-yellow-950 font-bold">금</span>
                         </div>
                         <span className="text-[11px] font-medium text-yellow-400">{formatCompact(myGeneral.gold)}</span>
                     </div>
                     <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-green-500/20">
                         <div className="w-3.5 h-3.5 rounded-full bg-green-500 flex items-center justify-center">
-                            <span className="text-[8px] text-green-950 font-bold">米</span>
+                            <span className="text-[8px] text-green-950 font-bold">미</span>
                         </div>
                         <span className="text-[11px] font-medium text-green-400">{formatCompact(myGeneral.rice)}</span>
                     </div>

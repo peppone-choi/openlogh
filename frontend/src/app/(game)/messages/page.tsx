@@ -297,7 +297,7 @@ export default function MessagesPage() {
                                             setMailboxType(canUseDiplomacy ? 'DIPLOMACY' : 'NATIONAL');
                                         }
                                     }}
-                                    className="h-9 w-full min-w-0 rounded-md border border-amber-900/60 bg-zinc-950 px-3 py-1 text-sm text-amber-100 shadow-xs outline-none focus-visible:border-amber-500"
+                                    className="h-9 w-full min-w-0 rounded-none border border-amber-900/60 bg-zinc-950 px-3 py-1 text-sm text-amber-100 shadow-xs outline-none focus-visible:border-amber-500"
                                 >
                                     <option value="public">공개 (전체)</option>
                                     <option value="general">장수</option>
@@ -312,7 +312,7 @@ export default function MessagesPage() {
                                     id="mailbox-type"
                                     value={mailboxType}
                                     onChange={(e) => setMailboxType(e.target.value as MailboxType)}
-                                    className="h-9 w-full min-w-0 rounded-md border border-amber-900/60 bg-zinc-950 px-3 py-1 text-sm text-amber-100 shadow-xs outline-none focus-visible:border-amber-500"
+                                    className="h-9 w-full min-w-0 rounded-none border border-amber-900/60 bg-zinc-950 px-3 py-1 text-sm text-amber-100 shadow-xs outline-none focus-visible:border-amber-500"
                                 >
                                     {recipientType === 'public' && <option value="PUBLIC">공개 서신</option>}
                                     {recipientType === 'general' && <option value="PRIVATE">사적 서신</option>}
@@ -336,7 +336,7 @@ export default function MessagesPage() {
                                     id="dest-general"
                                     value={destGeneralId}
                                     onChange={(e) => setDestGeneralId(e.target.value)}
-                                    className="h-9 w-full min-w-0 rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] md:text-sm"
+                                    className="h-9 w-full min-w-0 rounded-none border border-input bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] md:text-sm"
                                 >
                                     <option value="">선택...</option>
                                     {Array.from(
@@ -375,7 +375,7 @@ export default function MessagesPage() {
                                     id="dest-nation"
                                     value={destNationId}
                                     onChange={(e) => setDestNationId(e.target.value)}
-                                    className="h-9 w-full min-w-0 rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] md:text-sm"
+                                    className="h-9 w-full min-w-0 rounded-none border border-input bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] md:text-sm"
                                 >
                                     <option value="">선택...</option>
                                     {nations

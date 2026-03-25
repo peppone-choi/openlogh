@@ -108,7 +108,7 @@ export function DeploymentSelector({ onSubmit }: DeploymentSelectorProps) {
     return (
         <div className="space-y-3">
             {/* Help text */}
-            <div className="rounded-md bg-amber-900/20 border border-amber-800/40 px-3 py-2 text-xs text-amber-200/90">
+            <div className="rounded-none bg-amber-900/20 border border-amber-800/40 px-3 py-2 text-xs text-amber-200/90">
                 선택된 도시로 아국 장수를 발령합니다. 아국 도시로만 발령이 가능합니다.
             </div>
 
@@ -127,7 +127,7 @@ export function DeploymentSelector({ onSubmit }: DeploymentSelectorProps) {
                                     key={gen.id}
                                     onClick={() => setSelectedGeneralId(gen.id)}
                                     className={cn(
-                                        'w-full text-left px-3 py-1.5 rounded-md border text-xs transition-colors',
+                                        'w-full text-left px-3 py-1.5 rounded-none border text-xs transition-colors',
                                         isSelected
                                             ? 'border-amber-500 bg-amber-900/30 text-amber-100'
                                             : 'border-border hover:border-amber-700/50 hover:bg-amber-900/10'
@@ -192,7 +192,7 @@ export function DeploymentSelector({ onSubmit }: DeploymentSelectorProps) {
                                                 key={city.id}
                                                 onClick={() => setSelectedCityId(city.id)}
                                                 className={cn(
-                                                    'w-full text-left px-3 py-1.5 rounded-md border text-xs transition-colors',
+                                                    'w-full text-left px-3 py-1.5 rounded-none border text-xs transition-colors',
                                                     isSelected
                                                         ? 'border-amber-500 bg-amber-900/30 text-amber-100'
                                                         : 'border-border hover:border-amber-700/50 hover:bg-amber-900/10'

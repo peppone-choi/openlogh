@@ -279,7 +279,7 @@ export function TipTapEditor({
             {/* Image Modal */}
             {showImageModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-                    <div className="bg-background border border-border rounded-lg p-6 w-full max-w-md space-y-4">
+                    <div className="bg-background border border-border rounded-none p-6 w-full max-w-md space-y-4">
                         <h3 className="text-lg font-medium">이미지 추가</h3>
                         <div className="space-y-2">
                             <label className="text-sm text-muted-foreground">이미지 업로드</label>

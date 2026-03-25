@@ -560,14 +560,14 @@ export function CrewTypeBrowser({ commandName, onSubmit }: CrewTypeBrowserProps)
     return (
         <div className="space-y-3">
             {/* Header info */}
-            <div className="rounded-md bg-amber-900/20 border border-amber-800/40 px-3 py-2 text-xs text-amber-200/90">
+            <div className="rounded-none bg-amber-900/20 border border-amber-800/40 px-3 py-2 text-xs text-amber-200/90">
                 {commandName === '모병'
                     ? '모병은 가격 2배의 자금이 소요됩니다. 훈련·사기가 높습니다.'
                     : '징병은 저렴하지만 훈련·사기가 낮습니다. 도시 인구가 감소합니다.'}
             </div>
 
             {/* Status bar */}
-            <div className="grid grid-cols-3 gap-1 text-[10px] text-muted-foreground bg-zinc-900/50 rounded-md px-2 py-1.5">
+            <div className="grid grid-cols-3 gap-1 text-[10px] text-muted-foreground bg-zinc-900/50 rounded-none px-2 py-1.5">
                 <div>
                     통솔: <span className="text-amber-300 font-mono">{leadership}</span>
                 </div>
@@ -616,7 +616,7 @@ export function CrewTypeBrowser({ commandName, onSubmit }: CrewTypeBrowserProps)
                                     <button
                                         onClick={() => available && selectCrew(ct)}
                                         className={cn(
-                                            'w-full text-left rounded-md border px-2 py-1.5 transition-colors',
+                                            'w-full text-left rounded-none border px-2 py-1.5 transition-colors',
                                             isSelected
                                                 ? 'border-amber-500 bg-amber-900/30'
                                                 : available
@@ -691,7 +691,7 @@ export function CrewTypeBrowser({ commandName, onSubmit }: CrewTypeBrowserProps)
 
             {/* Selected crew detail + amount controls */}
             {selectedCrew && (
-                <div className="rounded-md border border-zinc-700 bg-zinc-900/50 p-2 space-y-2">
+                <div className="rounded-none border border-zinc-700 bg-zinc-900/50 p-2 space-y-2">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                             <Badge variant="outline" className="text-[10px]">

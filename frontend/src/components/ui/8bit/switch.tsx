@@ -19,17 +19,17 @@ function Switch({ className, ...props }: React.ComponentProps<typeof SwitchPrimi
             <SwitchPrimitive.Thumb
                 data-slot="switch-thumb"
                 className={cn(
-                    'bg-primary data-[state=checked]:bg-primary-foreground dark:data-[state=checked]:bg-primary-foreground dark:data-[state=unchecked]:bg-foreground pointer-events-none block size-4 data-[state=checked]:border-l data-[state=unchecked]:border-r border-foreground dark:border-ring ring-0 transition-transform data-[state=checked]:translate-x-[calc(100%)] data-[state=unchecked]:translate-x-0'
+                    'bg-primary data-[state=checked]:bg-primary-foreground dark:data-[state=checked]:bg-primary-foreground dark:data-[state=unchecked]:bg-foreground pointer-events-none block size-4 data-[state=checked]:border-l data-[state=unchecked]:border-r border-foreground/20 ring-0 transition-transform data-[state=checked]:translate-x-[calc(100%)] data-[state=unchecked]:translate-x-0'
                 )}
             />
 
             <div
-                className="absolute inset-0 border-y-4 -my-1 border-foreground dark:border-ring pointer-events-none"
+                className="absolute inset-0 border-y -my-px border-foreground/20 pointer-events-none"
                 aria-hidden="true"
             />
 
             <div
-                className="absolute inset-0 border-x-4 -mx-1 border-foreground dark:border-ring pointer-events-none"
+                className="absolute inset-0 border-x -mx-px border-foreground/20 pointer-events-none"
                 aria-hidden="true"
             />
         </SwitchPrimitive.Root>

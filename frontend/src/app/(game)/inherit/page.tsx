@@ -570,7 +570,7 @@ export default function InheritPage() {
                                         ? getBuffCost(currentSelected) - getBuffCost(prevLevel)
                                         : 0;
                                 return (
-                                    <div key={buff.code} className="border border-gray-800 rounded-md p-3 space-y-2">
+                                    <div key={buff.code} className="border border-gray-800 rounded-none p-3 space-y-2">
                                         <div className="flex items-center justify-between">
                                             <div>
                                                 <span className="text-sm font-medium">{buff.label}</span>
@@ -643,7 +643,7 @@ export default function InheritPage() {
                             <p className="text-sm text-muted-foreground">다음에 배정받을 전투특기를 지정합니다.</p>
                             <div className="flex gap-2">
                                 <select
-                                    className="flex-1 rounded-md border bg-background px-3 py-2 text-sm"
+                                    className="flex-1 rounded-none border bg-background px-3 py-2 text-sm"
                                     value={selectedSpecial}
                                     onChange={(e) => setSelectedSpecial(e.target.value)}
                                 >
@@ -679,7 +679,7 @@ export default function InheritPage() {
                             <p className="text-sm text-muted-foreground">다음에 시작할 도시를 지정합니다.</p>
                             <div className="flex gap-2">
                                 <select
-                                    className="flex-1 rounded-md border bg-background px-3 py-2 text-sm"
+                                    className="flex-1 rounded-none border bg-background px-3 py-2 text-sm"
                                     value={selectedCity}
                                     onChange={(e) => setSelectedCity(e.target.value)}
                                 >
@@ -897,7 +897,7 @@ export default function InheritPage() {
                             </p>
                             <div className="space-y-2">
                                 <select
-                                    className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+                                    className="w-full rounded-none border bg-background px-3 py-2 text-sm"
                                     value={selectedUnique}
                                     onChange={(e) => setSelectedUnique(e.target.value)}
                                 >
@@ -953,7 +953,7 @@ export default function InheritPage() {
                             </p>
                             <div className="flex gap-2">
                                 <select
-                                    className="flex-1 rounded-md border bg-background px-3 py-2 text-sm"
+                                    className="flex-1 rounded-none border bg-background px-3 py-2 text-sm"
                                     value={targetOwnerId}
                                     onChange={(e) => setTargetOwnerId(e.target.value)}
                                 >

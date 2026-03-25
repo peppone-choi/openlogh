@@ -31,7 +31,7 @@ export function NationBasicCard({ nation, global }: NationBasicCardProps) {
 
     return (
         <div
-            className="bg-card border border-border rounded-lg overflow-hidden text-sm"
+            className="bg-card border border-foreground/15 rounded-none overflow-hidden text-sm"
             data-tutorial="nation-card"
             style={{
                 maxWidth: 500,

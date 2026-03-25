@@ -240,7 +240,7 @@ function BoardPageContent() {
                                     value={title}
                                     onChange={(e) => setTitle(e.target.value)}
                                     placeholder="제목을 입력하세요..."
-                                    className="w-full h-8 px-2 text-xs border border-input bg-transparent rounded-md outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+                                    className="w-full h-8 px-2 text-xs border border-input bg-transparent rounded-none outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
                                 />
                                 <Textarea
                                     value={content}

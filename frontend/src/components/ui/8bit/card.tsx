@@ -32,12 +32,7 @@ export interface BitCardProps extends React.ComponentProps<'div'>, VariantProps<
 
 function Card({ className, font, ...props }: BitCardProps) {
     return (
-        <div
-            className={cn(
-                'relative bg-card text-card-foreground border-y-6 border-foreground dark:border-ring p-0!',
-                className
-            )}
-        >
+        <div className={cn('relative bg-card text-card-foreground border-y-2 border-foreground/20 p-0!', className)}>
             <ShadcnCard
                 {...props}
                 className={cn(
@@ -48,7 +43,7 @@ function Card({ className, font, ...props }: BitCardProps) {
             />
 
             <div
-                className={cn('absolute inset-0 border-x-6 -mx-1.5 border-inherit pointer-events-none')}
+                className={cn('absolute inset-0 border-x-2 -mx-0.5 border-inherit pointer-events-none')}
                 aria-hidden="true"
             />
         </div>

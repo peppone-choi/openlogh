@@ -77,12 +77,12 @@ function Progress({ className, font, variant, value, progressBg, indicatorColor,
             </ProgressPrimitive.Root>
 
             <div
-                className="absolute inset-0 border-y-4 -my-1 border-foreground dark:border-ring pointer-events-none"
+                className="absolute inset-0 border-y -my-px border-foreground/20 pointer-events-none"
                 aria-hidden="true"
             />
 
             <div
-                className="absolute inset-0 border-x-4 -mx-1 border-foreground dark:border-ring pointer-events-none"
+                className="absolute inset-0 border-x -mx-px border-foreground/20 pointer-events-none"
                 aria-hidden="true"
             />
         </div>

@@ -22,7 +22,7 @@ import '@/components/ui/8bit/styles/retro.css';
 export const tableVariants = cva('', {
     variants: {
         variant: {
-            default: 'p-4 py-2.5 border-y-6 border-foreground dark:border-ring',
+            default: 'p-4 py-2.5 border-y-2 border-foreground/20',
             borderless: '',
         },
         font: {
@@ -51,7 +51,7 @@ function Table({
 
             {variant !== 'borderless' && (
                 <div
-                    className="absolute inset-0 border-x-6 -mx-1.5 border-foreground dark:border-ring pointer-events-none"
+                    className="absolute inset-0 border-x-2 -mx-0.5 border-foreground/20 pointer-events-none"
                     aria-hidden="true"
                 />
             )}
@@ -60,7 +60,7 @@ function Table({
 }
 
 function TableHeader({ className, ...props }: React.ComponentProps<'thead'>) {
-    return <ShadcnTableHeader className={cn(className, 'border-b-4 border-foreground dark:border-ring')} {...props} />;
+    return <ShadcnTableHeader className={cn(className, 'border-b-2 border-foreground/20')} {...props} />;
 }
 
 function TableBody({ className, ...props }: React.ComponentProps<'tbody'>) {
@@ -72,12 +72,7 @@ function TableFooter({ className, ...props }: React.ComponentProps<'tfoot'>) {
 }
 
 function TableRow({ className, ...props }: React.ComponentProps<'tr'>) {
-    return (
-        <ShadcnTableRow
-            className={cn(className, 'border-dashed border-b-4 border-foreground dark:border-ring')}
-            {...props}
-        />
-    );
+    return <ShadcnTableRow className={cn(className, 'border-dashed border-b-2 border-foreground/20')} {...props} />;
 }
 
 function TableHead({ className, ...props }: React.ComponentProps<'th'>) {

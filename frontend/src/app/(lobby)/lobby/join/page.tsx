@@ -376,7 +376,7 @@ function LobbyJoinPageContent() {
                         <div className="space-y-1">
                             <label className="block text-sm text-muted-foreground">장수명</label>
                             {blockCustomName ? (
-                                <div className="text-sm text-muted-foreground p-2 border border-input rounded-md bg-muted/50">
+                                <div className="text-sm text-muted-foreground p-2 border border-input rounded-none bg-muted/50">
                                     이 서버에서는 커스텀 장수명을 사용할 수 없습니다. (서버 설정에 의해 자동 배정됩니다)
                                 </div>
                             ) : (
@@ -412,7 +412,7 @@ function LobbyJoinPageContent() {
                             <select
                                 value={personality}
                                 onChange={(e) => setPersonality(e.target.value)}
-                                className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm"
+                                className="w-full px-3 py-2 bg-background border border-input rounded-none text-sm"
                             >
                                 {PERSONALITIES.map((p) => (
                                     <option key={p.key} value={p.key}>
@@ -431,7 +431,7 @@ function LobbyJoinPageContent() {
                             <select
                                 value={nationId}
                                 onChange={(e) => setNationId(Number(e.target.value))}
-                                className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm"
+                                className="w-full px-3 py-2 bg-background border border-input rounded-none text-sm"
                             >
                                 <option value={0}>재야 (무소속)</option>
                                 {nations
@@ -457,7 +457,7 @@ function LobbyJoinPageContent() {
                                         (currentWorld.meta as Record<string, unknown>)?.randomStartCity
                                     );
                                     return randomOnly ? (
-                                        <div className="text-sm text-muted-foreground p-2 border border-input rounded-md bg-muted/50">
+                                        <div className="text-sm text-muted-foreground p-2 border border-input rounded-none bg-muted/50">
                                             이 서버에서는 랜덤 도시 배정만 가능합니다.
                                         </div>
                                     ) : (
@@ -468,7 +468,7 @@ function LobbyJoinPageContent() {
                                                     e.target.value === 'random' ? 'random' : Number(e.target.value)
                                                 )
                                             }
-                                            className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm"
+                                            className="w-full px-3 py-2 bg-background border border-input rounded-none text-sm"
                                         >
                                             <option value="random">랜덤 배치</option>
                                             {filteredCities.map((c) => (
@@ -480,7 +480,7 @@ function LobbyJoinPageContent() {
                                     );
                                 })()
                             ) : (
-                                <div className="text-sm text-muted-foreground p-2 border border-input rounded-md bg-muted/50">
+                                <div className="text-sm text-muted-foreground p-2 border border-input rounded-none bg-muted/50">
                                     국가 소속 시 도시는 자동 배정됩니다.
                                 </div>
                             )}
@@ -626,7 +626,7 @@ function LobbyJoinPageContent() {
                                         <select
                                             value={inheritSpecial}
                                             onChange={(e) => setInheritSpecial(e.target.value)}
-                                            className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm"
+                                            className="w-full px-3 py-2 bg-background border border-input rounded-none text-sm"
                                         >
                                             <option value="">선택 안함</option>
                                             {Object.entries(inheritInfo.availableSpecialWar ?? {}).map(
@@ -654,7 +654,7 @@ function LobbyJoinPageContent() {
                                             onChange={(e) =>
                                                 setInheritCity(e.target.value ? Number(e.target.value) : '')
                                             }
-                                            className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm"
+                                            className="w-full px-3 py-2 bg-background border border-input rounded-none text-sm"
                                         >
                                             <option value="">랜덤 배치</option>
                                             {cities.map((c) => (

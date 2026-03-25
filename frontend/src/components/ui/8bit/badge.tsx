@@ -53,9 +53,9 @@ function Badge({ children, className = '', font, variant, ...props }: BitButtonP
             </ShadcnBadge>
 
             {/* Left pixel bar */}
-            <div className={cn('-left-1.5 absolute inset-y-[4px] w-1.5', color, visualClasses)} />
+            <div className={cn('-left-0.5 absolute inset-y-[2px] w-0.5', color, visualClasses)} />
             {/* Right pixel bar */}
-            <div className={cn('-right-1.5 absolute inset-y-[4px] w-1.5', color, visualClasses)} />
+            <div className={cn('-right-0.5 absolute inset-y-[2px] w-0.5', color, visualClasses)} />
         </div>
     );
 }

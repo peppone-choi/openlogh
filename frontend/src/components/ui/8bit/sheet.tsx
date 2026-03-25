@@ -91,24 +91,24 @@ function SheetContent({ className, children, side = 'right', font, ...props }: B
                     {/* 8 bit borders */}
                     {side !== 'top' && (
                         <div
-                            className="absolute top-0 left-0 w-full h-1.5 bg-foreground dark:bg-ring pointer-events-none"
+                            className="absolute top-0 left-0 w-full h-0.5 bg-foreground/20 pointer-events-none"
                             aria-hidden="true"
                         />
                     )}
                     {side !== 'bottom' && (
                         <div
-                            className="absolute bottom-0 w-full h-1.5 bg-foreground dark:bg-ring pointer-events-none"
+                            className="absolute bottom-0 w-full h-0.5 bg-foreground/20 pointer-events-none"
                             aria-hidden="true"
                         />
                     )}
                     {side !== 'left' && (
                         <>
                             <div
-                                className="absolute top-1 -left-1 w-1.5 h-1/2 bg-foreground dark:bg-ring pointer-events-none"
+                                className="absolute top-0.5 -left-0.5 w-0.5 h-1/2 bg-foreground/20 pointer-events-none"
                                 aria-hidden="true"
                             />
                             <div
-                                className="absolute bottom-1 -left-1 w-1.5 h-1/2 bg-foreground dark:bg-ring pointer-events-none"
+                                className="absolute bottom-0.5 -left-0.5 w-0.5 h-1/2 bg-foreground/20 pointer-events-none"
                                 aria-hidden="true"
                             />
                         </>
@@ -116,11 +116,11 @@ function SheetContent({ className, children, side = 'right', font, ...props }: B
                     {side !== 'right' && (
                         <>
                             <div
-                                className="absolute top-1 -right-1 w-1.5 h-1/2 bg-foreground dark:bg-ring pointer-events-none"
+                                className="absolute top-0.5 -right-0.5 w-0.5 h-1/2 bg-foreground/20 pointer-events-none"
                                 aria-hidden="true"
                             />
                             <div
-                                className="absolute bottom-1 -right-1 w-1.5 h-1/2 bg-foreground dark:bg-ring pointer-events-none"
+                                className="absolute bottom-0.5 -right-0.5 w-0.5 h-1/2 bg-foreground/20 pointer-events-none"
                                 aria-hidden="true"
                             />
                         </>

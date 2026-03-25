@@ -335,7 +335,7 @@ export default function DiplomacyPage() {
                                         id="destNationId"
                                         value={destNationId}
                                         onChange={(e) => setDestNationId(e.target.value)}
-                                        className="h-9 w-full min-w-0 rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] md:text-sm"
+                                        className="h-9 w-full min-w-0 rounded-none border border-input bg-transparent px-3 py-1 text-base shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] md:text-sm"
                                     >
                                         <option value="">선택...</option>
                                         {otherNations.map((n) => (
@@ -353,7 +353,7 @@ export default function DiplomacyPage() {
                                         id="letterType"
                                         value={letterType}
                                         onChange={(e) => setLetterType(e.target.value)}
-                                        className="h-9 w-full min-w-0 rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] md:text-sm"
+                                        className="h-9 w-full min-w-0 rounded-none border border-input bg-transparent px-3 py-1 text-base shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] md:text-sm"
                                     >
                                         {LETTER_TYPES.map((lt) => (
                                             <option key={lt.value} value={lt.value}>

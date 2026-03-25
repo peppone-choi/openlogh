@@ -68,7 +68,7 @@ function AlertDialogContent({ className, children, font, ...props }: BitAlertDia
             <>
                 <ShadcnAlertDialogContent
                     className={cn(
-                        'rounded-none border-y-6 border-foreground dark:border-ring',
+                        'rounded-none border-y-2 border-foreground/20',
                         font !== 'normal' && 'retro',
                         className
                     )}
@@ -77,7 +77,7 @@ function AlertDialogContent({ className, children, font, ...props }: BitAlertDia
                     {children}
 
                     <div
-                        className="absolute inset-0 border-x-6 -mx-1.5 border-foreground dark:border-ring pointer-events-none"
+                        className="absolute inset-0 border-x-2 -mx-0.5 border-foreground/20 pointer-events-none"
                         aria-hidden="true"
                     />
                 </ShadcnAlertDialogContent>
@@ -117,22 +117,22 @@ function AlertDialogAction({ className, ...props }: React.ComponentProps<typeof 
         >
             {props.children}
             {/* Pixelated border */}
-            <div className="absolute -top-1.5 w-1/2 left-1.5 h-1.5 bg-foreground dark:bg-ring" />
-            <div className="absolute -top-1.5 w-1/2 right-1.5 h-1.5 bg-foreground dark:bg-ring" />
-            <div className="absolute -bottom-1.5 w-1/2 left-1.5 h-1.5 bg-foreground dark:bg-ring" />
-            <div className="absolute -bottom-1.5 w-1/2 right-1.5 h-1.5 bg-foreground dark:bg-ring" />
-            <div className="absolute top-0 left-0 size-1.5 bg-foreground dark:bg-ring" />
-            <div className="absolute top-0 right-0 size-1.5 bg-foreground dark:bg-ring" />
-            <div className="absolute bottom-0 left-0 size-1.5 bg-foreground dark:bg-ring" />
-            <div className="absolute bottom-0 right-0 size-1.5 bg-foreground dark:bg-ring" />
-            <div className="absolute top-1.5 -left-1.5 h-2/3 w-1.5 bg-foreground dark:bg-ring" />
-            <div className="absolute top-1.5 -right-1.5 h-2/3 w-1.5 bg-foreground dark:bg-ring" />
+            <div className="absolute -top-0.5 w-1/2 left-0.5 h-0.5 bg-foreground/20" />
+            <div className="absolute -top-0.5 w-1/2 right-0.5 h-0.5 bg-foreground/20" />
+            <div className="absolute -bottom-0.5 w-1/2 left-0.5 h-0.5 bg-foreground/20" />
+            <div className="absolute -bottom-0.5 w-1/2 right-0.5 h-0.5 bg-foreground/20" />
+            <div className="absolute top-0 left-0 size-0.5 bg-foreground/20" />
+            <div className="absolute top-0 right-0 size-0.5 bg-foreground/20" />
+            <div className="absolute bottom-0 left-0 size-0.5 bg-foreground/20" />
+            <div className="absolute bottom-0 right-0 size-0.5 bg-foreground/20" />
+            <div className="absolute top-0.5 -left-0.5 h-[calc(100%-4px)] w-0.5 bg-foreground/20" />
+            <div className="absolute top-0.5 -right-0.5 h-[calc(100%-4px)] w-0.5 bg-foreground/20" />
             {/* Top shadow */}
-            <div className="absolute top-0 left-0 w-full h-1.5 bg-foreground/20" />
-            <div className="absolute top-1.5 left-0 w-3 h-1.5 bg-foreground/20" />
+            <div className="absolute top-0 left-0 w-full h-0.5 bg-foreground/8" />
+            <div className="absolute top-0.5 left-0 w-1 h-0.5 bg-foreground/8" />
             {/* Bottom shadow */}
-            <div className="absolute bottom-0 left-0 w-full h-1.5 bg-foreground/20" />
-            <div className="absolute bottom-1.5 right-0 w-3 h-1.5 bg-foreground/20" />
+            <div className="absolute bottom-0 left-0 w-full h-0.5 bg-foreground/8" />
+            <div className="absolute bottom-0.5 right-0 w-1 h-0.5 bg-foreground/8" />
         </ShadcnAlertDialogAction>
     );
 }
@@ -148,16 +148,16 @@ function AlertDialogCancel({ className, ...props }: React.ComponentProps<typeof 
             {...props}
         >
             {props.children}
-            <div className="absolute -top-1.5 w-1/2 left-1.5 h-1.5 bg-foreground dark:bg-ring" />
-            <div className="absolute -top-1.5 w-1/2 right-1.5 h-1.5 bg-foreground dark:bg-ring" />
-            <div className="absolute -bottom-1.5 w-1/2 left-1.5 h-1.5 bg-foreground dark:bg-ring" />
-            <div className="absolute -bottom-1.5 w-1/2 right-1.5 h-1.5 bg-foreground dark:bg-ring" />
-            <div className="absolute top-0 left-0 size-1.5 bg-foreground dark:bg-ring" />
-            <div className="absolute top-0 right-0 size-1.5 bg-foreground dark:bg-ring" />
-            <div className="absolute bottom-0 left-0 size-1.5 bg-foreground dark:bg-ring" />
-            <div className="absolute bottom-0 right-0 size-1.5 bg-foreground dark:bg-ring" />
-            <div className="absolute top-1.5 -left-1.5 h-2/3 w-1.5 bg-foreground dark:bg-ring" />
-            <div className="absolute top-1.5 -right-1.5 h-2/3 w-1.5 bg-foreground dark:bg-ring" />
+            <div className="absolute -top-0.5 w-1/2 left-0.5 h-0.5 bg-foreground/20" />
+            <div className="absolute -top-0.5 w-1/2 right-0.5 h-0.5 bg-foreground/20" />
+            <div className="absolute -bottom-0.5 w-1/2 left-0.5 h-0.5 bg-foreground/20" />
+            <div className="absolute -bottom-0.5 w-1/2 right-0.5 h-0.5 bg-foreground/20" />
+            <div className="absolute top-0 left-0 size-0.5 bg-foreground/20" />
+            <div className="absolute top-0 right-0 size-0.5 bg-foreground/20" />
+            <div className="absolute bottom-0 left-0 size-0.5 bg-foreground/20" />
+            <div className="absolute bottom-0 right-0 size-0.5 bg-foreground/20" />
+            <div className="absolute top-0.5 -left-0.5 h-[calc(100%-4px)] w-0.5 bg-foreground/20" />
+            <div className="absolute top-0.5 -right-0.5 h-[calc(100%-4px)] w-0.5 bg-foreground/20" />
         </ShadcnAlertDialogCancel>
     );
 }

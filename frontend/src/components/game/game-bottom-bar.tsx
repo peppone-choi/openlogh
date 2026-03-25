@@ -229,7 +229,7 @@ export function GameBottomBar({ onRefresh }: GameBottomBarProps) {
                                             {/* Refresh Button */}
                                             <button
                                                 type="button"
-                                                className="w-full mb-4 flex items-center justify-center gap-2 py-3 bg-primary/10 hover:bg-primary/20 text-primary rounded-lg transition-colors"
+                                                className="w-full mb-4 flex items-center justify-center gap-2 py-3 bg-primary/10 hover:bg-primary/20 text-primary rounded-none transition-colors"
                                                 onClick={() => {
                                                     setSheetOpen(false);
                                                     onRefresh?.();
@@ -269,7 +269,7 @@ export function GameBottomBar({ onRefresh }: GameBottomBarProps) {
                                                                 <button
                                                                     key={item.key}
                                                                     type="button"
-                                                                    className="col-span-3 mx-1 my-1 py-3 text-sm text-center bg-muted/50 hover:bg-muted rounded-lg transition-colors"
+                                                                    className="col-span-3 mx-1 my-1 py-3 text-sm text-center bg-muted/50 hover:bg-muted rounded-none transition-colors"
                                                                     onClick={() => {
                                                                         setSheetOpen(false);
                                                                         window.location.href = '/lobby';
@@ -283,7 +283,7 @@ export function GameBottomBar({ onRefresh }: GameBottomBarProps) {
                                                             <button
                                                                 key={item.key}
                                                                 type="button"
-                                                                className="px-2 py-3 text-sm text-left hover:bg-muted/50 rounded-lg transition-colors min-h-[44px]"
+                                                                className="px-2 py-3 text-sm text-left hover:bg-muted/50 rounded-none transition-colors min-h-[44px]"
                                                                 onClick={() => {
                                                                     if (item.selector) {
                                                                         scrollToSelector(item.selector);
@@ -308,7 +308,7 @@ export function GameBottomBar({ onRefresh }: GameBottomBarProps) {
                                                         <Link
                                                             key={`${item.href}-${item.label}`}
                                                             href={item.href}
-                                                            className="px-2 py-3 text-sm hover:bg-muted/50 rounded-lg transition-colors min-h-[44px] flex items-center"
+                                                            className="px-2 py-3 text-sm hover:bg-muted/50 rounded-none transition-colors min-h-[44px] flex items-center"
                                                             onClick={() => setSheetOpen(false)}
                                                         >
                                                             {item.label}
@@ -327,7 +327,7 @@ export function GameBottomBar({ onRefresh }: GameBottomBarProps) {
                                                         <Link
                                                             key={item.href}
                                                             href={item.href}
-                                                            className="px-2 py-3 text-sm hover:bg-muted/50 rounded-lg transition-colors min-h-[44px] flex items-center"
+                                                            className="px-2 py-3 text-sm hover:bg-muted/50 rounded-none transition-colors min-h-[44px] flex items-center"
                                                             onClick={() => setSheetOpen(false)}
                                                         >
                                                             {item.label}

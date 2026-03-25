@@ -399,7 +399,7 @@ export default function BestGeneralsPage() {
 
             {/* NPC toggle */}
             <div className="flex items-center gap-3">
-                <div className="flex border border-gray-600 rounded-md overflow-hidden">
+                <div className="flex border border-gray-600 rounded-none overflow-hidden">
                     {(['user', 'npc'] as const).map((mode) => (
                         <button
                             type="button"

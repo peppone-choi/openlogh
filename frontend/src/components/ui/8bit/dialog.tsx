@@ -55,11 +55,11 @@ function DialogContent({ className, children, font, ...props }: BitDialogProps) 
             {children}
 
             <div
-                className="absolute inset-0 border-x-6 -mx-1.5 border-foreground dark:border-ring pointer-events-none"
+                className="absolute inset-0 border-x-2 -mx-0.5 border-foreground/20 pointer-events-none"
                 aria-hidden="true"
             />
             <div
-                className="absolute inset-0 border-y-6 -my-1.5 border-foreground dark:border-ring pointer-events-none"
+                className="absolute inset-0 border-y-2 -my-0.5 border-foreground/20 pointer-events-none"
                 aria-hidden="true"
             />
         </ShadcnDialogContent>

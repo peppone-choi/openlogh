@@ -24,14 +24,14 @@ function Input({ ...props }: BitInputProps) {
     const { className, font } = props;
 
     return (
-        <div className={cn('relative border-y-6 border-foreground dark:border-ring !p-0 flex items-center', className)}>
+        <div className={cn('relative border-y-2 border-foreground/20 !p-0 flex items-center', className)}>
             <ShadcnInput
                 {...props}
                 className={cn('rounded-none ring-0 !w-full', font !== 'normal' && 'retro', className)}
             />
 
             <div
-                className="absolute inset-0 border-x-6 -mx-1.5 border-foreground dark:border-ring pointer-events-none"
+                className="absolute inset-0 border-x-2 -mx-0.5 border-foreground/20 pointer-events-none"
                 aria-hidden="true"
             />
         </div>

@@ -235,7 +235,7 @@ export function MapCanvas({
     return (
         <div
             ref={containerRef}
-            className={`relative text-[14px] text-white overflow-hidden ${useResponsive ? 'border border-gray-800 rounded-lg' : 'w-full bg-black'} ${className ?? ''}`}
+            className={`relative text-[14px] text-white overflow-hidden ${useResponsive ? 'border border-gray-800 rounded-none' : 'w-full bg-black'} ${className ?? ''}`}
             style={{ ...outerStyle, cursor: coordinateSelectMode ? 'crosshair' : undefined }}
             onClick={coordinateSelectMode ? handleMapClick : undefined}
         >
@@ -247,7 +247,7 @@ export function MapCanvas({
                             className="text-white text-sm font-bold drop-shadow-lg"
                             style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}
                         >
-                            西紀 {yearMonth.year}年 {yearMonth.month}月 {SEASON_LABELS[season] ?? ''}
+                            서기 {yearMonth.year}년 {yearMonth.month}월 {SEASON_LABELS[season] ?? ''}
                         </span>
                     </div>
                 )}

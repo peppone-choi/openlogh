@@ -295,7 +295,7 @@ export default function BattlePage() {
                                         return (
                                             <div
                                                 key={w.id}
-                                                className="rounded-lg border border-red-900/50 bg-red-950/20 p-3 space-y-2"
+                                                className="rounded-none border border-red-900/50 bg-red-950/20 p-3 space-y-2"
                                             >
                                                 <div className="flex items-center gap-3">
                                                     <NationBadge name={src?.name} color={src?.color} />
@@ -337,7 +337,7 @@ export default function BattlePage() {
                                     const src = getNation(nations, d.srcNationId);
                                     const dest = getNation(nations, d.destNationId);
                                     return (
-                                        <div key={d.id} className="flex items-center gap-3 rounded-lg border p-3">
+                                        <div key={d.id} className="flex items-center gap-3 rounded-none border p-3">
                                             <NationBadge name={src?.name} color={src?.color} />
                                             <Badge variant="outline">
                                                 {d.stateCode === 'ceasefire' ? '휴전' : '종전제의'}

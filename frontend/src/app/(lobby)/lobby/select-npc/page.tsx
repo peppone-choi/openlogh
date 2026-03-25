@@ -169,7 +169,7 @@ export default function LobbySelectNpcPage() {
                 <EmptyState icon={Bot} title="선택 가능한 NPC 카드가 없습니다." />
             ) : (
                 <>
-                    <div className="flex flex-wrap items-center gap-3 rounded-lg border p-3 bg-card">
+                    <div className="flex flex-wrap items-center gap-3 rounded-none border p-3 bg-card">
                         <div className="flex items-center gap-2 text-sm">
                             <Timer className="size-4" />
                             <span className="text-muted-foreground">유효 시간</span>

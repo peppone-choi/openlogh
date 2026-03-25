@@ -473,7 +473,7 @@ export default function HistoryPage() {
                                 </Button>
                             </div>
                             {yearbook && (
-                                <div className="rounded-md border border-border p-3 space-y-2">
+                                <div className="rounded-none border border-border p-3 space-y-2">
                                     <div className="text-xs font-semibold">
                                         연감 ({yearbook.year}년 {yearbook.month}월)
                                     </div>

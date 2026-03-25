@@ -60,7 +60,7 @@ function TurnBrief({ members }: { members: General[] }) {
     const readyCount = members.filter((g) => !g.commandEndTime || new Date(g.commandEndTime) <= new Date()).length;
 
     return (
-        <div className="bg-blue-950/30 border border-blue-900/50 rounded-lg p-3 space-y-2">
+        <div className="bg-blue-950/30 border border-blue-900/50 rounded-none p-3 space-y-2">
             <div className="flex items-center gap-2 text-xs font-medium text-blue-300">
                 <Activity className="size-3" />턴 브리프
             </div>

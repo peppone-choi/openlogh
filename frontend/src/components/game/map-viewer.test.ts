@@ -159,12 +159,12 @@ describe('MapViewer mapCode resolution', () => {
 });
 
 describe('map-tooltips glassmorphism', () => {
-    it('GLASS constant includes backdrop-blur and transparency', () => {
+    it('GLASS constant includes backdrop-blur and transparency (8bit retro)', () => {
         const GLASS =
-            'backdrop-blur-md bg-black/75 border border-white/10 rounded-lg shadow-xl text-white animate-in fade-in duration-150';
+            'backdrop-blur-md bg-black/75 border border-foreground/15 rounded-none shadow-xl text-white animate-in fade-in duration-150';
         expect(GLASS).toContain('backdrop-blur');
         expect(GLASS).toContain('bg-black/75');
-        expect(GLASS).toContain('rounded-lg');
+        expect(GLASS).toContain('rounded-none');
     });
 
     it('NationBadge uses rounded-full pill shape', () => {

@@ -41,8 +41,8 @@ function TooltipContent({ className, children, font, ...props }: BitTooltipConte
                 className={cn('rounded-none', color, className)}
             >
                 {children}
-                <div className={cn('absolute top-1.5 bottom-1.5 -left-1.5 w-1.5 bg-primary', color)} />
-                <div className={cn('absolute top-1.5 bottom-1.5 -right-1.5 w-1.5 bg-primary ', color)} />
+                <div className={cn('absolute top-0.5 bottom-0.5 -left-0.5 w-0.5 bg-primary', color)} />
+                <div className={cn('absolute top-0.5 bottom-0.5 -right-0.5 w-0.5 bg-primary ', color)} />
             </ShadcnTooltipContent>
         </div>
     );

@@ -246,7 +246,7 @@ export default function GeneralsPage() {
                     </SelectContent>
                 </Select>
 
-                <div className="flex border border-gray-600 rounded-md overflow-hidden">
+                <div className="flex border border-gray-600 rounded-none overflow-hidden">
                     {(['all', 'user', 'npc'] as NpcFilter[]).map((f) => (
                         <button
                             key={f}

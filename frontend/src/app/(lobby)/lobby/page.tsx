@@ -460,7 +460,7 @@ export default function LobbyPage() {
                                     onClick={() => actionAvailability?.canJoin && router.push('/lobby/join')}
                                 >
                                     <CardContent className="flex items-center gap-4 py-4">
-                                        <div className="flex items-center justify-center size-10 rounded-lg bg-primary/10 text-primary">
+                                        <div className="flex items-center justify-center size-10 rounded-none bg-primary/10 text-primary">
                                             <UserPlus className="size-5" />
                                         </div>
                                         <div className="flex-1">
@@ -483,7 +483,7 @@ export default function LobbyPage() {
                                         onClick={() => router.push('/lobby/select-npc')}
                                     >
                                         <CardContent className="flex items-center gap-4 py-4">
-                                            <div className="flex items-center justify-center size-10 rounded-lg bg-primary/10 text-primary">
+                                            <div className="flex items-center justify-center size-10 rounded-none bg-primary/10 text-primary">
                                                 <Bot className="size-5" />
                                             </div>
                                             <div className="flex-1">
@@ -505,7 +505,7 @@ export default function LobbyPage() {
                                         onClick={() => router.push('/lobby/select-pool')}
                                     >
                                         <CardContent className="flex items-center gap-4 py-4">
-                                            <div className="flex items-center justify-center size-10 rounded-lg bg-primary/10 text-primary">
+                                            <div className="flex items-center justify-center size-10 rounded-none bg-primary/10 text-primary">
                                                 <Users className="size-5" />
                                             </div>
                                             <div className="flex-1">
@@ -532,7 +532,7 @@ export default function LobbyPage() {
                 onClick={() => router.push('/tutorial')}
             >
                 <CardContent className="flex items-center gap-4 py-4">
-                    <div className="flex items-center justify-center size-10 rounded-lg bg-amber-500/10 text-amber-500">
+                    <div className="flex items-center justify-center size-10 rounded-none bg-amber-500/10 text-amber-500">
                         <GraduationCap className="size-5" />
                     </div>
                     <div className="flex-1">
