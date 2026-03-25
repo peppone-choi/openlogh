@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Home, Map as MapIcon, Castle, ScrollText, MoreHorizontal, RefreshCw } from 'lucide-react';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/8bit/sheet';
 import { useGeneralStore } from '@/stores/generalStore';
 import { useWorldStore } from '@/stores/worldStore';
 

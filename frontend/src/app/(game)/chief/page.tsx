@@ -29,10 +29,10 @@ import { PageHeader } from '@/components/game/page-header';
 import { LoadingState } from '@/components/game/loading-state';
 import { ResourceDisplay } from '@/components/game/resource-display';
 import { GeneralPortrait } from '@/components/game/general-portrait';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/8bit/card';
+import { Badge } from '@/components/ui/8bit/badge';
+import { Button } from '@/components/ui/8bit/button';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/8bit/tabs';
 import { formatOfficerLevelText, CREW_TYPE_NAMES, REGION_NAMES } from '@/lib/game-utils';
 import { CommandArgForm, COMMAND_ARGS } from '@/components/game/command-arg-form';
 

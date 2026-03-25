@@ -29,7 +29,7 @@ import {
     SidebarMenuSubButton,
     SidebarMenuSubItem,
 } from '@/components/ui/sidebar';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/8bit/collapsible';
 import { useGeneralStore } from '@/stores/generalStore';
 import { useWorldStore } from '@/stores/worldStore';
 

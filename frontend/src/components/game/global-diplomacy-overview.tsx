@@ -1,7 +1,7 @@
 'use client';
 
 import { Map as MapIcon } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/8bit/card';
 import { NationBadge } from '@/components/game/nation-badge';
 import { MapViewer } from '@/components/game/map-viewer';
 import type { City, Diplomacy, Nation } from '@/types';

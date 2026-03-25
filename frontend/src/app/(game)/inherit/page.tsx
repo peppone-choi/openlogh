@@ -3,11 +3,11 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Gift, Search, RotateCcw, Dices, Swords, BarChart3, Crown, ChevronDown, Shield } from 'lucide-react';
 import { PageHeader } from '@/components/game/page-header';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/8bit/card';
+import { Badge } from '@/components/ui/8bit/badge';
+import { Button } from '@/components/ui/8bit/button';
+import { Input } from '@/components/ui/8bit/input';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/8bit/tabs';
 import { useWorldStore } from '@/stores/worldStore';
 import { inheritanceApi, cityApi } from '@/lib/gameApi';
 import { toast } from 'sonner';

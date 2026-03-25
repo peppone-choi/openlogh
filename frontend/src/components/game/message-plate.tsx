@@ -1,8 +1,8 @@
 'use client';
 
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/8bit/card';
+import { Button } from '@/components/ui/8bit/button';
+import { Badge } from '@/components/ui/8bit/badge';
 import { GeneralPortrait } from '@/components/game/general-portrait';
 import { formatLog } from '@/lib/formatLog';
 import { Trash2, Reply, Check, X } from 'lucide-react';

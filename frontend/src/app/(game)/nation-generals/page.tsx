@@ -13,10 +13,10 @@ import { LoadingState } from '@/components/game/loading-state';
 import { EmptyState } from '@/components/game/empty-state';
 import { ErrorState } from '@/components/game/error-state';
 import { GeneralPortrait } from '@/components/game/general-portrait';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/8bit/badge';
+import { Button } from '@/components/ui/8bit/button';
 import { formatOfficerLevelText, CREW_TYPE_NAMES } from '@/lib/game-utils';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/8bit/table';
 
 type ColumnKey =
     | 'officer'

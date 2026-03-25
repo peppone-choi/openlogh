@@ -7,11 +7,11 @@ import { nationApi, cityApi, generalApi, nationPolicyApi, diplomacyApi } from '@
 import { subscribeWebSocket } from '@/lib/websocket';
 import type { Nation, City, General, Diplomacy } from '@/types';
 import { Landmark } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/8bit/card';
+import { Badge } from '@/components/ui/8bit/badge';
+import { Button } from '@/components/ui/8bit/button';
+import { Input } from '@/components/ui/8bit/input';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/8bit/table';
 import { PageHeader } from '@/components/game/page-header';
 import { LoadingState } from '@/components/game/loading-state';
 import { NationBadge } from '@/components/game/nation-badge';

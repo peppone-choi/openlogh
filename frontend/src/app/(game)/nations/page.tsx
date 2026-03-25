@@ -9,10 +9,10 @@ import { PageHeader } from '@/components/game/page-header';
 import { LoadingState } from '@/components/game/loading-state';
 import { NationBadge } from '@/components/game/nation-badge';
 import { GeneralPortrait } from '@/components/game/general-portrait';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/8bit/badge';
+import { Progress } from '@/components/ui/8bit/progress';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/8bit/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/8bit/table';
 import { formatOfficerLevelText, getNationLevelLabel, stripCodePrefix, getNationTypeLabel } from '@/lib/game-utils';
 
 type UserType = '통' | '무' | '지' | '만능' | '평범' | '무지' | '무능';

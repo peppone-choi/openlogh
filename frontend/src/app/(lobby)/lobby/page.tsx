@@ -10,9 +10,9 @@ import { scenarioApi } from '@/lib/gameApi';
 import { connectWebSocket, disconnectWebSocket } from '@/lib/websocket';
 import type { Scenario, WorldState } from '@/types';
 import { ServerStatusCard } from '@/components/auth/server-status-card';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/8bit/card';
+import { Button } from '@/components/ui/8bit/button';
+import { Badge } from '@/components/ui/8bit/badge';
 import { GeneralPortrait } from '@/components/game/general-portrait';
 import { StatBar } from '@/components/game/stat-bar';
 

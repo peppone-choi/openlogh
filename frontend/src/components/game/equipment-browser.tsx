@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/8bit/button';
+import { Input } from '@/components/ui/8bit/input';
+import { Badge } from '@/components/ui/8bit/badge';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/8bit/tabs';
 import { cn } from '@/lib/utils';
 import { useGeneralStore } from '@/stores/generalStore';
 

@@ -15,8 +15,8 @@ import { GeneralPortrait } from '@/components/game/general-portrait';
 import { NationBadge } from '@/components/game/nation-badge';
 import { SammoBar } from '@/components/game/sammo-bar';
 import { formatGameLogDate } from '@/lib/gameLogDate';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/8bit/card';
+import { Badge } from '@/components/ui/8bit/badge';
 import {
     formatInjury,
     calcInjury,

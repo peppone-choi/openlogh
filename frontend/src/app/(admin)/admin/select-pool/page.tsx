@@ -4,11 +4,11 @@ import { useEffect, useState } from 'react';
 import { adminApi } from '@/lib/gameApi';
 import { useAdminWorld } from '@/contexts/AdminWorldContext';
 import { toast } from 'sonner';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/8bit/card';
+import { Button } from '@/components/ui/8bit/button';
+import { Input } from '@/components/ui/8bit/input';
+import { Badge } from '@/components/ui/8bit/badge';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/8bit/table';
 import { Trash2, Plus, Loader2 } from 'lucide-react';
 import type { SelectPoolEntry } from '@/types';
 

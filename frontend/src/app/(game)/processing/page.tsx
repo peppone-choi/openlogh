@@ -9,8 +9,8 @@ import { subscribeWebSocket } from '@/lib/websocket';
 import { LoadingState } from '@/components/game/loading-state';
 import { CommandArgForm } from '@/components/game/command-arg-form';
 import { PageHeader } from '@/components/game/page-header';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/8bit/card';
+import { Button } from '@/components/ui/8bit/button';
 import { ClipboardList } from 'lucide-react';
 import type { CommandArg } from '@/types';
 

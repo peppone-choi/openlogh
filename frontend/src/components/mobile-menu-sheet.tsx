@@ -2,9 +2,9 @@
 
 import Link from 'next/link';
 import { LogOut } from 'lucide-react';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/8bit/sheet';
 import { GeneralPortrait } from '@/components/game/general-portrait';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/ui/8bit/button';
 import { useGeneralStore } from '@/stores/generalStore';
 import { useWorldStore } from '@/stores/worldStore';
 

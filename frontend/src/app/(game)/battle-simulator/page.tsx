@@ -8,10 +8,10 @@ import { battleSimApi, simulatorExportApi } from '@/lib/gameApi';
 import type { BattleSimUnit, BattleSimCity, BattleSimResponse, General } from '@/types';
 import { Swords, Play, RotateCcw, Download, Upload, Plus, Minus, CloudRain, Mountain, Building } from 'lucide-react';
 import { PageHeader } from '@/components/game/page-header';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/8bit/card';
+import { Button } from '@/components/ui/8bit/button';
+import { Input } from '@/components/ui/8bit/input';
+import { Badge } from '@/components/ui/8bit/badge';
 import { formatInjury, BASE_CREW_TYPES, parseCrewTypeCode } from '@/lib/game-utils';
 
 // Known item/weapon/horse/book codes from legacy — these are used as dropdown options.

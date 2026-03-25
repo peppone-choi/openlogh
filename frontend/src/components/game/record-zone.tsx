@@ -1,7 +1,7 @@
 'use client';
 
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ScrollArea } from '@/components/ui/8bit/scroll-area';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/8bit/card';
 import { formatLog } from '@/lib/formatLog';
 import type { RecordEntry } from '@/types';
 

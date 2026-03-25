@@ -252,22 +252,24 @@ export function MapCanvas({
                     </div>
                 )}
 
-                {/* Background */}
+                {/* Background (pixelated 8-bit style) */}
                 {mapBgUrl && (
                     <div
                         className="absolute inset-0 z-0 bg-no-repeat bg-center"
                         style={{
                             backgroundImage: `url('${mapBgUrl}')`,
                             backgroundSize: `${innerW}px ${innerH}px`,
+                            imageRendering: 'pixelated',
                         }}
                     />
                 )}
-                {/* Road overlay */}
+                {/* Road overlay (pixelated 8-bit style) */}
                 <div
                     className="absolute inset-0 z-[1] bg-no-repeat bg-center"
                     style={{
                         backgroundImage: `url('${mapRoadUrl}')`,
                         backgroundSize: `${innerW}px ${innerH}px`,
+                        imageRendering: 'pixelated',
                     }}
                 />
 
@@ -402,6 +404,7 @@ export function MapCanvas({
                                         <img
                                             src={getCityLevelIcon(city.level)}
                                             className="w-full h-full block"
+                                            style={{ imageRendering: 'pixelated' }}
                                             alt=""
                                         />
 

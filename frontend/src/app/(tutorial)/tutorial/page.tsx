@@ -2,8 +2,8 @@
 
 import { useRouter } from 'next/navigation';
 import { useTutorialStore } from '@/stores/tutorialStore';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/8bit/button';
+import { Card, CardContent } from '@/components/ui/8bit/card';
 
 export default function TutorialIntroPage() {
     const router = useRouter();

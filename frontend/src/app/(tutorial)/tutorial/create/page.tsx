@@ -1,10 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/8bit/card';
+import { Button } from '@/components/ui/8bit/button';
 import { StatBar } from '@/components/game/stat-bar';
-import { Badge } from '@/components/ui/badge';
+import { Badge } from '@/components/ui/8bit/badge';
 
 const CREW_TYPES = [
     { id: 1, name: '창병', description: '균형 잡힌 보병. 기병에 강하다.' },

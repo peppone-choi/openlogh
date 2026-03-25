@@ -1,11 +1,11 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Button } from '@/components/ui/8bit/button';
+import { Input } from '@/components/ui/8bit/input';
+import { Badge } from '@/components/ui/8bit/badge';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/8bit/tabs';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/8bit/tooltip';
 import { useGeneralStore } from '@/stores/generalStore';
 import { useGameStore } from '@/stores/gameStore';
 import { cn } from '@/lib/utils';

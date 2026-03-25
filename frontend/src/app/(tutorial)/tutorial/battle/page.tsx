@@ -1,8 +1,8 @@
 'use client';
 
 import { MOCK_RESULT_WAR } from '@/data/tutorial/mock-commands';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/8bit/card';
+import { Badge } from '@/components/ui/8bit/badge';
 
 export default function TutorialBattlePage() {
     const logs = MOCK_RESULT_WAR.logs;

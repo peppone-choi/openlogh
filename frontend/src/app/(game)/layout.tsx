@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useCallback, useRef, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { toast, Toaster } from 'sonner';
+import { toast } from 'sonner';
+import { Toaster } from '@/components/ui/sonner';
 import { useAuthStore } from '@/stores/authStore';
 import { useWorldStore } from '@/stores/worldStore';
 import { useGeneralStore } from '@/stores/generalStore';

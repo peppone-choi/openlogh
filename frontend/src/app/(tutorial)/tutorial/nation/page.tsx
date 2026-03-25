@@ -2,8 +2,8 @@
 
 import { useGameStore } from '@/stores/gameStore';
 import { useGeneralStore } from '@/stores/generalStore';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/8bit/card';
+import { Badge } from '@/components/ui/8bit/badge';
 
 const OFFICER_LEVELS: Record<number, string> = {
     12: '군주',

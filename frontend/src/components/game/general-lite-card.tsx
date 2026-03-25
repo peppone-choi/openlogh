@@ -11,7 +11,7 @@ import {
     isValidObjKey,
 } from '@/lib/game-utils';
 import { getPortraitUrl } from '@/lib/image';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/8bit/tooltip';
 
 interface GeneralLiteCardProps {
     general: GeneralFrontInfo;

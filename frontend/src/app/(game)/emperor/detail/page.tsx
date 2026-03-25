@@ -8,8 +8,8 @@ import { PageHeader } from '@/components/game/page-header';
 import { LoadingState } from '@/components/game/loading-state';
 import { NationBadge } from '@/components/game/nation-badge';
 import { GeneralPortrait } from '@/components/game/general-portrait';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/8bit/card';
+import { Badge } from '@/components/ui/8bit/badge';
 import { formatOfficerLevelText } from '@/lib/game-utils';
 
 export default function EmperorDetailPage() {

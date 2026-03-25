@@ -14,7 +14,7 @@ import { CityBasicCard } from '@/components/game/city-basic-card';
 import { NationBasicCard } from '@/components/game/nation-basic-card';
 import { GeneralBasicCard } from '@/components/game/general-basic-card';
 import { LoadingState } from '@/components/game/loading-state';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/ui/8bit/button';
 import { toast } from 'sonner';
 import { formatLog } from '@/lib/formatLog';
 

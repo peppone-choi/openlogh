@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useTutorialStore } from '@/stores/tutorialStore';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/ui/8bit/button';
 
 export function StepController() {
     const { currentStep, steps, nextStep, prevStep, exit } = useTutorialStore();

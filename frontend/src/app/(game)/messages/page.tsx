@@ -11,11 +11,11 @@ import { ChevronDown, Mail, PenLine, Reply, Send, Trash2 } from 'lucide-react';
 import { PageHeader } from '@/components/game/page-header';
 import { LoadingState } from '@/components/game/loading-state';
 import { EmptyState } from '@/components/game/empty-state';
-import { Card, CardContent } from '@/components/ui/card';
-import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/8bit/card';
+import { Textarea } from '@/components/ui/8bit/textarea';
+import { Button } from '@/components/ui/8bit/button';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/8bit/tabs';
+import { Badge } from '@/components/ui/8bit/badge';
 
 type MailboxTab = 'public' | 'national' | 'private' | 'diplomacy';
 type ComposeRecipientType = 'public' | 'general' | 'nation';

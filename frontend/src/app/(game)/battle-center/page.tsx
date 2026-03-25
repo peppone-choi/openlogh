@@ -10,9 +10,9 @@ import { Swords, ChevronLeft, ChevronRight, ArrowLeftRight } from 'lucide-react'
 import { PageHeader } from '@/components/game/page-header';
 import { LoadingState } from '@/components/game/loading-state';
 import { EmptyState } from '@/components/game/empty-state';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/8bit/card';
+import { Badge } from '@/components/ui/8bit/badge';
+import { Button } from '@/components/ui/8bit/button';
 import { NationBadge } from '@/components/game/nation-badge';
 import { formatLog } from '@/lib/formatLog';
 import { CREW_TYPE_NAMES, getPersonalityName } from '@/lib/game-utils';

@@ -1,8 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/8bit/card';
+import { Skeleton } from '@/components/ui/8bit/skeleton';
 import type { PublicCachedMapResponse } from '@/types';
 import { MapViewer } from '@/components/game/map-viewer';
 import { formatGameLogDate } from '@/lib/gameLogDate';

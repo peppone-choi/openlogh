@@ -1,4 +1,4 @@
-import { Badge } from '@/components/ui/badge';
+import { Badge } from '@/components/ui/8bit/badge';
 
 interface NationBadgeProps {
     name?: string | null;

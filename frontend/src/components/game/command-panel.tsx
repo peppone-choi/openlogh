@@ -12,9 +12,9 @@ import {
 import { useRouter } from 'next/navigation';
 import { Clock3, Copy, Pencil, Trash2, GripVertical, ClipboardCopy, ChevronDown, ChevronUp } from 'lucide-react';
 import { useHotkeys } from '@/hooks/useHotkeys';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/8bit/card';
+import { Button } from '@/components/ui/8bit/button';
+import { Badge } from '@/components/ui/8bit/badge';
 import { commandApi, realtimeApi } from '@/lib/gameApi';
 import { subscribeWebSocket } from '@/lib/websocket';
 import { useWorldStore } from '@/stores/worldStore';

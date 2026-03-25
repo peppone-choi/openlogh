@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/8bit/avatar';
 import { User } from 'lucide-react';
 import { getPortraitUrl } from '@/lib/image';
 

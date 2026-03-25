@@ -1,11 +1,11 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/8bit/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/8bit/tabs';
+import { Button } from '@/components/ui/8bit/button';
+import { Textarea } from '@/components/ui/8bit/textarea';
+import { ScrollArea } from '@/components/ui/8bit/scroll-area';
 import { MessagePlate } from '@/components/game/message-plate';
 import { messageApi } from '@/lib/gameApi';
 import type { Message, General, ContactInfo } from '@/types';

@@ -1,4 +1,4 @@
-import { Progress } from '@/components/ui/progress';
+import { Progress } from '@/components/ui/8bit/progress';
 
 interface DevBarProps {
     label: string;

@@ -8,15 +8,15 @@ import { useGeneralStore } from '@/stores/generalStore';
 import { PageHeader } from '@/components/game/page-header';
 import { LoadingState } from '@/components/game/loading-state';
 import { EmptyState } from '@/components/game/empty-state';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/8bit/card';
+import { Button } from '@/components/ui/8bit/button';
+import { Badge } from '@/components/ui/8bit/badge';
+import { Input } from '@/components/ui/8bit/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/8bit/tabs';
 import type { Message, VoteComment } from '@/types';
 import { voteApi } from '@/lib/gameApi';
 import { useGameStore } from '@/stores/gameStore';
-import { Textarea } from '@/components/ui/textarea';
+import { Textarea } from '@/components/ui/8bit/textarea';
 
 interface DraftVoteOption {
     id: number;

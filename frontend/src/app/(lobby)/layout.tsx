@@ -4,9 +4,9 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuthStore } from '@/stores/authStore';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/ui/8bit/button';
 import { LogOut, Shield } from 'lucide-react';
-import { Toaster } from 'sonner';
+import { Toaster } from '@/components/ui/sonner';
 
 export default function LobbyLayout({ children }: { children: React.ReactNode }) {
     const router = useRouter();

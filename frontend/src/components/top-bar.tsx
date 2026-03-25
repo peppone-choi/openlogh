@@ -1,7 +1,7 @@
 'use client';
 
 import { Bell, LogOut } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/ui/8bit/button';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { TurnTimer } from '@/components/game/turn-timer';
 import { ResourceDisplay } from '@/components/game/resource-display';

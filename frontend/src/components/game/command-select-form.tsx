@@ -1,10 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent } from '@/components/ui/8bit/card';
+import { Badge } from '@/components/ui/8bit/badge';
+import { Button } from '@/components/ui/8bit/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/8bit/tabs';
 import { CommandArgForm, COMMAND_ARGS } from '@/components/game/command-arg-form';
 import type { CommandArg, CommandTableEntry } from '@/types';
 

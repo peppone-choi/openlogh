@@ -1,9 +1,9 @@
 'use client';
 
 import { useGameStore } from '@/stores/gameStore';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/8bit/card';
+import { Button } from '@/components/ui/8bit/button';
+import { Badge } from '@/components/ui/8bit/badge';
 
 const DIPLOMACY_STATE_LABELS: Record<string, { label: string; color: string }> = {
     neutral: { label: '중립', color: 'text-gray-400' },
