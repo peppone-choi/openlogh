@@ -185,7 +185,6 @@ export interface General {
     commandPoints: number;
     commandEndTime: string | null;
     lastTurn: LastTurnInfo;
-    destCityId?: number | null;
     meta: Record<string, unknown>;
     penalty: Record<string, unknown>;
     picture: string;
@@ -1047,19 +1046,8 @@ export interface BattleSimResult {
     defendersRemaining?: number[];
 }
 
-export interface BattlePhaseDetail {
-    phase: number;
-    attackerHp: number;
-    defenderHp: number;
-    attackerDamage: number;
-    defenderDamage: number;
-    defenderIndex: number;
-    events: string[];
-}
-
 export interface BattleSimResponse extends BattleSimResult {
     repeatSummary?: BattleSimRepeatResult;
-    phaseDetails?: BattlePhaseDetail[];
 }
 
 // Nation Policy

@@ -689,6 +689,7 @@ export default function BattleSimulatorPage() {
     const [result, setResult] = useState<BattleSimResponse | null>(null);
     const [running, setRunning] = useState(false);
     const [error, setError] = useState<string | null>(null);
+
     const skillSummary = useMemo(() => {
         if (!result) return null;
         const ext = result as BattleSimResponse & BattleSkillSummary;

@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import dynamic from 'next/dynamic';
 import { useGameStore } from '@/stores/gameStore';
 import { useWorldStore } from '@/stores/worldStore';
 import { REGION_NAMES, CITY_LEVEL_NAMES, isBrightColor } from '@/lib/game-utils';
@@ -13,13 +12,6 @@ import { MapCanvas } from '@/components/game/map-canvas';
 import type { RenderCity } from '@/components/game/map-canvas';
 import { CompactTooltip } from '@/components/game/map-tooltips';
 import type { PublicCachedMapResponse } from '@/types';
-import { isWebGLSupported } from '@/lib/battle3d-utils';
-import { MapHUD } from '@/components/map-3d/MapHUD';
-import { MapTransition } from '@/components/map-3d/MapTransition';
-
-const Map3DScene = dynamic(() => import('@/components/map-3d/Map3DScene').then((m) => ({ default: m.Map3DScene })), {
-    ssr: false,
-});
 
 interface MapViewerProps {
     /** Mode 1: auto-load from gameStore */
@@ -60,8 +52,6 @@ export function MapViewer({
     const currentWorld = useWorldStore((s) => s.currentWorld);
     const myGeneral = useGeneralStore((s) => s.myGeneral);
     const [showNames, setShowNames] = useState(!compact);
-    const [viewMode, setViewMode] = useState<'2d' | '3d'>('2d');
-    const [webglOk] = useState(() => (typeof window !== 'undefined' ? isWebGLSupported() : false));
 
     const isPublicMode = !!publicData;
     const mapCode = useMemo(() => {
@@ -196,65 +186,19 @@ export function MapViewer({
         );
     }
 
-    if (webglOk) {
-        return (
-            <div className={`relative ${compact ? 'h-48' : 'h-[500px]'}`}>
-                <MapTransition
-                    viewMode={viewMode}
-                    children2D={
-                        <MapCanvas
-                            cities={renderCities}
-                            mapCode={mapCode}
-                            season={season}
-                            yearMonth={yearMonth}
-                            showNames={showNames}
-                            onShowNamesChange={setShowNames}
-                            interactive={interactive}
-                            compact={compact}
-                            renderTooltip={renderTooltipFn}
-                            onCityClick={handleCityClick}
-                            useResponsiveScale={isPublicMode}
-                        />
-                    }
-                    children3D={
-                        <Map3DScene
-                            mapCode={mapCode}
-                            season={season}
-                            cities={renderCities}
-                            generals={isPublicMode ? undefined : generals}
-                            nations={isPublicMode ? undefined : nations}
-                            mapData={isPublicMode ? undefined : (mapData ?? undefined)}
-                            onCityClick={(cityId) => {
-                                if (onCitySelect) {
-                                    onCitySelect(cityId);
-                                } else {
-                                    router.push(`/city?id=${cityId}`);
-                                }
-                            }}
-                            className="w-full h-full"
-                        />
-                    }
-                />
-                <MapHUD viewMode={viewMode} onViewModeChange={setViewMode} season={season} mapCode={mapCode} />
-            </div>
-        );
-    }
-
     return (
-        <div className="relative">
-            <MapCanvas
-                cities={renderCities}
-                mapCode={mapCode}
-                season={season}
-                yearMonth={yearMonth}
-                showNames={showNames}
-                onShowNamesChange={setShowNames}
-                interactive={interactive}
-                compact={compact}
-                renderTooltip={renderTooltipFn}
-                onCityClick={handleCityClick}
-                useResponsiveScale={isPublicMode}
-            />
-        </div>
+        <MapCanvas
+            cities={renderCities}
+            mapCode={mapCode}
+            season={season}
+            yearMonth={yearMonth}
+            showNames={showNames}
+            onShowNamesChange={setShowNames}
+            interactive={interactive}
+            compact={compact}
+            renderTooltip={renderTooltipFn}
+            onCityClick={handleCityClick}
+            useResponsiveScale={isPublicMode}
+        />
     );
 }
