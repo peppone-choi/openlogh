@@ -6,6 +6,10 @@ import './globals.css';
 export const metadata: Metadata = {
     title: '오픈삼국',
     description: 'Web-based Three Kingdoms strategy game',
+    icons: {
+        icon: '/favicon.ico',
+        apple: '/icons/favicon-192.png',
+    },
 };
 
 export default function RootLayout({
