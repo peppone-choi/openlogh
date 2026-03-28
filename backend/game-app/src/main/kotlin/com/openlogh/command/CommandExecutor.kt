@@ -12,6 +12,8 @@ import com.openlogh.entity.*
 import com.openlogh.repository.FactionRepository
 import com.openlogh.repository.OfficerRepository
 import com.openlogh.repository.PlanetRepository
+import org.slf4j.LoggerFactory
+import org.springframework.dao.OptimisticLockingFailureException
 import org.springframework.stereotype.Service
 import kotlin.random.Random
 
@@ -24,7 +26,34 @@ class CommandExecutor(
     private val commandPointService: CommandPointService? = null,
     private val coupExecutionService: CoupExecutionService? = null,
 ) {
+    companion object {
+        private val log = LoggerFactory.getLogger(CommandExecutor::class.java)
+    }
+
     private val mapper = jacksonObjectMapper()
+
+    /**
+     * Execute an officer-mutating action with optimistic lock retry.
+     * Re-reads the officer on conflict, up to 3 attempts.
+     * HARD-01: Prevents CP race condition by catching version conflicts.
+     */
+    fun <T> withOptimisticRetry(officerId: Long, action: (Officer) -> T): T {
+        val repo = officerRepository
+            ?: throw IllegalStateException("OfficerRepository not available")
+        repeat(3) { attempt ->
+            try {
+                val officer = repo.findById(officerId)
+                    .orElseThrow { IllegalArgumentException("Officer not found: $officerId") }
+                val result = action(officer)
+                repo.save(officer)
+                return result
+            } catch (e: OptimisticLockingFailureException) {
+                if (attempt == 2) throw e
+                log.warn("Optimistic lock conflict on officer {}, retry {}/3", officerId, attempt + 2)
+            }
+        }
+        throw IllegalStateException("Optimistic lock retry exhausted for officer $officerId")
+    }
 
     @Suppress("UNCHECKED_CAST")
     suspend fun executeGeneralCommand(

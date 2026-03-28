@@ -16,6 +16,10 @@ class Officer(
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long = 0,
 
+    @Version
+    @Column(name = "version", nullable = false)
+    var version: Long = 0,
+
     @Column(name = "world_id", nullable = false)
     var sessionId: Long = 0,
 
