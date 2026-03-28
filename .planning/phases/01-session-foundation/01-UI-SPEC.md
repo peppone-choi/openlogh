@@ -59,7 +59,7 @@ Exceptions:
 | Role            | Size             | Weight         | Line Height | Font                                        |
 | --------------- | ---------------- | -------------- | ----------- | ------------------------------------------- |
 | Body            | 14px             | 400 (regular)  | 1.3         | `--font-legacy` (Pretendard stack)          |
-| Label / Caption | 11px-12px        | 500 (medium)   | 1.15        | `--font-legacy`                             |
+| Label / Caption | 11px-12px        | 600 (semibold) | 1.15        | `--font-legacy`                             |
 | Card Title      | 14px             | 600 (semibold) | 1.4         | `--font-legacy`                             |
 | Section Heading | 18px (`text-lg`) | 600 (semibold) | 1.4         | `--font-dunggeunmo` (via `game-font` class) |
 
@@ -69,7 +69,11 @@ Supplementary sizes used in existing components (not new declarations):
 - 13px: Button text, table cells, table body
 - 20px (`text-xl`): Officer name display in detail panel
 
-**Source:** `globals.css` base `body` rule (14px/1.3), `[data-slot='card-title']` (14px/600/1.4), `[data-slot='badge']` (11px/500), lobby page heading pattern (`game-font text-lg font-semibold`).
+Exceptions:
+
+- **500 (medium)** on badge elements: The existing `[data-slot='badge']` CSS rule in `globals.css` (line 376) sets `font-weight: 500`. Phase 1 must not override this value. New components should use 400 or 600 from the declared scale; the 500 weight is restricted to the badge slot rule only.
+
+**Source:** `globals.css` base `body` rule (14px/1.3), `[data-slot='card-title']` (14px/600/1.4), `[data-slot='badge']` (11px/500 -- exception, not in declared scale), lobby page heading pattern (`game-font text-lg font-semibold`).
 
 ---
 
