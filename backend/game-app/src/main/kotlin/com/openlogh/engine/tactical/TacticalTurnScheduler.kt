@@ -109,6 +109,21 @@ class TacticalTurnScheduler(
         messagingTemplate?.convertAndSend("/topic/tactical/$sessionCode/timer", update)
     }
 
+    /**
+     * Schedule a one-shot task on the managed executor.
+     * Used for delayed cleanup after battle end (replacing inline Executors.newSingleThreadScheduledExecutor).
+     * HARD-02: Prevents thread leak by reusing the managed thread pool.
+     */
+    fun scheduleOnce(delay: Long, unit: TimeUnit, task: () -> Unit): ScheduledFuture<*> {
+        return executor.schedule({
+            try {
+                task()
+            } catch (e: Exception) {
+                log.error("Scheduled one-shot task failed", e)
+            }
+        }, delay, unit)
+    }
+
     @PreDestroy
     fun shutdown() {
         executor.shutdownNow()

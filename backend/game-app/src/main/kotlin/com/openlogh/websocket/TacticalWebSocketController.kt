@@ -214,10 +214,10 @@ class TacticalWebSocketController(
 
             // 세션 정리 (약간 지연 후)
             turnScheduler.cancelTimer(sessionCode)
-            // 클라이언트에 결과 확인 시간 부여 후 정리
-            java.util.concurrent.Executors.newSingleThreadScheduledExecutor().schedule({
+            // 클라이언트에 결과 확인 시간 부여 후 정리 (HARD-02: managed executor)
+            turnScheduler.scheduleOnce(30, java.util.concurrent.TimeUnit.SECONDS) {
                 sessionManager.destroySession(sessionCode)
-            }, 30, java.util.concurrent.TimeUnit.SECONDS)
+            }
         } else {
             // 다음 턴 준비
             session.prepareNextTurn()
