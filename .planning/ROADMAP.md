@@ -38,7 +38,14 @@ Decimal phases appear between their surrounding integers in numeric order.
 3. A logged-out player's character remains present in the game world and CP continues recovering while they are offline
 4. Two concurrent command submissions cannot both succeed when only one CP unit is available (race condition eliminated)
 5. Ending a tactical battle does not leak JVM threads (executor leak fixed)
-   **Plans**: TBD
+
+**Plans:** 3 plans
+
+Plans:
+
+- [ ] 01-01-PLAN.md — Fix concurrency bugs: Officer @Version optimistic locking (HARD-01) + tactical executor thread leak (HARD-02)
+- [ ] 01-02-PLAN.md — Session creation/join with faction ratio enforcement (SESS-01, SESS-02, SESS-03, SESS-06)
+- [ ] 01-03-PLAN.md — Offline CP recovery verification + re-entry rules + lobby UI enhancement (SMGT-01, SESS-07)
 
 ### Phase 2: Character, Rank, and Organization
 
@@ -178,7 +185,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 
 | Phase                                                | Plans Complete | Status      | Completed |
 | ---------------------------------------------------- | -------------- | ----------- | --------- |
-| 1. Session Foundation                                | 0/TBD          | Not started | -         |
+| 1. Session Foundation                                | 0/3            | Planning    | -         |
 | 2. Character, Rank, and Organization                 | 0/TBD          | Not started | -         |
 | 3. Strategic Tick and CP System                      | 0/TBD          | Not started | -         |
 | 4. Galaxy Map and Planet Management                  | 0/TBD          | Not started | -         |
