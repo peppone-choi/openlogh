@@ -33,21 +33,22 @@ created: 2026-03-28
 
 Declared values (must be multiples of 4):
 
-| Token | Value | Usage                                                                   |
-| ----- | ----- | ----------------------------------------------------------------------- |
-| xs    | 4px   | Icon gaps, inline badge padding, table cell vertical padding            |
-| sm    | 8px   | Compact element spacing, card content gaps, button gaps                 |
-| md    | 14px  | Card content padding, card header horizontal padding (existing pattern) |
-| lg    | 24px  | Section spacing between cards (`space-y-6` = 24px)                      |
-| xl    | 32px  | Layout gaps between major panels                                        |
-| 2xl   | 48px  | Empty state vertical padding (`py-12` = 48px)                           |
-| 3xl   | 64px  | Page-level spacing (not used in Phase 1)                                |
+| Token | Value | Usage                                                        |
+| ----- | ----- | ------------------------------------------------------------ |
+| xs    | 4px   | Icon gaps, inline badge padding, table cell vertical padding |
+| sm    | 8px   | Compact element spacing, card content gaps, button gaps      |
+| md    | 16px  | Default element spacing, section inner padding               |
+| lg    | 24px  | Section spacing between cards (`space-y-6` = 24px)           |
+| xl    | 32px  | Layout gaps between major panels                             |
+| 2xl   | 48px  | Empty state vertical padding (`py-12` = 48px)                |
+| 3xl   | 64px  | Page-level spacing (not used in Phase 1)                     |
 
 Exceptions:
 
-- Card header min-height: 38px (existing pattern from globals.css `[data-slot='card-header']`)
-- Mobile touch targets: 44px min-height on buttons and card headers at viewport <= 768px (existing responsive rule)
-- Card content padding uses 14px (not 16px) to match established `[data-slot='card-content']` pattern
+- **14px** card content padding: Matches existing `[data-slot='card-content']` rule in `globals.css` which sets `padding: 14px`. New components that use the shadcn `Card` must not override this value.
+- **14px** card header horizontal padding: Matches existing `[data-slot='card-header']` horizontal padding in `globals.css`. Preserved for visual consistency with established card patterns.
+- **38px** card header min-height: Matches existing `[data-slot='card-header']` min-height rule in `globals.css`. This is a legacy constraint from the current card header design; do not change without auditing all card usages.
+- **44px** mobile touch targets: Min-height on buttons and card headers at viewport <= 768px (existing responsive rule in `globals.css`). This value aligns with WCAG 2.2 Level AA target size requirements.
 
 **Source:** Extracted from `globals.css` existing `[data-slot]` rules and lobby page Tailwind classes.
 
