@@ -2,10 +2,11 @@
 
 import { Suspense, useEffect, useState, useMemo, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { UserPlus, ArrowLeft, Crown } from 'lucide-react';
+import { UserPlus, ArrowLeft, Crown, Shield, Sword } from 'lucide-react';
 import { useWorldStore } from '@/stores/worldStore';
 import { useOfficerStore } from '@/stores/officerStore';
 import { useGameStore } from '@/stores/gameStore';
+import api from '@/lib/api';
 import { inheritanceApi, officerApi, factionApi } from '@/lib/gameApi';
 import { toast } from 'sonner';
 import { PageHeader } from '@/components/game/page-header';
@@ -16,7 +17,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { PLANET_LEVEL_NAMES, LEGACY_PERSONALITY_OPTIONS } from '@/lib/game-utils';
-import type { InheritanceInfo, Faction } from '@/types';
+import type { InheritanceInfo, Faction, FactionCounts } from '@/types';
 
 const TOTAL_STAT_POINTS = 350;
 const STAT_MIN = 10;
@@ -144,6 +145,11 @@ function LobbyJoinPageContent() {
     const [inheritCity, setInheritCity] = useState<number | ''>('');
     const [inheritBonusStat, setInheritBonusStat] = useState<[number, number, number]>([0, 0, 0]);
 
+    // Faction picker state (D-01: 3:2 ratio enforcement)
+    const [factionCounts, setFactionCounts] = useState<FactionCounts>({});
+    const [selectedFactionId, setSelectedFactionId] = useState<number | null>(null);
+    const [factionBlocked, setFactionBlocked] = useState<Record<number, string>>({});
+
     // Nation scout messages for recruitment display
     const [scoutMessages, setScoutMessages] = useState<Record<number, string>>({});
 
@@ -160,6 +166,11 @@ function LobbyJoinPageContent() {
             inheritanceApi
                 .getInfo(currentWorld.id)
                 .then(({ data }) => setInheritInfo(data))
+                .catch(() => {});
+
+            // Load faction counts for ratio display (D-04)
+            api.get<FactionCounts>(`/worlds/${currentWorld.id}/faction-counts`)
+                .then(({ data }) => setFactionCounts(data))
                 .catch(() => {});
 
             // Load scout messages from nations
@@ -286,6 +297,46 @@ function LobbyJoinPageContent() {
         return nations.filter((n) => n.level > 0 && scoutMessages[n.id] && scoutMessages[n.id].trim().length > 0);
     }, [nations, scoutMessages]);
 
+    // Compute faction ratio data for picker display (D-01)
+    const factionRatioData = useMemo(() => {
+        const empireFaction = nations.find((n) => n.factionType === 'empire' || n.name === '은하제국');
+        const allianceFaction = nations.find((n) => n.factionType === 'alliance' || n.name === '자유행성동맹');
+        if (!empireFaction || !allianceFaction) return null;
+
+        const empireCount = factionCounts[empireFaction.id] ?? 0;
+        const allianceCount = factionCounts[allianceFaction.id] ?? 0;
+        const totalPlayers = empireCount + allianceCount;
+
+        // Check 60% cap: after join, would (count+1)/(total+1) exceed 3/5?
+        const isEmpireBlocked = totalPlayers > 1 && (empireCount + 1) * 5 > (totalPlayers + 1) * 3;
+        const isAllianceBlocked = totalPlayers > 1 && (allianceCount + 1) * 5 > (totalPlayers + 1) * 3;
+
+        const empirePercent = totalPlayers > 0 ? (empireCount / totalPlayers) * 100 : 50;
+        const alliancePercent = totalPlayers > 0 ? (allianceCount / totalPlayers) * 100 : 50;
+
+        return {
+            empire: {
+                faction: empireFaction,
+                count: empireCount,
+                percent: empirePercent,
+                blocked: isEmpireBlocked,
+                blockedMessage: isEmpireBlocked
+                    ? `${empireFaction.name} 인원이 가득 찼습니다 -- 다른 진영에 참가하거나 자리가 날 때까지 기다려주세요`
+                    : null,
+            },
+            alliance: {
+                faction: allianceFaction,
+                count: allianceCount,
+                percent: alliancePercent,
+                blocked: isAllianceBlocked,
+                blockedMessage: isAllianceBlocked
+                    ? `${allianceFaction.name} 인원이 가득 찼습니다 -- 다른 진영에 참가하거나 자리가 날 때까지 기다려주세요`
+                    : null,
+            },
+            totalPlayers,
+        };
+    }, [nations, factionCounts]);
+
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         if (!currentWorld) return;
@@ -325,7 +376,14 @@ function LobbyJoinPageContent() {
             await fetchMyGeneral(currentWorld.id);
             router.push('/');
         } catch (err: unknown) {
-            const msg = err instanceof Error ? err.message : '제독 생성에 실패했습니다.';
+            // Handle faction ratio enforcement errors from backend
+            let msg = '제독 생성에 실패했습니다.';
+            if (err && typeof err === 'object' && 'response' in err) {
+                const axiosErr = err as { response?: { data?: { error?: string } } };
+                msg = axiosErr.response?.data?.error ?? msg;
+            } else if (err instanceof Error) {
+                msg = err.message;
+            }
             setError(msg);
         } finally {
             setSubmitting(false);
@@ -375,6 +433,124 @@ function LobbyJoinPageContent() {
                                 <p className="text-xs text-muted-foreground">{scoutMessages[n.id]}</p>
                             </div>
                         ))}
+                    </CardContent>
+                </Card>
+            )}
+
+            {/* Faction Picker (D-01: 3:2 ratio enforcement) */}
+            {factionRatioData && (
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="text-sm">진영 선택</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className="grid grid-cols-2 gap-2">
+                            {/* Empire Card */}
+                            <button
+                                type="button"
+                                disabled={factionRatioData.empire.blocked}
+                                onClick={() => {
+                                    if (!factionRatioData.empire.blocked) {
+                                        setSelectedFactionId(factionRatioData.empire.faction.id);
+                                        setNationId(factionRatioData.empire.faction.id);
+                                    }
+                                }}
+                                className={`p-3 border text-left transition-colors ${
+                                    selectedFactionId === factionRatioData.empire.faction.id
+                                        ? 'border-[var(--empire-gold)] bg-[var(--empire-gold)]/5'
+                                        : 'border-border'
+                                } ${
+                                    factionRatioData.empire.blocked
+                                        ? 'opacity-50 cursor-not-allowed'
+                                        : 'cursor-pointer hover:border-[var(--empire-gold)]/60'
+                                }`}
+                            >
+                                <div className="flex items-center gap-2 mb-1">
+                                    <Crown className="size-4" style={{ color: 'var(--empire-gold)' }} />
+                                    <span className="font-bold text-sm" style={{ color: 'var(--empire-gold)' }}>
+                                        은하제국
+                                    </span>
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                    참가 인원: {factionRatioData.empire.count}명
+                                </div>
+                            </button>
+
+                            {/* Alliance Card */}
+                            <button
+                                type="button"
+                                disabled={factionRatioData.alliance.blocked}
+                                onClick={() => {
+                                    if (!factionRatioData.alliance.blocked) {
+                                        setSelectedFactionId(factionRatioData.alliance.faction.id);
+                                        setNationId(factionRatioData.alliance.faction.id);
+                                    }
+                                }}
+                                className={`p-3 border text-left transition-colors ${
+                                    selectedFactionId === factionRatioData.alliance.faction.id
+                                        ? 'border-[var(--alliance-blue)] bg-[var(--alliance-blue)]/5'
+                                        : 'border-border'
+                                } ${
+                                    factionRatioData.alliance.blocked
+                                        ? 'opacity-50 cursor-not-allowed'
+                                        : 'cursor-pointer hover:border-[var(--alliance-blue)]/60'
+                                }`}
+                            >
+                                <div className="flex items-center gap-2 mb-1">
+                                    <Shield className="size-4" style={{ color: 'var(--alliance-blue-bright)' }} />
+                                    <span
+                                        className="font-bold text-sm"
+                                        style={{ color: 'var(--alliance-blue-bright)' }}
+                                    >
+                                        자유행성동맹
+                                    </span>
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                    참가 인원: {factionRatioData.alliance.count}명
+                                </div>
+                            </button>
+                        </div>
+
+                        {/* Blocked messages */}
+                        {factionRatioData.empire.blockedMessage && (
+                            <p className="text-xs text-muted-foreground">{factionRatioData.empire.blockedMessage}</p>
+                        )}
+                        {factionRatioData.alliance.blockedMessage && (
+                            <p className="text-xs text-muted-foreground">{factionRatioData.alliance.blockedMessage}</p>
+                        )}
+
+                        {/* Ratio Bar */}
+                        <div className="relative">
+                            <div className="flex h-3 w-full overflow-hidden">
+                                <div
+                                    className="h-full transition-all"
+                                    style={{
+                                        width: `${factionRatioData.empire.percent}%`,
+                                        backgroundColor: 'var(--empire-gold)',
+                                    }}
+                                />
+                                <div
+                                    className="h-full transition-all"
+                                    style={{
+                                        width: `${factionRatioData.alliance.percent}%`,
+                                        backgroundColor: 'var(--alliance-blue)',
+                                    }}
+                                />
+                            </div>
+                            {/* 60% cap indicator */}
+                            <div
+                                className="absolute top-0 h-full border-l-2 border-dashed border-white/50"
+                                style={{ left: '60%' }}
+                            />
+                            <div className="flex justify-between mt-1">
+                                <span className="text-xs text-muted-foreground">
+                                    제국 {factionRatioData.empire.count}명
+                                </span>
+                                <span className="text-xs text-muted-foreground">
+                                    동맹 {factionRatioData.alliance.count}명
+                                </span>
+                            </div>
+                        </div>
                     </CardContent>
                 </Card>
             )}

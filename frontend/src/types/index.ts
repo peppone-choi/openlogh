@@ -110,6 +110,11 @@ export interface Faction {
 /** @deprecated Use Faction */
 export type Nation = Faction;
 
+/** Faction player count for ratio display (D-04) */
+export interface FactionCounts {
+    [factionId: number]: number;
+}
+
 // StarSystem (formerly City)
 export interface StarSystem {
     id: number;
