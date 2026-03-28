@@ -15,7 +15,7 @@ Requirements sourced from `docs/feature-checklist.md` (P0~P2) and `docs/feature-
 - [ ] **SESS-04**: 승리 조건 달성 시 세션 자동 종료 (P1)
 - [ ] **SESS-05**: 종료된 세션 초기 조건으로 재시작 (P2)
 - [ ] **SESS-06**: 게임 시간 실시간 24배속 (P1)
-- [ ] **SESS-07**: 퇴장 플레이어 재등록 제한 (P2)
+- [x] **SESS-07**: 퇴장 플레이어 재등록 제한 (P2)
 
 ### Character (캐릭터)
 
@@ -275,7 +275,7 @@ Requirements sourced from `docs/feature-checklist.md` (P0~P2) and `docs/feature-
 
 ### Session Management (로그인/로그아웃)
 
-- [ ] **SMGT-01**: 오프라인 지속 (캐릭터 세계 존재, CP 계속 회복) (P0)
+- [x] **SMGT-01**: 오프라인 지속 (캐릭터 세계 존재, CP 계속 회복) (P0)
 - [ ] **SMGT-02**: AI 대행 (오프라인 전투 시 AI 지휘) (P1)
 - [ ] **SMGT-03**: 안전 지역 (자택/호텔 로그아웃 시 전사 불가) (P2)
 - [ ] **SMGT-04**: 체포 가능 (오프라인 중에도 체포/인사 대상) (P2)
@@ -365,7 +365,7 @@ Requirements sourced from `docs/feature-checklist.md` (P0~P2) and `docs/feature-
 | SESS-04     | Phase 10 | Pending |
 | SESS-05     | Phase 10 | Pending |
 | SESS-06     | Phase 1  | Pending |
-| SESS-07     | Phase 1  | Pending |
+| SESS-07     | Phase 1  | Complete |
 | CHAR-01     | Phase 2  | Pending |
 | CHAR-02     | Phase 2  | Pending |
 | CHAR-03     | Phase 2  | Pending |
@@ -568,7 +568,7 @@ Requirements sourced from `docs/feature-checklist.md` (P0~P2) and `docs/feature-
 | VICT-03     | Phase 10 | Pending |
 | VICT-04     | Phase 10 | Pending |
 | VICT-05     | Phase 10 | Pending |
-| SMGT-01     | Phase 1  | Pending |
+| SMGT-01     | Phase 1  | Complete |
 | SMGT-02     | Phase 6  | Pending |
 | SMGT-03     | Phase 10 | Pending |
 | SMGT-04     | Phase 10 | Pending |
