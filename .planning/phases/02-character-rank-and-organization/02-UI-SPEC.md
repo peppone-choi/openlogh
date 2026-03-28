@@ -47,7 +47,7 @@ Exceptions:
 
 - Portrait images: 64x64px (existing OfficerBasicCard), 48x48px (sm), 80x80px (lg profile view)
 - OrgTreeNode indent: 16px per depth level (depth \* 16)
-- StatCell: 6px internal padding (p-1.5 = 6px, existing pattern)
+- StatCell: 4px internal padding (p-1)
 
 **Source:** Existing component patterns in `officer-basic-card.tsx`, `org-chart/page.tsx`, `empty-state.tsx`
 
@@ -60,9 +60,11 @@ Exceptions:
 | Body        | 14px (text-sm)     | 400 (normal)   | 1.5         | --font-legacy (Pretendard)          |
 | Label       | 10px (text-[10px]) | 400 (normal)   | 1.4         | --font-legacy                       |
 | Heading     | 14px (text-sm)     | 600 (semibold) | 1.4         | --font-legacy                       |
-| Display     | 18px (text-lg)     | 700 (bold)     | 1.2         | --font-legacy                       |
-| Numeric     | 14px (text-sm)     | 500 (medium)   | 1.0         | tabular-nums (font-variant-numeric) |
-| Game accent | 14px               | 400            | 1.5         | --font-game (DungGeunMo)            |
+| Display     | 18px (text-lg)     | 600 (semibold) | 1.2         | --font-legacy                       |
+| Numeric     | 14px (text-sm)     | 400 (normal)   | 1.0         | tabular-nums (font-variant-numeric) |
+| Game accent | 14px               | 400 (normal)   | 1.5         | --font-game (DungGeunMo)            |
+
+**Weights used:** 400 (normal) and 600 (semibold) only. Numeric values use `font-variant-numeric: tabular-nums` for monospaced digit alignment without a heavier weight. Display uses 600 (semibold) to maintain hierarchy through size difference (18px vs 14px) rather than an extra weight.
 
 **Rationale:** This phase is data-dense (8 stats, 16 position cards, org tree). The existing codebase uses 10px labels, 14px body, and 18px display consistently. Two weights (400 normal + 600 semibold) cover all existing components. Game accent font (DungGeunMo) reserved for position card names and rank titles to reinforce the 8-bit LOGH aesthetic.
 
@@ -114,6 +116,16 @@ Exceptions:
 
 ---
 
+## Focal Points
+
+| Screen              | Focal Point                                                                                                        |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| Character Selection | The character card the user is about to select -- portrait + stat bars draw the eye; CTA button anchors the card   |
+| Officer Profile     | Section 1 portrait and name at top-left -- the officer identity block serves as the visual anchor for all sections |
+| Organization Chart  | The currently expanded tree branch -- faction-colored branch lines and holder names guide scanning                 |
+
+---
+
 ## Copywriting Contract
 
 All copy is in Korean (per project convention and user preference).
@@ -122,7 +134,7 @@ All copy is in Korean (per project convention and user preference).
 
 | Element                                       | Copy                                                                                 |
 | --------------------------------------------- | ------------------------------------------------------------------------------------ |
-| Primary CTA (original character)              | `선택하기` (Select)                                                                  |
+| Primary CTA (original character)              | `제독 선택하기` (Select Officer)                                                     |
 | Primary CTA (generate character)              | `제독 생성` (Create Officer)                                                         |
 | Empty state heading (no characters available) | `선택 가능한 캐릭터가 없습니다`                                                      |
 | Empty state body                              | `모든 오리지널 캐릭터가 선택되었습니다. 제네레이트 탭에서 새 캐릭터를 생성해주세요.` |
@@ -252,7 +264,7 @@ OrgChartPage
 
 1. Page loads with list of available (unselected) original characters
 2. Each character card shows: portrait, name, 8 stats as horizontal bars, age
-3. Click `선택하기` on a card triggers selection API call
+3. Click `제독 선택하기` on a card triggers selection API call
 4. During API call: button shows `선택 중...`, all other select buttons disabled
 5. On success: toast `제독을 선택했습니다.`, redirect to game home
 6. On failure: toast error, re-enable buttons
@@ -281,7 +293,7 @@ OrgChartPage
 
 ### Officer Profile (D-10)
 
-1. Section 1 (basic info): portrait (80x80), name (display size, bold), rank badge, faction badge, origin badge, career badge, age with color coding
+1. Section 1 (basic info): portrait (80x80), name (display size, semibold), rank badge, faction badge, origin badge, career badge, age with color coding
 2. Section 2 (stats): 8 horizontal bars using existing LoghBar component. Each row: stat label (colored), numeric value, bar, exp indicator (`+{N}` in yellow-500 if exp > 0)
 3. Section 3 (position cards): grid of PositionCardChip components. Each chip shows card name in game font. Tooltip on hover shows card description and granted commands. Empty slots not shown (just the grid of held cards). If no cards: show inline `보유한 직무카드가 없습니다`
 4. Section 4 (location/status): key-value pairs. Location (planet name), Fleet (fleet name or `-`), Injury (color-coded health text), PCP/MCP remaining values
