@@ -44,7 +44,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 Plans:
 
 - [ ] 01-01-PLAN.md — Fix concurrency bugs: Officer @Version optimistic locking (HARD-01) + tactical executor thread leak (HARD-02)
-- [ ] 01-02-PLAN.md — Session creation/join with faction ratio enforcement (SESS-01, SESS-02, SESS-03, SESS-06)
+- [x] 01-02-PLAN.md — Session creation/join with faction ratio enforcement (SESS-01, SESS-02, SESS-03, SESS-06)
 - [x] 01-03-PLAN.md — Offline CP recovery verification + re-entry rules + lobby UI enhancement (SMGT-01, SESS-07)
 
 ### Phase 2: Character, Rank, and Organization

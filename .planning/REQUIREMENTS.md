@@ -9,12 +9,12 @@ Requirements sourced from `docs/feature-checklist.md` (P0~P2) and `docs/feature-
 
 ### Session (세션)
 
-- [ ] **SESS-01**: 시나리오 선택하여 새 게임 세션 생성 (P0)
-- [ ] **SESS-02**: 기존 세션에 캐릭터 선택하여 참가, 최대 2,000명 (P0)
-- [ ] **SESS-03**: 제국/동맹 진영 선택 (P0)
+- [x] **SESS-01**: 시나리오 선택하여 새 게임 세션 생성 (P0)
+- [x] **SESS-02**: 기존 세션에 캐릭터 선택하여 참가, 최대 2,000명 (P0)
+- [x] **SESS-03**: 제국/동맹 진영 선택 (P0)
 - [ ] **SESS-04**: 승리 조건 달성 시 세션 자동 종료 (P1)
 - [ ] **SESS-05**: 종료된 세션 초기 조건으로 재시작 (P2)
-- [ ] **SESS-06**: 게임 시간 실시간 24배속 (P1)
+- [x] **SESS-06**: 게임 시간 실시간 24배속 (P1)
 - [x] **SESS-07**: 퇴장 플레이어 재등록 제한 (P2)
 
 ### Character (캐릭터)
@@ -359,12 +359,12 @@ Requirements sourced from `docs/feature-checklist.md` (P0~P2) and `docs/feature-
 
 | Requirement | Phase    | Status  |
 | ----------- | -------- | ------- |
-| SESS-01     | Phase 1  | Pending |
-| SESS-02     | Phase 1  | Pending |
-| SESS-03     | Phase 1  | Pending |
+| SESS-01     | Phase 1  | Complete |
+| SESS-02     | Phase 1  | Complete |
+| SESS-03     | Phase 1  | Complete |
 | SESS-04     | Phase 10 | Pending |
 | SESS-05     | Phase 10 | Pending |
-| SESS-06     | Phase 1  | Pending |
+| SESS-06     | Phase 1  | Complete |
 | SESS-07     | Phase 1  | Complete |
 | CHAR-01     | Phase 2  | Pending |
 | CHAR-02     | Phase 2  | Pending |
