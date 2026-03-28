@@ -24,6 +24,7 @@ class OfficerService(
     private val factionRepository: FactionRepository,
     private val officerTurnRepository: OfficerTurnRepository,
     private val gameConstService: GameConstService,
+    private val factionJoinService: FactionJoinService,
 ) {
     fun createOfficer(
         sessionId: Long,
@@ -49,6 +50,12 @@ class OfficerService(
         val inheritCity = user.meta["inheritCity"] as? Number
         val targetPlanetId = inheritCity?.toLong() ?: request.planetId ?: return null
         val planet = planetRepository.findById(targetPlanetId).orElse(null) ?: return null
+
+        // D-01: 3:2 faction ratio enforcement before officer creation
+        val joinResult = factionJoinService.canJoinFaction(sessionId, planet.factionId)
+        if (!joinResult.allowed) {
+            throw IllegalStateException(joinResult.reason ?: "진영 참가가 제한되었습니다")
+        }
 
         // Handle pre-purchased inherit special
         val inheritSpecificSpecialWar = user.meta["inheritSpecificSpecialWar"] as? String

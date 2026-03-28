@@ -5,6 +5,7 @@ import com.openlogh.dto.OfficerResponse
 import com.openlogh.repository.AppUserRepository
 import com.openlogh.repository.OfficerRepository
 import com.openlogh.service.CharacterDeletionService
+import com.openlogh.service.FactionJoinService
 import com.openlogh.service.OfficerService
 import com.openlogh.service.WorldService
 import org.springframework.http.HttpStatus
@@ -20,6 +21,7 @@ class OfficerController(
     private val appUserRepository: AppUserRepository,
     private val worldService: WorldService,
     private val characterDeletionService: CharacterDeletionService,
+    private val factionJoinService: FactionJoinService,
 ) {
     // GET /api/worlds/{worldId}/officers — 세계의 장교 목록
     @GetMapping("/worlds/{worldId}/officers")
@@ -72,7 +74,15 @@ class OfficerController(
             ResponseEntity.status(HttpStatus.CREATED).body(OfficerResponse.from(officer))
         } catch (e: IllegalArgumentException) {
             ResponseEntity.badRequest().body(mapOf("error" to (e.message ?: "bad request")))
+        } catch (e: IllegalStateException) {
+            ResponseEntity.status(HttpStatus.CONFLICT).body(mapOf("error" to (e.message ?: "진영 참가가 제한되었습니다")))
         }
+    }
+
+    // GET /api/worlds/{worldId}/faction-counts — 진영별 플레이어 수
+    @GetMapping("/worlds/{worldId}/faction-counts")
+    fun getFactionCounts(@PathVariable worldId: Long): ResponseEntity<Map<Long, Int>> {
+        return ResponseEntity.ok(factionJoinService.getFactionCounts(worldId))
     }
 
     // DELETE /api/officers/{id} — 캐릭터 삭제

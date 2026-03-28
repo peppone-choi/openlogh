@@ -19,6 +19,7 @@ import org.junit.jupiter.api.Test
 import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchers.anyList
+import org.mockito.ArgumentMatchers.anyLong
 import org.mockito.ArgumentMatchers.anyString
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
@@ -33,6 +34,7 @@ class OfficerServiceTest {
     private lateinit var factionRepository: FactionRepository
     private lateinit var officerTurnRepository: OfficerTurnRepository
     private lateinit var gameConstService: GameConstService
+    private lateinit var factionJoinService: FactionJoinService
     private lateinit var service: OfficerService
 
     @BeforeEach
@@ -44,6 +46,11 @@ class OfficerServiceTest {
         factionRepository = mock(FactionRepository::class.java)
         officerTurnRepository = mock(OfficerTurnRepository::class.java)
         gameConstService = mock(GameConstService::class.java)
+        factionJoinService = mock(FactionJoinService::class.java)
+
+        // Default: allow faction joins (ratio not exceeded)
+        `when`(factionJoinService.canJoinFaction(anyLong(), anyLong()))
+            .thenReturn(FactionJoinService.FactionJoinResult(allowed = true))
 
         service = OfficerService(
             officerRepository,
@@ -53,6 +60,7 @@ class OfficerServiceTest {
             factionRepository,
             officerTurnRepository,
             gameConstService,
+            factionJoinService,
         )
 
         val constMap = mapOf(
