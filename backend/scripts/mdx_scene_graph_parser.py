@@ -1041,7 +1041,10 @@ def compare_with_baseline(
     models = sorted(d.name for d in new_dir.iterdir() if d.is_dir())
     for model_name in models:
         new_obj = new_dir / model_name / "high.obj"
+        # Try both exact name and _h suffix (v2 extractor keeps _h)
         old_obj = baseline_dir / model_name / "high.obj"
+        if not old_obj.exists():
+            old_obj = baseline_dir / (model_name + "_h") / "high.obj"
 
         nv, nf = count_obj_stats(new_obj)
         ov, of_ = count_obj_stats(old_obj)
