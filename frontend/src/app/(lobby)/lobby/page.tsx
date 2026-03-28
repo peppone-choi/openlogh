@@ -6,9 +6,10 @@ import { Globe, UserPlus, Users, Bot, LogIn, Loader2, Clock, Signal, Shield, Ban
 import { useWorldStore } from '@/stores/worldStore';
 import { useOfficerStore } from '@/stores/officerStore';
 import { useAuthStore } from '@/stores/authStore';
+import api from '@/lib/api';
 import { scenarioApi } from '@/lib/gameApi';
 import { connectWebSocket, disconnectWebSocket } from '@/lib/websocket';
-import type { Scenario, WorldState } from '@/types';
+import type { Scenario, WorldState, FactionCounts } from '@/types';
 import { ServerStatusCard } from '@/components/auth/server-status-card';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -43,11 +44,12 @@ function getServerPhase(w: WorldState): {
     if (startTime && new Date(startTime) > now)
         return { label: '폐쇄', color: 'text-red-500', icon: Ban, startTime, opentime };
 
-    // 가오픈 기간 (startTime ~ opentime)
+    // 가오픈 기간 (startTime ~ opentime) → D-04: "모집중"
     if (phase === 'pre_open' || phase === 'closed' || (opentime && new Date(opentime) > now))
-        return { label: '가오픈', color: 'text-orange-400', icon: Clock, startTime, opentime };
+        return { label: '모집중', color: 'text-green-400', icon: Clock, startTime, opentime };
 
-    return { label: '오픈', color: 'text-green-400', icon: Signal };
+    // 오픈 → D-04: "진행중"
+    return { label: '진행중', color: 'text-blue-400', icon: Signal };
 }
 
 /** Derive player/capacity counts from world metadata */
@@ -151,6 +153,7 @@ export default function LobbyPage() {
     const [notice, setNotice] = useState('');
     const [serverNotices, setServerNotices] = useState<Record<number, string>>({});
     const [scenarios, setScenarios] = useState<Scenario[]>([]);
+    const [worldFactionCounts, setWorldFactionCounts] = useState<Record<number, FactionCounts>>({});
     const scenarioMap = useMemo(() => new Map(scenarios.map((s) => [s.code, s.title])), [scenarios]);
     const wsConnectedRef = useRef(false);
     const myGeneralRef = useRef(myGeneral);
@@ -190,6 +193,18 @@ export default function LobbyPage() {
             }
             setServerNotices(notices);
             if (globalNotice) setNotice(globalNotice);
+
+            // Fetch faction counts per world for D-04 Empire/Alliance display
+            const counts: Record<number, FactionCounts> = {};
+            Promise.allSettled(
+                worldStore.worlds.map((w) =>
+                    api.get<FactionCounts>(`/worlds/${w.id}/faction-counts`).then(({ data }) => {
+                        counts[w.id] = data;
+                    })
+                )
+            ).then(() => {
+                setWorldFactionCounts(counts);
+            });
         });
         scenarioApi
             .list()
@@ -231,7 +246,7 @@ export default function LobbyPage() {
                 <div className="space-y-4">
                     <h2 className="game-font text-lg font-semibold flex items-center gap-2">
                         <Globe className="size-5" />
-                        서버 목록
+                        세션 목록
                     </h2>
 
                     {worldsLoading ? (
@@ -248,6 +263,10 @@ export default function LobbyPage() {
                                 const players = getPlayerInfo(w);
                                 const PhaseIcon = phase.icon;
                                 const worldDisplayName = w.name || scenarioMap.get(w.scenarioCode) || w.scenarioCode;
+                                const fc = worldFactionCounts[w.id] ?? {};
+                                const fcValues = Object.values(fc);
+                                const empireCount = fcValues[0] ?? 0;
+                                const allianceCount = fcValues[1] ?? 0;
 
                                 return (
                                     <Card
@@ -295,7 +314,11 @@ export default function LobbyPage() {
                                                 </span>
                                                 <span className="flex items-center gap-1">
                                                     <Users className="size-3" />
-                                                    인원: {players.current}/{players.max}
+                                                    인원:{' '}
+                                                    <span className="text-[var(--empire-gold)]">{empireCount}</span>
+                                                    /
+                                                    <span className="text-[var(--alliance-blue-bright)]">{allianceCount}</span>
+                                                    {' '}({players.current}/{players.max})
                                                     {players.npc > 0 && (
                                                         <span className="text-cyan-400">+NPC {players.npc}</span>
                                                     )}
@@ -442,8 +465,11 @@ export default function LobbyPage() {
                                         </div>
                                         <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
                                             <span>
-                                                인원: {getPlayerInfo(currentWorld).current}/
-                                                {getPlayerInfo(currentWorld).max}
+                                                인원:{' '}
+                                                <span className="text-[var(--empire-gold)]">{Object.values(worldFactionCounts[currentWorld.id] ?? {})[0] ?? 0}</span>
+                                                /
+                                                <span className="text-[var(--alliance-blue-bright)]">{Object.values(worldFactionCounts[currentWorld.id] ?? {})[1] ?? 0}</span>
+                                                {' '}({getPlayerInfo(currentWorld).current}/{getPlayerInfo(currentWorld).max})
                                             </span>
                                             <span>
                                                 {currentWorld.currentYear}년 {currentWorld.currentMonth}월
