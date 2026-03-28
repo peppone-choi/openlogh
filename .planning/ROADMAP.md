@@ -59,8 +59,20 @@ Plans:
 3. Promoting an officer via manual promotion resets merit points to 0, revokes current position cards, and the PositionCard table reflects the change (not officer.meta JSON)
 4. The organization chart for both Empire and Alliance is navigable, showing all 100+ positions and their current holders
 5. An officer's home planet is set so that if their flagship is destroyed they are automatically returned there
-   **Plans**: TBD
-   **UI hint**: yes
+
+**Plans:** 7 plans
+
+Plans:
+
+- [ ] 02-01-PLAN.md — HARD-03: PositionCard JSONB-to-relational migration (PositionCardService facade + 6 callsite migration + V39 backfill)
+- [ ] 02-02-PLAN.md — Officer entity extensions + character creation backend (8-stat validation, ScenarioService 8-stat parsing, CharacterController REST API)
+- [ ] 02-03-PLAN.md — Rank ladder wiring to PositionCardService + personnel authority migration (RankController, PositionCard-based authority checks)
+- [ ] 02-04-PLAN.md — Organization API endpoints (OrgChartController, PositionCardController, DTOs)
+- [ ] 02-05-PLAN.md — Frontend character selection/creation UI (8-stat allocator, origin selector, select-pool rewrite)
+- [ ] 02-06-PLAN.md — Frontend officer profile (D-10 4-section layout) + org chart with live data (D-07/D-08 faction differentiation)
+- [ ] 02-07-PLAN.md — Visual verification checkpoint (character selection, officer profile, org chart)
+
+**UI hint**: yes
 
 ### Phase 3: Strategic Tick and CP System
 
@@ -186,7 +198,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | Phase                                                | Plans Complete | Status      | Completed |
 | ---------------------------------------------------- | -------------- | ----------- | --------- |
 | 1. Session Foundation                                | 0/3            | Planning    | -         |
-| 2. Character, Rank, and Organization                 | 0/TBD          | Not started | -         |
+| 2. Character, Rank, and Organization                 | 0/7            | Planning    | -         |
 | 3. Strategic Tick and CP System                      | 0/TBD          | Not started | -         |
 | 4. Galaxy Map and Planet Management                  | 0/TBD          | Not started | -         |
 | 5. Fleet System and Logistics                        | 0/TBD          | Not started | -         |
