@@ -19,21 +19,21 @@ Requirements sourced from `docs/feature-checklist.md` (P0~P2) and `docs/feature-
 
 ### Character (캐릭터)
 
-- [ ] **CHAR-01**: 원작 오리지널 캐릭터 선택 (능력치 고정, 추첨) (P0)
-- [ ] **CHAR-02**: 제네레이트 캐릭터 생성 (이름/외모/능력치 배분) (P1)
-- [ ] **CHAR-03**: 8개 능력치 (통솔/지휘/정보/정치/운영/기동/공격/방어) (P0)
+- [x] **CHAR-01**: 원작 오리지널 캐릭터 선택 (능력치 고정, 추첨) (P0)
+- [x] **CHAR-02**: 제네레이트 캐릭터 생성 (이름/외모/능력치 배분) (P1)
+- [x] **CHAR-03**: 8개 능력치 (통솔/지휘/정보/정치/운영/기동/공격/방어) (P0)
 - [ ] **CHAR-04**: 능력치 성장 — 나이 효과 (청년 +, 장년 -) (P1)
 - [ ] **CHAR-05**: 능력치 성장 — 경험치 (CP 사용량 누적, 100=1 상승) (P1)
-- [ ] **CHAR-06**: 분류 (군인/정치가), 전신 가능 (P1)
-- [ ] **CHAR-07**: 출자 — 제국 (귀족/제국기사/평민/망명자) (P1)
-- [ ] **CHAR-08**: 출자 — 동맹 (시민/망명자) (P1)
+- [x] **CHAR-06**: 분류 (군인/정치가), 전신 가능 (P1)
+- [x] **CHAR-07**: 출자 — 제국 (귀족/제국기사/평민/망명자) (P1)
+- [x] **CHAR-08**: 출자 — 동맹 (시민/망명자) (P1)
 - [ ] **CHAR-09**: 캐릭터 인계 (세션 간, 평가 포인트 기준, 60세 이하) (P2)
 - [ ] **CHAR-10**: 캐릭터 삭제 (대령 이하, 거주구/호텔 체류 중) (P2)
 - [ ] **CHAR-11**: 부상/치료 (전투 패배 시 능력치 하락, 회복 기간) (P1)
 - [ ] **CHAR-12**: 전사 (기함 격침 시 선택적) (P2)
-- [ ] **CHAR-13**: 위치 상태 (행성 체류/함대 탑승/우주 이동) (P0)
+- [x] **CHAR-13**: 위치 상태 (행성 체류/함대 탑승/우주 이동) (P0)
 - [ ] **CHAR-14**: 공작 능력치 3종 (정치/정보/군사공작, 최대 8,000) (P2)
-- [ ] **CHAR-15**: 출신지 — 기함 격침 시 귀환 설정 미지정이면 자동 귀환 (P1)
+- [x] **CHAR-15**: 출신지 — 기함 격침 시 귀환 설정 미지정이면 자동 귀환 (P1)
 
 ### Rank & Personnel (계급/인사)
 
@@ -143,7 +143,7 @@ Requirements sourced from `docs/feature-checklist.md` (P0~P2) and `docs/feature-
 - [ ] **PERS-03**: 망명 (PCP 320, 진영 변경, 적 수도 구금, 주소록 삭제) (P2)
 - [ ] **PERS-04**: 퇴역 (PCP 160, 군인→정치가, 30G일 지원 불가) (P2)
 - [ ] **PERS-05**: 지원 (PCP 160, 정치가→군인, 계급 소좌) (P2)
-- [ ] **PERS-06**: 귀환 설정 (0, 기함 격침 시 귀환 행성 설정) (P1)
+- [x] **PERS-06**: 귀환 설정 (0, 기함 격침 시 귀환 행성 설정) (P1)
 - [ ] **PERS-07**: 회견 (PCP 10, 동일 스팟 인물, 우호도 증가) (P1)
 - [ ] **PERS-08**: 수강 (PCP 160, 사관학교에서만, 능력 증가) (P1)
 - [ ] **PERS-09**: 병기연습 (PCP 10, 사관학교 시뮬레이터) (P2)
@@ -366,21 +366,21 @@ Requirements sourced from `docs/feature-checklist.md` (P0~P2) and `docs/feature-
 | SESS-05     | Phase 10 | Pending  |
 | SESS-06     | Phase 1  | Complete |
 | SESS-07     | Phase 1  | Complete |
-| CHAR-01     | Phase 2  | Pending  |
-| CHAR-02     | Phase 2  | Pending  |
-| CHAR-03     | Phase 2  | Pending  |
+| CHAR-01     | Phase 2  | Complete |
+| CHAR-02     | Phase 2  | Complete |
+| CHAR-03     | Phase 2  | Complete |
 | CHAR-04     | Phase 2  | Pending  |
 | CHAR-05     | Phase 2  | Pending  |
-| CHAR-06     | Phase 2  | Pending  |
-| CHAR-07     | Phase 2  | Pending  |
-| CHAR-08     | Phase 2  | Pending  |
+| CHAR-06     | Phase 2  | Complete |
+| CHAR-07     | Phase 2  | Complete |
+| CHAR-08     | Phase 2  | Complete |
 | CHAR-09     | Phase 2  | Pending  |
 | CHAR-10     | Phase 2  | Pending  |
 | CHAR-11     | Phase 2  | Pending  |
 | CHAR-12     | Phase 2  | Pending  |
-| CHAR-13     | Phase 2  | Pending  |
+| CHAR-13     | Phase 2  | Complete |
 | CHAR-14     | Phase 2  | Pending  |
-| CHAR-15     | Phase 2  | Pending  |
+| CHAR-15     | Phase 2  | Complete |
 | RANK-01     | Phase 2  | Pending  |
 | RANK-02     | Phase 2  | Pending  |
 | RANK-03     | Phase 2  | Pending  |
@@ -466,7 +466,7 @@ Requirements sourced from `docs/feature-checklist.md` (P0~P2) and `docs/feature-
 | PERS-03     | Phase 8  | Pending  |
 | PERS-04     | Phase 8  | Pending  |
 | PERS-05     | Phase 8  | Pending  |
-| PERS-06     | Phase 2  | Pending  |
+| PERS-06     | Phase 2  | Complete |
 | PERS-07     | Phase 7  | Pending  |
 | PERS-08     | Phase 9  | Pending  |
 | PERS-09     | Phase 9  | Pending  |

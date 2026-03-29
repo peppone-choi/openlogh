@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 02-01-PLAN.md
-last_updated: "2026-03-29T00:50:55.815Z"
+stopped_at: Completed 02-02-PLAN.md
+last_updated: "2026-03-29T02:03:08.575Z"
 last_activity: 2026-03-29
 progress:
   total_phases: 10
   completed_phases: 1
   total_plans: 11
-  completed_plans: 4
+  completed_plans: 5
   percent: 0
 ---
 
@@ -56,6 +56,7 @@ _Updated after each plan completion_
 | Phase 01 P02 | 82min | 2 tasks | 8 files |
 | Phase 01 P01 | 14min | 2 tasks | 7 files |
 | Phase 02 P01 | 59min | 2 tasks | 10 files |
+| Phase 02 P02 | 29min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -74,6 +75,9 @@ Recent decisions affecting current work:
 - [Phase 01]: V38 migration number used (not V10) because 37 migrations already exist
 - [Phase 01]: Officer @Version as Long (BIGINT) for optimistic locking; withOptimisticRetry in CommandExecutor for 3-attempt retry
 - [Phase 02]: PositionCardService nullable injection for backward compat — commands access via CommandServices data class since they are factory-created not Spring beans
+- [Phase 02]: Stats use Short type matching Officer entity; StatAllocation uses Int with toShort() conversion
+- [Phase 02]: CharacterController resolves factionType from DB (not client) to prevent origin validation bypass
+- [Phase 02]: 8-stat detection heuristic: row.size >= 18 distinguishes 8-stat (19 elements) from 5-stat (max 16)
 
 ### Pending Todos
 
@@ -93,6 +97,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-29T00:50:55.807Z
-Stopped at: Completed 02-01-PLAN.md
+Last session: 2026-03-29T02:03:08.566Z
+Stopped at: Completed 02-02-PLAN.md
 Resume file: None
