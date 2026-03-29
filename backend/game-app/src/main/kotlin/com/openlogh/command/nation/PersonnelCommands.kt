@@ -27,6 +27,37 @@ private fun peerageKo(code: String): String = when (code) {
     else -> code
 }
 
+/**
+ * 인사권 카드 목록.
+ * emperor/chairman: 모든 인사 권한
+ * military_minister/defense_committee_chair: 군사 인사 (대장까지 승진)
+ * personnel_chief/personnel_department_head: 인사 관리 (소장까지 승진)
+ */
+private val PERSONNEL_AUTHORITY_CARDS = setOf(
+    "emperor", "chairman",
+    "military_minister", "defense_committee_chair",
+    "personnel_chief", "personnel_department_head",
+)
+
+/**
+ * 인사권 확인 헬퍼.
+ * 장교가 인사 권한 카드를 보유하고 있는지 확인한다.
+ */
+private fun hasPersonnelAuthority(cmd: NationCommand): Boolean {
+    val pcs = cmd.services?.positionCardService ?: return false
+    val cards = pcs.getHeldCardCodes(cmd.env.worldId, cmd.general.id)
+    return cards.any { it in PERSONNEL_AUTHORITY_CARDS }
+}
+
+/**
+ * 서작(작위 수여) 권한 확인: 황제 카드만 가능.
+ */
+private fun hasEmperorAuthority(cmd: NationCommand): Boolean {
+    val pcs = cmd.services?.positionCardService ?: return false
+    val cards = pcs.getHeldCardCodes(cmd.env.worldId, cmd.general.id)
+    return cards.any { it == "emperor" }
+}
+
 // ========== 발탁 (Special Promotion) PCP 320 ==========
 // Ladder-skip promotion; costs influence
 
@@ -38,18 +69,27 @@ class 발탁(
     override val actionName = "발탁"
 
     override fun checkFullCondition(): ConstraintResult {
-        if (general.officerLevel < 20.toShort()) return ConstraintResult.Fail("군주급 이상만 사용할 수 있습니다")
+        if (!hasPersonnelAuthority(this)) return ConstraintResult.Fail("인사 권한이 없습니다.")
         val dg = destGeneral ?: return ConstraintResult.Fail("대상 장수가 없습니다")
         if (dg.factionId != general.factionId) return ConstraintResult.Fail("아군 장수가 아닙니다")
+        val targetRank = dg.rank.toInt() + 1
+        if (targetRank > 10) return ConstraintResult.Fail("이미 최고 계급입니다")
+        // 인원 제한 + 권한 범위 확인
+        val rls = services?.rankLadderService
+        if (rls != null && !rls.canPromote(env.worldId, general.id, general.factionId, targetRank)) {
+            return ConstraintResult.Fail("승진 권한이 없거나 인원 제한을 초과합니다.")
+        }
         return ConstraintResult.Pass
     }
 
     override suspend fun run(rng: Random): CommandResult {
         val dg = destGeneral!!
         dg.rank = (dg.rank + 1).toShort()
-        dg.experience = 0
+        dg.experience = 0 // 승진 시 공적 리셋 (RANK-05)
         dg.betray = (dg.betray + 1).toShort()
         general.influence = max(0, general.influence - 10)
+        // 승진 시 직무카드 정리
+        services?.positionCardService?.revokeOnRankChange(env.worldId, dg.id)
         return CommandResult(
             success = true,
             logs = listOf("${formatDate()} ${dg.name}을(를) 특별 발탁했습니다."),
@@ -58,7 +98,7 @@ class 발탁(
 }
 
 // ========== 강등 (Demotion) PCP 160 ==========
-// Demote rank; reset dedication (공적)
+// Demote rank; set experience to 100 (RANK-07)
 
 class 강등(
     general: General,
@@ -68,7 +108,7 @@ class 강등(
     override val actionName = "강등"
 
     override fun checkFullCondition(): ConstraintResult {
-        if (general.officerLevel < 20.toShort()) return ConstraintResult.Fail("군주급 이상만 사용할 수 있습니다")
+        if (!hasPersonnelAuthority(this)) return ConstraintResult.Fail("인사 권한이 없습니다.")
         val dg = destGeneral ?: return ConstraintResult.Fail("대상 장수가 없습니다")
         if (dg.factionId != general.factionId) return ConstraintResult.Fail("아군 장수가 아닙니다")
         if (dg.rank <= 0.toShort()) return ConstraintResult.Fail("이미 최하위 계급입니다")
@@ -78,8 +118,10 @@ class 강등(
     override suspend fun run(rng: Random): CommandResult {
         val dg = destGeneral!!
         dg.rank = (dg.rank - 1).toShort()
-        dg.dedication = 0
+        dg.experience = 100 // 강등 시 공적 100 설정 (RANK-07)
         dg.betray = (dg.betray + 2).toShort()
+        // 강등 시 직무카드 정리
+        services?.positionCardService?.revokeOnRankChange(env.worldId, dg.id)
         return CommandResult(
             success = true,
             logs = listOf("${formatDate()} ${dg.name}을(를) 강등했습니다."),
@@ -100,7 +142,8 @@ class 서작(
     private val peerageCode: String get() = arg?.get("peerageCode") as? String ?: "knight"
 
     override fun checkFullCondition(): ConstraintResult {
-        if (general.officerLevel < 20.toShort()) return ConstraintResult.Fail("군주급 이상만 사용할 수 있습니다")
+        // 작위 수여는 황제만 가능 (RANK-11)
+        if (!hasEmperorAuthority(this)) return ConstraintResult.Fail("황제만 작위를 수여할 수 있습니다.")
         val n = nation ?: return ConstraintResult.Fail("국가 정보가 없습니다")
         if (n.factionType != "empire") return ConstraintResult.Fail("제국 전용 커맨드입니다")
         val dg = destGeneral ?: return ConstraintResult.Fail("대상 장수가 없습니다")
@@ -131,7 +174,7 @@ class 서훈(
     override val actionName = "서훈"
 
     override fun checkFullCondition(): ConstraintResult {
-        if (general.officerLevel < 20.toShort()) return ConstraintResult.Fail("군주급 이상만 사용할 수 있습니다")
+        if (!hasPersonnelAuthority(this)) return ConstraintResult.Fail("인사 권한이 없습니다.")
         val dg = destGeneral ?: return ConstraintResult.Fail("대상 장수가 없습니다")
         if (dg.factionId != general.factionId) return ConstraintResult.Fail("아군 장수가 아닙니다")
         return ConstraintResult.Pass
@@ -184,7 +227,7 @@ class 봉토수여(
     override val actionName = "봉토수여"
 
     override fun checkFullCondition(): ConstraintResult {
-        if (general.officerLevel < 20.toShort()) return ConstraintResult.Fail("군주급 이상만 사용할 수 있습니다")
+        if (!hasEmperorAuthority(this)) return ConstraintResult.Fail("황제만 봉토를 수여할 수 있습니다.")
         val n = nation ?: return ConstraintResult.Fail("국가 정보가 없습니다")
         if (n.factionType != "empire") return ConstraintResult.Fail("제국 전용 커맨드입니다")
         val dg = destGeneral ?: return ConstraintResult.Fail("대상 장수가 없습니다")
@@ -218,7 +261,7 @@ class 봉토직할(
     override val actionName = "봉토직할"
 
     override fun checkFullCondition(): ConstraintResult {
-        if (general.officerLevel < 20.toShort()) return ConstraintResult.Fail("군주급 이상만 사용할 수 있습니다")
+        if (!hasEmperorAuthority(this)) return ConstraintResult.Fail("황제만 봉토를 직할할 수 있습니다.")
         val n = nation ?: return ConstraintResult.Fail("국가 정보가 없습니다")
         if (n.factionType != "empire") return ConstraintResult.Fail("제국 전용 커맨드입니다")
         val dc = destCity ?: return ConstraintResult.Fail("대상 행성이 없습니다")
@@ -248,10 +291,16 @@ class 승진(
     override val actionName = "승진"
 
     override fun checkFullCondition(): ConstraintResult {
-        if (general.officerLevel < 20.toShort()) return ConstraintResult.Fail("군주급 이상만 사용할 수 있습니다")
+        if (!hasPersonnelAuthority(this)) return ConstraintResult.Fail("인사 권한이 없습니다.")
         val dg = destGeneral ?: return ConstraintResult.Fail("대상 장수가 없습니다")
         if (dg.factionId != general.factionId) return ConstraintResult.Fail("아군 장수가 아닙니다")
         if (dg.rank >= 10.toShort()) return ConstraintResult.Fail("이미 최고 계급입니다")
+        val targetRank = dg.rank.toInt() + 1
+        // 인원 제한 + 권한 범위 확인
+        val rls = services?.rankLadderService
+        if (rls != null && !rls.canPromote(env.worldId, general.id, general.factionId, targetRank)) {
+            return ConstraintResult.Fail("승진 권한이 없거나 인원 제한을 초과합니다.")
+        }
         return ConstraintResult.Pass
     }
 
@@ -259,7 +308,9 @@ class 승진(
         val dg = destGeneral!!
         val prevRank = dg.rank.toInt()
         dg.rank = (prevRank + 1).toShort()
-        dg.experience = 0 // 공적 리셋
+        dg.experience = 0 // 공적 리셋 (RANK-05)
+        // 승진 시 직무카드 정리
+        services?.positionCardService?.revokeOnRankChange(env.worldId, dg.id)
         val msg = personnelMapper.writeValueAsString(mapOf(
             "promotion" to mapOf(
                 "officerId" to dg.id.toString(),
@@ -288,14 +339,19 @@ class 임명(
     private val positionCode: String get() = arg?.get("positionCode") as? String ?: ""
 
     override fun checkFullCondition(): ConstraintResult {
-        if (general.officerLevel < 20.toShort()) return ConstraintResult.Fail("군주급 이상만 사용할 수 있습니다")
+        if (!hasPersonnelAuthority(this)) return ConstraintResult.Fail("인사 권한이 없습니다.")
         val dg = destGeneral ?: return ConstraintResult.Fail("대상 장수가 없습니다")
         if (dg.factionId != general.factionId) return ConstraintResult.Fail("아군 장수가 아닙니다")
         if (positionCode.isEmpty()) return ConstraintResult.Fail("임명할 직무 코드가 없습니다")
         val cardType = PositionCardType.fromCode(positionCode)
             ?: return ConstraintResult.Fail("유효하지 않은 직무 코드입니다: $positionCode")
+        // 임명 대상의 계급이 해당 직책의 최소 계급 이상인지 확인 (RANK-10)
         if (dg.rank < cardType.minRank) {
             return ConstraintResult.Fail("계급이 부족합니다. (필요: ${cardType.minRank}, 현재: ${dg.rank})")
+        }
+        // 임명자의 계급이 대상 직책의 최소 계급보다 높은지 확인
+        if (general.rank <= cardType.minRank && !hasEmperorAuthority(this)) {
+            return ConstraintResult.Fail("임명자의 계급이 대상 직책보다 높아야 합니다.")
         }
         val pcs = services?.positionCardService
         val currentCards = pcs?.getCardCount(env.worldId, dg.id) ?: 2
@@ -338,7 +394,7 @@ class 파면(
     private val positionCode: String get() = arg?.get("positionCode") as? String ?: ""
 
     override fun checkFullCondition(): ConstraintResult {
-        if (general.officerLevel < 20.toShort()) return ConstraintResult.Fail("군주급 이상만 사용할 수 있습니다")
+        if (!hasPersonnelAuthority(this)) return ConstraintResult.Fail("인사 권한이 없습니다.")
         val dg = destGeneral ?: return ConstraintResult.Fail("대상 장수가 없습니다")
         if (dg.factionId != general.factionId) return ConstraintResult.Fail("아군 장수가 아닙니다")
         if (positionCode.isEmpty()) return ConstraintResult.Fail("파면할 직무 코드가 없습니다")

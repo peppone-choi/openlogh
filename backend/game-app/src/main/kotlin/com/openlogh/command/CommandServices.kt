@@ -9,6 +9,7 @@ import com.openlogh.repository.GeneralRepository
 import com.openlogh.repository.CityRepository
 import com.openlogh.repository.NationRepository
 import com.openlogh.service.PositionCardService
+import com.openlogh.service.RankLadderService
 
 data class CommandServices(
     val generalRepository: GeneralRepository,
@@ -20,4 +21,5 @@ data class CommandServices(
     val fleetFormationRules: FleetFormationRules? = null,
     val gridEntryValidator: GridEntryValidator? = null,
     val positionCardService: PositionCardService? = null,
+    val rankLadderService: RankLadderService? = null,
 )
