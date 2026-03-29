@@ -256,6 +256,16 @@ export interface Officer {
     commandEndTime: string | null;
     lastTurn: LastTurnInfo;
     meta: Record<string, unknown>;
+    // LOGH-specific fields (Phase 2)
+    careerType: string;        // "military" | "politician"
+    originType: string;        // "noble" | "knight" | "commoner" | "citizen" | "exile"
+    homePlanetId: number | null;
+    locationState: string;     // "planet" | "fleet" | "space"
+    peerage: string | null;    // "duke" | "marquis" | "count" | "viscount" | "baron" | "knight" | null
+    politicalOps: number;
+    intelOps: number;
+    militaryOps: number;
+    famePoints: number;
     penalty: Record<string, unknown>;
     picture: string;
     defenceTrain: number;
@@ -295,6 +305,41 @@ export interface Officer {
 
 /** @deprecated Use Officer */
 export type General = Officer;
+
+// Position Card types (from Plan 04 API)
+export interface OfficerPositionCard {
+    id: number;
+    positionType: string;
+    positionNameKo: string;
+    category: string;
+    grantedCommands: string[];
+}
+
+// Org Chart types (from Plan 04 API)
+export interface OrgChartHolder {
+    positionType: string;
+    positionNameKo: string;
+    category: string;
+    officerId: number | null;
+    officerName: string | null;
+    officerPicture: string | null;
+    officerRank: number | null;
+    officerFactionId: number | null;
+}
+
+export interface OrgChartResponse {
+    sessionId: number;
+    holders: OrgChartHolder[];
+    allPositionTypes: PositionTypeInfo[];
+}
+
+export interface PositionTypeInfo {
+    code: string;
+    displayName: string;
+    category: string;
+    minRank: number;
+    grantedCommands: string[];
+}
 
 export interface BestOfficer {
     id: number;
@@ -1721,3 +1766,22 @@ export interface SimulatorExportResult {
     reason?: string;
     data?: JsonObject;
 }
+
+// 8-stat system constants (Phase 2)
+export const STAT_KEYS_8 = [
+    'leadership', 'command', 'intelligence', 'politics',
+    'administration', 'mobility', 'attack', 'defense',
+] as const;
+export type StatKey8 = typeof STAT_KEYS_8[number];
+
+export const STAT_LABELS_KO: Record<StatKey8, string> = {
+    leadership: '통솔', command: '지휘', intelligence: '정보',
+    politics: '정치', administration: '운영', mobility: '기동',
+    attack: '공격', defense: '방어',
+};
+
+export const STAT_COLORS: Record<StatKey8, string> = {
+    leadership: '#ef4444', command: '#f97316', intelligence: '#1e90ff',
+    politics: '#32cd32', administration: '#9370db', mobility: '#06b6d4',
+    attack: '#ff6b6b', defense: '#74c0fc',
+};
