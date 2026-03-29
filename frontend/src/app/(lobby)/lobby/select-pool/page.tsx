@@ -4,102 +4,108 @@ import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useWorldStore } from '@/stores/worldStore';
 import { useOfficerStore } from '@/stores/officerStore';
-import { officerApi } from '@/lib/gameApi';
-import type { Officer } from '@/types';
-import { Users, ArrowLeft, Pencil, Dices, Settings2 } from 'lucide-react';
+import { characterApi, factionApi } from '@/lib/gameApi';
+import { characterCreationSchema, STAT_TOTAL, STAT_MIN, STAT_MAX } from '@/lib/schemas/character-creation';
+import type { Officer, Faction, StatKey8 } from '@/types';
+import { STAT_KEYS_8 } from '@/types';
+import { Users, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { PageHeader } from '@/components/game/page-header';
 import { LoadingState } from '@/components/game/loading-state';
 import { EmptyState } from '@/components/game/empty-state';
-import { GeneralPortrait } from '@/components/game/general-portrait';
-import { StatBar } from '@/components/game/stat-bar';
-import { LEGACY_PERSONALITY_OPTIONS } from '@/lib/game-utils';
+import { ErrorState } from '@/components/game/error-state';
+import { CharacterPickGrid } from '@/components/game/character-pick-grid';
+import { StatAllocator } from '@/components/game/stat-allocator';
+import { OriginSelector } from '@/components/game/origin-selector';
 
-const STAT_TOTAL = 350;
-const STAT_MIN = 10;
-const STAT_MAX = 100;
-const STAT_KEYS = ['leadership', 'strength', 'intel', 'politics', 'charm'] as const;
-type StatKey = (typeof STAT_KEYS)[number];
-const STAT_LABELS: Record<StatKey, string> = {
-    leadership: '통솔',
-    strength: '무력',
-    intel: '지력',
-    politics: '정치',
-    charm: '매력',
+const DEFAULT_STATS: Record<StatKey8, number> = {
+    leadership: 50,
+    command: 50,
+    intelligence: 50,
+    politics: 50,
+    administration: 50,
+    mobility: 50,
+    attack: 50,
+    defense: 50,
 };
-const STAT_COLORS: Record<StatKey, string> = {
-    leadership: 'bg-red-500',
-    strength: 'bg-orange-500',
-    intel: 'bg-blue-500',
-    politics: 'bg-green-500',
-    charm: 'bg-purple-500',
-};
-
-const EGO_OPTIONS = LEGACY_PERSONALITY_OPTIONS.map((option) => ({
-    value: option.code,
-    label: option.label,
-}));
 
 export default function LobbySelectPoolPage() {
     const router = useRouter();
     const currentWorld = useWorldStore((s) => s.currentWorld);
     const { fetchMyGeneral } = useOfficerStore();
-    const [pool, setPool] = useState<Officer[]>([]);
+
+    const [tab, setTab] = useState<string>('original');
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(false);
+    const [pool, setPool] = useState<Officer[]>([]);
     const [selecting, setSelecting] = useState<number | null>(null);
-    const [tab, setTab] = useState<string>('pick');
 
-    // Build custom mode state
+    // Faction context
+    const [factions, setFactions] = useState<Faction[]>([]);
+    const [activeFactionId, setActiveFactionId] = useState<number | null>(null);
+
+    // Generate mode state
     const [customName, setCustomName] = useState('');
-    const [customStats, setCustomStats] = useState<Record<StatKey, number>>({
-        leadership: 70,
-        strength: 70,
-        intel: 70,
-        politics: 70,
-        charm: 70,
-    });
-    const [building, setBuilding] = useState(false);
-    const [customEgo, setCustomEgo] = useState('Random');
+    const [customStats, setCustomStats] = useState<Record<StatKey8, number>>({ ...DEFAULT_STATS });
+    const [originType, setOriginType] = useState('noble');
+    const [generating, setGenerating] = useState(false);
 
-    // Update existing mode state
-    const [selectedForUpdate, setSelectedForUpdate] = useState<Officer | null>(null);
-    const [updateStats, setUpdateStats] = useState<Record<StatKey, number>>({
-        leadership: 70,
-        strength: 70,
-        intel: 70,
-        politics: 70,
-        charm: 70,
-    });
-    const [updating, setUpdating] = useState(false);
+    const activeFaction = factions.find((f) => f.id === activeFactionId);
+    const factionType = activeFaction?.factionType ?? activeFaction?.faction_type ?? 'empire';
 
-    const loadPool = useCallback(async () => {
+    // When factionType changes, reset origin appropriately
+    useEffect(() => {
+        if (factionType === 'empire') {
+            setOriginType('noble');
+        } else {
+            setOriginType('citizen');
+        }
+    }, [factionType]);
+
+    const loadData = useCallback(async () => {
         if (!currentWorld) return;
+        setLoading(true);
+        setError(false);
         try {
-            const { data } = await officerApi.listPool(currentWorld.id);
-            setPool(data);
+            const { data: factionList } = await factionApi.listByWorld(currentWorld.id);
+            setFactions(factionList);
+
+            // Default to first faction
+            const firstFaction = factionList[0];
+            if (firstFaction && !activeFactionId) {
+                setActiveFactionId(firstFaction.id);
+            }
+
+            const fid = activeFactionId ?? firstFaction?.id;
+            if (fid) {
+                const { data: originals } = await characterApi.getAvailableOriginals(
+                    currentWorld.id,
+                    fid,
+                );
+                setPool(originals);
+            }
         } catch {
-            /* ignore */
+            setError(true);
         } finally {
             setLoading(false);
         }
-    }, [currentWorld]);
+    }, [currentWorld, activeFactionId]);
 
     useEffect(() => {
-        loadPool();
-    }, [loadPool]);
+        loadData();
+    }, [loadData]);
 
-    const handleSelect = async (generalId: number) => {
+    const handleSelectOriginal = async (officerId: number) => {
         if (!currentWorld) return;
-        setSelecting(generalId);
+        setSelecting(officerId);
         try {
-            await officerApi.selectFromPool(currentWorld.id, generalId);
+            await characterApi.selectOriginal(currentWorld.id, officerId);
             await fetchMyGeneral(currentWorld.id);
-            toast.success('제독를 선택했습니다.');
+            toast.success('제독을 선택했습니다.');
             router.push('/');
         } catch {
             toast.error('제독 선택에 실패했습니다.');
@@ -108,73 +114,48 @@ export default function LobbySelectPoolPage() {
         }
     };
 
-    const customTotal = STAT_KEYS.reduce((s, k) => s + customStats[k], 0);
-    const customRemaining = STAT_TOTAL - customTotal;
+    const statTotal = STAT_KEYS_8.reduce((sum, key) => sum + customStats[key], 0);
+    const statRemaining = STAT_TOTAL - statTotal;
+    const canSubmitGenerate = customName.trim().length >= 2 && statRemaining === 0;
 
-    const handleBuildCustom = async () => {
-        if (!currentWorld || !customName.trim()) {
-            toast.error('제독 이름을 입력해주세요.');
-            return;
-        }
-        if (customRemaining !== 0) {
-            toast.error(`능력치 합계가 ${STAT_TOTAL}이어야 합니다.`);
-            return;
-        }
-        setBuilding(true);
-        try {
-            const buildPayload = {
-                name: customName.trim(),
-                ...customStats,
-                ego: customEgo,
-                personality: customEgo,
-            };
-            await officerApi.buildPoolGeneral(currentWorld.id, buildPayload);
-            toast.success('커스텀 제독가 풀에 등록되었습니다.');
-            setCustomName('');
-            setCustomEgo('Random');
-            await loadPool();
-        } catch {
-            toast.error('커스텀 제독 생성에 실패했습니다.');
-        } finally {
-            setBuilding(false);
-        }
-    };
+    const handleGenerate = async () => {
+        if (!currentWorld || !activeFactionId) return;
 
-    const selectForUpdate = (g: Officer) => {
-        setSelectedForUpdate(g);
-        setUpdateStats({
-            leadership: g.leadership,
-            strength: g.command,
-            intel: g.intelligence,
-            politics: g.politics,
-            charm: g.charm,
+        const parsed = characterCreationSchema.safeParse({
+            name: customName.trim(),
+            originType,
+            stats: customStats,
         });
-    };
 
-    const updateTotal = STAT_KEYS.reduce((s, k) => s + updateStats[k], 0);
-    const updateRemaining = STAT_TOTAL - updateTotal;
-
-    const handleUpdate = async () => {
-        if (!currentWorld || !selectedForUpdate) return;
-        if (updateRemaining !== 0) {
-            toast.error(`능력치 합계가 ${STAT_TOTAL}이어야 합니다.`);
+        if (!parsed.success) {
+            const firstError = parsed.error.issues[0];
+            toast.error(firstError?.message ?? '입력을 확인해주세요.');
             return;
         }
-        setUpdating(true);
+
+        setGenerating(true);
         try {
-            await officerApi.updatePoolGeneral(currentWorld.id, selectedForUpdate.id, updateStats);
-            toast.success('제독 능력치가 수정되었습니다.');
-            setSelectedForUpdate(null);
-            await loadPool();
+            await characterApi.generate({
+                sessionId: currentWorld.id,
+                factionId: activeFactionId,
+                name: parsed.data.name,
+                originType: parsed.data.originType,
+                stats: parsed.data.stats,
+                planetId: activeFaction?.capitalPlanetId ?? 0,
+            });
+            await fetchMyGeneral(currentWorld.id);
+            toast.success('제독을 생성했습니다.');
+            router.push('/');
         } catch {
-            toast.error('제독 수정에 실패했습니다.');
+            toast.error('제독 생성에 실패했습니다.');
         } finally {
-            setUpdating(false);
+            setGenerating(false);
         }
     };
 
-    if (!currentWorld) return <div className="p-4 text-muted-foreground">월드를 선택해주세요.</div>;
-    if (loading) return <LoadingState />;
+    if (!currentWorld) {
+        return <div className="p-4 text-muted-foreground">월드를 선택해주세요.</div>;
+    }
 
     return (
         <div className="p-4 space-y-4 max-w-3xl mx-auto">
@@ -182,371 +163,104 @@ export default function LobbySelectPoolPage() {
                 <ArrowLeft className="size-4 mr-1" /> 로비로 돌아가기
             </Button>
 
-            <PageHeader icon={Users} title="제독 선택 (풀)" />
+            <PageHeader icon={Users} title="제독 선택" />
+
+            {/* Faction toggle */}
+            {factions.length > 1 && (
+                <div className="flex gap-2">
+                    {factions.map((f) => (
+                        <Button
+                            key={f.id}
+                            type="button"
+                            variant={activeFactionId === f.id ? 'default' : 'outline'}
+                            size="sm"
+                            onClick={() => setActiveFactionId(f.id)}
+                        >
+                            {f.name}
+                        </Button>
+                    ))}
+                </div>
+            )}
 
             <Tabs value={tab} onValueChange={setTab}>
                 <TabsList>
-                    <TabsTrigger value="pick">
+                    <TabsTrigger value="original">
                         <Users className="size-3.5 mr-1" />
-                        기존 제독 선택
+                        오리지널 캐릭터
                     </TabsTrigger>
-                    <TabsTrigger value="build">
-                        <Pencil className="size-3.5 mr-1" />
-                        커스텀 생성
-                    </TabsTrigger>
-                    <TabsTrigger value="update">
-                        <Settings2 className="size-3.5 mr-1" />
-                        능력치 수정
+                    <TabsTrigger value="generate">
+                        제네레이트
                     </TabsTrigger>
                 </TabsList>
 
-                {/* ═══ Pick existing ═══ */}
-                <TabsContent value="pick" className="mt-4">
-                    <p className="text-sm text-muted-foreground mb-3">
-                        풀에 등록된 제독 중 하나를 선택하여 플레이할 수 있습니다.
-                    </p>
-                    {pool.length === 0 ? (
-                        <EmptyState icon={Users} title="선택 가능한 제독가 없습니다." />
+                {/* === Original characters tab === */}
+                <TabsContent value="original" className="mt-4">
+                    {loading ? (
+                        <LoadingState />
+                    ) : error ? (
+                        <ErrorState
+                            title="캐릭터 목록을 불러오지 못했습니다."
+                            description="네트워크 연결을 확인하고 다시 시도해주세요."
+                            onRetry={loadData}
+                        />
+                    ) : pool.length === 0 ? (
+                        <EmptyState
+                            icon={Users}
+                            title="선택 가능한 캐릭터가 없습니다"
+                            description="모든 오리지널 캐릭터가 선택되었습니다. 제네레이트 탭에서 새 캐릭터를 생성해주세요."
+                        />
                     ) : (
-                        <div className="grid gap-3 sm:grid-cols-2">
-                            {pool.map((g) => (
-                                <Card key={g.id}>
-                                    <CardContent className="space-y-3">
-                                        <div className="flex items-center gap-3">
-                                            <GeneralPortrait picture={g.picture} name={g.name} size="md" />
-                                            <div>
-                                                <p className="font-semibold">{g.name}</p>
-                                                <p className="text-xs text-muted-foreground">나이 {g.age}세</p>
-                                            </div>
-                                        </div>
-                                        <div className="space-y-1">
-                                            <StatBar label="통솔" value={g.leadership} color="bg-red-500" />
-                                            <StatBar label="지휘" value={g.command} color="bg-orange-500" />
-                                            <StatBar label="정보" value={g.intelligence} color="bg-blue-500" />
-                                            <StatBar label="정치" value={g.politics} color="bg-green-500" />
-                                            <StatBar label="매력" value={g.charm} color="bg-purple-500" />
-                                        </div>
-                                        <div className="flex gap-2 text-xs text-muted-foreground">
-                                            <span>함선: {g.crew.toLocaleString()}</span>
-                                            <span>경험: {g.experience}</span>
-                                        </div>
-                                        <Button
-                                            className="w-full"
-                                            onClick={() => handleSelect(g.id)}
-                                            disabled={selecting !== null}
-                                        >
-                                            {selecting === g.id ? '선택 중...' : '선택하기'}
-                                        </Button>
-                                    </CardContent>
-                                </Card>
-                            ))}
-                        </div>
+                        <CharacterPickGrid
+                            characters={pool}
+                            onSelect={handleSelectOriginal}
+                            selecting={selecting}
+                        />
                     )}
                 </TabsContent>
 
-                {/* ═══ Build custom ═══ */}
-                <TabsContent value="build" className="mt-4 space-y-4">
-                    <p className="text-sm text-muted-foreground">
-                        능력치를 직접 배분하여 커스텀 제독를 풀에 등록합니다.
-                    </p>
+                {/* === Generate character tab === */}
+                <TabsContent value="generate" className="mt-4 space-y-4">
                     <Card>
                         <CardHeader>
-                            <CardTitle className="text-sm">커스텀 제독 생성</CardTitle>
+                            <CardTitle className="text-sm">캐릭터 생성</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="space-y-1">
-                                <label htmlFor="pool-custom-name" className="text-sm text-muted-foreground">
+                                <label htmlFor="gen-name" className="text-sm text-muted-foreground">
                                     제독명
                                 </label>
                                 <Input
-                                    id="pool-custom-name"
+                                    id="gen-name"
                                     value={customName}
                                     onChange={(e) => setCustomName(e.target.value)}
-                                    placeholder="제독 이름 입력"
+                                    placeholder="제독 이름 입력 (2~20자)"
                                     maxLength={20}
                                 />
                             </div>
 
-                            <div className="space-y-1">
-                                <label htmlFor="pool-custom-ego" className="text-sm text-muted-foreground">
-                                    성격
-                                </label>
-                                <select
-                                    id="pool-custom-ego"
-                                    value={customEgo}
-                                    onChange={(e) => setCustomEgo(e.target.value)}
-                                    className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm"
-                                >
-                                    {EGO_OPTIONS.map((ego) => (
-                                        <option key={ego.value} value={ego.value}>
-                                            {ego.label}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
+                            <OriginSelector
+                                factionType={factionType}
+                                value={originType}
+                                onChange={setOriginType}
+                            />
 
-                            <div className="flex items-center justify-between">
-                                <span className="text-sm text-muted-foreground">능력치 배분 (합계 {STAT_TOTAL})</span>
-                                <Badge
-                                    variant={
-                                        customRemaining === 0
-                                            ? 'default'
-                                            : customRemaining > 0
-                                              ? 'secondary'
-                                              : 'destructive'
-                                    }
-                                    className={customRemaining === 0 ? 'bg-green-600' : ''}
-                                >
-                                    남은: {customRemaining}
-                                </Badge>
-                            </div>
-
-                            <div className="flex gap-2 mb-2">
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => {
-                                        const base = Math.floor(STAT_TOTAL / 5);
-                                        const rem = STAT_TOTAL - base * 5;
-                                        setCustomStats({
-                                            leadership: base + (rem > 0 ? 1 : 0),
-                                            strength: base + (rem > 1 ? 1 : 0),
-                                            intel: base + (rem > 2 ? 1 : 0),
-                                            politics: base + (rem > 3 ? 1 : 0),
-                                            charm: base,
-                                        });
-                                    }}
-                                >
-                                    균형형
-                                </Button>
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => {
-                                        const vals = STAT_KEYS.map(
-                                            () => STAT_MIN + Math.floor(Math.random() * (STAT_MAX - STAT_MIN))
-                                        );
-                                        const sum = vals.reduce((a, b) => a + b, 0);
-                                        const diff = STAT_TOTAL - sum;
-                                        vals[0] = Math.max(STAT_MIN, Math.min(STAT_MAX, vals[0] + diff));
-                                        setCustomStats({
-                                            leadership: vals[0],
-                                            strength: vals[1],
-                                            intel: vals[2],
-                                            politics: vals[3],
-                                            charm: vals[4],
-                                        });
-                                    }}
-                                >
-                                    <Dices className="size-3.5 mr-1" />
-                                    랜덤
-                                </Button>
-                            </div>
-
-                            {STAT_KEYS.map((key) => (
-                                <div key={key} className="space-y-1">
-                                    <div className="flex items-center gap-2">
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            size="icon-xs"
-                                            onClick={() =>
-                                                setCustomStats((prev) => {
-                                                    const next = Math.max(STAT_MIN, prev[key] - 5);
-                                                    return { ...prev, [key]: next };
-                                                })
-                                            }
-                                        >
-                                            -
-                                        </Button>
-                                        <div className="flex-1">
-                                            <StatBar
-                                                label={STAT_LABELS[key]}
-                                                value={customStats[key]}
-                                                max={STAT_MAX}
-                                                color={STAT_COLORS[key]}
-                                            />
-                                        </div>
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            size="icon-xs"
-                                            onClick={() =>
-                                                setCustomStats((prev) => {
-                                                    const next = Math.min(STAT_MAX, prev[key] + 5);
-                                                    const newTotal = STAT_KEYS.reduce(
-                                                        (s, k) => s + (k === key ? next : prev[k]),
-                                                        0
-                                                    );
-                                                    if (newTotal > STAT_TOTAL) return prev;
-                                                    return { ...prev, [key]: next };
-                                                })
-                                            }
-                                        >
-                                            +
-                                        </Button>
-                                        <Input
-                                            type="number"
-                                            min={STAT_MIN}
-                                            max={STAT_MAX}
-                                            value={customStats[key]}
-                                            onChange={(e) =>
-                                                setCustomStats((prev) => ({
-                                                    ...prev,
-                                                    [key]: Math.max(
-                                                        STAT_MIN,
-                                                        Math.min(STAT_MAX, Number(e.target.value))
-                                                    ),
-                                                }))
-                                            }
-                                            className="w-14 text-center"
-                                        />
-                                    </div>
-                                </div>
-                            ))}
+                            <StatAllocator
+                                budget={STAT_TOTAL}
+                                stats={customStats}
+                                onChange={setCustomStats}
+                                min={STAT_MIN}
+                                max={STAT_MAX}
+                            />
 
                             <Button
                                 className="w-full"
-                                onClick={handleBuildCustom}
-                                disabled={building || customRemaining !== 0 || !customName.trim()}
+                                onClick={handleGenerate}
+                                disabled={generating || !canSubmitGenerate}
                             >
-                                {building ? '생성 중...' : '커스텀 제독 등록'}
+                                {generating ? '생성 중...' : '제독 생성'}
                             </Button>
                         </CardContent>
                     </Card>
-                </TabsContent>
-
-                {/* ═══ Update existing ═══ */}
-                <TabsContent value="update" className="mt-4 space-y-4">
-                    <p className="text-sm text-muted-foreground">풀에 있는 기존 제독의 능력치를 수정합니다.</p>
-
-                    {pool.length === 0 ? (
-                        <EmptyState icon={Users} title="수정할 제독가 없습니다." />
-                    ) : !selectedForUpdate ? (
-                        <div className="grid gap-2 sm:grid-cols-2">
-                            {pool.map((g) => (
-                                <Card
-                                    key={g.id}
-                                    className="cursor-pointer hover:border-primary/50 transition-colors"
-                                    onClick={() => selectForUpdate(g)}
-                                >
-                                    <CardContent className="flex items-center gap-3">
-                                        <GeneralPortrait picture={g.picture} name={g.name} size="sm" />
-                                        <div className="flex-1 min-w-0">
-                                            <p className="font-semibold text-sm">{g.name}</p>
-                                            <p className="text-xs text-muted-foreground">
-                                                통{g.leadership} 지휘{g.command} 정보{g.intelligence} 정{g.politics}{' '}
-                                                운영{g.administration}
-                                            </p>
-                                        </div>
-                                        <Settings2 className="size-4 text-muted-foreground" />
-                                    </CardContent>
-                                </Card>
-                            ))}
-                        </div>
-                    ) : (
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="text-sm flex items-center justify-between">
-                                    <span>{selectedForUpdate.name} 능력치 수정</span>
-                                    <Button variant="ghost" size="sm" onClick={() => setSelectedForUpdate(null)}>
-                                        취소
-                                    </Button>
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                <div className="flex items-center justify-between">
-                                    <span className="text-sm text-muted-foreground">
-                                        능력치 배분 (합계 {STAT_TOTAL})
-                                    </span>
-                                    <Badge
-                                        variant={
-                                            updateRemaining === 0
-                                                ? 'default'
-                                                : updateRemaining > 0
-                                                  ? 'secondary'
-                                                  : 'destructive'
-                                        }
-                                        className={updateRemaining === 0 ? 'bg-green-600' : ''}
-                                    >
-                                        남은: {updateRemaining}
-                                    </Badge>
-                                </div>
-
-                                {STAT_KEYS.map((key) => (
-                                    <div key={key} className="space-y-1">
-                                        <div className="flex items-center gap-2">
-                                            <Button
-                                                type="button"
-                                                variant="outline"
-                                                size="icon-xs"
-                                                onClick={() =>
-                                                    setUpdateStats((prev) => ({
-                                                        ...prev,
-                                                        [key]: Math.max(STAT_MIN, prev[key] - 5),
-                                                    }))
-                                                }
-                                            >
-                                                -
-                                            </Button>
-                                            <div className="flex-1">
-                                                <StatBar
-                                                    label={STAT_LABELS[key]}
-                                                    value={updateStats[key]}
-                                                    max={STAT_MAX}
-                                                    color={STAT_COLORS[key]}
-                                                />
-                                            </div>
-                                            <Button
-                                                type="button"
-                                                variant="outline"
-                                                size="icon-xs"
-                                                onClick={() =>
-                                                    setUpdateStats((prev) => {
-                                                        const next = Math.min(STAT_MAX, prev[key] + 5);
-                                                        const total = STAT_KEYS.reduce(
-                                                            (s, k) => s + (k === key ? next : prev[k]),
-                                                            0
-                                                        );
-                                                        if (total > STAT_TOTAL) return prev;
-                                                        return { ...prev, [key]: next };
-                                                    })
-                                                }
-                                            >
-                                                +
-                                            </Button>
-                                            <Input
-                                                type="number"
-                                                min={STAT_MIN}
-                                                max={STAT_MAX}
-                                                value={updateStats[key]}
-                                                onChange={(e) =>
-                                                    setUpdateStats((prev) => ({
-                                                        ...prev,
-                                                        [key]: Math.max(
-                                                            STAT_MIN,
-                                                            Math.min(STAT_MAX, Number(e.target.value))
-                                                        ),
-                                                    }))
-                                                }
-                                                className="w-14 text-center"
-                                            />
-                                        </div>
-                                    </div>
-                                ))}
-
-                                <Button
-                                    className="w-full"
-                                    onClick={handleUpdate}
-                                    disabled={updating || updateRemaining !== 0}
-                                >
-                                    {updating ? '수정 중...' : '능력치 수정'}
-                                </Button>
-                            </CardContent>
-                        </Card>
-                    )}
                 </TabsContent>
             </Tabs>
         </div>

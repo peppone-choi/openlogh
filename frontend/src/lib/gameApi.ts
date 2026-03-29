@@ -180,6 +180,22 @@ export const generalApi = {
     listByCity: officerApi.listByPlanet,
 };
 
+// Character API (Phase 2 — character creation/selection)
+export const characterApi = {
+    getAvailableOriginals: (sessionId: number, factionId: number) =>
+        api.get<Officer[]>(`/api/character/available-originals`, { params: { sessionId, factionId } }),
+    selectOriginal: (sessionId: number, officerId: number) =>
+        api.post<Officer>(`/api/character/select-original`, { sessionId, officerId }),
+    generate: (payload: {
+        sessionId: number;
+        factionId: number;
+        name: string;
+        originType: string;
+        stats: Record<string, number>;
+        planetId: number;
+    }) => api.post<Officer>(`/api/character/generate`, payload),
+};
+
 export const npcTokenApi = {
     generate: (worldId: number) => api.post<NpcTokenResponse>(`/worlds/${worldId}/npc-token`),
     refresh: (worldId: number, nonce: string, keepIds: number[]) =>
