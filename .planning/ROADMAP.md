@@ -71,7 +71,7 @@ Plans:
 - [ ] 02-05-PLAN.md — Frontend character selection/creation UI (8-stat allocator, origin selector, select-pool rewrite)
 - [ ] 02-06-PLAN.md — Frontend officer profile (D-10 4-section layout) + org chart with live data (D-07/D-08 faction differentiation)
 - [ ] 02-07-PLAN.md — Visual verification checkpoint (character selection, officer profile, org chart)
-- [ ] 02-08-PLAN.md — Character lifecycle (deletion, injury/treatment, death, cross-session inheritance, covert ops stat cap)
+- [x] 02-08-PLAN.md — Character lifecycle (deletion, injury/treatment, death, cross-session inheritance, covert ops stat cap)
 
 **UI hint**: yes
 
