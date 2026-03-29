@@ -333,7 +333,7 @@ class InMemoryTurnHarness {
 
         `when`(diplomacyRepository.findBySessionId(org.mockito.Mockito.anyLong())).thenReturn(emptyList())
         `when`(
-            diplomacyRepository.findBySessionIdAndSrcNationIdOrDestFactionId(
+            diplomacyRepository.findBySessionIdAndSrcFactionIdOrDestFactionId(
                 org.mockito.Mockito.anyLong(),
                 org.mockito.Mockito.anyLong(),
                 org.mockito.Mockito.anyLong(),
