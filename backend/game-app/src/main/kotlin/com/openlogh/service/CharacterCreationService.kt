@@ -14,6 +14,8 @@ class CharacterCreationService(
         const val STAT_TOTAL = 400
         const val STAT_MIN = 10
         const val STAT_MAX = 100
+        /** CHAR-14: Maximum value for covert ops stats (politicalOps, intelOps, militaryOps) */
+        const val OPS_STAT_CAP = 8000
         val STAT_KEYS = listOf(
             "leadership", "command", "intelligence", "politics",
             "administration", "mobility", "attack", "defense",
@@ -43,6 +45,16 @@ class CharacterCreationService(
         if (values.any { it < STAT_MIN || it > STAT_MAX }) return false
         if (values.sum() != STAT_TOTAL) return false
         return true
+    }
+
+    /**
+     * CHAR-14: Enforce covert ops stat cap at 8000.
+     * Called after any operation that modifies politicalOps, intelOps, or militaryOps.
+     */
+    fun enforceOpsStatCap(officer: Officer) {
+        officer.politicalOps = officer.politicalOps.coerceIn(0, OPS_STAT_CAP)
+        officer.intelOps = officer.intelOps.coerceIn(0, OPS_STAT_CAP)
+        officer.militaryOps = officer.militaryOps.coerceIn(0, OPS_STAT_CAP)
     }
 
     fun validateOrigin(factionType: String, originType: String): Boolean {
@@ -90,6 +102,7 @@ class CharacterCreationService(
             npcState = 0, // player-controlled
             turnTime = OffsetDateTime.now(),
         )
+        enforceOpsStatCap(officer) // CHAR-14: defensive cap enforcement
         return officerRepository.save(officer)
     }
 
