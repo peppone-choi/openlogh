@@ -22,8 +22,8 @@ Requirements sourced from `docs/feature-checklist.md` (P0~P2) and `docs/feature-
 - [x] **CHAR-01**: 원작 오리지널 캐릭터 선택 (능력치 고정, 추첨) (P0)
 - [x] **CHAR-02**: 제네레이트 캐릭터 생성 (이름/외모/능력치 배분) (P1)
 - [x] **CHAR-03**: 8개 능력치 (통솔/지휘/정보/정치/운영/기동/공격/방어) (P0)
-- [ ] **CHAR-04**: 능력치 성장 — 나이 효과 (청년 +, 장년 -) (P1)
-- [ ] **CHAR-05**: 능력치 성장 — 경험치 (CP 사용량 누적, 100=1 상승) (P1)
+- [x] **CHAR-04**: 능력치 성장 — 나이 효과 (청년 +, 장년 -) (P1)
+- [x] **CHAR-05**: 능력치 성장 — 경험치 (CP 사용량 누적, 100=1 상승) (P1)
 - [x] **CHAR-06**: 분류 (군인/정치가), 전신 가능 (P1)
 - [x] **CHAR-07**: 출자 — 제국 (귀족/제국기사/평민/망명자) (P1)
 - [x] **CHAR-08**: 출자 — 동맹 (시민/망명자) (P1)
@@ -37,20 +37,20 @@ Requirements sourced from `docs/feature-checklist.md` (P0~P2) and `docs/feature-
 
 ### Rank & Personnel (계급/인사)
 
-- [ ] **RANK-01**: 소위~원수 11단계 계급 체계 (P0)
-- [ ] **RANK-02**: 계급별 인원 제한 (원수5, 상급대장5, 대장10 등) (P0)
-- [ ] **RANK-03**: 공적 포인트 축적 (전투/작전/점령) (P0)
-- [ ] **RANK-04**: 계급 래더 (5법칙: 공적→작위→훈장→영향력→능력합계) (P1)
-- [ ] **RANK-05**: 수동 승진 (인사권자 실행, 공적 0 리셋, 직무카드 상실) (P0)
-- [ ] **RANK-06**: 자동 승진 (대령 이하 30G일마다 래더 1위, 평균 공적 부여) (P1)
-- [ ] **RANK-07**: 수동 강등 (인사권자 실행, 공적 100, 직무카드 상실) (P1)
-- [ ] **RANK-08**: 자동 강등 (대령 이하 30G일마다 조건 충족 시) (P2)
-- [ ] **RANK-09**: 인사권 체계 (제국: 황제/군무상서/인사국장, 동맹: 상응) (P0)
-- [ ] **RANK-10**: 임명/파면 (상위 직책→하위, 계급 범위 제한) (P0)
-- [ ] **RANK-11**: 작위 — 제국 (공작/후작/백작/자작/남작/제국기사) (P2)
-- [ ] **RANK-12**: 서훈 (훈장 수여, 래더 제3법칙) (P2)
-- [ ] **RANK-13**: 평가 포인트 (세션 내 캐릭터 평가) (P1)
-- [ ] **RANK-14**: 명성 포인트 (세션 간 플레이어 평가) (P2)
+- [x] **RANK-01**: 소위~원수 11단계 계급 체계 (P0)
+- [x] **RANK-02**: 계급별 인원 제한 (원수5, 상급대장5, 대장10 등) (P0)
+- [x] **RANK-03**: 공적 포인트 축적 (전투/작전/점령) (P0)
+- [x] **RANK-04**: 계급 래더 (5법칙: 공적→작위→훈장→영향력→능력합계) (P1)
+- [x] **RANK-05**: 수동 승진 (인사권자 실행, 공적 0 리셋, 직무카드 상실) (P0)
+- [x] **RANK-06**: 자동 승진 (대령 이하 30G일마다 래더 1위, 평균 공적 부여) (P1)
+- [x] **RANK-07**: 수동 강등 (인사권자 실행, 공적 100, 직무카드 상실) (P1)
+- [x] **RANK-08**: 자동 강등 (대령 이하 30G일마다 조건 충족 시) (P2)
+- [x] **RANK-09**: 인사권 체계 (제국: 황제/군무상서/인사국장, 동맹: 상응) (P0)
+- [x] **RANK-10**: 임명/파면 (상위 직책→하위, 계급 범위 제한) (P0)
+- [x] **RANK-11**: 작위 — 제국 (공작/후작/백작/자작/남작/제국기사) (P2)
+- [x] **RANK-12**: 서훈 (훈장 수여, 래더 제3법칙) (P2)
+- [x] **RANK-13**: 평가 포인트 (세션 내 캐릭터 평가) (P1)
+- [x] **RANK-14**: 명성 포인트 (세션 간 플레이어 평가) (P2)
 
 ### Organization (조직)
 
@@ -369,8 +369,8 @@ Requirements sourced from `docs/feature-checklist.md` (P0~P2) and `docs/feature-
 | CHAR-01     | Phase 2  | Complete |
 | CHAR-02     | Phase 2  | Complete |
 | CHAR-03     | Phase 2  | Complete |
-| CHAR-04     | Phase 2  | Pending  |
-| CHAR-05     | Phase 2  | Pending  |
+| CHAR-04     | Phase 2  | Complete |
+| CHAR-05     | Phase 2  | Complete |
 | CHAR-06     | Phase 2  | Complete |
 | CHAR-07     | Phase 2  | Complete |
 | CHAR-08     | Phase 2  | Complete |
@@ -381,20 +381,20 @@ Requirements sourced from `docs/feature-checklist.md` (P0~P2) and `docs/feature-
 | CHAR-13     | Phase 2  | Complete |
 | CHAR-14     | Phase 2  | Complete |
 | CHAR-15     | Phase 2  | Complete |
-| RANK-01     | Phase 2  | Pending  |
-| RANK-02     | Phase 2  | Pending  |
-| RANK-03     | Phase 2  | Pending  |
-| RANK-04     | Phase 2  | Pending  |
-| RANK-05     | Phase 2  | Pending  |
-| RANK-06     | Phase 2  | Pending  |
-| RANK-07     | Phase 2  | Pending  |
-| RANK-08     | Phase 2  | Pending  |
-| RANK-09     | Phase 2  | Pending  |
-| RANK-10     | Phase 2  | Pending  |
-| RANK-11     | Phase 2  | Pending  |
-| RANK-12     | Phase 2  | Pending  |
-| RANK-13     | Phase 2  | Pending  |
-| RANK-14     | Phase 2  | Pending  |
+| RANK-01     | Phase 2  | Complete |
+| RANK-02     | Phase 2  | Complete |
+| RANK-03     | Phase 2  | Complete |
+| RANK-04     | Phase 2  | Complete |
+| RANK-05     | Phase 2  | Complete |
+| RANK-06     | Phase 2  | Complete |
+| RANK-07     | Phase 2  | Complete |
+| RANK-08     | Phase 2  | Complete |
+| RANK-09     | Phase 2  | Complete |
+| RANK-10     | Phase 2  | Complete |
+| RANK-11     | Phase 2  | Complete |
+| RANK-12     | Phase 2  | Complete |
+| RANK-13     | Phase 2  | Complete |
+| RANK-14     | Phase 2  | Complete |
 | ORG-01      | Phase 2  | Complete |
 | ORG-02      | Phase 2  | Pending  |
 | ORG-03      | Phase 2  | Pending  |
