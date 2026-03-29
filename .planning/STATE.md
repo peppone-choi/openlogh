@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: verifying
-stopped_at: Completed quick-260328-v2e
-last_updated: '2026-03-28T14:07:23.751Z'
-last_activity: 2026-03-28
+status: executing
+stopped_at: Completed 02-01-PLAN.md
+last_updated: "2026-03-29T00:50:55.815Z"
+last_activity: 2026-03-29
 progress:
-    total_phases: 10
-    completed_phases: 1
-    total_plans: 3
-    completed_plans: 3
-    percent: 0
+  total_phases: 10
+  completed_phases: 1
+  total_plans: 11
+  completed_plans: 4
+  percent: 0
 ---
 
 # Project State
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-28)
 
 **Core value:** gin7의 "조직 시뮬레이션" — 직무권한카드 기반 커맨드 시스템으로 다수 플레이어가 계급 구조 안에서 명령/제안/인사/정치를 수행
-**Current focus:** Phase 01 — session-foundation
+**Current focus:** Phase 02 — character-rank-and-organization
 
 ## Current Position
 
-Phase: 2
-Plan: Not started
-Status: Phase complete — ready for verification
-Last activity: 2026-03-28 - Completed quick task 260328-v2e: MDS scene graph parsing for accurate VB-IB mapping across all models
+Phase: 02 (character-rank-and-organization) — EXECUTING
+Plan: 2 of 8
+Status: Ready to execute
+Last activity: 2026-03-29
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -55,6 +55,7 @@ _Updated after each plan completion_
 | Phase 01 P03 | 71min | 2 tasks | 4 files |
 | Phase 01 P02 | 82min | 2 tasks | 8 files |
 | Phase 01 P01 | 14min | 2 tasks | 7 files |
+| Phase 02 P01 | 59min | 2 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -72,6 +73,7 @@ Recent decisions affecting current work:
 - [Phase 01]: FactionJoinService uses SERIALIZABLE isolation to prevent TOCTOU race on concurrent joins
 - [Phase 01]: V38 migration number used (not V10) because 37 migrations already exist
 - [Phase 01]: Officer @Version as Long (BIGINT) for optimistic locking; withOptimisticRetry in CommandExecutor for 3-attempt retry
+- [Phase 02]: PositionCardService nullable injection for backward compat — commands access via CommandServices data class since they are factory-created not Spring beans
 
 ### Pending Todos
 
@@ -91,6 +93,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-28T14:07:23.727Z
-Stopped at: Completed quick-260328-v2e
+Last session: 2026-03-29T00:50:55.807Z
+Stopped at: Completed 02-01-PLAN.md
 Resume file: None

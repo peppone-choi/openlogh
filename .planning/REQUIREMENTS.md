@@ -54,12 +54,12 @@ Requirements sourced from `docs/feature-checklist.md` (P0~P2) and `docs/feature-
 
 ### Organization (조직)
 
-- [ ] **ORG-01**: 직무권한카드 시스템 (최대 16장/캐릭터) (P0)
+- [x] **ORG-01**: 직무권한카드 시스템 (최대 16장/캐릭터) (P0)
 - [ ] **ORG-02**: 제국군 조직도 (황궁→내각→군무성→통수본부→함대, 100+ 직책) (P0)
 - [ ] **ORG-03**: 동맹군 조직도 (최고평의회→국방위원회→함대, 100+ 직책) (P0)
 - [ ] **ORG-04**: 제안 시스템 (하급→상급, 우호도/상성 반영 수락률) (P1)
 - [ ] **ORG-05**: 명령 시스템 (상급→하급 명령 하달) (P1)
-- [ ] **ORG-06**: 겸임 (복수 직무 보유 가능) (P1)
+- [x] **ORG-06**: 겸임 (복수 직무 보유 가능) (P1)
 - [ ] **ORG-07**: 봉토카드 (제국 전용, 승진/강등 시에도 유지) (P2)
 - [ ] **ORG-08**: 체포 권한 (헌병총감/내무상서/사법상서 등) (P1)
 
@@ -330,7 +330,7 @@ Requirements sourced from `docs/feature-checklist.md` (P0~P2) and `docs/feature-
 
 - [x] **HARD-01**: Officer 엔티티 @Version 추가 (CP race condition 해소) (P0)
 - [x] **HARD-02**: 전술전 executor 스레드 누수 수정 (P0)
-- [ ] **HARD-03**: PositionCard JSONB→관계형 마이그레이션 (P0)
+- [x] **HARD-03**: PositionCard JSONB→관계형 마이그레이션 (P0)
 - [ ] **HARD-04**: Spring STOMP 커넥션 풀 설정 (2,000명 스케일) (P1)
 - [ ] **HARD-05**: WarAftermath 비동기 리팩터링 (P1)
 
@@ -395,12 +395,12 @@ Requirements sourced from `docs/feature-checklist.md` (P0~P2) and `docs/feature-
 | RANK-12     | Phase 2  | Pending  |
 | RANK-13     | Phase 2  | Pending  |
 | RANK-14     | Phase 2  | Pending  |
-| ORG-01      | Phase 2  | Pending  |
+| ORG-01      | Phase 2  | Complete |
 | ORG-02      | Phase 2  | Pending  |
 | ORG-03      | Phase 2  | Pending  |
 | ORG-04      | Phase 7  | Pending  |
 | ORG-05      | Phase 7  | Pending  |
-| ORG-06      | Phase 2  | Pending  |
+| ORG-06      | Phase 2  | Complete |
 | ORG-07      | Phase 7  | Pending  |
 | ORG-08      | Phase 2  | Pending  |
 | MAP-01      | Phase 4  | Pending  |
@@ -599,7 +599,7 @@ Requirements sourced from `docs/feature-checklist.md` (P0~P2) and `docs/feature-
 | MISC-06     | Phase 9  | Pending  |
 | HARD-01     | Phase 1  | Complete |
 | HARD-02     | Phase 1  | Complete |
-| HARD-03     | Phase 2  | Pending  |
+| HARD-03     | Phase 2  | Complete |
 | HARD-04     | Phase 10 | Pending  |
 | HARD-05     | Phase 6  | Pending  |
 
