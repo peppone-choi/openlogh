@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service
 @Service
 class RankLadderService(
     private val officerRepository: OfficerRepository,
+    private val positionCardService: PositionCardService? = null,
 ) {
     companion object {
         private val log = LoggerFactory.getLogger(RankLadderService::class.java)
@@ -88,6 +89,10 @@ class RankLadderService(
                 // 자동 승진
                 top.rank = nextRank.toShort()
                 top.experience = avgMerit // 래더 평균 공적 부여
+
+                // 승진 시 직무카드 정리 (개인/함장/봉토 제외)
+                positionCardService?.revokeOnRankChange(sessionId, top.id)
+
                 officerRepository.save(top)
 
                 log.info("Auto-promotion: {} (rank {} → {}, merit set to {})", top.name, rank, nextRank, avgMerit)
@@ -116,11 +121,63 @@ class RankLadderService(
                     val demotee = ladder[ladder.size - 1 - i]
                     demotee.rank = (rank - 1).toShort()
                     demotee.experience = 100 // 강등 시 공적 100 설정
+
+                    // 강등 시 직무카드 정리 (개인/함장/봉토 제외)
+                    positionCardService?.revokeOnRankChange(sessionId, demotee.id)
+
                     officerRepository.save(demotee)
                     log.info("Auto-demotion: {} (rank {} → {}, excess at rank)", demotee.name, rank, rank - 1)
                 }
             }
         }
+    }
+
+    /**
+     * 인사권 검증: 승진 가능 여부 확인.
+     * 1. 인사권자가 적절한 직무카드를 보유하고 있는지
+     * 2. 대상 계급이 인사권자의 권한 범위 내인지
+     * 3. 대상 계급의 인원 제한에 여유가 있는지
+     *
+     * @param sessionId 세션 ID
+     * @param promoterId 승진 실행자의 장교 ID
+     * @param factionId 진영 ID
+     * @param targetRank 승진 목표 계급
+     * @return true if promotion is allowed
+     */
+    fun canPromote(sessionId: Long, promoterId: Long, factionId: Long, targetRank: Int): Boolean {
+        val pcs = positionCardService ?: return false
+        val promoterCards = pcs.getHeldCardCodes(sessionId, promoterId)
+
+        // 인사권 카드 보유 확인 + 권한 범위 판정
+        val maxPromotableRank = getMaxPromotableRank(promoterCards)
+        if (maxPromotableRank < 0) return false // 인사권 없음
+        if (targetRank > maxPromotableRank) return false // 권한 범위 초과
+
+        // 인원 제한 확인
+        val limit = RANK_LIMITS[targetRank] ?: return true // 제한 없는 계급
+        val officers = officerRepository.findBySessionId(sessionId)
+        val currentCount = officers.count {
+            it.factionId == factionId && it.rank.toInt() == targetRank && (it.killTurn ?: 0) <= 0
+        }
+        return currentCount < limit
+    }
+
+    /**
+     * 인사권 카드 기반 최대 승진 가능 계급 반환.
+     * @return 최대 승진 가능 계급, 인사권 없으면 -1
+     */
+    private fun getMaxPromotableRank(heldCards: List<String>): Int {
+        var maxRank = -1
+        for (code in heldCards) {
+            val rank = when (code) {
+                "emperor", "chairman" -> 10  // 모든 계급 승진 가능
+                "military_minister", "defense_committee_chair" -> 8  // 대장까지
+                "personnel_chief", "personnel_department_head" -> 6  // 소장까지
+                else -> -1
+            }
+            if (rank > maxRank) maxRank = rank
+        }
+        return maxRank
     }
 
     private fun peerageScore(officer: Officer): Int = when (officer.peerage) {
