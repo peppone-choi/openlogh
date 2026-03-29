@@ -300,6 +300,10 @@ class Officer(
     @Column(name = "command_end_time")
     var commandEndTime: OffsetDateTime? = null,
 
+    /** 본거지 행성 ID — 기함 파괴 시 자동 귀환 (CHAR-15, PERS-06) */
+    @Column(name = "home_planet_id")
+    var homePlanetId: Long? = null,
+
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "last_turn", columnDefinition = "jsonb", nullable = false)
     var lastTurn: MutableMap<String, Any> = mutableMapOf(),
