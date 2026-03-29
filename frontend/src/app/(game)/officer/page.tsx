@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useWorldStore } from '@/stores/worldStore';
 import { useOfficerStore } from '@/stores/officerStore';
 import { planetApi, frontApi, officerApi, historyApi, factionApi } from '@/lib/gameApi';
+import api from '@/lib/api';
 import { subscribeWebSocket } from '@/lib/websocket';
 import type { StarSystem, Officer, OfficerFrontInfo, LastTurnInfo, Message, Faction } from '@/types';
 import { User, Users, Swords } from 'lucide-react';
@@ -16,7 +17,9 @@ import { LoadingState } from '@/components/game/loading-state';
 import { OfficerPortrait } from '@/components/game/officer-portrait';
 import { FactionBadge } from '@/components/game/faction-badge';
 import { LoghBar } from '@/components/game/logh-bar';
+import { OfficerProfileCard } from '@/components/game/officer-profile-card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import type { OfficerPositionCard } from '@/types';
 import {
     formatOfficerLevelText,
     formatInjury,
@@ -50,6 +53,7 @@ export default function GeneralPage() {
     const [faction, setFaction] = useState<Faction | null>(null);
     const [starSystem, setStarSystem] = useState<StarSystem | null>(null);
     const [records, setRecords] = useState<Message[]>([]);
+    const [positionCards, setPositionCards] = useState<OfficerPositionCard[]>([]);
     const [error, setError] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<TabKey>('profile');
     const [factionOfficers, setFactionOfficers] = useState<Officer[]>([]);
@@ -95,6 +99,16 @@ export default function GeneralPage() {
             setRecords(history);
             setStarSystem(starSystemData);
             setFaction(factionData);
+
+            // Fetch position cards
+            try {
+                const cardsRes = await api.get<OfficerPositionCard[]>(
+                    `/api/position-cards/${currentWorld.id}/${myOfficer.id}`
+                );
+                setPositionCards(cardsRes.data);
+            } catch {
+                setPositionCards([]);
+            }
         } catch {
             setError('나의 제독 정보를 불러오지 못했습니다.');
         }
@@ -237,6 +251,18 @@ export default function GeneralPage() {
                 />
             ) : (
                 <>
+                    {/* D-10 Officer Profile Card (4-section layout) */}
+                    <OfficerProfileCard
+                        officer={g}
+                        positionCards={positionCards}
+                        faction={faction ? {
+                            type: faction.faction_type ?? faction.factionType,
+                            name: faction.name,
+                            color: faction.color,
+                            rank: faction.faction_rank ?? faction.factionRank,
+                        } : null}
+                    />
+
                     {/* Profile + Basic Info */}
                     <Card>
                         <CardContent className="pt-6 space-y-4">
