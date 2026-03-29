@@ -297,8 +297,8 @@ class 임명(
         if (dg.rank < cardType.minRank) {
             return ConstraintResult.Fail("계급이 부족합니다. (필요: ${cardType.minRank}, 현재: ${dg.rank})")
         }
-        @Suppress("UNCHECKED_CAST")
-        val currentCards = (dg.meta["positionCards"] as? List<*>)?.size ?: 2
+        val pcs = services?.positionCardService
+        val currentCards = pcs?.getCardCount(env.worldId, dg.id) ?: 2
         if (!CommandGating.canAddCard(currentCards)) {
             return ConstraintResult.Fail("직무카드 보유 한도(${CommandGating.MAX_CARDS_PER_OFFICER})를 초과합니다")
         }
@@ -307,13 +307,9 @@ class 임명(
 
     override suspend fun run(rng: Random): CommandResult {
         val dg = destGeneral!!
-        @Suppress("UNCHECKED_CAST")
-        val cards = (dg.meta["positionCards"] as? MutableList<String>)
-            ?: mutableListOf("personal", "captain").also { dg.meta["positionCards"] = it }
-        if (positionCode !in cards) {
-            cards.add(positionCode)
-        }
         val cardType = PositionCardType.fromCode(positionCode)!!
+        // Write to position_card table (relational)
+        services?.positionCardService?.appointPosition(env.worldId, dg.id, cardType)
         val msg = personnelMapper.writeValueAsString(mapOf(
             "appointment" to mapOf(
                 "officerId" to dg.id.toString(),
@@ -346,8 +342,9 @@ class 파면(
         val dg = destGeneral ?: return ConstraintResult.Fail("대상 장수가 없습니다")
         if (dg.factionId != general.factionId) return ConstraintResult.Fail("아군 장수가 아닙니다")
         if (positionCode.isEmpty()) return ConstraintResult.Fail("파면할 직무 코드가 없습니다")
-        @Suppress("UNCHECKED_CAST")
-        val cards = (dg.meta["positionCards"] as? List<*>)?.mapNotNull { it as? String } ?: emptyList()
+        // Read from position_card table (relational)
+        val pcs = services?.positionCardService
+        val cards = pcs?.getHeldCardCodes(env.worldId, dg.id) ?: emptyList()
         if (positionCode !in cards) return ConstraintResult.Fail("해당 직무를 보유하고 있지 않습니다")
         if (positionCode == "personal" || positionCode == "captain") {
             return ConstraintResult.Fail("기본 카드(개인/함장)는 파면할 수 없습니다")
@@ -357,12 +354,8 @@ class 파면(
 
     override suspend fun run(rng: Random): CommandResult {
         val dg = destGeneral!!
-        @Suppress("UNCHECKED_CAST")
-        val cards = (dg.meta["positionCards"] as? MutableList<String>) ?: return CommandResult(
-            success = false,
-            logs = listOf("${formatDate()} 직무카드 정보가 없습니다."),
-        )
-        cards.remove(positionCode)
+        // Delete from position_card table (relational)
+        services?.positionCardService?.dismissPosition(env.worldId, dg.id, positionCode)
         val cardType = PositionCardType.fromCode(positionCode)
         val displayName = cardType?.displayName ?: positionCode
         dg.betray = (dg.betray + 1).toShort()

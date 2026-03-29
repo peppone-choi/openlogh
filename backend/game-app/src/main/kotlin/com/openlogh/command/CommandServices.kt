@@ -8,6 +8,7 @@ import com.openlogh.engine.planet.PlanetFacilityService
 import com.openlogh.repository.GeneralRepository
 import com.openlogh.repository.CityRepository
 import com.openlogh.repository.NationRepository
+import com.openlogh.service.PositionCardService
 
 data class CommandServices(
     val generalRepository: GeneralRepository,
@@ -18,4 +19,5 @@ data class CommandServices(
     val planetFacilityService: PlanetFacilityService? = null,
     val fleetFormationRules: FleetFormationRules? = null,
     val gridEntryValidator: GridEntryValidator? = null,
+    val positionCardService: PositionCardService? = null,
 )

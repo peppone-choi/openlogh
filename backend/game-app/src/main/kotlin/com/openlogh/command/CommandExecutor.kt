@@ -12,6 +12,7 @@ import com.openlogh.entity.*
 import com.openlogh.repository.FactionRepository
 import com.openlogh.repository.OfficerRepository
 import com.openlogh.repository.PlanetRepository
+import com.openlogh.service.PositionCardService
 import org.slf4j.LoggerFactory
 import org.springframework.dao.OptimisticLockingFailureException
 import org.springframework.stereotype.Service
@@ -25,6 +26,7 @@ class CommandExecutor(
     private val officerRepository: OfficerRepository? = null,
     private val commandPointService: CommandPointService? = null,
     private val coupExecutionService: CoupExecutionService? = null,
+    private val positionCardService: PositionCardService? = null,
 ) {
     companion object {
         private val log = LoggerFactory.getLogger(CommandExecutor::class.java)
@@ -83,9 +85,8 @@ class CommandExecutor(
             }
         }
 
-        // Position card check: 직무카드 기반 커맨드 권한 확인
-        val heldCards = (general.meta["positionCards"] as? List<*>)
-            ?.mapNotNull { it as? String }
+        // Position card check: 직무카드 기반 커맨드 권한 확인 (relational table)
+        val heldCards = positionCardService?.getHeldCardCodes(general.sessionId, general.id)
             ?: CommandGating.defaultCards()
 
         val commandGroup = resolveCommandGroup(actionCode)

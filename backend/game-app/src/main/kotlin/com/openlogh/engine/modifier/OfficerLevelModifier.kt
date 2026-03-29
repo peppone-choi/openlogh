@@ -2,6 +2,7 @@ package com.openlogh.engine.modifier
 
 import com.openlogh.entity.Officer
 import com.openlogh.entity.SessionState
+import com.openlogh.service.PositionCardService
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 
@@ -17,7 +18,9 @@ import org.springframework.stereotype.Service
  * 이 서비스는 매 턴(월) 호출되어 계급에 따른 간접 효과를 적용한다.
  */
 @Service
-class OfficerLevelModifier {
+class OfficerLevelModifier(
+    private val positionCardService: PositionCardService? = null,
+) {
 
     companion object {
         private val log = LoggerFactory.getLogger(OfficerLevelModifier::class.java)
@@ -170,15 +173,8 @@ class OfficerLevelModifier {
         officer.rank = (officer.rank + 1).toShort()
         officer.experience = 0
 
-        // 직무카드 상실 (개인/함장/봉토 제외)
-        @Suppress("UNCHECKED_CAST")
-        val cards = (officer.meta["positionCards"] as? MutableList<String>)
-        if (cards != null) {
-            val retained = setOf("personal", "captain")
-            val fiefCards = cards.filter { it.startsWith("fief_") }
-            cards.retainAll(retained)
-            cards.addAll(fiefCards)
-        }
+        // 직무카드 상실 (개인/함장/봉토 제외) — relational table
+        positionCardService?.revokeOnRankChange(officer.sessionId, officer.id)
 
         log.debug("Promoted officer {} to rank {}", officer.name, officer.rank)
     }
@@ -191,15 +187,8 @@ class OfficerLevelModifier {
         officer.rank = (officer.rank - 1).coerceAtLeast(0).toShort()
         officer.experience = 100
 
-        // 직무카드 상실 (개인/함장/봉토 제외)
-        @Suppress("UNCHECKED_CAST")
-        val cards = (officer.meta["positionCards"] as? MutableList<String>)
-        if (cards != null) {
-            val retained = setOf("personal", "captain")
-            val fiefCards = cards.filter { it.startsWith("fief_") }
-            cards.retainAll(retained)
-            cards.addAll(fiefCards)
-        }
+        // 직무카드 상실 (개인/함장/봉토 제외) — relational table
+        positionCardService?.revokeOnRankChange(officer.sessionId, officer.id)
 
         log.debug("Demoted officer {} to rank {}", officer.name, officer.rank)
     }
