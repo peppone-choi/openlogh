@@ -68,8 +68,8 @@ Plans:
 - [x] 02-02-PLAN.md — Officer entity extensions + character creation backend (8-stat validation, ScenarioService 8-stat parsing, CharacterController REST API)
 - [x] 02-03-PLAN.md — Rank ladder wiring to PositionCardService + personnel authority migration + stat growth mechanics (CHAR-04 age, CHAR-05 exp)
 - [x] 02-04-PLAN.md — Organization API endpoints (OrgChartController, PositionCardController, DTOs)
-- [ ] 02-05-PLAN.md — Frontend character selection/creation UI (8-stat allocator, origin selector, select-pool rewrite)
-- [ ] 02-06-PLAN.md — Frontend officer profile (D-10 4-section layout) + org chart with live data (D-07/D-08 faction differentiation)
+- [x] 02-05-PLAN.md — Frontend character selection/creation UI (8-stat allocator, origin selector, select-pool rewrite)
+- [x] 02-06-PLAN.md — Frontend officer profile (D-10 4-section layout) + org chart with live data (D-07/D-08 faction differentiation)
 - [ ] 02-07-PLAN.md — Visual verification checkpoint (character selection, officer profile, org chart)
 - [x] 02-08-PLAN.md — Character lifecycle (deletion, injury/treatment, death, cross-session inheritance, covert ops stat cap)
 
