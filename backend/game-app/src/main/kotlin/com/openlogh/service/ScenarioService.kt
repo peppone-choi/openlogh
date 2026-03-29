@@ -630,38 +630,77 @@ class ScenarioService(
         val strength = (row[6] as Number).toShort()
         val intelligence = (row[7] as Number).toShort()
 
-        val hasFiveStatTuple = row.getOrNull(10) is Number && row.getOrNull(11) is Number && row.getOrNull(12) is Number
-        val hasLegacyThreeStatWithOfficer = row.getOrNull(8) is Number && row.getOrNull(9) is Number && row.getOrNull(10) is Number
-        val hasLegacyThreeStatWithoutOfficer = row.getOrNull(8) is Number && row.getOrNull(9) is Number
+        // 8-stat format: [aff, name, pic, fIdx, city, lead, cmd, int, pol, admin, mob, atk, def, rank, birth, death, pers, spec, bio?]
+        // Row size >= 18 distinguishes 8-stat (19 elements) from 5-stat (max 16 elements)
+        val hasEightStatTuple = row.size >= 18 && row.getOrNull(12) is Number && row.getOrNull(13) is Number
+        val hasFiveStatTuple = !hasEightStatTuple && row.getOrNull(10) is Number && row.getOrNull(11) is Number && row.getOrNull(12) is Number
+        val hasLegacyThreeStatWithOfficer = !hasEightStatTuple && !hasFiveStatTuple && row.getOrNull(8) is Number && row.getOrNull(9) is Number && row.getOrNull(10) is Number
+        val hasLegacyThreeStatWithoutOfficer = !hasEightStatTuple && !hasFiveStatTuple && !hasLegacyThreeStatWithOfficer && row.getOrNull(8) is Number && row.getOrNull(9) is Number
+
+        // For 8-stat format, parse all 8 stats directly; for 5-stat/legacy, derive defaults
+        var mobilityVal: Short = 0
+        var attackVal: Short = 0
+        var defenseVal: Short = 0
 
         val (politics, charm, rank, birthYear, deathYear, personalityIndex, specialIndex) = when {
-            hasFiveStatTuple -> TupleLayout(
-                politics = (row[8] as Number).toShort(),
-                charm = (row[9] as Number).toShort(),
-                rank = (row[10] as Number).toShort(),
-                birthYear = (row[11] as Number).toShort(),
-                deathYear = (row[12] as Number).toShort(),
-                personalityIndex = 13,
-                specialIndex = 14,
-            )
-            hasLegacyThreeStatWithOfficer -> TupleLayout(
-                politics = intelligence,
-                charm = intelligence,
-                rank = (row[8] as Number).toShort(),
-                birthYear = (row[9] as Number).toShort(),
-                deathYear = (row[10] as Number).toShort(),
-                personalityIndex = 11,
-                specialIndex = 12,
-            )
-            hasLegacyThreeStatWithoutOfficer -> TupleLayout(
-                politics = intelligence,
-                charm = intelligence,
-                rank = 0,
-                birthYear = (row[8] as Number).toShort(),
-                deathYear = (row[9] as Number).toShort(),
-                personalityIndex = 10,
-                specialIndex = 11,
-            )
+            hasEightStatTuple -> {
+                // row[5..12] = leadership, command, intelligence, politics, administration, mobility, attack, defense
+                mobilityVal = (row[10] as Number).toShort()
+                attackVal = (row[11] as Number).toShort()
+                defenseVal = (row[12] as Number).toShort()
+                TupleLayout(
+                    politics = (row[8] as Number).toShort(),
+                    charm = (row[9] as Number).toShort(),
+                    rank = (row[13] as Number).toShort(),
+                    birthYear = (row[14] as Number).toShort(),
+                    deathYear = (row[15] as Number).toShort(),
+                    personalityIndex = 16,
+                    specialIndex = 17,
+                )
+            }
+            hasFiveStatTuple -> {
+                // 5-stat: compute defaults for missing stats
+                mobilityVal = ((leadership + strength) / 2).toShort()
+                attackVal = strength
+                defenseVal = intelligence
+                TupleLayout(
+                    politics = (row[8] as Number).toShort(),
+                    charm = (row[9] as Number).toShort(),
+                    rank = (row[10] as Number).toShort(),
+                    birthYear = (row[11] as Number).toShort(),
+                    deathYear = (row[12] as Number).toShort(),
+                    personalityIndex = 13,
+                    specialIndex = 14,
+                )
+            }
+            hasLegacyThreeStatWithOfficer -> {
+                mobilityVal = ((leadership + strength) / 2).toShort()
+                attackVal = strength
+                defenseVal = intelligence
+                TupleLayout(
+                    politics = intelligence,
+                    charm = intelligence,
+                    rank = (row[8] as Number).toShort(),
+                    birthYear = (row[9] as Number).toShort(),
+                    deathYear = (row[10] as Number).toShort(),
+                    personalityIndex = 11,
+                    specialIndex = 12,
+                )
+            }
+            hasLegacyThreeStatWithoutOfficer -> {
+                mobilityVal = ((leadership + strength) / 2).toShort()
+                attackVal = strength
+                defenseVal = intelligence
+                TupleLayout(
+                    politics = intelligence,
+                    charm = intelligence,
+                    rank = 0,
+                    birthYear = (row[8] as Number).toShort(),
+                    deathYear = (row[9] as Number).toShort(),
+                    personalityIndex = 10,
+                    specialIndex = 11,
+                )
+            }
             else -> throw IllegalArgumentException("Unsupported general tuple format: $row")
         }
 
@@ -695,12 +734,16 @@ class ScenarioService(
             intelligence = intelligence,
             politics = politics,
             administration = charm,
+            mobility = mobilityVal,
+            attack = attackVal,
+            defense = defenseVal,
             rank = rank,
             npcState = defaultNpcState,
             age = age,
             startAge = age,
             personalCode = personality ?: "None",
             specialCode = special ?: "None",
+            homePlanetId = planetId,
             turnTime = OffsetDateTime.now(),
         )
     }
