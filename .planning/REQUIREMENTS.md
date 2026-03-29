@@ -55,13 +55,13 @@ Requirements sourced from `docs/feature-checklist.md` (P0~P2) and `docs/feature-
 ### Organization (조직)
 
 - [x] **ORG-01**: 직무권한카드 시스템 (최대 16장/캐릭터) (P0)
-- [ ] **ORG-02**: 제국군 조직도 (황궁→내각→군무성→통수본부→함대, 100+ 직책) (P0)
-- [ ] **ORG-03**: 동맹군 조직도 (최고평의회→국방위원회→함대, 100+ 직책) (P0)
+- [x] **ORG-02**: 제국군 조직도 (황궁→내각→군무성→통수본부→함대, 100+ 직책) (P0)
+- [x] **ORG-03**: 동맹군 조직도 (최고평의회→국방위원회→함대, 100+ 직책) (P0)
 - [ ] **ORG-04**: 제안 시스템 (하급→상급, 우호도/상성 반영 수락률) (P1)
 - [ ] **ORG-05**: 명령 시스템 (상급→하급 명령 하달) (P1)
 - [x] **ORG-06**: 겸임 (복수 직무 보유 가능) (P1)
 - [ ] **ORG-07**: 봉토카드 (제국 전용, 승진/강등 시에도 유지) (P2)
-- [ ] **ORG-08**: 체포 권한 (헌병총감/내무상서/사법상서 등) (P1)
+- [x] **ORG-08**: 체포 권한 (헌병총감/내무상서/사법상서 등) (P1)
 
 ### Galaxy Map & Planets (은하 지도/성계)
 
@@ -396,13 +396,13 @@ Requirements sourced from `docs/feature-checklist.md` (P0~P2) and `docs/feature-
 | RANK-13     | Phase 2  | Complete |
 | RANK-14     | Phase 2  | Complete |
 | ORG-01      | Phase 2  | Complete |
-| ORG-02      | Phase 2  | Pending  |
-| ORG-03      | Phase 2  | Pending  |
+| ORG-02      | Phase 2  | Complete |
+| ORG-03      | Phase 2  | Complete |
 | ORG-04      | Phase 7  | Pending  |
 | ORG-05      | Phase 7  | Pending  |
 | ORG-06      | Phase 2  | Complete |
 | ORG-07      | Phase 7  | Pending  |
-| ORG-08      | Phase 2  | Pending  |
+| ORG-08      | Phase 2  | Complete |
 | MAP-01      | Phase 4  | Pending  |
 | MAP-02      | Phase 4  | Pending  |
 | MAP-03      | Phase 4  | Pending  |
