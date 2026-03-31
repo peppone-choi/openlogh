@@ -421,7 +421,8 @@ class TurnService @Autowired constructor(
     private fun executeGeneralCommandsUntil(world: WorldState, targetTime: OffsetDateTime) {
         val worldId = world.id.toLong()
         val ports = worldPortFactory.create(worldId)
-        val generals = ports.allGenerals().map { it.toEntity() }.sortedBy { it.turnTime }
+        val generals = ports.allGenerals().map { it.toEntity() }
+            .sortedWith(compareBy<com.opensam.entity.General> { it.turnTime }.thenBy { it.id })
         val cityCache = ports.allCities().associate { it.id to it.toEntity() }
         val nationCache = ports.allNations().associate { it.id to it.toEntity() }.toMutableMap()
         val env = buildCommandEnv(world)

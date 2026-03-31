@@ -207,7 +207,9 @@ class InMemoryTurnProcessor(
         targetTime: OffsetDateTime,
     ) {
         val now = OffsetDateTime.now()
-        val generals = state.generals.values.sortedBy { it.turnTime }
+        val generals = state.generals.values.sortedWith(
+            compareBy<GeneralSnapshot> { it.turnTime }.thenBy { it.id }
+        )
 
         for (general in generals) {
             if (general.turnTime >= targetTime) {
