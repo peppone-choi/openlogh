@@ -130,7 +130,7 @@ class RealtimeService(
                     month = env.month,
                     logs = result.logs,
                 )
-            } catch (_: Exception) { }
+            } catch (e: Exception) { logger.warn("Failed to push realtime result: {}", e.message) }
         }
 
         gameEventService.sendToGeneral(general.id, mapOf(
@@ -190,7 +190,7 @@ class RealtimeService(
                             month = env2.month,
                             logs = result.logs,
                         )
-                    } catch (_: Exception) { }
+                    } catch (e: Exception) { logger.warn("Failed to push realtime result: {}", e.message) }
                 }
 
                 generalTurnRepository.delete(gt)
@@ -241,7 +241,8 @@ class RealtimeService(
     private fun buildCommandEnv(world: WorldState): CommandEnv {
         val startYear = try {
             scenarioService.getScenario(world.scenarioCode).startYear
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            logger.warn("Failed to resolve startYear for scenario {}: {}", world.scenarioCode, e.message)
             world.currentYear.toInt()
         }
 

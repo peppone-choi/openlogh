@@ -76,7 +76,8 @@ class EventService @Autowired constructor(
                 val month = (condition["month"] as? Number)?.toShort() ?: return false
                 val startYear = try {
                     scenarioService.getScenario(world.scenarioCode).startYear
-                } catch (_: Exception) {
+                } catch (e: Exception) {
+                    log.warn("Failed to resolve startYear for scenario {}: {}", world.scenarioCode, e.message)
                     return false
                 }
                 val targetYear = (startYear + yearOffset).toShort()

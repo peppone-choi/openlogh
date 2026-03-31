@@ -677,7 +677,8 @@ class EconomyService @Autowired constructor(
     fun processDisasterOrBoom(world: WorldState) {
         val startYear = try {
             (world.config["startYear"] as? Number)?.toInt() ?: world.currentYear.toInt()
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            log.warn("Failed to resolve startYear from config: {}", e.message)
             world.currentYear.toInt()
         }
 

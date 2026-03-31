@@ -46,7 +46,8 @@ class GeneralMaintenanceService(
         val isUnited = (world.config["isUnited"] as? Number)?.toInt() ?: 0
         val retirementYear = try {
             gameConstService.getInt("retirementYear")
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            log.warn("Failed to resolve retirementYear from config: {}", e.message)
             80 // 기본값
         }
 

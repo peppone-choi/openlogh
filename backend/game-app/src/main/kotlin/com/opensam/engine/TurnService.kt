@@ -542,7 +542,7 @@ class TurnService @Autowired constructor(
                                         month = env.month,
                                         logs = nationCmdResult.logs,
                                     )
-                                } catch (_: Exception) { }
+                                } catch (e: Exception) { logger.warn("Failed to push nationCmd realtime result: {}", e.message) }
                             }
                         } catch (e: Exception) {
                             logger.warn("Nation command $nationActionCode failed for general ${general.id}: ${e.message}")
@@ -773,7 +773,8 @@ class TurnService @Autowired constructor(
     private fun buildCommandEnv(world: WorldState): CommandEnv {
         val startYear = try {
             scenarioService.getScenario(world.scenarioCode).startYear
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            logger.warn("Failed to resolve startYear for scenario {}: {}", world.scenarioCode, e.message)
             world.currentYear.toInt()
         }
 
@@ -876,7 +877,8 @@ class TurnService @Autowired constructor(
 
         val startYear = try {
             scenarioService.getScenario(world.scenarioCode).startYear
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            logger.warn("Failed to resolve startYear for scenario {}: {}", world.scenarioCode, e.message)
             world.currentYear.toInt()
         }
         val scenarioId = world.scenarioCode.toIntOrNull() ?: 0

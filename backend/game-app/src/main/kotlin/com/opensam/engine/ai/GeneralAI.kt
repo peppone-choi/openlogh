@@ -111,7 +111,8 @@ class GeneralAI(
             mapService.getCities(mapName).associate { cityConst ->
                 cityConst.id.toLong() to cityConst.connections.map { it.toLong() }
             }
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            logger.warn("Failed to load city connections for map {}: {}", world.config["mapName"] ?: "che", e.message)
             emptyMap()
         }
 

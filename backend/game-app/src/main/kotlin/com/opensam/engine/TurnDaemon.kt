@@ -111,13 +111,14 @@ class TurnDaemon(
     private fun isPreOpen(world: com.opensam.entity.WorldState): Boolean {
         val now = OffsetDateTime.now()
         val startTime = (world.config["startTime"] as? String)?.let {
-            try { OffsetDateTime.parse(it) } catch (_: Exception) { null }
+            try { OffsetDateTime.parse(it) } catch (e: Exception) { logger.warn("Failed to parse startTime '{}': {}", it, e.message); null }
         }
         if (startTime != null && now.isBefore(startTime)) return true
         val opentime = (world.config["opentime"] as? String) ?: return false
         return try {
             now.isBefore(OffsetDateTime.parse(opentime))
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            logger.warn("Failed to parse opentime '{}': {}", opentime, e.message)
             false
         }
     }

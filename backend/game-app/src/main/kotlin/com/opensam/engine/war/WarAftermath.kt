@@ -5,6 +5,7 @@ import com.opensam.entity.City
 import com.opensam.entity.General
 import com.opensam.entity.Nation
 import com.opensam.model.CrewType
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import kotlin.math.floor
 import kotlin.math.hypot
@@ -103,6 +104,8 @@ data class WarAftermathOutcome(
 class WarAftermath {
 
     companion object {
+        private val log = LoggerFactory.getLogger(WarAftermath::class.java)
+
         fun getTechLevel(tech: Double, maxLevel: Int): Int {
             if (!tech.isFinite()) {
                 return 0
@@ -452,7 +455,8 @@ class WarAftermath {
             } else {
                 parsed.maxByOrNull { it.value }?.key ?: attackerNationId
             }
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            log.warn("Failed to parse occupiedBy for city, using attacker nation {}: {}", attackerNationId, e.message)
             attackerNationId
         }
     }

@@ -3,6 +3,7 @@ package com.opensam.engine.modifier
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.opensam.entity.General
+import org.slf4j.LoggerFactory
 import kotlin.math.floor
 
 class InheritBuffModifier private constructor(
@@ -57,6 +58,7 @@ class InheritBuffModifier private constructor(
     }
 
     companion object {
+        private val log = LoggerFactory.getLogger(InheritBuffModifier::class.java)
         private val mapper = ObjectMapper().registerModule(KotlinModule.Builder().build())
 
         fun fromGeneral(general: General): InheritBuffModifier {
@@ -78,7 +80,8 @@ class InheritBuffModifier private constructor(
                 is String -> {
                     try {
                         mapper.readValue(value, Map::class.java) as? Map<String, Any?> ?: emptyMap()
-                    } catch (_: Exception) {
+                    } catch (e: Exception) {
+                        log.warn("Failed to parse buff JSON: {}", e.message)
                         emptyMap()
                     }
                 }

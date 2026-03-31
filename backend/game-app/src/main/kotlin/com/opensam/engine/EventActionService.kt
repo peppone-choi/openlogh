@@ -838,7 +838,8 @@ class EventActionService(
         return try {
             (world.config["startYear"] as? Number)?.toInt()
                 ?: scenarioService.getScenario(world.scenarioCode).startYear
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            log.warn("Failed to resolve startYear for scenario {}: {}", world.scenarioCode, e.message)
             world.currentYear.toInt()
         }
     }
