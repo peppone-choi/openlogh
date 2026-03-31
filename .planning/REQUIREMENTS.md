@@ -138,17 +138,62 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| FOUND-01..05 | Phase 1 | Pending |
-| TYPE-01..03 | Phase 2 | Pending |
-| BATTLE-01..14 | Phase 3 | Pending |
-| MOD-01..04 | Phase 4 | Pending |
-| CMD-01..04 | Phase 5 | Pending |
-| ECON-01..06 | Phase 6 | Pending |
-| AI-01..04 | Phase 7 | Pending |
-| TURN-01..06 | Phase 8 | Pending |
-| DIPL-01..03 | Phase 9 | Pending |
-| DATA-01..03 | Phase 10 | Pending |
-| FE-01..04 | Phase 11 | Pending |
+| FOUND-01 | Phase 1: Deterministic Foundation | Pending |
+| FOUND-02 | Phase 1: Deterministic Foundation | Pending |
+| FOUND-03 | Phase 1: Deterministic Foundation | Pending |
+| FOUND-04 | Phase 1: Deterministic Foundation | Pending |
+| FOUND-05 | Phase 1: Deterministic Foundation | Pending |
+| TYPE-01 | Phase 2: Numeric Type Safety | Pending |
+| TYPE-02 | Phase 2: Numeric Type Safety | Pending |
+| TYPE-03 | Phase 2: Numeric Type Safety | Pending |
+| BATTLE-01 | Phase 3: Battle Framework and Core Triggers | Pending |
+| BATTLE-05 | Phase 3: Battle Framework and Core Triggers | Pending |
+| BATTLE-06 | Phase 3: Battle Framework and Core Triggers | Pending |
+| BATTLE-09 | Phase 3: Battle Framework and Core Triggers | Pending |
+| BATTLE-10 | Phase 3: Battle Framework and Core Triggers | Pending |
+| BATTLE-11 | Phase 3: Battle Framework and Core Triggers | Pending |
+| BATTLE-12 | Phase 3: Battle Framework and Core Triggers | Pending |
+| BATTLE-02 | Phase 4: Battle Completion | Pending |
+| BATTLE-03 | Phase 4: Battle Completion | Pending |
+| BATTLE-04 | Phase 4: Battle Completion | Pending |
+| BATTLE-07 | Phase 4: Battle Completion | Pending |
+| BATTLE-08 | Phase 4: Battle Completion | Pending |
+| BATTLE-13 | Phase 4: Battle Completion | Pending |
+| BATTLE-14 | Phase 4: Battle Completion | Pending |
+| MOD-01 | Phase 5: Modifier Pipeline | Pending |
+| MOD-02 | Phase 5: Modifier Pipeline | Pending |
+| MOD-03 | Phase 5: Modifier Pipeline | Pending |
+| MOD-04 | Phase 5: Modifier Pipeline | Pending |
+| ECON-01 | Phase 6: Economy Parity | Pending |
+| ECON-02 | Phase 6: Economy Parity | Pending |
+| ECON-03 | Phase 6: Economy Parity | Pending |
+| ECON-04 | Phase 6: Economy Parity | Pending |
+| ECON-05 | Phase 6: Economy Parity | Pending |
+| ECON-06 | Phase 6: Economy Parity | Pending |
+| CMD-01 | Phase 7: Command Parity | Pending |
+| CMD-02 | Phase 7: Command Parity | Pending |
+| CMD-03 | Phase 7: Command Parity | Pending |
+| CMD-04 | Phase 7: Command Parity | Pending |
+| AI-01 | Phase 8: NPC AI Parity | Pending |
+| AI-02 | Phase 8: NPC AI Parity | Pending |
+| AI-03 | Phase 8: NPC AI Parity | Pending |
+| AI-04 | Phase 8: NPC AI Parity | Pending |
+| TURN-01 | Phase 9: Turn Engine Completion | Pending |
+| TURN-02 | Phase 9: Turn Engine Completion | Pending |
+| TURN-03 | Phase 9: Turn Engine Completion | Pending |
+| TURN-04 | Phase 9: Turn Engine Completion | Pending |
+| TURN-05 | Phase 9: Turn Engine Completion | Pending |
+| TURN-06 | Phase 9: Turn Engine Completion | Pending |
+| DIPL-01 | Phase 10: Diplomacy and Scenario Data | Pending |
+| DIPL-02 | Phase 10: Diplomacy and Scenario Data | Pending |
+| DIPL-03 | Phase 10: Diplomacy and Scenario Data | Pending |
+| DATA-01 | Phase 10: Diplomacy and Scenario Data | Pending |
+| DATA-02 | Phase 10: Diplomacy and Scenario Data | Pending |
+| DATA-03 | Phase 10: Diplomacy and Scenario Data | Pending |
+| FE-01 | Phase 11: Frontend Display Parity | Pending |
+| FE-02 | Phase 11: Frontend Display Parity | Pending |
+| FE-03 | Phase 11: Frontend Display Parity | Pending |
+| FE-04 | Phase 11: Frontend Display Parity | Pending |
 
 **Coverage:**
 - v1 requirements: 56 total
@@ -157,4 +202,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-03-31*
-*Last updated: 2026-03-31 after initialization*
+*Last updated: 2026-03-31 after roadmap creation*
