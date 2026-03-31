@@ -1,0 +1,1 @@
+../mapobjectmodel_tex.arc

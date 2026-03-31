@@ -1,0 +1,1 @@
+../loading_mini_bin.arc

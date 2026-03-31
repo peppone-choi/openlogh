@@ -1,0 +1,1 @@
+../variety_info_script.arc

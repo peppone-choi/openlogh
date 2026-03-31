@@ -1,0 +1,1 @@
+../battle_effect_mdx.arc
