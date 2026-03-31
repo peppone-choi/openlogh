@@ -36,11 +36,11 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Engine exceptions are logged with context instead of silently swallowed (all 20+ catch blocks emit log entries)
   4. Entity processing order within a turn tick is deterministic regardless of database query order
   5. RandUtil.choice() on a single-element list behaves identically to PHP array_rand on a single-element array
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 01-01: TBD
-- [ ] 01-02: TBD
+- [ ] 01-01-PLAN.md — RNG determinism: replace java.util.Random, fix RandUtil.choice() single-element, extend parity tests
+- [ ] 01-02-PLAN.md — Observability and ordering: add logging to 16 silent catch blocks, add turn sort tiebreakers
 
 ### Phase 2: Numeric Type Safety
 **Goal**: All arithmetic operations on entity fields produce the same numeric results as legacy PHP, preventing silent overflow and truncation divergence
@@ -204,7 +204,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Deterministic Foundation | 0/2 | Not started | - |
+| 1. Deterministic Foundation | 0/2 | Planned | - |
 | 2. Numeric Type Safety | 0/2 | Not started | - |
 | 3. Battle Framework and Core Triggers | 0/3 | Not started | - |
 | 4. Battle Completion | 0/3 | Not started | - |
