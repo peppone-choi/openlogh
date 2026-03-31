@@ -39,7 +39,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 2 plans
 
 Plans:
-- [ ] 01-01-PLAN.md — RNG determinism: replace java.util.Random, fix RandUtil.choice() single-element, extend parity tests
+- [x] 01-01-PLAN.md — RNG determinism: replace java.util.Random, fix RandUtil.choice() single-element, extend parity tests
 - [ ] 01-02-PLAN.md — Observability and ordering: add logging to 16 silent catch blocks, add turn sort tiebreakers
 
 ### Phase 2: Numeric Type Safety

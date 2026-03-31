@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: planning
-stopped_at: Phase 1 context gathered
-last_updated: "2026-03-31T12:56:04.034Z"
-last_activity: 2026-03-31 -- Roadmap created with 11 phases covering 56 requirements
+status: executing
+stopped_at: Completed 01-01-PLAN.md
+last_updated: "2026-03-31T13:47:38.974Z"
+last_activity: 2026-03-31
 progress:
   total_phases: 11
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_plans: 2
+  completed_plans: 1
   percent: 0
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-31)
 
 **Core value:** Every game mechanic must produce identical outcomes to the legacy PHP implementation given the same inputs.
-**Current focus:** Phase 1 - Deterministic Foundation
+**Current focus:** Phase 01 — deterministic-foundation
 
 ## Current Position
 
-Phase: 1 of 11 (Deterministic Foundation)
-Plan: 0 of 2 in current phase
-Status: Ready to plan
-Last activity: 2026-03-31 -- Roadmap created with 11 phases covering 56 requirements
+Phase: 01 (deterministic-foundation) — EXECUTING
+Plan: 2 of 2
+Status: Ready to execute
+Last activity: 2026-03-31
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -52,6 +52,7 @@ Progress: [░░░░░░░░░░] 0%
 - Trend: -
 
 *Updated after each plan completion*
+| Phase 01 P01 | 14min | 3 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -63,6 +64,8 @@ Recent decisions affecting current work:
 - [Roadmap]: Fine granularity (11 phases) -- battle system split into framework + completion; economy separated from commands
 - [Roadmap]: Strict dependency ordering -- foundation before types before systems before composites
 - [Roadmap]: Phase 5 (Modifiers) depends on Phase 3 (not Phase 4) -- modifier pipeline needed for domestic commands, not remaining battle triggers
+- [Phase 01]: RandUtil.choice() single-element guard uses rng.nextLegacyInt(1L) for PHP array_rand parity
+- [Phase 01]: buildPreTurnTriggers() rng parameter has no default -- callers must explicitly inject RNG
 
 ### Pending Todos
 
@@ -75,6 +78,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-31T12:56:04.031Z
-Stopped at: Phase 1 context gathered
-Resume file: .planning/phases/01-deterministic-foundation/01-CONTEXT.md
+Last session: 2026-03-31T13:47:38.970Z
+Stopped at: Completed 01-01-PLAN.md
+Resume file: None
