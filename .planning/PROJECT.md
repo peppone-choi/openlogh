@@ -26,6 +26,9 @@ Every game mechanic must produce identical outcomes to the legacy PHP implementa
 - ✓ Game data layer (officer ranks, items, game constants) -- existing
 - ✓ Diplomacy system with state transitions -- existing
 - ✓ Database migrations (Flyway) -- existing
+- ✓ Deterministic game execution (LiteHashDRBG, no java.util.Random) -- Phase 1
+- ✓ Observable exception handling (SLF4J logging in all engine catch blocks) -- Phase 1
+- ✓ Deterministic entity processing order (sort tiebreakers) -- Phase 1
 
 ### Active
 
@@ -56,7 +59,8 @@ Every game mechanic must produce identical outcomes to the legacy PHP implementa
 - **Parity standard**: Same input must produce same output. Documentation is not trusted; only code-to-code comparison counts.
 - **3-stat vs 5-stat**: Legacy uses 3 stats (leadership/strength/intel); OpenSamguk extends with politics/charm. Parity logic must use the original 3 where legacy does.
 - **Existing verify skills**: Multiple verification skills exist (verify-command-parity, verify-logic-parity, verify-daemon-parity, etc.) for systematic checking
-- **Known gaps from codebase analysis**: Turn engine stubs, battle special modifiers, duplicate AuthService, non-deterministic RNG in some game logic
+- **Known gaps from codebase analysis**: Turn engine stubs, battle special modifiers, duplicate AuthService
+- **Phase 1 complete**: All game logic now uses deterministic RNG, exceptions are logged, entity processing order is deterministic
 
 ## Constraints
 
@@ -93,4 +97,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-31 after initialization*
+*Last updated: 2026-03-31 after Phase 1 completion*
