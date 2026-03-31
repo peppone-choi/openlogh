@@ -1,5 +1,6 @@
 package com.opensam.engine.trigger
 
+import com.opensam.engine.LiteHashDRBG
 import com.opensam.entity.General
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
@@ -118,5 +119,48 @@ class GeneralTriggerTest {
 
         assertEquals(5.toShort(), general.injury, "Injury should remain unchanged")
         assertNull(env.vars["medicineHealed"])
+    }
+
+    // ========== CityHealTrigger ==========
+
+    @Test
+    fun `CityHealTrigger accepts injected kotlin random`() {
+        val general = createGeneral(injury = 5)
+        val rng = LiteHashDRBG.build("test-city-heal")
+        val trigger = CityHealTrigger(general, emptyList(), rng)
+        val env = TriggerEnv(worldId = 1, year = 200, month = 6, generalId = 1)
+
+        trigger.action(env)
+
+        // Self-heal always happens regardless of RNG
+        assertEquals(0.toShort(), general.injury)
+    }
+
+    @Test
+    fun `CityHealTrigger heals city-mates deterministically with injected rng`() {
+        val healer = createGeneral(injury = 0)
+        val patient1 = createGeneral(injury = 15).apply { id = 2 }
+        val patient2 = createGeneral(injury = 20).apply { id = 3 }
+        val cityMates = listOf(healer, patient1, patient2)
+
+        // Run twice with same seed -- must produce identical results
+        val rng1 = LiteHashDRBG.build("deterministic-heal-seed")
+        val trigger1 = CityHealTrigger(healer, cityMates, rng1)
+        val env1 = TriggerEnv(worldId = 1, year = 200, month = 6, generalId = 1)
+        trigger1.action(env1)
+        val injury1a = patient1.injury
+        val injury1b = patient2.injury
+
+        // Reset patients
+        patient1.injury = 15
+        patient2.injury = 20
+
+        val rng2 = LiteHashDRBG.build("deterministic-heal-seed")
+        val trigger2 = CityHealTrigger(healer, cityMates, rng2)
+        val env2 = TriggerEnv(worldId = 1, year = 200, month = 6, generalId = 1)
+        trigger2.action(env2)
+
+        assertEquals(injury1a, patient1.injury, "Same seed must produce same heal outcome for patient1")
+        assertEquals(injury1b, patient2.injury, "Same seed must produce same heal outcome for patient2")
     }
 }
