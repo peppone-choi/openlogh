@@ -11,8 +11,8 @@ Requirements for legacy parity milestone. Each maps to roadmap phases.
 
 - [x] **FOUND-01**: Replace java.util.Random() with LiteHashDRBG in TurnService.registerAuction() and GeneralTrigger
 - [x] **FOUND-02**: Verify LiteHashDRBG cross-language parity (Kotlin SHA-512 output matches PHP implementation)
-- [ ] **FOUND-03**: Add logging to all exception-swallowing catch blocks in engine code (20+ locations)
-- [ ] **FOUND-04**: Add turn ordering tiebreakers to prevent non-deterministic entity processing order
+- [x] **FOUND-03**: Add logging to all exception-swallowing catch blocks in engine code (20+ locations)
+- [x] **FOUND-04**: Add turn ordering tiebreakers to prevent non-deterministic entity processing order
 - [x] **FOUND-05**: Fix RandUtil.choice() single-element bias (PHP array_rand vs Kotlin behavior)
 
 ### Type Safety
@@ -140,8 +140,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 |-------------|-------|--------|
 | FOUND-01 | Phase 1: Deterministic Foundation | Complete |
 | FOUND-02 | Phase 1: Deterministic Foundation | Complete |
-| FOUND-03 | Phase 1: Deterministic Foundation | Pending |
-| FOUND-04 | Phase 1: Deterministic Foundation | Pending |
+| FOUND-03 | Phase 1: Deterministic Foundation | Complete |
+| FOUND-04 | Phase 1: Deterministic Foundation | Complete |
 | FOUND-05 | Phase 1: Deterministic Foundation | Complete |
 | TYPE-01 | Phase 2: Numeric Type Safety | Pending |
 | TYPE-02 | Phase 2: Numeric Type Safety | Pending |

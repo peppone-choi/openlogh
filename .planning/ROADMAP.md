@@ -40,7 +40,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 Plans:
 - [x] 01-01-PLAN.md — RNG determinism: replace java.util.Random, fix RandUtil.choice() single-element, extend parity tests
-- [ ] 01-02-PLAN.md — Observability and ordering: add logging to 16 silent catch blocks, add turn sort tiebreakers
+- [x] 01-02-PLAN.md — Observability and ordering: add logging to 16 silent catch blocks, add turn sort tiebreakers
 
 ### Phase 2: Numeric Type Safety
 **Goal**: All arithmetic operations on entity fields produce the same numeric results as legacy PHP, preventing silent overflow and truncation divergence
