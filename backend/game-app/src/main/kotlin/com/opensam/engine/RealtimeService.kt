@@ -343,7 +343,11 @@ class RealtimeService(
 
     private fun firePreTurnTriggers(world: WorldState, general: com.opensam.entity.General, nation: Nation?) {
         val modifiers = modifierService.getModifiers(general, nation)
-        val triggers = buildPreTurnTriggers(general, modifiers)
+        val hiddenSeed = (world.config["hiddenSeed"] as? String) ?: world.id.toString()
+        val preTurnRng = DeterministicRng.create(
+            hiddenSeed, "preTurnTrigger", general.id, world.currentYear, world.currentMonth
+        )
+        val triggers = buildPreTurnTriggers(general, modifiers, rng = preTurnRng)
         if (triggers.isEmpty()) return
 
         val caller = TriggerCaller()

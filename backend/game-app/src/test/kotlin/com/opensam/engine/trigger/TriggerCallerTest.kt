@@ -1,5 +1,6 @@
 package com.opensam.engine.trigger
 
+import com.opensam.engine.LiteHashDRBG
 import com.opensam.entity.General
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
@@ -225,7 +226,7 @@ class TriggerCallerTest {
     @Test
     fun `buildPreTurnTriggers includes injury trigger`() {
         val general = createGeneral()
-        val triggers = buildPreTurnTriggers(general)
+        val triggers = buildPreTurnTriggers(general, rng = LiteHashDRBG.build("test"))
 
         assertEquals(1, triggers.size)
         assertTrue(triggers.any { it is InjuryReductionTrigger })

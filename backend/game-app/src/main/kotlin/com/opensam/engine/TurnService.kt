@@ -1047,29 +1047,32 @@ class TurnService @Autowired constructor(
         val neutralBuyRiceCnt = openAuctions.count { it.subType == "buyRice" }
         val neutralSellRiceCnt = openAuctions.count { it.subType == "sellRice" }
 
-        val rng = java.util.Random()
+        val hiddenSeed = (world.config["hiddenSeed"] as? String) ?: world.id.toString()
+        val rng = RandUtil(
+            DeterministicRng.create(hiddenSeed, "registerAuction", world.currentYear, world.currentMonth) as LiteHashDRBG
+        )
 
         // 쌀 판매 경매 등록 (시스템이 쌀을 팔고 금을 받음 → buyRice subtype)
-        if (rng.nextDouble() < 1.0 / (neutralBuyRiceCnt + 5)) {
-            val mul = rng.nextInt(5) + 1
+        if (rng.nextFloat1() < 1.0 / (neutralBuyRiceCnt + 5)) {
+            val mul = rng.nextRangeInt(1, 5)
             val amount = (clampedRice / 20.0 * mul).toLong().coerceAtLeast(100).coerceAtMost(10000).toInt()
             val startBid = (clampedGold / 20.0 * 0.9 * mul)
                 .coerceIn(amount * 0.8, amount * 1.2)
                 .toLong().coerceAtLeast(100).toInt()
             val finishBid = (amount * 2.0).toLong().coerceAtLeast((startBid * 1.1).toLong()).toInt()
-            val term = rng.nextInt(10) + 3
+            val term = rng.nextRangeInt(3, 12)
             auctionService.openSystemResourceAuction(worldId, "buyRice", amount, term, startBid, finishBid)
         }
 
         // 쌀 구매 경매 등록 (시스템이 쌀을 사고 금을 줌 → sellRice subtype)
-        if (rng.nextDouble() < 1.0 / (neutralSellRiceCnt + 5)) {
-            val mul = rng.nextInt(5) + 1
+        if (rng.nextFloat1() < 1.0 / (neutralSellRiceCnt + 5)) {
+            val mul = rng.nextRangeInt(1, 5)
             val amount = (clampedGold / 20.0 * mul).toLong().coerceAtLeast(100).coerceAtMost(10000).toInt()
             val startBid = (clampedRice / 20.0 * 1.1 * mul)
                 .coerceIn(amount * 0.8, amount * 1.2)
                 .toLong().coerceAtLeast(100).toInt()
             val finishBid = (amount * 2.0).toLong().coerceAtLeast((startBid * 1.1).toLong()).toInt()
-            val term = rng.nextInt(10) + 3
+            val term = rng.nextRangeInt(3, 12)
             auctionService.openSystemResourceAuction(worldId, "sellRice", amount, term, startBid, finishBid)
         }
     }
@@ -1148,7 +1151,11 @@ class TurnService @Autowired constructor(
         cityMates: List<com.opensam.entity.General> = emptyList(),
     ) {
         val modifiers = modifierService.getModifiers(general, nation)
-        val triggers = buildPreTurnTriggers(general, modifiers, cityMates)
+        val hiddenSeed = (world.config["hiddenSeed"] as? String) ?: world.id.toString()
+        val preTurnRng = DeterministicRng.create(
+            hiddenSeed, "preTurnTrigger", general.id, world.currentYear, world.currentMonth
+        )
+        val triggers = buildPreTurnTriggers(general, modifiers, cityMates, preTurnRng)
         if (triggers.isEmpty()) return
 
         val caller = TriggerCaller()

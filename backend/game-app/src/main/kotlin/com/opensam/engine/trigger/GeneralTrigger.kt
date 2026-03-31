@@ -5,6 +5,7 @@ import com.opensam.engine.modifier.DomesticContext
 import com.opensam.engine.modifier.ItemModifiers
 import com.opensam.engine.modifier.StatContext
 import com.opensam.entity.General
+import kotlin.random.Random
 
 /**
  * General command triggers (legacy parity: GeneralTrigger/).
@@ -197,7 +198,7 @@ class ModifierBridgeTrigger(
 class CityHealTrigger(
     private val general: General,
     private val cityMates: List<General>,
-    private val rng: java.util.Random = java.util.Random(),
+    private val rng: Random,
 ) : GeneralTrigger {
     override val uniqueId = "도시치료_${general.id}"
     override val priority = TriggerPriority.BEGIN + 10  // 10010
@@ -261,12 +262,13 @@ fun buildPreTurnTriggers(
     general: General,
     modifiers: List<ActionModifier> = emptyList(),
     cityMates: List<General> = emptyList(),
+    rng: Random,
 ): List<GeneralTrigger> {
     val triggers = mutableListOf<GeneralTrigger>()
 
     // City heal trigger (before injury reduction so self-heal counts)
     if (cityMates.isNotEmpty()) {
-        triggers.add(CityHealTrigger(general, cityMates))
+        triggers.add(CityHealTrigger(general, cityMates, rng))
     }
 
     // Medicine item pre-turn heal (before injury reduction)
