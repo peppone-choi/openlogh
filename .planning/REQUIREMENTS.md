@@ -33,7 +33,7 @@ Requirements for legacy parity milestone. Each maps to roadmap phases.
 - [ ] **BATTLE-08**: Implement 도시치료 (city healing) trigger
 - [ ] **BATTLE-09**: Implement 전투치료 (battle healing) trigger (시도/발동)
 - [ ] **BATTLE-10**: Implement 격노 (rage) trigger (시도/발동)
-- [ ] **BATTLE-11**: Implement battle experience (C7) -- generals gain XP from combat
+- [x] **BATTLE-11**: Implement battle experience (C7) -- generals gain XP from combat
 - [x] **BATTLE-12**: Fix 무쌍 modifier to read killnum from runtime rank data instead of hardcoded 0.0
 - [ ] **BATTLE-13**: Verify battle resolution formulas match legacy process_war.php
 - [ ] **BATTLE-14**: Verify siege/defense mechanics match legacy
@@ -151,7 +151,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | BATTLE-06 | Phase 3: Battle Framework and Core Triggers | Pending |
 | BATTLE-09 | Phase 3: Battle Framework and Core Triggers | Pending |
 | BATTLE-10 | Phase 3: Battle Framework and Core Triggers | Pending |
-| BATTLE-11 | Phase 3: Battle Framework and Core Triggers | Pending |
+| BATTLE-11 | Phase 3: Battle Framework and Core Triggers | Complete |
 | BATTLE-12 | Phase 3: Battle Framework and Core Triggers | Complete |
 | BATTLE-02 | Phase 4: Battle Completion | Pending |
 | BATTLE-03 | Phase 4: Battle Completion | Pending |
