@@ -32,11 +32,13 @@ Every game mechanic must produce identical outcomes to the legacy PHP implementa
 - ✓ Short field overflow prevention (coerceIn guards on all .toShort() sites) -- Phase 2
 - ✓ Float-to-int rounding normalized to match PHP behavior (Math.round → kotlin.math.round) -- Phase 2
 - ✓ Integer division parity with PHP intdiv() confirmed -- Phase 2
+- ✓ WarUnitTrigger framework operational with core battle abilities matching legacy -- Phase 3
+- ✓ All remaining combat triggers + battle formula/siege golden values locked -- Phase 4
+- ✓ Domestic modifier pipeline: specials, items, officer rank actionCode fix + stacking parity -- Phase 5
 
 ### Active
 
 - [ ] Turn engine stub completion (updateOnline, checkOverhead, checkWander, updateGeneralNumber)
-- [ ] Battle special modifier triggers (14+ WarUnitTrigger implementations)
 - [ ] Command logic parity -- verify each of 93 commands matches legacy output
 - [ ] NPC AI parity -- verify decision trees match legacy GeneralAI.php
 - [ ] Turn processing parity -- verify turn step ordering and side effects match legacy daemon.ts
