@@ -57,6 +57,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 02 P01 | 21min | 2 tasks | 19 files |
 | Phase 02 P02 | 20min | 2 tasks | 4 files |
 | Phase 03 P01 | 19min | 2 tasks | 7 files |
+| Phase 03 P02 | 7min | 2 tasks | 9 files |
 | Phase 03 P03 | 10min | 1 tasks | 1 files |
 
 ## Accumulated Context
@@ -80,6 +81,8 @@ Recent decisions affecting current work:
 - [Phase 03]: WarUnitTriggerRegistry uses mutable map with register() for Plan 02 trigger self-registration
 - [Phase 03]: killnum populated at BattleService.applyWarModifiers -- only StatContext construction site with general.meta access
 - [Phase 03]: MISC armType branch unreachable -- no CrewType maps to ArmType.MISC; documented in parity test
+- [Phase 03]: RageTrigger uses legacy TODO formula (1+0.2*count) over existing rollCriticalDamageMultiplier -- closer to PHP intent
+- [Phase 03]: Che*Trigger objects kept as no-ops in BattleTriggerRegistry rather than removed -- avoids breaking registry presence checks
 
 ### Pending Todos
 
