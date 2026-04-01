@@ -49,6 +49,7 @@ class BattleEngine {
 
         // Track injury immunity from init triggers
         var attackerInjuryImmune = false
+        var attackerRageActivationCount = 0
 
         val attackerCrewType = CrewType.fromCode(attacker.crewType)
         val maxPhase = attackerCrewType?.speed ?: 7
@@ -92,6 +93,15 @@ class BattleEngine {
                 defenderInitialized = true
             }
 
+            // WarUnitTrigger: onPreAttack (per phase before attack roll)
+            val preAttackCtx = BattleTriggerContext(
+                attacker = attacker, defender = currentDefender, rng = rng,
+                phaseNumber = currentPhase, isVsCity = inSiege,
+                rageActivationCount = attackerRageActivationCount,
+            )
+            for (trigger in attackerWarTriggers) trigger.onPreAttack(preAttackCtx)
+            logs.addAll(preAttackCtx.battleLogs)
+
             // Execute one combat phase
             val phaseResult = executeCombatPhase(
                 attacker, currentDefender, rng,
@@ -113,9 +123,11 @@ class BattleEngine {
             val postDamageCtx = BattleTriggerContext(
                 attacker = attacker, defender = currentDefender, rng = rng,
                 phaseNumber = currentPhase - 1, isVsCity = inSiege,
+                rageActivationCount = attackerRageActivationCount,
             )
             for (trigger in attackerWarTriggers) trigger.onPostDamage(postDamageCtx)
             logs.addAll(postDamageCtx.battleLogs)
+            attackerRageActivationCount = postDamageCtx.rageActivationCount
 
             // Attacker continuation check
             val attackerContinuation = attacker.continueWar()
@@ -361,6 +373,7 @@ class BattleEngine {
         val attackerTriggers = collectTriggers(attacker)
         val attackerWarTriggers = collectWarUnitTriggers(attacker)
         var attackerInjuryImmune = false
+        var attackerRageActivationCount = 0
 
         val attackerCrewType = CrewType.fromCode(attacker.crewType)
         val maxPhase = attackerCrewType?.speed ?: 7
@@ -397,8 +410,17 @@ class BattleEngine {
                 defenderInitialized = true
             }
 
+            // WarUnitTrigger: onPreAttack (per phase before attack roll)
+            val preAttackCtx = BattleTriggerContext(
+                attacker = attacker, defender = currentDefender!!, rng = rng,
+                phaseNumber = currentPhase, isVsCity = inSiege,
+                rageActivationCount = attackerRageActivationCount,
+            )
+            for (trigger in attackerWarTriggers) trigger.onPreAttack(preAttackCtx)
+            logs.addAll(preAttackCtx.battleLogs)
+
             val attackerHpBefore = attacker.hp
-            val defenderHpBefore = currentDefender!!.hp
+            val defenderHpBefore = currentDefender.hp
 
             val phaseResult = executeCombatPhase(attacker, currentDefender, rng, phaseNumber = currentPhase, isVsCity = inSiege)
             totalAttackerDamage += phaseResult.damage.first
@@ -426,9 +448,11 @@ class BattleEngine {
             val postDamageCtx = BattleTriggerContext(
                 attacker = attacker, defender = currentDefender, rng = rng,
                 phaseNumber = currentPhase - 1, isVsCity = inSiege,
+                rageActivationCount = attackerRageActivationCount,
             )
             for (trigger in attackerWarTriggers) trigger.onPostDamage(postDamageCtx)
             logs.addAll(postDamageCtx.battleLogs)
+            attackerRageActivationCount = postDamageCtx.rageActivationCount
 
             val attackerContinuation = attacker.continueWar()
             if (!attackerContinuation.canContinue) {
