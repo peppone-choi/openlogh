@@ -17,9 +17,9 @@ Requirements for legacy parity milestone. Each maps to roadmap phases.
 
 ### Type Safety
 
-- [ ] **TYPE-01**: Audit and guard 30+ Short/SMALLINT entity fields against arithmetic overflow
+- [x] **TYPE-01**: Audit and guard 30+ Short/SMALLINT entity fields against arithmetic overflow
 - [ ] **TYPE-02**: Audit 100+ float-to-int truncation patterns for PHP round() vs Kotlin roundToInt() divergence
-- [ ] **TYPE-03**: Verify integer division behavior matches legacy (PHP intdiv vs Kotlin / operator)
+- [x] **TYPE-03**: Verify integer division behavior matches legacy (PHP intdiv vs Kotlin / operator)
 
 ### Battle System
 
@@ -143,9 +143,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | FOUND-03 | Phase 1: Deterministic Foundation | Complete |
 | FOUND-04 | Phase 1: Deterministic Foundation | Complete |
 | FOUND-05 | Phase 1: Deterministic Foundation | Complete |
-| TYPE-01 | Phase 2: Numeric Type Safety | Pending |
+| TYPE-01 | Phase 2: Numeric Type Safety | Complete |
 | TYPE-02 | Phase 2: Numeric Type Safety | Pending |
-| TYPE-03 | Phase 2: Numeric Type Safety | Pending |
+| TYPE-03 | Phase 2: Numeric Type Safety | Complete |
 | BATTLE-01 | Phase 3: Battle Framework and Core Triggers | Pending |
 | BATTLE-05 | Phase 3: Battle Framework and Core Triggers | Pending |
 | BATTLE-06 | Phase 3: Battle Framework and Core Triggers | Pending |

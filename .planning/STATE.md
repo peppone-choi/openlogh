@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: verifying
-stopped_at: Phase 2 context gathered
-last_updated: "2026-03-31T14:06:39.172Z"
-last_activity: 2026-03-31
+status: executing
+stopped_at: Completed 02-01-PLAN.md
+last_updated: "2026-04-01T02:49:45.004Z"
+last_activity: 2026-04-01
 progress:
   total_phases: 11
   completed_phases: 1
-  total_plans: 2
-  completed_plans: 2
+  total_plans: 4
+  completed_plans: 3
   percent: 0
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-31)
 
 **Core value:** Every game mechanic must produce identical outcomes to the legacy PHP implementation given the same inputs.
-**Current focus:** Phase 01 — deterministic-foundation
+**Current focus:** Phase 02 — numeric-type-safety
 
 ## Current Position
 
-Phase: 2
-Plan: Not started
-Status: Phase complete — ready for verification
-Last activity: 2026-03-31
+Phase: 02 (numeric-type-safety) — EXECUTING
+Plan: 2 of 2
+Status: Ready to execute
+Last activity: 2026-04-01
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -54,6 +54,7 @@ Progress: [░░░░░░░░░░] 0%
 *Updated after each plan completion*
 | Phase 01 P01 | 14min | 3 tasks | 8 files |
 | Phase 01 P02 | 5min | 2 tasks | 12 files |
+| Phase 02 P01 | 21min | 2 tasks | 19 files |
 
 ## Accumulated Context
 
@@ -69,6 +70,8 @@ Recent decisions affecting current work:
 - [Phase 01]: buildPreTurnTriggers() rng parameter has no default -- callers must explicitly inject RNG
 - [Phase 01]: Use warn level for catch block logging since all blocks have valid fallbacks
 - [Phase 01]: Deterministic sort pattern: compareBy { primaryKey }.thenBy { id } for all entity iteration
+- [Phase 02]: city.state coerceIn bound widened to 0..32767 (actual game uses multi-digit state codes 31-43)
+- [Phase 02]: Non-assignment .toShort() (constants, query params, comparisons) excluded from coerceIn guards -- cannot cause entity field overflow
 
 ### Pending Todos
 
@@ -81,6 +84,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-31T14:06:39.169Z
-Stopped at: Phase 2 context gathered
-Resume file: .planning/phases/02-numeric-type-safety/02-CONTEXT.md
+Last session: 2026-04-01T02:49:45.001Z
+Stopped at: Completed 02-01-PLAN.md
+Resume file: None
