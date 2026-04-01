@@ -115,8 +115,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 06-01-PLAN.md — Clone legacy-core, verify/extend income/salary/semi-annual/supply/disaster golden values against PHP (ECON-01,03,04,05,06)
-- [ ] 06-02-PLAN.md — Economy command parity tests (12 commands) + 24-turn integration simulation + turn pipeline ordering (ECON-01..06, D-01)
+- [x] 06-01-PLAN.md — Clone legacy-core, verify/extend income/salary/semi-annual/supply/disaster golden values against PHP (ECON-01,03,04,05,06)
+- [x] 06-02-PLAN.md — Economy command parity tests (12 commands) + 24-turn integration simulation + turn pipeline ordering (ECON-01..06, D-01)
 
 ### Phase 7: Command Parity
 **Goal**: All 93 registered commands (55 general + 38 nation) produce identical entity mutations, log messages, and resource changes as legacy PHP

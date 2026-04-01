@@ -55,7 +55,7 @@ Requirements for legacy parity milestone. Each maps to roadmap phases.
 ### Economy
 
 - [x] **ECON-01**: Verify tax collection formula matches legacy
-- [ ] **ECON-02**: Verify trade income formula matches legacy
+- [x] **ECON-02**: Verify trade income formula matches legacy
 - [x] **ECON-03**: Verify supply/food consumption formula matches legacy
 - [x] **ECON-04**: Verify population growth/decline formula matches legacy
 - [x] **ECON-05**: Verify city development formulas match legacy
@@ -165,7 +165,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | MOD-03 | Phase 5: Modifier Pipeline | Pending |
 | MOD-04 | Phase 5: Modifier Pipeline | Pending |
 | ECON-01 | Phase 6: Economy Parity | Complete |
-| ECON-02 | Phase 6: Economy Parity | Pending |
+| ECON-02 | Phase 6: Economy Parity | Complete |
 | ECON-03 | Phase 6: Economy Parity | Complete |
 | ECON-04 | Phase 6: Economy Parity | Complete |
 | ECON-05 | Phase 6: Economy Parity | Complete |

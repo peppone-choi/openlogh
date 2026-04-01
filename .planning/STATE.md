@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: verifying
-stopped_at: Completed 06-01-PLAN.md
-last_updated: "2026-04-01T13:40:03.257Z"
+stopped_at: Completed 06-02-PLAN.md
+last_updated: "2026-04-01T13:56:41.549Z"
 last_activity: 2026-04-01
 progress:
   total_phases: 11
-  completed_phases: 4
-  total_plans: 12
-  completed_plans: 11
+  completed_phases: 6
+  total_plans: 14
+  completed_plans: 14
   percent: 0
 ---
 
@@ -63,6 +63,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 04 P02 | 9min | 2 tasks | 2 files |
 | Phase 04 P01 | 9min | 2 tasks | 11 files |
 | Phase 06 P01 | 11m | 2 tasks | 2 files |
+| Phase 06 P02 | 11min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -93,6 +94,8 @@ Recent decisions affecting current work:
 - [Phase 04]: CounterStrategyTrigger logs phase-level attempt only; Che반계Trigger BattleTrigger handles magic reflection (dual registry)
 - [Phase 04]: BattleEngine phase loop uses var maxPhase with += for bonusPhases/rageExtraPhases consumption
 - [Phase 06]: Nation level thresholds [0,1,2,4,6,9,12,16,20,25] confirmed as intentional opensamguk 10-level extension from PHP 8-level
+- [Phase 06]: PHP exchangeFee=0.01 vs Kotlin exchangeFee=0.03 is intentional opensamguk configuration difference
+- [Phase 06]: EconomyPreUpdateStep shouldSkip=true by design (handled outside pipeline for legacy ordering)
 
 ### Pending Todos
 
@@ -105,6 +108,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-01T13:40:03.251Z
-Stopped at: Completed 06-01-PLAN.md
+Last session: 2026-04-01T13:56:41.543Z
+Stopped at: Completed 06-02-PLAN.md
 Resume file: None
