@@ -54,7 +54,7 @@ Plans:
 
 Plans:
 - [x] 02-01-PLAN.md — Short overflow guards (coerceIn on all .toShort() sites), integer division parity verification, Wave 0 test scaffolds
-- [ ] 02-02-PLAN.md — Rounding normalization (Math.round/roundToInt audit), 200-turn golden snapshot integration test
+- [x] 02-02-PLAN.md — Rounding normalization (Math.round/roundToInt audit), 200-turn golden snapshot integration test
 
 ### Phase 3: Battle Framework and Core Triggers
 **Goal**: The WarUnitTrigger framework is operational and the four highest-impact battle abilities produce correct combat outcomes
