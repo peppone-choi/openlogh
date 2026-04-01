@@ -12,10 +12,10 @@ This roadmap delivers complete legacy parity between the OpenSamguk Kotlin/Next.
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Deterministic Foundation** - Replace non-deterministic RNG, add exception logging, fix turn ordering tiebreakers
-- [ ] **Phase 2: Numeric Type Safety** - Audit Short overflow, float-to-int truncation, and integer division divergence
-- [ ] **Phase 3: Battle Framework and Core Triggers** - Implement WarUnitTrigger framework, battle XP, and top-priority combat abilities
-- [ ] **Phase 4: Battle Completion** - Implement remaining combat triggers, verify battle formulas and siege mechanics
+- [x] **Phase 1: Deterministic Foundation** - Replace non-deterministic RNG, add exception logging, fix turn ordering tiebreakers
+- [x] **Phase 2: Numeric Type Safety** - Audit Short overflow, float-to-int truncation, and integer division divergence
+- [x] **Phase 3: Battle Framework and Core Triggers** - Implement WarUnitTrigger framework, battle XP, and top-priority combat abilities
+- [x] **Phase 4: Battle Completion** - Implement remaining combat triggers, verify battle formulas and siege mechanics
 - [ ] **Phase 5: Modifier Pipeline** - Complete item, special ability, and officer rank modifier effects on domestic commands
 - [ ] **Phase 6: Economy Parity** - Verify all economic formulas (tax, trade, supply, population, city development, salary)
 - [ ] **Phase 7: Command Parity** - Verify all 93 commands produce identical results to legacy PHP
