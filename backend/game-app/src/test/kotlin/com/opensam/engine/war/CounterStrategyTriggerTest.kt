@@ -102,9 +102,9 @@ class CounterStrategyTriggerTest {
     fun `existing Che반계Trigger BattleTrigger still handles magic reflection`() {
         // Che반계Trigger (BattleTrigger) continues to handle magic reflection via onPreMagic
         // This WarUnitTrigger only handles phase-level logging via onPreAttack
-        val ctx = makeCtx()
-        ctx.magicActivated = true
-        Che반계Trigger.onPostMagic(ctx)
+        val ctx = makeCtx(rng = Random(activateSeed))
+        ctx.magicChanceBonus = 0.5  // Simulate opponent trying magic
+        Che반계Trigger.onPreMagic(ctx)
         assertTrue(ctx.magicReflected)
     }
 }

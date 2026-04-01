@@ -52,7 +52,8 @@ class BattleEngine {
         var attackerRageActivationCount = 0
 
         val attackerCrewType = CrewType.fromCode(attacker.crewType)
-        val maxPhase = attackerCrewType?.speed ?: 7
+        val baseMaxPhase = attackerCrewType?.speed ?: 7
+        var maxPhase = baseMaxPhase
         var currentPhase = 0
         val cityUnit = WarUnitCity(city, year, startYear)
         var defenderIndex = 0
@@ -128,6 +129,10 @@ class BattleEngine {
             for (trigger in attackerWarTriggers) trigger.onPostDamage(postDamageCtx)
             logs.addAll(postDamageCtx.battleLogs)
             attackerRageActivationCount = postDamageCtx.rageActivationCount
+
+            // Consume bonusPhases and rageExtraPhases to extend phase loop
+            maxPhase += postDamageCtx.bonusPhases
+            maxPhase += postDamageCtx.rageExtraPhases
 
             // Attacker continuation check
             val attackerContinuation = attacker.continueWar()
@@ -376,7 +381,8 @@ class BattleEngine {
         var attackerRageActivationCount = 0
 
         val attackerCrewType = CrewType.fromCode(attacker.crewType)
-        val maxPhase = attackerCrewType?.speed ?: 7
+        val baseMaxPhase2 = attackerCrewType?.speed ?: 7
+        var maxPhase = baseMaxPhase2
         var currentPhase = 0
         val cityUnit = WarUnitCity(city, year, startYear)
         var defenderIndex = 0
@@ -453,6 +459,10 @@ class BattleEngine {
             for (trigger in attackerWarTriggers) trigger.onPostDamage(postDamageCtx)
             logs.addAll(postDamageCtx.battleLogs)
             attackerRageActivationCount = postDamageCtx.rageActivationCount
+
+            // Consume bonusPhases and rageExtraPhases to extend phase loop
+            maxPhase += postDamageCtx.bonusPhases
+            maxPhase += postDamageCtx.rageExtraPhases
 
             val attackerContinuation = attacker.continueWar()
             if (!attackerContinuation.canContinue) {

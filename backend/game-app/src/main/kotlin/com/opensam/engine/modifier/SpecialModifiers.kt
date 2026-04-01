@@ -304,7 +304,6 @@ object SpecialModifiers {
             override fun onCalcOpposeStat(stat: StatContext) = stat.copy(
                 magicSuccessProb = stat.magicSuccessProb - 0.1
             )
-            // TODO: Add getBattlePhaseSkillTriggerList for che_반계시도, che_반계발동 triggers
         },
         "che_보병" to object : ActionModifier {
             override val code = "che_보병"; override val name = "보병"
@@ -366,7 +365,6 @@ object SpecialModifiers {
                 }
                 return s
             }
-            // TODO: trigger che_돌격지속 — extends war phases when attacking (WarUnitTrigger)
         },
         "che_무쌍" to object : ActionModifier {
             override val code = "che_무쌍"; override val name = "무쌍"
@@ -394,7 +392,6 @@ object SpecialModifiers {
                 magicSuccessProb = stat.magicSuccessProb - 0.1,
                 warPower = stat.warPower * 0.9,
             )
-            // TODO: trigger che_부상무효 — injury immunity during init + each war phase (WarUnitTrigger)
         },
         "che_위압" to object : ActionModifier {
             override val code = "che_위압"; override val name = "위압"
@@ -407,8 +404,6 @@ object SpecialModifiers {
         "che_필살" to object : ActionModifier {
             override val code = "che_필살"; override val name = "필살"
             override fun onCalcStat(stat: StatContext) = stat.copy(criticalChance = stat.criticalChance + 0.3)
-            // TODO: criticalDamageRange enhancement — legacy sets warCriticalDamageMin/Max via StatContext extension
-            // TODO: trigger che_필살강화_회피불가 — undodgeable critical hit (WarUnitTrigger)
         },
         "che_징병" to object : ActionModifier {
             override val code = "che_징병"; override val name = "징병"
@@ -421,8 +416,6 @@ object SpecialModifiers {
         },
         "che_의술" to object : ActionModifier {
             override val code = "che_의술"; override val name = "의술"
-            // TODO: trigger che_도시치료 — preTurn city heal (GeneralTriggerCaller)
-            // TODO: trigger che_전투치료시도 + che_전투치료발동 — battle HP recovery (WarUnitTrigger)
         },
         "che_격노" to object : ActionModifier {
             override val code = "che_격노"; override val name = "격노"
