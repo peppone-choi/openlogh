@@ -65,12 +65,13 @@ Plans:
   2. Intimidation (위압), sniping (저격), battle healing (전투치료), and rage (격노) triggers produce the same battle outcome deltas as legacy PHP for identical inputs
   3. Generals gain combat experience (C7) from battles at the same rate as legacy PHP
   4. The 무쌍 modifier reads killnum from runtime rank data instead of returning hardcoded 0.0
-**Plans**: 3 plans
+**Plans**: 4 plans
 
 Plans:
 - [x] 03-01-PLAN.md — WarUnitTrigger framework (interface, registry, BattleEngine integration) and killnum fix (StatContext.killnum, che_무쌍 reads from stat)
 - [x] 03-02-PLAN.md — Four core triggers (IntimidationTrigger, SnipingTrigger, BattleHealTrigger, RageTrigger) as WarUnitTrigger implementations
 - [x] 03-03-PLAN.md — Battle experience (C7) parity verification tests (exp calculation, stat routing, win/lose atmos, full pipeline)
+- [ ] 03-04-PLAN.md — Gap closure: wire missing onPreAttack hook in BattleEngine, add rage integration test
 
 ### Phase 4: Battle Completion
 **Goal**: All remaining combat triggers are implemented and battle resolution formulas match legacy for all unit types, terrain, and siege scenarios
@@ -200,13 +201,13 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 → 10 → 11
+Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10 -> 11
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Deterministic Foundation | 0/2 | Planned | - |
 | 2. Numeric Type Safety | 0/2 | Planned | - |
-| 3. Battle Framework and Core Triggers | 0/3 | Planned | - |
+| 3. Battle Framework and Core Triggers | 0/4 | Planned | - |
 | 4. Battle Completion | 0/3 | Not started | - |
 | 5. Modifier Pipeline | 0/2 | Not started | - |
 | 6. Economy Parity | 0/2 | Not started | - |
