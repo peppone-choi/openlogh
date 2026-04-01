@@ -240,11 +240,16 @@ class EconomyFormulaParityTest {
         @ParameterizedTest
         @CsvSource(
             // pop, comm, commMax, trust, secu, secuMax, officers, isCapital, nationLevel, taxRate
+            // PHP golden values traced from func_time_event.php:88-104
             "10000, 500, 1000, 80,  500, 1000, 0, false, 1, 20",
             "50000, 800, 1000, 100, 900, 1000, 3, true,  3, 20",
             "5000,  200, 1000, 50,  100, 1000, 0, false, 5, 10",
             "30000, 1000,1000, 100, 1000,1000, 2, true,  7, 30",
             "1000,  100, 500,  30,  50,  200,  1, false, 2, 15",
+            // Edge cases: zero pop, max trust, min trust
+            "0,     500, 1000, 80,  500, 1000, 0, false, 1, 20",   // zero pop -> zero income
+            "10000, 500, 1000, 0,   500, 1000, 0, false, 1, 20",   // min trust -> trustRatio=0.5
+            "10000, 500, 1000, 100, 500, 1000, 0, false, 1, 20",   // max trust -> trustRatio=1.0
         )
         @DisplayName("Gold income golden value matches legacy formula exactly")
         fun `gold income golden values`(
@@ -311,9 +316,12 @@ class EconomyFormulaParityTest {
 
         @ParameterizedTest
         @CsvSource(
+            // PHP golden values traced from func_time_event.php:106-122
             "10000, 500, 1000, 80,  500, 1000, 0, false, 1, 20",
             "50000, 800, 1000, 100, 900, 1000, 2, true,  3, 20",
             "30000, 1000,1000, 60,  800, 1000, 1, false, 5, 15",
+            "5000,  200, 1000, 50,  100, 1000, 0, false, 1, 10",   // low agri ratio
+            "40000, 900, 1000, 90,  700, 1000, 1, true,  2, 25",   // high pop, near-max agri
         )
         @DisplayName("Rice income golden value matches legacy formula exactly")
         fun `rice income golden values`(
@@ -357,9 +365,12 @@ class EconomyFormulaParityTest {
 
         @ParameterizedTest
         @CsvSource(
+            // PHP golden values traced from func_time_event.php:124-139
             "500, 500, 1000, 500, 1000, 0, false, 1, 20",
             "800, 800, 1000, 900, 1000, 2, true,  3, 20",
             "1000,1000,1000, 1000,1000, 3, true,  7, 15",
+            "200, 300, 1000, 100, 1000, 0, false, 5, 10",   // low def/wall
+            "900, 950, 1000, 800, 1000, 1, true,  2, 25",   // near-max wall
         )
         @DisplayName("Wall income golden value matches legacy formula exactly")
         fun `wall income golden values`(
@@ -477,9 +488,16 @@ class EconomyFormulaParityTest {
 
         @ParameterizedTest
         @CsvSource(
+            // PHP golden values traced from func_converter.php:643-668
+            // getDedLevel = ceil(sqrt(dedication)/10) clamped [0, maxDedLevel=30]
+            // getBill = dedLevel * 200 + 400
             "0,     0, 400",     // dedLevel=ceil(0/10)=0, bill=0*200+400=400
+            "50,    1, 600",     // dedLevel=ceil(7.07/10)=1, bill=1*200+400=600
             "100,   1, 600",     // dedLevel=ceil(10/10)=1, bill=1*200+400=600
+            "400,   2, 800",     // dedLevel=ceil(20/10)=2, bill=2*200+400=800
+            "900,   3, 1000",    // dedLevel=ceil(30/10)=3, bill=3*200+400=1000
             "1000,  4, 1200",    // dedLevel=ceil(31.62/10)=4, bill=4*200+400=1200
+            "2500,  5, 1400",    // dedLevel=ceil(50/10)=5, bill=5*200+400=1400
             "10000, 10, 2400",   // dedLevel=ceil(100/10)=10
             "90000, 30, 6400",   // dedLevel=ceil(300/10)=30 (max)
             "100000,30, 6400",   // dedLevel=ceil(316.2/10)=32 -> clamped to 30
@@ -836,6 +854,227 @@ class EconomyFormulaParityTest {
             val goldLevel7 = nations[1L]!!.gold - 100000
 
             assertThat(goldLevel1).isGreaterThan(goldLevel7)
+        }
+    }
+
+    // ────────────────────────────────────────────────────────────────────────
+    // 12. Nation Type Modifier on Income
+    // Legacy func_time_event.php:101: $cityIncome = Util::round($nationType->onCalcNationalIncome('gold', $cityIncome))
+    // Nation types apply multipliers: 상인 gold*1.2, 농업국 rice*1.2, 도적 gold*0.9
+    // ────────────────────────────────────────────────────────────────────────
+
+    @Nested
+    @DisplayName("Nation Type Income Modifier — func_time_event.php:101")
+    inner class NationTypeIncomeModifier {
+
+        private fun nationWithType(
+            id: Long = 1, gold: Int = 100000, rice: Int = 100000,
+            level: Short = 1, rateTmp: Short = 20, bill: Short = 0,
+            capitalCityId: Long? = 99, typeCode: String = "che_중립",
+        ): Nation = Nation(
+            id = id, worldId = 1, name = "nation$id", color = "#FF0000",
+            gold = gold, rice = rice, level = level, rateTmp = rateTmp,
+            bill = bill, capitalCityId = capitalCityId,
+        ).also { it.typeCode = typeCode }
+
+        @Test
+        @DisplayName("상인 nation type gives 1.2x gold income (PHP: onCalcNationalIncome('gold', income))")
+        fun `merchant nation gold multiplier`() {
+            val c = city(pop = 20000, comm = 800, commMax = 1000, trust = 100f, secu = 500, secuMax = 1000)
+
+            // Neutral type (1.0x)
+            seed(listOf(c), listOf(nationWithType(gold = 100000, typeCode = "che_중립")),
+                listOf(general(npcState = 5), general(id = 99, dedication = 0, npcState = 0)))
+            service.preUpdateMonthly(world())
+            val goldNeutral = nations[1L]!!.gold - 100000
+
+            // 상인 type (1.2x gold)
+            seed(listOf(c), listOf(nationWithType(gold = 100000, typeCode = "che_상인")),
+                listOf(general(npcState = 5), general(id = 99, dedication = 0, npcState = 0)))
+            service.preUpdateMonthly(world())
+            val goldMerchant = nations[1L]!!.gold - 100000
+
+            // PHP: Util::round(income * 1.2) -> Kotlin: income * 1.2 then taxed
+            assertThat(goldMerchant.toDouble() / goldNeutral)
+                .describedAs("상인 gold multiplier should be ~1.2x")
+                .isCloseTo(1.2, within(0.02))
+        }
+
+        @Test
+        @DisplayName("농업국 nation type gives 1.2x rice income (PHP: onCalcNationalIncome('rice', income))")
+        fun `agricultural nation rice multiplier`() {
+            val c = city(pop = 20000, agri = 800, agriMax = 1000, trust = 100f, secu = 500, secuMax = 1000,
+                comm = 0, commMax = 0, wall = 0, wallMax = 0)
+
+            // Neutral type (1.0x)
+            seed(listOf(c), listOf(nationWithType(rice = 100000, typeCode = "che_중립")),
+                listOf(general(npcState = 5), general(id = 99, dedication = 0, npcState = 0)))
+            service.preUpdateMonthly(world())
+            val riceNeutral = nations[1L]!!.rice - 100000
+
+            // 농업국 type (1.2x rice)
+            seed(listOf(c), listOf(nationWithType(rice = 100000, typeCode = "che_농업국")),
+                listOf(general(npcState = 5), general(id = 99, dedication = 0, npcState = 0)))
+            service.preUpdateMonthly(world())
+            val riceAgri = nations[1L]!!.rice - 100000
+
+            assertThat(riceAgri.toDouble() / riceNeutral)
+                .describedAs("농업국 rice multiplier should be ~1.2x")
+                .isCloseTo(1.2, within(0.02))
+        }
+
+        @Test
+        @DisplayName("도적 nation type gives 0.9x gold income (PHP: onCalcNationalIncome('gold', income))")
+        fun `bandit nation gold penalty`() {
+            val c = city(pop = 20000, comm = 800, commMax = 1000, trust = 100f, secu = 500, secuMax = 1000)
+
+            // Neutral type (1.0x)
+            seed(listOf(c), listOf(nationWithType(gold = 100000, typeCode = "che_중립")),
+                listOf(general(npcState = 5), general(id = 99, dedication = 0, npcState = 0)))
+            service.preUpdateMonthly(world())
+            val goldNeutral = nations[1L]!!.gold - 100000
+
+            // 도적 type (0.9x gold)
+            seed(listOf(c), listOf(nationWithType(gold = 100000, typeCode = "che_도적")),
+                listOf(general(npcState = 5), general(id = 99, dedication = 0, npcState = 0)))
+            service.preUpdateMonthly(world())
+            val goldBandit = nations[1L]!!.gold - 100000
+
+            assertThat(goldBandit.toDouble() / goldNeutral)
+                .describedAs("도적 gold multiplier should be ~0.9x")
+                .isCloseTo(0.9, within(0.02))
+        }
+
+        @Test
+        @DisplayName("법가 nation type gives 1.1x gold income (PHP: onCalcNationalIncome('gold', income))")
+        fun `legalist nation gold modifier`() {
+            val c = city(pop = 20000, comm = 800, commMax = 1000, trust = 100f, secu = 500, secuMax = 1000)
+
+            // Neutral type (1.0x)
+            seed(listOf(c), listOf(nationWithType(gold = 100000, typeCode = "che_중립")),
+                listOf(general(npcState = 5), general(id = 99, dedication = 0, npcState = 0)))
+            service.preUpdateMonthly(world())
+            val goldNeutral = nations[1L]!!.gold - 100000
+
+            // 법가 type (1.1x gold)
+            seed(listOf(c), listOf(nationWithType(gold = 100000, typeCode = "che_법가")),
+                listOf(general(npcState = 5), general(id = 99, dedication = 0, npcState = 0)))
+            service.preUpdateMonthly(world())
+            val goldLegalist = nations[1L]!!.gold - 100000
+
+            assertThat(goldLegalist.toDouble() / goldNeutral)
+                .describedAs("법가 gold multiplier should be ~1.1x")
+                .isCloseTo(1.1, within(0.02))
+        }
+    }
+
+    // ────────────────────────────────────────────────────────────────────────
+    // 13. processIncome Salary Distribution (full + partial payment)
+    // Legacy ProcessIncome.php:
+    //   $originoutcome = getOutcome(100, generalList)  // sum of getBill(ded) for all generals
+    //   $outcome = round($nation['bill'] / 100 * $originoutcome)
+    //   Full: $ratio = $outcome / $originoutcome
+    //   Partial: $ratio = ($nation['gold'] - basegold) / $originoutcome
+    //   Per general: round(getBill(ded) * $ratio)
+    // ────────────────────────────────────────────────────────────────────────
+
+    @Nested
+    @DisplayName("processIncome Salary Distribution — ProcessIncome.php")
+    inner class ProcessIncomeSalaryDistribution {
+
+        @Test
+        @DisplayName("Full payment: nation gold sufficient for all salaries")
+        fun `full payment salary distribution`() {
+            // Nation gold = 50000 (plenty), bill = 100 (100%)
+            // 2 generals: ded=1000 -> bill=1200 each, totalBill=2400
+            // outcome = round(100/100 * 2400) = 2400
+            // Ratio = 2400 / 2400 = 1.0
+            // Each general gets: round(1200 * 1.0) = 1200 gold
+            val c = city(pop = 20000, comm = 800, commMax = 1000, trust = 100f)
+            val n = nation(gold = 50000, rice = 50000, bill = 100)
+            val g1 = general(id = 1, dedication = 1000, gold = 0, rice = 0)
+            val g2 = general(id = 2, dedication = 1000, gold = 0, rice = 0)
+            seed(listOf(c), listOf(n), listOf(g1, g2))
+
+            service.preUpdateMonthly(world())
+
+            val bill = legacyBill(1000)  // 1200
+            // Both generals should receive close to full bill amount
+            assertThat(generals[1L]!!.gold).isCloseTo(bill, within(2))
+            assertThat(generals[2L]!!.gold).isCloseTo(bill, within(2))
+        }
+
+        @Test
+        @DisplayName("Partial payment: nation gold insufficient, ratio < 1.0")
+        fun `partial payment salary distribution`() {
+            // Nation gold = 600, no income (zero commMax), bill = 100
+            // 1 general: ded=1000 -> bill=1200, outcome=1200
+            // gold(600) < outcome(1200): realOutcome = 600 - 0 = 600
+            // ratio = 600 / 1200 = 0.5
+            // General gets: round(1200 * 0.5) = 600
+            val c = city(commMax = 0, agriMax = 0, wallMax = 0)
+            val n = nation(gold = 600, rice = 600, bill = 100)
+            val g = general(dedication = 1000, gold = 0, rice = 0)
+            seed(listOf(c), listOf(n), listOf(g))
+
+            service.preUpdateMonthly(world())
+
+            // General should get partial salary
+            assertThat(generals[1L]!!.gold).isCloseTo(600, within(2))
+            // Nation gold should be at BASE_GOLD (0)
+            assertThat(nations[1L]!!.gold).isEqualTo(0)
+        }
+
+        @Test
+        @DisplayName("Different dedication levels get proportional salary")
+        fun `proportional salary by dedication`() {
+            // 2 generals: ded=100 -> bill=600, ded=10000 -> bill=2400
+            // totalBill = 3000, outcome = 3000
+            val c = city(commMax = 0, agriMax = 0, wallMax = 0)
+            val n = nation(gold = 3000, rice = 3000, bill = 100)
+            val g1 = general(id = 1, dedication = 100, gold = 0, rice = 0)
+            val g2 = general(id = 2, dedication = 10000, gold = 0, rice = 0)
+            seed(listOf(c), listOf(n), listOf(g1, g2))
+
+            service.preUpdateMonthly(world())
+
+            val bill1 = legacyBill(100)   // 600
+            val bill2 = legacyBill(10000) // 2400
+            // Both should get proportional amounts (ratio = 3000/3000 = 1.0)
+            assertThat(generals[1L]!!.gold).isCloseTo(bill1, within(2))
+            assertThat(generals[2L]!!.gold).isCloseTo(bill2, within(2))
+        }
+
+        @Test
+        @DisplayName("Bill rate < 100 reduces salary proportionally")
+        fun `bill rate reduces salary`() {
+            // bill = 50 (50%), ded=1000 -> originoutcome=1200, outcome=round(50/100*1200)=600
+            val c = city(commMax = 0, agriMax = 0, wallMax = 0)
+            val n = nation(gold = 5000, rice = 5000, bill = 50)
+            val g = general(dedication = 1000, gold = 0, rice = 0)
+            seed(listOf(c), listOf(n), listOf(g))
+
+            service.preUpdateMonthly(world())
+
+            // With bill=50, outcome = 600, ratio = 600/1200 = 0.5
+            // General gets: round(1200 * 0.5) = 600
+            assertThat(generals[1L]!!.gold).isCloseTo(600, within(2))
+        }
+
+        @Test
+        @DisplayName("Income added to treasury before salary deduction (PHP order)")
+        fun `income before salary deduction`() {
+            // Nation gold = 0, but city generates income
+            // PHP ProcessIncome.php:58: $nation['gold'] += $income FIRST, then salary
+            val c = city(pop = 20000, comm = 800, commMax = 1000, trust = 100f, secu = 500, secuMax = 1000)
+            val n = nation(gold = 0, rice = 0, bill = 100)
+            val g = general(dedication = 100, gold = 0, rice = 0)  // bill = 600
+            seed(listOf(c), listOf(n), listOf(g))
+
+            service.preUpdateMonthly(world())
+
+            // General should receive some salary (income was added first)
+            assertThat(generals[1L]!!.gold).isGreaterThan(0)
         }
     }
 }
