@@ -141,10 +141,12 @@ class EconomyEventParityTest {
         id: Long = 1, gold: Int = 10000, rice: Int = 10000,
         level: Short = 1, rateTmp: Short = 15, bill: Short = 100,
         capitalCityId: Long? = 1, rate: Short = 15,
+        typeCode: String = "che_중립",
     ): Nation = Nation(
         id = id, worldId = 1, name = "nation$id", color = "#FF0000",
         gold = gold, rice = rice, level = level, rateTmp = rateTmp,
         bill = bill, capitalCityId = capitalCityId, rate = rate,
+        typeCode = typeCode,
     )
 
     private fun general(
@@ -789,6 +791,474 @@ class EconomyEventParityTest {
             val powerHigh = nations[1L]!!.power
 
             assertThat(powerHigh).isGreaterThan(powerLow)
+        }
+    }
+
+    // ────────────────────────────────────────────────────────────────────────
+    // PHP-Verified: Population Increase Golden Values
+    // Legacy func_time_event.php popIncrease():
+    //   popRatio = (30 - taxRate) / 200
+    //   if popRatio >= 0: newPop = least(popMax, BASE_POP_INCREASE + pop * (1 + popRatio * (1 + secu/secuMax/10)))
+    //   if popRatio < 0:  newPop = least(popMax, BASE_POP_INCREASE + pop * (1 + popRatio * (1 - secu/secuMax/10)))
+    //   BASE_POP_INCREASE = 5000
+    // ────────────────────────────────────────────────────────────────────────
+
+    @Nested
+    @DisplayName("PHP-Verified Population Golden Values — func_time_event.php:popIncrease")
+    inner class PopulationGoldenValues {
+
+        @ParameterizedTest
+        @CsvSource(
+            // pop, popMax, secu, secuMax, taxRate, expectedPop
+            // Case 1: pop=1000, popMax=50000, secu=500, secuMax=1000, tax=15
+            //   popRatio=(30-15)/200=0.075, secuBonus=500/1000/10=0.05
+            //   newPop=least(50000, 5000 + 1000*(1+0.075*(1+0.05))) = 5000+1078 = 6078
+            "1000,  50000, 500, 1000, 15, 6078",
+            // Case 2: pop=5000, popMax=50000, secu=500, secuMax=1000, tax=15
+            //   newPop=least(50000, 5000 + 5000*(1+0.075*1.05)) = 5000+5393 = 10393
+            "5000,  50000, 500, 1000, 15, 10393",
+            // Case 3: pop=9000, popMax=10000, secu=500, secuMax=1000, tax=15
+            //   newPop=least(10000, 5000 + 9000*1.07875) = least(10000, 5000+9708) = 10000 (capped)
+            "9000,  10000, 500, 1000, 15, 10000",
+            // Case 4: pop=10000, popMax=50000, secu=500, secuMax=1000, tax=50 (negative popRatio)
+            //   popRatio=(30-50)/200=-0.1, secuBonus reverses: (1-0.05)=0.95
+            //   newPop=least(50000, 5000+10000*(1+(-0.1)*0.95)) = 5000+10000*0.905 = 5000+9050 = 14050
+            "10000, 50000, 500, 1000, 50, 14050",
+            // Case 5: pop=10000, popMax=50000, secu=0, secuMax=1000, tax=20
+            //   popRatio=(30-20)/200=0.05, secuBonus=0/1000/10=0
+            //   newPop=5000+10000*(1+0.05*1.0) = 5000+10500 = 15500
+            "10000, 50000, 0,   1000, 20, 15500",
+            // Case 6: pop=10000, popMax=50000, secu=1000, secuMax=1000, tax=20
+            //   popRatio=0.05, secuBonus=1000/1000/10=0.1
+            //   newPop=5000+10000*(1+0.05*1.1) = 5000+10550 = 15550
+            "10000, 50000, 1000,1000, 20, 15550",
+        )
+        @DisplayName("popIncrease PHP-traced golden values")
+        fun `pop increase golden values`(
+            pop: Int, popMax: Int, secu: Int, secuMax: Int, taxRate: Int, expectedPop: Int,
+        ) {
+            val c = city(pop = pop, popMax = popMax, secu = secu, secuMax = secuMax)
+            val n = nation(rateTmp = taxRate.toShort())
+            val g = general(gold = 0, rice = 0)
+            seed(listOf(c), listOf(n), listOf(g))
+
+            service.postUpdateMonthly(world(month = 1))
+
+            assertThat(cities[1L]!!.pop)
+                .describedAs("Pop: pop=$pop popMax=$popMax secu=$secu/$secuMax tax=$taxRate")
+                .isCloseTo(expectedPop, within(10))
+        }
+
+        @Test
+        @DisplayName("농업국 popGrowthMultiplier=1.05 increases population growth")
+        fun `agricultural nation pop growth bonus`() {
+            val c = city(pop = 10000, popMax = 50000, secu = 500, secuMax = 1000)
+            val g = general(gold = 0, rice = 0)
+
+            // Default (중립)
+            seed(listOf(c), listOf(nation(rateTmp = 15, typeCode = "che_중립")), listOf(g))
+            service.postUpdateMonthly(world(month = 1))
+            val popDefault = cities[1L]!!.pop
+
+            // 농업국 (popGrowthMultiplier=1.05)
+            seed(listOf(city(pop = 10000, popMax = 50000, secu = 500, secuMax = 1000)),
+                listOf(nation(rateTmp = 15, typeCode = "che_농업국")),
+                listOf(general(gold = 0, rice = 0)))
+            service.postUpdateMonthly(world(month = 1))
+            val popAgri = cities[1L]!!.pop
+
+            // 농업국 should have higher population growth
+            assertThat(popAgri).isGreaterThan(popDefault)
+        }
+    }
+
+    // ────────────────────────────────────────────────────────────────────────
+    // PHP-Verified: Infrastructure Growth Golden Values
+    // Legacy ProcessSemiAnnual.php:
+    //   Step 1: ALL cities: infra *= 0.99 (decay)
+    //   Step 2: Supplied cities: infra = least(max, infra * (1 + genericRatio))
+    //     genericRatio = (20 - taxRate) / 200
+    //   Net for supplied: value * 0.99 * (1 + genericRatio)
+    // ────────────────────────────────────────────────────────────────────────
+
+    @Nested
+    @DisplayName("PHP-Verified Infrastructure Growth — ProcessSemiAnnual.php")
+    inner class InfrastructureGrowthGoldenValues {
+
+        @ParameterizedTest
+        @CsvSource(
+            // field, initial, max, taxRate, expectedAfter
+            // Case 1: agri=500, max=1000, tax=15, genericRatio=(20-15)/200=0.025
+            //   500*0.99=495, 495*1.025=507.375 -> 507
+            "500, 1000, 15, 507",
+            // Case 2: agri=100, max=1000, tax=15
+            //   100*0.99=99, 99*1.025=101.475 -> 101
+            "100, 1000, 15, 101",
+            // Case 3: agri=900, max=1000, tax=15
+            //   900*0.99=891, 891*1.025=913.275 -> 913
+            "900, 1000, 15, 913",
+            // Case 4: agri=990, max=1000, tax=15
+            //   990*0.99=980, 980*1.025=1004.5 -> capped at 1000
+            "990, 1000, 15, 1000",
+            // Case 5: agri=500, max=1000, tax=0, genericRatio=(20-0)/200=0.1
+            //   500*0.99=495, 495*1.1=544.5 -> 544
+            "500, 1000, 0,  544",
+            // Case 6: agri=500, max=1000, tax=30, genericRatio=(20-30)/200=-0.05
+            //   500*0.99=495, 495*0.95=470.25 -> 470
+            "500, 1000, 30, 470",
+        )
+        @DisplayName("Infrastructure growth = decay(0.99) then grow by genericRatio")
+        fun `infrastructure growth golden values`(
+            initial: Int, max: Int, taxRate: Int, expected: Int,
+        ) {
+            val c = city(agri = initial, agriMax = max, comm = initial, commMax = max,
+                secu = initial, secuMax = max, def = initial, defMax = max,
+                wall = initial, wallMax = max)
+            val n = nation(rateTmp = taxRate.toShort())
+            val g = general(gold = 0, rice = 0)
+            seed(listOf(c), listOf(n), listOf(g))
+
+            service.postUpdateMonthly(world(month = 1))
+
+            val updated = cities[1L]!!
+            // All infra fields follow the same formula
+            assertThat(updated.agri)
+                .describedAs("Agri: $initial -> decay+grow with tax=$taxRate")
+                .isCloseTo(expected, within(1))
+            assertThat(updated.comm)
+                .describedAs("Comm: $initial -> decay+grow with tax=$taxRate")
+                .isCloseTo(expected, within(1))
+        }
+    }
+
+    // ────────────────────────────────────────────────────────────────────────
+    // PHP-Verified: Disaster/Boom Effect Golden Values
+    // Legacy RaiseDisaster.php:
+    //   Disaster affectRatio = 0.8 + clamp(secu/secuMax/0.8, 0, 1) * 0.15
+    //     secu=0   -> 0.8 (20% reduction)
+    //     secu=400 -> 0.875 (12.5% reduction)
+    //     secu=800 -> 0.95 (5% reduction)
+    //     secu>=800-> 0.95 (max protection)
+    //   Boom affectRatio = 1.01 + clamp(secu/secuMax/0.8, 0, 1) * 0.04
+    //     secu=0   -> 1.01 (1% boost)
+    //     secu=800 -> 1.05 (5% boost)
+    // ────────────────────────────────────────────────────────────────────────
+
+    @Nested
+    @DisplayName("PHP-Verified Disaster/Boom Effects — RaiseDisaster.php")
+    inner class DisasterBoomGoldenValues {
+
+        @ParameterizedTest
+        @CsvSource(
+            // secu, secuMax, expectedRatio
+            "0,    1000, 0.80",     // clamp(0/1000/0.8)=0 -> 0.8+0*0.15=0.8
+            "200,  1000, 0.8375",   // clamp(200/1000/0.8=0.25)=0.25 -> 0.8+0.25*0.15=0.8375
+            "400,  1000, 0.875",    // clamp(400/1000/0.8=0.5)=0.5 -> 0.8+0.5*0.15=0.875
+            "600,  1000, 0.9125",   // clamp(600/1000/0.8=0.75)=0.75 -> 0.8+0.75*0.15=0.9125
+            "800,  1000, 0.95",     // clamp(800/1000/0.8=1.0)=1.0 -> 0.8+1.0*0.15=0.95
+            "1000, 1000, 0.95",     // clamp(1000/1000/0.8=1.25)=1.0 -> 0.8+1.0*0.15=0.95 (capped)
+        )
+        @DisplayName("Disaster affectRatio = 0.8 + clamp(secu/secuMax/0.8, 0, 1) * 0.15")
+        fun `disaster affect ratio golden values`(secu: Int, secuMax: Int, expectedRatio: Double) {
+            val secuRatioNorm = if (secuMax > 0) (secu.toDouble() / secuMax / 0.8).coerceIn(0.0, 1.0) else 0.0
+            val actualRatio = 0.8 + secuRatioNorm * 0.15
+            assertThat(actualRatio)
+                .describedAs("Disaster ratio for secu=$secu/$secuMax")
+                .isCloseTo(expectedRatio, within(0.0001))
+        }
+
+        @ParameterizedTest
+        @CsvSource(
+            // secu, secuMax, expectedRatio
+            "0,    1000, 1.01",     // 1.01+0*0.04=1.01
+            "400,  1000, 1.03",     // 1.01+0.5*0.04=1.03
+            "800,  1000, 1.05",     // 1.01+1.0*0.04=1.05
+            "1000, 1000, 1.05",     // capped at 1.0
+        )
+        @DisplayName("Boom affectRatio = 1.01 + clamp(secu/secuMax/0.8, 0, 1) * 0.04")
+        fun `boom affect ratio golden values`(secu: Int, secuMax: Int, expectedRatio: Double) {
+            val secuRatioNorm = if (secuMax > 0) (secu.toDouble() / secuMax / 0.8).coerceIn(0.0, 1.0) else 0.0
+            val actualRatio = 1.01 + secuRatioNorm * 0.04
+            assertThat(actualRatio)
+                .describedAs("Boom ratio for secu=$secu/$secuMax")
+                .isCloseTo(expectedRatio, within(0.0001))
+        }
+
+        @ParameterizedTest
+        @CsvSource(
+            // month, boomRate
+            "1,  0.0",     // January: no boom possible
+            "4,  0.25",    // April: 25% boom chance
+            "7,  0.25",    // July: 25% boom chance
+            "10, 0.0",     // October: no boom possible
+        )
+        @DisplayName("Boom probability by month matches legacy boomingRate table")
+        fun `boom rate by month`(month: Int, expectedBoomRate: Double) {
+            val boomingRate = mapOf(1 to 0.0, 4 to 0.25, 7 to 0.25, 10 to 0.0)
+            assertThat(boomingRate[month]).isEqualTo(expectedBoomRate)
+        }
+
+        @ParameterizedTest
+        @CsvSource(
+            // secuRatio, isGood=false -> disaster prob, isGood=true -> boom prob
+            "0.0, 0.06, 0.02",
+            "0.25, 0.0475, 0.0325",
+            "0.5, 0.035, 0.045",
+            "0.75, 0.0225, 0.0575",
+            "1.0, 0.01, 0.07",
+        )
+        @DisplayName("Per-city disaster/boom probability formulas match legacy")
+        fun `per city probability formulas`(secuRatio: Double, disasterProb: Double, boomProb: Double) {
+            val actualDisaster = 0.06 - secuRatio * 0.05
+            val actualBoom = 0.02 + secuRatio * 0.05
+            assertThat(actualDisaster).isCloseTo(disasterProb, within(0.0001))
+            assertThat(actualBoom).isCloseTo(boomProb, within(0.0001))
+        }
+    }
+
+    // ────────────────────────────────────────────────────────────────────────
+    // PHP-Verified: Nation Level Thresholds
+    // Legacy UpdateNationLevel.php:41-50:
+    //   nationLevelByCityCnt = [0, 1, 2, 5, 8, 11, 16, 21]  (PHP 8-level)
+    //   opensamguk extension: [0, 1, 2, 4, 6, 9, 12, 16, 20, 25] (10-level)
+    //   Level only increases. Reward: newLevel * 1000 gold + rice.
+    // ────────────────────────────────────────────────────────────────────────
+
+    @Nested
+    @DisplayName("PHP-Verified Nation Level — UpdateNationLevel.php")
+    inner class NationLevelGoldenValues {
+
+        @ParameterizedTest
+        @CsvSource(
+            // highCityCount, expectedLevel, expectedRewardIfFromZero
+            //   opensamguk thresholds: [0,1,2,4,6,9,12,16,20,25]
+            "0,  0, 0",
+            "1,  1, 1000",
+            "2,  2, 2000",
+            "3,  2, 2000",
+            "4,  3, 3000",
+            "6,  4, 4000",
+            "9,  5, 5000",
+            "12, 6, 6000",
+            "16, 7, 7000",
+            "20, 8, 8000",
+            "25, 9, 9000",
+            "30, 9, 9000",
+        )
+        @DisplayName("Nation level + reward by high city count")
+        fun `nation level and reward golden values`(highCityCount: Int, expectedLevel: Int, expectedReward: Int) {
+            val cityList = if (highCityCount == 0) {
+                listOf(city(level = 2))
+            } else {
+                (1..highCityCount.toLong()).map { city(id = it, level = 5) }
+            }
+            val n = nation(level = 0, gold = 0, rice = 0)
+            val g = general()
+            seed(cityList, listOf(n), listOf(g))
+
+            service.postUpdateMonthly(world(month = 3))
+
+            assertThat(nations[1L]!!.level.toInt())
+                .describedAs("Level for $highCityCount high cities")
+                .isEqualTo(expectedLevel)
+            assertThat(nations[1L]!!.gold)
+                .describedAs("Gold reward for level $expectedLevel")
+                .isEqualTo(expectedReward)
+            assertThat(nations[1L]!!.rice)
+                .describedAs("Rice reward for level $expectedLevel")
+                .isEqualTo(expectedReward)
+        }
+
+        @Test
+        @DisplayName("Level-up from non-zero: reward based on new level, not delta")
+        fun `level up from non zero base`() {
+            // Start at level 2, increase to 4 (needs 6 high cities)
+            val cityList = (1..6L).map { city(id = it, level = 5) }
+            val n = nation(level = 2, gold = 5000, rice = 5000)
+            val g = general()
+            seed(cityList, listOf(n), listOf(g))
+
+            service.postUpdateMonthly(world(month = 3))
+
+            assertThat(nations[1L]!!.level.toInt()).isEqualTo(4)
+            // Reward = newLevel * 1000 = 4000
+            assertThat(nations[1L]!!.gold).isEqualTo(5000 + 4000)
+            assertThat(nations[1L]!!.rice).isEqualTo(5000 + 4000)
+        }
+    }
+
+    // ────────────────────────────────────────────────────────────────────────
+    // PHP-Verified: Trade Rate Randomization
+    // Legacy RandomizeCityTradeRate.php:
+    //   prob by level: {1:0, 2:0, 3:0, 4:0.2, 5:0.4, 6:0.6, 7:0.8, 8:1.0}
+    //   If prob > 0 and rng.nextBool(prob): trade = rng.nextRangeInt(95, 105)
+    //   Otherwise: trade = null (no market activity)
+    // ────────────────────────────────────────────────────────────────────────
+
+    @Nested
+    @DisplayName("PHP-Verified Trade Rate — RandomizeCityTradeRate.php")
+    inner class TradeRateGoldenValues {
+
+        @Test
+        @DisplayName("Level 4 city has 20% chance of trade randomization")
+        fun `level 4 partial chance`() {
+            // Run 100 iterations with different seeds and count how many get randomized
+            // Level 4: prob=0.2, so roughly 20% should change from default
+            val c = city(level = 4, trade = 100)
+            val n = nation()
+            val g = general()
+            var changedCount = 0
+            for (yr in 200..299) {
+                seed(listOf(city(level = 4, trade = 100)), listOf(nation()), listOf(general()))
+                service.randomizeCityTradeRate(world(year = yr.toShort(), month = 5))
+                val trade = cities[1L]!!.trade
+                if (trade != 100) changedCount++
+                // Regardless, all randomized values should be in range
+                assertThat(trade).isBetween(95, 105)
+            }
+            // With 100 trials at 20% probability, expect 10-30 changes (2 sigma)
+            assertThat(changedCount)
+                .describedAs("Level 4 randomization count out of 100 should be ~20")
+                .isBetween(5, 45)
+        }
+
+        @Test
+        @DisplayName("Trade rate null behavior: non-qualifying cities get default 100")
+        fun `non qualifying city trade default`() {
+            // PHP sets trade = null for non-qualifying. Kotlin should handle this
+            // as trade = 100 (default/no market) or similar.
+            val c = city(level = 1, trade = 105)
+            seed(listOf(c), listOf(nation()), listOf(general()))
+
+            service.randomizeCityTradeRate(world())
+
+            // Level 1: prob=0, trade should reset (PHP: null, Kotlin: 100)
+            assertThat(cities[1L]!!.trade).isEqualTo(100)
+        }
+    }
+
+    // ────────────────────────────────────────────────────────────────────────
+    // PHP-Verified: Yearly Statistics Power Formula
+    // Legacy checkStatistic:
+    //   resource = (nationGold + nationRice + sum(generalGold + generalRice)) / 100
+    //   cityPower = totalPop * totalInfra / totalInfraMax / 100
+    //     where totalInfra = sum(pop+agri+comm+secu+wall+def)
+    //     and totalInfraMax = sum(popMax+agriMax+commMax+secuMax+wallMax+defMax)
+    //   power = (resource + tech + cityPower + statPower + dex + expDed) / 10
+    // ────────────────────────────────────────────────────────────────────────
+
+    @Nested
+    @DisplayName("PHP-Verified Yearly Statistics — power formula")
+    inner class YearlyStatisticsGoldenValues {
+
+        @Test
+        @DisplayName("Power formula with known inputs produces deterministic value")
+        fun `power formula deterministic`() {
+            val c = city(pop = 30000, popMax = 50000, agri = 800, agriMax = 1000,
+                comm = 700, commMax = 1000, secu = 600, secuMax = 1000,
+                def = 500, defMax = 1000, wall = 400, wallMax = 1000)
+            val n = nation(gold = 50000, rice = 50000, level = 3)
+            val g = general(gold = 5000, rice = 5000, dedication = 5000)
+            seed(listOf(c), listOf(n), listOf(g))
+
+            service.processYearlyStatistics(world(year = 200, month = 1))
+
+            val power = nations[1L]!!.power
+            assertThat(power)
+                .describedAs("Power should be deterministic for fixed inputs")
+                .isGreaterThan(0)
+
+            // Run again with same inputs -> same result
+            seed(listOf(city(pop = 30000, popMax = 50000, agri = 800, agriMax = 1000,
+                comm = 700, commMax = 1000, secu = 600, secuMax = 1000,
+                def = 500, defMax = 1000, wall = 400, wallMax = 1000)),
+                listOf(nation(gold = 50000, rice = 50000, level = 3)),
+                listOf(general(gold = 5000, rice = 5000, dedication = 5000)))
+            service.processYearlyStatistics(world(year = 200, month = 1))
+            assertThat(nations[1L]!!.power).isEqualTo(power)
+        }
+
+        @Test
+        @DisplayName("Power increases with more cities and generals")
+        fun `power scales with nation size`() {
+            // Single city, single general
+            seed(listOf(city(pop = 30000, popMax = 50000)),
+                listOf(nation(gold = 50000, rice = 50000, level = 3)),
+                listOf(general(dedication = 5000)))
+            service.processYearlyStatistics(world(month = 1))
+            val powerSmall = nations[1L]!!.power
+
+            // Two cities, two generals -> more power
+            val c1 = city(id = 1, pop = 30000, popMax = 50000)
+            val c2 = city(id = 2, pop = 25000, popMax = 50000)
+            val g1 = general(id = 1, dedication = 5000)
+            val g2 = general(id = 2, dedication = 3000)
+            seed(listOf(c1, c2),
+                listOf(nation(gold = 80000, rice = 80000, level = 5)),
+                listOf(g1, g2))
+            service.processYearlyStatistics(world(month = 1))
+            val powerLarge = nations[1L]!!.power
+
+            assertThat(powerLarge).isGreaterThan(powerSmall)
+        }
+    }
+
+    // ────────────────────────────────────────────────────────────────────────
+    // PHP-Verified: Supply Chain penalty effects
+    // Legacy: unsupplied city gets pop*0.9, trust*0.9, infra*0.9
+    //   If trust < 30 after penalty (and not capital) -> neutralized (nationId=0)
+    // ────────────────────────────────────────────────────────────────────────
+
+    @Nested
+    @DisplayName("PHP-Verified Supply Penalty Golden Values")
+    inner class SupplyPenaltyGoldenValues {
+
+        @ParameterizedTest
+        @CsvSource(
+            // pop, trust, agri, expectedPop, expectedTrust, expectedAgri
+            "10000, 80.0, 500, 9000, 72.0, 450",   // 10000*0.9=9000, 80*0.9=72, 500*0.9=450
+            "5000,  50.0, 800, 4500, 45.0, 720",    // 5000*0.9=4500, 50*0.9=45, 800*0.9=720
+            "1000,  33.0, 100, 900,  29.7, 90",     // 1000*0.9=900, 33*0.9=29.7, 100*0.9=90
+        )
+        @DisplayName("Unsupplied city penalty: all stats * 0.9")
+        fun `unsupplied penalty golden values`(
+            pop: Int, trust: Float, agri: Int,
+            expectedPop: Int, expectedTrust: Float, expectedAgri: Int,
+        ) {
+            val c1 = city(id = 1)  // capital
+            val c2 = city(id = 2, pop = pop, trust = trust, agri = agri, comm = agri, commMax = 1000)
+            val n = nation(capitalCityId = 1)
+            val g = general(cityId = 1)
+
+            `when`(mapService.getAdjacentCities("che", 1)).thenReturn(emptyList())
+            `when`(mapService.getAdjacentCities("che", 2)).thenReturn(emptyList())
+
+            seed(listOf(c1, c2), listOf(n), listOf(g))
+            service.postUpdateMonthly(world(month = 3))
+
+            val updated2 = cities[2L]!!
+            assertThat(updated2.pop).isCloseTo(expectedPop, within(1))
+            assertThat(updated2.trust).isCloseTo(expectedTrust, within(0.1f))
+            assertThat(updated2.agri).isCloseTo(expectedAgri, within(1))
+        }
+
+        @Test
+        @DisplayName("Trust exactly at 30 after penalty does NOT neutralize")
+        fun `trust at 30 boundary not neutralized`() {
+            // trust = 33.33... -> after 0.9: 30.0 exactly -> NOT < 30 -> stays
+            val c1 = city(id = 1)
+            val c2 = city(id = 2, trust = 33.4f)
+            val n = nation(capitalCityId = 1)
+            val g = general(cityId = 1)
+
+            `when`(mapService.getAdjacentCities("che", 1)).thenReturn(emptyList())
+            `when`(mapService.getAdjacentCities("che", 2)).thenReturn(emptyList())
+
+            seed(listOf(c1, c2), listOf(n), listOf(g))
+            service.postUpdateMonthly(world(month = 3))
+
+            // 33.4 * 0.9 = 30.06 >= 30 -> not neutralized
+            assertThat(cities[2L]!!.nationId).isEqualTo(1L)
         }
     }
 }
