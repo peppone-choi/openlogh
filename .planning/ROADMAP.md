@@ -112,11 +112,11 @@ Plans:
   3. Food consumption for an army of known size with known supply route produces the same depletion as legacy PHP
   4. Population growth/decline over 12 turns for a city with known conditions matches legacy PHP within zero tolerance
   5. Semi-annual salary distribution for a nation with known officer roster produces the same gold deductions as legacy PHP
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 06-01: TBD
-- [ ] 06-02: TBD
+- [ ] 06-01-PLAN.md — Clone legacy-core, verify/extend income/salary/semi-annual/supply/disaster golden values against PHP (ECON-01,03,04,05,06)
+- [ ] 06-02-PLAN.md — Economy command parity tests (12 commands) + 24-turn integration simulation + turn pipeline ordering (ECON-01..06, D-01)
 
 ### Phase 7: Command Parity
 **Goal**: All 93 registered commands (55 general + 38 nation) produce identical entity mutations, log messages, and resource changes as legacy PHP
@@ -127,7 +127,7 @@ Plans:
   2. Each of 38 nation commands, given the same pre-state, produces the same post-state entity mutations as legacy PHP
   3. Command constraint checks (cooldowns, resource costs, prerequisites) accept and reject the same inputs as legacy PHP
   4. Command result side effects (log messages, notification triggers, stat changes) match legacy PHP
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
 - [ ] 07-01: TBD
@@ -143,7 +143,7 @@ Plans:
   2. NPC diplomacy AI proposes and responds to the same diplomatic actions as legacy PHP (fixing the "completely different" divergence)
   3. NPC recruitment and personnel management decisions (hire, fire, assign) match legacy PHP behavior
   4. NPC strategic priority ordering (when to attack vs. defend vs. develop) matches legacy PHP for early-game, mid-game, and late-game states
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
 - [ ] 08-01: TBD
@@ -159,7 +159,7 @@ Plans:
   2. Turn step ordering matches legacy daemon.ts exactly (verified by golden snapshot comparison)
   3. Disaster and random event trigger probabilities match legacy PHP values (boom, drought, plague, etc.)
   4. updateOnline and updateGeneralNumber produce the same snapshots as legacy for the same game state
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
 - [ ] 09-01: TBD
@@ -175,7 +175,7 @@ Plans:
   3. Unification and game-end conditions trigger at the same point as legacy PHP
   4. NPC general stats in all 80+ scenarios match legacy 3-stat values (leadership, strength, intel)
   5. City initial conditions (population, development, defense) and scenario start conditions (year, month, nation relations) match legacy data files
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
 - [ ] 10-01: TBD
@@ -190,7 +190,7 @@ Plans:
   2. The general detail page displays correct calculated stats matching backend values
   3. The nation management page shows correct aggregated data (total troops, cities, officers, treasury)
   4. Battle logs display the same combat events, damage values, and trigger activations as the legacy battle log format
-**Plans**: TBD
+**Plans**: 2 plans
 **UI hint**: yes
 
 Plans:
