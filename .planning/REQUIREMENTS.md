@@ -54,12 +54,12 @@ Requirements for legacy parity milestone. Each maps to roadmap phases.
 
 ### Economy
 
-- [ ] **ECON-01**: Verify tax collection formula matches legacy
+- [x] **ECON-01**: Verify tax collection formula matches legacy
 - [ ] **ECON-02**: Verify trade income formula matches legacy
-- [ ] **ECON-03**: Verify supply/food consumption formula matches legacy
-- [ ] **ECON-04**: Verify population growth/decline formula matches legacy
-- [ ] **ECON-05**: Verify city development formulas match legacy
-- [ ] **ECON-06**: Verify semi-annual salary distribution matches legacy
+- [x] **ECON-03**: Verify supply/food consumption formula matches legacy
+- [x] **ECON-04**: Verify population growth/decline formula matches legacy
+- [x] **ECON-05**: Verify city development formulas match legacy
+- [x] **ECON-06**: Verify semi-annual salary distribution matches legacy
 
 ### NPC AI
 
@@ -164,12 +164,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | MOD-02 | Phase 5: Modifier Pipeline | Pending |
 | MOD-03 | Phase 5: Modifier Pipeline | Pending |
 | MOD-04 | Phase 5: Modifier Pipeline | Pending |
-| ECON-01 | Phase 6: Economy Parity | Pending |
+| ECON-01 | Phase 6: Economy Parity | Complete |
 | ECON-02 | Phase 6: Economy Parity | Pending |
-| ECON-03 | Phase 6: Economy Parity | Pending |
-| ECON-04 | Phase 6: Economy Parity | Pending |
-| ECON-05 | Phase 6: Economy Parity | Pending |
-| ECON-06 | Phase 6: Economy Parity | Pending |
+| ECON-03 | Phase 6: Economy Parity | Complete |
+| ECON-04 | Phase 6: Economy Parity | Complete |
+| ECON-05 | Phase 6: Economy Parity | Complete |
+| ECON-06 | Phase 6: Economy Parity | Complete |
 | CMD-01 | Phase 7: Command Parity | Pending |
 | CMD-02 | Phase 7: Command Parity | Pending |
 | CMD-03 | Phase 7: Command Parity | Pending |
