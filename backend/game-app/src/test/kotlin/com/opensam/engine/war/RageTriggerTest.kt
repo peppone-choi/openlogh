@@ -236,4 +236,35 @@ class RageTriggerTest {
 
         assertEquals(0, ctx.rageActivationCount)
     }
+
+    // ========== Test 12: Integration — onPreAttack fires through BattleEngine pattern ==========
+
+    @Test
+    fun `onPreAttack fires through BattleEngine pattern with accumulated rage state`() {
+        // Simulate BattleEngine's phase loop: onPostDamage accumulates rage,
+        // then onPreAttack in next phase applies the multiplier.
+
+        // Phase 1: onPostDamage with critical -> rage activates
+        val seed = findSeed(0.5, wantBelow = true)
+        var attackerRageActivationCount = 0
+
+        val postDamageCtx = makeCtx(rng = Random(seed))
+        postDamageCtx.criticalActivated = true
+        postDamageCtx.rageActivationCount = attackerRageActivationCount
+        RageTrigger.onPostDamage(postDamageCtx)
+        attackerRageActivationCount = postDamageCtx.rageActivationCount
+
+        // Verify rage accumulated
+        assertEquals(1, attackerRageActivationCount,
+            "After onPostDamage with critical, rageActivationCount should be 1")
+
+        // Phase 2: onPreAttack should see accumulated rage and apply multiplier
+        val preAttackCtx = makeCtx()
+        preAttackCtx.rageActivationCount = attackerRageActivationCount
+        RageTrigger.onPreAttack(preAttackCtx)
+
+        // 1.0 * (1 + 0.2 * 1) = 1.2
+        assertEquals(1.2, preAttackCtx.attackMultiplier, 0.001,
+            "onPreAttack should apply attackMultiplier 1.2 after 1 rage activation")
+    }
 }
