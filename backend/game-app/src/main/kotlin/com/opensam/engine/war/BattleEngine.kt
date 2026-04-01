@@ -45,6 +45,7 @@ class BattleEngine {
 
         // Collect attacker triggers once (used across engagements)
         val attackerTriggers = collectTriggers(attacker)
+        val attackerWarTriggers = collectWarUnitTriggers(attacker)
 
         // Track injury immunity from init triggers
         var attackerInjuryImmune = false
@@ -75,6 +76,7 @@ class BattleEngine {
                 }
 
                 val defenderTriggers = collectTriggers(currentDefender)
+                val defenderWarTriggers = collectWarUnitTriggers(currentDefender)
 
                 val initCtx = BattleTriggerContext(
                     attacker = attacker, defender = currentDefender, rng = rng,
@@ -82,6 +84,9 @@ class BattleEngine {
                 )
                 for (trigger in attackerTriggers) trigger.onBattleInit(initCtx)
                 for (trigger in defenderTriggers) trigger.onBattleInit(initCtx)
+                // WarUnitTrigger: onEngagementStart (once per new opponent)
+                for (trigger in attackerWarTriggers) trigger.onEngagementStart(initCtx)
+                for (trigger in defenderWarTriggers) trigger.onEngagementStart(initCtx)
                 if (initCtx.injuryImmune) attackerInjuryImmune = true
                 logs.addAll(initCtx.battleLogs)
                 defenderInitialized = true
@@ -103,6 +108,14 @@ class BattleEngine {
                 defenderDamageDealtForExp[currentDefender] =
                     (defenderDamageDealtForExp[currentDefender] ?: 0) + phaseResult.damage.first
             }
+
+            // WarUnitTrigger: onPostDamage (per phase after damage)
+            val postDamageCtx = BattleTriggerContext(
+                attacker = attacker, defender = currentDefender, rng = rng,
+                phaseNumber = currentPhase - 1, isVsCity = inSiege,
+            )
+            for (trigger in attackerWarTriggers) trigger.onPostDamage(postDamageCtx)
+            logs.addAll(postDamageCtx.battleLogs)
 
             // Attacker continuation check
             val attackerContinuation = attacker.continueWar()
@@ -129,6 +142,14 @@ class BattleEngine {
             }
 
             if (!defenderCanContinue) {
+                // WarUnitTrigger: onPostRound (after all phases with one opponent)
+                val roundCtx = BattleTriggerContext(
+                    attacker = attacker, defender = currentDefender, rng = rng,
+                    isVsCity = inSiege,
+                )
+                for (trigger in attackerWarTriggers) trigger.onPostRound(roundCtx)
+                logs.addAll(roundCtx.battleLogs)
+
                 if (currentDefender is WarUnitCity && inSiege) {
                     // City walls defeated — city conquered!
                     cityOccupied = true
@@ -338,6 +359,7 @@ class BattleEngine {
 
         val sortedDefenders = defenders.sortedByDescending { it.calcBattleOrder() }.toMutableList()
         val attackerTriggers = collectTriggers(attacker)
+        val attackerWarTriggers = collectWarUnitTriggers(attacker)
         var attackerInjuryImmune = false
 
         val attackerCrewType = CrewType.fromCode(attacker.crewType)
@@ -363,9 +385,13 @@ class BattleEngine {
                     currentDefender.train = (currentDefender.train + 1).coerceAtMost(110)
                 }
                 val defenderTriggers = collectTriggers(currentDefender)
+                val defenderWarTriggers = collectWarUnitTriggers(currentDefender)
                 val initCtx = BattleTriggerContext(attacker = attacker, defender = currentDefender, rng = rng, isVsCity = inSiege)
                 for (trigger in attackerTriggers) trigger.onBattleInit(initCtx)
                 for (trigger in defenderTriggers) trigger.onBattleInit(initCtx)
+                // WarUnitTrigger: onEngagementStart (once per new opponent)
+                for (trigger in attackerWarTriggers) trigger.onEngagementStart(initCtx)
+                for (trigger in defenderWarTriggers) trigger.onEngagementStart(initCtx)
                 if (initCtx.injuryImmune) attackerInjuryImmune = true
                 logs.addAll(initCtx.battleLogs)
                 defenderInitialized = true
@@ -396,6 +422,14 @@ class BattleEngine {
                     (defenderDamageDealtForExp[currentDefender] ?: 0) + phaseResult.damage.first
             }
 
+            // WarUnitTrigger: onPostDamage (per phase after damage)
+            val postDamageCtx = BattleTriggerContext(
+                attacker = attacker, defender = currentDefender, rng = rng,
+                phaseNumber = currentPhase - 1, isVsCity = inSiege,
+            )
+            for (trigger in attackerWarTriggers) trigger.onPostDamage(postDamageCtx)
+            logs.addAll(postDamageCtx.battleLogs)
+
             val attackerContinuation = attacker.continueWar()
             if (!attackerContinuation.canContinue) {
                 logs.add(
@@ -418,6 +452,14 @@ class BattleEngine {
             }
 
             if (!defenderCanContinue) {
+                // WarUnitTrigger: onPostRound (after all phases with one opponent)
+                val roundCtx = BattleTriggerContext(
+                    attacker = attacker, defender = currentDefender, rng = rng,
+                    isVsCity = inSiege,
+                )
+                for (trigger in attackerWarTriggers) trigger.onPostRound(roundCtx)
+                logs.addAll(roundCtx.battleLogs)
+
                 if (currentDefender is WarUnitCity && inSiege) {
                     cityOccupied = true
                     cityUnit.applyResults()
@@ -687,6 +729,14 @@ class BattleEngine {
         return listOfNotNull(
             BattleTriggerRegistry.get(unit.general.specialCode),
             BattleTriggerRegistry.get(unit.general.special2Code),
+        ).sortedBy { it.priority }
+    }
+
+    internal fun collectWarUnitTriggers(unit: WarUnit): List<WarUnitTrigger> {
+        if (unit !is WarUnitGeneral) return emptyList()
+        return listOfNotNull(
+            WarUnitTriggerRegistry.get(unit.general.specialCode),
+            WarUnitTriggerRegistry.get(unit.general.special2Code),
         ).sortedBy { it.priority }
     }
 
