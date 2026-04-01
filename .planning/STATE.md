@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: verifying
-stopped_at: Phase 4 context gathered
-last_updated: "2026-04-01T06:42:40.252Z"
+status: executing
+stopped_at: Completed 04-02-PLAN.md
+last_updated: "2026-04-01T07:19:38.115Z"
 last_activity: 2026-04-01
 progress:
   total_phases: 11
-  completed_phases: 3
-  total_plans: 8
-  completed_plans: 8
+  completed_phases: 4
+  total_plans: 10
+  completed_plans: 10
   percent: 0
 ---
 
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-31)
 
 **Core value:** Every game mechanic must produce identical outcomes to the legacy PHP implementation given the same inputs.
-**Current focus:** Phase 03 — battle-framework-and-core-triggers
+**Current focus:** Phase 04 — battle-completion
 
 ## Current Position
 
-Phase: 03 (battle-framework-and-core-triggers) — EXECUTING
-Plan: 3 of 3
-Status: Phase complete — ready for verification
+Phase: 04 (battle-completion) — EXECUTING
+Plan: 2 of 2
+Status: Ready to execute
 Last activity: 2026-04-01
 
 Progress: [░░░░░░░░░░] 0%
@@ -60,6 +60,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 03 P02 | 7min | 2 tasks | 9 files |
 | Phase 03 P03 | 10min | 1 tasks | 1 files |
 | Phase 03 P04 | 14min | 1 tasks | 2 files |
+| Phase 04 P02 | 9min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -85,6 +86,8 @@ Recent decisions affecting current work:
 - [Phase 03]: RageTrigger uses legacy TODO formula (1+0.2*count) over existing rollCriticalDamageMultiplier -- closer to PHP intent
 - [Phase 03]: Che*Trigger objects kept as no-ops in BattleTriggerRegistry rather than removed -- avoids breaking registry presence checks
 - [Phase 03]: No architectural changes needed for onPreAttack wiring -- loop-scoped var pattern for cross-phase state persistence
+- [Phase 04]: Golden value approach: fixed-seed RNG output captured and locked as expected values for battle formula regression detection
+- [Phase 04]: Coefficient tests use golden value locks (not comparative ratios) - different CrewType base stats make naive damage comparison unreliable
 
 ### Pending Todos
 
@@ -97,6 +100,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-01T06:42:40.249Z
-Stopped at: Phase 4 context gathered
-Resume file: .planning/phases/04-battle-completion/04-CONTEXT.md
+Last session: 2026-04-01T07:19:38.112Z
+Stopped at: Completed 04-02-PLAN.md
+Resume file: None

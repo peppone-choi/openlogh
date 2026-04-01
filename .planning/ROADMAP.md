@@ -84,8 +84,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 04-01-PLAN.md — 5 combat triggers (반계, 돌격지속, 부상무효, 필살강화_회피불가, 도시치료) + BattleEngine bonusPhases/rageExtraPhases phase loop fix + TODO cleanup
-- [ ] 04-02-PLAN.md — Battle formula 6x6 ArmType matrix golden value tests + siege mechanics golden value tests
+- [x] 04-01-PLAN.md — 5 combat triggers (반계, 돌격지속, 부상무효, 필살강화_회피불가, 도시치료) + BattleEngine bonusPhases/rageExtraPhases phase loop fix + TODO cleanup
+- [x] 04-02-PLAN.md — Battle formula 6x6 ArmType matrix golden value tests + siege mechanics golden value tests
 
 ### Phase 5: Modifier Pipeline
 **Goal**: Item, special ability, and officer rank modifiers correctly affect domestic command outcomes, matching legacy stacking and priority behavior

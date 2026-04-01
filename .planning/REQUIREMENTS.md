@@ -35,8 +35,8 @@ Requirements for legacy parity milestone. Each maps to roadmap phases.
 - [x] **BATTLE-10**: Implement 격노 (rage) trigger (시도/발동)
 - [x] **BATTLE-11**: Implement battle experience (C7) -- generals gain XP from combat
 - [x] **BATTLE-12**: Fix 무쌍 modifier to read killnum from runtime rank data instead of hardcoded 0.0
-- [ ] **BATTLE-13**: Verify battle resolution formulas match legacy process_war.php
-- [ ] **BATTLE-14**: Verify siege/defense mechanics match legacy
+- [x] **BATTLE-13**: Verify battle resolution formulas match legacy process_war.php
+- [x] **BATTLE-14**: Verify siege/defense mechanics match legacy
 
 ### Modifier Pipeline
 
@@ -158,8 +158,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | BATTLE-04 | Phase 4: Battle Completion | Pending |
 | BATTLE-07 | Phase 4: Battle Completion | Pending |
 | BATTLE-08 | Phase 4: Battle Completion | Pending |
-| BATTLE-13 | Phase 4: Battle Completion | Pending |
-| BATTLE-14 | Phase 4: Battle Completion | Pending |
+| BATTLE-13 | Phase 4: Battle Completion | Complete |
+| BATTLE-14 | Phase 4: Battle Completion | Complete |
 | MOD-01 | Phase 5: Modifier Pipeline | Pending |
 | MOD-02 | Phase 5: Modifier Pipeline | Pending |
 | MOD-03 | Phase 5: Modifier Pipeline | Pending |
