@@ -58,6 +58,7 @@ data class StatContext(
     var dedicationMultiplier: Double = 1.0,
     var year: Int = 0,
     var startYear: Int = 0,
+    var killnum: Double = 0.0,  // From general.meta["rank"]["killnum"]
     var isAttacker: Boolean = false,
 )
 

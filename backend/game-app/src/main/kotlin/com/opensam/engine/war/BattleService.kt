@@ -677,6 +677,8 @@ class BattleService(
         if (modifiers.isEmpty() && opposeModifiers.isEmpty()) return
 
         val hpRatio = if (unit.maxHp <= 0) 1.0 else unit.hp.toDouble() / unit.maxHp.toDouble()
+        val rank = unit.general.meta["rank"] as? Map<*, *>
+        val killnum = (rank?.get("killnum") as? Number)?.toDouble() ?: 0.0
         val baseCtx = StatContext(
             crewType = unit.crewType.toString(),
             opponentCrewType = opponentCrewType,
@@ -687,6 +689,7 @@ class BattleService(
             criticalChance = unit.criticalChance,
             dodgeChance = unit.dodgeChance,
             magicChance = unit.magicChance,
+            killnum = killnum,
             isAttacker = isAttacker,
         )
         var modified = modifierService.applyStatModifiers(modifiers, baseCtx)

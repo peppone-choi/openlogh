@@ -375,9 +375,8 @@ object SpecialModifiers {
                 if (s.isAttacker) {
                     s = s.copy(criticalChance = s.criticalChance + 0.1)
                 }
-                // TODO: killnum needs runtime RankColumn.killnum — hardcoded 0 for now
                 // TODO: skip warPower multiplier if opponent warSpecial is also 무쌍 (needs opponent special info in StatContext)
-                val killnum = 0.0
+                val killnum = stat.killnum
                 val logVal = log2(maxOf(1.0, killnum / 5.0))
                 val attackMultiplier = 1.05 + logVal / 20.0
                 val defenceMultiplier = 0.98 - logVal / 50.0
