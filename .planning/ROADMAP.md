@@ -71,7 +71,7 @@ Plans:
 - [x] 03-01-PLAN.md — WarUnitTrigger framework (interface, registry, BattleEngine integration) and killnum fix (StatContext.killnum, che_무쌍 reads from stat)
 - [x] 03-02-PLAN.md — Four core triggers (IntimidationTrigger, SnipingTrigger, BattleHealTrigger, RageTrigger) as WarUnitTrigger implementations
 - [x] 03-03-PLAN.md — Battle experience (C7) parity verification tests (exp calculation, stat routing, win/lose atmos, full pipeline)
-- [ ] 03-04-PLAN.md — Gap closure: wire missing onPreAttack hook in BattleEngine, add rage integration test
+- [x] 03-04-PLAN.md — Gap closure: wire missing onPreAttack hook in BattleEngine, add rage integration test
 
 ### Phase 4: Battle Completion
 **Goal**: All remaining combat triggers are implemented and battle resolution formulas match legacy for all unit types, terrain, and siege scenarios
