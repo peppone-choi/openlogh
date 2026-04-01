@@ -596,69 +596,20 @@ object Che필살Trigger : BattleTrigger {
     }
 }
 
+// Moved to WarUnitTrigger: BattleHealTrigger
 object Che의술Trigger : BattleTrigger {
     override val code = "che_의술"
     override val priority = 10
-    override fun onPostDamage(ctx: BattleTriggerContext): BattleTriggerContext {
-        if (ctx.rng.nextBool(0.4)) {
-            ctx.defenderDamage = floor(ctx.defenderDamage * 0.7).toInt()
-            if (ctx.attacker is WarUnitGeneral) {
-                ctx.attacker.injury = 0
-            }
-            ctx.battleLogs.add("의술 발동! 피해를 줄이고 부상을 회복했다!")
-        }
-        return ctx
-    }
+    override fun onPostDamage(ctx: BattleTriggerContext) = ctx
 }
 
+// Moved to WarUnitTrigger: RageTrigger
 object Che격노Trigger : BattleTrigger {
     override val code = "che_격노"
     override val priority = 10
-    override fun onPostCritical(ctx: BattleTriggerContext): BattleTriggerContext {
-        if (ctx.suppressActive) {
-            return ctx
-        }
-        if (ctx.criticalActivated && ctx.rng.nextBool(0.5)) {
-            activateRage(ctx, reactedToCritical = true)
-        }
-        return ctx
-    }
-
-    override fun onPostDodge(ctx: BattleTriggerContext): BattleTriggerContext {
-        if (ctx.suppressActive) {
-            return ctx
-        }
-        if (ctx.dodgeActivated && ctx.rng.nextBool(0.25)) {
-            activateRage(ctx, reactedToCritical = false)
-        }
-        return ctx
-    }
-
-    override fun onDamageCalc(ctx: BattleTriggerContext): BattleTriggerContext {
-        if (ctx.rageActivationCount > 0) {
-            // Core2026: self.multiplyWarPowerMultiply(self.criticalDamage())
-            // criticalDamage() = rng.nextRange(1.3, 2.0)
-            ctx.attackMultiplier *= ctx.rollCriticalDamageMultiplier()
-        }
-        return ctx
-    }
-
-    private fun activateRage(ctx: BattleTriggerContext, reactedToCritical: Boolean) {
-        ctx.rageActivationCount += 1
-        ctx.rageDamageStack = 0.2 * ctx.rageActivationCount
-        if (ctx.rng.nextBool(0.5)) {
-            ctx.rageExtraPhases += 1
-            ctx.battleLogs.add(
-                if (reactedToCritical) "격노 발동! 상대 필살에 진노하여 추가 페이즈를 얻었다!"
-                else "격노 발동! 상대 회피 시도에 진노하여 추가 페이즈를 얻었다!"
-            )
-        } else {
-            ctx.battleLogs.add(
-                if (reactedToCritical) "격노 발동! 상대 필살에 분노가 쌓인다!"
-                else "격노 발동! 상대 회피 시도에 분노가 쌓인다!"
-            )
-        }
-    }
+    override fun onPostCritical(ctx: BattleTriggerContext) = ctx
+    override fun onPostDodge(ctx: BattleTriggerContext) = ctx
+    override fun onDamageCalc(ctx: BattleTriggerContext) = ctx
 }
 
 object Che척사Trigger : BattleTrigger {
