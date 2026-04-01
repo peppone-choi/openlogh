@@ -68,7 +68,7 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 03-01-PLAN.md — WarUnitTrigger framework (interface, registry, BattleEngine integration) and killnum fix (StatContext.killnum, che_무쌍 reads from stat)
+- [x] 03-01-PLAN.md — WarUnitTrigger framework (interface, registry, BattleEngine integration) and killnum fix (StatContext.killnum, che_무쌍 reads from stat)
 - [ ] 03-02-PLAN.md — Four core triggers (IntimidationTrigger, SnipingTrigger, BattleHealTrigger, RageTrigger) as WarUnitTrigger implementations
 - [ ] 03-03-PLAN.md — Battle experience (C7) parity verification tests (exp calculation, stat routing, win/lose atmos, full pipeline)
 

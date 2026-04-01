@@ -23,7 +23,7 @@ Requirements for legacy parity milestone. Each maps to roadmap phases.
 
 ### Battle System
 
-- [ ] **BATTLE-01**: Implement WarUnitTrigger framework for runtime battle-phase hooks
+- [x] **BATTLE-01**: Implement WarUnitTrigger framework for runtime battle-phase hooks
 - [ ] **BATTLE-02**: Implement 반계 (counter-strategy) trigger (시도/발동)
 - [ ] **BATTLE-03**: Implement 돌격지속 (sustained charge) trigger
 - [ ] **BATTLE-04**: Implement 부상무효 (injury nullification) trigger
@@ -34,7 +34,7 @@ Requirements for legacy parity milestone. Each maps to roadmap phases.
 - [ ] **BATTLE-09**: Implement 전투치료 (battle healing) trigger (시도/발동)
 - [ ] **BATTLE-10**: Implement 격노 (rage) trigger (시도/발동)
 - [ ] **BATTLE-11**: Implement battle experience (C7) -- generals gain XP from combat
-- [ ] **BATTLE-12**: Fix 무쌍 modifier to read killnum from runtime rank data instead of hardcoded 0.0
+- [x] **BATTLE-12**: Fix 무쌍 modifier to read killnum from runtime rank data instead of hardcoded 0.0
 - [ ] **BATTLE-13**: Verify battle resolution formulas match legacy process_war.php
 - [ ] **BATTLE-14**: Verify siege/defense mechanics match legacy
 
@@ -146,13 +146,13 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TYPE-01 | Phase 2: Numeric Type Safety | Complete |
 | TYPE-02 | Phase 2: Numeric Type Safety | Complete |
 | TYPE-03 | Phase 2: Numeric Type Safety | Complete |
-| BATTLE-01 | Phase 3: Battle Framework and Core Triggers | Pending |
+| BATTLE-01 | Phase 3: Battle Framework and Core Triggers | Complete |
 | BATTLE-05 | Phase 3: Battle Framework and Core Triggers | Pending |
 | BATTLE-06 | Phase 3: Battle Framework and Core Triggers | Pending |
 | BATTLE-09 | Phase 3: Battle Framework and Core Triggers | Pending |
 | BATTLE-10 | Phase 3: Battle Framework and Core Triggers | Pending |
 | BATTLE-11 | Phase 3: Battle Framework and Core Triggers | Pending |
-| BATTLE-12 | Phase 3: Battle Framework and Core Triggers | Pending |
+| BATTLE-12 | Phase 3: Battle Framework and Core Triggers | Complete |
 | BATTLE-02 | Phase 4: Battle Completion | Pending |
 | BATTLE-03 | Phase 4: Battle Completion | Pending |
 | BATTLE-04 | Phase 4: Battle Completion | Pending |

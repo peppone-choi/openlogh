@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: verifying
-stopped_at: Phase 3 context gathered
-last_updated: "2026-04-01T03:36:11.484Z"
+status: executing
+stopped_at: Completed 03-01-PLAN.md
+last_updated: "2026-04-01T04:55:12.375Z"
 last_activity: 2026-04-01
 progress:
   total_phases: 11
   completed_phases: 2
-  total_plans: 4
-  completed_plans: 4
+  total_plans: 7
+  completed_plans: 5
   percent: 0
 ---
 
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-31)
 
 **Core value:** Every game mechanic must produce identical outcomes to the legacy PHP implementation given the same inputs.
-**Current focus:** Phase 02 — numeric-type-safety
+**Current focus:** Phase 03 — battle-framework-and-core-triggers
 
 ## Current Position
 
-Phase: 3
-Plan: Not started
-Status: Phase complete — ready for verification
+Phase: 03 (battle-framework-and-core-triggers) — EXECUTING
+Plan: 2 of 3
+Status: Ready to execute
 Last activity: 2026-04-01
 
 Progress: [░░░░░░░░░░] 0%
@@ -56,6 +56,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 01 P02 | 5min | 2 tasks | 12 files |
 | Phase 02 P01 | 21min | 2 tasks | 19 files |
 | Phase 02 P02 | 20min | 2 tasks | 4 files |
+| Phase 03 P01 | 19min | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -75,6 +76,8 @@ Recent decisions affecting current work:
 - [Phase 02]: Non-assignment .toShort() (constants, query params, comparisons) excluded from coerceIn guards -- cannot cause entity field overflow
 - [Phase 02]: kotlin.math.round chosen over Math.round to eliminate Long-to-Int narrowing; banker's rounding .5 divergence documented but accepted
 - [Phase 02]: 200-turn golden snapshot uses standalone EconomyService simulation, not InMemoryTurnHarness
+- [Phase 03]: WarUnitTriggerRegistry uses mutable map with register() for Plan 02 trigger self-registration
+- [Phase 03]: killnum populated at BattleService.applyWarModifiers -- only StatContext construction site with general.meta access
 
 ### Pending Todos
 
@@ -87,6 +90,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-01T03:36:11.481Z
-Stopped at: Phase 3 context gathered
-Resume file: .planning/phases/03-battle-framework-and-core-triggers/03-CONTEXT.md
+Last session: 2026-04-01T04:55:12.366Z
+Stopped at: Completed 03-01-PLAN.md
+Resume file: None
