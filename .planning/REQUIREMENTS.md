@@ -24,13 +24,13 @@ Requirements for legacy parity milestone. Each maps to roadmap phases.
 ### Battle System
 
 - [x] **BATTLE-01**: Implement WarUnitTrigger framework for runtime battle-phase hooks
-- [ ] **BATTLE-02**: Implement 반계 (counter-strategy) trigger (시도/발동)
-- [ ] **BATTLE-03**: Implement 돌격지속 (sustained charge) trigger
-- [ ] **BATTLE-04**: Implement 부상무효 (injury nullification) trigger
+- [x] **BATTLE-02**: Implement 반계 (counter-strategy) trigger (시도/발동)
+- [x] **BATTLE-03**: Implement 돌격지속 (sustained charge) trigger
+- [x] **BATTLE-04**: Implement 부상무효 (injury nullification) trigger
 - [x] **BATTLE-05**: Implement 위압 (intimidation) trigger (시도/발동)
 - [x] **BATTLE-06**: Implement 저격 (sniping) trigger (시도/발동)
-- [ ] **BATTLE-07**: Implement 필살강화_회피불가 (unavoidable critical) trigger
-- [ ] **BATTLE-08**: Implement 도시치료 (city healing) trigger
+- [x] **BATTLE-07**: Implement 필살강화_회피불가 (unavoidable critical) trigger
+- [x] **BATTLE-08**: Implement 도시치료 (city healing) trigger
 - [x] **BATTLE-09**: Implement 전투치료 (battle healing) trigger (시도/발동)
 - [x] **BATTLE-10**: Implement 격노 (rage) trigger (시도/발동)
 - [x] **BATTLE-11**: Implement battle experience (C7) -- generals gain XP from combat
@@ -153,11 +153,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | BATTLE-10 | Phase 3: Battle Framework and Core Triggers | Complete |
 | BATTLE-11 | Phase 3: Battle Framework and Core Triggers | Complete |
 | BATTLE-12 | Phase 3: Battle Framework and Core Triggers | Complete |
-| BATTLE-02 | Phase 4: Battle Completion | Pending |
-| BATTLE-03 | Phase 4: Battle Completion | Pending |
-| BATTLE-04 | Phase 4: Battle Completion | Pending |
-| BATTLE-07 | Phase 4: Battle Completion | Pending |
-| BATTLE-08 | Phase 4: Battle Completion | Pending |
+| BATTLE-02 | Phase 4: Battle Completion | Complete |
+| BATTLE-03 | Phase 4: Battle Completion | Complete |
+| BATTLE-04 | Phase 4: Battle Completion | Complete |
+| BATTLE-07 | Phase 4: Battle Completion | Complete |
+| BATTLE-08 | Phase 4: Battle Completion | Complete |
 | BATTLE-13 | Phase 4: Battle Completion | Complete |
 | BATTLE-14 | Phase 4: Battle Completion | Complete |
 | MOD-01 | Phase 5: Modifier Pipeline | Pending |
