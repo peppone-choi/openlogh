@@ -90,4 +90,119 @@ class OfficerLevelModifierTest {
             assertThat(result.warPower).isEqualTo(93.0)
         }
     }
+
+    @Nested
+    @DisplayName("Domestic Score Bonus -- x1.05 per level set")
+    inner class DomesticScoreBonus {
+
+        // AGR_COM_LEVELS = {5, 8, 12, 15, 18, 20}
+        @Test
+        fun `level 20 agriculture gives bonus`() {
+            val mod = OfficerLevelModifier(officerLevel = 20, nationLevel = 5)
+            val result = mod.onCalcDomestic(DomesticContext(actionCode = "농업"))
+            assertThat(result.scoreMultiplier).isEqualTo(1.05)
+        }
+
+        @Test
+        fun `level 5 agriculture gives bonus`() {
+            val mod = OfficerLevelModifier(officerLevel = 5, nationLevel = 5)
+            val result = mod.onCalcDomestic(DomesticContext(actionCode = "농업"))
+            assertThat(result.scoreMultiplier).isEqualTo(1.05)
+        }
+
+        @Test
+        fun `level 20 commerce gives bonus`() {
+            val mod = OfficerLevelModifier(officerLevel = 20, nationLevel = 5)
+            val result = mod.onCalcDomestic(DomesticContext(actionCode = "상업"))
+            assertThat(result.scoreMultiplier).isEqualTo(1.05)
+        }
+
+        @Test
+        fun `level 6 agriculture gives no bonus -- not in AGR_COM_LEVELS`() {
+            val mod = OfficerLevelModifier(officerLevel = 6, nationLevel = 5)
+            val result = mod.onCalcDomestic(DomesticContext(actionCode = "농업"))
+            assertThat(result.scoreMultiplier).isEqualTo(1.0)
+        }
+
+        // TECH_LEVELS = {8, 12, 15, 18, 20}
+        @Test
+        fun `level 20 technology gives bonus`() {
+            val mod = OfficerLevelModifier(officerLevel = 20, nationLevel = 5)
+            val result = mod.onCalcDomestic(DomesticContext(actionCode = "기술"))
+            assertThat(result.scoreMultiplier).isEqualTo(1.05)
+        }
+
+        @Test
+        fun `level 8 technology gives bonus`() {
+            val mod = OfficerLevelModifier(officerLevel = 8, nationLevel = 5)
+            val result = mod.onCalcDomestic(DomesticContext(actionCode = "기술"))
+            assertThat(result.scoreMultiplier).isEqualTo(1.05)
+        }
+
+        @Test
+        fun `level 4 technology gives no bonus -- not in TECH_LEVELS`() {
+            val mod = OfficerLevelModifier(officerLevel = 4, nationLevel = 5)
+            val result = mod.onCalcDomestic(DomesticContext(actionCode = "기술"))
+            assertThat(result.scoreMultiplier).isEqualTo(1.0)
+        }
+
+        // POP_LEVELS = {3, 18, 20}
+        @Test
+        fun `level 3 popularity gives bonus`() {
+            val mod = OfficerLevelModifier(officerLevel = 3, nationLevel = 5)
+            val result = mod.onCalcDomestic(DomesticContext(actionCode = "민심"))
+            assertThat(result.scoreMultiplier).isEqualTo(1.05)
+        }
+
+        @Test
+        fun `level 20 population gives bonus`() {
+            val mod = OfficerLevelModifier(officerLevel = 20, nationLevel = 5)
+            val result = mod.onCalcDomestic(DomesticContext(actionCode = "인구"))
+            assertThat(result.scoreMultiplier).isEqualTo(1.05)
+        }
+
+        @Test
+        fun `level 2 popularity gives no bonus -- not in POP_LEVELS`() {
+            val mod = OfficerLevelModifier(officerLevel = 2, nationLevel = 5)
+            val result = mod.onCalcDomestic(DomesticContext(actionCode = "민심"))
+            assertThat(result.scoreMultiplier).isEqualTo(1.0)
+        }
+
+        // DEF_LEVELS = {7, 10, 13, 17, 18, 20}
+        @Test
+        fun `level 7 defence gives bonus`() {
+            val mod = OfficerLevelModifier(officerLevel = 7, nationLevel = 5)
+            val result = mod.onCalcDomestic(DomesticContext(actionCode = "수비"))
+            assertThat(result.scoreMultiplier).isEqualTo(1.05)
+        }
+
+        @Test
+        fun `level 20 wall gives bonus`() {
+            val mod = OfficerLevelModifier(officerLevel = 20, nationLevel = 5)
+            val result = mod.onCalcDomestic(DomesticContext(actionCode = "성벽"))
+            assertThat(result.scoreMultiplier).isEqualTo(1.05)
+        }
+
+        @Test
+        fun `level 20 security gives bonus`() {
+            val mod = OfficerLevelModifier(officerLevel = 20, nationLevel = 5)
+            val result = mod.onCalcDomestic(DomesticContext(actionCode = "치안"))
+            assertThat(result.scoreMultiplier).isEqualTo(1.05)
+        }
+
+        // Negative cases
+        @Test
+        fun `level 20 conscription gives no bonus -- no level set`() {
+            val mod = OfficerLevelModifier(officerLevel = 20, nationLevel = 5)
+            val result = mod.onCalcDomestic(DomesticContext(actionCode = "징병"))
+            assertThat(result.scoreMultiplier).isEqualTo(1.0)
+        }
+
+        @Test
+        fun `level 20 sabotage gives no bonus -- no level set`() {
+            val mod = OfficerLevelModifier(officerLevel = 20, nationLevel = 5)
+            val result = mod.onCalcDomestic(DomesticContext(actionCode = "계략"))
+            assertThat(result.scoreMultiplier).isEqualTo(1.0)
+        }
+    }
 }
