@@ -109,27 +109,27 @@ object SpecialModifiers {
         // === Domestic Specials ===
         "농업" to object : ActionModifier {
             override val code = "농업"; override val name = "농업"
-            override fun onCalcDomestic(ctx: DomesticContext) = if (ctx.actionCode == "농지개간")
+            override fun onCalcDomestic(ctx: DomesticContext) = if (ctx.actionCode in listOf("농업", "농지개간"))
                 ctx.copy(scoreMultiplier = ctx.scoreMultiplier * 1.2) else ctx
         },
         "상업" to object : ActionModifier {
             override val code = "상업"; override val name = "상업"
-            override fun onCalcDomestic(ctx: DomesticContext) = if (ctx.actionCode == "상업투자")
+            override fun onCalcDomestic(ctx: DomesticContext) = if (ctx.actionCode in listOf("상업", "상업투자"))
                 ctx.copy(scoreMultiplier = ctx.scoreMultiplier * 1.2) else ctx
         },
         "징수" to object : ActionModifier {
             override val code = "징수"; override val name = "징수"
-            override fun onCalcDomestic(ctx: DomesticContext) = if (ctx.actionCode == "물자조달")
+            override fun onCalcDomestic(ctx: DomesticContext) = if (ctx.actionCode in listOf("조달", "물자조달"))
                 ctx.copy(costMultiplier = ctx.costMultiplier * 0.8) else ctx
         },
         "보수" to object : ActionModifier {
             override val code = "보수"; override val name = "보수"
-            override fun onCalcDomestic(ctx: DomesticContext) = if (ctx.actionCode in listOf("수비강화", "성벽보수"))
+            override fun onCalcDomestic(ctx: DomesticContext) = if (ctx.actionCode in listOf("수비", "수비강화", "성벽", "성벽보수"))
                 ctx.copy(scoreMultiplier = ctx.scoreMultiplier * 1.3) else ctx
         },
         "발명" to object : ActionModifier {
             override val code = "발명"; override val name = "발명"
-            override fun onCalcDomestic(ctx: DomesticContext) = if (ctx.actionCode == "기술연구")
+            override fun onCalcDomestic(ctx: DomesticContext) = if (ctx.actionCode in listOf("기술", "기술연구"))
                 ctx.copy(scoreMultiplier = ctx.scoreMultiplier * 1.5) else ctx
         },
         "의술" to object : ActionModifier {
@@ -144,7 +144,7 @@ object SpecialModifiers {
         },
         "인덕" to object : ActionModifier {
             override val code = "인덕"; override val name = "인덕"
-            override fun onCalcDomestic(ctx: DomesticContext) = if (ctx.actionCode in listOf("주민선정", "정착장려"))
+            override fun onCalcDomestic(ctx: DomesticContext) = if (ctx.actionCode in listOf("민심", "주민선정", "인구", "정착장려"))
                 ctx.copy(scoreMultiplier = ctx.scoreMultiplier * 1.2) else ctx
         },
         "등용" to object : ActionModifier {
@@ -158,7 +158,7 @@ object SpecialModifiers {
         },
         "건축" to object : ActionModifier {
             override val code = "건축"; override val name = "건축"
-            override fun onCalcDomestic(ctx: DomesticContext) = if (ctx.actionCode in listOf("수비강화", "성벽보수"))
+            override fun onCalcDomestic(ctx: DomesticContext) = if (ctx.actionCode in listOf("수비", "수비강화", "성벽", "성벽보수"))
                 ctx.copy(scoreMultiplier = ctx.scoreMultiplier * 1.3) else ctx
         },
         "훈련_특기" to object : ActionModifier {
