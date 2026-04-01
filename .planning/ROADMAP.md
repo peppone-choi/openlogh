@@ -81,12 +81,11 @@ Plans:
   1. Counter-strategy (반계), sustained charge (돌격지속), injury nullification (부상무효), unavoidable critical (필살강화_회피불가), and city healing (도시치료) triggers produce the same outcomes as legacy PHP
   2. Battle resolution formula (damage calculation, casualties, morale impact) matches legacy process_war.php for a test matrix of unit type pairings
   3. Siege and defense mechanics (wall damage, defender bonuses, gate breach) produce identical results to legacy for the same inputs
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 04-01: TBD
-- [ ] 04-02: TBD
-- [ ] 04-03: TBD
+- [ ] 04-01-PLAN.md — 5 combat triggers (반계, 돌격지속, 부상무효, 필살강화_회피불가, 도시치료) + BattleEngine bonusPhases/rageExtraPhases phase loop fix + TODO cleanup
+- [ ] 04-02-PLAN.md — Battle formula 6x6 ArmType matrix golden value tests + siege mechanics golden value tests
 
 ### Phase 5: Modifier Pipeline
 **Goal**: Item, special ability, and officer rank modifiers correctly affect domestic command outcomes, matching legacy stacking and priority behavior
@@ -208,7 +207,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 | 1. Deterministic Foundation | 0/2 | Planned | - |
 | 2. Numeric Type Safety | 0/2 | Planned | - |
 | 3. Battle Framework and Core Triggers | 0/4 | Planned | - |
-| 4. Battle Completion | 0/3 | Not started | - |
+| 4. Battle Completion | 0/2 | Planned | - |
 | 5. Modifier Pipeline | 0/2 | Not started | - |
 | 6. Economy Parity | 0/2 | Not started | - |
 | 7. Command Parity | 0/3 | Not started | - |
