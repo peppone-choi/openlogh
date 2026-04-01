@@ -29,6 +29,9 @@ Every game mechanic must produce identical outcomes to the legacy PHP implementa
 - ✓ Deterministic game execution (LiteHashDRBG, no java.util.Random) -- Phase 1
 - ✓ Observable exception handling (SLF4J logging in all engine catch blocks) -- Phase 1
 - ✓ Deterministic entity processing order (sort tiebreakers) -- Phase 1
+- ✓ Short field overflow prevention (coerceIn guards on all .toShort() sites) -- Phase 2
+- ✓ Float-to-int rounding normalized to match PHP behavior (Math.round → kotlin.math.round) -- Phase 2
+- ✓ Integer division parity with PHP intdiv() confirmed -- Phase 2
 
 ### Active
 
@@ -61,6 +64,7 @@ Every game mechanic must produce identical outcomes to the legacy PHP implementa
 - **Existing verify skills**: Multiple verification skills exist (verify-command-parity, verify-logic-parity, verify-daemon-parity, etc.) for systematic checking
 - **Known gaps from codebase analysis**: Turn engine stubs, battle special modifiers, duplicate AuthService
 - **Phase 1 complete**: All game logic now uses deterministic RNG, exceptions are logged, entity processing order is deterministic
+- **Phase 2 complete**: All Short field assignments guarded against overflow, rounding normalized to PHP behavior, 200-turn golden snapshot baseline established
 
 ## Constraints
 
@@ -97,4 +101,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-31 after Phase 1 completion*
+*Last updated: 2026-04-01 after Phase 2 completion*
