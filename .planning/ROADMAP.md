@@ -96,11 +96,11 @@ Plans:
   2. A domestic command executed by a general with a special ability produces the same modified result as legacy PHP (H4 parity)
   3. A domestic command executed by a general with an officer rank produces the same modified result as legacy PHP (H5 parity)
   4. When multiple modifiers stack (item + special + rank), the combined effect matches legacy priority and application order
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 05-01: TBD
-- [ ] 05-02: TBD
+- [ ] 05-01-PLAN.md — Fix SpecialModifiers actionCode mismatch bug + golden value unit tests for specials, items, officer rank domestic modifiers
+- [ ] 05-02-PLAN.md — Multi-source modifier stacking golden value tests + pipeline order verification + full regression check
 
 ### Phase 6: Economy Parity
 **Goal**: All economic calculations (tax, trade, supply, population, city development, salary) produce identical values to legacy PHP over sustained gameplay
