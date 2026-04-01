@@ -40,10 +40,10 @@ Requirements for legacy parity milestone. Each maps to roadmap phases.
 
 ### Modifier Pipeline
 
-- [x] **MOD-01**: Complete item modifier effects on domestic commands (H3)
-- [x] **MOD-02**: Complete special ability effects on domestic commands (H4)
-- [x] **MOD-03**: Complete officer rank modifier effects on domestic commands (H5)
-- [ ] **MOD-04**: Verify modifier stacking/priority matches legacy behavior
+- [ ] **MOD-01**: Complete item modifier effects on domestic commands (H3)
+- [ ] **MOD-02**: Complete special ability effects on domestic commands (H4)
+- [ ] **MOD-03**: Complete officer rank modifier effects on domestic commands (H5)
+- [x] **MOD-04**: Verify modifier stacking/priority matches legacy behavior
 
 ### Command Parity
 
@@ -160,10 +160,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | BATTLE-08 | Phase 4: Battle Completion | Complete |
 | BATTLE-13 | Phase 4: Battle Completion | Complete |
 | BATTLE-14 | Phase 4: Battle Completion | Complete |
-| MOD-01 | Phase 5: Modifier Pipeline | Complete |
-| MOD-02 | Phase 5: Modifier Pipeline | Complete |
-| MOD-03 | Phase 5: Modifier Pipeline | Complete |
-| MOD-04 | Phase 5: Modifier Pipeline | Pending |
+| MOD-01 | Phase 5: Modifier Pipeline | Pending |
+| MOD-02 | Phase 5: Modifier Pipeline | Pending |
+| MOD-03 | Phase 5: Modifier Pipeline | Pending |
+| MOD-04 | Phase 5: Modifier Pipeline | Complete |
 | ECON-01 | Phase 6: Economy Parity | Pending |
 | ECON-02 | Phase 6: Economy Parity | Pending |
 | ECON-03 | Phase 6: Economy Parity | Pending |

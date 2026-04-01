@@ -99,8 +99,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [x] 05-01-PLAN.md — Fix SpecialModifiers actionCode mismatch bug + golden value unit tests for specials, items, officer rank domestic modifiers
-- [ ] 05-02-PLAN.md — Multi-source modifier stacking golden value tests + pipeline order verification + full regression check
+- [ ] 05-01-PLAN.md — Fix SpecialModifiers actionCode mismatch bug + golden value unit tests for specials, items, officer rank domestic modifiers
+- [x] 05-02-PLAN.md — Multi-source modifier stacking golden value tests + pipeline order verification + full regression check
 
 ### Phase 6: Economy Parity
 **Goal**: All economic calculations (tax, trade, supply, population, city development, salary) produce identical values to legacy PHP over sustained gameplay

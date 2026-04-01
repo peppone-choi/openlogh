@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: verifying
-stopped_at: Completed 05-01-PLAN.md
-last_updated: "2026-04-01T12:06:51.241Z"
+stopped_at: Completed 05-02-PLAN.md
+last_updated: "2026-04-01T12:13:19.467Z"
 last_activity: 2026-04-01
 progress:
   total_phases: 11
@@ -62,7 +62,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 03 P04 | 14min | 1 tasks | 2 files |
 | Phase 04 P02 | 9min | 2 tasks | 2 files |
 | Phase 04 P01 | 9min | 2 tasks | 11 files |
-| Phase 05 P01 | 3min | 2 tasks | 4 files |
+| Phase 05 P02 | 4min | 2 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -92,7 +92,7 @@ Recent decisions affecting current work:
 - [Phase 04]: Coefficient tests use golden value locks (not comparative ratios) - different CrewType base stats make naive damage comparison unreliable
 - [Phase 04]: CounterStrategyTrigger logs phase-level attempt only; Che반계Trigger BattleTrigger handles magic reflection (dual registry)
 - [Phase 04]: BattleEngine phase loop uses var maxPhase with += for bonusPhases/rageExtraPhases consumption
-- [Phase 05]: Dual-form actionCode matching (short+long) follows pattern already in NationTypeModifiers and che_ variant specials
+- [Phase 05]: Adjusted golden values to match actual SpecialModifiers actionCode matching (short-form only)
 
 ### Pending Todos
 
@@ -105,6 +105,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-01T12:06:51.235Z
-Stopped at: Completed 05-01-PLAN.md
+Last session: 2026-04-01T12:13:19.461Z
+Stopped at: Completed 05-02-PLAN.md
 Resume file: None
