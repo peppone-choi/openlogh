@@ -80,7 +80,7 @@ class EventService @Autowired constructor(
                     log.warn("Failed to resolve startYear for scenario {}: {}", world.scenarioCode, e.message)
                     return false
                 }
-                val targetYear = (startYear + yearOffset).toShort()
+                val targetYear = (startYear + yearOffset).coerceIn(0, 32767).toShort()
                 world.currentYear == targetYear && world.currentMonth == month
             }
 

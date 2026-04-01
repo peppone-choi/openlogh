@@ -72,7 +72,7 @@ class StatChangeService {
                     logs.add("<R>${entry.displayName}</>이 <C>1</> 떨어졌습니다!")
                 }
                 setStat(general, entry.statName, newStat)
-                setExp(general, entry.expName, (exp + upgradeLimit).toShort())
+                setExp(general, entry.expName, (exp + upgradeLimit).coerceIn(0, 1000).toShort())
             } else if (exp >= upgradeLimit) {
                 // Stat increases (capped at maxLevel)
                 if (stat < MAX_LEVEL) {
@@ -82,7 +82,7 @@ class StatChangeService {
                     setStat(general, entry.statName, newStat)
                 }
                 // Exp is always consumed even if stat is at max
-                setExp(general, entry.expName, (exp - upgradeLimit).toShort())
+                setExp(general, entry.expName, (exp - upgradeLimit).coerceIn(0, 1000).toShort())
             }
         }
 
@@ -113,9 +113,9 @@ class StatChangeService {
 
     private fun setStat(general: General, statName: String, value: Int) {
         when (statName) {
-            "leadership" -> general.leadership = value.toShort()
-            "strength" -> general.strength = value.toShort()
-            "intel" -> general.intel = value.toShort()
+            "leadership" -> general.leadership = value.coerceIn(0, 100).toShort()
+            "strength" -> general.strength = value.coerceIn(0, 100).toShort()
+            "intel" -> general.intel = value.coerceIn(0, 100).toShort()
         }
     }
 }

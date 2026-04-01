@@ -561,7 +561,7 @@ class BattleService(
         // 20% morale loss to all generals
         val nationals = generalRepository.findByNationId(nation.id)
         for (gen in nationals) {
-            gen.atmos = (gen.atmos * 0.8).toInt().toShort()
+            gen.atmos = (gen.atmos * 0.8).toInt().coerceIn(0, 150).toShort()
             if (gen.officerLevel >= 5) {
                 gen.cityId = newCapital.id
             }

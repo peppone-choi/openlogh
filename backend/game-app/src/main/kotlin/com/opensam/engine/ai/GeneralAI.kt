@@ -2630,7 +2630,7 @@ class GeneralAI(
         if (general.npcState.toInt() == 5) {
             // Per legacy: cycle killTurn for troop leaders
             val newKillTurn = ((general.killTurn?.toInt() ?: 70) + rng.nextInt(3) + 2) % 5 + 70
-            general.killTurn = newKillTurn.toShort()
+            general.killTurn = newKillTurn.coerceIn(-32768, 32767).toShort()
         }
         return "집합"
     }
@@ -2822,7 +2822,7 @@ class GeneralAI(
                 ports.putGeneral(oldChief.toSnapshot())
             }
 
-            newChief.officerLevel = chiefLevel.toShort()
+            newChief.officerLevel = chiefLevel.coerceIn(0, 20).toShort()
             newChief.officerCity = 0
             ports.putGeneral(newChief.toSnapshot())
             nextChiefs[chiefLevel] = newChief
@@ -2893,7 +2893,7 @@ class GeneralAI(
 
             if (picked == null) continue
 
-            picked.officerLevel = chiefLevel.toShort()
+            picked.officerLevel = chiefLevel.coerceIn(0, 20).toShort()
             picked.officerCity = 0
             ports.putGeneral(picked.toSnapshot())
             chiefGenerals[chiefLevel] = picked
@@ -2925,7 +2925,7 @@ class GeneralAI(
             }
         }
 
-        nation.rate = rate.toShort()
+        nation.rate = rate.coerceIn(0, 100).toShort()
         nation.warState = 0
         return rate
     }

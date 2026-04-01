@@ -141,7 +141,7 @@ class NationAI(
 
             val newLevel = targetOfficerLevel(picked.dedication)
             if (newLevel > picked.officerLevel.toInt() && newLevel <= 4) {
-                picked.officerLevel = newLevel.toShort()
+                picked.officerLevel = newLevel.coerceIn(0, 20).toShort()
                 writePort.putGeneral(picked.toSnapshot())
                 promoted += 1
             }
@@ -185,8 +185,8 @@ class NationAI(
         }
 
         if (changed) {
-            nation.rateTmp = newRateTmp.toShort()
-            nation.bill = newBill.toShort()
+            nation.rateTmp = newRateTmp.coerceIn(0, 100).toShort()
+            nation.bill = newBill.coerceIn(0, 200).toShort()
             writePort.putNation(nation.toSnapshot())
         }
     }

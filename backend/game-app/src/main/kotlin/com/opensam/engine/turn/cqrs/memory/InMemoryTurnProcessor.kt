@@ -238,7 +238,7 @@ class InMemoryTurnProcessor(
                         ports.putGeneral(deadGeneral)
                         continue
                     } else {
-                        general.killTurn = nextKillTurn.toShort()
+                        general.killTurn = nextKillTurn.coerceIn(-32768, 32767).toShort()
                     }
                 }
                 general.turnTime = calculateNextGeneralTurnTime(general.turnTime, general.meta, world.tickSeconds)
@@ -299,7 +299,7 @@ class InMemoryTurnProcessor(
     private fun resetStrategicCommandLimits(ports: InMemoryWorldPorts) {
         ports.allNations().forEach { nation ->
             if (nation.strategicCmdLimit > 0) {
-                nation.strategicCmdLimit = (nation.strategicCmdLimit - 1).toShort()
+                nation.strategicCmdLimit = (nation.strategicCmdLimit - 1).coerceIn(0, 72).toShort()
             }
             ports.putNation(nation)
         }
@@ -313,9 +313,9 @@ class InMemoryTurnProcessor(
         val nextMonth = world.currentMonth + 1
         if (nextMonth > 12) {
             world.currentMonth = 1
-            world.currentYear = (world.currentYear + 1).toShort()
+            world.currentYear = (world.currentYear + 1).coerceIn(0, 32767).toShort()
         } else {
-            world.currentMonth = nextMonth.toShort()
+            world.currentMonth = nextMonth.coerceIn(1, 12).toShort()
         }
     }
 

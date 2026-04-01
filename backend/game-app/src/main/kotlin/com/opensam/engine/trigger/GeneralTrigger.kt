@@ -61,7 +61,7 @@ class InjuryReductionTrigger(private val general: General) : GeneralTrigger {
 
     override fun action(env: TriggerEnv): Boolean {
         if (general.injury > 0) {
-            general.injury = (general.injury - 1).toShort()
+            general.injury = (general.injury - 1).coerceIn(0, 80).toShort()
             env.vars["injuryReduced"] = true
         }
         return true
@@ -89,7 +89,7 @@ class TroopConsumptionTrigger(private val general: General) : GeneralTrigger {
             // Not enough rice - morale drops
             general.rice = 0
             val atmosDrop = minOf(5, general.atmos.toInt())
-            general.atmos = (general.atmos - atmosDrop).toShort()
+            general.atmos = (general.atmos - atmosDrop).coerceIn(0, 150).toShort()
             env.vars["troopStarving"] = true
         }
         return true

@@ -147,9 +147,9 @@ class WarUnitGeneral(
     fun applyResults() {
         general.crew = hp.coerceAtLeast(0)
         general.rice = rice.coerceAtLeast(0)
-        general.train = train.toShort()
-        general.atmos = atmos.toShort()
-        general.injury = injury.toShort()
+        general.train = train.coerceIn(0, 110).toShort()
+        general.atmos = atmos.coerceIn(0, 150).toShort()
+        general.injury = injury.coerceIn(0, 80).toShort()
 
         // C7: apply accumulated battle experience
         if (pendingLevelExp > 0) {
@@ -159,14 +159,14 @@ class WarUnitGeneral(
             // PHP addStatExp: armType FOOTMAN/CAVALRY → strength, WIZARD → intel, SIEGE → leadership, MISC → all three
             val unitCrewType = CrewType.fromCode(crewType)
             when (unitCrewType?.armType) {
-                ArmType.WIZARD -> general.intelExp = (general.intelExp + pendingStatExp).toShort()
-                ArmType.SIEGE -> general.leadershipExp = (general.leadershipExp + pendingStatExp).toShort()
+                ArmType.WIZARD -> general.intelExp = (general.intelExp + pendingStatExp).coerceIn(0, 1000).toShort()
+                ArmType.SIEGE -> general.leadershipExp = (general.leadershipExp + pendingStatExp).coerceIn(0, 1000).toShort()
                 ArmType.MISC -> {
-                    general.leadershipExp = (general.leadershipExp + pendingStatExp).toShort()
-                    general.strengthExp = (general.strengthExp + pendingStatExp).toShort()
-                    general.intelExp = (general.intelExp + pendingStatExp).toShort()
+                    general.leadershipExp = (general.leadershipExp + pendingStatExp).coerceIn(0, 1000).toShort()
+                    general.strengthExp = (general.strengthExp + pendingStatExp).coerceIn(0, 1000).toShort()
+                    general.intelExp = (general.intelExp + pendingStatExp).coerceIn(0, 1000).toShort()
                 }
-                else -> general.strengthExp = (general.strengthExp + pendingStatExp).toShort()  // FOOTMAN, CAVALRY, ARCHER
+                else -> general.strengthExp = (general.strengthExp + pendingStatExp).coerceIn(0, 1000).toShort()  // FOOTMAN, CAVALRY, ARCHER
             }
         }
     }

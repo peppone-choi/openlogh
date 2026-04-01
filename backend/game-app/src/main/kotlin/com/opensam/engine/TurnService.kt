@@ -263,7 +263,7 @@ class TurnService @Autowired constructor(
                     if (general.npcState.toInt() == 5) continue
                     val currentKt = general.killTurn?.toInt() ?: continue
                     if (currentKt < globalKillTurn) {
-                        general.killTurn = globalKillTurn.toShort()
+                        general.killTurn = globalKillTurn.coerceIn(-32768, 32767).toShort()
                         resetCount++
                     }
                 }
@@ -469,7 +469,7 @@ class TurnService @Autowired constructor(
                                 }
                                 continue
                             } else {
-                                general.killTurn = kt.toShort()
+                                general.killTurn = kt.coerceIn(-32768, 32767).toShort()
                         }
                     }
                     general.turnTime = calculateNextGeneralTurnTime(general, world.tickSeconds)
@@ -739,7 +739,7 @@ class TurnService @Autowired constructor(
                         && actionCode != "휴식"
 
                     if (shouldReset) {
-                        general.killTurn = configuredKillTurn.toShort()
+                        general.killTurn = configuredKillTurn.coerceIn(-32768, 32767).toShort()
                     } else {
                         val kt = general.killTurn!! - 1
                         if (kt <= 0) {
@@ -754,7 +754,7 @@ class TurnService @Autowired constructor(
                             }
                             continue
                         } else {
-                            general.killTurn = kt.toShort()
+                            general.killTurn = kt.coerceIn(-32768, 32767).toShort()
                         }
                     }
                 }
@@ -796,7 +796,7 @@ class TurnService @Autowired constructor(
             maxAtmosByCommand = gameConstService.getInt("maxAtmosByCommand"),
             atmosSideEffectByTraining = gameConstService.getDouble("atmosSideEffectByTraining"),
             trainSideEffectByAtmosTurn = gameConstService.getDouble("trainSideEffectByAtmosTurn"),
-            killturn = killturn.toShort(),
+            killturn = killturn.coerceIn(-32768, 32767).toShort(),
         )
     }
 
@@ -976,8 +976,8 @@ class TurnService @Autowired constructor(
         val startYear = (world.config["startyear"] as? Number)?.toInt() ?: world.currentYear.toInt()
         val elapsedTurns = (world.currentYear.toInt() - startYear) * 12 + (world.currentMonth.toInt() - 1) + 1
         val totalMonths = startYear.toLong() * 12 + elapsedTurns
-        world.currentYear = (totalMonths / 12).toShort()
-        world.currentMonth = (1 + totalMonths % 12).toShort()
+        world.currentYear = (totalMonths / 12).coerceIn(0, 32767).toShort()
+        world.currentMonth = (1 + totalMonths % 12).coerceIn(1, 12).toShort()
     }
 
     /**
@@ -1111,7 +1111,7 @@ class TurnService @Autowired constructor(
 
         for (general in generals) {
             if (general.makeLimit > 0) {
-                general.makeLimit = (general.makeLimit - 1).toShort()
+                general.makeLimit = (general.makeLimit - 1).coerceIn(0, 32767).toShort()
             }
         }
 
@@ -1122,10 +1122,10 @@ class TurnService @Autowired constructor(
 
         for (nation in nations) {
             if (nation.strategicCmdLimit > 0) {
-                nation.strategicCmdLimit = (nation.strategicCmdLimit - 1).toShort()
+                nation.strategicCmdLimit = (nation.strategicCmdLimit - 1).coerceIn(0, 72).toShort()
             }
             if (nation.surrenderLimit > 0) {
-                nation.surrenderLimit = (nation.surrenderLimit - 1).toShort()
+                nation.surrenderLimit = (nation.surrenderLimit - 1).coerceIn(0, 120).toShort()
             }
             nation.rateTmp = nation.rate
             nation.gennum = activeGeneralCountByNation[nation.id] ?: 0
@@ -1186,7 +1186,7 @@ class TurnService @Autowired constructor(
 
         if (unsupplied) {
             val atmosDrop = minOf(5, general.atmos.toInt())
-            general.atmos = (general.atmos - atmosDrop).toShort()
+            general.atmos = (general.atmos - atmosDrop).coerceIn(0, 150).toShort()
         }
     }
 
@@ -1201,10 +1201,10 @@ class TurnService @Autowired constructor(
                 42 -> 41
                 43 -> 42
                 else -> city.state.toInt()
-            }.toShort()
+            }.coerceIn(0, 32767).toShort()
 
             val nextTerm = (city.term.toInt() - 1).coerceAtLeast(0)
-            city.term = nextTerm.toShort()
+            city.term = nextTerm.coerceIn(0, 32767).toShort()
             if (nextTerm == 0) {
                 city.conflict = mutableMapOf()
             }

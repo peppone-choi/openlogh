@@ -41,7 +41,7 @@ class EventActionService(
         var affected = 0
         for (g in generals) {
             if (g.betray <= ifMax) {
-                g.betray = (g.betray + cnt).toShort()
+                g.betray = (g.betray + cnt).coerceIn(0, 10).toShort()
                 affected++
             }
         }
@@ -315,11 +315,11 @@ class EventActionService(
                 nationId = 0,
                 cityId = targetCity.id,
                 npcState = 3,
-                bornYear = birthYear.toShort(),
-                deadYear = deathYear.toShort(),
-                leadership = leadership.toShort(),
-                strength = strength.toShort(),
-                intel = intel.toShort(),
+                bornYear = birthYear.coerceIn(0, 32767).toShort(),
+                deadYear = deathYear.coerceIn(0, 32767).toShort(),
+                leadership = leadership.coerceIn(0, 100).toShort(),
+                strength = strength.coerceIn(0, 100).toShort(),
+                intel = intel.coerceIn(0, 100).toShort(),
                 gold = 1000,
                 rice = 1000,
             )
@@ -696,9 +696,9 @@ class EventActionService(
         // Increment age for all generals and belong for nation generals
         val generals = generalRepository.findByWorldId(world.id.toLong())
         for (g in generals) {
-            g.age = (g.age + 1).toShort()
+            g.age = (g.age + 1).coerceIn(0, 120).toShort()
             if (g.nationId != 0L) {
-                g.belong = (g.belong + 1).toShort()
+                g.belong = (g.belong + 1).coerceIn(0, 12).toShort()
             }
         }
         generalRepository.saveAll(generals)
@@ -793,12 +793,12 @@ class EventActionService(
             nationId = nationId,
             cityId = resolvedCityId,
             npcState = npcType,
-            bornYear = birth.toShort(),
-            deadYear = death.toShort(),
-            leadership = leadership.toShort(),
-            strength = strength.toShort(),
-            intel = intel.toShort(),
-            officerLevel = officerLevel.toShort(),
+            bornYear = birth.coerceIn(0, 32767).toShort(),
+            deadYear = death.coerceIn(0, 32767).toShort(),
+            leadership = leadership.coerceIn(0, 100).toShort(),
+            strength = strength.coerceIn(0, 100).toShort(),
+            intel = intel.coerceIn(0, 100).toShort(),
+            officerLevel = officerLevel.coerceIn(0, 20).toShort(),
             gold = 1000,
             rice = 1000,
         )

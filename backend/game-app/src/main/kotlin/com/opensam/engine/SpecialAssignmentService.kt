@@ -160,13 +160,13 @@ class SpecialAssignmentService {
     /** Domestic specAge threshold: max(round((80 - age) / 12 - relYear / 2), 3) + age */
     private fun calcDomesticSpecAge(age: Int, relYear: Int): Short {
         val wait = maxOf(((RETIREMENT_AGE - age) / 12.0 - relYear / 2.0).roundToInt(), 3)
-        return (wait + age).toShort()
+        return (wait + age).coerceIn(0, 100).toShort()
     }
 
     /** War spec2Age threshold: max(round((80 - age) / 6 - relYear / 2), 3) + age */
     private fun calcWarSpecAge(age: Int, relYear: Int): Short {
         val wait = maxOf(((RETIREMENT_AGE - age) / 6.0 - relYear / 2.0).roundToInt(), 3)
-        return (wait + age).toShort()
+        return (wait + age).coerceIn(0, 100).toShort()
     }
 
     private fun getPrevSpecials(general: General, metaKey: String): List<String> {

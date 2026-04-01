@@ -313,7 +313,7 @@ class WarAftermath {
                     if (general.nationId != defenderNationId) {
                         continue
                     }
-                    general.atmos = round(general.atmos * 0.8).toInt().toShort()
+                    general.atmos = round(general.atmos * 0.8).toInt().coerceIn(0, 150).toShort()
                     if (general.officerLevel >= 5) {
                         general.cityId = nextCapital.id
                     }

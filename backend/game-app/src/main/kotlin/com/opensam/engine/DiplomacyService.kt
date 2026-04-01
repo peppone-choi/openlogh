@@ -62,7 +62,7 @@ class DiplomacyService(
         val active = ports.activeDiplomacies().map { it.toEntity() }
 
         for (diplomacy in active) {
-            diplomacy.term = (diplomacy.term - 1).toShort()
+            diplomacy.term = (diplomacy.term - 1).coerceIn(0, 32767).toShort()
 
             if (diplomacy.stateCode == "선전포고" && diplomacy.term <= 0) {
                 diplomacy.stateCode = "전쟁"
@@ -458,10 +458,10 @@ class DiplomacyService(
         // Kill existing relations of the same type
         val existing = getActiveRelation(worldId, srcNationId, destNationId, stateCode)
         if (existing != null) {
-            existing.term = term.toShort()
+            existing.term = term.coerceIn(0, 32767).toShort()
             worldPortFactory.create(worldId).putDiplomacy(existing.toSnapshot())
         } else {
-            createRelation(worldId, srcNationId, destNationId, stateCode, term.toShort())
+            createRelation(worldId, srcNationId, destNationId, stateCode, term.coerceIn(0, 32767).toShort())
         }
     }
 

@@ -495,8 +495,8 @@ class EconomyService @Autowired constructor(
                     val cityGenerals = generalsByCity[city.id] ?: emptyList()
                     for (general in cityGenerals) {
                         general.crew = (general.crew * 0.95).toInt()
-                        general.atmos = (general.atmos * 0.95).toInt().toShort()
-                        general.train = (general.train * 0.95).toInt().toShort()
+                        general.atmos = (general.atmos * 0.95).toInt().coerceIn(0, 150).toShort()
+                        general.train = (general.train * 0.95).toInt().coerceIn(0, 110).toShort()
                     }
 
                     if (city.trust < 30 && city.id != nation.capitalCityId) {
@@ -540,7 +540,7 @@ class EconomyService @Autowired constructor(
 
             if (newLevel > nation.level.toInt()) {
                 val oldLevel = nation.level.toInt()
-                nation.level = newLevel.toShort()
+                nation.level = newLevel.coerceIn(0, 9).toShort()
                 nation.gold += newLevel * 1000
                 nation.rice += newLevel * 1000
 
@@ -802,10 +802,10 @@ class EconomyService @Autowired constructor(
             for (general in generals) {
                 if (rng.nextDouble() >= 0.3) continue
                 val injuryAmount = rng.nextInt(1, 17)
-                general.injury = (general.injury + injuryAmount).coerceAtMost(80).toShort()
+                general.injury = (general.injury + injuryAmount).coerceIn(0, 80).toShort()
                 general.crew = (general.crew * 0.98).toInt()
-                general.atmos = (general.atmos * 0.98).toInt().toShort()
-                general.train = (general.train * 0.98).toInt().toShort()
+                general.atmos = (general.atmos * 0.98).toInt().coerceIn(0, 150).toShort()
+                general.train = (general.train * 0.98).toInt().coerceIn(0, 110).toShort()
                 injuryMessages += Message(
                     worldId = world.id.toLong(),
                     mailboxCode = "general_action",

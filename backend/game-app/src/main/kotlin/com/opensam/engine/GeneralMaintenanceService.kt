@@ -61,8 +61,8 @@ class GeneralMaintenanceService(
                 if (general.npcState.toInt() == 1 && general.deadYear > world.currentYear) {
                     // NPC유저(npcType==1): 유체이탈 → 원래 NPC로 전환
                     val remainingYears = general.deadYear - world.currentYear
-                    general.killTurn = (remainingYears * 12).toShort()
-                    general.npcState = (general.npcOrg ?: 2).toShort()
+                    general.killTurn = (remainingYears * 12).coerceIn(-32768, 32767).toShort()
+                    general.npcState = (general.npcOrg ?: 2).toInt().coerceIn(-1, 9).toShort()
                     general.userId = null
                     general.defenceTrain = 80
                     general.ownerName = ""
@@ -92,12 +92,12 @@ class GeneralMaintenanceService(
 
             // === 나이 증가 (1월) ===
             if (world.currentMonth.toInt() == 1) {
-                general.age = (general.age + 1).toShort()
+                general.age = (general.age + 1).coerceIn(0, 120).toShort()
             }
 
             // === 기본 월간 경험치 ===
             general.experience += 10
-            val newExpLevel = calcExpLevel(general.experience).toShort()
+            val newExpLevel = calcExpLevel(general.experience).coerceIn(0, 255).toShort()
             if (general.expLevel != newExpLevel) {
                 general.expLevel = newExpLevel
             }
@@ -105,7 +105,7 @@ class GeneralMaintenanceService(
             // === 헌신도 감쇠 ===
             if (general.dedication > 0) {
                 general.dedication = (general.dedication * 0.99).toInt()
-                val newDedLevel = calcDedLevel(general.dedication).toShort()
+                val newDedLevel = calcDedLevel(general.dedication).coerceIn(0, 30).toShort()
                 if (general.dedLevel != newDedLevel) {
                     general.dedLevel = newDedLevel
                 }
@@ -283,7 +283,7 @@ class GeneralMaintenanceService(
     }
 
     private fun scaledStatWithFloor(value: Short, ratio: Double, minValue: Int): Short {
-        return (value * ratio).toInt().coerceAtLeast(minValue).toShort()
+        return (value * ratio).toInt().coerceIn(minValue, 100).toShort()
     }
 
     private fun resetRankMeta(value: Any?): MutableMap<String, Any> {
