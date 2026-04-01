@@ -50,11 +50,11 @@ Plans:
   1. No Short field can silently wrap past 32767/-32768 -- all 30+ fields have coerceIn guards with domain-appropriate bounds
   2. A 200-turn economic simulation produces the same cumulative values in Kotlin and PHP (no truncation drift)
   3. Integer division in Kotlin matches PHP intdiv() behavior for all tested positive and negative dividend/divisor combinations
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 02-01: TBD
-- [ ] 02-02: TBD
+- [ ] 02-01-PLAN.md — Short overflow guards (coerceIn on all .toShort() sites), integer division parity verification, Wave 0 test scaffolds
+- [ ] 02-02-PLAN.md — Rounding normalization (Math.round/roundToInt audit), 200-turn golden snapshot integration test
 
 ### Phase 3: Battle Framework and Core Triggers
 **Goal**: The WarUnitTrigger framework is operational and the four highest-impact battle abilities produce correct combat outcomes
@@ -205,7 +205,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Deterministic Foundation | 0/2 | Planned | - |
-| 2. Numeric Type Safety | 0/2 | Not started | - |
+| 2. Numeric Type Safety | 0/2 | Planned | - |
 | 3. Battle Framework and Core Triggers | 0/3 | Not started | - |
 | 4. Battle Completion | 0/3 | Not started | - |
 | 5. Modifier Pipeline | 0/2 | Not started | - |
