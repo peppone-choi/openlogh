@@ -100,7 +100,7 @@ Plans:
 
 Plans:
 - [ ] 05-01-PLAN.md — Fix SpecialModifiers actionCode mismatch bug + golden value unit tests for specials, items, officer rank domestic modifiers
-- [ ] 05-02-PLAN.md — Multi-source modifier stacking golden value tests + pipeline order verification + full regression check
+- [x] 05-02-PLAN.md — Multi-source modifier stacking golden value tests + pipeline order verification + full regression check
 
 ### Phase 6: Economy Parity
 **Goal**: All economic calculations (tax, trade, supply, population, city development, salary) produce identical values to legacy PHP over sustained gameplay
@@ -208,7 +208,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 | 2. Numeric Type Safety | 0/2 | Planned | - |
 | 3. Battle Framework and Core Triggers | 0/4 | Planned | - |
 | 4. Battle Completion | 0/2 | Planned | - |
-| 5. Modifier Pipeline | 0/2 | Not started | - |
+| 5. Modifier Pipeline | 1/2 | In Progress|  |
 | 6. Economy Parity | 0/2 | Not started | - |
 | 7. Command Parity | 0/3 | Not started | - |
 | 8. NPC AI Parity | 0/3 | Not started | - |
