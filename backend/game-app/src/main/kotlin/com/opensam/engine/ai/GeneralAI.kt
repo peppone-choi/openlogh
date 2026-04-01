@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
+import kotlin.math.round
 import kotlin.math.sqrt
 import java.util.ArrayDeque
 import kotlin.random.Random
@@ -3698,7 +3699,7 @@ class GeneralAI(
         var income = city.pop.toDouble() * city.comm / commMax * trustRatio / 30.0
         val secuMax = city.secuMax.coerceAtLeast(1)
         income *= 1.0 + city.secu.toDouble() / secuMax / 10.0
-        return Math.round(income).toInt()
+        return round(income).toInt()
     }
 
     /**
@@ -3711,7 +3712,7 @@ class GeneralAI(
         var income = city.pop.toDouble() * city.agri / agriMax * trustRatio / 30.0
         val secuMax = city.secuMax.coerceAtLeast(1)
         income *= 1.0 + city.secu.toDouble() / secuMax / 10.0
-        return Math.round(income).toInt()
+        return round(income).toInt()
     }
 
     /**
@@ -3723,7 +3724,7 @@ class GeneralAI(
         var income = city.def.toDouble() * city.wall / wallMax / 3.0
         val secuMax = city.secuMax.coerceAtLeast(1)
         income *= 1.0 + city.secu.toDouble() / secuMax / 10.0
-        return Math.round(income).toInt()
+        return round(income).toInt()
     }
 
     /**
@@ -3737,6 +3738,6 @@ class GeneralAI(
                 .coerceIn(0, 5)
             dedLevel * 200 + 400
         }
-        return Math.round(totalBill.toDouble() * billRate / 100.0).toInt()
+        return round(totalBill.toDouble() * billRate / 100.0).toInt()
     }
 }

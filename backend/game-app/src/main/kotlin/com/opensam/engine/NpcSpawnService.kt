@@ -9,6 +9,7 @@ import com.opensam.service.MapService
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import kotlin.math.ln
+import kotlin.math.round
 import kotlin.random.Random
 
 @Service
@@ -225,12 +226,12 @@ class NpcSpawnService(
     }
 
     private fun derivePoliticsFromStats(leadership: Int, strength: Int, intel: Int, rng: Random): Int {
-        val base = Math.round(intel * 0.4 + leadership * 0.3 + rng.nextInt(-15, 16)).toInt()
+        val base = round(intel * 0.4 + leadership * 0.3 + rng.nextInt(-15, 16)).toInt()
         return base.coerceIn(30, 95)
     }
 
     private fun deriveCharmFromStats(leadership: Int, strength: Int, intel: Int, rng: Random): Int {
-        val base = Math.round(leadership * 0.3 + intel * 0.2 + strength * 0.1 + rng.nextInt(-15, 16)).toInt()
+        val base = round(leadership * 0.3 + intel * 0.2 + strength * 0.1 + rng.nextInt(-15, 16)).toInt()
         return base.coerceIn(30, 95)
     }
 
@@ -249,7 +250,7 @@ class NpcSpawnService(
         }
         // Sort by stat sum, trim top/bottom round(count/6) outliers
         val sorted = nationCities.sortedBy { it.pop + it.agri + it.comm + it.secu + it.def + it.wall }
-        val trimCount = Math.round(sorted.size / 6.0).toInt()
+        val trimCount = round(sorted.size / 6.0).toInt()
         val trimmed = if (sorted.size > trimCount * 2) {
             sorted.subList(trimCount, sorted.size - trimCount)
         } else {

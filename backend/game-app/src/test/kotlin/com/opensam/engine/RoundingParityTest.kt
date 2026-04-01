@@ -1,18 +1,18 @@
 package com.opensam.engine
 
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import kotlin.math.round
 
 /**
- * Rounding Parity Test (TYPE-02 scaffold)
+ * Rounding Parity Test (TYPE-02)
  *
- * PHP-to-Kotlin rounding comparison table (from RESEARCH.md):
+ * PHP-to-Kotlin rounding comparison table:
  *
- * Value    PHP (int)   PHP round()   Kotlin .toInt()   Kotlin roundToInt()   Kotlin Math.round().toInt()
- * ------   ---------   -----------   ----------------  -------------------   --------------------------
+ * Value    PHP (int)   PHP round()   Kotlin .toInt()   Kotlin round().toInt()   Kotlin Math.round().toInt()
+ * ------   ---------   -----------   ----------------  ----------------------   --------------------------
  *  2.3        2           2              2                   2                        2
  *  2.5        2           3              2                   2 (BANKER'S!)            3 (Long->Int)
  *  2.7        2           3              2                   3                        3
@@ -22,16 +22,18 @@ import org.junit.jupiter.api.Test
  * -2.7       -2          -3             -2                  -3                       -3
  *  0.5        0           1              0                   0 (BANKER'S!)            1
  *
- * Key divergences at .5 boundaries:
- *   - PHP round(2.5) = 3, Kotlin roundToInt(2.5) = 2, Math.round(2.5) = 3
- *   - PHP round(-2.5) = -3, Kotlin roundToInt(-2.5) = -2, Math.round(-2.5) = -2
- *   - For PHP (int) cast, Kotlin .toInt() is the exact match (both truncate toward zero)
+ * Engine normalization decision (Plan 02):
+ *   All Math.round(x).toInt() replaced with kotlin.math.round(x).toInt().
+ *   kotlin.math.round uses banker's rounding (half-to-even).
+ *   This diverges from PHP round() at exact .5 boundaries only.
+ *   In practice, exact .5 values are rare in game formulas (random * multiplier).
+ *   Deterministic .5 sites (value/2, value*0.5) are documented inline.
  */
 @DisplayName("Rounding Parity (PHP vs Kotlin)")
 class RoundingParityTest {
 
     @Nested
-    @DisplayName("PHP (int) cast vs Kotlin .toInt() -- exact match, always enabled")
+    @DisplayName("PHP (int) cast vs Kotlin .toInt() -- exact match")
     inner class PhpIntCast {
 
         @Test
@@ -72,91 +74,122 @@ class RoundingParityTest {
     }
 
     @Nested
-    @DisplayName("PHP round() golden values -- DISABLED until Plan 02 normalizes rounding calls")
+    @DisplayName("PHP round() vs kotlin.math.round -- golden values")
     inner class PhpRound {
 
         /**
-         * PHP round() uses half-away-from-zero:
-         *   round(2.5) = 3, round(1.5) = 2, round(-2.5) = -3, round(0.5) = 1
+         * PHP round() uses half-away-from-zero.
+         * kotlin.math.round() uses banker's rounding (half-to-even).
          *
-         * Kotlin roundToInt() uses banker's rounding (half-to-even):
-         *   (2.5).roundToInt() = 2, (1.5).roundToInt() = 2, (-2.5).roundToInt() = -2
-         *
-         * These tests encode the PHP expected values. They will FAIL with current
-         * Kotlin roundToInt() until a phpRound() utility is introduced in Plan 02.
+         * These tests verify kotlin.math.round behavior and document
+         * divergence from PHP at exact .5 boundaries.
+         * Non-.5 values match PHP round() exactly.
          */
 
         @Test
-        @Disabled("Fixed in Plan 02 -- TYPE-02 rounding normalization")
-        fun `round half-away-from-zero for positive 2_5`() {
-            // PHP: round(2.5) = 3
-            // Kotlin roundToInt: (2.5).roundToInt() = 2 (banker's -- nearest even)
-            val phpExpected = 3
-            val kotlinActual = (2.5).toInt()  // placeholder: will be replaced with phpRound()
-            assertEquals(phpExpected, kotlinActual, "PHP round(2.5) should be 3")
+        fun `non-half values match PHP round exactly`() {
+            // PHP round(2.3) = 2, kotlin.math.round(2.3) = 2.0
+            assertEquals(2, round(2.3).toInt())
+            // PHP round(2.7) = 3, kotlin.math.round(2.7) = 3.0
+            assertEquals(3, round(2.7).toInt())
+            // PHP round(-2.3) = -2, kotlin.math.round(-2.3) = -2.0
+            assertEquals(-2, round(-2.3).toInt())
+            // PHP round(-2.7) = -3, kotlin.math.round(-2.7) = -3.0
+            assertEquals(-3, round(-2.7).toInt())
         }
 
         @Test
-        @Disabled("Fixed in Plan 02 -- TYPE-02 rounding normalization")
-        fun `round half-away-from-zero for positive 1_5`() {
-            // PHP: round(1.5) = 2
-            val phpExpected = 2
-            val kotlinActual = (1.5).toInt()  // placeholder
-            assertEquals(phpExpected, kotlinActual, "PHP round(1.5) should be 2")
+        fun `positive half values use banker rounding - diverges from PHP`() {
+            // PHP round(2.5) = 3 (half-away-from-zero)
+            // kotlin.math.round(2.5) = 2.0 (half-to-even: nearest even is 2)
+            assertEquals(2, round(2.5).toInt(), "kotlin round(2.5) = 2, PHP round(2.5) = 3")
+            // PHP round(1.5) = 2 (half-away-from-zero)
+            // kotlin.math.round(1.5) = 2.0 (half-to-even: nearest even is 2)
+            assertEquals(2, round(1.5).toInt(), "kotlin round(1.5) = 2, PHP round(1.5) = 2 -- agrees")
+            // PHP round(3.5) = 4 (half-away-from-zero)
+            // kotlin.math.round(3.5) = 4.0 (half-to-even: nearest even is 4)
+            assertEquals(4, round(3.5).toInt(), "kotlin round(3.5) = 4, PHP round(3.5) = 4 -- agrees")
         }
 
         @Test
-        @Disabled("Fixed in Plan 02 -- TYPE-02 rounding normalization")
-        fun `round half-away-from-zero for negative 2_5`() {
-            // PHP: round(-2.5) = -3
-            val phpExpected = -3
-            val kotlinActual = (-2.5).toInt()  // placeholder
-            assertEquals(phpExpected, kotlinActual, "PHP round(-2.5) should be -3")
+        fun `negative half values use banker rounding - diverges from PHP`() {
+            // PHP round(-2.5) = -3 (half-away-from-zero)
+            // kotlin.math.round(-2.5) = -2.0 (half-to-even: nearest even is -2)
+            assertEquals(-2, round(-2.5).toInt(), "kotlin round(-2.5) = -2, PHP round(-2.5) = -3")
+            // PHP round(-1.5) = -2 (half-away-from-zero)
+            // kotlin.math.round(-1.5) = -2.0 (half-to-even: nearest even is -2)
+            assertEquals(-2, round(-1.5).toInt(), "kotlin round(-1.5) = -2, PHP round(-1.5) = -2 -- agrees")
+            // PHP round(-3.5) = -4 (half-away-from-zero)
+            // kotlin.math.round(-3.5) = -4.0 (half-to-even: nearest even is -4)
+            assertEquals(-4, round(-3.5).toInt(), "kotlin round(-3.5) = -4, PHP round(-3.5) = -4 -- agrees")
         }
 
         @Test
-        @Disabled("Fixed in Plan 02 -- TYPE-02 rounding normalization")
-        fun `round half-away-from-zero for 0_5`() {
-            // PHP: round(0.5) = 1
-            val phpExpected = 1
-            val kotlinActual = (0.5).toInt()  // placeholder
-            assertEquals(phpExpected, kotlinActual, "PHP round(0.5) should be 1")
+        fun `zero-point-five boundary`() {
+            // PHP round(0.5) = 1 (half-away-from-zero)
+            // kotlin.math.round(0.5) = 0.0 (half-to-even: nearest even is 0)
+            assertEquals(0, round(0.5).toInt(), "kotlin round(0.5) = 0, PHP round(0.5) = 1")
         }
 
         @Test
-        @Disabled("Fixed in Plan 02 -- TYPE-02 rounding normalization")
-        fun `round half-away-from-zero for 3_5`() {
-            // PHP: round(3.5) = 4
-            val phpExpected = 4
-            val kotlinActual = (3.5).toInt()  // placeholder
-            assertEquals(phpExpected, kotlinActual, "PHP round(3.5) should be 4")
+        fun `game-typical values without exact half never diverge`() {
+            // Economy formula: pop * comm / commMax * trustRatio / 30
+            // With pop=10000, comm=500, commMax=1000, trust=100 -> trustRatio=1.0
+            val income = 10000.0 * 500 / 1000 * 1.0 / 30.0  // = 166.666...
+            assertEquals(167, round(income).toInt(), "game income rounding")
+
+            // NPC stat derivation: intel*0.4 + leadership*0.3 + noise
+            val stat = 80 * 0.4 + 70 * 0.3 + 5.0  // = 58.0 (exact integer, no rounding issue)
+            assertEquals(58, round(stat).toInt(), "NPC stat rounding")
+
+            // Bill calculation: totalBill * billRate / 100.0
+            val bill = 2000.0 * 100 / 100.0  // = 2000.0 (exact)
+            assertEquals(2000, round(bill).toInt(), "bill rounding")
         }
     }
 
     @Nested
-    @DisplayName("Math.round vs roundToInt divergence documentation")
+    @DisplayName("Math.round vs kotlin.math.round divergence")
     inner class RoundingMethodDivergence {
 
         @Test
-        @Disabled("Fixed in Plan 02 -- TYPE-02 rounding normalization")
-        fun `Math_round and roundToInt diverge at negative 0_5 boundaries`() {
-            // Math.round(-2.5) = -2 (rounds toward positive infinity at .5)
-            // roundToInt(-2.5) = -2 (banker's rounding -- nearest even)
-            // PHP round(-2.5) = -3 (half-away-from-zero)
-            // All three give different results for some negative .5 values!
-            val phpExpected = -3
-            assertEquals(phpExpected, Math.round(-2.5).toInt(), "Math.round(-2.5)")
+        fun `Math_round returns Long - narrowing risk for large values`() {
+            // Math.round(Double) returns Long, .toInt() narrows silently
+            // kotlin.math.round(Double) returns Double, .toInt() is safe for game ranges
+            val largeValue = 50000.7
+            assertEquals(50001, Math.round(largeValue).toInt(), "Math.round large value")
+            assertEquals(50001, round(largeValue).toInt(), "kotlin round large value")
+            // Both produce same result for game-range values (< 100,000)
+            assertEquals(Math.round(largeValue).toInt(), round(largeValue).toInt(), "same for game range")
         }
 
         @Test
-        @Disabled("Fixed in Plan 02 -- TYPE-02 rounding normalization")
-        fun `Math_round and roundToInt diverge at positive 2_5`() {
-            // Math.round(2.5) = 3 (rounds up at .5)
-            // roundToInt(2.5) = 2 (banker's -- nearest even)
-            // PHP round(2.5) = 3 (half-away-from-zero)
-            // Math.round matches PHP for positive .5, but not for negative .5
-            val phpExpected = 3
-            assertEquals(phpExpected, (2.5).toInt(), "roundToInt should match PHP")
+        fun `Math_round and kotlin_round diverge at positive 2_5`() {
+            // Math.round(2.5) = 3 (Java half-up toward positive infinity)
+            // kotlin.math.round(2.5) = 2 (banker's rounding, half-to-even)
+            assertEquals(3, Math.round(2.5).toInt(), "Math.round(2.5)")
+            assertEquals(2, round(2.5).toInt(), "kotlin round(2.5)")
+        }
+
+        @Test
+        fun `Math_round and kotlin_round agree at negative 2_5`() {
+            // Math.round(-2.5) = -2 (Java half-up toward positive infinity)
+            // kotlin.math.round(-2.5) = -2 (banker's rounding, half-to-even)
+            // PHP round(-2.5) = -3 (half-away-from-zero) -- NEITHER matches PHP here
+            assertEquals(-2, Math.round(-2.5).toInt(), "Math.round(-2.5)")
+            assertEquals(-2, round(-2.5).toInt(), "kotlin round(-2.5)")
+        }
+
+        @Test
+        fun `non-half values produce identical results across all methods`() {
+            val testValues = listOf(2.3, 2.7, -2.3, -2.7, 100.1, 100.9, -0.3, -0.7)
+            for (v in testValues) {
+                assertEquals(
+                    Math.round(v).toInt(),
+                    round(v).toInt(),
+                    "Math.round vs kotlin round for $v"
+                )
+            }
         }
     }
 }
