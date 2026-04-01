@@ -131,6 +131,7 @@ class MeshPart:
     uvs: list[tuple[float, float]]
     faces: list[tuple[int, int, int]]
     source: str  # descriptor ID or extra-IB label
+    pool_base: int = 0  # offset of this part's VB within the combined pool
 
 
 # ---------------------------------------------------------------------------
@@ -801,6 +802,7 @@ def extract_mdx(
                             vertices=pool_verts, normals=pool_norms,
                             uvs=pool_uvs, faces=clean_faces,
                             source=f"VB[{ri}]-pool",
+                            pool_base=0,
                         ))
                     continue
                 else:
@@ -840,62 +842,106 @@ def extract_mdx(
                 uvs=all_uvs[ri],
                 faces=clean_faces,
                 source=f"VB[{ri}]-local",
+                pool_base=region.pool_base,
             ))
 
-    # Step 4: After-descriptor IB discovery
-    # Look for additional index runs between IB end and next VB start
-    for ri, region in enumerate(regions):
-        if region.index_count <= 0:
+    # Step 4: After-VB IB discovery (scan ALL gaps, not just descriptor IBs)
+    # gin7 stores IBs after each VB. OOB values (>= vc) are strip restart markers,
+    # not data boundaries. Read the entire gap up to the next VB.
+    sorted_by_start = sorted(range(len(regions)), key=lambda i: regions[i].vb_start)
+    for si, ri in enumerate(sorted_by_start):
+        region = regions[ri]
+        # Start scanning after VB end (or after descriptor IB if present)
+        if region.index_count > 0:
+            scan_start = region.ib_start + region.index_count * 2
+        else:
+            scan_start = region.vb_end
+
+        # Find next VB start
+        if si + 1 < len(sorted_by_start):
+            next_vb_start = regions[sorted_by_start[si + 1]].vb_start
+        else:
+            next_vb_start = min(len(data), scan_start + 50000)
+
+        gap_size = next_vb_start - scan_start
+        if gap_size < 12:
             continue
 
-        ib_end = region.ib_start + region.index_count * 2
-        # Find next boundary
-        next_vb_start = len(data)
-        for other in regions:
-            if other.vb_start > region.ib_start:
-                next_vb_start = other.vb_start
-                break
-
-        if ib_end >= next_vb_start:
-            continue
-
-        # Scan for additional u16 runs in the gap
-        gap_size = next_vb_start - ib_end
-        if gap_size < 12:  # need at least 6 indices
-            continue
-
-        # Read all u16 values in the gap
+        # Read ALL u16 values in gap (OOB = strip restart, not stop)
         extra_indices: list[int] = []
-        for off in range(ib_end, min(next_vb_start, ib_end + gap_size) - 1, 2):
+        for off in range(scan_start, next_vb_start - 1, 2):
             val = u16(data, off)
-            if val < total_pool_size:
-                extra_indices.append(val)
-            else:
-                # Gap ended or we hit non-index data
-                if len(extra_indices) >= 6:
-                    break
-                extra_indices.clear()
+            extra_indices.append(val)
 
-        if len(extra_indices) >= 6:
-            max_extra = max(extra_indices)
-            if max_extra < total_pool_size:
-                faces = decode_best(extra_indices, total_pool_size - 1, pool_verts)
-                ar = avg_aspect(faces, pool_verts)
-                if ar < 50 and faces:
-                    clean_faces = _filter_faces(faces, pool_verts, pool_norms, strict=True)
-                    if clean_faces:
-                        parts.append(MeshPart(
-                            vertices=pool_verts,
-                            normals=pool_norms,
-                            uvs=pool_uvs,
-                            faces=clean_faces,
-                            source=f"VB[{ri}]-extra",
-                        ))
-                        if verbose:
-                            print(
-                                f"    VB[{ri}]-extra: {len(extra_indices)} extra indices, "
-                                f"{len(clean_faces)} faces"
-                            )
+        if len(extra_indices) < 6:
+            continue
+
+        # Try both local decode (indices < local vc) and pool decode
+        local_vc = region.vertex_count
+        local_indices = [v if v < local_vc else -1 for v in extra_indices]
+        pool_indices = [v if v < total_pool_size else -1 for v in extra_indices]
+
+        # Decode local: strip with OOB restart
+        local_faces = []
+        buf: list[int] = []
+        for v in local_indices:
+            if v < 0:
+                buf = []
+                continue
+            buf.append(v)
+            if len(buf) >= 3:
+                i0, i1, i2 = buf[-3], buf[-2], buf[-1]
+                if i0 != i1 and i1 != i2 and i0 != i2:
+                    idx = len(buf) - 3
+                    local_faces.append((i0, i1, i2) if idx % 2 == 0 else (i0, i2, i1))
+
+        # Decode pool: strip with OOB restart
+        pool_faces = []
+        buf = []
+        for v in pool_indices:
+            if v < 0:
+                buf = []
+                continue
+            buf.append(v)
+            if len(buf) >= 3:
+                i0, i1, i2 = buf[-3], buf[-2], buf[-1]
+                if i0 != i1 and i1 != i2 and i0 != i2:
+                    idx = len(buf) - 3
+                    pool_faces.append((i0, i1, i2) if idx % 2 == 0 else (i0, i2, i1))
+
+        # Use whichever produces more faces, with aspect ratio quality gate
+        if len(pool_faces) >= len(local_faces) and pool_faces:
+            ar = avg_aspect(pool_faces, pool_verts)
+            if ar < 30:  # reject garbage data with high aspect ratio
+                clean_faces = _filter_faces(pool_faces, pool_verts, pool_norms, strict=True)
+                if clean_faces:
+                    parts.append(MeshPart(
+                        vertices=pool_verts, normals=pool_norms,
+                        uvs=pool_uvs, faces=clean_faces,
+                        source=f"VB[{ri}]-extra-pool",
+                        pool_base=0,
+                    ))
+                    if verbose:
+                        print(f"    VB[{ri}]-extra: {len(extra_indices)} gap indices, "
+                              f"{len(clean_faces)} pool faces (ar={ar:.1f})")
+            elif verbose:
+                print(f"    VB[{ri}]-extra: REJECTED pool (ar={ar:.1f} > 30)")
+        elif local_faces:
+            ar = avg_aspect(local_faces, all_verts[ri])
+            if ar < 30:
+                clean_faces = _filter_faces(local_faces, all_verts[ri], all_norms[ri])
+                if clean_faces:
+                    parts.append(MeshPart(
+                        vertices=all_verts[ri], normals=all_norms[ri],
+                        uvs=all_uvs[ri], faces=clean_faces,
+                        source=f"VB[{ri}]-extra-local",
+                        pool_base=region.pool_base,
+                    ))
+                    if verbose:
+                        print(f"    VB[{ri}]-extra: {len(extra_indices)} gap indices, "
+                              f"{len(clean_faces)} local faces (ar={ar:.1f})")
+            elif verbose:
+                print(f"    VB[{ri}]-extra: REJECTED local (ar={ar:.1f} > 30)")
 
     return parts if parts else None
 
@@ -969,33 +1015,150 @@ def write_obj(
             mirrored_blocks.append((combined_verts, combined_norms, combined_uvs, combined_faces))
         blocks = mirrored_blocks
 
-    total_v = 0
-    total_f = 0
+    # ── Post-process: merge blocks → clean → smooth normals ──
+
+    # Flatten all blocks into single arrays
+    all_verts = []
+    all_uvs = []
+    all_faces = []
+    vo = 0
+    for verts, norms, uvs, faces in blocks:
+        all_verts.extend(verts)
+        all_uvs.extend(uvs)
+        for i0, i1, i2 in faces:
+            all_faces.append((i0 + vo, i1 + vo, i2 + vo))
+        vo += len(verts)
+
+    import numpy as np
+    verts_arr = np.array(all_verts, dtype=np.float64)
+    faces_arr = list(all_faces)
+    nv = len(verts_arr)
+
+    # Step 1: Merge nearby vertices (position + UV must both be close)
+    # Preserves UV seams: vertices at same position but different UVs stay separate
+    if nv > 0:
+        from scipy.spatial import cKDTree
+        bbox_range = verts_arr.max(axis=0) - verts_arr.min(axis=0)
+        tol = max(bbox_range) * 0.0005
+        uv_tol = 0.01  # UV tolerance (1% of texture space)
+        tree = cKDTree(verts_arr)
+        pairs = tree.query_pairs(r=tol)
+        if pairs:
+            # Filter: only merge if UVs are also close
+            uv_arr = np.array(all_uvs, dtype=np.float64)
+            parent = list(range(nv))
+            def _find(x):
+                while parent[x] != x:
+                    parent[x] = parent[parent[x]]
+                    x = parent[x]
+                return x
+            for a, b in pairs:
+                # Check UV distance before merging
+                uv_dist = np.sqrt(np.sum((uv_arr[a] - uv_arr[b]) ** 2))
+                if uv_dist > uv_tol:
+                    continue  # UV seam — don't merge
+                ra, rb = _find(a), _find(b)
+                if ra != rb:
+                    parent[rb] = ra
+            remap = [_find(i) for i in range(nv)]
+            # Compact: assign new sequential indices
+            unique_map = {}
+            new_idx = 0
+            compact = [0] * nv
+            for i in range(nv):
+                root = remap[i]
+                if root not in unique_map:
+                    unique_map[root] = new_idx
+                    new_idx += 1
+                compact[i] = unique_map[root]
+            # Build new vertex/uv arrays (use representative vertex)
+            new_verts = [None] * new_idx
+            new_uvs = [None] * new_idx
+            for i in range(nv):
+                ci = compact[i]
+                if new_verts[ci] is None:
+                    new_verts[ci] = verts_arr[i]
+                    new_uvs[ci] = all_uvs[i]
+            verts_arr = np.array(new_verts, dtype=np.float64)
+            all_uvs = new_uvs
+            # Remap faces
+            new_faces = []
+            for i0, i1, i2 in faces_arr:
+                ni0, ni1, ni2 = compact[i0], compact[i1], compact[i2]
+                if ni0 != ni1 and ni1 != ni2 and ni0 != ni2:
+                    new_faces.append((ni0, ni1, ni2))
+            faces_arr = new_faces
+            nv = len(verts_arr)
+
+    # Remove duplicate faces
+    faces_set = set()
+    unique_faces = []
+    for f in faces_arr:
+        key = tuple(sorted(f))
+        if key not in faces_set:
+            faces_set.add(key)
+            unique_faces.append(f)
+    faces_arr = unique_faces
+
+    # Step 2: Spaghetti filter (long-edge faces)
+    if nv > 10 and faces_arr:
+        bbox_range = verts_arr.max(axis=0) - verts_arr.min(axis=0)
+        diag_sq = float(np.sum(bbox_range ** 2))
+        long_sq = diag_sq * 0.09  # 30% of diagonal
+        clean_faces = []
+        for i0, i1, i2 in faces_arr:
+            d01 = float(np.sum((verts_arr[i0] - verts_arr[i1]) ** 2))
+            d12 = float(np.sum((verts_arr[i1] - verts_arr[i2]) ** 2))
+            d20 = float(np.sum((verts_arr[i2] - verts_arr[i0]) ** 2))
+            if max(d01, d12, d20) <= long_sq:
+                clean_faces.append((i0, i1, i2))
+        faces_arr = clean_faces
+
+    # Step 3: Recompute area-weighted vertex normals (smooths part boundaries)
+    normals_arr = np.zeros((nv, 3), dtype=np.float64)
+    for i0, i1, i2 in faces_arr:
+        v0, v1, v2 = verts_arr[i0], verts_arr[i1], verts_arr[i2]
+        e1 = v1 - v0
+        e2 = v2 - v0
+        fn = np.cross(e1, e2)  # area-weighted (magnitude = 2 * area)
+        normals_arr[i0] += fn
+        normals_arr[i1] += fn
+        normals_arr[i2] += fn
+    # Normalize
+    lengths = np.linalg.norm(normals_arr, axis=1, keepdims=True)
+    lengths = np.where(lengths < 1e-8, 1.0, lengths)
+    normals_arr = normals_arr / lengths
+
+    # Step 4: Fix face winding — align with vertex normals
+    fixed_faces = []
+    for i0, i1, i2 in faces_arr:
+        v0, v1, v2 = verts_arr[i0], verts_arr[i1], verts_arr[i2]
+        e1 = v1 - v0
+        e2 = v2 - v0
+        fn = np.cross(e1, e2)
+        avg_vn = normals_arr[i0] + normals_arr[i1] + normals_arr[i2]
+        if np.dot(fn, avg_vn) < 0:
+            fixed_faces.append((i0, i2, i1))  # flip winding
+        else:
+            fixed_faces.append((i0, i1, i2))
+    faces_arr = fixed_faces
+
+    # ── Write OBJ ──
+    total_v = len(verts_arr)
+    total_f = len(faces_arr)
 
     with obj_path.open("w", encoding="utf-8") as f:
         f.write(f"# {name}\n")
         f.write(f"g {name}\n")
-
-        # Write all vertex data first
-        for verts, norms, uvs, faces in blocks:
-            for v in verts:
-                f.write(f"v {v[0]:.6f} {v[1]:.6f} {v[2]:.6f}\n")
-        for verts, norms, uvs, faces in blocks:
-            for n in norms:
-                f.write(f"vn {n[0]:.6f} {n[1]:.6f} {n[2]:.6f}\n")
-        for verts, norms, uvs, faces in blocks:
-            for uv in uvs:
-                f.write(f"vt {uv[0]:.6f} {uv[1]:.6f}\n")
-
-        # Write faces with proper base offsets
-        vo = 0
-        for verts, norms, uvs, faces in blocks:
-            for i0, i1, i2 in faces:
-                a, b, c = i0 + vo + 1, i1 + vo + 1, i2 + vo + 1
-                f.write(f"f {a}/{a}/{a} {b}/{b}/{b} {c}/{c}/{c}\n")
-            total_f += len(faces)
-            vo += len(verts)
-            total_v += len(verts)
+        for v in verts_arr:
+            f.write(f"v {v[0]:.6f} {v[1]:.6f} {v[2]:.6f}\n")
+        for n in normals_arr:
+            f.write(f"vn {n[0]:.6f} {n[1]:.6f} {n[2]:.6f}\n")
+        for uv in all_uvs:
+            f.write(f"vt {uv[0]:.6f} {uv[1]:.6f}\n")
+        for i0, i1, i2 in faces_arr:
+            a, b, c = i0 + 1, i1 + 1, i2 + 1
+            f.write(f"f {a}/{a}/{a} {b}/{b}/{b} {c}/{c}/{c}\n")
 
     return total_v, total_f
 

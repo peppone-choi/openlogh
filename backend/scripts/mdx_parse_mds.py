@@ -225,6 +225,133 @@ def decode_strip_faces(data, ib_off, ic, vc):
     return faces
 
 
+def decode_gap_strip(data, gap_start, gap_end, vc):
+    """Decode a gap region as triangle strip IB with OOB-as-restart.
+
+    gin7 stores [VB][list_IB][strip_IB][next_VB] where the strip IB
+    uses indices >= vc as strip restart markers.
+    """
+    count = (gap_end - gap_start) // 2
+    if count < 6:
+        return []
+    faces = []
+    buf = []
+    for i in range(count):
+        v = u16(data, gap_start + i * 2)
+        if v >= vc:
+            buf = []
+            continue
+        buf.append(v)
+        if len(buf) >= 3:
+            i0, i1, i2 = buf[-3], buf[-2], buf[-1]
+            if i0 != i1 and i1 != i2 and i0 != i2:
+                idx = len(buf) - 3
+                faces.append((i0, i1, i2) if idx % 2 == 0 else (i0, i2, i1))
+    return faces
+
+
+def find_s84_strip_end(data, ib_start, ic, vc):
+    """Find the true end of s84 strip IB, beyond descriptor ic.
+
+    s84 layout: [VB][strip_IB(ic)][more_strip_IB][PV or next section]
+    The descriptor ic underreports the actual strip length.
+    After ic, valid strip indices (with OOB restart markers) continue.
+    PV boundary is detected by a long run of consecutive OOB values (>50).
+    """
+    gap_start = ib_start + ic * 2
+    scan_limit = min(len(data), gap_start + 40000)
+    consecutive_oob = 0
+    end = gap_start
+    for i in range((scan_limit - gap_start) // 2):
+        v = u16(data, gap_start + i * 2)
+        if v >= vc:
+            consecutive_oob += 1
+            if consecutive_oob > 50:
+                end = gap_start + (i - 50) * 2
+                return end
+        else:
+            consecutive_oob = 0
+            end = gap_start + (i + 1) * 2
+    return end
+
+
+def decode_s84_mesh(data, desc, vb_off):
+    """Dedicated s84 decoder — handles strip IB + gap strip beyond ic.
+
+    s84 descriptors use prim=1 (triangle strip). The descriptor ic value
+    underreports the actual strip length. Additional strip IB data follows
+    after ic, using indices >= vc as strip restart markers.
+
+    Returns: (faces, verts, norms, uvs) or None if extraction fails.
+    """
+    vc, ic, stride = desc['vc'], desc['ic'], desc['stride']
+    ib_off = vb_off + vc * stride
+
+    if ib_off + ic * 2 > len(data):
+        return None
+
+    # Validate IB start
+    ib_ok = True
+    for probe in [0, ic // 4, ic // 2, ic - 1]:
+        if u16(data, ib_off + probe * 2) >= vc:
+            ib_ok = False
+            break
+    if not ib_ok:
+        return None
+
+    # Read vertices
+    verts, norms, uvs = read_vertices(data, vb_off, vc, stride)
+
+    # Decode strip faces from descriptor ic
+    faces = decode_strip_faces(data, ib_off, ic, vc)
+    faces = clean_faces(faces, verts, norms)
+
+    # Find true strip end (beyond ic, before PV)
+    # Gap strip faces are filtered with long-edge check to prevent spaghetti
+    strip_end = find_s84_strip_end(data, ib_off, ic, vc)
+    gap_start = ib_off + ic * 2
+    if strip_end > gap_start:
+        gap_faces = decode_gap_strip(data, gap_start, strip_end, vc)
+        gap_faces = clean_faces(gap_faces, verts, norms)
+        # Topology-based spaghetti filter: only keep gap faces that
+        # share at least 1 edge with main strip faces (grow from seed).
+        # Isolated faces with no edge connection = spaghetti.
+        if gap_faces:
+            edge_set = set()
+            for i0, i1, i2 in faces:
+                edge_set.add((min(i0,i1), max(i0,i1)))
+                edge_set.add((min(i1,i2), max(i1,i2)))
+                edge_set.add((min(i2,i0), max(i2,i0)))
+            # Iteratively grow: accept gap faces sharing edges with accepted set
+            remaining = list(gap_faces)
+            changed = True
+            while changed:
+                changed = False
+                next_remaining = []
+                for i0, i1, i2 in remaining:
+                    e0 = (min(i0,i1), max(i0,i1))
+                    e1 = (min(i1,i2), max(i1,i2))
+                    e2 = (min(i2,i0), max(i2,i0))
+                    if e0 in edge_set or e1 in edge_set or e2 in edge_set:
+                        faces.append((i0, i1, i2))
+                        edge_set.add(e0)
+                        edge_set.add(e1)
+                        edge_set.add(e2)
+                        changed = True
+                    else:
+                        next_remaining.append((i0, i1, i2))
+                remaining = next_remaining
+    if not faces:
+        return None
+
+    return {
+        'vc': vc, 'verts': verts, 'norms': norms, 'uvs': uvs,
+        'faces': faces, 'stride': stride, 'source': 'desc',
+        'vb_off': vb_off, 'vb_end': vb_off + vc * stride,
+        'ib_end': strip_end, 'prim': desc['prim'],
+    }
+
+
 def fix_winding(i0, i1, i2, verts, norms):
     p0, p1, p2 = verts[i0], verts[i1], verts[i2]
     e1 = (p1[0] - p0[0], p1[1] - p0[1], p1[2] - p0[2])
@@ -270,7 +397,8 @@ def clean_faces(raw_faces, verts, norms):
     if vc < 3:
         return []
 
-    out = []
+    # First pass: basic validity
+    valid = []
     for i0, i1, i2 in raw_faces:
         if max(i0, i1, i2) >= vc:
             continue
@@ -279,6 +407,13 @@ def clean_faces(raw_faces, verts, norms):
         area = face_area(verts[i0], verts[i1], verts[i2])
         if area < 1e-8:
             continue
+        valid.append((i0, i1, i2))
+
+    if len(valid) < 4:
+        return [fix_winding(i0, i1, i2, verts, norms) for i0, i1, i2 in valid]
+
+    out = []
+    for i0, i1, i2 in valid:
         f = fix_winding(i0, i1, i2, verts, norms)
         out.append(f)
     return out
@@ -352,6 +487,16 @@ def extract_descriptor_group(data, group):
             if vb_off < 0:
                 continue
 
+        # s84: use dedicated decoder (handles gap strip beyond ic + PV boundary)
+        if stride == 84:
+            result = decode_s84_mesh(data, desc, vb_off)
+            if result is not None:
+                if desc['prim'] == 1:
+                    strip_parts.append(result)
+                else:
+                    list_parts.append(result)
+            continue
+
         ib_off = vb_off + vc * stride
 
         # Validate IB: check a few indices are < vc
@@ -372,12 +517,8 @@ def extract_descriptor_group(data, group):
 
         verts, norms, uvs = read_vertices(data, vb_off, vc, stride)
 
-        # Stride-84 IBs use triangle strip with degenerate restarts.
         # Stride-72/36/24 IBs use triangle list (quad→tri pattern).
-        if stride == 84:
-            faces = decode_strip_faces(data, ib_off, ic, vc)
-        else:
-            faces = decode_list_faces(data, ib_off, ic, vc)
+        faces = decode_list_faces(data, ib_off, ic, vc)
 
         faces = clean_faces(faces, verts, norms)
         if not faces:
@@ -387,6 +528,7 @@ def extract_descriptor_group(data, group):
             'vc': vc, 'verts': verts, 'norms': norms, 'uvs': uvs,
             'faces': faces, 'stride': stride, 'source': 'desc',
             'vb_off': vb_off, 'vb_end': vb_off + vc * stride,
+            'ib_end': ib_off + ic * 2, 'prim': desc['prim'],
         }
 
         if desc['prim'] == 1:
@@ -682,6 +824,7 @@ def extract_heuristic(data, covered_ranges, inline_descs):
                 'vc': vc, 'verts': verts, 'norms': norms, 'uvs': uvs,
                 'faces': faces, 'stride': stride, 'source': 'heur',
                 'vb_off': vb['start'], 'vb_end': vb_end,
+                'ib_end': ib_off + ic * 2,
             })
 
     return parts
@@ -705,7 +848,6 @@ def extract_mdx(data, name):
         covered.extend(all_ranges)
 
     desc_count = len(all_parts)
-    desc_faces = sum(len(p['faces']) for p in all_parts)
 
     # Pre-scan W=1.0 VBs (ranges only, for Phase 2 false-positive prevention)
     w_vbs = find_vbs_heuristic(data)
@@ -753,8 +895,37 @@ def extract_mdx(data, name):
     # Phase 3: W=1.0 heuristic with inline descriptor ic lookup
     heur_parts = extract_heuristic(data, covered, inline_descs)
     heur_count = len(heur_parts)
-    heur_faces = sum(len(p['faces']) for p in heur_parts)
     all_parts.extend(heur_parts)
+
+    # Phase 4: Gap strip extraction — supplementary strip IB after list IB
+    # gin7 layout: [VB][list_IB][strip_IB][next_VB]
+    # The strip IB uses indices >= vc as strip restart markers.
+    # Applies to all list-type parts (stride != 84) from any phase.
+    all_vb_starts = sorted(set(
+        [p['vb_off'] for p in all_parts] + [vb['start'] for vb in w_vbs]
+    ))
+    for part in all_parts:
+        if part['stride'] == 84:
+            continue  # s84 gap strip handled by decode_s84_mesh() with PV boundary
+        ib_end = part.get('ib_end')
+        if ib_end is None:
+            continue
+        # Find next VB start after this IB
+        next_vb = len(data)
+        for vs in all_vb_starts:
+            if vs > ib_end + 10:
+                next_vb = vs
+                break
+        gap = next_vb - ib_end
+        if gap < 20:
+            continue
+        gap_faces = decode_gap_strip(data, ib_end, next_vb, part['vc'])
+        gap_faces = clean_faces(gap_faces, part['verts'], part['norms'])
+        if gap_faces:
+            part['faces'].extend(gap_faces)
+
+    desc_faces = sum(len(p['faces']) for p in all_parts[:desc_count])
+    heur_faces = sum(len(p['faces']) for p in all_parts[desc_count:])
 
     return all_parts, desc_count, desc_faces, heur_count, heur_faces
 
