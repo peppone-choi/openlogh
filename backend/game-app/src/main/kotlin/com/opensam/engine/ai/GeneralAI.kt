@@ -275,45 +275,280 @@ class GeneralAI(
     //  Diplomacy state calculation
     // ──────────────────────────────────────────────────────────
 
-    internal fun calcDiplomacyState(worldId: Long, nation: Nation?, diplomacies: List<Diplomacy>): DiplomacyState {
-        if (nation == null) return DiplomacyState.PEACE
+    /**
+     * Per legacy GeneralAI.php:206 calcDiplomacyState().
+     * PHP 5-state model using diplomacy term countdown:
+     *   - d평화(0): no declarations
+     *   - d선포(1): declaration exists but term > 8, or early game with war targets
+     *   - d징병(2): min term 6..8
+     *   - d직전(3): min term <= 5
+     *   - d전쟁(4): attackable AND active war (state=0)
+     *
+     * Also populates warTargetNation and attackable fields via returned result.
+     *
+     * @param world world state for year/month/startyear
+     * @param nation the AI nation
+     * @param diplomacies all active diplomacy rows
+     * @param supplyCities nation's cities with supply > 0 (for attackable check)
+     */
+    internal fun calcDiplomacyState(
+        world: WorldState,
+        nation: Nation?,
+        diplomacies: List<Diplomacy>,
+        supplyCities: List<City> = emptyList(),
+    ): CalcDiplomacyResult {
+        if (nation == null) return CalcDiplomacyResult(DiplomacyState.PEACE, false, mapOf(0L to 1))
 
-        val relevant = diplomacies.filter {
-            it.srcNationId == nation.id || it.destNationId == nation.id
+        val yearMonth = world.currentYear.toInt() * 12 + world.currentMonth.toInt()
+        val startYear = (world.config["startyear"] as? Number)?.toInt() ?: world.currentYear.toInt()
+        val earlyGameLimit = startYear * 12 + 2 * 12 + 5  // joinYearMonth(startyear+2, 5)
+
+        // PHP: SELECT ... FROM diplomacy WHERE me=$nationID AND state IN (0,1)
+        // state=0 → active war (stateCode="전쟁"), state=1 → declaration (stateCode="선전포고")
+        val warTarget = diplomacies.filter {
+            it.srcNationId == nation.id &&
+                (it.stateCode == "전쟁" || it.stateCode == "선전포고")
         }
 
-        if (relevant.any { it.stateCode == "선전포고" || it.stateCode == "전쟁" }) return DiplomacyState.AT_WAR
-        if (nation.warState > 0) return DiplomacyState.AT_WAR
-
-        if (relevant.any { it.stateCode == "종전제의" }) {
-            val nationTroops = worldPortFactory.create(worldId).generalsByNation(nation.id).sumOf { it.crew.toLong() }
-            return if (nationTroops < 3000) DiplomacyState.RECRUITING else DiplomacyState.DECLARED
-        }
-
-        val allDiplomacies = diplomacies.filter { it.stateCode != "동맹" }
-        val hostileNationIds = allDiplomacies
-            .filter { it.srcNationId == nation.id || it.destNationId == nation.id }
-            .map { if (it.srcNationId == nation.id) it.destNationId else it.srcNationId }
-            .toSet()
-
-        if (hostileNationIds.isNotEmpty()) {
-            val adjacentCities = worldPortFactory.create(worldId).citiesByNation(nation.id).filter { it.frontState > 0 }
-            if (adjacentCities.isNotEmpty()) {
-                val enemyTroops = hostileNationIds.sumOf { nid ->
-                    worldPortFactory.create(worldId).generalsByNation(nid).sumOf { it.crew.toLong() }
-                }
-                val ownTroops = worldPortFactory.create(worldId).generalsByNation(nation.id).sumOf { it.crew.toLong() }
-                if (enemyTroops > ownTroops * 2) return DiplomacyState.IMMINENT
+        // Early game check: per PHP line 219
+        if (yearMonth <= earlyGameLimit) {
+            return if (warTarget.isEmpty()) {
+                CalcDiplomacyResult(DiplomacyState.PEACE, false, mapOf(0L to 1))
+            } else {
+                CalcDiplomacyResult(DiplomacyState.DECLARED, false, mapOf(0L to 1))
             }
         }
 
-        return DiplomacyState.PEACE
+        // Attackable: nation has front cities with supply
+        val attackable = supplyCities.any { it.frontState > 0 }
+
+        // Build warTargetNation map and count war states
+        var onWar = 0
+        var onWarReady = 0
+        val warTargetNation = mutableMapOf<Long, Int>()
+
+        for (d in warTarget) {
+            val targetId = d.destNationId
+            when {
+                d.stateCode == "전쟁" -> {  // PHP state=0: active war
+                    onWar++
+                    warTargetNation[targetId] = 2
+                }
+                d.stateCode == "선전포고" && d.term < 5 -> {  // PHP state=1, term<5: war ready
+                    onWarReady++
+                    warTargetNation[targetId] = 1
+                }
+                // else: onWarYet (term >= 5), not added to warTargetNation
+            }
+        }
+
+        if (onWar == 0 && onWarReady == 0) {
+            warTargetNation[0L] = 1  // neutral targets
+        }
+
+        // Term-based state from declarations (state=1 / stateCode="선전포고")
+        val declarations = warTarget.filter { it.stateCode == "선전포고" }
+        val minTerm = declarations.minOfOrNull { it.term.toInt() }
+
+        var dipState = when {
+            minTerm == null -> DiplomacyState.PEACE
+            minTerm > 8 -> DiplomacyState.DECLARED
+            minTerm > 5 -> DiplomacyState.RECRUITING
+            else -> DiplomacyState.IMMINENT
+        }
+
+        // AT_WAR override: per PHP line 269-280
+        if (warTargetNation.containsKey(0L) && attackable) {
+            // PHP: key_exists(0, $warTargetNation) && $this->attackable
+            // This shouldn't normally happen (0L key means no real targets), but PHP checks it
+            dipState = DiplomacyState.AT_WAR
+        } else if (onWar > 0) {
+            if (attackable) {
+                dipState = DiplomacyState.AT_WAR
+            } else {
+                // PHP: last_attackable check within 5 months
+                val lastAttackable = (nation.meta["last_attackable"] as? Number)?.toInt()
+                if (lastAttackable != null && lastAttackable >= yearMonth - 5) {
+                    dipState = DiplomacyState.AT_WAR
+                }
+            }
+        }
+
+        // Store last_attackable in nation meta when AT_WAR
+        if (dipState == DiplomacyState.AT_WAR || dipState == DiplomacyState.IMMINENT) {
+            nation.meta["last_attackable"] = yearMonth
+        }
+
+        return CalcDiplomacyResult(dipState, attackable, warTargetNation)
+    }
+
+    /**
+     * Backward-compatible overload for existing callers that pass worldId.
+     */
+    internal fun calcDiplomacyState(worldId: Long, nation: Nation?, diplomacies: List<Diplomacy>): DiplomacyState {
+        if (nation == null) return DiplomacyState.PEACE
+
+        // PHP filters diplomacy WHERE me=$nationID (srcNationId). Also check destNationId for
+        // rows where this nation is the target of a declaration/war.
+        val relevant = diplomacies.filter {
+            (it.srcNationId == nation.id || it.destNationId == nation.id) &&
+                (it.stateCode == "전쟁" || it.stateCode == "선전포고")
+        }
+
+        // Active war check: "전쟁" means state=0 (active war in PHP)
+        val hasActiveWar = relevant.any { it.stateCode == "전쟁" }
+        if (hasActiveWar) return DiplomacyState.AT_WAR
+        if (nation.warState > 0) return DiplomacyState.AT_WAR
+
+        // Term-based state from declarations (state=1 / stateCode="선전포고")
+        val declarations = relevant.filter { it.stateCode == "선전포고" }
+        val minTerm = declarations.minOfOrNull { it.term.toInt() }
+        return when {
+            minTerm == null -> DiplomacyState.PEACE
+            minTerm > 8 -> DiplomacyState.DECLARED
+            minTerm > 5 -> DiplomacyState.RECRUITING
+            else -> DiplomacyState.IMMINENT
+        }
     }
 
     internal fun calcDiplomacyState(nation: Nation?, diplomacies: List<Diplomacy>): DiplomacyState {
         val inferredWorldId = nation?.worldId ?: diplomacies.firstOrNull()?.worldId ?: 0L
         return calcDiplomacyState(inferredWorldId, nation, diplomacies)
     }
+
+    /**
+     * Result of calcDiplomacyState carrying additional context for do*() methods.
+     */
+    data class CalcDiplomacyResult(
+        val dipState: DiplomacyState,
+        val attackable: Boolean,
+        val warTargetNation: Map<Long, Int>,
+    )
+
+    /**
+     * Per legacy GeneralAI.php:3516 categorizeNationGeneral().
+     * Classifies all generals in a nation into 7 categories:
+     * - npcWarGenerals: NPC with leadership >= minNPCWarLeadership, npcState >= 2, not dying
+     * - npcCivilGenerals: NPC with low leadership or killTurn <= 5
+     * - userWarGenerals: player generals who fought recently or have troops >= minWarCrew during war
+     * - userCivilGenerals: other player generals
+     * - troopLeaders: npcState == 5 or troop leaders with 집합 reserved
+     * - lostGenerals: in non-supply cities
+     * - chiefGenerals: officerLevel > 4 (PHP threshold, maps to mid-rank+ in Kotlin)
+     */
+    internal fun categorizeNationGeneral(
+        nationGenerals: List<General>,
+        selfGeneralId: Long,
+        nationCities: Map<Long, City>,
+        dipState: DiplomacyState,
+        minNPCWarLeadership: Int = 40,
+        minWarCrew: Int = 1500,
+        turnterm: Int = 60,
+    ): NationGeneralCategories {
+        val npcWarGenerals = mutableListOf<General>()
+        val npcCivilGenerals = mutableListOf<General>()
+        val userGenerals = mutableListOf<General>()
+        val userWarGenerals = mutableListOf<General>()
+        val userCivilGenerals = mutableListOf<General>()
+        val troopLeaders = mutableListOf<General>()
+        val lostGenerals = mutableListOf<General>()
+        val chiefGenerals = mutableMapOf<Int, General>()
+
+        // Exclude self from categorization (per PHP: no != $this->general->getID())
+        val others = nationGenerals.filter { it.id != selfGeneralId }
+
+        // PHP: calc lastWar = min of all recentWarTurn values
+        // recentWarTurn is computed from warnum meta; we approximate with killnum/recent combat
+        var lastWar = Int.MAX_VALUE
+        for (gen in others) {
+            val recentWar = calcRecentWarTurn(gen, turnterm)
+            val belongMonths = ((gen.belong?.toInt() ?: 1) - 1) * 12
+            if (recentWar >= belongMonths) continue  // exclude pre-enlistment combat
+            lastWar = min(lastWar, recentWar)
+        }
+
+        for (gen in others) {
+            val npcType = gen.npcState.toInt()
+            val officerLevel = gen.officerLevel.toInt()
+            val cityId = gen.cityId
+            val city = nationCities[cityId]
+
+            // Chief generals: PHP officer_level > 4
+            if (officerLevel > 4) {
+                chiefGenerals[officerLevel] = gen
+            }
+
+            // Lost generals: not in nation city or in non-supply city
+            if (city == null || city.supplyState <= 0) {
+                lostGenerals.add(gen)
+            }
+
+            when {
+                npcType == 5 -> {
+                    // Troop leader
+                    troopLeaders.add(gen)
+                }
+                (gen.killTurn?.toInt() ?: Int.MAX_VALUE) <= 5 -> {
+                    // Dying NPC treated as civil
+                    npcCivilGenerals.add(gen)
+                }
+                npcType < 2 -> {
+                    // Player general
+                    userGenerals.add(gen)
+                    val recentWar = calcRecentWarTurn(gen, turnterm)
+                    if (recentWar <= lastWar + 12) {
+                        userWarGenerals.add(gen)
+                    } else if (dipState != DiplomacyState.PEACE && gen.crew >= minWarCrew) {
+                        userWarGenerals.add(gen)
+                    } else {
+                        userCivilGenerals.add(gen)
+                    }
+                }
+                gen.leadership >= minNPCWarLeadership -> {
+                    npcWarGenerals.add(gen)
+                }
+                else -> {
+                    npcCivilGenerals.add(gen)
+                }
+            }
+        }
+
+        return NationGeneralCategories(
+            npcWarGenerals = npcWarGenerals,
+            npcCivilGenerals = npcCivilGenerals,
+            userGenerals = userGenerals,
+            userWarGenerals = userWarGenerals,
+            userCivilGenerals = userCivilGenerals,
+            troopLeaders = troopLeaders,
+            lostGenerals = lostGenerals,
+            chiefGenerals = chiefGenerals,
+        )
+    }
+
+    /**
+     * Approximate PHP's calcRecentWarTurn.
+     * Returns months since last combat based on warnum meta.
+     */
+    private fun calcRecentWarTurn(general: General, turnterm: Int): Int {
+        val warnum = (general.meta["warnum"] as? Number)?.toInt() ?: 0
+        val killnum = (general.meta["killnum"] as? Number)?.toInt() ?: 0
+        // Approximate: if recent combat exists, return low value; otherwise high
+        return if (warnum > 0 || killnum > 0) 0 else Int.MAX_VALUE
+    }
+
+    /**
+     * Result of categorizeNationGeneral.
+     */
+    data class NationGeneralCategories(
+        val npcWarGenerals: List<General>,
+        val npcCivilGenerals: List<General>,
+        val userGenerals: List<General>,
+        val userWarGenerals: List<General>,
+        val userCivilGenerals: List<General>,
+        val troopLeaders: List<General>,
+        val lostGenerals: List<General>,
+        val chiefGenerals: Map<Int, General>,
+    )
 
     /**
      * Calculate war target nations map: nationId -> state (1=war ready, 2=at war).

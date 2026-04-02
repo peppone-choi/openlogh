@@ -5,9 +5,11 @@ import com.opensam.engine.ai.GeneralAI
 import com.opensam.engine.ai.GeneralType
 import com.opensam.engine.ai.NpcGeneralPolicy
 import com.opensam.engine.ai.NpcNationPolicy
+import com.opensam.entity.City
 import com.opensam.entity.Diplomacy
 import com.opensam.entity.General
 import com.opensam.entity.Nation
+import com.opensam.entity.WorldState
 import com.opensam.engine.turn.cqrs.persist.JpaWorldPortFactory
 import com.opensam.repository.*
 import com.opensam.service.MapService
@@ -27,7 +29,10 @@ import kotlin.random.Random
  * - hwe/sammo/GeneralAI.php: chooseGeneralTurn()
  * - hwe/sammo/GeneralAI.php: calcDiplomacyState()
  * - hwe/sammo/GeneralAI.php: classifyGeneral()
+ * - hwe/sammo/GeneralAI.php: categorizeNationGeneral()
  * - hwe/sammo/NpcPolicy.php: NpcGeneralPolicy, NpcNationPolicy
+ * - hwe/sammo/AutorunGeneralPolicy.php: $default_priority
+ * - hwe/sammo/AutorunNationPolicy.php: $defaultPriority
  */
 @DisplayName("NPC AI Legacy Parity")
 class NpcAiParityTest {
@@ -119,26 +124,116 @@ class NpcAiParityTest {
     }
 
     // ──────────────────────────────────────────────────
-    //  Diplomacy state calculation parity
-    //  Legacy: GeneralAI.php calcDiplomacyState()
+    //  calcDiplomacyState parity (PHP 5-state term-based model)
+    //  Legacy: GeneralAI.php:206-281
     // ──────────────────────────────────────────────────
 
     @Nested
-    @DisplayName("calcDiplomacyState - legacy GeneralAI.php:227")
+    @DisplayName("calcDiplomacyState - PHP 5-state golden values")
+    inner class CalcDiplomacyStateGoldenValues {
+
+        @Test
+        fun `calcDiplomacyState no war declarations returns PEACE (code 0)`() {
+            val nation = createNation(id = 1)
+            val world = createWorld(year = 200, month = 3, startYear = 180)
+            val result = ai.calcDiplomacyState(world, nation, emptyList())
+            assertEquals(DiplomacyState.PEACE, result.dipState)
+            assertEquals(0, result.dipState.code)
+        }
+
+        @Test
+        fun `calcDiplomacyState early game with war returns DECLARED (code 1)`() {
+            val nation = createNation(id = 1)
+            // startyear=180, earlyGameLimit = 180*12 + 24 + 5 = 2189
+            // yearMonth = 181*12 + 3 = 2175 < 2189 → early game
+            val world = createWorld(year = 181, month = 3, startYear = 180)
+            val diplomacy = createDiplomacy(srcNationId = 1, destNationId = 2, stateCode = "선전포고", term = 12)
+            val result = ai.calcDiplomacyState(world, nation, listOf(diplomacy))
+            assertEquals(DiplomacyState.DECLARED, result.dipState)
+            assertEquals(1, result.dipState.code)
+            assertFalse(result.attackable, "Early game should set attackable=false")
+        }
+
+        @Test
+        fun `calcDiplomacyState early game no war returns PEACE (code 0)`() {
+            val nation = createNation(id = 1)
+            val world = createWorld(year = 181, month = 3, startYear = 180)
+            val result = ai.calcDiplomacyState(world, nation, emptyList())
+            assertEquals(DiplomacyState.PEACE, result.dipState)
+            assertEquals(0, result.dipState.code)
+        }
+
+        @Test
+        fun `calcDiplomacyState with minTerm greater than 8 returns DECLARED (code 1)`() {
+            val nation = createNation(id = 1)
+            val world = createWorld(year = 200, month = 3, startYear = 180)
+            val diplomacy = createDiplomacy(srcNationId = 1, destNationId = 2, stateCode = "선전포고", term = 10)
+            val result = ai.calcDiplomacyState(world, nation, listOf(diplomacy))
+            assertEquals(DiplomacyState.DECLARED, result.dipState)
+            assertEquals(1, result.dipState.code)
+        }
+
+        @Test
+        fun `calcDiplomacyState with minTerm 7 returns RECRUITING (code 2)`() {
+            val nation = createNation(id = 1)
+            val world = createWorld(year = 200, month = 3, startYear = 180)
+            val diplomacy = createDiplomacy(srcNationId = 1, destNationId = 2, stateCode = "선전포고", term = 7)
+            val result = ai.calcDiplomacyState(world, nation, listOf(diplomacy))
+            assertEquals(DiplomacyState.RECRUITING, result.dipState)
+            assertEquals(2, result.dipState.code)
+        }
+
+        @Test
+        fun `calcDiplomacyState with minTerm 4 returns IMMINENT (code 3)`() {
+            val nation = createNation(id = 1)
+            val world = createWorld(year = 200, month = 3, startYear = 180)
+            val diplomacy = createDiplomacy(srcNationId = 1, destNationId = 2, stateCode = "선전포고", term = 4)
+            val result = ai.calcDiplomacyState(world, nation, listOf(diplomacy))
+            assertEquals(DiplomacyState.IMMINENT, result.dipState)
+            assertEquals(3, result.dipState.code)
+        }
+
+        @Test
+        fun `calcDiplomacyState attackable with active war returns AT_WAR (code 4)`() {
+            val nation = createNation(id = 1)
+            val world = createWorld(year = 200, month = 3, startYear = 180)
+            val diplomacy = createDiplomacy(srcNationId = 1, destNationId = 2, stateCode = "전쟁")
+            val frontCity = createCity(id = 1, nationId = 1, frontState = 2, supplyState = 1)
+            val result = ai.calcDiplomacyState(world, nation, listOf(diplomacy), listOf(frontCity))
+            assertEquals(DiplomacyState.AT_WAR, result.dipState)
+            assertEquals(4, result.dipState.code)
+            assertTrue(result.attackable)
+        }
+
+        @Test
+        fun `calcDiplomacyState null nation returns PEACE`() {
+            val world = createWorld(year = 200, month = 3, startYear = 180)
+            val result = ai.calcDiplomacyState(world, null, emptyList())
+            assertEquals(DiplomacyState.PEACE, result.dipState)
+        }
+
+        @Test
+        fun `calcDiplomacyState active war without attackable checks last_attackable`() {
+            val nation = createNation(id = 1).apply {
+                // last_attackable = yearMonth - 3 (within 5 months)
+                meta["last_attackable"] = 200 * 12 + 3 - 3
+            }
+            val world = createWorld(year = 200, month = 3, startYear = 180)
+            val diplomacy = createDiplomacy(srcNationId = 1, destNationId = 2, stateCode = "전쟁")
+            // No front cities → not attackable
+            val result = ai.calcDiplomacyState(world, nation, listOf(diplomacy), emptyList())
+            assertEquals(DiplomacyState.AT_WAR, result.dipState, "Should be AT_WAR due to last_attackable within 5 months")
+        }
+    }
+
+    // Backward-compatible overload tests
+    @Nested
+    @DisplayName("calcDiplomacyState backward-compatible overloads")
     inner class DiplomacyStateParity {
 
         @Test
         fun `null nation returns PEACE`() {
             assertEquals(DiplomacyState.PEACE, ai.calcDiplomacyState(null, emptyList()))
-        }
-
-        @Test
-        fun `선전포고 diplomacy returns AT_WAR`() {
-            val nation = createNation(id = 1)
-            val diplomacy = Diplomacy(
-                srcNationId = 1, destNationId = 2, stateCode = "선전포고"
-            )
-            assertEquals(DiplomacyState.AT_WAR, ai.calcDiplomacyState(nation, listOf(diplomacy)))
         }
 
         @Test
@@ -148,46 +243,168 @@ class NpcAiParityTest {
         }
 
         @Test
-        fun `warState above 0 returns AT_WAR`() {
-            val nation = createNation(id = 1, warState = 1)
-            assertEquals(DiplomacyState.AT_WAR, ai.calcDiplomacyState(nation, emptyList()))
-        }
-
-        @Test
         fun `동맹 only returns PEACE`() {
             val nation = createNation(id = 1)
             val diplomacy = Diplomacy(srcNationId = 1, destNationId = 2, stateCode = "동맹")
             assertEquals(DiplomacyState.PEACE, ai.calcDiplomacyState(nation, listOf(diplomacy)))
         }
+    }
+
+    // ──────────────────────────────────────────────────
+    //  categorizeNationGeneral parity
+    //  Legacy: GeneralAI.php:3516-3613
+    // ──────────────────────────────────────────────────
+
+    @Nested
+    @DisplayName("categorizeNationGeneral - legacy GeneralAI.php:3516")
+    inner class CategorizeNationGeneralParity {
 
         @Test
-        fun `종전제의 with low troops returns RECRUITING`() {
-            val nation = createNation(id = 1)
-            val diplomacy = Diplomacy(srcNationId = 1, destNationId = 2, stateCode = "종전제의")
-            `when`(generalRepository.findByWorldIdAndNationId(1L, 1L)).thenReturn(
-                listOf(createGeneral(crew = 1000))
+        fun `categorizeNationGeneral classifies NPC with high leadership as npcWarGeneral`() {
+            val self = createGeneral(id = 1, leadership = 90, npcState = 2)
+            val npcWar = createGeneral(id = 2, leadership = 60, npcState = 2)
+            val city = createCity(id = 1, nationId = 1, supplyState = 1)
+
+            val result = ai.categorizeNationGeneral(
+                nationGenerals = listOf(self, npcWar),
+                selfGeneralId = 1,
+                nationCities = mapOf(1L to city),
+                dipState = DiplomacyState.PEACE,
+                minNPCWarLeadership = 40,
             )
-            assertEquals(DiplomacyState.RECRUITING, ai.calcDiplomacyState(nation, listOf(diplomacy)))
+
+            assertTrue(result.npcWarGenerals.any { it.id == 2L }, "High leadership NPC should be war general")
+            assertTrue(result.npcCivilGenerals.isEmpty(), "No civil generals expected")
         }
 
         @Test
-        fun `종전제의 with high troops returns DECLARED`() {
-            val nation = createNation(id = 1)
-            val diplomacy = Diplomacy(srcNationId = 1, destNationId = 2, stateCode = "종전제의")
-            `when`(generalRepository.findByWorldIdAndNationId(1L, 1L)).thenReturn(
-                listOf(createGeneral(crew = 5000))
+        fun `categorizeNationGeneral classifies NPC with low leadership as npcCivilGeneral`() {
+            val self = createGeneral(id = 1, leadership = 90, npcState = 2)
+            val npcCivil = createGeneral(id = 2, leadership = 30, npcState = 2)
+            val city = createCity(id = 1, nationId = 1, supplyState = 1)
+
+            val result = ai.categorizeNationGeneral(
+                nationGenerals = listOf(self, npcCivil),
+                selfGeneralId = 1,
+                nationCities = mapOf(1L to city),
+                dipState = DiplomacyState.PEACE,
+                minNPCWarLeadership = 40,
             )
-            assertEquals(DiplomacyState.DECLARED, ai.calcDiplomacyState(nation, listOf(diplomacy)))
+
+            assertTrue(result.npcCivilGenerals.any { it.id == 2L }, "Low leadership NPC should be civil general")
+            assertTrue(result.npcWarGenerals.isEmpty(), "No war generals expected")
+        }
+
+        @Test
+        fun `categorizeNationGeneral classifies player general with recent combat as userWarGeneral`() {
+            val self = createGeneral(id = 1, leadership = 90, npcState = 2)
+            val userWar = createGeneral(id = 2, leadership = 60, npcState = 0).apply {
+                meta["warnum"] = 5  // Recent combat
+            }
+            val city = createCity(id = 1, nationId = 1, supplyState = 1)
+
+            val result = ai.categorizeNationGeneral(
+                nationGenerals = listOf(self, userWar),
+                selfGeneralId = 1,
+                nationCities = mapOf(1L to city),
+                dipState = DiplomacyState.AT_WAR,
+                minNPCWarLeadership = 40,
+            )
+
+            assertTrue(result.userWarGenerals.any { it.id == 2L }, "Player with recent combat should be war general")
+        }
+
+        @Test
+        fun `categorizeNationGeneral classifies player general without combat as userCivilGeneral`() {
+            val self = createGeneral(id = 1, leadership = 90, npcState = 2)
+            val userCivil = createGeneral(id = 2, leadership = 60, npcState = 0, crew = 100)
+            val city = createCity(id = 1, nationId = 1, supplyState = 1)
+
+            val result = ai.categorizeNationGeneral(
+                nationGenerals = listOf(self, userCivil),
+                selfGeneralId = 1,
+                nationCities = mapOf(1L to city),
+                dipState = DiplomacyState.PEACE,
+                minNPCWarLeadership = 40,
+            )
+
+            assertTrue(result.userCivilGenerals.any { it.id == 2L }, "Player without combat in peace should be civil general")
+        }
+
+        @Test
+        fun `categorizeNationGeneral classifies npcState 5 as troopLeader`() {
+            val self = createGeneral(id = 1, leadership = 90, npcState = 2)
+            val troopLeader = createGeneral(id = 2, leadership = 60, npcState = 5)
+            val city = createCity(id = 1, nationId = 1, supplyState = 1)
+
+            val result = ai.categorizeNationGeneral(
+                nationGenerals = listOf(self, troopLeader),
+                selfGeneralId = 1,
+                nationCities = mapOf(1L to city),
+                dipState = DiplomacyState.PEACE,
+            )
+
+            assertTrue(result.troopLeaders.any { it.id == 2L }, "npcState=5 should be troop leader")
+        }
+
+        @Test
+        fun `categorizeNationGeneral classifies dying NPC as npcCivilGeneral`() {
+            val self = createGeneral(id = 1, leadership = 90, npcState = 2)
+            val dying = createGeneral(id = 2, leadership = 80, npcState = 2).apply {
+                killTurn = 3
+            }
+            val city = createCity(id = 1, nationId = 1, supplyState = 1)
+
+            val result = ai.categorizeNationGeneral(
+                nationGenerals = listOf(self, dying),
+                selfGeneralId = 1,
+                nationCities = mapOf(1L to city),
+                dipState = DiplomacyState.PEACE,
+            )
+
+            assertTrue(result.npcCivilGenerals.any { it.id == 2L }, "Dying NPC (killTurn<=5) should be civil general")
+        }
+
+        @Test
+        fun `categorizeNationGeneral marks generals in non-supply city as lost`() {
+            val self = createGeneral(id = 1, leadership = 90, npcState = 2)
+            val lost = createGeneral(id = 2, leadership = 60, npcState = 2, cityId = 2)
+            val city1 = createCity(id = 1, nationId = 1, supplyState = 1)
+            val city2 = createCity(id = 2, nationId = 1, supplyState = 0)
+
+            val result = ai.categorizeNationGeneral(
+                nationGenerals = listOf(self, lost),
+                selfGeneralId = 1,
+                nationCities = mapOf(1L to city1, 2L to city2),
+                dipState = DiplomacyState.PEACE,
+            )
+
+            assertTrue(result.lostGenerals.any { it.id == 2L }, "General in non-supply city should be lost")
+        }
+
+        @Test
+        fun `categorizeNationGeneral marks high officerLevel as chiefGeneral`() {
+            val self = createGeneral(id = 1, leadership = 90, npcState = 2)
+            val chief = createGeneral(id = 2, leadership = 60, npcState = 2, officerLevel = 11)
+            val city = createCity(id = 1, nationId = 1, supplyState = 1)
+
+            val result = ai.categorizeNationGeneral(
+                nationGenerals = listOf(self, chief),
+                selfGeneralId = 1,
+                nationCities = mapOf(1L to city),
+                dipState = DiplomacyState.PEACE,
+            )
+
+            assertTrue(result.chiefGenerals.containsKey(11), "officerLevel > 4 should be chief general")
         }
     }
 
     // ──────────────────────────────────────────────────
-    //  NPC policy defaults parity
-    //  Legacy: NpcPolicy.php / AutorunGeneralPolicy / AutorunNationPolicy
+    //  NPC policy defaults parity (PHP AutorunGeneralPolicy/AutorunNationPolicy)
     // ──────────────────────────────────────────────────
 
     @Nested
-    @DisplayName("NpcPolicy defaults")
+    @DisplayName("NpcPolicy defaults - PHP priority ordering")
     inner class PolicyDefaultsParity {
 
         @Test
@@ -213,14 +430,60 @@ class NpcAiParityTest {
         }
 
         @Test
-        fun `default priority lists match legacy order`() {
+        fun `DEFAULT_GENERAL_PRIORITY starts with NPC사망대비 matching PHP`() {
             val genPolicy = NpcGeneralPolicy()
-            assertEquals("긴급내정", genPolicy.priority.first())
-            assertEquals("중립", genPolicy.priority.last())
+            assertEquals("NPC사망대비", genPolicy.priority[0],
+                "PHP AutorunGeneralPolicy.\$default_priority[0] = 'NPC사망대비'")
+        }
 
+        @Test
+        fun `DEFAULT_GENERAL_PRIORITY has 귀환 at index 1 matching PHP`() {
+            val genPolicy = NpcGeneralPolicy()
+            assertEquals("귀환", genPolicy.priority[1],
+                "PHP AutorunGeneralPolicy.\$default_priority[1] = '귀환'")
+        }
+
+        @Test
+        fun `DEFAULT_GENERAL_PRIORITY has 금쌀구매 at index 2 matching PHP`() {
+            val genPolicy = NpcGeneralPolicy()
+            assertEquals("금쌀구매", genPolicy.priority[2],
+                "PHP AutorunGeneralPolicy.\$default_priority[2] = '금쌀구매'")
+        }
+
+        @Test
+        fun `DEFAULT_GENERAL_PRIORITY full ordering matches PHP`() {
+            val expected = listOf(
+                "NPC사망대비", "귀환", "금쌀구매", "출병", "긴급내정",
+                "전투준비", "전방워프", "NPC헌납", "징병", "후방워프",
+                "전쟁내정", "소집해제", "일반내정", "내정워프"
+            )
+            assertEquals(expected, NpcGeneralPolicy.DEFAULT_GENERAL_PRIORITY,
+                "Full general priority list must match PHP AutorunGeneralPolicy.\$default_priority")
+        }
+
+        @Test
+        fun `DEFAULT_NATION_PRIORITY starts with 불가침제의 matching PHP`() {
             val nationPolicy = NpcNationPolicy()
-            assertEquals("부대전방발령", nationPolicy.priority.first())
-            assertEquals("전시전략", nationPolicy.priority.last())
+            assertEquals("불가침제의", nationPolicy.priority[0],
+                "PHP AutorunNationPolicy.\$defaultPriority[0] = '불가침제의'")
+        }
+
+        @Test
+        fun `DEFAULT_NATION_PRIORITY full ordering matches PHP`() {
+            val expected = listOf(
+                "불가침제의", "선전포고", "천도",
+                "유저장긴급포상",
+                "부대전방발령", "유저장구출발령",
+                "유저장후방발령", "부대유저장후방발령",
+                "유저장전방발령", "유저장포상",
+                "부대구출발령", "부대후방발령",
+                "NPC긴급포상", "NPC구출발령", "NPC후방발령",
+                "NPC포상",
+                "NPC전방발령",
+                "유저장내정발령", "NPC내정발령", "NPC몰수",
+            )
+            assertEquals(expected, NpcNationPolicy.DEFAULT_NATION_PRIORITY,
+                "Full nation priority list must match PHP AutorunNationPolicy.\$defaultPriority")
         }
     }
 
@@ -238,7 +501,7 @@ class NpcAiParityTest {
             val gen = createGeneral(crew = 100, leadership = 80, train = 80, atmos = 80)
             val policy = NpcGeneralPolicy(minWarCrew = 500)
             assertTrue(gen.crew < policy.minWarCrew,
-                "crew(100) < minWarCrew(500) → should recruit")
+                "crew(100) < minWarCrew(500) -> should recruit")
         }
 
         @Test
@@ -246,7 +509,7 @@ class NpcAiParityTest {
             val gen = createGeneral(crew = 5000, leadership = 80)
             val policy = NpcGeneralPolicy(minWarCrew = 500)
             assertFalse(gen.crew < policy.minWarCrew,
-                "crew(5000) >= minWarCrew(500) → no recruitment needed")
+                "crew(5000) >= minWarCrew(500) -> no recruitment needed")
         }
 
         @Test
@@ -288,7 +551,7 @@ class NpcAiParityTest {
             val gen = createGeneral(injury = 30)
             val policy = NpcNationPolicy(cureThreshold = 20)
             assertTrue(gen.injury > policy.cureThreshold,
-                "injury(30) > cureThreshold(20) → should heal")
+                "injury(30) > cureThreshold(20) -> should heal")
         }
 
         @Test
@@ -296,7 +559,7 @@ class NpcAiParityTest {
             val gen = createGeneral(injury = 20)
             val policy = NpcNationPolicy(cureThreshold = 20)
             assertFalse(gen.injury > policy.cureThreshold,
-                "injury(20) == cureThreshold(20) → no healing")
+                "injury(20) == cureThreshold(20) -> no healing")
         }
 
         @Test
@@ -320,7 +583,7 @@ class NpcAiParityTest {
             val agriRatio = 400.0 / 1000.0
             val commRatio = 800.0 / 1000.0
             assertTrue(agriRatio < 0.8 && commRatio >= 0.8,
-                "Only agri below threshold → should develop agri first")
+                "Only agri below threshold -> should develop agri first")
         }
 
         @Test
@@ -365,7 +628,25 @@ class NpcAiParityTest {
         @Test
         fun `npcState 2 with nation does NOT trigger 거병`() {
             val gen = createGeneral(npcState = 2, nationId = 1)
-            assertFalse(gen.nationId == 0L, "Has nation → no 거병")
+            assertFalse(gen.nationId == 0L, "Has nation -> no 거병")
+        }
+    }
+
+    // ──────────────────────────────────────────────────
+    //  DiplomacyState enum code values match PHP constants
+    // ──────────────────────────────────────────────────
+
+    @Nested
+    @DisplayName("DiplomacyState enum codes")
+    inner class DiplomacyStateEnumCodes {
+
+        @Test
+        fun `DiplomacyState codes match PHP d constants`() {
+            assertEquals(0, DiplomacyState.PEACE.code, "d평화 = 0")
+            assertEquals(1, DiplomacyState.DECLARED.code, "d선포 = 1")
+            assertEquals(2, DiplomacyState.RECRUITING.code, "d징병 = 2")
+            assertEquals(3, DiplomacyState.IMMINENT.code, "d직전 = 3")
+            assertEquals(4, DiplomacyState.AT_WAR.code, "d전쟁 = 4")
         }
     }
 
@@ -376,6 +657,7 @@ class NpcAiParityTest {
     private fun createGeneral(
         id: Long = 1,
         nationId: Long = 1,
+        cityId: Long = 1,
         leadership: Short = 70,
         strength: Short = 70,
         intel: Short = 70,
@@ -390,7 +672,7 @@ class NpcAiParityTest {
         worldId = 1,
         name = "테스트장수",
         nationId = nationId,
-        cityId = 1,
+        cityId = cityId,
         leadership = leadership,
         strength = strength,
         intel = intel,
@@ -413,5 +695,47 @@ class NpcAiParityTest {
         worldId = 1,
         name = "테스트국",
         warState = warState,
+    )
+
+    private fun createWorld(
+        year: Short = 200,
+        month: Short = 3,
+        startYear: Int = 180,
+    ): WorldState = WorldState(
+        id = 1,
+        scenarioCode = "test",
+        currentYear = year,
+        currentMonth = month,
+        tickSeconds = 300,
+    ).apply {
+        config["startyear"] = startYear
+    }
+
+    private fun createCity(
+        id: Long = 1,
+        nationId: Long = 1,
+        frontState: Short = 0,
+        supplyState: Short = 1,
+    ): City = City(
+        id = id,
+        worldId = 1,
+        name = "테스트도시",
+        nationId = nationId,
+        frontState = frontState,
+    ).apply {
+        this.supplyState = supplyState
+    }
+
+    private fun createDiplomacy(
+        srcNationId: Long = 1,
+        destNationId: Long = 2,
+        stateCode: String = "선전포고",
+        term: Short = 0,
+    ): Diplomacy = Diplomacy(
+        worldId = 1,
+        srcNationId = srcNationId,
+        destNationId = destNationId,
+        stateCode = stateCode,
+        term = term,
     )
 }
