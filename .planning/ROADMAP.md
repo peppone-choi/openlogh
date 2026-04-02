@@ -181,7 +181,7 @@ Plans:
 
 Plans:
 - [ ] 10-01-PLAN.md — Diplomacy state transitions and timer golden value parity tests (DIPL-01, DIPL-02)
-- [ ] 10-02-PLAN.md — Unification and game-end condition golden value parity tests (DIPL-03)
+- [x] 10-02-PLAN.md — Unification and game-end condition golden value parity tests (DIPL-03)
 - [ ] 10-03-PLAN.md — Scenario data exhaustive diff: general 3-stat, city init, start conditions (DATA-01, DATA-02, DATA-03)
 
 ### Phase 11: Frontend Display Parity
@@ -216,5 +216,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 | 7. Command Parity | 0/3 | Not started | - |
 | 8. NPC AI Parity | 4/5 | In Progress|  |
 | 9. Turn Engine Completion | 1/2 | In Progress|  |
-| 10. Diplomacy and Scenario Data | 0/3 | Not started | - |
+| 10. Diplomacy and Scenario Data | 1/3 | In Progress|  |
 | 11. Frontend Display Parity | 0/2 | Not started | - |
