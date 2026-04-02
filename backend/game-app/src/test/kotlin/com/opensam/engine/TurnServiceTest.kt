@@ -696,10 +696,10 @@ class TurnServiceTest {
 
         service.processWorld(world)
 
-        // round(300^0.6 * 3) * 10 = round(36.517 * 3) * 10 = round(109.55) * 10 = 1100
+        // round(300^0.6 * 3) * 10 = round(30.64 * 3) * 10 = round(91.92) * 10 = 920
         val refreshLimit = (world.meta["refreshLimit"] as? Number)?.toInt()
         assertNotNull(refreshLimit, "refreshLimit should be set in world.meta")
-        assertEquals(1100, refreshLimit)
+        assertEquals(920, refreshLimit)
     }
 
     @Test
@@ -713,7 +713,7 @@ class TurnServiceTest {
 
         val refreshLimit = (world.meta["refreshLimit"] as? Number)?.toInt()
         assertNotNull(refreshLimit, "refreshLimit should be set even with default coef")
-        assertEquals(1100, refreshLimit)
+        assertEquals(920, refreshLimit)
     }
 
     // ========== updateGeneralNumber ==========

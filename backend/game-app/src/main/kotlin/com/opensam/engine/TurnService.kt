@@ -356,12 +356,17 @@ class TurnService @Autowired constructor(
                 )
                 turnPipeline.execute(turnContext)
 
-                // H7: postUpdateMonthly — functions present in legacy but previously missing
-                // Called after pipeline (postUpdateMonthly position: step 1000–1600 range)
+                // H7: postUpdateMonthly — legacy order: checkWander -> updateGeneralNumber -> triggerTournament -> registerAuction
+                // (func_gamerule.php:423-441)
                 try {
                     checkWander(world)
                 } catch (e: Exception) {
                     logger.warn("checkWander failed: ${e.message}")
+                }
+                try {
+                    updateGeneralNumber(world)
+                } catch (e: Exception) {
+                    logger.warn("updateGeneralNumber failed: ${e.message}")
                 }
                 try {
                     triggerTournament(world)
@@ -372,11 +377,6 @@ class TurnService @Autowired constructor(
                     registerAuction(world)
                 } catch (e: Exception) {
                     logger.warn("registerAuction failed: ${e.message}")
-                }
-                try {
-                    updateGeneralNumber(world)
-                } catch (e: Exception) {
-                    logger.warn("updateGeneralNumber failed: ${e.message}")
                 }
 
                 world.updatedAt = nextTurnAt
@@ -981,29 +981,80 @@ class TurnService @Autowired constructor(
 
     /**
      * M-online: Update online status bookkeeping per tick.
-     * Legacy: daemon.ts updateOnline() — updates online general count in world state.
-     * TODO: implement per-tick online count update if needed beyond TrafficSnapshotStep(700).
+     * Legacy: func.php:1205-1248 updateOnline() — updates online general count in world state.
      */
-    private fun updateOnline(@Suppress("UNUSED_PARAMETER") world: WorldState) {
-        // TODO: legacy updateOnline() per-tick online count snapshot
+    private fun updateOnline(world: WorldState) {
+        val worldId = world.id.toLong()
+        val accessLogs = generalAccessLogRepository.findByWorldId(worldId)
+        // Filter to recent access (accessed since last tick update)
+        val recentLogs = accessLogs.filter { it.accessedAt >= world.updatedAt }
+        val onlineCount = recentLogs.size
+
+        // Build nation name map
+        val nations = nationRepository.findByWorldId(worldId)
+        val nationNames = mutableMapOf<Long, String>(0L to "재야")
+        nations.forEach { nationNames[it.id] = it.name }
+
+        // Map generalId -> nationId via generals
+        val generals = generalRepository.findByWorldId(worldId)
+        val generalNationMap = generals.associate { it.id to it.nationId }
+
+        // Group online logs by nation, sort by count descending
+        val onlineByNation = recentLogs
+            .groupBy { generalNationMap[it.generalId] ?: 0L }
+            .entries.sortedByDescending { it.value.size }
+
+        val onlineNationStr = onlineByNation.map { (nationId, _) ->
+            "【${nationNames[nationId] ?: "unknown"}】"
+        }.joinToString(", ")
+
+        world.meta["online_user_cnt"] = onlineCount
+        world.meta["online_nation"] = onlineNationStr
     }
 
     /**
      * M-online: Check overhead (resource/process overhead) per tick.
-     * Legacy: daemon.ts CheckOverhead() — guards against runaway processes.
-     * TODO: implement overhead guard if needed.
+     * Legacy: func.php:1103-1116 CheckOverhead() — recalculates refreshLimit.
+     * Formula: round(turnterm^0.6 * 3) * refreshLimitCoef
      */
-    private fun checkOverhead(@Suppress("UNUSED_PARAMETER") world: WorldState) {
-        // TODO: legacy CheckOverhead() per-tick overhead guard
+    private fun checkOverhead(world: WorldState) {
+        val turnterm = world.tickSeconds.toDouble()
+        val refreshLimitCoef = (world.config["refreshLimitCoef"] as? Number)?.toInt() ?: 10
+        val nextRefreshLimit = kotlin.math.round(Math.pow(turnterm, 0.6) * 3).toInt() * refreshLimitCoef
+        val currentRefreshLimit = (world.meta["refreshLimit"] as? Number)?.toInt() ?: 0
+        if (nextRefreshLimit != currentRefreshLimit) {
+            world.meta["refreshLimit"] = nextRefreshLimit
+        }
     }
 
     /**
      * H7: Check wander nations for auto-dissolution.
-     * Legacy: postUpdateMonthly — 재야 세력이 건국 후 startYear+2 이상 경과시 자동 해산.
-     * TODO: implement full wander dissolution logic.
+     * Legacy: func_gamerule.php:445-467 — wander nations (level=0) auto-dissolved after startYear+2.
+     * Uses CommandRegistry to create and execute 해산 command for each wander chief.
      */
-    private fun checkWander(@Suppress("UNUSED_PARAMETER") world: WorldState) {
-        // TODO: legacy checkWander — dissolve wander nations where world.year >= foundYear + 2
+    private fun checkWander(world: WorldState) {
+        val startYear = (world.config["startYear"] as? Number)?.toInt() ?: return
+        if (world.currentYear.toInt() < startYear + 2) return
+
+        val worldId = world.id.toLong()
+        val generals = generalRepository.findByWorldId(worldId)
+        val env = buildCommandEnv(world)
+        val hiddenSeed = (world.config["hiddenSeed"] as? String) ?: world.id.toString()
+
+        for (general in generals) {
+            if (general.officerLevel.toInt() != 20) continue
+            val nation = nationRepository.findById(general.nationId).orElse(null) ?: continue
+            if (nation.level.toInt() != 0) continue
+
+            val command = commandRegistry.createGeneralCommand("해산", general, env)
+            if (command.checkFullCondition() is com.opensam.command.constraint.ConstraintResult.Pass) {
+                val rng = DeterministicRng.create(
+                    hiddenSeed, "checkWander", world.currentYear, world.currentMonth, general.id,
+                )
+                runBlocking { command.run(rng) }
+                logger.info("[Turn] checkWander: 방랑군 자동 해산 - generalId={}", general.id)
+            }
+        }
     }
 
     /**
@@ -1072,13 +1123,24 @@ class TurnService @Autowired constructor(
 
     /**
      * H7: Update nation general count and refresh static nation info.
-     * Legacy: postUpdateMonthly — updateGeneralNumber / refreshNationStaticInfo.
-     * Note: gennum is already updated in resetStrategicCommandLimits; this placeholder
-     * covers any additional static info refresh needed.
-     * TODO: implement refreshNationStaticInfo if additional fields need updating.
+     * Legacy: func_gamerule.php:174-186 — updateGeneralNumber / refreshNationStaticInfo.
+     * Counts generals per nation (excluding npcState=5) and saves nation.gennum.
      */
-    private fun updateGeneralNumber(@Suppress("UNUSED_PARAMETER") world: WorldState) {
-        // TODO: legacy refreshNationStaticInfo — nationService.refreshNationGenCount(world)
+    private fun updateGeneralNumber(world: WorldState) {
+        val worldId = world.id.toLong()
+        val generals = generalRepository.findByWorldId(worldId)
+        val nations = nationRepository.findByWorldId(worldId)
+
+        val genCountByNation = generals
+            .filter { it.npcState.toInt() != 5 && it.nationId > 0 }
+            .groupingBy { it.nationId }
+            .eachCount()
+
+        for (nation in nations) {
+            if (nation.id == 0L) continue
+            nation.gennum = genCountByNation[nation.id] ?: 0
+        }
+        nationRepository.saveAll(nations)
     }
 
     /**
