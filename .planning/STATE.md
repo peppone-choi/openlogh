@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: verifying
-stopped_at: Phase 5 UI-SPEC approved
-last_updated: "2026-04-01T08:23:31.583Z"
-last_activity: 2026-04-01
+stopped_at: Completed 08-02-PLAN.md
+last_updated: "2026-04-02T05:25:16.174Z"
+last_activity: 2026-04-02
 progress:
   total_phases: 11
   completed_phases: 4
-  total_plans: 10
-  completed_plans: 10
+  total_plans: 16
+  completed_plans: 12
   percent: 0
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-31)
 Phase: 04 (battle-completion) — EXECUTING
 Plan: 2 of 2
 Status: Phase complete — ready for verification
-Last activity: 2026-04-01
+Last activity: 2026-04-02
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -62,6 +62,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 03 P04 | 14min | 1 tasks | 2 files |
 | Phase 04 P02 | 9min | 2 tasks | 2 files |
 | Phase 04 P01 | 9min | 2 tasks | 11 files |
+| Phase 08 P02 | 9min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -91,6 +92,7 @@ Recent decisions affecting current work:
 - [Phase 04]: Coefficient tests use golden value locks (not comparative ratios) - different CrewType base stats make naive damage comparison unreliable
 - [Phase 04]: CounterStrategyTrigger logs phase-level attempt only; Che반계Trigger BattleTrigger handles magic reflection (dual registry)
 - [Phase 04]: BattleEngine phase loop uses var maxPhase with += for bonusPhases/rageExtraPhases consumption
+- [Phase 08]: doSortie/doCombatPrep use nationPolicy.properWarTrainAtmos (90) not hardcoded 80; doCombatPrep uses weighted random choice per PHP
 
 ### Pending Todos
 
@@ -103,6 +105,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-01T08:23:31.580Z
-Stopped at: Phase 5 UI-SPEC approved
-Resume file: .planning/phases/05-modifier-pipeline/05-UI-SPEC.md
+Last session: 2026-04-02T05:25:16.168Z
+Stopped at: Completed 08-02-PLAN.md
+Resume file: None

@@ -63,10 +63,10 @@ Requirements for legacy parity milestone. Each maps to roadmap phases.
 
 ### NPC AI
 
-- [ ] **AI-01**: Verify NPC military AI decision trees match legacy GeneralAI.php (40+ do*() methods)
+- [x] **AI-01**: Verify NPC military AI decision trees match legacy GeneralAI.php (40+ do*() methods)
 - [ ] **AI-02**: Fix NPC diplomacy AI to match legacy behavior (currently "completely different")
 - [ ] **AI-03**: Verify NPC recruitment/personnel decisions match legacy
-- [ ] **AI-04**: Verify NPC strategic priorities (attack, defend, develop) match legacy
+- [x] **AI-04**: Verify NPC strategic priorities (attack, defend, develop) match legacy
 
 ### Turn Engine
 
@@ -174,10 +174,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CMD-02 | Phase 7: Command Parity | Pending |
 | CMD-03 | Phase 7: Command Parity | Pending |
 | CMD-04 | Phase 7: Command Parity | Pending |
-| AI-01 | Phase 8: NPC AI Parity | Pending |
+| AI-01 | Phase 8: NPC AI Parity | Complete |
 | AI-02 | Phase 8: NPC AI Parity | Pending |
 | AI-03 | Phase 8: NPC AI Parity | Pending |
-| AI-04 | Phase 8: NPC AI Parity | Pending |
+| AI-04 | Phase 8: NPC AI Parity | Complete |
 | TURN-01 | Phase 9: Turn Engine Completion | Pending |
 | TURN-02 | Phase 9: Turn Engine Completion | Pending |
 | TURN-03 | Phase 9: Turn Engine Completion | Pending |

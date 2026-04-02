@@ -146,8 +146,8 @@ Plans:
 **Plans**: TBD
 
 Plans:
-- [ ] 08-01: TBD
-- [ ] 08-02: TBD
+- [x] 08-01: TBD
+- [x] 08-02: TBD
 - [ ] 08-03: TBD
 
 ### Phase 9: Turn Engine Completion
@@ -211,7 +211,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 | 5. Modifier Pipeline | 0/2 | Not started | - |
 | 6. Economy Parity | 0/2 | Not started | - |
 | 7. Command Parity | 0/3 | Not started | - |
-| 8. NPC AI Parity | 0/3 | Not started | - |
+| 8. NPC AI Parity | 2/4 | In Progress|  |
 | 9. Turn Engine Completion | 0/2 | Not started | - |
 | 10. Diplomacy and Scenario Data | 0/2 | Not started | - |
 | 11. Frontend Display Parity | 0/2 | Not started | - |
