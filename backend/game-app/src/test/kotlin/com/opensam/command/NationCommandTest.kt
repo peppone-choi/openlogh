@@ -2,11 +2,17 @@ package com.opensam.command
 
 import com.opensam.command.constraint.ConstraintResult
 import com.opensam.command.nation.che_선전포고
+import com.opensam.command.nation.che_선양요구
+import com.opensam.command.nation.che_신속
+import com.opensam.command.nation.che_칭제
+import com.opensam.command.nation.che_천자맞이
+import com.opensam.command.nation.che_독립선언
 import com.opensam.command.nation.che_포상
 import com.opensam.command.nation.che_초토화
 import com.opensam.command.nation.che_필사즉생
 import com.opensam.command.nation.event_극병연구
 import com.opensam.engine.DiplomacyService
+import com.opensam.engine.EmperorConstants
 import com.opensam.entity.City
 import com.opensam.entity.General
 import com.opensam.entity.Nation
@@ -21,6 +27,7 @@ import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
 import java.time.OffsetDateTime
+import java.util.Optional
 import kotlin.random.Random
 
 class NationCommandTest {
@@ -455,6 +462,189 @@ class NationCommandTest {
         assertEquals(120, chief.dedication, "dedication = 5 * 24")
         // Color-tagged log (D-05)
         assertTrue(result.logs.any { it.contains("<M>극병 연구</>") })
+    }
+
+    // ========== Kotlin-only 5 Commands: Basic Operation Tests (D-07) ==========
+
+    @Test
+    fun `칭제 -- constraint passes for chief with level 8 plus and entity mutation`() {
+        val chief = createGeneral(officerLevel = 20)
+        val nation = createNation(id = 1)
+        nation.level = 8
+        nation.meta.remove(EmperorConstants.NATION_IMPERIAL_STATUS)
+
+        val cmd = che_칭제(chief, env())
+        cmd.city = createCity(nationId = 1)
+        cmd.nation = nation
+        cmd.constraintEnv = mapOf(
+            "emperorSystem" to true,
+            "nationCityCount" to 20,
+        )
+
+        assertEquals(0, cmd.getPreReqTurn())
+        assertEquals(12, cmd.getPostReqTurn())
+
+        val check = cmd.checkFullCondition()
+        assertTrue(check is ConstraintResult.Pass, "칭제 constraint should pass: $check")
+
+        val result = runBlocking { cmd.run(fixedRng) }
+        assertTrue(result.success)
+        // Entity mutation: imperialStatus = emperor, emperorType = selfProclaimed
+        assertEquals(EmperorConstants.STATUS_EMPEROR, nation.meta[EmperorConstants.NATION_IMPERIAL_STATUS])
+        assertEquals(EmperorConstants.TYPE_SELF_PROCLAIMED, nation.meta[EmperorConstants.NATION_EMPEROR_TYPE])
+        // Color-tagged log
+        assertTrue(result.logs.any { it.contains("<C><b>황제</b></>") })
+        assertTrue(result.logs.any { it.contains("자칭") })
+    }
+
+    @Test
+    fun `칭제 -- fails for non-chief`() {
+        val nonChief = createGeneral(officerLevel = 5)
+        val cmd = che_칭제(nonChief, env())
+        cmd.city = createCity(nationId = 1)
+        cmd.nation = createNation(id = 1).also { it.level = 8 }
+        cmd.constraintEnv = mapOf("emperorSystem" to true, "nationCityCount" to 20)
+        val result = cmd.checkFullCondition()
+        assertTrue(result is ConstraintResult.Fail)
+    }
+
+    @Test
+    fun `천자맞이 -- entity mutation and color-tagged log`() {
+        val chief = createGeneral(officerLevel = 20)
+        val nation = createNation(id = 1)
+        nation.meta.remove(EmperorConstants.NATION_IMPERIAL_STATUS)
+
+        val emperorGeneral = createGeneral(id = 99, nationId = 0)
+        emperorGeneral.meta[EmperorConstants.GENERAL_EMPEROR_STATUS] = EmperorConstants.EMPEROR_WANDERING
+
+        val mocks = createMockServicesBundle()
+        `when`(mocks.generalRepository.findById(99L)).thenReturn(java.util.Optional.of(emperorGeneral))
+
+        val cmd = che_천자맞이(chief, env())
+        cmd.services = mocks.services
+        cmd.city = createCity(nationId = 1)
+        cmd.nation = nation
+        cmd.constraintEnv = mapOf(
+            "emperorSystem" to true,
+            "wanderingEmperorGeneralId" to 99L,
+            "wanderingEmperorInTerritory" to true,
+        )
+
+        assertEquals(0, cmd.getPreReqTurn())
+        assertEquals(12, cmd.getPostReqTurn())
+
+        val result = runBlocking { cmd.run(fixedRng) }
+        assertTrue(result.success)
+        // Entity mutation: nation becomes regent
+        assertEquals(EmperorConstants.STATUS_REGENT, nation.meta[EmperorConstants.NATION_IMPERIAL_STATUS])
+        assertEquals(EmperorConstants.TYPE_LEGITIMATE, nation.meta[EmperorConstants.NATION_EMPEROR_TYPE])
+        // Emperor general: assigned to nation, enthroned
+        assertEquals(1L, emperorGeneral.nationId, "emperor general joins nation")
+        assertEquals(EmperorConstants.EMPEROR_ENTHRONED, emperorGeneral.meta[EmperorConstants.GENERAL_EMPEROR_STATUS])
+        // Color-tagged log
+        assertTrue(result.logs.any { it.contains("옹립") })
+    }
+
+    @Test
+    fun `선양요구 -- entity mutation and color-tagged log`() {
+        val chief = createGeneral(officerLevel = 20)
+        val nation = createNation(id = 1)
+        nation.level = 8
+        nation.meta[EmperorConstants.NATION_IMPERIAL_STATUS] = EmperorConstants.STATUS_REGENT
+
+        val emperorGeneral = createGeneral(id = 88, nationId = 1)
+        emperorGeneral.meta[EmperorConstants.GENERAL_EMPEROR_STATUS] = EmperorConstants.EMPEROR_ENTHRONED
+
+        val mocks = createMockServicesBundle()
+        `when`(mocks.generalRepository.findById(88L)).thenReturn(java.util.Optional.of(emperorGeneral))
+
+        val cmd = che_선양요구(chief, env())
+        cmd.services = mocks.services
+        cmd.city = createCity(nationId = 1)
+        cmd.nation = nation
+        cmd.constraintEnv = mapOf(
+            "emperorSystem" to true,
+            "nationCityCount" to 20,
+            "nationHasEmperorGeneral" to true,
+        )
+        cmd.env.gameStor["emperorGeneralId"] = 88L
+
+        assertEquals(0, cmd.getPreReqTurn())
+        assertEquals(24, cmd.getPostReqTurn())
+
+        val result = runBlocking { cmd.run(fixedRng) }
+        assertTrue(result.success)
+        // Entity mutation: nation becomes emperor with legitimate type
+        assertEquals(EmperorConstants.STATUS_EMPEROR, nation.meta[EmperorConstants.NATION_IMPERIAL_STATUS])
+        assertEquals(EmperorConstants.TYPE_LEGITIMATE, nation.meta[EmperorConstants.NATION_EMPEROR_TYPE])
+        // Emperor general: abdicated
+        assertEquals(EmperorConstants.EMPEROR_ABDICATED, emperorGeneral.meta[EmperorConstants.GENERAL_EMPEROR_STATUS])
+        assertEquals(0.toShort(), emperorGeneral.npcState)
+        // Color-tagged log
+        assertTrue(result.logs.any { it.contains("선양") })
+    }
+
+    @Test
+    fun `신속 -- entity mutation and color-tagged log`() {
+        val chief = createGeneral(officerLevel = 20)
+        val nation = createNation(id = 1)
+        nation.meta[EmperorConstants.NATION_IMPERIAL_STATUS] = EmperorConstants.STATUS_INDEPENDENT
+        val destNation = createNation(id = 2)
+        destNation.meta[EmperorConstants.NATION_IMPERIAL_STATUS] = EmperorConstants.STATUS_EMPEROR
+
+        val mocks = createMockServicesBundle()
+        val cmd = che_신속(chief, env())
+        cmd.services = mocks.services
+        cmd.city = createCity(nationId = 1)
+        cmd.nation = nation
+        cmd.destNation = destNation
+        cmd.constraintEnv = mapOf(
+            "emperorSystem" to true,
+        )
+
+        assertEquals(0, cmd.getPreReqTurn())
+        assertEquals(12, cmd.getPostReqTurn())
+
+        val result = runBlocking { cmd.run(fixedRng) }
+        assertTrue(result.success)
+        // Entity mutation: nation becomes vassal with suzerain set
+        assertEquals(EmperorConstants.STATUS_VASSAL, nation.meta[EmperorConstants.NATION_IMPERIAL_STATUS])
+        assertEquals(2L, nation.meta[EmperorConstants.NATION_SUZERAIN_ID])
+        // Color-tagged log
+        assertTrue(result.logs.any { it.contains("신속") })
+        assertTrue(result.logs.any { it.contains("<S>신속</>") })
+    }
+
+    @Test
+    fun `독립선언 -- entity mutation and color-tagged log`() {
+        val chief = createGeneral(officerLevel = 20)
+        val nation = createNation(id = 1)
+        nation.meta[EmperorConstants.NATION_IMPERIAL_STATUS] = EmperorConstants.STATUS_VASSAL
+        nation.meta[EmperorConstants.NATION_SUZERAIN_ID] = 2L
+
+        val suzerainNation = createNation(id = 2)
+        val mocks = createMockServicesBundle()
+        `when`(mocks.services.nationRepository.findById(2L)).thenReturn(java.util.Optional.of(suzerainNation))
+
+        val cmd = che_독립선언(chief, env())
+        cmd.services = mocks.services
+        cmd.city = createCity(nationId = 1)
+        cmd.nation = nation
+        cmd.constraintEnv = mapOf(
+            "emperorSystem" to true,
+        )
+
+        assertEquals(0, cmd.getPreReqTurn())
+        assertEquals(12, cmd.getPostReqTurn())
+
+        val result = runBlocking { cmd.run(fixedRng) }
+        assertTrue(result.success)
+        // Entity mutation: nation becomes independent, suzerain removed
+        assertEquals(EmperorConstants.STATUS_INDEPENDENT, nation.meta[EmperorConstants.NATION_IMPERIAL_STATUS])
+        assertTrue(nation.meta[EmperorConstants.NATION_SUZERAIN_ID] == null, "suzerain ID removed")
+        // Color-tagged log
+        assertTrue(result.logs.any { it.contains("독립") })
+        assertTrue(result.logs.any { it.contains("<R><b>【독립】</b>") })
     }
 
     private fun createMockServicesBundle(): MockServicesBundle {
