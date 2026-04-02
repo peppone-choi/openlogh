@@ -21,7 +21,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 7: Command Parity** - Verify all 93 commands produce identical results to legacy PHP
 - [ ] **Phase 8: NPC AI Parity** - Verify military AI, fix diplomacy AI, verify recruitment and strategic priorities
 - [ ] **Phase 9: Turn Engine Completion** - Implement stub methods, verify turn step ordering and event triggers
-- [ ] **Phase 10: Diplomacy and Scenario Data** - Verify diplomacy state machine and scenario initial conditions
+- [x] **Phase 10: Diplomacy and Scenario Data** - Verify diplomacy state machine and scenario initial conditions (completed 2026-04-02)
 - [ ] **Phase 11: Frontend Display Parity** - Verify game dashboard, general detail, nation management, and battle log display
 
 ## Phase Details
@@ -182,7 +182,7 @@ Plans:
 Plans:
 - [x] 10-01-PLAN.md — Diplomacy state transitions and timer golden value parity tests (DIPL-01, DIPL-02)
 - [x] 10-02-PLAN.md — Unification and game-end condition golden value parity tests (DIPL-03)
-- [ ] 10-03-PLAN.md — Scenario data exhaustive diff: general 3-stat, city init, start conditions (DATA-01, DATA-02, DATA-03)
+- [x] 10-03-PLAN.md — Scenario data exhaustive diff: general 3-stat, city init, start conditions (DATA-01, DATA-02, DATA-03)
 
 ### Phase 11: Frontend Display Parity
 **Goal**: The frontend displays all game information present in the legacy UI with correct data values
@@ -216,5 +216,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 | 7. Command Parity | 0/3 | Not started | - |
 | 8. NPC AI Parity | 4/5 | In Progress|  |
 | 9. Turn Engine Completion | 1/2 | In Progress|  |
-| 10. Diplomacy and Scenario Data | 2/3 | In Progress|  |
+| 10. Diplomacy and Scenario Data | 3/3 | Complete   | 2026-04-02 |
 | 11. Frontend Display Parity | 0/2 | Not started | - |

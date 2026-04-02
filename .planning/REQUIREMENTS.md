@@ -85,9 +85,9 @@ Requirements for legacy parity milestone. Each maps to roadmap phases.
 
 ### Scenario Data
 
-- [ ] **DATA-01**: Verify NPC general stats in all scenarios match legacy 3-stat values
-- [ ] **DATA-02**: Verify city initial conditions (population, development, defense) match legacy
-- [ ] **DATA-03**: Verify scenario start conditions (year, month, nation relations) match legacy
+- [x] **DATA-01**: Verify NPC general stats in all scenarios match legacy 3-stat values
+- [x] **DATA-02**: Verify city initial conditions (population, development, defense) match legacy
+- [x] **DATA-03**: Verify scenario start conditions (year, month, nation relations) match legacy
 
 ### Frontend Display
 
@@ -187,9 +187,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DIPL-01 | Phase 10: Diplomacy and Scenario Data | Complete |
 | DIPL-02 | Phase 10: Diplomacy and Scenario Data | Complete |
 | DIPL-03 | Phase 10: Diplomacy and Scenario Data | Complete |
-| DATA-01 | Phase 10: Diplomacy and Scenario Data | Pending |
-| DATA-02 | Phase 10: Diplomacy and Scenario Data | Pending |
-| DATA-03 | Phase 10: Diplomacy and Scenario Data | Pending |
+| DATA-01 | Phase 10: Diplomacy and Scenario Data | Complete |
+| DATA-02 | Phase 10: Diplomacy and Scenario Data | Complete |
+| DATA-03 | Phase 10: Diplomacy and Scenario Data | Complete |
 | FE-01 | Phase 11: Frontend Display Parity | Pending |
 | FE-02 | Phase 11: Frontend Display Parity | Pending |
 | FE-03 | Phase 11: Frontend Display Parity | Pending |
