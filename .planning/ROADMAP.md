@@ -131,7 +131,7 @@ Plans:
 
 Plans:
 - [x] 07-01-PLAN.md — 내정(Civil) 18개 + 군사(Military) 18개 장수 커맨드 golden value parity 검증 (CMD-01, CMD-03, CMD-04)
-- [ ] 07-02-PLAN.md — 정치(Political) 19개 장수 커맨드 + NPC/CR 인프라 golden value parity 검증 (CMD-01, CMD-03, CMD-04)
+- [x] 07-02-PLAN.md — 정치(Political) 19개 장수 커맨드 + NPC/CR 인프라 golden value parity 검증 (CMD-01, CMD-03, CMD-04)
 - [x] 07-03-PLAN.md — 국가(Nation) 38개 커맨드 golden value parity 검증 (CMD-02, CMD-03, CMD-04)
 
 ### Phase 8: NPC AI Parity
