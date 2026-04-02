@@ -494,18 +494,8 @@ class TurnService @Autowired constructor(
                         nationArg = nt.arg
                         consumedNationTurn = nt
                     } else if (general.npcState >= 2) {
-                        val aiAction = nationAI.decideNationAction(
-                            nation,
-                            world,
-                            DeterministicRng.create(
-                                hiddenSeed,
-                                "preprocess",
-                                general.id,
-                                world.currentYear,
-                                world.currentMonth,
-                            )
-                        )
-                        if (aiAction != "Nation휴식") {
+                        val aiAction = generalAI.chooseNationTurn(general, world)
+                        if (aiAction != "휴식") {
                             nationActionCode = aiAction
                             if (aiAction == "선전포고") {
                                 nationArg = readStringAnyMap(nation.meta.remove("aiWarTarget"))

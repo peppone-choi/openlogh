@@ -246,7 +246,14 @@ class GeneralAI(
      * Wanderers can: 국가선택 (join nation), 거병 (rise), 이동, 견문, 물자조달, 휴식.
      */
     private fun decideWandererAction(general: General, world: WorldState, rng: Random): String {
-        if (general.injury > 0) return "요양"
+        // Per PHP: injury > cureThreshold (not > 0) -- same pattern as all other injury checks
+        val wandererPolicy = if (general.nationId != 0L) {
+            val nation = worldPortFactory.create(world.id.toLong()).nation(general.nationId)?.toEntity()
+            if (nation != null) NpcPolicyBuilder.buildNationPolicy(nation.meta) else NpcNationPolicy()
+        } else {
+            NpcNationPolicy()
+        }
+        if (general.injury > wandererPolicy.cureThreshold) return "요양"
 
         // NPC lords (officerLevel==20) with no nation do 방랑군이동 / 건국
         if (general.npcState.toInt() >= 2 && general.officerLevel.toInt() == 20) {
