@@ -662,6 +662,57 @@ class GeneralMilitaryCommandTest {
     }
 
     @Test
+    fun `parity 이동 golden value matches PHP-traced expectation`() {
+        val general = createTestGeneral(gold = 1000, rice = 1000, cityId = 1, atmos = 80)
+        val env = createTestEnv(develCost = 100)
+        env.gameStor["mapAdjacency"] = mapOf(1L to listOf(2L), 2L to listOf(1L))
+
+        val cmd = 이동(general, env)
+        cmd.destCity = createTestCity().apply { id = 2; name = "낙양" }
+
+        val result = runBlocking { cmd.run(LiteHashDRBG.build(GOLDEN_SEED)) }
+        assertTrue(result.success)
+
+        val json = mapper.readTree(result.message)
+        assertEquals("2", json["statChanges"]["cityId"].asText())
+        assertEquals(-100, json["statChanges"]["gold"].asInt())
+        assertEquals(-5, json["statChanges"]["atmos"].asInt())
+        assertEquals(50, json["statChanges"]["experience"].asInt())
+        assertEquals(1, json["statChanges"]["leadershipExp"].asInt())
+        assertTrue(json["tryUniqueLottery"].asBoolean())
+
+        // Log color tag parity
+        assertTrue(result.logs[0].contains("<G><b>낙양</b></>"))
+        assertTrue(result.logs[0].contains("이동"))
+        assertTrue(result.logs[0].contains("<1>"))
+    }
+
+    @Test
+    fun `parity 이동 constraint fails when not adjacent city`() {
+        val general = createTestGeneral(gold = 1000, cityId = 1)
+        val env = createTestEnv()
+        env.gameStor["mapAdjacency"] = mapOf(1L to listOf(2L), 3L to listOf(4L))
+
+        val cmd = 이동(general, env)
+        cmd.destCity = createTestCity().apply { id = 3 }
+
+        val cond = cmd.checkFullCondition()
+        assertTrue(cond is ConstraintResult.Fail)
+    }
+
+    @Test
+    fun `parity 이동 constraint fails when same city`() {
+        val general = createTestGeneral(gold = 1000, cityId = 1)
+        val env = createTestEnv()
+
+        val cmd = 이동(general, env)
+        cmd.destCity = createTestCity().apply { id = 1 }
+
+        val cond = cmd.checkFullCondition()
+        assertTrue(cond is ConstraintResult.Fail)
+    }
+
+    @Test
     fun `parity 귀환 golden value matches PHP-traced expectation`() {
         val general = createTestGeneral(nationId = 1, cityId = 5, officerLevel = 3).apply {
             officerCity = 7
