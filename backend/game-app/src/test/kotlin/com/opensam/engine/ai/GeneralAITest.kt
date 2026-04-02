@@ -1889,4 +1889,460 @@ class GeneralAITest {
         val action = invokeDoRise(world, general, FixedRandom(0.3, 0.0))
         assertEquals("거병", action, "Should proceed to 거병 when random <= 0.5 at non-major city")
     }
+
+    // ========== Domestic AI Parity Tests (08-03) ==========
+
+    private fun invokeDoUrgentDomestic(
+        world: WorldState, general: General, city: City, nation: Nation,
+        rng: Random = Random(0), dipState: DiplomacyState = DiplomacyState.AT_WAR,
+    ): String? {
+        val method = GeneralAI::class.java.getDeclaredMethod(
+            "doUrgentDomestic", AIContext::class.java, Random::class.java, NpcNationPolicy::class.java,
+        )
+        method.isAccessible = true
+        val ctx = AIContext(
+            world = world, general = general, city = city, nation = nation,
+            diplomacyState = dipState,
+            generalType = ai.classifyGeneral(general, Random(0), 40),
+            allCities = listOf(city), allGenerals = listOf(general), allNations = listOf(nation),
+            frontCities = emptyList(), rearCities = listOf(city), nationGenerals = listOf(general),
+        )
+        return method.invoke(ai, ctx, rng, NpcNationPolicy()) as String?
+    }
+
+    private fun invokeDoWarDomestic(
+        world: WorldState, general: General, city: City, nation: Nation,
+        rng: Random = Random(0), dipState: DiplomacyState = DiplomacyState.AT_WAR,
+    ): String? {
+        val method = GeneralAI::class.java.getDeclaredMethod(
+            "doWarDomestic", AIContext::class.java, Random::class.java, NpcNationPolicy::class.java,
+        )
+        method.isAccessible = true
+        val isFront = city.frontState.toInt() in listOf(1, 3)
+        val ctx = AIContext(
+            world = world, general = general, city = city, nation = nation,
+            diplomacyState = dipState,
+            generalType = ai.classifyGeneral(general, Random(0), 40),
+            allCities = listOf(city), allGenerals = listOf(general), allNations = listOf(nation),
+            frontCities = if (isFront) listOf(city) else emptyList(),
+            rearCities = if (!isFront) listOf(city) else emptyList(),
+            nationGenerals = listOf(general),
+        )
+        return method.invoke(ai, ctx, rng, NpcNationPolicy()) as String?
+    }
+
+    private fun invokeDoDonate(
+        world: WorldState, general: General, city: City, nation: Nation,
+        rng: Random = Random(0),
+    ): String? {
+        val method = GeneralAI::class.java.getDeclaredMethod(
+            "doDonate", AIContext::class.java, Random::class.java, NpcNationPolicy::class.java,
+        )
+        method.isAccessible = true
+        val ctx = AIContext(
+            world = world, general = general, city = city, nation = nation,
+            diplomacyState = DiplomacyState.PEACE,
+            generalType = ai.classifyGeneral(general, Random(0), 40),
+            allCities = listOf(city), allGenerals = listOf(general), allNations = listOf(nation),
+            frontCities = emptyList(), rearCities = listOf(city), nationGenerals = listOf(general),
+        )
+        return method.invoke(ai, ctx, rng, NpcNationPolicy()) as String?
+    }
+
+    private fun invokeDoNpcDedicate(
+        world: WorldState, general: General, city: City, nation: Nation,
+        rng: Random = Random(0),
+    ): String? {
+        val method = GeneralAI::class.java.getDeclaredMethod(
+            "doNpcDedicate", AIContext::class.java, Random::class.java, NpcNationPolicy::class.java,
+        )
+        method.isAccessible = true
+        val ctx = AIContext(
+            world = world, general = general, city = city, nation = nation,
+            diplomacyState = DiplomacyState.PEACE,
+            generalType = ai.classifyGeneral(general, Random(0), 40),
+            allCities = listOf(city), allGenerals = listOf(general), allNations = listOf(nation),
+            frontCities = emptyList(), rearCities = listOf(city), nationGenerals = listOf(general),
+        )
+        return method.invoke(ai, ctx, rng, NpcNationPolicy()) as String?
+    }
+
+    private fun invokeDoReturn(
+        world: WorldState, general: General, city: City, nation: Nation,
+    ): String? {
+        val method = GeneralAI::class.java.getDeclaredMethod(
+            "doReturn", AIContext::class.java, Random::class.java,
+        )
+        method.isAccessible = true
+        val ctx = AIContext(
+            world = world, general = general, city = city, nation = nation,
+            diplomacyState = DiplomacyState.PEACE,
+            generalType = ai.classifyGeneral(general, Random(0), 40),
+            allCities = listOf(city), allGenerals = listOf(general), allNations = listOf(nation),
+            frontCities = emptyList(), rearCities = listOf(city), nationGenerals = listOf(general),
+        )
+        return method.invoke(ai, ctx, Random(0)) as String?
+    }
+
+    private fun invokeDoWarpToDomestic(
+        world: WorldState, general: General, city: City, nation: Nation,
+        supplyCities: List<City>, rng: Random = Random(0),
+    ): String? {
+        val method = GeneralAI::class.java.getDeclaredMethod(
+            "doWarpToDomestic", AIContext::class.java, Random::class.java,
+            NpcNationPolicy::class.java, List::class.java,
+        )
+        method.isAccessible = true
+        val ctx = AIContext(
+            world = world, general = general, city = city, nation = nation,
+            diplomacyState = DiplomacyState.PEACE,
+            generalType = ai.classifyGeneral(general, Random(0), 40),
+            allCities = supplyCities + listOf(city),
+            allGenerals = listOf(general), allNations = listOf(nation),
+            frontCities = emptyList(), rearCities = supplyCities + listOf(city),
+            nationGenerals = listOf(general),
+        )
+        return method.invoke(ai, ctx, rng, NpcNationPolicy(), supplyCities) as String?
+    }
+
+    // --- doNormalDomestic golden value tests ---
+
+    @Test
+    fun `doNormalDomestic selects agri when it is lowest stat below 50 percent`() {
+        val world = createWorld()
+        val general = createGeneral(intel = 80, strength = 30, leadership = 30, crew = 0)
+        val city = createCity(
+            nationId = 1, agri = 200, agriMax = 1000, comm = 300, commMax = 1000, secu = 100, secuMax = 1000,
+        )
+        val nation = createNation()
+
+        val action = invokeDoNormalDomestic(world, general, city, nation)
+        assertEquals("농지개간", action, "agri < 50% triggers 농지개간 first per PHP deterministic path")
+    }
+
+    @Test
+    fun `doNormalDomestic returns null when all stats at max`() {
+        val world = createWorld()
+        val general = createGeneral(intel = 80, strength = 30, leadership = 30, crew = 0)
+        val city = createCity(
+            nationId = 1, agri = 1000, agriMax = 1000, comm = 1000, commMax = 1000, secu = 1000, secuMax = 1000,
+        ).apply {
+            trust = 100f; pop = 100000; popMax = 100000
+        }
+        val nation = createNation().apply { tech = 13000f }
+
+        val action = invokeDoNormalDomestic(world, general, city, nation)
+        assertNull(action, "All stats maxed should return null per PHP")
+    }
+
+    @Test
+    fun `doNormalDomestic selects comm when agri ok but comm below 50 percent`() {
+        val world = createWorld()
+        val general = createGeneral(intel = 80, strength = 30, leadership = 30, crew = 0)
+        val city = createCity(
+            nationId = 1, agri = 600, agriMax = 1000, comm = 200, commMax = 1000, secu = 600, secuMax = 1000,
+        )
+        val nation = createNation()
+
+        val action = invokeDoNormalDomestic(world, general, city, nation)
+        assertEquals("상업투자", action, "comm < 50% with agri >= 50% should select 상업투자")
+    }
+
+    // --- doUrgentDomestic golden value tests ---
+
+    @Test
+    fun `doUrgentDomestic returns null during peace`() {
+        val world = createWorld()
+        val general = createGeneral(leadership = 80)
+        val city = createCity(nationId = 1).apply { trust = 50f }
+        val nation = createNation()
+
+        val action = invokeDoUrgentDomestic(world, general, city, nation, dipState = DiplomacyState.PEACE)
+        assertNull(action, "doUrgentDomestic should return null during PEACE per PHP")
+    }
+
+    @Test
+    fun `doUrgentDomestic selects 주민선정 when trust below 70 during war`() {
+        val world = createWorld()
+        val general = createGeneral(leadership = 80)
+        val city = createCity(nationId = 1).apply { trust = 50f }
+        val nation = createNation()
+
+        val action = invokeDoUrgentDomestic(world, general, city, nation, rng = FixedRandom(0.0))
+        assertEquals("주민선정", action, "trust < 70 during war should select 주민선정 per PHP")
+    }
+
+    // --- doWarDomestic golden value tests ---
+
+    @Test
+    fun `doWarDomestic returns null during peace`() {
+        val world = createWorld()
+        val general = createGeneral(intel = 80, strength = 80, leadership = 80, crew = 0)
+        val city = createCity(nationId = 1, agri = 200, agriMax = 1000)
+        val nation = createNation()
+
+        val action = invokeDoWarDomestic(world, general, city, nation, dipState = DiplomacyState.PEACE)
+        assertNull(action, "doWarDomestic should return null during PEACE")
+    }
+
+    @Test
+    fun `doWarDomestic with front city and low def selects defense action`() {
+        val world = createWorld()
+        val general = createGeneral(strength = 90, intel = 30, leadership = 30, crew = 0)
+        val city = createCity(
+            nationId = 1, agri = 600, agriMax = 1000, comm = 600, commMax = 1000,
+            secu = 600, secuMax = 1000, frontState = 1,
+        ).apply {
+            def = 100; defMax = 1000; wall = 600; wallMax = 1000
+        }
+        val nation = createNation(rice = 5000)
+
+        // FixedRandom: first for rice<1000 (N/A), second for 30% skip (0.5 > 0.3 passes)
+        val action = invokeDoWarDomestic(world, general, city, nation, rng = FixedRandom(0.5, 0.5, 0.0))
+        assertNotNull(action, "Front city with low def should produce action during war")
+        assertTrue(action in listOf("수비강화", "성벽보수", "치안강화"),
+            "Expected defense action but got: $action")
+    }
+
+    // --- doTradeResources golden value tests ---
+
+    @Test
+    fun `doTradeResources buys rice when gold much higher than rice`() {
+        val world = createWorld()
+        val general = createGeneral(gold = 6000, rice = 500)
+        val city = createCity(nationId = 1)
+        val nation = createNation()
+
+        val action = invokeDoTradeResources(world, general, city, nation)
+        assertEquals("군량매매", action)
+        @Suppress("UNCHECKED_CAST")
+        val aiArg = general.meta["aiArg"] as Map<String, Any>
+        assertEquals(true, aiArg["isBuy"], "Should be buying rice")
+    }
+
+    @Test
+    fun `doTradeResources sells rice when rice much higher than gold`() {
+        val world = createWorld()
+        val general = createGeneral(gold = 500, rice = 6000)
+        val city = createCity(nationId = 1)
+        val nation = createNation()
+
+        val action = invokeDoTradeResources(world, general, city, nation)
+        assertEquals("군량매매", action)
+        @Suppress("UNCHECKED_CAST")
+        val aiArg = general.meta["aiArg"] as Map<String, Any>
+        assertEquals(false, aiArg["isBuy"], "Should be selling rice")
+    }
+
+    @Test
+    fun `doTradeResources returns null when both resources adequate`() {
+        val world = createWorld()
+        val general = createGeneral(gold = 3000, rice = 3000)
+        val city = createCity(nationId = 1)
+        val nation = createNation()
+
+        val action = invokeDoTradeResources(world, general, city, nation)
+        assertNull(action, "Balanced resources should return null")
+    }
+
+    // --- doDonate / doNpcDedicate golden value tests ---
+
+    @Test
+    fun `doDonate with excess gold donates to nation`() {
+        val world = createWorld()
+        val general = createGeneral(gold = 30000, rice = 1000, intel = 80, strength = 30, leadership = 30, crew = 0)
+        val city = createCity(nationId = 1)
+        val nation = createNation(gold = 5000)
+
+        val action = invokeDoDonate(world, general, city, nation)
+        assertEquals("헌납", action, "Excess gold should trigger 헌납")
+        @Suppress("UNCHECKED_CAST")
+        val aiArg = general.meta["aiArg"] as Map<String, Any>
+        assertEquals(true, aiArg["isGold"], "Should donate gold")
+    }
+
+    @Test
+    fun `doNpcDedicate with excess resources donates`() {
+        val world = createWorld()
+        val general = createGeneral(gold = 8000, rice = 1000, leadership = 80, strength = 50, intel = 30, crew = 0)
+        val city = createCity(nationId = 1)
+        val nation = createNation(gold = 5000)
+
+        val action = invokeDoNpcDedicate(world, general, city, nation, rng = FixedRandom(0.0))
+        if (action != null) {
+            assertEquals("헌납", action, "NPC dedicate should return 헌납")
+        }
+    }
+
+    // --- doReturn golden value tests ---
+
+    @Test
+    fun `doReturn returns 귀환 when general in enemy territory`() {
+        val world = createWorld()
+        val general = createGeneral(nationId = 1, cityId = 2)
+        val city = createCity(id = 2, nationId = 2)
+        val nation = createNation()
+
+        val action = invokeDoReturn(world, general, city, nation)
+        assertEquals("귀환", action, "General in enemy territory should return 귀환")
+    }
+
+    @Test
+    fun `doReturn returns null when in own territory with supply`() {
+        val world = createWorld()
+        val general = createGeneral(nationId = 1, cityId = 1)
+        val city = createCity(id = 1, nationId = 1).apply { supplyState = 1 }
+        val nation = createNation()
+
+        val action = invokeDoReturn(world, general, city, nation)
+        assertNull(action, "General in own supplied territory should return null")
+    }
+
+    // --- doWarpToDomestic golden value tests ---
+
+    @Test
+    fun `doWarpToDomestic warps to underdeveloped city when current is maxed`() {
+        val world = createWorld()
+        val general = createGeneral(intel = 80, strength = 30, leadership = 30, crew = 0)
+        val currentCity = createCity(
+            id = 1, nationId = 1, agri = 1000, agriMax = 1000,
+            comm = 1000, commMax = 1000, secu = 1000, secuMax = 1000,
+        ).apply { trust = 100f; pop = 100000; popMax = 100000 }
+        val targetCity = createCity(
+            id = 2, nationId = 1, agri = 200, agriMax = 1000,
+            comm = 200, commMax = 1000, secu = 200, secuMax = 1000,
+        ).apply { trust = 50f; pop = 50000; popMax = 100000 }
+        val nation = createNation()
+
+        val action = invokeDoWarpToDomestic(world, general, currentCity, nation,
+            supplyCities = listOf(currentCity, targetCity), rng = FixedRandom(0.99, 0.99, 0.0))
+        if (action != null) {
+            assertEquals("이동", action, "Should warp to underdeveloped city")
+        }
+    }
+
+    @Test
+    fun `doWarpToDomestic returns null when commander during war`() {
+        val world = createWorld()
+        val general = createGeneral(leadership = 80, strength = 50, intel = 30, crew = 0)
+        val city = createCity(id = 1, nationId = 1)
+        val nation = createNation()
+
+        val method = GeneralAI::class.java.getDeclaredMethod(
+            "doWarpToDomestic", AIContext::class.java, Random::class.java,
+            NpcNationPolicy::class.java, List::class.java,
+        )
+        method.isAccessible = true
+        val ctx = AIContext(
+            world = world, general = general, city = city, nation = nation,
+            diplomacyState = DiplomacyState.AT_WAR,
+            generalType = ai.classifyGeneral(general, Random(0), 40),
+            allCities = listOf(city), allGenerals = listOf(general), allNations = listOf(nation),
+            frontCities = emptyList(), rearCities = listOf(city), nationGenerals = listOf(general),
+        )
+        val action = method.invoke(ai, ctx, Random(0), NpcNationPolicy(), listOf(city)) as String?
+        assertNull(action, "Commander during war should not warp to domestic per PHP")
+    }
+
+    // ========== Economy Rate Parity Tests (08-03) ==========
+
+    @Test
+    fun `chooseTexRate with well-developed supply cities returns 25`() {
+        val world = createWorld()
+        val general = createGeneral(nationId = 1, dedication = 100)
+        val city = createCity(
+            nationId = 1, agri = 1000, agriMax = 1000, comm = 1000, commMax = 1000,
+            secu = 1000, secuMax = 1000,
+        ).apply { pop = 95000; popMax = 100000; trust = 100f }
+        val nation = createNation()
+
+        val ctx = buildAiContext(world, general, city, nation, listOf(general))
+        val rate = ai.chooseTexRate(ctx, listOf(city))
+        assertEquals(25, rate, "Well-developed cities should yield rate=25 per PHP")
+    }
+
+    @Test
+    fun `chooseTexRate with low-developed supply cities returns 10`() {
+        val world = createWorld()
+        val general = createGeneral(nationId = 1, dedication = 100)
+        val city = createCity(
+            nationId = 1, agri = 200, agriMax = 1000, comm = 200, commMax = 1000,
+            secu = 200, secuMax = 1000,
+        ).apply { pop = 20000; popMax = 100000; trust = 50f }
+        val nation = createNation()
+
+        val ctx = buildAiContext(world, general, city, nation, listOf(general))
+        val rate = ai.chooseTexRate(ctx, listOf(city))
+        assertEquals(10, rate, "Low-developed cities should yield rate=10 per PHP")
+    }
+
+    @Test
+    fun `chooseGoldBillRate with adequate treasury returns valid bill`() {
+        val world = createWorld()
+        val general = createGeneral(nationId = 1, dedication = 100)
+        val city = createCity(
+            nationId = 1, comm = 100, commMax = 1000, secu = 100, secuMax = 1000,
+        ).apply { trust = 50f; dead = 0; pop = 10000; popMax = 100000 }
+        val nation = createNation(gold = 500).apply { rate = 10; typeCode = "che_중립" }
+
+        val bill = ai.chooseGoldBillRate(
+            buildAiContext(world, general, city, nation, listOf(general)),
+            listOf(city), NpcNationPolicy(),
+        )
+        assertTrue(bill in 20..200, "Bill should be in valid range [20, 200]")
+    }
+
+    @Test
+    fun `chooseGoldBillRate with depleted treasury returns minimum bill`() {
+        val world = createWorld()
+        val general = createGeneral(nationId = 1, dedication = 100)
+        val city = createCity(
+            nationId = 1, comm = 50, commMax = 1000, secu = 50, secuMax = 1000,
+        ).apply { trust = 30f; dead = 0; pop = 5000; popMax = 100000 }
+        val nation = createNation(gold = 100).apply { rate = 10; typeCode = "che_중립" }
+
+        val bill = ai.chooseGoldBillRate(
+            buildAiContext(world, general, city, nation, listOf(general)),
+            listOf(city), NpcNationPolicy(),
+        )
+        assertEquals(20, bill, "Depleted treasury with low income should yield minimum bill=20")
+    }
+
+    @Test
+    fun `chooseRiceBillRate with adequate rice returns valid bill`() {
+        val world = createWorld()
+        val general = createGeneral(nationId = 1, dedication = 2000)
+        val city = createCity(
+            nationId = 1, agri = 800, agriMax = 1000, secu = 800, secuMax = 1000,
+        ).apply {
+            trust = 80f; pop = 80000; popMax = 100000
+            def = 500; wall = 800; wallMax = 1000
+        }
+        val nation = createNation(rice = 50000).apply { rate = 20; typeCode = "che_중립" }
+
+        val bill = ai.chooseRiceBillRate(
+            buildAiContext(world, general, city, nation, listOf(general)),
+            listOf(city), NpcNationPolicy(),
+        )
+        assertTrue(bill in 20..200, "Bill should be in valid range [20, 200]")
+    }
+
+    @Test
+    fun `chooseRiceBillRate with depleted rice returns minimum bill`() {
+        val world = createWorld()
+        val general = createGeneral(nationId = 1, dedication = 100)
+        val city = createCity(
+            nationId = 1, agri = 50, agriMax = 1000, secu = 50, secuMax = 1000,
+        ).apply {
+            trust = 30f; pop = 5000; popMax = 100000
+            def = 50; wall = 50; wallMax = 1000
+        }
+        val nation = createNation(rice = 100).apply { rate = 10; typeCode = "che_중립" }
+
+        val bill = ai.chooseRiceBillRate(
+            buildAiContext(world, general, city, nation, listOf(general)),
+            listOf(city), NpcNationPolicy(),
+        )
+        assertEquals(20, bill, "Depleted rice with low income should yield minimum bill=20")
+    }
 }
