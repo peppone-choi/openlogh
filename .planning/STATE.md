@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: verifying
-stopped_at: Completed 06-02-PLAN.md
-last_updated: "2026-04-01T14:09:51.924Z"
-last_activity: 2026-04-01
+status: executing
+stopped_at: Completed 07-03-PLAN.md
+last_updated: "2026-04-02T02:12:59.181Z"
+last_activity: 2026-04-02
 progress:
   total_phases: 11
   completed_phases: 6
-  total_plans: 14
-  completed_plans: 14
+  total_plans: 17
+  completed_plans: 15
   percent: 0
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-31)
 
 **Core value:** Every game mechanic must produce identical outcomes to the legacy PHP implementation given the same inputs.
-**Current focus:** Phase 04 — battle-completion
+**Current focus:** Phase 07 — command-parity
 
 ## Current Position
 
-Phase: 7
-Plan: Not started
-Status: Phase complete — ready for verification
-Last activity: 2026-04-01
+Phase: 07 (command-parity) — EXECUTING
+Plan: 2 of 3
+Status: Ready to execute
+Last activity: 2026-04-02
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -64,6 +64,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 04 P01 | 9min | 2 tasks | 11 files |
 | Phase 06 P01 | 11m | 2 tasks | 2 files |
 | Phase 06 P02 | 11min | 2 tasks | 2 files |
+| Phase 07 P03 | 14min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -96,6 +97,8 @@ Recent decisions affecting current work:
 - [Phase 06]: Nation level thresholds [0,1,2,4,6,9,12,16,20,25] confirmed as intentional opensamguk 10-level extension from PHP 8-level
 - [Phase 06]: PHP exchangeFee=0.01 vs Kotlin exchangeFee=0.03 is intentional opensamguk configuration difference
 - [Phase 06]: EconomyPreUpdateStep shouldSkip=true by design (handled outside pipeline for legacy ordering)
+- [Phase 07]: Entity state diff approach (Pitfall 4): Nation commands modify entities directly in run(), verification uses before/after field comparison
+- [Phase 07]: Kotlin-only 5 emperor commands (칭제, 천자맞이, 선양요구, 신속, 독립선언) tested for basic operation only -- no PHP counterpart
 
 ### Pending Todos
 
@@ -108,6 +111,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-01T13:56:41.543Z
-Stopped at: Completed 06-02-PLAN.md
+Last session: 2026-04-02T02:12:59.174Z
+Stopped at: Completed 07-03-PLAN.md
 Resume file: None
