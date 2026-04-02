@@ -216,5 +216,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 | 7. Command Parity | 0/3 | Not started | - |
 | 8. NPC AI Parity | 4/5 | In Progress|  |
 | 9. Turn Engine Completion | 1/2 | In Progress|  |
-| 10. Diplomacy and Scenario Data | 3/3 | Complete   | 2026-04-02 |
+| 10. Diplomacy and Scenario Data | 3/3 | Complete    | 2026-04-02 |
 | 11. Frontend Display Parity | 0/2 | Not started | - |
