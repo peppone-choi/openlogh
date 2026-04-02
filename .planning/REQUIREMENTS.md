@@ -47,7 +47,7 @@ Requirements for legacy parity milestone. Each maps to roadmap phases.
 
 ### Command Parity
 
-- [ ] **CMD-01**: Verify all 55 general commands produce identical results to legacy PHP
+- [x] **CMD-01**: Verify all 55 general commands produce identical results to legacy PHP
 - [x] **CMD-02**: Verify all 38 nation commands produce identical results to legacy PHP
 - [x] **CMD-03**: Verify command constraint checks match legacy (cooldowns, resource costs, prerequisites)
 - [x] **CMD-04**: Verify command result side effects match legacy (entity mutations, log messages)
@@ -170,7 +170,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ECON-04 | Phase 6: Economy Parity | Complete |
 | ECON-05 | Phase 6: Economy Parity | Complete |
 | ECON-06 | Phase 6: Economy Parity | Complete |
-| CMD-01 | Phase 7: Command Parity | Pending |
+| CMD-01 | Phase 7: Command Parity | Complete |
 | CMD-02 | Phase 7: Command Parity | Complete |
 | CMD-03 | Phase 7: Command Parity | Complete |
 | CMD-04 | Phase 7: Command Parity | Complete |
