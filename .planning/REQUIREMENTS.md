@@ -79,8 +79,8 @@ Requirements for legacy parity milestone. Each maps to roadmap phases.
 
 ### Diplomacy
 
-- [ ] **DIPL-01**: Verify diplomacy state transitions match legacy (war, alliance, ceasefire conditions)
-- [ ] **DIPL-02**: Verify diplomacy timer/duration calculations match legacy
+- [x] **DIPL-01**: Verify diplomacy state transitions match legacy (war, alliance, ceasefire conditions)
+- [x] **DIPL-02**: Verify diplomacy timer/duration calculations match legacy
 - [x] **DIPL-03**: Verify unification/game-end conditions match legacy
 
 ### Scenario Data
@@ -184,8 +184,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TURN-04 | Phase 9: Turn Engine Completion | Complete |
 | TURN-05 | Phase 9: Turn Engine Completion | Complete |
 | TURN-06 | Phase 9: Turn Engine Completion | Complete |
-| DIPL-01 | Phase 10: Diplomacy and Scenario Data | Pending |
-| DIPL-02 | Phase 10: Diplomacy and Scenario Data | Pending |
+| DIPL-01 | Phase 10: Diplomacy and Scenario Data | Complete |
+| DIPL-02 | Phase 10: Diplomacy and Scenario Data | Complete |
 | DIPL-03 | Phase 10: Diplomacy and Scenario Data | Complete |
 | DATA-01 | Phase 10: Diplomacy and Scenario Data | Pending |
 | DATA-02 | Phase 10: Diplomacy and Scenario Data | Pending |
