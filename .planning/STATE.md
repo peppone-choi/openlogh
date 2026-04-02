@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-stopped_at: Completed all Wave 2 plans
-last_updated: "2026-04-02T05:30:00.000Z"
+status: verifying
+stopped_at: Completed 08-05-PLAN.md (gap closure)
+last_updated: "2026-04-02T05:52:30.870Z"
 last_activity: 2026-04-02
 progress:
   total_phases: 11
-  completed_phases: 7
-  total_plans: 21
-  completed_plans: 21
+  completed_phases: 8
+  total_plans: 22
+  completed_plans: 22
   percent: 0
 ---
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-03-31)
 
 Phase: 08 (npc-ai-parity) — EXECUTING
 Plan: 4 of 4
-Status: All plans complete — ready for verification
+Status: Phase complete — ready for verification
 Last activity: 2026-04-02
 
 Progress: [░░░░░░░░░░] 0%
@@ -71,6 +71,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 08 P02 | 9min | 2 tasks | 2 files |
 | Phase 08 P03 | 12min | 2 tasks | 2 files |
 | Phase 08 P04 | 7min | 2 tasks | 1 files |
+| Phase 08 P05 | 5min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -113,6 +114,7 @@ Recent decisions affecting current work:
 - [Phase 08]: doSortie/doCombatPrep use nationPolicy.properWarTrainAtmos (90) not hardcoded 80; doCombatPrep uses weighted random choice per PHP
 - [Phase 08]: All 18 personnel/wanderer/promotion AI methods match PHP behavior - no fixes needed
 - [Phase 08]: NationAI.adjustTaxAndBill is runtime-active but non-PHP-matching; GeneralAI rate choosers are PHP-matching but not wired into TurnService
+- [Phase 08]: Wire TurnService to GeneralAI.chooseNationTurn() for runtime NPC nation AI parity
 
 ### Pending Todos
 
@@ -125,6 +127,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-02T05:30:00.000Z
-Stopped at: Completed all Phase 08 plans
+Last session: 2026-04-02T05:52:30.862Z
+Stopped at: Completed 08-05-PLAN.md (gap closure)
 Resume file: None
