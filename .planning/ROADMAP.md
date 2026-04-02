@@ -164,8 +164,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 09-01: TBD
-- [ ] 09-02: TBD
+- [ ] 09-01-PLAN.md — Implement 4 stub methods (checkWander, updateOnline, checkOverhead, updateGeneralNumber) + fix postUpdateMonthly ordering + unit tests (TURN-01, TURN-02, TURN-03, TURN-04, TURN-05)
+- [ ] 09-02-PLAN.md — Turn step ordering assertion + disaster/event probability golden value verification (TURN-05, TURN-06)
 
 ### Phase 10: Diplomacy and Scenario Data
 **Goal**: Diplomacy state transitions and game-end conditions match legacy, and all scenario initial conditions are verified against legacy data
