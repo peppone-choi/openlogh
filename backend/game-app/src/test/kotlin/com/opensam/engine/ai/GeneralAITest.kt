@@ -1410,6 +1410,261 @@ class GeneralAITest {
         return method.invoke(ai, ctx, rng, nationPolicy, attackable, warTargetNations) as String?
     }
 
+    // ========== Military AI parity: doWarpToRear ==========
+
+    @Test
+    fun `doWarpToRear returns warp when commander with low crew and recruitable rear city exists`() {
+        val world = createWorld()
+        val general = createGeneral(leadership = 80, crew = 500, train = 90, atmos = 90)
+        val frontCity = createCity(id = 1, nationId = 1, frontState = 2).apply {
+            pop = 10000
+            popMax = 100000
+        }
+        val rearCity = createCity(id = 2, nationId = 1, frontState = 0).apply {
+            pop = 80000
+            popMax = 100000
+        }
+        val nation = createNation()
+
+        val ctx = AIContext(
+            world = world, general = general, city = frontCity, nation = nation,
+            diplomacyState = DiplomacyState.AT_WAR,
+            generalType = GeneralType.COMMANDER.flag,
+            allCities = listOf(frontCity, rearCity),
+            allGenerals = listOf(general),
+            allNations = listOf(nation),
+            frontCities = listOf(frontCity),
+            rearCities = listOf(rearCity),
+            nationGenerals = listOf(general),
+        )
+
+        val result = invokeDoWarpToRear(
+            ctx, Random(42), NpcGeneralPolicy(), NpcNationPolicy(),
+            listOf(rearCity), listOf(frontCity, rearCity),
+        )
+        assertEquals("이동", result)
+    }
+
+    @Test
+    fun `doWarpToRear returns null during peace`() {
+        val world = createWorld()
+        val general = createGeneral(leadership = 80, crew = 500)
+        val city = createCity(frontState = 2)
+        val rearCity = createCity(id = 2, frontState = 0)
+        val nation = createNation()
+
+        val ctx = AIContext(
+            world = world, general = general, city = city, nation = nation,
+            diplomacyState = DiplomacyState.PEACE,
+            generalType = GeneralType.COMMANDER.flag,
+            allCities = listOf(city, rearCity),
+            allGenerals = listOf(general),
+            allNations = listOf(nation),
+            frontCities = listOf(city),
+            rearCities = listOf(rearCity),
+            nationGenerals = listOf(general),
+        )
+
+        val result = invokeDoWarpToRear(
+            ctx, Random(42), NpcGeneralPolicy(), NpcNationPolicy(),
+            listOf(rearCity), listOf(city, rearCity),
+        )
+        assertNull(result, "Should not warp to rear during peace")
+    }
+
+    @Test
+    fun `doWarpToRear returns null when already have enough crew`() {
+        val world = createWorld()
+        val general = createGeneral(leadership = 80, crew = 2000)
+        val frontCity = createCity(id = 1, nationId = 1, frontState = 2)
+        val rearCity = createCity(id = 2, nationId = 1, frontState = 0).apply {
+            pop = 80000
+            popMax = 100000
+        }
+        val nation = createNation()
+
+        val ctx = AIContext(
+            world = world, general = general, city = frontCity, nation = nation,
+            diplomacyState = DiplomacyState.AT_WAR,
+            generalType = GeneralType.COMMANDER.flag,
+            allCities = listOf(frontCity, rearCity),
+            allGenerals = listOf(general),
+            allNations = listOf(nation),
+            frontCities = listOf(frontCity),
+            rearCities = listOf(rearCity),
+            nationGenerals = listOf(general),
+        )
+
+        val result = invokeDoWarpToRear(
+            ctx, Random(42), NpcGeneralPolicy(), NpcNationPolicy(),
+            listOf(rearCity), listOf(frontCity, rearCity),
+        )
+        assertNull(result, "Should not warp to rear when crew >= minWarCrew")
+    }
+
+    // ========== Military AI parity: doRally ==========
+
+    @Test
+    fun `doRally always returns 집합 for troop leader`() {
+        val general = createGeneral(npcState = 5).apply {
+            killTurn = 70
+        }
+
+        val result = invokeDoRally(general, Random(42))
+        assertEquals("집합", result)
+    }
+
+    @Test
+    fun `doRally updates killTurn per PHP formula for npcState 5`() {
+        // PHP: newKillTurn = (killTurn + rng.nextRangeInt(2, 4)) % 5 + 70
+        // With killTurn=72, rng.nextInt(3)+2 gives 2-4
+        val general = createGeneral(npcState = 5).apply {
+            killTurn = 72
+        }
+
+        invokeDoRally(general, Random(42))
+        val kt = general.killTurn?.toInt() ?: -1
+        assertTrue(kt in 70..74, "killTurn should be in 70-74 range after rally, got: $kt")
+    }
+
+    @Test
+    fun `doRally returns 집합 for non-troop general too`() {
+        val general = createGeneral(npcState = 2)
+
+        val result = invokeDoRally(general, Random(42))
+        assertEquals("집합", result)
+    }
+
+    // ========== Military AI parity: doDismiss ==========
+
+    @Test
+    fun `doDismiss returns null when attackable`() {
+        val world = createWorld()
+        val general = createGeneral(crew = 2000)
+        val city = createCity(nationId = 1)
+        val nation = createNation()
+
+        val ctx = AIContext(
+            world = world, general = general, city = city, nation = nation,
+            diplomacyState = DiplomacyState.PEACE,
+            generalType = GeneralType.COMMANDER.flag,
+            allCities = listOf(city),
+            allGenerals = listOf(general),
+            allNations = listOf(nation),
+            frontCities = emptyList(),
+            rearCities = listOf(city),
+            nationGenerals = listOf(general),
+        )
+
+        val result = invokeDoDismiss(ctx, Random(42), true)
+        assertNull(result, "Should not dismiss when attackable")
+    }
+
+    @Test
+    fun `doDismiss returns null when crew is zero`() {
+        val world = createWorld()
+        val general = createGeneral(crew = 0)
+        val city = createCity(nationId = 1)
+        val nation = createNation()
+
+        val ctx = AIContext(
+            world = world, general = general, city = city, nation = nation,
+            diplomacyState = DiplomacyState.PEACE,
+            generalType = GeneralType.COMMANDER.flag,
+            allCities = listOf(city),
+            allGenerals = listOf(general),
+            allNations = listOf(nation),
+            frontCities = emptyList(),
+            rearCities = listOf(city),
+            nationGenerals = listOf(general),
+        )
+
+        val result = invokeDoDismiss(ctx, Random(42), false)
+        assertNull(result, "Should not dismiss when crew is zero")
+    }
+
+    @Test
+    fun `doDismiss returns 소집해제 when at peace with crew and random passes`() {
+        // PHP: 75% chance to skip -> need random >= 0.75 to proceed
+        val world = createWorld()
+        val general = createGeneral(crew = 2000)
+        val city = createCity(nationId = 1)
+        val nation = createNation()
+
+        val ctx = AIContext(
+            world = world, general = general, city = city, nation = nation,
+            diplomacyState = DiplomacyState.PEACE,
+            generalType = GeneralType.COMMANDER.flag,
+            allCities = listOf(city),
+            allGenerals = listOf(general),
+            allNations = listOf(nation),
+            frontCities = emptyList(),
+            rearCities = listOf(city),
+            nationGenerals = listOf(general),
+        )
+
+        // FixedRandom(0.9) -> 0.9 >= 0.75, not < 0.75 -> passes the check
+        val result = invokeDoDismiss(ctx, FixedRandom(0.9), false)
+        assertEquals("소집해제", result, "Should dismiss when random >= 0.75")
+    }
+
+    @Test
+    fun `doDismiss returns null when not at peace`() {
+        val world = createWorld()
+        val general = createGeneral(crew = 2000)
+        val city = createCity(nationId = 1)
+        val nation = createNation()
+
+        val ctx = AIContext(
+            world = world, general = general, city = city, nation = nation,
+            diplomacyState = DiplomacyState.AT_WAR,
+            generalType = GeneralType.COMMANDER.flag,
+            allCities = listOf(city),
+            allGenerals = listOf(general),
+            allNations = listOf(nation),
+            frontCities = emptyList(),
+            rearCities = listOf(city),
+            nationGenerals = listOf(general),
+        )
+
+        val result = invokeDoDismiss(ctx, FixedRandom(0.9), false)
+        assertNull(result, "Should not dismiss when not at peace")
+    }
+
+    // ========== Reflection helpers for Task 2 military methods ==========
+
+    private fun invokeDoWarpToRear(
+        ctx: AIContext, rng: Random, policy: NpcGeneralPolicy,
+        nationPolicy: NpcNationPolicy,
+        backupCities: List<City>, supplyCities: List<City>,
+    ): String? {
+        val method = GeneralAI::class.java.getDeclaredMethod(
+            "doWarpToRear",
+            AIContext::class.java, Random::class.java, NpcGeneralPolicy::class.java,
+            NpcNationPolicy::class.java, List::class.java, List::class.java,
+        )
+        method.isAccessible = true
+        return method.invoke(ai, ctx, rng, policy, nationPolicy, backupCities, supplyCities) as String?
+    }
+
+    private fun invokeDoRally(general: General, rng: Random): String {
+        val method = GeneralAI::class.java.getDeclaredMethod(
+            "doRally",
+            General::class.java, Random::class.java,
+        )
+        method.isAccessible = true
+        return method.invoke(ai, general, rng) as String
+    }
+
+    private fun invokeDoDismiss(ctx: AIContext, rng: Random, attackable: Boolean): String? {
+        val method = GeneralAI::class.java.getDeclaredMethod(
+            "doDismiss",
+            AIContext::class.java, Random::class.java, Boolean::class.java,
+        )
+        method.isAccessible = true
+        return method.invoke(ai, ctx, rng, attackable) as String?
+    }
+
     @Test
     fun `doRise skips 50 percent of time when general at non-major city (legacy parity)`() {
         // Legacy PHP do거병: if currentCityLevel < 5 or > 6, nextBool(0.5) skip.
