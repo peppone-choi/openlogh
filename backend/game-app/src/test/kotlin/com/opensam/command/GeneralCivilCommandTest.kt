@@ -1,5 +1,6 @@
 package com.opensam.command
 
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.opensam.command.constraint.ConstraintResult
 import com.opensam.command.general.*
 import com.opensam.engine.LiteHashDRBG
@@ -539,6 +540,371 @@ class GeneralCivilCommandTest {
             }
         }
         assertTrue(foundSuccess || true) // pass even if no success in 100 runs
+    }
+
+    // ================================================================
+    // Golden value parity tests (Phase 07 Plan 01)
+    // Fixed seed: "golden_parity_seed" -> deterministic output
+    // ================================================================
+
+    private val mapper = jacksonObjectMapper()
+    private val GOLDEN_SEED = "golden_parity_seed"
+
+    @Test
+    fun `parity 정착장려 golden value matches PHP-traced expectation`() {
+        val cmd = che_정착장려(createTestGeneral(leadership = 80, rice = 1000), createTestEnv(develCost = 120))
+        cmd.city = createTestCity(pop = 10000, popMax = 50000)
+
+        val result = runBlocking { cmd.run(LiteHashDRBG.build(GOLDEN_SEED)) }
+        assertTrue(result.success)
+
+        val json = mapper.readTree(result.message)
+        assertEquals(-240, json["statChanges"]["rice"].asInt())
+        assertEquals(18, json["statChanges"]["experience"].asInt())
+        assertEquals(26, json["statChanges"]["dedication"].asInt())
+        assertEquals(1, json["statChanges"]["leadershipExp"].asInt())
+        assertEquals(0, json["statChanges"]["max_domestic_critical"].asInt())
+        assertEquals(260, json["cityChanges"]["pop"].asInt())
+        assertEquals("fail", json["criticalResult"].asText())
+
+        // Log color tag parity
+        assertTrue(result.logs[0].contains("<R>실패</>"))
+        assertTrue(result.logs[0].contains("<C>260</>"))
+        assertTrue(result.logs[0].contains("<1>200년 01월</>"))
+
+        // Determinism: same seed -> same result
+        val cmd2 = che_정착장려(createTestGeneral(leadership = 80, rice = 1000), createTestEnv(develCost = 120))
+        cmd2.city = createTestCity(pop = 10000, popMax = 50000)
+        val result2 = runBlocking { cmd2.run(LiteHashDRBG.build(GOLDEN_SEED)) }
+        assertEquals(result.message, result2.message)
+    }
+
+    @Test
+    fun `parity 정착장려 constraint fails when pop is maxed`() {
+        val cmd = che_정착장려(createTestGeneral(rice = 1000), createTestEnv())
+        cmd.city = createTestCity(pop = 50000, popMax = 50000)
+        val cond = cmd.checkFullCondition()
+        assertTrue(cond is ConstraintResult.Fail)
+    }
+
+    @Test
+    fun `parity 주민선정 golden value matches PHP-traced expectation`() {
+        val cmd = che_주민선정(createTestGeneral(leadership = 85, rice = 1000), createTestEnv(develCost = 110))
+        cmd.city = createTestCity(trust = 80f)
+
+        val result = runBlocking { cmd.run(LiteHashDRBG.build(GOLDEN_SEED)) }
+        assertTrue(result.success)
+
+        val json = mapper.readTree(result.message)
+        assertEquals(-220, json["statChanges"]["rice"].asInt())
+        assertEquals(19, json["statChanges"]["experience"].asInt())
+        assertEquals(27, json["statChanges"]["dedication"].asInt())
+        assertEquals(1, json["statChanges"]["leadershipExp"].asInt())
+        assertEquals("2.72", json["cityChanges"]["trust"].asText())
+        assertEquals("fail", json["criticalResult"].asText())
+
+        // Log color tag parity
+        assertTrue(result.logs[0].contains("<R>실패</>"))
+        assertTrue(result.logs[0].contains("<C>2.7</>"))
+    }
+
+    @Test
+    fun `parity 주민선정 constraint fails when trust is max`() {
+        val cmd = che_주민선정(createTestGeneral(rice = 1000), createTestEnv())
+        cmd.city = createTestCity(trust = 100f)
+        assertTrue(cmd.checkFullCondition() is ConstraintResult.Fail)
+    }
+
+    @Test
+    fun `parity 기술연구 golden value matches PHP-traced expectation`() {
+        val cmd = che_기술연구(createTestGeneral(intel = 90, gold = 1000), createTestEnv(develCost = 100))
+        cmd.city = createTestCity(trust = 90f)
+
+        val result = runBlocking { cmd.run(LiteHashDRBG.build(GOLDEN_SEED)) }
+        assertTrue(result.success)
+
+        val json = mapper.readTree(result.message)
+        assertEquals(-100, json["statChanges"]["gold"].asInt())
+        assertEquals(18, json["statChanges"]["experience"].asInt())
+        assertEquals(26, json["statChanges"]["dedication"].asInt())
+        assertEquals(1, json["statChanges"]["intelExp"].asInt())
+        assertEquals(5.2, json["nationChanges"]["tech"].asDouble(), 0.01)
+        assertEquals("fail", json["criticalResult"].asText())
+        assertEquals(0, json["maxDomesticCritical"].asInt())
+
+        // Log color tag parity
+        assertTrue(result.logs[0].contains("<R>실패</>"))
+        assertTrue(result.logs[0].contains("<C>26</>"))
+    }
+
+    @Test
+    fun `parity 기술연구 constraint fails when gold insufficient`() {
+        val cmd = che_기술연구(createTestGeneral(gold = 10), createTestEnv(develCost = 100))
+        cmd.city = createTestCity()
+        assertTrue(cmd.checkFullCondition() is ConstraintResult.Fail)
+    }
+
+    @Test
+    fun `parity 모병 golden value matches PHP-traced expectation`() {
+        val arg = mapOf<String, Any>("amount" to 500, "crewType" to 0)
+        val cmd = che_모병(createTestGeneral(leadership = 50, crew = 0, crewType = 0, gold = 1000, rice = 1000), createTestEnv(), arg)
+        cmd.city = createTestCity(pop = 50000)
+
+        val result = runBlocking { cmd.run(LiteHashDRBG.build(GOLDEN_SEED)) }
+        assertTrue(result.success)
+
+        val json = mapper.readTree(result.message)
+        assertEquals(500, json["statChanges"]["crew"].asInt())
+        assertEquals(0, json["statChanges"]["crewType"].asInt())
+        assertEquals(70, json["statChanges"]["train"].asInt())
+        assertEquals(70, json["statChanges"]["atmos"].asInt())
+        assertEquals(-100, json["statChanges"]["gold"].asInt())
+        assertEquals(-5, json["statChanges"]["rice"].asInt())
+        assertEquals(5, json["statChanges"]["experience"].asInt())
+        assertEquals(5, json["statChanges"]["dedication"].asInt())
+        assertEquals(-500, json["cityChanges"]["pop"].asInt())
+        assertEquals(-1, json["cityChanges"]["trust"].asInt())
+        assertEquals(0, json["dexChanges"]["crewType"].asInt())
+        assertEquals(5, json["dexChanges"]["amount"].asInt())
+
+        // Log color tag parity
+        assertTrue(result.logs[0].contains("<C>500</>"))
+        assertTrue(result.logs[0].contains("모병"))
+    }
+
+    @Test
+    fun `parity 징병 golden value matches PHP-traced expectation`() {
+        val arg = mapOf<String, Any>("amount" to 500, "crewType" to 0)
+        val cmd = che_징병(createTestGeneral(leadership = 50, crew = 0, crewType = 0, gold = 1000, rice = 1000), createTestEnv(), arg)
+        cmd.city = createTestCity(pop = 50000)
+
+        val result = runBlocking { cmd.run(LiteHashDRBG.build(GOLDEN_SEED)) }
+        assertTrue(result.success)
+
+        val json = mapper.readTree(result.message)
+        assertEquals(500, json["statChanges"]["crew"].asInt())
+        assertEquals(0, json["statChanges"]["crewType"].asInt())
+        assertEquals(40, json["statChanges"]["train"].asInt())
+        assertEquals(40, json["statChanges"]["atmos"].asInt())
+        assertEquals(-50, json["statChanges"]["gold"].asInt())
+        assertEquals(-5, json["statChanges"]["rice"].asInt())
+        assertEquals(5, json["statChanges"]["experience"].asInt())
+        assertEquals(5, json["statChanges"]["dedication"].asInt())
+        assertEquals(-500, json["cityChanges"]["pop"].asInt())
+        assertEquals(-1, json["cityChanges"]["trust"].asInt())
+
+        // Log color tag parity
+        assertTrue(result.logs[0].contains("<C>500</>"))
+        assertTrue(result.logs[0].contains("징병"))
+    }
+
+    @Test
+    fun `parity 징병 constraint fails when pop too low`() {
+        val arg = mapOf<String, Any>("amount" to 500, "crewType" to 0)
+        val cmd = che_징병(createTestGeneral(leadership = 50, gold = 1000, rice = 1000), createTestEnv(), arg)
+        cmd.city = createTestCity(pop = 10000) // below MIN_AVAILABLE_RECRUIT_POP + maxCrew
+        assertTrue(cmd.checkFullCondition() is ConstraintResult.Fail)
+    }
+
+    @Test
+    fun `parity 훈련 golden value matches PHP-traced expectation`() {
+        val cmd = che_훈련(createTestGeneral(leadership = 80, crew = 200, train = 60, atmos = 70), createTestEnv())
+        cmd.city = createTestCity()
+
+        val result = runBlocking { cmd.run(LiteHashDRBG.build(GOLDEN_SEED)) }
+        assertTrue(result.success)
+
+        val json = mapper.readTree(result.message)
+        assertEquals(40, json["statChanges"]["train"].asInt())
+        assertEquals(0, json["statChanges"]["atmos"].asInt())
+        assertEquals(100, json["statChanges"]["experience"].asInt())
+        assertEquals(70, json["statChanges"]["dedication"].asInt())
+        assertEquals(1, json["statChanges"]["leadershipExp"].asInt())
+        assertEquals(0, json["dexChanges"]["crewType"].asInt())
+        assertEquals(40, json["dexChanges"]["amount"].asInt())
+
+        // Log color tag parity
+        assertTrue(result.logs[0].contains("<C>40</>"))
+        assertTrue(result.logs[0].contains("훈련치가"))
+
+        // Determinism
+        val cmd2 = che_훈련(createTestGeneral(leadership = 80, crew = 200, train = 60, atmos = 70), createTestEnv())
+        cmd2.city = createTestCity()
+        val result2 = runBlocking { cmd2.run(LiteHashDRBG.build(GOLDEN_SEED)) }
+        assertEquals(result.message, result2.message)
+    }
+
+    @Test
+    fun `parity 훈련 constraint fails when train is maxed`() {
+        val cmd = che_훈련(createTestGeneral(crew = 200, train = 100, atmos = 70), createTestEnv())
+        cmd.city = createTestCity()
+        assertTrue(cmd.checkFullCondition() is ConstraintResult.Fail)
+    }
+
+    @Test
+    fun `parity 사기진작 golden value matches PHP-traced expectation`() {
+        val cmd = che_사기진작(createTestGeneral(leadership = 80, crew = 200, atmos = 70, train = 80, charm = 60, gold = 1000), createTestEnv())
+        cmd.city = createTestCity()
+
+        val result = runBlocking { cmd.run(LiteHashDRBG.build(GOLDEN_SEED)) }
+        assertTrue(result.success)
+
+        val json = mapper.readTree(result.message)
+        assertEquals(-2, json["statChanges"]["gold"].asInt())
+        assertEquals(30, json["statChanges"]["atmos"].asInt())
+        assertEquals(0, json["statChanges"]["train"].asInt())
+        assertEquals(100, json["statChanges"]["experience"].asInt())
+        assertEquals(70, json["statChanges"]["dedication"].asInt())
+        assertEquals(1, json["statChanges"]["leadershipExp"].asInt())
+        assertEquals(0, json["dexChanges"]["crewType"].asInt())
+        assertEquals(30, json["dexChanges"]["amount"].asInt())
+
+        // Log color tag parity
+        assertTrue(result.logs[0].contains("<C>30</>"))
+        assertTrue(result.logs[0].contains("사기치가"))
+    }
+
+    @Test
+    fun `parity 사기진작 constraint fails when atmos is maxed`() {
+        val cmd = che_사기진작(createTestGeneral(crew = 200, atmos = 100, gold = 1000), createTestEnv())
+        cmd.city = createTestCity()
+        assertTrue(cmd.checkFullCondition() is ConstraintResult.Fail)
+    }
+
+    @Test
+    fun `parity 소집해제 golden value matches PHP-traced expectation`() {
+        val cmd = che_소집해제(createTestGeneral(crew = 500), createTestEnv())
+        cmd.city = createTestCity()
+
+        val result = runBlocking { cmd.run(LiteHashDRBG.build(GOLDEN_SEED)) }
+        assertTrue(result.success)
+
+        val json = mapper.readTree(result.message)
+        assertEquals(-500, json["statChanges"]["crew"].asInt())
+        assertEquals(70, json["statChanges"]["experience"].asInt())
+        assertEquals(100, json["statChanges"]["dedication"].asInt())
+        assertEquals(500, json["cityChanges"]["pop"].asInt())
+
+        // Log color tag parity
+        assertTrue(result.logs[0].contains("<R>소집해제</>"))
+    }
+
+    @Test
+    fun `parity 소집해제 constraint fails when crew is zero`() {
+        val cmd = che_소집해제(createTestGeneral(crew = 0), createTestEnv())
+        assertTrue(cmd.checkFullCondition() is ConstraintResult.Fail)
+    }
+
+    @Test
+    fun `parity 숙련전환 golden value matches PHP-traced expectation`() {
+        val general = createTestGeneral(gold = 1000, rice = 1000).apply { meta["dex1"] = 100 }
+        val arg = mapOf<String, Any>("srcArmType" to 1, "destArmType" to 2)
+        val cmd = che_숙련전환(general, createTestEnv(), arg)
+        cmd.city = createTestCity()
+
+        val result = runBlocking { cmd.run(LiteHashDRBG.build(GOLDEN_SEED)) }
+        assertTrue(result.success)
+
+        val json = mapper.readTree(result.message)
+        assertEquals(-100, json["statChanges"]["gold"].asInt())
+        assertEquals(-100, json["statChanges"]["rice"].asInt())
+        assertEquals(10, json["statChanges"]["experience"].asInt())
+        assertEquals(2, json["statChanges"]["leadershipExp"].asInt())
+        assertEquals(-40, json["statChanges"]["dex1"].asInt())
+        assertEquals(36, json["statChanges"]["dex2"].asInt())
+        assertTrue(json["dexConversion"].asBoolean())
+        assertTrue(json["tryUniqueLottery"].asBoolean())
+
+        // Log parity: 궁병 숙련 40을 기병 숙련 36으로
+        assertTrue(result.logs[0].contains("궁병 숙련 40을 기병 숙련 36으로"))
+    }
+
+    @Test
+    fun `parity 숙련전환 constraint fails when same arm type`() {
+        val arg = mapOf<String, Any>("srcArmType" to 1, "destArmType" to 1)
+        val cmd = che_숙련전환(createTestGeneral(gold = 1000, rice = 1000), createTestEnv(), arg)
+        cmd.city = createTestCity()
+        val result = runBlocking { cmd.run(fixedRng) }
+        assertFalse(result.success)
+    }
+
+    @Test
+    fun `parity 물자조달 golden value matches PHP-traced expectation`() {
+        val cmd = che_물자조달(createTestGeneral(leadership = 80, strength = 75, intel = 70), createTestEnv())
+        cmd.city = createTestCity(frontState = 0)
+
+        val result = runBlocking { cmd.run(LiteHashDRBG.build(GOLDEN_SEED)) }
+        assertTrue(result.success)
+
+        val json = mapper.readTree(result.message)
+        assertEquals(123, json["statChanges"]["experience"].asInt())
+        assertEquals(176, json["statChanges"]["dedication"].asInt())
+        assertEquals(1, json["statChanges"]["strengthExp"].asInt())
+        assertEquals(527, json["nationChanges"]["rice"].asInt())
+        assertEquals("success", json["criticalResult"].asText())
+
+        // Log color tag parity
+        assertTrue(result.logs[0].contains("<S>성공</>"))
+        assertTrue(result.logs[0].contains("<C>527</>"))
+    }
+
+    @Test
+    fun `parity 물자조달 constraint fails in unsupplied city`() {
+        val cmd = che_물자조달(createTestGeneral(), createTestEnv())
+        cmd.city = createTestCity(supplyState = 0)
+        assertTrue(cmd.checkFullCondition() is ConstraintResult.Fail)
+    }
+
+    @Test
+    fun `parity 단련 golden value matches PHP-traced expectation`() {
+        val cmd = che_단련(
+            createTestGeneral(leadership = 60, strength = 70, intel = 50, crew = 1000, train = 60, atmos = 70, gold = 1000, rice = 1000),
+            createTestEnv(develCost = 120)
+        )
+
+        val result = runBlocking { cmd.run(LiteHashDRBG.build(GOLDEN_SEED)) }
+        assertTrue(result.success)
+
+        val json = mapper.readTree(result.message)
+        assertEquals(-120, json["statChanges"]["gold"].asInt())
+        assertEquals(-120, json["statChanges"]["rice"].asInt())
+        assertEquals(2, json["statChanges"]["experience"].asInt())
+        assertEquals(1, json["statChanges"]["leadershipExp"].asInt())
+        assertEquals(0, json["dexChanges"]["crewType"].asInt())
+        assertEquals(63, json["dexChanges"]["amount"].asInt())
+        assertEquals("success", json["criticalResult"].asText())
+
+        // Log color tag parity
+        assertTrue(result.logs[0].contains("<S>일취월장</>"))
+        assertTrue(result.logs[0].contains("<C>63</>"))
+    }
+
+    @Test
+    fun `parity 단련 constraint fails when crew is zero`() {
+        val cmd = che_단련(createTestGeneral(crew = 0, gold = 1000, rice = 1000), createTestEnv())
+        assertTrue(cmd.checkFullCondition() is ConstraintResult.Fail)
+    }
+
+    @Test
+    fun `parity 군량매매 golden value regression matches expected`() {
+        val arg = mapOf<String, Any>("buyRice" to true, "amount" to 500)
+        val cmd = che_군량매매(createTestGeneral(gold = 1000, rice = 1000, leadership = 70, strength = 60, intel = 80), createTestEnv(), arg)
+        cmd.city = createTestCity(trade = 100)
+
+        val result = runBlocking { cmd.run(LiteHashDRBG.build(GOLDEN_SEED)) }
+        assertTrue(result.success)
+
+        val json = mapper.readTree(result.message)
+        assertEquals(-515, json["statChanges"]["gold"].asInt())
+        assertEquals(500, json["statChanges"]["rice"].asInt())
+        assertEquals(30, json["statChanges"]["experience"].asInt())
+        assertEquals(50, json["statChanges"]["dedication"].asInt())
+        assertEquals(1, json["statChanges"]["leadershipExp"].asInt())
+        assertEquals(15, json["nationTax"].asInt())
+
+        // Log color tag parity
+        assertTrue(result.logs[0].contains("<C>500</>"))
+        assertTrue(result.logs[0].contains("<C>515</>"))
     }
 
     private fun extractCityValue(message: String?, key: String): Int {
