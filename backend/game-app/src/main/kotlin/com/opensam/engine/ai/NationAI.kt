@@ -159,6 +159,12 @@ class NationAI(
         }
     }
 
+    // TODO: This simplified tax/bill adjustment does NOT match PHP GeneralAI.php's
+    //  chooseTexRate/chooseGoldBillRate/chooseRiceBillRate formulas. The PHP-matching
+    //  implementations exist in GeneralAI.kt (chooseTexRate, chooseGoldBillRate,
+    //  chooseRiceBillRate) but are called from GeneralAI.chooseNationTurn() which is
+    //  currently NOT wired into TurnService. This method should be replaced by the
+    //  GeneralAI rate choosers once chooseNationTurn is integrated into the turn pipeline.
     private fun adjustTaxAndBill(writePort: WorldWritePort, nation: Nation, nationCities: List<City>, nationGenerals: List<General>) {
         val totalResources = nation.gold + nation.rice
         val totalBill = (nationGenerals.size + nationCities.size) * nation.bill.toInt().coerceAtLeast(0)
