@@ -143,12 +143,12 @@ Plans:
   2. NPC diplomacy AI proposes and responds to the same diplomatic actions as legacy PHP (fixing the "completely different" divergence)
   3. NPC recruitment and personnel management decisions (hire, fire, assign) match legacy PHP behavior
   4. NPC strategic priority ordering (when to attack vs. defend vs. develop) matches legacy PHP for early-game, mid-game, and late-game states
-**Plans**: 2 plans
+**Plans**: 3 plans
 
 Plans:
-- [ ] 08-01: TBD
-- [ ] 08-02: TBD
-- [ ] 08-03: TBD
+- [ ] 08-01-PLAN.md — Structural fixes: calcDiplomacyState rewrite (5-state), categorizeNationGeneral, do선전포고/do불가침제의 rewrite, chooseGeneralTurn/chooseNationTurn flow fix, priority list correction (AI-02, AI-03, AI-04)
+- [ ] 08-02-PLAN.md — Military AI golden value parity: do출병/do징병/do전투준비/do전방워프/do후방워프/do집합/do소집해제 (AI-01, AI-04)
+- [ ] 08-03-PLAN.md — Domestic/Economy AI golden value parity: do일반내정/do긴급내정/do전쟁내정/do금쌀구매/doNPC헌납/do귀환/do내정워프/chooseTexRate/chooseGoldBillRate/chooseRiceBillRate (AI-01, AI-04)
 
 ### Phase 9: Turn Engine Completion
 **Goal**: The turn pipeline executes all steps in the correct order with all stub methods implemented, and event/disaster triggers fire at legacy-matching probabilities
