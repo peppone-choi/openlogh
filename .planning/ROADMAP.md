@@ -164,7 +164,7 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 09-01-PLAN.md — Implement 4 stub methods (checkWander, updateOnline, checkOverhead, updateGeneralNumber) + fix postUpdateMonthly ordering + unit tests (TURN-01, TURN-02, TURN-03, TURN-04, TURN-05)
+- [x] 09-01-PLAN.md — Implement 4 stub methods (checkWander, updateOnline, checkOverhead, updateGeneralNumber) + fix postUpdateMonthly ordering + unit tests (TURN-01, TURN-02, TURN-03, TURN-04, TURN-05)
 - [ ] 09-02-PLAN.md — Turn step ordering assertion + disaster/event probability golden value verification (TURN-05, TURN-06)
 
 ### Phase 10: Diplomacy and Scenario Data
@@ -214,6 +214,6 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 | 6. Economy Parity | 0/2 | Not started | - |
 | 7. Command Parity | 0/3 | Not started | - |
 | 8. NPC AI Parity | 4/5 | In Progress|  |
-| 9. Turn Engine Completion | 0/2 | Not started | - |
+| 9. Turn Engine Completion | 1/2 | In Progress|  |
 | 10. Diplomacy and Scenario Data | 0/2 | Not started | - |
 | 11. Frontend Display Parity | 0/2 | Not started | - |

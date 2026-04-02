@@ -70,11 +70,11 @@ Requirements for legacy parity milestone. Each maps to roadmap phases.
 
 ### Turn Engine
 
-- [ ] **TURN-01**: Implement checkWander() -- wander nation dissolution after 2 years
-- [ ] **TURN-02**: Implement updateOnline() -- per-tick online count snapshot
-- [ ] **TURN-03**: Implement checkOverhead() -- runaway process guard
-- [ ] **TURN-04**: Implement updateGeneralNumber() -- refresh nation static info
-- [ ] **TURN-05**: Verify turn step ordering matches legacy daemon.ts
+- [x] **TURN-01**: Implement checkWander() -- wander nation dissolution after 2 years
+- [x] **TURN-02**: Implement updateOnline() -- per-tick online count snapshot
+- [x] **TURN-03**: Implement checkOverhead() -- runaway process guard
+- [x] **TURN-04**: Implement updateGeneralNumber() -- refresh nation static info
+- [x] **TURN-05**: Verify turn step ordering matches legacy daemon.ts
 - [ ] **TURN-06**: Verify disaster/event trigger probabilities match legacy
 
 ### Diplomacy
@@ -178,11 +178,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | AI-02 | Phase 8: NPC AI Parity | Complete |
 | AI-03 | Phase 8: NPC AI Parity | Complete |
 | AI-04 | Phase 8: NPC AI Parity | Complete |
-| TURN-01 | Phase 9: Turn Engine Completion | Pending |
-| TURN-02 | Phase 9: Turn Engine Completion | Pending |
-| TURN-03 | Phase 9: Turn Engine Completion | Pending |
-| TURN-04 | Phase 9: Turn Engine Completion | Pending |
-| TURN-05 | Phase 9: Turn Engine Completion | Pending |
+| TURN-01 | Phase 9: Turn Engine Completion | Complete |
+| TURN-02 | Phase 9: Turn Engine Completion | Complete |
+| TURN-03 | Phase 9: Turn Engine Completion | Complete |
+| TURN-04 | Phase 9: Turn Engine Completion | Complete |
+| TURN-05 | Phase 9: Turn Engine Completion | Complete |
 | TURN-06 | Phase 9: Turn Engine Completion | Pending |
 | DIPL-01 | Phase 10: Diplomacy and Scenario Data | Pending |
 | DIPL-02 | Phase 10: Diplomacy and Scenario Data | Pending |

@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: verifying
-stopped_at: Phase 9 context gathered
-last_updated: "2026-04-02T09:22:14.141Z"
+status: executing
+stopped_at: Completed 09-01-PLAN.md
+last_updated: "2026-04-02T09:49:39.209Z"
 last_activity: 2026-04-02
 progress:
   total_phases: 11
   completed_phases: 8
-  total_plans: 22
-  completed_plans: 22
+  total_plans: 24
+  completed_plans: 23
   percent: 0
 ---
 
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-31)
 
 **Core value:** Every game mechanic must produce identical outcomes to the legacy PHP implementation given the same inputs.
-**Current focus:** Phase 08 — npc-ai-parity
+**Current focus:** Phase 09 — turn-engine-completion
 
 ## Current Position
 
-Phase: 9
-Plan: Not started
-Status: Phase complete — ready for verification
+Phase: 09 (turn-engine-completion) — EXECUTING
+Plan: 2 of 2
+Status: Ready to execute
 Last activity: 2026-04-02
 
 Progress: [░░░░░░░░░░] 0%
@@ -72,6 +72,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 08 P03 | 12min | 2 tasks | 2 files |
 | Phase 08 P04 | 7min | 2 tasks | 1 files |
 | Phase 08 P05 | 5min | 2 tasks | 3 files |
+| Phase 09 P01 | 7min | 1 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -115,6 +116,8 @@ Recent decisions affecting current work:
 - [Phase 08]: All 18 personnel/wanderer/promotion AI methods match PHP behavior - no fixes needed
 - [Phase 08]: NationAI.adjustTaxAndBill is runtime-active but non-PHP-matching; GeneralAI rate choosers are PHP-matching but not wired into TurnService
 - [Phase 08]: Wire TurnService to GeneralAI.chooseNationTurn() for runtime NPC nation AI parity
+- [Phase 09]: checkOverhead formula: round(turnterm^0.6 * 3) * refreshLimitCoef verified as 920 for tickSeconds=300
+- [Phase 09]: updateOnline uses accessedAt >= world.updatedAt (no lastRefresh field on GeneralAccessLog entity)
 
 ### Pending Todos
 
@@ -127,6 +130,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-02T09:22:14.134Z
-Stopped at: Phase 9 context gathered
-Resume file: .planning/phases/09-turn-engine-completion/09-CONTEXT.md
+Last session: 2026-04-02T09:49:39.197Z
+Stopped at: Completed 09-01-PLAN.md
+Resume file: None
