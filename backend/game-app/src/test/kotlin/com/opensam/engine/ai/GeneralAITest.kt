@@ -911,7 +911,8 @@ class GeneralAITest {
     @Test
     fun `wanderer returns 요양 when injured`() {
         val world = createWorld()
-        val general = createGeneral(nationId = 0, injury = 10)
+        // injury must exceed cureThreshold (default 10) for strict > comparison
+        val general = createGeneral(nationId = 0, injury = 15)
 
         val action = ai.decideAndExecute(general, world)
         assertEquals("요양", action)
@@ -2982,5 +2983,49 @@ class GeneralAITest {
             listOf(city), NpcNationPolicy(),
         )
         assertEquals(20, bill, "Depleted rice with low income should yield minimum bill=20")
+    }
+
+    // ========== Wanderer Injury Threshold Tests (08-05 Plan Task 2) ==========
+
+    @Nested
+    inner class WandererInjuryThresholdTests {
+
+        private fun invokeDecideWandererAction(general: General, world: WorldState, rng: Random): String {
+            val method = GeneralAI::class.java.getDeclaredMethod(
+                "decideWandererAction", General::class.java, WorldState::class.java, Random::class.java
+            )
+            method.isAccessible = true
+            return method.invoke(ai, general, world, rng) as String
+        }
+
+        @Test
+        fun `wanderer with injury below cureThreshold should NOT return 요양`() {
+            // injury=5 < default cureThreshold=10 -> should proceed to normal wanderer logic
+            val world = createWorld()
+            val general = createGeneral(nationId = 0, injury = 5, npcState = 2, officerLevel = 1)
+
+            val result = invokeDecideWandererAction(general, world, FixedRandom(0.5))
+            assertNotEquals("요양", result, "Injury 5 is below cureThreshold 10, should not heal")
+        }
+
+        @Test
+        fun `wanderer with injury above cureThreshold should return 요양`() {
+            // injury=15 > default cureThreshold=10 -> should early-return "요양"
+            val world = createWorld()
+            val general = createGeneral(nationId = 0, injury = 15, npcState = 2, officerLevel = 1)
+
+            val result = invokeDecideWandererAction(general, world, FixedRandom(0.5))
+            assertEquals("요양", result, "Injury 15 exceeds cureThreshold 10, should heal")
+        }
+
+        @Test
+        fun `wanderer with injury exactly at cureThreshold should NOT return 요양`() {
+            // injury=10 == default cureThreshold=10 -> strict > means should NOT heal
+            val world = createWorld()
+            val general = createGeneral(nationId = 0, injury = 10, npcState = 2, officerLevel = 1)
+
+            val result = invokeDecideWandererAction(general, world, FixedRandom(0.5))
+            assertNotEquals("요양", result, "Injury 10 equals cureThreshold 10, strict > means no heal")
+        }
     }
 }
