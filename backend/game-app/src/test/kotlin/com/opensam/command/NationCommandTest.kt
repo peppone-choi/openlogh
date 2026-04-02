@@ -558,7 +558,7 @@ class NationCommandTest {
         val mocks = createMockServicesBundle()
         `when`(mocks.generalRepository.findById(88L)).thenReturn(java.util.Optional.of(emperorGeneral))
 
-        val cmd = che_선양요구(chief, env())
+        val cmd = che_선양요구(chief, env().copy(gameStor = mutableMapOf("emperorGeneralId" to 88L)))
         cmd.services = mocks.services
         cmd.city = createCity(nationId = 1)
         cmd.nation = nation
@@ -567,7 +567,6 @@ class NationCommandTest {
             "nationCityCount" to 20,
             "nationHasEmperorGeneral" to true,
         )
-        cmd.env.gameStor["emperorGeneralId"] = 88L
 
         assertEquals(0, cmd.getPreReqTurn())
         assertEquals(24, cmd.getPostReqTurn())
