@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-stopped_at: Completed 09-01-PLAN.md
-last_updated: "2026-04-02T09:49:39.209Z"
+status: verifying
+stopped_at: Completed 09-02-PLAN.md
+last_updated: "2026-04-02T11:49:57.997Z"
 last_activity: 2026-04-02
 progress:
   total_phases: 11
-  completed_phases: 8
+  completed_phases: 9
   total_plans: 24
-  completed_plans: 23
+  completed_plans: 24
   percent: 0
 ---
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-03-31)
 
 Phase: 09 (turn-engine-completion) — EXECUTING
 Plan: 2 of 2
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-04-02
 
 Progress: [░░░░░░░░░░] 0%
@@ -73,6 +73,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 08 P04 | 7min | 2 tasks | 1 files |
 | Phase 08 P05 | 5min | 2 tasks | 3 files |
 | Phase 09 P01 | 7min | 1 tasks | 2 files |
+| Phase 09 P02 | 12min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -118,6 +119,8 @@ Recent decisions affecting current work:
 - [Phase 08]: Wire TurnService to GeneralAI.chooseNationTurn() for runtime NPC nation AI parity
 - [Phase 09]: checkOverhead formula: round(turnterm^0.6 * 3) * refreshLimitCoef verified as 920 for tickSeconds=300
 - [Phase 09]: updateOnline uses accessedAt >= world.updatedAt (no lastRefresh field on GeneralAccessLog entity)
+- [Phase 09]: Source-code reading for ordering assertion (simple, explicit)
+- [Phase 09]: RNG seed divergence documented: Kotlin 'disaster' vs PHP 'disater' typo -- not fixed to avoid world data impact
 
 ### Pending Todos
 
@@ -130,6 +133,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-02T09:49:39.197Z
-Stopped at: Completed 09-01-PLAN.md
+Last session: 2026-04-02T11:49:57.980Z
+Stopped at: Completed 09-02-PLAN.md
 Resume file: None
