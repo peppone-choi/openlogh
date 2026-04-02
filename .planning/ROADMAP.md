@@ -146,7 +146,7 @@ Plans:
 **Plans**: 4 plans
 
 Plans:
-- [ ] 08-01-PLAN.md — Structural fixes: calcDiplomacyState rewrite (5-state), categorizeNationGeneral, do선전포고/do불가침제의 rewrite, chooseGeneralTurn/chooseNationTurn flow fix, priority list correction (AI-02, AI-03, AI-04)
+- [x] 08-01-PLAN.md — Structural fixes: calcDiplomacyState rewrite (5-state), categorizeNationGeneral, do선전포고/do불가침제의 rewrite, chooseGeneralTurn/chooseNationTurn flow fix, priority list correction (AI-02, AI-03, AI-04)
 - [ ] 08-02-PLAN.md — Military AI golden value parity: do출병/do징병/do전투준비/do전방워프/do후방워프/do집합/do소집해제 (AI-01, AI-04)
 - [ ] 08-03-PLAN.md — Domestic/Economy AI golden value parity: do일반내정/do긴급내정/do전쟁내정/do금쌀구매/doNPC헌납/do귀환/do내정워프/chooseTexRate/chooseGoldBillRate/chooseRiceBillRate (AI-01, AI-04)
 - [ ] 08-04-PLAN.md — Personnel/wanderer/promotion AI golden value parity: 발령6종/포상몰수4종/방랑6종/승진2종 (AI-03, AI-04)

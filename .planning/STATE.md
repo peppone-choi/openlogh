@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: verifying
-stopped_at: Phase 8 context gathered
-last_updated: "2026-04-02T04:14:02.153Z"
+status: executing
+stopped_at: Completed 08-01-PLAN.md
+last_updated: "2026-04-02T05:12:44.772Z"
 last_activity: 2026-04-02
 progress:
   total_phases: 11
   completed_phases: 7
-  total_plans: 17
-  completed_plans: 17
+  total_plans: 21
+  completed_plans: 18
   percent: 0
 ---
 
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-31)
 
 **Core value:** Every game mechanic must produce identical outcomes to the legacy PHP implementation given the same inputs.
-**Current focus:** Phase 07 — command-parity
+**Current focus:** Phase 08 — npc-ai-parity
 
 ## Current Position
 
-Phase: 8
-Plan: Not started
-Status: Phase complete — ready for verification
+Phase: 08 (npc-ai-parity) — EXECUTING
+Plan: 2 of 4
+Status: Ready to execute
 Last activity: 2026-04-02
 
 Progress: [░░░░░░░░░░] 0%
@@ -67,6 +67,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 07 P03 | 14min | 2 tasks | 4 files |
 | Phase 07 P01 | 34min | 2 tasks | 2 files |
 | Phase 07 P02 | 39min | 1 tasks | 2 files |
+| Phase 08 P01 | 25min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -103,6 +104,9 @@ Recent decisions affecting current work:
 - [Phase 07]: Kotlin-only 5 emperor commands (칭제, 천자맞이, 선양요구, 신속, 독립선언) tested for basic operation only -- no PHP counterpart
 - [Phase 07]: Golden seed 'golden_parity_seed' for all command parity tests
 - [Phase 07]: Golden value capture-then-lock approach for command parity testing: fixed seed RNG + deterministic fixtures + exact JSON output assertions
+- [Phase 08]: DiplomacyState enum gains code: Int matching PHP d constants (0-4); calcDiplomacyState uses term-based transitions
+- [Phase 08]: RNG seed context unified to GeneralAI for all AI methods (PHP Pitfall 5)
+- [Phase 08]: Injury check uses cureThreshold (default 10) across all code paths, not > 0
 
 ### Pending Todos
 
@@ -115,6 +119,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-02T04:14:02.141Z
-Stopped at: Phase 8 context gathered
-Resume file: .planning/phases/08-npc-ai-parity/08-CONTEXT.md
+Last session: 2026-04-02T05:12:44.767Z
+Stopped at: Completed 08-01-PLAN.md
+Resume file: None
