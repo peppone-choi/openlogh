@@ -184,12 +184,13 @@ class GeneralAITest {
     // ========== Injury recovery ==========
 
     @Test
-    fun `returns 요양 when general is injured during war`() {
+    fun `returns 요양 when general injury exceeds cureThreshold during war`() {
         val world = createWorld()
-        val general = createGeneral(injury = 10)
+        // Per PHP: injury > cureThreshold (default 10). Use injury=15 to exceed threshold.
+        val general = createGeneral(injury = 15)
         val city = createCity(nationId = 1)
         val nation = createNation()
-        val diplomacy = createDiplomacy(1, 2, "선전포고")
+        val diplomacy = createDiplomacy(1, 2, "전쟁")
 
         setupRepos(world, general, city, nation, diplomacies = listOf(diplomacy),
             allNations = listOf(nation, createNation(id = 2)))
@@ -199,9 +200,10 @@ class GeneralAITest {
     }
 
     @Test
-    fun `returns 요양 when general is injured during peace`() {
+    fun `returns 요양 when general injury exceeds cureThreshold during peace`() {
         val world = createWorld()
-        val general = createGeneral(injury = 5)
+        // Per PHP: injury > cureThreshold (default 10). Use injury=15 to exceed threshold.
+        val general = createGeneral(injury = 15)
         val city = createCity(nationId = 1)
         val nation = createNation()
 
@@ -584,6 +586,65 @@ class GeneralAITest {
         }
 
         override fun nextDouble(): Double = 1.0
+    }
+
+    // ========== chooseGeneralTurn branch order (PHP parity) ==========
+
+    @Test
+    fun `chooseGeneralTurn checks do선양 before npcType 5`() {
+        // Per PHP line 3745-3751: do선양 is checked BEFORE npcType==5 (line 3753)
+        // A lord (officerLevel=20) who is also npcType=5 should try 선양 first
+        val world = createWorld()
+        val lord = createGeneral(id = 1, officerLevel = 20, npcState = 5, nationId = 1)
+        val other = createGeneral(id = 2, officerLevel = 1, npcState = 2, nationId = 1)
+        val city = createCity(nationId = 1)
+        val nation = createNation()
+
+        setupRepos(world, lord, city, nation,
+            allGenerals = listOf(lord, other),
+            allNations = listOf(nation))
+
+        // If do선양 fires before npcType==5 rally, result should be 선양
+        val action = ai.chooseGeneralTurn(lord, world)
+        assertEquals("선양", action, "do선양 should be checked BEFORE npcType==5 rally per PHP")
+    }
+
+    @Test
+    fun `chooseGeneralTurn injury threshold uses cureThreshold not zero`() {
+        // Per PHP line 3772: injury > cureThreshold (default 10), NOT injury > 0
+        val world = createWorld()
+        val general = createGeneral(injury = 5, npcState = 2)
+        val city = createCity(nationId = 1)
+        val nation = createNation()
+
+        setupRepos(world, general, city, nation)
+
+        val action = ai.chooseGeneralTurn(general, world)
+        assertNotEquals("요양", action,
+            "injury=5 with cureThreshold=10 should NOT trigger healing per PHP")
+    }
+
+    @Test
+    fun `chooseGeneralTurn lord without capital uses structured flow`() {
+        // Per PHP lines 3802-3827: do건국/do방랑군이동/do해산 with relYearMonth > 1
+        val world = createWorld(year = 181, month = 3).apply {
+            config["startyear"] = 180
+            config["init_year"] = 180
+            config["init_month"] = 1
+        }
+        val lord = createGeneral(id = 1, officerLevel = 20, npcState = 2, nationId = 1)
+        val city = createCity(nationId = 1)
+        val nation = createNation().apply {
+            capitalCityId = null  // No capital
+        }
+
+        setupRepos(world, lord, city, nation,
+            allGenerals = listOf(lord),
+            allNations = listOf(nation))
+
+        val action = ai.chooseGeneralTurn(lord, world)
+        // Should attempt 건국, 이동, or 해산 -- NOT fall through to standard decision
+        assertNotNull(action, "Lord without capital should produce an action")
     }
 
     // ========== War actions ==========

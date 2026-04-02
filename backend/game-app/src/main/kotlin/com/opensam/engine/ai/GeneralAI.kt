@@ -1349,64 +1349,104 @@ class GeneralAI(
      * Per legacy: look for nations that have assisted, propose treaty.
      * Calculates diplomatMonth = 24 * amount / income to determine proposal deadline.
      */
+    /**
+     * Per PHP GeneralAI.php:1765 do불가침제의.
+     * PHP bases NAP proposal on recv_assist/resp_assist KVStorage (assistance tracking).
+     * Candidate nations: those who provided assistance (recv_assist entries).
+     * Amount filter: amount * 4 < income -> skip.
+     * DiplomatMonth = 24 * amount / income.
+     * Cooldown: resp_assist_try within 8 months -> skip.
+     */
     private fun doNonAggressionProposal(
         ctx: AIContext, rng: Random, policy: NpcNationPolicy, supplyCities: List<City>,
     ): String? {
         val nation = ctx.nation ?: return null
+        // Per PHP line 1769: officer_level < 12 (chief). Kotlin chief = 20.
         if (ctx.general.officerLevel < 20) return null
+
         if (supplyCities.isEmpty()) return null
 
-        // Check for potential allies among non-hostile neighbors
-        val otherNations = ctx.allNations.filter {
-            it.id != nation.id && it.level > 0
+        val yearMonth = ctx.world.currentYear.toInt() * 12 + ctx.world.currentMonth.toInt()
+
+        // Per PHP: read recv_assist, resp_assist, resp_assist_try from nation KVStorage (nation.meta)
+        @Suppress("UNCHECKED_CAST")
+        val recvAssist = (nation.meta["recv_assist"] as? List<List<Any>>) ?: emptyList()
+        @Suppress("UNCHECKED_CAST")
+        val respAssist = (nation.meta["resp_assist"] as? Map<String, List<Any>>) ?: emptyMap()
+        @Suppress("UNCHECKED_CAST")
+        val respAssistTry = (nation.meta["resp_assist_try"] as? Map<String, List<Any>>)?.toMutableMap()
+            ?: mutableMapOf()
+
+        // Per PHP: build candidate list from recv_assist
+        val candidateList = mutableMapOf<Long, Double>()
+        for (entry in recvAssist) {
+            val candNationId = (entry.getOrNull(0) as? Number)?.toLong() ?: continue
+            var amount = (entry.getOrNull(1) as? Number)?.toDouble() ?: continue
+
+            // Subtract already responded assistance
+            val responded = (respAssist["n$candNationId"]?.getOrNull(1) as? Number)?.toDouble() ?: 0.0
+            amount -= responded
+            if (amount <= 0) continue
+
+            // Skip war targets
+            // Per PHP: key_exists($candNationID, $this->warTargetNation)
+            // We check the diplomacies for active wars
+            val diplomacies = worldPortFactory.create(ctx.world.id.toLong()).activeDiplomacies().map { it.toEntity() }
+            val isWarTarget = diplomacies.any {
+                (it.srcNationId == nation.id && it.destNationId == candNationId ||
+                    it.destNationId == nation.id && it.srcNationId == candNationId) &&
+                    (it.stateCode == "전쟁" || it.stateCode == "선전포고")
+            }
+            if (isWarTarget) continue
+
+            // Per PHP: cooldown check (resp_assist_try within 8 months)
+            val tryEntry = respAssistTry["n$candNationId"]
+            val lastTryYearMonth = (tryEntry?.getOrNull(1) as? Number)?.toInt() ?: 0
+            if (lastTryYearMonth >= yearMonth - 8) continue
+
+            candidateList[candNationId] = amount
         }
-        if (otherNations.isEmpty()) return null
 
-        // Find nations we're not at war with
-        val diplomacies = worldPortFactory.create(ctx.world.id.toLong()).activeDiplomacies().map { it.toEntity() }
-        val hostileIds = diplomacies.filter {
-            (it.srcNationId == nation.id || it.destNationId == nation.id) &&
-                (it.stateCode == "선전포고" || it.stateCode == "전쟁")
-        }.map { if (it.srcNationId == nation.id) it.destNationId else it.srcNationId }.toSet()
+        if (candidateList.isEmpty()) return null
 
-        val alreadyPact = diplomacies.filter {
-            (it.srcNationId == nation.id || it.destNationId == nation.id) &&
-                (it.stateCode == "불가침" || it.stateCode == "불가침제의")
-        }.map { if (it.srcNationId == nation.id) it.destNationId else it.srcNationId }.toSet()
-
-        val candidates = otherNations.filter {
-            !hostileIds.contains(it.id) && !alreadyPact.contains(it.id) && it.power < nation.power * 2
-        }
-
-        if (candidates.isEmpty()) return null
-
-        // Only propose with some probability
-        if (rng.nextDouble() > 0.15) return null
-
-        val target = candidates[rng.nextInt(candidates.size)]
-
-        // Calculate diplomatMonth = 24 * amount / income (legacy parity)
-        // amount = target nation's power (proxy for assistance), income = nation's total income
+        // Per PHP: calculate income from supply cities
         val goldIncome = supplyCities.sumOf { calcCityGoldIncome(it) }.toInt()
         val riceIncome = supplyCities.sumOf { calcCityRiceIncome(it) }.toInt()
         val wallIncome = supplyCities.sumOf { city ->
             if (city.supplyState > 0) (city.wall / 15) else 0
         }
         val income = (goldIncome + riceIncome + wallIncome).coerceAtLeast(1)
-        val amount = target.power.coerceAtLeast(1)
-        val diplomatMonth = (24.0 * amount / income).toInt()
 
-        // Calculate target year/month based on diplomatMonth
-        val currentMonth = ctx.world.currentYear * 12 + ctx.world.currentMonth - 1
-        val targetMonth = currentMonth + diplomatMonth
-        val targetYear = targetMonth / 12
-        val targetMonthOfYear = (targetMonth % 12) + 1
+        // Per PHP: sort by amount descending, pick first that passes filter
+        val sorted = candidateList.entries.sortedByDescending { it.value }
+        var destNationId: Long? = null
+        var diplomatMonth = 0
+
+        for ((candId, amount) in sorted) {
+            // Per PHP: if amount * 4 < income → skip
+            if (amount * 4 < income) break
+            destNationId = candId
+            diplomatMonth = (24.0 * amount / income).toInt()
+            break
+        }
+
+        if (destNationId == null) return null
+
+        // Per PHP: calculate target year/month
+        val targetYearMonth = yearMonth + diplomatMonth
+        val targetYear = targetYearMonth / 12
+        val targetMonthOfYear = (targetYearMonth % 12).let { if (it == 0) 12 else it }
 
         ctx.general.meta["aiArg"] = mutableMapOf<String, Any>(
-            "destNationId" to target.id,
+            "destNationId" to destNationId,
             "year" to targetYear,
             "month" to targetMonthOfYear
         )
+
+        // Per PHP: record resp_assist_try
+        respAssistTry["n$destNationId"] = listOf(destNationId, yearMonth)
+        nation.meta["resp_assist_try"] = respAssistTry
+
         return "불가침제의"
     }
 
@@ -1420,50 +1460,77 @@ class GeneralAI(
     ): String? {
         val nation = ctx.nation ?: return null
         if (ctx.general.officerLevel < 20) return null
+        // Per PHP line 1856: only declare war during PEACE
         if (ctx.diplomacyState != DiplomacyState.PEACE) {
             logger.debug("[doDeclaration] nation={} skipped: diplomacyState={}", nation.id, ctx.diplomacyState)
             return null
         }
-        // Only skip if there are actual enemy nation targets (not just neutral cities)
-        val hasEnemyNationTargets = warTargetNations.any { it.key != 0L }
-        if (attackable && hasEnemyNationTargets) {
-            logger.debug("[doDeclaration] nation={} skipped: already at war with enemy nations", nation.id)
+        // Per PHP line 1860: attackable must be false (no existing attack targets)
+        if (attackable) {
+            logger.debug("[doDeclaration] nation={} skipped: already attackable", nation.id)
             return null
         }
+        // Per PHP line 1864
         if (nation.capitalCityId == null) return null
-        if (ctx.frontCities.isEmpty()) {
-            logger.debug("[doDeclaration] nation={} skipped: no front cities (no borders)", nation.id)
+        // Per PHP line 1868: frontCities must be EMPTY (no borders yet)
+        // PHP: if($this->frontCities) return null; → returns null when frontCities is non-empty
+        if (ctx.frontCities.isNotEmpty()) {
+            logger.debug("[doDeclaration] nation={} skipped: has front cities (borders exist)", nation.id)
             return null
         }
 
-        // Check tech readiness (per legacy: need sufficient tech)
-        // Check resource readiness
-        val npcGenerals = ctx.nationGenerals.filter { it.npcState.toInt() >= 2 && it.npcState.toInt() != 5 }
-        val userGenerals = ctx.nationGenerals.filter { it.npcState.toInt() < 2 }
+        // Per PHP line 1876: TechLimit check (skip with comment if opensamguk does not use tech system)
+        // TODO: TechLimit guard not implemented; opensamguk tech system may differ
 
-        if (npcGenerals.isEmpty() && userGenerals.isEmpty()) return null
+        // Per PHP lines 1883-1902: use categorizeNationGeneral for war/civil separation
+        val nationCities = ctx.allCities.filter { it.nationId == nation.id }
+            .associateBy { it.id }
+        val categories = categorizeNationGeneral(
+            nationGenerals = ctx.nationGenerals,
+            selfGeneralId = ctx.general.id,
+            nationCities = nationCities,
+            dipState = ctx.diplomacyState,
+            minNPCWarLeadership = policy.minNPCWarLeadership,
+            minWarCrew = policy.minWarCrew,
+        )
 
+        val totalGenerals = categories.npcWarGenerals.size + categories.npcCivilGenerals.size +
+            categories.userWarGenerals.size + categories.userCivilGenerals.size
+        if (totalGenerals == 0) return null
+
+        // Per PHP: NPC generals at full weight, user generals at 50% weight
         var avgGold = nation.gold.toDouble()
         var avgRice = nation.rice.toDouble()
-        var genCnt = 1
+        var genCnt = 0
 
-        for (gen in npcGenerals) {
+        for (gen in categories.npcWarGenerals) {
             avgGold += gen.gold
             avgRice += gen.rice
             genCnt++
         }
-        for (gen in userGenerals) {
+        for (gen in categories.npcCivilGenerals) {
+            avgGold += gen.gold
+            avgRice += gen.rice
+            genCnt++
+        }
+        for (gen in categories.userWarGenerals) {
+            avgGold += gen.gold / 2.0
+            avgRice += gen.rice / 2.0
+            genCnt++
+        }
+        for (gen in categories.userCivilGenerals) {
             avgGold += gen.gold / 2.0
             avgRice += gen.rice / 2.0
             genCnt++
         }
 
+        if (genCnt == 0) return null
         avgGold /= genCnt
         avgRice /= genCnt
 
-        // Calculate trial probability based on resources and development
-        var trialProp = avgGold / max(policy.reqNationGold * 1.5, 2000.0)
-        trialProp += avgRice / max(policy.reqNationRice * 1.5, 2000.0)
+        // Per PHP lines 1913-1921: trial probability formula
+        var trialProp = avgGold / max(policy.calcPolicyValue("reqNPCWarGold", nation) * 1.5, 2000.0)
+        trialProp += avgRice / max(policy.calcPolicyValue("reqNPCWarRice", nation) * 1.5, 2000.0)
 
         if (supplyCities.isNotEmpty()) {
             val devRates = supplyCities.map { calcCityDevScore(it) }
@@ -1576,7 +1643,8 @@ class GeneralAI(
         val general = ctx.general
         val city = ctx.city
 
-        if (general.injury > 0) return "요양"
+        // Per PHP: injury > cureThreshold (not > 0)
+        if (general.injury > nationPolicy.cureThreshold) return "요양"
 
         // Iterate general policy priorities
         for (priority in policy.priority) {
@@ -1603,7 +1671,8 @@ class GeneralAI(
         val general = ctx.general
         val city = ctx.city
 
-        if (general.injury > 0) return "요양"
+        // Per PHP: injury > cureThreshold (not > 0)
+        if (general.injury > nationPolicy.cureThreshold) return "요양"
 
         // Iterate general policy priorities
         // Pass warTargetNations so doRecruit can see neutral targets even in peace mode
@@ -2894,11 +2963,23 @@ class GeneralAI(
      * Only when generalPolicy allows it (can선양).
      */
     private fun doAbdicate(ctx: AIContext, rng: Random): String? {
-        val general = ctx.general
+        return doAbdicate(ctx.general, ctx.world, rng)
+    }
+
+    /**
+     * Per PHP line 3745: do선양 (abdication) check.
+     * PHP checks this BEFORE npcType==5, only for officer_level==12 (chief).
+     * Kotlin chief = officerLevel==20.
+     */
+    private fun doAbdicate(general: General, world: WorldState, rng: Random): String? {
         if (general.officerLevel.toInt() != 20) return null
 
+        val ports = worldPortFactory.create(world.id.toLong())
+        val nationGenerals = ports.allGenerals().map { it.toEntity() }
+            .filter { it.nationId == general.nationId }
+
         // Find a non-troop general in the same nation to abdicate to
-        val candidates = ctx.nationGenerals.filter { gen ->
+        val candidates = nationGenerals.filter { gen ->
             gen.id != general.id && gen.npcState.toInt() != 5
         }
         if (candidates.isEmpty()) return null
@@ -3262,7 +3343,7 @@ class GeneralAI(
     fun chooseNationTurn(general: General, world: WorldState): String {
         val hiddenSeed = (world.config["hiddenSeed"] as? String) ?: "${world.id}"
         val rng = DeterministicRng.create(
-            hiddenSeed, "NationTurn", world.currentYear, world.currentMonth, general.id
+            hiddenSeed, "GeneralAI", world.currentYear, world.currentMonth, general.id
         )
 
         if (general.nationId == 0L) return "휴식"
@@ -3422,17 +3503,23 @@ class GeneralAI(
     fun chooseGeneralTurn(general: General, world: WorldState): String {
         val hiddenSeed = (world.config["hiddenSeed"] as? String) ?: "${world.id}"
         val rng = DeterministicRng.create(
-            hiddenSeed, "GeneralTurn", world.currentYear, world.currentMonth, general.id
+            hiddenSeed, "GeneralAI", world.currentYear, world.currentMonth, general.id
         )
 
         val npcType = general.npcState.toInt()
 
-        // Set defence_train for NPCs
+        // Set defence_train for NPCs (per PHP line 3741)
         if (npcType >= 2 && general.defenceTrain.toInt() != 80) {
             general.defenceTrain = 80
         }
 
-        // Troop leader: always rally
+        // Per PHP line 3745: do선양 (abdication) check BEFORE npcType==5
+        if (general.officerLevel.toInt() == 20 && npcType >= 2) {
+            val abdicateResult = doAbdicate(general, world, rng)
+            if (abdicateResult != null) return abdicateResult
+        }
+
+        // Troop leader: always rally (per PHP line 3753)
         if (npcType == 5) {
             if (general.nationId == 0L) {
                 general.killTurn = 1
@@ -3441,37 +3528,53 @@ class GeneralAI(
             return doRally(general, rng)
         }
 
-        // Reserved command check
+        // Reserved command check (per PHP line 3767)
         val reservedAction = checkReservedCommand(general)
         if (reservedAction != null) return reservedAction
 
-        // Injury check
-        if (general.injury > 0) return "요양"
+        // Injury check: per PHP line 3772, uses cureThreshold (default 10), NOT injury > 0
+        val nationPolicy = if (general.nationId != 0L) {
+            val nation = worldPortFactory.create(world.id.toLong()).nation(general.nationId)?.toEntity()
+            if (nation != null) NpcPolicyBuilder.buildNationPolicy(nation.meta) else NpcNationPolicy()
+        } else {
+            NpcNationPolicy()
+        }
+        if (general.injury > nationPolicy.cureThreshold) return "요양"
 
-        // NPC rise check
+        // NPC rise check (per PHP line 3778)
         if ((npcType == 2 || npcType == 3) && general.nationId == 0L) {
             val riseResult = doRise(general, world, rng)
             if (riseResult != null) return riseResult
         }
 
-        // Wanderer without nation: join or wander
+        // Wanderer without nation: join or wander (per PHP line 3786)
         if (general.nationId == 0L) {
             return decideWandererAction(general, world, rng)
         }
 
-        // NPC lord without capital: found nation or wander
+        // NPC lord without capital: structured do건국/do방랑군이동/do해산 (per PHP line 3802)
         if (npcType >= 2 && general.officerLevel.toInt() == 20) {
             val nation = worldPortFactory.create(world.id.toLong()).nation(general.nationId)?.toEntity()
             if (nation != null && nation.capitalCityId == null) {
-                val yearsFromInit = world.currentYear - ((world.config["startyear"] as? Number)?.toInt() ?: world.currentYear.toInt())
-                if (yearsFromInit > 0) {
-                    // Try founding
-                    if (rng.nextDouble() < 0.01) return "건국"
+                val initYear = (world.config["init_year"] as? Number)?.toInt()
+                    ?: (world.config["startyear"] as? Number)?.toInt()
+                    ?: world.currentYear.toInt()
+                val initMonth = (world.config["init_month"] as? Number)?.toInt() ?: 1
+                val relYearMonth = (world.currentYear.toInt() * 12 + world.currentMonth.toInt()) -
+                    (initYear * 12 + initMonth)
+
+                // Per PHP: do건국 only if relYearMonth > 1
+                if (relYearMonth > 1) {
+                    val foundResult = doFoundNation(general, rng)
+                    if (foundResult != null) return foundResult
                 }
-                // Move toward candidate city
-                if (rng.nextDouble() < 0.6) return "이동"
-                // Try disband
-                if (yearsFromInit > 0) {
+
+                // Per PHP: do방랑군이동
+                val moveResult = doWandererMove(general, world, rng)
+                if (moveResult != null) return moveResult
+
+                // Per PHP: do해산 only if relYearMonth > 1
+                if (relYearMonth > 1) {
                     val disbandResult = doDisband(general)
                     if (disbandResult != null) return disbandResult
                 }
