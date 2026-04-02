@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 08-01-PLAN.md
-last_updated: "2026-04-02T05:12:44.772Z"
+stopped_at: Completed 08-04-PLAN.md
+last_updated: "2026-04-02T05:23:29.694Z"
 last_activity: 2026-04-02
 progress:
   total_phases: 11
   completed_phases: 7
   total_plans: 21
-  completed_plans: 18
+  completed_plans: 19
   percent: 0
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-03-31)
 ## Current Position
 
 Phase: 08 (npc-ai-parity) — EXECUTING
-Plan: 2 of 4
+Plan: 3 of 4
 Status: Ready to execute
 Last activity: 2026-04-02
 
@@ -68,6 +68,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 07 P01 | 34min | 2 tasks | 2 files |
 | Phase 07 P02 | 39min | 1 tasks | 2 files |
 | Phase 08 P01 | 25min | 2 tasks | 5 files |
+| Phase 08 P04 | 7min | 2 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -107,6 +108,7 @@ Recent decisions affecting current work:
 - [Phase 08]: DiplomacyState enum gains code: Int matching PHP d constants (0-4); calcDiplomacyState uses term-based transitions
 - [Phase 08]: RNG seed context unified to GeneralAI for all AI methods (PHP Pitfall 5)
 - [Phase 08]: Injury check uses cureThreshold (default 10) across all code paths, not > 0
+- [Phase 08]: All 18 personnel/wanderer/promotion AI methods match PHP behavior - no fixes needed
 
 ### Pending Todos
 
@@ -119,6 +121,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-02T05:12:44.767Z
-Stopped at: Completed 08-01-PLAN.md
+Last session: 2026-04-02T05:23:29.683Z
+Stopped at: Completed 08-04-PLAN.md
 Resume file: None
