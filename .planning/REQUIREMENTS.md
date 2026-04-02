@@ -63,7 +63,7 @@ Requirements for legacy parity milestone. Each maps to roadmap phases.
 
 ### NPC AI
 
-- [ ] **AI-01**: Verify NPC military AI decision trees match legacy GeneralAI.php (40+ do*() methods)
+- [x] **AI-01**: Verify NPC military AI decision trees match legacy GeneralAI.php (40+ do*() methods)
 - [x] **AI-02**: Fix NPC diplomacy AI to match legacy behavior (currently "completely different")
 - [x] **AI-03**: Verify NPC recruitment/personnel decisions match legacy
 - [x] **AI-04**: Verify NPC strategic priorities (attack, defend, develop) match legacy
@@ -174,7 +174,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CMD-02 | Phase 7: Command Parity | Complete |
 | CMD-03 | Phase 7: Command Parity | Complete |
 | CMD-04 | Phase 7: Command Parity | Complete |
-| AI-01 | Phase 8: NPC AI Parity | Pending |
+| AI-01 | Phase 8: NPC AI Parity | Complete |
 | AI-02 | Phase 8: NPC AI Parity | Complete |
 | AI-03 | Phase 8: NPC AI Parity | Complete |
 | AI-04 | Phase 8: NPC AI Parity | Complete |
