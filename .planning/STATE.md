@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 08-03-PLAN.md
-last_updated: "2026-04-02T05:27:38.288Z"
+stopped_at: Completed all Wave 2 plans
+last_updated: "2026-04-02T05:30:00.000Z"
 last_activity: 2026-04-02
 progress:
   total_phases: 11
   completed_phases: 7
   total_plans: 21
-  completed_plans: 20
+  completed_plans: 21
   percent: 0
 ---
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-03-31)
 
 Phase: 08 (npc-ai-parity) — EXECUTING
 Plan: 4 of 4
-Status: Ready to execute
+Status: All plans complete — ready for verification
 Last activity: 2026-04-02
 
 Progress: [░░░░░░░░░░] 0%
@@ -68,8 +68,9 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 07 P01 | 34min | 2 tasks | 2 files |
 | Phase 07 P02 | 39min | 1 tasks | 2 files |
 | Phase 08 P01 | 25min | 2 tasks | 5 files |
-| Phase 08 P04 | 7min | 2 tasks | 1 files |
+| Phase 08 P02 | 9min | 2 tasks | 2 files |
 | Phase 08 P03 | 12min | 2 tasks | 2 files |
+| Phase 08 P04 | 7min | 2 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -109,6 +110,7 @@ Recent decisions affecting current work:
 - [Phase 08]: DiplomacyState enum gains code: Int matching PHP d constants (0-4); calcDiplomacyState uses term-based transitions
 - [Phase 08]: RNG seed context unified to GeneralAI for all AI methods (PHP Pitfall 5)
 - [Phase 08]: Injury check uses cureThreshold (default 10) across all code paths, not > 0
+- [Phase 08]: doSortie/doCombatPrep use nationPolicy.properWarTrainAtmos (90) not hardcoded 80; doCombatPrep uses weighted random choice per PHP
 - [Phase 08]: All 18 personnel/wanderer/promotion AI methods match PHP behavior - no fixes needed
 - [Phase 08]: NationAI.adjustTaxAndBill is runtime-active but non-PHP-matching; GeneralAI rate choosers are PHP-matching but not wired into TurnService
 
@@ -123,6 +125,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-02T05:27:38.282Z
-Stopped at: Completed 08-03-PLAN.md
+Last session: 2026-04-02T05:30:00.000Z
+Stopped at: Completed all Phase 08 plans
 Resume file: None

@@ -2109,11 +2109,31 @@ class GeneralAI(
 
         val train = general.train.toInt()
         val atmos = general.atmos.toInt()
-        val threshold = 80 // nationPolicy.properWarTrainAtmos equivalent
+        val threshold = nationPolicy.properWarTrainAtmos
 
-        if (train < threshold) return "훈련"
-        if (atmos < threshold) return "사기진작"
-        return null
+        // Per PHP: build weighted list of combat prep actions, choose randomly
+        val cmdList = mutableListOf<Pair<String, Double>>()
+        if (train < threshold) {
+            // PHP weight: maxTrainByCommand / valueFit(train, 1)
+            cmdList.add("훈련" to 30.0 / maxOf(train, 1))
+        }
+        if (atmos < threshold) {
+            // PHP weight: maxAtmosByCommand / valueFit(atmos, 1)
+            cmdList.add("사기진작" to 30.0 / maxOf(atmos, 1))
+        }
+
+        if (cmdList.isEmpty()) return null
+        if (cmdList.size == 1) return cmdList[0].first
+
+        // Weighted choice per PHP choiceUsingWeightPair
+        val totalWeight = cmdList.sumOf { it.second }
+        val roll = rng.nextDouble() * totalWeight
+        var cumulative = 0.0
+        for ((action, weight) in cmdList) {
+            cumulative += weight
+            if (roll < cumulative) return action
+        }
+        return cmdList.last().first
     }
 
     // ──────────────────────────────────────────────────────────
@@ -2143,11 +2163,12 @@ class GeneralAI(
         // Per legacy: if rice is very low and NPC, 70% chance to skip
         if (nation.rice < 1000 && general.npcState.toInt() >= 2 && rng.nextDouble() < 0.7) return null
 
-        // Need minimum train and atmos
-        if (general.train < min(100, 80)) return null
-        if (general.atmos < min(100, 80)) return null
-        // Need minimum crew
-        if (general.crew < min((general.leadership.toInt() - 2) * 100, 500)) return null
+        // Per PHP: train/atmos checked against min(100, nationPolicy.properWarTrainAtmos)
+        val trainAtmosThreshold = min(100, nationPolicy.properWarTrainAtmos)
+        if (general.train < trainAtmosThreshold) return null
+        if (general.atmos < trainAtmosThreshold) return null
+        // Per PHP: crew checked against min((fullLeadership - 2) * 100, nationPolicy.minWarCrew)
+        if (general.crew < min((general.leadership.toInt() - 2) * 100, nationPolicy.minWarCrew)) return null
 
         if (city.frontState.toInt() < 2 && ctx.frontCities.isNotEmpty()) return null
 
