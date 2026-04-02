@@ -569,4 +569,206 @@ class TurnServiceTest {
             detail = mapOf("actionCode" to "Nation휴식", "nationId" to 1L),
         )
     }
+
+    // ========== checkWander ==========
+
+    @Test
+    fun `checkWander dissolves wander nation when year ge startYear plus 2`() {
+        val now = OffsetDateTime.now()
+        val world = createWorld(year = 202, month = 6, tickSeconds = 300, updatedAt = now.minusSeconds(400))
+        world.config["startYear"] = 200
+
+        val chief = General(
+            id = 10, worldId = 1, name = "방랑군주", nationId = 5, cityId = 1,
+            officerLevel = 20, npcState = 0, turnTime = now,
+        )
+        val wanderNation = Nation(id = 5, worldId = 1, name = "방랑", color = "#888888", level = 0)
+
+        `when`(generalRepository.findByWorldId(1L)).thenReturn(listOf(chief))
+        `when`(nationRepository.findById(5L)).thenReturn(java.util.Optional.of(wanderNation))
+
+        service.processWorld(world)
+
+        // checkWander should have called createGeneralCommand("해산") for the wander chief
+        verify(commandRegistry, atLeastOnce()).createGeneralCommand(eq("해산"), anyNonNull(), anyNonNull(), anyOrNull())
+    }
+
+    @Test
+    fun `checkWander does nothing when year lt startYear plus 2`() {
+        val now = OffsetDateTime.now()
+        val world = createWorld(year = 201, month = 6, tickSeconds = 300, updatedAt = now.minusSeconds(400))
+        world.config["startYear"] = 200
+
+        `when`(generalRepository.findByWorldId(1L)).thenReturn(emptyList())
+
+        service.processWorld(world)
+
+        verify(commandRegistry, never()).createGeneralCommand(eq("해산"), anyNonNull(), anyNonNull(), anyOrNull())
+    }
+
+    @Test
+    fun `checkWander skips non-wander nation`() {
+        val now = OffsetDateTime.now()
+        val world = createWorld(year = 202, month = 6, tickSeconds = 300, updatedAt = now.minusSeconds(400))
+        world.config["startYear"] = 200
+
+        val chief = General(
+            id = 10, worldId = 1, name = "정상군주", nationId = 5, cityId = 1,
+            officerLevel = 20, npcState = 0, turnTime = now,
+        )
+        val regularNation = Nation(id = 5, worldId = 1, name = "위", color = "#FF0000", level = 3)
+
+        `when`(generalRepository.findByWorldId(1L)).thenReturn(listOf(chief))
+        `when`(nationRepository.findById(5L)).thenReturn(java.util.Optional.of(regularNation))
+
+        service.processWorld(world)
+
+        verify(commandRegistry, never()).createGeneralCommand(eq("해산"), anyNonNull(), anyNonNull(), anyOrNull())
+    }
+
+    // ========== updateOnline ==========
+
+    @Test
+    fun `updateOnline sets online count and nation string in world meta`() {
+        val now = OffsetDateTime.now()
+        val world = createWorld(year = 200, month = 6, tickSeconds = 300, updatedAt = now.minusSeconds(400))
+
+        val log1 = com.opensam.entity.GeneralAccessLog(id = 1, generalId = 1, worldId = 1, accessedAt = now.minusSeconds(10))
+        val log2 = com.opensam.entity.GeneralAccessLog(id = 2, generalId = 2, worldId = 1, accessedAt = now.minusSeconds(20))
+        val general1 = General(id = 1, worldId = 1, name = "장수1", nationId = 1, cityId = 1, turnTime = now)
+        val general2 = General(id = 2, worldId = 1, name = "장수2", nationId = 2, cityId = 1, turnTime = now)
+        val nation1 = Nation(id = 1, worldId = 1, name = "위", color = "#FF0000")
+        val nation2 = Nation(id = 2, worldId = 1, name = "촉", color = "#00FF00")
+
+        val accessLogRepo = mock(GeneralAccessLogRepository::class.java)
+        `when`(accessLogRepo.findByWorldId(1L)).thenReturn(listOf(log1, log2))
+        `when`(generalRepository.findByWorldId(1L)).thenReturn(listOf(general1, general2))
+        `when`(nationRepository.findByWorldId(1L)).thenReturn(listOf(nation1, nation2))
+
+        // Build a service instance with the custom accessLogRepo
+        val yearbookService = mock(YearbookService::class.java)
+        val worldPortFactory = JpaWorldPortFactory(
+            generalRepository = generalRepository,
+            cityRepository = cityRepository,
+            nationRepository = nationRepository,
+        )
+        val pipeline = com.opensam.engine.turn.TurnPipeline(listOf(
+            EconomyPostUpdateStep(economyService),
+            DisasterAndTradeStep(economyService),
+            DiplomacyStep(diplomacyService),
+            GeneralMaintenanceStep(generalMaintenanceService, specialAssignmentService, inheritanceService, worldPortFactory),
+        ))
+        val svcWithLog = TurnService(
+            worldStateRepository, generalRepository, generalTurnRepository, nationTurnRepository,
+            cityRepository, nationRepository, commandExecutor, commandRegistry,
+            scenarioService, economyService, eventService, diplomacyService,
+            generalMaintenanceService, specialAssignmentService, npcSpawnService,
+            unificationService, inheritanceService, yearbookService, auctionService,
+            tournamentService, mock(TrafficSnapshotRepository::class.java),
+            worldPortFactory, generalAI, nationAI,
+            mock(com.opensam.engine.modifier.ModifierService::class.java),
+            mock(WorldService::class.java),
+            mock(com.opensam.service.NationService::class.java),
+            mock(com.opensam.engine.war.BattleService::class.java),
+            uniqueLotteryService,
+            mock(com.opensam.service.CommandLogDispatcher::class.java),
+            mock(com.opensam.service.GameConstService::class.java),
+            accessLogRepo,
+            pipeline,
+            mock(com.opensam.engine.war.FieldBattleTrigger::class.java),
+        )
+        `when`(worldStateRepository.save(anyNonNull<WorldState>())).thenAnswer { it.arguments[0] }
+
+        svcWithLog.processWorld(world)
+
+        assertEquals(2, world.meta["online_user_cnt"])
+        assertNotNull(world.meta["online_nation"])
+    }
+
+    // ========== checkOverhead ==========
+
+    @Test
+    fun `checkOverhead calculates refreshLimit using legacy formula`() {
+        val now = OffsetDateTime.now()
+        val world = createWorld(year = 200, month = 6, tickSeconds = 300, updatedAt = now.minusSeconds(400))
+        world.config["refreshLimitCoef"] = 10
+        `when`(generalRepository.findByWorldId(1L)).thenReturn(emptyList())
+
+        service.processWorld(world)
+
+        // round(300^0.6 * 3) * 10 = round(36.517 * 3) * 10 = round(109.55) * 10 = 1100
+        val refreshLimit = (world.meta["refreshLimit"] as? Number)?.toInt()
+        assertNotNull(refreshLimit, "refreshLimit should be set in world.meta")
+        assertEquals(1100, refreshLimit)
+    }
+
+    @Test
+    fun `checkOverhead uses default refreshLimitCoef of 10`() {
+        val now = OffsetDateTime.now()
+        val world = createWorld(year = 200, month = 6, tickSeconds = 300, updatedAt = now.minusSeconds(400))
+        // No refreshLimitCoef in config
+        `when`(generalRepository.findByWorldId(1L)).thenReturn(emptyList())
+
+        service.processWorld(world)
+
+        val refreshLimit = (world.meta["refreshLimit"] as? Number)?.toInt()
+        assertNotNull(refreshLimit, "refreshLimit should be set even with default coef")
+        assertEquals(1100, refreshLimit)
+    }
+
+    // ========== updateGeneralNumber ==========
+
+    @Test
+    fun `updateGeneralNumber updates nation gennum to count of non-npcState5 generals`() {
+        val now = OffsetDateTime.now()
+        val world = createWorld(year = 200, month = 6, tickSeconds = 300, updatedAt = now.minusSeconds(400))
+
+        val gen1 = General(id = 1, worldId = 1, name = "장수1", nationId = 1, cityId = 1, npcState = 0, turnTime = now)
+        val gen2 = General(id = 2, worldId = 1, name = "장수2", nationId = 1, cityId = 1, npcState = 2, turnTime = now)
+        val gen3 = General(id = 3, worldId = 1, name = "죽은장수", nationId = 1, cityId = 1, npcState = 5, turnTime = now)
+        val gen4 = General(id = 4, worldId = 1, name = "장수3", nationId = 2, cityId = 1, npcState = 0, turnTime = now)
+        val nation1 = Nation(id = 1, worldId = 1, name = "위", color = "#FF0000", gennum = 0)
+        val nation2 = Nation(id = 2, worldId = 1, name = "촉", color = "#00FF00", gennum = 0)
+
+        `when`(generalRepository.findByWorldId(1L)).thenReturn(listOf(gen1, gen2, gen3, gen4))
+        `when`(nationRepository.findByWorldId(1L)).thenReturn(listOf(nation1, nation2))
+
+        service.processWorld(world)
+
+        @Suppress("UNCHECKED_CAST")
+        val captor = ArgumentCaptor.forClass(List::class.java) as ArgumentCaptor<List<Nation>>
+        verify(nationRepository, atLeastOnce()).saveAll(captor.capture())
+        val saved = captor.value
+        val savedNation1 = saved.find { it.id == 1L }
+        val savedNation2 = saved.find { it.id == 2L }
+        // nation1: gen1(npc=0) + gen2(npc=2) = 2 (gen3 excluded as npc=5)
+        assertEquals(2, savedNation1?.gennum, "Nation1 should have 2 active generals")
+        // nation2: gen4(npc=0) = 1
+        assertEquals(1, savedNation2?.gennum, "Nation2 should have 1 active general")
+    }
+
+    @Test
+    fun `updateGeneralNumber sets zero for nation with no active generals`() {
+        val now = OffsetDateTime.now()
+        val world = createWorld(year = 200, month = 6, tickSeconds = 300, updatedAt = now.minusSeconds(400))
+
+        val nation1 = Nation(id = 1, worldId = 1, name = "위", color = "#FF0000", gennum = 5)
+        `when`(generalRepository.findByWorldId(1L)).thenReturn(emptyList())
+        `when`(nationRepository.findByWorldId(1L)).thenReturn(listOf(nation1))
+
+        service.processWorld(world)
+
+        @Suppress("UNCHECKED_CAST")
+        val captor = ArgumentCaptor.forClass(List::class.java) as ArgumentCaptor<List<Nation>>
+        verify(nationRepository, atLeastOnce()).saveAll(captor.capture())
+        val saved = captor.value
+        assertEquals(0, saved.find { it.id == 1L }?.gennum, "Nation gennum should be 0 when no generals")
+    }
+
+    /** Helper: Mockito eq() wrapper returning non-null for Kotlin. */
+    private fun <T> eq(value: T): T = org.mockito.ArgumentMatchers.eq(value) ?: value
+
+    /** Helper: Mockito anyOrNull() for nullable parameters. */
+    @Suppress("UNCHECKED_CAST")
+    private fun <T> anyOrNull(): T? = any<T>() as T?
 }
