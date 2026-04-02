@@ -7,6 +7,7 @@ import com.opensam.entity.WorldState
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
+import java.io.File
 import java.time.OffsetDateTime
 
 /**
@@ -198,6 +199,65 @@ class TurnPipelineParityTest {
         val pipeline = TurnPipeline(emptyList())
         val result = pipeline.execute(testContext())
         assertThat(result).isEqualTo(0)
+    }
+
+    // ── postUpdateMonthly ordering assertions (func_gamerule.php:423-441) ──
+
+    @Test
+    @DisplayName("postUpdateMonthly call order matches legacy func_gamerule.php:423-441")
+    fun `postUpdateMonthly order matches legacy`() {
+        // Read TurnService source and verify post-pipeline call order.
+        // Legacy order: checkWander -> updateGeneralNumber -> triggerTournament -> registerAuction
+        val turnServiceFile = File("src/main/kotlin/com/opensam/engine/TurnService.kt")
+        assertThat(turnServiceFile.exists())
+            .describedAs("TurnService.kt must exist at expected path")
+            .isTrue()
+
+        val source = turnServiceFile.readText()
+
+        // Find each method call position in the postUpdateMonthly section
+        val checkWanderIdx = source.indexOf("checkWander(world)")
+        val updateGeneralNumberIdx = source.indexOf("updateGeneralNumber(world)")
+        val triggerTournamentIdx = source.indexOf("triggerTournament(world)")
+        val registerAuctionIdx = source.indexOf("registerAuction(world)")
+
+        assertThat(checkWanderIdx).describedAs("checkWander call must exist").isGreaterThan(-1)
+        assertThat(updateGeneralNumberIdx).describedAs("updateGeneralNumber call must exist").isGreaterThan(-1)
+        assertThat(triggerTournamentIdx).describedAs("triggerTournament call must exist").isGreaterThan(-1)
+        assertThat(registerAuctionIdx).describedAs("registerAuction call must exist").isGreaterThan(-1)
+
+        // Legacy ordering: checkWander < updateGeneralNumber < triggerTournament < registerAuction
+        assertThat(checkWanderIdx)
+            .describedAs("checkWander must appear before updateGeneralNumber (legacy func_gamerule.php:423-441)")
+            .isLessThan(updateGeneralNumberIdx)
+        assertThat(updateGeneralNumberIdx)
+            .describedAs("updateGeneralNumber must appear before triggerTournament")
+            .isLessThan(triggerTournamentIdx)
+        assertThat(triggerTournamentIdx)
+            .describedAs("triggerTournament must appear before registerAuction")
+            .isLessThan(registerAuctionIdx)
+    }
+
+    // ── Pipeline step coverage for legacy functions ──
+
+    @Test
+    @DisplayName("UnificationCheck step at order 1600 covers legacy checkEmperior()")
+    fun `unification check covers checkEmperior`() {
+        assertThat(LEGACY_STEP_ORDER).contains("UnificationCheck")
+        val idx = LEGACY_STEP_ORDER.indexOf("UnificationCheck")
+        assertThat(LEGACY_STEP_ORDERS[idx])
+            .describedAs("UnificationCheck (legacy checkEmperior) must be at order 1600")
+            .isEqualTo(1600)
+    }
+
+    @Test
+    @DisplayName("WarFrontRecalc step at order 1300 covers legacy SetNationFront()")
+    fun `warFrontRecalc covers SetNationFront`() {
+        assertThat(LEGACY_STEP_ORDER).contains("WarFrontRecalc")
+        val idx = LEGACY_STEP_ORDER.indexOf("WarFrontRecalc")
+        assertThat(LEGACY_STEP_ORDERS[idx])
+            .describedAs("WarFrontRecalc (legacy SetNationFront) must be at order 1300")
+            .isEqualTo(1300)
     }
 
     private fun testStep(name: String, order: Int, action: () -> Unit): TurnStep {
