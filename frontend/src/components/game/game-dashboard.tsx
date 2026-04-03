@@ -213,10 +213,7 @@ export function GameDashboard() {
                             className="col-span-2 md:col-span-4 lg:col-span-2 border-b border-gray-600 py-1"
                             style={{ color: 'cyan' }}
                         >
-                            기타 설정:{' '}
-                            {formatAutorunMode(
-                                (global as unknown as Record<string, unknown>).autorunUser as number | undefined
-                            )}
+                            기타 설정: {formatAutorunMode(global.autorunUser)}
                         </div>
 
                         <div className="col-span-4 md:col-span-8 lg:col-span-4 border-r border-b border-gray-600 py-1">
@@ -232,6 +229,10 @@ export function GameDashboard() {
                             등록 장수: 유저 {genCounts.user.toLocaleString()} /{' '}
                             {(global.generalCntLimit ?? Infinity).toLocaleString()} +{' '}
                             <span style={{ color: 'cyan' }}>NPC {genCounts.npc.toLocaleString()} 명</span>
+                        </div>
+
+                        <div className="col-span-4 md:col-span-8 lg:col-span-4 border-b border-gray-600 py-1">
+                            참가: {global.joinMode || '자유'} | 개발비용: {global.develCost ?? 0}
                         </div>
 
                         <div className="col-span-4 md:col-span-6 lg:col-span-4 border-r border-gray-600 py-1">
@@ -454,7 +455,7 @@ export function GameDashboard() {
                     <div className="text-center border-t border-b border-border text-xs font-semibold py-1 bg-primary/10 text-primary tracking-wide">
                         내 장수 요약
                     </div>
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 text-center text-xs border-b border-gray-600">
+                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 text-center text-xs border-b border-gray-600">
                         <div className="border-r border-gray-600/50 py-1">
                             <span className="text-muted-foreground">전투</span>{' '}
                             <span className="text-cyan-400">
@@ -480,9 +481,13 @@ export function GameDashboard() {
                                 {frontInfo.general.injury}%
                             </span>
                         </div>
-                        <div className="py-1">
+                        <div className="border-r border-gray-600/50 py-1">
                             <span className="text-muted-foreground">명성</span>{' '}
                             <span className="text-yellow-400">{frontInfo.general.honorText}</span>
+                        </div>
+                        <div className="py-1">
+                            <span className="text-muted-foreground">봉급</span>{' '}
+                            <span className="text-game-gold">{frontInfo.general.bill}금</span>
                         </div>
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-5 text-center text-xs border-b border-gray-600">

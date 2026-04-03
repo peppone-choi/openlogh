@@ -637,6 +637,7 @@ export interface GlobalInfo {
     serverCnt: number;
     lastVoteID: number;
     lastVote: LastVoteInfo | null;
+    autorunUser?: number;
 }
 
 export interface LastVoteInfo {
