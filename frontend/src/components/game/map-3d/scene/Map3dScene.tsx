@@ -58,7 +58,7 @@ export function Map3dScene({
   );
 
   return (
-    <div className="relative h-full w-full" style={{ minHeight: compact ? 200 : 500 }}>
+    <div className="relative h-full w-full">
       <Canvas
         gl={{
           antialias: !mobile,

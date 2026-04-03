@@ -208,7 +208,7 @@ export function MapViewer({
 
     if (mapMode === '3d') {
         return (
-            <div className="relative h-full w-full">
+            <div className="relative w-full" style={{ aspectRatio: '700 / 500' }}>
                 <MapModeToggle />
                 <Map3dScene
                     mapCode={mapCode}
