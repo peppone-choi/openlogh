@@ -1,65 +1,65 @@
 'use client';
-// Design Ref: §5.3 — 3D 맵 상태/설정/모드 관리
-import { useState, useCallback, useEffect } from 'react';
+// Design Ref: §5.3 — 3D 맵 상태/설정/모드 관리 (Zustand 공유 스토어)
+import { create } from 'zustand';
 import type { MapRenderMode, Map3dConfig } from '@/types';
 import { isWebGLSupported, isMobileDevice } from '@/lib/map-3d-utils';
 
 const STORAGE_KEY = 'opensamguk-map-mode';
 
-const DEFAULT_CONFIG: Map3dConfig = {
-  mode: '2d',
-  quality: 'high',
-  showDecorations: true,
-  showLabels: true,
-  showNationOverlay: true,
-};
+interface Map3dState {
+  config: Map3dConfig;
+  webglSupported: boolean;
+  isMobile: boolean;
+  mapMode: MapRenderMode;
+  setMapMode: (mode: MapRenderMode) => void;
+  toggleMode: () => void;
+}
 
-export function useMap3d() {
-  const [config, setConfig] = useState<Map3dConfig>(() => {
-    if (typeof window === 'undefined') return DEFAULT_CONFIG;
+function loadSavedMode(): MapRenderMode {
+  if (typeof window === 'undefined') return '2d';
+  try {
     const saved = sessionStorage.getItem(STORAGE_KEY);
     if (saved) {
-      try {
-        return { ...DEFAULT_CONFIG, ...JSON.parse(saved) };
-      } catch {
-        // ignore
-      }
+      const parsed = JSON.parse(saved);
+      if (parsed.mode === '3d' || parsed.mode === '2d') return parsed.mode;
     }
-    return DEFAULT_CONFIG;
-  });
+  } catch {
+    // ignore
+  }
+  return '2d';
+}
 
-  const [webglSupported] = useState(() => isWebGLSupported());
-  const [isMobile] = useState(() => isMobileDevice());
-
-  // 모바일이면 품질 자동 조절
-  useEffect(() => {
-    if (isMobile && config.quality === 'high') {
-      setConfig((prev) => ({ ...prev, quality: 'medium' }));
-    }
-  }, [isMobile, config.quality]);
-
-  const mapMode: MapRenderMode = webglSupported ? config.mode : '2d';
-
-  const setMapMode = useCallback(
-    (mode: MapRenderMode) => {
-      if (!webglSupported && mode === '3d') return;
-      const next = { ...config, mode };
-      setConfig(next);
-      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-    },
-    [config, webglSupported],
-  );
-
-  const toggleMode = useCallback(() => {
-    setMapMode(mapMode === '2d' ? '3d' : '2d');
-  }, [mapMode, setMapMode]);
+export const useMap3d = create<Map3dState>((set, get) => {
+  const webgl = typeof window !== 'undefined' ? isWebGLSupported() : false;
+  const mobile = typeof window !== 'undefined' ? isMobileDevice() : false;
+  const savedMode = loadSavedMode();
+  const initialMode: MapRenderMode = webgl ? savedMode : '2d';
 
   return {
-    config,
-    mapMode,
-    setMapMode,
-    toggleMode,
-    webglSupported,
-    isMobile,
+    config: {
+      mode: initialMode,
+      quality: mobile ? 'medium' : 'high',
+      showDecorations: true,
+      showLabels: true,
+      showNationOverlay: true,
+    },
+    webglSupported: webgl,
+    isMobile: mobile,
+    mapMode: initialMode,
+
+    setMapMode: (mode: MapRenderMode) => {
+      const { webglSupported } = get();
+      if (!webglSupported && mode === '3d') return;
+      set((state) => {
+        const next = { ...state.config, mode };
+        sessionStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+        return { config: next, mapMode: mode };
+      });
+    },
+
+    toggleMode: () => {
+      const { mapMode, setMapMode } = get();
+      setMapMode(mapMode === '2d' ? '3d' : '2d');
+    },
   };
-}
+});
