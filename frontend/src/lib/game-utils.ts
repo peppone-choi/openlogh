@@ -33,7 +33,7 @@ export function getContrastTextColor(bgColor: string | null | undefined): string
 // --- Injury ---
 
 export function calcInjury(baseStat: number, injury: number): number {
-    return Math.round((baseStat * (100 - injury)) / 100);
+    return Math.floor((baseStat * (100 - injury)) / 100);
 }
 
 export function formatInjury(injury: number): { text: string; color: string } {
