@@ -1,7 +1,6 @@
 'use client';
 // Design Ref: §3.2 TerrainMesh — 배경 이미지 기반 높이맵 + vertex color
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { useFrame } from '@react-three/fiber';
+import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import type { CityConst } from '@/types';
 import type { MapSeason } from '@/lib/map-constants';
@@ -14,7 +13,7 @@ import {
 
 const MAP_W = 700;
 const MAP_H = 500;
-const SEGMENTS = 128;
+const SEGMENTS = 64;
 
 interface TerrainMeshProps {
   cities: CityConst[];
@@ -126,8 +125,6 @@ export function TerrainMesh({ cities, mapCode = 'che', season = 'spring' }: Terr
     buildTerrain();
     return () => { cancelled = true; };
   }, [cities, mapCode, season]);
-
-  useFrame(({ invalidate }) => { invalidate(); });
 
   if (!geometry) return null;
 

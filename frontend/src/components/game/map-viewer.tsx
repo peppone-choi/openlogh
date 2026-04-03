@@ -206,7 +206,7 @@ export function MapViewer({
         );
     }
 
-    if (mapMode === '3d' && !isPublicMode) {
+    if (mapMode === '3d') {
         return (
             <div className="relative h-full w-full">
                 <MapModeToggle />
