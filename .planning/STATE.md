@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: verifying
-stopped_at: Phase 11 context gathered
-last_updated: "2026-04-03T00:46:54.089Z"
-last_activity: 2026-04-02
+status: executing
+stopped_at: Completed 11-01-PLAN.md
+last_updated: "2026-04-03T01:59:47.893Z"
+last_activity: 2026-04-03
 progress:
   total_phases: 11
   completed_phases: 10
-  total_plans: 27
-  completed_plans: 27
+  total_plans: 29
+  completed_plans: 28
   percent: 0
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-31)
 
 **Core value:** Every game mechanic must produce identical outcomes to the legacy PHP implementation given the same inputs.
-**Current focus:** Phase 10 — diplomacy-and-scenario-data
+**Current focus:** Phase 11 — frontend-display-parity
 
 ## Current Position
 
-Phase: 11
-Plan: Not started
-Status: Phase complete — ready for verification
-Last activity: 2026-04-02
+Phase: 11 (frontend-display-parity) — EXECUTING
+Plan: 2 of 2
+Status: Ready to execute
+Last activity: 2026-04-03
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -77,6 +77,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 10-diplomacy-and-scenario-data P02 | 5min | 1 tasks | 1 files |
 | Phase 10 P01 | 3min | 1 tasks | 1 files |
 | Phase 10-diplomacy-and-scenario-data P03 | 7min | 1 tasks | 1 files |
+| Phase 11 P01 | 6min | 2 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -128,6 +129,9 @@ Recent decisions affecting current work:
 - [Phase 10]: Mock DiplomacyRepository with in-memory list for full service-level testing without Spring context
 - [Phase 10]: War term casualty extension marked @Disabled as potential parity gap (func_gamerule.php lines 337-349)
 - [Phase 10-diplomacy-and-scenario-data]: General 3-stat comparison documents divergence rather than hard-failing (stats intentionally updated to 삼국지14 values)
+- [Phase 11]: calcInjury uses Math.floor (legacy parity), not Math.round
+- [Phase 11]: Kill ratio formula: killcrew/max(deathcrew,1) matches legacy, not killcrew/(killcrew+deathcrew)
+- [Phase 11]: Battle log needs two render paths: color tags (formatLog) + HTML template (new BattleLogEntry)
 
 ### Pending Todos
 
@@ -140,6 +144,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-03T00:46:54.078Z
-Stopped at: Phase 11 context gathered
-Resume file: .planning/phases/11-frontend-display-parity/11-CONTEXT.md
+Last session: 2026-04-03T01:59:47.886Z
+Stopped at: Completed 11-01-PLAN.md
+Resume file: None

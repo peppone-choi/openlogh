@@ -91,10 +91,10 @@ Requirements for legacy parity milestone. Each maps to roadmap phases.
 
 ### Frontend Display
 
-- [ ] **FE-01**: Verify game dashboard displays all information present in legacy UI
-- [ ] **FE-02**: Verify general detail page shows correct stats and calculated values
-- [ ] **FE-03**: Verify nation management page shows correct aggregated data
-- [ ] **FE-04**: Verify battle log display matches legacy format and content
+- [x] **FE-01**: Verify game dashboard displays all information present in legacy UI
+- [x] **FE-02**: Verify general detail page shows correct stats and calculated values
+- [x] **FE-03**: Verify nation management page shows correct aggregated data
+- [x] **FE-04**: Verify battle log display matches legacy format and content
 
 ## v2 Requirements
 
@@ -190,10 +190,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DATA-01 | Phase 10: Diplomacy and Scenario Data | Complete |
 | DATA-02 | Phase 10: Diplomacy and Scenario Data | Complete |
 | DATA-03 | Phase 10: Diplomacy and Scenario Data | Complete |
-| FE-01 | Phase 11: Frontend Display Parity | Pending |
-| FE-02 | Phase 11: Frontend Display Parity | Pending |
-| FE-03 | Phase 11: Frontend Display Parity | Pending |
-| FE-04 | Phase 11: Frontend Display Parity | Pending |
+| FE-01 | Phase 11: Frontend Display Parity | Complete |
+| FE-02 | Phase 11: Frontend Display Parity | Complete |
+| FE-03 | Phase 11: Frontend Display Parity | Complete |
+| FE-04 | Phase 11: Frontend Display Parity | Complete |
 
 **Coverage:**
 - v1 requirements: 56 total
