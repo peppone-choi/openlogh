@@ -1,151 +1,53 @@
 ---
 gsd_state_version: 1.0
 milestone: v1.0
-milestone_name: milestone
-status: verifying
-stopped_at: Completed 11-02-PLAN.md
-last_updated: "2026-04-03T02:21:00.788Z"
+milestone_name: Legacy Parity
+status: complete
+stopped_at: Milestone v1.0 archived
+last_updated: "2026-04-03"
 last_activity: 2026-04-03
 progress:
   total_phases: 11
   completed_phases: 11
   total_plans: 29
   completed_plans: 29
-  percent: 0
+  percent: 100
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-31)
+See: .planning/PROJECT.md (updated 2026-04-03)
 
 **Core value:** Every game mechanic must produce identical outcomes to the legacy PHP implementation given the same inputs.
-**Current focus:** Phase 11 — frontend-display-parity
+**Current focus:** Planning next milestone
 
 ## Current Position
 
-Phase: 11
-Plan: Not started
-Status: Phase complete — ready for verification
-Last activity: 2026-04-03
+Milestone: v1.0 Legacy Parity -- SHIPPED 2026-04-03
+Status: Complete
+Next: `/gsd:new-milestone` to start v1.1
 
-Progress: [░░░░░░░░░░] 0%
-
-## Performance Metrics
-
-**Velocity:**
-
-- Total plans completed: 0
-- Average duration: -
-- Total execution time: 0 hours
-
-**By Phase:**
-
-| Phase | Plans | Total | Avg/Plan |
-|-------|-------|-------|----------|
-| - | - | - | - |
-
-**Recent Trend:**
-
-- Last 5 plans: -
-- Trend: -
-
-*Updated after each plan completion*
-| Phase 01 P01 | 14min | 3 tasks | 8 files |
-| Phase 01 P02 | 5min | 2 tasks | 12 files |
-| Phase 02 P01 | 21min | 2 tasks | 19 files |
-| Phase 02 P02 | 20min | 2 tasks | 4 files |
-| Phase 03 P01 | 19min | 2 tasks | 7 files |
-| Phase 03 P02 | 7min | 2 tasks | 9 files |
-| Phase 03 P03 | 10min | 1 tasks | 1 files |
-| Phase 03 P04 | 14min | 1 tasks | 2 files |
-| Phase 04 P02 | 9min | 2 tasks | 2 files |
-| Phase 04 P01 | 9min | 2 tasks | 11 files |
-| Phase 06 P01 | 11m | 2 tasks | 2 files |
-| Phase 06 P02 | 11min | 2 tasks | 2 files |
-| Phase 07 P03 | 14min | 2 tasks | 4 files |
-| Phase 07 P01 | 34min | 2 tasks | 2 files |
-| Phase 07 P02 | 39min | 1 tasks | 2 files |
-| Phase 08 P01 | 25min | 2 tasks | 5 files |
-| Phase 08 P02 | 9min | 2 tasks | 2 files |
-| Phase 08 P03 | 12min | 2 tasks | 2 files |
-| Phase 08 P04 | 7min | 2 tasks | 1 files |
-| Phase 08 P05 | 5min | 2 tasks | 3 files |
-| Phase 09 P01 | 7min | 1 tasks | 2 files |
-| Phase 09 P02 | 12min | 2 tasks | 2 files |
-| Phase 10-diplomacy-and-scenario-data P02 | 5min | 1 tasks | 1 files |
-| Phase 10 P01 | 3min | 1 tasks | 1 files |
-| Phase 10-diplomacy-and-scenario-data P03 | 7min | 1 tasks | 1 files |
-| Phase 11 P01 | 6min | 2 tasks | 1 files |
-| Phase 11 P02 | 6min | 3 tasks | 11 files |
+Progress: [##########] 100%
 
 ## Accumulated Context
 
 ### Decisions
 
-Decisions are logged in PROJECT.md Key Decisions table.
-Recent decisions affecting current work:
-
-- [Roadmap]: Fine granularity (11 phases) -- battle system split into framework + completion; economy separated from commands
-- [Roadmap]: Strict dependency ordering -- foundation before types before systems before composites
-- [Roadmap]: Phase 5 (Modifiers) depends on Phase 3 (not Phase 4) -- modifier pipeline needed for domestic commands, not remaining battle triggers
-- [Phase 01]: RandUtil.choice() single-element guard uses rng.nextLegacyInt(1L) for PHP array_rand parity
-- [Phase 01]: buildPreTurnTriggers() rng parameter has no default -- callers must explicitly inject RNG
-- [Phase 01]: Use warn level for catch block logging since all blocks have valid fallbacks
-- [Phase 01]: Deterministic sort pattern: compareBy { primaryKey }.thenBy { id } for all entity iteration
-- [Phase 02]: city.state coerceIn bound widened to 0..32767 (actual game uses multi-digit state codes 31-43)
-- [Phase 02]: Non-assignment .toShort() (constants, query params, comparisons) excluded from coerceIn guards -- cannot cause entity field overflow
-- [Phase 02]: kotlin.math.round chosen over Math.round to eliminate Long-to-Int narrowing; banker's rounding .5 divergence documented but accepted
-- [Phase 02]: 200-turn golden snapshot uses standalone EconomyService simulation, not InMemoryTurnHarness
-- [Phase 03]: WarUnitTriggerRegistry uses mutable map with register() for Plan 02 trigger self-registration
-- [Phase 03]: killnum populated at BattleService.applyWarModifiers -- only StatContext construction site with general.meta access
-- [Phase 03]: MISC armType branch unreachable -- no CrewType maps to ArmType.MISC; documented in parity test
-- [Phase 03]: RageTrigger uses legacy TODO formula (1+0.2*count) over existing rollCriticalDamageMultiplier -- closer to PHP intent
-- [Phase 03]: Che*Trigger objects kept as no-ops in BattleTriggerRegistry rather than removed -- avoids breaking registry presence checks
-- [Phase 03]: No architectural changes needed for onPreAttack wiring -- loop-scoped var pattern for cross-phase state persistence
-- [Phase 04]: Golden value approach: fixed-seed RNG output captured and locked as expected values for battle formula regression detection
-- [Phase 04]: Coefficient tests use golden value locks (not comparative ratios) - different CrewType base stats make naive damage comparison unreliable
-- [Phase 04]: CounterStrategyTrigger logs phase-level attempt only; Che반계Trigger BattleTrigger handles magic reflection (dual registry)
-- [Phase 04]: BattleEngine phase loop uses var maxPhase with += for bonusPhases/rageExtraPhases consumption
-- [Phase 06]: Nation level thresholds [0,1,2,4,6,9,12,16,20,25] confirmed as intentional opensamguk 10-level extension from PHP 8-level
-- [Phase 06]: PHP exchangeFee=0.01 vs Kotlin exchangeFee=0.03 is intentional opensamguk configuration difference
-- [Phase 06]: EconomyPreUpdateStep shouldSkip=true by design (handled outside pipeline for legacy ordering)
-- [Phase 07]: Entity state diff approach (Pitfall 4): Nation commands modify entities directly in run(), verification uses before/after field comparison
-- [Phase 07]: Kotlin-only 5 emperor commands (칭제, 천자맞이, 선양요구, 신속, 독립선언) tested for basic operation only -- no PHP counterpart
-- [Phase 07]: Golden seed 'golden_parity_seed' for all command parity tests
-- [Phase 07]: Golden value capture-then-lock approach for command parity testing: fixed seed RNG + deterministic fixtures + exact JSON output assertions
-- [Phase 08]: DiplomacyState enum gains code: Int matching PHP d constants (0-4); calcDiplomacyState uses term-based transitions
-- [Phase 08]: RNG seed context unified to GeneralAI for all AI methods (PHP Pitfall 5)
-- [Phase 08]: Injury check uses cureThreshold (default 10) across all code paths, not > 0
-- [Phase 08]: doSortie/doCombatPrep use nationPolicy.properWarTrainAtmos (90) not hardcoded 80; doCombatPrep uses weighted random choice per PHP
-- [Phase 08]: All 18 personnel/wanderer/promotion AI methods match PHP behavior - no fixes needed
-- [Phase 08]: NationAI.adjustTaxAndBill is runtime-active but non-PHP-matching; GeneralAI rate choosers are PHP-matching but not wired into TurnService
-- [Phase 08]: Wire TurnService to GeneralAI.chooseNationTurn() for runtime NPC nation AI parity
-- [Phase 09]: checkOverhead formula: round(turnterm^0.6 * 3) * refreshLimitCoef verified as 920 for tickSeconds=300
-- [Phase 09]: updateOnline uses accessedAt >= world.updatedAt (no lastRefresh field on GeneralAccessLog entity)
-- [Phase 09]: Source-code reading for ordering assertion (simple, explicit)
-- [Phase 09]: RNG seed divergence documented: Kotlin 'disaster' vs PHP 'disater' typo -- not fixed to avoid world data impact
-- [Phase 10-diplomacy-and-scenario-data]: Source-code reading for inheritance award condition verification (officerLevel > 4)
-- [Phase 10]: Mock DiplomacyRepository with in-memory list for full service-level testing without Spring context
-- [Phase 10]: War term casualty extension marked @Disabled as potential parity gap (func_gamerule.php lines 337-349)
-- [Phase 10-diplomacy-and-scenario-data]: General 3-stat comparison documents divergence rather than hard-failing (stats intentionally updated to 삼국지14 values)
-- [Phase 11]: calcInjury uses Math.floor (legacy parity), not Math.round
-- [Phase 11]: Kill ratio formula: killcrew/max(deathcrew,1) matches legacy, not killcrew/(killcrew+deathcrew)
-- [Phase 11]: Battle log needs two render paths: color tags (formatLog) + HTML template (new BattleLogEntry)
-- [Phase 11]: Battle log parser uses regex extraction from known HTML structure (no DOMParser needed)
+See PROJECT.md Key Decisions table for full log.
 
 ### Pending Todos
 
-None yet.
+None.
 
 ### Blockers/Concerns
 
-- Research flagged Phase 3 (Battle) and Phase 8 (NPC AI) as needing deeper legacy-core/ reference reading during planning
-- jqwik-kotlin 1.9.3 compatibility with Kotlin 2.1 needs smoke test verification (Phase 2 tooling)
+- War term casualty extension marked @Disabled (potential parity gap)
+- NationAI.adjustTaxAndBill runtime path diverges from PHP
 
 ## Session Continuity
 
-Last session: 2026-04-03T02:16:57.891Z
-Stopped at: Completed 11-02-PLAN.md
+Last session: 2026-04-03
+Stopped at: Milestone v1.0 archived
 Resume file: None
