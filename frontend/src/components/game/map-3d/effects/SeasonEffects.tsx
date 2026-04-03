@@ -63,16 +63,14 @@ export function SeasonEffects({ season }: SeasonEffectsProps) {
     pos.needsUpdate = true;
   });
 
+  const bufferGeometry = useMemo(() => {
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    return geo;
+  }, [positions]);
+
   return (
-    <points ref={pointsRef}>
-      <bufferGeometry>
-        <bufferAttribute
-          attach="attributes-position"
-          array={positions}
-          count={PARTICLE_COUNT}
-          itemSize={3}
-        />
-      </bufferGeometry>
+    <points ref={pointsRef} geometry={bufferGeometry}>
       <pointsMaterial
         color={config.color}
         size={config.size * S}
