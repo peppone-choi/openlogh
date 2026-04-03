@@ -5,11 +5,14 @@ import { useFrame } from '@react-three/fiber';
 import { Line, Text, Billboard } from '@react-three/drei';
 import * as THREE from 'three';
 import type { UnitMarker } from '@/components/game/unit-markers';
+import type { CityConst } from '@/types';
 import { toWorld3d, WORLD_SCALE } from '@/lib/map-3d-utils';
 import { parseCrewTypeCode } from '@/lib/game-utils';
+import { findCityPath, pathToPositions } from '@/lib/map-pathfinding';
 
 interface UnitMarkers3dProps {
   markers: UnitMarker[];
+  cities: CityConst[];
   onMarkerClick?: (generalId: number) => void;
 }
 
@@ -29,7 +32,15 @@ function crewColor(crewType: number): string {
 }
 
 /** 개별 유닛 마커 */
-function UnitMarker3d({ marker, onClick }: { marker: UnitMarker; onClick?: (id: number) => void }) {
+function UnitMarker3d({
+  marker,
+  cities,
+  onClick,
+}: {
+  marker: UnitMarker;
+  cities: CityConst[];
+  onClick?: (id: number) => void;
+}) {
   const groupRef = useRef<THREE.Group>(null);
   const crewCode = parseCrewTypeCode(marker.crewType);
   const color = crewColor(crewCode);
@@ -39,38 +50,56 @@ function UnitMarker3d({ marker, onClick }: { marker: UnitMarker; onClick?: (id: 
     [marker.posX, marker.posY],
   );
 
-  const endPos = useMemo(
-    () =>
-      marker.isMoving && marker.destX != null && marker.destY != null
-        ? toWorld3d(marker.destX, marker.destY, 0)
-        : null,
-    [marker.isMoving, marker.destX, marker.destY],
-  );
+  // 가도 경로: 도시 connections를 따라가는 경유 좌표
+  const routePoints = useMemo(() => {
+    if (!marker.isMoving || marker.destX == null || marker.destY == null) return null;
+    // 도시 좌표로 출발/도착 도시 ID 찾기
+    const fromCity = cities.find((c) => c.x === marker.posX && c.y === marker.posY);
+    const toCity = cities.find((c) => c.x === marker.destX && c.y === marker.destY);
+    if (!fromCity || !toCity) {
+      // 폴백: 직선
+      return [
+        new THREE.Vector3(startPos.x, UNIT_Y_OFFSET, startPos.z),
+        toWorld3d(marker.destX, marker.destY, 0).setY(UNIT_Y_OFFSET),
+      ];
+    }
+    const pathIds = findCityPath(cities, fromCity.id, toCity.id);
+    const positions = pathToPositions(cities, pathIds);
+    return positions.map((p) => {
+      const w = toWorld3d(p.x, p.y, 0);
+      return new THREE.Vector3(w.x, UNIT_Y_OFFSET, w.z);
+    });
+  }, [marker, cities, startPos]);
 
-  // 진군 애니메이션: 출발→도착 왕복
+  // 진군 애니메이션: 경로를 따라 이동
   useFrame(({ clock }) => {
-    if (!groupRef.current || !endPos) return;
-    const t = (Math.sin(clock.elapsedTime * 0.8) + 1) / 2; // 0~1 왕복
-    groupRef.current.position.lerpVectors(
-      new THREE.Vector3(startPos.x, UNIT_Y_OFFSET, startPos.z),
-      new THREE.Vector3(endPos.x, UNIT_Y_OFFSET, endPos.z),
-      t,
-    );
+    if (!groupRef.current || !routePoints || routePoints.length < 2) return;
+    // 전체 경로를 15초 주기로 왕복
+    const totalT = (Math.sin(clock.elapsedTime * 0.4) + 1) / 2; // 0~1
+    const segCount = routePoints.length - 1;
+    const rawIdx = totalT * segCount;
+    const segIdx = Math.min(Math.floor(rawIdx), segCount - 1);
+    const segT = rawIdx - segIdx;
+
+    groupRef.current.position.lerpVectors(routePoints[segIdx], routePoints[segIdx + 1], segT);
     // 바운스
     groupRef.current.position.y += Math.sin(clock.elapsedTime * 3) * S * 0.5;
   });
 
   const borderColor = marker.isEnemy ? '#ef4444' : marker.nationColor;
 
+  // 경로선 좌표 (drei Line용)
+  const linePoints = useMemo(
+    () => routePoints?.map((p) => [p.x, p.y, p.z] as [number, number, number]) ?? null,
+    [routePoints],
+  );
+
   return (
     <>
-      {/* 이동 경로선 */}
-      {endPos && (
+      {/* 가도를 따르는 이동 경로선 */}
+      {linePoints && linePoints.length >= 2 && (
         <Line
-          points={[
-            [startPos.x, UNIT_Y_OFFSET, startPos.z],
-            [endPos.x, UNIT_Y_OFFSET, endPos.z],
-          ]}
+          points={linePoints}
           color={marker.nationColor}
           lineWidth={1.5}
           dashed
@@ -159,7 +188,7 @@ function BattleEffect({ x, y }: { x: number; y: number }) {
   );
 }
 
-export function UnitMarkers3d({ markers, onMarkerClick }: UnitMarkers3dProps) {
+export function UnitMarkers3d({ markers, cities, onMarkerClick }: UnitMarkers3dProps) {
   // 전투 중인 도시 = 같은 도시에 적군+아군 존재
   const battleCities = useMemo(() => {
     const cityNations = new Map<string, Set<boolean>>();
@@ -181,7 +210,7 @@ export function UnitMarkers3d({ markers, onMarkerClick }: UnitMarkers3dProps) {
   return (
     <group>
       {markers.map((m) => (
-        <UnitMarker3d key={m.generalId} marker={m} onClick={onMarkerClick} />
+        <UnitMarker3d key={m.generalId} marker={m} cities={cities} onClick={onMarkerClick} />
       ))}
       {battleCities.map(({ x, y }) => (
         <BattleEffect key={`battle-${x}-${y}`} x={x} y={y} />

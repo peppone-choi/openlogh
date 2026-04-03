@@ -86,7 +86,7 @@ export function Map3dScene({
             />
           ))}
           {unitMarkers && unitMarkers.length > 0 && (
-            <UnitMarkers3d markers={unitMarkers} onMarkerClick={onUnitClick} />
+            <UnitMarkers3d markers={unitMarkers} cities={cities} onMarkerClick={onUnitClick} />
           )}
           <HoverTooltip city={hoveredCity} />
           <CameraController compact={compact} />
