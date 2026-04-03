@@ -11,7 +11,6 @@ import { TerrainMesh } from '../terrain/TerrainMesh';
 import { CameraController } from '../camera/CameraController';
 import { CityModel } from '../city/CityModel';
 import { NationOverlay } from '../nation/NationOverlay';
-import { RoadOverlay } from '../terrain/RoadOverlay';
 import { HoverTooltip } from '../interaction/HoverTooltip';
 import { SeasonEffects } from '../effects/SeasonEffects';
 import { UnitMarkers3d } from '../units/UnitMarkers3d';
@@ -76,7 +75,6 @@ export function Map3dScene({
         <Suspense fallback={null}>
           <SceneSetup season={season} />
           <TerrainMesh cities={cities} mapCode={mapCode} season={season} />
-          <RoadOverlay mapCode={mapCode} />
           <NationOverlay cities={renderCities} />
           {renderCities.map((city) => (
             <CityModel
