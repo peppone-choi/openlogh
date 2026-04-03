@@ -4,16 +4,23 @@ import { Vector3 } from 'three';
 const MAP_W = 700;
 const MAP_H = 500;
 
-/** 2D 맵 좌표 → 3D 월드 좌표 */
+/** 3D 월드 스케일 (2D 좌표 × SCALE = 3D 좌표) */
+export const WORLD_SCALE = 3;
+
+/** 2D 맵 좌표 → 3D 월드 좌표 (스케일 적용) */
 export function toWorld3d(x2d: number, y2d: number, height = 0): Vector3 {
-  return new Vector3(x2d - MAP_W / 2, height, y2d - MAP_H / 2);
+  return new Vector3(
+    (x2d - MAP_W / 2) * WORLD_SCALE,
+    height * WORLD_SCALE,
+    (y2d - MAP_H / 2) * WORLD_SCALE,
+  );
 }
 
 /** 3D 월드 좌표 → 2D 맵 좌표 */
 export function toMap2d(world: Vector3): { x: number; y: number } {
   return {
-    x: world.x + MAP_W / 2,
-    y: world.z + MAP_H / 2,
+    x: world.x / WORLD_SCALE + MAP_W / 2,
+    y: world.z / WORLD_SCALE + MAP_H / 2,
   };
 }
 

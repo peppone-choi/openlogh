@@ -3,9 +3,10 @@
 import { useTexture } from '@react-three/drei';
 import * as THREE from 'three';
 import { getMapRoadUrl } from '@/lib/image';
+import { WORLD_SCALE } from '@/lib/map-3d-utils';
 
-const MAP_W = 700;
-const MAP_H = 500;
+const MAP_W = 700 * WORLD_SCALE;
+const MAP_H = 500 * WORLD_SCALE;
 
 interface RoadOverlayProps {
   mapCode: string;

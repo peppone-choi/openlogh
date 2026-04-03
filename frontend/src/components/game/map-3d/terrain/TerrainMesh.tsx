@@ -10,10 +10,13 @@ import {
   generateHeightMapFallback,
   loadImagePixels,
 } from './HeightMapGenerator';
+import { WORLD_SCALE } from '@/lib/map-3d-utils';
 
 const MAP_W = 700;
 const MAP_H = 500;
 const SEGMENTS = 64;
+const SCALED_W = MAP_W * WORLD_SCALE;
+const SCALED_H = MAP_H * WORLD_SCALE;
 
 interface TerrainMeshProps {
   cities: CityConst[];
@@ -84,7 +87,7 @@ export function TerrainMesh({ cities, mapCode = 'che', season = 'spring' }: Terr
     let cancelled = false;
 
     async function buildTerrain() {
-      const geo = new THREE.PlaneGeometry(MAP_W, MAP_H, SEGMENTS, SEGMENTS);
+      const geo = new THREE.PlaneGeometry(SCALED_W, SCALED_H, SEGMENTS, SEGMENTS);
       geo.rotateX(-Math.PI / 2);
 
       // 맵 배경 이미지 폴더 결정
@@ -107,10 +110,10 @@ export function TerrainMesh({ cities, mapCode = 'che', season = 'spring' }: Terr
 
       if (cancelled) { geo.dispose(); return; }
 
-      // 높이 적용
+      // 높이 적용 (WORLD_SCALE 반영)
       const positions = geo.attributes.position;
       for (let i = 0; i < positions.count; i++) {
-        positions.setY(i, heightMap[i] ?? 0);
+        positions.setY(i, (heightMap[i] ?? 0) * WORLD_SCALE);
       }
       positions.needsUpdate = true;
       geo.computeVertexNormals();

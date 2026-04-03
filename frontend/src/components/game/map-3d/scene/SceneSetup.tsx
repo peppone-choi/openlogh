@@ -34,7 +34,7 @@ export function SceneSetup({ season }: SceneSetupProps) {
       <hemisphereLight
         args={['#87CEEB', '#8B7355', 0.3]}
       />
-      <fog attach="fog" args={['#d4e4f7', 400, 900]} />
+      <fog attach="fog" args={['#d4e4f7', 1200, 2700]} />
     </>
   );
 }

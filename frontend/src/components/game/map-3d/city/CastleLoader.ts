@@ -37,21 +37,21 @@ export interface LocationConfig {
 export function getLocationConfig(level: number): LocationConfig {
   switch (level) {
     case 1:
-      return { type: 'spot', modelFile: SPOT_MODELS.naval, targetScale: 3.0, baseRadius: 8 };
+      return { type: 'spot', modelFile: SPOT_MODELS.naval, targetScale: 8, baseRadius: 12 };
     case 2:
-      return { type: 'spot', modelFile: SPOT_MODELS.camp, targetScale: 3.5, baseRadius: 9 };
+      return { type: 'spot', modelFile: SPOT_MODELS.camp, targetScale: 9, baseRadius: 13 };
     case 3:
-      return { type: 'spot', modelFile: SPOT_MODELS.gate, targetScale: 4.0, baseRadius: 10 };
+      return { type: 'spot', modelFile: SPOT_MODELS.gate, targetScale: 10, baseRadius: 14 };
     case 4:
-      return { type: 'spot', modelFile: SPOT_MODELS.tribal, targetScale: 4.0, baseRadius: 10 };
+      return { type: 'spot', modelFile: SPOT_MODELS.tribal, targetScale: 10, baseRadius: 14 };
     case 5:
-      return { type: 'city', modelFile: CITY_MODELS.small, targetScale: 5.0, baseRadius: 12 };
+      return { type: 'city', modelFile: CITY_MODELS.small, targetScale: 14, baseRadius: 18 };
     case 6:
-      return { type: 'city', modelFile: CITY_MODELS.medium, targetScale: 6.0, baseRadius: 14 };
+      return { type: 'city', modelFile: CITY_MODELS.medium, targetScale: 17, baseRadius: 22 };
     case 7:
-      return { type: 'city', modelFile: CITY_MODELS.large, targetScale: 7.5, baseRadius: 16 };
+      return { type: 'city', modelFile: CITY_MODELS.large, targetScale: 22, baseRadius: 26 };
     case 8:
-      return { type: 'city', modelFile: CITY_MODELS.grand, targetScale: 9.0, baseRadius: 18 };
+      return { type: 'city', modelFile: CITY_MODELS.grand, targetScale: 28, baseRadius: 30 };
     default:
       return { type: 'spot', modelFile: SPOT_MODELS.camp, targetScale: 3.0, baseRadius: 8 };
   }

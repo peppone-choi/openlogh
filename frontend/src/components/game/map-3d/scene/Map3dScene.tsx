@@ -40,8 +40,12 @@ export function Map3dScene({
         gl={{
           antialias: !mobile,
           powerPreference: 'high-performance',
+          alpha: false,
+          stencil: false,
+          depth: true,
+          failIfMajorPerformanceCaveat: false,
         }}
-        camera={{ position: [0, 300, 250], fov: 50, near: 1, far: 2000 }}
+        camera={{ position: [0, 900, 750], fov: 45, near: 1, far: 8000 }}
         dpr={mobile ? 1 : [1, 1.5]}
         frameloop="always"
         performance={{ min: 0.5 }}

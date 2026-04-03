@@ -9,8 +9,8 @@ export function CameraController({ compact = false }: CameraControllerProps) {
   return (
     <OrbitControls
       target={[0, 0, 0]}
-      minDistance={compact ? 50 : 80}
-      maxDistance={compact ? 400 : 600}
+      minDistance={compact ? 30 : 20}
+      maxDistance={compact ? 1200 : 1800}
       maxPolarAngle={Math.PI / 2.2}
       minPolarAngle={Math.PI / 8}
       enableDamping
