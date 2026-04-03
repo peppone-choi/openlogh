@@ -197,8 +197,8 @@ Plans:
 **UI hint**: yes
 
 Plans:
-- [ ] 11-01: TBD
-- [ ] 11-02: TBD
+- [ ] 11-01-PLAN.md — Legacy 40+ page field-by-field audit + battle log format analysis + gap inventory
+- [ ] 11-02-PLAN.md — Missing field implementation (BE+FE) + battle log component + Vitest tests (calculated value accuracy)
 
 ## Progress
 
