@@ -22,7 +22,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 8: NPC AI Parity** - Verify military AI, fix diplomacy AI, verify recruitment and strategic priorities
 - [ ] **Phase 9: Turn Engine Completion** - Implement stub methods, verify turn step ordering and event triggers
 - [x] **Phase 10: Diplomacy and Scenario Data** - Verify diplomacy state machine and scenario initial conditions (completed 2026-04-02)
-- [ ] **Phase 11: Frontend Display Parity** - Verify game dashboard, general detail, nation management, and battle log display
+- [x] **Phase 11: Frontend Display Parity** - Verify game dashboard, general detail, nation management, and battle log display (completed 2026-04-03)
 
 ## Phase Details
 
@@ -198,7 +198,7 @@ Plans:
 
 Plans:
 - [x] 11-01-PLAN.md — Legacy 40+ page field-by-field audit + battle log format analysis + gap inventory
-- [ ] 11-02-PLAN.md — Missing field implementation (BE+FE) + battle log component + Vitest tests (calculated value accuracy)
+- [x] 11-02-PLAN.md — Missing field implementation (BE+FE) + battle log component + Vitest tests (calculated value accuracy)
 
 ## Progress
 
@@ -217,4 +217,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 | 8. NPC AI Parity | 4/5 | In Progress|  |
 | 9. Turn Engine Completion | 1/2 | In Progress|  |
 | 10. Diplomacy and Scenario Data | 3/3 | Complete    | 2026-04-02 |
-| 11. Frontend Display Parity | 1/2 | In Progress|  |
+| 11. Frontend Display Parity | 2/2 | Complete   | 2026-04-03 |
