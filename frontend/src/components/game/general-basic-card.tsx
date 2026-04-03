@@ -16,6 +16,7 @@ import {
     formatDexLevel,
 } from '@/lib/game-utils';
 import { getPortraitUrl, getCrewTypeIconUrl } from '@/lib/image';
+import { useGameStore } from '@/stores/gameStore';
 
 interface GeneralBasicCardProps {
     general: GeneralFrontInfo | null;
@@ -25,8 +26,13 @@ interface GeneralBasicCardProps {
 }
 
 export function GeneralBasicCard({ general, nation, turnTerm, lastExecuted }: GeneralBasicCardProps) {
+    const cities = useGameStore((s) => s.cities);
+
     if (!general) return null;
 
+    const officerCityName = general.officerCity > 0
+        ? cities.find((c) => c.id === general.officerCity)?.name
+        : null;
     const injuryInfo = formatInjury(general.injury);
     const typeCall = formatGeneralTypeCall(general.leadership, general.strength, general.intel);
     const nationColor = nation?.color ?? '#333';
@@ -112,10 +118,10 @@ export function GeneralBasicCard({ general, nation, turnTerm, lastExecuted }: Ge
                         {general.name}
                     </div>
                     <div className="text-[11px] truncate" style={{ color: nationTextColor, opacity: 0.8 }}>
-                        {general.officerCity > 0 &&
+                        {officerCityName &&
                             general.officerLevel >= 2 &&
                             general.officerLevel <= 4 &&
-                            `${general.officerCity} `}
+                            `${officerCityName} `}
                         {general.officerLevelText} · {typeCall} ·{' '}
                         <span style={{ color: injuryInfo.color }}>{injuryInfo.text}</span> ·{' '}
                         {general.turntime.substring(11, 19)}
