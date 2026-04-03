@@ -215,7 +215,11 @@ export function MapViewer({
                     cities={cities3d}
                     renderCities={renderCities}
                     season={season}
-                    onCityClick={(cityId) => handleCityClick(cityId)}
+                    onCityClick={(cityId) => {
+                        // 3D에서는 CityModel 내부에서 이미 stopPropagation 처리
+                        const fakeEvent = { stopPropagation: () => {} } as React.MouseEvent;
+                        handleCityClick(cityId, fakeEvent);
+                    }}
                     compact={compact}
                 />
             </div>
