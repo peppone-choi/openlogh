@@ -11,6 +11,7 @@ import { TerrainMesh } from '../terrain/TerrainMesh';
 import { CameraController } from '../camera/CameraController';
 import { CityModel } from '../city/CityModel';
 import { NationOverlay } from '../nation/NationOverlay';
+import { RoadOverlay } from '../terrain/RoadOverlay';
 
 interface Map3dSceneProps {
   mapCode: string;
@@ -48,6 +49,7 @@ export function Map3dScene({
         <Suspense fallback={null}>
           <SceneSetup season={season} />
           <TerrainMesh cities={cities} mapCode={mapCode} season={season} />
+          <RoadOverlay mapCode={mapCode} />
           <NationOverlay cities={renderCities} />
           {renderCities.map((city) => (
             <CityModel
