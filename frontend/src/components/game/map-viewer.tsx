@@ -71,11 +71,16 @@ export function MapViewer({
         return worldMapCode?.trim() || 'che';
     }, [mapCodeProp, isPublicMode, publicData?.mapCode, currentWorld?.config]);
 
+    const { mapMode } = useMap3d();
+
     useEffect(() => {
+        // 3D 모드에서는 public 모드(로그인/로비)에서도 맵 데이터 필요
         if (!isPublicMode && worldId != null) {
             loadMap(mapCode);
+        } else if (isPublicMode && mapMode === '3d') {
+            loadMap(mapCode);
         }
-    }, [mapCode, loadMap, isPublicMode, worldId]);
+    }, [mapCode, loadMap, isPublicMode, worldId, mapMode]);
 
     const nationMap = useMemo(() => new Map(nations.map((n) => [n.id, n])), [nations]);
     const emperorCityId = useMemo(() => generals.find((g) => g.npcState === 10)?.cityId ?? -1, [generals]);
@@ -197,7 +202,6 @@ export function MapViewer({
         [isPublicMode, compact]
     );
 
-    const { mapMode } = useMap3d();
     const cities3d = useMemo(() => mapData?.cities ?? [], [mapData]);
 
     if (!isPublicMode && !mapData) {
