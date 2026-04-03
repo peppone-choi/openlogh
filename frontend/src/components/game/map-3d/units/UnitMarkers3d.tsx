@@ -1,6 +1,6 @@
 'use client';
 // Session 4: 유닛 마커 3D + 진군 애니메이션 + 전투 이펙트
-import { useRef, useMemo } from 'react';
+import { useRef, useMemo, useEffect, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Line, Text, Billboard } from '@react-three/drei';
 import * as THREE from 'three';
@@ -8,11 +8,13 @@ import type { UnitMarker } from '@/components/game/unit-markers';
 import type { CityConst } from '@/types';
 import { toWorld3d, WORLD_SCALE } from '@/lib/map-3d-utils';
 import { parseCrewTypeCode } from '@/lib/game-utils';
-import { findCityPath, pathToPositions } from '@/lib/map-pathfinding';
+import { findRoadPath } from '@/lib/map-pathfinding';
+import { getMapRoadUrl } from '@/lib/image';
 
 interface UnitMarkers3dProps {
   markers: UnitMarker[];
   cities: CityConst[];
+  mapCode: string;
   onMarkerClick?: (generalId: number) => void;
 }
 
@@ -35,41 +37,54 @@ function crewColor(crewType: number): string {
 function UnitMarker3d({
   marker,
   cities,
+  mapCode,
   onClick,
 }: {
   marker: UnitMarker;
   cities: CityConst[];
+  mapCode: string;
   onClick?: (id: number) => void;
 }) {
   const groupRef = useRef<THREE.Group>(null);
   const crewCode = parseCrewTypeCode(marker.crewType);
   const color = crewColor(crewCode);
+  const [routePoints, setRoutePoints] = useState<THREE.Vector3[] | null>(null);
 
   const startPos = useMemo(
     () => toWorld3d(marker.posX, marker.posY, 0),
     [marker.posX, marker.posY],
   );
 
-  // 가도 경로: 도시 connections를 따라가는 경유 좌표
-  const routePoints = useMemo(() => {
-    if (!marker.isMoving || marker.destX == null || marker.destY == null) return null;
-    // 도시 좌표로 출발/도착 도시 ID 찾기
+  // 도로 PNG 픽셀 트레이싱 경로 (비동기)
+  useEffect(() => {
+    if (!marker.isMoving || marker.destX == null || marker.destY == null) {
+      setRoutePoints(null);
+      return;
+    }
     const fromCity = cities.find((c) => c.x === marker.posX && c.y === marker.posY);
     const toCity = cities.find((c) => c.x === marker.destX && c.y === marker.destY);
     if (!fromCity || !toCity) {
       // 폴백: 직선
-      return [
+      const end = toWorld3d(marker.destX, marker.destY, 0);
+      setRoutePoints([
         new THREE.Vector3(startPos.x, UNIT_Y_OFFSET, startPos.z),
-        toWorld3d(marker.destX, marker.destY, 0).setY(UNIT_Y_OFFSET),
-      ];
+        new THREE.Vector3(end.x, UNIT_Y_OFFSET, end.z),
+      ]);
+      return;
     }
-    const pathIds = findCityPath(cities, fromCity.id, toCity.id);
-    const positions = pathToPositions(cities, pathIds);
-    return positions.map((p) => {
-      const w = toWorld3d(p.x, p.y, 0);
-      return new THREE.Vector3(w.x, UNIT_Y_OFFSET, w.z);
+
+    let cancelled = false;
+    const roadUrl = getMapRoadUrl(mapCode);
+    findRoadPath(roadUrl, cities, fromCity.id, toCity.id).then((path) => {
+      if (cancelled) return;
+      const pts = path.map((p) => {
+        const w = toWorld3d(p.x, p.y, 0);
+        return new THREE.Vector3(w.x, UNIT_Y_OFFSET, w.z);
+      });
+      setRoutePoints(pts.length >= 2 ? pts : null);
     });
-  }, [marker, cities, startPos]);
+    return () => { cancelled = true; };
+  }, [marker, cities, mapCode, startPos]);
 
   // 진군 애니메이션: 경로를 따라 이동
   useFrame(({ clock }) => {
@@ -188,7 +203,7 @@ function BattleEffect({ x, y }: { x: number; y: number }) {
   );
 }
 
-export function UnitMarkers3d({ markers, cities, onMarkerClick }: UnitMarkers3dProps) {
+export function UnitMarkers3d({ markers, cities, mapCode, onMarkerClick }: UnitMarkers3dProps) {
   // 전투 중인 도시 = 같은 도시에 적군+아군 존재
   const battleCities = useMemo(() => {
     const cityNations = new Map<string, Set<boolean>>();
@@ -210,7 +225,7 @@ export function UnitMarkers3d({ markers, cities, onMarkerClick }: UnitMarkers3dP
   return (
     <group>
       {markers.map((m) => (
-        <UnitMarker3d key={m.generalId} marker={m} cities={cities} onClick={onMarkerClick} />
+        <UnitMarker3d key={m.generalId} marker={m} cities={cities} mapCode={mapCode} onClick={onMarkerClick} />
       ))}
       {battleCities.map(({ x, y }) => (
         <BattleEffect key={`battle-${x}-${y}`} x={x} y={y} />
