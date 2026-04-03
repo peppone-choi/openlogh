@@ -3,6 +3,8 @@
 import { ScrollArea } from '@/components/ui/8bit/scroll-area';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/8bit/card';
 import { formatLog } from '@/lib/formatLog';
+import { isBattleLogHtml } from '@/lib/formatBattleLog';
+import { BattleLogEntry } from '@/components/game/battle-log-entry';
 import type { RecordEntry } from '@/types';
 
 interface RecordZoneProps {
@@ -39,7 +41,7 @@ function RecordColumn({ title, records, stripYear }: { title: string; records: R
                                 return (
                                     <div key={r.id} className="text-xs leading-relaxed">
                                         {date && <span className="text-muted-foreground mr-1">[{date}]</span>}
-                                        {formatLog(message)}
+                                        {isBattleLogHtml(message) ? <BattleLogEntry message={message} /> : formatLog(message)}
                                     </div>
                                 );
                             })
