@@ -13,6 +13,8 @@ import { CityModel } from '../city/CityModel';
 import { NationOverlay } from '../nation/NationOverlay';
 import { RoadOverlay } from '../terrain/RoadOverlay';
 import { HoverTooltip } from '../interaction/HoverTooltip';
+import { UnitMarkers3d } from '../units/UnitMarkers3d';
+import type { UnitMarker } from '@/components/game/unit-markers';
 
 interface Map3dSceneProps {
   mapCode: string;
@@ -21,6 +23,8 @@ interface Map3dSceneProps {
   season: MapSeason;
   onCityClick?: (cityId: number) => void;
   onCityHover?: (cityId: number | null) => void;
+  unitMarkers?: UnitMarker[];
+  onUnitClick?: (generalId: number) => void;
   compact?: boolean;
 }
 
@@ -31,6 +35,8 @@ export function Map3dScene({
   season,
   onCityClick,
   onCityHover,
+  unitMarkers,
+  onUnitClick,
   compact = false,
 }: Map3dSceneProps) {
   const mobile = isMobileDevice();
@@ -51,7 +57,7 @@ export function Map3dScene({
   );
 
   return (
-    <div className="relative h-full w-full">
+    <div className="relative h-full w-full" style={{ minHeight: compact ? 200 : 500 }}>
       <Canvas
         gl={{
           antialias: !mobile,
@@ -79,6 +85,9 @@ export function Map3dScene({
               onHover={handleHover}
             />
           ))}
+          {unitMarkers && unitMarkers.length > 0 && (
+            <UnitMarkers3d markers={unitMarkers} onMarkerClick={onUnitClick} />
+          )}
           <HoverTooltip city={hoveredCity} />
           <CameraController compact={compact} />
         </Suspense>
