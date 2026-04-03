@@ -1,6 +1,7 @@
 'use client';
 
 import { getCrewTypeIconUrl } from '@/lib/image';
+import { isBrightColor } from '@/lib/game-utils';
 import type { General } from '@/types';
 
 export interface UnitMarker {
@@ -30,7 +31,8 @@ export function UnitMarkers({ markers, mapScale, onMarkerClick }: UnitMarkersPro
                 const left = marker.posX * mapScale;
                 const top = marker.posY * mapScale;
                 const borderColor = marker.isEnemy ? '#ef4444' : marker.nationColor;
-                const bgColor = marker.isEnemy ? 'rgba(60,0,0,0.85)' : 'rgba(0,0,0,0.82)';
+                const bgColor = marker.isEnemy ? 'rgba(60,0,0,0.85)' : marker.nationColor;
+                const textColor = marker.isEnemy || !isBrightColor(marker.nationColor) ? '#fff' : '#000';
 
                 return (
                     <div
@@ -78,7 +80,7 @@ export function UnitMarkers({ markers, mapScale, onMarkerClick }: UnitMarkersPro
                                 borderRadius: 3,
                                 border: `1px solid ${borderColor}`,
                                 background: bgColor,
-                                color: '#fff',
+                                color: textColor,
                                 fontSize: 10,
                                 lineHeight: '14px',
                                 whiteSpace: 'nowrap',
@@ -100,7 +102,7 @@ export function UnitMarkers({ markers, mapScale, onMarkerClick }: UnitMarkersPro
                                 {marker.name.slice(0, 4)}
                             </span>
                             {!marker.isEnemy && (
-                                <span style={{ color: '#aaa', fontSize: 9 }}>{marker.crew.toLocaleString()}</span>
+                                <span style={{ color: textColor === '#000' ? '#444' : '#aaa', fontSize: 9 }}>{marker.crew.toLocaleString()}</span>
                             )}
                         </button>
                     </div>
