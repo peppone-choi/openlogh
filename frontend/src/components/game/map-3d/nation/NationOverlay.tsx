@@ -4,7 +4,7 @@
 import { useMemo } from 'react';
 import * as THREE from 'three';
 import type { RenderCity } from '@/components/game/map-canvas';
-import { toWorld3d, sampleHeight } from '@/lib/map-3d-utils';
+import { toWorld3d, sampleHeight, WORLD_SCALE } from '@/lib/map-3d-utils';
 
 interface NationOverlayProps {
   cities: RenderCity[];
@@ -28,7 +28,7 @@ export function NationOverlay({ cities, heightMap, segments = 128 }: NationOverl
       .map((city) => {
         const h = heightMap ? sampleHeight(heightMap, city.x, city.y, segments) : 0;
         const pos = toWorld3d(city.x, city.y, h + 0.2); // 지형 바로 위
-        const radius = getInfluenceRadius(city.level);
+        const radius = getInfluenceRadius(city.level) * WORLD_SCALE;
         return { id: city.id, pos, radius, color: city.nationColor! };
       });
   }, [cities, heightMap, segments]);

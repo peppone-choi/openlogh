@@ -1,7 +1,7 @@
 'use client';
 // Design Ref: §3.1 Map3dScene — R3F Canvas 루트 + Suspense
 import { Canvas } from '@react-three/fiber';
-import { Suspense } from 'react';
+import { Suspense, useCallback, useMemo, useState } from 'react';
 import type { RenderCity } from '@/components/game/map-canvas';
 import type { MapSeason } from '@/lib/map-constants';
 import type { CityConst } from '@/types';
@@ -12,6 +12,7 @@ import { CameraController } from '../camera/CameraController';
 import { CityModel } from '../city/CityModel';
 import { NationOverlay } from '../nation/NationOverlay';
 import { RoadOverlay } from '../terrain/RoadOverlay';
+import { HoverTooltip } from '../interaction/HoverTooltip';
 
 interface Map3dSceneProps {
   mapCode: string;
@@ -33,6 +34,21 @@ export function Map3dScene({
   compact = false,
 }: Map3dSceneProps) {
   const mobile = isMobileDevice();
+  const [hoveredCityId, setHoveredCityId] = useState<number | null>(null);
+
+  const cityMap = useMemo(
+    () => new Map(renderCities.map((c) => [c.id, c])),
+    [renderCities],
+  );
+  const hoveredCity = hoveredCityId != null ? cityMap.get(hoveredCityId) ?? null : null;
+
+  const handleHover = useCallback(
+    (cityId: number | null) => {
+      setHoveredCityId(cityId);
+      onCityHover?.(cityId);
+    },
+    [onCityHover],
+  );
 
   return (
     <div className="relative h-full w-full">
@@ -60,9 +76,10 @@ export function Map3dScene({
               key={city.id}
               city={city}
               onClick={onCityClick}
-              onHover={onCityHover}
+              onHover={handleHover}
             />
           ))}
+          <HoverTooltip city={hoveredCity} />
           <CameraController compact={compact} />
         </Suspense>
       </Canvas>

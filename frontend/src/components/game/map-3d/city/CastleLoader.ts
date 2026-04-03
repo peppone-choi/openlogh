@@ -36,22 +36,24 @@ export interface LocationConfig {
 /** 레벨 → 모델 + 스케일 매핑 */
 export function getLocationConfig(level: number): LocationConfig {
   switch (level) {
+    // targetScale/baseRadius는 월드 스케일 적용 전 기준값
+    // CityModel에서 WORLD_SCALE을 균일하게 곱함
     case 1:
-      return { type: 'spot', modelFile: SPOT_MODELS.naval, targetScale: 8, baseRadius: 12 };
+      return { type: 'spot', modelFile: SPOT_MODELS.naval, targetScale: 6, baseRadius: 10 };
     case 2:
-      return { type: 'spot', modelFile: SPOT_MODELS.camp, targetScale: 9, baseRadius: 13 };
+      return { type: 'spot', modelFile: SPOT_MODELS.camp, targetScale: 7, baseRadius: 11 };
     case 3:
-      return { type: 'spot', modelFile: SPOT_MODELS.gate, targetScale: 10, baseRadius: 14 };
+      return { type: 'spot', modelFile: SPOT_MODELS.gate, targetScale: 8, baseRadius: 12 };
     case 4:
-      return { type: 'spot', modelFile: SPOT_MODELS.tribal, targetScale: 10, baseRadius: 14 };
+      return { type: 'spot', modelFile: SPOT_MODELS.tribal, targetScale: 8, baseRadius: 12 };
     case 5:
-      return { type: 'city', modelFile: CITY_MODELS.small, targetScale: 14, baseRadius: 18 };
+      return { type: 'city', modelFile: CITY_MODELS.small, targetScale: 10, baseRadius: 14 };
     case 6:
-      return { type: 'city', modelFile: CITY_MODELS.medium, targetScale: 17, baseRadius: 22 };
+      return { type: 'city', modelFile: CITY_MODELS.medium, targetScale: 13, baseRadius: 17 };
     case 7:
-      return { type: 'city', modelFile: CITY_MODELS.large, targetScale: 22, baseRadius: 26 };
+      return { type: 'city', modelFile: CITY_MODELS.large, targetScale: 16, baseRadius: 20 };
     case 8:
-      return { type: 'city', modelFile: CITY_MODELS.grand, targetScale: 28, baseRadius: 30 };
+      return { type: 'city', modelFile: CITY_MODELS.grand, targetScale: 20, baseRadius: 24 };
     default:
       return { type: 'spot', modelFile: SPOT_MODELS.camp, targetScale: 3.0, baseRadius: 8 };
   }
