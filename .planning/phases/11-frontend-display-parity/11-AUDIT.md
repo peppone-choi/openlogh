@@ -387,3 +387,440 @@ Current: `<span style={{ color: 'limegreen' }}>가능</span>` (always limegreen)
 | 13 | joinMode display | Dashboard | display-only | `game-dashboard.tsx` | N/A (not shown in legacy GameInfo.vue either) | Low priority -- field exists in type but legacy also doesn't display prominently |
 | 14 | develCost display | Dashboard | display-only | `game-dashboard.tsx` | N/A | Low priority -- internal field |
 | 15 | ageColor retirementYear | General Card | format-diff | `general-basic-card.tsx` | `GeneralBasicCard.vue` | Pass `retirementYear` from game constants to `ageColor()` instead of default 80 |
+
+---
+
+## Section 6: Non-Core Page Audit
+
+Audit of all legacy Vue pages and TS pages against current Next.js routes. Pages are grouped by priority: core game pages first, then support pages, then remaining.
+
+### Core Game Pages
+
+#### 1. PageBattleCenter.vue -> `(game)/battle-center/page.tsx`
+
+**Status:** Matched (route exists)
+
+Legacy displays:
+- General selector (dropdown with NPC color, officer level markers, turntime)
+- `GeneralBasicCard` + `GeneralSupplementCard` for selected general
+- General history (장수 열전) via `v-html` formatLog
+- Battle detail log (전투 기록) via `v-html` formatLog
+- Battle result log (전투 결과) via `v-html` formatLog
+
+**Key gap:** Battle detail/result logs use `v-html` which renders `small_war_log` HTML templates. Current route likely uses `formatLog()` which cannot parse the HTML template structure. See Section 7.
+
+#### 2. PageTroop.vue -> `(game)/troop/page.tsx`
+
+**Status:** Matched (route exists)
+
+Legacy displays:
+- Troop list with: troopName, city name (from gameConstStore), turnTime, leader icon/name
+- Reserved command briefs for troop leader
+- Member list with: name, city difference highlighting (orange for different city), leader bold
+- Troop actions: join/leave/create/dismiss buttons
+
+**Key fields:** All troop-related fields (troopName, leader, members, city, reservedCommand) are structural data, not FrontInfo fields. This page uses a separate API endpoint. No FrontInfo field gaps expected -- display parity depends on the troop API implementation.
+
+#### 3. PageGlobalDiplomacy.vue -> `(game)/global-diplomacy/page.tsx`
+
+**Status:** Matched (route exists)
+
+Legacy displays:
+- Diplomacy matrix table: nations x nations with state symbols (불가침 @, 통상 ., 선포 ▲, 교전 ★)
+- Nation color headers
+- My nation rows highlighted (#660000 background)
+- Legend footer
+
+**Key fields:** diplomacyList matrix, nation colors/names. Uses separate diplomacy API. No FrontInfo field gaps.
+
+#### 4. PageNationGeneral.vue -> `(game)/nation-generals/page.tsx`
+
+**Status:** Matched (route exists)
+
+Legacy displays:
+- GeneralList component with all nation generals
+- Shows GeneralBasicCard + GeneralSupplementCard per general on click
+- Troop list overlay
+
+**Key fields:** Uses nation general list API. Same general fields as Section 2. No additional FrontInfo gaps beyond those already documented.
+
+#### 5. PageChiefCenter.vue -> `(game)/chief/page.tsx`
+
+**Status:** Matched (route exists)
+
+Legacy displays:
+- Chief command slots for officer levels [12, 10, 8, 6, 11, 9, 7, 5] (legacy system)
+- Turn index grid with max turns
+- Reserved command editing for own chief slot
+- Top officer display with turn info
+
+**Key fields:** Chief-specific data (officer turns, commands). Uses separate chief API. Opensamguk uses extended 20-level officer system, so slot layout differs intentionally.
+
+#### 6. PageNationStratFinan.vue -> `(game)/nation-finance/page.tsx`
+
+**Status:** Matched (route exists)
+
+Legacy displays: Nation strategic/financial management page with bill/tax controls.
+
+**Key fields:** Nation bill/taxRate (already in NationFrontInfo), strategic command lists. No additional gaps.
+
+### Support Pages
+
+#### 7. PageHistory.vue -> `(game)/history/page.tsx`
+
+**Status:** Matched (route exists)
+
+Legacy displays: World history timeline with formatLog-rendered entries.
+
+**Key fields:** history records -- same as dashboard record zone. No additional gaps.
+
+#### 8. PageBoard.vue -> `(game)/board/page.tsx`
+
+**Status:** Matched (route exists)
+
+Legacy displays: In-game bulletin board with posts.
+
+**Key fields:** Board API (separate from FrontInfo). No FrontInfo gaps.
+
+#### 9. PageVote.vue -> `(game)/vote/page.tsx`
+
+**Status:** Matched (route exists)
+
+Legacy displays: Vote/survey creation and participation UI.
+
+**Key fields:** Vote API. No FrontInfo gaps.
+
+#### 10. PageAuction.vue -> `(game)/auction/page.tsx`
+
+**Status:** Matched (route exists)
+
+Legacy displays: Item auction marketplace.
+
+**Key fields:** Auction API. No FrontInfo gaps.
+
+#### 11. PageNationBetting.vue -> `(game)/nation-betting/page.tsx`
+
+**Status:** Matched (route exists)
+
+Legacy displays: Nation betting UI for tournament.
+
+**Key fields:** Betting/tournament API. No FrontInfo gaps.
+
+#### 12. PageInheritPoint.vue -> `(game)/inherit/page.tsx`
+
+**Status:** Matched (route exists)
+
+Legacy displays: Inheritance point management.
+
+**Key fields:** Inherit API. No FrontInfo gaps.
+
+#### 13. PageNPCControl.vue -> `(game)/npc-control/page.tsx`
+
+**Status:** Matched (route exists)
+
+Legacy displays: NPC general management for officers.
+
+**Key fields:** NPC control API. No FrontInfo gaps.
+
+#### 14. PageCachedMap.vue -> `(game)/map/page.tsx`
+
+**Status:** Matched (route exists)
+
+Legacy displays: Cached static map view.
+
+**Key fields:** Map data API. No FrontInfo gaps.
+
+#### 15. PageJoin.vue -> `(lobby)/lobby/join/page.tsx`
+
+**Status:** Matched (route exists, in lobby group)
+
+Legacy displays: General creation/join form.
+
+**Key fields:** Join API. No FrontInfo gaps.
+
+### TS Pages (Legacy jQuery/Vanilla Pages)
+
+#### 16. battleCenter.ts -> `(game)/battle/page.tsx`
+
+**Status:** Matched
+
+Legacy: Battle center detail page (alternative to PageBattleCenter.vue).
+Same battle log rendering concern as #1 above.
+
+#### 17. bestGeneral.ts -> `(game)/best-generals/page.tsx`
+
+**Status:** Matched
+
+Legacy: Best generals ranking page. No FrontInfo gaps.
+
+#### 18. betting.ts -> `(game)/betting/page.tsx`
+
+**Status:** Matched
+
+Legacy: Individual betting page. No FrontInfo gaps.
+
+#### 19. currentCity.ts -> `(game)/city/page.tsx`
+
+**Status:** Matched
+
+Legacy: Current city detail view. Uses city data from separate API.
+
+#### 20. diplomacy.ts -> `(game)/diplomacy/page.tsx`
+
+**Status:** Matched
+
+Legacy: Nation-to-nation diplomacy actions page. No FrontInfo gaps.
+
+#### 21. hallOfFame.ts -> `(game)/hall-of-fame/page.tsx`
+
+**Status:** Matched
+
+Legacy: Hall of fame / past winners. No FrontInfo gaps.
+
+#### 22. msg.ts -> `(game)/messages/page.tsx`
+
+**Status:** Matched
+
+Legacy: Private/national/diplomatic messaging. No FrontInfo gaps.
+
+#### 23. myPage.ts -> `(game)/my-page/page.tsx`
+
+**Status:** Matched
+
+Legacy: Player profile page. No FrontInfo gaps.
+
+#### 24. battle_simulator.ts -> `(game)/battle-simulator/page.tsx`
+
+**Status:** Matched
+
+Legacy: Battle simulation tool. No FrontInfo gaps.
+
+#### 25. select_npc.ts -> `(lobby)/lobby/select-npc/page.tsx`
+
+**Status:** Matched (in lobby group)
+
+Legacy: NPC selection for joining. No FrontInfo gaps.
+
+#### 26. v_processing.ts -> `(game)/processing/page.tsx`
+
+**Status:** Matched
+
+Legacy: Turn processing status page. No FrontInfo gaps.
+
+#### 27. extKingdoms.ts -> `(game)/nations/page.tsx`
+
+**Status:** Matched
+
+Legacy: All nations overview page. No FrontInfo gaps.
+
+#### 28. extExpandCity.ts -> `(game)/nation-cities/page.tsx`
+
+**Status:** Matched
+
+Legacy: Nation cities expansion view. No FrontInfo gaps.
+
+### Opensamguk-Only Pages (no legacy equivalent)
+
+| # | Current Route | Purpose | Status |
+|---|--------------|---------|--------|
+| 29 | `(game)/spy/page.tsx` | Spy system | opensamguk-only, skip |
+| 30 | `(game)/superior/page.tsx` | Superior officer view | opensamguk-only, skip |
+| 31 | `(game)/personnel/page.tsx` | Personnel management | opensamguk-only, skip |
+| 32 | `(game)/internal-affairs/page.tsx` | Internal affairs panel | opensamguk-only, skip |
+| 33 | `(game)/commands/page.tsx` | Command reference | opensamguk-only, skip |
+| 34 | `(game)/general/page.tsx` | General detail | opensamguk-only, skip |
+| 35 | `(game)/generals/[id]/page.tsx` | General by ID | opensamguk-only, skip |
+| 36 | `(game)/generals/page.tsx` | All generals list | opensamguk-only, skip |
+| 37 | `(game)/emperor/page.tsx` | Emperor system | opensamguk-only, skip |
+| 38 | `(game)/dynasty/page.tsx` | Dynasty history | opensamguk-only, skip |
+| 39 | `(game)/traffic/page.tsx` | Traffic/route info | opensamguk-only, skip |
+| 40 | `(game)/tournament/page.tsx` | Tournament view | opensamguk extension |
+| 41 | `(game)/nation/page.tsx` | Nation detail | opensamguk-only, skip |
+| 42 | `(game)/npc-list/page.tsx` | NPC list | opensamguk-only, skip |
+
+### Non-Core Page Audit Summary
+
+All 28 legacy pages (16 Vue + 12 TS) have corresponding routes in the current frontend. No missing pages. The primary cross-cutting gap is **battle log HTML rendering** (affects PageBattleCenter, battleCenter.ts, and the dashboard record zone).
+
+---
+
+## Section 7: Battle Log Format Analysis (FE-04)
+
+### 1. HTML Template Structure
+
+Source: `legacy-core/hwe/templates/small_war_log.php`
+
+```html
+<div class="small_war_log">
+    <span class="me">
+        <span class="name_plate">
+            <span class="crew_type">{crewTypeShortName}</span>
+            <span class="name_plate_cover">【<span class="name">{name}</span>】</span>
+        </span>
+        <span class="crew_plate">
+            <span class="remain_crew">{remainCrew}</span>
+            <span class="killed_plate">(<span class="killed_crew">{killedCrew}</span>)</span>
+        </span>
+    </span>
+    <span class="war_type war_type_{attack|defense|siege}">{arrow: -> or <-}</span>
+    <span class="you">
+        <span class="crew_plate">
+            <span class="remain_crew">{remainCrew}</span>
+            <span class="killed_plate">(<span class="killed_crew">{killedCrew}</span>)</span>
+        </span>
+        <span class="name_plate">
+            <span class="crew_type">{crewTypeShortName}</span>
+            <span class="name_plate_cover">【<span class="name">{name}</span>】</span>
+        </span>
+    </span>
+</div>
+```
+
+Key structural observations:
+- `.me` (attacker) has name_plate BEFORE crew_plate
+- `.you` (defender) has crew_plate BEFORE name_plate (mirrored layout)
+- War type determines arrow direction and color
+
+### 2. CSS Class-to-Color Mapping
+
+Source: `legacy-core/hwe/scss/battleLog.scss`
+
+| CSS Class | Property | Value | Purpose |
+|-----------|----------|-------|---------|
+| `.small_war_log` | display | inline-block | Container |
+| `.war_type_attack` | color | cyan | Attack arrow (→) |
+| `.war_type_defense` | color | magenta | Defense arrow (←) |
+| `.war_type_siege` | color | white | Siege arrow (→) |
+| `.name_plate` | font-size | 0.75em | Smaller text for general name |
+| `.name_plate_cover` | color | yellow | Name bracket 【name】 |
+| `.crew_plate` | color | orangered | Crew numbers |
+| `.crew_plate` | font-size | 90% | Slightly smaller crew text |
+| `.hidden_but_copyable` | color | rgba(0,0,0,0); font-size: 0 | Hidden text for copy-paste |
+
+### 3. Battle Log Generation (ActionLogger.php lines 280-318)
+
+Source: `legacy-core/hwe/sammo/ActionLogger.php`
+
+```php
+$render_me = [
+    'crewtype' => $me->getCrewTypeShortName(),
+    'name' => $me->getName(),
+    'remain_crew' => $me->getHP(),
+    'killed_crew' => -$me->getDeadCurrentBattle()
+];
+$render_oppose = [
+    'crewtype' => $oppose->getCrewTypeShortName(),
+    'name' => $oppose->getName(),
+    'remain_crew' => $oppose->getHP(),
+    'killed_crew' => -$oppose->getDeadCurrentBattle()
+];
+
+// War type determination:
+if (!$me->isAttacker()) {
+    $warType = 'defense';     // defense arrow <-
+    $warTypeStr = '←';
+} else if ($oppose instanceof WarUnitCity) {
+    $warType = 'siege';       // siege arrow ->
+    $warTypeStr = '→';
+} else {
+    $warType = 'attack';      // attack arrow ->
+    $warTypeStr = '→';
+}
+
+// Rendered to single-line HTML string (newlines stripped)
+$res = str_replace(["\r\n", "\r", "\n"], '', $templates->render('small_war_log', [...]));
+
+// Pushed to: battleResultLog, battleDetailLog, actionLog
+```
+
+### 4. Detection Heuristic
+
+Battle log HTML can be distinguished from color tag logs by checking for the CSS class:
+
+```typescript
+function isBattleLogHtml(message: string): boolean {
+    return message.includes('class="small_war_log"');
+}
+```
+
+This is reliable because:
+- Only `ActionLogger::pushSmallBattleLog()` generates `small_war_log` HTML
+- All other log entries use color tags (`<R>`, `<C>`, etc.)
+- The class name `small_war_log` is unique to battle templates
+
+### 5. Two Rendering Paths
+
+**Path A: Color Tag Logs (existing)**
+- Used for: general records, global records, world history, non-battle action logs
+- Handler: `formatLog()` in `frontend/src/lib/formatLog.ts`
+- Handles: `<R>`, `<C>`, `<G>`, `<M>`, `<B>`, `<L>`, `<S>`, `<O>`, `<D>`, `<Y>`, `<W>` color tags
+- Also handles: `<b>`, `</b>` bold, `<1>` small text, compound tags like `<R1>`
+- Status: **Complete -- no changes needed**
+
+**Path B: HTML Template Battle Logs (NEW)**
+- Used for: battle result/detail logs containing `small_war_log` HTML
+- Handler: New `BattleLogEntry` component needed
+- Must parse: `.small_war_log` div with `.me`, `.you`, `.war_type`, `.name_plate`, `.crew_plate` spans
+- Must apply: CSS class-to-color mapping (cyan/magenta/white/yellow/orangered)
+- Status: **Not implemented -- new component needed**
+
+### 6. Wiring Point
+
+**Primary wiring point:** `record-zone.tsx` line 42 calls `formatLog(message)` for all record entries.
+
+This must be updated to:
+1. Check `isBattleLogHtml(message)` first
+2. If true: route to `BattleLogEntry` component (new, renders HTML structure with CSS colors)
+3. If false: use existing `formatLog(message)` (color tag parser)
+
+**Secondary wiring points:**
+- `game-dashboard.tsx` lines 388-422: Record zone in dashboard also uses `formatLog(r.message)` directly
+- `(game)/battle-center/page.tsx`: Battle center page renders battle detail/result logs
+- `(game)/battle/page.tsx`: Battle page also renders battle logs
+
+All these locations need the same `isBattleLogHtml` check routing.
+
+---
+
+## Section 8: Updated Gap Summary
+
+Combined gap table from all sections (Section 5 core gaps + Section 6/7 new gaps):
+
+| # | Field | Page | Gap Type | FE File | Legacy File | Action Needed |
+|---|-------|------|----------|---------|-------------|---------------|
+| 1 | autorunUser | Dashboard | type-missing | `types/index.ts`, `game-dashboard.tsx` | `GameInfo.vue` | Add `autorunUser?: number` to `GlobalInfo` interface; remove unsafe cast |
+| 2 | calcInjury rounding | General Card | calc-missing | `game-utils.ts` | `GeneralBasicCard.vue` | Change `Math.round` to `Math.floor` in `calcInjury()` |
+| 3 | kill ratio formula | General Card | calc-missing | `general-basic-card.tsx` | `GeneralSupplementCard.vue` | Change from `killcrew/(killcrew+deathcrew)` to `killcrew/max(deathcrew,1)` |
+| 4 | tech level constants | Nation Card | calc-missing | `nation-basic-card.tsx` | `NationBasicCard.vue` | Read from game constants instead of hardcoding |
+| 5 | impossibleStrategicCommand tooltip | Nation Card | format-diff | `nation-basic-card.tsx` | `NationBasicCard.vue` | Format each command with turn count and target year/month |
+| 6 | strategicCmd "가능" color | Nation Card | format-diff | `nation-basic-card.tsx` | `NationBasicCard.vue` | Show yellow when impossible list non-empty but limit=0 |
+| 7 | statUpThreshold hardcoded | General Card | calc-missing | `general-basic-card.tsx` | `GeneralBasicCard.vue` | Read `upgradeLimit` from game constants |
+| 8 | item/equipment tooltips | General Card | format-diff | `general-basic-card.tsx` | `GeneralBasicCard.vue` | Add tooltip info from gameConst iActionInfo |
+| 9 | troopInfo leader detail | General Card | format-diff | `general-basic-card.tsx` | `GeneralBasicCard.vue` | Add strikethrough/orange for leader status |
+| 10 | nextExecText "남음" suffix | General Card | format-diff | `general-basic-card.tsx` | `GeneralBasicCard.vue` | Change "N분" to "N분 남음" |
+| 11 | officerCity name resolution | General Card | format-diff | `general-basic-card.tsx` | `GeneralBasicCard.vue` | Resolve city ID to name |
+| 12 | tournamentStep detail | Dashboard | format-diff | `game-dashboard.tsx` | `GameInfo.vue` | Use `formatTournamentStep()` for state/nextText |
+| 13 | joinMode display | Dashboard | display-only | `game-dashboard.tsx` | N/A | Low priority -- not shown in legacy either |
+| 14 | develCost display | Dashboard | display-only | `game-dashboard.tsx` | N/A | Low priority -- internal field |
+| 15 | ageColor retirementYear | General Card | format-diff | `general-basic-card.tsx` | `GeneralBasicCard.vue` | Pass retirementYear from game constants |
+| 16 | battle log HTML renderer | Record Zone / Battle pages | component-new | `record-zone.tsx`, `game-dashboard.tsx` | `small_war_log.php`, `battleLog.scss` | Create `BattleLogEntry` component; add `isBattleLogHtml()` detection; wire into record rendering |
+| 17 | battle log CSS colors | Battle Log | component-new | (new) `battle-log-entry.tsx` | `battleLog.scss` | Implement 6 CSS class-to-color mappings (cyan/magenta/white/yellow/orangered/0.75em) |
+| 18 | battle detail wiring | Battle Center | component-new | `battle-center/page.tsx`, `battle/page.tsx` | `PageBattleCenter.vue` | Route battle detail/result logs through `BattleLogEntry` |
+
+### Gap Statistics
+
+| Gap Type | Count | Description |
+|----------|-------|-------------|
+| type-missing | 1 | Field missing from FE type definition |
+| calc-missing | 4 | Calculation formula incorrect or constants hardcoded |
+| format-diff | 8 | Display format differs from legacy |
+| display-only | 2 | Field in type but not rendered (low priority) |
+| component-new | 3 | New component needed for battle log rendering |
+| **Total** | **18** | |
+
+### Priority for Plan 02 Implementation
+
+**P0 (Correctness):** #2 calcInjury rounding, #3 kill ratio formula, #1 autorunUser type safety
+**P1 (Display parity):** #4 tech constants, #7 statUpThreshold, #16-18 battle log component
+**P2 (Polish):** #5 tooltip, #6 color, #8 tooltips, #9 troop detail, #10-12 format tweaks, #15 ageColor
+**P3 (Skip):** #13-14 display-only fields not shown in legacy either
