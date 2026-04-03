@@ -13,6 +13,7 @@ import { CityModel } from '../city/CityModel';
 import { NationOverlay } from '../nation/NationOverlay';
 import { RoadOverlay } from '../terrain/RoadOverlay';
 import { HoverTooltip } from '../interaction/HoverTooltip';
+import { SeasonEffects } from '../effects/SeasonEffects';
 import { UnitMarkers3d } from '../units/UnitMarkers3d';
 import type { UnitMarker } from '@/components/game/unit-markers';
 
@@ -88,6 +89,7 @@ export function Map3dScene({
           {unitMarkers && unitMarkers.length > 0 && (
             <UnitMarkers3d markers={unitMarkers} cities={cities} mapCode={mapCode} onMarkerClick={onUnitClick} />
           )}
+          <SeasonEffects season={season} />
           <HoverTooltip city={hoveredCity} />
           <CameraController compact={compact} />
         </Suspense>
