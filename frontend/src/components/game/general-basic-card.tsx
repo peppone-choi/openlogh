@@ -75,7 +75,7 @@ export function GeneralBasicCard({ general, nation, turnTerm, lastExecuted }: Ge
             effective = effective + turnTerm * 60000;
         }
         const minutes = Math.max(0, Math.min(999, Math.floor((effective - lastExecTime) / 60000)));
-        nextExecText = `${minutes}분`;
+        nextExecText = `${minutes}분 남음`;
     }
 
     return (
@@ -255,6 +255,7 @@ export function GeneralBasicCard({ general, nation, turnTerm, lastExecuted }: Ge
                         label="벌점"
                         value={`${formatRefreshScore(general.refreshScoreTotal ?? 0)} ${(general.refreshScoreTotal ?? 0).toLocaleString()}점(${general.refreshScore ?? 0})`}
                     />
+                    <MetaRow label="배반" value={`${general.betray}회`} />
                 </div>
 
                 <div>
