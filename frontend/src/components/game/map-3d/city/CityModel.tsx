@@ -1,8 +1,9 @@
 'use client';
 // Design Ref: §3.3 CityModel — GLB 모델 + 깃발 + 바닥 원형 + 이름 라벨
 // WORLD_SCALE: 모든 크기값에 1회만 균일 적용
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import { useGLTF, Text } from '@react-three/drei';
+import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import type { RenderCity } from '@/components/game/map-canvas';
 import { toWorld3d, sampleHeight, WORLD_SCALE } from '@/lib/map-3d-utils';
@@ -18,6 +19,121 @@ interface CityModelProps {
 
 // 모든 크기 = 기준값 * S
 const S = WORLD_SCALE;
+
+/** 펄럭이는 깃발 셰이더 머티리얼 */
+const flagVertexShader = /* glsl */ `
+  uniform float uTime;
+  uniform float uAmplitude;
+  varying vec2 vUv;
+  void main() {
+    vUv = uv;
+    vec3 pos = position;
+    // uv.x가 0(깃대쪽)→1(끝)으로 갈수록 진폭 증가
+    float wave = sin(pos.x * 4.0 + uTime * 3.0) * uAmplitude * uv.x;
+    wave += sin(pos.x * 7.0 + uTime * 5.0) * uAmplitude * 0.3 * uv.x;
+    pos.z += wave;
+    // 약간의 y축 출렁임
+    pos.y += sin(pos.x * 5.0 + uTime * 4.0) * uAmplitude * 0.2 * uv.x;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+  }
+`;
+
+const flagFragmentShader = /* glsl */ `
+  uniform vec3 uColor;
+  uniform sampler2D uTexture;
+  uniform float uHasTexture;
+  varying vec2 vUv;
+  void main() {
+    float shade = 0.85 + 0.15 * vUv.x;
+    if (uHasTexture > 0.5) {
+      vec4 tex = texture2D(uTexture, vUv);
+      gl_FragColor = vec4(tex.rgb * shade, tex.a);
+    } else {
+      gl_FragColor = vec4(uColor * shade, 1.0);
+    }
+  }
+`;
+
+/** Canvas 2D로 국가색 배경 + 국가명 텍스처 생성 */
+function createFlagTexture(color: string, text: string): THREE.CanvasTexture {
+  const canvas = document.createElement('canvas');
+  canvas.width = 256;
+  canvas.height = 128;
+  const ctx = canvas.getContext('2d')!;
+
+  // 배경: 국가 색상
+  ctx.fillStyle = color;
+  ctx.fillRect(0, 0, 256, 128);
+
+  // 테두리 (약간 어두운 색)
+  ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+  ctx.lineWidth = 4;
+  ctx.strokeRect(2, 2, 252, 124);
+
+  // 국가명 텍스트
+  ctx.fillStyle = '#ffffff';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  const fontSize = text.length <= 2 ? 64 : text.length <= 4 ? 48 : 36;
+  ctx.font = `bold ${fontSize}px sans-serif`;
+  ctx.shadowColor = 'rgba(0,0,0,0.6)';
+  ctx.shadowBlur = 4;
+  ctx.fillText(text, 128, 64);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.needsUpdate = true;
+  return texture;
+}
+
+function WavingFlag({
+  width,
+  height,
+  color,
+  position,
+  amplitude,
+  nationName,
+}: {
+  width: number;
+  height: number;
+  color: string;
+  position: [number, number, number];
+  amplitude: number;
+  nationName?: string | null;
+}) {
+  const meshRef = useRef<THREE.Mesh>(null);
+
+  const texture = useMemo(
+    () => (nationName ? createFlagTexture(color, nationName) : null),
+    [color, nationName],
+  );
+
+  const uniforms = useMemo(
+    () => ({
+      uTime: { value: 0 },
+      uAmplitude: { value: amplitude },
+      uColor: { value: new THREE.Color(color) },
+      uTexture: { value: texture ?? new THREE.Texture() },
+      uHasTexture: { value: texture ? 1.0 : 0.0 },
+    }),
+    [amplitude, color, texture],
+  );
+
+  useFrame((_, delta) => {
+    uniforms.uTime.value += delta;
+  });
+
+  return (
+    <mesh ref={meshRef} position={position}>
+      <planeGeometry args={[width, height, 16, 8]} />
+      <shaderMaterial
+        vertexShader={flagVertexShader}
+        fragmentShader={flagFragmentShader}
+        uniforms={uniforms}
+        side={THREE.DoubleSide}
+      />
+    </mesh>
+  );
+}
 
 export function CityModel({ city, heightMap, segments = 64, onClick, onHover }: CityModelProps) {
   const config = getLocationConfig(city.level);
@@ -80,17 +196,23 @@ export function CityModel({ city, heightMap, segments = 64, onClick, onHover }: 
         onPointerOut={() => onHover?.(null)}
       />
 
-      {/* 국가 깃발 */}
+      {/* 국가 깃발 (펄럭이는 셰이더) */}
       {nationColor && (
         <group position={[0, flagH, 0]}>
+          {/* 깃대 */}
           <mesh>
             <cylinderGeometry args={[flagPoleR, flagPoleR, flagH * 0.4, 4]} />
             <meshStandardMaterial color="#5c4033" />
           </mesh>
-          <mesh position={[flagW * 0.5, flagH * 0.15, 0]} rotation={[0, 0.1, 0]}>
-            <planeGeometry args={[flagW, flagFH]} />
-            <meshStandardMaterial color={nationColor} side={THREE.DoubleSide} />
-          </mesh>
+          {/* 깃발 천 */}
+          <WavingFlag
+            width={flagW}
+            height={flagFH}
+            color={nationColor}
+            position={[flagW * 0.5, flagH * 0.15, 0]}
+            amplitude={0.4 * S}
+            nationName={city.nationName}
+          />
         </group>
       )}
 
