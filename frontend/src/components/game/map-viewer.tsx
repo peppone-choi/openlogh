@@ -215,7 +215,7 @@ export function MapViewer({
                     cities={cities3d}
                     renderCities={renderCities}
                     season={season}
-                    onCityClick={handleCityClick}
+                    onCityClick={(cityId) => handleCityClick(cityId)}
                     compact={compact}
                 />
             </div>
