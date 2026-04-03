@@ -47,8 +47,8 @@ export function CityModel({ city, heightMap, segments = 64, onClick, onHover }: 
   }, [city.x, city.y, heightMap, segments]);
 
   const modelH = config.targetScale * S;
-  const flagH = modelH * 1.1;
-  const labelY = flagH + 2 * S;
+  const flagH = modelH * 0.5;
+  const labelY = modelH * 1.1 + 2 * S;
   const flagPoleR = 0.15 * S;
   const flagW = 2.4 * S;
   const flagFH = 1.5 * S;
