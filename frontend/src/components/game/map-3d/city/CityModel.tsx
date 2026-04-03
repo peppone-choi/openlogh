@@ -97,8 +97,8 @@ export function CityModel({ city, heightMap, segments = 128, onClick, onHover }:
       {/* 성곽/거점 모델 */}
       <primitive
         object={model}
-        onClick={(e: THREE.Event) => {
-          (e as { stopPropagation: () => void }).stopPropagation();
+        onClick={(e: { stopPropagation?: () => void }) => {
+          e.stopPropagation?.();
           onClick?.(city.id);
         }}
         onPointerOver={() => onHover?.(city.id)}
