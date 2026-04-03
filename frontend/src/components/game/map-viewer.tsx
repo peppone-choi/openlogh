@@ -13,6 +13,7 @@ import type { RenderCity } from '@/components/game/map-canvas';
 import { CompactTooltip } from '@/components/game/map-tooltips';
 import { getInterceptionMarkers } from '@/lib/interception-utils';
 import type { PublicCachedMapResponse } from '@/types';
+import { buildUnitMarkers } from '@/components/game/unit-markers';
 import dynamic from 'next/dynamic';
 import { useMap3d } from '@/hooks/useMap3d';
 import { MapModeToggle } from '@/components/game/map-mode-toggle';
@@ -202,6 +203,11 @@ export function MapViewer({
         [isPublicMode, compact]
     );
 
+    const unitMarkers = useMemo(() => {
+        if (isPublicMode || !myGeneral) return [];
+        return buildUnitMarkers(generals, myGeneral.nationId, nationColorMap);
+    }, [isPublicMode, generals, myGeneral, nationColorMap]);
+
     const cities3d = useMemo(() => mapData?.cities ?? [], [mapData]);
 
     if (!isPublicMode && !mapData) {
@@ -224,6 +230,7 @@ export function MapViewer({
                         const fakeEvent = { stopPropagation: () => {} } as React.MouseEvent;
                         handleCityClick(cityId, fakeEvent);
                     }}
+                    unitMarkers={unitMarkers}
                     compact={compact}
                 />
             </div>
@@ -246,6 +253,7 @@ export function MapViewer({
             onCityClick={handleCityClick}
             useResponsiveScale={isPublicMode}
             interceptions={interceptions}
+            unitMarkers={unitMarkers}
         />
         </div>
     );

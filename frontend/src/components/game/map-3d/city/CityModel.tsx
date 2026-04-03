@@ -54,6 +54,16 @@ const flagFragmentShader = /* glsl */ `
   }
 `;
 
+/** hex 색상의 상대 밝기(luminance) 계산 → 글자 색 결정 */
+function getContrastTextColor(hex: string): string {
+  const c = hex.replace('#', '');
+  const r = parseInt(c.substring(0, 2), 16) / 255;
+  const g = parseInt(c.substring(2, 4), 16) / 255;
+  const b = parseInt(c.substring(4, 6), 16) / 255;
+  const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
+  return luminance > 0.5 ? '#000000' : '#ffffff';
+}
+
 /** Canvas 2D로 국가색 배경 + 국가명 텍스처 생성 */
 function createFlagTexture(color: string, text: string): THREE.CanvasTexture {
   const canvas = document.createElement('canvas');
@@ -70,13 +80,15 @@ function createFlagTexture(color: string, text: string): THREE.CanvasTexture {
   ctx.lineWidth = 4;
   ctx.strokeRect(2, 2, 252, 124);
 
-  // 국가명 텍스트
-  ctx.fillStyle = '#ffffff';
+  // 국가명 텍스트 (배경 밝기에 따라 흑/백 자동 선택)
+  const textColor = getContrastTextColor(color);
+  const shadowColor = textColor === '#ffffff' ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.4)';
+  ctx.fillStyle = textColor;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   const fontSize = text.length <= 2 ? 64 : text.length <= 4 ? 48 : 36;
   ctx.font = `bold ${fontSize}px sans-serif`;
-  ctx.shadowColor = 'rgba(0,0,0,0.6)';
+  ctx.shadowColor = shadowColor;
   ctx.shadowBlur = 4;
   ctx.fillText(text, 128, 64);
 
@@ -211,7 +223,7 @@ export function CityModel({ city, heightMap, segments = 64, onClick, onHover }: 
             color={nationColor}
             position={[flagW * 0.5, flagH * 0.15, 0]}
             amplitude={0.4 * S}
-            nationName={city.nationName}
+            nationName={city.nationAbbr ?? city.nationName}
           />
         </group>
       )}
