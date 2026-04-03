@@ -13,6 +13,15 @@ import type { RenderCity } from '@/components/game/map-canvas';
 import { CompactTooltip } from '@/components/game/map-tooltips';
 import { getInterceptionMarkers } from '@/lib/interception-utils';
 import type { PublicCachedMapResponse } from '@/types';
+import dynamic from 'next/dynamic';
+import { useMap3d } from '@/hooks/useMap3d';
+import { MapModeToggle } from '@/components/game/map-mode-toggle';
+
+// SSR 방지: Three.js는 클라이언트만
+const Map3dScene = dynamic(
+    () => import('@/components/game/map-3d').then((m) => m.Map3dScene),
+    { ssr: false },
+);
 
 interface MapViewerProps {
     /** Mode 1: auto-load from gameStore */
@@ -188,14 +197,35 @@ export function MapViewer({
         [isPublicMode, compact]
     );
 
+    const { mapMode } = useMap3d();
+    const cities3d = useMemo(() => mapData?.cities ?? [], [mapData]);
+
     if (!isPublicMode && !mapData) {
         return (
             <div className="flex items-center justify-center h-32 text-xs text-muted-foreground">지도 로딩중...</div>
         );
     }
 
+    if (mapMode === '3d' && !isPublicMode) {
+        return (
+            <div className="relative h-full w-full">
+                <MapModeToggle />
+                <Map3dScene
+                    mapCode={mapCode}
+                    cities={cities3d}
+                    renderCities={renderCities}
+                    season={season}
+                    onCityClick={handleCityClick}
+                    compact={compact}
+                />
+            </div>
+        );
+    }
+
     return (
-        <MapCanvas
+        <div className="relative h-full w-full">
+            <MapModeToggle />
+            <MapCanvas
             cities={renderCities}
             mapCode={mapCode}
             season={season}
@@ -209,5 +239,6 @@ export function MapViewer({
             useResponsiveScale={isPublicMode}
             interceptions={interceptions}
         />
+        </div>
     );
 }
