@@ -10,10 +10,15 @@ export const CDN_ROOT = CDN_BASE.slice(0, -1);
 export const GAME_CDN_ROOT = `${CDN_ROOT}/game`;
 export const ICON_CDN_ROOT = `${CDN_ROOT}/icons`;
 
+/** Base URL of the backend API (gateway), used for locally-uploaded assets. */
+const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api').replace(/\/api\/?$/, '');
+
 export function getPortraitUrl(picture?: string | null): string {
     if (!picture) return `${ICON_CDN_ROOT}/default_silhouette.png`;
     const normalized = picture.trim().replace(/^\/+/, '');
     if (!normalized || normalized === 'default.jpg') return `${ICON_CDN_ROOT}/default_silhouette.png`;
+    // Locally uploaded icon (e.g. "/uploads/icons/xxx.jpg")
+    if (normalized.startsWith('uploads/')) return `${API_BASE}/${normalized}`;
     // picture is a numeric string (e.g. "1146") — append .jpg
     if (/^\d+$/.test(normalized)) return `${ICON_CDN_ROOT}/${normalized}.jpg`;
     if (/^\d+\.jpg$/i.test(normalized)) return `${ICON_CDN_ROOT}/${normalized}`;

@@ -22,6 +22,12 @@ describe('image helper URLs', () => {
         expect(getPortraitUrl('icons/77.jpg')).toContain('/icons/77.jpg');
     });
 
+    it('resolves uploaded icon path against API base, not CDN', () => {
+        const url = getPortraitUrl('/uploads/icons/abc.jpg');
+        expect(url).toContain('/uploads/icons/abc.jpg');
+        expect(url).not.toContain('cdn.jsdelivr.net');
+    });
+
     it('maps legacy crewType 0 to crewtype1100 icon', () => {
         expect(getCrewTypeIconUrl(0)).toContain('/game/crewtype1100.png');
     });

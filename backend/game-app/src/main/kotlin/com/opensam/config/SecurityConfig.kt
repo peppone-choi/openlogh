@@ -31,6 +31,7 @@ class SecurityConfig(
                     .requestMatchers("/api/public/**").permitAll()
                     .requestMatchers("/internal/**").permitAll()
                     .requestMatchers("/ws/**").permitAll()
+                    .requestMatchers("/uploads/**").permitAll()
                     .requestMatchers("/error").permitAll()
                     .requestMatchers("/api/admin/**").authenticated()
                     .anyRequest().authenticated()

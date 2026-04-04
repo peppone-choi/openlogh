@@ -2,13 +2,18 @@ package com.opensam.gateway.config
 
 import com.opensam.gateway.service.WorldRouteRegistry
 import jakarta.servlet.http.HttpServletRequest
+import org.springframework.core.io.ByteArrayResource
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
+import org.springframework.http.client.MultipartBodyBuilder
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.multipart.MultipartHttpServletRequest
+import org.springframework.web.reactive.function.BodyInserters
 import org.springframework.web.reactive.function.client.WebClient
 
 // Catch-all controller that proxies unmatched /api/** requests to the active game-app.
@@ -25,6 +30,50 @@ class GameApiCatchAllController(
     private val requestSkipHeaders = setOf("host", "content-length")
     private val responseSkipHeaders = setOf("transfer-encoding", "connection", "keep-alive", "access-control-allow-origin", "access-control-allow-credentials", "access-control-allow-methods", "access-control-allow-headers", "access-control-expose-headers", "access-control-max-age")
 
+    @RequestMapping("/uploads/**")
+    fun proxyUploads(
+        request: HttpServletRequest,
+    ): ResponseEntity<ByteArray> {
+        val baseUrl = pickGameAppBaseUrl()
+            ?: return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
+                .body("""{"message":"No active game instance available"}""".toByteArray())
+        val targetUrl = buildTargetUrl(baseUrl, request.requestURI, request.queryString)
+        val webClient = webClientBuilder.build()
+        return try {
+            val proxyResponse = webClient.get().uri(targetUrl)
+                .headers { headers ->
+                    val headerNames = request.headerNames
+                    while (headerNames.hasMoreElements()) {
+                        val headerName = headerNames.nextElement()
+                        if (headerName.lowercase() in requestSkipHeaders) continue
+                        val values = request.getHeaders(headerName)
+                        while (values.hasMoreElements()) {
+                            headers.add(headerName, values.nextElement())
+                        }
+                    }
+                }
+                .exchangeToMono { clientResponse ->
+                    clientResponse.bodyToMono(ByteArray::class.java)
+                        .defaultIfEmpty(ByteArray(0))
+                        .map { responseBody ->
+                            val headers = HttpHeaders()
+                            clientResponse.headers().asHttpHeaders().forEach { (headerName, values) ->
+                                if (headerName.lowercase() !in responseSkipHeaders) {
+                                    headers.addAll(headerName, values)
+                                }
+                            }
+                            ResponseEntity.status(clientResponse.statusCode())
+                                .headers(headers)
+                                .body(responseBody)
+                        }
+                }.block()
+            proxyResponse ?: ResponseEntity.status(HttpStatus.BAD_GATEWAY).build()
+        } catch (e: Exception) {
+            ResponseEntity.status(HttpStatus.BAD_GATEWAY)
+                .body("""{"message":"Upload proxy error: ${e.message}"}""".toByteArray())
+        }
+    }
+
     @RequestMapping("/api/**")
     fun proxyToGameApp(
         request: HttpServletRequest,
@@ -38,6 +87,8 @@ class GameApiCatchAllController(
         val method = HttpMethod.valueOf(request.method)
         val webClient = webClientBuilder.build()
 
+        val isMultipart = request.contentType?.lowercase()?.startsWith("multipart/") == true
+
         val baseSpec = webClient
             .method(method)
             .uri(targetUrl)
@@ -46,6 +97,8 @@ class GameApiCatchAllController(
                 while (headerNames.hasMoreElements()) {
                     val headerName = headerNames.nextElement()
                     if (headerName.lowercase() in requestSkipHeaders) continue
+                    // Skip content-type for multipart — WebClient will set it with boundary
+                    if (isMultipart && headerName.lowercase() == "content-type") continue
                     val values = request.getHeaders(headerName)
                     while (values.hasMoreElements()) {
                         headers.add(headerName, values.nextElement())
@@ -53,7 +106,21 @@ class GameApiCatchAllController(
                 }
             }
 
-        val requestSpec = if (acceptsBody(method) && body != null && body.isNotEmpty()) {
+        val requestSpec = if (isMultipart && request is MultipartHttpServletRequest) {
+            val builder = MultipartBodyBuilder()
+            request.fileMap.forEach { (name, file) ->
+                val resource = object : ByteArrayResource(file.bytes) {
+                    override fun getFilename(): String = file.originalFilename ?: "file"
+                }
+                builder.part(name, resource, MediaType.parseMediaType(file.contentType ?: "application/octet-stream"))
+            }
+            request.parameterMap.forEach { (name, values) ->
+                if (!request.fileMap.containsKey(name)) {
+                    values.forEach { value -> builder.part(name, value) }
+                }
+            }
+            baseSpec.body(BodyInserters.fromMultipartData(builder.build()))
+        } else if (acceptsBody(method) && body != null && body.isNotEmpty()) {
             baseSpec.bodyValue(body)
         } else {
             baseSpec
