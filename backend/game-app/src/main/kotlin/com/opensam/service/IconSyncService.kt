@@ -3,6 +3,7 @@ package com.opensam.service
 import com.opensam.repository.AppUserRepository
 import com.opensam.repository.GeneralRepository
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 
 /**
  * Syncs the general's icon/picture from the member (account) profile.
@@ -15,6 +16,7 @@ class IconSyncService(
 ) {
     data class SyncResult(val result: Boolean, val reason: String)
 
+    @Transactional
     fun syncIcon(loginId: String): SyncResult {
         val user = appUserRepository.findByLoginId(loginId)
             ?: return SyncResult(false, "회원 기록 정보가 없습니다")
