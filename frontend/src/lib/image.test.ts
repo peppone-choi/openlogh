@@ -2,12 +2,12 @@ import { describe, expect, it } from 'vitest';
 import { getCrewTypeIconUrl, getPortraitUrl } from '@/lib/image';
 
 describe('image helper URLs', () => {
-    it('falls back to icons/0.jpg when portrait is missing', () => {
-        expect(getPortraitUrl()).toContain('/icons/0.jpg');
+    it('falls back to default silhouette when portrait is missing', () => {
+        expect(getPortraitUrl()).toContain('/icons/default_silhouette.png');
     });
 
-    it('maps default.jpg portrait to icons/0.jpg', () => {
-        expect(getPortraitUrl('default.jpg')).toContain('/icons/0.jpg');
+    it('maps default.jpg portrait to default silhouette', () => {
+        expect(getPortraitUrl('default.jpg')).toContain('/icons/default_silhouette.png');
     });
 
     it('maps numeric portrait id to icons path', () => {

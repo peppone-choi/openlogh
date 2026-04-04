@@ -10,7 +10,7 @@ import { Separator } from '@/components/ui/8bit/separator';
 import { Badge } from '@/components/ui/8bit/badge';
 import { Card, CardContent } from '@/components/ui/8bit/card';
 import type { AccountDetailedInfo, OAuthProviderInfo } from '@/types';
-import { Link2, Unlink, Loader2, ShieldAlert, AlertTriangle, X, Upload, Trash2, RefreshCw, Info } from 'lucide-react';
+import { Link2, Unlink, Loader2, ShieldAlert, AlertTriangle, X, Upload, Trash2, RefreshCw, Info, ArrowLeft } from 'lucide-react';
 import { isKakaoOauthEnabled } from '@/lib/auth-features';
 
 const OAUTH_PROVIDERS = [{ id: 'kakao', name: '카카오', color: '#FEE500', textColor: '#000' }] as const;
@@ -294,9 +294,14 @@ function AccountPageContent() {
 
     return (
         <>
-            <Card className="w-full max-w-md p-8">
+            <Card className="w-full max-w-2xl p-8">
                 <CardContent className="space-y-6 p-0">
-                    <h1 className="text-xl font-bold">계정 관리</h1>
+                    <div className="flex items-center gap-3">
+                        <Button variant="ghost" size="sm" onClick={() => router.back()}>
+                            <ArrowLeft className="size-4" />
+                        </Button>
+                        <h1 className="text-xl font-bold">계정 관리</h1>
+                    </div>
 
                     {/* Detailed Profile (legacy parity: user_info.php) */}
                     <div className="space-y-2 rounded-md border p-3">
@@ -759,7 +764,7 @@ export default function AccountPage() {
     return (
         <Suspense
             fallback={
-                <div className="w-full max-w-md p-8 text-sm text-muted-foreground">계정 정보를 불러오는 중...</div>
+                <div className="w-full max-w-2xl p-8 text-sm text-muted-foreground">계정 정보를 불러오는 중...</div>
             }
         >
             <AccountPageContent />

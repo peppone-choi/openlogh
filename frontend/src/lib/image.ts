@@ -11,9 +11,9 @@ export const GAME_CDN_ROOT = `${CDN_ROOT}/game`;
 export const ICON_CDN_ROOT = `${CDN_ROOT}/icons`;
 
 export function getPortraitUrl(picture?: string | null): string {
-    if (!picture) return `${ICON_CDN_ROOT}/0.jpg`;
+    if (!picture) return `${ICON_CDN_ROOT}/default_silhouette.png`;
     const normalized = picture.trim().replace(/^\/+/, '');
-    if (!normalized || normalized === 'default.jpg') return `${ICON_CDN_ROOT}/0.jpg`;
+    if (!normalized || normalized === 'default.jpg') return `${ICON_CDN_ROOT}/default_silhouette.png`;
     // picture is a numeric string (e.g. "1146") — append .jpg
     if (/^\d+$/.test(normalized)) return `${ICON_CDN_ROOT}/${normalized}.jpg`;
     if (/^\d+\.jpg$/i.test(normalized)) return `${ICON_CDN_ROOT}/${normalized}`;
