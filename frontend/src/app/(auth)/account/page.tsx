@@ -182,6 +182,10 @@ function AccountPageContent() {
         setIconSyncLoading(true);
         try {
             await accountApi.syncIcon();
+            const picture = useAuthStore.getState().user?.picture;
+            if (picture) {
+                useGeneralStore.setState((s) => ({ myGeneral: s.myGeneral ? { ...s.myGeneral, picture } : s.myGeneral }));
+            }
             setShowIconSync(false);
             setIconMsg('모든 서버에 전콘이 동기화되었습니다.');
         } catch {
