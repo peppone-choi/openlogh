@@ -131,8 +131,7 @@ jobs:
                   username: ${{ secrets.SSH_USERNAME }}
                   key: ${{ secrets.SSH_PRIVATE_KEY }}
                   script: |
-                      cd ~/openlogh-deploy
-                      git pull origin main
+                      cd ~/deploy-logh
                       docker compose pull
                       docker compose up -d --remove-orphans
                       docker image prune -f
