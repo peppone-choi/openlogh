@@ -22,6 +22,7 @@ object LegacyCommandCpRegistry {
         val minCost: Int = baseCost,
         val maxCost: Int = baseCost,
         val commandGroup: String? = null,
+        val category: String = "",
     )
 
     // ===== General Commands (78) =====

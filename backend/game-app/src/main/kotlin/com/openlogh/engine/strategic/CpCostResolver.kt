@@ -14,7 +14,9 @@ import org.springframework.stereotype.Service
  * Design Ref: §2.2 — CP Cost Resolution Flow
  */
 @Service
-class CpCostResolver {
+class CpCostResolver(
+    private val registry: LegacyCommandCpRegistry = LegacyCommandCpRegistry,
+) {
 
     private val log = LoggerFactory.getLogger(CpCostResolver::class.java)
 
@@ -23,7 +25,7 @@ class CpCostResolver {
      * Registry에 없으면 StrategicCommandRegistry 참조 후 fallback PCP.
      */
     fun resolveCpType(actionCode: String): CpType {
-        val entry = LegacyCommandCpRegistry.findByCode(actionCode)
+        val entry = registry.findByCode(actionCode)
         if (entry != null) return entry.cpType
 
         val strategicDef = StrategicCommandRegistry.findByCode(actionCode)
@@ -38,7 +40,7 @@ class CpCostResolver {
      * 가변 비용 커맨드는 arg에서 유닛 수를 추출하여 계산.
      */
     fun resolveCpCost(actionCode: String, arg: Map<String, Any>? = null): Int {
-        val entry = LegacyCommandCpRegistry.findByCode(actionCode)
+        val entry = registry.findByCode(actionCode)
         if (entry != null) {
             if (!entry.isVariable) return entry.baseCost
             return calculateVariableCost(entry, arg)
@@ -55,7 +57,7 @@ class CpCostResolver {
      * 커맨드 코드 → 직무카드 커맨드 그룹.
      */
     fun resolveCommandGroup(actionCode: String): String? {
-        val entry = LegacyCommandCpRegistry.findByCode(actionCode)
+        val entry = registry.findByCode(actionCode)
         if (entry?.commandGroup != null) return entry.commandGroup
 
         val strategicDef = StrategicCommandRegistry.findByCode(actionCode)
