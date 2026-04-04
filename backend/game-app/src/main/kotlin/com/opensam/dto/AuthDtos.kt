@@ -63,6 +63,7 @@ data class UserInfo(
     val id: Long,
     val loginId: String,
     val displayName: String,
+    val picture: String? = null,
 )
 
 data class DupCheckRequest(

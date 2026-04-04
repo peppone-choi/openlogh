@@ -150,7 +150,10 @@ function AccountPageContent() {
         try {
             const formData = new FormData();
             formData.append('icon', iconFile);
-            await accountApi.uploadIcon(formData);
+            const { data } = await accountApi.uploadIcon(formData);
+            if (data.url) {
+                useAuthStore.setState((s) => ({ user: s.user ? { ...s.user, picture: data.url } : s.user }));
+            }
             setIconMsg('전콘이 업로드되었습니다.');
             setIconFile(null);
         } catch {
@@ -164,6 +167,7 @@ function AccountPageContent() {
         if (!confirm('전콘을 삭제하시겠습니까?')) return;
         try {
             await accountApi.deleteIcon();
+            useAuthStore.setState((s) => ({ user: s.user ? { ...s.user, picture: undefined } : s.user }));
             setIconMsg('전콘이 삭제되었습니다.');
             setIconPreview(null);
         } catch {
