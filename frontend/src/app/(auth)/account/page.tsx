@@ -94,6 +94,7 @@ function AccountPageContent() {
                 if (typeof data.thirdUse === 'boolean') setThirdUseStatus(data.thirdUse);
                 if (data.picture) {
                     useAuthStore.setState((s) => ({ user: s.user ? { ...s.user, picture: data.picture as string } : s.user }));
+                    useGeneralStore.setState((s) => ({ myGeneral: s.myGeneral ? { ...s.myGeneral, picture: data.picture as string } : s.myGeneral }));
                 }
             })
             .catch(() => {});
