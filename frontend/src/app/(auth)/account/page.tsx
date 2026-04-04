@@ -92,6 +92,9 @@ function AccountPageContent() {
             .then(({ data }) => {
                 setDetailedInfo(data);
                 if (typeof data.thirdUse === 'boolean') setThirdUseStatus(data.thirdUse);
+                if (data.picture) {
+                    useAuthStore.setState((s) => ({ user: s.user ? { ...s.user, picture: data.picture as string } : s.user }));
+                }
             })
             .catch(() => {});
     }, [fetchOAuthProviders]);

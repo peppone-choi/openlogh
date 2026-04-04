@@ -140,6 +140,7 @@ class AccountService(
             "oauthType" to oauthEntry?.get("provider")?.toString()?.uppercase(),
             "tokenValidUntil" to (oauthEntry?.get("tokenValidUntil") ?: oauthEntry?.get("accessTokenValidUntil") ?: user.meta["oauthExpiresAt"]),
             "acl" to user.meta["acl"],
+            "picture" to (user.meta["picture"] as? String),
         )
     }
 }
