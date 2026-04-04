@@ -4,6 +4,7 @@ import com.opensam.repository.AppUserRepository
 import com.opensam.repository.GeneralRepository
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import java.time.OffsetDateTime
 
 @Service
@@ -102,6 +103,7 @@ class AccountService(
         return true
     }
 
+    @Transactional
     fun updateIconUrl(loginId: String, iconUrl: String): Boolean {
         val user = appUserRepository.findByLoginId(loginId) ?: return false
         if (iconUrl.isBlank()) {

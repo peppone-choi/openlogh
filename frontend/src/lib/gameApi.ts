@@ -444,7 +444,7 @@ export const accountApi = {
     unlinkOAuth: (provider: string) => api.delete<void>(`/account/oauth/${provider}`),
     uploadIcon: (formData: FormData) =>
         api.post<{ url: string }>('/account/icon', formData, {
-            headers: { 'Content-Type': 'multipart/form-data' },
+            headers: { 'Content-Type': undefined },
         }),
     deleteIcon: () => api.delete<void>('/account/icon'),
     syncIcon: () => api.post<void>('/account/icon/sync'),
