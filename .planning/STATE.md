@@ -46,6 +46,12 @@ None.
 - War term casualty extension marked @Disabled (potential parity gap)
 - NationAI.adjustTaxAndBill runtime path diverges from PHP
 
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 260405-9yd | 3d모드 맵에 자신의 장수 현재위치(도시)를 표시하는 기능 추가 | 2026-04-05 | 371b272 | [260405-9yd-3d](./quick/260405-9yd-3d/) |
+
 ## Session Continuity
 
 Last session: 2026-04-05
