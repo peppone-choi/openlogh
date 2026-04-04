@@ -169,7 +169,7 @@ function MyLocationRing({ baseR }: { baseR: number }) {
   });
 
   return (
-    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.3, 0]}>
+    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.5, 0]} renderOrder={1}>
       <ringGeometry args={[baseR * 1.15, baseR * 1.3, 32]} />
       <meshBasicMaterial
         ref={matRef}
@@ -177,6 +177,7 @@ function MyLocationRing({ baseR }: { baseR: number }) {
         transparent
         opacity={0.9}
         depthWrite={false}
+        depthTest={false}
         side={THREE.DoubleSide}
       />
     </mesh>

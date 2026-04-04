@@ -4,6 +4,7 @@ import { Suspense, useState, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { accountApi } from '@/lib/gameApi';
 import { useAuthStore } from '@/stores/authStore';
+import { useGeneralStore } from '@/stores/generalStore';
 import { Button } from '@/components/ui/8bit/button';
 import { Input } from '@/components/ui/8bit/input';
 import { Separator } from '@/components/ui/8bit/separator';
@@ -153,6 +154,7 @@ function AccountPageContent() {
             const { data } = await accountApi.uploadIcon(formData);
             if (data.url) {
                 useAuthStore.setState((s) => ({ user: s.user ? { ...s.user, picture: data.url } : s.user }));
+                useGeneralStore.setState((s) => ({ myGeneral: s.myGeneral ? { ...s.myGeneral, picture: data.url } : s.myGeneral }));
             }
             setIconMsg('전콘이 업로드되었습니다.');
             setIconFile(null);
@@ -168,6 +170,7 @@ function AccountPageContent() {
         try {
             await accountApi.deleteIcon();
             useAuthStore.setState((s) => ({ user: s.user ? { ...s.user, picture: undefined } : s.user }));
+            useGeneralStore.setState((s) => ({ myGeneral: s.myGeneral ? { ...s.myGeneral, picture: '' } : s.myGeneral }));
             setIconMsg('전콘이 삭제되었습니다.');
             setIconPreview(null);
         } catch {
