@@ -147,6 +147,42 @@ function WavingFlag({
   );
 }
 
+/** 내 도시 여부에 따라 펄스 링 표시 결정 */
+export function shouldShowMyLocationRing(isMyCity: boolean): boolean {
+  return isMyCity;
+}
+
+/** sin 기반 펄스 opacity 계산 (0.3 ~ 0.9) */
+export function calcPulseOpacity(time: number): number {
+  return 0.6 + 0.3 * Math.sin(time * 3);
+}
+
+/** 내 도시 위치 표시 펄스 링 */
+function MyLocationRing({ baseR }: { baseR: number }) {
+  const matRef = useRef<THREE.MeshBasicMaterial>(null);
+
+  useFrame((_, delta) => {
+    if (matRef.current) {
+      matRef.current.userData._time = (matRef.current.userData._time ?? 0) + delta;
+      matRef.current.opacity = calcPulseOpacity(matRef.current.userData._time);
+    }
+  });
+
+  return (
+    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.3, 0]}>
+      <ringGeometry args={[baseR * 1.15, baseR * 1.3, 32]} />
+      <meshBasicMaterial
+        ref={matRef}
+        color="#ef4444"
+        transparent
+        opacity={0.9}
+        depthWrite={false}
+        side={THREE.DoubleSide}
+      />
+    </mesh>
+  );
+}
+
 export function CityModel({ city, heightMap, segments = 64, onClick, onHover }: CityModelProps) {
   const config = getLocationConfig(city.level);
   const modelUrl = getModelUrl(config.modelFile);
@@ -196,6 +232,9 @@ export function CityModel({ city, heightMap, segments = 64, onClick, onHover }: 
           depthWrite={false}
         />
       </mesh>
+
+      {/* 내 도시 펄스 링 */}
+      {shouldShowMyLocationRing(city.isMyCity) && <MyLocationRing baseR={baseR} />}
 
       {/* GLB 모델 */}
       <primitive
