@@ -3,7 +3,8 @@ package com.openlogh.engine
 import com.openlogh.engine.war.BattleEngine
 import com.openlogh.engine.war.BattleResult
 import com.openlogh.engine.war.WarUnitGeneral
-import com.openlogh.entity.*
+import com.openlogh.entity.City
+import com.openlogh.entity.General
 import com.openlogh.repository.CityRepository
 import com.openlogh.repository.GeneralRepository
 import com.openlogh.repository.MessageRepository
@@ -141,9 +142,10 @@ class FormulaParityTest {
             Int::class.javaPrimitiveType,
             Boolean::class.javaPrimitiveType,
             Int::class.javaPrimitiveType,
+            Double::class.javaPrimitiveType,
         )
         method.isAccessible = true
-        return method.invoke(economyService, city, officerCnt, isCapital, nationLevel) as Double
+        return method.invoke(economyService, city, officerCnt, isCapital, nationLevel, 1.0) as Double
     }
 
     private fun invokeCalcCityRiceIncome(city: City, officerCnt: Int, isCapital: Boolean, nationLevel: Int): Double {
@@ -153,9 +155,10 @@ class FormulaParityTest {
             Int::class.javaPrimitiveType,
             Boolean::class.javaPrimitiveType,
             Int::class.javaPrimitiveType,
+            Double::class.javaPrimitiveType,
         )
         method.isAccessible = true
-        return method.invoke(economyService, city, officerCnt, isCapital, nationLevel) as Double
+        return method.invoke(economyService, city, officerCnt, isCapital, nationLevel, 1.0) as Double
     }
 
     private fun createGeneral(
@@ -173,18 +176,18 @@ class FormulaParityTest {
     ): General {
         return General(
             id = id,
-            sessionId = 1,
+            worldId = 1,
             name = "장수$id",
-            factionId = nationId,
-            planetId = 1,
+            nationId = nationId,
+            cityId = 1,
             leadership = leadership,
-            command = strength,
-            intelligence = intel,
-            ships = crew,
-            shipClass = 0,
-            training = train,
-            morale = atmos,
-            supplies = rice,
+            strength = strength,
+            intel = intel,
+            crew = crew,
+            crewType = 0,
+            train = train,
+            atmos = atmos,
+            rice = rice,
             experience = experience,
             dedication = dedication,
             turnTime = OffsetDateTime.now(),
@@ -206,22 +209,22 @@ class FormulaParityTest {
     ): City {
         return City(
             id = 1,
-            sessionId = 1,
+            worldId = 1,
             name = "테스트도시",
-            factionId = nationId,
-            population = pop,
-            populationMax = 50000,
-            production = agri,
-            productionMax = agriMax,
-            commerce = comm,
-            commerceMax = commMax,
-            security = secu,
-            securityMax = secuMax,
-            approval = trust,
-            orbitalDefense = def,
-            orbitalDefenseMax = 1000,
-            fortress = wall,
-            fortressMax = 1000,
+            nationId = nationId,
+            pop = pop,
+            popMax = 50000,
+            agri = agri,
+            agriMax = agriMax,
+            comm = comm,
+            commMax = commMax,
+            secu = secu,
+            secuMax = secuMax,
+            trust = trust,
+            def = def,
+            defMax = 1000,
+            wall = wall,
+            wallMax = 1000,
         )
     }
 }

@@ -13,27 +13,27 @@ class HistoryService(
     private val yearbookHistoryRepository: YearbookHistoryRepository,
 ) {
     @Transactional
-    fun logWorldHistory(sessionId: Long, message: String, year: Int, month: Int) {
+    fun logWorldHistory(worldId: Long, message: String, year: Int, month: Int, scenarioInit: Boolean = false) {
+        val payload = mutableMapOf<String, Any>("message" to message)
+        if (scenarioInit) payload["scenarioInit"] = true
         recordRepository.save(
             Record(
-                sessionId = sessionId,
+                worldId = worldId,
                 recordType = "world_history",
                 year = year,
                 month = month,
-                payload = mutableMapOf(
-                    "message" to message,
-                ),
+                payload = payload,
             )
         )
     }
 
     @Transactional
-    fun logNationHistory(sessionId: Long, factionId: Long, message: String, year: Int, month: Int) {
+    fun logNationHistory(worldId: Long, nationId: Long, message: String, year: Int, month: Int) {
         recordRepository.save(
             Record(
-                sessionId = sessionId,
+                worldId = worldId,
                 recordType = "nation_history",
-                destId = factionId,
+                destId = nationId,
                 year = year,
                 month = month,
                 payload = mutableMapOf(
@@ -43,29 +43,28 @@ class HistoryService(
         )
     }
 
-    fun getWorldHistory(sessionId: Long): List<Record> {
-        return recordRepository.findBySessionIdAndRecordTypeOrderByCreatedAtDesc(sessionId, "world_history")
+    fun getWorldHistory(worldId: Long): List<Record> {
+        return recordRepository.findByWorldIdAndRecordTypeOrderByCreatedAtDesc(worldId, "world_history")
     }
 
-    fun getWorldRecords(sessionId: Long): List<Record> {
-        return recordRepository.findBySessionIdAndRecordTypeOrderByCreatedAtDesc(sessionId, "world_record")
+    fun getWorldRecords(worldId: Long): List<Record> {
+        return recordRepository.findByWorldIdAndRecordTypeOrderByCreatedAtDesc(worldId, "world_record")
     }
 
-    fun getOfficerRecords(officerId: Long): List<Record> {
-        return recordRepository.findByDestIdAndRecordTypeOrderByCreatedAtDesc(officerId, "general_action")
+    fun getGeneralRecords(generalId: Long): List<Record> {
+        return recordRepository.findByDestIdAndRecordTypeOrderByCreatedAtDesc(generalId, "general_action")
     }
 
-    /** Alias for [getOfficerRecords] (old field name compat). */
-    fun getGeneralRecords(officerId: Long): List<Record> = getOfficerRecords(officerId)
-
-    fun getByYearMonth(sessionId: Long, year: Int, month: Int): List<Record> {
-        return recordRepository.findBySessionIdAndYearAndMonth(sessionId, year, month)
+    fun getByYearMonth(worldId: Long, year: Int, month: Int): List<Record> {
+        return recordRepository.findByWorldIdAndRecordTypeInAndYearAndMonthOrderByCreatedAtDesc(
+            worldId, listOf("world_history", "world_record"), year, month
+        )
     }
 
-    fun getYearbook(sessionId: Long, year: Int): YearbookHistory? {
+    fun getYearbook(worldId: Long, year: Int): YearbookHistory? {
         val yearShort = year.toShort()
         for (month in 12 downTo 1) {
-            val snapshot = yearbookHistoryRepository.findBySessionIdAndYearAndMonth(sessionId, yearShort, month.toShort())
+            val snapshot = yearbookHistoryRepository.findByWorldIdAndYearAndMonth(worldId, yearShort, month.toShort())
             if (snapshot != null) {
                 return snapshot
             }

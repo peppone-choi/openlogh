@@ -9,12 +9,12 @@ import { ScrollText, Clock, Search, Map as MapIcon } from 'lucide-react';
 import { PageHeader } from '@/components/game/page-header';
 import { LoadingState } from '@/components/game/loading-state';
 import { EmptyState } from '@/components/game/empty-state';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/8bit/card';
+import { Badge } from '@/components/ui/8bit/badge';
+import { Input } from '@/components/ui/8bit/input';
+import { Button } from '@/components/ui/8bit/button';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/8bit/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/8bit/select';
 import { MapViewer } from '@/components/game/map-viewer';
 import { formatLog } from '@/lib/formatLog';
 
@@ -24,8 +24,8 @@ const EVENT_LABELS: Record<EventType, string> = {
     war: '전쟁',
     diplomacy: '외교',
     nation: '국가',
-    general: '제독',
-    city: '행성',
+    general: '장수',
+    city: '도시',
     other: '기타',
 };
 
@@ -244,7 +244,7 @@ export default function HistoryPage() {
         return combined;
     }, [history, records]);
 
-    // Filter + search + history view (중원 정세 vs 제독 동향)
+    // Filter + search + history view (중원 정세 vs 장수 동향)
     const filteredEvents = useMemo(() => {
         const q = searchQuery.toLowerCase();
         return allEvents.filter((e) => {
@@ -389,7 +389,7 @@ export default function HistoryPage() {
                                     <div className="text-xs text-muted-foreground">년</div>
                                     <Select
                                         value={selectedYear != null ? String(selectedYear) : ''}
-                                        onValueChange={(value: string) => setSelectedYear(Number(value))}
+                                        onValueChange={(value) => setSelectedYear(Number(value))}
                                     >
                                         <SelectTrigger className="w-28">
                                             <SelectValue placeholder="년" />
@@ -407,7 +407,7 @@ export default function HistoryPage() {
                                     <div className="text-xs text-muted-foreground">월</div>
                                     <Select
                                         value={selectedMonth != null ? String(selectedMonth) : ''}
-                                        onValueChange={(value: string) => setSelectedMonth(Number(value))}
+                                        onValueChange={(value) => setSelectedMonth(Number(value))}
                                     >
                                         <SelectTrigger className="w-24">
                                             <SelectValue placeholder="월" />
@@ -473,7 +473,7 @@ export default function HistoryPage() {
                                 </Button>
                             </div>
                             {yearbook && (
-                                <div className="rounded-md border border-border p-3 space-y-2">
+                                <div className="rounded-none border border-border p-3 space-y-2">
                                     <div className="text-xs font-semibold">
                                         연감 ({yearbook.year}년 {yearbook.month}월)
                                     </div>
@@ -490,14 +490,14 @@ export default function HistoryPage() {
                                                     영토 {nation.territoryCount}
                                                 </span>
                                                 <span className="text-muted-foreground">
-                                                    제독 {nation.generalCount ?? '-'}
+                                                    장수 {nation.generalCount ?? '-'}
                                                 </span>
                                             </div>
                                         ))}
                                     </div>
                                     <div className="pt-1 border-t border-border space-y-2">
                                         <div>
-                                            <div className="text-[11px] text-muted-foreground mb-1">은하 정세</div>
+                                            <div className="text-[11px] text-muted-foreground mb-1">중원 정세</div>
                                             {yearbook.globalHistory.length === 0 ? (
                                                 <div className="text-[11px] text-muted-foreground">기록 없음</div>
                                             ) : (
@@ -514,7 +514,7 @@ export default function HistoryPage() {
                                             )}
                                         </div>
                                         <div>
-                                            <div className="text-[11px] text-muted-foreground mb-1">제독 동향</div>
+                                            <div className="text-[11px] text-muted-foreground mb-1">장수 동향</div>
                                             {yearbook.globalAction.length === 0 ? (
                                                 <div className="text-[11px] text-muted-foreground">기록 없음</div>
                                             ) : (
@@ -536,7 +536,7 @@ export default function HistoryPage() {
                         </CardContent>
                     </Card>
 
-                    {/* History view toggle (legacy parity: 중원 정세 vs 제독 동향) */}
+                    {/* History view toggle (legacy parity: 중원 정세 vs 장수 동향) */}
                     <div className="flex gap-1.5">
                         {(['all', 'global', 'action'] as const).map((view) => (
                             <Button
@@ -545,7 +545,7 @@ export default function HistoryPage() {
                                 variant={historyView === view ? 'default' : 'outline'}
                                 onClick={() => setHistoryView(view)}
                             >
-                                {view === 'all' ? '전체' : view === 'global' ? '은하 정세' : '제독 동향'}
+                                {view === 'all' ? '전체' : view === 'global' ? '중원 정세' : '장수 동향'}
                             </Button>
                         ))}
                     </div>

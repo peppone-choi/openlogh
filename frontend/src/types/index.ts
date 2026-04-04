@@ -25,7 +25,7 @@ export interface AuthResponse {
     validUntil?: string;
 }
 
-// World (SessionState)
+// World
 export interface WorldState {
     id: number;
     name: string;
@@ -50,125 +50,72 @@ export interface WorldSnapshot {
     createdAt: string;
     phase?: string;
     season?: string;
-    starSystemOwnership: { starSystemId: number; factionId: number }[];
-    /** @deprecated use starSystemOwnership */
     cityOwnership: { cityId: number; nationId: number }[];
     events: string[];
 }
 
-// Faction (formerly Nation)
-export interface Faction {
+// Nation
+export interface Nation {
     id: number;
     worldId: number;
     name: string;
     abbreviation: string;
     color: string;
-    capitalStarSystemId: number | null;
-    /** @deprecated use capitalStarSystemId */
     capitalCityId: number | null;
-    funds: number;
-    supplies: number;
-    tax_rate: number;
-    conscription_rate: number;
+    gold: number;
+    rice: number;
+    bill: number;
+    rate: number;
     rateTmp: number;
     secretLimit: number;
-    sovereignId: number;
-    /** @deprecated use sovereignId */
     chiefGeneralId: number;
     scoutLevel: number;
     warState: number;
     strategicCmdLimit: number;
     surrenderLimit: number;
-    tech_level: number;
-    military_power: number;
-    faction_rank: number;
-    factionRank: number;
-    faction_type: string;
-    factionType: string;
-    taxRate: number;
-    conscriptionRate: number;
-    techLevel: number;
-    militaryPower: number;
-    capitalPlanetId: number | null;
-    supremeCommanderId: number;
-    /** Spy intel map: star system ID (string) → spy level (number) */
+    tech: number;
+    power: number;
+    level: number;
+    typeCode: string;
+    /** Spy intel map: city ID (string) → spy level (number) */
     spy: Record<string, number>;
     meta: Record<string, unknown>;
     createdAt: string;
     updatedAt: string;
-    // Deprecated field aliases (backward compat with OpenSamguk)
-    /** @deprecated use funds */ gold: number;
-    /** @deprecated use supplies */ rice: number;
-    /** @deprecated use conscription_rate */ rate: number;
-    /** @deprecated use tax_rate */ bill: number;
-    /** @deprecated use tech_level */ tech: number;
-    /** @deprecated use military_power */ power: number;
-    /** @deprecated use faction_rank */ level: number;
-    /** @deprecated use faction_type */ typeCode: string;
 }
 
-/** @deprecated Use Faction */
-export type Nation = Faction;
-
-/** Faction player count for ratio display (D-04) */
-export interface FactionCounts {
-    [factionId: number]: number;
-}
-
-// StarSystem (formerly City)
-export interface StarSystem {
+// City
+export interface City {
     id: number;
     worldId: number;
     name: string;
     level: number;
-    factionId: number;
-    /** @deprecated use factionId */
     nationId: number;
     supplyState: number;
     frontState: number;
-    population: number;
-    populationMax: number;
-    production: number;
-    productionMax: number;
-    commerce: number;
-    commerceMax: number;
-    security: number;
-    securityMax: number;
-    approval: number;
-    trade_route: number;
-    tradeRoute: number;
+    pop: number;
+    popMax: number;
+    agri: number;
+    agriMax: number;
+    comm: number;
+    commMax: number;
+    secu: number;
+    secuMax: number;
+    trust: number;
+    trade: number;
     dead: number;
-    orbital_defense: number;
-    orbitalDefense: number;
-    orbitalDefenseMax: number;
-    fortress: number;
-    fortressMax: number;
+    def: number;
+    defMax: number;
+    wall: number;
+    wallMax: number;
     officerSet: number;
     state: number;
     region: number;
     term: number;
-    /** Conflict score map: faction ID (string) → conflict score (number) */
+    /** Conflict score map: nation ID (string) → conflict score (number) */
     conflict: Record<string, number>;
     meta: Record<string, unknown>;
-    // Deprecated field aliases (backward compat with OpenSamguk)
-    /** @deprecated use population */ pop: number;
-    /** @deprecated use populationMax */ popMax: number;
-    /** @deprecated use approval */ trust: number;
-    /** @deprecated use production */ agri: number;
-    /** @deprecated use commerce */ comm: number;
-    /** @deprecated use security */ secu: number;
-    /** @deprecated use orbital_defense */ def: number;
-    /** @deprecated use orbitalDefenseMax */ defMax: number;
-    /** @deprecated use fortress */ wall: number;
-    /** @deprecated use fortressMax */ wallMax: number;
-    /** @deprecated use trade_route */ trade: number;
-    /** @deprecated use productionMax */ agriMax: number;
-    /** @deprecated use commerceMax */ commMax: number;
-    /** @deprecated use securityMax */ secuMax: number;
 }
-
-/** @deprecated Use StarSystem */
-export type City = StarSystem;
 
 export interface LastTurnInfo {
     command: string;
@@ -176,21 +123,14 @@ export interface LastTurnInfo {
     term?: number;
 }
 
-// Officer (formerly General) — 8-stat system
-export interface Officer {
+// General (5-stat system)
+export interface General {
     id: number;
     worldId: number;
     userId: number | null;
     name: string;
-    factionId: number;
-    /** @deprecated use factionId */
     nationId: number;
-    starSystemId: number;
-    planetId: number;
-    /** @deprecated use starSystemId */
     cityId: number;
-    fleetId: number;
-    /** @deprecated use fleetId */
     troopId: number;
     npcState: number;
     npcOrg: number | null;
@@ -199,20 +139,14 @@ export interface Officer {
     deadYear: number;
     leadership: number;
     leadershipExp: number;
-    command: number;
-    commandExp: number;
-    intelligence: number;
-    intelligenceExp: number;
+    strength: number;
+    strengthExp: number;
+    intel: number;
+    intelExp: number;
     politics: number;
     politicsExp: number;
-    administration: number;
-    administrationExp: number;
-    mobility: number;
-    mobilityExp: number;
-    attack: number;
-    attackExp: number;
-    defense: number;
-    defenseExp: number;
+    charm: number;
+    charmExp: number;
     dex1: number;
     dex2: number;
     dex3: number;
@@ -223,16 +157,16 @@ export interface Officer {
     dedication: number;
     officerLevel: number;
     officerCity: number;
-    funds: number;
-    supplies: number;
-    ships: number;
-    shipClass: number;
-    training: number;
-    morale: number;
-    flagshipCode: string;
-    equipCode: string;
-    engineCode: string;
-    accessoryCode: string;
+    gold: number;
+    rice: number;
+    crew: number;
+    crewType: number;
+    train: number;
+    atmos: number;
+    weaponCode: string;
+    bookCode: string;
+    horseCode: string;
+    itemCode: string;
     ownerName: string;
     newmsg: number;
     turnTime: string;
@@ -249,23 +183,9 @@ export interface Officer {
     special2Code: string;
     spec2Age: number;
     commandPoints: number;
-    /** Political Command Points (정략 커맨드 포인트) */
-    pcp: number;
-    /** Military Command Points (군사 커맨드 포인트) */
-    mcp: number;
     commandEndTime: string | null;
     lastTurn: LastTurnInfo;
     meta: Record<string, unknown>;
-    // LOGH-specific fields (Phase 2)
-    careerType: string;        // "military" | "politician"
-    originType: string;        // "noble" | "knight" | "commoner" | "citizen" | "exile"
-    homePlanetId: number | null;
-    locationState: string;     // "planet" | "fleet" | "space"
-    peerage: string | null;    // "duke" | "marquis" | "count" | "viscount" | "baron" | "knight" | null
-    politicalOps: number;
-    intelOps: number;
-    militaryOps: number;
-    famePoints: number;
     penalty: Record<string, unknown>;
     picture: string;
     defenceTrain: number;
@@ -277,6 +197,10 @@ export interface Officer {
     expLevel: number;
     createdAt: string;
     updatedAt: string;
+    posX: number;
+    posY: number;
+    destX?: number | null;
+    destY?: number | null;
     warnum?: number;
     killnum?: number;
     deathnum?: number;
@@ -284,77 +208,20 @@ export interface Officer {
     deathcrew?: number;
     firenum?: number;
     refreshScore?: number;
-    // Deprecated field aliases (backward compat with OpenSamguk)
-    /** @deprecated use command */ strength: number;
-    /** @deprecated use intelligence */ intel: number;
-    /** @deprecated use administration */ charm: number;
-    /** @deprecated use funds */ gold: number;
-    /** @deprecated use supplies */ rice: number;
-    /** @deprecated use ships */ crew: number;
-    /** @deprecated use training */ train: number;
-    /** @deprecated use morale */ atmos: number;
-    /** @deprecated use shipClass */ crewType: number;
-    /** @deprecated use flagshipCode */ weaponCode: string;
-    /** @deprecated use equipCode */ bookCode: string;
-    /** @deprecated use engineCode */ horseCode: string;
-    /** @deprecated use accessoryCode */ itemCode: string;
-    /** @deprecated use commandExp */ strengthExp: number;
-    /** @deprecated use intelligenceExp */ intelExp: number;
-    /** @deprecated use administrationExp */ charmExp: number;
 }
 
-/** @deprecated Use Officer */
-export type General = Officer;
-
-// Position Card types (from Plan 04 API)
-export interface OfficerPositionCard {
-    id: number;
-    positionType: string;
-    positionNameKo: string;
-    category: string;
-    grantedCommands: string[];
-}
-
-// Org Chart types (from Plan 04 API)
-export interface OrgChartHolder {
-    positionType: string;
-    positionNameKo: string;
-    category: string;
-    officerId: number | null;
-    officerName: string | null;
-    officerPicture: string | null;
-    officerRank: number | null;
-    officerFactionId: number | null;
-}
-
-export interface OrgChartResponse {
-    sessionId: number;
-    holders: OrgChartHolder[];
-    allPositionTypes: PositionTypeInfo[];
-}
-
-export interface PositionTypeInfo {
-    code: string;
-    displayName: string;
-    category: string;
-    minRank: number;
-    grantedCommands: string[];
-}
-
-export interface BestOfficer {
+export interface BestGeneral {
     id: number;
     worldId: number;
     name: string;
-    factionId: number;
-    /** @deprecated use factionId */
     nationId: number;
     npcState: number;
     picture: string;
     leadership: number;
-    command: number;
-    intelligence: number;
+    strength: number;
+    intel: number;
     politics: number;
-    administration: number;
+    charm: number;
     experience: number;
     dedication: number;
     dex1: number;
@@ -363,14 +230,7 @@ export interface BestOfficer {
     dex4: number;
     dex5: number;
     meta: Record<string, unknown>;
-    // Deprecated field aliases (backward compat with OpenSamguk)
-    /** @deprecated use command */ strength: number;
-    /** @deprecated use intelligence */ intel: number;
-    /** @deprecated use administration */ charm: number;
 }
-
-/** @deprecated Use BestOfficer */
-export type BestGeneral = BestOfficer;
 
 export interface NpcCard {
     id: number;
@@ -378,18 +238,12 @@ export interface NpcCard {
     picture: string;
     imageServer: number;
     leadership: number;
-    command: number;
-    intelligence: number;
+    strength: number;
+    intel: number;
     politics: number;
-    administration: number;
-    factionId: number;
-    factionName: string;
-    factionColor: string;
-    /** @deprecated use factionId */
+    charm: number;
     nationId: number;
-    /** @deprecated use factionName */
     nationName: string;
-    /** @deprecated use factionColor */
     nationColor: string;
     personality: string;
     special: string;
@@ -402,10 +256,6 @@ export interface NpcCard {
     specialInfo?: string;
     special2Info?: string;
     keepCount?: number;
-    // Deprecated field aliases (backward compat with OpenSamguk)
-    /** @deprecated use command */ strength: number;
-    /** @deprecated use intelligence */ intel: number;
-    /** @deprecated use administration */ charm: number;
 }
 
 export interface NpcTokenResponse {
@@ -418,20 +268,14 @@ export interface NpcTokenResponse {
 
 export interface SelectNpcResult {
     success: boolean;
-    officer: Officer;
-    /** @deprecated use officer */
-    general: Officer;
+    general: General;
 }
 
-// Fleet (formerly Troop)
-export interface Fleet {
+// Troop
+export interface Troop {
     id: number;
     worldId: number;
-    leaderOfficerId: number;
-    /** @deprecated use leaderOfficerId */
     leaderGeneralId: number;
-    factionId: number;
-    /** @deprecated use factionId */
     nationId: number;
     name: string;
     meta: Record<string, unknown>;
@@ -440,18 +284,11 @@ export interface Fleet {
     reservedCommandBrief?: string;
 }
 
-/** @deprecated Use Fleet */
-export type Troop = Fleet;
-
 // Diplomacy
 export interface Diplomacy {
     id: number;
     worldId: number;
-    srcFactionId: number;
-    /** @deprecated use srcFactionId */
     srcNationId: number;
-    destFactionId: number;
-    /** @deprecated use destFactionId */
     destNationId: number;
     stateCode: string;
     term: number;
@@ -476,28 +313,20 @@ export interface Message {
     meta: Record<string, unknown>;
 }
 
-export interface YearbookFactionSummary {
+export interface YearbookNationSummary {
     id: number;
     name: string;
     color: string;
     territoryCount: number;
-    officerCount: number | null;
-    starSystems: string[];
-    // Deprecated field aliases (backward compat with OpenSamguk)
-    /** @deprecated use officerCount */ generalCount: number | null;
-    /** @deprecated use starSystems */ cities: string[];
+    generalCount: number | null;
+    cities: string[];
 }
-
-/** @deprecated Use YearbookFactionSummary */
-export type YearbookNationSummary = YearbookFactionSummary;
 
 export interface YearbookSummary {
     worldId: number;
     year: number;
     month: number;
-    factions: YearbookFactionSummary[];
-    /** @deprecated use factions */
-    nations: YearbookFactionSummary[];
+    nations: YearbookNationSummary[];
     globalHistory: string[];
     globalAction: string[];
     keyEvents: Message[];
@@ -505,8 +334,6 @@ export interface YearbookSummary {
 
 export interface BoardComment {
     id: number;
-    authorOfficerId: number;
-    /** @deprecated use authorOfficerId */
     authorGeneralId: number;
     content: string;
     createdAt: string;
@@ -514,19 +341,15 @@ export interface BoardComment {
 
 export interface VoteComment {
     id: number;
-    authorOfficerId: number;
-    /** @deprecated use authorOfficerId */
     authorGeneralId: number;
     content: string;
     createdAt: string;
 }
 
 // Command types
-export interface OfficerTurn {
+export interface GeneralTurn {
     id: number;
     worldId: number;
-    officerId: number;
-    /** @deprecated use officerId */
     generalId: number;
     turnIdx: number;
     actionCode: string;
@@ -535,14 +358,9 @@ export interface OfficerTurn {
     createdAt: string;
 }
 
-/** @deprecated Use OfficerTurn */
-export type GeneralTurn = OfficerTurn;
-
-export interface FactionTurn {
+export interface NationTurn {
     id: number;
     worldId: number;
-    factionId: number;
-    /** @deprecated use factionId */
     nationId: number;
     officerLevel: number;
     turnIdx: number;
@@ -551,9 +369,6 @@ export interface FactionTurn {
     brief: string | null;
     createdAt: string;
 }
-
-/** @deprecated Use FactionTurn */
-export type NationTurn = FactionTurn;
 
 export interface CommandResult {
     success: boolean;
@@ -574,11 +389,7 @@ export interface WorldSummary {
     tickSeconds: number;
     realtimeMode: boolean;
     totalPopulation: number;
-    activeFactions: number;
-    /** @deprecated use activeFactions */
     activeNations: number;
-    activeOfficers: number;
-    /** @deprecated use activeOfficers */
     activeGenerals: number;
     humanPlayers: number;
     atWar: boolean;
@@ -630,11 +441,7 @@ export interface AuctionActionResponse {
 
 export interface AuctionHistoryEntry {
     id: number;
-    sellerOfficerId: number;
-    /** @deprecated use sellerOfficerId */
     sellerGeneralId: number;
-    buyerOfficerId: number | null;
-    /** @deprecated use buyerOfficerId */
     buyerGeneralId: number | null;
     itemCode: string;
     minPrice: number;
@@ -646,41 +453,29 @@ export interface AuctionHistoryEntry {
 
 export interface MarketPriceResponse {
     worldId: number;
-    fundsPerSupplies: number;
-    suppliesPerFunds: number;
-    /** @deprecated use fundsPerSupplies */
     goldPerRice: number;
-    /** @deprecated use suppliesPerFunds */
     ricePerGold: number;
     supply: number;
     demand: number;
 }
 
-export interface MarketBuySuppliesResponse {
+export interface MarketBuyRiceResponse {
     success: boolean;
     amount: number;
-    costFunds: number;
-    fundsPerSupplies: number;
-    officerFunds: number;
-    officerSupplies: number;
-    /** @deprecated use costFunds */ costGold: number;
+    costGold: number;
+    goldPerRice: number;
+    generalGold: number;
+    generalRice: number;
 }
 
-/** @deprecated Use MarketBuySuppliesResponse */
-export type MarketBuyRiceResponse = MarketBuySuppliesResponse;
-
-export interface MarketSellSuppliesResponse {
+export interface MarketSellRiceResponse {
     success: boolean;
     amount: number;
-    revenueFunds: number;
-    fundsPerSupplies: number;
-    officerFunds: number;
-    officerSupplies: number;
-    /** @deprecated use revenueFunds */ revenueGold: number;
+    revenueGold: number;
+    goldPerRice: number;
+    generalGold: number;
+    generalRice: number;
 }
-
-/** @deprecated Use MarketSellSuppliesResponse */
-export type MarketSellRiceResponse = MarketSellSuppliesResponse;
 
 export interface ItemAuctionCreateResponse {
     id: number;
@@ -728,8 +523,6 @@ export interface AccountDetailedInfo {
 export type AccountDetailedInfoResponse = AccountDetailedInfo;
 
 export interface RealtimeStatus {
-    officerId: number;
-    /** @deprecated use officerId */
     generalId: number;
     commandPoints: number;
     commandEndTime: string | null;
@@ -744,7 +537,7 @@ export interface Scenario {
 }
 
 // Map
-export interface StarSystemConst {
+export interface CityConst {
     id: number;
     name: string;
     level: number;
@@ -754,35 +547,24 @@ export interface StarSystemConst {
     connections: number[];
 }
 
-/** @deprecated Use StarSystemConst */
-export type CityConst = StarSystemConst;
-
 export interface MapData {
-    starSystems: StarSystemConst[];
-    /** @deprecated use starSystems */
-    cities: StarSystemConst[];
+    cities: CityConst[];
 }
 
-export interface PublicCachedMapStarSystem {
+export interface PublicCachedMapCity {
     id: number;
     name: string;
     x: number;
     y: number;
     level: number;
     region?: number;
-    factionName: string;
-    factionColor: string;
-    /** @deprecated use factionName */
     nationName: string;
-    /** @deprecated use factionColor */
     nationColor: string;
+    nationAbbr?: string;
     isCapital?: boolean;
     supplyState?: number;
     state?: number;
 }
-
-/** @deprecated Use PublicCachedMapStarSystem */
-export type PublicCachedMapCity = PublicCachedMapStarSystem;
 
 export interface PublicCachedMapHistory {
     id: number;
@@ -790,8 +572,6 @@ export interface PublicCachedMapHistory {
     text: string;
     year?: number;
     month?: number;
-    starSystemOwnership?: { starSystemId: number; factionId: number }[];
-    /** @deprecated use starSystemOwnership */
     cityOwnership?: { cityId: number; nationId: number }[];
     events?: string[];
 }
@@ -808,9 +588,7 @@ export interface PublicCachedMapResponse {
     mapCode: string | null;
     currentYear?: number | null;
     currentMonth?: number | null;
-    starSystems: PublicCachedMapStarSystem[];
-    /** @deprecated use starSystems */
-    cities: PublicCachedMapStarSystem[];
+    cities: PublicCachedMapCity[];
     history: PublicCachedMapHistory[];
     worlds?: PublicWorldSummary[];
 }
@@ -818,15 +596,9 @@ export interface PublicCachedMapResponse {
 // FrontInfo (main dashboard API response) — legacy parity
 export interface FrontInfoResponse {
     global: GlobalInfo;
-    officer: OfficerFrontInfo | null;
-    /** @deprecated use officer */
-    general: OfficerFrontInfo | null;
-    faction: FactionFrontInfo | null;
-    /** @deprecated use faction */
-    nation: FactionFrontInfo | null;
-    starSystem: StarSystemFrontInfo | null;
-    /** @deprecated use starSystem */
-    city: StarSystemFrontInfo | null;
+    general: GeneralFrontInfo | null;
+    nation: NationFrontInfo | null;
+    city: CityFrontInfo | null;
     recentRecord: RecentRecordInfo;
     aux: AuxInfo;
 }
@@ -841,7 +613,7 @@ export interface GlobalInfo {
     turnTerm: number;
     startyear: number;
     genCount: number[][];
-    onlineNations: OnlineFactionInfo[];
+    onlineNations: OnlineNationInfo[];
     onlineUserCnt: number;
     auctionCount: number;
     tournamentState: number;
@@ -865,6 +637,7 @@ export interface GlobalInfo {
     serverCnt: number;
     lastVoteID: number;
     lastVote: LastVoteInfo | null;
+    autorunUser?: number;
 }
 
 export interface LastVoteInfo {
@@ -874,25 +647,19 @@ export interface LastVoteInfo {
     votes: Record<string, number>;
 }
 
-export interface OnlineFactionInfo {
+export interface OnlineNationInfo {
     id: number;
     name: string;
     color: string;
     genCount: number;
 }
 
-/** @deprecated Use OnlineFactionInfo */
-export type OnlineNationInfo = OnlineFactionInfo;
-
-export interface FactionTypeInfo {
+export interface NationTypeInfo {
     raw: string;
     name: string;
     pros: string;
     cons: string;
 }
-
-/** @deprecated Use FactionTypeInfo */
-export type NationTypeInfo = FactionTypeInfo;
 
 export interface TopChiefInfo {
     officerLevel: number;
@@ -901,56 +668,38 @@ export interface TopChiefInfo {
     npc: number;
 }
 
-export interface FactionPopulationInfo {
+export interface NationPopulationInfo {
     cityCnt: number;
     now: number;
     max: number;
 }
 
-/** @deprecated Use FactionPopulationInfo */
-export type NationPopulationInfo = FactionPopulationInfo;
-
-export interface FactionShipsInfo {
+export interface NationCrewInfo {
     generalCnt: number;
     now: number;
     max: number;
 }
 
-/** @deprecated Use FactionShipsInfo */
-export type NationCrewInfo = FactionShipsInfo;
-
-export interface FactionNoticeInfo {
+export interface NationNoticeInfo {
     date: string;
     msg: string;
     author: string;
     authorID: number;
 }
 
-/** @deprecated Use FactionNoticeInfo */
-export type NationNoticeInfo = FactionNoticeInfo;
-
-export interface FleetInfo {
-    leader: { starSystem: number; reservedCommand: CommandArg | null };
+export interface TroopInfo {
+    leader: { city: number; reservedCommand: CommandArg | null };
     name: string;
 }
 
-/** @deprecated Use FleetInfo */
-export type TroopInfo = FleetInfo;
-
-export interface OfficerFrontInfo {
+export interface GeneralFrontInfo {
     no: number;
     name: string;
     picture: string;
     imgsvr: number;
-    faction: number;
-    /** @deprecated use faction */
     nation: number;
     npc: number;
-    starSystem: number;
-    /** @deprecated use starSystem */
     city: number;
-    fleet: number;
-    /** @deprecated use fleet */
     troop: number;
     officerLevel: number;
     officerLevelText: string;
@@ -959,52 +708,30 @@ export interface OfficerFrontInfo {
     lbonus: number;
     leadership: number;
     leadershipExp: number;
-    command: number;
-    commandExp: number;
-    intelligence: number;
-    intelligenceExp: number;
+    strength: number;
+    strengthExp: number;
+    intel: number;
+    intelExp: number;
     politics: number;
     politicsExp: number;
-    administration: number;
-    administrationExp: number;
+    charm: number;
+    charmExp: number;
     experience: number;
     dedication: number;
     explevel: number;
     dedlevel: number;
     honorText: string;
     dedLevelText: string;
-    salary: number;
-    /** @deprecated use salary */
     bill: number;
-    funds: number;
-    /** @deprecated use funds */
     gold: number;
-    supplies: number;
-    /** @deprecated use supplies */
     rice: number;
-    ships: number;
-    /** @deprecated use ships */
     crew: number;
-    shipClass: string;
-    /** @deprecated use shipClass */
     crewtype: string;
-    training: number;
-    /** @deprecated use training */
     train: number;
-    morale: number;
-    /** @deprecated use morale */
     atmos: number;
-    flagship: string;
-    /** @deprecated use flagship */
     weapon: string;
-    equipment: string;
-    /** @deprecated use equipment */
     book: string;
-    engine: string;
-    /** @deprecated use engine */
     horse: string;
-    accessory: string;
-    /** @deprecated use accessory */
     item: string;
     personal: string;
     specialDomestic: string;
@@ -1021,19 +748,13 @@ export interface OfficerFrontInfo {
     turntime: string;
     recentWar: string | null;
     commandPoints: number;
-    /** Political Command Points (정략 커맨드 포인트) */
-    pcp: number;
-    /** Military Command Points (군사 커맨드 포인트) */
-    mcp: number;
     commandEndTime: string | null;
     ownerName: string | null;
     refreshScoreTotal: number | null;
     refreshScore: number | null;
     autorunLimit: number;
     reservedCommand: CommandArg | null;
-    fleetInfo: FleetInfo | null;
-    /** @deprecated use fleetInfo */
-    troopInfo: FleetInfo | null;
+    troopInfo: TroopInfo | null;
     dex1: number;
     dex2: number;
     dex3: number;
@@ -1045,49 +766,28 @@ export interface OfficerFrontInfo {
     killcrew: number;
     deathcrew: number;
     firenum: number;
-    // Deprecated field aliases (backward compat with OpenSamguk)
-    /** @deprecated use command */ strength: number;
-    /** @deprecated use intelligence */ intel: number;
-    /** @deprecated use administration */ charm: number;
 }
 
-/** @deprecated Use OfficerFrontInfo */
-export type GeneralFrontInfo = OfficerFrontInfo;
-
-export interface FactionFrontInfo {
+export interface NationFrontInfo {
     id: number;
     full: boolean;
     name: string;
     color: string;
     level: number;
-    faction_type?: string;
-    /** @deprecated use faction_type */
     typeCode?: string;
-    type: FactionTypeInfo;
-    funds: number;
-    /** @deprecated use funds */
+    type: NationTypeInfo;
     gold: number;
-    supplies: number;
-    /** @deprecated use supplies */
     rice: number;
-    tech_level: number;
-    /** @deprecated use tech_level */
     tech: number;
-    military_power: number;
-    /** @deprecated use military_power */
     power: number;
     gennum: number;
     capital: number | null;
-    salary_rate: number;
-    /** @deprecated use salary_rate */
     bill: number;
     taxRate: number;
-    population: FactionPopulationInfo;
-    ships: FactionShipsInfo;
-    /** @deprecated use ships */
-    crew: FactionShipsInfo;
+    population: NationPopulationInfo;
+    crew: NationCrewInfo;
     onlineGen: string;
-    notice: FactionNoticeInfo | null;
+    notice: NationNoticeInfo | null;
     topChiefs: Record<number, TopChiefInfo | null>;
     diplomaticLimit: number;
     strategicCmdLimit: number;
@@ -1096,64 +796,34 @@ export interface FactionFrontInfo {
     prohibitWar: number;
 }
 
-/** @deprecated Use FactionFrontInfo */
-export type NationFrontInfo = FactionFrontInfo;
-
-export interface StarSystemNationInfo {
+export interface CityNationInfo {
     id: number;
     name: string;
     color: string;
 }
 
-/** @deprecated Use StarSystemNationInfo */
-export type CityNationInfo = StarSystemNationInfo;
-
-export interface StarSystemFrontInfo {
+export interface CityFrontInfo {
     id: number;
     name: string;
     level: number;
     region: number;
-    factionInfo: StarSystemNationInfo;
-    /** @deprecated use factionInfo */
-    nationInfo: StarSystemNationInfo;
-    approval: number;
-    /** @deprecated use approval */
+    nationInfo: CityNationInfo;
     trust: number;
-    population: number[];
-    /** @deprecated use population */
     pop: number[];
-    production: number[];
-    /** @deprecated use production */
     agri: number[];
-    commerce: number[];
-    /** @deprecated use commerce */
     comm: number[];
-    security: number[];
-    /** @deprecated use security */
     secu: number[];
-    orbital_defense: number[];
-    /** @deprecated use orbital_defense */
     def: number[];
-    fortress: number[];
-    /** @deprecated use fortress */
     wall: number[];
-    trade_route: number | null;
-    /** @deprecated use trade_route */
     trade: number | null;
-    officerList: Record<number, StarSystemOfficerInfo | null>;
+    officerList: Record<number, CityOfficerInfo | null>;
 }
 
-/** @deprecated Use StarSystemFrontInfo */
-export type CityFrontInfo = StarSystemFrontInfo;
-
-export interface StarSystemOfficerInfo {
+export interface CityOfficerInfo {
     officerLevel: number;
     name: string;
     npc: number;
 }
-
-/** @deprecated Use StarSystemOfficerInfo */
-export type CityOfficerInfo = StarSystemOfficerInfo;
 
 export interface RecentRecordInfo {
     flushGeneral: boolean;
@@ -1183,18 +853,10 @@ export interface CommandTableEntry {
 
 // Contact
 export interface ContactInfo {
-    officerId: number;
-    /** @deprecated use officerId */
     generalId: number;
     name: string;
-    factionId: number;
-    /** @deprecated use factionId */
     nationId: number;
-    factionName: string;
-    /** @deprecated use factionName */
     nationName: string;
-    factionColor?: string;
-    /** @deprecated use factionColor */
     nationColor?: string;
     picture: string;
 }
@@ -1249,17 +911,13 @@ export interface InheritanceInfo {
     inheritActionCost?: InheritanceActionCost;
     availableSpecialWar?: Record<string, { title: string; info: string }>;
     availableUnique?: Record<string, { title: string; rawName: string; info: string }>;
-    availableTargetOfficer?: Record<number, string>;
-    /** @deprecated use availableTargetOfficer */
     availableTargetGeneral?: Record<number, string>;
     currentStat?: {
         leadership: number;
-        command: number;
-        intelligence: number;
+        strength: number;
+        intel: number;
         statMax: number;
         statMin: number;
-        /** @deprecated use command */ strength: number;
-        /** @deprecated use intelligence */ intel: number;
     };
 }
 
@@ -1301,7 +959,7 @@ export interface BettingInfo {
     bets: BetEntry[];
     odds: Record<string, number>;
     history?: BettingEventSummary[];
-    /** Faction betting fields (legacy parity) */
+    /** Nation betting fields (legacy parity) */
     selectCnt?: number;
     isExclusive?: boolean;
     reqInheritancePoint?: boolean;
@@ -1324,8 +982,6 @@ export interface BettingEventSummary {
 }
 
 export interface BetEntry {
-    officerId: number;
-    /** @deprecated use officerId */
     generalId: number;
     targetId: number;
     amount: number;
@@ -1335,20 +991,20 @@ export interface BetEntry {
 export interface BattleSimUnit {
     name?: string;
     leadership?: number;
-    command?: number;
-    intelligence?: number;
-    ships?: number;
-    shipClass?: number;
-    training?: number;
-    morale?: number;
-    flagshipCode?: string;
-    equipCode?: string;
-    engineCode?: string;
-    accessoryCode?: string;
+    strength?: number;
+    intel?: number;
+    crew?: number;
+    crewType?: number;
+    train?: number;
+    atmos?: number;
+    weaponCode?: string;
+    bookCode?: string;
+    horseCode?: string;
+    itemCode?: string;
     specialCode?: string;
     personalCode?: string;
     injury?: number;
-    supplies?: number;
+    rice?: number;
     dex1?: number;
     dex2?: number;
     dex3?: number;
@@ -1357,18 +1013,6 @@ export interface BattleSimUnit {
     defenceTrain?: number;
     officerLevel?: number;
     expLevel?: number;
-    // Deprecated field aliases (backward compat with OpenSamguk)
-    /** @deprecated use command */ strength?: number;
-    /** @deprecated use intelligence */ intel?: number;
-    /** @deprecated use ships */ crew?: number;
-    /** @deprecated use shipClass */ crewType?: number;
-    /** @deprecated use training */ train?: number;
-    /** @deprecated use morale */ atmos?: number;
-    /** @deprecated use flagshipCode */ weaponCode?: string;
-    /** @deprecated use equipCode */ bookCode?: string;
-    /** @deprecated use engineCode */ horseCode?: string;
-    /** @deprecated use accessoryCode */ itemCode?: string;
-    /** @deprecated use supplies */ rice?: number;
     inheritBuff?: {
         warAvoidRatio?: number;
         warCriticalRatio?: number;
@@ -1390,18 +1034,11 @@ export interface BattleSimRepeatResult {
     avgRounds: number;
 }
 
-export interface BattleSimStarSystem {
-    orbital_defense?: number;
-    fortress?: number;
-    level?: number;
-    /** @deprecated use orbital_defense */
+export interface BattleSimCity {
     def?: number;
-    /** @deprecated use fortress */
     wall?: number;
+    level?: number;
 }
-
-/** @deprecated Use BattleSimStarSystem */
-export type BattleSimCity = BattleSimStarSystem;
 
 export interface BattleSimResult {
     winner: string;
@@ -1418,13 +1055,9 @@ export interface BattleSimResponse extends BattleSimResult {
     repeatSummary?: BattleSimRepeatResult;
 }
 
-// Faction Policy
-export interface FactionPolicyInfo {
-    conscription_rate: number;
-    salary_rate: number;
-    /** @deprecated use conscription_rate */
+// Nation Policy
+export interface NationPolicyInfo {
     rate: number;
-    /** @deprecated use salary_rate */
     bill: number;
     secretLimit: number;
     strategicCmdLimit: number;
@@ -1434,46 +1067,25 @@ export interface FactionPolicyInfo {
     blockScout: boolean;
 }
 
-/** @deprecated Use FactionPolicyInfo */
-export type NationPolicyInfo = FactionPolicyInfo;
-
 export interface NpcPolicyInfo {
-    reqFactionFunds: number;
-    reqFactionSupplies: number;
-    /** @deprecated */ reqNationGold: number;
-    /** @deprecated */ reqNationRice: number;
-    reqHumanWarUrgentFunds: number;
-    reqHumanWarUrgentSupplies: number;
-    /** @deprecated */ reqHumanWarUrgentGold: number;
-    /** @deprecated */ reqHumanWarUrgentRice: number;
-    reqHumanWarRecommandFunds: number;
-    reqHumanWarRecommandSupplies: number;
-    /** @deprecated */ reqHumanWarRecommandGold: number;
-    /** @deprecated */ reqHumanWarRecommandRice: number;
-    reqHumanDevelFunds: number;
-    reqHumanDevelSupplies: number;
-    /** @deprecated */ reqHumanDevelGold: number;
-    /** @deprecated */ reqHumanDevelRice: number;
-    reqNPCWarFunds: number;
-    reqNPCWarSupplies: number;
-    /** @deprecated */ reqNPCWarGold: number;
-    /** @deprecated */ reqNPCWarRice: number;
-    reqNPCDevelFunds: number;
-    reqNPCDevelSupplies: number;
-    /** @deprecated */ reqNPCDevelGold: number;
-    /** @deprecated */ reqNPCDevelRice: number;
+    reqNationGold: number;
+    reqNationRice: number;
+    reqHumanWarUrgentGold: number;
+    reqHumanWarUrgentRice: number;
+    reqHumanWarRecommandGold: number;
+    reqHumanWarRecommandRice: number;
+    reqHumanDevelGold: number;
+    reqHumanDevelRice: number;
+    reqNPCWarGold: number;
+    reqNPCWarRice: number;
+    reqNPCDevelGold: number;
+    reqNPCDevelRice: number;
     minimumResourceActionAmount: number;
     maximumResourceActionAmount: number;
     minNPCWarLeadership: number;
-    minWarShips: number;
-    /** @deprecated use minWarShips */
     minWarCrew: number;
-    minNPCRecruitStarSystemPopulation: number;
-    /** @deprecated use minNPCRecruitStarSystemPopulation */
     minNPCRecruitCityPopulation: number;
     safeRecruitCityPopulationRatio: number;
-    properWarTrainingMorale: number;
-    /** @deprecated use properWarTrainingMorale */
     properWarTrainAtmos: number;
     cureThreshold: number;
     combatForce: Record<number, [number, number]>;
@@ -1486,107 +1098,62 @@ export interface NpcPolicyInfo {
     defaultStatMax: number;
     defaultStatNPCMax: number;
     priority: string[];
-    factionPriority: string[];
-    /** @deprecated use factionPriority */
     nationPriority: string[];
-    officerPriority: string[];
-    /** @deprecated use officerPriority */
     generalPriority: string[];
-    currentFactionPriority: string[];
-    /** @deprecated use currentFactionPriority */
     currentNationPriority: string[];
-    currentOfficerActionPriority: string[];
-    /** @deprecated use currentOfficerActionPriority */
     currentGeneralActionPriority: string[];
-    defaultFactionPriority: string[];
-    /** @deprecated use defaultFactionPriority */
     defaultNationPriority: string[];
-    defaultOfficerActionPriority: string[];
-    /** @deprecated use defaultOfficerActionPriority */
     defaultGeneralActionPriority: string[];
-    availableFactionPriorityItems: string[];
-    /** @deprecated use availableFactionPriorityItems */
     availableNationPriorityItems: string[];
-    availableOfficerActionPriorityItems: string[];
-    /** @deprecated use availableOfficerActionPriorityItems */
     availableGeneralActionPriorityItems: string[];
     /** NPC auto-play mode (0=off, 1+=active) */
     npcMode?: number;
     /** Last setter info per category */
     lastSetters?: {
-        faction?: { setter: string; date: string };
-        officer?: { setter: string; date: string };
+        nation?: { setter: string; date: string };
+        general?: { setter: string; date: string };
         policy?: { setter: string; date: string };
-        /** @deprecated */ nation?: { setter: string; date: string };
-        /** @deprecated */ general?: { setter: string; date: string };
     };
     /** Recent settings change history */
     history?: { setter: string; date: string; action: string; details: string }[];
 }
 
-// Officer Info (in star system)
+// Officer
 export interface OfficerInfo {
     id: number;
     name: string;
     picture: string;
     officerLevel: number;
-    starSystemId: number;
-    /** @deprecated use starSystemId */
     cityId: number;
 }
 
-/** @deprecated Use OfficerInfo */
-export type OfficerInfoLegacy = OfficerInfo;
-
-// Fleet (extended)
-export interface FleetMemberInfo {
+// Troop (extended)
+export interface TroopMemberInfo {
     id: number;
     name: string;
     picture: string;
 }
 
-export interface FleetWithMembers {
-    fleet: Fleet;
-    members: FleetMemberInfo[];
+export interface TroopWithMembers {
+    troop: Troop;
+    members: TroopMemberInfo[];
 }
 
-/** @deprecated Use FleetWithMembers */
-export type TroopWithMembers = FleetWithMembers;
-
-// Faction Statistic
-export interface FactionStatistic {
-    factionId: number;
-    /** @deprecated use factionId */
+// Nation Statistic
+export interface NationStatistic {
     nationId: number;
     name: string;
     color: string;
-    faction_rank: number;
-    /** @deprecated use faction_rank */
     level: number;
-    funds: number;
-    /** @deprecated use funds */
     gold: number;
-    supplies: number;
-    /** @deprecated use supplies */
     rice: number;
-    tech_level: number;
-    /** @deprecated use tech_level */
     tech: number;
-    military_power: number;
-    /** @deprecated use military_power */
     power: number;
     genCount: number;
-    starSystemCount: number;
-    /** @deprecated use starSystemCount */
     cityCount: number;
-    totalShips: number;
-    /** @deprecated use totalShips */
     totalCrew: number;
     totalPop: number;
 }
-
-/** @deprecated Use FactionStatistic */
-export type NationStatistic = FactionStatistic;
 
 export interface AuctionBidResponse {
     success: boolean;
@@ -1634,14 +1201,10 @@ export interface AdminUser {
     lastLoginAt: string | null;
 }
 
-export interface AdminOfficer {
+export interface AdminGeneral {
     id: number;
     name: string;
-    factionId: number;
-    /** @deprecated use factionId */
     nationId: number;
-    ships: number;
-    /** @deprecated use ships */
     crew: number;
     experience: number;
     npcState: number;
@@ -1649,16 +1212,11 @@ export interface AdminOfficer {
     killTurn: number | null;
 }
 
-/** @deprecated Use AdminOfficer */
-export type AdminGeneral = AdminOfficer;
-
 export interface SelectPoolEntry {
     id: number;
     worldId: number;
     uniqueName: string;
     ownerId: number | null;
-    officerId: number | null;
-    /** @deprecated use officerId */
     generalId: number | null;
     reservedUntil: string | null;
     info: Record<string, unknown>;
@@ -1671,7 +1229,7 @@ export interface TimeControlRequest {
     startYear?: number;
     locked?: boolean;
     turnTerm?: number;
-    distribute?: { funds: number; supplies: number; target: string };
+    distribute?: { gold: number; rice: number; target: string };
     auctionSync?: boolean;
     auctionCloseMinutes?: number;
     opentime?: string;
@@ -1693,20 +1251,10 @@ export interface AdminWorldListEntry {
 export interface UniqueItemOwnerInfo {
     slot: string;
     slotLabel: string;
-    officerId: number;
-    /** @deprecated use officerId */
     generalId: number;
-    officerName: string;
-    /** @deprecated use officerName */
     generalName: string;
-    factionId: number;
-    /** @deprecated use factionId */
     nationId: number;
-    factionName: string;
-    /** @deprecated use factionName */
     nationName: string;
-    factionColor: string;
-    /** @deprecated use factionColor */
     nationColor: string;
     itemName: string;
     itemGrade: string;
@@ -1741,24 +1289,53 @@ export interface TurnStateResult {
     state: string;
 }
 
-// Officer Log (battle center)
-export interface OfficerLogEntry {
+// Game Record (returned by /api/records/*)
+export interface GameRecord {
+    id: number;
+    worldId: number;
+    recordType: string;
+    srcId: number | null;
+    destId: number | null;
+    year: number;
+    month: number;
+    payload: Record<string, unknown>;
+    createdAt: string;
+}
+
+// General Log (battle center)
+export interface GeneralLogEntry {
     id: number;
     message: string;
     date: string;
 }
 
-/** @deprecated Use OfficerLogEntry */
-export type GeneralLogEntry = OfficerLogEntry;
-
-export interface OfficerLogResult {
+export interface GeneralLogResult {
     result: boolean;
     reason?: string;
-    logs: OfficerLogEntry[];
+    logs: GeneralLogEntry[];
 }
 
-/** @deprecated Use OfficerLogResult */
-export type GeneralLogResult = OfficerLogResult;
+// 3D Map types
+export type MapRenderMode = '2d' | '3d';
+
+export interface Map3dConfig {
+    mode: MapRenderMode;
+    quality: 'low' | 'medium' | 'high';
+    showDecorations: boolean;
+    showLabels: boolean;
+    showNationOverlay: boolean;
+}
+
+export type SpotModelType = 'naval' | 'camp' | 'gate' | 'tribal';
+export type CityModelType = 'small' | 'medium' | 'large' | 'grand';
+export type UnitModelType = 'infantry' | 'archer' | 'cavalry' | 'chariot' | 'special' | 'navy';
+export type TerrainType = 'grass' | 'mountain' | 'forest' | 'water' | 'desert';
+
+export interface LocationConfig {
+    type: 'spot' | 'city';
+    model: string;
+    scale: number;
+}
 
 // Simulator Export
 export interface SimulatorExportResult {
@@ -1766,22 +1343,3 @@ export interface SimulatorExportResult {
     reason?: string;
     data?: JsonObject;
 }
-
-// 8-stat system constants (Phase 2)
-export const STAT_KEYS_8 = [
-    'leadership', 'command', 'intelligence', 'politics',
-    'administration', 'mobility', 'attack', 'defense',
-] as const;
-export type StatKey8 = typeof STAT_KEYS_8[number];
-
-export const STAT_LABELS_KO: Record<StatKey8, string> = {
-    leadership: '통솔', command: '지휘', intelligence: '정보',
-    politics: '정치', administration: '운영', mobility: '기동',
-    attack: '공격', defense: '방어',
-};
-
-export const STAT_COLORS: Record<StatKey8, string> = {
-    leadership: '#ef4444', command: '#f97316', intelligence: '#1e90ff',
-    politics: '#32cd32', administration: '#9370db', mobility: '#06b6d4',
-    attack: '#ff6b6b', defense: '#74c0fc',
-};

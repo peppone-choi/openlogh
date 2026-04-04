@@ -20,5 +20,5 @@ data class ItemDiscardRequest(
 
 data class ItemGiveRequest(
     val itemType: String,
-    val targetOfficerId: Long,
+    val targetGeneralId: Long,
 )

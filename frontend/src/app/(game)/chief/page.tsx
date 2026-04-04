@@ -13,8 +13,8 @@ import {
     Trash2,
 } from 'lucide-react';
 import { useWorldStore } from '@/stores/worldStore';
-import { useOfficerStore } from '@/stores/officerStore';
-import { officerApi, commandApi, factionApi, nationManagementApi, planetApi } from '@/lib/gameApi';
+import { useGeneralStore } from '@/stores/generalStore';
+import { generalApi, commandApi, nationApi, nationManagementApi, cityApi } from '@/lib/gameApi';
 import type {
     CommandArg,
     General,
@@ -29,11 +29,11 @@ import { PageHeader } from '@/components/game/page-header';
 import { LoadingState } from '@/components/game/loading-state';
 import { ResourceDisplay } from '@/components/game/resource-display';
 import { GeneralPortrait } from '@/components/game/general-portrait';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { formatOfficerLevelText, SHIP_CLASS_NAMES, REGION_NAMES } from '@/lib/game-utils';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/8bit/card';
+import { Badge } from '@/components/ui/8bit/badge';
+import { Button } from '@/components/ui/8bit/button';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/8bit/tabs';
+import { formatOfficerLevelText, CREW_TYPE_NAMES, REGION_NAMES } from '@/lib/game-utils';
 import { CommandArgForm, COMMAND_ARGS } from '@/components/game/command-arg-form';
 
 const CHIEF_STAT_MIN = 65;
@@ -115,7 +115,7 @@ function formatTurnClock(raw?: string): string {
 
 export default function ChiefPage() {
     const currentWorld = useWorldStore((s) => s.currentWorld);
-    const { myOfficer, fetchMyGeneral } = useOfficerStore();
+    const { myGeneral, fetchMyGeneral } = useGeneralStore();
     const [nation, setNation] = useState<Nation | null>(null);
     const [nationGenerals, setNationGenerals] = useState<General[]>([]);
     const [nationCities, setNationCities] = useState<City[]>([]);
@@ -160,16 +160,16 @@ export default function ChiefPage() {
     }, [currentWorld, fetchMyGeneral]);
 
     const reload = useCallback(async () => {
-        if (!myOfficer || myOfficer.officerLevel < 5) return;
+        if (!myGeneral || myGeneral.officerLevel < 5) return;
         setLoading(true);
         try {
             const [natRes, gRes, tRes, cmdRes, cRes, oRes] = await Promise.all([
-                factionApi.get(myOfficer.nationId),
-                officerApi.listByFaction(myOfficer.nationId),
-                commandApi.getNationReserved(myOfficer.nationId, myOfficer.officerLevel),
-                commandApi.getNationCommandTable(myOfficer.id),
-                planetApi.listByFaction(myOfficer.nationId),
-                nationManagementApi.getOfficers(myOfficer.nationId),
+                nationApi.get(myGeneral.nationId),
+                generalApi.listByNation(myGeneral.nationId),
+                commandApi.getNationReserved(myGeneral.nationId, myGeneral.officerLevel),
+                commandApi.getNationCommandTable(myGeneral.id),
+                cityApi.listByNation(myGeneral.nationId),
+                nationManagementApi.getOfficers(myGeneral.nationId),
             ]);
             setNation(natRes.data);
             setNationGenerals(gRes.data);
@@ -182,39 +182,39 @@ export default function ChiefPage() {
         } finally {
             setLoading(false);
         }
-    }, [myOfficer]);
+    }, [myGeneral]);
 
     useEffect(() => {
         void reload();
     }, [reload]);
 
     const loadAllOfficerTurns = useCallback(async () => {
-        if (!myOfficer?.nationId || !nation) return;
+        if (!myGeneral?.nationId || !nation) return;
         setAllOfficerLoading(true);
         try {
             const minLv = getMinNationChiefLevel(nation.level);
             const levels: number[] = [];
             for (let lv = minLv; lv <= 12; lv++) levels.push(lv);
-            const turns = await commandApi.getAllOfficerTurns(myOfficer.nationId, levels);
+            const turns = await commandApi.getAllOfficerTurns(myGeneral.nationId, levels);
             setAllOfficerTurns(turns);
         } catch {
             /* ignore */
         } finally {
             setAllOfficerLoading(false);
         }
-    }, [myOfficer?.nationId, nation]);
+    }, [myGeneral?.nationId, nation]);
 
     // Auto-load all officer turns when nation data is ready
     useEffect(() => {
-        if (nation && myOfficer?.nationId) {
+        if (nation && myGeneral?.nationId) {
             void loadAllOfficerTurns();
         }
-    }, [nation, myOfficer?.nationId, loadAllOfficerTurns]);
+    }, [nation, myGeneral?.nationId, loadAllOfficerTurns]);
 
     const getNationTurn = (idx: number) => nationTurns.find((turn) => turn.turnIdx === idx);
 
     // Preset localStorage key
-    const nationPresetKey = myOfficer?.nationId ? `openlogh:faction-presets:${myOfficer.nationId}` : null;
+    const nationPresetKey = myGeneral?.nationId ? `opensam:nation-presets:${myGeneral.nationId}` : null;
 
     // Load presets from localStorage
     useEffect(() => {
@@ -271,7 +271,7 @@ export default function ChiefPage() {
     }, [filledNationTurns, selectedNationSlots]);
 
     const nationPasteClipboard = useCallback(async () => {
-        if (!nationClipboard || !myOfficer?.nationId) return;
+        if (!nationClipboard || !myGeneral?.nationId) return;
         const slots = [...selectedNationSlots].sort((a, b) => a - b);
         if (slots.length === 0) return;
         const anchor = slots[0];
@@ -284,9 +284,9 @@ export default function ChiefPage() {
             actionCode: item.actionCode,
             arg: item.arg,
         }));
-        await commandApi.reserveNation(myOfficer.nationId, myOfficer.id, turns);
+        await commandApi.reserveNation(myGeneral.nationId, myGeneral.id, turns);
         await reload();
-    }, [nationClipboard, myOfficer, selectedNationSlots, reload]);
+    }, [nationClipboard, myGeneral, selectedNationSlots, reload]);
 
     const nationCopyAsText = useCallback(() => {
         const slots = [...selectedNationSlots].sort((a, b) => a - b);
@@ -324,7 +324,7 @@ export default function ChiefPage() {
 
     // Load preset
     const loadNationPreset = useCallback(async () => {
-        if (!selectedPreset || !myOfficer?.nationId) return;
+        if (!selectedPreset || !myGeneral?.nationId) return;
         const preset = nationPresets.find((p) => p.name === selectedPreset);
         if (!preset) return;
         const slots = [...selectedNationSlots].sort((a, b) => a - b);
@@ -338,9 +338,9 @@ export default function ChiefPage() {
             actionCode: item.actionCode,
             arg: item.arg,
         }));
-        await commandApi.reserveNation(myOfficer.nationId, myOfficer.id, turns);
+        await commandApi.reserveNation(myGeneral.nationId, myGeneral.id, turns);
         await reload();
-    }, [selectedPreset, myOfficer, nationPresets, selectedNationSlots, reload]);
+    }, [selectedPreset, myGeneral, nationPresets, selectedNationSlots, reload]);
 
     const deleteNationPreset = useCallback(() => {
         if (!selectedPreset) return;
@@ -371,7 +371,7 @@ export default function ChiefPage() {
             setNationDragOver(null);
             const fromIdx = nationDragFrom;
             setNationDragFrom(null);
-            if (fromIdx === null || fromIdx === targetIdx || !myOfficer?.nationId) return;
+            if (fromIdx === null || fromIdx === targetIdx || !myGeneral?.nationId) return;
 
             const ordered = [...filledNationTurns];
             const [moved] = ordered.splice(fromIdx, 1);
@@ -387,12 +387,12 @@ export default function ChiefPage() {
                     arg: ordered[i].arg,
                 });
             }
-            await commandApi.reserveNation(myOfficer.nationId, myOfficer.id, turns);
+            await commandApi.reserveNation(myGeneral.nationId, myGeneral.id, turns);
             await reload();
             setSelectedNationSlots(new Set([targetIdx]));
             setLastNationClickedSlot(targetIdx);
         },
-        [nationDragFrom, filledNationTurns, myOfficer, reload]
+        [nationDragFrom, filledNationTurns, myGeneral, reload]
     );
 
     const handleNationDragEnd = useCallback(() => {
@@ -428,7 +428,7 @@ export default function ChiefPage() {
     };
 
     const handleNationReserve = async (actionCode: string, arg?: CommandArg) => {
-        if (!myOfficer?.nationId) return;
+        if (!myGeneral?.nationId) return;
 
         setReservingNation(true);
         setNationReserveResult(null);
@@ -436,11 +436,11 @@ export default function ChiefPage() {
             const turns = [...selectedNationSlots]
                 .sort((a, b) => a - b)
                 .map((turnIdx) => ({ turnIdx, actionCode, arg }));
-            await commandApi.reserveNation(myOfficer.nationId, myOfficer.id, turns);
+            await commandApi.reserveNation(myGeneral.nationId, myGeneral.id, turns);
             await reload();
             setNationReserveResult({
                 success: true,
-                logs: ['진영 명령 예약을 저장했습니다.'],
+                logs: ['국가 명령 예약을 저장했습니다.'],
             });
             setShowNationReserveForm(false);
 
@@ -452,7 +452,7 @@ export default function ChiefPage() {
         } catch {
             setNationReserveResult({
                 success: false,
-                logs: ['진영 명령 예약 저장에 실패했습니다.'],
+                logs: ['국가 명령 예약 저장에 실패했습니다.'],
             });
         } finally {
             setReservingNation(false);
@@ -506,16 +506,16 @@ export default function ChiefPage() {
     }, [allOfficerTurns, cityMap, nationGenerals, officerOverview]);
 
     if (!currentWorld) return <div className="p-4 text-muted-foreground">월드를 선택해주세요.</div>;
-    if (!myOfficer) return <LoadingState />;
-    if (myOfficer.officerLevel < 5)
+    if (!myGeneral) return <LoadingState />;
+    if (myGeneral.officerLevel < 5)
         return <div className="p-4 text-muted-foreground">관직 Lv.5 이상만 사용 가능합니다.</div>;
     if (loading) return <LoadingState />;
     if (error) return <div className="p-4 text-destructive">{error}</div>;
 
     const npcGenerals = nationGenerals.filter((g) => g.npcState > 0);
     const playerGenerals = nationGenerals.filter((g) => g.npcState === 0);
-    const totalCrew = nationGenerals.reduce((sum, g) => sum + g.ships, 0);
-    const isChief = myOfficer.officerLevel === 20;
+    const totalCrew = nationGenerals.reduce((sum, g) => sum + g.crew, 0);
+    const isChief = myGeneral.officerLevel === 20;
 
     return (
         <div className="p-4 space-y-4 max-w-3xl mx-auto">
@@ -529,7 +529,7 @@ export default function ChiefPage() {
                 <TabsList>
                     <TabsTrigger value="chief">사령부</TabsTrigger>
                     <TabsTrigger value="overview">전체 턴</TabsTrigger>
-                    <TabsTrigger value="generals">소속 제독</TabsTrigger>
+                    <TabsTrigger value="generals">소속 장수</TabsTrigger>
                 </TabsList>
 
                 {/* ===== Tab 1: Chief Center (사령부) ===== */}
@@ -538,24 +538,24 @@ export default function ChiefPage() {
                     {nation && (
                         <Card>
                             <CardHeader>
-                                <CardTitle>{nation.name} 진영 자원</CardTitle>
+                                <CardTitle>{nation.name} 국가 자원</CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <ResourceDisplay funds={nation.funds} supplies={nation.supplies} ships={totalCrew} />
+                                <ResourceDisplay gold={nation.gold} rice={nation.rice} crew={totalCrew} />
                             </CardContent>
                         </Card>
                     )}
 
                     <Tabs defaultValue="reservation" className="space-y-3">
                         <TabsList>
-                            <TabsTrigger value="reservation">진영 명령 예약</TabsTrigger>
+                            <TabsTrigger value="reservation">국가 명령 예약</TabsTrigger>
                             <TabsTrigger value="execute">즉시 실행</TabsTrigger>
                         </TabsList>
 
                         <TabsContent value="reservation" className="space-y-3 mt-0">
                             <Card>
                                 <CardHeader>
-                                    <CardTitle>진영 명령 예약 (12턴)</CardTitle>
+                                    <CardTitle>국가 명령 예약 (12턴)</CardTitle>
                                 </CardHeader>
                                 <CardContent className="space-y-2">
                                     {/* Toolbar */}
@@ -600,7 +600,7 @@ export default function ChiefPage() {
                                         <select
                                             value={selectedPreset}
                                             onChange={(e) => setSelectedPreset(e.target.value)}
-                                            className="h-8 min-w-[120px] rounded-md border border-input bg-background px-2 text-xs"
+                                            className="h-8 min-w-[120px] rounded-none border border-input bg-background px-2 text-xs"
                                         >
                                             <option value="">프리셋 선택</option>
                                             {nationPresets.map((p) => (
@@ -768,7 +768,7 @@ export default function ChiefPage() {
                         <TabsContent value="execute" className="space-y-3 mt-0">
                             <Card>
                                 <CardHeader>
-                                    <CardTitle>진영 명령</CardTitle>
+                                    <CardTitle>국가 명령</CardTitle>
                                 </CardHeader>
                                 <CardContent className="space-y-3">
                                     <div className="flex flex-wrap gap-2">
@@ -812,12 +812,12 @@ export default function ChiefPage() {
                                             </p>
                                             <Button
                                                 onClick={async () => {
-                                                    if (!myOfficer) return;
+                                                    if (!myGeneral) return;
                                                     setExecuting(true);
                                                     setCmdResult(null);
                                                     try {
                                                         const { data } = await commandApi.executeNation(
-                                                            myOfficer.id,
+                                                            myGeneral.id,
                                                             selectedCmd.actionCode
                                                         );
                                                         setCmdResult(data);
@@ -878,7 +878,7 @@ export default function ChiefPage() {
                                                 >
                                                     <span className="font-medium">{officer.name}</span>
                                                     <span className="text-muted-foreground">
-                                                        행성: {officer.cityName}
+                                                        도시: {officer.cityName}
                                                     </span>
                                                     <span className="text-muted-foreground">
                                                         상태: {officer.commandStatus}
@@ -941,7 +941,7 @@ export default function ChiefPage() {
                                             const officer = nationGenerals.find((g) => g.officerLevel === lv);
                                             const turns = turnsByOfficer.get(lv) ?? [];
                                             const turnMap = new Map(turns.map((t) => [t.turnIdx, t]));
-                                            const isMe = lv === myOfficer.officerLevel;
+                                            const isMe = lv === myGeneral.officerLevel;
                                             const reservedCount = turns.filter((t) => t.actionCode !== '휴식').length;
 
                                             return (
@@ -1034,7 +1034,7 @@ export default function ChiefPage() {
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
                                 <Users className="size-4" />
-                                소속 제독 (플레이어 {playerGenerals.length}명 / NPC {npcGenerals.length}명)
+                                소속 장수 (플레이어 {playerGenerals.length}명 / NPC {npcGenerals.length}명)
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
@@ -1042,7 +1042,7 @@ export default function ChiefPage() {
                                 <table className="w-full text-sm">
                                     <thead>
                                         <tr className="border-b border-gray-700 text-xs text-muted-foreground">
-                                            <th className="px-2 py-1 text-left">제독</th>
+                                            <th className="px-2 py-1 text-left">장수</th>
                                             <th className="px-2 py-1 text-left">관직</th>
                                             <th className="px-2 py-1 text-left">도시</th>
                                             <th className="px-2 py-1 text-right">병력</th>
@@ -1087,7 +1087,7 @@ export default function ChiefPage() {
                                                         {g.crew.toLocaleString()}
                                                     </td>
                                                     <td className="px-2 py-1 text-xs text-right">
-                                                        {SHIP_CLASS_NAMES[g.crewType] ?? g.crewType}
+                                                        {CREW_TYPE_NAMES[g.crewType] ?? g.crewType}
                                                     </td>
                                                     <td className="px-2 py-1 text-xs text-right tabular-nums">
                                                         {g.train}

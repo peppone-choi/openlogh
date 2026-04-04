@@ -4,10 +4,10 @@ import { useEffect, useState, useCallback } from 'react';
 import { Container, Play, Square, Trash2, RefreshCw } from 'lucide-react';
 import { PageHeader } from '@/components/game/page-header';
 import { LoadingState } from '@/components/game/loading-state';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/8bit/card';
+import { Input } from '@/components/ui/8bit/input';
+import { Button } from '@/components/ui/8bit/button';
+import { Badge } from '@/components/ui/8bit/badge';
 import { gameVersionApi } from '@/lib/gameApi';
 import { toast } from 'sonner';
 
@@ -119,7 +119,7 @@ export default function AdminGameVersionsPage() {
                         <div className="space-y-1">
                             <span className="text-sm text-muted-foreground">이미지 태그 (선택)</span>
                             <Input
-                                placeholder="openlogh/game-app:v1.0.0"
+                                placeholder="opensam/game-app:v1.0.0"
                                 value={imageTag}
                                 onChange={(e) => setImageTag(e.target.value)}
                             />

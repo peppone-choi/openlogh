@@ -1,10 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent } from '@/components/ui/8bit/card';
+import { Badge } from '@/components/ui/8bit/badge';
+import { Button } from '@/components/ui/8bit/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/8bit/tabs';
 import { CommandArgForm, COMMAND_ARGS } from '@/components/game/command-arg-form';
 import type { CommandArg, CommandTableEntry } from '@/types';
 
@@ -16,19 +16,20 @@ interface CommandSelectFormProps {
     generalId: number;
 }
 
-export function CommandSelectForm({ commandTable, onSelect, onCancel, realtimeMode }: CommandSelectFormProps) {
+export function CommandSelectForm({
+    commandTable,
+    onSelect,
+    onCancel,
+    realtimeMode,
+    generalId,
+}: CommandSelectFormProps) {
     const [selectedCmd, setSelectedCmd] = useState('');
-    const [pendingArg, setPendingArg] = useState<CommandArg | undefined>();
     const categories = Object.keys(commandTable);
     const hasArgForm = !!(selectedCmd && COMMAND_ARGS[selectedCmd]);
 
-    const handleReserve = (arg?: CommandArg) => {
+    const handleArgSubmit = (arg: CommandArg) => {
         if (!selectedCmd) return;
         onSelect(selectedCmd, arg);
-    };
-
-    const handleArgSubmit = (arg: CommandArg) => {
-        setPendingArg(arg);
     };
 
     const handleSelectCmd = (actionCode: string) => {
@@ -37,7 +38,6 @@ export function CommandSelectForm({ commandTable, onSelect, onCancel, realtimeMo
             return;
         }
         setSelectedCmd(actionCode);
-        setPendingArg(undefined);
     };
 
     return (
@@ -63,13 +63,9 @@ export function CommandSelectForm({ commandTable, onSelect, onCancel, realtimeMo
                                                 key={cmd.actionCode}
                                                 variant={selectedCmd === cmd.actionCode ? 'default' : 'secondary'}
                                                 className={`cursor-pointer text-xs ${
-                                                    !cmd.enabled
-                                                        ? 'border-red-500/50 text-red-400 cursor-not-allowed'
-                                                        : ''
+                                                    !cmd.enabled ? 'border border-red-500/50 text-red-400' : ''
                                                 }`}
-                                                onClick={() => {
-                                                    if (cmd.enabled) handleSelectCmd(cmd.actionCode);
-                                                }}
+                                                onClick={() => handleSelectCmd(cmd.actionCode)}
                                                 title={
                                                     cmd.reason ??
                                                     (needsArgs ? '클릭하여 세부 설정' : '클릭하여 즉시 예약')
@@ -93,11 +89,7 @@ export function CommandSelectForm({ commandTable, onSelect, onCancel, realtimeMo
                 {selectedCmd && hasArgForm && (
                     <>
                         <CommandArgForm actionCode={selectedCmd} onSubmit={handleArgSubmit} />
-
                         <div className="flex gap-2">
-                            <Button size="sm" onClick={() => handleReserve(pendingArg)} disabled={!pendingArg}>
-                                예약
-                            </Button>
                             <Button size="sm" variant="ghost" onClick={onCancel}>
                                 취소
                             </Button>

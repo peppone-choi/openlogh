@@ -1,7 +1,7 @@
 'use client';
 
 import { Map as MapIcon } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/8bit/card';
 import { NationBadge } from '@/components/game/nation-badge';
 import { MapViewer } from '@/components/game/map-viewer';
 import type { City, Diplomacy, Nation } from '@/types';
@@ -89,7 +89,7 @@ export function GlobalDiplomacyOverview({
                     <CardHeader className="pb-2">
                         <CardTitle className="flex items-center gap-1 text-sm">
                             <MapIcon className="size-3.5" />
-                            진영 지도
+                            세력 지도
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -106,14 +106,14 @@ export function GlobalDiplomacyOverview({
                 </CardHeader>
                 <CardContent>
                     {nationStats.length === 0 ? (
-                        <p className="text-xs text-muted-foreground">진영이 없습니다.</p>
+                        <p className="text-xs text-muted-foreground">국가가 없습니다.</p>
                     ) : (
                         <div className="overflow-x-auto">
                             <table className="w-full text-xs">
                                 <thead>
                                     <tr className="border-b border-gray-700">
                                         <th className="px-2 py-1.5 text-left">국가</th>
-                                        <th className="px-2 py-1.5 text-right">제독</th>
+                                        <th className="px-2 py-1.5 text-right">장수</th>
                                         <th className="px-2 py-1.5 text-right">도시</th>
                                         <th className="px-2 py-1.5 text-right">인구</th>
                                         <th className="px-2 py-1.5 text-right">병력</th>
@@ -162,7 +162,7 @@ function DiplomacyMatrix({
     diplomacyLookup: Map<string, string>;
     myNationId?: number;
 }) {
-    if (nations.length === 0) return <p className="text-xs text-muted-foreground">진영이 없습니다.</p>;
+    if (nations.length === 0) return <p className="text-xs text-muted-foreground">국가가 없습니다.</p>;
 
     return (
         <div className="overflow-x-auto">
@@ -289,13 +289,13 @@ function ConflictAreaCard({
     return (
         <Card>
             <CardHeader className="pb-2">
-                <CardTitle className="text-sm">진영 영토 분쟁 현황</CardTitle>
+                <CardTitle className="text-sm">세력 영토 분쟁 현황</CardTitle>
             </CardHeader>
             <CardContent>
                 {warPairs.length > 0 && (
                     <div className="mb-3 space-y-2">
                         <div className="flex items-center gap-1 text-xs font-medium text-red-400">
-                            ⚔️ 교전 중인 진영
+                            ⚔️ 교전 중인 세력
                         </div>
                         {warPairs.map((pair) => (
                             <div

@@ -1,6 +1,6 @@
 package com.openlogh.controller
 
-import com.openlogh.dto.BestOfficerResponse
+import com.openlogh.dto.BestGeneralResponse
 import com.openlogh.dto.MessageResponse
 import com.openlogh.service.RankingService
 import org.springframework.http.ResponseEntity
@@ -11,31 +11,31 @@ import org.springframework.web.bind.annotation.*
 class RankingController(
     private val rankingService: RankingService,
 ) {
-    @GetMapping("/worlds/{sessionId}/best-officers")
-    fun bestOfficers(
-        @PathVariable sessionId: Long,
+    @GetMapping("/worlds/{worldId}/best-generals")
+    fun bestGenerals(
+        @PathVariable worldId: Long,
         @RequestParam(defaultValue = "experience") sortBy: String,
         @RequestParam(defaultValue = "20") limit: Int,
-    ): ResponseEntity<List<BestOfficerResponse>> {
-        return ResponseEntity.ok(rankingService.bestGenerals(sessionId, sortBy, limit))
+    ): ResponseEntity<List<BestGeneralResponse>> {
+        return ResponseEntity.ok(rankingService.bestGenerals(worldId, sortBy, limit))
     }
 
-    @GetMapping("/worlds/{sessionId}/hall-of-fame")
+    @GetMapping("/worlds/{worldId}/hall-of-fame")
     fun hallOfFame(
-        @PathVariable sessionId: Long,
+        @PathVariable worldId: Long,
         @RequestParam(required = false) season: Int?,
         @RequestParam(required = false) scenario: String?,
     ): ResponseEntity<List<MessageResponse>> {
-        return ResponseEntity.ok(rankingService.hallOfFame(sessionId, season, scenario))
+        return ResponseEntity.ok(rankingService.hallOfFame(worldId, season, scenario))
     }
 
-    @GetMapping("/worlds/{sessionId}/hall-of-fame/options")
-    fun hallOfFameOptions(@PathVariable sessionId: Long): ResponseEntity<Map<String, Any>> {
-        return ResponseEntity.ok(rankingService.hallOfFameOptions(sessionId))
+    @GetMapping("/worlds/{worldId}/hall-of-fame/options")
+    fun hallOfFameOptions(@PathVariable worldId: Long): ResponseEntity<Map<String, Any>> {
+        return ResponseEntity.ok(rankingService.hallOfFameOptions(worldId))
     }
 
-    @GetMapping("/worlds/{sessionId}/unique-item-owners")
-    fun uniqueItemOwners(@PathVariable sessionId: Long): ResponseEntity<List<Map<String, Any?>>> {
-        return ResponseEntity.ok(rankingService.uniqueItemOwners(sessionId))
+    @GetMapping("/worlds/{worldId}/unique-item-owners")
+    fun uniqueItemOwners(@PathVariable worldId: Long): ResponseEntity<List<Map<String, Any?>>> {
+        return ResponseEntity.ok(rankingService.uniqueItemOwners(worldId))
     }
 }

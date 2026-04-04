@@ -4,8 +4,8 @@ import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
-import com.openlogh.entity.Planet
-import com.openlogh.model.PlanetConst
+import com.openlogh.entity.City
+import com.openlogh.model.CityConst
 import jakarta.annotation.PostConstruct
 import org.springframework.core.io.ClassPathResource
 import org.springframework.stereotype.Service
@@ -14,13 +14,13 @@ import java.util.LinkedList
 @Service
 class MapService {
 
-    private val maps = mutableMapOf<String, List<PlanetConst>>()
+    private val maps = mutableMapOf<String, List<CityConst>>()
     private val adjacencyIndex = mutableMapOf<String, Map<Int, List<Int>>>()
     private val regionNames = mutableMapOf<String, Map<Int, String>>()
 
     @PostConstruct
     fun init() {
-        loadMap("logh")
+        loadMap("che")
     }
 
     private fun loadMap(mapName: String) {
@@ -32,7 +32,7 @@ class MapService {
         val rawRegions = data["regions"] as? Map<*, *> ?: emptyMap<Any, Any>()
 
         val cities = rawCities.map { raw ->
-            PlanetConst(
+            CityConst(
                 id = (raw["id"] as Number).toInt(),
                 name = raw["name"] as String,
                 level = (raw["level"] as Number).toInt(),
@@ -57,23 +57,23 @@ class MapService {
         }.toMap()
     }
 
-    fun getCities(mapName: String): List<PlanetConst> {
+    fun getCities(mapName: String): List<CityConst> {
         if (!maps.containsKey(mapName)) {
             loadMap(mapName)
         }
         return maps[mapName] ?: throw IllegalArgumentException("Unknown map: $mapName")
     }
 
-    fun getCity(mapName: String, planetId: Int): PlanetConst? {
-        return getCities(mapName).find { it.id == planetId }
+    fun getCity(mapName: String, cityId: Int): CityConst? {
+        return getCities(mapName).find { it.id == cityId }
     }
 
-    fun getAdjacentCities(mapName: String, planetId: Int): List<Int> {
+    fun getAdjacentCities(mapName: String, cityId: Int): List<Int> {
         if (!adjacencyIndex.containsKey(mapName)) {
             loadMap(mapName)
         }
         val adj = adjacencyIndex[mapName] ?: throw IllegalArgumentException("Unknown map: $mapName")
-        return adj[planetId] ?: emptyList()
+        return adj[cityId] ?: emptyList()
     }
 
     fun getRegions(mapName: String): Map<Int, String> {
@@ -117,10 +117,10 @@ class MapService {
         return -1
     }
 
-    fun calcAllPairsDistance(planetIds: List<Int>, mapName: String = "logh"): Map<Int, Map<Int, Int>> {
-        if (planetIds.isEmpty()) return emptyMap()
+    fun calcAllPairsDistance(cityIds: List<Int>, mapName: String = "che"): Map<Int, Map<Int, Int>> {
+        if (cityIds.isEmpty()) return emptyMap()
 
-        val uniqueCityIds = planetIds.distinct()
+        val uniqueCityIds = cityIds.distinct()
         val citySet = uniqueCityIds.toSet()
         val adj = adjacencyIndex[mapName] ?: run {
             loadMap(mapName)
@@ -128,14 +128,14 @@ class MapService {
         } ?: return emptyMap()
 
         val dist = mutableMapOf<Int, MutableMap<Int, Int>>()
-        for (planetId in uniqueCityIds) {
-            val nearList = mutableMapOf(planetId to 0)
-            for (neighbor in adj[planetId].orEmpty()) {
+        for (cityId in uniqueCityIds) {
+            val nearList = mutableMapOf(cityId to 0)
+            for (neighbor in adj[cityId].orEmpty()) {
                 if (neighbor in citySet) {
                     nearList[neighbor] = 1
                 }
             }
-            dist[planetId] = nearList
+            dist[cityId] = nearList
         }
 
         for (stop in uniqueCityIds) {
@@ -157,23 +157,23 @@ class MapService {
     }
 
     fun calcAllPairsDistanceByNation(
-        factionIds: List<Long>,
-        allCities: List<Planet>,
-        mapName: String = "logh",
+        nationIds: List<Long>,
+        allCities: List<City>,
+        mapName: String = "che",
     ): Map<Int, Map<Int, Int>> {
-        val factionIdSet = factionIds.toSet()
-        val planetIds = allCities.asSequence()
-            .filter { it.factionId in factionIdSet }
-            .map { it.mapPlanetId }
+        val nationIdSet = nationIds.toSet()
+        val cityIds = allCities.asSequence()
+            .filter { it.nationId in nationIdSet }
+            .map { it.mapCityId }
             .toList()
-        return calcAllPairsDistance(planetIds, mapName)
+        return calcAllPairsDistance(cityIds, mapName)
     }
 
     fun calcAllPairsDistanceByNations(
-        factionIds: List<Long>,
-        allCities: List<Planet>,
-        mapName: String = "logh",
-    ): Map<Int, Map<Int, Int>> = calcAllPairsDistanceByNation(factionIds, allCities, mapName)
+        nationIds: List<Long>,
+        allCities: List<City>,
+        mapName: String = "che",
+    ): Map<Int, Map<Int, Int>> = calcAllPairsDistanceByNation(nationIds, allCities, mapName)
 
     private fun readListOfStringAnyMap(raw: Any?): List<Map<String, Any>> {
         if (raw !is Iterable<*>) return emptyList()

@@ -10,6 +10,7 @@ import com.openlogh.service.InheritanceService
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.mockito.ArgumentCaptor
 import org.mockito.Mockito.*
 import java.time.OffsetDateTime
 import java.util.Optional
@@ -17,13 +18,14 @@ import java.util.Optional
 class BattleServiceTest {
 
     private lateinit var service: BattleService
-    private lateinit var planetRepository: PlanetRepository
-    private lateinit var officerRepository: OfficerRepository
-    private lateinit var factionRepository: FactionRepository
+    private lateinit var cityRepository: CityRepository
+    private lateinit var generalRepository: GeneralRepository
+    private lateinit var nationRepository: NationRepository
     private lateinit var messageRepository: MessageRepository
-    private lateinit var oldFactionRepository: OldFactionRepository
-    private lateinit var fleetRepository: FleetRepository
-    private lateinit var factionTurnRepository: FactionTurnRepository
+    private lateinit var recordRepository: RecordRepository
+    private lateinit var oldNationRepository: OldNationRepository
+    private lateinit var troopRepository: TroopRepository
+    private lateinit var nationTurnRepository: NationTurnRepository
     private lateinit var eventService: EventService
     private lateinit var diplomacyService: DiplomacyService
     private lateinit var historyService: HistoryService
@@ -33,44 +35,39 @@ class BattleServiceTest {
 
     @BeforeEach
     fun setUp() {
-        planetRepository = mock(PlanetRepository::class.java)
-        officerRepository = mock(OfficerRepository::class.java)
-        factionRepository = mock(FactionRepository::class.java)
+        cityRepository = mock(CityRepository::class.java)
+        generalRepository = mock(GeneralRepository::class.java)
+        nationRepository = mock(NationRepository::class.java)
         messageRepository = mock(MessageRepository::class.java)
-        oldFactionRepository = mock(OldFactionRepository::class.java)
-        fleetRepository = mock(FleetRepository::class.java)
-        factionTurnRepository = mock(FactionTurnRepository::class.java)
+        recordRepository = mock(RecordRepository::class.java)
+        oldNationRepository = mock(OldNationRepository::class.java)
+        troopRepository = mock(TroopRepository::class.java)
+        nationTurnRepository = mock(NationTurnRepository::class.java)
         eventService = mock(EventService::class.java)
         diplomacyService = mock(DiplomacyService::class.java)
         historyService = mock(HistoryService::class.java)
 
-        `when`(planetRepository.save(anyNonNull<Planet>())).thenAnswer { it.arguments[0] }
-        `when`(officerRepository.save(anyNonNull<Officer>())).thenAnswer { it.arguments[0] }
-        `when`(factionRepository.save(anyNonNull<Faction>())).thenAnswer { it.arguments[0] }
+        `when`(cityRepository.save(anyNonNull<City>())).thenAnswer { it.arguments[0] }
+        `when`(generalRepository.save(anyNonNull<General>())).thenAnswer { it.arguments[0] }
+        `when`(nationRepository.save(anyNonNull<Nation>())).thenAnswer { it.arguments[0] }
         `when`(messageRepository.save(anyNonNull<Message>())).thenAnswer { it.arguments[0] }
-        `when`(oldFactionRepository.save(anyNonNull<OldFaction>())).thenAnswer { it.arguments[0] }
-        `when`(fleetRepository.findByFactionId(anyLong())).thenReturn(emptyList())
+        `when`(oldNationRepository.save(anyNonNull<OldNation>())).thenAnswer { it.arguments[0] }
+        `when`(troopRepository.findByNationId(anyLong())).thenReturn(emptyList())
 
         val modifierService = mock(com.openlogh.engine.modifier.ModifierService::class.java)
         val gameConstService = mock(GameConstService::class.java)
-        val gameEventService = mock(com.openlogh.service.GameEventService::class.java)
-        val tacticalSessionManager = mock(com.openlogh.engine.tactical.TacticalSessionManager::class.java)
         `when`(gameConstService.getInt("defaultCityWall")).thenReturn(1000)
 
         service = BattleService(
-            planetRepository, officerRepository, factionRepository,
-            messageRepository, oldFactionRepository, fleetRepository, factionTurnRepository,
+            cityRepository, generalRepository, nationRepository,
+            messageRepository, recordRepository, oldNationRepository, troopRepository, nationTurnRepository,
             eventService, diplomacyService,
-            modifierService, gameConstService, gameEventService, historyService,
-            mock(InheritanceService::class.java), tacticalSessionManager,
-            mock(com.openlogh.engine.SafeZoneService::class.java),
-            mock(com.openlogh.engine.fleet.CrewGradeService::class.java),
-            mock(com.openlogh.engine.planet.PlanetTypeRules::class.java),
+            modifierService, gameConstService, historyService, mock(InheritanceService::class.java),
         )
     }
 
-    private fun createWorld(): SessionState {
-        return SessionState(
+    private fun createWorld(): WorldState {
+        return WorldState(
             id = 1,
             scenarioCode = "test",
             currentYear = 200,
@@ -80,84 +77,86 @@ class BattleServiceTest {
         )
     }
 
-    private fun createOfficer(
+    private fun createGeneral(
         id: Long = 1,
-        factionId: Long = 1,
-        planetId: Long = 1,
-        command: Short = 99,
+        nationId: Long = 1,
+        cityId: Long = 1,
+        strength: Short = 99,
         leadership: Short = 99,
-        ships: Int = 50000,
-        supplies: Int = 500000,
-        funds: Int = 10000,
-        training: Short = 80,
-        morale: Short = 80,
+        crew: Int = 50000,
+        rice: Int = 500000,
+        gold: Int = 10000,
+        train: Short = 80,
+        atmos: Short = 80,
         npcState: Short = 0,
-        rank: Short = 0,
+        officerLevel: Short = 0,
+        officerCity: Int = 0,
         experience: Int = 10000,
         dedication: Int = 5000,
-    ): Officer {
-        return Officer(
+    ): General {
+        return General(
             id = id,
-            sessionId = 1,
+            worldId = 1,
             name = "장수$id",
-            factionId = factionId,
-            planetId = planetId,
+            nationId = nationId,
+            cityId = cityId,
             leadership = leadership,
-            command = command,
-            intelligence = 50,
-            ships = ships,
-            shipClass = 0,
-            training = training,
-            morale = morale,
-            funds = funds,
-            supplies = supplies,
+            strength = strength,
+            intel = 50,
+            crew = crew,
+            crewType = 0,
+            train = train,
+            atmos = atmos,
+            gold = gold,
+            rice = rice,
             experience = experience,
             dedication = dedication,
             npcState = npcState,
-            rank = rank,
+            officerLevel = officerLevel,
+            officerCity = officerCity,
             turnTime = OffsetDateTime.now(),
         )
     }
 
-    private fun createPlanet(
+    private fun createCity(
         id: Long = 10,
-        factionId: Long = 2,
-        orbitalDefense: Int = 10,
-        fortress: Int = 10,
-        population: Int = 10000,
-        production: Int = 1000,
-        commerce: Int = 1000,
-        security: Int = 1000,
-    ): Planet {
-        return Planet(
+        nationId: Long = 2,
+        def: Int = 10,
+        wall: Int = 10,
+        pop: Int = 10000,
+        agri: Int = 1000,
+        comm: Int = 1000,
+        secu: Int = 1000,
+    ): City {
+        return City(
             id = id,
-            sessionId = 1,
+            worldId = 1,
             name = "테스트도시",
-            factionId = factionId,
-            orbitalDefense = orbitalDefense,
-            orbitalDefenseMax = 1000,
-            fortress = fortress,
-            fortressMax = 1000,
-            population = population,
-            populationMax = 50000,
-            production = production,
-            productionMax = 5000,
-            commerce = commerce,
-            commerceMax = 5000,
-            security = security,
-            securityMax = 5000,
+            nationId = nationId,
+            def = def,
+            defMax = 1000,
+            wall = wall,
+            wallMax = 1000,
+            pop = pop,
+            popMax = 50000,
+            agri = agri,
+            agriMax = 5000,
+            comm = comm,
+            commMax = 5000,
+            secu = secu,
+            secuMax = 5000,
         )
     }
 
-    private fun createFaction(id: Long = 2, name: String = "위", funds: Int = 10000, supplies: Int = 10000, capitalPlanetId: Long? = 10): Faction {
-        return Faction(
+    private fun createNation(id: Long = 2, name: String = "위", gold: Int = 10000, rice: Int = 10000, capitalCityId: Long? = 10): Nation {
+        return Nation(
             id = id,
-            sessionId = 1,
+            worldId = 1,
             name = name,
             color = "blue",
-            funds = funds,
-            supplies = supplies,
-            capitalPlanetId = capitalPlanetId,
+            gold = gold,
+            rice = rice,
+            capitalCityId = capitalCityId,
         )
     }
 
@@ -166,19 +165,19 @@ class BattleServiceTest {
     @Test
     fun `executeBattle dispatches OCCUPY_CITY event on city occupation`() {
         val world = createWorld()
-        val attacker = createOfficer(id = 1, factionId = 1)
-        val planet = createPlanet(id = 10, factionId = 2, orbitalDefense = 10, fortress = 10)
+        val attacker = createGeneral(id = 1, nationId = 1)
+        val city = createCity(id = 10, nationId = 2, def = 10, wall = 10)
 
-        val attackerFaction = createFaction(id = 1, name = "촉")
-        val defenderFaction = createFaction(id = 2, name = "위", capitalPlanetId = 99)
+        val attackerNation = createNation(id = 1, name = "촉")
+        val defenderNation = createNation(id = 2, name = "위", capitalCityId = 99)
 
-        `when`(factionRepository.findById(1L)).thenReturn(Optional.of(attackerFaction))
-        `when`(factionRepository.findById(2L)).thenReturn(Optional.of(defenderFaction))
-        `when`(officerRepository.findByCityId(10L)).thenReturn(emptyList())
-        // Defender faction still has other planets
-        `when`(planetRepository.findByFactionId(2L)).thenReturn(listOf(createPlanet(id = 99, factionId = 2)))
+        `when`(nationRepository.findById(1L)).thenReturn(Optional.of(attackerNation))
+        `when`(nationRepository.findById(2L)).thenReturn(Optional.of(defenderNation))
+        `when`(generalRepository.findByCityId(10L)).thenReturn(emptyList())
+        // Defender nation still has other cities
+        `when`(cityRepository.findByNationId(2L)).thenReturn(listOf(createCity(id = 99, nationId = 2)))
 
-        val result = service.executeBattle(attacker, planet, world)
+        val result = service.executeBattle(attacker, city, world)
 
         if (result.cityOccupied) {
             verify(eventService).dispatchEvents(world, "OCCUPY_CITY")
@@ -188,95 +187,96 @@ class BattleServiceTest {
     @Test
     fun `executeBattle dispatches DESTROY_NATION event when last city taken`() {
         val world = createWorld()
-        val attacker = createOfficer(id = 1, factionId = 1)
-        val planet = createPlanet(id = 10, factionId = 2, orbitalDefense = 10, fortress = 10)
+        val attacker = createGeneral(id = 1, nationId = 1)
+        val city = createCity(id = 10, nationId = 2, def = 10, wall = 10)
 
-        val attackerFaction = createFaction(id = 1, name = "촉")
-        val defenderFaction = createFaction(id = 2, name = "위", capitalPlanetId = 10)
+        val attackerNation = createNation(id = 1, name = "촉")
+        val defenderNation = createNation(id = 2, name = "위", capitalCityId = 10)
 
-        `when`(factionRepository.findById(1L)).thenReturn(Optional.of(attackerFaction))
-        `when`(factionRepository.findById(2L)).thenReturn(Optional.of(defenderFaction))
-        `when`(officerRepository.findByCityId(10L)).thenReturn(emptyList())
-        // No remaining planets for defender
-        `when`(planetRepository.findByFactionId(2L)).thenReturn(emptyList())
-        // No officers in destroyed faction
-        `when`(officerRepository.findByNationId(2L)).thenReturn(emptyList())
+        `when`(nationRepository.findById(1L)).thenReturn(Optional.of(attackerNation))
+        `when`(nationRepository.findById(2L)).thenReturn(Optional.of(defenderNation))
+        `when`(generalRepository.findByCityId(10L)).thenReturn(emptyList())
+        // No remaining cities for defender
+        `when`(cityRepository.findByNationId(2L)).thenReturn(emptyList())
+        // No generals in destroyed nation
+        `when`(generalRepository.findByNationId(2L)).thenReturn(emptyList())
 
-        val result = service.executeBattle(attacker, planet, world)
+        val result = service.executeBattle(attacker, city, world)
 
         if (result.cityOccupied) {
             verify(eventService).dispatchEvents(world, "OCCUPY_CITY")
             verify(eventService).dispatchEvents(world, "DESTROY_NATION")
-            verify(historyService).logWorldHistory(anyLong(), contains("멸망"), anyInt(), anyInt())
+            verify(historyService).logWorldHistory(anyLong(), contains("멸망"), anyInt(), anyInt(), eq(false))
             verify(historyService).logNationHistory(anyLong(), anyLong(), contains("정복"), anyInt(), anyInt())
         }
     }
 
-    // ========== Nation destruction: officer release and penalties ==========
+    // ========== Nation destruction: general release and penalties ==========
 
     @Test
-    fun `nation destruction releases officers with resource penalties`() {
+    fun `nation destruction releases generals with resource penalties`() {
         val world = createWorld()
-        val attacker = createOfficer(id = 1, factionId = 1)
-        val planet = createPlanet(id = 10, factionId = 2, orbitalDefense = 10, fortress = 10)
+        val attacker = createGeneral(id = 1, nationId = 1)
+        val city = createCity(id = 10, nationId = 2, def = 10, wall = 10)
 
-        val attackerFaction = createFaction(id = 1, name = "촉")
-        val defenderFaction = createFaction(id = 2, name = "위", capitalPlanetId = 10, funds = 5000, supplies = 8000)
+        val attackerNation = createNation(id = 1, name = "촉")
+        val defenderNation = createNation(id = 2, name = "위", capitalCityId = 10, gold = 5000, rice = 8000)
 
-        val defOfficer1 = createOfficer(id = 10, factionId = 2, funds = 1000, supplies = 2000, experience = 1000, dedication = 1000, npcState = 0)
-        val defOfficer2 = createOfficer(id = 11, factionId = 2, funds = 500, supplies = 1000, experience = 500, dedication = 500, npcState = 3)
+        val defGen1 = createGeneral(id = 10, nationId = 2, gold = 1000, rice = 2000, experience = 1000, dedication = 1000, npcState = 0)
+        val defGen2 = createGeneral(id = 11, nationId = 2, gold = 500, rice = 1000, experience = 500, dedication = 500, npcState = 3)
 
-        `when`(factionRepository.findById(1L)).thenReturn(Optional.of(attackerFaction))
-        `when`(factionRepository.findById(2L)).thenReturn(Optional.of(defenderFaction))
-        `when`(officerRepository.findByCityId(10L)).thenReturn(emptyList())
-        `when`(planetRepository.findByFactionId(2L)).thenReturn(emptyList())
-        `when`(officerRepository.findByNationId(2L)).thenReturn(listOf(defOfficer1, defOfficer2))
+        `when`(nationRepository.findById(1L)).thenReturn(Optional.of(attackerNation))
+        `when`(nationRepository.findById(2L)).thenReturn(Optional.of(defenderNation))
+        `when`(generalRepository.findByCityId(10L)).thenReturn(emptyList())
+        `when`(cityRepository.findByNationId(2L)).thenReturn(emptyList())
+        `when`(generalRepository.findByNationId(2L)).thenReturn(listOf(defGen1, defGen2))
 
-        val result = service.executeBattle(attacker, planet, world)
+        val result = service.executeBattle(attacker, city, world)
 
         if (result.cityOccupied) {
-            // Both officers released (factionId = 0)
-            assertEquals(0L, defOfficer1.factionId)
-            assertEquals(0L, defOfficer2.factionId)
+            // Both generals released (nationId = 0)
+            assertEquals(0L, defGen1.nationId)
+            assertEquals(0L, defGen2.nationId)
 
             // Officers demoted
-            assertEquals(0.toShort(), defOfficer1.rank)
-            assertEquals(0.toShort(), defOfficer2.rank)
+            assertEquals(0.toShort(), defGen1.officerLevel)
+            assertEquals(0.toShort(), defGen2.officerLevel)
 
-            // Funds/supplies reduced (20-50%)
-            assertTrue(defOfficer1.funds < 1000, "Officer should lose funds")
-            assertTrue(defOfficer1.supplies < 2000, "Officer should lose supplies")
+            // Gold/rice reduced (20-50%)
+            assertTrue(defGen1.gold < 1000, "General should lose gold")
+            assertTrue(defGen1.rice < 2000, "General should lose rice")
 
             // Experience reduced by 10%
-            assertTrue(defOfficer1.experience < 1000, "Officer should lose experience")
+            assertTrue(defGen1.experience < 1000, "General should lose experience")
 
             // Dedication reduced by 50%
-            assertTrue(defOfficer1.dedication < 1000, "Officer should lose dedication")
+            assertTrue(defGen1.dedication < 1000, "General should lose dedication")
         }
     }
 
     // ========== Nation destruction: conquest rewards ==========
 
     @Test
-    fun `nation destruction distributes conquest rewards to attacker faction`() {
+    fun `nation destruction distributes conquest rewards to attacker nation`() {
         val world = createWorld()
-        val attacker = createOfficer(id = 1, factionId = 1)
-        val planet = createPlanet(id = 10, factionId = 2, orbitalDefense = 10, fortress = 10)
+        val attacker = createGeneral(id = 1, nationId = 1)
+        val city = createCity(id = 10, nationId = 2, def = 10, wall = 10)
 
-        val attackerFaction = createFaction(id = 1, name = "촉", funds = 5000, supplies = 5000)
-        val defenderFaction = createFaction(id = 2, name = "위", capitalPlanetId = 10, funds = 10000, supplies = 12000)
+        val attackerNation = createNation(id = 1, name = "촉", gold = 5000, rice = 5000)
+        val defenderNation = createNation(id = 2, name = "위", capitalCityId = 10, gold = 10000, rice = 12000)
 
-        `when`(factionRepository.findById(1L)).thenReturn(Optional.of(attackerFaction))
-        `when`(factionRepository.findById(2L)).thenReturn(Optional.of(defenderFaction))
-        `when`(officerRepository.findByCityId(10L)).thenReturn(emptyList())
-        `when`(planetRepository.findByFactionId(2L)).thenReturn(emptyList())
-        `when`(officerRepository.findByNationId(2L)).thenReturn(emptyList())
+        `when`(nationRepository.findById(1L)).thenReturn(Optional.of(attackerNation))
+        `when`(nationRepository.findById(2L)).thenReturn(Optional.of(defenderNation))
+        `when`(generalRepository.findByCityId(10L)).thenReturn(emptyList())
+        `when`(cityRepository.findByNationId(2L)).thenReturn(emptyList())
+        `when`(generalRepository.findByNationId(2L)).thenReturn(emptyList())
 
-        val result = service.executeBattle(attacker, planet, world)
+        val result = service.executeBattle(attacker, city, world)
 
         if (result.cityOccupied) {
-            assertTrue(attackerFaction.funds > 5000, "Attacker faction should gain funds reward")
-            assertTrue(attackerFaction.supplies > 5000, "Attacker faction should gain supplies reward")
+            // Attacker nation should receive half of (10000-0)/2=5000 gold and (12000-2000)/2=5000 rice
+            assertTrue(attackerNation.gold > 5000, "Attacker nation should gain gold reward")
+            assertTrue(attackerNation.rice > 5000, "Attacker nation should gain rice reward")
         }
     }
 
@@ -285,106 +285,106 @@ class BattleServiceTest {
     @Test
     fun `nation destruction kills all diplomatic relations`() {
         val world = createWorld()
-        val attacker = createOfficer(id = 1, factionId = 1)
-        val planet = createPlanet(id = 10, factionId = 2, orbitalDefense = 10, fortress = 10)
+        val attacker = createGeneral(id = 1, nationId = 1)
+        val city = createCity(id = 10, nationId = 2, def = 10, wall = 10)
 
-        val attackerFaction = createFaction(id = 1, name = "촉")
-        val defenderFaction = createFaction(id = 2, name = "위", capitalPlanetId = 10)
+        val attackerNation = createNation(id = 1, name = "촉")
+        val defenderNation = createNation(id = 2, name = "위", capitalCityId = 10)
 
-        `when`(factionRepository.findById(1L)).thenReturn(Optional.of(attackerFaction))
-        `when`(factionRepository.findById(2L)).thenReturn(Optional.of(defenderFaction))
-        `when`(officerRepository.findByCityId(10L)).thenReturn(emptyList())
-        `when`(planetRepository.findByFactionId(2L)).thenReturn(emptyList())
-        `when`(officerRepository.findByNationId(2L)).thenReturn(emptyList())
+        `when`(nationRepository.findById(1L)).thenReturn(Optional.of(attackerNation))
+        `when`(nationRepository.findById(2L)).thenReturn(Optional.of(defenderNation))
+        `when`(generalRepository.findByCityId(10L)).thenReturn(emptyList())
+        `when`(cityRepository.findByNationId(2L)).thenReturn(emptyList())
+        `when`(generalRepository.findByNationId(2L)).thenReturn(emptyList())
 
-        val result = service.executeBattle(attacker, planet, world)
+        val result = service.executeBattle(attacker, city, world)
 
         if (result.cityOccupied) {
             verify(diplomacyService).killAllRelationsForNation(1L, 2L)
         }
     }
 
-    // ========== City occupation: planet stat reset ==========
+    // ========== City occupation: city stat reset ==========
 
     @Test
-    fun `city occupation resets planet stats per legacy rules`() {
+    fun `city occupation resets city stats per legacy rules`() {
         val world = createWorld()
-        val attacker = createOfficer(id = 1, factionId = 1)
-        val planet = createPlanet(id = 10, factionId = 2, orbitalDefense = 10, fortress = 10, production = 1000, commerce = 1000, security = 1000)
+        val attacker = createGeneral(id = 1, nationId = 1)
+        val city = createCity(id = 10, nationId = 2, def = 10, wall = 10, agri = 1000, comm = 1000, secu = 1000)
 
-        val attackerFaction = createFaction(id = 1, name = "촉")
-        val defenderFaction = createFaction(id = 2, name = "위", capitalPlanetId = 99)
+        val attackerNation = createNation(id = 1, name = "촉")
+        val defenderNation = createNation(id = 2, name = "위", capitalCityId = 99)
 
-        `when`(factionRepository.findById(1L)).thenReturn(Optional.of(attackerFaction))
-        `when`(factionRepository.findById(2L)).thenReturn(Optional.of(defenderFaction))
-        `when`(officerRepository.findByCityId(10L)).thenReturn(emptyList())
-        `when`(planetRepository.findByFactionId(2L)).thenReturn(listOf(createPlanet(id = 99, factionId = 2)))
+        `when`(nationRepository.findById(1L)).thenReturn(Optional.of(attackerNation))
+        `when`(nationRepository.findById(2L)).thenReturn(Optional.of(defenderNation))
+        `when`(generalRepository.findByCityId(10L)).thenReturn(emptyList())
+        `when`(cityRepository.findByNationId(2L)).thenReturn(listOf(createCity(id = 99, nationId = 2)))
 
-        val result = service.executeBattle(attacker, planet, world)
+        val result = service.executeBattle(attacker, city, world)
 
         if (result.cityOccupied) {
-            assertEquals(1L, planet.factionId, "Planet faction should change to attacker")
-            assertEquals(0f, planet.approval, "Approval should be reset")
-            assertEquals(1.toShort(), planet.supplyState)
-            assertEquals(0.toShort(), planet.term)
-            assertEquals(0, planet.garrisonSet)
-            // production/commerce/security reduced by 30%
-            assertEquals(700, planet.production)
-            assertEquals(700, planet.commerce)
-            assertEquals(700, planet.security)
+            assertEquals(1L, city.nationId, "City nation should change to attacker")
+            assertEquals(0f, city.trust, "Trust should be reset")
+            assertEquals(1.toShort(), city.supplyState)
+            assertEquals(0.toShort(), city.term)
+            assertEquals(0, city.officerSet)
+            // agri/comm/secu reduced by 30%
+            assertEquals(700, city.agri)
+            assertEquals(700, city.comm)
+            assertEquals(700, city.secu)
         }
     }
 
     // ========== Capital relocation ==========
 
     @Test
-    fun `capital relocation halves faction funds and supplies`() {
+    fun `capital relocation halves nation gold and rice`() {
         val world = createWorld()
-        val attacker = createOfficer(id = 1, factionId = 1)
-        val planet = createPlanet(id = 10, factionId = 2, orbitalDefense = 10, fortress = 10)
+        val attacker = createGeneral(id = 1, nationId = 1)
+        val city = createCity(id = 10, nationId = 2, def = 10, wall = 10)
 
-        val attackerFaction = createFaction(id = 1, name = "촉")
-        val defenderFaction = createFaction(id = 2, name = "위", capitalPlanetId = 10, funds = 10000, supplies = 8000)
+        val attackerNation = createNation(id = 1, name = "촉")
+        val defenderNation = createNation(id = 2, name = "위", capitalCityId = 10, gold = 10000, rice = 8000)
 
-        val otherPlanet = createPlanet(id = 99, factionId = 2, population = 20000)
+        val otherCity = createCity(id = 99, nationId = 2, pop = 20000)
 
-        `when`(factionRepository.findById(1L)).thenReturn(Optional.of(attackerFaction))
-        `when`(factionRepository.findById(2L)).thenReturn(Optional.of(defenderFaction))
-        `when`(officerRepository.findByCityId(10L)).thenReturn(emptyList())
-        `when`(planetRepository.findByFactionId(2L)).thenReturn(listOf(otherPlanet))
-        `when`(officerRepository.findByNationId(2L)).thenReturn(emptyList())
+        `when`(nationRepository.findById(1L)).thenReturn(Optional.of(attackerNation))
+        `when`(nationRepository.findById(2L)).thenReturn(Optional.of(defenderNation))
+        `when`(generalRepository.findByCityId(10L)).thenReturn(emptyList())
+        `when`(cityRepository.findByNationId(2L)).thenReturn(listOf(otherCity))
+        `when`(generalRepository.findByNationId(2L)).thenReturn(emptyList())
 
-        val result = service.executeBattle(attacker, planet, world)
+        val result = service.executeBattle(attacker, city, world)
 
         if (result.cityOccupied) {
-            assertEquals(99L, defenderFaction.capitalPlanetId)
-            assertEquals(5000, defenderFaction.funds)
-            assertEquals(4000, defenderFaction.supplies)
+            assertEquals(99L, defenderNation.capitalCityId)
+            assertEquals(5000, defenderNation.gold)
+            assertEquals(4000, defenderNation.rice)
         }
     }
 
     @Test
     fun `capital relocation applies 20 percent morale loss to all nationals`() {
         val world = createWorld()
-        val attacker = createOfficer(id = 1, factionId = 1)
-        val planet = createPlanet(id = 10, factionId = 2, orbitalDefense = 10, fortress = 10)
+        val attacker = createGeneral(id = 1, nationId = 1)
+        val city = createCity(id = 10, nationId = 2, def = 10, wall = 10)
 
-        val attackerFaction = createFaction(id = 1, name = "촉")
-        val defenderFaction = createFaction(id = 2, name = "위", capitalPlanetId = 10)
+        val attackerNation = createNation(id = 1, name = "촉")
+        val defenderNation = createNation(id = 2, name = "위", capitalCityId = 10)
 
-        val nationalOfficer = createOfficer(id = 20, factionId = 2, planetId = 99, morale = 100)
-        val otherPlanet = createPlanet(id = 99, factionId = 2, population = 20000)
+        val nationalGen = createGeneral(id = 20, nationId = 2, cityId = 99, atmos = 100)
+        val otherCity = createCity(id = 99, nationId = 2, pop = 20000)
 
-        `when`(factionRepository.findById(1L)).thenReturn(Optional.of(attackerFaction))
-        `when`(factionRepository.findById(2L)).thenReturn(Optional.of(defenderFaction))
-        `when`(officerRepository.findByCityId(10L)).thenReturn(emptyList())
-        `when`(planetRepository.findByFactionId(2L)).thenReturn(listOf(otherPlanet))
-        `when`(officerRepository.findByNationId(2L)).thenReturn(listOf(nationalOfficer))
+        `when`(nationRepository.findById(1L)).thenReturn(Optional.of(attackerNation))
+        `when`(nationRepository.findById(2L)).thenReturn(Optional.of(defenderNation))
+        `when`(generalRepository.findByCityId(10L)).thenReturn(emptyList())
+        `when`(cityRepository.findByNationId(2L)).thenReturn(listOf(otherCity))
+        `when`(generalRepository.findByNationId(2L)).thenReturn(listOf(nationalGen))
 
-        val result = service.executeBattle(attacker, planet, world)
+        val result = service.executeBattle(attacker, city, world)
 
         if (result.cityOccupied) {
-            assertEquals(80.toShort(), nationalOfficer.morale, "Morale should drop by 20%")
+            assertEquals(80.toShort(), nationalGen.atmos, "Morale should drop by 20%")
         }
     }
 
@@ -393,146 +393,146 @@ class BattleServiceTest {
     @Test
     fun `city occupation logs conquest message`() {
         val world = createWorld()
-        val attacker = createOfficer(id = 1, factionId = 1)
-        val planet = createPlanet(id = 10, factionId = 2, orbitalDefense = 10, fortress = 10)
+        val attacker = createGeneral(id = 1, nationId = 1)
+        val city = createCity(id = 10, nationId = 2, def = 10, wall = 10)
 
-        val attackerFaction = createFaction(id = 1, name = "촉")
-        val defenderFaction = createFaction(id = 2, name = "위", capitalPlanetId = 99)
+        val attackerNation = createNation(id = 1, name = "촉")
+        val defenderNation = createNation(id = 2, name = "위", capitalCityId = 99)
 
-        `when`(factionRepository.findById(1L)).thenReturn(Optional.of(attackerFaction))
-        `when`(factionRepository.findById(2L)).thenReturn(Optional.of(defenderFaction))
-        `when`(officerRepository.findByCityId(10L)).thenReturn(emptyList())
-        `when`(planetRepository.findByFactionId(2L)).thenReturn(listOf(createPlanet(id = 99, factionId = 2)))
+        `when`(nationRepository.findById(1L)).thenReturn(Optional.of(attackerNation))
+        `when`(nationRepository.findById(2L)).thenReturn(Optional.of(defenderNation))
+        `when`(generalRepository.findByCityId(10L)).thenReturn(emptyList())
+        `when`(cityRepository.findByNationId(2L)).thenReturn(listOf(createCity(id = 99, nationId = 2)))
 
-        val result = service.executeBattle(attacker, planet, world)
+        val result = service.executeBattle(attacker, city, world)
 
         if (result.cityOccupied) {
-            verify(historyService).logWorldHistory(eq(1L), anyString(), eq(200), eq(3))
+            verify(historyService).logWorldHistory(eq(1L), anyString(), eq(200), eq(3), eq(false))
         }
     }
 
     // ========== NPC auto-join queuing ==========
 
     @Test
-    fun `nation destruction hard-deletes faction and archives to old_faction`() {
+    fun `nation destruction hard-deletes nation and archives to old_nation`() {
         val world = createWorld()
-        val attacker = createOfficer(id = 1, factionId = 1)
-        val planet = createPlanet(id = 10, factionId = 2, orbitalDefense = 10, fortress = 10)
+        val attacker = createGeneral(id = 1, nationId = 1)
+        val city = createCity(id = 10, nationId = 2, def = 10, wall = 10)
 
-        val attackerFaction = createFaction(id = 1, name = "촉")
-        val defenderFaction = createFaction(id = 2, name = "위", capitalPlanetId = 10)
+        val attackerNation = createNation(id = 1, name = "촉")
+        val defenderNation = createNation(id = 2, name = "위", capitalCityId = 10)
 
-        `when`(factionRepository.findById(1L)).thenReturn(Optional.of(attackerFaction))
-        `when`(factionRepository.findById(2L)).thenReturn(Optional.of(defenderFaction))
-        `when`(officerRepository.findByCityId(10L)).thenReturn(emptyList())
-        `when`(planetRepository.findByFactionId(2L)).thenReturn(emptyList())
-        `when`(officerRepository.findByNationId(2L)).thenReturn(emptyList())
+        `when`(nationRepository.findById(1L)).thenReturn(Optional.of(attackerNation))
+        `when`(nationRepository.findById(2L)).thenReturn(Optional.of(defenderNation))
+        `when`(generalRepository.findByCityId(10L)).thenReturn(emptyList())
+        `when`(cityRepository.findByNationId(2L)).thenReturn(emptyList())
+        `when`(generalRepository.findByNationId(2L)).thenReturn(emptyList())
 
-        val result = service.executeBattle(attacker, planet, world)
+        val result = service.executeBattle(attacker, city, world)
 
         if (result.cityOccupied) {
-            verify(factionRepository).delete(defenderFaction)
-            verify(oldFactionRepository).save(anyNonNull<OldFaction>())
-            verify(factionTurnRepository).deleteByFactionId(2L)
+            verify(nationRepository).delete(defenderNation)
+            verify(oldNationRepository).save(anyNonNull<OldNation>())
+            verify(nationTurnRepository).deleteByNationId(2L)
         }
     }
 
     @Test
-    fun `nation destruction resets planets to neutral and deletes fleets`() {
+    fun `nation destruction resets cities to neutral and deletes troops`() {
         val world = createWorld()
-        val attacker = createOfficer(id = 1, factionId = 1)
-        val planet = createPlanet(id = 10, factionId = 2, orbitalDefense = 10, fortress = 10)
+        val attacker = createGeneral(id = 1, nationId = 1)
+        val city = createCity(id = 10, nationId = 2, def = 10, wall = 10)
 
-        val attackerFaction = createFaction(id = 1, name = "촉")
-        val defenderFaction = createFaction(id = 2, name = "위", capitalPlanetId = 10)
+        val attackerNation = createNation(id = 1, name = "촉")
+        val defenderNation = createNation(id = 2, name = "위", capitalCityId = 10)
 
-        val orphanedPlanet = createPlanet(id = 20, factionId = 2)
-        val fleet1 = mock(Fleet::class.java)
-        val fleet2 = mock(Fleet::class.java)
+        val orphanedCity = createCity(id = 20, nationId = 2)
+        val troop1 = mock(Troop::class.java)
+        val troop2 = mock(Troop::class.java)
 
-        `when`(factionRepository.findById(1L)).thenReturn(Optional.of(attackerFaction))
-        `when`(factionRepository.findById(2L)).thenReturn(Optional.of(defenderFaction))
-        `when`(officerRepository.findByCityId(10L)).thenReturn(emptyList())
-        `when`(planetRepository.findByFactionId(2L))
+        `when`(nationRepository.findById(1L)).thenReturn(Optional.of(attackerNation))
+        `when`(nationRepository.findById(2L)).thenReturn(Optional.of(defenderNation))
+        `when`(generalRepository.findByCityId(10L)).thenReturn(emptyList())
+        `when`(cityRepository.findByNationId(2L))
             .thenReturn(emptyList())
-            .thenReturn(listOf(orphanedPlanet))
-        `when`(officerRepository.findByNationId(2L)).thenReturn(emptyList())
-        `when`(fleetRepository.findByFactionId(2L)).thenReturn(listOf(fleet1, fleet2))
+            .thenReturn(listOf(orphanedCity))
+        `when`(generalRepository.findByNationId(2L)).thenReturn(emptyList())
+        `when`(troopRepository.findByNationId(2L)).thenReturn(listOf(troop1, troop2))
 
-        val result = service.executeBattle(attacker, planet, world)
+        val result = service.executeBattle(attacker, city, world)
 
         if (result.cityOccupied) {
-            assertEquals(0L, orphanedPlanet.factionId, "Orphaned planet should be neutralized")
-            assertEquals(0.toShort(), orphanedPlanet.frontState, "Planet frontState should be reset")
-            verify(fleetRepository).deleteAll(listOf(fleet1, fleet2))
+            assertEquals(0L, orphanedCity.nationId, "Orphaned city should be neutralized")
+            assertEquals(0.toShort(), orphanedCity.frontState, "City frontState should be reset")
+            verify(troopRepository).deleteAll(listOf(troop1, troop2))
         }
     }
 
     @Test
-    fun `nation destruction sets officer belong and fleet to zero`() {
+    fun `nation destruction sets general belong and troop to zero`() {
         val world = createWorld()
-        val attacker = createOfficer(id = 1, factionId = 1)
-        val planet = createPlanet(id = 10, factionId = 2, orbitalDefense = 10, fortress = 10)
+        val attacker = createGeneral(id = 1, nationId = 1)
+        val city = createCity(id = 10, nationId = 2, def = 10, wall = 10)
 
-        val attackerFaction = createFaction(id = 1, name = "촉")
-        val defenderFaction = createFaction(id = 2, name = "위", capitalPlanetId = 10)
+        val attackerNation = createNation(id = 1, name = "촉")
+        val defenderNation = createNation(id = 2, name = "위", capitalCityId = 10)
 
-        val defOfficer = createOfficer(id = 10, factionId = 2, funds = 1000, supplies = 2000)
+        val defGen = createGeneral(id = 10, nationId = 2, gold = 1000, rice = 2000)
 
-        `when`(factionRepository.findById(1L)).thenReturn(Optional.of(attackerFaction))
-        `when`(factionRepository.findById(2L)).thenReturn(Optional.of(defenderFaction))
-        `when`(officerRepository.findByCityId(10L)).thenReturn(emptyList())
-        `when`(planetRepository.findByFactionId(2L)).thenReturn(emptyList())
-        `when`(officerRepository.findByNationId(2L)).thenReturn(listOf(defOfficer))
+        `when`(nationRepository.findById(1L)).thenReturn(Optional.of(attackerNation))
+        `when`(nationRepository.findById(2L)).thenReturn(Optional.of(defenderNation))
+        `when`(generalRepository.findByCityId(10L)).thenReturn(emptyList())
+        `when`(cityRepository.findByNationId(2L)).thenReturn(emptyList())
+        `when`(generalRepository.findByNationId(2L)).thenReturn(listOf(defGen))
 
-        val result = service.executeBattle(attacker, planet, world)
+        val result = service.executeBattle(attacker, city, world)
 
         if (result.cityOccupied) {
-            assertEquals(0L, defOfficer.factionId)
-            assertEquals(0.toShort(), defOfficer.rank)
-            assertEquals(0.toShort(), defOfficer.belong)
-            assertEquals(0L, defOfficer.fleetId)
+            assertEquals(0L, defGen.nationId)
+            assertEquals(0.toShort(), defGen.officerLevel)
+            assertEquals(0.toShort(), defGen.belong)
+            assertEquals(0L, defGen.troopId)
         }
     }
 
     @Test
     fun `nation destruction queues eligible NPCs for auto-join`() {
         val world = createWorld()
-        val attacker = createOfficer(id = 1, factionId = 1)
-        val planet = createPlanet(id = 10, factionId = 2, orbitalDefense = 10, fortress = 10)
+        val attacker = createGeneral(id = 1, nationId = 1)
+        val city = createCity(id = 10, nationId = 2, def = 10, wall = 10)
 
-        val attackerFaction = createFaction(id = 1, name = "촉")
-        val defenderFaction = createFaction(id = 2, name = "위", capitalPlanetId = 10)
+        val attackerNation = createNation(id = 1, name = "촉")
+        val defenderNation = createNation(id = 2, name = "위", capitalCityId = 10)
 
-        // Create several NPC officers with eligible states
-        val npcOfficers = (2..8).filter { it != 5 }.map { npcState ->
-            createOfficer(
+        // Create several NPC generals with eligible states
+        val npcGenerals = (2..8).filter { it != 5 }.map { npcState ->
+            createGeneral(
                 id = (100 + npcState).toLong(),
-                factionId = 2,
+                nationId = 2,
                 npcState = npcState.toShort(),
-                funds = 100,
-                supplies = 100,
+                gold = 100,
+                rice = 100,
             )
         }
 
-        `when`(factionRepository.findById(1L)).thenReturn(Optional.of(attackerFaction))
-        `when`(factionRepository.findById(2L)).thenReturn(Optional.of(defenderFaction))
-        `when`(officerRepository.findByCityId(10L)).thenReturn(emptyList())
-        `when`(planetRepository.findByFactionId(2L)).thenReturn(emptyList())
-        `when`(officerRepository.findByNationId(2L)).thenReturn(npcOfficers)
+        `when`(nationRepository.findById(1L)).thenReturn(Optional.of(attackerNation))
+        `when`(nationRepository.findById(2L)).thenReturn(Optional.of(defenderNation))
+        `when`(generalRepository.findByCityId(10L)).thenReturn(emptyList())
+        `when`(cityRepository.findByNationId(2L)).thenReturn(emptyList())
+        `when`(generalRepository.findByNationId(2L)).thenReturn(npcGenerals)
 
-        service.executeBattle(attacker, planet, world)
+        service.executeBattle(attacker, city, world)
 
-        // All NPC officers should be released (factionId = 0)
-        for (officer in npcOfficers) {
-            assertEquals(0L, officer.factionId, "NPC officer ${officer.id} should be released")
+        // All NPC generals should be released (nationId = 0)
+        for (gen in npcGenerals) {
+            assertEquals(0L, gen.nationId, "NPC general ${gen.id} should be released")
         }
 
         // Some may have autoJoinNationId metadata (probabilistic, so we just check the field exists for those that got it)
-        val autoJoinQueued = npcOfficers.filter { it.meta.containsKey("autoJoinNationId") }
-        for (officer in autoJoinQueued) {
-            assertEquals(1L, officer.meta["autoJoinNationId"], "Auto-join target should be attacker faction")
-            assertTrue((officer.meta["autoJoinDelay"] as Int) in 0..12, "Delay should be 0-12")
+        val autoJoinQueued = npcGenerals.filter { it.meta.containsKey("autoJoinNationId") }
+        for (gen in autoJoinQueued) {
+            assertEquals(1L, gen.meta["autoJoinNationId"], "Auto-join target should be attacker nation")
+            assertTrue((gen.meta["autoJoinDelay"] as Int) in 0..12, "Delay should be 0-12")
         }
     }
 }

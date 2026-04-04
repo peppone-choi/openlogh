@@ -11,7 +11,7 @@ class Auction(
     var id: Long = 0,
 
     @Column(name = "world_id", nullable = false)
-    var sessionId: Long = 0,
+    var worldId: Long = 0,
 
     @Column(name = "seller_general_id", nullable = false)
     var sellerGeneralId: Long = 0,

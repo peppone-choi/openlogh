@@ -4,9 +4,9 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuthStore } from '@/stores/authStore';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/ui/8bit/button';
 import { LogOut, Shield } from 'lucide-react';
-import { Toaster } from 'sonner';
+import { Toaster } from '@/components/ui/sonner';
 
 export default function LobbyLayout({ children }: { children: React.ReactNode }) {
     const router = useRouter();
@@ -25,7 +25,7 @@ export default function LobbyLayout({ children }: { children: React.ReactNode })
     return (
         <div className="min-h-screen bg-background text-foreground">
             <header className="flex items-center justify-between h-14 px-6 border-b border-border bg-card">
-                <span className="game-font text-lg font-semibold text-[var(--empire-gold)]">오픈 은하영웅전설</span>
+                <span className="text-lg font-bold text-amber-400">오픈삼국</span>
                 <div className="flex items-center gap-2">
                     {isAdmin && (
                         <Button variant="ghost" size="sm" asChild className="text-red-400">

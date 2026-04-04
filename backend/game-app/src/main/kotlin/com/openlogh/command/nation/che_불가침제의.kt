@@ -1,0 +1,52 @@
+package com.openlogh.command.nation
+
+import com.openlogh.command.CommandCost
+import com.openlogh.command.CommandEnv
+import com.openlogh.command.CommandResult
+import com.openlogh.command.NationCommand
+import com.openlogh.command.constraint.*
+import com.openlogh.entity.General
+import com.openlogh.util.JosaUtil
+import kotlin.random.Random
+
+class che_불가침제의(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
+    : NationCommand(general, env, arg) {
+
+    override val actionName = "불가침 제의"
+
+    override val fullConditionConstraints: List<Constraint>
+        get() {
+            val year = arg?.get("year") as? Int
+            val month = arg?.get("month") as? Int
+            if (year != null && month != null) {
+                val currentMonth = env.year * 12 + env.month - 1
+                val reqMonth = year * 12 + month - 1
+                if (reqMonth < currentMonth + 6) {
+                    return listOf(AlwaysFail("기한은 6개월 이상이어야 합니다."))
+                }
+            }
+            return listOf(
+                BeChief(), NotBeNeutral(), ExistsDestNation(), DifferentDestNation(),
+                DisallowDiplomacyBetweenStatus(mapOf(0 to "교전 중입니다.", 1 to "선전포고 상태입니다.")),
+            )
+        }
+
+    override fun getCost() = CommandCost()
+    override fun getPreReqTurn() = 0
+    override fun getPostReqTurn() = 0
+
+    override suspend fun run(rng: Random): CommandResult {
+        val n = nation ?: return CommandResult(false, listOf("국가 정보를 찾을 수 없습니다"))
+        val dn = destNation ?: return CommandResult(false, listOf("대상 국가 정보를 찾을 수 없습니다"))
+
+        val josaRo = JosaUtil.pick(dn.name, "로")
+        pushLog("<D><b>${dn.name}</b></>${josaRo} 불가침 제의 서신을 보냈습니다.<1>${formatDate()}</>")
+        pushHistoryLog("<D><b>${dn.name}</b></>${josaRo} 불가침 제의 서신을 보냈습니다.")
+        pushNationalHistoryLog("<Y>${general.name}</>${pickJosa(general.name, "이")} <D><b>${dn.name}</b></>${josaRo} 불가침 제의를 보냈습니다.")
+        pushDestNationalHistoryLog("<D><b>${n.name}</b></>의 <Y>${general.name}</>${pickJosa(general.name, "이")} 아국에 불가침을 제의했습니다.")
+
+        services!!.diplomacyService.proposeNonAggression(env.worldId, n.id, dn.id)
+
+        return CommandResult(true, logs)
+    }
+}

@@ -2,22 +2,21 @@
 
 import { Suspense, useEffect, useState, useMemo, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { UserPlus, ArrowLeft, Crown, Shield, Sword } from 'lucide-react';
+import { UserPlus, ArrowLeft, Crown } from 'lucide-react';
 import { useWorldStore } from '@/stores/worldStore';
-import { useOfficerStore } from '@/stores/officerStore';
+import { useGeneralStore } from '@/stores/generalStore';
 import { useGameStore } from '@/stores/gameStore';
-import api from '@/lib/api';
-import { inheritanceApi, officerApi, factionApi } from '@/lib/gameApi';
+import { inheritanceApi, generalApi, nationApi } from '@/lib/gameApi';
 import { toast } from 'sonner';
 import { PageHeader } from '@/components/game/page-header';
 import { LoadingState } from '@/components/game/loading-state';
 import { StatBar } from '@/components/game/stat-bar';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { PLANET_LEVEL_NAMES, LEGACY_PERSONALITY_OPTIONS } from '@/lib/game-utils';
-import type { InheritanceInfo, Faction, FactionCounts } from '@/types';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/8bit/card';
+import { Input } from '@/components/ui/8bit/input';
+import { Button } from '@/components/ui/8bit/button';
+import { Badge } from '@/components/ui/8bit/badge';
+import { CITY_LEVEL_NAMES, LEGACY_PERSONALITY_OPTIONS } from '@/lib/game-utils';
+import type { InheritanceInfo, Nation } from '@/types';
 
 const TOTAL_STAT_POINTS = 350;
 const STAT_MIN = 10;
@@ -55,7 +54,7 @@ const PERSONALITIES = LEGACY_PERSONALITY_OPTIONS.map((option) => ({
     info: option.info,
 }));
 
-// Famous general presets for quick character creation (랜덤 제독 프리셋)
+// Famous general presets for quick character creation (랜덤 장수 프리셋)
 const GENERAL_PRESETS: {
     name: string;
     stats: Record<StatKey, number>;
@@ -119,7 +118,7 @@ function LobbyJoinPageContent() {
     const searchParams = useSearchParams();
     const isFoundMode = false;
     const { currentWorld } = useWorldStore();
-    const { fetchMyGeneral } = useOfficerStore();
+    const { fetchMyGeneral } = useGeneralStore();
     const { cities, nations, loadAll } = useGameStore();
 
     const [name, setName] = useState('');
@@ -143,12 +142,7 @@ function LobbyJoinPageContent() {
     const [inheritInfo, setInheritInfo] = useState<InheritanceInfo | null>(null);
     const [inheritSpecial, setInheritSpecial] = useState('');
     const [inheritCity, setInheritCity] = useState<number | ''>('');
-    const [inheritBonusStat, setInheritBonusStat] = useState<[number, number, number]>([0, 0, 0]);
-
-    // Faction picker state (D-01: 3:2 ratio enforcement)
-    const [factionCounts, setFactionCounts] = useState<FactionCounts>({});
-    const [selectedFactionId, setSelectedFactionId] = useState<number | null>(null);
-    const [factionBlocked, setFactionBlocked] = useState<Record<number, string>>({});
+    const [inheritBonusStat, setInheritBonusStat] = useState<[number, number, number, number, number]>([0, 0, 0, 0, 0]);
 
     // Nation scout messages for recruitment display
     const [scoutMessages, setScoutMessages] = useState<Record<number, string>>({});
@@ -168,13 +162,8 @@ function LobbyJoinPageContent() {
                 .then(({ data }) => setInheritInfo(data))
                 .catch(() => {});
 
-            // Load faction counts for ratio display (D-04)
-            api.get<FactionCounts>(`/worlds/${currentWorld.id}/faction-counts`)
-                .then(({ data }) => setFactionCounts(data))
-                .catch(() => {});
-
             // Load scout messages from nations
-            factionApi
+            nationApi
                 .listByWorld(currentWorld.id)
                 .then(({ data: nationList }) => {
                     const msgs: Record<number, string> = {};
@@ -297,46 +286,6 @@ function LobbyJoinPageContent() {
         return nations.filter((n) => n.level > 0 && scoutMessages[n.id] && scoutMessages[n.id].trim().length > 0);
     }, [nations, scoutMessages]);
 
-    // Compute faction ratio data for picker display (D-01)
-    const factionRatioData = useMemo(() => {
-        const empireFaction = nations.find((n) => n.factionType === 'empire' || n.name === '은하제국');
-        const allianceFaction = nations.find((n) => n.factionType === 'alliance' || n.name === '자유행성동맹');
-        if (!empireFaction || !allianceFaction) return null;
-
-        const empireCount = factionCounts[empireFaction.id] ?? 0;
-        const allianceCount = factionCounts[allianceFaction.id] ?? 0;
-        const totalPlayers = empireCount + allianceCount;
-
-        // Check 60% cap: after join, would (count+1)/(total+1) exceed 3/5?
-        const isEmpireBlocked = totalPlayers > 1 && (empireCount + 1) * 5 > (totalPlayers + 1) * 3;
-        const isAllianceBlocked = totalPlayers > 1 && (allianceCount + 1) * 5 > (totalPlayers + 1) * 3;
-
-        const empirePercent = totalPlayers > 0 ? (empireCount / totalPlayers) * 100 : 50;
-        const alliancePercent = totalPlayers > 0 ? (allianceCount / totalPlayers) * 100 : 50;
-
-        return {
-            empire: {
-                faction: empireFaction,
-                count: empireCount,
-                percent: empirePercent,
-                blocked: isEmpireBlocked,
-                blockedMessage: isEmpireBlocked
-                    ? `${empireFaction.name} 인원이 가득 찼습니다 -- 다른 진영에 참가하거나 자리가 날 때까지 기다려주세요`
-                    : null,
-            },
-            alliance: {
-                faction: allianceFaction,
-                count: allianceCount,
-                percent: alliancePercent,
-                blocked: isAllianceBlocked,
-                blockedMessage: isAllianceBlocked
-                    ? `${allianceFaction.name} 인원이 가득 찼습니다 -- 다른 진영에 참가하거나 자리가 날 때까지 기다려주세요`
-                    : null,
-            },
-            totalPlayers,
-        };
-    }, [nations, factionCounts]);
-
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         if (!currentWorld) return;
@@ -360,7 +309,7 @@ function LobbyJoinPageContent() {
         setSubmitting(true);
         setError(null);
         try {
-            await officerApi.create(currentWorld.id, {
+            await generalApi.create(currentWorld.id, {
                 name: blockCustomName ? undefined : name.trim(),
                 cityId: cityId === 'random' ? undefined : cityId,
                 nationId: isFoundMode ? null : nationId || null,
@@ -376,14 +325,7 @@ function LobbyJoinPageContent() {
             await fetchMyGeneral(currentWorld.id);
             router.push('/');
         } catch (err: unknown) {
-            // Handle faction ratio enforcement errors from backend
-            let msg = '제독 생성에 실패했습니다.';
-            if (err && typeof err === 'object' && 'response' in err) {
-                const axiosErr = err as { response?: { data?: { error?: string } } };
-                msg = axiosErr.response?.data?.error ?? msg;
-            } else if (err instanceof Error) {
-                msg = err.message;
-            }
+            const msg = err instanceof Error ? err.message : '장수 생성에 실패했습니다.';
             setError(msg);
         } finally {
             setSubmitting(false);
@@ -398,20 +340,7 @@ function LobbyJoinPageContent() {
                 <ArrowLeft className="size-4 mr-1" /> 로비로 돌아가기
             </Button>
 
-            <PageHeader icon={UserPlus} title="제독 생성" />
-
-            {/* Link to custom character creation */}
-            <div className="flex items-center gap-2 p-3 border border-border rounded-md bg-muted/30">
-                <span className="text-sm text-muted-foreground">커스텀 캐릭터를 직접 설계하려면:</span>
-                <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => router.push('/lobby/create-character')}
-                >
-                    캐릭터 직접 생성
-                </Button>
-            </div>
+            <PageHeader icon={UserPlus} title="장수 생성" />
 
             {error && <div className="text-sm px-3 py-2 rounded bg-destructive/20 text-destructive">{error}</div>}
 
@@ -437,136 +366,18 @@ function LobbyJoinPageContent() {
                 </Card>
             )}
 
-            {/* Faction Picker (D-01: 3:2 ratio enforcement) */}
-            {factionRatioData && (
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="text-sm">진영 선택</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="grid grid-cols-2 gap-2">
-                            {/* Empire Card */}
-                            <button
-                                type="button"
-                                disabled={factionRatioData.empire.blocked}
-                                onClick={() => {
-                                    if (!factionRatioData.empire.blocked) {
-                                        setSelectedFactionId(factionRatioData.empire.faction.id);
-                                        setNationId(factionRatioData.empire.faction.id);
-                                    }
-                                }}
-                                className={`p-3 border text-left transition-colors ${
-                                    selectedFactionId === factionRatioData.empire.faction.id
-                                        ? 'border-[var(--empire-gold)] bg-[var(--empire-gold)]/5'
-                                        : 'border-border'
-                                } ${
-                                    factionRatioData.empire.blocked
-                                        ? 'opacity-50 cursor-not-allowed'
-                                        : 'cursor-pointer hover:border-[var(--empire-gold)]/60'
-                                }`}
-                            >
-                                <div className="flex items-center gap-2 mb-1">
-                                    <Crown className="size-4" style={{ color: 'var(--empire-gold)' }} />
-                                    <span className="font-bold text-sm" style={{ color: 'var(--empire-gold)' }}>
-                                        은하제국
-                                    </span>
-                                </div>
-                                <div className="text-xs text-muted-foreground">
-                                    참가 인원: {factionRatioData.empire.count}명
-                                </div>
-                            </button>
-
-                            {/* Alliance Card */}
-                            <button
-                                type="button"
-                                disabled={factionRatioData.alliance.blocked}
-                                onClick={() => {
-                                    if (!factionRatioData.alliance.blocked) {
-                                        setSelectedFactionId(factionRatioData.alliance.faction.id);
-                                        setNationId(factionRatioData.alliance.faction.id);
-                                    }
-                                }}
-                                className={`p-3 border text-left transition-colors ${
-                                    selectedFactionId === factionRatioData.alliance.faction.id
-                                        ? 'border-[var(--alliance-blue)] bg-[var(--alliance-blue)]/5'
-                                        : 'border-border'
-                                } ${
-                                    factionRatioData.alliance.blocked
-                                        ? 'opacity-50 cursor-not-allowed'
-                                        : 'cursor-pointer hover:border-[var(--alliance-blue)]/60'
-                                }`}
-                            >
-                                <div className="flex items-center gap-2 mb-1">
-                                    <Shield className="size-4" style={{ color: 'var(--alliance-blue-bright)' }} />
-                                    <span
-                                        className="font-bold text-sm"
-                                        style={{ color: 'var(--alliance-blue-bright)' }}
-                                    >
-                                        자유행성동맹
-                                    </span>
-                                </div>
-                                <div className="text-xs text-muted-foreground">
-                                    참가 인원: {factionRatioData.alliance.count}명
-                                </div>
-                            </button>
-                        </div>
-
-                        {/* Blocked messages */}
-                        {factionRatioData.empire.blockedMessage && (
-                            <p className="text-xs text-muted-foreground">{factionRatioData.empire.blockedMessage}</p>
-                        )}
-                        {factionRatioData.alliance.blockedMessage && (
-                            <p className="text-xs text-muted-foreground">{factionRatioData.alliance.blockedMessage}</p>
-                        )}
-
-                        {/* Ratio Bar */}
-                        <div className="relative">
-                            <div className="flex h-3 w-full overflow-hidden">
-                                <div
-                                    className="h-full transition-all"
-                                    style={{
-                                        width: `${factionRatioData.empire.percent}%`,
-                                        backgroundColor: 'var(--empire-gold)',
-                                    }}
-                                />
-                                <div
-                                    className="h-full transition-all"
-                                    style={{
-                                        width: `${factionRatioData.alliance.percent}%`,
-                                        backgroundColor: 'var(--alliance-blue)',
-                                    }}
-                                />
-                            </div>
-                            {/* 60% cap indicator */}
-                            <div
-                                className="absolute top-0 h-full border-l-2 border-dashed border-white/50"
-                                style={{ left: '60%' }}
-                            />
-                            <div className="flex justify-between mt-1">
-                                <span className="text-xs text-muted-foreground">
-                                    제국 {factionRatioData.empire.count}명
-                                </span>
-                                <span className="text-xs text-muted-foreground">
-                                    동맹 {factionRatioData.alliance.count}명
-                                </span>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-            )}
-
             <Card>
                 <CardHeader>
-                    <CardTitle>제독 정보 입력</CardTitle>
+                    <CardTitle>장수 정보 입력</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <form onSubmit={handleSubmit} className="space-y-5">
                         {/* Name */}
                         <div className="space-y-1">
-                            <label className="block text-sm text-muted-foreground">제독명</label>
+                            <label className="block text-sm text-muted-foreground">장수명</label>
                             {blockCustomName ? (
-                                <div className="text-sm text-muted-foreground p-2 border border-input rounded-md bg-muted/50">
-                                    이 서버에서는 커스텀 제독명을 사용할 수 없습니다. (서버 설정에 의해 자동 배정됩니다)
+                                <div className="text-sm text-muted-foreground p-2 border border-input rounded-none bg-muted/50">
+                                    이 서버에서는 커스텀 장수명을 사용할 수 없습니다. (서버 설정에 의해 자동 배정됩니다)
                                 </div>
                             ) : (
                                 <Input
@@ -574,7 +385,7 @@ function LobbyJoinPageContent() {
                                     value={name}
                                     onChange={(e) => setName(e.target.value)}
                                     maxLength={20}
-                                    placeholder="제독 이름 입력"
+                                    placeholder="장수 이름 입력"
                                 />
                             )}
                         </div>
@@ -591,7 +402,7 @@ function LobbyJoinPageContent() {
                                 <span className="text-sm">전콘 사용</span>
                             </label>
                             <p className="text-xs text-muted-foreground ml-6">
-                                계정에 등록된 프로필 이미지(전콘)를 제독 초상화로 사용합니다.
+                                계정에 등록된 프로필 이미지(전콘)를 장수 초상화로 사용합니다.
                             </p>
                         </div>
 
@@ -601,7 +412,7 @@ function LobbyJoinPageContent() {
                             <select
                                 value={personality}
                                 onChange={(e) => setPersonality(e.target.value)}
-                                className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm"
+                                className="w-full px-3 py-2 bg-background border border-input rounded-none text-sm"
                             >
                                 {PERSONALITIES.map((p) => (
                                     <option key={p.key} value={p.key}>
@@ -620,7 +431,7 @@ function LobbyJoinPageContent() {
                             <select
                                 value={nationId}
                                 onChange={(e) => setNationId(Number(e.target.value))}
-                                className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm"
+                                className="w-full px-3 py-2 bg-background border border-input rounded-none text-sm"
                             >
                                 <option value={0}>재야 (무소속)</option>
                                 {nations
@@ -638,7 +449,7 @@ function LobbyJoinPageContent() {
 
                         {/* City */}
                         <div className="space-y-1">
-                            <label className="block text-sm text-muted-foreground">시작 행성</label>
+                            <label className="block text-sm text-muted-foreground">시작 도시</label>
                             {nationId === 0 ? (
                                 (() => {
                                     const randomOnly = !!(
@@ -646,7 +457,7 @@ function LobbyJoinPageContent() {
                                         (currentWorld.meta as Record<string, unknown>)?.randomStartCity
                                     );
                                     return randomOnly ? (
-                                        <div className="text-sm text-muted-foreground p-2 border border-input rounded-md bg-muted/50">
+                                        <div className="text-sm text-muted-foreground p-2 border border-input rounded-none bg-muted/50">
                                             이 서버에서는 랜덤 도시 배정만 가능합니다.
                                         </div>
                                     ) : (
@@ -657,19 +468,19 @@ function LobbyJoinPageContent() {
                                                     e.target.value === 'random' ? 'random' : Number(e.target.value)
                                                 )
                                             }
-                                            className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm"
+                                            className="w-full px-3 py-2 bg-background border border-input rounded-none text-sm"
                                         >
                                             <option value="random">랜덤 배치</option>
                                             {filteredCities.map((c) => (
                                                 <option key={c.id} value={c.id}>
-                                                    {c.name} ({PLANET_LEVEL_NAMES[c.level] ?? c.level})
+                                                    {c.name} ({CITY_LEVEL_NAMES[c.level] ?? c.level})
                                                 </option>
                                             ))}
                                         </select>
                                     );
                                 })()
                             ) : (
-                                <div className="text-sm text-muted-foreground p-2 border border-input rounded-md bg-muted/50">
+                                <div className="text-sm text-muted-foreground p-2 border border-input rounded-none bg-muted/50">
                                     국가 소속 시 도시는 자동 배정됩니다.
                                 </div>
                             )}
@@ -722,9 +533,9 @@ function LobbyJoinPageContent() {
                                 </Button>
                             </div>
 
-                            {/* 랜덤 제독 프리셋 (legacy parity: quick general templates) */}
+                            {/* 랜덤 장수 프리셋 (legacy parity: quick general templates) */}
                             <div className="space-y-1">
-                                <label className="text-xs text-muted-foreground">유명 제독 프리셋</label>
+                                <label className="text-xs text-muted-foreground">유명 장수 프리셋</label>
                                 <div className="flex flex-wrap gap-2">
                                     {GENERAL_PRESETS.map((preset) => (
                                         <Button
@@ -815,7 +626,7 @@ function LobbyJoinPageContent() {
                                         <select
                                             value={inheritSpecial}
                                             onChange={(e) => setInheritSpecial(e.target.value)}
-                                            className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm"
+                                            className="w-full px-3 py-2 bg-background border border-input rounded-none text-sm"
                                         >
                                             <option value="">선택 안함</option>
                                             {Object.entries(inheritInfo.availableSpecialWar ?? {}).map(
@@ -836,19 +647,19 @@ function LobbyJoinPageContent() {
 
                                     <div className="space-y-2">
                                         <label className="block text-xs text-muted-foreground">
-                                            시작 행성 지정 (유산)
+                                            시작 도시 지정 (유산)
                                         </label>
                                         <select
                                             value={inheritCity}
                                             onChange={(e) =>
                                                 setInheritCity(e.target.value ? Number(e.target.value) : '')
                                             }
-                                            className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm"
+                                            className="w-full px-3 py-2 bg-background border border-input rounded-none text-sm"
                                         >
                                             <option value="">랜덤 배치</option>
                                             {cities.map((c) => (
                                                 <option key={c.id} value={c.id}>
-                                                    {c.name} ({PLANET_LEVEL_NAMES[c.level] ?? c.level})
+                                                    {c.name} ({CITY_LEVEL_NAMES[c.level] ?? c.level})
                                                 </option>
                                             ))}
                                         </select>
@@ -858,58 +669,38 @@ function LobbyJoinPageContent() {
                                         <label className="block text-xs text-muted-foreground">
                                             보너스 능력치 (합 0 또는 3~5)
                                         </label>
-                                        <div className="grid grid-cols-3 gap-2">
-                                            <div>
-                                                <span className="text-xs">통솔</span>
-                                                <Input
-                                                    type="number"
-                                                    min={0}
-                                                    max={5}
-                                                    value={inheritBonusStat[0]}
-                                                    onChange={(e) =>
-                                                        setInheritBonusStat([
-                                                            Number(e.target.value),
-                                                            inheritBonusStat[1],
-                                                            inheritBonusStat[2],
-                                                        ])
-                                                    }
-                                                    className="text-center"
-                                                />
-                                            </div>
-                                            <div>
-                                                <span className="text-xs">무력</span>
-                                                <Input
-                                                    type="number"
-                                                    min={0}
-                                                    max={5}
-                                                    value={inheritBonusStat[1]}
-                                                    onChange={(e) =>
-                                                        setInheritBonusStat([
-                                                            inheritBonusStat[0],
-                                                            Number(e.target.value),
-                                                            inheritBonusStat[2],
-                                                        ])
-                                                    }
-                                                    className="text-center"
-                                                />
-                                            </div>
-                                            <div>
-                                                <span className="text-xs">지력</span>
-                                                <Input
-                                                    type="number"
-                                                    min={0}
-                                                    max={5}
-                                                    value={inheritBonusStat[2]}
-                                                    onChange={(e) =>
-                                                        setInheritBonusStat([
-                                                            inheritBonusStat[0],
-                                                            inheritBonusStat[1],
-                                                            Number(e.target.value),
-                                                        ])
-                                                    }
-                                                    className="text-center"
-                                                />
-                                            </div>
+                                        <div className="grid grid-cols-5 gap-2">
+                                            {(
+                                                [
+                                                    [0, '통솔'],
+                                                    [1, '무력'],
+                                                    [2, '지력'],
+                                                    [3, '정치'],
+                                                    [4, '매력'],
+                                                ] as const
+                                            ).map(([idx, label]) => (
+                                                <div key={idx}>
+                                                    <span className="text-xs">{label}</span>
+                                                    <Input
+                                                        type="number"
+                                                        min={0}
+                                                        max={5}
+                                                        value={inheritBonusStat[idx]}
+                                                        onChange={(e) => {
+                                                            const next = [...inheritBonusStat] as [
+                                                                number,
+                                                                number,
+                                                                number,
+                                                                number,
+                                                                number,
+                                                            ];
+                                                            next[idx] = Number(e.target.value);
+                                                            setInheritBonusStat(next);
+                                                        }}
+                                                        className="text-center"
+                                                    />
+                                                </div>
+                                            ))}
                                         </div>
                                         <p className="text-xs text-muted-foreground">보너스 합: {inheritBonusSum}</p>
                                         {!inheritBonusValid && (
@@ -925,7 +716,7 @@ function LobbyJoinPageContent() {
                         {/* Submit */}
                         <div className="flex gap-2">
                             <Button type="submit" disabled={submitting || remaining !== 0} className="flex-1">
-                                {submitting ? '생성중...' : '제독 생성'}
+                                {submitting ? '생성중...' : '장수 생성'}
                             </Button>
                             <Button type="button" variant="outline" onClick={() => applyPreset('balanced')}>
                                 다시 입력
@@ -943,7 +734,7 @@ export default function LobbyJoinPage() {
         <Suspense
             fallback={
                 <div className="p-4">
-                    <LoadingState message="제독 생성 정보를 불러오는 중..." />
+                    <LoadingState message="장수 생성 정보를 불러오는 중..." />
                 </div>
             }
         >

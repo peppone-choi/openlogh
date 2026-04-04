@@ -4,14 +4,25 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useGameStore } from '@/stores/gameStore';
 import { useWorldStore } from '@/stores/worldStore';
-import { REGION_NAMES, PLANET_LEVEL_NAMES, isBrightColor } from '@/lib/game-utils';
-import { useOfficerStore } from '@/stores/officerStore';
+import { REGION_NAMES, CITY_LEVEL_NAMES, isBrightColor } from '@/lib/game-utils';
+import { useGeneralStore } from '@/stores/generalStore';
 import { getSeason, CITY_STATE_NAMES, MAP_WIDTH, MAP_HEIGHT } from '@/lib/map-constants';
 import type { MapSeason } from '@/lib/map-constants';
 import { MapCanvas } from '@/components/game/map-canvas';
 import type { RenderCity } from '@/components/game/map-canvas';
 import { CompactTooltip } from '@/components/game/map-tooltips';
+import { getInterceptionMarkers } from '@/lib/interception-utils';
 import type { PublicCachedMapResponse } from '@/types';
+import { buildUnitMarkers } from '@/components/game/unit-markers';
+import dynamic from 'next/dynamic';
+import { useMap3d } from '@/hooks/useMap3d';
+import { MapModeToggle } from '@/components/game/map-mode-toggle';
+
+// SSR 방지: Three.js는 클라이언트만
+const Map3dScene = dynamic(
+    () => import('@/components/game/map-3d').then((m) => m.Map3dScene),
+    { ssr: false },
+);
 
 interface MapViewerProps {
     /** Mode 1: auto-load from gameStore */
@@ -50,7 +61,7 @@ export function MapViewer({
     const router = useRouter();
     const { cities: storeCities, nations, generals, mapData, loadMap } = useGameStore();
     const currentWorld = useWorldStore((s) => s.currentWorld);
-    const myOfficer = useOfficerStore((s) => s.myOfficer);
+    const myGeneral = useGeneralStore((s) => s.myGeneral);
     const [showNames, setShowNames] = useState(!compact);
 
     const isPublicMode = !!publicData;
@@ -61,11 +72,16 @@ export function MapViewer({
         return worldMapCode?.trim() || 'che';
     }, [mapCodeProp, isPublicMode, publicData?.mapCode, currentWorld?.config]);
 
+    const { mapMode } = useMap3d();
+
     useEffect(() => {
+        // 3D 모드에서는 public 모드(로그인/로비)에서도 맵 데이터 필요
         if (!isPublicMode && worldId != null) {
             loadMap(mapCode);
+        } else if (isPublicMode && mapMode === '3d') {
+            loadMap(mapCode);
         }
-    }, [mapCode, loadMap, isPublicMode, worldId]);
+    }, [mapCode, loadMap, isPublicMode, worldId, mapMode]);
 
     const nationMap = useMemo(() => new Map(nations.map((n) => [n.id, n])), [nations]);
     const emperorCityId = useMemo(() => generals.find((g) => g.npcState === 10)?.cityId ?? -1, [generals]);
@@ -111,11 +127,18 @@ export function MapViewer({
                 isCapital: !!(rt && nation?.capitalCityId === rt.id),
                 supplyState: rt?.supplyState ?? 0,
                 state: (rt as { state?: number })?.state ?? 0,
-                isMyCity: myOfficer?.cityId != null && rt?.id === myOfficer.cityId,
+                isMyCity: myGeneral?.cityId != null && rt?.id === myGeneral.cityId,
                 isEmperorCity: rt?.id === emperorCityId,
             };
         });
-    }, [isPublicMode, publicData, storeCities, overrideCities, mapData, nationMap, myOfficer?.cityId, emperorCityId]);
+    }, [isPublicMode, publicData, storeCities, overrideCities, mapData, nationMap, myGeneral?.cityId, emperorCityId]);
+
+    const nationColorMap = useMemo(() => new Map(nations.map((n) => [n.id, n.color])), [nations]);
+
+    const interceptions = useMemo(() => {
+        if (isPublicMode || !myGeneral || myGeneral.nationId <= 0) return [];
+        return getInterceptionMarkers(generals, myGeneral.nationId, nationColorMap);
+    }, [isPublicMode, generals, myGeneral, nationColorMap]);
 
     const season = useMemo<MapSeason>(() => {
         if (isPublicMode) return getSeason(publicData.currentMonth);
@@ -154,8 +177,8 @@ export function MapViewer({
 
     const renderTooltipFn = useCallback(
         (city: RenderCity, pos: { x: number; y: number }) => {
-            const regionName = city.region != null ? (REGION_NAMES[city.region] ?? '은하') : '';
-            const levelName = PLANET_LEVEL_NAMES[city.level] ?? '';
+            const regionName = city.region != null ? (REGION_NAMES[city.region] ?? '중원') : '';
+            const levelName = CITY_LEVEL_NAMES[city.level] ?? '';
             const prefix = regionName ? `【${regionName}|${levelName}】` : `【${levelName}】`;
             const stateName = city.state > 0 ? (CITY_STATE_NAMES[city.state] ?? `상태${city.state}`) : null;
             const textColor = city.nationColor && isBrightColor(city.nationColor) ? 'black' : 'white';
@@ -180,14 +203,44 @@ export function MapViewer({
         [isPublicMode, compact]
     );
 
+    const unitMarkers = useMemo(() => {
+        if (isPublicMode || !myGeneral) return [];
+        return buildUnitMarkers(generals, myGeneral.nationId, nationColorMap);
+    }, [isPublicMode, generals, myGeneral, nationColorMap]);
+
+    const cities3d = useMemo(() => mapData?.cities ?? [], [mapData]);
+
     if (!isPublicMode && !mapData) {
         return (
             <div className="flex items-center justify-center h-32 text-xs text-muted-foreground">지도 로딩중...</div>
         );
     }
 
+    if (mapMode === '3d') {
+        return (
+            <div className="relative w-full" style={{ aspectRatio: '700 / 500' }}>
+                <MapModeToggle />
+                <Map3dScene
+                    mapCode={mapCode}
+                    cities={cities3d}
+                    renderCities={renderCities}
+                    season={season}
+                    onCityClick={(cityId) => {
+                        // 3D에서는 CityModel 내부에서 이미 stopPropagation 처리
+                        const fakeEvent = { stopPropagation: () => {} } as React.MouseEvent;
+                        handleCityClick(cityId, fakeEvent);
+                    }}
+                    unitMarkers={unitMarkers}
+                    compact={compact}
+                />
+            </div>
+        );
+    }
+
     return (
-        <MapCanvas
+        <div className="relative h-full w-full">
+            <MapModeToggle />
+            <MapCanvas
             cities={renderCities}
             mapCode={mapCode}
             season={season}
@@ -199,6 +252,9 @@ export function MapViewer({
             renderTooltip={renderTooltipFn}
             onCityClick={handleCityClick}
             useResponsiveScale={isPublicMode}
+            interceptions={interceptions}
+            unitMarkers={unitMarkers}
         />
+        </div>
     );
 }

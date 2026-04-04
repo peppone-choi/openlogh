@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useState, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useWorldStore } from '@/stores/worldStore';
-import { useOfficerStore } from '@/stores/officerStore';
+import { useGeneralStore } from '@/stores/generalStore';
 import { useGameStore } from '@/stores/gameStore';
 import { boardApi, messageApi } from '@/lib/gameApi';
 import { subscribeWebSocket } from '@/lib/websocket';
@@ -14,11 +14,11 @@ import { LoadingState } from '@/components/game/loading-state';
 import { EmptyState } from '@/components/game/empty-state';
 import { GeneralPortrait } from '@/components/game/general-portrait';
 import { NationBadge } from '@/components/game/nation-badge';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Card, CardContent } from '@/components/ui/8bit/card';
+import { Badge } from '@/components/ui/8bit/badge';
+import { Button } from '@/components/ui/8bit/button';
+import { Textarea } from '@/components/ui/8bit/textarea';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/8bit/tabs';
 import { formatLog } from '@/lib/formatLog';
 
 const PAGE_SIZE = 20;
@@ -28,8 +28,8 @@ function BoardPageContent() {
     const isSecretParam = searchParams.get('secret') === 'true';
 
     const currentWorld = useWorldStore((s) => s.currentWorld);
-    const myOfficer = useOfficerStore((s) => s.myOfficer);
-    const { officers, factions, loadAll } = useGameStore();
+    const myGeneral = useGeneralStore((s) => s.myGeneral);
+    const { generals, nations, loadAll } = useGameStore();
 
     const [tab, setTab] = useState(isSecretParam ? 'secret' : 'public');
     const [publicPosts, setPublicPosts] = useState<Message[]>([]);
@@ -43,42 +43,42 @@ function BoardPageContent() {
     const [commentsByPost, setCommentsByPost] = useState<Record<number, BoardComment[]>>({});
     const [commentLoadingByPost, setCommentLoadingByPost] = useState<Record<number, boolean>>({});
 
-    const generalMap = useMemo(() => new Map(officers.map((g) => [g.id, g])), [officers]);
+    const generalMap = useMemo(() => new Map(generals.map((g) => [g.id, g])), [generals]);
 
-    const nationMap = useMemo(() => new Map(factions.map((n) => [n.id, n])), [factions]);
+    const nationMap = useMemo(() => new Map(nations.map((n) => [n.id, n])), [nations]);
 
-    const canAccessSecret = (myOfficer?.officerLevel ?? 0) >= 2;
+    const canAccessSecret = (myGeneral?.officerLevel ?? 0) >= 2;
     const isSecret = tab === 'secret';
     const posts = isSecret ? secretPosts : publicPosts;
     const visiblePosts = posts.slice(0, visibleCount);
     const hasMore = visibleCount < posts.length;
 
-    // Load game data (officers/factions) for name lookups
+    // Load game data (generals/nations) for name lookups
     useEffect(() => {
-        if (currentWorld && officers.length === 0) {
+        if (currentWorld && generals.length === 0) {
             loadAll(currentWorld.id);
         }
-    }, [currentWorld, officers.length, loadAll]);
+    }, [currentWorld, generals.length, loadAll]);
 
     const loadPublic = useCallback(async () => {
-        if (!currentWorld || !myOfficer?.factionId) return;
+        if (!currentWorld || !myGeneral?.nationId) return;
         try {
-            const { data } = await messageApi.getBoard(currentWorld.id, myOfficer.factionId);
+            const { data } = await messageApi.getBoard(currentWorld.id, myGeneral.nationId);
             setPublicPosts(data);
         } catch {
             /* ignore */
         }
-    }, [currentWorld, myOfficer?.factionId]);
+    }, [currentWorld, myGeneral?.nationId]);
 
     const loadSecret = useCallback(async () => {
-        if (!currentWorld || !myOfficer?.factionId || !canAccessSecret) return;
+        if (!currentWorld || !myGeneral?.nationId || !canAccessSecret) return;
         try {
-            const { data } = await messageApi.getSecretBoard(currentWorld.id, myOfficer.factionId);
+            const { data } = await messageApi.getSecretBoard(currentWorld.id, myGeneral.nationId);
             setSecretPosts(data);
         } catch {
             /* ignore */
         }
-    }, [currentWorld, myOfficer?.factionId, canAccessSecret]);
+    }, [currentWorld, myGeneral?.nationId, canAccessSecret]);
 
     const loadPosts = useCallback(async () => {
         setLoading(true);
@@ -120,14 +120,14 @@ function BoardPageContent() {
     }, [currentWorld, loadPublic, loadSecret]);
 
     const handlePost = async () => {
-        if (!currentWorld || !myOfficer || !content.trim()) return;
+        if (!currentWorld || !myGeneral || !content.trim()) return;
         setSending(true);
         try {
             if (isSecret) {
                 await messageApi.postSecretBoard(
                     currentWorld.id,
-                    myOfficer.id,
-                    myOfficer.factionId,
+                    myGeneral.id,
+                    myGeneral.nationId,
                     content.trim(),
                     title.trim() || undefined
                 );
@@ -135,8 +135,8 @@ function BoardPageContent() {
             } else {
                 await messageApi.postBoard(
                     currentWorld.id,
-                    myOfficer.id,
-                    myOfficer.factionId,
+                    myGeneral.id,
+                    myGeneral.nationId,
                     content.trim(),
                     title.trim() || undefined
                 );
@@ -175,20 +175,20 @@ function BoardPageContent() {
 
     const handleCreateComment = useCallback(
         async (postId: number, comment: string) => {
-            if (!myOfficer || !comment.trim()) return;
-            await boardApi.createComment(postId, myOfficer.id, comment.trim());
+            if (!myGeneral || !comment.trim()) return;
+            await boardApi.createComment(postId, myGeneral.id, comment.trim());
             await loadComments(postId);
         },
-        [myOfficer, loadComments]
+        [myGeneral, loadComments]
     );
 
     const handleDeleteComment = useCallback(
         async (postId: number, commentId: number) => {
-            if (!myOfficer) return;
-            await boardApi.deleteComment(postId, commentId, myOfficer.id);
+            if (!myGeneral) return;
+            await boardApi.deleteComment(postId, commentId, myGeneral.id);
             await loadComments(postId);
         },
-        [myOfficer, loadComments]
+        [myGeneral, loadComments]
     );
 
     if (!currentWorld) return <div className="p-4 text-muted-foreground">월드를 선택해주세요.</div>;
@@ -201,13 +201,13 @@ function BoardPageContent() {
                 description={
                     isSecret
                         ? '아국 관료만 열람할 수 있는 비밀 게시판입니다.'
-                        : '자국 제독만 열람할 수 있는 게시판입니다.'
+                        : '자국 장수만 열람할 수 있는 게시판입니다.'
                 }
             />
 
             <Tabs
                 value={tab}
-                onValueChange={(nextTab: string) => {
+                onValueChange={(nextTab) => {
                     setTab(nextTab);
                     setVisibleCount(PAGE_SIZE);
                     setExpandedId(null);
@@ -223,12 +223,12 @@ function BoardPageContent() {
 
                 <TabsContent value={tab} className="mt-4 space-y-4">
                     {/* Compose form */}
-                    {myOfficer && myOfficer.factionId > 0 && (!isSecret || canAccessSecret) && (
+                    {myGeneral && myGeneral.nationId > 0 && (!isSecret || canAccessSecret) && (
                         <Card>
                             <CardContent className="space-y-2">
                                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                    <GeneralPortrait picture={myOfficer.picture} name={myOfficer.name} size="sm" />
-                                    <span className="font-medium text-white">{myOfficer.name}</span>
+                                    <GeneralPortrait picture={myGeneral.picture} name={myGeneral.name} size="sm" />
+                                    <span className="font-medium text-white">{myGeneral.name}</span>
                                     {isSecret && (
                                         <Badge variant="destructive" className="text-[10px]">
                                             기밀
@@ -240,7 +240,7 @@ function BoardPageContent() {
                                     value={title}
                                     onChange={(e) => setTitle(e.target.value)}
                                     placeholder="제목을 입력하세요..."
-                                    className="w-full h-8 px-2 text-xs border border-input bg-transparent rounded-md outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+                                    className="w-full h-8 px-2 text-xs border border-input bg-transparent rounded-none outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
                                 />
                                 <Textarea
                                     value={content}
@@ -290,7 +290,7 @@ function BoardPageContent() {
                                     idx={posts.length - idx}
                                     isSecret={isSecret}
                                     isExpanded={expandedId === post.id}
-                                    isMine={post.srcId === myOfficer?.id}
+                                    isMine={post.srcId === myGeneral?.id}
                                     sender={post.srcId ? (generalMap.get(post.srcId) ?? null) : null}
                                     senderNation={
                                         post.srcId
@@ -312,7 +312,7 @@ function BoardPageContent() {
                                     onDelete={() => handleDelete(post.id)}
                                     comments={commentsByPost[post.id] ?? []}
                                     commentsLoading={commentLoadingByPost[post.id] ?? false}
-                                    myOfficerId={myOfficer?.id ?? null}
+                                    myGeneralId={myGeneral?.id ?? null}
                                     getGeneralName={(id) => generalMap.get(id)?.name ?? `#${id}`}
                                     onCreateComment={(comment) => handleCreateComment(post.id, comment)}
                                     onDeleteComment={(commentId) => handleDeleteComment(post.id, commentId)}
@@ -365,7 +365,7 @@ interface BoardRowProps {
     senderNation: { name: string; color: string } | null;
     comments: BoardComment[];
     commentsLoading: boolean;
-    myOfficerId: number | null;
+    myGeneralId: number | null;
     getGeneralName: (generalId: number) => string;
     onCreateComment: (content: string) => Promise<void>;
     onDeleteComment: (commentId: number) => Promise<void>;
@@ -383,7 +383,7 @@ function BoardRow({
     senderNation,
     comments,
     commentsLoading,
-    myOfficerId,
+    myGeneralId,
     getGeneralName,
     onCreateComment,
     onDeleteComment,
@@ -486,7 +486,7 @@ function BoardRow({
                                                 <span className="text-[10px] text-muted-foreground shrink-0">
                                                     {new Date(c.createdAt).toLocaleString('ko-KR')}
                                                 </span>
-                                                {myOfficerId === c.authorGeneralId && (
+                                                {myGeneralId === c.authorGeneralId && (
                                                     <Button
                                                         size="icon-sm"
                                                         variant="ghost"

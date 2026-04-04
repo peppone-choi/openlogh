@@ -10,9 +10,9 @@ data class DiplomacyRespondWithActionRequest(
 
 data class DiplomacyDto(
     val id: Long,
-    val sessionId: Long,
-    val srcFactionId: Long,
-    val destFactionId: Long,
+    val worldId: Long,
+    val srcNationId: Long,
+    val destNationId: Long,
     val stateCode: String,
     val term: Int,
     val isDead: Boolean,
@@ -21,9 +21,9 @@ data class DiplomacyDto(
     companion object {
         fun from(d: Diplomacy) = DiplomacyDto(
             id = d.id,
-            sessionId = d.sessionId,
-            srcFactionId = d.srcFactionId,
-            destFactionId = d.destFactionId,
+            worldId = d.worldId,
+            srcNationId = d.srcNationId,
+            destNationId = d.destNationId,
             stateCode = d.stateCode,
             term = d.term.toInt(),
             isDead = d.isDead,

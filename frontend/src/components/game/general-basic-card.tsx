@@ -1,6 +1,6 @@
 'use client';
 
-import type { OfficerFrontInfo, FactionFrontInfo } from '@/types';
+import type { GeneralFrontInfo, NationFrontInfo } from '@/types';
 import { LoghBar } from '@/components/game/logh-bar';
 import {
     isBrightColor,
@@ -11,38 +11,38 @@ import {
     nextExpLevelRemain,
     ageColor,
     isValidObjKey,
-    getShipClassName,
-    parseShipClassCode,
+    getCrewTypeName,
+    parseCrewTypeCode,
     formatDexLevel,
 } from '@/lib/game-utils';
-import { getPortraitUrl, getShipClassIconUrl } from '@/lib/image';
+import { getPortraitUrl, getCrewTypeIconUrl } from '@/lib/image';
 import { useGameStore } from '@/stores/gameStore';
 
 interface GeneralBasicCardProps {
-    general: OfficerFrontInfo | null;
-    nation: FactionFrontInfo | null;
+    general: GeneralFrontInfo | null;
+    nation: NationFrontInfo | null;
     turnTerm?: number;
     lastExecuted?: string | null;
 }
 
 export function GeneralBasicCard({ general, nation, turnTerm, lastExecuted }: GeneralBasicCardProps) {
-    const cities = useGameStore((s) => s.starSystems);
+    const cities = useGameStore((s) => s.cities);
 
     if (!general) return null;
 
-    const officerCityName =
-        general.officerCity > 0 ? cities.find((c) => c.id === general.officerCity)?.name : null;
-
+    const officerCityName = general.officerCity > 0
+        ? cities.find((c) => c.id === general.officerCity)?.name
+        : null;
     const injuryInfo = formatInjury(general.injury);
-    const typeCall = formatGeneralTypeCall(general.leadership, general.command, general.intelligence);
+    const typeCall = formatGeneralTypeCall(general.leadership, general.strength, general.intel);
     const nationColor = nation?.color ?? '#333';
     const nationTextColor = isBrightColor(nationColor) ? '#000' : '#fff';
 
     const leadershipEff = calcInjury(general.leadership, general.injury);
-    const commandEff = calcInjury(general.command, general.injury);
-    const intelligenceEff = calcInjury(general.intelligence, general.injury);
+    const strengthEff = calcInjury(general.strength, general.injury);
+    const intelEff = calcInjury(general.intel, general.injury);
     const politicsEff = calcInjury(general.politics, general.injury);
-    const administrationEff = calcInjury(general.administration, general.injury);
+    const charmEff = calcInjury(general.charm, general.injury);
 
     const [expCur, expMax] = nextExpLevelRemain(general.experience, general.explevel);
     const expPercent = expMax > 0 ? (expCur / expMax) * 100 : 0;
@@ -81,11 +81,15 @@ export function GeneralBasicCard({ general, nation, turnTerm, lastExecuted }: Ge
             effective = effective + turnTerm * 60000;
         }
         const minutes = Math.max(0, Math.min(999, Math.floor((effective - lastExecTime) / 60000)));
-        nextExecText = `${minutes}분`;
+        nextExecText = `${minutes}분 남음`;
     }
 
     return (
-        <div className="bg-card border border-border rounded-lg overflow-hidden text-sm" style={{ maxWidth: 500 }}>
+        <div
+            className="bg-card border border-foreground/15 rounded-none retro overflow-hidden text-sm"
+            data-tutorial="general-card"
+            style={{ maxWidth: 500 }}
+        >
             <div className="flex items-stretch">
                 <div
                     className="shrink-0"
@@ -135,15 +139,15 @@ export function GeneralBasicCard({ general, nation, turnTerm, lastExecuted }: Ge
                 />
                 <StatCell
                     label="지휘"
-                    value={commandEff}
+                    value={strengthEff}
                     injuryColor={injuryInfo.color}
-                    exp={(general.commandExp / statUpThreshold) * 100}
+                    exp={(general.strengthExp / statUpThreshold) * 100}
                 />
                 <StatCell
                     label="정보"
-                    value={intelligenceEff}
+                    value={intelEff}
                     injuryColor={injuryInfo.color}
-                    exp={(general.intelligenceExp / statUpThreshold) * 100}
+                    exp={(general.intelExp / statUpThreshold) * 100}
                 />
                 <StatCell
                     label="정치"
@@ -153,21 +157,21 @@ export function GeneralBasicCard({ general, nation, turnTerm, lastExecuted }: Ge
                 />
                 <StatCell
                     label="운영"
-                    value={administrationEff}
+                    value={charmEff}
                     injuryColor={injuryInfo.color}
-                    exp={(general.administrationExp / statUpThreshold) * 100}
+                    exp={(general.charmExp / statUpThreshold) * 100}
                 />
                 <div className="bg-card p-1.5">
-                    <div className="text-[10px] text-muted-foreground">특수장비</div>
-                    <div className="font-medium">{isValidObjKey(general.equipment) ? general.equipment : '-'}</div>
+                    <div className="text-[10px] text-muted-foreground">서적</div>
+                    <div className="font-medium">{isValidObjKey(general.book) ? general.book : '-'}</div>
                 </div>
             </div>
 
             <div className="grid grid-cols-4 gap-px bg-border/50 border-t border-border">
-                <KV label="기관" value={isValidObjKey(general.engine) ? general.engine : '-'} />
-                <KV label="기함" value={isValidObjKey(general.flagship) ? general.flagship : '-'} />
-                <KV label="부속품" value={isValidObjKey(general.accessory) ? general.accessory : '-'} />
-                <KV label="자금" value={general.funds.toLocaleString()} valueColor="var(--empire-gold)" />
+                <KV label="기관" value={isValidObjKey(general.horse) ? general.horse : '-'} />
+                <KV label="기함" value={isValidObjKey(general.weapon) ? general.weapon : '-'} />
+                <KV label="부속품" value={isValidObjKey(general.item) ? general.item : '-'} />
+                <KV label="자금" value={general.gold.toLocaleString()} valueColor="var(--game-gold)" />
             </div>
 
             <div className="flex border-t border-border">
@@ -176,18 +180,18 @@ export function GeneralBasicCard({ general, nation, turnTerm, lastExecuted }: Ge
                     style={{
                         width: 52,
                         height: 52,
-                        backgroundImage: `url('${getShipClassIconUrl(parseShipClassCode(general.shipClass))}')`,
+                        backgroundImage: `url('${getCrewTypeIconUrl(parseCrewTypeCode(general.crewtype))}')`,
                         backgroundSize: 'contain',
                         backgroundRepeat: 'no-repeat',
                         backgroundPosition: 'center',
                     }}
                 />
                 <div className="flex-1 grid grid-cols-3 gap-px bg-border/50">
-                    <KV label="물자" value={general.supplies.toLocaleString()} />
-                    <KV label="함종" value={getShipClassName(general.shipClass)} />
-                    <KV label="함선" value={general.ships.toLocaleString()} />
-                    <KV label="훈련" value={String(general.training)} />
-                    <KV label="사기" value={String(general.morale)} />
+                    <KV label="물자" value={general.rice.toLocaleString()} />
+                    <KV label="함종" value={getCrewTypeName(general.crewtype)} />
+                    <KV label="함선" value={general.crew.toLocaleString()} />
+                    <KV label="훈련" value={String(general.train)} />
+                    <KV label="사기" value={String(general.atmos)} />
                     <KV label="성격" value={isValidObjKey(general.personal) ? general.personal : '-'} />
                 </div>
             </div>
@@ -216,7 +220,7 @@ export function GeneralBasicCard({ general, nation, turnTerm, lastExecuted }: Ge
                             : `${Math.max(general.age + 1, general.specage2)}세`)
                     }
                 />
-                <KV label="함대" value={general.fleetInfo ? general.fleetInfo.name : '-'} />
+                <KV label="부대" value={general.troopInfo ? general.troopInfo.name : '-'} />
             </div>
 
             <div className="grid grid-cols-3 gap-px bg-border/50 border-t border-border">
@@ -239,7 +243,7 @@ export function GeneralBasicCard({ general, nation, turnTerm, lastExecuted }: Ge
                 <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 sm:grid-cols-3">
                     <MetaRow label="명성" value={general.experience.toLocaleString()} />
                     <MetaRow label="계급" value={`${dedicationLevel} (${general.dedication.toLocaleString()})`} />
-                    <MetaRow label="봉급" value={general.salary.toLocaleString()} />
+                    <MetaRow label="봉급" value={general.bill.toLocaleString()} />
                     <MetaRow label="전투" value={general.warnum.toLocaleString()} />
                     <MetaRow label="계략" value={general.firenum.toLocaleString()} />
                     <MetaRow label="사관" value={`${general.belong}년차`} />
@@ -257,6 +261,7 @@ export function GeneralBasicCard({ general, nation, turnTerm, lastExecuted }: Ge
                         label="벌점"
                         value={`${formatRefreshScore(general.refreshScoreTotal ?? 0)} ${(general.refreshScoreTotal ?? 0).toLocaleString()}점(${general.refreshScore ?? 0})`}
                     />
+                    <MetaRow label="배반" value={`${general.betray}회`} />
                 </div>
 
                 <div>

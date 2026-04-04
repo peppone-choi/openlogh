@@ -3,13 +3,13 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Gift, Search, RotateCcw, Dices, Swords, BarChart3, Crown, ChevronDown, Shield } from 'lucide-react';
 import { PageHeader } from '@/components/game/page-header';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/8bit/card';
+import { Badge } from '@/components/ui/8bit/badge';
+import { Button } from '@/components/ui/8bit/button';
+import { Input } from '@/components/ui/8bit/input';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/8bit/tabs';
 import { useWorldStore } from '@/stores/worldStore';
-import { inheritanceApi, planetApi } from '@/lib/gameApi';
+import { inheritanceApi, cityApi } from '@/lib/gameApi';
 import { toast } from 'sonner';
 import type {
     InheritanceInfo,
@@ -133,7 +133,9 @@ export default function InheritPage() {
     const [statLeadership, setStatLeadership] = useState(0);
     const [statStrength, setStatStrength] = useState(0);
     const [statIntel, setStatIntel] = useState(0);
-    const [bonusStat, setBonusStat] = useState<[number, number, number]>([0, 0, 0]);
+    const [statPolitics, setStatPolitics] = useState(0);
+    const [statCharm, setStatCharm] = useState(0);
+    const [bonusStat, setBonusStat] = useState<[number, number, number, number, number]>([0, 0, 0, 0, 0]);
 
     // Owner check (by ID dropdown)
     const [targetOwnerId, setTargetOwnerId] = useState<string>('');
@@ -165,7 +167,7 @@ export default function InheritPage() {
         try {
             const [infoRes, cityRes] = await Promise.all([
                 inheritanceApi.getInfo(currentWorld.id),
-                planetApi.listByWorld(currentWorld.id),
+                cityApi.listByWorld(currentWorld.id),
             ]);
             const data = infoRes.data;
             setInfo(data);
@@ -263,11 +265,11 @@ export default function InheritPage() {
         try {
             await inheritanceApi.setCity(currentWorld.id, Number(selectedCity));
             const cityName = cities.find((c) => c.id === Number(selectedCity))?.name;
-            toast.success(`시작 행성 지정: ${cityName}`);
+            toast.success(`시작 도시 지정: ${cityName}`);
             setSelectedCity('');
             fetchInfo();
         } catch {
-            toast.error('시작 행성 지정 실패');
+            toast.error('시작 도시 지정 실패');
         }
     };
 
@@ -323,12 +325,12 @@ export default function InheritPage() {
     };
 
     /* ── Stat reset with inheritBonusStat ── */
-    const bonusStatTotal = bonusStat[0] + bonusStat[1] + bonusStat[2];
+    const bonusStatTotal = bonusStat.reduce((a, b) => a + b, 0);
     const bonusStatRemaining = MAX_INHERIT_BONUS_STAT_TOTAL - bonusStatTotal;
     const bonusStatValid = bonusStatTotal === 0 || bonusStatTotal === MAX_INHERIT_BONUS_STAT_TOTAL;
     const requiredResetStatPoint = bonusStatTotal > 0 ? actionCost.bornStatPoint : 0;
 
-    const updateBonusStat = (index: 0 | 1 | 2, nextRaw: number) => {
+    const updateBonusStat = (index: 0 | 1 | 2 | 3 | 4, nextRaw: number) => {
         const requested = Number.isFinite(nextRaw) ? Math.trunc(nextRaw) : 0;
         setBonusStat((prev) => {
             const otherTotal = prev.reduce((sum, value, idx) => {
@@ -336,9 +338,9 @@ export default function InheritPage() {
             }, 0);
             const maxForIndex = Math.max(0, MAX_INHERIT_BONUS_STAT_TOTAL - otherTotal);
             const nextValue = Math.max(0, Math.min(maxForIndex, requested));
-            if (index === 0) return [nextValue, prev[1], prev[2]];
-            if (index === 1) return [prev[0], nextValue, prev[2]];
-            return [prev[0], prev[1], nextValue];
+            const next = [...prev] as [number, number, number, number, number];
+            next[index] = nextValue;
+            return next;
         });
     };
 
@@ -361,11 +363,15 @@ export default function InheritPage() {
                 leadership: number;
                 strength: number;
                 intel: number;
-                inheritBonusStat: [number, number, number];
+                politics: number;
+                charm: number;
+                inheritBonusStat: [number, number, number, number, number];
             } = {
                 leadership: statLeadership,
                 strength: statStrength,
                 intel: statIntel,
+                politics: statPolitics,
+                charm: statCharm,
                 inheritBonusStat: bonusStat,
             };
             await inheritanceApi.resetStats(currentWorld.id, payload);
@@ -388,9 +394,9 @@ export default function InheritPage() {
         try {
             const { data } = await inheritanceApi.checkOwner(currentWorld.id, Number(targetOwnerId));
             if (data.found) {
-                setOwnerResult(`'${targetName}' 제독의 소유주: ${data.ownerName}`);
+                setOwnerResult(`'${targetName}' 장수의 소유주: ${data.ownerName}`);
             } else {
-                setOwnerResult(`'${targetName}' 제독를 찾을 수 없습니다.`);
+                setOwnerResult(`'${targetName}' 장수를 찾을 수 없습니다.`);
             }
             fetchInfo();
         } catch {
@@ -528,7 +534,7 @@ export default function InheritPage() {
                     )}
 
                     <p className="text-sm text-muted-foreground">
-                        이전 게임에서 획득한 포인트로 새 제독에게 보너스를 줄 수 있습니다.
+                        이전 게임에서 획득한 포인트로 새 장수에게 보너스를 줄 수 있습니다.
                     </p>
                 </CardContent>
             </Card>
@@ -564,7 +570,7 @@ export default function InheritPage() {
                                         ? getBuffCost(currentSelected) - getBuffCost(prevLevel)
                                         : 0;
                                 return (
-                                    <div key={buff.code} className="border border-gray-800 rounded-md p-3 space-y-2">
+                                    <div key={buff.code} className="border border-gray-800 rounded-none p-3 space-y-2">
                                         <div className="flex items-center justify-between">
                                             <div>
                                                 <span className="text-sm font-medium">{buff.label}</span>
@@ -637,7 +643,7 @@ export default function InheritPage() {
                             <p className="text-sm text-muted-foreground">다음에 배정받을 전투특기를 지정합니다.</p>
                             <div className="flex gap-2">
                                 <select
-                                    className="flex-1 rounded-md border bg-background px-3 py-2 text-sm"
+                                    className="flex-1 rounded-none border bg-background px-3 py-2 text-sm"
                                     value={selectedSpecial}
                                     onChange={(e) => setSelectedSpecial(e.target.value)}
                                 >
@@ -667,13 +673,13 @@ export default function InheritPage() {
                     {/* Start City Designation */}
                     <Card>
                         <CardHeader>
-                            <CardTitle className="text-sm">시작 행성 지정</CardTitle>
+                            <CardTitle className="text-sm">시작 도시 지정</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-3">
                             <p className="text-sm text-muted-foreground">다음에 시작할 도시를 지정합니다.</p>
                             <div className="flex gap-2">
                                 <select
-                                    className="flex-1 rounded-md border bg-background px-3 py-2 text-sm"
+                                    className="flex-1 rounded-none border bg-background px-3 py-2 text-sm"
                                     value={selectedCity}
                                     onChange={(e) => setSelectedCity(e.target.value)}
                                 >
@@ -760,100 +766,79 @@ export default function InheritPage() {
                             <p className="text-sm text-muted-foreground">시즌 당 1회에 한해 능력치를 초기화합니다.</p>
                             <div className="space-y-2">
                                 <p className="text-xs font-medium">기본 능력치</p>
-                                <div className="grid grid-cols-3 gap-2">
-                                    <div className="space-y-1">
-                                        <label
-                                            htmlFor="inherit-reset-leadership"
-                                            className="text-xs text-muted-foreground"
-                                        >
-                                            통솔
-                                        </label>
-                                        <Input
-                                            id="inherit-reset-leadership"
-                                            type="number"
-                                            min={currentStat?.statMin ?? 0}
-                                            max={currentStat?.statMax ?? 100}
-                                            value={statLeadership}
-                                            onChange={(e) => setStatLeadership(Number(e.target.value))}
-                                        />
-                                    </div>
-                                    <div className="space-y-1">
-                                        <label
-                                            htmlFor="inherit-reset-strength"
-                                            className="text-xs text-muted-foreground"
-                                        >
-                                            무력
-                                        </label>
-                                        <Input
-                                            id="inherit-reset-strength"
-                                            type="number"
-                                            min={currentStat?.statMin ?? 0}
-                                            max={currentStat?.statMax ?? 100}
-                                            value={statStrength}
-                                            onChange={(e) => setStatStrength(Number(e.target.value))}
-                                        />
-                                    </div>
-                                    <div className="space-y-1">
-                                        <label htmlFor="inherit-reset-intel" className="text-xs text-muted-foreground">
-                                            지력
-                                        </label>
-                                        <Input
-                                            id="inherit-reset-intel"
-                                            type="number"
-                                            min={currentStat?.statMin ?? 0}
-                                            max={currentStat?.statMax ?? 100}
-                                            value={statIntel}
-                                            onChange={(e) => setStatIntel(Number(e.target.value))}
-                                        />
-                                    </div>
+                                <div className="grid grid-cols-5 gap-2">
+                                    {(
+                                        [
+                                            {
+                                                id: 'leadership',
+                                                label: '통솔',
+                                                value: statLeadership,
+                                                setter: setStatLeadership,
+                                            },
+                                            {
+                                                id: 'strength',
+                                                label: '지휘',
+                                                value: statStrength,
+                                                setter: setStatStrength,
+                                            },
+                                            { id: 'intel', label: '정보', value: statIntel, setter: setStatIntel },
+                                            {
+                                                id: 'politics',
+                                                label: '정치',
+                                                value: statPolitics,
+                                                setter: setStatPolitics,
+                                            },
+                                            { id: 'charm', label: '운영', value: statCharm, setter: setStatCharm },
+                                        ] as const
+                                    ).map((stat) => (
+                                        <div key={stat.id} className="space-y-1">
+                                            <label
+                                                htmlFor={`inherit-reset-${stat.id}`}
+                                                className="text-xs text-muted-foreground"
+                                            >
+                                                {stat.label}
+                                            </label>
+                                            <Input
+                                                id={`inherit-reset-${stat.id}`}
+                                                type="number"
+                                                min={currentStat?.statMin ?? 0}
+                                                max={currentStat?.statMax ?? 100}
+                                                value={stat.value}
+                                                onChange={(e) => stat.setter(Number(e.target.value))}
+                                            />
+                                        </div>
+                                    ))}
                                 </div>
                                 <p className="text-xs font-medium mt-2">추가 능력치 (보너스)</p>
-                                <div className="grid grid-cols-3 gap-2">
-                                    <div className="space-y-1">
-                                        <label
-                                            htmlFor="inherit-bonus-leadership"
-                                            className="text-xs text-muted-foreground"
-                                        >
-                                            통솔
-                                        </label>
-                                        <Input
-                                            id="inherit-bonus-leadership"
-                                            type="number"
-                                            min={0}
-                                            max={MAX_INHERIT_BONUS_STAT_TOTAL}
-                                            value={bonusStat[0]}
-                                            onChange={(e) => updateBonusStat(0, Number(e.target.value))}
-                                        />
-                                    </div>
-                                    <div className="space-y-1">
-                                        <label
-                                            htmlFor="inherit-bonus-strength"
-                                            className="text-xs text-muted-foreground"
-                                        >
-                                            무력
-                                        </label>
-                                        <Input
-                                            id="inherit-bonus-strength"
-                                            type="number"
-                                            min={0}
-                                            max={MAX_INHERIT_BONUS_STAT_TOTAL}
-                                            value={bonusStat[1]}
-                                            onChange={(e) => updateBonusStat(1, Number(e.target.value))}
-                                        />
-                                    </div>
-                                    <div className="space-y-1">
-                                        <label htmlFor="inherit-bonus-intel" className="text-xs text-muted-foreground">
-                                            지력
-                                        </label>
-                                        <Input
-                                            id="inherit-bonus-intel"
-                                            type="number"
-                                            min={0}
-                                            max={MAX_INHERIT_BONUS_STAT_TOTAL}
-                                            value={bonusStat[2]}
-                                            onChange={(e) => updateBonusStat(2, Number(e.target.value))}
-                                        />
-                                    </div>
+                                <div className="grid grid-cols-5 gap-2">
+                                    {(
+                                        [
+                                            [0, 'leadership', '통솔'],
+                                            [1, 'strength', '무력'],
+                                            [2, 'intel', '지력'],
+                                            [3, 'politics', '정치'],
+                                            [4, 'charm', '매력'],
+                                        ] as [number, string, string][]
+                                    ).map(([idx, id, label]) => (
+                                        <div key={id} className="space-y-1">
+                                            <label
+                                                htmlFor={`inherit-bonus-${id}`}
+                                                className="text-xs text-muted-foreground"
+                                            >
+                                                {label}
+                                            </label>
+                                            <Input
+                                                id={`inherit-bonus-${id}`}
+                                                type="number"
+                                                min={0}
+                                                max={MAX_INHERIT_BONUS_STAT_TOTAL}
+                                                value={bonusStat[idx]}
+                                                onChange={(e) =>
+                                                    updateBonusStat(idx as 0 | 1 | 2 | 3 | 4, Number(e.target.value))
+                                                }
+                                            />
+                                        </div>
+                                    ))}
                                 </div>
                                 <div className="flex items-center justify-between pt-1">
                                     <span className="text-xs text-muted-foreground">
@@ -912,7 +897,7 @@ export default function InheritPage() {
                             </p>
                             <div className="space-y-2">
                                 <select
-                                    className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+                                    className="w-full rounded-none border bg-background px-3 py-2 text-sm"
                                     value={selectedUnique}
                                     onChange={(e) => setSelectedUnique(e.target.value)}
                                 >
@@ -959,20 +944,20 @@ export default function InheritPage() {
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2 text-sm">
                                 <Search className="size-4" />
-                                제독 소유주 확인 ({actionCost.checkOwner}P)
+                                장수 소유주 확인 ({actionCost.checkOwner}P)
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-3">
                             <p className="text-sm text-muted-foreground">
-                                특정 제독의 실제 소유주(유저)를 확인합니다. 대상에게도 알림이 전송됩니다.
+                                특정 장수의 실제 소유주(유저)를 확인합니다. 대상에게도 알림이 전송됩니다.
                             </p>
                             <div className="flex gap-2">
                                 <select
-                                    className="flex-1 rounded-md border bg-background px-3 py-2 text-sm"
+                                    className="flex-1 rounded-none border bg-background px-3 py-2 text-sm"
                                     value={targetOwnerId}
                                     onChange={(e) => setTargetOwnerId(e.target.value)}
                                 >
-                                    <option value="">제독 선택...</option>
+                                    <option value="">장수 선택...</option>
                                     {Object.entries(availableTargetGeneral).map(([id, name]) => (
                                         <option key={id} value={id}>
                                             {name}

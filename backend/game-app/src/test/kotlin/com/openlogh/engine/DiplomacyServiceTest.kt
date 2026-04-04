@@ -2,7 +2,7 @@ package com.openlogh.engine
 
 import com.openlogh.entity.Diplomacy
 import com.openlogh.entity.Message
-import com.openlogh.entity.SessionState
+import com.openlogh.entity.WorldState
 import com.openlogh.repository.DiplomacyRepository
 import com.openlogh.repository.MessageRepository
 import org.junit.jupiter.api.Assertions.assertDoesNotThrow
@@ -65,28 +65,28 @@ class DiplomacyServiceTest {
             Optional.ofNullable(diplomacies[inv.arguments[0] as Long]?.let { cloneDiplomacy(it) })
         }
 
-        `when`(diplomacyRepository.findBySessionId(ArgumentMatchers.anyLong())).thenAnswer { inv ->
-            val sessionId = inv.arguments[0] as Long
-            diplomacies.values.filter { it.sessionId == sessionId }.map { cloneDiplomacy(it) }
+        `when`(diplomacyRepository.findByWorldId(ArgumentMatchers.anyLong())).thenAnswer { inv ->
+            val worldId = inv.arguments[0] as Long
+            diplomacies.values.filter { it.worldId == worldId }.map { cloneDiplomacy(it) }
         }
 
-        `when`(diplomacyRepository.findBySessionIdAndIsDeadFalse(ArgumentMatchers.anyLong())).thenAnswer { inv ->
-            val sessionId = inv.arguments[0] as Long
-            diplomacies.values.filter { it.sessionId == sessionId && !it.isDead }.map { cloneDiplomacy(it) }
+        `when`(diplomacyRepository.findByWorldIdAndIsDeadFalse(ArgumentMatchers.anyLong())).thenAnswer { inv ->
+            val worldId = inv.arguments[0] as Long
+            diplomacies.values.filter { it.worldId == worldId && !it.isDead }.map { cloneDiplomacy(it) }
         }
 
         `when`(
-            diplomacyRepository.findBySessionIdAndSrcFactionIdOrDestFactionId(
+            diplomacyRepository.findByWorldIdAndSrcNationIdOrDestNationId(
                 ArgumentMatchers.anyLong(),
                 ArgumentMatchers.anyLong(),
                 ArgumentMatchers.anyLong(),
             )
         ).thenAnswer { inv ->
-            val sessionId = inv.arguments[0] as Long
+            val worldId = inv.arguments[0] as Long
             val src = inv.arguments[1] as Long
             val dest = inv.arguments[2] as Long
             diplomacies.values
-                .filter { it.sessionId == sessionId && (it.srcFactionId == src || it.destFactionId == dest) }
+                .filter { it.worldId == worldId && (it.srcNationId == src || it.destNationId == dest) }
                 .map { cloneDiplomacy(it) }
         }
     }
@@ -106,21 +106,21 @@ class DiplomacyServiceTest {
         }
     }
 
-    private fun createWorld(year: Short = 200, month: Short = 3): SessionState =
-        SessionState(id = 1, scenarioCode = "test", currentYear = year, currentMonth = month, tickSeconds = 300)
+    private fun createWorld(year: Short = 200, month: Short = 3): WorldState =
+        WorldState(id = 1, scenarioCode = "test", currentYear = year, currentMonth = month, tickSeconds = 300)
 
     private fun createDiplomacy(
         id: Long,
         srcNationId: Long = 1,
-        destFactionId: Long = 2,
+        destNationId: Long = 2,
         stateCode: String,
         term: Short,
         isDead: Boolean = false,
     ): Diplomacy = Diplomacy(
         id = id,
-        sessionId = 1,
+        worldId = 1,
         srcNationId = srcNationId,
-        destFactionId = destFactionId,
+        destNationId = destNationId,
         stateCode = stateCode,
         term = term,
         isDead = isDead,
@@ -133,9 +133,9 @@ class DiplomacyServiceTest {
     private fun cloneDiplomacy(d: Diplomacy): Diplomacy {
         return Diplomacy(
             id = d.id,
-            sessionId = d.sessionId,
-            srcFactionId = d.srcFactionId,
-            destFactionId = d.destFactionId,
+            worldId = d.worldId,
+            srcNationId = d.srcNationId,
+            destNationId = d.destNationId,
             stateCode = d.stateCode,
             term = d.term,
             isDead = d.isDead,
@@ -148,7 +148,7 @@ class DiplomacyServiceTest {
     private fun cloneMessage(m: Message): Message {
         return Message(
             id = m.id,
-            sessionId = m.sessionId,
+            worldId = m.worldId,
             mailboxCode = m.mailboxCode,
             messageType = m.messageType,
             srcId = m.srcId,
@@ -213,8 +213,8 @@ class DiplomacyServiceTest {
     @Test
     fun `declareWar creates 선전포고 and kills pending proposals`() {
         seed(
-            createDiplomacy(id = 1, srcNationId = 1, destFactionId = 2, stateCode = "불가침제의", term = 5),
-            createDiplomacy(id = 2, srcNationId = 1, destFactionId = 2, stateCode = "종전제의", term = 5),
+            createDiplomacy(id = 1, srcNationId = 1, destNationId = 2, stateCode = "불가침제의", term = 5),
+            createDiplomacy(id = 2, srcNationId = 1, destNationId = 2, stateCode = "종전제의", term = 5),
         )
 
         val result = service.declareWar(1L, 1L, 2L)
@@ -352,12 +352,12 @@ class DiplomacyServiceTest {
         seed(createDiplomacy(id = 1, stateCode = "불가침제의", term = 5))
         val message = Message(
             id = 100,
-            sessionId = 1,
+            worldId = 1,
             mailboxCode = "diplomacy",
             messageType = DiplomacyService.MSG_NON_AGGRESSION_PROPOSAL,
             srcId = 1,
             destId = 2,
-            payload = mutableMapOf("srcNationId" to 1L, "destFactionId" to 2L),
+            payload = mutableMapOf("srcNationId" to 1L, "destNationId" to 2L),
         )
         messages[100] = message
 
@@ -373,10 +373,10 @@ class DiplomacyServiceTest {
     fun `rejectDiplomaticMessage marks rejected`() {
         messages[100] = Message(
             id = 100,
-            sessionId = 1,
+            worldId = 1,
             mailboxCode = "diplomacy",
             messageType = DiplomacyService.MSG_NON_AGGRESSION_PROPOSAL,
-            payload = mutableMapOf("srcNationId" to 1L, "destFactionId" to 2L),
+            payload = mutableMapOf("srcNationId" to 1L, "destNationId" to 2L),
         )
 
         service.rejectDiplomaticMessage(1L, 100)
@@ -389,9 +389,9 @@ class DiplomacyServiceTest {
     @Test
     fun `killAllRelationsForNation kills active only`() {
         seed(
-            createDiplomacy(id = 1, srcNationId = 5, destFactionId = 2, stateCode = "불가침", term = 10),
-            createDiplomacy(id = 2, srcNationId = 3, destFactionId = 5, stateCode = "선전포고", term = 10),
-            createDiplomacy(id = 3, srcNationId = 5, destFactionId = 4, stateCode = "불가침", term = 10, isDead = true),
+            createDiplomacy(id = 1, srcNationId = 5, destNationId = 2, stateCode = "불가침", term = 10),
+            createDiplomacy(id = 2, srcNationId = 3, destNationId = 5, stateCode = "선전포고", term = 10),
+            createDiplomacy(id = 3, srcNationId = 5, destNationId = 4, stateCode = "불가침", term = 10, isDead = true),
         )
 
         service.killAllRelationsForNation(1L, 5L)
@@ -431,8 +431,8 @@ class DiplomacyServiceTest {
     @Test
     fun `getRelations returns world relations and createRelation persists`() {
         seed(
-            createDiplomacy(id = 1, srcNationId = 1, destFactionId = 2, stateCode = "불가침", term = 10),
-            createDiplomacy(id = 2, srcNationId = 2, destFactionId = 3, stateCode = "선전포고", term = 10),
+            createDiplomacy(id = 1, srcNationId = 1, destNationId = 2, stateCode = "불가침", term = 10),
+            createDiplomacy(id = 2, srcNationId = 2, destNationId = 3, stateCode = "선전포고", term = 10),
         )
 
         val all = service.getRelations(1L)

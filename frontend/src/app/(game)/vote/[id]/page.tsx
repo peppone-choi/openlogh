@@ -4,14 +4,14 @@ import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Vote, ArrowLeft } from 'lucide-react';
 import { useWorldStore } from '@/stores/worldStore';
-import { useOfficerStore } from '@/stores/officerStore';
+import { useGeneralStore } from '@/stores/generalStore';
 import { PageHeader } from '@/components/game/page-header';
 import { LoadingState } from '@/components/game/loading-state';
 import { EmptyState } from '@/components/game/empty-state';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/8bit/card';
+import { Button } from '@/components/ui/8bit/button';
+import { Badge } from '@/components/ui/8bit/badge';
+import { Input } from '@/components/ui/8bit/input';
 import type { Message, VoteComment } from '@/types';
 import { voteApi } from '@/lib/gameApi';
 
@@ -64,7 +64,7 @@ export default function VoteDetailPage() {
     const router = useRouter();
     const voteId = Number(params.id);
     const { currentWorld } = useWorldStore();
-    const { myGeneral } = useOfficerStore();
+    const { myGeneral } = useGeneralStore();
     const [vote, setVote] = useState<Message | null>(null);
     const [loading, setLoading] = useState(true);
     const [comments, setComments] = useState<VoteComment[]>([]);
@@ -184,7 +184,7 @@ export default function VoteDetailPage() {
 
                         {!open && d.reward && lotteryWinner && (
                             <div className="rounded border border-amber-400/30 bg-amber-400/10 p-2 text-xs text-amber-300">
-                                추첨 당첨자: 제독 #{lotteryWinner}
+                                추첨 당첨자: 장수 #{lotteryWinner}
                             </div>
                         )}
 
@@ -290,7 +290,7 @@ export default function VoteDetailPage() {
                                 {comments.map((comment) => (
                                     <div key={comment.id} className="rounded border p-2 text-xs">
                                         <div className="mb-1 flex items-center justify-between text-muted-foreground">
-                                            <span>제독 #{comment.authorGeneralId}</span>
+                                            <span>장수 #{comment.authorGeneralId}</span>
                                             <span>{formatDeadline(comment.createdAt)}</span>
                                         </div>
                                         <p>{comment.content}</p>

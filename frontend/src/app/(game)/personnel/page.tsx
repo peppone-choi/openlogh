@@ -2,16 +2,16 @@
 
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { useWorldStore } from '@/stores/worldStore';
-import { useOfficerStore } from '@/stores/officerStore';
+import { useGeneralStore } from '@/stores/generalStore';
 import { useGameStore } from '@/stores/gameStore';
 import { Shield, UserPlus, UserMinus, Award } from 'lucide-react';
 import { PageHeader } from '@/components/game/page-header';
 import { LoadingState } from '@/components/game/loading-state';
 import { GeneralPortrait } from '@/components/game/general-portrait';
 import { NationBadge } from '@/components/game/nation-badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/8bit/card';
+import { Badge } from '@/components/ui/8bit/badge';
+import { Button } from '@/components/ui/8bit/button';
 import { formatOfficerLevelText, isOfficerSet, formatCityLevelBadge, getSpecialNationKey } from '@/lib/game-utils';
 import { nationManagementApi } from '@/lib/gameApi';
 import type { General, Nation } from '@/types';
@@ -104,7 +104,7 @@ function PermissionSelector({
                         </Badge>
                     );
                 })}
-                {candidates.length === 0 && <span className="text-xs text-muted-foreground">대상 제독 없음</span>}
+                {candidates.length === 0 && <span className="text-xs text-muted-foreground">대상 장수 없음</span>}
             </div>
             {current.length > 0 && (
                 <div className="text-xs text-muted-foreground">현재: {current.map((g) => g.name).join(', ')}</div>
@@ -131,7 +131,7 @@ function getNationChiefLevel(nationLevel: number, nationTypeCode?: string): numb
 
 export default function PersonnelPage() {
     const currentWorld = useWorldStore((s) => s.currentWorld);
-    const { myGeneral, fetchMyGeneral } = useOfficerStore();
+    const { myGeneral, fetchMyGeneral } = useGeneralStore();
     const { generals, nations, cities, loading, loadAll } = useGameStore();
     const [actionLoading, setActionLoading] = useState(false);
     const [appointLevel, setAppointLevel] = useState<number>(0);
@@ -255,8 +255,8 @@ export default function PersonnelPage() {
             }));
     }, [nationGenerals]);
 
-    // Sovereign general (npcState === 10) in the same nation
-    const sovereign = useMemo(() => nationGenerals.find((g) => g.npcState === 10) ?? null, [nationGenerals]);
+    // Emperor general (npcState === 10) in the same nation
+    const emperor = useMemo(() => nationGenerals.find((g) => g.npcState === 10) ?? null, [nationGenerals]);
 
     // City officer list
     const cityOfficers = useMemo(() => {
@@ -334,7 +334,7 @@ export default function PersonnelPage() {
     };
 
     const getStatLabel = (level: number): string => {
-        if (level === 12 || level === 11) return '모든 제독';
+        if (level === 12 || level === 11) return '모든 장수';
         if (level % 2 === 0) return `무력 ${chiefStatMin}+`;
         return `지력 ${chiefStatMin}+`;
     };
@@ -346,7 +346,7 @@ export default function PersonnelPage() {
     if (loading) return <LoadingState />;
 
     if (!myGeneral) {
-        return <div className="p-4 text-muted-foreground">제독 정보가 없습니다.</div>;
+        return <div className="p-4 text-muted-foreground">장수 정보가 없습니다.</div>;
     }
 
     if (myGeneral.nationId <= 0) {
@@ -384,17 +384,17 @@ export default function PersonnelPage() {
                 </CardContent>
             </Card>
 
-            {/* Sovereign Section */}
-            {sovereign && (
+            {/* Emperor Section */}
+            {emperor && (
                 <div className="flex justify-center">
                     <div className="flex flex-col items-center gap-1 rounded border border-yellow-500/40 bg-yellow-500/5 px-6 py-3">
-                        <GeneralPortrait picture={sovereign.picture} name={sovereign.name} size="sm" />
-                        <span className="text-sm font-medium">{sovereign.name}</span>
+                        <GeneralPortrait picture={emperor.picture} name={emperor.name} size="sm" />
+                        <span className="text-sm font-medium">{emperor.name}</span>
                         <span
                             className="inline-flex items-center rounded-sm px-0.5"
                             style={{ backgroundColor: '#f0c040' }}
                         >
-                            <img src="/icons/emperor.png" alt="황제" width={18} height={18} />
+                            <img src="/icons/emperor.png" alt="원수" width={18} height={18} />
                         </span>
                     </div>
                 </div>
@@ -483,7 +483,7 @@ export default function PersonnelPage() {
                     </CardHeader>
                     <CardContent className="space-y-3">
                         {officerSlots
-                            .filter((slot) => slot.level >= minChiefLevel && slot.level <= 20)
+                            .filter((slot) => slot.level >= minChiefLevel && slot.level < 20)
                             .map((slot) => {
                                 const candidates = getCandidatesForLevel(slot.level);
                                 const locked = slot.isLocked && meLevel < 12;
@@ -551,21 +551,21 @@ export default function PersonnelPage() {
                                 );
                             })}
                         <p className="text-xs text-muted-foreground">
-                            ※ <span className="text-red-400">빨간색</span>은 현재 임명중인 제독,{' '}
-                            <span className="text-orange-400">노란색</span>은 다른 관직에 임명된 제독, 흰색은 일반
-                            제독를 뜻합니다.
+                            ※ <span className="text-red-400">빨간색</span>은 현재 임명중인 장수,{' '}
+                            <span className="text-orange-400">노란색</span>은 다른 관직에 임명된 장수, 흰색은 일반
+                            장수를 뜻합니다.
                         </p>
                     </CardContent>
                 </Card>
             )}
 
-            {/* City Officer Appointment (행성 관직 임명) */}
+            {/* City Officer Appointment (도시 관직 임명) */}
             {canManage && (
                 <Card>
                     <CardHeader className="pb-2">
                         <CardTitle className="text-base flex items-center gap-2 text-orange-400">
                             <UserPlus className="size-4" />
-                            행성 관직 임명
+                            도시 관직 임명
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-3">
@@ -767,7 +767,7 @@ export default function PersonnelPage() {
                     </CardHeader>
                     <CardContent>
                         <div className="flex flex-wrap items-center gap-2">
-                            <span className="text-sm">대상 제독:</span>
+                            <span className="text-sm">대상 장수:</span>
                             <select
                                 className="flex-1 min-w-[200px] h-8 rounded border border-input bg-background px-2 text-sm"
                                 value={kickTarget}

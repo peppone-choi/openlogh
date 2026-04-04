@@ -1,8 +1,8 @@
 import { create } from 'zustand';
 import api from '@/lib/api';
 
-const LOGIN_TOKEN_KEY = 'openlogh_login_token';
-export const OTP_TICKET_STORAGE_KEY = 'openlogh_pending_otp_ticket';
+const LOGIN_TOKEN_KEY = 'sammo_login_token';
+export const OTP_TICKET_STORAGE_KEY = 'sammo_pending_otp_ticket';
 
 interface User {
     id: number;

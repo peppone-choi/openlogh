@@ -5,7 +5,7 @@ import { useWorldStore } from '@/stores/worldStore';
 import { Activity } from 'lucide-react';
 import { PageHeader } from '@/components/game/page-header';
 import { LoadingState } from '@/components/game/loading-state';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/8bit/card';
 import { trafficApi } from '@/lib/gameApi';
 
 type TrafficEntry = {

@@ -14,7 +14,7 @@ class PublicController(
     private val publicCachedMapService: PublicCachedMapService,
 ) {
     @GetMapping("/cached-map")
-    fun getCachedMap(@RequestParam sessionId: Short? = null): ResponseEntity<PublicCachedMapResponse> {
-        return ResponseEntity.ok(publicCachedMapService.getCachedMap(sessionId))
+    fun getCachedMap(@RequestParam worldId: Short? = null): ResponseEntity<PublicCachedMapResponse> {
+        return ResponseEntity.ok(publicCachedMapService.getCachedMap(worldId))
     }
 }

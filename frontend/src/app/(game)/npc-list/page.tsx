@@ -9,10 +9,10 @@ import { LoadingState } from '@/components/game/loading-state';
 import { EmptyState } from '@/components/game/empty-state';
 import { GeneralPortrait } from '@/components/game/general-portrait';
 import { NationBadge } from '@/components/game/nation-badge';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { SHIP_CLASS_NAMES, getPersonalityName } from '@/lib/game-utils';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Input } from '@/components/ui/8bit/input';
+import { Badge } from '@/components/ui/8bit/badge';
+import { CREW_TYPE_NAMES, getPersonalityName } from '@/lib/game-utils';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/8bit/table';
 
 type SortKey =
     | 'name'
@@ -28,13 +28,13 @@ type SortKey =
 
 const SORT_OPTIONS: { key: SortKey; label: string }[] = [
     { key: 'name', label: '이름' },
-    { key: 'nation', label: '진영' },
-    { key: 'city', label: '행성' },
+    { key: 'faction', label: '진영' },
+    { key: 'planet', label: '성계' },
     { key: 'totalStats', label: '종능' },
     { key: 'leadership', label: '통솔' },
-    { key: 'strength', label: '무력' },
-    { key: 'intel', label: '지력' },
-    { key: 'crew', label: '병력' },
+    { key: 'strength', label: '지휘' },
+    { key: 'intel', label: '정보' },
+    { key: 'crew', label: '함선' },
     { key: 'experience', label: '명성' },
     { key: 'dedication', label: '계급' },
 ];
@@ -121,14 +121,14 @@ export default function NpcListPage() {
 
     return (
         <div className="p-4 space-y-4 max-w-5xl mx-auto">
-            <PageHeader icon={Bot} title="NPC일람" />
+            <PageHeader icon={Bot} title="빙의일람" />
 
             <div className="flex gap-2 flex-wrap items-center">
                 <div className="relative w-48">
                     <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                     <Input
                         type="text"
-                        placeholder="제독/악령 검색..."
+                        placeholder="장교 검색..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                         className="pl-8"
@@ -137,7 +137,7 @@ export default function NpcListPage() {
                 <select
                     value={nationFilter}
                     onChange={(e) => setNationFilter(e.target.value)}
-                    className="h-9 min-w-0 rounded-md border border-input bg-transparent px-3 py-1 text-sm"
+                    className="h-9 min-w-0 rounded-none border border-input bg-transparent px-3 py-1 text-sm"
                 >
                     <option value="">전체 국가</option>
                     {nations.map((n) => (
@@ -155,7 +155,7 @@ export default function NpcListPage() {
                         setSortKey(key);
                         setSortDir(key === 'name' || key === 'nation' ? 'asc' : 'desc');
                     }}
-                    className="h-9 min-w-0 rounded-md border border-input bg-transparent px-3 py-1 text-sm"
+                    className="h-9 min-w-0 rounded-none border border-input bg-transparent px-3 py-1 text-sm"
                 >
                     {SORT_OPTIONS.map((o) => (
                         <option key={o.key} value={o.key}>
@@ -168,7 +168,7 @@ export default function NpcListPage() {
             </div>
 
             {npcGenerals.length === 0 ? (
-                <EmptyState icon={Bot} title="NPC 제독가 없습니다." />
+                <EmptyState icon={Bot} title="NPC 장교가 없습니다." />
             ) : (
                 <div className="overflow-x-auto">
                     <Table>
@@ -178,7 +178,7 @@ export default function NpcListPage() {
                                     className="cursor-pointer hover:text-foreground"
                                     onClick={() => handleSortChange('name')}
                                 >
-                                    희생된 제독{arrow('name')}
+                                    NPC 장교{arrow('name')}
                                 </TableHead>
                                 <TableHead>악령 이름</TableHead>
                                 <TableHead>Lv</TableHead>
@@ -283,16 +283,6 @@ export default function NpcListPage() {
                                                         풀
                                                     </Badge>
                                                 )}
-                                                {g.npcState >= 5 && (
-                                                    <Badge className="text-[10px] bg-indigo-600/60 text-indigo-200">
-                                                        악령
-                                                    </Badge>
-                                                )}
-                                                {g.npcState >= 2 && g.npcState < 5 && (
-                                                    <Badge className="text-[10px] bg-amber-700/60 text-amber-200">
-                                                        희생
-                                                    </Badge>
-                                                )}
                                             </div>
                                         </TableCell>
                                         <TableCell className="text-sm">
@@ -319,7 +309,7 @@ export default function NpcListPage() {
                                         <TableCell>{g.strength}</TableCell>
                                         <TableCell>{g.intel}</TableCell>
                                         <TableCell className="tabular-nums">{g.crew.toLocaleString()}</TableCell>
-                                        <TableCell className="text-xs">{SHIP_CLASS_NAMES[g.crewType] ?? '-'}</TableCell>
+                                        <TableCell className="text-xs">{CREW_TYPE_NAMES[g.crewType] ?? '-'}</TableCell>
                                         <TableCell>{g.experience.toLocaleString()}</TableCell>
                                         <TableCell>{g.dedication.toLocaleString()}</TableCell>
                                     </TableRow>

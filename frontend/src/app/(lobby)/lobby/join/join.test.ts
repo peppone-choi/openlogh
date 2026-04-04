@@ -14,6 +14,26 @@ describe('lobby join page', () => {
     });
 });
 
+describe('inheritBonusStat 5-stat support', () => {
+    it('supports all 5 stats: leadership, strength, intel, politics, charm', () => {
+        const inheritBonusStat: [number, number, number, number, number] = [1, 1, 1, 1, 1];
+        expect(inheritBonusStat).toHaveLength(5);
+        const sum = inheritBonusStat.reduce((a, b) => a + b, 0);
+        expect(sum).toBe(5);
+    });
+
+    it('validates sum range 0 or 3-5', () => {
+        const validate = (stat: number[]) => {
+            const sum = stat.reduce((a, b) => a + b, 0);
+            return sum === 0 || (sum >= 3 && sum <= 5);
+        };
+        expect(validate([0, 0, 0, 0, 0])).toBe(true);
+        expect(validate([2, 1, 0, 1, 1])).toBe(true);
+        expect(validate([1, 0, 0, 0, 0])).toBe(false);
+        expect(validate([2, 2, 2, 0, 0])).toBe(false);
+    });
+});
+
 describe('lobby join scout message nation name display', () => {
     it('displays full nation name in recruitment badge', () => {
         const mockNation = { name: '조조군', abbreviation: '조' };

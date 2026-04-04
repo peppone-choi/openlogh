@@ -1,16 +1,16 @@
 package com.openlogh.service
 
 import com.openlogh.dto.AdminDashboard
-import com.openlogh.dto.AdminOfficerSummary
+import com.openlogh.dto.AdminGeneralSummary
 import com.openlogh.dto.AdminUserAction
 import com.openlogh.dto.AdminUserSummary
 import com.openlogh.dto.AdminWorldInfo
 import com.openlogh.entity.HallOfFame
-import com.openlogh.dto.FactionStatistic
+import com.openlogh.dto.NationStatistic
 import com.openlogh.dto.ResourceDistributionRequest
 import com.openlogh.dto.TimeControlRequest
-import com.openlogh.entity.Officer
-import com.openlogh.entity.OfficerTurn
+import com.openlogh.entity.General
+import com.openlogh.entity.GeneralTurn
 import com.openlogh.repository.*
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -18,15 +18,17 @@ import java.time.OffsetDateTime
 
 @Service
 class AdminService(
-    private val worldStateRepository: SessionStateRepository,
-    private val officerRepository: OfficerRepository,
-    private val officerTurnRepository: OfficerTurnRepository,
-    private val factionRepository: FactionRepository,
-    private val planetRepository: PlanetRepository,
+    private val worldStateRepository: WorldStateRepository,
+    private val generalRepository: GeneralRepository,
+    private val generalTurnRepository: GeneralTurnRepository,
+    private val nationRepository: NationRepository,
+    private val cityRepository: CityRepository,
     private val appUserRepository: AppUserRepository,
     private val diplomacyRepository: DiplomacyRepository,
     private val hallOfFameRepository: HallOfFameRepository,
     private val messageRepository: MessageRepository,
+    private val eventActionService: com.openlogh.engine.EventActionService,
+    private val inheritanceService: InheritanceService,
     private val historyService: HistoryService,
 ) {
     private companion object {
@@ -35,9 +37,9 @@ class AdminService(
         const val INFINITE_KILL_TURN = 8000
     }
 
-    fun getDashboard(sessionId: Long): AdminDashboard {
+    fun getDashboard(worldId: Long): AdminDashboard {
         val worlds = worldStateRepository.findAll()
-        val world = worlds.firstOrNull { it.id.toLong() == sessionId }
+        val world = worlds.firstOrNull { it.id.toLong() == worldId }
         return AdminDashboard(
             worldCount = worlds.size,
             currentWorld = world?.let {
@@ -58,9 +60,10 @@ class AdminService(
         )
     }
 
-    fun updateSettings(sessionId: Long, settings: Map<String, Any>): Boolean {
-        val world = worldStateRepository.findById(sessionId.toShort()).orElse(null) ?: return false
+    fun updateSettings(worldId: Long, settings: Map<String, Any>): Boolean {
+        val world = worldStateRepository.findById(worldId.toShort()).orElse(null) ?: return false
 
+        // Column-level fields (not stored in config JSONB)
         settings["turnTerm"]?.let {
             val minutes = (it as Number).toInt().coerceAtLeast(1)
             world.tickSeconds = minutes * 60
@@ -70,6 +73,7 @@ class AdminService(
         settings["realtimeMode"]?.let { world.realtimeMode = it as Boolean }
         settings["commandPointRegenRate"]?.let { world.commandPointRegenRate = (it as Number).toInt() }
 
+        // Config JSONB keys — pass through everything except column-level fields
         val columnKeys = setOf("turnTerm", "realtimeMode", "commandPointRegenRate")
         for ((key, value) in settings) {
             if (key !in columnKeys) {
@@ -104,13 +108,13 @@ class AdminService(
         return true
     }
 
-    fun listAllOfficers(sessionId: Long): List<AdminOfficerSummary> {
-        return officerRepository.findBySessionId(sessionId).map {
-            AdminOfficerSummary(
+    fun listAllGenerals(worldId: Long): List<AdminGeneralSummary> {
+        return generalRepository.findByWorldId(worldId).map {
+            AdminGeneralSummary(
                 id = it.id,
                 name = it.name,
-                factionId = it.factionId,
-                ships = it.ships,
+                nationId = it.nationId,
+                crew = it.crew,
                 experience = it.experience,
                 npcState = it.npcState.toInt(),
                 blockState = it.blockState.toInt(),
@@ -120,48 +124,48 @@ class AdminService(
     }
 
     @Transactional
-    fun officerAction(sessionId: Long, id: Long, type: String): Boolean {
-        val officer = officerRepository.findById(id).orElse(null) ?: return false
-        if (officer.sessionId != sessionId) return false
-        if (!applyGeneralAction(officer, type)) return false
-        officerRepository.save(officer)
+    fun generalAction(worldId: Long, id: Long, type: String): Boolean {
+        val general = generalRepository.findById(id).orElse(null) ?: return false
+        if (general.worldId != worldId) return false
+        if (!applyGeneralAction(general, type)) return false
+        generalRepository.save(general)
         return true
     }
 
-    fun getStatistics(sessionId: Long): List<FactionStatistic> {
-        val nations = factionRepository.findBySessionId(sessionId)
+    fun getStatistics(worldId: Long): List<NationStatistic> {
+        val nations = nationRepository.findByWorldId(worldId)
         return nations.map { nation ->
-            val generals = officerRepository.findByNationId(nation.id)
-            val cities = planetRepository.findByFactionId(nation.id)
-            FactionStatistic(
-                factionId = nation.id,
+            val generals = generalRepository.findByNationId(nation.id)
+            val cities = cityRepository.findByNationId(nation.id)
+            NationStatistic(
+                nationId = nation.id,
                 name = nation.name,
                 color = nation.color,
-                factionRank = nation.factionRank.toInt(),
-                funds = nation.funds,
-                supplies = nation.supplies,
-                techLevel = nation.techLevel,
-                militaryPower = nation.militaryPower,
-                officerCount = generals.size,
-                planetCount = cities.size,
-                totalShips = generals.sumOf { it.ships },
-                totalPopulation = cities.sumOf { it.population },
+                level = nation.level.toInt(),
+                gold = nation.gold,
+                rice = nation.rice,
+                tech = nation.tech,
+                power = nation.power,
+                genCount = generals.size,
+                cityCount = cities.size,
+                totalCrew = generals.sumOf { it.crew },
+                totalPop = cities.sumOf { it.pop },
             )
         }
     }
 
-    fun getGeneralLogs(sessionId: Long, id: Long): List<Any> {
-        return messageRepository.findBySessionIdAndMailboxCodeAndDestIdOrderBySentAtDesc(sessionId, "general_action", id)
+    fun getGeneralLogs(worldId: Long, id: Long): List<Any> {
+        return messageRepository.findByWorldIdAndMailboxCodeAndDestIdOrderBySentAtDesc(worldId, "general_action", id)
     }
 
-    fun getDiplomacyMatrix(sessionId: Long): List<Any> {
-        return diplomacyRepository.findBySessionId(sessionId)
+    fun getDiplomacyMatrix(worldId: Long): List<Any> {
+        return diplomacyRepository.findByWorldId(worldId)
     }
 
-    fun writeLog(sessionId: Long, message: String): Boolean {
-        val world = worldStateRepository.findById(sessionId.toShort()).orElse(null) ?: return false
+    fun writeLog(worldId: Long, message: String): Boolean {
+        val world = worldStateRepository.findById(worldId.toShort()).orElse(null) ?: return false
         historyService.logWorldHistory(
-            sessionId = sessionId,
+            worldId = worldId,
             message = message,
             year = world.currentYear.toInt(),
             month = world.currentMonth.toInt(),
@@ -170,25 +174,28 @@ class AdminService(
     }
 
     @Transactional
-    fun forceRehall(sessionId: Long): Map<String, Int>? {
-        val world = worldStateRepository.findById(sessionId.toShort()).orElse(null) ?: return null
+    fun forceRehall(worldId: Long): Map<String, Int>? {
+        val world = worldStateRepository.findById(worldId.toShort()).orElse(null) ?: return null
         val isUnited = ((world.config["isunited"] as? Number)?.toInt())
             ?: ((world.config["isUnited"] as? Number)?.toInt())
             ?: 0
         require(isUnited != 0) { "아직 천통하지 않았습니다" }
 
-        val generals = officerRepository.findBySessionId(sessionId)
+        val generals = generalRepository.findByWorldId(worldId)
         val eligibleHallGenerals = generals.filter { it.npcState.toInt() < 2 && it.age.toInt() >= 40 }
         eligibleHallGenerals.forEach { upsertHallOfFame(world, it) }
 
+        eventActionService.mergeInheritPointRank(world)
+        val updatedUsers = inheritanceService.forceReapplyMergedPoints(worldId)
+
         return mapOf(
             "processedGenerals" to eligibleHallGenerals.size,
-            "updatedUsers" to 0,
+            "updatedUsers" to updatedUsers,
         )
     }
 
-    fun timeControl(sessionId: Long, request: TimeControlRequest): Boolean {
-        val world = worldStateRepository.findById(sessionId.toShort()).orElse(null) ?: return false
+    fun timeControl(worldId: Long, request: TimeControlRequest): Boolean {
+        val world = worldStateRepository.findById(worldId.toShort()).orElse(null) ?: return false
 
         request.year?.let { world.currentYear = it.toShort() }
         request.month?.let { world.currentMonth = it.toShort() }
@@ -210,7 +217,7 @@ class AdminService(
         request.reserveOpen?.let { world.config["reserveOpen"] = it }
         request.preReserveOpen?.let { world.config["preReserveOpen"] = it }
         request.distribute?.let {
-            if (!applyResourceDistribution(sessionId, it)) {
+            if (!applyResourceDistribution(worldId, it)) {
                 return false
             }
         }
@@ -219,45 +226,45 @@ class AdminService(
         return true
     }
 
-    private fun applyResourceDistribution(sessionId: Long, request: ResourceDistributionRequest): Boolean {
+    private fun applyResourceDistribution(worldId: Long, request: ResourceDistributionRequest): Boolean {
         return when (request.target.lowercase()) {
             "all" -> {
-                val generals = officerRepository.findBySessionId(sessionId)
+                val generals = generalRepository.findByWorldId(worldId)
                 generals.forEach { general ->
-                    general.funds += request.funds
-                    general.supplies += request.supplies
+                    general.gold += request.gold
+                    general.rice += request.rice
                 }
-                officerRepository.saveAll(generals)
+                generalRepository.saveAll(generals)
                 true
             }
             "nations" -> {
-                val nations = factionRepository.findBySessionId(sessionId)
+                val nations = nationRepository.findByWorldId(worldId)
                 nations.forEach { nation ->
-                    nation.funds += request.funds
-                    nation.supplies += request.supplies
+                    nation.gold += request.gold
+                    nation.rice += request.rice
                 }
-                factionRepository.saveAll(nations)
+                nationRepository.saveAll(nations)
                 true
             }
             else -> false
         }
     }
 
-    private fun applyGeneralAction(general: Officer, type: String): Boolean {
+    private fun applyGeneralAction(general: General, type: String): Boolean {
         when (type) {
             "block" -> {
                 general.blockState = 1
                 general.killTurn = DEFAULT_BLOCK_KILL_TURN.toShort()
             }
             "block2" -> {
-                general.funds = 0
-                general.supplies = 0
+                general.gold = 0
+                general.rice = 0
                 general.blockState = 2
                 general.killTurn = DEFAULT_BLOCK_KILL_TURN.toShort()
             }
             "block3" -> {
-                general.funds = 0
-                general.supplies = 0
+                general.gold = 0
+                general.rice = 0
                 general.blockState = 3
                 general.killTurn = DEFAULT_BLOCK_KILL_TURN.toShort()
             }
@@ -265,13 +272,13 @@ class AdminService(
             "kill" -> {
                 general.killTurn = 0
                 general.turnTime = OffsetDateTime.now()
-                upsertOfficerTurn(general, 0, "휴식", "휴식")
+                upsertGeneralTurn(general, 0, "휴식", "휴식")
             }
             "killturnInfinite" -> general.killTurn = INFINITE_KILL_TURN.toShort()
-            "resign" -> upsertOfficerTurn(general, 0, "che_하야", "하야")
+            "resign" -> upsertGeneralTurn(general, 0, "che_하야", "하야")
             "wanderDismiss" -> {
-                upsertOfficerTurn(general, 0, "che_방랑", "방랑")
-                upsertOfficerTurn(general, 1, "che_해산", "해산")
+                upsertGeneralTurn(general, 0, "che_방랑", "방랑")
+                upsertGeneralTurn(general, 1, "che_해산", "해산")
             }
             "exp1000" -> general.experience += 1000
             "dedication1000" -> general.dedication += 1000
@@ -286,8 +293,8 @@ class AdminService(
         return true
     }
 
-    private fun upsertHallOfFame(world: com.openlogh.entity.SessionState, general: Officer) {
-        val faction = factionRepository.findById(general.factionId).orElse(null)
+    private fun upsertHallOfFame(world: com.openlogh.entity.WorldState, general: General) {
+        val nation = nationRepository.findById(general.nationId).orElse(null)
         val serverId = (world.config["serverId"] as? String).orEmpty().ifBlank { world.name }
         val scenario = (world.meta["scenarioId"] as? Number)?.toInt() ?: 0
         val season = ((world.meta["season"] as? Number)?.toInt())?.takeIf { it > 0 } ?: 1
@@ -314,9 +321,9 @@ class AdminService(
 
             val aux = mutableMapOf<String, Any>(
                 "name" to general.name,
-                "nationName" to (faction?.name ?: "재야"),
-                "bgColor" to (faction?.color ?: "#000000"),
-                "fgColor" to (faction?.color ?: "#000000"),
+                "nationName" to (nation?.name ?: "재야"),
+                "bgColor" to (nation?.color ?: "#000000"),
+                "fgColor" to (nation?.color ?: "#000000"),
                 "picture" to general.picture,
                 "imgsvr" to general.imageServer,
             )
@@ -349,24 +356,24 @@ class AdminService(
         return numerator.toDouble() / denominator.toDouble()
     }
 
-    private fun upsertOfficerTurn(
-        general: Officer,
+    private fun upsertGeneralTurn(
+        general: General,
         turnIdx: Int,
         actionCode: String,
         brief: String,
     ) {
-        val turn = officerTurnRepository.findByOfficerIdOrderByTurnIdx(general.id)
+        val turn = generalTurnRepository.findByGeneralIdOrderByTurnIdx(general.id)
             .firstOrNull { it.turnIdx.toInt() == turnIdx }
-            ?: OfficerTurn(
-                sessionId = general.sessionId,
-                officerId = general.id,
+            ?: GeneralTurn(
+                worldId = general.worldId,
+                generalId = general.id,
                 turnIdx = turnIdx.toShort(),
             )
 
         turn.actionCode = actionCode
         turn.arg = mutableMapOf()
         turn.brief = brief
-        officerTurnRepository.save(turn)
+        generalTurnRepository.save(turn)
     }
 
     fun listUsers(): List<AdminUserSummary> {
@@ -427,14 +434,14 @@ class AdminService(
         }
     }
 
-    fun broadcastMessage(sessionId: Long, officerIds: List<Long>, message: String) {
-        val messages = officerIds.map { officerId ->
+    fun broadcastMessage(worldId: Long, generalIds: List<Long>, message: String) {
+        val messages = generalIds.map { generalId ->
             com.openlogh.entity.Message(
-                sessionId = sessionId,
+                worldId = worldId,
                 mailboxCode = "private",
                 messageType = "admin",
                 srcId = 0,
-                destId = officerId,
+                destId = generalId,
                 payload = mutableMapOf(
                     "message" to message as Any,
                 ),

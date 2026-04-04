@@ -14,9 +14,9 @@ interface MapCitySelectorProps {
     title?: string;
 }
 
-export function MapCitySelector({ open, onOpenChange, onSelect, title = '도시 선택' }: MapCitySelectorProps) {
+export function MapCitySelector({ open, onOpenChange, onSelect, title = '성계 선택' }: MapCitySelectorProps) {
     const currentWorld = useWorldStore((s) => s.currentWorld);
-    const cities = useGameStore((s) => s.starSystems);
+    const cities = useGameStore((s) => s.cities);
 
     const handleCityClick = (cityId: number) => {
         onSelect(cityId);

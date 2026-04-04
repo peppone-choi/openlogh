@@ -2,59 +2,64 @@ package com.openlogh.engine.turn.cqrs
 
 import com.openlogh.engine.turn.cqrs.memory.DirtyTracker
 import com.openlogh.engine.turn.cqrs.memory.InMemoryTurnProcessor
+import com.openlogh.engine.turn.cqrs.memory.InMemoryWorldPorts
 import com.openlogh.engine.turn.cqrs.memory.WorldStateLoader
 import com.openlogh.engine.turn.cqrs.persist.WorldStatePersister
-import com.openlogh.entity.SessionState
-import com.openlogh.repository.SessionStateRepository
+import com.openlogh.entity.WorldState
+import com.openlogh.repository.WorldStateRepository
 import com.openlogh.service.GameEventService
 import org.slf4j.LoggerFactory
-import org.springframework.stereotype.Service
+import org.springframework.stereotype.Component
 
-@Service
+@Component
 class TurnCoordinator(
     private val worldStateLoader: WorldStateLoader,
     private val inMemoryTurnProcessor: InMemoryTurnProcessor,
     private val worldStatePersister: WorldStatePersister,
-    private val sessionStateRepository: SessionStateRepository,
+    private val worldStateRepository: WorldStateRepository,
     private val turnStatusService: TurnStatusService,
     private val gameEventService: GameEventService,
 ) {
-    companion object {
-        private val log = LoggerFactory.getLogger(TurnCoordinator::class.java)
-    }
+    private val logger = LoggerFactory.getLogger(TurnCoordinator::class.java)
 
-    fun processWorld(world: SessionState) {
+    fun processWorld(world: WorldState) {
         val worldId = world.id.toLong()
         try {
-            // LOADING
-            turnStatusService.updateStatus(worldId, TurnLifecycleState.LOADING)
+            transition(worldId, TurnLifecycleState.LOADING)
             val state = worldStateLoader.loadWorldState(worldId)
+            val dirtyTracker = DirtyTracker()
+            val ports = InMemoryWorldPorts(state, dirtyTracker)
 
-            // PROCESSING
-            turnStatusService.updateStatus(worldId, TurnLifecycleState.PROCESSING)
-            val tracker = DirtyTracker()
-            val result = inMemoryTurnProcessor.process(world, state, tracker)
+            transition(worldId, TurnLifecycleState.PROCESSING)
+            val result = inMemoryTurnProcessor.process(world, state, ports)
 
-            // PERSISTING
-            turnStatusService.updateStatus(worldId, TurnLifecycleState.PERSISTING)
-            worldStatePersister.persist(state, tracker)
-            sessionStateRepository.save(world)
+            transition(worldId, TurnLifecycleState.PERSISTING)
+            worldStatePersister.persist(state, dirtyTracker, state.worldId)
+            worldStateRepository.save(world)
 
-            // PUBLISHING
-            turnStatusService.updateStatus(worldId, TurnLifecycleState.PUBLISHING)
-            if (result.advancedTurns > 0) {
-                gameEventService.broadcastTurnAdvance(
-                    worldId,
-                    world.currentYear.toInt(),
-                    world.currentMonth.toInt(),
-                )
-            }
-
-            turnStatusService.updateStatus(worldId, TurnLifecycleState.IDLE)
+            transition(worldId, TurnLifecycleState.PUBLISHING)
+            publish(worldId, result)
         } catch (e: Exception) {
-            log.error("CQRS turn processing failed for world {}", worldId, e)
-            turnStatusService.updateStatus(worldId, TurnLifecycleState.FAILED)
-            turnStatusService.updateStatus(worldId, TurnLifecycleState.IDLE)
+            transition(worldId, TurnLifecycleState.FAILED)
+            logger.error("Turn processing failed for world {}: {}", worldId, e.message, e)
+        } finally {
+            transition(worldId, TurnLifecycleState.IDLE)
         }
+    }
+
+    private fun publish(worldId: Long, result: TurnResult) {
+        if (result.events.isEmpty()) return
+
+        result.events.forEach { event ->
+            if (event.type == com.openlogh.engine.turn.cqrs.memory.InMemoryTurnProcessor.EVENT_TURN_ADVANCED) {
+                val year = (event.payload["year"] as? Int) ?: return@forEach
+                val month = (event.payload["month"] as? Int) ?: return@forEach
+                gameEventService.broadcastTurnAdvance(worldId, year, month)
+            }
+        }
+    }
+
+    private fun transition(worldId: Long, state: TurnLifecycleState) {
+        turnStatusService.updateStatus(worldId, state)
     }
 }

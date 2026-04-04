@@ -1,6 +1,9 @@
 package com.openlogh.engine
 
-import com.openlogh.entity.*
+import com.openlogh.entity.City
+import com.openlogh.entity.General
+import com.openlogh.entity.Nation
+import com.openlogh.entity.WorldState
 import com.openlogh.model.ScenarioData
 import com.openlogh.service.ScenarioService
 import com.openlogh.test.InMemoryTurnHarness
@@ -20,7 +23,7 @@ class DuelSimulationTest {
 
         fx.harness.turnService.processWorld(fx.world)
 
-        assertTrue(fx.harness.officerTurnsFor(fx.dongKing.id).isEmpty())
+        assertTrue(fx.harness.generalTurnsFor(fx.dongKing.id).isEmpty())
         assertEquals(2, fx.world.currentMonth.toInt())
     }
 
@@ -50,7 +53,7 @@ class DuelSimulationTest {
 
         fx.harness.turnService.processWorld(fx.world)
 
-        assertTrue(fx.harness.officerTurnsFor(fx.dongKing.id).isEmpty())
+        assertTrue(fx.harness.generalTurnsFor(fx.dongKing.id).isEmpty())
         assertEquals(2, fx.world.currentMonth.toInt())
     }
 
@@ -126,10 +129,10 @@ class DuelSimulationTest {
         val scenarioService = privateField<ScenarioService>(harness, "scenarioService")
         `when`(scenarioService.getScenario("test")).thenReturn(ScenarioData(startYear = 190))
 
-        harness.queueOfficerTurn(officerId = 11, actionCode = "출병", arg = mutableMapOf("destCityId" to 2L))
-        harness.queueFactionTurn(factionId = 1, officerLevel = 20, actionCode = "Nation휴식")
-        harness.queueFactionTurn(factionId = 1, officerLevel = 8, actionCode = "Nation휴식")
-        harness.queueFactionTurn(factionId = 2, officerLevel = 20, actionCode = "Nation휴식")
+        harness.queueGeneralTurn(generalId = 11, actionCode = "출병", arg = mutableMapOf("destCityId" to 2L))
+        harness.queueNationTurn(nationId = 1, officerLevel = 20, actionCode = "Nation휴식")
+        harness.queueNationTurn(nationId = 1, officerLevel = 8, actionCode = "Nation휴식")
+        harness.queueNationTurn(nationId = 2, officerLevel = 20, actionCode = "Nation휴식")
 
         return Fixture(harness, world, city2, dongKing)
     }

@@ -1,12 +1,12 @@
 package com.openlogh.dto
 
-data class TournamentRegisterRequest(val officerId: Long)
+data class TournamentRegisterRequest(val generalId: Long)
 
 data class CreateTournamentRequest(val type: Int)
 
 data class AdvanceTournamentRequest(val tournamentId: Long)
 
-data class PlaceBetRequest(val officerId: Long, val targetId: Long, val amount: Int)
+data class PlaceBetRequest(val generalId: Long, val targetId: Long, val amount: Int)
 
 data class TournamentBracketMatchResponse(
     val round: Int,
@@ -23,7 +23,7 @@ data class TournamentInfoResponse(
 )
 
 data class BetEntryResponse(
-    val officerId: Long,
+    val generalId: Long,
     val targetId: Long,
     val amount: Int,
 )

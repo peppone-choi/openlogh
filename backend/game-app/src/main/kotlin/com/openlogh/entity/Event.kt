@@ -13,7 +13,7 @@ class Event(
     var id: Long = 0,
 
     @Column(name = "world_id", nullable = false)
-    var sessionId: Long = 0,
+    var worldId: Long = 0,
 
     @Column(name = "target_code", nullable = false)
     var targetCode: String = "",

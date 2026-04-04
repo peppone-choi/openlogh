@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useWorldStore } from '@/stores/worldStore';
-import { useOfficerStore } from '@/stores/officerStore';
+import { useGeneralStore } from '@/stores/generalStore';
 import { useGameStore } from '@/stores/gameStore';
 import { generalLogApi } from '@/lib/gameApi';
 import type { General, GeneralLogEntry } from '@/types';
@@ -10,12 +10,12 @@ import { Swords, ChevronLeft, ChevronRight, ArrowLeftRight } from 'lucide-react'
 import { PageHeader } from '@/components/game/page-header';
 import { LoadingState } from '@/components/game/loading-state';
 import { EmptyState } from '@/components/game/empty-state';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/8bit/card';
+import { Badge } from '@/components/ui/8bit/badge';
+import { Button } from '@/components/ui/8bit/button';
 import { NationBadge } from '@/components/game/nation-badge';
 import { formatLog } from '@/lib/formatLog';
-import { SHIP_CLASS_NAMES, getPersonalityName } from '@/lib/game-utils';
+import { CREW_TYPE_NAMES, getPersonalityName } from '@/lib/game-utils';
 
 /** NPC color helper matching legacy getNPCColor */
 function getNPCColor(npcState: number): string | undefined {
@@ -48,7 +48,7 @@ const LOG_TYPES = ['generalHistory', 'battleDetail', 'battleResult', 'generalAct
 
 export default function BattleCenterPage() {
     const currentWorld = useWorldStore((s) => s.currentWorld);
-    const { myGeneral, fetchMyGeneral } = useOfficerStore();
+    const { myGeneral, fetchMyGeneral } = useGeneralStore();
     const { generals, nations, loading, loadAll } = useGameStore();
 
     const [orderBy, setOrderBy] = useState<SortKey>('turntime');
@@ -184,7 +184,7 @@ export default function BattleCenterPage() {
 
     return (
         <div className="space-y-4 max-w-6xl mx-auto">
-            <PageHeader icon={Swords} title="감찰부" description="제독별 전투 기록 및 상세 정보" />
+            <PageHeader icon={Swords} title="감찰부" description="장수별 전투 기록 및 상세 정보" />
 
             {/* Navigation bar */}
             <div className="flex items-center gap-2">
@@ -278,7 +278,7 @@ export default function BattleCenterPage() {
 
                     <div className="space-y-4">
                         <LogSection
-                            title="제독 열전"
+                            title="장수 열전"
                             titleColor="text-orange-400"
                             logs={logs?.generalHistory ?? []}
                             loading={logsLoading}
@@ -310,7 +310,7 @@ export default function BattleCenterPage() {
                     )}
                 </div>
             ) : orderedGenerals.length === 0 ? (
-                <EmptyState icon={Swords} title="조회 가능한 제독가 없습니다." />
+                <EmptyState icon={Swords} title="조회 가능한 장교가 없습니다." />
             ) : null}
         </div>
     );
@@ -331,10 +331,10 @@ function ComparisonView({
 }) {
     const stats: { label: string; a: number; b: number }[] = [
         { label: '통솔', a: generalA.leadership, b: generalB.leadership },
-        { label: '무력', a: generalA.strength, b: generalB.strength },
-        { label: '지력', a: generalA.intel, b: generalB.intel },
+        { label: '지휘', a: generalA.strength, b: generalB.strength },
+        { label: '정보', a: generalA.intel, b: generalB.intel },
         { label: '정치', a: generalA.politics, b: generalB.politics },
-        { label: '매력', a: generalA.charm, b: generalB.charm },
+        { label: '운영', a: generalA.charm, b: generalB.charm },
         { label: '병사', a: generalA.crew, b: generalB.crew },
         { label: '훈련', a: generalA.train, b: generalB.train },
         { label: '사기', a: generalA.atmos, b: generalB.atmos },
@@ -360,7 +360,7 @@ function ComparisonView({
             <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2">
                     <ArrowLeftRight className="size-4" />
-                    제독 비교
+                    장수 비교
                 </CardTitle>
             </CardHeader>
             <CardContent className="text-xs space-y-4">
@@ -419,10 +419,10 @@ function ComparisonView({
                     <div className="text-muted-foreground text-center mb-1">장비</div>
                     {(['weaponCode', 'bookCode', 'horseCode', 'itemCode'] as const).map((key) => {
                         const labels: Record<string, string> = {
-                            weaponCode: '기함',
-                            bookCode: '특수장비',
-                            horseCode: '기관',
-                            itemCode: '부속품',
+                            weaponCode: '무기',
+                            bookCode: '서적',
+                            horseCode: '명마',
+                            itemCode: '아이템',
                         };
                         return (
                             <div key={key} className="grid grid-cols-3 gap-2 text-center items-center">
@@ -465,7 +465,7 @@ function GeneralBasicCard({ general, nation }: { general: General; nation?: { na
         <Card>
             <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2" style={{ color: 'skyblue' }}>
-                    제독 정보
+                    장수 정보
                 </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 text-xs">
@@ -508,13 +508,13 @@ function GeneralBasicCard({ general, nation }: { general: General; nation?: { na
                     <EquipRow label="기함" value={general.weaponCode} />
                     <EquipRow label="특수장비" value={general.bookCode} />
                     <EquipRow label="기관" value={general.horseCode} />
-                    <EquipRow label="부속품" value={general.itemCode} />
+                    <EquipRow label="아이템" value={general.itemCode} />
                 </div>
 
                 <div className="grid grid-cols-3 gap-x-4 gap-y-1">
                     <div>
                         <span className="text-muted-foreground">병종:</span>{' '}
-                        {SHIP_CLASS_NAMES[general.crewType] ?? general.crewType}
+                        {CREW_TYPE_NAMES[general.crewType] ?? general.crewType}
                     </div>
                     <div>
                         <span className="text-muted-foreground">병사:</span> {general.crew.toLocaleString()}

@@ -1,6 +1,6 @@
 import type { LucideIcon } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/8bit/card';
+import { Button } from '@/components/ui/8bit/button';
 import { AlertTriangle } from 'lucide-react';
 
 interface ErrorStateProps {

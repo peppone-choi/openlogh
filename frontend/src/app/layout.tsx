@@ -1,11 +1,15 @@
 import type { Metadata } from 'next';
 import { ThemeProvider } from 'next-themes';
-import { Toaster } from 'sonner';
+import { Toaster } from '@/components/ui/sonner';
 import './globals.css';
 
 export const metadata: Metadata = {
-    title: '오픈 은하영웅전설',
-    description: '은하영웅전설 세계관 멀티플레이어 전략 시뮬레이션 게임',
+    title: '오픈삼국',
+    description: 'Web-based Three Kingdoms strategy game',
+    icons: {
+        icon: '/favicon.ico',
+        apple: '/icons/favicon-192.png',
+    },
 };
 
 export default function RootLayout({

@@ -5,9 +5,9 @@ import com.openlogh.dto.BoardCommentResponse
 import com.openlogh.entity.BoardComment
 import com.openlogh.entity.Message
 import com.openlogh.repository.BoardCommentRepository
-import com.openlogh.repository.OfficerRepository
+import com.openlogh.repository.GeneralRepository
 import com.openlogh.repository.MessageRepository
-import com.openlogh.repository.FactionRepository
+import com.openlogh.repository.NationRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.OffsetDateTime
@@ -16,9 +16,9 @@ import java.time.OffsetDateTime
 class MessageService(
     private val messageRepository: MessageRepository,
     private val boardCommentRepository: BoardCommentRepository,
-    private val officerRepository: OfficerRepository,
-    private val factionRepository: FactionRepository,
-    private val worldStateRepository: com.openlogh.repository.SessionStateRepository,
+    private val generalRepository: GeneralRepository,
+    private val nationRepository: NationRepository,
+    private val worldStateRepository: com.openlogh.repository.WorldStateRepository,
 ) {
     companion object {
         const val MAILBOX_PUBLIC = "PUBLIC"
@@ -29,33 +29,33 @@ class MessageService(
         private const val MAX_PAGE_SIZE = 100
     }
 
-    fun getMessages(officerId: Long, sinceId: Long? = null, limit: Int? = null): List<Message> {
-        val officer = officerRepository.findById(officerId).orElse(null) ?: return emptyList()
+    fun getMessages(generalId: Long, sinceId: Long? = null, limit: Int? = null): List<Message> {
+        val general = generalRepository.findById(generalId).orElse(null) ?: return emptyList()
         val privateMessages = if (sinceId != null) {
-            messageRepository.findConversationByMailboxTypeAndOwnerIdAndIdGreaterThan(MAILBOX_PRIVATE, officerId, sinceId)
+            messageRepository.findConversationByMailboxTypeAndOwnerIdAndIdGreaterThan(MAILBOX_PRIVATE, generalId, sinceId)
         } else {
-            messageRepository.findConversationByMailboxTypeAndOwnerId(MAILBOX_PRIVATE, officerId)
+            messageRepository.findConversationByMailboxTypeAndOwnerId(MAILBOX_PRIVATE, generalId)
         }
 
-        val nationalMessages = if (officer.factionId != 0L) {
+        val nationalMessages = if (general.nationId != 0L) {
             if (sinceId != null) {
                 messageRepository.findByDestIdAndMailboxTypeAndIdGreaterThanOrderBySentAtDesc(
-                    officer.factionId,
+                    general.nationId,
                     MAILBOX_NATIONAL,
                     sinceId,
                 )
             } else {
-                messageRepository.findByDestIdAndMailboxTypeOrderBySentAtDesc(officer.factionId, MAILBOX_NATIONAL)
+                messageRepository.findByDestIdAndMailboxTypeOrderBySentAtDesc(general.nationId, MAILBOX_NATIONAL)
             }
         } else {
             emptyList()
         }
 
-        val diplomacyMessages = if (officer.factionId != 0L && officer.rank >= 4) {
+        val diplomacyMessages = if (general.nationId != 0L && general.officerLevel >= 4) {
             if (sinceId != null) {
-                messageRepository.findConversationByMailboxTypeAndOwnerIdAndIdGreaterThan(MAILBOX_DIPLOMACY, officer.factionId, sinceId)
+                messageRepository.findConversationByMailboxTypeAndOwnerIdAndIdGreaterThan(MAILBOX_DIPLOMACY, general.nationId, sinceId)
             } else {
-                messageRepository.findConversationByMailboxTypeAndOwnerId(MAILBOX_DIPLOMACY, officer.factionId)
+                messageRepository.findConversationByMailboxTypeAndOwnerId(MAILBOX_DIPLOMACY, general.nationId)
             }
         } else {
             emptyList()
@@ -73,82 +73,82 @@ class MessageService(
         return if (normalizedLimit != null) messages.take(normalizedLimit) else messages
     }
 
-    fun getPublicMessages(sessionId: Long, beforeId: Long? = null, limit: Int? = null): List<Message> {
+    fun getPublicMessages(worldId: Long, beforeId: Long? = null, limit: Int? = null): List<Message> {
         val messages = if (beforeId != null) {
-            messageRepository.findBySessionIdAndMailboxTypeAndIdLessThanOrderBySentAtDesc(sessionId, MAILBOX_PUBLIC, beforeId)
+            messageRepository.findByWorldIdAndMailboxTypeAndIdLessThanOrderBySentAtDesc(worldId, MAILBOX_PUBLIC, beforeId)
         } else {
-            messageRepository.findBySessionIdAndMailboxTypeOrderBySentAtDesc(sessionId, MAILBOX_PUBLIC)
+            messageRepository.findByWorldIdAndMailboxTypeOrderBySentAtDesc(worldId, MAILBOX_PUBLIC)
         }
         // Only include user-written public messages (exclude system records with unrecognized mailboxCodes)
         val filtered = messages.filter { it.mailboxCode in setOf("public", "board", "public_chat") }
         return applyLimit(filtered, limit)
     }
 
-    fun getNationalMessages(factionId: Long, beforeId: Long? = null, limit: Int? = null): List<Message> {
+    fun getNationalMessages(nationId: Long, beforeId: Long? = null, limit: Int? = null): List<Message> {
         val messages = if (beforeId != null) {
-            messageRepository.findByDestIdAndMailboxTypeAndIdLessThanOrderBySentAtDesc(factionId, MAILBOX_NATIONAL, beforeId)
+            messageRepository.findByDestIdAndMailboxTypeAndIdLessThanOrderBySentAtDesc(nationId, MAILBOX_NATIONAL, beforeId)
         } else {
-            messageRepository.findByDestIdAndMailboxTypeOrderBySentAtDesc(factionId, MAILBOX_NATIONAL)
+            messageRepository.findByDestIdAndMailboxTypeOrderBySentAtDesc(nationId, MAILBOX_NATIONAL)
         }
         return applyLimit(messages, limit)
     }
 
-    fun getPrivateMessages(officerId: Long, beforeId: Long? = null, limit: Int? = null): List<Message> {
+    fun getPrivateMessages(generalId: Long, beforeId: Long? = null, limit: Int? = null): List<Message> {
         val messages = if (beforeId != null) {
-            messageRepository.findConversationByMailboxTypeAndOwnerIdAndIdLessThan(MAILBOX_PRIVATE, officerId, beforeId)
+            messageRepository.findConversationByMailboxTypeAndOwnerIdAndIdLessThan(MAILBOX_PRIVATE, generalId, beforeId)
         } else {
-            messageRepository.findConversationByMailboxTypeAndOwnerId(MAILBOX_PRIVATE, officerId)
+            messageRepository.findConversationByMailboxTypeAndOwnerId(MAILBOX_PRIVATE, generalId)
         }
         return applyLimit(messages, limit)
     }
 
-    fun getDiplomacyMessages(factionId: Long, rank: Short, beforeId: Long? = null, limit: Int? = null): List<Message> {
-        require(rank >= 4) { "Diplomacy mailbox requires officer level 4 or higher" }
+    fun getDiplomacyMessages(nationId: Long, officerLevel: Short, beforeId: Long? = null, limit: Int? = null): List<Message> {
+        require(officerLevel >= 4) { "Diplomacy mailbox requires officer level 4 or higher" }
         val messages = if (beforeId != null) {
-            messageRepository.findConversationByMailboxTypeAndOwnerIdAndIdLessThan(MAILBOX_DIPLOMACY, factionId, beforeId)
+            messageRepository.findConversationByMailboxTypeAndOwnerIdAndIdLessThan(MAILBOX_DIPLOMACY, nationId, beforeId)
         } else {
-            messageRepository.findConversationByMailboxTypeAndOwnerId(MAILBOX_DIPLOMACY, factionId)
+            messageRepository.findConversationByMailboxTypeAndOwnerId(MAILBOX_DIPLOMACY, nationId)
         }
         return applyLimit(messages, limit)
     }
 
-    fun getBoardMessages(sessionId: Long, factionId: Long): List<Message> {
-        return messageRepository.findBySessionIdAndMailboxCodeAndDestIdOrderBySentAtDesc(sessionId, "board", factionId)
+    fun getBoardMessages(worldId: Long, nationId: Long): List<Message> {
+        return messageRepository.findByWorldIdAndMailboxCodeAndDestIdOrderBySentAtDesc(worldId, "board", nationId)
     }
 
-    fun getSecretBoardMessages(sessionId: Long, factionId: Long): List<Message> {
-        return messageRepository.findBySessionIdAndMailboxCodeAndDestIdOrderBySentAtDesc(sessionId, "secret", factionId)
+    fun getSecretBoardMessages(worldId: Long, nationId: Long): List<Message> {
+        return messageRepository.findByWorldIdAndMailboxCodeAndDestIdOrderBySentAtDesc(worldId, "secret", nationId)
     }
 
     @Transactional
     fun sendMessage(
-        sessionId: Long,
+        worldId: Long,
         mailboxCode: String,
         mailboxType: String? = null,
         messageType: String,
         srcId: Long?,
         destId: Long?,
-        rank: Short? = null,
+        officerLevel: Short? = null,
         payload: Map<String, Any>,
     ): Message {
         val resolvedMailboxType = resolveMailboxType(mailboxType, mailboxCode)
 
         if (resolvedMailboxType == MAILBOX_DIPLOMACY) {
-            val resolvedOfficerLevel = rank ?: srcId
-                ?.let { senderId -> officerRepository.findById(senderId).orElse(null)?.rank }
+            val resolvedOfficerLevel = officerLevel ?: srcId
+                ?.let { senderId -> generalRepository.findById(senderId).orElse(null)?.officerLevel }
             require((resolvedOfficerLevel ?: 0) >= 4) { "Diplomacy mailbox requires officer level 4 or higher" }
         }
 
         if (resolvedMailboxType == MAILBOX_NATIONAL && mailboxCode == "national" && srcId != null && destId != null) {
             val recipientNationIds = linkedSetOf(srcId, destId)
-            val copies = recipientNationIds.map { factionId ->
+            val copies = recipientNationIds.map { nationId ->
                 Message(
-                    sessionId = sessionId,
+                    worldId = worldId,
                     mailboxCode = mailboxCode,
                     mailboxType = resolvedMailboxType,
                     messageType = messageType,
                     srcId = srcId,
-                    destId = factionId,
+                    destId = nationId,
                     payload = payload.toMutableMap(),
                 )
             }
@@ -157,7 +157,7 @@ class MessageService(
 
         return messageRepository.save(
             Message(
-                sessionId = sessionId,
+                worldId = worldId,
                 mailboxCode = mailboxCode,
                 mailboxType = resolvedMailboxType,
                 messageType = messageType,
@@ -182,16 +182,16 @@ class MessageService(
         messageRepository.save(message)
     }
 
-    fun getContacts(sessionId: Long): List<ContactInfo> {
-        val generals = officerRepository.findBySessionId(sessionId)
-        val nations = factionRepository.findBySessionId(sessionId).associateBy { it.id }
+    fun getContacts(worldId: Long): List<ContactInfo> {
+        val generals = generalRepository.findByWorldId(worldId)
+        val nations = nationRepository.findByWorldId(worldId).associateBy { it.id }
         return generals.map { gen ->
             ContactInfo(
-                officerId = gen.id,
+                generalId = gen.id,
                 name = gen.name,
-                factionId = gen.factionId,
-                nationName = nations[gen.factionId]?.name ?: "",
-                nationColor = nations[gen.factionId]?.color,
+                nationId = gen.nationId,
+                nationName = nations[gen.nationId]?.name ?: "",
+                nationColor = nations[gen.nationId]?.color,
                 picture = gen.picture,
             )
         }
@@ -230,13 +230,13 @@ class MessageService(
     }
 
     @Transactional
-    fun deleteBoardComment(postId: Long, commentId: Long, officerId: Long): Boolean {
+    fun deleteBoardComment(postId: Long, commentId: Long, generalId: Long): Boolean {
         val post = getBoardPost(postId)
         migrateLegacyPayloadComments(post)
 
         val comment = boardCommentRepository.findById(commentId).orElse(null) ?: return false
         if (comment.boardId != postId) return false
-        if (comment.authorGeneralId != officerId) return false
+        if (comment.authorGeneralId != generalId) return false
 
         boardCommentRepository.delete(comment)
         return true
@@ -247,22 +247,22 @@ class MessageService(
      */
     @Transactional
     fun sendNationalMessage(
-        sessionId: Long,
+        worldId: Long,
         srcNationId: Long,
-        destFactionId: Long,
+        destNationId: Long,
         srcGeneralId: Long,
         text: String,
     ) {
         sendMessage(
-            sessionId = sessionId,
+            worldId = worldId,
             mailboxCode = "national",
             mailboxType = MAILBOX_NATIONAL,
             messageType = "national_message",
             srcId = srcNationId,
-            destId = destFactionId,
+            destId = destNationId,
             payload = mapOf(
                 "srcNationId" to srcNationId,
-                "destFactionId" to destFactionId,
+                "destNationId" to destNationId,
                 "srcGeneralId" to srcGeneralId,
                 "text" to text,
             ),
@@ -354,23 +354,23 @@ class MessageService(
         val fromGeneralId = (message.payload["fromGeneralId"] as? Number)?.toLong()
             ?: throw IllegalStateException("등용자 정보가 없습니다.")
 
-        val receiver = officerRepository.findById(receiverGeneralId).orElseThrow {
+        val receiver = generalRepository.findById(receiverGeneralId).orElseThrow {
             IllegalArgumentException("장수를 찾을 수 없습니다.")
         }
 
-        if (receiver.rank >= 20) throw IllegalStateException("군주는 등용장을 수락할 수 없습니다.")
+        if (receiver.officerLevel >= 20) throw IllegalStateException("군주는 등용장을 수락할 수 없습니다.")
 
-        val destFaction = factionRepository.findById(fromNationId).orElse(null)
+        val destNation = nationRepository.findById(fromNationId).orElse(null)
             ?: throw IllegalStateException("대상 국가가 존재하지 않습니다.")
-        if (destFaction.factionRank <= 0) throw IllegalStateException("방랑군에는 임관할 수 없습니다.")
+        if (destNation.level <= 0) throw IllegalStateException("방랑군에는 임관할 수 없습니다.")
 
-        val world = worldStateRepository.findById(receiver.sessionId.toShort()).orElse(null)
+        val world = worldStateRepository.findById(receiver.worldId.toShort()).orElse(null)
         if (world != null) {
             val startYear = (world.config["startyear"] as? Number)?.toInt() ?: world.currentYear.toInt()
             val openingPartYears = (world.config["openingPartYears"] as? Number)?.toInt() ?: 3
             val relYear = world.currentYear.toInt() - startYear
             if (relYear < openingPartYears) {
-                val genCount = officerRepository.findBySessionIdAndNationId(world.id.toLong(), fromNationId).size
+                val genCount = generalRepository.findByWorldIdAndNationId(world.id.toLong(), fromNationId).size
                 val genLimit = (world.config["initialNationGenLimit"] as? Number)?.toInt() ?: 10
                 if (genCount >= genLimit) {
                     throw IllegalStateException("임관이 제한되고 있습니다. (개방 기간 중 국가당 최대 ${genLimit}명)")
@@ -378,14 +378,14 @@ class MessageService(
             }
         }
 
-        val oldNationId = receiver.factionId
-        val isTroopLeader = receiver.fleetId == receiver.id
+        val oldNationId = receiver.nationId
+        val isTroopLeader = receiver.troopId == receiver.id
 
-        if (oldNationId != 0L && receiver.funds > 1000) {
-            receiver.funds = 1000
+        if (oldNationId != 0L && receiver.gold > 1000) {
+            receiver.gold = 1000
         }
-        if (oldNationId != 0L && receiver.supplies > 1000) {
-            receiver.supplies = 1000
+        if (oldNationId != 0L && receiver.rice > 1000) {
+            receiver.rice = 1000
         }
 
         if (oldNationId != 0L) {
@@ -398,38 +398,38 @@ class MessageService(
             receiver.dedication += 100
         }
 
-        receiver.factionId = fromNationId
-        receiver.planetId = destFaction.capitalPlanetId ?: receiver.planetId
-        receiver.rank = 1
-        receiver.stationedSystem = 0
+        receiver.nationId = fromNationId
+        receiver.cityId = destNation.capitalCityId ?: receiver.cityId
+        receiver.officerLevel = 1
+        receiver.officerCity = 0
         receiver.permission = "normal"
         receiver.belong = 1
-        receiver.fleetId = 0
+        receiver.troopId = 0
 
         if (isTroopLeader) {
-            officerRepository.findByTroopId(receiverGeneralId).forEach { member ->
+            generalRepository.findByTroopId(receiverGeneralId).forEach { member ->
                 if (member.id != receiverGeneralId) {
-                    member.fleetId = 0
-                    officerRepository.save(member)
+                    member.troopId = 0
+                    generalRepository.save(member)
                 }
             }
         }
 
-        officerRepository.save(receiver)
+        generalRepository.save(receiver)
 
         message.meta["used"] = true
         messageRepository.save(message)
 
         invalidateOtherScoutMessages(receiverGeneralId, messageId)
 
-        val recruiter = officerRepository.findById(fromGeneralId).orElse(null)
+        val recruiter = generalRepository.findById(fromGeneralId).orElse(null)
         if (recruiter != null) {
             recruiter.experience += 100
             recruiter.dedication += 100
-            officerRepository.save(recruiter)
+            generalRepository.save(recruiter)
         }
 
-        return destFaction.name
+        return destNation.name
     }
 
     @Transactional
@@ -444,9 +444,9 @@ class MessageService(
         messageRepository.save(message)
     }
 
-    private fun invalidateOtherScoutMessages(officerId: Long, exceptMessageId: Long) {
+    private fun invalidateOtherScoutMessages(generalId: Long, exceptMessageId: Long) {
         val pendingScouts = messageRepository.findByDestIdAndMailboxTypeAndMessageTypeOrderBySentAtDesc(
-            officerId, MAILBOX_PRIVATE, "recruitment"
+            generalId, MAILBOX_PRIVATE, "recruitment"
         )
         pendingScouts.filter { it.id != exceptMessageId && (it.meta["used"] as? Boolean) != true }.forEach { msg ->
             msg.meta["used"] = true

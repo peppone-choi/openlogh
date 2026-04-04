@@ -1,7 +1,7 @@
 package com.openlogh.service
 
 import com.openlogh.entity.Record
-import com.openlogh.repository.OfficerRepository
+import com.openlogh.repository.GeneralRepository
 import com.openlogh.repository.RecordRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -9,7 +9,7 @@ import org.springframework.transaction.annotation.Transactional
 @Service
 class RecordService(
     private val recordRepository: RecordRepository,
-    private val officerRepository: OfficerRepository,
+    private val generalRepository: GeneralRepository,
 ) {
     companion object {
         const val GENERAL_ACTION = "general_action"
@@ -26,7 +26,7 @@ class RecordService(
 
     @Transactional
     fun saveRecord(
-        sessionId: Long,
+        worldId: Long,
         recordType: String,
         srcId: Long?,
         destId: Long?,
@@ -36,7 +36,7 @@ class RecordService(
     ): Record {
         return recordRepository.save(
             Record(
-                sessionId = sessionId,
+                worldId = worldId,
                 recordType = recordType,
                 srcId = srcId,
                 destId = destId,
@@ -47,93 +47,93 @@ class RecordService(
         )
     }
 
-    fun getGeneralActions(officerId: Long, beforeId: Long? = null, limit: Int? = null): List<Record> {
+    fun getGeneralActions(generalId: Long, beforeId: Long? = null, limit: Int? = null): List<Record> {
         val records = if (beforeId != null) {
             recordRepository.findByDestIdAndRecordTypeAndIdLessThanOrderByCreatedAtDesc(
-                officerId,
+                generalId,
                 GENERAL_ACTION,
                 beforeId
             )
         } else {
-            recordRepository.findByDestIdAndRecordTypeOrderByCreatedAtDesc(officerId, GENERAL_ACTION)
+            recordRepository.findByDestIdAndRecordTypeOrderByCreatedAtDesc(generalId, GENERAL_ACTION)
         }
         return applyLimit(records, limit)
     }
 
-    fun getOfficerRecords(officerId: Long, beforeId: Long? = null, limit: Int? = null): List<Record> {
+    fun getGeneralRecords(generalId: Long, beforeId: Long? = null, limit: Int? = null): List<Record> {
         val records = if (beforeId != null) {
             recordRepository.findByDestIdAndRecordTypeAndIdLessThanOrderByCreatedAtDesc(
-                officerId,
+                generalId,
                 GENERAL_RECORD,
                 beforeId
             )
         } else {
-            recordRepository.findByDestIdAndRecordTypeOrderByCreatedAtDesc(officerId, GENERAL_RECORD)
+            recordRepository.findByDestIdAndRecordTypeOrderByCreatedAtDesc(generalId, GENERAL_RECORD)
         }
         return applyLimit(records, limit)
     }
 
-    fun getWorldRecords(sessionId: Long, beforeId: Long? = null, limit: Int? = null): List<Record> {
+    fun getWorldRecords(worldId: Long, beforeId: Long? = null, limit: Int? = null): List<Record> {
         val records = if (beforeId != null) {
-            recordRepository.findBySessionIdAndRecordTypeAndIdLessThanOrderByCreatedAtDesc(
-                sessionId,
+            recordRepository.findByWorldIdAndRecordTypeAndIdLessThanOrderByCreatedAtDesc(
+                worldId,
                 WORLD_RECORD,
                 beforeId
             )
         } else {
-            recordRepository.findBySessionIdAndRecordTypeOrderByCreatedAtDesc(sessionId, WORLD_RECORD)
+            recordRepository.findByWorldIdAndRecordTypeOrderByCreatedAtDesc(worldId, WORLD_RECORD)
         }
         return applyLimit(records, limit)
     }
 
-    fun getWorldHistory(sessionId: Long, beforeId: Long? = null, limit: Int? = null): List<Record> {
+    fun getWorldHistory(worldId: Long, beforeId: Long? = null, limit: Int? = null): List<Record> {
         val records = if (beforeId != null) {
-            recordRepository.findBySessionIdAndRecordTypeAndIdLessThanOrderByCreatedAtDesc(
-                sessionId,
+            recordRepository.findByWorldIdAndRecordTypeAndIdLessThanOrderByCreatedAtDesc(
+                worldId,
                 WORLD_HISTORY,
                 beforeId
             )
         } else {
-            recordRepository.findBySessionIdAndRecordTypeOrderByCreatedAtDesc(sessionId, WORLD_HISTORY)
+            recordRepository.findByWorldIdAndRecordTypeOrderByCreatedAtDesc(worldId, WORLD_HISTORY)
         }
         return applyLimit(records, limit)
     }
 
-    fun getNationHistory(factionId: Long, beforeId: Long? = null, limit: Int? = null): List<Record> {
+    fun getNationHistory(nationId: Long, beforeId: Long? = null, limit: Int? = null): List<Record> {
         val records = if (beforeId != null) {
             recordRepository.findByDestIdAndRecordTypeAndIdLessThanOrderByCreatedAtDesc(
-                factionId,
+                nationId,
                 NATION_HISTORY,
                 beforeId
             )
         } else {
-            recordRepository.findByDestIdAndRecordTypeOrderByCreatedAtDesc(factionId, NATION_HISTORY)
+            recordRepository.findByDestIdAndRecordTypeOrderByCreatedAtDesc(nationId, NATION_HISTORY)
         }
         return applyLimit(records, limit)
     }
 
-    fun getBattleResults(officerId: Long, beforeId: Long? = null, limit: Int? = null): List<Record> {
+    fun getBattleResults(generalId: Long, beforeId: Long? = null, limit: Int? = null): List<Record> {
         val records = if (beforeId != null) {
             recordRepository.findByDestIdAndRecordTypeAndIdLessThanOrderByCreatedAtDesc(
-                officerId,
+                generalId,
                 BATTLE_RESULT,
                 beforeId
             )
         } else {
-            recordRepository.findByDestIdAndRecordTypeOrderByCreatedAtDesc(officerId, BATTLE_RESULT)
+            recordRepository.findByDestIdAndRecordTypeOrderByCreatedAtDesc(generalId, BATTLE_RESULT)
         }
         return applyLimit(records, limit)
     }
 
-    fun getBattleDetails(officerId: Long, beforeId: Long? = null, limit: Int? = null): List<Record> {
+    fun getBattleDetails(generalId: Long, beforeId: Long? = null, limit: Int? = null): List<Record> {
         val records = if (beforeId != null) {
             recordRepository.findByDestIdAndRecordTypeAndIdLessThanOrderByCreatedAtDesc(
-                officerId,
+                generalId,
                 BATTLE_DETAIL,
                 beforeId
             )
         } else {
-            recordRepository.findByDestIdAndRecordTypeOrderByCreatedAtDesc(officerId, BATTLE_DETAIL)
+            recordRepository.findByDestIdAndRecordTypeOrderByCreatedAtDesc(generalId, BATTLE_DETAIL)
         }
         return applyLimit(records, limit)
     }
@@ -150,7 +150,7 @@ class RecordService(
         val logs: List<LogEntry> = emptyList(),
     )
 
-    fun getOldLogs(officerId: Long, targetId: Long, type: String, toId: Long): LogResult {
+    fun getOldLogs(generalId: Long, targetId: Long, type: String, toId: Long): LogResult {
         if (type !in listOf("generalAction", "battleResult", "battleDetail")) {
             return LogResult(false, "요청 타입이 올바르지 않습니다.")
         }
@@ -165,12 +165,12 @@ class RecordService(
             else -> return LogResult(false, "잘못된 타입")
         }
 
-        val requester = officerRepository.findById(officerId).orElse(null)
+        val requester = generalRepository.findById(generalId).orElse(null)
             ?: return LogResult(false, "장수를 찾을 수 없습니다.")
-        val target = officerRepository.findById(targetId).orElse(null)
+        val target = generalRepository.findById(targetId).orElse(null)
             ?: return LogResult(false, "대상 장수를 찾을 수 없습니다.")
 
-        if (requester.factionId != target.factionId && requester.id != target.id) {
+        if (requester.nationId != target.nationId && requester.id != target.id) {
             return LogResult(false, "같은 국가의 장수만 조회할 수 있습니다.")
         }
 

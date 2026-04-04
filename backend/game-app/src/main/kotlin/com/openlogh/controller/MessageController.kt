@@ -17,22 +17,22 @@ class MessageController(
     @GetMapping
     fun getMessages(
         @RequestParam(required = false) type: String?,
-        @RequestParam(required = false) sessionId: Long?,
-        @RequestParam(required = false) factionId: Long?,
-        @RequestParam(required = false) officerId: Long?,
-        @RequestParam(required = false, defaultValue = "0") rank: Short,
+        @RequestParam(required = false) worldId: Long?,
+        @RequestParam(required = false) nationId: Long?,
+        @RequestParam(required = false) generalId: Long?,
+        @RequestParam(required = false, defaultValue = "0") officerLevel: Short,
         @RequestParam(required = false) beforeId: Long?,
         @RequestParam(required = false) sinceId: Long?,
         @RequestParam(required = false) limit: Int?,
     ): ResponseEntity<List<MessageResponse>> {
         val messages = when (type?.lowercase()) {
-            "public" -> messageService.getPublicMessages(requireParam(sessionId, "sessionId"), beforeId, limit)
-            "national" -> messageService.getNationalMessages(requireParam(factionId, "factionId"), beforeId, limit)
-            "private" -> messageService.getPrivateMessages(requireParam(officerId, "officerId"), beforeId, limit)
-            "diplomacy" -> messageService.getDiplomacyMessages(requireParam(factionId, "factionId"), rank, beforeId, limit)
+            "public" -> messageService.getPublicMessages(requireParam(worldId, "worldId"), beforeId, limit)
+            "national" -> messageService.getNationalMessages(requireParam(nationId, "nationId"), beforeId, limit)
+            "private" -> messageService.getPrivateMessages(requireParam(generalId, "generalId"), beforeId, limit)
+            "diplomacy" -> messageService.getDiplomacyMessages(requireParam(nationId, "nationId"), officerLevel, beforeId, limit)
             null -> {
-                val targetOfficerId = requireParam(officerId, "officerId")
-                messageService.getMessages(targetOfficerId, sinceId, limit)
+                val targetGeneralId = requireParam(generalId, "generalId")
+                messageService.getMessages(targetGeneralId, sinceId, limit)
             }
             else -> throw IllegalArgumentException("Unsupported mailbox type: $type")
         }
@@ -42,29 +42,30 @@ class MessageController(
 
     @GetMapping("/board")
     fun getBoardMessages(
-        @RequestParam sessionId: Long,
-        @RequestParam factionId: Long,
+        @RequestParam worldId: Long,
+        @RequestParam nationId: Long,
     ): ResponseEntity<List<MessageResponse>> {
-        return ResponseEntity.ok(messageService.getBoardMessages(sessionId, factionId).map { MessageResponse.from(it) })
+        return ResponseEntity.ok(messageService.getBoardMessages(worldId, nationId).map { MessageResponse.from(it) })
     }
 
     @GetMapping("/secret-board")
     fun getSecretBoardMessages(
-        @RequestParam sessionId: Long,
-        @RequestParam factionId: Long,
+        @RequestParam worldId: Long,
+        @RequestParam nationId: Long,
     ): ResponseEntity<List<MessageResponse>> {
-        return ResponseEntity.ok(messageService.getSecretBoardMessages(sessionId, factionId).map { MessageResponse.from(it) })
+        return ResponseEntity.ok(messageService.getSecretBoardMessages(worldId, nationId).map { MessageResponse.from(it) })
     }
 
     @PostMapping
     fun sendMessage(@RequestBody request: SendMessageRequest): ResponseEntity<MessageResponse> {
         val message = messageService.sendMessage(
-            sessionId = request.sessionId,
+            worldId = request.worldId,
             mailboxCode = request.mailboxCode,
             mailboxType = request.mailboxType,
             messageType = request.messageType,
             srcId = request.srcId,
             destId = request.destId,
+            officerLevel = request.officerLevel,
             payload = request.payload,
         )
         return ResponseEntity.status(HttpStatus.CREATED).body(MessageResponse.from(message))
@@ -99,18 +100,18 @@ class MessageController(
     @PostMapping("/{id}/accept-recruitment")
     fun acceptRecruitment(
         @PathVariable id: Long,
-        @RequestParam officerId: Long,
+        @RequestParam generalId: Long,
     ): ResponseEntity<Map<String, String>> {
-        val nationName = messageService.acceptRecruitment(id, officerId)
+        val nationName = messageService.acceptRecruitment(id, generalId)
         return ResponseEntity.ok(mapOf("nationName" to nationName))
     }
 
     @PostMapping("/{id}/decline-recruitment")
     fun declineRecruitment(
         @PathVariable id: Long,
-        @RequestParam officerId: Long,
+        @RequestParam generalId: Long,
     ): ResponseEntity<Void> {
-        messageService.declineRecruitment(id, officerId)
+        messageService.declineRecruitment(id, generalId)
         return ResponseEntity.ok().build()
     }
 
@@ -124,8 +125,8 @@ class MessageController(
 class ContactController(
     private val messageService: MessageService,
 ) {
-    @GetMapping("/worlds/{sessionId}/contacts")
-    fun getContacts(@PathVariable sessionId: Long): ResponseEntity<List<ContactInfo>> {
-        return ResponseEntity.ok(messageService.getContacts(sessionId))
+    @GetMapping("/worlds/{worldId}/contacts")
+    fun getContacts(@PathVariable worldId: Long): ResponseEntity<List<ContactInfo>> {
+        return ResponseEntity.ok(messageService.getContacts(worldId))
     }
 }

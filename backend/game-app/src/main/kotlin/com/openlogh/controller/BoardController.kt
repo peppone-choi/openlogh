@@ -30,9 +30,9 @@ class BoardController(
     fun deleteComment(
         @PathVariable postId: Long,
         @PathVariable commentId: Long,
-        @RequestParam officerId: Long,
+        @RequestParam generalId: Long,
     ): ResponseEntity<Void> {
-        if (!messageService.deleteBoardComment(postId, commentId, officerId)) {
+        if (!messageService.deleteBoardComment(postId, commentId, generalId)) {
             return ResponseEntity.notFound().build()
         }
         return ResponseEntity.noContent().build()

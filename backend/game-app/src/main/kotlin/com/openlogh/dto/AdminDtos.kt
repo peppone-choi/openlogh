@@ -2,7 +2,7 @@ package com.openlogh.dto
 
 import java.time.OffsetDateTime
 
-data class AdminOfficerAction(val type: String)
+data class AdminGeneralAction(val type: String)
 
 data class AdminUserAction(
     val type: String,
@@ -10,8 +10,8 @@ data class AdminUserAction(
 )
 
 data class ResourceDistributionRequest(
-    val funds: Int = 0,
-    val supplies: Int = 0,
+    val gold: Int = 0,
+    val rice: Int = 0,
     val target: String = "all",
 )
 
@@ -30,10 +30,10 @@ data class TimeControlRequest(
     val preReserveOpen: String? = null,
 )
 
-data class FactionStatistic(
-    val factionId: Long, val name: String, val color: String, val factionRank: Int,
-    val funds: Int, val supplies: Int, val techLevel: Float, val militaryPower: Int,
-    val officerCount: Int, val planetCount: Int, val totalShips: Int, val totalPopulation: Int,
+data class NationStatistic(
+    val nationId: Long, val name: String, val color: String, val level: Int,
+    val gold: Int, val rice: Int, val tech: Float, val power: Int,
+    val genCount: Int, val cityCount: Int, val totalCrew: Int, val totalPop: Int,
 )
 
 data class AdminDashboard(
@@ -52,11 +52,11 @@ data class AdminWorldInfo(
     val config: MutableMap<String, Any>,
 )
 
-data class AdminOfficerSummary(
+data class AdminGeneralSummary(
     val id: Long,
     val name: String,
-    val factionId: Long,
-    val ships: Int,
+    val nationId: Long,
+    val crew: Int,
     val experience: Int,
     val npcState: Int,
     val blockState: Int,
@@ -74,8 +74,8 @@ data class AdminUserSummary(
 )
 
 data class BroadcastRequest(
-    val sessionId: Long,
-    val officerIds: List<Long>,
+    val worldId: Long,
+    val generalIds: List<Long>,
     val message: String,
 )
 
@@ -84,7 +84,7 @@ data class GameVersionInfo(
     val gameVersion: String,
     val jarPath: String,
     val port: Int,
-    val sessionIds: List<Int>,
+    val worldIds: List<Int>,
     val alive: Boolean,
     val pid: Long,
     val baseUrl: String,

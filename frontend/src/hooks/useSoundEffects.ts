@@ -19,7 +19,7 @@ const FREQUENCIES: Record<SoundType, { freq: number[]; duration: number[]; type:
     notification: { freq: [660, 880], duration: [100, 150], type: 'triangle' },
 };
 
-const STORAGE_KEY = 'openlogh:sound-enabled';
+const STORAGE_KEY = 'opensam:sound-enabled';
 
 function getStoredEnabled(): boolean {
     if (typeof window === 'undefined') return true;

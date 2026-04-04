@@ -20,7 +20,7 @@ class Record(
     var id: Long = 0,
 
     @Column(name = "world_id", nullable = false)
-    var sessionId: Long = 0,
+    var worldId: Long = 0,
 
     /**
      * Record type classification:
@@ -43,10 +43,10 @@ class Record(
 
     /**
      * Destination ID (target entity):
-     * - general_action, general_record: officerId
-     * - nation_history: factionId
+     * - general_action, general_record: generalId
+     * - nation_history: nationId
      * - world_record, world_history: null
-     * - battle_result, battle_detail: officerId or null
+     * - battle_result, battle_detail: generalId or null
      */
     @Column(name = "dest_id")
     var destId: Long? = null,
@@ -78,11 +78,4 @@ class Record(
      */
     @Column(name = "created_at", nullable = false)
     var createdAt: OffsetDateTime = OffsetDateTime.now(),
-
-    // === Old field name alias (non-persisted constructor param) ===
-    worldId: Long = Long.MIN_VALUE,
-) {
-    init {
-        if (worldId != Long.MIN_VALUE) sessionId = worldId
-    }
-}
+)

@@ -4,26 +4,26 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AxiosError } from 'axios';
 import { useWorldStore } from '@/stores/worldStore';
-import { useOfficerStore } from '@/stores/officerStore';
+import { useGeneralStore } from '@/stores/generalStore';
 import { npcTokenApi } from '@/lib/gameApi';
 import type { NpcCard, NpcTokenResponse } from '@/types';
 import { Bot, ArrowLeft, RefreshCw, Timer, List } from 'lucide-react';
 import { toast } from 'sonner';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/8bit/card';
+import { Button } from '@/components/ui/8bit/button';
+import { Badge } from '@/components/ui/8bit/badge';
 import { PageHeader } from '@/components/game/page-header';
 import { LoadingState } from '@/components/game/loading-state';
 import { EmptyState } from '@/components/game/empty-state';
 import { GeneralPortrait } from '@/components/game/general-portrait';
 import { isBrightColor } from '@/lib/game-utils';
-import { officerApi, factionApi } from '@/lib/gameApi';
-import type { Officer, Faction } from '@/types';
+import { generalApi, nationApi } from '@/lib/gameApi';
+import type { General, Nation } from '@/types';
 
 export default function LobbySelectNpcPage() {
     const router = useRouter();
     const currentWorld = useWorldStore((s) => s.currentWorld);
-    const { fetchMyGeneral } = useOfficerStore();
+    const { fetchMyGeneral } = useGeneralStore();
     const [token, setToken] = useState<NpcTokenResponse | null>(null);
     const [keepIds, setKeepIds] = useState<number[]>([]);
     const [nowMs, setNowMs] = useState(() => Date.now());
@@ -31,11 +31,11 @@ export default function LobbySelectNpcPage() {
     const [refreshing, setRefreshing] = useState(false);
     const [selectingId, setSelectingId] = useState<number | null>(null);
 
-    // Full general list view - legacy parity from select_npc.php "제독 목록 보기"
+    // Full general list view - legacy parity from select_npc.php "장수 목록 보기"
     const [showGeneralList, setShowGeneralList] = useState(false);
-    const [generalList, setGeneralList] = useState<Officer[]>([]);
+    const [generalList, setGeneralList] = useState<General[]>([]);
     const [generalListLoading, setGeneralListLoading] = useState(false);
-    const [nationMap, setNationMap] = useState<Record<number, Faction>>({});
+    const [nationMap, setNationMap] = useState<Record<number, Nation>>({});
     const [generalListLimit, setGeneralListLimit] = useState(30);
 
     const formatSeconds = (seconds: number) => {
@@ -65,11 +65,11 @@ export default function LobbySelectNpcPage() {
         setGeneralListLoading(true);
         try {
             const [genRes, natRes] = await Promise.all([
-                officerApi.listByWorld(currentWorld.id),
-                factionApi.listByWorld(currentWorld.id),
+                generalApi.listByWorld(currentWorld.id),
+                nationApi.listByWorld(currentWorld.id),
             ]);
             setGeneralList(genRes.data);
-            const nm: Record<number, Faction> = {};
+            const nm: Record<number, Nation> = {};
             for (const n of natRes.data) nm[n.id] = n;
             setNationMap(nm);
             setShowGeneralList(true);
@@ -136,13 +136,13 @@ export default function LobbySelectNpcPage() {
             toast.error('토큰이 만료되었습니다. 다시 뽑아주세요.');
             return;
         }
-        if (!confirm(`${npc.name} 제독를 선택하시겠습니까?`)) return;
+        if (!confirm(`${npc.name} 장수를 선택하시겠습니까?`)) return;
 
         setSelectingId(npc.id);
         try {
             await npcTokenApi.select(currentWorld.id, token.nonce, npc.id);
             await fetchMyGeneral(currentWorld.id);
-            toast.success('NPC 제독를 선택했습니다.');
+            toast.success('NPC 장교를 선택했습니다.');
             router.replace('/lobby');
         } catch {
             toast.error('NPC 선택에 실패했습니다.');
@@ -169,7 +169,7 @@ export default function LobbySelectNpcPage() {
                 <EmptyState icon={Bot} title="선택 가능한 NPC 카드가 없습니다." />
             ) : (
                 <>
-                    <div className="flex flex-wrap items-center gap-3 rounded-lg border p-3 bg-card">
+                    <div className="flex flex-wrap items-center gap-3 rounded-none border p-3 bg-card">
                         <div className="flex items-center gap-2 text-sm">
                             <Timer className="size-4" />
                             <span className="text-muted-foreground">유효 시간</span>
@@ -221,12 +221,12 @@ export default function LobbySelectNpcPage() {
                                                 <span>{npc.leadership}</span>
                                             </div>
                                             <div className="flex justify-between">
-                                                <span className="text-muted-foreground">지휘</span>
-                                                <span>{npc.command}</span>
+                                                <span className="text-muted-foreground">무력</span>
+                                                <span>{npc.strength}</span>
                                             </div>
                                             <div className="flex justify-between">
-                                                <span className="text-muted-foreground">정보</span>
-                                                <span>{npc.intelligence}</span>
+                                                <span className="text-muted-foreground">지력</span>
+                                                <span>{npc.intel}</span>
                                             </div>
                                             <div className="flex justify-between">
                                                 <span className="text-muted-foreground">정치</span>
@@ -309,11 +309,11 @@ export default function LobbySelectNpcPage() {
                 </>
             )}
 
-            {/* Full General List - legacy parity from select_npc.php "제독 목록 보기" */}
+            {/* Full General List - legacy parity from select_npc.php "장수 목록 보기" */}
             <div className="flex gap-2 mt-4">
                 <Button variant="outline" size="sm" onClick={handleLoadGeneralList} disabled={generalListLoading}>
                     <List className="size-4 mr-1" />
-                    {generalListLoading ? '로딩 중...' : '제독 목록 보기'}
+                    {generalListLoading ? '로딩 중...' : '장수 목록 보기'}
                 </Button>
                 {showGeneralList && (
                     <Button variant="ghost" size="sm" onClick={() => setShowGeneralList(false)}>
@@ -353,15 +353,15 @@ export default function LobbySelectNpcPage() {
                                         <td className="px-2 py-1 text-center">{g.age}</td>
                                         <td className="px-2 py-1">
                                             {nat ? (
-                                                <span style={{ color: nat.color }}>{nat.abbreviation}</span>
+                                                <span style={{ color: nat.color }}>{nat.name}</span>
                                             ) : (
                                                 <span className="text-muted-foreground">재야</span>
                                             )}
                                         </td>
                                         <td className="px-2 py-1 text-center">{g.expLevel}</td>
                                         <td className="px-2 py-1 text-center">{g.leadership}</td>
-                                        <td className="px-2 py-1 text-center">{g.command}</td>
-                                        <td className="px-2 py-1 text-center">{g.intelligence}</td>
+                                        <td className="px-2 py-1 text-center">{g.strength}</td>
+                                        <td className="px-2 py-1 text-center">{g.intel}</td>
                                         <td className="px-2 py-1 text-center">{g.politics}</td>
                                         <td className="px-2 py-1 text-center">{g.charm}</td>
                                         <td className="px-2 py-1 text-center">{g.experience}</td>
@@ -382,7 +382,7 @@ export default function LobbySelectNpcPage() {
                     {generalListLimit < generalList.length && (
                         <div className="p-2 text-center border-t">
                             <Button variant="ghost" size="sm" onClick={() => setGeneralListLimit((prev) => prev + 30)}>
-                                제독 더 보기 ({generalList.length - generalListLimit}명 남음)
+                                장수 더 보기 ({generalList.length - generalListLimit}명 남음)
                             </Button>
                         </div>
                     )}

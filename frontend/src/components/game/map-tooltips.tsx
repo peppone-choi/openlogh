@@ -1,10 +1,10 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { PLANET_LEVEL_NAMES } from '@/lib/game-utils';
+import { CITY_LEVEL_NAMES } from '@/lib/game-utils';
 
 const GLASS =
-    'backdrop-blur-md bg-black/75 border border-white/10 rounded-lg shadow-xl text-white animate-in fade-in duration-150';
+    'backdrop-blur-md bg-black/75 border border-foreground/15 rounded-none shadow-xl text-white animate-in fade-in duration-150';
 
 interface NationBadgeProps {
     abbr: string;
@@ -73,7 +73,7 @@ export function CompactTooltip({
                 <span>{cityText}</span>
                 {isEmperorCity && (
                     <span className="ml-0.5 inline-flex items-center rounded-sm px-0.5 bg-yellow-500/80">
-                        <img src="/icons/emperor.png" alt="황제" width={12} height={12} />
+                        <img src="/icons/emperor.png" alt="원수" width={12} height={12} />
                     </span>
                 )}
             </div>
@@ -153,14 +153,14 @@ export function DetailTooltip({
             </div>
             <div className="text-white/50 text-xs">소속: {nationName}</div>
             <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 text-xs text-white/60">
-                <span>레벨: {PLANET_LEVEL_NAMES[level] ?? level}</span>
+                <span>레벨: {CITY_LEVEL_NAMES[level] ?? level}</span>
                 <span>인구: {isVisible ? pop.toLocaleString() : '?'}</span>
                 <span>농업: {agri}</span>
                 <span>상업: {comm}</span>
-                <span>보안: {secu}</span>
+                <span>치안: {secu}</span>
                 <span>수비: {def}</span>
-                <span>요새: {wall}</span>
-                <span>지지도: {isVisible ? trust : '?'}</span>
+                <span>성벽: {wall}</span>
+                <span>민심: {isVisible ? trust : '?'}</span>
             </div>
 
             <button
@@ -177,7 +177,7 @@ export function DetailTooltip({
             {isVisible ? (
                 generals.length > 0 && (
                     <div className="border-t border-white/10 pt-1 mt-1">
-                        <div className="text-white/70 font-medium text-xs mb-0.5">주둔 제독 ({generals.length}명)</div>
+                        <div className="text-white/70 font-medium text-xs mb-0.5">주둔 장수 ({generals.length}명)</div>
                         <div className="max-h-32 overflow-y-auto space-y-0.5">
                             {generals.map((g) => (
                                 <div

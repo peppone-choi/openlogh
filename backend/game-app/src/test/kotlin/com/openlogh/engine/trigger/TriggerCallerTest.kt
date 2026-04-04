@@ -1,25 +1,26 @@
 package com.openlogh.engine.trigger
 
-import com.openlogh.entity.*
+import com.openlogh.engine.LiteHashDRBG
+import com.openlogh.entity.General
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 
 class TriggerCallerTest {
 
-    private fun createOfficer(
-        ships: Int = 1000,
-        supplies: Int = 500,
+    private fun createGeneral(
+        crew: Int = 1000,
+        rice: Int = 500,
         injury: Short = 5,
-        morale: Short = 80,
-    ): Officer {
-        return Officer(
+        atmos: Short = 80,
+    ): General {
+        return General(
             id = 1,
-            sessionId = 1,
-            name = "TestOfficer",
-            ships = ships,
-            supplies = supplies,
+            worldId = 1,
+            name = "TestGeneral",
+            crew = crew,
+            rice = rice,
             injury = injury,
-            morale = morale,
+            atmos = atmos,
         )
     }
 
@@ -134,32 +135,32 @@ class TriggerCallerTest {
 
     @Test
     fun `InjuryReductionTrigger reduces injury by 1`() {
-        val officer = createOfficer(injury = 5)
-        val trigger = InjuryReductionTrigger(officer)
-        val env = TriggerEnv(worldId = 1, year = 200, month = 3, generalId = officer.id)
+        val general = createGeneral(injury = 5)
+        val trigger = InjuryReductionTrigger(general)
+        val env = TriggerEnv(worldId = 1, year = 200, month = 3, generalId = general.id)
 
         trigger.action(env)
 
-        assertEquals(4.toShort(), officer.injury)
+        assertEquals(4.toShort(), general.injury)
         assertEquals(true, env.vars["injuryReduced"])
     }
 
     @Test
     fun `InjuryReductionTrigger does nothing when injury is 0`() {
-        val officer = createOfficer(injury = 0)
-        val trigger = InjuryReductionTrigger(officer)
-        val env = TriggerEnv(worldId = 1, year = 200, month = 3, generalId = officer.id)
+        val general = createGeneral(injury = 0)
+        val trigger = InjuryReductionTrigger(general)
+        val env = TriggerEnv(worldId = 1, year = 200, month = 3, generalId = general.id)
 
         trigger.action(env)
 
-        assertEquals(0.toShort(), officer.injury)
+        assertEquals(0.toShort(), general.injury)
         assertNull(env.vars["injuryReduced"])
     }
 
     @Test
     fun `InjuryReductionTrigger has BEGIN priority`() {
-        val officer = createOfficer()
-        val trigger = InjuryReductionTrigger(officer)
+        val general = createGeneral()
+        val trigger = InjuryReductionTrigger(general)
 
         assertEquals(TriggerPriority.BEGIN, trigger.priority)
     }
@@ -168,54 +169,54 @@ class TriggerCallerTest {
 
     @Test
     fun `TroopConsumptionTrigger consumes rice for troops`() {
-        val officer = createOfficer(ships = 1000, supplies = 500)
-        val trigger = TroopConsumptionTrigger(officer)
-        val env = TriggerEnv(worldId = 1, year = 200, month = 3, generalId = officer.id)
+        val general = createGeneral(crew = 1000, rice = 500)
+        val trigger = TroopConsumptionTrigger(general)
+        val env = TriggerEnv(worldId = 1, year = 200, month = 3, generalId = general.id)
 
         trigger.action(env)
 
-        assertEquals(490, officer.supplies) // 1000/100 = 10 rice consumed
+        assertEquals(490, general.rice) // 1000/100 = 10 rice consumed
     }
 
     @Test
     fun `TroopConsumptionTrigger minimum consumption is 1`() {
-        val officer = createOfficer(ships = 50, supplies = 100)
-        val trigger = TroopConsumptionTrigger(officer)
-        val env = TriggerEnv(worldId = 1, year = 200, month = 3, generalId = officer.id)
+        val general = createGeneral(crew = 50, rice = 100)
+        val trigger = TroopConsumptionTrigger(general)
+        val env = TriggerEnv(worldId = 1, year = 200, month = 3, generalId = general.id)
 
         trigger.action(env)
 
-        assertEquals(99, officer.supplies) // min(50/100=0, 1) = 1
+        assertEquals(99, general.rice) // min(50/100=0, 1) = 1
     }
 
     @Test
     fun `TroopConsumptionTrigger does nothing when crew is 0`() {
-        val officer = createOfficer(ships = 0, supplies = 100)
-        val trigger = TroopConsumptionTrigger(officer)
-        val env = TriggerEnv(worldId = 1, year = 200, month = 3, generalId = officer.id)
+        val general = createGeneral(crew = 0, rice = 100)
+        val trigger = TroopConsumptionTrigger(general)
+        val env = TriggerEnv(worldId = 1, year = 200, month = 3, generalId = general.id)
 
         trigger.action(env)
 
-        assertEquals(100, officer.supplies)
+        assertEquals(100, general.rice)
     }
 
     @Test
     fun `TroopConsumptionTrigger reduces atmos when not enough rice`() {
-        val officer = createOfficer(ships = 1000, supplies = 3, morale = 80)
-        val trigger = TroopConsumptionTrigger(officer)
-        val env = TriggerEnv(worldId = 1, year = 200, month = 3, generalId = officer.id)
+        val general = createGeneral(crew = 1000, rice = 3, atmos = 80)
+        val trigger = TroopConsumptionTrigger(general)
+        val env = TriggerEnv(worldId = 1, year = 200, month = 3, generalId = general.id)
 
         trigger.action(env)
 
-        assertEquals(0, officer.supplies)
-        assertEquals(75.toShort(), officer.morale) // 80 - 5
+        assertEquals(0, general.rice)
+        assertEquals(75.toShort(), general.atmos) // 80 - 5
         assertEquals(true, env.vars["troopStarving"])
     }
 
     @Test
     fun `TroopConsumptionTrigger has FINAL priority`() {
-        val officer = createOfficer()
-        val trigger = TroopConsumptionTrigger(officer)
+        val general = createGeneral()
+        val trigger = TroopConsumptionTrigger(general)
 
         assertEquals(TriggerPriority.FINAL, trigger.priority)
     }
@@ -224,8 +225,8 @@ class TriggerCallerTest {
 
     @Test
     fun `buildPreTurnTriggers includes injury trigger`() {
-        val officer = createOfficer()
-        val triggers = buildPreTurnTriggers(officer)
+        val general = createGeneral()
+        val triggers = buildPreTurnTriggers(general, rng = LiteHashDRBG.build("test"))
 
         assertEquals(1, triggers.size)
         assertTrue(triggers.any { it is InjuryReductionTrigger })
@@ -235,12 +236,12 @@ class TriggerCallerTest {
 
     @Test
     fun `applyDomesticModifiers chains modifications`() {
-        val officer = createOfficer()
+        val general = createGeneral()
         val trigger1 = object : GeneralTrigger {
             override val uniqueId = "t1"
             override val priority = TriggerPriority.BEGIN
             override fun action(env: TriggerEnv) = true
-            override fun onCalcDomestic(general: Officer, turnType: String, varType: String, value: Double, aux: Map<String, Any>): Double {
+            override fun onCalcDomestic(general: General, turnType: String, varType: String, value: Double, aux: Map<String, Any>): Double {
                 return if (varType == "cost") value * 0.9 else value
             }
         }
@@ -248,29 +249,29 @@ class TriggerCallerTest {
             override val uniqueId = "t2"
             override val priority = TriggerPriority.POST
             override fun action(env: TriggerEnv) = true
-            override fun onCalcDomestic(general: Officer, turnType: String, varType: String, value: Double, aux: Map<String, Any>): Double {
+            override fun onCalcDomestic(general: General, turnType: String, varType: String, value: Double, aux: Map<String, Any>): Double {
                 return if (varType == "cost") value - 10 else value
             }
         }
 
-        val result = applyDomesticModifiers(listOf(trigger1, trigger2), officer, "징병", "cost", 100.0)
+        val result = applyDomesticModifiers(listOf(trigger1, trigger2), general, "징병", "cost", 100.0)
 
         assertEquals(80.0, result, 0.01) // 100 * 0.9 = 90, then 90 - 10 = 80
     }
 
     @Test
     fun `applyStatModifiers chains stat modifications`() {
-        val officer = createOfficer()
+        val general = createGeneral()
         val trigger = object : GeneralTrigger {
             override val uniqueId = "stat_boost"
             override val priority = TriggerPriority.BEGIN
             override fun action(env: TriggerEnv) = true
-            override fun onCalcStat(general: Officer, statName: String, value: Double, aux: Map<String, Any>): Double {
+            override fun onCalcStat(general: General, statName: String, value: Double, aux: Map<String, Any>): Double {
                 return if (statName == "leadership") value + 10 else value
             }
         }
 
-        val result = applyStatModifiers(listOf(trigger), officer, "leadership", 50.0)
+        val result = applyStatModifiers(listOf(trigger), general, "leadership", 50.0)
 
         assertEquals(60.0, result, 0.01)
     }

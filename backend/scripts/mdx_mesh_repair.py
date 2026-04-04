@@ -36,13 +36,16 @@ def repair_mesh(obj_path, out_path):
     if mask is not None and not mask.all():
         mesh.update_faces(mask)
 
-    # Step 2: Merge exact-duplicate vertices + close vertices
-    mesh.merge_vertices()
+    # Step 2a: Merge exact-duplicate vertices
+    mesh.merge_vertices(merge_norm=True, merge_tex=True)
+
+    # Step 2b: Merge coincident vertices (tight tolerance, all vertices)
     from scipy.spatial import cKDTree
-    bbox = mesh.bounding_box.extents
-    tol = max(bbox) * 0.001
+    from collections import defaultdict
+
+    tol_tight = 1e-4
     tree = cKDTree(mesh.vertices)
-    pairs = tree.query_pairs(r=tol)
+    pairs = tree.query_pairs(r=tol_tight)
     if pairs:
         parent = list(range(len(mesh.vertices)))
         def find(x):
@@ -57,7 +60,47 @@ def repair_mesh(obj_path, out_path):
         remap = np.array([find(i) for i in range(len(mesh.vertices))])
         mesh.faces = remap[mesh.faces]
 
-    # Step 3: Remove duplicate faces only
+    mesh.update_faces(mesh.unique_faces())
+    mask = mesh.nondegenerate_faces()
+    if mask is not None and not mask.all():
+        mesh.update_faces(mask)
+    mesh.remove_unreferenced_vertices()
+
+    # Step 2c: Boundary-only merge — close gaps between parts without
+    # disturbing interior geometry. Only merge boundary vertex pairs.
+    edge_face = defaultdict(list)
+    for fi, face in enumerate(mesh.faces):
+        for i in range(3):
+            e = tuple(sorted([face[i], face[(i + 1) % 3]]))
+            edge_face[e].append(fi)
+    boundary_verts = set()
+    for e, fs in edge_face.items():
+        if len(fs) == 1:
+            boundary_verts.add(e[0])
+            boundary_verts.add(e[1])
+
+    if boundary_verts:
+        bv_list = sorted(boundary_verts)
+        bv_pos = mesh.vertices[bv_list]
+        bv_tree = cKDTree(bv_pos)
+        tol_boundary = 0.05  # tight boundary merge — only near-coincident
+        bv_pairs = bv_tree.query_pairs(r=tol_boundary)
+        if bv_pairs:
+            parent = list(range(len(mesh.vertices)))
+            def find2(x):
+                while parent[x] != x:
+                    parent[x] = parent[parent[x]]
+                    x = parent[x]
+                return x
+            for ai, bi in bv_pairs:
+                a, b = bv_list[ai], bv_list[bi]
+                ra, rb = find2(a), find2(b)
+                if ra != rb:
+                    parent[rb] = ra
+            remap = np.array([find2(i) for i in range(len(mesh.vertices))])
+            mesh.faces = remap[mesh.faces]
+
+    # Step 3: Remove duplicate/degenerate faces
     mesh.update_faces(mesh.unique_faces())
     mask = mesh.nondegenerate_faces()
     if mask is not None and not mask.all():
@@ -68,7 +111,7 @@ def repair_mesh(obj_path, out_path):
     trimesh.repair.fix_inversion(mesh)
     trimesh.repair.fix_normals(mesh)
 
-    # Step 5: Fill holes (small loops only)
+    # Step 5: Fill holes
     try:
         trimesh.repair.fill_holes(mesh)
     except Exception:

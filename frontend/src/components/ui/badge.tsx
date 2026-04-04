@@ -5,16 +5,17 @@ import { Slot } from 'radix-ui';
 import { cn } from '@/lib/utils';
 
 const badgeVariants = cva(
-    'inline-flex w-fit shrink-0 items-center justify-center gap-1 whitespace-nowrap border px-1.5 py-0 text-[11px] font-medium [&>svg]:size-3 [&>svg]:pointer-events-none',
+    'inline-flex w-fit shrink-0 items-center justify-center gap-1 overflow-hidden rounded-full border border-transparent px-2 py-0.5 text-xs font-medium whitespace-nowrap transition-[color,box-shadow] focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&>svg]:pointer-events-none [&>svg]:size-3',
     {
         variants: {
             variant: {
-                default: 'border-[#004621] bg-[#00582c] text-white',
-                secondary: 'border-[#10164d] bg-[#141c65] text-white',
-                destructive: 'border-[#5b0d0d] bg-[#7f1d1d] text-white',
-                outline: 'border-[#666] bg-[#111] text-white',
-                ghost: 'border-[#333] bg-transparent text-gray-300',
-                link: 'border-transparent bg-transparent px-0 text-cyan-300 underline-offset-2',
+                default: 'bg-primary text-primary-foreground [a&]:hover:bg-primary/90',
+                secondary: 'bg-secondary text-secondary-foreground [a&]:hover:bg-secondary/90',
+                destructive:
+                    'bg-destructive text-white focus-visible:ring-destructive/20 dark:bg-destructive/60 dark:focus-visible:ring-destructive/40 [a&]:hover:bg-destructive/90',
+                outline: 'border-border text-foreground [a&]:hover:bg-accent [a&]:hover:text-accent-foreground',
+                ghost: '[a&]:hover:bg-accent [a&]:hover:text-accent-foreground',
+                link: 'text-primary underline-offset-4 [a&]:hover:underline',
             },
         },
         defaultVariants: {

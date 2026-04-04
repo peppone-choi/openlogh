@@ -3,28 +3,14 @@ package com.openlogh.repository
 import com.openlogh.entity.Record
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
-import org.springframework.data.repository.query.Param
 
 interface RecordRepository : JpaRepository<Record, Long> {
-    // === Old field name compat aliases ===
-    @Query("SELECT r FROM Record r WHERE r.sessionId = :worldId AND r.recordType = :recordType ORDER BY r.createdAt DESC")
-    fun findByWorldIdAndRecordTypeOrderByCreatedAtDesc(
-        @Param("worldId") worldId: Long,
-        @Param("recordType") recordType: String,
-    ): List<Record>
-
-    @Query("SELECT r FROM Record r WHERE r.sessionId = :worldId AND r.year = :year AND r.month = :month")
-    fun findByWorldIdAndYearAndMonth(
-        @Param("worldId") worldId: Long,
-        @Param("year") year: Int,
-        @Param("month") month: Int,
-    ): List<Record>
-    fun findBySessionIdAndRecordTypeOrderByCreatedAtDesc(sessionId: Long, recordType: String): List<Record>
+    fun findByWorldIdAndRecordTypeOrderByCreatedAtDesc(worldId: Long, recordType: String): List<Record>
 
     fun findByDestIdAndRecordTypeOrderByCreatedAtDesc(destId: Long, recordType: String): List<Record>
 
-    fun findBySessionIdAndRecordTypeAndIdLessThanOrderByCreatedAtDesc(
-        sessionId: Long,
+    fun findByWorldIdAndRecordTypeAndIdLessThanOrderByCreatedAtDesc(
+        worldId: Long,
         recordType: String,
         beforeId: Long
     ): List<Record>
@@ -35,8 +21,8 @@ interface RecordRepository : JpaRepository<Record, Long> {
         beforeId: Long
     ): List<Record>
 
-    fun findBySessionIdAndRecordTypeAndIdGreaterThanOrderByCreatedAtDesc(
-        sessionId: Long,
+    fun findByWorldIdAndRecordTypeAndIdGreaterThanOrderByCreatedAtDesc(
+        worldId: Long,
         recordType: String,
         sinceId: Long
     ): List<Record>
@@ -47,8 +33,15 @@ interface RecordRepository : JpaRepository<Record, Long> {
         sinceId: Long
     ): List<Record>
 
-    fun findBySessionIdAndYearAndMonth(
-        sessionId: Long,
+    fun findByWorldIdAndYearAndMonth(
+        worldId: Long,
+        year: Int,
+        month: Int
+    ): List<Record>
+
+    fun findByWorldIdAndRecordTypeInAndYearAndMonthOrderByCreatedAtDesc(
+        worldId: Long,
+        recordType: List<String>,
         year: Int,
         month: Int
     ): List<Record>
@@ -56,14 +49,14 @@ interface RecordRepository : JpaRepository<Record, Long> {
     @Query(
         """
         SELECT r FROM Record r 
-        WHERE r.sessionId = :sessionId 
+        WHERE r.worldId = :worldId 
         AND r.recordType IN :recordTypes 
         AND (:beforeId IS NULL OR r.id < :beforeId)
         ORDER BY r.createdAt DESC, r.id DESC
         """
     )
-    fun findBySessionIdAndRecordTypesWithPagination(
-        sessionId: Long,
+    fun findByWorldIdAndRecordTypesWithPagination(
+        worldId: Long,
         recordTypes: List<String>,
         beforeId: Long?
     ): List<Record>

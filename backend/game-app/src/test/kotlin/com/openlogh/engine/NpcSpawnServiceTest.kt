@@ -1,10 +1,13 @@
 package com.openlogh.engine
 
-import com.openlogh.entity.*
-import com.openlogh.repository.PlanetRepository
-import com.openlogh.repository.OfficerRepository
+import com.openlogh.entity.City
+import com.openlogh.entity.General
+import com.openlogh.entity.Nation
+import com.openlogh.entity.WorldState
+import com.openlogh.repository.CityRepository
+import com.openlogh.repository.GeneralRepository
 import com.openlogh.repository.MessageRepository
-import com.openlogh.repository.FactionRepository
+import com.openlogh.repository.NationRepository
 import com.openlogh.service.HistoryService
 import com.openlogh.service.MapService
 import org.junit.jupiter.api.Assertions.*
@@ -17,19 +20,19 @@ import kotlin.random.Random
 class NpcSpawnServiceTest {
 
     private lateinit var service: NpcSpawnService
-    private lateinit var planetRepository: PlanetRepository
-    private lateinit var factionRepository: FactionRepository
-    private lateinit var officerRepository: OfficerRepository
+    private lateinit var cityRepository: CityRepository
+    private lateinit var nationRepository: NationRepository
+    private lateinit var generalRepository: GeneralRepository
     private lateinit var mapService: MapService
 
     @BeforeEach
     fun setUp() {
-        planetRepository = mock(PlanetRepository::class.java)
-        factionRepository = mock(FactionRepository::class.java)
-        officerRepository = mock(OfficerRepository::class.java)
+        cityRepository = mock(CityRepository::class.java)
+        nationRepository = mock(NationRepository::class.java)
+        generalRepository = mock(GeneralRepository::class.java)
         mapService = mock(MapService::class.java)
         val historyService = mock(HistoryService::class.java)
-        service = NpcSpawnService(factionRepository, planetRepository, officerRepository, historyService, mapService)
+        service = NpcSpawnService(nationRepository, cityRepository, generalRepository, historyService, mapService)
     }
 
     // ========== derivePoliticsFromStats formula ==========
@@ -203,7 +206,7 @@ class NpcSpawnServiceTest {
 
         // Politics = 90*0.4 + 40*0.3 = 36 + 12 = 48 ± 15
         // Charm = 40*0.3 + 90*0.2 + 40*0.1 = 12 + 18 + 4 = 34 ± 15
-        // Politics should generally be higher for high-intel officers
+        // Politics should generally be higher for high-intel generals
         assertTrue(politics >= 33, "Politics should favor intel heavily")
     }
 
@@ -229,7 +232,7 @@ class NpcSpawnServiceTest {
 
     @Test
     fun `npc nation ruler uses fixed killTurn while followers use lifespan derived killTurn`() {
-        val world = SessionState(
+        val world = WorldState(
             id = 1,
             name = "test-world",
             scenarioCode = "test",
@@ -237,52 +240,52 @@ class NpcSpawnServiceTest {
             currentMonth = 4,
             config = mutableMapOf("hiddenSeed" to "seed"),
         )
-        val planet = Planet(
+        val city = City(
             id = 10,
-            sessionId = 1,
+            worldId = 1,
             name = "허창",
-            mapPlanetId = 10,
+            mapCityId = 10,
             level = 5,
-            population = 6000,
-            populationMax = 10000,
-            production = 500,
-            productionMax = 1000,
-            commerce = 500,
-            commerceMax = 1000,
-            security = 500,
-            securityMax = 1000,
-            orbitalDefense = 500,
-            orbitalDefenseMax = 1000,
-            fortress = 500,
-            fortressMax = 1000,
+            pop = 6000,
+            popMax = 10000,
+            agri = 500,
+            agriMax = 1000,
+            comm = 500,
+            commMax = 1000,
+            secu = 500,
+            secuMax = 1000,
+            def = 500,
+            defMax = 1000,
+            wall = 500,
+            wallMax = 1000,
         )
 
-        var nextFactionId = 100L
-        var nextOfficerId = 1000L
-        val savedOfficers = mutableListOf<Officer>()
+        var nextNationId = 100L
+        var nextGeneralId = 1000L
+        val savedGenerals = mutableListOf<General>()
 
-        `when`(factionRepository.save(any(Faction::class.java))).thenAnswer { invocation ->
-            val faction = invocation.arguments[0] as Faction
-            if (faction.id == 0L) {
-                faction.id = nextFactionId++
+        `when`(nationRepository.save(any(Nation::class.java))).thenAnswer { invocation ->
+            val nation = invocation.arguments[0] as Nation
+            if (nation.id == 0L) {
+                nation.id = nextNationId++
             }
-            faction
+            nation
         }
-        `when`(planetRepository.save(any(Planet::class.java))).thenAnswer { invocation -> invocation.arguments[0] as Planet }
-        `when`(officerRepository.save(any(Officer::class.java))).thenAnswer { invocation ->
-            val officer = invocation.arguments[0] as Officer
-            if (officer.id == 0L) {
-                officer.id = nextOfficerId++
+        `when`(cityRepository.save(any(City::class.java))).thenAnswer { invocation -> invocation.arguments[0] as City }
+        `when`(generalRepository.save(any(General::class.java))).thenAnswer { invocation ->
+            val general = invocation.arguments[0] as General
+            if (general.id == 0L) {
+                general.id = nextGeneralId++
             }
-            savedOfficers += officer
-            officer
+            savedGenerals += general
+            general
         }
 
         val method = NpcSpawnService::class.java.getDeclaredMethod(
             "buildNpcNation",
-            SessionState::class.java,
+            WorldState::class.java,
             Random::class.java,
-            Planet::class.java,
+            City::class.java,
             Map::class.java,
             Int::class.javaPrimitiveType,
             Float::class.javaPrimitiveType,
@@ -293,7 +296,7 @@ class NpcSpawnServiceTest {
             service,
             world,
             Random(42),
-            planet,
+            city,
             mapOf(
                 "pop" to 6000,
                 "agri" to 500,
@@ -306,14 +309,14 @@ class NpcSpawnServiceTest {
             0f,
         )
 
-        assertEquals(4, savedOfficers.size)
+        assertEquals(4, savedGenerals.size)
 
-        val ruler = savedOfficers.first()
-        val followers = savedOfficers.drop(1)
+        val ruler = savedGenerals.first()
+        val followers = savedGenerals.drop(1)
 
-        assertEquals(20.toShort(), ruler.rank)
+        assertEquals(20.toShort(), ruler.officerLevel)
         assertEquals(240.toShort(), ruler.killTurn)
         assertTrue(followers.all { it.killTurn == null }, "Followers should use deadYear-derived lifespan, not fixed killTurn")
-        assertTrue(followers.all { it.deathYear > world.currentYear }, "Followers should still have finite deadYear lifespan")
+        assertTrue(followers.all { it.deadYear > world.currentYear }, "Followers should still have finite deadYear lifespan")
     }
 }

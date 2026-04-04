@@ -4,14 +4,14 @@ const COLOR_MAP: Record<string, string> = {
     R: 'red',
     B: 'blue',
     G: 'green',
-    M: '#a855f7',
-    C: '#06b6d4',
-    L: '#84cc16',
-    S: '#94a3b8',
-    O: '#f97316',
+    M: 'magenta',
+    C: 'cyan',
+    L: 'limegreen',
+    S: 'skyblue',
+    O: 'orangered',
     D: 'orangered',
-    Y: '#eab308',
-    W: '#f8fafc',
+    Y: 'yellow',
+    W: 'white',
 };
 
 const TAG_REGEX = /<([RBGMCLSODYW]1?|1|\/|b|\/b)>/g;

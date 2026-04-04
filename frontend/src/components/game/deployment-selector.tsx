@@ -1,12 +1,12 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/8bit/button';
+import { Badge } from '@/components/ui/8bit/badge';
 import { useGameStore } from '@/stores/gameStore';
-import { useOfficerStore } from '@/stores/officerStore';
+import { useGeneralStore } from '@/stores/generalStore';
 import { cn } from '@/lib/utils';
-import { PLANET_LEVEL_NAMES } from '@/lib/game-utils';
+import { CITY_LEVEL_NAMES } from '@/lib/game-utils';
 import type { General, City, Nation } from '@/types';
 
 // ── Crew type name mapping ──
@@ -54,26 +54,26 @@ interface DeploymentSelectorProps {
 
 export function DeploymentSelector({ onSubmit }: DeploymentSelectorProps) {
     const { cities, nations, generals } = useGameStore();
-    const { myOfficer } = useOfficerStore();
+    const { myGeneral } = useGeneralStore();
     const [selectedGeneralId, setSelectedGeneralId] = useState<number | null>(null);
     const [selectedCityId, setSelectedCityId] = useState<number | null>(null);
 
     // Only own-nation generals
     const myNationGenerals = useMemo(() => {
-        if (!myOfficer) return [];
-        return generals.filter((g) => g.nationId === myOfficer.nationId);
-    }, [generals, myOfficer]);
+        if (!myGeneral) return [];
+        return generals.filter((g) => g.nationId === myGeneral.nationId);
+    }, [generals, myGeneral]);
 
     // Only own-nation cities
     const myCities = useMemo(() => {
-        if (!myOfficer) return [];
-        return cities.filter((c) => c.nationId === myOfficer.nationId);
-    }, [cities, myOfficer]);
+        if (!myGeneral) return [];
+        return cities.filter((c) => c.nationId === myGeneral.nationId);
+    }, [cities, myGeneral]);
 
     // Group cities by distance from selected general's current city
     const groupedCities = useMemo(() => {
         const selectedGen = myNationGenerals.find((g) => g.id === selectedGeneralId);
-        const baseCityId = selectedGen?.cityId ?? myOfficer?.cityId ?? 0;
+        const baseCityId = selectedGen?.cityId ?? myGeneral?.cityId ?? 0;
 
         const groups: Record<DistanceGroup, (City & { dist: number })[]> = {
             근접: [],
@@ -93,7 +93,7 @@ export function DeploymentSelector({ onSubmit }: DeploymentSelectorProps) {
         }
 
         return groups;
-    }, [myCities, selectedGeneralId, myNationGenerals, myOfficer]);
+    }, [myCities, selectedGeneralId, myNationGenerals, myGeneral]);
 
     const getNation = (nationId: number): Nation | undefined => nations.find((n) => n.id === nationId);
 
@@ -108,16 +108,16 @@ export function DeploymentSelector({ onSubmit }: DeploymentSelectorProps) {
     return (
         <div className="space-y-3">
             {/* Help text */}
-            <div className="rounded-md bg-amber-900/20 border border-amber-800/40 px-3 py-2 text-xs text-amber-200/90">
-                선택된 도시로 아국 제독를 발령합니다. 아국 도시로만 발령이 가능합니다.
+            <div className="rounded-none bg-amber-900/20 border border-amber-800/40 px-3 py-2 text-xs text-amber-200/90">
+                선택된 도시로 아국 장수를 발령합니다. 아국 도시로만 발령이 가능합니다.
             </div>
 
             {/* General selector */}
             <div className="space-y-1">
-                <label className="text-[10px] text-muted-foreground font-medium">제독 선택</label>
+                <label className="text-[10px] text-muted-foreground font-medium">장수 선택</label>
                 <div className="max-h-48 overflow-y-auto space-y-1">
                     {myNationGenerals.length === 0 ? (
-                        <p className="text-xs text-muted-foreground text-center py-3">소속 제독 없음</p>
+                        <p className="text-xs text-muted-foreground text-center py-3">소속 장수 없음</p>
                     ) : (
                         myNationGenerals.map((gen) => {
                             const isSelected = selectedGeneralId === gen.id;
@@ -127,7 +127,7 @@ export function DeploymentSelector({ onSubmit }: DeploymentSelectorProps) {
                                     key={gen.id}
                                     onClick={() => setSelectedGeneralId(gen.id)}
                                     className={cn(
-                                        'w-full text-left px-3 py-1.5 rounded-md border text-xs transition-colors',
+                                        'w-full text-left px-3 py-1.5 rounded-none border text-xs transition-colors',
                                         isSelected
                                             ? 'border-amber-500 bg-amber-900/30 text-amber-100'
                                             : 'border-border hover:border-amber-700/50 hover:bg-amber-900/10'
@@ -192,7 +192,7 @@ export function DeploymentSelector({ onSubmit }: DeploymentSelectorProps) {
                                                 key={city.id}
                                                 onClick={() => setSelectedCityId(city.id)}
                                                 className={cn(
-                                                    'w-full text-left px-3 py-1.5 rounded-md border text-xs transition-colors',
+                                                    'w-full text-left px-3 py-1.5 rounded-none border text-xs transition-colors',
                                                     isSelected
                                                         ? 'border-amber-500 bg-amber-900/30 text-amber-100'
                                                         : 'border-border hover:border-amber-700/50 hover:bg-amber-900/10'
@@ -202,7 +202,7 @@ export function DeploymentSelector({ onSubmit }: DeploymentSelectorProps) {
                                                     <div className="flex items-center gap-2">
                                                         <span className="font-medium">{city.name}</span>
                                                         <span className="text-[10px] text-muted-foreground">
-                                                            {PLANET_LEVEL_NAMES[city.level] ?? city.level}
+                                                            {CITY_LEVEL_NAMES[city.level] ?? city.level}
                                                         </span>
                                                         {nation && (
                                                             <Badge variant="outline" className="text-[9px] px-1 py-0">
@@ -214,7 +214,7 @@ export function DeploymentSelector({ onSubmit }: DeploymentSelectorProps) {
                                                 <div className="flex gap-2 mt-0.5 text-[10px] text-muted-foreground">
                                                     <span>인구 {(city.pop ?? 0).toLocaleString()}</span>
                                                     <span>방어 {(city.def ?? 0).toLocaleString()}</span>
-                                                    <span>보안 {city.secu ?? 0}</span>
+                                                    <span>치안 {city.secu ?? 0}</span>
                                                 </div>
                                             </button>
                                         );

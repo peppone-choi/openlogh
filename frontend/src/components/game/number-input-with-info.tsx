@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { Input } from '@/components/ui/input';
+import { Input } from '@/components/ui/8bit/input';
 import { cn } from '@/lib/utils';
 
 interface NumberInputWithInfoProps {

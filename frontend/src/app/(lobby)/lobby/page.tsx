@@ -4,16 +4,15 @@ import { useEffect, useRef, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Globe, UserPlus, Users, Bot, LogIn, Loader2, Clock, Signal, Shield, Ban, Trophy, Pause } from 'lucide-react';
 import { useWorldStore } from '@/stores/worldStore';
-import { useOfficerStore } from '@/stores/officerStore';
+import { useGeneralStore } from '@/stores/generalStore';
 import { useAuthStore } from '@/stores/authStore';
-import api from '@/lib/api';
 import { scenarioApi } from '@/lib/gameApi';
 import { connectWebSocket, disconnectWebSocket } from '@/lib/websocket';
-import type { Scenario, WorldState, FactionCounts } from '@/types';
+import type { Scenario, WorldState } from '@/types';
 import { ServerStatusCard } from '@/components/auth/server-status-card';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/8bit/card';
+import { Button } from '@/components/ui/8bit/button';
+import { Badge } from '@/components/ui/8bit/badge';
 import { GeneralPortrait } from '@/components/game/general-portrait';
 import { StatBar } from '@/components/game/stat-bar';
 
@@ -31,7 +30,8 @@ function getServerPhase(w: WorldState): {
     const opentime = config.opentime as string | undefined;
 
     if (meta.finished || meta.isFinished) return { label: '종료', color: 'text-gray-400', icon: Shield };
-    if (meta.isLocked || meta.locked) return { label: '잠김', color: 'text-yellow-400', icon: Shield };
+    if (meta.isLocked || meta.locked || config.locked)
+        return { label: '턴 정지', color: 'text-orange-400', icon: Pause };
 
     // isunited check (legacy: 1=천하통일, 2=정지)
     const phase = meta.phase as string | undefined;
@@ -44,12 +44,11 @@ function getServerPhase(w: WorldState): {
     if (startTime && new Date(startTime) > now)
         return { label: '폐쇄', color: 'text-red-500', icon: Ban, startTime, opentime };
 
-    // 가오픈 기간 (startTime ~ opentime) → D-04: "모집중"
+    // 가오픈 기간 (startTime ~ opentime)
     if (phase === 'pre_open' || phase === 'closed' || (opentime && new Date(opentime) > now))
-        return { label: '모집중', color: 'text-green-400', icon: Clock, startTime, opentime };
+        return { label: '가오픈', color: 'text-orange-400', icon: Clock, startTime, opentime };
 
-    // 오픈 → D-04: "진행중"
-    return { label: '진행중', color: 'text-blue-400', icon: Signal };
+    return { label: '오픈', color: 'text-green-400', icon: Signal };
 }
 
 /** Derive player/capacity counts from world metadata */
@@ -80,7 +79,7 @@ function getActionAvailability(
     const meta = w.meta ?? {};
     const config = w.config ?? {};
     const isFinished = !!(meta.finished || meta.isFinished);
-    const isLocked = !!(meta.isLocked || meta.locked);
+    const isLocked = !!(meta.isLocked || meta.locked || (w.config as Record<string, unknown> | undefined)?.locked);
     const playerInfo = getPlayerInfo(w);
     const isFull = playerInfo.current >= playerInfo.max;
 
@@ -88,8 +87,8 @@ function getActionAvailability(
         return {
             canJoin: false,
             canPossessNpc: false,
-            joinReason: '이미 제독가 있습니다',
-            npcReason: '이미 제독가 있습니다',
+            joinReason: '이미 장교가 있습니다',
+            npcReason: '이미 장교가 있습니다',
         };
     }
 
@@ -117,12 +116,7 @@ function getActionAvailability(
     const npcMode = Number(config.npcMode ?? config.npcmode ?? meta.npcMode ?? meta.npcmode ?? 0);
 
     // Legacy parity: block_general_create bitfield check
-    const blockBits =
-        (meta.blockOfficerCreate as number) ??
-        (meta.blockGeneralCreate as number) ??
-        (config.blockOfficerCreate as number) ??
-        (config.blockGeneralCreate as number) ??
-        0;
+    const blockBits = (meta.blockGeneralCreate as number) ?? (config.blockGeneralCreate as number) ?? 0;
     const blockCreate = !!(blockBits & 1);
     const blockNpc = !!(blockBits & 2);
 
@@ -145,7 +139,7 @@ function getActionAvailability(
 export default function LobbyPage() {
     const router = useRouter();
     const { worlds, currentWorld, loading: worldsLoading, fetchWorlds, fetchWorld, setCurrentWorld } = useWorldStore();
-    const { myGeneral, loading: generalLoading, fetchMyGeneral, clearMyGeneral } = useOfficerStore();
+    const { myGeneral, loading: generalLoading, fetchMyGeneral, clearMyGeneral } = useGeneralStore();
 
     const user = useAuthStore((s) => s.user);
     const isAdmin = user?.role === 'ADMIN';
@@ -153,7 +147,6 @@ export default function LobbyPage() {
     const [notice, setNotice] = useState('');
     const [serverNotices, setServerNotices] = useState<Record<number, string>>({});
     const [scenarios, setScenarios] = useState<Scenario[]>([]);
-    const [worldFactionCounts, setWorldFactionCounts] = useState<Record<number, FactionCounts>>({});
     const scenarioMap = useMemo(() => new Map(scenarios.map((s) => [s.code, s.title])), [scenarios]);
     const wsConnectedRef = useRef(false);
     const myGeneralRef = useRef(myGeneral);
@@ -193,18 +186,6 @@ export default function LobbyPage() {
             }
             setServerNotices(notices);
             if (globalNotice) setNotice(globalNotice);
-
-            // Fetch faction counts per world for D-04 Empire/Alliance display
-            const counts: Record<number, FactionCounts> = {};
-            Promise.allSettled(
-                worldStore.worlds.map((w) =>
-                    api.get<FactionCounts>(`/worlds/${w.id}/faction-counts`).then(({ data }) => {
-                        counts[w.id] = data;
-                    })
-                )
-            ).then(() => {
-                setWorldFactionCounts(counts);
-            });
         });
         scenarioApi
             .list()
@@ -244,9 +225,9 @@ export default function LobbyPage() {
             <div className="grid gap-6 lg:grid-cols-[1fr_1fr]">
                 {/* LEFT PANEL: World List with Status Indicators */}
                 <div className="space-y-4">
-                    <h2 className="game-font text-lg font-semibold flex items-center gap-2">
+                    <h2 className="text-lg font-semibold flex items-center gap-2">
                         <Globe className="size-5" />
-                        세션 목록
+                        서버 목록
                     </h2>
 
                     {worldsLoading ? (
@@ -263,10 +244,6 @@ export default function LobbyPage() {
                                 const players = getPlayerInfo(w);
                                 const PhaseIcon = phase.icon;
                                 const worldDisplayName = w.name || scenarioMap.get(w.scenarioCode) || w.scenarioCode;
-                                const fc = worldFactionCounts[w.id] ?? {};
-                                const fcValues = Object.values(fc);
-                                const empireCount = fcValues[0] ?? 0;
-                                const allianceCount = fcValues[1] ?? 0;
 
                                 return (
                                     <Card
@@ -314,11 +291,7 @@ export default function LobbyPage() {
                                                 </span>
                                                 <span className="flex items-center gap-1">
                                                     <Users className="size-3" />
-                                                    인원:{' '}
-                                                    <span className="text-[var(--empire-gold)]">{empireCount}</span>
-                                                    /
-                                                    <span className="text-[var(--alliance-blue-bright)]">{allianceCount}</span>
-                                                    {' '}({players.current}/{players.max})
+                                                    인원: {players.current}/{players.max}
                                                     {players.npc > 0 && (
                                                         <span className="text-cyan-400">+NPC {players.npc}</span>
                                                     )}
@@ -415,12 +388,12 @@ export default function LobbyPage() {
                     ) : generalLoading ? (
                         <div className="flex items-center justify-center h-full min-h-[200px] text-muted-foreground">
                             <Loader2 className="size-5 animate-spin mr-2" />
-                            제독 확인 중...
+                            장수 확인 중...
                         </div>
                     ) : myGeneral ? (
                         /* General exists - show preview + enter button */
                         <div className="space-y-4">
-                            <h2 className="game-font text-lg font-semibold">내 제독</h2>
+                            <h2 className="text-lg font-semibold">내 장수</h2>
                             <Card>
                                 <CardContent className="space-y-4 pt-4">
                                     <div className="flex items-center gap-4">
@@ -436,10 +409,10 @@ export default function LobbyPage() {
                                     </div>
                                     <div className="space-y-1">
                                         <StatBar label="통솔" value={myGeneral.leadership} color="bg-red-500" />
-                                        <StatBar label="지휘" value={myGeneral.command} color="bg-orange-500" />
-                                        <StatBar label="정보" value={myGeneral.intelligence} color="bg-blue-500" />
+                                        <StatBar label="지휘" value={myGeneral.strength} color="bg-orange-500" />
+                                        <StatBar label="정보" value={myGeneral.intel} color="bg-blue-500" />
                                         <StatBar label="정치" value={myGeneral.politics} color="bg-green-500" />
-                                        <StatBar label="매력" value={myGeneral.charm} color="bg-purple-500" />
+                                        <StatBar label="운영" value={myGeneral.charm} color="bg-purple-500" />
                                     </div>
                                     <Button className="w-full" onClick={handleEnter}>
                                         <LogIn className="size-4 mr-1" />
@@ -451,7 +424,7 @@ export default function LobbyPage() {
                     ) : (
                         /* No general - dynamic action matrix based on server state */
                         <div className="space-y-4">
-                            <h2 className="game-font text-lg font-semibold">제독 선택</h2>
+                            <h2 className="text-lg font-semibold">장수 선택</h2>
 
                             {/* Server state summary */}
                             {currentWorld && (
@@ -465,11 +438,8 @@ export default function LobbyPage() {
                                         </div>
                                         <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
                                             <span>
-                                                인원:{' '}
-                                                <span className="text-[var(--empire-gold)]">{Object.values(worldFactionCounts[currentWorld.id] ?? {})[0] ?? 0}</span>
-                                                /
-                                                <span className="text-[var(--alliance-blue-bright)]">{Object.values(worldFactionCounts[currentWorld.id] ?? {})[1] ?? 0}</span>
-                                                {' '}({getPlayerInfo(currentWorld).current}/{getPlayerInfo(currentWorld).max})
+                                                인원: {getPlayerInfo(currentWorld).current}/
+                                                {getPlayerInfo(currentWorld).max}
                                             </span>
                                             <span>
                                                 {currentWorld.currentYear}년 {currentWorld.currentMonth}월
@@ -480,7 +450,7 @@ export default function LobbyPage() {
                             )}
 
                             <div className="grid gap-3">
-                                {/* 제독 생성 */}
+                                {/* 장수 생성 */}
                                 <Card
                                     className={`transition-colors ${
                                         actionAvailability?.canJoin
@@ -490,13 +460,13 @@ export default function LobbyPage() {
                                     onClick={() => actionAvailability?.canJoin && router.push('/lobby/join')}
                                 >
                                     <CardContent className="flex items-center gap-4 py-4">
-                                        <div className="flex items-center justify-center size-10 rounded-lg bg-primary/10 text-primary">
+                                        <div className="flex items-center justify-center size-10 rounded-none bg-primary/10 text-primary">
                                             <UserPlus className="size-5" />
                                         </div>
                                         <div className="flex-1">
-                                            <p className="font-medium">제독 생성</p>
+                                            <p className="font-medium">장수 생성</p>
                                             <p className="text-xs text-muted-foreground">
-                                                {actionAvailability?.joinReason ?? '새로운 제독를 만들어 시작합니다.'}
+                                                {actionAvailability?.joinReason ?? '새로운 장수를 만들어 시작합니다.'}
                                             </p>
                                         </div>
                                         {actionAvailability?.canJoin && (
@@ -513,13 +483,13 @@ export default function LobbyPage() {
                                         onClick={() => router.push('/lobby/select-npc')}
                                     >
                                         <CardContent className="flex items-center gap-4 py-4">
-                                            <div className="flex items-center justify-center size-10 rounded-lg bg-primary/10 text-primary">
+                                            <div className="flex items-center justify-center size-10 rounded-none bg-primary/10 text-primary">
                                                 <Bot className="size-5" />
                                             </div>
                                             <div className="flex-1">
                                                 <p className="font-medium">NPC 부임</p>
                                                 <p className="text-xs text-muted-foreground">
-                                                    기존 NPC 제독를 인수하여 플레이합니다.
+                                                    기존 NPC 장교를 인수하여 플레이합니다.
                                                 </p>
                                             </div>
                                             <Badge variant="secondary" className="text-[10px]">
@@ -535,13 +505,13 @@ export default function LobbyPage() {
                                         onClick={() => router.push('/lobby/select-pool')}
                                     >
                                         <CardContent className="flex items-center gap-4 py-4">
-                                            <div className="flex items-center justify-center size-10 rounded-lg bg-primary/10 text-primary">
+                                            <div className="flex items-center justify-center size-10 rounded-none bg-primary/10 text-primary">
                                                 <Users className="size-5" />
                                             </div>
                                             <div className="flex-1">
-                                                <p className="font-medium">제독 선택</p>
+                                                <p className="font-medium">장수 선택</p>
                                                 <p className="text-xs text-muted-foreground">
-                                                    등록된 제독 중 하나를 선택하여 시작합니다.
+                                                    등록된 장수 중 하나를 선택하여 시작합니다.
                                                 </p>
                                             </div>
                                             <Badge variant="secondary" className="text-[10px]">
@@ -555,6 +525,28 @@ export default function LobbyPage() {
                     )}
                 </div>
             </div>
+
+            {/* Tutorial — 개편 완료 전까지 숨김
+            <Card
+                className="transition-colors cursor-pointer hover:border-primary/50 border-dashed border-2"
+                onClick={() => router.push('/tutorial')}
+            >
+                <CardContent className="flex items-center gap-4 py-4">
+                    <div className="flex items-center justify-center size-10 rounded-none bg-amber-500/10 text-amber-500">
+                        <GraduationCap className="size-5" />
+                    </div>
+                    <div className="flex-1">
+                        <p className="font-medium">튜토리얼</p>
+                        <p className="text-xs text-muted-foreground">
+                            게임의 전체 흐름을 체험해 보세요. (서버 참여 불필요)
+                        </p>
+                    </div>
+                    <Badge variant="secondary" className="text-[10px]">
+                        NEW
+                    </Badge>
+                </CardContent>
+            </Card>
+            */}
 
             {/* Multi-account warning */}
             <Card>
@@ -570,7 +562,7 @@ export default function LobbyPage() {
             {/* Account Management */}
             <Card>
                 <CardHeader>
-                    <CardTitle className="game-font text-center text-sm tracking-widest">계 정 관 리</CardTitle>
+                    <CardTitle className="text-center text-sm tracking-widest">계 정 관 리</CardTitle>
                 </CardHeader>
                 <CardContent className="flex justify-center gap-3">
                     <Button variant="outline" onClick={() => router.push('/account')}>

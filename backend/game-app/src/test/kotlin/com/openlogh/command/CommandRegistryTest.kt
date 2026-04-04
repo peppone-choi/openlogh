@@ -1,6 +1,6 @@
 package com.openlogh.command
 
-import com.openlogh.entity.*
+import com.openlogh.entity.General
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -38,9 +38,9 @@ class CommandRegistryTest {
     // ========== General Commands ==========
 
     @Test
-    fun `registry should have 55 general commands`() {
+    fun `registry should have 58 general commands`() {
         val names = registry.getGeneralCommandNames()
-        assertEquals(94, names.size, "Expected 94 general commands but got ${names.size}: $names")
+        assertEquals(58, names.size, "Expected 58 general commands but got ${names.size}: $names")
     }
 
     @Test
@@ -99,7 +99,7 @@ class CommandRegistryTest {
     @Test
     fun `registry should have 43 nation commands`() {
         val names = registry.getNationCommandNames()
-        assertEquals(57, names.size, "Expected 57 nation commands but got ${names.size}: $names")
+        assertEquals(43, names.size, "Expected 43 nation commands but got ${names.size}: $names")
     }
 
     @Test

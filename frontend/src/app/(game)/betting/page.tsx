@@ -2,18 +2,18 @@
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useWorldStore } from '@/stores/worldStore';
-import { useOfficerStore } from '@/stores/officerStore';
+import { useGeneralStore } from '@/stores/generalStore';
 import { useGameStore } from '@/stores/gameStore';
 import { Trophy, Coins, TrendingUp, Users, Swords, Shield, Brain, Flame, History, ChevronLeft } from 'lucide-react';
 import { PageHeader } from '@/components/game/page-header';
 import { LoadingState } from '@/components/game/loading-state';
 import { EmptyState } from '@/components/game/empty-state';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/8bit/card';
+import { Badge } from '@/components/ui/8bit/badge';
+import { Button } from '@/components/ui/8bit/button';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/8bit/tabs';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/8bit/table';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/8bit/select';
 import { GeneralPortrait } from '@/components/game/general-portrait';
 import { NationBadge } from '@/components/game/nation-badge';
 import { tournamentApi, bettingApi, frontApi, rankingApi } from '@/lib/gameApi';
@@ -116,7 +116,7 @@ function stripHtmlTags(value: string): string {
 
 export default function BettingPage() {
     const { currentWorld } = useWorldStore();
-    const { myGeneral } = useOfficerStore();
+    const { myGeneral } = useGeneralStore();
     const { generals, nations, loadAll } = useGameStore();
     const [tournament, setTournament] = useState<TournamentInfo | null>(null);
     const [betting, setBetting] = useState<BettingInfo | null>(null);
@@ -561,7 +561,7 @@ export default function BettingPage() {
                                     <Table>
                                         <TableHeader>
                                             <TableRow>
-                                                <TableHead className="text-xs">제독</TableHead>
+                                                <TableHead className="text-xs">장수</TableHead>
                                                 <TableHead className="text-xs">국가</TableHead>
                                                 <TableHead className="text-xs text-right">
                                                     {tournamentType.stat}
@@ -619,7 +619,7 @@ export default function BettingPage() {
                                                             <div className="flex items-center gap-1">
                                                                 <Select
                                                                     value={betAmounts[c.pid] ?? '10'}
-                                                                    onValueChange={(v: string) =>
+                                                                    onValueChange={(v) =>
                                                                         setBetAmounts((prev) => ({
                                                                             ...prev,
                                                                             [c.pid]: v,
@@ -760,7 +760,7 @@ export default function BettingPage() {
                                     <Table>
                                         <TableHeader>
                                             <TableRow>
-                                                <TableHead className="text-xs">제독</TableHead>
+                                                <TableHead className="text-xs">장수</TableHead>
                                                 <TableHead className="text-xs text-right">베팅 풀</TableHead>
                                                 <TableHead className="text-xs text-right">비율</TableHead>
                                                 <TableHead className="text-xs text-right">배당</TableHead>
@@ -829,7 +829,7 @@ export default function BettingPage() {
                                 <CardHeader className="py-2 px-4">
                                     <CardTitle className="text-sm flex items-center gap-2">
                                         <Users className="size-4" />
-                                        진영별 베팅 현황
+                                        국가별 베팅 현황
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="px-4 pb-3">
@@ -837,7 +837,7 @@ export default function BettingPage() {
                                         <TableHeader>
                                             <TableRow>
                                                 <TableHead className="text-xs">국가</TableHead>
-                                                <TableHead className="text-xs text-right">참가 제독</TableHead>
+                                                <TableHead className="text-xs text-right">참가 장수</TableHead>
                                                 <TableHead className="text-xs text-right">베팅 총액</TableHead>
                                             </TableRow>
                                         </TableHeader>
@@ -1016,7 +1016,7 @@ export default function BettingPage() {
                                                 <Table>
                                                     <TableHeader>
                                                         <TableRow>
-                                                            <TableHead className="text-xs">대상 제독</TableHead>
+                                                            <TableHead className="text-xs">대상 장수</TableHead>
                                                             <TableHead className="text-xs text-right">
                                                                 베팅 풀
                                                             </TableHead>
@@ -1260,7 +1260,7 @@ export default function BettingPage() {
                         <p>소지금 500 이하일 때는 베팅이 불가능합니다.</p>
                         <div className="mt-2 pt-2 border-t border-gray-800 text-center">
                             <span className="text-sky-400">배당률</span>이 낮을수록 베팅된 금액이 많고 유저들이{' '}
-                            <span className="text-amber-400">우승후보</span>로 많이 선택한 제독입니다.
+                            <span className="text-amber-400">우승후보</span>로 많이 선택한 장수입니다.
                         </div>
                     </CardContent>
                 </Card>

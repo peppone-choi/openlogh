@@ -4,13 +4,14 @@ import { Suspense, useState, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { accountApi } from '@/lib/gameApi';
 import { useAuthStore } from '@/stores/authStore';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Separator } from '@/components/ui/separator';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
+import { useGeneralStore } from '@/stores/generalStore';
+import { Button } from '@/components/ui/8bit/button';
+import { Input } from '@/components/ui/8bit/input';
+import { Separator } from '@/components/ui/8bit/separator';
+import { Badge } from '@/components/ui/8bit/badge';
+import { Card, CardContent } from '@/components/ui/8bit/card';
 import type { AccountDetailedInfo, OAuthProviderInfo } from '@/types';
-import { Link2, Unlink, Loader2, ShieldAlert, AlertTriangle, X, Upload, Trash2, RefreshCw, Info } from 'lucide-react';
+import { Link2, Unlink, Loader2, ShieldAlert, AlertTriangle, X, Upload, Trash2, RefreshCw, Info, ArrowLeft } from 'lucide-react';
 import { isKakaoOauthEnabled } from '@/lib/auth-features';
 
 const OAUTH_PROVIDERS = [{ id: 'kakao', name: '카카오', color: '#FEE500', textColor: '#000' }] as const;
@@ -150,7 +151,11 @@ function AccountPageContent() {
         try {
             const formData = new FormData();
             formData.append('icon', iconFile);
-            await accountApi.uploadIcon(formData);
+            const { data } = await accountApi.uploadIcon(formData);
+            if (data.url) {
+                useAuthStore.setState((s) => ({ user: s.user ? { ...s.user, picture: data.url } : s.user }));
+                useGeneralStore.setState((s) => ({ myGeneral: s.myGeneral ? { ...s.myGeneral, picture: data.url } : s.myGeneral }));
+            }
             setIconMsg('전콘이 업로드되었습니다.');
             setIconFile(null);
         } catch {
@@ -164,6 +169,8 @@ function AccountPageContent() {
         if (!confirm('전콘을 삭제하시겠습니까?')) return;
         try {
             await accountApi.deleteIcon();
+            useAuthStore.setState((s) => ({ user: s.user ? { ...s.user, picture: undefined } : s.user }));
+            useGeneralStore.setState((s) => ({ myGeneral: s.myGeneral ? { ...s.myGeneral, picture: '' } : s.myGeneral }));
             setIconMsg('전콘이 삭제되었습니다.');
             setIconPreview(null);
         } catch {
@@ -294,9 +301,14 @@ function AccountPageContent() {
 
     return (
         <>
-            <Card className="w-full max-w-md p-8">
+            <Card className="w-full max-w-2xl p-8">
                 <CardContent className="space-y-6 p-0">
-                    <h1 className="text-xl font-bold">계정 관리</h1>
+                    <div className="flex items-center gap-3">
+                        <Button variant="ghost" size="sm" onClick={() => router.back()}>
+                            <ArrowLeft className="size-4" />
+                        </Button>
+                        <h1 className="text-xl font-bold">계정 관리</h1>
+                    </div>
 
                     {/* Detailed Profile (legacy parity: user_info.php) */}
                     <div className="space-y-2 rounded-md border p-3">
@@ -373,7 +385,7 @@ function AccountPageContent() {
                     <div className="space-y-2 rounded-md border p-3">
                         <h2 className="text-sm font-semibold text-muted-foreground">전콘 (프로필 이미지)</h2>
                         <p className="text-xs text-muted-foreground">
-                            제독 생성 시 사용되는 프로필 이미지를 변경할 수 있습니다.
+                            장수 생성 시 사용되는 프로필 이미지를 변경할 수 있습니다.
                         </p>
                         <div className="flex items-center gap-3">
                             <div className="size-16 rounded border border-input bg-muted flex items-center justify-center text-xs text-muted-foreground overflow-hidden">
@@ -631,7 +643,7 @@ function AccountPageContent() {
                                 전콘 서버 동기화
                             </h3>
                             <p className="text-sm text-muted-foreground">
-                                현재 설정된 전콘을 모든 서버의 제독에 동기화합니다. 각 서버에서 사용 중인 전콘이 모두
+                                현재 설정된 전콘을 모든 서버의 장수에 동기화합니다. 각 서버에서 사용 중인 전콘이 모두
                                 현재 전콘으로 변경됩니다.
                             </p>
                             <div className="flex gap-2">
@@ -682,7 +694,7 @@ function AccountPageContent() {
                                     ⚠️ 주의: 이 작업은 되돌릴 수 없습니다!
                                 </p>
                                 <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
-                                    <li>모든 제독 데이터가 삭제됩니다.</li>
+                                    <li>모든 장수 데이터가 삭제됩니다.</li>
                                     <li>게임 기록 및 전적이 모두 사라집니다.</li>
                                     <li>연동된 소셜 계정이 모두 해제됩니다.</li>
                                     <li>동일 아이디로 재가입이 불가능할 수 있습니다.</li>
@@ -759,7 +771,7 @@ export default function AccountPage() {
     return (
         <Suspense
             fallback={
-                <div className="w-full max-w-md p-8 text-sm text-muted-foreground">계정 정보를 불러오는 중...</div>
+                <div className="w-full max-w-2xl p-8 text-sm text-muted-foreground">계정 정보를 불러오는 중...</div>
             }
         >
             <AccountPageContent />

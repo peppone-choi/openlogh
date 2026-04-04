@@ -1,334 +1,558 @@
 package com.openlogh.service
 
 import com.openlogh.dto.*
-import com.openlogh.entity.Officer
-import com.openlogh.model.ScenarioData
+import com.openlogh.entity.City
+import com.openlogh.entity.General
+import com.openlogh.entity.Message
+import com.openlogh.entity.Nation
+import com.openlogh.engine.EmperorConstants
+import com.openlogh.engine.modifier.ItemModifiers
+import com.openlogh.engine.modifier.NationTypeModifiers
+import com.openlogh.engine.modifier.PersonalityModifiers
+import com.openlogh.engine.modifier.SpecialModifiers
 import com.openlogh.repository.*
+import com.openlogh.entity.Record
 import org.springframework.stereotype.Service
+import kotlin.math.ceil
+import kotlin.math.sqrt
 
 @Service
 class FrontInfoService(
-    private val sessionStateRepository: SessionStateRepository,
-    private val officerRepository: OfficerRepository,
-    private val factionRepository: FactionRepository,
-    private val planetRepository: PlanetRepository,
+    private val worldStateRepository: WorldStateRepository,
+    private val generalRepository: GeneralRepository,
+    private val nationRepository: NationRepository,
+    private val cityRepository: CityRepository,
     private val messageRepository: MessageRepository,
     private val recordRepository: RecordRepository,
     private val appUserRepository: AppUserRepository,
-    private val fleetRepository: FleetRepository,
+    private val troopRepository: TroopRepository,
     private val officerRankService: OfficerRankService,
     private val scenarioService: ScenarioService,
-    private val planetService: PlanetService,
+    private val cityService: CityService,
 ) {
-    fun getFrontInfo(
-        worldId: Short,
-        loginId: String,
-        lastRecordId: Long?,
-        lastHistoryId: Long?,
-    ): FrontInfoResponse {
-        val world = sessionStateRepository.findById(worldId).orElse(null)
-            ?: throw IllegalArgumentException("세계를 찾을 수 없습니다.")
-        val user = appUserRepository.findByLoginId(loginId)
-            ?: throw IllegalArgumentException("유저를 찾을 수 없습니다.")
+    companion object {
+        private const val MAX_DED_LEVEL = 10
+    }
 
-        val sessionId = world.id.toLong()
-        val allOfficers = officerRepository.findBySessionId(sessionId)
-        val factions = factionRepository.findBySessionId(sessionId)
-        val myOfficer = allOfficers.find { it.userId == user.id }
+    fun getFrontInfo(worldId: Long, loginId: String, lastRecordId: Long?, lastHistoryId: Long?): FrontInfoResponse {
+        val world = worldStateRepository.findById(worldId.toShort()).orElse(null)
+            ?: throw IllegalArgumentException("World not found: $worldId")
 
-        val scenario = scenarioService.getScenario(world.scenarioCode) ?: ScenarioData(title = "")
-        val startYear = (world.config["startyear"] as? Number)?.toInt() ?: world.currentYear.toInt()
+        val allGenerals = generalRepository.findByWorldId(worldId)
+        val userId = appUserRepository.findByLoginId(loginId)?.id
+        val myGeneral = userId?.let { uid -> allGenerals.find { it.userId == uid } }
 
-        val officerCountByFaction = factions.map { faction ->
-            listOf(faction.id.toInt(), allOfficers.count { it.factionId == faction.id })
-        }
+        val nations = nationRepository.findByWorldId(worldId)
+        val nationsById = nations.associateBy { it.id }
+        val nation = myGeneral?.let { nationsById[it.nationId] }
+        val city = myGeneral?.let { cityRepository.findById(it.cityId).orElse(null) }
 
-        val onlineFactions = factions.map { faction ->
-            OnlineFactionInfo(
-                id = faction.id,
-                name = faction.name,
-                color = faction.color,
-                officerCount = allOfficers.count { it.factionId == faction.id },
+        val nationGenerals = allGenerals.groupBy { it.nationId }
+        val onlineNations = nations.filter { nationGenerals.containsKey(it.id) }.map { n ->
+            OnlineNationInfo(
+                id = n.id,
+                name = n.name,
+                color = n.color,
+                genCount = nationGenerals[n.id]?.size ?: 0,
             )
         }
+
+        // genCount by npcState: [[npcState, count], ...]
+        val genCountByNpc = allGenerals.groupBy { it.npcState.toInt() }
+            .map { (npc, gens) -> listOf(npc, gens.size) }
+
+        val tournamentState = (world.meta["tournamentState"] as? Number)?.toInt() ?: 0
 
         val globalInfo = GlobalInfo(
             year = world.currentYear.toInt(),
             month = world.currentMonth.toInt(),
             turnTerm = world.tickSeconds / 60,
-            startyear = startYear,
-            officerCount = officerCountByFaction,
-            onlineFactions = onlineFactions,
-            onlineUserCnt = allOfficers.count { it.userId != null },
+            startyear = (world.config["startyear"] as? Number)?.toInt() ?: world.currentYear.toInt(),
+            genCount = genCountByNpc,
+            onlineNations = onlineNations,
+            onlineUserCnt = allGenerals.count { it.userId != null },
             auctionCount = 0,
-            tournamentState = 0,
-            tournamentType = null,
-            tournamentTime = null,
-            isTournamentActive = false,
-            isTournamentApplicationOpen = false,
-            isBettingActive = false,
-            lastExecuted = world.updatedAt.toString(),
-            isLocked = false,
-            scenarioText = scenario.title,
+            tournamentState = tournamentState,
+            tournamentType = (world.meta["tournamentType"] as? Number)?.toInt(),
+            tournamentTime = world.meta["tournamentTime"] as? String,
+            isTournamentActive = tournamentState > 0,
+            isTournamentApplicationOpen = tournamentState == 1,
+            isBettingActive = tournamentState == 6,
+            lastExecuted = world.meta["lastExecuted"] as? String,
+            isLocked = (world.config["locked"] as? Boolean) ?: false,
+            scenarioText = try { scenarioService.getScenario(world.scenarioCode).title } catch (_: Exception) { world.scenarioCode },
             realtimeMode = world.realtimeMode,
-            extendedOfficer = (world.config["extend"] as? Number)?.toInt() ?: 0,
-            isFiction = (world.config["fiction"] as? Number)?.toInt() ?: 0,
+            extendedGeneral = when (val raw = world.config["extendedGeneral"] ?: world.config["extend"]) {
+                is Number -> raw.toInt()
+                is Boolean -> if (raw) 1 else 0
+                is String -> if (raw.equals("true", ignoreCase = true) || raw == "1") 1 else 0
+                else -> 0
+            },
+            isFiction = (world.config["isFiction"] as? Number)?.toInt() ?: 0,
             npcMode = (world.config["npcMode"] as? Number)?.toInt() ?: 0,
-            joinMode = (world.config["joinMode"] as? String) ?: "normal",
-            develCost = 0,
-            noticeMsg = 0,
-            apiLimit = (world.config["apiLimit"] as? Number)?.toInt() ?: 300,
-            officerCntLimit = (world.config["maxGeneral"] as? Number)?.toInt() ?: 500,
-            serverCnt = 1,
-            lastVoteID = 0,
+            joinMode = (world.config["joinMode"] as? String) ?: "full",
+            develCost = (world.config["develCost"] as? Number)?.toInt() ?: 0,
+            noticeMsg = (world.config["noticeMsg"] as? Number)?.toInt() ?: 0,
+            apiLimit = (world.config["refreshLimit"] as? Number)?.toInt() ?: 100,
+            generalCntLimit = (world.config["maxGeneral"] as? Number)?.toInt() ?: 500,
+            serverCnt = (world.config["serverCnt"] as? Number)?.toInt() ?: 1,
+            lastVoteID = (world.meta["lastVoteID"] as? Number)?.toInt() ?: 0,
             lastVote = null,
         )
 
-        val officerFrontInfo = myOfficer?.let { buildOfficerFrontInfo(it, world) }
-        val factionFrontInfo = myOfficer?.let { officer ->
-            factions.find { it.id == officer.factionId }?.let { buildFactionFrontInfo(it, allOfficers) }
+        val nationLevel = nation?.level?.toInt() ?: 0
+        val generalInfo = myGeneral?.let { toGeneralFrontInfo(it, nationLevel, allGenerals, nationsById) }
+
+        val allCities = cityRepository.findByWorldId(worldId)
+        val nationInfo = if (myGeneral != null && nation != null && nation.id > 0) {
+            buildNationInfo(nation, nationGenerals, allCities, allGenerals)
+        } else {
+            buildDummyNationInfo()
         }
-        val planetFrontInfo = myOfficer?.let { officer ->
-            planetRepository.findById(officer.planetId).orElse(null)?.let { planet ->
-                buildPlanetFrontInfo(planet, allOfficers, factions)
-            }
-        }
 
-        val sinceRecordId = lastRecordId ?: 0L
-        val sinceHistoryId = lastHistoryId ?: 0L
+        val cityInfo = if (city != null && nation != null) {
+            buildCityInfo(city, nation, nationsById, allGenerals)
+        } else if (city != null) {
+            buildCityInfo(city, null, nationsById, allGenerals)
+        } else null
 
-        val officerRecords = myOfficer?.let {
-            messageRepository.findByDestIdAndMailboxCodeAndIdGreaterThanOrderBySentAtDesc(
-                it.id, "general_action", sinceRecordId
-            )
-        } ?: emptyList()
-
-        val worldRecords = messageRepository
-            .findBySessionIdAndMailboxCodeAndIdGreaterThanOrderBySentAtDesc(
-                sessionId, "world_record", sinceRecordId
-            )
-
-        val historyRecords = messageRepository
-            .findBySessionIdAndMailboxCodeAndIdGreaterThanOrderBySentAtDesc(
-                sessionId, "world_history", sinceHistoryId
-            )
-
-        val recentRecordInfo = RecentRecordInfo(
-            flushOfficer = sinceRecordId == 0L,
-            flushGlobal = sinceRecordId == 0L,
-            flushHistory = sinceHistoryId == 0L,
-            officer = officerRecords.take(30).map { msg ->
-                RecordEntry(
-                    id = msg.id,
-                    message = (msg.payload["message"] as? String) ?: "",
-                    date = msg.sentAt.toString(),
-                )
-            },
-            global = worldRecords.take(30).map { msg ->
-                RecordEntry(
-                    id = msg.id,
-                    message = (msg.payload["message"] as? String) ?: "",
-                    date = msg.sentAt.toString(),
-                )
-            },
-            history = historyRecords.take(30).map { msg ->
-                RecordEntry(
-                    id = msg.id,
-                    message = (msg.payload["message"] as? String) ?: "",
-                    date = msg.sentAt.toString(),
-                )
-            },
-        )
+        val recentRecord = buildRecentRecord(worldId, myGeneral, lastRecordId, lastHistoryId)
 
         return FrontInfoResponse(
             global = globalInfo,
-            officer = officerFrontInfo,
-            faction = factionFrontInfo,
-            planet = planetFrontInfo,
-            recentRecord = recentRecordInfo,
+            general = generalInfo,
+            nation = nationInfo,
+            city = cityInfo,
+            recentRecord = recentRecord,
             aux = AuxInfo(),
         )
     }
 
-    private fun buildOfficerFrontInfo(officer: Officer, world: com.openlogh.entity.SessionState): OfficerFrontInfo {
-        val rankText = officerRankService.getRankTitle(officer.rank.toInt(), 1)
-        val turnTerm = world.tickSeconds / 60
+    private fun buildNationInfo(
+        n: Nation,
+        nationGenerals: Map<Long, List<General>>,
+        allCities: List<City>,
+        allGenerals: List<General>,
+    ): NationFrontInfo {
+        val myNationCities = allCities.filter { it.nationId == n.id }
+        val myNationGens = nationGenerals[n.id] ?: emptyList()
 
-        @Suppress("UNCHECKED_CAST")
-        val warStats = officer.meta["warStats"] as? Map<String, Any> ?: emptyMap()
+        val populationNow = myNationCities.sumOf { it.pop }
+        val populationMax = myNationCities.sumOf { it.popMax }
 
-        return OfficerFrontInfo(
-            no = officer.id,
-            name = officer.name,
-            picture = officer.picture,
-            imgsvr = officer.imageServer.toInt(),
-            faction = officer.factionId,
-            npc = officer.npcState.toInt(),
-            planet = officer.planetId,
-            troop = officer.fleetId,
-            rank = officer.rank.toInt(),
-            rankText = rankText,
-            stationedSystem = officer.stationedSystem,
-            permission = permissionToInt(officer.permission),
-            lbonus = 0,
-            leadership = officer.leadership.toInt(),
-            leadershipExp = officer.leadershipExp.toInt(),
-            command = officer.command.toInt(),
-            commandExp = officer.commandExp.toInt(),
-            intelligence = officer.intelligence.toInt(),
-            intelligenceExp = officer.intelligenceExp.toInt(),
-            politics = officer.politics.toInt(),
-            politicsExp = officer.politicsExp.toInt(),
-            administration = officer.administration.toInt(),
-            administrationExp = officer.administrationExp.toInt(),
-            experience = officer.experience,
-            dedication = officer.dedication,
-            explevel = officer.expLevel.toInt(),
-            dedlevel = officer.dedLevel.toInt(),
-            honorText = "",
-            dedLevelText = "",
-            taxRate = 0,
-            funds = officer.funds,
-            supplies = officer.supplies,
-            ships = officer.ships,
-            shipClass = officer.shipClass.toString(),
-            training = officer.training.toInt(),
-            morale = officer.morale.toInt(),
-            flagship = resolveCode(officer.flagshipCode),
-            equipment = resolveCode(officer.equipCode),
-            engine = resolveCode(officer.engineCode),
-            accessory = resolveCode(officer.accessoryCode),
-            personal = resolveCode(officer.personalCode),
-            specialDomestic = resolveCode(officer.specialCode),
-            specialWar = resolveCode(officer.special2Code),
-            specage = officer.specAge.toInt(),
-            specage2 = officer.spec2Age.toInt(),
-            age = officer.age.toInt(),
-            injury = officer.injury.toInt(),
-            killturn = officer.killTurn?.toInt(),
-            belong = officer.belong.toInt(),
-            betray = officer.betray.toInt(),
-            blockState = officer.blockState.toInt(),
-            defenceTrain = officer.defenceTrain.toInt(),
-            turntime = officer.turnTime.toString(),
-            recentWar = officer.recentWarTime?.toString(),
-            commandPoints = officer.commandPoints,
-            commandEndTime = officer.commandEndTime?.toString(),
-            ownerName = officer.ownerName,
-            refreshScoreTotal = null,
-            refreshScore = null,
-            autorunLimit = (officer.meta["autorunLimit"] as? Number)?.toInt() ?: 0,
-            reservedCommand = null,
-            fleetInfo = null,
-            dex1 = officer.dex1,
-            dex2 = officer.dex2,
-            dex3 = officer.dex3,
-            dex4 = officer.dex4,
-            dex5 = officer.dex5,
-            warnum = (warStats["warnum"] as? Number)?.toInt() ?: 0,
-            killnum = (warStats["killnum"] as? Number)?.toInt() ?: 0,
-            deathnum = (warStats["deathnum"] as? Number)?.toInt() ?: 0,
-            killships = (warStats["killships"] as? Number)?.toInt() ?: 0,
-            deathships = (warStats["deathships"] as? Number)?.toInt() ?: 0,
-            firenum = (warStats["firenum"] as? Number)?.toInt() ?: 0,
+        val crewNow = myNationGens.filter { it.npcState.toInt() != 5 }.sumOf { it.crew }
+        val crewMax = myNationGens.filter { it.npcState.toInt() != 5 }.sumOf { it.leadership.toInt() * 100 }
+
+        val topChiefs = mutableMapOf<Int, TopChiefInfo?>()
+        topChiefs[20] = null
+        topChiefs[19] = null
+        myNationGens.filter { it.officerLevel >= 19 }.forEach { g ->
+            topChiefs[g.officerLevel.toInt()] = TopChiefInfo(
+                officerLevel = g.officerLevel.toInt(),
+                no = g.id,
+                name = g.name,
+                npc = g.npcState.toInt(),
+            )
+        }
+
+        // Nation notice from meta
+        val noticeMap = readStringAnyMapOrNull(n.meta["nationNotice"])
+        val notice = noticeMap?.let {
+            NationNoticeInfo(
+                date = (it["date"] as? String) ?: "",
+                msg = (it["msg"] as? String) ?: "",
+                author = (it["author"] as? String) ?: "",
+                authorID = (it["authorID"] as? Number)?.toLong() ?: 0,
+            )
+        }
+
+        // Online generals text
+        val onlineGenNames = myNationGens
+            .filter { it.userId != null }
+            .joinToString(", ") { it.name }
+
+        return NationFrontInfo(
+            id = n.id,
+            full = true,
+            name = n.name,
+            color = n.color,
+            level = n.level.toInt(),
+            type = NationTypeInfo(
+                raw = n.typeCode,
+                name = resolveNationTypeName(n.typeCode),
+                pros = resolveNationTypePros(n.typeCode),
+                cons = resolveNationTypeCons(n.typeCode),
+            ),
+            gold = n.gold,
+            rice = n.rice,
+            tech = n.tech,
+            power = n.power,
+            gennum = myNationGens.size,
+            capital = n.capitalCityId,
+            bill = n.bill.toInt(),
+            taxRate = n.rate.toInt(),
+            population = NationPopulationInfo(
+                cityCnt = myNationCities.size,
+                now = populationNow,
+                max = populationMax,
+            ),
+            crew = NationCrewInfo(
+                generalCnt = myNationGens.size,
+                now = crewNow,
+                max = crewMax,
+            ),
+            onlineGen = onlineGenNames,
+            notice = notice,
+            topChiefs = topChiefs,
+            diplomaticLimit = n.surrenderLimit.toInt(),
+            strategicCmdLimit = n.strategicCmdLimit.toInt(),
+            impossibleStrategicCommand = emptyList(),
+            prohibitScout = n.scoutLevel.toInt(),
+            prohibitWar = n.warState.toInt(),
         )
     }
 
-    private fun buildFactionFrontInfo(
-        faction: com.openlogh.entity.Faction,
-        allOfficers: List<Officer>,
-    ): FactionFrontInfo {
-        val factionOfficers = allOfficers.filter { it.factionId == faction.id }
-        val planets = planetRepository.findByFactionId(faction.id)
-
-        return FactionFrontInfo(
-            id = faction.id,
+    private fun buildDummyNationInfo(): NationFrontInfo {
+        return NationFrontInfo(
+            id = 0,
             full = false,
-            name = faction.name,
-            color = faction.color,
-            factionRank = faction.factionRank.toInt(),
-            type = FactionTypeInfo(raw = faction.factionType, name = faction.factionType, pros = "", cons = ""),
-            funds = faction.funds,
-            supplies = faction.supplies,
-            techLevel = faction.techLevel,
-            militaryPower = faction.militaryPower,
-            officerCount = factionOfficers.size,
-            capital = faction.capitalPlanetId,
-            conscriptionRate = faction.conscriptionRate.toInt(),
-            taxRate = faction.taxRate.toInt(),
-            population = FactionPopulationInfo(
-                planetCnt = planets.size,
-                now = planets.sumOf { it.population },
-                max = planets.sumOf { it.populationMax },
-            ),
-            ships = FactionShipInfo(
-                officerCnt = factionOfficers.size,
-                now = factionOfficers.sumOf { it.ships },
-                max = 0,
-            ),
+            name = "재야",
+            color = "#000000",
+            level = 0,
+            type = NationTypeInfo(raw = "None", name = "-", pros = "", cons = ""),
+            gold = 0,
+            rice = 0,
+            tech = 0f,
+            power = 0,
+            gennum = 0,
+            capital = null,
+            bill = 0,
+            taxRate = 0,
+            population = NationPopulationInfo(cityCnt = 0, now = 0, max = 0),
+            crew = NationCrewInfo(generalCnt = 0, now = 0, max = 0),
             onlineGen = "",
             notice = null,
-            topChiefs = emptyMap(),
-            diplomaticLimit = faction.secretLimit.toInt(),
-            strategicCmdLimit = faction.strategicCmdLimit.toInt(),
+            topChiefs = mapOf(20 to null, 19 to null),
+            diplomaticLimit = 0,
+            strategicCmdLimit = 0,
             impossibleStrategicCommand = emptyList(),
-            prohibitScout = faction.scoutLevel.toInt(),
-            prohibitWar = faction.warState.toInt(),
+            prohibitScout = 0,
+            prohibitWar = 0,
         )
     }
 
-    private fun buildPlanetFrontInfo(
-        planet: com.openlogh.entity.Planet,
-        allOfficers: List<Officer>,
-        factions: List<com.openlogh.entity.Faction>,
-    ): PlanetFrontInfo {
-        val faction = factions.find { it.id == planet.factionId }
-        val region = planetService.canonicalRegionForDisplay(planet)
-        val planetOfficers = allOfficers.filter { it.planetId == planet.id }
+    private fun buildCityInfo(
+        c: City,
+        myNation: Nation?,
+        nationsById: Map<Long, Nation>,
+        allGenerals: List<General>,
+    ): CityFrontInfo {
+        val cityNation = nationsById[c.nationId]
+        val nationInfo = CityNationInfo(
+            id = c.nationId,
+            name = cityNation?.name ?: "공백지",
+            color = cityNation?.color ?: "#000000",
+        )
 
-        val officerMap = planetOfficers.mapIndexed { idx, officer ->
-            idx to PlanetOfficerInfo(
-                rank = officer.rank.toInt(),
-                name = officer.name,
-                npc = officer.npcState.toInt(),
-            )
-        }.toMap()
+        // Officer list keyed by level (4=태수, 3=군사, 2=종사)
+        val officerList = mutableMapOf<Int, CityOfficerInfo?>(4 to null, 3 to null, 2 to null)
+        allGenerals
+            .filter { it.officerCity == c.id.toInt() && it.officerLevel.toInt() in listOf(2, 3, 4) }
+            .forEach { g ->
+                officerList[g.officerLevel.toInt()] = CityOfficerInfo(
+                    officerLevel = g.officerLevel.toInt(),
+                    name = g.name,
+                    npc = g.npcState.toInt(),
+                )
+            }
 
-        return PlanetFrontInfo(
-            id = planet.id,
-            name = planet.name,
-            level = planet.level.toInt(),
-            region = region.toInt(),
-            factionInfo = PlanetFactionInfo(
-                id = faction?.id ?: 0,
-                name = faction?.name ?: "",
-                color = faction?.color ?: "",
-            ),
-            approval = planet.approval.toInt(),
-            population = listOf(planet.population, planet.populationMax),
-            production = listOf(planet.production, planet.productionMax),
-            commerce = listOf(planet.commerce, planet.commerceMax),
-            security = listOf(planet.security, planet.securityMax),
-            orbitalDefense = listOf(planet.orbitalDefense, planet.orbitalDefenseMax),
-            fortress = listOf(planet.fortress, planet.fortressMax),
-            tradeRoute = planet.tradeRoute,
-            officerList = officerMap,
+        return CityFrontInfo(
+            id = c.id,
+            name = c.name,
+            level = c.level.toInt(),
+            region = cityService.canonicalRegionForDisplay(c).toInt(),
+            nationInfo = nationInfo,
+            trust = c.trust.toInt(),
+            pop = listOf(c.pop, c.popMax),
+            agri = listOf(c.agri, c.agriMax),
+            comm = listOf(c.comm, c.commMax),
+            secu = listOf(c.secu, c.secuMax),
+            def = listOf(c.def, c.defMax),
+            wall = listOf(c.wall, c.wallMax),
+            trade = if (c.trade > 0) c.trade else null,
+            officerList = officerList,
         )
     }
 
-    companion object {
-        fun resolveCode(code: String): String {
-            if (!code.contains("_")) return code
-            return code.substringAfterLast("_")
+    private fun toGeneralFrontInfo(g: General, nationLevel: Int, allGenerals: List<General>, nations: Map<Long, Nation>): GeneralFrontInfo {
+        val officerLevel = g.officerLevel.toInt()
+        val dedLevel = calcDedLevel(g.dedication)
+
+        val permission = calcPermission(g)
+
+        // Troop info
+        val troopInfo = if (g.troopId > 0) {
+            val troops = troopRepository.findByNationId(g.nationId)
+            val troop = troops.find { it.leaderGeneralId == g.troopId }
+            if (troop != null) {
+                val leader = allGenerals.find { it.id == g.troopId }
+                TroopInfo(
+                    leader = TroopLeaderInfo(
+                        city = leader?.cityId ?: 0,
+                        reservedCommand = null,
+                    ),
+                    name = troop.name,
+                )
+            } else null
+        } else null
+
+        // Rank stats from meta
+        val rankMeta = g.meta["rank"]
+        val rank = readStringAnyMap(rankMeta)
+
+        // Dex from meta
+        val dexMeta = g.meta["dex"]
+        val dex = readStringAnyMap(dexMeta)
+
+        val generalNation = if (g.nationId != 0L) nations[g.nationId] else null
+        val officerRankKey = generalNation?.meta?.get("officerRankKey") as? String
+
+        return GeneralFrontInfo(
+            no = g.id,
+            name = g.name,
+            picture = g.picture,
+            imgsvr = g.imageServer.toInt(),
+            nation = g.nationId,
+            npc = g.npcState.toInt(),
+            city = g.cityId,
+            troop = g.troopId,
+            officerLevel = officerLevel,
+            officerLevelText = if (g.npcState == EmperorConstants.NPC_STATE_EMPEROR) "황제"
+                else officerRankService.getRankTitle(
+                    officerLevel = officerLevel,
+                    nationLevel = nationLevel,
+                    officerRankKey = officerRankKey
+                ),
+            officerCity = g.officerCity,
+            permission = permission,
+            lbonus = calcLeadershipBonus(officerLevel, nationLevel),
+            leadership = g.leadership.toInt(),
+            leadershipExp = g.leadershipExp.toInt(),
+            strength = g.strength.toInt(),
+            strengthExp = g.strengthExp.toInt(),
+            intel = g.intel.toInt(),
+            intelExp = g.intelExp.toInt(),
+            politics = g.politics.toInt(),
+            politicsExp = g.politicsExp.toInt(),
+            charm = g.charm.toInt(),
+            charmExp = g.charmExp.toInt(),
+            experience = g.experience,
+            dedication = g.dedication,
+            explevel = g.expLevel.toInt(),
+            dedlevel = dedLevel,
+            honorText = getHonorText(g.experience),
+            dedLevelText = getDedLevelText(dedLevel),
+            bill = getBillByLevel(dedLevel),
+            gold = g.gold,
+            rice = g.rice,
+            crew = g.crew,
+            crewtype = g.crewType.toString(),
+            train = g.train.toInt(),
+            atmos = g.atmos.toInt(),
+            weapon = resolveItemDisplayName(g.weaponCode),
+            book = resolveItemDisplayName(g.bookCode),
+            horse = resolveItemDisplayName(g.horseCode),
+            item = resolveItemDisplayName(g.itemCode),
+            personal = PersonalityModifiers.get(g.personalCode)?.name ?: stripCodePrefix(g.personalCode),
+            specialDomestic = SpecialModifiers.get(g.specialCode)?.name ?: stripCodePrefix(g.specialCode),
+            specialWar = SpecialModifiers.get(g.special2Code)?.name ?: stripCodePrefix(g.special2Code),
+            specage = g.specAge.toInt(),
+            specage2 = g.spec2Age.toInt(),
+            age = g.age.toInt(),
+            injury = g.injury.toInt(),
+            killturn = g.killTurn?.toInt(),
+            belong = g.belong.toInt(),
+            betray = g.betray.toInt(),
+            blockState = g.blockState.toInt(),
+            defenceTrain = g.defenceTrain.toInt(),
+            turntime = g.turnTime.toString(),
+            recentWar = g.recentWarTime?.toString(),
+            commandPoints = g.commandPoints,
+            commandEndTime = g.commandEndTime?.toString(),
+            ownerName = null,
+            refreshScoreTotal = null,
+            refreshScore = null,
+            autorunLimit = (g.meta["autorun_limit"] as? Number)?.toInt() ?: 0,
+            reservedCommand = null,
+            troopInfo = troopInfo,
+            dex1 = (dex["1"] as? Number)?.toInt() ?: 0,
+            dex2 = (dex["2"] as? Number)?.toInt() ?: 0,
+            dex3 = (dex["3"] as? Number)?.toInt() ?: 0,
+            dex4 = (dex["4"] as? Number)?.toInt() ?: 0,
+            dex5 = (dex["5"] as? Number)?.toInt() ?: 0,
+            warnum = (rank["warnum"] as? Number)?.toInt() ?: 0,
+            killnum = (rank["killnum"] as? Number)?.toInt() ?: 0,
+            deathnum = (rank["deathnum"] as? Number)?.toInt() ?: 0,
+            killcrew = (rank["killcrew"] as? Number)?.toInt() ?: 0,
+            deathcrew = (rank["deathcrew"] as? Number)?.toInt() ?: 0,
+            firenum = (rank["firenum"] as? Number)?.toInt() ?: 0,
+        )
+    }
+
+    private fun calcPermission(g: General): Int {
+        if (g.nationId <= 0) return -1
+        if (g.officerLevel.toInt() == 0) return -1
+        if (g.officerLevel.toInt() == 20) return 4
+        if (g.permission == "ambassador") return 4
+        if (g.permission == "auditor") return 3
+        if (g.officerLevel >= 5) return 2
+        if (g.officerLevel > 1) return 1
+        return 0
+    }
+
+    private fun calcLeadershipBonus(officerLevel: Int, nationLevel: Int): Int {
+        return when {
+            officerLevel == 20 -> nationLevel * 2
+            officerLevel >= 5 -> nationLevel
+            else -> 0
         }
+    }
 
-        fun permissionToInt(permission: String): Int {
-            return when (permission) {
-                "normal" -> 0
-                "auditor" -> 1
-                "ambassador" -> 2
-                else -> 0
+    private fun calcDedLevel(dedication: Int): Int {
+        return ceil(sqrt(dedication.toDouble()) / 10).toInt().coerceIn(0, MAX_DED_LEVEL)
+    }
+
+    private fun getDedLevelText(dedLevel: Int): String {
+        if (dedLevel == 0) return "무품관"
+        val invLevel = MAX_DED_LEVEL - dedLevel + 1
+        return "${invLevel}품관"
+    }
+
+    private fun getBillByLevel(dedLevel: Int): Int {
+        return dedLevel * 200 + 400
+    }
+
+    private fun getHonorText(experience: Int): String {
+        return when {
+            experience < 640 -> "전무"
+            experience < 2560 -> "무명"
+            experience < 5760 -> "신동"
+            experience < 10240 -> "약간"
+            experience < 16000 -> "평범"
+            experience < 23040 -> "지역적"
+            experience < 31360 -> "전국적"
+            experience < 40960 -> "세계적"
+            experience < 45000 -> "유명"
+            experience < 51840 -> "명사"
+            experience < 55000 -> "호걸"
+            experience < 64000 -> "효웅"
+            experience < 77440 -> "영웅"
+            else -> "구세주"
+        }
+    }
+
+    private fun resolveNationTypeName(typeCode: String): String {
+        NationTypeModifiers.get(typeCode)?.name?.let { return it }
+        return stripCodePrefix(typeCode)
+    }
+
+    private fun resolveItemDisplayName(code: String): String {
+        ItemModifiers.getMeta(code)?.rawName?.let { return it }
+        if (code.contains("_")) return code.substringAfterLast("_")
+        return code
+    }
+
+    private fun stripCodePrefix(code: String): String = code.removePrefix("che_")
+
+    private val NATION_TYPE_PROS_CONS = mapOf(
+        "che_중립" to ("" to ""),
+        "che_군벌" to ("전투↑" to "내정↓"),
+        "che_왕도" to ("내정↑ 인구↑" to ""),
+        "che_패도" to ("전투↑" to "내정↓"),
+        "che_상인" to ("금수입↑" to ""),
+        "che_농업국" to ("쌀수입↑ 인구↑" to ""),
+        "che_유목" to ("전투↑ 회피↑" to ""),
+        "che_해적" to ("필살↑ 전투↑" to ""),
+        "che_황건" to ("내정비용↓ 계략↑" to ""),
+        "che_종교" to ("성공률↑ 인구↑" to ""),
+        "che_학문" to ("지력↑ 내정↑" to ""),
+        "che_명문" to ("내정↑ 전투↑" to ""),
+        "che_의적" to ("필살↑ 내정↑" to ""),
+        "che_은둔" to ("회피↑" to ""),
+        "che_무사" to ("무력↑ 전투↑" to ""),
+        "che_건국" to ("내정↑" to ""),
+        // Legacy PHP nation types
+        "che_유가" to ("농상↑ 민심↑" to "쌀수입↓"),
+        "che_음양가" to ("농상↑ 인구↑" to "기술↓ 전략↓"),
+        "che_명가" to ("기술↑ 인구↑" to "쌀수입↓ 수성↓"),
+        "che_태평도" to ("인구↑ 민심↑" to "기술↓ 수성↓"),
+        "che_병가" to ("기술↑ 수성↑" to "인구↓ 민심↓"),
+        "che_도적" to ("계략↑" to "금수입↓ 치안↓ 민심↓"),
+        "che_도가" to ("인구↑" to "기술↓ 치안↓"),
+        "che_불가" to ("민심↑ 수성↑" to "금수입↓"),
+        "che_묵가" to ("수성↑" to "기술↓"),
+        "che_법가" to ("금수입↑ 치안↑" to "인구↓ 민심↓"),
+        "che_종횡가" to ("전략↑ 수성↑" to "금수입↓ 농상↓"),
+        "che_덕가" to ("치안↑ 인구↑ 민심↑" to "쌀수입↓ 수성↓"),
+        "che_오두미도" to ("쌀수입↑ 인구↑" to "기술↓ 수성↓ 농상↓"),
+    )
+
+    private fun resolveNationTypePros(typeCode: String): String {
+        return NATION_TYPE_PROS_CONS[typeCode]?.first ?: ""
+    }
+
+    private fun resolveNationTypeCons(typeCode: String): String {
+        return NATION_TYPE_PROS_CONS[typeCode]?.second ?: ""
+    }
+
+    private fun buildRecentRecord(worldId: Long, myGeneral: General?, lastRecordId: Long?, lastHistoryId: Long?): RecentRecordInfo {
+        val generalRecords = if (myGeneral != null) {
+            val sinceId = lastRecordId ?: 0
+            recordRepository.findByDestIdAndRecordTypeAndIdGreaterThanOrderByCreatedAtDesc(
+                myGeneral.id, "general_action", sinceId
+            )
+        } else emptyList()
+
+        val globalRecords = recordRepository.findByWorldIdAndRecordTypeAndIdGreaterThanOrderByCreatedAtDesc(
+            worldId, "world_record", lastRecordId ?: 0
+        )
+
+        val historyRecords = recordRepository.findByWorldIdAndRecordTypeAndIdGreaterThanOrderByCreatedAtDesc(
+            worldId, "world_history", lastHistoryId ?: 0
+        )
+
+        return RecentRecordInfo(
+            flushGeneral = generalRecords.isNotEmpty(),
+            flushGlobal = globalRecords.isNotEmpty(),
+            flushHistory = historyRecords.isNotEmpty(),
+            general = generalRecords.map { toRecordEntry(it) },
+            global = globalRecords.map { toRecordEntry(it) },
+            history = historyRecords.map { toRecordEntry(it) },
+        )
+    }
+
+    private fun toRecordEntry(r: Record): RecordEntry {
+        val isScenarioInit = r.payload["scenarioInit"] == true
+        val date = if (!isScenarioInit && r.year > 0 && r.month > 0) "${r.year}년 ${r.month}월" else ""
+        return RecordEntry(
+            id = r.id,
+            message = (r.payload["message"] as? String) ?: "",
+            date = date,
+        )
+    }
+
+    private fun readStringAnyMap(raw: Any?): Map<String, Any> {
+        return readStringAnyMapOrNull(raw) ?: emptyMap()
+    }
+
+    private fun readStringAnyMapOrNull(raw: Any?): Map<String, Any>? {
+        if (raw !is Map<*, *>) return null
+        val result = mutableMapOf<String, Any>()
+        raw.forEach { (key, value) ->
+            if (key is String && value != null) {
+                result[key] = value
             }
         }
+        return result
     }
 }

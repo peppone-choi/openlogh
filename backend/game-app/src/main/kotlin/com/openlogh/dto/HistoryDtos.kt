@@ -13,7 +13,7 @@ data class YearbookNationSummary(
 )
 
 data class YearbookSummaryResponse(
-    val sessionId: Long,
+    val worldId: Long,
     val year: Int,
     val month: Int,
     val nations: List<YearbookNationSummary>,
@@ -22,7 +22,7 @@ data class YearbookSummaryResponse(
 ) {
     companion object {
         fun from(
-            sessionId: Long,
+            worldId: Long,
             yearbook: YearbookHistory,
         ): YearbookSummaryResponse {
             val nations = yearbook.nations.map { nation ->
@@ -45,7 +45,7 @@ data class YearbookSummaryResponse(
             }
 
             return YearbookSummaryResponse(
-                sessionId = sessionId,
+                worldId = worldId,
                 year = yearbook.year.toInt(),
                 month = yearbook.month.toInt(),
                 nations = nations,

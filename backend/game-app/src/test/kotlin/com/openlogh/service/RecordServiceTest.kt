@@ -42,7 +42,7 @@ class RecordServiceTest {
             record(1, RecordService.WORLD_RECORD),
             record(2, RecordService.WORLD_RECORD)
         )
-        `when`(recordRepository.findBySessionIdAndRecordTypeOrderByCreatedAtDesc(1L, RecordService.WORLD_RECORD))
+        `when`(recordRepository.findByWorldIdAndRecordTypeOrderByCreatedAtDesc(1L, RecordService.WORLD_RECORD))
             .thenReturn(records)
 
         val result = service.getWorldRecords(1L)
@@ -59,7 +59,7 @@ class RecordServiceTest {
             .thenReturn(saved)
 
         val result = service.saveRecord(
-            sessionId = 1L,
+            worldId = 1L,
             recordType = RecordService.GENERAL_ACTION,
             srcId = 5L,
             destId = 10L,

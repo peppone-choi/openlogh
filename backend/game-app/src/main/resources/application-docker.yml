@@ -7,7 +7,3 @@ spring:
         redis:
             host: ${REDIS_HOST:redis}
             port: ${REDIS_PORT:6379}
-
-app:
-    jwt:
-        secret: ${JWT_SECRET:openlogh-jwt-secret-key-must-be-at-least-256-bits-long-for-hs256}

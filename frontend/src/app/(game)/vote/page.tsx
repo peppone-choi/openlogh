@@ -4,19 +4,19 @@ import { useEffect, useState, useCallback, useMemo } from 'react';
 import { Vote, Plus, History, BarChart3, MessageSquare, Trash2, Send } from 'lucide-react';
 import Link from 'next/link';
 import { useWorldStore } from '@/stores/worldStore';
-import { useOfficerStore } from '@/stores/officerStore';
+import { useGeneralStore } from '@/stores/generalStore';
 import { PageHeader } from '@/components/game/page-header';
 import { LoadingState } from '@/components/game/loading-state';
 import { EmptyState } from '@/components/game/empty-state';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/8bit/card';
+import { Button } from '@/components/ui/8bit/button';
+import { Badge } from '@/components/ui/8bit/badge';
+import { Input } from '@/components/ui/8bit/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/8bit/tabs';
 import type { Message, VoteComment } from '@/types';
 import { voteApi } from '@/lib/gameApi';
 import { useGameStore } from '@/stores/gameStore';
-import { Textarea } from '@/components/ui/textarea';
+import { Textarea } from '@/components/ui/8bit/textarea';
 
 interface DraftVoteOption {
     id: number;
@@ -58,7 +58,7 @@ function formatDeadline(iso?: string): string {
 
 export default function VotePage() {
     const { currentWorld } = useWorldStore();
-    const { myGeneral } = useOfficerStore();
+    const { myGeneral } = useGeneralStore();
     const { generals, loadAll } = useGameStore();
     const [votes, setVotes] = useState<Message[]>([]);
     const [loading, setLoading] = useState(true);
@@ -599,7 +599,7 @@ function VoteCard({
                                 <div className="space-y-1.5">
                                     {comments.map((c) => {
                                         const author = generalMap.get(c.authorGeneralId);
-                                        const authorName = author?.name ?? `제독#${c.authorGeneralId}`;
+                                        const authorName = author?.name ?? `장수#${c.authorGeneralId}`;
                                         const dateStr = formatDeadline(c.createdAt);
                                         return (
                                             <div key={c.id} className="flex items-start gap-2 text-xs">

@@ -1,100 +1,362 @@
 package com.openlogh.engine.turn.cqrs.memory
 
-import com.openlogh.engine.AgeGrowthService
-import com.openlogh.engine.CommandPointService
+import com.openlogh.engine.DiplomacyService
 import com.openlogh.engine.EconomyService
 import com.openlogh.engine.EventService
-import com.openlogh.engine.OfficerMaintenanceService
+import com.openlogh.engine.GeneralMaintenanceService
+import com.openlogh.engine.NpcSpawnService
+import com.openlogh.engine.SpecialAssignmentService
 import com.openlogh.engine.UnificationService
-import com.openlogh.engine.modifier.OfficerLevelModifier
+import com.openlogh.engine.turn.cqrs.TurnDomainEvent
 import com.openlogh.engine.turn.cqrs.TurnResult
-import com.openlogh.entity.SessionState
+import com.openlogh.engine.turn.cqrs.persist.toEntity
+import com.openlogh.engine.turn.cqrs.persist.toSnapshot
+import com.openlogh.entity.WorldState
+import com.openlogh.repository.TrafficSnapshotRepository
+import com.openlogh.service.AuctionService
+import com.openlogh.service.InheritanceService
+import com.openlogh.service.NationService
+import com.openlogh.service.TournamentService
+import com.openlogh.service.WorldService
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import java.time.Duration
+import java.time.Instant
 import java.time.OffsetDateTime
+import kotlin.math.roundToLong
 
-/**
- * CQRS in-memory turn processor.
- *
- * Processes elapsed ticks against an in-memory snapshot of world state,
- * delegating to existing sub-services for each monthly step.
- * DirtyTracker records all mutations for batch persistence.
- */
 @Service
 class InMemoryTurnProcessor(
     private val economyService: EconomyService,
     private val eventService: EventService,
-    private val officerMaintenanceService: OfficerMaintenanceService,
-    private val commandPointService: CommandPointService,
-    private val ageGrowthService: AgeGrowthService,
+    private val diplomacyService: DiplomacyService,
+    private val generalMaintenanceService: GeneralMaintenanceService,
+    private val specialAssignmentService: SpecialAssignmentService,
+    private val npcSpawnService: NpcSpawnService,
     private val unificationService: UnificationService,
-    private val officerLevelModifier: OfficerLevelModifier,
+    private val inheritanceService: InheritanceService,
+    private val yearbookService: com.openlogh.engine.YearbookService,
+    private val auctionService: AuctionService,
+    private val tournamentService: TournamentService,
+    private val trafficSnapshotRepository: TrafficSnapshotRepository,
+    private val worldService: WorldService,
+    private val nationService: NationService,
 ) {
-    companion object {
-        private val log = LoggerFactory.getLogger(InMemoryTurnProcessor::class.java)
-    }
+    private val logger = LoggerFactory.getLogger(InMemoryTurnProcessor::class.java)
 
-    fun process(world: SessionState, state: InMemoryWorldState, tracker: DirtyTracker): TurnResult {
+    fun process(world: WorldState, state: InMemoryWorldState, ports: InMemoryWorldPorts): TurnResult {
         val now = OffsetDateTime.now()
+        val tickDuration = Duration.ofSeconds(world.tickSeconds.toLong())
+        var nextTurnAt = world.updatedAt.plus(tickDuration)
+        val worldId = world.id.toLong()
         var advancedTurns = 0
-        val events = mutableListOf<Any>()
+        val events = mutableListOf<TurnDomainEvent>()
 
-        // Process each elapsed tick
-        while (world.updatedAt.plusSeconds(world.tickSeconds.toLong()) <= now) {
-            // Advance month
-            world.currentMonth = (world.currentMonth + 1).toShort()
-            if (world.currentMonth > 12) {
-                world.currentMonth = 1
-                world.currentYear = (world.currentYear + 1).toShort()
+        while (!now.isBefore(nextTurnAt) && advancedTurns < MAX_TURNS_PER_TICK) {
+            val previousYear = world.currentYear.toInt()
+            val previousMonth = world.currentMonth.toInt()
+
+            executeGeneralCommandsUntil(state, ports, world, nextTurnAt)
+
+            try {
+                eventService.dispatchEvents(world, "PRE_MONTH")
+            } catch (e: Exception) {
+                logger.warn("EventService.dispatchEvents(PRE_MONTH) failed: ${e.message}")
             }
 
-            // Advance updatedAt by tick duration
-            world.updatedAt = world.updatedAt.plusSeconds(world.tickSeconds.toLong())
-
-            // Monthly sub-services (resilient - continue on failure)
-            tryRun("economyService.preUpdateMonthly") { economyService.preUpdateMonthly(world) }
-            tryRun("economyService.postUpdateMonthly") { economyService.postUpdateMonthly(world) }
-            tryRun("economyService.processDisasterOrBoom") { economyService.processDisasterOrBoom(world) }
-            tryRun("economyService.randomizeCityTradeRate") { economyService.randomizeCityTradeRate(world) }
-            tryRun("eventService.dispatchEvents") { eventService.dispatchEvents(world, "monthly") }
-            tryRun("officerMaintenanceService") {
-                officerMaintenanceService.processOfficerMaintenance(world, state.officers)
+            try {
+                economyService.preUpdateMonthly(world)
+            } catch (e: Exception) {
+                logger.warn("EconomyService.preUpdateMonthly failed: ${e.message}")
             }
-            tryRun("commandPointService.recoverAllCp") {
-                for (officer in state.officers) {
-                    commandPointService.recoverCp(officer)
-                    tracker.markDirty(officer)
+
+            advanceMonth(world)
+
+            try {
+                yearbookService.saveMonthlySnapshot(worldId, previousYear, previousMonth)
+            } catch (e: Exception) {
+                logger.warn("YearbookService.saveMonthlySnapshot failed: ${e.message}")
+            }
+
+            try {
+                worldService.captureSnapshot(world)
+            } catch (e: Exception) {
+                logger.warn("WorldService.captureSnapshot failed: ${e.message}")
+            }
+
+            try {
+                val onlineCount = ports.allGenerals().count { it.userId != null }
+                val snapshot = com.openlogh.entity.TrafficSnapshot(
+                    worldId = worldId,
+                    year = world.currentYear,
+                    month = world.currentMonth,
+                    refresh = (world.meta["refresh"] as? Number)?.toInt() ?: 0,
+                    online = onlineCount,
+                )
+                trafficSnapshotRepository.save(snapshot)
+                world.meta["refresh"] = 0
+            } catch (e: Exception) {
+                logger.warn("TrafficSnapshot recording failed: ${e.message}")
+            }
+
+            if (world.currentMonth.toInt() == 1) {
+                try {
+                    economyService.processYearlyStatistics(world)
+                } catch (e: Exception) {
+                    logger.warn("EconomyService.processYearlyStatistics failed: ${e.message}")
                 }
             }
-            tryRun("ageGrowthService.processMonthlyGrowth") {
-                ageGrowthService.processMonthlyGrowth(world)
-            }
-            tryRun("officerLevelModifier.applyMonthlyModifiers") {
-                officerLevelModifier.applyMonthlyModifiers(state.officers, world)
-                state.officers.forEach { tracker.markDirty(it) }
+
+            try {
+                eventService.dispatchEvents(world, "MONTH")
+            } catch (e: Exception) {
+                logger.warn("EventService.dispatchEvents failed: ${e.message}")
             }
 
-            // Mark all factions dirty (economy changes)
-            state.factions.forEach { tracker.markDirty(it) }
-            state.planets.forEach { tracker.markDirty(it) }
+            try {
+                economyService.postUpdateMonthly(world)
+            } catch (e: Exception) {
+                logger.warn("EconomyService.postUpdateMonthly failed: ${e.message}")
+            }
 
-            // Unification check
-            tryRun("unificationService.checkAndSettleUnification") {
+            try {
+                economyService.processDisasterOrBoom(world)
+            } catch (e: Exception) {
+                logger.warn("EconomyService.processDisasterOrBoom failed: ${e.message}")
+            }
+
+            try {
+                economyService.randomizeCityTradeRate(world)
+            } catch (e: Exception) {
+                logger.warn("EconomyService.randomizeCityTradeRate failed: ${e.message}")
+            }
+
+            try {
+                diplomacyService.processDiplomacyTurn(world)
+            } catch (e: Exception) {
+                logger.warn("DiplomacyService.processDiplomacyTurn failed: ${e.message}")
+            }
+
+            try {
+                nationService.recalcAllFronts(worldId)
+            } catch (e: Exception) {
+                logger.warn("NationService.recalcAllFronts failed: ${e.message}")
+            }
+
+            try {
+                resetStrategicCommandLimits(ports)
+            } catch (e: Exception) {
+                logger.warn("resetStrategicCommandLimits failed: ${e.message}")
+            }
+
+            try {
+                val generals = ports.allGenerals().map { it.toEntity() }
+                generalMaintenanceService.processGeneralMaintenance(world, generals)
+                specialAssignmentService.checkAndAssignSpecials(world, generals)
+                generals.forEach { ports.putGeneral(it.toSnapshot()) }
+
+                for (general in generals.filter { it.npcState.toInt() == 0 }) {
+                    inheritanceService.accruePoints(general, "lived_month", 1)
+                }
+            } catch (e: Exception) {
+                logger.warn("GeneralMaintenanceService failed: ${e.message}")
+            }
+
+            try {
                 unificationService.checkAndSettleUnification(world)
+            } catch (e: Exception) {
+                logger.warn("UnificationService.checkAndSettleUnification failed: ${e.message}")
             }
 
-            advancedTurns++
+            world.updatedAt = nextTurnAt
+            nextTurnAt = nextTurnAt.plus(tickDuration)
+            advancedTurns += 1
+
+            events += TurnDomainEvent(
+                type = EVENT_TURN_ADVANCED,
+                payload = mapOf(
+                    "worldId" to world.id.toLong(),
+                    "year" to world.currentYear.toInt(),
+                    "month" to world.currentMonth.toInt(),
+                ),
+            )
         }
 
-        tracker.markDirty(world)
-        return TurnResult(advancedTurns = advancedTurns, events = events)
+        try {
+            tournamentService.processTournamentTurn(worldId)
+        } catch (e: Exception) {
+            logger.warn("TournamentService.processTournamentTurn failed: ${e.message}")
+        }
+
+        try {
+            auctionService.processExpiredAuctions()
+        } catch (e: Exception) {
+            logger.warn("AuctionService.processExpiredAuctions failed: ${e.message}")
+        }
+
+        return TurnResult(
+            advancedTurns = advancedTurns,
+            events = events,
+        )
     }
 
-    private fun tryRun(label: String, block: () -> Unit) {
-        try {
-            block()
-        } catch (e: Exception) {
-            log.warn("CQRS sub-service failed [{}]: {}", label, e.message)
+    private fun executeGeneralCommandsUntil(
+        state: InMemoryWorldState,
+        ports: InMemoryWorldPorts,
+        world: WorldState,
+        targetTime: OffsetDateTime,
+    ) {
+        val now = OffsetDateTime.now()
+        val generals = state.generals.values.sortedWith(
+            compareBy<GeneralSnapshot> { it.turnTime }.thenBy { it.id }
+        )
+
+        for (general in generals) {
+            if (general.turnTime >= targetTime) {
+                break
+            }
+
+            if (general.npcState == com.openlogh.engine.EmperorConstants.NPC_STATE_EMPEROR) {
+                general.turnTime = calculateNextGeneralTurnTime(general.turnTime, general.meta, world.tickSeconds)
+                general.updatedAt = now
+                ports.putGeneral(general)
+                continue
+            }
+
+            if (general.blockState >= 2) {
+                val killTurn = general.killTurn
+                if (killTurn != null) {
+                    val nextKillTurn = killTurn - 1
+                    if (nextKillTurn <= 0) {
+                        val deadGeneral = general.copy(userId = null)
+                        deadGeneral.npcState = 5
+                        deadGeneral.nationId = 0
+                        deadGeneral.officerLevel = 0
+                        deadGeneral.officerCity = 0
+                        deadGeneral.killTurn = null
+                        deadGeneral.updatedAt = now
+                        ports.putGeneral(deadGeneral)
+                        continue
+                    } else {
+                        general.killTurn = nextKillTurn.coerceIn(-32768, 32767).toShort()
+                    }
+                }
+                general.turnTime = calculateNextGeneralTurnTime(general.turnTime, general.meta, world.tickSeconds)
+                general.updatedAt = now
+                ports.putGeneral(general)
+                continue
+            }
+
+            if (general.officerLevel >= 5 && general.nationId > 0) {
+                val nationKey = NationTurnKey(general.nationId, general.officerLevel)
+                val nationQueue = state.nationTurnsByNationAndLevel[nationKey]
+                if (!nationQueue.isNullOrEmpty()) {
+                    nationQueue.removeAt(0)
+                    if (nationQueue.isEmpty()) {
+                        state.nationTurnsByNationAndLevel.remove(nationKey)
+                    }
+                }
+            }
+
+            val actionCode: String
+            val arg: MutableMap<String, Any>
+            if (general.npcState >= 2) {
+                actionCode = "휴식"
+                arg = mutableMapOf()
+                state.generalTurnsByGeneralId.remove(general.id)
+            } else {
+                val queue = state.generalTurnsByGeneralId[general.id]
+                if (queue.isNullOrEmpty()) {
+                    actionCode = "휴식"
+                    arg = mutableMapOf()
+                } else {
+                    val turn = queue.removeAt(0)
+                    actionCode = turn.actionCode
+                    arg = turn.arg
+                    if (queue.isEmpty()) {
+                        state.generalTurnsByGeneralId.remove(general.id)
+                    }
+                }
+            }
+
+            general.lastTurn = mutableMapOf(
+                "actionCode" to actionCode,
+                "arg" to arg,
+                "queuedInMemory" to true,
+            )
+            general.turnTime = calculateNextGeneralTurnTime(general.turnTime, general.meta, world.tickSeconds)
+            general.updatedAt = now
+            ports.putGeneral(general)
+        }
+
+        logger.debug(
+            "Processed in-memory command queues (general queues={}, nation queues={})",
+            state.generalTurnsByGeneralId.size,
+            state.nationTurnsByNationAndLevel.size,
+        )
+    }
+
+    private fun resetStrategicCommandLimits(ports: InMemoryWorldPorts) {
+        ports.allNations().forEach { nation ->
+            if (nation.strategicCmdLimit > 0) {
+                nation.strategicCmdLimit = (nation.strategicCmdLimit - 1).coerceIn(0, 72).toShort()
+            }
+            ports.putNation(nation)
+        }
+    }
+
+    private fun updateTraffic(world: WorldState) {
+        economyService.updateCitySupplyState(world)
+    }
+
+    private fun advanceMonth(world: WorldState) {
+        val nextMonth = world.currentMonth + 1
+        if (nextMonth > 12) {
+            world.currentMonth = 1
+            world.currentYear = (world.currentYear + 1).coerceIn(0, 32767).toShort()
+        } else {
+            world.currentMonth = nextMonth.coerceIn(1, 12).toShort()
+        }
+    }
+
+    companion object {
+        const val EVENT_TURN_ADVANCED = "TURN_ADVANCED"
+        private const val MAX_TURNS_PER_TICK = 5
+    }
+
+    private fun calculateNextGeneralTurnTime(
+        currentTurnTime: OffsetDateTime,
+        meta: MutableMap<String, Any>,
+        tickSeconds: Int,
+    ): OffsetDateTime {
+        val defaultNext = currentTurnTime.plusSeconds(tickSeconds.toLong())
+        val nextTurnTimeBase = readDouble(meta["nextTurnTimeBase"])
+        if (nextTurnTimeBase == null) {
+            return defaultNext
+        }
+
+        meta.remove("nextTurnTimeBase")
+        val turnBoundary = cutTurn(defaultNext, tickSeconds)
+        return turnBoundary.plusNanos((nextTurnTimeBase * 1_000_000_000L).roundToLong())
+    }
+
+    private fun cutTurn(time: OffsetDateTime, tickSeconds: Int): OffsetDateTime {
+        val tick = tickSeconds.toLong().coerceAtLeast(1L)
+        val epoch = time.toEpochSecond()
+        val floored = epoch - floorMod(epoch, tick)
+        return OffsetDateTime.ofInstant(Instant.ofEpochSecond(floored), time.offset)
+    }
+
+    private fun floorMod(value: Long, mod: Long): Long {
+        val raw = value % mod
+        return if (raw >= 0) raw else raw + mod
+    }
+
+    private fun readDouble(raw: Any?): Double? {
+        return when (raw) {
+            is Number -> raw.toDouble()
+            is String -> raw.toDoubleOrNull()
+            else -> null
         }
     }
 }

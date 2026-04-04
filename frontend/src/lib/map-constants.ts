@@ -25,10 +25,10 @@ export function getSeason(month: number | null | undefined): MapSeason {
 }
 
 export const SEASON_LABELS: Record<string, string> = {
-    spring: '春',
-    summer: '夏',
-    fall: '秋',
-    winter: '冬',
+    spring: '봄',
+    summer: '여름',
+    fall: '가을',
+    winter: '겨울',
 };
 
 export const CITY_STATE_NAMES: Record<number, string> = {

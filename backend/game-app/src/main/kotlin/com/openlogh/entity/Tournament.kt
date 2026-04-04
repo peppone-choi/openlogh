@@ -11,10 +11,10 @@ class Tournament(
     var id: Long = 0,
 
     @Column(name = "world_id", nullable = false)
-    var sessionId: Long = 0,
+    var worldId: Long = 0,
 
     @Column(name = "general_id", nullable = false)
-    var officerId: Long = 0,
+    var generalId: Long = 0,
 
     @Column(nullable = false)
     var round: Short = 0,

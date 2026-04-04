@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/8bit/avatar';
 import { User } from 'lucide-react';
 import { getPortraitUrl } from '@/lib/image';
 
@@ -20,13 +20,15 @@ interface GeneralPortraitProps {
     className?: string;
 }
 
-/** @deprecated Use OfficerPortrait from officer-portrait.tsx */
 export function GeneralPortrait({ picture, name, size = 'sm', className }: GeneralPortraitProps) {
     const px = sizes[size];
-    const [error, setError] = useState(false);
-    const src = error ? getPortraitUrl(null) : getPortraitUrl(picture);
+    // 0 = original picture, 1 = default silhouette, 2 = icon fallback
+    const [stage, setStage] = useState(0);
 
-    if (!error) {
+    const src =
+        stage === 0 ? getPortraitUrl(picture) : stage === 1 ? getPortraitUrl(null) : null;
+
+    if (src) {
         return (
             <Avatar className={className} style={{ width: px, height: px }}>
                 <Image
@@ -35,7 +37,7 @@ export function GeneralPortrait({ picture, name, size = 'sm', className }: Gener
                     width={px}
                     height={px}
                     className="size-full object-cover"
-                    onError={() => setError(true)}
+                    onError={() => setStage((s) => s + 1)}
                 />
             </Avatar>
         );
@@ -49,6 +51,3 @@ export function GeneralPortrait({ picture, name, size = 'sm', className }: Gener
         </Avatar>
     );
 }
-
-/** Preferred name — re-exports GeneralPortrait as OfficerPortrait */
-export { GeneralPortrait as OfficerPortrait };

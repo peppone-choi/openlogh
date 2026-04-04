@@ -1,0 +1,62 @@
+package com.openlogh.controller
+
+import com.openlogh.dto.CityResponse
+import com.openlogh.service.CityService
+import com.openlogh.service.GeneralService
+import org.springframework.http.HttpStatus
+import org.springframework.http.ResponseEntity
+import org.springframework.security.core.context.SecurityContextHolder
+import org.springframework.web.bind.annotation.*
+
+@RestController
+@RequestMapping("/api")
+class CityController(
+    private val cityService: CityService,
+    private val generalService: GeneralService,
+) {
+    @GetMapping("/worlds/{worldId}/cities")
+    fun listByWorld(@PathVariable worldId: Long): ResponseEntity<List<CityResponse>> {
+        return ResponseEntity.ok(
+            cityService.listByWorld(worldId).map { city ->
+                CityResponse.from(city, cityService.canonicalRegionForDisplay(city))
+            },
+        )
+    }
+
+    @GetMapping("/worlds/{worldId}/cities/visible")
+    fun listVisibleByWorld(@PathVariable worldId: Long): ResponseEntity<List<CityResponse>> {
+        val loginId = SecurityContextHolder.getContext().authentication?.name
+            ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
+        val myGeneral = generalService.getMyGeneral(worldId, loginId)
+            ?: return ResponseEntity.status(HttpStatus.FORBIDDEN).build()
+        return ResponseEntity.ok(
+            cityService.listByWorldMaskedForGeneral(worldId, myGeneral).map { city ->
+                CityResponse.from(city, cityService.canonicalRegionForDisplay(city))
+            },
+        )
+    }
+
+    @GetMapping("/cities/{id}")
+    fun getById(@PathVariable id: Long): ResponseEntity<CityResponse> {
+        val city = cityService.getById(id)
+            ?: return ResponseEntity.notFound().build()
+        val loginId = SecurityContextHolder.getContext().authentication?.name
+        val maskedCity = if (loginId != null) {
+            val myGeneral = generalService.getMyGeneral(city.worldId, loginId)
+            if (myGeneral != null) {
+                cityService.listByWorldMaskedForGeneral(city.worldId, myGeneral)
+                    .find { it.id == id } ?: city
+            } else city
+        } else city
+        return ResponseEntity.ok(CityResponse.from(maskedCity, cityService.canonicalRegionForDisplay(maskedCity)))
+    }
+
+    @GetMapping("/nations/{nationId}/cities")
+    fun listByNation(@PathVariable nationId: Long): ResponseEntity<List<CityResponse>> {
+        return ResponseEntity.ok(
+            cityService.listByNation(nationId).map { city ->
+                CityResponse.from(city, cityService.canonicalRegionForDisplay(city))
+            },
+        )
+    }
+}

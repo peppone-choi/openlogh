@@ -1,6 +1,9 @@
 package com.openlogh.engine
 
-import com.openlogh.entity.*
+import com.openlogh.entity.City
+import com.openlogh.entity.General
+import com.openlogh.entity.Nation
+import com.openlogh.entity.WorldState
 import com.openlogh.test.InMemoryTurnHarness
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -25,22 +28,22 @@ class GameplayIntegrationTest {
         )
 
         harness.putWorld(world)
-        harness.putFaction(nation)
-        harness.putPlanet(city)
-        harness.putOfficer(general)
+        harness.putNation(nation)
+        harness.putCity(city)
+        harness.putGeneral(general)
 
-        harness.queueOfficerTurn(officerId = general.id, actionCode = "농지개간", turnIdx = 0)
-        harness.queueOfficerTurn(officerId = general.id, actionCode = "농지개간", turnIdx = 1)
-        harness.queueOfficerTurn(officerId = general.id, actionCode = "상업투자", turnIdx = 2)
-        harness.queueOfficerTurn(officerId = general.id, actionCode = "치안강화", turnIdx = 3)
-        harness.queueOfficerTurn(officerId = general.id, actionCode = "모병", turnIdx = 4)
+        harness.queueGeneralTurn(generalId = general.id, actionCode = "농지개간", turnIdx = 0)
+        harness.queueGeneralTurn(generalId = general.id, actionCode = "농지개간", turnIdx = 1)
+        harness.queueGeneralTurn(generalId = general.id, actionCode = "상업투자", turnIdx = 2)
+        harness.queueGeneralTurn(generalId = general.id, actionCode = "치안강화", turnIdx = 3)
+        harness.queueGeneralTurn(generalId = general.id, actionCode = "모병", turnIdx = 4)
 
         repeat(5) {
             markTickReady(world)
             harness.turnService.processWorld(world)
         }
 
-        assertTrue(harness.officerTurnsFor(general.id).isEmpty())
+        assertTrue(harness.generalTurnsFor(general.id).isEmpty())
         assertEquals(6, world.currentMonth.toInt())
     }
 
@@ -54,24 +57,24 @@ class GameplayIntegrationTest {
         val yubi = baseGeneral(id = 2, name = "유비", strength = 90, crew = 300)
 
         harness.putWorld(world)
-        harness.putFaction(nation)
-        harness.putPlanet(city)
-        harness.putOfficer(chojo)
-        harness.putOfficer(yubi)
+        harness.putNation(nation)
+        harness.putCity(city)
+        harness.putGeneral(chojo)
+        harness.putGeneral(yubi)
 
         val initialAgri = city.agri
         val initialTrain = yubi.train.toInt()
 
-        harness.queueOfficerTurn(officerId = chojo.id, actionCode = "농지개간", turnIdx = 0)
-        harness.queueOfficerTurn(officerId = yubi.id, actionCode = "훈련", turnIdx = 0)
+        harness.queueGeneralTurn(generalId = chojo.id, actionCode = "농지개간", turnIdx = 0)
+        harness.queueGeneralTurn(generalId = yubi.id, actionCode = "훈련", turnIdx = 0)
 
         markTickReady(world)
         harness.turnService.processWorld(world)
 
         assertTrue(city.agri >= initialAgri)
         assertTrue(yubi.train.toInt() >= initialTrain)
-        assertTrue(harness.officerTurnsFor(chojo.id).isEmpty())
-        assertTrue(harness.officerTurnsFor(yubi.id).isEmpty())
+        assertTrue(harness.generalTurnsFor(chojo.id).isEmpty())
+        assertTrue(harness.generalTurnsFor(yubi.id).isEmpty())
     }
 
     @Test
@@ -83,17 +86,17 @@ class GameplayIntegrationTest {
         val chief = baseGeneral(officerLevel = 5)
 
         harness.putWorld(world)
-        harness.putFaction(nation)
-        harness.putPlanet(city)
-        harness.putOfficer(chief)
+        harness.putNation(nation)
+        harness.putCity(city)
+        harness.putGeneral(chief)
 
-        harness.queueFactionTurn(factionId = nation.id, officerLevel = 5, actionCode = "Nation휴식", turnIdx = 0)
-        harness.queueOfficerTurn(officerId = chief.id, actionCode = "휴식", turnIdx = 0)
+        harness.queueNationTurn(nationId = nation.id, officerLevel = 5, actionCode = "Nation휴식", turnIdx = 0)
+        harness.queueGeneralTurn(generalId = chief.id, actionCode = "휴식", turnIdx = 0)
 
         markTickReady(world, ticksBehind = 3)
         harness.turnService.processWorld(world)
 
-        assertTrue(harness.factionTurnsFor(nation.id, 5).isEmpty())
+        assertTrue(harness.nationTurnsFor(nation.id, 5).isEmpty())
         assertTrue(nation.strategicCmdLimit.toInt() <= 5)
     }
 
@@ -106,12 +109,12 @@ class GameplayIntegrationTest {
         val general = baseGeneral()
 
         harness.putWorld(world)
-        harness.putFaction(nation)
-        harness.putPlanet(city)
-        harness.putOfficer(general)
+        harness.putNation(nation)
+        harness.putCity(city)
+        harness.putGeneral(general)
 
         repeat(12) { idx ->
-            harness.queueOfficerTurn(officerId = general.id, actionCode = "휴식", turnIdx = idx.toShort())
+            harness.queueGeneralTurn(generalId = general.id, actionCode = "휴식", turnIdx = idx.toShort())
         }
 
         repeat(12) {
@@ -137,21 +140,21 @@ class GameplayIntegrationTest {
         )
 
         harness.putWorld(world)
-        harness.putFaction(nation)
-        harness.putPlanet(city)
-        harness.putOfficer(general)
+        harness.putNation(nation)
+        harness.putCity(city)
+        harness.putGeneral(general)
 
-        harness.queueOfficerTurn(officerId = general.id, actionCode = "모병", turnIdx = 0)
-        harness.queueOfficerTurn(officerId = general.id, actionCode = "훈련", turnIdx = 1)
-        harness.queueOfficerTurn(officerId = general.id, actionCode = "훈련", turnIdx = 2)
-        harness.queueOfficerTurn(officerId = general.id, actionCode = "사기진작", turnIdx = 3)
+        harness.queueGeneralTurn(generalId = general.id, actionCode = "모병", turnIdx = 0)
+        harness.queueGeneralTurn(generalId = general.id, actionCode = "훈련", turnIdx = 1)
+        harness.queueGeneralTurn(generalId = general.id, actionCode = "훈련", turnIdx = 2)
+        harness.queueGeneralTurn(generalId = general.id, actionCode = "사기진작", turnIdx = 3)
 
         repeat(4) {
             markTickReady(world)
             harness.turnService.processWorld(world)
         }
 
-        assertTrue(harness.officerTurnsFor(general.id).isEmpty())
+        assertTrue(harness.generalTurnsFor(general.id).isEmpty())
         assertNotNull(general.lastTurn)
     }
 

@@ -8,9 +8,9 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import { OTP_TICKET_STORAGE_KEY, useAuthStore } from '@/stores/authStore';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/8bit/card';
+import { Input } from '@/components/ui/8bit/input';
+import { Button } from '@/components/ui/8bit/button';
 import { ServerStatusCard } from '@/components/auth/server-status-card';
 import { ShieldCheck, X, Map as MapIcon } from 'lucide-react';
 import { sha512 } from 'js-sha512';
@@ -146,7 +146,7 @@ function LoginPageContent() {
     // Auto-login from stored token with nonce challenge (legacy parity: ReqNonce → sha512(token+nonce) → LoginByToken)
     const attemptAutoLogin = useCallback(async () => {
         if (!isInitialized || isAuthenticated) return;
-        const LOGIN_TOKEN_KEY = 'openlogh_login_token';
+        const LOGIN_TOKEN_KEY = 'sammo_login_token';
         const raw = typeof window !== 'undefined' ? localStorage.getItem(LOGIN_TOKEN_KEY) : null;
         if (!raw) return;
 
@@ -312,7 +312,7 @@ function LoginPageContent() {
         <>
             <Card className="w-full max-w-md p-8">
                 <CardHeader className="px-0 pt-0">
-                    <CardTitle className="game-font text-center text-2xl">오픈 은하영웅전설</CardTitle>
+                    <CardTitle className="text-center text-2xl">오픈삼국</CardTitle>
                 </CardHeader>
                 <CardContent className="px-0 pb-0">
                     {autoLogging && (

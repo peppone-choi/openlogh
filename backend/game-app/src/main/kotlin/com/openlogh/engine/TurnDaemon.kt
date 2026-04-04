@@ -1,8 +1,7 @@
 package com.openlogh.engine
 
+import com.openlogh.repository.WorldStateRepository
 import com.openlogh.engine.turn.cqrs.TurnCoordinator
-import com.openlogh.entity.SessionState
-import com.openlogh.repository.SessionStateRepository
 import com.openlogh.service.GameEventService
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
@@ -10,84 +9,127 @@ import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 import java.time.OffsetDateTime
 
+/**
+ * 턴 데몬: 주기적으로 월드를 순회하며 턴을 처리한다.
+ * - 일반 모드: TurnService (전체 파이프라인 — 커맨드 실행, 경제, 외교, 이벤트, AI, 유지보수)
+ * - 실시간 모드: RealtimeService (커맨드 포인트 기반)
+ */
 @Component
 class TurnDaemon(
     private val turnService: TurnService,
     private val turnCoordinator: TurnCoordinator,
     private val realtimeService: RealtimeService,
-    @Value("\${game.commit-sha:local}") private val commitSha: String,
-    @Value("\${game.cqrs-enabled:false}") private val cqrsEnabled: Boolean,
-    private val sessionStateRepository: SessionStateRepository,
+    @Value("\${game.commit-sha:local}") private val processCommitSha: String,
+    @Value("\${opensam.cqrs.enabled:false}") private val cqrsEnabled: Boolean,
+    private val worldStateRepository: WorldStateRepository,
     private val gameEventService: GameEventService,
 ) {
-    enum class DaemonState { RUNNING, PAUSED }
+    enum class DaemonState { IDLE, RUNNING, FLUSHING, PAUSED, STOPPING }
 
-    companion object {
-        private val log = LoggerFactory.getLogger(TurnDaemon::class.java)
+    @Volatile
+    private var state = DaemonState.IDLE
+
+    /** Reason for last state transition (e.g. "manual_pause", "tick_start", "error"). */
+    @Volatile
+    private var stateReason: String? = null
+
+    /** Unique request ID for the current/last operation. */
+    @Volatile
+    private var requestId: String? = null
+
+    private val logger = LoggerFactory.getLogger(TurnDaemon::class.java)
+
+    private fun transitionTo(newState: DaemonState, reason: String, reqId: String? = null) {
+        val prev = state
+        state = newState
+        stateReason = reason
+        if (reqId != null) requestId = reqId
+        logger.debug("Daemon state: {} -> {} (reason={}, requestId={})", prev, newState, reason, requestId)
     }
 
-    private var state = DaemonState.RUNNING
-
-    fun pause() {
-        state = DaemonState.PAUSED
-    }
-
-    fun resume() {
-        state = DaemonState.RUNNING
-    }
-
-    fun getStatus(): DaemonState = state
-
-    @Scheduled(fixedRateString = "\${game.tick-rate:1000}")
+    @Scheduled(fixedDelayString = "\${app.turn.interval-ms:5000}")
     fun tick() {
-        if (state == DaemonState.PAUSED) return
+        if (state != DaemonState.IDLE) return
+        val reqId = java.util.UUID.randomUUID().toString().take(8)
+        transitionTo(DaemonState.RUNNING, "tick_start", reqId)
+        try {
+            val worlds = worldStateRepository
+                .findByCommitSha(processCommitSha)
+                .filter { shouldProcessWorld(it.meta["gatewayActive"]) }
 
-        val worlds = sessionStateRepository.findByCommitSha(commitSha)
-        for (world in worlds) {
-            if (shouldSkip(world)) continue
-
-            val prevYear = world.currentYear
-            val prevMonth = world.currentMonth
-
-            try {
-                when {
-                    world.realtimeMode -> {
+            for (world in worlds) {
+                if (isPreOpen(world)) continue
+                if (isWorldLocked(world)) continue
+                try {
+                    if (world.realtimeMode) {
                         realtimeService.processCompletedCommands(world)
                         realtimeService.regenerateCommandPoints(world)
+                    } else {
+                        val prevYear = world.currentYear.toInt()
+                        val prevMonth = world.currentMonth.toInt()
+                        if (cqrsEnabled) {
+                            turnCoordinator.processWorld(world)
+                        } else {
+                            turnService.processWorld(world)
+                            // Legacy path doesn't broadcast — notify frontend of turn advance
+                            if (world.currentYear.toInt() != prevYear || world.currentMonth.toInt() != prevMonth) {
+                                gameEventService.broadcastTurnAdvance(
+                                    world.id.toLong(),
+                                    world.currentYear.toInt(),
+                                    world.currentMonth.toInt(),
+                                )
+                            }
+                        }
                     }
-                    cqrsEnabled -> turnCoordinator.processWorld(world)
-                    else -> turnService.processWorld(world)
+                } catch (e: Exception) {
+                    logger.error("Error processing world ${world.id}: ${e.message}", e)
                 }
-            } catch (e: Exception) {
-                log.error("Error processing world {}", world.id, e)
             }
-
-            if (world.currentYear != prevYear || world.currentMonth != prevMonth) {
-                gameEventService.broadcastTurnAdvance(
-                    world.id.toLong(),
-                    world.currentYear.toInt(),
-                    world.currentMonth.toInt(),
-                )
-            }
+        } finally {
+            transitionTo(DaemonState.IDLE, "tick_complete")
         }
     }
 
-    private fun shouldSkip(world: SessionState): Boolean {
-        if (world.config["locked"] == true) return true
+    fun pause(reason: String = "manual_pause") { transitionTo(DaemonState.PAUSED, reason) }
+    fun resume(reason: String = "manual_resume") { transitionTo(DaemonState.IDLE, reason) }
+    fun getStatus() = state
+    fun getStatusDetail() = mapOf("state" to state, "reason" to stateReason, "requestId" to requestId)
+    fun manualRun() {
+        if (state == DaemonState.IDLE) tick()
+    }
 
-        val opentime = world.config["opentime"] as? String
-        if (opentime != null) {
-            try {
-                val openAt = OffsetDateTime.parse(opentime)
-                if (OffsetDateTime.now().isBefore(openAt)) return true
-            } catch (e: Exception) {
-                log.warn("Invalid opentime format for world {}: {}", world.id, opentime)
-            }
+    private fun shouldProcessWorld(value: Any?): Boolean {
+        return when (value) {
+            null -> true
+            is Boolean -> value
+            is Number -> value.toInt() != 0
+            is String -> value.equals("true", ignoreCase = true) || value == "1"
+            else -> false
         }
+    }
 
-        val gatewayActive = world.meta["gatewayActive"]
-        if (gatewayActive == false) return true
+    private fun isPreOpen(world: com.openlogh.entity.WorldState): Boolean {
+        val now = OffsetDateTime.now()
+        val startTime = (world.config["startTime"] as? String)?.let {
+            try { OffsetDateTime.parse(it) } catch (e: Exception) { logger.warn("Failed to parse startTime '{}': {}", it, e.message); null }
+        }
+        if (startTime != null && now.isBefore(startTime)) return true
+        val opentime = (world.config["opentime"] as? String) ?: return false
+        return try {
+            now.isBefore(OffsetDateTime.parse(opentime))
+        } catch (e: Exception) {
+            logger.warn("Failed to parse opentime '{}': {}", opentime, e.message)
+            false
+        }
+    }
 
-        return false
+    private fun isWorldLocked(world: com.openlogh.entity.WorldState): Boolean {
+        val locked = world.config["locked"] ?: world.meta["locked"] ?: world.meta["isLocked"]
+        return when (locked) {
+            is Boolean -> locked
+            is Number -> locked.toInt() != 0
+            is String -> locked.equals("true", ignoreCase = true) || locked == "1"
+            else -> false
+        }
     }
 }

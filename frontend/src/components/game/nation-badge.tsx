@@ -1,4 +1,4 @@
-import { Badge } from '@/components/ui/badge';
+import { Badge } from '@/components/ui/8bit/badge';
 
 interface NationBadgeProps {
     name?: string | null;
@@ -33,8 +33,3 @@ export function getNationColorStyle(color?: string | null): React.CSSProperties 
     if (!color) return {};
     return { '--nation-color': color } as React.CSSProperties;
 }
-
-/** @deprecated Use FactionBadge from faction-badge.tsx */
-export { NationBadge as FactionBadge };
-/** @deprecated Use getFactionColorStyle from faction-badge.tsx */
-export { getNationColorStyle as getFactionColorStyle };

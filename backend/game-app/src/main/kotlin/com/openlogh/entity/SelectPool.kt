@@ -13,7 +13,7 @@ class SelectPool(
     var id: Long = 0,
 
     @Column(name = "world_id", nullable = false)
-    var sessionId: Long = 0,
+    var worldId: Long = 0,
 
     @Column(name = "unique_name", nullable = false)
     var uniqueName: String = "",
@@ -22,7 +22,7 @@ class SelectPool(
     var ownerId: Long? = null,
 
     @Column(name = "general_id", nullable = true)
-    var officerId: Long? = null,
+    var generalId: Long? = null,
 
     @Column(name = "reserved_until", nullable = true)
     var reservedUntil: OffsetDateTime? = null,

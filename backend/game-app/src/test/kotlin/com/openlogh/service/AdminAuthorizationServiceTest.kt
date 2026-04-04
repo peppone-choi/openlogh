@@ -1,6 +1,6 @@
 package com.openlogh.service
 
-import com.openlogh.entity.*
+import com.openlogh.entity.AppUser
 import com.openlogh.repository.AppUserRepository
 import com.openlogh.repository.WorldStateRepository
 import org.junit.jupiter.api.Assertions.assertDoesNotThrow

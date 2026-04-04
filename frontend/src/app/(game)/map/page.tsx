@@ -3,20 +3,22 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useWorldStore } from '@/stores/worldStore';
 import { useGameStore } from '@/stores/gameStore';
-import { useOfficerStore } from '@/stores/officerStore';
+import { useGeneralStore } from '@/stores/generalStore';
 import { mapRecentApi } from '@/lib/gameApi';
 import { subscribeWebSocket } from '@/lib/websocket';
 import { formatLog } from '@/lib/formatLog';
 import type { PublicCachedMapHistory } from '@/types';
 import { useRouter } from 'next/navigation';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { PLANET_LEVEL_NAMES, SHIP_CLASS_NAMES } from '@/lib/game-utils';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/8bit/card';
+import { Button } from '@/components/ui/8bit/button';
+import { CITY_LEVEL_NAMES, CREW_TYPE_NAMES } from '@/lib/game-utils';
 import { MAP_WIDTH, MAP_HEIGHT } from '@/lib/map-constants';
 import type { MapSeason } from '@/lib/map-constants';
 import { MapCanvas } from '@/components/game/map-canvas';
 import type { RenderCity, CityOverlay } from '@/components/game/map-canvas';
 import { DetailTooltip } from '@/components/game/map-tooltips';
+import { getInterceptionMarkers } from '@/lib/interception-utils';
+import { buildUnitMarkers } from '@/components/game/unit-markers';
 
 type MapTheme = 'default' | 'spring' | 'summer' | 'autumn' | 'winter';
 const MAP_THEMES: {
@@ -93,8 +95,8 @@ export default function MapPage() {
     const router = useRouter();
     const { currentWorld } = useWorldStore();
     const { cities, nations, generals, mapData, loadAll, loadMap } = useGameStore();
-    const myOfficer = useOfficerStore((s) => s.myOfficer);
-    const fetchMyGeneral = useOfficerStore((s) => s.fetchMyGeneral);
+    const myGeneral = useGeneralStore((s) => s.myGeneral);
+    const fetchMyGeneral = useGeneralStore((s) => s.fetchMyGeneral);
     const [history, setHistory] = useState<PublicCachedMapHistory[]>([]);
     const [touchTapId, setTouchTapId] = useState<number | null>(null);
 
@@ -171,9 +173,9 @@ export default function MapPage() {
     const cityMap = useMemo(() => new Map(cities.map((c) => [c.id, c])), [cities]);
 
     const myNation = useMemo(() => {
-        if (!myOfficer || myOfficer.factionId <= 0) return null;
-        return nationMap.get(myOfficer.factionId) ?? null;
-    }, [myOfficer, nationMap]);
+        if (!myGeneral || myGeneral.nationId <= 0) return null;
+        return nationMap.get(myGeneral.nationId) ?? null;
+    }, [myGeneral, nationMap]);
 
     const spyVisibleCityIds = useMemo(() => {
         const result = new Set<number>();
@@ -199,29 +201,29 @@ export default function MapPage() {
     const canViewCityInfo = useCallback(
         (cityId: number) => {
             const city = cityMap.get(cityId);
-            if (!city || !myOfficer) return false;
-            if (myOfficer.permission === 'spy') return true;
-            if (myOfficer.factionId > 0 && city.factionId === myOfficer.factionId) {
+            if (!city || !myGeneral) return false;
+            if (myGeneral.permission === 'spy') return true;
+            if (myGeneral.nationId > 0 && city.nationId === myGeneral.nationId) {
                 return true;
             }
             return spyVisibleCityIds.has(city.id);
         },
-        [cityMap, myOfficer, spyVisibleCityIds]
+        [cityMap, myGeneral, spyVisibleCityIds]
     );
 
     const cityByNameMap = useMemo(() => new Map(cities.map((c) => [c.name, c])), [cities]);
 
     // Build per-city general counts by nation (for troop indicators)
     const cityGeneralData = useMemo(() => {
-        const map = new Map<number, { factionId: number; name: string; ships: number; shipClass: number }[]>();
+        const map = new Map<number, { nationId: number; name: string; crew: number; crewType: number }[]>();
         for (const g of generals) {
-            if (g.factionId <= 0 || g.ships <= 0) continue;
-            if (!map.has(g.planetId)) map.set(g.planetId, []);
-            map.get(g.planetId)!.push({
-                factionId: g.factionId,
+            if (g.nationId <= 0 || g.crew <= 0) continue;
+            if (!map.has(g.cityId)) map.set(g.cityId, []);
+            map.get(g.cityId)!.push({
+                nationId: g.nationId,
                 name: g.name,
-                ships: g.ships,
-                shipClass: g.shipClass,
+                crew: g.crew,
+                crewType: g.crewType,
             });
         }
         return map;
@@ -234,7 +236,7 @@ export default function MapPage() {
             const city = cityMap.get(cityId);
             if (!city) continue;
             for (const g of gens) {
-                if (g.factionId !== city.factionId && city.factionId > 0) {
+                if (g.nationId !== city.nationId && city.nationId > 0) {
                     result.add(cityId);
                     break;
                 }
@@ -248,17 +250,17 @@ export default function MapPage() {
         (cityId: number) => {
             const city = cityMap.get(cityId);
             if (!city) return;
-            const nation = city.factionId ? nationMap.get(city.factionId) : null;
+            const nation = city.nationId ? nationMap.get(city.nationId) : null;
             const isVisible = canViewCityInfo(cityId);
             try {
                 localStorage.setItem(
-                    `openlogh:planetInfo:${cityId}`,
+                    `opensam:cityInfo:${cityId}`,
                     JSON.stringify({
                         id: cityId,
                         name: city.name ?? '',
                         nationName: nation?.name ?? '공백지',
                         nationColor: nation?.color ?? '#555',
-                        pop: isVisible ? city.population : 0,
+                        pop: isVisible ? city.pop : 0,
                         level: city.level,
                         ts: Date.now(),
                     })
@@ -275,9 +277,9 @@ export default function MapPage() {
         if (!mapData?.cities) return [];
         return mapData.cities.map((cc) => {
             const rtCity = cityByNameMap.get(cc.name);
-            const nation = rtCity?.factionId ? nationMap.get(rtCity.factionId) : null;
+            const nation = rtCity?.nationId ? nationMap.get(rtCity.nationId) : null;
             const showNationLayer = layers.has('nations') && !!nation;
-            const isMyCity = myOfficer?.planetId != null && rtCity?.id === myOfficer.planetId;
+            const isMyCity = myGeneral?.cityId != null && rtCity?.id === myGeneral.cityId;
 
             return {
                 id: rtCity?.id ?? cc.id,
@@ -289,14 +291,14 @@ export default function MapPage() {
                 nationColor: showNationLayer ? (nation?.color ?? null) : null,
                 nationName: showNationLayer ? (nation?.name ?? null) : null,
                 nationAbbr: showNationLayer ? nation?.abbreviation || nation?.name?.slice(0, 1) || null : null,
-                isCapital: showNationLayer && !!rtCity && nation!.capitalPlanetId === rtCity.id,
+                isCapital: showNationLayer && !!rtCity && nation!.capitalCityId === rtCity.id,
                 supplyState: rtCity?.supplyState ?? 0,
                 state: rtCity?.state ?? 0,
                 isMyCity,
                 isEmperorCity: false,
             };
         });
-    }, [mapData, cityByNameMap, nationMap, layers, myOfficer?.cityId]);
+    }, [mapData, cityByNameMap, nationMap, layers, myGeneral?.cityId]);
 
     // Build cityOverlays for troops/supply/terrain layers
     const cityOverlays = useMemo(() => {
@@ -323,6 +325,21 @@ export default function MapPage() {
         return overlays;
     }, [mapData, cityByNameMap, layers, cityGeneralData, foreignTroopCities]);
 
+    // Build nation color map for interception markers
+    const nationColorMap = useMemo(() => new Map(nations.map((n) => [n.id, n.color])), [nations]);
+
+    // Interception markers (own nation only)
+    const interceptions = useMemo(() => {
+        if (!myGeneral || myGeneral.nationId <= 0) return [];
+        return getInterceptionMarkers(generals, myGeneral.nationId, nationColorMap);
+    }, [generals, myGeneral, nationColorMap]);
+
+    // Unit markers (open-world generals with posX > 0)
+    const unitMarkers = useMemo(() => {
+        if (!myGeneral || myGeneral.nationId <= 0) return [];
+        return buildUnitMarkers(generals, myGeneral.nationId, nationColorMap);
+    }, [generals, myGeneral, nationColorMap]);
+
     // Year/month for header
     const yearMonth = useMemo(() => {
         const y = currentWorld?.currentYear;
@@ -339,16 +356,16 @@ export default function MapPage() {
     const buildTooltip = useCallback(
         (city: RenderCity, screenX: number, screenY: number) => {
             const rtCity = cityByNameMap.get(city.name);
-            const nation = rtCity?.factionId ? nationMap.get(rtCity.factionId) : null;
+            const nation = rtCity?.nationId ? nationMap.get(rtCity.nationId) : null;
             const cityGens = cityGeneralData.get(rtCity?.id ?? -1) ?? [];
             const isVisible = rtCity ? canViewCityInfo(rtCity.id) : false;
             const generalsInfo = isVisible
                 ? cityGens.map((g) => ({
                       name: g.name,
-                      nationColor: nationMap.get(g.factionId)?.color ?? '#555',
-                      crew: g.ships,
-                      crewType: SHIP_CLASS_NAMES[g.shipClass] ?? `${g.shipClass}`,
-                      isForeign: rtCity ? g.factionId !== rtCity.factionId : false,
+                      nationColor: nationMap.get(g.nationId)?.color ?? '#555',
+                      crew: g.crew,
+                      crewType: CREW_TYPE_NAMES[g.crewType] ?? `${g.crewType}`,
+                      isForeign: rtCity ? g.nationId !== rtCity.nationId : false,
                   }))
                 : [];
 
@@ -359,13 +376,13 @@ export default function MapPage() {
                 nationColor: nation?.color ?? '#555',
                 isVisible,
                 level: rtCity?.level ?? city.level,
-                pop: rtCity?.population ?? 0,
-                agri: rtCity && isVisible ? `${rtCity.production}/${rtCity.productionMax}` : '?',
-                comm: rtCity && isVisible ? `${rtCity.commerce}/${rtCity.commerceMax}` : '?',
-                secu: rtCity && isVisible ? `${rtCity.security}/${rtCity.securityMax}` : '?',
-                def: rtCity && isVisible ? `${rtCity.orbitalDefense}/${rtCity.orbitalDefenseMax}` : '?',
-                wall: rtCity && isVisible ? `${rtCity.fortress}/${rtCity.fortressMax}` : '?',
-                trust: rtCity?.approval ?? 0,
+                pop: rtCity?.pop ?? 0,
+                agri: rtCity && isVisible ? `${rtCity.agri}/${rtCity.agriMax}` : '?',
+                comm: rtCity && isVisible ? `${rtCity.comm}/${rtCity.commMax}` : '?',
+                secu: rtCity && isVisible ? `${rtCity.secu}/${rtCity.secuMax}` : '?',
+                def: rtCity && isVisible ? `${rtCity.def}/${rtCity.defMax}` : '?',
+                wall: rtCity && isVisible ? `${rtCity.wall}/${rtCity.wallMax}` : '?',
+                trust: rtCity?.trust ?? 0,
                 generals: generalsInfo,
                 screenX,
                 screenY,
@@ -462,6 +479,8 @@ export default function MapPage() {
                         cityNamePosition={cityNamePositionFn}
                         cityNameColor={currentTheme.text}
                         themeColors={{ bg: currentTheme.bg }}
+                        interceptions={interceptions}
+                        unitMarkers={unitMarkers}
                         dismissOverlay={
                             <button
                                 type="button"
@@ -500,7 +519,7 @@ export default function MapPage() {
                     <span className="ml-1 text-muted-foreground">레이어</span>
                     {[
                         { key: 'nations' as MapLayer, label: '국가색' },
-                        { key: 'troops' as MapLayer, label: '병력' },
+                        { key: 'troops' as MapLayer, label: '함선' },
                         { key: 'supply' as MapLayer, label: '보급' },
                         { key: 'terrain' as MapLayer, label: '지형' },
                     ].map((layer) => (

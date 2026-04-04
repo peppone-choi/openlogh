@@ -2,15 +2,17 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
-    getPlanetLevelIcon,
+    getCityLevelIcon,
     getEventIcon,
     getMapBgUrl,
     getMapRoadUrl,
-    getFactionBgGradient,
+    getNationBgGradient,
     getSpecialEventIcon,
 } from '@/lib/image';
 import { FactionFlag } from '@/components/game/faction-flag';
 import { detailMapCitySizes, MAP_WIDTH, MAP_HEIGHT, SEASON_LABELS, type MapSeason } from '@/lib/map-constants';
+import { UnitMarkers } from '@/components/game/unit-markers';
+import type { UnitMarker } from '@/components/game/unit-markers';
 
 // --- RenderCity: normalized shape consumed by the canvas ---
 export interface RenderCity {
@@ -64,6 +66,13 @@ export interface MapCanvasProps {
     useResponsiveScale?: boolean;
     /** Extra elements to render on the dismiss layer (z-[2]) */
     dismissOverlay?: React.ReactNode;
+    /** Interception markers to render between city pairs */
+    interceptions?: { generalName: string; nationColor: string; fromCityId: number; toCityId: number }[];
+    /** When true, cursor becomes crosshair and clicks call onCoordinateSelect */
+    coordinateSelectMode?: boolean;
+    onCoordinateSelect?: (x: number, y: number) => void;
+    /** Unit markers to overlay on the map */
+    unitMarkers?: UnitMarker[];
 }
 
 // Constants for full map page overlays
@@ -94,6 +103,10 @@ export function MapCanvas({
     themeColors,
     useResponsiveScale: useResponsiveScaleProp,
     dismissOverlay,
+    interceptions,
+    coordinateSelectMode,
+    onCoordinateSelect,
+    unitMarkers,
 }: MapCanvasProps) {
     const containerRef = useRef<HTMLDivElement>(null);
     const [mapScale, setMapScale] = useState(1);
@@ -206,11 +219,25 @@ export function MapCanvas({
               position: 'relative',
           };
 
+    const handleMapClick = useCallback(
+        (e: React.MouseEvent<HTMLDivElement>) => {
+            if (!coordinateSelectMode || !onCoordinateSelect) return;
+            const rect = e.currentTarget.getBoundingClientRect();
+            const rawX = e.clientX - rect.left + e.currentTarget.scrollLeft;
+            const rawY = e.clientY - rect.top + e.currentTarget.scrollTop;
+            const x = Math.round(rawX / mapScale);
+            const y = Math.round(rawY / mapScale);
+            onCoordinateSelect(x, y);
+        },
+        [coordinateSelectMode, onCoordinateSelect, mapScale]
+    );
+
     return (
         <div
             ref={containerRef}
-            className={`relative text-[14px] text-white overflow-hidden ${useResponsive ? 'border border-gray-800 rounded-lg' : 'w-full bg-black'} ${className ?? ''}`}
-            style={outerStyle}
+            className={`relative text-[14px] text-white overflow-hidden ${useResponsive ? 'border border-gray-800 rounded-none' : 'w-full bg-black'} ${className ?? ''}`}
+            style={{ ...outerStyle, cursor: coordinateSelectMode ? 'crosshair' : undefined }}
+            onClick={coordinateSelectMode ? handleMapClick : undefined}
         >
             <div style={innerStyle}>
                 {/* Year/Season header */}
@@ -220,27 +247,29 @@ export function MapCanvas({
                             className="text-white text-sm font-bold drop-shadow-lg"
                             style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}
                         >
-                            西紀 {yearMonth.year}年 {yearMonth.month}月 {SEASON_LABELS[season] ?? ''}
+                            서기 {yearMonth.year}년 {yearMonth.month}월 {SEASON_LABELS[season] ?? ''}
                         </span>
                     </div>
                 )}
 
-                {/* Background */}
+                {/* Background (pixelated 8-bit style) */}
                 {mapBgUrl && (
                     <div
                         className="absolute inset-0 z-0 bg-no-repeat bg-center"
                         style={{
                             backgroundImage: `url('${mapBgUrl}')`,
                             backgroundSize: `${innerW}px ${innerH}px`,
+                            imageRendering: 'pixelated',
                         }}
                     />
                 )}
-                {/* Road overlay */}
+                {/* Road overlay (pixelated 8-bit style) */}
                 <div
                     className="absolute inset-0 z-[1] bg-no-repeat bg-center"
                     style={{
                         backgroundImage: `url('${mapRoadUrl}')`,
                         backgroundSize: `${innerW}px ${innerH}px`,
+                        imageRendering: 'pixelated',
                     }}
                 />
 
@@ -269,7 +298,7 @@ export function MapCanvas({
                                     <div
                                         className="absolute"
                                         style={{
-                                            background: getFactionBgGradient(city.nationColor),
+                                            background: getNationBgGradient(city.nationColor),
                                             width: bgW,
                                             height: bgH,
                                             left: (hitW - bgW) / 2,
@@ -373,8 +402,9 @@ export function MapCanvas({
                                         }}
                                     >
                                         <img
-                                            src={getPlanetLevelIcon(city.level)}
+                                            src={getCityLevelIcon(city.level)}
                                             className="w-full h-full block"
+                                            style={{ imageRendering: 'pixelated' }}
                                             alt=""
                                         />
 
@@ -423,7 +453,7 @@ export function MapCanvas({
                                         {/* City name (default positioning) */}
                                         {showNames && !cityNamePosition && (
                                             <span
-                                                className="game-font absolute whitespace-nowrap px-1 py-[1px] bg-black/60 backdrop-blur-[2px] text-[10px] rounded-sm"
+                                                className="absolute whitespace-nowrap px-1 py-[1px] bg-black/60 backdrop-blur-[2px] text-[10px] rounded-sm"
                                                 style={
                                                     nearRight
                                                         ? { right: '70%', bottom: -10, color: cityNameColor }
@@ -464,7 +494,7 @@ export function MapCanvas({
                                     {/* City name (custom positioning for full map page) */}
                                     {showNames && cityNamePosition && (
                                         <span
-                                            className="game-font absolute whitespace-nowrap px-1 py-[1px] bg-black/60 backdrop-blur-[2px] text-[10px] rounded-sm"
+                                            className="absolute whitespace-nowrap px-1 py-[1px] bg-black/60 backdrop-blur-[2px] text-[10px] rounded-sm"
                                             style={{
                                                 ...cityNamePosition(city, left, top),
                                                 color: cityNameColor,
@@ -478,6 +508,37 @@ export function MapCanvas({
                         );
                     })}
                 </div>
+
+                {/* Interception markers */}
+                {interceptions?.map((intercept, idx) => {
+                    const fromCity = cities.find((c) => c.id === intercept.fromCityId);
+                    const toCity = cities.find((c) => c.id === intercept.toCityId);
+                    if (!fromCity || !toCity) return null;
+                    const midX = (fromCity.x + toCity.x) / 2;
+                    const midY = (fromCity.y + toCity.y) / 2;
+                    return (
+                        <div
+                            key={idx}
+                            style={{
+                                position: 'absolute',
+                                left: `${midX * coordScale}px`,
+                                top: `${midY * coordScale}px`,
+                                transform: 'translate(-50%, -50%)',
+                                zIndex: 5,
+                            }}
+                            className="text-[10px] px-1 py-0.5 rounded bg-red-900/80 text-white border border-red-500/50 whitespace-nowrap pointer-events-none"
+                        >
+                            ⚔️ {intercept.generalName}
+                        </div>
+                    );
+                })}
+
+                {/* Unit markers */}
+                {unitMarkers && unitMarkers.length > 0 && (
+                    <div className="absolute inset-0 z-[4] pointer-events-none">
+                        <UnitMarkers markers={unitMarkers} mapScale={mapScale} />
+                    </div>
+                )}
 
                 {/* Tooltip */}
                 {hoveredCity && renderTooltip?.(hoveredCity.city, { x: hoveredCity.x, y: hoveredCity.y })}

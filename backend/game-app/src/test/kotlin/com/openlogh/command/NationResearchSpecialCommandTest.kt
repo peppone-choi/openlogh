@@ -13,7 +13,9 @@ import com.openlogh.command.nation.event_음귀병연구
 import com.openlogh.command.nation.event_화륜차연구
 import com.openlogh.command.nation.event_화시병연구
 import com.openlogh.engine.DiplomacyService
-import com.openlogh.entity.*
+import com.openlogh.entity.City
+import com.openlogh.entity.General
+import com.openlogh.entity.Nation
 import com.openlogh.repository.CityRepository
 import com.openlogh.repository.GeneralRepository
 import com.openlogh.repository.NationRepository
@@ -150,8 +152,8 @@ class NationResearchSpecialCommandTest {
         val successCondition = successCmd.checkFullCondition()
         assertTrue(successCondition is ConstraintResult.Pass)
         assertEquals(expectedPreReqTurn, successCmd.getPreReqTurn())
-        assertEquals(expectedCost, successCmd.getCost().funds)
-        assertEquals(expectedCost, successCmd.getCost().supplies)
+        assertEquals(expectedCost, successCmd.getCost().gold)
+        assertEquals(expectedCost, successCmd.getCost().rice)
 
         val beforeGold = successNation.gold
         val beforeRice = successNation.rice
@@ -191,8 +193,8 @@ class NationResearchSpecialCommandTest {
     fun `산저병 연구 command validates constraints timing cost and run`() {
         assertResearchCommand(
             actionLabel = "산저병 연구",
-            expectedCost = 100000,
-            expectedPreReqTurn = 23,
+            expectedCost = 50000,
+            expectedPreReqTurn = 11,
             nationMetaKey = "can_산저병사용",
             commandFactory = ::event_산저병연구,
         )
@@ -224,8 +226,8 @@ class NationResearchSpecialCommandTest {
     fun `음귀병 연구 command validates constraints timing cost and run`() {
         assertResearchCommand(
             actionLabel = "음귀병 연구",
-            expectedCost = 100000,
-            expectedPreReqTurn = 23,
+            expectedCost = 50000,
+            expectedPreReqTurn = 11,
             nationMetaKey = "can_음귀병사용",
             commandFactory = ::event_음귀병연구,
         )
@@ -246,8 +248,8 @@ class NationResearchSpecialCommandTest {
     fun `화시병 연구 command validates constraints timing cost and run`() {
         assertResearchCommand(
             actionLabel = "화시병 연구",
-            expectedCost = 100000,
-            expectedPreReqTurn = 23,
+            expectedCost = 50000,
+            expectedPreReqTurn = 11,
             nationMetaKey = "can_화시병사용",
             commandFactory = ::event_화시병연구,
         )
@@ -282,8 +284,8 @@ class NationResearchSpecialCommandTest {
         cmd.nation = nation
         cmd.services = services
 
-        assertEquals(0, cmd.getCost().funds)
-        assertEquals(0, cmd.getCost().supplies)
+        assertEquals(0, cmd.getCost().gold)
+        assertEquals(0, cmd.getCost().rice)
         assertEquals(1, cmd.getPreReqTurn())
 
         val check = cmd.checkFullCondition()
@@ -310,8 +312,8 @@ class NationResearchSpecialCommandTest {
         val cmd = che_부대탈퇴지시(createGeneral(officerLevel = 20), env())
         cmd.destGeneral = target
 
-        assertEquals(0, cmd.getCost().funds)
-        assertEquals(0, cmd.getCost().supplies)
+        assertEquals(0, cmd.getCost().gold)
+        assertEquals(0, cmd.getCost().rice)
         assertEquals(0, cmd.getPreReqTurn())
 
         val check = cmd.checkFullCondition()
@@ -351,8 +353,8 @@ class NationResearchSpecialCommandTest {
             "cityNationByMapId" to mapOf(1L to 1L, 2L to 1L),
         )
 
-        assertEquals(200, cmd.getCost().funds)
-        assertEquals(200, cmd.getCost().supplies)
+        assertEquals(200, cmd.getCost().gold)
+        assertEquals(200, cmd.getCost().rice)
         assertEquals(0, cmd.getPreReqTurn())
 
         val check = cmd.checkFullCondition()
@@ -364,6 +366,126 @@ class NationResearchSpecialCommandTest {
         assertEquals(9800, nation.rice)
         assertEquals(30000, fromCity.pop)
         assertEquals(21000, toCity.pop)
+        assertTrue(result.logs.any { it.contains("인구") })
+    }
+
+    // ========== Golden Value: Research Parameterized crewType Verification ==========
+
+    @Test
+    fun `research commands -- crewType parameter differentiation verified`() {
+        // PHP: all event_*연구 share same template with different crewType/cost/turn
+        // Verify cost/turn parameters differ correctly between 50000-tier and 100000-tier
+        data class ResearchParams(
+            val name: String,
+            val cost: Int,
+            val preReqTurn: Int,
+            val metaKey: String,
+        )
+
+        val tier50000 = listOf(
+            ResearchParams("대검병", 50000, 11, "can_대검병사용"),
+            ResearchParams("산저병", 50000, 11, "can_산저병사용"),
+            ResearchParams("음귀병", 50000, 11, "can_음귀병사용"),
+            ResearchParams("화시병", 50000, 11, "can_화시병사용"),
+        )
+        val tier100000 = listOf(
+            ResearchParams("무희", 100000, 23, "can_무희사용"),
+            ResearchParams("상병", 100000, 23, "can_상병사용"),
+            ResearchParams("원융노병", 100000, 23, "can_원융노병사용"),
+            ResearchParams("화륜차", 100000, 23, "can_화륜차사용"),
+        )
+        // Verify tier separation: 50000-cost commands have preReqTurn=11, 100000-cost have preReqTurn=23
+        for (p in tier50000) {
+            assertEquals(50000, p.cost, "${p.name} should be tier 50000")
+            assertEquals(11, p.preReqTurn, "${p.name} should have preReqTurn=11")
+        }
+        for (p in tier100000) {
+            assertEquals(100000, p.cost, "${p.name} should be tier 100000")
+            assertEquals(23, p.preReqTurn, "${p.name} should have preReqTurn=23")
+        }
+        // Total: 4 tier-50k + 4 tier-100k + 극병(100k) = 9 research commands
+        assertEquals(9, tier50000.size + tier100000.size + 1, "9 research commands total")
+    }
+
+    // ========== Golden Value: Special Command Entity Diffs ==========
+
+    @Test
+    fun `무작위수도이전 golden value -- city ownership transferred and capital moved`() {
+        val cityRepository = mock(CityRepository::class.java)
+        val services = CommandServices(
+            generalRepository = mock(GeneralRepository::class.java),
+            cityRepository = cityRepository,
+            nationRepository = mock(NationRepository::class.java),
+            diplomacyService = mock(DiplomacyService::class.java),
+        )
+
+        val commandEnv = env(year = 189, startYear = 190)
+        commandEnv.gameStor["neutralCities"] = listOf(5)
+        val nation = createNation(id = 1)
+        nation.capitalCityId = 1
+        val targetCity = createCity(id = 5, nationId = 0)
+
+        `when`(cityRepository.findById(5L)).thenReturn(Optional.of(targetCity))
+
+        val cmd = che_무작위수도이전(createGeneral(officerLevel = 20), commandEnv)
+        cmd.city = createCity(id = 1, nationId = 1)
+        cmd.nation = nation
+        cmd.services = services
+
+        val result = runBlocking { cmd.run(fixedRng) }
+        assertTrue(result.success)
+        // PHP golden value: target city nationId set to nation's id
+        assertEquals(1L, targetCity.nationId, "target city claimed by nation")
+        // PHP golden value: nation.capitalCityId = targetCity.id
+        assertEquals(5L, nation.capitalCityId, "capital moved to target city")
+        // Log
+        assertTrue(result.logs.any { it.contains("국가를 옮겼습니다") })
+    }
+
+    @Test
+    fun `부대탈퇴지시 golden value -- troopId reset to zero`() {
+        val target = createGeneral(id = 3, nationId = 1)
+        target.troopId = 42
+
+        val cmd = che_부대탈퇴지시(createGeneral(officerLevel = 20), env())
+        cmd.destGeneral = target
+
+        val result = runBlocking { cmd.run(fixedRng) }
+        assertTrue(result.success)
+        // PHP golden value: troopId = 0
+        assertEquals(0L, target.troopId, "troopId reset to 0")
+        assertTrue(result.logs.any { it.contains("탈퇴") })
+    }
+
+    @Test
+    fun `인구이동 golden value -- exact population transfer and cost deduction`() {
+        val nation = createNation(id = 1, gold = 20000, rice = 15000)
+        val fromCity = createCity(id = 1, nationId = 1)
+        fromCity.pop = 35000
+        val toCity = createCity(id = 2, nationId = 1)
+        toCity.pop = 5000
+        toCity.popMax = 60000
+
+        val cmd = cr_인구이동(createGeneral(officerLevel = 20), env(), mapOf("amount" to 10000))
+        cmd.city = fromCity
+        cmd.destCity = toCity
+        cmd.nation = nation
+        cmd.constraintEnv = mapOf(
+            "mapAdjacency" to mapOf(1L to listOf(2L), 2L to listOf(1L)),
+            "cityNationById" to mapOf(1L to 1L, 2L to 1L),
+            "dbToMapId" to mapOf(1L to 1L, 2L to 2L),
+            "mapToDbId" to mapOf(1L to 1L, 2L to 2L),
+            "cityNationByMapId" to mapOf(1L to 1L, 2L to 1L),
+        )
+
+        val result = runBlocking { cmd.run(fixedRng) }
+        assertTrue(result.success)
+        // PHP golden value: fromCity.pop -= amount, toCity.pop += amount
+        assertEquals(25000, fromCity.pop, "fromCity.pop = 35000 - 10000")
+        assertEquals(15000, toCity.pop, "toCity.pop = 5000 + 10000")
+        // PHP golden value: cost = amount / 100 gold + amount / 100 rice
+        assertEquals(19900, nation.gold, "nation.gold = 20000 - 100")
+        assertEquals(14900, nation.rice, "nation.rice = 15000 - 100")
         assertTrue(result.logs.any { it.contains("인구") })
     }
 }

@@ -5,6 +5,6 @@ import org.springframework.data.jpa.repository.JpaRepository
 
 interface BetEntryRepository : JpaRepository<BetEntry, Long> {
     fun findByBettingId(bettingId: Long): List<BetEntry>
-    fun findByOfficerId(officerId: Long): List<BetEntry>
-    fun findByBettingIdAndOfficerId(bettingId: Long, officerId: Long): BetEntry?
+    fun findByGeneralId(generalId: Long): List<BetEntry>
+    fun findByBettingIdAndGeneralId(bettingId: Long, generalId: Long): BetEntry?
 }

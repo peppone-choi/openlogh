@@ -3,7 +3,7 @@
 import { useEffect, useMemo } from 'react';
 import { Globe } from 'lucide-react';
 import { useWorldStore } from '@/stores/worldStore';
-import { useOfficerStore } from '@/stores/officerStore';
+import { useGeneralStore } from '@/stores/generalStore';
 import { useGameStore } from '@/stores/gameStore';
 import { PageHeader } from '@/components/game/page-header';
 import { LoadingState } from '@/components/game/loading-state';
@@ -11,7 +11,7 @@ import { GlobalDiplomacyOverview } from '@/components/game/global-diplomacy-over
 
 export default function GlobalDiplomacyPage() {
     const currentWorld = useWorldStore((s) => s.currentWorld);
-    const { myGeneral, fetchMyGeneral } = useOfficerStore();
+    const { myGeneral, fetchMyGeneral } = useGeneralStore();
     const { nations, diplomacy, generals, cities, loading, loadAll } = useGameStore();
 
     useEffect(() => {
@@ -42,7 +42,7 @@ export default function GlobalDiplomacyPage() {
 
     return (
         <div className="mx-auto max-w-4xl space-y-0">
-            <PageHeader icon={Globe} title="은하 정보" />
+            <PageHeader icon={Globe} title="중원정보" />
             <div className="legacy-page-wrap">
                 <GlobalDiplomacyOverview
                     worldId={currentWorld.id}

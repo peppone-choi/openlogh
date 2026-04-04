@@ -5,9 +5,9 @@ import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useAuthStore } from '@/stores/authStore';
 import { AdminWorldProvider, useAdminWorld } from '@/contexts/AdminWorldContext';
-import { Toaster } from 'sonner';
-import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Toaster } from '@/components/ui/sonner';
+import { Button } from '@/components/ui/8bit/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/8bit/select';
 import {
     LayoutDashboard,
     Users,
@@ -22,11 +22,11 @@ import {
 
 const adminNav = [
     { href: '/admin', label: '대시보드', icon: LayoutDashboard },
-    { href: '/admin/members', label: '제독 관리', icon: Users },
+    { href: '/admin/members', label: '장수 관리', icon: Users },
     { href: '/admin/statistics', label: '통계', icon: BarChart3 },
     { href: '/admin/logs', label: '로그', icon: ScrollText },
     { href: '/admin/diplomacy', label: '외교', icon: Handshake },
-    { href: '/admin/select-pool', label: '제독 풀', icon: Users },
+    { href: '/admin/select-pool', label: '장수 풀', icon: Users },
     { href: '/admin/users', label: '유저 관리', icon: UserCog },
     { href: '/admin/game-versions', label: '게임 버전', icon: Container },
 ];
@@ -39,10 +39,7 @@ function WorldSelector() {
     return (
         <div className="flex items-center gap-2">
             <Globe className="size-4 text-muted-foreground" />
-            <Select
-                value={worldId != null ? String(worldId) : undefined}
-                onValueChange={(v: string) => setWorldId(Number(v))}
-            >
+            <Select value={worldId != null ? String(worldId) : undefined} onValueChange={(v) => setWorldId(Number(v))}>
                 <SelectTrigger size="sm" className="w-[200px]">
                     <SelectValue placeholder="월드 선택" />
                 </SelectTrigger>

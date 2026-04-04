@@ -1,7 +1,7 @@
 package com.openlogh.service
 
 import com.openlogh.repository.AppUserRepository
-import com.openlogh.repository.OfficerRepository
+import com.openlogh.repository.GeneralRepository
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import java.time.OffsetDateTime
@@ -9,7 +9,7 @@ import java.time.OffsetDateTime
 @Service
 class AccountService(
     private val appUserRepository: AppUserRepository,
-    private val officerRepository: OfficerRepository,
+    private val generalRepository: GeneralRepository,
     private val passwordEncoder: PasswordEncoder,
 ) {
     fun changePassword(loginId: String, currentPassword: String, newPassword: String): Boolean {
@@ -38,7 +38,7 @@ class AccountService(
         defenceTrain: Int?,
         tournamentState: Int?,
         potionThreshold: Int?,
-        autoFactionTurn: Boolean?,
+        autoNationTurn: Boolean?,
         preRiseDelete: Boolean?,
         preOpenDelete: Boolean?,
         borderReturn: Boolean?,
@@ -47,7 +47,7 @@ class AccountService(
         picture: String?,
     ): Boolean {
         val user = appUserRepository.findByLoginId(loginId) ?: return false
-        val officers = officerRepository.findByUserId(user.id)
+        val generals = generalRepository.findByUserId(user.id)
         var userChanged = false
 
         thirdUse?.let {
@@ -66,7 +66,7 @@ class AccountService(
             userChanged = true
         }
 
-        officers.forEach { gen ->
+        generals.forEach { gen ->
             defenceTrain?.let { gen.defenceTrain = it.toShort() }
             tournamentState?.let { gen.tournamentState = it.toShort() }
             picture?.let {
@@ -76,14 +76,14 @@ class AccountService(
 
             val meta = gen.meta.toMutableMap()
             potionThreshold?.let { meta["potionThreshold"] = it }
-            autoFactionTurn?.let { meta["autoFactionTurn"] = it }
+            autoNationTurn?.let { meta["autoNationTurn"] = it }
             preRiseDelete?.let { meta["preRiseDelete"] = it }
             preOpenDelete?.let { meta["preOpenDelete"] = it }
             borderReturn?.let { meta["borderReturn"] = it }
             customCss?.let { meta["customCss"] = it }
             gen.meta = meta
 
-            officerRepository.save(gen)
+            generalRepository.save(gen)
         }
         if (userChanged) {
             appUserRepository.save(user)
@@ -93,11 +93,11 @@ class AccountService(
 
     fun toggleVacation(loginId: String): Boolean {
         val user = appUserRepository.findByLoginId(loginId) ?: return false
-        val officers = officerRepository.findByUserId(user.id)
-        officers.forEach { gen ->
+        val generals = generalRepository.findByUserId(user.id)
+        generals.forEach { gen ->
             val current = gen.meta["vacationMode"] as? Boolean ?: false
             gen.meta["vacationMode"] = !current
-            officerRepository.save(gen)
+            generalRepository.save(gen)
         }
         return true
     }
@@ -112,6 +112,14 @@ class AccountService(
             user.meta["imageServer"] = 0
         }
         appUserRepository.save(user)
+
+        // Sync to all generals (legacy parity: j_adjust_icon.php)
+        val generals = generalRepository.findByUserId(user.id).filter { it.npcState.toInt() == 0 }
+        generals.forEach { gen ->
+            gen.picture = iconUrl.ifBlank { "" }
+            gen.imageServer = 0
+            generalRepository.save(gen)
+        }
         return true
     }
 

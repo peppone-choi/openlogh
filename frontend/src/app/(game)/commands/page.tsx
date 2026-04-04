@@ -7,13 +7,15 @@ import { PageHeader } from '@/components/game/page-header';
 import { CommandPanel } from '@/components/game/command-panel';
 import { LoadingState } from '@/components/game/loading-state';
 import { EmptyState } from '@/components/game/empty-state';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/8bit/button';
+import { Badge } from '@/components/ui/8bit/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/8bit/card';
+import { Input } from '@/components/ui/8bit/input';
 import { useWorldStore } from '@/stores/worldStore';
-import { useOfficerStore } from '@/stores/officerStore';
+import { useGeneralStore } from '@/stores/generalStore';
 import { commandApi } from '@/lib/gameApi';
+import { subscribeWebSocket } from '@/lib/websocket';
+import { useDebouncedCallback } from '@/hooks/useDebouncedCallback';
 import type { CommandArg, CommandTableEntry, NationTurn } from '@/types';
 
 /** Server clock display */
@@ -125,7 +127,8 @@ function NationCommandPanel({
     const [dragOver, setDragOver] = useState<number | null>(null);
     const [presetName, setPresetName] = useState('');
 
-    const presetKey = `openlogh:commands:faction-presets:${nationId}`;
+    const currentWorld = useWorldStore((s) => s.currentWorld);
+    const presetKey = `opensam:commands:nation-presets:${nationId}`;
 
     const loadData = useCallback(async () => {
         setLoading(true);
@@ -146,6 +149,27 @@ function NationCommandPanel({
     useEffect(() => {
         loadData();
     }, [loadData]);
+
+    const debouncedLoadData = useDebouncedCallback(
+        useCallback(() => {
+            loadData().catch(() => {});
+        }, [loadData]),
+        500
+    );
+
+    useEffect(() => {
+        if (!currentWorld) return;
+        const unsubTurn = subscribeWebSocket(`/topic/world/${currentWorld.id}/turn`, () => {
+            debouncedLoadData();
+        });
+        const unsubCommand = subscribeWebSocket(`/topic/world/${currentWorld.id}/command`, () => {
+            debouncedLoadData();
+        });
+        return () => {
+            unsubTurn();
+            unsubCommand();
+        };
+    }, [currentWorld, debouncedLoadData]);
 
     useEffect(() => {
         if (typeof window === 'undefined') return;
@@ -356,7 +380,7 @@ function NationCommandPanel({
         [dragFrom, filledTurns, nationId, generalId, loadData]
     );
 
-    if (loading) return <LoadingState message="진영 명령 불러오는 중..." />;
+    if (loading) return <LoadingState message="국가 명령 불러오는 중..." />;
 
     return (
         <div className="space-y-3">
@@ -388,7 +412,7 @@ function NationCommandPanel({
                             <Save className="size-3.5 mr-1" /> 저장
                         </Button>
                         <select
-                            className="h-8 rounded-md border border-input bg-background px-2 text-sm"
+                            className="h-8 rounded-none border border-input bg-background px-2 text-sm"
                             value={selectedPreset}
                             onChange={(e) => setSelectedPreset(e.target.value)}
                         >
@@ -490,7 +514,7 @@ function NationCommandPanel({
             {showSelector && (
                 <Card>
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-sm">{selectedTurn + 1}턴 진영 명령 선택</CardTitle>
+                        <CardTitle className="text-sm">{selectedTurn + 1}턴 국가 명령 선택</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-2">
                         {categories.map((cat) => (
@@ -534,17 +558,39 @@ function CommandsPageInner() {
     const searchParams = useSearchParams();
     const initialMode = searchParams.get('mode') === 'nation' ? 'nation' : 'general';
     const currentWorld = useWorldStore((s) => s.currentWorld);
-    const { myOfficer, fetchMyGeneral } = useOfficerStore();
+    const { myGeneral, fetchMyGeneral } = useGeneralStore();
     const [mode, setMode] = useState<'general' | 'nation'>(initialMode);
 
     useEffect(() => {
         if (!currentWorld) return;
-        if (!myOfficer) {
+        if (!myGeneral) {
             fetchMyGeneral(currentWorld.id).catch(() => {});
         }
-    }, [currentWorld, myOfficer, fetchMyGeneral]);
+    }, [currentWorld, myGeneral, fetchMyGeneral]);
 
-    const isChief = (myOfficer?.officerLevel ?? 0) >= 5;
+    const debouncedFetchGeneral = useDebouncedCallback(
+        useCallback(() => {
+            if (!currentWorld) return;
+            fetchMyGeneral(currentWorld.id).catch(() => {});
+        }, [currentWorld, fetchMyGeneral]),
+        500
+    );
+
+    useEffect(() => {
+        if (!currentWorld) return;
+        const unsubTurn = subscribeWebSocket(`/topic/world/${currentWorld.id}/turn`, () => {
+            debouncedFetchGeneral();
+        });
+        const unsubCommand = subscribeWebSocket(`/topic/world/${currentWorld.id}/command`, () => {
+            debouncedFetchGeneral();
+        });
+        return () => {
+            unsubTurn();
+            unsubCommand();
+        };
+    }, [currentWorld, debouncedFetchGeneral]);
+
+    const isChief = (myGeneral?.officerLevel ?? 0) >= 5;
 
     if (!currentWorld) {
         return (
@@ -554,7 +600,7 @@ function CommandsPageInner() {
         );
     }
 
-    if (!myOfficer) {
+    if (!myGeneral) {
         return <LoadingState message="명령 정보를 불러오는 중..." />;
     }
 
@@ -563,7 +609,7 @@ function CommandsPageInner() {
             <div className="flex items-center justify-between flex-wrap gap-2">
                 <PageHeader
                     icon={mode === 'nation' ? Crown : Swords}
-                    title={mode === 'nation' ? '진영 명령 예약' : '명령 예약'}
+                    title={mode === 'nation' ? '국가 명령 예약' : '명령 예약'}
                     description={
                         mode === 'nation'
                             ? '국가 턴 명령을 예약합니다.'
@@ -579,20 +625,20 @@ function CommandsPageInner() {
                             onClick={() => setMode(mode === 'nation' ? 'general' : 'nation')}
                         >
                             <Crown className="size-3.5 mr-1" />
-                            {mode === 'nation' ? '제독 명령' : '진영 명령'}
+                            {mode === 'nation' ? '장수 명령' : '국가 명령'}
                         </Button>
                     )}
                 </div>
             </div>
 
             {mode === 'general' ? (
-                <CommandPanel generalId={myOfficer.id} realtimeMode={currentWorld.realtimeMode} />
+                <CommandPanel generalId={myGeneral.id} realtimeMode={currentWorld.realtimeMode} />
             ) : (
-                myOfficer.nationId > 0 && (
+                myGeneral.nationId > 0 && (
                     <NationCommandPanel
-                        nationId={myOfficer.nationId}
-                        generalId={myOfficer.id}
-                        officerLevel={myOfficer.officerLevel}
+                        nationId={myGeneral.nationId}
+                        generalId={myGeneral.id}
+                        officerLevel={myGeneral.officerLevel}
                     />
                 )
             )}

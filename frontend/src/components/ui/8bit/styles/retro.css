@@ -1,0 +1,12 @@
+/* DungGeunMo is loaded in globals.css — no external import needed */
+
+.retro {
+    font-family: var(--font-legacy);
+    line-height: 1.5;
+    letter-spacing: 0.5px;
+}
+
+.pixelated {
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+}

@@ -2,9 +2,9 @@
 
 import { usePathname, useRouter } from 'next/navigation';
 import type { LucideIcon } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/ui/8bit/button';
 import { useWorldStore } from '@/stores/worldStore';
-import { useOfficerStore } from '@/stores/officerStore';
+import { useGeneralStore } from '@/stores/generalStore';
 
 interface PageHeaderProps {
     icon?: LucideIcon;
@@ -12,39 +12,31 @@ interface PageHeaderProps {
     description?: string;
 }
 
-export function PageHeader({ icon: Icon, title, description }: PageHeaderProps) {
+export function PageHeader({ title, description }: PageHeaderProps) {
     const router = useRouter();
     const pathname = usePathname();
     const { currentWorld, fetchWorld } = useWorldStore();
-    const { fetchMyOfficer } = useOfficerStore();
+    const { fetchMyGeneral } = useGeneralStore();
 
     const isMainPage = pathname === '/';
-
-    const handleRefresh = async () => {
-        if (currentWorld) {
-            await Promise.all([fetchMyOfficer(currentWorld.id), fetchWorld(currentWorld.id)]);
-        }
-        router.refresh();
-    };
 
     return (
         <div className="space-y-1 legacy-page-wrap">
             <div
+                className="legacy-bg0"
                 style={{
                     display: 'grid',
                     gridTemplateColumns: '90px 90px 1fr 90px 90px',
                     minHeight: '32px',
-                    borderTop: '1px solid rgba(201,168,76,0.35)',
-                    borderBottom: '1px solid rgba(201,168,76,0.35)',
-                    background: 'linear-gradient(180deg, rgba(201,168,76,0.06) 0%, rgba(0,0,0,0) 100%)',
+                    borderTop: '1px solid #666',
+                    borderBottom: '1px solid #666',
                     alignItems: 'stretch',
                 }}
             >
                 <Button
-                    variant="ghost"
+                    variant="outline"
                     size="sm"
-                    className="h-full rounded-none border-r font-mono text-xs tracking-wide"
-                    style={{ borderColor: 'rgba(201,168,76,0.25)', color: 'rgba(201,168,76,0.7)' }}
+                    className="h-full border-0 border-r border-gray-600"
                     onClick={() => {
                         if (isMainPage) {
                             router.push('/lobby');
@@ -56,36 +48,25 @@ export function PageHeader({ icon: Icon, title, description }: PageHeaderProps) 
                     {isMainPage ? '로비로' : '돌아가기'}
                 </Button>
                 <Button
-                    variant="ghost"
+                    variant="outline"
                     size="sm"
-                    className="h-full rounded-none border-r font-mono text-xs tracking-wide"
-                    style={{ borderColor: 'rgba(201,168,76,0.25)', color: 'rgba(201,168,76,0.7)' }}
-                    onClick={() => void handleRefresh()}
+                    className="h-full border-0 border-r border-gray-600"
+                    onClick={() => {
+                        if (currentWorld) {
+                            fetchMyGeneral(currentWorld.id);
+                            fetchWorld(currentWorld.id);
+                        }
+                        router.refresh();
+                    }}
                 >
                     갱신
                 </Button>
-                <h2
-                    className="game-font m-0 flex items-center justify-center gap-1.5 text-sm font-bold tracking-widest"
-                    style={{ color: 'var(--empire-gold, #c9a84c)' }}
-                >
-                    {Icon && <Icon className="h-3.5 w-3.5 shrink-0" style={{ color: 'var(--empire-gold, #c9a84c)' }} />}
-                    {title}
-                </h2>
-                <div style={{ borderLeft: '1px solid rgba(201,168,76,0.25)' }} />
-                <div style={{ borderLeft: '1px solid rgba(201,168,76,0.25)' }} />
+                <h2 className="m-0 text-center text-base font-bold leading-8">{title}</h2>
+                <div className="border-l border-gray-600" />
+                <div className="border-l border-gray-600" />
             </div>
             {description && (
-                <p
-                    className="px-2 py-1 text-xs"
-                    style={{
-                        border: '1px solid rgba(201,168,76,0.2)',
-                        background: 'rgba(201,168,76,0.04)',
-                        color: 'rgba(201,168,76,0.6)',
-                        fontFamily: 'monospace',
-                    }}
-                >
-                    {description}
-                </p>
+                <p className="border border-gray-600 bg-[#111] px-2 py-1 text-xs text-gray-300">{description}</p>
             )}
         </div>
     );

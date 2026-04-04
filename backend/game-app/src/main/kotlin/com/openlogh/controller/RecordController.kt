@@ -8,60 +8,60 @@ import org.springframework.web.bind.annotation.*
 class RecordController(
     private val recordService: RecordService,
 ) {
-    @GetMapping("/officer-actions")
-    fun getOfficerActions(
-        @RequestParam officerId: Long,
+    @GetMapping("/general-actions")
+    fun getGeneralActions(
+        @RequestParam generalId: Long,
         @RequestParam(required = false) beforeId: Long?,
         @RequestParam(required = false) limit: Int?,
-    ) = recordService.getGeneralActions(officerId, beforeId, limit)
+    ) = recordService.getGeneralActions(generalId, beforeId, limit)
 
-    @GetMapping("/officer-records")
-    fun getOfficerRecords(
-        @RequestParam officerId: Long,
+    @GetMapping("/general-records")
+    fun getGeneralRecords(
+        @RequestParam generalId: Long,
         @RequestParam(required = false) beforeId: Long?,
         @RequestParam(required = false) limit: Int?,
-    ) = recordService.getOfficerRecords(officerId, beforeId, limit)
+    ) = recordService.getGeneralRecords(generalId, beforeId, limit)
 
     @GetMapping("/world-records")
     fun getWorldRecords(
-        @RequestParam sessionId: Long,
+        @RequestParam worldId: Long,
         @RequestParam(required = false) beforeId: Long?,
         @RequestParam(required = false) limit: Int?,
-    ) = recordService.getWorldRecords(sessionId, beforeId, limit)
+    ) = recordService.getWorldRecords(worldId, beforeId, limit)
 
     @GetMapping("/world-history")
     fun getWorldHistory(
-        @RequestParam sessionId: Long,
+        @RequestParam worldId: Long,
         @RequestParam(required = false) beforeId: Long?,
         @RequestParam(required = false) limit: Int?,
-    ) = recordService.getWorldHistory(sessionId, beforeId, limit)
+    ) = recordService.getWorldHistory(worldId, beforeId, limit)
 
-    @GetMapping("/faction-history")
-    fun getFactionHistory(
-        @RequestParam factionId: Long,
+    @GetMapping("/nation-history")
+    fun getNationHistory(
+        @RequestParam nationId: Long,
         @RequestParam(required = false) beforeId: Long?,
         @RequestParam(required = false) limit: Int?,
-    ) = recordService.getNationHistory(factionId, beforeId, limit)
+    ) = recordService.getNationHistory(nationId, beforeId, limit)
 
     @GetMapping("/battle-results")
     fun getBattleResults(
-        @RequestParam officerId: Long,
+        @RequestParam generalId: Long,
         @RequestParam(required = false) beforeId: Long?,
         @RequestParam(required = false) limit: Int?,
-    ) = recordService.getBattleResults(officerId, beforeId, limit)
+    ) = recordService.getBattleResults(generalId, beforeId, limit)
 
     @GetMapping("/battle-details")
     fun getBattleDetails(
-        @RequestParam officerId: Long,
+        @RequestParam generalId: Long,
         @RequestParam(required = false) beforeId: Long?,
         @RequestParam(required = false) limit: Int?,
-    ) = recordService.getBattleDetails(officerId, beforeId, limit)
+    ) = recordService.getBattleDetails(generalId, beforeId, limit)
 
     @GetMapping("/old-logs")
     fun getOldLogs(
-        @RequestParam officerId: Long,
+        @RequestParam generalId: Long,
         @RequestParam targetId: Long,
         @RequestParam type: String,
         @RequestParam toId: Long,
-    ) = recordService.getOldLogs(officerId, targetId, type, toId)
+    ) = recordService.getOldLogs(generalId, targetId, type, toId)
 }

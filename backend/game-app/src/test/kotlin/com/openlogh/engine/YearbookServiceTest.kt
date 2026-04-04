@@ -1,7 +1,10 @@
 package com.openlogh.engine
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.openlogh.entity.*
+import com.openlogh.entity.City
+import com.openlogh.entity.General
+import com.openlogh.entity.Nation
+import com.openlogh.entity.WorldState
 import com.openlogh.repository.*
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
@@ -13,10 +16,10 @@ import java.util.*
 class YearbookServiceTest {
 
     private lateinit var service: YearbookService
-    private lateinit var sessionStateRepository: SessionStateRepository
-    private lateinit var planetRepository: PlanetRepository
-    private lateinit var factionRepository: FactionRepository
-    private lateinit var officerRepository: OfficerRepository
+    private lateinit var worldStateRepository: WorldStateRepository
+    private lateinit var cityRepository: CityRepository
+    private lateinit var nationRepository: NationRepository
+    private lateinit var generalRepository: GeneralRepository
     private lateinit var messageRepository: MessageRepository
     private lateinit var yearbookHistoryRepository: YearbookHistoryRepository
 
@@ -25,29 +28,29 @@ class YearbookServiceTest {
 
     @BeforeEach
     fun setUp() {
-        sessionStateRepository = mock(SessionStateRepository::class.java)
-        planetRepository = mock(PlanetRepository::class.java)
-        factionRepository = mock(FactionRepository::class.java)
-        officerRepository = mock(OfficerRepository::class.java)
+        worldStateRepository = mock(WorldStateRepository::class.java)
+        cityRepository = mock(CityRepository::class.java)
+        nationRepository = mock(NationRepository::class.java)
+        generalRepository = mock(GeneralRepository::class.java)
         messageRepository = mock(MessageRepository::class.java)
         yearbookHistoryRepository = mock(YearbookHistoryRepository::class.java)
 
         service = YearbookService(
-            sessionStateRepository,
-            planetRepository,
-            factionRepository,
-            officerRepository,
+            worldStateRepository,
+            cityRepository,
+            nationRepository,
+            generalRepository,
             messageRepository,
             yearbookHistoryRepository,
             ObjectMapper(),
         )
 
-        `when`(messageRepository.findBySessionIdAndYearAndMonthOrderBySentAtAsc(anyLong(), anyInt(), anyInt()))
+        `when`(messageRepository.findByWorldIdAndYearAndMonthOrderBySentAtAsc(anyLong(), anyInt(), anyInt()))
             .thenReturn(emptyList())
     }
 
-    private fun createWorld(): SessionState {
-        return SessionState(
+    private fun createWorld(): WorldState {
+        return WorldState(
             id = 1,
             name = "테스트서버",
             scenarioCode = "test",
@@ -61,7 +64,7 @@ class YearbookServiceTest {
 
     @Test
     fun `saveMonthlySnapshot throws for unknown world`() {
-        `when`(sessionStateRepository.findById(1.toShort())).thenReturn(Optional.empty())
+        `when`(worldStateRepository.findById(1.toShort())).thenReturn(Optional.empty())
 
         assertThrows(IllegalArgumentException::class.java) {
             service.saveMonthlySnapshot(1L, 200, 6)
@@ -71,29 +74,29 @@ class YearbookServiceTest {
     @Test
     fun `saveMonthlySnapshot creates snapshot with cities and nations`() {
         val world = createWorld()
-        `when`(sessionStateRepository.findById(1.toShort())).thenReturn(Optional.of(world))
-        `when`(planetRepository.findBySessionId(1L)).thenReturn(
+        `when`(worldStateRepository.findById(1.toShort())).thenReturn(Optional.of(world))
+        `when`(cityRepository.findByWorldId(1L)).thenReturn(
             listOf(
-                Planet(id = 1, sessionId = 1, name = "낙양", level = 5, factionId = 1,
-                    population = 5000, populationMax = 10000, production = 3000, productionMax = 5000,
-                    commerce = 2000, commerceMax = 5000, security = 1000, securityMax = 3000,
-                    fortress = 500, fortressMax = 1000, orbitalDefense = 300, orbitalDefenseMax = 500),
+                City(id = 1, worldId = 1, name = "낙양", level = 5, nationId = 1,
+                    pop = 5000, popMax = 10000, agri = 3000, agriMax = 5000,
+                    comm = 2000, commMax = 5000, secu = 1000, secuMax = 3000,
+                    wall = 500, wallMax = 1000, def = 300, defMax = 500),
             )
         )
-        `when`(factionRepository.findBySessionId(1L)).thenReturn(
+        `when`(nationRepository.findByWorldId(1L)).thenReturn(
             listOf(
-                Faction(id = 1, sessionId = 1, name = "위", color = "#FF0000", factionRank = 7, capitalPlanetId = 1),
+                Nation(id = 1, worldId = 1, name = "위", color = "#FF0000", level = 7, capitalCityId = 1),
             )
         )
-        `when`(officerRepository.findBySessionId(1L)).thenReturn(
+        `when`(generalRepository.findByWorldId(1L)).thenReturn(
             listOf(
-                Officer(id = 1, sessionId = 1, name = "조조", factionId = 1, planetId = 1,
-                    leadership = 90, command = 70, intelligence = 90, funds = 5000, supplies = 5000,
+                General(id = 1, worldId = 1, name = "조조", nationId = 1, cityId = 1,
+                    leadership = 90, strength = 70, intel = 90, gold = 5000, rice = 5000,
                     experience = 1000, dedication = 500, npcState = 0,
                     turnTime = OffsetDateTime.now()),
             )
         )
-        `when`(yearbookHistoryRepository.findBySessionIdAndYearAndMonth(1L, 200.toShort(), 6.toShort()))
+        `when`(yearbookHistoryRepository.findByWorldIdAndYearAndMonth(1L, 200.toShort(), 6.toShort()))
             .thenReturn(null)
         `when`(yearbookHistoryRepository.save(anyNonNull())).thenAnswer { it.arguments[0] }
 
@@ -106,11 +109,11 @@ class YearbookServiceTest {
     @Test
     fun `saveMonthlySnapshot generates non-empty hash`() {
         val world = createWorld()
-        `when`(sessionStateRepository.findById(1.toShort())).thenReturn(Optional.of(world))
-        `when`(planetRepository.findBySessionId(1L)).thenReturn(emptyList())
-        `when`(factionRepository.findBySessionId(1L)).thenReturn(emptyList())
-        `when`(officerRepository.findBySessionId(1L)).thenReturn(emptyList())
-        `when`(yearbookHistoryRepository.findBySessionIdAndYearAndMonth(1L, 200.toShort(), 6.toShort()))
+        `when`(worldStateRepository.findById(1.toShort())).thenReturn(Optional.of(world))
+        `when`(cityRepository.findByWorldId(1L)).thenReturn(emptyList())
+        `when`(nationRepository.findByWorldId(1L)).thenReturn(emptyList())
+        `when`(generalRepository.findByWorldId(1L)).thenReturn(emptyList())
+        `when`(yearbookHistoryRepository.findByWorldIdAndYearAndMonth(1L, 200.toShort(), 6.toShort()))
             .thenReturn(null)
         `when`(yearbookHistoryRepository.save(anyNonNull())).thenAnswer { it.arguments[0] }
 
@@ -124,11 +127,11 @@ class YearbookServiceTest {
     @Test
     fun `saveMonthlySnapshot deterministic hash for same data`() {
         val world = createWorld()
-        `when`(sessionStateRepository.findById(1.toShort())).thenReturn(Optional.of(world))
-        `when`(planetRepository.findBySessionId(1L)).thenReturn(emptyList())
-        `when`(factionRepository.findBySessionId(1L)).thenReturn(emptyList())
-        `when`(officerRepository.findBySessionId(1L)).thenReturn(emptyList())
-        `when`(yearbookHistoryRepository.findBySessionIdAndYearAndMonth(1L, 200.toShort(), 6.toShort()))
+        `when`(worldStateRepository.findById(1.toShort())).thenReturn(Optional.of(world))
+        `when`(cityRepository.findByWorldId(1L)).thenReturn(emptyList())
+        `when`(nationRepository.findByWorldId(1L)).thenReturn(emptyList())
+        `when`(generalRepository.findByWorldId(1L)).thenReturn(emptyList())
+        `when`(yearbookHistoryRepository.findByWorldIdAndYearAndMonth(1L, 200.toShort(), 6.toShort()))
             .thenReturn(null)
         `when`(yearbookHistoryRepository.save(anyNonNull())).thenAnswer { it.arguments[0] }
 

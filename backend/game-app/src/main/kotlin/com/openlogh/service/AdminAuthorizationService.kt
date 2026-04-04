@@ -1,16 +1,16 @@
 package com.openlogh.service
 
 import com.openlogh.entity.AppUser
-import com.openlogh.entity.SessionState
+import com.openlogh.entity.WorldState
 import com.openlogh.repository.AppUserRepository
-import com.openlogh.repository.SessionStateRepository
+import com.openlogh.repository.WorldStateRepository
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.stereotype.Service
 
 @Service
 class AdminAuthorizationService(
     private val appUserRepository: AppUserRepository,
-    private val worldStateRepository: SessionStateRepository,
+    private val worldStateRepository: WorldStateRepository,
 ) {
     private companion object {
         const val PERMISSION_ADMIN_PROFILES = "admin.profiles.manage"
@@ -145,7 +145,7 @@ class AdminAuthorizationService(
         return containsPermission(globalPermissions, "openClose") || containsPermission(globalPermissions, "*")
     }
 
-    private fun hasWorldPermission(user: AppUser, world: SessionState, permission: String): Boolean {
+    private fun hasWorldPermission(user: AppUser, world: WorldState, permission: String): Boolean {
         if (isGlobalAdmin(user)) {
             return true
         }
@@ -160,8 +160,8 @@ class AdminAuthorizationService(
             return true
         }
 
-        val sessionIdPermissions = acl[world.id.toString()].orEmpty()
-        if (containsPermission(sessionIdPermissions, permission)) {
+        val worldIdPermissions = acl[world.id.toString()].orEmpty()
+        if (containsPermission(worldIdPermissions, permission)) {
             return true
         }
 

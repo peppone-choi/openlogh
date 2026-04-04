@@ -5,21 +5,23 @@ function normalizeCdnBase(url: string): string {
 }
 
 export const CDN_BASE = normalizeCdnBase(process.env.NEXT_PUBLIC_IMAGE_CDN_BASE ?? DEFAULT_CDN_BASE);
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080/api';
 
 export const CDN_ROOT = CDN_BASE.slice(0, -1);
 export const GAME_CDN_ROOT = `${CDN_ROOT}/game`;
 export const ICON_CDN_ROOT = `${CDN_ROOT}/icons`;
 
+/** Base URL of the backend API (gateway), used for locally-uploaded assets. */
+const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api').replace(/\/api\/?$/, '');
+
 export function getPortraitUrl(picture?: string | null): string {
-    if (!picture) return `${ICON_CDN_ROOT}/0.jpg`;
+    if (!picture) return `${ICON_CDN_ROOT}/default_silhouette.png`;
     const normalized = picture.trim().replace(/^\/+/, '');
-    if (!normalized || normalized === 'default.jpg') return `${ICON_CDN_ROOT}/0.jpg`;
+    if (!normalized || normalized === 'default.jpg') return `${ICON_CDN_ROOT}/default_silhouette.png`;
+    // Locally uploaded icon (e.g. "/uploads/icons/xxx.jpg")
+    if (normalized.startsWith('uploads/')) return `${API_BASE}/${normalized}`;
     // picture is a numeric string (e.g. "1146") — append .jpg
     if (/^\d+$/.test(normalized)) return `${ICON_CDN_ROOT}/${normalized}.jpg`;
     if (/^\d+\.jpg$/i.test(normalized)) return `${ICON_CDN_ROOT}/${normalized}`;
-    // Uploaded icon served from backend
-    if (normalized.startsWith('uploads/')) return `${API_BASE}/${normalized}`;
     // Already has extension or is a full path
     return `${CDN_BASE}${normalized}`;
 }
@@ -28,7 +30,7 @@ export function getMapAssetUrl(asset: string): string {
     return `${GAME_CDN_ROOT}/${asset}`;
 }
 
-export function getPlanetLevelIcon(level: number): string {
+export function getCityLevelIcon(level: number): string {
     return `${GAME_CDN_ROOT}/cast_${level}.gif`;
 }
 
@@ -36,21 +38,21 @@ export function getEventIcon(state: number): string {
     return `${GAME_CDN_ROOT}/event${state}.gif`;
 }
 
-export function getShipClassIconUrl(crewType: number): string {
+export function getCrewTypeIconUrl(crewType: number): string {
     const normalizedCrewType = crewType >= 1000 ? crewType : 1100 + Math.max(0, crewType) * 100;
     return `${GAME_CDN_ROOT}/crewtype${normalizedCrewType}.png`;
 }
 
-export function getProgressBarBg(height: number): string {
+export function getLoghBarBg(height: number): string {
     return `${GAME_CDN_ROOT}/pr${height - 2}.gif`;
 }
 
-export function getProgressBarFill(height: number): string {
+export function getLoghBarFill(height: number): string {
     return `${GAME_CDN_ROOT}/pb${height - 2}.gif`;
 }
 
-/** Faction territory background as CSS radial gradient */
-export function getFactionBgGradient(color: string): string {
+/** Nation territory background as CSS radial gradient */
+export function getNationBgGradient(color: string): string {
     const hex = color.replace('#', '');
     const r = parseInt(hex.substring(0, 2), 16);
     const g = parseInt(hex.substring(2, 4), 16);

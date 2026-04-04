@@ -504,32 +504,32 @@ export function isValidObjKey<T>(key: T | 'None' | undefined | null): boolean {
 
 // --- Crew type names ---
 
-export const SHIP_CLASS_NAMES: Record<number, string> = {
-    0: '보병',
-    1: '궁병',
-    2: '기병',
-    3: '귀병',
-    4: '차병',
-    5: '노병',
-    6: '연노병',
-    7: '근위기병',
+export const CREW_TYPE_NAMES: Record<number, string> = {
+    0: '전함',
+    1: '순양함',
+    2: '구축함',
+    3: '항공모함',
+    4: '수송함',
+    5: '병원선',
+    6: '요새',
+    7: '고속전함',
     8: '무당병',
     9: '서량기병',
     10: '등갑병',
     11: '수군',
-    1100: '보병',
+    1100: '전함',
     1101: '청주병',
     1102: '수병',
     1103: '자객병',
     1104: '근위병',
     1105: '등갑병',
     1106: '백이병',
-    1200: '궁병',
+    1200: '순양함',
     1201: '궁기병',
-    1202: '연노병',
+    1202: '요새',
     1203: '강궁병',
     1204: '석궁병',
-    1300: '기병',
+    1300: '구축함',
     1301: '백마병',
     1302: '중장기병',
     1303: '돌격기병',
@@ -537,7 +537,7 @@ export const SHIP_CLASS_NAMES: Record<number, string> = {
     1305: '수렵기병',
     1306: '맹수병',
     1307: '호표기병',
-    1400: '귀병',
+    1400: '항공모함',
     1401: '신귀병',
     1402: '백귀병',
     1403: '흑귀병',
@@ -546,29 +546,29 @@ export const SHIP_CLASS_NAMES: Record<number, string> = {
     1406: '황귀병',
     1407: '천귀병',
     1408: '마귀병',
-    1500: '정란',
-    1501: '충차',
-    1502: '벽력거',
-    1503: '목우',
+    1500: '대형 미사일',
+    1501: '함재기',
+    1502: '에너지 포대',
+    1503: '보급 컨테이너',
 };
 
 /** Base crew type subset (0-11) for dropdowns / UI selectors */
 export const BASE_CREW_TYPES: Record<number, string> = Object.fromEntries(
-    Object.entries(SHIP_CLASS_NAMES)
+    Object.entries(CREW_TYPE_NAMES)
         .filter(([k]) => Number(k) <= 11)
         .map(([k, v]) => [Number(k), v])
 );
 
-export function parseShipClassCode(crewTypeRaw: string | number | null | undefined): number {
+export function parseCrewTypeCode(crewTypeRaw: string | number | null | undefined): number {
     if (typeof crewTypeRaw === 'number') return crewTypeRaw;
     if (!crewTypeRaw) return 0;
     const matched = String(crewTypeRaw).match(/(\d+)$/);
     return matched ? Number(matched[1]) : 0;
 }
 
-export function getShipClassName(crewTypeStr: string): string {
-    const code = parseShipClassCode(crewTypeStr);
-    return SHIP_CLASS_NAMES[code] ?? crewTypeStr;
+export function getCrewTypeName(crewTypeStr: string): string {
+    const code = parseCrewTypeCode(crewTypeStr);
+    return CREW_TYPE_NAMES[code] ?? crewTypeStr;
 }
 
 // --- Display name utilities (strip legacy che_* prefixes) ---
@@ -605,14 +605,14 @@ export function getNationTypeLabel(typeCode: string): string {
 
 export const LEGACY_PERSONALITY_OPTIONS: { code: string; label: string; info: string }[] = [
     { code: 'Random', label: '랜덤', info: '성향을 무작위로 선택합니다.' },
-    { code: 'che_안전', label: '안전', info: '사기 -5, 징·함선 징집 비용 -20%' },
-    { code: 'che_유지', label: '유지', info: '훈련 -5, 징·함선 징집 비용 -20%' },
-    { code: 'che_재간', label: '재간', info: '명성 -10%, 징·함선 징집 비용 -20%' },
-    { code: 'che_출세', label: '출세', info: '명성 +10%, 징·함선 징집 비용 +20%' },
+    { code: 'che_안전', label: '안전', info: '사기 -5, 징·모병 비용 -20%' },
+    { code: 'che_유지', label: '유지', info: '훈련 -5, 징·모병 비용 -20%' },
+    { code: 'che_재간', label: '재간', info: '명성 -10%, 징·모병 비용 -20%' },
+    { code: 'che_출세', label: '출세', info: '명성 +10%, 징·모병 비용 +20%' },
     { code: 'che_할거', label: '할거', info: '명성 -10%, 훈련 +5' },
     { code: 'che_정복', label: '정복', info: '명성 -10%, 사기 +5' },
-    { code: 'che_패권', label: '패권', info: '훈련 +5, 징·함선 징집 비용 +20%' },
-    { code: 'che_의협', label: '의협', info: '사기 +5, 징·함선 징집 비용 +20%' },
+    { code: 'che_패권', label: '패권', info: '훈련 +5, 징·모병 비용 +20%' },
+    { code: 'che_의협', label: '의협', info: '사기 +5, 징·모병 비용 +20%' },
     { code: 'che_대의', label: '대의', info: '명성 +10%, 훈련 -5' },
     { code: 'che_왕좌', label: '왕좌', info: '명성 +10%, 사기 -5' },
 ];
@@ -637,14 +637,14 @@ export function getPersonalityName(code: string | undefined | null): string {
 // --- Region names ---
 
 export const REGION_NAMES: Record<number, string> = {
-    1: '하북',
-    2: '은하',
-    3: '서북',
-    4: '서촉',
-    5: '남중',
-    6: '초',
-    7: '오월',
-    8: '동이',
+    1: '제국 중심부',
+    2: '제국 변경',
+    3: '페잔 회랑',
+    4: '동맹 중심부',
+    5: '동맹 변경',
+    6: '이제르론 회랑',
+    7: '은하 외곽',
+    8: '미개척 영역',
 };
 
 // --- Stat color (ability value → color) ---
@@ -692,30 +692,30 @@ export function getNationLevelLabel(level: number, typeCode?: string): string {
     return NATION_LEVEL_LABELS[level] ?? `Lv.${level}`;
 }
 
-// --- Planet level names ---
+// --- City level names ---
 
-export const PLANET_LEVEL_NAMES: Record<number, string> = {
-    1: '수',
-    2: '진',
-    3: '관',
-    4: '이',
-    5: '소',
-    6: '중',
-    7: '대',
-    8: '특',
+export const CITY_LEVEL_NAMES: Record<number, string> = {
+    1: '소행성',
+    2: '전초기지',
+    3: '변경 성계',
+    4: '중형 성계',
+    5: '주요 성계',
+    6: '중핵 성계',
+    7: '요새 성계',
+    8: '수도 성계',
 };
 
 // --- City level badge (legacy getCityLevelList) ---
 
 export const CITY_LEVEL_BADGES: Record<number, string> = {
-    1: '수',
-    2: '진',
-    3: '관',
-    4: '이',
-    5: '소',
-    6: '중',
-    7: '대',
-    8: '특',
+    1: '소행성',
+    2: '전초기지',
+    3: '변경 성계',
+    4: '중형 성계',
+    5: '주요 성계',
+    6: '중핵 성계',
+    7: '요새 성계',
+    8: '수도 성계',
 };
 
 export function formatCityLevelBadge(level: number): string {
@@ -732,7 +732,7 @@ export function isOfficerSet(officerSet: number, reqOfficerLevel: number): boole
 
 export function formatCityName(cityId: number, cityMap: Map<number, { name: string }>): string {
     const city = cityMap.get(cityId);
-    if (!city) return `행성#${cityId}`;
+    if (!city) return `성계#${cityId}`;
     return city.name;
 }
 

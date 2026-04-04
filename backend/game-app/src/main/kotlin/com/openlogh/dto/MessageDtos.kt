@@ -3,16 +3,16 @@ package com.openlogh.dto
 import java.time.OffsetDateTime
 
 data class ContactInfo(
-    val officerId: Long,
+    val generalId: Long,
     val name: String,
-    val factionId: Long,
+    val nationId: Long,
     val nationName: String,
     val nationColor: String? = null,
     val picture: String,
 )
 
 data class SendMessageRequest(
-    val sessionId: Long,
+    val worldId: Long,
     val mailboxCode: String,
     val mailboxType: String? = null,
     val messageType: String,

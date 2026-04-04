@@ -2,179 +2,589 @@ package com.openlogh.engine
 
 import com.openlogh.entity.Diplomacy
 import com.openlogh.entity.Message
-import com.openlogh.entity.SessionState
+import com.openlogh.entity.WorldState
+import com.openlogh.engine.turn.cqrs.persist.JpaWorldPortFactory
+import com.openlogh.engine.turn.cqrs.persist.toEntity
+import com.openlogh.engine.turn.cqrs.persist.toSnapshot
 import com.openlogh.repository.DiplomacyRepository
 import com.openlogh.repository.MessageRepository
+import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 
+/**
+ * Diplomacy state codes (legacy parity):
+ * - "전쟁"     = ACTIVE_WAR (state=0)
+ * - "불가침"   = NON_AGGRESSION
+ * - "선전포고" = WAR_DECLARATION (state=1)
+ * - "종전제의" = CEASEFIRE_PROPOSAL (pending acceptance)
+ * - "불가침제의" = NON_AGGRESSION_PROPOSAL (pending acceptance)
+ * - "불가침파기제의" = NON_AGGRESSION_BREAK_PROPOSAL (pending acceptance)
+ */
 @Service
 class DiplomacyService(
+    private val worldPortFactory: JpaWorldPortFactory,
     private val diplomacyRepository: DiplomacyRepository,
     private val messageRepository: MessageRepository,
 ) {
+    @Autowired
+    constructor(
+        diplomacyRepository: DiplomacyRepository,
+        messageRepository: MessageRepository,
+    ) : this(
+        worldPortFactory = JpaWorldPortFactory(diplomacyRepository = diplomacyRepository),
+        diplomacyRepository = diplomacyRepository,
+        messageRepository = messageRepository,
+    )
+
+    private val log = LoggerFactory.getLogger(DiplomacyService::class.java)
+
     companion object {
-        const val WAR_INITIAL_TERM: Short = 6
-        const val MSG_NON_AGGRESSION_PROPOSAL = "non_aggression_proposal"
-        const val MSG_BREAK_NON_AGGRESSION_PROPOSAL = "break_non_aggression_proposal"
-        const val MSG_CEASEFIRE_PROPOSAL = "ceasefire_proposal"
+        // Diplomatic message types stored in Message.messageType
+        const val MSG_NON_AGGRESSION_PROPOSAL = "diplomacy_na_proposal"
+        const val MSG_NON_AGGRESSION_BREAK = "diplomacy_na_break"
+        const val MSG_CEASEFIRE_PROPOSAL = "diplomacy_ceasefire_proposal"
+
+        // Default terms (in turns)
+        const val NON_AGGRESSION_TERM: Short = 60  // ~5 years
+        const val CEASEFIRE_PROPOSAL_TERM: Short = 12  // expires after 12 turns if not accepted
+        const val NA_PROPOSAL_TERM: Short = 12
+        const val WAR_DECLARATION_TERM: Short = 24  // legacy: 선전포고 term=24
+        const val WAR_INITIAL_TERM: Short = 6       // legacy: 선포->교전 transition sets term=6
     }
 
-    fun processDiplomacyTurn(world: SessionState) {
-        val active = diplomacyRepository.findBySessionIdAndIsDeadFalse(world.id.toLong())
-        if (active.isEmpty()) return
+    // ========== Turn processing ==========
 
-        val toSave = mutableListOf<Diplomacy>()
-        for (d in active) {
-            if (d.term > 0) d.term = (d.term - 1).toShort()
-            if (d.term <= 0.toShort()) {
-                when (d.stateCode) {
-                    "선전포고" -> { d.stateCode = "전쟁"; d.term = WAR_INITIAL_TERM }
-                    "전쟁" -> { /* war continues */ }
-                    else -> d.isDead = true
+    @Transactional
+    fun processDiplomacyTurn(world: WorldState) {
+        val ports = worldPortFactory.create(world.id.toLong())
+        val active = ports.activeDiplomacies().map { it.toEntity() }
+
+        for (diplomacy in active) {
+            diplomacy.term = (diplomacy.term - 1).coerceIn(0, 32767).toShort()
+
+            if (diplomacy.stateCode == "선전포고" && diplomacy.term <= 0) {
+                diplomacy.stateCode = "전쟁"
+                diplomacy.term = WAR_INITIAL_TERM
+                log.info(
+                    "War declaration transitioned to active war: nation {} <-> nation {}",
+                    diplomacy.srcNationId,
+                    diplomacy.destNationId,
+                )
+            }
+
+            if (diplomacy.term <= 0) {
+                when (diplomacy.stateCode) {
+                    "불가침" -> {
+                        diplomacy.isDead = true
+                        log.info("Non-aggression pact expired: nation {} <-> nation {}",
+                            diplomacy.srcNationId, diplomacy.destNationId)
+                    }
+                    "선전포고" -> {
+                        // War continues until ceasefire
+                    }
+                    "전쟁" -> { }
+                    "종전제의" -> {
+                        diplomacy.isDead = true
+                        log.info("Ceasefire proposal expired: nation {} -> nation {}",
+                            diplomacy.srcNationId, diplomacy.destNationId)
+                    }
+                    "불가침제의" -> {
+                        diplomacy.isDead = true
+                        log.info("Non-aggression proposal expired: nation {} -> nation {}",
+                            diplomacy.srcNationId, diplomacy.destNationId)
+                    }
+                    "불가침파기제의" -> {
+                        diplomacy.isDead = true
+                        log.info("Non-aggression break proposal expired: nation {} -> nation {}",
+                            diplomacy.srcNationId, diplomacy.destNationId)
+                    }
                 }
             }
-            toSave.add(d)
         }
-        diplomacyRepository.saveAll(toSave)
+
+        active.forEach { ports.putDiplomacy(it.toSnapshot()) }
     }
 
-    fun declareWar(sessionId: Long, srcFactionId: Long, destFactionId: Long): Diplomacy {
-        val existing = findActiveBetween(sessionId, srcFactionId, destFactionId)
-        for (d in existing) {
-            if (d.stateCode in listOf("불가침", "전쟁", "선전포고")) {
-                error("Cannot declare war: active '${d.stateCode}' exists")
+    // ========== Queries ==========
+
+    fun getRelations(worldId: Long): List<Diplomacy> {
+        return worldPortFactory.create(worldId).allDiplomacies().map { it.toEntity() }
+    }
+
+    fun getRelationsBetween(worldId: Long, nationA: Long, nationB: Long): List<Diplomacy> {
+        return worldPortFactory.create(worldId).activeDiplomacies().map { it.toEntity() }
+            .filter { isRelationBetween(it, nationA, nationB) }
+    }
+
+    fun getRelationsForNation(worldId: Long, nationId: Long): List<Diplomacy> {
+        return worldPortFactory.create(worldId).allDiplomacies().map { it.toEntity() }
+            .filter { it.srcNationId == nationId || it.destNationId == nationId }
+    }
+
+    fun getActiveRelation(worldId: Long, nationA: Long, nationB: Long, stateCode: String): Diplomacy? {
+        return worldPortFactory.create(worldId).activeDiplomacies().map { it.toEntity() }
+            .firstOrNull { isRelationBetween(it, nationA, nationB) && it.stateCode == stateCode }
+    }
+
+    // ========== State transitions ==========
+
+    @Transactional
+    fun createRelation(
+        worldId: Long,
+        srcNationId: Long,
+        destNationId: Long,
+        stateCode: String,
+        term: Short,
+    ): Diplomacy {
+        val relation = Diplomacy(
+            worldId = worldId,
+            srcNationId = srcNationId,
+            destNationId = destNationId,
+            stateCode = stateCode,
+            term = term,
+        )
+        val saved = diplomacyRepository.save(relation)
+        worldPortFactory.create(worldId).putDiplomacy(saved.toSnapshot())
+        return saved
+    }
+
+    /**
+     * Declare war: requires no active non-aggression pact between the two nations.
+     * Creates a "선전포고" relation (war declaration).
+     */
+    @Transactional
+    fun declareWar(worldId: Long, srcNationId: Long, destNationId: Long): Diplomacy {
+        // Cannot declare war while non-aggression pact is active
+        val existingNA = getActiveRelation(worldId, srcNationId, destNationId, "불가침")
+        if (existingNA != null) {
+            throw IllegalStateException("Cannot declare war: non-aggression pact is active between $srcNationId and $destNationId")
+        }
+
+        // Cannot declare war if already at war
+        val existingWar = getActiveRelation(worldId, srcNationId, destNationId, "선전포고")
+        if (existingWar != null) {
+            throw IllegalStateException("Already at war with nation $destNationId")
+        }
+        val existingActiveWar = getActiveRelation(worldId, srcNationId, destNationId, "전쟁")
+        if (existingActiveWar != null) {
+            throw IllegalStateException("Already at war with nation $destNationId")
+        }
+
+        // Kill any pending proposals between these nations
+        killPendingProposals(worldId, srcNationId, destNationId)
+
+        log.info("Nation {} declares war on nation {}", srcNationId, destNationId)
+        return createRelation(worldId, srcNationId, destNationId, "선전포고", Short.MAX_VALUE)
+    }
+
+    /**
+     * Propose non-aggression pact. Creates a pending proposal and sends a diplomatic message.
+     */
+    @Transactional
+    fun proposeNonAggression(worldId: Long, srcNationId: Long, destNationId: Long): Diplomacy {
+        // Cannot propose if at war
+        val existingWar = findActiveWarRelation(worldId, srcNationId, destNationId)
+        if (existingWar != null) {
+            throw IllegalStateException("Cannot propose non-aggression while at war with nation $destNationId")
+        }
+
+        // Cannot propose if already have a pact
+        val existingNA = getActiveRelation(worldId, srcNationId, destNationId, "불가침")
+        if (existingNA != null) {
+            throw IllegalStateException("Non-aggression pact already exists with nation $destNationId")
+        }
+
+        // Return existing proposal if already pending (idempotent)
+        val existingProposal = getActiveRelation(worldId, srcNationId, destNationId, "불가침제의")
+        if (existingProposal != null) {
+            log.info("Non-aggression proposal already pending with nation {}, returning existing", destNationId)
+            return existingProposal
+        }
+
+        val proposal = createRelation(worldId, srcNationId, destNationId, "불가침제의", NA_PROPOSAL_TERM)
+
+        // Send diplomatic message to dest nation
+        sendDiplomaticMessage(
+            worldId = worldId,
+            srcNationId = srcNationId,
+            destNationId = destNationId,
+            messageType = MSG_NON_AGGRESSION_PROPOSAL,
+            diplomacyId = proposal.id,
+        )
+
+        log.info("Nation {} proposes non-aggression to nation {}", srcNationId, destNationId)
+        return proposal
+    }
+
+    /**
+     * Accept a non-aggression proposal. Transitions "불가침제의" -> "불가침".
+     */
+    @Transactional
+    fun acceptNonAggression(worldId: Long, srcNationId: Long, destNationId: Long): Diplomacy {
+        val proposal = getActiveRelation(worldId, srcNationId, destNationId, "불가침제의")
+            ?: throw IllegalStateException("No pending non-aggression proposal between $srcNationId and $destNationId")
+
+        // Kill the proposal
+        proposal.isDead = true
+        worldPortFactory.create(worldId).putDiplomacy(proposal.toSnapshot())
+
+        // Create active non-aggression pact
+        log.info("Non-aggression pact accepted: nation {} <-> nation {}", srcNationId, destNationId)
+        return createRelation(worldId, srcNationId, destNationId, "불가침", NON_AGGRESSION_TERM)
+    }
+
+    /**
+     * Propose breaking a non-aggression pact. Sends a message; needs acceptance by other side.
+     */
+    @Transactional
+    fun proposeBreakNonAggression(worldId: Long, srcNationId: Long, destNationId: Long): Diplomacy {
+        val existingNA = getActiveRelation(worldId, srcNationId, destNationId, "불가침")
+            ?: throw IllegalStateException("No active non-aggression pact between $srcNationId and $destNationId")
+
+        val existingProposal = getActiveRelation(worldId, srcNationId, destNationId, "불가침파기제의")
+        if (existingProposal != null) {
+            throw IllegalStateException("Break proposal already pending with nation $destNationId")
+        }
+
+        val proposal = createRelation(worldId, srcNationId, destNationId, "불가침파기제의", NA_PROPOSAL_TERM)
+
+        sendDiplomaticMessage(
+            worldId = worldId,
+            srcNationId = srcNationId,
+            destNationId = destNationId,
+            messageType = MSG_NON_AGGRESSION_BREAK,
+            diplomacyId = proposal.id,
+        )
+
+        log.info("Nation {} proposes breaking non-aggression with nation {}", srcNationId, destNationId)
+        return proposal
+    }
+
+    /**
+     * Accept breaking a non-aggression pact. Kills the pact and the break proposal.
+     */
+    @Transactional
+    fun acceptBreakNonAggression(worldId: Long, srcNationId: Long, destNationId: Long) {
+        val proposal = getActiveRelation(worldId, srcNationId, destNationId, "불가침파기제의")
+            ?: throw IllegalStateException("No pending break proposal between $srcNationId and $destNationId")
+
+        val pact = getActiveRelation(worldId, srcNationId, destNationId, "불가침")
+
+        val ports = worldPortFactory.create(worldId)
+
+        proposal.isDead = true
+        ports.putDiplomacy(proposal.toSnapshot())
+
+        if (pact != null) {
+            pact.isDead = true
+            ports.putDiplomacy(pact.toSnapshot())
+        }
+
+        log.info("Non-aggression pact broken: nation {} <-> nation {}", srcNationId, destNationId)
+    }
+
+    /**
+     * Propose ceasefire during an active war.
+     */
+    @Transactional
+    fun proposeCeasefire(worldId: Long, srcNationId: Long, destNationId: Long): Diplomacy {
+        findActiveWarRelation(worldId, srcNationId, destNationId)
+            ?: throw IllegalStateException("Not at war with nation $destNationId")
+
+        val existingProposal = getActiveRelation(worldId, srcNationId, destNationId, "종전제의")
+        if (existingProposal != null) {
+            throw IllegalStateException("Ceasefire proposal already pending with nation $destNationId")
+        }
+
+        val proposal = createRelation(worldId, srcNationId, destNationId, "종전제의", CEASEFIRE_PROPOSAL_TERM)
+
+        sendDiplomaticMessage(
+            worldId = worldId,
+            srcNationId = srcNationId,
+            destNationId = destNationId,
+            messageType = MSG_CEASEFIRE_PROPOSAL,
+            diplomacyId = proposal.id,
+        )
+
+        log.info("Nation {} proposes ceasefire to nation {}", srcNationId, destNationId)
+        return proposal
+    }
+
+    /**
+     * Accept ceasefire. Ends the war and the ceasefire proposal.
+     */
+    @Transactional
+    fun acceptCeasefire(worldId: Long, srcNationId: Long, destNationId: Long) {
+        val proposal = getActiveRelation(worldId, srcNationId, destNationId, "종전제의")
+            ?: throw IllegalStateException("No pending ceasefire proposal between $srcNationId and $destNationId")
+
+        val declaredWar = getActiveRelation(worldId, srcNationId, destNationId, "선전포고")
+        val activeWar = getActiveRelation(worldId, srcNationId, destNationId, "전쟁")
+
+        val ports = worldPortFactory.create(worldId)
+
+        proposal.isDead = true
+        ports.putDiplomacy(proposal.toSnapshot())
+
+        if (declaredWar != null) {
+            declaredWar.isDead = true
+            ports.putDiplomacy(declaredWar.toSnapshot())
+        }
+        if (activeWar != null) {
+            activeWar.isDead = true
+            ports.putDiplomacy(activeWar.toSnapshot())
+        }
+
+        log.info("Ceasefire accepted: nation {} <-> nation {}", srcNationId, destNationId)
+    }
+
+    /**
+     * Handle accepting a diplomatic message by id. Routes to the correct acceptance method.
+     */
+    @Transactional
+    fun acceptDiplomaticMessage(worldId: Long, messageId: Long) {
+        val message = messageRepository.findById(messageId).orElseThrow {
+            IllegalArgumentException("Message not found: $messageId")
+        }
+
+        val srcNationId = (message.payload["srcNationId"] as Number).toLong()
+        val destNationId = (message.payload["destNationId"] as Number).toLong()
+
+        when (message.messageType) {
+            MSG_NON_AGGRESSION_PROPOSAL -> acceptNonAggression(worldId, srcNationId, destNationId)
+            MSG_NON_AGGRESSION_BREAK -> acceptBreakNonAggression(worldId, srcNationId, destNationId)
+            MSG_CEASEFIRE_PROPOSAL -> acceptCeasefire(worldId, srcNationId, destNationId)
+            else -> throw IllegalArgumentException("Unknown diplomatic message type: ${message.messageType}")
+        }
+
+        // Mark message as responded
+        message.meta["responded"] = true
+        message.meta["accepted"] = true
+        messageRepository.save(message)
+    }
+
+    /**
+     * Handle rejecting a diplomatic message by id.
+     */
+    @Transactional
+    fun rejectDiplomaticMessage(worldId: Long, messageId: Long) {
+        val message = messageRepository.findById(messageId).orElseThrow {
+            IllegalArgumentException("Message not found: $messageId")
+        }
+
+        // Mark message as responded but rejected
+        message.meta["responded"] = true
+        message.meta["accepted"] = false
+        messageRepository.save(message)
+    }
+
+    // ========== Helpers ==========
+
+    /**
+     * Kill all pending proposals between two nations.
+     */
+    private fun killPendingProposals(worldId: Long, nationA: Long, nationB: Long) {
+        val relations = getRelationsBetween(worldId, nationA, nationB)
+        for (rel in relations) {
+            if (rel.stateCode in listOf("불가침제의", "불가침파기제의", "종전제의")) {
+                rel.isDead = true
             }
         }
-        for (d in existing) { if (!d.isDead) { d.isDead = true; diplomacyRepository.save(d) } }
-        return diplomacyRepository.save(Diplomacy(
-            sessionId = sessionId, srcNationId = srcFactionId, destFactionId = destFactionId,
-            stateCode = "선전포고", term = 3,
-        ))
+        val ports = worldPortFactory.create(worldId)
+        relations.forEach { ports.putDiplomacy(it.toSnapshot()) }
     }
 
-    fun proposeNonAggression(sessionId: Long, srcFactionId: Long, destFactionId: Long): Diplomacy {
-        val existing = findActiveBetween(sessionId, srcFactionId, destFactionId)
-        for (d in existing) {
-            when (d.stateCode) {
-                "선전포고", "전쟁" -> error("Cannot propose non-aggression during war")
-                "불가침" -> error("Non-aggression pact already exists")
-                "불가침제의" -> return d
+    private fun findActiveWarRelation(worldId: Long, srcNationId: Long, destNationId: Long): Diplomacy? {
+        val declaredWar = getActiveRelation(worldId, srcNationId, destNationId, "선전포고")
+        if (declaredWar != null) return declaredWar
+        return getActiveRelation(worldId, srcNationId, destNationId, "전쟁")
+    }
+
+    // ========== Command-facing API ==========
+
+    /**
+     * State code mapping from legacy integer codes to string codes.
+     */
+    private fun stateIntToCode(state: Int): String = when (state) {
+        0 -> "전쟁"
+        1 -> "선전포고"
+        2 -> ""          // neutral / no relation
+        3 -> "불가침제의"
+        4 -> "불가침파기제의"
+        5 -> "종전제의"
+        7 -> "불가침"
+        else -> ""
+    }
+
+    /**
+     * State code mapping from string code to legacy integer code.
+     */
+    private fun stateCodeToInt(stateCode: String): Int = when (stateCode) {
+        "전쟁" -> 0
+        "선전포고" -> 1
+        "불가침" -> 7
+        "불가침제의" -> 3
+        "불가침파기제의" -> 4
+        "종전제의" -> 5
+        else -> 2
+    }
+
+    /**
+     * Set diplomacy state between two nations (command-facing API using legacy integer states).
+     * Creates or updates the diplomacy relation between the two nations.
+     *
+     * @param worldId World ID
+     * @param srcNationId Source nation ID
+     * @param destNationId Destination nation ID
+     * @param state Legacy integer state code (0=war, 1=declared, 2=neutral, 7=non-aggression)
+     * @param term Duration in turns
+     */
+    @Transactional
+    fun setDiplomacyState(worldId: Long, srcNationId: Long, destNationId: Long, state: Int, term: Int) {
+        val stateCode = stateIntToCode(state)
+        if (stateCode.isEmpty()) {
+            // neutral: kill all active relations between these nations
+            val relations = getRelationsBetween(worldId, srcNationId, destNationId)
+            for (rel in relations) {
+                rel.isDead = true
             }
+            val ports = worldPortFactory.create(worldId)
+            relations.forEach { ports.putDiplomacy(it.toSnapshot()) }
+            return
         }
-        val proposal = diplomacyRepository.save(Diplomacy(
-            sessionId = sessionId, srcNationId = srcFactionId, destFactionId = destFactionId,
-            stateCode = "불가침제의", term = 12,
-        ))
-        val nonAggressionContent = "불가침 제의가 도착했습니다. 외교부에서 확인해주세요."
-        messageRepository.save(Message(
-            sessionId = sessionId, mailboxCode = "diplomacy",
-            messageType = MSG_NON_AGGRESSION_PROPOSAL, srcId = srcFactionId, destId = destFactionId,
-            payload = mutableMapOf("content" to nonAggressionContent, "srcNationId" to srcFactionId, "destNationId" to destFactionId),
-        ))
-        return proposal
-    }
 
-    fun acceptNonAggression(sessionId: Long, srcFactionId: Long, destFactionId: Long): Diplomacy {
-        val existing = findActiveBetween(sessionId, srcFactionId, destFactionId)
-        val proposal = existing.find { it.stateCode == "불가침제의" } ?: error("No proposal found")
-        proposal.isDead = true; diplomacyRepository.save(proposal)
-        return diplomacyRepository.save(Diplomacy(
-            sessionId = sessionId, srcNationId = srcFactionId, destFactionId = destFactionId,
-            stateCode = "불가침", term = 24,
-        ))
-    }
-
-    fun proposeBreakNonAggression(sessionId: Long, srcFactionId: Long, destFactionId: Long): Diplomacy {
-        val existing = findActiveBetween(sessionId, srcFactionId, destFactionId)
-        existing.find { it.stateCode == "불가침" } ?: error("No pact to break")
-        val proposal = diplomacyRepository.save(Diplomacy(
-            sessionId = sessionId, srcNationId = srcFactionId, destFactionId = destFactionId,
-            stateCode = "불가침파기제의", term = 12,
-        ))
-        val breakContent = "불가침 파기 제의가 도착했습니다. 외교부에서 확인해주세요."
-        messageRepository.save(Message(
-            sessionId = sessionId, mailboxCode = "diplomacy",
-            messageType = MSG_BREAK_NON_AGGRESSION_PROPOSAL, srcId = srcFactionId, destId = destFactionId,
-            payload = mutableMapOf("content" to breakContent, "srcNationId" to srcFactionId, "destNationId" to destFactionId),
-        ))
-        return proposal
-    }
-
-    fun acceptBreakNonAggression(sessionId: Long, srcFactionId: Long, destFactionId: Long) {
-        val existing = findActiveBetween(sessionId, srcFactionId, destFactionId)
-        existing.find { it.stateCode == "불가침파기제의" } ?: error("No break proposal found")
-        for (d in existing) {
-            if (d.stateCode in listOf("불가침", "불가침파기제의")) { d.isDead = true; diplomacyRepository.save(d) }
+        // Kill existing relations of the same type
+        val existing = getActiveRelation(worldId, srcNationId, destNationId, stateCode)
+        if (existing != null) {
+            existing.term = term.coerceIn(0, 32767).toShort()
+            worldPortFactory.create(worldId).putDiplomacy(existing.toSnapshot())
+        } else {
+            createRelation(worldId, srcNationId, destNationId, stateCode, term.coerceIn(0, 32767).toShort())
         }
     }
 
-    fun proposeCeasefire(sessionId: Long, srcFactionId: Long, destFactionId: Long): Diplomacy {
-        val existing = findActiveBetween(sessionId, srcFactionId, destFactionId)
-        if (existing.none { it.stateCode in listOf("전쟁", "선전포고") }) error("Not at war")
-        if (existing.any { it.stateCode == "종전제의" }) error("Ceasefire proposal already exists")
-        val proposal = diplomacyRepository.save(Diplomacy(
-            sessionId = sessionId, srcNationId = srcFactionId, destFactionId = destFactionId,
-            stateCode = "종전제의", term = 12,
-        ))
-        val ceasefireContent = "종전 제의가 도착했습니다. 외교부에서 확인해주세요."
-        messageRepository.save(Message(
-            sessionId = sessionId, mailboxCode = "diplomacy",
-            messageType = MSG_CEASEFIRE_PROPOSAL, srcId = srcFactionId, destId = destFactionId,
-            payload = mutableMapOf("content" to ceasefireContent, "srcNationId" to srcFactionId, "destNationId" to destFactionId),
-        ))
-        return proposal
+    /**
+     * Get current diplomacy state between two nations (command-facing API).
+     * Returns null if no active relation exists.
+     */
+    fun getDiplomacyState(worldId: Long, srcNationId: Long, destNationId: Long): DiplomacyStateInfo? {
+        val relations = getRelationsBetween(worldId, srcNationId, destNationId)
+        if (relations.isEmpty()) return null
+        // Return the most relevant active relation
+        val rel = relations.first()
+        return DiplomacyStateInfo(
+            state = stateCodeToInt(rel.stateCode),
+            term = rel.term.toInt(),
+            stateCode = rel.stateCode,
+        )
     }
 
-    fun acceptCeasefire(sessionId: Long, srcFactionId: Long, destFactionId: Long) {
-        val existing = findActiveBetween(sessionId, srcFactionId, destFactionId)
-        existing.find { it.stateCode == "종전제의" } ?: error("No ceasefire proposal found")
-        for (d in existing) { d.isDead = true; diplomacyRepository.save(d) }
-    }
-
-    fun acceptDiplomaticMessage(sessionId: Long, messageId: Long) {
-        val msg = messageRepository.findById(messageId).orElseThrow()
-        val src = (msg.payload["srcNationId"] as Number).toLong()
-        val dest = (msg.payload["destFactionId"] as Number).toLong()
-        when (msg.messageType) {
-            MSG_NON_AGGRESSION_PROPOSAL -> acceptNonAggression(sessionId, src, dest)
-            MSG_BREAK_NON_AGGRESSION_PROPOSAL -> acceptBreakNonAggression(sessionId, src, dest)
-            MSG_CEASEFIRE_PROPOSAL -> acceptCeasefire(sessionId, src, dest)
+    /**
+     * Send a diplomatic message from a command (command-facing API).
+     * This is the overload used by command classes.
+     */
+    @Transactional
+    fun sendDiplomaticMessage(
+        worldId: Long,
+        srcNationId: Long,
+        destNationId: Long,
+        srcGeneralId: Long,
+        action: String,
+        extra: Map<String, Any> = emptyMap(),
+    ) {
+        val messageType = when (action) {
+            "non_aggression" -> MSG_NON_AGGRESSION_PROPOSAL
+            "cancel_non_aggression" -> MSG_NON_AGGRESSION_BREAK
+            "stop_war" -> MSG_CEASEFIRE_PROPOSAL
+            else -> "diplomacy_$action"
         }
-        msg.meta["responded"] = true; msg.meta["accepted"] = true; messageRepository.save(msg)
+
+        val content = when (action) {
+            "non_aggression" -> "불가침 제의가 도착했습니다. 외교부에서 확인해주세요."
+            "cancel_non_aggression" -> "불가침 파기 제의가 도착했습니다. 외교부에서 확인해주세요."
+            "stop_war" -> "종전 제의가 도착했습니다. 외교부에서 확인해주세요."
+            else -> "외교 알림이 도착했습니다. 외교부에서 확인해주세요."
+        }
+        val payload = mutableMapOf<String, Any>(
+            "content" to content,
+            "srcNationId" to srcNationId,
+            "destNationId" to destNationId,
+            "srcGeneralId" to srcGeneralId,
+        )
+        payload.putAll(extra)
+
+        messageRepository.save(
+            Message(
+                worldId = worldId,
+                mailboxCode = "diplomacy",
+                messageType = messageType,
+                srcId = srcNationId,
+                destId = destNationId,
+                payload = payload,
+            )
+        )
     }
 
-    fun rejectDiplomaticMessage(sessionId: Long, messageId: Long) {
-        val msg = messageRepository.findById(messageId).orElseThrow()
-        msg.meta["responded"] = true; msg.meta["accepted"] = false; messageRepository.save(msg)
+    /**
+     * Send a diplomatic message to the destination nation's mailbox (internal).
+     */
+    private fun sendDiplomaticMessage(
+        worldId: Long,
+        srcNationId: Long,
+        destNationId: Long,
+        messageType: String,
+        diplomacyId: Long,
+    ) {
+        val content = when (messageType) {
+            MSG_NON_AGGRESSION_PROPOSAL -> "불가침 제의가 도착했습니다. 외교부에서 확인해주세요."
+            MSG_NON_AGGRESSION_BREAK -> "불가침 파기 제의가 도착했습니다. 외교부에서 확인해주세요."
+            MSG_CEASEFIRE_PROPOSAL -> "종전 제의가 도착했습니다. 외교부에서 확인해주세요."
+            else -> "외교 문서 #${diplomacyId}이(가) 도착했습니다. 외교부에서 확인해주세요."
+        }
+        messageRepository.save(
+            Message(
+                worldId = worldId,
+                mailboxCode = "diplomacy",
+                messageType = messageType,
+                srcId = srcNationId,
+                destId = destNationId,
+                payload = mutableMapOf(
+                    "content" to content,
+                    "srcNationId" to srcNationId,
+                    "destNationId" to destNationId,
+                    "diplomacyId" to diplomacyId,
+                ),
+            )
+        )
     }
 
-    fun killAllRelationsForNation(sessionId: Long, factionId: Long) {
-        val relations = diplomacyRepository.findBySessionIdAndSrcFactionIdOrDestFactionId(sessionId, factionId, factionId)
-        for (d in relations) { if (!d.isDead) d.isDead = true }
-        diplomacyRepository.saveAll(relations)
-    }
-
-    fun getRelations(sessionId: Long): List<Diplomacy> = diplomacyRepository.findBySessionId(sessionId)
-
-    fun createRelation(sessionId: Long, srcFactionId: Long, destFactionId: Long, stateCode: String, term: Int): Diplomacy {
-        return diplomacyRepository.save(Diplomacy(
-            sessionId = sessionId, srcNationId = srcFactionId, destFactionId = destFactionId,
-            stateCode = stateCode, term = term.toShort(),
-        ))
-    }
-
-    fun getRelationsForNation(sessionId: Long, factionId: Long): List<Diplomacy> {
-        return diplomacyRepository.findBySessionIdAndSrcFactionIdOrDestFactionId(sessionId, factionId, factionId)
+    /**
+     * When a nation is destroyed, kill all its active diplomatic relations.
+     */
+    @Transactional
+    fun killAllRelationsForNation(worldId: Long, nationId: Long) {
+        val relations = getRelationsForNation(worldId, nationId)
             .filter { !it.isDead }
+        for (rel in relations) {
+            rel.isDead = true
+        }
+        val ports = worldPortFactory.create(worldId)
+        relations.forEach { ports.putDiplomacy(it.toSnapshot()) }
     }
 
-    fun areAtWar(sessionId: Long, factionA: Long, factionB: Long): Boolean {
-        return findActiveBetween(sessionId, factionA, factionB)
-            .any { it.stateCode == "전쟁" }
-    }
-
-    private fun findActiveBetween(sessionId: Long, factionA: Long, factionB: Long): List<Diplomacy> {
-        return diplomacyRepository.findBySessionIdAndSrcFactionIdOrDestFactionId(sessionId, factionA, factionB)
-            .filter { !it.isDead }
+    private fun isRelationBetween(relation: Diplomacy, nationA: Long, nationB: Long): Boolean {
+        return (relation.srcNationId == nationA && relation.destNationId == nationB) ||
+            (relation.srcNationId == nationB && relation.destNationId == nationA)
     }
 }
+
+/**
+ * Data class for returning diplomacy state information to commands.
+ */
+data class DiplomacyStateInfo(
+    val state: Int,
+    val term: Int,
+    val stateCode: String,
+)

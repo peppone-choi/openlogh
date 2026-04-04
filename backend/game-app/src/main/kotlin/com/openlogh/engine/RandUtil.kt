@@ -82,6 +82,12 @@ class RandUtil(val rng: LiteHashDRBG) {
         if (items.isEmpty()) {
             throw IllegalArgumentException()
         }
+        if (items.size == 1) {
+            // PHP array_rand on single-element array still consumes RNG state.
+            // We must advance RNG to maintain stream synchronization.
+            rng.nextLegacyInt(1L)  // consume one draw, result is always 0
+            return items[0]
+        }
         val keyIdx = rng.nextLegacyInt((items.size - 1).toLong()).toInt()
         return items[keyIdx]
     }
@@ -91,6 +97,10 @@ class RandUtil(val rng: LiteHashDRBG) {
             throw IllegalArgumentException()
         }
         val keys = items.keys.toList()
+        if (keys.size == 1) {
+            rng.nextLegacyInt(1L)
+            return items.getValue(keys[0])
+        }
         val keyIdx = rng.nextLegacyInt((keys.size - 1).toLong()).toInt()
         return items.getValue(keys[keyIdx])
     }

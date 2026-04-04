@@ -1,122 +1,112 @@
 'use client';
 
-import type { StarSystemFrontInfo } from '@/types';
+import type { CityFrontInfo } from '@/types';
 import { LoghBar } from '@/components/game/logh-bar';
-import { isBrightColor, getNPCColor, REGION_NAMES, PLANET_LEVEL_NAMES } from '@/lib/game-utils';
+import { isBrightColor, getNPCColor, REGION_NAMES, CITY_LEVEL_NAMES } from '@/lib/game-utils';
 
 interface CityBasicCardProps {
-    city: StarSystemFrontInfo | null;
+    city: CityFrontInfo | null;
     region?: number;
 }
 
 export function CityBasicCard({ city, region }: CityBasicCardProps) {
     if (!city) return null;
 
-    const factionInfo = city.factionInfo ?? city.nationInfo;
-    const factionColor = factionInfo.color ?? '#000000';
-    const textColor = isBrightColor(factionColor) ? 'black' : 'white';
+    const nationColor = city.nationInfo.color ?? '#000000';
+    const textColor = isBrightColor(nationColor) ? 'black' : 'white';
     const regionText = REGION_NAMES[region ?? 0] ?? '';
-    const levelText = PLANET_LEVEL_NAMES[city.level] ?? `Lv.${city.level}`;
+    const levelText = CITY_LEVEL_NAMES[city.level] ?? `Lv.${city.level}`;
 
-    const tradeRouteRaw = city.trade_route ?? city.trade;
-    const tradeAltText = tradeRouteRaw ? `${tradeRouteRaw}%` : '항로 없음';
-    const tradeBarPercent = tradeRouteRaw ? (tradeRouteRaw - 95) * 10 : 0;
-
-    // Support both new and legacy field names
-    const population = city.population ?? city.pop;
-    const production = city.production ?? city.agri;
-    const commerce = city.commerce ?? city.comm;
-    const security = city.security ?? city.secu;
-    const orbitalDefense = city.orbital_defense ?? city.def;
-    const fortress = city.fortress ?? city.wall;
-    const approval = city.approval ?? city.trust ?? 0;
+    const tradeAltText = city.trade ? `${city.trade}%` : '상인 없음';
+    const tradeBarPercent = city.trade ? (city.trade - 95) * 10 : 0;
 
     return (
         <div
-            className="bg-card border border-border rounded-lg overflow-hidden text-sm"
+            className="bg-card border border-foreground/15 rounded-none retro overflow-hidden text-sm"
+            data-tutorial="city-card"
             style={{
                 display: 'grid',
                 gridTemplateColumns: '1fr 1fr 1fr 1fr',
             }}
         >
-            {/* Star system name header */}
+            {/* City name header */}
             <div
                 className="font-bold text-center"
                 style={{
                     gridColumn: '1 / 5',
                     color: textColor,
-                    backgroundColor: factionColor,
+                    backgroundColor: nationColor,
                     lineHeight: '1.8em',
                 }}
             >
                 【{regionText} | {levelText}】 {city.name}
             </div>
 
-            {/* Faction name */}
+            {/* Nation name */}
             <div
                 className="border-t border-border/30 font-bold text-center text-[13px]"
                 style={{
                     gridColumn: '1 / 5',
                     color: textColor,
-                    backgroundColor: factionColor,
+                    backgroundColor: nationColor,
                     lineHeight: '1.8em',
                 }}
             >
-                {factionInfo.id ? `지배 진영 【 ${factionInfo.name} 】` : '공 백 지'}
+                {city.nationInfo.id ? `지배 국가 【 ${city.nationInfo.name} 】` : '공 백 지'}
             </div>
 
-            {/* Row 3: 주민 + 지지도 + 행성총독 */}
+            {/* Row 3: 주민 (spans 2 cols, 1fr 5fr head) + 태수 in col 4 */}
             <StatPanel label="주민" colSpan="1 / 3" headRatio="1fr 5fr">
-                <LoghBar height={7} percent={(population[0] / population[1]) * 100} />
+                <LoghBar height={7} percent={(city.pop[0] / city.pop[1]) * 100} />
                 <CellText>
-                    {population[0].toLocaleString()} / {population[1].toLocaleString()}
+                    {city.pop[0].toLocaleString()} / {city.pop[1].toLocaleString()}
                 </CellText>
             </StatPanel>
-            <StatPanel label="지지도" colSpan="3 / 4">
-                <LoghBar height={7} percent={approval} />
-                <CellText>{approval.toLocaleString(undefined, { maximumFractionDigits: 1 })}</CellText>
+            <StatPanel label="민심" colSpan="3 / 4">
+                <LoghBar height={7} percent={city.trust} />
+                <CellText>{city.trust.toLocaleString(undefined, { maximumFractionDigits: 1 })}</CellText>
             </StatPanel>
-            <OfficerCell label="행성총독" npc={city.officerList[4]?.npc ?? 0} name={city.officerList[4]?.name} />
+            <OfficerCell label="태수" npc={city.officerList[4]?.npc ?? 0} name={city.officerList[4]?.name} />
 
-            {/* Row 4: 생산 + 교역 + 함대사령관 */}
-            <StatPanel label="생산">
-                <LoghBar height={7} percent={(production[0] / production[1]) * 100} />
+            {/* Row 4: 농업 + 상업 + 군사 */}
+            <StatPanel label="농업">
+                <LoghBar height={7} percent={(city.agri[0] / city.agri[1]) * 100} />
                 <CellText>
-                    {production[0].toLocaleString()} / {production[1].toLocaleString()}
+                    {city.agri[0].toLocaleString()} / {city.agri[1].toLocaleString()}
                 </CellText>
             </StatPanel>
-            <StatPanel label="교역">
-                <LoghBar height={7} percent={(commerce[0] / commerce[1]) * 100} />
+            <StatPanel label="상업">
+                <LoghBar height={7} percent={(city.comm[0] / city.comm[1]) * 100} />
                 <CellText>
-                    {commerce[0].toLocaleString()} / {commerce[1].toLocaleString()}
+                    {city.comm[0].toLocaleString()} / {city.comm[1].toLocaleString()}
                 </CellText>
             </StatPanel>
-            <StatPanel label="보안">
-                <LoghBar height={7} percent={(security[0] / security[1]) * 100} />
+            <StatPanel label="치안">
+                <LoghBar height={7} percent={(city.secu[0] / city.secu[1]) * 100} />
                 <CellText>
-                    {security[0].toLocaleString()} / {security[1].toLocaleString()}
+                    {city.secu[0].toLocaleString()} / {city.secu[1].toLocaleString()}
                 </CellText>
             </StatPanel>
-            <OfficerCell label="함대사령관" npc={city.officerList[3]?.npc ?? 0} name={city.officerList[3]?.name} />
+            <OfficerCell label="군사" npc={city.officerList[3]?.npc ?? 0} name={city.officerList[3]?.name} />
 
-            {/* Row 5: 궤도방어 + 요새 + 항로 + 행정관 */}
-            <StatPanel label="궤도방어">
-                <LoghBar height={7} percent={(orbitalDefense[0] / orbitalDefense[1]) * 100} />
+            {/* Row 5: 수비 + 성벽 + 시세 + 종사 */}
+            <StatPanel label="수비">
+                <LoghBar height={7} percent={(city.def[0] / city.def[1]) * 100} />
                 <CellText>
-                    {orbitalDefense[0].toLocaleString()} / {orbitalDefense[1].toLocaleString()}
+                    {city.def[0].toLocaleString()} / {city.def[1].toLocaleString()}
                 </CellText>
             </StatPanel>
-            <StatPanel label="요새">
-                <LoghBar height={7} percent={(fortress[0] / fortress[1]) * 100} />
+            <StatPanel label="성벽">
+                <LoghBar height={7} percent={(city.wall[0] / city.wall[1]) * 100} />
                 <CellText>
-                    {fortress[0].toLocaleString()} / {fortress[1].toLocaleString()}
+                    {city.wall[0].toLocaleString()} / {city.wall[1].toLocaleString()}
                 </CellText>
             </StatPanel>
-            <StatPanel label="항로">
+            <StatPanel label="시세">
                 <LoghBar height={7} percent={tradeBarPercent} altText={tradeAltText} />
                 <CellText>{tradeAltText}</CellText>
             </StatPanel>
-            <OfficerCell label="행정관" npc={city.officerList[2]?.npc ?? 0} name={city.officerList[2]?.name} />
+            <OfficerCell label="종사" npc={city.officerList[2]?.npc ?? 0} name={city.officerList[2]?.name} />
         </div>
     );
 }

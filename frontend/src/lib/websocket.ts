@@ -1,4 +1,5 @@
 import { Client } from '@stomp/stompjs';
+import SockJS from 'sockjs-client';
 
 interface TurnData {
     year: number;
@@ -7,27 +8,6 @@ interface TurnData {
 interface EventData {
     message?: string;
 }
-interface BattleResultData {
-    attackerName: string;
-    planetName: string;
-    attackerWon: boolean;
-    cityOccupied: boolean;
-    attackerDamageDealt: number;
-    defenderDamageDealt: number;
-    message?: string;
-}
-
-function buildBrokerURL(): string {
-    const base = process.env.NEXT_PUBLIC_WS_URL;
-    if (base) {
-        return base.replace(/^http/, 'ws') + '/ws-stomp';
-    }
-    if (typeof window !== 'undefined') {
-        const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        return `${proto}//${window.location.host}/ws-stomp`;
-    }
-    return 'ws://localhost:8080/ws-stomp';
-}
 
 let stompClient: Client | null = null;
 
@@ -35,7 +15,7 @@ export function connectWebSocket(
     worldId: number,
     callbacks: {
         onTurnAdvance?: (data: TurnData) => void;
-        onBattle?: (data: BattleResultData | EventData) => void;
+        onBattle?: (data: EventData) => void;
         onDiplomacy?: (data: EventData) => void;
         onMessage?: (data: EventData) => void;
     }
@@ -43,7 +23,7 @@ export function connectWebSocket(
     if (stompClient?.active) return;
 
     stompClient = new Client({
-        brokerURL: buildBrokerURL(),
+        webSocketFactory: () => new SockJS(`${process.env.NEXT_PUBLIC_WS_URL ?? 'http://localhost:8080'}/ws`),
         onConnect: () => {
             if (callbacks.onTurnAdvance) {
                 stompClient!.subscribe(`/topic/world/${worldId}/turn`, (msg) => {
@@ -71,7 +51,7 @@ export function connectWebSocket(
     stompClient.activate();
 }
 
-export type { TurnData, EventData, BattleResultData };
+export type { TurnData, EventData };
 
 /**
  * Subscribe to a specific topic on the existing WebSocket connection.

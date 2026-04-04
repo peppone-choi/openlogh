@@ -13,7 +13,7 @@ class Betting(
     var id: Long = 0,
 
     @Column(name = "world_id", nullable = false)
-    var sessionId: Long = 0,
+    var worldId: Long = 0,
 
     @Column(name = "target_type", nullable = false)
     var targetType: String = "",

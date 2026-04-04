@@ -1,12 +1,12 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { useOfficerStore } from '@/stores/officerStore';
+import { Button } from '@/components/ui/8bit/button';
+import { Input } from '@/components/ui/8bit/input';
+import { Badge } from '@/components/ui/8bit/badge';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/8bit/tabs';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/8bit/tooltip';
+import { useGeneralStore } from '@/stores/generalStore';
 import { useGameStore } from '@/stores/gameStore';
 import { cn } from '@/lib/utils';
 
@@ -424,7 +424,7 @@ const CREW_TYPES: CrewTypeData[] = [
         cost: 14,
         riceCost: 5,
         magicCoef: 0,
-        info: ['기본 공성 병기', '요새에 강함', '선제사격'],
+        info: ['기본 공성 병기', '성벽에 강함', '선제사격'],
     },
     {
         code: 1501,
@@ -437,7 +437,7 @@ const CREW_TYPES: CrewTypeData[] = [
         cost: 18,
         riceCost: 5,
         magicCoef: 0,
-        info: ['요새 특화 공성', '요새에 매우 강함'],
+        info: ['성벽 특화 공성', '성벽에 매우 강함'],
     },
     {
         code: 1502,
@@ -450,7 +450,7 @@ const CREW_TYPES: CrewTypeData[] = [
         cost: 20,
         riceCost: 5,
         magicCoef: 0,
-        info: ['최강 공성 병기', '요새에 강함', '선제사격'],
+        info: ['최강 공성 병기', '성벽에 강함', '선제사격'],
     },
     {
         code: 1503,
@@ -486,7 +486,7 @@ interface CrewTypeBrowserProps {
 }
 
 export function CrewTypeBrowser({ commandName, onSubmit }: CrewTypeBrowserProps) {
-    const { myOfficer } = useOfficerStore();
+    const { myGeneral } = useGeneralStore();
     const { cities } = useGameStore();
 
     const [selectedArm, setSelectedArm] = useState<ArmType | '전체'>('전체');
@@ -496,15 +496,15 @@ export function CrewTypeBrowser({ commandName, onSubmit }: CrewTypeBrowserProps)
 
     // Derive city tech level
     const myCity = useMemo(() => {
-        if (!myOfficer) return null;
-        return cities.find((c) => c.id === myOfficer.cityId) ?? null;
-    }, [cities, myOfficer]);
+        if (!myGeneral) return null;
+        return cities.find((c) => c.id === myGeneral.cityId) ?? null;
+    }, [cities, myGeneral]);
 
     const techLevel = typeof myCity?.meta?.tech === 'number' ? (myCity.meta.tech as number) : 0;
-    const leadership = myOfficer?.leadership ?? 100;
-    const currentCrew = myOfficer?.crew ?? 0;
-    const currentCrewType = myOfficer?.crewType ?? 0;
-    const gold = myOfficer?.gold ?? 0;
+    const leadership = myGeneral?.leadership ?? 100;
+    const currentCrew = myGeneral?.crew ?? 0;
+    const currentCrewType = myGeneral?.crewType ?? 0;
+    const gold = myGeneral?.gold ?? 0;
     const goldCoeff = commandName === '모병' ? 2 : 1;
 
     // Simple tech availability: base types always available, others need tech
@@ -560,14 +560,14 @@ export function CrewTypeBrowser({ commandName, onSubmit }: CrewTypeBrowserProps)
     return (
         <div className="space-y-3">
             {/* Header info */}
-            <div className="rounded-md bg-amber-900/20 border border-amber-800/40 px-3 py-2 text-xs text-amber-200/90">
+            <div className="rounded-none bg-amber-900/20 border border-amber-800/40 px-3 py-2 text-xs text-amber-200/90">
                 {commandName === '모병'
-                    ? '함선 건조는 가격 2배의 자금이 소요됩니다. 훈련·사기가 높습니다.'
+                    ? '모병은 가격 2배의 자금이 소요됩니다. 훈련·사기가 높습니다.'
                     : '징병은 저렴하지만 훈련·사기가 낮습니다. 도시 인구가 감소합니다.'}
             </div>
 
             {/* Status bar */}
-            <div className="grid grid-cols-3 gap-1 text-[10px] text-muted-foreground bg-zinc-900/50 rounded-md px-2 py-1.5">
+            <div className="grid grid-cols-3 gap-1 text-[10px] text-muted-foreground bg-zinc-900/50 rounded-none px-2 py-1.5">
                 <div>
                     통솔: <span className="text-amber-300 font-mono">{leadership}</span>
                 </div>
@@ -580,7 +580,7 @@ export function CrewTypeBrowser({ commandName, onSubmit }: CrewTypeBrowserProps)
             </div>
 
             {/* Arm type filter tabs */}
-            <Tabs value={selectedArm} onValueChange={(v: string) => setSelectedArm(v as ArmType | '전체')}>
+            <Tabs value={selectedArm} onValueChange={(v) => setSelectedArm(v as ArmType | '전체')}>
                 <TabsList className="w-full h-7">
                     <TabsTrigger value="전체" className="text-[10px] flex-1">
                         전체
@@ -616,7 +616,7 @@ export function CrewTypeBrowser({ commandName, onSubmit }: CrewTypeBrowserProps)
                                     <button
                                         onClick={() => available && selectCrew(ct)}
                                         className={cn(
-                                            'w-full text-left rounded-md border px-2 py-1.5 transition-colors',
+                                            'w-full text-left rounded-none border px-2 py-1.5 transition-colors',
                                             isSelected
                                                 ? 'border-amber-500 bg-amber-900/30'
                                                 : available
@@ -691,7 +691,7 @@ export function CrewTypeBrowser({ commandName, onSubmit }: CrewTypeBrowserProps)
 
             {/* Selected crew detail + amount controls */}
             {selectedCrew && (
-                <div className="rounded-md border border-zinc-700 bg-zinc-900/50 p-2 space-y-2">
+                <div className="rounded-none border border-zinc-700 bg-zinc-900/50 p-2 space-y-2">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                             <Badge variant="outline" className="text-[10px]">

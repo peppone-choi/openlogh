@@ -1,41 +1,54 @@
 import { describe, expect, it } from 'vitest';
 import {
+    REGION_NAMES,
+    CITY_LEVEL_NAMES,
     NATION_LEVEL_LABELS,
-    getShipClassName,
+    getCrewTypeName,
     getNationTypeLabel,
     formatOfficerLevelText,
     getSpecialNationKey,
     getPersonalityName,
     getNationLevelLabel,
-    parseShipClassCode,
+    parseCrewTypeCode,
     stripCodePrefix,
 } from '@/lib/game-utils';
 
+describe('nation type labels have no parentheses', () => {
+    it('getNationTypeLabel returns label without parentheses', () => {
+        const types = ['che_도적', 'che_유가', 'che_법가', 'che_덕가', 'che_병가'];
+        for (const t of types) {
+            const label = getNationTypeLabel(t);
+            expect(label).not.toContain('(');
+            expect(label).not.toContain(')');
+        }
+    });
+});
+
 describe('crew type parsing', () => {
     it('parses legacy prefixed crew type', () => {
-        expect(parseShipClassCode('che_0')).toBe(0);
+        expect(parseCrewTypeCode('che_0')).toBe(0);
     });
 
     it('parses map-prefixed crew type codes', () => {
-        expect(parseShipClassCode('cr_1300')).toBe(1300);
-        expect(parseShipClassCode('miniche_1400')).toBe(1400);
+        expect(parseCrewTypeCode('cr_1300')).toBe(1300);
+        expect(parseCrewTypeCode('miniche_1400')).toBe(1400);
     });
 
     it('parses numeric string and number', () => {
-        expect(parseShipClassCode('1200')).toBe(1200);
-        expect(parseShipClassCode(1100)).toBe(1100);
+        expect(parseCrewTypeCode('1200')).toBe(1200);
+        expect(parseCrewTypeCode(1100)).toBe(1100);
     });
 
     it('falls back to 0 on invalid values', () => {
-        expect(parseShipClassCode('unknown')).toBe(0);
-        expect(parseShipClassCode(null)).toBe(0);
-        expect(parseShipClassCode(undefined)).toBe(0);
+        expect(parseCrewTypeCode('unknown')).toBe(0);
+        expect(parseCrewTypeCode(null)).toBe(0);
+        expect(parseCrewTypeCode(undefined)).toBe(0);
     });
 
     it('resolves crew type display name with map-prefixed code', () => {
-        expect(getShipClassName('cr_1300')).toBe('기병');
-        expect(getShipClassName('cr_1500')).toBe('정란');
-        expect(getShipClassName('3')).toBe('귀병');
+        expect(getCrewTypeName('cr_1300')).toBe('기병');
+        expect(getCrewTypeName('cr_1500')).toBe('정란');
+        expect(getCrewTypeName('3')).toBe('귀병');
     });
 });
 
@@ -49,17 +62,6 @@ describe('stripCodePrefix', () => {
     it('returns code unchanged when no che_ prefix', () => {
         expect(stripCodePrefix('농업')).toBe('농업');
         expect(stripCodePrefix('호전')).toBe('호전');
-    });
-});
-
-describe('nation type labels have no parentheses', () => {
-    it('getNationTypeLabel returns label without parentheses', () => {
-        const types = ['che_도적', 'che_유가', 'che_법가', 'che_덕가', 'che_병가'];
-        for (const t of types) {
-            const label = getNationTypeLabel(t);
-            expect(label).not.toContain('(');
-            expect(label).not.toContain(')');
-        }
     });
 });
 

@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { useOfficerStore } from '@/stores/officerStore';
+import { Button } from '@/components/ui/8bit/button';
+import { useGeneralStore } from '@/stores/generalStore';
 import { useWorldStore } from '@/stores/worldStore';
 import { frontApi } from '@/lib/gameApi';
 
@@ -20,20 +20,20 @@ interface CtrlItem {
 const CONTROLS: CtrlItem[] = [
     { href: '/board', label: '회의실', require: 'nation' },
     { href: '/board?secret=true', label: '기밀실', require: 'secret' },
-    { href: '/fleet', label: '함대편성', require: 'nation' },
-    { href: '/diplomacy', label: '외교부', require: 'secret' },
-    { href: '/personnel', label: '인사부', require: 'nation' },
-    { href: '/internal-affairs', label: '내무부', require: 'secret' },
+    { href: '/troop', label: '함대편성', require: 'nation' },
+    { href: '/diplomacy', label: '외교국', require: 'secret' },
+    { href: '/personnel', label: '인사국', require: 'nation' },
+    { href: '/internal-affairs', label: '내무국', require: 'secret' },
     { href: '/chief', label: '사령부', require: 'secret' },
     { href: '/npc-control', label: 'NPC정책', require: 'secret' },
-    { href: '/spy', label: '암행부', require: 'secret' },
+    { href: '/spy', label: '첩보국', require: 'secret' },
     { href: '/tournament', label: '토너먼트', highlight: 'tournament' },
-    { href: '/faction', label: '진영정보', require: 'nation' },
-    { href: '/faction-planets', label: '진영행성', require: 'nation' },
-    { href: '/faction-officers', label: '진영제독', require: 'nation' },
+    { href: '/nation', label: '진영정보', require: 'nation' },
+    { href: '/nation-cities', label: '진영성계', require: 'nation' },
+    { href: '/nation-generals', label: '진영장교', require: 'nation' },
     { href: '/global-diplomacy', label: '은하정보' },
-    { href: '/planet', label: '현재행성' },
-    { href: '/battle', label: '감찰부', require: 'secret' },
+    { href: '/city', label: '현재성계' },
+    { href: '/battle', label: '작전감찰', require: 'secret' },
     { href: '/inherit', label: '유산관리' },
     { href: '/my-page', label: '내정보&설정' },
     { href: '/auction', label: '경매장' },
@@ -42,11 +42,11 @@ const CONTROLS: CtrlItem[] = [
 
 export function MainControlBar() {
     const { currentWorld } = useWorldStore();
-    const myOfficer = useOfficerStore((s) => s.myOfficer);
+    const myGeneral = useGeneralStore((s) => s.myGeneral);
     const [isTournamentApplicationOpen, setIsTournamentApplicationOpen] = useState(false);
     const [isBettingActive, setIsBettingActive] = useState(false);
 
-    const officerLevel = myOfficer?.officerLevel ?? 0;
+    const officerLevel = myGeneral?.officerLevel ?? 0;
     const inNation = officerLevel >= 1;
     const showSecret = inNation && officerLevel >= 2;
 

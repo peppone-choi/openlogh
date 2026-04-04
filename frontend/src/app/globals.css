@@ -2,21 +2,12 @@
 @import 'tw-animate-css';
 @import 'shadcn/tailwind.css';
 
-@font-face {
-    font-family: 'DungGeunMo';
-    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_six@1.2/DungGeunMo.woff2') format('woff2');
-    font-weight: normal;
-    font-style: normal;
-    font-display: swap;
-}
-
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
     --color-background: var(--background);
     --color-foreground: var(--foreground);
     --font-sans: var(--font-legacy);
-    --font-game: var(--font-dunggeunmo);
     --font-mono: 'SFMono-Regular', Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
     --color-sidebar-ring: var(--sidebar-ring);
     --color-sidebar-border: var(--sidebar-border);
@@ -47,101 +38,101 @@
     --color-popover: var(--popover);
     --color-card-foreground: var(--card-foreground);
     --color-card: var(--card);
-    --radius-sm: calc(var(--radius) - 4px);
-    --radius-md: calc(var(--radius) - 2px);
-    --radius-lg: var(--radius);
-    --radius-xl: calc(var(--radius) + 4px);
-    --radius-2xl: calc(var(--radius) + 8px);
-    --radius-3xl: calc(var(--radius) + 12px);
-    --radius-4xl: calc(var(--radius) + 16px);
+    --radius-sm: 0px;
+    --radius-md: 0px;
+    --radius-lg: 0px;
+    --radius-xl: 0px;
+    --radius-2xl: 0px;
+    --radius-3xl: 0px;
+    --radius-4xl: 0px;
+}
+
+@font-face {
+    font-family: 'DungGeunMo';
+    src:
+        url('/fonts/DungGeunMo.woff2') format('woff2'),
+        url('/fonts/DungGeunMo.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
 }
 
 :root {
-    --font-legacy: 'Pretendard', 'Inter', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', sans-serif;
-    --font-dunggeunmo: 'DungGeunMo', 'Pretendard', 'Apple SD Gothic Neo', 'Noto Sans KR', monospace;
-    --radius: 0.625rem;
-    --background: #0a0e1a;
+    --font-legacy:
+        'DungGeunMo', 'Pretendard', 'Inter', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', sans-serif;
+    --radius: 0px;
+    --background: #080c14;
     --foreground: #e8ecf4;
-    --card: #0d1117;
+    --card: #0f1520;
     --card-foreground: #e8ecf4;
-    --popover: #131a26;
+    --popover: #151d2c;
     --popover-foreground: #e8ecf4;
-    --primary: #c9a84c;
-    --primary-foreground: #0a0e1a;
-    --secondary: #4a9eff;
+    --primary: #10b981;
+    --primary-foreground: #ffffff;
+    --secondary: #3b82f6;
     --secondary-foreground: #ffffff;
-    --muted: #131a26;
+    --muted: #151d2c;
     --muted-foreground: #7a8599;
-    --accent: #1a2336;
+    --accent: #1a2436;
     --accent-foreground: #e8ecf4;
     --destructive: #ef4444;
-    --border: #1e2d45;
-    --input: #1a2336;
-    --ring: #c9a84c;
-    --chart-1: #4a9eff;
-    --chart-2: #c9a84c;
-    --chart-3: #d4a574;
-    --chart-4: #ffd700;
+    --border: #1e293b;
+    --input: #1a2436;
+    --ring: #3b82f6;
+    --chart-1: #06b6d4;
+    --chart-2: #3b82f6;
+    --chart-3: #10b981;
+    --chart-4: #f59e0b;
     --chart-5: #ef4444;
-    --sidebar: #06090e;
+    --sidebar: #0a1018;
     --sidebar-foreground: #e8ecf4;
-    --sidebar-primary: #c9a84c;
-    --sidebar-primary-foreground: #0a0e1a;
-    --sidebar-accent: #0f1620;
+    --sidebar-primary: #10b981;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #151d2c;
     --sidebar-accent-foreground: #e8ecf4;
-    --sidebar-border: rgba(201, 168, 76, 0.15);
-    --sidebar-ring: #c9a84c;
+    --sidebar-border: #1e293b;
+    --sidebar-ring: #3b82f6;
 
-    /* LOGH Faction Colors */
-    --empire-gold: #c9a84c;
-    --empire-gold-bright: #ffd700;
-    --alliance-blue: #4a9eff;
-    --alliance-silver: #c0c0c0;
-    --fezzan-warm: #d4a574;
-    --rebel-red: #ef4444;
-    --space-dark: #0a0e1a;
-    --space-darker: #05080f;
-
-    --game-gold: #c9a84c;
+    --game-gold: #f59e0b;
     --game-red: #ef4444;
-    --game-blue: #4a9eff;
+    --game-blue: #3b82f6;
     --game-green: #10b981;
     --game-purple: #8b5cf6;
     --game-cyan: #06b6d4;
 }
 
 .dark {
-    --background: #0a0e1a;
+    --background: #080c14;
     --foreground: #e8ecf4;
-    --card: #0d1117;
+    --card: #0f1520;
     --card-foreground: #e8ecf4;
-    --popover: #131a26;
+    --popover: #151d2c;
     --popover-foreground: #e8ecf4;
-    --primary: #c9a84c;
-    --primary-foreground: #0a0e1a;
-    --secondary: #4a9eff;
+    --primary: #10b981;
+    --primary-foreground: #ffffff;
+    --secondary: #3b82f6;
     --secondary-foreground: #ffffff;
-    --muted: #131a26;
+    --muted: #151d2c;
     --muted-foreground: #7a8599;
-    --accent: #1a2336;
+    --accent: #1a2436;
     --accent-foreground: #e8ecf4;
     --destructive: #ef4444;
-    --border: #1e2d45;
-    --input: #1a2336;
-    --ring: #c9a84c;
-    --chart-1: #4a9eff;
-    --chart-2: #c9a84c;
-    --chart-3: #d4a574;
-    --chart-4: #ffd700;
+    --border: #1e293b;
+    --input: #1a2436;
+    --ring: #3b82f6;
+    --chart-1: #06b6d4;
+    --chart-2: #3b82f6;
+    --chart-3: #10b981;
+    --chart-4: #f59e0b;
     --chart-5: #ef4444;
-    --sidebar: #06090e;
+    --sidebar: #0a1018;
     --sidebar-foreground: #e8ecf4;
-    --sidebar-primary: #c9a84c;
-    --sidebar-primary-foreground: #0a0e1a;
-    --sidebar-accent: #0f1620;
+    --sidebar-primary: #10b981;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #151d2c;
     --sidebar-accent-foreground: #e8ecf4;
-    --sidebar-border: rgba(201, 168, 76, 0.15);
-    --sidebar-ring: #c9a84c;
+    --sidebar-border: #1e293b;
+    --sidebar-ring: #3b82f6;
 }
 
 @layer base {
@@ -150,45 +141,11 @@
     }
 
     body {
-        @apply text-foreground;
+        @apply bg-background text-foreground;
         font-family: var(--font-legacy);
         line-height: 1.3;
         font-size: 14px;
-        background-color: #05080f;
-        background-image:
-            /* Stars layer 1 — tiny white */
-            radial-gradient(1px 1px at 8% 12%, rgba(255, 255, 255, 0.65) 0%, transparent 100%),
-            radial-gradient(1px 1px at 22% 35%, rgba(255, 255, 255, 0.5) 0%, transparent 100%),
-            radial-gradient(1px 1px at 37% 8%, rgba(255, 255, 255, 0.55) 0%, transparent 100%),
-            radial-gradient(1px 1px at 55% 25%, rgba(255, 255, 255, 0.4) 0%, transparent 100%),
-            radial-gradient(1px 1px at 68% 55%, rgba(255, 255, 255, 0.65) 0%, transparent 100%),
-            radial-gradient(1px 1px at 82% 18%, rgba(255, 255, 255, 0.5) 0%, transparent 100%),
-            radial-gradient(1px 1px at 93% 72%, rgba(255, 255, 255, 0.55) 0%, transparent 100%),
-            radial-gradient(1px 1px at 15% 88%, rgba(255, 255, 255, 0.4) 0%, transparent 100%),
-            radial-gradient(1px 1px at 48% 66%, rgba(255, 255, 255, 0.5) 0%, transparent 100%),
-            radial-gradient(1px 1px at 74% 82%, rgba(255, 255, 255, 0.55) 0%, transparent 100%),
-            radial-gradient(1px 1px at 35% 50%, rgba(255, 255, 255, 0.3) 0%, transparent 100%),
-            radial-gradient(1px 1px at 62% 92%, rgba(255, 255, 255, 0.45) 0%, transparent 100%),
-            radial-gradient(1px 1px at 90% 48%, rgba(255, 255, 255, 0.5) 0%, transparent 100%),
-            radial-gradient(1px 1px at 5% 60%, rgba(255, 255, 255, 0.35) 0%, transparent 100%),
-            radial-gradient(1px 1px at 28% 75%, rgba(255, 255, 255, 0.4) 0%, transparent 100%),
-            radial-gradient(1px 1px at 78% 32%, rgba(255, 255, 255, 0.45) 0%, transparent 100%),
-            /* Stars layer 2 — slightly larger */
-                radial-gradient(1.5px 1.5px at 18% 50%, rgba(255, 255, 255, 0.25) 0%, transparent 100%),
-            radial-gradient(1.5px 1.5px at 42% 78%, rgba(255, 255, 255, 0.2) 0%, transparent 100%),
-            radial-gradient(1.5px 1.5px at 61% 42%, rgba(255, 255, 255, 0.25) 0%, transparent 100%),
-            radial-gradient(1.5px 1.5px at 88% 35%, rgba(255, 255, 255, 0.2) 0%, transparent 100%),
-            /* Colored accent stars — empire gold & alliance blue */
-                radial-gradient(2px 2px at 30% 15%, rgba(201, 168, 76, 0.55) 0%, transparent 100%),
-            radial-gradient(2px 2px at 75% 60%, rgba(74, 158, 255, 0.45) 0%, transparent 100%),
-            radial-gradient(1.5px 1.5px at 55% 90%, rgba(201, 168, 76, 0.4) 0%, transparent 100%),
-            radial-gradient(1.5px 1.5px at 12% 40%, rgba(74, 158, 255, 0.35) 0%, transparent 100%),
-            /* Nebula glows */
-                radial-gradient(ellipse 55% 35% at 15% 65%, rgba(201, 168, 76, 0.025) 0%, transparent 100%),
-            radial-gradient(ellipse 65% 45% at 85% 25%, rgba(74, 158, 255, 0.03) 0%, transparent 100%),
-            radial-gradient(ellipse 40% 30% at 50% 85%, rgba(139, 92, 246, 0.02) 0%, transparent 100%),
-            /* Base deep-space gradient */ linear-gradient(160deg, #05080f 0%, #0a0e1a 55%, #060a10 100%);
-        background-attachment: fixed;
+        background-position: center;
     }
 
     a {
@@ -281,7 +238,7 @@
         display: flex;
         align-items: center;
         gap: 8px;
-        background: linear-gradient(135deg, rgba(201, 168, 76, 0.04) 0%, rgba(255, 255, 255, 0.01) 100%);
+        background: rgba(255, 255, 255, 0.02);
     }
 
     [data-slot='card-title'] {
@@ -320,20 +277,20 @@
 
     [data-slot='button'][data-variant='default'] {
         background: var(--primary);
-        color: var(--primary-foreground);
+        color: #fff;
         border: 1px solid transparent;
-        box-shadow: 0 1px 3px rgba(201, 168, 76, 0.25);
+        box-shadow: 0 1px 3px rgba(16, 185, 129, 0.25);
     }
 
     [data-slot='button'][data-variant='default']:hover:not(:disabled) {
-        box-shadow: 0 2px 8px rgba(201, 168, 76, 0.4);
+        box-shadow: 0 2px 8px rgba(16, 185, 129, 0.35);
     }
 
     [data-slot='button'][data-variant='secondary'] {
         background: var(--secondary);
         color: #fff;
         border: 1px solid transparent;
-        box-shadow: 0 1px 3px rgba(74, 158, 255, 0.25);
+        box-shadow: 0 1px 3px rgba(59, 130, 246, 0.25);
     }
 
     [data-slot='button'][data-variant='outline'] {
@@ -387,9 +344,9 @@
     }
 
     [data-slot='tabs-trigger'][data-state='active'] {
-        background: var(--primary);
-        color: var(--primary-foreground);
-        box-shadow: 0 1px 3px rgba(201, 168, 76, 0.3);
+        background: var(--secondary);
+        color: #fff;
+        box-shadow: 0 1px 3px rgba(59, 130, 246, 0.3);
     }
 
     [data-slot='tabs-trigger']:hover:not([data-state='active']) {
@@ -397,58 +354,23 @@
         color: var(--foreground);
     }
 
-    /* ── Faction Color System (LOGH) ── */
-    .faction-color-empire {
-        --faction-color: #c9a84c;
-    }
-    .faction-color-alliance {
-        --faction-color: #4a9eff;
-    }
-    .faction-color-fezzan {
-        --faction-color: #d4a574;
-    }
-    .faction-color-rebel {
-        --faction-color: #ef4444;
-    }
-    .faction-color-other {
-        --faction-color: #c0c0c0;
-    }
-
-    /* ── Legacy Nation Color aliases (backward compat) ── */
+    /* ── Nation Color System ── */
     .nation-color-wei {
-        --nation-color: #c9a84c;
+        --nation-color: #6495ed;
     }
     .nation-color-shu {
-        --nation-color: #4a9eff;
+        --nation-color: #ff6347;
     }
     .nation-color-wu {
-        --nation-color: #d4a574;
+        --nation-color: #3cb371;
     }
     .nation-color-yuan {
-        --nation-color: #ef4444;
+        --nation-color: #daa520;
     }
     .nation-color-other {
         --nation-color: #c0c0c0;
     }
 
-    .faction-border {
-        border-color: var(--faction-color, #666);
-    }
-    .faction-bg {
-        background-color: var(--faction-color, #333);
-    }
-    .faction-text {
-        color: var(--faction-color, #ccc);
-    }
-    .faction-header {
-        background-color: var(--faction-color, #333);
-        color: #fff;
-        text-align: center;
-        font-weight: 700;
-        padding: 2px 6px;
-    }
-
-    /* ── Legacy nation aliases ── */
     .nation-border {
         border-color: var(--nation-color, #666);
     }
@@ -464,43 +386,6 @@
         text-align: center;
         font-weight: 700;
         padding: 2px 6px;
-    }
-
-    /* ── LOGH Star Field Background ── */
-    @keyframes twinkle {
-        0%,
-        100% {
-            opacity: 0.3;
-        }
-        50% {
-            opacity: 1;
-        }
-    }
-
-    .star-field-bg {
-        background-image:
-            radial-gradient(1px 1px at 10% 20%, rgba(255, 255, 255, 0.6) 0%, transparent 100%),
-            radial-gradient(1px 1px at 30% 60%, rgba(255, 255, 255, 0.4) 0%, transparent 100%),
-            radial-gradient(1px 1px at 50% 10%, rgba(255, 255, 255, 0.5) 0%, transparent 100%),
-            radial-gradient(1px 1px at 70% 80%, rgba(255, 255, 255, 0.6) 0%, transparent 100%),
-            radial-gradient(1px 1px at 90% 40%, rgba(255, 255, 255, 0.3) 0%, transparent 100%),
-            radial-gradient(2px 2px at 15% 85%, rgba(201, 168, 76, 0.4) 0%, transparent 100%),
-            radial-gradient(2px 2px at 85% 15%, rgba(74, 158, 255, 0.3) 0%, transparent 100%),
-            linear-gradient(180deg, var(--space-darker) 0%, var(--space-dark) 100%);
-    }
-
-    /* ── Empire Gold Glow ── */
-    .empire-glow {
-        box-shadow:
-            0 0 12px rgba(201, 168, 76, 0.3),
-            0 0 24px rgba(201, 168, 76, 0.1);
-    }
-
-    /* ── Alliance Blue Glow ── */
-    .alliance-glow {
-        box-shadow:
-            0 0 12px rgba(74, 158, 255, 0.3),
-            0 0 24px rgba(74, 158, 255, 0.1);
     }
 
     /* ── Legacy Event Colors ── */
@@ -783,7 +668,7 @@
         font-size: 12px;
     }
 
-    /* ── LoghBar Overrides ── */
+    /* ── SammoBar Legacy Overrides ── */
     .bar_out {
         position: relative;
         border-top: 1px solid #888;
@@ -850,12 +735,6 @@
 
 /* ── Mobile Utilities ── */
 @layer utilities {
-    .game-font {
-        font-family: var(--font-dunggeunmo);
-        font-feature-settings: normal;
-        letter-spacing: 0.02em;
-    }
-
     .mobile-safe-bottom {
         padding-bottom: env(safe-area-inset-bottom, 0);
     }
@@ -875,107 +754,16 @@
     }
 
     .game-glow-primary {
-        box-shadow: 0 0 12px rgba(201, 168, 76, 0.2);
+        box-shadow: 0 0 12px rgba(16, 185, 129, 0.15);
     }
 
     .game-glow-blue {
-        box-shadow: 0 0 12px rgba(74, 158, 255, 0.2);
+        box-shadow: 0 0 12px rgba(59, 130, 246, 0.15);
     }
 
     .game-gradient-card {
         background: linear-gradient(135deg, rgba(15, 21, 32, 1) 0%, rgba(26, 36, 54, 1) 100%);
     }
-
-    /* ── LOGH Military Corner Brackets ── */
-    .military-corner {
-        position: relative;
-    }
-    .military-corner::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 10px;
-        height: 10px;
-        border-top: 1px solid var(--empire-gold);
-        border-left: 1px solid var(--empire-gold);
-        opacity: 0.5;
-        pointer-events: none;
-    }
-    .military-corner::after {
-        content: '';
-        position: absolute;
-        bottom: 0;
-        right: 0;
-        width: 10px;
-        height: 10px;
-        border-bottom: 1px solid var(--empire-gold);
-        border-right: 1px solid var(--empire-gold);
-        opacity: 0.5;
-        pointer-events: none;
-    }
-
-    /* ── LOGH Section Divider ── */
-    .logh-divider {
-        border: none;
-        height: 1px;
-        background: linear-gradient(
-            to right,
-            transparent 0%,
-            rgba(201, 168, 76, 0.3) 20%,
-            rgba(201, 168, 76, 0.6) 50%,
-            rgba(201, 168, 76, 0.3) 80%,
-            transparent 100%
-        );
-    }
-
-    /* ── LOGH Record Section Header ── */
-    .logh-record-header {
-        text-align: center;
-        font-size: 11px;
-        font-weight: 600;
-        letter-spacing: 0.08em;
-        padding: 4px 8px;
-        border-top: 1px solid var(--border);
-        border-bottom: 1px solid var(--border);
-        background: linear-gradient(135deg, rgba(201, 168, 76, 0.06) 0%, rgba(201, 168, 76, 0.02) 100%);
-        color: var(--empire-gold);
-    }
-
-    /* ── Alliance Blue Record Header ── */
-    .logh-record-header-blue {
-        text-align: center;
-        font-size: 11px;
-        font-weight: 600;
-        letter-spacing: 0.08em;
-        padding: 4px 8px;
-        border-top: 1px solid var(--border);
-        border-bottom: 1px solid var(--border);
-        background: linear-gradient(135deg, rgba(74, 158, 255, 0.06) 0%, rgba(74, 158, 255, 0.02) 100%);
-        color: var(--alliance-blue);
-    }
-}
-
-/* ── Global Scrollbar (webkit) ── */
-::-webkit-scrollbar {
-    width: 5px;
-    height: 5px;
-}
-::-webkit-scrollbar-track {
-    background: #05080f;
-}
-::-webkit-scrollbar-thumb {
-    background: rgba(201, 168, 76, 0.25);
-    border-radius: 2px;
-}
-::-webkit-scrollbar-thumb:hover {
-    background: rgba(201, 168, 76, 0.45);
-}
-
-/* Firefox */
-* {
-    scrollbar-width: thin;
-    scrollbar-color: rgba(201, 168, 76, 0.25) #05080f;
 }
 
 /* ── Mobile Game Bottom Bar ── */

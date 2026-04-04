@@ -9,11 +9,11 @@ import { PageHeader } from '@/components/game/page-header';
 import { LoadingState } from '@/components/game/loading-state';
 import { EmptyState } from '@/components/game/empty-state';
 import { GeneralPortrait } from '@/components/game/general-portrait';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/8bit/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/8bit/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/8bit/select';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/8bit/tabs';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/8bit/table';
 
 /* ── Category definitions (legacy parity: a_hallOfFame.php) ── */
 
@@ -122,7 +122,7 @@ function HallFrame({ categoryLabel, entries }: { categoryLabel: string; entries:
                     {entries.slice(0, 10).map((entry, idx) => (
                         <div
                             key={`${entry.generalName}-${idx}`}
-                            className="flex-shrink-0 w-[100px] flex flex-col items-center text-center rounded-lg border p-2 space-y-1"
+                            className="flex-shrink-0 w-[100px] flex flex-col items-center text-center rounded-none border p-2 space-y-1"
                             style={{
                                 borderColor:
                                     idx < 3 ? (idx === 0 ? '#f59e0b' : idx === 1 ? '#9ca3af' : '#b45309') : undefined,
@@ -272,7 +272,7 @@ export default function HallOfFamePage() {
             <div className="flex items-center gap-3 flex-wrap">
                 <Select
                     value={selectedSeason}
-                    onValueChange={(v: string) => {
+                    onValueChange={(v) => {
                         setSelectedSeason(v);
                         setSelectedScenario('all');
                     }}
@@ -313,7 +313,7 @@ export default function HallOfFamePage() {
             </div>
 
             {hasData ? (
-                <Tabs value={viewMode} onValueChange={(v: string) => setViewMode(v as 'card' | 'table')}>
+                <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as 'card' | 'table')}>
                     <TabsList>
                         <TabsTrigger value="card">카드 보기</TabsTrigger>
                         <TabsTrigger value="table">표 보기</TabsTrigger>
@@ -353,7 +353,7 @@ export default function HallOfFamePage() {
                                 <TableHeader>
                                     <TableRow>
                                         <TableHead className="w-12">#</TableHead>
-                                        <TableHead>제독</TableHead>
+                                        <TableHead>장수</TableHead>
                                         <TableHead>소속</TableHead>
                                         {categoryKey === 'all' && <TableHead>분야</TableHead>}
                                         <TableHead>기록</TableHead>

@@ -1,6 +1,6 @@
 package com.openlogh.service
 
-import com.openlogh.entity.*
+import com.openlogh.entity.SelectPool
 import com.openlogh.repository.SelectPoolRepository
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
@@ -20,8 +20,8 @@ class SelectPoolServiceTest {
     }
 
     @Test
-    fun `create saves pool entry with sessionId and uniqueName`() {
-        val pool = SelectPool(id = 1, sessionId = 10, uniqueName = "test")
+    fun `create saves pool entry with worldId and uniqueName`() {
+        val pool = SelectPool(id = 1, worldId = 10, uniqueName = "test")
         `when`(repo.save(any(SelectPool::class.java))).thenReturn(pool)
 
         val result = service.create(10L, "test", mapOf("generalName" to "조조"))
@@ -51,7 +51,7 @@ class SelectPoolServiceTest {
 
     @Test
     fun `reserve returns null when already picked`() {
-        val pool = SelectPool(id = 1, sessionId = 10, uniqueName = "test", officerId = 100L)
+        val pool = SelectPool(id = 1, worldId = 10, uniqueName = "test", generalId = 100L)
         `when`(repo.findById(1L)).thenReturn(Optional.of(pool))
         assertNull(service.reserve(1L, 42L))
     }

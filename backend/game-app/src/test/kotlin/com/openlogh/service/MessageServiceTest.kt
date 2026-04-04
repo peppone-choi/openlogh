@@ -113,7 +113,7 @@ class MessageServiceTest {
             message(7, mailboxType = MessageService.MAILBOX_PUBLIC, mailboxCode = "public"),
             message(6, mailboxType = MessageService.MAILBOX_PUBLIC, mailboxCode = "public"),
         )
-        `when`(messageRepository.findBySessionIdAndMailboxTypeAndIdLessThanOrderBySentAtDesc(1L, MessageService.MAILBOX_PUBLIC, 9L))
+        `when`(messageRepository.findByWorldIdAndMailboxTypeAndIdLessThanOrderBySentAtDesc(1L, MessageService.MAILBOX_PUBLIC, 9L))
             .thenReturn(messages)
 
         val result = service.getPublicMessages(1L, 9L, 2)
@@ -135,7 +135,7 @@ class MessageServiceTest {
     @Test
     fun `getPublicMessages defaults to typed page size`() {
         val messages = (1L..35L).map { message(it, mailboxType = MessageService.MAILBOX_PUBLIC, mailboxCode = "public") }
-        `when`(messageRepository.findBySessionIdAndMailboxTypeOrderBySentAtDesc(1L, MessageService.MAILBOX_PUBLIC)).thenReturn(messages)
+        `when`(messageRepository.findByWorldIdAndMailboxTypeOrderBySentAtDesc(1L, MessageService.MAILBOX_PUBLIC)).thenReturn(messages)
 
         val result = service.getPublicMessages(1L)
 
@@ -155,8 +155,8 @@ class MessageServiceTest {
         nation.color = "#FF0000"
         val gen = general(id = 5L, nationId = 7L, officerLevel = 1)
 
-        `when`(generalRepository.findBySessionId(1L)).thenReturn(listOf(gen))
-        `when`(nationRepository.findBySessionId(1L)).thenReturn(listOf(nation))
+        `when`(generalRepository.findByWorldId(1L)).thenReturn(listOf(gen))
+        `when`(nationRepository.findByWorldId(1L)).thenReturn(listOf(nation))
 
         val result = service.getContacts(1L)
 
@@ -169,8 +169,8 @@ class MessageServiceTest {
     fun `getContacts returns null nationColor for general without nation`() {
         val gen = general(id = 3L, nationId = 0L, officerLevel = 1)
 
-        `when`(generalRepository.findBySessionId(1L)).thenReturn(listOf(gen))
-        `when`(nationRepository.findBySessionId(1L)).thenReturn(emptyList())
+        `when`(generalRepository.findByWorldId(1L)).thenReturn(listOf(gen))
+        `when`(nationRepository.findByWorldId(1L)).thenReturn(emptyList())
 
         val result = service.getContacts(1L)
 
@@ -186,7 +186,7 @@ class MessageServiceTest {
         val chatMsg = message(3L, mailboxType = MessageService.MAILBOX_PUBLIC, mailboxCode = "public_chat")
         val actionMsg = message(4L, mailboxType = MessageService.MAILBOX_PUBLIC, mailboxCode = "general_action")
 
-        `when`(messageRepository.findBySessionIdAndMailboxTypeOrderBySentAtDesc(1L, MessageService.MAILBOX_PUBLIC))
+        `when`(messageRepository.findByWorldIdAndMailboxTypeOrderBySentAtDesc(1L, MessageService.MAILBOX_PUBLIC))
             .thenReturn(listOf(publicMsg, boardMsg, chatMsg, actionMsg))
 
         val result = service.getPublicMessages(1L)

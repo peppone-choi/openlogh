@@ -1,7 +1,9 @@
 package com.openlogh.command
 
 import com.openlogh.command.constraint.*
-import com.openlogh.entity.*
+import com.openlogh.entity.City
+import com.openlogh.entity.General
+import com.openlogh.entity.Nation
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import java.time.OffsetDateTime
@@ -53,7 +55,7 @@ class ConstraintChainTest {
         nation: Nation? = null,
         destCity: City? = null,
         env: Map<String, Any> = emptyMap(),
-    ) = ConstraintContext(officer = general, planet = city, faction = nation, destCity = destCity, env = env)
+    ) = ConstraintContext(general = general, city = city, nation = nation, destCity = destCity, env = env)
 
     // ========== ConstraintChain.testAll ==========
 

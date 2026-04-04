@@ -4,9 +4,10 @@ import { useCallback, useEffect, useMemo, useState, type MouseEvent as ReactMous
 import { useRouter } from 'next/navigation';
 import { Clock3, Copy, Pencil, Trash2, GripVertical, ClipboardCopy, ChevronDown, ChevronUp } from 'lucide-react';
 import { useHotkeys } from '@/hooks/useHotkeys';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { useDebouncedCallback } from '@/hooks/useDebouncedCallback';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/8bit/card';
+import { Button } from '@/components/ui/8bit/button';
+import { Badge } from '@/components/ui/8bit/badge';
 import { commandApi, realtimeApi } from '@/lib/gameApi';
 import { subscribeWebSocket } from '@/lib/websocket';
 import { useWorldStore } from '@/stores/worldStore';
@@ -174,8 +175,8 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
 
     const selectedCount = selectedTurnList.length;
 
-    const localStorageKey = `openlogh:stored-actions:${generalId}`;
-    const recentActionsKey = `openlogh:recent-actions:${generalId}`;
+    const localStorageKey = `opensam:stored-actions:${generalId}`;
+    const recentActionsKey = `opensam:recent-actions:${generalId}`;
 
     useEffect(() => {
         const updateClock = () => {
@@ -282,13 +283,26 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
         return () => window.clearInterval(intervalId);
     }, [realtimeMode, loadRealtimeStatus]);
 
+    const debouncedLoadTurns = useDebouncedCallback(
+        useCallback(() => {
+            void loadTurns();
+        }, [loadTurns]),
+        500
+    );
+
     useEffect(() => {
         if (!currentWorld) return;
-        const unsubscribe = subscribeWebSocket(`/topic/world/${currentWorld.id}/turn`, () => {
-            void loadTurns();
+        const unsubTurn = subscribeWebSocket(`/topic/world/${currentWorld.id}/turn`, () => {
+            debouncedLoadTurns();
         });
-        return unsubscribe;
-    }, [currentWorld, loadTurns]);
+        const unsubCommand = subscribeWebSocket(`/topic/world/${currentWorld.id}/command`, () => {
+            debouncedLoadTurns();
+        });
+        return () => {
+            unsubTurn();
+            unsubCommand();
+        };
+    }, [currentWorld, debouncedLoadTurns]);
 
     const applyToTurns = useCallback(
         async (turnList: number[], actionCode: string, arg?: CommandArg) => {
@@ -711,7 +725,7 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
     ]);
 
     return (
-        <Card className="border-gray-700">
+        <Card className="border-gray-700" data-tutorial="command-panel">
             <CardHeader className="space-y-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                     <CardTitle className="text-base">{visibleCount}턴 예약 편집</CardTitle>
@@ -806,7 +820,7 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
                     <select
                         value={selectedStoredAction}
                         onChange={(event) => setSelectedStoredAction(event.target.value)}
-                        className="h-8 min-w-[140px] rounded-md border border-input bg-background px-2 text-xs"
+                        className="h-8 min-w-[140px] rounded-none border border-input bg-background px-2 text-xs"
                     >
                         <option value="">저장 액션 선택</option>
                         {storedActions.map((item) => (
@@ -879,7 +893,7 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
             </CardHeader>
 
             <CardContent>
-                <div className="overflow-hidden rounded-md border border-gray-700">
+                <div className="overflow-hidden rounded-none border border-gray-700">
                     <div className="grid grid-cols-[24px_68px_120px_1fr_136px] bg-[#1a1a1a] px-2 py-1.5 text-[11px] text-gray-400">
                         <div />
                         <div>년월</div>
@@ -1055,7 +1069,7 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
                         onClick={() => setShowSelector(false)}
                     >
                         <div
-                            className="w-full max-w-2xl rounded-t-xl sm:rounded-md border border-gray-700 bg-background shadow-xl max-h-[85vh] sm:max-h-[80vh] overflow-y-auto"
+                            className="w-full max-w-2xl rounded-none border border-gray-700 bg-background shadow-xl max-h-[85vh] sm:max-h-[80vh] overflow-y-auto"
                             onClick={(e) => e.stopPropagation()}
                         >
                             <div className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-700 px-4 py-2 bg-background">

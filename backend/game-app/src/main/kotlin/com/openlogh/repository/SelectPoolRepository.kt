@@ -4,8 +4,8 @@ import com.openlogh.entity.SelectPool
 import org.springframework.data.jpa.repository.JpaRepository
 
 interface SelectPoolRepository : JpaRepository<SelectPool, Long> {
-    fun findBySessionId(sessionId: Long): List<SelectPool>
-    fun findBySessionIdAndOfficerIdIsNull(sessionId: Long): List<SelectPool>
-    fun findBySessionIdAndUniqueName(sessionId: Long, uniqueName: String): SelectPool?
-    fun deleteBySessionId(sessionId: Long)
+    fun findByWorldId(worldId: Long): List<SelectPool>
+    fun findByWorldIdAndGeneralIdIsNull(worldId: Long): List<SelectPool>
+    fun findByWorldIdAndUniqueName(worldId: Long, uniqueName: String): SelectPool?
+    fun deleteByWorldId(worldId: Long)
 }

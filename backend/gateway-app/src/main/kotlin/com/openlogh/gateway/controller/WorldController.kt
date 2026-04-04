@@ -22,7 +22,6 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.reactive.function.client.WebClient
-import org.slf4j.LoggerFactory
 import org.springframework.web.reactive.function.client.WebClientResponseException
 
 @RestController
@@ -32,9 +31,6 @@ class WorldController(
     private val gameOrchestrator: GameOrchestrator,
     private val webClientBuilder: WebClient.Builder,
 ) {
-    companion object {
-        private val log = LoggerFactory.getLogger(WorldController::class.java)
-    }
     @GetMapping
     fun listWorlds(): ResponseEntity<List<WorldStateResponse>> {
         return ResponseEntity.ok(worldService.listWorlds().map { WorldStateResponse.from(it) })
@@ -93,18 +89,20 @@ class WorldController(
 
             val response = worldService.getWorld(created.id)?.let { WorldStateResponse.from(it) } ?: created
             ResponseEntity.status(HttpStatus.CREATED).body(response)
-        } catch (e: IllegalArgumentException) {
-            log.error("createWorld IllegalArgumentException: {}", e.message, e)
+        } catch (_: IllegalArgumentException) {
             ResponseEntity.badRequest().build()
-        } catch (e: IllegalStateException) {
-            log.error("createWorld IllegalStateException: {}", e.message, e)
+        } catch (_: IllegalStateException) {
             ResponseEntity.status(HttpStatus.CONFLICT).build()
-        } catch (e: WebClientResponseException) {
-            log.error("createWorld WebClientResponseException: {} {}", e.statusCode, e.responseBodyAsString, e)
-            ResponseEntity.status(e.statusCode).build()
-        } catch (e: Exception) {
-            log.error("createWorld unexpected error: {}", e.message, e)
-            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build()
+        } catch (_: WebClientResponseException.Unauthorized) {
+            ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
+        } catch (_: WebClientResponseException.Forbidden) {
+            ResponseEntity.status(HttpStatus.FORBIDDEN).build()
+        } catch (_: WebClientResponseException.BadRequest) {
+            ResponseEntity.badRequest().build()
+        } catch (_: WebClientResponseException.NotFound) {
+            ResponseEntity.status(HttpStatus.NOT_FOUND).build()
+        } catch (_: WebClientResponseException) {
+            ResponseEntity.status(HttpStatus.BAD_GATEWAY).build()
         }
     }
 

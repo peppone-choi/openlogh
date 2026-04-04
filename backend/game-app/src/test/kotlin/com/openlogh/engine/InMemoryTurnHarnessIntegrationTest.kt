@@ -1,6 +1,9 @@
 package com.openlogh.engine
 
-import com.openlogh.entity.*
+import com.openlogh.entity.City
+import com.openlogh.entity.General
+import com.openlogh.entity.Nation
+import com.openlogh.entity.WorldState
 import com.openlogh.test.InMemoryTurnHarness
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -66,14 +69,14 @@ class InMemoryTurnHarnessIntegrationTest {
         )
 
         harness.putWorld(world)
-        harness.putFaction(nation)
-        harness.putPlanet(city)
-        harness.putOfficer(general)
-        harness.queueOfficerTurn(officerId = 1, actionCode = "휴식")
+        harness.putNation(nation)
+        harness.putCity(city)
+        harness.putGeneral(general)
+        harness.queueGeneralTurn(generalId = 1, actionCode = "휴식")
 
         harness.turnService.processWorld(world)
 
-        assertTrue(harness.officerTurnsFor(1).isEmpty())
+        assertTrue(harness.generalTurnsFor(1).isEmpty())
         assertEquals(2, world.currentMonth.toInt())
     }
 
@@ -131,15 +134,15 @@ class InMemoryTurnHarnessIntegrationTest {
         )
 
         harness.putWorld(world)
-        harness.putFaction(nation)
-        harness.putPlanet(city)
-        harness.putOfficer(officer)
-        harness.queueFactionTurn(factionId = 1, officerLevel = 5, actionCode = "Nation휴식")
-        harness.queueOfficerTurn(officerId = 1, actionCode = "휴식")
+        harness.putNation(nation)
+        harness.putCity(city)
+        harness.putGeneral(officer)
+        harness.queueNationTurn(nationId = 1, officerLevel = 5, actionCode = "Nation휴식")
+        harness.queueGeneralTurn(generalId = 1, actionCode = "휴식")
 
         harness.turnService.processWorld(world)
 
-        assertTrue(harness.factionTurnsFor(1, 5).isEmpty())
+        assertTrue(harness.nationTurnsFor(1, 5).isEmpty())
         assertEquals(1, world.currentMonth.toInt())
         assertTrue(nation.strategicCmdLimit.toInt() <= 5)
         verify(harness.unificationService, times(3)).checkAndSettleUnification(world)

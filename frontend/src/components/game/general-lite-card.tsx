@@ -11,7 +11,7 @@ import {
     isValidObjKey,
 } from '@/lib/game-utils';
 import { getPortraitUrl } from '@/lib/image';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/8bit/tooltip';
 
 interface GeneralLiteCardProps {
     general: GeneralFrontInfo;
@@ -93,7 +93,7 @@ export function GeneralLiteCard({ general, nation, gameConst }: GeneralLiteCardP
             {/* Row 3: resources */}
             <div className="bg-muted/50 border-b border-border">자금</div>
             <div className="border-b border-border">{general.gold.toLocaleString()}</div>
-            <div className="bg-muted/50 border-b border-border">물자</div>
+            <div className="bg-muted/50 border-b border-border">군량</div>
             <div className="border-b border-border">{general.rice.toLocaleString()}</div>
             <div className="bg-muted/50 border-b border-border">성격</div>
             <div className="border-b border-border">

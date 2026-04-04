@@ -116,25 +116,17 @@ export const useWorldStore = create<WorldStore>()(
                 }),
         }),
         {
-            name: 'openlogh:world',
-            storage: typeof window !== 'undefined' ? createJSONStorage(() => sessionStorage) : undefined,
-            partialize: (state) => ({
-                currentWorld: state.currentWorld,
-                worlds: state.worlds,
-            }),
-            onRehydrateStorage: () => (state) => {
-                if (state) state.isHydrated = true;
-            },
+            name: 'world-store',
+            storage: createJSONStorage(() => sessionStorage),
+            partialize: (state) => ({ currentWorld: state.currentWorld }),
         }
     )
 );
 
-// Trigger hydration flag after store initializes
+// Reliably detect hydration completion (onRehydrateStorage can misfire in Next.js App Router)
 if (typeof window !== 'undefined') {
-    const unsub = useWorldStore.persist.onFinishHydration((state) => {
+    useWorldStore.persist.onFinishHydration(() => {
         useWorldStore.setState({ isHydrated: true });
-        void state;
-        unsub();
     });
     if (useWorldStore.persist.hasHydrated()) {
         useWorldStore.setState({ isHydrated: true });

@@ -13,7 +13,7 @@ class Message(
     var id: Long = 0,
 
     @Column(name = "world_id", nullable = false)
-    var sessionId: Long = 0,
+    var worldId: Long = 0,
 
     @Column(name = "mailbox_code", nullable = false)
     var mailboxCode: String = "",
@@ -43,13 +43,7 @@ class Message(
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb", nullable = false)
     var meta: MutableMap<String, Any> = mutableMapOf(),
-
-    // === Old field name alias (non-persisted constructor param) ===
-    worldId: Long = Long.MIN_VALUE,
 ) {
-    init {
-        if (worldId != Long.MIN_VALUE) sessionId = worldId
-    }
     @PrePersist
     fun applyMailboxTypeDefault() {
         if (mailboxType.isNotBlank()) {

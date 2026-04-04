@@ -1,12 +1,14 @@
 package com.openlogh.service
 
 import com.openlogh.engine.modifier.TraitSpecRegistry
-import com.openlogh.entity.*
+import com.openlogh.entity.AppUser
+import com.openlogh.entity.General
+import com.openlogh.entity.WorldState
 import com.openlogh.repository.AppUserRepository
-import com.openlogh.repository.PlanetRepository
-import com.openlogh.repository.OfficerRepository
+import com.openlogh.repository.CityRepository
+import com.openlogh.repository.GeneralRepository
 import com.openlogh.repository.RankDataRepository
-import com.openlogh.repository.SessionStateRepository
+import com.openlogh.repository.WorldStateRepository
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
@@ -21,28 +23,28 @@ import java.util.Optional
 
 class InheritanceServiceTest {
     private lateinit var appUserRepository: AppUserRepository
-    private lateinit var planetRepository: PlanetRepository
-    private lateinit var officerRepository: OfficerRepository
+    private lateinit var cityRepository: CityRepository
+    private lateinit var generalRepository: GeneralRepository
     private lateinit var rankDataRepository: RankDataRepository
-    private lateinit var sessionStateRepository: SessionStateRepository
+    private lateinit var worldStateRepository: WorldStateRepository
     private lateinit var gameConstService: GameConstService
     private lateinit var service: InheritanceService
 
     @BeforeEach
     fun setUp() {
         appUserRepository = mock(AppUserRepository::class.java)
-        planetRepository = mock(PlanetRepository::class.java)
-        officerRepository = mock(OfficerRepository::class.java)
+        cityRepository = mock(CityRepository::class.java)
+        generalRepository = mock(GeneralRepository::class.java)
         rankDataRepository = mock(RankDataRepository::class.java)
-        sessionStateRepository = mock(SessionStateRepository::class.java)
+        worldStateRepository = mock(WorldStateRepository::class.java)
         gameConstService = mock(GameConstService::class.java)
 
         service = InheritanceService(
             appUserRepository = appUserRepository,
-            planetRepository = planetRepository,
-            officerRepository = officerRepository,
+            cityRepository = cityRepository,
+            generalRepository = generalRepository,
             rankDataRepository = rankDataRepository,
-            sessionStateRepository = sessionStateRepository,
+            worldStateRepository = worldStateRepository,
             gameConstService = gameConstService,
         )
 
@@ -54,80 +56,80 @@ class InheritanceServiceTest {
         `when`(gameConstService.getInt("inheritBornStatPoint")).thenReturn(1000)
 
         `when`(appUserRepository.save(any(AppUser::class.java))).thenAnswer { it.arguments[0] }
-        `when`(officerRepository.save(any(Officer::class.java))).thenAnswer { it.arguments[0] }
+        `when`(generalRepository.save(any(General::class.java))).thenAnswer { it.arguments[0] }
     }
 
     @Test
-    fun `resetTurn stores next turn base on current officer`() {
+    fun `resetTurn stores next turn base on current general`() {
         val user = createUser(points = 5000)
-        val officer = createOfficer(userId = user.id)
+        val general = createGeneral(userId = user.id)
         val world = createWorld()
-        stubOwnership(user, officer, world)
+        stubOwnership(user, general, world)
 
         val result = service.resetTurn(world.id.toLong(), user.loginId)
 
         assertNull(result?.error)
         assertEquals(4000, result?.remainingPoints)
         assertEquals(4000, user.meta["inheritPoints"])
-        assertEquals(0, officer.meta["inheritResetTurnTime"])
-        assertNotNull(officer.meta["nextTurnTimeBase"])
+        assertEquals(0, general.meta["inheritResetTurnTime"])
+        assertNotNull(general.meta["nextTurnTimeBase"])
     }
 
     @Test
-    fun `setInheritSpecial reserves special on current officer instead of user meta`() {
+    fun `setInheritSpecial reserves special on current general instead of user meta`() {
         val user = createUser(points = 5000)
-        val officer = createOfficer(userId = user.id)
+        val general = createGeneral(userId = user.id)
         val world = createWorld()
-        stubOwnership(user, officer, world)
+        stubOwnership(user, general, world)
         val specialCode = TraitSpecRegistry.war.first().key
 
         val result = service.setInheritSpecial(world.id.toLong(), user.loginId, specialCode)
 
         assertNull(result?.error)
         assertEquals(1000, user.meta["inheritPoints"])
-        assertEquals(specialCode, officer.meta["inheritSpecificSpecialWar"])
+        assertEquals(specialCode, general.meta["inheritSpecificSpecialWar"])
         assertEquals(null, user.meta["inheritSpecificSpecialWar"])
     }
 
     @Test
-    fun `buyRandomUnique stores reservation on current officer and rejects duplicate`() {
+    fun `buyRandomUnique stores reservation on current general and rejects duplicate`() {
         val user = createUser(points = 7000)
-        val officer = createOfficer(userId = user.id)
+        val general = createGeneral(userId = user.id)
         val world = createWorld()
-        stubOwnership(user, officer, world)
+        stubOwnership(user, general, world)
 
         val first = service.buyRandomUnique(world.id.toLong(), user.loginId)
         val second = service.buyRandomUnique(world.id.toLong(), user.loginId)
 
         assertNull(first?.error)
         assertEquals(4000, first?.remainingPoints)
-        assertNotNull(officer.meta["inheritRandomUnique"])
+        assertNotNull(general.meta["inheritRandomUnique"])
         assertTrue(second?.error?.contains("이미 구입 명령") == true)
     }
 
     @Test
     fun `resetSpecialWar clears current special and tracks previous special list`() {
         val user = createUser(points = 5000)
-        val officer = createOfficer(userId = user.id).apply {
+        val general = createGeneral(userId = user.id).apply {
             special2Code = "che_저격"
         }
         val world = createWorld()
-        stubOwnership(user, officer, world)
+        stubOwnership(user, general, world)
 
         val result = service.resetSpecialWar(world.id.toLong(), user.loginId)
 
         assertNull(result?.error)
         assertEquals(4000, result?.remainingPoints)
-        assertEquals("None", officer.special2Code)
-        assertEquals(0, officer.meta["inheritResetSpecialWar"])
-        assertEquals(listOf("che_저격"), officer.meta["prev_special2"])
+        assertEquals("None", general.special2Code)
+        assertEquals(0, general.meta["inheritResetSpecialWar"])
+        assertEquals(listOf("che_저격"), general.meta["prev_special2"])
     }
 
-    private fun stubOwnership(user: AppUser, officer: Officer, world: SessionState) {
+    private fun stubOwnership(user: AppUser, general: General, world: WorldState) {
         `when`(appUserRepository.findByLoginId(user.loginId)).thenReturn(user)
         `when`(appUserRepository.findById(user.id)).thenReturn(Optional.of(user))
-        `when`(officerRepository.findBySessionIdAndUserId(world.id.toLong(), user.id)).thenReturn(listOf(officer))
-        `when`(sessionStateRepository.findById(world.id)).thenReturn(Optional.of(world))
+        `when`(generalRepository.findByWorldIdAndUserId(world.id.toLong(), user.id)).thenReturn(listOf(general))
+        `when`(worldStateRepository.findById(world.id)).thenReturn(Optional.of(world))
     }
 
     private fun createUser(points: Int): AppUser {
@@ -140,20 +142,20 @@ class InheritanceServiceTest {
         )
     }
 
-    private fun createOfficer(userId: Long): Officer {
-        return Officer(
+    private fun createGeneral(userId: Long): General {
+        return General(
             id = 10,
-            sessionId = 1,
+            worldId = 1,
             userId = userId,
             name = "장수",
-            factionId = 1,
-            planetId = 1,
+            nationId = 1,
+            cityId = 1,
             turnTime = OffsetDateTime.parse("2026-03-08T10:05:00+09:00"),
         )
     }
 
-    private fun createWorld(): SessionState {
-        return SessionState(
+    private fun createWorld(): WorldState {
+        return WorldState(
             id = 1,
             scenarioCode = "1",
             tickSeconds = 300,

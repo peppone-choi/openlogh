@@ -1,10 +1,10 @@
 'use client';
 
-import type { FactionFrontInfo, GlobalInfo } from '@/types';
+import type { NationFrontInfo, GlobalInfo } from '@/types';
 import { isBrightColor, getNPCColor, formatOfficerLevelText, convTechLevel, isTechLimited } from '@/lib/game-utils';
 
 interface NationBasicCardProps {
-    nation: FactionFrontInfo | null;
+    nation: NationFrontInfo | null;
     global?: GlobalInfo | null;
 }
 
@@ -12,7 +12,7 @@ export function NationBasicCard({ nation, global }: NationBasicCardProps) {
     if (!nation) return null;
 
     const textColor = isBrightColor(nation.color) ? 'black' : 'white';
-    const factionRank = nation.level;
+    const nationLevel = nation.level;
 
     // Tech level calculation
     const startYear = global?.startyear ?? global?.year ?? 0;
@@ -20,8 +20,8 @@ export function NationBasicCard({ nation, global }: NationBasicCardProps) {
     const maxTechLevel = 10;
     const initialAllowed = 1;
     const techIncYear = 5;
-    const currentTechLevel = convTechLevel(nation.tech_level, maxTechLevel);
-    const onTechLimit = isTechLimited(startYear, year, nation.tech_level, maxTechLevel, initialAllowed, techIncYear);
+    const currentTechLevel = convTechLevel(nation.tech, maxTechLevel);
+    const onTechLimit = isTechLimited(startYear, year, nation.tech, maxTechLevel, initialAllowed, techIncYear);
 
     const noNation = !nation.id;
     const impossibleStrategicCommandText =
@@ -31,7 +31,8 @@ export function NationBasicCard({ nation, global }: NationBasicCardProps) {
 
     return (
         <div
-            className="bg-card border border-border rounded-lg overflow-hidden text-sm"
+            className="bg-card border border-foreground/15 rounded-none overflow-hidden text-sm"
+            data-tutorial="nation-card"
             style={{
                 maxWidth: 500,
                 display: 'grid',
@@ -59,12 +60,12 @@ export function NationBasicCard({ nation, global }: NationBasicCardProps) {
                 <span style={{ color: 'magenta' }}>{nation.type.cons}</span>)
             </Body>
 
-            {/* 원수/참모 */}
-            <Head>{formatOfficerLevelText(20, factionRank, false, nation.faction_type)}</Head>
+            {/* 군주/참모 */}
+            <Head>{formatOfficerLevelText(20, nationLevel, false, nation.typeCode)}</Head>
             <Body style={{ color: getNPCColor(nation.topChiefs[20]?.npc ?? 1) }}>
                 {nation.topChiefs[20]?.name ?? '-'}
             </Body>
-            <Head>{formatOfficerLevelText(19, factionRank, false, nation.faction_type)}</Head>
+            <Head>{formatOfficerLevelText(19, nationLevel, false, nation.typeCode)}</Head>
             <Body style={{ color: getNPCColor(nation.topChiefs[19]?.npc ?? 1) }}>
                 {nation.topChiefs[19]?.name ?? '-'}
             </Body>
@@ -77,33 +78,33 @@ export function NationBasicCard({ nation, global }: NationBasicCardProps) {
                     : `${nation.population.now.toLocaleString()} / ${nation.population.max.toLocaleString()}`}
             </Body>
 
-            {/* 총 함선 */}
-            <Head>총 함선</Head>
+            {/* 총 병사 */}
+            <Head>총 병사</Head>
             <Body>
-                {noNation ? '해당 없음' : `${nation.ships.now.toLocaleString()} / ${nation.ships.max.toLocaleString()}`}
+                {noNation ? '해당 없음' : `${nation.crew.now.toLocaleString()} / ${nation.crew.max.toLocaleString()}`}
             </Body>
 
-            {/* 국고/물자 */}
+            {/* 국고/병량 */}
             <Head>국고</Head>
-            <Body>{noNation ? '해당 없음' : nation.funds.toLocaleString()}</Body>
-            <Head>물자</Head>
-            <Body>{noNation ? '해당 없음' : nation.supplies.toLocaleString()}</Body>
+            <Body>{noNation ? '해당 없음' : nation.gold.toLocaleString()}</Body>
+            <Head>병량</Head>
+            <Body>{noNation ? '해당 없음' : nation.rice.toLocaleString()}</Body>
 
             {/* 지급률/세율 */}
             <Head>지급률</Head>
-            <Body>{noNation ? '해당 없음' : `${nation.salary_rate}%`}</Body>
+            <Body>{noNation ? '해당 없음' : `${nation.bill}%`}</Body>
             <Head>세율</Head>
             <Body>{noNation ? '해당 없음' : `${nation.taxRate}%`}</Body>
 
-            {/* 속령/제독 */}
+            {/* 속령/장수 */}
             <Head>속령</Head>
             <Body>{noNation ? '해당 없음' : nation.population.cityCnt.toLocaleString()}</Body>
-            <Head>제독</Head>
-            <Body>{noNation ? '해당 없음' : nation.ships.generalCnt.toLocaleString()}</Body>
+            <Head>장수</Head>
+            <Body>{noNation ? '해당 없음' : nation.crew.generalCnt.toLocaleString()}</Body>
 
-            {/* 군사력/기술력 */}
-            <Head>군사력</Head>
-            <Body>{noNation ? '해당 없음' : nation.military_power.toLocaleString()}</Body>
+            {/* 국력/기술력 */}
+            <Head>국력</Head>
+            <Body>{noNation ? '해당 없음' : nation.power.toLocaleString()}</Body>
             <Head>기술력</Head>
             <Body>
                 {noNation ? (
@@ -112,7 +113,7 @@ export function NationBasicCard({ nation, global }: NationBasicCardProps) {
                     <>
                         {currentTechLevel}등급 /{' '}
                         <span style={{ color: onTechLimit ? 'magenta' : 'limegreen' }}>
-                            {Math.floor(nation.tech_level).toLocaleString()}
+                            {Math.floor(nation.tech).toLocaleString()}
                         </span>
                     </>
                 )}

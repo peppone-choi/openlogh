@@ -69,11 +69,13 @@ data class ResetStatsRequest(
     val leadership: Int,
     val strength: Int,
     val intel: Int,
+    val politics: Int = 0,
+    val charm: Int = 0,
     val inheritBonusStat: List<Int>? = null,
 )
 
 data class CheckOwnerRequest(
-    val destOfficerID: Long? = null,
+    val destGeneralID: Long? = null,
     val generalName: String? = null,
 )
 
@@ -95,8 +97,4 @@ data class InheritanceActionResult(
 
 data class SetInheritSpecialRequest(val specialCode: String)
 
-data class SetInheritCityRequest(val planetId: Long)
-
-data class InheritanceLogResponse(val logs: List<InheritanceLogEntry>, val hasMore: Boolean = false)
-
-data class InheritanceOwnerCheckResponse(val ownerName: String? = null, val found: Boolean)
+data class SetInheritCityRequest(val cityId: Long)

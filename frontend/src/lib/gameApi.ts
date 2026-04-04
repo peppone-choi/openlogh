@@ -2,14 +2,14 @@ import api from './api';
 import type {
     WorldState,
     WorldSnapshot,
-    Faction,
-    StarSystem,
-    Officer,
-    Fleet,
+    Nation,
+    City,
+    General,
+    Troop,
     Diplomacy,
     Message,
-    OfficerTurn,
-    FactionTurn,
+    GeneralTurn,
+    NationTurn,
     CommandResult,
     CommandTableEntry,
     Scenario,
@@ -23,16 +23,16 @@ import type {
     BettingInfo,
     BettingEventSummary,
     BattleSimUnit,
-    BattleSimStarSystem,
+    BattleSimCity,
     BattleSimResponse,
-    FactionPolicyInfo,
+    NationPolicyInfo,
     NpcPolicyInfo,
     OfficerInfo,
-    FleetWithMembers,
-    FactionStatistic,
+    TroopWithMembers,
+    NationStatistic,
     AdminDashboard,
     AdminUser,
-    AdminOfficer,
+    AdminGeneral,
     AdminWorldListEntry,
     RealtimeStatus,
     AuctionBidResponse,
@@ -40,7 +40,7 @@ import type {
     MailboxType,
     NpcTokenResponse,
     SelectNpcResult,
-    BestOfficer,
+    BestGeneral,
     YearbookSummary,
     BoardComment,
     VoteComment,
@@ -53,19 +53,20 @@ import type {
     AuctionActionResponse,
     AuctionHistoryEntry,
     MarketPriceResponse,
-    MarketBuySuppliesResponse,
-    MarketSellSuppliesResponse,
+    MarketBuyRiceResponse,
+    MarketSellRiceResponse,
     ItemAuctionCreateResponse,
     CreateWorldResponse,
     SystemFlagsResponse,
     ScrubResponse,
     ResetPasswordResponse,
     AdminRaiseEventResponse,
-    AccountDetailedInfo,
+    AccountDetailedInfoResponse,
     TimeControlRequest,
     UniqueItemOwnerInfo,
     GameVersionInfo,
-    OfficerLogResult,
+    GeneralLogEntry,
+    GeneralLogResult,
     SimulatorExportResult,
     JsonObject,
     JsonValue,
@@ -74,6 +75,7 @@ import type {
     TurnStateResult,
     WorldSummary,
     SelectPoolEntry,
+    GameRecord,
 } from '@/types';
 
 // World API
@@ -106,41 +108,31 @@ export const worldApi = {
     getSummary: (id: number) => api.get<WorldSummary>(`/worlds/${id}/summary`),
 };
 
-// Faction API (formerly Nation API)
-export const factionApi = {
-    listByWorld: (worldId: number) => api.get<Faction[]>(`/worlds/${worldId}/factions`),
-    get: (id: number) => api.get<Faction>(`/factions/${id}`),
+// Nation API
+export const nationApi = {
+    listByWorld: (worldId: number) => api.get<Nation[]>(`/worlds/${worldId}/nations`),
+    get: (id: number) => api.get<Nation>(`/nations/${id}`),
 };
 
-/** @deprecated Use factionApi */
-export const nationApi = factionApi;
-
-// Planet API (formerly City API)
-export const planetApi = {
-    listByWorld: (worldId: number) => api.get<StarSystem[]>(`/worlds/${worldId}/planets`),
-    listVisibleByWorld: (worldId: number) => api.get<StarSystem[]>(`/worlds/${worldId}/planets/visible`),
-    get: (id: number) => api.get<StarSystem>(`/planets/${id}`),
-    listByFaction: (factionId: number) => api.get<StarSystem[]>(`/factions/${factionId}/planets`),
-};
-
-/** @deprecated Use planetApi */
+// City API
 export const cityApi = {
-    ...planetApi,
-    /** @deprecated Use listByFaction */
-    listByNation: planetApi.listByFaction,
+    listByWorld: (worldId: number) => api.get<City[]>(`/worlds/${worldId}/cities`),
+    listVisibleByWorld: (worldId: number) => api.get<City[]>(`/worlds/${worldId}/cities/visible`),
+    get: (id: number) => api.get<City>(`/cities/${id}`),
+    listByNation: (nationId: number) => api.get<City[]>(`/nations/${nationId}/cities`),
 };
 
-// Officer API (formerly General API)
-export const officerApi = {
-    listByWorld: (worldId: number) => api.get<Officer[]>(`/worlds/${worldId}/officers`),
-    get: (id: number) => api.get<Officer>(`/officers/${id}`),
-    getMine: (worldId: number) => api.get<Officer>(`/worlds/${worldId}/officers/me`),
-    listByFaction: (factionId: number) => api.get<Officer[]>(`/factions/${factionId}/officers`),
+// General API
+export const generalApi = {
+    listByWorld: (worldId: number) => api.get<General[]>(`/worlds/${worldId}/generals`),
+    get: (id: number) => api.get<General>(`/generals/${id}`),
+    getMine: (worldId: number) => api.get<General>(`/worlds/${worldId}/generals/me`),
+    listByNation: (nationId: number) => api.get<General[]>(`/nations/${nationId}/generals`),
     selectNpc: (worldId: number, generalId: number) =>
-        api.post<Officer>(`/worlds/${worldId}/officers/npc`, { generalId }),
-    listPool: (worldId: number) => api.get<Officer[]>(`/worlds/${worldId}/pool`),
+        api.post<General>(`/worlds/${worldId}/select-npc`, { generalId }),
+    listPool: (worldId: number) => api.get<General[]>(`/worlds/${worldId}/pool`),
     selectFromPool: (worldId: number, generalId: number) =>
-        api.post<Officer>(`/worlds/${worldId}/officers/pool`, { generalId }),
+        api.post<General>(`/worlds/${worldId}/select-pool`, { generalId }),
     buildPoolGeneral: (
         worldId: number,
         payload: {
@@ -153,7 +145,7 @@ export const officerApi = {
             ego?: string;
             personality?: string;
         }
-    ) => api.post<Officer>(`/worlds/${worldId}/pool`, payload),
+    ) => api.post<General>(`/worlds/${worldId}/pool`, payload),
     updatePoolGeneral: (
         worldId: number,
         generalId: number,
@@ -164,36 +156,11 @@ export const officerApi = {
             politics: number;
             charm: number;
         }
-    ) => api.put<Officer>(`/worlds/${worldId}/pool/${generalId}`, stats),
+    ) => api.put<General>(`/worlds/${worldId}/pool/${generalId}`, stats),
     create: (worldId: number, payload: Record<string, unknown>) =>
-        api.post<Officer>(`/worlds/${worldId}/officers`, payload),
-    listAvailableNpcs: (worldId: number) => api.get<Officer[]>(`/worlds/${worldId}/available-npcs`),
-    listByPlanet: (planetId: number) => api.get<Officer[]>(`/planets/${planetId}/officers`),
-};
-
-/** @deprecated Use officerApi */
-export const generalApi = {
-    ...officerApi,
-    /** @deprecated Use listByFaction */
-    listByNation: officerApi.listByFaction,
-    /** @deprecated Use listByPlanet */
-    listByCity: officerApi.listByPlanet,
-};
-
-// Character API (Phase 2 — character creation/selection)
-export const characterApi = {
-    getAvailableOriginals: (sessionId: number, factionId: number) =>
-        api.get<Officer[]>(`/api/character/available-originals`, { params: { sessionId, factionId } }),
-    selectOriginal: (sessionId: number, officerId: number) =>
-        api.post<Officer>(`/api/character/select-original`, { sessionId, officerId }),
-    generate: (payload: {
-        sessionId: number;
-        factionId: number;
-        name: string;
-        originType: string;
-        stats: Record<string, number>;
-        planetId: number;
-    }) => api.post<Officer>(`/api/character/generate`, payload),
+        api.post<General>(`/worlds/${worldId}/generals`, payload),
+    listAvailableNpcs: (worldId: number) => api.get<General[]>(`/worlds/${worldId}/available-npcs`),
+    listByCity: (cityId: number) => api.get<General[]>(`/cities/${cityId}/generals`),
 };
 
 export const npcTokenApi = {
@@ -212,9 +179,9 @@ export const npcTokenApi = {
 
 // Command API
 export const commandApi = {
-    getReservedCommands: (generalId: number) => api.get<OfficerTurn[]>(`/officers/${generalId}/turns`),
+    getReservedCommands: (generalId: number) => api.get<GeneralTurn[]>(`/generals/${generalId}/turns`),
     reserveCommand: (generalId: number, payload: { turn: number; command: string; arg?: CommandArg }) =>
-        api.post<OfficerTurn[]>(`/officers/${generalId}/turns`, {
+        api.post<GeneralTurn[]>(`/generals/${generalId}/turns`, {
             turns: [
                 {
                     turnIdx: payload.turn,
@@ -224,7 +191,7 @@ export const commandApi = {
             ],
         }),
     deleteReservedCommand: (generalId: number, turn: number) =>
-        api.post<OfficerTurn[]>(`/officers/${generalId}/turns`, {
+        api.post<GeneralTurn[]>(`/generals/${generalId}/turns`, {
             turns: [{ turnIdx: turn, actionCode: '휴식' }],
         }),
     reserve: (
@@ -234,25 +201,25 @@ export const commandApi = {
             actionCode: string;
             arg?: CommandArg;
         }[]
-    ) => api.post<OfficerTurn[]>(`/officers/${generalId}/turns`, { turns }),
+    ) => api.post<GeneralTurn[]>(`/generals/${generalId}/turns`, { turns }),
     execute: (generalId: number, actionCode: string, arg?: CommandArg) =>
-        api.post<CommandResult>(`/officers/${generalId}/execute`, {
+        api.post<CommandResult>(`/generals/${generalId}/execute`, {
             actionCode,
             arg,
         }),
     executeNation: (generalId: number, actionCode: string, arg?: CommandArg) =>
-        api.post<CommandResult>(`/officers/${generalId}/execute-faction`, {
+        api.post<CommandResult>(`/generals/${generalId}/execute-nation`, {
             actionCode,
             arg,
         }),
     getNationReserved: (nationId: number, officerLevel: number) =>
-        api.get<FactionTurn[]>(`/factions/${nationId}/turns`, {
+        api.get<NationTurn[]>(`/nations/${nationId}/turns`, {
             params: { officerLevel },
         }),
-    getAllOfficerTurns: async (nationId: number, officerLevels: number[]): Promise<FactionTurn[]> => {
+    getAllOfficerTurns: async (nationId: number, officerLevels: number[]): Promise<NationTurn[]> => {
         const results = await Promise.all(
             officerLevels.map((lv) =>
-                api.get<FactionTurn[]>(`/factions/${nationId}/turns`, {
+                api.get<NationTurn[]>(`/nations/${nationId}/turns`, {
                     params: { officerLevel: lv },
                 })
             )
@@ -267,19 +234,19 @@ export const commandApi = {
             actionCode: string;
             arg?: CommandArg;
         }[]
-    ) => api.post<FactionTurn[]>(`/factions/${nationId}/turns`, { turns }, { params: { generalId } }),
+    ) => api.post<NationTurn[]>(`/nations/${nationId}/turns`, { turns }, { params: { generalId } }),
     getCommandTable: (generalId: number) =>
-        api.get<Record<string, CommandTableEntry[]>>(`/officers/${generalId}/command-table`),
+        api.get<Record<string, CommandTableEntry[]>>(`/generals/${generalId}/command-table`),
     getNationCommandTable: (generalId: number) =>
-        api.get<Record<string, CommandTableEntry[]>>(`/officers/${generalId}/faction-command-table`),
+        api.get<Record<string, CommandTableEntry[]>>(`/generals/${generalId}/nation-command-table`),
     repeatTurns: (generalId: number, count?: number) =>
-        api.post<OfficerTurn[]>(`/officers/${generalId}/turns/repeat`, { count: count ?? 1 }),
+        api.post<GeneralTurn[]>(`/generals/${generalId}/turns/repeat`, { count: count ?? 1 }),
     pushTurns: (generalId: number, amount: number) =>
-        api.post<OfficerTurn[]>(`/officers/${generalId}/turns/push`, { amount }),
-    repeatFactionTurns: (nationId: number, generalId: number, count?: number) =>
-        api.post<FactionTurn[]>(`/factions/${nationId}/turns/repeat`, { count: count ?? 1 }, { params: { generalId } }),
-    pushFactionTurns: (nationId: number, generalId: number, amount: number) =>
-        api.post<FactionTurn[]>(`/factions/${nationId}/turns/push`, { amount }, { params: { generalId } }),
+        api.post<GeneralTurn[]>(`/generals/${generalId}/turns/push`, { amount }),
+    repeatNationTurns: (nationId: number, generalId: number, count?: number) =>
+        api.post<NationTurn[]>(`/nations/${nationId}/turns/repeat`, { count: count ?? 1 }, { params: { generalId } }),
+    pushNationTurns: (nationId: number, generalId: number, amount: number) =>
+        api.post<NationTurn[]>(`/nations/${nationId}/turns/push`, { amount }, { params: { generalId } }),
 };
 
 export const realtimeApi = {
@@ -295,11 +262,8 @@ export const realtimeApi = {
 // Diplomacy API
 export const diplomacyApi = {
     listByWorld: (worldId: number) => api.get<Diplomacy[]>(`/worlds/${worldId}/diplomacy`),
-    listByFaction: (worldId: number, factionId: number) =>
-        api.get<Diplomacy[]>(`/worlds/${worldId}/diplomacy/faction/${factionId}`),
-    /** @deprecated Use listByFaction */
     listByNation: (worldId: number, nationId: number) =>
-        api.get<Diplomacy[]>(`/worlds/${worldId}/diplomacy/faction/${nationId}`),
+        api.get<Diplomacy[]>(`/worlds/${worldId}/diplomacy/nation/${nationId}`),
     respond: (worldId: number, messageId: number, action: string, accept: boolean) =>
         api.post(`/worlds/${worldId}/diplomacy/respond`, {
             messageId,
@@ -320,26 +284,10 @@ export const messageApi = {
             beforeId?: number;
             limit?: number;
         }
-    ) => {
-        const { worldId, nationId, generalId, officerLevel, ...rest } = params;
-        return api.get<Message[]>('/messages', {
-            params: {
-                type,
-                ...(worldId != null ? { sessionId: worldId } : {}),
-                ...(nationId != null ? { factionId: nationId } : {}),
-                ...(generalId != null ? { officerId: generalId } : {}),
-                ...(officerLevel != null ? { rank: officerLevel } : {}),
-                ...rest,
-            },
-        });
-    },
+    ) => api.get<Message[]>('/messages', { params: { type, ...params } }),
     getMine: (generalId: number, sinceId?: number | null, limit?: number) =>
-        api.get<Message[]>('/messages', {
-            params: {
-                officerId: generalId,
-                ...(sinceId != null ? { sinceId } : {}),
-                ...(limit != null ? { limit } : {}),
-            },
+        api.get<Message[]>(`/messages`, {
+            params: { generalId, ...(sinceId != null ? { sinceId } : {}), ...(limit != null ? { limit } : {}) },
         }),
     send: (
         worldId: number,
@@ -354,7 +302,7 @@ export const messageApi = {
         }
     ) =>
         api.post<Message>('/messages', {
-            sessionId: worldId,
+            worldId,
             mailboxCode: options?.mailboxCode ?? 'personal',
             mailboxType: options?.mailboxType ?? 'PRIVATE',
             messageType: options?.messageType ?? 'personal',
@@ -364,10 +312,10 @@ export const messageApi = {
             payload: { content },
         }),
     getBoard: (worldId: number, nationId: number) =>
-        api.get<Message[]>('/messages/board', { params: { sessionId: worldId, factionId: nationId } }),
+        api.get<Message[]>('/messages/board', { params: { worldId, nationId } }),
     postBoard: (worldId: number, srcId: number, nationId: number, content: string, title?: string) =>
         api.post<Message>('/messages', {
-            sessionId: worldId,
+            worldId,
             mailboxCode: 'board',
             mailboxType: 'PUBLIC',
             messageType: 'board',
@@ -377,11 +325,11 @@ export const messageApi = {
         }),
     getSecretBoard: (worldId: number, nationId: number) =>
         api.get<Message[]>('/messages/secret-board', {
-            params: { sessionId: worldId, factionId: nationId },
+            params: { worldId, nationId },
         }),
     postSecretBoard: (worldId: number, srcId: number, nationId: number, content: string, title?: string) =>
         api.post<Message>('/messages', {
-            sessionId: worldId,
+            worldId,
             mailboxCode: 'secret',
             mailboxType: 'NATIONAL',
             messageType: 'secret',
@@ -393,11 +341,9 @@ export const messageApi = {
     respondDiplomacy: (messageId: number, accept: boolean) =>
         api.post<void>(`/messages/${messageId}/diplomacy-respond`, { accept }),
     acceptRecruitment: (messageId: number, generalId: number) =>
-        api.post<{ nationName: string }>(`/messages/${messageId}/accept-recruitment`, null, {
-            params: { officerId: generalId },
-        }),
+        api.post<{ nationName: string }>(`/messages/${messageId}/accept-recruitment`, null, { params: { generalId } }),
     declineRecruitment: (messageId: number, generalId: number) =>
-        api.post<void>(`/messages/${messageId}/decline-recruitment`, null, { params: { officerId: generalId } }),
+        api.post<void>(`/messages/${messageId}/decline-recruitment`, null, { params: { generalId } }),
     delete: (id: number) => api.delete<void>(`/messages/${id}`),
     markAsRead: (id: number) => api.patch<void>(`/messages/${id}/read`),
     getRecent: (sequence: number) => api.get<Message[]>('/messages/recent', { params: { sequence } }),
@@ -427,29 +373,25 @@ export const historyApi = {
             params: { year },
         }),
     getWorldRecords: (worldId: number) => api.get<Message[]>(`/worlds/${worldId}/records`),
-    getOfficerRecords: (officerId: number) => api.get<Message[]>(`/officers/${officerId}/records`),
-    /** @deprecated Use getOfficerRecords */
-    getGeneralRecords: (generalId: number) => api.get<Message[]>(`/officers/${generalId}/records`),
+    getGeneralRecords: (generalId: number) => api.get<Message[]>(`/generals/${generalId}/records`),
+    getNationHistory: (nationId: number) => api.get<GameRecord[]>('/records/nation-history', { params: { nationId } }),
 };
 
-export const officerLogApi = {
+export const generalLogApi = {
     getOldLogs: (
-        officerId: number,
+        generalId: number,
         targetId: number,
         type: 'generalHistory' | 'generalAction' | 'battleResult' | 'battleDetail',
         to?: number
     ) =>
-        api.get<OfficerLogResult>(`/officers/${officerId}/logs/old`, {
+        api.get<GeneralLogResult>(`/generals/${generalId}/logs/old`, {
             params: { targetId, type, ...(to ? { to } : {}) },
         }),
 };
 
-/** @deprecated Use officerLogApi */
-export const generalLogApi = officerLogApi;
-
 export const simulatorExportApi = {
     exportGeneral: (generalId: number, targetId: number) =>
-        api.get<SimulatorExportResult>(`/officers/${generalId}/simulator-export`, {
+        api.get<SimulatorExportResult>(`/generals/${generalId}/simulator-export`, {
             params: { targetId },
         }),
 };
@@ -468,7 +410,7 @@ export const boardApi = {
         }),
     deleteComment: (postId: number, commentId: number, generalId: number) =>
         api.delete<void>(`/boards/${postId}/comments/${commentId}`, {
-            params: { officerId: generalId },
+            params: { generalId },
         }),
 };
 
@@ -501,74 +443,63 @@ export const accountApi = {
     },
     unlinkOAuth: (provider: string) => api.delete<void>(`/account/oauth/${provider}`),
     uploadIcon: (formData: FormData) =>
-        api.post<void>('/account/icon', formData, {
+        api.post<{ url: string }>('/account/icon', formData, {
             headers: { 'Content-Type': 'multipart/form-data' },
         }),
     deleteIcon: () => api.delete<void>('/account/icon'),
     syncIcon: () => api.post<void>('/account/icon/sync'),
-    getDetailedInfo: () => api.get<AccountDetailedInfo>('/account/detailed-info'),
+    getDetailedInfo: () => api.get<AccountDetailedInfoResponse>('/account/detailed-info'),
 };
 
-// Faction Management API (formerly Nation Management)
-export const factionManagementApi = {
-    getOfficers: (factionId: number) => api.get<OfficerInfo[]>(`/factions/${factionId}/officers`),
-    appointOfficer: (factionId: number, data: { generalId: number; officerLevel: number; officerCity?: number }) =>
-        api.post<void>(`/factions/${factionId}/officers`, data),
-    expel: (factionId: number, generalId: number) => api.post<void>(`/factions/${factionId}/expel`, { generalId }),
-    setPermission: (factionId: number, data: { requesterId: number; isAmbassador: boolean; generalIds: number[] }) =>
-        api.post<void>(`/factions/${factionId}/permissions`, data),
+// Nation Management API
+export const nationManagementApi = {
+    getOfficers: (nationId: number) => api.get<OfficerInfo[]>(`/nations/${nationId}/officers`),
+    appointOfficer: (nationId: number, data: { generalId: number; officerLevel: number; officerCity?: number }) =>
+        api.post<void>(`/nations/${nationId}/officers`, data),
+    expel: (nationId: number, generalId: number) => api.post<void>(`/nations/${nationId}/expel`, { generalId }),
+    setPermission: (nationId: number, data: { requesterId: number; isAmbassador: boolean; generalIds: number[] }) =>
+        api.post<void>(`/nations/${nationId}/permissions`, data),
 };
 
-/** @deprecated Use factionManagementApi */
-export const nationManagementApi = factionManagementApi;
-
-// Faction Policy API (formerly Nation Policy)
-export const factionPolicyApi = {
-    getPolicy: (nationId: number) => api.get<FactionPolicyInfo>(`/factions/${nationId}/policy`),
-    updatePolicy: (nationId: number, data: JsonObject) => api.patch<void>(`/factions/${nationId}/policy`, data),
-    updateNotice: (nationId: number, notice: string) => api.patch<void>(`/factions/${nationId}/notice`, { notice }),
+// Nation Policy API
+export const nationPolicyApi = {
+    getPolicy: (nationId: number) => api.get<NationPolicyInfo>(`/nations/${nationId}/policy`),
+    updatePolicy: (nationId: number, data: JsonObject) => api.patch<void>(`/nations/${nationId}/policy`, data),
+    updateNotice: (nationId: number, notice: string) => api.patch<void>(`/nations/${nationId}/notice`, { notice }),
     updateScoutMsg: (nationId: number, scoutMsg: string) =>
-        api.patch<void>(`/factions/${nationId}/scout-msg`, { scoutMsg }),
+        api.patch<void>(`/nations/${nationId}/scout-msg`, { scoutMsg }),
     setBlockWar: (nationId: number, value: boolean) =>
-        api.post<{ result: boolean; reason?: string; availableCnt?: number }>(`/factions/${nationId}/block-war`, {
+        api.post<{ result: boolean; reason?: string; availableCnt?: number }>(`/nations/${nationId}/block-war`, {
             value,
         }),
     setBlockScout: (nationId: number, value: boolean) =>
-        api.post<{ result: boolean; reason?: string }>(`/factions/${nationId}/block-scout`, { value }),
+        api.post<{ result: boolean; reason?: string }>(`/nations/${nationId}/block-scout`, { value }),
 };
-
-/** @deprecated Use factionPolicyApi */
-export const nationPolicyApi = factionPolicyApi;
 
 // NPC Policy API (dynamic policy maps - intentionally loose)
 export const npcPolicyApi = {
-    getPolicy: (nationId: number) => api.get<NpcPolicyInfo>(`/factions/${nationId}/npc-policy`),
+    getPolicy: (nationId: number) => api.get<NpcPolicyInfo>(`/nations/${nationId}/npc-policy`),
     updatePolicy: (nationId: number, policy: Partial<NpcPolicyInfo> & JsonObject) =>
-        api.put<void>(`/factions/${nationId}/npc-policy`, policy),
+        api.put<void>(`/nations/${nationId}/npc-policy`, policy),
     updatePriority: (nationId: number, priority: Partial<NpcPolicyInfo> & JsonObject) =>
-        api.put<void>(`/factions/${nationId}/npc-priority`, priority),
+        api.put<void>(`/nations/${nationId}/npc-priority`, priority),
 };
 
-// Fleet API (formerly Troop API)
-export const fleetApi = {
-    listByFaction: (factionId: number) => api.get<FleetWithMembers[]>(`/factions/${factionId}/fleets`),
-    /** @deprecated Use listByFaction */
-    listByNation: (nationId: number) => api.get<FleetWithMembers[]>(`/factions/${nationId}/fleets`),
-    create: (data: { worldId: number; leaderOfficerId: number; factionId: number; name: string }) =>
-        api.post<Fleet>('/fleets', data),
-    join: (fleetId: number, officerId: number) => api.post<void>(`/fleets/${fleetId}/join`, { officerId }),
-    exit: (fleetId: number, officerId: number) => api.post<void>(`/fleets/${fleetId}/exit`, { officerId }),
-    kick: (fleetId: number, officerId: number) => api.post<void>(`/fleets/${fleetId}/kick`, { officerId }),
-    rename: (fleetId: number, name: string) => api.patch<Fleet>(`/fleets/${fleetId}`, { name }),
-    disband: (fleetId: number) => api.delete<void>(`/fleets/${fleetId}`),
+// Troop API
+export const troopApi = {
+    listByNation: (nationId: number) => api.get<TroopWithMembers[]>(`/nations/${nationId}/troops`),
+    create: (data: { worldId: number; leaderGeneralId: number; nationId: number; name: string }) =>
+        api.post<Troop>('/troops', data),
+    join: (troopId: number, generalId: number) => api.post<void>(`/troops/${troopId}/join`, { generalId }),
+    exit: (troopId: number, generalId: number) => api.post<void>(`/troops/${troopId}/exit`, { generalId }),
+    kick: (troopId: number, generalId: number) => api.post<void>(`/troops/${troopId}/kick`, { generalId }),
+    rename: (troopId: number, name: string) => api.patch<Troop>(`/troops/${troopId}`, { name }),
+    disband: (troopId: number) => api.delete<void>(`/troops/${troopId}`),
 };
-
-/** @deprecated Use fleetApi */
-export const troopApi = fleetApi;
 
 // Diplomacy Letter API
 export const diplomacyLetterApi = {
-    list: (nationId: number) => api.get<Message[]>(`/factions/${nationId}/diplomacy-letters`),
+    list: (nationId: number) => api.get<Message[]>(`/nations/${nationId}/diplomacy-letters`),
     send: (
         nationId: number,
         data: {
@@ -578,7 +509,7 @@ export const diplomacyLetterApi = {
             content?: string;
             diplomaticContent?: string;
         }
-    ) => api.post<Message>(`/factions/${nationId}/diplomacy-letters`, data),
+    ) => api.post<Message>(`/nations/${nationId}/diplomacy-letters`, data),
     respond: (letterId: number, accept: boolean, reason?: string) =>
         api.post<void>(`/diplomacy-letters/${letterId}/respond`, {
             accept,
@@ -591,16 +522,14 @@ export const diplomacyLetterApi = {
 
 // Ranking API
 export const rankingApi = {
-    bestOfficers: (worldId: number, sortBy?: string, limit?: number) => {
+    bestGenerals: (worldId: number, sortBy?: string, limit?: number) => {
         const params: Record<string, string | number> = {};
         if (sortBy) params.sortBy = sortBy;
         if (limit) params.limit = limit;
-        return api.get<BestOfficer[]>(`/worlds/${worldId}/best-officers`, {
+        return api.get<BestGeneral[]>(`/worlds/${worldId}/best-generals`, {
             params,
         });
     },
-    /** @deprecated Use bestOfficers */
-    bestGenerals: (worldId: number, sortBy?: string, limit?: number) => rankingApi.bestOfficers(worldId, sortBy, limit),
     hallOfFame: (worldId: number, params?: { season?: number; scenario?: string }) =>
         api.get<Message[]>(`/worlds/${worldId}/hall-of-fame`, { params }),
     hallOfFameOptions: (worldId: number) =>
@@ -643,7 +572,9 @@ export const inheritanceApi = {
             leadership: number;
             strength: number;
             intel: number;
-            inheritBonusStat?: [number, number, number];
+            politics: number;
+            charm: number;
+            inheritBonusStat?: [number, number, number, number, number];
         }
     ) => api.post<InheritanceActionResult>(`/worlds/${worldId}/inheritance/reset-stats`, stats),
     checkOwner: (worldId: number, generalIdOrName: string | number) =>
@@ -691,12 +622,12 @@ export const auctionApi = {
     getHistory: (worldId: number) => api.get<AuctionHistoryEntry[]>(`/worlds/${worldId}/auction-history`),
     getMarketPrice: (worldId: number) => api.get<MarketPriceResponse>(`/worlds/${worldId}/market-price`),
     buyRice: (worldId: number, generalId: number, amount: number) =>
-        api.post<MarketBuySuppliesResponse>(`/worlds/${worldId}/market/buy-rice`, {
+        api.post<MarketBuyRiceResponse>(`/worlds/${worldId}/market/buy-rice`, {
             generalId,
             amount,
         }),
     sellRice: (worldId: number, generalId: number, amount: number) =>
-        api.post<MarketSellSuppliesResponse>(`/worlds/${worldId}/market/sell-rice`, {
+        api.post<MarketSellRiceResponse>(`/worlds/${worldId}/market/sell-rice`, {
             generalId,
             amount,
         }),
@@ -711,22 +642,22 @@ export const auctionApi = {
 // Item API
 export const itemApi = {
     discard: (generalId: number, itemType: string) =>
-        api.post<CommandResult>(`/officers/${generalId}/items/discard`, {
+        api.post<CommandResult>(`/generals/${generalId}/items/discard`, {
             itemType,
         }),
     unequip: (generalId: number, itemType: string) =>
-        api.post<CommandResult>(`/officers/${generalId}/items/unequip`, {
+        api.post<CommandResult>(`/generals/${generalId}/items/unequip`, {
             itemType,
         }),
     use: (generalId: number, itemType: string, itemCode: string) =>
-        api.post<CommandResult>(`/officers/${generalId}/items/use`, {
+        api.post<CommandResult>(`/generals/${generalId}/items/use`, {
             itemType,
             itemCode,
         }),
     equip: (generalId: number, payload: { itemCode: string; itemType?: string }) =>
-        api.post<CommandResult>(`/officers/${generalId}/items/equip`, payload),
+        api.post<CommandResult>(`/generals/${generalId}/items/equip`, payload),
     give: (generalId: number, payload: { itemType: string; targetGeneralId: number }) =>
-        api.post<CommandResult>(`/officers/${generalId}/items/give`, payload),
+        api.post<CommandResult>(`/generals/${generalId}/items/give`, payload),
 };
 
 // Tournament API
@@ -782,7 +713,7 @@ export const battleSimApi = {
     simulate: (
         attacker: BattleSimUnit,
         defender: BattleSimUnit,
-        defenderCity: BattleSimStarSystem,
+        defenderCity: BattleSimCity,
         options?: {
             year?: number;
             month?: number;
@@ -810,10 +741,7 @@ export const gameVersionApi = {
 // Public API (unauthenticated endpoints)
 export const publicApi = {
     getCachedMap: (worldId?: number) =>
-        api.get<PublicCachedMapResponse>(
-            '/public/cached-map',
-            worldId != null ? { params: { sessionId: worldId } } : {}
-        ),
+        api.get<PublicCachedMapResponse>('/public/cached-map', worldId != null ? { params: { worldId } } : {}),
 };
 
 // Helper: attach worldId as query param when provided
@@ -824,18 +752,11 @@ export const adminApi = {
     getDashboard: (worldId?: number) => api.get<AdminDashboard>('/admin/dashboard', wq(worldId)),
     updateSettings: (settings: JsonObject, worldId?: number) =>
         api.patch<void>('/admin/settings', settings, wq(worldId)),
-    listOfficers: (worldId?: number) => api.get<AdminOfficer[]>('/admin/officers', wq(worldId)),
-    /** @deprecated Use listOfficers */
-    listGenerals: (worldId?: number) => api.get<AdminOfficer[]>('/admin/officers', wq(worldId)),
-    officerAction: (id: number, type: string, worldId?: number) =>
-        api.post<void>(`/admin/officers/${id}/action`, { type }, wq(worldId)),
-    /** @deprecated Use officerAction */
+    listGenerals: (worldId?: number) => api.get<AdminGeneral[]>('/admin/generals', wq(worldId)),
     generalAction: (id: number, type: string, worldId?: number) =>
-        api.post<void>(`/admin/officers/${id}/action`, { type }, wq(worldId)),
-    getStatistics: (worldId?: number) => api.get<FactionStatistic[]>('/admin/statistics', wq(worldId)),
-    getOfficerLogs: (id: number, worldId?: number) => api.get<Message[]>(`/admin/officers/${id}/logs`, wq(worldId)),
-    /** @deprecated Use getOfficerLogs */
-    getGeneralLogs: (id: number, worldId?: number) => api.get<Message[]>(`/admin/officers/${id}/logs`, wq(worldId)),
+        api.post<void>(`/admin/generals/${id}/action`, { type }, wq(worldId)),
+    getStatistics: (worldId?: number) => api.get<NationStatistic[]>('/admin/statistics', wq(worldId)),
+    getGeneralLogs: (id: number, worldId?: number) => api.get<Message[]>(`/admin/generals/${id}/logs`, wq(worldId)),
     getDiplomacy: (worldId?: number) => api.get<Diplomacy[]>('/admin/diplomacy', wq(worldId)),
     timeControl: (data: TimeControlRequest, worldId?: number) =>
         api.post<void>('/admin/time-control', data, wq(worldId)),
@@ -866,10 +787,10 @@ export const adminApi = {
         extend?: boolean;
         npcMode?: number;
         fiction?: number;
-        maxOfficer?: number;
-        maxFaction?: number;
+        maxGeneral?: number;
+        maxNation?: number;
         joinMode?: string;
-        blockOfficerCreate?: number;
+        blockGeneralCreate?: number;
         showImgLevel?: number;
         opentime?: string;
         startTime?: string;
@@ -890,11 +811,8 @@ export const adminApi = {
     }) => api.post<CreateWorldResponse>('/worlds', data),
     deleteWorld: (worldId: number) => api.delete<void>(`/worlds/${worldId}`),
     listWorlds: () => api.get<AdminWorldListEntry[]>('/admin/worlds'),
-    bulkOfficerAction: (ids: number[], type: string, worldId?: number) =>
-        api.post<void>('/admin/officers/bulk-action', { ids, type }, wq(worldId)),
-    /** @deprecated Use bulkOfficerAction */
     bulkGeneralAction: (ids: number[], type: string, worldId?: number) =>
-        api.post<void>('/admin/officers/bulk-action', { ids, type }, wq(worldId)),
+        api.post<void>('/admin/generals/bulk-action', { ids, type }, wq(worldId)),
     activateWorld: (worldId: number, data?: { gameVersion?: string }) =>
         api.post<void>(`/worlds/${worldId}/activate`, data ?? {}),
     deactivateWorld: (worldId: number) => api.post<void>(`/worlds/${worldId}/deactivate`, {}),
@@ -906,10 +824,10 @@ export const adminApi = {
             extend?: boolean;
             npcMode?: number;
             fiction?: number;
-            maxOfficer?: number;
-            maxFaction?: number;
+            maxGeneral?: number;
+            maxNation?: number;
             joinMode?: string;
-            blockOfficerCreate?: number;
+            blockGeneralCreate?: number;
             showImgLevel?: number;
             opentime?: string;
             startTime?: string;

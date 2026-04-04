@@ -1,7 +1,8 @@
 package com.openlogh.qa.parity
 
 import com.openlogh.engine.war.*
-import com.openlogh.entity.*
+import com.openlogh.entity.City
+import com.openlogh.entity.General
 import com.openlogh.model.CrewType
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.DisplayName
@@ -457,13 +458,13 @@ class BattleParityTest {
     inner class CrewTypeCoefParity {
 
         @Test
-        fun `footman vs archer attack coef is 0_8`() {
-            assertEquals(0.8, CrewType.FOOTMAN.getAttackCoef(CrewType.ARCHER), 0.001)
+        fun `footman vs archer attack coef is 1_2`() {
+            assertEquals(1.2, CrewType.FOOTMAN.getAttackCoef(CrewType.ARCHER), 0.001)
         }
 
         @Test
-        fun `footman vs cavalry attack coef is 1_2`() {
-            assertEquals(1.2, CrewType.FOOTMAN.getAttackCoef(CrewType.CAVALRY), 0.001)
+        fun `footman vs cavalry attack coef is 0_8`() {
+            assertEquals(0.8, CrewType.FOOTMAN.getAttackCoef(CrewType.CAVALRY), 0.001)
         }
 
         @Test

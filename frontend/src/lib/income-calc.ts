@@ -1,21 +1,21 @@
 import type { City } from '@/types';
 
-const NATION_TYPE_INCOME_MOD: Record<string, { funds: number; supplies: number }> = {
-    che_법가: { funds: 1.1, supplies: 1.0 },
-    che_오두미도: { funds: 1.0, supplies: 1.1 },
-    che_유가: { funds: 1.0, supplies: 0.9 },
-    che_덕가: { funds: 1.0, supplies: 0.9 },
-    che_명가: { funds: 1.0, supplies: 0.9 },
-    che_불가: { funds: 0.9, supplies: 1.0 },
-    che_도적: { funds: 0.9, supplies: 1.0 },
-    che_종횡가: { funds: 0.9, supplies: 1.0 },
+const NATION_TYPE_INCOME_MOD: Record<string, { gold: number; rice: number }> = {
+    che_법가: { gold: 1.1, rice: 1.0 },
+    che_오두미도: { gold: 1.0, rice: 1.1 },
+    che_유가: { gold: 1.0, rice: 0.9 },
+    che_덕가: { gold: 1.0, rice: 0.9 },
+    che_명가: { gold: 1.0, rice: 0.9 },
+    che_불가: { gold: 0.9, rice: 1.0 },
+    che_도적: { gold: 0.9, rice: 1.0 },
+    che_종횡가: { gold: 0.9, rice: 1.0 },
 };
 
-function getIncomeModifier(typeCode: string, resource: 'funds' | 'supplies'): number {
+function getIncomeModifier(typeCode: string, resource: 'gold' | 'rice'): number {
     return NATION_TYPE_INCOME_MOD[typeCode]?.[resource] ?? 1.0;
 }
 
-export function calcPlanetFundsIncome(
+export function calcCityGoldIncome(
     city: City,
     officerCnt: number,
     isCapital: boolean,
@@ -23,17 +23,17 @@ export function calcPlanetFundsIncome(
     typeCode: string
 ): number {
     if (!city.supplyState) return 0;
-    if (city.commerceMax <= 0) return 0;
-    const trustRatio = city.approval / 200 + 0.5;
-    let v = (city.population * (city.commerce / city.commerceMax) * trustRatio) / 30;
-    v *= 1 + (city.securityMax > 0 ? city.security / city.securityMax / 10 : 0);
+    if (city.commMax <= 0) return 0;
+    const trustRatio = city.trust / 200 + 0.5;
+    let v = (city.pop * (city.comm / city.commMax) * trustRatio) / 30;
+    v *= 1 + (city.secuMax > 0 ? city.secu / city.secuMax / 10 : 0);
     v *= Math.pow(1.05, officerCnt);
     if (isCapital && nationLevel > 0) v *= 1 + 1 / (3 * nationLevel);
-    v *= getIncomeModifier(typeCode, 'funds');
+    v *= getIncomeModifier(typeCode, 'gold');
     return Math.round(v);
 }
 
-export function calcPlanetSuppliesIncome(
+export function calcCityRiceIncome(
     city: City,
     officerCnt: number,
     isCapital: boolean,
@@ -41,17 +41,17 @@ export function calcPlanetSuppliesIncome(
     typeCode: string
 ): number {
     if (!city.supplyState) return 0;
-    if (city.productionMax <= 0) return 0;
-    const trustRatio = city.approval / 200 + 0.5;
-    let v = (city.population * (city.production / city.productionMax) * trustRatio) / 30;
-    v *= 1 + (city.securityMax > 0 ? city.security / city.securityMax / 10 : 0);
+    if (city.agriMax <= 0) return 0;
+    const trustRatio = city.trust / 200 + 0.5;
+    let v = (city.pop * (city.agri / city.agriMax) * trustRatio) / 30;
+    v *= 1 + (city.secuMax > 0 ? city.secu / city.secuMax / 10 : 0);
     v *= Math.pow(1.05, officerCnt);
     if (isCapital && nationLevel > 0) v *= 1 + 1 / (3 * nationLevel);
-    v *= getIncomeModifier(typeCode, 'supplies');
+    v *= getIncomeModifier(typeCode, 'rice');
     return Math.round(v);
 }
 
-export function calcPlanetFortressSuppliesIncome(
+export function calcCityWallRiceIncome(
     city: City,
     officerCnt: number,
     isCapital: boolean,
@@ -59,19 +59,19 @@ export function calcPlanetFortressSuppliesIncome(
     typeCode: string
 ): number {
     if (!city.supplyState) return 0;
-    if (city.fortressMax <= 0) return 0;
-    let v = (city.orbitalDefense * city.fortress) / city.fortressMax / 3;
-    v *= 1 + (city.securityMax > 0 ? city.security / city.securityMax / 10 : 0);
+    if (city.wallMax <= 0) return 0;
+    let v = (city.def * city.wall) / city.wallMax / 3;
+    v *= 1 + (city.secuMax > 0 ? city.secu / city.secuMax / 10 : 0);
     v *= Math.pow(1.05, officerCnt);
     if (isCapital && nationLevel > 0) v *= 1 + 1 / (3 * nationLevel);
-    v *= getIncomeModifier(typeCode, 'supplies');
+    v *= getIncomeModifier(typeCode, 'rice');
     return Math.round(v);
 }
 
-export function calcPlanetWarFundsIncome(city: City, typeCode: string): number {
+export function calcCityWarGoldIncome(city: City, typeCode: string): number {
     if (!city.supplyState) return 0;
     let v = city.dead / 10;
-    v *= getIncomeModifier(typeCode, 'funds');
+    v *= getIncomeModifier(typeCode, 'gold');
     return Math.round(v);
 }
 

@@ -8,15 +8,15 @@ import org.springframework.data.repository.query.Param
 interface MessageRepository : JpaRepository<Message, Long> {
     fun findByDestIdOrderBySentAtDesc(destId: Long): List<Message>
     fun findByDestIdAndIdGreaterThanOrderBySentAtDesc(destId: Long, id: Long): List<Message>
-    fun findBySessionIdAndMailboxCodeOrderBySentAtDesc(sessionId: Long, mailboxCode: String): List<Message>
-    fun findBySessionIdAndMailboxCodeAndSrcIdOrderBySentAtDesc(sessionId: Long, mailboxCode: String, srcId: Long): List<Message>
+    fun findByWorldIdAndMailboxCodeOrderBySentAtDesc(worldId: Long, mailboxCode: String): List<Message>
+    fun findByWorldIdAndMailboxCodeAndSrcIdOrderBySentAtDesc(worldId: Long, mailboxCode: String, srcId: Long): List<Message>
     fun findBySrcIdAndMailboxCodeOrderBySentAtDesc(srcId: Long, mailboxCode: String): List<Message>
-    fun findBySessionIdAndMailboxCodeAndIdGreaterThanOrderBySentAtDesc(sessionId: Long, mailboxCode: String, id: Long): List<Message>
+    fun findByWorldIdAndMailboxCodeAndIdGreaterThanOrderBySentAtDesc(worldId: Long, mailboxCode: String, id: Long): List<Message>
     fun findByIdGreaterThanOrderBySentAtDesc(id: Long): List<Message>
     fun findByDestIdAndMailboxCodeOrderBySentAtDesc(destId: Long, mailboxCode: String): List<Message>
-    fun findBySessionIdAndMailboxCodeAndDestIdOrderBySentAtDesc(sessionId: Long, mailboxCode: String, destId: Long): List<Message>
-    fun findBySessionIdAndMailboxTypeOrderBySentAtDesc(sessionId: Long, mailboxType: String): List<Message>
-    fun findBySessionIdAndMailboxTypeAndIdLessThanOrderBySentAtDesc(sessionId: Long, mailboxType: String, id: Long): List<Message>
+    fun findByWorldIdAndMailboxCodeAndDestIdOrderBySentAtDesc(worldId: Long, mailboxCode: String, destId: Long): List<Message>
+    fun findByWorldIdAndMailboxTypeOrderBySentAtDesc(worldId: Long, mailboxType: String): List<Message>
+    fun findByWorldIdAndMailboxTypeAndIdLessThanOrderBySentAtDesc(worldId: Long, mailboxType: String, id: Long): List<Message>
     fun findByDestIdAndMailboxTypeOrderBySentAtDesc(destId: Long, mailboxType: String): List<Message>
     fun findByDestIdAndMailboxTypeAndIdLessThanOrderBySentAtDesc(destId: Long, mailboxType: String, id: Long): List<Message>
     fun findByDestIdAndMailboxTypeAndIdGreaterThanOrderBySentAtDesc(destId: Long, mailboxType: String, id: Long): List<Message>
@@ -24,26 +24,12 @@ interface MessageRepository : JpaRepository<Message, Long> {
     fun findByDestIdAndMailboxCodeAndIdGreaterThanOrderBySentAtDesc(destId: Long, mailboxCode: String, id: Long): List<Message>
     fun findByDestIdAndMailboxTypeAndMessageTypeOrderBySentAtDesc(destId: Long, mailboxType: String, messageType: String): List<Message>
 
-    // === Old field name compat aliases ===
-    @Query("SELECT m FROM Message m WHERE m.sessionId = :worldId AND m.mailboxType = :mailboxType ORDER BY m.sentAt DESC")
-    fun findByWorldIdAndMailboxTypeOrderBySentAtDesc(
-        @Param("worldId") worldId: Long,
-        @Param("mailboxType") mailboxType: String,
-    ): List<Message>
-
-    @Query("SELECT m FROM Message m WHERE m.sessionId = :worldId AND m.mailboxType = :mailboxType AND m.id < :id ORDER BY m.sentAt DESC")
-    fun findByWorldIdAndMailboxTypeAndIdLessThanOrderBySentAtDesc(
-        @Param("worldId") worldId: Long,
-        @Param("mailboxType") mailboxType: String,
-        @Param("id") id: Long,
-    ): List<Message>
-
     @Query(
         value =
             """
             SELECT *
             FROM message m
-            WHERE m.world_id = :sessionId
+            WHERE m.world_id = :worldId
               AND m.mailbox_code IN ('world_history', 'world_record')
               AND CAST(m.payload->>'year' AS integer) = :year
               AND CAST(m.payload->>'month' AS integer) = :month
@@ -51,8 +37,8 @@ interface MessageRepository : JpaRepository<Message, Long> {
             """,
         nativeQuery = true,
     )
-    fun findBySessionIdAndYearAndMonthOrderBySentAtAsc(
-        @Param("sessionId") sessionId: Long,
+    fun findByWorldIdAndYearAndMonthOrderBySentAtAsc(
+        @Param("worldId") worldId: Long,
         @Param("year") year: Int,
         @Param("month") month: Int,
     ): List<Message>
@@ -62,15 +48,15 @@ interface MessageRepository : JpaRepository<Message, Long> {
             """
             SELECT *
             FROM message m
-            WHERE m.world_id = :sessionId
+            WHERE m.world_id = :worldId
               AND m.mailbox_code IN ('world_history', 'world_record')
               AND CAST(m.payload->>'year' AS integer) = :year
             ORDER BY m.sent_at DESC, m.id DESC
             """,
         nativeQuery = true,
     )
-    fun findBySessionIdAndYearOrderBySentAtDesc(
-        @Param("sessionId") sessionId: Long,
+    fun findByWorldIdAndYearOrderBySentAtDesc(
+        @Param("worldId") worldId: Long,
         @Param("year") year: Int,
     ): List<Message>
 

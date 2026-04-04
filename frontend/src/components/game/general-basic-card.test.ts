@@ -1,16 +1,21 @@
 import { describe, expect, it } from 'vitest';
 
 describe('GeneralBasicCard redesign', () => {
-    it('uses bg-card with rounded-lg wrapper', () => {
-        const containerClass = 'bg-card border border-border rounded-lg overflow-hidden text-sm';
+    it('uses bg-card with rounded-none wrapper (8bit retro)', () => {
+        const containerClass = 'bg-card border border-foreground/15 rounded-none overflow-hidden text-sm';
         expect(containerClass).toContain('bg-card');
-        expect(containerClass).toContain('rounded-lg');
+        expect(containerClass).toContain('rounded-none');
         expect(containerClass).not.toContain('legacy-bg');
     });
 
     it('stat grid uses 3 columns', () => {
         const gridClass = 'grid grid-cols-3';
         expect(gridClass).toContain('grid-cols-3');
+    });
+
+    it('has data-tutorial="general-card" attribute on root', () => {
+        const src = require('fs').readFileSync(require('path').resolve(__dirname, 'general-basic-card.tsx'), 'utf-8');
+        expect(src).toContain('data-tutorial="general-card"');
     });
 
     it('KV cells use bg-card with muted labels', () => {
@@ -26,9 +31,9 @@ describe('GeneralBasicCard redesign', () => {
 });
 
 describe('GeneralSupplementCard design', () => {
-    it('uses rounded-lg and bg-card wrapper', () => {
-        const wrapperClass = 'text-center text-sm border border-border rounded-lg overflow-hidden bg-card';
-        expect(wrapperClass).toContain('rounded-lg');
+    it('uses rounded-none and bg-card wrapper (8bit retro)', () => {
+        const wrapperClass = 'text-center text-sm border border-foreground/15 rounded-none overflow-hidden bg-card';
+        expect(wrapperClass).toContain('rounded-none');
         expect(wrapperClass).toContain('bg-card');
     });
 });

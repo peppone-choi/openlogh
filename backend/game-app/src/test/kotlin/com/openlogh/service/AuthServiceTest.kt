@@ -4,7 +4,7 @@ import com.openlogh.config.JwtUtil
 import com.openlogh.dto.LoginByTokenRequest
 import com.openlogh.dto.LoginRequest
 import com.openlogh.dto.TokenLoginRequest
-import com.openlogh.entity.*
+import com.openlogh.entity.AppUser
 import com.openlogh.repository.AppUserRepository
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull

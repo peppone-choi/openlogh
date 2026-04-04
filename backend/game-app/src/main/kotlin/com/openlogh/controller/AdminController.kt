@@ -1,16 +1,16 @@
 package com.openlogh.controller
 
 import com.openlogh.dto.AdminDashboard
-import com.openlogh.dto.AdminOfficerAction
-import com.openlogh.dto.AdminOfficerSummary
+import com.openlogh.dto.AdminGeneralAction
+import com.openlogh.dto.AdminGeneralSummary
 import com.openlogh.dto.AdminUserSummary
 import com.openlogh.dto.AdminUserAction
 import com.openlogh.dto.BroadcastRequest
-import com.openlogh.dto.FactionStatistic
+import com.openlogh.dto.NationStatistic
 import com.openlogh.dto.TimeControlRequest
 import com.openlogh.service.AdminAuthorizationService
 import com.openlogh.service.AdminService
-import com.openlogh.service.SessionRestartService
+import com.openlogh.service.SelectPoolService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.AccessDeniedException
@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.*
 class AdminController(
     private val adminService: AdminService,
     private val adminAuthorizationService: AdminAuthorizationService,
-    private val sessionRestartService: SessionRestartService,
+    private val selectPoolService: SelectPoolService,
 ) {
     private companion object {
         const val PERMISSION_OPEN_CLOSE = "openClose"
@@ -30,10 +30,10 @@ class AdminController(
     }
 
     @GetMapping("/dashboard")
-    fun getDashboard(@RequestParam(required = false) sessionId: Long?): ResponseEntity<AdminDashboard> {
+    fun getDashboard(@RequestParam(required = false) worldId: Long?): ResponseEntity<AdminDashboard> {
         return try {
             val loginId = currentLoginId() ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
-            val resolvedWorldId = adminAuthorizationService.resolveWorldIdOrThrow(loginId, sessionId, PERMISSION_OPEN_CLOSE)
+            val resolvedWorldId = adminAuthorizationService.resolveWorldIdOrThrow(loginId, worldId, PERMISSION_OPEN_CLOSE)
             ResponseEntity.ok(adminService.getDashboard(resolvedWorldId))
         } catch (_: AccessDeniedException) {
             ResponseEntity.status(HttpStatus.FORBIDDEN).build()
@@ -42,12 +42,12 @@ class AdminController(
 
     @PatchMapping("/settings")
     fun updateSettings(
-        @RequestParam(required = false) sessionId: Long?,
+        @RequestParam(required = false) worldId: Long?,
         @RequestBody settings: Map<String, Any>,
     ): ResponseEntity<Void> {
         return try {
             val loginId = currentLoginId() ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
-            val resolvedWorldId = adminAuthorizationService.resolveWorldIdOrThrow(loginId, sessionId, PERMISSION_OPEN_CLOSE)
+            val resolvedWorldId = adminAuthorizationService.resolveWorldIdOrThrow(loginId, worldId, PERMISSION_OPEN_CLOSE)
             if (!adminService.updateSettings(resolvedWorldId, settings)) return ResponseEntity.notFound().build()
             ResponseEntity.ok().build()
         } catch (_: AccessDeniedException) {
@@ -55,27 +55,27 @@ class AdminController(
         }
     }
 
-    @GetMapping("/officers")
-    fun listAllOfficers(@RequestParam(required = false) sessionId: Long?): ResponseEntity<List<AdminOfficerSummary>> {
+    @GetMapping("/generals")
+    fun listAllGenerals(@RequestParam(required = false) worldId: Long?): ResponseEntity<List<AdminGeneralSummary>> {
         return try {
             val loginId = currentLoginId() ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
-            val resolvedWorldId = adminAuthorizationService.resolveWorldIdOrThrow(loginId, sessionId, PERMISSION_OPEN_CLOSE)
-            ResponseEntity.ok(adminService.listAllOfficers(resolvedWorldId))
+            val resolvedWorldId = adminAuthorizationService.resolveWorldIdOrThrow(loginId, worldId, PERMISSION_OPEN_CLOSE)
+            ResponseEntity.ok(adminService.listAllGenerals(resolvedWorldId))
         } catch (_: AccessDeniedException) {
             ResponseEntity.status(HttpStatus.FORBIDDEN).build()
         }
     }
 
-    @PostMapping("/officers/{id}/action")
-    fun officerAction(
+    @PostMapping("/generals/{id}/action")
+    fun generalAction(
         @PathVariable id: Long,
-        @RequestParam(required = false) sessionId: Long?,
-        @RequestBody action: AdminOfficerAction,
+        @RequestParam(required = false) worldId: Long?,
+        @RequestBody action: AdminGeneralAction,
     ): ResponseEntity<Void> {
         return try {
             val loginId = currentLoginId() ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
-            val resolvedWorldId = adminAuthorizationService.resolveWorldIdOrThrow(loginId, sessionId, PERMISSION_BLOCK_GENERAL)
-            if (!adminService.officerAction(resolvedWorldId, id, action.type)) return ResponseEntity.notFound().build()
+            val resolvedWorldId = adminAuthorizationService.resolveWorldIdOrThrow(loginId, worldId, PERMISSION_BLOCK_GENERAL)
+            if (!adminService.generalAction(resolvedWorldId, id, action.type)) return ResponseEntity.notFound().build()
             ResponseEntity.ok().build()
         } catch (_: AccessDeniedException) {
             ResponseEntity.status(HttpStatus.FORBIDDEN).build()
@@ -83,24 +83,24 @@ class AdminController(
     }
 
     @GetMapping("/statistics")
-    fun getStatistics(@RequestParam(required = false) sessionId: Long?): ResponseEntity<List<FactionStatistic>> {
+    fun getStatistics(@RequestParam(required = false) worldId: Long?): ResponseEntity<List<NationStatistic>> {
         return try {
             val loginId = currentLoginId() ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
-            val resolvedWorldId = adminAuthorizationService.resolveWorldIdOrThrow(loginId, sessionId, PERMISSION_OPEN_CLOSE)
+            val resolvedWorldId = adminAuthorizationService.resolveWorldIdOrThrow(loginId, worldId, PERMISSION_OPEN_CLOSE)
             ResponseEntity.ok(adminService.getStatistics(resolvedWorldId))
         } catch (_: AccessDeniedException) {
             ResponseEntity.status(HttpStatus.FORBIDDEN).build()
         }
     }
 
-    @GetMapping("/officers/{id}/logs")
-    fun getOfficerLogs(
+    @GetMapping("/generals/{id}/logs")
+    fun getGeneralLogs(
         @PathVariable id: Long,
-        @RequestParam(required = false) sessionId: Long?,
+        @RequestParam(required = false) worldId: Long?,
     ): ResponseEntity<List<Any>> {
         return try {
             val loginId = currentLoginId() ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
-            val resolvedWorldId = adminAuthorizationService.resolveWorldIdOrThrow(loginId, sessionId, PERMISSION_OPEN_CLOSE)
+            val resolvedWorldId = adminAuthorizationService.resolveWorldIdOrThrow(loginId, worldId, PERMISSION_OPEN_CLOSE)
             ResponseEntity.ok(adminService.getGeneralLogs(resolvedWorldId, id))
         } catch (_: AccessDeniedException) {
             ResponseEntity.status(HttpStatus.FORBIDDEN).build()
@@ -108,10 +108,10 @@ class AdminController(
     }
 
     @GetMapping("/diplomacy")
-    fun getDiplomacyMatrix(@RequestParam(required = false) sessionId: Long?): ResponseEntity<List<Any>> {
+    fun getDiplomacyMatrix(@RequestParam(required = false) worldId: Long?): ResponseEntity<List<Any>> {
         return try {
             val loginId = currentLoginId() ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
-            val resolvedWorldId = adminAuthorizationService.resolveWorldIdOrThrow(loginId, sessionId, PERMISSION_OPEN_CLOSE)
+            val resolvedWorldId = adminAuthorizationService.resolveWorldIdOrThrow(loginId, worldId, PERMISSION_OPEN_CLOSE)
             ResponseEntity.ok(adminService.getDiplomacyMatrix(resolvedWorldId))
         } catch (_: AccessDeniedException) {
             ResponseEntity.status(HttpStatus.FORBIDDEN).build()
@@ -120,12 +120,12 @@ class AdminController(
 
     @PostMapping("/time-control")
     fun timeControl(
-        @RequestParam(required = false) sessionId: Long?,
+        @RequestParam(required = false) worldId: Long?,
         @RequestBody request: TimeControlRequest,
     ): ResponseEntity<Void> {
         return try {
             val loginId = currentLoginId() ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
-            val resolvedWorldId = adminAuthorizationService.resolveWorldIdOrThrow(loginId, sessionId, PERMISSION_OPEN_CLOSE)
+            val resolvedWorldId = adminAuthorizationService.resolveWorldIdOrThrow(loginId, worldId, PERMISSION_OPEN_CLOSE)
             if (!adminService.timeControl(resolvedWorldId, request)) {
                 return ResponseEntity.notFound().build()
             }
@@ -163,12 +163,12 @@ class AdminController(
 
     @PostMapping("/write-log")
     fun writeLog(
-        @RequestParam(required = false) sessionId: Long?,
+        @RequestParam(required = false) worldId: Long?,
         @RequestBody body: Map<String, String>,
     ): ResponseEntity<Void> {
         return try {
             val loginId = currentLoginId() ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
-            val resolvedWorldId = adminAuthorizationService.resolveWorldIdOrThrow(loginId, sessionId, PERMISSION_OPEN_CLOSE)
+            val resolvedWorldId = adminAuthorizationService.resolveWorldIdOrThrow(loginId, worldId, PERMISSION_OPEN_CLOSE)
             val message = body["message"] ?: return ResponseEntity.badRequest().build()
             if (!adminService.writeLog(resolvedWorldId, message)) return ResponseEntity.notFound().build()
             ResponseEntity.ok().build()
@@ -177,18 +177,18 @@ class AdminController(
         }
     }
 
-    @PostMapping("/officers/bulk-action")
-    fun bulkOfficerAction(
-        @RequestParam(required = false) sessionId: Long?,
+    @PostMapping("/generals/bulk-action")
+    fun bulkGeneralAction(
+        @RequestParam(required = false) worldId: Long?,
         @RequestBody body: Map<String, Any>,
     ): ResponseEntity<Void> {
         return try {
             val loginId = currentLoginId() ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
-            val resolvedWorldId = adminAuthorizationService.resolveWorldIdOrThrow(loginId, sessionId, PERMISSION_BLOCK_GENERAL)
+            val resolvedWorldId = adminAuthorizationService.resolveWorldIdOrThrow(loginId, worldId, PERMISSION_BLOCK_GENERAL)
             val ids = readLongList(body["ids"]) ?: return ResponseEntity.badRequest().build()
             val type = body["type"] as? String ?: return ResponseEntity.badRequest().build()
             for (id in ids) {
-                adminService.officerAction(resolvedWorldId, id, type)
+                adminService.generalAction(resolvedWorldId, id, type)
             }
             ResponseEntity.ok().build()
         } catch (_: AccessDeniedException) {
@@ -198,13 +198,13 @@ class AdminController(
 
     @PostMapping("/broadcast")
     fun broadcast(
-        @RequestParam(required = false) sessionId: Long?,
+        @RequestParam(required = false) worldId: Long?,
         @RequestBody request: BroadcastRequest,
     ): ResponseEntity<Map<String, Boolean>> {
         return try {
             val loginId = currentLoginId() ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
-            val resolvedWorldId = adminAuthorizationService.resolveWorldIdOrThrow(loginId, sessionId, PERMISSION_OPEN_CLOSE)
-            adminService.broadcastMessage(resolvedWorldId, request.officerIds, request.message)
+            val resolvedWorldId = adminAuthorizationService.resolveWorldIdOrThrow(loginId, worldId, PERMISSION_OPEN_CLOSE)
+            adminService.broadcastMessage(resolvedWorldId, request.generalIds, request.message)
             ResponseEntity.ok(mapOf("success" to true))
         } catch (_: AccessDeniedException) {
             ResponseEntity.status(HttpStatus.FORBIDDEN).build()
@@ -212,30 +212,16 @@ class AdminController(
     }
 
     @PostMapping("/force-rehall")
-    fun forceRehall(@RequestParam(required = false) sessionId: Long?): ResponseEntity<Map<String, Int>> {
+    fun forceRehall(@RequestParam(required = false) worldId: Long?): ResponseEntity<Map<String, Int>> {
         return try {
             val loginId = currentLoginId() ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
-            val resolvedWorldId = adminAuthorizationService.resolveWorldIdOrThrow(loginId, sessionId, PERMISSION_OPEN_CLOSE)
+            val resolvedWorldId = adminAuthorizationService.resolveWorldIdOrThrow(loginId, worldId, PERMISSION_OPEN_CLOSE)
             val result = adminService.forceRehall(resolvedWorldId) ?: return ResponseEntity.notFound().build()
             ResponseEntity.ok(result)
         } catch (_: AccessDeniedException) {
             ResponseEntity.status(HttpStatus.FORBIDDEN).build()
         } catch (e: IllegalArgumentException) {
             ResponseEntity.badRequest().build()
-        }
-    }
-
-    @PostMapping("/session/{id}/restart")
-    fun restartSession(
-        @PathVariable id: Long,
-    ): ResponseEntity<Map<String, Boolean>> {
-        return try {
-            val loginId = currentLoginId() ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
-            adminAuthorizationService.requireGlobalAdmin(loginId)
-            sessionRestartService.restartSession(id)
-            ResponseEntity.ok(mapOf("success" to true))
-        } catch (_: AccessDeniedException) {
-            ResponseEntity.status(HttpStatus.FORBIDDEN).build()
         }
     }
 
@@ -255,5 +241,76 @@ class AdminController(
             out.add(value)
         }
         return out
+    }
+
+    @GetMapping("/select-pool")
+    fun listSelectPools(@RequestParam(required = false) worldId: Long?): ResponseEntity<Any> {
+        return try {
+            val loginId = currentLoginId() ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
+            val resolvedWorldId = adminAuthorizationService.resolveWorldIdOrThrow(loginId, worldId, PERMISSION_OPEN_CLOSE)
+            ResponseEntity.ok(selectPoolService.listAll(resolvedWorldId))
+        } catch (_: AccessDeniedException) {
+            ResponseEntity.status(HttpStatus.FORBIDDEN).build()
+        }
+    }
+
+    @PostMapping("/select-pool")
+    fun createSelectPool(
+        @RequestParam(required = false) worldId: Long?,
+        @RequestBody body: Map<String, Any>,
+    ): ResponseEntity<Any> {
+        return try {
+            val loginId = currentLoginId() ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
+            val resolvedWorldId = adminAuthorizationService.resolveWorldIdOrThrow(loginId, worldId, PERMISSION_OPEN_CLOSE)
+            val uniqueName = (body["uniqueName"] as? String) ?: return ResponseEntity.badRequest().build()
+            ResponseEntity.status(HttpStatus.CREATED).body(selectPoolService.create(resolvedWorldId, uniqueName, body))
+        } catch (_: AccessDeniedException) {
+            ResponseEntity.status(HttpStatus.FORBIDDEN).build()
+        }
+    }
+
+    @PostMapping("/select-pool/bulk")
+    fun bulkCreateSelectPool(
+        @RequestParam(required = false) worldId: Long?,
+        @RequestBody entries: List<Map<String, Any>>,
+    ): ResponseEntity<Any> {
+        return try {
+            val loginId = currentLoginId() ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
+            val resolvedWorldId = adminAuthorizationService.resolveWorldIdOrThrow(loginId, worldId, PERMISSION_OPEN_CLOSE)
+            ResponseEntity.status(HttpStatus.CREATED).body(selectPoolService.bulkCreate(resolvedWorldId, entries))
+        } catch (_: AccessDeniedException) {
+            ResponseEntity.status(HttpStatus.FORBIDDEN).build()
+        }
+    }
+
+    @PutMapping("/select-pool/{id}")
+    fun updateSelectPool(
+        @PathVariable id: Long,
+        @RequestParam(required = false) worldId: Long?,
+        @RequestBody body: Map<String, Any>,
+    ): ResponseEntity<Any> {
+        return try {
+            val loginId = currentLoginId() ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
+            adminAuthorizationService.resolveWorldIdOrThrow(loginId, worldId, PERMISSION_OPEN_CLOSE)
+            val updated = selectPoolService.update(id, body) ?: return ResponseEntity.notFound().build()
+            ResponseEntity.ok(updated)
+        } catch (_: AccessDeniedException) {
+            ResponseEntity.status(HttpStatus.FORBIDDEN).build()
+        }
+    }
+
+    @DeleteMapping("/select-pool/{id}")
+    fun deleteSelectPool(
+        @PathVariable id: Long,
+        @RequestParam(required = false) worldId: Long?,
+    ): ResponseEntity<Void> {
+        return try {
+            val loginId = currentLoginId() ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
+            adminAuthorizationService.resolveWorldIdOrThrow(loginId, worldId, PERMISSION_OPEN_CLOSE)
+            if (selectPoolService.delete(id)) ResponseEntity.noContent().build()
+            else ResponseEntity.notFound().build()
+        } catch (_: AccessDeniedException) {
+            ResponseEntity.status(HttpStatus.FORBIDDEN).build()
+        }
     }
 }

@@ -38,6 +38,8 @@ Usage:
 """
 
 import struct, math, argparse
+from collections import Counter
+from dataclasses import dataclass, field
 from pathlib import Path
 
 def f32(d, o): return struct.unpack_from('<f', d, o)[0]
@@ -52,6 +54,46 @@ STRIDE_FMT = {
     84:  {'p': 52, 'n': 40, 'uv': 76, 'w': 0},
 }
 W_ONE = struct.pack('<f', 1.0)
+FALLBACK_SUFFIXES = {'h', 'm', 'l'}
+ENABLE_GAP_EXTRACTION = False
+
+
+@dataclass
+class ExtractionStats:
+    desc_count: int = 0
+    desc_faces: int = 0
+    heur_count: int = 0
+    heur_faces: int = 0
+    descriptor_records: int = 0
+    inline_records: int = 0
+
+
+@dataclass
+class ExtractionRun:
+    data: bytes
+    parts: list[dict] = field(default_factory=list)
+    covered_ranges: list[tuple[int, int]] = field(default_factory=list)
+    descriptor_groups: list[list[dict]] = field(default_factory=list)
+    inline_descs: list[dict] = field(default_factory=list)
+    heuristic_vbs: list[dict] = field(default_factory=list)
+    stats: ExtractionStats = field(default_factory=ExtractionStats)
+
+    def add_part(self, part, *, exact=True, cover_range=None):
+        self.parts.append(part)
+        if cover_range is None:
+            vb_off = part.get('vb_off')
+            vb_end = part.get('vb_end')
+            if vb_off is not None and vb_end is not None:
+                cover_range = (vb_off, vb_end)
+        if cover_range is not None:
+            self.covered_ranges.append(cover_range)
+        faces = len(part['faces'])
+        if exact:
+            self.stats.desc_count += 1
+            self.stats.desc_faces += faces
+        else:
+            self.stats.heur_count += 1
+            self.stats.heur_faces += faces
 
 
 # ── TOC parsing ─────────────────────────────────────────────
@@ -63,6 +105,55 @@ def parse_toc(data):
         extra = struct.unpack_from('<H', data, i * 8 + 6)[0]
         entries.append({'idx': i, 'off': off, 'magic': magic, 'count': count, 'extra': extra})
     return entries
+
+
+def toc8_data_start(data):
+    toc = parse_toc(data)
+    if len(toc) <= 8:
+        return 0
+    start = toc[8]['off']
+    if start < 0 or start >= len(data):
+        return 0
+    return start
+
+
+def find_loose_descriptor_start(data):
+    """Find the earliest strong descriptor-like record after TOC8."""
+    start = toc8_data_start(data)
+    best = None
+    for align in (2, 4):
+        for off in range(start, len(data) - 40, align):
+            marker = u32(data, off + 24)
+            if marker not in MARKER_STRIDE:
+                continue
+            stride = u32(data, off + 32)
+            prim = u32(data, off)
+            vc = u32(data, off + 8)
+            ic = u32(data, off + 16)
+            pad = u32(data, off + 28)
+            flags = 0
+            if stride == MARKER_STRIDE[marker]:
+                flags += 1
+            if pad == 0:
+                flags += 1
+            if prim <= 4:
+                flags += 1
+            if 1 <= vc <= 200000:
+                flags += 1
+            if 0 <= ic <= 2000000:
+                flags += 1
+            if flags < 5:
+                continue
+            cand = {'off': off, 'score': flags, 'vc': vc, 'ic': ic, 'stride': stride}
+            if best is None or cand['off'] < best['off']:
+                best = cand
+    return best
+
+
+def suffix_of_name(name):
+    if '_' not in name:
+        return ''
+    return name.rsplit('_', 1)[-1]
 
 
 # ── Descriptor parsing ──────────────────────────────────────
@@ -127,6 +218,17 @@ def find_inline_descriptors(data):
             continue
         descs.append({'off': off, 'vc': vc, 'ic': ic, 'stride': st})
     return descs
+
+
+def filter_inline_descriptor_aliases(descs, inline_descs):
+    aliases = {
+        (desc['off'] + 4, desc['vc'], desc['ic'], desc['stride'])
+        for desc in descs
+    }
+    return [
+        desc for desc in inline_descs
+        if (desc['off'], desc['vc'], desc['ic'], desc['stride']) not in aliases
+    ]
 
 
 def group_descriptors(descs):
@@ -195,6 +297,48 @@ def read_vertices(data, vb_off, vc, stride):
     return verts, norms, uvs
 
 
+def position_cloud_profile(verts):
+    if not verts:
+        return None
+    xs = [v[0] for v in verts]
+    ys = [v[1] for v in verts]
+    zs = [v[2] for v in verts]
+    dx = max(xs) - min(xs)
+    dy = max(ys) - min(ys)
+    dz = max(zs) - min(zs)
+    dims = sorted([abs(dx), abs(dy), abs(dz)])
+    cx = sum(xs) / len(xs)
+    cy = sum(ys) / len(ys)
+    cz = sum(zs) / len(zs)
+    rs = [math.sqrt((x - cx) ** 2 + (y - cy) ** 2 + (z - cz) ** 2) for x, y, z in verts]
+    r_mean = sum(rs) / len(rs)
+    r_std = math.sqrt(sum((r - r_mean) ** 2 for r in rs) / len(rs))
+    return {
+        'dx': dx, 'dy': dy, 'dz': dz,
+        'ratio': dims[-1] / max(dims[0], 1e-6),
+        'center_mag': math.sqrt(cx * cx + cy * cy + cz * cz),
+        'r_mean': r_mean,
+        'r_std': r_std,
+    }
+
+
+def looks_like_unit_sphere_false_position(verts, stride):
+    if stride != 84 or len(verts) < 128:
+        return False
+    profile = position_cloud_profile(verts)
+    if profile is None:
+        return False
+    return (
+        profile['ratio'] < 1.25 and
+        profile['center_mag'] < 0.4 and
+        1.6 <= profile['dx'] <= 2.4 and
+        1.6 <= profile['dy'] <= 2.4 and
+        1.6 <= profile['dz'] <= 2.4 and
+        0.8 <= profile['r_mean'] <= 1.1 and
+        profile['r_std'] < 0.18
+    )
+
+
 # ── Face processing ─────────────────────────────────────────
 
 def decode_list_faces(data, ib_off, ic, vc):
@@ -223,6 +367,19 @@ def decode_strip_faces(data, ib_off, ic, vc):
             continue
         faces.append((i0, i1, i2) if i % 2 == 0 else (i0, i2, i1))
     return faces
+
+
+def pick_best_face_topology(verts, norms, list_faces, strip_faces):
+    list_clean = clean_faces(list_faces, verts, norms)
+    strip_clean = clean_faces(strip_faces, verts, norms)
+
+    def score(faces):
+        if not faces:
+            return (-1.0, 0, 0.0)
+        coverage = face_vertex_coverage(faces, len(verts))
+        return (len(faces) * coverage, len(faces), coverage)
+
+    return (list_clean, 'list') if score(list_clean) > score(strip_clean) else (strip_clean, 'strip')
 
 
 def decode_gap_strip(data, gap_start, gap_end, vc):
@@ -301,54 +458,63 @@ def decode_s84_mesh(data, desc, vb_off):
 
     # Read vertices
     verts, norms, uvs = read_vertices(data, vb_off, vc, stride)
+    if looks_like_unit_sphere_false_position(verts, stride):
+        return None
 
-    # Decode strip faces from descriptor ic
-    faces = decode_strip_faces(data, ib_off, ic, vc)
-    faces = clean_faces(faces, verts, norms)
+    # s84 topology is not reliable from prim alone.
+    faces, topo = pick_best_face_topology(
+        verts,
+        norms,
+        decode_list_faces(data, ib_off, ic, vc),
+        decode_strip_faces(data, ib_off, ic, vc),
+    )
 
     # Find true strip end (beyond ic, before PV)
     # Gap strip faces are filtered with long-edge check to prevent spaghetti
-    strip_end = find_s84_strip_end(data, ib_off, ic, vc)
-    gap_start = ib_off + ic * 2
-    if strip_end > gap_start:
-        gap_faces = decode_gap_strip(data, gap_start, strip_end, vc)
-        gap_faces = clean_faces(gap_faces, verts, norms)
-        # Topology-based spaghetti filter: only keep gap faces that
-        # share at least 1 edge with main strip faces (grow from seed).
-        # Isolated faces with no edge connection = spaghetti.
-        if gap_faces:
-            edge_set = set()
-            for i0, i1, i2 in faces:
-                edge_set.add((min(i0,i1), max(i0,i1)))
-                edge_set.add((min(i1,i2), max(i1,i2)))
-                edge_set.add((min(i2,i0), max(i2,i0)))
-            # Iteratively grow: accept gap faces sharing edges with accepted set
-            remaining = list(gap_faces)
-            changed = True
-            while changed:
-                changed = False
-                next_remaining = []
-                for i0, i1, i2 in remaining:
-                    e0 = (min(i0,i1), max(i0,i1))
-                    e1 = (min(i1,i2), max(i1,i2))
-                    e2 = (min(i2,i0), max(i2,i0))
-                    if e0 in edge_set or e1 in edge_set or e2 in edge_set:
-                        faces.append((i0, i1, i2))
-                        edge_set.add(e0)
-                        edge_set.add(e1)
-                        edge_set.add(e2)
-                        changed = True
-                    else:
-                        next_remaining.append((i0, i1, i2))
-                remaining = next_remaining
+    strip_end = ib_off + ic * 2
+    if ENABLE_GAP_EXTRACTION and topo == 'strip':
+        strip_end = find_s84_strip_end(data, ib_off, ic, vc)
+        gap_start = ib_off + ic * 2
+        if strip_end > gap_start:
+            gap_faces = decode_gap_strip(data, gap_start, strip_end, vc)
+            gap_faces = clean_faces(gap_faces, verts, norms)
+            # Topology-based spaghetti filter: only keep gap faces that
+            # share at least 1 edge with main strip faces (grow from seed).
+            # Isolated faces with no edge connection = spaghetti.
+            if gap_faces:
+                edge_set = set()
+                for i0, i1, i2 in faces:
+                    edge_set.add((min(i0,i1), max(i0,i1)))
+                    edge_set.add((min(i1,i2), max(i1,i2)))
+                    edge_set.add((min(i2,i0), max(i2,i0)))
+                # Iteratively grow: accept gap faces sharing edges with accepted set
+                remaining = list(gap_faces)
+                changed = True
+                while changed:
+                    changed = False
+                    next_remaining = []
+                    for i0, i1, i2 in remaining:
+                        e0 = (min(i0,i1), max(i0,i1))
+                        e1 = (min(i1,i2), max(i1,i2))
+                        e2 = (min(i2,i0), max(i2,i0))
+                        if e0 in edge_set or e1 in edge_set or e2 in edge_set:
+                            faces.append((i0, i1, i2))
+                            edge_set.add(e0)
+                            edge_set.add(e1)
+                            edge_set.add(e2)
+                            changed = True
+                        else:
+                            next_remaining.append((i0, i1, i2))
+                    remaining = next_remaining
     if not faces:
         return None
 
     return {
         'vc': vc, 'verts': verts, 'norms': norms, 'uvs': uvs,
         'faces': faces, 'stride': stride, 'source': 'desc',
+        'base_faces': list(faces), 'gap_faces': [],
         'vb_off': vb_off, 'vb_end': vb_off + vc * stride,
-        'ib_end': strip_end, 'prim': desc['prim'],
+        'ib_end': strip_end, 'prim': desc['prim'], 'topology': topo,
     }
 
 
@@ -419,10 +585,21 @@ def clean_faces(raw_faces, verts, norms):
     return out
 
 
+def face_vertex_coverage(faces, vc):
+    if vc <= 0 or not faces:
+        return 0.0
+    used = set()
+    for i0, i1, i2 in faces:
+        used.add(i0)
+        used.add(i1)
+        used.add(i2)
+    return len(used) / vc
+
+
 # ── Descriptor-based extraction ─────────────────────────────
 
 def find_vb_for_descriptor(data, desc):
-    """Find VB matching descriptor by W=1.0 scanning for exact vertex count."""
+    """Find the best VB matching a descriptor by W=1.0 scanning."""
     vc, stride = desc['vc'], desc['stride']
     fmt = STRIDE_FMT[stride]
     w_off = fmt['w']
@@ -433,6 +610,8 @@ def find_vb_for_descriptor(data, desc):
     search_start = max(0, desc['off'] - 1024)
     search_end = min(len(data), desc['off'] + vc * stride * 3)
     pos = search_start
+    best_vb = None
+    best_score = -1.0
 
     while pos < search_end:
         w_pos = data.find(W_ONE, pos, search_end)
@@ -458,9 +637,20 @@ def find_vb_for_descriptor(data, desc):
             count += 1
             test += stride
         if count == vc:
-            return vb
+            score = 1.0
+            ib_off = vb + vc * stride
+            ic = desc['ic']
+            if ib_off + ic * 2 <= len(data):
+                probes_ok = 0
+                for probe in [0, ic // 4, ic // 2, ic - 1]:
+                    if 0 <= probe < ic and u16(data, ib_off + probe * 2) < vc:
+                        probes_ok += 1
+                score += probes_ok / 4.0
+            if score > best_score:
+                best_score = score
+                best_vb = vb
         pos = test if count > 0 else w_pos + 4
-    return None
+    return best_vb
 
 
 def extract_descriptor_group(data, group):
@@ -527,6 +717,7 @@ def extract_descriptor_group(data, group):
         part = {
             'vc': vc, 'verts': verts, 'norms': norms, 'uvs': uvs,
             'faces': faces, 'stride': stride, 'source': 'desc',
+            'base_faces': list(faces), 'gap_faces': [],
             'vb_off': vb_off, 'vb_end': vb_off + vc * stride,
             'ib_end': ib_off + ic * 2, 'prim': desc['prim'],
         }
@@ -683,7 +874,7 @@ def find_vb_by_inline_desc(data, idesc, covered_ranges):
     ib_size = ic * 2
 
     best = None
-    best_score = -1
+    best_score = None
 
     for off in range(0, len(data) - vb_size - ib_size, 2):
         # Quick check: first vertex position
@@ -735,14 +926,55 @@ def find_vb_by_inline_desc(data, idesc, covered_ranges):
                 break
             score += 1
 
-        min_score = min(8, max(3, vc // 5))  # lower threshold for small VBs
-        if score >= min_score and score > best_score:
+        min_score = min(8, max(3, vc // 5))
+        if score < min_score:
+            continue
+
+        distance = abs(off - idesc['off'])
+        after_bonus = 0 if off >= idesc['off'] else 4096
+        cand_score = (score, -(distance + after_bonus))
+        if best_score is None or cand_score > best_score:
             best = off
-            best_score = score
-            if score >= 10:
-                return best
+            best_score = cand_score
 
     return best
+
+
+def find_best_inline_s84_part(data, idesc, covered_ranges):
+    vc, stride = idesc['vc'], idesc['stride']
+    if stride != 84:
+        return None, None
+    search_start = max(0, idesc['off'] - 8192)
+    search_end = min(len(data), idesc['off'] + 65536)
+    pos = search_start
+    best_part = None
+    best_vb = None
+    best_score = None
+
+    while pos < search_end - stride:
+        w_pos = data.find(W_ONE, pos, search_end)
+        if w_pos == -1:
+            break
+        vb = w_pos
+        pos = w_pos + 4
+        overlap = False
+        vb_end = vb + vc * stride
+        for cs, ce in covered_ranges:
+            if vb < ce and vb_end > cs:
+                overlap = True
+                break
+        if overlap:
+            continue
+        part = decode_inline_part(data, idesc, vb)
+        if part is None:
+            continue
+        coverage = face_vertex_coverage(part['faces'], vc)
+        score = (len(part['faces']) * coverage, len(part['faces']), -abs(vb - idesc['off']))
+        if best_score is None or score > best_score:
+            best_score = score
+            best_part = part
+            best_vb = vb
+    return best_vb, best_part
 
 
 def extract_heuristic(data, covered_ranges, inline_descs):
@@ -772,6 +1004,8 @@ def extract_heuristic(data, covered_ranges, inline_descs):
     for vb in uncovered:
         stride = vb['stride']
         vc = vb['count']
+        if vc < 64:
+            continue
         vb_end = vb['start'] + vc * stride
         ib_off = vb_end
 
@@ -811,20 +1045,30 @@ def extract_heuristic(data, covered_ranges, inline_descs):
                     ic = (total_ib // 3) * 3
 
         # Decode: s72/s36/s24 use triangle list, s84 uses triangle strip
-        if stride == 84:
-            faces = decode_strip_faces(data, ib_off, ic, vc)
-        else:
-            faces = decode_list_faces(data, ib_off, ic, vc)
-
         verts, norms, uvs = read_vertices(data, vb['start'], vc, stride)
-        faces = clean_faces(faces, verts, norms)
+        if looks_like_unit_sphere_false_position(verts, stride):
+            continue
+        if stride == 84:
+            faces, topo = pick_best_face_topology(
+                verts,
+                norms,
+                decode_list_faces(data, ib_off, ic, vc),
+                decode_strip_faces(data, ib_off, ic, vc),
+            )
+        else:
+            faces = clean_faces(decode_list_faces(data, ib_off, ic, vc), verts, norms)
+            topo = 'list'
+        coverage = face_vertex_coverage(faces, vc)
 
-        if faces:
+        min_faces = max(12, vc // 8)
+        if faces and len(faces) >= min_faces and coverage >= 0.2:
             parts.append({
                 'vc': vc, 'verts': verts, 'norms': norms, 'uvs': uvs,
                 'faces': faces, 'stride': stride, 'source': 'heur',
+                'base_faces': list(faces), 'gap_faces': [],
                 'vb_off': vb['start'], 'vb_end': vb_end,
                 'ib_end': ib_off + ic * 2,
+                'topology': topo,
             })
 
     return parts
@@ -832,102 +1076,271 @@ def extract_heuristic(data, covered_ranges, inline_descs):
 
 # ── Main extraction ─────────────────────────────────────────
 
-def extract_mdx(data, name):
+def rebase_parts(parts, base_off):
+    if base_off == 0:
+        return parts
+    rebased = []
+    for part in parts:
+        p = dict(part)
+        for key in ('vb_off', 'vb_end', 'ib_end'):
+            if key in p:
+                p[key] += base_off
+        rebased.append(p)
+    return rebased
+
+
+def create_extraction_run(data):
+    run = ExtractionRun(data=data)
     descs = find_all_descriptors(data)
-    groups = group_descriptors(descs)
-    inline_descs = find_inline_descriptors(data)
+    run.descriptor_groups = group_descriptors(descs)
+    run.inline_descs = filter_inline_descriptor_aliases(descs, find_inline_descriptors(data))
+    run.heuristic_vbs = find_vbs_heuristic(data)
+    run.stats.descriptor_records = len(descs)
+    run.stats.inline_records = len(run.inline_descs)
+    return run
 
-    all_parts = []
-    covered = []
 
-    # Phase 1: Descriptor-based extraction
-    for group in groups:
-        parts, all_ranges = extract_descriptor_group(data, group)
-        for p in parts:
-            all_parts.append(p)
-        covered.extend(all_ranges)
+def has_equivalent_exact_part(parts, vc, stride, ic):
+    min_faces = max(1, ic // 3 - 2)
+    for part in parts:
+        if part['source'] == 'heur':
+            continue
+        if part['vc'] == vc and part['stride'] == stride and len(part.get('base_faces', part['faces'])) >= min_faces:
+            return True
+    return False
 
-    desc_count = len(all_parts)
 
-    # Pre-scan W=1.0 VBs (ranges only, for Phase 2 false-positive prevention)
-    w_vbs = find_vbs_heuristic(data)
-    w_vb_ranges = []
-    for vb in w_vbs:
+def collect_descriptor_parts(run):
+    for group in run.descriptor_groups:
+        parts, all_ranges = extract_descriptor_group(run.data, group)
+        for part in parts:
+            run.parts.append(part)
+            run.stats.desc_count += 1
+            run.stats.desc_faces += len(part['faces'])
+        run.covered_ranges.extend(all_ranges)
+
+
+def heuristic_vb_ranges(run):
+    ranges = []
+    for vb in run.heuristic_vbs:
         vs = vb['start']
         ve = vs + vb['count'] * vb['stride']
-        w_vb_ranges.append((vs, ve))
+        ranges.append((vs, ve))
+    return ranges
 
-    # Phase 2: Extract s24/s36 VBs from inline descriptors
-    # s24: use w_vb_ranges to prevent false positives inside s72/s84 data
-    # s36: don't use w_vb_ranges (s72 scanner misreads s36 data as s72)
-    for idesc in inline_descs:
+
+def decode_inline_part(data, idesc, vb_off):
+    vc, ic, stride = idesc['vc'], idesc['ic'], idesc['stride']
+    ib_off = vb_off + vc * stride
+    if ib_off + ic * 2 > len(data):
+        return None
+    verts, norms, uvs = read_vertices(data, vb_off, vc, stride)
+    if looks_like_unit_sphere_false_position(verts, stride):
+        return None
+    if stride == 84:
+        faces, topo = pick_best_face_topology(
+            verts,
+            norms,
+            decode_list_faces(data, ib_off, ic, vc),
+            decode_strip_faces(data, ib_off, ic, vc),
+        )
+    else:
+        faces = clean_faces(decode_list_faces(data, ib_off, ic, vc), verts, norms)
+        topo = 'list'
+    if not faces:
+        return None
+    return {
+        'vc': vc, 'verts': verts, 'norms': norms, 'uvs': uvs,
+        'faces': faces, 'stride': stride, 'source': 'idesc',
+        'base_faces': list(faces), 'gap_faces': [],
+        'vb_off': vb_off, 'vb_end': vb_off + vc * stride,
+        'ib_end': ib_off + ic * 2,
+        'topology': topo,
+    }
+
+
+def nearby_inline_descriptor(run, vb_start, stride, radius=32768):
+    for desc in run.inline_descs:
+        if desc['stride'] != stride:
+            continue
+        off = desc['off']
+        if abs(off - vb_start) <= radius:
+            return desc
+    return None
+
+
+def collect_inline_exact_parts(run):
+    w_ranges = heuristic_vb_ranges(run)
+    for idesc in run.inline_descs:
         stride = idesc['stride']
-        if stride in (72, 84):
-            continue
         vc, ic = idesc['vc'], idesc['ic']
-        already = any(p['vc'] == vc and p['stride'] == stride for p in all_parts)
-        if already:
+        if has_equivalent_exact_part(run.parts, vc, stride, ic):
             continue
-        # s24: use w_vb_ranges to prevent false positives inside s72/s84 data
-        # s36: don't block (s72 scanner misreads s36 data)
-        phase2_covered = covered + (w_vb_ranges if stride == 24 else [])
-        vb_off = find_vb_by_inline_desc(data, idesc, phase2_covered)
+        covered = list(run.covered_ranges)
+        if stride == 24:
+            covered.extend(w_ranges)
+        vb_off = find_vb_by_inline_desc(run.data, idesc, covered)
         if vb_off is None:
-            continue
-        ib_off = vb_off + vc * stride
-        if ib_off + ic * 2 > len(data):
-            continue
-        verts, norms, uvs = read_vertices(data, vb_off, vc, stride)
-        if stride == 84:
-            faces = decode_strip_faces(data, ib_off, ic, vc)
+            vb_off, part = find_best_inline_s84_part(run.data, idesc, covered)
         else:
-            faces = decode_list_faces(data, ib_off, ic, vc)
-        faces = clean_faces(faces, verts, norms)
-        if faces:
-            part = {
-                'vc': vc, 'verts': verts, 'norms': norms, 'uvs': uvs,
-                'faces': faces, 'stride': stride, 'source': 'idesc',
-                'vb_off': vb_off, 'vb_end': vb_off + vc * stride,
-            }
-            all_parts.append(part)
-            covered.append((part['vb_off'], part['vb_end']))
+            part = decode_inline_part(run.data, idesc, vb_off)
+            if part is not None and stride == 84:
+                coverage = face_vertex_coverage(part['faces'], vc)
+                if coverage < 0.4 or len(part['faces']) < max(128, vc // 6):
+                    rescue_vb, rescue_part = find_best_inline_s84_part(run.data, idesc, covered)
+                    if rescue_part is not None and len(rescue_part['faces']) > len(part['faces']):
+                        vb_off, part = rescue_vb, rescue_part
+        if part is None:
+            continue
+        run.add_part(part, exact=True)
 
-    # Phase 3: W=1.0 heuristic with inline descriptor ic lookup
-    heur_parts = extract_heuristic(data, covered, inline_descs)
-    heur_count = len(heur_parts)
-    all_parts.extend(heur_parts)
 
-    # Phase 4: Gap strip extraction — supplementary strip IB after list IB
-    # gin7 layout: [VB][list_IB][strip_IB][next_VB]
-    # The strip IB uses indices >= vc as strip restart markers.
-    # Applies to all list-type parts (stride != 84) from any phase.
-    all_vb_starts = sorted(set(
-        [p['vb_off'] for p in all_parts] + [vb['start'] for vb in w_vbs]
-    ))
-    for part in all_parts:
+def exact_part_score(part):
+    source_bonus = 2 if part['source'] == 'desc' else 1
+    face_count = len(part.get('base_faces', part['faces']))
+    return (face_count, source_bonus, part['vc'])
+
+
+def exact_overlap_ratio(a, b):
+    a0, a1 = a.get('vb_off'), a.get('vb_end')
+    b0, b1 = b.get('vb_off'), b.get('vb_end')
+    if None in (a0, a1, b0, b1):
+        return 0.0
+    overlap = max(0, min(a1, b1) - max(a0, b0))
+    if overlap <= 0:
+        return 0.0
+    span = max(min(a1 - a0, b1 - b0), 1)
+    return overlap / span
+
+
+def dedupe_exact_parts(run):
+    exact_parts = [part for part in run.parts if part['source'] != 'heur']
+    heur_parts = [part for part in run.parts if part['source'] == 'heur']
+    removed = set()
+    for i, left in enumerate(exact_parts):
+        if i in removed:
+            continue
+        for j in range(i + 1, len(exact_parts)):
+            if j in removed:
+                continue
+            right = exact_parts[j]
+            overlap = exact_overlap_ratio(left, right)
+            same_span = left.get('vb_off') == right.get('vb_off') and left.get('vb_end') == right.get('vb_end')
+            same_stride = left['stride'] == right['stride']
+            if overlap < 0.95 and not same_span:
+                continue
+            if not same_stride and not same_span:
+                continue
+            left_score = exact_part_score(left)
+            right_score = exact_part_score(right)
+            if right_score > left_score:
+                removed.add(i)
+                break
+            removed.add(j)
+    kept_exact = [part for idx, part in enumerate(exact_parts) if idx not in removed]
+    if len(kept_exact) == len(exact_parts):
+        return
+    run.parts = []
+    run.covered_ranges = []
+    run.stats.desc_count = 0
+    run.stats.desc_faces = 0
+    run.stats.heur_count = 0
+    run.stats.heur_faces = 0
+    for part in kept_exact:
+        run.add_part(part, exact=True)
+    for part in heur_parts:
+        run.add_part(part, exact=False)
+
+
+def collect_heuristic_parts(run):
+    for part in extract_heuristic(run.data, run.covered_ranges, run.inline_descs):
         if part['stride'] == 84:
-            continue  # s84 gap strip handled by decode_s84_mesh() with PV boundary
+            nearby = nearby_inline_descriptor(run, part['vb_off'], part['stride'])
+            if nearby is not None and nearby['vc'] < part['vc'] * 0.75:
+                continue
+        run.add_part(part, exact=False)
+
+
+def apply_gap_pass(run):
+    if not ENABLE_GAP_EXTRACTION:
+        return
+    all_vb_starts = sorted(set(
+        [p['vb_off'] for p in run.parts] + [vb['start'] for vb in run.heuristic_vbs]
+    ))
+    for part in run.parts:
+        if part['stride'] == 84:
+            continue
         ib_end = part.get('ib_end')
         if ib_end is None:
             continue
-        # Find next VB start after this IB
-        next_vb = len(data)
+        next_vb = len(run.data)
         for vs in all_vb_starts:
             if vs > ib_end + 10:
                 next_vb = vs
                 break
-        gap = next_vb - ib_end
-        if gap < 20:
+        if next_vb - ib_end < 20:
             continue
-        gap_faces = decode_gap_strip(data, ib_end, next_vb, part['vc'])
+        gap_faces = decode_gap_strip(run.data, ib_end, next_vb, part['vc'])
         gap_faces = clean_faces(gap_faces, part['verts'], part['norms'])
-        if gap_faces:
-            part['faces'].extend(gap_faces)
+        if not gap_faces:
+            continue
+        part['gap_faces'] = list(gap_faces)
+        part['faces'].extend(gap_faces)
+        if part['source'] == 'heur':
+            run.stats.heur_faces += len(gap_faces)
+        else:
+            run.stats.desc_faces += len(gap_faces)
 
-    desc_faces = sum(len(p['faces']) for p in all_parts[:desc_count])
-    heur_faces = sum(len(p['faces']) for p in all_parts[desc_count:])
 
-    return all_parts, desc_count, desc_faces, heur_count, heur_faces
+def execute_extraction_passes(data):
+    run = create_extraction_run(data)
+    collect_descriptor_parts(run)
+    collect_inline_exact_parts(run)
+    dedupe_exact_parts(run)
+    collect_heuristic_parts(run)
+    apply_gap_pass(run)
+    return run
+
+
+def extract_mdx_core(data):
+    run = execute_extraction_passes(data)
+    stats = run.stats
+    return (
+        run.parts,
+        stats.desc_count,
+        stats.desc_faces,
+        stats.heur_count,
+        stats.heur_faces,
+        stats.descriptor_records,
+        stats.inline_records,
+    )
+
+
+def extract_mdx(data, name):
+    parts, dc, df, hc, hf, desc_total, inline_total = extract_mdx_core(data)
+    if desc_total > 0:
+        return parts, dc, df, hc, hf
+    if suffix_of_name(name) not in FALLBACK_SUFFIXES:
+        return parts, dc, df, hc, hf
+
+    fallback = find_loose_descriptor_start(data)
+    if fallback is None or fallback['off'] <= 0:
+        return parts, dc, df, hc, hf
+
+    sliced = data[fallback['off']:]
+    fb_parts, fb_dc, fb_df, fb_hc, fb_hf, fb_desc_total, fb_inline_total = extract_mdx_core(sliced)
+    if fb_desc_total == 0 and fb_inline_total == 0 and not fb_parts:
+        return parts, dc, df, hc, hf
+
+    cur_faces = sum(len(p['faces']) for p in parts)
+    fb_faces = sum(len(p['faces']) for p in fb_parts)
+    improved_descriptors = fb_desc_total > desc_total
+    keeps_enough_faces = cur_faces == 0 or fb_faces >= cur_faces * 0.6
+    if not improved_descriptors or not keeps_enough_faces:
+        return parts, dc, df, hc, hf
+
+    fb_parts = rebase_parts(fb_parts, fallback['off'])
+    return fb_parts, fb_dc, fb_df, fb_hc, fb_hf
 
 
 # ── OBJ output ──────────────────────────────────────────────
@@ -955,6 +1368,118 @@ def write_obj(parts, obj_path, name):
     tv = sum(p['vc'] for p in parts)
     tf = sum(len(p['faces']) for p in parts)
     return tv, tf
+
+
+def face_edge_counts(faces):
+    counts = Counter()
+    for i0, i1, i2 in faces:
+        counts[(min(i0, i1), max(i0, i1))] += 1
+        counts[(min(i1, i2), max(i1, i2))] += 1
+        counts[(min(i2, i0), max(i2, i0))] += 1
+    return counts
+
+
+def face_used_vertices(faces):
+    used = set()
+    for i0, i1, i2 in faces:
+        used.add(i0)
+        used.add(i1)
+        used.add(i2)
+    return used
+
+
+def classify_gap_behavior(part):
+    base_faces = list(part.get('base_faces', part['faces']))
+    gap_faces = list(part.get('gap_faces', []))
+    if not base_faces or not gap_faces:
+        return None
+
+    base_used = face_used_vertices(base_faces)
+    gap_used = face_used_vertices(gap_faces)
+    shared_used = base_used & gap_used
+
+    base_edge_counts = face_edge_counts(base_faces)
+    gap_edge_counts = face_edge_counts(gap_faces)
+    base_edges = set(base_edge_counts)
+    gap_edges = set(gap_edge_counts)
+    shared_edges = base_edges & gap_edges
+    base_boundary_edges = {edge for edge, count in base_edge_counts.items() if count == 1}
+    boundary_touch = gap_edges & base_boundary_edges
+
+    gap_vertex_overlap = len(shared_used) / max(len(gap_used), 1)
+    gap_edge_overlap = len(shared_edges) / max(len(gap_edges), 1)
+    gap_boundary_touch = len(boundary_touch) / max(len(gap_edges), 1)
+
+    label = 'ambiguous'
+    if gap_edge_overlap >= 0.45:
+        label = 'duplicate_like'
+    elif gap_vertex_overlap >= 0.80 and gap_edge_overlap < 0.45:
+        label = 'replace_like'
+    elif gap_vertex_overlap < 0.80 and gap_boundary_touch >= 0.05:
+        label = 'additive_like'
+    elif gap_vertex_overlap >= 0.65 and gap_boundary_touch >= 0.05:
+        label = 'mixed_like'
+
+    return {
+        'label': label,
+        'gap_vertex_overlap': gap_vertex_overlap,
+        'gap_edge_overlap': gap_edge_overlap,
+        'gap_boundary_touch': gap_boundary_touch,
+        'shared_vertices': len(shared_used),
+        'gap_vertices': len(gap_used),
+        'shared_edges': len(shared_edges),
+        'gap_edges': len(gap_edges),
+    }
+
+
+def replacement_faces_for_part(part):
+    base_faces = list(part.get('base_faces', part['faces']))
+    gap_faces = list(part.get('gap_faces', []))
+    if not gap_faces:
+        return base_faces
+    profile = classify_gap_behavior(part)
+    if profile is None:
+        return base_faces
+    label = profile['label']
+    if label in {'replace_like', 'duplicate_like'}:
+        return gap_faces
+    if label == 'additive_like':
+        return base_faces + gap_faces
+    if label == 'mixed_like':
+        return gap_faces if len(gap_faces) >= len(base_faces) * 0.35 else base_faces + gap_faces
+    return base_faces
+
+
+def select_export_parts(parts, mode='full'):
+    selected = []
+    for part in parts:
+        base_faces = list(part.get('base_faces', part['faces']))
+        gap_faces = list(part.get('gap_faces', []))
+        faces = None
+        if mode == 'full':
+            faces = list(part['faces'])
+        elif mode == 'exact':
+            if part['source'] == 'heur':
+                continue
+            faces = base_faces
+        elif mode == 'heur':
+            if part['source'] != 'heur':
+                continue
+            faces = base_faces
+        elif mode == 'gap':
+            faces = gap_faces
+        elif mode == 'replace':
+            if part['source'] == 'heur':
+                continue
+            faces = replacement_faces_for_part(part)
+        else:
+            raise ValueError(f'unknown export mode: {mode}')
+        if not faces:
+            continue
+        p = dict(part)
+        p['faces'] = faces
+        selected.append(p)
+    return selected
 
 
 # ── CLI ─────────────────────────────────────────────────────

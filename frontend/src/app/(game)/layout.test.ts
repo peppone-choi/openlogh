@@ -34,3 +34,30 @@ describe('game layout phase redirect', () => {
         expect(shouldRedirect({ opentime }, '/map')).toBeNull();
     });
 });
+
+describe('game layout hydration guard', () => {
+    function shouldBlockRedirect(flags: {
+        isInitialized: boolean;
+        worldHydrated: boolean;
+        generalHydrated: boolean;
+    }): boolean {
+        // Redirect should be blocked if any hydration is incomplete
+        return !flags.isInitialized || !flags.worldHydrated || !flags.generalHydrated;
+    }
+
+    it('blocks redirect when worldStore not hydrated', () => {
+        expect(shouldBlockRedirect({ isInitialized: true, worldHydrated: false, generalHydrated: true })).toBe(true);
+    });
+
+    it('blocks redirect when generalStore not hydrated', () => {
+        expect(shouldBlockRedirect({ isInitialized: true, worldHydrated: true, generalHydrated: false })).toBe(true);
+    });
+
+    it('blocks redirect when auth not initialized', () => {
+        expect(shouldBlockRedirect({ isInitialized: false, worldHydrated: true, generalHydrated: true })).toBe(true);
+    });
+
+    it('allows redirect when all stores are ready', () => {
+        expect(shouldBlockRedirect({ isInitialized: true, worldHydrated: true, generalHydrated: true })).toBe(false);
+    });
+});

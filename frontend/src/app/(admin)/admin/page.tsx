@@ -27,11 +27,11 @@ import {
 } from 'lucide-react';
 import { PageHeader } from '@/components/game/page-header';
 import { LoadingState } from '@/components/game/loading-state';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/8bit/card';
+import { Button } from '@/components/ui/8bit/button';
+import { Input } from '@/components/ui/8bit/input';
+import { Badge } from '@/components/ui/8bit/badge';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/8bit/table';
 import { adminApi, adminEventApi, worldApi, scenarioApi, gameVersionApi, turnApi } from '@/lib/gameApi';
 import { toast } from 'sonner';
 import type { WorldState, Scenario, AdminDashboard } from '@/types';
@@ -265,12 +265,12 @@ export default function AdminDashboardPage() {
         try {
             await adminApi.timeControl(
                 {
-                    distribute: { funds: gold, supplies: rice, target: distributeTarget },
+                    distribute: { gold, rice, target: distributeTarget },
                 },
                 worldId
             );
             toast.success(
-                `금 ${gold.toLocaleString()}, 쌀 ${rice.toLocaleString()} 지급 완료 (${distributeTarget === 'all' ? '전체 제독' : '진영별'})`
+                `금 ${gold.toLocaleString()}, 쌀 ${rice.toLocaleString()} 지급 완료 (${distributeTarget === 'all' ? '전체 장수' : '국가별'})`
             );
             setGoldAmount('');
             setRiceAmount('');
@@ -412,10 +412,10 @@ export default function AdminDashboardPage() {
                 npcMode: Number(formNpcMode),
                 fiction: formFiction ? Number(formFiction) : undefined,
                 isFiction: formIsFiction,
-                maxOfficer: formMaxGeneral ? Number(formMaxGeneral) : undefined,
-                maxFaction: formMaxNation ? Number(formMaxNation) : undefined,
+                maxGeneral: formMaxGeneral ? Number(formMaxGeneral) : undefined,
+                maxNation: formMaxNation ? Number(formMaxNation) : undefined,
                 joinMode: formJoinMode,
-                blockOfficerCreate: formBlockGeneralCreate ? 1 : 0,
+                blockGeneralCreate: formBlockGeneralCreate ? 1 : 0,
                 showImgLevel: formShowImgLevel ? 1 : 0,
                 realtimeMode: formRealtimeMode,
                 commandPointRegenRate: formCommandPointRegenRate ? Number(formCommandPointRegenRate) : undefined,
@@ -457,6 +457,17 @@ export default function AdminDashboardPage() {
         }
     };
 
+    const handleToggleLock = async (wId: number, currentlyLocked: boolean) => {
+        const next = !currentlyLocked;
+        try {
+            await adminApi.updateSettings({ locked: next }, wId);
+            toast.success(next ? '턴 정지됨' : '턴 재개됨');
+            loadWorlds();
+        } catch {
+            toast.error('턴 상태 변경 실패');
+        }
+    };
+
     const handleWorldAction = async (worldId: number, action: 'open' | 'close') => {
         const labels = { open: '오픈', close: '폐쇄' };
         try {
@@ -490,10 +501,10 @@ export default function AdminDashboardPage() {
                 npcMode: Number(formNpcMode),
                 fiction: formFiction ? Number(formFiction) : undefined,
                 isFiction: formIsFiction,
-                maxOfficer: formMaxGeneral ? Number(formMaxGeneral) : undefined,
-                maxFaction: formMaxNation ? Number(formMaxNation) : undefined,
+                maxGeneral: formMaxGeneral ? Number(formMaxGeneral) : undefined,
+                maxNation: formMaxNation ? Number(formMaxNation) : undefined,
                 joinMode: formJoinMode,
-                blockOfficerCreate: formBlockGeneralCreate ? 1 : 0,
+                blockGeneralCreate: formBlockGeneralCreate ? 1 : 0,
                 showImgLevel: formShowImgLevel ? 1 : 0,
                 realtimeMode: formRealtimeMode,
                 commandPointRegenRate: formCommandPointRegenRate ? Number(formCommandPointRegenRate) : undefined,
@@ -524,7 +535,7 @@ export default function AdminDashboardPage() {
         if (!logMessage.trim()) return;
         try {
             await adminApi.writeLog(logMessage.trim(), worldId);
-            toast.success('은하 정세 로그가 추가되었습니다.');
+            toast.success('중원정세 로그가 추가되었습니다.');
             setLogMessage('');
         } catch {
             toast.error('로그 쓰기 실패');
@@ -549,12 +560,12 @@ export default function AdminDashboardPage() {
             await adminApi.updateSettings(
                 {
                     notice,
-                    maxOfficer: maxGeneral ? Number(maxGeneral) : undefined,
-                    maxFaction: maxNation ? Number(maxNation) : undefined,
+                    maxGeneral: maxGeneral ? Number(maxGeneral) : undefined,
+                    maxNation: maxNation ? Number(maxNation) : undefined,
                     npcMode: Number(npcMode),
                     isFiction,
                     joinMode,
-                    blockOfficerCreate: blockGeneralCreate,
+                    blockGeneralCreate,
                     realtimeMode,
                     commandPointRegenRate: commandPointRegenRate ? Number(commandPointRegenRate) : undefined,
                     bettingActive,
@@ -597,16 +608,16 @@ export default function AdminDashboardPage() {
         {
             name: 'ProcessIncome',
             label: '세금 징수',
-            description: '행성 수입 처리 (골드/쌀)',
+            description: '도시 수입 처리 (골드/쌀)',
         },
         {
             name: 'ProcessSemiAnnual',
             label: '반기 처리',
-            description: '인구 변동, 기술 퇴화, 제독 수명 등',
+            description: '인구 변동, 기술 퇴화, 장수 수명 등',
         },
         {
             name: 'UpdateCitySupply',
-            label: '행성 보급',
+            label: '도시 보급',
             description: '도시 물자 갱신',
         },
         {
@@ -617,7 +628,7 @@ export default function AdminDashboardPage() {
         {
             name: 'RandomizeCityTradeRate',
             label: '교역률 변경',
-            description: '행성 교역률 무작위 변경',
+            description: '도시 교역률 무작위 변경',
         },
         {
             name: 'RaiseInvader',
@@ -628,12 +639,12 @@ export default function AdminDashboardPage() {
         {
             name: 'RegNeutralNPC',
             label: '재야 NPC 배치',
-            description: '재야 NPC 제독를 빈 도시에 배치',
+            description: '재야 NPC 장교를 빈 도시에 배치',
         },
         {
             name: 'NoticeToHistoryLog',
-            label: '은하 정세 기록',
-            description: '은하 정세에 메시지 기록',
+            label: '중원정세 기록',
+            description: '중원정세에 메시지 기록',
             needsArg: 'message',
         },
         {
@@ -837,7 +848,7 @@ export default function AdminDashboardPage() {
                                         </select>
                                     </div>
                                     <div className="space-y-1">
-                                        <label className="text-xs text-muted-foreground">최대 제독 수</label>
+                                        <label className="text-xs text-muted-foreground">최대 장수 수</label>
                                         <Input
                                             type="number"
                                             value={formMaxGeneral}
@@ -873,7 +884,7 @@ export default function AdminDashboardPage() {
                                         />
                                     </div>
                                     <label className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm">
-                                        <span className="text-xs text-muted-foreground">확장 제독 활성화</span>
+                                        <span className="text-xs text-muted-foreground">확장 장수 활성화</span>
                                         <input
                                             type="checkbox"
                                             checked={formExtend}
@@ -919,7 +930,7 @@ export default function AdminDashboardPage() {
                                 <p className="text-xs text-muted-foreground mb-2 font-medium">제한 설정</p>
                                 <div className="grid grid-cols-2 gap-3">
                                     <label className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm">
-                                        <span className="text-xs text-muted-foreground">제독 생성 차단</span>
+                                        <span className="text-xs text-muted-foreground">장수 생성 차단</span>
                                         <input
                                             type="checkbox"
                                             checked={formBlockGeneralCreate}
@@ -1111,7 +1122,7 @@ export default function AdminDashboardPage() {
                                         </select>
                                     </div>
                                     <div className="space-y-1">
-                                        <label className="text-xs text-muted-foreground">최대 제독 수</label>
+                                        <label className="text-xs text-muted-foreground">최대 장수 수</label>
                                         <Input
                                             type="number"
                                             value={formMaxGeneral}
@@ -1147,7 +1158,7 @@ export default function AdminDashboardPage() {
                                         />
                                     </div>
                                     <label className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm">
-                                        <span className="text-xs text-muted-foreground">확장 제독 활성화</span>
+                                        <span className="text-xs text-muted-foreground">확장 장수 활성화</span>
                                         <input
                                             type="checkbox"
                                             checked={formExtend}
@@ -1193,7 +1204,7 @@ export default function AdminDashboardPage() {
                                 <p className="text-xs text-muted-foreground mb-2 font-medium">제한 설정</p>
                                 <div className="grid grid-cols-2 gap-3">
                                     <label className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm">
-                                        <span className="text-xs text-muted-foreground">제독 생성 차단</span>
+                                        <span className="text-xs text-muted-foreground">장수 생성 차단</span>
                                         <input
                                             type="checkbox"
                                             checked={formBlockGeneralCreate}
@@ -1335,6 +1346,16 @@ export default function AdminDashboardPage() {
                                                     <Badge variant={w.meta?.gatewayActive ? 'outline' : 'destructive'}>
                                                         {w.meta?.gatewayActive ? '운영중' : '비활성'}
                                                     </Badge>
+                                                    {Boolean(
+                                                        (w.config as Record<string, unknown> | undefined)?.locked
+                                                    ) && (
+                                                        <Badge
+                                                            variant="outline"
+                                                            className="text-orange-400 border-orange-400/40"
+                                                        >
+                                                            <Lock className="size-3 mr-0.5" />턴 정지
+                                                        </Badge>
+                                                    )}
                                                     {(() => {
                                                         const phase = w.meta?.phase as string | undefined;
                                                         const config = (w.config ?? {}) as Record<string, unknown>;
@@ -1423,6 +1444,38 @@ export default function AdminDashboardPage() {
                                                     )}
                                                     <Button
                                                         size="sm"
+                                                        variant={
+                                                            Boolean(
+                                                                (w.config as Record<string, unknown> | undefined)
+                                                                    ?.locked
+                                                            )
+                                                                ? 'default'
+                                                                : 'outline'
+                                                        }
+                                                        onClick={() =>
+                                                            handleToggleLock(
+                                                                w.id,
+                                                                Boolean(
+                                                                    (w.config as Record<string, unknown> | undefined)
+                                                                        ?.locked
+                                                                )
+                                                            )
+                                                        }
+                                                    >
+                                                        {Boolean(
+                                                            (w.config as Record<string, unknown> | undefined)?.locked
+                                                        ) ? (
+                                                            <>
+                                                                <Unlock className="size-3.5 mr-1" />턴 재개
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <Lock className="size-3.5 mr-1" />턴 정지
+                                                            </>
+                                                        )}
+                                                    </Button>
+                                                    <Button
+                                                        size="sm"
                                                         variant="secondary"
                                                         onClick={() => handleOpenReset(w.id, displayName)}
                                                     >
@@ -1485,12 +1538,12 @@ export default function AdminDashboardPage() {
                                 />
                             </div>
                             <div className="space-y-1">
-                                <label className="text-sm text-muted-foreground">은하 정세 추가</label>
+                                <label className="text-sm text-muted-foreground">중원정세 추가</label>
                                 <div className="flex gap-2">
                                     <Input
                                         value={logMessage}
                                         onChange={(e) => setLogMessage(e.target.value)}
-                                        placeholder="은하 정세 메시지 입력"
+                                        placeholder="중원정세 메시지 입력"
                                         onKeyDown={(e) => e.key === 'Enter' && handleWriteLog()}
                                     />
                                     <Button size="sm" variant="outline" onClick={handleWriteLog}>
@@ -1540,7 +1593,7 @@ export default function AdminDashboardPage() {
                                                     onClick={() => setDistributeTarget(target)}
                                                     className={`px-3 py-1.5 text-xs transition-colors ${distributeTarget === target ? 'bg-[#141c65] text-white' : 'text-gray-400 hover:text-white'}`}
                                                 >
-                                                    {target === 'all' ? '전체 제독' : '진영별'}
+                                                    {target === 'all' ? '전체 장수' : '국가별'}
                                                 </button>
                                             ))}
                                         </div>
@@ -1604,7 +1657,7 @@ export default function AdminDashboardPage() {
                                 <h4 className="text-sm font-medium">게임 규칙</h4>
                                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                                     <div className="space-y-1">
-                                        <label className="text-xs text-muted-foreground">최대 제독</label>
+                                        <label className="text-xs text-muted-foreground">최대 장수</label>
                                         <Input
                                             type="number"
                                             value={maxGeneral}
@@ -1665,7 +1718,7 @@ export default function AdminDashboardPage() {
                                 </div>
                                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                                     <div className="space-y-1">
-                                        <label className="text-xs text-muted-foreground">제독 생성</label>
+                                        <label className="text-xs text-muted-foreground">장수 생성</label>
                                         <select
                                             value={blockGeneralCreate}
                                             onChange={(e) => setBlockGeneralCreate(Number(e.target.value))}
@@ -1673,7 +1726,7 @@ export default function AdminDashboardPage() {
                                         >
                                             <option value={0}>가능</option>
                                             <option value={1}>불가</option>
-                                            <option value={2}>제독명 무작위</option>
+                                            <option value={2}>장수명 무작위</option>
                                         </select>
                                     </div>
                                     <div className="space-y-1">
@@ -1793,7 +1846,7 @@ export default function AdminDashboardPage() {
                                             onChange: setAllowTeleport,
                                         },
                                         {
-                                            label: '함선 건조',
+                                            label: '모병',
                                             checked: allowRecruit,
                                             onChange: setAllowRecruit,
                                         },
@@ -1813,7 +1866,7 @@ export default function AdminDashboardPage() {
                                             onChange: setAllowMoraleBoost,
                                         },
                                         {
-                                            label: '함대 출격',
+                                            label: '출병',
                                             checked: allowDispatch,
                                             onChange: setAllowDispatch,
                                         },
@@ -1892,7 +1945,7 @@ export default function AdminDashboardPage() {
                             {/* NoticeToHistoryLog with message input */}
                             <div className="flex gap-2 items-end">
                                 <div className="flex-1 space-y-1">
-                                    <label className="text-xs text-muted-foreground">은하 정세 기록</label>
+                                    <label className="text-xs text-muted-foreground">중원정세 기록</label>
                                     <Input
                                         value={eventLogMsg}
                                         onChange={(e) => setEventLogMsg(e.target.value)}
@@ -2204,14 +2257,12 @@ export default function AdminDashboardPage() {
                                         </Button>
                                     </div>
                                     <p className="text-xs text-muted-foreground">
-                                        가오픈: 제독 생성/삭제, 사전 거병만 가능. 정식오픈: 모든 기능 활성화.
+                                        가오픈: 장수 생성/삭제, 사전 거병만 가능. 정식오픈: 모든 기능 활성화.
                                     </p>
                                 </CardContent>
                             </Card>
 
                             <div className="flex flex-wrap gap-2">
-                                {/* 세션 재시작 */}
-                                <SessionRestartButton worldId={worldId} onComplete={loadWorlds} />
                                 <Button
                                     size="sm"
                                     variant="destructive"
@@ -2241,14 +2292,14 @@ export default function AdminDashboardPage() {
                                     onClick={async () => {
                                         if (
                                             !confirm(
-                                                '강제 리홀: 천통 이후 40세 이상 제독의 명예의전당 기록과 상속 포인트를 재정산합니다. 계속할까요?'
+                                                '강제 리홀: 천통 이후 40세 이상 장수의 명예의전당 기록과 상속 포인트를 재정산합니다. 계속할까요?'
                                             )
                                         )
                                             return;
                                         try {
                                             const res = await adminApi.forceRehall(worldId!);
                                             toast.success(
-                                                `강제 리홀 완료 (제독 ${res.data.processedGenerals}명, 유저 ${res.data.updatedUsers}명)`
+                                                `강제 리홀 완료 (장수 ${res.data.processedGenerals}명, 유저 ${res.data.updatedUsers}명)`
                                             );
                                         } catch {
                                             toast.error('강제 리홀 실패');
@@ -2298,68 +2349,6 @@ export default function AdminDashboardPage() {
                     )}
                 </CardContent>
             </Card>
-        </div>
-    );
-}
-
-// ---------------------------------------------------------------------------
-// 세션 재시작 버튼 (admin dashboard)
-// ---------------------------------------------------------------------------
-function SessionRestartButton({ worldId, onComplete }: { worldId: number | undefined; onComplete: () => void }) {
-    const [showConfirm, setShowConfirm] = useState(false);
-    const [restarting, setRestarting] = useState(false);
-
-    const handleRestart = async () => {
-        if (!worldId) return;
-        setRestarting(true);
-        try {
-            await adminApi.resetWorld(worldId);
-            toast.success('세션이 재시작되었습니다.');
-            setShowConfirm(false);
-            onComplete();
-        } catch {
-            toast.error('세션 재시작에 실패했습니다.');
-        } finally {
-            setRestarting(false);
-        }
-    };
-
-    if (!showConfirm) {
-        return (
-            <Button size="sm" variant="outline" onClick={() => setShowConfirm(true)}>
-                <RotateCw className="mr-1 size-4" /> 세션 재시작
-            </Button>
-        );
-    }
-
-    return (
-        <div className="border border-yellow-500/50 rounded-md p-3 space-y-2 bg-yellow-500/10 w-full">
-            <p className="text-sm font-semibold text-yellow-400 flex items-center gap-1">
-                <AlertTriangle className="size-4" /> 세션을 재시작하시겠습니까?
-            </p>
-            <p className="text-xs text-muted-foreground">
-                현재 진행중인 게임 세션이 재시작됩니다. 진행중인 턴 처리가 중단될 수 있습니다.
-            </p>
-            <div className="flex gap-2">
-                <Button
-                    size="sm"
-                    variant="destructive"
-                    disabled={restarting}
-                    onClick={handleRestart}
-                    className="flex-1"
-                >
-                    {restarting ? '재시작 중...' : '재시작 확인'}
-                </Button>
-                <Button
-                    size="sm"
-                    variant="outline"
-                    disabled={restarting}
-                    onClick={() => setShowConfirm(false)}
-                    className="flex-1"
-                >
-                    취소
-                </Button>
-            </div>
         </div>
     );
 }

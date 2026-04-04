@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useWorldStore } from '@/stores/worldStore';
-import { useOfficerStore } from '@/stores/officerStore';
+import { useGeneralStore } from '@/stores/generalStore';
 import { useGameStore } from '@/stores/gameStore';
 import { diplomacyLetterApi, historyApi } from '@/lib/gameApi';
 import { subscribeWebSocket } from '@/lib/websocket';
@@ -13,11 +13,11 @@ import { LoadingState } from '@/components/game/loading-state';
 import { EmptyState } from '@/components/game/empty-state';
 import { NationBadge } from '@/components/game/nation-badge';
 import { GeneralPortrait } from '@/components/game/general-portrait';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/8bit/card';
+import { Badge } from '@/components/ui/8bit/badge';
+import { Button } from '@/components/ui/8bit/button';
+import { Textarea } from '@/components/ui/8bit/textarea';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/8bit/tabs';
 import { formatGameLogDate } from '@/lib/gameLogDate';
 import { formatLog } from '@/lib/formatLog';
 
@@ -48,7 +48,7 @@ const LETTER_TYPES = [
 
 export default function DiplomacyPage() {
     const currentWorld = useWorldStore((s) => s.currentWorld);
-    const { myOfficer, fetchMyGeneral } = useOfficerStore();
+    const { myGeneral, fetchMyGeneral } = useGeneralStore();
     const { nations, diplomacy, generals, loading, loadAll } = useGameStore();
 
     // Letter state
@@ -68,19 +68,19 @@ export default function DiplomacyPage() {
 
     useEffect(() => {
         if (!currentWorld) return;
-        if (!myOfficer) fetchMyGeneral(currentWorld.id).catch(() => {});
+        if (!myGeneral) fetchMyGeneral(currentWorld.id).catch(() => {});
         loadAll(currentWorld.id);
-    }, [currentWorld, myOfficer, fetchMyGeneral, loadAll]);
+    }, [currentWorld, myGeneral, fetchMyGeneral, loadAll]);
 
     const loadLetters = useCallback(() => {
-        if (!myOfficer?.nationId) return;
+        if (!myGeneral?.nationId) return;
         setLettersLoading(true);
         diplomacyLetterApi
-            .list(myOfficer.nationId)
+            .list(myGeneral.nationId)
             .then(({ data }) => setLetters(data))
             .catch(() => {})
             .finally(() => setLettersLoading(false));
-    }, [myOfficer?.nationId]);
+    }, [myGeneral?.nationId]);
 
     useEffect(() => {
         loadLetters();
@@ -143,10 +143,10 @@ export default function DiplomacyPage() {
     }, [historyRecords]);
 
     const handleSendLetter = async () => {
-        if (!currentWorld || !myOfficer?.nationId || !destNationId) return;
+        if (!currentWorld || !myGeneral?.nationId || !destNationId) return;
         setSending(true);
         try {
-            await diplomacyLetterApi.send(myOfficer.nationId, {
+            await diplomacyLetterApi.send(myGeneral.nationId, {
                 worldId: currentWorld.id,
                 destNationId: Number(destNationId),
                 type: letterType,
@@ -158,7 +158,7 @@ export default function DiplomacyPage() {
             setLetterContent('');
             setLetterDiplomaticContent('');
             setShowDualContent(false);
-            const { data } = await diplomacyLetterApi.list(myOfficer.nationId);
+            const { data } = await diplomacyLetterApi.list(myGeneral.nationId);
             setLetters(data);
         } finally {
             setSending(false);
@@ -169,8 +169,8 @@ export default function DiplomacyPage() {
     const handleExecute = async (letterId: number) => {
         try {
             await diplomacyLetterApi.execute(letterId);
-            if (myOfficer?.nationId) {
-                const { data } = await diplomacyLetterApi.list(myOfficer.nationId);
+            if (myGeneral?.nationId) {
+                const { data } = await diplomacyLetterApi.list(myGeneral.nationId);
                 setLetters(data);
             }
             if (currentWorld) loadAll(currentWorld.id);
@@ -186,24 +186,24 @@ export default function DiplomacyPage() {
         await diplomacyLetterApi.respond(letterId, accept, reason);
         setRejectingLetterId(null);
         setRejectReason('');
-        if (myOfficer?.nationId) {
-            const { data } = await diplomacyLetterApi.list(myOfficer.nationId);
+        if (myGeneral?.nationId) {
+            const { data } = await diplomacyLetterApi.list(myGeneral.nationId);
             setLetters(data);
         }
     };
 
     const handleRollback = async (letterId: number) => {
         await diplomacyLetterApi.rollback(letterId);
-        if (myOfficer?.nationId) {
-            const { data } = await diplomacyLetterApi.list(myOfficer.nationId);
+        if (myGeneral?.nationId) {
+            const { data } = await diplomacyLetterApi.list(myGeneral.nationId);
             setLetters(data);
         }
     };
 
     const handleDestroy = async (letterId: number) => {
         await diplomacyLetterApi.destroy(letterId);
-        if (myOfficer?.nationId) {
-            const { data } = await diplomacyLetterApi.list(myOfficer.nationId);
+        if (myGeneral?.nationId) {
+            const { data } = await diplomacyLetterApi.list(myGeneral.nationId);
             setLetters(data);
         }
     };
@@ -219,8 +219,8 @@ export default function DiplomacyPage() {
         { key: 'nonaggression', label: '불가침' },
     ];
 
-    const otherNations = nations.filter((n) => n.id !== myOfficer?.nationId);
-    const canSendLetter = myOfficer && myOfficer.officerLevel >= 5 && myOfficer.nationId > 0;
+    const otherNations = nations.filter((n) => n.id !== myGeneral?.nationId);
+    const canSendLetter = myGeneral && myGeneral.officerLevel >= 5 && myGeneral.nationId > 0;
 
     return (
         <div className="space-y-0 max-w-4xl mx-auto">
@@ -241,7 +241,7 @@ export default function DiplomacyPage() {
                 {/* Tab 1: 외교부 — Letters + Nation Diplomacy Status */}
                 <TabsContent value="letters" className="mt-4 space-y-4 px-2">
                     {/* My nation's diplomacy status summary */}
-                    {myOfficer?.nationId && (
+                    {myGeneral?.nationId && (
                         <Card>
                             <CardHeader className="pb-2">
                                 <CardTitle className="text-sm">외교 현황</CardTitle>
@@ -335,7 +335,7 @@ export default function DiplomacyPage() {
                                         id="destNationId"
                                         value={destNationId}
                                         onChange={(e) => setDestNationId(e.target.value)}
-                                        className="h-9 w-full min-w-0 rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] md:text-sm"
+                                        className="h-9 w-full min-w-0 rounded-none border border-input bg-transparent px-3 py-1 text-base shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] md:text-sm"
                                     >
                                         <option value="">선택...</option>
                                         {otherNations.map((n) => (
@@ -353,7 +353,7 @@ export default function DiplomacyPage() {
                                         id="letterType"
                                         value={letterType}
                                         onChange={(e) => setLetterType(e.target.value)}
-                                        className="h-9 w-full min-w-0 rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] md:text-sm"
+                                        className="h-9 w-full min-w-0 rounded-none border border-input bg-transparent px-3 py-1 text-base shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] md:text-sm"
                                     >
                                         {LETTER_TYPES.map((lt) => (
                                             <option key={lt.value} value={lt.value}>
@@ -365,7 +365,7 @@ export default function DiplomacyPage() {
                                 <div>
                                     <div className="flex items-center justify-between mb-1">
                                         <label htmlFor="letterContent" className="text-xs text-muted-foreground">
-                                            공개 내용 {showDualContent ? '(모든 진영에 공개)' : '(선택)'}
+                                            공개 내용 {showDualContent ? '(모든 국가에 공개)' : '(선택)'}
                                         </label>
                                         <button
                                             type="button"
@@ -483,10 +483,10 @@ export default function DiplomacyPage() {
                                             | string
                                             | undefined;
                                         const state = letter.payload.state as string | undefined;
-                                        const isOutgoing = myOfficer?.nationId === (letter.srcId as number);
+                                        const isOutgoing = myGeneral?.nationId === (letter.srcId as number);
                                         const isInvolved =
-                                            myOfficer?.nationId === (letter.srcId as number) ||
-                                            myOfficer?.nationId === (letter.destId as number);
+                                            myGeneral?.nationId === (letter.srcId as number) ||
+                                            myGeneral?.nationId === (letter.destId as number);
 
                                         // Chain steps: 제안→수락→이행
                                         const chainSteps = [
@@ -595,7 +595,7 @@ export default function DiplomacyPage() {
                                                         <div className="flex items-center gap-2 rounded border border-gray-800 px-2 py-1.5">
                                                             <GeneralPortrait
                                                                 picture={srcSigner?.picture}
-                                                                name={srcSigner?.name ?? '발신 제독'}
+                                                                name={srcSigner?.name ?? '발신 장수'}
                                                                 size="lg"
                                                             />
                                                             <div className="min-w-0 text-xs">
@@ -610,7 +610,7 @@ export default function DiplomacyPage() {
                                                         <div className="flex items-center gap-2 rounded border border-gray-800 px-2 py-1.5">
                                                             <GeneralPortrait
                                                                 picture={destSigner?.picture}
-                                                                name={destSigner?.name ?? '수신 제독'}
+                                                                name={destSigner?.name ?? '수신 장수'}
                                                                 size="lg"
                                                             />
                                                             <div className="min-w-0 text-xs">
@@ -651,7 +651,7 @@ export default function DiplomacyPage() {
                                                 <div className="flex gap-2">
                                                     {/* Pending: receiver can accept/reject */}
                                                     {state === 'pending' &&
-                                                        myOfficer?.nationId === (letter.destId as number) && (
+                                                        myGeneral?.nationId === (letter.destId as number) && (
                                                             <>
                                                                 <Button
                                                                     size="sm"
@@ -715,7 +715,7 @@ export default function DiplomacyPage() {
                                                         )}
                                                     {/* Pending: sender can withdraw */}
                                                     {state === 'pending' &&
-                                                        myOfficer?.nationId === (letter.srcId as number) && (
+                                                        myGeneral?.nationId === (letter.srcId as number) && (
                                                             <Button
                                                                 size="sm"
                                                                 variant="outline"

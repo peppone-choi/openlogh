@@ -1,8 +1,8 @@
 package com.openlogh.repository
 
-import com.openlogh.entity.SessionState
+import com.openlogh.entity.WorldState
 import org.springframework.data.jpa.repository.JpaRepository
 
-interface SessionStateRepository : JpaRepository<SessionState, Short> {
-    fun findByCommitSha(commitSha: String): List<SessionState>
+interface WorldStateRepository : JpaRepository<WorldState, Short> {
+    fun findByCommitSha(commitSha: String): List<WorldState>
 }

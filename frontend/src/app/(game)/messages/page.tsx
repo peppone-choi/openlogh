@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useWorldStore } from '@/stores/worldStore';
-import { useOfficerStore } from '@/stores/officerStore';
+import { useGeneralStore } from '@/stores/generalStore';
 import { useGameStore } from '@/stores/gameStore';
 import { messageApi } from '@/lib/gameApi';
 import { subscribeWebSocket } from '@/lib/websocket';
@@ -11,11 +11,11 @@ import { ChevronDown, Mail, PenLine, Reply, Send, Trash2 } from 'lucide-react';
 import { PageHeader } from '@/components/game/page-header';
 import { LoadingState } from '@/components/game/loading-state';
 import { EmptyState } from '@/components/game/empty-state';
-import { Card, CardContent } from '@/components/ui/card';
-import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/8bit/card';
+import { Textarea } from '@/components/ui/8bit/textarea';
+import { Button } from '@/components/ui/8bit/button';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/8bit/tabs';
+import { Badge } from '@/components/ui/8bit/badge';
 
 type MailboxTab = 'public' | 'national' | 'private' | 'diplomacy';
 type ComposeRecipientType = 'public' | 'general' | 'nation';
@@ -23,8 +23,8 @@ const PAGE_SIZE = 30;
 
 export default function MessagesPage() {
     const currentWorld = useWorldStore((s) => s.currentWorld);
-    const myGeneral = useOfficerStore((s) => s.myGeneral);
-    const fetchMyGeneral = useOfficerStore((s) => s.fetchMyGeneral);
+    const myGeneral = useGeneralStore((s) => s.myGeneral);
+    const fetchMyGeneral = useGeneralStore((s) => s.fetchMyGeneral);
     const { generals, nations, loadAll } = useGameStore();
     const [tab, setTab] = useState<MailboxTab>('public');
     const [messagesByTab, setMessagesByTab] = useState<Record<MailboxTab, Message[]>>({
@@ -297,10 +297,10 @@ export default function MessagesPage() {
                                             setMailboxType(canUseDiplomacy ? 'DIPLOMACY' : 'NATIONAL');
                                         }
                                     }}
-                                    className="h-9 w-full min-w-0 rounded-md border border-amber-900/60 bg-zinc-950 px-3 py-1 text-sm text-amber-100 shadow-xs outline-none focus-visible:border-amber-500"
+                                    className="h-9 w-full min-w-0 rounded-none border border-amber-900/60 bg-zinc-950 px-3 py-1 text-sm text-amber-100 shadow-xs outline-none focus-visible:border-amber-500"
                                 >
                                     <option value="public">공개 (전체)</option>
-                                    <option value="general">제독</option>
+                                    <option value="general">장수</option>
                                     <option value="nation">국가</option>
                                 </select>
                             </div>
@@ -312,7 +312,7 @@ export default function MessagesPage() {
                                     id="mailbox-type"
                                     value={mailboxType}
                                     onChange={(e) => setMailboxType(e.target.value as MailboxType)}
-                                    className="h-9 w-full min-w-0 rounded-md border border-amber-900/60 bg-zinc-950 px-3 py-1 text-sm text-amber-100 shadow-xs outline-none focus-visible:border-amber-500"
+                                    className="h-9 w-full min-w-0 rounded-none border border-amber-900/60 bg-zinc-950 px-3 py-1 text-sm text-amber-100 shadow-xs outline-none focus-visible:border-amber-500"
                                 >
                                     {recipientType === 'public' && <option value="PUBLIC">공개 서신</option>}
                                     {recipientType === 'general' && <option value="PRIVATE">사적 서신</option>}
@@ -330,13 +330,13 @@ export default function MessagesPage() {
                         {recipientType === 'general' && (
                             <div>
                                 <label htmlFor="dest-general" className="block text-xs text-muted-foreground mb-1">
-                                    받는 제독
+                                    받는 장수
                                 </label>
                                 <select
                                     id="dest-general"
                                     value={destGeneralId}
                                     onChange={(e) => setDestGeneralId(e.target.value)}
-                                    className="h-9 w-full min-w-0 rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] md:text-sm"
+                                    className="h-9 w-full min-w-0 rounded-none border border-input bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] md:text-sm"
                                 >
                                     <option value="">선택...</option>
                                     {Array.from(
@@ -363,7 +363,7 @@ export default function MessagesPage() {
                         )}
                         {recipientType === 'public' && (
                             <div className="text-xs text-muted-foreground p-2 bg-zinc-900/50 rounded">
-                                전체 제독에게 공개되는 서신입니다.
+                                전체 장수에게 공개되는 서신입니다.
                             </div>
                         )}
                         {recipientType === 'nation' && mailboxType === 'DIPLOMACY' && (
@@ -375,7 +375,7 @@ export default function MessagesPage() {
                                     id="dest-nation"
                                     value={destNationId}
                                     onChange={(e) => setDestNationId(e.target.value)}
-                                    className="h-9 w-full min-w-0 rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] md:text-sm"
+                                    className="h-9 w-full min-w-0 rounded-none border border-input bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] md:text-sm"
                                 >
                                     <option value="">선택...</option>
                                     {nations
@@ -390,7 +390,7 @@ export default function MessagesPage() {
                         )}
                         {recipientType === 'nation' && mailboxType === 'NATIONAL' && (
                             <div className="text-xs text-muted-foreground p-2 bg-zinc-900/50 rounded">
-                                자국 소속 제독에게만 전달되는 서신입니다.
+                                자국 소속 장수에게만 전달되는 서신입니다.
                             </div>
                         )}
                         <div>
@@ -425,7 +425,7 @@ export default function MessagesPage() {
                 </Card>
             )}
 
-            <Tabs value={tab} onValueChange={(v: string) => setTab(v as MailboxTab)}>
+            <Tabs value={tab} onValueChange={(v) => setTab(v as MailboxTab)}>
                 <TabsList className="grid grid-cols-4">
                     <TabsTrigger value="public">
                         공개 서신
@@ -498,7 +498,7 @@ export default function MessagesPage() {
                                             <span className="font-medium text-foreground">
                                                 {senderName ??
                                                     (m.payload.sender as string) ??
-                                                    `${m.mailboxType === 'NATIONAL' || m.mailboxType === 'DIPLOMACY' ? '국가' : '제독'}#${m.srcId ?? '시스템'}`}
+                                                    `${m.mailboxType === 'NATIONAL' || m.mailboxType === 'DIPLOMACY' ? '국가' : '장수'}#${m.srcId ?? '시스템'}`}
                                             </span>
                                             <span>{new Date(m.sentAt).toLocaleString('ko-KR')}</span>
                                             {typeof m.meta.readAt !== 'string' && (

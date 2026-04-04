@@ -1,161 +1,192 @@
 package com.openlogh.controller
 
-import com.openlogh.dto.*
-import com.openlogh.entity.Auction
-import com.openlogh.entity.AuctionBid
-import com.openlogh.repository.AuctionBidRepository
-import com.openlogh.repository.AuctionRepository
-import com.openlogh.repository.OfficerRepository
+import com.openlogh.dto.BidRequest
+import com.openlogh.dto.BidResourceAuctionRequest
+import com.openlogh.dto.CancelAuctionRequest
+import com.openlogh.dto.CreateAuctionRequest
+import com.openlogh.dto.CreateItemAuctionRequest
+import com.openlogh.dto.MarketTradeRequest
+import com.openlogh.dto.MessageResponse
+import com.openlogh.dto.OpenResourceAuctionRequest
+import com.openlogh.service.AuctionService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
-import java.time.OffsetDateTime
 
 @RestController
 @RequestMapping("/api")
 class AuctionController(
-    private val auctionRepository: AuctionRepository,
-    private val auctionBidRepository: AuctionBidRepository,
-    private val officerRepository: OfficerRepository,
+    private val auctionService: AuctionService,
 ) {
     @GetMapping("/worlds/{worldId}/auctions")
-    fun list(@PathVariable worldId: Long): ResponseEntity<List<Auction>> {
-        val auctions = auctionRepository.findBySessionIdAndStatusNotOrderByCreatedAtDesc(worldId, "deleted")
-        return ResponseEntity.ok(auctions)
+    fun listAuctions(@PathVariable worldId: Long): ResponseEntity<List<MessageResponse>> {
+        return ResponseEntity.ok(auctionService.listAuctions(worldId).map { MessageResponse.from(it) })
+    }
+
+    @GetMapping("/auctions/{id}/detail")
+    fun getAuctionDetail(
+        @PathVariable id: Long,
+        @RequestParam generalId: Long,
+    ): ResponseEntity<Map<String, Any>> {
+        val result = auctionService.getAuctionDetail(id, generalId)
+        if (result.containsKey("error")) return ResponseEntity.badRequest().body(result)
+        return ResponseEntity.ok(result)
     }
 
     @PostMapping("/worlds/{worldId}/auctions")
-    fun create(
+    fun createAuction(
         @PathVariable worldId: Long,
-        @RequestBody req: CreateAuctionRequest,
-    ): ResponseEntity<Auction> {
-        val seller = officerRepository.findById(req.sellerId).orElse(null)
-            ?: return ResponseEntity.notFound().build()
-        val auction = Auction(
-            sessionId = worldId,
-            sellerGeneralId = req.sellerId,
-            type = req.type,
-            itemCode = req.item,
-            amount = req.amount,
-            minPrice = req.minPrice,
-            startBidAmount = req.minPrice,
-            finishBidAmount = req.finishBidAmount ?: 0,
-            currentPrice = req.minPrice,
-            hostGeneralId = req.sellerId,
-            hostName = seller.name,
-            status = "open",
-            createdAt = OffsetDateTime.now(),
-            expiresAt = OffsetDateTime.now().plusDays((req.closeTurnCnt ?: 3).toLong()),
-        )
-        val saved = auctionRepository.save(auction)
-        return ResponseEntity.status(HttpStatus.CREATED).body(saved)
-    }
-
-    @PostMapping("/auctions/{auctionId}/bid")
-    fun bid(
-        @PathVariable auctionId: Long,
-        @RequestBody req: BidRequest,
-    ): ResponseEntity<AuctionBidResponse> {
-        val auction = auctionRepository.findById(auctionId).orElse(null)
-            ?: return ResponseEntity.notFound().build()
-        if (auction.status != "open") {
-            return ResponseEntity.ok(AuctionBidResponse(success = false, error = "경매가 종료되었습니다."))
-        }
-        if (req.amount <= auction.currentPrice) {
-            return ResponseEntity.ok(AuctionBidResponse(success = false, error = "현재가보다 높은 금액을 입력하세요."))
-        }
-
-        val bid = AuctionBid(
-            sessionId = auction.sessionId,
-            auctionId = auctionId,
-            bidderGeneralId = req.bidderId,
-            amount = req.amount,
-        )
-        auctionBidRepository.save(bid)
-
-        auction.currentPrice = req.amount
-        auction.buyerGeneralId = req.bidderId
-        auctionRepository.save(auction)
-
-        return ResponseEntity.ok(AuctionBidResponse(success = true, currentPrice = req.amount))
-    }
-
-    @PostMapping("/auctions/{auctionId}/cancel")
-    fun cancel(
-        @PathVariable auctionId: Long,
-        @RequestBody req: CancelAuctionRequest,
-    ): ResponseEntity<AuctionActionResponse> {
-        val auction = auctionRepository.findById(auctionId).orElse(null)
-            ?: return ResponseEntity.notFound().build()
-        if (auction.hostGeneralId != req.officerId) {
-            return ResponseEntity.ok(AuctionActionResponse(success = false, error = "권한이 없습니다."))
-        }
-        if (auction.buyerGeneralId != null) {
-            return ResponseEntity.ok(AuctionActionResponse(success = false, error = "이미 입찰이 있어 취소할 수 없습니다."))
-        }
-        auction.status = "cancelled"
-        auctionRepository.save(auction)
-        return ResponseEntity.ok(AuctionActionResponse(success = true))
-    }
-
-    @PostMapping("/auctions/{auctionId}/finalize")
-    fun finalize(@PathVariable auctionId: Long): ResponseEntity<AuctionActionResponse> {
-        val auction = auctionRepository.findById(auctionId).orElse(null)
-            ?: return ResponseEntity.notFound().build()
-        auction.status = "completed"
-        auctionRepository.save(auction)
-        return ResponseEntity.ok(AuctionActionResponse(success = true))
-    }
-
-    @GetMapping("/worlds/{worldId}/auction-history")
-    fun getHistory(@PathVariable worldId: Long): ResponseEntity<List<AuctionHistoryEntry>> {
-        val completed = auctionRepository.findBySessionIdAndStatusOrderByCreatedAtDesc(worldId, "completed")
-        val history = completed.map {
-            AuctionHistoryEntry(
-                id = it.id,
-                type = it.type,
-                itemCode = it.itemCode,
-                amount = it.amount,
-                finalPrice = it.currentPrice,
-                sellerName = it.hostName,
-                buyerName = null,
-                status = it.status,
-                createdAt = it.createdAt,
+        @RequestBody request: CreateAuctionRequest,
+    ): ResponseEntity<MessageResponse> {
+        return try {
+            val auction = auctionService.createAuction(
+                worldId,
+                request.type,
+                request.sellerId,
+                request.item,
+                request.amount,
+                request.minPrice,
+                request.finishBidAmount,
+                request.closeTurnCnt,
             )
+            ResponseEntity.status(HttpStatus.CREATED).body(MessageResponse.from(auction))
+        } catch (e: IllegalArgumentException) {
+            throw org.springframework.web.server.ResponseStatusException(HttpStatus.BAD_REQUEST, e.message ?: "잘못된 요청")
         }
-        return ResponseEntity.ok(history)
+    }
+
+    @GetMapping("/worlds/{worldId}/auctions/resource")
+    fun getActiveResourceAuctionList(@PathVariable worldId: Long): ResponseEntity<Map<String, Any>> {
+        return ResponseEntity.ok(auctionService.getActiveResourceAuctionList(worldId))
+    }
+
+    @PostMapping("/worlds/{worldId}/auctions/resource/buy-rice")
+    fun openBuyRiceAuction(
+        @PathVariable worldId: Long,
+        @RequestBody request: OpenResourceAuctionRequest,
+    ): ResponseEntity<Map<String, Any>> {
+        val result = auctionService.openBuyRiceAuction(
+            worldId = worldId,
+            hostGeneralId = request.hostGeneralId,
+            amount = request.amount,
+            closeTurnCnt = request.closeTurnCnt,
+            startBidAmount = request.startBidAmount,
+            finishBidAmount = request.finishBidAmount,
+        )
+        if (result.containsKey("error")) return ResponseEntity.badRequest().body(result)
+        return ResponseEntity.status(HttpStatus.CREATED).body(result)
+    }
+
+    @PostMapping("/worlds/{worldId}/auctions/resource/sell-rice")
+    fun openSellRiceAuction(
+        @PathVariable worldId: Long,
+        @RequestBody request: OpenResourceAuctionRequest,
+    ): ResponseEntity<Map<String, Any>> {
+        val result = auctionService.openSellRiceAuction(
+            worldId = worldId,
+            hostGeneralId = request.hostGeneralId,
+            amount = request.amount,
+            closeTurnCnt = request.closeTurnCnt,
+            startBidAmount = request.startBidAmount,
+            finishBidAmount = request.finishBidAmount,
+        )
+        if (result.containsKey("error")) return ResponseEntity.badRequest().body(result)
+        return ResponseEntity.status(HttpStatus.CREATED).body(result)
+    }
+
+    @PostMapping("/auctions/{id}/bid")
+    fun bid(
+        @PathVariable id: Long,
+        @RequestBody request: BidRequest,
+    ): ResponseEntity<Map<String, Any>> {
+        val result = auctionService.bid(id, request.bidderId, request.amount)
+            ?: return ResponseEntity.notFound().build()
+        if (result.containsKey("error")) return ResponseEntity.badRequest().body(result)
+        return ResponseEntity.ok(result)
+    }
+
+    @PostMapping("/auctions/{id}/bid-resource")
+    fun bidResourceAuction(
+        @PathVariable id: Long,
+        @RequestBody request: BidResourceAuctionRequest,
+    ): ResponseEntity<Map<String, Any>> {
+        val result = auctionService.bidResourceAuction(id, request.bidderId, request.amount)
+        if (result.containsKey("error")) return ResponseEntity.badRequest().body(result)
+        return ResponseEntity.ok(result)
+    }
+
+    @PostMapping("/worlds/{worldId}/market/buy-rice")
+    fun buyRice(
+        @PathVariable worldId: Long,
+        @RequestBody request: MarketTradeRequest,
+    ): ResponseEntity<Map<String, Any>> {
+        val general = auctionService.buyRice(request.generalId, request.amount)
+        if (general.containsKey("error")) return ResponseEntity.badRequest().body(general)
+        return ResponseEntity.ok(general)
+    }
+
+    @PostMapping("/worlds/{worldId}/market/sell-rice")
+    fun sellRice(
+        @PathVariable worldId: Long,
+        @RequestBody request: MarketTradeRequest,
+    ): ResponseEntity<Map<String, Any>> {
+        val general = auctionService.sellRice(request.generalId, request.amount)
+        if (general.containsKey("error")) return ResponseEntity.badRequest().body(general)
+        return ResponseEntity.ok(general)
     }
 
     @GetMapping("/worlds/{worldId}/market-price")
-    fun getMarketPrice(@PathVariable worldId: Long): ResponseEntity<MarketPriceResponse> {
-        // TODO: implement dynamic market pricing
-        return ResponseEntity.ok(MarketPriceResponse(goldPerRice = 1.0, ricePerGold = 1.0))
-    }
-
-    @PostMapping("/worlds/{worldId}/market/buy-supplies")
-    fun buyRice(
-        @PathVariable worldId: Long,
-        @RequestBody req: MarketTradeRequest,
-    ): ResponseEntity<MarketBuyRiceResponse> {
-        // TODO: implement market buy logic
-        return ResponseEntity.ok(MarketBuyRiceResponse(success = true, amount = req.amount, cost = req.amount))
-    }
-
-    @PostMapping("/worlds/{worldId}/market/sell-supplies")
-    fun sellRice(
-        @PathVariable worldId: Long,
-        @RequestBody req: MarketTradeRequest,
-    ): ResponseEntity<MarketSellRiceResponse> {
-        // TODO: implement market sell logic
-        return ResponseEntity.ok(MarketSellRiceResponse(success = true, amount = req.amount, revenue = req.amount))
+    fun getMarketPrice(@PathVariable worldId: Long): ResponseEntity<AuctionService.MarketPrice> {
+        return ResponseEntity.ok(auctionService.getMarketPrice(worldId))
     }
 
     @PostMapping("/worlds/{worldId}/item-auctions")
     fun createItemAuction(
         @PathVariable worldId: Long,
-        @RequestBody req: CreateItemAuctionRequest,
-    ): ResponseEntity<ItemAuctionCreateResponse> {
-        // TODO: implement item auction creation
-        return ResponseEntity.ok(ItemAuctionCreateResponse(success = true, auctionId = 0))
+        @RequestBody request: CreateItemAuctionRequest,
+    ): ResponseEntity<Map<String, Any>> {
+        return try {
+            val auction = auctionService.createAuction(request.generalId, request.itemType, request.startPrice)
+            ResponseEntity.status(HttpStatus.CREATED).body(
+                mapOf("id" to auction.id, "status" to auction.status, "expiresAt" to auction.expiresAt.toString())
+            )
+        } catch (e: IllegalArgumentException) {
+            ResponseEntity.badRequest().body(mapOf("error" to (e.message ?: "잘못된 요청")))
+        }
+    }
+
+    @PostMapping("/auctions/{id}/cancel")
+    fun cancelAuction(
+        @PathVariable id: Long,
+        @RequestBody request: CancelAuctionRequest,
+    ): ResponseEntity<Map<String, Any>> {
+        val result = auctionService.cancelAuction(request.generalId, id)
+        if (result.containsKey("error")) return ResponseEntity.badRequest().body(result)
+        return ResponseEntity.ok(result)
+    }
+
+    @PostMapping("/auctions/{id}/finalize")
+    fun finalizeAuction(@PathVariable id: Long): ResponseEntity<Map<String, Any>> {
+        val result = auctionService.finalizeAuction(id)
+        if (result.containsKey("error")) return ResponseEntity.badRequest().body(result)
+        return ResponseEntity.ok(result)
+    }
+
+    @GetMapping("/worlds/{worldId}/auction-history")
+    fun getAuctionHistory(@PathVariable worldId: Long): ResponseEntity<List<Map<String, Any?>>> {
+        val history = auctionService.getAuctionHistory(worldId).map {
+            mapOf<String, Any?>(
+                "id" to it.id,
+                "sellerGeneralId" to it.sellerGeneralId,
+                "buyerGeneralId" to it.buyerGeneralId,
+                "itemCode" to it.itemCode,
+                "minPrice" to it.minPrice,
+                "currentPrice" to it.currentPrice,
+                "status" to it.status,
+                "createdAt" to it.createdAt.toString(),
+                "expiresAt" to it.expiresAt.toString(),
+            )
+        }
+        return ResponseEntity.ok(history)
     }
 }

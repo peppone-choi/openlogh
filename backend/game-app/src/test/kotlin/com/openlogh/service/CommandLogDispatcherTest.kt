@@ -1,6 +1,6 @@
 package com.openlogh.service
 
-import com.openlogh.entity.*
+import com.openlogh.entity.Record
 import com.openlogh.repository.RecordRepository
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach

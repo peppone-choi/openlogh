@@ -1,21 +1,19 @@
 package com.openlogh.engine.ai
 
-import com.openlogh.entity.Faction
-import com.openlogh.entity.Officer
-import com.openlogh.entity.Planet
-import com.openlogh.entity.SessionState
+import com.openlogh.entity.*
 
 data class AIContext(
-    val world: SessionState,
-    val general: Officer,
-    val city: Planet,
-    val nation: Faction,
+    val world: WorldState,
+    val general: General,
+    val city: City,
+    val nation: Nation?,
     val diplomacyState: DiplomacyState,
     val generalType: Int,
-    val allCities: List<Planet>,
-    val allGenerals: List<Officer>,
-    val allNations: List<Faction>,
-    val frontCities: List<Planet>,
-    val rearCities: List<Planet>,
-    val nationGenerals: List<Officer>,
+    val allCities: List<City>,
+    val allGenerals: List<General>,
+    val allNations: List<Nation>,
+    val frontCities: List<City>,
+    val rearCities: List<City>,
+    val nationGenerals: List<General>,
+    val mapAdjacency: Map<Long, List<Long>> = emptyMap(),
 )

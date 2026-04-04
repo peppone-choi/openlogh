@@ -4,11 +4,11 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ScrollText, Search, ChevronDown, ChevronRight, Clock, RefreshCw, ChevronLeft } from 'lucide-react';
 import { PageHeader } from '@/components/game/page-header';
 import { LoadingState } from '@/components/game/loading-state';
-import { Card, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent } from '@/components/ui/8bit/card';
+import { Input } from '@/components/ui/8bit/input';
+import { Button } from '@/components/ui/8bit/button';
+import { Badge } from '@/components/ui/8bit/badge';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/8bit/tabs';
 import { adminApi } from '@/lib/gameApi';
 import { formatLog } from '@/lib/formatLog';
 import { toast } from 'sonner';
@@ -166,7 +166,7 @@ export default function AdminLogsPage() {
     const handleSearch = useCallback(async () => {
         const id = Number(generalId);
         if (!id) {
-            toast.error('제독 ID를 입력하세요.');
+            toast.error('장수 ID를 입력하세요.');
             return;
         }
         setLoading(true);
@@ -214,14 +214,14 @@ export default function AdminLogsPage() {
 
     return (
         <div className="space-y-4">
-            <PageHeader icon={ScrollText} title="제독 로그" />
+            <PageHeader icon={ScrollText} title="장수 로그" />
 
             <div className="flex flex-wrap items-center gap-2">
                 <div className="relative w-52">
                     <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                     <Input
                         type="number"
-                        placeholder="제독 ID"
+                        placeholder="장수 ID"
                         value={generalId}
                         onChange={(e) => setGeneralId(e.target.value)}
                         className="pl-8"
@@ -231,7 +231,7 @@ export default function AdminLogsPage() {
                 <Input
                     list="admin-general-list"
                     className="w-64"
-                    placeholder="제독명으로 ID 선택"
+                    placeholder="장수명으로 ID 선택"
                     onChange={(e) => {
                         const selected = generals.find((g) => `${g.name} (#${g.id})` === e.target.value);
                         if (selected) setGeneralId(String(selected.id));
@@ -260,7 +260,7 @@ export default function AdminLogsPage() {
                     <div className="flex flex-wrap items-center gap-2">
                         <Tabs
                             value={activeCategory}
-                            onValueChange={(v: string) => {
+                            onValueChange={(v) => {
                                 setActiveCategory(v as CategoryKey);
                                 setPage(1);
                             }}
@@ -372,7 +372,7 @@ export default function AdminLogsPage() {
             {!loading && searched && allLogs.length === 0 && (
                 <div className="text-center py-8 text-muted-foreground">
                     <ScrollText className="size-8 mx-auto mb-2 opacity-50" />
-                    <p>해당 제독의 로그가 없습니다.</p>
+                    <p>해당 장수의 로그가 없습니다.</p>
                 </div>
             )}
         </div>

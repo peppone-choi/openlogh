@@ -1,8 +1,10 @@
 'use client';
 
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ScrollArea } from '@/components/ui/8bit/scroll-area';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/8bit/card';
 import { formatLog } from '@/lib/formatLog';
+import { isBattleLogHtml } from '@/lib/formatBattleLog';
+import { BattleLogEntry } from '@/components/game/battle-log-entry';
 import type { RecordEntry } from '@/types';
 
 interface RecordZoneProps {
@@ -14,9 +16,9 @@ interface RecordZoneProps {
 export function RecordZone({ generalRecords, globalRecords, historyRecords }: RecordZoneProps) {
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <RecordColumn title="제독동향" records={globalRecords} />
+            <RecordColumn title="장수동향" records={globalRecords} />
             <RecordColumn title="개인기록" records={generalRecords} />
-            <RecordColumn title="은하 정세" records={historyRecords} stripYear />
+            <RecordColumn title="중원정세" records={historyRecords} stripYear />
         </div>
     );
 }
@@ -39,7 +41,7 @@ function RecordColumn({ title, records, stripYear }: { title: string; records: R
                                 return (
                                     <div key={r.id} className="text-xs leading-relaxed">
                                         {date && <span className="text-muted-foreground mr-1">[{date}]</span>}
-                                        {formatLog(message)}
+                                        {isBattleLogHtml(message) ? <BattleLogEntry message={message} /> : formatLog(message)}
                                     </div>
                                 );
                             })

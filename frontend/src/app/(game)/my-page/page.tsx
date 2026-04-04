@@ -3,18 +3,18 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useWorldStore } from '@/stores/worldStore';
-import { useOfficerStore } from '@/stores/officerStore';
-import { accountApi, historyApi, planetApi, factionApi, frontApi, itemApi, officerLogApi } from '@/lib/gameApi';
-import type { StarSystem, Faction, Message, GeneralFrontInfo } from '@/types';
+import { useGeneralStore } from '@/stores/generalStore';
+import { accountApi, historyApi, cityApi, nationApi, frontApi, itemApi, generalLogApi } from '@/lib/gameApi';
+import type { City, Nation, Message, GeneralFrontInfo } from '@/types';
 import { User, Settings, ScrollText, Trash2, Swords, ArrowLeft, RefreshCw } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/8bit/card';
+import { Badge } from '@/components/ui/8bit/badge';
+import { Button } from '@/components/ui/8bit/button';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/8bit/tabs';
+import { ScrollArea } from '@/components/ui/8bit/scroll-area';
 import { PageHeader } from '@/components/game/page-header';
 import { LoadingState } from '@/components/game/loading-state';
-import { OfficerPortrait } from '@/components/game/officer-portrait';
+import { GeneralPortrait } from '@/components/game/general-portrait';
 import { NationBadge } from '@/components/game/nation-badge';
 import { LoghBar } from '@/components/game/logh-bar';
 import { toast } from 'sonner';
@@ -28,7 +28,7 @@ import {
     formatRefreshScore,
     getNPCColor,
     nextExpLevelRemain,
-    SHIP_CLASS_NAMES,
+    CREW_TYPE_NAMES,
     numberWithCommas,
     ageColor,
     isValidObjKey,
@@ -69,10 +69,10 @@ const TOURNAMENT_OPTIONS = [
 export default function MyPage() {
     const router = useRouter();
     const currentWorld = useWorldStore((s) => s.currentWorld);
-    const { myOfficer, loading, fetchMyOfficer } = useOfficerStore();
+    const { myGeneral, loading, fetchMyGeneral } = useGeneralStore();
     const [frontInfo, setFrontInfo] = useState<GeneralFrontInfo | null>(null);
-    const [city, setCity] = useState<StarSystem | null>(null);
-    const [nation, setNation] = useState<Faction | null>(null);
+    const [city, setCity] = useState<City | null>(null);
+    const [nation, setNation] = useState<Nation | null>(null);
     const [records, setRecords] = useState<Message[]>([]);
     const [battleRecords, setBattleRecords] = useState<Message[]>([]);
     const [historyRecords, setHistoryRecords] = useState<Message[]>([]);
@@ -97,20 +97,20 @@ export default function MyPage() {
 
     useEffect(() => {
         if (!currentWorld) return;
-        fetchMyOfficer(currentWorld.id).catch(() => setError('제독 정보를 불러올 수 없습니다.'));
-    }, [currentWorld, fetchMyOfficer]);
+        fetchMyGeneral(currentWorld.id).catch(() => setError('장수 정보를 불러올 수 없습니다.'));
+    }, [currentWorld, fetchMyGeneral]);
 
     useEffect(() => {
-        if (!myOfficer || !currentWorld) return;
+        if (!myGeneral || !currentWorld) return;
         // Initialize settings from general data
-        setDefenceTrain(myOfficer.defenceTrain ?? 80);
-        setTournamentState(myOfficer.tournamentState ?? 0);
-        setPotionThreshold((myOfficer.meta?.potionThreshold as number) ?? 100);
-        setAutoNationTurn((myOfficer.meta?.autoNationTurn as boolean) ?? false);
-        setPreRiseDelete((myOfficer.meta?.preRiseDelete as boolean) ?? false);
-        setPreOpenDelete((myOfficer.meta?.preOpenDelete as boolean) ?? false);
-        setBorderReturn((myOfficer.meta?.borderReturn as boolean) ?? false);
-        setCustomCss((myOfficer.meta?.customCss as string) ?? '');
+        setDefenceTrain(myGeneral.defenceTrain ?? 80);
+        setTournamentState(myGeneral.tournamentState ?? 0);
+        setPotionThreshold((myGeneral.meta?.potionThreshold as number) ?? 100);
+        setAutoNationTurn((myGeneral.meta?.autoNationTurn as boolean) ?? false);
+        setPreRiseDelete((myGeneral.meta?.preRiseDelete as boolean) ?? false);
+        setPreOpenDelete((myGeneral.meta?.preOpenDelete as boolean) ?? false);
+        setBorderReturn((myGeneral.meta?.borderReturn as boolean) ?? false);
+        setCustomCss((myGeneral.meta?.customCss as string) ?? '');
 
         // Fetch front info for dex/battle stats
         frontApi
@@ -118,20 +118,20 @@ export default function MyPage() {
             .then(({ data }) => setFrontInfo(data.general))
             .catch(() => {});
 
-        if (myOfficer.planetId) {
-            planetApi
-                .get(myOfficer.planetId)
+        if (myGeneral.cityId) {
+            cityApi
+                .get(myGeneral.cityId)
                 .then(({ data }) => setCity(data))
                 .catch(() => {});
         }
-        if (myOfficer.factionId) {
-            factionApi
-                .get(myOfficer.factionId)
+        if (myGeneral.nationId) {
+            nationApi
+                .get(myGeneral.nationId)
                 .then(({ data }) => setNation(data))
                 .catch(() => {});
         }
         historyApi
-            .getGeneralRecords(myOfficer.id)
+            .getGeneralRecords(myGeneral.id)
             .then(({ data }) => {
                 setRecords(data);
                 // Split records by type if payload has type info
@@ -149,7 +149,7 @@ export default function MyPage() {
                 setHistoryRecords(history);
             })
             .catch(() => {});
-    }, [myOfficer, currentWorld]);
+    }, [myGeneral, currentWorld]);
 
     const handleSaveSettings = useCallback(async () => {
         setSaving(true);
@@ -186,28 +186,28 @@ export default function MyPage() {
         try {
             await accountApi.toggleVacation();
             toast.success('휴가 상태가 전환되었습니다.');
-            if (currentWorld) fetchMyOfficer(currentWorld.id);
+            if (currentWorld) fetchMyGeneral(currentWorld.id);
         } catch {
             toast.error('휴가 전환에 실패했습니다.');
         }
-    }, [currentWorld, fetchMyOfficer]);
+    }, [currentWorld, fetchMyGeneral]);
 
     if (!currentWorld) return <LoadingState message="월드를 선택해주세요." />;
     if (loading) return <LoadingState />;
     if (error) return <div className="p-4 text-red-400">{error}</div>;
-    if (!myOfficer) return <LoadingState message="제독 정보가 없습니다." />;
+    if (!myGeneral) return <LoadingState message="장수 정보가 없습니다." />;
 
-    const g = myOfficer;
-    const nationLevel = nation?.factionRank ?? 0;
+    const g = myGeneral;
+    const nationLevel = nation?.level ?? 0;
     const injuryInfo = formatInjury(g.injury);
     const officerText = formatOfficerLevelText(
         g.officerLevel,
         nationLevel,
-        g.factionId > 0,
-        nation?.factionType,
+        g.nationId > 0,
+        nation?.typeCode,
         g.npcState
     );
-    const typeCall = formatGeneralTypeCall(g.leadership, g.command, g.intelligence);
+    const typeCall = formatGeneralTypeCall(g.leadership, g.strength, g.intel);
     const honorText = formatHonor(g.experience);
     const [expCur, expMax] = nextExpLevelRemain(g.experience, g.expLevel ?? 0);
     const npcColor = getNPCColor(g.npcState);
@@ -248,7 +248,7 @@ export default function MyPage() {
                         variant="ghost"
                         size="sm"
                         onClick={() => {
-                            if (currentWorld) fetchMyOfficer(currentWorld.id);
+                            if (currentWorld) fetchMyGeneral(currentWorld.id);
                         }}
                     >
                         <RefreshCw className="size-4 mr-1" />
@@ -262,38 +262,46 @@ export default function MyPage() {
                     </CardHeader>
                     <CardContent className="space-y-3">
                         <p className="text-sm text-muted-foreground">
-                            정식 오픈 전까지는 사전 거병과 제독 삭제만 가능합니다.
+                            정식 오픈 전까지는 사전 거병과 장수 삭제만 가능합니다.
                         </p>
                         <div className="flex gap-2 flex-wrap">
-                            <Button
-                                onClick={async () => {
-                                    if (!confirm('사전 거병을 신청하시겠습니까?')) return;
-                                    try {
-                                        await accountApi.buildNationCandidate();
-                                        toast.success('사전 거병이 신청되었습니다.');
-                                    } catch {
-                                        toast.error('사전 거병 신청에 실패했습니다.');
-                                    }
-                                }}
-                            >
-                                <Swords className="mr-2 h-4 w-4" />
-                                사전 거병
-                            </Button>
+                            {myGeneral.nationId !== 0 ? (
+                                <Button disabled variant="secondary">
+                                    <Swords className="mr-2 h-4 w-4" />
+                                    사전 거병 완료
+                                </Button>
+                            ) : (
+                                <Button
+                                    onClick={async () => {
+                                        if (!confirm('사전 거병을 신청하시겠습니까?')) return;
+                                        try {
+                                            await accountApi.buildNationCandidate();
+                                            toast.success('사전 거병이 신청되었습니다.');
+                                            if (currentWorld) fetchMyGeneral(currentWorld.id);
+                                        } catch {
+                                            toast.error('사전 거병 신청에 실패했습니다.');
+                                        }
+                                    }}
+                                >
+                                    <Swords className="mr-2 h-4 w-4" />
+                                    사전 거병
+                                </Button>
+                            )}
                             <Button
                                 variant="destructive"
                                 onClick={async () => {
-                                    if (!confirm('제독를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) return;
+                                    if (!confirm('장수를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) return;
                                     try {
                                         await accountApi.dieOnPrestart();
-                                        toast.success('제독가 삭제되었습니다.');
-                                        if (currentWorld) fetchMyOfficer(currentWorld.id);
+                                        toast.success('장수가 삭제되었습니다.');
+                                        if (currentWorld) fetchMyGeneral(currentWorld.id);
                                     } catch {
-                                        toast.error('제독 삭제에 실패했습니다.');
+                                        toast.error('장수 삭제에 실패했습니다.');
                                     }
                                 }}
                             >
                                 <Trash2 className="mr-2 h-4 w-4" />
-                                제독 삭제
+                                장수 삭제
                             </Button>
                         </div>
                     </CardContent>
@@ -308,20 +316,20 @@ export default function MyPage() {
 
             <Tabs defaultValue="info">
                 <TabsList>
-                    <TabsTrigger value="info">제독 정보</TabsTrigger>
+                    <TabsTrigger value="info">장수 정보</TabsTrigger>
                     <TabsTrigger value="battle">전투 통계</TabsTrigger>
                     <TabsTrigger value="settings">설정</TabsTrigger>
                     <TabsTrigger value="log">기록</TabsTrigger>
                 </TabsList>
 
-                {/* ===== TAB 1: 제독 정보 ===== */}
+                {/* ===== TAB 1: 장수 정보 ===== */}
                 <TabsContent value="info" className="space-y-4 mt-4">
                     <div className="grid gap-4 lg:grid-cols-2">
                         {/* Profile + Basic Info */}
                         <Card>
                             <CardContent className="pt-4 space-y-3">
                                 <div className="flex gap-4 items-start">
-                                    <OfficerPortrait picture={g.picture} name={g.name} size="lg" />
+                                    <GeneralPortrait picture={g.picture} name={g.name} size="lg" />
                                     <div className="space-y-1 flex-1">
                                         <p className="text-lg font-bold" style={{ color: npcColor }}>
                                             {g.name}
@@ -346,7 +354,7 @@ export default function MyPage() {
                                         </p>
                                         {nation && (
                                             <div className="flex items-center gap-1">
-                                                <span className="text-sm text-muted-foreground">진영:</span>
+                                                <span className="text-sm text-muted-foreground">세력:</span>
                                                 <NationBadge name={nation.name} color={nation.color} />
                                             </div>
                                         )}
@@ -379,15 +387,15 @@ export default function MyPage() {
                                         color: 'red',
                                     },
                                     {
-                                        label: '무력',
-                                        value: g.command,
-                                        exp: g.commandExp,
+                                        label: '지휘',
+                                        value: g.strength,
+                                        exp: g.strengthExp,
                                         color: 'orange',
                                     },
                                     {
-                                        label: '지력',
-                                        value: g.intelligence,
-                                        exp: g.intelligenceExp,
+                                        label: '정보',
+                                        value: g.intel,
+                                        exp: g.intelExp,
                                         color: 'dodgerblue',
                                     },
                                     {
@@ -397,8 +405,8 @@ export default function MyPage() {
                                         color: 'limegreen',
                                     },
                                     {
-                                        label: '매력',
-                                        value: g.administration,
+                                        label: '운영',
+                                        value: g.charm,
                                         exp: 0,
                                         color: 'mediumpurple',
                                     },
@@ -430,30 +438,30 @@ export default function MyPage() {
                                 <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
                                     <div>
                                         <span className="text-muted-foreground">자금:</span>{' '}
-                                        <span className="text-yellow-400">{numberWithCommas(g.funds)}</span>
+                                        <span className="text-yellow-400">{numberWithCommas(g.gold)}</span>
                                     </div>
                                     <div>
-                                        <span className="text-muted-foreground">물자:</span>{' '}
-                                        <span className="text-green-400">{numberWithCommas(g.supplies)}</span>
+                                        <span className="text-muted-foreground">군량:</span>{' '}
+                                        <span className="text-green-400">{numberWithCommas(g.rice)}</span>
                                     </div>
                                     <div>
-                                        <span className="text-muted-foreground">함선:</span>{' '}
-                                        <span className="text-white">{numberWithCommas(g.ships)}</span>
+                                        <span className="text-muted-foreground">병력:</span>{' '}
+                                        <span className="text-white">{numberWithCommas(g.crew)}</span>
                                     </div>
                                     <div>
                                         <span className="text-muted-foreground">병종:</span>{' '}
-                                        <span className="text-cyan-300">{SHIP_CLASS_NAMES[g.shipClass] ?? '보병'}</span>
+                                        <span className="text-cyan-300">{CREW_TYPE_NAMES[g.crewType] ?? '보병'}</span>
                                     </div>
                                     <div>
                                         <span className="text-muted-foreground">훈련:</span>{' '}
-                                        <span className={g.training >= 80 ? 'text-cyan-400' : 'text-white'}>
-                                            {g.training}
+                                        <span className={g.train >= 80 ? 'text-cyan-400' : 'text-white'}>
+                                            {g.train}
                                         </span>
                                     </div>
                                     <div>
                                         <span className="text-muted-foreground">사기:</span>{' '}
-                                        <span className={g.morale >= 80 ? 'text-cyan-400' : 'text-white'}>
-                                            {g.morale}
+                                        <span className={g.atmos >= 80 ? 'text-cyan-400' : 'text-white'}>
+                                            {g.atmos}
                                         </span>
                                     </div>
                                     <div>
@@ -681,7 +689,7 @@ export default function MyPage() {
                             <CardHeader>
                                 <CardTitle className="text-sm flex items-center gap-2">
                                     <Settings className="size-4" />
-                                    제독 설정
+                                    장수 설정
                                 </CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4">
@@ -691,7 +699,7 @@ export default function MyPage() {
                                     <select
                                         value={defenceTrain}
                                         onChange={(e) => setDefenceTrain(Number(e.target.value))}
-                                        className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm"
+                                        className="w-full px-3 py-2 bg-background border border-input rounded-none text-sm"
                                     >
                                         {DEFENCE_PRESETS.map((p) => (
                                             <option key={p.value} value={p.value}>
@@ -710,7 +718,7 @@ export default function MyPage() {
                                     <select
                                         value={tournamentState}
                                         onChange={(e) => setTournamentState(Number(e.target.value))}
-                                        className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm"
+                                        className="w-full px-3 py-2 bg-background border border-input rounded-none text-sm"
                                     >
                                         {TOURNAMENT_OPTIONS.map((o) => (
                                             <option key={o.value} value={o.value}>
@@ -726,7 +734,7 @@ export default function MyPage() {
                                     <select
                                         value={autoNationTurn ? '1' : '0'}
                                         onChange={(e) => setAutoNationTurn(e.target.value === '1')}
-                                        className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm"
+                                        className="w-full px-3 py-2 bg-background border border-input rounded-none text-sm"
                                     >
                                         <option value="0">사용 안함</option>
                                         <option value="1">자동 실행</option>
@@ -774,7 +782,7 @@ export default function MyPage() {
                                     <select
                                         value={potionThreshold}
                                         onChange={(e) => setPotionThreshold(Number(e.target.value))}
-                                        className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm"
+                                        className="w-full px-3 py-2 bg-background border border-input rounded-none text-sm"
                                     >
                                         {POTION_OPTIONS.map((o) => (
                                             <option key={o.value} value={o.value}>
@@ -800,7 +808,7 @@ export default function MyPage() {
                                         <span className="text-sm">사전거병 시 삭제</span>
                                     </label>
                                     <p className="text-xs text-muted-foreground ml-6">
-                                        거병 전에 제독를 삭제하고 새로 시작합니다.
+                                        거병 전에 장수를 삭제하고 새로 시작합니다.
                                     </p>
 
                                     {currentWorld?.meta?.phase === 'pre_open' && (
@@ -815,7 +823,7 @@ export default function MyPage() {
                                                 <span className="text-sm">가오픈 삭제</span>
                                             </label>
                                             <p className="text-xs text-muted-foreground ml-6">
-                                                가오픈 시 제독를 삭제합니다.
+                                                가오픈 시 장수를 삭제합니다.
                                             </p>
                                         </>
                                     )}
@@ -851,7 +859,7 @@ export default function MyPage() {
                                         value={customCss}
                                         onChange={(e) => setCustomCss(e.target.value)}
                                         placeholder={`/* 예: */\n.card { border-color: gold; }\n.text-cyan-400 { color: #ff6600; }`}
-                                        className="w-full h-32 px-3 py-2 bg-background border border-input rounded-md text-xs font-mono resize-y"
+                                        className="w-full h-32 px-3 py-2 bg-background border border-input rounded-none text-xs font-mono resize-y"
                                     />
                                     {cssPreview && customCss && (
                                         <div className="border border-dashed border-yellow-600 rounded p-3">
@@ -890,12 +898,12 @@ export default function MyPage() {
                                         className="w-full"
                                         onClick={async () => {
                                             if (!confirm('거병후보로 등록하시겠습니까?')) return;
-                                            if (!confirm('거병 이후 제독를 삭제할 수 없게 됩니다. 계속하시겠습니까?'))
+                                            if (!confirm('거병 이후 장수를 삭제할 수 없게 됩니다. 계속하시겠습니까?'))
                                                 return;
                                             try {
                                                 await accountApi.buildNationCandidate();
                                                 toast.success('거병후보로 등록되었습니다.');
-                                                if (currentWorld) fetchMyOfficer(currentWorld.id);
+                                                if (currentWorld) fetchMyGeneral(currentWorld.id);
                                             } catch {
                                                 toast.error('거병후보 등록에 실패했습니다.');
                                             }
@@ -911,7 +919,7 @@ export default function MyPage() {
                                             try {
                                                 await accountApi.instantRetreat();
                                                 toast.success('즉시퇴각이 완료되었습니다.');
-                                                if (currentWorld) fetchMyOfficer(currentWorld.id);
+                                                if (currentWorld) fetchMyGeneral(currentWorld.id);
                                             } catch {
                                                 toast.error('즉시퇴각에 실패했습니다.');
                                             }
@@ -935,14 +943,6 @@ export default function MyPage() {
                                     >
                                         사전종료
                                     </Button>
-                                    {/* 캐릭터 삭제: rank ≤ 4 only (대령 이하) */}
-                                    {g.officerLevel <= 4 && (
-                                        <DeleteCharacterButton
-                                            onDeleted={() => {
-                                                if (currentWorld) fetchMyOfficer(currentWorld.id);
-                                            }}
-                                        />
-                                    )}
                                 </CardContent>
                             </Card>
 
@@ -1064,7 +1064,7 @@ function LogTabContent({
             setOldLogsLoading(true);
             try {
                 const lastId = reset ? undefined : oldLogs.length > 0 ? oldLogs[oldLogs.length - 1].id : undefined;
-                const { data } = await officerLogApi.getOldLogs(generalId, generalId, logType, lastId);
+                const { data } = await generalLogApi.getOldLogs(generalId, generalId, logType, lastId);
                 if (data.result && data.logs) {
                     if (reset) {
                         setOldLogs(data.logs);
@@ -1100,7 +1100,7 @@ function LogTabContent({
             <TabsList>
                 <TabsTrigger value="personal">개인 기록</TabsTrigger>
                 <TabsTrigger value="battle">전투 기록</TabsTrigger>
-                <TabsTrigger value="history">제독 열전</TabsTrigger>
+                <TabsTrigger value="history">장수 열전</TabsTrigger>
                 <TabsTrigger value="old">이전 기록</TabsTrigger>
             </TabsList>
 
@@ -1202,7 +1202,7 @@ function LogTabContent({
                                 className="h-7 px-2 bg-background border border-input rounded text-xs"
                             >
                                 <option value="generalAction">행동 기록</option>
-                                <option value="generalHistory">제독 열전</option>
+                                <option value="generalHistory">장수 열전</option>
                                 <option value="battleResult">전투 결과</option>
                                 <option value="battleDetail">전투 상세</option>
                             </select>
@@ -1321,60 +1321,6 @@ function RecordList({ records, pageSize = 20 }: { records: Message[]; pageSize?:
                     ))}
                 </div>
             </ScrollArea>
-        </div>
-    );
-}
-
-// ---------------------------------------------------------------------------
-// 캐릭터 삭제 버튼 (rank ≤ 4, 대령 이하만 표시)
-// ---------------------------------------------------------------------------
-function DeleteCharacterButton({ onDeleted }: { onDeleted: () => void }) {
-    const [showConfirm, setShowConfirm] = useState(false);
-    const [deleting, setDeleting] = useState(false);
-
-    const handleDelete = async () => {
-        setDeleting(true);
-        try {
-            await accountApi.dieOnPrestart();
-            toast.success('캐릭터가 삭제되었습니다.');
-            setShowConfirm(false);
-            onDeleted();
-        } catch {
-            toast.error('캐릭터 삭제에 실패했습니다.');
-        } finally {
-            setDeleting(false);
-        }
-    };
-
-    if (!showConfirm) {
-        return (
-            <Button variant="destructive" className="w-full" onClick={() => setShowConfirm(true)}>
-                <Trash2 className="mr-2 size-4" />
-                캐릭터 삭제
-            </Button>
-        );
-    }
-
-    return (
-        <div className="border border-destructive/50 rounded-md p-3 space-y-2 bg-destructive/10">
-            <p className="text-sm font-semibold text-destructive">정말 캐릭터를 삭제하시겠습니까?</p>
-            <p className="text-xs text-muted-foreground">
-                이 작업은 되돌릴 수 없습니다. 캐릭터의 모든 데이터가 삭제됩니다.
-            </p>
-            <div className="flex gap-2">
-                <Button variant="destructive" size="sm" disabled={deleting} onClick={handleDelete} className="flex-1">
-                    {deleting ? '삭제 중...' : '삭제 확인'}
-                </Button>
-                <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={deleting}
-                    onClick={() => setShowConfirm(false)}
-                    className="flex-1"
-                >
-                    취소
-                </Button>
-            </div>
         </div>
     );
 }

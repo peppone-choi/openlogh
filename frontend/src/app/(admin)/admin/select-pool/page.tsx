@@ -4,11 +4,11 @@ import { useEffect, useState } from 'react';
 import { adminApi } from '@/lib/gameApi';
 import { useAdminWorld } from '@/contexts/AdminWorldContext';
 import { toast } from 'sonner';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/8bit/card';
+import { Button } from '@/components/ui/8bit/button';
+import { Input } from '@/components/ui/8bit/input';
+import { Badge } from '@/components/ui/8bit/badge';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/8bit/table';
 import { Trash2, Plus, Loader2 } from 'lucide-react';
 import type { SelectPoolEntry } from '@/types';
 
@@ -42,7 +42,7 @@ export default function AdminSelectPoolPage() {
 
     const handleCreate = async () => {
         if (!uniqueName.trim() || !generalName.trim()) {
-            toast.error('고유명과 제독명을 입력하세요.');
+            toast.error('고유명과 장수명을 입력하세요.');
             return;
         }
         setCreating(true);
@@ -96,7 +96,7 @@ export default function AdminSelectPoolPage() {
         <div className="space-y-6">
             <Card>
                 <CardHeader>
-                    <CardTitle>제독 풀 관리</CardTitle>
+                    <CardTitle>장수 풀 관리</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <div className="grid grid-cols-7 gap-2 items-end mb-4">
@@ -109,7 +109,7 @@ export default function AdminSelectPoolPage() {
                             />
                         </div>
                         <div>
-                            <label className="text-xs text-muted-foreground">제독명</label>
+                            <label className="text-xs text-muted-foreground">장수명</label>
                             <Input
                                 value={generalName}
                                 onChange={(e) => setGeneralName(e.target.value)}
@@ -154,7 +154,7 @@ export default function AdminSelectPoolPage() {
                             <TableHeader>
                                 <TableRow>
                                     <TableHead>고유명</TableHead>
-                                    <TableHead>제독명</TableHead>
+                                    <TableHead>장수명</TableHead>
                                     <TableHead className="text-center">통</TableHead>
                                     <TableHead className="text-center">무</TableHead>
                                     <TableHead className="text-center">지</TableHead>

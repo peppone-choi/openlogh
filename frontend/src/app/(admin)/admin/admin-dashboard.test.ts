@@ -41,16 +41,16 @@ describe('admin create/reset world form options', () => {
             extend: true,
             npcMode: 1,
             fiction: 0,
-            maxOfficer: 500,
-            maxFaction: 55,
+            maxGeneral: 500,
+            maxNation: 55,
             joinMode: 'full',
-            blockOfficerCreate: 0,
+            blockGeneralCreate: 0,
             showImgLevel: 3,
             opentime: new Date().toISOString(),
         };
         expect(payload.scenarioCode).toBe('1070');
         expect(payload.extend).toBe(true);
-        expect(payload.maxOfficer).toBe(500);
+        expect(payload.maxGeneral).toBe(500);
         expect(typeof payload.opentime).toBe('string');
     });
 
@@ -59,7 +59,7 @@ describe('admin create/reset world form options', () => {
             scenarioCode: '1080',
             extend: false,
             npcMode: 0,
-            maxOfficer: 300,
+            maxGeneral: 300,
             opentime: new Date(Date.now() + 86400000).toISOString(),
         };
         expect(options.extend).toBe(false);
@@ -70,16 +70,16 @@ describe('admin create/reset world form options', () => {
         const defaults = {
             extend: true,
             npcMode: 1,
-            maxOfficer: 500,
-            maxFaction: 55,
-            blockOfficerCreate: 0,
+            maxGeneral: 500,
+            maxNation: 55,
+            blockGeneralCreate: 0,
             showImgLevel: 3,
             allowConscript: true,
             allowNpcNationSpawn: true,
             allowInvaderSpawn: true,
         };
-        expect(defaults.maxOfficer).toBe(500);
+        expect(defaults.maxGeneral).toBe(500);
         expect(defaults.allowConscript).toBe(true);
-        expect(defaults.blockOfficerCreate).toBe(0);
+        expect(defaults.blockGeneralCreate).toBe(0);
     });
 });

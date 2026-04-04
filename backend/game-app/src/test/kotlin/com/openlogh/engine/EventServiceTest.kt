@@ -1,24 +1,42 @@
 package com.openlogh.engine
 
-import com.openlogh.entity.*
+import com.openlogh.engine.event.EventActionRegistry
+import com.openlogh.engine.event.actions.control.CompoundAction
+import com.openlogh.engine.event.actions.control.DeleteEventAction
+import com.openlogh.engine.event.actions.control.DeleteSelfAction
+import com.openlogh.engine.event.actions.economy.ProcessIncomeAction
+import com.openlogh.engine.event.actions.economy.ProcessSemiAnnualAction
+import com.openlogh.engine.event.actions.economy.RandomizeCityTradeRateAction
+import com.openlogh.engine.event.actions.economy.UpdateCitySupplyAction
+import com.openlogh.engine.event.actions.economy.UpdateNationLevelAction
+import com.openlogh.engine.event.actions.misc.LogAction
+import com.openlogh.engine.event.actions.misc.NoticeAction
+import com.openlogh.engine.event.actions.npc.ProvideNpcTroopLeaderAction
+import com.openlogh.engine.event.actions.npc.RaiseInvaderAction
+import com.openlogh.engine.event.actions.npc.RaiseNpcNationAction
+import com.openlogh.entity.Event
+import com.openlogh.entity.Message
+import com.openlogh.entity.WorldState
 import com.openlogh.repository.EventRepository
 import com.openlogh.repository.MessageRepository
-import com.openlogh.repository.FactionRepository
+import com.openlogh.repository.NationRepository
 import com.openlogh.service.HistoryService
+import com.openlogh.service.ScenarioService
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.mockito.Mockito.*
 import org.mockito.ArgumentCaptor
+import org.mockito.Mockito.*
 
 class EventServiceTest {
 
     private lateinit var service: EventService
     private lateinit var eventRepository: EventRepository
-    private lateinit var factionRepository: FactionRepository
+    private lateinit var nationRepository: NationRepository
     private lateinit var messageRepository: MessageRepository
     private lateinit var historyService: HistoryService
     private lateinit var economyService: EconomyService
+    private lateinit var npcSpawnService: NpcSpawnService
 
     /** Mockito `any()` returns null which breaks Kotlin non-null params. This helper casts it. */
     @Suppress("UNCHECKED_CAST")
@@ -27,23 +45,53 @@ class EventServiceTest {
     @BeforeEach
     fun setUp() {
         eventRepository = mock(EventRepository::class.java)
-        factionRepository = mock(FactionRepository::class.java)
+        nationRepository = mock(NationRepository::class.java)
         messageRepository = mock(MessageRepository::class.java)
         historyService = mock(HistoryService::class.java)
         economyService = mock(EconomyService::class.java)
+        npcSpawnService = mock(NpcSpawnService::class.java)
+
+        val scenarioService = mock(ScenarioService::class.java)
+
+        // Build concrete action instances backed by mocks, then wrap in registry.
+        // CompoundAction has a circular dependency on registry — build registry first with
+        // a placeholder, then construct CompoundAction with the real registry.
+        val nonCompoundActions = listOf(
+            LogAction(historyService),
+            NoticeAction(messageRepository),
+            DeleteEventAction(eventRepository),
+            DeleteSelfAction(eventRepository),
+            ProcessIncomeAction(economyService),
+            ProcessSemiAnnualAction(economyService),
+            UpdateCitySupplyAction(economyService),
+            UpdateNationLevelAction(economyService),
+            RandomizeCityTradeRateAction(economyService),
+            RaiseInvaderAction(npcSpawnService),
+            RaiseNpcNationAction(npcSpawnService),
+            ProvideNpcTroopLeaderAction(npcSpawnService),
+        )
+        // EventActionRegistry is constructed with all actions; CompoundAction gets the registry injected.
+        // Since CompoundAction uses @Lazy in Spring, here we construct it with the full registry.
+        val registry = EventActionRegistry(nonCompoundActions + listOf(
+            // Temporary placeholder for compound — will be replaced below
+            object : com.openlogh.engine.event.EventAction {
+                override val actionType = "compound"
+                override fun execute(context: com.openlogh.engine.event.EventActionContext) =
+                    com.openlogh.engine.event.EventActionResult.Success
+            }
+        ))
+        // Build the real compound action with the registry, then rebuild registry including it.
+        val compoundAction = CompoundAction(registry)
+        val fullRegistry = EventActionRegistry(nonCompoundActions + listOf(compoundAction))
+
+        service = EventService(eventRepository, nationRepository, scenarioService, fullRegistry)
 
         // Default: messageRepository.save returns the argument
         `when`(messageRepository.save(anyNonNull<Message>())).thenAnswer { it.arguments[0] }
-
-        val npcSpawnService = mock(NpcSpawnService::class.java)
-        val scenarioService = mock(com.openlogh.service.ScenarioService::class.java)
-
-        val eventActionRegistry = mock(com.openlogh.engine.EventActionRegistry::class.java)
-        service = EventService(eventRepository, factionRepository, messageRepository, historyService, eventActionRegistry)
     }
 
-    private fun createWorld(year: Short = 200, month: Short = 3): SessionState {
-        return SessionState(
+    private fun createWorld(year: Short = 200, month: Short = 3): WorldState {
+        return WorldState(
             id = 1,
             scenarioCode = "test",
             currentYear = year,
@@ -61,7 +109,7 @@ class EventServiceTest {
     ): Event {
         return Event(
             id = id,
-            sessionId = 1,
+            worldId = 1,
             targetCode = targetCode,
             condition = condition,
             action = action,
@@ -81,12 +129,12 @@ class EventServiceTest {
             action = mutableMapOf("type" to "log", "message" to "Test event"),
         )
 
-        `when`(eventRepository.findBySessionIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "turn_start"))
+        `when`(eventRepository.findByWorldIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "turn_start"))
             .thenReturn(listOf(event))
 
         service.dispatchEvents(world, "turn_start")
 
-        verify(historyService).logWorldHistory(anyLong(), anyString(), anyInt(), anyInt())
+        verify(historyService).logWorldHistory(anyLong(), anyString(), anyInt(), anyInt(), eq(false))
     }
 
     @Test
@@ -99,12 +147,12 @@ class EventServiceTest {
             action = mutableMapOf("type" to "log", "message" to "Should not fire"),
         )
 
-        `when`(eventRepository.findBySessionIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "turn_start"))
+        `when`(eventRepository.findByWorldIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "turn_start"))
             .thenReturn(listOf(event))
 
         service.dispatchEvents(world, "turn_start")
 
-        verify(messageRepository, never()).save(any())
+        verify(historyService, never()).logWorldHistory(anyLong(), anyString(), anyInt(), anyInt(), anyBoolean())
     }
 
     @Test
@@ -117,12 +165,12 @@ class EventServiceTest {
             action = mutableMapOf("type" to "log", "message" to "Date matched"),
         )
 
-        `when`(eventRepository.findBySessionIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "turn_start"))
+        `when`(eventRepository.findByWorldIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "turn_start"))
             .thenReturn(listOf(event))
 
         service.dispatchEvents(world, "turn_start")
 
-        verify(historyService).logWorldHistory(anyLong(), anyString(), anyInt(), anyInt())
+        verify(historyService).logWorldHistory(anyLong(), anyString(), anyInt(), anyInt(), eq(false))
     }
 
     @Test
@@ -135,12 +183,12 @@ class EventServiceTest {
             action = mutableMapOf("type" to "log", "message" to "Should not fire"),
         )
 
-        `when`(eventRepository.findBySessionIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "turn_start"))
+        `when`(eventRepository.findByWorldIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "turn_start"))
             .thenReturn(listOf(event))
 
         service.dispatchEvents(world, "turn_start")
 
-        verify(messageRepository, never()).save(any())
+        verify(historyService, never()).logWorldHistory(anyLong(), anyString(), anyInt(), anyInt(), anyBoolean())
     }
 
     @Test
@@ -153,12 +201,12 @@ class EventServiceTest {
             action = mutableMapOf("type" to "log", "message" to "Date after matched"),
         )
 
-        `when`(eventRepository.findBySessionIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "turn_start"))
+        `when`(eventRepository.findByWorldIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "turn_start"))
             .thenReturn(listOf(event))
 
         service.dispatchEvents(world, "turn_start")
 
-        verify(historyService).logWorldHistory(anyLong(), anyString(), anyInt(), anyInt())
+        verify(historyService).logWorldHistory(anyLong(), anyString(), anyInt(), anyInt(), eq(false))
     }
 
     // ========== dispatchEvents: action execution ==========
@@ -173,12 +221,12 @@ class EventServiceTest {
             action = mutableMapOf("type" to "log", "message" to "History log test"),
         )
 
-        `when`(eventRepository.findBySessionIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "turn_start"))
+        `when`(eventRepository.findByWorldIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "turn_start"))
             .thenReturn(listOf(event))
 
         service.dispatchEvents(world, "turn_start")
 
-        verify(historyService).logWorldHistory(anyLong(), anyString(), anyInt(), anyInt())
+        verify(historyService).logWorldHistory(anyLong(), anyString(), anyInt(), anyInt(), eq(false))
     }
 
     @Test
@@ -191,7 +239,7 @@ class EventServiceTest {
             action = mutableMapOf("type" to "notice", "message" to "Notice test"),
         )
 
-        `when`(eventRepository.findBySessionIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "turn_start"))
+        `when`(eventRepository.findByWorldIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "turn_start"))
             .thenReturn(listOf(event))
 
         service.dispatchEvents(world, "turn_start")
@@ -212,7 +260,7 @@ class EventServiceTest {
             action = mutableMapOf("type" to "delete_event", "eventId" to 99),
         )
 
-        `when`(eventRepository.findBySessionIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "turn_start"))
+        `when`(eventRepository.findByWorldIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "turn_start"))
             .thenReturn(listOf(event))
 
         service.dispatchEvents(world, "turn_start")
@@ -240,12 +288,12 @@ class EventServiceTest {
             priority = 100,
         )
 
-        `when`(eventRepository.findBySessionIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "turn_start"))
+        `when`(eventRepository.findByWorldIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "turn_start"))
             .thenReturn(listOf(event1, event2))
 
         service.dispatchEvents(world, "turn_start")
 
-        verify(historyService, times(2)).logWorldHistory(anyLong(), anyString(), anyInt(), anyInt())
+        verify(historyService, times(2)).logWorldHistory(anyLong(), anyString(), anyInt(), anyInt(), eq(false))
     }
 
     // ========== dispatchEvents: empty events ==========
@@ -254,7 +302,7 @@ class EventServiceTest {
     fun `dispatchEvents handles no events gracefully`() {
         val world = createWorld()
 
-        `when`(eventRepository.findBySessionIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "turn_start"))
+        `when`(eventRepository.findByWorldIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "turn_start"))
             .thenReturn(emptyList())
 
         assertDoesNotThrow {
@@ -276,13 +324,13 @@ class EventServiceTest {
             action = mutableMapOf("type" to "log", "message" to "Few nations remain"),
         )
 
-        `when`(eventRepository.findBySessionIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "turn_start"))
+        `when`(eventRepository.findByWorldIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "turn_start"))
             .thenReturn(listOf(event))
-        `when`(factionRepository.findBySessionId(1L)).thenReturn(emptyList())
+        `when`(nationRepository.findByWorldId(1L)).thenReturn(emptyList())
 
         service.dispatchEvents(world, "turn_start")
 
-        verify(historyService).logWorldHistory(anyLong(), anyString(), anyInt(), anyInt())
+        verify(historyService).logWorldHistory(anyLong(), anyString(), anyInt(), anyInt(), eq(false))
     }
 
     // ========== New action types: economy delegations ==========
@@ -297,7 +345,7 @@ class EventServiceTest {
             action = mutableMapOf("type" to "process_income"),
         )
 
-        `when`(eventRepository.findBySessionIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "MONTH"))
+        `when`(eventRepository.findByWorldIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "MONTH"))
             .thenReturn(listOf(event))
 
         service.dispatchEvents(world, "MONTH")
@@ -315,7 +363,7 @@ class EventServiceTest {
             action = mutableMapOf("type" to "process_semi_annual"),
         )
 
-        `when`(eventRepository.findBySessionIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "MONTH"))
+        `when`(eventRepository.findByWorldIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "MONTH"))
             .thenReturn(listOf(event))
 
         service.dispatchEvents(world, "MONTH")
@@ -333,7 +381,7 @@ class EventServiceTest {
             action = mutableMapOf("type" to "update_city_supply"),
         )
 
-        `when`(eventRepository.findBySessionIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "MONTH"))
+        `when`(eventRepository.findByWorldIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "MONTH"))
             .thenReturn(listOf(event))
 
         service.dispatchEvents(world, "MONTH")
@@ -351,7 +399,7 @@ class EventServiceTest {
             action = mutableMapOf("type" to "update_nation_level"),
         )
 
-        `when`(eventRepository.findBySessionIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "MONTH"))
+        `when`(eventRepository.findByWorldIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "MONTH"))
             .thenReturn(listOf(event))
 
         service.dispatchEvents(world, "MONTH")
@@ -369,7 +417,7 @@ class EventServiceTest {
             action = mutableMapOf("type" to "randomize_trade_rate"),
         )
 
-        `when`(eventRepository.findBySessionIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "MONTH"))
+        `when`(eventRepository.findByWorldIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "MONTH"))
             .thenReturn(listOf(event))
 
         service.dispatchEvents(world, "MONTH")
@@ -389,7 +437,7 @@ class EventServiceTest {
             action = mutableMapOf("type" to "delete_self"),
         )
 
-        `when`(eventRepository.findBySessionIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "MONTH"))
+        `when`(eventRepository.findByWorldIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "MONTH"))
             .thenReturn(listOf(event))
 
         service.dispatchEvents(world, "MONTH")
@@ -413,7 +461,7 @@ class EventServiceTest {
             action = mutableMapOf("type" to "compound", "actions" to subActions),
         )
 
-        `when`(eventRepository.findBySessionIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "MONTH"))
+        `when`(eventRepository.findByWorldIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "MONTH"))
             .thenReturn(listOf(event))
 
         service.dispatchEvents(world, "MONTH")
@@ -434,7 +482,7 @@ class EventServiceTest {
             action = mutableMapOf("type" to "raise_invader"),
         )
 
-        `when`(eventRepository.findBySessionIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "MONTH"))
+        `when`(eventRepository.findByWorldIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "MONTH"))
             .thenReturn(listOf(event))
 
         assertDoesNotThrow { service.dispatchEvents(world, "MONTH") }
@@ -450,7 +498,7 @@ class EventServiceTest {
             action = mutableMapOf("type" to "raise_npc_nation"),
         )
 
-        `when`(eventRepository.findBySessionIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "MONTH"))
+        `when`(eventRepository.findByWorldIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "MONTH"))
             .thenReturn(listOf(event))
 
         assertDoesNotThrow { service.dispatchEvents(world, "MONTH") }
@@ -466,7 +514,7 @@ class EventServiceTest {
             action = mutableMapOf("type" to "provide_npc_troop_leader"),
         )
 
-        `when`(eventRepository.findBySessionIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "MONTH"))
+        `when`(eventRepository.findByWorldIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "MONTH"))
             .thenReturn(listOf(event))
 
         assertDoesNotThrow { service.dispatchEvents(world, "MONTH") }

@@ -11,10 +11,10 @@ class Board(
     var id: Long = 0,
 
     @Column(name = "world_id", nullable = false)
-    var sessionId: Long = 0,
+    var worldId: Long = 0,
 
     @Column(name = "nation_id")
-    var factionId: Long? = null,
+    var nationId: Long? = null,
 
     @Column(name = "author_general_id", nullable = false)
     var authorGeneralId: Long = 0,

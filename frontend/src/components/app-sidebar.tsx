@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
     Home,
+    Swords,
     Building2,
     Castle,
     User,
@@ -13,8 +14,6 @@ import {
     Gamepad2,
     Settings,
     ChevronDown,
-    Wallet,
-    Truck,
 } from 'lucide-react';
 import {
     Sidebar,
@@ -30,8 +29,8 @@ import {
     SidebarMenuSubButton,
     SidebarMenuSubItem,
 } from '@/components/ui/sidebar';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { useOfficerStore } from '@/stores/officerStore';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/8bit/collapsible';
+import { useGeneralStore } from '@/stores/generalStore';
 import { useWorldStore } from '@/stores/worldStore';
 
 const navItems = [
@@ -41,26 +40,26 @@ const navItems = [
         icon: Home,
     },
     {
-        title: '행성',
-        url: '/planet',
+        title: '도시',
+        url: '/city',
         icon: Building2,
     },
     {
-        title: '진영',
+        title: '국가',
         icon: Castle,
         requireNation: true,
         items: [
-            { title: '진영정보', url: '/faction' },
-            { title: '진영제독', url: '/faction-officers' },
-            { title: '진영행성', url: '/faction-planets' },
-            { title: '함대편성', url: '/fleet' },
-            { title: '조직도', url: '/org-chart' },
-            { title: '요새관리', url: '/fortress' },
-            { title: '외교부', url: '/diplomacy', requireSecret: true as const },
-            { title: '인사부', url: '/personnel' },
-            { title: '제안/명령', url: '/proposals' },
-            { title: '내무부', url: '/internal-affairs', requireSecret: true as const },
+            { title: '진영정보', url: '/nation' },
+            { title: '진영장교', url: '/nation-generals' },
+            { title: '진영성계', url: '/nation-cities' },
+            { title: '함대편성', url: '/troop' },
+            { title: '외교국', url: '/diplomacy', requireSecret: true as const },
+            { title: '인사국', url: '/personnel' },
+            { title: '내무국', url: '/internal-affairs', requireSecret: true as const },
             { title: '사령부', url: '/chief', requireSecret: true as const },
+            { title: 'NPC정책', url: '/npc-control', requireSecret: true as const },
+            { title: '첩보국', url: '/spy', requireSecret: true as const },
+            { title: '작전감찰', url: '/battle', requireSecret: true as const },
         ],
     },
     {
@@ -68,20 +67,19 @@ const navItems = [
         icon: User,
         items: [
             { title: '내정보&설정', url: '/my-page' },
-            { title: '내제독', url: '/officer' },
-            { title: '영향력', url: '/influence' },
-            { title: '직무권한카드', url: '/position-cards' },
+            { title: '내장수', url: '/general' },
             { title: '유산관리', url: '/inherit' },
         ],
     },
     {
-        title: '은하',
+        title: '중원',
         icon: MapIcon,
         items: [
             { title: '은하정보', url: '/global-diplomacy' },
-            { title: '진영일람', url: '/factions' },
-            { title: '제독일람', url: '/officers' },
-            { title: '명제독일람', url: '/best-officers' },
+            { title: '진영일람', url: '/nations' },
+            { title: '장교일람', url: '/generals' },
+            { title: '명장교일람', url: '/best-generals' },
+            { title: 'NPC일람', url: '/npc-list', requireNpcMode: true as const },
         ],
     },
     {
@@ -90,7 +88,7 @@ const navItems = [
         items: [
             { title: '연감', url: '/history' },
             { title: '명예의전당', url: '/hall-of-fame' },
-            { title: '왕조일람', url: '/sovereign' },
+            { title: '원수부일람', url: '/emperor' },
         ],
     },
     {
@@ -100,18 +98,7 @@ const navItems = [
             { title: '회의실', url: '/board', requireNation: true as const },
             { title: '기밀실', url: '/board?secret=true', requireSecret: true as const },
             { title: '메시지', url: '/messages' },
-            { title: '메신저', url: '/messenger', requireNation: true as const },
         ],
-    },
-    {
-        title: '재무',
-        icon: Wallet,
-        items: [{ title: '사적 구좌', url: '/private-funds' }],
-    },
-    {
-        title: '병참',
-        icon: Truck,
-        items: [{ title: '수송 계획', url: '/transport' }],
     },
     {
         title: '부가',
@@ -129,10 +116,6 @@ const navItems = [
         icon: Settings,
         items: [
             { title: '서버정보', url: '/traffic' },
-            { title: 'NPC정책', url: '/npc-control', requireSecret: true as const },
-            { title: '암행부', url: '/spy', requireSecret: true as const },
-            { title: '감찰부', url: '/battle', requireSecret: true as const },
-            { title: 'NPC일람', url: '/npc-list', requireNpcMode: true as const },
             { title: '설문조사', url: '/vote' },
         ],
     },
@@ -146,10 +129,10 @@ function isNpcModeEnabled(config: Record<string, unknown> | null | undefined): b
 
 export function AppSidebar() {
     const pathname = usePathname();
-    const { myOfficer } = useOfficerStore();
+    const { myGeneral } = useGeneralStore();
     const { currentWorld } = useWorldStore();
 
-    const officerLevel = myOfficer?.officerLevel ?? 0;
+    const officerLevel = myGeneral?.officerLevel ?? 0;
     const inNation = officerLevel >= 1;
     const showSecret = inNation && officerLevel >= 2;
     const npcMode = isNpcModeEnabled(currentWorld?.config as Record<string, unknown> | undefined);
@@ -179,15 +162,7 @@ export function AppSidebar() {
     return (
         <Sidebar collapsible="icon">
             <SidebarHeader>
-                <div
-                    className="game-font group-data-[collapsible=icon]:hidden px-3 py-2 font-bold text-sm tracking-widest uppercase border-b border-border"
-                    style={{ color: 'var(--empire-gold)', letterSpacing: '0.12em' }}
-                >
-                    Open LOGH
-                </div>
-                <div className="game-font group-data-[collapsible=icon]:hidden px-3 pb-1.5 text-[10px] text-muted-foreground tracking-widest">
-                    은하영웅전설
-                </div>
+                <div className="group-data-[collapsible=icon]:hidden px-2 py-1 font-bold text-base">오픈삼국</div>
             </SidebarHeader>
 
             <SidebarContent>
@@ -215,7 +190,7 @@ export function AppSidebar() {
                                 <SidebarGroupLabel asChild>
                                     <CollapsibleTrigger className="flex w-full items-center gap-2">
                                         <item.icon className="h-4 w-4" />
-                                        <span className="game-font">{item.title}</span>
+                                        <span>{item.title}</span>
                                         <ChevronDown className="ml-auto h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-180" />
                                     </CollapsibleTrigger>
                                 </SidebarGroupLabel>
@@ -240,28 +215,8 @@ export function AppSidebar() {
             </SidebarContent>
 
             <SidebarFooter>
-                <div className="group-data-[collapsible=icon]:hidden border-t border-border px-3 py-2">
-                    {myOfficer ? (
-                        <div className="flex items-center gap-2">
-                            <div
-                                className="flex-shrink-0 w-6 h-6 rounded flex items-center justify-center text-[10px] font-bold"
-                                style={{
-                                    background: 'linear-gradient(135deg, var(--empire-gold) 0%, #a07820 100%)',
-                                    color: '#0a0e1a',
-                                }}
-                            >
-                                {myOfficer.officerLevel}
-                            </div>
-                            <div className="min-w-0">
-                                <div className="text-xs font-semibold truncate" style={{ color: 'var(--empire-gold)' }}>
-                                    {myOfficer.name}
-                                </div>
-                                <div className="text-[10px] text-muted-foreground">제독</div>
-                            </div>
-                        </div>
-                    ) : (
-                        <div className="text-xs text-muted-foreground">제독 없음</div>
-                    )}
+                <div className="group-data-[collapsible=icon]:hidden p-2 text-xs text-muted-foreground">
+                    {myGeneral?.name || '장수 없음'}
                 </div>
             </SidebarFooter>
         </Sidebar>

@@ -4,10 +4,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { BarChart3, RefreshCw, TrendingUp, Users, MapPin, Coins, AlertTriangle } from 'lucide-react';
 import { PageHeader } from '@/components/game/page-header';
 import { LoadingState } from '@/components/game/loading-state';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/8bit/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/8bit/table';
+import { Button } from '@/components/ui/8bit/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/8bit/tabs';
 import { adminApi } from '@/lib/gameApi';
 import type { NationStatistic, Diplomacy } from '@/types';
 import { toast } from 'sonner';
@@ -180,8 +180,8 @@ export default function AdminStatisticsPage() {
         { key: 'rice', label: '쌀' },
         { key: 'tech', label: '기술' },
         { key: 'power', label: '국력' },
-        { key: 'genCount', label: '제독' },
-        { key: 'cityCount', label: '행성' },
+        { key: 'genCount', label: '장교' },
+        { key: 'cityCount', label: '성계' },
         { key: 'totalCrew', label: '총병력' },
         { key: 'totalPop', label: '총인구' },
     ];
@@ -209,7 +209,7 @@ export default function AdminStatisticsPage() {
                 <Card>
                     <CardContent className="p-4">
                         <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
-                            <Users className="size-3" />총 제독
+                            <Users className="size-3" />총 장수
                         </div>
                         <div className="text-2xl font-bold">{totals.generals}</div>
                     </CardContent>
@@ -217,7 +217,7 @@ export default function AdminStatisticsPage() {
                 <Card>
                     <CardContent className="p-4">
                         <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
-                            <MapPin className="size-3" />총 행성
+                            <MapPin className="size-3" />총 도시
                         </div>
                         <div className="text-2xl font-bold">{totals.cities}</div>
                     </CardContent>
@@ -286,7 +286,7 @@ export default function AdminStatisticsPage() {
                                         {sorted.length === 0 && (
                                             <TableRow>
                                                 <TableCell colSpan={10} className="text-center text-muted-foreground">
-                                                    진영이 없습니다.
+                                                    국가가 없습니다.
                                                 </TableCell>
                                             </TableRow>
                                         )}
@@ -352,7 +352,7 @@ export default function AdminStatisticsPage() {
                                                     />
                                                     <span className="font-medium">{n.name}</span>
                                                     <span className="text-xs text-muted-foreground">
-                                                        (제독 {n.genCount}명)
+                                                        (장수 {n.genCount}명)
                                                     </span>
                                                 </div>
                                                 <span className="font-mono text-xs">
@@ -406,7 +406,7 @@ export default function AdminStatisticsPage() {
                         </CardHeader>
                         <CardContent>
                             {nations.length === 0 ? (
-                                <p className="text-center text-muted-foreground py-4">진영이 없습니다.</p>
+                                <p className="text-center text-muted-foreground py-4">국가가 없습니다.</p>
                             ) : (
                                 <div className="overflow-x-auto">
                                     <table className="border-collapse text-xs w-full">

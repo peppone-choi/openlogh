@@ -2,10 +2,11 @@
 
 import { useEffect, useMemo, useCallback, useRef, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { toast, Toaster } from 'sonner';
+import { toast } from 'sonner';
+import { Toaster } from '@/components/ui/sonner';
 import { useAuthStore } from '@/stores/authStore';
 import { useWorldStore } from '@/stores/worldStore';
-import { useOfficerStore } from '@/stores/officerStore';
+import { useGeneralStore } from '@/stores/generalStore';
 import { useWebSocket } from '@/hooks/useWebSocket';
 import { useHotkeys } from '@/hooks/useHotkeys';
 import { useSoundEffects } from '@/hooks/useSoundEffects';
@@ -36,48 +37,45 @@ function isNpcModeEnabled(config: Record<string, unknown> | null | undefined): b
     return Number.isFinite(numeric) && numeric > 0;
 }
 
-// Nav sections — LOGH domain terminology
+// Legacy MainControlBar.vue parity — exact order from legacy-core/hwe/ts/components/MainControlBar.vue
 const navSections: NavSection[] = [
     {
         label: '진영',
         items: [
-            { href: '/board', label: '작전회의실', require: 'nation' },
+            { href: '/board', label: '회의실', require: 'nation' },
             { href: '/board?secret=true', label: '기밀실', require: 'secret' },
-            { href: '/fleet', label: '함대편성', require: 'nation' },
-            { href: '/org-chart', label: '조직도', require: 'nation' },
-            { href: '/proposals', label: '제안/명령', require: 'nation' },
-            { href: '/diplomacy', label: '외교부', require: 'secret' },
-            { href: '/personnel', label: '인사부', require: 'nation' },
-            { href: '/internal-affairs', label: '내무부', require: 'secret' },
+            { href: '/troop', label: '함대편성', require: 'nation' },
+            { href: '/diplomacy', label: '외교국', require: 'secret' },
+            { href: '/personnel', label: '인사국', require: 'nation' },
+            { href: '/internal-affairs', label: '내무국', require: 'secret' },
             { href: '/chief', label: '사령부', require: 'secret' },
             { href: '/npc-control', label: 'NPC정책', require: 'secret' },
-            { href: '/spy', label: '정보부', require: 'secret' },
+            { href: '/spy', label: '첩보국', require: 'secret' },
             { href: '/tournament', label: '토너먼트' },
-            { href: '/faction', label: '진영정보', require: 'nation' },
-            { href: '/faction-planets', label: '진영성계', require: 'nation' },
-            { href: '/faction-officers', label: '진영제독', require: 'nation' },
-            { href: '/global-diplomacy', label: '은하정세' },
-            { href: '/planet', label: '현재성계' },
-            { href: '/battle', label: '감찰부', require: 'secret' },
+            { href: '/nation', label: '진영정보', require: 'nation' },
+            { href: '/nation-cities', label: '진영성계', require: 'nation' },
+            { href: '/nation-generals', label: '진영장교', require: 'nation' },
+            { href: '/global-diplomacy', label: '은하정보' },
+            { href: '/city', label: '현재성계' },
+            { href: '/battle', label: '작전감찰', require: 'secret' },
             { href: '/inherit', label: '유산관리' },
             { href: '/my-page', label: '내정보&설정' },
-            { href: '/influence', label: '영향력' },
             { href: '/auction', label: '경매장' },
             { href: '/betting', label: '베팅장' },
         ],
     },
     {
+        // Legacy GlobalMenu.php parity — exact order from legacy-core/hwe/sammo/GlobalMenu.php
         label: '정보',
         items: [
-            { href: '/faction-betting', label: '통일진영 베팅' },
-            { href: '/factions', label: '진영일람' },
-            { href: '/officers', label: '제독일람' },
-            { href: '/best-officers', label: '명제독일람' },
+            { href: '/nation-betting', label: '은하 베팅' },
+            { href: '/nations', label: '진영일람' },
+            { href: '/generals', label: '장교일람' },
+            { href: '/best-generals', label: '명장교일람' },
             { href: '/hall-of-fame', label: '명예의전당' },
-            { href: '/sovereign', label: '왕조일람' },
+            { href: '/emperor', label: '원수부일람' },
             { href: '/history', label: '연감' },
             { href: '/battle-simulator', label: '전투 시뮬레이터' },
-            { href: '/models', label: '3D 함선도감' },
             { href: '/traffic', label: '접속량정보' },
             { href: '/npc-list', label: 'NPC일람', cond: 'npcMode' },
             { href: '/vote', label: '설문조사' },
@@ -89,8 +87,8 @@ export default function GameLayout({ children }: { children: React.ReactNode }) 
     const router = useRouter();
     const pathname = usePathname();
     const { isAuthenticated, isInitialized, initAuth, logout } = useAuthStore();
-    const { currentWorld } = useWorldStore();
-    const { myOfficer, loading: generalLoading, fetchMyOfficer } = useOfficerStore();
+    const { currentWorld, isHydrated: worldHydrated } = useWorldStore();
+    const { myGeneral, loading: generalLoading, fetchMyGeneral, isHydrated: generalHydrated } = useGeneralStore();
 
     useEffect(() => {
         initAuth();
@@ -104,25 +102,26 @@ export default function GameLayout({ children }: { children: React.ReactNode }) 
 
     useEffect(() => {
         if (currentWorld) {
-            fetchMyOfficer(currentWorld.id);
+            fetchMyGeneral(currentWorld.id);
         }
-    }, [currentWorld, fetchMyOfficer]);
+    }, [currentWorld, fetchMyGeneral]);
 
-    const prevGeneralRef = useRef(myOfficer);
+    const prevGeneralRef = useRef(myGeneral);
     useEffect(() => {
         if (!isAuthenticated) return;
+        if (!worldHydrated || !generalHydrated) return;
         if (generalLoading) return;
 
-        if (!currentWorld || myOfficer === null) {
+        if (!currentWorld || myGeneral === null) {
             if (prevGeneralRef.current !== null && currentWorld) {
-                toast.error(`${prevGeneralRef.current.name} 제독이 사망하였습니다. 로비로 이동합니다.`, {
+                toast.error(`${prevGeneralRef.current.name} 장교가 전사하였습니다. 로비로 이동합니다.`, {
                     duration: 5000,
                 });
             }
             router.replace('/lobby');
         }
-        prevGeneralRef.current = myOfficer;
-    }, [isAuthenticated, currentWorld, myOfficer, generalLoading, router]);
+        prevGeneralRef.current = myGeneral;
+    }, [isAuthenticated, currentWorld, myGeneral, generalLoading, worldHydrated, generalHydrated, router]);
 
     const { enabled: wsEnabled, toggleRealtime } = useWebSocket();
     const { soundEnabled, toggleSound } = useSoundEffects();
@@ -139,13 +138,13 @@ export default function GameLayout({ children }: { children: React.ReactNode }) 
         {
             key: 'g',
             alt: true,
-            handler: () => goTo('/officer'),
+            handler: () => goTo('/general'),
             description: 'My general',
         },
         {
             key: 'c',
             alt: true,
-            handler: () => goTo('/planet'),
+            handler: () => goTo('/city'),
             description: 'Current city',
         },
         {
@@ -169,7 +168,7 @@ export default function GameLayout({ children }: { children: React.ReactNode }) 
         {
             key: 'n',
             alt: true,
-            handler: () => goTo('/faction'),
+            handler: () => goTo('/nation'),
             description: 'Nation info',
         },
         {
@@ -180,7 +179,7 @@ export default function GameLayout({ children }: { children: React.ReactNode }) 
         },
     ]);
 
-    const officerLevel = myOfficer?.officerLevel ?? 0;
+    const officerLevel = myGeneral?.officerLevel ?? 0;
     const inNation = officerLevel >= 1;
     const showSecret = inNation && officerLevel >= 2;
 
@@ -202,10 +201,11 @@ export default function GameLayout({ children }: { children: React.ReactNode }) 
     const [messageSheetOpen, setMessageSheetOpen] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-    // Render guard: block only during initial load.
+    // Render guard: block during initial load and store hydration.
     // myGeneral keeps its value during re-fetches (not reset to null),
-    // so children stay mounted when pages call fetchMyOfficer.
-    if (!isAuthenticated || !currentWorld || myOfficer === null) return null;
+    // so children stay mounted when pages call fetchMyGeneral.
+    if (!isInitialized || !worldHydrated || !generalHydrated) return null;
+    if (!isAuthenticated || !currentWorld || myGeneral === null) return null;
 
     // Reserved phase (startTime 전): 접근 불가 → 로비로
     const config = currentWorld?.config as Record<string, string> | undefined;
@@ -215,7 +215,7 @@ export default function GameLayout({ children }: { children: React.ReactNode }) 
         router.replace('/lobby');
         return null;
     }
-    // Pre-open phase: only allow /my-page (사전 거병, 제독 삭제)
+    // Pre-open phase: only allow /my-page (사전 거병, 장수 삭제)
     const opentime = config?.opentime;
     const isPreOpen = opentime ? new Date() < new Date(opentime) : false;
     if (isPreOpen && pathname !== '/my-page') {

@@ -1,62 +1,64 @@
 import { create } from 'zustand';
-import type { Officer } from '@/types';
-import { officerApi } from '@/lib/gameApi';
+import { persist, createJSONStorage } from 'zustand/middleware';
+import type { General } from '@/types';
+import { generalApi } from '@/lib/gameApi';
 
-interface OfficerStore {
-    myOfficer: Officer | null;
-    officers: Officer[];
+interface GeneralStore {
+    myGeneral: General | null;
+    generals: General[];
     loading: boolean;
-    fetchMyOfficer: (worldId: number) => Promise<void>;
-    fetchOfficers: (worldId: number) => Promise<void>;
-    clearMyOfficer: () => void;
-    /** @deprecated use myOfficer */ myGeneral: Officer | null;
-    /** @deprecated use fetchMyOfficer */ fetchMyGeneral: (worldId: number) => Promise<void>;
-    /** @deprecated use clearMyOfficer */ clearMyGeneral: () => void;
-    /** @deprecated use fetchOfficers */ fetchGenerals: (worldId: number) => Promise<void>;
+    isHydrated: boolean;
+    fetchMyGeneral: (worldId: number) => Promise<void>;
+    fetchGenerals: (worldId: number) => Promise<void>;
+    clearMyGeneral: () => void;
 }
 
-export const useOfficerStore = create<OfficerStore>((set, get) => ({
-    myOfficer: null,
-    officers: [],
-    loading: false,
+export const useGeneralStore = create<GeneralStore>()(
+    persist(
+        (set) => ({
+            myGeneral: null,
+            generals: [],
+            loading: false,
+            isHydrated: false,
 
-    get myGeneral() {
-        return get().myOfficer;
-    },
-    get fetchMyGeneral() {
-        return get().fetchMyOfficer;
-    },
-    get clearMyGeneral() {
-        return get().clearMyOfficer;
-    },
-    get fetchGenerals() {
-        return get().fetchOfficers;
-    },
+            fetchMyGeneral: async (worldId) => {
+                set({ loading: true });
+                try {
+                    const { data } = await generalApi.getMine(worldId);
+                    set({ myGeneral: data });
+                } catch {
+                    set({ myGeneral: null });
+                } finally {
+                    set({ loading: false });
+                }
+            },
 
-    fetchMyOfficer: async (worldId) => {
-        set({ loading: true });
-        try {
-            const { data } = await officerApi.getMine(worldId);
-            set({ myOfficer: data });
-        } catch {
-            set({ myOfficer: null });
-        } finally {
-            set({ loading: false });
+            clearMyGeneral: () => set({ myGeneral: null }),
+
+            fetchGenerals: async (worldId) => {
+                set({ loading: true });
+                try {
+                    const { data } = await generalApi.listByWorld(worldId);
+                    set({ generals: data });
+                } finally {
+                    set({ loading: false });
+                }
+            },
+        }),
+        {
+            name: 'general-store',
+            storage: createJSONStorage(() => sessionStorage),
+            partialize: (state) => ({ myGeneral: state.myGeneral }),
         }
-    },
+    )
+);
 
-    clearMyOfficer: () => set({ myOfficer: null }),
-
-    fetchOfficers: async (worldId) => {
-        set({ loading: true });
-        try {
-            const { data } = await officerApi.listByWorld(worldId);
-            set({ officers: data });
-        } finally {
-            set({ loading: false });
-        }
-    },
-}));
-
-// Deprecated alias for backward compat
-export { useOfficerStore as useGeneralStore };
+// Reliably detect hydration completion (onRehydrateStorage can misfire in Next.js App Router)
+if (typeof window !== 'undefined') {
+    useGeneralStore.persist.onFinishHydration(() => {
+        useGeneralStore.setState({ isHydrated: true });
+    });
+    if (useGeneralStore.persist.hasHydrated()) {
+        useGeneralStore.setState({ isHydrated: true });
+    }
+}

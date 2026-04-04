@@ -1,93 +1,124 @@
 package com.openlogh.controller
 
-import com.openlogh.dto.TournamentBracketMatchResponse
+import com.openlogh.dto.PlaceBetRequest
+import com.openlogh.dto.BettingInfoResponse
+import com.openlogh.dto.CreateTournamentRequest
 import com.openlogh.dto.TournamentInfoResponse
 import com.openlogh.dto.TournamentRegisterRequest
-import com.openlogh.dto.CreateTournamentRequest
-import com.openlogh.repository.TournamentRepository
-import com.openlogh.repository.SessionStateRepository
+import com.openlogh.service.TournamentService
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 
 @RestController
-@RequestMapping("/api/worlds/{worldId}")
+@RequestMapping("/api")
 class TournamentController(
-    private val tournamentRepository: TournamentRepository,
-    private val sessionStateRepository: SessionStateRepository,
+    private val tournamentService: TournamentService,
 ) {
-    @GetMapping("/tournament")
-    fun getInfo(@PathVariable worldId: Long): ResponseEntity<TournamentInfoResponse> {
-        val world = sessionStateRepository.findById(worldId.toShort()).orElse(null)
-            ?: return ResponseEntity.notFound().build()
-        val entries = tournamentRepository.findBySessionIdOrderByRoundAscBracketPositionAsc(worldId)
-        val bracket = entries.map {
-            TournamentBracketMatchResponse(
-                round = it.round.toInt(),
-                match = it.bracketPosition.toInt(),
-                p1 = it.officerId,
-                p2 = it.opponentId ?: 0,
-                winner = if (it.result > 0.toShort()) it.officerId else if (it.result < 0.toShort()) it.opponentId else null,
-            )
-        }
-        val participants = entries.map { it.officerId }.distinct()
-        @Suppress("UNCHECKED_CAST")
-        val state = (world.meta["tournamentState"] as? Number)?.toInt() ?: 0
-
-        return ResponseEntity.ok(TournamentInfoResponse(state = state, bracket = bracket, participants = participants))
-    }
-
-    @PostMapping("/tournament")
-    fun create(
+    @PostMapping("/worlds/{worldId}/tournament")
+    fun createTournament(
         @PathVariable worldId: Long,
-        @RequestBody req: CreateTournamentRequest,
+        @RequestBody request: CreateTournamentRequest,
     ): ResponseEntity<Map<String, Any>> {
-        val world = sessionStateRepository.findById(worldId.toShort()).orElse(null)
+        val result = tournamentService.createTournament(worldId, request.type)
             ?: return ResponseEntity.notFound().build()
-        world.meta["tournamentState"] = 1
-        world.meta["tournamentType"] = req.type
-        sessionStateRepository.save(world)
-        return ResponseEntity.ok(mapOf("success" to true))
+        if (result.containsKey("error")) return ResponseEntity.badRequest().body(result)
+        return ResponseEntity.ok(result)
     }
 
-    @PostMapping("/tournament/register")
+    @GetMapping("/worlds/{worldId}/tournament")
+    fun getTournament(@PathVariable worldId: Long): ResponseEntity<TournamentInfoResponse> {
+        val result = tournamentService.getTournament(worldId)
+            ?: return ResponseEntity.notFound().build()
+        return ResponseEntity.ok(result)
+    }
+
+    @PostMapping("/worlds/{worldId}/tournament/register")
     fun register(
         @PathVariable worldId: Long,
-        @RequestBody req: TournamentRegisterRequest,
-    ): ResponseEntity<Map<String, Boolean>> {
-        // TODO: validate officer eligibility, add to tournament bracket
-        return ResponseEntity.ok(mapOf("success" to true))
+        @RequestBody request: TournamentRegisterRequest,
+    ): ResponseEntity<Map<String, Any>> {
+        val result = tournamentService.registerParticipant(worldId, request.generalId)
+            ?: return ResponseEntity.notFound().build()
+        if (result.containsKey("error")) return ResponseEntity.badRequest().body(result)
+        return ResponseEntity.ok(result)
     }
 
-    @PostMapping("/tournament/advance")
-    fun advance(@PathVariable worldId: Long): ResponseEntity<Map<String, Any>> {
-        // TODO: advance tournament to next phase
-        return ResponseEntity.ok(mapOf("success" to true))
+    @PostMapping("/worlds/{worldId}/tournament/start")
+    fun startTournament(@PathVariable worldId: Long): ResponseEntity<Map<String, Any>> {
+        val result = tournamentService.startTournament(worldId)
+            ?: return ResponseEntity.notFound().build()
+        if (result.containsKey("error")) return ResponseEntity.badRequest().body(result)
+        return ResponseEntity.ok(result)
     }
 
-    @PostMapping("/tournament/message")
-    fun sendMessage(
+    @PostMapping("/worlds/{worldId}/tournament/advance")
+    fun advanceRound(@PathVariable worldId: Long): ResponseEntity<Map<String, Any>> {
+        val result = tournamentService.advanceRound(worldId)
+            ?: return ResponseEntity.notFound().build()
+        if (result.containsKey("error")) return ResponseEntity.badRequest().body(result)
+        return ResponseEntity.ok(result)
+    }
+
+    @PostMapping("/worlds/{worldId}/tournament/finalize")
+    fun finalizeTournament(@PathVariable worldId: Long): ResponseEntity<Map<String, Any>> {
+        val result = tournamentService.finalizeTournament(worldId)
+            ?: return ResponseEntity.notFound().build()
+        if (result.containsKey("error")) return ResponseEntity.badRequest().body(result)
+        return ResponseEntity.ok(result)
+    }
+
+    @PostMapping("/worlds/{worldId}/tournament/message")
+    fun sendTournamentMessage(
         @PathVariable worldId: Long,
-        @RequestBody body: Map<String, String>,
-    ): ResponseEntity<Map<String, Boolean>> {
-        // TODO: broadcast tournament message
-        return ResponseEntity.ok(mapOf("success" to true))
+        @RequestBody request: Map<String, String>,
+    ): ResponseEntity<Map<String, Any>> {
+        val message = request["message"] ?: return ResponseEntity.badRequest().body(mapOf("error" to "메시지가 필요합니다"))
+        val result = tournamentService.sendTournamentMessage(worldId, message)
+            ?: return ResponseEntity.notFound().build()
+        return ResponseEntity.ok(result)
     }
 
-    @PostMapping("/tournament/start")
-    fun start(@PathVariable worldId: Long): ResponseEntity<Map<String, Any>> {
-        val world = sessionStateRepository.findById(worldId.toShort()).orElse(null)
-            ?: return ResponseEntity.notFound().build()
-        world.meta["tournamentState"] = 2
-        sessionStateRepository.save(world)
-        return ResponseEntity.ok(mapOf("success" to true))
+    @GetMapping("/worlds/{worldId}/betting/history")
+    fun getBettingHistory(@PathVariable worldId: Long): ResponseEntity<List<Map<String, Any?>>> {
+        return ResponseEntity.ok(tournamentService.getBettingHistory(worldId))
     }
 
-    @PostMapping("/tournament/finalize")
-    fun finalize(@PathVariable worldId: Long): ResponseEntity<Map<String, Any>> {
-        val world = sessionStateRepository.findById(worldId.toShort()).orElse(null)
+    @GetMapping("/worlds/{worldId}/betting/{yearMonth}")
+    fun getBettingEvent(
+        @PathVariable worldId: Long,
+        @PathVariable yearMonth: String,
+    ): ResponseEntity<BettingInfoResponse?> {
+        val result = tournamentService.getBettingEvent(worldId, yearMonth)
             ?: return ResponseEntity.notFound().build()
-        world.meta["tournamentState"] = 0
-        sessionStateRepository.save(world)
-        return ResponseEntity.ok(mapOf("success" to true))
+        return ResponseEntity.ok(result)
+    }
+
+    @PostMapping("/worlds/{worldId}/betting/gate")
+    fun toggleBettingGate(
+        @PathVariable worldId: Long,
+        @RequestBody request: Map<String, Boolean>,
+    ): ResponseEntity<Map<String, Any>> {
+        val open = request["open"] ?: return ResponseEntity.badRequest().body(mapOf("error" to "open 필드 필요"))
+        val result = tournamentService.toggleBettingGate(worldId, open)
+            ?: return ResponseEntity.notFound().build()
+        return ResponseEntity.ok(result)
+    }
+
+    @GetMapping("/worlds/{worldId}/betting")
+    fun getBetting(@PathVariable worldId: Long): ResponseEntity<BettingInfoResponse> {
+        val result = tournamentService.getBetting(worldId)
+            ?: return ResponseEntity.notFound().build()
+        return ResponseEntity.ok(result)
+    }
+
+    @PostMapping("/worlds/{worldId}/betting")
+    fun placeBet(
+        @PathVariable worldId: Long,
+        @RequestBody request: PlaceBetRequest,
+    ): ResponseEntity<Map<String, Any>> {
+        val result = tournamentService.placeBet(worldId, request.generalId, request.targetId, request.amount)
+            ?: return ResponseEntity.notFound().build()
+        if (result.containsKey("error")) return ResponseEntity.badRequest().body(result)
+        return ResponseEntity.ok(result)
     }
 }

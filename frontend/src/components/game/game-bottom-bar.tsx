@@ -4,8 +4,8 @@ import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Home, Map as MapIcon, Castle, ScrollText, MoreHorizontal, RefreshCw } from 'lucide-react';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { useOfficerStore } from '@/stores/officerStore';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/8bit/sheet';
+import { useGeneralStore } from '@/stores/generalStore';
 import { useWorldStore } from '@/stores/worldStore';
 
 interface GameBottomBarProps {
@@ -30,20 +30,20 @@ function isNpcModeEnabled(config: Record<string, unknown> | null | undefined): b
 const NATION_MENU: NavItem[] = [
     { href: '/board', label: '회의실', require: 'nation' },
     { href: '/board?secret=true', label: '기밀실', require: 'secret' },
-    { href: '/fleet', label: '함대편성', require: 'nation' },
-    { href: '/diplomacy', label: '외교부', require: 'secret' },
-    { href: '/personnel', label: '인사부', require: 'nation' },
-    { href: '/internal-affairs', label: '내무부', require: 'secret' },
+    { href: '/troop', label: '함대편성', require: 'nation' },
+    { href: '/diplomacy', label: '외교국', require: 'secret' },
+    { href: '/personnel', label: '인사국', require: 'nation' },
+    { href: '/internal-affairs', label: '내무국', require: 'secret' },
     { href: '/chief', label: '사령부', require: 'secret' },
     { href: '/npc-control', label: 'NPC정책', require: 'secret' },
-    { href: '/spy', label: '암행부', require: 'secret' },
+    { href: '/spy', label: '첩보국', require: 'secret' },
     { href: '/tournament', label: '토너먼트' },
-    { href: '/faction', label: '진영정보', require: 'nation' },
-    { href: '/faction-planets', label: '진영행성', require: 'nation' },
-    { href: '/faction-officers', label: '진영제독', require: 'nation' },
+    { href: '/nation', label: '진영정보', require: 'nation' },
+    { href: '/nation-cities', label: '진영성계', require: 'nation' },
+    { href: '/nation-generals', label: '진영장교', require: 'nation' },
     { href: '/global-diplomacy', label: '은하정보' },
-    { href: '/planet', label: '현재행성' },
-    { href: '/battle', label: '감찰부', require: 'secret' },
+    { href: '/city', label: '현재성계' },
+    { href: '/battle', label: '작전감찰', require: 'secret' },
     { href: '/inherit', label: '유산관리' },
     { href: '/my-page', label: '내정보&설정' },
     { href: '/auction', label: '경매장' },
@@ -52,12 +52,12 @@ const NATION_MENU: NavItem[] = [
 
 /* ── Legacy GlobalMenuDropdown parity: 정보 메뉴 items ── */
 const GLOBAL_MENU: NavItem[] = [
-    { href: '/faction-betting', label: '진영 베팅' },
-    { href: '/factions', label: '진영일람' },
-    { href: '/officers', label: '제독일람' },
-    { href: '/best-officers', label: '명제독일람' },
+    { href: '/nation-betting', label: '은하 베팅' },
+    { href: '/nations', label: '진영일람' },
+    { href: '/generals', label: '장교일람' },
+    { href: '/best-generals', label: '명장교일람' },
     { href: '/hall-of-fame', label: '명예의전당' },
-    { href: '/sovereign', label: '왕조일람' },
+    { href: '/emperor', label: '원수부일람' },
     { href: '/history', label: '연감' },
     { href: '/battle-simulator', label: '전투 시뮬레이터' },
     { href: '/traffic', label: '접속량정보' },
@@ -76,13 +76,13 @@ interface QuickNavItem {
 }
 
 const QUICK_NAV: QuickNavItem[] = [
-    { key: 'header-nation', label: '진영 정보', header: true },
+    { key: 'header-nation', label: '국가 정보', header: true },
     { key: 'divider-nation', label: '', divider: true },
     { key: 'notice', label: '방침', selector: '.nationNotice' },
     { key: 'commands', label: '명령', selector: '.reservedCommandZone' },
     { key: 'nation', label: '진영', selector: '.nationInfo' },
-    { key: 'general', label: '제독', selector: '.generalInfo' },
-    { key: 'planet', label: '행성', selector: '.planetInfo' },
+    { key: 'general', label: '장교', selector: '.generalInfo' },
+    { key: 'city', label: '성계', selector: '.cityInfo' },
     { key: 'header-record', label: '동향 정보', header: true },
     { key: 'divider-record', label: '', divider: true },
     { key: 'map', label: '지도', selector: '.mapView' },
@@ -117,8 +117,8 @@ interface TabConfig {
 const TABS: TabConfig[] = [
     { id: 'home', label: '홈', icon: Home, href: '/' },
     { id: 'map', label: '지도', icon: MapIcon, href: '/map' },
-    { id: 'nation', label: '진영', icon: Castle, href: '/faction' },
-    { id: 'info', label: '정보', icon: ScrollText, href: '/officers' },
+    { id: 'nation', label: '진영', icon: Castle, href: '/nation' },
+    { id: 'info', label: '정보', icon: ScrollText, href: '/generals' },
     { id: 'more', label: '더보기', icon: MoreHorizontal },
 ];
 
@@ -127,11 +127,11 @@ export function GameBottomBar({ onRefresh }: GameBottomBarProps) {
     const pathname = usePathname();
 
     const currentWorld = useWorldStore((s) => s.currentWorld);
-    const myOfficer = useOfficerStore((s) => s.myOfficer);
+    const myGeneral = useGeneralStore((s) => s.myGeneral);
     const npcMode = isNpcModeEnabled(currentWorld?.config as Record<string, unknown> | undefined);
-    const officerLevel = myOfficer?.officerLevel ?? 0;
+    const officerLevel = myGeneral?.officerLevel ?? 0;
     const inNation = officerLevel >= 1;
-    const showSecret = officerLevel >= 2 || Number(myOfficer?.permission ?? 0) >= 1;
+    const showSecret = officerLevel >= 2 || Number(myGeneral?.permission ?? 0) >= 1;
 
     function isVisible(item: NavItem): boolean {
         if (!item.require) return true;
@@ -148,29 +148,31 @@ export function GameBottomBar({ onRefresh }: GameBottomBarProps) {
         if (pathname === '/' || pathname === '/dashboard') return 'home';
         if (pathname.startsWith('/map')) return 'map';
         if (
-            pathname.startsWith('/faction') ||
+            pathname.startsWith('/nation') ||
             pathname.startsWith('/board') ||
-            pathname.startsWith('/fleet') ||
+            pathname.startsWith('/troop') ||
             pathname.startsWith('/diplomacy') ||
             pathname.startsWith('/personnel') ||
             pathname.startsWith('/internal-affairs') ||
             pathname.startsWith('/chief') ||
             pathname.startsWith('/npc-control') ||
-            pathname.startsWith('/spy')
+            pathname.startsWith('/spy') ||
+            pathname.startsWith('/nation-cities') ||
+            pathname.startsWith('/nation-generals')
         )
             return 'nation';
         if (
-            pathname.startsWith('/officers') ||
-            pathname.startsWith('/factions') ||
-            pathname.startsWith('/best-officers') ||
+            pathname.startsWith('/generals') ||
+            pathname.startsWith('/nations') ||
+            pathname.startsWith('/best-generals') ||
             pathname.startsWith('/hall-of-fame') ||
-            pathname.startsWith('/sovereign') ||
+            pathname.startsWith('/emperor') ||
             pathname.startsWith('/history') ||
             pathname.startsWith('/battle-simulator') ||
             pathname.startsWith('/traffic') ||
             pathname.startsWith('/npc-list') ||
             pathname.startsWith('/vote') ||
-            pathname.startsWith('/faction-betting')
+            pathname.startsWith('/nation-betting')
         )
             return 'info';
         return '';
@@ -227,7 +229,7 @@ export function GameBottomBar({ onRefresh }: GameBottomBarProps) {
                                             {/* Refresh Button */}
                                             <button
                                                 type="button"
-                                                className="w-full mb-4 flex items-center justify-center gap-2 py-3 bg-primary/10 hover:bg-primary/20 text-primary rounded-lg transition-colors"
+                                                className="w-full mb-4 flex items-center justify-center gap-2 py-3 bg-primary/10 hover:bg-primary/20 text-primary rounded-none transition-colors"
                                                 onClick={() => {
                                                     setSheetOpen(false);
                                                     onRefresh?.();
@@ -267,7 +269,7 @@ export function GameBottomBar({ onRefresh }: GameBottomBarProps) {
                                                                 <button
                                                                     key={item.key}
                                                                     type="button"
-                                                                    className="col-span-3 mx-1 my-1 py-3 text-sm text-center bg-muted/50 hover:bg-muted rounded-lg transition-colors"
+                                                                    className="col-span-3 mx-1 my-1 py-3 text-sm text-center bg-muted/50 hover:bg-muted rounded-none transition-colors"
                                                                     onClick={() => {
                                                                         setSheetOpen(false);
                                                                         window.location.href = '/lobby';
@@ -281,7 +283,7 @@ export function GameBottomBar({ onRefresh }: GameBottomBarProps) {
                                                             <button
                                                                 key={item.key}
                                                                 type="button"
-                                                                className="px-2 py-3 text-sm text-left hover:bg-muted/50 rounded-lg transition-colors min-h-[44px]"
+                                                                className="px-2 py-3 text-sm text-left hover:bg-muted/50 rounded-none transition-colors min-h-[44px]"
                                                                 onClick={() => {
                                                                     if (item.selector) {
                                                                         scrollToSelector(item.selector);
@@ -296,17 +298,17 @@ export function GameBottomBar({ onRefresh }: GameBottomBarProps) {
                                                 </div>
                                             </div>
 
-                                            {/* Faction Menu Section */}
+                                            {/* Nation Menu Section */}
                                             <div className="mb-4">
                                                 <h3 className="text-xs font-bold text-muted-foreground mb-2 px-1">
-                                                    진영 메뉴
+                                                    국가 메뉴
                                                 </h3>
                                                 <div className="grid grid-cols-3 gap-1">
                                                     {filteredNation.map((item) => (
                                                         <Link
                                                             key={`${item.href}-${item.label}`}
                                                             href={item.href}
-                                                            className="px-2 py-3 text-sm hover:bg-muted/50 rounded-lg transition-colors min-h-[44px] flex items-center"
+                                                            className="px-2 py-3 text-sm hover:bg-muted/50 rounded-none transition-colors min-h-[44px] flex items-center"
                                                             onClick={() => setSheetOpen(false)}
                                                         >
                                                             {item.label}
@@ -325,7 +327,7 @@ export function GameBottomBar({ onRefresh }: GameBottomBarProps) {
                                                         <Link
                                                             key={item.href}
                                                             href={item.href}
-                                                            className="px-2 py-3 text-sm hover:bg-muted/50 rounded-lg transition-colors min-h-[44px] flex items-center"
+                                                            className="px-2 py-3 text-sm hover:bg-muted/50 rounded-none transition-colors min-h-[44px] flex items-center"
                                                             onClick={() => setSheetOpen(false)}
                                                         >
                                                             {item.label}

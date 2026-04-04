@@ -1,6 +1,7 @@
 package com.openlogh.engine
 
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Test
 
 private const val RAND_UTIL_BLOCK_SIZE = LiteHashDRBG.BUFFER_BYTE_SIZE
@@ -153,5 +154,43 @@ class RandUtilTest {
                 ),
             ),
         )
+    }
+
+    @Test
+    fun `single-element choice consumes rng state`() {
+        val rng1 = LiteHashDRBG.build("single-element-test")
+        val rng2 = LiteHashDRBG.build("single-element-test")
+
+        val randUtil1 = RandUtil(rng1)
+        val randUtil2 = RandUtil(rng2)
+
+        val choiceResult = randUtil1.choice(listOf("only"))
+        assertEquals("only", choiceResult)
+
+        // Compare 10 subsequent draws to eliminate collision chance
+        val afterChoiceDraws = (1..10).map { randUtil1.nextRangeInt(0, 9999) }
+        val directDraws = (1..10).map { randUtil2.nextRangeInt(0, 9999) }
+
+        assertNotEquals(afterChoiceDraws, directDraws,
+            "choice() on single-element list must consume RNG state -- subsequent draw sequences must differ")
+    }
+
+    @Test
+    fun `single-element map choice consumes rng state`() {
+        val rng1 = LiteHashDRBG.build("single-element-map-test")
+        val rng2 = LiteHashDRBG.build("single-element-map-test")
+
+        val randUtil1 = RandUtil(rng1)
+        val randUtil2 = RandUtil(rng2)
+
+        val result = randUtil1.choice(mapOf("key" to "value"))
+        assertEquals("value", result)
+
+        // Compare 10 subsequent draws to eliminate collision chance
+        val afterChoiceDraws = (1..10).map { randUtil1.nextRangeInt(0, 9999) }
+        val directDraws = (1..10).map { randUtil2.nextRangeInt(0, 9999) }
+
+        assertNotEquals(afterChoiceDraws, directDraws,
+            "Map choice() on single-element must consume RNG state -- subsequent draw sequences must differ")
     }
 }

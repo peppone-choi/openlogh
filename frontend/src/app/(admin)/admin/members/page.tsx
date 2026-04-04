@@ -4,10 +4,10 @@ import { useCallback, useEffect, useState } from 'react';
 import { Users, Search } from 'lucide-react';
 import { PageHeader } from '@/components/game/page-header';
 import { LoadingState } from '@/components/game/loading-state';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Input } from '@/components/ui/8bit/input';
+import { Button } from '@/components/ui/8bit/button';
+import { Badge } from '@/components/ui/8bit/badge';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/8bit/table';
 import { adminApi } from '@/lib/gameApi';
 import { toast } from 'sonner';
 import type { AdminGeneral } from '@/types';
@@ -73,7 +73,7 @@ export default function AdminMembersPage() {
     }, [load]);
 
     const doAction = async (id: number, type: string) => {
-        if (type === 'kill' && !confirm('해당 제독에게 강제 사망을 입력하시겠습니까?')) {
+        if (type === 'kill' && !confirm('해당 장수에게 강제 사망을 입력하시겠습니까?')) {
             return;
         }
         try {
@@ -125,11 +125,11 @@ export default function AdminMembersPage() {
 
     return (
         <div className="space-y-4">
-            <PageHeader icon={Users} title="제독 관리" />
+            <PageHeader icon={Users} title="장수 관리" />
             <div className="relative w-64">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                 <Input
-                    placeholder="제독 검색..."
+                    placeholder="장교 검색..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     className="pl-8"
@@ -242,7 +242,7 @@ export default function AdminMembersPage() {
                     {filtered.length === 0 && (
                         <TableRow>
                             <TableCell colSpan={10} className="text-center text-muted-foreground">
-                                제독가 없습니다.
+                                장교가 없습니다.
                             </TableCell>
                         </TableRow>
                     )}

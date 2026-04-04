@@ -1,0 +1,61 @@
+package com.openlogh.command.nation
+
+import com.openlogh.command.CommandCost
+import com.openlogh.command.CommandEnv
+import com.openlogh.command.CommandResult
+import com.openlogh.command.NationCommand
+import com.openlogh.command.constraint.*
+import com.openlogh.entity.General
+import kotlin.random.Random
+
+private val NATION_COLORS = listOf(
+    "#FF0000", "#800000", "#A0522D", "#FF6347", "#FFA500",
+    "#FFDAB9", "#FFD700", "#FFFF00", "#7CFC00", "#00FF00",
+    "#808000", "#008000", "#2E8B57", "#008080", "#20B2AA",
+    "#6495ED", "#7FFFD4", "#AFEEEE", "#87CEEB", "#00FFFF",
+    "#00BFFF", "#0000FF", "#000080", "#483D8B", "#7B68EE",
+    "#BA55D3", "#800080", "#FF00FF", "#FFC0CB", "#F5F5DC",
+    "#E0FFFF", "#FFFFFF", "#A9A9A9",
+)
+
+class che_국기변경(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
+    : NationCommand(general, env, arg) {
+
+    override val actionName = "국기변경"
+
+    override val fullConditionConstraints = listOf(
+        OccupiedCity(), BeChief(), SuppliedCity()
+    )
+
+    override fun getCost() = CommandCost()
+    override fun getPreReqTurn() = 0
+    override fun getPostReqTurn() = 0
+
+    override suspend fun run(rng: Random): CommandResult {
+        val date = formatDate()
+        val rawColorType = arg?.get("colorType")
+        val color = when (rawColorType) {
+            is Number -> {
+                val colorType = rawColorType.toInt()
+                if (colorType < 0 || colorType >= NATION_COLORS.size) {
+                    return CommandResult(false, logs, "유효하지 않은 색상입니다")
+                }
+                NATION_COLORS[colorType]
+            }
+            is String -> rawColorType
+            else -> NATION_COLORS[0]
+        }
+        val n = nation ?: return CommandResult(false, logs, "국가 정보를 찾을 수 없습니다")
+
+        n.color = color
+        n.meta["can_국기변경"] = 0
+
+        general.experience += 5
+        general.dedication += 5
+
+         pushLog("<b>국기</>를 변경하였습니다 <1>$date</>")
+         pushHistoryLog("<b>국기</>를 변경하였습니다 <1>$date</>")
+        pushGlobalLog("<Y>${general.name}</>${pickJosa(general.name, "이")} 국기를 변경했습니다.")
+        return CommandResult(true, logs)
+    }
+}

@@ -1,207 +1,542 @@
 package com.openlogh.engine
 
-import com.openlogh.entity.Faction
-import com.openlogh.entity.Officer
-import com.openlogh.entity.Planet
-import com.openlogh.entity.SessionState
-import com.openlogh.repository.FactionRepository
-import com.openlogh.repository.OfficerRepository
-import com.openlogh.repository.PlanetRepository
+import com.openlogh.entity.*
+import com.openlogh.repository.CityRepository
+import com.openlogh.repository.GeneralRepository
+import com.openlogh.repository.NationRepository
 import com.openlogh.service.HistoryService
 import com.openlogh.service.MapService
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import kotlin.math.roundToInt
+import kotlin.math.ln
+import kotlin.math.round
 import kotlin.random.Random
 
 @Service
 class NpcSpawnService(
-    private val factionRepository: FactionRepository,
-    private val planetRepository: PlanetRepository,
-    private val officerRepository: OfficerRepository,
+    private val nationRepository: NationRepository,
+    private val cityRepository: CityRepository,
+    private val generalRepository: GeneralRepository,
     private val historyService: HistoryService,
     private val mapService: MapService,
 ) {
-    fun processSpawns(world: SessionState) {}
+    private val log = LoggerFactory.getLogger(javaClass)
 
-    /**
-     * Raise an invader NPC force at a neutral/border planet.
-     * gin7: 이민족 침략 이벤트.
-     */
-    @Suppress("UNCHECKED_CAST")
-    fun raiseInvader(world: SessionState, params: Map<String, Any>) {
-        val sessionId = world.id.toLong()
-        val rng = Random(world.currentYear * 100L + world.currentMonth)
-        val planets = planetRepository.findBySessionId(sessionId)
-        val neutralPlanets = planets.filter { it.factionId == 0L }
-        val targetPlanet = neutralPlanets.randomOrNull() ?: planets.randomOrNull() ?: return
-
-        val count = (params["count"] as? Number)?.toInt() ?: 3
-        val cityParams = (params["cityParams"] as? Map<String, Any>) ?: emptyMap()
-
-        buildNpcNation(world, rng, targetPlanet, cityParams, count, 1.0f)
-        historyService.logWorldHistory(
-            sessionId,
-            "이민족 세력이 ${targetPlanet.name}에 출현했습니다.",
-            world.currentYear.toInt(),
-            world.currentMonth.toInt(),
+    companion object {
+        private const val MIN_DIST_USER_NATION = 3
+        private const val MIN_DIST_NPC_NATION = 2
+        private val NPC_NATION_COLORS = listOf(
+            "#CC6600", "#996633", "#669966", "#336699",
+            "#993366", "#CC9900", "#339966", "#666699",
+        )
+        /** Base crew type IDs by armType: 보병=1100, 궁병=1200, 기병=1300, 귀병=1400 */
+        private val BASE_CREW_TYPES = intArrayOf(1100, 1200, 1300, 1400)
+        // 국가 레벨별 부대장 NPC 최대 수 (레거시 ProvideNPCTroopLeader.php)
+        private val MAX_NPC_TROOP_LEADERS = mapOf(
+            1 to 0, 2 to 1, 3 to 3, 4 to 4, 5 to 6, 6 to 7, 7 to 9
         )
     }
 
-    /**
-     * Create an NPC nation at a specified or random planet.
-     * gin7: NPC 국가 생성 이벤트.
-     */
-    @Suppress("UNCHECKED_CAST")
-    fun raiseNpcNation(world: SessionState, params: Map<String, Any>) {
-        val sessionId = world.id.toLong()
-        val rng = Random(world.currentYear * 100L + world.currentMonth + 7)
-        val planets = planetRepository.findBySessionId(sessionId)
+    fun checkNpcSpawn(world: WorldState) {
+        if (!isNpcNationSpawnEnabled(world)) {
+            log.info("NPC nation spawning disabled for world {}", world.id)
+            return
+        }
 
-        val cityName = params["city"] as? String
-        val targetPlanet = if (cityName != null) {
-            planets.find { it.name == cityName }
+        try {
+            raiseNPCNation(world)
+        } catch (e: Exception) {
+            log.warn("raiseNPCNation failed: {}", e.message)
+        }
+    }
+
+    /**
+     * Create NPC nations in empty lv5-6 cities that are far enough from existing nations.
+     * Based on legacy RaiseNPCNation.php
+     */
+    private fun raiseNPCNation(world: WorldState) {
+        val worldId = world.id.toLong()
+        val cities = cityRepository.findByWorldId(worldId)
+        val mapCode = (world.config["mapCode"] as? String) ?: "che"
+
+        // Find empty cities at level 5-6
+        val emptyCities = cities.filter { it.nationId == 0L && it.level.toInt() in 5..6 }.toMutableList()
+        if (emptyCities.isEmpty()) return
+
+        val occupiedCityIds = cities.filter { it.nationId != 0L }.map { it.id }
+        val npcCreatedCityIds = mutableListOf<Long>()
+
+        val hiddenSeed = (world.config["hiddenSeed"] as? String) ?: "${world.id}"
+        val rng = DeterministicRng.create(
+            hiddenSeed, "RaiseNPCNation",
+            world.currentYear, world.currentMonth
+        )
+
+        // Calculate average stats for new NPC cities
+        val avgCity = calcAverageCityStats(cities)
+        val avgGenCount = calcAvgNationGeneralCount(worldId)
+        val avgTech = calcAvgTech(worldId)
+
+        // Shuffle empty cities
+        emptyCities.shuffle(rng)
+
+        // Build DB city ID -> map city ID lookup
+        val dbToMapId = cities.associate { it.id to it.mapCityId }
+
+        for (emptyCity in emptyCities) {
+            // Check distance from occupied cities using map city IDs
+            val tooCloseToUser = occupiedCityIds.any { occupiedId ->
+                val fromMap = dbToMapId[emptyCity.id] ?: return@any false
+                val toMap = dbToMapId[occupiedId] ?: return@any false
+                mapService.getDistance(mapCode, fromMap, toMap).let { it in 0 until MIN_DIST_USER_NATION }
+            }
+            if (tooCloseToUser) continue
+
+            // Check distance from newly created NPC cities
+            val tooCloseToNpc = npcCreatedCityIds.any { npcCityId ->
+                val fromMap = dbToMapId[emptyCity.id] ?: return@any false
+                val toMap = dbToMapId[npcCityId] ?: return@any false
+                mapService.getDistance(mapCode, fromMap, toMap).let { it in 0 until MIN_DIST_NPC_NATION }
+            }
+            if (tooCloseToNpc) continue
+
+            // Create NPC nation
+            buildNpcNation(world, rng, emptyCity, avgCity, avgGenCount, avgTech)
+            npcCreatedCityIds.add(emptyCity.id)
+        }
+
+        for (npcCityId in npcCreatedCityIds) {
+            val npcCity = cities.find { it.id == npcCityId } ?: continue
+            historyService.logWorldHistory(
+                worldId = worldId,
+                message = "<S>◆</>ⓤ${npcCity.name}이(가) ${npcCity.name}에서 건국하였습니다.",
+                year = world.currentYear.toInt(),
+                month = world.currentMonth.toInt(),
+            )
+        }
+        if (npcCreatedCityIds.isNotEmpty()) {
+            log.info("Created {} NPC nations in world {}", npcCreatedCityIds.size, worldId)
+        }
+    }
+
+    private fun buildNpcNation(
+        world: WorldState,
+        rng: Random,
+        city: City,
+        avgCity: Map<String, Int>,
+        genCount: Int,
+        avgTech: Float,
+    ) {
+        val worldId = world.id.toLong()
+        val year = world.currentYear.toInt()
+        val color = NPC_NATION_COLORS[rng.nextInt(NPC_NATION_COLORS.size)]
+
+        // Save nation — DB generates ID via @GeneratedValue(IDENTITY)
+        val nation = nationRepository.save(
+            Nation(
+                worldId = worldId,
+                name = "ⓤ${city.name}",
+                color = color,
+                capitalCityId = city.id,
+                gold = 0,
+                rice = 2000,
+                bill = 80,
+                rate = 20,
+                rateTmp = 20,
+                chiefGeneralId = 0,
+                tech = avgTech,
+                level = 2,
+                typeCode = "che_중립",
+            )
+        )
+
+        // Assign city to nation
+        city.nationId = nation.id
+        city.trust = 100F
+        // Set city stats to average
+        city.pop = avgCity["pop"]?.coerceAtMost(city.popMax) ?: city.pop
+        city.agri = avgCity["agri"]?.coerceAtMost(city.agriMax) ?: city.agri
+        city.comm = avgCity["comm"]?.coerceAtMost(city.commMax) ?: city.comm
+        city.secu = avgCity["secu"]?.coerceAtMost(city.secuMax) ?: city.secu
+        city.def = avgCity["def"]?.coerceAtMost(city.defMax) ?: city.def
+        city.wall = avgCity["wall"]?.coerceAtMost(city.wallMax) ?: city.wall
+        cityRepository.save(city)
+
+        // Create ruler — DB generates ID
+        val rulerStats = generateNpcStats(rng, 180)
+        val ruler = generalRepository.save(
+            General(
+                worldId = worldId,
+                name = "${city.name}태수",
+                nationId = nation.id,
+                cityId = city.id,
+                npcState = 6,
+                bornYear = (year - 20).coerceIn(0, 32767).toShort(),
+                deadYear = (year + 60).coerceIn(0, 32767).toShort(), // Legacy default: year+60 (GeneralBuilder.fillRemainSpecAsZero)
+                leadership = rulerStats.first.coerceIn(0, 100).toShort(),
+                strength = rulerStats.second.coerceIn(0, 100).toShort(),
+                intel = rulerStats.third.coerceIn(0, 100).toShort(),
+                politics = derivePoliticsFromStats(rulerStats.first, rulerStats.second, rulerStats.third, rng).coerceIn(0, 100).toShort(),
+                charm = deriveCharmFromStats(rulerStats.first, rulerStats.second, rulerStats.third, rng).coerceIn(0, 100).toShort(),
+                officerLevel = 20,
+                gold = 1000,
+                rice = 1000,
+                crew = 1000,
+                crewType = BASE_CREW_TYPES[rng.nextInt(BASE_CREW_TYPES.size)].coerceIn(0, 32767).toShort(),
+                train = 80,
+                atmos = 80,
+                killTurn = 240,
+            )
+        )
+        nation.chiefGeneralId = ruler.id
+        nationRepository.save(nation)
+
+        // Create NPC generals
+        val npcCount = (genCount - 1).coerceAtLeast(2)
+        for (i in 1..npcCount) {
+            val stats = generateNpcStats(rng, 150)
+            generalRepository.save(
+                General(
+                    worldId = worldId,
+                    name = "${city.name}장수$i",
+                    nationId = nation.id,
+                    cityId = city.id,
+                    npcState = 6,
+                    bornYear = (year - 20).coerceIn(0, 32767).toShort(),
+                    deadYear = calcLogDeadYear(year, rng).coerceIn(0, 32767).toShort(),
+                    leadership = stats.first.coerceIn(0, 100).toShort(),
+                    strength = stats.second.coerceIn(0, 100).toShort(),
+                    intel = stats.third.coerceIn(0, 100).toShort(),
+                    politics = derivePoliticsFromStats(stats.first, stats.second, stats.third, rng).coerceIn(0, 100).toShort(),
+                    charm = deriveCharmFromStats(stats.first, stats.second, stats.third, rng).coerceIn(0, 100).toShort(),
+                    gold = 1000,
+                    rice = 1000,
+                    crew = 500 + rng.nextInt(500),
+                    crewType = BASE_CREW_TYPES[rng.nextInt(BASE_CREW_TYPES.size)].coerceIn(0, 32767).toShort(),
+                    train = 70,
+                    atmos = 70,
+                )
+            )
+        }
+    }
+
+    private fun calcLogDeadYear(year: Int, rng: Random): Int {
+        val rand = rng.nextInt(1, 1024).toDouble()
+        return year + 10 + (60 * (1 - ln(rand) / ln(2.0) / 10)).toInt()
+    }
+
+    private fun derivePoliticsFromStats(leadership: Int, strength: Int, intel: Int, rng: Random): Int {
+        val base = round(intel * 0.4 + leadership * 0.3 + rng.nextInt(-15, 16)).toInt()
+        return base.coerceIn(30, 95)
+    }
+
+    private fun deriveCharmFromStats(leadership: Int, strength: Int, intel: Int, rng: Random): Int {
+        val base = round(leadership * 0.3 + intel * 0.2 + strength * 0.1 + rng.nextInt(-15, 16)).toInt()
+        return base.coerceIn(30, 95)
+    }
+
+    private fun generateNpcStats(rng: Random, totalAvg: Int): Triple<Int, Int, Int> {
+        val variance = totalAvg / 6
+        val stat1 = (totalAvg / 3 + rng.nextInt(-variance, variance + 1)).coerceIn(30, 100)
+        val stat2 = (totalAvg / 3 + rng.nextInt(-variance, variance + 1)).coerceIn(30, 100)
+        val stat3 = (totalAvg - stat1 - stat2).coerceIn(30, 100)
+        return Triple(stat1, stat2, stat3)
+    }
+
+    private fun calcAverageCityStats(cities: List<City>): Map<String, Int> {
+        val nationCities = cities.filter { it.nationId != 0L }
+        if (nationCities.isEmpty()) {
+            return mapOf("pop" to 5000, "agri" to 500, "comm" to 500, "secu" to 500, "def" to 500, "wall" to 500)
+        }
+        // Sort by stat sum, trim top/bottom round(count/6) outliers
+        val sorted = nationCities.sortedBy { it.pop + it.agri + it.comm + it.secu + it.def + it.wall }
+        val trimCount = round(sorted.size / 6.0).toInt()
+        val trimmed = if (sorted.size > trimCount * 2) {
+            sorted.subList(trimCount, sorted.size - trimCount)
         } else {
-            planets.filter { it.factionId == 0L }.randomOrNull()
-        } ?: return
-
-        val count = (params["count"] as? Number)?.toInt() ?: 5
-        val cityParams = (params["cityParams"] as? Map<String, Any>) ?: emptyMap()
-
-        buildNpcNation(world, rng, targetPlanet, cityParams, count, 0.8f)
-        historyService.logWorldHistory(
-            sessionId,
-            "새로운 세력이 ${targetPlanet.name}에서 건국되었습니다.",
-            world.currentYear.toInt(),
-            world.currentMonth.toInt(),
+            sorted
+        }
+        return mapOf(
+            "pop" to trimmed.map { it.pop }.average().toInt(),
+            "agri" to trimmed.map { it.agri }.average().toInt(),
+            "comm" to trimmed.map { it.comm }.average().toInt(),
+            "secu" to trimmed.map { it.secu }.average().toInt(),
+            "def" to trimmed.map { it.def }.average().toInt(),
+            "wall" to trimmed.map { it.wall }.average().toInt(),
         )
     }
 
+    private fun calcAvgNationGeneralCount(worldId: Long): Int {
+        val nations = nationRepository.findByWorldId(worldId).filter { it.level > 0 }
+        if (nations.isEmpty()) return 5
+        val generals = generalRepository.findByWorldId(worldId)
+        val countsByNation = generals.groupBy { it.nationId }.mapValues { it.value.size }
+        val counts = nations.mapNotNull { countsByNation[it.id] }.filter { it > 0 }
+        return if (counts.isEmpty()) 5 else counts.average().toInt()
+    }
+
+    private fun calcAvgTech(worldId: Long): Float {
+        val nations = nationRepository.findByWorldId(worldId).filter { it.level > 0 }
+        if (nations.isEmpty()) return 0f
+        return nations.map { it.tech }.average().toFloat()
+    }
+
+
     /**
-     * Provide NPC troop leaders to factions that lack commanders.
-     * gin7: 지휘관 부족 시 NPC 자동 보충.
+     * 부대장 NPC를 국가 레벨에 맞게 보충.
+     * Based on legacy ProvideNPCTroopLeader.php
+     * npcState=5 장수를 국가별 최대치까지 생성, troopId = 자기 자신 (부대장)
      */
-    fun provideNpcTroopLeader(world: SessionState, params: Map<String, Any>) {
-        val sessionId = world.id.toLong()
-        val rng = Random(world.currentYear * 100L + world.currentMonth + 13)
-        val factions = factionRepository.findBySessionId(sessionId)
-        val officers = officerRepository.findBySessionId(sessionId)
+    fun provideNpcTroopLeaders(world: WorldState) {
+        val worldId = world.id.toLong()
+        val nations = nationRepository.findByWorldId(worldId)
+        val allGenerals = generalRepository.findByWorldId(worldId)
 
-        for (faction in factions) {
-            val factionOfficers = officers.filter { it.factionId == faction.id }
-            val minOfficers = (params["minOfficers"] as? Number)?.toInt() ?: 5
+        // 국가별 npcState=5 장수 수 집계
+        val npc5CountByNation = allGenerals.filter { it.npcState.toInt() == 5 }
+            .groupBy { it.nationId }
+            .mapValues { it.value.size }
 
-            if (factionOfficers.size < minOfficers) {
-                val deficit = minOfficers - factionOfficers.size
-                val capitalPlanet = planetRepository.findById(faction.capitalPlanetId ?: continue).orElse(null) ?: continue
+        for (nation in nations) {
+            val level = nation.level.toInt()
+            if (level <= 0) continue
+            val maxCount = MAX_NPC_TROOP_LEADERS[level] ?: 0
+            var currentCount = npc5CountByNation[nation.id] ?: 0
+            if (currentCount >= maxCount) continue
 
-                for (i in 0 until deficit) {
-                    val leadership = rng.nextInt(35, 70).toShort()
-                    val command = rng.nextInt(35, 70).toShort()
-                    val intelligence = rng.nextInt(35, 70).toShort()
-                    val politics = derivePoliticsFromStats(leadership.toInt(), command.toInt(), intelligence.toInt(), rng).toShort()
-                    val administration = deriveCharmFromStats(leadership.toInt(), command.toInt(), intelligence.toInt(), rng).toShort()
+            val capitalCity = nation.capitalCityId ?: continue
 
-                    officerRepository.save(Officer(
-                        sessionId = sessionId,
-                        name = "지휘관_${faction.id}_${factionOfficers.size + i + 1}",
-                        factionId = faction.id,
-                        planetId = capitalPlanet.id,
-                        leadership = leadership,
-                        command = command,
-                        intelligence = intelligence,
-                        politics = politics,
-                        administration = administration,
-                        age = rng.nextInt(22, 45).toShort(),
-                        npcState = 3,
-                        rank = rng.nextInt(1, 5).toShort(),
-                    ))
-                }
+            val hiddenSeed = (world.config["hiddenSeed"] as? String) ?: "${world.id}"
+            val rng = DeterministicRng.create(
+                hiddenSeed, "troopLeader",
+                world.currentYear, world.currentMonth,
+                nation.id.toInt()
+            )
+
+            while (currentCount < maxCount) {
+                val nameSeq = rng.nextInt(10000)
+                val npc = generalRepository.save(
+                    General(
+                        worldId = worldId,
+                        name = "부대장${String.format("%04d", nameSeq)}",
+                        nationId = nation.id,
+                        cityId = capitalCity,
+                        npcState = 5,
+                        affinity = 999,
+                        bornYear = (world.currentYear - 20).coerceIn(0, 32767).toShort(),
+                        deadYear = (world.currentYear + 30).coerceIn(0, 32767).toShort(),
+                        leadership = 10,
+                        strength = 10,
+                        intel = 10,
+                        politics = 10,
+                        charm = 10,
+                        gold = 0,
+                        rice = 0,
+                        crew = 0,
+                        crewType = 1,
+                        train = 0,
+                        atmos = 0,
+                        killTurn = 70,
+                        personalCode = "che_은둔",
+                    )
+                )
+                // 부대장 = troopId가 자기 자신
+                npc.troopId = npc.id
+                generalRepository.save(npc)
+                currentCount++
             }
         }
     }
 
-    private fun derivePoliticsFromStats(leadership: Int, strength: Int, intel: Int, rng: Random): Int {
-        val base = intel * 0.4 + leadership * 0.3
-        val variance = rng.nextInt(-15, 16)
-        return (base + variance).roundToInt().coerceIn(30, 95)
-    }
+    /**
+     * Raise invader nations in all lv4 cities.
+     * Based on legacy RaiseInvader.php - called as a special event, not every turn.
+     */
+    fun raiseInvader(world: WorldState) {
+        if (!isInvaderSpawnEnabled(world)) {
+            log.info("Invader spawning disabled for world {}", world.id)
+            return
+        }
 
-    private fun deriveCharmFromStats(leadership: Int, strength: Int, intel: Int, rng: Random): Int {
-        val base = leadership * 0.3 + intel * 0.2 + strength * 0.1
-        val variance = rng.nextInt(-15, 16)
-        return (base + variance).roundToInt().coerceIn(30, 95)
-    }
+        val worldId = world.id.toLong()
+        val cities = cityRepository.findByWorldId(worldId)
+        val lv4Cities = cities.filter { it.level.toInt() == 4 }
+        if (lv4Cities.isEmpty()) return
 
-    @Suppress("unused")
-    private fun buildNpcNation(
-        world: SessionState,
-        rng: Random,
-        city: Planet,
-        cityParams: Map<String, Any>,
-        count: Int,
-        statBonus: Float,
-    ) {
-        val sessionId = world.id.toLong()
+        val hiddenSeed = (world.config["hiddenSeed"] as? String) ?: "${world.id}"
+        val rng = DeterministicRng.create(
+            hiddenSeed, "RaiseInvader",
+            world.currentYear, world.currentMonth
+        )
 
-        // Create faction
-        val faction = factionRepository.save(Faction(
-            sessionId = sessionId,
-            name = "NPC세력",
-            color = "#${rng.nextInt(0x1000000).toString(16).padStart(6, '0')}",
-            capitalPlanetId = city.id,
-            factionRank = 1,
-        ))
+        val existingNations = nationRepository.findByWorldId(worldId)
+        val generals = generalRepository.findByWorldId(worldId)
+        val avgStatTotal = if (generals.isNotEmpty()) {
+            generals.filter { it.npcState < 4 }
+                .map { it.leadership + it.strength + it.intel }
+                .average().toInt()
+        } else 180
+        val specAvg = avgStatTotal / 3
+        val avgTech = calcAvgTech(worldId)
+        val avgExp = generals.map { it.experience }.average().toInt()
 
-        // Assign city to faction
-        city.factionId = faction.id
-        city.population = (cityParams["pop"] as? Number)?.toInt() ?: city.population
-        city.production = (cityParams["agri"] as? Number)?.toInt() ?: city.production
-        city.commerce = (cityParams["comm"] as? Number)?.toInt() ?: city.commerce
-        city.security = (cityParams["secu"] as? Number)?.toInt() ?: city.security
-        city.orbitalDefense = (cityParams["def"] as? Number)?.toInt() ?: city.orbitalDefense
-        city.fortress = (cityParams["wall"] as? Number)?.toInt() ?: city.fortress
-        planetRepository.save(city)
+        // Free all lv4 cities first
+        for (city in lv4Cities) {
+            if (city.nationId != 0L) {
+                // Move capital away if needed
+                val nation = existingNations.find { it.capitalCityId == city.id }
+                if (nation != null) {
+                    val otherCities = cities.filter { it.nationId == nation.id && it.id != city.id }
+                    if (otherCities.isNotEmpty()) {
+                        nation.capitalCityId = otherCities.maxByOrNull { it.pop }?.id
+                        nationRepository.save(nation)
+                    }
+                }
+                city.nationId = 0
+                city.frontState = 0
+                city.supplyState = 1
+                cityRepository.save(city)
+            }
+        }
 
-        // Create officers
-        val killTurnForRuler: Short = 240
-        for (i in 0 until count) {
-            val isRuler = (i == 0)
-            val leadership = rng.nextInt(40, 90).toShort()
-            val command = rng.nextInt(40, 90).toShort()
-            val intelligence = rng.nextInt(40, 90).toShort()
-            val politics = derivePoliticsFromStats(leadership.toInt(), command.toInt(), intelligence.toInt(), rng).toShort()
-            val administration = deriveCharmFromStats(leadership.toInt(), command.toInt(), intelligence.toInt(), rng).toShort()
-            val age = rng.nextInt(20, 50).toShort()
+        val invaderNationIds = mutableListOf<Long>()
 
-            val officer = Officer(
-                sessionId = sessionId,
-                name = "NPC${faction.id}_${i + 1}",
-                factionId = faction.id,
-                planetId = city.id,
-                leadership = leadership,
-                command = command,
-                intelligence = intelligence,
-                politics = politics,
-                administration = administration,
-                age = age,
-                npcState = 2,
-                rank = if (isRuler) 20 else rng.nextInt(1, 10).toShort(),
+        for (city in lv4Cities) {
+            val invaderName = city.name
+            val nationName = "ⓞ${invaderName}족"
+            val npcEachCount = 10.coerceAtLeast((generals.count { it.npcState < 4 } / lv4Cities.size) * 2)
+
+            // Create invader nation — DB generates ID
+            val nation = nationRepository.save(
+                Nation(
+                    worldId = worldId,
+                    name = nationName,
+                    color = "#800080",
+                    capitalCityId = city.id,
+                    gold = 9999999,
+                    rice = 9999999,
+                    bill = 80,
+                    rate = 20,
+                    rateTmp = 20,
+                    chiefGeneralId = 0,
+                    tech = avgTech * 1.2f,
+                    level = 2,
+                    typeCode = "che_병가",
+                )
             )
+            invaderNationIds.add(nation.id)
 
-            if (isRuler) {
-                officer.killTurn = killTurnForRuler
-            } else {
-                // Followers use deadYear-derived lifespan
-                officer.deathYear = (world.currentYear + rng.nextInt(20, 60)).toShort()
+            city.nationId = nation.id
+            city.pop = city.popMax
+            city.agri = city.agriMax
+            city.comm = city.commMax
+            city.secu = city.secuMax
+            cityRepository.save(city)
+
+            // Create ruler
+            val rulerLeadership = (specAvg * 1.8).toInt().coerceAtMost(100)
+            val rulerStrength = (specAvg * 1.8).toInt().coerceAtMost(100)
+            val rulerIntel = (specAvg * 1.2).toInt().coerceAtMost(100)
+            val ruler = generalRepository.save(
+                General(
+                    worldId = worldId,
+                    name = "${invaderName}대왕",
+                    nationId = nation.id,
+                    cityId = city.id,
+                    npcState = 9,
+                    affinity = 999,
+                    bornYear = (world.currentYear - 20).coerceIn(0, 32767).toShort(),
+                    deadYear = (world.currentYear + 20).coerceIn(0, 32767).toShort(),
+                    leadership = rulerLeadership.coerceIn(0, 100).toShort(),
+                    strength = rulerStrength.coerceIn(0, 100).toShort(),
+                    intel = rulerIntel.coerceIn(0, 100).toShort(),
+                    politics = derivePoliticsFromStats(rulerLeadership, rulerStrength, rulerIntel, rng).coerceIn(0, 100).toShort(),
+                    charm = deriveCharmFromStats(rulerLeadership, rulerStrength, rulerIntel, rng).coerceIn(0, 100).toShort(),
+                    officerLevel = 20,
+                    experience = (avgExp * 1.2).toInt(),
+                    gold = 99999,
+                    rice = 99999,
+                    crew = 5000,
+                    crewType = rng.nextInt(1, 5).coerceIn(0, 32767).toShort(),
+                    train = 100,
+                    atmos = 100,
+                )
+            )
+            nation.chiefGeneralId = ruler.id
+            nationRepository.save(nation)
+
+            // Create invader generals
+            for (i in 1 until npcEachCount) {
+                val leadership = rng.nextInt((specAvg * 1.2).toInt(), (specAvg * 1.4).toInt() + 1).coerceAtMost(100)
+                val mainStat = rng.nextInt((specAvg * 1.2).toInt(), (specAvg * 1.4).toInt() + 1).coerceAtMost(100)
+                val subStat = (specAvg * 3 - leadership - mainStat).coerceIn(30, 100)
+
+                val (str, intel) = if (rng.nextBoolean()) {
+                    mainStat to subStat  // warrior
+                } else {
+                    subStat to mainStat  // strategist
+                }
+
+                generalRepository.save(
+                    General(
+                        worldId = worldId,
+                        name = "${invaderName}장수$i",
+                        nationId = nation.id,
+                        cityId = city.id,
+                        npcState = 9,
+                        affinity = 999,
+                        bornYear = (world.currentYear - 20).coerceIn(0, 32767).toShort(),
+                        deadYear = (world.currentYear + 20).coerceIn(0, 32767).toShort(),
+                        leadership = leadership.coerceIn(0, 100).toShort(),
+                        strength = str.coerceIn(0, 100).toShort(),
+                        intel = intel.coerceIn(0, 100).toShort(),
+                        politics = derivePoliticsFromStats(leadership, str, intel, rng).coerceIn(0, 100).toShort(),
+                        charm = deriveCharmFromStats(leadership, str, intel, rng).coerceIn(0, 100).toShort(),
+                        experience = avgExp,
+                        gold = 99999,
+                        rice = 99999,
+                        crew = 3000 + rng.nextInt(2000),
+                        crewType = rng.nextInt(1, 5).coerceIn(0, 32767).toShort(),
+                        train = 90,
+                        atmos = 90,
+                    )
+                )
             }
+        }
 
-            officerRepository.save(officer)
-
-            if (isRuler) {
-                faction.supremeCommanderId = officer.id
-                faction.officerCount = count
-                factionRepository.save(faction)
+        // Set mutual war declarations: 24 months
+        // All existing nations vs all invader nations
+        for (invNationId in invaderNationIds) {
+            val invCity = lv4Cities.find { c -> nationRepository.findById(invNationId).orElse(null)?.capitalCityId == c.id }
+            val invNation = nationRepository.findById(invNationId).orElse(null)
+            if (invCity != null && invNation != null) {
+                historyService.logWorldHistory(
+                    worldId = worldId,
+                    message = "<R>★</>${invNation.name}이(가) ${invCity.name}에 출현하였습니다!",
+                    year = world.currentYear.toInt(),
+                    month = world.currentMonth.toInt(),
+                )
             }
+        }
+        if (invaderNationIds.isNotEmpty()) {
+            log.info("Raised {} invader nations in world {}", invaderNationIds.size, worldId)
+        }
+    }
+
+    private fun isNpcNationSpawnEnabled(world: WorldState): Boolean {
+        return readBoolean(world.config["allowNpcNationSpawn"], defaultValue = true)
+    }
+
+    private fun isInvaderSpawnEnabled(world: WorldState): Boolean {
+        return readBoolean(world.config["allowInvaderSpawn"], defaultValue = true)
+    }
+
+    private fun readBoolean(raw: Any?, defaultValue: Boolean): Boolean {
+        return when (raw) {
+            is Boolean -> raw
+            is Number -> raw.toInt() != 0
+            is String -> raw.equals("true", ignoreCase = true) || raw == "1"
+            else -> defaultValue
         }
     }
 }

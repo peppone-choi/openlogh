@@ -249,7 +249,6 @@ class GameContainerOrchestrator(
             "docker", "run", "-d",
             "--name", entry.containerName,
             "--network", dockerNetwork,
-            "--network-alias", "game",
             "--label", "opensam.role=game",
             "-e", "SERVER_PORT=9001",
             "-e", "SPRING_PROFILES_ACTIVE=docker",

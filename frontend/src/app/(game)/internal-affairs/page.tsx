@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useWorldStore } from '@/stores/worldStore';
-import { useOfficerStore } from '@/stores/officerStore';
+import { useGeneralStore } from '@/stores/generalStore';
 import { useGameStore } from '@/stores/gameStore';
 import { frontApi, nationPolicyApi } from '@/lib/gameApi';
 import type { NationFrontInfo } from '@/types';
@@ -18,14 +18,14 @@ import {
     Handshake,
     Calculator,
 } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { Badge } from '@/components/ui/8bit/badge';
 import { NationBadge } from '@/components/game/nation-badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Switch } from '@/components/ui/switch';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/8bit/card';
+import { Button } from '@/components/ui/8bit/button';
+import { Input } from '@/components/ui/8bit/input';
+import { Textarea } from '@/components/ui/8bit/textarea';
+import { Switch } from '@/components/ui/8bit/switch';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/8bit/tabs';
 import { PageHeader } from '@/components/game/page-header';
 import { LoadingState } from '@/components/game/loading-state';
 
@@ -74,7 +74,7 @@ function RichTextEditor({
     }, [exec]);
 
     return (
-        <div className="border rounded-md overflow-hidden">
+        <div className="border rounded-none overflow-hidden">
             <div className="flex items-center gap-1 p-1 border-b bg-muted/30">
                 <Button
                     type="button"
@@ -171,7 +171,7 @@ const DIPLOMACY_STATES: Record<string, { label: string; color: string }> = {
 
 export default function InternalAffairsPage() {
     const currentWorld = useWorldStore((s) => s.currentWorld);
-    const { myOfficer, fetchMyGeneral } = useOfficerStore();
+    const { myGeneral, fetchMyGeneral } = useGeneralStore();
     const { cities, nations, generals, diplomacy, loadAll } = useGameStore();
     const [loading, setLoading] = useState(true);
 
@@ -191,8 +191,8 @@ export default function InternalAffairsPage() {
     useEffect(() => {
         if (!currentWorld) return;
         loadAll(currentWorld.id);
-        if (!myOfficer) fetchMyGeneral(currentWorld.id).catch(() => {});
-    }, [currentWorld, myOfficer, fetchMyGeneral, loadAll]);
+        if (!myGeneral) fetchMyGeneral(currentWorld.id).catch(() => {});
+    }, [currentWorld, myGeneral, fetchMyGeneral, loadAll]);
 
     useEffect(() => {
         if (!currentWorld) return;
@@ -206,19 +206,19 @@ export default function InternalAffairsPage() {
 
     // Diplomacy for my nation
     const myDiplomacy = useMemo(() => {
-        if (!myOfficer?.nationId) return [];
+        if (!myGeneral?.nationId) return [];
         return diplomacy.filter(
-            (d) => (d.srcNationId === myOfficer.nationId || d.destNationId === myOfficer.nationId) && !d.isDead
+            (d) => (d.srcNationId === myGeneral.nationId || d.destNationId === myGeneral.nationId) && !d.isDead
         );
-    }, [diplomacy, myOfficer?.nationId]);
+    }, [diplomacy, myGeneral?.nationId]);
 
     // Financial calculator
     const myCities = useMemo(() => {
-        if (!myOfficer?.nationId) return [];
-        return cities.filter((c) => c.nationId === myOfficer.nationId);
-    }, [cities, myOfficer?.nationId]);
+        if (!myGeneral?.nationId) return [];
+        return cities.filter((c) => c.nationId === myGeneral.nationId);
+    }, [cities, myGeneral?.nationId]);
 
-    const myNation = myOfficer?.nationId ? nationMap.get(myOfficer.nationId) : null;
+    const myNation = myGeneral?.nationId ? nationMap.get(myGeneral.nationId) : null;
 
     const allNations = useMemo(() => {
         const cityCountByNation = new Map<number, number>();
@@ -264,9 +264,9 @@ export default function InternalAffairsPage() {
     }, [myCities, myNation?.bill]);
 
     useEffect(() => {
-        if (!myOfficer?.nationId) return;
+        if (!myGeneral?.nationId) return;
         nationPolicyApi
-            .getPolicy(myOfficer.nationId)
+            .getPolicy(myGeneral.nationId)
             .then(({ data }) => {
                 setRate((data.rate as number) ?? 15);
                 setBill((data.bill as number) ?? 100);
@@ -279,21 +279,21 @@ export default function InternalAffairsPage() {
             })
             .catch(() => {})
             .finally(() => setLoading(false));
-    }, [myOfficer?.nationId]);
+    }, [myGeneral?.nationId]);
 
     const handleSavePolicy = async () => {
-        if (!myOfficer?.nationId) return;
+        if (!myGeneral?.nationId) return;
         setSaving(true);
         setMsg('');
         try {
-            await nationPolicyApi.updatePolicy(myOfficer.nationId, {
+            await nationPolicyApi.updatePolicy(myGeneral.nationId, {
                 rate,
                 bill,
                 secretLimit,
                 strategicCmdLimit,
             });
-            await nationPolicyApi.setBlockWar(myOfficer.nationId, blockWar);
-            await nationPolicyApi.setBlockScout(myOfficer.nationId, blockScout);
+            await nationPolicyApi.setBlockWar(myGeneral.nationId, blockWar);
+            await nationPolicyApi.setBlockScout(myGeneral.nationId, blockScout);
             setMsg('정책이 저장되었습니다.');
         } catch {
             setMsg('저장에 실패했습니다.');
@@ -303,10 +303,10 @@ export default function InternalAffairsPage() {
     };
 
     const handleSaveNotice = async () => {
-        if (!myOfficer?.nationId) return;
+        if (!myGeneral?.nationId) return;
         setSaving(true);
         try {
-            await nationPolicyApi.updateNotice(myOfficer.nationId, notice);
+            await nationPolicyApi.updateNotice(myGeneral.nationId, notice);
             setMsg('공지가 저장되었습니다.');
         } catch {
             setMsg('저장에 실패했습니다.');
@@ -316,10 +316,10 @@ export default function InternalAffairsPage() {
     };
 
     const handleSaveScoutMsg = async () => {
-        if (!myOfficer?.nationId) return;
+        if (!myGeneral?.nationId) return;
         setSaving(true);
         try {
-            await nationPolicyApi.updateScoutMsg(myOfficer.nationId, scoutMsg);
+            await nationPolicyApi.updateScoutMsg(myGeneral.nationId, scoutMsg);
             setMsg('정찰 메시지가 저장되었습니다.');
         } catch {
             setMsg('저장에 실패했습니다.');
@@ -330,7 +330,7 @@ export default function InternalAffairsPage() {
 
     if (!currentWorld) return <div className="p-4 text-muted-foreground">월드를 선택해주세요.</div>;
     if (loading) return <LoadingState />;
-    if (!myOfficer?.nationId) return <div className="p-4 text-muted-foreground">소속 진영이 없습니다.</div>;
+    if (!myGeneral?.nationId) return <div className="p-4 text-muted-foreground">소속 국가가 없습니다.</div>;
 
     return (
         <div className="p-4 space-y-6 max-w-3xl mx-auto">
@@ -394,31 +394,31 @@ export default function InternalAffairsPage() {
                                 </div>
                             </div>
                             <div className="grid grid-cols-2 gap-4">
-                                <div className="flex items-center justify-between rounded-md border p-3">
+                                <div className="flex items-center justify-between rounded-none border p-3">
                                     <div className="space-y-0.5">
                                         <span className="text-sm font-medium">전쟁 차단</span>
                                         <p className="text-xs text-muted-foreground">
-                                            소속 제독의 전쟁 명령을 차단합니다
+                                            소속 장수의 전쟁 명령을 차단합니다
                                         </p>
                                     </div>
                                     <Switch checked={blockWar} onCheckedChange={setBlockWar} />
                                 </div>
-                                <div className="flex items-center justify-between rounded-md border p-3">
+                                <div className="flex items-center justify-between rounded-none border p-3">
                                     <div className="space-y-0.5">
                                         <span className="text-sm font-medium">임관 금지</span>
-                                        <p className="text-xs text-muted-foreground">타 제독의 임관을 제한합니다</p>
+                                        <p className="text-xs text-muted-foreground">타 장수의 임관을 제한합니다</p>
                                     </div>
                                     <Switch checked={blockScout} onCheckedChange={setBlockScout} />
                                 </div>
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                                <div className="rounded-md border p-3 space-y-1">
+                                <div className="rounded-none border p-3 space-y-1">
                                     <div className="text-muted-foreground">전쟁금지 잔여횟수</div>
                                     <div className="text-sm font-semibold tabular-nums">
                                         {nationFrontInfo ? `${nationFrontInfo.prohibitWar}회` : '-'}
                                     </div>
                                 </div>
-                                <div className="rounded-md border p-3 space-y-1">
+                                <div className="rounded-none border p-3 space-y-1">
                                     <div className="text-muted-foreground">임관금지 상태</div>
                                     <div className="text-sm font-semibold">
                                         {blockScout ? '금지' : '허용'}
@@ -427,7 +427,7 @@ export default function InternalAffairsPage() {
                                 </div>
                             </div>
                             {nationFrontInfo?.impossibleStrategicCommand?.length ? (
-                                <div className="rounded-md border p-3 text-xs space-y-1">
+                                <div className="rounded-none border p-3 text-xs space-y-1">
                                     <div className="text-muted-foreground">현재 불가능한 전략 명령</div>
                                     <div className="flex flex-wrap gap-1">
                                         {nationFrontInfo.impossibleStrategicCommand.map((cmd) => (
@@ -461,7 +461,7 @@ export default function InternalAffairsPage() {
                                 <div className="space-y-2">
                                     {myDiplomacy.map((d) => {
                                         const otherId =
-                                            d.srcNationId === myOfficer!.nationId ? d.destNationId : d.srcNationId;
+                                            d.srcNationId === myGeneral!.nationId ? d.destNationId : d.srcNationId;
                                         const otherNation = nationMap.get(otherId);
                                         const stateInfo = DIPLOMACY_STATES[d.stateCode] ?? {
                                             label: d.stateCode,
@@ -521,7 +521,7 @@ export default function InternalAffairsPage() {
                                                 국력 {nation.power.toLocaleString()}
                                             </span>
                                             <span className="text-xs text-muted-foreground tabular-nums">
-                                                제독 {nation.generalCount}
+                                                장수 {nation.generalCount}
                                             </span>
                                             <span className="text-xs text-muted-foreground tabular-nums">
                                                 도시 {nation.cityCount}
@@ -574,14 +574,14 @@ export default function InternalAffairsPage() {
                                 </div>
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                                <div className="rounded-md border p-3">
+                                <div className="rounded-none border p-3">
                                     <div className="text-muted-foreground">금 세부</div>
                                     <div className="mt-1 space-y-0.5">
                                         <div>단기수입: -</div>
                                         <div>세금(추정): {financeSummary.totalGoldIncome.toLocaleString()}</div>
                                     </div>
                                 </div>
-                                <div className="rounded-md border p-3">
+                                <div className="rounded-none border p-3">
                                     <div className="text-muted-foreground">쌀 세부</div>
                                     <div className="mt-1 space-y-0.5">
                                         <div>둔전수입: -</div>
@@ -590,7 +590,7 @@ export default function InternalAffairsPage() {
                                 </div>
                             </div>
                             <div className="text-xs text-muted-foreground">
-                                행성 수: {myCities.length}개 / 보유금: {myNation?.gold?.toLocaleString() ?? 0} / 보유쌀:{' '}
+                                도시 수: {myCities.length}개 / 보유금: {myNation?.gold?.toLocaleString() ?? 0} / 보유쌀:{' '}
                                 {myNation?.rice?.toLocaleString() ?? 0}
                             </div>
                             <div className="text-[10px] text-muted-foreground">

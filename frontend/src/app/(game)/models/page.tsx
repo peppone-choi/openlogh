@@ -1,6 +1,7 @@
 'use client';
 
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
@@ -23,6 +24,7 @@ declare module 'react' {
 }
 
 const CDN_BASE = 'https://raw.githubusercontent.com/peppone-choi/openlogh-image/main/3d-models';
+const LOCAL_BASE = '/research-models';
 
 type LodLevel = 'high' | 'medium' | 'low';
 
@@ -200,6 +202,8 @@ function Scene({
 }
 
 export default function ModelsPage() {
+    const searchParams = useSearchParams();
+    const source = searchParams.get('source') === 'research' ? 'research' : 'cdn';
     const [catalog, setCatalog] = useState<Catalog | null>(null);
     const [selected, setSelected] = useState<CatalogItem | null>(null);
     const [lod, setLod] = useState<LodLevel>('high');
@@ -207,17 +211,23 @@ export default function ModelsPage() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        fetch(`${CDN_BASE}/catalog.json`)
+        const base = source === 'research' ? LOCAL_BASE : CDN_BASE;
+        fetch(`${base}/catalog.json`)
             .then((r) => r.json())
             .then((data) => {
                 setCatalog(data);
                 setLoading(false);
             })
             .catch(() => setLoading(false));
-    }, []);
+    }, [source]);
+
+    useEffect(() => {
+        setSelected(null);
+    }, [source]);
 
     const modelUrl = useMemo(() => {
         if (!selected) return null;
+        const base = source === 'research' ? LOCAL_BASE : CDN_BASE;
         const lodFiles: Record<LodLevel, string[]> = {
             high: ['high.obj', 'model.obj'],
             medium: ['medium.obj', 'model.obj'],
@@ -225,22 +235,25 @@ export default function ModelsPage() {
         };
         for (const fn of lodFiles[lod]) {
             const key = fn.replace('.obj', '');
-            if (selected.files[key]) return `${CDN_BASE}/${selected.id}/${fn}`;
+            const file = selected.files[key];
+            if (file) return `${base}/${selected.id}/${file.file ?? fn}`;
         }
         return null;
-    }, [selected, lod]);
+    }, [selected, lod, source]);
 
     const textureUrl = useMemo(() => {
+        if (source === 'research') return null;
         if (!selected?.textures) return null;
         const key = lod === 'high' ? 'diffuse_high' : lod === 'medium' ? 'diffuse_medium' : 'diffuse_low';
         const tex = selected.textures[key] || selected.textures['diffuse'];
         return tex ? `${CDN_BASE}/${selected.id}/${tex.file}` : null;
-    }, [selected, lod]);
+    }, [selected, lod, source]);
 
     const bumpUrl = useMemo(() => {
+        if (source === 'research') return null;
         if (!selected?.textures?.bump) return null;
         return `${CDN_BASE}/${selected.id}/${selected.textures.bump.file}`;
-    }, [selected]);
+    }, [selected, source]);
 
     const filteredItems = useMemo(() => {
         if (!catalog) return { empire: [], alliance: [], fortresses: [], planets: [] };
@@ -306,6 +319,16 @@ export default function ModelsPage() {
                 {/* Sidebar */}
                 <div className="flex w-64 flex-col border-r border-zinc-800 bg-zinc-950/50">
                     <div className="border-b border-zinc-800 p-2">
+                        <div className="mb-2 flex items-center gap-1">
+                            <Badge variant={source === 'research' ? 'default' : 'outline'} className="text-[10px]">
+                                {source === 'research' ? 'Research Local' : 'CDN'}
+                            </Badge>
+                            {catalog?.summary && (
+                                <span className="text-[10px] text-zinc-500">
+                                    {catalog.summary.total_ships} ships
+                                </span>
+                            )}
+                        </div>
                         <div className="relative">
                             <Search className="absolute left-2 top-2 h-3.5 w-3.5 text-zinc-500" />
                             <Input
@@ -381,6 +404,14 @@ export default function ModelsPage() {
                                     <p>
                                         Textures:{' '}
                                         <span className="text-zinc-300">{Object.keys(selected.textures).length}</span>
+                                    </p>
+                                )}
+                                {source === 'research' && 'variants' in selected && (
+                                    <p>
+                                        Variants:{' '}
+                                        <span className="text-zinc-300">
+                                            {Object.keys((selected as CatalogItem & { variants?: Record<string, unknown> }).variants || {}).join(', ') || '-'}
+                                        </span>
                                     </p>
                                 )}
                             </CardContent>

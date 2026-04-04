@@ -3,14 +3,14 @@
 import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useWorldStore } from '@/stores/worldStore';
-import { useOfficerStore } from '@/stores/officerStore';
+import { useGeneralStore } from '@/stores/generalStore';
 import { commandApi } from '@/lib/gameApi';
 import { subscribeWebSocket } from '@/lib/websocket';
 import { LoadingState } from '@/components/game/loading-state';
 import { CommandArgForm } from '@/components/game/command-arg-form';
 import { PageHeader } from '@/components/game/page-header';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/8bit/card';
+import { Button } from '@/components/ui/8bit/button';
 import { ClipboardList } from 'lucide-react';
 import type { CommandArg } from '@/types';
 
@@ -21,7 +21,7 @@ function ProcessingContent() {
     const turnListStr = searchParams.get('turnList');
     const isNationCommand = searchParams.get('nation') === 'true';
     const currentWorld = useWorldStore((s) => s.currentWorld);
-    const { myOfficer } = useOfficerStore();
+    const { myGeneral } = useGeneralStore();
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const isFormMode = Boolean(command && turnListStr);
@@ -48,7 +48,7 @@ function ProcessingContent() {
     // Form mode: command argument form
     if (isFormMode && command) {
         const handleFormSubmit = async (arg: CommandArg) => {
-            if (!myOfficer) return;
+            if (!myGeneral) return;
             setIsSubmitting(true);
             try {
                 const turns = turnList.map((turnIdx) => ({
@@ -56,11 +56,11 @@ function ProcessingContent() {
                     actionCode: command,
                     arg,
                 }));
-                if (isNationCommand && myOfficer.factionId) {
-                    await commandApi.reserveNation(myOfficer.factionId, myOfficer.id, turns);
+                if (isNationCommand && myGeneral.nationId) {
+                    await commandApi.reserveNation(myGeneral.nationId, myGeneral.id, turns);
                     router.push('/commands?mode=nation');
                 } else {
-                    await commandApi.reserve(myOfficer.id, turns);
+                    await commandApi.reserve(myGeneral.id, turns);
                     router.push('/commands');
                 }
             } catch (error) {

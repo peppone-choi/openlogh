@@ -2,36 +2,42 @@ package com.openlogh.controller
 
 import com.openlogh.dto.DiplomacyDto
 import com.openlogh.dto.DiplomacyRespondWithActionRequest
-import com.openlogh.repository.DiplomacyRepository
+import com.openlogh.engine.DiplomacyService
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 
 @RestController
-@RequestMapping("/api/worlds/{worldId}")
+@RequestMapping("/api/worlds/{worldId}/diplomacy")
 class DiplomacyController(
-    private val diplomacyRepository: DiplomacyRepository,
+    private val diplomacyService: DiplomacyService,
 ) {
-    @GetMapping("/diplomacy")
-    fun list(@PathVariable worldId: Long): ResponseEntity<List<DiplomacyDto>> {
-        val items = diplomacyRepository.findBySessionId(worldId)
-        return ResponseEntity.ok(items.map { DiplomacyDto.from(it) })
+    @GetMapping
+    fun getRelations(@PathVariable worldId: Long): ResponseEntity<List<DiplomacyDto>> {
+        return ResponseEntity.ok(diplomacyService.getRelations(worldId).map(DiplomacyDto::from))
     }
 
-    @GetMapping("/diplomacy/nation/{nationId}")
-    fun listByNation(
+    @GetMapping("/nation/{nationId}")
+    fun getRelationsForNation(
         @PathVariable worldId: Long,
         @PathVariable nationId: Long,
     ): ResponseEntity<List<DiplomacyDto>> {
-        val items = diplomacyRepository.findBySessionIdAndSrcFactionIdOrDestFactionId(worldId, nationId, nationId)
-        return ResponseEntity.ok(items.map { DiplomacyDto.from(it) })
+        return ResponseEntity.ok(diplomacyService.getRelationsForNation(worldId, nationId).map(DiplomacyDto::from))
     }
 
-    @PostMapping("/diplomacy/respond")
+    @PostMapping("/respond")
     fun respond(
         @PathVariable worldId: Long,
-        @RequestBody req: DiplomacyRespondWithActionRequest,
-    ): ResponseEntity<Map<String, Boolean>> {
-        // TODO: implement diplomacy response logic
-        return ResponseEntity.ok(mapOf("success" to true))
+        @RequestBody request: DiplomacyRespondWithActionRequest,
+    ): ResponseEntity<Void> {
+        return try {
+            if (request.accept) {
+                diplomacyService.acceptDiplomaticMessage(worldId, request.messageId)
+            } else {
+                diplomacyService.rejectDiplomaticMessage(worldId, request.messageId)
+            }
+            ResponseEntity.ok().build()
+        } catch (_: Exception) {
+            ResponseEntity.badRequest().build()
+        }
     }
 }

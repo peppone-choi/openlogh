@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState, useRef, useCallback } from 'react';
 import { useWorldStore } from '@/stores/worldStore';
 import { useGameStore } from '@/stores/gameStore';
-import { useOfficerStore } from '@/stores/officerStore';
+import { useGeneralStore } from '@/stores/generalStore';
 import { npcPolicyApi } from '@/lib/gameApi';
 import type { NpcPolicyInfo } from '@/types';
 import {
@@ -24,15 +24,15 @@ import { PageHeader } from '@/components/game/page-header';
 import { LoadingState } from '@/components/game/loading-state';
 import { EmptyState } from '@/components/game/empty-state';
 import { GeneralPortrait } from '@/components/game/general-portrait';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { SHIP_CLASS_NAMES } from '@/lib/game-utils';
+import { Badge } from '@/components/ui/8bit/badge';
+import { Button } from '@/components/ui/8bit/button';
+import { Input } from '@/components/ui/8bit/input';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/8bit/card';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/8bit/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/8bit/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/8bit/table';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/8bit/tooltip';
+import { CREW_TYPE_NAMES } from '@/lib/game-utils';
 import { toast } from 'sonner';
 
 /* ── Full NPC policy field definitions (legacy parity) ── */
@@ -54,7 +54,7 @@ const POLICY_CATEGORIES: {
     fields: PolicyField[];
 }[] = [
     {
-        label: '진영 자원 기준',
+        label: '국가 자원 기준',
         icon: DollarSign,
         fields: [
             {
@@ -176,7 +176,7 @@ const POLICY_CATEGORIES: {
         fields: [
             {
                 key: 'minWarCrew',
-                label: '최소 전투 가능 함선 수',
+                label: '최소 전투 가능 병력 수',
                 step: 50,
                 hint: '이보다 적을 때에는 징병을 시도합니다.',
             },
@@ -207,7 +207,7 @@ const POLICY_CATEGORIES: {
                 step: 5,
                 min: 20,
                 max: 100,
-                hint: '훈련/사기진작 기준치. 이보다 같거나 높으면 함대를 출격합니다.',
+                hint: '훈련/사기진작 기준치. 이보다 같거나 높으면 출병합니다.',
             },
             {
                 key: 'cureThreshold',
@@ -439,7 +439,7 @@ function DraggablePriorityList({
 
 export default function NpcPage() {
     const currentWorld = useWorldStore((s) => s.currentWorld);
-    const { myGeneral, fetchMyGeneral } = useOfficerStore();
+    const { myGeneral, fetchMyGeneral } = useGeneralStore();
     const { generals, cities, loading, loadAll } = useGameStore();
 
     const [policy, setPolicy] = useState<Record<string, number>>({});
@@ -739,7 +739,7 @@ export default function NpcPage() {
                     [selectedNpcId]: generalOverride,
                 },
             });
-            toast.success('제독별 설정이 저장되었습니다.');
+            toast.success('장수별 설정이 저장되었습니다.');
         } catch {
             toast.error('저장에 실패했습니다.');
         } finally {
@@ -762,7 +762,7 @@ export default function NpcPage() {
         } else {
             setGeneralPriority(generalPriorityItems.map((i) => i.key));
         }
-        toast.info('제독턴 우선순위를 초기값으로 되돌렸습니다. 저장을 눌러주세요.');
+        toast.info('장수턴 우선순위를 초기값으로 되돌렸습니다. 저장을 눌러주세요.');
     };
     const handleRollbackNationPriority = () => {
         setNationPriority([...prevNationPriority]);
@@ -770,7 +770,7 @@ export default function NpcPage() {
     };
     const handleRollbackGeneralPriority = () => {
         setGeneralPriority([...prevGeneralPriority]);
-        toast.info('제독턴 우선순위를 이전값으로 되돌렸습니다.');
+        toast.info('장수턴 우선순위를 이전값으로 되돌렸습니다.');
     };
     const handleRollbackPolicy = () => {
         setPolicy({ ...prevPolicy });
@@ -819,17 +819,17 @@ export default function NpcPage() {
 
             <Tabs defaultValue="list">
                 <TabsList>
-                    <TabsTrigger value="list">NPC 제독</TabsTrigger>
+                    <TabsTrigger value="list">NPC 장교</TabsTrigger>
                     <TabsTrigger value="policy">국가 정책</TabsTrigger>
                     <TabsTrigger value="priority">우선순위</TabsTrigger>
-                    <TabsTrigger value="override">제독별 설정</TabsTrigger>
+                    <TabsTrigger value="override">장수별 설정</TabsTrigger>
                     <TabsTrigger value="history">설정 이력</TabsTrigger>
                 </TabsList>
 
                 {/* Tab 1: NPC generals list */}
                 <TabsContent value="list" className="mt-4">
                     {npcGenerals.length === 0 ? (
-                        <EmptyState icon={Bot} title="관리 가능한 NPC 제독가 없습니다." />
+                        <EmptyState icon={Bot} title="관리 가능한 NPC 장교가 없습니다." />
                     ) : (
                         <div className="overflow-x-auto">
                             <Table>
@@ -859,7 +859,7 @@ export default function NpcPage() {
                                                 <TableCell className="text-right tabular-nums">
                                                     {g.crew.toLocaleString()}
                                                 </TableCell>
-                                                <TableCell>{SHIP_CLASS_NAMES[g.crewType] ?? g.crewType}</TableCell>
+                                                <TableCell>{CREW_TYPE_NAMES[g.crewType] ?? g.crewType}</TableCell>
                                                 <TableCell className="text-right tabular-nums">{g.train}</TableCell>
                                                 <TableCell className="text-right tabular-nums">{g.atmos}</TableCell>
                                                 <TableCell>
@@ -1080,7 +1080,7 @@ export default function NpcPage() {
                                 순위가 높은 것부터 시도합니다. 아무것도 실행할 수 없으면 물자조달이나 인재탐색을 합니다.
                             </p>
                             <DraggablePriorityList
-                                title="제독턴"
+                                title="장수턴"
                                 items={generalPriorityItems}
                                 activeKeys={generalPriority}
                                 onReorder={setGeneralPriority}
@@ -1108,16 +1108,16 @@ export default function NpcPage() {
                 <TabsContent value="override" className="mt-4 space-y-4">
                     <Card>
                         <CardHeader>
-                            <CardTitle className="text-sm">제독별 정책 설정</CardTitle>
+                            <CardTitle className="text-sm">장수별 정책 설정</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <p className="text-xs text-muted-foreground">
-                                특정 NPC 제독에 대해 국가 기본 정책을 덮어쓸 수 있습니다. 설정하지 않은 항목은 국가 기본
+                                특정 NPC 장교에 대해 국가 기본 정책을 덮어쓸 수 있습니다. 설정하지 않은 항목은 국가 기본
                                 정책을 따릅니다.
                             </p>
                             <Select value={selectedNpcId} onValueChange={setSelectedNpcId}>
                                 <SelectTrigger size="sm" className="w-full max-w-[300px]">
-                                    <SelectValue placeholder="NPC 제독 선택..." />
+                                    <SelectValue placeholder="NPC 장교 선택..." />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {npcGenerals.map((g) => (
@@ -1149,7 +1149,7 @@ export default function NpcPage() {
                                         ))}
                                     </div>
                                     <Button onClick={handleSaveGeneralOverride} disabled={saving}>
-                                        {saving ? '저장 중...' : '제독별 설정 저장'}
+                                        {saving ? '저장 중...' : '장수별 설정 저장'}
                                     </Button>
                                 </>
                             )}
@@ -1211,7 +1211,7 @@ export default function NpcPage() {
                                     )}
                                     {lastSetters.general && (
                                         <div className="text-xs text-muted-foreground">
-                                            제독 우선순위: {lastSetters.general.setter} ({lastSetters.general.date})
+                                            장수 우선순위: {lastSetters.general.setter} ({lastSetters.general.date})
                                         </div>
                                     )}
                                 </div>

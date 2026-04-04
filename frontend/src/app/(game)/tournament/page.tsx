@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useWorldStore } from '@/stores/worldStore';
-import { useOfficerStore } from '@/stores/officerStore';
+import { useGeneralStore } from '@/stores/generalStore';
 import { useGameStore } from '@/stores/gameStore';
 import {
     Trophy,
@@ -17,14 +17,14 @@ import {
     MessageCircle,
     BarChart,
 } from 'lucide-react';
-import { Input } from '@/components/ui/input';
+import { Input } from '@/components/ui/8bit/input';
 import { PageHeader } from '@/components/game/page-header';
 import { LoadingState } from '@/components/game/loading-state';
 import { EmptyState } from '@/components/game/empty-state';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/8bit/card';
+import { Badge } from '@/components/ui/8bit/badge';
+import { Button } from '@/components/ui/8bit/button';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/8bit/table';
 import { GeneralPortrait } from '@/components/game/general-portrait';
 import { NationBadge } from '@/components/game/nation-badge';
 import { tournamentApi, bettingApi, frontApi } from '@/lib/gameApi';
@@ -72,7 +72,7 @@ const ROUND_NAMES: Record<number, string> = {
     4: '결승',
 };
 
-const GROUP_LABELS = ['一', '二', '三', '四', '五', '六', '七', '八'];
+const GROUP_LABELS = ['1조', '2조', '3조', '4조', '5조', '6조', '7조', '8조'];
 
 function getTournamentStatValue(
     general: { leadership: number; strength: number; intel: number } | undefined,
@@ -96,7 +96,7 @@ function getTournamentStatValue(
 
 export default function TournamentPage() {
     const { currentWorld } = useWorldStore();
-    const { myOfficer } = useOfficerStore();
+    const { myGeneral } = useGeneralStore();
     const { generals, nations, loadAll } = useGameStore();
     const [info, setInfo] = useState<TournamentInfo | null>(null);
     const [bettingInfo, setBettingInfo] = useState<BettingInfo | null>(null);
@@ -127,9 +127,9 @@ export default function TournamentPage() {
     }, [load]);
 
     const handleRegister = async () => {
-        if (!currentWorld || !myOfficer) return;
+        if (!currentWorld || !myGeneral) return;
         try {
-            await tournamentApi.register(currentWorld.id, myOfficer.id);
+            await tournamentApi.register(currentWorld.id, myGeneral.id);
             await load();
         } catch {
             /* ignore */
@@ -142,7 +142,7 @@ export default function TournamentPage() {
     const generalMap = useMemo(() => new Map(generals.map((g) => [g.id, g])), [generals]);
     const nationMap = useMemo(() => new Map(nations.map((n) => [n.id, n])), [nations]);
 
-    const isAdmin = myOfficer && (myOfficer.officerLevel ?? 0) >= 20;
+    const isAdmin = myGeneral && (myGeneral.officerLevel ?? 0) >= 20;
 
     const handleAdvancePhase = async () => {
         if (!currentWorld || !isAdmin) return;
@@ -165,7 +165,7 @@ export default function TournamentPage() {
         }
     };
 
-    const isRegistered = myOfficer && info?.participants.includes(myOfficer.id);
+    const isRegistered = myGeneral && info?.participants.includes(myGeneral.id);
     const tournamentType =
         TOURNAMENT_TYPES.find((t) => t.code === (globalInfo?.tournamentType ?? 0)) ?? TOURNAMENT_TYPES[0];
 
@@ -402,7 +402,7 @@ export default function TournamentPage() {
                         </div>
 
                         {/* Registration */}
-                        {info?.state === 1 && myOfficer && !isRegistered && (
+                        {info?.state === 1 && myGeneral && !isRegistered && (
                             <div className="mt-3 flex items-center gap-2">
                                 <Button size="sm" onClick={handleRegister}>
                                     참가 등록
@@ -628,7 +628,7 @@ export default function TournamentPage() {
                             <Table>
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead className="text-xs">제독</TableHead>
+                                        <TableHead className="text-xs">장수</TableHead>
                                         <TableHead className="text-xs">국가</TableHead>
                                         <TableHead className="text-xs text-right">{tournamentType.stat}</TableHead>
                                     </TableRow>
@@ -713,7 +713,7 @@ export default function TournamentPage() {
                                                 <TableHeader>
                                                     <TableRow>
                                                         <TableHead className="text-[10px] px-2 py-1 w-8">순</TableHead>
-                                                        <TableHead className="text-[10px] px-2 py-1">제독</TableHead>
+                                                        <TableHead className="text-[10px] px-2 py-1">장수</TableHead>
                                                         <TableHead className="text-[10px] px-2 py-1 text-right">
                                                             {tournamentType.stat}
                                                         </TableHead>
@@ -802,7 +802,7 @@ export default function TournamentPage() {
                                                 <TableHeader>
                                                     <TableRow>
                                                         <TableHead className="text-[10px] px-2 py-1 w-8">순</TableHead>
-                                                        <TableHead className="text-[10px] px-2 py-1">제독</TableHead>
+                                                        <TableHead className="text-[10px] px-2 py-1">장수</TableHead>
                                                         <TableHead className="text-[10px] px-2 py-1 text-right">
                                                             {tournamentType.stat}
                                                         </TableHead>

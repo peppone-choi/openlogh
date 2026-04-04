@@ -1,8 +1,12 @@
 package com.openlogh.service
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.openlogh.entity.*
-import com.openlogh.model.PlanetConst
+import com.openlogh.entity.City
+import com.openlogh.entity.General
+import com.openlogh.entity.Nation
+import com.openlogh.entity.SelectPool
+import com.openlogh.entity.WorldState
+import com.openlogh.model.CityConst
 import com.openlogh.model.ScenarioData
 import com.openlogh.repository.*
 import jakarta.persistence.EntityManager
@@ -20,17 +24,17 @@ import java.lang.reflect.Method
 import java.util.Optional
 
 /**
- * Tests for ScenarioService's officer tuple parsing (5-stat format).
+ * Tests for ScenarioService's general tuple parsing (5-stat format).
  */
 class ScenarioServiceTest {
 
     private lateinit var service: ScenarioService
     private lateinit var parseGeneral: Method
     private lateinit var objectMapper: ObjectMapper
-    private lateinit var worldStateRepository: SessionStateRepository
-    private lateinit var factionRepository: FactionRepository
-    private lateinit var planetRepository: PlanetRepository
-    private lateinit var officerRepository: OfficerRepository
+    private lateinit var worldStateRepository: WorldStateRepository
+    private lateinit var nationRepository: NationRepository
+    private lateinit var cityRepository: CityRepository
+    private lateinit var generalRepository: GeneralRepository
     private lateinit var diplomacyRepository: DiplomacyRepository
     private lateinit var selectPoolRepository: SelectPoolRepository
     private lateinit var historyService: HistoryService
@@ -40,10 +44,10 @@ class ScenarioServiceTest {
     @BeforeEach
     fun setUp() {
         objectMapper = mock(ObjectMapper::class.java)
-        worldStateRepository = mock(SessionStateRepository::class.java)
-        factionRepository = mock(FactionRepository::class.java)
-        planetRepository = mock(PlanetRepository::class.java)
-        officerRepository = mock(OfficerRepository::class.java)
+        worldStateRepository = mock(WorldStateRepository::class.java)
+        nationRepository = mock(NationRepository::class.java)
+        cityRepository = mock(CityRepository::class.java)
+        generalRepository = mock(GeneralRepository::class.java)
         diplomacyRepository = mock(DiplomacyRepository::class.java)
         historyService = mock(HistoryService::class.java)
         mapService = mock(MapService::class.java)
@@ -56,9 +60,9 @@ class ScenarioServiceTest {
             defaultCommitSha = "test-sha",
             defaultGameVersion = "test-v1",
             worldStateRepository = worldStateRepository,
-            factionRepository = factionRepository,
-            planetRepository = planetRepository,
-            officerRepository = officerRepository,
+            nationRepository = nationRepository,
+            cityRepository = cityRepository,
+            generalRepository = generalRepository,
             diplomacyRepository = diplomacyRepository,
             eventRepository = mock(EventRepository::class.java),
             mapService = mapService,
@@ -90,7 +94,7 @@ class ScenarioServiceTest {
         allCityIds: List<Long> = listOf(999L),
         startYear: Int = 200,
         defaultNpcState: Short = 2,
-    ): Officer {
+    ): General {
         return parseGeneral.invoke(
             service,
             row,
@@ -102,43 +106,43 @@ class ScenarioServiceTest {
             Random(0),
             startYear,
             defaultNpcState,
-        ) as Officer
+        ) as General
     }
 
     @Test
     fun `parseGeneral reads 5-stat tuple correctly`() {
         // [affinity, name, picture, nation, city, lead, str, int, pol, charm, officer, birth, death]
         val row: List<Any?> = listOf(25, "조조", "1010", null, null, 98, 72, 91, 94, 96, 0, 155, 220)
-        val officer = callParseGeneral(row)
-        assertEquals("조조", officer.name)
-        assertEquals(98.toShort(), officer.leadership)
-        assertEquals(72.toShort(), officer.command)
-        assertEquals(91.toShort(), officer.intelligence)
-        assertEquals(94.toShort(), officer.politics)
-        assertEquals(96.toShort(), officer.administration)
-        assertEquals(0.toShort(), officer.rank)
-        assertEquals(155.toShort(), officer.birthYear)
-        assertEquals(220.toShort(), officer.deathYear)
+        val general = callParseGeneral(row)
+        assertEquals("조조", general.name)
+        assertEquals(98.toShort(), general.leadership)
+        assertEquals(72.toShort(), general.strength)
+        assertEquals(91.toShort(), general.intel)
+        assertEquals(94.toShort(), general.politics)
+        assertEquals(96.toShort(), general.charm)
+        assertEquals(0.toShort(), general.officerLevel)
+        assertEquals(155.toShort(), general.bornYear)
+        assertEquals(220.toShort(), general.deadYear)
     }
 
     @Test
     fun `parseGeneral reads optional personality and special`() {
         val row: List<Any?> = listOf(76, "관우", "1020", null, null, 96, 97, 75, 64, 94, 0, 162, 219, "의리", "신산")
-        val officer = callParseGeneral(row)
-        assertEquals("관우", officer.name)
-        assertEquals(96.toShort(), officer.leadership)
-        assertEquals(64.toShort(), officer.politics)
-        assertEquals(94.toShort(), officer.administration)
-        assertEquals("의리", officer.personalCode)
-        assertEquals("신산", officer.specialCode)
+        val general = callParseGeneral(row)
+        assertEquals("관우", general.name)
+        assertEquals(96.toShort(), general.leadership)
+        assertEquals(64.toShort(), general.politics)
+        assertEquals(94.toShort(), general.charm)
+        assertEquals("의리", general.personalCode)
+        assertEquals("신산", general.specialCode)
     }
 
     @Test
     fun `parseGeneral defaults personality and special to None`() {
         val row: List<Any?> = listOf(0, "테스트", "9999", null, null, 50, 50, 50, 50, 50, 0, 180, 240)
-        val officer = callParseGeneral(row)
-        assertEquals("None", officer.personalCode)
-        assertEquals("None", officer.specialCode)
+        val general = callParseGeneral(row)
+        assertEquals("None", general.personalCode)
+        assertEquals("None", general.specialCode)
     }
 
     @Test
@@ -146,47 +150,47 @@ class ScenarioServiceTest {
         val nationIdxToDbId = mapOf(1 to 42L)
         val nationCityIds = mapOf(42L to listOf(100L))
         val row: List<Any?> = listOf(1, "헌제", "1002", 1, null, 17, 13, 61, 53, 46, 0, 170, 250)
-        val officer = callParseGeneral(row, nationIdxToDbId = nationIdxToDbId, nationCityIds = nationCityIds)
-        assertEquals(42L, officer.factionId)
-        assertEquals(2.toShort(), officer.npcState) // NPC belonging to faction
+        val general = callParseGeneral(row, nationIdxToDbId = nationIdxToDbId, nationCityIds = nationCityIds)
+        assertEquals(42L, general.nationId)
+        assertEquals(2.toShort(), general.npcState) // NPC belonging to nation
     }
 
     @Test
     fun `parseGeneral sets npcState for free NPC`() {
         val row: List<Any?> = listOf(50, "방랑자", "9000", null, null, 50, 50, 50, 50, 50, 0, 180, 240)
-        val officer = callParseGeneral(row)
-        assertEquals(0L, officer.factionId)
-        assertEquals(2.toShort(), officer.npcState)
+        val general = callParseGeneral(row)
+        assertEquals(0L, general.nationId)
+        assertEquals(2.toShort(), general.npcState)
     }
 
     @Test
     fun `parseGeneral keeps default npcState for affinity 999`() {
         val row: List<Any?> = listOf(999, "은둔자", "9001", null, null, 70, 10, 95, 80, 85, 0, 170, 234)
-        val officer = callParseGeneral(row)
-        assertEquals(2.toShort(), officer.npcState)
+        val general = callParseGeneral(row)
+        assertEquals(2.toShort(), general.npcState)
     }
 
     @Test
     fun `parseGeneral uses mapped city when city name is provided`() {
         val row: List<Any?> = listOf(50, "도시지정", "9002", 0, "장안", 50, 50, 50, 50, 50, 0, 180, 240)
-        val officer = callParseGeneral(row, cityNameToId = mapOf("장안" to 123L))
-        assertEquals(123L, officer.planetId)
+        val general = callParseGeneral(row, cityNameToId = mapOf("장안" to 123L))
+        assertEquals(123L, general.cityId)
     }
 
     @Test
     fun `parseGeneral calculates age from startYear`() {
         val row: List<Any?> = listOf(0, "장수", "1000", null, null, 50, 50, 50, 50, 50, 0, 180, 250)
-        val officer = callParseGeneral(row, startYear = 200)
-        assertEquals(20.toShort(), officer.age) // 200 - 180 = 20
+        val general = callParseGeneral(row, startYear = 200)
+        assertEquals(20.toShort(), general.age) // 200 - 180 = 20
     }
 
     @Test
     fun `parseGeneral clamps age to minimum 14 for neutral scenario NPC`() {
         val row: List<Any?> = listOf(0, "어린이", "1000", null, null, 50, 50, 50, 50, 50, 0, 195, 260)
-        val officer = callParseGeneral(row, startYear = 200)
-        assertEquals(14.toShort(), officer.age)
-        assertEquals(195.toShort(), officer.birthYear)
-        assertEquals(260.toShort(), officer.deathYear)
+        val general = callParseGeneral(row, startYear = 200)
+        assertEquals(14.toShort(), general.age)
+        assertEquals(195.toShort(), general.bornYear)
+        assertEquals(260.toShort(), general.deadYear)
     }
 
     @Test
@@ -195,49 +199,49 @@ class ScenarioServiceTest {
         val nationCityIds = mapOf(42L to listOf(100L))
         val row: List<Any?> = listOf(0, "소년", "1001", 1, null, 50, 50, 50, 50, 50, 2, 195, 260)
 
-        val officer = callParseGeneral(
+        val general = callParseGeneral(
             row,
             nationIdxToDbId = nationIdxToDbId,
             nationCityIds = nationCityIds,
             startYear = 200,
         )
 
-        assertEquals(42L, officer.factionId)
-        assertEquals(195.toShort(), officer.birthYear)
-        assertEquals(260.toShort(), officer.deathYear)
-        assertEquals(20.toShort(), officer.age)
+        assertEquals(42L, general.nationId)
+        assertEquals(195.toShort(), general.bornYear)
+        assertEquals(260.toShort(), general.deadYear)
+        assertEquals(20.toShort(), general.age)
     }
 
     @Test
     fun `parseGeneral supports legacy 3-stat tuple with officer field`() {
         val row: List<Any?> = listOf(1, "헌제", "1002", 1, null, 17, 13, 61, 0, 170, 250, "안전", null)
-        val officer = callParseGeneral(row, nationIdxToDbId = mapOf(1 to 42L), nationCityIds = mapOf(42L to listOf(100L)))
+        val general = callParseGeneral(row, nationIdxToDbId = mapOf(1 to 42L), nationCityIds = mapOf(42L to listOf(100L)))
 
-        assertEquals(61.toShort(), officer.intelligence)
-        assertEquals(61.toShort(), officer.politics)
-        assertEquals(61.toShort(), officer.administration)
-        assertEquals(0.toShort(), officer.rank)
-        assertEquals(170.toShort(), officer.birthYear)
-        assertEquals(250.toShort(), officer.deathYear)
+        assertEquals(61.toShort(), general.intel)
+        assertEquals(61.toShort(), general.politics)
+        assertEquals(61.toShort(), general.charm)
+        assertEquals(0.toShort(), general.officerLevel)
+        assertEquals(170.toShort(), general.bornYear)
+        assertEquals(250.toShort(), general.deadYear)
     }
 
     @Test
     fun `parseGeneral supports legacy 3-stat tuple without officer field`() {
         val row: List<Any?> = listOf(1, "테스트", "1002", 0, null, 70, 65, 60, 180, 230, "재간", "신산")
-        val officer = callParseGeneral(row)
+        val general = callParseGeneral(row)
 
-        assertEquals(60.toShort(), officer.intelligence)
-        assertEquals(60.toShort(), officer.politics)
-        assertEquals(60.toShort(), officer.administration)
-        assertEquals(0.toShort(), officer.rank)
-        assertEquals(180.toShort(), officer.birthYear)
-        assertEquals(230.toShort(), officer.deathYear)
-        assertEquals("재간", officer.personalCode)
-        assertEquals("신산", officer.specialCode)
+        assertEquals(60.toShort(), general.intel)
+        assertEquals(60.toShort(), general.politics)
+        assertEquals(60.toShort(), general.charm)
+        assertEquals(0.toShort(), general.officerLevel)
+        assertEquals(180.toShort(), general.bornYear)
+        assertEquals(230.toShort(), general.deadYear)
+        assertEquals("재간", general.personalCode)
+        assertEquals("신산", general.specialCode)
     }
 
     @Test
-    fun `initializeWorld seeds cities with approval 50 and assigns all configured faction cities`() {
+    fun `initializeWorld seeds cities with trust 50 and assigns all configured nation cities`() {
         val scenario = ScenarioData(
             title = "테스트",
             startYear = 181,
@@ -253,59 +257,59 @@ class ScenarioServiceTest {
         val scenarios = scenariosField.get(service) as MutableMap<String, ScenarioData>
         scenarios["test"] = scenario
 
-        val planetStore = mutableMapOf<Long, Planet>()
-        var planetSeq = 1L
-        val factionStore = mutableMapOf<Long, Faction>()
-        var factionSeq = 1L
+        val cityStore = mutableMapOf<Long, City>()
+        var citySeq = 1L
+        val nationStore = mutableMapOf<Long, Nation>()
+        var nationSeq = 1L
 
-        `when`(worldStateRepository.save(any(SessionState::class.java))).thenAnswer { inv ->
-            val world = inv.arguments[0] as SessionState
+        `when`(worldStateRepository.save(any(WorldState::class.java))).thenAnswer { inv ->
+            val world = inv.arguments[0] as WorldState
             world.id = 1
             world
         }
 
         `when`(mapService.getCities("che")).thenReturn(
             listOf(
-                PlanetConst(1, "업", 8, 1, 1000, 100, 100, 100, 100, 100, 10, 10, emptyList()),
-                PlanetConst(2, "허창", 8, 2, 1000, 100, 100, 100, 100, 100, 20, 20, emptyList()),
-                PlanetConst(3, "낙양", 8, 2, 1000, 100, 100, 100, 100, 100, 30, 30, emptyList()),
+                CityConst(1, "업", 8, 1, 1000, 100, 100, 100, 100, 100, 10, 10, emptyList()),
+                CityConst(2, "허창", 8, 2, 1000, 100, 100, 100, 100, 100, 20, 20, emptyList()),
+                CityConst(3, "낙양", 8, 2, 1000, 100, 100, 100, 100, 100, 30, 30, emptyList()),
             ),
         )
 
         @Suppress("UNCHECKED_CAST")
-        `when`(planetRepository.saveAll(anyList<Planet>())).thenAnswer { inv ->
-            val planets = inv.arguments[0] as List<Planet>
-            planets.forEach { planet ->
-                if (planet.id == 0L) planet.id = planetSeq++
-                planetStore[planet.id] = planet
+        `when`(cityRepository.saveAll(anyList<City>())).thenAnswer { inv ->
+            val cities = inv.arguments[0] as List<City>
+            cities.forEach { city ->
+                if (city.id == 0L) city.id = citySeq++
+                cityStore[city.id] = city
             }
-            planets
+            cities
         }
-        `when`(planetRepository.save(any(Planet::class.java))).thenAnswer { inv ->
-            val planet = inv.arguments[0] as Planet
-            if (planet.id == 0L) planet.id = planetSeq++
-            planetStore[planet.id] = planet
-            planet
+        `when`(cityRepository.save(any(City::class.java))).thenAnswer { inv ->
+            val city = inv.arguments[0] as City
+            if (city.id == 0L) city.id = citySeq++
+            cityStore[city.id] = city
+            city
         }
 
         @Suppress("UNCHECKED_CAST")
-        `when`(factionRepository.saveAll(anyList<Faction>())).thenAnswer { inv ->
-            val factions = inv.arguments[0] as List<Faction>
-            factions.forEach { faction ->
-                if (faction.id == 0L) faction.id = factionSeq++
-                factionStore[faction.id] = faction
+        `when`(nationRepository.saveAll(anyList<Nation>())).thenAnswer { inv ->
+            val nations = inv.arguments[0] as List<Nation>
+            nations.forEach { nation ->
+                if (nation.id == 0L) nation.id = nationSeq++
+                nationStore[nation.id] = nation
             }
-            factions
+            nations
         }
 
-        `when`(officerRepository.findBySessionId(1L)).thenReturn(emptyList())
+        `when`(generalRepository.findByWorldId(1L)).thenReturn(emptyList())
 
         service.initializeWorld("test")
 
-        assertEquals(3, planetStore.size)
-        assertTrue(planetStore.values.all { it.approval == 50f })
-        assertEquals(2L, planetStore.values.count { it.factionId == factionStore.values.first { it.name == "후한" }.id }.toLong())
-        assertEquals(1L, planetStore.values.count { it.factionId == factionStore.values.first { it.name == "황건적" }.id }.toLong())
+        assertEquals(3, cityStore.size)
+        assertTrue(cityStore.values.all { it.trust == 50f })
+        assertEquals(2L, cityStore.values.count { it.nationId == nationStore.values.first { it.name == "후한" }.id }.toLong())
+        assertEquals(1L, cityStore.values.count { it.nationId == nationStore.values.first { it.name == "황건적" }.id }.toLong())
     }
 
     @Test
@@ -325,55 +329,55 @@ class ScenarioServiceTest {
         val scenarios = scenariosField.get(service) as MutableMap<String, ScenarioData>
         scenarios["delay-test"] = scenario
 
-        val planetStore = mutableMapOf<Long, Planet>()
-        var planetSeq = 1L
-        val savedOfficers = mutableListOf<Officer>()
-        var officerSeq = 1L
+        val cityStore = mutableMapOf<Long, City>()
+        var citySeq = 1L
+        val savedGenerals = mutableListOf<General>()
+        var generalSeq = 1L
 
-        `when`(worldStateRepository.save(any(SessionState::class.java))).thenAnswer { inv ->
-            val world = inv.arguments[0] as SessionState
+        `when`(worldStateRepository.save(any(WorldState::class.java))).thenAnswer { inv ->
+            val world = inv.arguments[0] as WorldState
             world.id = 1
             world
         }
 
         `when`(mapService.getCities("che")).thenReturn(
             listOf(
-                PlanetConst(1, "낙양", 8, 1, 1000, 100, 100, 100, 100, 100, 10, 10, emptyList()),
+                CityConst(1, "낙양", 8, 1, 1000, 100, 100, 100, 100, 100, 10, 10, emptyList()),
             ),
         )
 
         @Suppress("UNCHECKED_CAST")
-        `when`(planetRepository.saveAll(anyList<Planet>())).thenAnswer { inv ->
-            val planets = inv.arguments[0] as List<Planet>
-            planets.forEach { planet ->
-                if (planet.id == 0L) planet.id = planetSeq++
-                planetStore[planet.id] = planet
+        `when`(cityRepository.saveAll(anyList<City>())).thenAnswer { inv ->
+            val cities = inv.arguments[0] as List<City>
+            cities.forEach { city ->
+                if (city.id == 0L) city.id = citySeq++
+                cityStore[city.id] = city
             }
-            planets
+            cities
         }
-        `when`(planetRepository.findBySessionId(1L)).thenAnswer { planetStore.values.toList() }
+        `when`(cityRepository.findByWorldId(1L)).thenAnswer { cityStore.values.toList() }
 
-        `when`(factionRepository.findBySessionId(1L)).thenReturn(emptyList())
+        `when`(nationRepository.findByWorldId(1L)).thenReturn(emptyList())
         @Suppress("UNCHECKED_CAST")
-        `when`(factionRepository.saveAll(anyList<Faction>())).thenAnswer { inv ->
-            (inv.arguments[0] as List<Faction>)
+        `when`(nationRepository.saveAll(anyList<Nation>())).thenAnswer { inv ->
+            (inv.arguments[0] as List<Nation>)
         }
 
         @Suppress("UNCHECKED_CAST")
-        `when`(officerRepository.saveAll(anyList<Officer>())).thenAnswer { inv ->
-            val officers = inv.arguments[0] as List<Officer>
-            officers.forEach { officer ->
-                if (officer.id == 0L) officer.id = officerSeq++
-                savedOfficers.add(officer)
+        `when`(generalRepository.saveAll(anyList<General>())).thenAnswer { inv ->
+            val generals = inv.arguments[0] as List<General>
+            generals.forEach { general ->
+                if (general.id == 0L) general.id = generalSeq++
+                savedGenerals.add(general)
             }
-            officers
+            generals
         }
-        `when`(officerRepository.findBySessionId(1L)).thenAnswer { savedOfficers.toList() }
+        `when`(generalRepository.findByWorldId(1L)).thenAnswer { savedGenerals.toList() }
 
         service.initializeWorld("delay-test")
 
-        assertEquals(1, savedOfficers.size)
-        assertEquals("성인", savedOfficers.first().name)
+        assertEquals(1, savedGenerals.size)
+        assertEquals("성인", savedGenerals.first().name)
     }
 
     @Test
@@ -389,38 +393,38 @@ class ScenarioServiceTest {
         val scenarios = scenariosField.get(service) as MutableMap<String, ScenarioData>
         scenarios["fast-turn"] = scenario
 
-        var planetSeq = 1L
+        var citySeq = 1L
 
-        `when`(worldStateRepository.save(any(SessionState::class.java))).thenAnswer { inv ->
-            val world = inv.arguments[0] as SessionState
+        `when`(worldStateRepository.save(any(WorldState::class.java))).thenAnswer { inv ->
+            val world = inv.arguments[0] as WorldState
             world.id = 1
             world
         }
 
         `when`(mapService.getCities("che")).thenReturn(
             listOf(
-                PlanetConst(1, "낙양", 8, 1, 1000, 100, 100, 100, 100, 100, 10, 10, emptyList()),
+                CityConst(1, "낙양", 8, 1, 1000, 100, 100, 100, 100, 100, 10, 10, emptyList()),
             ),
         )
 
         @Suppress("UNCHECKED_CAST")
-        `when`(planetRepository.saveAll(anyList<Planet>())).thenAnswer { inv ->
-            val planets = inv.arguments[0] as List<Planet>
-            planets.forEach { planet ->
-                if (planet.id == 0L) planet.id = planetSeq++
+        `when`(cityRepository.saveAll(anyList<City>())).thenAnswer { inv ->
+            val cities = inv.arguments[0] as List<City>
+            cities.forEach { city ->
+                if (city.id == 0L) city.id = citySeq++
             }
-            planets
+            cities
         }
 
         @Suppress("UNCHECKED_CAST")
-        `when`(factionRepository.saveAll(anyList<Faction>())).thenAnswer { inv ->
-            inv.arguments[0] as List<Faction>
+        `when`(nationRepository.saveAll(anyList<Nation>())).thenAnswer { inv ->
+            inv.arguments[0] as List<Nation>
         }
         @Suppress("UNCHECKED_CAST")
-        `when`(officerRepository.saveAll(anyList<Officer>())).thenAnswer { inv ->
-            inv.arguments[0] as List<Officer>
+        `when`(generalRepository.saveAll(anyList<General>())).thenAnswer { inv ->
+            inv.arguments[0] as List<General>
         }
-        `when`(officerRepository.findBySessionId(1L)).thenReturn(emptyList())
+        `when`(generalRepository.findByWorldId(1L)).thenReturn(emptyList())
 
         val world = service.initializeWorld("fast-turn", tickSeconds = 30)
 
@@ -457,63 +461,63 @@ class ScenarioServiceTest {
         val scenarios = scenariosField.get(service) as MutableMap<String, ScenarioData>
         scenarios["spawn-test"] = scenario
 
-        val planetStore = mutableMapOf<Long, Planet>()
-        var planetSeq = 1L
-        val savedOfficers = mutableListOf<Officer>()
-        var officerSeq = 1L
+        val cityStore = mutableMapOf<Long, City>()
+        var citySeq = 1L
+        val savedGenerals = mutableListOf<General>()
+        var generalSeq = 1L
 
-        `when`(worldStateRepository.save(any(SessionState::class.java))).thenAnswer { inv ->
-            val world = inv.arguments[0] as SessionState
+        `when`(worldStateRepository.save(any(WorldState::class.java))).thenAnswer { inv ->
+            val world = inv.arguments[0] as WorldState
             world.id = 1
             world
         }
 
         `when`(mapService.getCities("che")).thenReturn(
             listOf(
-                PlanetConst(1, "낙양", 8, 1, 1000, 100, 100, 100, 100, 100, 10, 10, emptyList()),
+                CityConst(1, "낙양", 8, 1, 1000, 100, 100, 100, 100, 100, 10, 10, emptyList()),
             ),
         )
 
         @Suppress("UNCHECKED_CAST")
-        `when`(planetRepository.saveAll(anyList<Planet>())).thenAnswer { inv ->
-            val planets = inv.arguments[0] as List<Planet>
-            planets.forEach { planet ->
-                if (planet.id == 0L) planet.id = planetSeq++
-                planetStore[planet.id] = planet
+        `when`(cityRepository.saveAll(anyList<City>())).thenAnswer { inv ->
+            val cities = inv.arguments[0] as List<City>
+            cities.forEach { city ->
+                if (city.id == 0L) city.id = citySeq++
+                cityStore[city.id] = city
             }
-            planets
+            cities
         }
-        `when`(planetRepository.findBySessionId(1L)).thenAnswer { planetStore.values.toList() }
+        `when`(cityRepository.findByWorldId(1L)).thenAnswer { cityStore.values.toList() }
 
-        `when`(factionRepository.findBySessionId(1L)).thenReturn(emptyList())
+        `when`(nationRepository.findByWorldId(1L)).thenReturn(emptyList())
         @Suppress("UNCHECKED_CAST")
-        `when`(factionRepository.saveAll(anyList<Faction>())).thenAnswer { inv ->
-            (inv.arguments[0] as List<Faction>)
+        `when`(nationRepository.saveAll(anyList<Nation>())).thenAnswer { inv ->
+            (inv.arguments[0] as List<Nation>)
         }
 
         @Suppress("UNCHECKED_CAST")
-        `when`(officerRepository.saveAll(anyList<Officer>())).thenAnswer { inv ->
-            val officers = inv.arguments[0] as List<Officer>
-            officers.forEach { officer ->
-                if (officer.id == 0L) officer.id = officerSeq++
-                savedOfficers.add(officer)
+        `when`(generalRepository.saveAll(anyList<General>())).thenAnswer { inv ->
+            val generals = inv.arguments[0] as List<General>
+            generals.forEach { general ->
+                if (general.id == 0L) general.id = generalSeq++
+                savedGenerals.add(general)
             }
-            officers
+            generals
         }
-        `when`(officerRepository.findBySessionId(1L)).thenAnswer { savedOfficers.toList() }
+        `when`(generalRepository.findByWorldId(1L)).thenAnswer { savedGenerals.toList() }
 
         val world = service.initializeWorld("spawn-test")
-        assertTrue(savedOfficers.none { it.name == "지연등장" })
+        assertTrue(savedGenerals.none { it.name == "지연등장" })
 
         world.currentYear = 190
         val beforeDue = service.spawnScenarioNpcGeneralsForYear(world)
         assertEquals(0, beforeDue)
-        assertTrue(savedOfficers.none { it.name == "지연등장" })
+        assertTrue(savedGenerals.none { it.name == "지연등장" })
 
         world.currentYear = 191
         val onDue = service.spawnScenarioNpcGeneralsForYear(world)
         assertEquals(1, onDue)
-        assertTrue(savedOfficers.any { it.name == "지연등장" && it.age == 14.toShort() })
+        assertTrue(savedGenerals.any { it.name == "지연등장" && it.age == 14.toShort() })
     }
 
     @Test
@@ -536,41 +540,41 @@ class ScenarioServiceTest {
         val scenarios = scenariosField.get(service) as MutableMap<String, ScenarioData>
         scenarios["diplo-test"] = scenario
 
-        val planetStore = mutableMapOf<Long, Planet>()
-        var planetSeq = 1L
-        val factionStore = mutableMapOf<Long, Faction>()
-        var factionSeq = 1L
+        val cityStore = mutableMapOf<Long, City>()
+        var citySeq = 1L
+        val nationStore = mutableMapOf<Long, Nation>()
+        var nationSeq = 1L
         val capturedDiplomacies = mutableListOf<com.openlogh.entity.Diplomacy>()
 
-        `when`(worldStateRepository.save(any(SessionState::class.java))).thenAnswer { inv ->
-            val world = inv.arguments[0] as SessionState
+        `when`(worldStateRepository.save(any(WorldState::class.java))).thenAnswer { inv ->
+            val world = inv.arguments[0] as WorldState
             world.id = 1
             world
         }
         `when`(mapService.getCities("che")).thenReturn(
             listOf(
-                PlanetConst(1, "낙양", 8, 1, 1000, 100, 100, 100, 100, 100, 10, 10, emptyList()),
-                PlanetConst(2, "남피", 8, 1, 1000, 100, 100, 100, 100, 100, 10, 10, emptyList()),
-                PlanetConst(3, "진류", 8, 1, 1000, 100, 100, 100, 100, 100, 10, 10, emptyList()),
+                CityConst(1, "낙양", 8, 1, 1000, 100, 100, 100, 100, 100, 10, 10, emptyList()),
+                CityConst(2, "남피", 8, 1, 1000, 100, 100, 100, 100, 100, 10, 10, emptyList()),
+                CityConst(3, "진류", 8, 1, 1000, 100, 100, 100, 100, 100, 10, 10, emptyList()),
             ),
         )
         @Suppress("UNCHECKED_CAST")
-        `when`(planetRepository.saveAll(anyList<Planet>())).thenAnswer { inv ->
-            val planets = inv.arguments[0] as List<Planet>
-            planets.forEach { planet ->
-                if (planet.id == 0L) planet.id = planetSeq++
-                planetStore[planet.id] = planet
+        `when`(cityRepository.saveAll(anyList<City>())).thenAnswer { inv ->
+            val cities = inv.arguments[0] as List<City>
+            cities.forEach { city ->
+                if (city.id == 0L) city.id = citySeq++
+                cityStore[city.id] = city
             }
-            planets
+            cities
         }
         @Suppress("UNCHECKED_CAST")
-        `when`(factionRepository.saveAll(anyList<Faction>())).thenAnswer { inv ->
-            val factions = inv.arguments[0] as List<Faction>
-            factions.forEach { faction ->
-                if (faction.id == 0L) faction.id = factionSeq++
-                factionStore[faction.id] = faction
+        `when`(nationRepository.saveAll(anyList<Nation>())).thenAnswer { inv ->
+            val nations = inv.arguments[0] as List<Nation>
+            nations.forEach { nation ->
+                if (nation.id == 0L) nation.id = nationSeq++
+                nationStore[nation.id] = nation
             }
-            factions
+            nations
         }
         @Suppress("UNCHECKED_CAST")
         `when`(diplomacyRepository.saveAll(anyList<com.openlogh.entity.Diplomacy>())).thenAnswer { inv ->
@@ -578,15 +582,15 @@ class ScenarioServiceTest {
             capturedDiplomacies += diplomacies
             diplomacies
         }
-        `when`(officerRepository.saveAll(anyList<Officer>())).thenAnswer { inv -> inv.arguments[0] as List<Officer> }
-        `when`(officerRepository.findBySessionId(1L)).thenReturn(emptyList())
+        `when`(generalRepository.saveAll(anyList<General>())).thenAnswer { inv -> inv.arguments[0] as List<General> }
+        `when`(generalRepository.findByWorldId(1L)).thenReturn(emptyList())
 
         service.initializeWorld("diplo-test")
 
         assertEquals(1, capturedDiplomacies.size)
         val diplomacy = capturedDiplomacies.single()
-        assertEquals(factionStore.values.first { it.name == "동탁" }.id, diplomacy.srcFactionId)
-        assertEquals(factionStore.values.first { it.name == "원소" }.id, diplomacy.destNationId)
+        assertEquals(nationStore.values.first { it.name == "동탁" }.id, diplomacy.srcNationId)
+        assertEquals(nationStore.values.first { it.name == "원소" }.id, diplomacy.destNationId)
         assertEquals("선전포고", diplomacy.stateCode)
         assertEquals(36.toShort(), diplomacy.term)
 
@@ -596,6 +600,7 @@ class ScenarioServiceTest {
             org.mockito.ArgumentMatchers.anyString(),
             org.mockito.ArgumentMatchers.anyInt(),
             org.mockito.ArgumentMatchers.anyInt(),
+            org.mockito.ArgumentMatchers.eq(true),
         )
     }
 
@@ -609,11 +614,28 @@ class ScenarioServiceTest {
         parseNation.isAccessible = true
 
         val row: List<Any> = listOf("후한", "#FF0000", 5000, 3000, "후한왕조", 100, "중립", 7, listOf("낙양"))
-        val faction = parseNation.invoke(service, row, 1L) as Faction
+        val nation = parseNation.invoke(service, row, 1L) as Nation
 
-        assertEquals("후한", faction.name)
-        assertEquals("후한왕조", faction.meta["scoutMsg"])
-        assertEquals("후한왕조", faction.meta["scout_msg"])
+        assertEquals("후한", nation.name)
+        assertEquals("후한왕조", nation.meta["scoutMsg"])
+        assertEquals("후한왕조", nation.meta["scout_msg"])
+    }
+
+    @Test
+    fun `parseNation sets legacy default bill 100 rate 15 rateTmp 15`() {
+        val parseNation = ScenarioService::class.java.getDeclaredMethod(
+            "parseNation",
+            List::class.java,
+            Long::class.javaPrimitiveType,
+        )
+        parseNation.isAccessible = true
+
+        val row: List<Any> = listOf("위", "#0000FF", 10000, 10000, "위나라", 1500, "중립", 7, listOf("허창"))
+        val nation = parseNation.invoke(service, row, 1L) as Nation
+
+        assertEquals(100.toShort(), nation.bill, "bill should match legacy default 100")
+        assertEquals(15.toShort(), nation.rate, "rate should match legacy default 15")
+        assertEquals(15.toShort(), nation.rateTmp, "rateTmp should match legacy default 15")
     }
 
     @Test
@@ -626,43 +648,43 @@ class ScenarioServiceTest {
         parseNation.isAccessible = true
 
         val row: List<Any> = listOf("황건적", "#FFFF00", 0, 2000, "", 50, "도적", 0, listOf<String>())
-        val faction = parseNation.invoke(service, row, 1L) as Faction
+        val nation = parseNation.invoke(service, row, 1L) as Nation
 
-        assertEquals("황건적", faction.name)
-        assertEquals("", faction.meta["scoutMsg"])
+        assertEquals("황건적", nation.name)
+        assertEquals("", nation.meta["scoutMsg"])
     }
 
     @Test
-    fun `applyScenarioEmperorSettings places emperor at faction capital`() {
+    fun `applyScenarioEmperorSettings places emperor at nation capital`() {
         val applyMethod = ScenarioService::class.java.getDeclaredMethod(
             "applyScenarioEmperorSettings",
             com.openlogh.model.ScenarioData::class.java,
-            SessionState::class.java,
+            WorldState::class.java,
             Map::class.java,
             List::class.java,
             List::class.java,
         )
         applyMethod.isAccessible = true
 
-        val world = SessionState(id = 1, name = "test", scenarioCode = "test")
-        val faction = Faction(id = 100L, sessionId = 1, name = "한")
-        faction.capitalPlanetId = 55L
-        val officer = Officer(
-            sessionId = 1, name = "헌제", factionId = 100L, planetId = 1L,
-            npcState = 2, rank = 20,
+        val world = WorldState(id = 1, name = "test", scenarioCode = "test")
+        val nation = Nation(id = 100L, worldId = 1, name = "한")
+        nation.capitalCityId = 55L
+        val general = General(
+            worldId = 1, name = "헌제", nationId = 100L, cityId = 1L,
+            npcState = 2, officerLevel = 20,
         )
 
         val scenario = com.openlogh.model.ScenarioData(
             title = "test",
             startYear = 184,
-            emperor = mapOf("generalName" to "헌제", "factionIdx" to 1, "status" to "enthroned"),
+            emperor = mapOf("generalName" to "헌제", "nationIdx" to 1, "status" to "enthroned"),
         )
 
         val nationIdxToDbId = mapOf(1 to 100L)
 
-        applyMethod.invoke(service, scenario, world, nationIdxToDbId, listOf(faction), listOf(officer))
+        applyMethod.invoke(service, scenario, world, nationIdxToDbId, listOf(nation), listOf(general))
 
-        assertEquals(55L, officer.planetId)
+        assertEquals(55L, general.cityId)
     }
 
     @Test
@@ -670,35 +692,35 @@ class ScenarioServiceTest {
         val applyMethod = ScenarioService::class.java.getDeclaredMethod(
             "applyScenarioEmperorSettings",
             com.openlogh.model.ScenarioData::class.java,
-            SessionState::class.java,
+            WorldState::class.java,
             Map::class.java,
             List::class.java,
             List::class.java,
         )
         applyMethod.isAccessible = true
 
-        val world = SessionState(id = 1, name = "test", scenarioCode = "test")
-        val faction = Faction(id = 100L, sessionId = 1, name = "한")
-        val officer = Officer(
-            sessionId = 1, name = "영제", factionId = 100L, planetId = 1L,
-            npcState = 2, rank = 20,
+        val world = WorldState(id = 1, name = "test", scenarioCode = "test")
+        val nation = Nation(id = 100L, worldId = 1, name = "한")
+        val general = General(
+            worldId = 1, name = "영제", nationId = 100L, cityId = 1L,
+            npcState = 2, officerLevel = 20,
         )
 
         val scenario = com.openlogh.model.ScenarioData(
             title = "test",
             startYear = 184,
-            emperor = mapOf("generalName" to "영제", "factionIdx" to 1, "status" to "enthroned"),
+            emperor = mapOf("generalName" to "영제", "nationIdx" to 1, "status" to "enthroned"),
         )
 
         val nationIdxToDbId = mapOf(1 to 100L)
 
-        applyMethod.invoke(service, scenario, world, nationIdxToDbId, listOf(faction), listOf(officer))
+        applyMethod.invoke(service, scenario, world, nationIdxToDbId, listOf(nation), listOf(general))
 
-        assertEquals(true, world.meta[com.openlogh.engine.SovereignConstants.WORLD_EMPEROR_SYSTEM])
-        assertEquals(com.openlogh.engine.SovereignConstants.NPC_STATE_EMPEROR, officer.npcState)
-        assertEquals("enthroned", officer.meta[com.openlogh.engine.SovereignConstants.GENERAL_EMPEROR_STATUS])
-        assertEquals("emperor", faction.meta[com.openlogh.engine.SovereignConstants.NATION_IMPERIAL_STATUS])
-        assertEquals("legitimate", faction.meta[com.openlogh.engine.SovereignConstants.NATION_EMPEROR_TYPE])
+        assertEquals(true, world.meta[com.openlogh.engine.EmperorConstants.WORLD_EMPEROR_SYSTEM])
+        assertEquals(com.openlogh.engine.EmperorConstants.NPC_STATE_EMPEROR, general.npcState)
+        assertEquals("enthroned", general.meta[com.openlogh.engine.EmperorConstants.GENERAL_EMPEROR_STATUS])
+        assertEquals("emperor", nation.meta[com.openlogh.engine.EmperorConstants.NATION_IMPERIAL_STATUS])
+        assertEquals("legitimate", nation.meta[com.openlogh.engine.EmperorConstants.NATION_EMPEROR_TYPE])
     }
 
     @Test
@@ -734,9 +756,9 @@ class ScenarioServiceTest {
         seedMethod.invoke(service, 999L)
 
         assertTrue(captured.isNotEmpty())
-        assertEquals(999L, captured.first().sessionId)
+        assertEquals(999L, captured.first().worldId)
         assertTrue(captured.first().info.containsKey("generalName"))
-        verify(selectPoolRepository).deleteBySessionId(999L)
+        verify(selectPoolRepository).deleteByWorldId(999L)
     }
 
     @Test
@@ -744,22 +766,22 @@ class ScenarioServiceTest {
         val applyMethod = ScenarioService::class.java.getDeclaredMethod(
             "applyScenarioEmperorSettings",
             com.openlogh.model.ScenarioData::class.java,
-            SessionState::class.java,
+            WorldState::class.java,
             Map::class.java,
             List::class.java,
             List::class.java,
         )
         applyMethod.isAccessible = true
 
-        val world = SessionState(id = 1, name = "test", scenarioCode = "test")
+        val world = WorldState(id = 1, name = "test", scenarioCode = "test")
         val scenario = com.openlogh.model.ScenarioData(
             title = "test", startYear = 225, emperor = null,
         )
 
-        applyMethod.invoke(service, scenario, world, emptyMap<Int, Long>(), emptyList<Faction>(), emptyList<Officer>())
+        applyMethod.invoke(service, scenario, world, emptyMap<Int, Long>(), emptyList<Nation>(), emptyList<General>())
 
-        assertEquals(true, world.meta[com.openlogh.engine.SovereignConstants.WORLD_EMPEROR_SYSTEM])
-        assertNull(world.meta[com.openlogh.engine.SovereignConstants.WORLD_EMPEROR_GENERAL_ID])
+        assertEquals(true, world.meta[com.openlogh.engine.EmperorConstants.WORLD_EMPEROR_SYSTEM])
+        assertNull(world.meta[com.openlogh.engine.EmperorConstants.WORLD_EMPEROR_GENERAL_ID])
     }
 
     @Test
@@ -776,38 +798,38 @@ class ScenarioServiceTest {
     }
 
     @Test
-    fun `faction city list uses lastOrNull for List element`() {
-        val factionRow = listOf("테스트", "#FFF", 1000, 1000, "설명", 100, "유가", 3, listOf("장안", "낙양"))
-        val cities = factionRow.lastOrNull { it is List<*> }
+    fun `nation city list uses lastOrNull for List element`() {
+        val nationRow = listOf("테스트", "#FFF", 1000, 1000, "설명", 100, "유가", 3, listOf("장안", "낙양"))
+        val cities = nationRow.lastOrNull { it is List<*> }
         assertNotNull(cities)
         assertEquals(listOf("장안", "낙양"), cities)
 
-        val factionRowWithAbbr = listOf("테스트", "#FFF", 1000, 1000, "설명", 100, "유가", 3, "테", listOf("장안", "낙양"))
-        val cities2 = factionRowWithAbbr.lastOrNull { it is List<*> }
+        val nationRowWithAbbr = listOf("테스트", "#FFF", 1000, 1000, "설명", 100, "유가", 3, "테", listOf("장안", "낙양"))
+        val cities2 = nationRowWithAbbr.lastOrNull { it is List<*> }
         assertEquals(listOf("장안", "낙양"), cities2)
     }
 
     @Test
-    fun `Faction abbreviation field defaults to empty string`() {
-        val faction = Faction(id = 1, sessionId = 1, name = "유비군")
-        assertEquals("", faction.abbreviation)
-        faction.abbreviation = "유"
-        assertEquals("유", faction.abbreviation)
+    fun `Nation abbreviation field defaults to empty string`() {
+        val nation = Nation(id = 1, worldId = 1, name = "유비군")
+        assertEquals("", nation.abbreviation)
+        nation.abbreviation = "유"
+        assertEquals("유", nation.abbreviation)
     }
 
     @Test
-    fun `FactionResponse includes abbreviation from entity`() {
-        val faction = Faction(id = 1, sessionId = 1, name = "조조군")
-        faction.abbreviation = "조"
-        val response = com.openlogh.dto.FactionResponse.from(faction)
+    fun `NationResponse includes abbreviation from entity`() {
+        val nation = Nation(id = 1, worldId = 1, name = "조조군")
+        nation.abbreviation = "조"
+        val response = com.openlogh.dto.NationResponse.from(nation)
         assertEquals("조", response.abbreviation)
     }
 
     @Test
     fun `updateAbbreviation truncates to 2 chars`() {
-        val faction = Faction(id = 1, sessionId = 1, name = "테스트")
-        faction.abbreviation = "abcdef".take(2)
-        assertEquals("ab", faction.abbreviation)
+        val nation = Nation(id = 1, worldId = 1, name = "테스트")
+        nation.abbreviation = "abcdef".take(2)
+        assertEquals("ab", nation.abbreviation)
     }
 
 }

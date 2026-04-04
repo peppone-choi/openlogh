@@ -2,17 +2,17 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useWorldStore } from '@/stores/worldStore';
-import { useOfficerStore } from '@/stores/officerStore';
+import { useGeneralStore } from '@/stores/generalStore';
 import { useGameStore } from '@/stores/gameStore';
 import { battleSimApi, simulatorExportApi } from '@/lib/gameApi';
 import type { BattleSimUnit, BattleSimCity, BattleSimResponse, General } from '@/types';
 import { Swords, Play, RotateCcw, Download, Upload, Plus, Minus, CloudRain, Mountain, Building } from 'lucide-react';
 import { PageHeader } from '@/components/game/page-header';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { formatInjury, BASE_CREW_TYPES, parseShipClassCode } from '@/lib/game-utils';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/8bit/card';
+import { Button } from '@/components/ui/8bit/button';
+import { Input } from '@/components/ui/8bit/input';
+import { Badge } from '@/components/ui/8bit/badge';
+import { formatInjury, BASE_CREW_TYPES, parseCrewTypeCode } from '@/lib/game-utils';
 
 // Known item/weapon/horse/book codes from legacy — these are used as dropdown options.
 // In production these would come from game const store; we provide common ones here.
@@ -250,13 +250,13 @@ function UnitBuilder({
     unit,
     onChange,
     generals,
-    myOfficerId,
+    myGeneralId,
 }: {
     title: string;
     unit: UnitFormState;
     onChange: (u: UnitFormState) => void;
     generals: General[];
-    myOfficerId: number | null;
+    myGeneralId: number | null;
 }) {
     const set = <K extends keyof UnitFormState>(key: K, val: UnitFormState[K]) => onChange({ ...unit, [key]: val });
 
@@ -276,8 +276,8 @@ function UnitBuilder({
                     intel: (d.intel as number) ?? unit.intel,
                     crew: (d.crew as number) ?? unit.crew,
                     crewType:
-                        parseShipClassCode(d.crewtype as string | number | null | undefined) ||
-                        parseShipClassCode(d.crewType as string | number | null | undefined) ||
+                        parseCrewTypeCode(d.crewtype as string | number | null | undefined) ||
+                        parseCrewTypeCode(d.crewType as string | number | null | undefined) ||
                         unit.crewType,
                     train: (d.train as number) ?? unit.train,
                     atmos: (d.atmos as number) ?? unit.atmos,
@@ -328,7 +328,7 @@ function UnitBuilder({
                         return;
                     }
                     if (data.objType !== 'general') {
-                        alert('제독 데이터가 아닙니다');
+                        alert('장수 데이터가 아닙니다');
                         return;
                     }
                     importFromJson(data);
@@ -353,10 +353,10 @@ function UnitBuilder({
     }, []);
 
     const handleLoadGeneral = async (targetId: number) => {
-        if (!myOfficerId) return;
+        if (!myGeneralId) return;
         setLoadingGeneral(true);
         try {
-            const { data } = await simulatorExportApi.exportGeneral(myOfficerId, targetId);
+            const { data } = await simulatorExportApi.exportGeneral(myGeneralId, targetId);
             if (data.result && data.data) {
                 const d = data.data;
                 onChange({
@@ -367,8 +367,8 @@ function UnitBuilder({
                     intel: (d.intel as number) ?? unit.intel,
                     crew: (d.crew as number) ?? unit.crew,
                     crewType:
-                        parseShipClassCode(d.crewtype as string | number | null | undefined) ||
-                        parseShipClassCode(d.crewType as string | number | null | undefined) ||
+                        parseCrewTypeCode(d.crewtype as string | number | null | undefined) ||
+                        parseCrewTypeCode(d.crewType as string | number | null | undefined) ||
                         unit.crewType,
                     train: (d.train as number) ?? unit.train,
                     atmos: (d.atmos as number) ?? unit.atmos,
@@ -413,7 +413,7 @@ function UnitBuilder({
                     {title}
                     <span className="text-[9px] text-muted-foreground ml-1">(JSON 드래그&amp;드롭 가능)</span>
                     {/* General picker */}
-                    {generals.length > 0 && myOfficerId && (
+                    {generals.length > 0 && myGeneralId && (
                         <select
                             onChange={(e) => {
                                 const id = Number(e.target.value);
@@ -456,13 +456,13 @@ function UnitBuilder({
                         max={100}
                     />
                     <NumberField
-                        label="무력"
+                        label="지휘"
                         value={unit.strength}
                         onChange={(v) => set('strength', v)}
                         min={1}
                         max={100}
                     />
-                    <NumberField label="지력" value={unit.intel} onChange={(v) => set('intel', v)} min={1} max={100} />
+                    <NumberField label="정보" value={unit.intel} onChange={(v) => set('intel', v)} min={1} max={100} />
                 </div>
 
                 {/* Crew */}
@@ -481,7 +481,7 @@ function UnitBuilder({
                             ))}
                         </select>
                     </div>
-                    <NumberField label="병사" value={unit.crew} onChange={(v) => set('crew', v)} min={100} step={100} />
+                    <NumberField label="함선" value={unit.crew} onChange={(v) => set('crew', v)} min={100} step={100} />
                 </div>
 
                 {/* Train / Atmos */}
@@ -510,13 +510,13 @@ function UnitBuilder({
                 {/* Equipment dropdowns */}
                 <div className="flex flex-wrap gap-2">
                     <SelectField
-                        label="무기"
+                        label="기함"
                         value={unit.weaponCode}
                         onChange={(v) => set('weaponCode', v)}
                         options={WEAPON_CODES}
                     />
                     <SelectField
-                        label="서적"
+                        label="특수장비"
                         value={unit.bookCode}
                         onChange={(v) => set('bookCode', v)}
                         options={BOOK_CODES}
@@ -524,7 +524,7 @@ function UnitBuilder({
                 </div>
                 <div className="flex flex-wrap gap-2">
                     <SelectField
-                        label="명마"
+                        label="기관"
                         value={unit.horseCode}
                         onChange={(v) => set('horseCode', v)}
                         options={HORSE_CODES}
@@ -667,7 +667,7 @@ function UnitBuilder({
 
 export default function BattleSimulatorPage() {
     const currentWorld = useWorldStore((s) => s.currentWorld);
-    const { myOfficer, fetchMyGeneral } = useOfficerStore();
+    const { myGeneral, fetchMyGeneral } = useGeneralStore();
     const { generals, nations, loadAll } = useGameStore();
 
     const [year, setYear] = useState(currentWorld?.currentYear ?? 200);
@@ -702,9 +702,9 @@ export default function BattleSimulatorPage() {
     useEffect(() => {
         if (currentWorld) {
             loadAll(currentWorld.id);
-            if (!myOfficer) fetchMyGeneral(currentWorld.id).catch(() => {});
+            if (!myGeneral) fetchMyGeneral(currentWorld.id).catch(() => {});
         }
-    }, [currentWorld, loadAll, myOfficer, fetchMyGeneral]);
+    }, [currentWorld, loadAll, myGeneral, fetchMyGeneral]);
 
     const handleSimulate = async () => {
         setRunning(true);
@@ -859,7 +859,7 @@ export default function BattleSimulatorPage() {
 
     return (
         <div className="space-y-4 max-w-4xl mx-auto">
-            <PageHeader icon={Swords} title="전투 시뮬레이터" description="제독 간 전투를 시뮬레이션합니다." />
+            <PageHeader icon={Swords} title="전투 시뮬레이터" description="장수 간 전투를 시뮬레이션합니다." />
 
             {/* Global Config */}
             <Card>
@@ -946,11 +946,11 @@ export default function BattleSimulatorPage() {
             {/* Attacker / Defenders */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <UnitBuilder
-                    title="공격측 제독"
+                    title="공격측 장수"
                     unit={attacker}
                     onChange={setAttacker}
                     generals={generals}
-                    myOfficerId={myOfficer?.id ?? null}
+                    myGeneralId={myGeneral?.id ?? null}
                 />
                 <div className="space-y-4">
                     {defenders.map((def, idx) => (
@@ -959,11 +959,11 @@ export default function BattleSimulatorPage() {
                             className="relative"
                         >
                             <UnitBuilder
-                                title={defenders.length > 1 ? `방어측 제독 ${idx + 1}` : '방어측 제독'}
+                                title={defenders.length > 1 ? `방어측 장수 ${idx + 1}` : '방어측 장수'}
                                 unit={def}
                                 onChange={(u) => setDefenders((prev) => prev.map((d, i) => (i === idx ? u : d)))}
                                 generals={generals}
-                                myOfficerId={myOfficer?.id ?? null}
+                                myGeneralId={myGeneral?.id ?? null}
                             />
                             {defenders.length > 1 && (
                                 <Button
@@ -1000,7 +1000,7 @@ export default function BattleSimulatorPage() {
                                     step={10}
                                 />
                                 <NumberField
-                                    label="요새 방어"
+                                    label="성벽"
                                     value={cityDef.wall}
                                     onChange={(v) => setCityDef({ ...cityDef, wall: v })}
                                     min={0}

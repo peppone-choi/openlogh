@@ -4,11 +4,11 @@ import { useEffect, useMemo, useState } from 'react';
 import { Handshake, Shield, Swords, Minus, RefreshCw, Timer } from 'lucide-react';
 import { PageHeader } from '@/components/game/page-header';
 import { LoadingState } from '@/components/game/loading-state';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Badge } from '@/components/ui/8bit/badge';
+import { Button } from '@/components/ui/8bit/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/8bit/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/8bit/table';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/8bit/tooltip';
 import { adminApi } from '@/lib/gameApi';
 import type { Diplomacy, NationStatistic } from '@/types';
 import { toast } from 'sonner';
@@ -197,7 +197,7 @@ export default function AdminDiplomacyPage() {
                             <TableHeader>
                                 <TableRow>
                                     <TableHead>국가</TableHead>
-                                    <TableHead className="text-right">제독</TableHead>
+                                    <TableHead className="text-right">장수</TableHead>
                                     <TableHead className="text-right">도시</TableHead>
                                     <TableHead className="text-right">병력</TableHead>
                                     <TableHead className="text-right">금</TableHead>
@@ -232,7 +232,7 @@ export default function AdminDiplomacyPage() {
                                 {nations.length === 0 && (
                                     <TableRow>
                                         <TableCell colSpan={8} className="text-center text-muted-foreground">
-                                            진영이 없습니다.
+                                            국가가 없습니다.
                                         </TableCell>
                                     </TableRow>
                                 )}

@@ -10,20 +10,20 @@ import org.springframework.web.bind.annotation.*
 @RequestMapping("/api")
 class HistoryController(
     private val historyService: HistoryService,
-    private val worldStateRepository: com.openlogh.repository.SessionStateRepository,
+    private val worldStateRepository: com.openlogh.repository.WorldStateRepository,
 ) {
-    @GetMapping("/worlds/{sessionId}/history")
+    @GetMapping("/worlds/{worldId}/history")
     fun getWorldHistory(
-        @PathVariable sessionId: Long,
+        @PathVariable worldId: Long,
         @RequestParam(required = false) year: Int?,
         @RequestParam(required = false) month: Int?,
     ): ResponseEntity<List<RecordResponse>> {
         val data = if (year != null && month != null) {
-            historyService.getByYearMonth(sessionId, year, month)
+            historyService.getByYearMonth(worldId, year, month)
         } else {
-            historyService.getWorldHistory(sessionId)
+            historyService.getWorldHistory(worldId)
         }
-        val world = worldStateRepository.findById(sessionId.toShort()).orElse(null)
+        val world = worldStateRepository.findById(worldId.toShort()).orElse(null)
         val currentYear = world?.currentYear?.toInt() ?: Int.MAX_VALUE
         val currentMonth = world?.currentMonth?.toInt() ?: 12
         val filtered = data.filter { record ->
@@ -32,22 +32,22 @@ class HistoryController(
         return ResponseEntity.ok(filtered.map { RecordResponse.from(it) })
     }
 
-    @GetMapping("/worlds/{sessionId}/records")
-    fun getWorldRecords(@PathVariable sessionId: Long): ResponseEntity<List<RecordResponse>> {
-        return ResponseEntity.ok(historyService.getWorldRecords(sessionId).map { RecordResponse.from(it) })
+    @GetMapping("/worlds/{worldId}/records")
+    fun getWorldRecords(@PathVariable worldId: Long): ResponseEntity<List<RecordResponse>> {
+        return ResponseEntity.ok(historyService.getWorldRecords(worldId).map { RecordResponse.from(it) })
     }
 
-    @GetMapping("/officers/{officerId}/records")
-    fun getOfficerRecords(@PathVariable officerId: Long): ResponseEntity<List<RecordResponse>> {
-        return ResponseEntity.ok(historyService.getOfficerRecords(officerId).map { RecordResponse.from(it) })
+    @GetMapping("/generals/{generalId}/records")
+    fun getGeneralRecords(@PathVariable generalId: Long): ResponseEntity<List<RecordResponse>> {
+        return ResponseEntity.ok(historyService.getGeneralRecords(generalId).map { RecordResponse.from(it) })
     }
 
-    @GetMapping("/worlds/{sessionId}/history/yearbook")
+    @GetMapping("/worlds/{worldId}/history/yearbook")
     fun getYearbook(
-        @PathVariable sessionId: Long,
+        @PathVariable worldId: Long,
         @RequestParam year: Int,
     ): ResponseEntity<YearbookSummaryResponse> {
-        val yearbook = historyService.getYearbook(sessionId, year) ?: return ResponseEntity.notFound().build()
-        return ResponseEntity.ok(YearbookSummaryResponse.from(sessionId, yearbook))
+        val yearbook = historyService.getYearbook(worldId, year) ?: return ResponseEntity.notFound().build()
+        return ResponseEntity.ok(YearbookSummaryResponse.from(worldId, yearbook))
     }
 }

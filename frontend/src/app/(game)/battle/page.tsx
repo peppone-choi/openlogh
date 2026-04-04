@@ -1,39 +1,24 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import dynamic from 'next/dynamic';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useWorldStore } from '@/stores/worldStore';
 import { useGameStore } from '@/stores/gameStore';
 import { subscribeWebSocket } from '@/lib/websocket';
 import type { Nation, General, GeneralLogEntry } from '@/types';
-import { Swords, ArrowUpDown, Shield, Flame, User, ScrollText, Zap } from 'lucide-react';
+import { Swords, ArrowUpDown, Shield, Flame, User, ScrollText } from 'lucide-react';
 import { PageHeader } from '@/components/game/page-header';
 import { LoadingState } from '@/components/game/loading-state';
 import { EmptyState } from '@/components/game/empty-state';
 import { NationBadge } from '@/components/game/nation-badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { useOfficerStore } from '@/stores/officerStore';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/8bit/card';
+import { Badge } from '@/components/ui/8bit/badge';
+import { Button } from '@/components/ui/8bit/button';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/8bit/tabs';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/8bit/table';
+import { useGeneralStore } from '@/stores/generalStore';
 import { generalLogApi } from '@/lib/gameApi';
 import { formatLog } from '@/lib/formatLog';
-import { PLANET_LEVEL_NAMES } from '@/lib/game-utils';
-import { useBattleStore, toLegacyFleet } from '@/stores/battleStore';
-import { FormationSelector } from '@/components/game/battle/FormationSelector';
-import { EnergyAllocator } from '@/components/game/battle/EnergyAllocator';
-import { OrderPanel } from '@/components/game/battle/OrderPanel';
-import { TurnTimer } from '@/components/game/battle/TurnTimer';
-import { BattleResult } from '@/components/game/battle/BattleResult';
-
-// Dynamic import — Three.js/R3F requires browser APIs not available on server
-const BattleCanvas = dynamic(() => import('@/components/game/battle/BattleCanvas3D').then((m) => m.BattleCanvas3D), {
-    ssr: false,
-    loading: () => (
-        <div className="bg-[#02020a] rounded border border-amber-900/20" style={{ width: '100%', height: 480 }} />
-    ),
-});
+import { CITY_LEVEL_NAMES } from '@/lib/game-utils';
 
 function getNation(nations: Nation[], id: number) {
     return nations.find((n) => n.id === id);
@@ -53,7 +38,7 @@ interface MilitaryRow {
 type OldLogType = 'generalHistory' | 'generalAction' | 'battleResult' | 'battleDetail';
 
 const GENERAL_LOG_SECTIONS: { type: OldLogType; title: string; emptyTitle: string }[] = [
-    { type: 'generalHistory', title: '제독 열전', emptyTitle: '제독 열전 기록이 없습니다.' },
+    { type: 'generalHistory', title: '장수 열전', emptyTitle: '장수 열전 기록이 없습니다.' },
     { type: 'battleResult', title: '전투 기록', emptyTitle: '전투 기록이 없습니다.' },
     { type: 'battleDetail', title: '전투 결과', emptyTitle: '전투 결과가 없습니다.' },
     { type: 'generalAction', title: '개인 기록', emptyTitle: '개인 기록이 없습니다.' },
@@ -63,258 +48,11 @@ function SortIndicator({ active }: { active: boolean }) {
     return <ArrowUpDown className={`inline size-3 ml-0.5 ${active ? 'text-white' : 'text-gray-500'}`} />;
 }
 
-// ─── Live Battle Panel ───────────────────────────────────────────────────────
-
-function LiveBattlePanel() {
-    const {
-        battlePhase,
-        myFleet,
-        enemyFleets,
-        alliedFleets,
-        turnTimer,
-        currentTurn,
-        battleLog,
-        battleResult,
-        pendingFormation,
-        pendingEnergy,
-        pendingOrder,
-        commandSubmitted,
-        setFormation,
-        setEnergy,
-        setOrder,
-        submitCommand,
-        resetBattle,
-        startDemoBattle,
-        tickTimer,
-    } = useBattleStore();
-
-    const [selectedFleetId, setSelectedFleetId] = useState<string | null>(null);
-    const logEndRef = useRef<HTMLDivElement>(null);
-
-    // Auto-scroll battle log
-    useEffect(() => {
-        logEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [battleLog.length]);
-
-    // Turn countdown
-    useEffect(() => {
-        if (battlePhase !== 'setup' && battlePhase !== 'combat') return;
-        const id = setInterval(tickTimer, 1000);
-        return () => clearInterval(id);
-    }, [battlePhase, tickTimer]);
-
-    const logTypeColor: Record<string, string> = {
-        attack: 'text-red-400',
-        movement: 'text-sky-400',
-        morale: 'text-amber-400',
-        result: 'text-emerald-400',
-        info: 'text-gray-400',
-    };
-
-    if (battlePhase === 'idle') {
-        return (
-            <div className="flex flex-col items-center justify-center py-16 space-y-4">
-                <div className="text-center space-y-2">
-                    <div className="text-4xl font-mono font-black text-gray-700 tracking-widest">STANDBY</div>
-                    <div className="text-sm text-gray-600 font-mono">대기 중 — 전투 명령을 기다리고 있습니다</div>
-                </div>
-                <div className="flex gap-3">
-                    <Button
-                        variant="outline"
-                        onClick={startDemoBattle}
-                        className="font-mono border-amber-900/40 text-amber-400 hover:border-amber-500/60 hover:bg-amber-900/10"
-                    >
-                        <Zap className="size-4" />
-                        데모 전투 시작
-                    </Button>
-                </div>
-                <p className="text-[10px] text-gray-700 font-mono">
-                    실제 전투는 WebSocket /topic/battle/&#123;sessionId&#125; 수신 시 자동 시작됩니다
-                </p>
-            </div>
-        );
-    }
-
-    return (
-        <div className="space-y-3">
-            {/* Turn timer */}
-            {(battlePhase === 'setup' || battlePhase === 'combat') && (
-                <div className="bg-gray-950/80 border border-gray-800/60 rounded-lg px-4 py-2.5">
-                    <TurnTimer seconds={turnTimer} maxSeconds={30} turn={currentTurn} submitted={commandSubmitted} />
-                </div>
-            )}
-
-            {/* Main battle layout */}
-            <div className="overflow-x-auto">
-                <div className="flex gap-3" style={{ minWidth: 900 }}>
-                    {/* Canvas */}
-                    <div className="flex-1 min-w-0 bg-[#02020a] border border-amber-900/20 rounded-lg overflow-hidden">
-                        <BattleCanvas
-                            myFleet={myFleet}
-                            enemyFleets={enemyFleets}
-                            alliedFleets={alliedFleets}
-                            selectedFleetId={selectedFleetId}
-                            onFleetSelect={setSelectedFleetId}
-                        />
-                    </div>
-
-                    {/* Controls panel */}
-                    <div className="w-56 shrink-0 space-y-3">
-                        {/* Fleet status cards */}
-                        <div className="space-y-1.5">
-                            <div className="text-[10px] font-mono text-amber-500/70 tracking-widest uppercase">
-                                함대 현황 // Fleets
-                            </div>
-                            {myFleet && (
-                                <FleetStatusCard
-                                    fleet={myFleet}
-                                    selected={selectedFleetId === myFleet.id}
-                                    onClick={() => setSelectedFleetId(myFleet.id)}
-                                />
-                            )}
-                            {alliedFleets.map((f) => (
-                                <FleetStatusCard
-                                    key={f.id}
-                                    fleet={f}
-                                    selected={selectedFleetId === f.id}
-                                    onClick={() => setSelectedFleetId(f.id)}
-                                />
-                            ))}
-                            {enemyFleets.length > 0 && (
-                                <div className="text-[9px] font-mono text-red-500/60 uppercase tracking-widest pt-1">
-                                    적군
-                                </div>
-                            )}
-                            {enemyFleets.map((f) => {
-                                const legacy = toLegacyFleet(f, false);
-                                return (
-                                    <FleetStatusCard
-                                        key={legacy.id}
-                                        fleet={legacy}
-                                        selected={selectedFleetId === legacy.id}
-                                        onClick={() => setSelectedFleetId(legacy.id)}
-                                    />
-                                );
-                            })}
-                        </div>
-
-                        {/* Tactical controls (my fleet only) */}
-                        {myFleet && battlePhase !== 'result' && (
-                            <>
-                                <div className="border-t border-gray-800/60 pt-3 space-y-3">
-                                    <FormationSelector value={pendingFormation} onChange={setFormation} />
-                                    <EnergyAllocator value={pendingEnergy} onChange={setEnergy} />
-                                    <OrderPanel value={pendingOrder} onChange={setOrder} disabled={commandSubmitted} />
-                                </div>
-
-                                {/* Submit button */}
-                                <button
-                                    type="button"
-                                    disabled={commandSubmitted}
-                                    onClick={submitCommand}
-                                    className="w-full py-2.5 rounded border font-mono text-sm font-bold transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed border-amber-500/50 text-amber-400 hover:bg-amber-900/20 hover:border-amber-400 active:scale-[0.98]"
-                                    style={{ boxShadow: commandSubmitted ? 'none' : '0 0 12px rgba(255,215,0,0.15)' }}
-                                >
-                                    {commandSubmitted ? '✓ 명령 전송 완료' : '⚡ 명령 전송'}
-                                </button>
-                            </>
-                        )}
-                    </div>
-                </div>
-            </div>
-
-            {/* Battle result overlay */}
-            {battlePhase === 'result' && battleResult && <BattleResult result={battleResult} onClose={resetBattle} />}
-
-            {/* Battle log */}
-            <div className="bg-gray-950 border border-gray-800/60 rounded-lg overflow-hidden">
-                <div className="flex items-center justify-between px-3 py-1.5 border-b border-gray-800/60">
-                    <span className="text-[10px] font-mono text-amber-500/70 tracking-widest uppercase">
-                        전투 로그 // Battle Log
-                    </span>
-                    <button
-                        type="button"
-                        onClick={resetBattle}
-                        className="text-[9px] font-mono text-gray-600 hover:text-gray-400 transition-colors"
-                    >
-                        전투 종료
-                    </button>
-                </div>
-                <div className="h-28 overflow-y-auto p-2 space-y-0.5 font-mono text-[11px]">
-                    {battleLog.length === 0 ? (
-                        <div className="text-gray-700 text-center py-4">전투 로그가 없습니다</div>
-                    ) : (
-                        battleLog.map((entry) => (
-                            <div key={entry.id} className="flex gap-2">
-                                <span className="text-gray-700 shrink-0">T{entry.turn}</span>
-                                <span className={logTypeColor[entry.type] ?? 'text-gray-400'}>{entry.message}</span>
-                            </div>
-                        ))
-                    )}
-                    <div ref={logEndRef} />
-                </div>
-            </div>
-        </div>
-    );
-}
-
-const FACTION_COLORS: Record<string, string> = {
-    empire: '#FFD700',
-    alliance: '#4488FF',
-    fezzan: '#CC88FF',
-    rebel: '#FF8844',
-};
-
-function FleetStatusCard({
-    fleet,
-    selected,
-    onClick,
-}: {
-    fleet: import('@/stores/battleStore').BattleFleet;
-    selected: boolean;
-    onClick: () => void;
-}) {
-    const color = FACTION_COLORS[fleet.faction] ?? '#888888';
-    const hpPct = fleet.maxShips > 0 ? fleet.ships / fleet.maxShips : 0;
-    return (
-        <button
-            type="button"
-            onClick={onClick}
-            className="w-full text-left p-2 rounded border transition-all duration-100"
-            style={{
-                borderColor: selected ? color + '88' : '#1f2937',
-                backgroundColor: selected ? color + '0a' : 'transparent',
-            }}
-        >
-            <div className="flex items-center justify-between mb-1">
-                <span className="text-[10px] font-mono font-bold" style={{ color }}>
-                    {fleet.name}
-                </span>
-                <span className="text-[9px] font-mono text-gray-600">사기 {fleet.morale}</span>
-            </div>
-            <div className="h-1.5 bg-gray-800 rounded-full overflow-hidden">
-                <div
-                    className="h-full rounded-full transition-all"
-                    style={{
-                        width: `${hpPct * 100}%`,
-                        backgroundColor: hpPct > 0.5 ? '#00cc55' : hpPct > 0.25 ? '#ffaa00' : '#ff4444',
-                    }}
-                />
-            </div>
-            <div className="text-[9px] font-mono text-gray-600 mt-0.5 tabular-nums">
-                {fleet.ships.toLocaleString()} / {fleet.maxShips.toLocaleString()}
-            </div>
-        </button>
-    );
-}
-
-// ─── Main Page ───────────────────────────────────────────────────────────────
-
 export default function BattlePage() {
     const currentWorld = useWorldStore((s) => s.currentWorld);
     const { cities, nations, generals, diplomacy, loading, loadAll } = useGameStore();
 
-    const { myOfficer, fetchMyGeneral } = useOfficerStore();
+    const { myGeneral, fetchMyGeneral } = useGeneralStore();
     const [sortKey, setSortKey] = useState<SortKey>('totalCrew');
     const [sortAsc, setSortAsc] = useState(false);
     const [personalLogs, setPersonalLogs] = useState<{ id: number; message: string; date: string }[]>([]);
@@ -330,28 +68,18 @@ export default function BattlePage() {
         battleDetail: [],
     });
 
-    const { battlePhase, handleBattleEvent } = useBattleStore();
-
     useEffect(() => {
         if (currentWorld) {
             loadAll(currentWorld.id);
-            if (!myOfficer) fetchMyGeneral(currentWorld.id).catch(() => {});
+            if (!myGeneral) fetchMyGeneral(currentWorld.id).catch(() => {});
         }
-    }, [currentWorld, loadAll, myOfficer, fetchMyGeneral]);
-
-    // Subscribe to real-time battle events
-    useEffect(() => {
-        if (!currentWorld) return;
-        return subscribeWebSocket(`/topic/battle/${currentWorld.id}`, (data) => {
-            handleBattleEvent(data);
-        });
-    }, [currentWorld, handleBattleEvent]);
+    }, [currentWorld, loadAll, myGeneral, fetchMyGeneral]);
 
     const loadPersonalLogs = async () => {
-        if (!myOfficer || !currentWorld) return;
+        if (!myGeneral || !currentWorld) return;
         setPersonalLoading(true);
         try {
-            const { data } = await generalLogApi.getOldLogs(myOfficer.id, myOfficer.id, 'battleResult');
+            const { data } = await generalLogApi.getOldLogs(myGeneral.id, myGeneral.id, 'battleResult');
             setPersonalLogs(data.logs ?? []);
             setPersonalLogsLoaded(true);
         } catch {
@@ -363,15 +91,16 @@ export default function BattlePage() {
 
     const loadGeneralLogs = useCallback(
         async (targetGeneralId: number) => {
-            if (!myOfficer) return;
+            if (!myGeneral) return;
             setGeneralLogsLoading(true);
             try {
                 const entries = await Promise.all(
                     GENERAL_LOG_SECTIONS.map(async ({ type }) => {
-                        const { data } = await generalLogApi.getOldLogs(myOfficer.id, targetGeneralId, type);
+                        const { data } = await generalLogApi.getOldLogs(myGeneral.id, targetGeneralId, type);
                         return [type, data.logs ?? []] as const;
                     })
                 );
+
                 setGeneralLogs({
                     generalHistory: entries.find(([type]) => type === 'generalHistory')?.[1] ?? [],
                     generalAction: entries.find(([type]) => type === 'generalAction')?.[1] ?? [],
@@ -379,12 +108,17 @@ export default function BattlePage() {
                     battleDetail: entries.find(([type]) => type === 'battleDetail')?.[1] ?? [],
                 });
             } catch {
-                setGeneralLogs({ generalHistory: [], generalAction: [], battleResult: [], battleDetail: [] });
+                setGeneralLogs({
+                    generalHistory: [],
+                    generalAction: [],
+                    battleResult: [],
+                    battleDetail: [],
+                });
             } finally {
                 setGeneralLogsLoading(false);
             }
         },
-        [myOfficer]
+        [myGeneral]
     );
 
     useEffect(() => {
@@ -395,43 +129,67 @@ export default function BattlePage() {
     }, [currentWorld, loadAll]);
 
     useEffect(() => {
-        if (!myOfficer || generals.length === 0) return;
+        if (!currentWorld) return;
+        return subscribeWebSocket(`/topic/world/${currentWorld.id}/field-battle`, () => {
+            loadAll(currentWorld.id);
+        });
+    }, [currentWorld, loadAll]);
+
+    useEffect(() => {
+        if (!myGeneral || generals.length === 0) return;
         const targetExists = selectedGeneralId !== null && generals.some((general) => general.id === selectedGeneralId);
         if (!targetExists) {
-            const defaultGeneralId = generals.some((general) => general.id === myOfficer.id)
-                ? myOfficer.id
+            const defaultGeneralId = generals.some((general) => general.id === myGeneral.id)
+                ? myGeneral.id
                 : generals[0].id;
             setSelectedGeneralId(defaultGeneralId);
         }
-    }, [generals, myOfficer, selectedGeneralId]);
+    }, [generals, myGeneral, selectedGeneralId]);
 
     useEffect(() => {
-        if (!myOfficer || selectedGeneralId === null) return;
+        if (!myGeneral || selectedGeneralId === null) return;
         void loadGeneralLogs(selectedGeneralId);
-    }, [myOfficer, selectedGeneralId, loadGeneralLogs]);
+    }, [myGeneral, selectedGeneralId, loadGeneralLogs]);
 
+    // Active wars
     const wars = useMemo(() => diplomacy.filter((d) => d.stateCode === 'war' && !d.isDead), [diplomacy]);
+
+    // War history (all war diplomacy entries)
     const warHistory = useMemo(() => diplomacy.filter((d) => d.stateCode === 'war'), [diplomacy]);
+
+    // Ceasefire proposals
     const ceasefires = useMemo(
         () =>
             diplomacy.filter((d) => (d.stateCode === 'ceasefire' || d.stateCode === 'ceasefire_proposal') && !d.isDead),
         [diplomacy]
     );
 
+    // Military stats per nation
     const militaryRows = useMemo(() => {
         const map = new Map<
             number,
-            { totalCrew: number; generalCount: number; totalTrain: number; totalAtmos: number }
+            {
+                totalCrew: number;
+                generalCount: number;
+                totalTrain: number;
+                totalAtmos: number;
+            }
         >();
         for (const g of generals) {
-            if (g.factionId === 0 || g.ships <= 0) continue;
-            const entry = map.get(g.factionId) ?? { totalCrew: 0, generalCount: 0, totalTrain: 0, totalAtmos: 0 };
-            entry.totalCrew += g.ships;
+            if (g.nationId === 0 || g.crew <= 0) continue;
+            const entry = map.get(g.nationId) ?? {
+                totalCrew: 0,
+                generalCount: 0,
+                totalTrain: 0,
+                totalAtmos: 0,
+            };
+            entry.totalCrew += g.crew;
             entry.generalCount += 1;
-            entry.totalTrain += g.training;
-            entry.totalAtmos += g.morale;
-            map.set(g.factionId, entry);
+            entry.totalTrain += g.train;
+            entry.totalAtmos += g.atmos;
+            map.set(g.nationId, entry);
         }
+
         const rows: MilitaryRow[] = [];
         for (const n of nations) {
             const m = map.get(n.id);
@@ -450,6 +208,7 @@ export default function BattlePage() {
         return rows;
     }, [generals, nations]);
 
+    // Sorted military
     const sortedMilitary = useMemo(() => {
         const sorted = [...militaryRows].sort((a, b) => {
             const diff = a[sortKey] - b[sortKey];
@@ -460,22 +219,25 @@ export default function BattlePage() {
 
     const maxCrew = useMemo(() => Math.max(1, ...militaryRows.map((r) => r.totalCrew)), [militaryRows]);
 
+    // Front line cities
     const frontCities = useMemo(() => cities.filter((c) => c.frontState > 0), [cities]);
 
+    // Generals grouped by city
     const generalsByCity = useMemo(() => {
         const map = new Map<number, General[]>();
         for (const g of generals) {
-            if (g.ships <= 0) continue;
-            const list = map.get(g.planetId) ?? [];
+            if (g.crew <= 0) continue;
+            const list = map.get(g.cityId) ?? [];
             list.push(g);
-            map.set(g.planetId, list);
+            map.set(g.cityId, list);
         }
         return map;
     }, [generals]);
 
     const handleSort = (key: SortKey) => {
-        if (sortKey === key) setSortAsc(!sortAsc);
-        else {
+        if (sortKey === key) {
+            setSortAsc(!sortAsc);
+        } else {
             setSortKey(key);
             setSortAsc(false);
         }
@@ -489,33 +251,16 @@ export default function BattlePage() {
     if (!currentWorld) return <div className="p-4 text-muted-foreground">월드를 선택해주세요.</div>;
     if (loading) return <LoadingState />;
 
-    const isLiveBattle = battlePhase !== 'idle';
-
     return (
-        <div className="space-y-4 max-w-5xl mx-auto">
-            <PageHeader icon={Swords} title="감찰부" description="전쟁 현황 · 군사력 · 실시간 전투 지휘" />
+        <div className="space-y-4 max-w-4xl mx-auto">
+            <PageHeader icon={Swords} title="감찰부" description="전쟁 현황, 군사력, 전선 정보" />
 
-            {/* Live battle alert badge */}
-            {isLiveBattle && battlePhase !== 'result' && (
-                <div className="flex items-center gap-2 px-3 py-1.5 bg-red-950/40 border border-red-900/50 rounded-lg">
-                    <span className="size-2 rounded-full bg-red-500 animate-pulse" />
-                    <span className="text-xs font-mono text-red-400">LIVE BATTLE IN PROGRESS</span>
-                </div>
-            )}
-
-            <Tabs defaultValue={isLiveBattle ? 'live' : 'wars'}>
+            <Tabs defaultValue="wars">
                 <TabsList>
-                    <TabsTrigger
-                        value="live"
-                        className={isLiveBattle ? 'text-amber-400 data-[state=active]:text-amber-300' : ''}
-                    >
-                        {isLiveBattle && <span className="size-1.5 rounded-full bg-red-500 animate-pulse mr-1.5" />}
-                        실시간 전투
-                    </TabsTrigger>
                     <TabsTrigger value="wars">전쟁 현황</TabsTrigger>
                     <TabsTrigger value="military">군사력</TabsTrigger>
                     <TabsTrigger value="frontline">전선</TabsTrigger>
-                    {myOfficer && (
+                    {myGeneral && (
                         <TabsTrigger
                             value="personal"
                             onClick={() => {
@@ -525,16 +270,12 @@ export default function BattlePage() {
                             내 전투기록
                         </TabsTrigger>
                     )}
-                    {myOfficer && <TabsTrigger value="general-logs">제독 기록</TabsTrigger>}
+                    {myGeneral && <TabsTrigger value="general-logs">장수 기록</TabsTrigger>}
                 </TabsList>
-
-                {/* Tab: Live Battle */}
-                <TabsContent value="live" className="mt-4">
-                    <LiveBattlePanel />
-                </TabsContent>
 
                 {/* Tab 1: War Status */}
                 <TabsContent value="wars" className="mt-4 space-y-4">
+                    {/* Active Wars */}
                     <Card>
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
@@ -554,7 +295,7 @@ export default function BattlePage() {
                                         return (
                                             <div
                                                 key={w.id}
-                                                className="rounded-lg border border-red-900/50 bg-red-950/20 p-3 space-y-2"
+                                                className="rounded-none border border-red-900/50 bg-red-950/20 p-3 space-y-2"
                                             >
                                                 <div className="flex items-center gap-3">
                                                     <NationBadge name={src?.name} color={src?.color} />
@@ -567,11 +308,11 @@ export default function BattlePage() {
                                                 <div className="text-xs text-muted-foreground flex gap-4">
                                                     <span>
                                                         {src?.name ?? '?'}: 도시{' '}
-                                                        {cities.filter((c) => c.factionId === w.srcNationId).length}개
+                                                        {cities.filter((c) => c.nationId === w.srcNationId).length}개
                                                     </span>
                                                     <span>
                                                         {dest?.name ?? '?'}: 도시{' '}
-                                                        {cities.filter((c) => c.factionId === w.destNationId).length}개
+                                                        {cities.filter((c) => c.nationId === w.destNationId).length}개
                                                     </span>
                                                 </div>
                                             </div>
@@ -582,6 +323,7 @@ export default function BattlePage() {
                         </CardContent>
                     </Card>
 
+                    {/* Ceasefire Negotiations */}
                     {ceasefires.length > 0 && (
                         <Card>
                             <CardHeader>
@@ -595,7 +337,7 @@ export default function BattlePage() {
                                     const src = getNation(nations, d.srcNationId);
                                     const dest = getNation(nations, d.destNationId);
                                     return (
-                                        <div key={d.id} className="flex items-center gap-3 rounded-lg border p-3">
+                                        <div key={d.id} className="flex items-center gap-3 rounded-none border p-3">
                                             <NationBadge name={src?.name} color={src?.color} />
                                             <Badge variant="outline">
                                                 {d.stateCode === 'ceasefire' ? '휴전' : '종전제의'}
@@ -609,6 +351,7 @@ export default function BattlePage() {
                         </Card>
                     )}
 
+                    {/* War Declaration History */}
                     {warHistory.length > 0 && (
                         <Card>
                             <CardHeader>
@@ -648,7 +391,7 @@ export default function BattlePage() {
                 <TabsContent value="military" className="mt-4 space-y-4">
                     <Card>
                         <CardHeader>
-                            <CardTitle>진영별 군사력 비교</CardTitle>
+                            <CardTitle>국가별 군사력 비교</CardTitle>
                         </CardHeader>
                         <CardContent>
                             {sortedMilitary.length === 0 ? (
@@ -670,7 +413,7 @@ export default function BattlePage() {
                                                     className="cursor-pointer select-none text-right"
                                                     onClick={() => handleSort('generalCount')}
                                                 >
-                                                    제독
+                                                    장수
                                                     <SortIndicator active={sortKey === 'generalCount'} />
                                                 </TableHead>
                                                 <TableHead
@@ -747,12 +490,9 @@ export default function BattlePage() {
                     ) : (
                         frontCities.map((c) => {
                             const cityGenerals = generalsByCity.get(c.id) ?? [];
-                            const ownerNation = nations.find((n) => n.id === c.factionId);
-                            const wallPercent = c.fortressMax > 0 ? Math.round((c.fortress / c.fortressMax) * 100) : 0;
-                            const defPercent =
-                                c.orbitalDefenseMax > 0
-                                    ? Math.round((c.orbitalDefense / c.orbitalDefenseMax) * 100)
-                                    : 0;
+                            const ownerNation = nations.find((n) => n.id === c.nationId);
+                            const wallPercent = c.wallMax > 0 ? Math.round((c.wall / c.wallMax) * 100) : 0;
+                            const defPercent = c.defMax > 0 ? Math.round((c.def / c.defMax) * 100) : 0;
                             return (
                                 <Card key={c.id}>
                                     <CardHeader className="pb-2">
@@ -761,17 +501,18 @@ export default function BattlePage() {
                                                 <NationBadge name={ownerNation.name} color={ownerNation.color} />
                                             )}
                                             <span>{c.name}</span>
-                                            <Badge variant="secondary">{PLANET_LEVEL_NAMES[c.level] ?? c.level}</Badge>
+                                            <Badge variant="secondary">{CITY_LEVEL_NAMES[c.level] ?? c.level}</Badge>
                                             <Badge variant="destructive" className="ml-auto">
                                                 전선 {c.frontState}
                                             </Badge>
                                         </CardTitle>
                                     </CardHeader>
                                     <CardContent className="space-y-3">
+                                        {/* Defense status */}
                                         <div className="grid grid-cols-2 gap-3">
                                             <div className="space-y-1">
                                                 <div className="flex justify-between text-xs">
-                                                    <span className="text-muted-foreground">요새 방어</span>
+                                                    <span className="text-muted-foreground">성벽</span>
                                                     <span>
                                                         {c.wall}/{c.wallMax} ({wallPercent}%)
                                                     </span>
@@ -798,10 +539,12 @@ export default function BattlePage() {
                                                 </div>
                                             </div>
                                         </div>
+
+                                        {/* Garrison generals */}
                                         {cityGenerals.length > 0 && (
                                             <div>
                                                 <div className="text-xs text-muted-foreground mb-1">
-                                                    주둔 제독 ({cityGenerals.length}명)
+                                                    주둔 장수 ({cityGenerals.length}명)
                                                 </div>
                                                 <div className="overflow-x-auto">
                                                     <Table>
@@ -841,15 +584,14 @@ export default function BattlePage() {
                         })
                     )}
                 </TabsContent>
-
                 {/* Tab 4: Personal Battle Log */}
-                {myOfficer && (
+                {myGeneral && (
                     <TabsContent value="personal" className="mt-4 space-y-4">
                         <Card>
                             <CardHeader className="pb-2">
                                 <CardTitle className="flex items-center gap-2 text-sm">
                                     <User className="size-4" />
-                                    {myOfficer.name}의 전투 기록
+                                    {myGeneral.name}의 전투 기록
                                     <div className="ml-auto flex items-center gap-2">
                                         <span className="text-xs text-muted-foreground">로그 스타일:</span>
                                         <select
@@ -908,14 +650,13 @@ export default function BattlePage() {
                     </TabsContent>
                 )}
 
-                {/* Tab 5: General Logs */}
-                {myOfficer && (
+                {myGeneral && (
                     <TabsContent value="general-logs" className="mt-4 space-y-4">
                         <Card>
                             <CardHeader className="pb-2">
                                 <CardTitle className="flex items-center gap-2 text-sm">
                                     <User className="size-4" />
-                                    제독 선택
+                                    장수 선택
                                     <div className="ml-auto flex items-center gap-2">
                                         <span className="text-xs text-muted-foreground">로그 스타일:</span>
                                         <select
@@ -943,7 +684,7 @@ export default function BattlePage() {
                                 </select>
                                 {selectedGeneral && (
                                     <div className="mt-2 text-xs text-muted-foreground">
-                                        선택된 제독: {selectedGeneral.name}
+                                        선택된 장수: {selectedGeneral.name}
                                     </div>
                                 )}
                             </CardContent>
@@ -966,12 +707,18 @@ export default function BattlePage() {
                                                 <EmptyState icon={ScrollText} title={section.emptyTitle} />
                                             ) : (
                                                 <div
-                                                    className={`max-h-80 overflow-y-auto space-y-1 ${logStyle === 'legacy' ? 'font-mono text-[11px] bg-black p-3 rounded border border-gray-800' : 'text-sm'}`}
+                                                    className={`max-h-80 overflow-y-auto space-y-1 ${
+                                                        logStyle === 'legacy'
+                                                            ? 'font-mono text-[11px] bg-black p-3 rounded border border-gray-800'
+                                                            : 'text-sm'
+                                                    }`}
                                                 >
                                                     {logs.map((log) => (
                                                         <div
                                                             key={log.id}
-                                                            className={`py-1 border-b border-gray-800 last:border-0 ${logStyle === 'legacy' ? 'text-green-400' : ''}`}
+                                                            className={`py-1 border-b border-gray-800 last:border-0 ${
+                                                                logStyle === 'legacy' ? 'text-green-400' : ''
+                                                            }`}
                                                         >
                                                             <span className="text-muted-foreground text-xs mr-2">
                                                                 {logStyle === 'legacy'

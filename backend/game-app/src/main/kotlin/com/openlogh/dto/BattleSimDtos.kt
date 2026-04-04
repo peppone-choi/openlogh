@@ -2,7 +2,7 @@ package com.openlogh.dto
 
 data class SimUnitInfo(
     val name: String = "장수",
-    val factionId: Long = 1,
+    val nationId: Long = 1,
     val leadership: Int = 50,
     val strength: Int = 50,
     val intel: Int = 50,
@@ -26,9 +26,9 @@ data class WeatherModifier(
     val defenceMultiplier: Double = 1.0,
 )
 
-data class SimPlanetInfo(
-    val sessionId: Long = 0,
-    val factionId: Long = 0,
+data class SimCityInfo(
+    val worldId: Long = 0,
+    val nationId: Long = 0,
     val name: String = "가상 도시",
     val def: Int = 0,
     val wall: Int = 0,
@@ -39,9 +39,20 @@ data class SimulateRequest(
     val attacker: SimUnitInfo,
     val defender: SimUnitInfo,
     val defenders: List<SimUnitInfo> = emptyList(),
-    val defenderPlanet: SimPlanetInfo = SimPlanetInfo(),
+    val defenderCity: SimCityInfo = SimCityInfo(),
     val terrain: String = "plain",
     val weather: String = "clear",
+    val detailed: Boolean = false,
+)
+
+data class BattlePhaseDetail(
+    val phase: Int,
+    val attackerHp: Int,
+    val defenderHp: Int,
+    val attackerDamage: Int,
+    val defenderDamage: Int,
+    val defenderIndex: Int = 0,
+    val events: List<String> = emptyList(),
 )
 
 data class SimulateResult(
@@ -53,4 +64,5 @@ data class SimulateResult(
     val terrain: String,
     val weather: String,
     val logs: List<String>,
+    val phaseDetails: List<BattlePhaseDetail>? = null,
 )

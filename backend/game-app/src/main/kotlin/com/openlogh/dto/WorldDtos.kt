@@ -11,10 +11,10 @@ data class CreateWorldRequest(
     val extend: Boolean? = null,
     val npcMode: Int? = null,
     val fiction: Int? = null,
-    val maxOfficer: Int? = null,
-    val maxFaction: Int? = null,
+    val maxGeneral: Int? = null,
+    val maxNation: Int? = null,
     val joinMode: String? = null,
-    val blockOfficerCreate: Int? = null,
+    val blockGeneralCreate: Int? = null,
     val showImgLevel: Int? = null,
     val autorunUser: List<String>? = null,
     val startTime: String? = null,
@@ -26,29 +26,29 @@ data class ResetWorldRequest(
     val extend: Boolean? = null,
     val npcMode: Int? = null,
     val fiction: Int? = null,
-    val maxOfficer: Int? = null,
-    val maxFaction: Int? = null,
+    val maxGeneral: Int? = null,
+    val maxNation: Int? = null,
     val joinMode: String? = null,
-    val blockOfficerCreate: Int? = null,
+    val blockGeneralCreate: Int? = null,
     val showImgLevel: Int? = null,
     val autorunUser: List<String>? = null,
     val startTime: String? = null,
     val opentime: String? = null,
 )
 
-data class WorldPlanetOwnershipSnapshotResponse(
-    val planetId: Long,
-    val factionId: Long,
+data class WorldCityOwnershipSnapshotResponse(
+    val cityId: Long,
+    val nationId: Long,
 )
 
 data class WorldSnapshotResponse(
     val id: Long,
-    val sessionId: Long,
+    val worldId: Long,
     val year: Int,
     val month: Int,
     val createdAt: String,
     val phase: String? = null,
     val season: String? = null,
-    val planetOwnership: List<WorldPlanetOwnershipSnapshotResponse>,
+    val cityOwnership: List<WorldCityOwnershipSnapshotResponse>,
     val events: List<String> = emptyList(),
 )

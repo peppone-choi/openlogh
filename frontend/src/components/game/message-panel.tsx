@@ -1,11 +1,11 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/8bit/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/8bit/tabs';
+import { Button } from '@/components/ui/8bit/button';
+import { Textarea } from '@/components/ui/8bit/textarea';
+import { ScrollArea } from '@/components/ui/8bit/scroll-area';
 import { MessagePlate } from '@/components/game/message-plate';
 import { messageApi } from '@/lib/gameApi';
 import type { Message, General, ContactInfo } from '@/types';
@@ -60,7 +60,7 @@ export function MessagePanel({ worldId, myGeneralId, generals }: MessagePanelPro
     // Load last_contact from localStorage
     useEffect(() => {
         try {
-            const raw = localStorage.getItem(`openlogh:lastContacts:${myGeneralId}`);
+            const raw = localStorage.getItem(`opensam:lastContacts:${myGeneralId}`);
             if (raw) setLastContacts(new Map(Object.entries(JSON.parse(raw)).map(([k, v]) => [Number(k), Number(v)])));
         } catch {
             /* ignore */
@@ -79,7 +79,7 @@ export function MessagePanel({ worldId, myGeneralId, generals }: MessagePanelPro
                 const trimmed = new Map(entries);
                 try {
                     localStorage.setItem(
-                        `openlogh:lastContacts:${myGeneralId}`,
+                        `opensam:lastContacts:${myGeneralId}`,
                         JSON.stringify(Object.fromEntries(trimmed))
                     );
                 } catch {
@@ -330,7 +330,7 @@ export function MessagePanel({ worldId, myGeneralId, generals }: MessagePanelPro
                         onChange={(e) => setDestId(e.target.value)}
                         className="h-8 flex-1 min-w-0 border border-gray-600 bg-[#111] px-2 text-xs"
                     >
-                        <option value="">받는 제독...</option>
+                        <option value="">받는 장수...</option>
                         {recipientMode === 'all'
                             ? // Nation-grouped optgroups with color coding
                               Array.from(nationGroups.entries()).map(([nationName, group]) => (

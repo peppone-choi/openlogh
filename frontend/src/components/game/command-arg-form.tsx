@@ -1,13 +1,17 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/8bit/input';
+import { Button } from '@/components/ui/8bit/button';
+import { Badge } from '@/components/ui/8bit/badge';
 import { useGameStore } from '@/stores/gameStore';
-import { useOfficerStore } from '@/stores/officerStore';
+import { useGeneralStore } from '@/stores/generalStore';
 import { useWorldStore } from '@/stores/worldStore';
 import type { City, CommandArg, General, Nation } from '@/types';
-import { PLANET_LEVEL_NAMES } from '@/lib/game-utils';
+import { CITY_LEVEL_NAMES } from '@/lib/game-utils';
+import { CrewTypeBrowser } from './crew-type-browser';
+import { EquipmentBrowser } from './equipment-browser';
+import { DeploymentSelector } from './deployment-selector';
 import { MapViewer } from './map-viewer';
 
 /** Arg schema for each command that requires user input */
@@ -18,6 +22,7 @@ type ArgField =
     | { type: 'number'; key: string; label: string; placeholder?: string }
     | { type: 'boolean'; key: string; label: string }
     | { type: 'text'; key: string; label: string; placeholder?: string }
+    | { type: 'coordinate'; key: string; label: string }
     | {
           type: 'select';
           key: string;
@@ -25,299 +30,484 @@ type ArgField =
           options: { value: string; label: string }[];
       };
 
+const CREW_TYPE_OPTIONS = [
+    { value: '0', label: '보병' },
+    { value: '1', label: '궁병' },
+    { value: '2', label: '기병' },
+    { value: '3', label: '수군' },
+];
+
+const ITEM_TYPE_OPTIONS = [
+    { value: 'weapon', label: '무기' },
+    { value: 'book', label: '서적' },
+    { value: 'horse', label: '군마' },
+    { value: 'item', label: '도구' },
+];
+
+const NATION_TYPE_OPTIONS = [
+    { value: 'che_도적', label: '도적' },
+    { value: 'che_명가', label: '명가' },
+    { value: 'che_음양가', label: '음양가' },
+    { value: 'che_종횡가', label: '종횡가' },
+    { value: 'che_불가', label: '불가' },
+    { value: 'che_오두미도', label: '오두미도' },
+    { value: 'che_태평도', label: '태평도' },
+    { value: 'che_도가', label: '도가' },
+    { value: 'che_묵가', label: '묵가' },
+    { value: 'che_덕가', label: '덕가' },
+    { value: 'che_병가', label: '병가' },
+    { value: 'che_유가', label: '유가' },
+    { value: 'che_법가', label: '법가' },
+];
+
+const COLOR_TYPE_OPTIONS = [
+    { value: '0', label: '기본' },
+    { value: '1', label: '적색' },
+    { value: '2', label: '청색' },
+    { value: '3', label: '녹색' },
+    { value: '4', label: '황색' },
+    { value: '5', label: '자색' },
+    { value: '6', label: '백색' },
+    { value: '7', label: '흑색' },
+];
+
+const FLAG_COLOR_OPTIONS = [
+    { value: 'red', label: '적색' },
+    { value: 'blue', label: '청색' },
+    { value: 'green', label: '녹색' },
+    { value: 'yellow', label: '황색' },
+    { value: 'purple', label: '자색' },
+    { value: 'black', label: '흑색' },
+    { value: 'white', label: '백색' },
+];
+
+const NPC_OPTION_OPTIONS = [{ value: '순간이동', label: '순간이동' }];
+
+const PIJANG_OPTION_OPTIONS = [
+    { value: '전략', label: '전략' },
+    { value: '급습', label: '급습' },
+    { value: '수몰', label: '수몰' },
+    { value: '초토화', label: '초토화' },
+    { value: '허보', label: '허보' },
+    { value: '의병모집', label: '의병모집' },
+];
+
 const COMMAND_ARGS: Record<string, ArgField[]> = {
-    // ===== Default =====
-    휴식: [],
-
-    // ===== Operations / MCP =====
-    워프항행: [],
-    성계내항행: [{ type: 'city', key: 'destCityId', label: '목적지 행성' }],
-    연료보급: [],
-    정찰: [{ type: 'city', key: 'destCityId', label: '정찰 대상 행성' }],
-    군기유지: [],
-    기본훈련: [],
-    특수훈련: [],
-    맹훈련: [],
-    육전훈련: [],
-    공전훈련: [],
-    경계출동: [],
-    무력진압: [],
-    분열행진: [],
-    징발: [],
-    특별경비: [],
-    정비: [],
-    지상작전개시: [{ type: 'city', key: 'destCityId', label: '목표 행성' }],
-    지상전투개시: [{ type: 'city', key: 'destCityId', label: '목표 행성' }],
-    점령: [],
-    철수: [],
-    후퇴: [],
-    육전대출격: [],
-    육전대철수: [],
-    육전전술훈련: [],
-    공전전술훈련: [],
-
-    // ===== Personal / PCP =====
-    퇴역: [],
-    지원전환: [],
-    망명: [{ type: 'nation', key: 'destNationId', label: '망명 대상 진영' }],
-    회견: [{ type: 'general', key: 'destGeneralId', label: '대상 장교' }],
-    수강: [],
-    기함구매: [],
-    자금투입: [],
-    귀환설정: [{ type: 'city', key: 'destCityId', label: '귀환 행성' }],
-    원거리이동: [{ type: 'city', key: 'destCityId', label: '목적지 행성' }],
-    근거리이동: [],
-    병기연습: [],
-    반의: [],
-    모의: [],
-    설득: [{ type: 'general', key: 'destGeneralId', label: '설득 대상' }],
-    반란참가: [],
-    반란: [],
-
-    // ===== Command / Leadership =====
-    작전계획: [],
-    장수발령: [
-        { type: 'general', key: 'destGeneralId', label: '대상 장교' },
-        { type: 'city', key: 'destCityId', label: '이동 행성' },
+    // Military - recruitment
+    모병: [
+        {
+            type: 'select',
+            key: 'crewType',
+            label: '병종',
+            options: CREW_TYPE_OPTIONS,
+        },
+        { type: 'number', key: 'amount', label: '수량', placeholder: '최대' },
     ],
-    작전철회: [],
-    부대결성: [],
-    부대해산: [],
-    강의: [],
-    수송계획: [],
-    수송중지: [],
-
-    // ===== Logistics =====
-    재편성: [],
-    완전수리: [],
-    완전보급: [],
-    반출입: [],
-    보충: [],
-    할당: [],
-
-    // ===== Influence / Social =====
-    야회: [],
-    수렵: [],
-    회담: [],
-    담화: [],
-    연설: [],
-
-    // ===== Personal (proposal/order) =====
-    제안: [{ type: 'general', key: 'destGeneralId', label: '제안 대상' }],
-    명령: [{ type: 'general', key: 'destGeneralId', label: '명령 대상' }],
-
-    // ===== Espionage / Intelligence =====
-    일제수색: [],
-    체포허가: [{ type: 'general', key: 'destGeneralId', label: '체포 대상' }],
-    집행명령: [{ type: 'general', key: 'destGeneralId', label: '집행 대상' }],
-    체포명령: [{ type: 'general', key: 'destGeneralId', label: '체포 대상' }],
-    사열: [],
-    습격: [{ type: 'general', key: 'destGeneralId', label: '습격 대상' }],
-    감시: [{ type: 'general', key: 'destGeneralId', label: '감시 대상' }],
-    잠입공작: [{ type: 'city', key: 'destCityId', label: '잠입 대상 행성' }],
-    탈출공작: [],
-    정보공작: [],
-    파괴공작: [],
-    선동공작: [{ type: 'city', key: 'destCityId', label: '선동 대상 행성' }],
-    귀환공작: [],
-    통신방해: [],
-    위장함대: [],
-
-    // ===== Nation: Default =====
-    Nation휴식: [],
-
-    // ===== Nation: Personnel =====
-    승진: [{ type: 'general', key: 'destGeneralId', label: '승진 대상' }],
-    발탁: [{ type: 'general', key: 'destGeneralId', label: '발탁 대상' }],
-    강등: [{ type: 'general', key: 'destGeneralId', label: '강등 대상' }],
-    서작: [{ type: 'general', key: 'destGeneralId', label: '서작 대상' }],
-    서훈: [{ type: 'general', key: 'destGeneralId', label: '서훈 대상' }],
-    임명: [{ type: 'general', key: 'destGeneralId', label: '임명 대상' }],
-    파면: [{ type: 'general', key: 'destGeneralId', label: '파면 대상' }],
-    사임: [],
-    봉토수여: [
-        { type: 'general', key: 'destGeneralId', label: '봉토 수여 대상' },
-        { type: 'city', key: 'destCityId', label: '봉토 행성' },
+    징병: [
+        {
+            type: 'select',
+            key: 'crewType',
+            label: '병종',
+            options: CREW_TYPE_OPTIONS,
+        },
+        { type: 'number', key: 'amount', label: '수량', placeholder: '최대' },
     ],
-    봉토직할: [{ type: 'city', key: 'destCityId', label: '직할 전환 행성' }],
-
-    // ===== Nation: Political =====
-    국가목표설정: [],
-    납입률변경: [{ type: 'number', key: 'rate', label: '납입률 (%)', placeholder: '0~100' }],
-    관세율변경: [{ type: 'number', key: 'rate', label: '관세율 (%)', placeholder: '0~100' }],
-    분배: [],
-    처단: [{ type: 'general', key: 'destGeneralId', label: '처단 대상' }],
-    외교: [{ type: 'nation', key: 'destNationId', label: '외교 대상 진영' }],
-    통치목표: [],
-    예산편성: [],
-    제안공작: [{ type: 'general', key: 'destGeneralId', label: '제안공작 대상' }],
-
-    // ===== Nation: Diplomacy =====
-    선전포고: [{ type: 'nation', key: 'destNationId', label: '대상 진영' }],
-    불가침제의: [{ type: 'nation', key: 'destNationId', label: '대상 진영' }],
-    불가침수락: [
-        { type: 'nation', key: 'destNationId', label: '대상 진영' },
-        { type: 'general', key: 'destGeneralId', label: '대상 장교' },
+    // Movement
+    출병: [{ type: 'city', key: 'destCityId', label: '목표 도시' }],
+    이동: [{ type: 'city', key: 'destCityId', label: '목표 도시' }],
+    강행: [{ type: 'city', key: 'destCityId', label: '목표 도시' }],
+    // Espionage & tactics
+    첩보: [{ type: 'city', key: 'destCityId', label: '목표 도시' }],
+    화계: [{ type: 'city', key: 'destCityId', label: '목표 도시' }],
+    탈취: [{ type: 'city', key: 'destCityId', label: '목표 도시' }],
+    파괴: [{ type: 'city', key: 'destCityId', label: '목표 도시' }],
+    선동: [{ type: 'city', key: 'destCityId', label: '목표 도시' }],
+    // Personnel
+    등용: [{ type: 'general', key: 'destGeneralID', label: '대상 장수' }],
+    장수대상임관: [{ type: 'general', key: 'destGeneralID', label: '대상 장수' }],
+    // Economy
+    증여: [
+        { type: 'general', key: 'destGeneralID', label: '대상 장수' },
+        { type: 'boolean', key: 'isGold', label: '금화 여부 (off=쌀)' },
+        { type: 'number', key: 'amount', label: '수량' },
     ],
-    불가침파기제의: [{ type: 'nation', key: 'destNationId', label: '대상 진영' }],
-    불가침파기수락: [
-        { type: 'nation', key: 'destNationId', label: '대상 진영' },
-        { type: 'general', key: 'destGeneralId', label: '대상 장교' },
+    헌납: [
+        { type: 'boolean', key: 'isGold', label: '금화 여부 (off=쌀)' },
+        { type: 'number', key: 'amount', label: '수량' },
     ],
-    종전제의: [{ type: 'nation', key: 'destNationId', label: '대상 진영' }],
+    군량매매: [
+        {
+            type: 'boolean',
+            key: 'buyRice',
+            label: '쌀 구매 여부 (off=쌀 판매)',
+        },
+        { type: 'number', key: 'amount', label: '매매 수량' },
+    ],
+    // Equipment
+    장비매매: [
+        {
+            type: 'select',
+            key: 'itemType',
+            label: '장비 종류',
+            options: ITEM_TYPE_OPTIONS,
+        },
+        {
+            type: 'text',
+            key: 'itemCode',
+            label: '아이템 코드',
+            placeholder: '예: S_sword',
+        },
+    ],
+    건국: [
+        {
+            type: 'text',
+            key: 'nationName',
+            label: '국가명',
+            placeholder: '신생국',
+        },
+        {
+            type: 'select',
+            key: 'nationType',
+            label: '국가 성향',
+            options: NATION_TYPE_OPTIONS,
+        },
+        {
+            type: 'select',
+            key: 'colorType',
+            label: '국가 색상',
+            options: COLOR_TYPE_OPTIONS,
+        },
+    ],
+    CR건국: [
+        {
+            type: 'text',
+            key: 'nationName',
+            label: '국가명',
+            placeholder: '신생국',
+        },
+        {
+            type: 'select',
+            key: 'nationType',
+            label: '국가 성향',
+            options: NATION_TYPE_OPTIONS,
+        },
+        {
+            type: 'select',
+            key: 'colorType',
+            label: '국가 색상',
+            options: COLOR_TYPE_OPTIONS,
+        },
+    ],
+    무작위건국: [
+        {
+            type: 'text',
+            key: 'nationName',
+            label: '국가명',
+            placeholder: '신생국',
+        },
+        {
+            type: 'select',
+            key: 'nationType',
+            label: '국가 성향',
+            options: NATION_TYPE_OPTIONS,
+        },
+        {
+            type: 'select',
+            key: 'colorType',
+            label: '국가 색상',
+            options: COLOR_TYPE_OPTIONS,
+        },
+    ],
+    숙련전환: [
+        {
+            type: 'select',
+            key: 'srcArmType',
+            label: '감소 대상 숙련',
+            options: CREW_TYPE_OPTIONS,
+        },
+        {
+            type: 'select',
+            key: 'destArmType',
+            label: '전환 대상 숙련',
+            options: CREW_TYPE_OPTIONS,
+        },
+    ],
+    선양: [{ type: 'general', key: 'destGeneralID', label: '선양 대상 장수' }],
+    임관: [{ type: 'nation', key: 'destNationId', label: '임관할 국가' }],
+    랜덤임관: [],
+    NPC능동: [
+        {
+            type: 'select',
+            key: 'optionText',
+            label: 'NPC 동작',
+            options: NPC_OPTION_OPTIONS,
+        },
+        { type: 'city', key: 'destCityID', label: '목표 도시' },
+    ],
+    // Nation commands
+    포상: [
+        { type: 'general', key: 'destGeneralID', label: '대상 장수' },
+        { type: 'boolean', key: 'isGold', label: '금화 여부 (off=쌀)' },
+        { type: 'number', key: 'amount', label: '수량' },
+    ],
+    몰수: [
+        { type: 'general', key: 'destGeneralID', label: '대상 장수' },
+        { type: 'boolean', key: 'isGold', label: '금화 여부 (off=쌀)' },
+        { type: 'number', key: 'amount', label: '수량' },
+    ],
+    발령: [
+        { type: 'general', key: 'destGeneralID', label: '대상 장수' },
+        { type: 'city', key: 'cityId', label: '이동 도시' },
+    ],
+    천도: [{ type: 'city', key: 'destCityId', label: '새 수도' }],
+    백성동원: [{ type: 'city', key: 'cityId', label: '대상 도시' }],
+    수몰: [{ type: 'city', key: 'cityId', label: '대상 도시' }],
+    초토화: [{ type: 'city', key: 'cityId', label: '대상 도시' }],
+    허보: [{ type: 'city', key: 'cityId', label: '대상 도시' }],
+    물자원조: [
+        { type: 'nation', key: 'destNationId', label: '대상 국가' },
+        { type: 'number', key: 'goldAmount', label: '지원 금' },
+        { type: 'number', key: 'riceAmount', label: '지원 쌀' },
+    ],
+    국호변경: [
+        {
+            type: 'text',
+            key: 'nationName',
+            label: '새 국호',
+            placeholder: '국가명',
+        },
+    ],
+    국기변경: [
+        {
+            type: 'select',
+            key: 'colorType',
+            label: '국기 색상',
+            options: FLAG_COLOR_OPTIONS,
+        },
+    ],
+    // Diplomacy
+    선전포고: [{ type: 'nation', key: 'destNationId', label: '대상 국가' }],
+    종전제의: [{ type: 'nation', key: 'destNationId', label: '대상 국가' }],
     종전수락: [
-        { type: 'nation', key: 'destNationId', label: '대상 진영' },
-        { type: 'general', key: 'destGeneralId', label: '대상 장교' },
+        { type: 'nation', key: 'destNationId', label: '대상 국가' },
+        { type: 'general', key: 'destGeneralID', label: '대상 장수' },
+    ],
+    불가침제의: [
+        { type: 'nation', key: 'destNationId', label: '대상 국가' },
+        { type: 'number', key: 'year', label: '유효 연도' },
+        { type: 'number', key: 'month', label: '유효 월' },
+    ],
+    불가침수락: [
+        { type: 'nation', key: 'destNationId', label: '대상 국가' },
+        { type: 'general', key: 'destGeneralID', label: '대상 장수' },
+        { type: 'number', key: 'year', label: '유효 연도' },
+        { type: 'number', key: 'month', label: '유효 월' },
+    ],
+    불가침파기제의: [{ type: 'nation', key: 'destNationId', label: '대상 국가' }],
+    불가침파기수락: [
+        { type: 'nation', key: 'destNationId', label: '대상 국가' },
+        { type: 'general', key: 'destGeneralID', label: '대상 장수' },
+    ],
+    // Strategic
+    급습: [{ type: 'nation', key: 'destNationId', label: '대상 국가' }],
+    이호경식: [{ type: 'nation', key: 'destNationId', label: '대상 국가' }],
+    피장파장: [
+        { type: 'nation', key: 'destNationId', label: '대상 국가' },
+        {
+            type: 'select',
+            key: 'commandType',
+            label: '대응 전략',
+            options: PIJANG_OPTION_OPTIONS,
+        },
+    ],
+    부대탈퇴지시: [{ type: 'general', key: 'destGeneralID', label: '대상 장수' }],
+    인구이동: [
+        { type: 'city', key: 'destCityId', label: '도착 도시' },
+        { type: 'number', key: 'amount', label: '이동 인구' },
     ],
 
-    // ===== Nation: Resource / Administration =====
-    감축: [{ type: 'city', key: 'destCityId', label: '감축 대상 행성' }],
-    주민동원: [{ type: 'city', key: 'destCityId', label: '동원 대상 행성' }],
-    외교공작: [{ type: 'nation', key: 'destNationId', label: '대상 진영' }],
-    세율변경: [{ type: 'number', key: 'rate', label: '세율 (%)', placeholder: '0~100' }],
-    징병률변경: [{ type: 'number', key: 'rate', label: '징병률 (%)', placeholder: '0~100' }],
-    국가해산: [],
-    항복: [{ type: 'nation', key: 'destNationId', label: '항복 대상 진영' }],
+    // Field battle
+    요격: [{ type: 'city', key: 'destCityId', label: '매복 방면 (인접 도시)' }],
+
+    // Open-world movement
+    좌표이동: [{ type: 'coordinate', key: 'dest', label: '목표 지점 (맵 클릭)' }],
+
+    // === No-arg General Commands ===
+    // Default
+    휴식: [],
+    // Domestic
+    농지개간: [],
+    상업투자: [],
+    치안강화: [],
+    수비강화: [],
+    성벽보수: [],
+    정착장려: [],
+    주민선정: [],
+    기술연구: [],
+    훈련: [],
+    사기진작: [],
+    소집해제: [],
+    물자조달: [],
+    단련: [],
+    // Military
+    집합: [],
+    귀환: [],
+    접경귀환: [],
+    거병: [],
+    전투태세: [],
+    요양: [],
+    방랑: [],
+    // Political
+    등용수락: [],
+    하야: [],
+    은퇴: [],
+    모반시도: [],
+    해산: [],
+    견문: [],
+    인재탐색: [],
+    내정특기초기화: [],
+    전투특기초기화: [],
+    // Special
+    CR맹훈련: [],
+    // === No-arg Nation Commands ===
+    Nation휴식: [],
+    감축: [],
+    증축: [],
+    필사즉생: [],
+    의병모집: [],
+    무작위수도이전: [],
+    // Research
+    극병연구: [],
+    대검병연구: [],
+    무희연구: [],
+    산저병연구: [],
+    상병연구: [],
+    원융노병연구: [],
+    음귀병연구: [],
+    화륜차연구: [],
+    화시병연구: [],
 };
 
-/** Contextual help text for commands */
+/** Contextual help text for commands, matching legacy processing pages */
 const COMMAND_HELP: Record<string, string> = {
-    // Operations
-    워프항행: '워프 항행으로 지정된 그리드 좌표로 이동합니다. 연료를 소모합니다.',
-    성계내항행: '성계 내 다른 행성으로 항행합니다. 대기 시간이 발생합니다.',
-    연료보급: '함대에 연료를 보급합니다.',
-    정찰: '대상 행성의 정보를 수집합니다.',
-    군기유지: '함대의 군기를 유지하여 사기를 높입니다.',
-    기본훈련: '함대의 기본 훈련을 실시합니다.',
-    특수훈련: '물자를 소모하여 특수 훈련을 실시합니다.',
-    맹훈련: '물자를 소모하여 고강도 훈련을 실시합니다. 사기가 감소할 수 있습니다.',
-    육전훈련: '육전 능력을 향상시키는 훈련입니다.',
-    공전훈련: '공중전 능력을 향상시키는 훈련입니다.',
-    경계출동: '아군 행성의 치안을 강화합니다.',
-    무력진압: '치안을 크게 강화하지만 지지율이 하락합니다.',
-    분열행진: '분열행진을 실시합니다.',
-    징발: '행성에서 물자를 징발합니다.',
-    특별경비: '특별 경비 태세를 갖춥니다.',
-    정비: '함선을 정비하여 훈련도를 회복합니다.',
-    지상작전개시: '적 행성에 대한 지상 작전을 개시합니다.',
-    지상전투개시: '적 행성에서 지상 전투를 개시합니다.',
-    점령: '적 행성을 점령합니다.',
-    철수: '현재 위치에서 철수합니다.',
-    후퇴: '긴급 후퇴합니다. 사기가 크게 감소합니다.',
-    육전대출격: '육전대를 행성으로 출격시킵니다.',
-    육전대철수: '육전대를 철수시킵니다.',
-    육전전술훈련: '육전 전술 훈련을 실시합니다.',
-    공전전술훈련: '공중전 전술 훈련을 실시합니다.',
-    // Personal
-    퇴역: '현역에서 퇴역합니다.',
-    지원전환: '군사/정치 경력을 전환합니다.',
-    망명: '다른 진영으로 망명합니다.',
-    회견: '같은 행성의 장교와 회견하여 친밀도를 높입니다.',
-    수강: '사관학교에서 수강하여 능력치를 향상시킵니다.',
-    기함구매: '기함을 구매합니다.',
-    자금투입: '개인 자금을 투입합니다.',
-    귀환설정: '기함 격침 시 귀환할 행성을 설정합니다.',
-    원거리이동: '다른 행성의 시설로 이동합니다.',
-    근거리이동: '같은 행성 내 스팟으로 이동합니다.',
-    병기연습: '병기 연습을 실시합니다.',
-    반의: '반의를 표명합니다 (쿠데타 1단계).',
-    모의: '같은 행성의 장교와 모의합니다 (쿠데타 2단계).',
-    설득: '대상 장교를 설득합니다.',
-    반란참가: '진행 중인 반란에 참가합니다.',
-    반란: '반란을 개시합니다 (쿠데타 실행).',
-    // Command
-    작전계획: '작전 계획을 수립합니다.',
-    장수발령: '장교를 지정 행성으로 발령합니다.',
-    작전철회: '수립된 작전을 철회합니다.',
-    부대결성: '새로운 함대를 결성합니다.',
-    부대해산: '소속 함대를 해산합니다.',
-    강의: '강의를 실시하여 장교의 능력을 향상시킵니다.',
-    수송계획: '물자 수송 계획을 수립합니다.',
-    수송중지: '수송을 중지합니다.',
-    // Logistics
-    재편성: '함대를 재편성하여 훈련도를 향상시킵니다.',
-    완전수리: '함대를 완전히 수리합니다.',
-    완전보급: '함대에 물자를 보급합니다.',
-    반출입: '물자를 국가와 개인 간 이동합니다.',
-    보충: '손실 함선을 보충합니다.',
-    할당: '행성 창고에서 함대로 유닛을 할당합니다.',
-    // Influence
-    야회: '야회를 개최하여 영향력을 높입니다.',
-    수렵: '봉토 행성에서 수렵을 실시합니다.',
-    회담: '다른 장교와 회담하여 영향력을 높입니다.',
-    담화: '다른 장교와 담화를 나눕니다.',
-    연설: '행성에서 연설하여 영향력과 지지율을 높입니다.',
-    // Proposal/Order
-    제안: '상급자에게 제안합니다.',
-    명령: '하급자에게 명령합니다.',
-    // Espionage
-    일제수색: '행성에서 적 스파이를 수색합니다.',
-    체포허가: '대상 장교에 대한 체포 허가를 발부합니다.',
-    집행명령: '체포 대상에 대한 집행 명령을 하달합니다.',
-    체포명령: '같은 행성의 장교를 체포합니다.',
-    사열: '사열로 반란 징후를 탐지합니다.',
-    습격: '같은 행성의 장교를 습격합니다.',
-    감시: '대상 장교를 감시합니다.',
-    잠입공작: '적 행성에 잠입합니다.',
-    탈출공작: '잠입 상태에서 탈출을 시도합니다.',
-    정보공작: '잠입 중 정보를 수집합니다.',
-    파괴공작: '잠입 중 시설을 파괴합니다.',
-    선동공작: '적 행성의 지지율을 떨어뜨립니다.',
-    귀환공작: '잠입 완료 후 아군 영토로 귀환합니다.',
-    통신방해: '적의 통신을 방해합니다.',
-    위장함대: '위장 함대를 운용합니다.',
+    // City-targeting commands
+    강행: '선택된 도시로 강행합니다. 최대 3칸내 도시로만 강행이 가능합니다.',
+    이동: '선택된 도시로 이동합니다. 인접 도시로만 이동이 가능합니다.',
+    출병: '선택된 도시를 향해 침공을 합니다. 침공 경로에 적군의 도시가 있다면 전투를 벌입니다.',
+    첩보: '선택된 도시에 첩보를 실행합니다. 인접도시일 경우 많은 정보를 얻을 수 있습니다.',
+    화계: '선택된 도시에 화계를 실행합니다.',
+    탈취: '선택된 도시에 탈취를 실행합니다.',
+    파괴: '선택된 도시에 파괴를 실행합니다.',
+    선동: '선택된 도시에 선동을 실행합니다.',
+    수몰: '선택된 도시에 수몰을 발동합니다. 전쟁중인 상대국 도시만 가능합니다.',
+    백성동원: '선택된 도시에 백성을 동원해 성벽을 쌓습니다. 아국 도시만 가능합니다.',
+    천도: '선택된 도시로 천도합니다. 현재 수도에서 연결된 도시만 가능하며, 1+2×거리만큼의 턴이 필요합니다.',
+    허보: '선택된 도시에 허보를 발동합니다. 선포, 전쟁중인 상대국 도시만 가능합니다.',
+    초토화: '선택된 도시를 초토화 시킵니다. 도시가 공백지가 되며, 국고가 확보됩니다. 수뇌들은 명성을 잃고, 모든 장수들은 배신 수치가 1 증가합니다.',
+    // General-targeting commands
+    등용: '다른 세력 장수를 등용합니다.',
+    장수대상임관: '특정 장수의 세력에 임관합니다.',
+    증여: '자신의 자금이나 군량을 다른 장수에게 증여합니다.',
+    포상: '국고로 장수에게 자금이나 군량을 지급합니다.',
+    몰수: '장수의 자금이나 군량을 몰수합니다. 몰수한것은 국가재산으로 귀속됩니다.',
+    부대탈퇴지시: '지정한 장수에게 부대 탈퇴를 지시합니다. 부대원만 가능합니다.',
+    발령: '장수를 지정한 도시로 발령합니다.',
+    헌납: '자신의 자금이나 군량을 국고에 헌납합니다.',
+    // Economy
+    모병: '병종을 선택하고 모병합니다. 비용은 자금에서 차감됩니다.',
+    징병: '병종을 선택하고 징병합니다. 도시 인구가 감소합니다.',
+    군량매매: '금과 쌀을 교환합니다.',
+    장비매매: '무기, 서적, 군마, 도구를 구매합니다.',
     // Nation
-    Nation휴식: '국가 커맨드를 사용하지 않고 턴을 넘깁니다.',
-    승진: '장교를 1계급 승진시킵니다.',
-    발탁: '장교를 특별 발탁합니다.',
-    강등: '장교를 1계급 강등합니다.',
-    서작: '장교에게 작위를 수여합니다 (제국 전용).',
-    서훈: '장교에게 훈장을 수여합니다.',
-    임명: '장교에게 직무카드를 부여합니다.',
-    파면: '장교의 직무카드를 박탈합니다.',
-    사임: '현재 직무에서 사임합니다.',
-    봉토수여: '장교에게 행성을 봉토로 수여합니다 (제국 전용).',
-    봉토직할: '봉토를 직할령으로 전환합니다 (제국 전용).',
-    국가목표설정: '국가 전략 목표를 설정합니다.',
-    납입률변경: '납입률을 변경합니다.',
-    관세율변경: '관세율을 변경합니다.',
-    분배: '국가 자원을 장교에게 분배합니다.',
-    처단: '체포된 인물을 처형 또는 추방합니다.',
-    외교: '외교 행동을 실행합니다 (선전포고/종전/불가침).',
-    통치목표: '행성의 통치 목표를 설정합니다.',
-    예산편성: '국가 예산을 편성합니다.',
-    제안공작: '정치공작을 소모하여 제안을 강제 수락시킵니다.',
-    선전포고: '타국에게 선전 포고합니다.',
-    종전제의: '전쟁 중인 진영에 종전을 제의합니다.',
-    종전수락: '종전 제의를 수락합니다.',
+    건국: '새 국가를 건국합니다.',
+    CR건국: '새 국가를 건국합니다. (특수)',
+    무작위건국: '무작위 위치에 건국합니다.',
+    선전포고: '타국에게 선전 포고합니다. 고립되지 않은 아국 도시에서 인접한 국가에 선포 가능합니다.',
+    종전제의: '전쟁중인 국가에 종전을 제의합니다.',
     불가침제의: '타국에 불가침 조약을 제의합니다.',
-    불가침수락: '불가침 제의를 수락합니다.',
-    불가침파기제의: '불가침 조약 파기를 제의합니다.',
-    불가침파기수락: '불가침 파기 제의를 수락합니다.',
-    감축: '행성의 시설 등급을 감축합니다.',
-    주민동원: '행성 주민을 동원하여 방어 시설을 강화합니다.',
-    외교공작: '외교 공작을 실행합니다.',
-    세율변경: '세율을 변경합니다.',
-    징병률변경: '징병률을 변경합니다.',
-    국가해산: '국가를 해산합니다.',
-    항복: '대상 진영에 항복합니다.',
+    불가침파기제의: '불가침중인 국가에 조약 파기를 제의합니다.',
+    급습: '선택된 국가에 급습을 발동합니다. 선포, 전쟁중인 상대국에만 가능합니다.',
+    이호경식: '선택된 국가에 이호경식을 발동합니다. 선포, 전쟁중인 상대국에만 가능합니다.',
+    물자원조: '동맹국에 금과 쌀을 원조합니다.',
+    국호변경: '국가명을 변경합니다.',
+    국기변경: '국기 색상을 변경합니다.',
+    피장파장: '선택된 국가에 대한 대응 전략을 설정합니다.',
+    인구이동: '도시 간 인구를 이동시킵니다.',
+    숙련전환: '병종 숙련도를 전환합니다.',
+    선양: '장수에게 왕위를 선양합니다.',
+    임관: '국가에 임관합니다.',
+    NPC능동: 'NPC를 수동 조작합니다.',
+    // No-arg command help
+    휴식: '아무 행동 없이 턴을 넘깁니다.',
+    농지개간: '도시의 농업 수치를 높입니다.',
+    상업투자: '도시의 상업 수치를 높입니다.',
+    치안강화: '도시의 치안 수치를 높입니다.',
+    수비강화: '도시의 수비 수치를 높입니다.',
+    성벽보수: '도시의 성벽을 보수합니다.',
+    정착장려: '도시에 주민 정착을 장려합니다.',
+    주민선정: '도시의 민심 수치를 높입니다.',
+    기술연구: '도시의 기술 수치를 높입니다.',
+    훈련: '병사를 훈련시킵니다.',
+    사기진작: '병사의 사기를 높입니다.',
+    소집해제: '보유 병사를 해산합니다.',
+    물자조달: '도시의 물자를 조달합니다.',
+    단련: '장수의 능력치를 단련합니다.',
+    집합: '현재 도시로 소속 부대원을 집합시킵니다.',
+    귀환: '소속 도시로 귀환합니다.',
+    접경귀환: '가장 가까운 아국 도시로 귀환합니다.',
+    거병: '새로운 세력을 일으킵니다. 재야 장수만 가능합니다.',
+    전투태세: '전투 태세를 갖춥니다.',
+    요양: '부상을 치료합니다.',
+    방랑: '다른 도시로 방랑합니다.',
+    등용수락: '받은 등용 제의를 수락합니다.',
+    하야: '현재 소속 국가에서 하야합니다.',
+    은퇴: '장수를 은퇴시킵니다.',
+    모반시도: '소속 국가에서 모반을 시도합니다.',
+    해산: '국가를 해산합니다. 군주만 가능합니다.',
+    견문: '견문을 넓혀 경험치를 얻습니다.',
+    인재탐색: '주변의 인재를 탐색합니다.',
+    내정특기초기화: '내정 특기를 초기화합니다.',
+    전투특기초기화: '전투 특기를 초기화합니다.',
+    CR맹훈련: '병사를 맹훈련합니다. (특수)',
+    Nation휴식: '국가 커맨드를 사용하지 않고 턴을 넘깁니다.',
+    감축: '도시의 시설을 감축합니다.',
+    증축: '도시의 시설을 증축합니다.',
+    필사즉생: '필사즉생을 발동합니다. 전쟁중인 상대국에만 가능합니다.',
+    의병모집: '의병을 모집합니다.',
+    무작위수도이전: '수도를 무작위 위치로 이전합니다.',
+    극병연구: '극병을 연구합니다.',
+    대검병연구: '대검병을 연구합니다.',
+    무희연구: '무희를 연구합니다.',
+    산저병연구: '산저병을 연구합니다.',
+    상병연구: '상병을 연구합니다.',
+    원융노병연구: '원융노병을 연구합니다.',
+    음귀병연구: '음귀병을 연구합니다.',
+    화륜차연구: '화륜차를 연구합니다.',
+    화시병연구: '화시병을 연구합니다.',
+    요격: '인접 도시 방면 도로에 매복하여 적 부대를 요격합니다.',
+    순찰: '주둔 도시 인근 도로를 순찰하여 적 부대를 자동 감지합니다.',
+    좌표이동: '맵의 원하는 지점으로 자유롭게 이동합니다. 도로 위가 더 빠릅니다.',
 };
 
-/** Commands that target cities (shown with map selector) */
+/** Commands that target cities (shown with distance sorting) */
 const CITY_TARGET_COMMANDS = new Set([
-    '성계내항행',
-    '정찰',
-    '지상작전개시',
-    '지상전투개시',
-    '잠입공작',
-    '선동공작',
-    '귀환설정',
-    '원거리이동',
-    '감축',
-    '주민동원',
-    '봉토직할',
-    '장수발령',
-    '봉토수여',
+    '출병',
+    '이동',
+    '강행',
+    '첩보',
+    '화계',
+    '탈취',
+    '파괴',
+    '선동',
+    '수몰',
+    '백성동원',
+    '천도',
+    '허보',
+    '초토화',
+    'NPC능동',
+    '발령',
+    '인구이동',
+    '요격',
 ]);
 
 interface CommandArgFormProps {
@@ -327,11 +517,13 @@ interface CommandArgFormProps {
 
 export function CommandArgForm({ actionCode, onSubmit }: CommandArgFormProps) {
     const { cities, nations, generals } = useGameStore();
-    const { myOfficer } = useOfficerStore();
+    const { myGeneral } = useGeneralStore();
     const { currentWorld } = useWorldStore();
     const [valuesByCommand, setValuesByCommand] = useState<Record<string, Record<string, string>>>({});
     const [mapSelectorOpen, setMapSelectorOpen] = useState(false);
     const [mapSelectorField, setMapSelectorField] = useState<string | null>(null);
+    const [coordX, setCoordX] = useState<string>('');
+    const [coordY, setCoordY] = useState<string>('');
 
     const fields = COMMAND_ARGS[actionCode];
     const values = valuesByCommand[actionCode] ?? {};
@@ -339,19 +531,54 @@ export function CommandArgForm({ actionCode, onSubmit }: CommandArgFormProps) {
 
     // Sort cities by nation ownership for better UX
     const sortedCities = useMemo(() => {
-        if (!myOfficer) return cities;
+        if (!myGeneral) return cities;
         const myCities: City[] = [];
         const otherCities: City[] = [];
         for (const c of cities) {
-            if (c.nationId === myOfficer.nationId) myCities.push(c);
+            if (c.nationId === myGeneral.nationId) myCities.push(c);
             else otherCities.push(c);
         }
         return [...myCities, ...otherCities];
-    }, [cities, myOfficer]);
+    }, [cities, myGeneral]);
 
     if (!fields) {
         // No args needed - auto-submit
         return null;
+    }
+
+    // Use rich crew type browser for recruitment commands
+    if (actionCode === '징병' || actionCode === '모병') {
+        return (
+            <CrewTypeBrowser
+                commandName={actionCode}
+                onSubmit={(crewTypeCode, amount) => {
+                    onSubmit({ crewType: crewTypeCode, amount });
+                }}
+            />
+        );
+    }
+
+    // Use rich equipment browser for 장비매매
+    if (actionCode === '장비매매') {
+        return (
+            <EquipmentBrowser
+                commandName={actionCode}
+                onSubmit={(itemType, itemCode) => {
+                    onSubmit({ itemType, itemCode });
+                }}
+            />
+        );
+    }
+
+    // Use rich deployment selector for 발령
+    if (actionCode === '발령') {
+        return (
+            <DeploymentSelector
+                onSubmit={(generalId, cityId) => {
+                    onSubmit({ destGeneralID: generalId, destCityID: cityId });
+                }}
+            />
+        );
     }
 
     const setValue = (key: string, val: string) => {
@@ -367,6 +594,15 @@ export function CommandArgForm({ actionCode, onSubmit }: CommandArgFormProps) {
     const handleSubmit = () => {
         const arg: CommandArg = {};
         for (const field of fields) {
+            if (field.type === 'coordinate') {
+                const x = Number(coordX);
+                const y = Number(coordY);
+                if (coordX && coordY && !isNaN(x) && !isNaN(y)) {
+                    arg['destX'] = x;
+                    arg['destY'] = y;
+                }
+                continue;
+            }
             const raw = values[field.key];
             if (!raw && raw !== '0') continue;
             if (
@@ -388,7 +624,7 @@ export function CommandArgForm({ actionCode, onSubmit }: CommandArgFormProps) {
     };
 
     // Filter cities to own nation for some commands
-    const myCities = myOfficer ? cities.filter((c) => c.nationId === myOfficer.nationId) : cities;
+    const myCities = myGeneral ? cities.filter((c) => c.nationId === myGeneral.nationId) : cities;
 
     const renderField = (field: ArgField) => {
         switch (field.type) {
@@ -402,26 +638,26 @@ export function CommandArgForm({ actionCode, onSubmit }: CommandArgFormProps) {
                         <div className="flex items-center gap-2">
                             <span className="text-xs font-medium">
                                 {selectedCity
-                                    ? `${selectedCity.name} (${PLANET_LEVEL_NAMES[selectedCity.level] ?? selectedCity.level})`
+                                    ? `${selectedCity.name} (${CITY_LEVEL_NAMES[selectedCity.level] ?? selectedCity.level})`
                                     : `${field.label} 미선택`}
                             </span>
                             <select
                                 value={values[field.key] ?? ''}
                                 onChange={(e) => setValue(field.key, e.target.value)}
-                                className="flex-1 bg-background border border-input rounded-md px-2 py-1 text-xs"
+                                className="flex-1 bg-background border border-input rounded-none px-2 py-1 text-xs"
                             >
                                 <option value="">직접 선택</option>
                                 {list.map((c) => {
                                     const nation = nations.find((n) => n.id === c.nationId);
                                     const nationTag = nation ? ` [${nation.name}]` : c.nationId === 0 ? ' [공백]' : '';
-                                    const isMyCity = myOfficer && c.nationId === myOfficer.nationId;
+                                    const isMyCity = myGeneral && c.nationId === myGeneral.nationId;
                                     return (
                                         <option
                                             key={c.id}
                                             value={c.id}
                                             style={isMyCity ? { fontWeight: 'bold' } : undefined}
                                         >
-                                            {c.name} ({PLANET_LEVEL_NAMES[c.level] ?? c.level}){nationTag}
+                                            {c.name} ({CITY_LEVEL_NAMES[c.level] ?? c.level}){nationTag}
                                         </option>
                                     );
                                 })}
@@ -438,13 +674,13 @@ export function CommandArgForm({ actionCode, onSubmit }: CommandArgFormProps) {
                 );
             }
             case 'nation': {
-                const list: Nation[] = nations.filter((n) => !myOfficer || n.id !== myOfficer.nationId);
+                const list: Nation[] = nations.filter((n) => !myGeneral || n.id !== myGeneral.nationId);
                 return (
                     <select
                         key={field.key}
                         value={values[field.key] ?? ''}
                         onChange={(e) => setValue(field.key, e.target.value)}
-                        className="w-full bg-background border border-input rounded-md px-2 py-1.5 text-xs"
+                        className="w-full bg-background border border-input rounded-none px-2 py-1.5 text-xs"
                     >
                         <option value="">{field.label}...</option>
                         {list.map((n) => (
@@ -456,13 +692,13 @@ export function CommandArgForm({ actionCode, onSubmit }: CommandArgFormProps) {
                 );
             }
             case 'general': {
-                const list: General[] = generals.filter((g) => !myOfficer || g.id !== myOfficer.id);
+                const list: General[] = generals.filter((g) => !myGeneral || g.id !== myGeneral.id);
                 return (
                     <select
                         key={field.key}
                         value={values[field.key] ?? ''}
                         onChange={(e) => setValue(field.key, e.target.value)}
-                        className="w-full bg-background border border-input rounded-md px-2 py-1.5 text-xs"
+                        className="w-full bg-background border border-input rounded-none px-2 py-1.5 text-xs"
                     >
                         <option value="">{field.label}...</option>
                         {list.map((g) => {
@@ -488,7 +724,7 @@ export function CommandArgForm({ actionCode, onSubmit }: CommandArgFormProps) {
                         key={field.key}
                         value={values[field.key] ?? ''}
                         onChange={(e) => setValue(field.key, e.target.value)}
-                        className="w-full bg-background border border-input rounded-md px-2 py-1.5 text-xs"
+                        className="w-full bg-background border border-input rounded-none px-2 py-1.5 text-xs"
                     >
                         <option value="">{field.label}...</option>
                         {field.options.map((o) => (
@@ -532,13 +768,50 @@ export function CommandArgForm({ actionCode, onSubmit }: CommandArgFormProps) {
                         className="text-xs h-8"
                     />
                 );
+            case 'coordinate':
+                return (
+                    <div key={field.key} className="space-y-1">
+                        <div className="flex items-center gap-2">
+                            <Input
+                                type="number"
+                                value={coordX}
+                                onChange={(e) => setCoordX(e.target.value)}
+                                placeholder="X 좌표"
+                                className="text-xs h-8 w-24"
+                            />
+                            <Input
+                                type="number"
+                                value={coordY}
+                                onChange={(e) => setCoordY(e.target.value)}
+                                placeholder="Y 좌표"
+                                className="text-xs h-8 w-24"
+                            />
+                            {coordX && coordY && (
+                                <span className="text-[10px] text-muted-foreground">
+                                    ({coordX}, {coordY})
+                                </span>
+                            )}
+                        </div>
+                        <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            className="h-7 text-xs"
+                            onClick={() => {
+                                /* map-click integration: caller sets coordinateSelectMode on MapCanvas */
+                            }}
+                        >
+                            맵에서 선택
+                        </Button>
+                    </div>
+                );
         }
     };
 
     return (
         <div className="space-y-2">
             {helpText && (
-                <div className="rounded-md bg-amber-900/20 border border-amber-800/40 px-3 py-2 text-xs text-amber-200/90">
+                <div className="rounded-none bg-amber-900/20 border border-amber-800/40 px-3 py-2 text-xs text-amber-200/90">
                     {helpText}
                 </div>
             )}

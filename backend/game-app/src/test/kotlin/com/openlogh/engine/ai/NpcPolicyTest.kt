@@ -14,8 +14,8 @@ class NpcPolicyTest {
         assertTrue(policy.canDo("전방워프"))
         assertFalse(policy.canDo("한계징병"))
         assertFalse(policy.canDo("고급병종"))
-        assertEquals(500, policy.minWarCrew)
-        assertEquals(80, policy.properWarTrainAtmos)
+        assertEquals(1500, policy.minWarCrew)
+        assertEquals(90, policy.properWarTrainAtmos)
     }
 
     @Test
@@ -32,8 +32,8 @@ class NpcPolicyTest {
     @Test
     fun `default priority lists match expected order`() {
         val genPolicy = NpcGeneralPolicy()
-        assertEquals("긴급내정", genPolicy.priority.first())
-        assertEquals("중립", genPolicy.priority.last())
+        assertEquals("NPC사망대비", genPolicy.priority.first())
+        assertEquals("내정워프", genPolicy.priority.last())
 
         val nationPolicy = NpcNationPolicy()
         assertEquals("부대전방발령", nationPolicy.priority.first())

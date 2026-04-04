@@ -521,7 +521,7 @@ class AuthService(
         val token = jwtUtil.generateToken(user.id, user.loginId, user.displayName, role, user.grade.toInt())
         return AuthResponse(
             token = token,
-            user = UserInfo(user.id, user.loginId, user.displayName),
+            user = UserInfo(user.id, user.loginId, user.displayName, user.meta["picture"] as? String),
             nextToken = loginToken,
             validUntil = validUntil?.toString(),
         )

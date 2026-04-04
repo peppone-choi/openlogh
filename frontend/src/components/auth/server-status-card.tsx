@@ -1,8 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/8bit/card';
+import { Skeleton } from '@/components/ui/8bit/skeleton';
 import type { PublicCachedMapResponse } from '@/types';
 import { MapViewer } from '@/components/game/map-viewer';
 import { formatGameLogDate } from '@/lib/gameLogDate';
@@ -110,7 +110,7 @@ export function ServerStatusCard() {
                 )}
 
                 <div>
-                    <h3 className="mb-2 text-sm font-semibold">은하 정세</h3>
+                    <h3 className="mb-2 text-sm font-semibold">중원 정세</h3>
                     {!data?.available || data.history.length === 0 ? (
                         <p className="text-sm text-muted-foreground">표시할 기록이 없습니다</p>
                     ) : (

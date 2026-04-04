@@ -2,8 +2,12 @@ package com.openlogh.service
 
 import com.openlogh.dto.ResourceDistributionRequest
 import com.openlogh.dto.TimeControlRequest
-import com.openlogh.entity.*
+import com.openlogh.engine.EventActionService
+import com.openlogh.entity.General
+import com.openlogh.entity.GeneralTurn
+import com.openlogh.entity.WorldState
 import com.openlogh.repository.AppUserRepository
+import com.openlogh.repository.CityRepository
 import com.openlogh.repository.DiplomacyRepository
 import com.openlogh.repository.GeneralRepository
 import com.openlogh.repository.GeneralTurnRepository
@@ -11,6 +15,7 @@ import com.openlogh.repository.HallOfFameRepository
 import com.openlogh.repository.MessageRepository
 import com.openlogh.repository.NationRepository
 import com.openlogh.repository.WorldStateRepository
+import com.openlogh.service.HistoryService
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -32,11 +37,13 @@ class AdminServiceTest {
     private lateinit var generalRepository: GeneralRepository
     private lateinit var generalTurnRepository: GeneralTurnRepository
     private lateinit var nationRepository: NationRepository
-    private lateinit var cityRepository: com.openlogh.repository.CityRepository
+    private lateinit var cityRepository: CityRepository
     private lateinit var appUserRepository: AppUserRepository
     private lateinit var diplomacyRepository: DiplomacyRepository
     private lateinit var hallOfFameRepository: HallOfFameRepository
     private lateinit var messageRepository: MessageRepository
+    private lateinit var eventActionService: EventActionService
+    private lateinit var inheritanceService: InheritanceService
     private lateinit var service: AdminService
 
     @BeforeEach
@@ -45,11 +52,13 @@ class AdminServiceTest {
         generalRepository = mock(GeneralRepository::class.java)
         generalTurnRepository = mock(GeneralTurnRepository::class.java)
         nationRepository = mock(NationRepository::class.java)
-        cityRepository = mock(com.openlogh.repository.CityRepository::class.java)
+        cityRepository = mock(CityRepository::class.java)
         appUserRepository = mock(AppUserRepository::class.java)
         diplomacyRepository = mock(DiplomacyRepository::class.java)
         hallOfFameRepository = mock(HallOfFameRepository::class.java)
         messageRepository = mock(MessageRepository::class.java)
+        eventActionService = mock(EventActionService::class.java)
+        inheritanceService = mock(InheritanceService::class.java)
         val historyService = mock(HistoryService::class.java)
 
         service = AdminService(
@@ -62,6 +71,8 @@ class AdminServiceTest {
             diplomacyRepository,
             hallOfFameRepository,
             messageRepository,
+            eventActionService,
+            inheritanceService,
             historyService,
         )
     }
@@ -117,7 +128,7 @@ class AdminServiceTest {
         )
 
         `when`(worldStateRepository.findById(1.toShort())).thenReturn(Optional.of(world))
-        `when`(generalRepository.findBySessionId(1L)).thenReturn(listOf(general1, general2))
+        `when`(generalRepository.findByWorldId(1L)).thenReturn(listOf(general1, general2))
 
         val result = service.timeControl(
             1L,
@@ -127,7 +138,7 @@ class AdminServiceTest {
                 startYear = 190,
                 locked = true,
                 turnTerm = 10,
-                distribute = ResourceDistributionRequest(funds = 50, supplies = 75, target = "all"),
+                distribute = ResourceDistributionRequest(gold = 50, rice = 75, target = "all"),
                 auctionSync = true,
                 auctionCloseMinutes = 45,
                 opentime = "2026-04-01T00:00:00Z",
@@ -152,10 +163,10 @@ class AdminServiceTest {
         assertEquals("2026-03-25T00:00:00Z", world.config["startTime"])
         assertEquals("2026-04-01T00:00", world.config["reserveOpen"])
         assertEquals("2026-03-25T00:00", world.config["preReserveOpen"])
-        assertEquals(150, general1.funds)
-        assertEquals(275, general1.supplies)
-        assertEquals(350, general2.funds)
-        assertEquals(475, general2.supplies)
+        assertEquals(150, general1.gold)
+        assertEquals(275, general1.rice)
+        assertEquals(350, general2.gold)
+        assertEquals(475, general2.rice)
         verify(worldStateRepository).save(world)
         verify(generalRepository).saveAll(listOf(general1, general2))
     }
@@ -175,7 +186,7 @@ class AdminServiceTest {
         val result = service.timeControl(
             1L,
             TimeControlRequest(
-                distribute = ResourceDistributionRequest(funds = 10, supplies = 10, target = "invalid"),
+                distribute = ResourceDistributionRequest(gold = 10, rice = 10, target = "invalid"),
             )
         )
 
@@ -184,7 +195,7 @@ class AdminServiceTest {
     }
 
     @Test
-    fun `officerAction block applies legacy stage one semantics`() {
+    fun `generalAction block applies legacy stage one semantics`() {
         val general = General(
             id = 7,
             worldId = 1,
@@ -195,7 +206,7 @@ class AdminServiceTest {
         )
         `when`(generalRepository.findById(7L)).thenReturn(Optional.of(general))
 
-        val result = service.officerAction(1L, 7L, "block")
+        val result = service.generalAction(1L, 7L, "block")
 
         assertTrue(result)
         assertEquals(1.toShort(), general.blockState)
@@ -204,7 +215,7 @@ class AdminServiceTest {
     }
 
     @Test
-    fun `officerAction unblock clears block state but preserves kill turn`() {
+    fun `generalAction unblock clears block state but preserves kill turn`() {
         val general = General(
             id = 8,
             worldId = 1,
@@ -215,7 +226,7 @@ class AdminServiceTest {
         )
         `when`(generalRepository.findById(8L)).thenReturn(Optional.of(general))
 
-        val result = service.officerAction(1L, 8L, "unblock")
+        val result = service.generalAction(1L, 8L, "unblock")
 
         assertTrue(result)
         assertEquals(0.toShort(), general.blockState)
@@ -224,7 +235,7 @@ class AdminServiceTest {
     }
 
     @Test
-    fun `officerAction kill schedules forced death and rewrites first turn`() {
+    fun `generalAction kill schedules forced death and rewrites first turn`() {
         val initialTurnTime = OffsetDateTime.now().minusDays(1)
         val general = General(
             id = 9,
@@ -242,9 +253,9 @@ class AdminServiceTest {
             brief = "출병",
         )
         `when`(generalRepository.findById(9L)).thenReturn(Optional.of(general))
-        `when`(generalTurnRepository.findByOfficerIdOrderByTurnIdx(9L)).thenReturn(listOf(queuedTurn))
+        `when`(generalTurnRepository.findByGeneralIdOrderByTurnIdx(9L)).thenReturn(listOf(queuedTurn))
 
-        val result = service.officerAction(1L, 9L, "kill")
+        val result = service.generalAction(1L, 9L, "kill")
 
         assertTrue(result)
         assertEquals(0.toShort(), general.killTurn)
@@ -261,7 +272,7 @@ class AdminServiceTest {
     }
 
     @Test
-    fun `officerAction supports resignation and dismissal queue edits`() {
+    fun `generalAction supports resignation and dismissal queue edits`() {
         val general = General(
             id = 10,
             worldId = 1,
@@ -269,10 +280,10 @@ class AdminServiceTest {
             turnTime = OffsetDateTime.now(),
         )
         `when`(generalRepository.findById(10L)).thenReturn(Optional.of(general))
-        `when`(generalTurnRepository.findByOfficerIdOrderByTurnIdx(10L)).thenReturn(emptyList())
+        `when`(generalTurnRepository.findByGeneralIdOrderByTurnIdx(10L)).thenReturn(emptyList())
 
-        val resignResult = service.officerAction(1L, 10L, "resign")
-        val wanderResult = service.officerAction(1L, 10L, "wanderDismiss")
+        val resignResult = service.generalAction(1L, 10L, "resign")
+        val wanderResult = service.generalAction(1L, 10L, "wanderDismiss")
 
         assertTrue(resignResult)
         assertTrue(wanderResult)
@@ -285,7 +296,7 @@ class AdminServiceTest {
     }
 
     @Test
-    fun `officerAction rejects unsupported action`() {
+    fun `generalAction rejects unsupported action`() {
         val general = General(
             id = 11,
             worldId = 1,
@@ -294,7 +305,7 @@ class AdminServiceTest {
         )
         `when`(generalRepository.findById(11L)).thenReturn(Optional.of(general))
 
-        val result = service.officerAction(1L, 11L, "unknown")
+        val result = service.generalAction(1L, 11L, "unknown")
 
         assertFalse(result)
         assertNull(general.killTurn)

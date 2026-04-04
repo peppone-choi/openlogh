@@ -2,9 +2,9 @@ package com.openlogh.dto
 
 data class FrontInfoResponse(
     val global: GlobalInfo,
-    val officer: OfficerFrontInfo?,
-    val faction: FactionFrontInfo?,
-    val planet: PlanetFrontInfo?,
+    val general: GeneralFrontInfo?,
+    val nation: NationFrontInfo?,
+    val city: CityFrontInfo?,
     val recentRecord: RecentRecordInfo,
     val aux: AuxInfo,
 )
@@ -18,8 +18,8 @@ data class GlobalInfo(
     val month: Int,
     val turnTerm: Int,
     val startyear: Int,
-    val officerCount: List<List<Int>>,
-    val onlineFactions: List<OnlineFactionInfo>,
+    val genCount: List<List<Int>>,
+    val onlineNations: List<OnlineNationInfo>,
     val onlineUserCnt: Int,
     val auctionCount: Int,
     val tournamentState: Int,
@@ -32,93 +32,93 @@ data class GlobalInfo(
     val isLocked: Boolean,
     val scenarioText: String,
     val realtimeMode: Boolean,
-    val extendedOfficer: Int,
+    val extendedGeneral: Int,
     val isFiction: Int,
     val npcMode: Int,
     val joinMode: String,
     val develCost: Int,
     val noticeMsg: Int,
     val apiLimit: Int,
-    val officerCntLimit: Int,
+    val generalCntLimit: Int,
     val serverCnt: Int,
     val lastVoteID: Int,
     val lastVote: Map<String, Any>?,
 )
 
-data class OnlineFactionInfo(
+data class OnlineNationInfo(
     val id: Long,
     val name: String,
     val color: String,
-    val officerCount: Int,
+    val genCount: Int,
 )
 
-data class FactionTypeInfo(
+data class NationTypeInfo(
     val raw: String,
     val name: String,
     val pros: String,
     val cons: String,
 )
 
-data class FactionPopulationInfo(
-    val planetCnt: Int,
+data class NationPopulationInfo(
+    val cityCnt: Int,
     val now: Int,
     val max: Int,
 )
 
-data class FactionShipInfo(
-    val officerCnt: Int,
+data class NationCrewInfo(
+    val generalCnt: Int,
     val now: Int,
     val max: Int,
 )
 
 data class TopChiefInfo(
-    val rank: Int,
+    val officerLevel: Int,
     val no: Long,
     val name: String,
     val npc: Int,
 )
 
-data class OfficerFrontInfo(
+data class GeneralFrontInfo(
     val no: Long,
     val name: String,
     val picture: String,
     val imgsvr: Int,
-    val faction: Long,
+    val nation: Long,
     val npc: Int,
-    val planet: Long,
+    val city: Long,
     val troop: Long,
-    val rank: Int,
-    val rankText: String,
-    val stationedSystem: Int,
+    val officerLevel: Int,
+    val officerLevelText: String,
+    val officerCity: Int,
     val permission: Int,
     val lbonus: Int,
     val leadership: Int,
     val leadershipExp: Int,
-    val command: Int,
-    val commandExp: Int,
-    val intelligence: Int,
-    val intelligenceExp: Int,
+    val strength: Int,
+    val strengthExp: Int,
+    val intel: Int,
+    val intelExp: Int,
     val politics: Int,
     val politicsExp: Int,
-    val administration: Int,
-    val administrationExp: Int,
+    val charm: Int,
+    val charmExp: Int,
     val experience: Int,
     val dedication: Int,
     val explevel: Int,
     val dedlevel: Int,
     val honorText: String,
     val dedLevelText: String,
-    val taxRate: Int,
-    val funds: Int,
-    val supplies: Int,
-    val ships: Int,
-    val shipClass: String,
-    val training: Int,
-    val morale: Int,
-    val flagship: String,
-    val equipment: String,
-    val engine: String,
-    val accessory: String,
+    val bill: Int,
+    val gold: Int,
+    val rice: Int,
+    val crew: Int,
+    val crewtype: String,
+    val train: Int,
+    val atmos: Int,
+    val weapon: String,
+    val book: String,
+    val horse: String,
+    val item: String,
     val personal: String,
     val specialDomestic: String,
     val specialWar: String,
@@ -140,7 +140,7 @@ data class OfficerFrontInfo(
     val refreshScore: Int?,
     val autorunLimit: Int,
     val reservedCommand: Map<String, Any>?,
-    val fleetInfo: FleetInfo?,
+    val troopInfo: TroopInfo?,
     val dex1: Int,
     val dex2: Int,
     val dex3: Int,
@@ -149,40 +149,40 @@ data class OfficerFrontInfo(
     val warnum: Int,
     val killnum: Int,
     val deathnum: Int,
-    val killships: Int,
-    val deathships: Int,
+    val killcrew: Int,
+    val deathcrew: Int,
     val firenum: Int,
 )
 
-data class FleetInfo(
-    val leader: FleetLeaderInfo,
+data class TroopInfo(
+    val leader: TroopLeaderInfo,
     val name: String,
 )
 
-data class FleetLeaderInfo(
-    val planet: Long,
+data class TroopLeaderInfo(
+    val city: Long,
     val reservedCommand: Map<String, Any>?,
 )
 
-data class FactionFrontInfo(
+data class NationFrontInfo(
     val id: Long,
     val full: Boolean,
     val name: String,
     val color: String,
-    val factionRank: Int,
-    val type: FactionTypeInfo,
-    val funds: Int,
-    val supplies: Int,
-    val techLevel: Float,
-    val militaryPower: Int,
-    val officerCount: Int,
+    val level: Int,
+    val type: NationTypeInfo,
+    val gold: Int,
+    val rice: Int,
+    val tech: Float,
+    val power: Int,
+    val gennum: Int,
     val capital: Long?,
-    val conscriptionRate: Int,
+    val bill: Int,
     val taxRate: Int,
-    val population: FactionPopulationInfo,
-    val ships: FactionShipInfo,
+    val population: NationPopulationInfo,
+    val crew: NationCrewInfo,
     val onlineGen: String,
-    val notice: FactionNoticeInfo?,
+    val notice: NationNoticeInfo?,
     val topChiefs: Map<Int, TopChiefInfo?>,
     val diplomaticLimit: Int,
     val strategicCmdLimit: Int,
@@ -191,47 +191,47 @@ data class FactionFrontInfo(
     val prohibitWar: Int,
 )
 
-data class FactionNoticeInfo(
+data class NationNoticeInfo(
     val date: String,
     val msg: String,
     val author: String,
     val authorID: Long,
 )
 
-data class PlanetFactionInfo(
+data class CityNationInfo(
     val id: Long,
     val name: String,
     val color: String,
 )
 
-data class PlanetFrontInfo(
+data class CityFrontInfo(
     val id: Long,
     val name: String,
     val level: Int,
     val region: Int,
-    val factionInfo: PlanetFactionInfo,
-    val approval: Int,
-    val population: List<Int>,
-    val production: List<Int>,
-    val commerce: List<Int>,
-    val security: List<Int>,
-    val orbitalDefense: List<Int>,
-    val fortress: List<Int>,
-    val tradeRoute: Int?,
-    val officerList: Map<Int, PlanetOfficerInfo?>,
+    val nationInfo: CityNationInfo,
+    val trust: Int,
+    val pop: List<Int>,
+    val agri: List<Int>,
+    val comm: List<Int>,
+    val secu: List<Int>,
+    val def: List<Int>,
+    val wall: List<Int>,
+    val trade: Int?,
+    val officerList: Map<Int, CityOfficerInfo?>,
 )
 
-data class PlanetOfficerInfo(
-    val rank: Int,
+data class CityOfficerInfo(
+    val officerLevel: Int,
     val name: String,
     val npc: Int,
 )
 
 data class RecentRecordInfo(
-    val flushOfficer: Boolean,
+    val flushGeneral: Boolean,
     val flushGlobal: Boolean,
     val flushHistory: Boolean,
-    val officer: List<RecordEntry>,
+    val general: List<RecordEntry>,
     val global: List<RecordEntry>,
     val history: List<RecordEntry>,
 )

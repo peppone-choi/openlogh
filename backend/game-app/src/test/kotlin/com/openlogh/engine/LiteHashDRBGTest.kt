@@ -90,6 +90,76 @@ class LiteHashDRBGTest {
     }
 
     @Test
+    fun `100 sequential draws match golden values for parity-test-seed`() {
+        val expected = longArrayOf(
+            767, 870, 80, 249, 645, 27, 946, 368, 383, 751,
+            9, 551, 391, 747, 61, 159, 407, 911, 390, 749,
+            239, 278, 971, 960, 388, 662, 10, 680, 853, 855,
+            296, 118, 0, 318, 358, 971, 60, 722, 859, 829,
+            115, 798, 254, 893, 514, 543, 357, 845, 880, 428,
+            711, 820, 225, 263, 914, 423, 997, 311, 410, 956,
+            209, 528, 715, 60, 358, 572, 161, 856, 785, 934,
+            593, 829, 39, 201, 834, 825, 525, 749, 687, 489,
+            778, 486, 442, 705, 533, 420, 657, 696, 498, 710,
+            333, 924, 455, 813, 739, 436, 623, 221, 318, 112,
+        )
+
+        val rng = LiteHashDRBG.build("parity-test-seed")
+        val actual = (1..100).map { rng.nextLegacyInt(999) }.toLongArray()
+        assertArrayEquals(expected, actual, "100 sequential draws must match golden values")
+    }
+
+    @Test
+    fun `edge case seeds produce valid non-crashing sequences`() {
+        // Zero seed
+        val rng0 = LiteHashDRBG.build("0")
+        val draws0 = (1..20).map { rng0.nextLegacyInt(999) }
+        assertTrue(draws0.all { it in 0..999 }, "All draws from seed '0' must be in [0, 999]")
+
+        // Empty string seed
+        val rngEmpty = LiteHashDRBG.build("")
+        val drawsEmpty = (1..20).map { rngEmpty.nextLegacyInt(999) }
+        assertTrue(drawsEmpty.all { it in 0..999 }, "All draws from seed '' must be in [0, 999]")
+
+        // Different seeds must produce different sequences
+        val rng0b = LiteHashDRBG.build("0")
+        val rngEmptyB = LiteHashDRBG.build("")
+        val seq0 = (1..10).map { rng0b.nextLegacyInt(10000) }
+        val seqEmpty = (1..10).map { rngEmptyB.nextLegacyInt(10000) }
+        assertTrue(seq0 != seqEmpty, "Seeds '0' and '' must produce different sequences")
+    }
+
+    @Test
+    fun `Long MAX_VALUE seed produces golden values`() {
+        val expected = longArrayOf(187, 27, 352, 644, 374, 228, 663, 352, 122, 240)
+
+        val rng = LiteHashDRBG.build("9223372036854775807")
+        val actual = (1..10).map { rng.nextLegacyInt(999) }.toLongArray()
+        assertArrayEquals(expected, actual, "Long.MAX_VALUE seed must match golden values")
+    }
+
+    @Test
+    fun `100 sequential nextFloat1 draws are in valid range`() {
+        val rng = LiteHashDRBG.build("float-range-test")
+        val draws = (1..100).map { rng.nextFloat1() }
+        assertTrue(draws.all { it >= 0.0 && it < 1.0 }, "All nextFloat1() draws must be in [0.0, 1.0)")
+    }
+
+    @Test
+    fun `mixed nextLegacyInt and nextFloat1 draws are deterministic`() {
+        val rng1 = LiteHashDRBG.build("mixed-draw-seed")
+        val rng2 = LiteHashDRBG.build("mixed-draw-seed")
+
+        val results1 = (1..50).map { i ->
+            if (i % 2 == 0) rng1.nextLegacyInt(1000).toDouble() else rng1.nextFloat1()
+        }
+        val results2 = (1..50).map { i ->
+            if (i % 2 == 0) rng2.nextLegacyInt(1000).toDouble() else rng2.nextFloat1()
+        }
+        assertEquals(results1, results2, "Mixed draw sequences must be identical for same seed")
+    }
+
+    @Test
     fun `nextLegacyInt and nextFloat1 match php dummy block vectors`() {
         val pattern = byteArrayOf(
             0x00,

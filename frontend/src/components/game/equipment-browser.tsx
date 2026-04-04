@@ -1,12 +1,12 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/8bit/button';
+import { Input } from '@/components/ui/8bit/input';
+import { Badge } from '@/components/ui/8bit/badge';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/8bit/tabs';
 import { cn } from '@/lib/utils';
-import { useOfficerStore } from '@/stores/officerStore';
+import { useGeneralStore } from '@/stores/generalStore';
 
 // ── Korean consonant (초성) search ──
 
@@ -306,25 +306,25 @@ interface EquipmentBrowserProps {
 }
 
 export function EquipmentBrowser({ commandName, citySecu, gold, onSubmit }: EquipmentBrowserProps) {
-    const { myOfficer } = useOfficerStore();
+    const { myGeneral } = useGeneralStore();
     const [search, setSearch] = useState('');
     const [selectedCategory, setSelectedCategory] = useState<ItemCategory | 'sell'>('weapon');
     const [selectedItem, setSelectedItem] = useState<EquipmentItem | null>(null);
     const [mode, setMode] = useState<'buy' | 'sell'>('buy');
 
-    const currentGold = gold ?? myOfficer?.gold ?? 0;
+    const currentGold = gold ?? myGeneral?.gold ?? 0;
     const currentSecu = citySecu ?? 100;
 
     // Owned items from general
     const ownedItems = useMemo(() => {
-        if (!myOfficer) return {};
+        if (!myGeneral) return {};
         return {
-            weapon: myOfficer.weaponCode,
-            book: myOfficer.bookCode,
-            horse: myOfficer.horseCode,
-            item: myOfficer.itemCode,
+            weapon: myGeneral.weaponCode,
+            book: myGeneral.bookCode,
+            horse: myGeneral.horseCode,
+            item: myGeneral.itemCode,
         };
-    }, [myOfficer]);
+    }, [myGeneral]);
 
     const filteredItems = useMemo(() => {
         if (selectedCategory === 'sell') return [];
@@ -354,12 +354,12 @@ export function EquipmentBrowser({ commandName, citySecu, gold, onSubmit }: Equi
     return (
         <div className="space-y-3">
             {/* Header info */}
-            <div className="rounded-md bg-amber-900/20 border border-amber-800/40 px-3 py-2 text-xs text-amber-200/90">
+            <div className="rounded-none bg-amber-900/20 border border-amber-800/40 px-3 py-2 text-xs text-amber-200/90">
                 장비를 구입하거나 매각합니다.
                 <span className="text-red-400"> 붉은색</span>은 현재 구입 불가.
                 <div className="mt-1 flex gap-3">
                     <span>
-                        보안: <strong>{currentSecu.toLocaleString()}</strong>
+                        치안: <strong>{currentSecu.toLocaleString()}</strong>
                     </span>
                     <span>
                         자금: <strong className="text-amber-300">{currentGold.toLocaleString()}금</strong>
@@ -378,7 +378,7 @@ export function EquipmentBrowser({ commandName, citySecu, gold, onSubmit }: Equi
             {/* Category tabs */}
             <Tabs
                 value={selectedCategory}
-                onValueChange={(v: string) => {
+                onValueChange={(v) => {
                     setSelectedCategory(v as ItemCategory | 'sell');
                     setSelectedItem(null);
                 }}
@@ -412,7 +412,7 @@ export function EquipmentBrowser({ commandName, citySecu, gold, onSubmit }: Equi
                                         key={item.code}
                                         onClick={() => handleSelect(item)}
                                         className={cn(
-                                            'w-full text-left px-3 py-2 rounded-md border text-xs transition-colors',
+                                            'w-full text-left px-3 py-2 rounded-none border text-xs transition-colors',
                                             unavailable
                                                 ? 'border-red-800/40 text-red-400/80 bg-red-950/20'
                                                 : isSelected
@@ -437,7 +437,7 @@ export function EquipmentBrowser({ commandName, citySecu, gold, onSubmit }: Equi
                                             {item.intel && <span>지력+{item.intel}</span>}
                                             {item.leadership && <span>통솔+{item.leadership}</span>}
                                             {item.speed && <span>속도+{item.speed}</span>}
-                                            <span className="ml-auto">보안 {item.reqSecu}+</span>
+                                            <span className="ml-auto">치안 {item.reqSecu}+</span>
                                         </div>
                                     </button>
                                 );
@@ -466,7 +466,7 @@ export function EquipmentBrowser({ commandName, citySecu, gold, onSubmit }: Equi
                                         setSelectedItem(ownedItem ?? null);
                                     }}
                                     className={cn(
-                                        'w-full text-left px-3 py-2 rounded-md border text-xs',
+                                        'w-full text-left px-3 py-2 rounded-none border text-xs',
                                         isEmpty
                                             ? 'border-border/30 text-muted-foreground/50 cursor-not-allowed'
                                             : 'border-border hover:border-amber-700/50 hover:bg-amber-900/10'
@@ -491,7 +491,7 @@ export function EquipmentBrowser({ commandName, citySecu, gold, onSubmit }: Equi
 
             {/* Selected item detail */}
             {selectedItem && (
-                <div className="rounded-md border border-amber-800/40 bg-amber-950/20 px-3 py-2 text-xs">
+                <div className="rounded-none border border-amber-800/40 bg-amber-950/20 px-3 py-2 text-xs">
                     <div className="flex justify-between items-center">
                         <span className="font-medium text-amber-200">{selectedItem.name}</span>
                         <Badge variant="outline" className="text-[9px]">

@@ -1,6 +1,9 @@
 package com.openlogh.engine
 
-import com.openlogh.entity.*
+import com.openlogh.entity.City
+import com.openlogh.entity.General
+import com.openlogh.entity.Nation
+import com.openlogh.entity.WorldState
 import com.openlogh.test.InMemoryTurnHarness
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -71,17 +74,17 @@ class GoldenSnapshotTest {
         harness.putGeneral(g3)
         harness.putGeneral(g4)
 
-        harness.queueOfficerTurn(officerId = 1, actionCode = "훈련")
-        harness.queueOfficerTurn(officerId = 2, actionCode = "훈련")
-        harness.queueOfficerTurn(officerId = 3, actionCode = "훈련")
-        harness.queueOfficerTurn(officerId = 4, actionCode = "훈련")
+        harness.queueGeneralTurn(generalId = 1, actionCode = "훈련")
+        harness.queueGeneralTurn(generalId = 2, actionCode = "훈련")
+        harness.queueGeneralTurn(generalId = 3, actionCode = "훈련")
+        harness.queueGeneralTurn(generalId = 4, actionCode = "훈련")
 
         harness.turnService.processWorld(world)
 
-        assertTrue(harness.officerTurnsFor(1).isEmpty())
-        assertTrue(harness.officerTurnsFor(2).isEmpty())
-        assertTrue(harness.officerTurnsFor(3).isEmpty())
-        assertTrue(harness.officerTurnsFor(4).isEmpty())
+        assertTrue(harness.generalTurnsFor(1).isEmpty())
+        assertTrue(harness.generalTurnsFor(2).isEmpty())
+        assertTrue(harness.generalTurnsFor(3).isEmpty())
+        assertTrue(harness.generalTurnsFor(4).isEmpty())
 
         val generals = harness.generalRepository.findByWorldId(1).sortedBy { it.id }
         val nations = harness.nationRepository.findByWorldId(1).sortedBy { it.id }
@@ -126,10 +129,10 @@ class GoldenSnapshotTest {
             year = 200,
             month = 2,
             generals = listOf(
-                GeneralState(id = 1, crew = 200, train = 62, atmos = 63, experience = 100, dedication = 70),
-                GeneralState(id = 2, crew = 300, train = 41, atmos = 58, experience = 100, dedication = 70),
-                GeneralState(id = 3, crew = 250, train = 56, atmos = 67, experience = 100, dedication = 70),
-                GeneralState(id = 4, crew = 400, train = 30, atmos = 54, experience = 100, dedication = 70),
+                GeneralState(id = 1, crew = 199, train = 100, atmos = 70, experience = 100, dedication = 70),
+                GeneralState(id = 2, crew = 299, train = 100, atmos = 65, experience = 100, dedication = 70),
+                GeneralState(id = 3, crew = 249, train = 100, atmos = 75, experience = 100, dedication = 70),
+                GeneralState(id = 4, crew = 399, train = 100, atmos = 60, experience = 100, dedication = 70),
             ),
             nations = listOf(
                 NationState(id = 1, gold = 10000, rice = 10000, strategicCmdLimit = 0),

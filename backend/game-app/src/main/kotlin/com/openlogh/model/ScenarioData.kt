@@ -4,16 +4,16 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-class ScenarioData(
+data class ScenarioData(
     val title: String = "",
     val startYear: Int = 180,
     val life: Int = 0,
     val fiction: Int = 0,
     val history: List<String> = emptyList(),
-    faction: List<List<Any>> = emptyList(),
+    val nation: List<List<Any>> = emptyList(),
     val diplomacy: List<List<Any>> = emptyList(),
     val emperor: Map<String, Any>? = null,
-    officer: List<List<Any?>> = emptyList(),
+    val general: List<List<Any?>> = emptyList(),
     @JsonProperty("general_ex")
     val generalEx: List<List<Any?>> = emptyList(),
     @JsonProperty("general_neutral")
@@ -23,18 +23,12 @@ class ScenarioData(
     val const: Map<String, Any> = emptyMap(),
     val stat: ScenarioStat? = null,
     val iconPath: String? = null,
-    // === Old field name aliases ===
-    nation: List<List<Any>> = emptyList(),
-    general: List<List<Any?>> = emptyList(),
-) {
-    val faction: List<List<Any>> = faction.ifEmpty { nation }
-    val officer: List<List<Any?>> = officer.ifEmpty { general }
-}
+)
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class ScenarioMap(
-    val mapName: String = "logh",
-    val unitSet: String = "logh",
+    val mapName: String = "che",
+    val unitSet: String = "che",
     val scenarioEffect: String? = null,
 )
 
