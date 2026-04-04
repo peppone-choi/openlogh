@@ -8,6 +8,7 @@ import com.openlogh.engine.CommandPointService
 import com.openlogh.engine.CoupExecutionService
 import com.openlogh.engine.organization.CommandGating
 import com.openlogh.engine.organization.PositionCardType
+import com.openlogh.engine.strategic.CpCostResolver
 import com.openlogh.entity.*
 import com.openlogh.repository.FactionRepository
 import com.openlogh.repository.OfficerRepository
@@ -27,6 +28,7 @@ class CommandExecutor(
     private val commandPointService: CommandPointService? = null,
     private val coupExecutionService: CoupExecutionService? = null,
     private val positionCardService: PositionCardService? = null,
+    private val cpCostResolver: CpCostResolver? = null,
 ) {
     companion object {
         private val log = LoggerFactory.getLogger(CommandExecutor::class.java)
@@ -97,10 +99,11 @@ class CommandExecutor(
             )
         }
 
-        // CP consumption: 커맨드 포인트 소비
+        // CP consumption: 커맨드 포인트 소비 — Design Ref: §2.2 CP Cost Resolution Flow
         if (commandPointService != null) {
-            val cpType = resolveCpType(actionCode)
-            val cpCost = resolveCpCost(actionCode)
+            val resolver = cpCostResolver
+            val cpType = resolver?.resolveCpType(actionCode) ?: resolveCpType(actionCode)
+            val cpCost = resolver?.resolveCpCost(actionCode, arg) ?: resolveCpCost(actionCode)
             if (cpCost > 0 && !commandPointService.consume(general, cpType, cpCost)) {
                 return CommandResult(
                     success = false,
@@ -324,49 +327,29 @@ class CommandExecutor(
     private fun formatDate(env: CommandEnv): String =
         "${env.year}년 ${"%02d".format(env.month)}월"
 
-    /** 커맨드 코드 → 직무카드 커맨드 그룹 매핑 */
+    /** 커맨드 코드 → 직무카드 커맨드 그룹 매핑 — Design Ref: §9.2 Dependency Rules */
     private fun resolveCommandGroup(actionCode: String): String? {
-        // 전략 커맨드 레지스트리에서 찾기
-        val strategicDef = com.openlogh.engine.strategic.StrategicCommandRegistry.findByCode(actionCode)
-        if (strategicDef != null) return strategicDef.requiredCommandGroup
-
-        // 기존 커맨드: 접두사 기반 매핑
-        return when {
-            actionCode.startsWith("che_") -> when {
-                actionCode.contains("외교") || actionCode.contains("선전포고") -> "diplomacy"
-                actionCode.contains("모병") || actionCode.contains("징병") -> "logistics"
-                actionCode.contains("공격") || actionCode.contains("출병") -> "operations"
-                actionCode.contains("발탁") || actionCode.contains("강등") || actionCode.contains("서작") -> "personnel"
-                actionCode.contains("세율") || actionCode.contains("분배") -> "politics"
-                else -> null // 기본 카드로 실행 가능
-            }
-            else -> null // 기본 카드로 실행 가능
-        }
+        return cpCostResolver?.resolveCommandGroup(actionCode) ?: resolveCommandGroupLegacy(actionCode)
     }
 
-    /** 커맨드 코드 → CP 타입 결정 (정략 vs 군사) */
+    /** Legacy fallback: CpCostResolver 미주입 시 기존 로직 */
+    private fun resolveCommandGroupLegacy(actionCode: String): String? {
+        val strategicDef = com.openlogh.engine.strategic.StrategicCommandRegistry.findByCode(actionCode)
+        if (strategicDef != null) return strategicDef.requiredCommandGroup
+        return null
+    }
+
+    /** Legacy fallback: CP 타입 결정 */
     private fun resolveCpType(actionCode: String): CommandPointService.CpType {
         val strategicDef = com.openlogh.engine.strategic.StrategicCommandRegistry.findByCode(actionCode)
         if (strategicDef != null) return strategicDef.cpType
-
-        // 군사 관련 커맨드는 MCP, 나머지는 PCP
-        val militaryKeywords = listOf("공격", "출병", "이동", "훈련", "모병", "징병", "정찰", "연료",
-            "워프", "항행", "군기", "경계", "진압", "행진", "징발", "부대", "보충", "할당",
-            "통신", "위장", "병기", "수색", "습격", "감시", "잠입", "탈출", "정보공작", "파괴", "선동", "귀환공작",
-            "체포명령", "사열", "특별경비")
-        return if (militaryKeywords.any { actionCode.contains(it) }) {
-            CommandPointService.CpType.MCP
-        } else {
-            CommandPointService.CpType.PCP
-        }
+        return CommandPointService.CpType.PCP
     }
 
-    /** 커맨드 코드 → CP 비용 결정 */
+    /** Legacy fallback: CP 비용 결정 */
     private fun resolveCpCost(actionCode: String): Int {
         val strategicDef = com.openlogh.engine.strategic.StrategicCommandRegistry.findByCode(actionCode)
         if (strategicDef != null) return strategicDef.cpCost
-
-        // 기존 커맨드 기본 비용 (0 = CP 소비 없음)
-        return 0 // 기존 커맨드는 현재 CP 체크 없이 유지 (점진적 이행)
+        return 0
     }
 }

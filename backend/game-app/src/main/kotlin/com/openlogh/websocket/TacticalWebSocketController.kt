@@ -41,6 +41,7 @@ class TacticalWebSocketController(
     private val resultWriteback: TacticalResultWriteback,
     private val tacticalAI: TacticalAI,
     private val messagingTemplate: SimpMessagingTemplate?,
+    private val groundAssaultInitializer: GroundAssaultInitializer? = null,
 ) {
     companion object {
         private val log = LoggerFactory.getLogger(TacticalWebSocketController::class.java)
@@ -185,7 +186,7 @@ class TacticalWebSocketController(
         }
 
         // 엔진으로 턴 처리
-        val engine = TacticalBattleEngine(Random(System.currentTimeMillis() + battleSession.currentTurn))
+        val engine = TacticalBattleEngine(Random(System.currentTimeMillis() + battleSession.currentTurn), groundAssaultInitializer = groundAssaultInitializer)
         val result = engine.resolveTurn(battleSession)
 
         log.info("Turn {} resolved for session {}: {} events, victory={}",

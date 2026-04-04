@@ -3,6 +3,7 @@ package com.openlogh.controller
 import com.openlogh.dto.OrgChartHolder
 import com.openlogh.dto.OrgChartResponse
 import com.openlogh.dto.PositionTypeInfo
+import com.openlogh.engine.organization.PositionCardGrantMap
 import com.openlogh.engine.organization.PositionCardType
 import com.openlogh.repository.OfficerRepository
 import com.openlogh.repository.PositionCardRepository
@@ -48,7 +49,7 @@ class OrgChartController(
                 displayName = type.displayName,
                 category = type.category.name,
                 minRank = type.minRank,
-                grantedCommands = type.grantedCommands.toList(),
+                grantedCommands = PositionCardGrantMap.getGrantedCommands(type.code).toList(),
             )
         }
 

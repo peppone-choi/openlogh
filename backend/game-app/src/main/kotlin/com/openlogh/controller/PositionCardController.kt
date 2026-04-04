@@ -1,6 +1,7 @@
 package com.openlogh.controller
 
 import com.openlogh.dto.OfficerPositionCard
+import com.openlogh.engine.organization.PositionCardGrantMap
 import com.openlogh.engine.organization.PositionCardType
 import com.openlogh.entity.PositionCard
 import com.openlogh.repository.PositionCardRepository
@@ -28,7 +29,7 @@ class PositionCardController(
                 positionType = card.positionType,
                 positionNameKo = card.positionNameKo,
                 category = type?.category?.name ?: "unknown",
-                grantedCommands = type?.grantedCommands?.toList() ?: emptyList(),
+                grantedCommands = type?.let { PositionCardGrantMap.getGrantedCommands(it.code).toList() } ?: emptyList(),
             )
         }
         return ResponseEntity.ok(result)

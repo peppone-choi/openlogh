@@ -8,6 +8,7 @@ import kotlin.random.Random
 class TacticalBattleEngine(
     private val rng: Random,
     private val commandTimingService: CommandTimingService = CommandTimingService(),
+    private val groundAssaultInitializer: GroundAssaultInitializer? = null,
 ) {
 
     companion object {
@@ -154,11 +155,12 @@ class TacticalBattleEngine(
                             it.shipClass == TacticalShipClass.ASSAULT_SHIP && it.isAlive()
                         }
                         if (assaultUnit != null && !session.groundAssault.isActive() && !session.groundAssault.isFinished()) {
-                            // 지상전 개시: 궤도 방어력과 수비대 전력 초기화
-                            session.groundAssault = GroundAssaultEngine.initiate(
-                                orbitalDefense = 100.0, // TODO: Planet.orbitalDefense에서 가져오기
-                                garrisonStrength = 100.0, // TODO: Planet garrison에서 가져오기
-                            )
+                            // 지상전 개시: Planet 엔티티에서 방어력 조회 — Design Ref: §2.2, Plan SC: SC-03
+                            session.groundAssault = groundAssaultInitializer?.initiate(session.planetId)
+                                ?: GroundAssaultEngine.initiate(
+                                    orbitalDefense = 100.0,
+                                    garrisonStrength = 100.0,
+                                )
                             // 병종 설정 (Fleet에서)
                             session.groundAssault.attackerUnitType =
                                 GroundUnitType.fromCode(order.specialCode ?: "light_infantry")
