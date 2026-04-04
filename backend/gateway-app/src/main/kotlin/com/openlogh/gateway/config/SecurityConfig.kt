@@ -34,6 +34,7 @@ class SecurityConfig(
                     .requestMatchers("/api/worlds").permitAll()
                     .requestMatchers("/ws/**").permitAll()
                     .requestMatchers("/api/worlds/**").permitAll()
+                    .requestMatchers("/uploads/**").permitAll()
                     .anyRequest().authenticated()
             }
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter::class.java)

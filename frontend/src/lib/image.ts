@@ -5,6 +5,7 @@ function normalizeCdnBase(url: string): string {
 }
 
 export const CDN_BASE = normalizeCdnBase(process.env.NEXT_PUBLIC_IMAGE_CDN_BASE ?? DEFAULT_CDN_BASE);
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080/api';
 
 export const CDN_ROOT = CDN_BASE.slice(0, -1);
 export const GAME_CDN_ROOT = `${CDN_ROOT}/game`;
@@ -17,6 +18,8 @@ export function getPortraitUrl(picture?: string | null): string {
     // picture is a numeric string (e.g. "1146") — append .jpg
     if (/^\d+$/.test(normalized)) return `${ICON_CDN_ROOT}/${normalized}.jpg`;
     if (/^\d+\.jpg$/i.test(normalized)) return `${ICON_CDN_ROOT}/${normalized}`;
+    // Uploaded icon served from backend
+    if (normalized.startsWith('uploads/')) return `${API_BASE}/${normalized}`;
     // Already has extension or is a full path
     return `${CDN_BASE}${normalized}`;
 }
