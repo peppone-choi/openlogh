@@ -79,7 +79,7 @@ const navSections: NavSection[] = [
             { href: '/battle-simulator', label: '전투 시뮬레이터' },
             { href: '/models', label: '3D 함선도감' },
             { href: '/traffic', label: '접속량정보' },
-            { href: '/npc-list', label: '빙의일람', cond: 'npcMode' },
+            { href: '/npc-list', label: 'NPC일람', cond: 'npcMode' },
             { href: '/vote', label: '설문조사' },
         ],
     },

@@ -16,7 +16,7 @@ interface MapCitySelectorProps {
 
 export function MapCitySelector({ open, onOpenChange, onSelect, title = '도시 선택' }: MapCitySelectorProps) {
     const currentWorld = useWorldStore((s) => s.currentWorld);
-    const cities = useGameStore((s) => s.cities);
+    const cities = useGameStore((s) => s.starSystems);
 
     const handleCityClick = (cityId: number) => {
         onSelect(cityId);

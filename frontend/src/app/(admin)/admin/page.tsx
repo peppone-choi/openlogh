@@ -822,7 +822,7 @@ export default function AdminDashboardPage() {
                                             className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm"
                                         >
                                             <option value="0">0 - 없음</option>
-                                            <option value="1">1 - 빙의모드</option>
+                                            <option value="1">1 - NPC 부임모드</option>
                                         </select>
                                     </div>
                                     <div className="space-y-1">
@@ -1096,7 +1096,7 @@ export default function AdminDashboardPage() {
                                             className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm"
                                         >
                                             <option value="0">0 - 없음</option>
-                                            <option value="1">1 - 빙의모드</option>
+                                            <option value="1">1 - NPC 부임모드</option>
                                         </select>
                                     </div>
                                     <div className="space-y-1">

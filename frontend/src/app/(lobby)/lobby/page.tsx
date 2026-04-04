@@ -135,7 +135,7 @@ function getActionAvailability(
             : isFull
               ? '정원 초과'
               : blockNpc
-                ? '빙의 불가'
+                ? 'NPC 부임 불가'
                 : npcMode <= 0
                   ? 'NPC모드 불가'
                   : undefined,
@@ -517,7 +517,7 @@ export default function LobbyPage() {
                                                 <Bot className="size-5" />
                                             </div>
                                             <div className="flex-1">
-                                                <p className="font-medium">NPC 빙의</p>
+                                                <p className="font-medium">NPC 부임</p>
                                                 <p className="text-xs text-muted-foreground">
                                                     기존 NPC 제독를 인수하여 플레이합니다.
                                                 </p>

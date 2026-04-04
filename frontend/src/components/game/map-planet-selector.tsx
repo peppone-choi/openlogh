@@ -14,7 +14,7 @@ interface MapPlanetSelectorProps {
 
 export function MapPlanetSelector({ open, onOpenChange, onSelect, title = '행성 선택' }: MapPlanetSelectorProps) {
     const currentWorld = useWorldStore((s) => s.currentWorld);
-    const cities = useGameStore((s) => s.cities);
+    const cities = useGameStore((s) => s.starSystems);
 
     const handlePlanetClick = (planetId: number) => {
         onSelect(planetId);
