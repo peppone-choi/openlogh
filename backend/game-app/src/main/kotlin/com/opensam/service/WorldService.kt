@@ -74,11 +74,13 @@ class WorldService(
         return worldStateRepository.findById(id).orElse(null)
     }
 
+    @Transactional
     fun save(world: WorldState): WorldState {
         world.updatedAt = OffsetDateTime.now()
         return worldStateRepository.save(world)
     }
 
+    @Transactional
     fun deleteWorld(id: Short) {
         worldStateRepository.deleteById(id)
     }

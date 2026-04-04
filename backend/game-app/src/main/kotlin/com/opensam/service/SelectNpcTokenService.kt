@@ -13,6 +13,7 @@ import com.opensam.repository.NationRepository
 import com.opensam.repository.WorldStateRepository
 import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import java.time.Duration
 import java.time.Instant
 import java.time.OffsetDateTime
@@ -114,6 +115,7 @@ class SelectNpcTokenService(
         return toResponse(worldId, nextToken, kept + drawn)
     }
 
+    @Transactional
     fun selectNpc(worldId: Long, userId: Long, nonce: String, generalId: Long): SelectNpcResult {
         ensureNpcModeEnabled(worldId)
         ensureUserHasNoGeneral(worldId, userId)

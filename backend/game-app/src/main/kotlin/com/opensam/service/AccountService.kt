@@ -13,6 +13,7 @@ class AccountService(
     private val generalRepository: GeneralRepository,
     private val passwordEncoder: PasswordEncoder,
 ) {
+    @Transactional
     fun changePassword(loginId: String, currentPassword: String, newPassword: String): Boolean {
         val user = appUserRepository.findByLoginId(loginId) ?: return false
         if (!passwordEncoder.matches(currentPassword, user.passwordHash)) return false
@@ -21,6 +22,7 @@ class AccountService(
         return true
     }
 
+    @Transactional
     fun deleteAccount(loginId: String, password: String): Boolean {
         val user = appUserRepository.findByLoginId(loginId) ?: return false
         if (!passwordEncoder.matches(password, user.passwordHash)) return false
@@ -34,6 +36,7 @@ class AccountService(
         return true
     }
 
+    @Transactional
     fun updateSettings(
         loginId: String,
         defenceTrain: Int?,
@@ -92,6 +95,7 @@ class AccountService(
         return true
     }
 
+    @Transactional
     fun toggleVacation(loginId: String): Boolean {
         val user = appUserRepository.findByLoginId(loginId) ?: return false
         val generals = generalRepository.findByUserId(user.id)

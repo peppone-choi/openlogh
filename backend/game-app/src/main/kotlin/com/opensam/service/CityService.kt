@@ -109,10 +109,12 @@ class CityService(
         return cityRepository.findByNationId(nationId)
     }
 
+    @Transactional
     fun save(city: City): City {
         return cityRepository.save(city)
     }
 
+    @Transactional
     fun saveAll(cities: List<City>): List<City> {
         return cityRepository.saveAll(cities)
     }

@@ -60,6 +60,7 @@ class AdminService(
         )
     }
 
+    @Transactional
     fun updateSettings(worldId: Long, settings: Map<String, Any>): Boolean {
         val world = worldStateRepository.findById(worldId.toShort()).orElse(null) ?: return false
 
@@ -194,6 +195,7 @@ class AdminService(
         )
     }
 
+    @Transactional
     fun timeControl(worldId: Long, request: TimeControlRequest): Boolean {
         val world = worldStateRepository.findById(worldId.toShort()).orElse(null) ?: return false
 
@@ -390,6 +392,7 @@ class AdminService(
         }
     }
 
+    @Transactional
     fun userAction(actorLoginId: String, id: Long, action: AdminUserAction): Boolean {
         val actor = appUserRepository.findByLoginId(actorLoginId) ?: return false
         val actorGrade = actor.grade.toInt()
@@ -434,6 +437,7 @@ class AdminService(
         }
     }
 
+    @Transactional
     fun broadcastMessage(worldId: Long, generalIds: List<Long>, message: String) {
         val messages = generalIds.map { generalId ->
             com.opensam.entity.Message(

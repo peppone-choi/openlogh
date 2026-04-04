@@ -65,6 +65,7 @@ class GeneralService(
         return generalRepository.findById(id).orElse(null)
     }
 
+    @Transactional
     fun getMyGeneral(worldId: Long, loginId: String): General? {
         val userId = getCurrentUserId(loginId) ?: return null
         val general = generalRepository.findByWorldIdAndUserId(worldId, userId)
@@ -246,6 +247,7 @@ class GeneralService(
             .filter { it.npcState.toInt() == 1 && it.userId == null }
     }
 
+    @Transactional
     fun possessNpc(worldId: Long, loginId: String, generalId: Long): General? {
         val userId = getCurrentUserId(loginId) ?: return null
         if (hasActiveGeneral(worldId, userId)) return null
@@ -308,6 +310,7 @@ class GeneralService(
         return generalRepository.save(general)
     }
 
+    @Transactional
     fun updatePoolGeneral(
         worldId: Long,
         loginId: String,

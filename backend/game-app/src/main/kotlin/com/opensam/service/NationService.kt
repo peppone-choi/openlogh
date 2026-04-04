@@ -42,6 +42,7 @@ class NationService(
         return nationRepository.findById(id).orElse(null)
     }
 
+    @Transactional
     fun updateAbbreviation(nationId: Long, abbreviation: String): Nation? {
         val nation = nationRepository.findById(nationId).orElse(null) ?: return null
         nation.abbreviation = abbreviation.take(2)
@@ -64,6 +65,7 @@ class NationService(
         )
     }
 
+    @Transactional
     fun updatePolicy(nationId: Long, rate: Int?, bill: Int?, secretLimit: Int?, strategicCmdLimit: Int?): Boolean {
         val nation = nationRepository.findById(nationId).orElse(null) ?: return false
         rate?.let { nation.rate = it.toShort() }
@@ -99,6 +101,7 @@ class NationService(
             .firstOrNull { it.nationId == nationId }
     }
 
+    @Transactional
     fun updateBill(nationId: Long, amount: Int): Boolean {
         val nation = nationRepository.findById(nationId).orElse(null) ?: return false
         nation.bill = amount.toShort()
@@ -106,6 +109,7 @@ class NationService(
         return true
     }
 
+    @Transactional
     fun updateRate(nationId: Long, amount: Int): Boolean {
         val nation = nationRepository.findById(nationId).orElse(null) ?: return false
         nation.rate = amount.toShort()
@@ -113,6 +117,7 @@ class NationService(
         return true
     }
 
+    @Transactional
     fun updateSecretLimit(nationId: Long, amount: Int): Boolean {
         val nation = nationRepository.findById(nationId).orElse(null) ?: return false
         nation.secretLimit = amount.toShort()
@@ -120,6 +125,7 @@ class NationService(
         return true
     }
 
+    @Transactional
     fun updateNotice(nationId: Long, notice: String, authorGeneral: General? = null): Boolean {
         val nation = nationRepository.findById(nationId).orElse(null) ?: return false
         val sanitizedNotice = sanitizeHtml(notice)
@@ -134,6 +140,7 @@ class NationService(
         return true
     }
 
+    @Transactional
     fun updateScoutMsg(nationId: Long, scoutMsg: String): Boolean {
         val nation = nationRepository.findById(nationId).orElse(null) ?: return false
         val sanitizedScoutMsg = sanitizeHtml(scoutMsg)
@@ -143,6 +150,7 @@ class NationService(
         return true
     }
 
+    @Transactional
     fun updateBlockScout(nationId: Long, value: Boolean): MutationResult {
         val nation = nationRepository.findById(nationId).orElse(null) ?: return MutationResult(success = false)
         val world = worldStateRepository.findById(nation.worldId.toShort()).orElse(null)
@@ -156,6 +164,7 @@ class NationService(
         return MutationResult(success = true)
     }
 
+    @Transactional
     fun updateBlockWar(nationId: Long, value: Boolean): MutationResult {
         val nation = nationRepository.findById(nationId).orElse(null) ?: return MutationResult(success = false)
         val availableCnt = readInt(nation.meta["available_war_setting_cnt"]) ?: 0
@@ -223,6 +232,7 @@ class NationService(
         return true
     }
 
+    @Transactional
     fun expelGeneral(nationId: Long, generalId: Long): Boolean {
         val general = generalRepository.findById(generalId).orElse(null) ?: return false
         if (general.nationId != nationId) return false
@@ -251,6 +261,7 @@ class NationService(
         return merged
     }
 
+    @Transactional
     fun updateNpcPolicy(nationId: Long, policy: Map<String, Any>): Boolean {
         val nation = nationRepository.findById(nationId).orElse(null) ?: return false
         nation.meta["npcNationPolicy"] = policy
@@ -259,6 +270,7 @@ class NationService(
         return true
     }
 
+    @Transactional
     fun updateNpcPriority(nationId: Long, priority: Map<String, Any>): Boolean {
         val nation = nationRepository.findById(nationId).orElse(null) ?: return false
         val nationPolicy = readStringAnyMap(nation.meta["npcNationPolicy"]).toMutableMap()
@@ -309,6 +321,7 @@ class NationService(
      * front=2: adjacent to neutral/empty city (peacetime only)
      * front=3: adjacent to active war city (전쟁, state=0 in legacy)
      */
+    @Transactional
     fun setNationFront(worldId: Long, nationId: Long) {
         if (nationId == 0L) return
 
@@ -403,6 +416,7 @@ class NationService(
      * Recalculate front state for ALL nations in a world.
      * Called during turn processing and after scenario creation.
      */
+    @Transactional
     fun recalcAllFronts(worldId: Long) {
         val nations = nationRepository.findByWorldId(worldId).filter { it.level > 0 }
         for (nation in nations) {
