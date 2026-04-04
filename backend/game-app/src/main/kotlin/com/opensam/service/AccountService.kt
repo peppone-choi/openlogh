@@ -112,6 +112,14 @@ class AccountService(
             user.meta["imageServer"] = 0
         }
         appUserRepository.save(user)
+
+        // Sync to all generals (legacy parity: j_adjust_icon.php)
+        val generals = generalRepository.findByUserId(user.id).filter { it.npcState.toInt() == 0 }
+        generals.forEach { gen ->
+            gen.picture = iconUrl.ifBlank { "" }
+            gen.imageServer = 0
+            generalRepository.save(gen)
+        }
         return true
     }
 

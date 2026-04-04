@@ -122,6 +122,77 @@ class AccountServiceTest {
     }
 
     @Test
+    fun `updateIconUrl syncs picture to all player generals`() {
+        val user = AppUser(
+            id = 4,
+            loginId = "user",
+            displayName = "유저",
+            passwordHash = "encoded",
+            meta = mutableMapOf(),
+        )
+        val playerGeneral = General(
+            id = 10,
+            userId = 4,
+            worldId = 1,
+            name = "장수",
+            picture = "old.png",
+            npcState = 0,
+        )
+        val npcGeneral = General(
+            id = 11,
+            userId = 4,
+            worldId = 1,
+            name = "NPC장수",
+            picture = "npc.png",
+            npcState = 1,
+        )
+        `when`(appUserRepository.findByLoginId("user")).thenReturn(user)
+        `when`(generalRepository.findByUserId(4L)).thenReturn(listOf(playerGeneral, npcGeneral))
+
+        val result = service.updateIconUrl("user", "/uploads/icons/new.png")
+
+        assertTrue(result)
+        assertEquals("/uploads/icons/new.png", user.meta["picture"])
+        assertEquals(0, user.meta["imageServer"])
+        // Player general should be synced
+        assertEquals("/uploads/icons/new.png", playerGeneral.picture)
+        assertEquals(0.toShort(), playerGeneral.imageServer)
+        verify(generalRepository).save(playerGeneral)
+        // NPC general (npcState != 0) should NOT be synced
+        assertEquals("npc.png", npcGeneral.picture)
+        verify(generalRepository, never()).save(npcGeneral)
+    }
+
+    @Test
+    fun `updateIconUrl clears picture when blank url`() {
+        val user = AppUser(
+            id = 4,
+            loginId = "user",
+            displayName = "유저",
+            passwordHash = "encoded",
+            meta = mutableMapOf("picture" to "old.png", "imageServer" to 0),
+        )
+        val general = General(
+            id = 10,
+            userId = 4,
+            worldId = 1,
+            name = "장수",
+            picture = "old.png",
+            npcState = 0,
+        )
+        `when`(appUserRepository.findByLoginId("user")).thenReturn(user)
+        `when`(generalRepository.findByUserId(4L)).thenReturn(listOf(general))
+
+        val result = service.updateIconUrl("user", "")
+
+        assertTrue(result)
+        assertFalse(user.meta.containsKey("picture"))
+        assertFalse(user.meta.containsKey("imageServer"))
+        assertEquals("", general.picture)
+        verify(generalRepository).save(general)
+    }
+
+    @Test
     fun `getDetailedInfo extracts oauth provider name`() {
         val user = AppUser(
             id = 5,

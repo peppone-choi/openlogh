@@ -443,7 +443,7 @@ export const accountApi = {
     },
     unlinkOAuth: (provider: string) => api.delete<void>(`/account/oauth/${provider}`),
     uploadIcon: (formData: FormData) =>
-        api.post<void>('/account/icon', formData, {
+        api.post<{ url: string }>('/account/icon', formData, {
             headers: { 'Content-Type': 'multipart/form-data' },
         }),
     deleteIcon: () => api.delete<void>('/account/icon'),
