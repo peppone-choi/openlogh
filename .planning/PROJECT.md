@@ -44,75 +44,125 @@ OpenSamguk(삼국지 웹게임) 포크. Spring Boot 3 (Kotlin) + Next.js 15 + Po
 ### Active
 
 **캐릭터/계급 시스템**
-- [ ] 8스탯 시스템 (leadership, politics, administration, intelligence, command, mobility, attack, defense)
-- [ ] PCP(정략) + MCP(군사) 스탯 그룹 분리
-- [ ] 11단계 계급 (소위~원수), 제국/동맹 칭호 구분
-- [ ] 공적 포인트 기반 승진/강등
-- [ ] 커스텀 캐릭터 생성 (8스탯 배분)
-- [ ] 원작 캐릭터 일부 선택 가능 (시나리오별)
-- [ ] 소위부터 플레이 시작 가능
+- [ ] CHAR-01: 8스탯 시스템 (leadership, politics, administration, intelligence, command, mobility, attack, defense)
+- [ ] CHAR-02: PCP(정략) + MCP(군사) 스탯 그룹 분리
+- [ ] CHAR-03: 11단계 계급 (소위~원수), 제국/동맹 칭호 구분
+- [ ] CHAR-04: 공적 포인트 기반 승진/강등
+- [ ] CHAR-05: 커스텀 캐릭터 생성 (8스탯 배분)
+- [ ] CHAR-06: 원작 캐릭터 일부 선택 가능 (시나리오별)
+- [ ] CHAR-07: 소위부터 플레이 시작 가능
 
 **커맨드 시스템**
-- [ ] 직무권한카드 기반 커맨드 체계 (77종 카드)
-- [ ] PCP/MCP 커맨드포인트 분리 (각각 독립 회복, 5분마다)
-- [ ] 교차사용 시 2배 비용
-- [ ] 리얼타임 쿨다운 (턴 대기 없음)
-- [ ] 제안공작 시스템
+- [ ] CMD-01: 직무권한카드 기반 커맨드 체계 (77종 카드)
+- [ ] CMD-02: PCP/MCP 커맨드포인트 분리 (각각 독립 회복, 5분마다)
+- [ ] CMD-03: 교차사용 시 2배 비용
+- [ ] CMD-04: 리얼타임 쿨다운 (턴 대기 없음)
+- [ ] CMD-05: 제안공작 시스템
 
 **리얼타임 엔진**
-- [ ] 1초 서버 tick = 게임 내 24초 (24배속)
-- [ ] 실시간 30시간 = 게임 내 1개월
-- [ ] CP 5분마다 회복
-- [ ] 커맨드 실행 시 실시간 대기
+- [ ] ENG-01: 1초 서버 tick = 게임 내 24초 (24배속)
+- [ ] ENG-02: 실시간 30시간 = 게임 내 1개월
+- [ ] ENG-03: CP 5분마다 회복
+- [ ] ENG-04: 커맨드 실행 시 실시간 대기
 
 **조직 구조**
-- [ ] 함대: 60유닛(18,000척), 10명 편성
-- [ ] 순찰대: 3유닛(900척), 3명 편성
-- [ ] 수송함대: 수송20+전투3유닛, 3명
-- [ ] 지상부대: 양륙함3+육전대3유닛, 1명
-- [ ] 행성수비대: 육전대10유닛, 1명
-- [ ] 인구 10억당 함대/수송함대 1, 순찰대/지상부대 6
+- [ ] ORG-01: 함대: 60유닛(18,000척), 10명 편성
+- [ ] ORG-02: 순찰대: 3유닛(900척), 3명 편성
+- [ ] ORG-03: 수송함대: 수송20+전투3유닛, 3명
+- [ ] ORG-04: 지상부대: 양륙함3+육전대3유닛, 1명
+- [ ] ORG-05: 행성수비대: 육전대10유닛, 1명
+- [ ] ORG-06: 인구 10억당 함대/수송함대 1, 순찰대/지상부대 6
 
 **갤럭시 맵**
-- [ ] 80개 성계 (docs/star_systems.json)
-- [ ] 성계 간 항로 연결
-- [ ] 제국/동맹/페잔 영역 구분
-- [ ] 이제르론/가이에스부르크 등 요새 시스템
+- [ ] GAL-01: 80개 성계 (docs/star_systems.json)
+- [ ] GAL-02: 성계 간 항로 연결
+- [ ] GAL-03: 제국/동맹/페잔 영역 구분
+- [ ] GAL-04: 이제르론/가이에스부르크 등 요새 시스템
 
 **전술전 (RTS)**
-- [ ] WebSocket 기반 실시간 함대전
-- [ ] 에너지 배분: BEAM/GUN/SHIELD/ENGINE/WARP/SENSOR
-- [ ] 진형: 방추/함종별/혼성/삼열
-- [ ] 요새포 (토르 해머, 가이에스하켄)
-- [ ] 점거 커맨드, 통신방해
+- [ ] TAC-01: WebSocket 기반 실시간 함대전
+- [ ] TAC-02: 에너지 배분: BEAM/GUN/SHIELD/ENGINE/WARP/SENSOR
+- [ ] TAC-03: 진형: 방추/함종별/혼성/삼열
+- [ ] TAC-04: 요새포 (토르 해머, 가이에스하켄)
+- [ ] TAC-05: 점거 커맨드, 통신방해
 
 **3세력 시스템**
-- [ ] 제국: 전제군주제, 귀족 체계, 쿠데타 이벤트
-- [ ] 동맹: 민주공화제, 최고평의회, 선거
-- [ ] 페잔: NPC 세력, 중립 교역, 차관 시스템, 정보 거래
-- [ ] 페잔 빚 상환, 페잔 엔딩
+- [ ] FAC-01: 제국: 전제군주제, 귀족 체계, 쿠데타 이벤트
+- [ ] FAC-02: 동맹: 민주공화제, 최고평의회, 선거
+- [ ] FAC-03: 페잔: NPC 세력, 중립 교역, 차관 시스템, 정보 거래
+- [ ] FAC-04: 페잔 빚 상환, 페잔 엔딩
 
 **시나리오**
-- [ ] 10개 시나리오 (UC795.9 ~ UC799.4)
-- [ ] 시나리오별 초기 성계 배치, 전투 현황, 편성 가능 함대
-- [ ] 시나리오별 이벤트 (쿠데타, 내전 등)
+- [ ] SCN-01: 10개 시나리오 (UC795.9 ~ UC799.4)
+- [ ] SCN-02: 시나리오별 초기 성계 배치, 전투 현황, 편성 가능 함대
+- [ ] SCN-03: 시나리오별 이벤트 (쿠데타, 내전 등)
 
 **NPC AI**
-- [ ] 성격/성향 기반 행동 패턴 (향상된 AI)
-- [ ] 오프라인 플레이어 캐릭터 자동 행동
-- [ ] 미선택 원작 캐릭터 자율 행동
+- [ ] NPC-01: 성격/성향 기반 행동 패턴 (향상된 AI)
+- [ ] NPC-02: 오프라인 플레이어 캐릭터 자동 행동
+- [ ] NPC-03: 미선택 원작 캐릭터 자율 행동
 
 **승리 조건**
-- [ ] 적 수도 성계 점령
-- [ ] 적 보유 성계 3개 이하
-- [ ] UC801.7.27 시간제한 → 인구 비교
-- [ ] 결정적/한정적/국지적/패배 4단계 평가
+- [ ] VIC-01: 적 수도 성계 점령
+- [ ] VIC-02: 적 보유 성계 3개 이하
+- [ ] VIC-03: UC801.7.27 시간제한 → 인구 비교
+- [ ] VIC-04: 결정적/한정적/국지적/패배 4단계 평가
 
 ### Out of Scope
 
 - 페잔 플레이어 세력 — NPC 전용으로 결정
 - 모바일 앱 — 웹 기반 우선
 - 대규모(2000명) 최적화 — 중규모(100-500명) 우선, 이후 확장
+
+## Traceability
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| CHAR-01 | Phase 1 | Pending |
+| CHAR-02 | Phase 1 | Pending |
+| CHAR-03 | Phase 1 | Pending |
+| CHAR-04 | Phase 7 | Pending |
+| CHAR-05 | Phase 8 | Pending |
+| CHAR-06 | Phase 8 | Pending |
+| CHAR-07 | Phase 7 | Pending |
+| CMD-01 | Phase 4 | Pending |
+| CMD-02 | Phase 3 | Pending |
+| CMD-03 | Phase 3 | Pending |
+| CMD-04 | Phase 4 | Pending |
+| CMD-05 | Phase 4 | Pending |
+| ENG-01 | Phase 2 | Pending |
+| ENG-02 | Phase 2 | Pending |
+| ENG-03 | Phase 2 | Pending |
+| ENG-04 | Phase 2 | Pending |
+| ORG-01 | Phase 5 | Pending |
+| ORG-02 | Phase 5 | Pending |
+| ORG-03 | Phase 5 | Pending |
+| ORG-04 | Phase 5 | Pending |
+| ORG-05 | Phase 5 | Pending |
+| ORG-06 | Phase 5 | Pending |
+| GAL-01 | Phase 6 | Pending |
+| GAL-02 | Phase 6 | Pending |
+| GAL-03 | Phase 6 | Pending |
+| GAL-04 | Phase 6 | Pending |
+| TAC-01 | Phase 10 | Pending |
+| TAC-02 | Phase 10 | Pending |
+| TAC-03 | Phase 10 | Pending |
+| TAC-04 | Phase 10 | Pending |
+| TAC-05 | Phase 9 | Pending |
+| FAC-01 | Phase 11 | Pending |
+| FAC-02 | Phase 11 | Pending |
+| FAC-03 | Phase 11 | Pending |
+| FAC-04 | Phase 11 | Pending |
+| SCN-01 | Phase 8 | Pending |
+| SCN-02 | Phase 8 | Pending |
+| SCN-03 | Phase 8 | Pending |
+| NPC-01 | Phase 12 | Pending |
+| NPC-02 | Phase 12 | Pending |
+| NPC-03 | Phase 12 | Pending |
+| VIC-01 | Phase 12 | Pending |
+| VIC-02 | Phase 12 | Pending |
+| VIC-03 | Phase 12 | Pending |
+| VIC-04 | Phase 12 | Pending |
 
 ## Key Decisions
 
@@ -164,4 +214,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-05 after initialization*
+*Last updated: 2026-04-05 after roadmap creation*
