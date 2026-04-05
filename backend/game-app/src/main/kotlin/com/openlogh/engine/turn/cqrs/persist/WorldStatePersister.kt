@@ -2,8 +2,8 @@ package com.openlogh.engine.turn.cqrs.persist
 
 import com.openlogh.engine.turn.cqrs.memory.DirtyTracker
 import com.openlogh.engine.turn.cqrs.memory.InMemoryWorldState
-import com.openlogh.entity.GeneralTurn
-import com.openlogh.entity.NationTurn
+import com.openlogh.entity.OfficerTurn
+import com.openlogh.entity.FactionTurn
 import com.openlogh.repository.CityRepository
 import com.openlogh.repository.DiplomacyRepository
 import com.openlogh.repository.GeneralRepository
@@ -16,29 +16,29 @@ import org.springframework.transaction.annotation.Transactional
 
 @Service
 class WorldStatePersister(
-    private val generalRepository: GeneralRepository,
-    private val cityRepository: CityRepository,
-    private val nationRepository: NationRepository,
-    private val troopRepository: TroopRepository,
+    private val officerRepository: GeneralRepository,
+    private val planetRepository: CityRepository,
+    private val factionRepository: NationRepository,
+    private val fleetRepository: TroopRepository,
     private val diplomacyRepository: DiplomacyRepository,
-    private val generalTurnRepository: GeneralTurnRepository,
-    private val nationTurnRepository: NationTurnRepository,
+    private val officerTurnRepository: GeneralTurnRepository,
+    private val factionTurnRepository: NationTurnRepository,
     private val jpaBulkWriter: JpaBulkWriter,
 ) {
     @Transactional
-    fun persist(state: InMemoryWorldState, tracker: DirtyTracker, worldId: Long) {
+    fun persist(state: InMemoryWorldState, tracker: DirtyTracker, sessionId: Long) {
         val changes = tracker.consumeAll()
 
-        val generalUpserts = (changes.dirtyGeneralIds + changes.createdGeneralIds)
+        val officerUpserts = (changes.dirtyOfficerIds + changes.createdOfficerIds)
             .mapNotNull { id ->
-                val snapshot = state.generals[id] ?: return@mapNotNull null
-                generalRepository.findById(id).orElse(null)?.also { entity ->
-                    entity.worldId = worldId
+                val snapshot = state.officers[id] ?: return@mapNotNull null
+                officerRepository.findById(id).orElse(null)?.also { entity ->
+                    entity.sessionId = sessionId
                     entity.userId = snapshot.userId
                     entity.name = snapshot.name
-                    entity.nationId = snapshot.nationId
-                    entity.cityId = snapshot.cityId
-                    entity.troopId = snapshot.troopId
+                    entity.factionId = snapshot.factionId
+                    entity.planetId = snapshot.planetId
+                    entity.fleetId = snapshot.fleetId
                     entity.npcState = snapshot.npcState
                     entity.npcOrg = snapshot.npcOrg
                     entity.affinity = snapshot.affinity
@@ -48,33 +48,44 @@ class WorldStatePersister(
                     entity.imageServer = snapshot.imageServer
                     entity.leadership = snapshot.leadership
                     entity.leadershipExp = snapshot.leadershipExp
-                    entity.strength = snapshot.strength
-                    entity.strengthExp = snapshot.strengthExp
-                    entity.intel = snapshot.intel
-                    entity.intelExp = snapshot.intelExp
+                    entity.command = snapshot.command
+                    entity.commandExp = snapshot.commandExp
+                    entity.intelligence = snapshot.intelligence
+                    entity.intelligenceExp = snapshot.intelligenceExp
                     entity.politics = snapshot.politics
-                    entity.charm = snapshot.charm
+                    entity.politicsExp = snapshot.politicsExp
+                    entity.administration = snapshot.administration
+                    entity.administrationExp = snapshot.administrationExp
+                    entity.mobility = snapshot.mobility
+                    entity.mobilityExp = snapshot.mobilityExp
+                    entity.attack = snapshot.attack
+                    entity.attackExp = snapshot.attackExp
+                    entity.defense = snapshot.defense
+                    entity.defenseExp = snapshot.defenseExp
                     entity.dex1 = snapshot.dex1
                     entity.dex2 = snapshot.dex2
                     entity.dex3 = snapshot.dex3
                     entity.dex4 = snapshot.dex4
                     entity.dex5 = snapshot.dex5
+                    entity.dex6 = snapshot.dex6
+                    entity.dex7 = snapshot.dex7
+                    entity.dex8 = snapshot.dex8
                     entity.injury = snapshot.injury
                     entity.experience = snapshot.experience
                     entity.dedication = snapshot.dedication
                     entity.officerLevel = snapshot.officerLevel
                     entity.officerCity = snapshot.officerCity
                     entity.permission = snapshot.permission
-                    entity.gold = snapshot.gold
-                    entity.rice = snapshot.rice
-                    entity.crew = snapshot.crew
-                    entity.crewType = snapshot.crewType
-                    entity.train = snapshot.train
-                    entity.atmos = snapshot.atmos
-                    entity.weaponCode = snapshot.weaponCode
-                    entity.bookCode = snapshot.bookCode
-                    entity.horseCode = snapshot.horseCode
-                    entity.itemCode = snapshot.itemCode
+                    entity.funds = snapshot.funds
+                    entity.supplies = snapshot.supplies
+                    entity.ships = snapshot.ships
+                    entity.shipClass = snapshot.shipClass
+                    entity.training = snapshot.training
+                    entity.morale = snapshot.morale
+                    entity.flagshipCode = snapshot.flagshipCode
+                    entity.equipCode = snapshot.equipCode
+                    entity.engineCode = snapshot.engineCode
+                    entity.accessoryCode = snapshot.accessoryCode
                     entity.ownerName = snapshot.ownerName
                     entity.newmsg = snapshot.newmsg
                     entity.turnTime = snapshot.turnTime
@@ -97,6 +108,10 @@ class WorldStatePersister(
                     entity.tournamentState = snapshot.tournamentState
                     entity.commandPoints = snapshot.commandPoints
                     entity.commandEndTime = snapshot.commandEndTime
+                    entity.posX = snapshot.posX
+                    entity.posY = snapshot.posY
+                    entity.destX = snapshot.destX
+                    entity.destY = snapshot.destY
                     entity.lastTurn = snapshot.lastTurn.toMutableMap()
                     entity.meta = snapshot.meta.toMutableMap()
                     entity.penalty = snapshot.penalty.toMutableMap()
@@ -104,34 +119,34 @@ class WorldStatePersister(
                     entity.updatedAt = snapshot.updatedAt
                 }
             }
-        jpaBulkWriter.saveAll(generalRepository, generalUpserts)
-        jpaBulkWriter.deleteAllById(generalRepository, changes.deletedGeneralIds)
+        jpaBulkWriter.saveAll(officerRepository, officerUpserts)
+        jpaBulkWriter.deleteAllById(officerRepository, changes.deletedOfficerIds)
 
-        val cityUpserts = (changes.dirtyCityIds + changes.createdCityIds)
+        val planetUpserts = (changes.dirtyPlanetIds + changes.createdPlanetIds)
             .mapNotNull { id ->
-                val snapshot = state.cities[id] ?: return@mapNotNull null
-                cityRepository.findById(id).orElse(null)?.also { entity ->
-                    entity.worldId = worldId
+                val snapshot = state.planets[id] ?: return@mapNotNull null
+                planetRepository.findById(id).orElse(null)?.also { entity ->
+                    entity.sessionId = sessionId
                     entity.name = snapshot.name
                     entity.level = snapshot.level
-                    entity.nationId = snapshot.nationId
+                    entity.factionId = snapshot.factionId
                     entity.supplyState = snapshot.supplyState
                     entity.frontState = snapshot.frontState
-                    entity.pop = snapshot.pop
-                    entity.popMax = snapshot.popMax
-                    entity.agri = snapshot.agri
-                    entity.agriMax = snapshot.agriMax
-                    entity.comm = snapshot.comm
-                    entity.commMax = snapshot.commMax
-                    entity.secu = snapshot.secu
-                    entity.secuMax = snapshot.secuMax
-                    entity.trust = snapshot.trust
-                    entity.trade = snapshot.trade
+                    entity.population = snapshot.population
+                    entity.populationMax = snapshot.populationMax
+                    entity.production = snapshot.production
+                    entity.productionMax = snapshot.productionMax
+                    entity.commerce = snapshot.commerce
+                    entity.commerceMax = snapshot.commerceMax
+                    entity.security = snapshot.security
+                    entity.securityMax = snapshot.securityMax
+                    entity.approval = snapshot.approval
+                    entity.tradeRoute = snapshot.tradeRoute
                     entity.dead = snapshot.dead
-                    entity.def = snapshot.def
-                    entity.defMax = snapshot.defMax
-                    entity.wall = snapshot.wall
-                    entity.wallMax = snapshot.wallMax
+                    entity.orbitalDefense = snapshot.orbitalDefense
+                    entity.orbitalDefenseMax = snapshot.orbitalDefenseMax
+                    entity.fortress = snapshot.fortress
+                    entity.fortressMax = snapshot.fortressMax
                     entity.officerSet = snapshot.officerSet
                     entity.state = snapshot.state
                     entity.region = snapshot.region
@@ -140,63 +155,65 @@ class WorldStatePersister(
                     entity.meta = snapshot.meta.toMutableMap()
                 }
             }
-        jpaBulkWriter.saveAll(cityRepository, cityUpserts)
-        jpaBulkWriter.deleteAllById(cityRepository, changes.deletedCityIds)
+        jpaBulkWriter.saveAll(planetRepository, planetUpserts)
+        jpaBulkWriter.deleteAllById(planetRepository, changes.deletedPlanetIds)
 
-        val nationUpserts = (changes.dirtyNationIds + changes.createdNationIds)
+        val factionUpserts = (changes.dirtyFactionIds + changes.createdFactionIds)
             .mapNotNull { id ->
-                val snapshot = state.nations[id] ?: return@mapNotNull null
-                nationRepository.findById(id).orElse(null)?.also { entity ->
-                    entity.worldId = worldId
+                val snapshot = state.factions[id] ?: return@mapNotNull null
+                factionRepository.findById(id).orElse(null)?.also { entity ->
+                    entity.sessionId = sessionId
                     entity.name = snapshot.name
+                    entity.abbreviation = snapshot.abbreviation
                     entity.color = snapshot.color
-                    entity.capitalCityId = snapshot.capitalCityId
-                    entity.gold = snapshot.gold
-                    entity.rice = snapshot.rice
-                    entity.bill = snapshot.bill
-                    entity.rate = snapshot.rate
-                    entity.rateTmp = snapshot.rateTmp
+                    entity.capitalPlanetId = snapshot.capitalPlanetId
+                    entity.funds = snapshot.funds
+                    entity.supplies = snapshot.supplies
+                    entity.taxRate = snapshot.taxRate
+                    entity.conscriptionRate = snapshot.conscriptionRate
+                    entity.conscriptionRateTmp = snapshot.conscriptionRateTmp
                     entity.secretLimit = snapshot.secretLimit
-                    entity.chiefGeneralId = snapshot.chiefGeneralId
+                    entity.chiefOfficerId = snapshot.chiefOfficerId
                     entity.scoutLevel = snapshot.scoutLevel
                     entity.warState = snapshot.warState
                     entity.strategicCmdLimit = snapshot.strategicCmdLimit
                     entity.surrenderLimit = snapshot.surrenderLimit
-                    entity.tech = snapshot.tech
-                    entity.power = snapshot.power
-                    entity.level = snapshot.level
-                    entity.typeCode = snapshot.typeCode
+                    entity.techLevel = snapshot.techLevel
+                    entity.militaryPower = snapshot.militaryPower
+                    entity.officerCount = snapshot.officerCount
+                    entity.factionRank = snapshot.factionRank
+                    entity.factionType = snapshot.factionType
                     entity.spy = snapshot.spy.toMutableMap()
                     entity.meta = snapshot.meta.toMutableMap()
                     entity.createdAt = snapshot.createdAt
                     entity.updatedAt = snapshot.updatedAt
                 }
             }
-        jpaBulkWriter.saveAll(nationRepository, nationUpserts)
-        jpaBulkWriter.deleteAllById(nationRepository, changes.deletedNationIds)
+        jpaBulkWriter.saveAll(factionRepository, factionUpserts)
+        jpaBulkWriter.deleteAllById(factionRepository, changes.deletedFactionIds)
 
-        val troopUpserts = (changes.dirtyTroopIds + changes.createdTroopIds)
+        val fleetUpserts = (changes.dirtyFleetIds + changes.createdFleetIds)
             .mapNotNull { id ->
-                val snapshot = state.troops[id] ?: return@mapNotNull null
-                troopRepository.findById(id).orElse(null)?.also { entity ->
-                    entity.worldId = worldId
-                    entity.leaderGeneralId = snapshot.leaderGeneralId
-                    entity.nationId = snapshot.nationId
+                val snapshot = state.fleets[id] ?: return@mapNotNull null
+                fleetRepository.findById(id).orElse(null)?.also { entity ->
+                    entity.sessionId = sessionId
+                    entity.leaderOfficerId = snapshot.leaderOfficerId
+                    entity.factionId = snapshot.factionId
                     entity.name = snapshot.name
                     entity.meta = snapshot.meta.toMutableMap()
                     entity.createdAt = snapshot.createdAt
                 }
             }
-        jpaBulkWriter.saveAll(troopRepository, troopUpserts)
-        jpaBulkWriter.deleteAllById(troopRepository, changes.deletedTroopIds)
+        jpaBulkWriter.saveAll(fleetRepository, fleetUpserts)
+        jpaBulkWriter.deleteAllById(fleetRepository, changes.deletedFleetIds)
 
         val diplomacyUpserts = (changes.dirtyDiplomacyIds + changes.createdDiplomacyIds)
             .mapNotNull { id ->
                 val snapshot = state.diplomacies[id] ?: return@mapNotNull null
                 diplomacyRepository.findById(id).orElse(null)?.also { entity ->
-                    entity.worldId = worldId
-                    entity.srcNationId = snapshot.srcNationId
-                    entity.destNationId = snapshot.destNationId
+                    entity.sessionId = sessionId
+                    entity.srcFactionId = snapshot.srcFactionId
+                    entity.destFactionId = snapshot.destFactionId
                     entity.stateCode = snapshot.stateCode
                     entity.term = snapshot.term
                     entity.isDead = snapshot.isDead
@@ -208,16 +225,16 @@ class WorldStatePersister(
         jpaBulkWriter.saveAll(diplomacyRepository, diplomacyUpserts)
         jpaBulkWriter.deleteAllById(diplomacyRepository, changes.deletedDiplomacyIds)
 
-        generalTurnRepository.deleteByWorldId(worldId)
-        val generalTurns = state.generalTurnsByGeneralId
+        officerTurnRepository.deleteByWorldId(sessionId)
+        val officerTurns = state.officerTurnsByOfficerId
             .values
             .flatten()
-            .sortedWith(compareBy({ it.generalId }, { it.turnIdx }))
+            .sortedWith(compareBy({ it.officerId }, { it.turnIdx }))
             .map {
-                GeneralTurn(
+                OfficerTurn(
                     id = 0,
-                    worldId = worldId,
-                    generalId = it.generalId,
+                    sessionId = sessionId,
+                    officerId = it.officerId,
                     turnIdx = it.turnIdx,
                     actionCode = it.actionCode,
                     arg = it.arg.toMutableMap(),
@@ -225,18 +242,18 @@ class WorldStatePersister(
                     createdAt = it.createdAt,
                 )
             }
-        jpaBulkWriter.saveAll(generalTurnRepository, generalTurns)
+        jpaBulkWriter.saveAll(officerTurnRepository, officerTurns)
 
-        nationTurnRepository.deleteByWorldId(worldId)
-        val nationTurns = state.nationTurnsByNationAndLevel
+        factionTurnRepository.deleteByWorldId(sessionId)
+        val factionTurns = state.factionTurnsByFactionAndLevel
             .values
             .flatten()
-            .sortedWith(compareBy({ it.nationId }, { it.officerLevel }, { it.turnIdx }))
+            .sortedWith(compareBy({ it.factionId }, { it.officerLevel }, { it.turnIdx }))
             .map {
-                NationTurn(
+                FactionTurn(
                     id = 0,
-                    worldId = worldId,
-                    nationId = it.nationId,
+                    sessionId = sessionId,
+                    factionId = it.factionId,
                     officerLevel = it.officerLevel,
                     turnIdx = it.turnIdx,
                     actionCode = it.actionCode,
@@ -245,6 +262,6 @@ class WorldStatePersister(
                     createdAt = it.createdAt,
                 )
             }
-        jpaBulkWriter.saveAll(nationTurnRepository, nationTurns)
+        jpaBulkWriter.saveAll(factionTurnRepository, factionTurns)
     }
 }

@@ -2,77 +2,77 @@ package com.openlogh.engine.turn.cqrs.memory
 
 class DirtyTracker {
     enum class EntityType {
-        GENERAL,
-        CITY,
-        NATION,
-        TROOP,
+        OFFICER,
+        PLANET,
+        FACTION,
+        FLEET,
         DIPLOMACY,
     }
 
-    val dirtyGeneralIds: MutableSet<Long> = mutableSetOf()
-    val dirtyCityIds: MutableSet<Long> = mutableSetOf()
-    val dirtyNationIds: MutableSet<Long> = mutableSetOf()
-    val dirtyTroopIds: MutableSet<Long> = mutableSetOf()
+    val dirtyOfficerIds: MutableSet<Long> = mutableSetOf()
+    val dirtyPlanetIds: MutableSet<Long> = mutableSetOf()
+    val dirtyFactionIds: MutableSet<Long> = mutableSetOf()
+    val dirtyFleetIds: MutableSet<Long> = mutableSetOf()
     val dirtyDiplomacyIds: MutableSet<Long> = mutableSetOf()
 
-    val createdGeneralIds: MutableSet<Long> = mutableSetOf()
-    val createdCityIds: MutableSet<Long> = mutableSetOf()
-    val createdNationIds: MutableSet<Long> = mutableSetOf()
-    val createdTroopIds: MutableSet<Long> = mutableSetOf()
+    val createdOfficerIds: MutableSet<Long> = mutableSetOf()
+    val createdPlanetIds: MutableSet<Long> = mutableSetOf()
+    val createdFactionIds: MutableSet<Long> = mutableSetOf()
+    val createdFleetIds: MutableSet<Long> = mutableSetOf()
     val createdDiplomacyIds: MutableSet<Long> = mutableSetOf()
 
-    val deletedGeneralIds: MutableSet<Long> = mutableSetOf()
-    val deletedCityIds: MutableSet<Long> = mutableSetOf()
-    val deletedNationIds: MutableSet<Long> = mutableSetOf()
-    val deletedTroopIds: MutableSet<Long> = mutableSetOf()
+    val deletedOfficerIds: MutableSet<Long> = mutableSetOf()
+    val deletedPlanetIds: MutableSet<Long> = mutableSetOf()
+    val deletedFactionIds: MutableSet<Long> = mutableSetOf()
+    val deletedFleetIds: MutableSet<Long> = mutableSetOf()
     val deletedDiplomacyIds: MutableSet<Long> = mutableSetOf()
 
     fun markDirty(type: EntityType, id: Long) {
         when (type) {
-            EntityType.GENERAL -> dirtyGeneralIds += id
-            EntityType.CITY -> dirtyCityIds += id
-            EntityType.NATION -> dirtyNationIds += id
-            EntityType.TROOP -> dirtyTroopIds += id
+            EntityType.OFFICER -> dirtyOfficerIds += id
+            EntityType.PLANET -> dirtyPlanetIds += id
+            EntityType.FACTION -> dirtyFactionIds += id
+            EntityType.FLEET -> dirtyFleetIds += id
             EntityType.DIPLOMACY -> dirtyDiplomacyIds += id
         }
     }
 
     fun markCreated(type: EntityType, id: Long) {
         when (type) {
-            EntityType.GENERAL -> createdGeneralIds += id
-            EntityType.CITY -> createdCityIds += id
-            EntityType.NATION -> createdNationIds += id
-            EntityType.TROOP -> createdTroopIds += id
+            EntityType.OFFICER -> createdOfficerIds += id
+            EntityType.PLANET -> createdPlanetIds += id
+            EntityType.FACTION -> createdFactionIds += id
+            EntityType.FLEET -> createdFleetIds += id
             EntityType.DIPLOMACY -> createdDiplomacyIds += id
         }
     }
 
     fun markDeleted(type: EntityType, id: Long) {
         when (type) {
-            EntityType.GENERAL -> deletedGeneralIds += id
-            EntityType.CITY -> deletedCityIds += id
-            EntityType.NATION -> deletedNationIds += id
-            EntityType.TROOP -> deletedTroopIds += id
+            EntityType.OFFICER -> deletedOfficerIds += id
+            EntityType.PLANET -> deletedPlanetIds += id
+            EntityType.FACTION -> deletedFactionIds += id
+            EntityType.FLEET -> deletedFleetIds += id
             EntityType.DIPLOMACY -> deletedDiplomacyIds += id
         }
     }
 
     fun consumeAll(): DirtyChanges {
         val changes = DirtyChanges(
-            dirtyGeneralIds = dirtyGeneralIds.toSet(),
-            dirtyCityIds = dirtyCityIds.toSet(),
-            dirtyNationIds = dirtyNationIds.toSet(),
-            dirtyTroopIds = dirtyTroopIds.toSet(),
+            dirtyOfficerIds = dirtyOfficerIds.toSet(),
+            dirtyPlanetIds = dirtyPlanetIds.toSet(),
+            dirtyFactionIds = dirtyFactionIds.toSet(),
+            dirtyFleetIds = dirtyFleetIds.toSet(),
             dirtyDiplomacyIds = dirtyDiplomacyIds.toSet(),
-            createdGeneralIds = createdGeneralIds.toSet(),
-            createdCityIds = createdCityIds.toSet(),
-            createdNationIds = createdNationIds.toSet(),
-            createdTroopIds = createdTroopIds.toSet(),
+            createdOfficerIds = createdOfficerIds.toSet(),
+            createdPlanetIds = createdPlanetIds.toSet(),
+            createdFactionIds = createdFactionIds.toSet(),
+            createdFleetIds = createdFleetIds.toSet(),
             createdDiplomacyIds = createdDiplomacyIds.toSet(),
-            deletedGeneralIds = deletedGeneralIds.toSet(),
-            deletedCityIds = deletedCityIds.toSet(),
-            deletedNationIds = deletedNationIds.toSet(),
-            deletedTroopIds = deletedTroopIds.toSet(),
+            deletedOfficerIds = deletedOfficerIds.toSet(),
+            deletedPlanetIds = deletedPlanetIds.toSet(),
+            deletedFactionIds = deletedFactionIds.toSet(),
+            deletedFleetIds = deletedFleetIds.toSet(),
             deletedDiplomacyIds = deletedDiplomacyIds.toSet(),
         )
         clearAll()
@@ -80,40 +80,40 @@ class DirtyTracker {
     }
 
     private fun clearAll() {
-        dirtyGeneralIds.clear()
-        dirtyCityIds.clear()
-        dirtyNationIds.clear()
-        dirtyTroopIds.clear()
+        dirtyOfficerIds.clear()
+        dirtyPlanetIds.clear()
+        dirtyFactionIds.clear()
+        dirtyFleetIds.clear()
         dirtyDiplomacyIds.clear()
 
-        createdGeneralIds.clear()
-        createdCityIds.clear()
-        createdNationIds.clear()
-        createdTroopIds.clear()
+        createdOfficerIds.clear()
+        createdPlanetIds.clear()
+        createdFactionIds.clear()
+        createdFleetIds.clear()
         createdDiplomacyIds.clear()
 
-        deletedGeneralIds.clear()
-        deletedCityIds.clear()
-        deletedNationIds.clear()
-        deletedTroopIds.clear()
+        deletedOfficerIds.clear()
+        deletedPlanetIds.clear()
+        deletedFactionIds.clear()
+        deletedFleetIds.clear()
         deletedDiplomacyIds.clear()
     }
 }
 
 data class DirtyChanges(
-    val dirtyGeneralIds: Set<Long>,
-    val dirtyCityIds: Set<Long>,
-    val dirtyNationIds: Set<Long>,
-    val dirtyTroopIds: Set<Long>,
+    val dirtyOfficerIds: Set<Long>,
+    val dirtyPlanetIds: Set<Long>,
+    val dirtyFactionIds: Set<Long>,
+    val dirtyFleetIds: Set<Long>,
     val dirtyDiplomacyIds: Set<Long>,
-    val createdGeneralIds: Set<Long>,
-    val createdCityIds: Set<Long>,
-    val createdNationIds: Set<Long>,
-    val createdTroopIds: Set<Long>,
+    val createdOfficerIds: Set<Long>,
+    val createdPlanetIds: Set<Long>,
+    val createdFactionIds: Set<Long>,
+    val createdFleetIds: Set<Long>,
     val createdDiplomacyIds: Set<Long>,
-    val deletedGeneralIds: Set<Long>,
-    val deletedCityIds: Set<Long>,
-    val deletedNationIds: Set<Long>,
-    val deletedTroopIds: Set<Long>,
+    val deletedOfficerIds: Set<Long>,
+    val deletedPlanetIds: Set<Long>,
+    val deletedFactionIds: Set<Long>,
+    val deletedFleetIds: Set<Long>,
     val deletedDiplomacyIds: Set<Long>,
 )

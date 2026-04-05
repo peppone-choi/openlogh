@@ -1,78 +1,78 @@
 package com.openlogh.engine.turn.cqrs.persist
 
-import com.openlogh.engine.turn.cqrs.memory.CitySnapshot
 import com.openlogh.engine.turn.cqrs.memory.DiplomacySnapshot
-import com.openlogh.engine.turn.cqrs.memory.GeneralSnapshot
-import com.openlogh.engine.turn.cqrs.memory.GeneralTurnSnapshot
-import com.openlogh.engine.turn.cqrs.memory.NationSnapshot
-import com.openlogh.engine.turn.cqrs.memory.NationTurnSnapshot
-import com.openlogh.engine.turn.cqrs.memory.TroopSnapshot
+import com.openlogh.engine.turn.cqrs.memory.FactionSnapshot
+import com.openlogh.engine.turn.cqrs.memory.FactionTurnSnapshot
+import com.openlogh.engine.turn.cqrs.memory.FleetSnapshot
+import com.openlogh.engine.turn.cqrs.memory.OfficerSnapshot
+import com.openlogh.engine.turn.cqrs.memory.OfficerTurnSnapshot
+import com.openlogh.engine.turn.cqrs.memory.PlanetSnapshot
 
 class CachingWorldPorts(private val delegate: WorldPorts) : WorldPorts {
-    private var generalCache: MutableMap<Long, GeneralSnapshot>? = null
-    private var cityCache: MutableMap<Long, CitySnapshot>? = null
-    private var nationCache: MutableMap<Long, NationSnapshot>? = null
-    private var troopCache: MutableMap<Long, TroopSnapshot>? = null
+    private var officerCache: MutableMap<Long, OfficerSnapshot>? = null
+    private var planetCache: MutableMap<Long, PlanetSnapshot>? = null
+    private var factionCache: MutableMap<Long, FactionSnapshot>? = null
+    private var fleetCache: MutableMap<Long, FleetSnapshot>? = null
     private var diplomacyCache: MutableMap<Long, DiplomacySnapshot>? = null
 
-    override fun allGenerals(): Collection<GeneralSnapshot> = ensureGeneralCache().values
+    override fun allOfficers(): Collection<OfficerSnapshot> = ensureOfficerCache().values
 
-    override fun general(id: Long): GeneralSnapshot? = ensureGeneralCache()[id]
+    override fun officer(id: Long): OfficerSnapshot? = ensureOfficerCache()[id]
 
-    override fun generalsByNation(nationId: Long): List<GeneralSnapshot> =
-        ensureGeneralCache().values.filter { it.nationId == nationId }
+    override fun officersByFaction(factionId: Long): List<OfficerSnapshot> =
+        ensureOfficerCache().values.filter { it.factionId == factionId }
 
-    override fun generalsByCity(cityId: Long): List<GeneralSnapshot> =
-        ensureGeneralCache().values.filter { it.cityId == cityId }
+    override fun officersByPlanet(planetId: Long): List<OfficerSnapshot> =
+        ensureOfficerCache().values.filter { it.planetId == planetId }
 
-    override fun allCities(): Collection<CitySnapshot> = ensureCityCache().values
+    override fun allPlanets(): Collection<PlanetSnapshot> = ensurePlanetCache().values
 
-    override fun city(id: Long): CitySnapshot? = ensureCityCache()[id]
+    override fun planet(id: Long): PlanetSnapshot? = ensurePlanetCache()[id]
 
-    override fun citiesByNation(nationId: Long): List<CitySnapshot> =
-        ensureCityCache().values.filter { it.nationId == nationId }
+    override fun planetsByFaction(factionId: Long): List<PlanetSnapshot> =
+        ensurePlanetCache().values.filter { it.factionId == factionId }
 
-    override fun allNations(): Collection<NationSnapshot> = ensureNationCache().values
+    override fun allFactions(): Collection<FactionSnapshot> = ensureFactionCache().values
 
-    override fun nation(id: Long): NationSnapshot? = ensureNationCache()[id]
+    override fun faction(id: Long): FactionSnapshot? = ensureFactionCache()[id]
 
-    override fun allTroops(): Collection<TroopSnapshot> = ensureTroopCache().values
+    override fun allFleets(): Collection<FleetSnapshot> = ensureFleetCache().values
 
-    override fun troop(id: Long): TroopSnapshot? = ensureTroopCache()[id]
+    override fun fleet(id: Long): FleetSnapshot? = ensureFleetCache()[id]
 
     override fun allDiplomacies(): Collection<DiplomacySnapshot> = ensureDiplomacyCache().values
 
     override fun diplomacy(id: Long): DiplomacySnapshot? = ensureDiplomacyCache()[id]
 
-    override fun diplomaciesByNation(nationId: Long): List<DiplomacySnapshot> =
-        ensureDiplomacyCache().values.filter { it.srcNationId == nationId || it.destNationId == nationId }
+    override fun diplomaciesByFaction(factionId: Long): List<DiplomacySnapshot> =
+        ensureDiplomacyCache().values.filter { it.srcFactionId == factionId || it.destFactionId == factionId }
 
     override fun activeDiplomacies(): List<DiplomacySnapshot> =
         ensureDiplomacyCache().values.filter { !it.isDead }
 
-    override fun generalTurns(generalId: Long): List<GeneralTurnSnapshot> = delegate.generalTurns(generalId)
+    override fun officerTurns(officerId: Long): List<OfficerTurnSnapshot> = delegate.officerTurns(officerId)
 
-    override fun nationTurns(nationId: Long, officerLevel: Short): List<NationTurnSnapshot> =
-        delegate.nationTurns(nationId, officerLevel)
+    override fun factionTurns(factionId: Long, officerLevel: Short): List<FactionTurnSnapshot> =
+        delegate.factionTurns(factionId, officerLevel)
 
-    override fun putGeneral(snapshot: GeneralSnapshot) {
-        delegate.putGeneral(snapshot)
-        generalCache?.put(snapshot.id, snapshot)
+    override fun putOfficer(snapshot: OfficerSnapshot) {
+        delegate.putOfficer(snapshot)
+        officerCache?.put(snapshot.id, snapshot)
     }
 
-    override fun putCity(snapshot: CitySnapshot) {
-        delegate.putCity(snapshot)
-        cityCache?.put(snapshot.id, snapshot)
+    override fun putPlanet(snapshot: PlanetSnapshot) {
+        delegate.putPlanet(snapshot)
+        planetCache?.put(snapshot.id, snapshot)
     }
 
-    override fun putNation(snapshot: NationSnapshot) {
-        delegate.putNation(snapshot)
-        nationCache?.put(snapshot.id, snapshot)
+    override fun putFaction(snapshot: FactionSnapshot) {
+        delegate.putFaction(snapshot)
+        factionCache?.put(snapshot.id, snapshot)
     }
 
-    override fun putTroop(snapshot: TroopSnapshot) {
-        delegate.putTroop(snapshot)
-        troopCache?.put(snapshot.id, snapshot)
+    override fun putFleet(snapshot: FleetSnapshot) {
+        delegate.putFleet(snapshot)
+        fleetCache?.put(snapshot.id, snapshot)
     }
 
     override fun putDiplomacy(snapshot: DiplomacySnapshot) {
@@ -80,24 +80,24 @@ class CachingWorldPorts(private val delegate: WorldPorts) : WorldPorts {
         diplomacyCache?.put(snapshot.id, snapshot)
     }
 
-    override fun deleteGeneral(id: Long) {
-        delegate.deleteGeneral(id)
-        generalCache?.remove(id)
+    override fun deleteOfficer(id: Long) {
+        delegate.deleteOfficer(id)
+        officerCache?.remove(id)
     }
 
-    override fun deleteCity(id: Long) {
-        delegate.deleteCity(id)
-        cityCache?.remove(id)
+    override fun deletePlanet(id: Long) {
+        delegate.deletePlanet(id)
+        planetCache?.remove(id)
     }
 
-    override fun deleteNation(id: Long) {
-        delegate.deleteNation(id)
-        nationCache?.remove(id)
+    override fun deleteFaction(id: Long) {
+        delegate.deleteFaction(id)
+        factionCache?.remove(id)
     }
 
-    override fun deleteTroop(id: Long) {
-        delegate.deleteTroop(id)
-        troopCache?.remove(id)
+    override fun deleteFleet(id: Long) {
+        delegate.deleteFleet(id)
+        fleetCache?.remove(id)
     }
 
     override fun deleteDiplomacy(id: Long) {
@@ -105,35 +105,35 @@ class CachingWorldPorts(private val delegate: WorldPorts) : WorldPorts {
         diplomacyCache?.remove(id)
     }
 
-    override fun setGeneralTurns(generalId: Long, turns: List<GeneralTurnSnapshot>) =
-        delegate.setGeneralTurns(generalId, turns)
+    override fun setOfficerTurns(officerId: Long, turns: List<OfficerTurnSnapshot>) =
+        delegate.setOfficerTurns(officerId, turns)
 
-    override fun setNationTurns(nationId: Long, officerLevel: Short, turns: List<NationTurnSnapshot>) =
-        delegate.setNationTurns(nationId, officerLevel, turns)
+    override fun setFactionTurns(factionId: Long, officerLevel: Short, turns: List<FactionTurnSnapshot>) =
+        delegate.setFactionTurns(factionId, officerLevel, turns)
 
-    override fun removeGeneralTurns(generalId: Long) = delegate.removeGeneralTurns(generalId)
+    override fun removeOfficerTurns(officerId: Long) = delegate.removeOfficerTurns(officerId)
 
-    override fun removeNationTurns(nationId: Long, officerLevel: Short) =
-        delegate.removeNationTurns(nationId, officerLevel)
+    override fun removeFactionTurns(factionId: Long, officerLevel: Short) =
+        delegate.removeFactionTurns(factionId, officerLevel)
 
-    private fun ensureGeneralCache(): MutableMap<Long, GeneralSnapshot> {
-        return generalCache
-            ?: delegate.allGenerals().associateByTo(mutableMapOf()) { it.id }.also { generalCache = it }
+    private fun ensureOfficerCache(): MutableMap<Long, OfficerSnapshot> {
+        return officerCache
+            ?: delegate.allOfficers().associateByTo(mutableMapOf()) { it.id }.also { officerCache = it }
     }
 
-    private fun ensureCityCache(): MutableMap<Long, CitySnapshot> {
-        return cityCache
-            ?: delegate.allCities().associateByTo(mutableMapOf()) { it.id }.also { cityCache = it }
+    private fun ensurePlanetCache(): MutableMap<Long, PlanetSnapshot> {
+        return planetCache
+            ?: delegate.allPlanets().associateByTo(mutableMapOf()) { it.id }.also { planetCache = it }
     }
 
-    private fun ensureNationCache(): MutableMap<Long, NationSnapshot> {
-        return nationCache
-            ?: delegate.allNations().associateByTo(mutableMapOf()) { it.id }.also { nationCache = it }
+    private fun ensureFactionCache(): MutableMap<Long, FactionSnapshot> {
+        return factionCache
+            ?: delegate.allFactions().associateByTo(mutableMapOf()) { it.id }.also { factionCache = it }
     }
 
-    private fun ensureTroopCache(): MutableMap<Long, TroopSnapshot> {
-        return troopCache
-            ?: delegate.allTroops().associateByTo(mutableMapOf()) { it.id }.also { troopCache = it }
+    private fun ensureFleetCache(): MutableMap<Long, FleetSnapshot> {
+        return fleetCache
+            ?: delegate.allFleets().associateByTo(mutableMapOf()) { it.id }.also { fleetCache = it }
     }
 
     private fun ensureDiplomacyCache(): MutableMap<Long, DiplomacySnapshot> {

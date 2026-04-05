@@ -1,5 +1,6 @@
 package com.openlogh.engine.turn.cqrs.memory
 
+import com.openlogh.engine.turn.cqrs.persist.toSnapshot
 import com.openlogh.repository.CityRepository
 import com.openlogh.repository.DiplomacyRepository
 import com.openlogh.repository.GeneralRepository
@@ -12,193 +13,48 @@ import org.springframework.transaction.annotation.Transactional
 
 @Service
 class WorldStateLoader(
-    private val generalRepository: GeneralRepository,
-    private val cityRepository: CityRepository,
-    private val nationRepository: NationRepository,
-    private val troopRepository: TroopRepository,
+    private val officerRepository: GeneralRepository,
+    private val planetRepository: CityRepository,
+    private val factionRepository: NationRepository,
+    private val fleetRepository: TroopRepository,
     private val diplomacyRepository: DiplomacyRepository,
-    private val generalTurnRepository: GeneralTurnRepository,
-    private val nationTurnRepository: NationTurnRepository,
+    private val officerTurnRepository: GeneralTurnRepository,
+    private val factionTurnRepository: NationTurnRepository,
 ) {
     @Transactional(readOnly = true)
-    fun loadWorldState(worldId: Long): InMemoryWorldState {
-        val state = InMemoryWorldState(worldId = worldId)
+    fun loadWorldState(sessionId: Long): InMemoryWorldState {
+        val state = InMemoryWorldState(sessionId = sessionId)
 
-        generalRepository.findByWorldId(worldId).forEach { general ->
-            state.generals[general.id] = GeneralSnapshot(
-                id = general.id,
-                worldId = general.worldId,
-                userId = general.userId,
-                name = general.name,
-                nationId = general.nationId,
-                cityId = general.cityId,
-                troopId = general.troopId,
-                npcState = general.npcState,
-                npcOrg = general.npcOrg,
-                affinity = general.affinity,
-                bornYear = general.bornYear,
-                deadYear = general.deadYear,
-                picture = general.picture,
-                imageServer = general.imageServer,
-                leadership = general.leadership,
-                leadershipExp = general.leadershipExp,
-                strength = general.strength,
-                strengthExp = general.strengthExp,
-                intel = general.intel,
-                intelExp = general.intelExp,
-                politics = general.politics,
-                charm = general.charm,
-                dex1 = general.dex1,
-                dex2 = general.dex2,
-                dex3 = general.dex3,
-                dex4 = general.dex4,
-                dex5 = general.dex5,
-                injury = general.injury,
-                experience = general.experience,
-                dedication = general.dedication,
-                officerLevel = general.officerLevel,
-                officerCity = general.officerCity,
-                permission = general.permission,
-                gold = general.gold,
-                rice = general.rice,
-                crew = general.crew,
-                crewType = general.crewType,
-                train = general.train,
-                atmos = general.atmos,
-                weaponCode = general.weaponCode,
-                bookCode = general.bookCode,
-                horseCode = general.horseCode,
-                itemCode = general.itemCode,
-                ownerName = general.ownerName,
-                newmsg = general.newmsg,
-                turnTime = general.turnTime,
-                recentWarTime = general.recentWarTime,
-                makeLimit = general.makeLimit,
-                killTurn = general.killTurn,
-                blockState = general.blockState,
-                dedLevel = general.dedLevel,
-                expLevel = general.expLevel,
-                age = general.age,
-                startAge = general.startAge,
-                belong = general.belong,
-                betray = general.betray,
-                personalCode = general.personalCode,
-                specialCode = general.specialCode,
-                specAge = general.specAge,
-                special2Code = general.special2Code,
-                spec2Age = general.spec2Age,
-                defenceTrain = general.defenceTrain,
-                tournamentState = general.tournamentState,
-                commandPoints = general.commandPoints,
-                commandEndTime = general.commandEndTime,
-                lastTurn = general.lastTurn.toMutableMap(),
-                meta = general.meta.toMutableMap(),
-                penalty = general.penalty.toMutableMap(),
-                createdAt = general.createdAt,
-                updatedAt = general.updatedAt,
-            )
+        officerRepository.findByWorldId(sessionId).forEach { officer ->
+            state.officers[officer.id] = officer.toSnapshot()
         }
 
-        cityRepository.findByWorldId(worldId).forEach { city ->
-            state.cities[city.id] = CitySnapshot(
-                id = city.id,
-                worldId = city.worldId,
-                name = city.name,
-                mapCityId = city.mapCityId,
-                level = city.level,
-                nationId = city.nationId,
-                supplyState = city.supplyState,
-                frontState = city.frontState,
-                pop = city.pop,
-                popMax = city.popMax,
-                agri = city.agri,
-                agriMax = city.agriMax,
-                comm = city.comm,
-                commMax = city.commMax,
-                secu = city.secu,
-                secuMax = city.secuMax,
-                trust = city.trust,
-                trade = city.trade,
-                dead = city.dead,
-                def = city.def,
-                defMax = city.defMax,
-                wall = city.wall,
-                wallMax = city.wallMax,
-                officerSet = city.officerSet,
-                state = city.state,
-                region = city.region,
-                term = city.term,
-                conflict = city.conflict.toMutableMap(),
-                meta = city.meta.toMutableMap(),
-            )
+        planetRepository.findByWorldId(sessionId).forEach { planet ->
+            state.planets[planet.id] = planet.toSnapshot()
         }
 
-        nationRepository.findByWorldId(worldId).forEach { nation ->
-            state.nations[nation.id] = NationSnapshot(
-                id = nation.id,
-                worldId = nation.worldId,
-                name = nation.name,
-                color = nation.color,
-                capitalCityId = nation.capitalCityId,
-                gold = nation.gold,
-                rice = nation.rice,
-                bill = nation.bill,
-                rate = nation.rate,
-                rateTmp = nation.rateTmp,
-                secretLimit = nation.secretLimit,
-                chiefGeneralId = nation.chiefGeneralId,
-                scoutLevel = nation.scoutLevel,
-                warState = nation.warState,
-                strategicCmdLimit = nation.strategicCmdLimit,
-                surrenderLimit = nation.surrenderLimit,
-                tech = nation.tech,
-                power = nation.power,
-                level = nation.level,
-                typeCode = nation.typeCode,
-                spy = nation.spy.toMutableMap(),
-                meta = nation.meta.toMutableMap(),
-                createdAt = nation.createdAt,
-                updatedAt = nation.updatedAt,
-            )
+        factionRepository.findByWorldId(sessionId).forEach { faction ->
+            state.factions[faction.id] = faction.toSnapshot()
         }
 
-        troopRepository.findByWorldId(worldId).forEach { troop ->
-            state.troops[troop.id] = TroopSnapshot(
-                id = troop.id,
-                worldId = troop.worldId,
-                leaderGeneralId = troop.leaderGeneralId,
-                nationId = troop.nationId,
-                name = troop.name,
-                meta = troop.meta.toMutableMap(),
-                createdAt = troop.createdAt,
-            )
+        fleetRepository.findByWorldId(sessionId).forEach { fleet ->
+            state.fleets[fleet.id] = fleet.toSnapshot()
         }
 
-        diplomacyRepository.findByWorldId(worldId).forEach { diplomacy ->
-            state.diplomacies[diplomacy.id] = DiplomacySnapshot(
-                id = diplomacy.id,
-                worldId = diplomacy.worldId,
-                srcNationId = diplomacy.srcNationId,
-                destNationId = diplomacy.destNationId,
-                stateCode = diplomacy.stateCode,
-                term = diplomacy.term,
-                isDead = diplomacy.isDead,
-                isShowing = diplomacy.isShowing,
-                meta = diplomacy.meta.toMutableMap(),
-                createdAt = diplomacy.createdAt,
-            )
+        diplomacyRepository.findByWorldId(sessionId).forEach { diplomacy ->
+            state.diplomacies[diplomacy.id] = diplomacy.toSnapshot()
         }
 
-        generalTurnRepository.findByWorldId(worldId)
-            .groupBy { it.generalId }
-            .forEach { (generalId, turns) ->
-                state.generalTurnsByGeneralId[generalId] = turns
+        officerTurnRepository.findByWorldId(sessionId)
+            .groupBy { it.officerId }
+            .forEach { (officerId, turns) ->
+                state.officerTurnsByOfficerId[officerId] = turns
                     .sortedBy { it.turnIdx }
                     .map { turn ->
-                        GeneralTurnSnapshot(
+                        OfficerTurnSnapshot(
                             id = turn.id,
-                            worldId = turn.worldId,
-                            generalId = turn.generalId,
+                            sessionId = turn.sessionId,
+                            officerId = turn.officerId,
                             turnIdx = turn.turnIdx,
                             actionCode = turn.actionCode,
                             arg = turn.arg.toMutableMap(),
@@ -209,16 +65,16 @@ class WorldStateLoader(
                     .toMutableList()
             }
 
-        nationTurnRepository.findByWorldId(worldId)
-            .groupBy { NationTurnKey(it.nationId, it.officerLevel) }
+        factionTurnRepository.findByWorldId(sessionId)
+            .groupBy { FactionTurnKey(it.factionId, it.officerLevel) }
             .forEach { (key, turns) ->
-                state.nationTurnsByNationAndLevel[key] = turns
+                state.factionTurnsByFactionAndLevel[key] = turns
                     .sortedBy { it.turnIdx }
                     .map { turn ->
-                        NationTurnSnapshot(
+                        FactionTurnSnapshot(
                             id = turn.id,
-                            worldId = turn.worldId,
-                            nationId = turn.nationId,
+                            sessionId = turn.sessionId,
+                            factionId = turn.factionId,
                             officerLevel = turn.officerLevel,
                             turnIdx = turn.turnIdx,
                             actionCode = turn.actionCode,

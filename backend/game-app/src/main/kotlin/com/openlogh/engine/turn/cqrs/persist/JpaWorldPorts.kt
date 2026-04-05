@@ -1,21 +1,21 @@
 package com.openlogh.engine.turn.cqrs.persist
 
-import com.openlogh.engine.turn.cqrs.memory.CitySnapshot
 import com.openlogh.engine.turn.cqrs.memory.DiplomacySnapshot
-import com.openlogh.engine.turn.cqrs.memory.GeneralSnapshot
-import com.openlogh.engine.turn.cqrs.memory.GeneralTurnSnapshot
-import com.openlogh.engine.turn.cqrs.memory.NationSnapshot
-import com.openlogh.engine.turn.cqrs.memory.NationTurnSnapshot
-import com.openlogh.engine.turn.cqrs.memory.TroopSnapshot
+import com.openlogh.engine.turn.cqrs.memory.FactionSnapshot
+import com.openlogh.engine.turn.cqrs.memory.FactionTurnSnapshot
+import com.openlogh.engine.turn.cqrs.memory.FleetSnapshot
+import com.openlogh.engine.turn.cqrs.memory.OfficerSnapshot
+import com.openlogh.engine.turn.cqrs.memory.OfficerTurnSnapshot
+import com.openlogh.engine.turn.cqrs.memory.PlanetSnapshot
 import com.openlogh.engine.turn.cqrs.port.WorldReadPort
 import com.openlogh.engine.turn.cqrs.port.WorldWritePort
-import com.openlogh.entity.City
 import com.openlogh.entity.Diplomacy
-import com.openlogh.entity.General
-import com.openlogh.entity.GeneralTurn
-import com.openlogh.entity.Nation
-import com.openlogh.entity.NationTurn
-import com.openlogh.entity.Troop
+import com.openlogh.entity.Faction
+import com.openlogh.entity.Fleet
+import com.openlogh.entity.Officer
+import com.openlogh.entity.OfficerTurn
+import com.openlogh.entity.FactionTurn
+import com.openlogh.entity.Planet
 import com.openlogh.repository.CityRepository
 import com.openlogh.repository.DiplomacyRepository
 import com.openlogh.repository.GeneralRepository
@@ -25,124 +25,124 @@ import com.openlogh.repository.NationTurnRepository
 import com.openlogh.repository.TroopRepository
 
 class JpaWorldPorts(
-    private val worldId: Long,
-    private val generalRepository: GeneralRepository,
-    private val cityRepository: CityRepository,
-    private val nationRepository: NationRepository,
-    private val troopRepository: TroopRepository,
+    private val sessionId: Long,
+    private val officerRepository: GeneralRepository,
+    private val planetRepository: CityRepository,
+    private val factionRepository: NationRepository,
+    private val fleetRepository: TroopRepository,
     private val diplomacyRepository: DiplomacyRepository,
-    private val generalTurnRepository: GeneralTurnRepository,
-    private val nationTurnRepository: NationTurnRepository,
+    private val officerTurnRepository: GeneralTurnRepository,
+    private val factionTurnRepository: NationTurnRepository,
 ) : WorldPorts {
 
-    override fun general(id: Long): GeneralSnapshot? =
-        generalRepository.findById(id)
+    override fun officer(id: Long): OfficerSnapshot? =
+        officerRepository.findById(id)
             .orElse(null)
-            ?.takeIf { it.worldId == worldId }
-            ?.let(::toGeneralSnapshot)
+            ?.takeIf { it.sessionId == sessionId }
+            ?.let(::toOfficerSnapshot)
 
-    override fun city(id: Long): CitySnapshot? =
-        cityRepository.findById(id)
+    override fun planet(id: Long): PlanetSnapshot? =
+        planetRepository.findById(id)
             .orElse(null)
-            ?.takeIf { it.worldId == worldId }
-            ?.let(::toCitySnapshot)
+            ?.takeIf { it.sessionId == sessionId }
+            ?.let(::toPlanetSnapshot)
 
-    override fun nation(id: Long): NationSnapshot? =
-        nationRepository.findById(id)
+    override fun faction(id: Long): FactionSnapshot? =
+        factionRepository.findById(id)
             .orElse(null)
-            ?.takeIf { it.worldId == worldId }
-            ?.let(::toNationSnapshot)
+            ?.takeIf { it.sessionId == sessionId }
+            ?.let(::toFactionSnapshot)
 
-    override fun troop(id: Long): TroopSnapshot? =
-        troopRepository.findById(id)
+    override fun fleet(id: Long): FleetSnapshot? =
+        fleetRepository.findById(id)
             .orElse(null)
-            ?.takeIf { it.worldId == worldId }
-            ?.let(::toTroopSnapshot)
+            ?.takeIf { it.sessionId == sessionId }
+            ?.let(::toFleetSnapshot)
 
     override fun diplomacy(id: Long): DiplomacySnapshot? =
         diplomacyRepository.findById(id)
             .orElse(null)
-            ?.takeIf { it.worldId == worldId }
+            ?.takeIf { it.sessionId == sessionId }
             ?.let(::toDiplomacySnapshot)
 
-    override fun allGenerals(): Collection<GeneralSnapshot> =
-        generalRepository.findByWorldId(worldId).map(::toGeneralSnapshot)
+    override fun allOfficers(): Collection<OfficerSnapshot> =
+        officerRepository.findByWorldId(sessionId).map(::toOfficerSnapshot)
 
-    override fun allCities(): Collection<CitySnapshot> =
-        cityRepository.findByWorldId(worldId).map(::toCitySnapshot)
+    override fun allPlanets(): Collection<PlanetSnapshot> =
+        planetRepository.findByWorldId(sessionId).map(::toPlanetSnapshot)
 
-    override fun allNations(): Collection<NationSnapshot> =
-        nationRepository.findByWorldId(worldId).map(::toNationSnapshot)
+    override fun allFactions(): Collection<FactionSnapshot> =
+        factionRepository.findByWorldId(sessionId).map(::toFactionSnapshot)
 
-    override fun allTroops(): Collection<TroopSnapshot> =
-        troopRepository.findByWorldId(worldId).map(::toTroopSnapshot)
+    override fun allFleets(): Collection<FleetSnapshot> =
+        fleetRepository.findByWorldId(sessionId).map(::toFleetSnapshot)
 
     override fun allDiplomacies(): Collection<DiplomacySnapshot> =
-        diplomacyRepository.findByWorldId(worldId).map(::toDiplomacySnapshot)
+        diplomacyRepository.findByWorldId(sessionId).map(::toDiplomacySnapshot)
 
-    override fun generalsByNation(nationId: Long): List<GeneralSnapshot> =
-        generalRepository.findByWorldIdAndNationId(worldId, nationId).map(::toGeneralSnapshot)
+    override fun officersByFaction(factionId: Long): List<OfficerSnapshot> =
+        officerRepository.findByWorldIdAndNationId(sessionId, factionId).map(::toOfficerSnapshot)
 
-    override fun generalsByCity(cityId: Long): List<GeneralSnapshot> =
-        generalRepository.findByCityId(cityId)
+    override fun officersByPlanet(planetId: Long): List<OfficerSnapshot> =
+        officerRepository.findByCityId(planetId)
             .asSequence()
-            .filter { it.worldId == worldId }
-            .map(::toGeneralSnapshot)
+            .filter { it.sessionId == sessionId }
+            .map(::toOfficerSnapshot)
             .toList()
 
-    override fun citiesByNation(nationId: Long): List<CitySnapshot> =
-        cityRepository.findByNationId(nationId)
+    override fun planetsByFaction(factionId: Long): List<PlanetSnapshot> =
+        planetRepository.findByNationId(factionId)
             .asSequence()
-            .filter { it.worldId == worldId }
-            .map(::toCitySnapshot)
+            .filter { it.sessionId == sessionId }
+            .map(::toPlanetSnapshot)
             .toList()
 
-    override fun diplomaciesByNation(nationId: Long): List<DiplomacySnapshot> =
-        diplomacyRepository.findByWorldIdAndSrcNationIdOrDestNationId(worldId, nationId, nationId)
+    override fun diplomaciesByFaction(factionId: Long): List<DiplomacySnapshot> =
+        diplomacyRepository.findByWorldIdAndSrcNationIdOrDestNationId(sessionId, factionId, factionId)
             .asSequence()
-            .filter { it.worldId == worldId }
+            .filter { it.sessionId == sessionId }
             .map(::toDiplomacySnapshot)
             .toList()
 
     override fun activeDiplomacies(): List<DiplomacySnapshot> =
-        diplomacyRepository.findByWorldIdAndIsDeadFalse(worldId).map(::toDiplomacySnapshot)
+        diplomacyRepository.findByWorldIdAndIsDeadFalse(sessionId).map(::toDiplomacySnapshot)
 
-    override fun generalTurns(generalId: Long): List<GeneralTurnSnapshot> =
-        generalTurnRepository.findByGeneralIdOrderByTurnIdx(generalId)
+    override fun officerTurns(officerId: Long): List<OfficerTurnSnapshot> =
+        officerTurnRepository.findByGeneralIdOrderByTurnIdx(officerId)
             .asSequence()
-            .filter { it.worldId == worldId }
-            .map(::toGeneralTurnSnapshot)
+            .filter { it.sessionId == sessionId }
+            .map(::toOfficerTurnSnapshot)
             .toList()
 
-    override fun nationTurns(nationId: Long, officerLevel: Short): List<NationTurnSnapshot> =
-        nationTurnRepository.findByNationIdAndOfficerLevelOrderByTurnIdx(nationId, officerLevel)
+    override fun factionTurns(factionId: Long, officerLevel: Short): List<FactionTurnSnapshot> =
+        factionTurnRepository.findByNationIdAndOfficerLevelOrderByTurnIdx(factionId, officerLevel)
             .asSequence()
-            .filter { it.worldId == worldId }
-            .map(::toNationTurnSnapshot)
+            .filter { it.sessionId == sessionId }
+            .map(::toFactionTurnSnapshot)
             .toList()
 
-    override fun putGeneral(snapshot: GeneralSnapshot) {
-        val entity = generalRepository.findById(snapshot.id).orElse(General())
+    override fun putOfficer(snapshot: OfficerSnapshot) {
+        val entity = officerRepository.findById(snapshot.id).orElse(Officer())
         entity.applySnapshot(snapshot)
-        generalRepository.save(entity)
+        officerRepository.save(entity)
     }
 
-    override fun putCity(snapshot: CitySnapshot) {
-        val entity = cityRepository.findById(snapshot.id).orElse(City())
+    override fun putPlanet(snapshot: PlanetSnapshot) {
+        val entity = planetRepository.findById(snapshot.id).orElse(Planet())
         entity.applySnapshot(snapshot)
-        cityRepository.save(entity)
+        planetRepository.save(entity)
     }
 
-    override fun putNation(snapshot: NationSnapshot) {
-        val entity = nationRepository.findById(snapshot.id).orElse(Nation())
+    override fun putFaction(snapshot: FactionSnapshot) {
+        val entity = factionRepository.findById(snapshot.id).orElse(Faction())
         entity.applySnapshot(snapshot)
-        nationRepository.save(entity)
+        factionRepository.save(entity)
     }
 
-    override fun putTroop(snapshot: TroopSnapshot) {
-        val entity = troopRepository.findById(snapshot.id).orElse(Troop())
+    override fun putFleet(snapshot: FleetSnapshot) {
+        val entity = fleetRepository.findById(snapshot.id).orElse(Fleet())
         entity.applySnapshot(snapshot)
-        troopRepository.save(entity)
+        fleetRepository.save(entity)
     }
 
     override fun putDiplomacy(snapshot: DiplomacySnapshot) {
@@ -151,131 +151,60 @@ class JpaWorldPorts(
         diplomacyRepository.save(entity)
     }
 
-    override fun deleteGeneral(id: Long) {
-        generalRepository.deleteById(id)
+    override fun deleteOfficer(id: Long) {
+        officerRepository.deleteById(id)
     }
 
-    override fun deleteCity(id: Long) {
-        cityRepository.deleteById(id)
+    override fun deletePlanet(id: Long) {
+        planetRepository.deleteById(id)
     }
 
-    override fun deleteNation(id: Long) {
-        nationRepository.deleteById(id)
+    override fun deleteFaction(id: Long) {
+        factionRepository.deleteById(id)
     }
 
-    override fun deleteTroop(id: Long) {
-        troopRepository.deleteById(id)
+    override fun deleteFleet(id: Long) {
+        fleetRepository.deleteById(id)
     }
 
     override fun deleteDiplomacy(id: Long) {
         diplomacyRepository.deleteById(id)
     }
 
-    override fun setGeneralTurns(generalId: Long, turns: List<GeneralTurnSnapshot>) {
-        generalTurnRepository.deleteByGeneralId(generalId)
+    override fun setOfficerTurns(officerId: Long, turns: List<OfficerTurnSnapshot>) {
+        officerTurnRepository.deleteByGeneralId(officerId)
         val entities = turns
             .sortedBy { it.turnIdx }
             .map { it.toEntityWithGeneratedId() }
-        generalTurnRepository.saveAll(entities)
+        officerTurnRepository.saveAll(entities)
     }
 
-    override fun setNationTurns(nationId: Long, officerLevel: Short, turns: List<NationTurnSnapshot>) {
-        nationTurnRepository.deleteByNationIdAndOfficerLevel(nationId, officerLevel)
+    override fun setFactionTurns(factionId: Long, officerLevel: Short, turns: List<FactionTurnSnapshot>) {
+        factionTurnRepository.deleteByNationIdAndOfficerLevel(factionId, officerLevel)
         val entities = turns
             .sortedBy { it.turnIdx }
             .map { it.toEntityWithGeneratedId() }
-        nationTurnRepository.saveAll(entities)
+        factionTurnRepository.saveAll(entities)
     }
 
-    override fun removeGeneralTurns(generalId: Long) {
-        generalTurnRepository.deleteByGeneralId(generalId)
+    override fun removeOfficerTurns(officerId: Long) {
+        officerTurnRepository.deleteByGeneralId(officerId)
     }
 
-    override fun removeNationTurns(nationId: Long, officerLevel: Short) {
-        nationTurnRepository.deleteByNationIdAndOfficerLevel(nationId, officerLevel)
+    override fun removeFactionTurns(factionId: Long, officerLevel: Short) {
+        factionTurnRepository.deleteByNationIdAndOfficerLevel(factionId, officerLevel)
     }
 
-    private fun toGeneralSnapshot(entity: General): GeneralSnapshot = GeneralSnapshot(
-        id = entity.id,
-        worldId = entity.worldId,
-        userId = entity.userId,
-        name = entity.name,
-        nationId = entity.nationId,
-        cityId = entity.cityId,
-        troopId = entity.troopId,
-        npcState = entity.npcState,
-        npcOrg = entity.npcOrg,
-        affinity = entity.affinity,
-        bornYear = entity.bornYear,
-        deadYear = entity.deadYear,
-        picture = entity.picture,
-        imageServer = entity.imageServer,
-        leadership = entity.leadership,
-        leadershipExp = entity.leadershipExp,
-        strength = entity.strength,
-        strengthExp = entity.strengthExp,
-        intel = entity.intel,
-        intelExp = entity.intelExp,
-        politics = entity.politics,
-        charm = entity.charm,
-        dex1 = entity.dex1,
-        dex2 = entity.dex2,
-        dex3 = entity.dex3,
-        dex4 = entity.dex4,
-        dex5 = entity.dex5,
-        injury = entity.injury,
-        experience = entity.experience,
-        dedication = entity.dedication,
-        officerLevel = entity.officerLevel,
-        officerCity = entity.officerCity,
-        permission = entity.permission,
-        gold = entity.gold,
-        rice = entity.rice,
-        crew = entity.crew,
-        crewType = entity.crewType,
-        train = entity.train,
-        atmos = entity.atmos,
-        weaponCode = entity.weaponCode,
-        bookCode = entity.bookCode,
-        horseCode = entity.horseCode,
-        itemCode = entity.itemCode,
-        ownerName = entity.ownerName,
-        newmsg = entity.newmsg,
-        turnTime = entity.turnTime,
-        recentWarTime = entity.recentWarTime,
-        makeLimit = entity.makeLimit,
-        killTurn = entity.killTurn,
-        blockState = entity.blockState,
-        dedLevel = entity.dedLevel,
-        expLevel = entity.expLevel,
-        age = entity.age,
-        startAge = entity.startAge,
-        belong = entity.belong,
-        betray = entity.betray,
-        personalCode = entity.personalCode,
-        specialCode = entity.specialCode,
-        specAge = entity.specAge,
-        special2Code = entity.special2Code,
-        spec2Age = entity.spec2Age,
-        defenceTrain = entity.defenceTrain,
-        tournamentState = entity.tournamentState,
-        commandPoints = entity.commandPoints,
-        commandEndTime = entity.commandEndTime,
-        lastTurn = entity.lastTurn.toMutableMap(),
-        meta = entity.meta.toMutableMap(),
-        penalty = entity.penalty.toMutableMap(),
-        createdAt = entity.createdAt,
-        updatedAt = entity.updatedAt,
-    )
+    private fun toOfficerSnapshot(entity: Officer): OfficerSnapshot = entity.toSnapshot()
 
-    private fun General.applySnapshot(snapshot: GeneralSnapshot) {
+    private fun Officer.applySnapshot(snapshot: OfficerSnapshot) {
         id = snapshot.id
-        worldId = snapshot.worldId
+        sessionId = snapshot.sessionId
         userId = snapshot.userId
         name = snapshot.name
-        nationId = snapshot.nationId
-        cityId = snapshot.cityId
-        troopId = snapshot.troopId
+        factionId = snapshot.factionId
+        planetId = snapshot.planetId
+        fleetId = snapshot.fleetId
         npcState = snapshot.npcState
         npcOrg = snapshot.npcOrg
         affinity = snapshot.affinity
@@ -285,33 +214,44 @@ class JpaWorldPorts(
         imageServer = snapshot.imageServer
         leadership = snapshot.leadership
         leadershipExp = snapshot.leadershipExp
-        strength = snapshot.strength
-        strengthExp = snapshot.strengthExp
-        intel = snapshot.intel
-        intelExp = snapshot.intelExp
+        command = snapshot.command
+        commandExp = snapshot.commandExp
+        intelligence = snapshot.intelligence
+        intelligenceExp = snapshot.intelligenceExp
         politics = snapshot.politics
-        charm = snapshot.charm
+        politicsExp = snapshot.politicsExp
+        administration = snapshot.administration
+        administrationExp = snapshot.administrationExp
+        mobility = snapshot.mobility
+        mobilityExp = snapshot.mobilityExp
+        attack = snapshot.attack
+        attackExp = snapshot.attackExp
+        defense = snapshot.defense
+        defenseExp = snapshot.defenseExp
         dex1 = snapshot.dex1
         dex2 = snapshot.dex2
         dex3 = snapshot.dex3
         dex4 = snapshot.dex4
         dex5 = snapshot.dex5
+        dex6 = snapshot.dex6
+        dex7 = snapshot.dex7
+        dex8 = snapshot.dex8
         injury = snapshot.injury
         experience = snapshot.experience
         dedication = snapshot.dedication
         officerLevel = snapshot.officerLevel
         officerCity = snapshot.officerCity
         permission = snapshot.permission
-        gold = snapshot.gold
-        rice = snapshot.rice
-        crew = snapshot.crew
-        crewType = snapshot.crewType
-        train = snapshot.train
-        atmos = snapshot.atmos
-        weaponCode = snapshot.weaponCode
-        bookCode = snapshot.bookCode
-        horseCode = snapshot.horseCode
-        itemCode = snapshot.itemCode
+        funds = snapshot.funds
+        supplies = snapshot.supplies
+        ships = snapshot.ships
+        shipClass = snapshot.shipClass
+        training = snapshot.training
+        morale = snapshot.morale
+        flagshipCode = snapshot.flagshipCode
+        equipCode = snapshot.equipCode
+        engineCode = snapshot.engineCode
+        accessoryCode = snapshot.accessoryCode
         ownerName = snapshot.ownerName
         newmsg = snapshot.newmsg
         turnTime = snapshot.turnTime
@@ -334,6 +274,10 @@ class JpaWorldPorts(
         tournamentState = snapshot.tournamentState
         commandPoints = snapshot.commandPoints
         commandEndTime = snapshot.commandEndTime
+        posX = snapshot.posX
+        posY = snapshot.posY
+        destX = snapshot.destX
+        destY = snapshot.destY
         lastTurn = snapshot.lastTurn.toMutableMap()
         meta = snapshot.meta.toMutableMap()
         penalty = snapshot.penalty.toMutableMap()
@@ -341,62 +285,32 @@ class JpaWorldPorts(
         updatedAt = snapshot.updatedAt
     }
 
-    private fun toCitySnapshot(entity: City): CitySnapshot = CitySnapshot(
-        id = entity.id,
-        worldId = entity.worldId,
-        name = entity.name,
-        mapCityId = entity.mapCityId,
-        level = entity.level,
-        nationId = entity.nationId,
-        supplyState = entity.supplyState,
-        frontState = entity.frontState,
-        pop = entity.pop,
-        popMax = entity.popMax,
-        agri = entity.agri,
-        agriMax = entity.agriMax,
-        comm = entity.comm,
-        commMax = entity.commMax,
-        secu = entity.secu,
-        secuMax = entity.secuMax,
-        trust = entity.trust,
-        trade = entity.trade,
-        dead = entity.dead,
-        def = entity.def,
-        defMax = entity.defMax,
-        wall = entity.wall,
-        wallMax = entity.wallMax,
-        officerSet = entity.officerSet,
-        state = entity.state,
-        region = entity.region,
-        term = entity.term,
-        conflict = entity.conflict.toMutableMap(),
-        meta = entity.meta.toMutableMap(),
-    )
+    private fun toPlanetSnapshot(entity: Planet): PlanetSnapshot = entity.toSnapshot()
 
-    private fun City.applySnapshot(snapshot: CitySnapshot) {
+    private fun Planet.applySnapshot(snapshot: PlanetSnapshot) {
         id = snapshot.id
-        worldId = snapshot.worldId
+        sessionId = snapshot.sessionId
         name = snapshot.name
         mapCityId = snapshot.mapCityId
         level = snapshot.level
-        nationId = snapshot.nationId
+        factionId = snapshot.factionId
         supplyState = snapshot.supplyState
         frontState = snapshot.frontState
-        pop = snapshot.pop
-        popMax = snapshot.popMax
-        agri = snapshot.agri
-        agriMax = snapshot.agriMax
-        comm = snapshot.comm
-        commMax = snapshot.commMax
-        secu = snapshot.secu
-        secuMax = snapshot.secuMax
-        trust = snapshot.trust
-        trade = snapshot.trade
+        population = snapshot.population
+        populationMax = snapshot.populationMax
+        production = snapshot.production
+        productionMax = snapshot.productionMax
+        commerce = snapshot.commerce
+        commerceMax = snapshot.commerceMax
+        security = snapshot.security
+        securityMax = snapshot.securityMax
+        approval = snapshot.approval
+        tradeRoute = snapshot.tradeRoute
         dead = snapshot.dead
-        def = snapshot.def
-        defMax = snapshot.defMax
-        wall = snapshot.wall
-        wallMax = snapshot.wallMax
+        orbitalDefense = snapshot.orbitalDefense
+        orbitalDefenseMax = snapshot.orbitalDefenseMax
+        fortress = snapshot.fortress
+        fortressMax = snapshot.fortressMax
         officerSet = snapshot.officerSet
         state = snapshot.state
         region = snapshot.region
@@ -405,98 +319,56 @@ class JpaWorldPorts(
         meta = snapshot.meta.toMutableMap()
     }
 
-    private fun toNationSnapshot(entity: Nation): NationSnapshot = NationSnapshot(
-        id = entity.id,
-        worldId = entity.worldId,
-        name = entity.name,
-        color = entity.color,
-        capitalCityId = entity.capitalCityId,
-        gold = entity.gold,
-        rice = entity.rice,
-        bill = entity.bill,
-        rate = entity.rate,
-        rateTmp = entity.rateTmp,
-        secretLimit = entity.secretLimit,
-        chiefGeneralId = entity.chiefGeneralId,
-        scoutLevel = entity.scoutLevel,
-        warState = entity.warState,
-        strategicCmdLimit = entity.strategicCmdLimit,
-        surrenderLimit = entity.surrenderLimit,
-        tech = entity.tech,
-        power = entity.power,
-        level = entity.level,
-        typeCode = entity.typeCode,
-        spy = entity.spy.toMutableMap(),
-        meta = entity.meta.toMutableMap(),
-        createdAt = entity.createdAt,
-        updatedAt = entity.updatedAt,
-    )
+    private fun toFactionSnapshot(entity: Faction): FactionSnapshot = entity.toSnapshot()
 
-    private fun Nation.applySnapshot(snapshot: NationSnapshot) {
+    private fun Faction.applySnapshot(snapshot: FactionSnapshot) {
         id = snapshot.id
-        worldId = snapshot.worldId
+        sessionId = snapshot.sessionId
         name = snapshot.name
+        abbreviation = snapshot.abbreviation
         color = snapshot.color
-        capitalCityId = snapshot.capitalCityId
-        gold = snapshot.gold
-        rice = snapshot.rice
-        bill = snapshot.bill
-        rate = snapshot.rate
-        rateTmp = snapshot.rateTmp
+        capitalPlanetId = snapshot.capitalPlanetId
+        funds = snapshot.funds
+        supplies = snapshot.supplies
+        taxRate = snapshot.taxRate
+        conscriptionRate = snapshot.conscriptionRate
+        conscriptionRateTmp = snapshot.conscriptionRateTmp
         secretLimit = snapshot.secretLimit
-        chiefGeneralId = snapshot.chiefGeneralId
+        chiefOfficerId = snapshot.chiefOfficerId
         scoutLevel = snapshot.scoutLevel
         warState = snapshot.warState
         strategicCmdLimit = snapshot.strategicCmdLimit
         surrenderLimit = snapshot.surrenderLimit
-        tech = snapshot.tech
-        power = snapshot.power
-        level = snapshot.level
-        typeCode = snapshot.typeCode
+        techLevel = snapshot.techLevel
+        militaryPower = snapshot.militaryPower
+        officerCount = snapshot.officerCount
+        factionRank = snapshot.factionRank
+        factionType = snapshot.factionType
         spy = snapshot.spy.toMutableMap()
         meta = snapshot.meta.toMutableMap()
         createdAt = snapshot.createdAt
         updatedAt = snapshot.updatedAt
     }
 
-    private fun toTroopSnapshot(entity: Troop): TroopSnapshot = TroopSnapshot(
-        id = entity.id,
-        worldId = entity.worldId,
-        leaderGeneralId = entity.leaderGeneralId,
-        nationId = entity.nationId,
-        name = entity.name,
-        meta = entity.meta.toMutableMap(),
-        createdAt = entity.createdAt,
-    )
+    private fun toFleetSnapshot(entity: Fleet): FleetSnapshot = entity.toSnapshot()
 
-    private fun Troop.applySnapshot(snapshot: TroopSnapshot) {
+    private fun Fleet.applySnapshot(snapshot: FleetSnapshot) {
         id = snapshot.id
-        worldId = snapshot.worldId
-        leaderGeneralId = snapshot.leaderGeneralId
-        nationId = snapshot.nationId
+        sessionId = snapshot.sessionId
+        leaderOfficerId = snapshot.leaderOfficerId
+        factionId = snapshot.factionId
         name = snapshot.name
         meta = snapshot.meta.toMutableMap()
         createdAt = snapshot.createdAt
     }
 
-    private fun toDiplomacySnapshot(entity: Diplomacy): DiplomacySnapshot = DiplomacySnapshot(
-        id = entity.id,
-        worldId = entity.worldId,
-        srcNationId = entity.srcNationId,
-        destNationId = entity.destNationId,
-        stateCode = entity.stateCode,
-        term = entity.term,
-        isDead = entity.isDead,
-        isShowing = entity.isShowing,
-        meta = entity.meta.toMutableMap(),
-        createdAt = entity.createdAt,
-    )
+    private fun toDiplomacySnapshot(entity: Diplomacy): DiplomacySnapshot = entity.toSnapshot()
 
     private fun Diplomacy.applySnapshot(snapshot: DiplomacySnapshot) {
         id = snapshot.id
-        worldId = snapshot.worldId
-        srcNationId = snapshot.srcNationId
-        destNationId = snapshot.destNationId
+        sessionId = snapshot.sessionId
+        srcFactionId = snapshot.srcFactionId
+        destFactionId = snapshot.destFactionId
         stateCode = snapshot.stateCode
         term = snapshot.term
         isDead = snapshot.isDead
@@ -505,10 +377,10 @@ class JpaWorldPorts(
         createdAt = snapshot.createdAt
     }
 
-    private fun toGeneralTurnSnapshot(entity: GeneralTurn): GeneralTurnSnapshot = GeneralTurnSnapshot(
+    private fun toOfficerTurnSnapshot(entity: OfficerTurn): OfficerTurnSnapshot = OfficerTurnSnapshot(
         id = entity.id,
-        worldId = entity.worldId,
-        generalId = entity.generalId,
+        sessionId = entity.sessionId,
+        officerId = entity.officerId,
         turnIdx = entity.turnIdx,
         actionCode = entity.actionCode,
         arg = entity.arg.toMutableMap(),
@@ -516,10 +388,10 @@ class JpaWorldPorts(
         createdAt = entity.createdAt,
     )
 
-    private fun GeneralTurnSnapshot.toEntityWithGeneratedId(): GeneralTurn = GeneralTurn(
+    private fun OfficerTurnSnapshot.toEntityWithGeneratedId(): OfficerTurn = OfficerTurn(
         id = 0,
-        worldId = worldId,
-        generalId = generalId,
+        sessionId = sessionId,
+        officerId = officerId,
         turnIdx = turnIdx,
         actionCode = actionCode,
         arg = arg.toMutableMap(),
@@ -527,10 +399,10 @@ class JpaWorldPorts(
         createdAt = createdAt,
     )
 
-    private fun toNationTurnSnapshot(entity: NationTurn): NationTurnSnapshot = NationTurnSnapshot(
+    private fun toFactionTurnSnapshot(entity: FactionTurn): FactionTurnSnapshot = FactionTurnSnapshot(
         id = entity.id,
-        worldId = entity.worldId,
-        nationId = entity.nationId,
+        sessionId = entity.sessionId,
+        factionId = entity.factionId,
         officerLevel = entity.officerLevel,
         turnIdx = entity.turnIdx,
         actionCode = entity.actionCode,
@@ -539,10 +411,10 @@ class JpaWorldPorts(
         createdAt = entity.createdAt,
     )
 
-    private fun NationTurnSnapshot.toEntityWithGeneratedId(): NationTurn = NationTurn(
+    private fun FactionTurnSnapshot.toEntityWithGeneratedId(): FactionTurn = FactionTurn(
         id = 0,
-        worldId = worldId,
-        nationId = nationId,
+        sessionId = sessionId,
+        factionId = factionId,
         officerLevel = officerLevel,
         turnIdx = turnIdx,
         actionCode = actionCode,

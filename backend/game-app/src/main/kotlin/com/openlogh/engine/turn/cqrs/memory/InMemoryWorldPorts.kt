@@ -1,75 +1,75 @@
 package com.openlogh.engine.turn.cqrs.memory
 
-import com.openlogh.engine.turn.cqrs.memory.DirtyTracker.EntityType.CITY
+import com.openlogh.engine.turn.cqrs.memory.DirtyTracker.EntityType.OFFICER
+import com.openlogh.engine.turn.cqrs.memory.DirtyTracker.EntityType.PLANET
 import com.openlogh.engine.turn.cqrs.memory.DirtyTracker.EntityType.DIPLOMACY
-import com.openlogh.engine.turn.cqrs.memory.DirtyTracker.EntityType.GENERAL
-import com.openlogh.engine.turn.cqrs.memory.DirtyTracker.EntityType.NATION
-import com.openlogh.engine.turn.cqrs.memory.DirtyTracker.EntityType.TROOP
+import com.openlogh.engine.turn.cqrs.memory.DirtyTracker.EntityType.FACTION
+import com.openlogh.engine.turn.cqrs.memory.DirtyTracker.EntityType.FLEET
 import com.openlogh.engine.turn.cqrs.persist.WorldPorts
 
 class InMemoryWorldPorts(
     private val state: InMemoryWorldState,
     private val dirtyTracker: DirtyTracker,
 ) : WorldPorts {
-    override fun general(id: Long): GeneralSnapshot? = state.generals[id]
+    override fun officer(id: Long): OfficerSnapshot? = state.officers[id]
 
-    override fun city(id: Long): CitySnapshot? = state.cities[id]
+    override fun planet(id: Long): PlanetSnapshot? = state.planets[id]
 
-    override fun nation(id: Long): NationSnapshot? = state.nations[id]
+    override fun faction(id: Long): FactionSnapshot? = state.factions[id]
 
-    override fun troop(id: Long): TroopSnapshot? = state.troops[id]
+    override fun fleet(id: Long): FleetSnapshot? = state.fleets[id]
 
     override fun diplomacy(id: Long): DiplomacySnapshot? = state.diplomacies[id]
 
-    override fun allGenerals(): Collection<GeneralSnapshot> = state.generals.values
+    override fun allOfficers(): Collection<OfficerSnapshot> = state.officers.values
 
-    override fun allCities(): Collection<CitySnapshot> = state.cities.values
+    override fun allPlanets(): Collection<PlanetSnapshot> = state.planets.values
 
-    override fun allNations(): Collection<NationSnapshot> = state.nations.values
+    override fun allFactions(): Collection<FactionSnapshot> = state.factions.values
 
-    override fun allTroops(): Collection<TroopSnapshot> = state.troops.values
+    override fun allFleets(): Collection<FleetSnapshot> = state.fleets.values
 
     override fun allDiplomacies(): Collection<DiplomacySnapshot> = state.diplomacies.values
 
-    override fun generalsByNation(nationId: Long): List<GeneralSnapshot> =
-        state.generals.values.filter { it.nationId == nationId }
+    override fun officersByFaction(factionId: Long): List<OfficerSnapshot> =
+        state.officers.values.filter { it.factionId == factionId }
 
-    override fun generalsByCity(cityId: Long): List<GeneralSnapshot> =
-        state.generals.values.filter { it.cityId == cityId }
+    override fun officersByPlanet(planetId: Long): List<OfficerSnapshot> =
+        state.officers.values.filter { it.planetId == planetId }
 
-    override fun citiesByNation(nationId: Long): List<CitySnapshot> =
-        state.cities.values.filter { it.nationId == nationId }
+    override fun planetsByFaction(factionId: Long): List<PlanetSnapshot> =
+        state.planets.values.filter { it.factionId == factionId }
 
-    override fun diplomaciesByNation(nationId: Long): List<DiplomacySnapshot> =
-        state.diplomacies.values.filter { it.srcNationId == nationId || it.destNationId == nationId }
+    override fun diplomaciesByFaction(factionId: Long): List<DiplomacySnapshot> =
+        state.diplomacies.values.filter { it.srcFactionId == factionId || it.destFactionId == factionId }
 
     override fun activeDiplomacies(): List<DiplomacySnapshot> =
         state.diplomacies.values.filter { !it.isDead }
 
-    override fun generalTurns(generalId: Long): List<GeneralTurnSnapshot> =
-        state.generalTurnsByGeneralId[generalId].orEmpty()
+    override fun officerTurns(officerId: Long): List<OfficerTurnSnapshot> =
+        state.officerTurnsByOfficerId[officerId].orEmpty()
 
-    override fun nationTurns(nationId: Long, officerLevel: Short): List<NationTurnSnapshot> =
-        state.nationTurnsByNationAndLevel[NationTurnKey(nationId, officerLevel)].orEmpty()
+    override fun factionTurns(factionId: Long, officerLevel: Short): List<FactionTurnSnapshot> =
+        state.factionTurnsByFactionAndLevel[FactionTurnKey(factionId, officerLevel)].orEmpty()
 
-    override fun putGeneral(snapshot: GeneralSnapshot) {
-        state.generals[snapshot.id] = snapshot
-        dirtyTracker.markDirty(GENERAL, snapshot.id)
+    override fun putOfficer(snapshot: OfficerSnapshot) {
+        state.officers[snapshot.id] = snapshot
+        dirtyTracker.markDirty(OFFICER, snapshot.id)
     }
 
-    override fun putCity(snapshot: CitySnapshot) {
-        state.cities[snapshot.id] = snapshot
-        dirtyTracker.markDirty(CITY, snapshot.id)
+    override fun putPlanet(snapshot: PlanetSnapshot) {
+        state.planets[snapshot.id] = snapshot
+        dirtyTracker.markDirty(PLANET, snapshot.id)
     }
 
-    override fun putNation(snapshot: NationSnapshot) {
-        state.nations[snapshot.id] = snapshot
-        dirtyTracker.markDirty(NATION, snapshot.id)
+    override fun putFaction(snapshot: FactionSnapshot) {
+        state.factions[snapshot.id] = snapshot
+        dirtyTracker.markDirty(FACTION, snapshot.id)
     }
 
-    override fun putTroop(snapshot: TroopSnapshot) {
-        state.troops[snapshot.id] = snapshot
-        dirtyTracker.markDirty(TROOP, snapshot.id)
+    override fun putFleet(snapshot: FleetSnapshot) {
+        state.fleets[snapshot.id] = snapshot
+        dirtyTracker.markDirty(FLEET, snapshot.id)
     }
 
     override fun putDiplomacy(snapshot: DiplomacySnapshot) {
@@ -77,24 +77,24 @@ class InMemoryWorldPorts(
         dirtyTracker.markDirty(DIPLOMACY, snapshot.id)
     }
 
-    override fun deleteGeneral(id: Long) {
-        state.generals.remove(id)
-        dirtyTracker.markDeleted(GENERAL, id)
+    override fun deleteOfficer(id: Long) {
+        state.officers.remove(id)
+        dirtyTracker.markDeleted(OFFICER, id)
     }
 
-    override fun deleteCity(id: Long) {
-        state.cities.remove(id)
-        dirtyTracker.markDeleted(CITY, id)
+    override fun deletePlanet(id: Long) {
+        state.planets.remove(id)
+        dirtyTracker.markDeleted(PLANET, id)
     }
 
-    override fun deleteNation(id: Long) {
-        state.nations.remove(id)
-        dirtyTracker.markDeleted(NATION, id)
+    override fun deleteFaction(id: Long) {
+        state.factions.remove(id)
+        dirtyTracker.markDeleted(FACTION, id)
     }
 
-    override fun deleteTroop(id: Long) {
-        state.troops.remove(id)
-        dirtyTracker.markDeleted(TROOP, id)
+    override fun deleteFleet(id: Long) {
+        state.fleets.remove(id)
+        dirtyTracker.markDeleted(FLEET, id)
     }
 
     override fun deleteDiplomacy(id: Long) {
@@ -102,19 +102,19 @@ class InMemoryWorldPorts(
         dirtyTracker.markDeleted(DIPLOMACY, id)
     }
 
-    override fun setGeneralTurns(generalId: Long, turns: List<GeneralTurnSnapshot>) {
-        state.generalTurnsByGeneralId[generalId] = turns.toMutableList()
+    override fun setOfficerTurns(officerId: Long, turns: List<OfficerTurnSnapshot>) {
+        state.officerTurnsByOfficerId[officerId] = turns.toMutableList()
     }
 
-    override fun setNationTurns(nationId: Long, officerLevel: Short, turns: List<NationTurnSnapshot>) {
-        state.nationTurnsByNationAndLevel[NationTurnKey(nationId, officerLevel)] = turns.toMutableList()
+    override fun setFactionTurns(factionId: Long, officerLevel: Short, turns: List<FactionTurnSnapshot>) {
+        state.factionTurnsByFactionAndLevel[FactionTurnKey(factionId, officerLevel)] = turns.toMutableList()
     }
 
-    override fun removeGeneralTurns(generalId: Long) {
-        state.generalTurnsByGeneralId.remove(generalId)
+    override fun removeOfficerTurns(officerId: Long) {
+        state.officerTurnsByOfficerId.remove(officerId)
     }
 
-    override fun removeNationTurns(nationId: Long, officerLevel: Short) {
-        state.nationTurnsByNationAndLevel.remove(NationTurnKey(nationId, officerLevel))
+    override fun removeFactionTurns(factionId: Long, officerLevel: Short) {
+        state.factionTurnsByFactionAndLevel.remove(FactionTurnKey(factionId, officerLevel))
     }
 }

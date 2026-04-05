@@ -1,18 +1,18 @@
 package com.openlogh.engine.turn.cqrs.persist
 
-import com.openlogh.engine.turn.cqrs.memory.CitySnapshot
 import com.openlogh.engine.turn.cqrs.memory.DiplomacySnapshot
-import com.openlogh.engine.turn.cqrs.memory.GeneralSnapshot
-import com.openlogh.engine.turn.cqrs.memory.GeneralTurnSnapshot
-import com.openlogh.engine.turn.cqrs.memory.NationSnapshot
-import com.openlogh.engine.turn.cqrs.memory.NationTurnSnapshot
-import com.openlogh.engine.turn.cqrs.memory.TroopSnapshot
+import com.openlogh.engine.turn.cqrs.memory.FactionSnapshot
+import com.openlogh.engine.turn.cqrs.memory.FactionTurnSnapshot
+import com.openlogh.engine.turn.cqrs.memory.FleetSnapshot
+import com.openlogh.engine.turn.cqrs.memory.OfficerSnapshot
+import com.openlogh.engine.turn.cqrs.memory.OfficerTurnSnapshot
+import com.openlogh.engine.turn.cqrs.memory.PlanetSnapshot
 import com.openlogh.engine.turn.cqrs.port.WorldReadPort
 import com.openlogh.engine.turn.cqrs.port.WorldWritePort
-import com.openlogh.entity.City
 import com.openlogh.entity.Diplomacy
-import com.openlogh.entity.General
-import com.openlogh.entity.Nation
+import com.openlogh.entity.Faction
+import com.openlogh.entity.Officer
+import com.openlogh.entity.Planet
 import com.openlogh.repository.CityRepository
 import com.openlogh.repository.DiplomacyRepository
 import com.openlogh.repository.GeneralRepository
@@ -26,23 +26,23 @@ interface WorldPorts : WorldReadPort, WorldWritePort
 
 @Component
 class JpaWorldPortFactory(
-    private val generalRepository: GeneralRepository? = null,
-    private val cityRepository: CityRepository? = null,
-    private val nationRepository: NationRepository? = null,
-    private val troopRepository: TroopRepository? = null,
+    private val officerRepository: GeneralRepository? = null,
+    private val planetRepository: CityRepository? = null,
+    private val factionRepository: NationRepository? = null,
+    private val fleetRepository: TroopRepository? = null,
     private val diplomacyRepository: DiplomacyRepository? = null,
-    private val generalTurnRepository: GeneralTurnRepository? = null,
-    private val nationTurnRepository: NationTurnRepository? = null,
+    private val officerTurnRepository: GeneralTurnRepository? = null,
+    private val factionTurnRepository: NationTurnRepository? = null,
 ) {
     private val scopedPorts = ThreadLocal<MutableMap<Long, CachingWorldPorts>?>()
 
-    fun create(worldId: Long): WorldPorts {
+    fun create(sessionId: Long): WorldPorts {
         val activeScope = scopedPorts.get()
         if (activeScope != null) {
-            return activeScope.getOrPut(worldId) { CachingWorldPorts(createRaw(worldId)) }
+            return activeScope.getOrPut(sessionId) { CachingWorldPorts(createRaw(sessionId)) }
         }
 
-        return createRaw(worldId)
+        return createRaw(sessionId)
     }
 
     fun beginScope() {
@@ -55,106 +55,106 @@ class JpaWorldPortFactory(
         scopedPorts.remove()
     }
 
-    private fun createRaw(worldId: Long): WorldPorts {
+    private fun createRaw(sessionId: Long): WorldPorts {
         if (
-            generalRepository != null && cityRepository != null && nationRepository != null &&
-            troopRepository != null && diplomacyRepository != null &&
-            generalTurnRepository != null && nationTurnRepository != null
+            officerRepository != null && planetRepository != null && factionRepository != null &&
+            fleetRepository != null && diplomacyRepository != null &&
+            officerTurnRepository != null && factionTurnRepository != null
         ) {
             return JpaWorldPorts(
-                worldId = worldId,
-                generalRepository = generalRepository,
-                cityRepository = cityRepository,
-                nationRepository = nationRepository,
-                troopRepository = troopRepository,
+                sessionId = sessionId,
+                officerRepository = officerRepository,
+                planetRepository = planetRepository,
+                factionRepository = factionRepository,
+                fleetRepository = fleetRepository,
                 diplomacyRepository = diplomacyRepository,
-                generalTurnRepository = generalTurnRepository,
-                nationTurnRepository = nationTurnRepository,
+                officerTurnRepository = officerTurnRepository,
+                factionTurnRepository = factionTurnRepository,
             )
         }
 
         return PartialJpaWorldPorts(
-            worldId = worldId,
-            generalRepository = generalRepository,
-            cityRepository = cityRepository,
-            nationRepository = nationRepository,
+            sessionId = sessionId,
+            officerRepository = officerRepository,
+            planetRepository = planetRepository,
+            factionRepository = factionRepository,
             diplomacyRepository = diplomacyRepository,
         )
     }
 }
 
 private class PartialJpaWorldPorts(
-    private val worldId: Long,
-    private val generalRepository: GeneralRepository?,
-    private val cityRepository: CityRepository?,
-    private val nationRepository: NationRepository?,
+    private val sessionId: Long,
+    private val officerRepository: GeneralRepository?,
+    private val planetRepository: CityRepository?,
+    private val factionRepository: NationRepository?,
     private val diplomacyRepository: DiplomacyRepository?,
 ) : WorldPorts {
-    override fun general(id: Long): GeneralSnapshot? =
-        generalRepository?.findById(id)?.orElse(null)?.takeIf { it.worldId == worldId }?.toSnapshot()
+    override fun officer(id: Long): OfficerSnapshot? =
+        officerRepository?.findById(id)?.orElse(null)?.takeIf { it.sessionId == sessionId }?.toSnapshot()
 
-    override fun city(id: Long): CitySnapshot? =
-        cityRepository?.findById(id)?.orElse(null)?.takeIf { it.worldId == worldId }?.toSnapshot()
+    override fun planet(id: Long): PlanetSnapshot? =
+        planetRepository?.findById(id)?.orElse(null)?.takeIf { it.sessionId == sessionId }?.toSnapshot()
 
-    override fun nation(id: Long): NationSnapshot? =
-        nationRepository?.findById(id)?.orElse(null)?.takeIf { it.worldId == worldId }?.toSnapshot()
+    override fun faction(id: Long): FactionSnapshot? =
+        factionRepository?.findById(id)?.orElse(null)?.takeIf { it.sessionId == sessionId }?.toSnapshot()
 
-    override fun troop(id: Long): TroopSnapshot? = null
+    override fun fleet(id: Long): FleetSnapshot? = null
 
     override fun diplomacy(id: Long): DiplomacySnapshot? =
-        diplomacyRepository?.findById(id)?.orElse(null)?.takeIf { it.worldId == worldId }?.toSnapshot()
+        diplomacyRepository?.findById(id)?.orElse(null)?.takeIf { it.sessionId == sessionId }?.toSnapshot()
 
-    override fun allGenerals(): Collection<GeneralSnapshot> = generalRepository?.findByWorldId(worldId)?.map(General::toSnapshot).orEmpty()
+    override fun allOfficers(): Collection<OfficerSnapshot> = officerRepository?.findByWorldId(sessionId)?.map(Officer::toSnapshot).orEmpty()
 
-    override fun allCities(): Collection<CitySnapshot> = cityRepository?.findByWorldId(worldId)?.map(City::toSnapshot).orEmpty()
+    override fun allPlanets(): Collection<PlanetSnapshot> = planetRepository?.findByWorldId(sessionId)?.map(Planet::toSnapshot).orEmpty()
 
-    override fun allNations(): Collection<NationSnapshot> = nationRepository?.findByWorldId(worldId)?.map(Nation::toSnapshot).orEmpty()
+    override fun allFactions(): Collection<FactionSnapshot> = factionRepository?.findByWorldId(sessionId)?.map(Faction::toSnapshot).orEmpty()
 
-    override fun allTroops(): Collection<TroopSnapshot> = emptyList()
+    override fun allFleets(): Collection<FleetSnapshot> = emptyList()
 
     override fun allDiplomacies(): Collection<DiplomacySnapshot> =
-        diplomacyRepository?.findByWorldId(worldId)?.map(Diplomacy::toSnapshot).orEmpty()
+        diplomacyRepository?.findByWorldId(sessionId)?.map(Diplomacy::toSnapshot).orEmpty()
 
-    override fun generalsByNation(nationId: Long): List<GeneralSnapshot> =
-        generalRepository?.findByWorldIdAndNationId(worldId, nationId)?.map(General::toSnapshot).orEmpty()
+    override fun officersByFaction(factionId: Long): List<OfficerSnapshot> =
+        officerRepository?.findByWorldIdAndNationId(sessionId, factionId)?.map(Officer::toSnapshot).orEmpty()
 
-    override fun generalsByCity(cityId: Long): List<GeneralSnapshot> =
-        generalRepository?.findByCityId(cityId)?.filter { it.worldId == worldId }?.map(General::toSnapshot).orEmpty()
+    override fun officersByPlanet(planetId: Long): List<OfficerSnapshot> =
+        officerRepository?.findByCityId(planetId)?.filter { it.sessionId == sessionId }?.map(Officer::toSnapshot).orEmpty()
 
-    override fun citiesByNation(nationId: Long): List<CitySnapshot> =
-        cityRepository?.findByNationId(nationId)?.filter { it.worldId == worldId }?.map(City::toSnapshot).orEmpty()
+    override fun planetsByFaction(factionId: Long): List<PlanetSnapshot> =
+        planetRepository?.findByNationId(factionId)?.filter { it.sessionId == sessionId }?.map(Planet::toSnapshot).orEmpty()
 
-    override fun diplomaciesByNation(nationId: Long): List<DiplomacySnapshot> =
+    override fun diplomaciesByFaction(factionId: Long): List<DiplomacySnapshot> =
         diplomacyRepository
-            ?.findByWorldIdAndSrcNationIdOrDestNationId(worldId, nationId, nationId)
-            ?.filter { it.worldId == worldId }
+            ?.findByWorldIdAndSrcNationIdOrDestNationId(sessionId, factionId, factionId)
+            ?.filter { it.sessionId == sessionId }
             ?.map(Diplomacy::toSnapshot)
             .orEmpty()
 
     override fun activeDiplomacies(): List<DiplomacySnapshot> =
-        diplomacyRepository?.findByWorldIdAndIsDeadFalse(worldId)?.map(Diplomacy::toSnapshot).orEmpty()
+        diplomacyRepository?.findByWorldIdAndIsDeadFalse(sessionId)?.map(Diplomacy::toSnapshot).orEmpty()
 
-    override fun generalTurns(generalId: Long): List<GeneralTurnSnapshot> = emptyList()
+    override fun officerTurns(officerId: Long): List<OfficerTurnSnapshot> = emptyList()
 
-    override fun nationTurns(nationId: Long, officerLevel: Short): List<NationTurnSnapshot> = emptyList()
+    override fun factionTurns(factionId: Long, officerLevel: Short): List<FactionTurnSnapshot> = emptyList()
 
-    override fun putGeneral(snapshot: GeneralSnapshot) {
-        checkNotNull(generalRepository) { "GeneralRepository is required" }
-        generalRepository.save(snapshot.toEntity())
+    override fun putOfficer(snapshot: OfficerSnapshot) {
+        checkNotNull(officerRepository) { "OfficerRepository is required" }
+        officerRepository.save(snapshot.toEntity())
     }
 
-    override fun putCity(snapshot: CitySnapshot) {
-        checkNotNull(cityRepository) { "CityRepository is required" }
-        cityRepository.save(snapshot.toEntity())
+    override fun putPlanet(snapshot: PlanetSnapshot) {
+        checkNotNull(planetRepository) { "PlanetRepository is required" }
+        planetRepository.save(snapshot.toEntity())
     }
 
-    override fun putNation(snapshot: NationSnapshot) {
-        checkNotNull(nationRepository) { "NationRepository is required" }
-        nationRepository.save(snapshot.toEntity())
+    override fun putFaction(snapshot: FactionSnapshot) {
+        checkNotNull(factionRepository) { "FactionRepository is required" }
+        factionRepository.save(snapshot.toEntity())
     }
 
-    override fun putTroop(snapshot: TroopSnapshot) {
-        throw UnsupportedOperationException("Troop operations are not available in PartialJpaWorldPorts")
+    override fun putFleet(snapshot: FleetSnapshot) {
+        throw UnsupportedOperationException("Fleet operations are not available in PartialJpaWorldPorts")
     }
 
     override fun putDiplomacy(snapshot: DiplomacySnapshot) {
@@ -162,23 +162,23 @@ private class PartialJpaWorldPorts(
         diplomacyRepository.save(snapshot.toEntity())
     }
 
-    override fun deleteGeneral(id: Long) {
-        checkNotNull(generalRepository) { "GeneralRepository is required" }
-        generalRepository.deleteById(id)
+    override fun deleteOfficer(id: Long) {
+        checkNotNull(officerRepository) { "OfficerRepository is required" }
+        officerRepository.deleteById(id)
     }
 
-    override fun deleteCity(id: Long) {
-        checkNotNull(cityRepository) { "CityRepository is required" }
-        cityRepository.deleteById(id)
+    override fun deletePlanet(id: Long) {
+        checkNotNull(planetRepository) { "PlanetRepository is required" }
+        planetRepository.deleteById(id)
     }
 
-    override fun deleteNation(id: Long) {
-        checkNotNull(nationRepository) { "NationRepository is required" }
-        nationRepository.deleteById(id)
+    override fun deleteFaction(id: Long) {
+        checkNotNull(factionRepository) { "FactionRepository is required" }
+        factionRepository.deleteById(id)
     }
 
-    override fun deleteTroop(id: Long) {
-        throw UnsupportedOperationException("Troop operations are not available in PartialJpaWorldPorts")
+    override fun deleteFleet(id: Long) {
+        throw UnsupportedOperationException("Fleet operations are not available in PartialJpaWorldPorts")
     }
 
     override fun deleteDiplomacy(id: Long) {
@@ -186,19 +186,19 @@ private class PartialJpaWorldPorts(
         diplomacyRepository.deleteById(id)
     }
 
-    override fun setGeneralTurns(generalId: Long, turns: List<GeneralTurnSnapshot>) {
+    override fun setOfficerTurns(officerId: Long, turns: List<OfficerTurnSnapshot>) {
         throw UnsupportedOperationException("Turn operations are not available in PartialJpaWorldPorts")
     }
 
-    override fun setNationTurns(nationId: Long, officerLevel: Short, turns: List<NationTurnSnapshot>) {
+    override fun setFactionTurns(factionId: Long, officerLevel: Short, turns: List<FactionTurnSnapshot>) {
         throw UnsupportedOperationException("Turn operations are not available in PartialJpaWorldPorts")
     }
 
-    override fun removeGeneralTurns(generalId: Long) {
+    override fun removeOfficerTurns(officerId: Long) {
         throw UnsupportedOperationException("Turn operations are not available in PartialJpaWorldPorts")
     }
 
-    override fun removeNationTurns(nationId: Long, officerLevel: Short) {
+    override fun removeFactionTurns(factionId: Long, officerLevel: Short) {
         throw UnsupportedOperationException("Turn operations are not available in PartialJpaWorldPorts")
     }
 }
