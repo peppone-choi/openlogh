@@ -1,7 +1,7 @@
 package com.openlogh.engine.war.trigger
 
 import com.openlogh.engine.war.BattleTriggerContext
-import com.openlogh.engine.war.WarUnitGeneral
+import com.openlogh.engine.war.WarUnitOfficer
 import com.openlogh.engine.war.WarUnitTrigger
 import com.openlogh.engine.war.WarUnitTriggerRegistry
 
@@ -21,7 +21,7 @@ object SnipingTrigger : WarUnitTrigger {
 
     override fun onEngagementStart(ctx: BattleTriggerContext): BattleTriggerContext {
         if (ctx.snipeImmune) return ctx
-        if (ctx.defender !is WarUnitGeneral) return ctx
+        if (ctx.defender !is WarUnitOfficer) return ctx
         if (!ctx.newOpponent) return ctx
 
         // 시도 (attempt): 50% probability

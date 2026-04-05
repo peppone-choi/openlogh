@@ -10,13 +10,13 @@ import com.openlogh.engine.trigger.TriggerCaller
 import com.openlogh.engine.trigger.TriggerEnv
 import com.openlogh.engine.trigger.buildPreTurnTriggers
 import com.openlogh.entity.GeneralTurn
-import com.openlogh.entity.Nation
-import com.openlogh.entity.WorldState
-import com.openlogh.repository.CityRepository
-import com.openlogh.repository.GeneralRepository
-import com.openlogh.repository.GeneralTurnRepository
-import com.openlogh.repository.NationRepository
-import com.openlogh.repository.WorldStateRepository
+import com.openlogh.entity.Faction
+import com.openlogh.entity.SessionState
+import com.openlogh.repository.PlanetRepository
+import com.openlogh.repository.OfficerRepository
+import com.openlogh.repository.OfficerTurnRepository
+import com.openlogh.repository.FactionRepository
+import com.openlogh.repository.SessionStateRepository
 import com.openlogh.service.CommandLogDispatcher
 import com.openlogh.service.GameEventService
 import com.openlogh.service.ScenarioService
@@ -28,11 +28,11 @@ import java.time.OffsetDateTime
 
 @Service
 class RealtimeService(
-    private val generalRepository: GeneralRepository,
-    private val generalTurnRepository: GeneralTurnRepository,
-    private val cityRepository: CityRepository,
-    private val nationRepository: NationRepository,
-    private val worldStateRepository: WorldStateRepository,
+    private val officerRepository: OfficerRepository,
+    private val officerTurnRepository: OfficerTurnRepository,
+    private val planetRepository: PlanetRepository,
+    private val factionRepository: FactionRepository,
+    private val sessionStateRepository: SessionStateRepository,
     private val commandExecutor: CommandExecutor,
     private val commandRegistry: CommandRegistry,
     private val gameEventService: GameEventService,
@@ -45,12 +45,12 @@ class RealtimeService(
 
     @Transactional
     fun submitCommand(generalId: Long, actionCode: String, arg: Map<String, Any>?): CommandResult {
-        val general = generalRepository.findById(generalId).orElseThrow {
+        val general = officerRepository.findById(generalId).orElseThrow {
             IllegalArgumentException("General not found: $generalId")
         }
 
-        val world = worldStateRepository.findById(general.worldId.toShort()).orElseThrow {
-            IllegalArgumentException("World not found: ${general.worldId}")
+        val world = sessionStateRepository.findById(general.sessionId.toShort()).orElseThrow {
+            IllegalArgumentException("World not found: ${general.sessionId}")
         }
         if (!world.realtimeMode) {
             return CommandResult(success = false, logs = listOf("This world is not in realtime mode."))
@@ -65,7 +65,7 @@ class RealtimeService(
 
     @Transactional
     fun submitNationCommand(generalId: Long, actionCode: String, arg: Map<String, Any>?): CommandResult {
-        val general = generalRepository.findById(generalId).orElseThrow {
+        val general = officerRepository.findById(generalId).orElseThrow {
             IllegalArgumentException("General not found: $generalId")
         }
 
@@ -73,8 +73,8 @@ class RealtimeService(
             return CommandResult(success = false, logs = listOf("국가 명령 권한이 없습니다."))
         }
 
-        val world = worldStateRepository.findById(general.worldId.toShort()).orElseThrow {
-            IllegalArgumentException("World not found: ${general.worldId}")
+        val world = sessionStateRepository.findById(general.sessionId.toShort()).orElseThrow {
+            IllegalArgumentException("World not found: ${general.sessionId}")
         }
         if (!world.realtimeMode) {
             return CommandResult(success = false, logs = listOf("This world is not in realtime mode."))
@@ -94,19 +94,19 @@ class RealtimeService(
      */
     @Transactional
     fun executePreOpenCommand(generalId: Long, actionCode: String, arg: Map<String, Any>? = null): CommandResult {
-        val general = generalRepository.findById(generalId).orElseThrow {
+        val general = officerRepository.findById(generalId).orElseThrow {
             IllegalArgumentException("General not found: $generalId")
         }
-        val world = worldStateRepository.findById(general.worldId.toShort()).orElseThrow {
-            IllegalArgumentException("World not found: ${general.worldId}")
+        val world = sessionStateRepository.findById(general.sessionId.toShort()).orElseThrow {
+            IllegalArgumentException("World not found: ${general.sessionId}")
         }
         val env = buildCommandEnv(world)
-        val city = cityRepository.findById(general.cityId).orElse(null)
-        val nation = if (general.nationId != 0L) {
-            nationRepository.findById(general.nationId).orElse(null)
+        val city = planetRepository.findById(general.planetId).orElse(null)
+        val nation = if (general.factionId != 0L) {
+            factionRepository.findById(general.factionId).orElse(null)
         } else null
 
-        val command = commandRegistry.createGeneralCommand(actionCode, general, env, arg)
+        val command = commandRegistry.createOfficerCommand(actionCode, general, env, arg)
         command.city = city
         command.nation = nation
         commandExecutor.hydrateCommandForConstraintCheck(command, general, env, arg)
@@ -117,7 +117,7 @@ class RealtimeService(
         }
 
         val result = runBlocking {
-            commandExecutor.executeGeneralCommand(actionCode, general, env, arg, city, nation)
+            commandExecutor.executeOfficerCommand(actionCode, general, env, arg, city, nation)
         }
 
         if (result.logs.isNotEmpty()) {
@@ -125,7 +125,7 @@ class RealtimeService(
                 commandLogDispatcher.dispatchLogs(
                     worldId = world.id.toLong(),
                     generalId = general.id,
-                    nationId = if (general.nationId != 0L) general.nationId else null,
+                    nationId = if (general.factionId != 0L) general.factionId else null,
                     year = env.year,
                     month = env.month,
                     logs = result.logs,
@@ -144,24 +144,24 @@ class RealtimeService(
     }
 
     @Transactional
-    fun processCompletedCommands(world: WorldState) {
+    fun processCompletedCommands(world: SessionState) {
         val now = OffsetDateTime.now()
-        val generals = generalRepository.findByWorldIdAndCommandEndTimeBefore(world.id.toLong(), now)
+        val generals = officerRepository.findBySessionIdAndCommandEndTimeBefore(world.id.toLong(), now)
 
         for (general in generals) {
             try {
-                val turns = generalTurnRepository.findByGeneralIdOrderByTurnIdx(general.id)
+                val turns = officerTurnRepository.findByOfficerIdOrderByTurnIdx(general.id)
                 if (turns.isEmpty()) {
                     general.commandEndTime = null
-                    generalRepository.save(general)
+                    officerRepository.save(general)
                     continue
                 }
 
                 val gt = turns.first()
                 val env = buildCommandEnv(world)
-                val city = cityRepository.findById(general.cityId).orElse(null)
-                val nation = if (general.nationId != 0L) {
-                    nationRepository.findById(general.nationId).orElse(null)
+                val city = planetRepository.findById(general.planetId).orElse(null)
+                val nation = if (general.factionId != 0L) {
+                    factionRepository.findById(general.factionId).orElse(null)
                 } else null
 
                 val hiddenSeed = (world.config["hiddenSeed"] as? String) ?: "${world.id}"
@@ -173,9 +173,9 @@ class RealtimeService(
 
                 val result = runBlocking {
                     if (commandRegistry.hasNationCommand(gt.actionCode)) {
-                        commandExecutor.executeNationCommand(gt.actionCode, general, env, gt.arg, city, nation, rng)
+                        commandExecutor.executeFactionCommand(gt.actionCode, general, env, gt.arg, city, nation, rng)
                     } else {
-                        commandExecutor.executeGeneralCommand(gt.actionCode, general, env, gt.arg, city, nation, rng)
+                        commandExecutor.executeOfficerCommand(gt.actionCode, general, env, gt.arg, city, nation, rng)
                     }
                 }
 
@@ -185,7 +185,7 @@ class RealtimeService(
                         commandLogDispatcher.dispatchLogs(
                             worldId = world.id.toLong(),
                             generalId = general.id,
-                            nationId = if (general.nationId != 0L) general.nationId else null,
+                            nationId = if (general.factionId != 0L) general.factionId else null,
                             year = env2.year,
                             month = env2.month,
                             logs = result.logs,
@@ -193,10 +193,10 @@ class RealtimeService(
                     } catch (e: Exception) { logger.warn("Failed to push realtime result: {}", e.message) }
                 }
 
-                generalTurnRepository.delete(gt)
+                officerTurnRepository.delete(gt)
                 general.commandEndTime = null
                 general.updatedAt = OffsetDateTime.now()
-                generalRepository.save(general)
+                officerRepository.save(general)
 
                 gameEventService.sendToGeneral(general.id, mapOf(
                     "type" to "command_completed",
@@ -211,19 +211,19 @@ class RealtimeService(
     }
 
     @Transactional
-    fun regenerateCommandPoints(world: WorldState) {
-        val generals = generalRepository.findByWorldId(world.id.toLong())
+    fun regenerateCommandPoints(world: SessionState) {
+        val generals = officerRepository.findBySessionId(world.id.toLong())
         for (general in generals) {
             val newCp = (general.commandPoints + world.commandPointRegenRate).coerceAtMost(100)
             if (newCp != general.commandPoints) {
                 general.commandPoints = newCp
-                generalRepository.save(general)
+                officerRepository.save(general)
             }
         }
     }
 
     fun getRealtimeStatus(generalId: Long): Map<String, Any?>? {
-        val general = generalRepository.findById(generalId).orElse(null) ?: return null
+        val general = officerRepository.findById(generalId).orElse(null) ?: return null
         val now = OffsetDateTime.now()
         val remainingSeconds = if (general.commandEndTime != null && general.commandEndTime!!.isAfter(now)) {
             java.time.Duration.between(now, general.commandEndTime).seconds
@@ -238,7 +238,7 @@ class RealtimeService(
         )
     }
 
-    private fun buildCommandEnv(world: WorldState): CommandEnv {
+    private fun buildCommandEnv(world: SessionState): CommandEnv {
         val startYear = try {
             scenarioService.getScenario(world.scenarioCode).startYear
         } catch (e: Exception) {
@@ -262,23 +262,23 @@ class RealtimeService(
     }
 
     private fun scheduleCommand(
-        general: com.openlogh.entity.General,
-        world: WorldState,
+        general: com.openlogh.entity.Officer,
+        world: SessionState,
         actionCode: String,
         arg: Map<String, Any>?,
         isNationCommand: Boolean,
     ): CommandResult {
         val env = buildCommandEnv(world)
-        val city = cityRepository.findById(general.cityId).orElse(null)
-        val nation = if (general.nationId != 0L) {
-            nationRepository.findById(general.nationId).orElse(null)
+        val city = planetRepository.findById(general.planetId).orElse(null)
+        val nation = if (general.factionId != 0L) {
+            factionRepository.findById(general.factionId).orElse(null)
         } else null
 
         val command = if (isNationCommand) {
-            commandRegistry.createNationCommand(actionCode, general, env, arg)
+            commandRegistry.createFactionCommand(actionCode, general, env, arg)
                 ?: return CommandResult(success = false, logs = listOf("알 수 없는 국가 명령: $actionCode"))
         } else {
-            commandRegistry.createGeneralCommand(actionCode, general, env, arg)
+            commandRegistry.createOfficerCommand(actionCode, general, env, arg)
         }
 
         command.city = city
@@ -309,12 +309,12 @@ class RealtimeService(
         general.commandPoints -= commandPointCost
         general.commandEndTime = OffsetDateTime.now().plusSeconds(duration.toLong())
         general.updatedAt = OffsetDateTime.now()
-        generalRepository.save(general)
+        officerRepository.save(general)
 
-        generalTurnRepository.deleteByGeneralId(general.id)
-        generalTurnRepository.save(
+        officerTurnRepository.deleteByGeneralId(general.id)
+        officerTurnRepository.save(
             GeneralTurn(
-                worldId = general.worldId,
+                worldId = general.sessionId,
                 generalId = general.id,
                 turnIdx = 0,
                 actionCode = actionCode,
@@ -342,7 +342,7 @@ class RealtimeService(
         )
     }
 
-    private fun firePreTurnTriggers(world: WorldState, general: com.openlogh.entity.General, nation: Nation?) {
+    private fun firePreTurnTriggers(world: SessionState, general: com.openlogh.entity.Officer, nation: Faction?) {
         val modifiers = modifierService.getModifiers(general, nation)
         val hiddenSeed = (world.config["hiddenSeed"] as? String) ?: world.id.toString()
         val preTurnRng = DeterministicRng.create(

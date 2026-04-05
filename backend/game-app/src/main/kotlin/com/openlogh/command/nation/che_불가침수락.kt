@@ -3,14 +3,14 @@ package com.openlogh.command.nation
 import com.openlogh.command.CommandCost
 import com.openlogh.command.CommandEnv
 import com.openlogh.command.CommandResult
-import com.openlogh.command.NationCommand
+import com.openlogh.command.FactionCommand
 import com.openlogh.command.constraint.*
-import com.openlogh.entity.General
+import com.openlogh.entity.Officer
 import com.openlogh.util.JosaUtil
 import kotlin.random.Random
 
-class che_불가침수락(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
-    : NationCommand(general, env, arg) {
+class che_불가침수락(general: Officer, env: CommandEnv, arg: Map<String, Any>? = null)
+    : FactionCommand(general, env, arg) {
 
     override val actionName = "불가침 수락"
     override val canDisplay = false
@@ -29,10 +29,10 @@ class che_불가침수락(general: General, env: CommandEnv, arg: Map<String, An
 
     override suspend fun run(rng: Random): CommandResult {
         val n = nation ?: return CommandResult(false, listOf("국가 정보를 찾을 수 없습니다"))
-        val dn = destNation ?: return CommandResult(false, listOf("대상 국가 정보를 찾을 수 없습니다"))
-        val dg = destGeneral ?: return CommandResult(false, listOf("대상 장수 정보를 찾을 수 없습니다"))
+        val dn = destFaction ?: return CommandResult(false, listOf("대상 국가 정보를 찾을 수 없습니다"))
+        val dg = destOfficer ?: return CommandResult(false, listOf("대상 장수 정보를 찾을 수 없습니다"))
 
-        services!!.diplomacyService.acceptNonAggression(env.worldId, n.id, dn.id)
+        services!!.diplomacyService.acceptNonAggression(env.sessionId, n.id, dn.id)
 
         val josaWaDest = JosaUtil.pick(dn.name, "와")
         val josaWaSrc = JosaUtil.pick(n.name, "와")

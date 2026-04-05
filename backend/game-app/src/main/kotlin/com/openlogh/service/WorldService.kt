@@ -89,7 +89,7 @@ class WorldService(
 
     /**
      * Get the current game phase based on world state.
-     * Legacy parity: opening period, normal play, ending (single nation remaining).
+     * Legacy parity: opening period, normal play, ending (single faction remaining).
      */
     fun getGamePhase(world: SessionState): String {
         val finished = world.config["finished"] as? Boolean ?: false
@@ -190,7 +190,7 @@ class WorldService(
      * Get total population across all cities in the world.
      */
     fun getTotalPopulation(worldId: Long): Long {
-        return planetRepository.findBySessionId(worldId).sumOf { it.pop.toLong() }
+        return planetRepository.findBySessionId(worldId).sumOf { it.population.toLong() }
     }
 
     /**
@@ -216,19 +216,19 @@ class WorldService(
 
     /**
      * Check if any wars are active in the world.
-     * A nation is at war if warState > 0.
+     * A faction is at war if warState > 0.
      */
     fun isAtWar(worldId: Long): Boolean {
         return factionRepository.findBySessionId(worldId).any { it.warState > 0 }
     }
 
     /**
-     * Get total cities and cities per nation.
+     * Get total cities and cities per faction.
      */
     fun getCityDistribution(worldId: Long): Map<Long, Int> {
         return planetRepository.findBySessionId(worldId)
-            .filter { it.nationId != 0L }
-            .groupBy { it.nationId }
+            .filter { it.factionId != 0L }
+            .groupBy { it.factionId }
             .mapValues { it.value.size }
     }
 
@@ -245,35 +245,35 @@ class WorldService(
         val cities = planetRepository.findBySessionId(worldId)
         val generals = officerRepository.findBySessionId(worldId)
 
-        val nationSummaries = nations.filter { it.level > 0 }.map { nation ->
-            val nationCities = cities.filter { it.nationId == nation.id }
-            val nationGenerals = generals.filter { it.nationId == nation.id && it.npcState.toInt() != 5 }
+        val nationSummaries = nations.filter { it.level > 0 }.map { faction ->
+            val nationCities = cities.filter { it.factionId == faction.id }
+            val nationGenerals = generals.filter { it.factionId == faction.id && it.npcState.toInt() != 5 }
             mapOf(
-                "id" to nation.id,
-                "name" to nation.name,
-                "color" to nation.color,
-                "level" to nation.level.toInt(),
-                "power" to nation.power,
-                "gold" to nation.gold,
-                "rice" to nation.rice,
-                "tech" to nation.tech,
+                "id" to faction.id,
+                "name" to faction.name,
+                "color" to faction.color,
+                "level" to faction.factionRank.toInt(),
+                "power" to faction.militaryPower,
+                "gold" to faction.funds,
+                "rice" to faction.supplies,
+                "tech" to faction.techLevel,
                 "cityCount" to nationCities.size,
                 "generalCount" to nationGenerals.size,
-                "population" to nationCities.sumOf { it.pop.toLong() },
-                "warState" to nation.warState.toInt(),
-                "capitalCityId" to nation.capitalCityId,
+                "population" to nationCities.sumOf { it.population.toLong() },
+                "warState" to faction.warState.toInt(),
+                "capitalCityId" to faction.capitalPlanetId,
             )
         }
 
-        val citySummaries = cities.map { city ->
+        val citySummaries = cities.map { planet ->
             mapOf(
-                "id" to city.id,
-                "name" to city.name,
-                "nationId" to city.nationId,
-                "level" to city.level.toInt(),
-                "pop" to city.pop,
-                "region" to city.region.toInt(),
-                "supplyState" to city.supplyState.toInt(),
+                "id" to planet.id,
+                "name" to planet.name,
+                "nationId" to planet.factionId,
+                "level" to planet.level.toInt(),
+                "pop" to planet.population,
+                "region" to planet.region.toInt(),
+                "supplyState" to planet.supplyState.toInt(),
             )
         }
 
@@ -283,7 +283,7 @@ class WorldService(
             "month" to world.currentMonth.toInt(),
             "phase" to getGamePhase(world),
             "season" to getCurrentSeason(world),
-            "totalPopulation" to cities.sumOf { it.pop.toLong() },
+            "totalPopulation" to cities.sumOf { it.population.toLong() },
             "activeNations" to nations.count { it.level > 0 },
             "activeGenerals" to generals.count { it.npcState.toInt() != 5 },
             "humanPlayers" to generals.count { it.userId != null },

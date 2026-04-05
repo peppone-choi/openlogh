@@ -3,13 +3,13 @@ package com.openlogh.command.nation
 import com.openlogh.command.CommandCost
 import com.openlogh.command.CommandEnv
 import com.openlogh.command.CommandResult
-import com.openlogh.command.NationCommand
+import com.openlogh.command.FactionCommand
 import com.openlogh.command.constraint.*
-import com.openlogh.entity.General
+import com.openlogh.entity.Officer
 import kotlin.random.Random
 
-class che_발령(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
-    : NationCommand(general, env, arg) {
+class che_발령(general: Officer, env: CommandEnv, arg: Map<String, Any>? = null)
+    : FactionCommand(general, env, arg) {
 
     override val actionName = "발령"
 
@@ -25,15 +25,15 @@ class che_발령(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
 
     override suspend fun run(rng: Random): CommandResult {
         val date = formatDate()
-        val destGen = destGeneral ?: return CommandResult(false, logs, "대상 장수 정보를 찾을 수 없습니다")
-        val dCity = destCity ?: return CommandResult(false, logs, "대상 도시 정보를 찾을 수 없습니다")
+        val destGen = destOfficer ?: return CommandResult(false, logs, "대상 장수 정보를 찾을 수 없습니다")
+        val dCity = destPlanet ?: return CommandResult(false, logs, "대상 도시 정보를 찾을 수 없습니다")
 
         if (destGen.id == general.id) {
             return CommandResult(false, logs, "본인입니다")
         }
 
-        destGen.cityId = dCity.id
-        destGen.troopId = 0
+        destGen.planetId = dCity.id
+        destGen.fleetId = 0
 
         // Set last발령 meta (yearMonth value)
         val yearMonth = env.year * 12 + env.month - 1

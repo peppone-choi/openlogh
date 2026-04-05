@@ -3,9 +3,9 @@ package com.openlogh.command.nation
 import com.openlogh.command.CommandCost
 import com.openlogh.command.CommandEnv
 import com.openlogh.command.CommandResult
-import com.openlogh.command.NationCommand
+import com.openlogh.command.FactionCommand
 import com.openlogh.command.constraint.*
-import com.openlogh.entity.General
+import com.openlogh.entity.Officer
 import com.openlogh.util.JosaUtil
 import kotlin.random.Random
 
@@ -14,8 +14,8 @@ private const val STRATEGIC_GLOBAL_DELAY = 9
 private const val PRE_REQ_TURN = 2
 private const val DAMAGE_RATE = 0.2
 
-class che_수몰(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
-    : NationCommand(general, env, arg) {
+class che_수몰(general: Officer, env: CommandEnv, arg: Map<String, Any>? = null)
+    : FactionCommand(general, env, arg) {
 
     override val actionName = "수몰"
 
@@ -35,9 +35,9 @@ class che_수몰(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
     override suspend fun run(rng: Random): CommandResult {
         val date = formatDate()
         val n = nation ?: return CommandResult(false, logs, "국가 정보를 찾을 수 없습니다")
-        val dc = destCity ?: return CommandResult(false, logs, "대상 도시 정보를 찾을 수 없습니다")
+        val dc = destPlanet ?: return CommandResult(false, logs, "대상 도시 정보를 찾을 수 없습니다")
 
-        val destNationId = dc.nationId
+        val destNationId = dc.factionId
         val generalName = general.name
         val nationName = n.name
 
@@ -66,11 +66,11 @@ class che_수몰(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
         pushDestNationalHistoryLogFor(destNationId,
             "<D><b>${nationName}</b></>의 <Y>${generalName}</>${josaYi} 아국의 <G><b>${dc.name}</b></>에 <M>수몰</>을 발동")
 
-        val beforePop = dc.pop
-        dc.def = (dc.def * DAMAGE_RATE).toInt()
-        dc.wall = (dc.wall * DAMAGE_RATE).toInt()
-        dc.pop = (dc.pop * 0.5).toInt()
-        dc.dead += ((beforePop - dc.pop) * 0.1).toInt()
+        val beforePop = dc.population
+        dc.orbitalDefense = (dc.orbitalDefense * DAMAGE_RATE).toInt()
+        dc.fortress = (dc.fortress * DAMAGE_RATE).toInt()
+        dc.population = (dc.population * 0.5).toInt()
+        dc.dead += ((beforePop - dc.population) * 0.1).toInt()
 
         // General history + national history
         pushHistoryLog("<G><b>${dc.name}</b></>에 <M>수몰</>을 발동")

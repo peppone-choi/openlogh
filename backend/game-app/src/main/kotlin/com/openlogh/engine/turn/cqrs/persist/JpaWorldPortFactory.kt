@@ -13,26 +13,26 @@ import com.openlogh.entity.Diplomacy
 import com.openlogh.entity.Faction
 import com.openlogh.entity.Officer
 import com.openlogh.entity.Planet
-import com.openlogh.repository.CityRepository
+import com.openlogh.repository.PlanetRepository
 import com.openlogh.repository.DiplomacyRepository
-import com.openlogh.repository.GeneralRepository
-import com.openlogh.repository.GeneralTurnRepository
-import com.openlogh.repository.NationRepository
-import com.openlogh.repository.NationTurnRepository
-import com.openlogh.repository.TroopRepository
+import com.openlogh.repository.OfficerRepository
+import com.openlogh.repository.OfficerTurnRepository
+import com.openlogh.repository.FactionRepository
+import com.openlogh.repository.FactionTurnRepository
+import com.openlogh.repository.FleetRepository
 import org.springframework.stereotype.Component
 
 interface WorldPorts : WorldReadPort, WorldWritePort
 
 @Component
 class JpaWorldPortFactory(
-    private val officerRepository: GeneralRepository? = null,
-    private val planetRepository: CityRepository? = null,
-    private val factionRepository: NationRepository? = null,
-    private val fleetRepository: TroopRepository? = null,
+    private val officerRepository: OfficerRepository? = null,
+    private val planetRepository: PlanetRepository? = null,
+    private val factionRepository: FactionRepository? = null,
+    private val fleetRepository: FleetRepository? = null,
     private val diplomacyRepository: DiplomacyRepository? = null,
-    private val officerTurnRepository: GeneralTurnRepository? = null,
-    private val factionTurnRepository: NationTurnRepository? = null,
+    private val officerTurnRepository: OfficerTurnRepository? = null,
+    private val factionTurnRepository: FactionTurnRepository? = null,
 ) {
     private val scopedPorts = ThreadLocal<MutableMap<Long, CachingWorldPorts>?>()
 
@@ -85,9 +85,9 @@ class JpaWorldPortFactory(
 
 private class PartialJpaWorldPorts(
     private val sessionId: Long,
-    private val officerRepository: GeneralRepository?,
-    private val planetRepository: CityRepository?,
-    private val factionRepository: NationRepository?,
+    private val officerRepository: OfficerRepository?,
+    private val planetRepository: PlanetRepository?,
+    private val factionRepository: FactionRepository?,
     private val diplomacyRepository: DiplomacyRepository?,
 ) : WorldPorts {
     override fun officer(id: Long): OfficerSnapshot? =
@@ -104,25 +104,25 @@ private class PartialJpaWorldPorts(
     override fun diplomacy(id: Long): DiplomacySnapshot? =
         diplomacyRepository?.findById(id)?.orElse(null)?.takeIf { it.sessionId == sessionId }?.toSnapshot()
 
-    override fun allOfficers(): Collection<OfficerSnapshot> = officerRepository?.findByWorldId(sessionId)?.map(Officer::toSnapshot).orEmpty()
+    override fun allOfficers(): Collection<OfficerSnapshot> = officerRepository?.findBySessionId(sessionId)?.map(Officer::toSnapshot).orEmpty()
 
-    override fun allPlanets(): Collection<PlanetSnapshot> = planetRepository?.findByWorldId(sessionId)?.map(Planet::toSnapshot).orEmpty()
+    override fun allPlanets(): Collection<PlanetSnapshot> = planetRepository?.findBySessionId(sessionId)?.map(Planet::toSnapshot).orEmpty()
 
-    override fun allFactions(): Collection<FactionSnapshot> = factionRepository?.findByWorldId(sessionId)?.map(Faction::toSnapshot).orEmpty()
+    override fun allFactions(): Collection<FactionSnapshot> = factionRepository?.findBySessionId(sessionId)?.map(Faction::toSnapshot).orEmpty()
 
     override fun allFleets(): Collection<FleetSnapshot> = emptyList()
 
     override fun allDiplomacies(): Collection<DiplomacySnapshot> =
-        diplomacyRepository?.findByWorldId(sessionId)?.map(Diplomacy::toSnapshot).orEmpty()
+        diplomacyRepository?.findBySessionId(sessionId)?.map(Diplomacy::toSnapshot).orEmpty()
 
     override fun officersByFaction(factionId: Long): List<OfficerSnapshot> =
-        officerRepository?.findByWorldIdAndNationId(sessionId, factionId)?.map(Officer::toSnapshot).orEmpty()
+        officerRepository?.findBySessionIdAndFactionId(sessionId, factionId)?.map(Officer::toSnapshot).orEmpty()
 
     override fun officersByPlanet(planetId: Long): List<OfficerSnapshot> =
-        officerRepository?.findByCityId(planetId)?.filter { it.sessionId == sessionId }?.map(Officer::toSnapshot).orEmpty()
+        officerRepository?.findByPlanetId(planetId)?.filter { it.sessionId == sessionId }?.map(Officer::toSnapshot).orEmpty()
 
     override fun planetsByFaction(factionId: Long): List<PlanetSnapshot> =
-        planetRepository?.findByNationId(factionId)?.filter { it.sessionId == sessionId }?.map(Planet::toSnapshot).orEmpty()
+        planetRepository?.findByFactionId(factionId)?.filter { it.sessionId == sessionId }?.map(Planet::toSnapshot).orEmpty()
 
     override fun diplomaciesByFaction(factionId: Long): List<DiplomacySnapshot> =
         diplomacyRepository

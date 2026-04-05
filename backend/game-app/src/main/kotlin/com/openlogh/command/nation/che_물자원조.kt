@@ -3,15 +3,15 @@ package com.openlogh.command.nation
 import com.openlogh.command.CommandCost
 import com.openlogh.command.CommandEnv
 import com.openlogh.command.CommandResult
-import com.openlogh.command.NationCommand
+import com.openlogh.command.FactionCommand
 import com.openlogh.command.constraint.*
-import com.openlogh.entity.General
+import com.openlogh.entity.Officer
 import kotlin.random.Random
 
 private const val POST_REQ_TURN = 12
 
-class che_물자원조(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
-    : NationCommand(general, env, arg) {
+class che_물자원조(general: Officer, env: CommandEnv, arg: Map<String, Any>? = null)
+    : FactionCommand(general, env, arg) {
 
     override val actionName = "원조"
 
@@ -28,7 +28,7 @@ class che_물자원조(general: General, env: CommandEnv, arg: Map<String, Any>?
     override suspend fun run(rng: Random): CommandResult {
         val date = formatDate()
         val n = nation ?: return CommandResult(false, logs, "국가 정보를 찾을 수 없습니다")
-        val dn = destNation ?: return CommandResult(false, logs, "대상 국가 정보를 찾을 수 없습니다")
+        val dn = destFaction ?: return CommandResult(false, logs, "대상 국가 정보를 찾을 수 없습니다")
 
         // Parse amountList [goldAmount, riceAmount] matching PHP/TS
         val amountList = readNumberList(arg?.get("amountList"))
@@ -46,13 +46,13 @@ class che_물자원조(general: General, env: CommandEnv, arg: Map<String, Any>?
             return CommandResult(false, logs, "원조 금액이 없습니다")
         }
 
-        val actualGold = goldAmount.coerceIn(0, n.gold)
-        val actualRice = riceAmount.coerceIn(0, n.rice)
+        val actualGold = goldAmount.coerceIn(0, n.funds)
+        val actualRice = riceAmount.coerceIn(0, n.supplies)
 
-        n.gold -= actualGold
-        n.rice -= actualRice
-        dn.gold += actualGold
-        dn.rice += actualRice
+        n.funds -= actualGold
+        n.supplies -= actualRice
+        dn.funds += actualGold
+        dn.supplies += actualRice
 
         // Set surlimit (diplomacy cooldown)
         val currentSurlimit = (n.meta["surlimit"] as? Number)?.toInt() ?: 0

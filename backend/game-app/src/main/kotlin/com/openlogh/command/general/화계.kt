@@ -3,13 +3,13 @@ package com.openlogh.command.general
 import com.openlogh.command.CommandCost
 import com.openlogh.command.CommandEnv
 import com.openlogh.command.CommandResult
-import com.openlogh.command.GeneralCommand
+import com.openlogh.command.OfficerCommand
 import com.openlogh.command.constraint.*
 import com.openlogh.engine.modifier.ConsumableItem
 import com.openlogh.engine.modifier.DomesticContext
 import com.openlogh.engine.modifier.ItemModifiers
 import com.openlogh.engine.modifier.StatContext
-import com.openlogh.entity.General
+import com.openlogh.entity.Officer
 import kotlin.math.ln
 import kotlin.math.max
 import kotlin.math.min
@@ -20,8 +20,8 @@ private const val MAX_SUCCESS_PROB = 0.5
 private const val INJURY_MAX = 80
 private const val INJURY_PROB_DEFAULT = 0.3
 
-open class 화계(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
-    : GeneralCommand(general, env, arg) {
+open class 화계(general: Officer, env: CommandEnv, arg: Map<String, Any>? = null)
+    : OfficerCommand(general, env, arg) {
 
     override val actionName = "화계"
 
@@ -37,8 +37,8 @@ open class 화계(general: General, env: CommandEnv, arg: Map<String, Any>? = nu
                 SuppliedCity(),
                 NotOccupiedDestCity(),
                 NotNeutralDestCity(),
-                ReqGeneralGold(cost.gold),
-                ReqGeneralRice(cost.rice),
+                ReqGeneralGold(cost.funds),
+                ReqGeneralRice(cost.supplies),
                 DisallowDiplomacyBetweenStatus(mapOf(7 to "불가침국입니다.")),
             )
         }
@@ -50,8 +50,8 @@ open class 화계(general: General, env: CommandEnv, arg: Map<String, Any>? = nu
                 NotBeNeutral(),
                 OccupiedCity(),
                 SuppliedCity(),
-                ReqGeneralGold(cost.gold),
-                ReqGeneralRice(cost.rice),
+                ReqGeneralGold(cost.funds),
+                ReqGeneralRice(cost.supplies),
             )
         }
 
@@ -67,14 +67,14 @@ open class 화계(general: General, env: CommandEnv, arg: Map<String, Any>? = nu
         val mods = services?.modifierService?.getModifiers(general, nation) ?: emptyList()
         val base = StatContext(
             leadership = general.leadership.toDouble(),
-            strength = general.strength.toDouble(),
-            intel = general.intel.toDouble(),
+            strength = general.command.toDouble(),
+            intel = general.intelligence.toDouble(),
         )
         val modified = services?.modifierService?.applyStatModifiers(mods, base) ?: base
         return when (statType) {
             "leadership" -> modified.leadership.toInt()
-            "strength" -> modified.strength.toInt()
-            else -> modified.intel.toInt()
+            "strength" -> modified.command.toInt()
+            else -> modified.intelligence.toInt()
         }
     }
 
@@ -109,11 +109,11 @@ open class 화계(general: General, env: CommandEnv, arg: Map<String, Any>? = nu
      * - supplied city: +0.1
      */
     protected fun calcDefenceProb(): Double {
-        val dc = destCity ?: return 0.0
-        val destNationId = dc.nationId
-        val defenders = destCityGenerals ?: emptyList()
-        val destNation = if (destNationId != 0L) {
-            services?.nationRepository?.findById(destNationId)?.orElse(null)
+        val dc = destPlanet ?: return 0.0
+        val destNationId = dc.factionId
+        val defenders = destPlanetOfficers ?: emptyList()
+        val destFaction = if (destNationId != 0L) {
+            services?.factionRepository?.findById(destNationId)?.orElse(null)
         } else null
 
         var maxStat = 0
@@ -121,19 +121,19 @@ open class 화계(general: General, env: CommandEnv, arg: Map<String, Any>? = nu
         var affectCount = 0
 
         for (defender in defenders) {
-            if (defender.nationId != destNationId) continue
+            if (defender.factionId != destNationId) continue
             affectCount++
             val defStat = when (statType) {
                 "leadership" -> defender.leadership.toInt()
-                "strength" -> defender.strength.toInt()
-                else -> defender.intel.toInt()
+                "strength" -> defender.command.toInt()
+                else -> defender.intelligence.toInt()
             }
             maxStat = max(maxStat, defStat)
 
-            // Legacy: $probCorrection = $destGeneral->onCalcStat($destGeneral, 'sabotageDefence', $probCorrection)
+            // Legacy: $probCorrection = $destOfficer->onCalcStat($destOfficer, 'sabotageDefence', $probCorrection)
             // Apply per-defender sabotageDefence modifier
-            val defenderNation = if (defender.nationId == destNationId) destNation else if (defender.nationId != 0L) {
-                services?.nationRepository?.findById(defender.nationId)?.orElse(null)
+            val defenderNation = if (defender.factionId == destNationId) destFaction else if (defender.factionId != 0L) {
+                services?.factionRepository?.findById(defender.factionId)?.orElse(null)
             } else null
             val defenderModifiers = services?.modifierService?.getModifiers(defender, defenderNation) ?: emptyList()
             val baseStat = StatContext(sabotageDefence = probCorrection)
@@ -144,7 +144,7 @@ open class 화계(general: General, env: CommandEnv, arg: Map<String, Any>? = nu
         var prob = maxStat / env.sabotageProbCoefByStat.toDouble()
         prob += probCorrection
         prob += (ln((affectCount + 1).toDouble()) / ln(2.0) - 1.25) * env.sabotageDefenceCoefByGeneralCnt
-        prob += if (dc.secuMax > 0) dc.secu.toDouble() / dc.secuMax / 5.0 else 0.0
+        prob += if (dc.securityMax > 0) dc.security.toDouble() / dc.securityMax / 5.0 else 0.0
         prob += if (dc.supplyState > 0) 0.1 else 0.0
 
         return prob
@@ -156,14 +156,14 @@ open class 화계(general: General, env: CommandEnv, arg: Map<String, Any>? = nu
      * Keys starting with "_" are metadata, not city changes.
      */
     protected open fun affectDestCity(rng: Random, injuryCount: Int): Map<String, Any> {
-        val dc = destCity!!
+        val dc = destPlanet!!
         val agriAmount = min(
             max(rng.nextInt(env.sabotageDamageMin, env.sabotageDamageMax + 1), 0),
-            dc.agri
+            dc.production
         )
         val commAmount = min(
             max(rng.nextInt(env.sabotageDamageMin, env.sabotageDamageMax + 1), 0),
-            dc.comm
+            dc.commerce
         )
 
         pushGlobalActionLog("<G><b>${dc.name}</b></>${josa(dc.name, "이")} 불타고 있습니다.")
@@ -184,19 +184,19 @@ open class 화계(general: General, env: CommandEnv, arg: Map<String, Any>? = nu
     protected fun calculateAndApplyInjuries(rng: Random): Int {
         if (!injuryGeneral) return 0
 
-        val dc = destCity ?: return 0
-        val defenders = destCityGenerals ?: emptyList()
-        val destNation = if (dc.nationId != 0L) {
-            services?.nationRepository?.findById(dc.nationId)?.orElse(null)
+        val dc = destPlanet ?: return 0
+        val defenders = destPlanetOfficers ?: emptyList()
+        val destFaction = if (dc.factionId != 0L) {
+            services?.factionRepository?.findById(dc.factionId)?.orElse(null)
         } else null
         var injuryCount = 0
 
         for (defender in defenders) {
-            if (defender.nationId != dc.nationId) continue
+            if (defender.factionId != dc.factionId) continue
 
             // Legacy: injuryProb = 0.3, then onCalcStat($general, 'injuryProb', $injuryProb)
-            val defenderNation = if (defender.nationId == dc.nationId) destNation else if (defender.nationId != 0L) {
-                services?.nationRepository?.findById(defender.nationId)?.orElse(null)
+            val defenderNation = if (defender.factionId == dc.factionId) destFaction else if (defender.factionId != 0L) {
+                services?.factionRepository?.findById(defender.factionId)?.orElse(null)
             } else null
             val defenderModifiers = services?.modifierService?.getModifiers(defender, defenderNation) ?: emptyList()
             val baseInjuryStat = StatContext(injuryProb = INJURY_PROB_DEFAULT)
@@ -206,9 +206,9 @@ open class 화계(general: General, env: CommandEnv, arg: Map<String, Any>? = nu
 
             val injuryAmount = rng.nextInt(1, 17) // 1-16
             defender.injury = min(defender.injury.toInt() + injuryAmount, INJURY_MAX).toShort()
-            defender.crew = (defender.crew * 0.98).toInt()
-            defender.atmos = (defender.atmos * 0.98).toInt().toShort()
-            defender.train = (defender.train * 0.98).toInt().toShort()
+            defender.ships = (defender.ships * 0.98).toInt()
+            defender.morale = (defender.morale * 0.98).toInt().toShort()
+            defender.training = (defender.training * 0.98).toInt().toShort()
 
             injuryCount++
         }
@@ -218,13 +218,13 @@ open class 화계(general: General, env: CommandEnv, arg: Map<String, Any>? = nu
 
     /**
      * Check if the general's consumable item triggers on sabotage success.
-     * Legacy: $itemObj->tryConsumeNow($general, 'GeneralCommand', '계략')
+     * Legacy: $itemObj->tryConsumeNow($general, 'OfficerCommand', '계략')
      * Returns true if item should be consumed, plus the item's display name.
      */
     protected fun checkConsumableItem(): Pair<Boolean, String?> {
-        if (general.itemCode == "None") return Pair(false, null)
+        if (general.accessoryCode == "None") return Pair(false, null)
 
-        val itemCode = general.itemCode
+        val itemCode = general.accessoryCode
         val itemModifier = modifiers.find { it.code == itemCode }
 
         if (itemModifier is ConsumableItem && itemModifier.effect == "sabotageSuccess") {
@@ -237,7 +237,7 @@ open class 화계(general: General, env: CommandEnv, arg: Map<String, Any>? = nu
 
     override suspend fun run(rng: Random): CommandResult {
         val date = formatDate()
-        val dc = destCity!!
+        val dc = destPlanet!!
         val destCityName = dc.name
 
         // Distance factor (legacy: searchDistance, default 99 if not found)
@@ -262,7 +262,7 @@ open class 화계(general: General, env: CommandEnv, arg: Map<String, Any>? = nu
             return CommandResult(
                 success = false,
                 logs = logs,
-                message = """{"statChanges":{"gold":${-cost.gold},"rice":${-cost.rice},"experience":$exp,"dedication":$ded,"${getStatExpKey()}":1}}"""
+                message = """{"statChanges":{"gold":${-cost.funds},"rice":${-cost.supplies},"experience":$exp,"dedication":$ded,"${getStatExpKey()}":1}}"""
             )
         }
 
@@ -292,7 +292,7 @@ open class 화계(general: General, env: CommandEnv, arg: Map<String, Any>? = nu
             success = true,
             logs = logs,
             message = buildString {
-                append("""{"statChanges":{"gold":${-cost.gold},"rice":${-cost.rice},"experience":$exp,"dedication":$ded,"${getStatExpKey()}":1}""")
+                append("""{"statChanges":{"gold":${-cost.funds},"rice":${-cost.supplies},"experience":$exp,"dedication":$ded,"${getStatExpKey()}":1}""")
 
                 // destCityChanges
                 append(""","destCityChanges":{"cityId":${dc.id}""")

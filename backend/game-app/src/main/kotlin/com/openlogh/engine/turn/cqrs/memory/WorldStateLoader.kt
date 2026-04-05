@@ -1,51 +1,51 @@
 package com.openlogh.engine.turn.cqrs.memory
 
 import com.openlogh.engine.turn.cqrs.persist.toSnapshot
-import com.openlogh.repository.CityRepository
+import com.openlogh.repository.PlanetRepository
 import com.openlogh.repository.DiplomacyRepository
-import com.openlogh.repository.GeneralRepository
-import com.openlogh.repository.GeneralTurnRepository
-import com.openlogh.repository.NationRepository
-import com.openlogh.repository.NationTurnRepository
-import com.openlogh.repository.TroopRepository
+import com.openlogh.repository.OfficerRepository
+import com.openlogh.repository.OfficerTurnRepository
+import com.openlogh.repository.FactionRepository
+import com.openlogh.repository.FactionTurnRepository
+import com.openlogh.repository.FleetRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 @Service
 class WorldStateLoader(
-    private val officerRepository: GeneralRepository,
-    private val planetRepository: CityRepository,
-    private val factionRepository: NationRepository,
-    private val fleetRepository: TroopRepository,
+    private val officerRepository: OfficerRepository,
+    private val planetRepository: PlanetRepository,
+    private val factionRepository: FactionRepository,
+    private val fleetRepository: FleetRepository,
     private val diplomacyRepository: DiplomacyRepository,
-    private val officerTurnRepository: GeneralTurnRepository,
-    private val factionTurnRepository: NationTurnRepository,
+    private val officerTurnRepository: OfficerTurnRepository,
+    private val factionTurnRepository: FactionTurnRepository,
 ) {
     @Transactional(readOnly = true)
     fun loadWorldState(sessionId: Long): InMemoryWorldState {
         val state = InMemoryWorldState(sessionId = sessionId)
 
-        officerRepository.findByWorldId(sessionId).forEach { officer ->
+        officerRepository.findBySessionId(sessionId).forEach { officer ->
             state.officers[officer.id] = officer.toSnapshot()
         }
 
-        planetRepository.findByWorldId(sessionId).forEach { planet ->
+        planetRepository.findBySessionId(sessionId).forEach { planet ->
             state.planets[planet.id] = planet.toSnapshot()
         }
 
-        factionRepository.findByWorldId(sessionId).forEach { faction ->
+        factionRepository.findBySessionId(sessionId).forEach { faction ->
             state.factions[faction.id] = faction.toSnapshot()
         }
 
-        fleetRepository.findByWorldId(sessionId).forEach { fleet ->
+        fleetRepository.findBySessionId(sessionId).forEach { fleet ->
             state.fleets[fleet.id] = fleet.toSnapshot()
         }
 
-        diplomacyRepository.findByWorldId(sessionId).forEach { diplomacy ->
+        diplomacyRepository.findBySessionId(sessionId).forEach { diplomacy ->
             state.diplomacies[diplomacy.id] = diplomacy.toSnapshot()
         }
 
-        officerTurnRepository.findByWorldId(sessionId)
+        officerTurnRepository.findBySessionId(sessionId)
             .groupBy { it.officerId }
             .forEach { (officerId, turns) ->
                 state.officerTurnsByOfficerId[officerId] = turns
@@ -65,7 +65,7 @@ class WorldStateLoader(
                     .toMutableList()
             }
 
-        factionTurnRepository.findByWorldId(sessionId)
+        factionTurnRepository.findBySessionId(sessionId)
             .groupBy { FactionTurnKey(it.factionId, it.officerLevel) }
             .forEach { (key, turns) ->
                 state.factionTurnsByFactionAndLevel[key] = turns

@@ -1,6 +1,6 @@
 package com.openlogh.engine
 
-import com.openlogh.entity.General
+import com.openlogh.entity.Officer
 import com.openlogh.engine.modifier.ItemMeta
 import org.springframework.stereotype.Service
 import kotlin.math.floor
@@ -259,12 +259,12 @@ class UniqueLotteryService {
         return choiceUsingWeightPair(input.rng, availableUnique)
     }
 
-    fun applyUniqueItemGain(general: General, itemKey: String, slot: String): Boolean {
+    fun applyUniqueItemGain(general: Officer, itemKey: String, slot: String): Boolean {
         when (slot) {
-            "horse" -> general.horseCode = itemKey
-            "weapon" -> general.weaponCode = itemKey
-            "book" -> general.bookCode = itemKey
-            "item" -> general.itemCode = itemKey
+            "horse" -> general.engineCode = itemKey
+            "weapon" -> general.flagshipCode = itemKey
+            "book" -> general.equipCode = itemKey
+            "item" -> general.accessoryCode = itemKey
             else -> return false
         }
         return true

@@ -3,8 +3,8 @@ package com.openlogh.engine
 import com.openlogh.command.CommandEnv
 import com.openlogh.command.CommandExecutor
 import com.openlogh.command.CommandRegistry
-import com.openlogh.engine.ai.GeneralAI
-import com.openlogh.engine.ai.NationAI
+import com.openlogh.engine.ai.OfficerAI
+import com.openlogh.engine.ai.FactionAI
 import com.openlogh.engine.modifier.ItemModifiers
 import com.openlogh.engine.modifier.ModifierService
 import com.openlogh.engine.turn.cqrs.persist.JpaWorldPortFactory
@@ -15,15 +15,15 @@ import com.openlogh.engine.war.FieldBattleTrigger
 import com.openlogh.engine.trigger.TriggerCaller
 import com.openlogh.engine.trigger.TriggerEnv
 import com.openlogh.engine.trigger.buildPreTurnTriggers
-import com.openlogh.entity.City
-import com.openlogh.entity.Nation
-import com.openlogh.entity.WorldState
+import com.openlogh.entity.Planet
+import com.openlogh.entity.Faction
+import com.openlogh.entity.SessionState
 import com.openlogh.model.CrewType
 import com.openlogh.repository.*
 import com.openlogh.service.AuctionService
 import com.openlogh.service.CommandLogDispatcher
 import com.openlogh.service.InheritanceService
-import com.openlogh.service.NationService
+import com.openlogh.service.FactionService
 import com.openlogh.service.ScenarioService
 import com.openlogh.service.TournamentService
 import com.openlogh.service.WorldService
@@ -51,19 +51,19 @@ import kotlin.math.roundToLong
  */
 @Service
 class TurnService @Autowired constructor(
-    private val worldStateRepository: WorldStateRepository,
-    private val generalRepository: GeneralRepository,
-    private val generalTurnRepository: GeneralTurnRepository,
-    private val nationTurnRepository: NationTurnRepository,
-    private val cityRepository: CityRepository,
-    private val nationRepository: NationRepository,
+    private val sessionStateRepository: SessionStateRepository,
+    private val officerRepository: OfficerRepository,
+    private val officerTurnRepository: OfficerTurnRepository,
+    private val factionTurnRepository: FactionTurnRepository,
+    private val planetRepository: PlanetRepository,
+    private val factionRepository: FactionRepository,
     private val commandExecutor: CommandExecutor,
     private val commandRegistry: CommandRegistry,
     private val scenarioService: ScenarioService,
     private val economyService: EconomyService,
     private val eventService: EventService,
     private val diplomacyService: DiplomacyService,
-    private val generalMaintenanceService: GeneralMaintenanceService,
+    private val officerMaintenanceService: OfficerMaintenanceService,
     private val specialAssignmentService: SpecialAssignmentService,
     private val npcSpawnService: NpcSpawnService,
     private val unificationService: UnificationService,
@@ -73,35 +73,35 @@ class TurnService @Autowired constructor(
     private val tournamentService: TournamentService,
     private val trafficSnapshotRepository: com.openlogh.repository.TrafficSnapshotRepository,
     private val worldPortFactory: JpaWorldPortFactory,
-    private val generalAI: GeneralAI,
-    private val nationAI: NationAI,
+    private val officerAI: OfficerAI,
+    private val factionAI: FactionAI,
     private val modifierService: ModifierService,
     private val worldService: WorldService,
-    private val nationService: NationService,
+    private val factionService: FactionService,
     private val battleService: BattleService,
     private val uniqueLotteryService: UniqueLotteryService,
     private val commandLogDispatcher: CommandLogDispatcher,
     private val gameConstService: com.openlogh.service.GameConstService,
-    private val generalAccessLogRepository: GeneralAccessLogRepository,
+    private val officerAccessLogRepository: OfficerAccessLogRepository,
     private val turnPipeline: com.openlogh.engine.turn.TurnPipeline,
     private val fieldBattleTrigger: FieldBattleTrigger,
     private val gameEventService: com.openlogh.service.GameEventService? = null,
 ) {
     /** Test-only constructor: omits turnPipeline, uses an empty no-op pipeline. */
     constructor(
-        worldStateRepository: WorldStateRepository,
-        generalRepository: GeneralRepository,
-        generalTurnRepository: GeneralTurnRepository,
-        nationTurnRepository: NationTurnRepository,
-        cityRepository: CityRepository,
-        nationRepository: NationRepository,
+        sessionStateRepository: SessionStateRepository,
+        officerRepository: OfficerRepository,
+        officerTurnRepository: OfficerTurnRepository,
+        factionTurnRepository: FactionTurnRepository,
+        planetRepository: PlanetRepository,
+        factionRepository: FactionRepository,
         commandExecutor: CommandExecutor,
         commandRegistry: CommandRegistry,
         scenarioService: ScenarioService,
         economyService: EconomyService,
         eventService: EventService,
         diplomacyService: DiplomacyService,
-        generalMaintenanceService: GeneralMaintenanceService,
+        officerMaintenanceService: OfficerMaintenanceService,
         specialAssignmentService: SpecialAssignmentService,
         npcSpawnService: NpcSpawnService,
         unificationService: UnificationService,
@@ -110,31 +110,31 @@ class TurnService @Autowired constructor(
         auctionService: AuctionService,
         tournamentService: TournamentService,
         trafficSnapshotRepository: com.openlogh.repository.TrafficSnapshotRepository,
-        generalAI: GeneralAI,
-        nationAI: NationAI,
+        officerAI: OfficerAI,
+        factionAI: FactionAI,
         modifierService: ModifierService,
         worldService: WorldService,
-        nationService: NationService,
+        factionService: FactionService,
         battleService: BattleService,
         uniqueLotteryService: UniqueLotteryService,
         commandLogDispatcher: CommandLogDispatcher,
         gameConstService: com.openlogh.service.GameConstService,
-        generalAccessLogRepository: GeneralAccessLogRepository,
+        officerAccessLogRepository: OfficerAccessLogRepository,
         fieldBattleTrigger: FieldBattleTrigger,
     ) : this(
-        worldStateRepository = worldStateRepository,
-        generalRepository = generalRepository,
-        generalTurnRepository = generalTurnRepository,
-        nationTurnRepository = nationTurnRepository,
-        cityRepository = cityRepository,
-        nationRepository = nationRepository,
+        sessionStateRepository = sessionStateRepository,
+        officerRepository = officerRepository,
+        officerTurnRepository = officerTurnRepository,
+        factionTurnRepository = factionTurnRepository,
+        planetRepository = planetRepository,
+        factionRepository = factionRepository,
         commandExecutor = commandExecutor,
         commandRegistry = commandRegistry,
         scenarioService = scenarioService,
         economyService = economyService,
         eventService = eventService,
         diplomacyService = diplomacyService,
-        generalMaintenanceService = generalMaintenanceService,
+        officerMaintenanceService = officerMaintenanceService,
         specialAssignmentService = specialAssignmentService,
         npcSpawnService = npcSpawnService,
         unificationService = unificationService,
@@ -143,34 +143,34 @@ class TurnService @Autowired constructor(
         auctionService = auctionService,
         tournamentService = tournamentService,
         trafficSnapshotRepository = trafficSnapshotRepository,
-        generalAI = generalAI,
-        nationAI = nationAI,
+        officerAI = officerAI,
+        factionAI = factionAI,
         modifierService = modifierService,
         worldService = worldService,
-        nationService = nationService,
+        factionService = factionService,
         battleService = battleService,
         uniqueLotteryService = uniqueLotteryService,
         commandLogDispatcher = commandLogDispatcher,
         gameConstService = gameConstService,
-        generalAccessLogRepository = generalAccessLogRepository,
+        officerAccessLogRepository = officerAccessLogRepository,
         turnPipeline = com.openlogh.engine.turn.TurnPipeline(emptyList()),
         fieldBattleTrigger = fieldBattleTrigger,
     )
 
     constructor(
-        worldStateRepository: WorldStateRepository,
-        generalRepository: GeneralRepository,
-        generalTurnRepository: GeneralTurnRepository,
-        nationTurnRepository: NationTurnRepository,
-        cityRepository: CityRepository,
-        nationRepository: NationRepository,
+        sessionStateRepository: SessionStateRepository,
+        officerRepository: OfficerRepository,
+        officerTurnRepository: OfficerTurnRepository,
+        factionTurnRepository: FactionTurnRepository,
+        planetRepository: PlanetRepository,
+        factionRepository: FactionRepository,
         commandExecutor: CommandExecutor,
         commandRegistry: CommandRegistry,
         scenarioService: ScenarioService,
         economyService: EconomyService,
         eventService: EventService,
         diplomacyService: DiplomacyService,
-        generalMaintenanceService: GeneralMaintenanceService,
+        officerMaintenanceService: OfficerMaintenanceService,
         specialAssignmentService: SpecialAssignmentService,
         npcSpawnService: NpcSpawnService,
         unificationService: UnificationService,
@@ -179,32 +179,32 @@ class TurnService @Autowired constructor(
         auctionService: AuctionService,
         tournamentService: TournamentService,
         trafficSnapshotRepository: com.openlogh.repository.TrafficSnapshotRepository,
-        generalAI: GeneralAI,
-        nationAI: NationAI,
+        officerAI: OfficerAI,
+        factionAI: FactionAI,
         modifierService: ModifierService,
         worldService: WorldService,
-        nationService: NationService,
+        factionService: FactionService,
         battleService: BattleService,
         uniqueLotteryService: UniqueLotteryService,
         commandLogDispatcher: CommandLogDispatcher,
         gameConstService: com.openlogh.service.GameConstService,
-        generalAccessLogRepository: GeneralAccessLogRepository,
+        officerAccessLogRepository: OfficerAccessLogRepository,
         turnPipeline: com.openlogh.engine.turn.TurnPipeline,
         fieldBattleTrigger: FieldBattleTrigger,
     ) : this(
-        worldStateRepository = worldStateRepository,
-        generalRepository = generalRepository,
-        generalTurnRepository = generalTurnRepository,
-        nationTurnRepository = nationTurnRepository,
-        cityRepository = cityRepository,
-        nationRepository = nationRepository,
+        sessionStateRepository = sessionStateRepository,
+        officerRepository = officerRepository,
+        officerTurnRepository = officerTurnRepository,
+        factionTurnRepository = factionTurnRepository,
+        planetRepository = planetRepository,
+        factionRepository = factionRepository,
         commandExecutor = commandExecutor,
         commandRegistry = commandRegistry,
         scenarioService = scenarioService,
         economyService = economyService,
         eventService = eventService,
         diplomacyService = diplomacyService,
-        generalMaintenanceService = generalMaintenanceService,
+        officerMaintenanceService = officerMaintenanceService,
         specialAssignmentService = specialAssignmentService,
         npcSpawnService = npcSpawnService,
         unificationService = unificationService,
@@ -214,20 +214,20 @@ class TurnService @Autowired constructor(
         tournamentService = tournamentService,
         trafficSnapshotRepository = trafficSnapshotRepository,
         worldPortFactory = JpaWorldPortFactory(
-            generalRepository = generalRepository,
-            cityRepository = cityRepository,
-            nationRepository = nationRepository,
+            officerRepository = officerRepository,
+            planetRepository = planetRepository,
+            factionRepository = factionRepository,
         ),
-        generalAI = generalAI,
-        nationAI = nationAI,
+        officerAI = officerAI,
+        factionAI = factionAI,
         modifierService = modifierService,
         worldService = worldService,
-        nationService = nationService,
+        factionService = factionService,
         battleService = battleService,
         uniqueLotteryService = uniqueLotteryService,
         commandLogDispatcher = commandLogDispatcher,
         gameConstService = gameConstService,
-        generalAccessLogRepository = generalAccessLogRepository,
+        officerAccessLogRepository = officerAccessLogRepository,
         turnPipeline = turnPipeline,
         fieldBattleTrigger = fieldBattleTrigger,
     )
@@ -241,8 +241,8 @@ class TurnService @Autowired constructor(
     }
 
     @Transactional
-    fun processWorld(world: WorldState) {
-        val world = worldStateRepository.findById(world.id)
+    fun processWorld(world: SessionState) {
+        val world = sessionStateRepository.findById(world.id)
             .orElse(world)
         worldPortFactory.beginScope()
         try {
@@ -257,7 +257,7 @@ class TurnService @Autowired constructor(
             // 가오픈 중 생성된 장수의 killTurn이 너무 낮아 정식 오픈 직후 삭턴 사망하는 것을 방지
             if (world.meta["openKillTurnReset"] != true) {
                 val globalKillTurn = resolveGlobalKillTurn(world, null)
-                val allGenerals = generalRepository.findByWorldId(worldId)
+                val allGenerals = officerRepository.findBySessionId(worldId)
                 var resetCount = 0
                 for (general in allGenerals) {
                     if (general.npcState.toInt() == 5) continue
@@ -268,7 +268,7 @@ class TurnService @Autowired constructor(
                     }
                 }
                 if (resetCount > 0) {
-                    generalRepository.saveAll(allGenerals)
+                    officerRepository.saveAll(allGenerals)
                     logger.info("[Turn] 가오픈→오픈 전환: {}명 장수 killTurn을 {}로 리셋", resetCount, globalKillTurn)
                 }
                 world.meta["openKillTurnReset"] = true
@@ -405,7 +405,7 @@ class TurnService @Autowired constructor(
                 logger.warn("AuctionService.processExpiredAuctions failed: ${e.message}")
             }
 
-            worldStateRepository.save(world)
+            sessionStateRepository.save(world)
             val totalElapsedMs = System.currentTimeMillis() - processStartMs
             logger.info(
                 "[Turn] processWorld completed: {} turns in {}ms for world {}",
@@ -418,13 +418,13 @@ class TurnService @Autowired constructor(
         }
     }
 
-    private fun executeGeneralCommandsUntil(world: WorldState, targetTime: OffsetDateTime) {
+    private fun executeGeneralCommandsUntil(world: SessionState, targetTime: OffsetDateTime) {
         val worldId = world.id.toLong()
         val ports = worldPortFactory.create(worldId)
-        val generals = ports.allGenerals().map { it.toEntity() }
-            .sortedWith(compareBy<com.openlogh.entity.General> { it.turnTime }.thenBy { it.id })
-        val cityCache = ports.allCities().associate { it.id to it.toEntity() }
-        val nationCache = ports.allNations().associate { it.id to it.toEntity() }.toMutableMap()
+        val generals = ports.allOfficers().map { it.toEntity() }
+            .sortedWith(compareBy<com.openlogh.entity.Officer> { it.turnTime }.thenBy { it.id })
+        val cityCache = ports.allPlanets().associate { it.id to it.toEntity() }
+        val nationCache = ports.allFactions().associate { it.id to it.toEntity() }.toMutableMap()
         val env = buildCommandEnv(world)
 
         logger.info("[Turn] executeGeneralCommands: {} generals for world {}", generals.size, worldId)
@@ -435,21 +435,21 @@ class TurnService @Autowired constructor(
             }
             // Skip dead generals (killGeneral sets npcState=5, nationId=0)
             // Troop leaders also have npcState=5 but retain nationId>0
-            if (general.npcState.toInt() == 5 && general.nationId == 0L) {
+            if (general.npcState.toInt() == 5 && general.factionId == 0L) {
                 continue
             }
-            if (general.npcState == EmperorConstants.NPC_STATE_EMPEROR) {
+            if (general.npcState == SovereignConstants.NPC_STATE_EMPEROR) {
                 general.turnTime = calculateNextGeneralTurnTime(general, world.tickSeconds)
                 general.updatedAt = OffsetDateTime.now()
-                ports.putGeneral(general.toSnapshot())
+                ports.putOfficer(general.toSnapshot())
                 continue
             }
             try {
-                val city = cityCache[general.cityId]
-                val nation = if (general.nationId != 0L) {
-                    nationCache[general.nationId]
+                val city = cityCache[general.planetId]
+                val nation = if (general.factionId != 0L) {
+                    nationCache[general.factionId]
                 } else null
-                val cityMates = generals.filter { it.cityId == general.cityId && it.id != general.id }
+                val cityMates = generals.filter { it.planetId == general.planetId && it.id != general.id }
 
                 firePreTurnTriggers(world, general, nation, cityMates)
                 applyPerTurnCrewConsumption(general, city)
@@ -458,13 +458,13 @@ class TurnService @Autowired constructor(
                         if (general.killTurn != null) {
                             val kt = general.killTurn!! - 1
                             if (kt <= 0) {
-                                val previousNationId = general.nationId
-                                generalMaintenanceService.killGeneral(general, world, generals)
-                                generals.forEach { ports.putGeneral(it.toSnapshot()) }
+                                val previousNationId = general.factionId
+                                officerMaintenanceService.killGeneral(general, world, generals)
+                                generals.forEach { ports.putOfficer(it.toSnapshot()) }
                                 if (previousNationId > 0L) {
-                                    nationRepository.findById(previousNationId).orElse(null)?.let {
+                                    factionRepository.findById(previousNationId).orElse(null)?.let {
                                         nationCache[previousNationId] = it
-                                        ports.putNation(it.toSnapshot())
+                                        ports.putFaction(it.toSnapshot())
                                     }
                                 }
                                 continue
@@ -474,15 +474,15 @@ class TurnService @Autowired constructor(
                     }
                     general.turnTime = calculateNextGeneralTurnTime(general, world.tickSeconds)
                     general.updatedAt = OffsetDateTime.now()
-                    ports.putGeneral(general.toSnapshot())
+                    ports.putOfficer(general.toSnapshot())
                     continue
                 }
 
                 // Nation command for high-ranking officers
                 var didConsumeNationTurn = false
                 if (general.officerLevel >= 5 && nation != null) {
-                    val nationTurns = nationTurnRepository
-                        .findByNationIdAndOfficerLevelOrderByTurnIdx(general.nationId, general.officerLevel)
+                    val nationTurns = factionTurnRepository
+                        .findByNationIdAndOfficerLevelOrderByTurnIdx(general.factionId, general.officerLevel)
                     var nationActionCode: String? = null
                     var nationArg: Map<String, Any>? = null
                     var consumedNationTurn: com.openlogh.entity.NationTurn? = null
@@ -494,7 +494,7 @@ class TurnService @Autowired constructor(
                         nationArg = nt.arg
                         consumedNationTurn = nt
                     } else if (general.npcState >= 2) {
-                        val aiAction = generalAI.chooseNationTurn(general, world)
+                        val aiAction = officerAI.chooseNationTurn(general, world)
                         if (aiAction != "휴식") {
                             nationActionCode = aiAction
                             if (aiAction == "선전포고") {
@@ -506,7 +506,7 @@ class TurnService @Autowired constructor(
                     if (nationActionCode != null && commandRegistry.hasNationCommand(nationActionCode)) {
                         try {
                             val nationCmdResult = runBlocking {
-                                commandExecutor.executeNationCommand(
+                                commandExecutor.executeFactionCommand(
                                     nationActionCode,
                                     general,
                                     env,
@@ -528,7 +528,7 @@ class TurnService @Autowired constructor(
                                     commandLogDispatcher.dispatchLogs(
                                         worldId = worldId,
                                         generalId = general.id,
-                                        nationId = if (general.nationId != 0L) general.nationId else null,
+                                        nationId = if (general.factionId != 0L) general.factionId else null,
                                         year = env.year,
                                         month = env.month,
                                         logs = nationCmdResult.logs,
@@ -541,8 +541,8 @@ class TurnService @Autowired constructor(
                     }
 
                     if (consumedNationTurn != null) {
-                        nationTurnRepository.delete(consumedNationTurn)
-                        nationTurnRepository.shiftTurnsDown(general.nationId, general.officerLevel, consumedNationTurn.turnIdx)
+                        factionTurnRepository.delete(consumedNationTurn)
+                        factionTurnRepository.shiftTurnsDown(general.factionId, general.officerLevel, consumedNationTurn.turnIdx)
                         if (general.npcState < 2) didConsumeNationTurn = true
                         gameEventService?.fireCommand(
                             worldId = worldId,
@@ -550,7 +550,7 @@ class TurnService @Autowired constructor(
                             month = world.currentMonth,
                             generalId = general.id,
                             commandEventType = "consumed",
-                            detail = mapOf("actionCode" to (nationActionCode ?: ""), "nationId" to general.nationId),
+                            detail = mapOf("actionCode" to (nationActionCode ?: ""), "nationId" to general.factionId),
                         )
                     }
                 }
@@ -573,7 +573,7 @@ class TurnService @Autowired constructor(
 
                 if (general.npcState >= 2 || useAutorun) {
                     // NPC generals 또는 autorun 대상: AI가 행동 결정
-                    actionCode = generalAI.decideAndExecute(general, world)
+                    actionCode = officerAI.decideAndExecute(general, world)
                     val aiArg = readStringAnyMap(general.meta.remove("aiArg"))
                     arg = if (actionCode == "선전포고" && aiArg == null) {
                         val warTargetId = (general.meta.remove("warTarget") as? Number)?.toLong()
@@ -584,12 +584,12 @@ class TurnService @Autowired constructor(
                     logger.info("[Turn] NPC {} ({}) AI decided: {}, arg={}", general.id, general.name, actionCode, arg)
                     executedTurn = null
                     // Consume any queued turns
-                    val queuedTurns = generalTurnRepository.findByGeneralIdOrderByTurnIdx(general.id)
+                    val queuedTurns = officerTurnRepository.findByOfficerIdOrderByTurnIdx(general.id)
                     if (queuedTurns.isNotEmpty()) {
-                        generalTurnRepository.deleteAll(queuedTurns)
+                        officerTurnRepository.deleteAll(queuedTurns)
                     }
                 } else {
-                    val generalTurns = generalTurnRepository.findByGeneralIdOrderByTurnIdx(general.id)
+                    val generalTurns = officerTurnRepository.findByOfficerIdOrderByTurnIdx(general.id)
                     if (generalTurns.isNotEmpty()) {
                         val gt = generalTurns.first()
                         actionCode = gt.actionCode
@@ -603,7 +603,7 @@ class TurnService @Autowired constructor(
                     }
                 }
 
-                val fromCityId = general.cityId
+                val fromCityId = general.planetId
 
                 val generalHiddenSeed = (world.config["hiddenSeed"] as? String) ?: "${world.id}"
                 val rng = DeterministicRng.create(
@@ -611,11 +611,11 @@ class TurnService @Autowired constructor(
                 )
                 val cmdResult = if (commandRegistry.hasNationCommand(actionCode) && general.officerLevel >= 5 && nation != null) {
                     runBlocking {
-                        commandExecutor.executeNationCommand(actionCode, general, env, arg, city, nation, rng)
+                        commandExecutor.executeFactionCommand(actionCode, general, env, arg, city, nation, rng)
                     }
                 } else {
                     runBlocking {
-                        commandExecutor.executeGeneralCommand(actionCode, general, env, arg, city, nation, rng)
+                        commandExecutor.executeOfficerCommand(actionCode, general, env, arg, city, nation, rng)
                     }
                 }
 
@@ -624,7 +624,7 @@ class TurnService @Autowired constructor(
                         commandLogDispatcher.dispatchLogs(
                             worldId = worldId,
                             generalId = general.id,
-                            nationId = if (general.nationId != 0L) general.nationId else null,
+                            nationId = if (general.factionId != 0L) general.factionId else null,
                             year = env.year,
                             month = env.month,
                             logs = cmdResult.logs,
@@ -644,26 +644,26 @@ class TurnService @Autowired constructor(
                                 else -> null
                             }
                             val targetCity = if (targetCityId != null) {
-                                ports.city(targetCityId)?.toEntity()
+                                ports.planet(targetCityId)?.toEntity()
                             } else {
                                 null
                             }
-                            if (targetCity != null && targetCity.nationId != general.nationId) {
+                            if (targetCity != null && targetCity.factionId != general.factionId) {
                                 logger.info("[Turn] Battle triggered: {} ({}) attacks city {} (nation {})",
-                                    general.id, general.name, targetCity.name, targetCity.nationId)
+                                    general.id, general.name, targetCity.name, targetCity.factionId)
                                 val battleResult = battleService.executeBattle(general, targetCity, world)
                                 // Sync battle damage back to ports cache so subsequent
                                 // attackers this turn see the reduced def/wall
-                                ports.putCity(targetCity.toSnapshot())
-                                ports.putGeneral(general.toSnapshot())
+                                ports.putPlanet(targetCity.toSnapshot())
+                                ports.putOfficer(general.toSnapshot())
                                 if (battleResult.cityOccupied) {
-                                    general.cityId = targetCity.id
-                                    ports.putGeneral(general.toSnapshot())
+                                    general.planetId = targetCity.id
+                                    ports.putOfficer(general.toSnapshot())
                                     logger.info("[Turn] City {} conquered by {} ({}) — general moved to conquered city",
                                         targetCity.name, general.id, general.name)
                                 } else {
                                     logger.info("[Turn] Battle at {} — not conquered, {} ({}) stays at city {}",
-                                        targetCity.name, general.id, general.name, general.cityId)
+                                        targetCity.name, general.id, general.name, general.planetId)
                                 }
                             } else {
                                 logger.warn("[Turn] battleTriggered but targetCity={} is null or same nation", targetCityId)
@@ -687,8 +687,8 @@ class TurnService @Autowired constructor(
                 }
 
                 if (executedTurn != null) {
-                    generalTurnRepository.delete(executedTurn)
-                    generalTurnRepository.shiftTurnsDown(general.id, executedTurn.turnIdx)
+                    officerTurnRepository.delete(executedTurn)
+                    officerTurnRepository.shiftTurnsDown(general.id, executedTurn.turnIdx)
                     gameEventService?.fireCommand(
                         worldId = worldId,
                         year = world.currentYear,
@@ -733,13 +733,13 @@ class TurnService @Autowired constructor(
                     } else {
                         val kt = general.killTurn!! - 1
                         if (kt <= 0) {
-                            val previousNationId = general.nationId
-                            generalMaintenanceService.killGeneral(general, world, generals)
-                            generals.forEach { ports.putGeneral(it.toSnapshot()) }
+                            val previousNationId = general.factionId
+                            officerMaintenanceService.killGeneral(general, world, generals)
+                            generals.forEach { ports.putOfficer(it.toSnapshot()) }
                             if (previousNationId > 0L) {
-                                nationRepository.findById(previousNationId).orElse(null)?.let {
+                                factionRepository.findById(previousNationId).orElse(null)?.let {
                                     nationCache[previousNationId] = it
-                                    ports.putNation(it.toSnapshot())
+                                    ports.putFaction(it.toSnapshot())
                                 }
                             }
                             continue
@@ -751,9 +751,9 @@ class TurnService @Autowired constructor(
 
                 general.turnTime = calculateNextGeneralTurnTime(general, world.tickSeconds)
                 general.updatedAt = OffsetDateTime.now()
-                ports.putGeneral(general.toSnapshot())
+                ports.putOfficer(general.toSnapshot())
                 if (nation != null) {
-                    ports.putNation(nation.toSnapshot())
+                    ports.putFaction(nation.toSnapshot())
                 }
             } catch (e: Exception) {
                 logger.error("Error processing general ${general.id}: ${e.message}", e)
@@ -761,7 +761,7 @@ class TurnService @Autowired constructor(
         }
     }
 
-    private fun buildCommandEnv(world: WorldState): CommandEnv {
+    private fun buildCommandEnv(world: SessionState): CommandEnv {
         val startYear = try {
             scenarioService.getScenario(world.scenarioCode).startYear
         } catch (e: Exception) {
@@ -790,7 +790,7 @@ class TurnService @Autowired constructor(
         )
     }
 
-    private fun accrueYearlyInheritancePoints(generals: List<com.openlogh.entity.General>) {
+    private fun accrueYearlyInheritancePoints(generals: List<com.openlogh.entity.Officer>) {
         for (general in generals) {
             if (general.npcState.toInt() >= 2) {
                 continue
@@ -818,21 +818,21 @@ class TurnService @Autowired constructor(
      * Legacy: killturn = 4800 / turnterm (e.g. 80 for 60-min turns).
      * If npcmode==1 (빙의 모드), killturn is divided by 3.
      */
-    private fun resolveGlobalKillTurn(world: WorldState, env: CommandEnv?): Int {
+    private fun resolveGlobalKillTurn(world: SessionState, env: CommandEnv?): Int {
         return (world.config["killturn"] as? Number)?.toInt()
             ?: (world.config["killTurn"] as? Number)?.toInt()
             ?: env?.killturn?.toInt()
             ?: calcDefaultKillTurn(world)
     }
 
-    private fun calcDefaultKillTurn(world: WorldState): Int {
+    private fun calcDefaultKillTurn(world: SessionState): Int {
         val turnterm = (world.tickSeconds / 60).coerceAtLeast(1)
         val base = 4800 / turnterm
         val npcmode = (world.config["npcmode"] as? Number)?.toInt() ?: 0
         return if (npcmode == 1) base / 3 else base
     }
 
-    private fun calculateNextGeneralTurnTime(general: com.openlogh.entity.General, tickSeconds: Int): OffsetDateTime {
+    private fun calculateNextGeneralTurnTime(general: com.openlogh.entity.Officer, tickSeconds: Int): OffsetDateTime {
         val defaultNext = general.turnTime.plusSeconds(tickSeconds.toLong())
         val nextTurnTimeBase = readDouble(general.meta["nextTurnTimeBase"])
         if (nextTurnTimeBase == null) {
@@ -845,9 +845,9 @@ class TurnService @Autowired constructor(
     }
 
     private fun tryUniqueLottery(
-        world: WorldState,
+        world: SessionState,
         ports: com.openlogh.engine.turn.cqrs.persist.WorldPorts,
-        general: com.openlogh.entity.General,
+        general: com.openlogh.entity.Officer,
         actionCode: String,
     ) {
         if (general.npcState >= 2) {
@@ -874,7 +874,7 @@ class TurnService @Autowired constructor(
         }
         val scenarioId = world.scenarioCode.toIntOrNull() ?: 0
         val generalItems = generalItemSlotsOf(general)
-        val allGeneralSlots = ports.allGenerals().map { generalItemSlotsOf(it.toEntity()) }
+        val allGeneralSlots = ports.allOfficers().map { generalItemSlotsOf(it.toEntity()) }
         val occupiedUniqueCounts = uniqueLotteryService.countOccupiedUniqueItems(allGeneralSlots, itemRegistry, config)
         val hiddenSeed = (world.config["hiddenSeed"] as? String) ?: world.id.toString()
         val seed = uniqueLotteryService.buildGenericUniqueSeed(
@@ -891,7 +891,7 @@ class TurnService @Autowired constructor(
             generalItems = generalItems,
             occupiedUniqueCounts = occupiedUniqueCounts,
             scenarioId = scenarioId,
-            userCount = ports.allGenerals().count { it.npcState.toInt() < 2 },
+            userCount = ports.allOfficers().count { it.npcState.toInt() < 2 },
             currentYear = world.currentYear.toInt(),
             currentMonth = world.currentMonth.toInt(),
             startYear = startYear,
@@ -921,12 +921,12 @@ class TurnService @Autowired constructor(
         }
     }
 
-    private fun generalItemSlotsOf(general: com.openlogh.entity.General): UniqueLotteryService.GeneralItemSlots {
+    private fun generalItemSlotsOf(general: com.openlogh.entity.Officer): UniqueLotteryService.GeneralItemSlots {
         return UniqueLotteryService.GeneralItemSlots(
-            horse = normalizeItemCode(general.horseCode),
-            weapon = normalizeItemCode(general.weaponCode),
-            book = normalizeItemCode(general.bookCode),
-            item = normalizeItemCode(general.itemCode),
+            horse = normalizeItemCode(general.engineCode),
+            weapon = normalizeItemCode(general.flagshipCode),
+            book = normalizeItemCode(general.equipCode),
+            item = normalizeItemCode(general.accessoryCode),
         )
     }
 
@@ -962,7 +962,7 @@ class TurnService @Autowired constructor(
         }
     }
 
-    private fun advanceMonth(world: WorldState) {
+    private fun advanceMonth(world: SessionState) {
         val startYear = (world.config["startyear"] as? Number)?.toInt() ?: world.currentYear.toInt()
         val elapsedTurns = (world.currentYear.toInt() - startYear) * 12 + (world.currentMonth.toInt() - 1) + 1
         val totalMonths = startYear.toLong() * 12 + elapsedTurns
@@ -975,7 +975,7 @@ class TurnService @Autowired constructor(
      * Delegates to EconomyService which already has BFS-based supply logic.
      * Renamed from updateTraffic to clarify the actual operation.
      */
-    private fun recalculateCitySupply(world: WorldState) {
+    private fun recalculateCitySupply(world: SessionState) {
         economyService.updateCitySupplyState(world)
     }
 
@@ -983,21 +983,21 @@ class TurnService @Autowired constructor(
      * M-online: Update online status bookkeeping per tick.
      * Legacy: func.php:1205-1248 updateOnline() — updates online general count in world state.
      */
-    private fun updateOnline(world: WorldState) {
+    private fun updateOnline(world: SessionState) {
         val worldId = world.id.toLong()
-        val accessLogs = generalAccessLogRepository.findByWorldId(worldId)
+        val accessLogs = officerAccessLogRepository.findBySessionId(worldId)
         // Filter to recent access (accessed since last tick update)
         val recentLogs = accessLogs.filter { it.accessedAt >= world.updatedAt }
         val onlineCount = recentLogs.size
 
         // Build nation name map
-        val nations = nationRepository.findByWorldId(worldId)
+        val nations = factionRepository.findBySessionId(worldId)
         val nationNames = mutableMapOf<Long, String>(0L to "재야")
         nations.forEach { nationNames[it.id] = it.name }
 
         // Map generalId -> nationId via generals
-        val generals = generalRepository.findByWorldId(worldId)
-        val generalNationMap = generals.associate { it.id to it.nationId }
+        val generals = officerRepository.findBySessionId(worldId)
+        val generalNationMap = generals.associate { it.id to it.factionId }
 
         // Group online logs by nation, sort by count descending
         val onlineByNation = recentLogs
@@ -1017,7 +1017,7 @@ class TurnService @Autowired constructor(
      * Legacy: func.php:1103-1116 CheckOverhead() — recalculates refreshLimit.
      * Formula: round(turnterm^0.6 * 3) * refreshLimitCoef
      */
-    private fun checkOverhead(world: WorldState) {
+    private fun checkOverhead(world: SessionState) {
         val turnterm = world.tickSeconds.toDouble()
         val refreshLimitCoef = (world.config["refreshLimitCoef"] as? Number)?.toInt() ?: 10
         val nextRefreshLimit = kotlin.math.round(Math.pow(turnterm, 0.6) * 3).toInt() * refreshLimitCoef
@@ -1032,21 +1032,21 @@ class TurnService @Autowired constructor(
      * Legacy: func_gamerule.php:445-467 — wander nations (level=0) auto-dissolved after startYear+2.
      * Uses CommandRegistry to create and execute 해산 command for each wander chief.
      */
-    private fun checkWander(world: WorldState) {
+    private fun checkWander(world: SessionState) {
         val startYear = (world.config["startYear"] as? Number)?.toInt() ?: return
         if (world.currentYear.toInt() < startYear + 2) return
 
         val worldId = world.id.toLong()
-        val generals = generalRepository.findByWorldId(worldId)
+        val generals = officerRepository.findBySessionId(worldId)
         val env = buildCommandEnv(world)
         val hiddenSeed = (world.config["hiddenSeed"] as? String) ?: world.id.toString()
 
         for (general in generals) {
             if (general.officerLevel.toInt() != 20) continue
-            val nation = nationRepository.findById(general.nationId).orElse(null) ?: continue
-            if (nation.level.toInt() != 0) continue
+            val nation = factionRepository.findById(general.factionId).orElse(null) ?: continue
+            if (nation.factionRank.toInt() != 0) continue
 
-            val command = commandRegistry.createGeneralCommand("해산", general, env)
+            val command = commandRegistry.createOfficerCommand("해산", general, env)
             if (command.checkFullCondition() is com.openlogh.command.constraint.ConstraintResult.Pass) {
                 val rng = DeterministicRng.create(
                     hiddenSeed, "checkWander", world.currentYear, world.currentMonth, general.id,
@@ -1062,7 +1062,7 @@ class TurnService @Autowired constructor(
      * Legacy func.php:triggerTournament 패러티:
      *   tournament==0 && tnmt_auto && 40% chance → tnmt_pattern 큐에서 타입 선택 후 startTournament
      */
-    private fun triggerTournament(world: WorldState) {
+    private fun triggerTournament(world: SessionState) {
         tournamentService.checkAndTriggerTournament(world)
     }
 
@@ -1073,15 +1073,15 @@ class TurnService @Autowired constructor(
      *   - 중립 buyRice 경매 수 기반 확률로 쌀 판매(시스템→구매자) 경매 등록
      *   - 중립 sellRice 경매 수 기반 확률로 쌀 구매(시스템←판매자) 경매 등록
      */
-    private fun registerAuction(world: WorldState) {
+    private fun registerAuction(world: SessionState) {
         val worldId = world.id.toLong()
-        val generals = generalRepository.findByWorldId(worldId)
+        val generals = officerRepository.findBySessionId(worldId)
         val humanGenerals = generals.filter { it.npcState.toInt() < 2 }
 
         val avgGold = if (humanGenerals.isEmpty()) 1000.0
-            else humanGenerals.map { it.gold.toDouble() }.average()
+            else humanGenerals.map { it.funds.toDouble() }.average()
         val avgRice = if (humanGenerals.isEmpty()) 1000.0
-            else humanGenerals.map { it.rice.toDouble() }.average()
+            else humanGenerals.map { it.supplies.toDouble() }.average()
 
         val clampedGold = avgGold.coerceIn(1000.0, 20000.0)
         val clampedRice = avgRice.coerceIn(1000.0, 20000.0)
@@ -1124,37 +1124,37 @@ class TurnService @Autowired constructor(
     /**
      * H7: Update nation general count and refresh static nation info.
      * Legacy: func_gamerule.php:174-186 — updateGeneralNumber / refreshNationStaticInfo.
-     * Counts generals per nation (excluding npcState=5) and saves nation.gennum.
+     * Counts generals per nation (excluding npcState=5) and saves nation.officerCount.
      */
-    private fun updateGeneralNumber(world: WorldState) {
+    private fun updateGeneralNumber(world: SessionState) {
         val worldId = world.id.toLong()
-        val generals = generalRepository.findByWorldId(worldId)
-        val nations = nationRepository.findByWorldId(worldId)
+        val generals = officerRepository.findBySessionId(worldId)
+        val nations = factionRepository.findBySessionId(worldId)
 
         val genCountByNation = generals
-            .filter { it.npcState.toInt() != 5 && it.nationId > 0 }
-            .groupingBy { it.nationId }
+            .filter { it.npcState.toInt() != 5 && it.factionId > 0 }
+            .groupingBy { it.factionId }
             .eachCount()
 
         for (nation in nations) {
             if (nation.id == 0L) continue
-            nation.gennum = genCountByNation[nation.id] ?: 0
+            nation.officerCount = genCountByNation[nation.id] ?: 0
         }
-        nationRepository.saveAll(nations)
+        factionRepository.saveAll(nations)
     }
 
     /**
      * Decrement strategic command limits for all nations each turn.
      * Per legacy: strategicCmdLimit decreases by 1 each turn until 0.
      */
-    private fun resetStrategicCommandLimits(world: WorldState) {
+    private fun resetStrategicCommandLimits(world: SessionState) {
         val worldId = world.id.toLong()
         val ports = worldPortFactory.create(worldId)
-        val generalSnapshots = ports.allGenerals()
+        val generalSnapshots = ports.allOfficers()
         val generals = generalSnapshots.map { it.toEntity() }
-        val nationSnapshots = ports.allNations()
+        val nationSnapshots = ports.allFactions()
         val nations = nationSnapshots.map { it.toEntity() }
-        val citySnapshots = ports.allCities()
+        val citySnapshots = ports.allPlanets()
         val cities = citySnapshots.map { it.toEntity() }
 
         val originalGenerals = generalSnapshots.associateBy { it.id }
@@ -1168,8 +1168,8 @@ class TurnService @Autowired constructor(
         }
 
         val activeGeneralCountByNation = generals
-            .filter { !(it.npcState.toInt() == 5 && it.nationId == 0L) && it.nationId > 0 }
-            .groupingBy { it.nationId }
+            .filter { !(it.npcState.toInt() == 5 && it.factionId == 0L) && it.factionId > 0 }
+            .groupingBy { it.factionId }
             .eachCount()
 
         for (nation in nations) {
@@ -1179,8 +1179,8 @@ class TurnService @Autowired constructor(
             if (nation.surrenderLimit > 0) {
                 nation.surrenderLimit = (nation.surrenderLimit - 1).coerceIn(0, 120).toShort()
             }
-            nation.rateTmp = nation.rate
-            nation.gennum = activeGeneralCountByNation[nation.id] ?: 0
+            nation.conscriptionRateTmp = nation.conscriptionRate
+            nation.officerCount = activeGeneralCountByNation[nation.id] ?: 0
             nation.spy = decaySpyDurations(nation.spy)
         }
 
@@ -1190,20 +1190,20 @@ class TurnService @Autowired constructor(
 
         for (g in generals) {
             val snap = g.toSnapshot()
-            if (snap != originalGenerals[g.id]) ports.putGeneral(snap)
+            if (snap != originalGenerals[g.id]) ports.putOfficer(snap)
         }
         for (c in cities) {
             val snap = c.toSnapshot()
-            if (snap != originalCities[c.id]) ports.putCity(snap)
+            if (snap != originalCities[c.id]) ports.putPlanet(snap)
         }
-        nations.forEach { ports.putNation(it.toSnapshot()) }
+        nations.forEach { ports.putFaction(it.toSnapshot()) }
     }
 
     private fun firePreTurnTriggers(
-        world: WorldState,
-        general: com.openlogh.entity.General,
-        nation: Nation?,
-        cityMates: List<com.openlogh.entity.General> = emptyList(),
+        world: SessionState,
+        general: com.openlogh.entity.Officer,
+        nation: Faction?,
+        cityMates: List<com.openlogh.entity.Officer> = emptyList(),
     ) {
         val modifiers = modifierService.getModifiers(general, nation)
         val hiddenSeed = (world.config["hiddenSeed"] as? String) ?: world.id.toString()
@@ -1225,24 +1225,24 @@ class TurnService @Autowired constructor(
         )
     }
 
-    private fun applyPerTurnCrewConsumption(general: com.openlogh.entity.General, city: com.openlogh.entity.City?) {
-        if (general.crew <= 0) {
+    private fun applyPerTurnCrewConsumption(general: com.openlogh.entity.Officer, city: com.openlogh.entity.Planet?) {
+        if (general.ships <= 0) {
             return
         }
 
-        val crewTypeCost = CrewType.fromCode(general.crewType.toInt())?.cost ?: 0
-        val baseLoss = kotlin.math.ceil(general.crew.toDouble() * crewTypeCost / 1000.0).toInt().coerceAtLeast(1)
+        val crewTypeCost = CrewType.fromCode(general.shipClass.toInt())?.cost ?: 0
+        val baseLoss = kotlin.math.ceil(general.ships.toDouble() * crewTypeCost / 1000.0).toInt().coerceAtLeast(1)
         val unsupplied = city?.supplyState?.toInt() == 0
         val crewLoss = if (unsupplied) baseLoss * 2 else baseLoss
-        general.crew = (general.crew - crewLoss).coerceAtLeast(0)
+        general.ships = (general.ships - crewLoss).coerceAtLeast(0)
 
         if (unsupplied) {
-            val atmosDrop = minOf(5, general.atmos.toInt())
-            general.atmos = (general.atmos - atmosDrop).coerceIn(0, 150).toShort()
+            val atmosDrop = minOf(5, general.morale.toInt())
+            general.morale = (general.morale - atmosDrop).coerceIn(0, 150).toShort()
         }
     }
 
-    private fun transitionCityStates(cities: List<City>) {
+    private fun transitionCityStates(cities: List<Planet>) {
         for (city in cities) {
             city.state = when (city.state.toInt()) {
                 31 -> 0
@@ -1263,7 +1263,7 @@ class TurnService @Autowired constructor(
         }
     }
 
-    private fun updateDevelCost(world: WorldState) {
+    private fun updateDevelCost(world: SessionState) {
         val startYear = (world.config["startyear"] as? Number)?.toInt() ?: world.currentYear.toInt()
         val develCost = (world.currentYear.toInt() - startYear + 10) * 2
         world.config["develCost"] = develCost
@@ -1271,7 +1271,7 @@ class TurnService @Autowired constructor(
     }
 
     private fun decayRefreshScoreTotals(worldId: Long) {
-        val accessLogs = generalAccessLogRepository.findByWorldId(worldId)
+        val accessLogs = officerAccessLogRepository.findBySessionId(worldId)
         if (accessLogs.isEmpty()) {
             return
         }
@@ -1279,7 +1279,7 @@ class TurnService @Autowired constructor(
         for (accessLog in accessLogs) {
             accessLog.refreshScoreTotal = kotlin.math.floor(accessLog.refreshScoreTotal * 0.99).toInt()
         }
-        generalAccessLogRepository.saveAll(accessLogs)
+        officerAccessLogRepository.saveAll(accessLogs)
     }
 
     private fun decaySpyDurations(spy: MutableMap<String, Any>): MutableMap<String, Any> {

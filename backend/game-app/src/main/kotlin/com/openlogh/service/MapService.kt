@@ -163,7 +163,7 @@ class MapService {
     ): Map<Int, Map<Int, Int>> {
         val nationIdSet = nationIds.toSet()
         val cityIds = allCities.asSequence()
-            .filter { it.nationId in nationIdSet }
+            .filter { it.factionId in nationIdSet }
             .map { it.mapCityId }
             .toList()
         return calcAllPairsDistance(cityIds, mapName)

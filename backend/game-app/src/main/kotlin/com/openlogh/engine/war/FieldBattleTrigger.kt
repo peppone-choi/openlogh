@@ -1,13 +1,13 @@
 package com.openlogh.engine.war
 
 import com.openlogh.engine.DeterministicRng
-import com.openlogh.entity.City
-import com.openlogh.entity.General
+import com.openlogh.entity.Planet
+import com.openlogh.entity.Officer
 import com.openlogh.entity.Message
 import com.openlogh.entity.Record
-import com.openlogh.entity.WorldState
-import com.openlogh.repository.CityRepository
-import com.openlogh.repository.GeneralRepository
+import com.openlogh.entity.SessionState
+import com.openlogh.repository.PlanetRepository
+import com.openlogh.repository.OfficerRepository
 import com.openlogh.repository.MessageRepository
 import com.openlogh.repository.RecordRepository
 import org.slf4j.LoggerFactory
@@ -29,14 +29,14 @@ import org.springframework.stereotype.Component
  *
  * Result:
  *  - Interceptor wins (result.attackerWon = true): move is cancelled by resetting
- *    movingGeneral.cityId back to [fromCityId].
+ *    movingGeneral.planetId back to [fromCityId].
  *  - Mover wins: interceptor is sent back to their origin/patrol city.
  */
 @Component
 class FieldBattleTrigger(
     private val fieldBattleService: FieldBattleService,
-    private val generalRepository: GeneralRepository,
-    private val cityRepository: CityRepository,
+    private val officerRepository: OfficerRepository,
+    private val planetRepository: PlanetRepository,
     private val messageRepository: MessageRepository,
     private val recordRepository: RecordRepository,
 ) {
@@ -46,7 +46,7 @@ class FieldBattleTrigger(
     private val MOVE_ACTIONS = setOf("이동", "출병", "강행")
 
     /**
-     * Called after a move command has been applied (general.cityId is already the destination).
+     * Called after a move command has been applied (general.planetId is already the destination).
      *
      * @param movingGeneral  General who just moved (cityId = destination).
      * @param actionCode     Command that was just executed.
@@ -56,14 +56,14 @@ class FieldBattleTrigger(
      * @return true if a field battle was triggered.
      */
     fun checkAndTrigger(
-        movingGeneral: General,
+        movingGeneral: Officer,
         actionCode: String,
         fromCityId: Long,
-        allGenerals: List<General>,
-        world: WorldState,
+        allGenerals: List<Officer>,
+        world: SessionState,
     ): Boolean {
         if (actionCode !in MOVE_ACTIONS) return false
-        val toCityId = movingGeneral.cityId
+        val toCityId = movingGeneral.planetId
         if (toCityId == fromCityId) return false
 
         val interceptor = findInterceptor(movingGeneral, fromCityId, toCityId, allGenerals)
@@ -71,24 +71,24 @@ class FieldBattleTrigger(
 
         logger.info(
             "[FieldBattle] {} (nation={}) intercepted by {} (nation={}) on road {}→{}",
-            movingGeneral.name, movingGeneral.nationId,
-            interceptor.name, interceptor.nationId,
+            movingGeneral.name, movingGeneral.factionId,
+            interceptor.name, interceptor.factionId,
             fromCityId, toCityId,
         )
 
-        val interceptorCity = cityRepository.findById(interceptor.cityId).orElse(null)
+        val interceptorCity = planetRepository.findById(interceptor.planetId).orElse(null)
             ?: run {
-                logger.warn("[FieldBattle] Interceptor city {} not found — skipping", interceptor.cityId)
+                logger.warn("[FieldBattle] Interceptor city {} not found — skipping", interceptor.planetId)
                 return false
             }
 
-        val interceptorUnit = WarUnitGeneral(
+        val interceptorUnit = WarUnitOfficer(
             interceptor,
             nationTech = 0f,
             isAttacker = true,
             cityLevel = interceptorCity.level.toInt(),
         )
-        val movingUnit = WarUnitGeneral(
+        val movingUnit = WarUnitOfficer(
             movingGeneral,
             nationTech = 0f,
             isAttacker = false,
@@ -117,20 +117,20 @@ class FieldBattleTrigger(
         movingUnit.applyResults()
 
         if (result.attackerWon) {
-            movingGeneral.cityId = fromCityId
+            movingGeneral.planetId = fromCityId
             logger.info("[FieldBattle] Interceptor {} won — {} retreats to city {}",
                 interceptor.name, movingGeneral.name, fromCityId)
         } else {
             val originCityId = getInterceptorOriginCityId(interceptor)
             if (originCityId > 0L) {
-                interceptor.cityId = originCityId
+                interceptor.planetId = originCityId
             }
             logger.info("[FieldBattle] Mover {} won — interceptor {} retreats to city {}",
-                movingGeneral.name, interceptor.name, interceptor.cityId)
+                movingGeneral.name, interceptor.name, interceptor.planetId)
         }
 
-        generalRepository.save(movingGeneral)
-        generalRepository.save(interceptor)
+        officerRepository.save(movingGeneral)
+        officerRepository.save(interceptor)
 
         persistFieldBattleLogs(interceptor, movingGeneral, result, interceptorCity, world, isAmbush)
 
@@ -138,16 +138,16 @@ class FieldBattleTrigger(
     }
 
     private fun findInterceptor(
-        movingGeneral: General,
+        movingGeneral: Officer,
         fromCityId: Long,
         toCityId: Long,
-        allGenerals: List<General>,
-    ): General? {
+        allGenerals: List<Officer>,
+    ): Officer? {
         return allGenerals.firstOrNull { candidate ->
             if (candidate.id == movingGeneral.id) return@firstOrNull false
-            if (candidate.nationId == movingGeneral.nationId) return@firstOrNull false
-            if (candidate.nationId == 0L || movingGeneral.nationId == 0L) return@firstOrNull false
-            if (candidate.crew <= 0) return@firstOrNull false
+            if (candidate.factionId == movingGeneral.factionId) return@firstOrNull false
+            if (candidate.factionId == 0L || movingGeneral.factionId == 0L) return@firstOrNull false
+            if (candidate.ships <= 0) return@firstOrNull false
 
             val action = candidate.lastTurn["action"] as? String ?: return@firstOrNull false
 
@@ -170,20 +170,20 @@ class FieldBattleTrigger(
         }
     }
 
-    private fun getInterceptorOriginCityId(interceptor: General): Long {
+    private fun getInterceptorOriginCityId(interceptor: Officer): Long {
         return when (interceptor.lastTurn["action"] as? String) {
             "요격" -> (interceptor.lastTurn["originCityId"] as? Number)?.toLong() ?: 0L
-            "순찰" -> (interceptor.lastTurn["patrolCityId"] as? Number)?.toLong() ?: interceptor.cityId
-            else -> interceptor.cityId
+            "순찰" -> (interceptor.lastTurn["patrolCityId"] as? Number)?.toLong() ?: interceptor.planetId
+            else -> interceptor.planetId
         }
     }
 
     private fun persistFieldBattleLogs(
-        interceptor: General,
-        mover: General,
+        interceptor: Officer,
+        mover: Officer,
         result: BattleResult,
-        city: City,
-        world: WorldState,
+        city: Planet,
+        world: SessionState,
         isAmbush: Boolean,
     ) {
         val worldId = world.id.toLong()
@@ -196,7 +196,7 @@ class FieldBattleTrigger(
 
         val messages = mutableListOf<Message>()
         messages += Message(
-            worldId = worldId,
+            sessionId = worldId,
             mailboxCode = "battle_result",
             messageType = "log",
             srcId = interceptor.id,
@@ -204,7 +204,7 @@ class FieldBattleTrigger(
             payload = mutableMapOf("message" to "<S>◆</>$year 년 ${month}월:$summary", "year" to year, "month" to month),
         )
         messages += Message(
-            worldId = worldId,
+            sessionId = worldId,
             mailboxCode = "battle_result",
             messageType = "log",
             srcId = mover.id,
@@ -212,7 +212,7 @@ class FieldBattleTrigger(
             payload = mutableMapOf("message" to "<S>◆</>$year 년 ${month}월:$summary", "year" to year, "month" to month),
         )
         messages += Message(
-            worldId = worldId,
+            sessionId = worldId,
             mailboxCode = "world_record",
             messageType = "log",
             srcId = interceptor.id,
@@ -222,7 +222,7 @@ class FieldBattleTrigger(
         messageRepository.saveAll(messages)
         val records = messages.map { msg ->
             Record(
-                worldId = msg.worldId,
+                worldId = msg.sessionId,
                 recordType = msg.mailboxCode,
                 srcId = msg.srcId,
                 destId = msg.destId,

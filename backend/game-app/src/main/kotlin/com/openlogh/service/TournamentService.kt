@@ -86,10 +86,10 @@ class TournamentService(
 
     @Transactional
     fun placeBet(worldId: Long, generalId: Long, targetId: Long, amount: Int): Map<String, Any>? {
-        val general = officerRepository.findById(generalId).orElse(null) ?: return null
-        if (general.gold < amount) return mapOf("error" to "금 부족")
-        general.gold -= amount
-        officerRepository.save(general)
+        val officer = officerRepository.findById(generalId).orElse(null) ?: return null
+        if (officer.funds < amount) return mapOf("error" to "금 부족")
+        officer.funds -= amount
+        officerRepository.save(officer)
         val world = sessionStateRepository.findById(worldId.toShort()).orElse(null) ?: return null
 
         val bets = mutableListOf<Map<String, Any>>()
@@ -134,22 +134,22 @@ class TournamentService(
         val state = (world.meta["tournamentState"] as? Number)?.toInt() ?: 0
         if (state != STATE_REGISTER) return mapOf("error" to "등록 기간이 아닙니다")
 
-        val general = officerRepository.findById(generalId).orElse(null) ?: return mapOf("error" to "장수가 없습니다")
-        if (general.worldId != tournamentId) return mapOf("error" to "같은 월드의 장수만 참가할 수 있습니다")
+        val officer = officerRepository.findById(generalId).orElse(null) ?: return mapOf("error" to "장수가 없습니다")
+        if (officer.sessionId != tournamentId) return mapOf("error" to "같은 월드의 장수만 참가할 수 있습니다")
 
         val exists = tournamentRepository.findBySessionIdAndRound(tournamentId, 0).any { it.generalId == generalId }
         if (exists) return mapOf("error" to "이미 등록됨")
 
         tournamentRepository.save(
             Tournament(
-                worldId = tournamentId,
-                generalId = generalId,
+                sessionId = tournamentId,
+                officerId = generalId,
                 round = 0,
                 bracketPosition = 0,
                 result = 0,
             )
         )
-        inheritanceService.accruePoints(general, "tournament", 1)
+        inheritanceService.accruePoints(officer, "tournament", 1)
         syncWorldTournamentMeta(tournamentId)
         return mapOf("success" to true, "generalId" to generalId)
     }
@@ -172,8 +172,8 @@ class TournamentService(
 
             tournamentRepository.save(
                 Tournament(
-                    worldId = tournamentId,
-                    generalId = p1,
+                    sessionId = tournamentId,
+                    officerId = p1,
                     round = 1,
                     bracketPosition = idx.toShort(),
                     opponentId = if (p2 == 0L) null else p2,
@@ -183,8 +183,8 @@ class TournamentService(
             if (p2 != 0L) {
                 tournamentRepository.save(
                     Tournament(
-                        worldId = tournamentId,
-                        generalId = p2,
+                        sessionId = tournamentId,
+                        officerId = p2,
                         round = 1,
                         bracketPosition = (idx + 1).toShort(),
                         opponentId = p1,
@@ -237,8 +237,8 @@ class TournamentService(
                         name = attackerGeneral.name,
                         stats = TournamentBattle.TournamentStats(
                             leadership = attackerGeneral.leadership.toDouble(),
-                            strength = attackerGeneral.strength.toDouble(),
-                            intel = attackerGeneral.intel.toDouble(),
+                            strength = attackerGeneral.command.toDouble(),
+                            intel = attackerGeneral.intelligence.toDouble(),
                         ),
                         level = attackerGeneral.expLevel.toInt(),
                     ),
@@ -247,8 +247,8 @@ class TournamentService(
                         name = defenderGeneral.name,
                         stats = TournamentBattle.TournamentStats(
                             leadership = defenderGeneral.leadership.toDouble(),
-                            strength = defenderGeneral.strength.toDouble(),
-                            intel = defenderGeneral.intel.toDouble(),
+                            strength = defenderGeneral.command.toDouble(),
+                            intel = defenderGeneral.intelligence.toDouble(),
                         ),
                         level = defenderGeneral.expLevel.toInt(),
                     ),
@@ -285,8 +285,8 @@ class TournamentService(
             val p2 = nextWinners.getOrNull(idx + 1)
             tournamentRepository.save(
                 Tournament(
-                    worldId = tournamentId,
-                    generalId = p1,
+                    sessionId = tournamentId,
+                    officerId = p1,
                     round = nextRound.toShort(),
                     bracketPosition = idx.toShort(),
                     opponentId = p2,
@@ -296,8 +296,8 @@ class TournamentService(
             if (p2 != null) {
                 tournamentRepository.save(
                     Tournament(
-                        worldId = tournamentId,
-                        generalId = p2,
+                        sessionId = tournamentId,
+                        officerId = p2,
                         round = nextRound.toShort(),
                         bracketPosition = (idx + 1).toShort(),
                         opponentId = p1,
@@ -327,12 +327,12 @@ class TournamentService(
         val runnerUpId = finalists.firstOrNull { it.generalId != winnerId }?.generalId
         val runnerUp = runnerUpId?.let { officerRepository.findById(it).orElse(null) }
 
-        winner.gold += 5000
+        winner.funds += 5000
         winner.dedication += 100
         officerRepository.save(winner)
 
         if (runnerUp != null) {
-            runnerUp.gold += 2500
+            runnerUp.funds += 2500
             runnerUp.dedication += 50
             officerRepository.save(runnerUp)
         }
@@ -464,7 +464,7 @@ class TournamentService(
      *   - tnmt_pattern 큐에서 type 결정 (0=전력전 40%, 1=통솔전, 2=일기토, 3=설전 각 20%)
      */
     @Transactional
-    fun checkAndTriggerTournament(world: com.openlogh.entity.WorldState) {
+    fun checkAndTriggerTournament(world: com.openlogh.entity.SessionState) {
         val state = (world.meta["tournamentState"] as? Number)?.toInt() ?: 0
         if (state != 0) return
 

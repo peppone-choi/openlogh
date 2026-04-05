@@ -3,9 +3,9 @@ package com.openlogh.command.general
 import com.openlogh.command.CommandCost
 import com.openlogh.command.CommandEnv
 import com.openlogh.command.CommandResult
-import com.openlogh.command.GeneralCommand
+import com.openlogh.command.OfficerCommand
 import com.openlogh.command.constraint.*
-import com.openlogh.entity.General
+import com.openlogh.entity.Officer
 import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.min
@@ -15,8 +15,8 @@ private const val DEFAULT_GOLD = 1000
 private const val DEFAULT_RICE = 1000
 private const val MAX_BETRAY_CNT = 10
 
-class 등용수락(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
-    : GeneralCommand(general, env, arg) {
+class 등용수락(general: Officer, env: CommandEnv, arg: Map<String, Any>? = null)
+    : OfficerCommand(general, env, arg) {
 
     override val actionName = "등용 수락"
     override val canDisplay = false
@@ -44,11 +44,11 @@ class 등용수락(general: General, env: CommandEnv, arg: Map<String, Any>? = n
     override fun getPostReqTurn() = 0
 
     override suspend fun run(rng: Random): CommandResult {
-        val destNationName = destNation?.name ?: "알 수 없음"
-        val destNationId = destNation?.id ?: 0L
-        val capitalCityId = destNation?.capitalCityId ?: 0L
+        val destNationName = destFaction?.name ?: "알 수 없음"
+        val destNationId = destFaction?.id ?: 0L
+        val capitalCityId = destFaction?.capitalPlanetId ?: 0L
         val generalName = general.name
-        val isTroopLeader = general.troopId == general.id
+        val isTroopLeader = general.fleetId == general.id
 
         // Self log
         pushLog("<D>${destNationName}</>로 망명하여 수도로 이동합니다.")
@@ -75,15 +75,15 @@ class 등용수락(general: General, env: CommandEnv, arg: Map<String, Any>? = n
             "dedication" to 100,
         )
 
-        if (general.nationId != 0L) {
+        if (general.factionId != 0L) {
             // Return excess gold/rice to original nation
-            if (general.gold > DEFAULT_GOLD) {
+            if (general.funds > DEFAULT_GOLD) {
                 statChanges["gold"] = DEFAULT_GOLD
-                statChanges["returnGold"] = general.gold - DEFAULT_GOLD
+                statChanges["returnGold"] = general.funds - DEFAULT_GOLD
             }
-            if (general.rice > DEFAULT_RICE) {
+            if (general.supplies > DEFAULT_RICE) {
                 statChanges["rice"] = DEFAULT_RICE
-                statChanges["returnRice"] = general.rice - DEFAULT_RICE
+                statChanges["returnRice"] = general.supplies - DEFAULT_RICE
             }
             // Betrayal penalty: 10% * betray count
             val betrayPenalty = 0.1 * general.betray

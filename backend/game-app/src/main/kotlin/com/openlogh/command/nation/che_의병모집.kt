@@ -3,9 +3,9 @@ package com.openlogh.command.nation
 import com.openlogh.command.CommandCost
 import com.openlogh.command.CommandEnv
 import com.openlogh.command.CommandResult
-import com.openlogh.command.NationCommand
+import com.openlogh.command.FactionCommand
 import com.openlogh.command.constraint.*
-import com.openlogh.entity.General
+import com.openlogh.entity.Officer
 import com.openlogh.util.JosaUtil
 import kotlin.math.roundToInt
 import kotlin.random.Random
@@ -15,8 +15,8 @@ private const val STRATEGIC_GLOBAL_DELAY = 9
 private const val PRE_REQ_TURN = 2
 private const val NPC_TYPE = 4
 
-class che_의병모집(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
-    : NationCommand(general, env, arg) {
+class che_의병모집(general: Officer, env: CommandEnv, arg: Map<String, Any>? = null)
+    : FactionCommand(general, env, arg) {
 
     override val actionName = "의병모집"
 
@@ -61,21 +61,21 @@ class che_의병모집(general: General, env: CommandEnv, arg: Map<String, Any>?
         pushHistoryLog("<M>${actionName}</>${josaUl} 발동")
         pushNationalHistoryLog("<Y>${generalName}</>${josaYi} <M>${actionName}</>${josaUl} 발동")
 
-        c.pop = (c.pop * 0.5).toInt()
+        c.population = (c.population * 0.5).toInt()
 
         // Calculate NPC count: 3 + round(avgGenCount / 8)
-        val avgGenCount = services!!.nationRepository.getAverageGennum(env.worldId)
+        val avgGenCount = services!!.factionRepository.getAverageGennum(env.sessionId)
         val createGenCount = 3 + (avgGenCount / 8.0).roundToInt()
 
-        val avgStats = runCatching { services!!.generalRepository.getAverageStats(env.worldId, n.id) }.getOrNull()
+        val avgStats = runCatching { services!!.officerRepository.getAverageStats(env.sessionId, n.id) }.getOrNull()
         val avgExperience = avgStats?.experience ?: 0
         val avgDedication = avgStats?.dedication ?: 0
 
-        val generalPoolService = services!!.generalPoolService
-        if (generalPoolService != null) {
+        val officerPoolService = services!!.officerPoolService
+        if (officerPoolService != null) {
             for (i in 1..createGenCount) {
-                generalPoolService.pickAndCreateNpc(
-                    worldId = env.worldId,
+                officerPoolService.pickAndCreateNpc(
+                    worldId = env.sessionId,
                     nationId = n.id,
                     cityId = c.id,
                     npcType = NPC_TYPE,
@@ -92,11 +92,11 @@ class che_의병모집(general: General, env: CommandEnv, arg: Map<String, Any>?
             }
         } else {
             repeat(createGenCount) { idx ->
-                val npc = General(
-                    worldId = env.worldId,
+                val npc = Officer(
+                    sessionId = env.sessionId,
                     name = "의병${idx + 1}",
-                    nationId = n.id,
-                    cityId = c.id,
+                    factionId = n.id,
+                    planetId = c.id,
                     npcState = NPC_TYPE.toShort(),
                     bornYear = (env.year - 20).toShort(),
                     deadYear = (env.year + 10).toShort(),
@@ -106,12 +106,12 @@ class che_의병모집(general: General, env: CommandEnv, arg: Map<String, Any>?
                     experience = avgExperience,
                     dedication = avgDedication,
                 )
-                services!!.generalRepository.save(npc)
+                services!!.officerRepository.save(npc)
             }
         }
 
         // Update nation gennum and strategic limit
-        n.gennum = n.gennum + createGenCount
+        n.officerCount = n.officerCount + createGenCount
         n.strategicCmdLimit = STRATEGIC_GLOBAL_DELAY.toShort()
 
         return CommandResult(true, logs)

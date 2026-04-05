@@ -7,11 +7,11 @@ import com.openlogh.engine.turn.cqrs.persist.JpaWorldPortFactory
 import com.openlogh.engine.turn.cqrs.persist.toEntity
 import com.openlogh.engine.turn.cqrs.persist.toSnapshot
 import com.openlogh.engine.turn.cqrs.port.WorldWritePort
-import com.openlogh.entity.City
+import com.openlogh.entity.Planet
 import com.openlogh.entity.Diplomacy
-import com.openlogh.entity.General
-import com.openlogh.entity.Nation
-import com.openlogh.entity.WorldState
+import com.openlogh.entity.Officer
+import com.openlogh.entity.Faction
+import com.openlogh.entity.SessionState
 import com.openlogh.model.ArmType
 import com.openlogh.model.CrewType
 import org.slf4j.LoggerFactory
@@ -26,26 +26,26 @@ import java.util.ArrayDeque
 import kotlin.random.Random
 
 /**
- * Full NPC AI decision engine, ported from legacy GeneralAI.php.
+ * Full NPC AI decision engine, ported from legacy OfficerAI.php.
  *
  * Returns action command strings that the game engine interprets.
  * The decision tree mirrors the legacy PHP implementation's ~40 do*() methods.
  */
 @Service
-class GeneralAI(
+class OfficerAI(
     private val worldPortFactory: JpaWorldPortFactory,
     private val mapService: MapService,
 ) {
-    private val logger = LoggerFactory.getLogger(GeneralAI::class.java)
+    private val logger = LoggerFactory.getLogger(OfficerAI::class.java)
 
     // ──────────────────────────────────────────────────────────
     //  Main entry point
     // ──────────────────────────────────────────────────────────
 
-    fun decideAndExecute(general: General, world: WorldState): String {
+    fun decideAndExecute(general: Officer, world: SessionState): String {
         val hiddenSeed = (world.config["hiddenSeed"] as? String) ?: "${world.id}"
         val rng = DeterministicRng.create(
-            hiddenSeed, "GeneralAI", world.currentYear, world.currentMonth, general.id
+            hiddenSeed, "OfficerAI", world.currentYear, world.currentMonth, general.id
         )
 
         // Troop leaders (npcState=5) always rally
@@ -63,22 +63,22 @@ class GeneralAI(
         }
 
         // Wanderers (nationId=0) have limited options
-        if (general.nationId == 0L) {
+        if (general.factionId == 0L) {
             return decideWandererAction(general, world, rng)
         }
 
         val worldId = world.id.toLong()
         val ports = worldPortFactory.create(worldId)
-        val city = ports.city(general.cityId)?.toEntity() ?: return "휴식"
-        val nation = ports.nation(general.nationId)?.toEntity()
+        val city = ports.planet(general.planetId)?.toEntity() ?: return "휴식"
+        val nation = ports.faction(general.factionId)?.toEntity()
 
-        val allCities = ports.allCities().map { it.toEntity() }
-        val allGenerals = ports.allGenerals().map { it.toEntity() }
-        val allNations = ports.allNations().map { it.toEntity() }
+        val allCities = ports.allPlanets().map { it.toEntity() }
+        val allGenerals = ports.allOfficers().map { it.toEntity() }
+        val allNations = ports.allFactions().map { it.toEntity() }
         val diplomacies = ports.activeDiplomacies().map { it.toEntity() }
 
         val nationCities = if (nation != null) {
-            allCities.filter { it.nationId == nation.id }
+            allCities.filter { it.factionId == nation.id }
         } else {
             emptyList()
         }
@@ -87,7 +87,7 @@ class GeneralAI(
         val rearCities = nationCities.filter { it.frontState.toInt() == 0 }
         val supplyCities = nationCities.filter { it.supplyState > 0 }
         val backupCities = nationCities.filter { it.frontState.toInt() == 0 && it.supplyState > 0 }
-        val nationGenerals = allGenerals.filter { it.nationId == general.nationId }
+        val nationGenerals = allGenerals.filter { it.factionId == general.factionId }
 
         val diplomacyState = calcDiplomacyState(worldId, nation, diplomacies)
 
@@ -153,16 +153,16 @@ class GeneralAI(
                     chooseTexRate(ctx, supplyCities)
                     chooseGoldBillRate(ctx, supplyCities, nationPolicy)
                     nationModified = true
-                    logger.info("Nation {} ({}) bill set to {}, rate set to {}", nation.id, nation.name, nation.bill, nation.rate)
+                    logger.info("Nation {} ({}) bill set to {}, rate set to {}", nation.id, nation.name, nation.taxRate, nation.conscriptionRate)
                 }
                 if (month == 6) {
                     chooseTexRate(ctx, supplyCities)
                     chooseRiceBillRate(ctx, supplyCities, nationPolicy)
                     nationModified = true
-                    logger.info("Nation {} ({}) riceBill set to {}, rate set to {}", nation.id, nation.name, nation.bill, nation.rate)
+                    logger.info("Nation {} ({}) riceBill set to {}, rate set to {}", nation.id, nation.name, nation.taxRate, nation.conscriptionRate)
                 }
                 if (nationModified) {
-                    ports.putNation(nation.toSnapshot())
+                    ports.putFaction(nation.toSnapshot())
                 }
             } else if (month in listOf(3, 6, 9, 12)) {
                 chooseNonLordPromotion(ctx, rng, ports)
@@ -176,7 +176,7 @@ class GeneralAI(
         }
 
         // NPC거병 check: NPC lord-capable wanderer with nation
-        if ((general.npcState.toInt() == 2 || general.npcState.toInt() == 3) && general.nationId == 0L) {
+        if ((general.npcState.toInt() == 2 || general.npcState.toInt() == 3) && general.factionId == 0L) {
             val riseResult = doRise(general, world, rng)
             if (riseResult != null) return riseResult
         }
@@ -230,7 +230,7 @@ class GeneralAI(
     //  Reserved command check
     // ──────────────────────────────────────────────────────────
 
-    private fun checkReservedCommand(general: General): String? {
+    private fun checkReservedCommand(general: Officer): String? {
         val reserved = general.meta["reservedCommand"] as? String ?: return null
         general.meta.remove("reservedCommand")
         if (reserved == "휴식" || reserved.isBlank()) return null
@@ -245,10 +245,10 @@ class GeneralAI(
      * Legacy: chooseGeneralTurn for nationID==0.
      * Wanderers can: 국가선택 (join nation), 거병 (rise), 이동, 견문, 물자조달, 휴식.
      */
-    private fun decideWandererAction(general: General, world: WorldState, rng: Random): String {
+    private fun decideWandererAction(general: Officer, world: SessionState, rng: Random): String {
         // Per PHP: injury > cureThreshold (not > 0) -- same pattern as all other injury checks
-        val wandererPolicy = if (general.nationId != 0L) {
-            val nation = worldPortFactory.create(world.id.toLong()).nation(general.nationId)?.toEntity()
+        val wandererPolicy = if (general.factionId != 0L) {
+            val nation = worldPortFactory.create(world.id.toLong()).faction(general.factionId)?.toEntity()
             if (nation != null) NpcPolicyBuilder.buildNationPolicy(nation.meta) else NpcNationPolicy()
         } else {
             NpcNationPolicy()
@@ -283,7 +283,7 @@ class GeneralAI(
     // ──────────────────────────────────────────────────────────
 
     /**
-     * Per legacy GeneralAI.php:206 calcDiplomacyState().
+     * Per legacy OfficerAI.php:206 calcDiplomacyState().
      * PHP 5-state model using diplomacy term countdown:
      *   - d평화(0): no declarations
      *   - d선포(1): declaration exists but term > 8, or early game with war targets
@@ -299,10 +299,10 @@ class GeneralAI(
      * @param supplyCities nation's cities with supply > 0 (for attackable check)
      */
     internal fun calcDiplomacyState(
-        world: WorldState,
-        nation: Nation?,
+        world: SessionState,
+        nation: Faction?,
         diplomacies: List<Diplomacy>,
-        supplyCities: List<City> = emptyList(),
+        supplyCities: List<Planet> = emptyList(),
     ): CalcDiplomacyResult {
         if (nation == null) return CalcDiplomacyResult(DiplomacyState.PEACE, false, mapOf(0L to 1))
 
@@ -313,7 +313,7 @@ class GeneralAI(
         // PHP: SELECT ... FROM diplomacy WHERE me=$nationID AND state IN (0,1)
         // state=0 → active war (stateCode="전쟁"), state=1 → declaration (stateCode="선전포고")
         val warTarget = diplomacies.filter {
-            it.srcNationId == nation.id &&
+            it.srcFactionId == nation.id &&
                 (it.stateCode == "전쟁" || it.stateCode == "선전포고")
         }
 
@@ -335,7 +335,7 @@ class GeneralAI(
         val warTargetNation = mutableMapOf<Long, Int>()
 
         for (d in warTarget) {
-            val targetId = d.destNationId
+            val targetId = d.destFactionId
             when {
                 d.stateCode == "전쟁" -> {  // PHP state=0: active war
                     onWar++
@@ -392,13 +392,13 @@ class GeneralAI(
     /**
      * Backward-compatible overload for existing callers that pass worldId.
      */
-    internal fun calcDiplomacyState(worldId: Long, nation: Nation?, diplomacies: List<Diplomacy>): DiplomacyState {
+    internal fun calcDiplomacyState(worldId: Long, nation: Faction?, diplomacies: List<Diplomacy>): DiplomacyState {
         if (nation == null) return DiplomacyState.PEACE
 
         // PHP filters diplomacy WHERE me=$nationID (srcNationId). Also check destNationId for
         // rows where this nation is the target of a declaration/war.
         val relevant = diplomacies.filter {
-            (it.srcNationId == nation.id || it.destNationId == nation.id) &&
+            (it.srcFactionId == nation.id || it.destFactionId == nation.id) &&
                 (it.stateCode == "전쟁" || it.stateCode == "선전포고")
         }
 
@@ -418,8 +418,8 @@ class GeneralAI(
         }
     }
 
-    internal fun calcDiplomacyState(nation: Nation?, diplomacies: List<Diplomacy>): DiplomacyState {
-        val inferredWorldId = nation?.worldId ?: diplomacies.firstOrNull()?.worldId ?: 0L
+    internal fun calcDiplomacyState(nation: Faction?, diplomacies: List<Diplomacy>): DiplomacyState {
+        val inferredWorldId = nation?.sessionId ?: diplomacies.firstOrNull()?.sessionId ?: 0L
         return calcDiplomacyState(inferredWorldId, nation, diplomacies)
     }
 
@@ -433,7 +433,7 @@ class GeneralAI(
     )
 
     /**
-     * Per legacy GeneralAI.php:3516 categorizeNationGeneral().
+     * Per legacy OfficerAI.php:3516 categorizeNationGeneral().
      * Classifies all generals in a nation into 7 categories:
      * - npcWarGenerals: NPC with leadership >= minNPCWarLeadership, npcState >= 2, not dying
      * - npcCivilGenerals: NPC with low leadership or killTurn <= 5
@@ -444,22 +444,22 @@ class GeneralAI(
      * - chiefGenerals: officerLevel > 4 (PHP threshold, maps to mid-rank+ in Kotlin)
      */
     internal fun categorizeNationGeneral(
-        nationGenerals: List<General>,
+        nationGenerals: List<Officer>,
         selfGeneralId: Long,
-        nationCities: Map<Long, City>,
+        nationCities: Map<Long, Planet>,
         dipState: DiplomacyState,
         minNPCWarLeadership: Int = 40,
         minWarCrew: Int = 1500,
         turnterm: Int = 60,
     ): NationGeneralCategories {
-        val npcWarGenerals = mutableListOf<General>()
-        val npcCivilGenerals = mutableListOf<General>()
-        val userGenerals = mutableListOf<General>()
-        val userWarGenerals = mutableListOf<General>()
-        val userCivilGenerals = mutableListOf<General>()
-        val troopLeaders = mutableListOf<General>()
-        val lostGenerals = mutableListOf<General>()
-        val chiefGenerals = mutableMapOf<Int, General>()
+        val npcWarGenerals = mutableListOf<Officer>()
+        val npcCivilGenerals = mutableListOf<Officer>()
+        val userGenerals = mutableListOf<Officer>()
+        val userWarGenerals = mutableListOf<Officer>()
+        val userCivilGenerals = mutableListOf<Officer>()
+        val troopLeaders = mutableListOf<Officer>()
+        val lostGenerals = mutableListOf<Officer>()
+        val chiefGenerals = mutableMapOf<Int, Officer>()
 
         // Exclude self from categorization (per PHP: no != $this->general->getID())
         val others = nationGenerals.filter { it.id != selfGeneralId }
@@ -477,7 +477,7 @@ class GeneralAI(
         for (gen in others) {
             val npcType = gen.npcState.toInt()
             val officerLevel = gen.officerLevel.toInt()
-            val cityId = gen.cityId
+            val cityId = gen.planetId
             val city = nationCities[cityId]
 
             // Chief generals: PHP officer_level > 4
@@ -505,7 +505,7 @@ class GeneralAI(
                     val recentWar = calcRecentWarTurn(gen, turnterm)
                     if (recentWar <= lastWar + 12) {
                         userWarGenerals.add(gen)
-                    } else if (dipState != DiplomacyState.PEACE && gen.crew >= minWarCrew) {
+                    } else if (dipState != DiplomacyState.PEACE && gen.ships >= minWarCrew) {
                         userWarGenerals.add(gen)
                     } else {
                         userCivilGenerals.add(gen)
@@ -536,7 +536,7 @@ class GeneralAI(
      * Approximate PHP's calcRecentWarTurn.
      * Returns months since last combat based on warnum meta.
      */
-    private fun calcRecentWarTurn(general: General, turnterm: Int): Int {
+    private fun calcRecentWarTurn(general: Officer, turnterm: Int): Int {
         val warnum = (general.meta["warnum"] as? Number)?.toInt() ?: 0
         val killnum = (general.meta["killnum"] as? Number)?.toInt() ?: 0
         // Approximate: if recent combat exists, return low value; otherwise high
@@ -547,28 +547,28 @@ class GeneralAI(
      * Result of categorizeNationGeneral.
      */
     data class NationGeneralCategories(
-        val npcWarGenerals: List<General>,
-        val npcCivilGenerals: List<General>,
-        val userGenerals: List<General>,
-        val userWarGenerals: List<General>,
-        val userCivilGenerals: List<General>,
-        val troopLeaders: List<General>,
-        val lostGenerals: List<General>,
-        val chiefGenerals: Map<Int, General>,
+        val npcWarGenerals: List<Officer>,
+        val npcCivilGenerals: List<Officer>,
+        val userGenerals: List<Officer>,
+        val userWarGenerals: List<Officer>,
+        val userCivilGenerals: List<Officer>,
+        val troopLeaders: List<Officer>,
+        val lostGenerals: List<Officer>,
+        val chiefGenerals: Map<Int, Officer>,
     )
 
     /**
      * Calculate war target nations map: nationId -> state (1=war ready, 2=at war).
      * Per legacy: state 0 (war) -> 2, state 1 with term<5 -> 1.
      */
-    private fun calcWarTargetNations(nation: Nation?, diplomacies: List<Diplomacy>): Map<Long, Int> {
+    private fun calcWarTargetNations(nation: Faction?, diplomacies: List<Diplomacy>): Map<Long, Int> {
         if (nation == null) return emptyMap()
         val result = mutableMapOf<Long, Int>()
         val relevant = diplomacies.filter {
-            it.srcNationId == nation.id || it.destNationId == nation.id
+            it.srcFactionId == nation.id || it.destFactionId == nation.id
         }
         for (d in relevant) {
-            val targetId = if (d.srcNationId == nation.id) d.destNationId else d.srcNationId
+            val targetId = if (d.srcFactionId == nation.id) d.destFactionId else d.srcFactionId
             when {
                 d.stateCode == "선전포고" || d.stateCode == "전쟁" -> result[targetId] = 2
                 d.stateCode == "불가침" -> { /* skip */ }
@@ -586,14 +586,14 @@ class GeneralAI(
     // ──────────────────────────────────────────────────────────
 
     internal fun classifyGeneral(
-        general: General,
+        general: Officer,
         rng: Random = Random(0),
         minNPCWarLeadership: Int = 40,
     ): Int {
         var flags = 0
         val l = general.leadership.toInt()
-        val s = general.strength.toInt()
-        val i = general.intel.toInt()
+        val s = general.command.toInt()
+        val i = general.intelligence.toInt()
 
         if (s >= i) {
             flags = flags or GeneralType.WARRIOR.flag
@@ -620,31 +620,31 @@ class GeneralAI(
     /**
      * Returns map of development key -> Pair(rate 0.0-1.0, generalTypeMask).
      */
-    private fun calcCityDevelRate(city: City): Map<String, Pair<Double, Int>> {
+    private fun calcCityDevelRate(city: Planet): Map<String, Pair<Double, Int>> {
         return mapOf(
-            "trust" to Pair(city.trust.toDouble() / 100.0, GeneralType.COMMANDER.flag),
+            "trust" to Pair(city.approval.toDouble() / 100.0, GeneralType.COMMANDER.flag),
             "pop" to Pair(
-                if (city.popMax > 0) city.pop.toDouble() / city.popMax else 1.0,
+                if (city.populationMax > 0) city.population.toDouble() / city.populationMax else 1.0,
                 GeneralType.COMMANDER.flag
             ),
             "agri" to Pair(
-                if (city.agriMax > 0) city.agri.toDouble() / city.agriMax else 1.0,
+                if (city.productionMax > 0) city.production.toDouble() / city.productionMax else 1.0,
                 GeneralType.STRATEGIST.flag
             ),
             "comm" to Pair(
-                if (city.commMax > 0) city.comm.toDouble() / city.commMax else 1.0,
+                if (city.commerceMax > 0) city.commerce.toDouble() / city.commerceMax else 1.0,
                 GeneralType.STRATEGIST.flag
             ),
             "secu" to Pair(
-                if (city.secuMax > 0) city.secu.toDouble() / city.secuMax else 1.0,
+                if (city.securityMax > 0) city.security.toDouble() / city.securityMax else 1.0,
                 GeneralType.WARRIOR.flag
             ),
             "def" to Pair(
-                if (city.defMax > 0) city.def.toDouble() / city.defMax else 1.0,
+                if (city.orbitalDefenseMax > 0) city.orbitalDefense.toDouble() / city.orbitalDefenseMax else 1.0,
                 GeneralType.WARRIOR.flag
             ),
             "wall" to Pair(
-                if (city.wallMax > 0) city.wall.toDouble() / city.wallMax else 1.0,
+                if (city.fortressMax > 0) city.fortress.toDouble() / city.fortressMax else 1.0,
                 GeneralType.WARRIOR.flag
             ),
         )
@@ -653,10 +653,10 @@ class GeneralAI(
     /**
      * Overall development score for a city (0.0-1.0).
      */
-    private fun calcCityDevScore(city: City): Double {
-        val maxSum = (city.agriMax + city.commMax + city.secuMax + city.defMax + city.wallMax).toDouble()
+    private fun calcCityDevScore(city: Planet): Double {
+        val maxSum = (city.productionMax + city.commerceMax + city.securityMax + city.orbitalDefenseMax + city.fortressMax).toDouble()
         if (maxSum <= 0) return 1.0
-        val curSum = (city.agri + city.comm + city.secu + city.def + city.wall).toDouble()
+        val curSum = (city.production + city.commerce + city.security + city.orbitalDefense + city.fortress).toDouble()
         return curSum / maxSum
     }
 
@@ -671,8 +671,8 @@ class GeneralAI(
         generalPolicy: NpcGeneralPolicy,
         attackable: Boolean,
         warTargetNations: Map<Long, Int>,
-        supplyCities: List<City>,
-        backupCities: List<City>,
+        supplyCities: List<Planet>,
+        backupCities: List<Planet>,
     ): String {
         val nation = ctx.nation ?: return "휴식"
 
@@ -698,8 +698,8 @@ class GeneralAI(
         ctx: AIContext,
         rng: Random,
         nationPolicy: NpcNationPolicy,
-        supplyCities: List<City>,
-        backupCities: List<City>,
+        supplyCities: List<Planet>,
+        backupCities: List<Planet>,
         attackable: Boolean,
         warTargetNations: Map<Long, Int>,
     ): String? {
@@ -754,7 +754,7 @@ class GeneralAI(
     }
 
     // ──────────────────────────────────────────────────────────
-    //  Nation-level do*() methods: Troop assignments
+    //  Nation-level do*() methods: Fleet assignments
     // ──────────────────────────────────────────────────────────
 
     /**
@@ -763,24 +763,24 @@ class GeneralAI(
      */
     private fun doTroopFrontAssignment(
         ctx: AIContext, rng: Random, policy: NpcNationPolicy,
-        frontCities: List<City>, supplyCities: List<City>,
+        frontCities: List<Planet>, supplyCities: List<Planet>,
         warTargetNations: Map<Long, Int>,
     ): String? {
         val nation = ctx.nation ?: return null
-        if (nation.capitalCityId == null) return null
+        if (nation.capitalPlanetId == null) return null
         if (frontCities.isEmpty()) return null
 
         val mapName = (ctx.world.config["mapName"] as? String) ?: "che"
-        val capitalMapCityId = ctx.allCities.find { it.id == nation.capitalCityId }?.mapCityId ?: return null
+        val capitalMapCityId = ctx.allPlanets.find { it.id == nation.capitalPlanetId }?.mapCityId ?: return null
 
         val targetNationIds = warTargetNations.keys.filter { it != 0L }
         val routeNationIds = mutableListOf(nation.id).apply { addAll(targetNationIds) }
-        val warRoute = mapService.calcAllPairsDistanceByNations(routeNationIds, ctx.allCities, mapName)
+        val warRoute = mapService.calcAllPairsDistanceByNations(routeNationIds, ctx.allPlanets, mapName)
 
         val frontCityMapIds = frontCities.map { it.mapCityId }.toSet()
         val supplyCityMapIds = supplyCities.map { it.mapCityId }.toSet()
-        val ownCityByMapId = ctx.allCities
-            .filter { it.nationId == nation.id }
+        val ownCityByMapId = ctx.allPlanets
+            .filter { it.factionId == nation.id }
             .associateBy { it.mapCityId }
 
         val troopLeaders = ctx.nationGenerals.filter { it.npcState.toInt() == 5 }
@@ -788,12 +788,12 @@ class GeneralAI(
         val candidates = mutableListOf<Pair<Long, Long>>()
 
         fun addRandomFront(leaderId: Long) {
-            val destCity = frontCities[rng.nextInt(frontCities.size)]
-            candidates.add(leaderId to destCity.id)
+            val destPlanet = frontCities[rng.nextInt(frontCities.size)]
+            candidates.add(leaderId to destPlanet.id)
         }
 
         for (leader in troopLeaders) {
-            val currentCityMapId = ctx.allCities.find { it.id == leader.cityId }?.mapCityId ?: continue
+            val currentCityMapId = ctx.allPlanets.find { it.id == leader.planetId }?.mapCityId ?: continue
             if (currentCityMapId in frontCityMapIds) continue
 
             val combatForce = policy.combatForce[leader.id.toInt()]
@@ -836,9 +836,9 @@ class GeneralAI(
                 }
             }
 
-            val destCity = ownCityByMapId[targetMapCityId]
-            if (destCity != null && destCity.supplyState > 0) {
-                candidates.add(leader.id to destCity.id)
+            val destPlanet = ownCityByMapId[targetMapCityId]
+            if (destPlanet != null && destPlanet.supplyState > 0) {
+                candidates.add(leader.id to destPlanet.id)
             } else {
                 addRandomFront(leader.id)
             }
@@ -859,22 +859,22 @@ class GeneralAI(
      */
     private fun doTroopRearAssignment(
         ctx: AIContext, rng: Random, policy: NpcNationPolicy,
-        backupCities: List<City>, supplyCities: List<City>,
+        backupCities: List<Planet>, supplyCities: List<Planet>,
     ): String? {
         val nation = ctx.nation ?: return null
-        if (nation.capitalCityId == null) return null
+        if (nation.capitalPlanetId == null) return null
 
         val troopLeaders = ctx.nationGenerals.filter { it.npcState.toInt() == 5 }
         val supplyCityIds = supplyCities.map { it.id }.toSet()
 
         // Find troop leaders in cities with low population
         val candidates = troopLeaders.filter { leader ->
-            val leaderCity = ctx.allCities.find { it.id == leader.cityId }
+            val leaderCity = ctx.allPlanets.find { it.id == leader.planetId }
             if (leaderCity == null || !supplyCityIds.contains(leaderCity.id)) {
                 true // Lost troop leader, needs rescue/rear
             } else {
-                leaderCity.popMax > 0 &&
-                    leaderCity.pop.toDouble() / leaderCity.popMax < policy.safeRecruitCityPopulationRatio
+                leaderCity.populationMax > 0 &&
+                    leaderCity.population.toDouble() / leaderCity.populationMax < policy.safeRecruitCityPopulationRatio
             }
         }
 
@@ -882,15 +882,15 @@ class GeneralAI(
 
         // Find suitable rear cities with enough population
         val recruitCities = (backupCities.ifEmpty { supplyCities }).filter { city ->
-            city.popMax > 0 &&
-                city.pop.toDouble() / city.popMax >= policy.safeRecruitCityPopulationRatio
+            city.populationMax > 0 &&
+                city.population.toDouble() / city.populationMax >= policy.safeRecruitCityPopulationRatio
         }
 
         if (recruitCities.isEmpty()) return null
 
         val target = candidates[rng.nextInt(candidates.size)]
-        val destCity = recruitCities[rng.nextInt(recruitCities.size)]
-        target.meta["assignedCity"] = destCity.id
+        val destPlanet = recruitCities[rng.nextInt(recruitCities.size)]
+        target.meta["assignedCity"] = destPlanet.id
         return "발령"
     }
 
@@ -899,22 +899,22 @@ class GeneralAI(
      */
     private fun doTroopRescueAssignment(
         ctx: AIContext, rng: Random, policy: NpcNationPolicy,
-        supplyCities: List<City>,
+        supplyCities: List<Planet>,
     ): String? {
         val nation = ctx.nation ?: return null
-        if (nation.capitalCityId == null) return null
+        if (nation.capitalPlanetId == null) return null
 
         val supplyCityIds = supplyCities.map { it.id }.toSet()
         val troopLeaders = ctx.nationGenerals.filter { it.npcState.toInt() == 5 }
 
         // Find troop leaders in non-supply cities (lost/cut off)
-        val lostLeaders = troopLeaders.filter { !supplyCityIds.contains(it.cityId) }
+        val lostLeaders = troopLeaders.filter { !supplyCityIds.contains(it.planetId) }
         if (lostLeaders.isEmpty()) return null
         if (supplyCities.isEmpty()) return null
 
         val target = lostLeaders[rng.nextInt(lostLeaders.size)]
-        val destCity = supplyCities[rng.nextInt(supplyCities.size)]
-        target.meta["assignedCity"] = destCity.id
+        val destPlanet = supplyCities[rng.nextInt(supplyCities.size)]
+        target.meta["assignedCity"] = destPlanet.id
         return "발령"
     }
 
@@ -928,15 +928,15 @@ class GeneralAI(
      */
     private fun doNpcFrontAssignment(
         ctx: AIContext, rng: Random, policy: NpcNationPolicy,
-        frontCities: List<City>, attackable: Boolean,
+        frontCities: List<Planet>, attackable: Boolean,
     ): String? {
         val nation = ctx.nation ?: return null
-        if (nation.capitalCityId == null) return null
+        if (nation.capitalPlanetId == null) return null
         if (frontCities.isEmpty()) return null
         if (ctx.diplomacyState == DiplomacyState.PEACE || ctx.diplomacyState == DiplomacyState.DECLARED) return null
 
         val frontCityIds = frontCities.map { it.id }.toSet()
-        val nationCityIds = ctx.allCities.filter { it.nationId == nation.id }.map { it.id }.toSet()
+        val nationCityIds = ctx.allPlanets.filter { it.factionId == nation.id }.map { it.id }.toSet()
 
         val npcWarGenerals = ctx.nationGenerals.filter { gen ->
             gen.npcState.toInt() >= 2 &&
@@ -946,19 +946,19 @@ class GeneralAI(
         }
 
         val candidates = npcWarGenerals.filter { gen ->
-            !frontCityIds.contains(gen.cityId) &&
-                nationCityIds.contains(gen.cityId) &&
-                gen.crew >= policy.minNPCWarLeadership && // minWarCrew analog
-                gen.troopId == 0L &&
-                max(gen.train.toInt(), gen.atmos.toInt()) >= 80
+            !frontCityIds.contains(gen.planetId) &&
+                nationCityIds.contains(gen.planetId) &&
+                gen.ships >= policy.minNPCWarLeadership && // minWarCrew analog
+                gen.fleetId == 0L &&
+                max(gen.training.toInt(), gen.morale.toInt()) >= 80
         }
 
         if (candidates.isEmpty()) return null
 
         // Weight front cities by importance (using officer count as proxy)
         val target = candidates[rng.nextInt(candidates.size)]
-        val destCity = frontCities[rng.nextInt(frontCities.size)]
-        target.meta["assignedCity"] = destCity.id
+        val destPlanet = frontCities[rng.nextInt(frontCities.size)]
+        target.meta["assignedCity"] = destPlanet.id
         return "발령"
     }
 
@@ -968,10 +968,10 @@ class GeneralAI(
      */
     private fun doNpcRearAssignment(
         ctx: AIContext, rng: Random, policy: NpcNationPolicy,
-        backupCities: List<City>, supplyCities: List<City>, frontCities: List<City>,
+        backupCities: List<Planet>, supplyCities: List<Planet>, frontCities: List<Planet>,
     ): String? {
         val nation = ctx.nation ?: return null
-        if (nation.capitalCityId == null) return null
+        if (nation.capitalPlanetId == null) return null
         if (ctx.diplomacyState != DiplomacyState.AT_WAR) return null
 
         val supplyCityIds = supplyCities.map { it.id }.toSet()
@@ -980,16 +980,16 @@ class GeneralAI(
             gen.npcState.toInt() >= 2 && gen.npcState.toInt() != 5 &&
                 gen.leadership >= policy.minNPCWarLeadership &&
                 gen.id != ctx.general.id &&
-                gen.troopId == 0L
+                gen.fleetId == 0L
         }
 
         // Generals in supply cities with low population ratio, needing crew
         val candidates = npcWarGenerals.filter { gen ->
-            if (!supplyCityIds.contains(gen.cityId)) return@filter false
-            if (gen.crew >= policy.minWarCrew) return@filter false
-            val genCity = ctx.allCities.find { it.id == gen.cityId } ?: return@filter false
-            genCity.popMax > 0 &&
-                genCity.pop.toDouble() / genCity.popMax < policy.safeRecruitCityPopulationRatio
+            if (!supplyCityIds.contains(gen.planetId)) return@filter false
+            if (gen.ships >= policy.minWarCrew) return@filter false
+            val genCity = ctx.allPlanets.find { it.id == gen.planetId } ?: return@filter false
+            genCity.populationMax > 0 &&
+                genCity.population.toDouble() / genCity.populationMax < policy.safeRecruitCityPopulationRatio
         }
 
         if (candidates.isEmpty()) return null
@@ -999,18 +999,18 @@ class GeneralAI(
 
         // Find cities with enough population for recruitment
         val recruitCities = (backupCities.ifEmpty { supplyCities }).filter { city ->
-            city.pop >= minRecruitPop &&
-                city.popMax > 0 &&
-                city.pop.toDouble() / city.popMax >= policy.safeRecruitCityPopulationRatio
+            city.population >= minRecruitPop &&
+                city.populationMax > 0 &&
+                city.population.toDouble() / city.populationMax >= policy.safeRecruitCityPopulationRatio
         }
 
         if (recruitCities.isEmpty()) return null
 
         val target = candidates[rng.nextInt(candidates.size)]
-        val destCity = choiceByWeight(rng, recruitCities) { city ->
-            city.pop.toDouble() / city.popMax
+        val destPlanet = choiceByWeight(rng, recruitCities) { city ->
+            city.population.toDouble() / city.populationMax
         } ?: return null
-        target.meta["assignedCity"] = destCity.id
+        target.meta["assignedCity"] = destPlanet.id
         return "발령"
     }
 
@@ -1020,10 +1020,10 @@ class GeneralAI(
      */
     private fun doNpcDomesticAssignment(
         ctx: AIContext, rng: Random, policy: NpcNationPolicy,
-        supplyCities: List<City>,
+        supplyCities: List<Planet>,
     ): String? {
         val nation = ctx.nation ?: return null
-        if (nation.capitalCityId == null) return null
+        if (nation.capitalPlanetId == null) return null
         if (supplyCities.size <= 1) return null
 
         val avgDev = supplyCities.map { calcCityDevScore(it) }.average()
@@ -1044,7 +1044,7 @@ class GeneralAI(
 
         // Find generals in well-developed cities
         val candidates = civilGenerals.filter { gen ->
-            val city = supplyCityMap[gen.cityId] ?: return@filter false
+            val city = supplyCityMap[gen.planetId] ?: return@filter false
             calcCityDevScore(city) >= 0.95
         }
 
@@ -1054,20 +1054,20 @@ class GeneralAI(
         val cityWeights = supplyCities.map { city ->
             val dev = min(calcCityDevScore(city), 0.999)
             val score = (1.0 - dev).pow(2.0)
-            val generalCount = ctx.nationGenerals.count { it.cityId == city.id }
+            val generalCount = ctx.nationGenerals.count { it.planetId == city.id }
             city to score / sqrt(generalCount.toDouble() + 1.0)
         }.filter { it.second > 0.0 }
 
         if (cityWeights.isEmpty()) return null
 
-        val destGeneral = candidates[rng.nextInt(candidates.size)]
-        val srcCity = supplyCityMap[destGeneral.cityId]
-        val destCity = choiceByWeightPair(rng, cityWeights) ?: return null
+        val destOfficer = candidates[rng.nextInt(candidates.size)]
+        val srcCity = supplyCityMap[destOfficer.planetId]
+        val destPlanet = choiceByWeightPair(rng, cityWeights) ?: return null
 
         // Don't move to a city that's already better developed
-        if (srcCity != null && calcCityDevScore(srcCity) <= calcCityDevScore(destCity)) return null
+        if (srcCity != null && calcCityDevScore(srcCity) <= calcCityDevScore(destPlanet)) return null
 
-        destGeneral.meta["assignedCity"] = destCity.id
+        destOfficer.meta["assignedCity"] = destPlanet.id
         return "발령"
     }
 
@@ -1080,33 +1080,33 @@ class GeneralAI(
      */
     private fun doUserFrontAssignment(
         ctx: AIContext, rng: Random, policy: NpcNationPolicy,
-        frontCities: List<City>, attackable: Boolean,
+        frontCities: List<Planet>, attackable: Boolean,
     ): String? {
         val nation = ctx.nation ?: return null
-        if (nation.capitalCityId == null) return null
+        if (nation.capitalPlanetId == null) return null
         if (frontCities.isEmpty()) return null
         if (ctx.diplomacyState == DiplomacyState.PEACE || ctx.diplomacyState == DiplomacyState.DECLARED) return null
 
         val frontCityIds = frontCities.map { it.id }.toSet()
-        val nationCityIds = ctx.allCities.filter { it.nationId == nation.id }.map { it.id }.toSet()
+        val nationCityIds = ctx.allPlanets.filter { it.factionId == nation.id }.map { it.id }.toSet()
 
         val userWarGenerals = ctx.nationGenerals.filter { gen ->
             gen.npcState.toInt() < 2 && gen.id != ctx.general.id
         }
 
         val candidates = userWarGenerals.filter { gen ->
-            nationCityIds.contains(gen.cityId) &&
-                !frontCityIds.contains(gen.cityId) &&
-                gen.crew >= 500 &&
-                gen.troopId == 0L &&
-                max(gen.train.toInt(), gen.atmos.toInt()) >= 80
+            nationCityIds.contains(gen.planetId) &&
+                !frontCityIds.contains(gen.planetId) &&
+                gen.ships >= 500 &&
+                gen.fleetId == 0L &&
+                max(gen.training.toInt(), gen.morale.toInt()) >= 80
         }
 
         if (candidates.isEmpty()) return null
 
         val target = candidates[rng.nextInt(candidates.size)]
-        val destCity = frontCities[rng.nextInt(frontCities.size)]
-        target.meta["assignedCity"] = destCity.id
+        val destPlanet = frontCities[rng.nextInt(frontCities.size)]
+        target.meta["assignedCity"] = destPlanet.id
         return "발령"
     }
 
@@ -1115,23 +1115,23 @@ class GeneralAI(
      */
     private fun doUserRearAssignment(
         ctx: AIContext, rng: Random, policy: NpcNationPolicy,
-        backupCities: List<City>, supplyCities: List<City>, frontCities: List<City>,
+        backupCities: List<Planet>, supplyCities: List<Planet>, frontCities: List<Planet>,
     ): String? {
         val nation = ctx.nation ?: return null
-        if (nation.capitalCityId == null) return null
+        if (nation.capitalPlanetId == null) return null
         if (ctx.diplomacyState != DiplomacyState.AT_WAR) return null
 
         val supplyCityMap = supplyCities.associateBy { it.id }
 
         val userWarGenerals = ctx.nationGenerals.filter { gen ->
-            gen.npcState.toInt() < 2 && gen.id != ctx.general.id && gen.troopId == 0L
+            gen.npcState.toInt() < 2 && gen.id != ctx.general.id && gen.fleetId == 0L
         }
 
         val candidates = userWarGenerals.filter { gen ->
-            val city = supplyCityMap[gen.cityId] ?: return@filter false
-            gen.crew < 500 &&
-                city.popMax > 0 &&
-                city.pop.toDouble() / city.popMax < policy.safeRecruitCityPopulationRatio
+            val city = supplyCityMap[gen.planetId] ?: return@filter false
+            gen.ships < 500 &&
+                city.populationMax > 0 &&
+                city.population.toDouble() / city.populationMax < policy.safeRecruitCityPopulationRatio
         }
 
         if (candidates.isEmpty()) return null
@@ -1141,16 +1141,16 @@ class GeneralAI(
         val minRecruitPop = pickedGeneral.leadership.toInt() * 100 + policy.minNPCRecruitCityPopulation
 
         val recruitCities = (backupCities.ifEmpty { supplyCities }).filter { city ->
-            city.pop >= minRecruitPop && city.popMax > 0 &&
-                city.pop.toDouble() / city.popMax >= policy.safeRecruitCityPopulationRatio
+            city.population >= minRecruitPop && city.populationMax > 0 &&
+                city.population.toDouble() / city.populationMax >= policy.safeRecruitCityPopulationRatio
         }
 
         if (recruitCities.isEmpty()) return null
 
-        val destCity = choiceByWeight(rng, recruitCities) { city ->
-            city.pop.toDouble() / city.popMax
+        val destPlanet = choiceByWeight(rng, recruitCities) { city ->
+            city.population.toDouble() / city.populationMax
         } ?: return null
-        pickedGeneral.meta["assignedCity"] = destCity.id
+        pickedGeneral.meta["assignedCity"] = destPlanet.id
         return "발령"
     }
 
@@ -1164,8 +1164,8 @@ class GeneralAI(
      */
     private fun doNpcReward(ctx: AIContext, rng: Random, policy: NpcNationPolicy): String? {
         val nation = ctx.nation ?: return null
-        if (nation.gold < policy.reqNationGold) return null
-        if (nation.rice < policy.reqNationRice) return null
+        if (nation.funds < policy.reqNationGold) return null
+        if (nation.supplies < policy.reqNationRice) return null
 
         val npcGenerals = ctx.nationGenerals.filter { gen ->
             gen.npcState.toInt() >= 2 && gen.npcState.toInt() != 5 &&
@@ -1176,18 +1176,18 @@ class GeneralAI(
         if (npcGenerals.isEmpty()) return null
 
         // Find the NPC general most in need
-        val candidates = mutableListOf<Pair<General, Double>>()
+        val candidates = mutableListOf<Pair<Officer, Double>>()
 
         for (gen in npcGenerals) {
             val isWarGen = gen.leadership >= policy.minNPCWarLeadership
             val reqGold = if (isWarGen) policy.reqNationGold else (policy.reqNationGold / 2)
             val reqRice = if (isWarGen) policy.reqNationRice else (policy.reqNationRice / 2)
 
-            if (gen.gold < reqGold) {
-                val deficit = (reqGold - gen.gold).toDouble()
+            if (gen.funds < reqGold) {
+                val deficit = (reqGold - gen.funds).toDouble()
                 candidates.add(gen to deficit)
-            } else if (gen.rice < reqRice) {
-                val deficit = (reqRice - gen.rice).toDouble()
+            } else if (gen.supplies < reqRice) {
+                val deficit = (reqRice - gen.supplies).toDouble()
                 candidates.add(gen to deficit)
             }
         }
@@ -1198,15 +1198,15 @@ class GeneralAI(
         val (target, _) = candidates.maxByOrNull { it.second } ?: return null
 
         // Calculate payment amount: geometric mean of deficit and treasury
-        val goldDeficit = max(0, policy.reqNationGold - target.gold)
-        val riceDeficit = max(0, policy.reqNationRice - target.rice)
+        val goldDeficit = max(0, policy.reqNationGold - target.funds)
+        val riceDeficit = max(0, policy.reqNationRice - target.supplies)
 
         val payGold = if (goldDeficit > riceDeficit) {
-            valueFit(sqrt(goldDeficit.toDouble() * nation.gold).toInt(), policy.minimumResourceActionAmount, policy.maximumResourceActionAmount)
+            valueFit(sqrt(goldDeficit.toDouble() * nation.funds).toInt(), policy.minimumResourceActionAmount, policy.maximumResourceActionAmount)
         } else 0
 
         val payRice = if (riceDeficit >= goldDeficit) {
-            valueFit(sqrt(riceDeficit.toDouble() * nation.rice).toInt(), policy.minimumResourceActionAmount, policy.maximumResourceActionAmount)
+            valueFit(sqrt(riceDeficit.toDouble() * nation.supplies).toInt(), policy.minimumResourceActionAmount, policy.maximumResourceActionAmount)
         } else 0
 
         if (payGold <= 0 && payRice <= 0) return null
@@ -1222,8 +1222,8 @@ class GeneralAI(
      */
     private fun doUserReward(ctx: AIContext, rng: Random, policy: NpcNationPolicy): String? {
         val nation = ctx.nation ?: return null
-        if (nation.gold < policy.reqNationGold) return null
-        if (nation.rice < policy.reqNationRice) return null
+        if (nation.funds < policy.reqNationGold) return null
+        if (nation.supplies < policy.reqNationRice) return null
 
         val userGenerals = ctx.nationGenerals.filter { gen ->
             gen.npcState.toInt() < 2 && gen.id != ctx.general.id &&
@@ -1232,15 +1232,15 @@ class GeneralAI(
 
         if (userGenerals.isEmpty()) return null
 
-        val candidates = mutableListOf<Pair<General, Double>>()
+        val candidates = mutableListOf<Pair<Officer, Double>>()
         val reqGold = policy.reqNationGold
         val reqRice = policy.reqNationRice
 
         for (gen in userGenerals) {
-            if (gen.gold < reqGold) {
-                candidates.add(gen to (reqGold - gen.gold).toDouble())
-            } else if (gen.rice < reqRice) {
-                candidates.add(gen to (reqRice - gen.rice).toDouble())
+            if (gen.funds < reqGold) {
+                candidates.add(gen to (reqGold - gen.funds).toDouble())
+            } else if (gen.supplies < reqRice) {
+                candidates.add(gen to (reqRice - gen.supplies).toDouble())
             }
         }
 
@@ -1248,14 +1248,14 @@ class GeneralAI(
 
         val (target, deficit) = candidates.maxByOrNull { it.second } ?: return null
         val payAmount = valueFit(
-            sqrt(deficit * max(nation.gold, nation.rice).toDouble()).toInt(),
+            sqrt(deficit * max(nation.funds, nation.supplies).toDouble()).toInt(),
             policy.minimumResourceActionAmount,
             policy.maximumResourceActionAmount
         )
         if (payAmount <= 0) return null
 
-        target.meta["rewardGold"] = if (target.gold < target.rice) payAmount else 0
-        target.meta["rewardRice"] = if (target.rice <= target.gold) payAmount else 0
+        target.meta["rewardGold"] = if (target.funds < target.supplies) payAmount else 0
+        target.meta["rewardRice"] = if (target.supplies <= target.funds) payAmount else 0
         return "포상"
     }
 
@@ -1278,28 +1278,28 @@ class GeneralAI(
         val reqGold = policy.reqNationGold
         val reqRice = policy.reqNationRice
 
-        data class ConfCandidate(val general: General, val isGold: Boolean, val amount: Int, val weight: Double)
+        data class ConfCandidate(val general: Officer, val isGold: Boolean, val amount: Int, val weight: Double)
 
         val candidates = mutableListOf<ConfCandidate>()
 
         // Civil NPC generals (low leadership = civil)
         val civilNpcs = npcGenerals.filter { it.leadership < policy.minNPCWarLeadership }
-            .sortedByDescending { it.gold + it.rice }
+            .sortedByDescending { it.funds + it.supplies }
         val warNpcs = npcGenerals.filter { it.leadership >= policy.minNPCWarLeadership }
-            .sortedByDescending { it.gold + it.rice }
+            .sortedByDescending { it.funds + it.supplies }
 
         val reqDevelGold = reqGold / 2
         val reqDevelRice = reqRice / 2
 
         for (gen in civilNpcs) {
-            if (gen.gold > reqDevelGold * 1.5) {
-                val take = valueFit((gen.gold - reqDevelGold * 1.2).toInt(), 100, policy.maximumResourceActionAmount)
+            if (gen.funds > reqDevelGold * 1.5) {
+                val take = valueFit((gen.funds - reqDevelGold * 1.2).toInt(), 100, policy.maximumResourceActionAmount)
                 if (take >= policy.minimumResourceActionAmount) {
                     candidates.add(ConfCandidate(gen, true, take, take.toDouble()))
                 }
             }
-            if (gen.rice > reqDevelRice * 1.5) {
-                val take = valueFit((gen.rice - reqDevelRice * 1.2).toInt(), 100, policy.maximumResourceActionAmount)
+            if (gen.supplies > reqDevelRice * 1.5) {
+                val take = valueFit((gen.supplies - reqDevelRice * 1.2).toInt(), 100, policy.maximumResourceActionAmount)
                 if (take >= policy.minimumResourceActionAmount) {
                     candidates.add(ConfCandidate(gen, false, take, take.toDouble()))
                 }
@@ -1307,14 +1307,14 @@ class GeneralAI(
         }
 
         // War NPCs: only when treasury needs it
-        val goldDeficit = reqGold * 1.5 - nation.gold
-        val riceDeficit = reqRice * 1.5 - nation.rice
+        val goldDeficit = reqGold * 1.5 - nation.funds
+        val riceDeficit = reqRice * 1.5 - nation.supplies
 
         if (goldDeficit > 0) {
             for (gen in warNpcs) {
-                if (gen.gold <= reqGold) continue
+                if (gen.funds <= reqGold) continue
                 val take = valueFit(
-                    sqrt((gen.gold - reqGold).toDouble() * goldDeficit).toInt(),
+                    sqrt((gen.funds - reqGold).toDouble() * goldDeficit).toInt(),
                     100, policy.maximumResourceActionAmount
                 )
                 if (take >= policy.minimumResourceActionAmount) {
@@ -1324,9 +1324,9 @@ class GeneralAI(
         }
         if (riceDeficit > 0) {
             for (gen in warNpcs) {
-                if (gen.rice <= reqRice) continue
+                if (gen.supplies <= reqRice) continue
                 val take = valueFit(
-                    sqrt((gen.rice - reqRice).toDouble() * riceDeficit).toInt(),
+                    sqrt((gen.supplies - reqRice).toDouble() * riceDeficit).toInt(),
                     100, policy.maximumResourceActionAmount
                 )
                 if (take >= policy.minimumResourceActionAmount) {
@@ -1357,7 +1357,7 @@ class GeneralAI(
      * Calculates diplomatMonth = 24 * amount / income to determine proposal deadline.
      */
     /**
-     * Per PHP GeneralAI.php:1765 do불가침제의.
+     * Per PHP OfficerAI.php:1765 do불가침제의.
      * PHP bases NAP proposal on recv_assist/resp_assist KVStorage (assistance tracking).
      * Candidate nations: those who provided assistance (recv_assist entries).
      * Amount filter: amount * 4 < income -> skip.
@@ -1365,7 +1365,7 @@ class GeneralAI(
      * Cooldown: resp_assist_try within 8 months -> skip.
      */
     private fun doNonAggressionProposal(
-        ctx: AIContext, rng: Random, policy: NpcNationPolicy, supplyCities: List<City>,
+        ctx: AIContext, rng: Random, policy: NpcNationPolicy, supplyCities: List<Planet>,
     ): String? {
         val nation = ctx.nation ?: return null
         // Per PHP line 1769: officer_level < 12 (chief). Kotlin chief = 20.
@@ -1400,8 +1400,8 @@ class GeneralAI(
             // We check the diplomacies for active wars
             val diplomacies = worldPortFactory.create(ctx.world.id.toLong()).activeDiplomacies().map { it.toEntity() }
             val isWarTarget = diplomacies.any {
-                (it.srcNationId == nation.id && it.destNationId == candNationId ||
-                    it.destNationId == nation.id && it.srcNationId == candNationId) &&
+                (it.srcFactionId == nation.id && it.destFactionId == candNationId ||
+                    it.destFactionId == nation.id && it.srcFactionId == candNationId) &&
                     (it.stateCode == "전쟁" || it.stateCode == "선전포고")
             }
             if (isWarTarget) continue
@@ -1420,7 +1420,7 @@ class GeneralAI(
         val goldIncome = supplyCities.sumOf { calcCityGoldIncome(it) }.toInt()
         val riceIncome = supplyCities.sumOf { calcCityRiceIncome(it) }.toInt()
         val wallIncome = supplyCities.sumOf { city ->
-            if (city.supplyState > 0) (city.wall / 15) else 0
+            if (city.supplyState > 0) (city.fortress / 15) else 0
         }
         val income = (goldIncome + riceIncome + wallIncome).coerceAtLeast(1)
 
@@ -1463,7 +1463,7 @@ class GeneralAI(
      */
     private fun doDeclaration(
         ctx: AIContext, rng: Random, policy: NpcNationPolicy,
-        attackable: Boolean, warTargetNations: Map<Long, Int>, supplyCities: List<City>,
+        attackable: Boolean, warTargetNations: Map<Long, Int>, supplyCities: List<Planet>,
     ): String? {
         val nation = ctx.nation ?: return null
         if (ctx.general.officerLevel < 20) return null
@@ -1478,7 +1478,7 @@ class GeneralAI(
             return null
         }
         // Per PHP line 1864
-        if (nation.capitalCityId == null) return null
+        if (nation.capitalPlanetId == null) return null
         // Per PHP line 1868: frontCities must be EMPTY (no borders yet)
         // PHP: if($this->frontCities) return null; → returns null when frontCities is non-empty
         if (ctx.frontCities.isNotEmpty()) {
@@ -1490,7 +1490,7 @@ class GeneralAI(
         // TODO: TechLimit guard not implemented; opensamguk tech system may differ
 
         // Per PHP lines 1883-1902: use categorizeNationGeneral for war/civil separation
-        val nationCities = ctx.allCities.filter { it.nationId == nation.id }
+        val nationCities = ctx.allPlanets.filter { it.factionId == nation.id }
             .associateBy { it.id }
         val categories = categorizeNationGeneral(
             nationGenerals = ctx.nationGenerals,
@@ -1506,28 +1506,28 @@ class GeneralAI(
         if (totalGenerals == 0) return null
 
         // Per PHP: NPC generals at full weight, user generals at 50% weight
-        var avgGold = nation.gold.toDouble()
-        var avgRice = nation.rice.toDouble()
+        var avgGold = nation.funds.toDouble()
+        var avgRice = nation.supplies.toDouble()
         var genCnt = 0
 
         for (gen in categories.npcWarGenerals) {
-            avgGold += gen.gold
-            avgRice += gen.rice
+            avgGold += gen.funds
+            avgRice += gen.supplies
             genCnt++
         }
         for (gen in categories.npcCivilGenerals) {
-            avgGold += gen.gold
-            avgRice += gen.rice
+            avgGold += gen.funds
+            avgRice += gen.supplies
             genCnt++
         }
         for (gen in categories.userWarGenerals) {
-            avgGold += gen.gold / 2.0
-            avgRice += gen.rice / 2.0
+            avgGold += gen.funds / 2.0
+            avgRice += gen.supplies / 2.0
             genCnt++
         }
         for (gen in categories.userCivilGenerals) {
-            avgGold += gen.gold / 2.0
-            avgRice += gen.rice / 2.0
+            avgGold += gen.funds / 2.0
+            avgRice += gen.supplies / 2.0
             genCnt++
         }
 
@@ -1542,7 +1542,7 @@ class GeneralAI(
         if (supplyCities.isNotEmpty()) {
             val devRates = supplyCities.map { calcCityDevScore(it) }
             val popRates = supplyCities.map {
-                if (it.popMax > 0) it.pop.toDouble() / it.popMax else 0.0
+                if (it.populationMax > 0) it.population.toDouble() / it.populationMax else 0.0
             }
             trialProp += (popRates.average() + devRates.average()) / 2.0
         }
@@ -1557,7 +1557,7 @@ class GeneralAI(
 
         // Find neighboring nations to declare war on
         // Per legacy: prefer nations not already in wars, weighted by inverse power
-        val otherNations = ctx.allNations.filter {
+        val otherNations = ctx.allFactions.filter {
             it.id != nation.id && it.level > 0
         }
 
@@ -1565,8 +1565,8 @@ class GeneralAI(
 
         // Map-adjacency based neighbor check: only nations that share a border via connected cities
         // mapAdjacency keys are mapCityId (from map JSON), not DB city.id
-        val myMapCityIds = ctx.allCities.filter { it.nationId == nation.id }.map { it.mapCityId.toLong() }.toSet()
-        val mapCityNationMap = ctx.allCities.associate { it.mapCityId.toLong() to it.nationId }
+        val myMapCityIds = ctx.allPlanets.filter { it.factionId == nation.id }.map { it.mapCityId.toLong() }.toSet()
+        val mapCityNationMap = ctx.allPlanets.associate { it.mapCityId.toLong() to it.factionId }
         val neighborNationIds = mutableSetOf<Long>()
         for (myMapCityId in myMapCityIds) {
             for (adjMapId in ctx.mapAdjacency[myMapCityId].orEmpty()) {
@@ -1591,16 +1591,16 @@ class GeneralAI(
      * Per legacy: score = pop * (maxDistSum / cityDistSum) * sqrt(dev), move if capital isn't in top 25%.
      */
     private fun doMoveCapital(
-        ctx: AIContext, rng: Random, policy: NpcNationPolicy, supplyCities: List<City>,
+        ctx: AIContext, rng: Random, policy: NpcNationPolicy, supplyCities: List<Planet>,
     ): String? {
         val nation = ctx.nation ?: return null
-        val capital = nation.capitalCityId ?: return null
+        val capital = nation.capitalPlanetId ?: return null
         if (supplyCities.size <= 1) return null
 
         // Score each supply city
         val cityScores = supplyCities.map { city ->
             val dev = calcCityDevScore(city)
-            val score = city.pop.toDouble() * sqrt(dev)
+            val score = city.population.toDouble() * sqrt(dev)
             city to score
         }.sortedByDescending { it.second }
 
@@ -1624,7 +1624,7 @@ class GeneralAI(
     private fun decideWarOrPeaceGeneralAction(
         ctx: AIContext, rng: Random, generalPolicy: NpcGeneralPolicy,
         nationPolicy: NpcNationPolicy, attackable: Boolean,
-        warTargetNations: Map<Long, Int>, supplyCities: List<City>, backupCities: List<City>,
+        warTargetNations: Map<Long, Int>, supplyCities: List<Planet>, backupCities: List<Planet>,
     ): String {
         val hasNeutralTargets = warTargetNations.containsKey(0L)
         return if (ctx.diplomacyState == DiplomacyState.AT_WAR ||
@@ -1645,7 +1645,7 @@ class GeneralAI(
     private fun decideWarAction(
         ctx: AIContext, rng: Random, policy: NpcGeneralPolicy,
         nationPolicy: NpcNationPolicy, attackable: Boolean,
-        warTargetNations: Map<Long, Int>, supplyCities: List<City>, backupCities: List<City>,
+        warTargetNations: Map<Long, Int>, supplyCities: List<Planet>, backupCities: List<Planet>,
     ): String {
         val general = ctx.general
         val city = ctx.city
@@ -1672,7 +1672,7 @@ class GeneralAI(
 
     private fun decidePeaceAction(
         ctx: AIContext, rng: Random, policy: NpcGeneralPolicy,
-        nationPolicy: NpcNationPolicy, supplyCities: List<City>, backupCities: List<City>,
+        nationPolicy: NpcNationPolicy, supplyCities: List<Planet>, backupCities: List<Planet>,
         warTargetNations: Map<Long, Int> = emptyMap(),
     ): String {
         val general = ctx.general
@@ -1704,7 +1704,7 @@ class GeneralAI(
         policy: NpcGeneralPolicy, nationPolicy: NpcNationPolicy,
         warMode: Boolean, attackable: Boolean,
         warTargetNations: Map<Long, Int>,
-        supplyCities: List<City>, backupCities: List<City>,
+        supplyCities: List<Planet>, backupCities: List<Planet>,
     ): String? {
         return when (priority) {
             "긴급내정" -> doUrgentDomestic(ctx, rng, nationPolicy)
@@ -1739,7 +1739,7 @@ class GeneralAI(
         val genType = ctx.generalType
 
         // Per legacy: if nation rice is low, 30% chance to skip
-        if (nation.rice < 1000 && rng.nextDouble() < 0.3) return null
+        if (nation.supplies < 1000 && rng.nextDouble() < 0.3) return null
 
         val develRate = calcCityDevelRate(city)
         val isSpringSummer = ctx.world.currentMonth <= 6
@@ -1754,25 +1754,25 @@ class GeneralAI(
 
         if (genType and GeneralType.WARRIOR.flag != 0) {
             val fullLeadership = general.leadership.toInt()
-            val goldAfterTrainCost = general.gold - fullLeadership * 3
-            val riceAfterTrainCost = general.rice - fullLeadership * 4
-            if (general.crew <= 0 && goldAfterTrainCost > 0 && riceAfterTrainCost > 0) {
-                val crewTypeCode = if (general.crewType.toInt() > 0) general.crewType.toInt() else 1100
+            val goldAfterTrainCost = general.funds - fullLeadership * 3
+            val riceAfterTrainCost = general.supplies - fullLeadership * 4
+            if (general.ships <= 0 && goldAfterTrainCost > 0 && riceAfterTrainCost > 0) {
+                val crewTypeCode = if (general.shipClass.toInt() > 0) general.shipClass.toInt() else 1100
                 general.meta["aiArg"] = mutableMapOf<String, Any>(
                     "crewType" to crewTypeCode,
                     "amount" to fullLeadership * 100,
                 )
                 return if (goldAfterTrainCost >= fullLeadership * 3 * 6) "모병" else "징병"
             }
-            if (general.crew > 0 && general.train < 80) return "훈련"
+            if (general.ships > 0 && general.training < 80) return "훈련"
         }
 
         data class WeightedAction(val action: String, val weight: Double)
         val cmdList = mutableListOf<WeightedAction>()
 
         val leadership = general.leadership.toInt()
-        val strength = general.strength.toInt()
-        val intel = general.intel.toInt()
+        val strength = general.command.toInt()
+        val intel = general.intelligence.toInt()
 
         // Commander type: trust and population
         if (genType and GeneralType.COMMANDER.flag != 0) {
@@ -1810,7 +1810,7 @@ class GeneralAI(
         // Strategist type: tech, agriculture, commerce
         if (genType and GeneralType.STRATEGIST.flag != 0) {
             // Tech research: use legacy TechLimit formula
-            val currentTech = nation.tech.toDouble()
+            val currentTech = nation.techLevel.toDouble()
             val startYear = (ctx.world.config["startyear"] as? Number)?.toInt() ?: ctx.world.currentYear.toInt()
             val relYear = ctx.world.currentYear.toInt() - startYear
             val techLevelBand = kotlin.math.floor(currentTech / 1000.0).toInt().coerceIn(0, 12)
@@ -1849,12 +1849,12 @@ class GeneralAI(
 
         // Per legacy: trust < 70 -> 주민선정 with probability based on leadership.
         // Ignore unset trust(<=0) so urgent domestic does not dominate sparse fixtures.
-        if (city.trust > 0 && city.trust < 70 && rng.nextDouble() < leadership.toDouble() / 60.0) {
+        if (city.approval > 0 && city.approval < 70 && rng.nextDouble() < leadership.toDouble() / 60.0) {
             return "주민선정"
         }
 
         // Population too low for recruitment
-        if (city.pop < nationPolicy.minNPCRecruitCityPopulation && rng.nextDouble() < leadership.toDouble() / 120.0) {
+        if (city.population < nationPolicy.minNPCRecruitCityPopulation && rng.nextDouble() < leadership.toDouble() / 120.0) {
             return "정착장려"
         }
 
@@ -1873,7 +1873,7 @@ class GeneralAI(
         val nation = ctx.nation ?: return null
         val genType = ctx.generalType
 
-        if (nation.rice < 1000 && rng.nextDouble() < 0.3) return null
+        if (nation.supplies < 1000 && rng.nextDouble() < 0.3) return null
         if (rng.nextDouble() < 0.3) return null  // 30% skip per legacy
 
         val develRate = calcCityDevelRate(city)
@@ -1881,8 +1881,8 @@ class GeneralAI(
         val isFront = city.frontState.toInt() in listOf(1, 3)
 
         val leadership = general.leadership.toInt()
-        val strength = general.strength.toInt()
-        val intel = general.intel.toInt()
+        val strength = general.command.toInt()
+        val intel = general.intelligence.toInt()
 
         data class WA(val action: String, val weight: Double)
         val cmdList = mutableListOf<WA>()
@@ -1890,7 +1890,7 @@ class GeneralAI(
         // Commander: trust and pop (same as normal but lower thresholds)
         if (genType and GeneralType.COMMANDER.flag != 0) {
             val trustRate = develRate["trust"]!!.first
-            if (city.trust > 0 && trustRate < 0.98) {
+            if (city.approval > 0 && trustRate < 0.98) {
                 cmdList.add(WA("주민선정", leadership / valueFitD(trustRate / 2.0 - 0.2, 0.001) * 2.0))
             }
             val popRate = develRate["pop"]!!.first
@@ -1918,7 +1918,7 @@ class GeneralAI(
 
         // Strategist: only if below 50%
         if (genType and GeneralType.STRATEGIST.flag != 0) {
-            val techLevel = nation.tech.toInt()
+            val techLevel = nation.techLevel.toInt()
             val yearsElapsed = ctx.world.currentYear - ((ctx.world.config["startyear"] as? Number)?.toInt() ?: ctx.world.currentYear.toInt())
             if (techLevel < yearsElapsed * 500) {
                 val nextTech = techLevel % 1000 + 1
@@ -1969,19 +1969,19 @@ class GeneralAI(
         val city = ctx.city
 
         // Already have enough crew - per legacy uses nationPolicy.minWarCrew
-        if (general.crew >= nationPolicy.minWarCrew) return null
+        if (general.ships >= nationPolicy.minWarCrew) return null
 
         // Population safety check per legacy (line 2505):
         // remainPop = pop - minNPCRecruitCityPopulation - fullLeadership * 100
         val fullLeadership = general.leadership.toInt()
-        val remainPop = city.pop - nationPolicy.minNPCRecruitCityPopulation - fullLeadership * 100
+        val remainPop = city.population - nationPolicy.minNPCRecruitCityPopulation - fullLeadership * 100
         if (remainPop <= 0) return null
 
         // Legacy (line 2511): if pop ratio < safeRecruitCityPopulationRatio, probabilistic skip
-        if (city.popMax > 0) {
-            val popRatio = city.pop.toDouble() / city.popMax
+        if (city.populationMax > 0) {
+            val popRatio = city.population.toDouble() / city.populationMax
             if (popRatio < nationPolicy.safeRecruitCityPopulationRatio) {
-                val maxPop = city.popMax - nationPolicy.minNPCRecruitCityPopulation
+                val maxPop = city.populationMax - nationPolicy.minNPCRecruitCityPopulation
                 if (maxPop > 0 && rng.nextDouble() < remainPop.toDouble() / maxPop) {
                     return null
                 }
@@ -1989,12 +1989,12 @@ class GeneralAI(
         }
 
         // Legacy (lines 2602-2609): subtract estimated training/morale costs
-        val goldAfterTrainCost = general.gold - fullLeadership * 3
-        val riceAfterTrainCost = general.rice - fullLeadership * 4
+        val goldAfterTrainCost = general.funds - fullLeadership * 3
+        val riceAfterTrainCost = general.supplies - fullLeadership * 4
         if (goldAfterTrainCost <= 0 || riceAfterTrainCost <= 0) return null
 
-        val crewTypeCode = pickCrewType(general, ctx.generalType, rng, ctx.allCities, ctx.nation, ctx.world)
-        val maxAmount = fullLeadership * 100 - (if (crewTypeCode == general.crewType.toInt()) general.crew else 0)
+        val crewTypeCode = pickCrewType(general, ctx.generalType, rng, ctx.allPlanets, ctx.nation, ctx.world)
+        val maxAmount = fullLeadership * 100 - (if (crewTypeCode == general.shipClass.toInt()) general.ships else 0)
         if (maxAmount <= 0) return null
 
         general.meta["aiArg"] = mutableMapOf<String, Any>(
@@ -2007,12 +2007,12 @@ class GeneralAI(
     }
 
     private fun pickCrewType(
-        general: General,
+        general: Officer,
         generalType: Int,
         rng: Random,
-        nationCities: List<City>,
-        nation: Nation?,
-        world: WorldState,
+        nationCities: List<Planet>,
+        nation: Faction?,
+        world: SessionState,
     ): Int {
         val randUtil = (rng as? LiteHashDRBG)?.let { RandUtil(it) }
 
@@ -2029,8 +2029,8 @@ class GeneralAI(
         }
 
         if (armTypeCode == null) {
-            val fullStrength = general.strength.toInt()
-            val fullIntel = general.intel.toInt()
+            val fullStrength = general.command.toInt()
+            val fullIntel = general.intelligence.toInt()
 
             val dex = mapOf(
                 ArmType.FOOTMAN.code to sqrt((general.dex1 + 500).toDouble()),
@@ -2059,8 +2059,8 @@ class GeneralAI(
             }
         }
 
-        val nationId = nation?.id ?: general.nationId
-        val ownedCities = nationCities.filter { it.nationId == nationId }
+        val nationId = nation?.id ?: general.factionId
+        val ownedCities = nationCities.filter { it.factionId == nationId }
         val ownCityNames = ownedCities.map { it.name }.toSet()
         val ownRegionIds = ownedCities.map { it.region.toInt() }.toSet()
         val mapName = (world.config["mapName"] as? String) ?: "che"
@@ -2087,7 +2087,7 @@ class GeneralAI(
             CrewType.byArmType(armType).firstOrNull()?.code ?: CrewType.FOOTMAN.code
         }
 
-        val currentCrewType = CrewType.fromCode(general.crewType.toInt())
+        val currentCrewType = CrewType.fromCode(general.shipClass.toInt())
         if (currentCrewType != null && currentCrewType.isValidForNation(ownCityNames, ownRegionIds, relYear, tech, regionNameToId)) {
             if (currentCrewType.reqTech >= 2000) {
                 return currentCrewType.code
@@ -2112,10 +2112,10 @@ class GeneralAI(
         if (!hasNeutralTargets && (ctx.diplomacyState == DiplomacyState.PEACE || ctx.diplomacyState == DiplomacyState.DECLARED)) return null
 
         val general = ctx.general
-        if (general.crew <= 0) return null
+        if (general.ships <= 0) return null
 
-        val train = general.train.toInt()
-        val atmos = general.atmos.toInt()
+        val train = general.training.toInt()
+        val atmos = general.morale.toInt()
         val threshold = nationPolicy.properWarTrainAtmos
 
         // Per PHP: build weighted list of combat prep actions, choose randomly
@@ -2168,22 +2168,22 @@ class GeneralAI(
         val city = ctx.city
 
         // Per legacy: if rice is very low and NPC, 70% chance to skip
-        if (nation.rice < 1000 && general.npcState.toInt() >= 2 && rng.nextDouble() < 0.7) return null
+        if (nation.supplies < 1000 && general.npcState.toInt() >= 2 && rng.nextDouble() < 0.7) return null
 
         // Per PHP: train/atmos checked against min(100, nationPolicy.properWarTrainAtmos)
         val trainAtmosThreshold = min(100, nationPolicy.properWarTrainAtmos)
-        if (general.train < trainAtmosThreshold) return null
-        if (general.atmos < trainAtmosThreshold) return null
+        if (general.training < trainAtmosThreshold) return null
+        if (general.morale < trainAtmosThreshold) return null
         // Per PHP: crew checked against min((fullLeadership - 2) * 100, nationPolicy.minWarCrew)
-        if (general.crew < min((general.leadership.toInt() - 2) * 100, nationPolicy.minWarCrew)) return null
+        if (general.ships < min((general.leadership.toInt() - 2) * 100, nationPolicy.minWarCrew)) return null
 
         if (city.frontState.toInt() < 2 && ctx.frontCities.isNotEmpty()) return null
 
         val activeWarTargetIds = warTargetNations.filter { it.value >= 2 }.keys
         val targetCities = if (activeWarTargetIds.isNotEmpty()) {
-            ctx.allCities.filter { it.nationId in activeWarTargetIds && it.nationId != nation.id }
+            ctx.allPlanets.filter { it.factionId in activeWarTargetIds && it.factionId != nation.id }
         } else {
-            ctx.allCities.filter { it.nationId == 0L }
+            ctx.allPlanets.filter { it.factionId == 0L }
         }
         if (targetCities.isEmpty()) return null
 
@@ -2214,7 +2214,7 @@ class GeneralAI(
         if (ctx.generalType and GeneralType.COMMANDER.flag == 0) return null
 
         val general = ctx.general
-        if (general.crew < nationPolicy.minWarCrew) return null
+        if (general.ships < nationPolicy.minWarCrew) return null
 
         // Already at front
         if (ctx.city.frontState > 0) return null
@@ -2226,8 +2226,8 @@ class GeneralAI(
         val supplyFront = ctx.frontCities.filter { it.supplyState > 0 }
         if (supplyFront.isEmpty()) return null
 
-        val destCity = supplyFront[rng.nextInt(supplyFront.size)]
-        general.meta["aiArg"] = mutableMapOf<String, Any>("destCityId" to destCity.id)
+        val destPlanet = supplyFront[rng.nextInt(supplyFront.size)]
+        general.meta["aiArg"] = mutableMapOf<String, Any>("destCityId" to destPlanet.id)
         return "이동"  // NPC능동/순간이동 maps to 이동 in Kotlin engine
     }
 
@@ -2238,7 +2238,7 @@ class GeneralAI(
     private fun doWarpToRear(
         ctx: AIContext, rng: Random, policy: NpcGeneralPolicy,
         nationPolicy: NpcNationPolicy,
-        backupCities: List<City>, supplyCities: List<City>,
+        backupCities: List<Planet>, supplyCities: List<Planet>,
     ): String? {
         if (ctx.diplomacyState == DiplomacyState.PEACE || ctx.diplomacyState == DiplomacyState.DECLARED) return null
 
@@ -2247,14 +2247,14 @@ class GeneralAI(
 
         val general = ctx.general
         // Already have enough crew
-        if (general.crew >= nationPolicy.minWarCrew) return null
+        if (general.ships >= nationPolicy.minWarCrew) return null
 
         // Check if current city has enough population
         val city = ctx.city
         val minRecruitPop = general.leadership.toInt() * 100 + nationPolicy.minNPCRecruitCityPopulation
 
-        if (city.popMax > 0 && city.pop.toDouble() / city.popMax >= nationPolicy.safeRecruitCityPopulationRatio &&
-            city.pop >= minRecruitPop
+        if (city.populationMax > 0 && city.population.toDouble() / city.populationMax >= nationPolicy.safeRecruitCityPopulationRatio &&
+            city.population >= minRecruitPop
         ) {
             return null  // Current city is fine for recruitment
         }
@@ -2262,18 +2262,18 @@ class GeneralAI(
         // Find recruitable rear city
         val recruitCities = (backupCities.ifEmpty { supplyCities }).filter { c ->
             c.id != city.id &&
-                c.pop >= minRecruitPop &&
-                c.popMax > 0 &&
-                c.pop.toDouble() / c.popMax >= nationPolicy.safeRecruitCityPopulationRatio
+                c.population >= minRecruitPop &&
+                c.populationMax > 0 &&
+                c.population.toDouble() / c.populationMax >= nationPolicy.safeRecruitCityPopulationRatio
         }
 
         if (recruitCities.isEmpty()) return null
 
-        val destCity = choiceByWeight(rng, recruitCities) { c ->
-            c.pop.toDouble() / c.popMax
+        val destPlanet = choiceByWeight(rng, recruitCities) { c ->
+            c.population.toDouble() / c.populationMax
         } ?: return null
 
-        general.meta["aiArg"] = mutableMapOf<String, Any>("destCityId" to destCity.id)
+        general.meta["aiArg"] = mutableMapOf<String, Any>("destCityId" to destPlanet.id)
         return "이동"
     }
 
@@ -2283,7 +2283,7 @@ class GeneralAI(
 
     private fun doWarpToDomestic(
         ctx: AIContext, rng: Random, nationPolicy: NpcNationPolicy,
-        supplyCities: List<City>,
+        supplyCities: List<Planet>,
     ): String? {
         // Commanders during war don't do domestic warp
         if (ctx.generalType and GeneralType.COMMANDER.flag != 0 &&
@@ -2334,8 +2334,8 @@ class GeneralAI(
 
         if (candidates.isEmpty()) return null
 
-        val destCity = candidates[rng.nextInt(candidates.size)]
-        ctx.general.meta["aiArg"] = mutableMapOf<String, Any>("destCityId" to destCity.id)
+        val destPlanet = candidates[rng.nextInt(candidates.size)]
+        ctx.general.meta["aiArg"] = mutableMapOf<String, Any>("destCityId" to destPlanet.id)
         return "이동"
     }
 
@@ -2348,7 +2348,7 @@ class GeneralAI(
         val city = ctx.city
 
         // If in own territory with supply, no need to return
-        if (city.nationId == general.nationId && city.supplyState > 0) return null
+        if (city.factionId == general.factionId && city.supplyState > 0) return null
 
         return "귀환"
     }
@@ -2365,11 +2365,11 @@ class GeneralAI(
         val general = ctx.general
 
         // Need some baseline resources
-        val totalRes = general.gold + general.rice
+        val totalRes = general.funds + general.supplies
         if (totalRes < 2000) return null  // baseDevelCost*2
 
-        val absGold = general.gold.toDouble()
-        val absRice = general.rice.toDouble()
+        val absGold = general.funds.toDouble()
+        val absRice = general.supplies.toDouble()
 
         // Per legacy: weight rice by kill/death ratio (more deaths = rice more expensive)
         val rankMap = general.meta["rank"] as? Map<*, *>
@@ -2421,28 +2421,28 @@ class GeneralAI(
         var donateRice = false
 
         // Check gold
-        if (nation.gold < nationPolicy.reqNationGold && general.gold > reqGold * 1.5) {
-            if (rng.nextDouble() < (general.gold.toDouble() / reqGold - 0.5)) {
+        if (nation.funds < nationPolicy.reqNationGold && general.funds > reqGold * 1.5) {
+            if (rng.nextDouble() < (general.funds.toDouble() / reqGold - 0.5)) {
                 donateGold = true
             }
         }
         // Excess gold even if nation doesn't need it
-        if (!donateGold && general.gold > reqGold * 5 && general.gold > 5000) {
+        if (!donateGold && general.funds > reqGold * 5 && general.funds > 5000) {
             donateGold = true
         }
 
         // Check rice
-        if (nation.rice < nationPolicy.reqNationRice && general.rice > reqRice * 1.5) {
-            if (rng.nextDouble() < (general.rice.toDouble() / reqRice - 0.5)) {
+        if (nation.supplies < nationPolicy.reqNationRice && general.supplies > reqRice * 1.5) {
+            if (rng.nextDouble() < (general.supplies.toDouble() / reqRice - 0.5)) {
                 donateRice = true
             }
         }
-        if (!donateRice && general.rice > reqRice * 5 && general.rice > 5000) {
+        if (!donateRice && general.supplies > reqRice * 5 && general.supplies > 5000) {
             donateRice = true
         }
 
         // Emergency: nation rice is critically low
-        if (!donateRice && nation.rice <= 500 && general.rice >= 500) {
+        if (!donateRice && nation.supplies <= 500 && general.supplies >= 500) {
             donateRice = true
         }
 
@@ -2450,11 +2450,11 @@ class GeneralAI(
 
         // Calculate donation amounts — command accepts one resource at a time, prefer gold first
         if (donateGold) {
-            val amount = max(general.gold - reqGold, nationPolicy.minimumResourceActionAmount)
+            val amount = max(general.funds - reqGold, nationPolicy.minimumResourceActionAmount)
             val finalAmount = valueFit(amount, nationPolicy.minimumResourceActionAmount, nationPolicy.maximumResourceActionAmount)
             general.meta["aiArg"] = mutableMapOf<String, Any>("isGold" to true, "amount" to finalAmount)
         } else {
-            val amount = max(general.rice - reqRice, nationPolicy.minimumResourceActionAmount)
+            val amount = max(general.supplies - reqRice, nationPolicy.minimumResourceActionAmount)
             val finalAmount = valueFit(amount, nationPolicy.minimumResourceActionAmount, nationPolicy.maximumResourceActionAmount)
             general.meta["aiArg"] = mutableMapOf<String, Any>("isGold" to false, "amount" to finalAmount)
         }
@@ -2469,7 +2469,7 @@ class GeneralAI(
     private fun doDismiss(ctx: AIContext, rng: Random, attackable: Boolean): String? {
         if (attackable) return null
         if (ctx.diplomacyState != DiplomacyState.PEACE) return null
-        if (ctx.general.crew == 0) return null
+        if (ctx.general.ships == 0) return null
         // Per legacy: 75% chance to skip (slow disbanding)
         if (rng.nextDouble() < 0.75) return null
         return "소집해제"
@@ -2482,8 +2482,8 @@ class GeneralAI(
     /**
      * Per legacy: if nation needs gold/rice, do 물자조달. Otherwise 인재탐색 or 견문.
      */
-    private fun doNeutral(general: General, nation: Nation?, rng: Random): String {
-        if (general.nationId == 0L) {
+    private fun doNeutral(general: Officer, nation: Faction?, rng: Random): String {
+        if (general.factionId == 0L) {
             // Wanderer: 인재탐색 or 견문
             return if (rng.nextDouble() < 0.2) "인재탐색" else "견문"
         }
@@ -2491,7 +2491,7 @@ class GeneralAI(
         val candidate = mutableListOf("물자조달", "인재탐색")
 
         if (nation != null) {
-            if (nation.gold < 2000 || nation.rice < 2000) {
+            if (nation.funds < 2000 || nation.supplies < 2000) {
                 return "물자조달"
             }
         }
@@ -2503,31 +2503,31 @@ class GeneralAI(
     //  do거병: Rise up (NPC lord founding)
     // ──────────────────────────────────────────────────────────
 
-    private fun doRise(general: General, world: WorldState, rng: Random): String? {
+    private fun doRise(general: Officer, world: SessionState, rng: Random): String? {
         if (general.makeLimit > 0) return null
         if (general.npcState.toInt() > 2) return null
 
         val worldId = world.id.toLong()
         val ports = worldPortFactory.create(worldId)
-        val allCities = ports.allCities().map { it.toEntity() }
-        val allGenerals = ports.allGenerals().map { it.toEntity() }
+        val allCities = ports.allPlanets().map { it.toEntity() }
+        val allGenerals = ports.allOfficers().map { it.toEntity() }
 
         // Legacy parity: if general is NOT at a major city (level 5-6), 50% chance to skip.
         // PHP do거병: if ($currentCityLevel < 5 || 6 < $currentCityLevel) && $this->rng->nextBool(0.5)
-        val currentCityLevel = allCities.find { it.id == general.cityId }?.level?.toInt() ?: 5
+        val currentCityLevel = allCities.find { it.id == general.planetId }?.level?.toInt() ?: 5
         if ((currentCityLevel < 5 || currentCityLevel > 6) && rng.nextDouble() >= 0.5) return null
 
         // Per legacy: check for nearby unoccupied major city (level 5-6) within distance 3
         val occupiedCityIds = mutableSetOf<Long>()
         // Cities belonging to a nation
-        allCities.filter { it.nationId != 0L }.forEach { occupiedCityIds.add(it.id) }
+        allCities.filter { it.factionId != 0L }.forEach { occupiedCityIds.add(it.id) }
         // Cities where a lord (officer_level=20) is located in a neutral city
         allGenerals.filter { it.officerLevel.toInt() == 20 }.forEach { gen ->
-            val city = allCities.find { it.id == gen.cityId }
-            if (city != null && city.nationId == 0L) occupiedCityIds.add(city.id)
+            val city = allCities.find { it.id == gen.planetId }
+            if (city != null && city.factionId == 0L) occupiedCityIds.add(city.id)
         }
 
-        val distances = bfsCityDistances(general.cityId, allCities)
+        val distances = bfsCityDistances(general.planetId, allCities)
         val availableNearCity = distances.any { (cityId, dist) ->
             if (dist == 0 || dist > 3) return@any false
             if (cityId in occupiedCityIds) return@any false
@@ -2539,7 +2539,7 @@ class GeneralAI(
         }
         if (!availableNearCity) return null
 
-        val avgStat = (general.leadership + general.strength + general.intel).toDouble() / 3.0
+        val avgStat = (general.leadership + general.command + general.intelligence).toDouble() / 3.0
         // Per legacy: (defaultStatNPCMax + chiefStatMin) / 2 = (75 + 65) / 2 = 70
         val threshold = rng.nextDouble() * 70.0
 
@@ -2560,32 +2560,32 @@ class GeneralAI(
     /**
      * Per legacy: when killTurn <= 5, donate all resources to nation.
      */
-    private fun doDeathPreparation(general: General, nation: Nation?, rng: Random): String {
-        if (general.nationId == 0L) {
+    private fun doDeathPreparation(general: Officer, nation: Faction?, rng: Random): String {
+        if (general.factionId == 0L) {
             return if (rng.nextDouble() < 0.5) "인재탐색" else "견문"
         }
 
         if (general.officerLevel >= 20 && nation != null) {
-            val ports = worldPortFactory.create(general.worldId)
-            val nationGenerals = ports.generalsByNation(general.nationId).map { it.toEntity() }
+            val ports = worldPortFactory.create(general.sessionId)
+            val nationGenerals = ports.officersByFaction(general.factionId).map { it.toEntity() }
             val candidates = nationGenerals.filter { gen ->
                 gen.id != general.id && gen.npcState.toInt() != 5
             }
             if (candidates.isNotEmpty()) {
-                val target = candidates.maxByOrNull { it.leadership + it.strength + it.intel }
+                val target = candidates.maxByOrNull { it.leadership + it.command + it.intelligence }
                     ?: candidates[rng.nextInt(candidates.size)]
                 general.meta["aiArg"] = mapOf("destGeneralId" to target.id)
                 return "선양"
             }
         }
 
-        if (general.gold + general.rice == 0) return "물자조달"
+        if (general.funds + general.supplies == 0) return "물자조달"
 
-        return if (general.gold >= general.rice) {
-            general.meta["aiArg"] = mutableMapOf<String, Any>("isGold" to true, "amount" to general.gold)
+        return if (general.funds >= general.supplies) {
+            general.meta["aiArg"] = mutableMapOf<String, Any>("isGold" to true, "amount" to general.funds)
             "헌납"
         } else {
-            general.meta["aiArg"] = mutableMapOf<String, Any>("isGold" to false, "amount" to general.rice)
+            general.meta["aiArg"] = mutableMapOf<String, Any>("isGold" to false, "amount" to general.supplies)
             "헌납"
         }
     }
@@ -2600,14 +2600,14 @@ class GeneralAI(
      */
     private fun doTroopUserRearAssignment(
         ctx: AIContext, rng: Random, policy: NpcNationPolicy,
-        backupCities: List<City>, supplyCities: List<City>,
+        backupCities: List<Planet>, supplyCities: List<Planet>,
     ): String? {
         val nation = ctx.nation ?: return null
         if (ctx.frontCities.isEmpty()) return null
         if (ctx.diplomacyState != DiplomacyState.AT_WAR) return null
 
         val frontCityIds = ctx.frontCities.map { it.id }.toSet()
-        val nationCityMap = ctx.allCities.filter { it.nationId == nation.id }.associateBy { it.id }
+        val nationCityMap = ctx.allPlanets.filter { it.factionId == nation.id }.associateBy { it.id }
         val supplyCityIds = supplyCities.map { it.id }.toSet()
 
         // Troop leaders in our nation
@@ -2620,22 +2620,22 @@ class GeneralAI(
         }
 
         val generalCandidates = userWarGenerals.filter { gen ->
-            if (!frontCityIds.contains(gen.cityId)) return@filter false
-            if (!nationCityMap.containsKey(gen.cityId)) return@filter false
-            val city = nationCityMap[gen.cityId] ?: return@filter false
+            if (!frontCityIds.contains(gen.planetId)) return@filter false
+            if (!nationCityMap.containsKey(gen.planetId)) return@filter false
+            val city = nationCityMap[gen.planetId] ?: return@filter false
 
-            val troopLeaderId = gen.troopId
+            val troopLeaderId = gen.fleetId
             if (troopLeaderId == 0L || !troopLeaderMap.containsKey(troopLeaderId)) return@filter false
             if (troopLeaderId == gen.id) return@filter false
 
             val troopLeader = troopLeaderMap[troopLeaderId] ?: return@filter false
-            if (troopLeader.cityId != gen.cityId) return@filter false
-            if (!supplyCityIds.contains(troopLeader.cityId)) return@filter false
+            if (troopLeader.planetId != gen.planetId) return@filter false
+            if (!supplyCityIds.contains(troopLeader.planetId)) return@filter false
 
             // City population ratio check
-            if (city.popMax > 0 && city.pop.toDouble() / city.popMax >= policy.safeRecruitCityPopulationRatio) return@filter false
+            if (city.populationMax > 0 && city.population.toDouble() / city.populationMax >= policy.safeRecruitCityPopulationRatio) return@filter false
             // Crew check
-            if (gen.crew >= policy.minWarCrew) return@filter false
+            if (gen.ships >= policy.minWarCrew) return@filter false
 
             true
         }
@@ -2645,13 +2645,13 @@ class GeneralAI(
 
         // Find suitable rear cities
         val cityCandidates = (backupCities.ifEmpty { supplyCities }).filter { city ->
-            city.popMax > 0 && city.pop.toDouble() / city.popMax >= policy.safeRecruitCityPopulationRatio
+            city.populationMax > 0 && city.population.toDouble() / city.populationMax >= policy.safeRecruitCityPopulationRatio
         }
         if (cityCandidates.isEmpty()) return null
 
         val pickedGeneral = generalCandidates[rng.nextInt(generalCandidates.size)]
-        val destCity = cityCandidates[rng.nextInt(cityCandidates.size)]
-        pickedGeneral.meta["assignedCity"] = destCity.id
+        val destPlanet = cityCandidates[rng.nextInt(cityCandidates.size)]
+        pickedGeneral.meta["assignedCity"] = destPlanet.id
         return "발령"
     }
 
@@ -2665,10 +2665,10 @@ class GeneralAI(
      */
     private fun doNpcRescueAssignment(
         ctx: AIContext, rng: Random, policy: NpcNationPolicy,
-        supplyCities: List<City>,
+        supplyCities: List<Planet>,
     ): String? {
         val nation = ctx.nation ?: return null
-        if (nation.capitalCityId == null) return null
+        if (nation.capitalPlanetId == null) return null
         if (supplyCities.isEmpty()) return null
 
         val supplyCityIds = supplyCities.map { it.id }.toSet()
@@ -2677,14 +2677,14 @@ class GeneralAI(
         val lostNpcGenerals = ctx.nationGenerals.filter { gen ->
             gen.npcState.toInt() >= 2 && gen.npcState.toInt() != 5 &&
                 gen.id != ctx.general.id &&
-                !supplyCityIds.contains(gen.cityId)
+                !supplyCityIds.contains(gen.planetId)
         }
 
         if (lostNpcGenerals.isEmpty()) return null
 
         val target = lostNpcGenerals[rng.nextInt(lostNpcGenerals.size)]
-        val destCity = supplyCities[rng.nextInt(supplyCities.size)]
-        target.meta["assignedCity"] = destCity.id
+        val destPlanet = supplyCities[rng.nextInt(supplyCities.size)]
+        target.meta["assignedCity"] = destPlanet.id
         return "발령"
     }
 
@@ -2698,10 +2698,10 @@ class GeneralAI(
      */
     private fun doUserRescueAssignment(
         ctx: AIContext, rng: Random, policy: NpcNationPolicy,
-        supplyCities: List<City>,
+        supplyCities: List<Planet>,
     ): String? {
         val nation = ctx.nation ?: return null
-        if (nation.capitalCityId == null) return null
+        if (nation.capitalPlanetId == null) return null
         if (supplyCities.isEmpty()) return null
 
         val supplyCityIds = supplyCities.map { it.id }.toSet()
@@ -2709,27 +2709,27 @@ class GeneralAI(
         // Lost user generals: npcState < 2, not in supply cities
         val lostUserGenerals = ctx.nationGenerals.filter { gen ->
             gen.npcState.toInt() < 2 && gen.id != ctx.general.id &&
-                !supplyCityIds.contains(gen.cityId)
+                !supplyCityIds.contains(gen.planetId)
         }
 
         // Filter out those who can defend (have crew + train + atmos)
         val rescueCandidates = lostUserGenerals.filter { gen ->
-            !(gen.crew >= 500 && gen.train >= gen.defenceTrain && gen.atmos >= gen.defenceTrain)
+            !(gen.ships >= 500 && gen.training >= gen.defenceTrain && gen.morale >= gen.defenceTrain)
         }
 
         // Filter out those already in a troop with a leader that can escape
         val troopLeaderMap = ctx.nationGenerals.filter { it.npcState.toInt() == 5 }.associateBy { it.id }
         val candidateArgs = rescueCandidates.mapNotNull { gen ->
-            val troopId = gen.troopId
+            val troopId = gen.fleetId
             if (troopId != 0L && troopLeaderMap.containsKey(troopId)) {
                 val troopLeader = troopLeaderMap[troopId]!!
-                if (supplyCityIds.contains(troopLeader.cityId)) {
+                if (supplyCityIds.contains(troopLeader.planetId)) {
                     return@mapNotNull null // Already in escapable troop
                 }
             }
 
             // Choose destination
-            val destCity = if (ctx.diplomacyState in listOf(DiplomacyState.IMMINENT, DiplomacyState.AT_WAR) &&
+            val destPlanet = if (ctx.diplomacyState in listOf(DiplomacyState.IMMINENT, DiplomacyState.AT_WAR) &&
                 ctx.frontCities.size > 2
             ) {
                 ctx.frontCities[rng.nextInt(ctx.frontCities.size)]
@@ -2737,13 +2737,13 @@ class GeneralAI(
                 supplyCities[rng.nextInt(supplyCities.size)]
             }
 
-            gen to destCity
+            gen to destPlanet
         }
 
         if (candidateArgs.isEmpty()) return null
 
-        val (target, destCity) = candidateArgs[rng.nextInt(candidateArgs.size)]
-        target.meta["assignedCity"] = destCity.id
+        val (target, destPlanet) = candidateArgs[rng.nextInt(candidateArgs.size)]
+        target.meta["assignedCity"] = destPlanet.id
         return "발령"
     }
 
@@ -2757,10 +2757,10 @@ class GeneralAI(
      */
     private fun doUserDomesticAssignment(
         ctx: AIContext, rng: Random, policy: NpcNationPolicy,
-        supplyCities: List<City>,
+        supplyCities: List<Planet>,
     ): String? {
         val nation = ctx.nation ?: return null
-        if (nation.capitalCityId == null) return null
+        if (nation.capitalPlanetId == null) return null
         if (supplyCities.size <= 1) return null
 
         val avgDev = supplyCities.map { calcCityDevScore(it) }.average()
@@ -2770,7 +2770,7 @@ class GeneralAI(
 
         // In peace, include both war and civil user generals; otherwise only civil
         val userGenerals = ctx.nationGenerals.filter { gen ->
-            gen.npcState.toInt() < 2 && gen.id != ctx.general.id && gen.troopId == 0L
+            gen.npcState.toInt() < 2 && gen.id != ctx.general.id && gen.fleetId == 0L
         }
         val civilUserGenerals = if (ctx.diplomacyState == DiplomacyState.PEACE ||
             ctx.diplomacyState == DiplomacyState.DECLARED
@@ -2782,7 +2782,7 @@ class GeneralAI(
 
         // Find generals in well-developed supply cities (dev >= 0.95)
         val candidates = civilUserGenerals.filter { gen ->
-            val city = supplyCityMap[gen.cityId] ?: return@filter false
+            val city = supplyCityMap[gen.planetId] ?: return@filter false
             calcCityDevScore(city) >= 0.95
         }
 
@@ -2792,19 +2792,19 @@ class GeneralAI(
         val cityWeights = supplyCities.map { city ->
             val dev = min(calcCityDevScore(city), 0.999)
             val score = (1.0 - dev).pow(2.0)
-            val generalCount = ctx.nationGenerals.count { it.cityId == city.id }
+            val generalCount = ctx.nationGenerals.count { it.planetId == city.id }
             city to score / sqrt(generalCount.toDouble() + 1.0)
         }.filter { it.second > 0.0 }
 
         if (cityWeights.isEmpty()) return null
 
-        val destGeneral = candidates[rng.nextInt(candidates.size)]
-        val srcCity = supplyCityMap[destGeneral.cityId]
-        val destCity = choiceByWeightPair(rng, cityWeights) ?: return null
+        val destOfficer = candidates[rng.nextInt(candidates.size)]
+        val srcCity = supplyCityMap[destOfficer.planetId]
+        val destPlanet = choiceByWeightPair(rng, cityWeights) ?: return null
 
-        if (srcCity != null && calcCityDevScore(srcCity) <= calcCityDevScore(destCity)) return null
+        if (srcCity != null && calcCityDevScore(srcCity) <= calcCityDevScore(destPlanet)) return null
 
-        destGeneral.meta["assignedCity"] = destCity.id
+        destOfficer.meta["assignedCity"] = destPlanet.id
         return "발령"
     }
 
@@ -2833,36 +2833,36 @@ class GeneralAI(
         val reqRiceThreshold = policy.reqNationRice  // reqHumanWarUrgentRice analog
 
         // Gold check
-        val sortedByGold = userWarGenerals.sortedBy { it.gold }
+        val sortedByGold = userWarGenerals.sortedBy { it.funds }
         for ((idx, gen) in sortedByGold.withIndex()) {
-            if (gen.gold >= reqGoldThreshold) break
+            if (gen.funds >= reqGoldThreshold) break
 
             val reqMoney = gen.leadership.toInt() * 100 * 3.0 * 1.1
             val enoughMoney = reqMoney * 1.1
-            if (gen.gold >= reqMoney) continue
+            if (gen.funds >= reqMoney) continue
 
-            val payAmount = sqrt((enoughMoney - gen.gold) * nation.gold.toDouble())
-            val clampedPay = valueFitD(payAmount, 0.0, enoughMoney - gen.gold)
+            val payAmount = sqrt((enoughMoney - gen.funds) * nation.funds.toDouble())
+            val clampedPay = valueFitD(payAmount, 0.0, enoughMoney - gen.funds)
             if (clampedPay < policy.minimumResourceActionAmount) continue
-            if (nation.gold < clampedPay / 2) continue
+            if (nation.funds < clampedPay / 2) continue
 
             val finalPay = valueFit(clampedPay.toInt(), 100, policy.maximumResourceActionAmount)
             candidates.add(RewardCandidate(gen.id, true, finalPay, (sortedByGold.size - idx).toDouble()))
         }
 
         // Rice check
-        val sortedByRice = userWarGenerals.sortedBy { it.rice }
+        val sortedByRice = userWarGenerals.sortedBy { it.supplies }
         for ((idx, gen) in sortedByRice.withIndex()) {
-            if (gen.rice >= reqRiceThreshold) break
+            if (gen.supplies >= reqRiceThreshold) break
 
             val reqMoney = gen.leadership.toInt() * 100 * 3.0 * 1.1
             val enoughMoney = reqMoney * 1.1
-            if (gen.rice >= reqMoney) continue
+            if (gen.supplies >= reqMoney) continue
 
-            val payAmount = sqrt((enoughMoney - gen.rice) * nation.rice.toDouble())
-            val clampedPay = valueFitD(payAmount, 0.0, enoughMoney - gen.rice)
+            val payAmount = sqrt((enoughMoney - gen.supplies) * nation.supplies.toDouble())
+            val clampedPay = valueFitD(payAmount, 0.0, enoughMoney - gen.supplies)
             if (clampedPay < policy.minimumResourceActionAmount) continue
-            if (nation.rice < clampedPay / 2) continue
+            if (nation.supplies < clampedPay / 2) continue
 
             val finalPay = valueFit(clampedPay.toInt(), 100, policy.maximumResourceActionAmount)
             candidates.add(RewardCandidate(gen.id, false, finalPay, (sortedByRice.size - idx).toDouble()))
@@ -2903,19 +2903,19 @@ class GeneralAI(
         val reqNPCMinWarRice = policy.reqNationRice / 2
 
         // Gold
-        if (nation.gold >= policy.reqNationGold) {
-            val sortedByGold = npcWarGenerals.sortedBy { it.gold }
+        if (nation.funds >= policy.reqNationGold) {
+            val sortedByGold = npcWarGenerals.sortedBy { it.funds }
             for ((idx, gen) in sortedByGold.withIndex()) {
-                if (gen.gold >= reqNPCMinWarGold) break
+                if (gen.funds >= reqNPCMinWarGold) break
 
                 val reqMoney = gen.leadership.toInt() * 100 * 1.5
                 val enoughMoney = reqMoney * 1.2
-                if (gen.gold >= reqMoney) continue
+                if (gen.funds >= reqMoney) continue
 
-                val payAmount = sqrt((enoughMoney - gen.gold) * nation.gold.toDouble())
-                val clampedPay = valueFitD(payAmount, 0.0, enoughMoney - gen.gold)
+                val payAmount = sqrt((enoughMoney - gen.funds) * nation.funds.toDouble())
+                val clampedPay = valueFitD(payAmount, 0.0, enoughMoney - gen.funds)
                 if (clampedPay < policy.minimumResourceActionAmount) continue
-                if (nation.gold < clampedPay / 2) continue
+                if (nation.funds < clampedPay / 2) continue
 
                 val finalPay = valueFit(clampedPay.toInt(), 100, policy.maximumResourceActionAmount)
                 candidates.add(RewardCandidate(gen.id, true, finalPay, (sortedByGold.size - idx).toDouble()))
@@ -2923,19 +2923,19 @@ class GeneralAI(
         }
 
         // Rice
-        if (nation.rice >= policy.reqNationRice) {
-            val sortedByRice = npcWarGenerals.sortedBy { it.rice }
+        if (nation.supplies >= policy.reqNationRice) {
+            val sortedByRice = npcWarGenerals.sortedBy { it.supplies }
             for ((idx, gen) in sortedByRice.withIndex()) {
-                if (gen.rice >= reqNPCMinWarRice) break
+                if (gen.supplies >= reqNPCMinWarRice) break
 
                 val reqMoney = gen.leadership.toInt() * 100 * 1.5
                 val enoughMoney = reqMoney * 1.2
-                if (gen.rice >= reqMoney) continue
+                if (gen.supplies >= reqMoney) continue
 
-                val payAmount = sqrt((enoughMoney - gen.rice) * nation.rice.toDouble())
-                val clampedPay = valueFitD(payAmount, 0.0, enoughMoney - gen.rice)
+                val payAmount = sqrt((enoughMoney - gen.supplies) * nation.supplies.toDouble())
+                val clampedPay = valueFitD(payAmount, 0.0, enoughMoney - gen.supplies)
                 if (clampedPay < policy.minimumResourceActionAmount) continue
-                if (nation.rice < clampedPay / 2) continue
+                if (nation.supplies < clampedPay / 2) continue
 
                 val finalPay = valueFit(clampedPay.toInt(), 100, policy.maximumResourceActionAmount)
                 candidates.add(RewardCandidate(gen.id, false, finalPay, (sortedByRice.size - idx).toDouble()))
@@ -2956,10 +2956,10 @@ class GeneralAI(
     // ──────────────────────────────────────────────────────────
 
     /**
-     * Per legacy do집합: Troop leaders (npcState==5) always rally.
+     * Per legacy do집합: Fleet leaders (npcState==5) always rally.
      * Also refresh killTurn for troop leaders.
      */
-    private fun doRally(general: General, rng: Random): String {
+    private fun doRally(general: Officer, rng: Random): String {
         if (general.npcState.toInt() == 5) {
             // Per legacy: cycle killTurn for troop leaders
             val newKillTurn = ((general.killTurn?.toInt() ?: 70) + rng.nextInt(3) + 2) % 5 + 70
@@ -2976,7 +2976,7 @@ class GeneralAI(
      * Per legacy do해산: Lord NPC without capital disbands nation.
      * Clears movingTargetCityID aux var.
      */
-    private fun doDisband(general: General): String? {
+    private fun doDisband(general: Officer): String? {
         // Simplified condition check; engine validates
         general.meta.remove("movingTargetCityID")
         return "해산"
@@ -2999,12 +2999,12 @@ class GeneralAI(
      * PHP checks this BEFORE npcType==5, only for officer_level==12 (chief).
      * Kotlin chief = officerLevel==20.
      */
-    private fun doAbdicate(general: General, world: WorldState, rng: Random): String? {
+    private fun doAbdicate(general: Officer, world: SessionState, rng: Random): String? {
         if (general.officerLevel.toInt() != 20) return null
 
         val ports = worldPortFactory.create(world.id.toLong())
-        val nationGenerals = ports.allGenerals().map { it.toEntity() }
-            .filter { it.nationId == general.nationId }
+        val nationGenerals = ports.allOfficers().map { it.toEntity() }
+            .filter { it.factionId == general.factionId }
 
         // Find a non-troop general in the same nation to abdicate to
         val candidates = nationGenerals.filter { gen ->
@@ -3028,18 +3028,18 @@ class GeneralAI(
      *
      * Selection priority: highest (leadership + strength + intel) among NPC generals.
      */
-    fun autoPromoteLord(nationGenerals: List<General>, ports: WorldWritePort): General? {
+    fun autoPromoteLord(nationGenerals: List<Officer>, ports: WorldWritePort): Officer? {
         val hasLord = nationGenerals.any { it.officerLevel.toInt() == 20 }
         if (hasLord) return null
 
         val candidate = nationGenerals
             .filter { it.npcState.toInt() >= 2 && it.npcState.toInt() != 5 }
-            .maxByOrNull { it.leadership.toInt() + it.strength.toInt() + it.intel.toInt() }
+            .maxByOrNull { it.leadership.toInt() + it.command.toInt() + it.intelligence.toInt() }
             ?: return null
 
         candidate.officerLevel = 20
         candidate.officerCity = 0
-        ports.putGeneral(candidate.toSnapshot())
+        ports.putOfficer(candidate.toSnapshot())
         logger.info("Auto-promoted {} ({}) to lord (officerLevel=20) for lordless nation", candidate.id, candidate.name)
         return candidate
     }
@@ -3058,10 +3058,10 @@ class GeneralAI(
         val nationGenerals = ctx.nationGenerals
         val general = ctx.general
 
-        val minChiefLevel = getNationChiefLevel(nation.level.toInt())
+        val minChiefLevel = getNationChiefLevel(nation.factionRank.toInt())
 
         // Track which chief levels are filled
-        val chiefGenerals = mutableMapOf<Int, General>()
+        val chiefGenerals = mutableMapOf<Int, Officer>()
         for (gen in nationGenerals) {
             if (gen.officerLevel.toInt() in minChiefLevel..20 && gen.id != general.id) {
                 chiefGenerals[gen.officerLevel.toInt()] = gen
@@ -3091,10 +3091,10 @@ class GeneralAI(
         // Sort all generals by composite stat for promotion
         val sortedGenerals = nationGenerals.filter { it.id != general.id }
             .sortedByDescending {
-                it.leadership.toInt() * 2 + it.strength.toInt() + it.intel.toInt()
+                it.leadership.toInt() * 2 + it.command.toInt() + it.intelligence.toInt()
             }
 
-        val nextChiefs = mutableMapOf<Int, General>()
+        val nextChiefs = mutableMapOf<Int, Officer>()
 
         // First ensure level 11 is filled with a user if possible and no user chiefs exist
         val userGenerals = nationGenerals.filter { it.npcState.toInt() < 2 && it.id != general.id }
@@ -3108,7 +3108,7 @@ class GeneralAI(
                 pick.officerLevel = 11
                 pick.officerCity = 0
                 pick.permission = "ambassador"
-                ports.putGeneral(pick.toSnapshot())
+                ports.putOfficer(pick.toSnapshot())
                 nextChiefs[11] = pick
                 chiefGenerals[11] = pick
                 userChiefCnt++
@@ -3130,7 +3130,7 @@ class GeneralAI(
                 if (!rng.nextBoolean() || rng.nextDouble() >= 0.1) continue
             }
 
-            var newChief: General? = null
+            var newChief: Officer? = null
             for (candidate in sortedGenerals) {
                 if (candidate.officerLevel.toInt() > 4) continue
                 if (candidate.npcState.toInt() < 2 && (candidate.killTurn?.toInt() ?: 100) < minUserKillturn) continue
@@ -3140,9 +3140,9 @@ class GeneralAI(
                 if (chiefLevel == 11) {
                     // No stat requirement for level 11
                 } else if (chiefLevel % 2 == 0) {
-                    if (candidate.strength < 60) continue  // chiefStatMin
+                    if (candidate.command < 60) continue  // chiefStatMin
                 } else {
-                    if (candidate.intel < 60) continue
+                    if (candidate.intelligence < 60) continue
                 }
 
                 // Limit user chiefs to 3
@@ -3164,12 +3164,12 @@ class GeneralAI(
             if (oldChief != null && oldChief.id != newChief.id) {
                 oldChief.officerLevel = 1
                 oldChief.officerCity = 0
-                ports.putGeneral(oldChief.toSnapshot())
+                ports.putOfficer(oldChief.toSnapshot())
             }
 
             newChief.officerLevel = chiefLevel.coerceIn(0, 20).toShort()
             newChief.officerCity = 0
-            ports.putGeneral(newChief.toSnapshot())
+            ports.putOfficer(newChief.toSnapshot())
             nextChiefs[chiefLevel] = newChief
             chiefGenerals[chiefLevel] = newChief
         }
@@ -3189,9 +3189,9 @@ class GeneralAI(
         val general = ctx.general
         val nationPolicy = NpcPolicyBuilder.buildNationPolicy(nation.meta)
 
-        val minChiefLevel = getNationChiefLevel(nation.level.toInt())
+        val minChiefLevel = getNationChiefLevel(nation.factionRank.toInt())
 
-        val chiefGenerals = mutableMapOf<Int, General>()
+        val chiefGenerals = mutableMapOf<Int, Officer>()
         for (gen in nationGenerals) {
             if (gen.officerLevel.toInt() in minChiefLevel..20 && gen.id != general.id) {
                 chiefGenerals[gen.officerLevel.toInt()] = gen
@@ -3215,7 +3215,7 @@ class GeneralAI(
             if (chiefGenerals.containsKey(chiefLevel)) continue
             if (general.officerLevel.toInt() == chiefLevel) continue
 
-            var picked: General? = null
+            var picked: Officer? = null
             for (attempt in 0 until 5) {
                 val pool = when {
                     npcWarGenerals.isNotEmpty() -> npcWarGenerals
@@ -3230,8 +3230,8 @@ class GeneralAI(
                     picked = randGeneral
                     break
                 }
-                if (chiefLevel % 2 == 0 && randGeneral.strength < 60) continue
-                if (chiefLevel % 2 == 1 && randGeneral.intel < 60) continue
+                if (chiefLevel % 2 == 0 && randGeneral.command < 60) continue
+                if (chiefLevel % 2 == 1 && randGeneral.intelligence < 60) continue
                 picked = randGeneral
                 break
             }
@@ -3240,7 +3240,7 @@ class GeneralAI(
 
             picked.officerLevel = chiefLevel.coerceIn(0, 20).toShort()
             picked.officerCity = 0
-            ports.putGeneral(picked.toSnapshot())
+            ports.putOfficer(picked.toSnapshot())
             chiefGenerals[chiefLevel] = picked
         }
     }
@@ -3253,12 +3253,12 @@ class GeneralAI(
      * Per legacy chooseTexRate: Set tax rate based on nation development level.
      * Higher development = higher tax rate.
      */
-    fun chooseTexRate(ctx: AIContext, supplyCities: List<City>): Int {
+    fun chooseTexRate(ctx: AIContext, supplyCities: List<Planet>): Int {
         val nation = ctx.nation ?: return 15
 
         var rate = 15
         if (supplyCities.isNotEmpty()) {
-            val popRates = supplyCities.map { if (it.popMax > 0) it.pop.toDouble() / it.popMax else 0.0 }
+            val popRates = supplyCities.map { if (it.populationMax > 0) it.population.toDouble() / it.populationMax else 0.0 }
             val devRates = supplyCities.map { calcCityDevScore(it) }
             val avg = (popRates.average() + devRates.average()) / 2.0
 
@@ -3270,7 +3270,7 @@ class GeneralAI(
             }
         }
 
-        nation.rate = rate.coerceIn(0, 100).toShort()
+        nation.conscriptionRate = rate.coerceIn(0, 100).toShort()
         nation.warState = 0
         return rate
     }
@@ -3283,7 +3283,7 @@ class GeneralAI(
      * Per legacy chooseGoldBillRate: Calculate gold bill rate based on income vs outcome.
      * Bill = income / outcome * 90, clamped to [20, 200].
      */
-    fun chooseGoldBillRate(ctx: AIContext, supplyCities: List<City>, policy: NpcNationPolicy): Int {
+    fun chooseGoldBillRate(ctx: AIContext, supplyCities: List<Planet>, policy: NpcNationPolicy): Int {
         val nation = ctx.nation ?: return 20
         if (supplyCities.isEmpty()) return 20
 
@@ -3292,7 +3292,7 @@ class GeneralAI(
         // Per legacy: goldIncome = sum(calcCityGoldIncome) * taxRate/20
         val goldIncome = supplyCities.sumOf { city ->
             calcCityGoldIncome(city)
-        }.let { (it * nation.rate / 20.0).toInt() }
+        }.let { (it * nation.conscriptionRate / 20.0).toInt() }
 
         // Per legacy: warGoldIncome = sum(dead/10) for supply cities
         val warGoldIncome = supplyCities.sumOf { city ->
@@ -3306,15 +3306,15 @@ class GeneralAI(
 
         var bill = (income.toDouble() / outcome * 90).toInt()
 
-        if (nation.gold + income - outcome > policy.reqNationGold * 2) {
-            val moreBill = ((nation.gold + income - policy.reqNationGold * 2).toDouble() / outcome * 80).toInt()
+        if (nation.funds + income - outcome > policy.reqNationGold * 2) {
+            val moreBill = ((nation.funds + income - policy.reqNationGold * 2).toDouble() / outcome * 80).toInt()
             if (moreBill > bill) {
                 bill = (moreBill + bill) / 2
             }
         }
 
         bill = bill.coerceIn(20, 200)
-        nation.bill = bill.toShort()
+        nation.taxRate = bill.toShort()
         return bill
     }
 
@@ -3326,7 +3326,7 @@ class GeneralAI(
      * Per legacy chooseRiceBillRate: Calculate rice bill rate based on income vs outcome.
      * Bill = income / outcome * 90, clamped to [20, 200].
      */
-    fun chooseRiceBillRate(ctx: AIContext, supplyCities: List<City>, policy: NpcNationPolicy): Int {
+    fun chooseRiceBillRate(ctx: AIContext, supplyCities: List<Planet>, policy: NpcNationPolicy): Int {
         val nation = ctx.nation ?: return 20
         if (supplyCities.isEmpty()) return 20
 
@@ -3335,12 +3335,12 @@ class GeneralAI(
         // Per legacy: riceIncome = sum(calcCityRiceIncome) * taxRate/20
         val riceIncome = supplyCities.sumOf { city ->
             calcCityRiceIncome(city)
-        }.let { (it * nation.rate / 20.0).toInt() }
+        }.let { (it * nation.conscriptionRate / 20.0).toInt() }
 
         // Per legacy: wallIncome = sum(def * wall/wallMax / 3 * secuFactor) * taxRate/20
         val wallIncome = supplyCities.sumOf { city ->
             calcCityWallRiceIncome(city)
-        }.let { (it * nation.rate / 20.0).toInt() }
+        }.let { (it * nation.conscriptionRate / 20.0).toInt() }
 
         val income = (riceIncome + wallIncome).coerceAtLeast(1)
 
@@ -3348,15 +3348,15 @@ class GeneralAI(
 
         var bill = (income.toDouble() / outcome * 90).toInt()
 
-        if (nation.rice + income - outcome > policy.reqNationRice * 2) {
-            val moreBill = ((nation.rice + income - policy.reqNationRice * 2).toDouble() / outcome * 80).toInt()
+        if (nation.supplies + income - outcome > policy.reqNationRice * 2) {
+            val moreBill = ((nation.supplies + income - policy.reqNationRice * 2).toDouble() / outcome * 80).toInt()
             if (moreBill > bill) {
                 bill = (moreBill + bill) / 2
             }
         }
 
         bill = bill.coerceIn(20, 200)
-        nation.bill = bill.toShort()
+        nation.taxRate = bill.toShort()
         return bill
     }
 
@@ -3368,30 +3368,30 @@ class GeneralAI(
      * Per legacy chooseNationTurn: Main entry point for NPC nation-level turn decisions.
      * Handles periodic tasks (promotion, tax/bill rates) and iterates nation policy priorities.
      */
-    fun chooseNationTurn(general: General, world: WorldState): String {
+    fun chooseNationTurn(general: Officer, world: SessionState): String {
         val hiddenSeed = (world.config["hiddenSeed"] as? String) ?: "${world.id}"
         val rng = DeterministicRng.create(
-            hiddenSeed, "GeneralAI", world.currentYear, world.currentMonth, general.id
+            hiddenSeed, "OfficerAI", world.currentYear, world.currentMonth, general.id
         )
 
-        if (general.nationId == 0L) return "휴식"
+        if (general.factionId == 0L) return "휴식"
 
         val worldId = world.id.toLong()
         val ports = worldPortFactory.create(worldId)
-        val city = ports.city(general.cityId)?.toEntity() ?: return "휴식"
-        val nation = ports.nation(general.nationId)?.toEntity() ?: return "휴식"
+        val city = ports.planet(general.planetId)?.toEntity() ?: return "휴식"
+        val nation = ports.faction(general.factionId)?.toEntity() ?: return "휴식"
 
-        val allCities = ports.allCities().map { it.toEntity() }
-        val allGenerals = ports.allGenerals().map { it.toEntity() }
-        val allNations = ports.allNations().map { it.toEntity() }
+        val allCities = ports.allPlanets().map { it.toEntity() }
+        val allGenerals = ports.allOfficers().map { it.toEntity() }
+        val allNations = ports.allFactions().map { it.toEntity() }
         val diplomacies = ports.activeDiplomacies().map { it.toEntity() }
 
-        val nationCities = allCities.filter { it.nationId == nation.id }
+        val nationCities = allCities.filter { it.factionId == nation.id }
         val frontCities = nationCities.filter { it.frontState > 0 }
         val rearCities = nationCities.filter { it.frontState.toInt() == 0 }
         val supplyCities = nationCities.filter { it.supplyState > 0 }
         val backupCities = nationCities.filter { it.frontState.toInt() == 0 && it.supplyState > 0 }
-        val nationGenerals = allGenerals.filter { it.nationId == general.nationId }
+        val nationGenerals = allGenerals.filter { it.factionId == general.factionId }
 
         val diplomacyState = calcDiplomacyState(worldId, nation, diplomacies)
 
@@ -3469,30 +3469,30 @@ class GeneralAI(
     /**
      * Per legacy chooseInstantNationTurn: Only processes actions available for instant turns.
      */
-    fun chooseInstantNationTurn(general: General, world: WorldState): String? {
+    fun chooseInstantNationTurn(general: Officer, world: SessionState): String? {
         val hiddenSeed = (world.config["hiddenSeed"] as? String) ?: "${world.id}"
         val rng = DeterministicRng.create(
             hiddenSeed, "InstantNationTurn", world.currentYear, world.currentMonth, general.id
         )
 
-        if (general.nationId == 0L) return null
+        if (general.factionId == 0L) return null
 
         val worldId = world.id.toLong()
         val ports = worldPortFactory.create(worldId)
-        val city = ports.city(general.cityId)?.toEntity() ?: return null
-        val nation = ports.nation(general.nationId)?.toEntity() ?: return null
+        val city = ports.planet(general.planetId)?.toEntity() ?: return null
+        val nation = ports.faction(general.factionId)?.toEntity() ?: return null
 
-        val allCities = ports.allCities().map { it.toEntity() }
-        val allGenerals = ports.allGenerals().map { it.toEntity() }
-        val allNations = ports.allNations().map { it.toEntity() }
+        val allCities = ports.allPlanets().map { it.toEntity() }
+        val allGenerals = ports.allOfficers().map { it.toEntity() }
+        val allNations = ports.allFactions().map { it.toEntity() }
         val diplomacies = ports.activeDiplomacies().map { it.toEntity() }
 
-        val nationCities = allCities.filter { it.nationId == nation.id }
+        val nationCities = allCities.filter { it.factionId == nation.id }
         val frontCities = nationCities.filter { it.frontState > 0 }
         val rearCities = nationCities.filter { it.frontState.toInt() == 0 }
         val supplyCities = nationCities.filter { it.supplyState > 0 }
         val backupCities = nationCities.filter { it.frontState.toInt() == 0 && it.supplyState > 0 }
-        val nationGenerals = allGenerals.filter { it.nationId == general.nationId }
+        val nationGenerals = allGenerals.filter { it.factionId == general.factionId }
 
         val diplomacyState = calcDiplomacyState(worldId, nation, diplomacies)
         val nationPolicy = NpcPolicyBuilder.buildNationPolicy(nation.meta)
@@ -3528,10 +3528,10 @@ class GeneralAI(
      * Per legacy chooseGeneralTurn: Main entry point for NPC general-level turn decisions.
      * Handles special cases (troop leaders, wandering lords, abdication) then iterates priorities.
      */
-    fun chooseGeneralTurn(general: General, world: WorldState): String {
+    fun chooseGeneralTurn(general: Officer, world: SessionState): String {
         val hiddenSeed = (world.config["hiddenSeed"] as? String) ?: "${world.id}"
         val rng = DeterministicRng.create(
-            hiddenSeed, "GeneralAI", world.currentYear, world.currentMonth, general.id
+            hiddenSeed, "OfficerAI", world.currentYear, world.currentMonth, general.id
         )
 
         val npcType = general.npcState.toInt()
@@ -3549,7 +3549,7 @@ class GeneralAI(
 
         // Troop leader: always rally (per PHP line 3753)
         if (npcType == 5) {
-            if (general.nationId == 0L) {
+            if (general.factionId == 0L) {
                 general.killTurn = 1
                 return "휴식"
             }
@@ -3561,8 +3561,8 @@ class GeneralAI(
         if (reservedAction != null) return reservedAction
 
         // Injury check: per PHP line 3772, uses cureThreshold (default 10), NOT injury > 0
-        val nationPolicy = if (general.nationId != 0L) {
-            val nation = worldPortFactory.create(world.id.toLong()).nation(general.nationId)?.toEntity()
+        val nationPolicy = if (general.factionId != 0L) {
+            val nation = worldPortFactory.create(world.id.toLong()).faction(general.factionId)?.toEntity()
             if (nation != null) NpcPolicyBuilder.buildNationPolicy(nation.meta) else NpcNationPolicy()
         } else {
             NpcNationPolicy()
@@ -3570,20 +3570,20 @@ class GeneralAI(
         if (general.injury > nationPolicy.cureThreshold) return "요양"
 
         // NPC rise check (per PHP line 3778)
-        if ((npcType == 2 || npcType == 3) && general.nationId == 0L) {
+        if ((npcType == 2 || npcType == 3) && general.factionId == 0L) {
             val riseResult = doRise(general, world, rng)
             if (riseResult != null) return riseResult
         }
 
         // Wanderer without nation: join or wander (per PHP line 3786)
-        if (general.nationId == 0L) {
+        if (general.factionId == 0L) {
             return decideWandererAction(general, world, rng)
         }
 
         // NPC lord without capital: structured do건국/do방랑군이동/do해산 (per PHP line 3802)
         if (npcType >= 2 && general.officerLevel.toInt() == 20) {
-            val nation = worldPortFactory.create(world.id.toLong()).nation(general.nationId)?.toEntity()
-            if (nation != null && nation.capitalCityId == null) {
+            val nation = worldPortFactory.create(world.id.toLong()).faction(general.factionId)?.toEntity()
+            if (nation != null && nation.capitalPlanetId == null) {
                 val initYear = (world.config["init_year"] as? Number)?.toInt()
                     ?: (world.config["startyear"] as? Number)?.toInt()
                     ?: world.currentYear.toInt()
@@ -3611,7 +3611,7 @@ class GeneralAI(
 
         val killTurn = general.killTurn?.toInt()
         if (npcType >= 2 && killTurn != null && killTurn <= 5) {
-            val nation = worldPortFactory.create(world.id.toLong()).nation(general.nationId)?.toEntity()
+            val nation = worldPortFactory.create(world.id.toLong()).faction(general.factionId)?.toEntity()
             return doDeathPreparation(general, nation, rng)
         }
 
@@ -3623,21 +3623,21 @@ class GeneralAI(
     //  Helper: build context for a general
     // ──────────────────────────────────────────────────────────
 
-    private fun buildContextForGeneral(general: General, world: WorldState, rng: Random): AIContext? {
+    private fun buildContextForGeneral(general: Officer, world: SessionState, rng: Random): AIContext? {
         val worldId = world.id.toLong()
         val ports = worldPortFactory.create(worldId)
-        val city = ports.city(general.cityId)?.toEntity() ?: return null
-        val nation = ports.nation(general.nationId)?.toEntity()
+        val city = ports.planet(general.planetId)?.toEntity() ?: return null
+        val nation = ports.faction(general.factionId)?.toEntity()
 
-        val allCities = ports.allCities().map { it.toEntity() }
-        val allGenerals = ports.allGenerals().map { it.toEntity() }
-        val allNations = ports.allNations().map { it.toEntity() }
+        val allCities = ports.allPlanets().map { it.toEntity() }
+        val allGenerals = ports.allOfficers().map { it.toEntity() }
+        val allNations = ports.allFactions().map { it.toEntity() }
         val diplomacies = ports.activeDiplomacies().map { it.toEntity() }
 
-        val nationCities = if (nation != null) allCities.filter { it.nationId == nation.id } else emptyList()
+        val nationCities = if (nation != null) allCities.filter { it.factionId == nation.id } else emptyList()
         val frontCities = nationCities.filter { it.frontState > 0 }
         val rearCities = nationCities.filter { it.frontState.toInt() == 0 }
-        val nationGenerals = allGenerals.filter { it.nationId == general.nationId }
+        val nationGenerals = allGenerals.filter { it.factionId == general.factionId }
 
         val diplomacyState = calcDiplomacyState(worldId, nation, diplomacies)
         val nationPolicy = if (nation != null) NpcPolicyBuilder.buildNationPolicy(nation.meta) else NpcNationPolicy()
@@ -3735,7 +3735,7 @@ class GeneralAI(
      * Picks random nation type and color, names nation after general.
      * Clears movingTargetCityID.
      */
-    private fun doFoundNation(general: General, rng: Random): String? {
+    private fun doFoundNation(general: Officer, rng: Random): String? {
         // Per legacy: pick random nation type (1-3) and color (0-15)
         val nationType = rng.nextInt(3) + 1
         val nationColor = rng.nextInt(16)
@@ -3761,15 +3761,15 @@ class GeneralAI(
      * - 20% chance to just move to adjacent city
      * - Otherwise returns null (do neutral action)
      */
-    private fun doSelectNation(general: General, world: WorldState, rng: Random): String? {
+    private fun doSelectNation(general: Officer, world: SessionState, rng: Random): String? {
         val ports = worldPortFactory.create(world.id.toLong())
         // Barbarians (npcType 9) join other barbarian nations directly
         if (general.npcState.toInt() == 9) {
-            val barbarianLords = ports.allGenerals().map { it.toEntity() }
-                .filter { it.officerLevel.toInt() == 20 && it.npcState.toInt() == 9 && it.nationId != 0L }
+            val barbarianLords = ports.allOfficers().map { it.toEntity() }
+                .filter { it.officerLevel.toInt() == 20 && it.npcState.toInt() == 9 && it.factionId != 0L }
             if (barbarianLords.isNotEmpty()) {
                 val target = barbarianLords[rng.nextInt(barbarianLords.size)]
-                general.meta["aiArg"] = mutableMapOf<String, Any>("destNationId" to target.nationId)
+                general.meta["aiArg"] = mutableMapOf<String, Any>("destNationId" to target.factionId)
                 return "임관"
             }
         }
@@ -3784,10 +3784,10 @@ class GeneralAI(
 
             if (yearsElapsed < 3) {
                 // Early game: fewer nations → less chance to join
-                val nations = ports.allNations().map { it.toEntity() }
+                val nations = ports.allFactions().map { it.toEntity() }
                 val nationCnt = nations.size
                 val notFullNationCnt = nations.count { nation ->
-                    val genCount = ports.generalsByNation(nation.id).size
+                    val genCount = ports.officersByFaction(nation.id).size
                     genCount < 20 // initialNationGenLimit analog
                 }
                 if (nationCnt == 0 || notFullNationCnt == 0) return null
@@ -3805,8 +3805,8 @@ class GeneralAI(
 
         // 20% chance to move to adjacent city
         if (rng.nextDouble() < 0.2) {
-            val allCities = ports.allCities().map { it.toEntity() }
-            val currentCity = allCities.find { it.id == general.cityId } ?: return null
+            val allCities = ports.allPlanets().map { it.toEntity() }
+            val currentCity = allCities.find { it.id == general.planetId } ?: return null
             val adjacentIds = getAdjacentCityIds(currentCity, allCities)
             if (adjacentIds.isEmpty()) return null
             general.meta["aiArg"] = mutableMapOf<String, Any>("destCityId" to adjacentIds[rng.nextInt(adjacentIds.size)])
@@ -3826,15 +3826,15 @@ class GeneralAI(
      * - Otherwise pick a target city and move toward it step by step
      * - Prefers nearby unoccupied major cities; if adjacent one is available, prioritize it
      */
-    private fun doWandererMove(general: General, world: WorldState, rng: Random): String? {
+    private fun doWandererMove(general: Officer, world: SessionState, rng: Random): String? {
         val ports = worldPortFactory.create(world.id.toLong())
-        val allCities = ports.allCities().map { it.toEntity() }
-        val allGenerals = ports.allGenerals().map { it.toEntity() }
+        val allCities = ports.allPlanets().map { it.toEntity() }
+        val allGenerals = ports.allOfficers().map { it.toEntity() }
 
-        val currentCity = allCities.find { it.id == general.cityId } ?: return null
+        val currentCity = allCities.find { it.id == general.planetId } ?: return null
 
         // Check if we're the only lord here at a major city
-        val lordsHere = allGenerals.count { it.officerLevel.toInt() == 20 && it.cityId == general.cityId }
+        val lordsHere = allGenerals.count { it.officerLevel.toInt() == 20 && it.planetId == general.planetId }
         if (lordsHere <= 1 && currentCity.level.toInt() in 5..6) {
             return null // Stay here, can try founding
         }
@@ -3842,15 +3842,15 @@ class GeneralAI(
         // Build set of occupied cities (by lords or nations)
         val lordCityIds = allGenerals
             .filter { it.officerLevel.toInt() == 20 }
-            .map { it.cityId }.toSet()
+            .map { it.planetId }.toSet()
         val nationCityIds = allCities
-            .filter { it.nationId != 0L }
+            .filter { it.factionId != 0L }
             .map { it.id }.toSet()
         val occupiedCities = lordCityIds + nationCityIds
 
         // Check current target
         var targetCityId = (general.meta["movingTargetCityID"] as? Number)?.toLong()
-        if (targetCityId == general.cityId || (targetCityId != null && targetCityId in occupiedCities)) {
+        if (targetCityId == general.planetId || (targetCityId != null && targetCityId in occupiedCities)) {
             targetCityId = null
         }
 
@@ -3858,9 +3858,9 @@ class GeneralAI(
         if (targetCityId == null) {
             // BFS from current city, find unoccupied major cities within range 4
             val candidates = mutableListOf<Pair<Long, Double>>()
-            val visited = mutableSetOf(general.cityId)
+            val visited = mutableSetOf(general.planetId)
             val queue = ArrayDeque<Pair<Long, Int>>()
-            queue.add(general.cityId to 0)
+            queue.add(general.planetId to 0)
 
             while (queue.isNotEmpty()) {
                 val (cid, dist) = queue.removeFirst()
@@ -3882,13 +3882,13 @@ class GeneralAI(
             general.meta["movingTargetCityID"] = targetCityId
         }
 
-        if (targetCityId == general.cityId) {
+        if (targetCityId == general.planetId) {
             return "인재탐색"
         }
 
         // BFS from target to find distances
         val distFromTarget = bfsCityDistances(targetCityId, allCities)
-        val currentDist = distFromTarget[general.cityId] ?: return null
+        val currentDist = distFromTarget[general.planetId] ?: return null
 
         // Pick next step: prefer adjacent unoccupied major cities, or step closer to target
         val adjacentIds = getAdjacentCityIds(currentCity, allCities)
@@ -3937,10 +3937,10 @@ class GeneralAI(
         // Process gold and rice
         data class ResourceInfo(val isGold: Boolean, val genRes: Int, val nationRes: Int, val reqNation: Int, val reqWar: Int, val reqDevel: Int)
         val resources = listOf(
-            ResourceInfo(true, general.gold, nation.gold, nationPolicy.reqNationGold,
+            ResourceInfo(true, general.funds, nation.funds, nationPolicy.reqNationGold,
                 nationPolicy.calcPolicyValue("reqNPCWarGold", nation),
                 nationPolicy.calcPolicyValue("reqNPCDevelGold", nation)),
-            ResourceInfo(false, general.rice, nation.rice, nationPolicy.reqNationRice,
+            ResourceInfo(false, general.supplies, nation.supplies, nationPolicy.reqNationRice,
                 nationPolicy.calcPolicyValue("reqNPCWarRice", nation),
                 nationPolicy.calcPolicyValue("reqNPCDevelRice", nation))
         )
@@ -4016,7 +4016,7 @@ class GeneralAI(
      * Get adjacent city IDs from city meta or by region proximity.
      * Cities store adjacency in meta["connections"] as list of city IDs.
      */
-    private fun getAdjacentCityIds(city: City, allCities: List<City>): List<Long> {
+    private fun getAdjacentCityIds(city: Planet, allCities: List<Planet>): List<Long> {
         // Try meta connections first
         val connections = city.meta["connections"] as? Collection<*>
         if (connections != null) {
@@ -4032,7 +4032,7 @@ class GeneralAI(
     /**
      * BFS from a city to compute distances to all reachable cities.
      */
-    private fun bfsCityDistances(startCityId: Long, allCities: List<City>): Map<Long, Int> {
+    private fun bfsCityDistances(startCityId: Long, allCities: List<Planet>): Map<Long, Int> {
         val result = mutableMapOf(startCityId to 0)
         val queue = ArrayDeque<Pair<Long, Int>>()
         queue.add(startCityId to 0)
@@ -4058,38 +4058,38 @@ class GeneralAI(
      * Per legacy calcCityGoldIncome: pop * comm/commMax * trustRatio / 30 * secuFactor.
      * Simplified: no officer bonus, no capital bonus, no nation type modifier.
      */
-    private fun calcCityGoldIncome(city: City): Int {
+    private fun calcCityGoldIncome(city: Planet): Int {
         if (city.supplyState <= 0) return 0
-        val trustRatio = city.trust / 200.0 + 0.5
-        val commMax = city.commMax.coerceAtLeast(1)
-        var income = city.pop.toDouble() * city.comm / commMax * trustRatio / 30.0
-        val secuMax = city.secuMax.coerceAtLeast(1)
-        income *= 1.0 + city.secu.toDouble() / secuMax / 10.0
+        val trustRatio = city.approval / 200.0 + 0.5
+        val commMax = city.commerceMax.coerceAtLeast(1)
+        var income = city.population.toDouble() * city.commerce / commMax * trustRatio / 30.0
+        val secuMax = city.securityMax.coerceAtLeast(1)
+        income *= 1.0 + city.security.toDouble() / secuMax / 10.0
         return round(income).toInt()
     }
 
     /**
      * Per legacy calcCityRiceIncome: pop * agri/agriMax * trustRatio / 30 * secuFactor.
      */
-    private fun calcCityRiceIncome(city: City): Int {
+    private fun calcCityRiceIncome(city: Planet): Int {
         if (city.supplyState <= 0) return 0
-        val trustRatio = city.trust / 200.0 + 0.5
-        val agriMax = city.agriMax.coerceAtLeast(1)
-        var income = city.pop.toDouble() * city.agri / agriMax * trustRatio / 30.0
-        val secuMax = city.secuMax.coerceAtLeast(1)
-        income *= 1.0 + city.secu.toDouble() / secuMax / 10.0
+        val trustRatio = city.approval / 200.0 + 0.5
+        val agriMax = city.productionMax.coerceAtLeast(1)
+        var income = city.population.toDouble() * city.production / agriMax * trustRatio / 30.0
+        val secuMax = city.securityMax.coerceAtLeast(1)
+        income *= 1.0 + city.security.toDouble() / secuMax / 10.0
         return round(income).toInt()
     }
 
     /**
      * Per legacy calcCityWallRiceIncome: def * wall/wallMax / 3 * secuFactor.
      */
-    private fun calcCityWallRiceIncome(city: City): Int {
+    private fun calcCityWallRiceIncome(city: Planet): Int {
         if (city.supplyState <= 0) return 0
-        val wallMax = city.wallMax.coerceAtLeast(1)
-        var income = city.def.toDouble() * city.wall / wallMax / 3.0
-        val secuMax = city.secuMax.coerceAtLeast(1)
-        income *= 1.0 + city.secu.toDouble() / secuMax / 10.0
+        val wallMax = city.fortressMax.coerceAtLeast(1)
+        var income = city.orbitalDefense.toDouble() * city.fortress / wallMax / 3.0
+        val secuMax = city.securityMax.coerceAtLeast(1)
+        income *= 1.0 + city.security.toDouble() / secuMax / 10.0
         return round(income).toInt()
     }
 
@@ -4098,7 +4098,7 @@ class GeneralAI(
      * getBill(ded) = getDedLevel(ded) * 200 + 400
      * getDedLevel(ded) = ceil(sqrt(ded) / 10), clamped to [0, maxDedLevel=5]
      */
-    private fun calcOutcome(billRate: Int, generals: List<General>): Int {
+    private fun calcOutcome(billRate: Int, generals: List<Officer>): Int {
         val totalBill = generals.sumOf { gen ->
             val dedLevel = kotlin.math.ceil(kotlin.math.sqrt(gen.dedication.toDouble()) / 10.0).toInt()
                 .coerceIn(0, 5)

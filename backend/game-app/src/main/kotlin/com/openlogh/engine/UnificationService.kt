@@ -1,23 +1,23 @@
 package com.openlogh.engine
 
-import com.openlogh.entity.City
-import com.openlogh.entity.Emperor
+import com.openlogh.entity.Planet
+import com.openlogh.entity.Sovereign
 import com.openlogh.entity.GameHistory
-import com.openlogh.entity.General
+import com.openlogh.entity.Officer
 import com.openlogh.entity.HallOfFame
 import com.openlogh.entity.Message
 import com.openlogh.entity.OldGeneral
 import com.openlogh.entity.OldNation
-import com.openlogh.entity.WorldState
+import com.openlogh.entity.SessionState
 import com.openlogh.repository.AppUserRepository
 import com.openlogh.service.HistoryService
-import com.openlogh.repository.CityRepository
-import com.openlogh.repository.EmperorRepository
+import com.openlogh.repository.PlanetRepository
+import com.openlogh.repository.SovereignRepository
 import com.openlogh.repository.GameHistoryRepository
-import com.openlogh.repository.GeneralRepository
+import com.openlogh.repository.OfficerRepository
 import com.openlogh.repository.HallOfFameRepository
 import com.openlogh.repository.MessageRepository
-import com.openlogh.repository.NationRepository
+import com.openlogh.repository.FactionRepository
 import com.openlogh.repository.OldGeneralRepository
 import com.openlogh.repository.OldNationRepository
 import org.slf4j.LoggerFactory
@@ -27,12 +27,12 @@ import java.time.OffsetDateTime
 
 @Service
 class UnificationService(
-    private val nationRepository: NationRepository,
-    private val cityRepository: CityRepository,
-    private val generalRepository: GeneralRepository,
+    private val factionRepository: FactionRepository,
+    private val planetRepository: PlanetRepository,
+    private val officerRepository: OfficerRepository,
     private val appUserRepository: AppUserRepository,
     private val hallOfFameRepository: HallOfFameRepository,
-    private val emperorRepository: EmperorRepository,
+    private val sovereignRepository: SovereignRepository,
     private val oldNationRepository: OldNationRepository,
     private val oldGeneralRepository: OldGeneralRepository,
     private val gameHistoryRepository: GameHistoryRepository,
@@ -46,26 +46,26 @@ class UnificationService(
     }
 
     @Transactional
-    fun checkAndSettleUnification(world: WorldState) {
+    fun checkAndSettleUnification(world: SessionState) {
         val isUnited = (world.config["isUnited"] as? Number)?.toInt() ?: 0
         if (isUnited != 0) {
             return
         }
 
         val worldId = world.id.toLong()
-        val nations = nationRepository.findByWorldId(worldId)
+        val nations = factionRepository.findBySessionId(worldId)
         val activeNations = nations.filter { it.level > 0 }
         if (activeNations.size != 1) {
             return
         }
 
         val winner = activeNations.first()
-        val cities = cityRepository.findByWorldId(worldId)
+        val cities = planetRepository.findBySessionId(worldId)
         if (cities.isEmpty()) {
             return
         }
 
-        val ownedCount = cities.count { it.nationId == winner.id }
+        val ownedCount = cities.count { it.factionId == winner.id }
         if (ownedCount != cities.size) {
             return
         }
@@ -90,20 +90,20 @@ class UnificationService(
         sendInvaderWarning(world, winner.id, cities)
     }
 
-    private fun sendInvaderWarning(world: WorldState, winnerNationId: Long, cities: List<City>) {
+    private fun sendInvaderWarning(world: SessionState, winnerNationId: Long, cities: List<Planet>) {
         val hasLv4City = cities.any { it.level.toInt() == 4 }
         if (!hasLv4City) return
 
-        val generals = generalRepository.findByWorldId(world.id.toLong())
+        val generals = officerRepository.findBySessionId(world.id.toLong())
         val chiefs = generals
-            .filter { it.nationId == winnerNationId && it.officerLevel >= 5 && it.npcState.toInt() < 2 }
+            .filter { it.factionId == winnerNationId && it.officerLevel >= 5 && it.npcState.toInt() < 2 }
             .sortedByDescending { it.officerLevel }
             .take(2)
 
         for (chief in chiefs) {
             messageRepository.save(
                 Message(
-                    worldId = world.id.toLong(),
+                    sessionId = world.id.toLong(),
                     mailboxCode = "general_action",
                     messageType = "notice",
                     destId = chief.id,
@@ -118,8 +118,8 @@ class UnificationService(
         logger.info("Sent invader warning to {} chiefs in world {}", chiefs.size, world.id)
     }
 
-    private fun settleInheritance(world: WorldState, winnerNationId: Long) {
-        val generals = generalRepository.findByWorldId(world.id.toLong())
+    private fun settleInheritance(world: SessionState, winnerNationId: Long) {
+        val generals = officerRepository.findBySessionId(world.id.toLong())
             .filter { it.userId != null && it.npcState.toInt() < 2 }
         for (general in generals) {
             val userId = general.userId ?: continue
@@ -138,7 +138,7 @@ class UnificationService(
             val sabotage = firenum * 20
             val dex = computeDexPoint(general)
             val previousUnifier = readNumber(inheritMeta, "unifier")
-            val unifierAward = if (general.nationId == winnerNationId && general.officerLevel.toInt() > 4) {
+            val unifierAward = if (general.factionId == winnerNationId && general.officerLevel.toInt() > 4) {
                 UNIFIER_POINT
             } else {
                 0
@@ -177,14 +177,14 @@ class UnificationService(
         }
     }
 
-    private fun settleHallOfFame(world: WorldState, winnerNationId: Long) {
+    private fun settleHallOfFame(world: SessionState, winnerNationId: Long) {
         val worldId = world.id.toLong()
         val serverId = readString(world.config, "serverId").ifBlank { world.name }
         val season = readNumber(world.meta, "season").takeIf { it > 0 } ?: 1
         val scenario = readNumber(world.meta, "scenarioId")
 
-        val nations = nationRepository.findByWorldId(worldId).associateBy { it.id }
-        val generals = generalRepository.findByWorldId(worldId).filter { it.userId != null && it.npcState.toInt() < 2 }
+        val nations = factionRepository.findBySessionId(worldId).associateBy { it.id }
+        val generals = officerRepository.findBySessionId(worldId).filter { it.userId != null && it.npcState.toInt() < 2 }
 
         for (general in generals) {
             val rank = asMap(general.meta["rank"])
@@ -212,7 +212,7 @@ class UnificationService(
                     continue
                 }
 
-                val nation = nations[general.nationId]
+                val nation = nations[general.factionId]
                 val aux = mutableMapOf<String, Any>(
                     "name" to general.name,
                     "nationName" to (nation?.name ?: "재야"),
@@ -252,21 +252,21 @@ class UnificationService(
         gameHistoryRepository.save(gameHistory)
     }
 
-    private fun settleDynasty(world: WorldState, winnerNationId: Long, winnerNationName: String) {
+    private fun settleDynasty(world: SessionState, winnerNationId: Long, winnerNationName: String) {
         val worldId = world.id.toLong()
         val serverId = readString(world.config, "serverId").ifBlank { world.name }
         val serverName = readString(world.config, "serverName").ifBlank { world.name }
-        val nations = nationRepository.findByWorldId(worldId)
+        val nations = factionRepository.findBySessionId(worldId)
         val winnerNation = nations.firstOrNull { it.id == winnerNationId } ?: return
-        val cities = cityRepository.findByWorldId(worldId)
-        val generals = generalRepository.findByWorldId(worldId)
+        val cities = planetRepository.findBySessionId(worldId)
+        val generals = officerRepository.findBySessionId(worldId)
 
-        val winnerGenerals = generals.filter { it.nationId == winnerNationId }
-        val neutralGenerals = generals.filter { it.nationId == 0L }
+        val winnerGenerals = generals.filter { it.factionId == winnerNationId }
+        val neutralGenerals = generals.filter { it.factionId == 0L }
 
-        val ownedCities = cities.filter { it.nationId == winnerNationId }
-        val popSum = ownedCities.sumOf { it.pop }
-        val popMaxSum = ownedCities.sumOf { it.popMax }
+        val ownedCities = cities.filter { it.factionId == winnerNationId }
+        val popSum = ownedCities.sumOf { it.population }
+        val popMaxSum = ownedCities.sumOf { it.populationMax }
         val popText = "$popSum / $popMaxSum"
         val popRate = if (popMaxSum > 0) "${(popSum.toDouble() / popMaxSum.toDouble() * 10000).toInt() / 100.0} %" else "0 %"
 
@@ -297,12 +297,12 @@ class UnificationService(
                 "nation" to winnerNationId,
                 "name" to winnerNation.name,
                 "color" to winnerNation.color,
-                "type" to winnerNation.typeCode,
+                "type" to winnerNation.factionType,
                 "level" to winnerNation.level,
-                "gold" to winnerNation.gold,
-                "rice" to winnerNation.rice,
+                "gold" to winnerNation.funds,
+                "rice" to winnerNation.supplies,
                 "power" to winnerNation.power,
-                "capitalCityId" to (winnerNation.capitalCityId ?: 0),
+                "capitalCityId" to (winnerNation.capitalPlanetId ?: 0),
                 "generals" to winnerGenerals.map { it.id },
                 "history" to historyMessages,
                 "meta" to winnerNation.meta,
@@ -343,12 +343,12 @@ class UnificationService(
             val type = oldNation.data["type"] as? String ?: return@forEach
             nationTypeCounts[type] = (nationTypeCounts[type] ?: 0) + 1
         }
-        nationTypeCounts[winnerNation.typeCode] = (nationTypeCounts[winnerNation.typeCode] ?: 0) + 1
+        nationTypeCounts[winnerNation.factionType] = (nationTypeCounts[winnerNation.factionType] ?: 0) + 1
         val nationHist = nationTypeCounts.entries.joinToString(", ") { "${it.key}(${it.value})" }
 
         val serverCount = gameHistoryRepository.count() + 1
 
-        emperorRepository.save(
+        sovereignRepository.save(
             Emperor(
                 serverId = serverId,
                 phase = "${serverName}${serverCount}기",
@@ -359,7 +359,7 @@ class UnificationService(
                 personalHist = "",
                 specialHist = "",
                 name = winnerNation.name,
-                type = winnerNation.typeCode,
+                type = winnerNation.factionType,
                 color = winnerNation.color,
                 year = world.currentYear,
                 month = world.currentMonth,
@@ -368,8 +368,8 @@ class UnificationService(
                 citynum = ownedCities.size,
                 pop = popText,
                 poprate = popRate,
-                gold = winnerNation.gold,
-                rice = winnerNation.rice,
+                gold = winnerNation.funds,
+                rice = winnerNation.supplies,
                 l12name = officerMap[12]?.first ?: "",
                 l12pic = officerMap[12]?.second ?: "",
                 l11name = officerMap[11]?.first ?: "",
@@ -407,7 +407,7 @@ class UnificationService(
         oldNationRepository.save(oldNation)
     }
 
-    private fun upsertOldGeneral(serverId: String, general: General, world: WorldState) {
+    private fun upsertOldGeneral(serverId: String, general: Officer, world: SessionState) {
         val oldGeneral = oldGeneralRepository.findByServerIdAndGeneralNo(serverId, general.id) ?: OldGeneral(
             serverId = serverId,
             generalNo = general.id,
@@ -419,23 +419,23 @@ class UnificationService(
         oldGeneral.data = mutableMapOf(
             "id" to general.id,
             "name" to general.name,
-            "nationId" to general.nationId,
-            "cityId" to general.cityId,
-            "troopId" to general.troopId,
+            "nationId" to general.factionId,
+            "cityId" to general.planetId,
+            "troopId" to general.fleetId,
             "officerLevel" to general.officerLevel,
             "dedication" to general.dedication,
             "experience" to general.experience,
             "leadership" to general.leadership,
-            "strength" to general.strength,
-            "intel" to general.intel,
+            "strength" to general.command,
+            "intel" to general.intelligence,
             "politics" to general.politics,
-            "charm" to general.charm,
-            "gold" to general.gold,
-            "rice" to general.rice,
-            "crew" to general.crew,
-            "crewType" to general.crewType,
-            "train" to general.train,
-            "atmos" to general.atmos,
+            "charm" to general.administration,
+            "gold" to general.funds,
+            "rice" to general.supplies,
+            "crew" to general.ships,
+            "crewType" to general.shipClass,
+            "train" to general.training,
+            "atmos" to general.morale,
             "age" to general.age,
             "startAge" to general.startAge,
             "npcState" to general.npcState,
@@ -448,7 +448,7 @@ class UnificationService(
         oldGeneralRepository.save(oldGeneral)
     }
 
-    private fun buildTopList(generals: List<General>, rankKey: String, limit: Int): String {
+    private fun buildTopList(generals: List<Officer>, rankKey: String, limit: Int): String {
         val rows = generals
             .map { general ->
                 val rank = asMap(general.meta["rank"])
@@ -462,7 +462,7 @@ class UnificationService(
         return rows.joinToString(", ") { "${it.first}【${it.second}】" }
     }
 
-    private fun computeDexPoint(general: General): Int {
+    private fun computeDexPoint(general: Officer): Int {
         val dexMeta = asMap(general.meta["dex"])
         val total = general.dex1 + general.dex2 + general.dex3 + general.dex4 + general.dex5 +
             dexMeta.values.sumOf { (it as? Number)?.toInt() ?: 0 }

@@ -14,7 +14,7 @@ class DiplomacyLetterService(
 
     fun sendLetter(worldId: Long, srcNationId: Long, destNationId: Long, type: String, content: String?): Message {
         return messageRepository.save(Message(
-            worldId = worldId,
+            sessionId = worldId,
             mailboxCode = "diplomacy_letter",
             messageType = type,
             srcId = srcNationId,

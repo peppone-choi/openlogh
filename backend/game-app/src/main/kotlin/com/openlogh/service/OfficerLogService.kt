@@ -6,7 +6,7 @@ import com.openlogh.repository.RecordRepository
 import org.springframework.stereotype.Service
 
 /**
- * Retrieves old/paginated general logs (action, battle result, battle detail).
+ * Retrieves old/paginated officer logs (action, battle result, battle detail).
  * Legacy: j_general_log_old.php
  */
 @Service
@@ -28,8 +28,8 @@ class OfficerLogService(
     )
 
     /**
-     * @param generalId the general requesting logs
-     * @param targetId the general whose logs to fetch
+     * @param generalId the officer requesting logs
+     * @param targetId the officer whose logs to fetch
      * @param type one of "generalAction", "battleResult", "battleDetail"
      * @param toId fetch logs with id < toId (pagination)
      */
@@ -41,13 +41,13 @@ class OfficerLogService(
             return LogResult(false, "요청 대상이 올바르지 않습니다.")
         }
 
-        // Check permission: same nation or own logs
+        // Check permission: same faction or own logs
         val requester = officerRepository.findById(generalId).orElse(null)
             ?: return LogResult(false, "장수를 찾을 수 없습니다.")
         val target = officerRepository.findById(targetId).orElse(null)
             ?: return LogResult(false, "대상 장수를 찾을 수 없습니다.")
 
-        if (requester.nationId != target.nationId && requester.id != target.id) {
+        if (requester.factionId != target.factionId && requester.id != target.id) {
             return LogResult(false, "같은 국가의 장수만 조회할 수 있습니다.")
         }
 

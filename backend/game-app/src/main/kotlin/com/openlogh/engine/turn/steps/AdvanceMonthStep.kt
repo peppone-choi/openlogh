@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component
  *
  * Legacy: turnDate() / advanceMonth()
  * This step is a marker — actual month advancement is handled by TurnService
- * because it mutates WorldState.currentYear/currentMonth which affects all
+ * because it mutates SessionState.currentYear/currentMonth which affects all
  * subsequent steps' context.
  */
 @Component

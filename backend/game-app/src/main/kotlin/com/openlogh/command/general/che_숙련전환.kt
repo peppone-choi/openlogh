@@ -3,9 +3,9 @@ package com.openlogh.command.general
 import com.openlogh.command.CommandCost
 import com.openlogh.command.CommandEnv
 import com.openlogh.command.CommandResult
-import com.openlogh.command.GeneralCommand
+import com.openlogh.command.OfficerCommand
 import com.openlogh.command.constraint.*
-import com.openlogh.entity.General
+import com.openlogh.entity.Officer
 import kotlin.random.Random
 
 private const val DECREASE_COEFF = 0.4
@@ -16,8 +16,8 @@ private val ARM_TYPE_NAMES = mapOf(
     3 to "극병", 4 to "노병", 5 to "차병"
 )
 
-class che_숙련전환(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
-    : GeneralCommand(general, env, arg) {
+class che_숙련전환(general: Officer, env: CommandEnv, arg: Map<String, Any>? = null)
+    : OfficerCommand(general, env, arg) {
 
     override val actionName = "숙련전환"
 
@@ -27,8 +27,8 @@ class che_숙련전환(general: General, env: CommandEnv, arg: Map<String, Any>?
             return listOf(
                 NotBeNeutral(),
                 OccupiedCity(),
-                ReqGeneralGold(cost.gold),
-                ReqGeneralRice(cost.rice)
+                ReqGeneralGold(cost.funds),
+                ReqGeneralRice(cost.supplies)
             )
         }
 
@@ -38,8 +38,8 @@ class che_숙련전환(general: General, env: CommandEnv, arg: Map<String, Any>?
             return listOf(
                 NotBeNeutral(),
                 OccupiedCity(),
-                ReqGeneralGold(cost.gold),
-                ReqGeneralRice(cost.rice)
+                ReqGeneralGold(cost.funds),
+                ReqGeneralRice(cost.supplies)
             )
         }
 
@@ -84,7 +84,7 @@ class che_숙련전환(general: General, env: CommandEnv, arg: Map<String, Any>?
         return CommandResult(
             success = true,
             logs = logs,
-            message = """{"statChanges":{"gold":${-cost.gold},"rice":${-cost.rice},"experience":10,"leadershipExp":2,"dex$srcArmType":${-cutDex},"dex$destArmType":$addDex},"dexConversion":true,"tryUniqueLottery":true}"""
+            message = """{"statChanges":{"gold":${-cost.funds},"rice":${-cost.supplies},"experience":10,"leadershipExp":2,"dex$srcArmType":${-cutDex},"dex$destArmType":$addDex},"dexConversion":true,"tryUniqueLottery":true}"""
         )
     }
 }

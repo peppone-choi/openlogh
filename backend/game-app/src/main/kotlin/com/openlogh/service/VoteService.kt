@@ -19,7 +19,7 @@ class VoteService(
 
     fun createVote(worldId: Long, creatorId: Long, title: String, options: List<String>): Message {
         return messageRepository.save(Message(
-            worldId = worldId,
+            sessionId = worldId,
             mailboxCode = "vote",
             messageType = "vote",
             srcId = creatorId,

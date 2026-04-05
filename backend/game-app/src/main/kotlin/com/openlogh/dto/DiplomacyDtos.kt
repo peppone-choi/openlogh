@@ -21,9 +21,9 @@ data class DiplomacyDto(
     companion object {
         fun from(d: Diplomacy) = DiplomacyDto(
             id = d.id,
-            worldId = d.worldId,
-            srcNationId = d.srcNationId,
-            destNationId = d.destNationId,
+            worldId = d.sessionId,
+            srcNationId = d.srcFactionId,
+            destNationId = d.destFactionId,
             stateCode = d.stateCode,
             term = d.term.toInt(),
             isDead = d.isDead,

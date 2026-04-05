@@ -1,16 +1,16 @@
 package com.openlogh.command.constraint
 
-import com.openlogh.entity.City
-import com.openlogh.entity.General
-import com.openlogh.entity.Nation
+import com.openlogh.entity.Planet
+import com.openlogh.entity.Officer
+import com.openlogh.entity.Faction
 
 data class ConstraintContext(
-    val general: General,
-    val city: City? = null,
-    val nation: Nation? = null,
-    val destGeneral: General? = null,
-    val destCity: City? = null,
-    val destNation: Nation? = null,
+    val general: Officer,
+    val city: Planet? = null,
+    val nation: Faction? = null,
+    val destOfficer: Officer? = null,
+    val destPlanet: Planet? = null,
+    val destFaction: Faction? = null,
     val arg: Map<String, Any>? = null,
     val env: Map<String, Any> = emptyMap()
 )

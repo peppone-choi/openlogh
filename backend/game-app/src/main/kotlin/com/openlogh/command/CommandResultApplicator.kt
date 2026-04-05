@@ -3,9 +3,9 @@ package com.openlogh.command
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.openlogh.command.util.StatChangeUtil
-import com.openlogh.entity.City
-import com.openlogh.entity.General
-import com.openlogh.entity.Nation
+import com.openlogh.entity.Planet
+import com.openlogh.entity.Officer
+import com.openlogh.entity.Faction
 
 /**
  * CommandResult.message JSON을 파싱하여 엔티티에 적용하는 유틸리티.
@@ -35,12 +35,12 @@ object CommandResultApplicator {
      */
     fun apply(
         result: CommandResult,
-        general: General,
-        city: City?,
-        nation: Nation?,
-        destGeneral: General? = null,
-        destCity: City? = null,
-        destNation: Nation? = null,
+        general: Officer,
+        city: Planet?,
+        nation: Faction?,
+        destOfficer: Officer? = null,
+        destPlanet: Planet? = null,
+        destFaction: Faction? = null,
     ) {
         val message = result.message ?: return
         if (!result.success) return
@@ -57,9 +57,9 @@ object CommandResultApplicator {
             if (city != null) {
                 applyCityChanges(city, it)
                 if (readBoolean(it["claimCity"]) == true) {
-                    val claimNationId = nation?.id ?: general.nationId
+                    val claimNationId = nation?.id ?: general.factionId
                     if (claimNationId > 0L) {
-                        city.nationId = claimNationId
+                        city.factionId = claimNationId
                     }
                 }
             }
@@ -70,15 +70,15 @@ object CommandResultApplicator {
         }
 
         readStringAnyMap(json["destGeneralChanges"])?.let {
-            if (destGeneral != null) applyStatChanges(destGeneral, it)
+            if (destOfficer != null) applyStatChanges(destOfficer, it)
         }
 
         readStringAnyMap(json["destCityChanges"])?.let {
-            if (destCity != null) applyCityChanges(destCity, it)
+            if (destPlanet != null) applyCityChanges(destPlanet, it)
         }
 
         readStringAnyMap(json["destNationChanges"])?.let {
-            if (destNation != null) applyNationChanges(destNation, it)
+            if (destFaction != null) applyNationChanges(destFaction, it)
         }
 
         readStringAnyMap(json["dexChanges"])?.let { applyDexChanges(general, it) }
@@ -91,8 +91,8 @@ object CommandResultApplicator {
         (json["setMakeLimit"] as? Number)?.let { general.makeLimit = it.toShort() }
 
         if (json["leaveNation"] == true) {
-            general.nationId = 0L
-            general.troopId = 0L
+            general.factionId = 0L
+            general.fleetId = 0L
         }
 
         if (json["resetOfficer"] == true) {
@@ -102,15 +102,15 @@ object CommandResultApplicator {
         }
 
         if (json["moveToCityOfLord"] == true) {
-            val capitalId = destNation?.capitalCityId
+            val capitalId = destFaction?.capitalPlanetId
             if (capitalId != null && capitalId > 0L) {
-                general.cityId = capitalId
+                general.planetId = capitalId
             }
         }
 
         // Consumable item: delete item on use (legacy: tryConsumeNow + deleteItem)
         if (json["consumeItem"] == true) {
-            general.itemCode = "None"
+            general.accessoryCode = "None"
         }
 
         // Own nation changes (e.g., 탈취 resource transfer to own nation)
@@ -128,7 +128,7 @@ object CommandResultApplicator {
                     else -> null
                 }
                 if (id != null && id > 0) {
-                    general.cityId = id
+                    general.planetId = id
                 }
             }
         }
@@ -151,9 +151,9 @@ object CommandResultApplicator {
             }
             val stateVal = (csu["state"] as? Number)?.toShort()
             val termVal = (csu["term"] as? Number)?.toShort()
-            if (targetCityId != null && destCity != null && destCity.id == targetCityId) {
-                if (stateVal != null) destCity.state = stateVal
-                if (termVal != null) destCity.term = termVal
+            if (targetCityId != null && destPlanet != null && destPlanet.id == targetCityId) {
+                if (stateVal != null) destPlanet.state = stateVal
+                if (termVal != null) destPlanet.term = termVal
             }
         }
 
@@ -163,7 +163,7 @@ object CommandResultApplicator {
         }
     }
 
-    private fun applyStatChanges(general: General, changes: Map<String, Any>) {
+    private fun applyStatChanges(general: Officer, changes: Map<String, Any>) {
         for ((key, rawValue) in changes) {
             val value = (rawValue as? Number) ?: continue
             if (key == "experienceMultiplier") {
@@ -178,55 +178,55 @@ object CommandResultApplicator {
         }
     }
 
-    private fun applyStatSet(general: General, key: String, value: Int) {
+    private fun applyStatSet(general: Officer, key: String, value: Int) {
         when (key) {
-            "crewType" -> general.crewType = value.toShort()
-            "nation" -> general.nationId = value.toLong()
+            "crewType" -> general.shipClass = value.toShort()
+            "nation" -> general.factionId = value.toLong()
             "officerLevel" -> general.officerLevel = value.toShort()
             "officerCity" -> general.officerCity = value
-            "troop" -> general.troopId = value.toLong()
+            "troop" -> general.fleetId = value.toLong()
             "killTurn" -> general.killTurn = value.toShort()
         }
     }
 
-    private fun applyStatDelta(general: General, key: String, delta: Int) {
+    private fun applyStatDelta(general: Officer, key: String, delta: Int) {
         when (key) {
-            "gold" -> general.gold = maxOf(0, general.gold + delta)
-            "rice" -> general.rice = maxOf(0, general.rice + delta)
-            "crew" -> general.crew = maxOf(0, general.crew + delta)
-            "train" -> general.train = maxOf(0, minOf(100, general.train + delta)).toShort()
-            "atmos" -> general.atmos = maxOf(0, minOf(100, general.atmos + delta)).toShort()
+            "gold" -> general.funds = maxOf(0, general.funds + delta)
+            "rice" -> general.supplies = maxOf(0, general.supplies + delta)
+            "crew" -> general.ships = maxOf(0, general.ships + delta)
+            "train" -> general.training = maxOf(0, minOf(100, general.training + delta)).toShort()
+            "atmos" -> general.morale = maxOf(0, minOf(100, general.morale + delta)).toShort()
             "experience" -> general.experience = maxOf(0, general.experience + delta)
             "dedication" -> general.dedication = maxOf(0, general.dedication + delta)
             "leadershipExp" -> general.leadershipExp = (general.leadershipExp + delta).toShort()
-            "strengthExp" -> general.strengthExp = (general.strengthExp + delta).toShort()
-            "intelExp" -> general.intelExp = (general.intelExp + delta).toShort()
+            "strengthExp" -> general.commandExp = (general.commandExp + delta).toShort()
+            "intelExp" -> general.intelligenceExp = (general.intelligenceExp + delta).toShort()
             "injury" -> general.injury = maxOf(0, minOf(100, general.injury + delta)).toShort()
             "belong" -> general.belong = (general.belong + delta).toShort()
             "betray" -> general.betray = (general.betray + delta).toShort()
         }
     }
 
-    private fun applyCityChanges(city: City, changes: Map<String, Any>) {
+    private fun applyCityChanges(city: Planet, changes: Map<String, Any>) {
         for ((key, rawValue) in changes) {
             val num = rawValue as? Number ?: continue
             when (key) {
                 // trust uses float delta for decimal precision (legacy: 선동 민심 1 decimal)
                 "trust" -> {
                     val delta = num.toFloat()
-                    city.trust = maxOf(0f, minOf(100f, city.trust + delta))
+                    city.approval = maxOf(0f, minOf(100f, city.approval + delta))
                 }
                 else -> {
                     val delta = num.toInt()
                     when (key) {
-                        "agri" -> city.agri = maxOf(0, minOf(city.agriMax, city.agri + delta))
-                        "comm" -> city.comm = maxOf(0, minOf(city.commMax, city.comm + delta))
-                        "secu" -> city.secu = maxOf(0, minOf(city.secuMax, city.secu + delta))
-                        "def" -> city.def = maxOf(0, minOf(city.defMax, city.def + delta))
-                        "wall" -> city.wall = maxOf(0, minOf(city.wallMax, city.wall + delta))
-                        "pop" -> city.pop = maxOf(0, minOf(city.popMax, city.pop + delta))
+                        "agri" -> city.production = maxOf(0, minOf(city.productionMax, city.production + delta))
+                        "comm" -> city.commerce = maxOf(0, minOf(city.commerceMax, city.commerce + delta))
+                        "secu" -> city.security = maxOf(0, minOf(city.securityMax, city.security + delta))
+                        "def" -> city.orbitalDefense = maxOf(0, minOf(city.orbitalDefenseMax, city.orbitalDefense + delta))
+                        "wall" -> city.fortress = maxOf(0, minOf(city.fortressMax, city.fortress + delta))
+                        "pop" -> city.population = maxOf(0, minOf(city.populationMax, city.population + delta))
                         "dead" -> city.dead = maxOf(0, city.dead + delta)
-                        "trade" -> city.trade = maxOf(0, city.trade + delta)
+                        "trade" -> city.tradeRoute = maxOf(0, city.tradeRoute + delta)
                         "state" -> city.state = delta.toShort()
                     }
                 }
@@ -234,18 +234,18 @@ object CommandResultApplicator {
         }
     }
 
-    private fun applyNationChanges(nation: Nation, changes: Map<String, Any>) {
+    private fun applyNationChanges(nation: Faction, changes: Map<String, Any>) {
         for ((key, rawValue) in changes) {
             when (key) {
-                "gold" -> (rawValue as? Number)?.toInt()?.let { nation.gold = maxOf(0, nation.gold + it) }
-                "rice" -> (rawValue as? Number)?.toInt()?.let { nation.rice = maxOf(0, nation.rice + it) }
-                "tech" -> (rawValue as? Number)?.toInt()?.let { nation.tech = maxOf(0f, nation.tech + it) }
-                "power" -> (rawValue as? Number)?.toInt()?.let { nation.power = maxOf(0, nation.power + it) }
-                "chiefGeneralId" -> (rawValue as? Number)?.toLong()?.let { nation.chiefGeneralId = it }
+                "gold" -> (rawValue as? Number)?.toInt()?.let { nation.funds = maxOf(0, nation.funds + it) }
+                "rice" -> (rawValue as? Number)?.toInt()?.let { nation.supplies = maxOf(0, nation.supplies + it) }
+                "tech" -> (rawValue as? Number)?.toInt()?.let { nation.techLevel = maxOf(0f, nation.techLevel + it) }
+                "power" -> (rawValue as? Number)?.toInt()?.let { nation.militaryPower = maxOf(0, nation.militaryPower + it) }
+                "chiefGeneralId" -> (rawValue as? Number)?.toLong()?.let { nation.chiefOfficerId = it }
                 "nationName", "name" -> (rawValue as? String)?.takeIf { it.isNotBlank() }?.let { nation.name = it }
-                "nationType", "type", "typeCode" -> (rawValue as? String)?.let { nation.typeCode = normalizeNationTypeCode(it) }
-                "level" -> (rawValue as? Number)?.toInt()?.let { nation.level = it.toShort() }
-                "capital", "capitalCityId" -> (rawValue as? Number)?.toLong()?.let { nation.capitalCityId = it }
+                "nationType", "type", "typeCode" -> (rawValue as? String)?.let { nation.factionType = normalizeNationTypeCode(it) }
+                "level" -> (rawValue as? Number)?.toInt()?.let { nation.factionRank = it.toShort() }
+                "capital", "capitalCityId" -> (rawValue as? Number)?.toLong()?.let { nation.capitalPlanetId = it }
                 "color" -> (rawValue as? String)?.takeIf { it.isNotBlank() }?.let { nation.color = it }
                 "colorType" -> {
                     val idx = (rawValue as? Number)?.toInt() ?: (rawValue as? String)?.toIntOrNull()
@@ -290,7 +290,7 @@ object CommandResultApplicator {
     }
 
     /** 병종 숙련도 변경. crewType → dex1~5 매핑. */
-    private fun applyDexChanges(general: General, changes: Map<String, Any>) {
+    private fun applyDexChanges(general: Officer, changes: Map<String, Any>) {
         val crewType = (changes["crewType"] as? Number)?.toInt() ?: return
         val amount = (changes["amount"] as? Number)?.toInt() ?: return
         when (crewType) {

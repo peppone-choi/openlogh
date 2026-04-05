@@ -3,13 +3,13 @@ package com.openlogh.command.nation
 import com.openlogh.command.CommandCost
 import com.openlogh.command.CommandEnv
 import com.openlogh.command.CommandResult
-import com.openlogh.command.NationCommand
+import com.openlogh.command.FactionCommand
 import com.openlogh.command.constraint.*
-import com.openlogh.entity.General
+import com.openlogh.entity.Officer
 import kotlin.random.Random
 
-class che_부대탈퇴지시(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
-    : NationCommand(general, env, arg) {
+class che_부대탈퇴지시(general: Officer, env: CommandEnv, arg: Map<String, Any>? = null)
+    : FactionCommand(general, env, arg) {
 
     override val actionName = "부대 탈퇴 지시"
 
@@ -22,7 +22,7 @@ class che_부대탈퇴지시(general: General, env: CommandEnv, arg: Map<String,
     override fun getPostReqTurn() = 0
 
     override suspend fun run(rng: Random): CommandResult {
-        val destGen = destGeneral ?: return CommandResult(false, logs, "대상 장수 정보를 찾을 수 없습니다")
+        val destGen = destOfficer ?: return CommandResult(false, logs, "대상 장수 정보를 찾을 수 없습니다")
 
         if (destGen.id == general.id) {
             return CommandResult(false, logs, "본인입니다")
@@ -30,16 +30,16 @@ class che_부대탈퇴지시(general: General, env: CommandEnv, arg: Map<String,
 
         val destGeneralName = destGen.name
 
-        if (destGen.troopId == 0L) {
+        if (destGen.fleetId == 0L) {
             pushLog("<Y>$destGeneralName</>은(는) 부대원이 아닙니다.")
             return CommandResult(true, logs, "부대원이 아닙니다")
         }
-        if (destGen.troopId == destGen.id) {
+        if (destGen.fleetId == destGen.id) {
             pushLog("<Y>$destGeneralName</>은(는) 부대장입니다.")
             return CommandResult(true, logs, "부대장입니다")
         }
 
-        destGen.troopId = 0
+        destGen.fleetId = 0
         pushLog("<Y>$destGeneralName</>에게 부대 탈퇴를 지시했습니다.")
         pushHistoryLog("<Y>$destGeneralName</>에게 부대 탈퇴를 지시했습니다.")
         pushDestGeneralLog("부대 탈퇴를 지시받았습니다.")

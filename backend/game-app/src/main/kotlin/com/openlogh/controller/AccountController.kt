@@ -5,7 +5,7 @@ import com.openlogh.dto.DeleteAccountRequest
 import com.openlogh.dto.UpdateSettingsRequest
 import com.openlogh.engine.RealtimeService
 import com.openlogh.service.AccountService
-import com.openlogh.service.GeneralService
+import com.openlogh.service.OfficerService
 import com.openlogh.service.IconSyncService
 import com.openlogh.service.WorldService
 import org.springframework.http.HttpStatus
@@ -23,7 +23,7 @@ import java.util.UUID
 class AccountController(
     private val accountService: AccountService,
     private val iconSyncService: IconSyncService,
-    private val generalService: GeneralService,
+    private val officerService: OfficerService,
     private val realtimeService: RealtimeService,
     private val worldService: WorldService,
 ) {
@@ -120,9 +120,9 @@ class AccountController(
     @PostMapping("/buildNationCandidate")
     fun buildNationCandidate(): ResponseEntity<Any> {
         val loginId = getLoginId() ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
-        val general = generalService.getMyActiveGeneral(loginId)
+        val general = officerService.getMyActiveGeneral(loginId)
             ?: return ResponseEntity.badRequest().build()
-        val world = worldService.getWorld(general.worldId.toShort())
+        val world = worldService.getWorld(general.sessionId.toShort())
         if (world != null && worldService.getGamePhase(world) != WorldService.PHASE_PRE_OPEN) {
             return ResponseEntity.badRequest().body(mapOf("error" to "게임이 시작되었습니다."))
         }
@@ -133,7 +133,7 @@ class AccountController(
     @PostMapping("/instantRetreat")
     fun instantRetreat(): ResponseEntity<Any> {
         val loginId = getLoginId() ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
-        val general = generalService.getMyActiveGeneral(loginId)
+        val general = officerService.getMyActiveGeneral(loginId)
             ?: return ResponseEntity.badRequest().build()
         val result = realtimeService.submitCommand(general.id, "접경귀환", null)
         return ResponseEntity.ok(result)
@@ -142,9 +142,9 @@ class AccountController(
     @PostMapping("/dieOnPrestart")
     fun dieOnPrestart(): ResponseEntity<Any> {
         val loginId = getLoginId() ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
-        val general = generalService.getMyActiveGeneral(loginId)
+        val general = officerService.getMyActiveGeneral(loginId)
             ?: return ResponseEntity.badRequest().build()
-        val world = worldService.getWorld(general.worldId.toShort())
+        val world = worldService.getWorld(general.sessionId.toShort())
         if (world != null && worldService.getGamePhase(world) != WorldService.PHASE_PRE_OPEN) {
             return ResponseEntity.badRequest().body(mapOf("error" to "게임이 시작되었습니다."))
         }

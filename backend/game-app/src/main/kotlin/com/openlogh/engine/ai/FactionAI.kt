@@ -11,14 +11,14 @@ import kotlin.math.sqrt
 import kotlin.random.Random
 
 @Service
-class NationAI(
+class FactionAI(
     private val worldPortFactory: JpaWorldPortFactory,
 ) {
-    fun decideNationAction(nation: Nation, world: WorldState, rng: Random): String {
+    fun decideNationAction(nation: Faction, world: SessionState, rng: Random): String {
         val worldId = world.id.toLong()
         val ports = worldPortFactory.create(worldId)
-        val nationCities = ports.citiesByNation(nation.id).map { it.toEntity() }
-        val nationGenerals = ports.generalsByNation(nation.id).map { it.toEntity() }
+        val nationCities = ports.planetsByFaction(nation.id).map { it.toEntity() }
+        val nationGenerals = ports.officersByFaction(nation.id).map { it.toEntity() }
         val diplomacies = ports.activeDiplomacies().map { it.toEntity() }
         val policy = NpcPolicyBuilder.buildNationPolicy(nation.meta)
 
@@ -30,7 +30,7 @@ class NationAI(
 
         val atWar = diplomacies.any {
             (it.stateCode == "선전포고" || it.stateCode == "전쟁") &&
-                (it.srcNationId == nation.id || it.destNationId == nation.id)
+                (it.srcFactionId == nation.id || it.destFactionId == nation.id)
         } || nation.warState > 0
 
         // At war: strategic commands
@@ -43,17 +43,17 @@ class NationAI(
         }
 
         // Consider war declaration before resource gate (war declaration is free)
-        val allNations = ports.allNations().map { it.toEntity() }
-        val allCities = ports.allCities().map { it.toEntity() }
+        val allNations = ports.allFactions().map { it.toEntity() }
+        val allCities = ports.allPlanets().map { it.toEntity() }
         val warTarget = pickWarTarget(nation, allNations, allCities, diplomacies, rng)
         if (warTarget != null) {
             nation.meta["aiWarTarget"] = mapOf("destNationId" to warTarget.id)
-            ports.putNation(nation.toSnapshot())
+            ports.putFaction(nation.toSnapshot())
             return "선전포고"
         }
 
         // Low funds: skip expensive nation actions
-        if (nation.gold < policy.reqNationGold || nation.rice < policy.reqNationRice) {
+        if (nation.funds < policy.reqNationGold || nation.supplies < policy.reqNationRice) {
             return "Nation휴식"
         }
 
@@ -67,27 +67,27 @@ class NationAI(
                     "destCityID" to target.destCityId,
                     "reason" to target.reason,
                 )
-                ports.putNation(nation.toSnapshot())
+                ports.putFaction(nation.toSnapshot())
             }
             candidates.add("발령")
         }
 
         // Expand cities
-        if (nation.gold > 5000) {
+        if (nation.funds > 5000) {
             val expansionTarget = selectExpansionTarget(nation, nationCities, rng)
             if (expansionTarget != null) {
                 nation.meta["aiExpansionTarget"] = mapOf("destCityID" to expansionTarget.id)
-                ports.putNation(nation.toSnapshot())
+                ports.putFaction(nation.toSnapshot())
                 candidates.add("증축")
             }
         }
 
         // Reward generals with low dedication
-        if (nation.gold > 3000) {
+        if (nation.funds > 3000) {
             val rewardTarget = selectRewardTarget(nationGenerals, rng)
             if (rewardTarget != null) {
                 nation.meta["aiRewardTarget"] = mapOf("destGeneralID" to rewardTarget.id)
-                ports.putNation(nation.toSnapshot())
+                ports.putFaction(nation.toSnapshot())
                 candidates.add("포상")
             }
         }
@@ -101,7 +101,7 @@ class NationAI(
         val secondWarTarget = pickWarTarget(nation, allNations, allCities, diplomacies, rng)
         if (secondWarTarget != null) {
             nation.meta["aiWarTarget"] = mapOf("destNationId" to secondWarTarget.id)
-            ports.putNation(nation.toSnapshot())
+            ports.putFaction(nation.toSnapshot())
             candidates.add("선전포고")
         }
 
@@ -123,7 +123,7 @@ class NationAI(
         return candidates.first()
     }
 
-    private fun promoteEligibleGenerals(writePort: WorldWritePort, nationGenerals: List<General>, rng: Random) {
+    private fun promoteEligibleGenerals(writePort: WorldWritePort, nationGenerals: List<Officer>, rng: Random) {
         val candidates = nationGenerals.filter {
             it.npcState.toInt() != 5 &&
                 it.officerLevel.toInt() in 1..3 &&
@@ -142,7 +142,7 @@ class NationAI(
             val newLevel = targetOfficerLevel(picked.dedication)
             if (newLevel > picked.officerLevel.toInt() && newLevel <= 4) {
                 picked.officerLevel = newLevel.coerceIn(0, 20).toShort()
-                writePort.putGeneral(picked.toSnapshot())
+                writePort.putOfficer(picked.toSnapshot())
                 promoted += 1
             }
 
@@ -159,18 +159,18 @@ class NationAI(
         }
     }
 
-    // TODO: This simplified tax/bill adjustment does NOT match PHP GeneralAI.php's
+    // TODO: This simplified tax/bill adjustment does NOT match PHP OfficerAI.php's
     //  chooseTexRate/chooseGoldBillRate/chooseRiceBillRate formulas. The PHP-matching
-    //  implementations exist in GeneralAI.kt (chooseTexRate, chooseGoldBillRate,
-    //  chooseRiceBillRate) but are called from GeneralAI.chooseNationTurn() which is
+    //  implementations exist in OfficerAI.kt (chooseTexRate, chooseGoldBillRate,
+    //  chooseRiceBillRate) but are called from OfficerAI.chooseNationTurn() which is
     //  currently NOT wired into TurnService. This method should be replaced by the
-    //  GeneralAI rate choosers once chooseNationTurn is integrated into the turn pipeline.
-    private fun adjustTaxAndBill(writePort: WorldWritePort, nation: Nation, nationCities: List<City>, nationGenerals: List<General>) {
-        val totalResources = nation.gold + nation.rice
-        val totalBill = (nationGenerals.size + nationCities.size) * nation.bill.toInt().coerceAtLeast(0)
+    //  OfficerAI rate choosers once chooseNationTurn is integrated into the turn pipeline.
+    private fun adjustTaxAndBill(writePort: WorldWritePort, nation: Faction, nationCities: List<Planet>, nationGenerals: List<Officer>) {
+        val totalResources = nation.funds + nation.supplies
+        val totalBill = (nationGenerals.size + nationCities.size) * nation.taxRate.toInt().coerceAtLeast(0)
 
         var changed = false
-        var newRateTmp = nation.rateTmp.toInt()
+        var newRateTmp = nation.conscriptionRateTmp.toInt()
         if (totalResources < 10000 && newRateTmp < 20) {
             newRateTmp += 1
             changed = true
@@ -179,25 +179,25 @@ class NationAI(
             changed = true
         }
 
-        var newBill = nation.bill.toInt()
+        var newBill = nation.taxRate.toInt()
         if (totalBill > 0) {
-            if (nation.gold < totalBill * 3 && newBill > 0) {
+            if (nation.funds < totalBill * 3 && newBill > 0) {
                 newBill = (newBill - 5).coerceAtLeast(0)
                 changed = true
-            } else if (nation.gold > totalBill * 10 && newBill < 100) {
+            } else if (nation.funds > totalBill * 10 && newBill < 100) {
                 newBill = (newBill + 5).coerceAtMost(100)
                 changed = true
             }
         }
 
         if (changed) {
-            nation.rateTmp = newRateTmp.coerceIn(0, 100).toShort()
-            nation.bill = newBill.coerceIn(0, 200).toShort()
-            writePort.putNation(nation.toSnapshot())
+            nation.conscriptionRateTmp = newRateTmp.coerceIn(0, 100).toShort()
+            nation.taxRate = newBill.coerceIn(0, 200).toShort()
+            writePort.putFaction(nation.toSnapshot())
         }
     }
 
-    private fun selectRewardTarget(nationGenerals: List<General>, rng: Random): General? {
+    private fun selectRewardTarget(nationGenerals: List<Officer>, rng: Random): Officer? {
         val playerCandidates = nationGenerals.filter {
             it.npcState.toInt() == 0 && it.dedication < 80
         }
@@ -210,24 +210,24 @@ class NationAI(
 
         val weightedPool = pool.map { general ->
             val baseDeficit = (100 - general.dedication).coerceAtLeast(1)
-            val activityMultiplier = if (general.crew > 0) 1.5 else 1.0
+            val activityMultiplier = if (general.ships > 0) 1.5 else 1.0
             general to (baseDeficit * activityMultiplier)
         }
 
         return choiceByWeightPair(rng, weightedPool)
     }
 
-    private fun selectExpansionTarget(nation: Nation, nationCities: List<City>, rng: Random): City? {
+    private fun selectExpansionTarget(nation: Faction, nationCities: List<Planet>, rng: Random): Planet? {
         val candidates = nationCities.filter { it.level < 5 }
         if (candidates.isEmpty()) return null
 
         val scored = candidates.map { city ->
             var score = (6 - city.level).toDouble()
-            if (city.id == nation.capitalCityId) score += 3.0
+            if (city.id == nation.capitalPlanetId) score += 3.0
             if (city.frontState > 0) score += 2.0
             if (city.frontState.toInt() == 0 && city.supplyState > 0) score += 1.5
-            if (city.popMax > 0) {
-                score += city.pop.toDouble() / city.popMax
+            if (city.populationMax > 0) {
+                score += city.population.toDouble() / city.populationMax
             }
             city to score
         }
@@ -238,18 +238,18 @@ class NationAI(
     }
 
     private fun categorizeAssignmentNeeds(
-        nation: Nation,
-        nationCities: List<City>,
-        nationGenerals: List<General>,
+        nation: Faction,
+        nationCities: List<Planet>,
+        nationGenerals: List<Officer>,
         atWar: Boolean,
     ): AssignmentNeeds {
-        val capitalId = nation.capitalCityId
+        val capitalId = nation.capitalPlanetId
         val frontCities = nationCities.filter { it.frontState > 0 }
         val backCities = nationCities.filter { it.frontState.toInt() == 0 }
         val supplyCities = nationCities.filter { it.supplyState > 0 }
         val generalsByCity = nationGenerals
             .filter { it.npcState.toInt() != 5 }
-            .groupBy { it.cityId }
+            .groupBy { it.planetId }
 
         val undermannedFront = frontCities.filter { city ->
             val count = generalsByCity[city.id]?.size ?: 0
@@ -274,20 +274,20 @@ class NationAI(
 
     private fun selectAssignmentTarget(
         needs: AssignmentNeeds,
-        nationGenerals: List<General>,
+        nationGenerals: List<Officer>,
         rng: Random,
     ): AssignmentTarget? {
         val movableGenerals = nationGenerals.filter {
-            it.npcState.toInt() != 5 && it.troopId == 0L
+            it.npcState.toInt() != 5 && it.fleetId == 0L
         }
 
         if (needs.needsFrontReinforcement && needs.undermannedFront.isNotEmpty()) {
             val frontTarget = needs.undermannedFront[rng.nextInt(needs.undermannedFront.size)]
 
             val fromBack = movableGenerals.filter { gen ->
-                needs.rearSurplusCities.any { it.id == gen.cityId }
+                needs.rearSurplusCities.any { it.id == gen.planetId }
             }
-            val bestFromBack = fromBack.maxByOrNull { it.leadership.toInt() + it.crew / 100 }
+            val bestFromBack = fromBack.maxByOrNull { it.leadership.toInt() + it.ships / 100 }
             if (bestFromBack != null) {
                 return AssignmentTarget(bestFromBack.id, frontTarget.id, "front_reinforcement")
             }
@@ -300,7 +300,7 @@ class NationAI(
         }
 
         if (needs.unassigned.isNotEmpty()) {
-            val supplyDest = needs.supplyCities.maxByOrNull { it.pop }
+            val supplyDest = needs.supplyCities.maxByOrNull { it.population }
             val picked = needs.unassigned[rng.nextInt(needs.unassigned.size)]
             if (supplyDest != null) {
                 return AssignmentTarget(picked.id, supplyDest.id, "supply_assignment")
@@ -324,22 +324,22 @@ class NationAI(
         return weighted.last().first
     }
 
-    fun shouldDeclareWar(nation: Nation, targetNation: Nation, world: WorldState): Boolean {
+    fun shouldDeclareWar(nation: Faction, targetNation: Faction, world: SessionState): Boolean {
         val ports = worldPortFactory.create(world.id.toLong())
-        val nationCities = ports.citiesByNation(nation.id).map { it.toEntity() }
-        val targetCities = ports.citiesByNation(targetNation.id).map { it.toEntity() }
-        val nationGenerals = ports.generalsByNation(nation.id).map { it.toEntity() }
-        val targetGenerals = ports.generalsByNation(targetNation.id).map { it.toEntity() }
+        val nationCities = ports.planetsByFaction(nation.id).map { it.toEntity() }
+        val targetCities = ports.planetsByFaction(targetNation.id).map { it.toEntity() }
+        val nationGenerals = ports.officersByFaction(nation.id).map { it.toEntity() }
+        val targetGenerals = ports.officersByFaction(targetNation.id).map { it.toEntity() }
 
         // Power comparison
-        if (nation.power < targetNation.power) return false
+        if (nation.militaryPower < targetNation.power) return false
 
         // Need sufficient cities and generals
         if (nationCities.size < 2) return false
         if (nationGenerals.size < targetGenerals.size) return false
 
         // Need sufficient resources
-        if (nation.gold < 5000 || nation.rice < 5000) return false
+        if (nation.funds < 5000 || nation.supplies < 5000) return false
 
         return true
     }
@@ -348,18 +348,18 @@ class NationAI(
      * Consider non-aggression pact when not at war and have neighbors without existing NAP.
      */
     private fun shouldConsiderNAP(
-        nation: Nation,
+        nation: Faction,
         diplomacies: List<Diplomacy>,
-        nationCities: List<City>,
+        nationCities: List<Planet>,
         rng: Random,
     ): Boolean {
         // Don't propose NAP if low on resources
-        if (nation.gold < 5000) return false
+        if (nation.funds < 5000) return false
 
         // Find nations that already have diplomacy with us
         val existingDiploNationIds = diplomacies
-            .filter { it.srcNationId == nation.id || it.destNationId == nation.id }
-            .flatMap { listOf(it.srcNationId, it.destNationId) }
+            .filter { it.srcFactionId == nation.id || it.destFactionId == nation.id }
+            .flatMap { listOf(it.srcFactionId, it.destFactionId) }
             .toSet()
 
         // We need neighboring nations without existing diplomacy
@@ -374,34 +374,34 @@ class NationAI(
      * Consider capital relocation when current capital is not the best city.
      * Per legacy: move capital based on population, development, and connectivity.
      */
-    private fun shouldConsiderCapitalMove(nation: Nation, nationCities: List<City>): Boolean {
-        val capitalId = nation.capitalCityId ?: return false
+    private fun shouldConsiderCapitalMove(nation: Faction, nationCities: List<Planet>): Boolean {
+        val capitalId = nation.capitalPlanetId ?: return false
         if (nationCities.size < 2) return false
         val capital = nationCities.find { it.id == capitalId } ?: return false
 
         // Check if another city has significantly better population
-        val bestCity = nationCities.maxByOrNull { it.pop } ?: return false
-        return bestCity.id != capital.id && bestCity.pop > capital.pop * 1.5
+        val bestCity = nationCities.maxByOrNull { it.population } ?: return false
+        return bestCity.id != capital.id && bestCity.population > capital.population * 1.5
     }
 
     private fun pickWarTarget(
-        nation: Nation,
-        allNations: List<Nation>,
-        allCities: List<City>,
+        nation: Faction,
+        allNations: List<Faction>,
+        allCities: List<Planet>,
         diplomacies: List<Diplomacy>,
         rng: Random,
-    ): Nation? {
-        if (nation.gold < 3000 || nation.rice < 3000) return null
+    ): Faction? {
+        if (nation.funds < 3000 || nation.supplies < 3000) return null
 
         val existingDiploNationIds = diplomacies
-            .filter { it.srcNationId == nation.id || it.destNationId == nation.id }
-            .flatMap { listOf(it.srcNationId, it.destNationId) }
+            .filter { it.srcFactionId == nation.id || it.destFactionId == nation.id }
+            .flatMap { listOf(it.srcFactionId, it.destFactionId) }
             .toSet()
 
         val neighborNationIds = mutableSetOf<Long>()
         for (city in allCities) {
-            if (city.nationId != nation.id && city.nationId != 0L && city.frontState > 0) {
-                neighborNationIds.add(city.nationId)
+            if (city.factionId != nation.id && city.factionId != 0L && city.frontState > 0) {
+                neighborNationIds.add(city.factionId)
             }
         }
 
@@ -409,7 +409,7 @@ class NationAI(
             it.id != nation.id &&
                 it.level > 0 &&
                 it.id !in existingDiploNationIds &&
-                it.power < nation.power &&
+                it.power < nation.militaryPower &&
                 neighborNationIds.contains(it.id)
         }
 
@@ -434,10 +434,10 @@ class NationAI(
     }
 
     private data class AssignmentNeeds(
-        val unassigned: List<General>,
-        val undermannedFront: List<City>,
-        val rearSurplusCities: List<City>,
-        val supplyCities: List<City>,
+        val unassigned: List<Officer>,
+        val undermannedFront: List<Planet>,
+        val rearSurplusCities: List<Planet>,
+        val supplyCities: List<Planet>,
         val needsFrontReinforcement: Boolean,
     )
 

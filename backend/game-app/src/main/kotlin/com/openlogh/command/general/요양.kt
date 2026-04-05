@@ -3,12 +3,12 @@ package com.openlogh.command.general
 import com.openlogh.command.CommandCost
 import com.openlogh.command.CommandEnv
 import com.openlogh.command.CommandResult
-import com.openlogh.command.GeneralCommand
-import com.openlogh.entity.General
+import com.openlogh.command.OfficerCommand
+import com.openlogh.entity.Officer
 import kotlin.random.Random
 
-class 요양(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
-    : GeneralCommand(general, env, arg) {
+class 요양(general: Officer, env: CommandEnv, arg: Map<String, Any>? = null)
+    : OfficerCommand(general, env, arg) {
 
     override val actionName = "요양"
 

@@ -4,7 +4,7 @@ import com.openlogh.dto.NpcTokenResponse
 import com.openlogh.dto.RefreshNpcTokenRequest
 import com.openlogh.dto.SelectNpcResult
 import com.openlogh.dto.SelectNpcWithTokenRequest
-import com.openlogh.service.GeneralService
+import com.openlogh.service.OfficerService
 import com.openlogh.service.SelectNpcTokenService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/api")
 class NpcSelectionController(
-    private val generalService: GeneralService,
+    private val officerService: OfficerService,
     private val selectNpcTokenService: SelectNpcTokenService,
 ) {
     @PostMapping("/worlds/{worldId}/npc-token")
@@ -69,6 +69,6 @@ class NpcSelectionController(
 
     private fun currentUserId(): Long? {
         val loginId = SecurityContextHolder.getContext().authentication?.name ?: return null
-        return generalService.getCurrentUserId(loginId)
+        return officerService.getCurrentUserId(loginId)
     }
 }

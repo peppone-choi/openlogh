@@ -3,13 +3,13 @@ package com.openlogh.command.general
 import com.openlogh.command.CommandCost
 import com.openlogh.command.CommandEnv
 import com.openlogh.command.CommandResult
-import com.openlogh.command.GeneralCommand
+import com.openlogh.command.OfficerCommand
 import com.openlogh.command.constraint.*
-import com.openlogh.entity.General
+import com.openlogh.entity.Officer
 import kotlin.random.Random
 
-class 선양(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
-    : GeneralCommand(general, env, arg) {
+class 선양(general: Officer, env: CommandEnv, arg: Map<String, Any>? = null)
+    : OfficerCommand(general, env, arg) {
 
     override val actionName = "선양"
 
@@ -29,7 +29,7 @@ class 선양(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
 
     override suspend fun run(rng: Random): CommandResult {
         val date = formatDate()
-        val dg = destGeneral ?: return CommandResult(success = false, logs = listOf("선양 대상 장수가 없습니다."))
+        val dg = destOfficer ?: return CommandResult(success = false, logs = listOf("선양 대상 장수가 없습니다."))
         val destGeneralName = dg.name
         val nationName = nation?.name ?: "알 수 없음"
         val generalName = general.name

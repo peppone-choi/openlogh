@@ -3,13 +3,13 @@ package com.openlogh.command.general
 import com.openlogh.command.CommandCost
 import com.openlogh.command.CommandEnv
 import com.openlogh.command.CommandResult
-import com.openlogh.command.GeneralCommand
+import com.openlogh.command.OfficerCommand
 import com.openlogh.command.constraint.*
-import com.openlogh.entity.General
+import com.openlogh.entity.Officer
 import kotlin.random.Random
 
-class che_소집해제(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
-    : GeneralCommand(general, env, arg) {
+class che_소집해제(general: Officer, env: CommandEnv, arg: Map<String, Any>? = null)
+    : OfficerCommand(general, env, arg) {
 
     override val actionName = "소집해제"
 
@@ -23,7 +23,7 @@ class che_소집해제(general: General, env: CommandEnv, arg: Map<String, Any>?
 
     override suspend fun run(rng: Random): CommandResult {
         val date = formatDate()
-        val crewToReturn = general.crew.toInt()
+        val crewToReturn = general.ships.toInt()
 
         // Legacy PHP: uses <R> tag for formatting
         pushLog("병사들을 <R>소집해제</>하였습니다. <1>$date</>")

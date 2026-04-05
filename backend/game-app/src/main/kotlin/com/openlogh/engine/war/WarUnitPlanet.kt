@@ -1,26 +1,26 @@
 package com.openlogh.engine.war
 
-import com.openlogh.entity.City
+import com.openlogh.entity.Planet
 import com.openlogh.model.ArmType
 
-class WarUnitCity(
-    val city: City,
+class WarUnitPlanet(
+    val city: Planet,
     year: Int = 200,
     startYear: Int = 180,
-) : WarUnit(city.name, city.nationId) {
-    var wall: Int = city.wall
+) : WarUnit(city.name, city.factionId) {
+    var wall: Int = city.fortress
 
     /**
-     * Legacy PHP WarUnitCity::__construct():
+     * Legacy PHP WarUnitPlanet::__construct():
      *   cityTrainAtmos = Util::clamp(year - startYear + 59, 60, 110)
      * Used as both train and atmos for the city unit.
      */
     val cityTrainAtmos: Int = (year - startYear + 59).coerceIn(60, 110)
 
     init {
-        hp = city.def * 10
+        hp = city.orbitalDefense * 10
         maxHp = hp
-        crew = city.pop
+        crew = city.population
         // PHP: getComputedTrain() = cityTrainAtmos + trainBonus
         //      getComputedAtmos() = cityTrainAtmos + atmosBonus
         train = cityTrainAtmos
@@ -40,7 +40,7 @@ class WarUnitCity(
     }
 
     /**
-     * Legacy PHP WarUnitCity::getDex():
+     * Legacy PHP WarUnitPlanet::getDex():
      *   return ($this->cityTrainAtmos - 60) * 7200;
      * Ignores the crewType argument — always uses cityTrainAtmos.
      */
@@ -49,12 +49,12 @@ class WarUnitCity(
     }
 
     override fun getBaseAttack(): Double {
-        val base = (city.def + wall * 9) / 500.0 + 200.0
+        val base = (city.orbitalDefense + wall * 9) / 500.0 + 200.0
         return base * attackMultiplier
     }
 
     override fun getBaseDefence(): Double {
-        val base = (city.def + wall * 9) / 500.0 + 200.0
+        val base = (city.orbitalDefense + wall * 9) / 500.0 + 200.0
         return base * defenceMultiplier
     }
 
@@ -64,7 +64,7 @@ class WarUnitCity(
     }
 
     fun applyResults() {
-        city.def = (hp / 10).coerceAtLeast(0)
-        city.wall = wall.coerceAtLeast(0)
+        city.orbitalDefense = (hp / 10).coerceAtLeast(0)
+        city.fortress = wall.coerceAtLeast(0)
     }
 }

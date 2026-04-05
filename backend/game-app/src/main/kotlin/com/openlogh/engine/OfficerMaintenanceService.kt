@@ -1,19 +1,19 @@
 package com.openlogh.engine
 
-import com.openlogh.entity.General
+import com.openlogh.entity.Officer
 import com.openlogh.entity.HallOfFame
-import com.openlogh.entity.Nation
+import com.openlogh.entity.Faction
 import com.openlogh.entity.OldGeneral
-import com.openlogh.entity.WorldState
-import com.openlogh.repository.CityRepository
+import com.openlogh.entity.SessionState
+import com.openlogh.repository.PlanetRepository
 import com.openlogh.repository.DiplomacyRepository
-import com.openlogh.repository.GeneralAccessLogRepository
-import com.openlogh.repository.GeneralTurnRepository
+import com.openlogh.repository.OfficerAccessLogRepository
+import com.openlogh.repository.OfficerTurnRepository
 import com.openlogh.repository.HallOfFameRepository
-import com.openlogh.repository.NationRepository
-import com.openlogh.repository.NationTurnRepository
+import com.openlogh.repository.FactionRepository
+import com.openlogh.repository.FactionTurnRepository
 import com.openlogh.repository.OldGeneralRepository
-import com.openlogh.repository.TroopRepository
+import com.openlogh.repository.FleetRepository
 import com.openlogh.service.GameConstService
 import com.openlogh.service.HistoryService
 import org.slf4j.LoggerFactory
@@ -27,22 +27,22 @@ import kotlin.math.sqrt
  * Legacy parity: TurnExecutionHelper.php lines 180-229
  */
 @Service
-class GeneralMaintenanceService(
+class OfficerMaintenanceService(
     private val gameConstService: GameConstService,
     private val hallOfFameRepository: HallOfFameRepository,
-    private val nationRepository: NationRepository,
-    private val cityRepository: CityRepository,
+    private val factionRepository: FactionRepository,
+    private val planetRepository: PlanetRepository,
     private val diplomacyRepository: DiplomacyRepository,
-    private val nationTurnRepository: NationTurnRepository,
-    private val troopRepository: TroopRepository,
+    private val factionTurnRepository: FactionTurnRepository,
+    private val fleetRepository: FleetRepository,
     private val oldGeneralRepository: OldGeneralRepository,
-    private val generalTurnRepository: GeneralTurnRepository,
-    private val generalAccessLogRepository: GeneralAccessLogRepository,
+    private val officerTurnRepository: OfficerTurnRepository,
+    private val officerAccessLogRepository: OfficerAccessLogRepository,
     private val historyService: HistoryService,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
-    fun processGeneralMaintenance(world: WorldState, generals: List<General>) {
+    fun processGeneralMaintenance(world: SessionState, generals: List<Officer>) {
         val isUnited = (world.config["isUnited"] as? Number)?.toInt() ?: 0
         val retirementYear = try {
             gameConstService.getInt("retirementYear")
@@ -118,7 +118,7 @@ class GeneralMaintenanceService(
 
             // === NPC 장수 수명 체크 (deadYear) ===
             if (general.npcState >= 2 &&
-                general.npcState != EmperorConstants.NPC_STATE_EMPEROR &&
+                general.npcState != SovereignConstants.NPC_STATE_EMPEROR &&
                 world.currentYear >= general.deadYear
             ) {
                 killGeneral(general, world, generals)
@@ -130,19 +130,19 @@ class GeneralMaintenanceService(
 
     /**
      * 장수 사망 처리: 국가에서 해제하고 npcState=5로 설정
-     * legacy: General::kill() 패러티
+     * legacy: Officer::kill() 패러티
      */
-    fun killGeneral(general: General, world: WorldState, allGenerals: List<General>) {
-        val originNationId = general.nationId
-        val nation = originNationId.takeIf { it > 0 }?.let { nationRepository.findById(it).orElse(null) }
+    fun killGeneral(general: Officer, world: SessionState, allGenerals: List<Officer>) {
+        val originNationId = general.factionId
+        val nation = originNationId.takeIf { it > 0 }?.let { factionRepository.findById(it).orElse(null) }
 
-        if ((general.officerLevel.toInt() == 20 || nation?.chiefGeneralId == general.id) && originNationId > 0) {
+        if ((general.officerLevel.toInt() == 20 || nation?.chiefOfficerId == general.id) && originNationId > 0) {
             val successor = selectNextRuler(world, general, allGenerals)
             if (successor != null) {
                 successor.officerLevel = 20
                 successor.officerCity = 0
                 if (nation != null) {
-                    nation.chiefGeneralId = successor.id
+                    nation.chiefOfficerId = successor.id
                 }
             } else if (nation != null) {
                 collapseNation(world, nation, general, allGenerals)
@@ -153,30 +153,30 @@ class GeneralMaintenanceService(
         clearGeneralQueuesAndAccessLogs(general.id)
         upsertOldGeneral(readServerId(world), general, world)
 
-        if (nation != null && nation.gennum > 0) {
-            nation.gennum -= 1
+        if (nation != null && nation.officerCount > 0) {
+            nation.officerCount -= 1
         }
 
         general.npcState = 5
         general.userId = null
-        general.nationId = 0
+        general.factionId = 0
         general.officerLevel = 0
         general.officerCity = 0
         general.killTurn = null
         general.blockState = 0
-        general.troopId = 0
+        general.fleetId = 0
         general.commandEndTime = null
 
     }
 
     /**
      * 장수 환생 처리: 은퇴 후 새 캐릭터로 재시작할 수 있도록 초기화
-     * legacy: General::rebirth() 패러티
+     * legacy: Officer::rebirth() 패러티
      */
-    private fun rebirthGeneral(general: General) {
+    private fun rebirthGeneral(general: Officer) {
         general.leadership = scaledStatWithFloor(general.leadership, 0.85, 10)
-        general.strength = scaledStatWithFloor(general.strength, 0.85, 10)
-        general.intel = scaledStatWithFloor(general.intel, 0.85, 10)
+        general.command = scaledStatWithFloor(general.command, 0.85, 10)
+        general.intelligence = scaledStatWithFloor(general.intelligence, 0.85, 10)
         general.injury = 0
         general.experience = (general.experience * 0.5).toInt()
         general.dedication = (general.dedication * 0.5).toInt()
@@ -194,8 +194,8 @@ class GeneralMaintenanceService(
         general.meta.remove("retired_month")
     }
 
-    private fun checkHall(general: General, world: WorldState) {
-        val nation = nationRepository.findById(general.nationId).orElse(null)
+    private fun checkHall(general: Officer, world: SessionState) {
+        val nation = factionRepository.findById(general.factionId).orElse(null)
         val serverId = readString(world.config, "serverId").ifBlank { world.name }
         val scenario = readNumber(world.meta, "scenarioId")
         val season = readNumber(world.meta, "season").takeIf { it > 0 } ?: 1
@@ -292,56 +292,56 @@ class GeneralMaintenanceService(
     }
 
     private fun clearGeneralQueuesAndAccessLogs(generalId: Long) {
-        generalTurnRepository.deleteByGeneralId(generalId)
-        val accessLogs = generalAccessLogRepository.findByGeneralId(generalId)
+        officerTurnRepository.deleteByGeneralId(generalId)
+        val accessLogs = officerAccessLogRepository.findByGeneralId(generalId)
         if (accessLogs.isNotEmpty()) {
-            generalAccessLogRepository.deleteAll(accessLogs)
+            officerAccessLogRepository.deleteAll(accessLogs)
         }
     }
 
-    private fun collapseNation(world: WorldState, nation: Nation, deadGeneral: General, allGenerals: List<General>) {
+    private fun collapseNation(world: SessionState, nation: Faction, deadGeneral: Officer, allGenerals: List<Officer>) {
         logNationCollapse(world, nation, deadGeneral)
 
         allGenerals.asSequence()
-            .filter { it.nationId == nation.id && it.id != deadGeneral.id }
+            .filter { it.factionId == nation.id && it.id != deadGeneral.id }
             .forEach { general ->
                 general.belong = 0
-                general.troopId = 0
+                general.fleetId = 0
                 general.officerLevel = 0
                 general.officerCity = 0
-                general.nationId = 0
+                general.factionId = 0
                 general.permission = "normal"
             }
 
-        cityRepository.findByNationId(nation.id).forEach { city ->
-            city.nationId = 0
+        planetRepository.findByFactionId(nation.id).forEach { city ->
+            city.factionId = 0
             city.frontState = 0
         }
 
-        val nationTroops = troopRepository.findByNationId(nation.id)
+        val nationTroops = fleetRepository.findByFactionId(nation.id)
         if (nationTroops.isNotEmpty()) {
-            troopRepository.deleteAll(nationTroops)
+            fleetRepository.deleteAll(nationTroops)
         }
 
-        nationTurnRepository.findByWorldId(world.id.toLong())
-            .filter { it.nationId == nation.id }
-            .forEach { nationTurnRepository.delete(it) }
+        factionTurnRepository.findBySessionId(world.id.toLong())
+            .filter { it.factionId == nation.id }
+            .forEach { factionTurnRepository.delete(it) }
 
-        diplomacyRepository.findByWorldId(world.id.toLong())
-            .filter { it.srcNationId == nation.id || it.destNationId == nation.id }
+        diplomacyRepository.findBySessionId(world.id.toLong())
+            .filter { it.srcFactionId == nation.id || it.destFactionId == nation.id }
             .forEach {
                 it.isDead = true
                 it.isShowing = false
             }
 
-        nation.capitalCityId = null
-        nation.chiefGeneralId = 0
-        nation.gennum = 0
-        nation.power = 0
-        nation.level = 0
+        nation.capitalPlanetId = null
+        nation.chiefOfficerId = 0
+        nation.officerCount = 0
+        nation.militaryPower = 0
+        nation.factionRank = 0
     }
 
-    private fun logNationCollapse(world: WorldState, nation: Nation, deadGeneral: General) {
+    private fun logNationCollapse(world: SessionState, nation: Faction, deadGeneral: Officer) {
         val year = world.currentYear.toInt()
         val month = world.currentMonth.toInt()
         historyService.logWorldHistory(
@@ -359,31 +359,31 @@ class GeneralMaintenanceService(
         )
     }
 
-    private fun disbandLedTroop(general: General, allGenerals: List<General>) {
+    private fun disbandLedTroop(general: Officer, allGenerals: List<Officer>) {
         val troopId = resolveLedTroopId(general) ?: return
-        allGenerals.filter { it.troopId == troopId }.forEach { it.troopId = 0 }
+        allGenerals.filter { it.fleetId == troopId }.forEach { it.fleetId = 0 }
 
-        troopRepository.findById(troopId).orElse(null)
+        fleetRepository.findById(troopId).orElse(null)
             ?.takeIf { it.leaderGeneralId == general.id }
-            ?.let { troopRepository.delete(it) }
+            ?.let { fleetRepository.delete(it) }
     }
 
-    private fun resolveLedTroopId(general: General): Long? {
-        val troopId = general.troopId
+    private fun resolveLedTroopId(general: Officer): Long? {
+        val troopId = general.fleetId
         if (troopId <= 0L) {
             return null
         }
         if (troopId == general.id) {
             return troopId
         }
-        val troop = troopRepository.findById(troopId).orElse(null) ?: return null
+        val troop = fleetRepository.findById(troopId).orElse(null) ?: return null
         return troopId.takeIf { troop.leaderGeneralId == general.id }
     }
 
-    private fun selectNextRuler(world: WorldState, deadGeneral: General, allGenerals: List<General>): General? {
+    private fun selectNextRuler(world: SessionState, deadGeneral: Officer, allGenerals: List<Officer>): Officer? {
         val nationCandidates = allGenerals.filter {
             it.id != deadGeneral.id &&
-                it.nationId == deadGeneral.nationId &&
+                it.factionId == deadGeneral.factionId &&
                 it.officerLevel.toInt() != 20 &&
                 it.npcState.toInt() != 5
         }
@@ -397,7 +397,7 @@ class GeneralMaintenanceService(
             val npcCandidates = nationCandidates
                 .filter { it.npcState.toInt() >= 1 }
                 .sortedWith(
-                    compareBy<General>(
+                    compareBy<Officer>(
                         { affinityDistance(deadGeneral.affinity.toInt(), it.affinity.toInt()) },
                         { -it.officerLevel.toInt() },
                         { it.id },
@@ -410,14 +410,14 @@ class GeneralMaintenanceService(
 
         val highOfficer = nationCandidates
             .filter { it.officerLevel.toInt() >= 9 }
-            .sortedWith(compareByDescending<General> { it.officerLevel.toInt() }.thenBy { it.id })
+            .sortedWith(compareByDescending<Officer> { it.officerLevel.toInt() }.thenBy { it.id })
             .firstOrNull()
         if (highOfficer != null) {
             return highOfficer
         }
 
         return nationCandidates
-            .sortedWith(compareByDescending<General> { it.dedication }.thenBy { it.id })
+            .sortedWith(compareByDescending<Officer> { it.dedication }.thenBy { it.id })
             .firstOrNull()
     }
 
@@ -447,18 +447,18 @@ class GeneralMaintenanceService(
         return if (diff > 75) 150 - diff else diff
     }
 
-    private fun isFictionWorld(world: WorldState): Boolean {
+    private fun isFictionWorld(world: SessionState): Boolean {
         val fiction = (world.meta["fiction"] as? Number)?.toInt()
             ?: (world.config["fiction"] as? Number)?.toInt()
             ?: 0
         return fiction != 0
     }
 
-    private fun readServerId(world: WorldState): String {
+    private fun readServerId(world: SessionState): String {
         return readString(world.config, "serverId").ifBlank { world.name }
     }
 
-    private fun upsertOldGeneral(serverId: String, general: General, world: WorldState) {
+    private fun upsertOldGeneral(serverId: String, general: Officer, world: SessionState) {
         val oldGeneral = oldGeneralRepository.findByServerIdAndGeneralNo(serverId, general.id) ?: OldGeneral(
             serverId = serverId,
             generalNo = general.id,
@@ -470,23 +470,23 @@ class GeneralMaintenanceService(
         oldGeneral.data = mutableMapOf(
             "id" to general.id,
             "name" to general.name,
-            "nationId" to general.nationId,
-            "cityId" to general.cityId,
-            "troopId" to general.troopId,
+            "nationId" to general.factionId,
+            "cityId" to general.planetId,
+            "troopId" to general.fleetId,
             "officerLevel" to general.officerLevel,
             "dedication" to general.dedication,
             "experience" to general.experience,
             "leadership" to general.leadership,
-            "strength" to general.strength,
-            "intel" to general.intel,
+            "strength" to general.command,
+            "intel" to general.intelligence,
             "politics" to general.politics,
-            "charm" to general.charm,
-            "gold" to general.gold,
-            "rice" to general.rice,
-            "crew" to general.crew,
-            "crewType" to general.crewType,
-            "train" to general.train,
-            "atmos" to general.atmos,
+            "charm" to general.administration,
+            "gold" to general.funds,
+            "rice" to general.supplies,
+            "crew" to general.ships,
+            "crewType" to general.shipClass,
+            "train" to general.training,
+            "atmos" to general.morale,
             "age" to general.age,
             "startAge" to general.startAge,
             "npcState" to general.npcState,

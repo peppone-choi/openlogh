@@ -3,15 +3,15 @@ package com.openlogh.command.nation
 import com.openlogh.command.CommandCost
 import com.openlogh.command.CommandEnv
 import com.openlogh.command.CommandResult
-import com.openlogh.command.NationCommand
+import com.openlogh.command.FactionCommand
 import com.openlogh.command.constraint.*
-import com.openlogh.engine.EmperorConstants
-import com.openlogh.entity.General
+import com.openlogh.engine.SovereignConstants
+import com.openlogh.entity.Officer
 import com.openlogh.util.JosaUtil
 import kotlin.random.Random
 
-class che_선양요구(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
-    : NationCommand(general, env, arg) {
+class che_선양요구(general: Officer, env: CommandEnv, arg: Map<String, Any>? = null)
+    : FactionCommand(general, env, arg) {
 
     override val actionName = "선양 요구"
 
@@ -40,17 +40,17 @@ class che_선양요구(general: General, env: CommandEnv, arg: Map<String, Any>?
 
         val emperorGeneralId = (env.gameStor["emperorGeneralId"] as? Number)?.toLong()
             ?: return CommandResult(false, listOf("천자 정보를 찾을 수 없습니다."))
-        val emperorGeneral = services!!.generalRepository.findById(emperorGeneralId).orElse(null)
+        val emperorGeneral = services!!.officerRepository.findById(emperorGeneralId).orElse(null)
             ?: return CommandResult(false, listOf("천자 장수를 찾을 수 없습니다."))
 
         val emperorName = emperorGeneral.name
 
-        emperorGeneral.meta[EmperorConstants.GENERAL_EMPEROR_STATUS] = EmperorConstants.EMPEROR_ABDICATED
+        emperorGeneral.meta[SovereignConstants.GENERAL_EMPEROR_STATUS] = SovereignConstants.EMPEROR_ABDICATED
         emperorGeneral.npcState = 0
-        services!!.generalRepository.save(emperorGeneral)
+        services!!.officerRepository.save(emperorGeneral)
 
-        n.meta[EmperorConstants.NATION_IMPERIAL_STATUS] = EmperorConstants.STATUS_EMPEROR
-        n.meta[EmperorConstants.NATION_EMPEROR_TYPE] = EmperorConstants.TYPE_LEGITIMATE
+        n.meta[SovereignConstants.NATION_IMPERIAL_STATUS] = SovereignConstants.STATUS_EMPEROR
+        n.meta[SovereignConstants.NATION_EMPEROR_TYPE] = SovereignConstants.TYPE_LEGITIMATE
 
         pushLog("<C><b>${emperorName}</b></>에게 선양을 받아 제위에 올랐습니다. <1>${formatDate()}</>")
         pushHistoryLog("<C><b>${emperorName}</b></>에게 선양을 받음")

@@ -3,9 +3,9 @@ package com.openlogh.command.general
 import com.openlogh.command.CommandCost
 import com.openlogh.command.CommandEnv
 import com.openlogh.command.CommandResult
-import com.openlogh.command.GeneralCommand
+import com.openlogh.command.OfficerCommand
 import com.openlogh.command.constraint.*
-import com.openlogh.entity.General
+import com.openlogh.entity.Officer
 import com.openlogh.model.CrewType
 import kotlin.math.max
 import kotlin.math.roundToInt
@@ -21,8 +21,8 @@ import kotlin.random.Random
  * - Pop loss = reqCrewDown (= maxCrew, modified by onCalcDomestic '징집인구')
  * - Default train/atmos: 40/40 (징병), 70/70 (모병)
  */
-open class che_징병(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
-    : GeneralCommand(general, env, arg) {
+open class che_징병(general: Officer, env: CommandEnv, arg: Map<String, Any>? = null)
+    : OfficerCommand(general, env, arg) {
 
     override val actionName = "징병"
 
@@ -43,8 +43,8 @@ open class che_징병(general: General, env: CommandEnv, arg: Map<String, Any>? 
         get() {
             val leadership = general.leadership.toInt()
             var max = leadership * 100
-            if (reqCrewTypeId == general.crewType.toInt()) {
-                max -= general.crew
+            if (reqCrewTypeId == general.shipClass.toInt()) {
+                max -= general.ships
             }
             return minOf(reqAmount, maxOf(0, max))
         }
@@ -58,8 +58,8 @@ open class che_징병(general: General, env: CommandEnv, arg: Map<String, Any>? 
                 OccupiedCity(),
                 ReqCityCapacity("pop", "주민", MIN_AVAILABLE_RECRUIT_POP + mc),
                 ReqCityTrust(MIN_TRUST_FOR_RECRUIT.toFloat()),
-                ReqGeneralGold(cost.gold),
-                ReqGeneralRice(cost.rice),
+                ReqGeneralGold(cost.funds),
+                ReqGeneralRice(cost.supplies),
                 ReqGeneralCrewMargin(reqCrewTypeId),
                 AvailableRecruitCrewType(reqCrewTypeId),
             )
@@ -111,8 +111,8 @@ open class che_징병(general: General, env: CommandEnv, arg: Map<String, Any>? 
         val date = formatDate()
         val reqCrew = maxCrew
         val crewTypeId = reqCrewTypeId
-        val currCrew = general.crew
-        val currCrewTypeId = general.crewType.toInt()
+        val currCrew = general.ships
+        val currCrewTypeId = general.shipClass.toInt()
 
         val crewTypeName = getCrewTypeName(crewTypeId) ?: "병사"
         val reqCrewText = String.format("%,d", reqCrew)
@@ -128,8 +128,8 @@ open class che_징병(general: General, env: CommandEnv, arg: Map<String, Any>? 
 
         if (crewTypeId == currCrewTypeId && currCrew > 0) {
             logMessage = "${crewTypeName} <C>${reqCrewText}</>명을 추가${actionName}했습니다. <1>$date</>"
-            newTrain = (currCrew * general.train + reqCrew * setTrain) / (currCrew + reqCrew)
-            newAtmos = (currCrew * general.atmos + reqCrew * setAtmos) / (currCrew + reqCrew)
+            newTrain = (currCrew * general.training + reqCrew * setTrain) / (currCrew + reqCrew)
+            newAtmos = (currCrew * general.morale + reqCrew * setAtmos) / (currCrew + reqCrew)
             newCrew = currCrew + reqCrew
         } else {
             logMessage = "${crewTypeName} <C>${reqCrewText}</>명을 ${actionName}했습니다. <1>$date</>"
@@ -149,14 +149,14 @@ open class che_징병(general: General, env: CommandEnv, arg: Map<String, Any>? 
         val reqCrewDown = DomesticUtils.applyModifier(services, general, nation, "징집인구", "score", reqCrew.toDouble()).roundToInt()
 
         // Legacy: trust -= (reqCrewDown / cityPop) / costOffset * 100
-        val cityPop = city?.pop ?: 10000
+        val cityPop = city?.population ?: 10000
         val trustLoss = if (cityPop > 0) {
             (reqCrewDown.toDouble() / cityPop) / costOffset * 100.0
         } else {
             0.0
         }
         // Clamp trust to >= 0
-        val currentTrust = city?.trust?.toDouble() ?: 50.0
+        val currentTrust = city?.approval?.toDouble() ?: 50.0
         val clampedTrustLoss = trustLoss.coerceAtMost(currentTrust)
 
         // Resolve armType code for dex changes (legacy: armType maps to dex1-5)
@@ -171,8 +171,8 @@ open class che_징병(general: General, env: CommandEnv, arg: Map<String, Any>? 
             message = buildString {
                 append("""{"statChanges":{""")
                 append(""""crew":${newCrew - currCrew},"crewType":$crewTypeId""")
-                append(""","train":${newTrain - general.train},"atmos":${newAtmos - general.atmos}""")
-                append(""","gold":${-cost.gold},"rice":${-cost.rice}""")
+                append(""","train":${newTrain - general.training},"atmos":${newAtmos - general.morale}""")
+                append(""","gold":${-cost.funds},"rice":${-cost.supplies}""")
                 append(""","experience":$exp,"dedication":$ded,"leadershipExp":1""")
                 append("""},"cityChanges":{"pop":${-reqCrewDown},"trust":${-clampedTrustLoss.roundToInt()}}""")
                 append(""","dexChanges":{"crewType":$armTypeCode,"amount":$dexGain}""")

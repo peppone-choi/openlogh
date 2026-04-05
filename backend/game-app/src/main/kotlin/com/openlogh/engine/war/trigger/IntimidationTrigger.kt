@@ -1,7 +1,7 @@
 package com.openlogh.engine.war.trigger
 
 import com.openlogh.engine.war.BattleTriggerContext
-import com.openlogh.engine.war.WarUnitGeneral
+import com.openlogh.engine.war.WarUnitOfficer
 import com.openlogh.engine.war.WarUnitTrigger
 import com.openlogh.engine.war.WarUnitTriggerRegistry
 
@@ -21,7 +21,7 @@ object IntimidationTrigger : WarUnitTrigger {
     }
 
     override fun onEngagementStart(ctx: BattleTriggerContext): BattleTriggerContext {
-        if (ctx.defender !is WarUnitGeneral) return ctx
+        if (ctx.defender !is WarUnitOfficer) return ctx
 
         // 시도 (attempt): 40% probability
         if (ctx.rng.nextDouble() >= 0.4) return ctx
@@ -32,7 +32,7 @@ object IntimidationTrigger : WarUnitTrigger {
         ctx.criticalDisabled = true
         ctx.magicDisabled = true
         ctx.intimidatePhasesRemaining = 1
-        ctx.defender.atmos = (ctx.defender.atmos - 5).coerceAtLeast(0)
+        ctx.defender.morale = (ctx.defender.morale - 5).coerceAtLeast(0)
         ctx.battleLogs.add("위압 발동! 적이 위축되었다!")
         return ctx
     }

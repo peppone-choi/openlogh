@@ -1,9 +1,9 @@
 package com.openlogh.engine
 
-import com.openlogh.entity.City
-import com.openlogh.entity.General
-import com.openlogh.entity.Nation
-import com.openlogh.entity.WorldState
+import com.openlogh.entity.Planet
+import com.openlogh.entity.Officer
+import com.openlogh.entity.Faction
+import com.openlogh.entity.SessionState
 import com.openlogh.engine.turn.cqrs.persist.JpaWorldPortFactory
 import com.openlogh.engine.turn.cqrs.persist.toEntity
 import com.openlogh.engine.turn.cqrs.persist.toSnapshot
@@ -11,10 +11,10 @@ import com.openlogh.engine.turn.cqrs.port.WorldWritePort
 import com.openlogh.engine.modifier.IncomeContext
 import com.openlogh.engine.modifier.NationTypeModifiers
 import com.openlogh.entity.Message
-import com.openlogh.repository.CityRepository
-import com.openlogh.repository.GeneralRepository
+import com.openlogh.repository.PlanetRepository
+import com.openlogh.repository.OfficerRepository
 import com.openlogh.repository.MessageRepository
-import com.openlogh.repository.NationRepository
+import com.openlogh.repository.FactionRepository
 import com.openlogh.service.HistoryService
 import com.openlogh.service.InheritanceService
 import com.openlogh.service.MapService
@@ -30,27 +30,27 @@ import kotlin.math.sqrt
 @Service
 class EconomyService @Autowired constructor(
     private val worldPortFactory: JpaWorldPortFactory,
-    private val generalRepository: GeneralRepository,
+    private val officerRepository: OfficerRepository,
     private val messageRepository: MessageRepository,
     private val mapService: MapService,
     private val historyService: HistoryService,
     private val inheritanceService: InheritanceService,
 ) {
     constructor(
-        cityRepository: CityRepository,
-        nationRepository: NationRepository,
-        generalRepository: GeneralRepository,
+        planetRepository: PlanetRepository,
+        factionRepository: FactionRepository,
+        officerRepository: OfficerRepository,
         messageRepository: MessageRepository,
         mapService: MapService,
         historyService: HistoryService,
         inheritanceService: InheritanceService,
     ) : this(
         JpaWorldPortFactory(
-            generalRepository = generalRepository,
-            cityRepository = cityRepository,
-            nationRepository = nationRepository,
+            officerRepository = officerRepository,
+            planetRepository = planetRepository,
+            factionRepository = factionRepository,
         ),
-        generalRepository,
+        officerRepository,
         messageRepository,
         mapService,
         historyService,
@@ -82,17 +82,17 @@ class EconomyService @Autowired constructor(
     )
 
     @Transactional
-    fun processMonthly(world: WorldState) {
+    fun processMonthly(world: SessionState) {
         preUpdateMonthly(world)
         postUpdateMonthly(world)
     }
 
     @Transactional
-    fun preUpdateMonthly(world: WorldState) {
+    fun preUpdateMonthly(world: SessionState) {
         val ports = worldPortFactory.create(world.id.toLong())
-        val cities = ports.allCities().map { it.toEntity() }
-        val nations = ports.allNations().map { it.toEntity() }
-        val generals = ports.allGenerals().map { it.toEntity() }
+        val cities = ports.allPlanets().map { it.toEntity() }
+        val nations = ports.allFactions().map { it.toEntity() }
+        val generals = ports.allOfficers().map { it.toEntity() }
 
         processIncome(world, nations, cities, generals)
         processWarIncome(nations, cities)
@@ -103,11 +103,11 @@ class EconomyService @Autowired constructor(
     }
 
     @Transactional
-    fun postUpdateMonthly(world: WorldState) {
+    fun postUpdateMonthly(world: SessionState) {
         val ports = worldPortFactory.create(world.id.toLong())
-        val cities = ports.allCities().map { it.toEntity() }
-        val nations = ports.allNations().map { it.toEntity() }
-        val generals = ports.allGenerals().map { it.toEntity() }
+        val cities = ports.allPlanets().map { it.toEntity() }
+        val nations = ports.allFactions().map { it.toEntity() }
+        val generals = ports.allOfficers().map { it.toEntity() }
 
         if (world.currentMonth.toInt() == 1 || world.currentMonth.toInt() == 7) {
             processSemiAnnual(world, nations, cities, generals)
@@ -124,26 +124,26 @@ class EconomyService @Autowired constructor(
     // ── Phase A1: processIncome (legacy formula) ──
 
     // resourceType: "gold" = gold only, "rice" = rice only, null/"all" = both (legacy: gold spring, rice autumn)
-    private fun processIncome(world: WorldState, nations: List<Nation>, cities: List<City>, generals: List<General>, resourceType: String = "all") {
-        val citiesByNation = cities.groupBy { it.nationId }
+    private fun processIncome(world: SessionState, nations: List<Faction>, cities: List<Planet>, generals: List<Officer>, resourceType: String = "all") {
+        val citiesByNation = cities.groupBy { it.factionId }
         val generalsByNation = generals
-            .filter { it.npcState.toInt() != 5 && it.npcState != EmperorConstants.NPC_STATE_EMPEROR }
-            .groupBy { it.nationId }
+            .filter { it.npcState.toInt() != 5 && it.npcState != SovereignConstants.NPC_STATE_EMPEROR }
+            .groupBy { it.factionId }
 
         // Count officers (officer_level 2-4) per city who are in their assigned city
         val officerCountByCity = generals
-            .filter { it.officerLevel in 2..4 && it.cityId == it.officerCity.toLong() }
-            .groupBy { it.cityId }
+            .filter { it.officerLevel in 2..4 && it.planetId == it.officerCity.toLong() }
+            .groupBy { it.planetId }
             .mapValues { it.value.size }
 
         for (nation in nations) {
             val nationCities = citiesByNation[nation.id] ?: continue
             val nationGenerals = generalsByNation[nation.id] ?: emptyList()
-            val taxRate = nation.rateTmp.toDouble()
-            val nationLevel = nation.level.toInt().coerceAtLeast(1)
+            val taxRate = nation.conscriptionRateTmp.toDouble()
+            val nationLevel = nation.factionRank.toInt().coerceAtLeast(1)
 
             // Get nation type modifier (applied per-city, legacy parity: onCalcNationalIncome per city)
-            val nationTypeMod = NationTypeModifiers.get(nation.typeCode)
+            val nationTypeMod = NationTypeModifiers.get(nation.factionType)
             val baseIncomeCtx = if (nationTypeMod != null) nationTypeMod.onCalcIncome(IncomeContext()) else IncomeContext()
 
             // Calculate city-level income with per-city modifier (H1)
@@ -153,7 +153,7 @@ class EconomyService @Autowired constructor(
             for (city in nationCities) {
                 if (city.supplyState.toInt() == 0) continue
                 val officerCnt = officerCountByCity[city.id] ?: 0
-                val isCapital = city.id == nation.capitalCityId
+                val isCapital = city.id == nation.capitalPlanetId
 
                 if (resourceType != "rice") {
                     totalGoldIncome += calcCityGoldIncome(city, officerCnt, isCapital, nationLevel, baseIncomeCtx.goldMultiplier)
@@ -169,52 +169,52 @@ class EconomyService @Autowired constructor(
             val riceIncome = (totalRiceIncome * taxRate / 20).toInt()
 
             // Add income to nation treasury
-            if (resourceType != "rice") nation.gold += goldIncome
-            if (resourceType != "gold") nation.rice += riceIncome
+            if (resourceType != "rice") nation.funds += goldIncome
+            if (resourceType != "gold") nation.supplies += riceIncome
 
             // Calculate bill/salary
             val totalBill = nationGenerals.sumOf { getBill(it.dedication) }
-            val goldOutcome = (nation.bill.toDouble() / 100 * totalBill).toInt()
-            val riceOutcome = (nation.bill.toDouble() / 100 * totalBill).toInt()
+            val goldOutcome = (nation.taxRate.toDouble() / 100 * totalBill).toInt()
+            val riceOutcome = (nation.taxRate.toDouble() / 100 * totalBill).toInt()
 
             // Pay salaries (gold)
             val goldRatio = if (totalBill == 0) 0.0
-            else if (nation.gold < BASE_GOLD) 0.0
-            else if (nation.gold - BASE_GOLD < goldOutcome) {
-                val realOutcome = nation.gold - BASE_GOLD
-                nation.gold = BASE_GOLD
+            else if (nation.funds < BASE_GOLD) 0.0
+            else if (nation.funds - BASE_GOLD < goldOutcome) {
+                val realOutcome = nation.funds - BASE_GOLD
+                nation.funds = BASE_GOLD
                 realOutcome.toDouble() / totalBill
             } else {
-                nation.gold -= goldOutcome
+                nation.funds -= goldOutcome
                 goldOutcome.toDouble() / totalBill
             }
 
             // Pay salaries (rice)
             val riceRatio = if (totalBill == 0) 0.0
-            else if (nation.rice < BASE_RICE) 0.0
-            else if (nation.rice - BASE_RICE < riceOutcome) {
-                val realOutcome = nation.rice - BASE_RICE
-                nation.rice = BASE_RICE
+            else if (nation.supplies < BASE_RICE) 0.0
+            else if (nation.supplies - BASE_RICE < riceOutcome) {
+                val realOutcome = nation.supplies - BASE_RICE
+                nation.supplies = BASE_RICE
                 realOutcome.toDouble() / totalBill
             } else {
-                nation.rice -= riceOutcome
+                nation.supplies -= riceOutcome
                 riceOutcome.toDouble() / totalBill
             }
 
             // Distribute salary to each general
             for (general in nationGenerals) {
                 val bill = getBill(general.dedication)
-                general.gold += (bill * goldRatio).toInt()
-                general.rice += (bill * riceRatio).toInt()
+                general.funds += (bill * goldRatio).toInt()
+                general.supplies += (bill * riceRatio).toInt()
             }
         }
     }
 
-    private fun calcCityGoldIncome(city: City, officerCnt: Int, isCapital: Boolean, nationLevel: Int, multiplier: Double = 1.0): Double {
-        if (city.commMax == 0) return 0.0
-        val trustRatio = city.trust / 200.0 + 0.5
-        var income = city.pop.toDouble() * city.comm / city.commMax * trustRatio / 30
-        income *= 1 + city.secu.toDouble() / city.secuMax.coerceAtLeast(1) / 10
+    private fun calcCityGoldIncome(city: Planet, officerCnt: Int, isCapital: Boolean, nationLevel: Int, multiplier: Double = 1.0): Double {
+        if (city.commerceMax == 0) return 0.0
+        val trustRatio = city.approval / 200.0 + 0.5
+        var income = city.population.toDouble() * city.commerce / city.commerceMax * trustRatio / 30
+        income *= 1 + city.security.toDouble() / city.securityMax.coerceAtLeast(1) / 10
         income *= 1.05.pow(officerCnt)
         if (isCapital) {
             income *= 1 + 1.0 / 3 / nationLevel
@@ -222,11 +222,11 @@ class EconomyService @Autowired constructor(
         return income * multiplier
     }
 
-    private fun calcCityRiceIncome(city: City, officerCnt: Int, isCapital: Boolean, nationLevel: Int, multiplier: Double = 1.0): Double {
-        if (city.agriMax == 0) return 0.0
-        val trustRatio = city.trust / 200.0 + 0.5
-        var income = city.pop.toDouble() * city.agri / city.agriMax * trustRatio / 30
-        income *= 1 + city.secu.toDouble() / city.secuMax.coerceAtLeast(1) / 10
+    private fun calcCityRiceIncome(city: Planet, officerCnt: Int, isCapital: Boolean, nationLevel: Int, multiplier: Double = 1.0): Double {
+        if (city.productionMax == 0) return 0.0
+        val trustRatio = city.approval / 200.0 + 0.5
+        var income = city.population.toDouble() * city.production / city.productionMax * trustRatio / 30
+        income *= 1 + city.security.toDouble() / city.securityMax.coerceAtLeast(1) / 10
         income *= 1.05.pow(officerCnt)
         if (isCapital) {
             income *= 1 + 1.0 / 3 / nationLevel
@@ -234,10 +234,10 @@ class EconomyService @Autowired constructor(
         return income * multiplier
     }
 
-    private fun calcCityWallIncome(city: City, officerCnt: Int, isCapital: Boolean, nationLevel: Int, multiplier: Double = 1.0): Double {
-        if (city.wallMax == 0) return 0.0
-        var income = city.def.toDouble() * city.wall / city.wallMax / 3
-        income *= 1 + city.secu.toDouble() / city.secuMax.coerceAtLeast(1) / 10
+    private fun calcCityWallIncome(city: Planet, officerCnt: Int, isCapital: Boolean, nationLevel: Int, multiplier: Double = 1.0): Double {
+        if (city.fortressMax == 0) return 0.0
+        var income = city.orbitalDefense.toDouble() * city.fortress / city.fortressMax / 3
+        income *= 1 + city.security.toDouble() / city.securityMax.coerceAtLeast(1) / 10
         income *= 1.05.pow(officerCnt)
         if (isCapital) {
             income *= 1 + 1.0 / 3 / nationLevel
@@ -253,15 +253,15 @@ class EconomyService @Autowired constructor(
         return getDedLevel(dedication) * 200 + 400
     }
 
-    private fun processWarIncome(nations: List<Nation>, cities: List<City>) {
+    private fun processWarIncome(nations: List<Faction>, cities: List<Planet>) {
         val nationMap = nations.associateBy { it.id }
 
         for (city in cities) {
             if (city.dead > 0) {
-                val nation = nationMap[city.nationId] ?: continue
-                nation.gold += (city.dead / 10)
-                val popGain = (city.dead * 0.2).toInt().coerceAtMost((city.popMax - city.pop).coerceAtLeast(0))
-                city.pop += popGain
+                val nation = nationMap[city.factionId] ?: continue
+                nation.funds += (city.dead / 10)
+                val popGain = (city.dead * 0.2).toInt().coerceAtMost((city.populationMax - city.population).coerceAtLeast(0))
+                city.population += popGain
                 city.dead = 0
             }
         }
@@ -269,24 +269,24 @@ class EconomyService @Autowired constructor(
 
     // ── Phase A2: processSemiAnnual (legacy formula) ──
 
-    private fun processSemiAnnual(world: WorldState, nations: List<Nation>, cities: List<City>, generals: List<General>) {
+    private fun processSemiAnnual(world: SessionState, nations: List<Faction>, cities: List<Planet>, generals: List<Officer>) {
         // 1. Reset dead and apply 0.99 decay to ALL cities unconditionally
         // Legacy ProcessSemiAnnual.php:75-82: decay is applied to ALL cities first,
         // then popIncrease() applies growth ONLY to supplied nation cities.
         // Neutral cities additionally get trust reset to 50.
-        val citiesByNation = cities.filter { it.nationId != 0L }.groupBy { it.nationId }
+        val citiesByNation = cities.filter { it.factionId != 0L }.groupBy { it.factionId }
 
         for (city in cities) {
             city.dead = 0
             // 0.99 decay on ALL cities (legacy parity: ProcessSemiAnnual.php:75-82)
-            city.agri = (city.agri * 0.99).toInt()
-            city.comm = (city.comm * 0.99).toInt()
-            city.secu = (city.secu * 0.99).toInt()
-            city.def = (city.def * 0.99).toInt()
-            city.wall = (city.wall * 0.99).toInt()
-            if (city.nationId == 0L) {
+            city.production = (city.production * 0.99).toInt()
+            city.commerce = (city.commerce * 0.99).toInt()
+            city.security = (city.security * 0.99).toInt()
+            city.orbitalDefense = (city.orbitalDefense * 0.99).toInt()
+            city.fortress = (city.fortress * 0.99).toInt()
+            if (city.factionId == 0L) {
                 // Neutral city: trust reset to 50 (legacy func_time_event.php:43)
-                city.trust = 50F
+                city.approval = 50F
             }
         }
 
@@ -295,13 +295,13 @@ class EconomyService @Autowired constructor(
 
         for ((nationId, nationCities) in citiesByNation) {
             val nation = nationMap[nationId] ?: continue
-            val taxRate = nation.rateTmp.toDouble()
+            val taxRate = nation.conscriptionRateTmp.toDouble()
 
             val popRatio = (30 - taxRate) / 200
             val genericRatio = (20 - taxRate) / 200
 
             // Nation type pop growth modifier
-            val nationTypeMod = NationTypeModifiers.get(nation.typeCode)
+            val nationTypeMod = NationTypeModifiers.get(nation.factionType)
             var incomeCtx = IncomeContext()
             if (nationTypeMod != null) {
                 incomeCtx = nationTypeMod.onCalcIncome(incomeCtx)
@@ -312,57 +312,57 @@ class EconomyService @Autowired constructor(
 
                 // Population growth (with nation type modifier)
                 val rawPopGrowth = if (popRatio >= 0) {
-                    BASE_POP_INCREASE + (city.pop * (1 + popRatio * (1 + city.secu.toDouble() / city.secuMax.coerceAtLeast(1) / 10))).toInt()
+                    BASE_POP_INCREASE + (city.population * (1 + popRatio * (1 + city.security.toDouble() / city.securityMax.coerceAtLeast(1) / 10))).toInt()
                 } else {
-                    BASE_POP_INCREASE + (city.pop * (1 + popRatio * (1 - city.secu.toDouble() / city.secuMax.coerceAtLeast(1) / 10))).toInt()
+                    BASE_POP_INCREASE + (city.population * (1 + popRatio * (1 - city.security.toDouble() / city.securityMax.coerceAtLeast(1) / 10))).toInt()
                 }
-                val popDelta = rawPopGrowth - city.pop
-                val popGrowth = city.pop + (popDelta * incomeCtx.popGrowthMultiplier).toInt()
-                city.pop = popGrowth.coerceAtMost(city.popMax)
+                val popDelta = rawPopGrowth - city.population
+                val popGrowth = city.population + (popDelta * incomeCtx.popGrowthMultiplier).toInt()
+                city.population = popGrowth.coerceAtMost(city.populationMax)
 
                 // Infrastructure growth
-                city.agri = (city.agri * (1 + genericRatio)).toInt().coerceAtMost(city.agriMax)
-                city.comm = (city.comm * (1 + genericRatio)).toInt().coerceAtMost(city.commMax)
-                city.secu = (city.secu * (1 + genericRatio)).toInt().coerceAtMost(city.secuMax)
-                city.def = (city.def * (1 + genericRatio)).toInt().coerceAtMost(city.defMax)
-                city.wall = (city.wall * (1 + genericRatio)).toInt().coerceAtMost(city.wallMax)
+                city.production = (city.production * (1 + genericRatio)).toInt().coerceAtMost(city.productionMax)
+                city.commerce = (city.commerce * (1 + genericRatio)).toInt().coerceAtMost(city.commerceMax)
+                city.security = (city.security * (1 + genericRatio)).toInt().coerceAtMost(city.securityMax)
+                city.orbitalDefense = (city.orbitalDefense * (1 + genericRatio)).toInt().coerceAtMost(city.orbitalDefenseMax)
+                city.fortress = (city.fortress * (1 + genericRatio)).toInt().coerceAtMost(city.fortressMax)
 
                 // Trust adjustment
-                city.trust = (city.trust + (20 - taxRate).toFloat()).coerceIn(0F, 100F)
+                city.approval = (city.approval + (20 - taxRate).toFloat()).coerceIn(0F, 100F)
             }
         }
 
         // 4. General maintenance: resource decay
         for (general in generals) {
             // Gold: > 10000 → 3%, > 1000 → 1%
-            if (general.gold > 10000) {
-                general.gold = (general.gold * 0.97).toInt()
-            } else if (general.gold > 1000) {
-                general.gold = (general.gold * 0.99).toInt()
+            if (general.funds > 10000) {
+                general.funds = (general.funds * 0.97).toInt()
+            } else if (general.funds > 1000) {
+                general.funds = (general.funds * 0.99).toInt()
             }
             // Rice: > 10000 → 3%, > 1000 → 1%
-            if (general.rice > 10000) {
-                general.rice = (general.rice * 0.97).toInt()
-            } else if (general.rice > 1000) {
-                general.rice = (general.rice * 0.99).toInt()
+            if (general.supplies > 10000) {
+                general.supplies = (general.supplies * 0.97).toInt()
+            } else if (general.supplies > 1000) {
+                general.supplies = (general.supplies * 0.99).toInt()
             }
         }
 
         // 5. Nation maintenance: resource decay
         for (nation in nations) {
             // Gold: > 100000 → 5%, > 10000 → 3%, > 1000 → 1%
-            nation.gold = when {
-                nation.gold > 100000 -> (nation.gold * 0.95).toInt()
-                nation.gold > 10000 -> (nation.gold * 0.97).toInt()
-                nation.gold > 1000 -> (nation.gold * 0.99).toInt()
-                else -> nation.gold
+            nation.funds = when {
+                nation.funds > 100000 -> (nation.funds * 0.95).toInt()
+                nation.funds > 10000 -> (nation.funds * 0.97).toInt()
+                nation.funds > 1000 -> (nation.funds * 0.99).toInt()
+                else -> nation.funds
             }
             // Rice
-            nation.rice = when {
-                nation.rice > 100000 -> (nation.rice * 0.95).toInt()
-                nation.rice > 10000 -> (nation.rice * 0.97).toInt()
-                nation.rice > 1000 -> (nation.rice * 0.99).toInt()
-                else -> nation.rice
+            nation.supplies = when {
+                nation.supplies > 100000 -> (nation.supplies * 0.95).toInt()
+                nation.supplies > 10000 -> (nation.supplies * 0.97).toInt()
+                nation.supplies > 1000 -> (nation.supplies * 0.99).toInt()
+                else -> nation.supplies
             }
         }
     }
@@ -372,11 +372,11 @@ class EconomyService @Autowired constructor(
      * Called by TurnService each turn to keep supply routes current.
      */
     @Transactional
-    fun updateCitySupplyState(world: WorldState) {
+    fun updateCitySupplyState(world: SessionState) {
         val ports = worldPortFactory.create(world.id.toLong())
-        val cities = ports.allCities().map { it.toEntity() }
-        val nations = ports.allNations().map { it.toEntity() }
-        val generals = ports.allGenerals().map { it.toEntity() }
+        val cities = ports.allPlanets().map { it.toEntity() }
+        val nations = ports.allFactions().map { it.toEntity() }
+        val generals = ports.allOfficers().map { it.toEntity() }
         updateCitySupply(world, nations, cities, generals)
         saveCities(ports, cities)
         saveGenerals(ports, generals)
@@ -386,11 +386,11 @@ class EconomyService @Autowired constructor(
      * Public entry point for event-driven income processing.
      */
     @Transactional
-    fun processIncomeEvent(world: WorldState) {
+    fun processIncomeEvent(world: SessionState) {
         val ports = worldPortFactory.create(world.id.toLong())
-        val cities = ports.allCities().map { it.toEntity() }
-        val nations = ports.allNations().map { it.toEntity() }
-        val generals = ports.allGenerals().map { it.toEntity() }
+        val cities = ports.allPlanets().map { it.toEntity() }
+        val nations = ports.allFactions().map { it.toEntity() }
+        val generals = ports.allOfficers().map { it.toEntity() }
         processIncome(world, nations, cities, generals)
         saveCities(ports, cities)
         saveNations(ports, nations)
@@ -401,11 +401,11 @@ class EconomyService @Autowired constructor(
      * Public entry point for event-driven semi-annual processing.
      */
     @Transactional
-    fun processSemiAnnualEvent(world: WorldState) {
+    fun processSemiAnnualEvent(world: SessionState) {
         val ports = worldPortFactory.create(world.id.toLong())
-        val cities = ports.allCities().map { it.toEntity() }
-        val nations = ports.allNations().map { it.toEntity() }
-        val generals = ports.allGenerals().map { it.toEntity() }
+        val cities = ports.allPlanets().map { it.toEntity() }
+        val nations = ports.allFactions().map { it.toEntity() }
+        val generals = ports.allOfficers().map { it.toEntity() }
         processSemiAnnual(world, nations, cities, generals)
         saveCities(ports, cities)
         saveNations(ports, nations)
@@ -416,22 +416,22 @@ class EconomyService @Autowired constructor(
      * Public entry point for event-driven nation level update.
      */
     @Transactional
-    fun updateNationLevelEvent(world: WorldState) {
+    fun updateNationLevelEvent(world: SessionState) {
         val ports = worldPortFactory.create(world.id.toLong())
-        val cities = ports.allCities().map { it.toEntity() }
-        val nations = ports.allNations().map { it.toEntity() }
-        val generals = ports.allGenerals().map { it.toEntity() }
+        val cities = ports.allPlanets().map { it.toEntity() }
+        val nations = ports.allFactions().map { it.toEntity() }
+        val generals = ports.allOfficers().map { it.toEntity() }
         updateNationLevel(world, nations, cities, generals)
         saveNations(ports, nations)
     }
 
     // ── Phase A2: updateCitySupply (+ trust < 30 neutral conversion) ──
 
-    private fun updateCitySupply(world: WorldState, nations: List<Nation>, cities: List<City>, generals: List<General>) {
+    private fun updateCitySupply(world: SessionState, nations: List<Faction>, cities: List<Planet>, generals: List<Officer>) {
         val mapCode = (world.config["mapCode"] as? String) ?: "che"
-        val citiesByNation = cities.groupBy { it.nationId }
+        val citiesByNation = cities.groupBy { it.factionId }
         val cityById = cities.associateBy { it.id }
-        val generalsByCity = generals.groupBy { it.cityId }
+        val generalsByCity = generals.groupBy { it.planetId }
 
         // Build map city ID <-> DB city ID lookups
         val dbToMapId = cities.associate { it.id to it.mapCityId }
@@ -439,7 +439,7 @@ class EconomyService @Autowired constructor(
 
         // Neutral cities are always supplied
         for (city in cities) {
-            if (city.nationId == 0L) {
+            if (city.factionId == 0L) {
                 city.supplyState = 1
             }
         }
@@ -448,7 +448,7 @@ class EconomyService @Autowired constructor(
             val nationCities = citiesByNation[nation.id] ?: continue
             val suppliedMapIds = mutableSetOf<Int>()
 
-            val capitalId = nation.capitalCityId
+            val capitalId = nation.capitalPlanetId
             val capitalMapId = if (capitalId != null) dbToMapId[capitalId] else null
             if (capitalMapId != null && capitalMapId != 0) {
                 val queue = ArrayDeque<Int>()
@@ -467,7 +467,7 @@ class EconomyService @Autowired constructor(
                         if (adjMapId !in suppliedMapIds) {
                             val adjDbId = mapToDbId[adjMapId]
                             val adjCity = if (adjDbId != null) cityById[adjDbId] else null
-                            if (adjCity != null && adjCity.nationId == nation.id) {
+                            if (adjCity != null && adjCity.factionId == nation.id) {
                                 suppliedMapIds.add(adjMapId)
                                 queue.add(adjMapId)
                             }
@@ -484,30 +484,30 @@ class EconomyService @Autowired constructor(
                     city.supplyState = 1
                 } else {
                     city.supplyState = 0
-                    city.pop = (city.pop * 0.9).toInt()
-                    city.trust = city.trust * 0.9F
-                    city.agri = (city.agri * 0.9).toInt()
-                    city.comm = (city.comm * 0.9).toInt()
-                    city.secu = (city.secu * 0.9).toInt()
-                    city.def = (city.def * 0.9).toInt()
-                    city.wall = (city.wall * 0.9).toInt()
+                    city.population = (city.population * 0.9).toInt()
+                    city.approval = city.approval * 0.9F
+                    city.production = (city.production * 0.9).toInt()
+                    city.commerce = (city.commerce * 0.9).toInt()
+                    city.security = (city.security * 0.9).toInt()
+                    city.orbitalDefense = (city.orbitalDefense * 0.9).toInt()
+                    city.fortress = (city.fortress * 0.9).toInt()
 
                     val cityGenerals = generalsByCity[city.id] ?: emptyList()
                     for (general in cityGenerals) {
-                        general.crew = (general.crew * 0.95).toInt()
-                        general.atmos = (general.atmos * 0.95).toInt().coerceIn(0, 150).toShort()
-                        general.train = (general.train * 0.95).toInt().coerceIn(0, 110).toShort()
+                        general.ships = (general.ships * 0.95).toInt()
+                        general.morale = (general.morale * 0.95).toInt().coerceIn(0, 150).toShort()
+                        general.training = (general.training * 0.95).toInt().coerceIn(0, 110).toShort()
                     }
 
-                    if (city.trust < 30 && city.id != nation.capitalCityId) {
-                        log.info("City {} (id={}) lost to isolation (trust={})", city.name, city.id, city.trust)
+                    if (city.approval < 30 && city.id != nation.capitalPlanetId) {
+                        log.info("City {} (id={}) lost to isolation (trust={})", city.name, city.id, city.approval)
                         for (general in cityGenerals) {
                             if (general.officerCity == city.id.toInt()) {
                                 general.officerLevel = 1
                                 general.officerCity = 0
                             }
                         }
-                        city.nationId = 0
+                        city.factionId = 0
                         city.officerSet = 0
                         city.conflict = mutableMapOf()
                         city.term = 0
@@ -520,11 +520,11 @@ class EconomyService @Autowired constructor(
 
     // ── Phase A2: updateNationLevel (legacy thresholds + rewards) ──
 
-    private fun updateNationLevel(world: WorldState, nations: List<Nation>, cities: List<City>, generals: List<General>) {
-        val citiesByNation = cities.groupBy { it.nationId }
+    private fun updateNationLevel(world: SessionState, nations: List<Faction>, cities: List<Planet>, generals: List<Officer>) {
+        val citiesByNation = cities.groupBy { it.factionId }
         val generalsByNation = generals
-            .filter { it.npcState.toInt() != 5 && it.npcState != EmperorConstants.NPC_STATE_EMPEROR }
-            .groupBy { it.nationId }
+            .filter { it.npcState.toInt() != 5 && it.npcState != SovereignConstants.NPC_STATE_EMPEROR }
+            .groupBy { it.factionId }
 
         for (nation in nations) {
             val nationCities = citiesByNation[nation.id] ?: continue
@@ -538,11 +538,11 @@ class EconomyService @Autowired constructor(
                 }
             }
 
-            if (newLevel > nation.level.toInt()) {
-                val oldLevel = nation.level.toInt()
-                nation.level = newLevel.coerceIn(0, 9).toShort()
-                nation.gold += newLevel * 1000
-                nation.rice += newLevel * 1000
+            if (newLevel > nation.factionRank.toInt()) {
+                val oldLevel = nation.factionRank.toInt()
+                nation.factionRank = newLevel.coerceIn(0, 9).toShort()
+                nation.funds += newLevel * 1000
+                nation.supplies += newLevel * 1000
 
                 // Legacy parity: log 【작위】 history for nation level-up
                 val nationName = nation.name
@@ -598,45 +598,45 @@ class EconomyService @Autowired constructor(
      * 국력 = (자원/100 + 기술 + 도시파워 + 장수능력 + 숙련/1000 + 경험공헌/100) / 10
      */
     @Transactional
-    fun processYearlyStatistics(world: WorldState) {
+    fun processYearlyStatistics(world: SessionState) {
         val ports = worldPortFactory.create(world.id.toLong())
-        val nations = ports.allNations().map { it.toEntity() }
-        val cities = ports.allCities().map { it.toEntity() }
-        val generals = ports.allGenerals().map { it.toEntity() }
+        val nations = ports.allFactions().map { it.toEntity() }
+        val cities = ports.allPlanets().map { it.toEntity() }
+        val generals = ports.allOfficers().map { it.toEntity() }
 
-        val citiesByNation = cities.groupBy { it.nationId }
+        val citiesByNation = cities.groupBy { it.factionId }
         val generalsByNation = generals
-            .filter { it.npcState.toInt() != 5 && it.npcState != EmperorConstants.NPC_STATE_EMPEROR }
-            .groupBy { it.nationId }
+            .filter { it.npcState.toInt() != 5 && it.npcState != SovereignConstants.NPC_STATE_EMPEROR }
+            .groupBy { it.factionId }
         val hiddenSeed = (world.config["hiddenSeed"] as? String) ?: world.id.toString()
 
         for (nation in nations) {
-            if (nation.level.toInt() == 0) continue
+            if (nation.factionRank.toInt() == 0) continue
 
             val nationGenerals = generalsByNation[nation.id] ?: emptyList()
             val nationCities = citiesByNation[nation.id] ?: emptyList()
 
             // 자원: (국가금+쌀 + 장수금+쌀합) / 100
-            val generalGoldRice = nationGenerals.sumOf { (it.gold + it.rice).toLong() }
-            val resource = ((nation.gold + nation.rice).toLong() + generalGoldRice) / 100.0
+            val generalGoldRice = nationGenerals.sumOf { (it.funds + it.supplies).toLong() }
+            val resource = ((nation.funds + nation.supplies).toLong() + generalGoldRice) / 100.0
 
             // 기술
-            val tech = nation.tech.toDouble()
+            val tech = nation.techLevel.toDouble()
 
             // 도시파워: sum(pop) * sum(pop+agri+comm+secu+wall+def) / sum(popMax+agriMax+commMax+secuMax+wallMax+defMax) / 100
             val suppliedCities = nationCities.filter { it.supplyState.toInt() == 1 }
             val cityPower = if (suppliedCities.isNotEmpty()) {
-                val popSum = suppliedCities.sumOf { it.pop.toLong() }
-                val valueSum = suppliedCities.sumOf { (it.pop + it.agri + it.comm + it.secu + it.wall + it.def).toLong() }
-                val maxSum = suppliedCities.sumOf { (it.popMax + it.agriMax + it.commMax + it.secuMax + it.wallMax + it.defMax).toLong() }
+                val popSum = suppliedCities.sumOf { it.population.toLong() }
+                val valueSum = suppliedCities.sumOf { (it.population + it.production + it.commerce + it.security + it.fortress + it.orbitalDefense).toLong() }
+                val maxSum = suppliedCities.sumOf { (it.populationMax + it.productionMax + it.commerceMax + it.securityMax + it.fortressMax + it.orbitalDefenseMax).toLong() }
                 if (maxSum > 0) (popSum * valueSum).toDouble() / maxSum / 100.0 else 0.0
             } else 0.0
 
             // 장수능력: (npcMul * leaderCore * 2 + (sqrt(intel*str)*2 + lead/2)/2) 합
             val statPower = nationGenerals.sumOf { g ->
                 val lead = g.leadership.toDouble()
-                val str = g.strength.toDouble()
-                val intel = g.intel.toDouble()
+                val str = g.command.toDouble()
+                val intel = g.intelligence.toDouble()
                 val npcMul = if (g.npcState < 2) 1.2 else 1.0
                 val leaderCore = if (lead >= 40) lead else 0.0
                 npcMul * leaderCore * 2 + (kotlin.math.sqrt(intel * str) * 2 + lead / 2) / 2
@@ -665,7 +665,7 @@ class EconomyService @Autowired constructor(
                 nation.meta["maxPower"] = power
             }
 
-            nation.power = power
+            nation.militaryPower = power
         }
 
         saveNations(ports, nations)
@@ -674,7 +674,7 @@ class EconomyService @Autowired constructor(
 
     // ── Phase A3: processDisasterOrBoom ──
 
-    fun processDisasterOrBoom(world: WorldState) {
+    fun processDisasterOrBoom(world: SessionState) {
         val startYear = try {
             (world.config["startYear"] as? Number)?.toInt() ?: world.currentYear.toInt()
         } catch (e: Exception) {
@@ -686,7 +686,7 @@ class EconomyService @Autowired constructor(
         if (startYear + 3 > world.currentYear.toInt()) return
 
         val ports = worldPortFactory.create(world.id.toLong())
-        val cities = ports.allCities().map { it.toEntity() }
+        val cities = ports.allPlanets().map { it.toEntity() }
         val month = world.currentMonth.toInt()
 
         // Reset disaster state
@@ -709,9 +709,9 @@ class EconomyService @Autowired constructor(
         )
         val isGood = boomRate > 0 && rng.nextDouble() < boomRate
 
-        val targetCities = mutableListOf<City>()
+        val targetCities = mutableListOf<Planet>()
         for (city in cities) {
-            val secuRatio = if (city.secuMax > 0) city.secu.toDouble() / city.secuMax else 0.0
+            val secuRatio = if (city.securityMax > 0) city.security.toDouble() / city.securityMax else 0.0
             val raiseProp = if (isGood) {
                 0.02 + secuRatio * 0.05  // 2~7%
             } else {
@@ -759,17 +759,17 @@ class EconomyService @Autowired constructor(
         if (isGood) {
             val entry = boomEntries[month] ?: boomEntries[4]!!
             for (city in targetCities) {
-                val secuRatio = if (city.secuMax > 0) city.secu.toDouble() / city.secuMax / 0.8 else 0.0
+                val secuRatio = if (city.securityMax > 0) city.security.toDouble() / city.securityMax / 0.8 else 0.0
                 val affectRatio = 1.01 + secuRatio.coerceIn(0.0, 1.0) * 0.04
 
                 city.state = entry.stateCode
-                city.pop = (city.pop * affectRatio).toInt().coerceAtMost(city.popMax)
-                city.trust = (city.trust * affectRatio.toFloat()).coerceAtMost(100F)
-                city.agri = (city.agri * affectRatio).toInt().coerceAtMost(city.agriMax)
-                city.comm = (city.comm * affectRatio).toInt().coerceAtMost(city.commMax)
-                city.secu = (city.secu * affectRatio).toInt().coerceAtMost(city.secuMax)
-                city.def = (city.def * affectRatio).toInt().coerceAtMost(city.defMax)
-                city.wall = (city.wall * affectRatio).toInt().coerceAtMost(city.wallMax)
+                city.population = (city.population * affectRatio).toInt().coerceAtMost(city.populationMax)
+                city.approval = (city.approval * affectRatio.toFloat()).coerceAtMost(100F)
+                city.production = (city.production * affectRatio).toInt().coerceAtMost(city.productionMax)
+                city.commerce = (city.commerce * affectRatio).toInt().coerceAtMost(city.commerceMax)
+                city.security = (city.security * affectRatio).toInt().coerceAtMost(city.securityMax)
+                city.orbitalDefense = (city.orbitalDefense * affectRatio).toInt().coerceAtMost(city.orbitalDefenseMax)
+                city.fortress = (city.fortress * affectRatio).toInt().coerceAtMost(city.fortressMax)
             }
 
             val cityNames = targetCities.joinToString(" ") { it.name }
@@ -783,31 +783,31 @@ class EconomyService @Autowired constructor(
             val entries = disasterEntries[month] ?: disasterEntries[1]!!
             val entry = entries[rng.nextInt(entries.size)]
             for (city in targetCities) {
-                val secuRatio = if (city.secuMax > 0) city.secu.toDouble() / city.secuMax / 0.8 else 0.0
+                val secuRatio = if (city.securityMax > 0) city.security.toDouble() / city.securityMax / 0.8 else 0.0
                 val affectRatio = 0.8 + secuRatio.coerceIn(0.0, 1.0) * 0.15
 
                 city.state = entry.stateCode
-                city.pop = (city.pop * affectRatio).toInt()
-                city.trust = city.trust * affectRatio.toFloat()
-                city.agri = (city.agri * affectRatio).toInt()
-                city.comm = (city.comm * affectRatio).toInt()
-                city.secu = (city.secu * affectRatio).toInt()
-                city.def = (city.def * affectRatio).toInt()
-                city.wall = (city.wall * affectRatio).toInt()
+                city.population = (city.population * affectRatio).toInt()
+                city.approval = city.approval * affectRatio.toFloat()
+                city.production = (city.production * affectRatio).toInt()
+                city.commerce = (city.commerce * affectRatio).toInt()
+                city.security = (city.security * affectRatio).toInt()
+                city.orbitalDefense = (city.orbitalDefense * affectRatio).toInt()
+                city.fortress = (city.fortress * affectRatio).toInt()
             }
 
             val affectedCityIds = targetCities.map { it.id }
-            val generals = generalRepository.findByWorldIdAndCityIdIn(world.id.toLong(), affectedCityIds)
+            val generals = officerRepository.findBySessionIdAndPlanetIdIn(world.id.toLong(), affectedCityIds)
             val injuryMessages = mutableListOf<Message>()
             for (general in generals) {
                 if (rng.nextDouble() >= 0.3) continue
                 val injuryAmount = rng.nextInt(1, 17)
                 general.injury = (general.injury + injuryAmount).coerceIn(0, 80).toShort()
-                general.crew = (general.crew * 0.98).toInt()
-                general.atmos = (general.atmos * 0.98).toInt().coerceIn(0, 150).toShort()
-                general.train = (general.train * 0.98).toInt().coerceIn(0, 110).toShort()
+                general.ships = (general.ships * 0.98).toInt()
+                general.morale = (general.morale * 0.98).toInt().coerceIn(0, 150).toShort()
+                general.training = (general.training * 0.98).toInt().coerceIn(0, 110).toShort()
                 injuryMessages += Message(
-                    worldId = world.id.toLong(),
+                    sessionId = world.id.toLong(),
                     mailboxCode = "general_action",
                     messageType = "log",
                     srcId = general.id,
@@ -819,7 +819,7 @@ class EconomyService @Autowired constructor(
                     ),
                 )
             }
-            generalRepository.saveAll(generals)
+            officerRepository.saveAll(generals)
             if (injuryMessages.isNotEmpty()) {
                 messageRepository.saveAll(injuryMessages)
             }
@@ -838,9 +838,9 @@ class EconomyService @Autowired constructor(
 
     // ── Phase A3: randomizeCityTradeRate ──
 
-    fun randomizeCityTradeRate(world: WorldState) {
+    fun randomizeCityTradeRate(world: SessionState) {
         val ports = worldPortFactory.create(world.id.toLong())
-        val cities = ports.allCities().map { it.toEntity() }
+        val cities = ports.allPlanets().map { it.toEntity() }
         val hiddenSeed = (world.config["hiddenSeed"] as? String) ?: "${world.id}"
         val rng = DeterministicRng.create(
             hiddenSeed, "tradeRate",
@@ -855,24 +855,24 @@ class EconomyService @Autowired constructor(
         for (city in cities) {
             val prob = probByLevel[city.level.toInt()] ?: 0.0
             if (prob > 0 && rng.nextDouble() < prob) {
-                city.trade = rng.nextInt(95, 106)  // 95~105 inclusive
+                city.tradeRoute = rng.nextInt(95, 106)  // 95~105 inclusive
             } else {
-                city.trade = 100  // 확률 미달: 기본값으로 리셋
+                city.tradeRoute = 100  // 확률 미달: 기본값으로 리셋
             }
         }
 
         saveCities(ports, cities)
     }
 
-    private fun saveCities(writePort: WorldWritePort, cities: List<City>) {
-        cities.forEach { writePort.putCity(it.toSnapshot()) }
+    private fun saveCities(writePort: WorldWritePort, cities: List<Planet>) {
+        cities.forEach { writePort.putPlanet(it.toSnapshot()) }
     }
 
-    private fun saveNations(writePort: WorldWritePort, nations: List<Nation>) {
-        nations.forEach { writePort.putNation(it.toSnapshot()) }
+    private fun saveNations(writePort: WorldWritePort, nations: List<Faction>) {
+        nations.forEach { writePort.putFaction(it.toSnapshot()) }
     }
 
-    private fun saveGenerals(writePort: WorldWritePort, generals: List<General>) {
-        generals.forEach { writePort.putGeneral(it.toSnapshot()) }
+    private fun saveGenerals(writePort: WorldWritePort, generals: List<Officer>) {
+        generals.forEach { writePort.putOfficer(it.toSnapshot()) }
     }
 }

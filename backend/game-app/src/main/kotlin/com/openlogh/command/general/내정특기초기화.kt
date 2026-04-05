@@ -1,9 +1,9 @@
 package com.openlogh.command.general
 
 import com.openlogh.command.CommandEnv
-import com.openlogh.entity.General
+import com.openlogh.entity.Officer
 
-class 내정특기초기화(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
+class 내정특기초기화(general: Officer, env: CommandEnv, arg: Map<String, Any>? = null)
     : 전투특기초기화(general, env, arg) {
 
     override val actionName = "내정 특기 초기화"

@@ -192,8 +192,8 @@ class StatItem(
 ) : ActionModifier {
     override fun onCalcStat(stat: StatContext) = stat.copy(
         leadership = stat.leadership + leadership,
-        strength = stat.strength + strength,
-        intel = stat.intel + intel,
+        strength = stat.command + strength,
+        intel = stat.intelligence + intel,
         dodgeChance = stat.dodgeChance + dodge,
         criticalChance = stat.criticalChance + critical,
         magicChance = stat.magicChance + magic,
@@ -232,8 +232,8 @@ class MiscItem(
     override fun onCalcStat(stat: StatContext): StatContext {
         var s = stat
         statMods["leadership"]?.let { s = s.copy(leadership = s.leadership + it) }
-        statMods["strength"]?.let { s = s.copy(strength = s.strength + it) }
-        statMods["intel"]?.let { s = s.copy(intel = s.intel + it) }
+        statMods["strength"]?.let { s = s.copy(strength = s.command + it) }
+        statMods["intel"]?.let { s = s.copy(intel = s.intelligence + it) }
         statMods["leadershipPercent"]?.let { s = s.copy(leadership = s.leadership * (1.0 + it)) }
         statMods["dodgeChance"]?.let { s = s.copy(dodgeChance = s.dodgeChance + it) }
         statMods["criticalChance"]?.let { s = s.copy(criticalChance = s.criticalChance + it) }
@@ -256,16 +256,16 @@ class MiscItem(
                     s = s.copy(leadership = s.leadership + progressiveBonus)
                 }
                 if (statMods.containsKey("strength")) {
-                    s = s.copy(strength = s.strength + progressiveBonus)
+                    s = s.copy(strength = s.command + progressiveBonus)
                 }
                 if (statMods.containsKey("intel")) {
-                    s = s.copy(intel = s.intel + progressiveBonus)
+                    s = s.copy(intel = s.intelligence + progressiveBonus)
                 }
             }
         }
 
         if (triggerType == "typeAdvantage" || triggerType == "antiRegional") {
-            val myCrewType = parseCrewType(s.crewType)
+            val myCrewType = parseCrewType(s.shipClass)
             val opponentCrewType = parseCrewType(s.opponentCrewType)
             if (triggerType == "typeAdvantage" && myCrewType != null && opponentCrewType != null) {
                 if (myCrewType.getAttackCoef(opponentCrewType) >= 1.0) {
@@ -354,7 +354,7 @@ class MiscItem(
         }
         // typeAdvantage defence: advantage → opponent warPower * 0.9
         if (triggerType == "typeAdvantage") {
-            val myCrewType = parseCrewType(s.crewType)
+            val myCrewType = parseCrewType(s.shipClass)
             val opponentCrewType = parseCrewType(s.opponentCrewType)
             if (myCrewType != null && opponentCrewType != null) {
                 if (myCrewType.getAttackCoef(opponentCrewType) >= 1.0) {

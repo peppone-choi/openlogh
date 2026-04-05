@@ -12,6 +12,6 @@ data class CommandResult(
 }
 
 data class CommandCost(
-    val gold: Int = 0,
-    val rice: Int = 0
+    val funds: Int = 0,
+    val supplies: Int = 0
 )

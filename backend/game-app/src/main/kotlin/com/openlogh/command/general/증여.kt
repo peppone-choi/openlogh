@@ -3,9 +3,9 @@ package com.openlogh.command.general
 import com.openlogh.command.CommandCost
 import com.openlogh.command.CommandEnv
 import com.openlogh.command.CommandResult
-import com.openlogh.command.GeneralCommand
+import com.openlogh.command.OfficerCommand
 import com.openlogh.command.constraint.*
-import com.openlogh.entity.General
+import com.openlogh.entity.Officer
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.random.Random
@@ -14,8 +14,8 @@ private const val GENERAL_MINIMUM_GOLD = 100
 private const val GENERAL_MINIMUM_RICE = 100
 private const val MAX_RESOURCE_ACTION_AMOUNT = 10000
 
-class 증여(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
-    : GeneralCommand(general, env, arg) {
+class 증여(general: Officer, env: CommandEnv, arg: Map<String, Any>? = null)
+    : OfficerCommand(general, env, arg) {
 
     override val actionName = "증여"
 
@@ -49,7 +49,7 @@ class 증여(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
 
     override suspend fun run(rng: Random): CommandResult {
         val date = formatDate()
-        val dg = destGeneral ?: return CommandResult(
+        val dg = destOfficer ?: return CommandResult(
             success = false,
             logs = listOf("대상 장수를 찾을 수 없습니다."),
         )
@@ -58,7 +58,7 @@ class 증여(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
         val requestedAmount = (arg?.get("amount") as? Number)?.toInt() ?: 100
         val resName = if (isGold) "금" else "쌀"
         val minReserve = if (isGold) GENERAL_MINIMUM_GOLD else GENERAL_MINIMUM_RICE
-        val currentRes = if (isGold) general.gold else general.rice
+        val currentRes = if (isGold) general.funds else general.supplies
         val maxGiveable = max(0, currentRes - minReserve)
         val roundedAmount = (requestedAmount / 100) * 100
         val clampedAmount = max(100, min(roundedAmount, MAX_RESOURCE_ACTION_AMOUNT))

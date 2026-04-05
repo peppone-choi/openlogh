@@ -1,6 +1,6 @@
 package com.openlogh.engine.ai
 
-import com.openlogh.entity.Nation
+import com.openlogh.entity.Faction
 import com.openlogh.model.CrewType
 import kotlin.math.floor
 import kotlin.math.roundToInt
@@ -83,7 +83,7 @@ class NpcNationPolicy(
 ) {
     fun canDo(action: String): Boolean = action in enabledActions
 
-    fun calcPolicyValue(fieldName: String, nation: Nation): Int {
+    fun calcPolicyValue(fieldName: String, nation: Faction): Int {
         return when (fieldName) {
             "reqNPCDevelGold" -> if (reqNPCDevelGold == 0) defaultDevelCost * 30 else reqNPCDevelGold
             "reqNPCWarGold" -> if (reqNPCWarGold == 0) roundToHundreds(calcDefaultNpcWarGold(nation)) else reqNPCWarGold
@@ -134,29 +134,29 @@ class NpcNationPolicy(
         }
     }
 
-    private fun calcDefaultHumanWarUrgentGold(nation: Nation): Int {
+    private fun calcDefaultHumanWarUrgentGold(nation: Faction): Int {
         return calcCrewCostWithTech(nation, defaultStatMax * 100) * 6
     }
 
-    private fun calcDefaultHumanWarUrgentRice(nation: Nation): Int {
+    private fun calcDefaultHumanWarUrgentRice(nation: Faction): Int {
         return calcCrewRiceWithTech(nation, defaultStatMax * 100) * 6
     }
 
-    private fun calcDefaultNpcWarGold(nation: Nation): Int {
+    private fun calcDefaultNpcWarGold(nation: Faction): Int {
         return calcCrewCostWithTech(nation, defaultStatNpcMax * 100) * 4
     }
 
-    private fun calcDefaultNpcWarRice(nation: Nation): Int {
+    private fun calcDefaultNpcWarRice(nation: Faction): Int {
         return calcCrewRiceWithTech(nation, defaultStatNpcMax * 100) * 4
     }
 
-    private fun calcCrewCostWithTech(nation: Nation, maxCrew: Int): Int {
-        val techCost = 1.0 + floor(nation.tech.toDouble() / 1000.0) * 0.15
+    private fun calcCrewCostWithTech(nation: Faction, maxCrew: Int): Int {
+        val techCost = 1.0 + floor(nation.techLevel.toDouble() / 1000.0) * 0.15
         return (defaultCrewType.cost * techCost * maxCrew / 100.0).roundToInt()
     }
 
-    private fun calcCrewRiceWithTech(nation: Nation, maxCrew: Int): Int {
-        val techCost = 1.0 + floor(nation.tech.toDouble() / 1000.0) * 0.15
+    private fun calcCrewRiceWithTech(nation: Faction, maxCrew: Int): Int {
+        val techCost = 1.0 + floor(nation.techLevel.toDouble() / 1000.0) * 0.15
         return (defaultCrewType.riceCost * techCost * maxCrew / 100.0).roundToInt()
     }
 

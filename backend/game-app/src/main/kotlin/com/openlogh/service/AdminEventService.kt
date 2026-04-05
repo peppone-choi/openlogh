@@ -133,7 +133,7 @@ class AdminEventService(
     private fun executeActionDirect(
         actionType: String,
         actionMap: Map<String, Any>,
-        world: com.openlogh.entity.WorldState,
+        world: com.openlogh.entity.SessionState,
     ): Map<String, Any> {
         // We save the world state for the action to read current env
         val env = buildEnvMap(world)
@@ -148,7 +148,7 @@ class AdminEventService(
         )
     }
 
-    private fun buildEnvMap(world: com.openlogh.entity.WorldState): Map<String, Any> {
+    private fun buildEnvMap(world: com.openlogh.entity.SessionState): Map<String, Any> {
         val env = mutableMapOf<String, Any>()
         env["year"] = world.currentYear.toInt()
         env["month"] = world.currentMonth.toInt()

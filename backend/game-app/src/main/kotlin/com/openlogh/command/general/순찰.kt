@@ -3,9 +3,9 @@ package com.openlogh.command.general
 import com.openlogh.command.CommandCost
 import com.openlogh.command.CommandEnv
 import com.openlogh.command.CommandResult
-import com.openlogh.command.GeneralCommand
+import com.openlogh.command.OfficerCommand
 import com.openlogh.command.constraint.*
-import com.openlogh.entity.General
+import com.openlogh.entity.Officer
 import kotlin.random.Random
 
 /**
@@ -13,8 +13,8 @@ import kotlin.random.Random
  *
  * Saves patrol state in general.lastTurn for the turn engine.
  */
-class 순찰(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
-    : GeneralCommand(general, env, arg) {
+class 순찰(general: Officer, env: CommandEnv, arg: Map<String, Any>? = null)
+    : OfficerCommand(general, env, arg) {
 
     override val actionName = "순찰"
 
@@ -40,7 +40,7 @@ class 순찰(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
     override suspend fun run(rng: Random): CommandResult {
         general.lastTurn = mutableMapOf(
             "action" to "순찰",
-            "patrolCityId" to general.cityId,
+            "patrolCityId" to general.planetId,
         )
 
         val josaGa = josa(general.name, "이")
@@ -49,7 +49,7 @@ class 순찰(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
         return CommandResult(
             success = true,
             logs = logs,
-            message = """{"statChanges":{"rice":${-getCost().rice}}}""",
+            message = """{"statChanges":{"rice":${-getCost().supplies}}}""",
         )
     }
 }

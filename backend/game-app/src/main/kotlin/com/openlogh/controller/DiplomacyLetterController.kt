@@ -23,7 +23,7 @@ class DiplomacyLetterController(
         @PathVariable nationId: Long,
         @RequestBody request: SendLetterRequest,
     ): ResponseEntity<MessageResponse> {
-        val letter = diplomacyLetterService.sendLetter(request.worldId, nationId, request.destNationId, request.type, request.content)
+        val letter = diplomacyLetterService.sendLetter(request.sessionId, nationId, request.destFactionId, request.type, request.content)
         return ResponseEntity.status(HttpStatus.CREATED).body(MessageResponse.from(letter))
     }
 

@@ -3,7 +3,7 @@ package com.openlogh.engine.turn.cqrs.memory
 import com.openlogh.engine.DiplomacyService
 import com.openlogh.engine.EconomyService
 import com.openlogh.engine.EventService
-import com.openlogh.engine.GeneralMaintenanceService
+import com.openlogh.engine.OfficerMaintenanceService
 import com.openlogh.engine.NpcSpawnService
 import com.openlogh.engine.SpecialAssignmentService
 import com.openlogh.engine.UnificationService
@@ -15,7 +15,7 @@ import com.openlogh.entity.SessionState
 import com.openlogh.repository.TrafficSnapshotRepository
 import com.openlogh.service.AuctionService
 import com.openlogh.service.InheritanceService
-import com.openlogh.service.NationService
+import com.openlogh.service.FactionService
 import com.openlogh.service.TournamentService
 import com.openlogh.service.WorldService
 import org.slf4j.LoggerFactory
@@ -30,7 +30,7 @@ class InMemoryTurnProcessor(
     private val economyService: EconomyService,
     private val eventService: EventService,
     private val diplomacyService: DiplomacyService,
-    private val generalMaintenanceService: GeneralMaintenanceService,
+    private val officerMaintenanceService: OfficerMaintenanceService,
     private val specialAssignmentService: SpecialAssignmentService,
     private val npcSpawnService: NpcSpawnService,
     private val unificationService: UnificationService,
@@ -40,7 +40,7 @@ class InMemoryTurnProcessor(
     private val tournamentService: TournamentService,
     private val trafficSnapshotRepository: TrafficSnapshotRepository,
     private val worldService: WorldService,
-    private val nationService: NationService,
+    private val factionService: FactionService,
 ) {
     private val logger = LoggerFactory.getLogger(InMemoryTurnProcessor::class.java)
 
@@ -87,7 +87,7 @@ class InMemoryTurnProcessor(
             try {
                 val onlineCount = ports.allOfficers().count { it.userId != null }
                 val snapshot = com.openlogh.entity.TrafficSnapshot(
-                    worldId = sessionId,
+                    sessionId = sessionId,
                     year = session.currentYear,
                     month = session.currentMonth,
                     refresh = (session.meta["refresh"] as? Number)?.toInt() ?: 0,
@@ -138,9 +138,9 @@ class InMemoryTurnProcessor(
             }
 
             try {
-                nationService.recalcAllFronts(sessionId)
+                factionService.recalcAllFronts(sessionId)
             } catch (e: Exception) {
-                logger.warn("NationService.recalcAllFronts failed: ${e.message}")
+                logger.warn("FactionService.recalcAllFronts failed: ${e.message}")
             }
 
             try {
@@ -151,7 +151,7 @@ class InMemoryTurnProcessor(
 
             try {
                 val officers = ports.allOfficers().map { it.toEntity() }
-                generalMaintenanceService.processGeneralMaintenance(session, officers)
+                officerMaintenanceService.processGeneralMaintenance(session, officers)
                 specialAssignmentService.checkAndAssignSpecials(session, officers)
                 officers.forEach { ports.putOfficer(it.toSnapshot()) }
 
@@ -159,7 +159,7 @@ class InMemoryTurnProcessor(
                     inheritanceService.accruePoints(officer, "lived_month", 1)
                 }
             } catch (e: Exception) {
-                logger.warn("GeneralMaintenanceService failed: ${e.message}")
+                logger.warn("OfficerMaintenanceService failed: ${e.message}")
             }
 
             try {
@@ -216,7 +216,7 @@ class InMemoryTurnProcessor(
                 break
             }
 
-            if (officer.npcState == com.openlogh.engine.EmperorConstants.NPC_STATE_EMPEROR) {
+            if (officer.npcState == com.openlogh.engine.SovereignConstants.NPC_STATE_EMPEROR) {
                 officer.turnTime = calculateNextOfficerTurnTime(officer.turnTime, officer.meta, session.tickSeconds)
                 officer.updatedAt = now
                 ports.putOfficer(officer)

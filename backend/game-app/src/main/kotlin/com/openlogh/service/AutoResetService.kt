@@ -16,14 +16,14 @@ import java.time.format.DateTimeFormatter
  * and proximity to the reset time. When the reset time arrives, it triggers a full
  * scenario rebuild.
  *
- * In the Kotlin backend, scheduled reset info is stored in WorldState.meta under:
+ * In the Kotlin backend, scheduled reset info is stored in SessionState.meta under:
  *   - "reservedResetDate": ISO-8601 datetime string for the scheduled reset
  *   - "reservedResetOptions": map of reset options (scenario, turnterm, etc.)
  *
- * The "isunited" game state is stored in WorldState.config:
+ * The "isunited" game state is stored in SessionState.config:
  *   - config["isunited"]: 0 = normal play, 1 = unified (천통), 2 = stopped/ended
  *
- * The "turntime" (last turn time) is WorldState.updatedAt.
+ * The "turntime" (last turn time) is SessionState.updatedAt.
  */
 @Service
 class AutoResetService(
@@ -144,14 +144,14 @@ class AutoResetService(
         }
     }
 
-    private fun closeServer(world: com.openlogh.entity.WorldState) {
+    private fun closeServer(world: com.openlogh.entity.SessionState) {
         world.config["serverClosed"] = true
         world.config["locked"] = true
         sessionStateRepository.save(world)
         log.info("Server closed for world {}", world.id)
     }
 
-    private fun openServer(world: com.openlogh.entity.WorldState) {
+    private fun openServer(world: com.openlogh.entity.SessionState) {
         world.config["serverClosed"] = false
         world.config["locked"] = false
         sessionStateRepository.save(world)

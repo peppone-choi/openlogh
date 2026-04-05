@@ -3,19 +3,19 @@ package com.openlogh.command.nation
 import com.openlogh.command.CommandCost
 import com.openlogh.command.CommandEnv
 import com.openlogh.command.CommandResult
-import com.openlogh.command.NationCommand
+import com.openlogh.command.FactionCommand
 import com.openlogh.command.constraint.*
-import com.openlogh.entity.General
-import com.openlogh.service.CityService.Companion.EXPAND_CITY_COST_COEF
-import com.openlogh.service.CityService.Companion.EXPAND_CITY_DEFAULT_COST
-import com.openlogh.service.CityService.Companion.EXPAND_CITY_DEVEL_INCREASE
-import com.openlogh.service.CityService.Companion.EXPAND_CITY_POP_INCREASE
-import com.openlogh.service.CityService.Companion.EXPAND_CITY_WALL_INCREASE
+import com.openlogh.entity.Officer
+import com.openlogh.service.PlanetService.Companion.EXPAND_CITY_COST_COEF
+import com.openlogh.service.PlanetService.Companion.EXPAND_CITY_DEFAULT_COST
+import com.openlogh.service.PlanetService.Companion.EXPAND_CITY_DEVEL_INCREASE
+import com.openlogh.service.PlanetService.Companion.EXPAND_CITY_POP_INCREASE
+import com.openlogh.service.PlanetService.Companion.EXPAND_CITY_WALL_INCREASE
 import kotlin.math.max
 import kotlin.random.Random
 
-class che_감축(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
-    : NationCommand(general, env, arg) {
+class che_감축(general: Officer, env: CommandEnv, arg: Map<String, Any>? = null)
+    : FactionCommand(general, env, arg) {
 
     override val actionName = "감축"
 
@@ -40,9 +40,9 @@ class che_감축(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
     override suspend fun run(rng: Random): CommandResult {
         val n = nation ?: return CommandResult(false, logs, "국가 정보를 찾을 수 없습니다")
         val capitalCity = city ?: run {
-            val capitalCityId = n.capitalCityId
+            val capitalCityId = n.capitalPlanetId
                 ?: return CommandResult(false, logs, "방랑상태에서는 불가능합니다.")
-            services?.cityRepository?.findById(capitalCityId)?.orElse(null)
+            services?.planetRepository?.findById(capitalCityId)?.orElse(null)
                 ?: return CommandResult(false, logs, "수도 정보를 찾을 수 없습니다")
         }
         val date = formatDate()
@@ -53,23 +53,23 @@ class che_감축(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
 
         capitalCity.level = (capitalCity.level - 1).toShort()
         // PHP reduces all 6 stats and their maxes
-        capitalCity.pop = max(capitalCity.pop - EXPAND_CITY_POP_INCREASE, 0)
-        capitalCity.popMax -= EXPAND_CITY_POP_INCREASE
-        capitalCity.agri = max(capitalCity.agri - EXPAND_CITY_DEVEL_INCREASE, 0)
-        capitalCity.agriMax -= EXPAND_CITY_DEVEL_INCREASE
-        capitalCity.comm = max(capitalCity.comm - EXPAND_CITY_DEVEL_INCREASE, 0)
-        capitalCity.commMax -= EXPAND_CITY_DEVEL_INCREASE
-        capitalCity.secu = max(capitalCity.secu - EXPAND_CITY_DEVEL_INCREASE, 0)
-        capitalCity.secuMax -= EXPAND_CITY_DEVEL_INCREASE
-        capitalCity.def = max(capitalCity.def - EXPAND_CITY_WALL_INCREASE, 0)
-        capitalCity.defMax -= EXPAND_CITY_WALL_INCREASE
-        capitalCity.wall = max(capitalCity.wall - EXPAND_CITY_WALL_INCREASE, 0)
-        capitalCity.wallMax -= EXPAND_CITY_WALL_INCREASE
+        capitalCity.population = max(capitalCity.population - EXPAND_CITY_POP_INCREASE, 0)
+        capitalCity.populationMax -= EXPAND_CITY_POP_INCREASE
+        capitalCity.production = max(capitalCity.production - EXPAND_CITY_DEVEL_INCREASE, 0)
+        capitalCity.productionMax -= EXPAND_CITY_DEVEL_INCREASE
+        capitalCity.commerce = max(capitalCity.commerce - EXPAND_CITY_DEVEL_INCREASE, 0)
+        capitalCity.commerceMax -= EXPAND_CITY_DEVEL_INCREASE
+        capitalCity.security = max(capitalCity.security - EXPAND_CITY_DEVEL_INCREASE, 0)
+        capitalCity.securityMax -= EXPAND_CITY_DEVEL_INCREASE
+        capitalCity.orbitalDefense = max(capitalCity.orbitalDefense - EXPAND_CITY_WALL_INCREASE, 0)
+        capitalCity.orbitalDefenseMax -= EXPAND_CITY_WALL_INCREASE
+        capitalCity.fortress = max(capitalCity.fortress - EXPAND_CITY_WALL_INCREASE, 0)
+        capitalCity.fortressMax -= EXPAND_CITY_WALL_INCREASE
 
         // PHP refunds the cost back to the nation (gold/rice +)
         val cost = getCost()
-        n.gold += cost.gold
-        n.rice += cost.rice
+        n.funds += cost.funds
+        n.supplies += cost.supplies
 
         // Increment capset (nation meta)
         val capset = (n.meta["capset"] as? Number)?.toInt() ?: 0

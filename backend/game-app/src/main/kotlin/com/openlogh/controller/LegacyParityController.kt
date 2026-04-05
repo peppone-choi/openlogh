@@ -21,7 +21,7 @@ class LegacyParityController(
     private val generalLogService: GeneralLogService,
     private val permissionService: PermissionService,
     private val simulatorExportService: SimulatorExportService,
-    private val generalService: GeneralService,
+    private val officerService: OfficerService,
     private val mapService: MapService,
     private val autoResetService: AutoResetService,
     private val mapRecentService: MapRecentService,
@@ -52,7 +52,7 @@ class LegacyParityController(
         @RequestBody request: SetPermissionRequest,
     ): ResponseEntity<Any> {
         val loginId = currentLoginId() ?: return unauthorized()
-        val userId = generalService.getCurrentUserId(loginId) ?: return unauthorized()
+        val userId = officerService.getCurrentUserId(loginId) ?: return unauthorized()
         return ResponseEntity.ok(
             permissionService.setPermission(userId, nationId, request.isAmbassador, request.generalIds)
         )
@@ -98,7 +98,7 @@ class LegacyParityController(
             loginId = loginId,
             eventName = request.event,
             eventArgs = request.args,
-            worldId = request.worldId,
+            sessionId = request.sessionId,
         )
 
         return if (result.result) {

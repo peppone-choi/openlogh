@@ -3,14 +3,14 @@ package com.openlogh.command.general
 import com.openlogh.command.CommandCost
 import com.openlogh.command.CommandEnv
 import com.openlogh.command.CommandResult
-import com.openlogh.command.GeneralCommand
+import com.openlogh.command.OfficerCommand
 import com.openlogh.command.constraint.*
-import com.openlogh.entity.General
+import com.openlogh.entity.Officer
 import kotlin.math.max
 import kotlin.random.Random
 
-class che_기술연구(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
-    : GeneralCommand(general, env, arg) {
+class che_기술연구(general: Officer, env: CommandEnv, arg: Map<String, Any>? = null)
+    : OfficerCommand(general, env, arg) {
 
     override val actionName = "기술 연구"
 
@@ -27,8 +27,8 @@ class che_기술연구(general: General, env: CommandEnv, arg: Map<String, Any>?
                 NotWanderingNation(),
                 OccupiedCity(),
                 SuppliedCity(),
-                ReqGeneralGold(cost.gold),
-                ReqGeneralRice(cost.rice)
+                ReqGeneralGold(cost.funds),
+                ReqGeneralRice(cost.supplies)
             )
         }
 
@@ -39,8 +39,8 @@ class che_기술연구(general: General, env: CommandEnv, arg: Map<String, Any>?
 
     override suspend fun run(rng: Random): CommandResult {
         val date = formatDate()
-        val intel = general.intel.toDouble()
-        val trust = maxOf(50.0, (city?.trust ?: 50F).toDouble())
+        val intel = general.intelligence.toDouble()
+        val trust = maxOf(50.0, (city?.approval ?: 50F).toDouble())
 
         // Legacy: base score = intel * trust/100 * getDomesticExpLevelBonus * rng(0.8..1.2)
         var score = intel * (trust / 100.0) *
@@ -110,7 +110,7 @@ class che_기술연구(general: General, env: CommandEnv, arg: Map<String, Any>?
         return CommandResult(
             success = true,
             logs = logs,
-            message = """{"statChanges":{"gold":${-cost.gold},"experience":$exp,"dedication":$ded,"intelExp":1},"nationChanges":{"tech":$nationTechDelta},"criticalResult":"$pick"$maxCriticalJson}"""
+            message = """{"statChanges":{"gold":${-cost.funds},"experience":$exp,"dedication":$ded,"intelExp":1},"nationChanges":{"tech":$nationTechDelta},"criticalResult":"$pick"$maxCriticalJson}"""
         )
     }
 }

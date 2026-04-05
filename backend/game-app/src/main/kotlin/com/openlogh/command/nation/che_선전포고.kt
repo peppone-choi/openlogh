@@ -3,14 +3,14 @@ package com.openlogh.command.nation
 import com.openlogh.command.CommandCost
 import com.openlogh.command.CommandEnv
 import com.openlogh.command.CommandResult
-import com.openlogh.command.NationCommand
+import com.openlogh.command.FactionCommand
 import com.openlogh.command.constraint.*
-import com.openlogh.entity.General
+import com.openlogh.entity.Officer
 import com.openlogh.util.JosaUtil
 import kotlin.random.Random
 
-class che_선전포고(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
-    : NationCommand(general, env, arg) {
+class che_선전포고(general: Officer, env: CommandEnv, arg: Map<String, Any>? = null)
+    : FactionCommand(general, env, arg) {
 
     override val actionName = "선전포고"
 
@@ -31,7 +31,7 @@ class che_선전포고(general: General, env: CommandEnv, arg: Map<String, Any>?
 
     override suspend fun run(rng: Random): CommandResult {
         val n = nation ?: return CommandResult(false, listOf("국가 정보를 찾을 수 없습니다"))
-        val dn = destNation ?: return CommandResult(false, listOf("대상 국가 정보를 찾을 수 없습니다"))
+        val dn = destFaction ?: return CommandResult(false, listOf("대상 국가 정보를 찾을 수 없습니다"))
         val date = formatDate()
         val generalName = general.name
         val nationName = n.name
@@ -41,7 +41,7 @@ class che_선전포고(general: General, env: CommandEnv, arg: Map<String, Any>?
         val josaYiNation = JosaUtil.pick(nationName, "이")
 
         // Update diplomacy: state=1 (declaration), term=24
-        services!!.diplomacyService.setDiplomacyState(env.worldId, n.id, dn.id, state = 1, term = 24)
+        services!!.diplomacyService.setDiplomacyState(env.sessionId, n.id, dn.id, state = 1, term = 24)
 
         // General action log
         pushLog("<D><b>${destNationName}</b></>에 선전 포고 했습니다.<1>$date</>")
@@ -60,7 +60,7 @@ class che_선전포고(general: General, env: CommandEnv, arg: Map<String, Any>?
         // National message to dest nation
         val text = "【외교】${env.year}년 ${env.month}월:${nationName}에서 ${destNationName}에 선전포고"
         services!!.messageService?.sendNationalMessage(
-            worldId = env.worldId,
+            sessionId = env.sessionId,
             srcNationId = n.id,
             destNationId = dn.id,
             srcGeneralId = general.id,

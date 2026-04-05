@@ -13,7 +13,7 @@ import java.time.Instant
  * Implements the map-recent endpoint logic from legacy j_map_recent.php.
  *
  * Returns a cached snapshot of the current world map state including:
- * - All city ownership/nation data
+ * - All planet ownership/faction data
  * - Recent global history entries (last 10)
  * - Map theme name
  *
@@ -90,29 +90,29 @@ class MapRecentService(
         val nationById = nations.associateBy { it.id }
 
         val cities = planetRepository.findBySessionId(worldId)
-        val cityDataList = cities.mapNotNull { city ->
-            val mapCity = mapCityByName[city.name] ?: return@mapNotNull null
-            val nation = nationById[city.nationId]
+        val cityDataList = cities.mapNotNull { planet ->
+            val mapCity = mapCityByName[planet.name] ?: return@mapNotNull null
+            val faction = nationById[planet.factionId]
             mapOf(
-                "id" to city.id,
-                "name" to city.name,
+                "id" to planet.id,
+                "name" to planet.name,
                 "x" to mapCity.x,
                 "y" to mapCity.y,
-                "level" to city.level.toInt(),
-                "region" to city.region.toInt(),
-                "nationId" to city.nationId,
-                "nationName" to (nation?.name ?: ""),
-                "nationColor" to (nation?.color ?: "#4b5563"),
-                "pop" to city.pop,
-                "popMax" to city.popMax,
-                "agri" to city.agri,
-                "comm" to city.comm,
-                "secu" to city.secu,
-                "def" to city.def,
-                "wall" to city.wall,
-                "trust" to city.trust,
-                "state" to city.state.toInt(),
-                "supply" to city.supplyState.toInt(),
+                "level" to planet.level.toInt(),
+                "region" to planet.region.toInt(),
+                "nationId" to planet.factionId,
+                "nationName" to (faction?.name ?: ""),
+                "nationColor" to (faction?.color ?: "#4b5563"),
+                "pop" to planet.population,
+                "popMax" to planet.populationMax,
+                "agri" to planet.production,
+                "comm" to planet.commerce,
+                "secu" to planet.security,
+                "def" to planet.orbitalDefense,
+                "wall" to planet.fortress,
+                "trust" to planet.approval,
+                "state" to planet.state.toInt(),
+                "supply" to planet.supplyState.toInt(),
             )
         }
 
@@ -141,8 +141,8 @@ class MapRecentService(
                     "name" to n.name,
                     "color" to n.color,
                     "level" to n.level.toInt(),
-                    "gold" to n.gold,
-                    "rice" to n.rice,
+                    "gold" to n.funds,
+                    "rice" to n.supplies,
                 )
             },
             "history" to history,

@@ -3,15 +3,15 @@ package com.openlogh.command.nation
 import com.openlogh.command.CommandCost
 import com.openlogh.command.CommandEnv
 import com.openlogh.command.CommandResult
-import com.openlogh.command.NationCommand
+import com.openlogh.command.FactionCommand
 import com.openlogh.command.constraint.*
-import com.openlogh.engine.EmperorConstants
-import com.openlogh.entity.General
+import com.openlogh.engine.SovereignConstants
+import com.openlogh.entity.Officer
 import com.openlogh.util.JosaUtil
 import kotlin.random.Random
 
-class che_독립선언(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
-    : NationCommand(general, env, arg) {
+class che_독립선언(general: Officer, env: CommandEnv, arg: Map<String, Any>? = null)
+    : FactionCommand(general, env, arg) {
 
     override val actionName = "독립 선언"
 
@@ -36,15 +36,15 @@ class che_독립선언(general: General, env: CommandEnv, arg: Map<String, Any>?
         val nationName = n.name
         val josaYi = JosaUtil.pick(generalName, "이")
 
-        val suzerainId = (n.meta[EmperorConstants.NATION_SUZERAIN_ID] as? Number)?.toLong()
+        val suzerainId = (n.meta[SovereignConstants.NATION_SUZERAIN_ID] as? Number)?.toLong()
         val suzerainName = if (suzerainId != null && suzerainId > 0) {
-            services!!.nationRepository.findById(suzerainId).orElse(null)?.name ?: "종주국"
+            services!!.factionRepository.findById(suzerainId).orElse(null)?.name ?: "종주국"
         } else {
             "종주국"
         }
 
-        n.meta[EmperorConstants.NATION_IMPERIAL_STATUS] = EmperorConstants.STATUS_INDEPENDENT
-        n.meta.remove(EmperorConstants.NATION_SUZERAIN_ID)
+        n.meta[SovereignConstants.NATION_IMPERIAL_STATUS] = SovereignConstants.STATUS_INDEPENDENT
+        n.meta.remove(SovereignConstants.NATION_SUZERAIN_ID)
 
         pushLog("<D><b>${suzerainName}</b></>으로부터 독립을 선언하였습니다. <1>${formatDate()}</>")
         pushHistoryLog("<D><b>${suzerainName}</b></>으로부터 독립 선언")
@@ -55,7 +55,7 @@ class che_독립선언(general: General, env: CommandEnv, arg: Map<String, Any>?
         if (suzerainId != null && suzerainId > 0) {
             val text = "【외교】${env.year}년 ${env.month}월:${nationName}이(가) 독립을 선언"
             services!!.messageService?.sendNationalMessage(
-                worldId = env.worldId,
+                sessionId = env.sessionId,
                 srcNationId = n.id,
                 destNationId = suzerainId,
                 srcGeneralId = general.id,

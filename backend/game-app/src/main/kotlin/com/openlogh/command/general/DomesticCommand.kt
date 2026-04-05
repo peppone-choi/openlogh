@@ -3,10 +3,10 @@ package com.openlogh.command.general
 import com.openlogh.command.CommandCost
 import com.openlogh.command.CommandEnv
 import com.openlogh.command.CommandResult
-import com.openlogh.command.GeneralCommand
+import com.openlogh.command.OfficerCommand
 import com.openlogh.command.constraint.*
 import com.openlogh.engine.modifier.StatContext
-import com.openlogh.entity.General
+import com.openlogh.entity.Officer
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
@@ -14,8 +14,8 @@ import kotlin.math.roundToInt
 import kotlin.random.Random
 
 abstract class DomesticCommand(
-    general: General, env: CommandEnv, arg: Map<String, Any>? = null
-) : GeneralCommand(general, env, arg) {
+    general: Officer, env: CommandEnv, arg: Map<String, Any>? = null
+) : OfficerCommand(general, env, arg) {
 
     abstract val cityKey: String
     abstract val statKey: String
@@ -36,8 +36,8 @@ abstract class DomesticCommand(
                 NotWanderingNation(),
                 OccupiedCity(),
                 SuppliedCity(),
-                ReqGeneralGold(cost.gold),
-                ReqGeneralRice(cost.rice),
+                ReqGeneralGold(cost.funds),
+                ReqGeneralRice(cost.supplies),
                 RemainCityCapacity(cityKey, actionName)
             )
         }
@@ -55,24 +55,24 @@ abstract class DomesticCommand(
         val mods = services?.modifierService?.getModifiers(general, nation) ?: emptyList()
         val base = StatContext(
             leadership = general.leadership.toDouble(),
-            strength = general.strength.toDouble(),
-            intel = general.intel.toDouble(),
+            strength = general.command.toDouble(),
+            intel = general.intelligence.toDouble(),
         )
         val modified = services?.modifierService?.applyStatModifiers(mods, base) ?: base
         return when (statKey) {
             "leadership" -> modified.leadership.toInt()
-            "strength" -> modified.strength.toInt()
-            "intel" -> modified.intel.toInt()
+            "strength" -> modified.command.toInt()
+            "intel" -> modified.intelligence.toInt()
             "politics" -> general.politics.toInt()
-            "charm" -> general.charm.toInt()
-            else -> modified.intel.toInt()
+            "charm" -> general.administration.toInt()
+            else -> modified.intelligence.toInt()
         }
     }
 
     override suspend fun run(rng: Random): CommandResult {
         val date = formatDate()
         val stat = getStat()
-        val trust = maxOf(50.0, (city?.trust ?: 50F).toDouble())
+        val trust = maxOf(50.0, (city?.approval ?: 50F).toDouble())
 
         // Legacy: base score = stat * trust/100 * getDomesticExpLevelBonus * rng(0.8..1.2)
         var score = stat.toDouble() * (trust / 100.0) *
@@ -89,13 +89,13 @@ abstract class DomesticCommand(
         val mods = services?.modifierService?.getModifiers(general, nation) ?: emptyList()
         val baseStatCtx = StatContext(
             leadership = general.leadership.toDouble(),
-            strength = general.strength.toDouble(),
-            intel = general.intel.toDouble(),
+            strength = general.command.toDouble(),
+            intel = general.intelligence.toDouble(),
         )
         val modifiedStatCtx = services?.modifierService?.applyStatModifiers(mods, baseStatCtx) ?: baseStatCtx
         val leadership = modifiedStatCtx.leadership
-        val strength = modifiedStatCtx.strength
-        val intel = modifiedStatCtx.intel
+        val strength = modifiedStatCtx.command
+        val intel = modifiedStatCtx.intelligence
         val avg = (leadership + strength + intel) / 3.0
         val statValue = when (statKey) {
             "leadership" -> leadership
@@ -162,7 +162,7 @@ abstract class DomesticCommand(
         if (c != null && (c.frontState.toInt() == 1 || c.frontState.toInt() == 3)) {
             var actualDebuff = debuffFront
 
-            if (nation?.capitalCityId == c.id?.toLong()) {
+            if (nation?.capitalPlanetId == c.id?.toLong()) {
                 val relYear = env.year - env.startYear
                 if (relYear < 25) {
                     val debuffScale = (maxOf(0, relYear - 5).coerceAtMost(20)) * 0.05
@@ -174,19 +174,19 @@ abstract class DomesticCommand(
         }
 
         val currentValue = when (cityKey) {
-            "agri" -> c?.agri ?: 0
-            "comm" -> c?.comm ?: 0
-            "secu" -> c?.secu ?: 0
-            "def" -> c?.def ?: 0
-            "wall" -> c?.wall ?: 0
+            "agri" -> c?.production ?: 0
+            "comm" -> c?.commerce ?: 0
+            "secu" -> c?.security ?: 0
+            "def" -> c?.orbitalDefense ?: 0
+            "wall" -> c?.fortress ?: 0
             else -> 0
         }
         val maxValue = when (cityKey) {
-            "agri" -> c?.agriMax ?: 1000
-            "comm" -> c?.commMax ?: 1000
-            "secu" -> c?.secuMax ?: 1000
-            "def" -> c?.defMax ?: 1000
-            "wall" -> c?.wallMax ?: 1000
+            "agri" -> c?.productionMax ?: 1000
+            "comm" -> c?.commerceMax ?: 1000
+            "secu" -> c?.securityMax ?: 1000
+            "def" -> c?.orbitalDefenseMax ?: 1000
+            "wall" -> c?.fortressMax ?: 1000
             else -> 1000
         }
         val newValue = minOf(maxValue, currentValue + finalScore)
@@ -197,7 +197,7 @@ abstract class DomesticCommand(
         return CommandResult(
             success = true,
             logs = logs,
-            message = """{"statChanges":{"gold":${-getCost().gold},"experience":$exp,"dedication":$ded,"$statExpKey":1},"cityChanges":{"$cityKey":$actualDelta},"criticalResult":"$pick"$maxCriticalJson}"""
+            message = """{"statChanges":{"gold":${-getCost().funds},"experience":$exp,"dedication":$ded,"$statExpKey":1},"cityChanges":{"$cityKey":$actualDelta},"criticalResult":"$pick"$maxCriticalJson}"""
         )
     }
 }

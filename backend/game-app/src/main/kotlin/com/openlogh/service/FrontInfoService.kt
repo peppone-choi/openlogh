@@ -5,7 +5,7 @@ import com.openlogh.entity.Planet
 import com.openlogh.entity.Officer
 import com.openlogh.entity.Message
 import com.openlogh.entity.Faction
-import com.openlogh.engine.EmperorConstants
+import com.openlogh.engine.SovereignConstants
 import com.openlogh.engine.modifier.ItemModifiers
 import com.openlogh.engine.modifier.NationTypeModifiers
 import com.openlogh.engine.modifier.PersonalityModifiers
@@ -44,10 +44,10 @@ class FrontInfoService(
 
         val nations = factionRepository.findBySessionId(worldId)
         val nationsById = nations.associateBy { it.id }
-        val nation = myGeneral?.let { nationsById[it.nationId] }
-        val city = myGeneral?.let { planetRepository.findById(it.cityId).orElse(null) }
+        val faction = myGeneral?.let { nationsById[it.factionId] }
+        val planet = myGeneral?.let { planetRepository.findById(it.planetId).orElse(null) }
 
-        val nationGenerals = allGenerals.groupBy { it.nationId }
+        val nationGenerals = allGenerals.groupBy { it.factionId }
         val onlineNations = nations.filter { nationGenerals.containsKey(it.id) }.map { n ->
             OnlineNationInfo(
                 id = n.id,
@@ -100,29 +100,29 @@ class FrontInfoService(
             lastVote = null,
         )
 
-        val nationLevel = nation?.level?.toInt() ?: 0
+        val nationLevel = faction?.level?.toInt() ?: 0
         val generalInfo = myGeneral?.let { toGeneralFrontInfo(it, nationLevel, allGenerals, nationsById) }
 
         val allCities = planetRepository.findBySessionId(worldId)
-        val nationInfo = if (myGeneral != null && nation != null && nation.id > 0) {
-            buildNationInfo(nation, nationGenerals, allCities, allGenerals)
+        val nationInfo = if (myGeneral != null && faction != null && faction.id > 0) {
+            buildNationInfo(faction, nationGenerals, allCities, allGenerals)
         } else {
             buildDummyNationInfo()
         }
 
-        val cityInfo = if (city != null && nation != null) {
-            buildCityInfo(city, nation, nationsById, allGenerals)
-        } else if (city != null) {
-            buildCityInfo(city, null, nationsById, allGenerals)
+        val cityInfo = if (planet != null && faction != null) {
+            buildCityInfo(planet, faction, nationsById, allGenerals)
+        } else if (planet != null) {
+            buildCityInfo(planet, null, nationsById, allGenerals)
         } else null
 
         val recentRecord = buildRecentRecord(worldId, myGeneral, lastRecordId, lastHistoryId)
 
         return FrontInfoResponse(
             global = globalInfo,
-            general = generalInfo,
-            nation = nationInfo,
-            city = cityInfo,
+            officer = generalInfo,
+            faction = nationInfo,
+            planet = cityInfo,
             recentRecord = recentRecord,
             aux = AuxInfo(),
         )
@@ -134,13 +134,13 @@ class FrontInfoService(
         allCities: List<Planet>,
         allGenerals: List<Officer>,
     ): NationFrontInfo {
-        val myNationCities = allCities.filter { it.nationId == n.id }
+        val myNationCities = allCities.filter { it.factionId == n.id }
         val myNationGens = nationGenerals[n.id] ?: emptyList()
 
-        val populationNow = myNationCities.sumOf { it.pop }
-        val populationMax = myNationCities.sumOf { it.popMax }
+        val populationNow = myNationCities.sumOf { it.population }
+        val populationMax = myNationCities.sumOf { it.populationMax }
 
-        val crewNow = myNationGens.filter { it.npcState.toInt() != 5 }.sumOf { it.crew }
+        val crewNow = myNationGens.filter { it.npcState.toInt() != 5 }.sumOf { it.ships }
         val crewMax = myNationGens.filter { it.npcState.toInt() != 5 }.sumOf { it.leadership.toInt() * 100 }
 
         val topChiefs = mutableMapOf<Int, TopChiefInfo?>()
@@ -178,17 +178,17 @@ class FrontInfoService(
             color = n.color,
             level = n.level.toInt(),
             type = NationTypeInfo(
-                raw = n.typeCode,
-                name = resolveNationTypeName(n.typeCode),
-                pros = resolveNationTypePros(n.typeCode),
-                cons = resolveNationTypeCons(n.typeCode),
+                raw = n.factionType,
+                name = resolveNationTypeName(n.factionType),
+                pros = resolveNationTypePros(n.factionType),
+                cons = resolveNationTypeCons(n.factionType),
             ),
-            gold = n.gold,
-            rice = n.rice,
+            gold = n.funds,
+            rice = n.supplies,
             tech = n.tech,
             power = n.power,
             gennum = myNationGens.size,
-            capital = n.capitalCityId,
+            capital = n.capitalPlanetId,
             bill = n.bill.toInt(),
             taxRate = n.rate.toInt(),
             population = NationPopulationInfo(
@@ -247,9 +247,9 @@ class FrontInfoService(
         nationsById: Map<Long, Faction>,
         allGenerals: List<Officer>,
     ): CityFrontInfo {
-        val cityNation = nationsById[c.nationId]
+        val cityNation = nationsById[c.factionId]
         val nationInfo = CityNationInfo(
-            id = c.nationId,
+            id = c.factionId,
             name = cityNation?.name ?: "공백지",
             color = cityNation?.color ?: "#000000",
         )
@@ -272,14 +272,14 @@ class FrontInfoService(
             level = c.level.toInt(),
             region = planetService.canonicalRegionForDisplay(c).toInt(),
             nationInfo = nationInfo,
-            trust = c.trust.toInt(),
-            pop = listOf(c.pop, c.popMax),
-            agri = listOf(c.agri, c.agriMax),
-            comm = listOf(c.comm, c.commMax),
-            secu = listOf(c.secu, c.secuMax),
-            def = listOf(c.def, c.defMax),
-            wall = listOf(c.wall, c.wallMax),
-            trade = if (c.trade > 0) c.trade else null,
+            trust = c.approval.toInt(),
+            pop = listOf(c.population, c.populationMax),
+            agri = listOf(c.production, c.productionMax),
+            comm = listOf(c.commerce, c.commerceMax),
+            secu = listOf(c.security, c.securityMax),
+            def = listOf(c.orbitalDefense, c.orbitalDefenseMax),
+            wall = listOf(c.fortress, c.fortressMax),
+            trade = if (c.tradeRoute > 0) c.tradeRoute else null,
             officerList = officerList,
         )
     }
@@ -291,14 +291,14 @@ class FrontInfoService(
         val permission = calcPermission(g)
 
         // Troop info
-        val troopInfo = if (g.troopId > 0) {
-            val troops = fleetRepository.findByFactionId(g.nationId)
-            val troop = troops.find { it.leaderGeneralId == g.troopId }
+        val troopInfo = if (g.fleetId > 0) {
+            val troops = fleetRepository.findByFactionId(g.factionId)
+            val troop = troops.find { it.leaderGeneralId == g.fleetId }
             if (troop != null) {
-                val leader = allGenerals.find { it.id == g.troopId }
+                val leader = allGenerals.find { it.id == g.fleetId }
                 TroopInfo(
                     leader = TroopLeaderInfo(
-                        city = leader?.cityId ?: 0,
+                        planet = leader?.planetId ?: 0,
                         reservedCommand = null,
                     ),
                     name = troop.name,
@@ -314,7 +314,7 @@ class FrontInfoService(
         val dexMeta = g.meta["dex"]
         val dex = readStringAnyMap(dexMeta)
 
-        val generalNation = if (g.nationId != 0L) nations[g.nationId] else null
+        val generalNation = if (g.factionId != 0L) nations[g.factionId] else null
         val officerRankKey = generalNation?.meta?.get("officerRankKey") as? String
 
         return GeneralFrontInfo(
@@ -322,12 +322,12 @@ class FrontInfoService(
             name = g.name,
             picture = g.picture,
             imgsvr = g.imageServer.toInt(),
-            nation = g.nationId,
+            faction = g.factionId,
             npc = g.npcState.toInt(),
-            city = g.cityId,
-            troop = g.troopId,
+            planet = g.planetId,
+            troop = g.fleetId,
             officerLevel = officerLevel,
-            officerLevelText = if (g.npcState == EmperorConstants.NPC_STATE_EMPEROR) "황제"
+            officerLevelText = if (g.npcState == SovereignConstants.NPC_STATE_EMPEROR) "황제"
                 else officerRankService.getRankTitle(
                     officerLevel = officerLevel,
                     nationLevel = nationLevel,
@@ -338,14 +338,14 @@ class FrontInfoService(
             lbonus = calcLeadershipBonus(officerLevel, nationLevel),
             leadership = g.leadership.toInt(),
             leadershipExp = g.leadershipExp.toInt(),
-            strength = g.strength.toInt(),
-            strengthExp = g.strengthExp.toInt(),
-            intel = g.intel.toInt(),
-            intelExp = g.intelExp.toInt(),
+            strength = g.command.toInt(),
+            strengthExp = g.commandExp.toInt(),
+            intel = g.intelligence.toInt(),
+            intelExp = g.intelligenceExp.toInt(),
             politics = g.politics.toInt(),
             politicsExp = g.politicsExp.toInt(),
-            charm = g.charm.toInt(),
-            charmExp = g.charmExp.toInt(),
+            charm = g.administration.toInt(),
+            charmExp = g.administrationExp.toInt(),
             experience = g.experience,
             dedication = g.dedication,
             explevel = g.expLevel.toInt(),
@@ -353,16 +353,16 @@ class FrontInfoService(
             honorText = getHonorText(g.experience),
             dedLevelText = getDedLevelText(dedLevel),
             bill = getBillByLevel(dedLevel),
-            gold = g.gold,
-            rice = g.rice,
-            crew = g.crew,
-            crewtype = g.crewType.toString(),
-            train = g.train.toInt(),
-            atmos = g.atmos.toInt(),
-            weapon = resolveItemDisplayName(g.weaponCode),
-            book = resolveItemDisplayName(g.bookCode),
-            horse = resolveItemDisplayName(g.horseCode),
-            item = resolveItemDisplayName(g.itemCode),
+            gold = g.funds,
+            rice = g.supplies,
+            crew = g.ships,
+            crewtype = g.shipClass.toString(),
+            train = g.training.toInt(),
+            atmos = g.morale.toInt(),
+            weapon = resolveItemDisplayName(g.flagshipCode),
+            book = resolveItemDisplayName(g.equipCode),
+            horse = resolveItemDisplayName(g.engineCode),
+            item = resolveItemDisplayName(g.accessoryCode),
             personal = PersonalityModifiers.get(g.personalCode)?.name ?: stripCodePrefix(g.personalCode),
             specialDomestic = SpecialModifiers.get(g.specialCode)?.name ?: stripCodePrefix(g.specialCode),
             specialWar = SpecialModifiers.get(g.special2Code)?.name ?: stripCodePrefix(g.special2Code),
@@ -400,7 +400,7 @@ class FrontInfoService(
     }
 
     private fun calcPermission(g: Officer): Int {
-        if (g.nationId <= 0) return -1
+        if (g.factionId <= 0) return -1
         if (g.officerLevel.toInt() == 0) return -1
         if (g.officerLevel.toInt() == 20) return 4
         if (g.permission == "ambassador") return 4
@@ -481,7 +481,7 @@ class FrontInfoService(
         "che_은둔" to ("회피↑" to ""),
         "che_무사" to ("무력↑ 전투↑" to ""),
         "che_건국" to ("내정↑" to ""),
-        // Legacy PHP nation types
+        // Legacy PHP faction types
         "che_유가" to ("농상↑ 민심↑" to "쌀수입↓"),
         "che_음양가" to ("농상↑ 인구↑" to "기술↓ 전략↓"),
         "che_명가" to ("기술↑ 인구↑" to "쌀수입↓ 수성↓"),
@@ -525,7 +525,7 @@ class FrontInfoService(
             flushGeneral = generalRecords.isNotEmpty(),
             flushGlobal = globalRecords.isNotEmpty(),
             flushHistory = historyRecords.isNotEmpty(),
-            general = generalRecords.map { toRecordEntry(it) },
+            officer = generalRecords.map { toRecordEntry(it) },
             global = globalRecords.map { toRecordEntry(it) },
             history = historyRecords.map { toRecordEntry(it) },
         )

@@ -3,15 +3,15 @@ package com.openlogh.command.nation
 import com.openlogh.command.CommandCost
 import com.openlogh.command.CommandEnv
 import com.openlogh.command.CommandResult
-import com.openlogh.command.NationCommand
+import com.openlogh.command.FactionCommand
 import com.openlogh.command.constraint.*
-import com.openlogh.engine.EmperorConstants
-import com.openlogh.entity.General
+import com.openlogh.engine.SovereignConstants
+import com.openlogh.entity.Officer
 import com.openlogh.util.JosaUtil
 import kotlin.random.Random
 
-class che_신속(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
-    : NationCommand(general, env, arg) {
+class che_신속(general: Officer, env: CommandEnv, arg: Map<String, Any>? = null)
+    : FactionCommand(general, env, arg) {
 
     override val actionName = "신속"
 
@@ -34,15 +34,15 @@ class che_신속(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
 
     override suspend fun run(rng: Random): CommandResult {
         val n = nation ?: return CommandResult(false, listOf("국가 정보를 찾을 수 없습니다."))
-        val dn = destNation ?: return CommandResult(false, listOf("대상 국가 정보를 찾을 수 없습니다."))
+        val dn = destFaction ?: return CommandResult(false, listOf("대상 국가 정보를 찾을 수 없습니다."))
         val generalName = general.name
         val nationName = n.name
         val destNationName = dn.name
         val josaYi = JosaUtil.pick(generalName, "이")
         val josaEge = JosaUtil.pick(destNationName, "에")
 
-        n.meta[EmperorConstants.NATION_IMPERIAL_STATUS] = EmperorConstants.STATUS_VASSAL
-        n.meta[EmperorConstants.NATION_SUZERAIN_ID] = dn.id
+        n.meta[SovereignConstants.NATION_IMPERIAL_STATUS] = SovereignConstants.STATUS_VASSAL
+        n.meta[SovereignConstants.NATION_SUZERAIN_ID] = dn.id
 
         pushLog("<D><b>${destNationName}</b></>${josaEge} 신속하였습니다. <1>${formatDate()}</>")
         pushHistoryLog("<D><b>${destNationName}</b></>${josaEge} 신속")
@@ -53,7 +53,7 @@ class che_신속(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
 
         val text = "【외교】${env.year}년 ${env.month}월:${nationName}이(가) ${destNationName}에 신속"
         services!!.messageService?.sendNationalMessage(
-            worldId = env.worldId,
+            sessionId = env.sessionId,
             srcNationId = n.id,
             destNationId = dn.id,
             srcGeneralId = general.id,

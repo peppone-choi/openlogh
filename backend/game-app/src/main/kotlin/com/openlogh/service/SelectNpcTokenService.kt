@@ -131,35 +131,35 @@ class SelectNpcTokenService(
             throw IllegalArgumentException("선택할 수 없는 NPC입니다.")
         }
 
-        val general = officerRepository.findById(generalId).orElse(null)
+        val officer = officerRepository.findById(generalId).orElse(null)
             ?: throw IllegalArgumentException("NPC 장수를 찾을 수 없습니다.")
-        if (general.worldId != worldId || !isSelectableNpc(general)) {
+        if (officer.sessionId != worldId || !isSelectableNpc(officer)) {
             throw IllegalArgumentException("이미 선택되었거나 선택 불가능한 NPC입니다.")
         }
 
-        general.userId = userId
-        general.npcState = 1
-        if (general.nationId > 0L) {
-            if (general.officerLevel < 1) {
-                general.officerLevel = 1
+        officer.userId = userId
+        officer.npcState = 1
+        if (officer.factionId > 0L) {
+            if (officer.officerLevel < 1) {
+                officer.officerLevel = 1
             }
-            general.officerCity = 0
-            general.permission = "normal"
-            if (general.makeLimit > 0) {
-                general.makeLimit = 0
+            officer.officerCity = 0
+            officer.permission = "normal"
+            if (officer.makeLimit > 0) {
+                officer.makeLimit = 0
             }
         }
-        general.killTurn = 6
-        general.updatedAt = OffsetDateTime.now()
+        officer.killTurn = 6
+        officer.updatedAt = OffsetDateTime.now()
 
-        val saved = officerRepository.save(general)
+        val saved = officerRepository.save(officer)
 
         // Initialize turn queue so the possessed NPC can execute reserved commands
         val maxTurn = gameConstService.getInt("maxTurn")
         officerTurnRepository.saveAll(
             (0 until maxTurn).map { turnIdx ->
                 OfficerTurn(
-                    worldId = worldId,
+                    sessionId = worldId,
                     generalId = saved.id,
                     turnIdx = turnIdx.toShort(),
                     actionCode = "휴식",
@@ -169,7 +169,7 @@ class SelectNpcTokenService(
         )
 
         deleteToken(worldId, userId)
-        return SelectNpcResult(success = true, general = GeneralResponse.from(saved))
+        return SelectNpcResult(success = true, officer = GeneralResponse.from(saved))
     }
 
     private fun ensureUserHasNoOfficer(worldId: Long, userId: Long) {
@@ -194,7 +194,7 @@ class SelectNpcTokenService(
 
     private fun loadNpcCards(worldId: Long, ids: List<Long>): List<Officer> {
         if (ids.isEmpty()) return emptyList()
-        return officerRepository.findAllById(ids).filter { it.worldId == worldId }
+        return officerRepository.findAllById(ids).filter { it.sessionId == worldId }
     }
 
     private fun drawNpcCards(worldId: Long, count: Int, excludeIds: Set<Long>): List<Officer> {
@@ -221,21 +221,21 @@ class SelectNpcTokenService(
 
     private fun weightedPickIndex(candidates: List<Officer>, totalWeight: Double): Int {
         var random = Random.nextDouble(totalWeight)
-        candidates.forEachIndexed { index, general ->
-            random -= weight(general)
+        candidates.forEachIndexed { index, officer ->
+            random -= weight(officer)
             if (random <= 0.0) return index
         }
         return candidates.lastIndex
     }
 
     private fun weight(officer: Officer): Double {
-        val statSum = general.leadership.toInt() + general.strength.toInt() + general.intel.toInt()
+        val statSum = officer.leadership.toInt() + officer.command.toInt() + officer.intelligence.toInt()
         return max(1.0, statSum.toDouble().pow(1.5))
     }
 
     private fun isSelectableNpc(officer: Officer): Boolean {
-        val npc = general.npcState.toInt()
-        return general.userId == null && npc >= 2 && npc < 5
+        val npc = officer.npcState.toInt()
+        return officer.userId == null && npc >= 2 && npc < 5
     }
 
     private fun generalsByOrderedIds(worldId: Long, ids: List<Long>): List<Officer> {
@@ -254,23 +254,23 @@ class SelectNpcTokenService(
         val nations = factionRepository.findBySessionId(worldId).associateBy { it.id }
         val cardsById = generals.associateBy { it.id }
         val orderedCards = token.generalIds.mapNotNull { generalId ->
-            val general = cardsById[generalId] ?: return@mapNotNull null
-            val nation = nations[general.nationId]
+            val officer = cardsById[generalId] ?: return@mapNotNull null
+            val faction = nations[officer.factionId]
             NpcCard(
-                id = general.id,
-                name = general.name,
-                picture = general.picture,
-                imageServer = general.imageServer,
-                leadership = general.leadership,
-                strength = general.strength,
-                intel = general.intel,
-                politics = general.politics,
-                charm = general.charm,
-                nationId = general.nationId,
-                nationName = nation?.name ?: "중립",
-                nationColor = nation?.color ?: "#6b7280",
-                personality = general.personalCode,
-                special = general.specialCode,
+                id = officer.id,
+                name = officer.name,
+                picture = officer.picture,
+                imageServer = officer.imageServer,
+                leadership = officer.leadership,
+                strength = officer.command,
+                intel = officer.intelligence,
+                politics = officer.politics,
+                charm = officer.administration,
+                nationId = officer.factionId,
+                nationName = faction?.name ?: "중립",
+                nationColor = faction?.color ?: "#6b7280",
+                personality = officer.personalCode,
+                special = officer.specialCode,
             )
         }
         return NpcTokenResponse(

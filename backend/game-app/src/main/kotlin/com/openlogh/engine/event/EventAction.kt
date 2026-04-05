@@ -1,7 +1,7 @@
 package com.openlogh.engine.event
 
 import com.openlogh.engine.RandUtil
-import com.openlogh.entity.WorldState
+import com.openlogh.entity.SessionState
 
 /**
  * Interface for all event actions.
@@ -13,7 +13,7 @@ interface EventAction {
 }
 
 data class EventActionContext(
-    val world: WorldState,
+    val world: SessionState,
     val params: Map<String, Any>,
     val currentEventId: Long = 0,
 )

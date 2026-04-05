@@ -1,6 +1,6 @@
 package com.openlogh.engine.turn
 
-import com.openlogh.entity.WorldState
+import com.openlogh.entity.SessionState
 import java.time.OffsetDateTime
 
 /**
@@ -28,7 +28,7 @@ interface TurnStep {
  * @param resetStrategicLimitsFn callback to TurnService.resetStrategicCommandLimits (uses private helpers)
  */
 class TurnContext(
-    val world: WorldState,
+    val world: SessionState,
     val worldId: Long,
     val year: Int,
     val month: Int,

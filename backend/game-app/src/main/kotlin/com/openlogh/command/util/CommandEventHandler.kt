@@ -1,6 +1,6 @@
 package com.openlogh.command.util
 
-import com.openlogh.entity.General
+import com.openlogh.entity.Officer
 
 /**
  * Legacy parity: StaticEventHandler::handleEvent() from StaticEventHandler.php

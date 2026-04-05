@@ -3,13 +3,13 @@ package com.openlogh.command.general
 import com.openlogh.command.CommandCost
 import com.openlogh.command.CommandEnv
 import com.openlogh.command.CommandResult
-import com.openlogh.command.GeneralCommand
+import com.openlogh.command.OfficerCommand
 import com.openlogh.command.constraint.*
-import com.openlogh.entity.General
+import com.openlogh.entity.Officer
 import kotlin.random.Random
 
-class 첩보(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
-    : GeneralCommand(general, env, arg) {
+class 첩보(general: Officer, env: CommandEnv, arg: Map<String, Any>? = null)
+    : OfficerCommand(general, env, arg) {
 
     override val actionName = "첩보"
 
@@ -19,8 +19,8 @@ class 첩보(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
             return listOf(
                 NotBeNeutral(),
                 NotOccupiedDestCity(),
-                ReqGeneralGold(cost.gold),
-                ReqGeneralRice(cost.rice),
+                ReqGeneralGold(cost.funds),
+                ReqGeneralRice(cost.supplies),
             )
         }
 
@@ -29,8 +29,8 @@ class 첩보(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
             val cost = getCost()
             return listOf(
                 NotBeNeutral(),
-                ReqGeneralGold(cost.gold),
-                ReqGeneralRice(cost.rice),
+                ReqGeneralGold(cost.funds),
+                ReqGeneralRice(cost.supplies),
             )
         }
 
@@ -44,7 +44,7 @@ class 첩보(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
 
     override suspend fun run(rng: Random): CommandResult {
         val date = formatDate()
-        val dc = destCity!!
+        val dc = destPlanet!!
         val destCityName = dc.name
         val destCityId = dc.id
 
@@ -56,13 +56,13 @@ class 첩보(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
         pushHistoryLog("<G><b>${destCityName}</b></>에 첩보를 시도했습니다. <1>$date</>")
 
         // Gather city info
-        val popText = String.format("%,d", dc.pop)
-        val trustText = String.format("%.1f", dc.trust)
-        val agriText = String.format("%,d", dc.agri)
-        val commText = String.format("%,d", dc.comm)
-        val secuText = String.format("%,d", dc.secu)
-        val defText = String.format("%,d", dc.def)
-        val wallText = String.format("%,d", dc.wall)
+        val popText = String.format("%,d", dc.population)
+        val trustText = String.format("%.1f", dc.approval)
+        val agriText = String.format("%,d", dc.production)
+        val commText = String.format("%,d", dc.commerce)
+        val secuText = String.format("%,d", dc.security)
+        val defText = String.format("%,d", dc.orbitalDefense)
+        val wallText = String.format("%,d", dc.fortress)
 
         val cityGeneralCount = getDestCityGeneralCount()
         val totalCrew = getDestCityTotalCrew()
@@ -106,7 +106,7 @@ class 첩보(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
         return CommandResult(
             success = true,
             logs = logs,
-            message = """{"statChanges":{"gold":${-cost.gold},"rice":${-cost.rice},"experience":$exp,"dedication":$ded,"leadershipExp":1,"inheritancePoint":0.5},"spyResult":{"destCityId":$destCityId,"distance":$distance},"nationChanges":{"spyUpdate":{"$destCityId":3}}}"""
+            message = """{"statChanges":{"gold":${-cost.funds},"rice":${-cost.supplies},"experience":$exp,"dedication":$ded,"leadershipExp":1,"inheritancePoint":0.5},"spyResult":{"destCityId":$destCityId,"distance":$distance},"nationChanges":{"spyUpdate":{"$destCityId":3}}}"""
         )
     }
 
@@ -118,7 +118,7 @@ class 첩보(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
         val adjacency = readAdjacency(env.gameStor["mapAdjacency"])
         if (adjacency.isEmpty()) return 3
 
-        val startCityId = general.cityId
+        val startCityId = general.planetId
         if (startCityId == targetCityId) return 0
 
         val visited = mutableSetOf(startCityId)
@@ -143,11 +143,11 @@ class 첩보(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
      * Legacy: 압도/우위/대등/열위/미미
      */
     private fun getTechComparison(): String? {
-        val destNation = destNation ?: return null
+        val destFaction = destFaction ?: return null
         val ownNation = nation ?: return null
-        if (destNation.id == 0L || ownNation.id == 0L) return null
+        if (destFaction.id == 0L || ownNation.id == 0L) return null
 
-        val destTech = destNation.tech.toInt()
+        val destTech = destFaction.tech.toInt()
         val ownTech = ownNation.tech.toInt()
         val techDiff = destTech - ownTech
 
@@ -158,7 +158,7 @@ class 첩보(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
             techDiff >= -1000 -> "<G>▼</>열위"
             else -> "<C>↓</>미미"
         }
-         val destNationName = destNation.name
+         val destNationName = destFaction.name
          return "【<Y>${destNationName}</>】아국대비기술:${techText}"
     }
 

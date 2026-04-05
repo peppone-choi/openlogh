@@ -3,14 +3,14 @@ package com.openlogh.command.general
 import com.openlogh.command.CommandCost
 import com.openlogh.command.CommandEnv
 import com.openlogh.command.CommandResult
-import com.openlogh.command.GeneralCommand
+import com.openlogh.command.OfficerCommand
 import com.openlogh.command.constraint.*
-import com.openlogh.entity.General
+import com.openlogh.entity.Officer
 import com.openlogh.util.JosaUtil
 import kotlin.random.Random
 
-class 귀환(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
-    : GeneralCommand(general, env, arg) {
+class 귀환(general: Officer, env: CommandEnv, arg: Map<String, Any>? = null)
+    : OfficerCommand(general, env, arg) {
 
     override val actionName = "귀환"
 
@@ -40,9 +40,9 @@ class 귀환(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
 
         if (officerLevel in 2..4) {
             destCityId = general.officerCity.toLong()
-            destCityName = services?.let { it.getCityName(destCityId) } ?: destCity?.name ?: "담당도시"
+            destCityName = services?.let { it.getCityName(destCityId) } ?: destPlanet?.name ?: "담당도시"
         } else {
-            destCityId = nation?.capitalCityId ?: 0L
+            destCityId = nation?.capitalPlanetId ?: 0L
             destCityName = services?.let { it.getCityName(destCityId) } ?: "수도"
         }
 

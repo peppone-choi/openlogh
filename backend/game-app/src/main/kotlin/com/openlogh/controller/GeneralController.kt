@@ -7,7 +7,7 @@ import com.openlogh.dto.GeneralResponse
 import com.openlogh.dto.SelectNpcRequest
 import com.openlogh.dto.UpdatePoolGeneralRequest
 import com.openlogh.service.FrontInfoService
-import com.openlogh.service.GeneralService
+import com.openlogh.service.OfficerService
 import com.openlogh.service.WorldService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.*
 @RestController
 @RequestMapping("/api")
 class GeneralController(
-    private val generalService: GeneralService,
+    private val officerService: OfficerService,
     private val frontInfoService: FrontInfoService,
     private val worldService: WorldService,
 ) {
@@ -34,33 +34,33 @@ class GeneralController(
 
     @GetMapping("/worlds/{worldId}/generals")
     fun listByWorld(@PathVariable worldId: Long): ResponseEntity<List<GeneralResponse>> {
-        return ResponseEntity.ok(generalService.listByWorld(worldId).map { GeneralResponse.from(it) })
+        return ResponseEntity.ok(officerService.listByWorld(worldId).map { GeneralResponse.from(it) })
     }
 
     @GetMapping("/worlds/{worldId}/generals/me")
     fun getMyGeneral(@PathVariable worldId: Long): ResponseEntity<GeneralResponse> {
         val loginId = SecurityContextHolder.getContext().authentication?.name
             ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
-        val general = generalService.getMyGeneral(worldId, loginId)
+        val general = officerService.getMyGeneral(worldId, loginId)
             ?: return ResponseEntity.notFound().build()
         return ResponseEntity.ok(GeneralResponse.from(general))
     }
 
     @GetMapping("/generals/{id}")
     fun getById(@PathVariable id: Long): ResponseEntity<GeneralResponse> {
-        val general = generalService.getById(id)
+        val general = officerService.getById(id)
             ?: return ResponseEntity.notFound().build()
         return ResponseEntity.ok(GeneralResponse.from(general))
     }
 
     @GetMapping("/nations/{nationId}/generals")
     fun listByNation(@PathVariable nationId: Long): ResponseEntity<List<GeneralResponse>> {
-        return ResponseEntity.ok(generalService.listByNation(nationId).map { GeneralResponse.from(it) })
+        return ResponseEntity.ok(officerService.listByNation(nationId).map { GeneralResponse.from(it) })
     }
 
     @GetMapping("/cities/{cityId}/generals")
     fun listByCity(@PathVariable cityId: Long): ResponseEntity<List<GeneralResponse>> {
-        return ResponseEntity.ok(generalService.listByCity(cityId).map { GeneralResponse.from(it) })
+        return ResponseEntity.ok(officerService.listByCity(cityId).map { GeneralResponse.from(it) })
     }
 
     @PostMapping("/worlds/{worldId}/generals")
@@ -74,14 +74,14 @@ class GeneralController(
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build()
         val loginId = SecurityContextHolder.getContext().authentication?.name
             ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
-        val general = generalService.createGeneral(worldId, loginId, request)
+        val general = officerService.createGeneral(worldId, loginId, request)
             ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
         return ResponseEntity.status(HttpStatus.CREATED).body(GeneralResponse.from(general))
     }
 
     @GetMapping("/worlds/{worldId}/available-npcs")
     fun listAvailableNpcs(@PathVariable worldId: Long): ResponseEntity<List<GeneralResponse>> {
-        return ResponseEntity.ok(generalService.listAvailableNpcs(worldId).map { GeneralResponse.from(it) })
+        return ResponseEntity.ok(officerService.listAvailableNpcs(worldId).map { GeneralResponse.from(it) })
     }
 
     @PostMapping("/worlds/{worldId}/select-npc")
@@ -95,14 +95,14 @@ class GeneralController(
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build()
         val loginId = SecurityContextHolder.getContext().authentication?.name
             ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
-        val general = generalService.possessNpc(worldId, loginId, request.generalId)
+        val general = officerService.possessNpc(worldId, loginId, request.generalId)
             ?: return ResponseEntity.badRequest().build()
         return ResponseEntity.ok(GeneralResponse.from(general))
     }
 
     @GetMapping("/worlds/{worldId}/pool")
     fun listPool(@PathVariable worldId: Long): ResponseEntity<List<GeneralResponse>> {
-        return ResponseEntity.ok(generalService.listPool(worldId).map { GeneralResponse.from(it) })
+        return ResponseEntity.ok(officerService.listPool(worldId).map { GeneralResponse.from(it) })
     }
 
     @PostMapping("/worlds/{worldId}/pool")
@@ -112,7 +112,7 @@ class GeneralController(
     ): ResponseEntity<GeneralResponse> {
         val loginId = SecurityContextHolder.getContext().authentication?.name
             ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
-        val general = generalService.buildPoolGeneral(worldId, loginId, request)
+        val general = officerService.buildPoolGeneral(worldId, loginId, request)
             ?: return ResponseEntity.badRequest().build()
         return ResponseEntity.status(HttpStatus.CREATED).body(GeneralResponse.from(general))
     }
@@ -125,9 +125,9 @@ class GeneralController(
     ): ResponseEntity<GeneralResponse> {
         val loginId = SecurityContextHolder.getContext().authentication?.name
             ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
-        val general = generalService.updatePoolGeneral(
+        val general = officerService.updatePoolGeneral(
             worldId, loginId, generalId,
-            request.leadership, request.strength, request.intel, request.politics, request.charm,
+            request.leadership, request.command, request.intelligence, request.politics, request.administration,
         ) ?: return ResponseEntity.badRequest().build()
         return ResponseEntity.ok(GeneralResponse.from(general))
     }
@@ -143,7 +143,7 @@ class GeneralController(
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build()
         val loginId = SecurityContextHolder.getContext().authentication?.name
             ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
-        val general = generalService.selectFromPool(worldId, loginId, request.generalId)
+        val general = officerService.selectFromPool(worldId, loginId, request.generalId)
             ?: return ResponseEntity.badRequest().build()
         return ResponseEntity.ok(GeneralResponse.from(general))
     }

@@ -3,13 +3,13 @@ package com.openlogh.command.nation
 import com.openlogh.command.CommandCost
 import com.openlogh.command.CommandEnv
 import com.openlogh.command.CommandResult
-import com.openlogh.command.NationCommand
+import com.openlogh.command.FactionCommand
 import com.openlogh.command.constraint.*
-import com.openlogh.entity.General
+import com.openlogh.entity.Officer
 import kotlin.random.Random
 
-class che_포상(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
-    : NationCommand(general, env, arg) {
+class che_포상(general: Officer, env: CommandEnv, arg: Map<String, Any>? = null)
+    : FactionCommand(general, env, arg) {
 
     override val actionName = "포상"
 
@@ -47,7 +47,7 @@ class che_포상(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
 
     override suspend fun run(rng: Random): CommandResult {
         val date = formatDate()
-        val destGen = destGeneral ?: return CommandResult(false, logs, "대상 장수 정보를 찾을 수 없습니다")
+        val destGen = destOfficer ?: return CommandResult(false, logs, "대상 장수 정보를 찾을 수 없습니다")
         val n = nation ?: return CommandResult(false, logs, "국가 정보를 찾을 수 없습니다")
 
         val isGold = arg?.get("isGold") as? Boolean ?: true
@@ -63,7 +63,7 @@ class che_포상(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
         val resKey = if (isGold) "gold" else "rice"
         val resName = if (isGold) "금" else "쌀"
         val base = if (isGold) baseGold else baseRice
-        val available = if (isGold) n.gold - base else n.rice - base
+        val available = if (isGold) n.funds - base else n.supplies - base
         amount = amount.coerceIn(0, available)
 
         if (amount <= 0) {
@@ -71,11 +71,11 @@ class che_포상(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
         }
 
         if (isGold) {
-            n.gold -= amount
-            destGen.gold += amount
+            n.funds -= amount
+            destGen.funds += amount
         } else {
-            n.rice -= amount
-            destGen.rice += amount
+            n.supplies -= amount
+            destGen.supplies += amount
         }
 
         val amountText = String.format("%,d", amount)

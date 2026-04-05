@@ -170,7 +170,7 @@ class RecordService(
         val target = officerRepository.findById(targetId).orElse(null)
             ?: return LogResult(false, "대상 장수를 찾을 수 없습니다.")
 
-        if (requester.nationId != target.nationId && requester.id != target.id) {
+        if (requester.factionId != target.factionId && requester.id != target.id) {
             return LogResult(false, "같은 국가의 장수만 조회할 수 있습니다.")
         }
 

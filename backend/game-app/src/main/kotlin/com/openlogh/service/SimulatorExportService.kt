@@ -4,7 +4,7 @@ import com.openlogh.repository.OfficerRepository
 import org.springframework.stereotype.Service
 
 /**
- * Exports general data for the battle simulator.
+ * Exports officer data for the battle simulator.
  * Legacy: j_export_simulator_object.php
  */
 @Service
@@ -24,31 +24,31 @@ class SimulatorExportService(
         val target = officerRepository.findById(targetId).orElse(null)
             ?: return ExportResult(false, "대상 장수를 찾을 수 없습니다.")
 
-        // Only same-nation generals can export (or self)
-        if (requester.nationId != target.nationId && requester.id != target.id) {
+        // Only same-faction generals can export (or self)
+        if (requester.factionId != target.factionId && requester.id != target.id) {
             return ExportResult(false, "같은 국가의 장수만 추출할 수 있습니다.")
         }
 
         val data = mapOf<String, Any?>(
             "name" to target.name,
-            "nation" to target.nationId,
+            "faction" to target.factionId,
             "officerLevel" to target.officerLevel.toInt(),
             "leadership" to target.leadership.toInt(),
-            "strength" to target.strength.toInt(),
-            "intel" to target.intel.toInt(),
+            "strength" to target.command.toInt(),
+            "intel" to target.intelligence.toInt(),
             "experience" to target.experience,
-            "crew" to target.crew,
-            "crewtype" to target.crewType,
-            "train" to target.train.toInt(),
-            "atmos" to target.atmos.toInt(),
-            "weapon" to target.weaponCode,
-            "book" to target.bookCode,
-            "horse" to target.horseCode,
-            "item" to target.itemCode,
+            "crew" to target.ships,
+            "crewtype" to target.shipClass,
+            "train" to target.training.toInt(),
+            "atmos" to target.morale.toInt(),
+            "weapon" to target.flagshipCode,
+            "book" to target.equipCode,
+            "horse" to target.engineCode,
+            "item" to target.accessoryCode,
             "personal" to target.personalCode,
             "specialWar" to target.special2Code,
             "defenceTrain" to target.defenceTrain.toInt(),
-            "rice" to target.rice,
+            "rice" to target.supplies,
             "injury" to target.injury.toInt(),
             "dex" to target.meta["dex"],
             "rank" to target.meta["rank"],

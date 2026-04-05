@@ -1,12 +1,12 @@
 package com.openlogh.engine
 
-import com.openlogh.entity.General
+import com.openlogh.entity.Officer
 import org.springframework.stereotype.Service
 
 /**
  * Checks and applies stat level-ups/level-downs based on accumulated experience.
  *
- * Legacy parity: General::checkStatChange() in legacy/hwe/sammo/General.php
+ * Legacy parity: Officer::checkStatChange() in legacy/hwe/sammo/General.php
  *
  * When statExp reaches upgradeLimit (default 30), the stat increases by 1.
  * When statExp goes below 0, the stat decreases by 1.
@@ -53,10 +53,10 @@ class StatChangeService {
     /**
      * Check all three stats for level changes and apply them to the general entity.
      *
-     * Legacy: General::checkStatChange()
+     * Legacy: Officer::checkStatChange()
      * Called after command execution when statExp values have been modified.
      */
-    fun checkStatChange(general: General, upgradeLimit: Int = UPGRADE_LIMIT): StatChangeResult {
+    fun checkStatChange(general: Officer, upgradeLimit: Int = UPGRADE_LIMIT): StatChangeResult {
         val changes = mutableListOf<StatChange>()
         val logs = mutableListOf<String>()
 
@@ -89,33 +89,33 @@ class StatChangeService {
         return StatChangeResult(changes, logs)
     }
 
-    private fun getExp(general: General, expName: String): Int = when (expName) {
+    private fun getExp(general: Officer, expName: String): Int = when (expName) {
         "leadershipExp" -> general.leadershipExp.toInt()
-        "strengthExp" -> general.strengthExp.toInt()
-        "intelExp" -> general.intelExp.toInt()
+        "strengthExp" -> general.commandExp.toInt()
+        "intelExp" -> general.intelligenceExp.toInt()
         else -> 0
     }
 
-    private fun setExp(general: General, expName: String, value: Short) {
+    private fun setExp(general: Officer, expName: String, value: Short) {
         when (expName) {
             "leadershipExp" -> general.leadershipExp = value
-            "strengthExp" -> general.strengthExp = value
-            "intelExp" -> general.intelExp = value
+            "strengthExp" -> general.commandExp = value
+            "intelExp" -> general.intelligenceExp = value
         }
     }
 
-    private fun getStat(general: General, statName: String): Int = when (statName) {
+    private fun getStat(general: Officer, statName: String): Int = when (statName) {
         "leadership" -> general.leadership.toInt()
-        "strength" -> general.strength.toInt()
-        "intel" -> general.intel.toInt()
+        "strength" -> general.command.toInt()
+        "intel" -> general.intelligence.toInt()
         else -> 0
     }
 
-    private fun setStat(general: General, statName: String, value: Int) {
+    private fun setStat(general: Officer, statName: String, value: Int) {
         when (statName) {
             "leadership" -> general.leadership = value.coerceIn(0, 100).toShort()
-            "strength" -> general.strength = value.coerceIn(0, 100).toShort()
-            "intel" -> general.intel = value.coerceIn(0, 100).toShort()
+            "strength" -> general.command = value.coerceIn(0, 100).toShort()
+            "intel" -> general.intelligence = value.coerceIn(0, 100).toShort()
         }
     }
 }

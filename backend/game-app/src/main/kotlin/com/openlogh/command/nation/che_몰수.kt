@@ -3,16 +3,16 @@ package com.openlogh.command.nation
 import com.openlogh.command.CommandCost
 import com.openlogh.command.CommandEnv
 import com.openlogh.command.CommandResult
-import com.openlogh.command.NationCommand
+import com.openlogh.command.FactionCommand
 import com.openlogh.command.constraint.*
-import com.openlogh.entity.General
+import com.openlogh.entity.Officer
 import kotlin.random.Random
 
 private const val MIN_AMOUNT = 100
 private const val MAX_AMOUNT = 100000
 
-class che_몰수(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
-    : NationCommand(general, env, arg) {
+class che_몰수(general: Officer, env: CommandEnv, arg: Map<String, Any>? = null)
+    : FactionCommand(general, env, arg) {
 
     override val actionName = "몰수"
 
@@ -28,7 +28,7 @@ class che_몰수(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
 
     override suspend fun run(rng: Random): CommandResult {
         val date = formatDate()
-        val destGen = destGeneral ?: return CommandResult(false, logs, "대상 장수 정보를 찾을 수 없습니다")
+        val destGen = destOfficer ?: return CommandResult(false, logs, "대상 장수 정보를 찾을 수 없습니다")
 
         if (destGen.id == general.id) {
             return CommandResult(false, logs, "본인입니다")
@@ -41,14 +41,14 @@ class che_몰수(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
         val resName: String
         val actual: Int
         if (isGold) {
-            actual = rawAmount.coerceAtMost(destGen.gold)
-            destGen.gold -= actual
-            n.gold += actual
+            actual = rawAmount.coerceAtMost(destGen.funds)
+            destGen.funds -= actual
+            n.funds += actual
             resName = "금"
         } else {
-            actual = rawAmount.coerceAtMost(destGen.rice)
-            destGen.rice -= actual
-            n.rice += actual
+            actual = rawAmount.coerceAtMost(destGen.supplies)
+            destGen.supplies -= actual
+            n.supplies += actual
             resName = "쌀"
         }
 

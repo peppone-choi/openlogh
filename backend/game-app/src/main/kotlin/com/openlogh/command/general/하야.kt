@@ -3,9 +3,9 @@ package com.openlogh.command.general
 import com.openlogh.command.CommandCost
 import com.openlogh.command.CommandEnv
 import com.openlogh.command.CommandResult
-import com.openlogh.command.GeneralCommand
+import com.openlogh.command.OfficerCommand
 import com.openlogh.command.constraint.*
-import com.openlogh.entity.General
+import com.openlogh.entity.Officer
 import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.min
@@ -15,8 +15,8 @@ private const val DEFAULT_GOLD = 1000
 private const val DEFAULT_RICE = 1000
 private const val MAX_BETRAY_COUNT = 10
 
-class 하야(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
-    : GeneralCommand(general, env, arg) {
+class 하야(general: Officer, env: CommandEnv, arg: Map<String, Any>? = null)
+    : OfficerCommand(general, env, arg) {
 
     override val actionName = "하야"
 
@@ -46,17 +46,17 @@ class 하야(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
         val newDed = floor(general.dedication * (1.0 - penaltyRate)).toInt()
         val expLoss = general.experience.toInt() - newExp
         val dedLoss = general.dedication.toInt() - newDed
-        val goldToNation = max(0, general.gold - DEFAULT_GOLD)
-        val riceToNation = max(0, general.rice - DEFAULT_RICE)
+        val goldToNation = max(0, general.funds - DEFAULT_GOLD)
+        val riceToNation = max(0, general.supplies - DEFAULT_RICE)
         val newBetray = min(betrayCount + 1, MAX_BETRAY_COUNT)
-        val isTroopLeader = general.troopId == general.id
+        val isTroopLeader = general.fleetId == general.id
 
         pushLog("<D><b>${nationName}</b></>에서 하야했습니다. <1>$date</>")
         pushHistoryLog("<D><b>${nationName}</b></>에서 하야")
         pushGlobalLog("<Y>${generalName}</>${josa(generalName, "이")} <D><b>${nationName}</b></>에서 <R>하야</>했습니다.")
 
         if (currentNation != null) {
-            currentNation.gennum = max(0, currentNation.gennum - 1)
+            currentNation.officerCount = max(0, currentNation.officerCount - 1)
         }
 
         return CommandResult(

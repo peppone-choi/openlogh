@@ -1,22 +1,22 @@
 package com.openlogh.engine.war
 
 import com.openlogh.engine.modifier.ItemModifiers
-import com.openlogh.entity.General
+import com.openlogh.entity.Officer
 import com.openlogh.model.ArmType
 import com.openlogh.model.CrewType
 import kotlin.math.min
 
-class WarUnitGeneral(
-    val general: General,
+class WarUnitOfficer(
+    val general: Officer,
     nationTech: Float = 0f,
     isAttacker: Boolean = true,
     cityLevel: Int = 0,
     capitalCityId: Long = 0,
-) : WarUnit(general.name, general.nationId) {
+) : WarUnit(general.name, general.factionId) {
 
-    /** Train bonus from city-level defender bonuses (legacy: WarUnitGeneral constructor). */
+    /** Train bonus from city-level defender bonuses (legacy: WarUnitOfficer constructor). */
     var trainBonus: Int = 0
-    /** Atmos bonus from city-level attacker bonuses (legacy: WarUnitGeneral constructor). */
+    /** Atmos bonus from city-level attacker bonuses (legacy: WarUnitOfficer constructor). */
     var atmosBonus: Int = 0
 
     // C7: battle experience accumulators — written to general in applyResults()
@@ -26,27 +26,27 @@ class WarUnitGeneral(
     var pendingStatExp: Int = 0
 
     init {
-        crew = general.crew
-        train = general.train.toInt()
-        atmos = general.atmos.toInt()
-        crewType = general.crewType.toInt()
+        crew = general.ships
+        train = general.training.toInt()
+        atmos = general.morale.toInt()
+        crewType = general.shipClass.toInt()
         leadership = general.leadership.toInt()
-        strength = general.strength.toInt()
-        intel = general.intel.toInt()
+        strength = general.command.toInt()
+        intel = general.intelligence.toInt()
         experience = general.experience
         dedication = general.dedication
         tech = nationTech
         injury = general.injury.toInt()
-        rice = general.rice
+        rice = general.supplies
         hp = crew
         maxHp = crew
 
-        // Legacy WarUnitGeneral constructor: city-level bonuses (GAP-8)
+        // Legacy WarUnitOfficer constructor: city-level bonuses (GAP-8)
         if (isAttacker) {
             if (cityLevel == 2) {
                 atmosBonus += 5
             }
-            if (capitalCityId == general.cityId) {
+            if (capitalCityId == general.planetId) {
                 atmosBonus += 5
             }
         } else {
@@ -64,7 +64,7 @@ class WarUnitGeneral(
         dodgeChance = unitCrewType.avoid / 100.0 * (train / 100.0)
 
         // Apply item killRice modifier (e.g., 백우선/백상: 소모 군량 +10%)
-        val itemKillRice = ItemModifiers.getKillRice(general.itemCode)
+        val itemKillRice = ItemModifiers.getKillRice(general.accessoryCode)
         if (itemKillRice != 1.0) {
             killRiceMultiplier = itemKillRice
         }
@@ -145,10 +145,10 @@ class WarUnitGeneral(
     }
 
     fun applyResults() {
-        general.crew = hp.coerceAtLeast(0)
-        general.rice = rice.coerceAtLeast(0)
-        general.train = train.coerceIn(0, 110).toShort()
-        general.atmos = atmos.coerceIn(0, 150).toShort()
+        general.ships = hp.coerceAtLeast(0)
+        general.supplies = rice.coerceAtLeast(0)
+        general.training = train.coerceIn(0, 110).toShort()
+        general.morale = atmos.coerceIn(0, 150).toShort()
         general.injury = injury.coerceIn(0, 80).toShort()
 
         // C7: apply accumulated battle experience
@@ -159,14 +159,14 @@ class WarUnitGeneral(
             // PHP addStatExp: armType FOOTMAN/CAVALRY → strength, WIZARD → intel, SIEGE → leadership, MISC → all three
             val unitCrewType = CrewType.fromCode(crewType)
             when (unitCrewType?.armType) {
-                ArmType.WIZARD -> general.intelExp = (general.intelExp + pendingStatExp).coerceIn(0, 1000).toShort()
+                ArmType.WIZARD -> general.intelligenceExp = (general.intelligenceExp + pendingStatExp).coerceIn(0, 1000).toShort()
                 ArmType.SIEGE -> general.leadershipExp = (general.leadershipExp + pendingStatExp).coerceIn(0, 1000).toShort()
                 ArmType.MISC -> {
                     general.leadershipExp = (general.leadershipExp + pendingStatExp).coerceIn(0, 1000).toShort()
-                    general.strengthExp = (general.strengthExp + pendingStatExp).coerceIn(0, 1000).toShort()
-                    general.intelExp = (general.intelExp + pendingStatExp).coerceIn(0, 1000).toShort()
+                    general.commandExp = (general.commandExp + pendingStatExp).coerceIn(0, 1000).toShort()
+                    general.intelligenceExp = (general.intelligenceExp + pendingStatExp).coerceIn(0, 1000).toShort()
                 }
-                else -> general.strengthExp = (general.strengthExp + pendingStatExp).coerceIn(0, 1000).toShort()  // FOOTMAN, CAVALRY, ARCHER
+                else -> general.commandExp = (general.commandExp + pendingStatExp).coerceIn(0, 1000).toShort()  // FOOTMAN, CAVALRY, ARCHER
             }
         }
     }

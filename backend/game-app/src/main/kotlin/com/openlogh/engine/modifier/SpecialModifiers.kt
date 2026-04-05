@@ -95,7 +95,7 @@ object SpecialModifiers {
         },
         "분투" to object : ActionModifier {
             override val code = "분투"; override val name = "분투"
-            override fun onCalcStat(stat: StatContext) = stat.copy(strength = stat.strength + 3, warPower = stat.warPower * 1.05)
+            override fun onCalcStat(stat: StatContext) = stat.copy(strength = stat.command + 3, warPower = stat.warPower * 1.05)
         },
         "용병" to object : ActionModifier {
             override val code = "용병"; override val name = "용병"

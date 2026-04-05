@@ -1,9 +1,9 @@
 package com.openlogh.command
 
-import com.openlogh.entity.General
+import com.openlogh.entity.Officer
 
-abstract class GeneralCommand(
-    general: General,
+abstract class FactionCommand(
+    general: Officer,
     env: CommandEnv,
     arg: Map<String, Any>? = null
 ) : BaseCommand(general, env, arg)

@@ -49,7 +49,7 @@ class CommandController(
     }
 
     @PostMapping("/generals/{generalId}/execute-nation")
-    fun executeNationCommand(
+    fun executeFactionCommand(
         @PathVariable generalId: Long,
         @RequestBody request: ExecuteRequest,
     ): ResponseEntity<CommandResult> {
@@ -58,7 +58,7 @@ class CommandController(
         if (!commandService.verifyOwnership(generalId, loginId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build()
         }
-        val result = commandService.executeNationCommand(generalId, request.actionCode, request.arg)
+        val result = commandService.executeFactionCommand(generalId, request.actionCode, request.arg)
             ?: return ResponseEntity.notFound().build()
         return ResponseEntity.ok(result)
     }

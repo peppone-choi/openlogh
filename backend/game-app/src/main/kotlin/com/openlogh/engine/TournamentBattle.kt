@@ -263,9 +263,9 @@ object TournamentBattle {
     private fun resolveTournamentStat(type: Int, stats: TournamentStats): Double {
         return when (type) {
             TOURNAMENT_LEADERSHIP -> stats.leadership
-            TOURNAMENT_STRENGTH -> stats.strength
-            TOURNAMENT_INTEL -> stats.intel
-            else -> (stats.leadership + stats.strength + stats.intel) * (7.0 / 15.0)
+            TOURNAMENT_STRENGTH -> stats.command
+            TOURNAMENT_INTEL -> stats.intelligence
+            else -> (stats.leadership + stats.command + stats.intelligence) * (7.0 / 15.0)
         }
     }
 

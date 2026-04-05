@@ -23,12 +23,12 @@ class RankingService(
         val generals = officerRepository.findBySessionId(worldId)
         val sorted = when (sortBy) {
             "leadership" -> generals.sortedByDescending { it.leadership }
-            "strength" -> generals.sortedByDescending { it.strength }
-            "intel" -> generals.sortedByDescending { it.intel }
+            "strength" -> generals.sortedByDescending { it.command }
+            "intel" -> generals.sortedByDescending { it.intelligence }
             "politics" -> generals.sortedByDescending { it.politics }
-            "charm" -> generals.sortedByDescending { it.charm }
+            "charm" -> generals.sortedByDescending { it.administration }
             "dedication" -> generals.sortedByDescending { it.dedication }
-            "crew" -> generals.sortedByDescending { it.crew }
+            "crew" -> generals.sortedByDescending { it.ships }
             else -> generals.sortedByDescending { it.experience }
         }
         return sorted.take(limit).map { BestGeneralResponse.from(it) }
@@ -94,27 +94,27 @@ class RankingService(
             generals
                 .filter {
                     val code = when (slot) {
-                        "weapon" -> it.weaponCode
-                        "book" -> it.bookCode
-                        "horse" -> it.horseCode
-                        "item" -> it.itemCode
+                        "weapon" -> it.flagshipCode
+                        "book" -> it.equipCode
+                        "horse" -> it.engineCode
+                        "item" -> it.accessoryCode
                         else -> "None"
                     }
                     code != "None" && code.isNotBlank()
                 }
                 .map { gen ->
                     val code = when (slot) {
-                        "weapon" -> gen.weaponCode
-                        "book" -> gen.bookCode
-                        "horse" -> gen.horseCode
-                        else -> gen.itemCode
+                        "weapon" -> gen.flagshipCode
+                        "book" -> gen.equipCode
+                        "horse" -> gen.engineCode
+                        else -> gen.accessoryCode
                     }
                     mapOf(
                         "slot" to slot,
                         "slotLabel" to slotLabel,
                         "generalId" to gen.id,
                         "generalName" to gen.name,
-                        "nationId" to gen.nationId,
+                        "nationId" to gen.factionId,
                         "nationName" to "",
                         "nationColor" to "",
                         "itemName" to code,
@@ -124,7 +124,7 @@ class RankingService(
         }
     }
 
-    private fun resolveServerId(world: com.openlogh.entity.WorldState): String {
+    private fun resolveServerId(world: com.openlogh.entity.SessionState): String {
         return (world.config["serverId"] as? String).orEmpty().ifBlank { world.name }
     }
 
@@ -155,7 +155,7 @@ class RankingService(
         return MessageResponse.from(
             Message(
                 id = fame.id,
-                worldId = worldId,
+                sessionId = worldId,
                 mailboxCode = "hall_of_fame",
                 mailboxType = "PUBLIC",
                 messageType = "hall_of_fame",

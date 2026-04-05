@@ -3,14 +3,14 @@ package com.openlogh.command.general
 import com.openlogh.command.CommandCost
 import com.openlogh.command.CommandEnv
 import com.openlogh.command.CommandResult
-import com.openlogh.command.GeneralCommand
+import com.openlogh.command.OfficerCommand
 import com.openlogh.command.constraint.*
-import com.openlogh.entity.General
+import com.openlogh.entity.Officer
 import com.openlogh.util.JosaUtil
 import kotlin.random.Random
 
-class CR건국(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
-    : GeneralCommand(general, env, arg) {
+class CR건국(general: Officer, env: CommandEnv, arg: Map<String, Any>? = null)
+    : OfficerCommand(general, env, arg) {
 
     override val actionName = "건국"
 
@@ -77,7 +77,7 @@ class CR건국(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
         return CommandResult(
             success = true,
             logs = logs,
-            message = """{"statChanges":{"experience":$exp,"dedication":$ded},"nationFoundation":{"name":"$nationName","type":"$nationType","colorType":$colorType,"capitalCityId":${general.cityId},"can_국기변경":1},"cityChanges":{"claimCity":true},"historyLog":{"global":"<Y><b>【건국】</b></>${nationType} <D><b>${nationName}</b></>${josaNationYi} 새로이 등장하였습니다.","globalAction":"<Y>${generalName}</>${josaYi} <G><b>${cityName}</b></>에 국가를 건설하였습니다.","general":"<D><b>${nationName}</b></>${josaUl} 건국","nation":"<Y>${generalName}</>${josaYi} <D><b>${nationName}</b></>${josaUl} 건국"},"inheritancePoint":{"active_action":1}}"""
+            message = """{"statChanges":{"experience":$exp,"dedication":$ded},"nationFoundation":{"name":"$nationName","type":"$nationType","colorType":$colorType,"capitalCityId":${general.planetId},"can_국기변경":1},"cityChanges":{"claimCity":true},"historyLog":{"global":"<Y><b>【건국】</b></>${nationType} <D><b>${nationName}</b></>${josaNationYi} 새로이 등장하였습니다.","globalAction":"<Y>${generalName}</>${josaYi} <G><b>${cityName}</b></>에 국가를 건설하였습니다.","general":"<D><b>${nationName}</b></>${josaUl} 건국","nation":"<Y>${generalName}</>${josaYi} <D><b>${nationName}</b></>${josaUl} 건국"},"inheritancePoint":{"active_action":1}}"""
         )
     }
 }

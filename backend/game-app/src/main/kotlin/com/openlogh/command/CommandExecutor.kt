@@ -3,18 +3,18 @@ package com.openlogh.command
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.openlogh.command.constraint.ConstraintResult
-import com.openlogh.entity.City
-import com.openlogh.entity.General
-import com.openlogh.entity.Nation
+import com.openlogh.entity.Planet
+import com.openlogh.entity.Officer
+import com.openlogh.entity.Faction
 import com.openlogh.engine.DiplomacyService
 import com.openlogh.engine.StatChangeService
 import com.openlogh.engine.turn.cqrs.persist.JpaWorldPortFactory
 import com.openlogh.engine.turn.cqrs.persist.toEntity
 import com.openlogh.engine.turn.cqrs.persist.toSnapshot
-import com.openlogh.repository.CityRepository
+import com.openlogh.repository.PlanetRepository
 import com.openlogh.repository.DiplomacyRepository
-import com.openlogh.repository.GeneralRepository
-import com.openlogh.repository.NationRepository
+import com.openlogh.repository.OfficerRepository
+import com.openlogh.repository.FactionRepository
 import com.openlogh.engine.modifier.ModifierService
 import com.openlogh.service.MapService
 import org.springframework.beans.factory.annotation.Autowired
@@ -25,9 +25,9 @@ import kotlin.random.Random
 class CommandExecutor @Autowired constructor(
     private val commandRegistry: CommandRegistry,
     private val worldPortFactory: JpaWorldPortFactory,
-    private val generalRepository: GeneralRepository,
-    private val cityRepository: CityRepository,
-    private val nationRepository: NationRepository,
+    private val officerRepository: OfficerRepository,
+    private val planetRepository: PlanetRepository,
+    private val factionRepository: FactionRepository,
     private val diplomacyRepository: DiplomacyRepository,
     private val diplomacyService: DiplomacyService,
     private val mapService: MapService,
@@ -39,9 +39,9 @@ class CommandExecutor @Autowired constructor(
 
     constructor(
         commandRegistry: CommandRegistry,
-        generalRepository: GeneralRepository,
-        cityRepository: CityRepository,
-        nationRepository: NationRepository,
+        officerRepository: OfficerRepository,
+        planetRepository: PlanetRepository,
+        factionRepository: FactionRepository,
         diplomacyRepository: DiplomacyRepository,
         diplomacyService: DiplomacyService,
         mapService: MapService,
@@ -51,14 +51,14 @@ class CommandExecutor @Autowired constructor(
     ) : this(
         commandRegistry = commandRegistry,
         worldPortFactory = JpaWorldPortFactory(
-            generalRepository = generalRepository,
-            cityRepository = cityRepository,
-            nationRepository = nationRepository,
+            officerRepository = officerRepository,
+            planetRepository = planetRepository,
+            factionRepository = factionRepository,
             diplomacyRepository = diplomacyRepository,
         ),
-        generalRepository = generalRepository,
-        cityRepository = cityRepository,
-        nationRepository = nationRepository,
+        officerRepository = officerRepository,
+        planetRepository = planetRepository,
+        factionRepository = factionRepository,
         diplomacyRepository = diplomacyRepository,
         diplomacyService = diplomacyService,
         mapService = mapService,
@@ -67,18 +67,18 @@ class CommandExecutor @Autowired constructor(
         messageService = messageService,
     )
 
-    suspend fun executeGeneralCommand(
+    suspend fun executeOfficerCommand(
         actionCode: String,
-        general: General,
+        general: Officer,
         env: CommandEnv,
         arg: Map<String, Any>? = null,
-        city: City? = null,
-        nation: Nation? = null,
+        city: Planet? = null,
+        nation: Faction? = null,
         rng: Random = Random.Default
     ): CommandResult {
         var effectiveArg = arg
         var effectiveNation = nation
-        val schema = commandRegistry.getGeneralSchema(actionCode)
+        val schema = commandRegistry.getOfficerSchema(actionCode)
         if (schema != ArgSchema.NONE && !effectiveArg.isNullOrEmpty()) {
             val validated = schema.parse(effectiveArg)
             if (!validated.ok()) {
@@ -88,10 +88,10 @@ class CommandExecutor @Autowired constructor(
             effectiveArg = validated.toLegacyMap(schema)
         }
 
-        val command = commandRegistry.createGeneralCommand(actionCode, general, env, effectiveArg)
+        val command = commandRegistry.createOfficerCommand(actionCode, general, env, effectiveArg)
         command.city = city
         command.nation = effectiveNation
-        command.services = CommandServices(generalRepository, cityRepository, nationRepository, diplomacyService, messageService = messageService, modifierService = modifierService)
+        command.services = CommandServices(officerRepository, planetRepository, factionRepository, diplomacyService, messageService = messageService, modifierService = modifierService)
         hydrateCommandForConstraintCheck(command, general, env, effectiveArg)
 
         val cooldown = checkGeneralCooldown(actionCode, general, env)
@@ -104,7 +104,7 @@ class CommandExecutor @Autowired constructor(
         if (conditionResult is ConstraintResult.Fail) {
             val altCode = command.getAlternativeCommand()
             if (altCode != null && altCode != actionCode) {
-                return executeGeneralCommand(altCode, general, env, effectiveArg, city, effectiveNation, rng)
+                return executeOfficerCommand(altCode, general, env, effectiveArg, city, effectiveNation, rng)
             }
             return CommandResult(success = false, logs = listOf("<R>${command.actionName}</>을(를) 실패하여 휴식합니다. - ${conditionResult.reason}"))
         }
@@ -138,9 +138,9 @@ class CommandExecutor @Autowired constructor(
             command.nation = effectiveNation
             CommandResultApplicator.apply(
                 result.copy(success = true), general, city, effectiveNation,
-                destGeneral = command.destGeneral,
-                destCity = command.destCity,
-                destNation = command.destNation,
+                destOfficer = command.destOfficer,
+                destPlanet = command.destPlanet,
+                destFaction = command.destFaction,
             )
         }
 
@@ -156,17 +156,17 @@ class CommandExecutor @Autowired constructor(
         return finalResult
     }
 
-    suspend fun executeNationCommand(
+    suspend fun executeFactionCommand(
         actionCode: String,
-        general: General,
+        general: Officer,
         env: CommandEnv,
         arg: Map<String, Any>? = null,
-        city: City? = null,
-        nation: Nation? = null,
+        city: Planet? = null,
+        nation: Faction? = null,
         rng: Random = Random.Default
     ): CommandResult {
         var effectiveArg = arg
-        val schema = commandRegistry.getNationSchema(actionCode)
+        val schema = commandRegistry.getFactionSchema(actionCode)
         if (schema != ArgSchema.NONE && !effectiveArg.isNullOrEmpty()) {
             val validated = schema.parse(effectiveArg)
             if (!validated.ok()) {
@@ -176,11 +176,11 @@ class CommandExecutor @Autowired constructor(
             effectiveArg = validated.toLegacyMap(schema)
         }
 
-        val command = commandRegistry.createNationCommand(actionCode, general, env, effectiveArg)
+        val command = commandRegistry.createFactionCommand(actionCode, general, env, effectiveArg)
             ?: return CommandResult(success = false, logs = listOf("<R>$actionCode</> - 알 수 없는 국가 명령"))
         command.city = city
         command.nation = nation
-        command.services = CommandServices(generalRepository, cityRepository, nationRepository, diplomacyService, messageService = messageService, modifierService = modifierService)
+        command.services = CommandServices(officerRepository, planetRepository, factionRepository, diplomacyService, messageService = messageService, modifierService = modifierService)
         hydrateCommandForConstraintCheck(command, general, env, effectiveArg)
 
         val cooldown = checkNationCooldown(actionCode, general, nation, env)
@@ -230,23 +230,23 @@ class CommandExecutor @Autowired constructor(
      * 커맨드 실행 후 수정된 엔티티들을 저장한다.
      * JPA dirty check가 불필요한 UPDATE를 방지한다.
      */
-    private fun saveModifiedEntities(general: General, city: City?, nation: Nation?, command: BaseCommand) {
-        val ports = worldPortFactory.create(general.worldId)
-        ports.putGeneral(general.toSnapshot())
-        if (city != null) ports.putCity(city.toSnapshot())
-        if (nation != null) ports.putNation(nation.toSnapshot())
-        if (command.destGeneral != null) ports.putGeneral(command.destGeneral!!.toSnapshot())
-        if (command.destCity != null) ports.putCity(command.destCity!!.toSnapshot())
-        if (command.destNation != null) ports.putNation(command.destNation!!.toSnapshot())
+    private fun saveModifiedEntities(general: Officer, city: Planet?, nation: Faction?, command: BaseCommand) {
+        val ports = worldPortFactory.create(general.sessionId)
+        ports.putOfficer(general.toSnapshot())
+        if (city != null) ports.putPlanet(city.toSnapshot())
+        if (nation != null) ports.putFaction(nation.toSnapshot())
+        if (command.destOfficer != null) ports.putOfficer(command.destOfficer!!.toSnapshot())
+        if (command.destPlanet != null) ports.putPlanet(command.destPlanet!!.toSnapshot())
+        if (command.destFaction != null) ports.putFaction(command.destFaction!!.toSnapshot())
         // Save dest city generals (for sabotage injury effects)
-        command.destCityGenerals?.forEach { ports.putGeneral(it.toSnapshot()) }
+        command.destPlanetOfficers?.forEach { ports.putOfficer(it.toSnapshot()) }
     }
 
     private fun toTurnIndex(env: CommandEnv): Int {
         return env.year * 12 + env.month
     }
 
-    private fun checkGeneralCooldown(actionCode: String, general: General, env: CommandEnv): CommandResult? {
+    private fun checkGeneralCooldown(actionCode: String, general: Officer, env: CommandEnv): CommandResult? {
         val nextExecuteMap = parseIntMap(general.meta[GENERAL_NEXT_EXECUTE_KEY])
         val blockedUntil = nextExecuteMap[actionCode] ?: return null
         val nowTurn = toTurnIndex(env)
@@ -260,7 +260,7 @@ class CommandExecutor @Autowired constructor(
         return null
     }
 
-    private fun applyGeneralCooldown(actionCode: String, postReqTurn: Int, general: General, env: CommandEnv) {
+    private fun applyGeneralCooldown(actionCode: String, postReqTurn: Int, general: Officer, env: CommandEnv) {
         if (postReqTurn <= 0) return
         val map = parseIntMap(general.meta[GENERAL_NEXT_EXECUTE_KEY])
         map[actionCode] = toTurnIndex(env) + postReqTurn
@@ -269,8 +269,8 @@ class CommandExecutor @Autowired constructor(
 
     private fun checkNationCooldown(
         actionCode: String,
-        general: General,
-        nation: Nation?,
+        general: Officer,
+        nation: Faction?,
         env: CommandEnv,
     ): CommandResult? {
         if (nation == null) return null
@@ -291,8 +291,8 @@ class CommandExecutor @Autowired constructor(
     private fun applyNationCooldown(
         actionCode: String,
         postReqTurn: Int,
-        general: General,
-        nation: Nation?,
+        general: Officer,
+        nation: Faction?,
         env: CommandEnv,
     ) {
         if (nation == null || postReqTurn <= 0) return
@@ -302,13 +302,13 @@ class CommandExecutor @Autowired constructor(
         nation.meta[key] = mapToMetaValueMap(map)
     }
 
-    private fun getNationLastTurn(nation: Nation, officerLevel: Short): LastTurn {
+    private fun getNationLastTurn(nation: Faction, officerLevel: Short): LastTurn {
         val key = nationLastTurnKey(officerLevel)
         val raw = readStringAnyMap(nation.meta[key])
         return LastTurn.fromMap(raw)
     }
 
-    private fun setNationLastTurn(nation: Nation, officerLevel: Short, lastTurn: LastTurn) {
+    private fun setNationLastTurn(nation: Faction, officerLevel: Short, lastTurn: LastTurn) {
         val key = nationLastTurnKey(officerLevel)
         nation.meta[key] = lastTurn.toMap()
     }
@@ -325,83 +325,83 @@ class CommandExecutor @Autowired constructor(
         if (arg == null) return
         val ports = worldPortFactory.create(worldId)
 
-        var destCity = extractLong(
+        var destPlanet = extractLong(
             arg,
             "destCityId",
             "destCityID",
             "cityId",
             "targetCityId",
-        )?.let { ports.city(it)?.toEntity() }
+        )?.let { ports.planet(it)?.toEntity() }
 
-        var destNation = extractLong(
+        var destFaction = extractLong(
             arg,
             "destNationId",
             "destNationID",
             "targetNationId",
             "nationId",
-        )?.let { ports.nation(it)?.toEntity() }
+        )?.let { ports.faction(it)?.toEntity() }
 
-        var destGeneral = extractLong(
+        var destOfficer = extractLong(
             arg,
             "destGeneralID",
             "destGeneralId",
             "targetGeneralId",
             "generalId",
-        )?.let { ports.general(it)?.toEntity() }
+        )?.let { ports.officer(it)?.toEntity() }
 
-        if (destCity == null && destGeneral != null) {
-            destCity = ports.city(destGeneral.cityId)?.toEntity()
+        if (destPlanet == null && destOfficer != null) {
+            destPlanet = ports.planet(destOfficer.planetId)?.toEntity()
         }
-        if (destNation == null && destGeneral != null && destGeneral.nationId != 0L) {
-            destNation = ports.nation(destGeneral.nationId)?.toEntity()
+        if (destFaction == null && destOfficer != null && destOfficer.factionId != 0L) {
+            destFaction = ports.faction(destOfficer.factionId)?.toEntity()
         }
-        if (destNation == null && destCity != null && destCity.nationId != 0L) {
-            destNation = ports.nation(destCity.nationId)?.toEntity()
+        if (destFaction == null && destPlanet != null && destPlanet.factionId != 0L) {
+            destFaction = ports.faction(destPlanet.factionId)?.toEntity()
         }
 
-        if (destGeneral == null && destNation != null) {
-            if (destNation.chiefGeneralId > 0L) {
-                destGeneral = ports.general(destNation.chiefGeneralId)?.toEntity()
+        if (destOfficer == null && destFaction != null) {
+            if (destFaction.chiefOfficerId > 0L) {
+                destOfficer = ports.officer(destFaction.chiefOfficerId)?.toEntity()
             }
-            if (destGeneral == null) {
-                destGeneral = ports.generalsByNation(destNation.id).map { it.toEntity() }
+            if (destOfficer == null) {
+                destOfficer = ports.officersByFaction(destFaction.id).map { it.toEntity() }
                     .maxByOrNull { it.officerLevel }
             }
         }
 
-        command.destCity = destCity
-        command.destNation = destNation
-        command.destGeneral = destGeneral
+        command.destPlanet = destPlanet
+        command.destFaction = destFaction
+        command.destOfficer = destOfficer
     }
 
     fun hydrateCommandForConstraintCheck(
         command: BaseCommand,
-        general: General,
+        general: Officer,
         env: CommandEnv,
         arg: Map<String, Any>?,
     ) {
-        applyDestinationContext(command, env.worldId, arg)
+        applyDestinationContext(command, env.sessionId, arg)
         command.constraintEnv = buildConstraintEnv(general, env)
         // Inject action modifiers for onCalcDomestic/onCalcStat usage in commands
         val nation = command.nation
         command.modifiers = modifierService.getModifiers(general, nation)
 
         // Load dest city generals for sabotage defence calculations and injury effects
-        val destCity = command.destCity
-        if (destCity != null) {
-            val ports = worldPortFactory.create(env.worldId)
-            command.destCityGenerals = ports.generalsByCity(destCity.id).map { it.toEntity() }
+        val destPlanet = command.destPlanet
+        if (destPlanet != null) {
+            val ports = worldPortFactory.create(env.sessionId)
+            command.destPlanetOfficers = ports.officersByPlanet(destPlanet.id).map { it.toEntity() }
                 .filter { it.id != general.id }
         }
     }
 
-    private fun buildConstraintEnv(general: General, env: CommandEnv): Map<String, Any> {
-        val worldId = env.worldId
+    private fun buildConstraintEnv(general: Officer, env: CommandEnv): Map<String, Any> {
+        val worldId = env.sessionId
         val mapName = (env.gameStor["mapName"] as? String) ?: "che"
         val ports = worldPortFactory.create(worldId)
 
-        val allCities = ports.allCities().map { it.toEntity() }
-        val cityNationById = allCities.associate { it.id to it.nationId }
+        val allCities = ports.allPlanets().map { it.toEntity() }
+        val cityNationById = allCities.associate { it.id to it.factionId }
         val citySupplyStateById = allCities.associate { it.id to it.supplyState.toInt() }
 
         // DB city.id ↔ mapCityId bidirectional mapping
@@ -409,9 +409,9 @@ class CommandExecutor @Autowired constructor(
         // DB city.id is auto-generated (1129, 1146...) — they don't match
         val dbToMapId = allCities.associate { it.id to it.mapCityId.toLong() }
         val mapToDbId = allCities.associate { it.mapCityId.toLong() to it.id }
-        val cityNationByMapId = allCities.associate { it.mapCityId.toLong() to it.nationId }
+        val cityNationByMapId = allCities.associate { it.mapCityId.toLong() to it.factionId }
 
-        val allGenerals = ports.allGenerals().map { it.toEntity() }
+        val allGenerals = ports.allOfficers().map { it.toEntity() }
         val totalNpcCount = allGenerals.count { it.npcState.toInt() > 0 }
         val totalGeneralCount = allGenerals.size - totalNpcCount
 
@@ -423,22 +423,22 @@ class CommandExecutor @Autowired constructor(
             emptyMap()
         }
 
-        val troopMemberExistsByTroopId = ports.allGenerals().map { it.toEntity() }
+        val troopMemberExistsByTroopId = ports.allOfficers().map { it.toEntity() }
             .asSequence()
-            .filter { it.troopId > 0L }
-            .groupBy { it.troopId }
-            .mapValues { (_, members) -> members.any { m -> m.id != m.troopId } }
+            .filter { it.fleetId > 0L }
+            .groupBy { it.fleetId }
+            .mapValues { (_, members) -> members.any { m -> m.id != m.fleetId } }
 
-        val atWarNationIds = if (general.nationId == 0L) {
+        val atWarNationIds = if (general.factionId == 0L) {
             emptySet()
         } else {
             ports.activeDiplomacies().map { it.toEntity() }
                 .asSequence()
                 .filter { it.stateCode == "선전포고" || it.stateCode == "전쟁" }
                 .mapNotNull {
-                    when (general.nationId) {
-                        it.srcNationId -> it.destNationId
-                        it.destNationId -> it.srcNationId
+                    when (general.factionId) {
+                        it.srcFactionId -> it.destFactionId
+                        it.destFactionId -> it.srcFactionId
                         else -> null
                     }
                 }
@@ -471,7 +471,7 @@ class CommandExecutor @Autowired constructor(
             "joinActionLimit" to joinActionLimit,
         )
         if (wanderingEmperor != null) {
-            result["wanderingEmperorCityId"] = wanderingEmperor.cityId
+            result["wanderingEmperorCityId"] = wanderingEmperor.planetId
             result["wanderingEmperorGeneralId"] = wanderingEmperor.id
         }
         return result
@@ -479,10 +479,10 @@ class CommandExecutor @Autowired constructor(
 
     private fun ensureNationContextForFounding(
         message: String?,
-        general: General,
-        city: City?,
-        nation: Nation?,
-    ): Nation? {
+        general: Officer,
+        city: Planet?,
+        nation: Faction?,
+    ): Faction? {
         if (message.isNullOrBlank()) return nation
 
         val json = runCatching { mapper.readValue<Map<String, Any>>(message) }.getOrNull() ?: return nation
@@ -506,16 +506,16 @@ class CommandExecutor @Autowired constructor(
                     ?: (nationFoundation["type"] as? String)
                 val capitalCityId = readIntValue(nationChanges["capital"])?.toLong()
                     ?: readIntValue(nationFoundation["capitalCityId"])?.toLong()
-                    ?: general.cityId
+                    ?: general.planetId
                 val colorType = readIntValue(nationChanges["colorType"])
                     ?: readIntValue(nationFoundation["colorType"])
                 val level = readIntValue(nationChanges["level"])
                     ?: if (createWandering) 0 else 1
                 val secretLimit = readIntValue(nationChanges["secretLimit"]) ?: 3
 
-                val createdNation = nationRepository.save(
-                    Nation(
-                        worldId = general.worldId,
+                val createdNation = factionRepository.save(
+                    Faction(
+                        sessionId = general.sessionId,
                         name = nationName,
                         color = resolveNationColor(colorType),
                         capitalCityId = capitalCityId,
@@ -536,7 +536,7 @@ class CommandExecutor @Autowired constructor(
                 }
 
                 effectiveNation = createdNation
-                general.nationId = createdNation.id
+                general.factionId = createdNation.id
                 if (general.officerLevel < 20) {
                     general.officerLevel = 20
                 }
@@ -545,38 +545,38 @@ class CommandExecutor @Autowired constructor(
 
         if (effectiveNation != null && nationFoundation.isNotEmpty()) {
             (nationFoundation["name"] as? String)?.takeIf { it.isNotBlank() }?.let { effectiveNation.name = it }
-            (nationFoundation["type"] as? String)?.let { effectiveNation.typeCode = resolveNationTypeCode(it, false) }
+            (nationFoundation["type"] as? String)?.let { effectiveNation.factionType = resolveNationTypeCode(it, false) }
             readIntValue(nationFoundation["colorType"])?.let { effectiveNation.color = resolveNationColor(it) }
-            readIntValue(nationFoundation["capitalCityId"])?.toLong()?.let { effectiveNation.capitalCityId = it }
+            readIntValue(nationFoundation["capitalCityId"])?.toLong()?.let { effectiveNation.capitalPlanetId = it }
             readIntValue(nationFoundation["can_국기변경"])?.let { effectiveNation.meta["can_국기변경"] = it }
         }
 
         if (effectiveNation != null) {
-            val randomFoundingCity = resolveRandomFoundingCity(findRandomCity, general.worldId)
+            val randomFoundingCity = resolveRandomFoundingCity(findRandomCity, general.sessionId)
             if (randomFoundingCity != null) {
-                effectiveNation.capitalCityId = randomFoundingCity.id
-                randomFoundingCity.nationId = effectiveNation.id
+                effectiveNation.capitalPlanetId = randomFoundingCity.id
+                randomFoundingCity.factionId = effectiveNation.id
                 if (city?.id == randomFoundingCity.id) {
-                    city.nationId = effectiveNation.id
+                    city.factionId = effectiveNation.id
                 } else {
-                    cityRepository.save(randomFoundingCity)
+                    planetRepository.save(randomFoundingCity)
                 }
 
                 if (moveAllNationGenerals) {
-                    val nationGenerals = generalRepository.findByWorldIdAndNationId(general.worldId, effectiveNation.id)
-                    nationGenerals.forEach { it.cityId = randomFoundingCity.id }
-                    general.cityId = randomFoundingCity.id
+                    val nationGenerals = officerRepository.findBySessionIdAndFactionId(general.sessionId, effectiveNation.id)
+                    nationGenerals.forEach { it.planetId = randomFoundingCity.id }
+                    general.planetId = randomFoundingCity.id
                     if (nationGenerals.isNotEmpty()) {
-                        generalRepository.saveAll(nationGenerals)
+                        officerRepository.saveAll(nationGenerals)
                     }
                 }
             }
         }
 
         if (claimCity && city != null) {
-            val nationIdForClaim = effectiveNation?.id ?: general.nationId
+            val nationIdForClaim = effectiveNation?.id ?: general.factionId
             if (nationIdForClaim > 0L) {
-                city.nationId = nationIdForClaim
+                city.factionId = nationIdForClaim
             }
         }
 
@@ -616,7 +616,7 @@ class CommandExecutor @Autowired constructor(
         return NATION_COLORS.getOrElse(colorType) { NATION_COLORS.first() }
     }
 
-    private fun resolveRandomFoundingCity(findRandomCity: Map<String, Any>, worldId: Long): City? {
+    private fun resolveRandomFoundingCity(findRandomCity: Map<String, Any>, worldId: Long): Planet? {
         if (findRandomCity.isEmpty()) return null
         val query = (findRandomCity["query"] as? String)?.trim().orEmpty()
         if (query.isNotBlank() && query != "neutral_constructable") {
@@ -625,8 +625,8 @@ class CommandExecutor @Autowired constructor(
 
         val levelMin = readIntValue(findRandomCity["levelMin"]) ?: 5
         val levelMax = readIntValue(findRandomCity["levelMax"]) ?: 6
-        val candidates = cityRepository.findByWorldId(worldId).filter { city ->
-            city.nationId == 0L && city.level.toInt() in levelMin..levelMax
+        val candidates = planetRepository.findBySessionId(worldId).filter { city ->
+            city.factionId == 0L && city.level.toInt() in levelMin..levelMax
         }
         if (candidates.isEmpty()) return null
         return candidates.random()

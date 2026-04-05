@@ -17,11 +17,11 @@ import kotlin.random.Random
  */
 @Service
 class EventActionService(
-    private val generalRepository: GeneralRepository,
-    private val nationRepository: NationRepository,
-    private val cityRepository: CityRepository,
+    private val officerRepository: OfficerRepository,
+    private val factionRepository: FactionRepository,
+    private val planetRepository: PlanetRepository,
     private val eventRepository: EventRepository,
-    private val generalTurnRepository: GeneralTurnRepository,
+    private val officerTurnRepository: OfficerTurnRepository,
     private val messageRepository: MessageRepository,
     private val bettingRepository: BettingRepository,
     private val betEntryRepository: BetEntryRepository,
@@ -36,8 +36,8 @@ class EventActionService(
     // ─── AddGlobalBetray ───
     // Increases betray counter for all generals with betray <= ifMax
     @Transactional
-    fun addGlobalBetray(world: WorldState, cnt: Int = 1, ifMax: Int = 0) {
-        val generals = generalRepository.findByWorldId(world.id.toLong())
+    fun addGlobalBetray(world: SessionState, cnt: Int = 1, ifMax: Int = 0) {
+        val generals = officerRepository.findBySessionId(world.id.toLong())
         var affected = 0
         for (g in generals) {
             if (g.betray <= ifMax) {
@@ -45,18 +45,18 @@ class EventActionService(
                 affected++
             }
         }
-        generalRepository.saveAll(generals)
+        officerRepository.saveAll(generals)
         log.info("[World {}] AddGlobalBetray: {} generals affected (cnt={}, ifMax={})", world.id, affected, cnt, ifMax)
     }
 
     // ─── AssignGeneralSpeciality ───
     // Delegates to SpecialAssignmentService (already partially implemented)
     @Transactional
-    fun assignGeneralSpeciality(world: WorldState) {
+    fun assignGeneralSpeciality(world: SessionState) {
         val startYear = getStartYear(world)
         if (world.currentYear.toInt() < startYear + 3) return
 
-        val generals = generalRepository.findByWorldId(world.id.toLong())
+        val generals = officerRepository.findBySessionId(world.id.toLong())
         specialAssignmentService.checkAndAssignSpecials(world, generals)
 
         // Log speciality assignments
@@ -65,15 +65,15 @@ class EventActionService(
                 // The service already sets the code; we just need to persist
             }
         }
-        generalRepository.saveAll(generals)
+        officerRepository.saveAll(generals)
         log.info("[World {}] AssignGeneralSpeciality completed for {} generals", world.id, generals.size)
     }
 
     // ─── AutoDeleteInvader ───
     // If invader nation no longer exists or has no active wars, set ruler to wander and delete event
     @Transactional
-    fun autoDeleteInvader(world: WorldState, nationId: Long, currentEventId: Long) {
-        val nation = nationRepository.findById(nationId).orElse(null)
+    fun autoDeleteInvader(world: SessionState, nationId: Long, currentEventId: Long) {
+        val nation = factionRepository.findById(nationId).orElse(null)
         if (nation == null) {
             // Nation doesn't exist, delete the event
             if (currentEventId > 0) eventRepository.deleteById(currentEventId)
@@ -91,16 +91,16 @@ class EventActionService(
         }
 
         // Find ruler and set to wander
-        val generals = generalRepository.findByNationId(nationId)
+        val generals = officerRepository.findByFactionId(nationId)
         val ruler = generals.find { it.officerLevel.toInt() == 20 }
         if (ruler != null) {
-            val turns = generalTurnRepository.findByGeneralIdOrderByTurnIdx(ruler.id)
+            val turns = officerTurnRepository.findByOfficerIdOrderByTurnIdx(ruler.id)
             if (turns.isNotEmpty()) {
                 val firstTurn = turns[0]
                 firstTurn.actionCode = "che_방랑"
                 firstTurn.arg = mutableMapOf()
                 firstTurn.brief = "이민족 방랑"
-                generalTurnRepository.save(firstTurn)
+                officerTurnRepository.save(firstTurn)
             }
         }
 
@@ -110,12 +110,12 @@ class EventActionService(
 
     // ─── BlockScoutAction / UnblockScoutAction ───
     @Transactional
-    fun blockScoutAction(world: WorldState, blockChangeScout: Boolean? = null) {
-        val nations = nationRepository.findByWorldId(world.id.toLong())
+    fun blockScoutAction(world: SessionState, blockChangeScout: Boolean? = null) {
+        val nations = factionRepository.findBySessionId(world.id.toLong())
         for (n in nations) {
             n.scoutLevel = 1
         }
-        nationRepository.saveAll(nations)
+        factionRepository.saveAll(nations)
         if (blockChangeScout != null) {
             world.config["blockChangeScout"] = blockChangeScout
         }
@@ -123,12 +123,12 @@ class EventActionService(
     }
 
     @Transactional
-    fun unblockScoutAction(world: WorldState, blockChangeScout: Boolean? = null) {
-        val nations = nationRepository.findByWorldId(world.id.toLong())
+    fun unblockScoutAction(world: SessionState, blockChangeScout: Boolean? = null) {
+        val nations = factionRepository.findBySessionId(world.id.toLong())
         for (n in nations) {
             n.scoutLevel = 0
         }
-        nationRepository.saveAll(nations)
+        factionRepository.saveAll(nations)
         if (blockChangeScout != null) {
             world.config["blockChangeScout"] = blockChangeScout
         }
@@ -138,8 +138,8 @@ class EventActionService(
     // ─── ChangeCity ───
     // Modifies city stats based on target filter and action map
     @Transactional
-    fun changeCity(world: WorldState, target: Any?, actions: Map<String, Any>) {
-        val cities = cityRepository.findByWorldId(world.id.toLong())
+    fun changeCity(world: SessionState, target: Any?, actions: Map<String, Any>) {
+        val cities = planetRepository.findBySessionId(world.id.toLong())
         val targetCities = filterTargetCities(cities, target)
 
         for (city in targetCities) {
@@ -147,17 +147,17 @@ class EventActionService(
                 applyCityChange(city, key, value)
             }
         }
-        cityRepository.saveAll(targetCities)
+        planetRepository.saveAll(targetCities)
         log.info("[World {}] ChangeCity: {} cities modified", world.id, targetCities.size)
     }
 
-    private fun filterTargetCities(cities: List<City>, target: Any?): List<City> {
+    private fun filterTargetCities(cities: List<Planet>, target: Any?): List<Planet> {
         if (target == null) return cities
         return when {
             target is String -> when (target) {
                 "all" -> cities
-                "free" -> cities.filter { it.nationId == 0L }
-                "occupied" -> cities.filter { it.nationId != 0L }
+                "free" -> cities.filter { it.factionId == 0L }
+                "occupied" -> cities.filter { it.factionId != 0L }
                 else -> cities
             }
             target is Map<*, *> -> {
@@ -169,8 +169,8 @@ class EventActionService(
                         val cityIds = args.mapNotNull { (it as? Number)?.toLong() }.toSet()
                         cities.filter { it.name in cityNames || it.id in cityIds }
                     }
-                    "free" -> cities.filter { it.nationId == 0L }
-                    "occupied" -> cities.filter { it.nationId != 0L }
+                    "free" -> cities.filter { it.factionId == 0L }
+                    "occupied" -> cities.filter { it.factionId != 0L }
                     else -> cities
                 }
             }
@@ -178,29 +178,29 @@ class EventActionService(
         }
     }
 
-    private fun applyCityChange(city: City, key: String, value: Any) {
+    private fun applyCityChange(city: Planet, key: String, value: Any) {
         when (key) {
             "trust" -> {
-                val newVal = parseCityValue(city.trust.toDouble(), 100.0, value)
-                city.trust = newVal.toFloat().coerceIn(0f, 100f)
+                val newVal = parseCityValue(city.approval.toDouble(), 100.0, value)
+                city.approval = newVal.toFloat().coerceIn(0f, 100f)
             }
             "trade" -> {
                 if (value is Number) {
-                    city.trade = value.toDouble().coerceIn(95.0, 105.0).toInt()
+                    city.tradeRoute = value.toDouble().coerceIn(95.0, 105.0).toInt()
                 }
             }
-            "pop" -> city.pop = parseCityValueWithMax(city.pop.toDouble(), city.popMax.toDouble(), value).toInt()
-            "agri" -> city.agri = parseCityValueWithMax(city.agri.toDouble(), city.agriMax.toDouble(), value).toInt()
-            "comm" -> city.comm = parseCityValueWithMax(city.comm.toDouble(), city.commMax.toDouble(), value).toInt()
-            "secu" -> city.secu = parseCityValueWithMax(city.secu.toDouble(), city.secuMax.toDouble(), value).toInt()
-            "def" -> city.def = parseCityValueWithMax(city.def.toDouble(), city.defMax.toDouble(), value).toInt()
-            "wall" -> city.wall = parseCityValueWithMax(city.wall.toDouble(), city.wallMax.toDouble(), value).toInt()
-            "pop_max" -> city.popMax = parseCityMaxValue(city.popMax.toDouble(), value).toInt()
-            "agri_max" -> city.agriMax = parseCityMaxValue(city.agriMax.toDouble(), value).toInt()
-            "comm_max" -> city.commMax = parseCityMaxValue(city.commMax.toDouble(), value).toInt()
-            "secu_max" -> city.secuMax = parseCityMaxValue(city.secuMax.toDouble(), value).toInt()
-            "def_max" -> city.defMax = parseCityMaxValue(city.defMax.toDouble(), value).toInt()
-            "wall_max" -> city.wallMax = parseCityMaxValue(city.wallMax.toDouble(), value).toInt()
+            "pop" -> city.population = parseCityValueWithMax(city.population.toDouble(), city.populationMax.toDouble(), value).toInt()
+            "agri" -> city.production = parseCityValueWithMax(city.production.toDouble(), city.productionMax.toDouble(), value).toInt()
+            "comm" -> city.commerce = parseCityValueWithMax(city.commerce.toDouble(), city.commerceMax.toDouble(), value).toInt()
+            "secu" -> city.security = parseCityValueWithMax(city.security.toDouble(), city.securityMax.toDouble(), value).toInt()
+            "def" -> city.orbitalDefense = parseCityValueWithMax(city.orbitalDefense.toDouble(), city.orbitalDefenseMax.toDouble(), value).toInt()
+            "wall" -> city.fortress = parseCityValueWithMax(city.fortress.toDouble(), city.fortressMax.toDouble(), value).toInt()
+            "pop_max" -> city.populationMax = parseCityMaxValue(city.populationMax.toDouble(), value).toInt()
+            "agri_max" -> city.productionMax = parseCityMaxValue(city.productionMax.toDouble(), value).toInt()
+            "comm_max" -> city.commerceMax = parseCityMaxValue(city.commerceMax.toDouble(), value).toInt()
+            "secu_max" -> city.securityMax = parseCityMaxValue(city.securityMax.toDouble(), value).toInt()
+            "def_max" -> city.orbitalDefenseMax = parseCityMaxValue(city.orbitalDefenseMax.toDouble(), value).toInt()
+            "wall_max" -> city.fortressMax = parseCityMaxValue(city.fortressMax.toDouble(), value).toInt()
         }
     }
 
@@ -262,27 +262,27 @@ class EventActionService(
 
     // ─── CreateAdminNPC ───
     // Legacy: NYI (Not Yet Implemented in PHP either)
-    fun createAdminNPC(world: WorldState) {
+    fun createAdminNPC(world: SessionState) {
         log.info("[World {}] CreateAdminNPC: NYI (not implemented in legacy)", world.id)
     }
 
     // ─── CreateManyNPC ───
     // Creates random NPC generals (delegates to NpcSpawnService for the actual creation)
     @Transactional
-    fun createManyNPC(world: WorldState, npcCount: Int = 10, fillCnt: Int = 0) {
+    fun createManyNPC(world: SessionState, npcCount: Int = 10, fillCnt: Int = 0) {
         if (npcCount <= 0 && fillCnt <= 0) return
 
         var moreGenCnt = 0
         if (fillCnt > 0) {
             // Count nations with player rulers and calculate how many more NPCs needed
-            val generals = generalRepository.findByWorldId(world.id.toLong())
+            val generals = officerRepository.findBySessionId(world.id.toLong())
             val playerNations = generals
                 .filter { it.npcState < 3 && it.officerLevel.toInt() == 20 }
-                .map { it.nationId }
+                .map { it.factionId }
                 .distinct()
 
             if (playerNations.isNotEmpty()) {
-                val regGens = generals.count { it.nationId in playerNations && it.npcState < 4 }
+                val regGens = generals.count { it.factionId in playerNations && it.npcState < 4 }
                 moreGenCnt = (playerNations.size * fillCnt - regGens).coerceAtLeast(0)
             }
         }
@@ -304,13 +304,13 @@ class EventActionService(
             val strength = (statTotal / 3 + rng.nextInt(-20, 21)).coerceIn(30, 100)
             val intel = (statTotal - leadership - strength).coerceIn(30, 100)
 
-            val allCities = cityRepository.findByWorldId(world.id.toLong())
-            val targetCity = allCities.filter { it.nationId == 0L }.randomOrNull(rng)
+            val allCities = planetRepository.findBySessionId(world.id.toLong())
+            val targetCity = allCities.filter { it.factionId == 0L }.randomOrNull(rng)
                 ?: allCities.randomOrNull(rng)
                 ?: continue
 
-            val npc = General(
-                worldId = world.id.toLong(),
+            val npc = Officer(
+                sessionId = world.id.toLong(),
                 name = "무명장수${world.currentYear}_${i}",
                 nationId = 0,
                 cityId = targetCity.id,
@@ -323,7 +323,7 @@ class EventActionService(
                 gold = 1000,
                 rice = 1000,
             )
-            generalRepository.save(npc)
+            officerRepository.save(npc)
             created++
         }
 
@@ -339,7 +339,7 @@ class EventActionService(
 
     // ─── FinishNationBetting ───
     @Transactional
-    fun finishNationBetting(world: WorldState, bettingId: Long) {
+    fun finishNationBetting(world: SessionState, bettingId: Long) {
         val betting = bettingRepository.findById(bettingId).orElse(null)
         if (betting == null) {
             log.warn("[World {}] FinishNationBetting: betting {} not found", world.id, bettingId)
@@ -351,7 +351,7 @@ class EventActionService(
         bettingRepository.save(betting)
 
         // Determine winners: remaining nations
-        val nations = nationRepository.findByWorldId(world.id.toLong()).filter { it.level > 0 }
+        val nations = factionRepository.findBySessionId(world.id.toLong()).filter { it.level > 0 }
         val winnerNationIds = nations.map { it.id }.toSet()
 
         // Find all bets and reward winners
@@ -362,9 +362,9 @@ class EventActionService(
             if (betNationId in winnerNationIds) {
                 // Winner: return bet amount * odds (simplified)
                 val amount = bet.amount
-                val general = generalRepository.findById(bet.generalId).orElse(null) ?: continue
-                general.gold += (amount * 2)  // simplified reward
-                generalRepository.save(general)
+                val general = officerRepository.findById(bet.generalId).orElse(null) ?: continue
+                general.funds += (amount * 2)  // simplified reward
+                officerRepository.save(general)
                 inheritanceService.accruePoints(general, "betting", 1)
             }
         }
@@ -380,16 +380,16 @@ class EventActionService(
 
     // ─── OpenNationBetting ───
     @Transactional
-    fun openNationBetting(world: WorldState, nationCnt: Int = 1, bonusPoint: Int = 0) {
-        val nations = nationRepository.findByWorldId(world.id.toLong()).filter { it.level > 0 }
-        val cities = cityRepository.findByWorldId(world.id.toLong())
-        val citiesByNation = cities.groupBy { it.nationId }
+    fun openNationBetting(world: SessionState, nationCnt: Int = 1, bonusPoint: Int = 0) {
+        val nations = factionRepository.findBySessionId(world.id.toLong()).filter { it.level > 0 }
+        val cities = planetRepository.findBySessionId(world.id.toLong())
+        val citiesByNation = cities.groupBy { it.factionId }
 
         val name = if (nationCnt == 1) "천통국" else "최후 ${nationCnt}국"
 
         // Create betting
         val betting = bettingRepository.save(Betting(
-            worldId = world.id.toLong(),
+            sessionId = world.id.toLong(),
             targetType = "bettingNation",
             targetId = 0,
             odds = mutableMapOf(
@@ -400,7 +400,7 @@ class EventActionService(
                         "nationId" to n.id,
                         "name" to n.name,
                         "power" to n.power,
-                        "gennum" to n.gennum,
+                        "gennum" to n.officerCount,
                         "cityCnt" to (citiesByNation[n.id]?.size ?: 0),
                     )
                 },
@@ -410,7 +410,7 @@ class EventActionService(
 
         // Create finish event: when remaining nations <= nationCnt
         eventRepository.save(Event(
-            worldId = world.id.toLong(),
+            sessionId = world.id.toLong(),
             targetCode = "DESTROY_NATION",
             priority = 1000,
             condition = mutableMapOf(
@@ -438,20 +438,20 @@ class EventActionService(
 
     // ─── InvaderEnding ───
     @Transactional
-    fun invaderEnding(world: WorldState, currentEventId: Long) {
+    fun invaderEnding(world: SessionState, currentEventId: Long) {
         val isunited = (world.config["isunited"] as? Number)?.toInt() ?: 0
         if (isunited == 0 || isunited == 2) {
             log.info("[World {}] InvaderEnding: no invader event (isunited={})", world.id, isunited)
             return
         }
 
-        val nations = nationRepository.findByWorldId(world.id.toLong())
+        val nations = factionRepository.findBySessionId(world.id.toLong())
         if (nations.size >= 2) {
             return  // Event still ongoing
         }
 
-        val cities = cityRepository.findByWorldId(world.id.toLong())
-        val freeCityCount = cities.count { it.nationId == 0L }
+        val cities = planetRepository.findBySessionId(world.id.toLong())
+        val freeCityCount = cities.count { it.factionId == 0L }
         val totalCityCount = cities.size
 
         val needStop: Boolean
@@ -488,8 +488,8 @@ class EventActionService(
     // ─── LostUniqueItem ───
     // Randomly removes non-buyable items from player generals
     @Transactional
-    fun lostUniqueItem(world: WorldState, lostProb: Double = 0.1) {
-        val generals = generalRepository.findByWorldId(world.id.toLong())
+    fun lostUniqueItem(world: SessionState, lostProb: Double = 0.1) {
+        val generals = officerRepository.findBySessionId(world.id.toLong())
             .filter { it.npcState <= 1 }
 
         if (generals.isEmpty()) return
@@ -504,7 +504,7 @@ class EventActionService(
         val lostGeneralNames = mutableListOf<String>()
 
         for (general in generals) {
-            val itemCode = general.itemCode
+            val itemCode = general.accessoryCode
             if (itemCode == "None" || itemCode.isBlank()) continue
 
             // Check if item is a unique (non-buyable) item
@@ -524,7 +524,7 @@ class EventActionService(
 
             if (didLose) {
                 lostGeneralNames.add(general.name)
-                generalRepository.save(general)
+                officerRepository.save(general)
             }
         }
 
@@ -547,10 +547,10 @@ class EventActionService(
         log.info("[World {}] LostUniqueItem: {} items lost by {} generals", world.id, totalLostCnt, lostGeneralNames.size)
     }
 
-    private fun parseGeneralItems(general: General): Map<String, String> {
+    private fun parseGeneralItems(general: Officer): Map<String, String> {
         val items = mutableMapOf<String, String>()
-        if (general.itemCode != "None" && general.itemCode.isNotBlank()) {
-            items["item"] = general.itemCode
+        if (general.accessoryCode != "None" && general.accessoryCode.isNotBlank()) {
+            items["item"] = general.accessoryCode
         }
         // Check meta for additional item slots
         val metaItems = readStringStringMap(general.meta["items"])
@@ -566,9 +566,9 @@ class EventActionService(
         return itemCode in buyableItems
     }
 
-    private fun clearGeneralItem(general: General, slot: String) {
+    private fun clearGeneralItem(general: Officer, slot: String) {
         if (slot == "item") {
-            general.itemCode = "None"
+            general.accessoryCode = "None"
         } else {
             val metaItems = getMutableStringStringMap(general.meta, "items")
             metaItems?.remove(slot)
@@ -612,12 +612,12 @@ class EventActionService(
     // We simplify: compute a composite score from general stats/exp/ded and
     // store it as a RankData entry with category = "inherit_point_earned_by_merge".
     @Transactional
-    fun mergeInheritPointRank(world: WorldState) {
+    fun mergeInheritPointRank(world: SessionState) {
         val worldId = world.id.toLong()
-        val generals = generalRepository.findByWorldId(worldId)
+        val generals = officerRepository.findBySessionId(worldId)
 
         // Delete old merge-rank entries for this world
-        val oldMergeEntries = rankDataRepository.findByWorldIdAndCategory(worldId, RANK_INHERIT_EARNED_BY_MERGE)
+        val oldMergeEntries = rankDataRepository.findBySessionIdAndCategory(worldId, RANK_INHERIT_EARNED_BY_MERGE)
         if (oldMergeEntries.isNotEmpty()) {
             rankDataRepository.deleteAll(oldMergeEntries)
         }
@@ -628,8 +628,8 @@ class EventActionService(
         val newEntries = generals.map { general ->
             val score = calculateInheritancePoint(general)
             RankData(
-                worldId = worldId,
-                nationId = general.nationId,
+                sessionId = worldId,
+                nationId = general.factionId,
                 category = RANK_INHERIT_EARNED_BY_MERGE,
                 score = score,
                 meta = mutableMapOf("generalId" to general.id, "generalName" to general.name),
@@ -638,11 +638,11 @@ class EventActionService(
         rankDataRepository.saveAll(newEntries)
 
         // Update total earned = earned_by_action + earned_by_merge
-        val actionEntries = rankDataRepository.findByWorldIdAndCategory(worldId, RANK_INHERIT_EARNED_BY_ACTION)
+        val actionEntries = rankDataRepository.findBySessionIdAndCategory(worldId, RANK_INHERIT_EARNED_BY_ACTION)
             .associateBy { (it.meta["generalId"] as? Number)?.toLong() ?: 0L }
         val mergeEntries = newEntries.associateBy { (it.meta["generalId"] as? Number)?.toLong() ?: 0L }
 
-        val totalEntries = rankDataRepository.findByWorldIdAndCategory(worldId, RANK_INHERIT_EARNED)
+        val totalEntries = rankDataRepository.findBySessionIdAndCategory(worldId, RANK_INHERIT_EARNED)
         for (entry in totalEntries) {
             val gid = (entry.meta["generalId"] as? Number)?.toLong() ?: continue
             val actionScore = actionEntries[gid]?.score ?: 0
@@ -652,9 +652,9 @@ class EventActionService(
         rankDataRepository.saveAll(totalEntries)
 
         // Update spent = spent_dynamic (copy dynamic to static)
-        val dynamicEntries = rankDataRepository.findByWorldIdAndCategory(worldId, RANK_INHERIT_SPENT_DYNAMIC)
+        val dynamicEntries = rankDataRepository.findBySessionIdAndCategory(worldId, RANK_INHERIT_SPENT_DYNAMIC)
             .associateBy { (it.meta["generalId"] as? Number)?.toLong() ?: 0L }
-        val spentEntries = rankDataRepository.findByWorldIdAndCategory(worldId, RANK_INHERIT_SPENT)
+        val spentEntries = rankDataRepository.findBySessionIdAndCategory(worldId, RANK_INHERIT_SPENT)
         for (entry in spentEntries) {
             val gid = (entry.meta["generalId"] as? Number)?.toLong() ?: continue
             entry.score = dynamicEntries[gid]?.score ?: 0
@@ -664,10 +664,10 @@ class EventActionService(
         log.info("[World {}] MergeInheritPointRank: {} generals processed", world.id, generals.size)
     }
 
-    private fun calculateInheritancePoint(general: General): Int {
+    private fun calculateInheritancePoint(general: Officer): Int {
         // Composite inheritance point from general stats/exp/dedication
         // Legacy: sums across InheritanceKey cases (sabotage, dex, betting, belong, etc.)
-        val statSum = general.leadership + general.strength + general.intel
+        val statSum = general.leadership + general.command + general.intelligence
         val expDed = (general.experience + general.dedication) / 100
         return (statSum + expDed).toInt()
     }
@@ -682,7 +682,7 @@ class EventActionService(
 
     // ─── NewYear ───
     @Transactional
-    fun newYear(world: WorldState) {
+    fun newYear(world: SessionState) {
         val year = world.currentYear.toInt()
         val month = world.currentMonth.toInt()
 
@@ -694,14 +694,14 @@ class EventActionService(
         )
 
         // Increment age for all generals and belong for nation generals
-        val generals = generalRepository.findByWorldId(world.id.toLong())
+        val generals = officerRepository.findBySessionId(world.id.toLong())
         for (g in generals) {
             g.age = (g.age + 1).coerceIn(0, 120).toShort()
-            if (g.nationId != 0L) {
+            if (g.factionId != 0L) {
                 g.belong = (g.belong + 1).coerceIn(0, 12).toShort()
             }
         }
-        generalRepository.saveAll(generals)
+        officerRepository.saveAll(generals)
         val spawned = scenarioService.spawnScenarioNpcGeneralsForYear(world)
         log.info("[World {}] NewYear: {} generals aged", world.id, generals.size)
         if (spawned > 0) {
@@ -711,38 +711,38 @@ class EventActionService(
 
     // ─── ProcessWarIncome ───
     @Transactional
-    fun processWarIncome(world: WorldState) {
-        val cities = cityRepository.findByWorldId(world.id.toLong())
-        val nations = nationRepository.findByWorldId(world.id.toLong())
+    fun processWarIncome(world: SessionState) {
+        val cities = planetRepository.findBySessionId(world.id.toLong())
+        val nations = factionRepository.findBySessionId(world.id.toLong())
         val nationMap = nations.associateBy { it.id }
-        val citiesByNation = cities.groupBy { it.nationId }
+        val citiesByNation = cities.groupBy { it.factionId }
 
         // War gold income by nation type
         for (nation in nations) {
-            if (nation.level <= 0) continue
+            if (nation.factionRank <= 0) continue
             val nationCities = citiesByNation[nation.id] ?: continue
-            val income = calculateWarGoldIncome(nation.typeCode, nationCities)
-            nation.gold += income
+            val income = calculateWarGoldIncome(nation.factionType, nationCities)
+            nation.funds += income
         }
 
         // 20% of dead troops return as pop (capped at popMax)
         for (city in cities) {
             if (city.dead > 0) {
                 val popGain = (city.dead * 0.2).toInt()
-                    .coerceAtMost((city.popMax - city.pop).coerceAtLeast(0))
-                city.pop += popGain
+                    .coerceAtMost((city.populationMax - city.population).coerceAtLeast(0))
+                city.population += popGain
                 city.dead = 0
             }
         }
 
-        cityRepository.saveAll(cities)
-        nationRepository.saveAll(nations)
+        planetRepository.saveAll(cities)
+        factionRepository.saveAll(nations)
         log.info("[World {}] ProcessWarIncome completed", world.id)
     }
 
-    private fun calculateWarGoldIncome(nationTypeCode: String, cities: List<City>): Int {
+    private fun calculateWarGoldIncome(nationTypeCode: String, cities: List<Planet>): Int {
         // War income based on nation type and city populations
-        val popSum = cities.sumOf { it.pop.toLong() }
+        val popSum = cities.sumOf { it.population.toLong() }
         val baseIncome = (popSum / 100).toInt()
         // Nation type modifier
         val modifier = when {
@@ -756,7 +756,7 @@ class EventActionService(
     // ─── RaiseDisaster ───
     // Delegates to EconomyService.processDisasterOrBoom which is already implemented
     @Transactional
-    fun raiseDisaster(world: WorldState) {
+    fun raiseDisaster(world: SessionState) {
         // Already implemented in EconomyService.processDisasterOrBoom
         // This is called through EventService dispatch
         log.info("[World {}] RaiseDisaster: delegated to EconomyService", world.id)
@@ -764,7 +764,7 @@ class EventActionService(
 
     // ─── RegNPC / RegNeutralNPC ───
     @Transactional
-    fun regNPC(world: WorldState, params: Map<String, Any>) {
+    fun regNPC(world: SessionState, params: Map<String, Any>) {
         val name = params["name"] as? String ?: return
         val nationId = (params["nationId"] as? Number)?.toLong() ?: 0L
         val cityName = params["city"] as? String
@@ -781,14 +781,14 @@ class EventActionService(
         val resolvedCityId = when {
             cityId != null -> cityId
             cityName != null -> {
-                cityRepository.findByWorldId(world.id.toLong())
+                planetRepository.findBySessionId(world.id.toLong())
                     .find { it.name == cityName }?.id ?: 0L
             }
             else -> 0L
         }
 
-        val general = General(
-            worldId = world.id.toLong(),
+        val general = Officer(
+            sessionId = world.id.toLong(),
             name = name,
             nationId = nationId,
             cityId = resolvedCityId,
@@ -802,12 +802,12 @@ class EventActionService(
             gold = 1000,
             rice = 1000,
         )
-        generalRepository.save(general)
+        officerRepository.save(general)
         log.info("[World {}] RegNPC: created '{}' (nationId={}, npc={})", world.id, name, nationId, npcType)
     }
 
     @Transactional
-    fun regNeutralNPC(world: WorldState, params: Map<String, Any>) {
+    fun regNeutralNPC(world: SessionState, params: Map<String, Any>) {
         // Same as regNPC but with npcType=6 (neutral)
         val mutableParams = params.toMutableMap()
         mutableParams["npcType"] = 6.toShort()
@@ -816,25 +816,25 @@ class EventActionService(
 
     // ─── ResetOfficerLock ───
     @Transactional
-    fun resetOfficerLock(world: WorldState) {
+    fun resetOfficerLock(world: SessionState) {
         // Reset chief_set on nations (capital move lock)
-        val nations = nationRepository.findByWorldId(world.id.toLong())
+        val nations = factionRepository.findBySessionId(world.id.toLong())
         for (n in nations) {
             n.meta.remove("chiefSet")
         }
-        nationRepository.saveAll(nations)
+        factionRepository.saveAll(nations)
 
         // Reset officer_set on cities (officer assignment lock)
-        val cities = cityRepository.findByWorldId(world.id.toLong())
+        val cities = planetRepository.findBySessionId(world.id.toLong())
         for (c in cities) {
             c.officerSet = 0
         }
-        cityRepository.saveAll(cities)
+        planetRepository.saveAll(cities)
         log.info("[World {}] ResetOfficerLock: {} nations, {} cities reset", world.id, nations.size, cities.size)
     }
 
     // ─── Helper ───
-    private fun getStartYear(world: WorldState): Int {
+    private fun getStartYear(world: SessionState): Int {
         return try {
             (world.config["startYear"] as? Number)?.toInt()
                 ?: scenarioService.getScenario(world.scenarioCode).startYear

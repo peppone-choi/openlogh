@@ -7,7 +7,7 @@ import com.openlogh.engine.event.EventActionResult
 import org.springframework.stereotype.Component
 
 @Component
-class AssignGeneralSpecialityAction(
+class AssignOfficerSpecialityAction(
     private val eventActionService: EventActionService,
 ) : EventAction {
     override val actionType = "assign_general_speciality"

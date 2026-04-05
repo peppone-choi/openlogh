@@ -50,7 +50,7 @@ class PlanetService(
             5 to "소", 6 to "중", 7 to "대", 8 to "특",
         )
 
-        // Population cap multipliers by city level (legacy scale: level -> popMax factor)
+        // Population cap multipliers by planet level (legacy scale: level -> popMax factor)
         // These are encoded in the map JSON data directly as CityConst.population * 100
 
         // Terrain/level modifiers for development rates (legacy parity)
@@ -63,10 +63,10 @@ class PlanetService(
         // Legacy: trust minimum during internal affairs
         const val DEVEL_RATE_MIN_TRUST = 50
 
-        // Legacy: default city wall after conquest
+        // Legacy: default planet wall after conquest
         const val DEFAULT_CITY_WALL = 1000
 
-        // Legacy: expand city costs and amounts
+        // Legacy: expand planet costs and amounts
         const val EXPAND_CITY_POP_INCREASE = 100000
         const val EXPAND_CITY_DEVEL_INCREASE = 2000
         const val EXPAND_CITY_WALL_INCREASE = 2000
@@ -82,21 +82,21 @@ class PlanetService(
 
     fun listByWorldMaskedForOfficer(worldId: Long, officer: Officer): List<Planet> {
         val cities = planetRepository.findBySessionId(worldId)
-        if (general.worldId != worldId) return cities.map(::toMaskedView)
-        val canSeeAllMilitary = general.permission == "spy"
-        val visibleCityIds = if (canSeeAllMilitary || general.nationId <= 0L) {
+        if (officer.sessionId != worldId) return cities.map(::toMaskedView)
+        val canSeeAllMilitary = officer.permission == "spy"
+        val visibleCityIds = if (canSeeAllMilitary || officer.factionId <= 0L) {
             emptySet()
         } else {
-            factionRepository.findById(general.nationId).orElse(null)
+            factionRepository.findById(officer.factionId).orElse(null)
                 ?.let { extractVisibleCityIds(it.spy) }
                 ?: emptySet()
         }
 
-        return cities.map { city ->
-            if (isCityVisibleToOfficer(city, general, canSeeAllMilitary, visibleCityIds)) {
-                city
+        return cities.map { planet ->
+            if (isCityVisibleToOfficer(planet, officer, canSeeAllMilitary, visibleCityIds)) {
+                planet
             } else {
-                toMaskedView(city)
+                toMaskedView(planet)
             }
         }
     }
@@ -111,7 +111,7 @@ class PlanetService(
 
     @Transactional
     fun save(planet: Planet): Planet {
-        return planetRepository.save(city)
+        return planetRepository.save(planet)
     }
 
     @Transactional
@@ -120,13 +120,13 @@ class PlanetService(
     }
 
     fun canonicalRegionForDisplay(planet: Planet): Short {
-        return canonicalRegionByCityName[city.name] ?: city.region
+        return canonicalRegionByCityName[planet.name] ?: planet.region
     }
 
     // ── Adjacency / Map Queries ──
 
     /**
-     * Get adjacent map city IDs for a given map city ID.
+     * Get adjacent map planet IDs for a given map planet ID.
      * Delegates to MapService which holds the parsed map JSON.
      */
     fun getAdjacentCities(mapCode: String, mapCityId: Int): List<Int> {
@@ -142,7 +142,7 @@ class PlanetService(
 
     /**
      * Get distance between two cities on the map (BFS hop count).
-     * Takes map city IDs, not DB city IDs.
+     * Takes map planet IDs, not DB planet IDs.
      */
     fun getDistance(mapCode: String, fromMapCityId: Int, toMapCityId: Int): Int {
         return mapService.getDistance(mapCode, fromMapCityId, toMapCityId)
@@ -158,60 +158,60 @@ class PlanetService(
     // ── Supply Calculation ──
 
     /**
-     * Check if a city is supplied (connected to its nation's capital via friendly territory).
+     * Check if a planet is supplied (connected to its faction's capital via friendly territory).
      * Returns true if supplied, false otherwise.
      * This is a read-only check; the actual supply state update is done by EconomyService.
      */
     fun isSupplied(worldId: Long, cityId: Long, mapCode: String): Boolean {
-        val city = getById(cityId) ?: return false
-        if (city.nationId == 0L) return true // neutral cities are always supplied
+        val planet = getById(cityId) ?: return false
+        if (planet.factionId == 0L) return true // neutral cities are always supplied
 
-        val nationCities = listByNation(city.nationId)
+        val nationCities = listByNation(planet.factionId)
         val nationCityIds = nationCities.map { it.id }.toSet()
 
         // Find capital
         val capitalCity = nationCities.find {
-            val nation = it.nationId
-            // We need to find the capital — check meta or find by nation
+            val faction = it.factionId
+            // We need to find the capital — check meta or find by faction
             true // will be filtered by BFS
         }
 
         // BFS from capital
-        val allNationCities = planetRepository.findByFactionId(city.nationId)
-        // We don't have direct access to nation here, so just check supplyState
-        return city.supplyState.toInt() == 1
+        val allNationCities = planetRepository.findByFactionId(planet.factionId)
+        // We don't have direct access to faction here, so just check supplyState
+        return planet.supplyState.toInt() == 1
     }
 
     // ── Development Calculation (legacy parity) ──
 
     /**
-     * Calculate development effectiveness for a city based on general stats.
+     * Calculate development effectiveness for a planet based on officer stats.
      * Legacy formula: base * (1 + stat/100) * levelModifier * trustModifier
      *
-     * @param city The city being developed
-     * @param statValue The general's relevant stat (politics for agri/comm, leadership for secu/def/wall)
+     * @param planet The planet being developed
+     * @param statValue The officer's relevant stat (politics for agri/comm, leadership for secu/def/wall)
      * @param baseAmount Base development amount from command
      * @return Actual development amount
      */
     fun calcDevelopment(planet: Planet, statValue: Int, baseAmount: Int): Int {
-        val levelMod = DEV_RATE_BY_LEVEL[city.level.toInt()] ?: 1.0
-        val trustMod = city.trust / 100.0
+        val levelMod = DEV_RATE_BY_LEVEL[planet.level.toInt()] ?: 1.0
+        val trustMod = planet.approval / 100.0
         val statMod = 1.0 + statValue / 100.0
         return (baseAmount * statMod * levelMod * trustMod).roundToInt()
     }
 
     /**
-     * Calculate supply income contribution of a city.
+     * Calculate supply income contribution of a planet.
      * Legacy formula from EconomyService — exposed here for external callers.
      */
     fun calcSupply(planet: Planet): Double {
-        if (city.supplyState.toInt() == 0) return 0.0
-        val trustRatio = city.trust / 200.0 + 0.5
-        val goldBase = if (city.commMax > 0) {
-            city.pop.toDouble() * city.comm / city.commMax * trustRatio / 30
+        if (planet.supplyState.toInt() == 0) return 0.0
+        val trustRatio = planet.approval / 200.0 + 0.5
+        val goldBase = if (planet.commerceMax > 0) {
+            planet.population.toDouble() * planet.commerce / planet.commerceMax * trustRatio / 30
         } else 0.0
-        val riceBase = if (city.agriMax > 0) {
-            city.pop.toDouble() * city.agri / city.agriMax * trustRatio / 30
+        val riceBase = if (planet.productionMax > 0) {
+            planet.population.toDouble() * planet.production / planet.productionMax * trustRatio / 30
         } else 0.0
         return goldBase + riceBase
     }
@@ -219,13 +219,13 @@ class PlanetService(
     // ── City Initialization for Scenario Setup ──
 
     /**
-     * Initialize a city entity from a CityConst (map definition) for scenario setup.
+     * Initialize a planet entity from a CityConst (map definition) for scenario setup.
      * Legacy parity: matches the initial values from CityConstBase.
      * Population and development values in CityConst are stored as x100.
      */
     fun initializeCityFromConst(worldId: Long, cityConst: CityConst, nationId: Long = 0): Planet {
         return Planet(
-            worldId = worldId,
+            sessionId = worldId,
             name = cityConst.name,
             level = cityConst.level.toShort(),
             nationId = nationId,
@@ -243,8 +243,8 @@ class PlanetService(
             trade = 100,
             def = cityConst.defence * 100,
             defMax = cityConst.defence * 100,
-            wall = cityConst.wall * 100,
-            wallMax = cityConst.wall * 100,
+            wall = cityConst.fortress * 100,
+            wallMax = cityConst.fortress * 100,
             officerSet = 0,
             state = 0,
             region = cityConst.region.toShort(),
@@ -273,68 +273,68 @@ class PlanetService(
     // ── City Expansion (legacy: 증축) ──
 
     /**
-     * Calculate the cost of expanding a city.
+     * Calculate the cost of expanding a planet.
      * Legacy formula: defaultCost + (popMax / 100) * costCoef
      */
     fun calcExpandCost(planet: Planet): Int {
-        return EXPAND_CITY_DEFAULT_COST + (city.popMax / 100) * EXPAND_CITY_COST_COEF
+        return EXPAND_CITY_DEFAULT_COST + (planet.populationMax / 100) * EXPAND_CITY_COST_COEF
     }
 
     /**
-     * Expand a city: increase popMax, develMax, wallMax.
-     * Legacy parity: checks cost against nation treasury.
+     * Expand a planet: increase popMax, develMax, wallMax.
+     * Legacy parity: checks cost against faction treasury.
      */
     @Transactional
     fun expandPlanet(planet: Planet): Planet {
-        city.popMax += EXPAND_CITY_POP_INCREASE
-        city.agriMax += EXPAND_CITY_DEVEL_INCREASE
-        city.commMax += EXPAND_CITY_DEVEL_INCREASE
-        city.secuMax += EXPAND_CITY_DEVEL_INCREASE
-        city.defMax += EXPAND_CITY_DEVEL_INCREASE
-        city.wallMax += EXPAND_CITY_WALL_INCREASE
-        return planetRepository.save(city)
+        planet.populationMax += EXPAND_CITY_POP_INCREASE
+        planet.productionMax += EXPAND_CITY_DEVEL_INCREASE
+        planet.commerceMax += EXPAND_CITY_DEVEL_INCREASE
+        planet.securityMax += EXPAND_CITY_DEVEL_INCREASE
+        planet.orbitalDefenseMax += EXPAND_CITY_DEVEL_INCREASE
+        planet.fortressMax += EXPAND_CITY_WALL_INCREASE
+        return planetRepository.save(planet)
     }
 
     // ── City Conquest ──
 
     /**
-     * Transfer city ownership after conquest.
+     * Transfer planet ownership after conquest.
      * Legacy parity: reset officers, set default wall, clear conflict.
      */
     @Transactional
     fun conquerPlanet(planet: Planet, newNationId: Long) {
-        val oldNationId = city.nationId
-        city.nationId = newNationId
-        city.wall = DEFAULT_CITY_WALL.coerceAtMost(city.wallMax)
-        city.officerSet = 0
-        city.conflict = mutableMapOf()
-        city.term = 0
-        city.frontState = 0
+        val oldNationId = planet.factionId
+        planet.factionId = newNationId
+        planet.fortress = DEFAULT_CITY_WALL.coerceAtMost(planet.fortressMax)
+        planet.officerSet = 0
+        planet.conflict = mutableMapOf()
+        planet.term = 0
+        planet.frontState = 0
 
-        // Reset officer assignments for generals in this city from old nation
+        // Reset officer assignments for generals in this planet from old faction
         if (oldNationId != 0L) {
-            val generals = officerRepository.findByPlanetId(city.id)
-            for (general in generals) {
-                if (general.nationId == oldNationId && general.officerCity == city.id.toInt()) {
-                    general.officerLevel = 1
-                    general.officerCity = 0
-                    officerRepository.save(general)
+            val generals = officerRepository.findByPlanetId(planet.id)
+            for (officer in generals) {
+                if (officer.factionId == oldNationId && officer.officerCity == planet.id.toInt()) {
+                    officer.officerLevel = 1
+                    officer.officerCity = 0
+                    officerRepository.save(officer)
                 }
             }
         }
 
-        planetRepository.save(city)
+        planetRepository.save(planet)
     }
 
     // ── Utility ──
 
     /**
-     * Get generals stationed in a city.
+     * Get generals stationed in a planet.
      */
     fun getGeneralsInPlanet(cityId: Long) = officerRepository.findByPlanetId(cityId)
 
     /**
-     * Count cities owned by a nation at or above a given level.
+     * Count cities owned by a faction at or above a given level.
      */
     fun countCitiesAboveLevel(nationId: Long, minLevel: Int): Int {
         return planetRepository.findByFactionId(nationId).count { it.level >= minLevel }
@@ -362,14 +362,14 @@ class PlanetService(
      * Get total population across all cities in a world.
      */
     fun getTotalPopulation(worldId: Long): Long {
-        return planetRepository.findBySessionId(worldId).sumOf { it.pop.toLong() }
+        return planetRepository.findBySessionId(worldId).sumOf { it.population.toLong() }
     }
 
     /**
      * Get cities with low trust (potential rebellion).
      */
     fun getLowTrustCities(worldId: Long, threshold: Float = 30f): List<Planet> {
-        return planetRepository.findBySessionId(worldId).filter { it.trust < threshold && it.nationId != 0L }
+        return planetRepository.findBySessionId(worldId).filter { it.approval < threshold && it.factionId != 0L }
     }
 
     private fun isCityVisibleToOfficer(
@@ -378,10 +378,10 @@ class PlanetService(
         canSeeAllMilitary: Boolean,
         visibleCityIds: Set<Long>,
     ): Boolean {
-        if (city.nationId == general.nationId && general.nationId > 0L) return true
-        if (city.id == general.cityId.toLong()) return true
+        if (planet.factionId == officer.factionId && officer.factionId > 0L) return true
+        if (planet.id == officer.planetId.toLong()) return true
         if (canSeeAllMilitary) return true
-        return visibleCityIds.contains(city.id)
+        return visibleCityIds.contains(planet.id)
     }
 
     private fun extractVisibleCityIds(spyInfo: Map<String, Any>): Set<Long> {
@@ -422,35 +422,35 @@ class PlanetService(
 
     private fun toMaskedView(planet: Planet): Planet {
         return Planet(
-            id = city.id,
-            worldId = city.worldId,
-            name = city.name,
-            mapCityId = city.mapCityId,
-            level = city.level,
-            nationId = city.nationId,
+            id = planet.id,
+            sessionId = planet.sessionId,
+            name = planet.name,
+            mapCityId = planet.mapCityId,
+            level = planet.level,
+            factionId = planet.factionId,
             supplyState = 0,
             frontState = 0,
-            pop = 0,
-            popMax = 0,
-            agri = 0,
-            agriMax = 0,
-            comm = 0,
-            commMax = 0,
-            secu = 0,
-            secuMax = 0,
-            trust = 0f,
-            trade = 0,
+            population = 0,
+            populationMax = 0,
+            production = 0,
+            productionMax = 0,
+            commerce = 0,
+            commerceMax = 0,
+            security = 0,
+            securityMax = 0,
+            approval = 0f,
+            tradeRoute = 0,
             dead = 0,
-            def = 0,
-            defMax = 0,
-            wall = 0,
-            wallMax = 0,
+            orbitalDefense = 0,
+            orbitalDefenseMax = 0,
+            fortress = 0,
+            fortressMax = 0,
             officerSet = 0,
-            state = city.state,
-            region = city.region,
-            term = city.term,
+            state = planet.state,
+            region = planet.region,
+            term = planet.term,
             conflict = mutableMapOf(),
-            meta = city.meta.toMutableMap(),
+            meta = planet.meta.toMutableMap(),
         )
     }
 }

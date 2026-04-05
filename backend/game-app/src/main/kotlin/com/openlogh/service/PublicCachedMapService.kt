@@ -73,23 +73,23 @@ class PublicCachedMapService(
 
         val nations = factionRepository.findBySessionId(worldId)
         val nationById = nations.associateBy { it.id }
-        val cities = planetRepository.findBySessionId(worldId).mapNotNull { city ->
-            val mapCity = mapCityByName[city.name] ?: return@mapNotNull null
-            val nation = nationById[city.nationId]
-            val isCapital = nation != null && nation.capitalCityId == city.id
+        val cities = planetRepository.findBySessionId(worldId).mapNotNull { planet ->
+            val mapCity = mapCityByName[planet.name] ?: return@mapNotNull null
+            val faction = nationById[planet.factionId]
+            val isCapital = faction != null && faction.capitalPlanetId == planet.id
             PublicCachedMapCityResponse(
-                id = city.id,
-                name = city.name,
+                id = planet.id,
+                name = planet.name,
                 x = mapCity.x,
                 y = mapCity.y,
                 level = mapCity.level,
                 region = mapCity.region,
-                nationName = nation?.name ?: "",
-                nationColor = nation?.color ?: "#4b5563",
-                nationAbbr = nation?.abbreviation?.ifBlank { null },
+                nationName = faction?.name ?: "",
+                nationColor = faction?.color ?: "#4b5563",
+                nationAbbr = faction?.abbreviation?.ifBlank { null },
                 isCapital = isCapital,
-                supplyState = city.supplyState.toInt(),
-                state = city.state.toInt(),
+                supplyState = planet.supplyState.toInt(),
+                state = planet.state.toInt(),
             )
         }
 

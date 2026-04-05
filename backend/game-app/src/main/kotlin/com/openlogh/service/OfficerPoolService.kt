@@ -6,7 +6,7 @@ import org.springframework.stereotype.Service
 import kotlin.random.Random
 
 /**
- * Service for managing the NPC general pool.
+ * Service for managing the NPC officer pool.
  * Used by strategic commands like 의병모집 to spawn new NPC generals.
  */
 @Service
@@ -14,11 +14,11 @@ class OfficerPoolService(
     private val officerRepository: OfficerRepository,
 ) {
     /**
-     * Pick and create an NPC general from the pool.
+     * Pick and create an NPC officer from the pool.
      *
      * @param worldId The world ID
-     * @param nationId The nation to assign the general to
-     * @param cityId The city to place the general in
+     * @param nationId The faction to assign the officer to
+     * @param cityId The planet to place the officer in
      * @param npcType NPC type code (e.g. 4 for militia)
      * @param birthYear Birth year for the NPC
      * @param deathYear Death year for the NPC
@@ -50,10 +50,10 @@ class OfficerPoolService(
         val strength = (rng.nextInt(30, 70)).toShort()
         val intel = (rng.nextInt(30, 70)).toShort()
 
-        val general = Officer(
-            worldId = worldId,
-            nationId = nationId,
-            cityId = cityId,
+        val officer = Officer(
+            sessionId = worldId,
+            factionId = nationId,
+            planetId = cityId,
             name = generateNpcName(rng),
             leadership = leadership,
             strength = strength,
@@ -70,7 +70,7 @@ class OfficerPoolService(
             officerLevel = 1,
         )
 
-        return officerRepository.save(general)
+        return officerRepository.save(officer)
     }
 
     private fun generateNpcName(rng: Random): String {

@@ -3,17 +3,17 @@ package com.openlogh.engine.ai
 import com.openlogh.entity.*
 
 data class AIContext(
-    val world: WorldState,
-    val general: General,
-    val city: City,
-    val nation: Nation?,
+    val world: SessionState,
+    val general: Officer,
+    val city: Planet,
+    val nation: Faction?,
     val diplomacyState: DiplomacyState,
     val generalType: Int,
-    val allCities: List<City>,
-    val allGenerals: List<General>,
-    val allNations: List<Nation>,
-    val frontCities: List<City>,
-    val rearCities: List<City>,
-    val nationGenerals: List<General>,
+    val allCities: List<Planet>,
+    val allGenerals: List<Officer>,
+    val allNations: List<Faction>,
+    val frontCities: List<Planet>,
+    val rearCities: List<Planet>,
+    val nationGenerals: List<Officer>,
     val mapAdjacency: Map<Long, List<Long>> = emptyMap(),
 )

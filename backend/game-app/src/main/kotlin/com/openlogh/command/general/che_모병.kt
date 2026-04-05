@@ -1,7 +1,7 @@
 package com.openlogh.command.general
 
 import com.openlogh.command.CommandEnv
-import com.openlogh.entity.General
+import com.openlogh.entity.Officer
 
 /**
  * 모병 command — recruit soldiers (higher cost, higher train/atmos).
@@ -10,7 +10,7 @@ import com.openlogh.entity.General
  * - costOffset = 2 (gold cost doubled, trust impact halved)
  * - defaultTrain/Atmos = 70/70 (vs 40/40 for 징병)
  */
-class che_모병(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
+class che_모병(general: Officer, env: CommandEnv, arg: Map<String, Any>? = null)
     : che_징병(general, env, arg) {
 
     override val actionName = "모병"

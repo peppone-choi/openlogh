@@ -32,13 +32,13 @@ class YearlyStatisticsStep(
     override fun execute(context: TurnContext) {
         economyService.processYearlyStatistics(context.world)
 
-        val ports = worldPortFactory.create(context.worldId)
-        val generals = ports.allGenerals().map { it.toEntity() }
+        val ports = worldPortFactory.create(context.sessionId)
+        val generals = ports.allOfficers().map { it.toEntity() }
         accrueYearlyInheritancePoints(generals)
-        generals.forEach { ports.putGeneral(it.toSnapshot()) }
+        generals.forEach { ports.putOfficer(it.toSnapshot()) }
     }
 
-    private fun accrueYearlyInheritancePoints(generals: List<com.openlogh.entity.General>) {
+    private fun accrueYearlyInheritancePoints(generals: List<com.openlogh.entity.Officer>) {
         for (general in generals) {
             if (general.npcState.toInt() >= 2) continue
 

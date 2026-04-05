@@ -1,6 +1,6 @@
 package com.openlogh.engine.war
 
-import com.openlogh.entity.City
+import com.openlogh.entity.Planet
 import com.openlogh.model.CrewType
 import kotlin.math.ceil
 import kotlin.math.round
@@ -23,9 +23,9 @@ class BattleEngine {
     }
 
     fun resolveBattle(
-        attacker: WarUnitGeneral,
+        attacker: WarUnitOfficer,
         defenders: List<WarUnit>,
-        city: City,
+        city: Planet,
         rng: Random,
         year: Int = 200,
         startYear: Int = 180,
@@ -35,8 +35,8 @@ class BattleEngine {
         var totalDefenderDamage = 0
         // C7: track damage dealt to accumulate level exp (PHP: damage/50)
         var attackerDamageDealtForExp = 0
-        // Map each defender WarUnitGeneral to the damage dealt TO them (for their exp)
-        val defenderDamageDealtForExp = mutableMapOf<WarUnitGeneral, Int>()
+        // Map each defender WarUnitOfficer to the damage dealt TO them (for their exp)
+        val defenderDamageDealtForExp = mutableMapOf<WarUnitOfficer, Int>()
         var attackerWon = true
         var cityOccupied = false
 
@@ -51,11 +51,11 @@ class BattleEngine {
         var attackerInjuryImmune = false
         var attackerRageActivationCount = 0
 
-        val attackerCrewType = CrewType.fromCode(attacker.crewType)
+        val attackerCrewType = CrewType.fromCode(attacker.shipClass)
         val baseMaxPhase = attackerCrewType?.speed ?: 7
         var maxPhase = baseMaxPhase
         var currentPhase = 0
-        val cityUnit = WarUnitCity(city, year, startYear)
+        val cityUnit = WarUnitPlanet(city, year, startYear)
         var defenderIndex = 0
         var currentDefender: WarUnit? = if (sortedDefenders.isNotEmpty()) sortedDefenders[0] else null
         var inSiege = false
@@ -72,9 +72,9 @@ class BattleEngine {
 
             if (!defenderInitialized) {
                 // PHP process_war.php: addTrain(1) for both sides at start of each new engagement
-                attacker.train = (attacker.train + 1).coerceAtMost(110)
-                if (currentDefender is WarUnitGeneral) {
-                    currentDefender.train = (currentDefender.train + 1).coerceAtMost(110)
+                attacker.training = (attacker.training + 1).coerceAtMost(110)
+                if (currentDefender is WarUnitOfficer) {
+                    currentDefender.training = (currentDefender.training + 1).coerceAtMost(110)
                 }
 
                 val defenderTriggers = collectTriggers(currentDefender)
@@ -115,7 +115,7 @@ class BattleEngine {
             currentPhase++
             // C7: accumulate level exp: damage/50 per phase
             attackerDamageDealtForExp += phaseResult.damage.second
-            if (currentDefender is WarUnitGeneral) {
+            if (currentDefender is WarUnitOfficer) {
                 defenderDamageDealtForExp[currentDefender] =
                     (defenderDamageDealtForExp[currentDefender] ?: 0) + phaseResult.damage.first
             }
@@ -149,10 +149,10 @@ class BattleEngine {
             }
 
             // Defender continuation check
-            val defenderCanContinue = if (currentDefender is WarUnitCity) {
+            val defenderCanContinue = if (currentDefender is WarUnitPlanet) {
                 // City: only HP check (no rice). In siege: continues while HP > 0
                 if (inSiege) currentDefender.hp > 0 else false
-            } else if (currentDefender is WarUnitGeneral) {
+            } else if (currentDefender is WarUnitOfficer) {
                 currentDefender.continueWar().canContinue
             } else {
                 currentDefender.isAlive
@@ -167,13 +167,13 @@ class BattleEngine {
                 for (trigger in attackerWarTriggers) trigger.onPostRound(roundCtx)
                 logs.addAll(roundCtx.battleLogs)
 
-                if (currentDefender is WarUnitCity && inSiege) {
+                if (currentDefender is WarUnitPlanet && inSiege) {
                     // City walls defeated — city conquered!
                     cityOccupied = true
                     cityUnit.applyResults()
                     logs.add("<R>${city.name}</> 점령!")
                     break
-                } else if (currentDefender is WarUnitGeneral) {
+                } else if (currentDefender is WarUnitOfficer) {
                     val defenderContinuation = currentDefender.continueWar()
                     logs.add(
                         if (defenderContinuation.isRiceShortage) {
@@ -231,7 +231,7 @@ class BattleEngine {
 
         // If maxPhase reached without entering siege but all defenders down, try siege
         if (attackerWon && !inSiege && !cityOccupied && attacker.continueWar().canContinue) {
-            val allDefendersDown = sortedDefenders.all { it is WarUnitGeneral && !it.continueWar().canContinue }
+            val allDefendersDown = sortedDefenders.all { it is WarUnitOfficer && !it.continueWar().canContinue }
             if (allDefendersDown) {
                 inSiege = true
                 val siegeInitCtx = BattleTriggerContext(attacker = attacker, defender = cityUnit, rng = rng, isVsCity = true)
@@ -285,24 +285,24 @@ class BattleEngine {
         // Win/lose stat exp (+1 based on armType) and atmos boost
         if (attackerWon && attacker.isAlive) {
             // PHP addWin(): atmos *= 1.1, addStatExp(1)
-            attacker.atmos = (attacker.atmos * 1.1).toInt().coerceAtMost(100)
+            attacker.morale = (attacker.morale * 1.1).toInt().coerceAtMost(100)
             attacker.pendingStatExp += 1
             // Defenders that survived also get atmos *= 1.05 and stat exp on their side
             for (def in sortedDefenders) {
-                if (def is WarUnitGeneral) {
-                    def.atmos = (def.atmos * 1.05).toInt().coerceAtMost(100)
+                if (def is WarUnitOfficer) {
+                    def.morale = (def.morale * 1.05).toInt().coerceAtMost(100)
                     def.pendingStatExp += 1
                 }
             }
         } else {
             // Attacker lost: defenders won — apply win bonuses to defenders
             for (def in sortedDefenders) {
-                if (def is WarUnitGeneral) {
-                    def.atmos = (def.atmos * 1.1).toInt().coerceAtMost(100)
+                if (def is WarUnitOfficer) {
+                    def.morale = (def.morale * 1.1).toInt().coerceAtMost(100)
                     def.pendingStatExp += 1
                 }
             }
-            attacker.atmos = (attacker.atmos * 1.05).toInt().coerceAtMost(100)
+            attacker.morale = (attacker.morale * 1.05).toInt().coerceAtMost(100)
             attacker.pendingStatExp += 1
         }
 
@@ -311,7 +311,7 @@ class BattleEngine {
         for (trigger in attackerTriggers) trigger.onInjuryCheck(injuryCtx)
         val effectiveInjuryImmune = attackerInjuryImmune || injuryCtx.injuryImmune
 
-        // Legacy parity (PHP WarUnitGeneral::tryWound):
+        // Legacy parity (PHP WarUnitOfficer::tryWound):
         // Flat 5% chance (nextBool(0.05)), injury random [10, 80], capped at 80
         if (!effectiveInjuryImmune && attacker.isAlive) {
             if (rng.nextDouble() < 0.05) {
@@ -324,7 +324,7 @@ class BattleEngine {
         // C8: PHP process_war.php calls tryWound() for BOTH attacker AND all defenders.
         // Apply injury check to each defender general (same 5% chance, [10,80] range, cap 80).
         for (def in sortedDefenders) {
-            if (def is WarUnitGeneral && def.isAlive) {
+            if (def is WarUnitOfficer && def.isAlive) {
                 if (rng.nextDouble() < 0.05) {
                     val woundAmount = rng.nextInt(10, 81)  // [10, 80] inclusive
                     def.injury = (def.injury + woundAmount).coerceAtMost(80)
@@ -335,7 +335,7 @@ class BattleEngine {
 
         attacker.applyResults()
         for (def in sortedDefenders) {
-            if (def is WarUnitGeneral) def.applyResults()
+            if (def is WarUnitOfficer) def.applyResults()
         }
         // Always sync city battle damage (wall/def) back to entity,
         // even when city is not conquered — damage must persist across turns.
@@ -358,9 +358,9 @@ class BattleEngine {
     )
 
     fun resolveBattleWithPhases(
-        attacker: WarUnitGeneral,
+        attacker: WarUnitOfficer,
         defenders: List<WarUnit>,
-        city: City,
+        city: Planet,
         rng: Random,
         year: Int = 200,
         startYear: Int = 180,
@@ -370,7 +370,7 @@ class BattleEngine {
         var totalAttackerDamage = 0
         var totalDefenderDamage = 0
         var attackerDamageDealtForExp = 0
-        val defenderDamageDealtForExp = mutableMapOf<WarUnitGeneral, Int>()
+        val defenderDamageDealtForExp = mutableMapOf<WarUnitOfficer, Int>()
         var attackerWon = true
         var cityOccupied = false
 
@@ -380,11 +380,11 @@ class BattleEngine {
         var attackerInjuryImmune = false
         var attackerRageActivationCount = 0
 
-        val attackerCrewType = CrewType.fromCode(attacker.crewType)
+        val attackerCrewType = CrewType.fromCode(attacker.shipClass)
         val baseMaxPhase2 = attackerCrewType?.speed ?: 7
         var maxPhase = baseMaxPhase2
         var currentPhase = 0
-        val cityUnit = WarUnitCity(city, year, startYear)
+        val cityUnit = WarUnitPlanet(city, year, startYear)
         var defenderIndex = 0
         var currentDefender: WarUnit? = if (sortedDefenders.isNotEmpty()) sortedDefenders[0] else null
         var inSiege = false
@@ -399,9 +399,9 @@ class BattleEngine {
             }
 
             if (!defenderInitialized) {
-                attacker.train = (attacker.train + 1).coerceAtMost(110)
-                if (currentDefender is WarUnitGeneral) {
-                    currentDefender.train = (currentDefender.train + 1).coerceAtMost(110)
+                attacker.training = (attacker.training + 1).coerceAtMost(110)
+                if (currentDefender is WarUnitOfficer) {
+                    currentDefender.training = (currentDefender.training + 1).coerceAtMost(110)
                 }
                 val defenderTriggers = collectTriggers(currentDefender)
                 val defenderWarTriggers = collectWarUnitTriggers(currentDefender)
@@ -445,7 +445,7 @@ class BattleEngine {
 
             currentPhase++
             attackerDamageDealtForExp += phaseResult.damage.second
-            if (currentDefender is WarUnitGeneral) {
+            if (currentDefender is WarUnitOfficer) {
                 defenderDamageDealtForExp[currentDefender] =
                     (defenderDamageDealtForExp[currentDefender] ?: 0) + phaseResult.damage.first
             }
@@ -477,9 +477,9 @@ class BattleEngine {
                 break
             }
 
-            val defenderCanContinue = if (currentDefender is WarUnitCity) {
+            val defenderCanContinue = if (currentDefender is WarUnitPlanet) {
                 if (inSiege) currentDefender.hp > 0 else false
-            } else if (currentDefender is WarUnitGeneral) {
+            } else if (currentDefender is WarUnitOfficer) {
                 currentDefender.continueWar().canContinue
             } else {
                 currentDefender.isAlive
@@ -494,12 +494,12 @@ class BattleEngine {
                 for (trigger in attackerWarTriggers) trigger.onPostRound(roundCtx)
                 logs.addAll(roundCtx.battleLogs)
 
-                if (currentDefender is WarUnitCity && inSiege) {
+                if (currentDefender is WarUnitPlanet && inSiege) {
                     cityOccupied = true
                     cityUnit.applyResults()
                     logs.add("<R>${city.name}</> 점령!")
                     break
-                } else if (currentDefender is WarUnitGeneral) {
+                } else if (currentDefender is WarUnitOfficer) {
                     val defenderContinuation = currentDefender.continueWar()
                     logs.add(
                         if (defenderContinuation.isRiceShortage) {
@@ -562,7 +562,7 @@ class BattleEngine {
         }
 
         if (attackerWon && !inSiege && !cityOccupied && attacker.continueWar().canContinue) {
-            val allDefendersDown = sortedDefenders.all { it is WarUnitGeneral && !it.continueWar().canContinue }
+            val allDefendersDown = sortedDefenders.all { it is WarUnitOfficer && !it.continueWar().canContinue }
             if (allDefendersDown) {
                 inSiege = true
                 val siegeInitCtx = BattleTriggerContext(attacker = attacker, defender = cityUnit, rng = rng, isVsCity = true)
@@ -618,22 +618,22 @@ class BattleEngine {
         if (cityOccupied) attacker.pendingLevelExp += 1000
 
         if (attackerWon && attacker.isAlive) {
-            attacker.atmos = (attacker.atmos * 1.1).toInt().coerceAtMost(100)
+            attacker.morale = (attacker.morale * 1.1).toInt().coerceAtMost(100)
             attacker.pendingStatExp += 1
             for (def in sortedDefenders) {
-                if (def is WarUnitGeneral) {
-                    def.atmos = (def.atmos * 1.05).toInt().coerceAtMost(100)
+                if (def is WarUnitOfficer) {
+                    def.morale = (def.morale * 1.05).toInt().coerceAtMost(100)
                     def.pendingStatExp += 1
                 }
             }
         } else {
             for (def in sortedDefenders) {
-                if (def is WarUnitGeneral) {
-                    def.atmos = (def.atmos * 1.1).toInt().coerceAtMost(100)
+                if (def is WarUnitOfficer) {
+                    def.morale = (def.morale * 1.1).toInt().coerceAtMost(100)
                     def.pendingStatExp += 1
                 }
             }
-            attacker.atmos = (attacker.atmos * 1.05).toInt().coerceAtMost(100)
+            attacker.morale = (attacker.morale * 1.05).toInt().coerceAtMost(100)
             attacker.pendingStatExp += 1
         }
 
@@ -649,7 +649,7 @@ class BattleEngine {
             }
         }
         for (def in sortedDefenders) {
-            if (def is WarUnitGeneral && def.isAlive) {
+            if (def is WarUnitOfficer && def.isAlive) {
                 if (rng.nextDouble() < 0.05) {
                     val woundAmount = rng.nextInt(10, 81)
                     def.injury = (def.injury + woundAmount).coerceAtMost(80)
@@ -660,7 +660,7 @@ class BattleEngine {
 
         attacker.applyResults()
         for (def in sortedDefenders) {
-            if (def is WarUnitGeneral) def.applyResults()
+            if (def is WarUnitOfficer) def.applyResults()
         }
         cityUnit.applyResults()
 
@@ -687,7 +687,7 @@ class BattleEngine {
 
     /**
      * Compute war power for one side attacking another.
-     * Legacy: WarUnit::computeWarPower() + WarUnitGeneral::computeWarPower()
+     * Legacy: WarUnit::computeWarPower() + WarUnitOfficer::computeWarPower()
      *
      * Formula: (armperphase + myAttack - opDefence) × atmos/train × expLevel × random
      *
@@ -707,23 +707,23 @@ class BattleEngine {
             warPower = warPower + rng.nextDouble() * (100.0 - warPower)
         }
 
-        warPower *= attacker.atmos.toDouble()
-        warPower /= maxOf(1.0, defender.train.toDouble())
+        warPower *= attacker.morale.toDouble()
+        warPower /= maxOf(1.0, defender.training.toDouble())
 
         // Legacy: dex is looked up by attacker's crew type arm type for both sides
-        val attackerCrewTypeObj = CrewType.fromCode(attacker.crewType)
+        val attackerCrewTypeObj = CrewType.fromCode(attacker.shipClass)
         val armType = attackerCrewTypeObj?.armType ?: com.openlogh.model.ArmType.FOOTMAN
         val attackerDex = attacker.getDexForArmType(armType)
         val defenderDex = defender.getDexForArmType(armType)
         warPower *= getDexLog(attackerDex, defenderDex)
 
-        // Legacy parity (PHP WarUnitGeneral.php):
+        // Legacy parity (PHP WarUnitOfficer.php):
         // [$specialMyWarPowerMultiply, $specialOpposeWarPowerMultiply] = $this->general->getWarPowerMultiplier($this);
         // $warPower *= $specialMyWarPowerMultiply;
         // $opposeWarPowerMultiply *= $specialOpposeWarPowerMultiply;
         // Both attacker's attack coef AND defender's defence coef are applied to THIS side's power,
         // AND the opponent's coefficients are returned to be applied to the OTHER side's power.
-        val defenderCrewType = CrewType.fromCode(defender.crewType)
+        val defenderCrewType = CrewType.fromCode(defender.shipClass)
         val attackTypeCoef = if (attackerCrewTypeObj != null && defenderCrewType != null) {
             attackerCrewTypeObj.getAttackCoef(defenderCrewType)
         } else 1.0
@@ -738,12 +738,12 @@ class BattleEngine {
         // the oppose multiplier — applied to the OTHER side's war power calculation
         val opposeWarPowerMultiply = defenceTypeCoef
 
-        // Experience level scaling (WarUnitGeneral only)
+        // Experience level scaling (WarUnitOfficer only)
         // Legacy: own warPower boosted AND opposeWarPowerMultiply reduced
         var expOpposeMultiply = 1.0
-        if (attacker is WarUnitGeneral) {
+        if (attacker is WarUnitOfficer) {
             val expLevel = attacker.general.expLevel.toInt()
-            if (defender is WarUnitCity) {
+            if (defender is WarUnitPlanet) {
                 warPower *= 1.0 + expLevel / 600.0
             } else {
                 val expFactor = maxOf(0.01, 1.0 - expLevel / 300.0)
@@ -759,7 +759,7 @@ class BattleEngine {
     }
 
     internal fun collectTriggers(unit: WarUnit): List<BattleTrigger> {
-        if (unit !is WarUnitGeneral) return emptyList()
+        if (unit !is WarUnitOfficer) return emptyList()
         return listOfNotNull(
             BattleTriggerRegistry.get(unit.general.specialCode),
             BattleTriggerRegistry.get(unit.general.special2Code),
@@ -767,7 +767,7 @@ class BattleEngine {
     }
 
     internal fun collectWarUnitTriggers(unit: WarUnit): List<WarUnitTrigger> {
-        if (unit !is WarUnitGeneral) return emptyList()
+        if (unit !is WarUnitOfficer) return emptyList()
         return listOfNotNull(
             WarUnitTriggerRegistry.get(unit.general.specialCode),
             WarUnitTriggerRegistry.get(unit.general.special2Code),
@@ -833,7 +833,7 @@ class BattleEngine {
         // Dodge roll (legacy: 회피시도/발동)
         // Legacy: avoidRatio *= 0.75 when opponent is footman
         var effectiveDodgeChance = defender.dodgeChance + ctx.dodgeChanceBonus
-        val attackerCrewObj = com.openlogh.model.CrewType.fromCode(attacker.crewType)
+        val attackerCrewObj = com.openlogh.model.CrewType.fromCode(attacker.shipClass)
         if (attackerCrewObj?.armType == com.openlogh.model.ArmType.FOOTMAN) {
             effectiveDodgeChance *= 0.75
         }
@@ -849,7 +849,7 @@ class BattleEngine {
         if (totalMagicChance > 0) {
             if (rng.nextDouble() < totalMagicChance) {
                 // Stratagem success (legacy: 계략발동)
-                val magicDamage = (attacker.intel * 2 * attacker.magicDamageMultiplier * ctx.magicDamageMultiplier).toInt()
+                val magicDamage = (attacker.intelligence * 2 * attacker.magicDamageMultiplier * ctx.magicDamageMultiplier).toInt()
                 attackerDamage += magicDamage
                 ctx.magicActivated = true
                 for (trigger in attackerTriggers) trigger.onPostMagic(ctx)
@@ -867,7 +867,7 @@ class BattleEngine {
         if (ctx.magicActivated) {
             for (trigger in defenderTriggers) trigger.onPostMagic(ctx)
             if (ctx.magicReflected) {
-                val reflectedDamage = (attacker.intel * 2 * attacker.magicDamageMultiplier * 0.3).toInt()
+                val reflectedDamage = (attacker.intelligence * 2 * attacker.magicDamageMultiplier * 0.3).toInt()
                 defenderDamage += reflectedDamage
             }
         }
@@ -914,7 +914,7 @@ class BattleEngine {
         attacker.takeDamage(defenderDamage)
 
         // Snipe wound application (legacy: 저격발동 applies wound)
-        if (ctx.snipeActivated && defender is WarUnitGeneral) {
+        if (ctx.snipeActivated && defender is WarUnitOfficer) {
             defender.injury = (defender.injury + ctx.snipeWoundAmount).coerceAtMost(80)
         }
 
@@ -929,19 +929,19 @@ class BattleEngine {
         }
 
         // Apply morale boost (legacy: 사기진작)
-        if (ctx.moraleBoost > 0 && attacker is WarUnitGeneral) {
-            attacker.atmos = (attacker.atmos + ctx.moraleBoost).coerceAtMost(100)
+        if (ctx.moraleBoost > 0 && attacker is WarUnitOfficer) {
+            attacker.morale = (attacker.morale + ctx.moraleBoost).coerceAtMost(100)
         }
 
         // Rice consumption (generals only)
-        if (attacker is WarUnitGeneral) {
+        if (attacker is WarUnitOfficer) {
             attacker.consumeRice(
                 damageDealt = attackerDamage,
                 isAttacker = true,
                 vsCity = isVsCity,
             )
         }
-        if (defender is WarUnitGeneral) {
+        if (defender is WarUnitOfficer) {
             defender.consumeRice(
                 damageDealt = defenderDamage,
                 isAttacker = false,
@@ -950,11 +950,11 @@ class BattleEngine {
         }
 
         // Morale loss
-        if (defender is WarUnitGeneral) {
-            defender.atmos = (defender.atmos - 3).coerceAtLeast(0)
+        if (defender is WarUnitOfficer) {
+            defender.morale = (defender.morale - 3).coerceAtLeast(0)
         }
-        if (attacker is WarUnitGeneral) {
-            attacker.atmos = (attacker.atmos - 1).coerceAtLeast(0)
+        if (attacker is WarUnitOfficer) {
+            attacker.morale = (attacker.morale - 1).coerceAtLeast(0)
         }
 
         return PhaseResult(

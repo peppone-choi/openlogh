@@ -80,7 +80,7 @@ class WorldController(
 
                 WorldSnapshotResponse(
                     id = history.id,
-                    worldId = history.worldId,
+                    worldId = history.sessionId,
                     year = history.year.toInt(),
                     month = history.month.toInt(),
                     createdAt = history.createdAt.toString(),
@@ -116,7 +116,7 @@ class WorldController(
         return ResponseEntity.status(HttpStatus.CREATED).body(
             WorldSnapshotResponse(
                 id = snapshot.id,
-                worldId = snapshot.worldId,
+                worldId = snapshot.sessionId,
                 year = snapshot.year.toInt(),
                 month = snapshot.month.toInt(),
                 createdAt = snapshot.createdAt.toString(),

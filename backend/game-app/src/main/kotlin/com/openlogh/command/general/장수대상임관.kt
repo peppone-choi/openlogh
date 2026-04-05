@@ -3,15 +3,15 @@ package com.openlogh.command.general
 import com.openlogh.command.CommandCost
 import com.openlogh.command.CommandEnv
 import com.openlogh.command.CommandResult
-import com.openlogh.command.GeneralCommand
+import com.openlogh.command.OfficerCommand
 import com.openlogh.command.constraint.*
-import com.openlogh.entity.General
+import com.openlogh.entity.Officer
 import kotlin.random.Random
 
 private const val INITIAL_NATION_GEN_LIMIT = 8
 
-class 장수대상임관(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
-    : GeneralCommand(general, env, arg) {
+class 장수대상임관(general: Officer, env: CommandEnv, arg: Map<String, Any>? = null)
+    : OfficerCommand(general, env, arg) {
 
     override val actionName = "장수를 따라 임관"
 
@@ -44,20 +44,20 @@ class 장수대상임관(general: General, env: CommandEnv, arg: Map<String, Any
         val commandServices = services
             ?: return CommandResult(success = false, logs = listOf("커맨드 서비스가 없습니다."))
         val date = formatDate()
-        val dn = destNation!!
+        val dn = destFaction!!
         val destNationName = dn.name
-        val destCityId = destGeneral?.cityId ?: dn.capitalCityId ?: 0L
+        val destCityId = destOfficer?.planetId ?: dn.capitalPlanetId ?: 0L
         val generalName = general.name
 
         pushLog("<D>${destNationName}</>에 임관했습니다. <1>$date</>")
         pushHistoryLog("<D><b>${destNationName}</b></>에 임관")
         pushGlobalLog("<Y>${generalName}</>${pickJosa(generalName, "이")} <D><b>${destNationName}</b></>에 <S>임관</>했습니다.")
 
-        val gennum = commandServices.generalRepository.findByNationId(dn.id)?.size ?: 0
+        val gennum = commandServices.officerRepository.findByFactionId(dn.id)?.size ?: 0
         val exp = if (gennum < INITIAL_NATION_GEN_LIMIT) 700 else 100
 
-        dn.gennum += 1
-        commandServices.nationRepository.save(dn)
+        dn.officerCount += 1
+        commandServices.factionRepository.save(dn)
 
         return CommandResult(
             success = true,

@@ -24,13 +24,13 @@ class FleetService(
     @Transactional
     fun create(worldId: Long, leaderGeneralId: Long, nationId: Long, name: String): Fleet {
         val troop = fleetRepository.save(Fleet(
-            worldId = worldId,
+            sessionId = worldId,
             leaderGeneralId = leaderGeneralId,
-            nationId = nationId,
+            factionId = nationId,
             name = name,
         ))
         officerRepository.findById(leaderGeneralId).ifPresent { gen ->
-            gen.troopId = troop.id
+            gen.fleetId = troop.id
             officerRepository.save(gen)
         }
         return troop
@@ -38,22 +38,22 @@ class FleetService(
 
     @Transactional
     fun join(troopId: Long, generalId: Long): Boolean {
-        val general = officerRepository.findById(generalId).orElse(null) ?: return false
-        general.troopId = troopId
-        officerRepository.save(general)
+        val officer = officerRepository.findById(generalId).orElse(null) ?: return false
+        officer.fleetId = troopId
+        officerRepository.save(officer)
         return true
     }
 
     @Transactional
     fun exit(generalId: Long): Boolean {
-        val general = officerRepository.findById(generalId).orElse(null) ?: return false
-        general.troopId = 0
-        officerRepository.save(general)
+        val officer = officerRepository.findById(generalId).orElse(null) ?: return false
+        officer.fleetId = 0
+        officerRepository.save(officer)
         return true
     }
 
     @Transactional
-    fun rename(troopId: Long, name: String): Troop? {
+    fun rename(troopId: Long, name: String): Fleet? {
         val troop = fleetRepository.findById(troopId).orElse(null) ?: return null
         troop.name = name
         return fleetRepository.save(troop)
@@ -63,7 +63,7 @@ class FleetService(
     fun disband(troopId: Long): Boolean {
         if (!fleetRepository.existsById(troopId)) return false
         val members = officerRepository.findByFleetId(troopId)
-        members.forEach { it.troopId = 0; officerRepository.save(it) }
+        members.forEach { it.fleetId = 0; officerRepository.save(it) }
         fleetRepository.deleteById(troopId)
         return true
     }

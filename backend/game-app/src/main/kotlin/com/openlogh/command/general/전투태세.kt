@@ -3,9 +3,9 @@ package com.openlogh.command.general
 import com.openlogh.command.CommandCost
 import com.openlogh.command.CommandEnv
 import com.openlogh.command.CommandResult
-import com.openlogh.command.GeneralCommand
+import com.openlogh.command.OfficerCommand
 import com.openlogh.command.constraint.*
-import com.openlogh.entity.General
+import com.openlogh.entity.Officer
 import kotlin.math.roundToInt
 import kotlin.random.Random
 
@@ -13,8 +13,8 @@ private const val MAX_TRAIN_BY_COMMAND = 100
 private const val MAX_ATMOS_BY_COMMAND = 100
 private const val PRE_REQ_TURN = 3
 
-class 전투태세(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
-    : GeneralCommand(general, env, arg) {
+class 전투태세(general: Officer, env: CommandEnv, arg: Map<String, Any>? = null)
+    : OfficerCommand(general, env, arg) {
 
     override val actionName = "전투태세"
     override val canDisplay = false
@@ -27,8 +27,8 @@ class 전투태세(general: General, env: CommandEnv, arg: Map<String, Any>? = n
                 NotWanderingNation(),
                 OccupiedCity(),
                 ReqGeneralCrew(),
-                ReqGeneralGold(cost.gold),
-                ReqGeneralRice(cost.rice),
+                ReqGeneralGold(cost.funds),
+                ReqGeneralRice(cost.supplies),
                 ReqGeneralTrainMargin(MAX_TRAIN_BY_COMMAND - 10),
                 ReqGeneralAtmosMargin(MAX_ATMOS_BY_COMMAND - 10),
             )
@@ -42,7 +42,7 @@ class 전투태세(general: General, env: CommandEnv, arg: Map<String, Any>? = n
     )
 
     override fun getCost(): CommandCost {
-        val crew = general.crew
+        val crew = general.ships
         val techCost = getNationTechCost()
         val gold = (crew / 100.0 * 3 * techCost).roundToInt()
         return CommandCost(gold = gold, rice = 0)
@@ -63,7 +63,7 @@ class 전투태세(general: General, env: CommandEnv, arg: Map<String, Any>? = n
 
         val exp = 100 * reqTurn
         val ded = 70 * reqTurn
-        val dexGain = (general.crew / 100.0 * reqTurn).roundToInt()
+        val dexGain = (general.ships / 100.0 * reqTurn).roundToInt()
         val trainTarget = MAX_TRAIN_BY_COMMAND - 5
         val atmosTarget = MAX_ATMOS_BY_COMMAND - 5
         val cost = getCost()
@@ -71,7 +71,7 @@ class 전투태세(general: General, env: CommandEnv, arg: Map<String, Any>? = n
         return CommandResult(
             success = true,
             logs = logs,
-            message = """{"statChanges":{"gold":${-cost.gold},"train":{"setMin":$trainTarget},"atmos":{"setMin":$atmosTarget},"experience":$exp,"dedication":$ded,"leadershipExp":$reqTurn},"dexChanges":{"crewType":${general.crewType},"amount":$dexGain},"battleStanceTerm":$term,"completed":true}"""
+            message = """{"statChanges":{"gold":${-cost.funds},"train":{"setMin":$trainTarget},"atmos":{"setMin":$atmosTarget},"experience":$exp,"dedication":$ded,"leadershipExp":$reqTurn},"dexChanges":{"crewType":${general.shipClass},"amount":$dexGain},"battleStanceTerm":$term,"completed":true}"""
         )
     }
 }

@@ -3,15 +3,15 @@ package com.openlogh.command.nation
 import com.openlogh.command.CommandCost
 import com.openlogh.command.CommandEnv
 import com.openlogh.command.CommandResult
-import com.openlogh.command.NationCommand
+import com.openlogh.command.FactionCommand
 import com.openlogh.command.constraint.*
-import com.openlogh.engine.EmperorConstants
-import com.openlogh.entity.General
+import com.openlogh.engine.SovereignConstants
+import com.openlogh.entity.Officer
 import com.openlogh.util.JosaUtil
 import kotlin.random.Random
 
-class che_칭제(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
-    : NationCommand(general, env, arg) {
+class che_칭제(general: Officer, env: CommandEnv, arg: Map<String, Any>? = null)
+    : FactionCommand(general, env, arg) {
 
     override val actionName = "칭제"
 
@@ -39,8 +39,8 @@ class che_칭제(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
         val nationName = n.name
         val josaYi = JosaUtil.pick(generalName, "이")
 
-        n.meta[EmperorConstants.NATION_IMPERIAL_STATUS] = EmperorConstants.STATUS_EMPEROR
-        n.meta[EmperorConstants.NATION_EMPEROR_TYPE] = EmperorConstants.TYPE_SELF_PROCLAIMED
+        n.meta[SovereignConstants.NATION_IMPERIAL_STATUS] = SovereignConstants.STATUS_EMPEROR
+        n.meta[SovereignConstants.NATION_EMPEROR_TYPE] = SovereignConstants.TYPE_SELF_PROCLAIMED
 
         pushLog("<C><b>황제</b></>를 자칭하였습니다. <1>${formatDate()}</>")
         pushHistoryLog("<D><b>${nationName}</b></>에서 황제를 자칭")

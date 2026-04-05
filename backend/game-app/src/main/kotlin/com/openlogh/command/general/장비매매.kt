@@ -3,9 +3,9 @@ package com.openlogh.command.general
 import com.openlogh.command.CommandCost
 import com.openlogh.command.CommandEnv
 import com.openlogh.command.CommandResult
-import com.openlogh.command.GeneralCommand
+import com.openlogh.command.OfficerCommand
 import com.openlogh.command.constraint.*
-import com.openlogh.entity.General
+import com.openlogh.entity.Officer
 import com.openlogh.engine.modifier.ItemModifiers
 import kotlin.random.Random
 
@@ -16,8 +16,8 @@ private val ITEM_TYPE_NAMES = mapOf(
     "item" to "도구",
 )
 
-class 장비매매(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
-    : GeneralCommand(general, env, arg) {
+class 장비매매(general: Officer, env: CommandEnv, arg: Map<String, Any>? = null)
+    : OfficerCommand(general, env, arg) {
 
     override val actionName = "장비매매"
 
@@ -40,7 +40,7 @@ class 장비매매(general: General, env: CommandEnv, arg: Map<String, Any>? = n
                 if (item != null) {
                     constraints.add(ReqCityCapacity("secu", "치안 수치", item.grade * 10))
                 }
-                constraints.add(ReqGeneralGold(cost.gold))
+                constraints.add(ReqGeneralGold(cost.funds))
             }
             return constraints
         }
@@ -99,10 +99,10 @@ class 장비매매(general: General, env: CommandEnv, arg: Map<String, Any>? = n
 
     private fun sellItem(itemType: String, date: String): CommandResult {
         val currentItemCode = when (itemType) {
-            "weapon" -> general.weaponCode
-            "book" -> general.bookCode
-            "horse" -> general.horseCode
-            "item" -> general.itemCode
+            "weapon" -> general.flagshipCode
+            "book" -> general.equipCode
+            "horse" -> general.engineCode
+            "item" -> general.accessoryCode
             else -> null
         }
         if (currentItemCode == null || currentItemCode == "None") {

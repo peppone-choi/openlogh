@@ -1,11 +1,11 @@
 package com.openlogh.command.general
 
 import com.openlogh.command.CommandEnv
-import com.openlogh.entity.General
+import com.openlogh.entity.Officer
 import kotlin.math.min
 import kotlin.random.Random
 
-class 선동(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
+class 선동(general: Officer, env: CommandEnv, arg: Map<String, Any>? = null)
     : 화계(general, env, arg) {
 
     override val actionName = "선동"
@@ -13,14 +13,14 @@ class 선동(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
     override val injuryGeneral = true
 
     override fun affectDestCity(rng: Random, injuryCount: Int): Map<String, Any> {
-        val dc = destCity!!
+        val dc = destPlanet!!
 
-        val secuAmount = min(rng.nextInt(env.sabotageDamageMin, env.sabotageDamageMax + 1), dc.secu)
+        val secuAmount = min(rng.nextInt(env.sabotageDamageMin, env.sabotageDamageMax + 1), dc.security)
 
         // Trust reduction: damage / 50, capped at current trust.
         // Legacy: number_format($trustAmount, 1) — keep one decimal place.
         val trustRawDamage = rng.nextInt(env.sabotageDamageMin, env.sabotageDamageMax + 1).toDouble() / 50.0
-        val trustAmount = minOf(trustRawDamage, dc.trust.toDouble())
+        val trustAmount = minOf(trustRawDamage, dc.approval.toDouble())
         // Round to 1 decimal place for display and storage (legacy parity)
         val trustAmountRounded = Math.round(trustAmount * 10.0) / 10.0
 

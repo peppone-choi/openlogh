@@ -3,9 +3,9 @@ package com.openlogh.command.general
 import com.openlogh.command.CommandCost
 import com.openlogh.command.CommandEnv
 import com.openlogh.command.CommandResult
-import com.openlogh.command.GeneralCommand
+import com.openlogh.command.OfficerCommand
 import com.openlogh.command.constraint.*
-import com.openlogh.entity.General
+import com.openlogh.entity.Officer
 import kotlin.math.roundToInt
 import kotlin.random.Random
 
@@ -13,8 +13,8 @@ private const val DEFAULT_TRAIN_LOW = 40
 private const val DEFAULT_ATMOS_LOW = 40
 private const val SCORE_DIVISOR = 200000.0
 
-class che_단련(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
-    : GeneralCommand(general, env, arg) {
+class che_단련(general: Officer, env: CommandEnv, arg: Map<String, Any>? = null)
+    : OfficerCommand(general, env, arg) {
 
     override val actionName = "단련"
 
@@ -24,10 +24,10 @@ class che_단련(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
             return listOf(
                 NotBeNeutral(),
                 ReqGeneralCrew(),
-                ReqGeneralStatValue({ it.train.toInt() }, "훈련", DEFAULT_TRAIN_LOW),
-                ReqGeneralStatValue({ it.atmos.toInt() }, "사기", DEFAULT_ATMOS_LOW),
-                ReqGeneralGold(cost.gold),
-                ReqGeneralRice(cost.rice)
+                ReqGeneralStatValue({ it.training.toInt() }, "훈련", DEFAULT_TRAIN_LOW),
+                ReqGeneralStatValue({ it.morale.toInt() }, "사기", DEFAULT_ATMOS_LOW),
+                ReqGeneralGold(cost.funds),
+                ReqGeneralRice(cost.supplies)
             )
         }
 
@@ -38,9 +38,9 @@ class che_단련(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
 
     override suspend fun run(rng: Random): CommandResult {
         val date = formatDate()
-        val crew = general.crew
-        val train = general.train.toInt()
-        val atmos = general.atmos.toInt()
+        val crew = general.ships
+        val train = general.training.toInt()
+        val atmos = general.morale.toInt()
 
         // Legacy parity: fail < 0.33, success > 0.66, otherwise normal
         val criticalRoll = rng.nextDouble()
@@ -56,7 +56,7 @@ class che_단련(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
         val score = (baseScore * multiplier).roundToInt()
         val scoreText = "%,d".format(score)
 
-        val armTypeName = getCrewTypeName(general.crewType.toInt()) ?: "병사"
+        val armTypeName = getCrewTypeName(general.shipClass.toInt()) ?: "병사"
 
         val logMessage = when (pick) {
              "fail" -> "단련이 <R>지지부진</>하여 ${armTypeName} 숙련도가 <C>${scoreText}</> 향상되었습니다. <1>$date</>"
@@ -72,8 +72,8 @@ class che_단련(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
 
         // random stat exp weighted by stats
         val leadership = general.leadership.toInt()
-        val strength = general.strength.toInt()
-        val intel = general.intel.toInt()
+        val strength = general.command.toInt()
+        val intel = general.intelligence.toInt()
         val statWeights = listOf(
             "leadershipExp" to leadership,
             "strengthExp" to strength,
@@ -90,7 +90,7 @@ class che_단련(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
         return CommandResult(
             success = true,
             logs = logs,
-            message = """{"statChanges":{"gold":${-cost.gold},"rice":${-cost.rice},"experience":$exp,"$incStat":1},"dexChanges":{"crewType":${general.crewType},"amount":$score},"criticalResult":"$pick"}"""
+            message = """{"statChanges":{"gold":${-cost.funds},"rice":${-cost.supplies},"experience":$exp,"$incStat":1},"dexChanges":{"crewType":${general.shipClass},"amount":$score},"criticalResult":"$pick"}"""
         )
     }
 }

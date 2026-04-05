@@ -4,7 +4,7 @@ data class CommandEnv(
     val year: Int,
     val month: Int,
     val startYear: Int,
-    val worldId: Long,
+    val sessionId: Long,
     val realtimeMode: Boolean = false,
     val develCost: Int = 100,
     val scenario: Int = 0,

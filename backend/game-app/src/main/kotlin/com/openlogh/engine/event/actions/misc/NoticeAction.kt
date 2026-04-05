@@ -19,7 +19,7 @@ class NoticeAction(
         val message = context.params["message"] as? String ?: ""
         messageRepository.save(
             Message(
-                worldId = context.world.id.toLong(),
+                sessionId = context.world.id.toLong(),
                 mailboxCode = "notice",
                 messageType = "notice",
                 payload = mutableMapOf(

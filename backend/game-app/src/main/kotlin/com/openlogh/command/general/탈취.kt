@@ -1,7 +1,7 @@
 package com.openlogh.command.general
 
 import com.openlogh.command.CommandEnv
-import com.openlogh.entity.General
+import com.openlogh.entity.Officer
 import kotlin.math.roundToInt
 import kotlin.math.sqrt
 import kotlin.random.Random
@@ -9,7 +9,7 @@ import kotlin.random.Random
 private const val MIN_NATIONAL_GOLD = 1000
 private const val MIN_NATIONAL_RICE = 1000
 
-class 탈취(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
+class 탈취(general: Officer, env: CommandEnv, arg: Map<String, Any>? = null)
     : 화계(general, env, arg) {
 
     override val actionName = "탈취"
@@ -26,23 +26,23 @@ class 탈취(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
      * - If neutral (nationId == 0), general keeps 100%
      */
     override fun affectDestCity(rng: Random, injuryCount: Int): Map<String, Any> {
-        val dc = destCity!!
+        val dc = destPlanet!!
         val yearCoef = sqrt(1.0 + (env.year - env.startYear) / 4.0) / 2.0
-        val commRatio = if (dc.commMax > 0) dc.comm.toDouble() / dc.commMax else 0.0
-        val agriRatio = if (dc.agriMax > 0) dc.agri.toDouble() / dc.agriMax else 0.0
+        val commRatio = if (dc.commerceMax > 0) dc.commerce.toDouble() / dc.commerceMax else 0.0
+        val agriRatio = if (dc.productionMax > 0) dc.production.toDouble() / dc.productionMax else 0.0
 
         var gold = (rng.nextInt(env.sabotageDamageMin, env.sabotageDamageMax + 1) * dc.level * yearCoef * (0.25 + commRatio / 4.0)).roundToInt()
         var rice = (rng.nextInt(env.sabotageDamageMin, env.sabotageDamageMax + 1) * dc.level * yearCoef * (0.25 + agriRatio / 4.0)).roundToInt()
 
-        val isSupplied = dc.supplyState > 0 && destNation != null
+        val isSupplied = dc.supplyState > 0 && destFaction != null
 
         // If supplied: cap by dest nation's gold/rice at minNationalGold/Rice
         // Legacy: if(destNationGold - gold < minNationalGold) { gold += destNationGold - minNationalGold; ... }
         if (isSupplied) {
-            val dn = destNation
+            val dn = destFaction
             if (dn != null) {
-                val destNationGold = dn.gold
-                val destNationRice = dn.rice
+                val destNationGold = dn.funds
+                val destNationRice = dn.supplies
                 if (destNationGold - gold < MIN_NATIONAL_GOLD) {
                     gold = (destNationGold - MIN_NATIONAL_GOLD).coerceAtLeast(0)
                 }
@@ -58,7 +58,7 @@ class 탈취(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
         pushHistoryLog("<G><b>${dc.name}</b></>에 ${actionName}${josa(actionName, "이")} 성공했습니다. <1>${formatDate()}</>")
         pushGlobalLog("<Y>${general.name}</>${pickJosa(general.name, "이")} <G><b>${dc.name}</b></>에서 자원을 탈취했습니다.")
 
-        val nationId = general.nationId
+        val nationId = general.factionId
         val nationShareGold: Int
         val nationShareRice: Int
         val generalShareGold: Int

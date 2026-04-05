@@ -1,9 +1,9 @@
 package com.openlogh.command.util
 
-import com.openlogh.entity.General
+import com.openlogh.entity.Officer
 
 /**
- * Legacy parity: General::checkStatChange() from General.php
+ * Legacy parity: Officer::checkStatChange() from General.php
  *
  * Checks if any stat experience has crossed the upgrade/downgrade threshold.
  * When leadershipExp/strengthExp/intelExp >= upgradeLimit, the stat increases by 1.
@@ -33,7 +33,7 @@ object StatChangeUtil {
      * @return StatChangeResult with whether any change occurred and log messages
      */
     fun checkStatChange(
-        general: General,
+        general: Officer,
         upgradeLimit: Int = DEFAULT_UPGRADE_LIMIT,
         maxLevel: Int = DEFAULT_MAX_LEVEL,
     ): StatChangeResult {
@@ -48,11 +48,11 @@ object StatChangeUtil {
                 { general.leadership }, { general.leadership = it },
                 { general.leadershipExp }, { general.leadershipExp = it }),
             StatEntry("무력",
-                { general.strength }, { general.strength = it },
-                { general.strengthExp }, { general.strengthExp = it }),
+                { general.command }, { general.command = it },
+                { general.commandExp }, { general.commandExp = it }),
             StatEntry("지력",
-                { general.intel }, { general.intel = it },
-                { general.intelExp }, { general.intelExp = it }),
+                { general.intelligence }, { general.intelligence = it },
+                { general.intelligenceExp }, { general.intelligenceExp = it }),
         )
 
         for (stat in stats) {

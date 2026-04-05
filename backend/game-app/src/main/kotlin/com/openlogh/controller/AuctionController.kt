@@ -66,8 +66,8 @@ class AuctionController(
         @RequestBody request: OpenResourceAuctionRequest,
     ): ResponseEntity<Map<String, Any>> {
         val result = auctionService.openBuyRiceAuction(
-            worldId = worldId,
-            hostGeneralId = request.hostGeneralId,
+            sessionId = worldId,
+            hostOfficerId = request.hostGeneralId,
             amount = request.amount,
             closeTurnCnt = request.closeTurnCnt,
             startBidAmount = request.startBidAmount,
@@ -83,8 +83,8 @@ class AuctionController(
         @RequestBody request: OpenResourceAuctionRequest,
     ): ResponseEntity<Map<String, Any>> {
         val result = auctionService.openSellRiceAuction(
-            worldId = worldId,
-            hostGeneralId = request.hostGeneralId,
+            sessionId = worldId,
+            hostOfficerId = request.hostGeneralId,
             amount = request.amount,
             closeTurnCnt = request.closeTurnCnt,
             startBidAmount = request.startBidAmount,
@@ -179,7 +179,7 @@ class AuctionController(
                 "id" to it.id,
                 "sellerGeneralId" to it.sellerGeneralId,
                 "buyerGeneralId" to it.buyerGeneralId,
-                "itemCode" to it.itemCode,
+                "itemCode" to it.accessoryCode,
                 "minPrice" to it.minPrice,
                 "currentPrice" to it.currentPrice,
                 "status" to it.status,

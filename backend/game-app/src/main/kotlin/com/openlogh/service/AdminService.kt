@@ -114,8 +114,8 @@ class AdminService(
             AdminGeneralSummary(
                 id = it.id,
                 name = it.name,
-                nationId = it.nationId,
-                crew = it.crew,
+                nationId = it.factionId,
+                crew = it.ships,
                 experience = it.experience,
                 npcState = it.npcState.toInt(),
                 blockState = it.blockState.toInt(),
@@ -126,31 +126,31 @@ class AdminService(
 
     @Transactional
     fun generalAction(worldId: Long, id: Long, type: String): Boolean {
-        val general = officerRepository.findById(id).orElse(null) ?: return false
-        if (general.worldId != worldId) return false
-        if (!applyGeneralAction(general, type)) return false
-        officerRepository.save(general)
+        val officer = officerRepository.findById(id).orElse(null) ?: return false
+        if (officer.sessionId != worldId) return false
+        if (!applyGeneralAction(officer, type)) return false
+        officerRepository.save(officer)
         return true
     }
 
     fun getStatistics(worldId: Long): List<NationStatistic> {
         val nations = factionRepository.findBySessionId(worldId)
-        return nations.map { nation ->
-            val generals = officerRepository.findByFactionId(nation.id)
-            val cities = planetRepository.findByFactionId(nation.id)
+        return nations.map { faction ->
+            val generals = officerRepository.findByFactionId(faction.id)
+            val cities = planetRepository.findByFactionId(faction.id)
             NationStatistic(
-                nationId = nation.id,
-                name = nation.name,
-                color = nation.color,
-                level = nation.level.toInt(),
-                gold = nation.gold,
-                rice = nation.rice,
-                tech = nation.tech,
-                power = nation.power,
+                nationId = faction.id,
+                name = faction.name,
+                color = faction.color,
+                level = faction.factionRank.toInt(),
+                gold = faction.funds,
+                rice = faction.supplies,
+                tech = faction.techLevel,
+                power = faction.militaryPower,
                 genCount = generals.size,
                 cityCount = cities.size,
-                totalCrew = generals.sumOf { it.crew },
-                totalPop = cities.sumOf { it.pop },
+                totalCrew = generals.sumOf { it.ships },
+                totalPop = cities.sumOf { it.population },
             )
         }
     }
@@ -232,18 +232,18 @@ class AdminService(
         return when (request.target.lowercase()) {
             "all" -> {
                 val generals = officerRepository.findBySessionId(worldId)
-                generals.forEach { general ->
-                    general.gold += request.gold
-                    general.rice += request.rice
+                generals.forEach { officer ->
+                    officer.funds += request.funds
+                    officer.supplies += request.supplies
                 }
                 officerRepository.saveAll(generals)
                 true
             }
             "nations" -> {
                 val nations = factionRepository.findBySessionId(worldId)
-                nations.forEach { nation ->
-                    nation.gold += request.gold
-                    nation.rice += request.rice
+                nations.forEach { faction ->
+                    faction.funds += request.funds
+                    faction.supplies += request.supplies
                 }
                 factionRepository.saveAll(nations)
                 true
@@ -255,52 +255,52 @@ class AdminService(
     private fun applyGeneralAction(officer: Officer, type: String): Boolean {
         when (type) {
             "block" -> {
-                general.blockState = 1
-                general.killTurn = DEFAULT_BLOCK_KILL_TURN.toShort()
+                officer.blockState = 1
+                officer.killTurn = DEFAULT_BLOCK_KILL_TURN.toShort()
             }
             "block2" -> {
-                general.gold = 0
-                general.rice = 0
-                general.blockState = 2
-                general.killTurn = DEFAULT_BLOCK_KILL_TURN.toShort()
+                officer.funds = 0
+                officer.supplies = 0
+                officer.blockState = 2
+                officer.killTurn = DEFAULT_BLOCK_KILL_TURN.toShort()
             }
             "block3" -> {
-                general.gold = 0
-                general.rice = 0
-                general.blockState = 3
-                general.killTurn = DEFAULT_BLOCK_KILL_TURN.toShort()
+                officer.funds = 0
+                officer.supplies = 0
+                officer.blockState = 3
+                officer.killTurn = DEFAULT_BLOCK_KILL_TURN.toShort()
             }
-            "unblock" -> general.blockState = 0
+            "unblock" -> officer.blockState = 0
             "kill" -> {
-                general.killTurn = 0
-                general.turnTime = OffsetDateTime.now()
-                upsertOfficerTurn(general, 0, "휴식", "휴식")
+                officer.killTurn = 0
+                officer.turnTime = OffsetDateTime.now()
+                upsertOfficerTurn(officer, 0, "휴식", "휴식")
             }
-            "killturnInfinite" -> general.killTurn = INFINITE_KILL_TURN.toShort()
-            "resign" -> upsertOfficerTurn(general, 0, "che_하야", "하야")
+            "killturnInfinite" -> officer.killTurn = INFINITE_KILL_TURN.toShort()
+            "resign" -> upsertOfficerTurn(officer, 0, "che_하야", "하야")
             "wanderDismiss" -> {
-                upsertOfficerTurn(general, 0, "che_방랑", "방랑")
-                upsertOfficerTurn(general, 1, "che_해산", "해산")
+                upsertOfficerTurn(officer, 0, "che_방랑", "방랑")
+                upsertOfficerTurn(officer, 1, "che_해산", "해산")
             }
-            "exp1000" -> general.experience += 1000
-            "dedication1000" -> general.dedication += 1000
-            "dex1_10000" -> general.dex1 += 10000
-            "dex2_10000" -> general.dex2 += 10000
-            "dex3_10000" -> general.dex3 += 10000
-            "dex4_10000" -> general.dex4 += 10000
-            "dex5_10000" -> general.dex5 += 10000
+            "exp1000" -> officer.experience += 1000
+            "dedication1000" -> officer.dedication += 1000
+            "dex1_10000" -> officer.dex1 += 10000
+            "dex2_10000" -> officer.dex2 += 10000
+            "dex3_10000" -> officer.dex3 += 10000
+            "dex4_10000" -> officer.dex4 += 10000
+            "dex5_10000" -> officer.dex5 += 10000
             else -> return false
         }
 
         return true
     }
 
-    private fun upsertHallOfFame(world: com.openlogh.entity.WorldState, officer: Officer) {
-        val nation = factionRepository.findById(general.nationId).orElse(null)
+    private fun upsertHallOfFame(world: com.openlogh.entity.SessionState, officer: Officer) {
+        val faction = factionRepository.findById(officer.factionId).orElse(null)
         val serverId = (world.config["serverId"] as? String).orEmpty().ifBlank { world.name }
         val scenario = (world.meta["scenarioId"] as? Number)?.toInt() ?: 0
         val season = ((world.meta["season"] as? Number)?.toInt())?.takeIf { it > 0 } ?: 1
-        val rank = general.meta["rank"] as? Map<*, *> ?: emptyMap<String, Any>()
+        val rank = officer.meta["rank"] as? Map<*, *> ?: emptyMap<String, Any>()
         val warnum = (rank["warnum"] as? Number)?.toInt() ?: 0
         val killnum = (rank["killnum"] as? Number)?.toInt() ?: 0
         val firenum = (rank["firenum"] as? Number)?.toInt() ?: 0
@@ -308,8 +308,8 @@ class AdminService(
         val deathcrew = (rank["deathcrew"] as? Number)?.toInt() ?: 0
 
         val hallValues = linkedMapOf(
-            "experience" to general.experience.toDouble(),
-            "dedication" to general.dedication.toDouble(),
+            "experience" to officer.experience.toDouble(),
+            "dedication" to officer.dedication.toDouble(),
             "warnum" to warnum.toDouble(),
             "killnum" to killnum.toDouble(),
             "firenum" to firenum.toDouble(),
@@ -322,31 +322,31 @@ class AdminService(
             if (value <= 0.0) continue
 
             val aux = mutableMapOf<String, Any>(
-                "name" to general.name,
-                "nationName" to (nation?.name ?: "재야"),
-                "bgColor" to (nation?.color ?: "#000000"),
-                "fgColor" to (nation?.color ?: "#000000"),
-                "picture" to general.picture,
-                "imgsvr" to general.imageServer,
+                "name" to officer.name,
+                "nationName" to (faction?.name ?: "재야"),
+                "bgColor" to (faction?.color ?: "#000000"),
+                "fgColor" to (faction?.color ?: "#000000"),
+                "picture" to officer.picture,
+                "imgsvr" to officer.imageServer,
             )
 
-            val existing = hallOfFameRepository.findByServerIdAndTypeAndGeneralNo(serverId, type, general.id)
+            val existing = hallOfFameRepository.findByServerIdAndTypeAndGeneralNo(serverId, type, officer.id)
             if (existing == null) {
                 hallOfFameRepository.save(
                     HallOfFame(
                         serverId = serverId,
                         season = season,
                         scenario = scenario,
-                        generalNo = general.id,
+                        generalNo = officer.id,
                         type = type,
                         value = value,
-                        owner = general.userId?.toString(),
+                        owner = officer.userId?.toString(),
                         aux = aux,
                     )
                 )
             } else if (value > existing.value) {
                 existing.value = value
-                existing.owner = general.userId?.toString()
+                existing.owner = officer.userId?.toString()
                 existing.aux = aux
                 hallOfFameRepository.save(existing)
             }
@@ -364,11 +364,11 @@ class AdminService(
         actionCode: String,
         brief: String,
     ) {
-        val turn = officerTurnRepository.findByOfficerIdOrderByTurnIdx(general.id)
+        val turn = officerTurnRepository.findByOfficerIdOrderByTurnIdx(officer.id)
             .firstOrNull { it.turnIdx.toInt() == turnIdx }
             ?: OfficerTurn(
-                worldId = general.worldId,
-                generalId = general.id,
+                sessionId = officer.sessionId,
+                generalId = officer.id,
                 turnIdx = turnIdx.toShort(),
             )
 
@@ -441,7 +441,7 @@ class AdminService(
     fun broadcastMessage(worldId: Long, generalIds: List<Long>, message: String) {
         val messages = generalIds.map { generalId ->
             com.openlogh.entity.Message(
-                worldId = worldId,
+                sessionId = worldId,
                 mailboxCode = "private",
                 messageType = "admin",
                 srcId = 0,

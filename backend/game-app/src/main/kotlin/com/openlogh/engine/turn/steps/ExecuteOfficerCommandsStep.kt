@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component
  * execution happens before the pipeline runs in TurnService.processWorld().
  */
 @Component
-class ExecuteGeneralCommandsStep : TurnStep {
+class ExecuteOfficerCommandsStep : TurnStep {
     override val name = "ExecuteGeneralCommands"
     override val order = 100
 

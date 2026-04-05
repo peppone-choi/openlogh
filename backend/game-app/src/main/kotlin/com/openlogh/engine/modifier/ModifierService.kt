@@ -1,17 +1,17 @@
 package com.openlogh.engine.modifier
 
-import com.openlogh.entity.General
-import com.openlogh.entity.Nation
+import com.openlogh.entity.Officer
+import com.openlogh.entity.Faction
 import org.springframework.stereotype.Service
 
 @Service
 class ModifierService {
 
-    fun getModifiers(general: General, nation: Nation? = null): List<ActionModifier> {
+    fun getModifiers(general: Officer, nation: Faction? = null): List<ActionModifier> {
         val modifiers = mutableListOf<ActionModifier>()
 
         // 1. Nation type
-        nation?.typeCode?.let { NationTypeModifiers.get(it)?.let { m -> modifiers.add(m) } }
+        nation?.factionType?.let { NationTypeModifiers.get(it)?.let { m -> modifiers.add(m) } }
 
         // 2. Personality
         if (general.personalCode != "None") {
@@ -29,22 +29,22 @@ class ModifierService {
         }
 
         // 5. Items
-        if (general.weaponCode != "None") {
-            ItemModifiers.get(general.weaponCode)?.let { modifiers.add(it) }
+        if (general.flagshipCode != "None") {
+            ItemModifiers.get(general.flagshipCode)?.let { modifiers.add(it) }
         }
-        if (general.bookCode != "None") {
-            ItemModifiers.get(general.bookCode)?.let { modifiers.add(it) }
+        if (general.equipCode != "None") {
+            ItemModifiers.get(general.equipCode)?.let { modifiers.add(it) }
         }
-        if (general.horseCode != "None") {
-            ItemModifiers.get(general.horseCode)?.let { modifiers.add(it) }
+        if (general.engineCode != "None") {
+            ItemModifiers.get(general.engineCode)?.let { modifiers.add(it) }
         }
-        if (general.itemCode != "None") {
-            ItemModifiers.get(general.itemCode)?.let { modifiers.add(it) }
+        if (general.accessoryCode != "None") {
+            ItemModifiers.get(general.accessoryCode)?.let { modifiers.add(it) }
         }
 
         // 6. Officer level (legacy: TriggerOfficerLevel — leadership bonus, score bonus, war power)
         if (general.officerLevel > 0 && nation != null) {
-            modifiers.add(OfficerLevelModifier(general.officerLevel.toInt(), nation.level.toInt()))
+            modifiers.add(OfficerLevelModifier(general.officerLevel.toInt(), nation.factionRank.toInt()))
         }
 
         return modifiers

@@ -33,7 +33,7 @@ private fun parseFloat(x: Any?): Float? = when (x) {
 object ArgSchemas {
     val none = ArgSchema.NONE
 
-    val destCity = ArgSchema(
+    val destPlanet = ArgSchema(
         listOf(
             Field(
                 "destCityId",
@@ -44,7 +44,7 @@ object ArgSchemas {
         )
     )
 
-    val destNation = ArgSchema(
+    val destFaction = ArgSchema(
         listOf(
             Field(
                 "destNationId",
@@ -55,7 +55,7 @@ object ArgSchemas {
         )
     )
 
-    val destGeneral = ArgSchema(
+    val destOfficer = ArgSchema(
         listOf(
             Field(
                 "destGeneralId",
@@ -206,35 +206,35 @@ val COMMAND_SCHEMAS: Map<String, ArgSchema> = mapOf(
 
     "물자조달" to ArgSchemas.amountWithDirection,
     "군량매매" to ArgSchemas.amountWithDirection,
-    "헌납" to ArgSchemas.trade,
+    "헌납" to ArgSchemas.tradeRoute,
 
-    "출병" to ArgSchemas.destCity,
-    "이동" to ArgSchemas.destCity,
-    "집합" to ArgSchemas.destCity,
+    "출병" to ArgSchemas.destPlanet,
+    "이동" to ArgSchemas.destPlanet,
+    "집합" to ArgSchemas.destPlanet,
     "귀환" to ArgSchemas.none,
     "접경귀환" to ArgSchemas.none,
-    "강행" to ArgSchemas.destCity,
+    "강행" to ArgSchemas.destPlanet,
     "거병" to ArgSchemas.none,
     "전투태세" to ArgSchemas.none,
 
-    "화계" to ArgSchemas.destCity,
-    "첩보" to ArgSchemas.destCity,
-    "선동" to ArgSchemas.destCity,
+    "화계" to ArgSchemas.destPlanet,
+    "첩보" to ArgSchemas.destPlanet,
+    "선동" to ArgSchemas.destPlanet,
     "탈취" to ArgSchemas.destGeneralOptional,
-    "파괴" to ArgSchemas.destCity,
+    "파괴" to ArgSchemas.destPlanet,
 
-    "등용" to ArgSchemas.destGeneral,
-    "등용수락" to ArgSchemas.destGeneral,
-    "임관" to ArgSchemas.destNation,
+    "등용" to ArgSchemas.destOfficer,
+    "등용수락" to ArgSchemas.destOfficer,
+    "임관" to ArgSchemas.destFaction,
     "랜덤임관" to ArgSchemas.none,
-    "장수대상임관" to ArgSchemas.destGeneral,
+    "장수대상임관" to ArgSchemas.destOfficer,
     "하야" to ArgSchemas.none,
     "은퇴" to ArgSchemas.none,
 
     "건국" to ArgSchemas.foundNation,
     "무작위건국" to ArgSchemas.foundNation,
     "모반시도" to ArgSchemas.none,
-    "선양" to ArgSchemas.destGeneral,
+    "선양" to ArgSchemas.destOfficer,
     "해산" to ArgSchemas.none,
 
     "단련" to ArgSchemas.none,
@@ -242,12 +242,12 @@ val COMMAND_SCHEMAS: Map<String, ArgSchema> = mapOf(
     "방랑" to ArgSchemas.destCityOptional,
     "견문" to ArgSchemas.none,
     "인재탐색" to ArgSchemas.none,
-    "증여" to ArgSchemas.destGeneral,
+    "증여" to ArgSchemas.destOfficer,
     "장비매매" to ArgSchemas.equipment,
     "내정특기초기화" to ArgSchemas.none,
     "전투특기초기화" to ArgSchemas.none,
 
-    "요격" to ArgSchemas.destCity,
+    "요격" to ArgSchemas.destPlanet,
     "순찰" to ArgSchemas.none,
     "좌표이동" to ArgSchemas.coords,
 
@@ -257,39 +257,39 @@ val COMMAND_SCHEMAS: Map<String, ArgSchema> = mapOf(
 
     "Nation휴식" to ArgSchemas.none,
 
-    "포상" to ArgSchemas.destGeneral,
-    "몰수" to ArgSchemas.destGeneral,
+    "포상" to ArgSchemas.destOfficer,
+    "몰수" to ArgSchemas.destOfficer,
     "감축" to ArgSchemas.none,
     "증축" to ArgSchemas.none,
     "발령" to ArgSchemas.deployTarget,
-    "천도" to ArgSchemas.destCity,
-    "백성동원" to ArgSchemas.destCity,
-    "물자원조" to ArgSchemas.destNation,
+    "천도" to ArgSchemas.destPlanet,
+    "백성동원" to ArgSchemas.destPlanet,
+    "물자원조" to ArgSchemas.destFaction,
     "국기변경" to ArgSchemas.textInput,
     "국호변경" to ArgSchemas.textInput,
 
-    "선전포고" to ArgSchemas.destNation,
-    "종전제의" to ArgSchemas.destNation,
-    "종전수락" to ArgSchemas.destNation,
+    "선전포고" to ArgSchemas.destFaction,
+    "종전제의" to ArgSchemas.destFaction,
+    "종전수락" to ArgSchemas.destFaction,
     "불가침제의" to ArgSchemas.diplomacyWithTerm,
-    "불가침수락" to ArgSchemas.destNation,
-    "불가침파기제의" to ArgSchemas.destNation,
-    "불가침파기수락" to ArgSchemas.destNation,
+    "불가침수락" to ArgSchemas.destFaction,
+    "불가침파기제의" to ArgSchemas.destFaction,
+    "불가침파기수락" to ArgSchemas.destFaction,
 
     "칭제" to ArgSchemas.none,
     "천자맞이" to ArgSchemas.none,
     "선양요구" to ArgSchemas.none,
-    "신속" to ArgSchemas.destNation,
+    "신속" to ArgSchemas.destFaction,
     "독립선언" to ArgSchemas.none,
 
-    "급습" to ArgSchemas.destCity,
-    "수몰" to ArgSchemas.destCity,
-    "허보" to ArgSchemas.destNation,
-    "초토화" to ArgSchemas.destCity,
+    "급습" to ArgSchemas.destPlanet,
+    "수몰" to ArgSchemas.destPlanet,
+    "허보" to ArgSchemas.destFaction,
+    "초토화" to ArgSchemas.destPlanet,
     "필사즉생" to ArgSchemas.none,
-    "이호경식" to ArgSchemas.destNation,
-    "피장파장" to ArgSchemas.destNation,
-    "의병모집" to ArgSchemas.destCity,
+    "이호경식" to ArgSchemas.destFaction,
+    "피장파장" to ArgSchemas.destFaction,
+    "의병모집" to ArgSchemas.destPlanet,
 
     "극병연구" to ArgSchemas.none,
     "대검병연구" to ArgSchemas.none,
@@ -302,6 +302,6 @@ val COMMAND_SCHEMAS: Map<String, ArgSchema> = mapOf(
     "화시병연구" to ArgSchemas.none,
 
     "무작위수도이전" to ArgSchemas.none,
-    "부대탈퇴지시" to ArgSchemas.destGeneral,
-    "인구이동" to ArgSchemas.destCity,
+    "부대탈퇴지시" to ArgSchemas.destOfficer,
+    "인구이동" to ArgSchemas.destPlanet,
 )

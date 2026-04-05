@@ -2,7 +2,7 @@ package com.openlogh.engine.modifier
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
-import com.openlogh.entity.General
+import com.openlogh.entity.Officer
 import org.slf4j.LoggerFactory
 import kotlin.math.floor
 
@@ -61,7 +61,7 @@ class InheritBuffModifier private constructor(
         private val log = LoggerFactory.getLogger(InheritBuffModifier::class.java)
         private val mapper = ObjectMapper().registerModule(KotlinModule.Builder().build())
 
-        fun fromGeneral(general: General): InheritBuffModifier {
+        fun fromGeneral(general: Officer): InheritBuffModifier {
             val fromMeta = parseInheritBuff(general.meta["inheritBuff"])
             if (fromMeta.isNotEmpty()) {
                 return InheritBuffModifier(fromMeta)

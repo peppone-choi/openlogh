@@ -8,6 +8,6 @@ interface FactionRepository : JpaRepository<Faction, Long> {
     fun findBySessionId(sessionId: Long): List<Faction>
     fun findBySessionIdAndName(sessionId: Long, name: String): Faction?
 
-    @Query("SELECT COALESCE(AVG(f.gennum), 0) FROM Faction f WHERE f.sessionId = :sessionId AND f.level > 0")
+    @Query("SELECT COALESCE(AVG(f.officerCount), 0) FROM Faction f WHERE f.sessionId = :sessionId AND f.level > 0")
     fun getAverageGennum(sessionId: Long): Double
 }

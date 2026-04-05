@@ -2,13 +2,13 @@ package com.openlogh.engine
 
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.openlogh.entity.WorldState
+import com.openlogh.entity.SessionState
 import com.openlogh.entity.YearbookHistory
-import com.openlogh.repository.CityRepository
-import com.openlogh.repository.GeneralRepository
+import com.openlogh.repository.PlanetRepository
+import com.openlogh.repository.OfficerRepository
 import com.openlogh.repository.MessageRepository
-import com.openlogh.repository.NationRepository
-import com.openlogh.repository.WorldStateRepository
+import com.openlogh.repository.FactionRepository
+import com.openlogh.repository.SessionStateRepository
 import com.openlogh.repository.YearbookHistoryRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -19,10 +19,10 @@ import kotlin.math.sqrt
 
 @Service
 class YearbookService(
-    private val worldStateRepository: WorldStateRepository,
-    private val cityRepository: CityRepository,
-    private val nationRepository: NationRepository,
-    private val generalRepository: GeneralRepository,
+    private val sessionStateRepository: SessionStateRepository,
+    private val planetRepository: PlanetRepository,
+    private val factionRepository: FactionRepository,
+    private val officerRepository: OfficerRepository,
     private val messageRepository: MessageRepository,
     private val yearbookHistoryRepository: YearbookHistoryRepository,
     private val objectMapper: ObjectMapper,
@@ -68,7 +68,7 @@ class YearbookService(
 
     @Transactional
     fun saveMonthlySnapshot(worldId: Long, year: Int, month: Int): YearbookHistory {
-        val world = worldStateRepository.findById(worldId.toShort()).orElse(null)
+        val world = sessionStateRepository.findById(worldId.toShort()).orElse(null)
             ?: throw IllegalArgumentException("World not found: $worldId")
 
         val map = buildMapSnapshot(world, year, month)
@@ -91,9 +91,9 @@ class YearbookService(
         return yearbookHistoryRepository.save(entity)
     }
 
-    private fun buildMapSnapshot(world: WorldState, year: Int, month: Int): YearbookMap {
-        val cities = cityRepository.findByWorldId(world.id.toLong())
-        val nations = nationRepository.findByWorldId(world.id.toLong())
+    private fun buildMapSnapshot(world: SessionState, year: Int, month: Int): YearbookMap {
+        val cities = planetRepository.findBySessionId(world.id.toLong())
+        val nations = factionRepository.findBySessionId(world.id.toLong())
 
         val cityList = cities.map { city ->
             val stateInMeta = (city.meta["state"] as? Number)?.toInt()
@@ -102,7 +102,7 @@ class YearbookService(
                 id = city.id,
                 level = city.level.toInt(),
                 state = stateInMeta ?: city.state.toInt(),
-                nationId = city.nationId,
+                nationId = city.factionId,
                 region = regionInMeta ?: city.region.toInt(),
                 supplyFlag = if (city.supplyState.toInt() > 0) 1 else 0,
             )
@@ -113,7 +113,7 @@ class YearbookService(
                 id = nation.id,
                 name = nation.name,
                 color = nation.color,
-                capitalCityId = nation.capitalCityId ?: 0,
+                capitalCityId = nation.capitalPlanetId ?: 0,
             )
         }
 
@@ -128,10 +128,10 @@ class YearbookService(
         )
     }
 
-    private fun buildNationSnapshot(world: WorldState): List<YearbookNation> {
-        val cities = cityRepository.findByWorldId(world.id.toLong())
-        val generals = generalRepository.findByWorldId(world.id.toLong())
-        val nations = nationRepository.findByWorldId(world.id.toLong())
+    private fun buildNationSnapshot(world: SessionState): List<YearbookNation> {
+        val cities = planetRepository.findBySessionId(world.id.toLong())
+        val generals = officerRepository.findBySessionId(world.id.toLong())
+        val nations = factionRepository.findBySessionId(world.id.toLong())
 
         data class CityStats(var popSum: Long = 0, var valueSum: Long = 0, var maxSum: Long = 0)
         data class GeneralStats(var goldRice: Long = 0, var statPower: Double = 0.0, var expDed: Long = 0)
@@ -140,24 +140,24 @@ class YearbookService(
         val cityNamesByNation = mutableMapOf<Long, MutableList<String>>()
 
         for (city in cities) {
-            val entry = cityStatsByNation.getOrPut(city.nationId) { CityStats() }
-            val valueSum = city.pop + city.agri + city.comm + city.secu + city.wall + city.def
-            val maxSum = city.popMax + city.agriMax + city.commMax + city.secuMax + city.wallMax + city.defMax
-            entry.popSum += city.pop.toLong()
+            val entry = cityStatsByNation.getOrPut(city.factionId) { CityStats() }
+            val valueSum = city.population + city.production + city.commerce + city.security + city.fortress + city.orbitalDefense
+            val maxSum = city.populationMax + city.productionMax + city.commerceMax + city.securityMax + city.fortressMax + city.orbitalDefenseMax
+            entry.popSum += city.population.toLong()
             entry.valueSum += valueSum.toLong()
             entry.maxSum += maxSum.toLong()
 
-            cityNamesByNation.getOrPut(city.nationId) { mutableListOf() }.add(city.name)
+            cityNamesByNation.getOrPut(city.factionId) { mutableListOf() }.add(city.name)
         }
 
         val generalStatsByNation = mutableMapOf<Long, GeneralStats>()
         for (general in generals) {
-            val entry = generalStatsByNation.getOrPut(general.nationId) { GeneralStats() }
-            entry.goldRice += (general.gold + general.rice).toLong()
+            val entry = generalStatsByNation.getOrPut(general.factionId) { GeneralStats() }
+            entry.goldRice += (general.funds + general.supplies).toLong()
 
             val leadership = general.leadership.toDouble()
-            val strength = general.strength.toDouble()
-            val intel = general.intel.toDouble()
+            val strength = general.command.toDouble()
+            val intel = general.intelligence.toDouble()
             val npcMultiplier = if (general.npcState < 2) 1.2 else 1.0
             val leaderCore = if (leadership >= 40) leadership else 0.0
 
@@ -169,9 +169,9 @@ class YearbookService(
             val generalStats = generalStatsByNation[nation.id] ?: GeneralStats()
             val cityStats = cityStatsByNation[nation.id] ?: CityStats()
 
-            val resource = (((nation.gold + nation.rice).toLong() + generalStats.goldRice) / 100.0).roundToInt()
-            val tech = ((nation.meta["tech"] as? Number)?.toDouble() ?: nation.tech.toDouble()).roundToInt()
-            val cityPower = if (nation.level.toInt() > 0 && cityStats.maxSum > 0L) {
+            val resource = (((nation.funds + nation.supplies).toLong() + generalStats.goldRice) / 100.0).roundToInt()
+            val tech = ((nation.meta["tech"] as? Number)?.toDouble() ?: nation.techLevel.toDouble()).roundToInt()
+            val cityPower = if (nation.factionRank.toInt() > 0 && cityStats.maxSum > 0L) {
                 ((cityStats.popSum * cityStats.valueSum).toDouble() / cityStats.maxSum / 100.0).roundToInt()
             } else {
                 0
@@ -183,14 +183,14 @@ class YearbookService(
                 id = nation.id,
                 name = nation.name,
                 color = nation.color,
-                level = nation.level.toInt(),
+                level = nation.factionRank.toInt(),
                 power = power,
                 cities = cityNamesByNation[nation.id] ?: emptyList(),
             )
         }
     }
 
-    private fun resolveStartYear(world: WorldState): Int {
+    private fun resolveStartYear(world: SessionState): Int {
         val scenarioMeta = world.meta["scenarioMeta"] as? Map<*, *>
         val fromMeta = (scenarioMeta?.get("startYear") as? Number)?.toInt()
         if (fromMeta != null) {

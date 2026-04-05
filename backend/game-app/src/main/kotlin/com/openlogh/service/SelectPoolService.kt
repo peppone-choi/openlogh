@@ -17,7 +17,7 @@ class SelectPoolService(
     @Transactional
     fun create(worldId: Long, uniqueName: String, info: Map<String, Any>): SelectPool {
         return selectPoolRepository.save(
-            SelectPool(worldId = worldId, uniqueName = uniqueName, info = info.toMutableMap()),
+            SelectPool(sessionId = worldId, uniqueName = uniqueName, info = info.toMutableMap()),
         )
     }
 
@@ -26,7 +26,7 @@ class SelectPoolService(
         return entries.mapIndexed { idx, entry ->
             val name = (entry["uniqueName"] as? String) ?: "pool-${idx + 1}"
             selectPoolRepository.save(
-                SelectPool(worldId = worldId, uniqueName = name, info = entry.toMutableMap()),
+                SelectPool(sessionId = worldId, uniqueName = name, info = entry.toMutableMap()),
             )
         }
     }

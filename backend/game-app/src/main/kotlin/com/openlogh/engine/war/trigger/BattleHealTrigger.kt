@@ -1,7 +1,7 @@
 package com.openlogh.engine.war.trigger
 
 import com.openlogh.engine.war.BattleTriggerContext
-import com.openlogh.engine.war.WarUnitGeneral
+import com.openlogh.engine.war.WarUnitOfficer
 import com.openlogh.engine.war.WarUnitTrigger
 import com.openlogh.engine.war.WarUnitTriggerRegistry
 import kotlin.math.floor
@@ -26,7 +26,7 @@ object BattleHealTrigger : WarUnitTrigger {
 
         // 발동 (activation)
         ctx.defenderDamage = floor(ctx.defenderDamage * 0.7).toInt()
-        if (ctx.attacker is WarUnitGeneral) {
+        if (ctx.attacker is WarUnitOfficer) {
             ctx.attacker.injury = 0
         }
         ctx.battleLogs.add("의술 발동! 피해를 줄이고 부상을 회복했다!")

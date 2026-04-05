@@ -1,12 +1,12 @@
 package com.openlogh.command.general
 
 import com.openlogh.command.CommandEnv
-import com.openlogh.entity.General
+import com.openlogh.entity.Officer
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.random.Random
 
-class 파괴(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
+class 파괴(general: Officer, env: CommandEnv, arg: Map<String, Any>? = null)
     : 화계(general, env, arg) {
 
     override val actionName = "파괴"
@@ -14,9 +14,9 @@ class 파괴(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
     override val injuryGeneral = true
 
     override fun affectDestCity(rng: Random, injuryCount: Int): Map<String, Any> {
-        val dc = destCity!!
-        val defAmount = min(max(rng.nextInt(env.sabotageDamageMin, env.sabotageDamageMax + 1), 0), dc.def)
-        val wallAmount = min(max(rng.nextInt(env.sabotageDamageMin, env.sabotageDamageMax + 1), 0), dc.wall)
+        val dc = destPlanet!!
+        val defAmount = min(max(rng.nextInt(env.sabotageDamageMin, env.sabotageDamageMax + 1), 0), dc.orbitalDefense)
+        val wallAmount = min(max(rng.nextInt(env.sabotageDamageMin, env.sabotageDamageMax + 1), 0), dc.fortress)
 
         pushGlobalActionLog("누군가가 <G><b>${dc.name}</b></>의 성벽을 허물었습니다.")
         pushLog("<G><b>${dc.name}</b></>에 ${actionName}${josa(actionName, "이")} 성공했습니다. <1>${formatDate()}</>")

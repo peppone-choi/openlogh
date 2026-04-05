@@ -1,8 +1,8 @@
 package com.openlogh.engine
 
-import com.openlogh.entity.City
-import com.openlogh.entity.General
-import com.openlogh.entity.Nation
+import com.openlogh.entity.Planet
+import com.openlogh.entity.Officer
+import com.openlogh.entity.Faction
 import org.springframework.stereotype.Service
 import kotlin.math.floor
 
@@ -88,17 +88,17 @@ data class UnitSetDefinition(
 )
 
 data class CrewTypeAvailabilityContext(
-    val general: General,
-    val nation: Nation?,
+    val general: Officer,
+    val nation: Faction?,
     val mapCities: List<MapCityDefinition>,
-    val ownedCities: List<City>,
+    val ownedCities: List<Planet>,
     val currentYear: Int? = null,
     val startYear: Int? = null,
     val regionMap: Map<String, Int> = emptyMap(),
 )
 
 @Service
-class CrewTypeAvailability {
+class ShipClassAvailability {
 
     fun parseUnitSetDefinition(data: Map<String, Any?>): UnitSetDefinition {
         val id = data["id"].asString("unknown")
@@ -121,8 +121,8 @@ class CrewTypeAvailability {
     ): Boolean {
         val crewType = unitSet.crewTypes.firstOrNull { it.id == crewTypeId } ?: return false
 
-        val nationId = context.nation?.id ?: context.general.nationId
-        val ownedCities = context.ownedCities.filter { it.nationId == nationId }
+        val nationId = context.nation?.id ?: context.general.factionId
+        val ownedCities = context.ownedCities.filter { it.factionId == nationId }
         val ownedCityMap = ownedCities.associateBy { it.id.toInt() }
 
         val nameToId = context.mapCities.associate { it.name to it.id }
@@ -288,15 +288,15 @@ class CrewTypeAvailability {
         return result
     }
 
-    private fun resolveNationTech(nation: Nation?): Int {
+    private fun resolveNationTech(nation: Faction?): Int {
         if (nation == null) {
             return 0
         }
         val fromMeta = (nation.meta["tech"] as? Number)?.toInt()
-        return fromMeta ?: nation.tech.toInt()
+        return fromMeta ?: nation.techLevel.toInt()
     }
 
-    private fun resolveNationAux(nation: Nation?): Map<String, Any?> {
+    private fun resolveNationAux(nation: Faction?): Map<String, Any?> {
         if (nation == null) {
             return emptyMap()
         }

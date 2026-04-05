@@ -6,7 +6,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 /**
- * Syncs the general's icon/picture from the member (account) profile.
+ * Syncs the officer's icon/picture from the member (account) profile.
  * Legacy: j_adjust_icon.php
  */
 @Service
@@ -29,10 +29,10 @@ class IconSyncService(
         val userPicture = user.meta["picture"] as? String
         val userImageServer = (user.meta["imageServer"] as? Number)?.toShort()
 
-        for (general in generals) {
-            if (userPicture != null) general.picture = userPicture
-            if (userImageServer != null) general.imageServer = userImageServer
-            officerRepository.save(general)
+        for (officer in generals) {
+            if (userPicture != null) officer.picture = userPicture
+            if (userImageServer != null) officer.imageServer = userImageServer
+            officerRepository.save(officer)
         }
 
         return SyncResult(true, "success")

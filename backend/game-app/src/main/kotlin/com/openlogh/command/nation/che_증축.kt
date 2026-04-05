@@ -4,19 +4,19 @@ import com.openlogh.command.CommandCost
 import com.openlogh.command.CommandEnv
 import com.openlogh.command.CommandResult
 import com.openlogh.command.LastTurn
-import com.openlogh.command.NationCommand
+import com.openlogh.command.FactionCommand
 import com.openlogh.command.constraint.*
-import com.openlogh.entity.General
-import com.openlogh.service.CityService.Companion.EXPAND_CITY_COST_COEF
-import com.openlogh.service.CityService.Companion.EXPAND_CITY_DEFAULT_COST
-import com.openlogh.service.CityService.Companion.EXPAND_CITY_DEVEL_INCREASE
-import com.openlogh.service.CityService.Companion.EXPAND_CITY_POP_INCREASE
-import com.openlogh.service.CityService.Companion.EXPAND_CITY_WALL_INCREASE
+import com.openlogh.entity.Officer
+import com.openlogh.service.PlanetService.Companion.EXPAND_CITY_COST_COEF
+import com.openlogh.service.PlanetService.Companion.EXPAND_CITY_DEFAULT_COST
+import com.openlogh.service.PlanetService.Companion.EXPAND_CITY_DEVEL_INCREASE
+import com.openlogh.service.PlanetService.Companion.EXPAND_CITY_POP_INCREASE
+import com.openlogh.service.PlanetService.Companion.EXPAND_CITY_WALL_INCREASE
 import com.openlogh.util.JosaUtil
 import kotlin.random.Random
 
-class che_증축(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
-    : NationCommand(general, env, arg) {
+class che_증축(general: Officer, env: CommandEnv, arg: Map<String, Any>? = null)
+    : FactionCommand(general, env, arg) {
 
     override val actionName = "증축"
 
@@ -28,7 +28,7 @@ class che_증축(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
             val baseRice = (env.gameStor["baseRice"] as? Number)?.toInt()
                 ?: (env.gameStor["baserice"] as? Number)?.toInt() ?: 2000
             val levelConstraints = buildList {
-                val destLevel = destCity?.level?.toInt() ?: city?.level?.toInt()
+                val destLevel = destPlanet?.level?.toInt() ?: city?.level?.toInt()
                 if (destLevel != null && destLevel <= 3) {
                     add(AlwaysFail("수진, 진, 관문에서는 불가능합니다."))
                 }
@@ -60,7 +60,7 @@ class che_증축(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
 
     override suspend fun run(rng: Random): CommandResult {
         val n = nation ?: return CommandResult(false, logs, "국가 정보를 찾을 수 없습니다")
-        val c = destCity ?: city ?: return CommandResult(false, logs, "수도 도시 정보를 찾을 수 없습니다")
+        val c = destPlanet ?: city ?: return CommandResult(false, logs, "수도 도시 정보를 찾을 수 없습니다")
 
         if (c.level < 4.toShort()) {
             return CommandResult(false, logs, "수진, 진, 관문에서는 불가능합니다.")
@@ -72,16 +72,16 @@ class che_증축(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
         val date = formatDate()
         val cost = getCost()
 
-        n.gold -= cost.gold
-        n.rice -= cost.rice
+        n.funds -= cost.funds
+        n.supplies -= cost.supplies
 
         c.level = (c.level + 1).toShort()
-        c.popMax += EXPAND_CITY_POP_INCREASE
-        c.agriMax += EXPAND_CITY_DEVEL_INCREASE
-        c.commMax += EXPAND_CITY_DEVEL_INCREASE
-        c.secuMax += EXPAND_CITY_DEVEL_INCREASE
-        c.defMax += EXPAND_CITY_WALL_INCREASE
-        c.wallMax += EXPAND_CITY_WALL_INCREASE
+        c.populationMax += EXPAND_CITY_POP_INCREASE
+        c.productionMax += EXPAND_CITY_DEVEL_INCREASE
+        c.commerceMax += EXPAND_CITY_DEVEL_INCREASE
+        c.securityMax += EXPAND_CITY_DEVEL_INCREASE
+        c.orbitalDefenseMax += EXPAND_CITY_WALL_INCREASE
+        c.fortressMax += EXPAND_CITY_WALL_INCREASE
 
         val currentCapSet = (n.meta["capSet"] as? Number)?.toInt() ?: 0
         n.meta["capSet"] = currentCapSet + 1

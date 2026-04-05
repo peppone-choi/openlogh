@@ -21,9 +21,9 @@ class TrafficSnapshotStep(
     override val order = 700
 
     override fun execute(context: TurnContext) {
-        val onlineCount = worldPortFactory.create(context.worldId).allGenerals().count { it.userId != null }
+        val onlineCount = worldPortFactory.create(context.sessionId).allOfficers().count { it.userId != null }
         val snapshot = TrafficSnapshot(
-            worldId = context.worldId,
+            sessionId = context.sessionId,
             year = context.world.currentYear,
             month = context.world.currentMonth,
             refresh = (context.world.meta["refresh"] as? Number)?.toInt() ?: 0,

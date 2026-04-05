@@ -3,22 +3,22 @@ package com.openlogh.command.general
 import com.openlogh.command.CommandCost
 import com.openlogh.command.CommandEnv
 import com.openlogh.command.CommandResult
-import com.openlogh.command.GeneralCommand
+import com.openlogh.command.OfficerCommand
 import com.openlogh.command.constraint.*
-import com.openlogh.entity.General
+import com.openlogh.entity.Officer
 import kotlin.math.pow
 import kotlin.math.sqrt
 import kotlin.random.Random
 
-class 인재탐색(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
-    : GeneralCommand(general, env, arg) {
+class 인재탐색(general: Officer, env: CommandEnv, arg: Map<String, Any>? = null)
+    : OfficerCommand(general, env, arg) {
 
     override val actionName = "인재탐색"
 
     override val fullConditionConstraints: List<Constraint> by lazy {
         listOf(
-            ReqGeneralGold(getCost().gold),
-            ReqGeneralRice(getCost().rice),
+            ReqGeneralGold(getCost().funds),
+            ReqGeneralRice(getCost().supplies),
         )
     }
 
@@ -37,12 +37,12 @@ class 인재탐색(general: General, env: CommandEnv, arg: Map<String, Any>? = n
 
     override suspend fun run(rng: Random): CommandResult {
         val date = formatDate()
-        val reqGold = getCost().gold
+        val reqGold = getCost().funds
 
         // Weighted random stat increase (legacy PHP parity)
         val leadershipW = general.leadership.toInt().coerceAtLeast(1)
-        val strengthW = general.strength.toInt().coerceAtLeast(1)
-        val intelW = general.intel.toInt().coerceAtLeast(1)
+        val strengthW = general.command.toInt().coerceAtLeast(1)
+        val intelW = general.intelligence.toInt().coerceAtLeast(1)
         val totalWeight = leadershipW + strengthW + intelW
         val rand = rng.nextInt(totalWeight)
         val incStat = when {

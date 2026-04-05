@@ -30,32 +30,32 @@ class MessageService(
     }
 
     fun getMessages(generalId: Long, sinceId: Long? = null, limit: Int? = null): List<Message> {
-        val general = officerRepository.findById(generalId).orElse(null) ?: return emptyList()
+        val officer = officerRepository.findById(generalId).orElse(null) ?: return emptyList()
         val privateMessages = if (sinceId != null) {
             messageRepository.findConversationByMailboxTypeAndOwnerIdAndIdGreaterThan(MAILBOX_PRIVATE, generalId, sinceId)
         } else {
             messageRepository.findConversationByMailboxTypeAndOwnerId(MAILBOX_PRIVATE, generalId)
         }
 
-        val nationalMessages = if (general.nationId != 0L) {
+        val nationalMessages = if (officer.factionId != 0L) {
             if (sinceId != null) {
                 messageRepository.findByDestIdAndMailboxTypeAndIdGreaterThanOrderBySentAtDesc(
-                    general.nationId,
+                    officer.factionId,
                     MAILBOX_NATIONAL,
                     sinceId,
                 )
             } else {
-                messageRepository.findByDestIdAndMailboxTypeOrderBySentAtDesc(general.nationId, MAILBOX_NATIONAL)
+                messageRepository.findByDestIdAndMailboxTypeOrderBySentAtDesc(officer.factionId, MAILBOX_NATIONAL)
             }
         } else {
             emptyList()
         }
 
-        val diplomacyMessages = if (general.nationId != 0L && general.officerLevel >= 4) {
+        val diplomacyMessages = if (officer.factionId != 0L && officer.officerLevel >= 4) {
             if (sinceId != null) {
-                messageRepository.findConversationByMailboxTypeAndOwnerIdAndIdGreaterThan(MAILBOX_DIPLOMACY, general.nationId, sinceId)
+                messageRepository.findConversationByMailboxTypeAndOwnerIdAndIdGreaterThan(MAILBOX_DIPLOMACY, officer.factionId, sinceId)
             } else {
-                messageRepository.findConversationByMailboxTypeAndOwnerId(MAILBOX_DIPLOMACY, general.nationId)
+                messageRepository.findConversationByMailboxTypeAndOwnerId(MAILBOX_DIPLOMACY, officer.factionId)
             }
         } else {
             emptyList()
@@ -143,7 +143,7 @@ class MessageService(
             val recipientNationIds = linkedSetOf(srcId, destId)
             val copies = recipientNationIds.map { nationId ->
                 Message(
-                    worldId = worldId,
+                    sessionId = worldId,
                     mailboxCode = mailboxCode,
                     mailboxType = resolvedMailboxType,
                     messageType = messageType,
@@ -157,7 +157,7 @@ class MessageService(
 
         return messageRepository.save(
             Message(
-                worldId = worldId,
+                sessionId = worldId,
                 mailboxCode = mailboxCode,
                 mailboxType = resolvedMailboxType,
                 messageType = messageType,
@@ -189,9 +189,9 @@ class MessageService(
             ContactInfo(
                 generalId = gen.id,
                 name = gen.name,
-                nationId = gen.nationId,
-                nationName = nations[gen.nationId]?.name ?: "",
-                nationColor = nations[gen.nationId]?.color,
+                nationId = gen.factionId,
+                nationName = nations[gen.factionId]?.name ?: "",
+                nationColor = nations[gen.factionId]?.color,
                 picture = gen.picture,
             )
         }
@@ -360,11 +360,11 @@ class MessageService(
 
         if (receiver.officerLevel >= 20) throw IllegalStateException("군주는 등용장을 수락할 수 없습니다.")
 
-        val destNation = factionRepository.findById(fromNationId).orElse(null)
+        val destFaction = factionRepository.findById(fromNationId).orElse(null)
             ?: throw IllegalStateException("대상 국가가 존재하지 않습니다.")
-        if (destNation.level <= 0) throw IllegalStateException("방랑군에는 임관할 수 없습니다.")
+        if (destFaction.level <= 0) throw IllegalStateException("방랑군에는 임관할 수 없습니다.")
 
-        val world = sessionStateRepository.findById(receiver.worldId.toShort()).orElse(null)
+        val world = sessionStateRepository.findById(receiver.sessionId.toShort()).orElse(null)
         if (world != null) {
             val startYear = (world.config["startyear"] as? Number)?.toInt() ?: world.currentYear.toInt()
             val openingPartYears = (world.config["openingPartYears"] as? Number)?.toInt() ?: 3
@@ -378,14 +378,14 @@ class MessageService(
             }
         }
 
-        val oldNationId = receiver.nationId
-        val isTroopLeader = receiver.troopId == receiver.id
+        val oldNationId = receiver.factionId
+        val isTroopLeader = receiver.fleetId == receiver.id
 
-        if (oldNationId != 0L && receiver.gold > 1000) {
-            receiver.gold = 1000
+        if (oldNationId != 0L && receiver.funds > 1000) {
+            receiver.funds = 1000
         }
-        if (oldNationId != 0L && receiver.rice > 1000) {
-            receiver.rice = 1000
+        if (oldNationId != 0L && receiver.supplies > 1000) {
+            receiver.supplies = 1000
         }
 
         if (oldNationId != 0L) {
@@ -398,18 +398,18 @@ class MessageService(
             receiver.dedication += 100
         }
 
-        receiver.nationId = fromNationId
-        receiver.cityId = destNation.capitalCityId ?: receiver.cityId
+        receiver.factionId = fromNationId
+        receiver.planetId = destFaction.capitalPlanetId ?: receiver.planetId
         receiver.officerLevel = 1
         receiver.officerCity = 0
         receiver.permission = "normal"
         receiver.belong = 1
-        receiver.troopId = 0
+        receiver.fleetId = 0
 
         if (isTroopLeader) {
             officerRepository.findByFleetId(receiverGeneralId).forEach { member ->
                 if (member.id != receiverGeneralId) {
-                    member.troopId = 0
+                    member.fleetId = 0
                     officerRepository.save(member)
                 }
             }
@@ -429,7 +429,7 @@ class MessageService(
             officerRepository.save(recruiter)
         }
 
-        return destNation.name
+        return destFaction.name
     }
 
     @Transactional
@@ -461,7 +461,7 @@ class MessageService(
         }
 
         return when (mailboxCode) {
-            "secret", "national", "nation" -> MAILBOX_NATIONAL
+            "secret", "national", "faction" -> MAILBOX_NATIONAL
             "personal", "message", "private" -> MAILBOX_PRIVATE
             "diplomacy", "diplomacy_letter" -> MAILBOX_DIPLOMACY
             else -> MAILBOX_PUBLIC

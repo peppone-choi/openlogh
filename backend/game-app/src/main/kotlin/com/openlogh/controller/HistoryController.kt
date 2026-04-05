@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*
 @RequestMapping("/api")
 class HistoryController(
     private val historyService: HistoryService,
-    private val worldStateRepository: com.openlogh.repository.WorldStateRepository,
+    private val sessionStateRepository: com.openlogh.repository.SessionStateRepository,
 ) {
     @GetMapping("/worlds/{worldId}/history")
     fun getWorldHistory(
@@ -23,7 +23,7 @@ class HistoryController(
         } else {
             historyService.getWorldHistory(worldId)
         }
-        val world = worldStateRepository.findById(worldId.toShort()).orElse(null)
+        val world = sessionStateRepository.findById(worldId.toShort()).orElse(null)
         val currentYear = world?.currentYear?.toInt() ?: Int.MAX_VALUE
         val currentMonth = world?.currentMonth?.toInt() ?: 12
         val filtered = data.filter { record ->

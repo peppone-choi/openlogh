@@ -88,7 +88,7 @@ class NationEvent(
     val nationId: Long,
     val nationEventType: String, // "founded", "destroyed", "level_up", "capital_moved", "policy_changed"
     val detail: Map<String, Any> = emptyMap(),
-) : GameEvent(source, worldId, year, month, "nation") {
+) : GameEvent(source, worldId, year, month, "faction") {
     override fun toPayload() = super.toPayload().apply {
         put("nationId", nationId)
         put("nationEventType", nationEventType)
@@ -102,7 +102,7 @@ class GeneralEvent(
     val nationId: Long = 0,
     val generalEventType: String, // "joined", "defected", "died", "promoted", "level_up", "command_executed"
     val detail: Map<String, Any> = emptyMap(),
-) : GameEvent(source, worldId, year, month, "general") {
+) : GameEvent(source, worldId, year, month, "officer") {
     override fun toPayload() = super.toPayload().apply {
         put("generalId", generalId)
         put("nationId", nationId)
@@ -139,7 +139,7 @@ class GameEventService(
     }
 
     fun broadcastCityUpdate(worldId: Long, cityId: Long, data: Any) {
-        messagingTemplate.convertAndSend("/topic/world/$worldId/city/$cityId", data)
+        messagingTemplate.convertAndSend("/topic/world/$worldId/planet/$cityId", data)
     }
 
     fun broadcastBattle(worldId: Long, data: Any) {
@@ -147,7 +147,7 @@ class GameEventService(
     }
 
     fun sendToOfficer(generalId: Long, data: Any) {
-        messagingTemplate.convertAndSend("/topic/general/$generalId", data)
+        messagingTemplate.convertAndSend("/topic/officer/$generalId", data)
     }
 
     fun broadcastTurnAdvance(worldId: Long, year: Int, month: Int) {
@@ -214,7 +214,7 @@ class GameEventService(
     }
 
     /**
-     * Convenience: fire a nation event.
+     * Convenience: fire a faction event.
      */
     fun fireNation(
         worldId: Long, year: Short, month: Short,
@@ -225,7 +225,7 @@ class GameEventService(
     }
 
     /**
-     * Convenience: fire a general event.
+     * Convenience: fire a officer event.
      */
     fun fireOfficer(
         worldId: Long, year: Short, month: Short,
@@ -253,7 +253,7 @@ class GameEventService(
     fun onGameEvent(event: GameEvent) {
         // 1. Persist to world_history table
         val history = WorldHistory(
-            worldId = event.worldId,
+            worldId = event.sessionId,
             year = event.year,
             month = event.month,
             eventType = event.eventType,
@@ -265,33 +265,33 @@ class GameEventService(
         val payload = event.toPayload().apply { put("historyId", history.id) }
         when (event) {
             is BattleEvent -> {
-                broadcastBattle(event.worldId, payload)
+                broadcastBattle(event.sessionId, payload)
                 sendToOfficer(event.attackerGeneralId, payload)
                 sendToOfficer(event.defenderGeneralId, payload)
             }
             is TurnEvent -> {
-                broadcastTurnAdvance(event.worldId, event.year.toInt(), event.month.toInt())
-                broadcastWorldUpdate(event.worldId, payload)
+                broadcastTurnAdvance(event.sessionId, event.year.toInt(), event.month.toInt())
+                broadcastWorldUpdate(event.sessionId, payload)
             }
             is DiplomacyEvent -> {
-                broadcastWorldUpdate(event.worldId, payload)
+                broadcastWorldUpdate(event.sessionId, payload)
             }
             is NationEvent -> {
-                broadcastWorldUpdate(event.worldId, payload)
+                broadcastWorldUpdate(event.sessionId, payload)
             }
             is GeneralEvent -> {
                 sendToOfficer(event.generalId, payload)
-                broadcastWorldUpdate(event.worldId, payload)
+                broadcastWorldUpdate(event.sessionId, payload)
             }
             is CommandEvent -> {
-                broadcastCommand(event.worldId, event.generalId, payload)
+                broadcastCommand(event.sessionId, event.generalId, payload)
             }
             else -> {
-                broadcastWorldUpdate(event.worldId, payload)
+                broadcastWorldUpdate(event.sessionId, payload)
             }
         }
 
-        log.debug("[World {}] Event logged: type={}, id={}", event.worldId, event.eventType, history.id)
+        log.debug("[World {}] Event logged: type={}, id={}", event.sessionId, event.eventType, history.id)
     }
 
     // ── Event Query API ──
@@ -318,15 +318,15 @@ class GameEventService(
     }
 
     /**
-     * Query events by general ID (searches payload JSONB).
+     * Query events by officer ID (searches payload JSONB).
      */
     fun getEventsByOfficer(worldId: Long, generalId: Long): List<WorldHistory> {
-        return worldHistoryRepository.findBySessionIdAndEventType(worldId, "general")
+        return worldHistoryRepository.findBySessionIdAndEventType(worldId, "officer")
             .filter { (it.payload["generalId"] as? Number)?.toLong() == generalId }
     }
 
     /**
-     * Query events by nation ID (searches payload JSONB).
+     * Query events by faction ID (searches payload JSONB).
      */
     fun getEventsByNation(worldId: Long, nationId: Long): List<WorldHistory> {
         return worldHistoryRepository.findBySessionId(worldId)

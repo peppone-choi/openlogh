@@ -1,7 +1,7 @@
 package com.openlogh.engine
 
-import com.openlogh.entity.General
-import com.openlogh.entity.WorldState
+import com.openlogh.entity.Officer
+import com.openlogh.entity.SessionState
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import kotlin.math.roundToInt
@@ -104,7 +104,7 @@ class SpecialAssignmentService {
         val weight: Int,
     )
 
-    fun checkAndAssignSpecials(world: WorldState, generals: List<General>) {
+    fun checkAndAssignSpecials(world: SessionState, generals: List<Officer>) {
         val startYear = try {
             (world.config["startYear"] as? Number)?.toInt() ?: world.currentYear.toInt()
         } catch (e: Exception) {
@@ -169,17 +169,17 @@ class SpecialAssignmentService {
         return (wait + age).coerceIn(0, 100).toShort()
     }
 
-    private fun getPrevSpecials(general: General, metaKey: String): List<String> {
+    private fun getPrevSpecials(general: Officer, metaKey: String): List<String> {
         val raw = general.meta[metaKey]
         if (raw !is Iterable<*>) return emptyList()
         return raw.mapNotNull { it as? String }
     }
 
-    private fun calcStatCondition(general: General): Int {
+    private fun calcStatCondition(general: Officer): Int {
         var cond = 0
         val leadership = general.leadership.toInt()
-        val strength = general.strength.toInt()
-        val intel = general.intel.toInt()
+        val strength = general.command.toInt()
+        val intel = general.intelligence.toInt()
 
         if (leadership > CHIEF_STAT_MIN) {
             cond = cond or STAT_LEADERSHIP
@@ -214,7 +214,7 @@ class SpecialAssignmentService {
      * Legacy: calcCondDexterity() in SpecialityHelper.php
      * Returns 0 (no dexterity condition) or an ARMY_* flag.
      */
-    private fun calcCondDexterity(rng: Random, general: General): Int {
+    private fun calcCondDexterity(rng: Random, general: Officer): Int {
         val dexEntries = DEX_ARMY_MAP.map { (key, flag) ->
             flag to ((general.meta[key] as? Number)?.toInt() ?: 0)
         }
@@ -239,7 +239,7 @@ class SpecialAssignmentService {
         return if (maxFlags.size == 1) maxFlags[0] else maxFlags.random(rng)
     }
 
-    private fun pickDomesticSpecial(rng: Random, general: General, prevSpecials: List<String>): String? {
+    private fun pickDomesticSpecial(rng: Random, general: Officer, prevSpecials: List<String>): String? {
         val myCond = calcStatCondition(general)
         val candidates = buildCandidates(DOMESTIC_SPECIALS, myCond, prevSpecials)
 
@@ -255,7 +255,7 @@ class SpecialAssignmentService {
      * War special selection with dexterity-based priority.
      * Legacy: pickSpecialWar() in SpecialityHelper.php
      */
-    private fun pickWarSpecial(rng: Random, general: General, prevSpecials: List<String>): String? {
+    private fun pickWarSpecial(rng: Random, general: Officer, prevSpecials: List<String>): String? {
         var myCond = calcStatCondition(general)
         myCond = myCond or calcCondDexterity(rng, general)
         myCond = myCond or REQ_DEXTERITY

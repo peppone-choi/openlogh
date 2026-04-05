@@ -199,9 +199,9 @@ object 저격Trigger : BattleTrigger {
     }
 
     override fun onPostCritical(ctx: BattleTriggerContext): BattleTriggerContext {
-        if (ctx.criticalActivated && ctx.defender is WarUnitGeneral) {
+        if (ctx.criticalActivated && ctx.defender is WarUnitOfficer) {
             // Legacy: snipe proc applies wound (2-6 turns)
-            val woundChance = ctx.attacker.strength / 200.0
+            val woundChance = ctx.attacker.command / 200.0
             if (ctx.rng.nextDouble() < woundChance) {
                 ctx.snipeActivated = true
                 ctx.snipeWoundAmount = ctx.rng.nextInt(2, 7)
@@ -302,7 +302,7 @@ object 귀모Trigger : BattleTrigger {
 
     override fun onMagicFail(ctx: BattleTriggerContext): BattleTriggerContext {
         // Failed stratagem causes self-damage proportional to intel
-        ctx.magicFailDamage += ctx.attacker.intel * 0.5
+        ctx.magicFailDamage += ctx.attacker.intelligence * 0.5
         ctx.battleLogs.add("계략 실패! 역효과 발생!")
         return ctx
     }
@@ -529,8 +529,8 @@ object Che돌격Trigger : BattleTrigger {
     override fun onBattleInit(ctx: BattleTriggerContext): BattleTriggerContext {
         ctx.phaseNumber += 2
 
-        val attackerType = CrewType.fromCode(ctx.attacker.crewType)
-        val defenderType = CrewType.fromCode(ctx.defender.crewType)
+        val attackerType = CrewType.fromCode(ctx.attacker.shipClass)
+        val defenderType = CrewType.fromCode(ctx.defender.shipClass)
         if (attackerType != null && defenderType != null) {
             val attackCoef = attackerType.getAttackCoef(defenderType)
             if (attackCoef >= 1.0) {
@@ -644,19 +644,19 @@ object Che약탈FireTrigger : BattleTrigger {
             return ctx
         }
 
-        val self = ctx.attacker as? WarUnitGeneral ?: return ctx
-        val oppose = ctx.defender as? WarUnitGeneral ?: return ctx
+        val self = ctx.attacker as? WarUnitOfficer ?: return ctx
+        val oppose = ctx.defender as? WarUnitOfficer ?: return ctx
 
-        val theftGold = floor(oppose.general.gold * ctx.plunderRatio).toInt().coerceAtLeast(0)
-        val theftRice = floor(oppose.general.rice * ctx.plunderRatio).toInt().coerceAtLeast(0)
+        val theftGold = floor(oppose.general.funds * ctx.plunderRatio).toInt().coerceAtLeast(0)
+        val theftRice = floor(oppose.general.supplies * ctx.plunderRatio).toInt().coerceAtLeast(0)
 
-        oppose.general.gold = (oppose.general.gold - theftGold).coerceAtLeast(0)
-        oppose.general.rice = (oppose.general.rice - theftRice).coerceAtLeast(0)
-        oppose.rice = oppose.general.rice
+        oppose.general.funds = (oppose.general.funds - theftGold).coerceAtLeast(0)
+        oppose.general.supplies = (oppose.general.supplies - theftRice).coerceAtLeast(0)
+        oppose.supplies = oppose.general.supplies
 
-        self.general.gold += theftGold
-        self.general.rice += theftRice
-        self.rice = self.general.rice
+        self.general.funds += theftGold
+        self.general.supplies += theftRice
+        self.supplies = self.general.supplies
 
         ctx.plunderGold += theftGold
         ctx.plunderRice += theftRice
@@ -672,7 +672,7 @@ object Che사기Trigger : BattleTrigger {
     override val code = "che_사기"
     override val priority = 10
     override fun onBattleInit(ctx: BattleTriggerContext): BattleTriggerContext {
-        ctx.attacker.atmos = (ctx.attacker.atmos + 30).coerceAtMost(100)
+        ctx.attacker.morale = (ctx.attacker.morale + 30).coerceAtMost(100)
         ctx.battleLogs.add("사기 발동! 아군 사기가 상승했다!")
         return ctx
     }
@@ -770,7 +770,7 @@ object Che훈련InitTrigger : BattleTrigger {
     override val code = "che_훈련Init"
     override val priority = 10
     override fun onBattleInit(ctx: BattleTriggerContext): BattleTriggerContext {
-        ctx.attacker.train = (ctx.attacker.train + 40).coerceAtMost(110)
+        ctx.attacker.training = (ctx.attacker.training + 40).coerceAtMost(110)
         return ctx
     }
 }
@@ -802,7 +802,7 @@ object Che선제사격발동Trigger : BattleTrigger {
     override fun onBattleInit(ctx: BattleTriggerContext): BattleTriggerContext {
         if (!ctx.preemptiveFireActivated) return ctx
 
-        val defenderType = CrewType.fromCode(ctx.defender.crewType)
+        val defenderType = CrewType.fromCode(ctx.defender.shipClass)
         val defenderIsArcher = defenderType?.armType == ArmType.ARCHER
 
         if (defenderIsArcher && ctx.opponentPreemptiveFire) {

@@ -3,9 +3,9 @@ package com.openlogh.command.general
 import com.openlogh.command.CommandCost
 import com.openlogh.command.CommandEnv
 import com.openlogh.command.CommandResult
-import com.openlogh.command.GeneralCommand
+import com.openlogh.command.OfficerCommand
 import com.openlogh.command.constraint.*
-import com.openlogh.entity.General
+import com.openlogh.entity.Officer
 import kotlin.math.roundToInt
 import kotlin.random.Random
 
@@ -13,8 +13,8 @@ private const val DEBUFF_FRONT = 0.5
 private const val EXP_RATE = 0.7 / 3.0
 private const val DED_RATE = 1.0 / 3.0
 
-class che_물자조달(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
-    : GeneralCommand(general, env, arg) {
+class che_물자조달(general: Officer, env: CommandEnv, arg: Map<String, Any>? = null)
+    : OfficerCommand(general, env, arg) {
 
     override val actionName = "물자조달"
 
@@ -34,8 +34,8 @@ class che_물자조달(general: General, env: CommandEnv, arg: Map<String, Any>?
     override suspend fun run(rng: Random): CommandResult {
         val date = formatDate()
         val leadership = general.leadership.toInt()
-        val strength = general.strength.toInt()
-        val intel = general.intel.toInt()
+        val strength = general.command.toInt()
+        val intel = general.intelligence.toInt()
 
         val resourceType = if (rng.nextDouble() < 0.5) "gold" else "rice"
         val resName = if (resourceType == "gold") "금" else "쌀"
@@ -66,7 +66,7 @@ class che_물자조달(general: General, env: CommandEnv, arg: Map<String, Any>?
         if (c != null && (c.frontState.toInt() == 1 || c.frontState.toInt() == 3)) {
             var debuff = DEBUFF_FRONT
             // Capital city front debuff scaling: reduced penalty in early years
-            if (nation?.capitalCityId == c.id) {
+            if (nation?.capitalPlanetId == c.id) {
                 val relYear = env.year - env.startYear
                 if (relYear < 25) {
                     val debuffScale = maxOf(0, minOf(relYear - 5, 20)) * 0.05

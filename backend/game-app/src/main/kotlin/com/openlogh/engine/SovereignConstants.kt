@@ -1,6 +1,6 @@
 package com.openlogh.engine
 
-object EmperorConstants {
+object SovereignConstants {
     const val WORLD_EMPEROR_SYSTEM = "emperorSystem"
     const val WORLD_EMPEROR_GENERAL_ID = "emperorGeneralId"
 

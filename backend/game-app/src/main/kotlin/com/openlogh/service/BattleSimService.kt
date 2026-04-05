@@ -5,7 +5,7 @@ import com.openlogh.dto.SimulateRequest
 import com.openlogh.dto.SimulateResult
 import com.openlogh.engine.LiteHashDRBG
 import com.openlogh.engine.war.BattleEngine
-import com.openlogh.engine.war.WarUnitGeneral
+import com.openlogh.engine.war.WarUnitOfficer
 import com.openlogh.entity.Planet
 import com.openlogh.entity.Officer
 import org.springframework.stereotype.Service
@@ -33,16 +33,16 @@ class BattleSimService {
     fun simulate(request: SimulateRequest): SimulateResult {
         val defenders = if (request.defenders.isEmpty()) listOf(request.defender) else request.defenders
 
-        val city = Planet(
+        val planet = Planet(
             id = 0,
-            worldId = request.defenderCity.worldId,
+            sessionId = request.defenderCity.sessionId,
             name = request.defenderCity.name,
             level = request.defenderCity.level.toShort(),
-            nationId = request.defenderCity.nationId,
-            def = request.defenderCity.def,
-            defMax = request.defenderCity.def,
-            wall = request.defenderCity.wall,
-            wallMax = request.defenderCity.wall,
+            nationId = request.defenderCity.factionId,
+            def = request.defenderCity.orbitalDefense,
+            defMax = request.defenderCity.orbitalDefense,
+            wall = request.defenderCity.fortress,
+            wallMax = request.defenderCity.fortress,
             pop = 50000,
             popMax = 50000,
         )
@@ -69,21 +69,21 @@ class BattleSimService {
         val rng = LiteHashDRBG.build(randomSeed)
 
         val (result, phaseDetails) = if (request.detailed) {
-            val r = battleEngine.resolveBattleWithPhases(attackerUnit, defenderUnits, city, rng)
+            val r = battleEngine.resolveBattleWithPhases(attackerUnit, defenderUnits, planet, rng)
             r.battleResult to r.phaseDetails
         } else {
-            battleEngine.resolveBattle(attackerUnit, defenderUnits, city, rng) to null
+            battleEngine.resolveBattle(attackerUnit, defenderUnits, planet, rng) to null
         }
 
         val logs = mutableListOf<String>()
         logs.add("=== 전투 시뮬레이터(BattleEngine) ===")
         logs.add("지형: $terrainKey / 날씨: $weatherKey")
-        logs.add("공격: ${attackerGeneral.name} (${attackerGeneral.crew}명)")
-        defenders.forEachIndexed { idx, def -> logs.add("방어${idx + 1}: ${def.name} (${def.crew}명)") }
+        logs.add("공격: ${attackerGeneral.name} (${attackerGeneral.ships}명)")
+        defenders.forEachIndexed { idx, def -> logs.add("방어${idx + 1}: ${def.name} (${def.ships}명)") }
         logs.addAll(result.attackerLogs)
 
-        val attackerRemaining = attackerGeneral.crew.coerceAtLeast(0)
-        val defendersRemaining = defenderUnits.map { it.general.crew.coerceAtLeast(0) }
+        val attackerRemaining = attackerGeneral.ships.coerceAtLeast(0)
+        val defendersRemaining = defenderUnits.map { it.officer.ships.coerceAtLeast(0) }
         val totalDefenderRemaining = defendersRemaining.sum()
 
         val winner = when {
@@ -111,20 +111,20 @@ class BattleSimService {
     private fun toOfficer(info: com.openlogh.dto.SimUnitInfo): Officer {
         return Officer(
             id = 0,
-            worldId = 0,
+            sessionId = 0,
             name = info.name,
-            nationId = info.nationId,
-            cityId = 0,
+            factionId = info.factionId,
+            planetId = 0,
             leadership = info.leadership.toShort(),
-            strength = info.strength.toShort(),
-            intel = info.intel.toShort(),
-            crew = info.crew,
-            crewType = info.crewType.toShort(),
-            train = info.train.toShort(),
-            atmos = info.atmos.toShort(),
-            weaponCode = info.weaponCode,
-            bookCode = info.bookCode,
-            horseCode = info.horseCode,
+            strength = info.command.toShort(),
+            intel = info.intelligence.toShort(),
+            crew = info.ships,
+            crewType = info.shipClass.toShort(),
+            train = info.training.toShort(),
+            atmos = info.morale.toShort(),
+            weaponCode = info.flagshipCode,
+            bookCode = info.equipCode,
+            horseCode = info.engineCode,
             specialCode = info.specialCode,
             special2Code = "None",
             rice = 200000,

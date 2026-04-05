@@ -13,55 +13,55 @@ class ItemService(
 ) {
     @Transactional
     fun buyItem(generalId: Long, itemCode: String, requestedItemType: String? = null): ItemActionResult {
-        val general = officerRepository.findById(generalId).orElse(null)
+        val officer = officerRepository.findById(generalId).orElse(null)
             ?: return ItemActionResult(false, "장수를 찾을 수 없습니다.")
-        val result = buyAndEquipItem(general, itemCode, requestedItemType)
+        val result = buyAndEquipItem(officer, itemCode, requestedItemType)
         if (result.success) {
-            officerRepository.save(general)
+            officerRepository.save(officer)
         }
         return result
     }
 
     @Transactional
     fun sellItem(generalId: Long, itemType: String): ItemActionResult {
-        val general = officerRepository.findById(generalId).orElse(null)
+        val officer = officerRepository.findById(generalId).orElse(null)
             ?: return ItemActionResult(false, "장수를 찾을 수 없습니다.")
-        val result = sellItemByType(general, itemType)
+        val result = sellItemByType(officer, itemType)
         if (result.success) {
-            officerRepository.save(general)
+            officerRepository.save(officer)
         }
         return result
     }
 
     @Transactional
     fun consumeItem(generalId: Long, itemType: String? = null, itemCode: String? = null): ItemActionResult {
-        val general = officerRepository.findById(generalId).orElse(null)
+        val officer = officerRepository.findById(generalId).orElse(null)
             ?: return ItemActionResult(false, "장수를 찾을 수 없습니다.")
-        val result = useItem(general, itemType, itemCode)
+        val result = useItem(officer, itemType, itemCode)
         if (result.success) {
-            officerRepository.save(general)
+            officerRepository.save(officer)
         }
         return result
     }
 
     @Transactional
     fun unequipItem(generalId: Long, itemType: String): ItemActionResult {
-        val general = officerRepository.findById(generalId).orElse(null)
+        val officer = officerRepository.findById(generalId).orElse(null)
             ?: return ItemActionResult(false, "장수를 찾을 수 없습니다.")
-        val result = unequipItem(general, itemType)
+        val result = unequipItem(officer, itemType)
         if (result.success) {
-            officerRepository.save(general)
+            officerRepository.save(officer)
         }
         return result
     }
 
     @Transactional
     fun discardItem(generalId: Long, itemType: String): ItemActionResult {
-        val general = officerRepository.findById(generalId).orElse(null)
+        val officer = officerRepository.findById(generalId).orElse(null)
             ?: return ItemActionResult(false, "장수를 찾을 수 없습니다.")
-        val result = discardItem(general, itemType)
+        val result = discardItem(officer, itemType)
         if (result.success) {
-            officerRepository.save(general)
+            officerRepository.save(officer)
         }
         return result
     }
@@ -100,30 +100,30 @@ class ItemService(
         private fun slotByCategory(category: String): ItemSlot? = slots.find { it.category == category }
 
         private fun getSlotValue(officer: Officer, slot: ItemSlot): String = when (slot.field) {
-            "weaponCode" -> general.weaponCode
-            "bookCode" -> general.bookCode
-            "horseCode" -> general.horseCode
-            "itemCode" -> general.itemCode
+            "weaponCode" -> officer.flagshipCode
+            "bookCode" -> officer.equipCode
+            "horseCode" -> officer.engineCode
+            "itemCode" -> officer.accessoryCode
             else -> "None"
         }
 
         private fun setSlotValue(officer: Officer, slot: ItemSlot, value: String) {
             when (slot.field) {
-                "weaponCode" -> general.weaponCode = value
-                "bookCode" -> general.bookCode = value
-                "horseCode" -> general.horseCode = value
-                "itemCode" -> general.itemCode = value
+                "weaponCode" -> officer.flagshipCode = value
+                "bookCode" -> officer.equipCode = value
+                "horseCode" -> officer.engineCode = value
+                "itemCode" -> officer.accessoryCode = value
             }
         }
 
         private fun clearConsumableMeta(officer: Officer, itemCode: String) {
-            general.meta = general.meta.toMutableMap().apply {
+            officer.meta = officer.meta.toMutableMap().apply {
                 remove("item_uses_$itemCode")
             }
         }
 
         private fun initializeConsumableMeta(officer: Officer, itemCode: String) {
-            general.meta = general.meta.toMutableMap().apply {
+            officer.meta = officer.meta.toMutableMap().apply {
                 put("item_uses_$itemCode", 0)
             }
         }
@@ -131,24 +131,24 @@ class ItemService(
         private fun applyConsumableEffect(officer: Officer, item: ConsumableItem): Boolean {
             when (item.effect) {
                 "preTurnHeal" -> {
-                    general.injury = (general.injury - item.value).coerceIn(0, 80).toShort()
+                    officer.injury = (officer.injury - item.value).coerceIn(0, 80).toShort()
                     return true
                 }
 
                 "battleAtmos" -> {
-                    general.atmos = (general.atmos + item.value).coerceIn(0, 150).toShort()
+                    officer.morale = (officer.morale + item.value).coerceIn(0, 150).toShort()
                     return true
                 }
 
                 "battleTrain" -> {
-                    general.train = (general.train + item.value).coerceIn(0, 110).toShort()
+                    officer.training = (officer.training + item.value).coerceIn(0, 110).toShort()
                     return true
                 }
 
                 "sabotageSuccess" -> {
                     val key = "item_effect_sabotage_success"
-                    val current = (general.meta[key] as? Number)?.toInt() ?: 0
-                    general.meta = general.meta.toMutableMap().apply {
+                    val current = (officer.meta[key] as? Number)?.toInt() ?: 0
+                    officer.meta = officer.meta.toMutableMap().apply {
                         put(key, current + item.value)
                     }
                     return true
@@ -156,8 +156,8 @@ class ItemService(
 
                 "battleSnipe" -> {
                     val key = "item_effect_battle_snipe"
-                    val current = (general.meta[key] as? Number)?.toInt() ?: 0
-                    general.meta = general.meta.toMutableMap().apply {
+                    val current = (officer.meta[key] as? Number)?.toInt() ?: 0
+                    officer.meta = officer.meta.toMutableMap().apply {
                         put(key, current + item.value)
                     }
                     return true
@@ -173,7 +173,7 @@ class ItemService(
             if (!meta.buyable) {
                 return ItemActionResult(false, "구매할 수 없는 아이템입니다.")
             }
-            if (general.gold < meta.cost) {
+            if (officer.funds < meta.cost) {
                 return ItemActionResult(false, "금이 부족합니다. (필요: ${meta.cost})")
             }
 
@@ -182,14 +182,14 @@ class ItemService(
             if (requestedItemType != null && slot.itemType != requestedItemType) {
                 return ItemActionResult(false, "선택한 장비 종류와 아이템이 일치하지 않습니다.")
             }
-            if (getSlotValue(general, slot) != "None") {
+            if (getSlotValue(officer, slot) != "None") {
                 return ItemActionResult(false, "이미 ${slot.displayName}를 장착 중입니다.")
             }
 
-            general.gold -= meta.cost
-            setSlotValue(general, slot, itemCode)
+            officer.funds -= meta.cost
+            setSlotValue(officer, slot, itemCode)
             if (meta.consumable) {
-                initializeConsumableMeta(general, itemCode)
+                initializeConsumableMeta(officer, itemCode)
             }
 
             return ItemActionResult(true, "${meta.rawName}을(를) 금 ${meta.cost}에 구입했습니다.")
@@ -198,16 +198,16 @@ class ItemService(
         fun sellItemByType(officer: Officer, itemType: String): ItemActionResult {
             val slot = slotByItemType(itemType)
                 ?: return ItemActionResult(false, "잘못된 아이템 종류입니다.")
-            val itemCode = getSlotValue(general, slot)
+            val itemCode = getSlotValue(officer, slot)
             if (itemCode == "None") {
                 return ItemActionResult(false, "판매할 아이템이 없습니다.")
             }
 
             val meta = ItemModifiers.getMeta(itemCode)
             val sellPrice = ((meta?.cost ?: 0) / 2).coerceAtLeast(0)
-            general.gold += sellPrice
-            setSlotValue(general, slot, "None")
-            clearConsumableMeta(general, itemCode)
+            officer.funds += sellPrice
+            setSlotValue(officer, slot, "None")
+            clearConsumableMeta(officer, itemCode)
 
             val itemName = meta?.rawName ?: itemCode
             return ItemActionResult(true, "${itemName}을(를) 금 ${sellPrice}에 판매했습니다.")
@@ -221,13 +221,13 @@ class ItemService(
             if (requestedItemType != null && slot.itemType != requestedItemType) {
                 return ItemActionResult(false, "선택한 장비 종류와 아이템이 일치하지 않습니다.")
             }
-            if (getSlotValue(general, slot) != "None") {
+            if (getSlotValue(officer, slot) != "None") {
                 return ItemActionResult(false, "이미 ${slot.displayName}를 장착 중입니다.")
             }
 
-            setSlotValue(general, slot, itemCode)
+            setSlotValue(officer, slot, itemCode)
             if (meta.consumable) {
-                initializeConsumableMeta(general, itemCode)
+                initializeConsumableMeta(officer, itemCode)
             }
             return ItemActionResult(true, "${meta.rawName}을(를) 장착했습니다.")
         }
@@ -235,14 +235,14 @@ class ItemService(
         fun unequipItem(officer: Officer, itemType: String): ItemActionResult {
             val slot = slotByItemType(itemType)
                 ?: return ItemActionResult(false, "잘못된 아이템 종류입니다.")
-            val itemCode = getSlotValue(general, slot)
+            val itemCode = getSlotValue(officer, slot)
             if (itemCode == "None") {
                 return ItemActionResult(false, "해제할 아이템이 없습니다.")
             }
 
             val itemName = ItemModifiers.getMeta(itemCode)?.rawName ?: itemCode
-            setSlotValue(general, slot, "None")
-            clearConsumableMeta(general, itemCode)
+            setSlotValue(officer, slot, "None")
+            clearConsumableMeta(officer, itemCode)
             return ItemActionResult(true, "$itemName 장착을 해제했습니다.")
         }
 
@@ -253,7 +253,7 @@ class ItemService(
                 else -> slotByItemType("item")
             } ?: return ItemActionResult(false, "잘못된 아이템 종류입니다.")
 
-            val equippedCode = getSlotValue(general, slot)
+            val equippedCode = getSlotValue(officer, slot)
             if (equippedCode == "None") {
                 return ItemActionResult(false, "사용할 아이템이 없습니다.")
             }
@@ -264,24 +264,24 @@ class ItemService(
             val item = ItemModifiers.get(equippedCode) as? ConsumableItem
                 ?: return ItemActionResult(false, "사용할 수 없는 아이템입니다.")
             val usesKey = "item_uses_$equippedCode"
-            val currentUses = (general.meta[usesKey] as? Number)?.toInt() ?: 0
+            val currentUses = (officer.meta[usesKey] as? Number)?.toInt() ?: 0
             if (currentUses >= item.maxUses) {
                 return ItemActionResult(false, "사용 횟수를 모두 소진했습니다.")
             }
 
-            val didApply = applyConsumableEffect(general, item)
+            val didApply = applyConsumableEffect(officer, item)
             if (!didApply) {
                 return ItemActionResult(false, "정의되지 않은 아이템 효과입니다.")
             }
 
             val nextUses = currentUses + 1
-            general.meta = general.meta.toMutableMap().apply {
+            officer.meta = officer.meta.toMutableMap().apply {
                 put(usesKey, nextUses)
             }
 
             if (nextUses >= item.maxUses) {
-                setSlotValue(general, slot, "None")
-                clearConsumableMeta(general, equippedCode)
+                setSlotValue(officer, slot, "None")
+                clearConsumableMeta(officer, equippedCode)
                 return ItemActionResult(true, "아이템 효과를 사용하고 소모했습니다.")
             }
             return ItemActionResult(true, "아이템 효과를 사용했습니다.")
@@ -290,14 +290,14 @@ class ItemService(
         fun discardItem(officer: Officer, itemType: String): ItemActionResult {
             val slot = slotByItemType(itemType)
                 ?: return ItemActionResult(false, "잘못된 아이템 종류입니다.")
-            val itemCode = getSlotValue(general, slot)
+            val itemCode = getSlotValue(officer, slot)
             if (itemCode == "None") {
                 return ItemActionResult(false, "버릴 아이템이 없습니다.")
             }
 
             val itemName = ItemModifiers.getMeta(itemCode)?.rawName ?: itemCode
-            setSlotValue(general, slot, "None")
-            clearConsumableMeta(general, itemCode)
+            setSlotValue(officer, slot, "None")
+            clearConsumableMeta(officer, itemCode)
             return ItemActionResult(true, "${itemName}을(를) 버렸습니다.")
         }
 

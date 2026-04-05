@@ -2,26 +2,26 @@ package com.openlogh.engine.war
 
 import com.openlogh.engine.DeterministicRng
 import com.openlogh.engine.DiplomacyService
-import com.openlogh.engine.EmperorConstants
+import com.openlogh.engine.SovereignConstants
 import com.openlogh.engine.EventService
 import com.openlogh.engine.modifier.ActionModifier
 import com.openlogh.engine.modifier.ModifierService
 import com.openlogh.engine.modifier.StatContext
-import com.openlogh.entity.City
+import com.openlogh.entity.Planet
 import com.openlogh.model.CrewType
-import com.openlogh.entity.General
+import com.openlogh.entity.Officer
 import com.openlogh.entity.Message
 import com.openlogh.entity.Record
-import com.openlogh.entity.WorldState
+import com.openlogh.entity.SessionState
 import com.openlogh.entity.OldNation
-import com.openlogh.repository.CityRepository
-import com.openlogh.repository.GeneralRepository
+import com.openlogh.repository.PlanetRepository
+import com.openlogh.repository.OfficerRepository
 import com.openlogh.repository.MessageRepository
-import com.openlogh.repository.NationRepository
-import com.openlogh.repository.NationTurnRepository
+import com.openlogh.repository.FactionRepository
+import com.openlogh.repository.FactionTurnRepository
 import com.openlogh.repository.OldNationRepository
 import com.openlogh.repository.RecordRepository
-import com.openlogh.repository.TroopRepository
+import com.openlogh.repository.FleetRepository
 import com.openlogh.service.GameConstService
 import com.openlogh.service.HistoryService
 import com.openlogh.service.InheritanceService
@@ -34,14 +34,14 @@ import kotlin.random.Random
 
 @Service
 class BattleService(
-    private val cityRepository: CityRepository,
-    private val generalRepository: GeneralRepository,
-    private val nationRepository: NationRepository,
+    private val planetRepository: PlanetRepository,
+    private val officerRepository: OfficerRepository,
+    private val factionRepository: FactionRepository,
     private val messageRepository: MessageRepository,
     private val recordRepository: RecordRepository,
     private val oldNationRepository: OldNationRepository,
-    private val troopRepository: TroopRepository,
-    private val nationTurnRepository: NationTurnRepository,
+    private val fleetRepository: FleetRepository,
+    private val factionTurnRepository: FactionTurnRepository,
     private val eventService: EventService,
     private val diplomacyService: DiplomacyService,
     private val modifierService: ModifierService,
@@ -65,11 +65,11 @@ class BattleService(
 
     @Transactional
     fun executeBattle(
-        attacker: General,
-        targetCity: City,
-        world: WorldState,
+        attacker: Officer,
+        targetCity: Planet,
+        world: SessionState,
     ): BattleResult {
-        if (attacker.npcState == EmperorConstants.NPC_STATE_EMPEROR) {
+        if (attacker.npcState == SovereignConstants.NPC_STATE_EMPEROR) {
             return BattleResult(attackerWon = false)
         }
 
@@ -77,38 +77,38 @@ class BattleService(
         val rng = DeterministicRng.create(
             hiddenSeed, "ConquerCity",
             world.currentYear, world.currentMonth,
-            attacker.nationId, attacker.id, targetCity.id
+            attacker.factionId, attacker.id, targetCity.id
         )
 
-        val attackerNation = nationRepository.findById(attacker.nationId).orElse(null)
-        val attackerUnit = WarUnitGeneral(
+        val attackerNation = factionRepository.findById(attacker.factionId).orElse(null)
+        val attackerUnit = WarUnitOfficer(
             attacker,
             nationTech = attackerNation?.tech ?: 0f,
             isAttacker = true,
             cityLevel = targetCity.level.toInt(),
-            capitalCityId = attackerNation?.capitalCityId ?: 0,
+            capitalCityId = attackerNation?.capitalPlanetId ?: 0,
         )
         val attackerModifiers = modifierService.getModifiers(attacker, attackerNation)
 
         // Get defenders in the city
         // C9: PHP also requires rice > crew/100, train >= defence_train, atmos >= defence_train
-        val defenderEntries = generalRepository.findByCityId(targetCity.id)
+        val defenderEntries = officerRepository.findByPlanetId(targetCity.id)
             .filter {
-                it.nationId == targetCity.nationId &&
-                    it.crew > 0 &&
-                    it.rice > it.crew / 100 &&
-                    it.train >= it.defenceTrain &&
-                    it.atmos >= it.defenceTrain &&
-                    it.npcState != EmperorConstants.NPC_STATE_EMPEROR
+                it.factionId == targetCity.factionId &&
+                    it.ships > 0 &&
+                    it.supplies > it.ships / 100 &&
+                    it.training >= it.defenceTrain &&
+                    it.morale >= it.defenceTrain &&
+                    it.npcState != SovereignConstants.NPC_STATE_EMPEROR
             }
             .map { gen ->
-                val defNation = nationRepository.findById(gen.nationId).orElse(null)
-                val unit = WarUnitGeneral(
+                val defNation = factionRepository.findById(gen.factionId).orElse(null)
+                val unit = WarUnitOfficer(
                     gen,
                     nationTech = defNation?.tech ?: 0f,
                     isAttacker = false,
                     cityLevel = targetCity.level.toInt(),
-                    capitalCityId = defNation?.capitalCityId ?: 0,
+                    capitalCityId = defNation?.capitalPlanetId ?: 0,
                 )
                 val modifiers = modifierService.getModifiers(gen, defNation)
                 Triple(unit, gen, modifiers)
@@ -118,7 +118,7 @@ class BattleService(
         applyWarModifiers(
             unit = attackerUnit,
             modifiers = attackerModifiers,
-            opponentCrewType = primaryDefender?.first?.crewType?.toString().orEmpty(),
+            opponentCrewType = primaryDefender?.first?.shipClass?.toString().orEmpty(),
             opposeModifiers = primaryDefender?.third ?: emptyList(),
             isAttacker = true,
         )
@@ -127,7 +127,7 @@ class BattleService(
             applyWarModifiers(
                 unit = unit,
                 modifiers = modifiers,
-                opponentCrewType = attackerUnit.crewType.toString(),
+                opponentCrewType = attackerUnit.shipClass.toString(),
                 opposeModifiers = attackerModifiers,
                 isAttacker = false,
             )
@@ -145,17 +145,17 @@ class BattleService(
         // Legacy: dead split 0.4 to attacker's city, 0.6 to defender's city
         val totalDead = result.attackerDamageDealt + result.defenderDamageDealt
         if (totalDead > 0) {
-            val attackerCity = cityRepository.findById(attacker.cityId).orElse(null)
+            val attackerCity = planetRepository.findById(attacker.planetId).orElse(null)
             if (attackerCity != null) {
                 attackerCity.dead += (totalDead * 0.4).toInt()
-                cityRepository.save(attackerCity)
+                planetRepository.save(attackerCity)
             }
             targetCity.dead += (totalDead * 0.6).toInt()
         }
 
-        cityRepository.save(targetCity)
-        generalRepository.save(attacker)
-        defenders.forEach { it.general.let { gen -> generalRepository.save(gen) } }
+        planetRepository.save(targetCity)
+        officerRepository.save(attacker)
+        defenders.forEach { it.general.let { gen -> officerRepository.save(gen) } }
 
         // ── Battle log persistence (legacy parity: pushBattleResultTemplate) ──
         persistBattleLogs(
@@ -174,27 +174,27 @@ class BattleService(
     }
 
     private fun persistBattleLogs(
-        world: WorldState,
-        attacker: General,
-        attackerUnit: WarUnitGeneral,
-        defenders: List<WarUnitGeneral>,
-        targetCity: City,
+        world: SessionState,
+        attacker: Officer,
+        attackerUnit: WarUnitOfficer,
+        defenders: List<WarUnitOfficer>,
+        targetCity: Planet,
         result: BattleResult,
     ) {
         val worldId = world.id.toLong()
         val year = world.currentYear.toInt()
         val month = world.currentMonth.toInt()
-        val attackerCrewType = CrewType.fromCode(attacker.crewType.toInt())
+        val attackerCrewType = CrewType.fromCode(attacker.shipClass.toInt())
 
         val messages = mutableListOf<Message>()
 
         fun buildSummary(
-            me: General, meUnit: WarUnitGeneral, meCrewType: CrewType?,
+            me: Officer, meUnit: WarUnitOfficer, meCrewType: CrewType?,
             opp: String, oppCrewType: CrewType?, oppRemain: Int, oppKilled: Int,
             warTypeStr: String,
         ): String {
             val meName = me.name
-            val meTypeName = meCrewType?.displayName ?: "병종${me.crewType}"
+            val meTypeName = meCrewType?.displayName ?: "병종${me.shipClass}"
             val meRemain = meUnit.hp
             val meKilled = -(meUnit.maxHp - meUnit.hp)
             val oppTypeName = oppCrewType?.displayName ?: "?"
@@ -203,7 +203,7 @@ class BattleService(
 
         val primaryDefender = defenders.firstOrNull()
         val defenderName = primaryDefender?.general?.name ?: targetCity.name
-        val defenderCrewType = primaryDefender?.let { CrewType.fromCode(it.crewType) }
+        val defenderCrewType = primaryDefender?.let { CrewType.fromCode(it.shipClass) }
         val defenderRemain = primaryDefender?.hp ?: 0
         val defenderKilled = primaryDefender?.let { it.maxHp - it.hp } ?: 0
 
@@ -216,7 +216,7 @@ class BattleService(
 
         // battle_result for attacker (legacy: pushGeneralBattleResultLog)
         messages += Message(
-            worldId = worldId,
+            sessionId = worldId,
             mailboxCode = "battle_result",
             messageType = "log",
             srcId = attacker.id,
@@ -228,7 +228,7 @@ class BattleService(
         val detailText = result.attackerLogs.joinToString("\n")
         if (detailText.isNotBlank()) {
             messages += Message(
-                worldId = worldId,
+                sessionId = worldId,
                 mailboxCode = "battle_detail",
                 messageType = "log",
                 srcId = attacker.id,
@@ -239,7 +239,7 @@ class BattleService(
 
         // general_action for attacker (legacy: pushBattleResultTemplate also pushes to generalActionLog)
         messages += Message(
-            worldId = worldId,
+            sessionId = worldId,
             mailboxCode = "general_action",
             messageType = "log",
             srcId = attacker.id,
@@ -250,7 +250,7 @@ class BattleService(
         // Defender battle logs (for each general defender)
         for (defUnit in defenders) {
             val defGen = defUnit.general
-            val defCrewType = CrewType.fromCode(defGen.crewType.toInt())
+            val defCrewType = CrewType.fromCode(defGen.shipClass.toInt())
 
             val defenseSummary = buildSummary(
                 me = defGen, meUnit = defUnit, meCrewType = defCrewType,
@@ -260,7 +260,7 @@ class BattleService(
             )
 
             messages += Message(
-                worldId = worldId,
+                sessionId = worldId,
                 mailboxCode = "battle_result",
                 messageType = "log",
                 srcId = defGen.id,
@@ -269,7 +269,7 @@ class BattleService(
             )
 
             messages += Message(
-                worldId = worldId,
+                sessionId = worldId,
                 mailboxCode = "battle_detail",
                 messageType = "log",
                 srcId = defGen.id,
@@ -278,7 +278,7 @@ class BattleService(
             )
 
             messages += Message(
-                worldId = worldId,
+                sessionId = worldId,
                 mailboxCode = "general_action",
                 messageType = "log",
                 srcId = defGen.id,
@@ -290,7 +290,7 @@ class BattleService(
         // world_record: global action log (legacy: pushGlobalActionLog for battle)
         val globalSummary = "${attacker.name}이(가) ${targetCity.name}에서 전투 (${if (result.attackerWon) "승리" else "패배"})"
         messages += Message(
-            worldId = worldId,
+            sessionId = worldId,
             mailboxCode = "world_record",
             messageType = "log",
             srcId = attacker.id,
@@ -303,7 +303,7 @@ class BattleService(
             // Dual-write to records table so FrontInfoService and history page can read battle logs
             val records = messages.map { msg ->
                 Record(
-                    worldId = msg.worldId,
+                    worldId = msg.sessionId,
                     recordType = msg.mailboxCode,
                     srcId = msg.srcId,
                     destId = msg.destId,
@@ -316,11 +316,11 @@ class BattleService(
         }
     }
 
-    private fun occupyCity(city: City, attacker: General, world: WorldState, rng: Random) {
-        val oldNationId = city.nationId
-        val conquerNationId = resolveConquerNationId(city, attacker.nationId)
-        city.nationId = conquerNationId
-        city.trust = 0F
+    private fun occupyCity(city: Planet, attacker: Officer, world: SessionState, rng: Random) {
+        val oldNationId = city.factionId
+        val conquerNationId = resolveConquerNationId(city, attacker.factionId)
+        city.factionId = conquerNationId
+        city.approval = 0F
 
         // Reset city post-occupation (legacy: supply=1, term=0, conflict={}, officer_set=0)
         city.supplyState = 1
@@ -329,18 +329,18 @@ class BattleService(
         city.officerSet = 0
 
         // Reduce agri/comm/secu by 30% (legacy: multiply by 0.7)
-        city.agri = (city.agri * 0.7).toInt()
-        city.comm = (city.comm * 0.7).toInt()
-        city.secu = (city.secu * 0.7).toInt()
+        city.production = (city.production * 0.7).toInt()
+        city.commerce = (city.commerce * 0.7).toInt()
+        city.security = (city.security * 0.7).toInt()
 
         // Legacy: city level > 3 → set def/wall to defaultCityWall; else def_max/2, wall_max/2
         val defaultCityWall = gameConstService.getInt("defaultCityWall")
         if (city.level > 3) {
-            city.def = defaultCityWall
-            city.wall = defaultCityWall
+            city.orbitalDefense = defaultCityWall
+            city.fortress = defaultCityWall
         } else {
-            city.def = (city.defMax / 2.0).roundToInt()
-            city.wall = (city.wallMax / 2.0).roundToInt()
+            city.orbitalDefense = (city.orbitalDefenseMax / 2.0).roundToInt()
+            city.fortress = (city.fortressMax / 2.0).roundToInt()
         }
 
         // Dispatch OCCUPY_CITY event
@@ -353,15 +353,15 @@ class BattleService(
         demoteCityOfficers(city.id, oldNationId)
 
         // Check if old nation lost capital or is destroyed
-        val oldNation = nationRepository.findById(oldNationId).orElse(null)
+        val oldNation = factionRepository.findById(oldNationId).orElse(null)
         if (oldNation != null) {
-            val remainingCities = cityRepository.findByNationId(oldNationId)
+            val remainingCities = planetRepository.findByFactionId(oldNationId)
                 .filter { it.id != city.id }
 
             if (remainingCities.isEmpty()) {
                 // Nation destroyed
                 destroyNation(oldNationId, attacker, world, rng)
-            } else if (oldNation.capitalCityId == city.id) {
+            } else if (oldNation.capitalPlanetId == city.id) {
                 // Capital lost - relocate
                 relocateCapital(oldNation, remainingCities, world)
             }
@@ -369,13 +369,13 @@ class BattleService(
 
         // Update conflict tracking
         val conflictMap = city.conflict.toMutableMap()
-        val attackerKey = attacker.nationId.toString()
+        val attackerKey = attacker.factionId.toString()
         val currentScore = (conflictMap[attackerKey] as? Number)?.toInt() ?: 0
         conflictMap[attackerKey] = currentScore + 1
         city.conflict = conflictMap
     }
 
-    private fun resolveConquerNationId(city: City, attackerNationId: Long): Long {
+    private fun resolveConquerNationId(city: Planet, attackerNationId: Long): Long {
         val conflictMap = city.conflict
         if (conflictMap.isEmpty()) {
             return attackerNationId
@@ -416,27 +416,27 @@ class BattleService(
     // Legacy parity: func.php deleteNation() — hard-delete nation after archiving
     private fun destroyNation(
         destroyedNationId: Long,
-        attacker: General,
-        world: WorldState,
+        attacker: Officer,
+        world: SessionState,
         rng: Random,
     ) {
-        val destroyedNation = nationRepository.findById(destroyedNationId).orElse(null) ?: return
-        logger.info("Nation {} ({}) destroyed by nation {}", destroyedNation.name, destroyedNationId, attacker.nationId)
+        val destroyedNation = factionRepository.findById(destroyedNationId).orElse(null) ?: return
+        logger.info("Nation {} ({}) destroyed by nation {}", destroyedNation.name, destroyedNationId, attacker.factionId)
 
-        val generals = generalRepository.findByNationId(destroyedNationId)
+        val generals = officerRepository.findByFactionId(destroyedNationId)
         var totalGoldLoss = 0
         var totalRiceLoss = 0
 
         // Apply losses to all defender generals (legacy: 20-50% gold/rice, -10% exp, -50% dedication)
         for (gen in generals) {
             val lossRatio = 0.2 + rng.nextDouble() * 0.3  // 20-50%
-            val goldLoss = (gen.gold * lossRatio).toInt()
-            val riceLoss = (gen.rice * lossRatio).toInt()
+            val goldLoss = (gen.funds * lossRatio).toInt()
+            val riceLoss = (gen.supplies * lossRatio).toInt()
             val expLoss = (gen.experience * 0.1).toInt()
             val dedLoss = (gen.dedication * 0.5).toInt()
 
-            gen.gold -= goldLoss
-            gen.rice -= riceLoss
+            gen.funds -= goldLoss
+            gen.supplies -= riceLoss
             gen.experience -= expLoss
             gen.dedication -= dedLoss
 
@@ -444,60 +444,60 @@ class BattleService(
             totalRiceLoss += riceLoss
 
             // Release from nation (legacy: nation=0, officer_level=0, officer_city=0, belong=0, troop=0)
-            gen.nationId = 0
+            gen.factionId = 0
             gen.officerLevel = 0
             gen.officerCity = 0
             gen.belong = 0
-            gen.troopId = 0
+            gen.fleetId = 0
 
             // NPC auto-join to attacker nation (legacy: npcState 2-8 except 5, gated by joinRuinedNPCProp)
             if (gen.npcState in NPC_AUTO_JOIN_STATES && rng.nextDouble() < JOIN_RUINED_NPC_PROP) {
                 val delay = rng.nextInt(0, NPC_JOIN_MAX_DELAY + 1)
-                gen.meta["autoJoinNationId"] = attacker.nationId
+                gen.meta["autoJoinNationId"] = attacker.factionId
                 gen.meta["autoJoinDelay"] = delay
             }
 
-            generalRepository.save(gen)
+            officerRepository.save(gen)
         }
 
         // Distribute conquest rewards to attacker nation
         // Legacy: half of nation gold/rice above base + half of general losses
-        val nationGoldAboveBase = maxOf(0, destroyedNation.gold - BASE_GOLD)
-        val nationRiceAboveBase = maxOf(0, destroyedNation.rice - BASE_RICE)
+        val nationGoldAboveBase = maxOf(0, destroyedNation.funds - BASE_GOLD)
+        val nationRiceAboveBase = maxOf(0, destroyedNation.supplies - BASE_RICE)
         val goldReward = nationGoldAboveBase / 2 + totalGoldLoss / 2
         val riceReward = nationRiceAboveBase / 2 + totalRiceLoss / 2
 
-        val attackerNation = nationRepository.findById(attacker.nationId).orElse(null)
+        val attackerNation = factionRepository.findById(attacker.factionId).orElse(null)
         if (attackerNation != null && (goldReward > 0 || riceReward > 0)) {
-            attackerNation.gold += goldReward
-            attackerNation.rice += riceReward
-            nationRepository.save(attackerNation)
+            attackerNation.funds += goldReward
+            attackerNation.supplies += riceReward
+            factionRepository.save(attackerNation)
 
             // Log reward to all chiefs (officer_level >= 5)
-            logConquestReward(world, attacker.nationId, destroyedNation.name, goldReward, riceReward)
+            logConquestReward(world, attacker.factionId, destroyedNation.name, goldReward, riceReward)
         }
 
-        logNationDestroyed(world, attackerNation?.name ?: attacker.name, attacker.nationId, destroyedNation.name)
+        logNationDestroyed(world, attackerNation?.name ?: attacker.name, attacker.factionId, destroyedNation.name)
 
         // Legacy: set all cities to neutral (nation=0, front=0)
-        val cities = cityRepository.findByNationId(destroyedNationId)
+        val cities = planetRepository.findByFactionId(destroyedNationId)
         for (city in cities) {
-            city.nationId = 0
+            city.factionId = 0
             city.frontState = 0
-            cityRepository.save(city)
+            planetRepository.save(city)
         }
 
         // Legacy: delete all troops of the nation
-        val troops = troopRepository.findByNationId(destroyedNationId)
+        val troops = fleetRepository.findByFactionId(destroyedNationId)
         if (troops.isNotEmpty()) {
-            troopRepository.deleteAll(troops)
+            fleetRepository.deleteAll(troops)
         }
 
         // Kill all diplomatic relations
         diplomacyService.killAllRelationsForNation(world.id.toLong(), destroyedNationId)
 
         // Legacy: delete nation turns
-        nationTurnRepository.deleteByNationId(destroyedNationId)
+        factionTurnRepository.deleteByNationId(destroyedNationId)
 
         // Legacy: archive nation data to old_nation before deletion
         oldNationRepository.save(
@@ -508,10 +508,10 @@ class BattleService(
                     "name" to destroyedNation.name,
                     "color" to destroyedNation.color,
                     "level" to destroyedNation.level,
-                    "gold" to destroyedNation.gold,
-                    "rice" to destroyedNation.rice,
+                    "gold" to destroyedNation.funds,
+                    "rice" to destroyedNation.supplies,
                     "tech" to destroyedNation.tech,
-                    "gennum" to destroyedNation.gennum,
+                    "gennum" to destroyedNation.officerCount,
                     "generals" to generals.map { it.id },
                 ),
                 date = java.time.OffsetDateTime.now(),
@@ -519,7 +519,7 @@ class BattleService(
         )
 
         // Legacy: hard-delete nation from DB (not soft delete)
-        nationRepository.delete(destroyedNation)
+        factionRepository.delete(destroyedNation)
 
         eventService.dispatchEvents(world, "DESTROY_NATION")
     }
@@ -531,47 +531,47 @@ class BattleService(
      * Also halves nation gold/rice, 20% morale loss.
      */
     private fun relocateCapital(
-        nation: com.openlogh.entity.Nation,
-        remainingCities: List<City>,
-        world: WorldState,
+        nation: com.openlogh.entity.Faction,
+        remainingCities: List<Planet>,
+        world: SessionState,
     ) {
         // C10: PHP picks the CLOSEST city to the old capital, not highest population.
-        val oldCapital = nation.capitalCityId?.let { cityRepository.findById(it).orElse(null) }
+        val oldCapital = nation.capitalPlanetId?.let { planetRepository.findById(it).orElse(null) }
         val oldX = (oldCapital?.meta?.get("positionX") as? Number)?.toDouble()
         val oldY = (oldCapital?.meta?.get("positionY") as? Number)?.toDouble()
         val newCapital = if (oldX != null && oldY != null) {
             remainingCities.minWithOrNull(
-                compareBy<City> {
+                compareBy<Planet> {
                     val x = (it.meta["positionX"] as? Number)?.toDouble()
                     val y = (it.meta["positionY"] as? Number)?.toDouble()
                     if (x != null && y != null) hypot(x - oldX, y - oldY) else Double.MAX_VALUE
-                }.thenByDescending { it.pop }
+                }.thenByDescending { it.population }
             )
         } else {
-            remainingCities.maxByOrNull { it.pop }
+            remainingCities.maxByOrNull { it.population }
         } ?: return
 
         logger.info("Nation {} relocates capital to {}", nation.name, newCapital.name)
 
-        nation.capitalCityId = newCapital.id
-        nation.gold /= 2
-        nation.rice /= 2
-        nationRepository.save(nation)
+        nation.capitalPlanetId = newCapital.id
+        nation.funds /= 2
+        nation.supplies /= 2
+        factionRepository.save(nation)
 
         // 20% morale loss to all generals
-        val nationals = generalRepository.findByNationId(nation.id)
+        val nationals = officerRepository.findByFactionId(nation.id)
         for (gen in nationals) {
-            gen.atmos = (gen.atmos * 0.8).toInt().coerceIn(0, 150).toShort()
+            gen.morale = (gen.morale * 0.8).toInt().coerceIn(0, 150).toShort()
             if (gen.officerLevel >= 5) {
-                gen.cityId = newCapital.id
+                gen.planetId = newCapital.id
             }
-            generalRepository.save(gen)
+            officerRepository.save(gen)
         }
 
         // Log emergency relocation
         messageRepository.save(
             Message(
-                worldId = world.id.toLong(),
+                sessionId = world.id.toLong(),
                 mailboxCode = "national",
                 messageType = "capital_relocated",
                 destId = nation.id,
@@ -590,17 +590,17 @@ class BattleService(
      * Legacy: officer_level = 1, officer_city = 0 for generals who had officer_city == capturedCityId.
      */
     private fun demoteCityOfficers(cityId: Long, oldNationId: Long) {
-        val generals = generalRepository.findByCityId(cityId)
-            .filter { it.nationId == oldNationId && it.officerCity == cityId.toInt() }
+        val generals = officerRepository.findByPlanetId(cityId)
+            .filter { it.factionId == oldNationId && it.officerCity == cityId.toInt() }
         for (gen in generals) {
             gen.officerLevel = 1
             gen.officerCity = 0
-            generalRepository.save(gen)
+            officerRepository.save(gen)
         }
     }
 
-    private fun logConquest(city: City, attacker: General, world: WorldState) {
-        val nation = nationRepository.findById(attacker.nationId).orElse(null)
+    private fun logConquest(city: Planet, attacker: Officer, world: SessionState) {
+        val nation = factionRepository.findById(attacker.factionId).orElse(null)
         val message = if (nation != null) {
             "${nation.name}의 ${attacker.name}이(가) ${city.name}을(를) 점령하였습니다"
         } else {
@@ -615,7 +615,7 @@ class BattleService(
     }
 
     private fun logConquestReward(
-        world: WorldState,
+        world: SessionState,
         attackerNationId: Long,
         destroyedNationName: String,
         goldReward: Int,
@@ -623,7 +623,7 @@ class BattleService(
     ) {
         messageRepository.save(
             Message(
-                worldId = world.id.toLong(),
+                sessionId = world.id.toLong(),
                 mailboxCode = "national",
                 messageType = "conquest_reward",
                 destId = attackerNationId,
@@ -639,7 +639,7 @@ class BattleService(
     }
 
     private fun logNationDestroyed(
-        world: WorldState,
+        world: SessionState,
         attackerNationName: String,
         attackerNationId: Long,
         destroyedNationName: String,
@@ -668,7 +668,7 @@ class BattleService(
      * ModifierService에서 수집한 StatContext를 WarUnit 필드에 매핑.
      */
     private fun applyWarModifiers(
-        unit: WarUnitGeneral,
+        unit: WarUnitOfficer,
         modifiers: List<ActionModifier>,
         opponentCrewType: String = "",
         opposeModifiers: List<ActionModifier> = emptyList(),
@@ -680,12 +680,12 @@ class BattleService(
         val rank = unit.general.meta["rank"] as? Map<*, *>
         val killnum = (rank?.get("killnum") as? Number)?.toDouble() ?: 0.0
         val baseCtx = StatContext(
-            crewType = unit.crewType.toString(),
+            crewType = unit.shipClass.toString(),
             opponentCrewType = opponentCrewType,
             hpRatio = hpRatio,
             leadership = unit.leadership.toDouble(),
-            strength = unit.strength.toDouble(),
-            intel = unit.intel.toDouble(),
+            strength = unit.command.toDouble(),
+            intel = unit.intelligence.toDouble(),
             criticalChance = unit.criticalChance,
             dodgeChance = unit.dodgeChance,
             magicChance = unit.magicChance,
@@ -696,15 +696,15 @@ class BattleService(
         if (opposeModifiers.isNotEmpty()) {
             val opposeCtx = modified.copy(
                 crewType = opponentCrewType,
-                opponentCrewType = unit.crewType.toString(),
+                opponentCrewType = unit.shipClass.toString(),
             )
             modified = modifierService.applyOpposeStatModifiers(opposeModifiers, opposeCtx)
         }
 
         // 스탯 반영 (0-100 범위 클램핑)
         unit.leadership = modified.leadership.toInt().coerceIn(0, 100)
-        unit.strength = modified.strength.toInt().coerceIn(0, 100)
-        unit.intel = modified.intel.toInt().coerceIn(0, 100)
+        unit.command = modified.command.toInt().coerceIn(0, 100)
+        unit.intelligence = modified.intelligence.toInt().coerceIn(0, 100)
         unit.criticalChance = modified.criticalChance
         unit.dodgeChance = modified.dodgeChance
         unit.magicChance = modified.magicChance
@@ -712,10 +712,10 @@ class BattleService(
 
         // 훈련/사기 보너스
         if (modified.bonusTrain != 0.0) {
-            unit.train = (unit.train + modified.bonusTrain.toInt()).coerceIn(0, 100)
+            unit.training = (unit.training + modified.bonusTrain.toInt()).coerceIn(0, 100)
         }
         if (modified.bonusAtmos != 0.0) {
-            unit.atmos = (unit.atmos + modified.bonusAtmos.toInt()).coerceIn(0, 100)
+            unit.morale = (unit.morale + modified.bonusAtmos.toInt()).coerceIn(0, 100)
         }
 
         if (modified.warPower != 1.0) {

@@ -3,9 +3,9 @@ package com.openlogh.command.general
 import com.openlogh.command.CommandCost
 import com.openlogh.command.CommandEnv
 import com.openlogh.command.CommandResult
-import com.openlogh.command.GeneralCommand
+import com.openlogh.command.OfficerCommand
 import com.openlogh.command.constraint.*
-import com.openlogh.entity.General
+import com.openlogh.entity.Officer
 import com.openlogh.util.JosaUtil
 import kotlin.math.roundToInt
 import kotlin.random.Random
@@ -13,12 +13,12 @@ import kotlin.random.Random
 /**
  * 출병 (Attack march) — Legacy parity: che_출병.php
  *
- * Route-finding (BFS-based shortest path to destCity):
+ * Route-finding (BFS-based shortest path to destPlanet):
  *  1. Among shortest-distance and shortest+1 cities, find enemy cities → attack
  *  2. If no enemy found, pick the nearest allied city → fallback to 이동 (inside run())
  */
-class 출병(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
-    : GeneralCommand(general, env, arg) {
+class 출병(general: Officer, env: CommandEnv, arg: Map<String, Any>? = null)
+    : OfficerCommand(general, env, arg) {
 
     override val actionName = "출병"
 
@@ -32,7 +32,7 @@ class 출병(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
                 NotBeNeutral(),
                 OccupiedCity(),
                 ReqGeneralCrew(),
-                ReqGeneralRice(cost.rice),
+                ReqGeneralRice(cost.supplies),
                 AllowWar(),
                 HasRouteWithEnemy(),
             )
@@ -47,12 +47,12 @@ class 출병(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
                 NotBeNeutral(),
                 OccupiedCity(),
                 ReqGeneralCrew(),
-                ReqGeneralRice(cost.rice),
+                ReqGeneralRice(cost.supplies),
             )
         }
 
     override fun getCost(): CommandCost {
-        val rice = (general.crew / 100.0).roundToInt()
+        val rice = (general.ships / 100.0).roundToInt()
         return CommandCost(gold = 0, rice = rice)
     }
 
@@ -61,7 +61,7 @@ class 출병(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
 
     /**
      * 출병 실행:
-     * - BFS shortest path to destCity, find candidate enemy cities (dist or dist+1)
+     * - BFS shortest path to destPlanet, find candidate enemy cities (dist or dist+1)
      * - If nearest candidate is own nation → fallback to 이동 (alternative, handled by engine)
      * - Otherwise set city state=43,term=3 and trigger battle
      * - 병종숙련 += crew/100
@@ -72,9 +72,9 @@ class 출병(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
         val date = formatDate()
         val finalTargetCityId = arg?.get("destCityID") as? Int
             ?: arg?.get("destCityId") as? Int
-            ?: destCity?.id?.toInt() ?: 0
-        val finalTargetCityName = destCity?.name ?: "알 수 없음"
-        val attackerNationId = general.nationId
+            ?: destPlanet?.id?.toInt() ?: 0
+        val finalTargetCityName = destPlanet?.name ?: "알 수 없음"
+        val attackerNationId = general.factionId
 
         // Resolve the actual attack target via BFS route-finding
         // The engine layer provides candidate cities through constraintEnv
@@ -116,18 +116,18 @@ class 출병(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
         pushLog("<Y>${general.name}</>${pickJosa(general.name, "이")} <G><b>${finalTargetCityName}</b></> 방면으로 출병했습니다.")
 
         val cost = getCost()
-        val dexGain = (general.crew / 100.0).roundToInt()
+        val dexGain = (general.ships / 100.0).roundToInt()
 
         // Inheritance point: 500명 이상, 훈련*사기 > 70*70
-        val earnInheritance = general.crew > 500 &&
-                general.train * general.atmos > 70 * 70
+        val earnInheritance = general.ships > 500 &&
+                general.training * general.morale > 70 * 70
 
         return CommandResult(
             success = true,
             logs = logs,
             message = buildString {
-                append("""{"statChanges":{"rice":${-cost.rice}}""")
-                append(""","dexChanges":{"crewType":${general.crewType},"amount":$dexGain}""")
+                append("""{"statChanges":{"rice":${-cost.supplies}}""")
+                append(""","dexChanges":{"crewType":${general.shipClass},"amount":$dexGain}""")
                 append(""","battleTriggered":true""")
                 append(",\"targetCityId\":\"$targetCityId\"")
                 append(""","cityStateUpdate":{"cityId":${targetCityId},"state":43,"term":3}""")
@@ -174,7 +174,7 @@ class 출병(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
             adjacency[key] = values
         }
 
-        val startMapCityId = when (val raw = dbToMapIdRaw[general.cityId] ?: dbToMapIdRaw[general.cityId.toString()]) {
+        val startMapCityId = when (val raw = dbToMapIdRaw[general.planetId] ?: dbToMapIdRaw[general.planetId.toString()]) {
             is Number -> raw.toLong()
             else -> return null
         }
@@ -256,7 +256,7 @@ class 출병(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
         if (cityId == null) return null
         // Try to get from services
         return try {
-            services?.cityRepository?.findById(cityId)?.orElse(null)?.name
+            services?.planetRepository?.findById(cityId)?.orElse(null)?.name
         } catch (_: Exception) {
             null
         }

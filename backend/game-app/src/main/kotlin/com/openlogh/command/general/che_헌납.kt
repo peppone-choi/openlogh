@@ -3,17 +3,17 @@ package com.openlogh.command.general
 import com.openlogh.command.CommandCost
 import com.openlogh.command.CommandEnv
 import com.openlogh.command.CommandResult
-import com.openlogh.command.GeneralCommand
+import com.openlogh.command.OfficerCommand
 import com.openlogh.command.constraint.*
-import com.openlogh.entity.General
+import com.openlogh.entity.Officer
 import kotlin.random.Random
 
 private const val GENERAL_MINIMUM_GOLD = 100
 private const val GENERAL_MINIMUM_RICE = 100
 private const val MAX_RESOURCE_ACTION_AMOUNT = 10000
 
-class che_헌납(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
-    : GeneralCommand(general, env, arg) {
+class che_헌납(general: Officer, env: CommandEnv, arg: Map<String, Any>? = null)
+    : OfficerCommand(general, env, arg) {
 
     override val actionName = "헌납"
 
@@ -53,7 +53,7 @@ class che_헌납(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
         val resKey = if (gold) "gold" else "rice"
         val resName = if (gold) "금" else "쌀"
 
-        val currentRes = if (gold) general.gold else general.rice
+        val currentRes = if (gold) general.funds else general.supplies
         val amount = minOf(donateAmount, currentRes)
 
         pushLog("$resName <C>${amount}</>을 헌납했습니다. <1>$date</>")

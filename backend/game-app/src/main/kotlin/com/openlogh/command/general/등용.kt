@@ -3,13 +3,13 @@ package com.openlogh.command.general
 import com.openlogh.command.CommandCost
 import com.openlogh.command.CommandEnv
 import com.openlogh.command.CommandResult
-import com.openlogh.command.GeneralCommand
+import com.openlogh.command.OfficerCommand
 import com.openlogh.command.constraint.*
-import com.openlogh.entity.General
+import com.openlogh.entity.Officer
 import kotlin.random.Random
 
-class 등용(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
-    : GeneralCommand(general, env, arg) {
+class 등용(general: Officer, env: CommandEnv, arg: Map<String, Any>? = null)
+    : OfficerCommand(general, env, arg) {
 
     override val actionName = "등용"
 
@@ -22,9 +22,9 @@ class 등용(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
                 SuppliedCity(),
                 ExistsDestGeneral(),
                 DifferentNationDestGeneral(),
-                ReqGeneralGold(getCost().gold),
+                ReqGeneralGold(getCost().funds),
             )
-            if (destGeneral?.officerLevel?.toInt() == 20) {
+            if (destOfficer?.officerLevel?.toInt() == 20) {
                 constraints.add(AlwaysFail("군주에게는 등용장을 보낼 수 없습니다."))
             }
             return constraints
@@ -39,7 +39,7 @@ class 등용(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
 
     override fun getCost(): CommandCost {
         val develCost = env.develCost
-        val dg = destGeneral
+        val dg = destOfficer
         if (dg == null) return CommandCost(gold = develCost)
         val reqGold = kotlin.math.round(develCost + (dg.experience + dg.dedication) / 1000.0).toInt() * 10
         return CommandCost(gold = reqGold)
@@ -50,14 +50,14 @@ class 등용(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
 
     override suspend fun run(rng: Random): CommandResult {
         val date = formatDate()
-        val dg = destGeneral ?: return CommandResult(false, listOf("대상 장수를 찾을 수 없습니다."))
+        val dg = destOfficer ?: return CommandResult(false, listOf("대상 장수를 찾을 수 없습니다."))
         val destName = dg.name
         val cost = getCost()
         val nationName = nation?.name ?: "알 수 없음"
         val josaRo = pickJosa(nationName, "로")
 
         services?.messageService?.sendMessage(
-            worldId = env.worldId,
+            worldId = env.sessionId,
             mailboxCode = "personal",
             mailboxType = "PRIVATE",
             messageType = "recruitment",
@@ -67,7 +67,7 @@ class 등용(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
                 "action" to "scout",
                 "fromGeneralId" to general.id,
                 "fromGeneralName" to general.name,
-                "fromNationId" to general.nationId,
+                "fromNationId" to general.factionId,
                 "fromNationName" to nationName,
                 "text" to "${nationName}${josaRo} 망명 권유 서신",
             ),
@@ -80,7 +80,7 @@ class 등용(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
         return CommandResult(
             success = true,
             logs = logs,
-            message = """{"statChanges":{"gold":${-cost.gold},"experience":100,"dedication":200,"leadershipExp":1}}"""
+            message = """{"statChanges":{"gold":${-cost.funds},"experience":100,"dedication":200,"leadershipExp":1}}"""
         )
     }
 }

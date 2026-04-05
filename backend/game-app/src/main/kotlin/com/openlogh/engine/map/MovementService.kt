@@ -1,6 +1,6 @@
 package com.openlogh.engine.map
 
-import com.openlogh.entity.General
+import com.openlogh.entity.Officer
 import org.springframework.stereotype.Service
 import kotlin.math.sqrt
 
@@ -17,7 +17,7 @@ class MovementService(private val mapDataService: MapDataService) {
      * Returns Triple(newX, newY, arrived).
      * If the general has no destination, returns current position with arrived=false.
      */
-    fun calculateNextPosition(general: General, mapCode: String): Triple<Float, Float, Boolean> {
+    fun calculateNextPosition(general: Officer, mapCode: String): Triple<Float, Float, Boolean> {
         val destX = general.destX ?: return Triple(general.posX, general.posY, false)
         val destY = general.destY ?: return Triple(general.posX, general.posY, false)
 

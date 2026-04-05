@@ -3,15 +3,15 @@ package com.openlogh.command
 import com.openlogh.command.constraint.Constraint
 import com.openlogh.command.constraint.ConstraintContext
 import com.openlogh.command.constraint.ConstraintResult
-import com.openlogh.entity.City
-import com.openlogh.entity.General
-import com.openlogh.entity.Nation
-import com.openlogh.entity.Troop
+import com.openlogh.entity.Planet
+import com.openlogh.entity.Officer
+import com.openlogh.entity.Faction
+import com.openlogh.entity.Fleet
 import com.openlogh.util.JosaUtil
 import kotlin.random.Random
 
 abstract class BaseCommand(
-    protected val general: General,
+    protected val general: Officer,
     protected val env: CommandEnv,
     protected val arg: Map<String, Any>? = null
 ) {
@@ -26,13 +26,13 @@ abstract class BaseCommand(
     protected open val minConditionConstraints: List<Constraint> = emptyList()
     protected open val permissionConstraints: List<Constraint> = emptyList()
 
-    var city: City? = null
-    var nation: Nation? = null
-    var destGeneral: General? = null
-    var destCity: City? = null
-    var destNation: Nation? = null
-    var troop: Troop? = null
-    var destCityGenerals: List<General>? = null
+    var city: Planet? = null
+    var nation: Faction? = null
+    var destOfficer: Officer? = null
+    var destPlanet: Planet? = null
+    var destFaction: Faction? = null
+    var troop: Fleet? = null
+    var destPlanetOfficers: List<Officer>? = null
     var constraintEnv: Map<String, Any> = emptyMap()
     var services: CommandServices? = null
     /** Action modifiers from nation type, personality, specials, items. Injected by CommandExecutor. */
@@ -54,9 +54,9 @@ abstract class BaseCommand(
             general = general,
             city = city,
             nation = nation,
-            destGeneral = destGeneral,
-            destCity = destCity,
-            destNation = destNation,
+            destOfficer = destOfficer,
+            destPlanet = destPlanet,
+            destFaction = destFaction,
             arg = arg,
             env = buildConstraintContextEnv(),
         )
@@ -141,10 +141,10 @@ abstract class BaseCommand(
     }
 
     /**
-     * Push a log entry tagged as a dest nation history log (using destNation).
+     * Push a log entry tagged as a dest nation history log (using destFaction).
      */
     protected fun pushDestNationalHistoryLog(message: String) {
-        val dnId = destNation?.id ?: 0L
+        val dnId = destFaction?.id ?: 0L
         logs.add("_destNationalHistory:${dnId}:$message")
     }
 
@@ -159,7 +159,7 @@ abstract class BaseCommand(
      * Push a log entry for the dest general.
      */
     protected fun pushDestGeneralLog(message: String) {
-        val dgId = destGeneral?.id ?: 0L
+        val dgId = destOfficer?.id ?: 0L
         logs.add("_destGeneralLog:${dgId}:$message")
     }
 
@@ -167,7 +167,7 @@ abstract class BaseCommand(
      * Push a history log entry for the dest general.
      */
     protected fun pushDestGeneralHistoryLog(message: String) {
-        val dgId = destGeneral?.id ?: 0L
+        val dgId = destOfficer?.id ?: 0L
         logs.add("_destGeneralHistory:${dgId}:$message")
     }
 
@@ -208,7 +208,7 @@ abstract class BaseCommand(
         val adjacencyRaw = env.gameStor["mapAdjacency"]
         if (adjacencyRaw !is Map<*, *>) return null
 
-        val startCityId = general.cityId
+        val startCityId = general.planetId
         if (startCityId == targetCityId) return 0
 
         val adjacency = mutableMapOf<Long, List<Long>>()
@@ -248,26 +248,26 @@ abstract class BaseCommand(
      * Get the number of generals in the dest city.
      */
     protected fun getDestCityGeneralCount(): Int {
-        return destCityGenerals?.size ?: 0
+        return destPlanetOfficers?.size ?: 0
     }
 
     /**
      * Get total crew count of all generals in the dest city.
      */
     protected fun getDestCityTotalCrew(): Int {
-        return destCityGenerals?.sumOf { it.crew } ?: 0
+        return destPlanetOfficers?.sumOf { it.ships } ?: 0
     }
 
     /**
      * Get a text summary of crew types in the dest city.
      */
     protected fun getDestCityCrewTypeSummary(): String {
-        val generals = destCityGenerals ?: return ""
-        val grouped = generals.filter { it.crew > 0 }.groupBy { it.crewType.toInt() }
+        val generals = destPlanetOfficers ?: return ""
+        val grouped = generals.filter { it.ships > 0 }.groupBy { it.shipClass.toInt() }
         if (grouped.isEmpty()) return ""
         return grouped.entries.joinToString(", ") { (typeId, gens) ->
             val typeName = getCrewTypeName(typeId) ?: "병종$typeId"
-            val total = gens.sumOf { it.crew }
+            val total = gens.sumOf { it.ships }
             "${typeName}:${String.format("%,d", total)}"
         }
     }
@@ -283,7 +283,7 @@ abstract class BaseCommand(
 
     private fun buildConstraintContextEnv(): Map<String, Any> {
         val merged = mutableMapOf<String, Any>(
-            "worldId" to env.worldId,
+            "worldId" to env.sessionId,
             "year" to env.year,
             "month" to env.month,
             "startYear" to env.startYear,

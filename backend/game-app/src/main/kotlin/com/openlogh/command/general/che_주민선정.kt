@@ -3,15 +3,15 @@ package com.openlogh.command.general
 import com.openlogh.command.CommandCost
 import com.openlogh.command.CommandEnv
 import com.openlogh.command.CommandResult
-import com.openlogh.command.GeneralCommand
+import com.openlogh.command.OfficerCommand
 import com.openlogh.command.constraint.*
-import com.openlogh.entity.General
+import com.openlogh.entity.Officer
 import kotlin.math.max
 import kotlin.math.roundToInt
 import kotlin.random.Random
 
-class che_주민선정(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
-    : GeneralCommand(general, env, arg) {
+class che_주민선정(general: Officer, env: CommandEnv, arg: Map<String, Any>? = null)
+    : OfficerCommand(general, env, arg) {
 
     override val actionName = "주민 선정"
 
@@ -33,7 +33,7 @@ class che_주민선정(general: General, env: CommandEnv, arg: Map<String, Any>?
                 NotWanderingNation(),
                 OccupiedCity(),
                 SuppliedCity(),
-                ReqGeneralRice(cost.rice),
+                ReqGeneralRice(cost.supplies),
                 RemainCityTrust(MAX_TRUST)
             )
         }
@@ -108,7 +108,7 @@ class che_주민선정(general: General, env: CommandEnv, arg: Map<String, Any>?
         return CommandResult(
             success = true,
             logs = logs,
-            message = """{"statChanges":{"rice":${-cost.rice},"experience":$exp,"dedication":$ded,"leadershipExp":1,"max_domestic_critical":${String.format("%.2f", maxDomesticCritical)}},"cityChanges":{"trust":${String.format("%.2f", trustIncrease)},"trustMax":$MAX_TRUST},"criticalResult":"$pick"}"""
+            message = """{"statChanges":{"rice":${-cost.supplies},"experience":$exp,"dedication":$ded,"leadershipExp":1,"max_domestic_critical":${String.format("%.2f", maxDomesticCritical)}},"cityChanges":{"trust":${String.format("%.2f", trustIncrease)},"trustMax":$MAX_TRUST},"criticalResult":"$pick"}"""
         )
     }
 }

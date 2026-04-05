@@ -3,14 +3,14 @@ package com.openlogh.command.nation
 import com.openlogh.command.CommandCost
 import com.openlogh.command.CommandEnv
 import com.openlogh.command.CommandResult
-import com.openlogh.command.NationCommand
+import com.openlogh.command.FactionCommand
 import com.openlogh.command.constraint.*
-import com.openlogh.entity.General
+import com.openlogh.entity.Officer
 import com.openlogh.util.JosaUtil
 import kotlin.random.Random
 
-class event_화시병연구(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
-    : NationCommand(general, env, arg) {
+class event_화시병연구(general: Officer, env: CommandEnv, arg: Map<String, Any>? = null)
+    : FactionCommand(general, env, arg) {
 
     override val actionName = "화시병 연구"
 
@@ -29,8 +29,8 @@ class event_화시병연구(general: General, env: CommandEnv, arg: Map<String, 
     override suspend fun run(rng: Random): CommandResult {
         val n = nation ?: return CommandResult(false, listOf("국가 정보를 찾을 수 없습니다"))
         val cost = getCost()
-        n.gold -= cost.gold
-        n.rice -= cost.rice
+        n.funds -= cost.funds
+        n.supplies -= cost.supplies
         n.meta["can_화시병사용"] = 1
 
         val expDed = 100

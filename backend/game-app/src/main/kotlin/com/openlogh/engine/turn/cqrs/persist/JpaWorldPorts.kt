@@ -16,23 +16,23 @@ import com.openlogh.entity.Officer
 import com.openlogh.entity.OfficerTurn
 import com.openlogh.entity.FactionTurn
 import com.openlogh.entity.Planet
-import com.openlogh.repository.CityRepository
+import com.openlogh.repository.PlanetRepository
 import com.openlogh.repository.DiplomacyRepository
-import com.openlogh.repository.GeneralRepository
-import com.openlogh.repository.GeneralTurnRepository
-import com.openlogh.repository.NationRepository
-import com.openlogh.repository.NationTurnRepository
-import com.openlogh.repository.TroopRepository
+import com.openlogh.repository.OfficerRepository
+import com.openlogh.repository.OfficerTurnRepository
+import com.openlogh.repository.FactionRepository
+import com.openlogh.repository.FactionTurnRepository
+import com.openlogh.repository.FleetRepository
 
 class JpaWorldPorts(
     private val sessionId: Long,
-    private val officerRepository: GeneralRepository,
-    private val planetRepository: CityRepository,
-    private val factionRepository: NationRepository,
-    private val fleetRepository: TroopRepository,
+    private val officerRepository: OfficerRepository,
+    private val planetRepository: PlanetRepository,
+    private val factionRepository: FactionRepository,
+    private val fleetRepository: FleetRepository,
     private val diplomacyRepository: DiplomacyRepository,
-    private val officerTurnRepository: GeneralTurnRepository,
-    private val factionTurnRepository: NationTurnRepository,
+    private val officerTurnRepository: OfficerTurnRepository,
+    private val factionTurnRepository: FactionTurnRepository,
 ) : WorldPorts {
 
     override fun officer(id: Long): OfficerSnapshot? =
@@ -66,32 +66,32 @@ class JpaWorldPorts(
             ?.let(::toDiplomacySnapshot)
 
     override fun allOfficers(): Collection<OfficerSnapshot> =
-        officerRepository.findByWorldId(sessionId).map(::toOfficerSnapshot)
+        officerRepository.findBySessionId(sessionId).map(::toOfficerSnapshot)
 
     override fun allPlanets(): Collection<PlanetSnapshot> =
-        planetRepository.findByWorldId(sessionId).map(::toPlanetSnapshot)
+        planetRepository.findBySessionId(sessionId).map(::toPlanetSnapshot)
 
     override fun allFactions(): Collection<FactionSnapshot> =
-        factionRepository.findByWorldId(sessionId).map(::toFactionSnapshot)
+        factionRepository.findBySessionId(sessionId).map(::toFactionSnapshot)
 
     override fun allFleets(): Collection<FleetSnapshot> =
-        fleetRepository.findByWorldId(sessionId).map(::toFleetSnapshot)
+        fleetRepository.findBySessionId(sessionId).map(::toFleetSnapshot)
 
     override fun allDiplomacies(): Collection<DiplomacySnapshot> =
-        diplomacyRepository.findByWorldId(sessionId).map(::toDiplomacySnapshot)
+        diplomacyRepository.findBySessionId(sessionId).map(::toDiplomacySnapshot)
 
     override fun officersByFaction(factionId: Long): List<OfficerSnapshot> =
-        officerRepository.findByWorldIdAndNationId(sessionId, factionId).map(::toOfficerSnapshot)
+        officerRepository.findBySessionIdAndFactionId(sessionId, factionId).map(::toOfficerSnapshot)
 
     override fun officersByPlanet(planetId: Long): List<OfficerSnapshot> =
-        officerRepository.findByCityId(planetId)
+        officerRepository.findByPlanetId(planetId)
             .asSequence()
             .filter { it.sessionId == sessionId }
             .map(::toOfficerSnapshot)
             .toList()
 
     override fun planetsByFaction(factionId: Long): List<PlanetSnapshot> =
-        planetRepository.findByNationId(factionId)
+        planetRepository.findByFactionId(factionId)
             .asSequence()
             .filter { it.sessionId == sessionId }
             .map(::toPlanetSnapshot)
@@ -108,7 +108,7 @@ class JpaWorldPorts(
         diplomacyRepository.findByWorldIdAndIsDeadFalse(sessionId).map(::toDiplomacySnapshot)
 
     override fun officerTurns(officerId: Long): List<OfficerTurnSnapshot> =
-        officerTurnRepository.findByGeneralIdOrderByTurnIdx(officerId)
+        officerTurnRepository.findByOfficerIdOrderByTurnIdx(officerId)
             .asSequence()
             .filter { it.sessionId == sessionId }
             .map(::toOfficerTurnSnapshot)

@@ -4,18 +4,18 @@ import com.openlogh.engine.modifier.ActionModifier
 import com.openlogh.engine.modifier.DomesticContext
 import com.openlogh.engine.modifier.ItemModifiers
 import com.openlogh.engine.modifier.StatContext
-import com.openlogh.entity.General
+import com.openlogh.entity.Officer
 import kotlin.random.Random
 
 /**
- * General command triggers (legacy parity: GeneralTrigger/).
+ * General command triggers (legacy parity: OfficerTrigger/).
  *
  * These modify command behavior via onCalcDomestic hooks:
  *   - cost, rice, train, atmos, success, fail, score adjustments
  *
  * Fired by TurnExecutionHelper::preprocessCommand() before command runs.
  */
-interface GeneralTrigger : ObjectTrigger {
+interface OfficerTrigger : ObjectTrigger {
     /**
      * Modify domestic command parameters.
      *
@@ -26,7 +26,7 @@ interface GeneralTrigger : ObjectTrigger {
      * @return modified value
      */
     fun onCalcDomestic(
-        general: General,
+        general: Officer,
         turnType: String,
         varType: String,
         value: Double,
@@ -42,7 +42,7 @@ interface GeneralTrigger : ObjectTrigger {
      * @return modified value
      */
     fun onCalcStat(
-        general: General,
+        general: Officer,
         statName: String,
         value: Double,
         aux: Map<String, Any> = emptyMap(),
@@ -53,9 +53,9 @@ interface GeneralTrigger : ObjectTrigger {
 
 /**
  * 부상경감: Reduces injury by 1 each turn (priority BEGIN).
- * Legacy: GeneralTrigger/che_부상경감.php
+ * Legacy: OfficerTrigger/che_부상경감.php
  */
-class InjuryReductionTrigger(private val general: General) : GeneralTrigger {
+class InjuryReductionTrigger(private val general: Officer) : OfficerTrigger {
     override val uniqueId = "부상경감_${general.id}"
     override val priority = TriggerPriority.BEGIN
 
@@ -70,26 +70,26 @@ class InjuryReductionTrigger(private val general: General) : GeneralTrigger {
 
 /**
  * 병력군량소모: Consume rice for troops each turn (priority FINAL).
- * Legacy: GeneralTrigger/che_병력군량소모.php
+ * Legacy: OfficerTrigger/che_병력군량소모.php
  *
  * Rice consumption = crew / 100 (minimum 1 if crew > 0).
  * If not enough rice, crew loses atmos.
  */
-class TroopConsumptionTrigger(private val general: General) : GeneralTrigger {
+class TroopConsumptionTrigger(private val general: Officer) : OfficerTrigger {
     override val uniqueId = "병력군량소모_${general.id}"
     override val priority = TriggerPriority.FINAL
 
     override fun action(env: TriggerEnv): Boolean {
-        if (general.crew <= 0) return true
+        if (general.ships <= 0) return true
 
-        val riceNeeded = maxOf(general.crew / 100, 1)
-        if (general.rice >= riceNeeded) {
-            general.rice -= riceNeeded
+        val riceNeeded = maxOf(general.ships / 100, 1)
+        if (general.supplies >= riceNeeded) {
+            general.supplies -= riceNeeded
         } else {
             // Not enough rice - morale drops
-            general.rice = 0
-            val atmosDrop = minOf(5, general.atmos.toInt())
-            general.atmos = (general.atmos - atmosDrop).coerceIn(0, 150).toShort()
+            general.supplies = 0
+            val atmosDrop = minOf(5, general.morale.toInt())
+            general.morale = (general.morale - atmosDrop).coerceIn(0, 150).toShort()
             env.vars["troopStarving"] = true
         }
         return true
@@ -97,16 +97,16 @@ class TroopConsumptionTrigger(private val general: General) : GeneralTrigger {
 }
 
 class ModifierBridgeTrigger(
-    private val general: General,
+    private val general: Officer,
     private val modifiers: List<ActionModifier>,
-) : GeneralTrigger {
+) : OfficerTrigger {
     override val uniqueId = "modifier_bridge_${general.id}"
     override val priority = TriggerPriority.POST
 
     override fun action(env: TriggerEnv): Boolean = true
 
     override fun onCalcDomestic(
-        general: General,
+        general: Officer,
         turnType: String,
         varType: String,
         value: Double,
@@ -135,7 +135,7 @@ class ModifierBridgeTrigger(
     }
 
     override fun onCalcStat(
-        general: General,
+        general: Officer,
         statName: String,
         value: Double,
         aux: Map<String, Any>,
@@ -165,8 +165,8 @@ class ModifierBridgeTrigger(
         val modified = modifiers.fold(baseCtx) { stat, modifier -> modifier.onCalcStat(stat) }
         return when (statName) {
             "leadership" -> modified.leadership
-            "strength" -> modified.strength
-            "intel" -> modified.intel
+            "strength" -> modified.command
+            "intel" -> modified.intelligence
             "criticalChance" -> modified.criticalChance
             "dodgeChance" -> modified.dodgeChance
             "magicChance" -> modified.magicChance
@@ -189,17 +189,17 @@ class ModifierBridgeTrigger(
 
 /**
  * 도시치료: A general with medical skill heals injured generals in the same city each turn.
- * Legacy: GeneralTrigger/che_도시치료.php (priority 10010)
+ * Legacy: OfficerTrigger/che_도시치료.php (priority 10010)
  *
  * - First heals the triggering general's own injury (if any).
  * - Then iterates city-mates with injury > 10, healing each with 50% probability.
  * - Nation=0 generals only heal other nation=0 generals; others heal anyone.
  */
 class CityHealTrigger(
-    private val general: General,
-    private val cityMates: List<General>,
+    private val general: Officer,
+    private val cityMates: List<Officer>,
     private val rng: Random,
-) : GeneralTrigger {
+) : OfficerTrigger {
     override val uniqueId = "도시치료_${general.id}"
     override val priority = TriggerPriority.BEGIN + 10  // 10010
 
@@ -210,8 +210,8 @@ class CityHealTrigger(
         }
 
         // Heal city-mates with injury > 10, 50% chance each
-        val patients = if (general.nationId == 0L) {
-            cityMates.filter { it.id != general.id && it.nationId == 0L && it.injury > 10 }
+        val patients = if (general.factionId == 0L) {
+            cityMates.filter { it.id != general.id && it.factionId == 0L && it.injury > 10 }
         } else {
             cityMates.filter { it.id != general.id && it.injury > 10 }
         }
@@ -228,16 +228,16 @@ class CityHealTrigger(
 
 /**
  * 아이템치료: Medicine items auto-heal injury when injury >= threshold.
- * Legacy: GeneralTrigger/che_아이템치료.php
+ * Legacy: OfficerTrigger/che_아이템치료.php
  *
  * Fires before command execution. If general has a medicine-type item
  * and injury >= injuryTarget, sets injury to 0.
  * Consumable medicine items decrement their remaining uses.
  */
 class MedicineHealTrigger(
-    private val general: General,
+    private val general: Officer,
     private val injuryTarget: Int = 10,
-) : GeneralTrigger {
+) : OfficerTrigger {
     override val uniqueId = "아이템치료_${general.id}"
     override val priority = TriggerPriority.PRE  // Before injury reduction
 
@@ -245,7 +245,7 @@ class MedicineHealTrigger(
         if (general.injury >= injuryTarget) {
             general.injury = 0
             env.vars["medicineHealed"] = true
-            env.vars["medicineItemCode"] = general.itemCode
+            env.vars["medicineItemCode"] = general.accessoryCode
         }
         return true
     }
@@ -259,12 +259,12 @@ class MedicineHealTrigger(
  *                  Pass an empty list when city-mates are unavailable (e.g. realtime path).
  */
 fun buildPreTurnTriggers(
-    general: General,
+    general: Officer,
     modifiers: List<ActionModifier> = emptyList(),
-    cityMates: List<General> = emptyList(),
+    cityMates: List<Officer> = emptyList(),
     rng: Random,
-): List<GeneralTrigger> {
-    val triggers = mutableListOf<GeneralTrigger>()
+): List<OfficerTrigger> {
+    val triggers = mutableListOf<OfficerTrigger>()
 
     // City heal trigger (before injury reduction so self-heal counts)
     if (cityMates.isNotEmpty()) {
@@ -272,7 +272,7 @@ fun buildPreTurnTriggers(
     }
 
     // Medicine item pre-turn heal (before injury reduction)
-    val itemCode = general.itemCode
+    val itemCode = general.accessoryCode
     if (itemCode != "None" && itemCode.isNotBlank()) {
         val itemTriggerTypes = ItemModifiers.getTriggerType(itemCode)
         if (itemTriggerTypes == "medicine") {
@@ -295,8 +295,8 @@ fun buildPreTurnTriggers(
  * Apply onCalcDomestic across a list of triggers.
  */
 fun applyDomesticModifiers(
-    triggers: List<GeneralTrigger>,
-    general: General,
+    triggers: List<OfficerTrigger>,
+    general: Officer,
     turnType: String,
     varType: String,
     baseValue: Double,
@@ -313,8 +313,8 @@ fun applyDomesticModifiers(
  * Apply onCalcStat across a list of triggers.
  */
 fun applyStatModifiers(
-    triggers: List<GeneralTrigger>,
-    general: General,
+    triggers: List<OfficerTrigger>,
+    general: Officer,
     statName: String,
     baseValue: Double,
     aux: Map<String, Any> = emptyMap(),

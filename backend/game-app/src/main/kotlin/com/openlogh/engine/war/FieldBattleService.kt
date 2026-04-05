@@ -1,6 +1,6 @@
 package com.openlogh.engine.war
 
-import com.openlogh.entity.City
+import com.openlogh.entity.Planet
 import org.springframework.stereotype.Service
 import kotlin.random.Random
 
@@ -15,9 +15,9 @@ import kotlin.random.Random
 class FieldBattleService {
 
     fun resolve(
-        interceptor: WarUnitGeneral,
-        target: WarUnitGeneral,
-        city: City,
+        interceptor: WarUnitOfficer,
+        target: WarUnitOfficer,
+        city: Planet,
         rng: Random,
         isAmbush: Boolean,
         year: Int,
@@ -27,13 +27,13 @@ class FieldBattleService {
             interceptor.attackMultiplier *= 1.2
             interceptor.criticalChance += 0.15
         }
-        target.atmos = (target.atmos - 10).coerceAtLeast(0)
+        target.morale = (target.morale - 10).coerceAtLeast(0)
         target.defenceMultiplier *= 0.85
 
         // Field battle uses a dummy city with no walls (pure field, no siege phase)
-        val fieldCity = City()
-        fieldCity.def = 0
-        fieldCity.wall = 0
+        val fieldCity = Planet()
+        fieldCity.orbitalDefense = 0
+        fieldCity.fortress = 0
         fieldCity.level = city.level
 
         val engine = BattleEngine()

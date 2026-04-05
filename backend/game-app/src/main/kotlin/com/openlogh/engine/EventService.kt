@@ -1,11 +1,11 @@
 package com.openlogh.engine
 
-import com.openlogh.entity.WorldState
+import com.openlogh.entity.SessionState
 import com.openlogh.engine.event.EventActionContext
 import com.openlogh.engine.event.EventActionRegistry
 import com.openlogh.engine.turn.cqrs.persist.JpaWorldPortFactory
 import com.openlogh.repository.EventRepository
-import com.openlogh.repository.NationRepository
+import com.openlogh.repository.FactionRepository
 import com.openlogh.service.ScenarioService
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -21,12 +21,12 @@ class EventService @Autowired constructor(
 ) {
     constructor(
         eventRepository: EventRepository,
-        nationRepository: NationRepository,
+        factionRepository: FactionRepository,
         scenarioService: ScenarioService,
         eventActionRegistry: EventActionRegistry,
     ) : this(
         eventRepository = eventRepository,
-        worldPortFactory = JpaWorldPortFactory(nationRepository = nationRepository),
+        worldPortFactory = JpaWorldPortFactory(factionRepository = factionRepository),
         scenarioService = scenarioService,
         eventActionRegistry = eventActionRegistry,
     )
@@ -34,7 +34,7 @@ class EventService @Autowired constructor(
     private val log = LoggerFactory.getLogger(EventService::class.java)
 
     @Transactional
-    fun dispatchEvents(world: WorldState, targetCode: String) {
+    fun dispatchEvents(world: SessionState, targetCode: String) {
         val events = eventRepository.findByWorldIdAndTargetCodeOrderByPriorityDescIdAsc(
             world.id.toLong(), targetCode
         )
@@ -47,7 +47,7 @@ class EventService @Autowired constructor(
         }
     }
 
-    private fun evaluateCondition(condition: Map<String, Any>, world: WorldState): Boolean {
+    private fun evaluateCondition(condition: Map<String, Any>, world: SessionState): Boolean {
         return when (val type = condition["type"] as? String) {
             "always_true" -> true
             "always_false" -> false
@@ -99,7 +99,7 @@ class EventService @Autowired constructor(
             "remain_nation" -> {
                 val count = (condition["count"] as? Number)?.toInt() ?: return false
                 val op = (condition["operator"] as? String) ?: "<="
-                val nationCount = worldPortFactory.create(world.id.toLong()).allNations().size
+                val nationCount = worldPortFactory.create(world.id.toLong()).allFactions().size
                 when (op) {
                     "==" -> nationCount == count
                     "<=" -> nationCount <= count
@@ -138,7 +138,7 @@ class EventService @Autowired constructor(
         }
     }
 
-    private fun executeAction(action: Map<String, Any>, world: WorldState, currentEventId: Long = 0) {
+    private fun executeAction(action: Map<String, Any>, world: SessionState, currentEventId: Long = 0) {
         val type = action["type"] as? String ?: run {
             log.warn("[World {}] Event action missing 'type' field", world.id)
             return

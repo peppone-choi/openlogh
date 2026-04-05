@@ -3,15 +3,15 @@ package com.openlogh.command.nation
 import com.openlogh.command.CommandCost
 import com.openlogh.command.CommandEnv
 import com.openlogh.command.CommandResult
-import com.openlogh.command.NationCommand
+import com.openlogh.command.FactionCommand
 import com.openlogh.command.constraint.*
-import com.openlogh.entity.General
+import com.openlogh.entity.Officer
 import kotlin.random.Random
 
 private const val STRATEGIC_GLOBAL_DELAY = 9
 
-class che_백성동원(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
-    : NationCommand(general, env, arg) {
+class che_백성동원(general: Officer, env: CommandEnv, arg: Map<String, Any>? = null)
+    : FactionCommand(general, env, arg) {
 
     override val actionName = "백성동원"
 
@@ -25,7 +25,7 @@ class che_백성동원(general: General, env: CommandEnv, arg: Map<String, Any>?
 
     override suspend fun run(rng: Random): CommandResult {
         val n = nation ?: return CommandResult(false, logs, "국가 정보를 찾을 수 없습니다")
-        val dCity = destCity ?: return CommandResult(false, logs, "대상 도시 정보를 찾을 수 없습니다")
+        val dCity = destPlanet ?: return CommandResult(false, logs, "대상 도시 정보를 찾을 수 없습니다")
         val date = formatDate()
         val generalName = general.name
         val josaYi = pickJosa(generalName, "이")
@@ -35,8 +35,8 @@ class che_백성동원(general: General, env: CommandEnv, arg: Map<String, Any>?
         general.dedication += 5 * (getPreReqTurn() + 1)
 
         // PHP: def = GREATEST(def_max * 0.8, def), wall = GREATEST(wall_max * 0.8, wall)
-        dCity.def = maxOf((dCity.defMax * 0.8).toInt(), dCity.def)
-        dCity.wall = maxOf((dCity.wallMax * 0.8).toInt(), dCity.wall)
+        dCity.orbitalDefense = maxOf((dCity.orbitalDefenseMax * 0.8).toInt(), dCity.orbitalDefense)
+        dCity.fortress = maxOf((dCity.fortressMax * 0.8).toInt(), dCity.fortress)
 
         // Set strategic command cooldown
         n.strategicCmdLimit = STRATEGIC_GLOBAL_DELAY.toShort()

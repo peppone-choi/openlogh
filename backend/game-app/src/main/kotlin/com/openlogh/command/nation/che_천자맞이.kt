@@ -3,15 +3,15 @@ package com.openlogh.command.nation
 import com.openlogh.command.CommandCost
 import com.openlogh.command.CommandEnv
 import com.openlogh.command.CommandResult
-import com.openlogh.command.NationCommand
+import com.openlogh.command.FactionCommand
 import com.openlogh.command.constraint.*
-import com.openlogh.engine.EmperorConstants
-import com.openlogh.entity.General
+import com.openlogh.engine.SovereignConstants
+import com.openlogh.entity.Officer
 import com.openlogh.util.JosaUtil
 import kotlin.random.Random
 
-class che_천자맞이(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
-    : NationCommand(general, env, arg) {
+class che_천자맞이(general: Officer, env: CommandEnv, arg: Map<String, Any>? = null)
+    : FactionCommand(general, env, arg) {
 
     override val actionName = "천자 맞이"
 
@@ -40,16 +40,16 @@ class che_천자맞이(general: General, env: CommandEnv, arg: Map<String, Any>?
 
         val emperorGeneralId = (constraintEnv["wanderingEmperorGeneralId"] as? Number)?.toLong()
             ?: return CommandResult(false, listOf("유랑 중인 천자를 찾을 수 없습니다."))
-        val emperorGeneral = services!!.generalRepository.findById(emperorGeneralId).orElse(null)
+        val emperorGeneral = services!!.officerRepository.findById(emperorGeneralId).orElse(null)
             ?: return CommandResult(false, listOf("천자 장수를 찾을 수 없습니다."))
 
-        emperorGeneral.nationId = n.id
-        emperorGeneral.cityId = general.cityId
-        emperorGeneral.meta[EmperorConstants.GENERAL_EMPEROR_STATUS] = EmperorConstants.EMPEROR_ENTHRONED
-        services!!.generalRepository.save(emperorGeneral)
+        emperorGeneral.factionId = n.id
+        emperorGeneral.planetId = general.planetId
+        emperorGeneral.meta[SovereignConstants.GENERAL_EMPEROR_STATUS] = SovereignConstants.EMPEROR_ENTHRONED
+        services!!.officerRepository.save(emperorGeneral)
 
-        n.meta[EmperorConstants.NATION_IMPERIAL_STATUS] = EmperorConstants.STATUS_REGENT
-        n.meta[EmperorConstants.NATION_EMPEROR_TYPE] = EmperorConstants.TYPE_LEGITIMATE
+        n.meta[SovereignConstants.NATION_IMPERIAL_STATUS] = SovereignConstants.STATUS_REGENT
+        n.meta[SovereignConstants.NATION_EMPEROR_TYPE] = SovereignConstants.TYPE_LEGITIMATE
 
         val emperorName = emperorGeneral.name
         val josaReul = JosaUtil.pick(emperorName, "를")

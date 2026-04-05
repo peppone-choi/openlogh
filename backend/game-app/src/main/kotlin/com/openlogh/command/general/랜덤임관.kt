@@ -3,10 +3,10 @@ package com.openlogh.command.general
 import com.openlogh.command.CommandCost
 import com.openlogh.command.CommandEnv
 import com.openlogh.command.CommandResult
-import com.openlogh.command.GeneralCommand
+import com.openlogh.command.OfficerCommand
 import com.openlogh.command.constraint.*
-import com.openlogh.entity.General
-import com.openlogh.entity.Nation
+import com.openlogh.entity.Officer
+import com.openlogh.entity.Faction
 import kotlin.math.abs
 import kotlin.math.ln
 import kotlin.math.pow
@@ -27,8 +27,8 @@ private val RANDOM_TALK_LIST = listOf(
     "오랜 은거를 마치고",
 )
 
-class 랜덤임관(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
-    : GeneralCommand(general, env, arg) {
+class 랜덤임관(general: Officer, env: CommandEnv, arg: Map<String, Any>? = null)
+    : OfficerCommand(general, env, arg) {
 
     override val actionName = "무작위 국가로 임관"
 
@@ -51,15 +51,15 @@ class 랜덤임관(general: General, env: CommandEnv, arg: Map<String, Any>? = n
         val relYear = env.year - env.startYear
         val genLimit = if (relYear < 3) env.initialNationGenLimit else env.defaultMaxGeneral
 
-        val allNations = commandServices.nationRepository.findByWorldId(env.worldId)
-        val allGenerals = commandServices.generalRepository.findByWorldId(env.worldId)
+        val allNations = commandServices.factionRepository.findBySessionId(env.sessionId)
+        val allGenerals = commandServices.officerRepository.findBySessionId(env.sessionId)
         val candidateNations = allNations.filter { nation ->
-            nation.scoutLevel.toInt() == 0 && nation.gennum < genLimit
+            nation.scoutLevel.toInt() == 0 && nation.officerCount < genLimit
         }
 
         val generalsByNationId = allGenerals
-            .filter { it.nationId > 0L }
-            .groupBy { it.nationId }
+            .filter { it.factionId > 0L }
+            .groupBy { it.factionId }
 
         val lordByNationId = generalsByNationId.mapNotNull { (nationId, nationGenerals) ->
             nationGenerals
@@ -76,55 +76,55 @@ class 랜덤임관(general: General, env: CommandEnv, arg: Map<String, Any>? = n
         val fiction = readBoolean(env.gameStor["fiction"])
         val isHistoricalNpc = general.npcState.toInt() >= 2 && env.scenario in 1000..1999 && !fiction
 
-        val destNation = if (isHistoricalNpc) {
+        val destFaction = if (isHistoricalNpc) {
             pickByAffinityScore(eligibleNations, lordByNationId, rng)
         } else {
             pickByNationPowerWeight(eligibleNations, generalsByNationId, rng)
         }
 
-        if (destNation == null) {
+        if (destFaction == null) {
             pushLog("임관 가능한 국가가 없습니다. <1>$date</>")
             return CommandResult(success = false, logs = logs)
         }
 
-        val lordGeneral = lordByNationId[destNation.id]
-        val lordCityId = lordGeneral?.cityId ?: destNation.capitalCityId ?: 0L
+        val lordGeneral = lordByNationId[destFaction.id]
+        val lordCityId = lordGeneral?.planetId ?: destFaction.capitalPlanetId ?: 0L
         if (lordCityId <= 0L) {
             pushLog("임관 가능한 국가가 없습니다. <1>$date</>")
             return CommandResult(success = false, logs = logs)
         }
 
         val randomTalk = RANDOM_TALK_LIST[rng.nextInt(RANDOM_TALK_LIST.size)]
-        val exp = if (destNation.gennum < env.initialNationGenLimit) 700 else 100
+        val exp = if (destFaction.officerCount < env.initialNationGenLimit) 700 else 100
 
-        pushLog("<D>${destNation.name}</>에 랜덤 임관했습니다. <1>$date</>")
-        pushHistoryLog("<D><b>${destNation.name}</b></>에 랜덤 임관")
-        pushGlobalLog("<Y>${generalName}</>${josaYi} $randomTalk <D><b>${destNation.name}</b></>에 <S>임관</>했습니다.")
+        pushLog("<D>${destFaction.name}</>에 랜덤 임관했습니다. <1>$date</>")
+        pushHistoryLog("<D><b>${destFaction.name}</b></>에 랜덤 임관")
+        pushGlobalLog("<Y>${generalName}</>${josaYi} $randomTalk <D><b>${destFaction.name}</b></>에 <S>임관</>했습니다.")
 
-        destNation.gennum += 1
-        commandServices.nationRepository.save(destNation)
+        destFaction.officerCount += 1
+        commandServices.factionRepository.save(destFaction)
 
         return CommandResult(
             success = true,
             logs = logs,
-            message = """{"statChanges":{"nation":${destNation.id},"officerLevel":1,"officerCity":0,"belong":1,"troop":0,"experience":$exp,"cityId":"$lordCityId"},"inheritanceBonus":1,"tryUniqueLottery":true}"""
+            message = """{"statChanges":{"nation":${destFaction.id},"officerLevel":1,"officerCity":0,"belong":1,"troop":0,"experience":$exp,"cityId":"$lordCityId"},"inheritanceBonus":1,"tryUniqueLottery":true}"""
         )
     }
 
     private fun pickByAffinityScore(
-        nations: List<Nation>,
-        lordByNationId: Map<Long, General>,
+        nations: List<Faction>,
+        lordByNationId: Map<Long, Officer>,
         rng: Random,
-    ): Nation? {
-        val allGenCount = nations.sumOf { it.gennum }.coerceAtLeast(1)
-        var bestNation: Nation? = null
+    ): Faction? {
+        val allGenCount = nations.sumOf { it.officerCount }.coerceAtLeast(1)
+        var bestNation: Faction? = null
         var bestScore = Double.POSITIVE_INFINITY
 
         for (nation in nations.shuffled(rng)) {
             val lord = lordByNationId[nation.id] ?: continue
             val affinityDiff = circularAffinityDiff(general.affinity.toInt(), lord.affinity.toInt())
             val score =
-                log2(affinityDiff.toDouble() + 1.0) + rng.nextDouble() + sqrt(nation.gennum.toDouble() / allGenCount.toDouble())
+                log2(affinityDiff.toDouble() + 1.0) + rng.nextDouble() + sqrt(nation.officerCount.toDouble() / allGenCount.toDouble())
 
             if (score < bestScore) {
                 bestScore = score
@@ -136,11 +136,11 @@ class 랜덤임관(general: General, env: CommandEnv, arg: Map<String, Any>? = n
     }
 
     private fun pickByNationPowerWeight(
-        nations: List<Nation>,
-        generalsByNationId: Map<Long, List<General>>,
+        nations: List<Faction>,
+        generalsByNationId: Map<Long, List<Officer>>,
         rng: Random,
-    ): Nation? {
-        val weighted = mutableListOf<Pair<Nation, Double>>()
+    ): Faction? {
+        val weighted = mutableListOf<Pair<Faction, Double>>()
 
         for (nation in nations) {
             val nationGenerals = generalsByNationId[nation.id].orEmpty()
@@ -158,8 +158,8 @@ class 랜덤임관(general: General, env: CommandEnv, arg: Map<String, Any>? = n
                     warpower += (killcrew / deathcrew.coerceAtLeast(1.0)) * npcCoef * leadership
                 }
 
-                develpower += (sqrt(nationGeneral.intel.toDouble() * nationGeneral.strength.toDouble()) * 2.0 + leadership / 2.0) / 5.0 *
-                    DomesticUtils.statBonus(nationGeneral.charm.toInt(), 0.5)
+                develpower += (sqrt(nationGeneral.intelligence.toDouble() * nationGeneral.command.toDouble()) * 2.0 + leadership / 2.0) / 5.0 *
+                    DomesticUtils.statBonus(nationGeneral.administration.toInt(), 0.5)
             }
 
             var calcCnt = warpower + develpower

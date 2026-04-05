@@ -34,7 +34,7 @@ class ItemController(
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build()
         }
 
-        val result = itemService.buyItem(generalId, request.itemCode, request.itemType)
+        val result = itemService.buyItem(generalId, request.accessoryCode, request.itemType)
         return ResponseEntity.ok(CommandResult(result.success, listOf(result.message)))
     }
 
@@ -64,7 +64,7 @@ class ItemController(
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build()
         }
 
-        val result = itemService.consumeItem(generalId, request.itemType, request.itemCode)
+        val result = itemService.consumeItem(generalId, request.itemType, request.accessoryCode)
         return ResponseEntity.ok(CommandResult(result.success, listOf(result.message)))
     }
 

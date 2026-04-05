@@ -3,14 +3,14 @@ package com.openlogh.command.nation
 import com.openlogh.command.CommandCost
 import com.openlogh.command.CommandEnv
 import com.openlogh.command.CommandResult
-import com.openlogh.command.NationCommand
+import com.openlogh.command.FactionCommand
 import com.openlogh.command.constraint.*
-import com.openlogh.entity.General
+import com.openlogh.entity.Officer
 import com.openlogh.util.JosaUtil
 import kotlin.random.Random
 
-class che_종전수락(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
-    : NationCommand(general, env, arg) {
+class che_종전수락(general: Officer, env: CommandEnv, arg: Map<String, Any>? = null)
+    : FactionCommand(general, env, arg) {
 
     override val actionName = "종전 수락"
     override val canDisplay = false
@@ -28,8 +28,8 @@ class che_종전수락(general: General, env: CommandEnv, arg: Map<String, Any>?
 
     override suspend fun run(rng: Random): CommandResult {
         val n = nation ?: return CommandResult(false, listOf("국가 정보를 찾을 수 없습니다"))
-        val dn = destNation ?: return CommandResult(false, listOf("대상 국가 정보를 찾을 수 없습니다"))
-        val dg = destGeneral ?: return CommandResult(false, listOf("대상 장수 정보를 찾을 수 없습니다"))
+        val dn = destFaction ?: return CommandResult(false, listOf("대상 국가 정보를 찾을 수 없습니다"))
+        val dg = destOfficer ?: return CommandResult(false, listOf("대상 장수 정보를 찾을 수 없습니다"))
 
         val generalName = general.name
         val nationName = n.name
@@ -38,11 +38,11 @@ class che_종전수락(general: General, env: CommandEnv, arg: Map<String, Any>?
         val josaYiGeneral = JosaUtil.pick(generalName, "이")
         val josaYiNation = JosaUtil.pick(nationName, "이")
 
-        services!!.diplomacyService.acceptCeasefire(env.worldId, n.id, dn.id)
+        services!!.diplomacyService.acceptCeasefire(env.sessionId, n.id, dn.id)
 
         // Update nation fronts
-        services!!.nationService?.setNationFront(env.worldId, n.id)
-        services!!.nationService?.setNationFront(env.worldId, dn.id)
+        services!!.factionService?.setNationFront(env.sessionId, n.id)
+        services!!.factionService?.setNationFront(env.sessionId, dn.id)
 
         // General action + history logs
         val josaWaDest = JosaUtil.pick(destNationName, "와")

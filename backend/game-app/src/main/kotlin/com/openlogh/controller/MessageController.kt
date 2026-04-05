@@ -59,7 +59,7 @@ class MessageController(
     @PostMapping
     fun sendMessage(@RequestBody request: SendMessageRequest): ResponseEntity<MessageResponse> {
         val message = messageService.sendMessage(
-            worldId = request.worldId,
+            worldId = request.sessionId,
             mailboxCode = request.mailboxCode,
             mailboxType = request.mailboxType,
             messageType = request.messageType,

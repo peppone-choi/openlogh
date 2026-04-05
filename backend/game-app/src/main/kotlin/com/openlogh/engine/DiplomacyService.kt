@@ -2,7 +2,7 @@ package com.openlogh.engine
 
 import com.openlogh.entity.Diplomacy
 import com.openlogh.entity.Message
-import com.openlogh.entity.WorldState
+import com.openlogh.entity.SessionState
 import com.openlogh.engine.turn.cqrs.persist.JpaWorldPortFactory
 import com.openlogh.engine.turn.cqrs.persist.toEntity
 import com.openlogh.engine.turn.cqrs.persist.toSnapshot
@@ -57,7 +57,7 @@ class DiplomacyService(
     // ========== Turn processing ==========
 
     @Transactional
-    fun processDiplomacyTurn(world: WorldState) {
+    fun processDiplomacyTurn(world: SessionState) {
         val ports = worldPortFactory.create(world.id.toLong())
         val active = ports.activeDiplomacies().map { it.toEntity() }
 
@@ -69,8 +69,8 @@ class DiplomacyService(
                 diplomacy.term = WAR_INITIAL_TERM
                 log.info(
                     "War declaration transitioned to active war: nation {} <-> nation {}",
-                    diplomacy.srcNationId,
-                    diplomacy.destNationId,
+                    diplomacy.srcFactionId,
+                    diplomacy.destFactionId,
                 )
             }
 
@@ -79,7 +79,7 @@ class DiplomacyService(
                     "불가침" -> {
                         diplomacy.isDead = true
                         log.info("Non-aggression pact expired: nation {} <-> nation {}",
-                            diplomacy.srcNationId, diplomacy.destNationId)
+                            diplomacy.srcFactionId, diplomacy.destFactionId)
                     }
                     "선전포고" -> {
                         // War continues until ceasefire
@@ -88,17 +88,17 @@ class DiplomacyService(
                     "종전제의" -> {
                         diplomacy.isDead = true
                         log.info("Ceasefire proposal expired: nation {} -> nation {}",
-                            diplomacy.srcNationId, diplomacy.destNationId)
+                            diplomacy.srcFactionId, diplomacy.destFactionId)
                     }
                     "불가침제의" -> {
                         diplomacy.isDead = true
                         log.info("Non-aggression proposal expired: nation {} -> nation {}",
-                            diplomacy.srcNationId, diplomacy.destNationId)
+                            diplomacy.srcFactionId, diplomacy.destFactionId)
                     }
                     "불가침파기제의" -> {
                         diplomacy.isDead = true
                         log.info("Non-aggression break proposal expired: nation {} -> nation {}",
-                            diplomacy.srcNationId, diplomacy.destNationId)
+                            diplomacy.srcFactionId, diplomacy.destFactionId)
                     }
                 }
             }
@@ -120,7 +120,7 @@ class DiplomacyService(
 
     fun getRelationsForNation(worldId: Long, nationId: Long): List<Diplomacy> {
         return worldPortFactory.create(worldId).allDiplomacies().map { it.toEntity() }
-            .filter { it.srcNationId == nationId || it.destNationId == nationId }
+            .filter { it.srcFactionId == nationId || it.destFactionId == nationId }
     }
 
     fun getActiveRelation(worldId: Long, nationA: Long, nationB: Long, stateCode: String): Diplomacy? {
@@ -139,9 +139,9 @@ class DiplomacyService(
         term: Short,
     ): Diplomacy {
         val relation = Diplomacy(
-            worldId = worldId,
-            srcNationId = srcNationId,
-            destNationId = destNationId,
+            sessionId = worldId,
+            srcFactionId = srcNationId,
+            destFactionId = destNationId,
             stateCode = stateCode,
             term = term,
         )
@@ -207,7 +207,7 @@ class DiplomacyService(
 
         // Send diplomatic message to dest nation
         sendDiplomaticMessage(
-            worldId = worldId,
+            sessionId = worldId,
             srcNationId = srcNationId,
             destNationId = destNationId,
             messageType = MSG_NON_AGGRESSION_PROPOSAL,
@@ -251,7 +251,7 @@ class DiplomacyService(
         val proposal = createRelation(worldId, srcNationId, destNationId, "불가침파기제의", NA_PROPOSAL_TERM)
 
         sendDiplomaticMessage(
-            worldId = worldId,
+            sessionId = worldId,
             srcNationId = srcNationId,
             destNationId = destNationId,
             messageType = MSG_NON_AGGRESSION_BREAK,
@@ -301,7 +301,7 @@ class DiplomacyService(
         val proposal = createRelation(worldId, srcNationId, destNationId, "종전제의", CEASEFIRE_PROPOSAL_TERM)
 
         sendDiplomaticMessage(
-            worldId = worldId,
+            sessionId = worldId,
             srcNationId = srcNationId,
             destNationId = destNationId,
             messageType = MSG_CEASEFIRE_PROPOSAL,
@@ -517,7 +517,7 @@ class DiplomacyService(
 
         messageRepository.save(
             Message(
-                worldId = worldId,
+                sessionId = worldId,
                 mailboxCode = "diplomacy",
                 messageType = messageType,
                 srcId = srcNationId,
@@ -545,7 +545,7 @@ class DiplomacyService(
         }
         messageRepository.save(
             Message(
-                worldId = worldId,
+                sessionId = worldId,
                 mailboxCode = "diplomacy",
                 messageType = messageType,
                 srcId = srcNationId,
@@ -575,8 +575,8 @@ class DiplomacyService(
     }
 
     private fun isRelationBetween(relation: Diplomacy, nationA: Long, nationB: Long): Boolean {
-        return (relation.srcNationId == nationA && relation.destNationId == nationB) ||
-            (relation.srcNationId == nationB && relation.destNationId == nationA)
+        return (relation.srcFactionId == nationA && relation.destFactionId == nationB) ||
+            (relation.srcFactionId == nationB && relation.destFactionId == nationA)
     }
 }
 

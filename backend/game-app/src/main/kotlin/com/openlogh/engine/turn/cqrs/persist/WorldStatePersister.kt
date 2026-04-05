@@ -4,25 +4,25 @@ import com.openlogh.engine.turn.cqrs.memory.DirtyTracker
 import com.openlogh.engine.turn.cqrs.memory.InMemoryWorldState
 import com.openlogh.entity.OfficerTurn
 import com.openlogh.entity.FactionTurn
-import com.openlogh.repository.CityRepository
+import com.openlogh.repository.PlanetRepository
 import com.openlogh.repository.DiplomacyRepository
-import com.openlogh.repository.GeneralRepository
-import com.openlogh.repository.GeneralTurnRepository
-import com.openlogh.repository.NationRepository
-import com.openlogh.repository.NationTurnRepository
-import com.openlogh.repository.TroopRepository
+import com.openlogh.repository.OfficerRepository
+import com.openlogh.repository.OfficerTurnRepository
+import com.openlogh.repository.FactionRepository
+import com.openlogh.repository.FactionTurnRepository
+import com.openlogh.repository.FleetRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 @Service
 class WorldStatePersister(
-    private val officerRepository: GeneralRepository,
-    private val planetRepository: CityRepository,
-    private val factionRepository: NationRepository,
-    private val fleetRepository: TroopRepository,
+    private val officerRepository: OfficerRepository,
+    private val planetRepository: PlanetRepository,
+    private val factionRepository: FactionRepository,
+    private val fleetRepository: FleetRepository,
     private val diplomacyRepository: DiplomacyRepository,
-    private val officerTurnRepository: GeneralTurnRepository,
-    private val factionTurnRepository: NationTurnRepository,
+    private val officerTurnRepository: OfficerTurnRepository,
+    private val factionTurnRepository: FactionTurnRepository,
     private val jpaBulkWriter: JpaBulkWriter,
 ) {
     @Transactional

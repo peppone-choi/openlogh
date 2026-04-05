@@ -3,19 +3,19 @@ package com.openlogh.controller
 import com.openlogh.engine.ai.NpcPolicyBuilder
 import com.openlogh.engine.ai.NpcGeneralPolicy
 import com.openlogh.engine.ai.NpcNationPolicy
-import com.openlogh.service.NationService
+import com.openlogh.service.FactionService
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 
 @RestController
 @RequestMapping("/api/nations/{nationId}")
 class NpcPolicyController(
-    private val nationService: NationService,
+    private val factionService: FactionService,
 ) {
     @GetMapping("/npc-policy")
     fun getNpcPolicy(@PathVariable nationId: Long): ResponseEntity<Map<String, Any>> {
-        val nation = nationService.getById(nationId) ?: return ResponseEntity.notFound().build()
-        val mergedPolicy = nationService.getNpcPolicy(nationId) ?: emptyMap()
+        val nation = factionService.getById(nationId) ?: return ResponseEntity.notFound().build()
+        val mergedPolicy = factionService.getNpcPolicy(nationId) ?: emptyMap()
 
         val nationPolicy = NpcPolicyBuilder.buildNationPolicy(nation.meta)
         val generalPolicy = NpcPolicyBuilder.buildGeneralPolicy(nation.meta)
@@ -83,7 +83,7 @@ class NpcPolicyController(
         @PathVariable nationId: Long,
         @RequestBody policy: Map<String, Any>,
     ): ResponseEntity<Void> {
-        if (!nationService.updateNpcPolicy(nationId, policy)) return ResponseEntity.notFound().build()
+        if (!factionService.updateNpcPolicy(nationId, policy)) return ResponseEntity.notFound().build()
         return ResponseEntity.ok().build()
     }
 
@@ -92,7 +92,7 @@ class NpcPolicyController(
         @PathVariable nationId: Long,
         @RequestBody priority: Map<String, Any>,
     ): ResponseEntity<Void> {
-        if (!nationService.updateNpcPriority(nationId, priority)) return ResponseEntity.notFound().build()
+        if (!factionService.updateNpcPriority(nationId, priority)) return ResponseEntity.notFound().build()
         return ResponseEntity.ok().build()
     }
 }

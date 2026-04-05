@@ -2,8 +2,8 @@ package com.openlogh.command.general
 
 import com.openlogh.command.CommandServices
 import com.openlogh.engine.modifier.DomesticContext
-import com.openlogh.entity.General
-import com.openlogh.entity.Nation
+import com.openlogh.entity.Officer
+import com.openlogh.entity.Faction
 import kotlin.math.min
 import kotlin.math.pow
 import kotlin.random.Random
@@ -30,10 +30,10 @@ object DomesticUtils {
      *
      * @return Pair(successRatio, failRatio)
      */
-    fun criticalRatioDomestic(general: General, statKey: String): Pair<Double, Double> {
+    fun criticalRatioDomestic(general: Officer, statKey: String): Pair<Double, Double> {
         val leadership = general.leadership.toDouble()
-        val strength = general.strength.toDouble()
-        val intel = general.intel.toDouble()
+        val strength = general.command.toDouble()
+        val intel = general.intelligence.toDouble()
         val avg = (leadership + strength + intel) / 3.0
 
         val statValue = when (statKey) {
@@ -89,8 +89,8 @@ object DomesticUtils {
      */
     fun applyModifier(
         services: CommandServices?,
-        general: General,
-        nation: Nation?,
+        general: Officer,
+        nation: Faction?,
         actionKey: String,
         varType: String,
         baseValue: Double

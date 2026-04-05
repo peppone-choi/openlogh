@@ -3,16 +3,16 @@ package com.openlogh.command.general
 import com.openlogh.command.CommandCost
 import com.openlogh.command.CommandEnv
 import com.openlogh.command.CommandResult
-import com.openlogh.command.GeneralCommand
+import com.openlogh.command.OfficerCommand
 import com.openlogh.command.constraint.*
-import com.openlogh.entity.General
+import com.openlogh.entity.Officer
 import kotlin.math.roundToInt
 import kotlin.random.Random
 
 private const val MAX_RESOURCE_ACTION_AMOUNT = 10000
 
-class che_군량매매(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
-    : GeneralCommand(general, env, arg) {
+class che_군량매매(general: Officer, env: CommandEnv, arg: Map<String, Any>? = null)
+    : OfficerCommand(general, env, arg) {
 
     override val actionName = "군량매매"
 
@@ -58,10 +58,10 @@ class che_군량매매(general: General, env: CommandEnv, arg: Map<String, Any>?
         val isBuyRice = buyRice
         val argAmount = tradeAmount
 
-        val tradeRate = (city?.trade ?: 100) / 100.0
+        val tradeRate = (city?.tradeRoute ?: 100) / 100.0
         val exchangeFee = env.exchangeFee
-        val currentGold = general.gold
-        val currentRice = general.rice
+        val currentGold = general.funds
+        val currentRice = general.supplies
 
         val buyAmount: Double
         val sellAmount: Double
@@ -95,8 +95,8 @@ class che_군량매매(general: General, env: CommandEnv, arg: Map<String, Any>?
 
         // random stat exp weighted by base stats (legacy parity)
         val leadership = general.leadership.toInt()
-        val strength = general.strength.toInt()
-        val intel = general.intel.toInt()
+        val strength = general.command.toInt()
+        val intel = general.intelligence.toInt()
         val statWeights = listOf(
             "leadershipExp" to leadership,
             "strengthExp" to strength,

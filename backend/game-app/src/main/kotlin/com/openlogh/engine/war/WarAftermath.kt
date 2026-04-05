@@ -1,9 +1,9 @@
 package com.openlogh.engine.war
 
 import com.openlogh.engine.DeterministicRng
-import com.openlogh.entity.City
-import com.openlogh.entity.General
-import com.openlogh.entity.Nation
+import com.openlogh.entity.Planet
+import com.openlogh.entity.Officer
+import com.openlogh.entity.Faction
 import com.openlogh.model.CrewType
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -31,9 +31,9 @@ data class WarUnitReport(
 )
 
 data class WarBattleOutcome(
-    val attacker: General,
-    val defenders: List<General>,
-    val defenderCity: City,
+    val attacker: Officer,
+    val defenders: List<Officer>,
+    val defenderCity: Planet,
     val logs: List<String>,
     val conquered: Boolean,
     val reports: List<WarUnitReport>,
@@ -52,20 +52,20 @@ data class WarAftermathConfig(
 
 data class WarAftermathTechContext(
     val side: String,
-    val nation: Nation,
+    val nation: Faction,
     val attackerReport: WarUnitReport,
     val baseGain: Double,
 )
 
 data class WarAftermathInput(
     val battle: WarBattleOutcome,
-    val attackerNation: Nation,
-    val defenderNation: Nation?,
-    val attackerCity: City,
-    val defenderCity: City,
-    val nations: List<Nation>,
-    val cities: List<City>,
-    val generals: List<General>,
+    val attackerNation: Faction,
+    val defenderNation: Faction?,
+    val attackerCity: Planet,
+    val defenderCity: Planet,
+    val nations: List<Faction>,
+    val cities: List<Planet>,
+    val generals: List<Officer>,
     val config: WarAftermathConfig,
     val time: WarTimeContext,
     val hiddenSeed: String? = null,
@@ -85,15 +85,15 @@ data class ConquerCityOutcome(
     val collapseRewardGold: Int,
     val collapseRewardRice: Int,
     val logs: List<String>,
-    val nations: List<Nation>,
-    val cities: List<City>,
-    val generals: List<General>,
+    val nations: List<Faction>,
+    val cities: List<Planet>,
+    val generals: List<Officer>,
 )
 
 data class WarAftermathOutcome(
-    val nations: List<Nation>,
-    val cities: List<City>,
-    val generals: List<General>,
+    val nations: List<Faction>,
+    val cities: List<Planet>,
+    val generals: List<Officer>,
     val diplomacyDeltas: List<WarDiplomacyDelta>,
     val logs: List<String>,
     val conquered: Boolean,
@@ -119,9 +119,9 @@ class WarAftermath {
     fun resolveWarAftermath(input: WarAftermathInput): WarAftermathOutcome {
         val logs = mutableListOf<String>()
         val diplomacyDeltas = mutableListOf<WarDiplomacyDelta>()
-        val affectedNations = linkedSetOf<Nation>()
-        val affectedCities = linkedSetOf<City>()
-        val affectedGenerals = linkedSetOf<General>()
+        val affectedNations = linkedSetOf<Faction>()
+        val affectedCities = linkedSetOf<Planet>()
+        val affectedGenerals = linkedSetOf<Officer>()
 
         val attackerReport = findReport(input.battle.reports) { it.type == "general" && it.isAttacker }
         val cityReport = findReport(input.battle.reports) { it.type == "city" }
@@ -153,11 +153,11 @@ class WarAftermath {
                 rice *= resolveCityTrainAtmos(input.time.year, input.time.startYear) / 100.0 - 0.2
                 rice = round(rice)
 
-                defenderNation.rice = (defenderNation.rice - rice.toInt()).coerceAtLeast(0)
+                defenderNation.supplies = (defenderNation.supplies - rice.toInt()).coerceAtLeast(0)
                 affectedNations.add(defenderNation)
             } else if (input.battle.conquered) {
-                val bonus = if (defenderNation.capitalCityId == input.defenderCity.id) 1000 else 500
-                defenderNation.rice = round(defenderNation.rice + bonus.toDouble()).toInt()
+                val bonus = if (defenderNation.capitalPlanetId == input.defenderCity.id) 1000 else 500
+                defenderNation.supplies = round(defenderNation.supplies + bonus.toDouble()).toInt()
                 affectedNations.add(defenderNation)
             }
         }
@@ -245,9 +245,9 @@ class WarAftermath {
         val attacker = input.battle.attacker
 
         val logs = mutableListOf<String>()
-        val affectedCities = linkedSetOf<City>()
-        val affectedGenerals = linkedSetOf<General>()
-        val affectedNations = linkedSetOf<Nation>()
+        val affectedCities = linkedSetOf<Planet>()
+        val affectedGenerals = linkedSetOf<Officer>()
+        val affectedNations = linkedSetOf<Faction>()
 
         val conquerNationId = resolveConquerNation(defenderCity, attackerNation.id)
         logs.add("${defenderCity.name} 공략 성공")
@@ -255,7 +255,7 @@ class WarAftermath {
 
         val defenderNationId = defenderNation?.id ?: 0L
         val defenderCityCount = if (defenderNationId != 0L) {
-            input.cities.count { it.nationId == defenderNationId }
+            input.cities.count { it.factionId == defenderNationId }
         } else {
             0
         }
@@ -265,15 +265,15 @@ class WarAftermath {
         var collapseRewardRice = 0.0
 
         if (nationCollapsed && defenderNation != null) {
-            val defenderGenerals = input.generals.filter { it.nationId == defenderNationId }
+            val defenderGenerals = input.generals.filter { it.factionId == defenderNationId }
             var totalGoldLoss = 0
             var totalRiceLoss = 0
 
             for (general in defenderGenerals) {
-                val loseGold = round(general.gold * rng.nextDouble(0.2, 0.5)).toInt()
-                val loseRice = round(general.rice * rng.nextDouble(0.2, 0.5)).toInt()
-                general.gold = (general.gold - loseGold).coerceAtLeast(0)
-                general.rice = (general.rice - loseRice).coerceAtLeast(0)
+                val loseGold = round(general.funds * rng.nextDouble(0.2, 0.5)).toInt()
+                val loseRice = round(general.supplies * rng.nextDouble(0.2, 0.5)).toInt()
+                general.funds = (general.funds - loseGold).coerceAtLeast(0)
+                general.supplies = (general.supplies - loseRice).coerceAtLeast(0)
                 general.experience = round(general.experience * 0.9).toInt()
                 general.dedication = round(general.dedication * 0.5).toInt()
 
@@ -283,18 +283,18 @@ class WarAftermath {
                 affectedGenerals.add(general)
             }
 
-            collapseRewardGold = (defenderNation.gold - input.config.baseGold).coerceAtLeast(0) * 0.5 + totalGoldLoss * 0.5
-            collapseRewardRice = (defenderNation.rice - input.config.baseRice).coerceAtLeast(0) * 0.5 + totalRiceLoss * 0.5
+            collapseRewardGold = (defenderNation.funds - input.config.baseGold).coerceAtLeast(0) * 0.5 + totalGoldLoss * 0.5
+            collapseRewardRice = (defenderNation.supplies - input.config.baseRice).coerceAtLeast(0) * 0.5 + totalRiceLoss * 0.5
 
-            attackerNation.gold = round(attackerNation.gold + collapseRewardGold).toInt()
-            attackerNation.rice = round(attackerNation.rice + collapseRewardRice).toInt()
+            attackerNation.funds = round(attackerNation.funds + collapseRewardGold).toInt()
+            attackerNation.supplies = round(attackerNation.supplies + collapseRewardRice).toInt()
 
             defenderNation.meta["collapsed"] = true
             affectedNations.add(defenderNation)
             affectedNations.add(attackerNation)
         }
 
-        if (!nationCollapsed && defenderNation != null && defenderNation.capitalCityId == defenderCity.id) {
+        if (!nationCollapsed && defenderNation != null && defenderNation.capitalPlanetId == defenderCity.id) {
             val nextCapital = findNextCapital(
                 cities = input.cities,
                 defenderNationId = defenderNationId,
@@ -302,20 +302,20 @@ class WarAftermath {
                 oldCapital = defenderCity,
             )
             if (nextCapital != null) {
-                defenderNation.capitalCityId = nextCapital.id
-                defenderNation.gold = round(defenderNation.gold * 0.5).toInt()
-                defenderNation.rice = round(defenderNation.rice * 0.5).toInt()
+                defenderNation.capitalPlanetId = nextCapital.id
+                defenderNation.funds = round(defenderNation.funds * 0.5).toInt()
+                defenderNation.supplies = round(defenderNation.supplies * 0.5).toInt()
 
                 nextCapital.supplyState = 1
                 affectedCities.add(nextCapital)
 
                 for (general in input.generals) {
-                    if (general.nationId != defenderNationId) {
+                    if (general.factionId != defenderNationId) {
                         continue
                     }
-                    general.atmos = round(general.atmos * 0.8).toInt().coerceIn(0, 150).toShort()
+                    general.morale = round(general.morale * 0.8).toInt().coerceIn(0, 150).toShort()
                     if (general.officerLevel >= 5) {
-                        general.cityId = nextCapital.id
+                        general.planetId = nextCapital.id
                     }
                     affectedGenerals.add(general)
                 }
@@ -331,7 +331,7 @@ class WarAftermath {
         }
 
         if (conquerNationId == attackerNation.id) {
-            attacker.cityId = defenderCity.id
+            attacker.planetId = defenderCity.id
             affectedGenerals.add(attacker)
         } else {
             logs.add("분쟁협상으로 ${defenderCity.name} 양도")
@@ -339,19 +339,19 @@ class WarAftermath {
 
         defenderCity.supplyState = 1
         defenderCity.frontState = 0
-        defenderCity.agri = round(defenderCity.agri * 0.7).toInt()
-        defenderCity.comm = round(defenderCity.comm * 0.7).toInt()
-        defenderCity.secu = round(defenderCity.secu * 0.7).toInt()
-        defenderCity.nationId = conquerNationId
+        defenderCity.production = round(defenderCity.production * 0.7).toInt()
+        defenderCity.commerce = round(defenderCity.commerce * 0.7).toInt()
+        defenderCity.security = round(defenderCity.security * 0.7).toInt()
+        defenderCity.factionId = conquerNationId
         defenderCity.meta[META_CONFLICT] = "{}"
         defenderCity.conflict = mutableMapOf()
 
         if (defenderCity.level > 3) {
-            defenderCity.def = input.config.defaultCityWall
-            defenderCity.wall = input.config.defaultCityWall
+            defenderCity.orbitalDefense = input.config.defaultCityWall
+            defenderCity.fortress = input.config.defaultCityWall
         } else {
-            defenderCity.def = round(defenderCity.defMax / 2.0).toInt()
-            defenderCity.wall = round(defenderCity.wallMax / 2.0).toInt()
+            defenderCity.orbitalDefense = round(defenderCity.orbitalDefenseMax / 2.0).toInt()
+            defenderCity.fortress = round(defenderCity.fortressMax / 2.0).toInt()
         }
 
         affectedCities.add(defenderCity)
@@ -378,13 +378,13 @@ class WarAftermath {
         return null
     }
 
-    private fun getDeadCounter(city: City): Int = getMetaNumber(city.meta, META_DEAD, 0.0).toInt()
+    private fun getDeadCounter(city: Planet): Int = getMetaNumber(city.meta, META_DEAD, 0.0).toInt()
 
-    private fun setDeadCounter(city: City, value: Double) {
+    private fun setDeadCounter(city: Planet, value: Double) {
         city.meta[META_DEAD] = round(value).toInt()
     }
 
-    private fun isSupplyCity(city: City): Boolean {
+    private fun isSupplyCity(city: Planet): Boolean {
         val raw = city.meta["supply"]
         return when (raw) {
             is Boolean -> raw
@@ -404,13 +404,13 @@ class WarAftermath {
     }
 
     private fun resolveNationGenCount(
-        nation: Nation,
-        generals: List<General>,
+        nation: Faction,
+        generals: List<Officer>,
         config: WarAftermathConfig,
     ): Pair<Int, Int> {
-        val fallback = generals.count { it.nationId == nation.id }
+        val fallback = generals.count { it.factionId == nation.id }
         var total = getMetaNumber(nation.meta, "gennum", fallback.toDouble()).toInt()
-        var effective = generals.count { it.nationId == nation.id && it.npcState.toInt() != 5 }
+        var effective = generals.count { it.factionId == nation.id && it.npcState.toInt() != 5 }
 
         if (effective < config.initialNationGenLimit) {
             total = config.initialNationGenLimit
@@ -421,7 +421,7 @@ class WarAftermath {
     }
 
     private fun applyNationTechGain(
-        nation: Nation,
+        nation: Faction,
         baseGain: Double,
         input: WarAftermathInput,
         context: WarAftermathTechContext,
@@ -446,7 +446,7 @@ class WarAftermath {
         setNationTech(nation, round(nextTech))
     }
 
-    private fun resolveConquerNation(city: City, attackerNationId: Long): Long {
+    private fun resolveConquerNation(city: Planet, attackerNationId: Long): Long {
         val rawConflict = city.meta[META_CONFLICT] ?: return attackerNationId
         return try {
             val parsed = parseConflict(rawConflict.toString())
@@ -462,34 +462,34 @@ class WarAftermath {
     }
 
     private fun findNextCapital(
-        cities: List<City>,
+        cities: List<Planet>,
         defenderNationId: Long,
         capturedCityId: Long,
-        oldCapital: City,
-    ): City? {
-        val candidates = cities.filter { it.nationId == defenderNationId && it.id != capturedCityId }
+        oldCapital: Planet,
+    ): Planet? {
+        val candidates = cities.filter { it.factionId == defenderNationId && it.id != capturedCityId }
         if (candidates.isEmpty()) {
             return null
         }
 
         val oldPos = getCityPosition(oldCapital)
         if (oldPos == null) {
-            return candidates.maxByOrNull { it.pop }
+            return candidates.maxByOrNull { it.population }
         }
 
         return candidates.minWithOrNull(
-            compareBy<City> {
+            compareBy<Planet> {
                 val pos = getCityPosition(it)
                 if (pos == null) {
                     Double.MAX_VALUE
                 } else {
                     hypot(pos.first - oldPos.first, pos.second - oldPos.second)
                 }
-            }.thenByDescending { it.pop },
+            }.thenByDescending { it.population },
         )
     }
 
-    private fun getCityPosition(city: City): Pair<Double, Double>? {
+    private fun getCityPosition(city: Planet): Pair<Double, Double>? {
         val x = getMetaNumber(city.meta, "positionX", Double.NaN)
         val y = getMetaNumber(city.meta, "positionY", Double.NaN)
         if (!x.isFinite() || !y.isFinite()) {
@@ -503,17 +503,17 @@ class WarAftermath {
         return if (value is Number && value.toDouble().isFinite()) value.toDouble() else fallback
     }
 
-    private fun getNationTech(nation: Nation): Double {
+    private fun getNationTech(nation: Faction): Double {
         val techMeta = nation.meta["tech"]
         if (techMeta is Number) {
             return techMeta.toDouble()
         }
-        return nation.tech.toDouble()
+        return nation.techLevel.toDouble()
     }
 
-    private fun setNationTech(nation: Nation, tech: Double) {
+    private fun setNationTech(nation: Faction, tech: Double) {
         nation.meta["tech"] = tech.toInt()
-        nation.tech = tech.toFloat()
+        nation.techLevel = tech.toFloat()
     }
 
     private fun parseConflict(raw: String): Map<Long, Int> {

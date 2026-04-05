@@ -68,18 +68,18 @@ class OfficerService(
     @Transactional
     fun getMyOfficer(worldId: Long, loginId: String): Officer? {
         val userId = getCurrentUserId(loginId) ?: return null
-        val general = officerRepository.findBySessionIdAndUserId(worldId, userId)
+        val officer = officerRepository.findBySessionIdAndUserId(worldId, userId)
             .firstOrNull { it.npcState < 5 } ?: return null
-        if (general.nationId > 0L && general.officerLevel < 1) {
-            general.officerLevel = 1
-            general.officerCity = 0
-            general.permission = "normal"
-            if (general.makeLimit > 0) {
-                general.makeLimit = 0
+        if (officer.factionId > 0L && officer.officerLevel < 1) {
+            officer.officerLevel = 1
+            officer.officerCity = 0
+            officer.permission = "normal"
+            if (officer.makeLimit > 0) {
+                officer.makeLimit = 0
             }
-            return officerRepository.save(general)
+            return officerRepository.save(officer)
         }
-        return general
+        return officer
     }
 
     fun listByNation(nationId: Long): List<Officer> {
@@ -99,7 +99,7 @@ class OfficerService(
         }
 
         ensureCreateAllowed(world, worldId, userId)
-        validateFiveStats(request.leadership, request.strength, request.intel, request.politics, request.charm)
+        validateFiveStats(request.leadership, request.command, request.intelligence, request.politics, request.administration)
 
         val prePurchasedSpecial = user.meta["inheritSpecificSpecialWar"] as? String
         val prePurchasedCity = (user.meta["inheritCity"] as? Number)?.toLong()
@@ -112,11 +112,11 @@ class OfficerService(
 
         val inheritBonusStat = normalizeInheritBonusStat(request.inheritBonusStat)
         val nameBlocked = isCustomNameBlocked(world)
-        val nationId = request.nationId ?: 0L
-        val nation = if (nationId > 0L) {
+        val nationId = request.factionId ?: 0L
+        val faction = if (nationId > 0L) {
             factionRepository.findById(nationId).orElseThrow { IllegalArgumentException("국가를 찾을 수 없습니다.") }
                 .also {
-                    if (it.worldId != worldId) {
+                    if (it.sessionId != worldId) {
                         throw IllegalArgumentException("다른 월드의 국가입니다.")
                     }
                 }
@@ -124,14 +124,14 @@ class OfficerService(
             null
         }
 
-        val finalCityId = inheritCity ?: request.cityId ?: pickRandomStartPlanet(worldId, world, nationId)
-        val city = planetRepository.findById(finalCityId).orElseThrow {
+        val finalCityId = inheritCity ?: request.planetId ?: pickRandomStartPlanet(worldId, world, nationId)
+        val planet = planetRepository.findById(finalCityId).orElseThrow {
             IllegalArgumentException("도시를 찾을 수 없습니다.")
         }.also {
-            if (it.worldId != worldId) {
+            if (it.sessionId != worldId) {
                 throw IllegalArgumentException("다른 월드의 도시입니다.")
             }
-            if (nation != null && it.nationId != 0L && it.nationId != nation.id) {
+            if (faction != null && it.factionId != 0L && it.factionId != faction.id) {
                 throw IllegalArgumentException("선택한 도시는 해당 국가 소속이 아닙니다.")
             }
         }
@@ -158,41 +158,41 @@ class OfficerService(
         )
         applyJoinInheritCost(user, pointsToSpend)
 
-        val bonusStat = inheritBonusStat ?: randomBornBonus(rng, request.leadership.toInt(), request.strength.toInt(), request.intel.toInt(), request.politics.toInt(), request.charm.toInt())
+        val bonusStat = inheritBonusStat ?: randomBornBonus(rng, request.leadership.toInt(), request.command.toInt(), request.intelligence.toInt(), request.politics.toInt(), request.administration.toInt())
         val relYear = (world.currentYear.toInt() - getStartYear(world)).coerceAtLeast(0)
         val age = (20 + bonusStat.sum() * 2 - rng.nextInt(0, 2)).toShort()
         val specAge = calcSpecAge(age.toInt(), relYear)
         val spec2Age = if (inheritSpecial != null) age else calcWarSpecAge(age.toInt(), relYear)
-        val experience = nation?.let {
+        val experience = faction?.let {
             val initialNationGenLimit = (world.config["initialNationGenLimit"] as? Number)?.toInt()
                 ?: gameConstService.getInt("initialNationGenLimit")
-            if (it.gennum < initialNationGenLimit) 700 else 100
+            if (it.officerCount < initialNationGenLimit) 700 else 100
         } ?: calcStartingExperience(allGenerals, relYear)
         val useOwnIcon = request.useOwnIcon ?: request.pic ?: false
         val (picture, imageServer) = resolvePicture(user, useOwnIcon)
 
         val saved = officerRepository.save(
             Officer(
-                worldId = worldId,
+                sessionId = worldId,
                 userId = userId,
                 name = name,
-                cityId = finalCityId,
-                nationId = nationId,
+                planetId = finalCityId,
+                factionId = nationId,
                 affinity = rng.nextInt(1, 151).toShort(),
                 picture = picture,
                 imageServer = imageServer,
                 leadership = (request.leadership + bonusStat[0]).toShort(),
-                strength = (request.strength + bonusStat[1]).toShort(),
-                intel = (request.intel + bonusStat[2]).toShort(),
+                strength = (request.command + bonusStat[1]).toShort(),
+                intel = (request.intelligence + bonusStat[2]).toShort(),
                 politics = (request.politics + bonusStat[3]).toShort(),
-                charm = (request.charm + bonusStat[4]).toShort(),
+                charm = (request.administration + bonusStat[4]).toShort(),
                 experience = experience,
                 officerLevel = if (nationId > 0L) 1 else 0,
                 officerCity = 0,
                 permission = "normal",
                 gold = gameConstService.getInt("defaultGold"),
                 rice = gameConstService.getInt("defaultRice"),
-                crewType = request.crewType,
+                crewType = request.shipClass,
                 ownerName = user.displayName,
                 turnTime = createInitialTurnTime(world, rng, request.inheritTurntimeZone),
                 killTurn = resolveKillTurn(world).toShort(),
@@ -215,7 +215,7 @@ class OfficerService(
         officerTurnRepository.saveAll(
             (0 until gameConstService.getInt("maxTurn")).map { turnIdx ->
                 OfficerTurn(
-                    worldId = worldId,
+                    sessionId = worldId,
                     generalId = saved.id,
                     turnIdx = turnIdx.toShort(),
                     actionCode = "휴식",
@@ -224,9 +224,9 @@ class OfficerService(
             },
         )
 
-        if (nation != null) {
-            nation.gennum += 1
-            factionRepository.save(nation)
+        if (faction != null) {
+            faction.officerCount += 1
+            factionRepository.save(faction)
         }
 
         if (inheritSpecial != null && inheritSpecial == prePurchasedSpecial) {
@@ -251,11 +251,11 @@ class OfficerService(
     fun possessNpc(worldId: Long, loginId: String, generalId: Long): Officer? {
         val userId = getCurrentUserId(loginId) ?: return null
         if (hasActiveOfficer(worldId, userId)) return null
-        val general = officerRepository.findById(generalId).orElse(null) ?: return null
-        if (general.worldId != worldId || general.npcState.toInt() == 0 || general.userId != null) return null
-        general.userId = userId
-        general.npcState = 0
-        return officerRepository.save(general)
+        val officer = officerRepository.findById(generalId).orElse(null) ?: return null
+        if (officer.sessionId != worldId || officer.npcState.toInt() == 0 || officer.userId != null) return null
+        officer.userId = userId
+        officer.npcState = 0
+        return officerRepository.save(officer)
     }
 
     fun listPool(worldId: Long): List<Officer> {
@@ -267,23 +267,23 @@ class OfficerService(
     fun selectFromPool(worldId: Long, loginId: String, generalId: Long): Officer? {
         val userId = getCurrentUserId(loginId) ?: return null
         if (hasActiveOfficer(worldId, userId)) return null
-        val general = officerRepository.findById(generalId).orElse(null) ?: return null
-        if (general.worldId != worldId || general.npcState.toInt() != 5 || general.userId != null) return null
+        val officer = officerRepository.findById(generalId).orElse(null) ?: return null
+        if (officer.sessionId != worldId || officer.npcState.toInt() != 5 || officer.userId != null) return null
         
-        if (general.officerLevel.toInt() == 20) {
+        if (officer.officerLevel.toInt() == 20) {
             throw IllegalStateException("황제는 플레이할 수 없습니다.")
         }
         
-        general.userId = userId
-        general.npcState = 0
-        return officerRepository.save(general)
+        officer.userId = userId
+        officer.npcState = 0
+        return officerRepository.save(officer)
     }
 
     @Transactional
     fun buildPoolOfficer(worldId: Long, loginId: String, request: BuildPoolGeneralRequest): Officer? {
         val user = findUserByLoginId(loginId)
         val userId = user.id ?: throw IllegalArgumentException("계정 정보를 확인할 수 없습니다. 다시 로그인해주세요.")
-        validateFiveStats(request.leadership, request.strength, request.intel, request.politics, request.charm)
+        validateFiveStats(request.leadership, request.command, request.intelligence, request.politics, request.administration)
         if (hasActiveOfficer(worldId, userId)) return null
 
         val rng = createJoinRng(
@@ -291,15 +291,15 @@ class OfficerService(
             userId = userId,
         )
         val (picture, imageServer) = resolvePicture(user, true)
-        val general = Officer(
-            worldId = worldId,
+        val officer = Officer(
+            sessionId = worldId,
             userId = userId,
             name = normalizeName(request.name),
             leadership = request.leadership,
-            strength = request.strength,
-            intel = request.intel,
+            strength = request.command,
+            intel = request.intelligence,
             politics = request.politics,
-            charm = request.charm,
+            charm = request.administration,
             npcState = 5,
             turnTime = OffsetDateTime.now(),
             picture = picture,
@@ -307,7 +307,7 @@ class OfficerService(
             ownerName = user.displayName,
             personalCode = normalizePersonalityCode(request.personality ?: request.ego, rng),
         )
-        return officerRepository.save(general)
+        return officerRepository.save(officer)
     }
 
     @Transactional
@@ -323,14 +323,14 @@ class OfficerService(
     ): Officer? {
         validateFiveStats(leadership, strength, intel, politics, charm)
         val userId = getCurrentUserId(loginId) ?: return null
-        val general = officerRepository.findById(generalId).orElse(null) ?: return null
-        if (general.worldId != worldId || general.userId != userId || general.npcState.toInt() != 5) return null
-        general.leadership = leadership
-        general.strength = strength
-        general.intel = intel
-        general.politics = politics
-        general.charm = charm
-        return officerRepository.save(general)
+        val officer = officerRepository.findById(generalId).orElse(null) ?: return null
+        if (officer.sessionId != worldId || officer.userId != userId || officer.npcState.toInt() != 5) return null
+        officer.leadership = leadership
+        officer.command = strength
+        officer.intelligence = intel
+        officer.politics = politics
+        officer.administration = charm
+        return officerRepository.save(officer)
     }
 
     fun getMyActiveOfficer(loginId: String): Officer? {
@@ -483,7 +483,7 @@ class OfficerService(
     private fun calcStartingExperience(allGenerals: List<Officer>, relYear: Int): Int {
         if (relYear < 3) return 0
         val experienced = allGenerals
-            .filter { it.nationId != 0L && it.npcState.toInt() < 4 }
+            .filter { it.factionId != 0L && it.npcState.toInt() < 4 }
             .map { it.experience }
             .sorted()
         if (experienced.isEmpty()) return 0
@@ -568,12 +568,12 @@ class OfficerService(
         val allCities = planetRepository.findBySessionId(worldId)
         
         val cities = if (nationId > 0L) {
-            allCities.filter { it.nationId == nationId }
+            allCities.filter { it.factionId == nationId }
                 .ifEmpty {
-                    allCities.filter { it.level.toInt() in 5..6 && it.nationId == 0L }
+                    allCities.filter { it.level.toInt() in 5..6 && it.factionId == 0L }
                 }
         } else {
-            allCities.filter { it.level.toInt() in 5..6 && it.nationId == 0L }
+            allCities.filter { it.level.toInt() in 5..6 && it.factionId == 0L }
                 .ifEmpty {
                     allCities.filter { it.level.toInt() in 5..6 }
                 }

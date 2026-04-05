@@ -3,13 +3,13 @@ package com.openlogh.command.general
 import com.openlogh.command.CommandCost
 import com.openlogh.command.CommandEnv
 import com.openlogh.command.CommandResult
-import com.openlogh.command.GeneralCommand
+import com.openlogh.command.OfficerCommand
 import com.openlogh.command.constraint.*
-import com.openlogh.entity.General
+import com.openlogh.entity.Officer
 import kotlin.random.Random
 
-class 접경귀환(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
-    : GeneralCommand(general, env, arg) {
+class 접경귀환(general: Officer, env: CommandEnv, arg: Map<String, Any>? = null)
+    : OfficerCommand(general, env, arg) {
 
     override val actionName = "접경귀환"
     override val canDisplay = false
@@ -31,14 +31,14 @@ class 접경귀환(general: General, env: CommandEnv, arg: Map<String, Any>? = n
         val cityNationById = readLongMap(env.gameStor["cityNationById"])
         val citySupplyStateById = readIntMap(env.gameStor["citySupplyStateById"])
         val cityNameById = readStringMap(env.gameStor["cityNameById"])
-        val nationId = general.nationId
+        val nationId = general.factionId
 
         if (adjacency.isEmpty() || nationId == 0L) {
             pushLog("3칸 이내에 아국 도시가 없습니다.")
             return CommandResult(success = false, logs = logs)
         }
 
-        val distanceByCity = searchDistance(adjacency, general.cityId, 3)
+        val distanceByCity = searchDistance(adjacency, general.planetId, 3)
         val candidates = cityNationById.entries
             .asSequence()
             .filter { (_, ownerNationId) -> ownerNationId == nationId }

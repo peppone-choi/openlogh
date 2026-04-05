@@ -4,9 +4,9 @@ import com.openlogh.command.CommandCost
 import com.openlogh.command.CommandEnv
 import com.openlogh.command.CommandResult
 import com.openlogh.command.LastTurn
-import com.openlogh.command.NationCommand
+import com.openlogh.command.FactionCommand
 import com.openlogh.command.constraint.*
-import com.openlogh.entity.General
+import com.openlogh.entity.Officer
 import com.openlogh.util.JosaUtil
 import kotlin.random.Random
 
@@ -19,14 +19,14 @@ import kotlin.random.Random
  * We track capset in nation.meta["capSet"] and compare with the stored seq in lastTurn.
  *
  * On completion:
- *  - Update nation.capitalCityId
+ *  - Update nation.capitalPlanetId
  *  - Increment nation.meta["capSet"]
  *  - Award experience + dedication = 5 * (preReqTurn + 1)
  *  - Award inheritancePoint(active_action, 1)
  *  - refreshNationStaticInfo (handled by engine on save)
  */
-class che_천도(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
-    : NationCommand(general, env, arg) {
+class che_천도(general: Officer, env: CommandEnv, arg: Map<String, Any>? = null)
+    : FactionCommand(general, env, arg) {
 
     override val actionName = "천도"
 
@@ -35,17 +35,17 @@ class che_천도(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
     private fun getDistance(): Int {
         cachedDist?.let { return it }
 
-        val capitalCityId = nation?.capitalCityId ?: return 2
+        val capitalCityId = nation?.capitalPlanetId ?: return 2
         val destCityId = (arg?.get("destCityID") as? Number)?.toLong()
             ?: (arg?.get("destCityId") as? Number)?.toLong()
-            ?: destCity?.id ?: return 2
+            ?: destPlanet?.id ?: return 2
 
         if (capitalCityId == destCityId) {
             cachedDist = 0
             return 0
         }
 
-        // BFS distance from capital to destCity through own-nation territory
+        // BFS distance from capital to destPlanet through own-nation territory
         val dist = computeDistanceThroughOwnTerritory(capitalCityId, destCityId)
         cachedDist = dist ?: 1
         return cachedDist!!
@@ -56,7 +56,7 @@ class che_천도(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
         val dbToMapIdRaw = readMap(constraintEnv["dbToMapId"])
         val cityNationByMapIdRaw = readMap(constraintEnv["cityNationByMapId"])
 
-        val nationId = general.nationId
+        val nationId = general.factionId
 
         val adjacency = mutableMapOf<Long, List<Long>>()
         adjacencyRaw.forEach { (k, v) ->
@@ -152,11 +152,11 @@ class che_천도(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
      */
     override suspend fun run(rng: Random): CommandResult {
         val date = formatDate()
-        val dCity = destCity ?: return CommandResult(false, logs, "대상 도시 정보를 찾을 수 없습니다")
+        val dCity = destPlanet ?: return CommandResult(false, logs, "대상 도시 정보를 찾을 수 없습니다")
         val n = nation ?: return CommandResult(false, logs, "국가 정보를 찾을 수 없습니다")
 
         // Check not already capital
-        if (n.capitalCityId == dCity.id) {
+        if (n.capitalPlanetId == dCity.id) {
             return CommandResult(false, logs, "이미 수도입니다.")
         }
 
@@ -170,11 +170,11 @@ class che_천도(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
 
         // Apply costs
         val cost = getCost()
-        n.gold -= cost.gold
-        n.rice -= cost.rice
+        n.funds -= cost.funds
+        n.supplies -= cost.supplies
 
         // Update capital
-        n.capitalCityId = dCity.id
+        n.capitalPlanetId = dCity.id
 
         // Increment capSet
         n.meta["capSet"] = currentCapSet + 1

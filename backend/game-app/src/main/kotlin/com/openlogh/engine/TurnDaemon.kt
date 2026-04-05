@@ -1,6 +1,6 @@
 package com.openlogh.engine
 
-import com.openlogh.repository.WorldStateRepository
+import com.openlogh.repository.SessionStateRepository
 import com.openlogh.engine.turn.cqrs.TurnCoordinator
 import com.openlogh.service.GameEventService
 import org.slf4j.LoggerFactory
@@ -21,7 +21,7 @@ class TurnDaemon(
     private val realtimeService: RealtimeService,
     @Value("\${game.commit-sha:local}") private val processCommitSha: String,
     @Value("\${opensam.cqrs.enabled:false}") private val cqrsEnabled: Boolean,
-    private val worldStateRepository: WorldStateRepository,
+    private val sessionStateRepository: SessionStateRepository,
     private val gameEventService: GameEventService,
 ) {
     enum class DaemonState { IDLE, RUNNING, FLUSHING, PAUSED, STOPPING }
@@ -53,7 +53,7 @@ class TurnDaemon(
         val reqId = java.util.UUID.randomUUID().toString().take(8)
         transitionTo(DaemonState.RUNNING, "tick_start", reqId)
         try {
-            val worlds = worldStateRepository
+            val worlds = sessionStateRepository
                 .findByCommitSha(processCommitSha)
                 .filter { shouldProcessWorld(it.meta["gatewayActive"]) }
 
@@ -108,7 +108,7 @@ class TurnDaemon(
         }
     }
 
-    private fun isPreOpen(world: com.openlogh.entity.WorldState): Boolean {
+    private fun isPreOpen(world: com.openlogh.entity.SessionState): Boolean {
         val now = OffsetDateTime.now()
         val startTime = (world.config["startTime"] as? String)?.let {
             try { OffsetDateTime.parse(it) } catch (e: Exception) { logger.warn("Failed to parse startTime '{}': {}", it, e.message); null }
@@ -123,7 +123,7 @@ class TurnDaemon(
         }
     }
 
-    private fun isWorldLocked(world: com.openlogh.entity.WorldState): Boolean {
+    private fun isWorldLocked(world: com.openlogh.entity.SessionState): Boolean {
         val locked = world.config["locked"] ?: world.meta["locked"] ?: world.meta["isLocked"]
         return when (locked) {
             is Boolean -> locked

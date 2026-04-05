@@ -1,9 +1,9 @@
 package com.openlogh.command.general
 
 import com.openlogh.command.CommandEnv
-import com.openlogh.entity.General
+import com.openlogh.entity.Officer
 
-class che_치안강화(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
+class che_치안강화(general: Officer, env: CommandEnv, arg: Map<String, Any>? = null)
     : DomesticCommand(general, env, arg) {
 
     override val actionName = "치안 강화"
