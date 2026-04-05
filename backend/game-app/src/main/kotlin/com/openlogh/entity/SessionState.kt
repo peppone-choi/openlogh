@@ -39,6 +39,12 @@ class SessionState(
     @Column(name = "command_point_regen_rate", nullable = false)
     var commandPointRegenRate: Int = 1,
 
+    @Column(name = "game_time_sec", nullable = false)
+    var gameTimeSec: Long = 0,
+
+    @Column(name = "tick_count", nullable = false)
+    var tickCount: Long = 0,
+
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb", nullable = false)
     var config: MutableMap<String, Any> = mutableMapOf(),
