@@ -4,10 +4,10 @@ import com.openlogh.entity.Tournament
 import org.springframework.data.jpa.repository.JpaRepository
 
 interface TournamentRepository : JpaRepository<Tournament, Long> {
-    fun findByWorldId(worldId: Long): List<Tournament>
-    fun findByWorldIdOrderByRoundAscBracketPositionAsc(worldId: Long): List<Tournament>
-    fun findByGeneralId(generalId: Long): List<Tournament>
-    fun findByWorldIdAndRoundOrderByBracketPositionAsc(worldId: Long, round: Short): List<Tournament>
-    fun findByWorldIdAndRound(worldId: Long, round: Short): List<Tournament>
-    fun deleteByWorldId(worldId: Long): Long
+    fun findBySessionId(sessionId: Long): List<Tournament>
+    fun findBySessionIdOrderByRoundAscBracketPositionAsc(sessionId: Long): List<Tournament>
+    fun findByOfficerId(officerId: Long): List<Tournament>
+    fun findBySessionIdAndRoundOrderByBracketPositionAsc(sessionId: Long, round: Short): List<Tournament>
+    fun findBySessionIdAndRound(sessionId: Long, round: Short): List<Tournament>
+    fun deleteBySessionId(sessionId: Long): Long
 }

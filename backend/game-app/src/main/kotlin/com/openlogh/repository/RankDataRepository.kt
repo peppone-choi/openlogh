@@ -4,8 +4,8 @@ import com.openlogh.entity.RankData
 import org.springframework.data.jpa.repository.JpaRepository
 
 interface RankDataRepository : JpaRepository<RankData, Long> {
-    fun findByWorldId(worldId: Long): List<RankData>
-    fun findByWorldIdAndCategory(worldId: Long, category: String): List<RankData>
-    fun findByWorldIdAndCategoryOrderByScoreDesc(worldId: Long, category: String): List<RankData>
-    fun findByNationId(nationId: Long): List<RankData>
+    fun findBySessionId(sessionId: Long): List<RankData>
+    fun findBySessionIdAndCategory(sessionId: Long, category: String): List<RankData>
+    fun findBySessionIdAndCategoryOrderByScoreDesc(sessionId: Long, category: String): List<RankData>
+    fun findByFactionId(factionId: Long): List<RankData>
 }

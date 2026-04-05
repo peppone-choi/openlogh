@@ -5,12 +5,12 @@ import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 
 interface RecordRepository : JpaRepository<Record, Long> {
-    fun findByWorldIdAndRecordTypeOrderByCreatedAtDesc(worldId: Long, recordType: String): List<Record>
+    fun findBySessionIdAndRecordTypeOrderByCreatedAtDesc(sessionId: Long, recordType: String): List<Record>
 
     fun findByDestIdAndRecordTypeOrderByCreatedAtDesc(destId: Long, recordType: String): List<Record>
 
-    fun findByWorldIdAndRecordTypeAndIdLessThanOrderByCreatedAtDesc(
-        worldId: Long,
+    fun findBySessionIdAndRecordTypeAndIdLessThanOrderByCreatedAtDesc(
+        sessionId: Long,
         recordType: String,
         beforeId: Long
     ): List<Record>
@@ -21,8 +21,8 @@ interface RecordRepository : JpaRepository<Record, Long> {
         beforeId: Long
     ): List<Record>
 
-    fun findByWorldIdAndRecordTypeAndIdGreaterThanOrderByCreatedAtDesc(
-        worldId: Long,
+    fun findBySessionIdAndRecordTypeAndIdGreaterThanOrderByCreatedAtDesc(
+        sessionId: Long,
         recordType: String,
         sinceId: Long
     ): List<Record>
@@ -33,14 +33,14 @@ interface RecordRepository : JpaRepository<Record, Long> {
         sinceId: Long
     ): List<Record>
 
-    fun findByWorldIdAndYearAndMonth(
-        worldId: Long,
+    fun findBySessionIdAndYearAndMonth(
+        sessionId: Long,
         year: Int,
         month: Int
     ): List<Record>
 
-    fun findByWorldIdAndRecordTypeInAndYearAndMonthOrderByCreatedAtDesc(
-        worldId: Long,
+    fun findBySessionIdAndRecordTypeInAndYearAndMonthOrderByCreatedAtDesc(
+        sessionId: Long,
         recordType: List<String>,
         year: Int,
         month: Int
@@ -48,24 +48,24 @@ interface RecordRepository : JpaRepository<Record, Long> {
 
     @Query(
         """
-        SELECT r FROM Record r 
-        WHERE r.worldId = :worldId 
-        AND r.recordType IN :recordTypes 
+        SELECT r FROM Record r
+        WHERE r.sessionId = :sessionId
+        AND r.recordType IN :recordTypes
         AND (:beforeId IS NULL OR r.id < :beforeId)
         ORDER BY r.createdAt DESC, r.id DESC
         """
     )
-    fun findByWorldIdAndRecordTypesWithPagination(
-        worldId: Long,
+    fun findBySessionIdAndRecordTypesWithPagination(
+        sessionId: Long,
         recordTypes: List<String>,
         beforeId: Long?
     ): List<Record>
 
     @Query(
         """
-        SELECT r FROM Record r 
-        WHERE r.destId = :destId 
-        AND r.recordType IN :recordTypes 
+        SELECT r FROM Record r
+        WHERE r.destId = :destId
+        AND r.recordType IN :recordTypes
         AND (:beforeId IS NULL OR r.id < :beforeId)
         ORDER BY r.createdAt DESC, r.id DESC
         """
