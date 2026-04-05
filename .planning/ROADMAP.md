@@ -47,7 +47,7 @@ Plans:
 - [x] 01-05-PLAN.md — CQRS snapshot layer update (InMemoryWorldState, SnapshotEntityMapper, Loader, Persister, Ports)
 - [x] 01-06-PLAN.md — Repository + Service layer renames
 - [ ] 01-07-PLAN.md — Command system (93 commands), war engine, turn engine, DTOs, controllers
-- [ ] 01-08-PLAN.md — Frontend types, API client, stores, components, pages
+- [x] 01-08-PLAN.md — Frontend types, API client, stores, components, pages
 
 ### Phase 2: Real-time Tick Engine
 **Goal**: The game world advances in real-time at 24x speed with 1-second server ticks instead of turn-based processing
