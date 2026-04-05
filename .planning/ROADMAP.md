@@ -59,10 +59,10 @@ Plans:
   3. Command points regenerate every 5 real-time minutes (7,200 game-seconds)
   4. Commands execute with real-time duration waits (not instant turn resolution) and players see countdown timers
   5. Multiple concurrent players in the same session experience consistent game time progression
-**Plans:** 3 plans
+**Plans:** 1/3 plans executed
 
 Plans:
-- [ ] 02-01-PLAN.md — Flyway V30 migration + GameTimeConstants + SessionState entity update
+- [x] 02-01-PLAN.md — Flyway V30 migration + GameTimeConstants + SessionState entity update
 - [ ] 02-02-PLAN.md — TickEngine core with TDD (tick advancement, month boundary, CP regen gating)
 - [ ] 02-03-PLAN.md — WebSocket tick broadcast + command duration integration
 
@@ -203,7 +203,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 12
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Entity Model Foundation | 0/8 | Planning complete | - |
-| 2. Real-time Tick Engine | 0/3 | Planning complete | - |
+| 2. Real-time Tick Engine | 1/3 | In Progress|  |
 | 3. Command Point System | 0/TBD | Not started | - |
 | 4. Position Card & Command Authority | 0/TBD | Not started | - |
 | 5. Organization & Fleet Structure | 0/TBD | Not started | - |
