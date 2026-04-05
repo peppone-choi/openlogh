@@ -45,7 +45,7 @@ Plans:
 - [x] 01-03-PLAN.md — Core entity renames (General->Officer, City->Planet, Nation->Faction, Troop->Fleet, Emperor->Sovereign, WorldState->SessionState)
 - [x] 01-04-PLAN.md — Gateway SessionState + auxiliary entity renames (turns, flags, old records, logs)
 - [x] 01-05-PLAN.md — CQRS snapshot layer update (InMemoryWorldState, SnapshotEntityMapper, Loader, Persister, Ports)
-- [ ] 01-06-PLAN.md — Repository + Service layer renames
+- [x] 01-06-PLAN.md — Repository + Service layer renames
 - [ ] 01-07-PLAN.md — Command system (93 commands), war engine, turn engine, DTOs, controllers
 - [ ] 01-08-PLAN.md — Frontend types, API client, stores, components, pages
 
