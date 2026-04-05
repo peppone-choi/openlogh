@@ -517,6 +517,7 @@ export interface AccountDetailedInfo {
     oauthType: string | null;
     tokenValidUntil: string | null;
     acl: string | null;
+    picture: string | null;
 }
 
 /** @deprecated Use AccountDetailedInfo instead */
