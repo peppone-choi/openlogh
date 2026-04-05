@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { useWorldStore } from '@/stores/worldStore';
-import { useGeneralStore } from '@/stores/generalStore';
+import { useOfficerStore } from '@/stores/officerStore';
 import { useGameStore } from '@/stores/gameStore';
 import { Shield, UserPlus, UserMinus, Award } from 'lucide-react';
 import { PageHeader } from '@/components/game/page-header';
@@ -22,7 +22,7 @@ function PermissionSelector({
     maxSlots,
     nationGenerals: nGens,
     nation: nat,
-    myGeneral: myGen,
+    myOfficer: myGen,
     actionLoading: aLoading,
     setActionLoading: setALoading,
     setMessage: setMsg,
@@ -34,7 +34,7 @@ function PermissionSelector({
     maxSlots: number;
     nationGenerals: General[];
     nation: Nation | null | undefined;
-    myGeneral: General;
+    myOfficer: General;
     actionLoading: boolean;
     setActionLoading: (v: boolean) => void;
     setMessage: (v: { text: string; type: 'success' | 'error' } | null) => void;
@@ -131,7 +131,7 @@ function getNationChiefLevel(nationLevel: number, nationTypeCode?: string): numb
 
 export default function PersonnelPage() {
     const currentWorld = useWorldStore((s) => s.currentWorld);
-    const { myGeneral, fetchMyGeneral } = useGeneralStore();
+    const { myOfficer, fetchMyOfficer } = useOfficerStore();
     const { generals, nations, cities, loading, loadAll } = useGameStore();
     const [actionLoading, setActionLoading] = useState(false);
     const [appointLevel, setAppointLevel] = useState<number>(0);
@@ -146,17 +146,17 @@ export default function PersonnelPage() {
     useEffect(() => {
         if (!currentWorld) return;
         loadAll(currentWorld.id);
-        if (!myGeneral) fetchMyGeneral(currentWorld.id).catch(() => {});
-    }, [currentWorld, myGeneral, fetchMyGeneral, loadAll]);
+        if (!myOfficer) fetchMyOfficer(currentWorld.id).catch(() => {});
+    }, [currentWorld, myOfficer, fetchMyOfficer, loadAll]);
 
     const nation = useMemo(
-        () => (myGeneral ? nations.find((n) => n.id === myGeneral.nationId) : null),
-        [myGeneral, nations]
+        () => (myOfficer ? nations.find((n) => n.id === myOfficer.nationId) : null),
+        [myOfficer, nations]
     );
 
     const cityMap = useMemo(() => new Map(cities.map((c) => [c.id, c])), [cities]);
 
-    const meLevel = myGeneral?.officerLevel ?? 0;
+    const meLevel = myOfficer?.officerLevel ?? 0;
     const nationLevel = nation?.level ?? 0;
     const nationTypeCode = nation?.typeCode;
     const minChiefLevel = getNationChiefLevel(nationLevel, nationTypeCode);
@@ -165,9 +165,9 @@ export default function PersonnelPage() {
 
     // All generals in my nation (excluding the king for appointment candidates)
     const nationGenerals = useMemo(() => {
-        if (!myGeneral || myGeneral.nationId <= 0) return [];
-        return generals.filter((g) => g.nationId === myGeneral.nationId);
-    }, [myGeneral, generals]);
+        if (!myOfficer || myOfficer.nationId <= 0) return [];
+        return generals.filter((g) => g.nationId === myOfficer.nationId);
+    }, [myOfficer, generals]);
 
     // chiefStatMin from server GameConst (passed via nation meta or world config); fallback 65
     const chiefStatMin = useMemo(() => {
@@ -260,7 +260,7 @@ export default function PersonnelPage() {
 
     // City officer list
     const cityOfficers = useMemo(() => {
-        const nationCities = cities.filter((c) => c.nationId === myGeneral?.nationId);
+        const nationCities = cities.filter((c) => c.nationId === myOfficer?.nationId);
         const officersByCityAndLevel = new Map<string, General>();
         nationGenerals
             .filter((g) => g.officerLevel >= 2 && g.officerLevel <= 4)
@@ -278,7 +278,7 @@ export default function PersonnelPage() {
                 city,
                 officers: [4, 3, 2].map((lvl) => officersByCityAndLevel.get(`${city.id}-${lvl}`) ?? null),
             }));
-    }, [cities, nationGenerals, myGeneral]);
+    }, [cities, nationGenerals, myOfficer]);
 
     const handleAppoint = useCallback(
         async (level: number, generalId: number, officerCity?: number) => {
@@ -345,11 +345,11 @@ export default function PersonnelPage() {
 
     if (loading) return <LoadingState />;
 
-    if (!myGeneral) {
+    if (!myOfficer) {
         return <div className="p-4 text-muted-foreground">장수 정보가 없습니다.</div>;
     }
 
-    if (myGeneral.nationId <= 0) {
+    if (myOfficer.nationId <= 0) {
         return <div className="p-4 text-muted-foreground">재야입니다.</div>;
     }
 
@@ -573,7 +573,7 @@ export default function PersonnelPage() {
                             const levelLabel = formatOfficerLevelText(level, nationLevel, false, nationTypeCode);
                             const candidates =
                                 level === 3 ? candidatesIntel : level === 4 ? candidatesStrength : candidatesAny;
-                            const nationCities = cities.filter((c) => c.nationId === myGeneral.nationId);
+                            const nationCities = cities.filter((c) => c.nationId === myOfficer.nationId);
                             return (
                                 <div
                                     key={level}
@@ -731,7 +731,7 @@ export default function PersonnelPage() {
                             maxSlots={2}
                             nationGenerals={nationGenerals}
                             nation={nation}
-                            myGeneral={myGeneral}
+                            myOfficer={myOfficer}
                             actionLoading={actionLoading}
                             setActionLoading={setActionLoading}
                             setMessage={setMessage}
@@ -745,7 +745,7 @@ export default function PersonnelPage() {
                             maxSlots={2}
                             nationGenerals={nationGenerals}
                             nation={nation}
-                            myGeneral={myGeneral}
+                            myOfficer={myOfficer}
                             actionLoading={actionLoading}
                             setActionLoading={setActionLoading}
                             setMessage={setMessage}
@@ -775,7 +775,7 @@ export default function PersonnelPage() {
                             >
                                 <option value={0}>선택하세요</option>
                                 {candidatesAny
-                                    .filter((g) => g.id !== myGeneral.id)
+                                    .filter((g) => g.id !== myOfficer.id)
                                     .map((g) => (
                                         <option key={g.id} value={g.id}>
                                             {g.name} ({g.leadership}/{g.strength}/{g.intel}

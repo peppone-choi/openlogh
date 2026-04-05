@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useWorldStore } from '@/stores/worldStore';
-import { useGeneralStore } from '@/stores/generalStore';
+import { useOfficerStore } from '@/stores/officerStore';
 import { accountApi, historyApi, cityApi, nationApi, frontApi, itemApi, generalLogApi } from '@/lib/gameApi';
 import type { City, Nation, Message, GeneralFrontInfo } from '@/types';
 import { User, Settings, ScrollText, Trash2, Swords, ArrowLeft, RefreshCw } from 'lucide-react';
@@ -69,7 +69,7 @@ const TOURNAMENT_OPTIONS = [
 export default function MyPage() {
     const router = useRouter();
     const currentWorld = useWorldStore((s) => s.currentWorld);
-    const { myGeneral, loading, fetchMyGeneral } = useGeneralStore();
+    const { myOfficer, loading, fetchMyOfficer } = useOfficerStore();
     const [frontInfo, setFrontInfo] = useState<GeneralFrontInfo | null>(null);
     const [city, setCity] = useState<City | null>(null);
     const [nation, setNation] = useState<Nation | null>(null);
@@ -97,20 +97,20 @@ export default function MyPage() {
 
     useEffect(() => {
         if (!currentWorld) return;
-        fetchMyGeneral(currentWorld.id).catch(() => setError('장수 정보를 불러올 수 없습니다.'));
-    }, [currentWorld, fetchMyGeneral]);
+        fetchMyOfficer(currentWorld.id).catch(() => setError('장수 정보를 불러올 수 없습니다.'));
+    }, [currentWorld, fetchMyOfficer]);
 
     useEffect(() => {
-        if (!myGeneral || !currentWorld) return;
+        if (!myOfficer || !currentWorld) return;
         // Initialize settings from general data
-        setDefenceTrain(myGeneral.defenceTrain ?? 80);
-        setTournamentState(myGeneral.tournamentState ?? 0);
-        setPotionThreshold((myGeneral.meta?.potionThreshold as number) ?? 100);
-        setAutoNationTurn((myGeneral.meta?.autoNationTurn as boolean) ?? false);
-        setPreRiseDelete((myGeneral.meta?.preRiseDelete as boolean) ?? false);
-        setPreOpenDelete((myGeneral.meta?.preOpenDelete as boolean) ?? false);
-        setBorderReturn((myGeneral.meta?.borderReturn as boolean) ?? false);
-        setCustomCss((myGeneral.meta?.customCss as string) ?? '');
+        setDefenceTrain(myOfficer.defenceTrain ?? 80);
+        setTournamentState(myOfficer.tournamentState ?? 0);
+        setPotionThreshold((myOfficer.meta?.potionThreshold as number) ?? 100);
+        setAutoNationTurn((myOfficer.meta?.autoNationTurn as boolean) ?? false);
+        setPreRiseDelete((myOfficer.meta?.preRiseDelete as boolean) ?? false);
+        setPreOpenDelete((myOfficer.meta?.preOpenDelete as boolean) ?? false);
+        setBorderReturn((myOfficer.meta?.borderReturn as boolean) ?? false);
+        setCustomCss((myOfficer.meta?.customCss as string) ?? '');
 
         // Fetch front info for dex/battle stats
         frontApi
@@ -118,20 +118,20 @@ export default function MyPage() {
             .then(({ data }) => setFrontInfo(data.general))
             .catch(() => {});
 
-        if (myGeneral.cityId) {
+        if (myOfficer.cityId) {
             cityApi
-                .get(myGeneral.cityId)
+                .get(myOfficer.cityId)
                 .then(({ data }) => setCity(data))
                 .catch(() => {});
         }
-        if (myGeneral.nationId) {
+        if (myOfficer.nationId) {
             nationApi
-                .get(myGeneral.nationId)
+                .get(myOfficer.nationId)
                 .then(({ data }) => setNation(data))
                 .catch(() => {});
         }
         historyApi
-            .getGeneralRecords(myGeneral.id)
+            .getGeneralRecords(myOfficer.id)
             .then(({ data }) => {
                 setRecords(data);
                 // Split records by type if payload has type info
@@ -149,7 +149,7 @@ export default function MyPage() {
                 setHistoryRecords(history);
             })
             .catch(() => {});
-    }, [myGeneral, currentWorld]);
+    }, [myOfficer, currentWorld]);
 
     const handleSaveSettings = useCallback(async () => {
         setSaving(true);
@@ -186,18 +186,18 @@ export default function MyPage() {
         try {
             await accountApi.toggleVacation();
             toast.success('휴가 상태가 전환되었습니다.');
-            if (currentWorld) fetchMyGeneral(currentWorld.id);
+            if (currentWorld) fetchMyOfficer(currentWorld.id);
         } catch {
             toast.error('휴가 전환에 실패했습니다.');
         }
-    }, [currentWorld, fetchMyGeneral]);
+    }, [currentWorld, fetchMyOfficer]);
 
     if (!currentWorld) return <LoadingState message="월드를 선택해주세요." />;
     if (loading) return <LoadingState />;
     if (error) return <div className="p-4 text-red-400">{error}</div>;
-    if (!myGeneral) return <LoadingState message="장수 정보가 없습니다." />;
+    if (!myOfficer) return <LoadingState message="장수 정보가 없습니다." />;
 
-    const g = myGeneral;
+    const g = myOfficer;
     const nationLevel = nation?.level ?? 0;
     const injuryInfo = formatInjury(g.injury);
     const officerText = formatOfficerLevelText(
@@ -248,7 +248,7 @@ export default function MyPage() {
                         variant="ghost"
                         size="sm"
                         onClick={() => {
-                            if (currentWorld) fetchMyGeneral(currentWorld.id);
+                            if (currentWorld) fetchMyOfficer(currentWorld.id);
                         }}
                     >
                         <RefreshCw className="size-4 mr-1" />
@@ -265,7 +265,7 @@ export default function MyPage() {
                             정식 오픈 전까지는 사전 거병과 장수 삭제만 가능합니다.
                         </p>
                         <div className="flex gap-2 flex-wrap">
-                            {myGeneral.nationId !== 0 ? (
+                            {myOfficer.nationId !== 0 ? (
                                 <Button disabled variant="secondary">
                                     <Swords className="mr-2 h-4 w-4" />
                                     사전 거병 완료
@@ -277,7 +277,7 @@ export default function MyPage() {
                                         try {
                                             await accountApi.buildNationCandidate();
                                             toast.success('사전 거병이 신청되었습니다.');
-                                            if (currentWorld) fetchMyGeneral(currentWorld.id);
+                                            if (currentWorld) fetchMyOfficer(currentWorld.id);
                                         } catch {
                                             toast.error('사전 거병 신청에 실패했습니다.');
                                         }
@@ -294,7 +294,7 @@ export default function MyPage() {
                                     try {
                                         await accountApi.dieOnPrestart();
                                         toast.success('장수가 삭제되었습니다.');
-                                        if (currentWorld) fetchMyGeneral(currentWorld.id);
+                                        if (currentWorld) fetchMyOfficer(currentWorld.id);
                                     } catch {
                                         toast.error('장수 삭제에 실패했습니다.');
                                     }
@@ -903,7 +903,7 @@ export default function MyPage() {
                                             try {
                                                 await accountApi.buildNationCandidate();
                                                 toast.success('거병후보로 등록되었습니다.');
-                                                if (currentWorld) fetchMyGeneral(currentWorld.id);
+                                                if (currentWorld) fetchMyOfficer(currentWorld.id);
                                             } catch {
                                                 toast.error('거병후보 등록에 실패했습니다.');
                                             }
@@ -919,7 +919,7 @@ export default function MyPage() {
                                             try {
                                                 await accountApi.instantRetreat();
                                                 toast.success('즉시퇴각이 완료되었습니다.');
-                                                if (currentWorld) fetchMyGeneral(currentWorld.id);
+                                                if (currentWorld) fetchMyOfficer(currentWorld.id);
                                             } catch {
                                                 toast.error('즉시퇴각에 실패했습니다.');
                                             }

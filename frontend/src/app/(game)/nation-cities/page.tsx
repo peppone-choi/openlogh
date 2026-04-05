@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useWorldStore } from '@/stores/worldStore';
-import { useGeneralStore } from '@/stores/generalStore';
+import { useOfficerStore } from '@/stores/officerStore';
 import { cityApi, diplomacyApi, generalApi, nationApi, nationManagementApi, nationPolicyApi } from '@/lib/gameApi';
 import type { City, Diplomacy, General, Nation } from '@/types';
 import { REGION_NAMES, CITY_LEVEL_NAMES, CREW_TYPE_NAMES } from '@/lib/game-utils';
@@ -68,8 +68,8 @@ const OFFICER_TITLES: Record<number, string> = {
 
 export default function NationCitiesPage() {
     const currentWorld = useWorldStore((s) => s.currentWorld);
-    const myGeneral = useGeneralStore((s) => s.myGeneral);
-    const fetchMyGeneral = useGeneralStore((s) => s.fetchMyGeneral);
+    const myOfficer = useOfficerStore((s) => s.myOfficer);
+    const fetchMyOfficer = useOfficerStore((s) => s.fetchMyOfficer);
 
     const [cities, setCities] = useState<City[] | null>(null);
     const [allNations, setAllNations] = useState<Nation[]>([]);
@@ -93,20 +93,20 @@ export default function NationCitiesPage() {
 
     useEffect(() => {
         if (!currentWorld) return;
-        if (!myGeneral) {
-            fetchMyGeneral(currentWorld.id).catch(() => setError('장수 정보를 불러올 수 없습니다.'));
+        if (!myOfficer) {
+            fetchMyOfficer(currentWorld.id).catch(() => setError('장수 정보를 불러올 수 없습니다.'));
         }
-    }, [currentWorld, myGeneral, fetchMyGeneral]);
+    }, [currentWorld, myOfficer, fetchMyOfficer]);
 
     useEffect(() => {
-        if (!myGeneral?.nationId || !currentWorld) return;
+        if (!myOfficer?.nationId || !currentWorld) return;
         Promise.all([
-            cityApi.listByNation(myGeneral.nationId),
+            cityApi.listByNation(myOfficer.nationId),
             nationApi.listByWorld(currentWorld.id),
-            nationApi.get(myGeneral.nationId),
-            generalApi.listByNation(myGeneral.nationId),
-            diplomacyApi.listByNation(currentWorld.id, myGeneral.nationId),
-            nationPolicyApi.getPolicy(myGeneral.nationId),
+            nationApi.get(myOfficer.nationId),
+            generalApi.listByNation(myOfficer.nationId),
+            diplomacyApi.listByNation(currentWorld.id, myOfficer.nationId),
+            nationPolicyApi.getPolicy(myOfficer.nationId),
         ])
             .then(([cityRes, allNationsRes, myNationRes, nationGeneralsRes, diplomacyRes, policyRes]) => {
                 setCities(cityRes.data);
@@ -118,14 +118,14 @@ export default function NationCitiesPage() {
                 setBill(Number(policyRes.data.bill) || 100);
             })
             .catch(() => setError('국가 도시 정보를 불러올 수 없습니다.'));
-    }, [myGeneral?.nationId, currentWorld]);
+    }, [myOfficer?.nationId, currentWorld]);
 
     const handleSavePolicy = async () => {
-        if (!myGeneral?.nationId) return;
+        if (!myOfficer?.nationId) return;
         setSavingPolicy(true);
         setSaveMsg('');
         try {
-            await nationPolicyApi.updatePolicy(myGeneral.nationId, { rate, bill });
+            await nationPolicyApi.updatePolicy(myOfficer.nationId, { rate, bill });
             setSaveMsg('정책이 저장되었습니다.');
         } catch {
             setSaveMsg('정책 저장에 실패했습니다.');
@@ -135,10 +135,10 @@ export default function NationCitiesPage() {
     };
 
     const handleAppoint = async () => {
-        if (!myGeneral?.nationId || !appointCity || !appointGeneralId) return;
+        if (!myOfficer?.nationId || !appointCity || !appointGeneralId) return;
         setAppointSaving(true);
         try {
-            await nationManagementApi.appointOfficer(myGeneral.nationId, {
+            await nationManagementApi.appointOfficer(myOfficer.nationId, {
                 generalId: Number(appointGeneralId),
                 officerLevel: appointLevel,
                 officerCity: appointCity,
@@ -147,7 +147,7 @@ export default function NationCitiesPage() {
             setAppointCity(null);
             setAppointGeneralId('');
             // Reload generals
-            const res = await generalApi.listByNation(myGeneral.nationId);
+            const res = await generalApi.listByNation(myOfficer.nationId);
             setNationGenerals(res.data);
         } catch {
             setSaveMsg('관직 임명 실패');
@@ -206,7 +206,7 @@ export default function NationCitiesPage() {
     const diplomacyRows = diplomacyList
         .filter((d) => !d.isDead)
         .map((d) => {
-            const otherNationId = d.srcNationId === myGeneral?.nationId ? d.destNationId : d.srcNationId;
+            const otherNationId = d.srcNationId === myOfficer?.nationId ? d.destNationId : d.srcNationId;
             return {
                 id: d.id,
                 nation: nationMap.get(otherNationId),
@@ -257,9 +257,9 @@ export default function NationCitiesPage() {
     const totalExpense = budgetRows.reduce((sum, row) => sum + row.expense, 0);
 
     if (!currentWorld) return <LoadingState message="월드를 선택해주세요." />;
-    if (myGeneral?.nationId && cities === null) return <LoadingState />;
+    if (myOfficer?.nationId && cities === null) return <LoadingState />;
     if (error) return <div className="p-4 text-red-400">{error}</div>;
-    if (!myGeneral?.nationId)
+    if (!myOfficer?.nationId)
         return (
             <div className="p-4">
                 <EmptyState

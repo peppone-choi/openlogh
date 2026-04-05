@@ -1,17 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import { useGeneralStore } from './generalStore';
+import { useOfficerStore } from './officerStore';
 
 describe('generalStore persist config', () => {
-    it('partialize only persists myGeneral', () => {
+    it('partialize only persists myOfficer', () => {
         const state = {
-            myGeneral: { id: 42, name: 'TestGen' },
+            myOfficer: { id: 42, name: 'TestGen' },
             generals: [{ id: 42 }, { id: 43 }],
             loading: true,
             isHydrated: true,
         };
-        const partialize = (s: typeof state) => ({ myGeneral: s.myGeneral });
+        const partialize = (s: typeof state) => ({ myOfficer: s.myOfficer });
         const result = partialize(state);
-        expect(result).toEqual({ myGeneral: { id: 42, name: 'TestGen' } });
+        expect(result).toEqual({ myOfficer: { id: 42, name: 'TestGen' } });
         expect(result).not.toHaveProperty('generals');
         expect(result).not.toHaveProperty('loading');
         expect(result).not.toHaveProperty('isHydrated');
@@ -23,7 +23,7 @@ describe('generalStore persist config', () => {
     });
 
     it('onFinishHydration listener sets isHydrated to true', () => {
-        const state = useGeneralStore.getState();
+        const state = useOfficerStore.getState();
         expect(state).toHaveProperty('isHydrated');
         expect(typeof state.isHydrated).toBe('boolean');
     });

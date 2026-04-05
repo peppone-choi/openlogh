@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState, useRef, useCallback } from 'react';
 import { useWorldStore } from '@/stores/worldStore';
 import { useGameStore } from '@/stores/gameStore';
-import { useGeneralStore } from '@/stores/generalStore';
+import { useOfficerStore } from '@/stores/officerStore';
 import { npcPolicyApi } from '@/lib/gameApi';
 import type { NpcPolicyInfo } from '@/types';
 import {
@@ -439,7 +439,7 @@ function DraggablePriorityList({
 
 export default function NpcPage() {
     const currentWorld = useWorldStore((s) => s.currentWorld);
-    const { myGeneral, fetchMyGeneral } = useGeneralStore();
+    const { myOfficer, fetchMyOfficer } = useOfficerStore();
     const { generals, cities, loading, loadAll } = useGameStore();
 
     const [policy, setPolicy] = useState<Record<string, number>>({});
@@ -488,15 +488,15 @@ export default function NpcPage() {
 
     useEffect(() => {
         if (!currentWorld) return;
-        fetchMyGeneral(currentWorld.id);
+        fetchMyOfficer(currentWorld.id);
         loadAll(currentWorld.id);
-    }, [currentWorld, fetchMyGeneral, loadAll]);
+    }, [currentWorld, fetchMyOfficer, loadAll]);
 
     const loadPolicy = useCallback(() => {
-        if (!myGeneral?.nationId) return;
+        if (!myOfficer?.nationId) return;
         setPolicyLoading(true);
         npcPolicyApi
-            .getPolicy(myGeneral.nationId)
+            .getPolicy(myOfficer.nationId)
             .then(({ data }) => {
                 const p: Record<string, number> = {};
                 for (const key of ALL_POLICY_KEYS) {
@@ -623,7 +623,7 @@ export default function NpcPage() {
             })
             .catch(() => {})
             .finally(() => setPolicyLoading(false));
-    }, [myGeneral?.nationId]);
+    }, [myOfficer?.nationId]);
 
     useEffect(() => {
         loadPolicy();
@@ -632,9 +632,9 @@ export default function NpcPage() {
     const cityMap = useMemo(() => new Map(cities.map((c) => [c.id, c])), [cities]);
 
     const npcGenerals = useMemo(() => {
-        if (!myGeneral) return [];
-        return generals.filter((g) => g.npcState > 0 && g.nationId === myGeneral.nationId);
-    }, [generals, myGeneral]);
+        if (!myOfficer) return [];
+        return generals.filter((g) => g.npcState > 0 && g.nationId === myOfficer.nationId);
+    }, [generals, myOfficer]);
 
     const calcPolicyValue = useCallback(
         (key: string): number => {
@@ -686,7 +686,7 @@ export default function NpcPage() {
     };
 
     const handleSavePolicy = async () => {
-        if (!myGeneral?.nationId) return;
+        if (!myOfficer?.nationId) return;
         setSaving(true);
         try {
             // Convert percent back to ratio for safeRecruitCityPopulationRatio
@@ -694,7 +694,7 @@ export default function NpcPage() {
             if (policyToSend.safeRecruitCityPopulationRatio != null) {
                 policyToSend.safeRecruitCityPopulationRatio = policyToSend.safeRecruitCityPopulationRatio / 100;
             }
-            await npcPolicyApi.updatePolicy(myGeneral.nationId, {
+            await npcPolicyApi.updatePolicy(myOfficer.nationId, {
                 ...policyToSend,
                 npcMode: Number(npcMode),
                 CombatForce: combatForce,
@@ -712,10 +712,10 @@ export default function NpcPage() {
     };
 
     const handleSavePriority = async () => {
-        if (!myGeneral?.nationId) return;
+        if (!myOfficer?.nationId) return;
         setSaving(true);
         try {
-            await npcPolicyApi.updatePriority(myGeneral.nationId, {
+            await npcPolicyApi.updatePriority(myOfficer.nationId, {
                 nationPriority,
                 generalPriority,
             });
@@ -731,10 +731,10 @@ export default function NpcPage() {
     };
 
     const handleSaveGeneralOverride = async () => {
-        if (!myGeneral?.nationId || !selectedNpcId) return;
+        if (!myOfficer?.nationId || !selectedNpcId) return;
         setSaving(true);
         try {
-            await npcPolicyApi.updatePolicy(myGeneral.nationId, {
+            await npcPolicyApi.updatePolicy(myOfficer.nationId, {
                 generalOverrides: {
                     [selectedNpcId]: generalOverride,
                 },

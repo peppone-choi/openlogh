@@ -7,7 +7,7 @@ import { TurnTimer } from '@/components/game/turn-timer';
 import { ResourceDisplay } from '@/components/game/resource-display';
 import { GeneralPortrait } from '@/components/game/general-portrait';
 import { useWorldStore } from '@/stores/worldStore';
-import { useGeneralStore } from '@/stores/generalStore';
+import { useOfficerStore } from '@/stores/officerStore';
 import { useRouter } from 'next/navigation';
 
 function formatCompact(n: number): string {
@@ -24,9 +24,9 @@ interface TopBarProps {
 export function TopBar({ onMessageClick, onMobileMenuClick }: TopBarProps) {
     const router = useRouter();
     const { currentWorld } = useWorldStore();
-    const { myGeneral } = useGeneralStore();
+    const { myOfficer } = useOfficerStore();
 
-    if (!currentWorld || !myGeneral) return null;
+    if (!currentWorld || !myOfficer) return null;
 
     const worldDate =
         currentWorld.currentYear && currentWorld.currentMonth
@@ -41,9 +41,9 @@ export function TopBar({ onMessageClick, onMobileMenuClick }: TopBarProps) {
                 onClick={() => router.push('/general')}
                 aria-label="장수 정보"
             >
-                <GeneralPortrait picture={myGeneral.picture} name={myGeneral.name} size="xs" />
+                <GeneralPortrait picture={myOfficer.picture} name={myOfficer.name} size="xs" />
                 <div className="flex flex-col min-w-0 items-start">
-                    <span className="text-xs font-medium truncate max-w-[80px]">{myGeneral.name}</span>
+                    <span className="text-xs font-medium truncate max-w-[80px]">{myOfficer.name}</span>
                     {worldDate && <span className="text-[10px] text-muted-foreground">{worldDate}</span>}
                 </div>
             </Button>
@@ -60,7 +60,7 @@ export function TopBar({ onMessageClick, onMobileMenuClick }: TopBarProps) {
 
             <div className="flex items-center gap-3">
                 <div className="hidden md:block">
-                    <ResourceDisplay gold={myGeneral.gold} rice={myGeneral.rice} crew={myGeneral.crew} />
+                    <ResourceDisplay gold={myOfficer.gold} rice={myOfficer.rice} crew={myOfficer.crew} />
                 </div>
 
                 <div className="flex md:hidden items-center gap-2">
@@ -68,13 +68,13 @@ export function TopBar({ onMessageClick, onMobileMenuClick }: TopBarProps) {
                         <div className="w-3.5 h-3.5 rounded-full bg-yellow-500 flex items-center justify-center">
                             <span className="text-[8px] text-yellow-950 font-bold">금</span>
                         </div>
-                        <span className="text-[11px] font-medium text-yellow-400">{formatCompact(myGeneral.gold)}</span>
+                        <span className="text-[11px] font-medium text-yellow-400">{formatCompact(myOfficer.gold)}</span>
                     </div>
                     <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-green-500/20">
                         <div className="w-3.5 h-3.5 rounded-full bg-green-500 flex items-center justify-center">
                             <span className="text-[8px] text-green-950 font-bold">미</span>
                         </div>
-                        <span className="text-[11px] font-medium text-green-400">{formatCompact(myGeneral.rice)}</span>
+                        <span className="text-[11px] font-medium text-green-400">{formatCompact(myOfficer.rice)}</span>
                     </div>
                 </div>
 
@@ -83,7 +83,7 @@ export function TopBar({ onMessageClick, onMobileMenuClick }: TopBarProps) {
                 </Button>
 
                 <div className="hidden md:block">
-                    <GeneralPortrait picture={myGeneral.picture} name={myGeneral.name} size="sm" />
+                    <GeneralPortrait picture={myOfficer.picture} name={myOfficer.name} size="sm" />
                 </div>
 
                 <Button variant="ghost" size="sm" onClick={() => router.push('/lobby')}>

@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Globe, UserPlus, Users, Bot, LogIn, Loader2, Clock, Signal, Shield, Ban, Trophy, Pause } from 'lucide-react';
 import { useWorldStore } from '@/stores/worldStore';
-import { useGeneralStore } from '@/stores/generalStore';
+import { useOfficerStore } from '@/stores/officerStore';
 import { useAuthStore } from '@/stores/authStore';
 import { scenarioApi } from '@/lib/gameApi';
 import { connectWebSocket, disconnectWebSocket } from '@/lib/websocket';
@@ -139,7 +139,7 @@ function getActionAvailability(
 export default function LobbyPage() {
     const router = useRouter();
     const { worlds, currentWorld, loading: worldsLoading, fetchWorlds, fetchWorld, setCurrentWorld } = useWorldStore();
-    const { myGeneral, loading: generalLoading, fetchMyGeneral, clearMyGeneral } = useGeneralStore();
+    const { myOfficer, loading: generalLoading, fetchMyOfficer, clearMyOfficer } = useOfficerStore();
 
     const user = useAuthStore((s) => s.user);
     const isAdmin = user?.role === 'ADMIN';
@@ -149,8 +149,8 @@ export default function LobbyPage() {
     const [scenarios, setScenarios] = useState<Scenario[]>([]);
     const scenarioMap = useMemo(() => new Map(scenarios.map((s) => [s.code, s.title])), [scenarios]);
     const wsConnectedRef = useRef(false);
-    const myGeneralRef = useRef(myGeneral);
-    myGeneralRef.current = myGeneral;
+    const myOfficerRef = useRef(myOfficer);
+    myOfficerRef.current = myOfficer;
 
     useEffect(() => {
         if (!currentWorld) return;
@@ -161,7 +161,7 @@ export default function LobbyPage() {
             onTurnAdvance: () => {
                 fetchWorld(currentWorld.id).catch(() => {});
                 fetchWorlds().catch(() => {});
-                if (myGeneralRef.current) fetchMyGeneral(currentWorld.id).catch(() => {});
+                if (myOfficerRef.current) fetchMyOfficer(currentWorld.id).catch(() => {});
             },
         });
 
@@ -169,7 +169,7 @@ export default function LobbyPage() {
             disconnectWebSocket();
             wsConnectedRef.current = false;
         };
-    }, [currentWorld, fetchWorld, fetchWorlds, fetchMyGeneral]);
+    }, [currentWorld, fetchWorld, fetchWorlds, fetchMyOfficer]);
 
     useEffect(() => {
         fetchWorlds().then(() => {
@@ -196,9 +196,9 @@ export default function LobbyPage() {
     }, [fetchWorlds]);
 
     const handleSelectWorld = (world: typeof currentWorld & {}) => {
-        clearMyGeneral();
+        clearMyOfficer();
         setCurrentWorld(world);
-        fetchMyGeneral(world.id);
+        fetchMyOfficer(world.id);
     };
 
     const handleEnter = () => {
@@ -207,8 +207,8 @@ export default function LobbyPage() {
 
     const actionAvailability = useMemo(() => {
         if (!currentWorld) return null;
-        return getActionAvailability(currentWorld, !!myGeneral);
-    }, [currentWorld, myGeneral]);
+        return getActionAvailability(currentWorld, !!myOfficer);
+    }, [currentWorld, myOfficer]);
 
     return (
         <div className="space-y-6">
@@ -390,16 +390,16 @@ export default function LobbyPage() {
                             <Loader2 className="size-5 animate-spin mr-2" />
                             장수 확인 중...
                         </div>
-                    ) : myGeneral ? (
+                    ) : myOfficer ? (
                         /* General exists - show preview + enter button */
                         <div className="space-y-4">
                             <h2 className="text-lg font-semibold">내 장수</h2>
                             <Card>
                                 <CardContent className="space-y-4 pt-4">
                                     <div className="flex items-center gap-4">
-                                        <GeneralPortrait picture={myGeneral.picture} name={myGeneral.name} size="lg" />
+                                        <GeneralPortrait picture={myOfficer.picture} name={myOfficer.name} size="lg" />
                                         <div>
-                                            <p className="text-xl font-bold">{myGeneral.name}</p>
+                                            <p className="text-xl font-bold">{myOfficer.name}</p>
                                             <p className="text-sm text-muted-foreground">
                                                 {scenarioMap.get(currentWorld.scenarioCode) ||
                                                     currentWorld.scenarioCode}{' '}
@@ -408,11 +408,11 @@ export default function LobbyPage() {
                                         </div>
                                     </div>
                                     <div className="space-y-1">
-                                        <StatBar label="통솔" value={myGeneral.leadership} color="bg-red-500" />
-                                        <StatBar label="무력" value={myGeneral.strength} color="bg-orange-500" />
-                                        <StatBar label="지력" value={myGeneral.intel} color="bg-blue-500" />
-                                        <StatBar label="정치" value={myGeneral.politics} color="bg-green-500" />
-                                        <StatBar label="매력" value={myGeneral.charm} color="bg-purple-500" />
+                                        <StatBar label="통솔" value={myOfficer.leadership} color="bg-red-500" />
+                                        <StatBar label="무력" value={myOfficer.strength} color="bg-orange-500" />
+                                        <StatBar label="지력" value={myOfficer.intel} color="bg-blue-500" />
+                                        <StatBar label="정치" value={myOfficer.politics} color="bg-green-500" />
+                                        <StatBar label="매력" value={myOfficer.charm} color="bg-purple-500" />
                                     </div>
                                     <Button className="w-full" onClick={handleEnter}>
                                         <LogIn className="size-4 mr-1" />

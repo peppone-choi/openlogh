@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useWorldStore } from '@/stores/worldStore';
 import { useGameStore } from '@/stores/gameStore';
-import { useGeneralStore } from '@/stores/generalStore';
+import { useOfficerStore } from '@/stores/officerStore';
 import { subscribeWebSocket } from '@/lib/websocket';
 import { Users, Search, Columns3 } from 'lucide-react';
 import { PageHeader } from '@/components/game/page-header';
@@ -104,7 +104,7 @@ const SORT_DROPDOWN_OPTIONS: { key: SortKey; label: string }[] = [
 export default function GeneralsPage() {
     const router = useRouter();
     const currentWorld = useWorldStore((s) => s.currentWorld);
-    const { fetchMyGeneral } = useGeneralStore();
+    const { fetchMyOfficer } = useOfficerStore();
     const { generals, nations, cities, loading, loadAll } = useGameStore();
     const [search, setSearch] = useState('');
     const [sortKey, setSortKey] = useState<SortKey>('name');
@@ -115,9 +115,9 @@ export default function GeneralsPage() {
 
     const reloadAll = useCallback(() => {
         if (!currentWorld) return;
-        fetchMyGeneral(currentWorld.id).catch(() => {});
+        fetchMyOfficer(currentWorld.id).catch(() => {});
         loadAll(currentWorld.id);
-    }, [currentWorld, fetchMyGeneral, loadAll]);
+    }, [currentWorld, fetchMyOfficer, loadAll]);
 
     useEffect(() => {
         reloadAll();

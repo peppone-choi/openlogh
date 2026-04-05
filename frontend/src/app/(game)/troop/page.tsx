@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useWorldStore } from '@/stores/worldStore';
-import { useGeneralStore } from '@/stores/generalStore';
+import { useOfficerStore } from '@/stores/officerStore';
 import { useGameStore } from '@/stores/gameStore';
 import { troopApi } from '@/lib/gameApi';
 import type { Troop, General } from '@/types';
@@ -340,9 +340,9 @@ function MemberRow({
 
 export default function TroopPage() {
     const currentWorld = useWorldStore((s) => s.currentWorld);
-    const { myGeneral, fetchMyGeneral } = useGeneralStore();
+    const { myOfficer, fetchMyOfficer } = useOfficerStore();
     const nations = useGameStore((s) => s.nations);
-    const myNation = nations.find((n) => n.id === myGeneral?.nationId);
+    const myNation = nations.find((n) => n.id === myOfficer?.nationId);
     const { generals, cities, loadAll } = useGameStore();
     const [troops, setTroops] = useState<Troop[]>([]);
     const [loading, setLoading] = useState(true);
@@ -354,19 +354,19 @@ export default function TroopPage() {
 
     useEffect(() => {
         if (!currentWorld) return;
-        if (!myGeneral) fetchMyGeneral(currentWorld.id).catch(() => {});
+        if (!myOfficer) fetchMyOfficer(currentWorld.id).catch(() => {});
         loadAll(currentWorld.id);
-    }, [currentWorld, myGeneral, fetchMyGeneral, loadAll]);
+    }, [currentWorld, myOfficer, fetchMyOfficer, loadAll]);
 
     const fetchTroops = useCallback(async () => {
-        if (!myGeneral?.nationId) return;
+        if (!myOfficer?.nationId) return;
         try {
-            const { data } = await troopApi.listByNation(myGeneral.nationId);
+            const { data } = await troopApi.listByNation(myOfficer.nationId);
             setTroops(data.map((tw) => tw.troop));
         } finally {
             setLoading(false);
         }
-    }, [myGeneral?.nationId]);
+    }, [myOfficer?.nationId]);
 
     useEffect(() => {
         void fetchTroops();
@@ -388,13 +388,13 @@ export default function TroopPage() {
     }, [troops, generals]);
 
     const handleCreate = async () => {
-        if (!currentWorld || !myGeneral?.nationId || !newName.trim()) return;
+        if (!currentWorld || !myOfficer?.nationId || !newName.trim()) return;
         setSaving(true);
         try {
             await troopApi.create({
                 worldId: currentWorld.id,
-                leaderGeneralId: myGeneral.id,
-                nationId: myGeneral.nationId,
+                leaderGeneralId: myOfficer.id,
+                nationId: myOfficer.nationId,
                 name: newName.trim(),
             });
             setNewName('');
@@ -406,17 +406,17 @@ export default function TroopPage() {
     };
 
     const handleJoin = async (troopId: number) => {
-        if (!myGeneral) return;
-        await troopApi.join(troopId, myGeneral.id);
+        if (!myOfficer) return;
+        await troopApi.join(troopId, myOfficer.id);
         await fetchTroops();
-        if (currentWorld) fetchMyGeneral(currentWorld.id);
+        if (currentWorld) fetchMyOfficer(currentWorld.id);
     };
 
     const handleExit = async (troopId: number) => {
-        if (!myGeneral) return;
-        await troopApi.exit(troopId, myGeneral.id);
+        if (!myOfficer) return;
+        await troopApi.exit(troopId, myOfficer.id);
         await fetchTroops();
-        if (currentWorld) fetchMyGeneral(currentWorld.id);
+        if (currentWorld) fetchMyOfficer(currentWorld.id);
     };
 
     const handleDisband = async (troopId: number) => {
@@ -441,10 +441,10 @@ export default function TroopPage() {
 
     if (!currentWorld) return <div className="p-4 text-muted-foreground">월드를 선택해주세요.</div>;
     if (loading) return <LoadingState />;
-    if (!myGeneral?.nationId) return <div className="p-4 text-muted-foreground">소속 국가가 없습니다.</div>;
+    if (!myOfficer?.nationId) return <div className="p-4 text-muted-foreground">소속 국가가 없습니다.</div>;
 
     const myTroop = troops.find(
-        (t) => t.leaderGeneralId === myGeneral.id || (troopMembers.get(t.id) ?? []).some((m) => m.id === myGeneral.id)
+        (t) => t.leaderGeneralId === myOfficer.id || (troopMembers.get(t.id) ?? []).some((m) => m.id === myOfficer.id)
     );
 
     return (
@@ -505,9 +505,9 @@ export default function TroopPage() {
                     const leader = generalMap.get(t.leaderGeneralId);
                     const members = troopMembers.get(t.id) ?? [];
                     const reservedCommands = parseReservedCommandBrief(t.reservedCommandBrief);
-                    const isLeader = myGeneral.id === t.leaderGeneralId;
-                    const isMember = members.some((m) => m.id === myGeneral.id);
-                    const canRename = isLeader && (myGeneral.officerLevel ?? 0) >= 4;
+                    const isLeader = myOfficer.id === t.leaderGeneralId;
+                    const isMember = members.some((m) => m.id === myOfficer.id);
+                    const canRename = isLeader && (myOfficer.officerLevel ?? 0) >= 4;
 
                     return (
                         <Card key={t.id}>

@@ -5,7 +5,7 @@ import { LogOut } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/8bit/sheet';
 import { GeneralPortrait } from '@/components/game/general-portrait';
 import { Button } from '@/components/ui/8bit/button';
-import { useGeneralStore } from '@/stores/generalStore';
+import { useOfficerStore } from '@/stores/officerStore';
 import { useWorldStore } from '@/stores/worldStore';
 
 interface MobileMenuSheetProps {
@@ -15,7 +15,7 @@ interface MobileMenuSheetProps {
 }
 
 export function MobileMenuSheet({ children, open, onOpenChange }: MobileMenuSheetProps) {
-    const myGeneral = useGeneralStore((s) => s.myGeneral);
+    const myOfficer = useOfficerStore((s) => s.myOfficer);
     const currentWorld = useWorldStore((s) => s.currentWorld);
 
     const worldDate =
@@ -31,13 +31,13 @@ export function MobileMenuSheet({ children, open, onOpenChange }: MobileMenuShee
                 </SheetHeader>
 
                 <div className="bg-gradient-to-b from-primary/10 to-transparent px-4 pt-4 pb-3 border-b border-border">
-                    {myGeneral && (
+                    {myOfficer && (
                         <Link href="/general" className="flex items-center gap-3" onClick={() => onOpenChange?.(false)}>
-                            <GeneralPortrait picture={myGeneral.picture} name={myGeneral.name} size="sm" />
+                            <GeneralPortrait picture={myOfficer.picture} name={myOfficer.name} size="sm" />
                             <div className="min-w-0 flex-1">
-                                <p className="text-sm font-semibold truncate">{myGeneral.name}</p>
+                                <p className="text-sm font-semibold truncate">{myOfficer.name}</p>
                                 <p className="text-xs text-muted-foreground truncate">
-                                    Lv.{myGeneral.expLevel} | 관직 {myGeneral.officerLevel}
+                                    Lv.{myOfficer.expLevel} | 관직 {myOfficer.officerLevel}
                                 </p>
                             </div>
                         </Link>

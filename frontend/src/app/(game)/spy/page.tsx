@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { troopApi } from '@/lib/gameApi';
 import { CREW_TYPE_NAMES, getNPCColor } from '@/lib/game-utils';
 import { useWorldStore } from '@/stores/worldStore';
-import { useGeneralStore } from '@/stores/generalStore';
+import { useOfficerStore } from '@/stores/officerStore';
 import { useGameStore } from '@/stores/gameStore';
 
 function formatTurnTime(turnTime: string | null | undefined): string {
@@ -19,26 +19,26 @@ function formatTurnTime(turnTime: string | null | undefined): string {
 
 export default function SpyPage() {
     const currentWorld = useWorldStore((s) => s.currentWorld);
-    const { myGeneral, fetchMyGeneral } = useGeneralStore();
+    const { myOfficer, fetchMyOfficer } = useOfficerStore();
     const { generals, cities, nations, loading, loadAll } = useGameStore();
     const [troopNameMap, setTroopNameMap] = useState<Map<number, string>>(new Map());
     const [troopLoading, setTroopLoading] = useState(false);
 
     useEffect(() => {
         if (!currentWorld) return;
-        fetchMyGeneral(currentWorld.id).catch(() => {});
+        fetchMyOfficer(currentWorld.id).catch(() => {});
         loadAll(currentWorld.id);
-    }, [currentWorld, fetchMyGeneral, loadAll]);
+    }, [currentWorld, fetchMyOfficer, loadAll]);
 
     useEffect(() => {
-        if (!myGeneral?.nationId) {
+        if (!myOfficer?.nationId) {
             setTroopNameMap(new Map());
             return;
         }
 
         setTroopLoading(true);
         troopApi
-            .listByNation(myGeneral.nationId)
+            .listByNation(myOfficer.nationId)
             .then(({ data }) => {
                 const nextMap = new Map<number, string>();
                 data.forEach((row) => {
@@ -52,17 +52,17 @@ export default function SpyPage() {
             .finally(() => {
                 setTroopLoading(false);
             });
-    }, [myGeneral?.nationId]);
+    }, [myOfficer?.nationId]);
 
     const cityMap = useMemo(() => new Map(cities.map((c) => [c.id, c.name])), [cities]);
     const nationMap = useMemo(() => new Map(nations.map((n) => [n.id, n])), [nations]);
 
     const nationGenerals = useMemo(() => {
-        if (!myGeneral?.nationId) return [];
+        if (!myOfficer?.nationId) return [];
         return generals
-            .filter((g) => g.nationId === myGeneral.nationId)
+            .filter((g) => g.nationId === myOfficer.nationId)
             .sort((a, b) => (a.turnTime ?? '').localeCompare(b.turnTime ?? ''));
-    }, [generals, myGeneral?.nationId]);
+    }, [generals, myOfficer?.nationId]);
 
     const summary = useMemo(() => {
         const effective = nationGenerals.filter((g) => g.npcState !== 5);
@@ -100,7 +100,7 @@ export default function SpyPage() {
             </div>
         );
 
-    const myNation = myGeneral?.nationId ? nationMap.get(myGeneral.nationId) : null;
+    const myNation = myOfficer?.nationId ? nationMap.get(myOfficer.nationId) : null;
 
     return (
         <div className="p-4 space-y-4 max-w-5xl mx-auto">

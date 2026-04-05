@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useWorldStore } from '@/stores/worldStore';
-import { useGeneralStore } from '@/stores/generalStore';
+import { useOfficerStore } from '@/stores/officerStore';
 import { generalApi } from '@/lib/gameApi';
 import type { General } from '@/types';
 import { Users, ArrowLeft, Pencil, Dices, Settings2 } from 'lucide-react';
@@ -48,7 +48,7 @@ const EGO_OPTIONS = LEGACY_PERSONALITY_OPTIONS.map((option) => ({
 export default function LobbySelectPoolPage() {
     const router = useRouter();
     const currentWorld = useWorldStore((s) => s.currentWorld);
-    const { fetchMyGeneral } = useGeneralStore();
+    const { fetchMyOfficer } = useOfficerStore();
     const [pool, setPool] = useState<General[]>([]);
     const [loading, setLoading] = useState(true);
     const [selecting, setSelecting] = useState<number | null>(null);
@@ -98,7 +98,7 @@ export default function LobbySelectPoolPage() {
         setSelecting(generalId);
         try {
             await generalApi.selectFromPool(currentWorld.id, generalId);
-            await fetchMyGeneral(currentWorld.id);
+            await fetchMyOfficer(currentWorld.id);
             toast.success('장수를 선택했습니다.');
             router.push('/');
         } catch {

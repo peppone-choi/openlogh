@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/8bit/button';
-import { useGeneralStore } from '@/stores/generalStore';
+import { useOfficerStore } from '@/stores/officerStore';
 import { useWorldStore } from '@/stores/worldStore';
 import { frontApi } from '@/lib/gameApi';
 
@@ -42,11 +42,11 @@ const CONTROLS: CtrlItem[] = [
 
 export function MainControlBar() {
     const { currentWorld } = useWorldStore();
-    const myGeneral = useGeneralStore((s) => s.myGeneral);
+    const myOfficer = useOfficerStore((s) => s.myOfficer);
     const [isTournamentApplicationOpen, setIsTournamentApplicationOpen] = useState(false);
     const [isBettingActive, setIsBettingActive] = useState(false);
 
-    const officerLevel = myGeneral?.officerLevel ?? 0;
+    const officerLevel = myOfficer?.officerLevel ?? 0;
     const inNation = officerLevel >= 1;
     const showSecret = inNation && officerLevel >= 2;
 

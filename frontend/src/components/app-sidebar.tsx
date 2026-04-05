@@ -30,7 +30,7 @@ import {
     SidebarMenuSubItem,
 } from '@/components/ui/sidebar';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/8bit/collapsible';
-import { useGeneralStore } from '@/stores/generalStore';
+import { useOfficerStore } from '@/stores/officerStore';
 import { useWorldStore } from '@/stores/worldStore';
 
 const navItems = [
@@ -129,10 +129,10 @@ function isNpcModeEnabled(config: Record<string, unknown> | null | undefined): b
 
 export function AppSidebar() {
     const pathname = usePathname();
-    const { myGeneral } = useGeneralStore();
+    const { myOfficer } = useOfficerStore();
     const { currentWorld } = useWorldStore();
 
-    const officerLevel = myGeneral?.officerLevel ?? 0;
+    const officerLevel = myOfficer?.officerLevel ?? 0;
     const inNation = officerLevel >= 1;
     const showSecret = inNation && officerLevel >= 2;
     const npcMode = isNpcModeEnabled(currentWorld?.config as Record<string, unknown> | undefined);
@@ -216,7 +216,7 @@ export function AppSidebar() {
 
             <SidebarFooter>
                 <div className="group-data-[collapsible=icon]:hidden p-2 text-xs text-muted-foreground">
-                    {myGeneral?.name || '장수 없음'}
+                    {myOfficer?.name || '장수 없음'}
                 </div>
             </SidebarFooter>
         </Sidebar>

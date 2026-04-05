@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useWorldStore } from '@/stores/worldStore';
-import { useGeneralStore } from '@/stores/generalStore';
+import { useOfficerStore } from '@/stores/officerStore';
 import { useGameStore } from '@/stores/gameStore';
 import { Trophy, Coins, TrendingUp, Users, Swords, Shield, Brain, Flame, History, ChevronLeft } from 'lucide-react';
 import { PageHeader } from '@/components/game/page-header';
@@ -116,7 +116,7 @@ function stripHtmlTags(value: string): string {
 
 export default function BettingPage() {
     const { currentWorld } = useWorldStore();
-    const { myGeneral } = useGeneralStore();
+    const { myOfficer } = useOfficerStore();
     const { generals, nations, loadAll } = useGameStore();
     const [tournament, setTournament] = useState<TournamentInfo | null>(null);
     const [betting, setBetting] = useState<BettingInfo | null>(null);
@@ -242,14 +242,14 @@ export default function BettingPage() {
     };
 
     const handleNationBet = async () => {
-        if (!currentWorld || !myGeneral) return;
+        if (!currentWorld || !myOfficer) return;
         if (pickedCandidates.size !== selectCnt) return;
         const targets = Array.from(pickedCandidates).sort((a, b) => a - b);
         try {
             const perAmount = Math.floor(nationBetAmount / targets.length);
             if (perAmount <= 0) return;
             for (const targetId of targets) {
-                await bettingApi.placeBet(currentWorld.id, myGeneral.id, targetId, perAmount);
+                await bettingApi.placeBet(currentWorld.id, myOfficer.id, targetId, perAmount);
             }
             setPickedCandidates(new Set());
             await load();
@@ -259,11 +259,11 @@ export default function BettingPage() {
     };
 
     const handleBet = async (targetId: number) => {
-        if (!currentWorld || !myGeneral) return;
+        if (!currentWorld || !myOfficer) return;
         const amount = parseInt(betAmounts[targetId] ?? '10', 10);
         if (!amount || amount <= 0) return;
         try {
-            await bettingApi.placeBet(currentWorld.id, myGeneral.id, targetId, amount);
+            await bettingApi.placeBet(currentWorld.id, myOfficer.id, targetId, amount);
             await load();
         } catch {
             /* ignore */
@@ -308,7 +308,7 @@ export default function BettingPage() {
         const globalBetsMap = new Map<number, number>();
 
         for (const bet of bettingData.bets) {
-            if (myGeneral && bet.generalId === myGeneral.id) {
+            if (myOfficer && bet.generalId === myOfficer.id) {
                 myBetsMap.set(bet.targetId, (myBetsMap.get(bet.targetId) ?? 0) + bet.amount);
             }
             globalBetsMap.set(bet.targetId, (globalBetsMap.get(bet.targetId) ?? 0) + bet.amount);
@@ -513,7 +513,7 @@ export default function BettingPage() {
                 )}
 
                 {/* Phase Gate Control (admin) */}
-                {myGeneral && (myGeneral.officerLevel ?? 0) >= 20 && (
+                {myOfficer && (myOfficer.officerLevel ?? 0) >= 20 && (
                     <Card>
                         <CardContent className="py-2 px-4">
                             <div className="flex items-center justify-between">

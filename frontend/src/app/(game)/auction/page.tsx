@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useWorldStore } from '@/stores/worldStore';
-import { useGeneralStore } from '@/stores/generalStore';
+import { useOfficerStore } from '@/stores/officerStore';
 import { useGameStore } from '@/stores/gameStore';
 import { Gavel, Package, Clock, TrendingUp } from 'lucide-react';
 import { PageHeader } from '@/components/game/page-header';
@@ -105,7 +105,7 @@ function isActive(payload: AuctionPayload): boolean {
 
 export default function AuctionPage() {
     const { currentWorld } = useWorldStore();
-    const { myGeneral } = useGeneralStore();
+    const { myOfficer } = useOfficerStore();
     const { generals, loadAll } = useGameStore();
     const [auctions, setAuctions] = useState<Message[]>([]);
     const [loading, setLoading] = useState(true);
@@ -191,7 +191,7 @@ export default function AuctionPage() {
     const genMap = new Map(generals.map((g) => [g.id, g]));
 
     const handleBid = async (auctionId: number) => {
-        if (!myGeneral) return;
+        if (!myOfficer) return;
         const amount = Number(bidAmounts[auctionId]);
         if (!amount || amount <= 0) return;
 
@@ -236,7 +236,7 @@ export default function AuctionPage() {
 
         setBidding(auctionId);
         try {
-            await auctionApi.bid(auctionId, myGeneral.id, amount);
+            await auctionApi.bid(auctionId, myOfficer.id, amount);
             setBidAmounts((prev) => ({ ...prev, [auctionId]: '' }));
             await load();
         } catch {
@@ -247,7 +247,7 @@ export default function AuctionPage() {
     };
 
     const handleCreate = async () => {
-        if (!currentWorld || !myGeneral) return;
+        if (!currentWorld || !myOfficer) return;
         const amount = Number(createAmount);
         const startBid = Number(createStartBid);
         const finishBid = Number(createFinishBid);
@@ -257,7 +257,7 @@ export default function AuctionPage() {
         try {
             await auctionApi.create(currentWorld.id, {
                 type: 'resource',
-                sellerId: myGeneral.id,
+                sellerId: myOfficer.id,
                 item: createSubType,
                 amount,
                 minPrice: startBid,
@@ -278,10 +278,10 @@ export default function AuctionPage() {
     };
 
     const handleCancel = async (auctionId: number) => {
-        if (!myGeneral) return;
+        if (!myOfficer) return;
         if (!confirm('이 경매를 취소하시겠습니까?')) return;
         try {
-            await auctionApi.cancel(auctionId, myGeneral.id);
+            await auctionApi.cancel(auctionId, myOfficer.id);
             await load();
         } catch {
             alert('경매 취소에 실패했습니다.');
@@ -289,12 +289,12 @@ export default function AuctionPage() {
     };
 
     const handleMarketBuy = async () => {
-        if (!currentWorld || !myGeneral) return;
+        if (!currentWorld || !myOfficer) return;
         const amount = Number(marketAmount);
         if (!amount || amount <= 0) return;
         setMarketBusy(true);
         try {
-            const { data } = await auctionApi.buyRice(currentWorld.id, myGeneral.id, amount);
+            const { data } = await auctionApi.buyRice(currentWorld.id, myOfficer.id, amount);
             alert(`쌀 ${data.amount.toLocaleString()} 구매 완료 (금 ${data.costGold.toLocaleString()} 소비)`);
             await load();
         } catch {
@@ -305,12 +305,12 @@ export default function AuctionPage() {
     };
 
     const handleMarketSell = async () => {
-        if (!currentWorld || !myGeneral) return;
+        if (!currentWorld || !myOfficer) return;
         const amount = Number(marketAmount);
         if (!amount || amount <= 0) return;
         setMarketBusy(true);
         try {
-            const { data } = await auctionApi.sellRice(currentWorld.id, myGeneral.id, amount);
+            const { data } = await auctionApi.sellRice(currentWorld.id, myOfficer.id, amount);
             alert(`쌀 ${data.amount.toLocaleString()} 판매 완료 (금 ${data.revenueGold.toLocaleString()} 획득)`);
             await load();
         } catch {
@@ -321,7 +321,7 @@ export default function AuctionPage() {
     };
 
     const handleCreateItemAuction = async () => {
-        if (!currentWorld || !myGeneral) return;
+        if (!currentWorld || !myOfficer) return;
         const startPrice = Number(itemStartPrice);
         if (!startPrice || startPrice <= 0) {
             toast.error('시작가를 확인해주세요.');
@@ -330,7 +330,7 @@ export default function AuctionPage() {
 
         setCreatingItemAuction(true);
         try {
-            await auctionApi.createItemAuction(currentWorld.id, myGeneral.id, itemType, startPrice);
+            await auctionApi.createItemAuction(currentWorld.id, myOfficer.id, itemType, startPrice);
             toast.success('아이템 경매를 등록했습니다.');
             setItemStartPrice('500');
             await load();
@@ -378,13 +378,13 @@ export default function AuctionPage() {
 
     // recent logs from any auction that has them
 
-    const mySelling = auctions.filter((a) => p(a).sellerId === myGeneral?.id && isActive(p(a)));
+    const mySelling = auctions.filter((a) => p(a).sellerId === myOfficer?.id && isActive(p(a)));
     const myBidding = auctions.filter(
-        (a) => p(a).currentBidderId === myGeneral?.id && p(a).sellerId !== myGeneral?.id && isActive(p(a))
+        (a) => p(a).currentBidderId === myOfficer?.id && p(a).sellerId !== myOfficer?.id && isActive(p(a))
     );
     const myWonAuctions = auctions.filter((a) => {
         const d = p(a);
-        return !isActive(d) && d.currentBidderId === myGeneral?.id && d.sellerId !== myGeneral?.id;
+        return !isActive(d) && d.currentBidderId === myOfficer?.id && d.sellerId !== myOfficer?.id;
     });
 
     const selectedAuction = selectedAuctionId ? auctions.find((a) => a.id === selectedAuctionId) : null;
@@ -412,7 +412,7 @@ export default function AuctionPage() {
                 {/* ═══ Tab 1: Resource (legacy parity: buyRice / sellRice split) ═══ */}
                 <TabsContent value="resource" className="mt-4 space-y-4 px-2">
                     {/* my auctions summary */}
-                    {myGeneral && (mySelling.length > 0 || myBidding.length > 0) && (
+                    {myOfficer && (mySelling.length > 0 || myBidding.length > 0) && (
                         <Card>
                             <CardHeader className="pb-2">
                                 <CardTitle className="text-sm">내 경매</CardTitle>
@@ -493,7 +493,7 @@ export default function AuctionPage() {
                                             ...activeBuyRice,
                                             ...activeOtherResource.filter((a) => p(a).item === 'rice'),
                                         ]}
-                                        myId={myGeneral?.id}
+                                        myId={myOfficer?.id}
                                         bidAmounts={bidAmounts}
                                         setBidAmounts={setBidAmounts}
                                         onBid={handleBid}
@@ -519,7 +519,7 @@ export default function AuctionPage() {
                                 <div className="overflow-x-auto">
                                     <ResourceAuctionTable
                                         auctions={activeSellRice}
-                                        myId={myGeneral?.id}
+                                        myId={myOfficer?.id}
                                         bidAmounts={bidAmounts}
                                         setBidAmounts={setBidAmounts}
                                         onBid={handleBid}
@@ -547,7 +547,7 @@ export default function AuctionPage() {
                                             <AuctionRow
                                                 key={a.id}
                                                 auction={a}
-                                                myId={myGeneral?.id}
+                                                myId={myOfficer?.id}
                                                 bidVal={bidAmounts[a.id] ?? ''}
                                                 onBidVal={(v) => setBidAmounts((x) => ({ ...x, [a.id]: v }))}
                                                 onBid={() => handleBid(a.id)}
@@ -561,7 +561,7 @@ export default function AuctionPage() {
                     )}
 
                     {/* create button */}
-                    {myGeneral && (
+                    {myOfficer && (
                         <div className="flex justify-end">
                             <Button
                                 size="sm"
@@ -675,7 +675,7 @@ export default function AuctionPage() {
                     )}
 
                     {/* Market buy/sell rice (legacy parity: AuctionBuyRice/AuctionSellRice) */}
-                    {myGeneral && marketPrice && (
+                    {myOfficer && marketPrice && (
                         <Card>
                             <CardHeader className="pb-2">
                                 <CardTitle className="text-sm">쌀 시세 거래</CardTitle>
@@ -758,7 +758,7 @@ export default function AuctionPage() {
 
                 {/* ═══ Tab 2: Unique Item Auctions (legacy parity) ═══ */}
                 <TabsContent value="item" className="mt-4 space-y-4 px-2">
-                    {myGeneral && (
+                    {myOfficer && (
                         <Card>
                             <CardHeader className="pb-2">
                                 <CardTitle className="text-sm">아이템 경매 등록</CardTitle>
@@ -802,7 +802,7 @@ export default function AuctionPage() {
                         </Card>
                     )}
 
-                    {myGeneral && myWonAuctions.length > 0 && (
+                    {myOfficer && myWonAuctions.length > 0 && (
                         <Card>
                             <CardHeader className="pb-2">
                                 <CardTitle className="text-sm">내 낙찰 경매 정산</CardTitle>
@@ -911,7 +911,7 @@ export default function AuctionPage() {
 
                                         {/* Bid input */}
                                         {isActive(d) &&
-                                            myGeneral &&
+                                            myOfficer &&
                                             (() => {
                                                 const hbAmt = d.highestBid?.amount ?? d.currentBid ?? 0;
                                                 const minUniqueBid =
@@ -959,9 +959,9 @@ export default function AuctionPage() {
                                             })()}
 
                                         {!isActive(d) &&
-                                            myGeneral &&
-                                            d.currentBidderId === myGeneral.id &&
-                                            d.sellerId !== myGeneral.id && (
+                                            myOfficer &&
+                                            d.currentBidderId === myOfficer.id &&
+                                            d.sellerId !== myOfficer.id && (
                                                 <div className="flex items-center gap-2">
                                                     <Badge variant="outline" className="text-[10px]">
                                                         낙찰자

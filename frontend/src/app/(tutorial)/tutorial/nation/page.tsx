@@ -1,7 +1,7 @@
 'use client';
 
 import { useGameStore } from '@/stores/gameStore';
-import { useGeneralStore } from '@/stores/generalStore';
+import { useOfficerStore } from '@/stores/officerStore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/8bit/card';
 import { Badge } from '@/components/ui/8bit/badge';
 
@@ -16,9 +16,9 @@ export default function TutorialNationPage() {
     const nations = useGameStore((s) => s.nations);
     const generals = useGameStore((s) => s.generals);
     const cities = useGameStore((s) => s.cities);
-    const myGeneral = useGeneralStore((s) => s.myGeneral);
+    const myOfficer = useOfficerStore((s) => s.myOfficer);
 
-    const myNation = nations.find((n) => n.id === myGeneral?.nationId);
+    const myNation = nations.find((n) => n.id === myOfficer?.nationId);
     const nationGenerals = generals.filter((g) => g.nationId === myNation?.id);
     const nationCities = cities.filter((c) => c.nationId === myNation?.id);
 
@@ -77,7 +77,7 @@ export default function TutorialNationPage() {
                         <div key={g.id} className="flex items-center justify-between p-2 rounded bg-muted/50">
                             <div className="flex items-center gap-2">
                                 <span className="font-medium">{g.name}</span>
-                                {g.id === myGeneral?.id && (
+                                {g.id === myOfficer?.id && (
                                     <Badge variant="secondary" className="text-[10px]">
                                         나
                                     </Badge>

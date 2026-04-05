@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/8bit/input';
 import { Badge } from '@/components/ui/8bit/badge';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/8bit/tabs';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/8bit/tooltip';
-import { useGeneralStore } from '@/stores/generalStore';
+import { useOfficerStore } from '@/stores/officerStore';
 import { useGameStore } from '@/stores/gameStore';
 import { cn } from '@/lib/utils';
 
@@ -486,7 +486,7 @@ interface CrewTypeBrowserProps {
 }
 
 export function CrewTypeBrowser({ commandName, onSubmit }: CrewTypeBrowserProps) {
-    const { myGeneral } = useGeneralStore();
+    const { myOfficer } = useOfficerStore();
     const { cities } = useGameStore();
 
     const [selectedArm, setSelectedArm] = useState<ArmType | '전체'>('전체');
@@ -496,15 +496,15 @@ export function CrewTypeBrowser({ commandName, onSubmit }: CrewTypeBrowserProps)
 
     // Derive city tech level
     const myCity = useMemo(() => {
-        if (!myGeneral) return null;
-        return cities.find((c) => c.id === myGeneral.cityId) ?? null;
-    }, [cities, myGeneral]);
+        if (!myOfficer) return null;
+        return cities.find((c) => c.id === myOfficer.cityId) ?? null;
+    }, [cities, myOfficer]);
 
     const techLevel = typeof myCity?.meta?.tech === 'number' ? (myCity.meta.tech as number) : 0;
-    const leadership = myGeneral?.leadership ?? 100;
-    const currentCrew = myGeneral?.crew ?? 0;
-    const currentCrewType = myGeneral?.crewType ?? 0;
-    const gold = myGeneral?.gold ?? 0;
+    const leadership = myOfficer?.leadership ?? 100;
+    const currentCrew = myOfficer?.crew ?? 0;
+    const currentCrewType = myOfficer?.crewType ?? 0;
+    const gold = myOfficer?.gold ?? 0;
     const goldCoeff = commandName === '모병' ? 2 : 1;
 
     // Simple tech availability: base types always available, others need tech

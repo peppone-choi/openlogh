@@ -4,7 +4,7 @@ import { Suspense, useState, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { accountApi } from '@/lib/gameApi';
 import { useAuthStore } from '@/stores/authStore';
-import { useGeneralStore } from '@/stores/generalStore';
+import { useOfficerStore } from '@/stores/officerStore';
 import { Button } from '@/components/ui/8bit/button';
 import { Input } from '@/components/ui/8bit/input';
 import { Separator } from '@/components/ui/8bit/separator';
@@ -94,7 +94,7 @@ function AccountPageContent() {
                 if (typeof data.thirdUse === 'boolean') setThirdUseStatus(data.thirdUse);
                 if (data.picture) {
                     useAuthStore.setState((s) => ({ user: s.user ? { ...s.user, picture: data.picture as string } : s.user }));
-                    useGeneralStore.setState((s) => ({ myGeneral: s.myGeneral ? { ...s.myGeneral, picture: data.picture as string } : s.myGeneral }));
+                    useOfficerStore.setState((s) => ({ myOfficer: s.myOfficer ? { ...s.myOfficer, picture: data.picture as string } : s.myOfficer }));
                 }
             })
             .catch(() => {});
@@ -158,7 +158,7 @@ function AccountPageContent() {
             const { data } = await accountApi.uploadIcon(formData);
             if (data.url) {
                 useAuthStore.setState((s) => ({ user: s.user ? { ...s.user, picture: data.url } : s.user }));
-                useGeneralStore.setState((s) => ({ myGeneral: s.myGeneral ? { ...s.myGeneral, picture: data.url } : s.myGeneral }));
+                useOfficerStore.setState((s) => ({ myOfficer: s.myOfficer ? { ...s.myOfficer, picture: data.url } : s.myOfficer }));
             }
             setIconMsg('전콘이 업로드되었습니다.');
             setIconFile(null);
@@ -174,7 +174,7 @@ function AccountPageContent() {
         try {
             await accountApi.deleteIcon();
             useAuthStore.setState((s) => ({ user: s.user ? { ...s.user, picture: undefined } : s.user }));
-            useGeneralStore.setState((s) => ({ myGeneral: s.myGeneral ? { ...s.myGeneral, picture: '' } : s.myGeneral }));
+            useOfficerStore.setState((s) => ({ myOfficer: s.myOfficer ? { ...s.myOfficer, picture: '' } : s.myOfficer }));
             setIconMsg('전콘이 삭제되었습니다.');
             setIconPreview(null);
         } catch {
@@ -188,7 +188,7 @@ function AccountPageContent() {
             await accountApi.syncIcon();
             const picture = useAuthStore.getState().user?.picture;
             if (picture) {
-                useGeneralStore.setState((s) => ({ myGeneral: s.myGeneral ? { ...s.myGeneral, picture } : s.myGeneral }));
+                useOfficerStore.setState((s) => ({ myOfficer: s.myOfficer ? { ...s.myOfficer, picture } : s.myOfficer }));
             }
             setShowIconSync(false);
             setIconMsg('모든 서버에 전콘이 동기화되었습니다.');
@@ -224,7 +224,7 @@ function AccountPageContent() {
                 picture: trimmedUrl,
             } as Record<string, unknown> & import('@/types').AccountSettings);
             useAuthStore.setState((s) => ({ user: s.user ? { ...s.user, picture: trimmedUrl } : s.user }));
-            useGeneralStore.setState((s) => ({ myGeneral: s.myGeneral ? { ...s.myGeneral, picture: trimmedUrl } : s.myGeneral }));
+            useOfficerStore.setState((s) => ({ myOfficer: s.myOfficer ? { ...s.myOfficer, picture: trimmedUrl } : s.myOfficer }));
             setPictureMsg('전콘이 변경되었습니다.');
         } catch {
             setPictureMsg('전콘 변경에 실패했습니다.');

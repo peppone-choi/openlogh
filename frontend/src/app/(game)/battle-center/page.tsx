@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useWorldStore } from '@/stores/worldStore';
-import { useGeneralStore } from '@/stores/generalStore';
+import { useOfficerStore } from '@/stores/officerStore';
 import { useGameStore } from '@/stores/gameStore';
 import { generalLogApi } from '@/lib/gameApi';
 import type { General, GeneralLogEntry } from '@/types';
@@ -48,7 +48,7 @@ const LOG_TYPES = ['generalHistory', 'battleDetail', 'battleResult', 'generalAct
 
 export default function BattleCenterPage() {
     const currentWorld = useWorldStore((s) => s.currentWorld);
-    const { myGeneral, fetchMyGeneral } = useGeneralStore();
+    const { myOfficer, fetchMyOfficer } = useOfficerStore();
     const { generals, nations, loading, loadAll } = useGameStore();
 
     const [orderBy, setOrderBy] = useState<SortKey>('turntime');
@@ -63,9 +63,9 @@ export default function BattleCenterPage() {
     useEffect(() => {
         if (currentWorld) {
             loadAll(currentWorld.id);
-            if (!myGeneral) fetchMyGeneral(currentWorld.id).catch(() => {});
+            if (!myOfficer) fetchMyOfficer(currentWorld.id).catch(() => {});
         }
-    }, [currentWorld, loadAll, myGeneral, fetchMyGeneral]);
+    }, [currentWorld, loadAll, myOfficer, fetchMyOfficer]);
 
     const nationMap = useMemo(() => new Map(nations.map((n) => [n.id, n])), [nations]);
 
@@ -119,7 +119,7 @@ export default function BattleCenterPage() {
     // Load per-general logs when target changes
     const loadLogs = useCallback(
         async (generalId: number) => {
-            if (!myGeneral) return;
+            if (!myOfficer) return;
             setLogsLoading(true);
             const newLogs: GeneralLogs = {
                 generalHistory: [],
@@ -130,7 +130,7 @@ export default function BattleCenterPage() {
             await Promise.all(
                 LOG_TYPES.map(async (type) => {
                     try {
-                        const { data } = await generalLogApi.getOldLogs(myGeneral.id, generalId, type);
+                        const { data } = await generalLogApi.getOldLogs(myOfficer.id, generalId, type);
                         if (data.result) {
                             newLogs[type] = data.logs;
                         }
@@ -142,14 +142,14 @@ export default function BattleCenterPage() {
             setLogs(newLogs);
             setLogsLoading(false);
         },
-        [myGeneral]
+        [myOfficer]
     );
 
     useEffect(() => {
-        if (targetGeneralId && myGeneral) {
+        if (targetGeneralId && myOfficer) {
             loadLogs(targetGeneralId);
         }
-    }, [targetGeneralId, myGeneral, loadLogs]);
+    }, [targetGeneralId, myOfficer, loadLogs]);
 
     const changeTarget = (offset: number) => {
         if (orderedGenerals.length === 0) return;

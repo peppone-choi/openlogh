@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useWorldStore } from '@/stores/worldStore';
 import { useGameStore } from '@/stores/gameStore';
-import { useGeneralStore } from '@/stores/generalStore';
+import { useOfficerStore } from '@/stores/officerStore';
 import { mapRecentApi } from '@/lib/gameApi';
 import { subscribeWebSocket } from '@/lib/websocket';
 import { formatLog } from '@/lib/formatLog';
@@ -95,8 +95,8 @@ export default function MapPage() {
     const router = useRouter();
     const { currentWorld } = useWorldStore();
     const { cities, nations, generals, mapData, loadAll, loadMap } = useGameStore();
-    const myGeneral = useGeneralStore((s) => s.myGeneral);
-    const fetchMyGeneral = useGeneralStore((s) => s.fetchMyGeneral);
+    const myOfficer = useOfficerStore((s) => s.myOfficer);
+    const fetchMyOfficer = useOfficerStore((s) => s.fetchMyOfficer);
     const [history, setHistory] = useState<PublicCachedMapHistory[]>([]);
     const [touchTapId, setTouchTapId] = useState<number | null>(null);
 
@@ -145,7 +145,7 @@ export default function MapPage() {
         if (currentWorld) {
             loadAll(currentWorld.id);
             loadMap(mapCode);
-            fetchMyGeneral(currentWorld.id);
+            fetchMyOfficer(currentWorld.id);
 
             mapRecentApi
                 .getMapRecent(currentWorld.id)
@@ -154,7 +154,7 @@ export default function MapPage() {
                 })
                 .catch(() => {});
         }
-    }, [currentWorld, loadAll, loadMap, mapCode, fetchMyGeneral]);
+    }, [currentWorld, loadAll, loadMap, mapCode, fetchMyOfficer]);
 
     useEffect(() => {
         if (!currentWorld) return;
@@ -173,9 +173,9 @@ export default function MapPage() {
     const cityMap = useMemo(() => new Map(cities.map((c) => [c.id, c])), [cities]);
 
     const myNation = useMemo(() => {
-        if (!myGeneral || myGeneral.nationId <= 0) return null;
-        return nationMap.get(myGeneral.nationId) ?? null;
-    }, [myGeneral, nationMap]);
+        if (!myOfficer || myOfficer.nationId <= 0) return null;
+        return nationMap.get(myOfficer.nationId) ?? null;
+    }, [myOfficer, nationMap]);
 
     const spyVisibleCityIds = useMemo(() => {
         const result = new Set<number>();
@@ -201,14 +201,14 @@ export default function MapPage() {
     const canViewCityInfo = useCallback(
         (cityId: number) => {
             const city = cityMap.get(cityId);
-            if (!city || !myGeneral) return false;
-            if (myGeneral.permission === 'spy') return true;
-            if (myGeneral.nationId > 0 && city.nationId === myGeneral.nationId) {
+            if (!city || !myOfficer) return false;
+            if (myOfficer.permission === 'spy') return true;
+            if (myOfficer.nationId > 0 && city.nationId === myOfficer.nationId) {
                 return true;
             }
             return spyVisibleCityIds.has(city.id);
         },
-        [cityMap, myGeneral, spyVisibleCityIds]
+        [cityMap, myOfficer, spyVisibleCityIds]
     );
 
     const cityByNameMap = useMemo(() => new Map(cities.map((c) => [c.name, c])), [cities]);
@@ -279,7 +279,7 @@ export default function MapPage() {
             const rtCity = cityByNameMap.get(cc.name);
             const nation = rtCity?.nationId ? nationMap.get(rtCity.nationId) : null;
             const showNationLayer = layers.has('nations') && !!nation;
-            const isMyCity = myGeneral?.cityId != null && rtCity?.id === myGeneral.cityId;
+            const isMyCity = myOfficer?.cityId != null && rtCity?.id === myOfficer.cityId;
 
             return {
                 id: rtCity?.id ?? cc.id,
@@ -298,7 +298,7 @@ export default function MapPage() {
                 isEmperorCity: false,
             };
         });
-    }, [mapData, cityByNameMap, nationMap, layers, myGeneral?.cityId]);
+    }, [mapData, cityByNameMap, nationMap, layers, myOfficer?.cityId]);
 
     // Build cityOverlays for troops/supply/terrain layers
     const cityOverlays = useMemo(() => {
@@ -330,15 +330,15 @@ export default function MapPage() {
 
     // Interception markers (own nation only)
     const interceptions = useMemo(() => {
-        if (!myGeneral || myGeneral.nationId <= 0) return [];
-        return getInterceptionMarkers(generals, myGeneral.nationId, nationColorMap);
-    }, [generals, myGeneral, nationColorMap]);
+        if (!myOfficer || myOfficer.nationId <= 0) return [];
+        return getInterceptionMarkers(generals, myOfficer.nationId, nationColorMap);
+    }, [generals, myOfficer, nationColorMap]);
 
     // Unit markers (open-world generals with posX > 0)
     const unitMarkers = useMemo(() => {
-        if (!myGeneral || myGeneral.nationId <= 0) return [];
-        return buildUnitMarkers(generals, myGeneral.nationId, nationColorMap);
-    }, [generals, myGeneral, nationColorMap]);
+        if (!myOfficer || myOfficer.nationId <= 0) return [];
+        return buildUnitMarkers(generals, myOfficer.nationId, nationColorMap);
+    }, [generals, myOfficer, nationColorMap]);
 
     // Year/month for header
     const yearMonth = useMemo(() => {

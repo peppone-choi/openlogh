@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useState, useMemo, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useWorldStore } from '@/stores/worldStore';
-import { useGeneralStore } from '@/stores/generalStore';
+import { useOfficerStore } from '@/stores/officerStore';
 import { nationApi, generalApi, cityApi, nationPolicyApi, diplomacyApi, historyApi } from '@/lib/gameApi';
 import { subscribeWebSocket } from '@/lib/websocket';
 import type { Nation, General, City, NationPolicyInfo, Diplomacy, GameRecord } from '@/types';
@@ -95,8 +95,8 @@ const CITY_SORTS: SortOpt<City>[] = [
 
 function NationPageContent() {
     const currentWorld = useWorldStore((s) => s.currentWorld);
-    const myGeneral = useGeneralStore((s) => s.myGeneral);
-    const fetchMyGeneral = useGeneralStore((s) => s.fetchMyGeneral);
+    const myOfficer = useOfficerStore((s) => s.myOfficer);
+    const fetchMyOfficer = useOfficerStore((s) => s.fetchMyOfficer);
     const searchParams = useSearchParams();
     const router = useRouter();
 
@@ -123,18 +123,18 @@ function NationPageContent() {
     const tabParam = searchParams.get('tab');
     const validTabs = ['info', 'generals', 'cities', 'admin'];
     const activeTab = validTabs.includes(tabParam ?? '') ? tabParam! : 'info';
-    const isOfficer = (myGeneral?.officerLevel ?? 0) >= 5;
+    const isOfficer = (myOfficer?.officerLevel ?? 0) >= 5;
 
     useEffect(() => {
-        if (!currentWorld || myGeneral) return;
-        fetchMyGeneral(currentWorld.id).catch(() => setError('장수 정보를 불러올 수 없습니다.'));
-    }, [currentWorld, myGeneral, fetchMyGeneral]);
+        if (!currentWorld || myOfficer) return;
+        fetchMyOfficer(currentWorld.id).catch(() => setError('장수 정보를 불러올 수 없습니다.'));
+    }, [currentWorld, myOfficer, fetchMyOfficer]);
 
     const loadNationData = useCallback(async () => {
-        if (!myGeneral?.nationId || !currentWorld) return;
-        const nId = myGeneral.nationId;
+        if (!myOfficer?.nationId || !currentWorld) return;
+        const nId = myOfficer.nationId;
         const wId = currentWorld.id;
-        const off = myGeneral.officerLevel >= 5;
+        const off = myOfficer.officerLevel >= 5;
 
         const base = [nationApi.get(nId), generalApi.listByNation(nId), cityApi.listByNation(nId)];
         const extra = off
@@ -167,18 +167,18 @@ function NationPageContent() {
         } finally {
             setLoading(false);
         }
-    }, [myGeneral?.nationId, myGeneral?.officerLevel, currentWorld]);
+    }, [myOfficer?.nationId, myOfficer?.officerLevel, currentWorld]);
 
     useEffect(() => {
         loadNationData();
     }, [loadNationData]);
 
     useEffect(() => {
-        if (!currentWorld || !myGeneral?.nationId) return;
+        if (!currentWorld || !myOfficer?.nationId) return;
         return subscribeWebSocket(`/topic/world/${currentWorld.id}/turn`, () => {
             loadNationData();
         });
-    }, [currentWorld, myGeneral?.nationId, loadNationData]);
+    }, [currentWorld, myOfficer?.nationId, loadNationData]);
 
     const handleTabChange = (value: string) => {
         router.replace(value === 'info' ? '/nation' : `/nation?tab=${value}`, {
@@ -284,7 +284,7 @@ function NationPageContent() {
     if (!currentWorld) return <LoadingState message="월드를 선택해주세요." />;
     if (loading) return <LoadingState />;
     if (error) return <div className="p-4 text-red-400">{error}</div>;
-    if (!myGeneral?.nationId) return <div className="p-4 text-muted-foreground">소속 국가가 없습니다.</div>;
+    if (!myOfficer?.nationId) return <div className="p-4 text-muted-foreground">소속 국가가 없습니다.</div>;
     if (!nation) return <LoadingState message="국가 정보가 없습니다." />;
 
     // ── Derived ──────────────────────────────────────────────────────
@@ -718,7 +718,7 @@ function NationPageContent() {
                                     <CardTitle>국가 공지</CardTitle>
                                 </CardHeader>
                                 <CardContent>
-                                    {myGeneral.officerLevel >= 5 && (
+                                    {myOfficer.officerLevel >= 5 && (
                                         <div className="flex gap-1 mb-1">
                                             {[
                                                 {
@@ -791,7 +791,7 @@ function NationPageContent() {
                                         onChange={(e) => setEditNotice(e.target.value)}
                                         rows={5}
                                         placeholder="국가 공지사항을 입력하세요... (마크다운 지원)"
-                                        disabled={myGeneral.officerLevel < 5}
+                                        disabled={myOfficer.officerLevel < 5}
                                         className="font-mono text-sm"
                                     />
                                     {editNotice && (
@@ -802,7 +802,7 @@ function NationPageContent() {
                                             <NoticePreview text={editNotice} />
                                         </div>
                                     )}
-                                    {myGeneral.officerLevel >= 5 && (
+                                    {myOfficer.officerLevel >= 5 && (
                                         <Button size="sm" className="mt-2" onClick={saveNotice} disabled={saving}>
                                             공지 저장
                                         </Button>
@@ -823,7 +823,7 @@ function NationPageContent() {
                                             min={5}
                                             max={30}
                                             unit="%"
-                                            editable={myGeneral.officerLevel >= 5}
+                                            editable={myOfficer.officerLevel >= 5}
                                             saving={saving}
                                             onChange={setEditRate}
                                             onSave={() => savePolicy('rate', editRate)}
@@ -834,7 +834,7 @@ function NationPageContent() {
                                             min={20}
                                             max={200}
                                             unit="%"
-                                            editable={myGeneral.officerLevel >= 5}
+                                            editable={myOfficer.officerLevel >= 5}
                                             saving={saving}
                                             onChange={setEditBill}
                                             onSave={() => savePolicy('bill', editBill)}
@@ -845,14 +845,14 @@ function NationPageContent() {
                                             min={1}
                                             max={99}
                                             unit="년"
-                                            editable={myGeneral.officerLevel >= 5}
+                                            editable={myOfficer.officerLevel >= 5}
                                             saving={saving}
                                             onChange={setEditSecretLimit}
                                             onSave={() => savePolicy('secretLimit', editSecretLimit)}
                                         />
                                     </div>
 
-                                    {myGeneral.officerLevel >= 5 && (
+                                    {myOfficer.officerLevel >= 5 && (
                                         <div className="flex gap-3 mt-4 pt-3 border-t border-gray-600">
                                             <Button
                                                 size="sm"

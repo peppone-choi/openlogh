@@ -3,7 +3,7 @@
 import { useEffect, useMemo } from 'react';
 import { Globe } from 'lucide-react';
 import { useWorldStore } from '@/stores/worldStore';
-import { useGeneralStore } from '@/stores/generalStore';
+import { useOfficerStore } from '@/stores/officerStore';
 import { useGameStore } from '@/stores/gameStore';
 import { PageHeader } from '@/components/game/page-header';
 import { LoadingState } from '@/components/game/loading-state';
@@ -11,12 +11,12 @@ import { GlobalDiplomacyOverview } from '@/components/game/global-diplomacy-over
 
 export default function GlobalDiplomacyPage() {
     const currentWorld = useWorldStore((s) => s.currentWorld);
-    const { myGeneral, fetchMyGeneral } = useGeneralStore();
+    const { myOfficer, fetchMyOfficer } = useOfficerStore();
     const { nations, diplomacy, generals, cities, loading, loadAll } = useGameStore();
 
     useEffect(() => {
         if (!currentWorld) return;
-        if (!myGeneral) fetchMyGeneral(currentWorld.id).catch(() => {});
+        if (!myOfficer) fetchMyOfficer(currentWorld.id).catch(() => {});
         loadAll(currentWorld.id);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [currentWorld?.id]);
@@ -49,7 +49,7 @@ export default function GlobalDiplomacyPage() {
                     nations={nations}
                     diplomacy={diplomacy}
                     cities={cities}
-                    myNationId={myGeneral?.nationId}
+                    myNationId={myOfficer?.nationId}
                     nationStats={nationStats}
                 />
             </div>

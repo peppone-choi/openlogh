@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Home, Map as MapIcon, Castle, ScrollText, MoreHorizontal, RefreshCw } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/8bit/sheet';
-import { useGeneralStore } from '@/stores/generalStore';
+import { useOfficerStore } from '@/stores/officerStore';
 import { useWorldStore } from '@/stores/worldStore';
 
 interface GameBottomBarProps {
@@ -127,11 +127,11 @@ export function GameBottomBar({ onRefresh }: GameBottomBarProps) {
     const pathname = usePathname();
 
     const currentWorld = useWorldStore((s) => s.currentWorld);
-    const myGeneral = useGeneralStore((s) => s.myGeneral);
+    const myOfficer = useOfficerStore((s) => s.myOfficer);
     const npcMode = isNpcModeEnabled(currentWorld?.config as Record<string, unknown> | undefined);
-    const officerLevel = myGeneral?.officerLevel ?? 0;
+    const officerLevel = myOfficer?.officerLevel ?? 0;
     const inNation = officerLevel >= 1;
-    const showSecret = officerLevel >= 2 || Number(myGeneral?.permission ?? 0) >= 1;
+    const showSecret = officerLevel >= 2 || Number(myOfficer?.permission ?? 0) >= 1;
 
     function isVisible(item: NavItem): boolean {
         if (!item.require) return true;

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useWorldStore } from '@/stores/worldStore';
-import { useGeneralStore } from '@/stores/generalStore';
+import { useOfficerStore } from '@/stores/officerStore';
 import { cityApi, frontApi, generalApi, historyApi, nationApi } from '@/lib/gameApi';
 import { subscribeWebSocket } from '@/lib/websocket';
 import type { City, General, GeneralFrontInfo, LastTurnInfo, Message, Nation } from '@/types';
@@ -44,7 +44,7 @@ type TabKey = 'profile' | 'nation-generals';
 export default function GeneralPage() {
     const router = useRouter();
     const currentWorld = useWorldStore((s) => s.currentWorld);
-    const { myGeneral, loading: myGeneralLoading, fetchMyGeneral } = useGeneralStore();
+    const { myOfficer, loading: myOfficerLoading, fetchMyOfficer } = useOfficerStore();
     const [frontInfo, setFrontInfo] = useState<GeneralFrontInfo | null>(null);
     const [nation, setNation] = useState<Nation | null>(null);
     const [city, setCity] = useState<City | null>(null);
@@ -57,25 +57,25 @@ export default function GeneralPage() {
 
     useEffect(() => {
         if (!currentWorld) return;
-        fetchMyGeneral(currentWorld.id).catch(() => {
+        fetchMyOfficer(currentWorld.id).catch(() => {
             setError('장수 정보를 불러올 수 없습니다.');
         });
-    }, [currentWorld, fetchMyGeneral]);
+    }, [currentWorld, fetchMyOfficer]);
 
     const loadGeneralData = useCallback(async () => {
-        if (!currentWorld || !myGeneral) return;
+        if (!currentWorld || !myOfficer) return;
 
         const cityPromise =
-            myGeneral.cityId > 0
+            myOfficer.cityId > 0
                 ? cityApi
-                      .get(myGeneral.cityId)
+                      .get(myOfficer.cityId)
                       .then((res) => res.data)
                       .catch(() => null)
                 : Promise.resolve(null);
         const nationPromise =
-            myGeneral.nationId > 0
+            myOfficer.nationId > 0
                 ? nationApi
-                      .get(myGeneral.nationId)
+                      .get(myOfficer.nationId)
                       .then((res) => res.data)
                       .catch(() => null)
                 : Promise.resolve(null);
@@ -83,7 +83,7 @@ export default function GeneralPage() {
         try {
             const [generalFront, history, cityData, nationData] = await Promise.all([
                 frontApi.getInfo(currentWorld.id).then((res) => res.data.general),
-                historyApi.getGeneralRecords(myGeneral.id).then((res) => res.data),
+                historyApi.getGeneralRecords(myOfficer.id).then((res) => res.data),
                 cityPromise,
                 nationPromise,
             ]);
@@ -94,19 +94,19 @@ export default function GeneralPage() {
         } catch {
             setError('나의 장수 정보를 불러오지 못했습니다.');
         }
-    }, [currentWorld, myGeneral]);
+    }, [currentWorld, myOfficer]);
 
     useEffect(() => {
         loadGeneralData();
     }, [loadGeneralData]);
 
     const loadNationGenerals = useCallback(async () => {
-        if (!myGeneral?.nationId || myGeneral.nationId <= 0) return;
+        if (!myOfficer?.nationId || myOfficer.nationId <= 0) return;
         setNationGeneralsLoading(true);
         try {
             const [genRes, cityRes] = await Promise.all([
-                generalApi.listByNation(myGeneral.nationId),
-                cityApi.listByNation(myGeneral.nationId),
+                generalApi.listByNation(myOfficer.nationId),
+                cityApi.listByNation(myOfficer.nationId),
             ]);
             setNationGenerals(genRes.data);
             setNationCities(cityRes.data);
@@ -115,7 +115,7 @@ export default function GeneralPage() {
         } finally {
             setNationGeneralsLoading(false);
         }
-    }, [myGeneral?.nationId]);
+    }, [myOfficer?.nationId]);
 
     useEffect(() => {
         if (activeTab === 'nation-generals') {
@@ -124,12 +124,12 @@ export default function GeneralPage() {
     }, [activeTab, loadNationGenerals]);
 
     useEffect(() => {
-        if (!currentWorld || !myGeneral) return;
+        if (!currentWorld || !myOfficer) return;
         return subscribeWebSocket(`/topic/world/${currentWorld.id}/turn`, () => {
-            fetchMyGeneral(currentWorld.id).catch(() => {});
+            fetchMyOfficer(currentWorld.id).catch(() => {});
             loadGeneralData();
         });
-    }, [currentWorld, myGeneral, fetchMyGeneral, loadGeneralData]);
+    }, [currentWorld, myOfficer, fetchMyOfficer, loadGeneralData]);
 
     const biographyRows = useMemo(
         () =>
@@ -148,13 +148,13 @@ export default function GeneralPage() {
     );
 
     if (!currentWorld) return <LoadingState message="월드를 선택해주세요." />;
-    if (myGeneralLoading || (myGeneral && !frontInfo && !error)) {
+    if (myOfficerLoading || (myOfficer && !frontInfo && !error)) {
         return <LoadingState />;
     }
     if (error) return <div className="p-4 text-red-400">{error}</div>;
-    if (!myGeneral) return <LoadingState message="장수 정보가 없습니다." />;
+    if (!myOfficer) return <LoadingState message="장수 정보가 없습니다." />;
 
-    const g = myGeneral;
+    const g = myOfficer;
     const fi = frontInfo;
     const nationLevel = nation?.level ?? 0;
     const commandName = getCurrentCommandName(g.lastTurn);
@@ -210,7 +210,7 @@ export default function GeneralPage() {
                     <User className="size-4 mr-1" />
                     개인 프로필
                 </Button>
-                {myGeneral.nationId > 0 && (
+                {myOfficer.nationId > 0 && (
                     <Button
                         variant={activeTab === 'nation-generals' ? 'default' : 'ghost'}
                         size="sm"

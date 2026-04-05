@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useGameStore } from '@/stores/gameStore';
 import { useWorldStore } from '@/stores/worldStore';
 import { REGION_NAMES, CITY_LEVEL_NAMES, isBrightColor } from '@/lib/game-utils';
-import { useGeneralStore } from '@/stores/generalStore';
+import { useOfficerStore } from '@/stores/officerStore';
 import { getSeason, CITY_STATE_NAMES, MAP_WIDTH, MAP_HEIGHT } from '@/lib/map-constants';
 import type { MapSeason } from '@/lib/map-constants';
 import { MapCanvas } from '@/components/game/map-canvas';
@@ -61,7 +61,7 @@ export function MapViewer({
     const router = useRouter();
     const { cities: storeCities, nations, generals, mapData, loadMap } = useGameStore();
     const currentWorld = useWorldStore((s) => s.currentWorld);
-    const myGeneral = useGeneralStore((s) => s.myGeneral);
+    const myOfficer = useOfficerStore((s) => s.myOfficer);
     const [showNames, setShowNames] = useState(!compact);
 
     const isPublicMode = !!publicData;
@@ -127,18 +127,18 @@ export function MapViewer({
                 isCapital: !!(rt && nation?.capitalCityId === rt.id),
                 supplyState: rt?.supplyState ?? 0,
                 state: (rt as { state?: number })?.state ?? 0,
-                isMyCity: myGeneral?.cityId != null && rt?.id === myGeneral.cityId,
+                isMyCity: myOfficer?.cityId != null && rt?.id === myOfficer.cityId,
                 isEmperorCity: rt?.id === emperorCityId,
             };
         });
-    }, [isPublicMode, publicData, storeCities, overrideCities, mapData, nationMap, myGeneral?.cityId, emperorCityId]);
+    }, [isPublicMode, publicData, storeCities, overrideCities, mapData, nationMap, myOfficer?.cityId, emperorCityId]);
 
     const nationColorMap = useMemo(() => new Map(nations.map((n) => [n.id, n.color])), [nations]);
 
     const interceptions = useMemo(() => {
-        if (isPublicMode || !myGeneral || myGeneral.nationId <= 0) return [];
-        return getInterceptionMarkers(generals, myGeneral.nationId, nationColorMap);
-    }, [isPublicMode, generals, myGeneral, nationColorMap]);
+        if (isPublicMode || !myOfficer || myOfficer.nationId <= 0) return [];
+        return getInterceptionMarkers(generals, myOfficer.nationId, nationColorMap);
+    }, [isPublicMode, generals, myOfficer, nationColorMap]);
 
     const season = useMemo<MapSeason>(() => {
         if (isPublicMode) return getSeason(publicData.currentMonth);
@@ -204,9 +204,9 @@ export function MapViewer({
     );
 
     const unitMarkers = useMemo(() => {
-        if (isPublicMode || !myGeneral) return [];
-        return buildUnitMarkers(generals, myGeneral.nationId, nationColorMap);
-    }, [isPublicMode, generals, myGeneral, nationColorMap]);
+        if (isPublicMode || !myOfficer) return [];
+        return buildUnitMarkers(generals, myOfficer.nationId, nationColorMap);
+    }, [isPublicMode, generals, myOfficer, nationColorMap]);
 
     const cities3d = useMemo(() => mapData?.cities ?? [], [mapData]);
 

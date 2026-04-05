@@ -1344,3 +1344,97 @@ export interface SimulatorExportResult {
     reason?: string;
     data?: JsonObject;
 }
+
+// ──────────────────────────────────────────────────────────────────────
+// LOGH Domain Aliases
+// New canonical type names for the LOGH universe.
+// These alias the original interfaces so all existing code continues to compile.
+// Field-level renames will follow when backend DTOs are confirmed.
+// ──────────────────────────────────────────────────────────────────────
+
+/** SessionState (was WorldState) */
+export type SessionState = WorldState;
+
+/** Faction (was Nation) */
+export type Faction = Nation;
+
+/** Planet (was City) */
+export type Planet = City;
+
+/** Officer (was General) */
+export type Officer = General;
+
+/** BestOfficer (was BestGeneral) */
+export type BestOfficer = BestGeneral;
+
+/** Fleet (was Troop) */
+export type Fleet = Troop;
+
+/** FleetWithMembers (was TroopWithMembers) */
+export type FleetWithMembers = TroopWithMembers;
+
+/** FleetMemberInfo (was TroopMemberInfo) */
+export type FleetMemberInfo = TroopMemberInfo;
+
+/** OfficerTurn (was GeneralTurn) */
+export type OfficerTurn = GeneralTurn;
+
+/** FactionTurn (was NationTurn) */
+export type FactionTurn = NationTurn;
+
+/** FactionStatistic (was NationStatistic) */
+export type FactionStatistic = NationStatistic;
+
+/** FactionPolicyInfo (was NationPolicyInfo) */
+export type FactionPolicyInfo = NationPolicyInfo;
+
+/** FactionTypeInfo (was NationTypeInfo) */
+export type FactionTypeInfo = NationTypeInfo;
+
+/** OnlineFactionInfo (was OnlineNationInfo) */
+export type OnlineFactionInfo = OnlineNationInfo;
+
+/** OfficerFrontInfo (was GeneralFrontInfo) */
+export type OfficerFrontInfo = GeneralFrontInfo;
+
+/** FactionFrontInfo (was NationFrontInfo) */
+export type FactionFrontInfo = NationFrontInfo;
+
+/** PlanetFrontInfo (was CityFrontInfo) */
+export type PlanetFrontInfo = CityFrontInfo;
+
+/** PlanetFactionInfo (was CityNationInfo) */
+export type PlanetFactionInfo = CityNationInfo;
+
+/** PlanetOfficerInfo (was CityOfficerInfo) */
+export type PlanetOfficerInfo = CityOfficerInfo;
+
+/** PlanetConst (was CityConst) */
+export type PlanetConst = CityConst;
+
+/** PublicCachedMapPlanet (was PublicCachedMapCity) */
+export type PublicCachedMapPlanet = PublicCachedMapCity;
+
+/** AdminOfficer (was AdminGeneral) */
+export type AdminOfficer = AdminGeneral;
+
+/** OfficerLogEntry (was GeneralLogEntry) */
+export type OfficerLogEntry = GeneralLogEntry;
+
+/** OfficerLogResult (was GeneralLogResult) */
+export type OfficerLogResult = GeneralLogResult;
+
+/** FleetInfo (was TroopInfo) */
+export type FleetInfo = TroopInfo;
+
+/** FactionShipsInfo (was NationCrewInfo) */
+export type FactionShipsInfo = NationCrewInfo;
+
+/** BattleSimPlanet (was BattleSimCity) */
+export type BattleSimPlanet = BattleSimCity;
+
+/** MarketBuySuppliesResponse (was MarketBuyRiceResponse) */
+export type MarketBuySuppliesResponse = MarketBuyRiceResponse;
+
+/** MarketSellSuppliesResponse (was MarketSellRiceResponse) */
+export type MarketSellSuppliesResponse = MarketSellRiceResponse;

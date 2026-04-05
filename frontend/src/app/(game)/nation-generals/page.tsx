@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useWorldStore } from '@/stores/worldStore';
-import { useGeneralStore } from '@/stores/generalStore';
+import { useOfficerStore } from '@/stores/officerStore';
 import { useGameStore } from '@/stores/gameStore';
 import { generalApi, nationApi, troopApi } from '@/lib/gameApi';
 import type { General, Nation, Troop } from '@/types';
@@ -57,7 +57,7 @@ const ALL_COLUMNS: {
 
 export default function NationGeneralsPage() {
     const currentWorld = useWorldStore((s) => s.currentWorld);
-    const { myGeneral } = useGeneralStore();
+    const { myOfficer } = useOfficerStore();
     const { cities } = useGameStore();
     const [generals, setGenerals] = useState<General[]>([]);
     const [nation, setNation] = useState<Nation | null>(null);
@@ -67,13 +67,13 @@ export default function NationGeneralsPage() {
     const [hiddenCols, setHiddenCols] = useState<Set<ColumnKey>>(new Set());
 
     const fetchData = useCallback(() => {
-        if (!myGeneral?.nationId) return;
+        if (!myOfficer?.nationId) return;
         setLoading(true);
         setError(false);
         Promise.all([
-            generalApi.listByNation(myGeneral.nationId),
-            nationApi.get(myGeneral.nationId),
-            troopApi.listByNation(myGeneral.nationId),
+            generalApi.listByNation(myOfficer.nationId),
+            nationApi.get(myOfficer.nationId),
+            troopApi.listByNation(myOfficer.nationId),
         ])
             .then(([gRes, nRes, tRes]) => {
                 setGenerals(gRes.data);
@@ -82,7 +82,7 @@ export default function NationGeneralsPage() {
             })
             .catch(() => setError(true))
             .finally(() => setLoading(false));
-    }, [myGeneral?.nationId]);
+    }, [myOfficer?.nationId]);
 
     useEffect(() => {
         fetchData();
@@ -91,7 +91,7 @@ export default function NationGeneralsPage() {
     const troopMap = useMemo(() => new Map(troops.map((t) => [t.id, t])), [troops]);
     const cityMap = useMemo(() => new Map(cities.map((c) => [c.id, c])), [cities]);
 
-    const myOfficerLevel = myGeneral?.officerLevel ?? 0;
+    const myOfficerLevel = myOfficer?.officerLevel ?? 0;
     const visibleColumns = ALL_COLUMNS.filter(
         (col) => col.minOfficerLevel <= myOfficerLevel && !hiddenCols.has(col.key)
     );
@@ -105,7 +105,7 @@ export default function NationGeneralsPage() {
         });
     };
 
-    if (!currentWorld || !myGeneral) return <div className="p-4 text-muted-foreground">월드를 선택해주세요.</div>;
+    if (!currentWorld || !myOfficer) return <div className="p-4 text-muted-foreground">월드를 선택해주세요.</div>;
     if (loading) return <LoadingState />;
     if (error) return <ErrorState title="세력 장수 정보를 불러오지 못했습니다." onRetry={fetchData} />;
 

@@ -12,7 +12,7 @@ import { Badge } from '@/components/ui/8bit/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/8bit/card';
 import { Input } from '@/components/ui/8bit/input';
 import { useWorldStore } from '@/stores/worldStore';
-import { useGeneralStore } from '@/stores/generalStore';
+import { useOfficerStore } from '@/stores/officerStore';
 import { commandApi } from '@/lib/gameApi';
 import { subscribeWebSocket } from '@/lib/websocket';
 import { useDebouncedCallback } from '@/hooks/useDebouncedCallback';
@@ -558,21 +558,21 @@ function CommandsPageInner() {
     const searchParams = useSearchParams();
     const initialMode = searchParams.get('mode') === 'nation' ? 'nation' : 'general';
     const currentWorld = useWorldStore((s) => s.currentWorld);
-    const { myGeneral, fetchMyGeneral } = useGeneralStore();
+    const { myOfficer, fetchMyOfficer } = useOfficerStore();
     const [mode, setMode] = useState<'general' | 'nation'>(initialMode);
 
     useEffect(() => {
         if (!currentWorld) return;
-        if (!myGeneral) {
-            fetchMyGeneral(currentWorld.id).catch(() => {});
+        if (!myOfficer) {
+            fetchMyOfficer(currentWorld.id).catch(() => {});
         }
-    }, [currentWorld, myGeneral, fetchMyGeneral]);
+    }, [currentWorld, myOfficer, fetchMyOfficer]);
 
     const debouncedFetchGeneral = useDebouncedCallback(
         useCallback(() => {
             if (!currentWorld) return;
-            fetchMyGeneral(currentWorld.id).catch(() => {});
-        }, [currentWorld, fetchMyGeneral]),
+            fetchMyOfficer(currentWorld.id).catch(() => {});
+        }, [currentWorld, fetchMyOfficer]),
         500
     );
 
@@ -590,7 +590,7 @@ function CommandsPageInner() {
         };
     }, [currentWorld, debouncedFetchGeneral]);
 
-    const isChief = (myGeneral?.officerLevel ?? 0) >= 5;
+    const isChief = (myOfficer?.officerLevel ?? 0) >= 5;
 
     if (!currentWorld) {
         return (
@@ -600,7 +600,7 @@ function CommandsPageInner() {
         );
     }
 
-    if (!myGeneral) {
+    if (!myOfficer) {
         return <LoadingState message="명령 정보를 불러오는 중..." />;
     }
 
@@ -632,13 +632,13 @@ function CommandsPageInner() {
             </div>
 
             {mode === 'general' ? (
-                <CommandPanel generalId={myGeneral.id} realtimeMode={currentWorld.realtimeMode} />
+                <CommandPanel generalId={myOfficer.id} realtimeMode={currentWorld.realtimeMode} />
             ) : (
-                myGeneral.nationId > 0 && (
+                myOfficer.nationId > 0 && (
                     <NationCommandPanel
-                        nationId={myGeneral.nationId}
-                        generalId={myGeneral.id}
-                        officerLevel={myGeneral.officerLevel}
+                        nationId={myOfficer.nationId}
+                        generalId={myOfficer.id}
+                        officerLevel={myOfficer.officerLevel}
                     />
                 )
             )}

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AxiosError } from 'axios';
 import { useWorldStore } from '@/stores/worldStore';
-import { useGeneralStore } from '@/stores/generalStore';
+import { useOfficerStore } from '@/stores/officerStore';
 import { npcTokenApi } from '@/lib/gameApi';
 import type { NpcCard, NpcTokenResponse } from '@/types';
 import { Bot, ArrowLeft, RefreshCw, Timer, List } from 'lucide-react';
@@ -23,7 +23,7 @@ import type { General, Nation } from '@/types';
 export default function LobbySelectNpcPage() {
     const router = useRouter();
     const currentWorld = useWorldStore((s) => s.currentWorld);
-    const { fetchMyGeneral } = useGeneralStore();
+    const { fetchMyOfficer } = useOfficerStore();
     const [token, setToken] = useState<NpcTokenResponse | null>(null);
     const [keepIds, setKeepIds] = useState<number[]>([]);
     const [nowMs, setNowMs] = useState(() => Date.now());
@@ -141,7 +141,7 @@ export default function LobbySelectNpcPage() {
         setSelectingId(npc.id);
         try {
             await npcTokenApi.select(currentWorld.id, token.nonce, npc.id);
-            await fetchMyGeneral(currentWorld.id);
+            await fetchMyOfficer(currentWorld.id);
             toast.success('NPC 장수를 선택했습니다.');
             router.replace('/lobby');
         } catch {

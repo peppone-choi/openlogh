@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Vote, ArrowLeft } from 'lucide-react';
 import { useWorldStore } from '@/stores/worldStore';
-import { useGeneralStore } from '@/stores/generalStore';
+import { useOfficerStore } from '@/stores/officerStore';
 import { PageHeader } from '@/components/game/page-header';
 import { LoadingState } from '@/components/game/loading-state';
 import { EmptyState } from '@/components/game/empty-state';
@@ -64,7 +64,7 @@ export default function VoteDetailPage() {
     const router = useRouter();
     const voteId = Number(params.id);
     const { currentWorld } = useWorldStore();
-    const { myGeneral } = useGeneralStore();
+    const { myOfficer } = useOfficerStore();
     const [vote, setVote] = useState<Message | null>(null);
     const [loading, setLoading] = useState(true);
     const [comments, setComments] = useState<VoteComment[]>([]);
@@ -92,9 +92,9 @@ export default function VoteDetailPage() {
     }, [load]);
 
     const handleVote = async (optionIndex: number) => {
-        if (!myGeneral) return;
+        if (!myOfficer) return;
         try {
-            await voteApi.cast(voteId, myGeneral.id, optionIndex);
+            await voteApi.cast(voteId, myOfficer.id, optionIndex);
             await load();
         } catch {
             /* ignore */
@@ -111,9 +111,9 @@ export default function VoteDetailPage() {
     };
 
     const handleAddComment = async () => {
-        if (!myGeneral || !commentInput.trim()) return;
+        if (!myOfficer || !commentInput.trim()) return;
         try {
-            const { data } = await voteApi.createComment(voteId, myGeneral.id, commentInput.trim());
+            const { data } = await voteApi.createComment(voteId, myOfficer.id, commentInput.trim());
             setComments((prev) => [...prev, data]);
             setCommentInput('');
         } catch {
@@ -122,9 +122,9 @@ export default function VoteDetailPage() {
     };
 
     const handleDeleteComment = async (id: number) => {
-        if (!myGeneral) return;
+        if (!myOfficer) return;
         try {
-            await voteApi.deleteComment(voteId, id, myGeneral.id);
+            await voteApi.deleteComment(voteId, id, myOfficer.id);
             setComments((prev) => prev.filter((comment) => comment.id !== id));
         } catch {
             /* ignore */
@@ -146,7 +146,7 @@ export default function VoteDetailPage() {
     const options = d.options ?? [];
     const ballots = d.ballots ?? {};
     const open = isOpen(d);
-    const myVoteIdx = myGeneral != null ? ballots[myGeneral.id.toString()] : undefined;
+    const myVoteIdx = myOfficer != null ? ballots[myOfficer.id.toString()] : undefined;
 
     const counts = new Array(options.length).fill(0) as number[];
     Object.values(ballots).forEach((idx) => {
@@ -154,7 +154,7 @@ export default function VoteDetailPage() {
     });
     const total = counts.reduce((a, b) => a + b, 0);
     const maxCount = Math.max(...counts, 1);
-    const canClose = myGeneral && myGeneral.officerLevel >= 5;
+    const canClose = myOfficer && myOfficer.officerLevel >= 5;
     const lotteryWinner = !open ? pickLotteryWinner(vote.id, ballots) : null;
 
     return (
@@ -240,7 +240,7 @@ export default function VoteDetailPage() {
                         </div>
 
                         {/* vote buttons */}
-                        {open && myVoteIdx === undefined && myGeneral && (
+                        {open && myVoteIdx === undefined && myOfficer && (
                             <div className="flex flex-wrap gap-2 pt-2">
                                 {options.map((opt, i) => (
                                     <Button
@@ -271,7 +271,7 @@ export default function VoteDetailPage() {
                         <CardTitle className="text-sm">투표 댓글</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-3">
-                        {myGeneral && (
+                        {myOfficer && (
                             <div className="flex gap-2">
                                 <Input
                                     value={commentInput}
@@ -294,7 +294,7 @@ export default function VoteDetailPage() {
                                             <span>{formatDeadline(comment.createdAt)}</span>
                                         </div>
                                         <p>{comment.content}</p>
-                                        {myGeneral?.id === comment.authorGeneralId && (
+                                        {myOfficer?.id === comment.authorGeneralId && (
                                             <div className="mt-2 flex justify-end">
                                                 <Button
                                                     size="sm"

@@ -13,7 +13,7 @@ import {
     Trash2,
 } from 'lucide-react';
 import { useWorldStore } from '@/stores/worldStore';
-import { useGeneralStore } from '@/stores/generalStore';
+import { useOfficerStore } from '@/stores/officerStore';
 import { generalApi, commandApi, nationApi, nationManagementApi, cityApi } from '@/lib/gameApi';
 import type {
     CommandArg,
@@ -115,7 +115,7 @@ function formatTurnClock(raw?: string): string {
 
 export default function ChiefPage() {
     const currentWorld = useWorldStore((s) => s.currentWorld);
-    const { myGeneral, fetchMyGeneral } = useGeneralStore();
+    const { myOfficer, fetchMyOfficer } = useOfficerStore();
     const [nation, setNation] = useState<Nation | null>(null);
     const [nationGenerals, setNationGenerals] = useState<General[]>([]);
     const [nationCities, setNationCities] = useState<City[]>([]);
@@ -156,20 +156,20 @@ export default function ChiefPage() {
 
     useEffect(() => {
         if (!currentWorld) return;
-        fetchMyGeneral(currentWorld.id);
-    }, [currentWorld, fetchMyGeneral]);
+        fetchMyOfficer(currentWorld.id);
+    }, [currentWorld, fetchMyOfficer]);
 
     const reload = useCallback(async () => {
-        if (!myGeneral || myGeneral.officerLevel < 5) return;
+        if (!myOfficer || myOfficer.officerLevel < 5) return;
         setLoading(true);
         try {
             const [natRes, gRes, tRes, cmdRes, cRes, oRes] = await Promise.all([
-                nationApi.get(myGeneral.nationId),
-                generalApi.listByNation(myGeneral.nationId),
-                commandApi.getNationReserved(myGeneral.nationId, myGeneral.officerLevel),
-                commandApi.getNationCommandTable(myGeneral.id),
-                cityApi.listByNation(myGeneral.nationId),
-                nationManagementApi.getOfficers(myGeneral.nationId),
+                nationApi.get(myOfficer.nationId),
+                generalApi.listByNation(myOfficer.nationId),
+                commandApi.getNationReserved(myOfficer.nationId, myOfficer.officerLevel),
+                commandApi.getNationCommandTable(myOfficer.id),
+                cityApi.listByNation(myOfficer.nationId),
+                nationManagementApi.getOfficers(myOfficer.nationId),
             ]);
             setNation(natRes.data);
             setNationGenerals(gRes.data);
@@ -182,39 +182,39 @@ export default function ChiefPage() {
         } finally {
             setLoading(false);
         }
-    }, [myGeneral]);
+    }, [myOfficer]);
 
     useEffect(() => {
         void reload();
     }, [reload]);
 
     const loadAllOfficerTurns = useCallback(async () => {
-        if (!myGeneral?.nationId || !nation) return;
+        if (!myOfficer?.nationId || !nation) return;
         setAllOfficerLoading(true);
         try {
             const minLv = getMinNationChiefLevel(nation.level);
             const levels: number[] = [];
             for (let lv = minLv; lv <= 12; lv++) levels.push(lv);
-            const turns = await commandApi.getAllOfficerTurns(myGeneral.nationId, levels);
+            const turns = await commandApi.getAllOfficerTurns(myOfficer.nationId, levels);
             setAllOfficerTurns(turns);
         } catch {
             /* ignore */
         } finally {
             setAllOfficerLoading(false);
         }
-    }, [myGeneral?.nationId, nation]);
+    }, [myOfficer?.nationId, nation]);
 
     // Auto-load all officer turns when nation data is ready
     useEffect(() => {
-        if (nation && myGeneral?.nationId) {
+        if (nation && myOfficer?.nationId) {
             void loadAllOfficerTurns();
         }
-    }, [nation, myGeneral?.nationId, loadAllOfficerTurns]);
+    }, [nation, myOfficer?.nationId, loadAllOfficerTurns]);
 
     const getNationTurn = (idx: number) => nationTurns.find((turn) => turn.turnIdx === idx);
 
     // Preset localStorage key
-    const nationPresetKey = myGeneral?.nationId ? `openlogh:nation-presets:${myGeneral.nationId}` : null;
+    const nationPresetKey = myOfficer?.nationId ? `openlogh:nation-presets:${myOfficer.nationId}` : null;
 
     // Load presets from localStorage
     useEffect(() => {
@@ -271,7 +271,7 @@ export default function ChiefPage() {
     }, [filledNationTurns, selectedNationSlots]);
 
     const nationPasteClipboard = useCallback(async () => {
-        if (!nationClipboard || !myGeneral?.nationId) return;
+        if (!nationClipboard || !myOfficer?.nationId) return;
         const slots = [...selectedNationSlots].sort((a, b) => a - b);
         if (slots.length === 0) return;
         const anchor = slots[0];
@@ -284,9 +284,9 @@ export default function ChiefPage() {
             actionCode: item.actionCode,
             arg: item.arg,
         }));
-        await commandApi.reserveNation(myGeneral.nationId, myGeneral.id, turns);
+        await commandApi.reserveNation(myOfficer.nationId, myOfficer.id, turns);
         await reload();
-    }, [nationClipboard, myGeneral, selectedNationSlots, reload]);
+    }, [nationClipboard, myOfficer, selectedNationSlots, reload]);
 
     const nationCopyAsText = useCallback(() => {
         const slots = [...selectedNationSlots].sort((a, b) => a - b);
@@ -324,7 +324,7 @@ export default function ChiefPage() {
 
     // Load preset
     const loadNationPreset = useCallback(async () => {
-        if (!selectedPreset || !myGeneral?.nationId) return;
+        if (!selectedPreset || !myOfficer?.nationId) return;
         const preset = nationPresets.find((p) => p.name === selectedPreset);
         if (!preset) return;
         const slots = [...selectedNationSlots].sort((a, b) => a - b);
@@ -338,9 +338,9 @@ export default function ChiefPage() {
             actionCode: item.actionCode,
             arg: item.arg,
         }));
-        await commandApi.reserveNation(myGeneral.nationId, myGeneral.id, turns);
+        await commandApi.reserveNation(myOfficer.nationId, myOfficer.id, turns);
         await reload();
-    }, [selectedPreset, myGeneral, nationPresets, selectedNationSlots, reload]);
+    }, [selectedPreset, myOfficer, nationPresets, selectedNationSlots, reload]);
 
     const deleteNationPreset = useCallback(() => {
         if (!selectedPreset) return;
@@ -371,7 +371,7 @@ export default function ChiefPage() {
             setNationDragOver(null);
             const fromIdx = nationDragFrom;
             setNationDragFrom(null);
-            if (fromIdx === null || fromIdx === targetIdx || !myGeneral?.nationId) return;
+            if (fromIdx === null || fromIdx === targetIdx || !myOfficer?.nationId) return;
 
             const ordered = [...filledNationTurns];
             const [moved] = ordered.splice(fromIdx, 1);
@@ -387,12 +387,12 @@ export default function ChiefPage() {
                     arg: ordered[i].arg,
                 });
             }
-            await commandApi.reserveNation(myGeneral.nationId, myGeneral.id, turns);
+            await commandApi.reserveNation(myOfficer.nationId, myOfficer.id, turns);
             await reload();
             setSelectedNationSlots(new Set([targetIdx]));
             setLastNationClickedSlot(targetIdx);
         },
-        [nationDragFrom, filledNationTurns, myGeneral, reload]
+        [nationDragFrom, filledNationTurns, myOfficer, reload]
     );
 
     const handleNationDragEnd = useCallback(() => {
@@ -428,7 +428,7 @@ export default function ChiefPage() {
     };
 
     const handleNationReserve = async (actionCode: string, arg?: CommandArg) => {
-        if (!myGeneral?.nationId) return;
+        if (!myOfficer?.nationId) return;
 
         setReservingNation(true);
         setNationReserveResult(null);
@@ -436,7 +436,7 @@ export default function ChiefPage() {
             const turns = [...selectedNationSlots]
                 .sort((a, b) => a - b)
                 .map((turnIdx) => ({ turnIdx, actionCode, arg }));
-            await commandApi.reserveNation(myGeneral.nationId, myGeneral.id, turns);
+            await commandApi.reserveNation(myOfficer.nationId, myOfficer.id, turns);
             await reload();
             setNationReserveResult({
                 success: true,
@@ -506,8 +506,8 @@ export default function ChiefPage() {
     }, [allOfficerTurns, cityMap, nationGenerals, officerOverview]);
 
     if (!currentWorld) return <div className="p-4 text-muted-foreground">월드를 선택해주세요.</div>;
-    if (!myGeneral) return <LoadingState />;
-    if (myGeneral.officerLevel < 5)
+    if (!myOfficer) return <LoadingState />;
+    if (myOfficer.officerLevel < 5)
         return <div className="p-4 text-muted-foreground">관직 Lv.5 이상만 사용 가능합니다.</div>;
     if (loading) return <LoadingState />;
     if (error) return <div className="p-4 text-destructive">{error}</div>;
@@ -515,7 +515,7 @@ export default function ChiefPage() {
     const npcGenerals = nationGenerals.filter((g) => g.npcState > 0);
     const playerGenerals = nationGenerals.filter((g) => g.npcState === 0);
     const totalCrew = nationGenerals.reduce((sum, g) => sum + g.crew, 0);
-    const isChief = myGeneral.officerLevel === 20;
+    const isChief = myOfficer.officerLevel === 20;
 
     return (
         <div className="p-4 space-y-4 max-w-3xl mx-auto">
@@ -812,12 +812,12 @@ export default function ChiefPage() {
                                             </p>
                                             <Button
                                                 onClick={async () => {
-                                                    if (!myGeneral) return;
+                                                    if (!myOfficer) return;
                                                     setExecuting(true);
                                                     setCmdResult(null);
                                                     try {
                                                         const { data } = await commandApi.executeNation(
-                                                            myGeneral.id,
+                                                            myOfficer.id,
                                                             selectedCmd.actionCode
                                                         );
                                                         setCmdResult(data);
@@ -941,7 +941,7 @@ export default function ChiefPage() {
                                             const officer = nationGenerals.find((g) => g.officerLevel === lv);
                                             const turns = turnsByOfficer.get(lv) ?? [];
                                             const turnMap = new Map(turns.map((t) => [t.turnIdx, t]));
-                                            const isMe = lv === myGeneral.officerLevel;
+                                            const isMe = lv === myOfficer.officerLevel;
                                             const reservedCount = turns.filter((t) => t.actionCode !== '휴식').length;
 
                                             return (

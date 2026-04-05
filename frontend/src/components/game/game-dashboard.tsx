@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { useDebouncedCallback } from '@/hooks/useDebouncedCallback';
 import { RefreshCw, Map as MapIcon, Swords, User, ScrollText } from 'lucide-react';
 import { useWorldStore } from '@/stores/worldStore';
-import { useGeneralStore } from '@/stores/generalStore';
+import { useOfficerStore } from '@/stores/officerStore';
 import { useGameStore } from '@/stores/gameStore';
 import { frontApi } from '@/lib/gameApi';
 import { subscribeWebSocket } from '@/lib/websocket';
@@ -43,7 +43,7 @@ function formatAutorunMode(mode?: number): string {
 
 export function GameDashboard() {
     const { currentWorld } = useWorldStore();
-    const { myGeneral } = useGeneralStore();
+    const { myOfficer } = useOfficerStore();
     const [frontInfo, setFrontInfo] = useState<FrontInfoResponse | null>(null);
     const lastRecordIdRef = useRef<number | undefined>(undefined);
     const lastHistoryIdRef = useRef<number | undefined>(undefined);
@@ -354,8 +354,8 @@ export function GameDashboard() {
                         <MapViewer worldId={currentWorld.id} mapCode={mapCode} />
                     </div>
                     <div className="flex-1 overflow-y-auto lg:max-h-[500px]">
-                        {myGeneral && (
-                            <CommandPanel generalId={myGeneral.id} realtimeMode={currentWorld.realtimeMode} />
+                        {myOfficer && (
+                            <CommandPanel generalId={myOfficer.id} realtimeMode={currentWorld.realtimeMode} />
                         )}
                     </div>
                 </div>

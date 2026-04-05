@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useState, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useWorldStore } from '@/stores/worldStore';
-import { useGeneralStore } from '@/stores/generalStore';
+import { useOfficerStore } from '@/stores/officerStore';
 import { useGameStore } from '@/stores/gameStore';
 import { boardApi, messageApi } from '@/lib/gameApi';
 import { subscribeWebSocket } from '@/lib/websocket';
@@ -28,7 +28,7 @@ function BoardPageContent() {
     const isSecretParam = searchParams.get('secret') === 'true';
 
     const currentWorld = useWorldStore((s) => s.currentWorld);
-    const myGeneral = useGeneralStore((s) => s.myGeneral);
+    const myOfficer = useOfficerStore((s) => s.myOfficer);
     const { generals, nations, loadAll } = useGameStore();
 
     const [tab, setTab] = useState(isSecretParam ? 'secret' : 'public');
@@ -47,7 +47,7 @@ function BoardPageContent() {
 
     const nationMap = useMemo(() => new Map(nations.map((n) => [n.id, n])), [nations]);
 
-    const canAccessSecret = (myGeneral?.officerLevel ?? 0) >= 2;
+    const canAccessSecret = (myOfficer?.officerLevel ?? 0) >= 2;
     const isSecret = tab === 'secret';
     const posts = isSecret ? secretPosts : publicPosts;
     const visiblePosts = posts.slice(0, visibleCount);
@@ -61,24 +61,24 @@ function BoardPageContent() {
     }, [currentWorld, generals.length, loadAll]);
 
     const loadPublic = useCallback(async () => {
-        if (!currentWorld || !myGeneral?.nationId) return;
+        if (!currentWorld || !myOfficer?.nationId) return;
         try {
-            const { data } = await messageApi.getBoard(currentWorld.id, myGeneral.nationId);
+            const { data } = await messageApi.getBoard(currentWorld.id, myOfficer.nationId);
             setPublicPosts(data);
         } catch {
             /* ignore */
         }
-    }, [currentWorld, myGeneral?.nationId]);
+    }, [currentWorld, myOfficer?.nationId]);
 
     const loadSecret = useCallback(async () => {
-        if (!currentWorld || !myGeneral?.nationId || !canAccessSecret) return;
+        if (!currentWorld || !myOfficer?.nationId || !canAccessSecret) return;
         try {
-            const { data } = await messageApi.getSecretBoard(currentWorld.id, myGeneral.nationId);
+            const { data } = await messageApi.getSecretBoard(currentWorld.id, myOfficer.nationId);
             setSecretPosts(data);
         } catch {
             /* ignore */
         }
-    }, [currentWorld, myGeneral?.nationId, canAccessSecret]);
+    }, [currentWorld, myOfficer?.nationId, canAccessSecret]);
 
     const loadPosts = useCallback(async () => {
         setLoading(true);
@@ -120,14 +120,14 @@ function BoardPageContent() {
     }, [currentWorld, loadPublic, loadSecret]);
 
     const handlePost = async () => {
-        if (!currentWorld || !myGeneral || !content.trim()) return;
+        if (!currentWorld || !myOfficer || !content.trim()) return;
         setSending(true);
         try {
             if (isSecret) {
                 await messageApi.postSecretBoard(
                     currentWorld.id,
-                    myGeneral.id,
-                    myGeneral.nationId,
+                    myOfficer.id,
+                    myOfficer.nationId,
                     content.trim(),
                     title.trim() || undefined
                 );
@@ -135,8 +135,8 @@ function BoardPageContent() {
             } else {
                 await messageApi.postBoard(
                     currentWorld.id,
-                    myGeneral.id,
-                    myGeneral.nationId,
+                    myOfficer.id,
+                    myOfficer.nationId,
                     content.trim(),
                     title.trim() || undefined
                 );
@@ -175,20 +175,20 @@ function BoardPageContent() {
 
     const handleCreateComment = useCallback(
         async (postId: number, comment: string) => {
-            if (!myGeneral || !comment.trim()) return;
-            await boardApi.createComment(postId, myGeneral.id, comment.trim());
+            if (!myOfficer || !comment.trim()) return;
+            await boardApi.createComment(postId, myOfficer.id, comment.trim());
             await loadComments(postId);
         },
-        [myGeneral, loadComments]
+        [myOfficer, loadComments]
     );
 
     const handleDeleteComment = useCallback(
         async (postId: number, commentId: number) => {
-            if (!myGeneral) return;
-            await boardApi.deleteComment(postId, commentId, myGeneral.id);
+            if (!myOfficer) return;
+            await boardApi.deleteComment(postId, commentId, myOfficer.id);
             await loadComments(postId);
         },
-        [myGeneral, loadComments]
+        [myOfficer, loadComments]
     );
 
     if (!currentWorld) return <div className="p-4 text-muted-foreground">월드를 선택해주세요.</div>;
@@ -223,12 +223,12 @@ function BoardPageContent() {
 
                 <TabsContent value={tab} className="mt-4 space-y-4">
                     {/* Compose form */}
-                    {myGeneral && myGeneral.nationId > 0 && (!isSecret || canAccessSecret) && (
+                    {myOfficer && myOfficer.nationId > 0 && (!isSecret || canAccessSecret) && (
                         <Card>
                             <CardContent className="space-y-2">
                                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                    <GeneralPortrait picture={myGeneral.picture} name={myGeneral.name} size="sm" />
-                                    <span className="font-medium text-white">{myGeneral.name}</span>
+                                    <GeneralPortrait picture={myOfficer.picture} name={myOfficer.name} size="sm" />
+                                    <span className="font-medium text-white">{myOfficer.name}</span>
                                     {isSecret && (
                                         <Badge variant="destructive" className="text-[10px]">
                                             기밀
@@ -290,7 +290,7 @@ function BoardPageContent() {
                                     idx={posts.length - idx}
                                     isSecret={isSecret}
                                     isExpanded={expandedId === post.id}
-                                    isMine={post.srcId === myGeneral?.id}
+                                    isMine={post.srcId === myOfficer?.id}
                                     sender={post.srcId ? (generalMap.get(post.srcId) ?? null) : null}
                                     senderNation={
                                         post.srcId
@@ -312,7 +312,7 @@ function BoardPageContent() {
                                     onDelete={() => handleDelete(post.id)}
                                     comments={commentsByPost[post.id] ?? []}
                                     commentsLoading={commentLoadingByPost[post.id] ?? false}
-                                    myGeneralId={myGeneral?.id ?? null}
+                                    myOfficerId={myOfficer?.id ?? null}
                                     getGeneralName={(id) => generalMap.get(id)?.name ?? `#${id}`}
                                     onCreateComment={(comment) => handleCreateComment(post.id, comment)}
                                     onDeleteComment={(commentId) => handleDeleteComment(post.id, commentId)}
@@ -365,7 +365,7 @@ interface BoardRowProps {
     senderNation: { name: string; color: string } | null;
     comments: BoardComment[];
     commentsLoading: boolean;
-    myGeneralId: number | null;
+    myOfficerId: number | null;
     getGeneralName: (generalId: number) => string;
     onCreateComment: (content: string) => Promise<void>;
     onDeleteComment: (commentId: number) => Promise<void>;
@@ -383,7 +383,7 @@ function BoardRow({
     senderNation,
     comments,
     commentsLoading,
-    myGeneralId,
+    myOfficerId,
     getGeneralName,
     onCreateComment,
     onDeleteComment,
@@ -486,7 +486,7 @@ function BoardRow({
                                                 <span className="text-[10px] text-muted-foreground shrink-0">
                                                     {new Date(c.createdAt).toLocaleString('ko-KR')}
                                                 </span>
-                                                {myGeneralId === c.authorGeneralId && (
+                                                {myOfficerId === c.authorGeneralId && (
                                                     <Button
                                                         size="icon-sm"
                                                         variant="ghost"

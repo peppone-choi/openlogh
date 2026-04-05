@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useWorldStore } from '@/stores/worldStore';
-import { useGeneralStore } from '@/stores/generalStore';
+import { useOfficerStore } from '@/stores/officerStore';
 import { useGameStore } from '@/stores/gameStore';
 import { messageApi } from '@/lib/gameApi';
 import { subscribeWebSocket } from '@/lib/websocket';
@@ -23,8 +23,8 @@ const PAGE_SIZE = 30;
 
 export default function MessagesPage() {
     const currentWorld = useWorldStore((s) => s.currentWorld);
-    const myGeneral = useGeneralStore((s) => s.myGeneral);
-    const fetchMyGeneral = useGeneralStore((s) => s.fetchMyGeneral);
+    const myOfficer = useOfficerStore((s) => s.myOfficer);
+    const fetchMyOfficer = useOfficerStore((s) => s.fetchMyOfficer);
     const { generals, nations, loadAll } = useGameStore();
     const [tab, setTab] = useState<MailboxTab>('public');
     const [messagesByTab, setMessagesByTab] = useState<Record<MailboxTab, Message[]>>({
@@ -49,26 +49,26 @@ export default function MessagesPage() {
         private: true,
         diplomacy: true,
     });
-    const canUseDiplomacy = (myGeneral?.officerLevel ?? 0) >= 4;
+    const canUseDiplomacy = (myOfficer?.officerLevel ?? 0) >= 4;
 
     useEffect(() => {
         if (!currentWorld) return;
-        if (!myGeneral) fetchMyGeneral(currentWorld.id).catch(() => {});
+        if (!myOfficer) fetchMyOfficer(currentWorld.id).catch(() => {});
         loadAll(currentWorld.id);
-    }, [currentWorld, myGeneral, fetchMyGeneral, loadAll]);
+    }, [currentWorld, myOfficer, fetchMyOfficer, loadAll]);
 
     const fetchMessages = useCallback(async () => {
-        if (!currentWorld || !myGeneral) return;
+        if (!currentWorld || !myOfficer) return;
         setRefreshing(true);
         try {
             const [publicRes, nationalRes, privateRes, diplomacyRes] = await Promise.all([
                 messageApi.getByType('public', { worldId: currentWorld.id, limit: PAGE_SIZE }),
-                messageApi.getByType('national', { nationId: myGeneral.nationId, limit: PAGE_SIZE }),
-                messageApi.getByType('private', { generalId: myGeneral.id, limit: PAGE_SIZE }),
+                messageApi.getByType('national', { nationId: myOfficer.nationId, limit: PAGE_SIZE }),
+                messageApi.getByType('private', { generalId: myOfficer.id, limit: PAGE_SIZE }),
                 canUseDiplomacy
                     ? messageApi.getByType('diplomacy', {
-                          nationId: myGeneral.nationId,
-                          officerLevel: myGeneral.officerLevel,
+                          nationId: myOfficer.nationId,
+                          officerLevel: myOfficer.officerLevel,
                           limit: PAGE_SIZE,
                       })
                     : Promise.resolve({ data: [] as Message[] }),
@@ -90,15 +90,15 @@ export default function MessagesPage() {
             setLoading(false);
             setRefreshing(false);
         }
-    }, [currentWorld, myGeneral, canUseDiplomacy]);
+    }, [currentWorld, myOfficer, canUseDiplomacy]);
 
     useEffect(() => {
-        if (!myGeneral || !currentWorld) return;
+        if (!myOfficer || !currentWorld) return;
         fetchMessages();
-    }, [myGeneral, currentWorld, fetchMessages]);
+    }, [myOfficer, currentWorld, fetchMessages]);
 
     const loadOlderMessages = useCallback(async () => {
-        if (!currentWorld || !myGeneral) return;
+        if (!currentWorld || !myOfficer) return;
         const currentInbox = messagesByTab[tab];
         if (currentInbox.length === 0) return;
 
@@ -107,11 +107,11 @@ export default function MessagesPage() {
         try {
             const typeParams = {
                 public: { worldId: currentWorld.id },
-                national: { nationId: myGeneral.nationId },
-                private: { generalId: myGeneral.id },
+                national: { nationId: myOfficer.nationId },
+                private: { generalId: myOfficer.id },
                 diplomacy: {
-                    nationId: myGeneral.nationId,
-                    officerLevel: myGeneral.officerLevel,
+                    nationId: myOfficer.nationId,
+                    officerLevel: myOfficer.officerLevel,
                 },
             }[tab];
             const res = await messageApi.getByType(tab, {
@@ -131,7 +131,7 @@ export default function MessagesPage() {
         } finally {
             setLoadingOlder(false);
         }
-    }, [currentWorld, myGeneral, tab, messagesByTab]);
+    }, [currentWorld, myOfficer, tab, messagesByTab]);
 
     /** Set compose form to reply to a specific message sender */
     const handleReplyTo = useCallback((msg: Message) => {
@@ -149,7 +149,7 @@ export default function MessagesPage() {
     }, []);
 
     useEffect(() => {
-        if (!currentWorld || !myGeneral) return;
+        if (!currentWorld || !myOfficer) return;
 
         const unsubTurn = subscribeWebSocket(`/topic/world/${currentWorld.id}/turn`, () => {
             fetchMessages();
@@ -162,7 +162,7 @@ export default function MessagesPage() {
             unsubTurn();
             unsubMessage();
         };
-    }, [currentWorld, myGeneral, fetchMessages]);
+    }, [currentWorld, myOfficer, fetchMessages]);
 
     const generalMap = useMemo(() => new Map(generals.map((g) => [g.id, g])), [generals]);
 
@@ -212,7 +212,7 @@ export default function MessagesPage() {
     };
 
     const handleSend = async () => {
-        if (!currentWorld || !myGeneral || !content.trim()) return;
+        if (!currentWorld || !myOfficer || !content.trim()) return;
 
         const trimmedContent = content.trim();
         const isPublic = recipientType === 'public';
@@ -230,13 +230,13 @@ export default function MessagesPage() {
                     ? 'diplomacy'
                     : 'personal';
 
-        const srcId = mailboxType === 'NATIONAL' || mailboxType === 'DIPLOMACY' ? myGeneral.nationId : myGeneral.id;
+        const srcId = mailboxType === 'NATIONAL' || mailboxType === 'DIPLOMACY' ? myOfficer.nationId : myOfficer.id;
 
         const targetId =
             mailboxType === 'DIPLOMACY'
                 ? Number(destNationId)
                 : mailboxType === 'NATIONAL'
-                  ? myGeneral.nationId
+                  ? myOfficer.nationId
                   : isPublic
                     ? null
                     : Number(destGeneralId);
@@ -247,7 +247,7 @@ export default function MessagesPage() {
                 mailboxCode,
                 mailboxType,
                 messageType: mailboxCode,
-                officerLevel: myGeneral.officerLevel,
+                officerLevel: myOfficer.officerLevel,
             });
             setContent('');
             setDestGeneralId('');
@@ -341,7 +341,7 @@ export default function MessagesPage() {
                                     <option value="">선택...</option>
                                     {Array.from(
                                         generals
-                                            .filter((g) => g.id !== myGeneral?.id)
+                                            .filter((g) => g.id !== myOfficer?.id)
                                             .reduce((map, g) => {
                                                 const nation = nationMap.get(g.nationId);
                                                 const key = nation?.name ?? '재야';
@@ -379,7 +379,7 @@ export default function MessagesPage() {
                                 >
                                     <option value="">선택...</option>
                                     {nations
-                                        .filter((n) => n.id !== myGeneral?.nationId)
+                                        .filter((n) => n.id !== myOfficer?.nationId)
                                         .map((n) => (
                                             <option key={n.id} value={n.id}>
                                                 {n.name}
@@ -565,7 +565,7 @@ export default function MessagesPage() {
                                         {m.messageType === 'recruitment' &&
                                             m.payload.action === 'scout' &&
                                             m.meta.used !== true &&
-                                            myGeneral && (
+                                            myOfficer && (
                                                 <div className="flex gap-2 mt-2">
                                                     <Button
                                                         size="sm"
@@ -576,10 +576,10 @@ export default function MessagesPage() {
                                                             try {
                                                                 const res = await messageApi.acceptRecruitment(
                                                                     m.id,
-                                                                    myGeneral.id
+                                                                    myOfficer.id
                                                                 );
                                                                 alert(`${res.data.nationName}(으)로 임관하였습니다.`);
-                                                                await fetchMyGeneral(currentWorld!.id);
+                                                                await fetchMyOfficer(currentWorld!.id);
                                                                 fetchMessages();
                                                             } catch (err: unknown) {
                                                                 const msg =
@@ -599,7 +599,7 @@ export default function MessagesPage() {
                                                         onClick={async (e) => {
                                                             e.stopPropagation();
                                                             try {
-                                                                await messageApi.declineRecruitment(m.id, myGeneral.id);
+                                                                await messageApi.declineRecruitment(m.id, myOfficer.id);
                                                                 fetchMessages();
                                                             } catch {
                                                                 alert('등용 거절 실패');

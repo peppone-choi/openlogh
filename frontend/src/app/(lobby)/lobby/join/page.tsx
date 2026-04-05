@@ -4,7 +4,7 @@ import { Suspense, useEffect, useState, useMemo, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { UserPlus, ArrowLeft, Crown } from 'lucide-react';
 import { useWorldStore } from '@/stores/worldStore';
-import { useGeneralStore } from '@/stores/generalStore';
+import { useOfficerStore } from '@/stores/officerStore';
 import { useGameStore } from '@/stores/gameStore';
 import { inheritanceApi, generalApi, nationApi } from '@/lib/gameApi';
 import { toast } from 'sonner';
@@ -118,7 +118,7 @@ function LobbyJoinPageContent() {
     const searchParams = useSearchParams();
     const isFoundMode = false;
     const { currentWorld } = useWorldStore();
-    const { fetchMyGeneral } = useGeneralStore();
+    const { fetchMyOfficer } = useOfficerStore();
     const { cities, nations, loadAll } = useGameStore();
 
     const [name, setName] = useState('');
@@ -322,7 +322,7 @@ function LobbyJoinPageContent() {
                 inheritCity: inheritCity || undefined,
                 inheritBonusStat: inheritBonusSum > 0 ? inheritBonusStat : undefined,
             });
-            await fetchMyGeneral(currentWorld.id);
+            await fetchMyOfficer(currentWorld.id);
             router.push('/');
         } catch (err: unknown) {
             const msg = err instanceof Error ? err.message : '장수 생성에 실패했습니다.';

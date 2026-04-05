@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 import { Toaster } from '@/components/ui/sonner';
 import { useAuthStore } from '@/stores/authStore';
 import { useWorldStore } from '@/stores/worldStore';
-import { useGeneralStore } from '@/stores/generalStore';
+import { useOfficerStore } from '@/stores/officerStore';
 import { useWebSocket } from '@/hooks/useWebSocket';
 import { useHotkeys } from '@/hooks/useHotkeys';
 import { useSoundEffects } from '@/hooks/useSoundEffects';
@@ -88,7 +88,7 @@ export default function GameLayout({ children }: { children: React.ReactNode }) 
     const pathname = usePathname();
     const { isAuthenticated, isInitialized, initAuth, logout } = useAuthStore();
     const { currentWorld, isHydrated: worldHydrated } = useWorldStore();
-    const { myGeneral, loading: generalLoading, fetchMyGeneral, isHydrated: generalHydrated } = useGeneralStore();
+    const { myOfficer, loading: generalLoading, fetchMyOfficer, isHydrated: generalHydrated } = useOfficerStore();
 
     useEffect(() => {
         initAuth();
@@ -102,17 +102,17 @@ export default function GameLayout({ children }: { children: React.ReactNode }) 
 
     useEffect(() => {
         if (currentWorld) {
-            fetchMyGeneral(currentWorld.id);
+            fetchMyOfficer(currentWorld.id);
         }
-    }, [currentWorld, fetchMyGeneral]);
+    }, [currentWorld, fetchMyOfficer]);
 
-    const prevGeneralRef = useRef(myGeneral);
+    const prevGeneralRef = useRef(myOfficer);
     useEffect(() => {
         if (!isAuthenticated) return;
         if (!worldHydrated || !generalHydrated) return;
         if (generalLoading) return;
 
-        if (!currentWorld || myGeneral === null) {
+        if (!currentWorld || myOfficer === null) {
             if (prevGeneralRef.current !== null && currentWorld) {
                 toast.error(`${prevGeneralRef.current.name} 장수가 사망하였습니다. 로비로 이동합니다.`, {
                     duration: 5000,
@@ -120,8 +120,8 @@ export default function GameLayout({ children }: { children: React.ReactNode }) 
             }
             router.replace('/lobby');
         }
-        prevGeneralRef.current = myGeneral;
-    }, [isAuthenticated, currentWorld, myGeneral, generalLoading, worldHydrated, generalHydrated, router]);
+        prevGeneralRef.current = myOfficer;
+    }, [isAuthenticated, currentWorld, myOfficer, generalLoading, worldHydrated, generalHydrated, router]);
 
     const { enabled: wsEnabled, toggleRealtime } = useWebSocket();
     const { soundEnabled, toggleSound } = useSoundEffects();
@@ -179,7 +179,7 @@ export default function GameLayout({ children }: { children: React.ReactNode }) 
         },
     ]);
 
-    const officerLevel = myGeneral?.officerLevel ?? 0;
+    const officerLevel = myOfficer?.officerLevel ?? 0;
     const inNation = officerLevel >= 1;
     const showSecret = inNation && officerLevel >= 2;
 
@@ -202,10 +202,10 @@ export default function GameLayout({ children }: { children: React.ReactNode }) 
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
     // Render guard: block during initial load and store hydration.
-    // myGeneral keeps its value during re-fetches (not reset to null),
-    // so children stay mounted when pages call fetchMyGeneral.
+    // myOfficer keeps its value during re-fetches (not reset to null),
+    // so children stay mounted when pages call fetchMyOfficer.
     if (!isInitialized || !worldHydrated || !generalHydrated) return null;
-    if (!isAuthenticated || !currentWorld || myGeneral === null) return null;
+    if (!isAuthenticated || !currentWorld || myOfficer === null) return null;
 
     // Reserved phase (startTime 전): 접근 불가 → 로비로
     const config = currentWorld?.config as Record<string, string> | undefined;

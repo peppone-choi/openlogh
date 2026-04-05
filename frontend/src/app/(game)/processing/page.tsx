@@ -3,7 +3,7 @@
 import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useWorldStore } from '@/stores/worldStore';
-import { useGeneralStore } from '@/stores/generalStore';
+import { useOfficerStore } from '@/stores/officerStore';
 import { commandApi } from '@/lib/gameApi';
 import { subscribeWebSocket } from '@/lib/websocket';
 import { LoadingState } from '@/components/game/loading-state';
@@ -21,7 +21,7 @@ function ProcessingContent() {
     const turnListStr = searchParams.get('turnList');
     const isNationCommand = searchParams.get('nation') === 'true';
     const currentWorld = useWorldStore((s) => s.currentWorld);
-    const { myGeneral } = useGeneralStore();
+    const { myOfficer } = useOfficerStore();
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const isFormMode = Boolean(command && turnListStr);
@@ -48,7 +48,7 @@ function ProcessingContent() {
     // Form mode: command argument form
     if (isFormMode && command) {
         const handleFormSubmit = async (arg: CommandArg) => {
-            if (!myGeneral) return;
+            if (!myOfficer) return;
             setIsSubmitting(true);
             try {
                 const turns = turnList.map((turnIdx) => ({
@@ -56,11 +56,11 @@ function ProcessingContent() {
                     actionCode: command,
                     arg,
                 }));
-                if (isNationCommand && myGeneral.nationId) {
-                    await commandApi.reserveNation(myGeneral.nationId, myGeneral.id, turns);
+                if (isNationCommand && myOfficer.nationId) {
+                    await commandApi.reserveNation(myOfficer.nationId, myOfficer.id, turns);
                     router.push('/commands?mode=nation');
                 } else {
-                    await commandApi.reserve(myGeneral.id, turns);
+                    await commandApi.reserve(myOfficer.id, turns);
                     router.push('/commands');
                 }
             } catch (error) {

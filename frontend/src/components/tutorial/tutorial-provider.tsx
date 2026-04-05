@@ -3,7 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { useTutorialStore } from '@/stores/tutorialStore';
 import { useWorldStore } from '@/stores/worldStore';
-import { useGeneralStore } from '@/stores/generalStore';
+import { useOfficerStore } from '@/stores/officerStore';
 import { useGameStore } from '@/stores/gameStore';
 import { registerTutorialApiGuard, ejectTutorialApiGuard } from '@/lib/tutorial-api-guard';
 import { MOCK_WORLD, MOCK_MY_GENERAL, MOCK_GENERALS, MOCK_CITIES, MOCK_NATIONS, MOCK_DIPLOMACY } from '@/data/tutorial';
@@ -19,7 +19,7 @@ export function TutorialProvider({ children }: TutorialProviderProps) {
     const { start, currentStep, steps } = useTutorialStore();
     const snapshotRef = useRef<{
         world: ReturnType<typeof useWorldStore.getState>;
-        general: ReturnType<typeof useGeneralStore.getState>;
+        general: ReturnType<typeof useOfficerStore.getState>;
         game: ReturnType<typeof useGameStore.getState>;
     } | null>(null);
 
@@ -28,7 +28,7 @@ export function TutorialProvider({ children }: TutorialProviderProps) {
         // Save snapshot for cleanup
         snapshotRef.current = {
             world: useWorldStore.getState(),
-            general: useGeneralStore.getState(),
+            general: useOfficerStore.getState(),
             game: useGameStore.getState(),
         };
 
@@ -40,9 +40,9 @@ export function TutorialProvider({ children }: TutorialProviderProps) {
             currentWorld: MOCK_WORLD,
             worlds: [MOCK_WORLD],
         });
-        useGeneralStore.setState({
-            myGeneral: MOCK_MY_GENERAL,
-            generals: MOCK_GENERALS,
+        useOfficerStore.setState({
+            myOfficer: MOCK_MY_GENERAL,
+            officers: MOCK_GENERALS,
         });
         useGameStore.setState({
             cities: MOCK_CITIES,
@@ -61,7 +61,7 @@ export function TutorialProvider({ children }: TutorialProviderProps) {
 
             if (snapshotRef.current) {
                 useWorldStore.setState(snapshotRef.current.world);
-                useGeneralStore.setState(snapshotRef.current.general);
+                useOfficerStore.setState(snapshotRef.current.general);
                 useGameStore.setState(snapshotRef.current.game);
             }
         };
@@ -75,8 +75,8 @@ export function TutorialProvider({ children }: TutorialProviderProps) {
 
         switch (step.id) {
             case 3: {
-                // 장수 생성 완료 — myGeneral 확인
-                useGeneralStore.setState({ myGeneral: MOCK_MY_GENERAL });
+                // 장수 생성 완료 — myOfficer 확인
+                useOfficerStore.setState({ myOfficer: MOCK_MY_GENERAL });
                 break;
             }
             case 6: {
@@ -93,9 +93,9 @@ export function TutorialProvider({ children }: TutorialProviderProps) {
                     .getState()
                     .generals.map((g) => (g.id === -1 ? { ...g, crew: g.crew + 500 } : g));
                 useGameStore.setState({ generals: generals8 });
-                const myGen8 = useGeneralStore.getState().myGeneral;
+                const myGen8 = useOfficerStore.getState().myOfficer;
                 if (myGen8 && myGen8.id === -1) {
-                    useGeneralStore.setState({ myGeneral: { ...myGen8, crew: myGen8.crew + 500 } });
+                    useOfficerStore.setState({ myOfficer: { ...myGen8, crew: myGen8.crew + 500 } });
                 }
                 break;
             }
@@ -105,10 +105,10 @@ export function TutorialProvider({ children }: TutorialProviderProps) {
                     .getState()
                     .generals.map((g) => (g.id === -1 ? { ...g, train: Math.min(100, g.train + 20) } : g));
                 useGameStore.setState({ generals: generals9 });
-                const myGen9 = useGeneralStore.getState().myGeneral;
+                const myGen9 = useOfficerStore.getState().myOfficer;
                 if (myGen9 && myGen9.id === -1) {
-                    useGeneralStore.setState({
-                        myGeneral: { ...myGen9, train: Math.min(100, myGen9.train + 20) },
+                    useOfficerStore.setState({
+                        myOfficer: { ...myGen9, train: Math.min(100, myGen9.train + 20) },
                     });
                 }
                 break;

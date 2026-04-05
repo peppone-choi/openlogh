@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useWorldStore } from '@/stores/worldStore';
-import { useGeneralStore } from '@/stores/generalStore';
+import { useOfficerStore } from '@/stores/officerStore';
 import { nationApi, cityApi, generalApi, nationPolicyApi, diplomacyApi } from '@/lib/gameApi';
 import { subscribeWebSocket } from '@/lib/websocket';
 import type { Nation, City, General, Diplomacy } from '@/types';
@@ -35,8 +35,8 @@ const DIP_STATE_LABELS: Record<string, { label: string; color: string }> = {
 
 export default function NationFinancePage() {
     const currentWorld = useWorldStore((s) => s.currentWorld);
-    const myGeneral = useGeneralStore((s) => s.myGeneral);
-    const { fetchMyGeneral } = useGeneralStore();
+    const myOfficer = useOfficerStore((s) => s.myOfficer);
+    const { fetchMyOfficer } = useOfficerStore();
 
     const [loading, setLoading] = useState(true);
     const [nation, setNation] = useState<Nation | null>(null);
@@ -49,18 +49,18 @@ export default function NationFinancePage() {
     const [editBill, setEditBill] = useState(100);
     const [editSecretLimit, setEditSecretLimit] = useState(12);
 
-    const isLeader = myGeneral && nation && (myGeneral.officerLevel >= 5 || myGeneral.id === nation.chiefGeneralId);
+    const isLeader = myOfficer && nation && (myOfficer.officerLevel >= 5 || myOfficer.id === nation.chiefGeneralId);
 
     const loadData = useCallback(async () => {
-        if (!currentWorld || !myGeneral || !myGeneral.nationId) return;
+        if (!currentWorld || !myOfficer || !myOfficer.nationId) return;
         setLoading(true);
         try {
             const [nationRes, citiesRes, generalsRes, allNationsRes, dipRes] = await Promise.all([
-                nationApi.get(myGeneral.nationId),
-                cityApi.listByNation(myGeneral.nationId),
-                generalApi.listByNation(myGeneral.nationId),
+                nationApi.get(myOfficer.nationId),
+                cityApi.listByNation(myOfficer.nationId),
+                generalApi.listByNation(myOfficer.nationId),
                 nationApi.listByWorld(currentWorld.id),
-                diplomacyApi.listByNation(currentWorld.id, myGeneral.nationId),
+                diplomacyApi.listByNation(currentWorld.id, myOfficer.nationId),
             ]);
             setNation(nationRes.data);
             setCities(citiesRes.data);
@@ -75,23 +75,23 @@ export default function NationFinancePage() {
         } finally {
             setLoading(false);
         }
-    }, [currentWorld, myGeneral]);
+    }, [currentWorld, myOfficer]);
 
     useEffect(() => {
         if (!currentWorld) return;
-        fetchMyGeneral(currentWorld.id).catch(() => {});
-    }, [currentWorld, fetchMyGeneral]);
+        fetchMyOfficer(currentWorld.id).catch(() => {});
+    }, [currentWorld, fetchMyOfficer]);
 
     useEffect(() => {
         loadData();
     }, [loadData]);
 
     useEffect(() => {
-        if (!currentWorld || !myGeneral) return;
+        if (!currentWorld || !myOfficer) return;
         return subscribeWebSocket(`/topic/world/${currentWorld.id}/turn`, () => {
             loadData();
         });
-    }, [currentWorld, myGeneral, loadData]);
+    }, [currentWorld, myOfficer, loadData]);
 
     // Income calculations
     const officerCntByCity = useMemo(() => {
@@ -135,13 +135,13 @@ export default function NationFinancePage() {
     const dipMap = useMemo(() => {
         const map = new Map<number, Diplomacy>();
         for (const d of diplomacy) {
-            const otherId = d.srcNationId === myGeneral?.nationId ? d.destNationId : d.srcNationId;
+            const otherId = d.srcNationId === myOfficer?.nationId ? d.destNationId : d.srcNationId;
             map.set(otherId, d);
         }
         return map;
-    }, [diplomacy, myGeneral]);
+    }, [diplomacy, myOfficer]);
 
-    const otherNations = useMemo(() => allNations.filter((n) => n.id !== myGeneral?.nationId), [allNations, myGeneral]);
+    const otherNations = useMemo(() => allNations.filter((n) => n.id !== myOfficer?.nationId), [allNations, myOfficer]);
 
     // Policy save handlers
     const saveRate = async () => {
@@ -181,7 +181,7 @@ export default function NationFinancePage() {
     };
 
     if (!currentWorld) return <div className="p-4 text-muted-foreground">월드를 선택해주세요.</div>;
-    if (!myGeneral || !myGeneral.nationId)
+    if (!myOfficer || !myOfficer.nationId)
         return <div className="p-4 text-muted-foreground">국가에 소속되어있지 않습니다.</div>;
     if (loading)
         return (

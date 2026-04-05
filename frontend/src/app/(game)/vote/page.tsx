@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useMemo } from 'react';
 import { Vote, Plus, History, BarChart3, MessageSquare, Trash2, Send } from 'lucide-react';
 import Link from 'next/link';
 import { useWorldStore } from '@/stores/worldStore';
-import { useGeneralStore } from '@/stores/generalStore';
+import { useOfficerStore } from '@/stores/officerStore';
 import { PageHeader } from '@/components/game/page-header';
 import { LoadingState } from '@/components/game/loading-state';
 import { EmptyState } from '@/components/game/empty-state';
@@ -58,7 +58,7 @@ function formatDeadline(iso?: string): string {
 
 export default function VotePage() {
     const { currentWorld } = useWorldStore();
-    const { myGeneral } = useGeneralStore();
+    const { myOfficer } = useOfficerStore();
     const { generals, loadAll } = useGameStore();
     const [votes, setVotes] = useState<Message[]>([]);
     const [loading, setLoading] = useState(true);
@@ -94,9 +94,9 @@ export default function VotePage() {
     }, [currentWorld, load, loadAll]);
 
     const handleVote = async (voteId: number, optionIndex: number) => {
-        if (!myGeneral) return;
+        if (!myOfficer) return;
         try {
-            await voteApi.cast(voteId, myGeneral.id, optionIndex);
+            await voteApi.cast(voteId, myOfficer.id, optionIndex);
             await load();
         } catch {
             /* ignore */
@@ -113,7 +113,7 @@ export default function VotePage() {
     };
 
     const handleCreate = async () => {
-        if (!currentWorld || !myGeneral || !createTitle.trim()) return;
+        if (!currentWorld || !myOfficer || !createTitle.trim()) return;
         const opts = createOptions.map((o) => o.value.trim()).filter(Boolean);
         if (opts.length < 2) return;
         setCreating(true);
@@ -121,7 +121,7 @@ export default function VotePage() {
             await voteApi.create(currentWorld.id, {
                 title: createTitle.trim(),
                 options: opts,
-                creatorId: myGeneral.id,
+                creatorId: myOfficer.id,
                 ...(createDeadline ? { deadline: new Date(createDeadline).toISOString() } : {}),
                 ...(createReward.trim() ? { reward: createReward.trim() } : {}),
                 ...(createMaxSelections > 1 ? { maxSelections: createMaxSelections } : {}),
@@ -158,7 +158,7 @@ export default function VotePage() {
     const closedVotesSorted = [...closedVotes].sort((a, b) => b.id - a.id);
 
     // Chief or higher can create
-    const canCreate = myGeneral && myGeneral.officerLevel >= 5;
+    const canCreate = myOfficer && myOfficer.officerLevel >= 5;
 
     return (
         <div className="space-y-0 max-w-4xl mx-auto">
@@ -320,7 +320,7 @@ export default function VotePage() {
                                 <VoteCard
                                     key={vote.id}
                                     vote={vote}
-                                    myGeneralId={myGeneral?.id}
+                                    myOfficerId={myOfficer?.id}
                                     isChief={canCreate ?? false}
                                     onVote={handleVote}
                                     onClose={handleClose}
@@ -364,7 +364,7 @@ export default function VotePage() {
                                 <VoteCard
                                     key={vote.id}
                                     vote={vote}
-                                    myGeneralId={myGeneral?.id}
+                                    myOfficerId={myOfficer?.id}
                                     isChief={false}
                                     onVote={handleVote}
                                     onClose={handleClose}
@@ -382,14 +382,14 @@ export default function VotePage() {
 /* ── Vote card ── */
 function VoteCard({
     vote,
-    myGeneralId,
+    myOfficerId,
     isChief,
     onVote,
     onClose,
     generals,
 }: {
     vote: Message;
-    myGeneralId?: number;
+    myOfficerId?: number;
     isChief: boolean;
     onVote: (voteId: number, idx: number) => void;
     onClose: (voteId: number) => void;
@@ -407,7 +407,7 @@ function VoteCard({
         optionIdx,
     }));
 
-    const myVoteSelection = myGeneralId != null ? ballots[myGeneralId.toString()] : undefined;
+    const myVoteSelection = myOfficerId != null ? ballots[myOfficerId.toString()] : undefined;
     const hasVoted = myVoteSelection !== undefined;
 
     // count per option
@@ -448,10 +448,10 @@ function VoteCard({
     }, [showComments, loadComments]);
 
     const handleAddComment = async () => {
-        if (!commentText.trim() || myGeneralId == null) return;
+        if (!commentText.trim() || myOfficerId == null) return;
         setSendingComment(true);
         try {
-            await voteApi.createComment(vote.id, myGeneralId, commentText.trim());
+            await voteApi.createComment(vote.id, myOfficerId, commentText.trim());
             setCommentText('');
             await loadComments();
         } catch {
@@ -462,9 +462,9 @@ function VoteCard({
     };
 
     const handleDeleteComment = async (commentId: number) => {
-        if (myGeneralId == null) return;
+        if (myOfficerId == null) return;
         try {
-            await voteApi.deleteComment(vote.id, commentId, myGeneralId);
+            await voteApi.deleteComment(vote.id, commentId, myOfficerId);
             await loadComments();
         } catch {
             /* ignore */
@@ -555,7 +555,7 @@ function VoteCard({
                 </div>
 
                 {/* vote buttons */}
-                {open && !hasVoted && myGeneralId != null && (
+                {open && !hasVoted && myOfficerId != null && (
                     <div className="flex flex-wrap gap-2 pt-1">
                         {optionRows.map((row) => (
                             <Button
@@ -610,7 +610,7 @@ function VoteCard({
                                                         {c.content}
                                                     </p>
                                                 </div>
-                                                {myGeneralId != null && c.authorGeneralId === myGeneralId && (
+                                                {myOfficerId != null && c.authorGeneralId === myOfficerId && (
                                                     <button
                                                         type="button"
                                                         className="text-muted-foreground hover:text-destructive shrink-0"
@@ -626,7 +626,7 @@ function VoteCard({
                             )}
 
                             {/* Comment input */}
-                            {myGeneralId != null && (
+                            {myOfficerId != null && (
                                 <div className="flex gap-2 mt-2">
                                     <Textarea
                                         value={commentText}

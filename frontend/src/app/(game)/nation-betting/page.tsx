@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useWorldStore } from '@/stores/worldStore';
-import { useGeneralStore } from '@/stores/generalStore';
+import { useOfficerStore } from '@/stores/officerStore';
 import { Trophy, Coins } from 'lucide-react';
 import { PageHeader } from '@/components/game/page-header';
 import { LoadingState } from '@/components/game/loading-state';
@@ -23,8 +23,8 @@ function formatYearMonth(ym?: number): string {
 
 export default function NationBettingPage() {
     const currentWorld = useWorldStore((s) => s.currentWorld);
-    const myGeneral = useGeneralStore((s) => s.myGeneral);
-    const { fetchMyGeneral } = useGeneralStore();
+    const myOfficer = useOfficerStore((s) => s.myOfficer);
+    const { fetchMyOfficer } = useOfficerStore();
 
     const [loading, setLoading] = useState(true);
     const [betting, setBetting] = useState<BettingInfo | null>(null);
@@ -53,9 +53,9 @@ export default function NationBettingPage() {
 
     useEffect(() => {
         if (!currentWorld) return;
-        fetchMyGeneral(currentWorld.id).catch(() => {});
+        fetchMyOfficer(currentWorld.id).catch(() => {});
         load();
-    }, [currentWorld, fetchMyGeneral, load]);
+    }, [currentWorld, fetchMyOfficer, load]);
 
     const loadHistoryEvent = useCallback(
         async (yearMonth: string) => {
@@ -90,14 +90,14 @@ export default function NationBettingPage() {
     };
 
     const handleNationBet = async () => {
-        if (!currentWorld || !myGeneral) return;
+        if (!currentWorld || !myOfficer) return;
         if (pickedCandidates.size !== selectCnt) return;
         const targets = Array.from(pickedCandidates).sort((a, b) => a - b);
         try {
             const perAmount = Math.floor(betAmount / targets.length);
             if (perAmount <= 0) return;
             for (const targetId of targets) {
-                await bettingApi.placeBet(currentWorld.id, myGeneral.id, targetId, perAmount);
+                await bettingApi.placeBet(currentWorld.id, myOfficer.id, targetId, perAmount);
             }
             setPickedCandidates(new Set());
             await load();
@@ -125,14 +125,14 @@ export default function NationBettingPage() {
     // My bets
     const myBets = useMemo(() => {
         const map = new Map<number, number>();
-        if (!activeBetting?.bets || !myGeneral) return map;
+        if (!activeBetting?.bets || !myOfficer) return map;
         for (const b of activeBetting.bets) {
-            if (b.generalId === myGeneral.id) {
+            if (b.generalId === myOfficer.id) {
                 map.set(b.targetId, (map.get(b.targetId) ?? 0) + b.amount);
             }
         }
         return map;
-    }, [activeBetting, myGeneral]);
+    }, [activeBetting, myOfficer]);
 
     const winnerSet = useMemo(() => new Set(activeBetting?.winner ?? []), [activeBetting]);
 
@@ -263,7 +263,7 @@ export default function NationBettingPage() {
                             </div>
 
                             {/* Bet controls */}
-                            {canBet && myGeneral && (
+                            {canBet && myOfficer && (
                                 <div className="flex items-center gap-2 flex-wrap">
                                     <span className="text-sm text-muted-foreground">
                                         잔여 {activeBetting.reqInheritancePoint ? '포인트' : '금'}:{' '}

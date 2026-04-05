@@ -4,7 +4,7 @@ import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/8bit/button';
 import { Badge } from '@/components/ui/8bit/badge';
 import { useGameStore } from '@/stores/gameStore';
-import { useGeneralStore } from '@/stores/generalStore';
+import { useOfficerStore } from '@/stores/officerStore';
 import { cn } from '@/lib/utils';
 import { CITY_LEVEL_NAMES } from '@/lib/game-utils';
 import type { General, City, Nation } from '@/types';
@@ -54,26 +54,26 @@ interface DeploymentSelectorProps {
 
 export function DeploymentSelector({ onSubmit }: DeploymentSelectorProps) {
     const { cities, nations, generals } = useGameStore();
-    const { myGeneral } = useGeneralStore();
+    const { myOfficer } = useOfficerStore();
     const [selectedGeneralId, setSelectedGeneralId] = useState<number | null>(null);
     const [selectedCityId, setSelectedCityId] = useState<number | null>(null);
 
     // Only own-nation generals
     const myNationGenerals = useMemo(() => {
-        if (!myGeneral) return [];
-        return generals.filter((g) => g.nationId === myGeneral.nationId);
-    }, [generals, myGeneral]);
+        if (!myOfficer) return [];
+        return generals.filter((g) => g.nationId === myOfficer.nationId);
+    }, [generals, myOfficer]);
 
     // Only own-nation cities
     const myCities = useMemo(() => {
-        if (!myGeneral) return [];
-        return cities.filter((c) => c.nationId === myGeneral.nationId);
-    }, [cities, myGeneral]);
+        if (!myOfficer) return [];
+        return cities.filter((c) => c.nationId === myOfficer.nationId);
+    }, [cities, myOfficer]);
 
     // Group cities by distance from selected general's current city
     const groupedCities = useMemo(() => {
         const selectedGen = myNationGenerals.find((g) => g.id === selectedGeneralId);
-        const baseCityId = selectedGen?.cityId ?? myGeneral?.cityId ?? 0;
+        const baseCityId = selectedGen?.cityId ?? myOfficer?.cityId ?? 0;
 
         const groups: Record<DistanceGroup, (City & { dist: number })[]> = {
             근접: [],
@@ -93,7 +93,7 @@ export function DeploymentSelector({ onSubmit }: DeploymentSelectorProps) {
         }
 
         return groups;
-    }, [myCities, selectedGeneralId, myNationGenerals, myGeneral]);
+    }, [myCities, selectedGeneralId, myNationGenerals, myOfficer]);
 
     const getNation = (nationId: number): Nation | undefined => nations.find((n) => n.id === nationId);
 

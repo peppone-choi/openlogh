@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useState, useMemo, useCallback } from 'react';
 import { useWorldStore } from '@/stores/worldStore';
-import { useGeneralStore } from '@/stores/generalStore';
+import { useOfficerStore } from '@/stores/officerStore';
 import { cityApi, generalApi, mapApi, nationApi } from '@/lib/gameApi';
 import { subscribeWebSocket } from '@/lib/websocket';
 import type { City, General, Nation } from '@/types';
@@ -104,8 +104,8 @@ function sortCities(cities: City[], sortKey: SortKey): City[] {
 function CityPageContent() {
     const searchParams = useSearchParams();
     const currentWorld = useWorldStore((s) => s.currentWorld);
-    const myGeneral = useGeneralStore((s) => s.myGeneral);
-    const fetchMyGeneral = useGeneralStore((s) => s.fetchMyGeneral);
+    const myOfficer = useOfficerStore((s) => s.myOfficer);
+    const fetchMyOfficer = useOfficerStore((s) => s.fetchMyOfficer);
 
     const [nation, setNation] = useState<Nation | null>(null);
     const [nations, setNations] = useState<Nation[]>([]);
@@ -127,10 +127,10 @@ function CityPageContent() {
 
     useEffect(() => {
         if (!currentWorld) return;
-        if (!myGeneral) {
-            fetchMyGeneral(currentWorld.id).catch(() => setError('장수 정보를 불러올 수 없습니다.'));
+        if (!myOfficer) {
+            fetchMyOfficer(currentWorld.id).catch(() => setError('장수 정보를 불러올 수 없습니다.'));
         }
-    }, [currentWorld, myGeneral, fetchMyGeneral]);
+    }, [currentWorld, myOfficer, fetchMyOfficer]);
 
     useEffect(() => {
         if (requestedCityId == null) return;
@@ -140,10 +140,10 @@ function CityPageContent() {
 
     useEffect(() => {
         if (requestedCityId != null) return;
-        if (!myGeneral?.cityId || myGeneral.cityId <= 0) return;
-        setFilterCityId(myGeneral.cityId);
-        setExpandedCityId(myGeneral.cityId);
-    }, [requestedCityId, myGeneral?.cityId]);
+        if (!myOfficer?.cityId || myOfficer.cityId <= 0) return;
+        setFilterCityId(myOfficer.cityId);
+        setExpandedCityId(myOfficer.cityId);
+    }, [requestedCityId, myOfficer?.cityId]);
 
     const loadCityData = useCallback(async () => {
         if (!currentWorld) return;
@@ -151,7 +151,7 @@ function CityPageContent() {
         const mapCode = (currentWorld.config as Record<string, string>)?.mapCode ?? 'che';
 
         try {
-            const hasGeneral = !!myGeneral;
+            const hasGeneral = !!myOfficer;
             const [nationsRes, citiesRes, generalsRes, mapRes, myNationRes] = await Promise.all([
                 nationApi.listByWorld(currentWorld.id),
                 hasGeneral
@@ -161,8 +161,8 @@ function CityPageContent() {
                       : Promise.resolve({ data: [] as City[] }),
                 generalApi.listByWorld(currentWorld.id),
                 mapApi.get(mapCode),
-                hasGeneral && myGeneral.nationId > 0
-                    ? nationApi.get(myGeneral.nationId)
+                hasGeneral && myOfficer.nationId > 0
+                    ? nationApi.get(myOfficer.nationId)
                     : Promise.resolve({ data: null }),
             ]);
 
@@ -191,18 +191,18 @@ function CityPageContent() {
         } finally {
             setLoading(false);
         }
-    }, [currentWorld, myGeneral, requestedCityId]);
+    }, [currentWorld, myOfficer, requestedCityId]);
 
     useEffect(() => {
         loadCityData();
     }, [loadCityData]);
 
     useEffect(() => {
-        if (!currentWorld || !myGeneral) return;
+        if (!currentWorld || !myOfficer) return;
         return subscribeWebSocket(`/topic/world/${currentWorld.id}/turn`, () => {
             loadCityData();
         });
-    }, [currentWorld, myGeneral, loadCityData]);
+    }, [currentWorld, myOfficer, loadCityData]);
 
     const nationMap = useMemo(() => new Map(nations.map((n) => [n.id, n])), [nations]);
 
@@ -227,13 +227,13 @@ function CityPageContent() {
 
     const canSeeMilitary = useCallback(
         (city: City) => {
-            if (!myGeneral) return false;
-            if (city.id === myGeneral.cityId) return true;
-            if (city.nationId === 0 || city.nationId === myGeneral.nationId) return true;
-            if (myGeneral.permission === 'spy') return true;
+            if (!myOfficer) return false;
+            if (city.id === myOfficer.cityId) return true;
+            if (city.nationId === 0 || city.nationId === myOfficer.nationId) return true;
+            if (myOfficer.permission === 'spy') return true;
             return spyVisibleCityIds.has(city.id);
         },
-        [myGeneral, spyVisibleCityIds]
+        [myOfficer, spyVisibleCityIds]
     );
 
     // Officers grouped by officerCity (level 2-4: 종사, 군사, 태수)
@@ -314,9 +314,9 @@ function CityPageContent() {
             {sortedCities.map((city, idx) => {
                 const isCapital = nation?.capitalCityId === city.id;
                 const owner = nationMap.get(city.nationId);
-                const isMyNationCity = city.nationId === myGeneral?.nationId;
+                const isMyNationCity = city.nationId === myOfficer?.nationId;
                 const isVacant = city.nationId === 0;
-                const isMyCity = city.id === myGeneral?.cityId;
+                const isMyCity = city.id === myOfficer?.cityId;
                 const isVisible = isMyCity || (canSeeMilitary(city) && !isVacant);
                 const nationColor = owner?.color ?? '#888';
                 const textColor = isBrightColor(nationColor) ? 'black' : 'white';
@@ -581,7 +581,7 @@ function CityPageContent() {
                                 {isVisible &&
                                     isMyNationCity &&
                                     (() => {
-                                        const myNationId = myGeneral?.nationId ?? 0;
+                                        const myNationId = myOfficer?.nationId ?? 0;
                                         const enemyGens = cityGens.filter(
                                             (g) => g.nationId !== 0 && g.nationId !== myNationId
                                         );
@@ -644,7 +644,7 @@ function CityPageContent() {
                                 <GarrisonTable
                                     generals={cityGens}
                                     nationLevel={nation?.level}
-                                    myNationId={myGeneral?.nationId}
+                                    myNationId={myOfficer?.nationId}
                                 />
                             )}
                         </div>

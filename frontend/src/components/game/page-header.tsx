@@ -4,7 +4,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import type { LucideIcon } from 'lucide-react';
 import { Button } from '@/components/ui/8bit/button';
 import { useWorldStore } from '@/stores/worldStore';
-import { useGeneralStore } from '@/stores/generalStore';
+import { useOfficerStore } from '@/stores/officerStore';
 
 interface PageHeaderProps {
     icon?: LucideIcon;
@@ -16,7 +16,7 @@ export function PageHeader({ title, description }: PageHeaderProps) {
     const router = useRouter();
     const pathname = usePathname();
     const { currentWorld, fetchWorld } = useWorldStore();
-    const { fetchMyGeneral } = useGeneralStore();
+    const { fetchMyOfficer } = useOfficerStore();
 
     const isMainPage = pathname === '/';
 
@@ -53,7 +53,7 @@ export function PageHeader({ title, description }: PageHeaderProps) {
                     className="h-full border-0 border-r border-gray-600"
                     onClick={() => {
                         if (currentWorld) {
-                            fetchMyGeneral(currentWorld.id);
+                            fetchMyOfficer(currentWorld.id);
                             fetchWorld(currentWorld.id);
                         }
                         router.refresh();

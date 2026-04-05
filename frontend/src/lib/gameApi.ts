@@ -891,3 +891,30 @@ export const adminEventApi = {
             ...(worldId != null ? { worldId } : {}),
         }),
 };
+
+// ──────────────────────────────────────────────────────────────────────
+// LOGH Domain Aliases
+// New canonical API object names for the LOGH universe.
+// These alias the original API objects so all existing code continues to compile.
+// ──────────────────────────────────────────────────────────────────────
+
+/** @see factionApi (was nationApi) */
+export const factionApi = nationApi;
+
+/** @see planetApi (was cityApi) */
+export const planetApi = cityApi;
+
+/** @see officerApi (was generalApi) */
+export const officerApi = generalApi;
+
+/** @see fleetApi (was troopApi) */
+export const fleetApi = troopApi;
+
+/** @see factionManagementApi (was nationManagementApi) */
+export const factionManagementApi = nationManagementApi;
+
+/** @see factionPolicyApi (was nationPolicyApi) */
+export const factionPolicyApi = nationPolicyApi;
+
+/** @see officerLogApi (was generalLogApi) */
+export const officerLogApi = generalLogApi;
