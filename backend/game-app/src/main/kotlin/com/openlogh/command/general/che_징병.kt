@@ -98,8 +98,7 @@ open class che_징병(general: Officer, env: CommandEnv, arg: Map<String, Any>? 
         reqRice = DomesticUtils.applyModifier(services, general, nation, "징병", "rice", reqRice)
 
         return CommandCost(
-            gold = reqGold.roundToInt(),
-            rice = reqRice.roundToInt()
+            funds = reqGold.roundToInt(), supplies = reqRice.roundToInt()
         )
     }
 

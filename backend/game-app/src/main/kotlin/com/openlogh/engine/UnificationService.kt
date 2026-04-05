@@ -215,7 +215,7 @@ class UnificationService(
                 val nation = nations[general.factionId]
                 val aux = mutableMapOf<String, Any>(
                     "name" to general.name,
-                    "nationName" to (nation?.name ?: "재야"),
+                    "factionName" to (nation?.name ?: "재야"),
                     "bgColor" to (nation?.color ?: "#000000"),
                     "fgColor" to (nation?.color ?: "#000000"),
                     "picture" to general.picture,
@@ -223,7 +223,7 @@ class UnificationService(
                     "winnerNationId" to winnerNationId,
                 )
 
-                val existing = hallOfFameRepository.findByServerIdAndTypeAndGeneralNo(serverId, type, general.id)
+                val existing = hallOfFameRepository.findByServerIdAndTypeAndOfficerNo(serverId, type, general.id)
                 if (existing == null) {
                     hallOfFameRepository.save(
                         HallOfFame(
@@ -333,9 +333,9 @@ class UnificationService(
         }
 
         val oldNations = oldNationRepository.findByServerId(serverId)
-        val nationNameList = oldNations.mapNotNull { it.data["name"] as? String }.toMutableList()
-        if (!nationNameList.contains(winnerNationName)) {
-            nationNameList.add(winnerNationName)
+        val factionNameList = oldNations.mapNotNull { it.data["name"] as? String }.toMutableList()
+        if (!factionNameList.contains(winnerNationName)) {
+            factionNameList.add(winnerNationName)
         }
 
         val nationTypeCounts = mutableMapOf<String, Int>()
@@ -344,17 +344,17 @@ class UnificationService(
             nationTypeCounts[type] = (nationTypeCounts[type] ?: 0) + 1
         }
         nationTypeCounts[winnerNation.factionType] = (nationTypeCounts[winnerNation.factionType] ?: 0) + 1
-        val nationHist = nationTypeCounts.entries.joinToString(", ") { "${it.key}(${it.value})" }
+        val factionHist = nationTypeCounts.entries.joinToString(", ") { "${it.key}(${it.value})" }
 
         val serverCount = gameHistoryRepository.count() + 1
 
         sovereignRepository.save(
             Sovereign(
-                sessionId = serverId,
+                serverId = serverId,
                 phase = "${serverName}${serverCount}기",
-                nationCount = "${nations.size} / ${nations.size}",
-                nationName = nationNameList.joinToString(", "),
-                nationHist = nationHist,
+                factionCount = "${nations.size} / ${nations.size}",
+                factionName = factionNameList.joinToString(", "),
+                factionHist = factionHist,
                 genCount = "${generals.size} / ${generals.size}",
                 personalHist = "",
                 specialHist = "",
@@ -365,7 +365,7 @@ class UnificationService(
                 month = world.currentMonth,
                 power = winnerNation.militaryPower,
                 gennum = winnerGenerals.size,
-                citynum = ownedCities.size,
+                planetCount = ownedCities.size,
                 pop = popText,
                 poprate = popRate,
                 gold = winnerNation.funds, rice = winnerNation.supplies,

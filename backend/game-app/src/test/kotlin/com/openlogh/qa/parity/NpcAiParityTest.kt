@@ -1,15 +1,15 @@
 package com.openlogh.qa.parity
 
 import com.openlogh.engine.ai.DiplomacyState
-import com.openlogh.engine.ai.GeneralAI
+import com.openlogh.engine.ai.OfficerAI
 import com.openlogh.engine.ai.GeneralType
 import com.openlogh.engine.ai.NpcGeneralPolicy
 import com.openlogh.engine.ai.NpcNationPolicy
-import com.openlogh.entity.City
+import com.openlogh.entity.Planet
 import com.openlogh.entity.Diplomacy
-import com.openlogh.entity.General
-import com.openlogh.entity.Nation
-import com.openlogh.entity.WorldState
+import com.openlogh.entity.Officer
+import com.openlogh.entity.Faction
+import com.openlogh.entity.SessionState
 import com.openlogh.engine.turn.cqrs.persist.JpaWorldPortFactory
 import com.openlogh.repository.*
 import com.openlogh.service.MapService
@@ -26,10 +26,10 @@ import kotlin.random.Random
  * NPC AI decision parity tests verifying Kotlin matches legacy PHP.
  *
  * Legacy references:
- * - hwe/sammo/GeneralAI.php: chooseGeneralTurn()
- * - hwe/sammo/GeneralAI.php: calcDiplomacyState()
- * - hwe/sammo/GeneralAI.php: classifyGeneral()
- * - hwe/sammo/GeneralAI.php: categorizeNationGeneral()
+ * - hwe/sammo/OfficerAI.php: chooseGeneralTurn()
+ * - hwe/sammo/OfficerAI.php: calcDiplomacyState()
+ * - hwe/sammo/OfficerAI.php: classifyGeneral()
+ * - hwe/sammo/OfficerAI.php: categorizeNationGeneral()
  * - hwe/sammo/NpcPolicy.php: NpcGeneralPolicy, NpcNationPolicy
  * - hwe/sammo/AutorunGeneralPolicy.php: $default_priority
  * - hwe/sammo/AutorunNationPolicy.php: $defaultPriority
@@ -37,35 +37,35 @@ import kotlin.random.Random
 @DisplayName("NPC AI Legacy Parity")
 class NpcAiParityTest {
 
-    private lateinit var ai: GeneralAI
-    private lateinit var generalRepository: GeneralRepository
-    private lateinit var cityRepository: CityRepository
-    private lateinit var nationRepository: NationRepository
+    private lateinit var ai: OfficerAI
+    private lateinit var officerRepository: OfficerRepository
+    private lateinit var planetRepository: PlanetRepository
+    private lateinit var factionRepository: FactionRepository
     private lateinit var diplomacyRepository: DiplomacyRepository
     private lateinit var mapService: MapService
 
     @BeforeEach
     fun setUp() {
-        generalRepository = mock(GeneralRepository::class.java)
-        cityRepository = mock(CityRepository::class.java)
-        nationRepository = mock(NationRepository::class.java)
+        officerRepository = mock(OfficerRepository::class.java)
+        planetRepository = mock(PlanetRepository::class.java)
+        factionRepository = mock(FactionRepository::class.java)
         diplomacyRepository = mock(DiplomacyRepository::class.java)
         mapService = mock(MapService::class.java)
-        ai = GeneralAI(JpaWorldPortFactory(
-            generalRepository = generalRepository,
-            cityRepository = cityRepository,
-            nationRepository = nationRepository,
+        ai = OfficerAI(JpaWorldPortFactory(
+            officerRepository = officerRepository,
+            planetRepository = planetRepository,
+            factionRepository = factionRepository,
             diplomacyRepository = diplomacyRepository,
         ), mapService)
     }
 
     // ──────────────────────────────────────────────────
     //  classifyGeneral parity
-    //  Legacy: GeneralAI.php classifyGeneral()
+    //  Legacy: OfficerAI.php classifyGeneral()
     // ──────────────────────────────────────────────────
 
     @Nested
-    @DisplayName("classifyGeneral - legacy GeneralAI.php:290")
+    @DisplayName("classifyGeneral - legacy OfficerAI.php:290")
     inner class ClassifyGeneralParity {
 
         @Test
@@ -125,7 +125,7 @@ class NpcAiParityTest {
 
     // ──────────────────────────────────────────────────
     //  calcDiplomacyState parity (PHP 5-state term-based model)
-    //  Legacy: GeneralAI.php:206-281
+    //  Legacy: OfficerAI.php:206-281
     // ──────────────────────────────────────────────────
 
     @Nested
@@ -147,7 +147,7 @@ class NpcAiParityTest {
             // startyear=180, earlyGameLimit = 180*12 + 24 + 5 = 2189
             // yearMonth = 181*12 + 3 = 2175 < 2189 → early game
             val world = createWorld(year = 181, month = 3, startYear = 180)
-            val diplomacy = createDiplomacy(srcNationId = 1, destNationId = 2, stateCode = "선전포고", term = 12)
+            val diplomacy = createDiplomacy(srcFactionId = 1, destFactionId = 2, stateCode = "선전포고", term = 12)
             val result = ai.calcDiplomacyState(world, nation, listOf(diplomacy))
             assertEquals(DiplomacyState.DECLARED, result.dipState)
             assertEquals(1, result.dipState.code)
@@ -167,7 +167,7 @@ class NpcAiParityTest {
         fun `calcDiplomacyState with minTerm greater than 8 returns DECLARED (code 1)`() {
             val nation = createNation(id = 1)
             val world = createWorld(year = 200, month = 3, startYear = 180)
-            val diplomacy = createDiplomacy(srcNationId = 1, destNationId = 2, stateCode = "선전포고", term = 10)
+            val diplomacy = createDiplomacy(srcFactionId = 1, destFactionId = 2, stateCode = "선전포고", term = 10)
             val result = ai.calcDiplomacyState(world, nation, listOf(diplomacy))
             assertEquals(DiplomacyState.DECLARED, result.dipState)
             assertEquals(1, result.dipState.code)
@@ -177,7 +177,7 @@ class NpcAiParityTest {
         fun `calcDiplomacyState with minTerm 7 returns RECRUITING (code 2)`() {
             val nation = createNation(id = 1)
             val world = createWorld(year = 200, month = 3, startYear = 180)
-            val diplomacy = createDiplomacy(srcNationId = 1, destNationId = 2, stateCode = "선전포고", term = 7)
+            val diplomacy = createDiplomacy(srcFactionId = 1, destFactionId = 2, stateCode = "선전포고", term = 7)
             val result = ai.calcDiplomacyState(world, nation, listOf(diplomacy))
             assertEquals(DiplomacyState.RECRUITING, result.dipState)
             assertEquals(2, result.dipState.code)
@@ -187,7 +187,7 @@ class NpcAiParityTest {
         fun `calcDiplomacyState with minTerm 4 returns IMMINENT (code 3)`() {
             val nation = createNation(id = 1)
             val world = createWorld(year = 200, month = 3, startYear = 180)
-            val diplomacy = createDiplomacy(srcNationId = 1, destNationId = 2, stateCode = "선전포고", term = 4)
+            val diplomacy = createDiplomacy(srcFactionId = 1, destFactionId = 2, stateCode = "선전포고", term = 4)
             val result = ai.calcDiplomacyState(world, nation, listOf(diplomacy))
             assertEquals(DiplomacyState.IMMINENT, result.dipState)
             assertEquals(3, result.dipState.code)
@@ -197,7 +197,7 @@ class NpcAiParityTest {
         fun `calcDiplomacyState attackable with active war returns AT_WAR (code 4)`() {
             val nation = createNation(id = 1)
             val world = createWorld(year = 200, month = 3, startYear = 180)
-            val diplomacy = createDiplomacy(srcNationId = 1, destNationId = 2, stateCode = "전쟁")
+            val diplomacy = createDiplomacy(srcFactionId = 1, destFactionId = 2, stateCode = "전쟁")
             val frontCity = createCity(id = 1, nationId = 1, frontState = 2, supplyState = 1)
             val result = ai.calcDiplomacyState(world, nation, listOf(diplomacy), listOf(frontCity))
             assertEquals(DiplomacyState.AT_WAR, result.dipState)
@@ -219,7 +219,7 @@ class NpcAiParityTest {
                 meta["last_attackable"] = 200 * 12 + 3 - 3
             }
             val world = createWorld(year = 200, month = 3, startYear = 180)
-            val diplomacy = createDiplomacy(srcNationId = 1, destNationId = 2, stateCode = "전쟁")
+            val diplomacy = createDiplomacy(srcFactionId = 1, destFactionId = 2, stateCode = "전쟁")
             // No front cities → not attackable
             val result = ai.calcDiplomacyState(world, nation, listOf(diplomacy), emptyList())
             assertEquals(DiplomacyState.AT_WAR, result.dipState, "Should be AT_WAR due to last_attackable within 5 months")
@@ -245,18 +245,18 @@ class NpcAiParityTest {
         @Test
         fun `동맹 only returns PEACE`() {
             val nation = createNation(id = 1)
-            val diplomacy = Diplomacy(srcNationId = 1, destNationId = 2, stateCode = "동맹")
+            val diplomacy = Diplomacy(srcFactionId = 1, destFactionId = 2, stateCode = "동맹")
             assertEquals(DiplomacyState.PEACE, ai.calcDiplomacyState(nation, listOf(diplomacy)))
         }
     }
 
     // ──────────────────────────────────────────────────
     //  categorizeNationGeneral parity
-    //  Legacy: GeneralAI.php:3516-3613
+    //  Legacy: OfficerAI.php:3516-3613
     // ──────────────────────────────────────────────────
 
     @Nested
-    @DisplayName("categorizeNationGeneral - legacy GeneralAI.php:3516")
+    @DisplayName("categorizeNationGeneral - legacy OfficerAI.php:3516")
     inner class CategorizeNationGeneralParity {
 
         @Test
@@ -489,7 +489,7 @@ class NpcAiParityTest {
 
     // ──────────────────────────────────────────────────
     //  War readiness checks parity
-    //  Legacy: GeneralAI.php decideWarAction()
+    //  Legacy: OfficerAI.php decideWarAction()
     // ──────────────────────────────────────────────────
 
     @Nested
@@ -500,7 +500,7 @@ class NpcAiParityTest {
         fun `low crew below minWarCrew triggers recruitment`() {
             val gen = createGeneral(crew = 100, leadership = 80, train = 80, atmos = 80)
             val policy = NpcGeneralPolicy(minWarCrew = 500)
-            assertTrue(gen.crew < policy.minWarCrew,
+            assertTrue(gen.ships < policy.minWarCrew,
                 "crew(100) < minWarCrew(500) -> should recruit")
         }
 
@@ -508,7 +508,7 @@ class NpcAiParityTest {
         fun `sufficient crew passes recruitment check`() {
             val gen = createGeneral(crew = 5000, leadership = 80)
             val policy = NpcGeneralPolicy(minWarCrew = 500)
-            assertFalse(gen.crew < policy.minWarCrew,
+            assertFalse(gen.ships < policy.minWarCrew,
                 "crew(5000) >= minWarCrew(500) -> no recruitment needed")
         }
 
@@ -516,30 +516,30 @@ class NpcAiParityTest {
         fun `low train triggers training`() {
             val gen = createGeneral(train = 30)
             val policy = NpcGeneralPolicy(properWarTrainAtmos = 80)
-            assertTrue(gen.train < policy.properWarTrainAtmos)
+            assertTrue(gen.training < policy.properWarTrainAtmos)
         }
 
         @Test
         fun `low atmos triggers morale boost`() {
             val gen = createGeneral(atmos = 30)
             val policy = NpcGeneralPolicy(properWarTrainAtmos = 80)
-            assertTrue(gen.atmos < policy.properWarTrainAtmos)
+            assertTrue(gen.morale < policy.properWarTrainAtmos)
         }
 
         @Test
         fun `all stats sufficient means ready for attack`() {
             val gen = createGeneral(crew = 5000, leadership = 80, train = 80, atmos = 80)
             val policy = NpcGeneralPolicy(minWarCrew = 500, properWarTrainAtmos = 80)
-            val crewOk = gen.crew >= policy.minWarCrew
-            val trainOk = gen.train >= policy.properWarTrainAtmos
-            val atmosOk = gen.atmos >= policy.properWarTrainAtmos
+            val crewOk = gen.ships >= policy.minWarCrew
+            val trainOk = gen.training >= policy.properWarTrainAtmos
+            val atmosOk = gen.morale >= policy.properWarTrainAtmos
             assertTrue(crewOk && trainOk && atmosOk, "General should be ready for attack")
         }
     }
 
     // ──────────────────────────────────────────────────
     //  Injury-based decisions parity
-    //  Legacy: GeneralAI.php:128
+    //  Legacy: OfficerAI.php:128
     // ──────────────────────────────────────────────────
 
     @Nested
@@ -621,14 +621,14 @@ class NpcAiParityTest {
         fun `npcState 2 or 3 wanderers can attempt 거병`() {
             val gen2 = createGeneral(npcState = 2, nationId = 0)
             val gen3 = createGeneral(npcState = 3, nationId = 0)
-            assertTrue(gen2.npcState.toInt() in listOf(2, 3) && gen2.nationId == 0L)
-            assertTrue(gen3.npcState.toInt() in listOf(2, 3) && gen3.nationId == 0L)
+            assertTrue(gen2.npcState.toInt() in listOf(2, 3) && gen2.factionId == 0L)
+            assertTrue(gen3.npcState.toInt() in listOf(2, 3) && gen3.factionId == 0L)
         }
 
         @Test
         fun `npcState 2 with nation does NOT trigger 거병`() {
             val gen = createGeneral(npcState = 2, nationId = 1)
-            assertFalse(gen.nationId == 0L, "Has nation -> no 거병")
+            assertFalse(gen.factionId == 0L, "Has nation -> no 거병")
         }
     }
 
@@ -652,7 +652,7 @@ class NpcAiParityTest {
 
     // ──────────────────────────────────────────────────
     //  doDeclaration (do선전포고) parity
-    //  Legacy: GeneralAI.php:1848-1974
+    //  Legacy: OfficerAI.php:1848-1974
     // ──────────────────────────────────────────────────
 
     @Nested
@@ -687,7 +687,7 @@ class NpcAiParityTest {
 
     // ──────────────────────────────────────────────────
     //  doNonAggressionProposal (do불가침제의) parity
-    //  Legacy: GeneralAI.php:1765-1845
+    //  Legacy: OfficerAI.php:1765-1845
     // ──────────────────────────────────────────────────
 
     @Nested
@@ -735,7 +735,7 @@ class NpcAiParityTest {
 
     // ──────────────────────────────────────────────────
     //  chooseGeneralTurn entry flow parity
-    //  Legacy: GeneralAI.php:3709-3848
+    //  Legacy: OfficerAI.php:3709-3848
     // ──────────────────────────────────────────────────
 
     @Nested
@@ -763,17 +763,17 @@ class NpcAiParityTest {
         }
 
         @Test
-        fun `chooseGeneralTurn RNG seed context uses GeneralAI not GeneralTurn`() {
-            // Per PHP Pitfall 5: All AI RNG uses "GeneralAI" context
+        fun `chooseGeneralTurn RNG seed context uses OfficerAI not GeneralTurn`() {
+            // Per PHP Pitfall 5: All AI RNG uses "OfficerAI" context
             // This is a structural test - verified by reading the source code
-            // The RNG context "GeneralAI" is now used in both chooseGeneralTurn and chooseNationTurn
+            // The RNG context "OfficerAI" is now used in both chooseGeneralTurn and chooseNationTurn
             assertTrue(true, "RNG seed context verified in source code")
         }
     }
 
     // ──────────────────────────────────────────────────
     //  chooseNationTurn flow parity
-    //  Legacy: GeneralAI.php:3616-3683
+    //  Legacy: OfficerAI.php:3616-3683
     // ──────────────────────────────────────────────────
 
     @Nested
@@ -811,32 +811,32 @@ class NpcAiParityTest {
         injury: Short = 0,
         npcState: Short = 2,
         officerLevel: Short = 5,
-    ): General = General(
+    ): Officer = Officer(
         id = id,
-        worldId = 1,
+        sessionId = 1,
         name = "테스트장수",
-        nationId = nationId,
-        cityId = cityId,
+        factionId = nationId,
+        planetId = cityId,
         leadership = leadership,
-        strength = strength,
-        intel = intel,
-        crew = crew,
-        train = train,
-        atmos = atmos,
+        command = strength,
+        intelligence = intel,
+        ships = crew,
+        training = train,
+        morale = atmos,
         injury = injury,
         npcState = npcState,
         officerLevel = officerLevel,
-        gold = 5000,
-        rice = 5000,
+        funds = 5000,
+        supplies = 5000,
         turnTime = OffsetDateTime.now(),
     )
 
     private fun createNation(
         id: Long = 1,
         warState: Short = 0,
-    ): Nation = Nation(
+    ): Faction = Faction(
         id = id,
-        worldId = 1,
+        sessionId = 1,
         name = "테스트국",
         warState = warState,
     )
@@ -845,7 +845,7 @@ class NpcAiParityTest {
         year: Short = 200,
         month: Short = 3,
         startYear: Int = 180,
-    ): WorldState = WorldState(
+    ): SessionState = SessionState(
         id = 1,
         scenarioCode = "test",
         currentYear = year,
@@ -860,11 +860,11 @@ class NpcAiParityTest {
         nationId: Long = 1,
         frontState: Short = 0,
         supplyState: Short = 1,
-    ): City = City(
+    ): Planet = Planet(
         id = id,
-        worldId = 1,
+        sessionId = 1,
         name = "테스트도시",
-        nationId = nationId,
+        factionId = nationId,
         frontState = frontState,
     ).apply {
         this.supplyState = supplyState
@@ -876,9 +876,9 @@ class NpcAiParityTest {
         stateCode: String = "선전포고",
         term: Short = 0,
     ): Diplomacy = Diplomacy(
-        worldId = 1,
-        srcNationId = srcNationId,
-        destNationId = destNationId,
+        sessionId = 1,
+        srcFactionId = srcNationId,
+        destFactionId = destNationId,
         stateCode = stateCode,
         term = term,
     )

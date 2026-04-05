@@ -5,12 +5,12 @@ import com.openlogh.command.constraint.ConstraintResult
 import com.openlogh.command.general.*
 import com.openlogh.engine.DiplomacyService
 import com.openlogh.engine.LiteHashDRBG
-import com.openlogh.entity.City
-import com.openlogh.entity.General
-import com.openlogh.entity.Nation
-import com.openlogh.repository.CityRepository
-import com.openlogh.repository.GeneralRepository
-import com.openlogh.repository.NationRepository
+import com.openlogh.entity.Planet
+import com.openlogh.entity.Officer
+import com.openlogh.entity.Faction
+import com.openlogh.repository.PlanetRepository
+import com.openlogh.repository.OfficerRepository
+import com.openlogh.repository.FactionRepository
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
@@ -41,26 +41,26 @@ class GeneralMilitaryCommandTest {
         experience: Int = 0,
         dedication: Int = 0,
         injury: Short = 0,
-    ): General {
-        return General(
+    ): Officer {
+        return Officer(
             id = 1,
-            worldId = 1,
+            sessionId = 1,
             name = "테스트장수",
-            nationId = nationId,
-            cityId = cityId,
-            gold = gold,
-            rice = rice,
-            crew = crew,
-            crewType = crewType,
-            train = train,
-            atmos = atmos,
+            factionId = nationId,
+            planetId = cityId,
+            funds = gold,
+            supplies = rice,
+            ships = crew,
+            shipClass = crewType,
+            training = train,
+            morale = atmos,
             leadership = leadership,
-            strength = strength,
-            intel = intel,
+            command = strength,
+            intelligence = intel,
             politics = politics,
-            charm = charm,
+            administration = charm,
             officerLevel = officerLevel,
-            troopId = troopId,
+            fleetId = troopId,
             experience = experience,
             dedication = dedication,
             injury = injury,
@@ -85,25 +85,25 @@ class GeneralMilitaryCommandTest {
         trust: Float = 80f,
         supplyState: Short = 1,
         frontState: Short = 0,
-    ): City {
-        return City(
+    ): Planet {
+        return Planet(
             id = 1,
-            worldId = 1,
+            sessionId = 1,
             name = "테스트도시",
-            nationId = nationId,
-            agri = agri,
-            agriMax = agriMax,
-            comm = comm,
-            commMax = commMax,
-            secu = secu,
-            secuMax = secuMax,
-            def = def,
-            defMax = defMax,
-            wall = wall,
-            wallMax = wallMax,
-            pop = pop,
-            popMax = popMax,
-            trust = trust,
+            factionId = nationId,
+            production = agri,
+            productionMax = agriMax,
+            commerce = comm,
+            commerceMax = commMax,
+            security = secu,
+            securityMax = secuMax,
+            orbitalDefense = def,
+            orbitalDefenseMax = defMax,
+            fortress = wall,
+            fortressMax = wallMax,
+            population = pop,
+            populationMax = popMax,
+            approval = trust,
             supplyState = supplyState,
             frontState = frontState,
         )
@@ -114,15 +114,15 @@ class GeneralMilitaryCommandTest {
         level: Short = 1,
         gold: Int = 10000,
         rice: Int = 10000,
-    ): Nation {
-        return Nation(
+    ): Faction {
+        return Faction(
             id = id,
-            worldId = 1,
+            sessionId = 1,
             name = "테스트국가",
             color = "#FF0000",
-            gold = gold,
-            rice = rice,
-            level = level,
+            funds = gold,
+            supplies = rice,
+            factionRank = level,
         )
     }
 
@@ -135,7 +135,7 @@ class GeneralMilitaryCommandTest {
         year = year,
         month = month,
         startYear = startYear,
-        worldId = 1,
+        sessionId = 1,
         realtimeMode = false,
         develCost = develCost,
     )
@@ -156,7 +156,7 @@ class GeneralMilitaryCommandTest {
         val cmd = 출병(general, env)
         cmd.city = createTestCity(nationId = 1)
         cmd.nation = createTestNation(id = 1).apply { warState = 0 }
-        cmd.destCity = createTestCity(nationId = 0).apply { id = 2 }
+        cmd.destPlanet = createTestCity(nationId = 0).apply { id = 2 }
 
         val cond = cmd.checkFullCondition()
         assertTrue(cond is ConstraintResult.Pass)
@@ -175,7 +175,7 @@ class GeneralMilitaryCommandTest {
         val cmd = 출병(general, env)
         cmd.city = createTestCity(nationId = 1)
         cmd.nation = createTestNation(id = 1)
-        cmd.destCity = createTestCity(nationId = 0).apply { id = 1 }
+        cmd.destPlanet = createTestCity(nationId = 0).apply { id = 1 }
 
         val cond = cmd.checkFullCondition()
         assertTrue(cond is ConstraintResult.Fail)
@@ -221,13 +221,13 @@ class GeneralMilitaryCommandTest {
         val env = createTestEnv()
         env.gameStor["troopMemberExistsByTroopId"] = mapOf(1L to true)
 
-        val generalRepository = mock(GeneralRepository::class.java)
-        `when`(generalRepository.findByTroopId(1L)).thenReturn(listOf(leader, member))
+        val officerRepository = mock(OfficerRepository::class.java)
+        `when`(officerRepository.findByFleetId(1L)).thenReturn(listOf(leader, member))
 
         val mockServices = CommandServices(
-            generalRepository = generalRepository,
-            cityRepository = mock(CityRepository::class.java),
-            nationRepository = mock(NationRepository::class.java),
+            officerRepository = officerRepository,
+            planetRepository = mock(PlanetRepository::class.java),
+            factionRepository = mock(FactionRepository::class.java),
             diplomacyService = mock(DiplomacyService::class.java),
         )
 
@@ -239,11 +239,11 @@ class GeneralMilitaryCommandTest {
 
         assertTrue(result.success)
         // Member should have been moved to city 1
-        assertEquals(1L, member.cityId, "Member not at city should be moved to leader city")
+        assertEquals(1L, member.planetId, "Member not at city should be moved to leader city")
         // movedCount in message should reflect 1 member moved
         assertTrue(result.message!!.contains("\"movedCount\":1"))
-        // destCityGenerals should contain the moved member
-        assertTrue(cmd.destCityGenerals?.any { it.id == member.id } == true)
+        // destPlanetOfficers should contain the moved member
+        assertTrue(cmd.destPlanetOfficers?.any { it.id == member.id } == true)
     }
 
     @Test
@@ -261,12 +261,12 @@ class GeneralMilitaryCommandTest {
     @Test
     fun `귀환 should move district officer to officer city`() {
         val general = createTestGeneral(nationId = 1, cityId = 5, officerLevel = 3).apply {
-            officerCity = 7
+            officerPlanet = 7
         }
         val env = createTestEnv()
         val cmd = 귀환(general, env)
         cmd.nation = createTestNation(id = 1).apply { capitalCityId = 2 }
-        cmd.destCity = createTestCity().apply { name = "담당도시" }
+        cmd.destPlanet = createTestCity().apply { name = "담당도시" }
 
         val cond = cmd.checkFullCondition()
         assertTrue(cond is ConstraintResult.Pass)
@@ -313,7 +313,7 @@ class GeneralMilitaryCommandTest {
         val general = createTestGeneral(gold = 1000, rice = 1000, cityId = 1)
         val env = createTestEnv()
         val cmd = 강행(general, env)
-        cmd.destCity = createTestCity().apply { id = 2 }
+        cmd.destPlanet = createTestCity().apply { id = 2 }
 
         val cond = cmd.checkFullCondition()
         assertTrue(cond is ConstraintResult.Fail)
@@ -331,7 +331,7 @@ class GeneralMilitaryCommandTest {
         env.gameStor["cityNationByMapId"] = mapOf(1L to 1L, 2L to 1L)
 
         val cmd = 강행(general, env)
-        cmd.destCity = createTestCity().apply { id = 2 }
+        cmd.destPlanet = createTestCity().apply { id = 2 }
 
         val cond = cmd.checkFullCondition()
         assertTrue(cond is ConstraintResult.Pass)
@@ -405,7 +405,7 @@ class GeneralMilitaryCommandTest {
         val env = createTestEnv()
         val cmd = 화계(general, env)
         cmd.city = createTestCity(nationId = 1, supplyState = 1)
-        cmd.destCity = createTestCity(nationId = 0).apply { id = 2 }
+        cmd.destPlanet = createTestCity(nationId = 0).apply { id = 2 }
 
         val cond = cmd.checkFullCondition()
         assertTrue(cond is ConstraintResult.Fail)
@@ -419,7 +419,7 @@ class GeneralMilitaryCommandTest {
         env.gameStor["mapAdjacency"] = mapOf(1L to listOf(2L), 2L to listOf(1L))
         val cmd = 화계(general, env)
         cmd.city = createTestCity(nationId = 1, supplyState = 1)
-        cmd.destCity = createTestCity(nationId = 2, agri = 600, comm = 600).apply { id = 2 }
+        cmd.destPlanet = createTestCity(nationId = 2, agri = 600, comm = 600).apply { id = 2 }
 
         val cond = cmd.checkFullCondition()
         assertTrue(cond is ConstraintResult.Pass)
@@ -437,7 +437,7 @@ class GeneralMilitaryCommandTest {
         val general = createTestGeneral(nationId = 1, gold = 500, rice = 500)
         val env = createTestEnv()
         val cmd = 첩보(general, env)
-        cmd.destCity = createTestCity(nationId = 1).apply { id = 2 }
+        cmd.destPlanet = createTestCity(nationId = 1).apply { id = 2 }
 
         val cond = cmd.checkFullCondition()
         assertTrue(cond is ConstraintResult.Fail)
@@ -450,7 +450,7 @@ class GeneralMilitaryCommandTest {
         val general = createTestGeneral(nationId = 1, gold = 500, rice = 500)
         val env = createTestEnv()
         val cmd = 첩보(general, env)
-        cmd.destCity = createTestCity(nationId = 2, pop = 12000, trust = 75f).apply { id = 2 }
+        cmd.destPlanet = createTestCity(nationId = 2, pop = 12000, trust = 75f).apply { id = 2 }
 
         val cond = cmd.checkFullCondition()
         assertTrue(cond is ConstraintResult.Pass)
@@ -468,7 +468,7 @@ class GeneralMilitaryCommandTest {
         val env = createTestEnv()
         val cmd = 선동(general, env)
         cmd.city = createTestCity(nationId = 1, supplyState = 1)
-        cmd.destCity = createTestCity(nationId = 0).apply { id = 2 }
+        cmd.destPlanet = createTestCity(nationId = 0).apply { id = 2 }
 
         val cond = cmd.checkFullCondition()
         assertTrue(cond is ConstraintResult.Fail)
@@ -482,7 +482,7 @@ class GeneralMilitaryCommandTest {
         env.gameStor["mapAdjacency"] = mapOf(1L to listOf(2L), 2L to listOf(1L))
         val cmd = 선동(general, env)
         cmd.city = createTestCity(nationId = 1, supplyState = 1)
-        cmd.destCity = createTestCity(nationId = 2, secu = 700, trust = 90f).apply { id = 2 }
+        cmd.destPlanet = createTestCity(nationId = 2, secu = 700, trust = 90f).apply { id = 2 }
 
         val cond = cmd.checkFullCondition()
         assertTrue(cond is ConstraintResult.Pass)
@@ -500,7 +500,7 @@ class GeneralMilitaryCommandTest {
         val env = createTestEnv()
         val cmd = 탈취(general, env)
         cmd.city = createTestCity(nationId = 1, supplyState = 1)
-        cmd.destCity = createTestCity(nationId = 0).apply { id = 2 }
+        cmd.destPlanet = createTestCity(nationId = 0).apply { id = 2 }
 
         val cond = cmd.checkFullCondition()
         assertTrue(cond is ConstraintResult.Fail)
@@ -514,7 +514,7 @@ class GeneralMilitaryCommandTest {
         env.gameStor["mapAdjacency"] = mapOf(1L to listOf(2L), 2L to listOf(1L))
         val cmd = 탈취(general, env)
         cmd.city = createTestCity(nationId = 1, supplyState = 1)
-        cmd.destCity = createTestCity(nationId = 2, agri = 700, agriMax = 1000, comm = 700, commMax = 1000).apply {
+        cmd.destPlanet = createTestCity(nationId = 2, agri = 700, agriMax = 1000, comm = 700, commMax = 1000).apply {
             id = 2
             level = 3
         }
@@ -535,7 +535,7 @@ class GeneralMilitaryCommandTest {
         val env = createTestEnv()
         val cmd = 파괴(general, env)
         cmd.city = createTestCity(nationId = 1, supplyState = 1)
-        cmd.destCity = createTestCity(nationId = 0).apply { id = 2 }
+        cmd.destPlanet = createTestCity(nationId = 0).apply { id = 2 }
 
         val cond = cmd.checkFullCondition()
         assertTrue(cond is ConstraintResult.Fail)
@@ -549,7 +549,7 @@ class GeneralMilitaryCommandTest {
         env.gameStor["mapAdjacency"] = mapOf(1L to listOf(2L), 2L to listOf(1L))
         val cmd = 파괴(general, env)
         cmd.city = createTestCity(nationId = 1, supplyState = 1)
-        cmd.destCity = createTestCity(nationId = 2, def = 700, wall = 700).apply { id = 2 }
+        cmd.destPlanet = createTestCity(nationId = 2, def = 700, wall = 700).apply { id = 2 }
 
         val cond = cmd.checkFullCondition()
         assertTrue(cond is ConstraintResult.Pass)
@@ -609,7 +609,7 @@ class GeneralMilitaryCommandTest {
         val cmd = 출병(general, env)
         cmd.city = createTestCity(nationId = 1)
         cmd.nation = createTestNation(id = 1).apply { warState = 0 }
-        cmd.destCity = createTestCity(nationId = 0).apply { id = 2 }
+        cmd.destPlanet = createTestCity(nationId = 0).apply { id = 2 }
 
         val result = runBlocking { cmd.run(LiteHashDRBG.build(GOLDEN_SEED)) }
         assertTrue(result.success)
@@ -633,7 +633,7 @@ class GeneralMilitaryCommandTest {
         val cmd2 = 출병(general2, env2)
         cmd2.city = createTestCity(nationId = 1)
         cmd2.nation = createTestNation(id = 1).apply { warState = 0 }
-        cmd2.destCity = createTestCity(nationId = 0).apply { id = 2 }
+        cmd2.destPlanet = createTestCity(nationId = 0).apply { id = 2 }
         val result2 = runBlocking { cmd2.run(LiteHashDRBG.build(GOLDEN_SEED)) }
         assertEquals(result.message, result2.message)
     }
@@ -645,7 +645,7 @@ class GeneralMilitaryCommandTest {
         val cmd = 출병(general, env)
         cmd.city = createTestCity(nationId = 1)
         cmd.nation = createTestNation(id = 1)
-        cmd.destCity = createTestCity(nationId = 0).apply { id = 2 }
+        cmd.destPlanet = createTestCity(nationId = 0).apply { id = 2 }
         assertTrue(cmd.checkFullCondition() is ConstraintResult.Fail)
     }
 
@@ -656,7 +656,7 @@ class GeneralMilitaryCommandTest {
         val cmd = 출병(general, env)
         cmd.city = createTestCity(nationId = 1)
         cmd.nation = createTestNation(id = 1)
-        cmd.destCity = createTestCity(nationId = 0).apply { id = 1 }
+        cmd.destPlanet = createTestCity(nationId = 0).apply { id = 1 }
         val cond = cmd.checkFullCondition()
         assertTrue(cond is ConstraintResult.Fail)
     }
@@ -668,7 +668,7 @@ class GeneralMilitaryCommandTest {
         env.gameStor["mapAdjacency"] = mapOf(1L to listOf(2L), 2L to listOf(1L))
 
         val cmd = 이동(general, env)
-        cmd.destCity = createTestCity().apply { id = 2; name = "낙양" }
+        cmd.destPlanet = createTestCity().apply { id = 2; name = "낙양" }
 
         val result = runBlocking { cmd.run(LiteHashDRBG.build(GOLDEN_SEED)) }
         assertTrue(result.success)
@@ -694,7 +694,7 @@ class GeneralMilitaryCommandTest {
         env.gameStor["mapAdjacency"] = mapOf(1L to listOf(2L), 3L to listOf(4L))
 
         val cmd = 이동(general, env)
-        cmd.destCity = createTestCity().apply { id = 3 }
+        cmd.destPlanet = createTestCity().apply { id = 3 }
 
         val cond = cmd.checkFullCondition()
         assertTrue(cond is ConstraintResult.Fail)
@@ -706,7 +706,7 @@ class GeneralMilitaryCommandTest {
         val env = createTestEnv()
 
         val cmd = 이동(general, env)
-        cmd.destCity = createTestCity().apply { id = 1 }
+        cmd.destPlanet = createTestCity().apply { id = 1 }
 
         val cond = cmd.checkFullCondition()
         assertTrue(cond is ConstraintResult.Fail)
@@ -715,11 +715,11 @@ class GeneralMilitaryCommandTest {
     @Test
     fun `parity 귀환 golden value matches PHP-traced expectation`() {
         val general = createTestGeneral(nationId = 1, cityId = 5, officerLevel = 3).apply {
-            officerCity = 7
+            officerPlanet = 7
         }
         val cmd = 귀환(general, createTestEnv())
         cmd.nation = createTestNation(id = 1).apply { capitalCityId = 2 }
-        cmd.destCity = createTestCity().apply { name = "담당도시" }
+        cmd.destPlanet = createTestCity().apply { name = "담당도시" }
 
         val result = runBlocking { cmd.run(LiteHashDRBG.build(GOLDEN_SEED)) }
         assertTrue(result.success)
@@ -775,7 +775,7 @@ class GeneralMilitaryCommandTest {
         env.gameStor["cityNationByMapId"] = mapOf(1L to 1L, 2L to 1L)
 
         val cmd = 강행(general, env)
-        cmd.destCity = createTestCity().apply { id = 2 }
+        cmd.destPlanet = createTestCity().apply { id = 2 }
 
         val result = runBlocking { cmd.run(LiteHashDRBG.build(GOLDEN_SEED)) }
         assertTrue(result.success)
@@ -798,7 +798,7 @@ class GeneralMilitaryCommandTest {
     fun `parity 강행 constraint fails when no route`() {
         val general = createTestGeneral(gold = 1000, rice = 1000, cityId = 1)
         val cmd = 강행(general, createTestEnv())
-        cmd.destCity = createTestCity().apply { id = 2 }
+        cmd.destPlanet = createTestCity().apply { id = 2 }
         assertTrue(cmd.checkFullCondition() is ConstraintResult.Fail)
     }
 
@@ -817,7 +817,7 @@ class GeneralMilitaryCommandTest {
         assertEquals(100, json["statChanges"]["dedication"].asInt())
         assertEquals(20, json["statChanges"]["officerLevel"].asInt())
         assertTrue(json["nationChanges"]["createWanderingNation"].asBoolean())
-        assertEquals("테스트장수", json["nationChanges"]["nationName"].asText())
+        assertEquals("테스트장수", json["nationChanges"]["factionName"].asText())
 
         // Log color tag parity
         assertTrue(result.logs[0].contains("거병에 성공"))
@@ -863,7 +863,7 @@ class GeneralMilitaryCommandTest {
         env.gameStor["mapAdjacency"] = mapOf(1L to listOf(2L), 2L to listOf(1L))
         val cmd = 화계(general, env)
         cmd.city = createTestCity(nationId = 1, supplyState = 1)
-        cmd.destCity = createTestCity(nationId = 2, agri = 600, comm = 600).apply { id = 2 }
+        cmd.destPlanet = createTestCity(nationId = 2, agri = 600, comm = 600).apply { id = 2 }
 
         val result = runBlocking { cmd.run(LiteHashDRBG.build(GOLDEN_SEED)) }
         // With this seed, fire attack fails
@@ -886,7 +886,7 @@ class GeneralMilitaryCommandTest {
         val general = createTestGeneral(nationId = 1, gold = 1000, rice = 1000, intel = 100)
         val cmd = 화계(general, createTestEnv())
         cmd.city = createTestCity(nationId = 1, supplyState = 1)
-        cmd.destCity = createTestCity(nationId = 0).apply { id = 2 }
+        cmd.destPlanet = createTestCity(nationId = 0).apply { id = 2 }
         assertTrue(cmd.checkFullCondition() is ConstraintResult.Fail)
     }
 
@@ -894,7 +894,7 @@ class GeneralMilitaryCommandTest {
     fun `parity 첩보 golden value matches PHP-traced expectation`() {
         val general = createTestGeneral(nationId = 1, gold = 500, rice = 500)
         val cmd = 첩보(general, createTestEnv())
-        cmd.destCity = createTestCity(nationId = 2, pop = 12000, trust = 75f).apply { id = 2 }
+        cmd.destPlanet = createTestCity(nationId = 2, pop = 12000, trust = 75f).apply { id = 2 }
 
         val result = runBlocking { cmd.run(LiteHashDRBG.build(GOLDEN_SEED)) }
         assertTrue(result.success)
@@ -917,7 +917,7 @@ class GeneralMilitaryCommandTest {
     fun `parity 첩보 constraint fails for friendly city`() {
         val general = createTestGeneral(nationId = 1, gold = 500, rice = 500)
         val cmd = 첩보(general, createTestEnv())
-        cmd.destCity = createTestCity(nationId = 1).apply { id = 2 }
+        cmd.destPlanet = createTestCity(nationId = 1).apply { id = 2 }
         assertTrue(cmd.checkFullCondition() is ConstraintResult.Fail)
     }
 
@@ -928,7 +928,7 @@ class GeneralMilitaryCommandTest {
         env.gameStor["mapAdjacency"] = mapOf(1L to listOf(2L), 2L to listOf(1L))
         val cmd = 선동(general, env)
         cmd.city = createTestCity(nationId = 1, supplyState = 1)
-        cmd.destCity = createTestCity(nationId = 2, secu = 700, trust = 90f).apply { id = 2 }
+        cmd.destPlanet = createTestCity(nationId = 2, secu = 700, trust = 90f).apply { id = 2 }
 
         val result = runBlocking { cmd.run(LiteHashDRBG.build(GOLDEN_SEED)) }
         // With this seed, agitation fails
@@ -949,7 +949,7 @@ class GeneralMilitaryCommandTest {
         val general = createTestGeneral(nationId = 1, leadership = 100)
         val cmd = 선동(general, createTestEnv())
         cmd.city = createTestCity(nationId = 1, supplyState = 1)
-        cmd.destCity = createTestCity(nationId = 0).apply { id = 2 }
+        cmd.destPlanet = createTestCity(nationId = 0).apply { id = 2 }
         assertTrue(cmd.checkFullCondition() is ConstraintResult.Fail)
     }
 
@@ -960,7 +960,7 @@ class GeneralMilitaryCommandTest {
         env.gameStor["mapAdjacency"] = mapOf(1L to listOf(2L), 2L to listOf(1L))
         val cmd = 탈취(general, env)
         cmd.city = createTestCity(nationId = 1, supplyState = 1)
-        cmd.destCity = createTestCity(nationId = 2, agri = 700, agriMax = 1000, comm = 700, commMax = 1000).apply {
+        cmd.destPlanet = createTestCity(nationId = 2, agri = 700, agriMax = 1000, comm = 700, commMax = 1000).apply {
             id = 2; level = 3
         }
 
@@ -984,7 +984,7 @@ class GeneralMilitaryCommandTest {
         val general = createTestGeneral(nationId = 1, strength = 100)
         val cmd = 탈취(general, createTestEnv())
         cmd.city = createTestCity(nationId = 1, supplyState = 1)
-        cmd.destCity = createTestCity(nationId = 0).apply { id = 2 }
+        cmd.destPlanet = createTestCity(nationId = 0).apply { id = 2 }
         assertTrue(cmd.checkFullCondition() is ConstraintResult.Fail)
     }
 
@@ -995,7 +995,7 @@ class GeneralMilitaryCommandTest {
         env.gameStor["mapAdjacency"] = mapOf(1L to listOf(2L), 2L to listOf(1L))
         val cmd = 파괴(general, env)
         cmd.city = createTestCity(nationId = 1, supplyState = 1)
-        cmd.destCity = createTestCity(nationId = 2, def = 700, wall = 700).apply { id = 2 }
+        cmd.destPlanet = createTestCity(nationId = 2, def = 700, wall = 700).apply { id = 2 }
 
         val result = runBlocking { cmd.run(LiteHashDRBG.build(GOLDEN_SEED)) }
         // With this seed, destruction fails
@@ -1017,7 +1017,7 @@ class GeneralMilitaryCommandTest {
         val general = createTestGeneral(nationId = 1, strength = 100)
         val cmd = 파괴(general, createTestEnv())
         cmd.city = createTestCity(nationId = 1, supplyState = 1)
-        cmd.destCity = createTestCity(nationId = 0).apply { id = 2 }
+        cmd.destPlanet = createTestCity(nationId = 0).apply { id = 2 }
         assertTrue(cmd.checkFullCondition() is ConstraintResult.Fail)
     }
 
@@ -1123,7 +1123,7 @@ class GeneralMilitaryCommandTest {
         val general = createTestGeneral(nationId = 1, crew = 100, rice = 100)
         val cmd = 요격(general, createTestEnv())
         cmd.city = createTestCity(nationId = 1)
-        cmd.destCity = createTestCity(nationId = 2).apply { id = 2; name = "적도시" }
+        cmd.destPlanet = createTestCity(nationId = 2).apply { id = 2; name = "적도시" }
 
         val cond = cmd.checkFullCondition()
         assertTrue(cond is ConstraintResult.Pass)

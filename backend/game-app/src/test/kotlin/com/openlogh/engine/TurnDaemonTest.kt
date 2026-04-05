@@ -1,8 +1,8 @@
 package com.openlogh.engine
 
 import com.openlogh.engine.turn.cqrs.TurnCoordinator
-import com.openlogh.entity.WorldState
-import com.openlogh.repository.WorldStateRepository
+import com.openlogh.entity.SessionState
+import com.openlogh.repository.SessionStateRepository
 import com.openlogh.service.GameEventService
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
@@ -16,7 +16,7 @@ class TurnDaemonTest {
     private lateinit var turnService: TurnService
     private lateinit var turnCoordinator: TurnCoordinator
     private lateinit var realtimeService: RealtimeService
-    private lateinit var worldStateRepository: WorldStateRepository
+    private lateinit var sessionStateRepository: SessionStateRepository
     private lateinit var gameEventService: GameEventService
 
     @Suppress("UNCHECKED_CAST")
@@ -27,7 +27,7 @@ class TurnDaemonTest {
         turnService = mock(TurnService::class.java)
         turnCoordinator = mock(TurnCoordinator::class.java)
         realtimeService = mock(RealtimeService::class.java)
-        worldStateRepository = mock(WorldStateRepository::class.java)
+        sessionStateRepository = mock(SessionStateRepository::class.java)
         gameEventService = mock(GameEventService::class.java)
 
         daemon = TurnDaemon(
@@ -36,15 +36,15 @@ class TurnDaemonTest {
             realtimeService,
             "test-sha",
             false,
-            worldStateRepository,
+            sessionStateRepository,
             gameEventService,
         )
     }
 
-    private fun createWorld(id: Short = 1, realtimeMode: Boolean = false, gatewayActive: Any? = null): WorldState {
+    private fun createWorld(id: Short = 1, realtimeMode: Boolean = false, gatewayActive: Any? = null): SessionState {
         val meta = if (gatewayActive != null) mutableMapOf<String, Any>("gatewayActive" to gatewayActive)
         else mutableMapOf()
-        return WorldState(
+        return SessionState(
             id = id,
             scenarioCode = "test",
             currentYear = 200,
@@ -59,7 +59,7 @@ class TurnDaemonTest {
     @Test
     fun `tick calls turnService for non-realtime worlds`() {
         val world = createWorld(realtimeMode = false)
-        `when`(worldStateRepository.findByCommitSha("test-sha")).thenReturn(listOf(world))
+        `when`(sessionStateRepository.findByCommitSha("test-sha")).thenReturn(listOf(world))
 
         daemon.tick()
 
@@ -71,7 +71,7 @@ class TurnDaemonTest {
     @Test
     fun `tick calls realtimeService for realtime worlds`() {
         val world = createWorld(realtimeMode = true)
-        `when`(worldStateRepository.findByCommitSha("test-sha")).thenReturn(listOf(world))
+        `when`(sessionStateRepository.findByCommitSha("test-sha")).thenReturn(listOf(world))
 
         daemon.tick()
 
@@ -84,7 +84,7 @@ class TurnDaemonTest {
     @Test
     fun `tick calls turnCoordinator for non-realtime worlds when cqrs is enabled`() {
         val world = createWorld(realtimeMode = false)
-        `when`(worldStateRepository.findByCommitSha("test-sha")).thenReturn(listOf(world))
+        `when`(sessionStateRepository.findByCommitSha("test-sha")).thenReturn(listOf(world))
 
         val cqrsDaemon = TurnDaemon(
             turnService,
@@ -92,7 +92,7 @@ class TurnDaemonTest {
             realtimeService,
             "test-sha",
             true,
-            worldStateRepository,
+            sessionStateRepository,
             gameEventService,
         )
         cqrsDaemon.tick()
@@ -104,7 +104,7 @@ class TurnDaemonTest {
     @Test
     fun `tick skips worlds with gatewayActive false`() {
         val world = createWorld(gatewayActive = false)
-        `when`(worldStateRepository.findByCommitSha("test-sha")).thenReturn(listOf(world))
+        `when`(sessionStateRepository.findByCommitSha("test-sha")).thenReturn(listOf(world))
 
         daemon.tick()
 
@@ -114,7 +114,7 @@ class TurnDaemonTest {
     @Test
     fun `pause prevents tick from running`() {
         val world = createWorld()
-        `when`(worldStateRepository.findByCommitSha("test-sha")).thenReturn(listOf(world))
+        `when`(sessionStateRepository.findByCommitSha("test-sha")).thenReturn(listOf(world))
 
         daemon.pause()
         daemon.tick()
@@ -126,7 +126,7 @@ class TurnDaemonTest {
     @Test
     fun `resume allows tick to run again after pause`() {
         val world = createWorld()
-        `when`(worldStateRepository.findByCommitSha("test-sha")).thenReturn(listOf(world))
+        `when`(sessionStateRepository.findByCommitSha("test-sha")).thenReturn(listOf(world))
 
         daemon.pause()
         daemon.resume()
@@ -139,7 +139,7 @@ class TurnDaemonTest {
     fun `tick skips locked world`() {
         val world = createWorld()
         world.config["locked"] = true
-        `when`(worldStateRepository.findByCommitSha("test-sha")).thenReturn(listOf(world))
+        `when`(sessionStateRepository.findByCommitSha("test-sha")).thenReturn(listOf(world))
 
         daemon.tick()
 
@@ -150,7 +150,7 @@ class TurnDaemonTest {
     fun `tick skips world in pre_open phase`() {
         val world = createWorld()
         world.config["opentime"] = OffsetDateTime.now().plusHours(1).toString()
-        `when`(worldStateRepository.findByCommitSha("test-sha")).thenReturn(listOf(world))
+        `when`(sessionStateRepository.findByCommitSha("test-sha")).thenReturn(listOf(world))
 
         daemon.tick()
 
@@ -161,7 +161,7 @@ class TurnDaemonTest {
     fun `tick processes unlocked world`() {
         val world = createWorld()
         world.config["locked"] = false
-        `when`(worldStateRepository.findByCommitSha("test-sha")).thenReturn(listOf(world))
+        `when`(sessionStateRepository.findByCommitSha("test-sha")).thenReturn(listOf(world))
 
         daemon.tick()
 
@@ -171,7 +171,7 @@ class TurnDaemonTest {
     @Test
     fun `tick broadcasts turn advance after legacy turnService when month changes`() {
         val world = createWorld()
-        `when`(worldStateRepository.findByCommitSha("test-sha")).thenReturn(listOf(world))
+        `when`(sessionStateRepository.findByCommitSha("test-sha")).thenReturn(listOf(world))
         doAnswer {
             world.currentYear = 200
             world.currentMonth = 7
@@ -186,7 +186,7 @@ class TurnDaemonTest {
     @Test
     fun `tick does not broadcast when month unchanged`() {
         val world = createWorld()
-        `when`(worldStateRepository.findByCommitSha("test-sha")).thenReturn(listOf(world))
+        `when`(sessionStateRepository.findByCommitSha("test-sha")).thenReturn(listOf(world))
 
         daemon.tick()
 

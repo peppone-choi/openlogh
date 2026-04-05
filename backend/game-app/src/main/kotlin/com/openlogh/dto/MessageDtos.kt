@@ -6,7 +6,7 @@ data class ContactInfo(
     val generalId: Long,
     val name: String,
     val nationId: Long,
-    val nationName: String,
+    val factionName: String,
     val nationColor: String? = null,
     val picture: String,
 )

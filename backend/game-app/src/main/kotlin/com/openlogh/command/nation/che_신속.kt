@@ -36,7 +36,7 @@ class che_신속(general: Officer, env: CommandEnv, arg: Map<String, Any>? = nul
         val n = nation ?: return CommandResult(false, listOf("국가 정보를 찾을 수 없습니다."))
         val dn = destFaction ?: return CommandResult(false, listOf("대상 국가 정보를 찾을 수 없습니다."))
         val generalName = general.name
-        val nationName = n.name
+        val factionName = n.name
         val destNationName = dn.name
         val josaYi = JosaUtil.pick(generalName, "이")
         val josaEge = JosaUtil.pick(destNationName, "에")
@@ -47,13 +47,13 @@ class che_신속(general: Officer, env: CommandEnv, arg: Map<String, Any>? = nul
         pushLog("<D><b>${destNationName}</b></>${josaEge} 신속하였습니다. <1>${formatDate()}</>")
         pushHistoryLog("<D><b>${destNationName}</b></>${josaEge} 신속")
         pushNationalHistoryLog("<Y>${generalName}</>${josaYi} <D><b>${destNationName}</b></>${josaEge} 신속하였습니다.")
-        pushDestNationalHistoryLog("<D><b>${nationName}</b></>의 <Y>${generalName}</>${josaYi} 아국에 신속하였습니다.")
-        pushGlobalLog("<Y>${generalName}</>${josaYi} <D><b>${nationName}</b></>을(를) 이끌고 <D><b>${destNationName}</b></>${josaEge} <S>신속</>하였습니다.")
-        pushGlobalHistoryLog("<S><b>【신속】</b></><D><b>${nationName}</b></>의 <Y>${generalName}</>${josaYi} <D><b>${destNationName}</b></>${josaEge} 신속하였습니다.")
+        pushDestNationalHistoryLog("<D><b>${factionName}</b></>의 <Y>${generalName}</>${josaYi} 아국에 신속하였습니다.")
+        pushGlobalLog("<Y>${generalName}</>${josaYi} <D><b>${factionName}</b></>을(를) 이끌고 <D><b>${destNationName}</b></>${josaEge} <S>신속</>하였습니다.")
+        pushGlobalHistoryLog("<S><b>【신속】</b></><D><b>${factionName}</b></>의 <Y>${generalName}</>${josaYi} <D><b>${destNationName}</b></>${josaEge} 신속하였습니다.")
 
-        val text = "【외교】${env.year}년 ${env.month}월:${nationName}이(가) ${destNationName}에 신속"
+        val text = "【외교】${env.year}년 ${env.month}월:${factionName}이(가) ${destNationName}에 신속"
         services!!.messageService?.sendNationalMessage(
-            sessionId = env.sessionId,
+            worldId = env.sessionId,
             srcNationId = n.id,
             destNationId = dn.id,
             srcGeneralId = general.id,

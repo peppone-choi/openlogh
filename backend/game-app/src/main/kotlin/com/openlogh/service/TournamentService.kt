@@ -31,16 +31,16 @@ class TournamentService(
         val state = (world.meta["tournamentState"] as? Number)?.toInt() ?: 0
 
         val entries = tournamentRepository.findBySessionIdOrderByRoundAscBracketPositionAsc(worldId)
-        val participants = entries.filter { it.round.toInt() == 0 }.map { it.generalId }
+        val participants = entries.filter { it.round.toInt() == 0 }.map { it.officerId }
         val bracket = entries
             .filter { it.round.toInt() > 0 }
             .map {
                 TournamentBracketMatchResponse(
                     round = it.round.toInt(),
                     match = it.bracketPosition.toInt() / 2,
-                    p1 = it.generalId,
+                    p1 = it.officerId,
                     p2 = it.opponentId ?: 0,
-                    winner = if (it.result.toInt() == 1) it.generalId else null,
+                    winner = if (it.result.toInt() == 1) it.officerId else null,
                 )
             }
 
@@ -137,7 +137,7 @@ class TournamentService(
         val officer = officerRepository.findById(generalId).orElse(null) ?: return mapOf("error" to "장수가 없습니다")
         if (officer.sessionId != tournamentId) return mapOf("error" to "같은 월드의 장수만 참가할 수 있습니다")
 
-        val exists = tournamentRepository.findBySessionIdAndRound(tournamentId, 0).any { it.generalId == generalId }
+        val exists = tournamentRepository.findBySessionIdAndRound(tournamentId, 0).any { it.officerId == generalId }
         if (exists) return mapOf("error" to "이미 등록됨")
 
         tournamentRepository.save(
@@ -160,7 +160,7 @@ class TournamentService(
         val participants = tournamentRepository.findBySessionIdAndRound(tournamentId, 0)
         if (participants.size < 2) return mapOf("error" to "참가자가 부족합니다")
 
-        val seeded = participants.shuffled().map { it.generalId }.toMutableList()
+        val seeded = participants.shuffled().map { it.officerId }.toMutableList()
         var bracketSize = 1
         while (bracketSize < seeded.size) bracketSize *= 2
         while (seeded.size < bracketSize) seeded.add(0L)
@@ -220,12 +220,12 @@ class TournamentService(
             if (attackerRow.opponentId == null || defenderRow == null) {
                 attackerRow.result = 1
                 tournamentRepository.save(attackerRow)
-                nextWinners.add(attackerRow.generalId)
+                nextWinners.add(attackerRow.officerId)
                 continue
             }
 
-            val attackerGeneral = officerRepository.findById(attackerRow.generalId).orElse(null)
-            val defenderGeneral = officerRepository.findById(defenderRow.generalId).orElse(null)
+            val attackerGeneral = officerRepository.findById(attackerRow.officerId).orElse(null)
+            val defenderGeneral = officerRepository.findById(defenderRow.officerId).orElse(null)
             if (attackerGeneral == null || defenderGeneral == null) continue
 
             val battleResult = TournamentBattle.resolveTournamentBattle(
@@ -324,7 +324,7 @@ class TournamentService(
 
         val finalRound = tournamentRepository.findBySessionId(world.id.toLong()).maxOfOrNull { it.round.toInt() } ?: 1
         val finalists = tournamentRepository.findBySessionIdAndRound(world.id.toLong(), finalRound.toShort())
-        val runnerUpId = finalists.firstOrNull { it.generalId != winnerId }?.generalId
+        val runnerUpId = finalists.firstOrNull { it.officerId != winnerId }?.officerId
         val runnerUp = runnerUpId?.let { officerRepository.findById(it).orElse(null) }
 
         winner.funds += 5000
@@ -437,16 +437,16 @@ class TournamentService(
         val world = sessionStateRepository.findById(worldId.toShort()).orElse(null) ?: return
         val entries = tournamentRepository.findBySessionIdOrderByRoundAscBracketPositionAsc(worldId)
 
-        val participants = entries.filter { it.round.toInt() == 0 }.map { it.generalId }
+        val participants = entries.filter { it.round.toInt() == 0 }.map { it.officerId }
         val bracket = entries
             .filter { it.round.toInt() > 0 }
             .map {
                 mapOf(
                     "round" to it.round.toInt(),
                     "match" to it.bracketPosition.toInt() / 2,
-                    "p1" to it.generalId,
+                    "p1" to it.officerId,
                     "p2" to (it.opponentId ?: 0L),
-                    "winner" to if (it.result.toInt() == 1) it.generalId else null,
+                    "winner" to if (it.result.toInt() == 1) it.officerId else null,
                 )
             }
 

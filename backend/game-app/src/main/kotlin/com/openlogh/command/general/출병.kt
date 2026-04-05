@@ -53,7 +53,7 @@ class 출병(general: Officer, env: CommandEnv, arg: Map<String, Any>? = null)
 
     override fun getCost(): CommandCost {
         val rice = (general.ships / 100.0).roundToInt()
-        return CommandCost(gold = 0, rice = rice)
+        return CommandCost(funds = 0, supplies = rice)
     }
 
     override fun getPreReqTurn() = 0
@@ -225,19 +225,19 @@ class 출병(general: Officer, env: CommandEnv, arg: Map<String, Any>? = null)
 
         for ((dist, cities) in distanceList) {
             if (dist > minDist + 1) break
-            for ((mapCityId, nationId) in cities) {
+            for ((mapPlanetId, nationId) in cities) {
                 // Legacy parity: any city not owned by attacker is a valid target (including empty cities)
                 if (nationId != attackerNationId) {
-                    candidateMapCities.add(mapCityId)
+                    candidateMapCities.add(mapPlanetId)
                 }
             }
             if (candidateMapCities.isNotEmpty()) break
         }
 
         if (candidateMapCities.isEmpty()) {
-            for ((mapCityId, nationId) in distanceList[minDist].orEmpty()) {
+            for ((mapPlanetId, nationId) in distanceList[minDist].orEmpty()) {
                 if (nationId == attackerNationId) {
-                    candidateMapCities.add(mapCityId)
+                    candidateMapCities.add(mapPlanetId)
                 }
             }
         }

@@ -49,7 +49,7 @@ class 장비매매(general: Officer, env: CommandEnv, arg: Map<String, Any>? = n
         val code = itemCode ?: return CommandCost()
         if (code == "None") return CommandCost()
         val item = ItemModifiers.getMeta(code) ?: return CommandCost()
-        return CommandCost(gold = item.cost)
+        return CommandCost(funds = item.cost)
     }
 
     override fun getPreReqTurn() = 0

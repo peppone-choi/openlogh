@@ -21,11 +21,11 @@ import org.mockito.Mockito.*
 class EventActionServiceTest {
 
     private lateinit var service: EventActionService
-    private lateinit var generalRepository: GeneralRepository
-    private lateinit var nationRepository: NationRepository
-    private lateinit var cityRepository: CityRepository
+    private lateinit var officerRepository: OfficerRepository
+    private lateinit var factionRepository: FactionRepository
+    private lateinit var planetRepository: PlanetRepository
     private lateinit var eventRepository: EventRepository
-    private lateinit var generalTurnRepository: GeneralTurnRepository
+    private lateinit var officerTurnRepository: OfficerTurnRepository
     private lateinit var messageRepository: MessageRepository
     private lateinit var bettingRepository: BettingRepository
     private lateinit var betEntryRepository: BetEntryRepository
@@ -40,11 +40,11 @@ class EventActionServiceTest {
 
     @BeforeEach
     fun setUp() {
-        generalRepository = mock(GeneralRepository::class.java)
-        nationRepository = mock(NationRepository::class.java)
-        cityRepository = mock(CityRepository::class.java)
+        officerRepository = mock(OfficerRepository::class.java)
+        factionRepository = mock(FactionRepository::class.java)
+        planetRepository = mock(PlanetRepository::class.java)
         eventRepository = mock(EventRepository::class.java)
-        generalTurnRepository = mock(GeneralTurnRepository::class.java)
+        officerTurnRepository = mock(OfficerTurnRepository::class.java)
         messageRepository = mock(MessageRepository::class.java)
         bettingRepository = mock(BettingRepository::class.java)
         betEntryRepository = mock(BetEntryRepository::class.java)
@@ -55,16 +55,16 @@ class EventActionServiceTest {
         inheritanceService = mock(InheritanceService::class.java)
 
         service = EventActionService(
-            generalRepository, nationRepository, cityRepository,
-            eventRepository, generalTurnRepository, messageRepository,
+            officerRepository, factionRepository, planetRepository,
+            eventRepository, officerTurnRepository, messageRepository,
             bettingRepository, betEntryRepository,
             historyService, scenarioService, specialAssignmentService,
             rankDataRepository, inheritanceService,
         )
     }
 
-    private fun createWorld(year: Short = 200, month: Short = 3): WorldState =
-        WorldState(id = 1, scenarioCode = "test", currentYear = year, currentMonth = month, tickSeconds = 300)
+    private fun createWorld(year: Short = 200, month: Short = 3): SessionState =
+        SessionState(id = 1, scenarioCode = "test", currentYear = year, currentMonth = month, tickSeconds = 300)
 
     private fun createGeneral(
         id: Long = 1L,
@@ -82,12 +82,12 @@ class EventActionServiceTest {
         experience: Int = 1000,
         dedication: Int = 500,
         itemCode: String = "None",
-    ): General = General(
-        id = id, worldId = worldId, nationId = nationId, name = name,
-        leadership = leadership, strength = strength, intel = intel,
+    ): Officer = Officer(
+        id = id, sessionId = worldId, factionId = nationId, name = name,
+        leadership = leadership, command = strength, intelligence = intel,
         betray = betray, age = age, belong = belong, officerLevel = officerLevel,
         npcState = npcState, experience = experience, dedication = dedication,
-        itemCode = itemCode,
+        accessoryCode = itemCode,
     )
 
     private fun createNation(
@@ -97,7 +97,7 @@ class EventActionServiceTest {
         level: Short = 2,
         scoutLevel: Short = 0,
         gold: Int = 10000,
-    ): Nation = Nation(id = id, worldId = worldId, name = name, level = level, scoutLevel = scoutLevel, gold = gold)
+    ): Faction = Faction(id = id, sessionId = worldId, name = name, factionRank = level, scoutLevel = scoutLevel, funds = gold)
 
     private fun createCity(
         id: Long = 1L,
@@ -114,12 +114,12 @@ class EventActionServiceTest {
         trade: Int = 100,
         officerSet: Int = 0,
         dead: Int = 0,
-    ): City = City(
-        id = id, worldId = worldId, name = "테스트도시$id", nationId = nationId,
-        pop = pop, popMax = popMax, agri = agri, agriMax = agriMax,
-        comm = comm, commMax = commMax, secu = secu, secuMax = secuMax,
-        def = def, defMax = defMax, wall = wall, wallMax = wallMax,
-        trust = trust.toInt(), trade = trade, officerSet = officerSet, dead = dead,
+    ): Planet = Planet(
+        id = id, sessionId = worldId, name = "테스트도시$id", factionId = nationId,
+        population = pop, populationMax = popMax, production = agri, productionMax = agriMax,
+        commerce = comm, commerceMax = commMax, security = secu, securityMax = secuMax,
+        orbitalDefense = def, orbitalDefenseMax = defMax, fortress = wall, fortressMax = wallMax,
+        approval = trust.toInt(), trade = trade, officerSet = officerSet, dead = dead,
     )
 
     // ─── AddGlobalBetray ───────────────────────────────────────────────────
@@ -132,8 +132,8 @@ class EventActionServiceTest {
             // PHP: foreach general where betray <= ifMax → betray += cnt
             val gen1 = createGeneral(id = 1, betray = 0)  // betray <= 0 ✓
             val gen2 = createGeneral(id = 2, betray = 5)  // betray > 0 ✗
-            `when`(generalRepository.findByWorldId(1L)).thenReturn(listOf(gen1, gen2))
-            `when`(generalRepository.saveAll(anyNonNull<List<General>>())).thenReturn(listOf(gen1, gen2))
+            `when`(officerRepository.findBySessionId(1L)).thenReturn(listOf(gen1, gen2))
+            `when`(officerRepository.saveAll(anyNonNull<List<Officer>>())).thenReturn(listOf(gen1, gen2))
 
             service.addGlobalBetray(createWorld(), cnt = 1, ifMax = 0)
 
@@ -144,8 +144,8 @@ class EventActionServiceTest {
         @Test
         fun `increases betray by cnt`() {
             val gen = createGeneral(betray = 2)
-            `when`(generalRepository.findByWorldId(1L)).thenReturn(listOf(gen))
-            `when`(generalRepository.saveAll(anyNonNull<List<General>>())).thenReturn(listOf(gen))
+            `when`(officerRepository.findBySessionId(1L)).thenReturn(listOf(gen))
+            `when`(officerRepository.saveAll(anyNonNull<List<Officer>>())).thenReturn(listOf(gen))
 
             service.addGlobalBetray(createWorld(), cnt = 3, ifMax = 10)
 
@@ -154,8 +154,8 @@ class EventActionServiceTest {
 
         @Test
         fun `handles empty general list gracefully`() {
-            `when`(generalRepository.findByWorldId(1L)).thenReturn(emptyList())
-            `when`(generalRepository.saveAll(anyNonNull<List<General>>())).thenReturn(emptyList())
+            `when`(officerRepository.findBySessionId(1L)).thenReturn(emptyList())
+            `when`(officerRepository.saveAll(anyNonNull<List<Officer>>())).thenReturn(emptyList())
 
             assertDoesNotThrow { service.addGlobalBetray(createWorld()) }
         }
@@ -163,8 +163,8 @@ class EventActionServiceTest {
         @Test
         fun `does not affect generals above ifMax`() {
             val gen = createGeneral(betray = 5)
-            `when`(generalRepository.findByWorldId(1L)).thenReturn(listOf(gen))
-            `when`(generalRepository.saveAll(anyNonNull<List<General>>())).thenReturn(listOf(gen))
+            `when`(officerRepository.findBySessionId(1L)).thenReturn(listOf(gen))
+            `when`(officerRepository.saveAll(anyNonNull<List<Officer>>())).thenReturn(listOf(gen))
 
             service.addGlobalBetray(createWorld(), cnt = 1, ifMax = 3)
 
@@ -182,8 +182,8 @@ class EventActionServiceTest {
             // PHP: foreach nation → scout = 1 (blocked)
             val nation1 = createNation(id = 1, scoutLevel = 0)
             val nation2 = createNation(id = 2, scoutLevel = 0)
-            `when`(nationRepository.findByWorldId(1L)).thenReturn(listOf(nation1, nation2))
-            `when`(nationRepository.saveAll(anyNonNull<List<Nation>>())).thenReturn(listOf(nation1, nation2))
+            `when`(factionRepository.findBySessionId(1L)).thenReturn(listOf(nation1, nation2))
+            `when`(factionRepository.saveAll(anyNonNull<List<Faction>>())).thenReturn(listOf(nation1, nation2))
 
             service.blockScoutAction(createWorld())
 
@@ -196,8 +196,8 @@ class EventActionServiceTest {
             // PHP: foreach nation → scout = 0 (unblocked)
             val nation1 = createNation(id = 1, scoutLevel = 1)
             val nation2 = createNation(id = 2, scoutLevel = 1)
-            `when`(nationRepository.findByWorldId(1L)).thenReturn(listOf(nation1, nation2))
-            `when`(nationRepository.saveAll(anyNonNull<List<Nation>>())).thenReturn(listOf(nation1, nation2))
+            `when`(factionRepository.findBySessionId(1L)).thenReturn(listOf(nation1, nation2))
+            `when`(factionRepository.saveAll(anyNonNull<List<Faction>>())).thenReturn(listOf(nation1, nation2))
 
             service.unblockScoutAction(createWorld())
 
@@ -208,8 +208,8 @@ class EventActionServiceTest {
         @Test
         fun `blockScoutAction propagates blockChangeScout to world config`() {
             val world = createWorld()
-            `when`(nationRepository.findByWorldId(1L)).thenReturn(emptyList())
-            `when`(nationRepository.saveAll(anyNonNull<List<Nation>>())).thenReturn(emptyList())
+            `when`(factionRepository.findBySessionId(1L)).thenReturn(emptyList())
+            `when`(factionRepository.saveAll(anyNonNull<List<Faction>>())).thenReturn(emptyList())
 
             service.blockScoutAction(world, blockChangeScout = true)
 
@@ -219,8 +219,8 @@ class EventActionServiceTest {
         @Test
         fun `unblockScoutAction propagates blockChangeScout to world config`() {
             val world = createWorld()
-            `when`(nationRepository.findByWorldId(1L)).thenReturn(emptyList())
-            `when`(nationRepository.saveAll(anyNonNull<List<Nation>>())).thenReturn(emptyList())
+            `when`(factionRepository.findBySessionId(1L)).thenReturn(emptyList())
+            `when`(factionRepository.saveAll(anyNonNull<List<Faction>>())).thenReturn(emptyList())
 
             service.unblockScoutAction(world, blockChangeScout = false)
 
@@ -235,65 +235,65 @@ class EventActionServiceTest {
 
         @Test
         fun `applies trust absolute value to all cities when target is null`() {
-            // PHP: $actions['trust'] = 50 → city.trust = 50
+            // PHP: $actions['trust'] = 50 → city.approval = 50
             val city1 = createCity(id = 1, trust = 80f)
             val city2 = createCity(id = 2, trust = 60f)
-            `when`(cityRepository.findByWorldId(1L)).thenReturn(listOf(city1, city2))
-            `when`(cityRepository.saveAll(anyNonNull<List<City>>())).thenReturn(listOf(city1, city2))
+            `when`(planetRepository.findBySessionId(1L)).thenReturn(listOf(city1, city2))
+            `when`(planetRepository.saveAll(anyNonNull<List<Planet>>())).thenReturn(listOf(city1, city2))
 
             service.changeCity(createWorld(), null, mapOf("trust" to 50))
 
-            assertEquals(50f, city1.trust, 0.01f)
-            assertEquals(50f, city2.trust, 0.01f)
+            assertEquals(50f, city1.approval, 0.01f)
+            assertEquals(50f, city2.approval, 0.01f)
         }
 
         @Test
         fun `applies percentage expression to city trade`() {
             // PHP: trade = 100 (absolute value)
             val city = createCity(trade = 95)
-            `when`(cityRepository.findByWorldId(1L)).thenReturn(listOf(city))
-            `when`(cityRepository.saveAll(anyNonNull<List<City>>())).thenReturn(listOf(city))
+            `when`(planetRepository.findBySessionId(1L)).thenReturn(listOf(city))
+            `when`(planetRepository.saveAll(anyNonNull<List<Planet>>())).thenReturn(listOf(city))
 
             service.changeCity(createWorld(), null, mapOf("trade" to 102))
 
-            assertEquals(102, city.trade)
+            assertEquals(102, city.tradeRoute)
         }
 
         @Test
         fun `filters cities by free target`() {
             val freeCity = createCity(id = 1, nationId = 0)
             val occupiedCity = createCity(id = 2, nationId = 1)
-            `when`(cityRepository.findByWorldId(1L)).thenReturn(listOf(freeCity, occupiedCity))
-            `when`(cityRepository.saveAll(anyNonNull<List<City>>())).thenReturn(listOf(freeCity))
+            `when`(planetRepository.findBySessionId(1L)).thenReturn(listOf(freeCity, occupiedCity))
+            `when`(planetRepository.saveAll(anyNonNull<List<Planet>>())).thenReturn(listOf(freeCity))
 
             service.changeCity(createWorld(), "free", mapOf("trust" to 100))
 
-            assertEquals(100f, freeCity.trust, 0.01f)
+            assertEquals(100f, freeCity.approval, 0.01f)
             // occupied city should be unchanged
-            assertEquals(80f, occupiedCity.trust, 0.01f)
+            assertEquals(80f, occupiedCity.approval, 0.01f)
         }
 
         @Test
         fun `applies math expression with plus operator to city field`() {
             val city = createCity(agri = 400, agriMax = 1000)
-            `when`(cityRepository.findByWorldId(1L)).thenReturn(listOf(city))
-            `when`(cityRepository.saveAll(anyNonNull<List<City>>())).thenReturn(listOf(city))
+            `when`(planetRepository.findBySessionId(1L)).thenReturn(listOf(city))
+            `when`(planetRepository.saveAll(anyNonNull<List<Planet>>())).thenReturn(listOf(city))
 
             // "+100" should add 100 to current agri
             service.changeCity(createWorld(), null, mapOf("agri" to "+100"))
 
-            assertEquals(500, city.agri)
+            assertEquals(500, city.production)
         }
 
         @Test
         fun `clamps trust to 100 maximum`() {
             val city = createCity(trust = 90f)
-            `when`(cityRepository.findByWorldId(1L)).thenReturn(listOf(city))
-            `when`(cityRepository.saveAll(anyNonNull<List<City>>())).thenReturn(listOf(city))
+            `when`(planetRepository.findBySessionId(1L)).thenReturn(listOf(city))
+            `when`(planetRepository.saveAll(anyNonNull<List<Planet>>())).thenReturn(listOf(city))
 
             service.changeCity(createWorld(), null, mapOf("trust" to 200))
 
-            assertEquals(100f, city.trust, 0.01f)
+            assertEquals(100f, city.approval, 0.01f)
         }
     }
 
@@ -306,8 +306,8 @@ class EventActionServiceTest {
         fun `increments age for all generals`() {
             // PHP: foreach general → age++
             val gen = createGeneral(age = 25, nationId = 1)
-            `when`(generalRepository.findByWorldId(1L)).thenReturn(listOf(gen))
-            `when`(generalRepository.saveAll(anyNonNull<List<General>>())).thenReturn(listOf(gen))
+            `when`(officerRepository.findBySessionId(1L)).thenReturn(listOf(gen))
+            `when`(officerRepository.saveAll(anyNonNull<List<Officer>>())).thenReturn(listOf(gen))
 
             service.newYear(createWorld())
 
@@ -318,8 +318,8 @@ class EventActionServiceTest {
         fun `increments belong for generals in a nation`() {
             // PHP: foreach general where nation != 0 → belong++
             val gen = createGeneral(nationId = 1, belong = 10)
-            `when`(generalRepository.findByWorldId(1L)).thenReturn(listOf(gen))
-            `when`(generalRepository.saveAll(anyNonNull<List<General>>())).thenReturn(listOf(gen))
+            `when`(officerRepository.findBySessionId(1L)).thenReturn(listOf(gen))
+            `when`(officerRepository.saveAll(anyNonNull<List<Officer>>())).thenReturn(listOf(gen))
 
             service.newYear(createWorld())
 
@@ -330,8 +330,8 @@ class EventActionServiceTest {
         fun `does not increment belong for wandering generals`() {
             // PHP: only generals in a nation get belong++; nation==0 → wander
             val gen = createGeneral(nationId = 0, belong = 5)
-            `when`(generalRepository.findByWorldId(1L)).thenReturn(listOf(gen))
-            `when`(generalRepository.saveAll(anyNonNull<List<General>>())).thenReturn(listOf(gen))
+            `when`(officerRepository.findBySessionId(1L)).thenReturn(listOf(gen))
+            `when`(officerRepository.saveAll(anyNonNull<List<Officer>>())).thenReturn(listOf(gen))
 
             service.newYear(createWorld())
 
@@ -340,8 +340,8 @@ class EventActionServiceTest {
 
         @Test
         fun `logs history message with current year`() {
-            `when`(generalRepository.findByWorldId(1L)).thenReturn(emptyList())
-            `when`(generalRepository.saveAll(anyNonNull<List<General>>())).thenReturn(emptyList())
+            `when`(officerRepository.findBySessionId(1L)).thenReturn(emptyList())
+            `when`(officerRepository.saveAll(anyNonNull<List<Officer>>())).thenReturn(emptyList())
 
             service.newYear(createWorld(year = 220))
 
@@ -358,10 +358,10 @@ class EventActionServiceTest {
         fun `resets officerSet to 0 for all cities`() {
             // PHP: UPDATE city SET officer_set=0 (all cities)
             val city = createCity(officerSet = 1)
-            `when`(cityRepository.findByWorldId(1L)).thenReturn(listOf(city))
-            `when`(cityRepository.saveAll(anyNonNull<List<City>>())).thenReturn(listOf(city))
-            `when`(nationRepository.findByWorldId(1L)).thenReturn(emptyList())
-            `when`(nationRepository.saveAll(anyNonNull<List<Nation>>())).thenReturn(emptyList())
+            `when`(planetRepository.findBySessionId(1L)).thenReturn(listOf(city))
+            `when`(planetRepository.saveAll(anyNonNull<List<Planet>>())).thenReturn(listOf(city))
+            `when`(factionRepository.findBySessionId(1L)).thenReturn(emptyList())
+            `when`(factionRepository.saveAll(anyNonNull<List<Faction>>())).thenReturn(emptyList())
 
             service.resetOfficerLock(createWorld())
 
@@ -373,10 +373,10 @@ class EventActionServiceTest {
             // PHP: unset nation meta chiefSet
             val nation = createNation()
             nation.meta["chiefSet"] = true
-            `when`(nationRepository.findByWorldId(1L)).thenReturn(listOf(nation))
-            `when`(nationRepository.saveAll(anyNonNull<List<Nation>>())).thenReturn(listOf(nation))
-            `when`(cityRepository.findByWorldId(1L)).thenReturn(emptyList())
-            `when`(cityRepository.saveAll(anyNonNull<List<City>>())).thenReturn(emptyList())
+            `when`(factionRepository.findBySessionId(1L)).thenReturn(listOf(nation))
+            `when`(factionRepository.saveAll(anyNonNull<List<Faction>>())).thenReturn(listOf(nation))
+            `when`(planetRepository.findBySessionId(1L)).thenReturn(emptyList())
+            `when`(planetRepository.saveAll(anyNonNull<List<Planet>>())).thenReturn(emptyList())
 
             service.resetOfficerLock(createWorld())
 
@@ -393,15 +393,15 @@ class EventActionServiceTest {
         fun `converts dead troops back to population at 20 percent`() {
             // PHP: pop += dead * 0.2; dead = 0
             val city = createCity(nationId = 1, pop = 10000, dead = 500)
-            `when`(cityRepository.findByWorldId(anyLong())).thenReturn(listOf(city))
-            `when`(cityRepository.saveAll(anyNonNull<List<City>>())).thenReturn(listOf(city))
-            `when`(nationRepository.findByWorldId(anyLong())).thenReturn(emptyList())
-            `when`(nationRepository.saveAll(anyNonNull<List<Nation>>())).thenReturn(emptyList())
+            `when`(planetRepository.findBySessionId(anyLong())).thenReturn(listOf(city))
+            `when`(planetRepository.saveAll(anyNonNull<List<Planet>>())).thenReturn(listOf(city))
+            `when`(factionRepository.findBySessionId(anyLong())).thenReturn(emptyList())
+            `when`(factionRepository.saveAll(anyNonNull<List<Faction>>())).thenReturn(emptyList())
 
             service.processWarIncome(createWorld())
 
             // 500 dead * 0.2 = 100 returned as pop
-            assertEquals(10100, city.pop)
+            assertEquals(10100, city.population)
             assertEquals(0, city.dead)
         }
 
@@ -409,28 +409,28 @@ class EventActionServiceTest {
         fun `pop gain from dead capped at popMax`() {
             // dead=50000, pop=49900, popMax=50000 → gain=10000 but capped to 100
             val city = createCity(nationId = 1, pop = 49900, popMax = 50000, dead = 50000)
-            `when`(cityRepository.findByWorldId(anyLong())).thenReturn(listOf(city))
-            `when`(cityRepository.saveAll(anyNonNull<List<City>>())).thenReturn(listOf(city))
-            `when`(nationRepository.findByWorldId(anyLong())).thenReturn(emptyList())
-            `when`(nationRepository.saveAll(anyNonNull<List<Nation>>())).thenReturn(emptyList())
+            `when`(planetRepository.findBySessionId(anyLong())).thenReturn(listOf(city))
+            `when`(planetRepository.saveAll(anyNonNull<List<Planet>>())).thenReturn(listOf(city))
+            `when`(factionRepository.findBySessionId(anyLong())).thenReturn(emptyList())
+            `when`(factionRepository.saveAll(anyNonNull<List<Faction>>())).thenReturn(emptyList())
 
             service.processWarIncome(createWorld())
 
-            assertTrue(city.pop <= 50000, "pop should not exceed popMax")
+            assertTrue(city.population <= 50000, "pop should not exceed popMax")
             assertEquals(0, city.dead)
         }
 
         @Test
         fun `zero dead means no pop change`() {
             val city = createCity(pop = 10000, dead = 0)
-            `when`(cityRepository.findByWorldId(anyLong())).thenReturn(listOf(city))
-            `when`(cityRepository.saveAll(anyNonNull<List<City>>())).thenReturn(listOf(city))
-            `when`(nationRepository.findByWorldId(anyLong())).thenReturn(emptyList())
-            `when`(nationRepository.saveAll(anyNonNull<List<Nation>>())).thenReturn(emptyList())
+            `when`(planetRepository.findBySessionId(anyLong())).thenReturn(listOf(city))
+            `when`(planetRepository.saveAll(anyNonNull<List<Planet>>())).thenReturn(listOf(city))
+            `when`(factionRepository.findBySessionId(anyLong())).thenReturn(emptyList())
+            `when`(factionRepository.saveAll(anyNonNull<List<Faction>>())).thenReturn(emptyList())
 
             service.processWarIncome(createWorld())
 
-            assertEquals(10000, city.pop)
+            assertEquals(10000, city.population)
         }
     }
 
@@ -442,7 +442,7 @@ class EventActionServiceTest {
         @Test
         fun `deletes event when nation does not exist`() {
             // PHP: nation not found → delete event
-            `when`(nationRepository.findById(anyLong())).thenReturn(java.util.Optional.empty())
+            `when`(factionRepository.findById(anyLong())).thenReturn(java.util.Optional.empty())
 
             service.autoDeleteInvader(createWorld(), nationId = 99L, currentEventId = 42L)
 
@@ -453,8 +453,8 @@ class EventActionServiceTest {
         fun `does not delete event when nation still exists and at war`() {
             val nation = createNation(id = 1)
             nation.meta["atWar"] = true
-            `when`(nationRepository.findById(anyLong())).thenReturn(java.util.Optional.of(nation))
-            `when`(generalRepository.findByNationId(anyLong())).thenReturn(emptyList())
+            `when`(factionRepository.findById(anyLong())).thenReturn(java.util.Optional.of(nation))
+            `when`(officerRepository.findByFactionId(anyLong())).thenReturn(emptyList())
 
             service.autoDeleteInvader(createWorld(), nationId = 1L, currentEventId = 5L)
 
@@ -470,9 +470,9 @@ class EventActionServiceTest {
         @Test
         fun `creates a general with specified stats`() {
             // PHP: insert general with name, nationId, leadership, strength, intel
-            `when`(cityRepository.findByWorldId(1L)).thenReturn(emptyList())
+            `when`(planetRepository.findBySessionId(1L)).thenReturn(emptyList())
             val generalCaptor = ArgumentCaptor.forClass(General::class.java)
-            `when`(generalRepository.save(generalCaptor.capture())).thenAnswer { it.arguments[0] }
+            `when`(officerRepository.save(generalCaptor.capture())).thenAnswer { it.arguments[0] }
 
             val params = mapOf(
                 "name" to "테스트장수",
@@ -485,17 +485,17 @@ class EventActionServiceTest {
 
             val saved = generalCaptor.value
             assertEquals("테스트장수", saved.name)
-            assertEquals(2L, saved.nationId)
+            assertEquals(2L, saved.factionId)
             assertEquals(80.toShort(), saved.leadership)
-            assertEquals(70.toShort(), saved.strength)
-            assertEquals(60.toShort(), saved.intel)
+            assertEquals(70.toShort(), saved.command)
+            assertEquals(60.toShort(), saved.intelligence)
         }
 
         @Test
         fun `regNeutralNPC creates general with npcState 6`() {
-            `when`(cityRepository.findByWorldId(1L)).thenReturn(emptyList())
+            `when`(planetRepository.findBySessionId(1L)).thenReturn(emptyList())
             val generalCaptor = ArgumentCaptor.forClass(General::class.java)
-            `when`(generalRepository.save(generalCaptor.capture())).thenAnswer { it.arguments[0] }
+            `when`(officerRepository.save(generalCaptor.capture())).thenAnswer { it.arguments[0] }
 
             service.regNeutralNPC(createWorld(), mapOf("name" to "중립NPC"))
 
@@ -507,14 +507,14 @@ class EventActionServiceTest {
         fun `resolves city by name when cityId not specified`() {
             val city = createCity(id = 5L)
             city.name = "낙양"
-            `when`(cityRepository.findByWorldId(1L)).thenReturn(listOf(city))
+            `when`(planetRepository.findBySessionId(1L)).thenReturn(listOf(city))
             val generalCaptor = ArgumentCaptor.forClass(General::class.java)
-            `when`(generalRepository.save(generalCaptor.capture())).thenAnswer { it.arguments[0] }
+            `when`(officerRepository.save(generalCaptor.capture())).thenAnswer { it.arguments[0] }
 
             service.regNPC(createWorld(), mapOf("name" to "장수", "city" to "낙양"))
 
             val saved = generalCaptor.value
-            assertEquals(5L, saved.cityId)
+            assertEquals(5L, saved.planetId)
         }
     }
 
@@ -526,33 +526,33 @@ class EventActionServiceTest {
         @Test
         fun `does not affect generals with no items`() {
             val gen = createGeneral(npcState = 1, itemCode = "None")
-            `when`(generalRepository.findByWorldId(1L)).thenReturn(listOf(gen))
+            `when`(officerRepository.findBySessionId(1L)).thenReturn(listOf(gen))
 
             service.lostUniqueItem(createWorld(), lostProb = 1.0)
 
-            verify(generalRepository, never()).save(anyNonNull())
-            assertEquals("None", gen.itemCode)
+            verify(officerRepository, never()).save(anyNonNull())
+            assertEquals("None", gen.accessoryCode)
         }
 
         @Test
         fun `does not affect NPC generals (npcState gt 1)`() {
             val gen = createGeneral(npcState = 3, itemCode = "전국옥새")
-            `when`(generalRepository.findByWorldId(1L)).thenReturn(listOf(gen))
+            `when`(officerRepository.findBySessionId(1L)).thenReturn(listOf(gen))
 
             service.lostUniqueItem(createWorld(), lostProb = 1.0)
 
             // npcState=3 > 1 → skipped entirely
-            assertEquals("전국옥새", gen.itemCode)
+            assertEquals("전국옥새", gen.accessoryCode)
         }
 
         @Test
         fun `does not remove buyable items even at 100 percent probability`() {
             val gen = createGeneral(npcState = 0, itemCode = "숫돌")
-            `when`(generalRepository.findByWorldId(1L)).thenReturn(listOf(gen))
+            `when`(officerRepository.findBySessionId(1L)).thenReturn(listOf(gen))
 
             service.lostUniqueItem(createWorld(), lostProb = 1.0)
 
-            assertEquals("숫돌", gen.itemCode)
+            assertEquals("숫돌", gen.accessoryCode)
         }
     }
 
@@ -564,8 +564,8 @@ class EventActionServiceTest {
         @Test
         fun `deletes old merge entries and creates new ones per general`() {
             val gen = createGeneral(id = 1, leadership = 80, strength = 70, intel = 60, experience = 1000, dedication = 500)
-            `when`(generalRepository.findByWorldId(anyLong())).thenReturn(listOf(gen))
-            `when`(rankDataRepository.findByWorldIdAndCategory(anyLong(), anyString())).thenReturn(emptyList())
+            `when`(officerRepository.findBySessionId(anyLong())).thenReturn(listOf(gen))
+            `when`(rankDataRepository.findBySessionIdAndCategory(anyLong(), anyString())).thenReturn(emptyList())
             `when`(rankDataRepository.saveAll(anyNonNull<List<RankData>>())).thenReturn(emptyList())
 
             assertDoesNotThrow { service.mergeInheritPointRank(createWorld()) }
@@ -577,8 +577,8 @@ class EventActionServiceTest {
         @Test
         fun `calculates positive inheritance score from general stats`() {
             val gen = createGeneral(leadership = 80, strength = 70, intel = 60, experience = 2000, dedication = 1000)
-            `when`(generalRepository.findByWorldId(anyLong())).thenReturn(listOf(gen))
-            `when`(rankDataRepository.findByWorldIdAndCategory(anyLong(), anyString())).thenReturn(emptyList())
+            `when`(officerRepository.findBySessionId(anyLong())).thenReturn(listOf(gen))
+            `when`(rankDataRepository.findBySessionIdAndCategory(anyLong(), anyString())).thenReturn(emptyList())
             `when`(rankDataRepository.saveAll(anyNonNull<List<RankData>>())).thenReturn(emptyList())
 
             service.mergeInheritPointRank(createWorld())
@@ -596,11 +596,11 @@ class EventActionServiceTest {
         @Test
         fun `creates specified number of NPCs`() {
             val city = createCity(nationId = 0)
-            `when`(cityRepository.findByWorldId(1L)).thenReturn(listOf(city))
-            `when`(generalRepository.findByWorldId(1L)).thenReturn(emptyList())
-            val savedGenerals = mutableListOf<General>()
-            `when`(generalRepository.save(anyNonNull<General>())).thenAnswer {
-                val g = it.arguments[0] as General
+            `when`(planetRepository.findBySessionId(1L)).thenReturn(listOf(city))
+            `when`(officerRepository.findBySessionId(1L)).thenReturn(emptyList())
+            val savedGenerals = mutableListOf<Officer>()
+            `when`(officerRepository.save(anyNonNull<Officer>())).thenAnswer {
+                val g = it.arguments[0] as Officer
                 savedGenerals.add(g)
                 g
             }
@@ -612,21 +612,21 @@ class EventActionServiceTest {
 
         @Test
         fun `skips when npcCount and fillCnt are both zero`() {
-            `when`(cityRepository.findByWorldId(1L)).thenReturn(emptyList())
-            `when`(generalRepository.findByWorldId(1L)).thenReturn(emptyList())
+            `when`(planetRepository.findBySessionId(1L)).thenReturn(emptyList())
+            `when`(officerRepository.findBySessionId(1L)).thenReturn(emptyList())
 
             service.createManyNPC(createWorld(), npcCount = 0, fillCnt = 0)
 
-            verify(generalRepository, never()).save(anyNonNull())
+            verify(officerRepository, never()).save(anyNonNull())
         }
 
         @Test
         fun `created NPCs have npcState 3`() {
             val city = createCity(nationId = 0)
-            `when`(cityRepository.findByWorldId(1L)).thenReturn(listOf(city))
-            `when`(generalRepository.findByWorldId(1L)).thenReturn(emptyList())
+            `when`(planetRepository.findBySessionId(1L)).thenReturn(listOf(city))
+            `when`(officerRepository.findBySessionId(1L)).thenReturn(emptyList())
             val generalCaptor = ArgumentCaptor.forClass(General::class.java)
-            `when`(generalRepository.save(generalCaptor.capture())).thenAnswer { it.arguments[0] }
+            `when`(officerRepository.save(generalCaptor.capture())).thenAnswer { it.arguments[0] }
 
             service.createManyNPC(createWorld(), npcCount = 1, fillCnt = 0)
 
@@ -647,7 +647,7 @@ class EventActionServiceTest {
 
             assertDoesNotThrow { service.assignGeneralSpeciality(world) }
 
-            verify(generalRepository, never()).findByWorldId(anyLong())
+            verify(officerRepository, never()).findBySessionId(anyLong())
         }
 
         @Test
@@ -656,13 +656,13 @@ class EventActionServiceTest {
             val world = createWorld(year = 205)
             world.config["startYear"] = 200  // 205 >= 203
             val gen = createGeneral()
-            `when`(generalRepository.findByWorldId(anyLong())).thenReturn(listOf(gen))
-            `when`(generalRepository.saveAll(anyNonNull<List<General>>())).thenReturn(listOf(gen))
+            `when`(officerRepository.findBySessionId(anyLong())).thenReturn(listOf(gen))
+            `when`(officerRepository.saveAll(anyNonNull<List<Officer>>())).thenReturn(listOf(gen))
 
             // Just verify it runs without exception and calls the repository
             assertDoesNotThrow { service.assignGeneralSpeciality(world) }
 
-            verify(generalRepository).findByWorldId(1L)
+            verify(officerRepository).findBySessionId(1L)
         }
     }
 }

@@ -43,7 +43,7 @@ class che_숙련전환(general: Officer, env: CommandEnv, arg: Map<String, Any>?
             )
         }
 
-    override fun getCost() = CommandCost(gold = env.develCost, rice = env.develCost)
+    override fun getCost() = CommandCost(funds = env.develCost, supplies = env.develCost)
     override fun getPreReqTurn() = 0
     override fun getPostReqTurn() = 0
     override fun getDuration() = 300

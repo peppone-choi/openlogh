@@ -1,9 +1,9 @@
 package com.openlogh.command
 
-import com.openlogh.entity.City
-import com.openlogh.entity.General
-import com.openlogh.entity.Nation
-import com.openlogh.entity.WorldState
+import com.openlogh.entity.Planet
+import com.openlogh.entity.Officer
+import com.openlogh.entity.Faction
+import com.openlogh.entity.SessionState
 import com.openlogh.test.InMemoryTurnHarness
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -16,35 +16,35 @@ import java.time.OffsetDateTime
 class CommandExecutorTest {
 
     @Test
-    fun `executeGeneralCommand applies 요양 stat changes to general`() = runBlocking {
+    fun `executeOfficerCommand applies 요양 stat changes to general`() = runBlocking {
         val harness = InMemoryTurnHarness()
-        val world = WorldState(
+        val world = SessionState(
             id = 1,
             scenarioCode = "test",
             currentYear = 180,
             currentMonth = 1,
             tickSeconds = 300,
         )
-        val nation = Nation(
+        val nation = Faction(
             id = 1,
-            worldId = 1,
+            sessionId = 1,
             name = "테스트국가",
             color = "#FF0000",
-            level = 1,
+            factionRank = 1,
         )
-        val city = City(
+        val city = Planet(
             id = 1,
-            worldId = 1,
+            sessionId = 1,
             name = "테스트도시",
-            nationId = 1,
+            factionId = 1,
             supplyState = 1,
         )
-        val general = General(
+        val general = Officer(
             id = 1,
-            worldId = 1,
+            sessionId = 1,
             name = "테스트장수",
-            nationId = 1,
-            cityId = 1,
+            factionId = 1,
+            planetId = 1,
             injury = 25,
             experience = 100,
             dedication = 50,
@@ -54,15 +54,15 @@ class CommandExecutorTest {
             year = 180,
             month = 1,
             startYear = 180,
-            worldId = 1,
+            sessionId = 1,
         )
 
         harness.putWorld(world)
-        harness.putNation(nation)
-        harness.putCity(city)
-        harness.putGeneral(general)
+        harness.putFaction(nation)
+        harness.putPlanet(city)
+        harness.putOfficer(general)
 
-        val result = harness.commandExecutor.executeGeneralCommand(
+        val result = harness.commandExecutor.executeOfficerCommand(
             actionCode = "요양",
             general = general,
             env = env,
@@ -77,9 +77,9 @@ class CommandExecutorTest {
     }
 
     @Test
-    fun `executeGeneralCommand creates wandering nation on 거병 for unaffiliated general`() = runBlocking {
+    fun `executeOfficerCommand creates wandering nation on 거병 for unaffiliated general`() = runBlocking {
         val harness = InMemoryTurnHarness()
-        val world = WorldState(
+        val world = SessionState(
             id = 1,
             scenarioCode = "test",
             currentYear = 180,
@@ -87,20 +87,20 @@ class CommandExecutorTest {
             tickSeconds = 300,
             config = mutableMapOf("startyear" to 180),
         )
-        val city = City(
+        val city = Planet(
             id = 1,
-            worldId = 1,
+            sessionId = 1,
             name = "테스트도시",
             level = 5,
-            nationId = 0,
+            factionId = 0,
             supplyState = 1,
         )
-        val general = General(
+        val general = Officer(
             id = 1,
-            worldId = 1,
+            sessionId = 1,
             name = "테스트장수",
-            nationId = 0,
-            cityId = 1,
+            factionId = 0,
+            planetId = 1,
             officerLevel = 0,
             turnTime = OffsetDateTime.now(),
         )
@@ -108,14 +108,14 @@ class CommandExecutorTest {
             year = 180,
             month = 2,
             startYear = 180,
-            worldId = 1,
+            sessionId = 1,
         )
 
         harness.putWorld(world)
-        harness.putCity(city)
-        harness.putGeneral(general)
+        harness.putPlanet(city)
+        harness.putOfficer(general)
 
-        val result = harness.commandExecutor.executeGeneralCommand(
+        val result = harness.commandExecutor.executeOfficerCommand(
             actionCode = "거병",
             general = general,
             env = env,
@@ -124,19 +124,19 @@ class CommandExecutorTest {
         )
 
         assertTrue(result.success)
-        assertNotEquals(0L, general.nationId)
+        assertNotEquals(0L, general.factionId)
         assertEquals(20.toShort(), general.officerLevel)
 
-        val nations = harness.nationRepository.findByWorldId(1)
+        val nations = harness.factionRepository.findBySessionId(1)
         assertEquals(1, nations.size)
-        assertEquals(general.nationId, nations.first().id)
+        assertEquals(general.factionId, nations.first().id)
         assertEquals(0.toShort(), nations.first().level)
     }
 
     @Test
-    fun `executeGeneralCommand founds nation directly from unaffiliated general`() = runBlocking {
+    fun `executeOfficerCommand founds nation directly from unaffiliated general`() = runBlocking {
         val harness = InMemoryTurnHarness()
-        val world = WorldState(
+        val world = SessionState(
             id = 1,
             scenarioCode = "test",
             currentYear = 180,
@@ -144,20 +144,20 @@ class CommandExecutorTest {
             tickSeconds = 300,
             config = mutableMapOf("startyear" to 180),
         )
-        val city = City(
+        val city = Planet(
             id = 1,
-            worldId = 1,
+            sessionId = 1,
             name = "테스트도시",
             level = 5,
-            nationId = 0,
+            factionId = 0,
             supplyState = 1,
         )
-        val general = General(
+        val general = Officer(
             id = 1,
-            worldId = 1,
+            sessionId = 1,
             name = "테스트장수",
-            nationId = 0,
-            cityId = 1,
+            factionId = 0,
+            planetId = 1,
             officerLevel = 0,
             turnTime = OffsetDateTime.now(),
         )
@@ -165,19 +165,19 @@ class CommandExecutorTest {
             year = 180,
             month = 2,
             startYear = 180,
-            worldId = 1,
+            sessionId = 1,
         )
 
         harness.putWorld(world)
-        harness.putCity(city)
-        harness.putGeneral(general)
+        harness.putPlanet(city)
+        harness.putOfficer(general)
 
-        val result = harness.commandExecutor.executeGeneralCommand(
+        val result = harness.commandExecutor.executeOfficerCommand(
             actionCode = "건국",
             general = general,
             env = env,
             arg = mapOf(
-                "nationName" to "신국",
+                "factionName" to "신국",
                 "nationType" to "군벌",
                 "colorType" to 1,
             ),
@@ -186,21 +186,21 @@ class CommandExecutorTest {
         )
 
         assertTrue(result.success)
-        assertNotEquals(0L, general.nationId)
+        assertNotEquals(0L, general.factionId)
         assertEquals(20.toShort(), general.officerLevel)
-        assertEquals(general.nationId, city.nationId)
+        assertEquals(general.factionId, city.factionId)
 
-        val foundedNation = harness.nationRepository.findById(general.nationId).orElse(null)
+        val foundedNation = harness.factionRepository.findById(general.factionId).orElse(null)
         assertNotNull(foundedNation)
         assertEquals("신국", foundedNation!!.name)
         assertEquals(1.toShort(), foundedNation.level)
-        assertEquals("che_군벌", foundedNation.typeCode)
+        assertEquals("che_군벌", foundedNation.factionType)
     }
 
     @Test
-    fun `executeGeneralCommand random founding moves nation generals to random neutral city`() = runBlocking {
+    fun `executeOfficerCommand random founding moves nation generals to random neutral city`() = runBlocking {
         val harness = InMemoryTurnHarness()
-        val world = WorldState(
+        val world = SessionState(
             id = 1,
             scenarioCode = "test",
             currentYear = 180,
@@ -208,53 +208,53 @@ class CommandExecutorTest {
             tickSeconds = 300,
             config = mutableMapOf("startyear" to 180),
         )
-        val nation = Nation(
+        val nation = Faction(
             id = 10,
-            worldId = 1,
+            sessionId = 1,
             name = "방랑국",
-            level = 0,
-            gennum = 2,
-            chiefGeneralId = 1,
+            factionRank = 0,
+            officerCount = 2,
+            chiefOfficerId = 1,
         )
-        val currentCity = City(
+        val currentCity = Planet(
             id = 1,
-            worldId = 1,
+            sessionId = 1,
             name = "현재도시",
             level = 7,
-            nationId = 0,
+            factionId = 0,
             supplyState = 1,
         )
-        val candidateCityA = City(
+        val candidateCityA = Planet(
             id = 2,
-            worldId = 1,
+            sessionId = 1,
             name = "후보A",
             level = 5,
-            nationId = 0,
+            factionId = 0,
             supplyState = 1,
         )
-        val candidateCityB = City(
+        val candidateCityB = Planet(
             id = 3,
-            worldId = 1,
+            sessionId = 1,
             name = "후보B",
             level = 6,
-            nationId = 0,
+            factionId = 0,
             supplyState = 1,
         )
-        val general = General(
+        val general = Officer(
             id = 1,
-            worldId = 1,
+            sessionId = 1,
             name = "군주",
-            nationId = 10,
-            cityId = 1,
+            factionId = 10,
+            planetId = 1,
             officerLevel = 20,
             turnTime = OffsetDateTime.now(),
         )
-        val subordinate = General(
+        val subordinate = Officer(
             id = 2,
-            worldId = 1,
+            sessionId = 1,
             name = "부하",
-            nationId = 10,
-            cityId = 1,
+            factionId = 10,
+            planetId = 1,
             officerLevel = 2,
             turnTime = OffsetDateTime.now(),
         )
@@ -262,23 +262,23 @@ class CommandExecutorTest {
             year = 180,
             month = 2,
             startYear = 180,
-            worldId = 1,
+            sessionId = 1,
         )
 
         harness.putWorld(world)
-        harness.putNation(nation)
-        harness.putCity(currentCity)
-        harness.putCity(candidateCityA)
-        harness.putCity(candidateCityB)
-        harness.putGeneral(general)
-        harness.putGeneral(subordinate)
+        harness.putFaction(nation)
+        harness.putPlanet(currentCity)
+        harness.putPlanet(candidateCityA)
+        harness.putPlanet(candidateCityB)
+        harness.putOfficer(general)
+        harness.putOfficer(subordinate)
 
-        val result = harness.commandExecutor.executeGeneralCommand(
+        val result = harness.commandExecutor.executeOfficerCommand(
             actionCode = "무작위건국",
             general = general,
             env = env,
             arg = mapOf(
-                "nationName" to "신국",
+                "factionName" to "신국",
                 "nationType" to "군벌",
                 "colorType" to 1,
             ),
@@ -288,41 +288,41 @@ class CommandExecutorTest {
 
         assertTrue(result.success)
 
-        val movedCityId = general.cityId
+        val movedCityId = general.planetId
         assertTrue(movedCityId == 2L || movedCityId == 3L)
-        assertEquals(movedCityId, subordinate.cityId)
+        assertEquals(movedCityId, subordinate.planetId)
 
-        val updatedNation = harness.nationRepository.findById(10).orElseThrow()
-        assertEquals(movedCityId, updatedNation.capitalCityId)
+        val updatedNation = harness.factionRepository.findById(10).orElseThrow()
+        assertEquals(movedCityId, updatedNation.capitalPlanetId)
         assertEquals(1.toShort(), updatedNation.level)
 
-        val selectedCity = harness.cityRepository.findById(movedCityId).orElseThrow()
-        assertEquals(10L, selectedCity.nationId)
+        val selectedCity = harness.planetRepository.findById(movedCityId).orElseThrow()
+        assertEquals(10L, selectedCity.factionId)
     }
 
     @Test
     fun `cooldown failure log includes command name with color tag`() = runBlocking {
         val harness = InMemoryTurnHarness()
-        val world = WorldState(
+        val world = SessionState(
             id = 1, scenarioCode = "test", currentYear = 180, currentMonth = 1, tickSeconds = 300,
             config = mutableMapOf("startyear" to 180),
         )
-        val nation = Nation(id = 1, worldId = 1, name = "테스트국가", level = 1)
-        val city = City(id = 1, worldId = 1, name = "도시", nationId = 1, supplyState = 1)
-        val general = General(
-            id = 1, worldId = 1, name = "장수", nationId = 1, cityId = 1,
+        val nation = Faction(id = 1, sessionId = 1, name = "테스트국가", factionRank = 1)
+        val city = Planet(id = 1, sessionId = 1, name = "도시", factionId = 1, supplyState = 1)
+        val general = Officer(
+            id = 1, sessionId = 1, name = "장수", factionId = 1, planetId = 1,
             turnTime = OffsetDateTime.now(),
         ).apply {
             meta["next_execute"] = mutableMapOf<String, Any>("che_농지개간" to (180 * 12 + 5))
         }
-        val env = CommandEnv(year = 180, month = 1, startYear = 180, worldId = 1)
+        val env = CommandEnv(year = 180, month = 1, startYear = 180, sessionId = 1)
 
         harness.putWorld(world)
-        harness.putNation(nation)
-        harness.putCity(city)
-        harness.putGeneral(general)
+        harness.putFaction(nation)
+        harness.putPlanet(city)
+        harness.putOfficer(general)
 
-        val result = harness.commandExecutor.executeGeneralCommand(
+        val result = harness.commandExecutor.executeOfficerCommand(
             actionCode = "che_농지개간", general = general, env = env, city = city, nation = nation,
         )
 

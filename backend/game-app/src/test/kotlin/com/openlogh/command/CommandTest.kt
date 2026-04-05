@@ -2,9 +2,9 @@ package com.openlogh.command
 
 import com.openlogh.command.constraint.ConstraintResult
 import com.openlogh.command.general.*
-import com.openlogh.entity.City
-import com.openlogh.entity.General
-import com.openlogh.entity.Nation
+import com.openlogh.entity.Planet
+import com.openlogh.entity.Officer
+import com.openlogh.entity.Faction
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
@@ -32,26 +32,26 @@ class CommandTest {
         experience: Int = 0,
         dedication: Int = 0,
         betray: Short = 0,
-    ): General {
-        return General(
+    ): Officer {
+        return Officer(
             id = 1,
-            worldId = 1,
+            sessionId = 1,
             name = "테스트장수",
-            nationId = nationId,
-            cityId = cityId,
-            gold = gold,
-            rice = rice,
-            crew = crew,
-            crewType = crewType,
-            train = train,
-            atmos = atmos,
+            factionId = nationId,
+            planetId = cityId,
+            funds = gold,
+            supplies = rice,
+            ships = crew,
+            shipClass = crewType,
+            training = train,
+            morale = atmos,
             leadership = leadership,
-            strength = strength,
-            intel = intel,
+            command = strength,
+            intelligence = intel,
             politics = politics,
-            charm = charm,
+            administration = charm,
             officerLevel = officerLevel,
-            troopId = troopId,
+            fleetId = troopId,
             experience = experience,
             dedication = dedication,
             betray = betray,
@@ -76,25 +76,25 @@ class CommandTest {
         trust: Float = 80f,
         supplyState: Short = 1,
         frontState: Short = 0,
-    ): City {
-        return City(
+    ): Planet {
+        return Planet(
             id = 1,
-            worldId = 1,
+            sessionId = 1,
             name = "테스트도시",
-            nationId = nationId,
-            agri = agri,
-            agriMax = agriMax,
-            comm = comm,
-            commMax = commMax,
-            secu = secu,
-            secuMax = secuMax,
-            def = def,
-            defMax = defMax,
-            wall = wall,
-            wallMax = wallMax,
-            pop = pop,
-            popMax = popMax,
-            trust = trust,
+            factionId = nationId,
+            production = agri,
+            productionMax = agriMax,
+            commerce = comm,
+            commerceMax = commMax,
+            security = secu,
+            securityMax = secuMax,
+            orbitalDefense = def,
+            orbitalDefenseMax = defMax,
+            fortress = wall,
+            fortressMax = wallMax,
+            population = pop,
+            populationMax = popMax,
+            approval = trust,
             supplyState = supplyState,
             frontState = frontState,
         )
@@ -105,15 +105,15 @@ class CommandTest {
         level: Short = 1,
         gold: Int = 10000,
         rice: Int = 10000,
-    ): Nation {
-        return Nation(
+    ): Faction {
+        return Faction(
             id = id,
-            worldId = 1,
+            sessionId = 1,
             name = "테스트국가",
             color = "#FF0000",
-            gold = gold,
-            rice = rice,
-            level = level,
+            funds = gold,
+            supplies = rice,
+            factionRank = level,
         )
     }
 
@@ -125,7 +125,7 @@ class CommandTest {
         year = year,
         month = month,
         startYear = startYear,
-        worldId = 1,
+        sessionId = 1,
         realtimeMode = false,
     )
 
@@ -152,8 +152,8 @@ class CommandTest {
         val cmd = 휴식(general, env)
         val cost = cmd.getCost()
 
-        assertEquals(0, cost.gold)
-        assertEquals(0, cost.rice)
+        assertEquals(0, cost.funds)
+        assertEquals(0, cost.supplies)
     }
 
     @Test
@@ -245,12 +245,12 @@ class CommandTest {
     @Test
     fun `농지개간 cost should use env develCost`() {
         val general = createTestGeneral()
-        val env = CommandEnv(year = 200, month = 1, startYear = 190, worldId = 1, develCost = 150)
+        val env = CommandEnv(year = 200, month = 1, startYear = 190, sessionId = 1, develCost = 150)
         val cmd = che_농지개간(general, env)
         val cost = cmd.getCost()
 
-        assertEquals(150, cost.gold)
-        assertEquals(0, cost.rice)
+        assertEquals(150, cost.funds)
+        assertEquals(0, cost.supplies)
     }
 
     @Test
@@ -350,7 +350,7 @@ class CommandTest {
         val cost = cmd.getCost()
         // maxCrew should be min(99999, max(0, 10*100 - 0)) = 1000
         // baseCost = 1000/10 = 100, gold = 100*2 = 200
-        assertEquals(200, cost.gold)
+        assertEquals(200, cost.funds)
     }
 
     @Test
@@ -364,7 +364,7 @@ class CommandTest {
 
         // maxCrew = min(500, max(0, 50*100 - 2000)) = min(500, 3000) = 500
         val cost = cmd.getCost()
-        assertEquals(100, cost.gold) // 500/10 * 2 = 100
+        assertEquals(100, cost.funds) // 500/10 * 2 = 100
     }
 
     @Test
@@ -447,7 +447,7 @@ class CommandTest {
         val general = createTestGeneral(nationId = 1, officerLevel = 20, cityId = 5)
         val env = createTestEnv(year = 190, month = 2, startYear = 190)
         val city = createTestCity()
-        val cmd = 건국(general, env, mapOf("nationName" to "신한", "nationType" to "군벌"))
+        val cmd = 건국(general, env, mapOf("factionName" to "신한", "nationType" to "군벌"))
         cmd.city = city
 
         val result = runBlocking { cmd.run(fixedRng) }

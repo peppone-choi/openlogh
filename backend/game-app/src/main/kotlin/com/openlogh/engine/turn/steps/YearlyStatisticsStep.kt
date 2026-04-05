@@ -32,7 +32,7 @@ class YearlyStatisticsStep(
     override fun execute(context: TurnContext) {
         economyService.processYearlyStatistics(context.world)
 
-        val ports = worldPortFactory.create(context.sessionId)
+        val ports = worldPortFactory.create(context.worldId)
         val generals = ports.allOfficers().map { it.toEntity() }
         accrueYearlyInheritancePoints(generals)
         generals.forEach { ports.putOfficer(it.toSnapshot()) }

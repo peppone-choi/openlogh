@@ -143,7 +143,7 @@ class ScenarioService(
             Planet(
                 sessionId = worldId,
                 name = mc.name,
-                mapCityId = mc.id,
+                mapPlanetId = mc.id,
                 level = mc.level.toShort(),
                 population = init.pop,
                 populationMax = mc.population,
@@ -350,7 +350,7 @@ class ScenarioService(
             Planet(
                 sessionId = worldId,
                 name = mc.name,
-                mapCityId = mc.id,
+                mapPlanetId = mc.id,
                 level = mc.level.toShort(),
                 population = init.pop,
                 populationMax = mc.population,
@@ -570,18 +570,18 @@ class ScenarioService(
         "한나라" to "한", "헌제" to "헌", "소제" to "소", "영제" to "영",
     )
 
-    private fun deriveAbbreviation(nationName: String): String {
-        SPECIAL_ABBR[nationName]?.let { return it }
-        val twoChar = nationName.take(2)
+    private fun deriveAbbreviation(factionName: String): String {
+        SPECIAL_ABBR[factionName]?.let { return it }
+        val twoChar = factionName.take(2)
         if (twoChar in TWO_CHAR_SURNAMES) return twoChar
-        return nationName.take(1)
+        return factionName.take(1)
     }
 
     private fun parseFaction(row: List<Any>, worldId: Long): Faction {
         val typeRaw = row[6].toString()
         val typeCode = if (typeRaw.contains("_")) typeRaw else "che_$typeRaw"
         val description = row.getOrNull(4)?.toString() ?: ""
-        val nationName = row[0] as String
+        val factionName = row[0] as String
         val explicitAbbr = row.getOrNull(9)?.toString()?.takeIf { it.isNotBlank() && it != "null" }
         val specialKey = row.getOrNull(10)?.toString()?.takeIf { it.isNotBlank() && it != "null" }
         
@@ -595,8 +595,8 @@ class ScenarioService(
         
         return Faction(
             sessionId = worldId,
-            name = nationName,
-            abbreviation = explicitAbbr ?: deriveAbbreviation(nationName),
+            name = factionName,
+            abbreviation = explicitAbbr ?: deriveAbbreviation(factionName),
             color = row[1] as String,
             funds = (row[2] as Number).toInt(), supplies = (row[3] as Number).toInt(),
             taxRate = 100,
@@ -751,8 +751,8 @@ class ScenarioService(
         val nationByName = factionRepository.findBySessionId(worldId).associateBy { it.name }
         val nationIdxToDbId = mutableMapOf<Int, Long>()
         for ((idx, nationRow) in scenario.nation.withIndex()) {
-            val nationName = nationRow.getOrNull(0) as? String ?: continue
-            val nationId = nationByName[nationName]?.id ?: continue
+            val factionName = nationRow.getOrNull(0) as? String ?: continue
+            val nationId = nationByName[factionName]?.id ?: continue
             nationIdxToDbId[idx + 1] = nationId
         }
         val nationCityIds = allCities

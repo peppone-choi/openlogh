@@ -1,7 +1,7 @@
 package com.openlogh.service
 
-import com.openlogh.entity.General
-import com.openlogh.repository.GeneralRepository
+import com.openlogh.entity.Officer
+import com.openlogh.repository.OfficerRepository
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -16,13 +16,13 @@ import java.time.OffsetDateTime
 
 class PermissionServiceTest {
 
-    private lateinit var generalRepository: GeneralRepository
+    private lateinit var officerRepository: OfficerRepository
     private lateinit var service: PermissionService
 
     @BeforeEach
     fun setUp() {
-        generalRepository = mock(GeneralRepository::class.java)
-        service = PermissionService(generalRepository)
+        officerRepository = mock(OfficerRepository::class.java)
+        service = PermissionService(officerRepository)
     }
 
     private fun general(
@@ -31,14 +31,14 @@ class PermissionServiceTest {
         nationId: Long = 1,
         officerLevel: Short = 1,
         permission: String = "normal",
-    ): General {
-        return General(
+    ): Officer {
+        return Officer(
             id = id,
-            worldId = 1,
+            sessionId = 1,
             userId = userId,
             name = "장수$id",
-            nationId = nationId,
-            cityId = 1,
+            factionId = nationId,
+            planetId = 1,
             officerLevel = officerLevel,
             permission = permission,
             turnTime = OffsetDateTime.now(),
@@ -55,8 +55,8 @@ class PermissionServiceTest {
         val existingAuditor = general(id = 4, nationId = 1, permission = "auditor")
         val ruler = general(id = 5, nationId = 1, officerLevel = 20)
 
-        `when`(generalRepository.findByUserId(10L)).thenReturn(listOf(leader))
-        `when`(generalRepository.findByNationId(1L)).thenReturn(listOf(leader, eligible, noChief, existingAuditor, ruler))
+        `when`(officerRepository.findByUserId(10L)).thenReturn(listOf(leader))
+        `when`(officerRepository.findByFactionId(1L)).thenReturn(listOf(leader, eligible, noChief, existingAuditor, ruler))
 
         val result = service.setPermission(
             userId = 10,
@@ -71,8 +71,8 @@ class PermissionServiceTest {
         assertEquals("normal", noChief.permission)
         assertEquals("auditor", existingAuditor.permission)
         assertEquals("normal", ruler.permission)
-        verify(generalRepository).save(eligible)
-        verify(generalRepository, times(2)).save(existingAuditor)
+        verify(officerRepository).save(eligible)
+        verify(officerRepository, times(2)).save(existingAuditor)
     }
 
     @Test
@@ -80,8 +80,8 @@ class PermissionServiceTest {
         val leader = general(id = 1, userId = 10, nationId = 1, officerLevel = 20)
         val ambassador = general(id = 2, nationId = 1, permission = "ambassador")
 
-        `when`(generalRepository.findByUserId(10L)).thenReturn(listOf(leader))
-        `when`(generalRepository.findByNationId(1L)).thenReturn(listOf(leader, ambassador))
+        `when`(officerRepository.findByUserId(10L)).thenReturn(listOf(leader))
+        `when`(officerRepository.findByFactionId(1L)).thenReturn(listOf(leader, ambassador))
 
         val result = service.setPermission(
             userId = 10,
@@ -92,14 +92,14 @@ class PermissionServiceTest {
 
         assertTrue(result.result)
         assertEquals("normal", ambassador.permission)
-        verify(generalRepository).save(ambassador)
+        verify(officerRepository).save(ambassador)
     }
 
     @Test
     fun `setPermission rejects more than two ambassadors`() {
         val leader = general(id = 1, userId = 10, nationId = 1, officerLevel = 20)
 
-        `when`(generalRepository.findByUserId(10L)).thenReturn(listOf(leader))
+        `when`(officerRepository.findByUserId(10L)).thenReturn(listOf(leader))
 
         val result = service.setPermission(
             userId = 10,
@@ -110,6 +110,6 @@ class PermissionServiceTest {
 
         assertFalse(result.result)
         assertEquals("외교권자는 최대 둘까지만 설정 가능합니다.", result.reason)
-        verify(generalRepository, never()).findByNationId(1L)
+        verify(officerRepository, never()).findByFactionId(1L)
     }
 }

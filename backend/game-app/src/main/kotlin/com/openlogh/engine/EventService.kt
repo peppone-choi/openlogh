@@ -99,15 +99,15 @@ class EventService @Autowired constructor(
             "remain_nation" -> {
                 val count = (condition["count"] as? Number)?.toInt() ?: return false
                 val op = (condition["operator"] as? String) ?: "<="
-                val nationCount = worldPortFactory.create(world.id.toLong()).allFactions().size
+                val factionCount = worldPortFactory.create(world.id.toLong()).allFactions().size
                 when (op) {
-                    "==" -> nationCount == count
-                    "<=" -> nationCount <= count
-                    ">=" -> nationCount >= count
-                    "<" -> nationCount < count
-                    ">" -> nationCount > count
-                    "!=" -> nationCount != count
-                    else -> nationCount <= count
+                    "==" -> factionCount == count
+                    "<=" -> factionCount <= count
+                    ">=" -> factionCount >= count
+                    "<" -> factionCount < count
+                    ">" -> factionCount > count
+                    "!=" -> factionCount != count
+                    else -> factionCount <= count
                 }
             }
 

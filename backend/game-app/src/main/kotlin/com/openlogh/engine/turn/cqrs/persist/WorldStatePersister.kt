@@ -74,7 +74,7 @@ class WorldStatePersister(
                     entity.experience = snapshot.experience
                     entity.dedication = snapshot.dedication
                     entity.officerLevel = snapshot.officerLevel
-                    entity.officerCity = snapshot.officerCity
+                    entity.officerPlanet = snapshot.officerPlanet
                     entity.permission = snapshot.permission
                     entity.funds = snapshot.funds
                     entity.supplies = snapshot.supplies

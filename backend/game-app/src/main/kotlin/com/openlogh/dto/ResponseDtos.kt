@@ -37,7 +37,7 @@ data class GeneralResponse(
     val experience: Int,
     val dedication: Int,
     val officerLevel: Short,
-    val officerCity: Int,
+    val officerPlanet: Int,
     val permission: String,
     val gold: Int,
     val rice: Int,
@@ -116,7 +116,7 @@ data class GeneralResponse(
             experience = e.experience,
             dedication = e.dedication,
             officerLevel = e.officerLevel,
-            officerCity = e.officerCity,
+            officerPlanet = e.officerPlanet,
             permission = e.permission,
             gold = e.funds,
             rice = e.supplies,
@@ -200,18 +200,18 @@ data class NationResponse(
             capitalCityId = e.capitalPlanetId,
             gold = e.funds,
             rice = e.supplies,
-            bill = e.bill,
-            rate = e.rate,
-            rateTmp = e.rateTmp,
+            bill = e.taxRate,
+            rate = e.conscriptionRate,
+            rateTmp = e.conscriptionRateTmp,
             secretLimit = e.secretLimit,
             chiefGeneralId = e.chiefOfficerId,
             scoutLevel = e.scoutLevel,
             warState = e.warState,
             strategicCmdLimit = e.strategicCmdLimit,
             surrenderLimit = e.surrenderLimit,
-            tech = e.tech,
-            power = e.power,
-            level = e.level,
+            tech = e.techLevel,
+            power = e.militaryPower,
+            level = e.factionRank,
             typeCode = e.factionType,
             spy = e.spy,
             meta = e.meta,
@@ -334,7 +334,7 @@ data class TroopResponse(
         fun from(e: Fleet) = TroopResponse(
             id = e.id,
             worldId = e.sessionId,
-            leaderGeneralId = e.leaderGeneralId,
+            leaderGeneralId = e.leaderOfficerId,
             nationId = e.factionId,
             name = e.name,
             meta = e.meta,
@@ -384,10 +384,10 @@ data class GeneralTurnResponse(
     val createdAt: OffsetDateTime,
 ) {
     companion object {
-        fun from(e: GeneralTurn) = GeneralTurnResponse(
+        fun from(e: OfficerTurn) = GeneralTurnResponse(
             id = e.id,
             worldId = e.sessionId,
-            generalId = e.generalId,
+            generalId = e.officerId,
             turnIdx = e.turnIdx,
             actionCode = e.actionCode,
             arg = e.arg,
@@ -409,7 +409,7 @@ data class NationTurnResponse(
     val createdAt: OffsetDateTime,
 ) {
     companion object {
-        fun from(e: NationTurn) = NationTurnResponse(
+        fun from(e: FactionTurn) = NationTurnResponse(
             id = e.id,
             worldId = e.sessionId,
             nationId = e.factionId,

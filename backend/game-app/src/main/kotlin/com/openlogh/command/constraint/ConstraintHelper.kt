@@ -612,11 +612,11 @@ fun AllowJoinDestNation(relYear: Int) = object : Constraint {
     }
 }
 
-fun CheckNationNameDuplicate(nationName: String) = object : Constraint {
+fun CheckNationNameDuplicate(factionName: String) = object : Constraint {
     override val name = "CheckNationNameDuplicate"
     override fun test(ctx: ConstraintContext): ConstraintResult {
         val existingNames = readStringSet(ctx.env["existingNationNames"])
-        return if (nationName !in existingNames) ConstraintResult.Pass
+        return if (factionName !in existingNames) ConstraintResult.Pass
         else ConstraintResult.Fail("이미 같은 이름의 국가가 존재합니다.")
     }
 }

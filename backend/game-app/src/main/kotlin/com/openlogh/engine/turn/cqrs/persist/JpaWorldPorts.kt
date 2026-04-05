@@ -240,7 +240,7 @@ class JpaWorldPorts(
         experience = snapshot.experience
         dedication = snapshot.dedication
         officerLevel = snapshot.officerLevel
-        officerCity = snapshot.officerCity
+        officerPlanet = snapshot.officerPlanet
         permission = snapshot.permission
         funds = snapshot.funds
         supplies = snapshot.supplies
@@ -291,7 +291,7 @@ class JpaWorldPorts(
         id = snapshot.id
         sessionId = snapshot.sessionId
         name = snapshot.name
-        mapCityId = snapshot.mapCityId
+        mapPlanetId = snapshot.mapPlanetId
         level = snapshot.level
         factionId = snapshot.factionId
         supplyState = snapshot.supplyState

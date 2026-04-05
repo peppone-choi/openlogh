@@ -3,14 +3,14 @@ package com.openlogh.engine
 import com.openlogh.engine.turn.cqrs.persist.JpaWorldPortFactory
 import com.openlogh.engine.turn.cqrs.persist.toEntity
 import com.openlogh.engine.turn.cqrs.persist.toSnapshot
-import com.openlogh.entity.City
-import com.openlogh.entity.General
-import com.openlogh.entity.Nation
-import com.openlogh.entity.WorldState
-import com.openlogh.repository.CityRepository
-import com.openlogh.repository.GeneralRepository
+import com.openlogh.entity.Planet
+import com.openlogh.entity.Officer
+import com.openlogh.entity.Faction
+import com.openlogh.entity.SessionState
+import com.openlogh.repository.PlanetRepository
+import com.openlogh.repository.OfficerRepository
 import com.openlogh.repository.MessageRepository
-import com.openlogh.repository.NationRepository
+import com.openlogh.repository.FactionRepository
 import com.openlogh.service.HistoryService
 import com.openlogh.service.InheritanceService
 import com.openlogh.service.MapService
@@ -36,23 +36,23 @@ import org.mockito.Mockito.`when`
 class NumericParityGoldenTest {
 
     private lateinit var service: EconomyService
-    private lateinit var cityRepository: CityRepository
-    private lateinit var nationRepository: NationRepository
-    private lateinit var generalRepository: GeneralRepository
+    private lateinit var planetRepository: PlanetRepository
+    private lateinit var factionRepository: FactionRepository
+    private lateinit var officerRepository: OfficerRepository
     private lateinit var mapService: MapService
 
-    private val cities = linkedMapOf<Long, City>()
-    private val nations = linkedMapOf<Long, Nation>()
-    private val generals = linkedMapOf<Long, General>()
+    private val cities = linkedMapOf<Long, Planet>()
+    private val nations = linkedMapOf<Long, Faction>()
+    private val generals = linkedMapOf<Long, Officer>()
 
     @BeforeEach
     fun setUp() {
-        cityRepository = mock(CityRepository::class.java)
-        nationRepository = mock(NationRepository::class.java)
-        generalRepository = mock(GeneralRepository::class.java)
+        planetRepository = mock(PlanetRepository::class.java)
+        factionRepository = mock(FactionRepository::class.java)
+        officerRepository = mock(OfficerRepository::class.java)
         mapService = mock(MapService::class.java)
         service = EconomyService(
-            cityRepository, nationRepository, generalRepository,
+            planetRepository, factionRepository, officerRepository,
             mock(MessageRepository::class.java), mapService,
             mock(HistoryService::class.java), mock(InheritanceService::class.java),
         )
@@ -62,32 +62,32 @@ class NumericParityGoldenTest {
     }
 
     private fun wireRepos() {
-        `when`(cityRepository.findByWorldId(ArgumentMatchers.anyLong())).thenAnswer { inv ->
+        `when`(planetRepository.findBySessionId(ArgumentMatchers.anyLong())).thenAnswer { inv ->
             val worldId = inv.arguments[0] as Long
-            cities.values.filter { it.worldId == worldId }.map { it.toSnapshot().toEntity() }
+            cities.values.filter { it.sessionId == worldId }.map { it.toSnapshot().toEntity() }
         }
-        `when`(nationRepository.findByWorldId(ArgumentMatchers.anyLong())).thenAnswer { inv ->
+        `when`(factionRepository.findBySessionId(ArgumentMatchers.anyLong())).thenAnswer { inv ->
             val worldId = inv.arguments[0] as Long
-            nations.values.filter { it.worldId == worldId }.map { it.toSnapshot().toEntity() }
+            nations.values.filter { it.sessionId == worldId }.map { it.toSnapshot().toEntity() }
         }
-        `when`(generalRepository.findByWorldId(ArgumentMatchers.anyLong())).thenAnswer { inv ->
+        `when`(officerRepository.findBySessionId(ArgumentMatchers.anyLong())).thenAnswer { inv ->
             val worldId = inv.arguments[0] as Long
-            generals.values.filter { it.worldId == worldId }.map { it.toSnapshot().toEntity() }
+            generals.values.filter { it.sessionId == worldId }.map { it.toSnapshot().toEntity() }
         }
-        `when`(generalRepository.findByWorldIdAndCityIdIn(ArgumentMatchers.anyLong(), ArgumentMatchers.anyList()))
+        `when`(officerRepository.findBySessionIdAndPlanetIdIn(ArgumentMatchers.anyLong(), ArgumentMatchers.anyList()))
             .thenReturn(emptyList())
-        `when`(cityRepository.save(ArgumentMatchers.any(City::class.java))).thenAnswer { inv ->
-            val city = inv.arguments[0] as City
+        `when`(planetRepository.save(ArgumentMatchers.any(City::class.java))).thenAnswer { inv ->
+            val city = inv.arguments[0] as Planet
             cities[city.id] = city.toSnapshot().toEntity()
             city
         }
-        `when`(nationRepository.save(ArgumentMatchers.any(Nation::class.java))).thenAnswer { inv ->
-            val nation = inv.arguments[0] as Nation
+        `when`(factionRepository.save(ArgumentMatchers.any(Nation::class.java))).thenAnswer { inv ->
+            val nation = inv.arguments[0] as Faction
             nations[nation.id] = nation.toSnapshot().toEntity()
             nation
         }
-        `when`(generalRepository.save(ArgumentMatchers.any(General::class.java))).thenAnswer { inv ->
-            val general = inv.arguments[0] as General
+        `when`(officerRepository.save(ArgumentMatchers.any(General::class.java))).thenAnswer { inv ->
+            val general = inv.arguments[0] as Officer
             generals[general.id] = general.toSnapshot().toEntity()
             general
         }
@@ -96,91 +96,91 @@ class NumericParityGoldenTest {
     private fun seedFixture() {
         cities.clear(); nations.clear(); generals.clear()
 
-        val cityWei = City(
-            id = 1, worldId = 1, name = "허창", mapCityId = 1,
-            nationId = 1, supplyState = 1, frontState = 0,
-            pop = 10000, popMax = 50000,
-            agri = 500, agriMax = 1000,
-            comm = 500, commMax = 1000,
-            secu = 500, secuMax = 1000,
-            trust = 80f,
-            def = 300, defMax = 1000,
-            wall = 500, wallMax = 1000,
-            level = 5, trade = 100,
+        val cityWei = Planet(
+            id = 1, sessionId = 1, name = "허창", mapPlanetId = 1,
+            factionId = 1, supplyState = 1, frontState = 0,
+            population = 10000, populationMax = 50000,
+            production = 500, productionMax = 1000,
+            commerce = 500, commerceMax = 1000,
+            security = 500, securityMax = 1000,
+            approval = 80f,
+            orbitalDefense = 300, orbitalDefenseMax = 1000,
+            fortress = 500, fortressMax = 1000,
+            level = 5, tradeRoute = 100,
         )
-        val cityShu = City(
-            id = 2, worldId = 1, name = "성도", mapCityId = 2,
-            nationId = 2, supplyState = 1, frontState = 0,
-            pop = 10000, popMax = 50000,
-            agri = 500, agriMax = 1000,
-            comm = 500, commMax = 1000,
-            secu = 500, secuMax = 1000,
-            trust = 80f,
-            def = 300, defMax = 1000,
-            wall = 500, wallMax = 1000,
-            level = 5, trade = 100,
+        val cityShu = Planet(
+            id = 2, sessionId = 1, name = "성도", mapPlanetId = 2,
+            factionId = 2, supplyState = 1, frontState = 0,
+            population = 10000, populationMax = 50000,
+            production = 500, productionMax = 1000,
+            commerce = 500, commerceMax = 1000,
+            security = 500, securityMax = 1000,
+            approval = 80f,
+            orbitalDefense = 300, orbitalDefenseMax = 1000,
+            fortress = 500, fortressMax = 1000,
+            level = 5, tradeRoute = 100,
         )
-        val cityNeutral = City(
-            id = 3, worldId = 1, name = "중립도시", mapCityId = 3,
-            nationId = 0, supplyState = 1, frontState = 0,
-            pop = 10000, popMax = 50000,
-            agri = 500, agriMax = 1000,
-            comm = 500, commMax = 1000,
-            secu = 500, secuMax = 1000,
-            trust = 80f,
-            def = 300, defMax = 1000,
-            wall = 500, wallMax = 1000,
-            level = 5, trade = 100,
-        )
-
-        val nationWei = Nation(
-            id = 1, worldId = 1, name = "위", color = "#FF0000",
-            gold = 10000, rice = 10000, level = 3,
-            bill = 100, rateTmp = 15, rate = 15,
-            capitalCityId = 1,
-        )
-        val nationShu = Nation(
-            id = 2, worldId = 1, name = "촉", color = "#00FF00",
-            gold = 10000, rice = 10000, level = 3,
-            bill = 100, rateTmp = 15, rate = 15,
-            capitalCityId = 2,
+        val cityNeutral = Planet(
+            id = 3, sessionId = 1, name = "중립도시", mapPlanetId = 3,
+            factionId = 0, supplyState = 1, frontState = 0,
+            population = 10000, populationMax = 50000,
+            production = 500, productionMax = 1000,
+            commerce = 500, commerceMax = 1000,
+            security = 500, securityMax = 1000,
+            approval = 80f,
+            orbitalDefense = 300, orbitalDefenseMax = 1000,
+            fortress = 500, fortressMax = 1000,
+            level = 5, tradeRoute = 100,
         )
 
-        val g1 = General(
-            id = 1, worldId = 1, name = "조조",
-            nationId = 1, cityId = 1,
-            leadership = 80, strength = 70, intel = 90,
-            politics = 60, charm = 60,
-            crew = 200, crewType = 0, train = 60, atmos = 70,
-            gold = 500, rice = 500, npcState = 0,
-            dedication = 1000, officerLevel = 1, officerCity = 0,
+        val nationWei = Faction(
+            id = 1, sessionId = 1, name = "위", color = "#FF0000",
+            funds = 10000, supplies = 10000, factionRank = 3,
+            taxRate = 100, conscriptionRateTmp = 15, conscriptionRate = 15,
+            capitalPlanetId = 1,
         )
-        val g2 = General(
-            id = 2, worldId = 1, name = "하후돈",
-            nationId = 1, cityId = 1,
-            leadership = 60, strength = 85, intel = 50,
-            politics = 40, charm = 45,
-            crew = 300, crewType = 0, train = 40, atmos = 65,
-            gold = 500, rice = 500, npcState = 0,
-            dedication = 800, officerLevel = 1, officerCity = 0,
+        val nationShu = Faction(
+            id = 2, sessionId = 1, name = "촉", color = "#00FF00",
+            funds = 10000, supplies = 10000, factionRank = 3,
+            taxRate = 100, conscriptionRateTmp = 15, conscriptionRate = 15,
+            capitalPlanetId = 2,
         )
-        val g3 = General(
-            id = 3, worldId = 1, name = "유비",
-            nationId = 2, cityId = 2,
-            leadership = 75, strength = 65, intel = 70,
-            politics = 70, charm = 85,
-            crew = 250, crewType = 0, train = 55, atmos = 75,
-            gold = 500, rice = 500, npcState = 0,
-            dedication = 1200, officerLevel = 1, officerCity = 0,
+
+        val g1 = Officer(
+            id = 1, sessionId = 1, name = "조조",
+            factionId = 1, planetId = 1,
+            leadership = 80, command = 70, intelligence = 90,
+            politics = 60, administration = 60,
+            ships = 200, shipClass = 0, training = 60, morale = 70,
+            funds = 500, supplies = 500, npcState = 0,
+            dedication = 1000, officerLevel = 1, officerPlanet = 0,
         )
-        val g4 = General(
-            id = 4, worldId = 1, name = "관우",
-            nationId = 2, cityId = 2,
-            leadership = 50, strength = 95, intel = 60,
-            politics = 45, charm = 70,
-            crew = 400, crewType = 0, train = 30, atmos = 60,
-            gold = 500, rice = 500, npcState = 0,
-            dedication = 600, officerLevel = 1, officerCity = 0,
+        val g2 = Officer(
+            id = 2, sessionId = 1, name = "하후돈",
+            factionId = 1, planetId = 1,
+            leadership = 60, command = 85, intelligence = 50,
+            politics = 40, administration = 45,
+            ships = 300, shipClass = 0, training = 40, morale = 65,
+            funds = 500, supplies = 500, npcState = 0,
+            dedication = 800, officerLevel = 1, officerPlanet = 0,
+        )
+        val g3 = Officer(
+            id = 3, sessionId = 1, name = "유비",
+            factionId = 2, planetId = 2,
+            leadership = 75, command = 65, intelligence = 70,
+            politics = 70, administration = 85,
+            ships = 250, shipClass = 0, training = 55, morale = 75,
+            funds = 500, supplies = 500, npcState = 0,
+            dedication = 1200, officerLevel = 1, officerPlanet = 0,
+        )
+        val g4 = Officer(
+            id = 4, sessionId = 1, name = "관우",
+            factionId = 2, planetId = 2,
+            leadership = 50, command = 95, intelligence = 60,
+            politics = 45, administration = 70,
+            ships = 400, shipClass = 0, training = 30, morale = 60,
+            funds = 500, supplies = 500, npcState = 0,
+            dedication = 600, officerLevel = 1, officerPlanet = 0,
         )
 
         listOf(cityWei, cityShu, cityNeutral).forEach { cities[it.id] = it.toSnapshot().toEntity() }
@@ -190,7 +190,7 @@ class NumericParityGoldenTest {
 
     private fun runEconomySimulation(): SimulationResult {
         seedFixture()
-        val world = WorldState(
+        val world = SessionState(
             id = 1, scenarioCode = "test",
             currentYear = 200, currentMonth = 1,
             tickSeconds = 300,
@@ -212,31 +212,31 @@ class NumericParityGoldenTest {
         val finalGenerals = generals.values.sortedBy { it.id }
 
         return SimulationResult(
-            nationGold1 = finalNations[0].gold,
-            nationRice1 = finalNations[0].rice,
-            nationGold2 = finalNations[1].gold,
-            nationRice2 = finalNations[1].rice,
-            city1Pop = finalCities[0].pop,
-            city1Agri = finalCities[0].agri,
-            city1Comm = finalCities[0].comm,
-            city1Secu = finalCities[0].secu,
-            city1Def = finalCities[0].def,
-            city1Wall = finalCities[0].wall,
-            city2Pop = finalCities[1].pop,
-            city2Agri = finalCities[1].agri,
-            city2Comm = finalCities[1].comm,
-            city3Pop = finalCities[2].pop,
-            city3Agri = finalCities[2].agri,
+            nationGold1 = finalNations[0].funds,
+            nationRice1 = finalNations[0].supplies,
+            nationGold2 = finalNations[1].funds,
+            nationRice2 = finalNations[1].supplies,
+            city1Pop = finalCities[0].population,
+            city1Agri = finalCities[0].production,
+            city1Comm = finalCities[0].commerce,
+            city1Secu = finalCities[0].security,
+            city1Def = finalCities[0].orbitalDefense,
+            city1Wall = finalCities[0].fortress,
+            city2Pop = finalCities[1].population,
+            city2Agri = finalCities[1].production,
+            city2Comm = finalCities[1].commerce,
+            city3Pop = finalCities[2].population,
+            city3Agri = finalCities[2].production,
             generals = finalGenerals.map { g ->
-                GeneralSnapshot(
+                OfficerSnapshot(
                     id = g.id,
-                    gold = g.gold,
-                    rice = g.rice,
+                    funds = g.funds,
+                    supplies = g.supplies,
                     leadership = g.leadership,
-                    strength = g.strength,
-                    intel = g.intel,
-                    train = g.train,
-                    atmos = g.atmos,
+                    command = g.command,
+                    intelligence = g.intelligence,
+                    training = g.training,
+                    morale = g.morale,
                     injury = g.injury,
                 )
             },
@@ -280,14 +280,14 @@ class NumericParityGoldenTest {
         assertEquals(344, result.city3Agri, "city3 neutral agri")
 
         // General gold/rice accumulation from salary distribution
-        assertEquals(65277, result.generals[0].gold, "general1 (조조) gold")
-        assertEquals(69621, result.generals[0].rice, "general1 (조조) rice")
-        assertEquals(54500, result.generals[1].gold, "general2 (하후돈) gold")
-        assertEquals(58106, result.generals[1].rice, "general2 (하후돈) rice")
-        assertEquals(65277, result.generals[2].gold, "general3 (유비) gold")
-        assertEquals(69621, result.generals[2].rice, "general3 (유비) rice")
-        assertEquals(54500, result.generals[3].gold, "general4 (관우) gold")
-        assertEquals(58106, result.generals[3].rice, "general4 (관우) rice")
+        assertEquals(65277, result.generals[0].funds, "general1 (조조) gold")
+        assertEquals(69621, result.generals[0].supplies, "general1 (조조) rice")
+        assertEquals(54500, result.generals[1].funds, "general2 (하후돈) gold")
+        assertEquals(58106, result.generals[1].supplies, "general2 (하후돈) rice")
+        assertEquals(65277, result.generals[2].funds, "general3 (유비) gold")
+        assertEquals(69621, result.generals[2].supplies, "general3 (유비) rice")
+        assertEquals(54500, result.generals[3].funds, "general4 (관우) gold")
+        assertEquals(58106, result.generals[3].supplies, "general4 (관우) rice")
     }
 
     @Test
@@ -296,10 +296,10 @@ class NumericParityGoldenTest {
 
         for (g in result.generals) {
             assertTrue(g.leadership in 0..100, "general ${g.id} leadership=${g.leadership} out of bounds")
-            assertTrue(g.strength in 0..100, "general ${g.id} strength=${g.strength} out of bounds")
-            assertTrue(g.intel in 0..100, "general ${g.id} intel=${g.intel} out of bounds")
-            assertTrue(g.train in 0..110, "general ${g.id} train=${g.train} out of bounds")
-            assertTrue(g.atmos in 0..110, "general ${g.id} atmos=${g.atmos} out of bounds")
+            assertTrue(g.command in 0..100, "general ${g.id} strength=${g.command} out of bounds")
+            assertTrue(g.intelligence in 0..100, "general ${g.id} intel=${g.intelligence} out of bounds")
+            assertTrue(g.training in 0..110, "general ${g.id} train=${g.training} out of bounds")
+            assertTrue(g.morale in 0..110, "general ${g.id} atmos=${g.morale} out of bounds")
             assertTrue(g.injury in 0..100, "general ${g.id} injury=${g.injury} out of bounds")
         }
     }
@@ -320,10 +320,10 @@ class NumericParityGoldenTest {
         val city2Comm: Int,
         val city3Pop: Int,
         val city3Agri: Int,
-        val generals: List<GeneralSnapshot>,
+        val generals: List<OfficerSnapshot>,
     )
 
-    private data class GeneralSnapshot(
+    private data class OfficerSnapshot(
         val id: Long,
         val gold: Int,
         val rice: Int,

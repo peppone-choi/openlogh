@@ -41,7 +41,7 @@ class che_주민선정(general: Officer, env: CommandEnv, arg: Map<String, Any>?
     override fun getCost(): CommandCost {
         var reqRice = (env.develCost * DEVELOP_COST_MULTIPLIER).toDouble()
         reqRice = DomesticUtils.applyModifier(services, general, nation, ACTION_KEY, "cost", reqRice)
-        return CommandCost(rice = Math.round(reqRice).toInt())
+        return CommandCost(supplies = Math.round(reqRice).toInt())
     }
 
     override fun getPreReqTurn() = 0

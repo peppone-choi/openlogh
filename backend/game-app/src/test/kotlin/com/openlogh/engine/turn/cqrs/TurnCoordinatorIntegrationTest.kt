@@ -3,28 +3,28 @@ package com.openlogh.engine.turn.cqrs
 import com.openlogh.engine.DiplomacyService
 import com.openlogh.engine.EconomyService
 import com.openlogh.engine.EventService
-import com.openlogh.engine.GeneralMaintenanceService
+import com.openlogh.engine.OfficerMaintenanceService
 import com.openlogh.engine.NpcSpawnService
 import com.openlogh.engine.SpecialAssignmentService
 import com.openlogh.engine.UnificationService
 import com.openlogh.engine.YearbookService
 import com.openlogh.engine.turn.cqrs.memory.DirtyTracker
-import com.openlogh.engine.turn.cqrs.memory.GeneralSnapshot
-import com.openlogh.engine.turn.cqrs.memory.GeneralTurnSnapshot
+import com.openlogh.engine.turn.cqrs.memory.OfficerSnapshot
+import com.openlogh.engine.turn.cqrs.memory.OfficerTurnSnapshot
 import com.openlogh.engine.turn.cqrs.memory.InMemoryTurnProcessor
 import com.openlogh.engine.turn.cqrs.memory.InMemoryWorldState
-import com.openlogh.engine.turn.cqrs.memory.NationSnapshot
+import com.openlogh.engine.turn.cqrs.memory.FactionSnapshot
 import com.openlogh.engine.turn.cqrs.memory.NationTurnKey
-import com.openlogh.engine.turn.cqrs.memory.NationTurnSnapshot
+import com.openlogh.engine.turn.cqrs.memory.FactionTurnSnapshot
 import com.openlogh.engine.turn.cqrs.memory.WorldStateLoader
 import com.openlogh.engine.turn.cqrs.persist.WorldStatePersister
-import com.openlogh.entity.WorldState
+import com.openlogh.entity.SessionState
 import com.openlogh.repository.TrafficSnapshotRepository
-import com.openlogh.repository.WorldStateRepository
+import com.openlogh.repository.SessionStateRepository
 import com.openlogh.service.AuctionService
 import com.openlogh.service.GameEventService
 import com.openlogh.service.InheritanceService
-import com.openlogh.service.NationService
+import com.openlogh.service.FactionService
 import com.openlogh.service.TournamentService
 import com.openlogh.service.WorldService
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -39,7 +39,7 @@ import java.time.OffsetDateTime
 class TurnCoordinatorIntegrationTest {
     private lateinit var worldStateLoader: WorldStateLoader
     private lateinit var worldStatePersister: WorldStatePersister
-    private lateinit var worldStateRepository: WorldStateRepository
+    private lateinit var sessionStateRepository: SessionStateRepository
     private lateinit var turnStatusService: TurnStatusService
     private lateinit var gameEventService: GameEventService
     private lateinit var processor: InMemoryTurnProcessor
@@ -49,7 +49,7 @@ class TurnCoordinatorIntegrationTest {
     fun setUp() {
         worldStateLoader = mock(WorldStateLoader::class.java)
         worldStatePersister = mock(WorldStatePersister::class.java)
-        worldStateRepository = mock(WorldStateRepository::class.java)
+        sessionStateRepository = mock(SessionStateRepository::class.java)
         turnStatusService = mock(TurnStatusService::class.java)
         gameEventService = mock(GameEventService::class.java)
 
@@ -57,7 +57,7 @@ class TurnCoordinatorIntegrationTest {
             economyService = mock(EconomyService::class.java),
             eventService = mock(EventService::class.java),
             diplomacyService = mock(DiplomacyService::class.java),
-            generalMaintenanceService = mock(GeneralMaintenanceService::class.java),
+            officerMaintenanceService = mock(OfficerMaintenanceService::class.java),
             specialAssignmentService = mock(SpecialAssignmentService::class.java),
             npcSpawnService = mock(NpcSpawnService::class.java),
             unificationService = mock(UnificationService::class.java),
@@ -67,14 +67,14 @@ class TurnCoordinatorIntegrationTest {
             tournamentService = mock(TournamentService::class.java),
             trafficSnapshotRepository = mock(TrafficSnapshotRepository::class.java),
             worldService = mock(WorldService::class.java),
-            nationService = mock(NationService::class.java),
+            factionService = mock(FactionService::class.java),
         )
 
         coordinator = TurnCoordinator(
             worldStateLoader = worldStateLoader,
             inMemoryTurnProcessor = processor,
             worldStatePersister = worldStatePersister,
-            worldStateRepository = worldStateRepository,
+            sessionStateRepository = sessionStateRepository,
             turnStatusService = turnStatusService,
             gameEventService = gameEventService,
         )
@@ -83,7 +83,7 @@ class TurnCoordinatorIntegrationTest {
     @Test
     fun `coordinator path advances turn and mutates in-memory queues`() {
         val now = OffsetDateTime.now()
-        val world = WorldState(
+        val world = SessionState(
             id = 1,
             scenarioCode = "test",
             currentYear = 200,
@@ -108,9 +108,9 @@ class TurnCoordinatorIntegrationTest {
             ),
             generalTurnsByGeneralId = mutableMapOf(
                 101L to mutableListOf(
-                    GeneralTurnSnapshot(
+                    OfficerTurnSnapshot(
                         id = 1,
-                        worldId = 1,
+                        sessionId = 1,
                         generalId = 101,
                         turnIdx = 0,
                         actionCode = "휴식",
@@ -122,10 +122,10 @@ class TurnCoordinatorIntegrationTest {
             ),
             nationTurnsByNationAndLevel = mutableMapOf(
                 NationTurnKey(10, 5) to mutableListOf(
-                    NationTurnSnapshot(
+                    FactionTurnSnapshot(
                         id = 2,
-                        worldId = 1,
-                        nationId = 10,
+                        sessionId = 1,
+                        factionId = 10,
                         officerLevel = 5,
                         turnIdx = 0,
                         actionCode = "Nation휴식",
@@ -138,7 +138,7 @@ class TurnCoordinatorIntegrationTest {
         )
 
         doReturn(state).`when`(worldStateLoader).loadWorldState(1)
-        doAnswer { it.arguments[0] }.`when`(worldStateRepository).save(org.mockito.Mockito.any(WorldState::class.java))
+        doAnswer { it.arguments[0] }.`when`(sessionStateRepository).save(org.mockito.Mockito.any(SessionState::class.java))
 
         coordinator.processWorld(world)
 
@@ -148,21 +148,21 @@ class TurnCoordinatorIntegrationTest {
         assertEquals(2, state.nations.getValue(10).strategicCmdLimit.toInt())
     }
 
-    private fun nationSnapshot(id: Long, worldId: Long, strategicCmdLimit: Int): NationSnapshot {
+    private fun nationSnapshot(id: Long, worldId: Long, strategicCmdLimit: Int): FactionSnapshot {
         val now = OffsetDateTime.now()
-        return NationSnapshot(
+        return FactionSnapshot(
             id = id,
-            worldId = worldId,
+            sessionId = worldId,
             name = "nation-$id",
             color = "#ffffff",
-            capitalCityId = null,
-            gold = 1000,
-            rice = 1000,
-            bill = 0,
-            rate = 0,
-            rateTmp = 0,
+            capitalPlanetId = null,
+            funds = 1000,
+            supplies = 1000,
+            taxRate = 0,
+            conscriptionRate = 0,
+            conscriptionRateTmp = 0,
             secretLimit = 3,
-            chiefGeneralId = 0,
+            chiefOfficerId = 0,
             scoutLevel = 0,
             warState = 0,
             strategicCmdLimit = strategicCmdLimit.toShort(),
@@ -184,16 +184,16 @@ class TurnCoordinatorIntegrationTest {
         nationId: Long,
         officerLevel: Int,
         turnTime: OffsetDateTime,
-    ): GeneralSnapshot {
+    ): OfficerSnapshot {
         val now = OffsetDateTime.now()
-        return GeneralSnapshot(
+        return OfficerSnapshot(
             id = id,
-            worldId = worldId,
+            sessionId = worldId,
             userId = null,
             name = "general-$id",
-            nationId = nationId,
-            cityId = 1,
-            troopId = 0,
+            factionId = nationId,
+            planetId = 1,
+            fleetId = 0,
             npcState = 0,
             npcOrg = null,
             affinity = 0,
@@ -203,12 +203,12 @@ class TurnCoordinatorIntegrationTest {
             imageServer = 0,
             leadership = 50,
             leadershipExp = 0,
-            strength = 50,
-            strengthExp = 0,
-            intel = 50,
-            intelExp = 0,
+            command = 50,
+            commandExp = 0,
+            intelligence = 50,
+            intelligenceExp = 0,
             politics = 50,
-            charm = 50,
+            administration = 50,
             dex1 = 0,
             dex2 = 0,
             dex3 = 0,
@@ -218,7 +218,7 @@ class TurnCoordinatorIntegrationTest {
             experience = 0,
             dedication = 0,
             officerLevel = officerLevel.toShort(),
-            officerCity = 0,
+            officerPlanet = 0,
             permission = "normal",
             gold = 1000,
             rice = 1000,

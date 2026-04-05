@@ -101,7 +101,7 @@ class MapRecentService(
                 "level" to planet.level.toInt(),
                 "region" to planet.region.toInt(),
                 "nationId" to planet.factionId,
-                "nationName" to (faction?.name ?: ""),
+                "factionName" to (faction?.name ?: ""),
                 "nationColor" to (faction?.color ?: "#4b5563"),
                 "pop" to planet.population,
                 "popMax" to planet.populationMax,
@@ -140,7 +140,7 @@ class MapRecentService(
                     "id" to n.id,
                     "name" to n.name,
                     "color" to n.color,
-                    "level" to n.level.toInt(),
+                    "level" to n.factionRank.toInt(),
                     "gold" to n.funds,
                     "rice" to n.supplies,
                 )

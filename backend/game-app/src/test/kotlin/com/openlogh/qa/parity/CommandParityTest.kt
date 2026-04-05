@@ -5,9 +5,9 @@ import com.openlogh.command.CommandEnv
 import com.openlogh.command.CommandResult
 import com.openlogh.command.general.*
 import com.openlogh.engine.LiteHashDRBG
-import com.openlogh.entity.City
-import com.openlogh.entity.General
-import com.openlogh.entity.Nation
+import com.openlogh.entity.Planet
+import com.openlogh.entity.Officer
+import com.openlogh.entity.Faction
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.DisplayName
@@ -148,8 +148,8 @@ class CommandParityTest {
         @Test
         fun `gold cost includes tech cost multiplier`() {
             val gen = createGeneral(crew = 0, crewType = 0, leadership = 50, gold = 50000, rice = 50000)
-            gen.nationId = 1
-            val nation = Nation(id = 1, worldId = 1, name = "테스트국", tech = 1000f)
+            gen.factionId = 1
+            val nation = Faction(id = 1, sessionId = 1, name = "테스트국", techLevel = 1000f)
             val env = createEnv()
             val arg = mapOf<String, Any>("amount" to 500, "crewType" to 1100)
             val cmd = che_징병(gen, env, arg)
@@ -348,7 +348,7 @@ class CommandParityTest {
             }
         }
 
-        private fun createDomesticCmd(name: String, gen: General, env: CommandEnv): DomesticCommand {
+        private fun createDomesticCmd(name: String, gen: Officer, env: CommandEnv): DomesticCommand {
             return when (name) {
                 "농지개간" -> che_농지개간(gen, env)
                 "상업투자" -> che_상업투자(gen, env)
@@ -368,7 +368,7 @@ class CommandParityTest {
         return runBlocking { cmd.run(LiteHashDRBG.build(seed)) }
     }
 
-    private fun runDomestic(cmd: DomesticCommand, city: City, seed: String): CommandResult {
+    private fun runDomestic(cmd: DomesticCommand, city: Planet, seed: String): CommandResult {
         cmd.city = city
         return runBlocking { cmd.run(LiteHashDRBG.build(seed)) }
     }
@@ -378,7 +378,7 @@ class CommandParityTest {
             year = 200,
             month = 1,
             startYear = 190,
-            worldId = 1,
+            sessionId = 1,
             realtimeMode = false,
             develCost = develCost,
         )
@@ -394,23 +394,23 @@ class CommandParityTest {
         crewType: Short = 0,
         train: Short = 60,
         atmos: Short = 60,
-    ): General = General(
+    ): Officer = Officer(
         id = 1,
-        worldId = 1,
+        sessionId = 1,
         name = "테스트장수",
-        nationId = 1,
-        cityId = 1,
-        gold = gold,
-        rice = rice,
-        crew = crew,
-        crewType = crewType,
-        train = train,
-        atmos = atmos,
+        factionId = 1,
+        planetId = 1,
+        funds = gold,
+        supplies = rice,
+        ships = crew,
+        shipClass = crewType,
+        training = train,
+        morale = atmos,
         leadership = leadership,
-        strength = strength,
-        intel = intel,
+        command = strength,
+        intelligence = intel,
         politics = 60,
-        charm = 60,
+        administration = 60,
         turnTime = OffsetDateTime.now(),
     )
 
@@ -429,40 +429,40 @@ class CommandParityTest {
         wallMax: Int = 1000,
         trust: Float = 80f,
         frontState: Short = 0,
-    ): City = City(
+    ): Planet = Planet(
         id = 1,
-        worldId = 1,
+        sessionId = 1,
         name = "테스트도시",
-        nationId = nationId,
-        pop = pop,
-        popMax = 100000,
-        agri = agri,
-        agriMax = agriMax,
-        comm = comm,
-        commMax = commMax,
-        secu = secu,
-        secuMax = secuMax,
-        def = def,
-        defMax = defMax,
-        wall = wall,
-        wallMax = wallMax,
-        trust = trust,
+        factionId = nationId,
+        population = pop,
+        populationMax = 100000,
+        production = agri,
+        productionMax = agriMax,
+        commerce = comm,
+        commerceMax = commMax,
+        security = secu,
+        securityMax = secuMax,
+        orbitalDefense = def,
+        orbitalDefenseMax = defMax,
+        fortress = wall,
+        fortressMax = wallMax,
+        approval = trust,
         supplyState = 1,
         frontState = frontState,
     )
 
     // Extension for General to support copy-like behavior in tests
-    private fun General.copy(): General = General(
-        id = id, worldId = worldId, name = name, nationId = nationId, cityId = cityId,
-        gold = gold, rice = rice, crew = crew, crewType = crewType, train = train, atmos = atmos,
-        leadership = leadership, strength = strength, intel = intel, politics = politics, charm = charm,
+    private fun General.copy(): Officer = Officer(
+        id = id, sessionId = worldId, name = name, factionId = nationId, planetId = cityId,
+        funds = gold, supplies = rice, ships = crew, shipClass = crewType, training = train, morale = atmos,
+        leadership = leadership, command = strength, intelligence = intel, politics = politics, administration = charm,
         turnTime = turnTime,
     )
 
-    private fun City.copy(): City = City(
-        id = id, worldId = worldId, name = name, nationId = nationId,
-        pop = pop, popMax = popMax, agri = agri, agriMax = agriMax, comm = comm, commMax = commMax,
-        secu = secu, secuMax = secuMax, def = def, defMax = defMax, wall = wall, wallMax = wallMax,
-        trust = trust, supplyState = supplyState, frontState = frontState,
+    private fun City.copy(): Planet = Planet(
+        id = id, sessionId = worldId, name = name, factionId = nationId,
+        population = pop, populationMax = popMax, production = agri, productionMax = agriMax, commerce = comm, commerceMax = commMax,
+        security = secu, securityMax = secuMax, orbitalDefense = def, orbitalDefenseMax = defMax, fortress = wall, fortressMax = wallMax,
+        approval = trust, supplyState = supplyState, frontState = frontState,
     )
 }

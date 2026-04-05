@@ -1,6 +1,6 @@
 package com.openlogh.engine.map
 
-import com.openlogh.entity.General
+import com.openlogh.entity.Officer
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -9,13 +9,13 @@ class ProximityDetectorTest {
 
     private val detector = ProximityDetector()
 
-    private fun makeGeneral(id: Long, nationId: Long, posX: Float, posY: Float, crew: Int = 100): General {
-        return General().apply {
+    private fun makeGeneral(id: Long, nationId: Long, posX: Float, posY: Float, crew: Int = 100): Officer {
+        return Officer().apply {
             this.id = id
-            this.nationId = nationId
+            this.factionId = nationId
             this.posX = posX
             this.posY = posY
-            this.crew = crew
+            this.ships = crew
         }
     }
 

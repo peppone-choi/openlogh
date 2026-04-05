@@ -24,7 +24,7 @@ object CommandResultApplicator {
         "crewType",
         "nation",
         "officerLevel",
-        "officerCity",
+        "officerPlanet",
         "troop",
         "killTurn",
     )
@@ -97,7 +97,7 @@ object CommandResultApplicator {
 
         if (json["resetOfficer"] == true) {
             general.officerLevel = 0
-            general.officerCity = 0
+            general.officerPlanet = 0
             general.permission = "normal"
         }
 
@@ -183,7 +183,7 @@ object CommandResultApplicator {
             "crewType" -> general.shipClass = value.toShort()
             "nation" -> general.factionId = value.toLong()
             "officerLevel" -> general.officerLevel = value.toShort()
-            "officerCity" -> general.officerCity = value
+            "officerPlanet" -> general.officerPlanet = value
             "troop" -> general.fleetId = value.toLong()
             "killTurn" -> general.killTurn = value.toShort()
         }
@@ -242,7 +242,7 @@ object CommandResultApplicator {
                 "tech" -> (rawValue as? Number)?.toInt()?.let { nation.techLevel = maxOf(0f, nation.techLevel + it) }
                 "power" -> (rawValue as? Number)?.toInt()?.let { nation.militaryPower = maxOf(0, nation.militaryPower + it) }
                 "chiefGeneralId" -> (rawValue as? Number)?.toLong()?.let { nation.chiefOfficerId = it }
-                "nationName", "name" -> (rawValue as? String)?.takeIf { it.isNotBlank() }?.let { nation.name = it }
+                "factionName", "name" -> (rawValue as? String)?.takeIf { it.isNotBlank() }?.let { nation.name = it }
                 "nationType", "type", "typeCode" -> (rawValue as? String)?.let { nation.factionType = normalizeNationTypeCode(it) }
                 "level" -> (rawValue as? Number)?.toInt()?.let { nation.factionRank = it.toShort() }
                 "capital", "capitalCityId" -> (rawValue as? Number)?.toLong()?.let { nation.capitalPlanetId = it }

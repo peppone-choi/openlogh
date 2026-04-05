@@ -89,7 +89,7 @@ data class GeneralFrontInfo(
     val troop: Long,
     val officerLevel: Int,
     val officerLevelText: String,
-    val officerCity: Int,
+    val officerPlanet: Int,
     val permission: Int,
     val lbonus: Int,
     val leadership: Int,

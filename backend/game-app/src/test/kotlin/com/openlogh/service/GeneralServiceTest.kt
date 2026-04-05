@@ -3,16 +3,16 @@ package com.openlogh.service
 import com.openlogh.dto.BuildPoolGeneralRequest
 import com.openlogh.dto.CreateGeneralRequest
 import com.openlogh.entity.AppUser
-import com.openlogh.entity.City
-import com.openlogh.entity.General
+import com.openlogh.entity.Planet
+import com.openlogh.entity.Officer
 import com.openlogh.entity.GeneralTurn
-import com.openlogh.entity.WorldState
+import com.openlogh.entity.SessionState
 import com.openlogh.repository.AppUserRepository
-import com.openlogh.repository.CityRepository
-import com.openlogh.repository.GeneralRepository
-import com.openlogh.repository.GeneralTurnRepository
-import com.openlogh.repository.NationRepository
-import com.openlogh.repository.WorldStateRepository
+import com.openlogh.repository.PlanetRepository
+import com.openlogh.repository.OfficerRepository
+import com.openlogh.repository.OfficerTurnRepository
+import com.openlogh.repository.FactionRepository
+import com.openlogh.repository.SessionStateRepository
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -30,32 +30,32 @@ import org.mockito.Mockito.`when`
 import java.util.Optional
 
 class GeneralServiceTest {
-    private lateinit var generalRepository: GeneralRepository
+    private lateinit var officerRepository: OfficerRepository
     private lateinit var appUserRepository: AppUserRepository
-    private lateinit var worldStateRepository: WorldStateRepository
-    private lateinit var cityRepository: CityRepository
-    private lateinit var nationRepository: NationRepository
-    private lateinit var generalTurnRepository: GeneralTurnRepository
+    private lateinit var sessionStateRepository: SessionStateRepository
+    private lateinit var planetRepository: PlanetRepository
+    private lateinit var factionRepository: FactionRepository
+    private lateinit var officerTurnRepository: OfficerTurnRepository
     private lateinit var gameConstService: GameConstService
-    private lateinit var service: GeneralService
+    private lateinit var service: OfficerService
 
     @BeforeEach
     fun setUp() {
-        generalRepository = mock(GeneralRepository::class.java)
+        officerRepository = mock(OfficerRepository::class.java)
         appUserRepository = mock(AppUserRepository::class.java)
-        worldStateRepository = mock(WorldStateRepository::class.java)
-        cityRepository = mock(CityRepository::class.java)
-        nationRepository = mock(NationRepository::class.java)
-        generalTurnRepository = mock(GeneralTurnRepository::class.java)
+        sessionStateRepository = mock(SessionStateRepository::class.java)
+        planetRepository = mock(PlanetRepository::class.java)
+        factionRepository = mock(FactionRepository::class.java)
+        officerTurnRepository = mock(OfficerTurnRepository::class.java)
         gameConstService = mock(GameConstService::class.java)
 
-        service = GeneralService(
-            generalRepository,
+        service = OfficerService(
+            officerRepository,
             appUserRepository,
-            worldStateRepository,
-            cityRepository,
-            nationRepository,
-            generalTurnRepository,
+            sessionStateRepository,
+            planetRepository,
+            factionRepository,
+            officerTurnRepository,
             gameConstService,
         )
 
@@ -76,14 +76,14 @@ class GeneralServiceTest {
             constMap[invocation.getArgument<String>(0)] ?: 0
         }
 
-        `when`(generalRepository.save(any(General::class.java))).thenAnswer { invocation ->
-            val general = invocation.getArgument<General>(0)
+        `when`(officerRepository.save(any(General::class.java))).thenAnswer { invocation ->
+            val general = invocation.getArgument<Officer>(0)
             if (general.id == 0L) {
                 general.id = 77
             }
             general
         }
-        `when`(generalTurnRepository.saveAll(anyList())).thenAnswer { invocation ->
+        `when`(officerTurnRepository.saveAll(anyList())).thenAnswer { invocation ->
             invocation.getArgument<List<GeneralTurn>>(0)
         }
     }
@@ -102,7 +102,7 @@ class GeneralServiceTest {
                 "inheritPoints" to 10000,
             ),
         )
-        val world = WorldState(
+        val world = SessionState(
             id = 1,
             currentYear = 185,
             currentMonth = 1,
@@ -114,14 +114,14 @@ class GeneralServiceTest {
             ),
             meta = mutableMapOf(),
         )
-        val city = City(id = 10, worldId = 1, name = "허창", level = 5, nationId = 0)
+        val city = Planet(id = 10, sessionId = 1, name = "허창", level = 5, factionId = 0)
 
         `when`(appUserRepository.findByLoginId("user")).thenReturn(user)
-        `when`(worldStateRepository.findById(1.toShort())).thenReturn(Optional.of(world))
-        `when`(generalRepository.findByWorldIdAndUserId(1L, 1L)).thenReturn(emptyList())
-        `when`(generalRepository.findByWorldId(1L)).thenReturn(emptyList())
-        `when`(generalRepository.findByNameAndWorldId("신장수", 1L)).thenReturn(null)
-        `when`(cityRepository.findById(10L)).thenReturn(Optional.of(city))
+        `when`(sessionStateRepository.findById(1.toShort())).thenReturn(Optional.of(world))
+        `when`(officerRepository.findBySessionIdAndUserId(1L, 1L)).thenReturn(emptyList())
+        `when`(officerRepository.findBySessionId(1L)).thenReturn(emptyList())
+        `when`(officerRepository.findByNameAndSessionId("신장수", 1L)).thenReturn(null)
+        `when`(planetRepository.findById(10L)).thenReturn(Optional.of(city))
 
         val general = service.createGeneral(
             1L,
@@ -148,13 +148,13 @@ class GeneralServiceTest {
         assertEquals("che_대의", general?.personalCode)
         assertEquals("che_저격", general?.special2Code)
         assertEquals(72.toShort(), general?.leadership)
-        assertEquals(71.toShort(), general?.strength)
-        assertEquals(70.toShort(), general?.intel)
+        assertEquals(71.toShort(), general?.command)
+        assertEquals(70.toShort(), general?.intelligence)
         assertEquals(3000, user.meta["inheritPoints"])
 
         @Suppress("UNCHECKED_CAST")
         val turnCaptor = ArgumentCaptor.forClass(Iterable::class.java) as ArgumentCaptor<Iterable<GeneralTurn>>
-        verify(generalTurnRepository).saveAll(turnCaptor.capture())
+        verify(officerTurnRepository).saveAll(turnCaptor.capture())
         val turns = turnCaptor.value.toList()
         assertEquals(30, turns.size)
         assertTrue(turns.all { it.actionCode == "휴식" && it.generalId == 77L })
@@ -173,7 +173,7 @@ class GeneralServiceTest {
                 "inheritCity" to 11,
             ),
         )
-        val world = WorldState(
+        val world = SessionState(
             id = 1,
             currentYear = 180,
             currentMonth = 1,
@@ -181,14 +181,14 @@ class GeneralServiceTest {
             config = mutableMapOf("hiddenSeed" to "seed"),
             meta = mutableMapOf(),
         )
-        val city = City(id = 11, worldId = 1, name = "낙양", level = 5, nationId = 0)
+        val city = Planet(id = 11, sessionId = 1, name = "낙양", level = 5, factionId = 0)
 
         `when`(appUserRepository.findByLoginId("user")).thenReturn(user)
-        `when`(worldStateRepository.findById(1.toShort())).thenReturn(Optional.of(world))
-        `when`(generalRepository.findByWorldIdAndUserId(1L, 2L)).thenReturn(emptyList())
-        `when`(generalRepository.findByWorldId(1L)).thenReturn(emptyList())
-        `when`(generalRepository.findByNameAndWorldId("계승장수", 1L)).thenReturn(null)
-        `when`(cityRepository.findById(11L)).thenReturn(Optional.of(city))
+        `when`(sessionStateRepository.findById(1.toShort())).thenReturn(Optional.of(world))
+        `when`(officerRepository.findBySessionIdAndUserId(1L, 2L)).thenReturn(emptyList())
+        `when`(officerRepository.findBySessionId(1L)).thenReturn(emptyList())
+        `when`(officerRepository.findByNameAndSessionId("계승장수", 1L)).thenReturn(null)
+        `when`(planetRepository.findById(11L)).thenReturn(Optional.of(city))
 
         val general = service.createGeneral(
             1L,
@@ -206,7 +206,7 @@ class GeneralServiceTest {
         )
 
         assertNotNull(general)
-        assertEquals(11L, general?.cityId)
+        assertEquals(11L, general?.planetId)
         assertEquals("che_반계", general?.special2Code)
         assertEquals(500, user.meta["inheritPoints"])
         assertFalse(user.meta.containsKey("inheritSpecificSpecialWar"))
@@ -226,15 +226,15 @@ class GeneralServiceTest {
                 "imageServer" to 2,
             ),
         )
-        val world = WorldState(
+        val world = SessionState(
             id = 1,
             config = mutableMapOf("hiddenSeed" to "seed"),
             meta = mutableMapOf(),
         )
 
         `when`(appUserRepository.findByLoginId("user")).thenReturn(user)
-        `when`(worldStateRepository.findById(1.toShort())).thenReturn(Optional.of(world))
-        `when`(generalRepository.findByWorldIdAndUserId(1L, 3L)).thenReturn(emptyList())
+        `when`(sessionStateRepository.findById(1.toShort())).thenReturn(Optional.of(world))
+        `when`(officerRepository.findBySessionIdAndUserId(1L, 3L)).thenReturn(emptyList())
 
         val general = service.buildPoolGeneral(
             1L,
@@ -266,7 +266,7 @@ class GeneralServiceTest {
             passwordHash = "encoded",
             meta = mutableMapOf(),
         )
-        val world = WorldState(
+        val world = SessionState(
             id = 1,
             currentYear = 180,
             currentMonth = 1,
@@ -274,15 +274,15 @@ class GeneralServiceTest {
             config = mutableMapOf("hiddenSeed" to "seed"),
             meta = mutableMapOf(),
         )
-        val city = City(id = 10, worldId = 1, name = "허창", level = 5, nationId = 0)
+        val city = Planet(id = 10, sessionId = 1, name = "허창", level = 5, factionId = 0)
 
         `when`(appUserRepository.findByLoginId("USER")).thenReturn(null)
         `when`(appUserRepository.findByLoginIdIgnoreCase("USER")).thenReturn(user)
-        `when`(worldStateRepository.findById(1.toShort())).thenReturn(Optional.of(world))
-        `when`(generalRepository.findByWorldIdAndUserId(1L, 4L)).thenReturn(emptyList())
-        `when`(generalRepository.findByWorldId(1L)).thenReturn(emptyList())
-        `when`(generalRepository.findByNameAndWorldId("신장수", 1L)).thenReturn(null)
-        `when`(cityRepository.findById(10L)).thenReturn(Optional.of(city))
+        `when`(sessionStateRepository.findById(1.toShort())).thenReturn(Optional.of(world))
+        `when`(officerRepository.findBySessionIdAndUserId(1L, 4L)).thenReturn(emptyList())
+        `when`(officerRepository.findBySessionId(1L)).thenReturn(emptyList())
+        `when`(officerRepository.findByNameAndSessionId("신장수", 1L)).thenReturn(null)
+        `when`(planetRepository.findById(10L)).thenReturn(Optional.of(city))
 
         val general = service.createGeneral(
             1L,
@@ -313,7 +313,7 @@ class GeneralServiceTest {
             meta = mutableMapOf(),
         )
         val worldUpdatedAt = java.time.OffsetDateTime.now().minusSeconds(5)
-        val world = WorldState(
+        val world = SessionState(
             id = 1,
             currentYear = 180,
             currentMonth = 1,
@@ -322,14 +322,14 @@ class GeneralServiceTest {
             meta = mutableMapOf(),
             updatedAt = worldUpdatedAt,
         )
-        val city = City(id = 10, worldId = 1, name = "허창", level = 5, nationId = 0)
+        val city = Planet(id = 10, sessionId = 1, name = "허창", level = 5, factionId = 0)
 
         `when`(appUserRepository.findByLoginId("user")).thenReturn(user)
-        `when`(worldStateRepository.findById(1.toShort())).thenReturn(Optional.of(world))
-        `when`(generalRepository.findByWorldIdAndUserId(1L, 5L)).thenReturn(emptyList())
-        `when`(generalRepository.findByWorldId(1L)).thenReturn(emptyList())
-        `when`(generalRepository.findByNameAndWorldId("턴타임장수", 1L)).thenReturn(null)
-        `when`(cityRepository.findById(10L)).thenReturn(Optional.of(city))
+        `when`(sessionStateRepository.findById(1.toShort())).thenReturn(Optional.of(world))
+        `when`(officerRepository.findBySessionIdAndUserId(1L, 5L)).thenReturn(emptyList())
+        `when`(officerRepository.findBySessionId(1L)).thenReturn(emptyList())
+        `when`(officerRepository.findByNameAndSessionId("턴타임장수", 1L)).thenReturn(null)
+        `when`(planetRepository.findById(10L)).thenReturn(Optional.of(city))
 
         val general = service.createGeneral(
             1L,
@@ -365,7 +365,7 @@ class GeneralServiceTest {
             meta = mutableMapOf(),
         )
         // tickSeconds=300 → turnterm=5 → killTurn=4800/5=960
-        val world = WorldState(
+        val world = SessionState(
             id = 1,
             currentYear = 180,
             currentMonth = 1,
@@ -373,14 +373,14 @@ class GeneralServiceTest {
             config = mutableMapOf("hiddenSeed" to "seed"),
             meta = mutableMapOf(),
         )
-        val city = City(id = 10, worldId = 1, name = "허창", level = 5, nationId = 0)
+        val city = Planet(id = 10, sessionId = 1, name = "허창", level = 5, factionId = 0)
 
         `when`(appUserRepository.findByLoginId("user")).thenReturn(user)
-        `when`(worldStateRepository.findById(1.toShort())).thenReturn(Optional.of(world))
-        `when`(generalRepository.findByWorldIdAndUserId(1L, 6L)).thenReturn(emptyList())
-        `when`(generalRepository.findByWorldId(1L)).thenReturn(emptyList())
-        `when`(generalRepository.findByNameAndWorldId("삭턴장수", 1L)).thenReturn(null)
-        `when`(cityRepository.findById(10L)).thenReturn(Optional.of(city))
+        `when`(sessionStateRepository.findById(1.toShort())).thenReturn(Optional.of(world))
+        `when`(officerRepository.findBySessionIdAndUserId(1L, 6L)).thenReturn(emptyList())
+        `when`(officerRepository.findBySessionId(1L)).thenReturn(emptyList())
+        `when`(officerRepository.findByNameAndSessionId("삭턴장수", 1L)).thenReturn(null)
+        `when`(planetRepository.findById(10L)).thenReturn(Optional.of(city))
 
         val general = service.createGeneral(
             1L,
@@ -409,7 +409,7 @@ class GeneralServiceTest {
             passwordHash = "encoded",
             meta = mutableMapOf(),
         )
-        val world = WorldState(
+        val world = SessionState(
             id = 1,
             currentYear = 180,
             currentMonth = 1,
@@ -417,14 +417,14 @@ class GeneralServiceTest {
             config = mutableMapOf("hiddenSeed" to "seed", "killturn" to 100),
             meta = mutableMapOf(),
         )
-        val city = City(id = 10, worldId = 1, name = "허창", level = 5, nationId = 0)
+        val city = Planet(id = 10, sessionId = 1, name = "허창", level = 5, factionId = 0)
 
         `when`(appUserRepository.findByLoginId("user")).thenReturn(user)
-        `when`(worldStateRepository.findById(1.toShort())).thenReturn(Optional.of(world))
-        `when`(generalRepository.findByWorldIdAndUserId(1L, 7L)).thenReturn(emptyList())
-        `when`(generalRepository.findByWorldId(1L)).thenReturn(emptyList())
-        `when`(generalRepository.findByNameAndWorldId("설정장수", 1L)).thenReturn(null)
-        `when`(cityRepository.findById(10L)).thenReturn(Optional.of(city))
+        `when`(sessionStateRepository.findById(1.toShort())).thenReturn(Optional.of(world))
+        `when`(officerRepository.findBySessionIdAndUserId(1L, 7L)).thenReturn(emptyList())
+        `when`(officerRepository.findBySessionId(1L)).thenReturn(emptyList())
+        `when`(officerRepository.findByNameAndSessionId("설정장수", 1L)).thenReturn(null)
+        `when`(planetRepository.findById(10L)).thenReturn(Optional.of(city))
 
         val general = service.createGeneral(
             1L,

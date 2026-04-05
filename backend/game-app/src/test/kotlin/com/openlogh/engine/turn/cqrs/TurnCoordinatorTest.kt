@@ -5,8 +5,8 @@ import com.openlogh.engine.turn.cqrs.memory.InMemoryTurnProcessor
 import com.openlogh.engine.turn.cqrs.memory.InMemoryWorldState
 import com.openlogh.engine.turn.cqrs.memory.WorldStateLoader
 import com.openlogh.engine.turn.cqrs.persist.WorldStatePersister
-import com.openlogh.entity.WorldState
-import com.openlogh.repository.WorldStateRepository
+import com.openlogh.entity.SessionState
+import com.openlogh.repository.SessionStateRepository
 import com.openlogh.service.GameEventService
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
@@ -20,7 +20,7 @@ class TurnCoordinatorTest {
     private lateinit var worldStateLoader: WorldStateLoader
     private lateinit var inMemoryTurnProcessor: InMemoryTurnProcessor
     private lateinit var worldStatePersister: WorldStatePersister
-    private lateinit var worldStateRepository: WorldStateRepository
+    private lateinit var sessionStateRepository: SessionStateRepository
     private lateinit var turnStatusService: TurnStatusService
     private lateinit var gameEventService: GameEventService
 
@@ -32,7 +32,7 @@ class TurnCoordinatorTest {
         worldStateLoader = mock(WorldStateLoader::class.java)
         inMemoryTurnProcessor = mock(InMemoryTurnProcessor::class.java)
         worldStatePersister = mock(WorldStatePersister::class.java)
-        worldStateRepository = mock(WorldStateRepository::class.java)
+        sessionStateRepository = mock(SessionStateRepository::class.java)
         turnStatusService = mock(TurnStatusService::class.java)
         gameEventService = mock(GameEventService::class.java)
 
@@ -40,14 +40,14 @@ class TurnCoordinatorTest {
             worldStateLoader,
             inMemoryTurnProcessor,
             worldStatePersister,
-            worldStateRepository,
+            sessionStateRepository,
             turnStatusService,
             gameEventService,
         )
     }
 
-    private fun createWorld(): WorldState {
-        return WorldState(
+    private fun createWorld(): SessionState {
+        return SessionState(
             id = 1,
             scenarioCode = "test",
             currentYear = 200,
@@ -65,7 +65,7 @@ class TurnCoordinatorTest {
 
         doReturn(state).`when`(worldStateLoader).loadWorldState(1L)
         doReturn(result).`when`(inMemoryTurnProcessor).process(anyNonNull(), anyNonNull(), anyNonNull())
-        doAnswer { it.arguments[0] }.`when`(worldStateRepository).save(anyNonNull<WorldState>())
+        doAnswer { it.arguments[0] }.`when`(sessionStateRepository).save(anyNonNull<SessionState>())
 
         coordinator.processWorld(world)
 
@@ -85,11 +85,11 @@ class TurnCoordinatorTest {
 
         doReturn(state).`when`(worldStateLoader).loadWorldState(1L)
         doReturn(result).`when`(inMemoryTurnProcessor).process(anyNonNull(), anyNonNull(), anyNonNull())
-        doAnswer { it.arguments[0] }.`when`(worldStateRepository).save(anyNonNull<WorldState>())
+        doAnswer { it.arguments[0] }.`when`(sessionStateRepository).save(anyNonNull<SessionState>())
 
         coordinator.processWorld(world)
 
-        verify(worldStateRepository).save(world)
+        verify(sessionStateRepository).save(world)
     }
 
     @Test
@@ -112,7 +112,7 @@ class TurnCoordinatorTest {
 
         doReturn(state).`when`(worldStateLoader).loadWorldState(1L)
         doReturn(result).`when`(inMemoryTurnProcessor).process(anyNonNull(), anyNonNull(), anyNonNull())
-        doAnswer { it.arguments[0] }.`when`(worldStateRepository).save(anyNonNull<WorldState>())
+        doAnswer { it.arguments[0] }.`when`(sessionStateRepository).save(anyNonNull<SessionState>())
 
         coordinator.processWorld(world)
 
@@ -127,7 +127,7 @@ class TurnCoordinatorTest {
 
         doReturn(state).`when`(worldStateLoader).loadWorldState(1L)
         doReturn(result).`when`(inMemoryTurnProcessor).process(anyNonNull(), anyNonNull(), anyNonNull())
-        doAnswer { it.arguments[0] }.`when`(worldStateRepository).save(anyNonNull<WorldState>())
+        doAnswer { it.arguments[0] }.`when`(sessionStateRepository).save(anyNonNull<SessionState>())
 
         coordinator.processWorld(world)
 

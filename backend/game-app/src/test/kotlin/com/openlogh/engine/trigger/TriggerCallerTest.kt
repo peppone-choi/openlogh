@@ -1,7 +1,7 @@
 package com.openlogh.engine.trigger
 
 import com.openlogh.engine.LiteHashDRBG
-import com.openlogh.entity.General
+import com.openlogh.entity.Officer
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 
@@ -12,15 +12,15 @@ class TriggerCallerTest {
         rice: Int = 500,
         injury: Short = 5,
         atmos: Short = 80,
-    ): General {
-        return General(
+    ): Officer {
+        return Officer(
             id = 1,
-            worldId = 1,
+            sessionId = 1,
             name = "TestGeneral",
-            crew = crew,
-            rice = rice,
+            ships = crew,
+            supplies = rice,
             injury = injury,
-            atmos = atmos,
+            morale = atmos,
         )
     }
 
@@ -175,7 +175,7 @@ class TriggerCallerTest {
 
         trigger.action(env)
 
-        assertEquals(490, general.rice) // 1000/100 = 10 rice consumed
+        assertEquals(490, general.supplies) // 1000/100 = 10 rice consumed
     }
 
     @Test
@@ -186,7 +186,7 @@ class TriggerCallerTest {
 
         trigger.action(env)
 
-        assertEquals(99, general.rice) // min(50/100=0, 1) = 1
+        assertEquals(99, general.supplies) // min(50/100=0, 1) = 1
     }
 
     @Test
@@ -197,7 +197,7 @@ class TriggerCallerTest {
 
         trigger.action(env)
 
-        assertEquals(100, general.rice)
+        assertEquals(100, general.supplies)
     }
 
     @Test
@@ -208,8 +208,8 @@ class TriggerCallerTest {
 
         trigger.action(env)
 
-        assertEquals(0, general.rice)
-        assertEquals(75.toShort(), general.atmos) // 80 - 5
+        assertEquals(0, general.supplies)
+        assertEquals(75.toShort(), general.morale) // 80 - 5
         assertEquals(true, env.vars["troopStarving"])
     }
 
@@ -237,19 +237,19 @@ class TriggerCallerTest {
     @Test
     fun `applyDomesticModifiers chains modifications`() {
         val general = createGeneral()
-        val trigger1 = object : GeneralTrigger {
+        val trigger1 = object : OfficerTrigger {
             override val uniqueId = "t1"
             override val priority = TriggerPriority.BEGIN
             override fun action(env: TriggerEnv) = true
-            override fun onCalcDomestic(general: General, turnType: String, varType: String, value: Double, aux: Map<String, Any>): Double {
+            override fun onCalcDomestic(general: Officer, turnType: String, varType: String, value: Double, aux: Map<String, Any>): Double {
                 return if (varType == "cost") value * 0.9 else value
             }
         }
-        val trigger2 = object : GeneralTrigger {
+        val trigger2 = object : OfficerTrigger {
             override val uniqueId = "t2"
             override val priority = TriggerPriority.POST
             override fun action(env: TriggerEnv) = true
-            override fun onCalcDomestic(general: General, turnType: String, varType: String, value: Double, aux: Map<String, Any>): Double {
+            override fun onCalcDomestic(general: Officer, turnType: String, varType: String, value: Double, aux: Map<String, Any>): Double {
                 return if (varType == "cost") value - 10 else value
             }
         }
@@ -262,11 +262,11 @@ class TriggerCallerTest {
     @Test
     fun `applyStatModifiers chains stat modifications`() {
         val general = createGeneral()
-        val trigger = object : GeneralTrigger {
+        val trigger = object : OfficerTrigger {
             override val uniqueId = "stat_boost"
             override val priority = TriggerPriority.BEGIN
             override fun action(env: TriggerEnv) = true
-            override fun onCalcStat(general: General, statName: String, value: Double, aux: Map<String, Any>): Double {
+            override fun onCalcStat(general: Officer, statName: String, value: Double, aux: Map<String, Any>): Double {
                 return if (statName == "leadership") value + 10 else value
             }
         }

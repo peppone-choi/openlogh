@@ -1,7 +1,7 @@
 package com.openlogh.engine.war
 
-import com.openlogh.entity.City
-import com.openlogh.entity.General
+import com.openlogh.entity.Planet
+import com.openlogh.entity.Officer
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -28,21 +28,21 @@ class BattleEngineWithPhasesTest {
         atmos: Short = 80,
         gold: Int = 1000,
         rice: Int = 5000,
-    ): General = General(
+    ): Officer = Officer(
         id = id,
-        worldId = 1,
+        sessionId = 1,
         name = "장수$id",
-        nationId = nationId,
-        cityId = 1,
+        factionId = nationId,
+        planetId = 1,
         leadership = leadership,
-        strength = strength,
-        intel = intel,
-        crew = crew,
-        crewType = 0,
-        train = train,
-        atmos = atmos,
-        gold = gold,
-        rice = rice,
+        command = strength,
+        intelligence = intel,
+        ships = crew,
+        shipClass = 0,
+        training = train,
+        morale = atmos,
+        funds = gold,
+        supplies = rice,
         experience = 1000,
         dedication = 1000,
         specialCode = "None",
@@ -54,17 +54,17 @@ class BattleEngineWithPhasesTest {
         nationId: Long = 2,
         def: Int = 500,
         wall: Int = 500,
-    ): City = City(
+    ): Planet = Planet(
         id = 1,
-        worldId = 1,
+        sessionId = 1,
         name = "테스트도시",
-        nationId = nationId,
-        def = def,
-        defMax = 1000,
-        wall = wall,
-        wallMax = 1000,
-        pop = 10000,
-        popMax = 50000,
+        factionId = nationId,
+        orbitalDefense = def,
+        orbitalDefenseMax = 1000,
+        fortress = wall,
+        fortressMax = 1000,
+        population = 10000,
+        populationMax = 50000,
     )
 
     @Test
@@ -74,8 +74,8 @@ class BattleEngineWithPhasesTest {
         val defenderGeneral = createGeneral(id = 2, nationId = 2, strength = 50, leadership = 50, crew = 2000, rice = 20000)
         val city = createCity(nationId = 2)
 
-        val attacker = WarUnitGeneral(attackerGeneral)
-        val defender = WarUnitGeneral(defenderGeneral)
+        val attacker = WarUnitOfficer(attackerGeneral)
+        val defender = WarUnitOfficer(defenderGeneral)
 
         val withPhases = engine.resolveBattleWithPhases(attacker, listOf(defender), city, rng)
 
@@ -90,8 +90,8 @@ class BattleEngineWithPhasesTest {
         }
 
         // The embedded BattleResult must match a fresh resolveBattle call with the same seed
-        val attacker2 = WarUnitGeneral(createGeneral(id = 1, nationId = 1, strength = 70, leadership = 70, crew = 3000, rice = 30000))
-        val defender2 = WarUnitGeneral(createGeneral(id = 2, nationId = 2, strength = 50, leadership = 50, crew = 2000, rice = 20000))
+        val attacker2 = WarUnitOfficer(createGeneral(id = 1, factionId = 1, command = 70, leadership = 70, ships = 3000, supplies = 30000))
+        val defender2 = WarUnitOfficer(createGeneral(id = 2, factionId = 2, command = 50, leadership = 50, ships = 2000, supplies = 20000))
         val city2 = createCity(nationId = 2)
         val plainResult = engine.resolveBattle(attacker2, listOf(defender2), city2, Random(42))
 

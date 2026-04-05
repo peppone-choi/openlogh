@@ -28,7 +28,7 @@ class OfficerMaintenanceStep(
     override val order = 1500
 
     override fun execute(context: TurnContext) {
-        val ports = worldPortFactory.create(context.sessionId)
+        val ports = worldPortFactory.create(context.worldId)
         val beforeSnapshots = ports.allOfficers().associateBy { it.id }
         val generals = beforeSnapshots.values.map { it.toEntity() }
 

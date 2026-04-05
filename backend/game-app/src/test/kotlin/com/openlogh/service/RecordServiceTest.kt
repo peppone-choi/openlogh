@@ -1,7 +1,7 @@
 package com.openlogh.service
 
 import com.openlogh.entity.Record
-import com.openlogh.repository.GeneralRepository
+import com.openlogh.repository.OfficerRepository
 import com.openlogh.repository.RecordRepository
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
@@ -12,14 +12,14 @@ import java.time.OffsetDateTime
 
 class RecordServiceTest {
     private lateinit var recordRepository: RecordRepository
-    private lateinit var generalRepository: GeneralRepository
+    private lateinit var officerRepository: OfficerRepository
     private lateinit var service: RecordService
 
     @BeforeEach
     fun setUp() {
         recordRepository = mock(RecordRepository::class.java)
-        generalRepository = mock(GeneralRepository::class.java)
-        service = RecordService(recordRepository, generalRepository)
+        officerRepository = mock(OfficerRepository::class.java)
+        service = RecordService(recordRepository, officerRepository)
     }
 
     @Test

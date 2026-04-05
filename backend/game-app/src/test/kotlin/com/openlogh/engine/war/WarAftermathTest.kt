@@ -1,8 +1,8 @@
 package com.openlogh.engine.war
 
-import com.openlogh.entity.City
-import com.openlogh.entity.General
-import com.openlogh.entity.Nation
+import com.openlogh.entity.Planet
+import com.openlogh.entity.Officer
+import com.openlogh.entity.Faction
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -23,70 +23,70 @@ class WarAftermathTest {
         castleCrewTypeId = 1000,
     )
 
-    private fun buildCity(id: Long, nationId: Long): City {
-        return City(
+    private fun buildCity(id: Long, nationId: Long): Planet {
+        return Planet(
             id = id,
-            worldId = 1,
+            sessionId = 1,
             name = "City$id",
             level = 2,
-            nationId = nationId,
-            pop = 10_000,
-            popMax = 10_000,
-            agri = 1000,
-            agriMax = 1000,
-            comm = 1000,
-            commMax = 1000,
-            secu = 1000,
-            secuMax = 1000,
-            def = 100,
-            defMax = 200,
-            wall = 100,
-            wallMax = 200,
+            factionId = nationId,
+            population = 10_000,
+            populationMax = 10_000,
+            production = 1000,
+            productionMax = 1000,
+            commerce = 1000,
+            commerceMax = 1000,
+            security = 1000,
+            securityMax = 1000,
+            orbitalDefense = 100,
+            orbitalDefenseMax = 200,
+            fortress = 100,
+            fortressMax = 200,
             supplyState = 1,
             frontState = 0,
             meta = mutableMapOf(),
         )
     }
 
-    private fun buildNation(id: Long): Nation {
-        return Nation(
+    private fun buildNation(id: Long): Faction {
+        return Faction(
             id = id,
-            worldId = 1,
+            sessionId = 1,
             name = "Nation$id",
             color = "#000000",
-            capitalCityId = id,
-            chiefGeneralId = 0,
-            gold = 1000,
-            rice = 1000,
-            power = 0,
-            level = 1,
-            typeCode = "test",
-            tech = 1000f,
+            capitalPlanetId = id,
+            chiefOfficerId = 0,
+            funds = 1000,
+            supplies = 1000,
+            militaryPower = 0,
+            factionRank = 1,
+            factionType = "test",
+            techLevel = 1000f,
             meta = mutableMapOf("tech" to 1000),
         )
     }
 
-    private fun buildGeneral(id: Long, nationId: Long, cityId: Long): General {
-        return General(
+    private fun buildGeneral(id: Long, nationId: Long, cityId: Long): Officer {
+        return Officer(
             id = id,
-            worldId = 1,
+            sessionId = 1,
             name = "General$id",
-            nationId = nationId,
-            cityId = cityId,
-            troopId = 0,
+            factionId = nationId,
+            planetId = cityId,
+            fleetId = 0,
             leadership = 70,
-            strength = 70,
-            intel = 70,
+            command = 70,
+            intelligence = 70,
             experience = 100,
             dedication = 100,
             officerLevel = 3,
             injury = 0,
-            gold = 1000,
-            rice = 1000,
-            crew = 1000,
-            crewType = 1000,
-            train = 80,
-            atmos = 80,
+            funds = 1000,
+            supplies = 1000,
+            ships = 1000,
+            shipClass = 1000,
+            training = 80,
+            morale = 80,
             age = 20,
             npcState = 0,
             killTurn = 24,
@@ -203,11 +203,11 @@ class WarAftermathTest {
         )
 
         assertEquals(true, outcome.conquest?.nationCollapsed)
-        assertTrue(attackerNation.gold > 1000)
-        assertTrue(attackerNation.rice > 1000)
+        assertTrue(attackerNation.funds > 1000)
+        assertTrue(attackerNation.supplies > 1000)
         assertTrue(defender.experience < 100)
         assertTrue(defender.dedication < 100)
-        assertEquals(attackerNation.id, defenderCity.nationId)
+        assertEquals(attackerNation.id, defenderCity.factionId)
         assertEquals("{}", defenderCity.meta["conflict"])
     }
 }

@@ -15,13 +15,13 @@ class 무작위건국(general: Officer, env: CommandEnv, arg: Map<String, Any>? 
 
     override val fullConditionConstraints: List<Constraint> by lazy {
         val relYear = env.year - env.startYear
-        val nationName = arg?.get("nationName") as? String ?: ""
+        val factionName = arg?.get("factionName") as? String ?: ""
         listOf(
             BeLordOrUnaffiliated(),
             WanderingNation(),
             ReqNationGeneralCount(2),
             BeOpeningPart(relYear + 1),
-            CheckNationNameDuplicate(nationName),
+            CheckNationNameDuplicate(factionName),
             AllowJoinAction(),
         )
     }
@@ -54,28 +54,28 @@ class 무작위건국(general: Officer, env: CommandEnv, arg: Map<String, Any>? 
             )
         }
 
-        val nationName = arg?.get("nationName") as? String ?: "신생국"
+        val factionName = arg?.get("factionName") as? String ?: "신생국"
         val nationType = arg?.get("nationType") as? String ?: "che_도적"
         val colorType = arg?.get("colorType") ?: 0
-        val josaNationUl = pickJosa(nationName, "을")
-        val josaNationYi = pickJosa(nationName, "이")
+        val josaNationUl = pickJosa(factionName, "을")
+        val josaNationYi = pickJosa(factionName, "이")
 
         // Action log
-        pushLog("<D><b>${nationName}</b></>${josaNationUl} 건국하였습니다. <1>$date</>")
+        pushLog("<D><b>${factionName}</b></>${josaNationUl} 건국하였습니다. <1>$date</>")
         // Global action log
         pushGlobalLog("<Y>${generalName}</>${josaYi} 국가를 건설하였습니다.")
         // Global history log
-        pushGlobalLog("<Y><b>【건국】</b></>${nationType} <D><b>${nationName}</b></>${josaNationYi} 새로이 등장하였습니다.")
-        pushGlobalHistoryLog("<Y><b>【건국】</b></>${nationType} <D><b>${nationName}</b></>${josaNationYi} 새로이 등장하였습니다.")
+        pushGlobalLog("<Y><b>【건국】</b></>${nationType} <D><b>${factionName}</b></>${josaNationYi} 새로이 등장하였습니다.")
+        pushGlobalHistoryLog("<Y><b>【건국】</b></>${nationType} <D><b>${factionName}</b></>${josaNationYi} 새로이 등장하였습니다.")
         // General history log
-        pushHistoryLog("<D><b>${nationName}</b></>${josaNationUl} 건국")
+        pushHistoryLog("<D><b>${factionName}</b></>${josaNationUl} 건국")
         // National history log
-        pushNationalHistoryLog("<Y>${generalName}</>${josaYi} <D><b>${nationName}</b></>${josaNationUl} 건국")
+        pushNationalHistoryLog("<Y>${generalName}</>${josaYi} <D><b>${factionName}</b></>${josaNationUl} 건국")
 
         return CommandResult(
             success = true,
             logs = logs,
-            message = """{"statChanges":{"experience":1000,"dedication":1000},"nationChanges":{"foundNation":true,"nationName":"$nationName","nationType":"$nationType","colorType":$colorType,"level":1,"aux":{"can_국기변경":1,"can_무작위수도이전":1}},"findRandomCity":{"query":"neutral_constructable","levelMin":5,"levelMax":6},"moveAllNationGenerals":true,"alternativeCommand":"che_해산"}"""
+            message = """{"statChanges":{"experience":1000,"dedication":1000},"nationChanges":{"foundNation":true,"factionName":"$factionName","nationType":"$nationType","colorType":$colorType,"level":1,"aux":{"can_국기변경":1,"can_무작위수도이전":1}},"findRandomCity":{"query":"neutral_constructable","levelMin":5,"levelMax":6},"moveAllNationGenerals":true,"alternativeCommand":"che_해산"}"""
         )
     }
 }

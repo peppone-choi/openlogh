@@ -9,7 +9,7 @@ import com.openlogh.engine.modifier.ModifierService
 import com.openlogh.engine.trigger.TriggerCaller
 import com.openlogh.engine.trigger.TriggerEnv
 import com.openlogh.engine.trigger.buildPreTurnTriggers
-import com.openlogh.entity.GeneralTurn
+import com.openlogh.entity.OfficerTurn
 import com.openlogh.entity.Faction
 import com.openlogh.entity.SessionState
 import com.openlogh.repository.PlanetRepository
@@ -133,7 +133,7 @@ class RealtimeService(
             } catch (e: Exception) { logger.warn("Failed to push realtime result: {}", e.message) }
         }
 
-        gameEventService.sendToGeneral(general.id, mapOf(
+        gameEventService.sendToOfficer(general.id, mapOf(
             "type" to "command_completed",
             "actionCode" to actionCode,
             "success" to result.success,
@@ -198,7 +198,7 @@ class RealtimeService(
                 general.updatedAt = OffsetDateTime.now()
                 officerRepository.save(general)
 
-                gameEventService.sendToGeneral(general.id, mapOf(
+                gameEventService.sendToOfficer(general.id, mapOf(
                     "type" to "command_completed",
                     "actionCode" to gt.actionCode,
                     "success" to result.success,
@@ -250,7 +250,7 @@ class RealtimeService(
             year = world.currentYear.toInt(),
             month = world.currentMonth.toInt(),
             startYear = startYear,
-            worldId = world.id.toLong(),
+            sessionId = world.id.toLong(),
             realtimeMode = world.realtimeMode,
             trainDelta = gameConstService.getDouble("trainDelta"),
             atmosDelta = gameConstService.getDouble("atmosDelta"),
@@ -311,11 +311,11 @@ class RealtimeService(
         general.updatedAt = OffsetDateTime.now()
         officerRepository.save(general)
 
-        officerTurnRepository.deleteByGeneralId(general.id)
+        officerTurnRepository.deleteByOfficerId(general.id)
         officerTurnRepository.save(
-            GeneralTurn(
-                worldId = general.sessionId,
-                generalId = general.id,
+            OfficerTurn(
+                sessionId = general.sessionId,
+                officerId = general.id,
                 turnIdx = 0,
                 actionCode = actionCode,
                 arg = arg?.toMutableMap() ?: mutableMapOf(),
@@ -323,7 +323,7 @@ class RealtimeService(
             )
         )
 
-        gameEventService.sendToGeneral(
+        gameEventService.sendToOfficer(
             general.id,
             mapOf(
                 "type" to "command_scheduled",

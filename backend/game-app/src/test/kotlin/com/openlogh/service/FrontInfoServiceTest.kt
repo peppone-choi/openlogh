@@ -1,19 +1,19 @@
 package com.openlogh.service
 
 import com.openlogh.entity.AppUser
-import com.openlogh.entity.City
-import com.openlogh.entity.General
-import com.openlogh.entity.Nation
-import com.openlogh.entity.WorldState
+import com.openlogh.entity.Planet
+import com.openlogh.entity.Officer
+import com.openlogh.entity.Faction
+import com.openlogh.entity.SessionState
 import com.openlogh.model.ScenarioData
 import com.openlogh.repository.AppUserRepository
-import com.openlogh.repository.CityRepository
-import com.openlogh.repository.GeneralRepository
+import com.openlogh.repository.PlanetRepository
+import com.openlogh.repository.OfficerRepository
 import com.openlogh.repository.MessageRepository
-import com.openlogh.repository.NationRepository
+import com.openlogh.repository.FactionRepository
 import com.openlogh.repository.RecordRepository
-import com.openlogh.repository.TroopRepository
-import com.openlogh.repository.WorldStateRepository
+import com.openlogh.repository.FleetRepository
+import com.openlogh.repository.SessionStateRepository
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.BeforeEach
@@ -24,47 +24,47 @@ import java.time.OffsetDateTime
 import java.util.Optional
 
 class FrontInfoServiceTest {
-    private lateinit var worldStateRepository: WorldStateRepository
-    private lateinit var generalRepository: GeneralRepository
-    private lateinit var nationRepository: NationRepository
-    private lateinit var cityRepository: CityRepository
+    private lateinit var sessionStateRepository: SessionStateRepository
+    private lateinit var officerRepository: OfficerRepository
+    private lateinit var factionRepository: FactionRepository
+    private lateinit var planetRepository: PlanetRepository
     private lateinit var messageRepository: MessageRepository
     private lateinit var appUserRepository: AppUserRepository
-    private lateinit var troopRepository: TroopRepository
+    private lateinit var fleetRepository: FleetRepository
     private lateinit var officerRankService: OfficerRankService
     private lateinit var scenarioService: ScenarioService
-    private lateinit var cityService: CityService
+    private lateinit var planetService: PlanetService
     private lateinit var service: FrontInfoService
 
     @BeforeEach
     fun setUp() {
-        worldStateRepository = mock(WorldStateRepository::class.java)
-        generalRepository = mock(GeneralRepository::class.java)
-        nationRepository = mock(NationRepository::class.java)
-        cityRepository = mock(CityRepository::class.java)
+        sessionStateRepository = mock(SessionStateRepository::class.java)
+        officerRepository = mock(OfficerRepository::class.java)
+        factionRepository = mock(FactionRepository::class.java)
+        planetRepository = mock(PlanetRepository::class.java)
         messageRepository = mock(MessageRepository::class.java)
         appUserRepository = mock(AppUserRepository::class.java)
-        troopRepository = mock(TroopRepository::class.java)
+        fleetRepository = mock(FleetRepository::class.java)
         officerRankService = mock(OfficerRankService::class.java)
         scenarioService = mock(ScenarioService::class.java)
-        cityService = mock(CityService::class.java)
+        planetService = mock(PlanetService::class.java)
 
         service = FrontInfoService(
-            worldStateRepository,
-            generalRepository,
-            nationRepository,
-            cityRepository,
+            sessionStateRepository,
+            officerRepository,
+            factionRepository,
+            planetRepository,
             messageRepository,
             mock(RecordRepository::class.java),
             appUserRepository,
-            troopRepository,
+            fleetRepository,
             officerRankService,
             scenarioService,
-            cityService,
+            planetService,
         )
     }
 
-    private fun buildWorld() = WorldState(
+    private fun buildWorld() = SessionState(
         id = 1,
         scenarioCode = "test",
         currentYear = 180,
@@ -73,17 +73,17 @@ class FrontInfoServiceTest {
     )
 
     private fun buildUser() = AppUser(id = 10, loginId = "tester", displayName = "테스터", passwordHash = "pw")
-    private fun buildNation() = Nation(id = 7, worldId = 1, name = "세력", level = 1)
-    private fun buildCity() = City(id = 5, worldId = 1, name = "도시", nationId = 7, level = 5)
+    private fun buildNation() = Faction(id = 7, sessionId = 1, name = "세력", factionRank = 1)
+    private fun buildCity() = Planet(id = 5, sessionId = 1, name = "도시", factionId = 7, level = 5)
 
-    private fun stubCommon(world: WorldState, user: AppUser, nation: Nation, city: City, general: General) {
-        `when`(worldStateRepository.findById(1)).thenReturn(Optional.of(world))
+    private fun stubCommon(world: SessionState, user: AppUser, nation: Faction, city: Planet, general: Officer) {
+        `when`(sessionStateRepository.findById(1)).thenReturn(Optional.of(world))
         `when`(appUserRepository.findByLoginId("tester")).thenReturn(user)
-        `when`(generalRepository.findByWorldId(1)).thenReturn(listOf(general))
-        `when`(nationRepository.findByWorldId(1)).thenReturn(listOf(nation))
-        `when`(cityRepository.findById(5)).thenReturn(Optional.of(city))
-        `when`(cityRepository.findByWorldId(1)).thenReturn(listOf(city))
-        `when`(cityService.canonicalRegionForDisplay(city)).thenReturn(city.region)
+        `when`(officerRepository.findBySessionId(1)).thenReturn(listOf(general))
+        `when`(factionRepository.findBySessionId(1)).thenReturn(listOf(nation))
+        `when`(planetRepository.findById(5)).thenReturn(Optional.of(city))
+        `when`(planetRepository.findBySessionId(1)).thenReturn(listOf(city))
+        `when`(planetService.canonicalRegionForDisplay(city)).thenReturn(city.region)
         `when`(scenarioService.getScenario("test")).thenReturn(ScenarioData(title = "테스트 시나리오"))
         `when`(officerRankService.getRankTitle(0, 1)).thenReturn("무품관")
         `when`(messageRepository.findByDestIdAndMailboxCodeAndIdGreaterThanOrderBySentAtDesc(general.id, "general_action", 0)).thenReturn(emptyList())
@@ -97,9 +97,9 @@ class FrontInfoServiceTest {
         val user = buildUser()
         val nation = buildNation()
         val city = buildCity()
-        val general = General(
-            id = 11, worldId = 1, userId = 10, nationId = 7, cityId = 5,
-            name = "장수", crewType = 3, turnTime = OffsetDateTime.now(),
+        val general = Officer(
+            id = 11, sessionId = 1, userId = 10, factionId = 7, planetId = 5,
+            name = "장수", shipClass = 3, turnTime = OffsetDateTime.now(),
         )
         stubCommon(world, user, nation, city, general)
 
@@ -115,9 +115,9 @@ class FrontInfoServiceTest {
         val user = buildUser()
         val nation = buildNation()
         val city = buildCity()
-        val general = General(
-            id = 11, worldId = 1, userId = 10, nationId = 7, cityId = 5,
-            name = "장수", crewType = 3, turnTime = OffsetDateTime.now(),
+        val general = Officer(
+            id = 11, sessionId = 1, userId = 10, factionId = 7, planetId = 5,
+            name = "장수", shipClass = 3, turnTime = OffsetDateTime.now(),
         ).apply {
             weaponCode = "che_무기_15_의천검"
             bookCode = "che_회피_태평요술"

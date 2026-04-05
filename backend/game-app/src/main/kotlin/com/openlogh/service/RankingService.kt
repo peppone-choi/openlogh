@@ -115,7 +115,7 @@ class RankingService(
                         "generalId" to gen.id,
                         "generalName" to gen.name,
                         "nationId" to gen.factionId,
-                        "nationName" to "",
+                        "factionName" to "",
                         "nationColor" to "",
                         "itemName" to code,
                         "itemGrade" to "unique",
@@ -139,7 +139,7 @@ class RankingService(
             "type" to fame.type,
             "generalName" to ((fame.aux["name"] as? String) ?: "-"),
             "name" to ((fame.aux["name"] as? String) ?: "-"),
-            "nationName" to ((fame.aux["nationName"] as? String) ?: "재야"),
+            "factionName" to ((fame.aux["factionName"] as? String) ?: "재야"),
             "nationColor" to ((fame.aux["bgColor"] as? String) ?: "#888888"),
             "bgColor" to ((fame.aux["bgColor"] as? String) ?: "#888888"),
             "value" to fame.value,
@@ -147,7 +147,7 @@ class RankingService(
             "scenario" to fame.scenario.toString(),
             "season" to fame.season,
             "serverName" to fame.serverId,
-            "generalId" to fame.generalNo,
+            "generalId" to fame.officerNo,
         )
         (fame.aux["picture"] as? String)?.takeIf { it.isNotBlank() }?.let { payload["picture"] = it }
         ownerName?.let { payload["ownerName"] = it }
@@ -159,7 +159,7 @@ class RankingService(
                 mailboxCode = "hall_of_fame",
                 mailboxType = "PUBLIC",
                 messageType = "hall_of_fame",
-                srcId = fame.generalNo,
+                srcId = fame.officerNo,
                 payload = payload,
                 meta = mutableMapOf(
                     "season" to fame.season,

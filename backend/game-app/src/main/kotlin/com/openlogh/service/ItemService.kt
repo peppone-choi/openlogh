@@ -305,28 +305,28 @@ class ItemService(
             val slot = slotByItemType(itemType)
                 ?: return ItemActionResult(false, "잘못된 아이템 종류입니다.")
 
-            val sourceItemCode = getSlotValue(fromGeneral, slot)
+            val sourceItemCode = getSlotValue(fromOfficer, slot)
             if (sourceItemCode == "None") {
                 return ItemActionResult(false, "증여할 아이템이 없습니다.")
             }
-            if (getSlotValue(targetGeneral, slot) != "None") {
+            if (getSlotValue(targetOfficer, slot) != "None") {
                 return ItemActionResult(false, "대상 장수가 이미 해당 종류의 아이템을 장착 중입니다.")
             }
 
-            setSlotValue(fromGeneral, slot, "None")
-            setSlotValue(targetGeneral, slot, sourceItemCode)
+            setSlotValue(fromOfficer, slot, "None")
+            setSlotValue(targetOfficer, slot, sourceItemCode)
 
             val sourceUsesKey = "item_uses_$sourceItemCode"
-            val sourceUses = (fromGeneral.meta[sourceUsesKey] as? Number)?.toInt()
-            clearConsumableMeta(fromGeneral, sourceItemCode)
+            val sourceUses = (fromOfficer.meta[sourceUsesKey] as? Number)?.toInt()
+            clearConsumableMeta(fromOfficer, sourceItemCode)
             if (sourceUses != null) {
-                targetGeneral.meta = targetGeneral.meta.toMutableMap().apply {
+                targetOfficer.meta = targetOfficer.meta.toMutableMap().apply {
                     put(sourceUsesKey, sourceUses)
                 }
             }
 
             val itemName = ItemModifiers.getMeta(sourceItemCode)?.rawName ?: sourceItemCode
-            return ItemActionResult(true, "${itemName}을(를) ${targetGeneral.name}에게 증여했습니다.")
+            return ItemActionResult(true, "${itemName}을(를) ${targetOfficer.name}에게 증여했습니다.")
         }
     }
 }

@@ -94,7 +94,7 @@ object ArgSchemas {
 
     val foundNation = ArgSchema(
         listOf(
-            Field("nationName", aliases = listOf("name", "text", "value"), required = true, parser = ::parseString),
+            Field("factionName", aliases = listOf("name", "text", "value"), required = true, parser = ::parseString),
             Field("nationType", required = false, defaultValue = "che_도적", parser = ::parseString),
             Field("colorType", required = false, defaultValue = 0, parser = ::parseInt),
         )

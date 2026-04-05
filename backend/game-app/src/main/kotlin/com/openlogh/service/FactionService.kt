@@ -189,7 +189,7 @@ class FactionService(
     }
 
     @Transactional
-    fun appointOfficer(nationId: Long, generalId: Long, officerLevel: Int, officerCity: Int?): Boolean {
+    fun appointOfficer(nationId: Long, generalId: Long, officerLevel: Int, officerPlanet: Int?): Boolean {
         val officer = officerRepository.findById(generalId).orElse(null) ?: return false
         val faction = factionRepository.findById(nationId).orElse(null) ?: return false
         
@@ -227,7 +227,7 @@ class FactionService(
         }
         
         officer.officerLevel = officerLevel.toShort()
-        if (officerCity != null) officer.officerCity = officerCity
+        if (officerPlanet != null) officer.officerPlanet = officerPlanet
         officerRepository.save(officer)
         return true
     }
@@ -359,7 +359,7 @@ class FactionService(
         for (planet in allCities) {
             if (planet.factionId in warNations) {
                 try {
-                    val neighbors = mapService.getAdjacentCities(mapCode, planet.mapCityId)
+                    val neighbors = mapService.getAdjacentCities(mapCode, planet.mapPlanetId)
                     adj3.addAll(neighbors)
                 } catch (e: Exception) {
                     log.warn("Failed to get adjacent cities for planet {}: {}", planet.id, e.message)
@@ -367,7 +367,7 @@ class FactionService(
             }
             if (planet.factionId in imminentNations) {
                 try {
-                    val neighbors = mapService.getAdjacentCities(mapCode, planet.mapCityId)
+                    val neighbors = mapService.getAdjacentCities(mapCode, planet.mapPlanetId)
                     adj1.addAll(neighbors)
                 } catch (e: Exception) {
                     log.warn("Failed to get adjacent cities for planet {}: {}", planet.id, e.message)
@@ -380,7 +380,7 @@ class FactionService(
             for (planet in allCities) {
                 if (planet.factionId == 0L) {
                     try {
-                        val neighbors = mapService.getAdjacentCities(mapCode, planet.mapCityId)
+                        val neighbors = mapService.getAdjacentCities(mapCode, planet.mapPlanetId)
                         adj2.addAll(neighbors)
                     } catch (e: Exception) {
                         log.warn("Failed to get adjacent cities for planet {}: {}", planet.id, e.message)
@@ -395,19 +395,19 @@ class FactionService(
         }
         // front=1 first (lowest priority)
         for (planet in nationCities) {
-            if (planet.mapCityId in adj1) planet.frontState = 1
+            if (planet.mapPlanetId in adj1) planet.frontState = 1
         }
         // front=2 overwrites 1
         for (planet in nationCities) {
-            if (planet.mapCityId in adj2) planet.frontState = 2
+            if (planet.mapPlanetId in adj2) planet.frontState = 2
         }
         // front=3 overwrites all (highest priority)
         for (planet in nationCities) {
-            if (planet.mapCityId in adj3) planet.frontState = 3
+            if (planet.mapPlanetId in adj3) planet.frontState = 3
         }
 
         planetRepository.saveAll(nationCities)
-        val nationMapIds = nationCities.map { it.mapCityId }.toSet()
+        val nationMapIds = nationCities.map { it.mapPlanetId }.toSet()
         log.info("Updated front state for faction {} — adj3={}, adj1={}, adj2={}",
             nationId, adj3.intersect(nationMapIds), adj1.intersect(nationMapIds), adj2.intersect(nationMapIds))
     }

@@ -1,15 +1,15 @@
 package com.openlogh.service
 
 import com.openlogh.entity.AppUser
-import com.openlogh.entity.General
-import com.openlogh.entity.Nation
-import com.openlogh.entity.WorldState
+import com.openlogh.entity.Officer
+import com.openlogh.entity.Faction
+import com.openlogh.entity.SessionState
 import com.openlogh.repository.AppUserRepository
-import com.openlogh.repository.CityRepository
+import com.openlogh.repository.PlanetRepository
 import com.openlogh.repository.DiplomacyRepository
-import com.openlogh.repository.GeneralRepository
-import com.openlogh.repository.NationRepository
-import com.openlogh.repository.WorldStateRepository
+import com.openlogh.repository.OfficerRepository
+import com.openlogh.repository.FactionRepository
+import com.openlogh.repository.SessionStateRepository
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -24,47 +24,47 @@ import java.time.OffsetDateTime
 import java.util.Optional
 
 class NationServiceTest {
-    private lateinit var nationRepository: NationRepository
-    private lateinit var generalRepository: GeneralRepository
+    private lateinit var factionRepository: FactionRepository
+    private lateinit var officerRepository: OfficerRepository
     private lateinit var appUserRepository: AppUserRepository
     private lateinit var officerRankService: OfficerRankService
-    private lateinit var cityRepository: CityRepository
+    private lateinit var planetRepository: PlanetRepository
     private lateinit var diplomacyRepository: DiplomacyRepository
-    private lateinit var worldStateRepository: WorldStateRepository
+    private lateinit var sessionStateRepository: SessionStateRepository
     private lateinit var mapService: MapService
-    private lateinit var service: NationService
+    private lateinit var service: FactionService
 
     @BeforeEach
     fun setUp() {
-        nationRepository = mock(NationRepository::class.java)
-        generalRepository = mock(GeneralRepository::class.java)
+        factionRepository = mock(FactionRepository::class.java)
+        officerRepository = mock(OfficerRepository::class.java)
         appUserRepository = mock(AppUserRepository::class.java)
         officerRankService = mock(OfficerRankService::class.java)
-        cityRepository = mock(CityRepository::class.java)
+        planetRepository = mock(PlanetRepository::class.java)
         diplomacyRepository = mock(DiplomacyRepository::class.java)
-        worldStateRepository = mock(WorldStateRepository::class.java)
+        sessionStateRepository = mock(SessionStateRepository::class.java)
         mapService = mock(MapService::class.java)
 
-        service = NationService(
-            nationRepository = nationRepository,
-            generalRepository = generalRepository,
+        service = FactionService(
+            factionRepository = factionRepository,
+            officerRepository = officerRepository,
             appUserRepository = appUserRepository,
             officerRankService = officerRankService,
-            cityRepository = cityRepository,
+            planetRepository = planetRepository,
             diplomacyRepository = diplomacyRepository,
-            worldStateRepository = worldStateRepository,
+            sessionStateRepository = sessionStateRepository,
             mapService = mapService,
         )
     }
 
     @Test
     fun `getPolicy prefers legacy notice and scout message keys`() {
-        val nation = Nation(
+        val nation = Faction(
             id = 1,
-            worldId = 1,
+            sessionId = 1,
             name = "위",
-            rate = 20,
-            bill = 80,
+            conscriptionRate = 20,
+            taxRate = 80,
             secretLimit = 3,
             strategicCmdLimit = 12,
             meta = mutableMapOf(
@@ -74,7 +74,7 @@ class NationServiceTest {
                 "scout_msg" to "legacy scout",
             ),
         )
-        `when`(nationRepository.findById(1L)).thenReturn(Optional.of(nation))
+        `when`(factionRepository.findById(1L)).thenReturn(Optional.of(nation))
 
         val policy = service.getPolicy(1L)
 
@@ -84,21 +84,21 @@ class NationServiceTest {
 
     @Test
     fun `verifyPolicyAccess allows ambassador in same nation`() {
-        val nation = Nation(id = 1, worldId = 1, name = "위")
+        val nation = Faction(id = 1, sessionId = 1, name = "위")
         val user = AppUser(id = 7, loginId = "tester", displayName = "Tester", passwordHash = "hash")
-        val general = General(
+        val general = Officer(
             id = 100,
-            worldId = 1,
+            sessionId = 1,
             userId = 7,
-            nationId = 1,
+            factionId = 1,
             name = "사절",
             permission = "ambassador",
             officerLevel = 1,
             turnTime = OffsetDateTime.now(),
         )
-        `when`(nationRepository.findById(1L)).thenReturn(Optional.of(nation))
+        `when`(factionRepository.findById(1L)).thenReturn(Optional.of(nation))
         `when`(appUserRepository.findByLoginId("tester")).thenReturn(user)
-        `when`(generalRepository.findByWorldIdAndUserId(1L, 7L)).thenReturn(listOf(general))
+        `when`(officerRepository.findBySessionIdAndUserId(1L, 7L)).thenReturn(listOf(general))
 
         val allowed = service.verifyPolicyAccess(1L, "tester")
 
@@ -107,21 +107,21 @@ class NationServiceTest {
 
     @Test
     fun `verifyPolicyAccess rejects penalized chief`() {
-        val nation = Nation(id = 1, worldId = 1, name = "위")
+        val nation = Faction(id = 1, sessionId = 1, name = "위")
         val user = AppUser(id = 8, loginId = "chief", displayName = "Chief", passwordHash = "hash")
-        val general = General(
+        val general = Officer(
             id = 101,
-            worldId = 1,
+            sessionId = 1,
             userId = 8,
-            nationId = 1,
+            factionId = 1,
             name = "군주",
             officerLevel = 20,
             penalty = mutableMapOf("noChief" to true),
             turnTime = OffsetDateTime.now(),
         )
-        `when`(nationRepository.findById(1L)).thenReturn(Optional.of(nation))
+        `when`(factionRepository.findById(1L)).thenReturn(Optional.of(nation))
         `when`(appUserRepository.findByLoginId("chief")).thenReturn(user)
-        `when`(generalRepository.findByWorldIdAndUserId(1L, 8L)).thenReturn(listOf(general))
+        `when`(officerRepository.findBySessionIdAndUserId(1L, 8L)).thenReturn(listOf(general))
 
         val allowed = service.verifyPolicyAccess(1L, "chief")
 
@@ -130,9 +130,9 @@ class NationServiceTest {
 
     @Test
     fun `updateNotice stores legacy nationNotice envelope`() {
-        val nation = Nation(id = 1, worldId = 1, name = "위")
-        val author = General(id = 9, worldId = 1, nationId = 1, name = "조조", turnTime = OffsetDateTime.now())
-        `when`(nationRepository.findById(1L)).thenReturn(Optional.of(nation))
+        val nation = Faction(id = 1, sessionId = 1, name = "위")
+        val author = Officer(id = 9, sessionId = 1, factionId = 1, name = "조조", turnTime = OffsetDateTime.now())
+        `when`(factionRepository.findById(1L)).thenReturn(Optional.of(nation))
 
         val updated = service.updateNotice(1L, "새 방침", author)
 
@@ -144,14 +144,14 @@ class NationServiceTest {
         assertEquals("조조", notice["author"])
         assertEquals(9L, notice["authorID"])
         assertTrue((notice["date"] as String).isNotBlank())
-        verify(nationRepository).save(nation)
+        verify(factionRepository).save(nation)
     }
 
     @Test
     fun `updateNotice escapes html before persisting`() {
-        val nation = Nation(id = 1, worldId = 1, name = "위")
-        val author = General(id = 9, worldId = 1, nationId = 1, name = "조조", turnTime = OffsetDateTime.now())
-        `when`(nationRepository.findById(1L)).thenReturn(Optional.of(nation))
+        val nation = Faction(id = 1, sessionId = 1, name = "위")
+        val author = Officer(id = 9, sessionId = 1, factionId = 1, name = "조조", turnTime = OffsetDateTime.now())
+        `when`(factionRepository.findById(1L)).thenReturn(Optional.of(nation))
 
         service.updateNotice(1L, "<script>alert(1)</script>", author)
 
@@ -163,29 +163,29 @@ class NationServiceTest {
 
     @Test
     fun `updateBlockScout respects world lock flag`() {
-        val nation = Nation(id = 1, worldId = 1, name = "위", scoutLevel = 0)
-        val world = WorldState(id = 1, name = "world", scenarioCode = "test", config = mutableMapOf("blockChangeScout" to true))
-        `when`(nationRepository.findById(1L)).thenReturn(Optional.of(nation))
-        `when`(worldStateRepository.findById(1)).thenReturn(Optional.of(world))
+        val nation = Faction(id = 1, sessionId = 1, name = "위", scoutLevel = 0)
+        val world = SessionState(id = 1, name = "world", scenarioCode = "test", config = mutableMapOf("blockChangeScout" to true))
+        `when`(factionRepository.findById(1L)).thenReturn(Optional.of(nation))
+        `when`(sessionStateRepository.findById(1)).thenReturn(Optional.of(world))
 
         val result = service.updateBlockScout(1L, true)
 
         assertFalse(result.success)
         assertEquals("임관 설정을 바꿀 수 없도록 설정되어 있습니다.", result.reason)
         assertEquals(0.toShort(), nation.scoutLevel)
-        verify(nationRepository, never()).save(nation)
+        verify(factionRepository, never()).save(nation)
     }
 
     @Test
     fun `updateBlockWar decrements available count and updates war flag`() {
-        val nation = Nation(
+        val nation = Faction(
             id = 1,
-            worldId = 1,
+            sessionId = 1,
             name = "위",
             warState = 0,
             meta = mutableMapOf("available_war_setting_cnt" to 2),
         )
-        `when`(nationRepository.findById(1L)).thenReturn(Optional.of(nation))
+        `when`(factionRepository.findById(1L)).thenReturn(Optional.of(nation))
 
         val result = service.updateBlockWar(1L, true)
 
@@ -195,7 +195,7 @@ class NationServiceTest {
         assertEquals(1, nation.meta["available_war_setting_cnt"])
 
         val captor = ArgumentCaptor.forClass(Nation::class.java)
-        verify(nationRepository).save(captor.capture())
+        verify(factionRepository).save(captor.capture())
         assertEquals(1.toShort(), captor.value.warState)
     }
 }

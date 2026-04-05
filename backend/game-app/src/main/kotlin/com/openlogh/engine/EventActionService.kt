@@ -312,16 +312,15 @@ class EventActionService(
             val npc = Officer(
                 sessionId = world.id.toLong(),
                 name = "무명장수${world.currentYear}_${i}",
-                nationId = 0,
-                cityId = targetCity.id,
+                factionId = 0,
+                planetId = targetCity.id,
                 npcState = 3,
                 bornYear = birthYear.coerceIn(0, 32767).toShort(),
                 deadYear = deathYear.coerceIn(0, 32767).toShort(),
                 leadership = leadership.coerceIn(0, 100).toShort(),
-                strength = strength.coerceIn(0, 100).toShort(),
-                intel = intel.coerceIn(0, 100).toShort(),
-                gold = 1000,
-                rice = 1000,
+                command = strength.coerceIn(0, 100).toShort(),
+                intelligence = intel.coerceIn(0, 100).toShort(),
+                funds = 1000, supplies = 1000,
             )
             officerRepository.save(npc)
             created++
@@ -351,7 +350,7 @@ class EventActionService(
         bettingRepository.save(betting)
 
         // Determine winners: remaining nations
-        val nations = factionRepository.findBySessionId(world.id.toLong()).filter { it.level > 0 }
+        val nations = factionRepository.findBySessionId(world.id.toLong()).filter { it.factionRank > 0 }
         val winnerNationIds = nations.map { it.id }.toSet()
 
         // Find all bets and reward winners
@@ -362,7 +361,7 @@ class EventActionService(
             if (betNationId in winnerNationIds) {
                 // Winner: return bet amount * odds (simplified)
                 val amount = bet.amount
-                val general = officerRepository.findById(bet.generalId).orElse(null) ?: continue
+                val general = officerRepository.findById(bet.officerId).orElse(null) ?: continue
                 general.funds += (amount * 2)  // simplified reward
                 officerRepository.save(general)
                 inheritanceService.accruePoints(general, "betting", 1)
@@ -381,7 +380,7 @@ class EventActionService(
     // ─── OpenNationBetting ───
     @Transactional
     fun openNationBetting(world: SessionState, nationCnt: Int = 1, bonusPoint: Int = 0) {
-        val nations = factionRepository.findBySessionId(world.id.toLong()).filter { it.level > 0 }
+        val nations = factionRepository.findBySessionId(world.id.toLong()).filter { it.factionRank > 0 }
         val cities = planetRepository.findBySessionId(world.id.toLong())
         val citiesByNation = cities.groupBy { it.factionId }
 
@@ -395,11 +394,11 @@ class EventActionService(
             odds = mutableMapOf(
                 "name" to "${name} 예상",
                 "selectCnt" to nationCnt,
-                "candidates" to nations.sortedByDescending { it.power }.map { n ->
+                "candidates" to nations.sortedByDescending { it.militaryPower }.map { n ->
                     mapOf(
                         "nationId" to n.id,
                         "name" to n.name,
-                        "power" to n.power,
+                        "power" to n.militaryPower,
                         "gennum" to n.officerCount,
                         "cityCnt" to (citiesByNation[n.id]?.size ?: 0),
                     )
@@ -459,8 +458,8 @@ class EventActionService(
 
         if (freeCityCount == 0) {
             needStop = true
-            val nationName = nations.firstOrNull()?.name ?: ""
-            userWin = !nationName.startsWith("ⓞ")
+            val factionName = nations.firstOrNull()?.name ?: ""
+            userWin = !factionName.startsWith("ⓞ")
         } else if (freeCityCount == totalCityCount) {
             needStop = true
             userWin = false
@@ -629,7 +628,7 @@ class EventActionService(
             val score = calculateInheritancePoint(general)
             RankData(
                 sessionId = worldId,
-                nationId = general.factionId,
+                factionId = general.factionId,
                 category = RANK_INHERIT_EARNED_BY_MERGE,
                 score = score,
                 meta = mutableMapOf("generalId" to general.id, "generalName" to general.name),
@@ -790,17 +789,16 @@ class EventActionService(
         val general = Officer(
             sessionId = world.id.toLong(),
             name = name,
-            nationId = nationId,
-            cityId = resolvedCityId,
+            factionId = nationId,
+            planetId = resolvedCityId,
             npcState = npcType,
             bornYear = birth.coerceIn(0, 32767).toShort(),
             deadYear = death.coerceIn(0, 32767).toShort(),
             leadership = leadership.coerceIn(0, 100).toShort(),
-            strength = strength.coerceIn(0, 100).toShort(),
-            intel = intel.coerceIn(0, 100).toShort(),
+            command = strength.coerceIn(0, 100).toShort(),
+            intelligence = intel.coerceIn(0, 100).toShort(),
             officerLevel = officerLevel.coerceIn(0, 20).toShort(),
-            gold = 1000,
-            rice = 1000,
+            funds = 1000, supplies = 1000,
         )
         officerRepository.save(general)
         log.info("[World {}] RegNPC: created '{}' (nationId={}, npc={})", world.id, name, nationId, npcType)

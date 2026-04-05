@@ -16,10 +16,10 @@ import com.openlogh.engine.event.actions.npc.RaiseInvaderAction
 import com.openlogh.engine.event.actions.npc.RaiseNpcNationAction
 import com.openlogh.entity.Event
 import com.openlogh.entity.Message
-import com.openlogh.entity.WorldState
+import com.openlogh.entity.SessionState
 import com.openlogh.repository.EventRepository
 import com.openlogh.repository.MessageRepository
-import com.openlogh.repository.NationRepository
+import com.openlogh.repository.FactionRepository
 import com.openlogh.service.HistoryService
 import com.openlogh.service.ScenarioService
 import org.junit.jupiter.api.Assertions.*
@@ -32,7 +32,7 @@ class EventServiceTest {
 
     private lateinit var service: EventService
     private lateinit var eventRepository: EventRepository
-    private lateinit var nationRepository: NationRepository
+    private lateinit var factionRepository: FactionRepository
     private lateinit var messageRepository: MessageRepository
     private lateinit var historyService: HistoryService
     private lateinit var economyService: EconomyService
@@ -45,7 +45,7 @@ class EventServiceTest {
     @BeforeEach
     fun setUp() {
         eventRepository = mock(EventRepository::class.java)
-        nationRepository = mock(NationRepository::class.java)
+        factionRepository = mock(FactionRepository::class.java)
         messageRepository = mock(MessageRepository::class.java)
         historyService = mock(HistoryService::class.java)
         economyService = mock(EconomyService::class.java)
@@ -84,14 +84,14 @@ class EventServiceTest {
         val compoundAction = CompoundAction(registry)
         val fullRegistry = EventActionRegistry(nonCompoundActions + listOf(compoundAction))
 
-        service = EventService(eventRepository, nationRepository, scenarioService, fullRegistry)
+        service = EventService(eventRepository, factionRepository, scenarioService, fullRegistry)
 
         // Default: messageRepository.save returns the argument
         `when`(messageRepository.save(anyNonNull<Message>())).thenAnswer { it.arguments[0] }
     }
 
-    private fun createWorld(year: Short = 200, month: Short = 3): WorldState {
-        return WorldState(
+    private fun createWorld(year: Short = 200, month: Short = 3): SessionState {
+        return SessionState(
             id = 1,
             scenarioCode = "test",
             currentYear = year,
@@ -109,7 +109,7 @@ class EventServiceTest {
     ): Event {
         return Event(
             id = id,
-            worldId = 1,
+            sessionId = 1,
             targetCode = targetCode,
             condition = condition,
             action = action,
@@ -326,7 +326,7 @@ class EventServiceTest {
 
         `when`(eventRepository.findByWorldIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "turn_start"))
             .thenReturn(listOf(event))
-        `when`(nationRepository.findByWorldId(1L)).thenReturn(emptyList())
+        `when`(factionRepository.findBySessionId(1L)).thenReturn(emptyList())
 
         service.dispatchEvents(world, "turn_start")
 

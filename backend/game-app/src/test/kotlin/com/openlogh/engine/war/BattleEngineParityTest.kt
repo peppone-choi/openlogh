@@ -1,7 +1,7 @@
 package com.openlogh.engine.war
 
-import com.openlogh.entity.City
-import com.openlogh.entity.General
+import com.openlogh.entity.Planet
+import com.openlogh.entity.Officer
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import java.time.OffsetDateTime
@@ -40,21 +40,21 @@ class BattleEngineParityTest {
         crewType: Short = 0, // FOOTMAN (0 in entity, mapped to CrewType.FOOTMAN code 1000)
         train: Short = 80,
         atmos: Short = 80,
-    ): General = General(
+    ): Officer = Officer(
         id = id,
-        worldId = 1,
+        sessionId = 1,
         name = "테스트장수$id",
-        nationId = nationId,
-        cityId = 1,
+        factionId = nationId,
+        planetId = 1,
         leadership = leadership,
-        strength = strength,
-        intel = intel,
-        crew = crew,
-        crewType = crewType,
-        train = train,
-        atmos = atmos,
-        gold = 1000,
-        rice = rice,
+        command = strength,
+        intelligence = intel,
+        ships = crew,
+        shipClass = crewType,
+        training = train,
+        morale = atmos,
+        funds = 1000,
+        supplies = rice,
         experience = 1000,
         dedication = 1000,
         specialCode = "None",
@@ -66,17 +66,17 @@ class BattleEngineParityTest {
         nationId: Long = 2,
         def: Int = 300,
         wall: Int = 300,
-    ): City = City(
+    ): Planet = Planet(
         id = 1,
-        worldId = 1,
+        sessionId = 1,
         name = "테스트도시",
-        nationId = nationId,
-        def = def,
-        defMax = 1000,
-        wall = wall,
-        wallMax = 1000,
-        pop = 10000,
-        popMax = 50000,
+        factionId = nationId,
+        orbitalDefense = def,
+        orbitalDefenseMax = 1000,
+        fortress = wall,
+        fortressMax = 1000,
+        population = 10000,
+        populationMax = 50000,
     )
 
     // ──────────────────────────────────────────────────────────────────
@@ -110,7 +110,7 @@ class BattleEngineParityTest {
         val gen = makeGeneral(id = 1, nationId = 1, strength = 80, leadership = 80, crew = 5000, rice = 100000)
         val city = makeCity(nationId = 2, def = 50, wall = 50)
 
-        val attacker = WarUnitGeneral(gen)
+        val attacker = WarUnitOfficer(gen)
         val result = engine.resolveBattle(attacker, emptyList(), city, rng)
 
         // City HP = def * 10 = 500. Footman gets 1.2x boost → should fall.
@@ -140,16 +140,16 @@ class BattleEngineParityTest {
         val cavalryGen = makeGeneral(id = 1, nationId = 1, strength = 70, crew = 3000, rice = 50000, crewType = 3)
         val archerDefender = makeGeneral(id = 2, nationId = 2, strength = 70, crew = 3000, rice = 50000, crewType = 2)
         val city1 = makeCity()
-        val unit1 = WarUnitGeneral(cavalryGen)
-        val def1 = WarUnitGeneral(archerDefender)
+        val unit1 = WarUnitOfficer(cavalryGen)
+        val def1 = WarUnitOfficer(archerDefender)
         val result1 = engine.resolveBattle(unit1, listOf(def1), city1, Random(seed))
 
         // Battle 2: cavalry attacker vs footman defender (neutral matchup)
         val cavalryGen2 = makeGeneral(id = 1, nationId = 1, strength = 70, crew = 3000, rice = 50000, crewType = 3)
         val footmanDefender = makeGeneral(id = 2, nationId = 2, strength = 70, crew = 3000, rice = 50000, crewType = 0)
         val city2 = makeCity()
-        val unit2 = WarUnitGeneral(cavalryGen2)
-        val def2 = WarUnitGeneral(footmanDefender)
+        val unit2 = WarUnitOfficer(cavalryGen2)
+        val def2 = WarUnitOfficer(footmanDefender)
         val result2 = engine.resolveBattle(unit2, listOf(def2), city2, Random(seed))
 
         // Cavalry vs archer: ARCHER.defenceCoef["3"] = 1.2 → cavalry should deal MORE damage
@@ -175,16 +175,16 @@ class BattleEngineParityTest {
         val defenderGen = makeGeneral(id = 2, nationId = 2, strength = 30, crew = 100, rice = 1000, train = 30)
         val city = makeCity(nationId = 2, def = 50, wall = 50)
 
-        val attacker = WarUnitGeneral(gen)
-        val defender = WarUnitGeneral(defenderGen)
-        val initialTrain = attacker.train
+        val attacker = WarUnitOfficer(gen)
+        val defender = WarUnitOfficer(defenderGen)
+        val initialTrain = attacker.training
 
         engine.resolveBattle(attacker, listOf(defender), city, rng)
 
-        // After at least one engagement, attacker.train should have increased by at least 1
+        // After at least one engagement, attacker.training should have increased by at least 1
         assertTrue(
-            attacker.train > initialTrain,
-            "Attacker train should increase by 1 per engagement. Initial=$initialTrain, after=${attacker.train}"
+            attacker.training > initialTrain,
+            "Attacker train should increase by 1 per engagement. Initial=$initialTrain, after=${attacker.training}"
         )
     }
 
@@ -196,22 +196,22 @@ class BattleEngineParityTest {
         val defenderGen = makeGeneral(id = 2, nationId = 2, strength = 50, crew = 2000, rice = 20000, train = 60)
 
         val city = makeCity(nationId = 2)
-        val attacker = WarUnitGeneral(gen)
-        val defender = WarUnitGeneral(defenderGen)
-        val initialDefenderTrain = defender.train
+        val attacker = WarUnitOfficer(gen)
+        val defender = WarUnitOfficer(defenderGen)
+        val initialDefenderTrain = defender.training
 
         engine.resolveBattle(attacker, listOf(defender), city, rng)
 
         // If defender participated in at least one engagement, train should have increased
-        // (Defender is WarUnitGeneral so addTrain applies to it)
+        // (Defender is WarUnitOfficer so addTrain applies to it)
         assertTrue(
-            defender.train > initialDefenderTrain,
-            "Defender train should increase by 1 per engagement. Initial=$initialDefenderTrain, after=${defender.train}"
+            defender.training > initialDefenderTrain,
+            "Defender train should increase by 1 per engagement. Initial=$initialDefenderTrain, after=${defender.training}"
         )
     }
 
     // ──────────────────────────────────────────────────────────────────
-    // WarUnitCity year-based train/atmos in battle context
+    // WarUnitPlanet year-based train/atmos in battle context
     // ──────────────────────────────────────────────────────────────────
 
     @Test
@@ -224,11 +224,11 @@ class BattleEngineParityTest {
         // Test: city with year=181 should have train=60, year=221 should have train=100.
 
         val cityEarly = makeCity(def = 300, wall = 300)
-        val unitEarly = WarUnitCity(cityEarly, year = 181, startYear = 180)
-        assertEquals(60, unitEarly.train, "Early game city should have train=60")
+        val unitEarly = WarUnitPlanet(cityEarly, year = 181, startYear = 180)
+        assertEquals(60, unitEarly.training, "Early game city should have train=60")
 
         val cityLate = makeCity(def = 300, wall = 300)
-        val unitLate = WarUnitCity(cityLate, year = 221, startYear = 180)
-        assertEquals(100, unitLate.train, "Late game city should have train=100")
+        val unitLate = WarUnitPlanet(cityLate, year = 221, startYear = 180)
+        assertEquals(100, unitLate.training, "Late game city should have train=100")
     }
 }

@@ -1,9 +1,9 @@
 package com.openlogh.service
 
 import com.openlogh.entity.AppUser
-import com.openlogh.entity.General
+import com.openlogh.entity.Officer
 import com.openlogh.repository.AppUserRepository
-import com.openlogh.repository.GeneralRepository
+import com.openlogh.repository.OfficerRepository
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -20,16 +20,16 @@ import java.util.Optional
 
 class AccountServiceTest {
     private lateinit var appUserRepository: AppUserRepository
-    private lateinit var generalRepository: GeneralRepository
+    private lateinit var officerRepository: OfficerRepository
     private lateinit var passwordEncoder: PasswordEncoder
     private lateinit var service: AccountService
 
     @BeforeEach
     fun setUp() {
         appUserRepository = mock(AppUserRepository::class.java)
-        generalRepository = mock(GeneralRepository::class.java)
+        officerRepository = mock(OfficerRepository::class.java)
         passwordEncoder = mock(PasswordEncoder::class.java)
-        service = AccountService(appUserRepository, generalRepository, passwordEncoder)
+        service = AccountService(appUserRepository, officerRepository, passwordEncoder)
     }
 
     @Test
@@ -50,7 +50,7 @@ class AccountServiceTest {
         assertNotNull(user.meta["deleteRequestedAt"])
         assertNotNull(user.meta["deleteAfter"])
         verify(appUserRepository).save(user)
-        verify(generalRepository, never()).findByUserId(user.id)
+        verify(officerRepository, never()).findByUserId(user.id)
     }
 
     @Test
@@ -79,15 +79,15 @@ class AccountServiceTest {
             passwordHash = "encoded",
             meta = mutableMapOf(),
         )
-        val general = General(
+        val general = Officer(
             id = 10,
             userId = 3,
-            worldId = 1,
+            sessionId = 1,
             name = "장수",
             picture = "old",
         )
         `when`(appUserRepository.findByLoginId("user")).thenReturn(user)
-        `when`(generalRepository.findByUserId(3L)).thenReturn(listOf(general))
+        `when`(officerRepository.findByUserId(3L)).thenReturn(listOf(general))
 
         val result = service.updateSettings(
             loginId = "user",
@@ -118,7 +118,7 @@ class AccountServiceTest {
         assertEquals(true, general.meta["borderReturn"])
         assertEquals(".test{}", general.meta["customCss"])
         verify(appUserRepository).save(user)
-        verify(generalRepository).save(general)
+        verify(officerRepository).save(general)
     }
 
     @Test
@@ -130,24 +130,24 @@ class AccountServiceTest {
             passwordHash = "encoded",
             meta = mutableMapOf(),
         )
-        val playerGeneral = General(
+        val playerGeneral = Officer(
             id = 10,
             userId = 4,
-            worldId = 1,
+            sessionId = 1,
             name = "장수",
             picture = "old.png",
             npcState = 0,
         )
-        val npcGeneral = General(
+        val npcGeneral = Officer(
             id = 11,
             userId = 4,
-            worldId = 1,
+            sessionId = 1,
             name = "NPC장수",
             picture = "npc.png",
             npcState = 1,
         )
         `when`(appUserRepository.findByLoginId("user")).thenReturn(user)
-        `when`(generalRepository.findByUserId(4L)).thenReturn(listOf(playerGeneral, npcGeneral))
+        `when`(officerRepository.findByUserId(4L)).thenReturn(listOf(playerGeneral, npcGeneral))
 
         val result = service.updateIconUrl("user", "/uploads/icons/new.png")
 
@@ -157,10 +157,10 @@ class AccountServiceTest {
         // Player general should be synced
         assertEquals("/uploads/icons/new.png", playerGeneral.picture)
         assertEquals(0.toShort(), playerGeneral.imageServer)
-        verify(generalRepository).save(playerGeneral)
+        verify(officerRepository).save(playerGeneral)
         // NPC general (npcState != 0) should NOT be synced
         assertEquals("npc.png", npcGeneral.picture)
-        verify(generalRepository, never()).save(npcGeneral)
+        verify(officerRepository, never()).save(npcGeneral)
     }
 
     @Test
@@ -172,16 +172,16 @@ class AccountServiceTest {
             passwordHash = "encoded",
             meta = mutableMapOf("picture" to "old.png", "imageServer" to 0),
         )
-        val general = General(
+        val general = Officer(
             id = 10,
             userId = 4,
-            worldId = 1,
+            sessionId = 1,
             name = "장수",
             picture = "old.png",
             npcState = 0,
         )
         `when`(appUserRepository.findByLoginId("user")).thenReturn(user)
-        `when`(generalRepository.findByUserId(4L)).thenReturn(listOf(general))
+        `when`(officerRepository.findByUserId(4L)).thenReturn(listOf(general))
 
         val result = service.updateIconUrl("user", "")
 
@@ -189,7 +189,7 @@ class AccountServiceTest {
         assertFalse(user.meta.containsKey("picture"))
         assertFalse(user.meta.containsKey("imageServer"))
         assertEquals("", general.picture)
-        verify(generalRepository).save(general)
+        verify(officerRepository).save(general)
     }
 
     @Test

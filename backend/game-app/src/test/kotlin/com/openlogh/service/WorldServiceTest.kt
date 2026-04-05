@@ -1,11 +1,11 @@
 package com.openlogh.service
 
-import com.openlogh.entity.WorldState
-import com.openlogh.repository.CityRepository
-import com.openlogh.repository.GeneralRepository
-import com.openlogh.repository.NationRepository
+import com.openlogh.entity.SessionState
+import com.openlogh.repository.PlanetRepository
+import com.openlogh.repository.OfficerRepository
+import com.openlogh.repository.FactionRepository
 import com.openlogh.repository.WorldHistoryRepository
-import com.openlogh.repository.WorldStateRepository
+import com.openlogh.repository.SessionStateRepository
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -15,26 +15,26 @@ import org.mockito.Mockito.`when`
 import java.util.Optional
 
 class WorldServiceTest {
-    private lateinit var worldStateRepository: WorldStateRepository
-    private lateinit var nationRepository: NationRepository
-    private lateinit var cityRepository: CityRepository
-    private lateinit var generalRepository: GeneralRepository
+    private lateinit var sessionStateRepository: SessionStateRepository
+    private lateinit var factionRepository: FactionRepository
+    private lateinit var planetRepository: PlanetRepository
+    private lateinit var officerRepository: OfficerRepository
     private lateinit var worldHistoryRepository: WorldHistoryRepository
     private lateinit var service: WorldService
 
     @BeforeEach
     fun setUp() {
-        worldStateRepository = mock(WorldStateRepository::class.java)
-        nationRepository = mock(NationRepository::class.java)
-        cityRepository = mock(CityRepository::class.java)
-        generalRepository = mock(GeneralRepository::class.java)
+        sessionStateRepository = mock(SessionStateRepository::class.java)
+        factionRepository = mock(FactionRepository::class.java)
+        planetRepository = mock(PlanetRepository::class.java)
+        officerRepository = mock(OfficerRepository::class.java)
         worldHistoryRepository = mock(WorldHistoryRepository::class.java)
 
         service = WorldService(
-            worldStateRepository = worldStateRepository,
-            nationRepository = nationRepository,
-            cityRepository = cityRepository,
-            generalRepository = generalRepository,
+            sessionStateRepository = sessionStateRepository,
+            factionRepository = factionRepository,
+            planetRepository = planetRepository,
+            officerRepository = officerRepository,
             worldHistoryRepository = worldHistoryRepository,
         )
     }
@@ -43,7 +43,7 @@ class WorldServiceTest {
     fun `deleteWorld calls repository deleteById`() {
         service.deleteWorld(1.toShort())
 
-        verify(worldStateRepository).deleteById(1.toShort())
+        verify(sessionStateRepository).deleteById(1.toShort())
     }
 
     @Test
@@ -51,11 +51,11 @@ class WorldServiceTest {
         // deleteById is void and doesn't throw for missing entities by default
         service.deleteWorld(99.toShort())
 
-        verify(worldStateRepository).deleteById(99.toShort())
+        verify(sessionStateRepository).deleteById(99.toShort())
     }
 
-    private fun createWorld(config: MutableMap<String, Any> = mutableMapOf()): WorldState {
-        return WorldState(
+    private fun createWorld(config: MutableMap<String, Any> = mutableMapOf()): SessionState {
+        return SessionState(
             id = 1,
             scenarioCode = "test",
             currentYear = 200,
@@ -100,7 +100,7 @@ class WorldServiceTest {
     fun `getGamePhase returns OPENING when opentime has passed and within opening years`() {
         val past = java.time.OffsetDateTime.now().minusHours(1).toString()
         val world = createWorld(mutableMapOf("opentime" to past, "startYear" to 200))
-        `when`(nationRepository.findByWorldId(1L)).thenReturn(emptyList())
+        `when`(factionRepository.findBySessionId(1L)).thenReturn(emptyList())
 
         val phase = service.getGamePhase(world)
 

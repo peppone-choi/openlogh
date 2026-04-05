@@ -1,8 +1,8 @@
 package com.openlogh.engine.war
 
 import com.openlogh.engine.war.trigger.SnipingTrigger
-import com.openlogh.entity.City
-import com.openlogh.entity.General
+import com.openlogh.entity.Planet
+import com.openlogh.entity.Officer
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import java.time.OffsetDateTime
@@ -19,17 +19,17 @@ class SnipingTriggerTest {
         crew: Int = 1000,
         specialCode: String = "None",
         special2Code: String = "None",
-    ): General {
-        return General(
+    ): Officer {
+        return Officer(
             id = id,
-            worldId = 1,
+            sessionId = 1,
             name = "장수$id",
-            nationId = nationId,
-            cityId = 1,
+            factionId = nationId,
+            planetId = 1,
             leadership = leadership,
-            strength = strength,
-            intel = intel,
-            crew = crew,
+            command = strength,
+            intelligence = intel,
+            ships = crew,
             specialCode = specialCode,
             special2Code = special2Code,
             turnTime = OffsetDateTime.now(),
@@ -43,8 +43,8 @@ class SnipingTriggerTest {
         phaseNumber: Int = 0,
         isVsCity: Boolean = false,
     ): BattleTriggerContext {
-        val a = attacker ?: WarUnitGeneral(createGeneral())
-        val d = defender ?: WarUnitGeneral(createGeneral(id = 2))
+        val a = attacker ?: WarUnitOfficer(createGeneral())
+        val d = defender ?: WarUnitOfficer(createGeneral(id = 2))
         return BattleTriggerContext(
             attacker = a,
             defender = d,
@@ -140,16 +140,16 @@ class SnipingTriggerTest {
         assertTrue(ctx.battleLogs.any { "저격" in it })
     }
 
-    // ========== Test 7: Does not apply wound to WarUnitCity ==========
+    // ========== Test 7: Does not apply wound to WarUnitPlanet ==========
 
     @Test
-    fun `onEngagementStart does not apply wound to WarUnitCity defender`() {
-        val city = City(
-            id = 1, worldId = 1, name = "도시", nationId = 2,
-            def = 100, defMax = 1000, wall = 100, wallMax = 1000,
-            pop = 1000, popMax = 50000,
+    fun `onEngagementStart does not apply wound to WarUnitPlanet defender`() {
+        val city = Planet(
+            id = 1, sessionId = 1, name = "도시", factionId = 2,
+            orbitalDefense = 100, orbitalDefenseMax = 1000, fortress = 100, fortressMax = 1000,
+            population = 1000, populationMax = 50000,
         )
-        val defender = WarUnitCity(city)
+        val defender = WarUnitPlanet(city)
         val ctx = makeCtx(defender = defender, rng = Random(activateSeed))
         ctx.newOpponent = true
 

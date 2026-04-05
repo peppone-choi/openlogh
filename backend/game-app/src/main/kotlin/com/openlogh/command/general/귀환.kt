@@ -39,7 +39,7 @@ class 귀환(general: Officer, env: CommandEnv, arg: Map<String, Any>? = null)
         val destCityName: String
 
         if (officerLevel in 2..4) {
-            destCityId = general.officerCity.toLong()
+            destCityId = general.officerPlanet.toLong()
             destCityName = services?.let { it.getCityName(destCityId) } ?: destPlanet?.name ?: "담당도시"
         } else {
             destCityId = nation?.capitalPlanetId ?: 0L

@@ -9,12 +9,12 @@ class ArgSchemaValidationTest {
 
     @Test
     fun `dest city schema parses aliases and emits legacy keys`() {
-        val validated = ArgSchemas.destCity.parse(mapOf("cityId" to "12"))
+        val validated = ArgSchemas.destPlanet.parse(mapOf("cityId" to "12"))
 
         assertTrue(validated.ok())
         assertEquals(12L, validated.longOrNull("destCityId"))
 
-        val legacy = validated.toLegacyMap(ArgSchemas.destCity)
+        val legacy = validated.toLegacyMap(ArgSchemas.destPlanet)
         assertEquals(12L, legacy["destCityId"])
         assertEquals(12L, legacy["destCityID"])
         assertEquals(12L, legacy["cityId"])
@@ -31,7 +31,7 @@ class ArgSchemaValidationTest {
 
     @Test
     fun `trade schema applies default isBuy true`() {
-        val validated = ArgSchemas.trade.parse(mapOf("amount" to "300"))
+        val validated = ArgSchemas.tradeRoute.parse(mapOf("amount" to "300"))
 
         assertTrue(validated.ok())
         assertEquals(300, validated.intOrNull("amount"))
@@ -40,10 +40,10 @@ class ArgSchemaValidationTest {
 
     @Test
     fun `foundNation schema defaults nationType to legacy che_도적`() {
-        val validated = ArgSchemas.foundNation.parse(mapOf("nationName" to "테스트국"))
+        val validated = ArgSchemas.foundNation.parse(mapOf("factionName" to "테스트국"))
 
         assertTrue(validated.ok())
-        assertEquals("테스트국", validated.stringOrNull("nationName"))
+        assertEquals("테스트국", validated.stringOrNull("factionName"))
         assertEquals("che_도적", validated.stringOrNull("nationType"))
         assertEquals(0, validated.intOrNull("colorType"))
     }

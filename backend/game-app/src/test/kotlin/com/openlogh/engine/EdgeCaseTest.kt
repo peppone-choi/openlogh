@@ -8,9 +8,9 @@ import com.openlogh.command.constraint.ReqGeneralCrew
 import com.openlogh.command.general.che_징병
 import com.openlogh.command.general.che_모병
 import com.openlogh.engine.war.BattleEngine
-import com.openlogh.engine.war.WarUnitGeneral
-import com.openlogh.entity.City
-import com.openlogh.entity.General
+import com.openlogh.engine.war.WarUnitOfficer
+import com.openlogh.entity.Planet
+import com.openlogh.entity.Officer
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.*
@@ -40,21 +40,21 @@ class EdgeCaseTest {
         gold: Int = 100_000,
         rice: Int = 100_000,
         injury: Short = 0,
-    ): General = General(
+    ): Officer = Officer(
         id = id,
-        worldId = 1,
+        sessionId = 1,
         name = "장수$id",
-        nationId = nationId,
-        cityId = cityId,
+        factionId = nationId,
+        planetId = cityId,
         leadership = leadership,
-        strength = strength,
-        intel = intel,
-        crew = crew,
-        crewType = crewType,
-        train = train,
-        atmos = atmos,
-        gold = gold,
-        rice = rice,
+        command = strength,
+        intelligence = intel,
+        ships = crew,
+        shipClass = crewType,
+        training = train,
+        morale = atmos,
+        funds = gold,
+        supplies = rice,
         injury = injury,
         turnTime = OffsetDateTime.now(),
     )
@@ -63,19 +63,19 @@ class EdgeCaseTest {
         nationId: Long = 1,
         pop: Int = 50_000,
         trust: Float = 80f,
-    ): City = City(
+    ): Planet = Planet(
         id = 1,
-        worldId = 1,
+        sessionId = 1,
         name = "테스트도시",
-        nationId = nationId,
-        pop = pop,
-        popMax = 100_000,
-        agri = 500, agriMax = 1000,
-        comm = 500, commMax = 1000,
-        secu = 500, secuMax = 1000,
-        def = 500, defMax = 1000,
-        wall = 500, wallMax = 1000,
-        trust = trust,
+        factionId = nationId,
+        population = pop,
+        populationMax = 100_000,
+        production = 500, productionMax = 1000,
+        commerce = 500, commerceMax = 1000,
+        security = 500, securityMax = 1000,
+        orbitalDefense = 500, orbitalDefenseMax = 1000,
+        fortress = 500, fortressMax = 1000,
+        approval = trust,
         supplyState = 1,
     )
 
@@ -83,12 +83,12 @@ class EdgeCaseTest {
         year = 200,
         month = 1,
         startYear = 190,
-        worldId = 1,
+        sessionId = 1,
         realtimeMode = false,
         develCost = 100,
     )
 
-    private fun constraintCtx(gen: General, city: City? = null) =
+    private fun constraintCtx(gen: Officer, city: Planet? = null) =
         ConstraintContext(general = gen, city = city)
 
     // ─── 1. General with 0 troops: ReqGeneralCrew blocks ────────────────────
@@ -107,12 +107,12 @@ class EdgeCaseTest {
         assertEquals(ConstraintResult.Pass, result)
     }
 
-    // ─── 2. General with max stats (all 100): WarUnitGeneral no overflow ─────
+    // ─── 2. General with max stats (all 100): WarUnitOfficer no overflow ─────
 
     @Test
-    fun `WarUnitGeneral with all stats 100 does not overflow or throw`() {
+    fun `WarUnitOfficer with all stats 100 does not overflow or throw`() {
         val gen = general(leadership = 100, strength = 100, intel = 100, crew = 100_000, train = 100, atmos = 100)
-        val unit = WarUnitGeneral(gen)
+        val unit = WarUnitOfficer(gen)
         // Should not throw; base attack/defence are finite positive doubles
         val baseAttack = unit.getBaseAttack()
         val baseDefence = unit.getBaseDefence()
@@ -142,14 +142,14 @@ class EdgeCaseTest {
         val c = city(nationId = 2)
 
         val r1 = engine.resolveBattle(
-            attacker = WarUnitGeneral(attacker),
-            defenders = listOf(WarUnitGeneral(general(id = 2, nationId = 2, leadership = 30, strength = 30, intel = 30, crew = 100, train = 40, atmos = 40))),
+            attacker = WarUnitOfficer(attacker),
+            defenders = listOf(WarUnitOfficer(general(id = 2, factionId = 2, leadership = 30, command = 30, intelligence = 30, ships = 100, training = 40, morale = 40))),
             city = c,
             rng = LiteHashDRBG.build("edge_case_det"),
         )
         val r2 = engine.resolveBattle(
-            attacker = WarUnitGeneral(general(leadership = 30, strength = 30, intel = 30, crew = 100, train = 40, atmos = 40)),
-            defenders = listOf(WarUnitGeneral(general(id = 2, nationId = 2, leadership = 30, strength = 30, intel = 30, crew = 100, train = 40, atmos = 40))),
+            attacker = WarUnitOfficer(general(leadership = 30, command = 30, intelligence = 30, ships = 100, training = 40, morale = 40)),
+            defenders = listOf(WarUnitOfficer(general(id = 2, factionId = 2, leadership = 30, command = 30, intelligence = 30, ships = 100, training = 40, morale = 40))),
             city = city(nationId = 2),
             rng = LiteHashDRBG.build("edge_case_det"),
         )
@@ -168,8 +168,8 @@ class EdgeCaseTest {
         val c = city(nationId = 2)
 
         val result = engine.resolveBattle(
-            attacker = WarUnitGeneral(attacker),
-            defenders = listOf(WarUnitGeneral(defender)),
+            attacker = WarUnitOfficer(attacker),
+            defenders = listOf(WarUnitOfficer(defender)),
             city = c,
             rng = LiteHashDRBG.build("edge_low_wp"),
         )

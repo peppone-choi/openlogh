@@ -81,10 +81,10 @@ class ApiContractTest {
         fun `BuildPoolGeneralRequest defaults are 70`() {
             val req = BuildPoolGeneralRequest(name = "테스트")
             assertEquals(70, req.leadership.toInt())
-            assertEquals(70, req.strength.toInt())
-            assertEquals(70, req.intel.toInt())
+            assertEquals(70, req.command.toInt())
+            assertEquals(70, req.intelligence.toInt())
             assertEquals(70, req.politics.toInt())
-            assertEquals(70, req.charm.toInt())
+            assertEquals(70, req.administration.toInt())
         }
     }
 

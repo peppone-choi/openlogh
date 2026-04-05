@@ -45,7 +45,7 @@ abstract class DomesticCommand(
     override fun getCost(): CommandCost {
         // Legacy: onCalcDomestic(actionKey, 'cost', develcost)
         val gold = DomesticUtils.applyModifier(services, general, nation, actionKey, "cost", env.develCost.toDouble())
-        return CommandCost(gold = gold.roundToInt())
+        return CommandCost(funds = gold.roundToInt())
     }
     override fun getPreReqTurn() = 0
     override fun getPostReqTurn() = 0
@@ -61,11 +61,11 @@ abstract class DomesticCommand(
         val modified = services?.modifierService?.applyStatModifiers(mods, base) ?: base
         return when (statKey) {
             "leadership" -> modified.leadership.toInt()
-            "strength" -> modified.command.toInt()
-            "intel" -> modified.intelligence.toInt()
+            "strength" -> modified.strength.toInt()
+            "intel" -> modified.intel.toInt()
             "politics" -> general.politics.toInt()
             "charm" -> general.administration.toInt()
-            else -> modified.intelligence.toInt()
+            else -> modified.intel.toInt()
         }
     }
 
@@ -94,8 +94,8 @@ abstract class DomesticCommand(
         )
         val modifiedStatCtx = services?.modifierService?.applyStatModifiers(mods, baseStatCtx) ?: baseStatCtx
         val leadership = modifiedStatCtx.leadership
-        val strength = modifiedStatCtx.command
-        val intel = modifiedStatCtx.intelligence
+        val strength = modifiedStatCtx.strength
+        val intel = modifiedStatCtx.intel
         val avg = (leadership + strength + intel) / 3.0
         val statValue = when (statKey) {
             "leadership" -> leadership

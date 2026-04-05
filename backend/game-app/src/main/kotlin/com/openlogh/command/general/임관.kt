@@ -68,7 +68,7 @@ class 임관(general: Officer, env: CommandEnv, arg: Map<String, Any>? = null)
         return CommandResult(
             success = true,
             logs = logs,
-            message = """{"statChanges":{"nation":${dn.id},"officerLevel":1,"officerCity":0,"belong":1,"troop":0,"experience":$exp},"moveToCityOfLord":true,"inheritanceBonus":1,"tryUniqueLottery":true}"""
+            message = """{"statChanges":{"nation":${dn.id},"officerLevel":1,"officerPlanet":0,"belong":1,"troop":0,"experience":$exp},"moveToCityOfLord":true,"inheritanceBonus":1,"tryUniqueLottery":true}"""
         )
     }
 }

@@ -1,8 +1,8 @@
 package com.openlogh.engine
 
-import com.openlogh.entity.City
-import com.openlogh.entity.General
-import com.openlogh.entity.Nation
+import com.openlogh.entity.Planet
+import com.openlogh.entity.Officer
+import com.openlogh.entity.Faction
 import com.openlogh.model.CrewType
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test
 
 class CrewTypeAvailabilityTest {
 
-    private val service = CrewTypeAvailability()
+    private val service = ShipClassAvailability()
 
     @Test
     fun `parses unit set data and normalizes coefficients`() {
@@ -123,13 +123,13 @@ class CrewTypeAvailabilityTest {
         )
 
         val context = CrewTypeAvailabilityContext(
-            general = General(nationId = 1, officerLevel = 3),
-            nation = Nation(id = 1, tech = 3000f),
+            general = Officer(factionId = 1, officerLevel = 3),
+            nation = Faction(id = 1, techLevel = 3000f),
             mapCities = listOf(
                 MapCityDefinition(id = 1, name = "A", level = 6, region = 1),
             ),
             ownedCities = listOf(
-                City(id = 1, name = "A", nationId = 1, level = 6),
+                Planet(id = 1, name = "A", factionId = 1, level = 6),
             ),
             currentYear = 10,
             startYear = 1,

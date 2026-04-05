@@ -992,8 +992,8 @@ class TurnService @Autowired constructor(
 
         // Build nation name map
         val nations = factionRepository.findBySessionId(worldId)
-        val nationNames = mutableMapOf<Long, String>(0L to "재야")
-        nations.forEach { nationNames[it.id] = it.name }
+        val factionNames = mutableMapOf<Long, String>(0L to "재야")
+        nations.forEach { factionNames[it.id] = it.name }
 
         // Map generalId -> nationId via generals
         val generals = officerRepository.findBySessionId(worldId)
@@ -1005,7 +1005,7 @@ class TurnService @Autowired constructor(
             .entries.sortedByDescending { it.value.size }
 
         val onlineNationStr = onlineByNation.map { (nationId, _) ->
-            "【${nationNames[nationId] ?: "unknown"}】"
+            "【${factionNames[nationId] ?: "unknown"}】"
         }.joinToString(", ")
 
         world.meta["online_user_cnt"] = onlineCount

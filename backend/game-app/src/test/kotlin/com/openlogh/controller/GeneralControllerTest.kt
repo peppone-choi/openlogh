@@ -3,9 +3,9 @@ package com.openlogh.controller
 import com.openlogh.dto.CreateGeneralRequest
 import com.openlogh.dto.SelectNpcRequest
 import com.openlogh.service.FrontInfoService
-import com.openlogh.service.GeneralService
+import com.openlogh.service.OfficerService
 import com.openlogh.service.WorldService
-import com.openlogh.entity.WorldState
+import com.openlogh.entity.SessionState
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -20,25 +20,25 @@ import org.springframework.security.core.context.SecurityContextHolder
 
 class GeneralControllerTest {
 
-    private lateinit var generalService: GeneralService
+    private lateinit var officerService: OfficerService
     private lateinit var frontInfoService: FrontInfoService
     private lateinit var worldService: WorldService
     private lateinit var controller: GeneralController
 
     @BeforeEach
     fun setUp() {
-        generalService = mock(GeneralService::class.java)
+        officerService = mock(OfficerService::class.java)
         frontInfoService = mock(FrontInfoService::class.java)
         worldService = mock(WorldService::class.java)
-        controller = GeneralController(generalService, frontInfoService, worldService)
+        controller = GeneralController(officerService, frontInfoService, worldService)
 
         SecurityContextHolder.getContext().authentication =
             UsernamePasswordAuthenticationToken("testuser", null)
     }
 
-    private fun closedWorld(): WorldState {
+    private fun closedWorld(): SessionState {
         val future = java.time.OffsetDateTime.now().plusHours(2).toString()
-        return WorldState(
+        return SessionState(
             id = 1,
             name = "test",
             scenarioCode = "test",

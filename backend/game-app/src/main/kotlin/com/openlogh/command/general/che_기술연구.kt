@@ -32,7 +32,7 @@ class che_기술연구(general: Officer, env: CommandEnv, arg: Map<String, Any>?
             )
         }
 
-    override fun getCost() = CommandCost(gold = env.develCost)
+    override fun getCost() = CommandCost(funds = env.develCost)
     override fun getPreReqTurn() = 0
     override fun getPostReqTurn() = 0
     override fun getDuration() = 300
@@ -91,7 +91,7 @@ class che_기술연구(general: Officer, env: CommandEnv, arg: Map<String, Any>?
         pushLog("<Y>${general.name}</>${pickJosa(general.name, "이")} ${actionName}${josaUl} 수행했습니다.")
 
         // Legacy parity: TechLimit check - if tech exceeds limit, score /= 4
-        val techLimitApplied = env.isTechLimited(nation?.tech?.toDouble() ?: 0.0)
+        val techLimitApplied = env.isTechLimited(nation?.techLevel?.toDouble() ?: 0.0)
         val techScore = if (techLimitApplied) scoreInt / 4 else scoreInt
 
         // Legacy parity: divide by gennum (nation general count, min initialNationGenLimit)

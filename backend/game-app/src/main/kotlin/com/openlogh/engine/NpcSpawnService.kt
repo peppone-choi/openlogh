@@ -81,7 +81,7 @@ class NpcSpawnService(
         emptyCities.shuffle(rng)
 
         // Build DB city ID -> map city ID lookup
-        val dbToMapId = cities.associate { it.id to it.mapCityId }
+        val dbToMapId = cities.associate { it.id to it.mapPlanetId }
 
         for (emptyCity in emptyCities) {
             // Check distance from occupied cities using map city IDs
@@ -174,17 +174,16 @@ class NpcSpawnService(
                 bornYear = (year - 20).coerceIn(0, 32767).toShort(),
                 deadYear = (year + 60).coerceIn(0, 32767).toShort(), // Legacy default: year+60 (GeneralBuilder.fillRemainSpecAsZero)
                 leadership = rulerStats.first.coerceIn(0, 100).toShort(),
-                strength = rulerStats.second.coerceIn(0, 100).toShort(),
-                intel = rulerStats.third.coerceIn(0, 100).toShort(),
+                command = rulerStats.second.coerceIn(0, 100).toShort(),
+                intelligence = rulerStats.third.coerceIn(0, 100).toShort(),
                 politics = derivePoliticsFromStats(rulerStats.first, rulerStats.second, rulerStats.third, rng).coerceIn(0, 100).toShort(),
-                charm = deriveCharmFromStats(rulerStats.first, rulerStats.second, rulerStats.third, rng).coerceIn(0, 100).toShort(),
+                administration = deriveCharmFromStats(rulerStats.first, rulerStats.second, rulerStats.third, rng).coerceIn(0, 100).toShort(),
                 officerLevel = 20,
-                gold = 1000,
-                rice = 1000,
-                crew = 1000,
-                crewType = BASE_CREW_TYPES[rng.nextInt(BASE_CREW_TYPES.size)].coerceIn(0, 32767).toShort(),
-                train = 80,
-                atmos = 80,
+                funds = 1000, supplies = 1000,
+                ships = 1000,
+                shipClass = BASE_CREW_TYPES[rng.nextInt(BASE_CREW_TYPES.size)].coerceIn(0, 32767).toShort(),
+                training = 80,
+                morale = 80,
                 killTurn = 240,
             )
         )
@@ -205,16 +204,15 @@ class NpcSpawnService(
                     bornYear = (year - 20).coerceIn(0, 32767).toShort(),
                     deadYear = calcLogDeadYear(year, rng).coerceIn(0, 32767).toShort(),
                     leadership = stats.first.coerceIn(0, 100).toShort(),
-                    strength = stats.second.coerceIn(0, 100).toShort(),
-                    intel = stats.third.coerceIn(0, 100).toShort(),
+                    command = stats.second.coerceIn(0, 100).toShort(),
+                    intelligence = stats.third.coerceIn(0, 100).toShort(),
                     politics = derivePoliticsFromStats(stats.first, stats.second, stats.third, rng).coerceIn(0, 100).toShort(),
-                    charm = deriveCharmFromStats(stats.first, stats.second, stats.third, rng).coerceIn(0, 100).toShort(),
-                    gold = 1000,
-                    rice = 1000,
-                    crew = 500 + rng.nextInt(500),
-                    crewType = BASE_CREW_TYPES[rng.nextInt(BASE_CREW_TYPES.size)].coerceIn(0, 32767).toShort(),
-                    train = 70,
-                    atmos = 70,
+                    administration = deriveCharmFromStats(stats.first, stats.second, stats.third, rng).coerceIn(0, 100).toShort(),
+                    funds = 1000, supplies = 1000,
+                    ships = 500 + rng.nextInt(500),
+                    shipClass = BASE_CREW_TYPES[rng.nextInt(BASE_CREW_TYPES.size)].coerceIn(0, 32767).toShort(),
+                    training = 70,
+                    morale = 70,
                 )
             )
         }
@@ -267,7 +265,7 @@ class NpcSpawnService(
     }
 
     private fun calcAvgNationGeneralCount(worldId: Long): Int {
-        val nations = factionRepository.findBySessionId(worldId).filter { it.level > 0 }
+        val nations = factionRepository.findBySessionId(worldId).filter { it.factionRank > 0 }
         if (nations.isEmpty()) return 5
         val generals = officerRepository.findBySessionId(worldId)
         val countsByNation = generals.groupBy { it.factionId }.mapValues { it.value.size }
@@ -276,9 +274,9 @@ class NpcSpawnService(
     }
 
     private fun calcAvgTech(worldId: Long): Float {
-        val nations = factionRepository.findBySessionId(worldId).filter { it.level > 0 }
+        val nations = factionRepository.findBySessionId(worldId).filter { it.factionRank > 0 }
         if (nations.isEmpty()) return 0f
-        return nations.map { it.tech }.average().toFloat()
+        return nations.map { it.techLevel }.average().toFloat()
     }
 
 
@@ -319,23 +317,22 @@ class NpcSpawnService(
                     Officer(
                         sessionId = worldId,
                         name = "부대장${String.format("%04d", nameSeq)}",
-                        nationId = nation.id,
-                        cityId = capitalCity,
+                        factionId = nation.id,
+                        planetId = capitalCity,
                         npcState = 5,
                         affinity = 999,
                         bornYear = (world.currentYear - 20).coerceIn(0, 32767).toShort(),
                         deadYear = (world.currentYear + 30).coerceIn(0, 32767).toShort(),
                         leadership = 10,
-                        strength = 10,
-                        intel = 10,
+                        command = 10,
+                        intelligence = 10,
                         politics = 10,
-                        charm = 10,
-                        gold = 0,
-                        rice = 0,
-                        crew = 0,
-                        crewType = 1,
-                        train = 0,
-                        atmos = 0,
+                        administration = 10,
+                        funds = 0, supplies = 0,
+                        ships = 0,
+                        shipClass = 1,
+                        training = 0,
+                        morale = 0,
                         killTurn = 70,
                         personalCode = "che_은둔",
                     )
@@ -403,14 +400,14 @@ class NpcSpawnService(
 
         for (city in lv4Cities) {
             val invaderName = city.name
-            val nationName = "ⓞ${invaderName}족"
+            val factionName = "ⓞ${invaderName}족"
             val npcEachCount = 10.coerceAtLeast((generals.count { it.npcState < 4 } / lv4Cities.size) * 2)
 
             // Create invader nation — DB generates ID
             val nation = factionRepository.save(
                 Faction(
                     sessionId = worldId,
-                    name = nationName,
+                    name = factionName,
                     color = "#800080",
                     capitalPlanetId = city.id,
                     funds = 9999999,
@@ -448,18 +445,17 @@ class NpcSpawnService(
                     bornYear = (world.currentYear - 20).coerceIn(0, 32767).toShort(),
                     deadYear = (world.currentYear + 20).coerceIn(0, 32767).toShort(),
                     leadership = rulerLeadership.coerceIn(0, 100).toShort(),
-                    strength = rulerStrength.coerceIn(0, 100).toShort(),
-                    intel = rulerIntel.coerceIn(0, 100).toShort(),
+                    command = rulerStrength.coerceIn(0, 100).toShort(),
+                    intelligence = rulerIntel.coerceIn(0, 100).toShort(),
                     politics = derivePoliticsFromStats(rulerLeadership, rulerStrength, rulerIntel, rng).coerceIn(0, 100).toShort(),
-                    charm = deriveCharmFromStats(rulerLeadership, rulerStrength, rulerIntel, rng).coerceIn(0, 100).toShort(),
+                    administration = deriveCharmFromStats(rulerLeadership, rulerStrength, rulerIntel, rng).coerceIn(0, 100).toShort(),
                     officerLevel = 20,
                     experience = (avgExp * 1.2).toInt(),
-                    gold = 99999,
-                    rice = 99999,
-                    crew = 5000,
-                    crewType = rng.nextInt(1, 5).coerceIn(0, 32767).toShort(),
-                    train = 100,
-                    atmos = 100,
+                    funds = 99999, supplies = 99999,
+                    ships = 5000,
+                    shipClass = rng.nextInt(1, 5).coerceIn(0, 32767).toShort(),
+                    training = 100,
+                    morale = 100,
                 )
             )
             nation.chiefOfficerId = ruler.id
@@ -488,17 +484,16 @@ class NpcSpawnService(
                         bornYear = (world.currentYear - 20).coerceIn(0, 32767).toShort(),
                         deadYear = (world.currentYear + 20).coerceIn(0, 32767).toShort(),
                         leadership = leadership.coerceIn(0, 100).toShort(),
-                        strength = str.coerceIn(0, 100).toShort(),
-                        intel = intel.coerceIn(0, 100).toShort(),
+                        command = str.coerceIn(0, 100).toShort(),
+                        intelligence = intel.coerceIn(0, 100).toShort(),
                         politics = derivePoliticsFromStats(leadership, str, intel, rng).coerceIn(0, 100).toShort(),
-                        charm = deriveCharmFromStats(leadership, str, intel, rng).coerceIn(0, 100).toShort(),
+                        administration = deriveCharmFromStats(leadership, str, intel, rng).coerceIn(0, 100).toShort(),
                         experience = avgExp,
-                        gold = 99999,
-                        rice = 99999,
-                        crew = 3000 + rng.nextInt(2000),
-                        crewType = rng.nextInt(1, 5).coerceIn(0, 32767).toShort(),
-                        train = 90,
-                        atmos = 90,
+                        funds = 99999, supplies = 99999,
+                        ships = 3000 + rng.nextInt(2000),
+                        shipClass = rng.nextInt(1, 5).coerceIn(0, 32767).toShort(),
+                        training = 90,
+                        morale = 90,
                     )
                 )
             }

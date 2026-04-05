@@ -63,7 +63,7 @@ class 등용수락(general: Officer, env: CommandEnv, arg: Map<String, Any>? = n
             "permission" to "normal",
             "belong" to 1,
             "officerLevel" to 1,
-            "officerCity" to 0,
+            "officerPlanet" to 0,
             "nation" to destNationId,
             "city" to capitalCityId,
             "troop" to 0,

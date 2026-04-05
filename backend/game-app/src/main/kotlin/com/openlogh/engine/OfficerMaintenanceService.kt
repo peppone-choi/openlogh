@@ -140,7 +140,7 @@ class OfficerMaintenanceService(
             val successor = selectNextRuler(world, general, allGenerals)
             if (successor != null) {
                 successor.officerLevel = 20
-                successor.officerCity = 0
+                successor.officerPlanet = 0
                 if (nation != null) {
                     nation.chiefOfficerId = successor.id
                 }
@@ -161,7 +161,7 @@ class OfficerMaintenanceService(
         general.userId = null
         general.factionId = 0
         general.officerLevel = 0
-        general.officerCity = 0
+        general.officerPlanet = 0
         general.killTurn = null
         general.blockState = 0
         general.fleetId = 0
@@ -226,14 +226,14 @@ class OfficerMaintenanceService(
 
             val aux = mutableMapOf<String, Any>(
                 "name" to general.name,
-                "nationName" to (nation?.name ?: "재야"),
+                "factionName" to (nation?.name ?: "재야"),
                 "bgColor" to (nation?.color ?: "#000000"),
                 "fgColor" to (nation?.color ?: "#000000"),
                 "picture" to general.picture,
                 "imgsvr" to general.imageServer,
             )
 
-            val existing = hallOfFameRepository.findByServerIdAndTypeAndGeneralNo(serverId, type, general.id)
+            val existing = hallOfFameRepository.findByServerIdAndTypeAndOfficerNo(serverId, type, general.id)
             if (existing == null) {
                 hallOfFameRepository.save(
                     HallOfFame(
@@ -308,7 +308,7 @@ class OfficerMaintenanceService(
                 general.belong = 0
                 general.fleetId = 0
                 general.officerLevel = 0
-                general.officerCity = 0
+                general.officerPlanet = 0
                 general.factionId = 0
                 general.permission = "normal"
             }

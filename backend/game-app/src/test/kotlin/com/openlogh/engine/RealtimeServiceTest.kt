@@ -3,8 +3,8 @@ package com.openlogh.engine
 import com.openlogh.command.CommandExecutor
 import com.openlogh.command.CommandRegistry
 import com.openlogh.engine.modifier.ModifierService
-import com.openlogh.entity.General
-import com.openlogh.entity.WorldState
+import com.openlogh.entity.Officer
+import com.openlogh.entity.SessionState
 import com.openlogh.repository.*
 import com.openlogh.service.GameEventService
 import com.openlogh.service.ScenarioService
@@ -18,11 +18,11 @@ import java.util.*
 class RealtimeServiceTest {
 
     private lateinit var service: RealtimeService
-    private lateinit var generalRepository: GeneralRepository
-    private lateinit var generalTurnRepository: GeneralTurnRepository
-    private lateinit var cityRepository: CityRepository
-    private lateinit var nationRepository: NationRepository
-    private lateinit var worldStateRepository: WorldStateRepository
+    private lateinit var officerRepository: OfficerRepository
+    private lateinit var officerTurnRepository: OfficerTurnRepository
+    private lateinit var planetRepository: PlanetRepository
+    private lateinit var factionRepository: FactionRepository
+    private lateinit var sessionStateRepository: SessionStateRepository
     private lateinit var commandExecutor: CommandExecutor
     private lateinit var commandRegistry: CommandRegistry
     private lateinit var gameEventService: GameEventService
@@ -34,11 +34,11 @@ class RealtimeServiceTest {
 
     @BeforeEach
     fun setUp() {
-        generalRepository = mock(GeneralRepository::class.java)
-        generalTurnRepository = mock(GeneralTurnRepository::class.java)
-        cityRepository = mock(CityRepository::class.java)
-        nationRepository = mock(NationRepository::class.java)
-        worldStateRepository = mock(WorldStateRepository::class.java)
+        officerRepository = mock(OfficerRepository::class.java)
+        officerTurnRepository = mock(OfficerTurnRepository::class.java)
+        planetRepository = mock(PlanetRepository::class.java)
+        factionRepository = mock(FactionRepository::class.java)
+        sessionStateRepository = mock(SessionStateRepository::class.java)
         commandExecutor = mock(CommandExecutor::class.java)
         commandRegistry = mock(CommandRegistry::class.java)
         gameEventService = mock(GameEventService::class.java)
@@ -46,11 +46,11 @@ class RealtimeServiceTest {
         modifierService = mock(ModifierService::class.java)
 
         service = RealtimeService(
-            generalRepository,
-            generalTurnRepository,
-            cityRepository,
-            nationRepository,
-            worldStateRepository,
+            officerRepository,
+            officerTurnRepository,
+            planetRepository,
+            factionRepository,
+            sessionStateRepository,
             commandExecutor,
             commandRegistry,
             gameEventService,
@@ -67,13 +67,13 @@ class RealtimeServiceTest {
         commandEndTime: OffsetDateTime? = null,
         commandPoints: Int = 10,
         officerLevel: Short = 1,
-    ): General {
-        return General(
+    ): Officer {
+        return Officer(
             id = id,
-            worldId = worldId,
+            sessionId = worldId,
             name = "테스트",
-            nationId = 1,
-            cityId = 1,
+            factionId = 1,
+            planetId = 1,
             commandEndTime = commandEndTime,
             commandPoints = commandPoints,
             officerLevel = officerLevel,
@@ -81,8 +81,8 @@ class RealtimeServiceTest {
         )
     }
 
-    private fun createWorld(realtimeMode: Boolean = true): WorldState {
-        return WorldState(
+    private fun createWorld(realtimeMode: Boolean = true): SessionState {
+        return SessionState(
             id = 1,
             scenarioCode = "test",
             currentYear = 200,
@@ -98,8 +98,8 @@ class RealtimeServiceTest {
         val general = createGeneral()
         val world = createWorld(realtimeMode = false)
 
-        `when`(generalRepository.findById(1L)).thenReturn(Optional.of(general))
-        `when`(worldStateRepository.findById(1.toShort())).thenReturn(Optional.of(world))
+        `when`(officerRepository.findById(1L)).thenReturn(Optional.of(general))
+        `when`(sessionStateRepository.findById(1.toShort())).thenReturn(Optional.of(world))
 
         val result = service.submitCommand(1L, "징병", null)
 
@@ -112,8 +112,8 @@ class RealtimeServiceTest {
         val general = createGeneral(commandEndTime = OffsetDateTime.now().plusMinutes(5))
         val world = createWorld()
 
-        `when`(generalRepository.findById(1L)).thenReturn(Optional.of(general))
-        `when`(worldStateRepository.findById(1.toShort())).thenReturn(Optional.of(world))
+        `when`(officerRepository.findById(1L)).thenReturn(Optional.of(general))
+        `when`(sessionStateRepository.findById(1.toShort())).thenReturn(Optional.of(world))
 
         val result = service.submitCommand(1L, "징병", null)
 
@@ -125,7 +125,7 @@ class RealtimeServiceTest {
     fun `submitNationCommand fails when officer level too low`() {
         val general = createGeneral(officerLevel = 3)
 
-        `when`(generalRepository.findById(1L)).thenReturn(Optional.of(general))
+        `when`(officerRepository.findById(1L)).thenReturn(Optional.of(general))
 
         val result = service.submitNationCommand(1L, "천도", null)
 
@@ -139,17 +139,17 @@ class RealtimeServiceTest {
         world.commandPointRegenRate = 5
         val general = createGeneral(commandPoints = 97)
 
-        `when`(generalRepository.findByWorldId(1L)).thenReturn(listOf(general))
+        `when`(officerRepository.findBySessionId(1L)).thenReturn(listOf(general))
 
         service.regenerateCommandPoints(world)
 
         assertEquals(100, general.commandPoints, "Should cap at 100")
-        verify(generalRepository).save(general)
+        verify(officerRepository).save(general)
     }
 
     @Test
     fun `getRealtimeStatus returns null for unknown general`() {
-        `when`(generalRepository.findById(999L)).thenReturn(Optional.empty())
+        `when`(officerRepository.findById(999L)).thenReturn(Optional.empty())
 
         val result = service.getRealtimeStatus(999L)
 
@@ -163,12 +163,12 @@ class RealtimeServiceTest {
         val general = createGeneral()
         val world = createWorld(realtimeMode = false)
 
-        `when`(generalRepository.findById(1L)).thenReturn(Optional.of(general))
-        `when`(worldStateRepository.findById(1.toShort())).thenReturn(Optional.of(world))
-        `when`(cityRepository.findById(1L)).thenReturn(Optional.empty())
-        `when`(nationRepository.findById(1L)).thenReturn(Optional.empty())
+        `when`(officerRepository.findById(1L)).thenReturn(Optional.of(general))
+        `when`(sessionStateRepository.findById(1.toShort())).thenReturn(Optional.of(world))
+        `when`(planetRepository.findById(1L)).thenReturn(Optional.empty())
+        `when`(factionRepository.findById(1L)).thenReturn(Optional.empty())
         // Command not found → returns a failure, but proves realtimeMode was not checked
-        `when`(commandRegistry.createGeneralCommand(anyNonNull(), anyNonNull(), anyNonNull(), anyNonNull()))
+        `when`(commandRegistry.createOfficerCommand(anyNonNull(), anyNonNull(), anyNonNull(), anyNonNull()))
             .thenThrow(IllegalArgumentException("Unknown command"))
 
         try {

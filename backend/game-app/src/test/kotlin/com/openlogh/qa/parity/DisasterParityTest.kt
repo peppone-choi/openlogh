@@ -4,13 +4,13 @@ import com.openlogh.engine.DeterministicRng
 import com.openlogh.engine.EconomyService
 import com.openlogh.engine.turn.cqrs.persist.toEntity
 import com.openlogh.engine.turn.cqrs.persist.toSnapshot
-import com.openlogh.entity.City
-import com.openlogh.entity.General
-import com.openlogh.entity.WorldState
-import com.openlogh.repository.CityRepository
-import com.openlogh.repository.GeneralRepository
+import com.openlogh.entity.Planet
+import com.openlogh.entity.Officer
+import com.openlogh.entity.SessionState
+import com.openlogh.repository.PlanetRepository
+import com.openlogh.repository.OfficerRepository
 import com.openlogh.repository.MessageRepository
-import com.openlogh.repository.NationRepository
+import com.openlogh.repository.FactionRepository
 import com.openlogh.service.HistoryService
 import com.openlogh.service.InheritanceService
 import com.openlogh.service.MapService
@@ -41,22 +41,22 @@ import org.mockito.Mockito.`when`
 class DisasterParityTest {
 
     private lateinit var service: EconomyService
-    private lateinit var cityRepository: CityRepository
-    private lateinit var nationRepository: NationRepository
-    private lateinit var generalRepository: GeneralRepository
+    private lateinit var planetRepository: PlanetRepository
+    private lateinit var factionRepository: FactionRepository
+    private lateinit var officerRepository: OfficerRepository
     private lateinit var messageRepository: MessageRepository
 
-    private val cities = linkedMapOf<Long, City>()
-    private val generals = linkedMapOf<Long, General>()
+    private val cities = linkedMapOf<Long, Planet>()
+    private val generals = linkedMapOf<Long, Officer>()
 
     @BeforeEach
     fun setUp() {
-        cityRepository = mock(CityRepository::class.java)
-        nationRepository = mock(NationRepository::class.java)
-        generalRepository = mock(GeneralRepository::class.java)
+        planetRepository = mock(PlanetRepository::class.java)
+        factionRepository = mock(FactionRepository::class.java)
+        officerRepository = mock(OfficerRepository::class.java)
         messageRepository = mock(MessageRepository::class.java)
         service = EconomyService(
-            cityRepository, nationRepository, generalRepository,
+            planetRepository, factionRepository, officerRepository,
             messageRepository, mock(MapService::class.java),
             mock(HistoryService::class.java), mock(InheritanceService::class.java),
         )
@@ -64,46 +64,46 @@ class DisasterParityTest {
     }
 
     private fun wireRepos() {
-        `when`(cityRepository.findByWorldId(ArgumentMatchers.anyLong())).thenAnswer { inv ->
+        `when`(planetRepository.findBySessionId(ArgumentMatchers.anyLong())).thenAnswer { inv ->
             val worldId = inv.arguments[0] as Long
-            cities.values.filter { it.worldId == worldId }.map { it.toSnapshot().toEntity() }
+            cities.values.filter { it.sessionId == worldId }.map { it.toSnapshot().toEntity() }
         }
-        `when`(nationRepository.findByWorldId(ArgumentMatchers.anyLong())).thenAnswer {
+        `when`(factionRepository.findBySessionId(ArgumentMatchers.anyLong())).thenAnswer {
             emptyList<Any>()
         }
-        `when`(generalRepository.findByWorldId(ArgumentMatchers.anyLong())).thenAnswer { inv ->
+        `when`(officerRepository.findBySessionId(ArgumentMatchers.anyLong())).thenAnswer { inv ->
             val worldId = inv.arguments[0] as Long
-            generals.values.filter { it.worldId == worldId }
+            generals.values.filter { it.sessionId == worldId }
         }
-        `when`(generalRepository.findByWorldIdAndCityIdIn(ArgumentMatchers.anyLong(), ArgumentMatchers.anyList()))
+        `when`(officerRepository.findBySessionIdAndPlanetIdIn(ArgumentMatchers.anyLong(), ArgumentMatchers.anyList()))
             .thenAnswer { inv ->
                 val cityIds = inv.arguments[1] as List<*>
-                generals.values.filter { it.worldId == 1L && cityIds.contains(it.cityId) }
+                generals.values.filter { it.sessionId == 1L && cityIds.contains(it.planetId) }
             }
-        `when`(generalRepository.saveAll(ArgumentMatchers.anyList<General>())).thenAnswer { inv ->
+        `when`(officerRepository.saveAll(ArgumentMatchers.anyList<Officer>())).thenAnswer { inv ->
             @Suppress("UNCHECKED_CAST")
-            val saved = inv.arguments[0] as List<General>
+            val saved = inv.arguments[0] as List<Officer>
             saved.forEach { generals[it.id] = it }
             saved
         }
         `when`(messageRepository.saveAll(ArgumentMatchers.anyList<com.openlogh.entity.Message>())).thenAnswer { inv ->
             inv.arguments[0]
         }
-        `when`(cityRepository.save(ArgumentMatchers.any(City::class.java))).thenAnswer { inv ->
-            val city = inv.arguments[0] as City
+        `when`(planetRepository.save(ArgumentMatchers.any(City::class.java))).thenAnswer { inv ->
+            val city = inv.arguments[0] as Planet
             cities[city.id] = city.toSnapshot().toEntity()
             city
         }
-        `when`(cityRepository.saveAll(ArgumentMatchers.anyList<City>())).thenAnswer { inv ->
+        `when`(planetRepository.saveAll(ArgumentMatchers.anyList<Planet>())).thenAnswer { inv ->
             @Suppress("UNCHECKED_CAST")
-            val saved = inv.arguments[0] as List<City>
+            val saved = inv.arguments[0] as List<Planet>
             saved.forEach { cities[it.id] = it.toSnapshot().toEntity() }
             saved
         }
     }
 
-    private fun worldAt(year: Int, month: Int, startYear: Int = 200): WorldState {
-        return WorldState(
+    private fun worldAt(year: Int, month: Int, startYear: Int = 200): SessionState {
+        return SessionState(
             id = 1,
             scenarioCode = "test",
             currentYear = year.toShort(),
@@ -119,9 +119,9 @@ class DisasterParityTest {
 
     private fun testCity(id: Long, pop: Int = 50000, agri: Int = 800, comm: Int = 600,
                          secu: Int = 400, secuMax: Int = 1000, def: Int = 500, defMax: Int = 1000,
-                         wall: Int = 300, wallMax: Int = 1000): City {
-        return City(
-            id = id, worldId = 1, name = "TestCity$id", mapCityId = id.toInt(),
+                         wall: Int = 300, wallMax: Int = 1000): Planet {
+        return Planet(
+            id = id, sessionId = 1, name = "TestCity$id", mapPlanetId = id.toInt(),
             pop = pop, popMax = 100000,
             agri = agri, agriMax = 1500,
             comm = comm, commMax = 1200,
@@ -143,18 +143,18 @@ class DisasterParityTest {
             // startYear=200, currentYear=202 -> 200+3=203 > 202 -> skip
             val city = testCity(1)
             cities[1L] = city
-            val origPop = city.pop
-            val origAgri = city.agri
-            val origComm = city.comm
+            val origPop = city.population
+            val origAgri = city.production
+            val origComm = city.commerce
 
             val world = worldAt(year = 202, month = 1, startYear = 200)
             service.processDisasterOrBoom(world)
 
             // City fields should be unchanged (grace period skip)
             val resultCity = cities[1L]!!
-            assertThat(resultCity.pop).describedAs("pop unchanged during grace period").isEqualTo(origPop)
-            assertThat(resultCity.agri).describedAs("agri unchanged during grace period").isEqualTo(origAgri)
-            assertThat(resultCity.comm).describedAs("comm unchanged during grace period").isEqualTo(origComm)
+            assertThat(resultCity.population).describedAs("pop unchanged during grace period").isEqualTo(origPop)
+            assertThat(resultCity.production).describedAs("agri unchanged during grace period").isEqualTo(origAgri)
+            assertThat(resultCity.commerce).describedAs("comm unchanged during grace period").isEqualTo(origComm)
         }
 
         @Test

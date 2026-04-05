@@ -404,12 +404,12 @@ class CommandExecutor @Autowired constructor(
         val cityNationById = allCities.associate { it.id to it.factionId }
         val citySupplyStateById = allCities.associate { it.id to it.supplyState.toInt() }
 
-        // DB city.id ↔ mapCityId bidirectional mapping
-        // mapAdjacency keys are mapCityId (from map JSON: 1,2,3...)
+        // DB city.id ↔ mapPlanetId bidirectional mapping
+        // mapAdjacency keys are mapPlanetId (from map JSON: 1,2,3...)
         // DB city.id is auto-generated (1129, 1146...) — they don't match
-        val dbToMapId = allCities.associate { it.id to it.mapCityId.toLong() }
-        val mapToDbId = allCities.associate { it.mapCityId.toLong() to it.id }
-        val cityNationByMapId = allCities.associate { it.mapCityId.toLong() to it.factionId }
+        val dbToMapId = allCities.associate { it.id to it.mapPlanetId.toLong() }
+        val mapToDbId = allCities.associate { it.mapPlanetId.toLong() to it.id }
+        val cityNationByMapId = allCities.associate { it.mapPlanetId.toLong() to it.factionId }
 
         val allGenerals = ports.allOfficers().map { it.toEntity() }
         val totalNpcCount = allGenerals.count { it.npcState.toInt() > 0 }
@@ -499,7 +499,7 @@ class CommandExecutor @Autowired constructor(
             val foundNation = readBooleanValue(nationChanges["foundNation"]) == true || nationFoundation.isNotEmpty()
 
             if (createWandering || foundNation) {
-                val nationName = (nationChanges["nationName"] as? String)
+                val factionName = (nationChanges["factionName"] as? String)
                     ?: (nationFoundation["name"] as? String)
                     ?: general.name
                 val nationTypeRaw = (nationChanges["nationType"] as? String)
@@ -516,14 +516,14 @@ class CommandExecutor @Autowired constructor(
                 val createdNation = factionRepository.save(
                     Faction(
                         sessionId = general.sessionId,
-                        name = nationName,
+                        name = factionName,
                         color = resolveNationColor(colorType),
-                        capitalCityId = capitalCityId,
-                        chiefGeneralId = general.id,
+                        capitalPlanetId = capitalCityId,
+                        chiefOfficerId = general.id,
                         secretLimit = secretLimit.toShort(),
-                        level = level.toShort(),
-                        typeCode = resolveNationTypeCode(nationTypeRaw, createWandering),
-                        gennum = 1,
+                        factionRank = level.toShort(),
+                        factionType = resolveNationTypeCode(nationTypeRaw, createWandering),
+                        officerCount = 1,
                     )
                 )
 

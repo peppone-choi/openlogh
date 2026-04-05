@@ -37,7 +37,7 @@ class GameEventServiceTest {
     fun `CommandEvent toPayload includes generalId and commandEventType`() {
         val event = CommandEvent(
             source = service,
-            worldId = 1L,
+            sessionId = 1L,
             year = 200,
             month = 6,
             generalId = 42L,
@@ -68,7 +68,7 @@ class GameEventServiceTest {
         val published = captor.value
         assertEquals(42L, published.generalId)
         assertEquals("reserved", published.commandEventType)
-        assertEquals(1L, published.worldId)
+        assertEquals(1L, published.sessionId)
     }
 
     @Test
@@ -85,7 +85,7 @@ class GameEventServiceTest {
 
         val event = CommandEvent(
             source = service,
-            worldId = 1L,
+            sessionId = 1L,
             year = 200,
             month = 6,
             generalId = 42L,

@@ -22,7 +22,7 @@ class TroopController(
 
     @PostMapping("/troops")
     fun create(@RequestBody request: CreateTroopRequest): ResponseEntity<TroopResponse> {
-        val troop = fleetService.create(request.sessionId, request.leaderGeneralId, request.factionId, request.name)
+        val troop = fleetService.create(request.worldId, request.leaderGeneralId, request.nationId, request.name)
         return ResponseEntity.status(HttpStatus.CREATED).body(TroopResponse.from(troop))
     }
 

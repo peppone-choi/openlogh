@@ -23,7 +23,7 @@ class che_국호변경(general: Officer, env: CommandEnv, arg: Map<String, Any>?
 
     override suspend fun run(rng: Random): CommandResult {
         val date = formatDate()
-        val newName = (arg?.get("nationName") as? String)
+        val newName = (arg?.get("factionName") as? String)
             ?: return CommandResult(false, logs, "국호가 지정되지 않았습니다")
         val n = nation ?: return CommandResult(false, logs, "국가 정보를 찾을 수 없습니다")
 

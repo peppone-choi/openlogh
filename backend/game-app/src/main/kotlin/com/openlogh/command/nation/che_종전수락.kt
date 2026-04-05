@@ -32,11 +32,11 @@ class che_종전수락(general: Officer, env: CommandEnv, arg: Map<String, Any>?
         val dg = destOfficer ?: return CommandResult(false, listOf("대상 장수 정보를 찾을 수 없습니다"))
 
         val generalName = general.name
-        val nationName = n.name
+        val factionName = n.name
         val destNationName = dn.name
 
         val josaYiGeneral = JosaUtil.pick(generalName, "이")
-        val josaYiNation = JosaUtil.pick(nationName, "이")
+        val josaYiNation = JosaUtil.pick(factionName, "이")
 
         services!!.diplomacyService.acceptCeasefire(env.sessionId, n.id, dn.id)
 
@@ -51,16 +51,16 @@ class che_종전수락(general: Officer, env: CommandEnv, arg: Map<String, Any>?
 
         // Global action + history
         pushGlobalActionLog("<Y>${generalName}</>${josaYiGeneral} <D><b>${destNationName}</b></>${josaWaDest} <M>종전 합의</> 하였습니다.")
-        pushGlobalHistoryLog("<Y><b>【종전】</b></><D><b>${nationName}</b></>${josaYiNation} <D><b>${destNationName}</b></>${josaWaDest} <M>종전 합의</> 하였습니다.")
+        pushGlobalHistoryLog("<Y><b>【종전】</b></><D><b>${factionName}</b></>${josaYiNation} <D><b>${destNationName}</b></>${josaWaDest} <M>종전 합의</> 하였습니다.")
 
         // Own national history
         pushNationalHistoryLog("<D><b>${destNationName}</b></>${josaWaDest} 종전")
 
         // Dest general logs
-        val josaWaSrc = JosaUtil.pick(nationName, "와")
-        pushDestGeneralLog("<D><b>${nationName}</b></>${josaWaSrc} 종전에 성공했습니다.")
-        pushDestGeneralHistoryLog("<D><b>${nationName}</b></>${josaWaSrc} 종전 성공")
-        pushDestNationalHistoryLogFor(dn.id, "<D><b>${nationName}</b></>${josaWaSrc} 종전")
+        val josaWaSrc = JosaUtil.pick(factionName, "와")
+        pushDestGeneralLog("<D><b>${factionName}</b></>${josaWaSrc} 종전에 성공했습니다.")
+        pushDestGeneralHistoryLog("<D><b>${factionName}</b></>${josaWaSrc} 종전 성공")
+        pushDestNationalHistoryLogFor(dn.id, "<D><b>${factionName}</b></>${josaWaSrc} 종전")
 
         return CommandResult(true, logs)
     }

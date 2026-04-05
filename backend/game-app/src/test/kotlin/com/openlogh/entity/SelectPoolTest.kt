@@ -8,8 +8,8 @@ class SelectPoolTest {
 
     @Test
     fun `SelectPool entity initializes with defaults`() {
-        val pool = SelectPool(worldId = 1L, uniqueName = "test-pool")
-        assertEquals(1L, pool.worldId)
+        val pool = SelectPool(sessionId = 1L, uniqueName = "test-pool")
+        assertEquals(1L, pool.sessionId)
         assertEquals("test-pool", pool.uniqueName)
         assertNull(pool.ownerId)
         assertNull(pool.generalId)
@@ -20,7 +20,7 @@ class SelectPoolTest {
     @Test
     fun `SelectPool info stores general template data`() {
         val pool = SelectPool(
-            worldId = 1L,
+            sessionId = 1L,
             uniqueName = "pool-1",
             info = mutableMapOf(
                 "generalName" to "조조",
@@ -37,7 +37,7 @@ class SelectPoolTest {
 
     @Test
     fun `SelectPool reservation tracks owner and expiry`() {
-        val pool = SelectPool(worldId = 1L, uniqueName = "pool-1")
+        val pool = SelectPool(sessionId = 1L, uniqueName = "pool-1")
         val expiry = OffsetDateTime.now().plusMinutes(10)
         pool.ownerId = 42L
         pool.reservedUntil = expiry

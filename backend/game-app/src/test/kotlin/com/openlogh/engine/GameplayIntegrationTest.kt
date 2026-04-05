@@ -1,9 +1,9 @@
 package com.openlogh.engine
 
-import com.openlogh.entity.City
-import com.openlogh.entity.General
-import com.openlogh.entity.Nation
-import com.openlogh.entity.WorldState
+import com.openlogh.entity.Planet
+import com.openlogh.entity.Officer
+import com.openlogh.entity.Faction
+import com.openlogh.entity.SessionState
 import com.openlogh.test.InMemoryTurnHarness
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -28,9 +28,9 @@ class GameplayIntegrationTest {
         )
 
         harness.putWorld(world)
-        harness.putNation(nation)
-        harness.putCity(city)
-        harness.putGeneral(general)
+        harness.putFaction(nation)
+        harness.putPlanet(city)
+        harness.putOfficer(general)
 
         harness.queueGeneralTurn(generalId = general.id, actionCode = "농지개간", turnIdx = 0)
         harness.queueGeneralTurn(generalId = general.id, actionCode = "농지개간", turnIdx = 1)
@@ -57,13 +57,13 @@ class GameplayIntegrationTest {
         val yubi = baseGeneral(id = 2, name = "유비", strength = 90, crew = 300)
 
         harness.putWorld(world)
-        harness.putNation(nation)
-        harness.putCity(city)
-        harness.putGeneral(chojo)
-        harness.putGeneral(yubi)
+        harness.putFaction(nation)
+        harness.putPlanet(city)
+        harness.putOfficer(chojo)
+        harness.putOfficer(yubi)
 
-        val initialAgri = city.agri
-        val initialTrain = yubi.train.toInt()
+        val initialAgri = city.production
+        val initialTrain = yubi.training.toInt()
 
         harness.queueGeneralTurn(generalId = chojo.id, actionCode = "농지개간", turnIdx = 0)
         harness.queueGeneralTurn(generalId = yubi.id, actionCode = "훈련", turnIdx = 0)
@@ -71,8 +71,8 @@ class GameplayIntegrationTest {
         markTickReady(world)
         harness.turnService.processWorld(world)
 
-        assertTrue(city.agri >= initialAgri)
-        assertTrue(yubi.train.toInt() >= initialTrain)
+        assertTrue(city.production >= initialAgri)
+        assertTrue(yubi.training.toInt() >= initialTrain)
         assertTrue(harness.generalTurnsFor(chojo.id).isEmpty())
         assertTrue(harness.generalTurnsFor(yubi.id).isEmpty())
     }
@@ -86,9 +86,9 @@ class GameplayIntegrationTest {
         val chief = baseGeneral(officerLevel = 5)
 
         harness.putWorld(world)
-        harness.putNation(nation)
-        harness.putCity(city)
-        harness.putGeneral(chief)
+        harness.putFaction(nation)
+        harness.putPlanet(city)
+        harness.putOfficer(chief)
 
         harness.queueNationTurn(nationId = nation.id, officerLevel = 5, actionCode = "Nation휴식", turnIdx = 0)
         harness.queueGeneralTurn(generalId = chief.id, actionCode = "휴식", turnIdx = 0)
@@ -109,9 +109,9 @@ class GameplayIntegrationTest {
         val general = baseGeneral()
 
         harness.putWorld(world)
-        harness.putNation(nation)
-        harness.putCity(city)
-        harness.putGeneral(general)
+        harness.putFaction(nation)
+        harness.putPlanet(city)
+        harness.putOfficer(general)
 
         repeat(12) { idx ->
             harness.queueGeneralTurn(generalId = general.id, actionCode = "휴식", turnIdx = idx.toShort())
@@ -140,9 +140,9 @@ class GameplayIntegrationTest {
         )
 
         harness.putWorld(world)
-        harness.putNation(nation)
-        harness.putCity(city)
-        harness.putGeneral(general)
+        harness.putFaction(nation)
+        harness.putPlanet(city)
+        harness.putOfficer(general)
 
         harness.queueGeneralTurn(generalId = general.id, actionCode = "모병", turnIdx = 0)
         harness.queueGeneralTurn(generalId = general.id, actionCode = "훈련", turnIdx = 1)
@@ -158,8 +158,8 @@ class GameplayIntegrationTest {
         assertNotNull(general.lastTurn)
     }
 
-    private fun baseWorld(year: Int = 200, month: Int = 1): WorldState {
-        return WorldState(
+    private fun baseWorld(year: Int = 200, month: Int = 1): SessionState {
+        return SessionState(
             id = 1,
             name = "test-world",
             scenarioCode = "test",
@@ -170,39 +170,39 @@ class GameplayIntegrationTest {
         )
     }
 
-    private fun baseNation(strategicCmdLimit: Int = 10): Nation {
-        return Nation(
+    private fun baseNation(strategicCmdLimit: Int = 10): Faction {
+        return Faction(
             id = 1,
-            worldId = 1,
+            sessionId = 1,
             name = "위",
             color = "#ffffff",
-            level = 3,
+            factionRank = 3,
             strategicCmdLimit = strategicCmdLimit.toShort(),
         )
     }
 
-    private fun baseCity(pop: Int = 10000): City {
-        return City(
+    private fun baseCity(pop: Int = 10000): Planet {
+        return Planet(
             id = 1,
-            worldId = 1,
+            sessionId = 1,
             name = "낙양",
             level = 5,
-            nationId = 1,
+            factionId = 1,
             supplyState = 1,
             frontState = 0,
-            pop = pop,
-            popMax = 50000,
-            agri = 100,
-            agriMax = 1000,
-            comm = 100,
-            commMax = 1000,
-            secu = 100,
-            secuMax = 1000,
-            trust = 100,
-            def = 100,
-            defMax = 1000,
-            wall = 100,
-            wallMax = 1000,
+            population = pop,
+            populationMax = 50000,
+            production = 100,
+            productionMax = 1000,
+            commerce = 100,
+            commerceMax = 1000,
+            security = 100,
+            securityMax = 1000,
+            approval = 100,
+            orbitalDefense = 100,
+            orbitalDefenseMax = 1000,
+            fortress = 100,
+            fortressMax = 1000,
         )
     }
 
@@ -219,13 +219,13 @@ class GameplayIntegrationTest {
         gold: Int = 1000,
         rice: Int = 1000,
         crew: Int = 0,
-    ): General {
-        return General(
+    ): Officer {
+        return Officer(
             id = id,
-            worldId = 1,
+            sessionId = 1,
             name = name,
-            nationId = nationId,
-            cityId = cityId,
+            factionId = nationId,
+            planetId = cityId,
             officerLevel = officerLevel.toShort(),
             leadership = leadership.toShort(),
             strength = strength.toShort(),
@@ -239,7 +239,7 @@ class GameplayIntegrationTest {
         )
     }
 
-    private fun markTickReady(world: WorldState, ticksBehind: Int = 1) {
+    private fun markTickReady(world: SessionState, ticksBehind: Int = 1) {
         val seconds = world.tickSeconds.toLong() * ticksBehind + 10
         world.updatedAt = OffsetDateTime.now().minusSeconds(seconds)
     }

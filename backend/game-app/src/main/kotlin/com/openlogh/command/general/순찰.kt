@@ -32,7 +32,7 @@ class 순찰(general: Officer, env: CommandEnv, arg: Map<String, Any>? = null)
             ReqGeneralCrew(),
         )
 
-    override fun getCost() = CommandCost(gold = 0, rice = 30)
+    override fun getCost() = CommandCost(funds = 0, supplies = 30)
 
     override fun getPreReqTurn() = 0
     override fun getPostReqTurn() = 0

@@ -50,7 +50,7 @@ class UniqueLotteryService {
     )
 
     data class UniqueGainLogContext(
-        val nationName: String,
+        val factionName: String,
         val generalName: String,
         val itemName: String,
         val itemRawName: String,
@@ -277,7 +277,7 @@ class UniqueLotteryService {
             "<C>${ctx.itemName}</>${josaUl} 습득했습니다!",
             "<C>${ctx.itemName}</>${josaUl} 습득",
             "<Y>${ctx.generalName}</>${josaYi} <C>${ctx.itemName}</>${josaUl} 습득했습니다!",
-            "<C><b>【${ctx.acquireType.label}】</b></><D><b>${ctx.nationName}</b></>의 <Y>${ctx.generalName}</>${josaYi} <C>${ctx.itemName}</>${josaUl} 습득했습니다!",
+            "<C><b>【${ctx.acquireType.label}】</b></><D><b>${ctx.factionName}</b></>의 <Y>${ctx.generalName}</>${josaYi} <C>${ctx.itemName}</>${josaUl} 습득했습니다!",
         )
     }
 

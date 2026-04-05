@@ -39,10 +39,10 @@ class che_수몰(general: Officer, env: CommandEnv, arg: Map<String, Any>? = nul
 
         val destNationId = dc.factionId
         val generalName = general.name
-        val nationName = n.name
+        val factionName = n.name
 
         val josaYi = JosaUtil.pick(generalName, "이")
-        val josaYiNation = JosaUtil.pick(nationName, "이")
+        val josaYiNation = JosaUtil.pick(factionName, "이")
 
         // Experience and dedication: 5 * (preReqTurn + 1)
         val expDed = 5 * (PRE_REQ_TURN + 1)
@@ -64,7 +64,7 @@ class che_수몰(general: Officer, env: CommandEnv, arg: Map<String, Any>? = nul
 
         // Dest nation history
         pushDestNationalHistoryLogFor(destNationId,
-            "<D><b>${nationName}</b></>의 <Y>${generalName}</>${josaYi} 아국의 <G><b>${dc.name}</b></>에 <M>수몰</>을 발동")
+            "<D><b>${factionName}</b></>의 <Y>${generalName}</>${josaYi} 아국의 <G><b>${dc.name}</b></>에 <M>수몰</>을 발동")
 
         val beforePop = dc.population
         dc.orbitalDefense = (dc.orbitalDefense * DAMAGE_RATE).toInt()

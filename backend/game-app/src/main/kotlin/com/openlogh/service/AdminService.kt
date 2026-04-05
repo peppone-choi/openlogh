@@ -322,14 +322,14 @@ class AdminService(
 
             val aux = mutableMapOf<String, Any>(
                 "name" to officer.name,
-                "nationName" to (faction?.name ?: "재야"),
+                "factionName" to (faction?.name ?: "재야"),
                 "bgColor" to (faction?.color ?: "#000000"),
                 "fgColor" to (faction?.color ?: "#000000"),
                 "picture" to officer.picture,
                 "imgsvr" to officer.imageServer,
             )
 
-            val existing = hallOfFameRepository.findByServerIdAndTypeAndGeneralNo(serverId, type, officer.id)
+            val existing = hallOfFameRepository.findByServerIdAndTypeAndOfficerNo(serverId, type, officer.id)
             if (existing == null) {
                 hallOfFameRepository.save(
                     HallOfFame(

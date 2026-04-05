@@ -130,7 +130,7 @@ class che_천도(general: Officer, env: CommandEnv, arg: Map<String, Any>? = nul
 
     override fun getCost(): CommandCost {
         val amount = getCostAmount()
-        return CommandCost(gold = amount, rice = amount)
+        return CommandCost(funds = amount, supplies = amount)
     }
 
     override fun getPreReqTurn() = 0
@@ -190,16 +190,16 @@ class che_천도(general: Officer, env: CommandEnv, arg: Map<String, Any>? = nul
 
         // Logging (legacy parity)
         val generalName = general.name
-        val nationName = n.name
+        val factionName = n.name
         val josaRo = JosaUtil.pick(dCity.name, "로")
         val josaYi = JosaUtil.pick(generalName, "이")
-        val josaYiNation = JosaUtil.pick(nationName, "이")
+        val josaYiNation = JosaUtil.pick(factionName, "이")
 
         pushLog("<G><b>${dCity.name}</b></>${josaRo} 천도했습니다. <1>$date</>")
         pushHistoryLog("<G><b>${dCity.name}</b></>${josaRo} <M>천도</>명령")
         pushNationalHistoryLog("<Y>${generalName}</>${josaYi} <G><b>${dCity.name}</b></>${josaRo} <M>천도</> 명령")
         pushGlobalActionLog("<Y>${generalName}</>${josaYi} <G><b>${dCity.name}</b></>${josaRo} <M>천도</>를 명령하였습니다.")
-        pushGlobalHistoryLog("<S><b>【천도】</b></><D><b>${nationName}</b></>${josaYiNation} <G><b>${dCity.name}</b></>${josaRo} <M>천도</>하였습니다.")
+        pushGlobalHistoryLog("<S><b>【천도】</b></><D><b>${factionName}</b></>${josaYiNation} <G><b>${dCity.name}</b></>${josaRo} <M>천도</>하였습니다.")
 
         // Reset lastTurn term to 0 (completed)
         general.lastTurn = LastTurn(actionName, arg, 0).toMap()

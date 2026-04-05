@@ -4,9 +4,9 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.openlogh.command.CommandEnv
 import com.openlogh.command.general.che_기술연구
 import com.openlogh.engine.LiteHashDRBG
-import com.openlogh.entity.City
-import com.openlogh.entity.General
-import com.openlogh.entity.Nation
+import com.openlogh.entity.Planet
+import com.openlogh.entity.Officer
+import com.openlogh.entity.Faction
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -63,40 +63,40 @@ class TechResearchParityTest {
         year = year,
         month = 1,
         startYear = 180,
-        worldId = 1,
+        sessionId = 1,
         develCost = 100,
     )
 
-    private fun createGeneral() = General(
+    private fun createGeneral() = Officer(
         id = 1,
-        worldId = 1,
+        sessionId = 1,
         name = "테스트장수",
-        nationId = 1,
-        cityId = 1,
-        intel = 100,
+        factionId = 1,
+        planetId = 1,
+        intelligence = 100,
         leadership = 70,
-        strength = 70,
+        command = 70,
         politics = 60,
-        charm = 60,
-        gold = 1000,
-        rice = 1000,
+        administration = 60,
+        funds = 1000,
+        supplies = 1000,
         turnTime = OffsetDateTime.now(),
     )
 
-    private fun createCity() = City(
+    private fun createCity() = Planet(
         id = 1,
-        worldId = 1,
+        sessionId = 1,
         name = "테스트도시",
-        nationId = 1,
-        trust = 100f,
+        factionId = 1,
+        approval = 100f,
         supplyState = 1,
     )
 
-    private fun createNation() = Nation(
+    private fun createNation() = Faction(
         id = 1,
-        worldId = 1,
+        sessionId = 1,
         name = "테스트국",
-        tech = 1000f,
+        techLevel = 1000f,
         meta = mutableMapOf("gennum" to 10),
     )
 }

@@ -17,8 +17,8 @@ class Planet(
     @Column(nullable = false)
     var name: String = "",
 
-    @Column(name = "map_city_id", nullable = false)
-    var mapCityId: Int = 0,
+    @Column(name = "map_planet_id", nullable = false)
+    var mapPlanetId: Int = 0,
 
     @Column(nullable = false)
     var level: Short = 0,

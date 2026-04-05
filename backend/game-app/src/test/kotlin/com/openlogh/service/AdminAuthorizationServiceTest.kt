@@ -2,7 +2,7 @@ package com.openlogh.service
 
 import com.openlogh.entity.AppUser
 import com.openlogh.repository.AppUserRepository
-import com.openlogh.repository.WorldStateRepository
+import com.openlogh.repository.SessionStateRepository
 import org.junit.jupiter.api.Assertions.assertDoesNotThrow
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.BeforeEach
@@ -13,14 +13,14 @@ import org.springframework.security.access.AccessDeniedException
 
 class AdminAuthorizationServiceTest {
     private lateinit var appUserRepository: AppUserRepository
-    private lateinit var worldStateRepository: WorldStateRepository
+    private lateinit var sessionStateRepository: SessionStateRepository
     private lateinit var service: AdminAuthorizationService
 
     @BeforeEach
     fun setUp() {
         appUserRepository = mock(AppUserRepository::class.java)
-        worldStateRepository = mock(WorldStateRepository::class.java)
-        service = AdminAuthorizationService(appUserRepository, worldStateRepository)
+        sessionStateRepository = mock(SessionStateRepository::class.java)
+        service = AdminAuthorizationService(appUserRepository, sessionStateRepository)
     }
 
     @Test

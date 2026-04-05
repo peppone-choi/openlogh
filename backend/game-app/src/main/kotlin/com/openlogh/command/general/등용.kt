@@ -40,9 +40,9 @@ class 등용(general: Officer, env: CommandEnv, arg: Map<String, Any>? = null)
     override fun getCost(): CommandCost {
         val develCost = env.develCost
         val dg = destOfficer
-        if (dg == null) return CommandCost(gold = develCost)
+        if (dg == null) return CommandCost(funds = develCost)
         val reqGold = kotlin.math.round(develCost + (dg.experience + dg.dedication) / 1000.0).toInt() * 10
-        return CommandCost(gold = reqGold)
+        return CommandCost(funds = reqGold)
     }
 
     override fun getPreReqTurn() = 0
@@ -53,8 +53,8 @@ class 등용(general: Officer, env: CommandEnv, arg: Map<String, Any>? = null)
         val dg = destOfficer ?: return CommandResult(false, listOf("대상 장수를 찾을 수 없습니다."))
         val destName = dg.name
         val cost = getCost()
-        val nationName = nation?.name ?: "알 수 없음"
-        val josaRo = pickJosa(nationName, "로")
+        val factionName = nation?.name ?: "알 수 없음"
+        val josaRo = pickJosa(factionName, "로")
 
         services?.messageService?.sendMessage(
             worldId = env.sessionId,
@@ -68,8 +68,8 @@ class 등용(general: Officer, env: CommandEnv, arg: Map<String, Any>? = null)
                 "fromGeneralId" to general.id,
                 "fromGeneralName" to general.name,
                 "fromNationId" to general.factionId,
-                "fromNationName" to nationName,
-                "text" to "${nationName}${josaRo} 망명 권유 서신",
+                "fromNationName" to factionName,
+                "text" to "${factionName}${josaRo} 망명 권유 서신",
             ),
         )
 

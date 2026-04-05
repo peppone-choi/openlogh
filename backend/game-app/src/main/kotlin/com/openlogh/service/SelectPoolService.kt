@@ -12,7 +12,7 @@ class SelectPoolService(
 ) {
     fun listAll(worldId: Long): List<SelectPool> = selectPoolRepository.findBySessionId(worldId)
 
-    fun listAvailable(worldId: Long): List<SelectPool> = selectPoolRepository.findBySessionIdAndGeneralIdIsNull(worldId)
+    fun listAvailable(worldId: Long): List<SelectPool> = selectPoolRepository.findBySessionIdAndOfficerIdIsNull(worldId)
 
     @Transactional
     fun create(worldId: Long, uniqueName: String, info: Map<String, Any>): SelectPool {
@@ -53,7 +53,7 @@ class SelectPoolService(
     @Transactional
     fun reserve(id: Long, userId: Long, minutes: Int = 10): SelectPool? {
         val pool = selectPoolRepository.findById(id).orElse(null) ?: return null
-        if (pool.generalId != null) return null
+        if (pool.officerId != null) return null
         if (pool.ownerId != null && pool.reservedUntil?.isAfter(OffsetDateTime.now()) == true) return null
         pool.ownerId = userId
         pool.reservedUntil = OffsetDateTime.now().plusMinutes(minutes.toLong())
@@ -64,7 +64,7 @@ class SelectPoolService(
     fun releaseExpired(worldId: Long) {
         val now = OffsetDateTime.now()
         selectPoolRepository.findBySessionId(worldId)
-            .filter { it.ownerId != null && it.generalId == null && (it.reservedUntil?.isBefore(now) == true) }
+            .filter { it.ownerId != null && it.officerId == null && (it.reservedUntil?.isBefore(now) == true) }
             .forEach {
                 it.ownerId = null
                 it.reservedUntil = null

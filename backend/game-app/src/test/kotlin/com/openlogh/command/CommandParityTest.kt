@@ -12,12 +12,12 @@ import com.openlogh.command.general.che_훈련
 import com.openlogh.engine.DiplomacyService
 import com.openlogh.engine.LiteHashDRBG
 import com.openlogh.engine.modifier.ModifierService
-import com.openlogh.entity.City
-import com.openlogh.entity.General
-import com.openlogh.entity.Nation
-import com.openlogh.repository.CityRepository
-import com.openlogh.repository.GeneralRepository
-import com.openlogh.repository.NationRepository
+import com.openlogh.entity.Planet
+import com.openlogh.entity.Officer
+import com.openlogh.entity.Faction
+import com.openlogh.repository.PlanetRepository
+import com.openlogh.repository.OfficerRepository
+import com.openlogh.repository.FactionRepository
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -184,37 +184,37 @@ class CommandParityTest {
         assertEquals(expected.pick, json["criticalResult"].asText())
     }
 
-    private fun runTraining(general: General, city: City, env: CommandEnv, seed: String): CommandResult {
+    private fun runTraining(general: Officer, city: Planet, env: CommandEnv, seed: String): CommandResult {
         val cmd = che_훈련(general, env)
         cmd.city = city
         return runBlocking { cmd.run(LiteHashDRBG.build(seed)) }
     }
 
-    private fun runConscription(general: General, city: City, env: CommandEnv, arg: Map<String, Any>, seed: String): CommandResult {
+    private fun runConscription(general: Officer, city: Planet, env: CommandEnv, arg: Map<String, Any>, seed: String): CommandResult {
         val cmd = che_징병(general, env, arg)
         cmd.city = city
         return runBlocking { cmd.run(LiteHashDRBG.build(seed)) }
     }
 
-    private fun runAgri(general: General, city: City, env: CommandEnv, seed: String): CommandResult {
+    private fun runAgri(general: Officer, city: Planet, env: CommandEnv, seed: String): CommandResult {
         val cmd = che_농지개간(general, env)
         cmd.city = city
         return runBlocking { cmd.run(LiteHashDRBG.build(seed)) }
     }
 
-    private fun runCommerce(general: General, city: City, env: CommandEnv, seed: String): CommandResult {
+    private fun runCommerce(general: Officer, city: Planet, env: CommandEnv, seed: String): CommandResult {
         val cmd = che_상업투자(general, env)
         cmd.city = city
         return runBlocking { cmd.run(LiteHashDRBG.build(seed)) }
     }
 
-    private fun runMorale(general: General, city: City, env: CommandEnv, seed: String): CommandResult {
+    private fun runMorale(general: Officer, city: Planet, env: CommandEnv, seed: String): CommandResult {
         val cmd = che_사기진작(general, env)
         cmd.city = city
         return runBlocking { cmd.run(LiteHashDRBG.build(seed)) }
     }
 
-    private fun runDrill(general: General, env: CommandEnv, seed: String): CommandResult {
+    private fun runDrill(general: Officer, env: CommandEnv, seed: String): CommandResult {
         val cmd = che_단련(general, env)
         return runBlocking { cmd.run(LiteHashDRBG.build(seed)) }
     }
@@ -340,7 +340,7 @@ class CommandParityTest {
             year = 200,
             month = 1,
             startYear = 190,
-            worldId = 1,
+            sessionId = 1,
             realtimeMode = false,
             develCost = develCost,
         )
@@ -356,24 +356,24 @@ class CommandParityTest {
         crewType: Short = 0,
         train: Short = 60,
         atmos: Short = 60,
-    ): General {
-        return General(
+    ): Officer {
+        return Officer(
             id = 1,
-            worldId = 1,
+            sessionId = 1,
             name = "테스트장수",
-            nationId = 1,
-            cityId = 1,
-            gold = gold,
-            rice = rice,
-            crew = crew,
-            crewType = crewType,
-            train = train,
-            atmos = atmos,
+            factionId = 1,
+            planetId = 1,
+            funds = gold,
+            supplies = rice,
+            ships = crew,
+            shipClass = crewType,
+            training = train,
+            morale = atmos,
             leadership = leadership,
-            strength = strength,
-            intel = intel,
+            command = strength,
+            intelligence = intel,
             politics = 60,
-            charm = 60,
+            administration = 60,
             turnTime = OffsetDateTime.now(),
         )
     }
@@ -388,25 +388,25 @@ class CommandParityTest {
         secu: Int = 500,
         trust: Float = 80f,
         frontState: Short = 0,
-    ): City {
-        return City(
+    ): Planet {
+        return Planet(
             id = 1,
-            worldId = 1,
+            sessionId = 1,
             name = "테스트도시",
-            nationId = nationId,
-            pop = pop,
-            popMax = 50000,
-            agri = agri,
-            agriMax = agriMax,
-            comm = comm,
-            commMax = commMax,
-            secu = secu,
-            secuMax = 1000,
-            def = 500,
-            defMax = 1000,
-            wall = 500,
-            wallMax = 1000,
-            trust = trust,
+            factionId = nationId,
+            population = pop,
+            populationMax = 50000,
+            production = agri,
+            productionMax = agriMax,
+            commerce = comm,
+            commerceMax = commMax,
+            security = secu,
+            securityMax = 1000,
+            orbitalDefense = 500,
+            orbitalDefenseMax = 1000,
+            fortress = 500,
+            fortressMax = 1000,
+            approval = trust,
             supplyState = 1,
             frontState = frontState,
         )
@@ -420,9 +420,9 @@ class CommandParityTest {
      * Helper: create CommandServices with a real ModifierService (no Spring).
      */
     private fun createServices(): CommandServices = CommandServices(
-        generalRepository = mock(GeneralRepository::class.java),
-        cityRepository = mock(CityRepository::class.java),
-        nationRepository = mock(NationRepository::class.java),
+        officerRepository = mock(OfficerRepository::class.java),
+        planetRepository = mock(PlanetRepository::class.java),
+        factionRepository = mock(FactionRepository::class.java),
         diplomacyService = mock(DiplomacyService::class.java),
         modifierService = ModifierService(),
     )
@@ -451,9 +451,9 @@ class CommandParityTest {
         val modCost = cmdMod.getCost()
 
         // Modifier reduces gold cost by 20%
-        assertTrue(modCost.gold < baseCost.gold,
-            "Modifier should reduce gold cost: base=${baseCost.gold} mod=${modCost.gold}")
-        assertEquals((baseCost.gold * 0.8).roundToInt(), modCost.gold,
+        assertTrue(modCost.funds < baseCost.funds,
+            "Modifier should reduce gold cost: base=${baseCost.funds} mod=${modCost.funds}")
+        assertEquals((baseCost.funds * 0.8).roundToInt(), modCost.funds,
             "Gold cost should be reduced to 80% of base")
     }
 
@@ -480,10 +480,10 @@ class CommandParityTest {
         val baseCost = cmdBase.getCost()
         val modCost = cmdMod.getCost()
 
-        assertTrue(modCost.gold < baseCost.gold,
-            "모병 modifier should reduce gold cost: base=${baseCost.gold} mod=${modCost.gold}")
+        assertTrue(modCost.funds < baseCost.funds,
+            "모병 modifier should reduce gold cost: base=${baseCost.funds} mod=${modCost.funds}")
         // 모병 uses costOffset=2 but modifier still applies
-        assertEquals((baseCost.gold * 0.8).roundToInt(), modCost.gold,
+        assertEquals((baseCost.funds * 0.8).roundToInt(), modCost.funds,
             "모병 gold cost should be reduced to 80% of base")
     }
 

@@ -1,9 +1,9 @@
 package com.openlogh.command
 
 import com.openlogh.command.constraint.*
-import com.openlogh.entity.City
-import com.openlogh.entity.General
-import com.openlogh.entity.Nation
+import com.openlogh.entity.Planet
+import com.openlogh.entity.Officer
+import com.openlogh.entity.Faction
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import java.time.OffsetDateTime
@@ -22,20 +22,20 @@ class ConstraintTest {
         troopId: Long = 0,
         npcState: Short = 0,
         age: Short = 30,
-    ): General {
-        return General(
+    ): Officer {
+        return Officer(
             id = 1,
-            worldId = 1,
+            sessionId = 1,
             name = "테스트",
-            nationId = nationId,
-            cityId = cityId,
-            gold = gold,
-            rice = rice,
-            crew = crew,
-            train = train,
-            atmos = atmos,
+            factionId = nationId,
+            planetId = cityId,
+            funds = gold,
+            supplies = rice,
+            ships = crew,
+            training = train,
+            morale = atmos,
             officerLevel = officerLevel,
-            troopId = troopId,
+            fleetId = troopId,
             npcState = npcState,
             age = age,
             turnTime = OffsetDateTime.now(),
@@ -58,26 +58,26 @@ class ConstraintTest {
         pop: Int = 10000,
         popMax: Int = 50000,
         trust: Float = 80f,
-    ): City {
-        return City(
+    ): Planet {
+        return Planet(
             id = 1,
-            worldId = 1,
+            sessionId = 1,
             name = "테스트도시",
-            nationId = nationId,
+            factionId = nationId,
             supplyState = supplyState,
-            agri = agri,
-            agriMax = agriMax,
-            comm = comm,
-            commMax = commMax,
-            secu = secu,
-            secuMax = secuMax,
-            def = def,
-            defMax = defMax,
-            wall = wall,
-            wallMax = wallMax,
-            pop = pop,
-            popMax = popMax,
-            trust = trust,
+            production = agri,
+            productionMax = agriMax,
+            commerce = comm,
+            commerceMax = commMax,
+            security = secu,
+            securityMax = secuMax,
+            orbitalDefense = def,
+            orbitalDefenseMax = defMax,
+            fortress = wall,
+            fortressMax = wallMax,
+            population = pop,
+            populationMax = popMax,
+            approval = trust,
         )
     }
 
@@ -88,34 +88,34 @@ class ConstraintTest {
         level: Short = 1,
         capitalCityId: Long? = 1,
         strategicCmdLimit: Short = 0,
-    ): Nation {
-        return Nation(
+    ): Faction {
+        return Faction(
             id = id,
-            worldId = 1,
+            sessionId = 1,
             name = "테스트국가",
             color = "#FF0000",
-            gold = gold,
-            rice = rice,
-            level = level,
-            capitalCityId = capitalCityId,
+            funds = gold,
+            supplies = rice,
+            factionRank = level,
+            capitalPlanetId = capitalCityId,
             strategicCmdLimit = strategicCmdLimit,
         )
     }
 
     private fun ctx(
-        general: General = createGeneral(),
-        city: City? = null,
-        nation: Nation? = null,
-        destGeneral: General? = null,
-        destCity: City? = null,
-        destNation: Nation? = null,
+        general: Officer = createGeneral(),
+        city: Planet? = null,
+        nation: Faction? = null,
+        destOfficer: Officer? = null,
+        destPlanet: Planet? = null,
+        destFaction: Faction? = null,
     ) = ConstraintContext(
         general = general,
         city = city,
         nation = nation,
-        destGeneral = destGeneral,
-        destCity = destCity,
-        destNation = destNation,
+        destOfficer = destOfficer,
+        destPlanet = destPlanet,
+        destFaction = destFaction,
     )
 
     // ========== NotBeNeutral ==========
@@ -400,16 +400,16 @@ class ConstraintTest {
     @Test
     fun `NotSameDestCity passes when dest city differs`() {
         val general = createGeneral(cityId = 1)
-        val destCity = createCity().apply { id = 2 }
-        val result = NotSameDestCity().test(ctx(general = general, destCity = destCity))
+        val destPlanet = createCity().apply { id = 2 }
+        val result = NotSameDestCity().test(ctx(general = general, destPlanet = destPlanet))
         assertTrue(result is ConstraintResult.Pass)
     }
 
     @Test
     fun `NotSameDestCity fails when dest city is same`() {
         val general = createGeneral(cityId = 1)
-        val destCity = createCity().apply { id = 1 }
-        val result = NotSameDestCity().test(ctx(general = general, destCity = destCity))
+        val destPlanet = createCity().apply { id = 1 }
+        val result = NotSameDestCity().test(ctx(general = general, destPlanet = destPlanet))
         assertTrue(result is ConstraintResult.Fail)
     }
 
@@ -449,8 +449,8 @@ class ConstraintTest {
 
     @Test
     fun `ExistsDestGeneral passes when dest general exists`() {
-        val destGeneral = createGeneral()
-        val result = ExistsDestGeneral().test(ctx(destGeneral = destGeneral))
+        val destOfficer = createGeneral()
+        val result = ExistsDestGeneral().test(ctx(destOfficer = destOfficer))
         assertTrue(result is ConstraintResult.Pass)
     }
 
@@ -463,16 +463,16 @@ class ConstraintTest {
     @Test
     fun `FriendlyDestGeneral passes when same nation`() {
         val general = createGeneral(nationId = 1)
-        val destGeneral = createGeneral(nationId = 1)
-        val result = FriendlyDestGeneral().test(ctx(general = general, destGeneral = destGeneral))
+        val destOfficer = createGeneral(nationId = 1)
+        val result = FriendlyDestGeneral().test(ctx(general = general, destOfficer = destOfficer))
         assertTrue(result is ConstraintResult.Pass)
     }
 
     @Test
     fun `FriendlyDestGeneral fails when different nation`() {
         val general = createGeneral(nationId = 1)
-        val destGeneral = createGeneral(nationId = 2)
-        val result = FriendlyDestGeneral().test(ctx(general = general, destGeneral = destGeneral))
+        val destOfficer = createGeneral(nationId = 2)
+        val result = FriendlyDestGeneral().test(ctx(general = general, destOfficer = destOfficer))
         assertTrue(result is ConstraintResult.Fail)
     }
 
@@ -644,16 +644,16 @@ class ConstraintTest {
     @Test
     fun `ReqGeneralStatValue passes when stat is sufficient`() {
         val general = createGeneral()
-        general.intel = 80
-        val result = ReqGeneralStatValue({ it.intel }, "지력", 50).test(ctx(general = general))
+        general.intelligence = 80
+        val result = ReqGeneralStatValue({ it.intelligence }, "지력", 50).test(ctx(general = general))
         assertTrue(result is ConstraintResult.Pass)
     }
 
     @Test
     fun `ReqGeneralStatValue fails when stat is insufficient`() {
         val general = createGeneral()
-        general.intel = 30
-        val result = ReqGeneralStatValue({ it.intel }, "지력", 50).test(ctx(general = general))
+        general.intelligence = 30
+        val result = ReqGeneralStatValue({ it.intelligence }, "지력", 50).test(ctx(general = general))
         assertTrue(result is ConstraintResult.Fail)
         assertTrue((result as ConstraintResult.Fail).reason.contains("지력"))
     }
@@ -774,17 +774,17 @@ class ConstraintTest {
 
     @Test
     fun `DestNationIsEmperor passes when dest nation is emperor`() {
-        val destNation = createNation(id = 2)
-        destNation.meta["imperialStatus"] = "emperor"
-        val result = DestNationIsEmperor().test(ctx(destNation = destNation))
+        val destFaction = createNation(id = 2)
+        destFaction.meta["imperialStatus"] = "emperor"
+        val result = DestNationIsEmperor().test(ctx(destFaction = destFaction))
         assertTrue(result is ConstraintResult.Pass)
     }
 
     @Test
     fun `DestNationIsEmperor fails when dest nation is not emperor`() {
-        val destNation = createNation(id = 2)
-        destNation.meta["imperialStatus"] = "independent"
-        val result = DestNationIsEmperor().test(ctx(destNation = destNation))
+        val destFaction = createNation(id = 2)
+        destFaction.meta["imperialStatus"] = "independent"
+        val result = DestNationIsEmperor().test(ctx(destFaction = destFaction))
         assertTrue(result is ConstraintResult.Fail)
         assertTrue((result as ConstraintResult.Fail).reason.contains("황제국이 아닙니다"))
     }

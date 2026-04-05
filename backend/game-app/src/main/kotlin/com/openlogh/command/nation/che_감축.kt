@@ -31,7 +31,7 @@ class che_감축(general: Officer, env: CommandEnv, arg: Map<String, Any>? = nul
 
     override fun getCost(): CommandCost {
         val amount = getCostAmount()
-        return CommandCost(gold = amount, rice = amount)
+        return CommandCost(funds = amount, supplies = amount)
     }
 
     override fun getPreReqTurn() = 5

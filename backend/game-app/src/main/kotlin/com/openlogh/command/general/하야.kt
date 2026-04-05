@@ -37,7 +37,7 @@ class 하야(general: Officer, env: CommandEnv, arg: Map<String, Any>? = null)
     override suspend fun run(rng: Random): CommandResult {
         val date = formatDate()
         val currentNation = nation
-        val nationName = currentNation?.name ?: "소속국"
+        val factionName = currentNation?.name ?: "소속국"
         val generalName = general.name
 
         val betrayCount = general.betray.toInt()
@@ -51,9 +51,9 @@ class 하야(general: Officer, env: CommandEnv, arg: Map<String, Any>? = null)
         val newBetray = min(betrayCount + 1, MAX_BETRAY_COUNT)
         val isTroopLeader = general.fleetId == general.id
 
-        pushLog("<D><b>${nationName}</b></>에서 하야했습니다. <1>$date</>")
-        pushHistoryLog("<D><b>${nationName}</b></>에서 하야")
-        pushGlobalLog("<Y>${generalName}</>${josa(generalName, "이")} <D><b>${nationName}</b></>에서 <R>하야</>했습니다.")
+        pushLog("<D><b>${factionName}</b></>에서 하야했습니다. <1>$date</>")
+        pushHistoryLog("<D><b>${factionName}</b></>에서 하야")
+        pushGlobalLog("<Y>${generalName}</>${josa(generalName, "이")} <D><b>${factionName}</b></>에서 <R>하야</>했습니다.")
 
         if (currentNation != null) {
             currentNation.officerCount = max(0, currentNation.officerCount - 1)

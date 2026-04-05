@@ -16,13 +16,13 @@ class CR건국(general: Officer, env: CommandEnv, arg: Map<String, Any>? = null)
 
     override val fullConditionConstraints: List<Constraint> by lazy {
         val relYear = env.year - env.startYear
-        val nationName = arg?.get("nationName") as? String ?: ""
+        val factionName = arg?.get("factionName") as? String ?: ""
         listOf(
             BeLordOrUnaffiliated(),
             WanderingNation(),
             ReqNationGenCount(2),
             BeOpeningPart(relYear + 1),
-            CheckNationNameDuplicate(nationName),
+            CheckNationNameDuplicate(factionName),
             AllowJoinAction(),
             NeutralCity(),
         )
@@ -55,21 +55,21 @@ class CR건국(general: Officer, env: CommandEnv, arg: Map<String, Any>? = null)
             )
         }
 
-        val nationName = arg?.get("nationName") as? String
+        val factionName = arg?.get("factionName") as? String
             ?: return CommandResult(success = false, logs = listOf("인자가 없습니다."))
         val nationType = arg?.get("nationType") as? String ?: "che_도적"
         val colorType = arg?.get("colorType") ?: 0
         val cityName = city?.name ?: "알 수 없는 도시"
         val generalName = general.name
 
-        val josaUl = JosaUtil.pick(nationName, "을")
+        val josaUl = JosaUtil.pick(factionName, "을")
         val josaYi = JosaUtil.pick(generalName, "이")
-        val josaNationYi = JosaUtil.pick(nationName, "이")
+        val josaNationYi = JosaUtil.pick(factionName, "이")
 
-        pushLog("<D><b>${nationName}</b></>${josaUl} 건국하였습니다. <1>$date</>")
-        pushHistoryLog("<D><b>${nationName}</b></>${josaUl} 건국하였습니다. <1>$date</>")
+        pushLog("<D><b>${factionName}</b></>${josaUl} 건국하였습니다. <1>$date</>")
+        pushHistoryLog("<D><b>${factionName}</b></>${josaUl} 건국하였습니다. <1>$date</>")
         pushGlobalLog("<Y>${generalName}</>${josaYi} <G><b>${cityName}</b></>에 국가를 건설하였습니다.")
-        pushGlobalHistoryLog("<Y><b>【건국】</b></>${nationType} <D><b>${nationName}</b></>${josaNationYi} 새로이 등장하였습니다.")
+        pushGlobalHistoryLog("<Y><b>【건국】</b></>${nationType} <D><b>${factionName}</b></>${josaNationYi} 새로이 등장하였습니다.")
 
         val exp = 1000
         val ded = 1000
@@ -77,7 +77,7 @@ class CR건국(general: Officer, env: CommandEnv, arg: Map<String, Any>? = null)
         return CommandResult(
             success = true,
             logs = logs,
-            message = """{"statChanges":{"experience":$exp,"dedication":$ded},"nationFoundation":{"name":"$nationName","type":"$nationType","colorType":$colorType,"capitalCityId":${general.planetId},"can_국기변경":1},"cityChanges":{"claimCity":true},"historyLog":{"global":"<Y><b>【건국】</b></>${nationType} <D><b>${nationName}</b></>${josaNationYi} 새로이 등장하였습니다.","globalAction":"<Y>${generalName}</>${josaYi} <G><b>${cityName}</b></>에 국가를 건설하였습니다.","general":"<D><b>${nationName}</b></>${josaUl} 건국","nation":"<Y>${generalName}</>${josaYi} <D><b>${nationName}</b></>${josaUl} 건국"},"inheritancePoint":{"active_action":1}}"""
+            message = """{"statChanges":{"experience":$exp,"dedication":$ded},"nationFoundation":{"name":"$factionName","type":"$nationType","colorType":$colorType,"capitalCityId":${general.planetId},"can_국기변경":1},"cityChanges":{"claimCity":true},"historyLog":{"global":"<Y><b>【건국】</b></>${nationType} <D><b>${factionName}</b></>${josaNationYi} 새로이 등장하였습니다.","globalAction":"<Y>${generalName}</>${josaYi} <G><b>${cityName}</b></>에 국가를 건설하였습니다.","general":"<D><b>${factionName}</b></>${josaUl} 건국","nation":"<Y>${generalName}</>${josaYi} <D><b>${factionName}</b></>${josaUl} 건국"},"inheritancePoint":{"active_action":1}}"""
         )
     }
 }

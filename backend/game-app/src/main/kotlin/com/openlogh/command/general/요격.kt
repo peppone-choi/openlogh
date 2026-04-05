@@ -41,7 +41,7 @@ class 요격(general: Officer, env: CommandEnv, arg: Map<String, Any>? = null)
             )
         }
 
-    override fun getCost() = CommandCost(gold = 0, rice = 50)
+    override fun getCost() = CommandCost(funds = 0, supplies = 50)
 
     override fun getPreReqTurn() = 0
     override fun getPostReqTurn() = 0

@@ -22,7 +22,7 @@ class 인재탐색(general: Officer, env: CommandEnv, arg: Map<String, Any>? = n
         )
     }
 
-    override fun getCost() = CommandCost(gold = env.develCost, rice = 0)
+    override fun getCost() = CommandCost(funds = env.develCost, supplies = 0)
     override fun getPreReqTurn() = 0
     override fun getPostReqTurn() = 0
 

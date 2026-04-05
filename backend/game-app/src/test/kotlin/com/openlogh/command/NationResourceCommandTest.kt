@@ -13,12 +13,12 @@ import com.openlogh.command.nation.che_백성동원
 import com.openlogh.command.nation.che_증축
 import com.openlogh.command.nation.che_천도
 import com.openlogh.engine.DiplomacyService
-import com.openlogh.entity.City
-import com.openlogh.entity.General
-import com.openlogh.entity.Nation
-import com.openlogh.repository.CityRepository
-import com.openlogh.repository.GeneralRepository
-import com.openlogh.repository.NationRepository
+import com.openlogh.entity.Planet
+import com.openlogh.entity.Officer
+import com.openlogh.entity.Faction
+import com.openlogh.repository.PlanetRepository
+import com.openlogh.repository.OfficerRepository
+import com.openlogh.repository.FactionRepository
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -40,20 +40,20 @@ class NationResourceCommandTest {
         officerLevel: Short = 20,
         gold: Int = 1000,
         rice: Int = 1000,
-    ): General = General(
+    ): Officer = Officer(
         id = id,
-        worldId = 1,
+        sessionId = 1,
         name = "테스트장수$id",
-        nationId = nationId,
-        cityId = cityId,
+        factionId = nationId,
+        planetId = cityId,
         officerLevel = officerLevel,
-        gold = gold,
-        rice = rice,
+        funds = gold,
+        supplies = rice,
         leadership = 50,
-        strength = 50,
-        intel = 50,
+        command = 50,
+        intelligence = 50,
         politics = 50,
-        charm = 50,
+        administration = 50,
         turnTime = OffsetDateTime.now(),
     )
 
@@ -61,25 +61,25 @@ class NationResourceCommandTest {
         id: Long = 1,
         nationId: Long = 1,
         supplyState: Short = 1,
-    ): City = City(
+    ): Planet = Planet(
         id = id,
-        worldId = 1,
+        sessionId = 1,
         name = "테스트도시$id",
-        nationId = nationId,
+        factionId = nationId,
         supplyState = supplyState,
-        agri = 500,
-        agriMax = 1000,
-        comm = 500,
-        commMax = 1000,
-        secu = 500,
-        secuMax = 1000,
-        def = 500,
-        defMax = 1000,
-        wall = 500,
-        wallMax = 1000,
-        pop = 10000,
-        popMax = 50000,
-        trust = 80,
+        production = 500,
+        productionMax = 1000,
+        commerce = 500,
+        commerceMax = 1000,
+        security = 500,
+        securityMax = 1000,
+        orbitalDefense = 500,
+        orbitalDefenseMax = 1000,
+        fortress = 500,
+        fortressMax = 1000,
+        population = 10000,
+        populationMax = 50000,
+        approval = 80,
     )
 
     private fun createNation(
@@ -87,16 +87,16 @@ class NationResourceCommandTest {
         gold: Int = 200000,
         rice: Int = 200000,
         strategicCmdLimit: Short = 0,
-    ): Nation = Nation(
+    ): Faction = Faction(
         id = id,
-        worldId = 1,
+        sessionId = 1,
         name = "테스트국가$id",
         color = "#FF0000",
-        gold = gold,
-        rice = rice,
-        level = 7,
+        funds = gold,
+        supplies = rice,
+        factionRank = 7,
         strategicCmdLimit = strategicCmdLimit,
-        chiefGeneralId = 1,
+        chiefOfficerId = 1,
     )
 
     private fun env(
@@ -107,7 +107,7 @@ class NationResourceCommandTest {
         year = year,
         month = month,
         startYear = startYear,
-        worldId = 1,
+        sessionId = 1,
         realtimeMode = false,
     )
 
@@ -128,15 +128,15 @@ class NationResourceCommandTest {
     @Test
     fun `Nation휴식 golden value -- no entity mutation`() {
         val general = createGeneral(officerLevel = 1, gold = 500, rice = 600)
-        val beforeGold = general.gold
-        val beforeRice = general.rice
+        val beforeGold = general.funds
+        val beforeRice = general.supplies
         val cmd = Nation휴식(general, env())
 
         val result = runBlocking { cmd.run(fixedRng) }
         assertTrue(result.success)
-        // PHP: Nation휴식 does nothing -- no entity mutation
-        assertEquals(beforeGold, general.gold, "gold should not change")
-        assertEquals(beforeRice, general.rice, "rice should not change")
+        // PHP: Faction휴식 does nothing -- no entity mutation
+        assertEquals(beforeGold, general.funds, "gold should not change")
+        assertEquals(beforeRice, general.supplies, "rice should not change")
         assertEquals(0, result.logs.size, "no logs emitted")
     }
 
@@ -148,15 +148,15 @@ class NationResourceCommandTest {
         val cmd = che_포상(chief, env(), mapOf("isGold" to false, "amount" to 3000))
         cmd.city = createCity(nationId = 1)
         cmd.nation = nation
-        cmd.destGeneral = target
+        cmd.destOfficer = target
 
-        val beforeNationRice = nation.rice
-        val beforeTargetRice = target.rice
+        val beforeNationRice = nation.supplies
+        val beforeTargetRice = target.supplies
         val result = runBlocking { cmd.run(fixedRng) }
         assertTrue(result.success)
-        // PHP golden value: nation.rice -= amount, target.rice += amount
-        assertEquals(beforeNationRice - 3000, nation.rice, "nation rice reduced by 3000")
-        assertEquals(beforeTargetRice + 3000, target.rice, "target rice increased by 3000")
+        // PHP golden value: nation.supplies -= amount, target.supplies += amount
+        assertEquals(beforeNationRice - 3000, nation.supplies, "nation rice reduced by 3000")
+        assertEquals(beforeTargetRice + 3000, target.supplies, "target rice increased by 3000")
         // Color-tagged log (per D-05)
         assertTrue(result.logs.any { it.contains("수여") && it.contains("쌀") })
     }
@@ -169,15 +169,15 @@ class NationResourceCommandTest {
         val cmd = che_포상(chief, env(), mapOf("isGold" to true, "amount" to 5000))
         cmd.city = createCity(nationId = 1)
         cmd.nation = nation
-        cmd.destGeneral = target
+        cmd.destOfficer = target
 
-        val beforeNationGold = nation.gold
-        val beforeTargetGold = target.gold
+        val beforeNationGold = nation.funds
+        val beforeTargetGold = target.funds
         val result = runBlocking { cmd.run(fixedRng) }
         assertTrue(result.success)
-        // PHP golden value: nation.gold -= amount, target.gold += amount
-        assertEquals(beforeNationGold - 5000, nation.gold, "nation gold reduced by 5000")
-        assertEquals(beforeTargetGold + 5000, target.gold, "target gold increased by 5000")
+        // PHP golden value: nation.funds -= amount, target.funds += amount
+        assertEquals(beforeNationGold - 5000, nation.funds, "nation gold reduced by 5000")
+        assertEquals(beforeTargetGold + 5000, target.funds, "target gold increased by 5000")
         assertTrue(result.logs.any { it.contains("수여") && it.contains("금") })
     }
 
@@ -187,7 +187,7 @@ class NationResourceCommandTest {
         val failCmd = che_몰수(nonChief, env(), mapOf("isGold" to true, "amount" to 500))
         failCmd.city = createCity(nationId = 1)
         failCmd.nation = createNation(id = 1)
-        failCmd.destGeneral = createGeneral(id = 2, nationId = 1, gold = 1500)
+        failCmd.destOfficer = createGeneral(id = 2, nationId = 1, gold = 1500)
         val fail = failCmd.checkFullCondition()
         assertTrue(fail is ConstraintResult.Fail)
 
@@ -197,14 +197,14 @@ class NationResourceCommandTest {
         val cmd = che_몰수(chief, env(), mapOf("isGold" to true, "amount" to 500))
         cmd.city = createCity(nationId = 1)
         cmd.nation = nation
-        cmd.destGeneral = target
+        cmd.destOfficer = target
 
         val check = cmd.checkFullCondition()
         assertTrue(check is ConstraintResult.Pass)
         val result = runBlocking { cmd.run(fixedRng) }
         assertTrue(result.success)
-        assertEquals(1000, target.gold)
-        assertEquals(10500, nation.gold)
+        assertEquals(1000, target.funds)
+        assertEquals(10500, nation.funds)
         assertEquals(1, target.betray.toInt())
         assertTrue(result.logs.any { it.contains("몰수") })
     }
@@ -222,7 +222,7 @@ class NationResourceCommandTest {
         val nation = createNation(id = 1, gold = 10000, rice = 10000)
         val city = createCity(nationId = 1)
         city.level = 2
-        city.popMax = 50000
+        city.populationMax = 50000
         val cmd = che_감축(chief, env())
         cmd.city = city
         cmd.nation = nation
@@ -233,10 +233,10 @@ class NationResourceCommandTest {
         assertTrue(result.success)
         assertEquals(1, city.level.toInt())
         // PHP: reduces all 6 stats + maxes, refunds cost
-        assertTrue(city.popMax < 50000) // popMax reduced
-        assertTrue(city.agriMax < 1000) // agriMax reduced
-        assertTrue(nation.gold > 10000) // cost refunded (gold increased)
-        assertTrue(nation.rice > 10000) // cost refunded (rice increased)
+        assertTrue(city.populationMax < 50000) // popMax reduced
+        assertTrue(city.productionMax < 1000) // agriMax reduced
+        assertTrue(nation.funds > 10000) // cost refunded (gold increased)
+        assertTrue(nation.supplies > 10000) // cost refunded (rice increased)
     }
 
     @Test
@@ -247,22 +247,22 @@ class NationResourceCommandTest {
         val failCmd = che_증축(chief, env())
         failCmd.city = createCity(nationId = 1)
         failCmd.nation = createNation(id = 1, gold = 2000, rice = 3000)
-        failCmd.destCity = createCity(id = 1, nationId = 1).also { it.level = 5 }
+        failCmd.destPlanet = createCity(id = 1, nationId = 1).also { it.level = 5 }
         val fail = failCmd.checkFullCondition()
         assertTrue(fail is ConstraintResult.Fail)
 
         val nation = createNation(id = 1, gold = 200000, rice = 200000)
         val city = createCity(nationId = 1)
         city.level = 5
-        city.popMax = 40000
-        city.agriMax = 1000
-        city.commMax = 1000
-        city.secuMax = 1000
-        city.defMax = 1000
-        city.wallMax = 1000
+        city.populationMax = 40000
+        city.productionMax = 1000
+        city.commerceMax = 1000
+        city.securityMax = 1000
+        city.orbitalDefenseMax = 1000
+        city.fortressMax = 1000
         val cmd = che_증축(chief, env())
         cmd.city = city
-        cmd.destCity = city
+        cmd.destPlanet = city
         cmd.nation = nation
 
         val check = cmd.checkFullCondition()
@@ -270,14 +270,14 @@ class NationResourceCommandTest {
         val result = runBlocking { cmd.run(fixedRng) }
         assertTrue(result.success)
         assertEquals(6, city.level.toInt())
-        assertEquals(140000, city.popMax)
-        assertEquals(3000, city.agriMax)
-        assertEquals(3000, city.commMax)
-        assertEquals(3000, city.secuMax)
-        assertEquals(3000, city.defMax)
-        assertEquals(3000, city.wallMax)
-        assertEquals(90000, nation.gold)
-        assertEquals(90000, nation.rice)
+        assertEquals(140000, city.populationMax)
+        assertEquals(3000, city.productionMax)
+        assertEquals(3000, city.commerceMax)
+        assertEquals(3000, city.securityMax)
+        assertEquals(3000, city.orbitalDefenseMax)
+        assertEquals(3000, city.fortressMax)
+        assertEquals(90000, nation.funds)
+        assertEquals(90000, nation.supplies)
         assertTrue(result.logs.any { it.contains("증축") })
     }
 
@@ -287,24 +287,24 @@ class NationResourceCommandTest {
         val failCmd = che_발령(chief, env())
         failCmd.city = createCity(nationId = 1)
         failCmd.nation = createNation(id = 1)
-        failCmd.destCity = createCity(id = 2, nationId = 1)
+        failCmd.destPlanet = createCity(id = 2, nationId = 1)
         val fail = failCmd.checkFullCondition()
         assertTrue(fail is ConstraintResult.Fail)
 
         val target = createGeneral(id = 2, nationId = 1, cityId = 1)
-        target.troopId = 99
+        target.fleetId = 99
         val cmd = che_발령(chief, env())
         cmd.city = createCity(nationId = 1)
         cmd.nation = createNation(id = 1)
-        cmd.destGeneral = target
-        cmd.destCity = createCity(id = 2, nationId = 1)
+        cmd.destOfficer = target
+        cmd.destPlanet = createCity(id = 2, nationId = 1)
 
         val check = cmd.checkFullCondition()
         assertTrue(check is ConstraintResult.Pass)
         val result = runBlocking { cmd.run(fixedRng) }
         assertTrue(result.success)
-        assertEquals(2L, target.cityId)
-        assertEquals(0L, target.troopId)
+        assertEquals(2L, target.planetId)
+        assertEquals(0L, target.fleetId)
         assertTrue(result.logs.any { it.contains("발령") })
     }
 
@@ -313,26 +313,26 @@ class NationResourceCommandTest {
         val nonChief = createGeneral(officerLevel = 5)
         val failCmd = che_천도(nonChief, env())
         failCmd.city = createCity(nationId = 1)
-        failCmd.destCity = createCity(id = 2, nationId = 1)
+        failCmd.destPlanet = createCity(id = 2, nationId = 1)
         failCmd.nation = createNation(id = 1)
         val fail = failCmd.checkFullCondition()
         assertTrue(fail is ConstraintResult.Fail)
 
         val chief = createGeneral(officerLevel = 20)
         val nation = createNation(id = 1, gold = 10000, rice = 10000)
-        nation.capitalCityId = 1
+        nation.capitalPlanetId = 1
         val cmd = che_천도(chief, env())
         cmd.city = createCity(id = 1, nationId = 1)
-        cmd.destCity = createCity(id = 2, nationId = 1)
+        cmd.destPlanet = createCity(id = 2, nationId = 1)
         cmd.nation = nation
 
         val check = cmd.checkFullCondition()
         assertTrue(check is ConstraintResult.Pass)
         val result = runBlocking { cmd.run(fixedRng) }
         assertTrue(result.success)
-        assertEquals(2L, nation.capitalCityId)
-        assertEquals(8000, nation.gold)
-        assertEquals(8000, nation.rice)
+        assertEquals(2L, nation.capitalPlanetId)
+        assertEquals(8000, nation.funds)
+        assertEquals(8000, nation.supplies)
         assertTrue(result.logs.any { it.contains("천도") })
     }
 
@@ -340,42 +340,42 @@ class NationResourceCommandTest {
     fun `천도 back to original city succeeds after first move`() {
         val chief = createGeneral(officerLevel = 20)
         val nation = createNation(id = 1, gold = 10000, rice = 10000)
-        nation.capitalCityId = 1
+        nation.capitalPlanetId = 1
         val cityA = createCity(id = 1, nationId = 1)
         val cityB = createCity(id = 2, nationId = 1)
 
         // First move: A → B
         val cmd1 = che_천도(chief, env())
         cmd1.city = cityA
-        cmd1.destCity = cityB
+        cmd1.destPlanet = cityB
         cmd1.nation = nation
         val r1 = runBlocking { cmd1.run(fixedRng) }
         assertTrue(r1.success)
-        assertEquals(2L, nation.capitalCityId)
+        assertEquals(2L, nation.capitalPlanetId)
 
         // Second move: B → A (back to original)
         val cmd2 = che_천도(chief, env())
         cmd2.city = cityB
-        cmd2.destCity = cityA
+        cmd2.destPlanet = cityA
         cmd2.nation = nation
         val check2 = cmd2.checkFullCondition()
         assertTrue(check2 is ConstraintResult.Pass, "Constraints should pass for return 천도: $check2")
         val r2 = runBlocking { cmd2.run(fixedRng) }
         assertTrue(r2.success, "Return 천도 should succeed")
-        assertEquals(1L, nation.capitalCityId)
-        assertEquals(6000, nation.gold)
-        assertEquals(6000, nation.rice)
+        assertEquals(1L, nation.capitalPlanetId)
+        assertEquals(6000, nation.funds)
+        assertEquals(6000, nation.supplies)
     }
 
     @Test
     fun `천도 to current capital fails with already-capital message`() {
         val chief = createGeneral(officerLevel = 20)
         val nation = createNation(id = 1, gold = 10000, rice = 10000)
-        nation.capitalCityId = 1
+        nation.capitalPlanetId = 1
 
         val cmd = che_천도(chief, env())
         cmd.city = createCity(id = 1, nationId = 1)
-        cmd.destCity = createCity(id = 1, nationId = 1)
+        cmd.destPlanet = createCity(id = 1, nationId = 1)
         cmd.nation = nation
         val check = cmd.checkFullCondition()
         assertTrue(check is ConstraintResult.Pass)
@@ -388,26 +388,26 @@ class NationResourceCommandTest {
         val chief = createGeneral(officerLevel = 20)
         val failCmd = che_백성동원(chief, env())
         failCmd.city = createCity(nationId = 1)
-        failCmd.destCity = createCity(id = 2, nationId = 1)
+        failCmd.destPlanet = createCity(id = 2, nationId = 1)
         failCmd.nation = createNation(id = 1, strategicCmdLimit = 3)
         val fail = failCmd.checkFullCondition()
         assertTrue(fail is ConstraintResult.Fail)
 
-        val generalRepository = mock(GeneralRepository::class.java)
+        val officerRepository = mock(OfficerRepository::class.java)
         val mockServices = CommandServices(
-            generalRepository = generalRepository,
-            cityRepository = mock(CityRepository::class.java),
-            nationRepository = mock(NationRepository::class.java),
+            officerRepository = officerRepository,
+            planetRepository = mock(PlanetRepository::class.java),
+            factionRepository = mock(FactionRepository::class.java),
             diplomacyService = mock(DiplomacyService::class.java),
         )
 
         val nation = createNation(id = 1, strategicCmdLimit = 0)
-        val destCity = createCity(id = 2, nationId = 1)
-        destCity.pop = 25000
+        val destPlanet = createCity(id = 2, nationId = 1)
+        destPlanet.population = 25000
 
         val cmd = che_백성동원(chief, env())
         cmd.city = createCity(nationId = 1)
-        cmd.destCity = destCity
+        cmd.destPlanet = destPlanet
         cmd.nation = nation
         cmd.services = mockServices
 
@@ -417,8 +417,8 @@ class NationResourceCommandTest {
         assertTrue(result.success)
         assertEquals(9, nation.strategicCmdLimit.toInt())
         // PHP: def = GREATEST(def_max * 0.8, def), wall = GREATEST(wall_max * 0.8, wall)
-        assertEquals(maxOf((destCity.defMax * 0.8).toInt(), 500), destCity.def)
-        assertEquals(maxOf((destCity.wallMax * 0.8).toInt(), 500), destCity.wall)
+        assertEquals(maxOf((destPlanet.orbitalDefenseMax * 0.8).toInt(), 500), destPlanet.orbitalDefense)
+        assertEquals(maxOf((destPlanet.fortressMax * 0.8).toInt(), 500), destPlanet.fortress)
         assertTrue(result.logs.any { it.contains("백성") })
     }
 
@@ -428,7 +428,7 @@ class NationResourceCommandTest {
         val failCmd = che_물자원조(chief, env(), mapOf("goldAmount" to 500, "riceAmount" to 600))
         failCmd.city = createCity(nationId = 1)
         failCmd.nation = createNation(id = 1, gold = 10000, rice = 10000)
-        failCmd.destNation = createNation(id = 1, gold = 1000, rice = 1000)
+        failCmd.destFaction = createNation(id = 1, gold = 1000, rice = 1000)
         val fail = failCmd.checkFullCondition()
         assertTrue(fail is ConstraintResult.Fail)
 
@@ -437,16 +437,16 @@ class NationResourceCommandTest {
         val cmd = che_물자원조(chief, env(), mapOf("goldAmount" to 500, "riceAmount" to 600))
         cmd.city = createCity(nationId = 1)
         cmd.nation = nation
-        cmd.destNation = allyNation
+        cmd.destFaction = allyNation
 
         val check = cmd.checkFullCondition()
         assertTrue(check is ConstraintResult.Pass)
         val result = runBlocking { cmd.run(fixedRng) }
         assertTrue(result.success)
-        assertEquals(9500, nation.gold)
-        assertEquals(9400, nation.rice)
-        assertEquals(1500, allyNation.gold)
-        assertEquals(2600, allyNation.rice)
+        assertEquals(9500, nation.funds)
+        assertEquals(9400, nation.supplies)
+        assertEquals(1500, allyNation.funds)
+        assertEquals(2600, allyNation.supplies)
         assertTrue(result.logs.any { it.contains("지원") })
     }
 
@@ -473,14 +473,14 @@ class NationResourceCommandTest {
 
     @Test
     fun `국호변경 fails for non-chief and runs to mutate nation name`() {
-        val failCmd = che_국호변경(createGeneral(officerLevel = 5), env(), mapOf("nationName" to "신국호"))
+        val failCmd = che_국호변경(createGeneral(officerLevel = 5), env(), mapOf("factionName" to "신국호"))
         failCmd.city = createCity(nationId = 1)
         failCmd.nation = createNation(id = 1)
         val fail = failCmd.checkFullCondition()
         assertTrue(fail is ConstraintResult.Fail)
 
         val nation = createNation(id = 1)
-        val cmd = che_국호변경(createGeneral(officerLevel = 20), env(), mapOf("nationName" to "신국호"))
+        val cmd = che_국호변경(createGeneral(officerLevel = 20), env(), mapOf("factionName" to "신국호"))
         cmd.city = createCity(nationId = 1)
         cmd.nation = nation
 
@@ -503,13 +503,13 @@ class NationResourceCommandTest {
         val cmd = che_몰수(chief, env(), mapOf("isGold" to true, "amount" to 1500))
         cmd.city = createCity(nationId = 1)
         cmd.nation = nation
-        cmd.destGeneral = target
+        cmd.destOfficer = target
 
         val result = runBlocking { cmd.run(fixedRng) }
         assertTrue(result.success)
-        // PHP golden value: target.gold -= amount, nation.gold += amount, target.betray++
-        assertEquals(1500, target.gold, "target gold reduced from 3000 by 1500")
-        assertEquals(11500, nation.gold, "nation gold increased from 10000 by 1500")
+        // PHP golden value: target.funds -= amount, nation.funds += amount, target.betray++
+        assertEquals(1500, target.funds, "target gold reduced from 3000 by 1500")
+        assertEquals(11500, nation.funds, "nation gold increased from 10000 by 1500")
         assertEquals(1, target.betray.toInt(), "betray incremented by 1")
         // Color-tagged log (D-05)
         assertTrue(result.logs.any { it.contains("몰수") })
@@ -521,12 +521,12 @@ class NationResourceCommandTest {
         val nation = createNation(id = 1, gold = 10000, rice = 10000)
         val city = createCity(nationId = 1)
         city.level = 3
-        city.popMax = 80000
-        city.agriMax = 2000
-        city.commMax = 2000
-        city.secuMax = 2000
-        city.defMax = 2000
-        city.wallMax = 2000
+        city.populationMax = 80000
+        city.productionMax = 2000
+        city.commerceMax = 2000
+        city.securityMax = 2000
+        city.orbitalDefenseMax = 2000
+        city.fortressMax = 2000
         val cmd = che_감축(chief, env())
         cmd.city = city
         cmd.nation = nation
@@ -537,12 +537,12 @@ class NationResourceCommandTest {
         // PHP golden value: level decremented by 1
         assertEquals(beforeLevel - 1, city.level.toInt(), "city level decremented by 1")
         // PHP: all max values reduced, current values clamped
-        assertTrue(city.popMax < 80000, "popMax reduced")
-        assertTrue(city.agriMax < 2000, "agriMax reduced")
-        assertTrue(city.commMax < 2000, "commMax reduced")
+        assertTrue(city.populationMax < 80000, "popMax reduced")
+        assertTrue(city.productionMax < 2000, "agriMax reduced")
+        assertTrue(city.commerceMax < 2000, "commMax reduced")
         // PHP: nation receives cost refund
-        assertTrue(nation.gold > 10000, "gold refunded")
-        assertTrue(nation.rice > 10000, "rice refunded")
+        assertTrue(nation.funds > 10000, "gold refunded")
+        assertTrue(nation.supplies > 10000, "rice refunded")
     }
 
     @Test
@@ -551,15 +551,15 @@ class NationResourceCommandTest {
         val nation = createNation(id = 1, gold = 200000, rice = 200000)
         val city = createCity(nationId = 1)
         city.level = 5
-        city.popMax = 40000
-        city.agriMax = 1000
-        city.commMax = 1000
-        city.secuMax = 1000
-        city.defMax = 1000
-        city.wallMax = 1000
+        city.populationMax = 40000
+        city.productionMax = 1000
+        city.commerceMax = 1000
+        city.securityMax = 1000
+        city.orbitalDefenseMax = 1000
+        city.fortressMax = 1000
         val cmd = che_증축(chief, env())
         cmd.city = city
-        cmd.destCity = city
+        cmd.destPlanet = city
         cmd.nation = nation
 
         val result = runBlocking { cmd.run(fixedRng) }
@@ -567,36 +567,36 @@ class NationResourceCommandTest {
         // PHP golden value: level 5 → 6
         assertEquals(6, city.level.toInt())
         // PHP: popMax += 100000, each max += 2000
-        assertEquals(140000, city.popMax, "popMax = 40000 + 100000")
-        assertEquals(3000, city.agriMax, "agriMax = 1000 + 2000")
-        assertEquals(3000, city.commMax, "commMax = 1000 + 2000")
-        assertEquals(3000, city.secuMax, "secuMax = 1000 + 2000")
-        assertEquals(3000, city.defMax, "defMax = 1000 + 2000")
-        assertEquals(3000, city.wallMax, "wallMax = 1000 + 2000")
+        assertEquals(140000, city.populationMax, "popMax = 40000 + 100000")
+        assertEquals(3000, city.productionMax, "agriMax = 1000 + 2000")
+        assertEquals(3000, city.commerceMax, "commMax = 1000 + 2000")
+        assertEquals(3000, city.securityMax, "secuMax = 1000 + 2000")
+        assertEquals(3000, city.orbitalDefenseMax, "defMax = 1000 + 2000")
+        assertEquals(3000, city.fortressMax, "wallMax = 1000 + 2000")
         // PHP: cost = develCost(100) * 500 + 60000 = 110000
-        assertEquals(90000, nation.gold, "gold = 200000 - 110000")
-        assertEquals(90000, nation.rice, "rice = 200000 - 110000")
+        assertEquals(90000, nation.funds, "gold = 200000 - 110000")
+        assertEquals(90000, nation.supplies, "rice = 200000 - 110000")
         // Color-tagged log (D-05)
         assertTrue(result.logs.any { it.contains("증축") })
     }
 
     @Test
-    fun `발령 golden value -- officerCity change and troopId reset`() {
+    fun `발령 golden value -- officerPlanet change and troopId reset`() {
         val chief = createGeneral(officerLevel = 20)
         val target = createGeneral(id = 2, nationId = 1, cityId = 1)
-        target.troopId = 99
-        val destCity = createCity(id = 3, nationId = 1)
+        target.fleetId = 99
+        val destPlanet = createCity(id = 3, nationId = 1)
         val cmd = che_발령(chief, env())
         cmd.city = createCity(nationId = 1)
         cmd.nation = createNation(id = 1)
-        cmd.destGeneral = target
-        cmd.destCity = destCity
+        cmd.destOfficer = target
+        cmd.destPlanet = destPlanet
 
         val result = runBlocking { cmd.run(fixedRng) }
         assertTrue(result.success)
-        // PHP golden value: target.cityId = destCity.id, target.troopId = 0
-        assertEquals(3L, target.cityId, "target moved to dest city")
-        assertEquals(0L, target.troopId, "troopId reset to 0")
+        // PHP golden value: target.planetId = destPlanet.id, target.fleetId = 0
+        assertEquals(3L, target.planetId, "target moved to dest city")
+        assertEquals(0L, target.fleetId, "troopId reset to 0")
         // Color-tagged log (D-05)
         assertTrue(result.logs.any { it.contains("발령") })
     }
@@ -605,18 +605,18 @@ class NationResourceCommandTest {
     fun `천도 golden value -- capital change and gold rice cost`() {
         val chief = createGeneral(officerLevel = 20)
         val nation = createNation(id = 1, gold = 20000, rice = 20000)
-        nation.capitalCityId = 1
+        nation.capitalPlanetId = 1
         val cmd = che_천도(chief, env())
         cmd.city = createCity(id = 1, nationId = 1)
-        cmd.destCity = createCity(id = 5, nationId = 1)
+        cmd.destPlanet = createCity(id = 5, nationId = 1)
         cmd.nation = nation
 
         val result = runBlocking { cmd.run(fixedRng) }
         assertTrue(result.success)
-        // PHP golden value: nation.capitalCityId = destCity.id, cost = 2000 gold + 2000 rice
-        assertEquals(5L, nation.capitalCityId, "capital changed to dest city")
-        assertEquals(18000, nation.gold, "gold = 20000 - 2000")
-        assertEquals(18000, nation.rice, "rice = 20000 - 2000")
+        // PHP golden value: nation.capitalPlanetId = destPlanet.id, cost = 2000 gold + 2000 rice
+        assertEquals(5L, nation.capitalPlanetId, "capital changed to dest city")
+        assertEquals(18000, nation.funds, "gold = 20000 - 2000")
+        assertEquals(18000, nation.supplies, "rice = 20000 - 2000")
         // Color-tagged log (D-05)
         assertTrue(result.logs.any { it.contains("천도") })
     }
@@ -624,25 +624,25 @@ class NationResourceCommandTest {
     @Test
     fun `백성동원 golden value -- population halved and def wall clamped`() {
         val chief = createGeneral(officerLevel = 20)
-        val generalRepository = mock(GeneralRepository::class.java)
+        val officerRepository = mock(OfficerRepository::class.java)
         val mockServices = CommandServices(
-            generalRepository = generalRepository,
-            cityRepository = mock(CityRepository::class.java),
-            nationRepository = mock(NationRepository::class.java),
+            officerRepository = officerRepository,
+            planetRepository = mock(PlanetRepository::class.java),
+            factionRepository = mock(FactionRepository::class.java),
             diplomacyService = mock(DiplomacyService::class.java),
         )
 
         val nation = createNation(id = 1, strategicCmdLimit = 0)
-        val destCity = createCity(id = 2, nationId = 1)
-        destCity.pop = 40000
-        destCity.def = 200
-        destCity.wall = 300
-        destCity.defMax = 1000
-        destCity.wallMax = 1000
+        val destPlanet = createCity(id = 2, nationId = 1)
+        destPlanet.population = 40000
+        destPlanet.orbitalDefense = 200
+        destPlanet.fortress = 300
+        destPlanet.orbitalDefenseMax = 1000
+        destPlanet.fortressMax = 1000
 
         val cmd = che_백성동원(chief, env())
         cmd.city = createCity(nationId = 1)
-        cmd.destCity = destCity
+        cmd.destPlanet = destPlanet
         cmd.nation = nation
         cmd.services = mockServices
 
@@ -651,9 +651,9 @@ class NationResourceCommandTest {
         // PHP golden value: strategicCmdLimit = 9
         assertEquals(9, nation.strategicCmdLimit.toInt())
         // PHP: def = GREATEST(def_max * 0.8, def) → max(800, 200) = 800
-        assertEquals(800, destCity.def, "def clamped to defMax * 0.8")
+        assertEquals(800, destPlanet.orbitalDefense, "def clamped to defMax * 0.8")
         // PHP: wall = GREATEST(wall_max * 0.8, wall) → max(800, 300) = 800
-        assertEquals(800, destCity.wall, "wall clamped to wallMax * 0.8")
+        assertEquals(800, destPlanet.fortress, "wall clamped to wallMax * 0.8")
         // Color-tagged log (D-05)
         assertTrue(result.logs.any { it.contains("백성") })
     }
@@ -666,15 +666,15 @@ class NationResourceCommandTest {
         val cmd = che_물자원조(chief, env(), mapOf("goldAmount" to 12000, "riceAmount" to 7000))
         cmd.city = createCity(nationId = 1)
         cmd.nation = nation
-        cmd.destNation = allyNation
+        cmd.destFaction = allyNation
 
         val result = runBlocking { cmd.run(fixedRng) }
         assertTrue(result.success)
         // PHP golden value: src -= amount, dest += amount
-        assertEquals(38000, nation.gold, "nation gold = 50000 - 12000")
-        assertEquals(23000, nation.rice, "nation rice = 30000 - 7000")
-        assertEquals(17000, allyNation.gold, "ally gold = 5000 + 12000")
-        assertEquals(15000, allyNation.rice, "ally rice = 8000 + 7000")
+        assertEquals(38000, nation.funds, "nation gold = 50000 - 12000")
+        assertEquals(23000, nation.supplies, "nation rice = 30000 - 7000")
+        assertEquals(17000, allyNation.funds, "ally gold = 5000 + 12000")
+        assertEquals(15000, allyNation.supplies, "ally rice = 8000 + 7000")
         // Color-tagged log (D-05)
         assertTrue(result.logs.any { it.contains("지원") })
     }
@@ -699,13 +699,13 @@ class NationResourceCommandTest {
     fun `국호변경 golden value -- exact name mutation`() {
         val nation = createNation(id = 1)
         assertEquals("테스트국가1", nation.name, "initial name")
-        val cmd = che_국호변경(createGeneral(officerLevel = 20), env(), mapOf("nationName" to "대한제국"))
+        val cmd = che_국호변경(createGeneral(officerLevel = 20), env(), mapOf("factionName" to "대한제국"))
         cmd.city = createCity(nationId = 1)
         cmd.nation = nation
 
         val result = runBlocking { cmd.run(fixedRng) }
         assertTrue(result.success)
-        // PHP golden value: nation.name = arg.nationName
+        // PHP golden value: nation.name = arg.factionName
         assertEquals("대한제국", nation.name, "name mutated to 대한제국")
         // Color-tagged log (D-05)
         assertTrue(result.logs.any { it.contains("국호") })

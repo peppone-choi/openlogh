@@ -52,7 +52,7 @@ class che_증축(general: Officer, env: CommandEnv, arg: Map<String, Any>? = nul
 
     override fun getCost(): CommandCost {
         val amount = getCostAmount()
-        return CommandCost(gold = amount, rice = amount)
+        return CommandCost(funds = amount, supplies = amount)
     }
 
     override fun getPreReqTurn() = 5
@@ -94,16 +94,16 @@ class che_증축(general: Officer, env: CommandEnv, arg: Map<String, Any>? = nul
         inheritMeta["active_action"] = ((inheritMeta["active_action"] as? Number)?.toInt() ?: 0) + 1
 
         val generalName = general.name
-        val nationName = n.name
+        val factionName = n.name
         val josaUl = JosaUtil.pick(c.name, "을")
         val josaYi = JosaUtil.pick(generalName, "이")
-        val josaYiNation = JosaUtil.pick(nationName, "이")
+        val josaYiNation = JosaUtil.pick(factionName, "이")
 
         pushLog("<G><b>${c.name}</b></>${josaUl} 증축했습니다. <1>$date</>")
         pushHistoryLog("<G><b>${c.name}</b></>${josaUl} <M>증축</>")
         pushNationalHistoryLog("<Y>${generalName}</>${josaYi} <G><b>${c.name}</b></>${josaUl} <M>증축</>")
         pushGlobalActionLog("<Y>${generalName}</>${josaYi} <G><b>${c.name}</b></>${josaUl} <M>증축</>하였습니다.")
-        pushGlobalHistoryLog("<C><b>【증축】</b></><D><b>${nationName}</b></>${josaYiNation} <G><b>${c.name}</b></>${josaUl} <M>증축</>하였습니다.")
+        pushGlobalHistoryLog("<C><b>【증축】</b></><D><b>${factionName}</b></>${josaYiNation} <G><b>${c.name}</b></>${josaUl} <M>증축</>하였습니다.")
 
         // Reset lastTurn (completed)
         general.lastTurn = LastTurn(actionName, arg, 0).toMap()

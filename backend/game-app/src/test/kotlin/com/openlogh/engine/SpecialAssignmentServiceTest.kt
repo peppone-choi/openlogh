@@ -1,7 +1,7 @@
 package com.openlogh.engine
 
-import com.openlogh.entity.General
-import com.openlogh.entity.WorldState
+import com.openlogh.entity.Officer
+import com.openlogh.entity.SessionState
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -17,8 +17,8 @@ class SpecialAssignmentServiceTest {
         service = SpecialAssignmentService()
     }
 
-    private fun createWorld(year: Short = 200, month: Short = 3, startYear: Int = 184): WorldState {
-        return WorldState(
+    private fun createWorld(year: Short = 200, month: Short = 3, startYear: Int = 184): SessionState {
+        return SessionState(
             id = 1,
             scenarioCode = "test",
             currentYear = year,
@@ -39,17 +39,17 @@ class SpecialAssignmentServiceTest {
         specAge: Short = 20,
         spec2Age: Short = 20,
         meta: MutableMap<String, Any> = mutableMapOf(),
-    ): General {
-        return General(
+    ): Officer {
+        return Officer(
             id = id,
-            worldId = 1,
+            sessionId = 1,
             name = "장수$id",
-            nationId = 1,
-            cityId = 1,
+            factionId = 1,
+            planetId = 1,
             age = age,
             leadership = leadership,
-            strength = strength,
-            intel = intel,
+            command = strength,
+            intelligence = intel,
             specialCode = specialCode,
             special2Code = special2Code,
             specAge = specAge,

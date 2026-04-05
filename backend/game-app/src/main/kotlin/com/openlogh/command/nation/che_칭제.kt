@@ -36,17 +36,17 @@ class che_칭제(general: Officer, env: CommandEnv, arg: Map<String, Any>? = nul
     override suspend fun run(rng: Random): CommandResult {
         val n = nation ?: return CommandResult(false, listOf("국가 정보를 찾을 수 없습니다."))
         val generalName = general.name
-        val nationName = n.name
+        val factionName = n.name
         val josaYi = JosaUtil.pick(generalName, "이")
 
         n.meta[SovereignConstants.NATION_IMPERIAL_STATUS] = SovereignConstants.STATUS_EMPEROR
         n.meta[SovereignConstants.NATION_EMPEROR_TYPE] = SovereignConstants.TYPE_SELF_PROCLAIMED
 
         pushLog("<C><b>황제</b></>를 자칭하였습니다. <1>${formatDate()}</>")
-        pushHistoryLog("<D><b>${nationName}</b></>에서 황제를 자칭")
+        pushHistoryLog("<D><b>${factionName}</b></>에서 황제를 자칭")
         pushNationalHistoryLog("<Y>${generalName}</>${josaYi} 황제를 자칭하였습니다.")
-        pushGlobalLog("<Y>${generalName}</>${josaYi} <D><b>${nationName}</b></>에서 <C><b>황제</b></>를 자칭하였습니다!")
-        pushGlobalHistoryLog("<C><b>【칭제】</b></><Y>${generalName}</>${josaYi} <D><b>${nationName}</b></>에서 황제를 자칭하였습니다.")
+        pushGlobalLog("<Y>${generalName}</>${josaYi} <D><b>${factionName}</b></>에서 <C><b>황제</b></>를 자칭하였습니다!")
+        pushGlobalHistoryLog("<C><b>【칭제】</b></><Y>${generalName}</>${josaYi} <D><b>${factionName}</b></>에서 황제를 자칭하였습니다.")
 
         return CommandResult(true, logs)
     }

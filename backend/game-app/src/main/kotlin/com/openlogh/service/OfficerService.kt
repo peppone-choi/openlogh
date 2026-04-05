@@ -72,7 +72,7 @@ class OfficerService(
             .firstOrNull { it.npcState < 5 } ?: return null
         if (officer.factionId > 0L && officer.officerLevel < 1) {
             officer.officerLevel = 1
-            officer.officerCity = 0
+            officer.officerPlanet = 0
             officer.permission = "normal"
             if (officer.makeLimit > 0) {
                 officer.makeLimit = 0
@@ -188,7 +188,7 @@ class OfficerService(
                 administration = (request.charm + bonusStat[4]).toShort(),
                 experience = experience,
                 officerLevel = if (nationId > 0L) 1 else 0,
-                officerCity = 0,
+                officerPlanet = 0,
                 permission = "normal",
                 funds = gameConstService.getInt("defaultGold"), supplies = gameConstService.getInt("defaultRice"),
                 shipClass = request.crewType,

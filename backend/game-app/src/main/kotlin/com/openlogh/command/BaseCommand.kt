@@ -188,7 +188,7 @@ abstract class BaseCommand(
      * Returns a cost multiplier based on nation's tech level.
      */
     protected fun getNationTechCost(): Double {
-        val tech = nation?.tech?.toDouble() ?: 0.0
+        val tech = nation?.techLevel?.toDouble() ?: 0.0
         val techLevel = Math.floor(tech / 1000.0).coerceIn(0.0, 12.0)
         return 1.0 + techLevel * 0.15
     }

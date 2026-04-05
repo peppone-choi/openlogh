@@ -20,22 +20,22 @@ class WarUnitPlanet(
     init {
         hp = city.orbitalDefense * 10
         maxHp = hp
-        crew = city.population
+        ships = city.population
         // PHP: getComputedTrain() = cityTrainAtmos + trainBonus
         //      getComputedAtmos() = cityTrainAtmos + atmosBonus
-        train = cityTrainAtmos
-        atmos = cityTrainAtmos
-        crewType = -1  // CREWTYPE_CASTLE
+        training = cityTrainAtmos
+        morale = cityTrainAtmos
+        shipClass = -1  // CREWTYPE_CASTLE
         leadership = 50
-        strength = 30
-        intel = 30
+        command = 30
+        intelligence = 30
         experience = 0
         dedication = 0
-        tech = 0f
+        techLevel = 0f
 
         // PHP: level==1 or level==3 → trainBonus += 5
         if (city.level == 1.toShort() || city.level == 3.toShort()) {
-            train += 5
+            training += 5
         }
     }
 

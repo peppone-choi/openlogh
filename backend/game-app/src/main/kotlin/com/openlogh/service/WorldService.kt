@@ -127,8 +127,8 @@ class WorldService(
         val yearsElapsed = world.currentYear.toInt() - startYear
         if (yearsElapsed < OPENING_PART_YEARS) return PHASE_OPENING
 
-        val nationCount = factionRepository.findBySessionId(world.id.toLong()).count { it.level > 0 }
-        if (nationCount <= 1) return PHASE_ENDING
+        val factionCount = factionRepository.findBySessionId(world.id.toLong()).count { it.factionRank > 0 }
+        if (factionCount <= 1) return PHASE_ENDING
 
         return PHASE_NORMAL
     }
@@ -197,7 +197,7 @@ class WorldService(
      * Get count of active nations (level > 0).
      */
     fun getActiveNationCount(worldId: Long): Int {
-        return factionRepository.findBySessionId(worldId).count { it.level > 0 }
+        return factionRepository.findBySessionId(worldId).count { it.factionRank > 0 }
     }
 
     /**
@@ -245,7 +245,7 @@ class WorldService(
         val cities = planetRepository.findBySessionId(worldId)
         val generals = officerRepository.findBySessionId(worldId)
 
-        val nationSummaries = nations.filter { it.level > 0 }.map { faction ->
+        val nationSummaries = nations.filter { it.factionRank > 0 }.map { faction ->
             val nationCities = cities.filter { it.factionId == faction.id }
             val nationGenerals = generals.filter { it.factionId == faction.id && it.npcState.toInt() != 5 }
             mapOf(
@@ -284,7 +284,7 @@ class WorldService(
             "phase" to getGamePhase(world),
             "season" to getCurrentSeason(world),
             "totalPopulation" to cities.sumOf { it.population.toLong() },
-            "activeNations" to nations.count { it.level > 0 },
+            "activeNations" to nations.count { it.factionRank > 0 },
             "activeGenerals" to generals.count { it.npcState.toInt() != 5 },
             "humanPlayers" to generals.count { it.userId != null },
             "atWar" to nations.any { it.warState > 0 },
@@ -293,7 +293,7 @@ class WorldService(
         )
 
         val history = WorldHistory(
-            worldId = worldId,
+            sessionId = worldId,
             year = world.currentYear,
             month = world.currentMonth,
             eventType = "snapshot",

@@ -33,7 +33,7 @@ class che_사기진작(general: Officer, env: CommandEnv, arg: Map<String, Any>?
 
     override fun getCost(): CommandCost {
         val gold = general.ships / 100
-        return CommandCost(gold = gold)
+        return CommandCost(funds = gold)
     }
 
     override fun getPreReqTurn() = 0

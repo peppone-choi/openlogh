@@ -9,7 +9,7 @@ data class PublicCachedMapCityResponse(
     val y: Int,
     val level: Int,
     val region: Int? = null,
-    val nationName: String,
+    val factionName: String,
     val nationColor: String,
     val nationAbbr: String? = null,
     val isCapital: Boolean = false,

@@ -2,17 +2,17 @@ package com.openlogh.service
 
 import com.openlogh.command.CommandExecutor
 import com.openlogh.command.CommandRegistry
-import com.openlogh.entity.General
+import com.openlogh.entity.Officer
 import com.openlogh.entity.GeneralTurn
-import com.openlogh.entity.WorldState
+import com.openlogh.entity.SessionState
 import com.openlogh.engine.RealtimeService
 import com.openlogh.repository.AppUserRepository
-import com.openlogh.repository.CityRepository
-import com.openlogh.repository.GeneralRepository
-import com.openlogh.repository.GeneralTurnRepository
-import com.openlogh.repository.NationRepository
-import com.openlogh.repository.NationTurnRepository
-import com.openlogh.repository.WorldStateRepository
+import com.openlogh.repository.PlanetRepository
+import com.openlogh.repository.OfficerRepository
+import com.openlogh.repository.OfficerTurnRepository
+import com.openlogh.repository.FactionRepository
+import com.openlogh.repository.FactionTurnRepository
+import com.openlogh.repository.SessionStateRepository
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -26,12 +26,12 @@ import java.time.OffsetDateTime
 import java.util.Optional
 
 class CommandServiceTest {
-    private lateinit var generalTurnRepository: GeneralTurnRepository
-    private lateinit var nationTurnRepository: NationTurnRepository
-    private lateinit var generalRepository: GeneralRepository
-    private lateinit var cityRepository: CityRepository
-    private lateinit var nationRepository: NationRepository
-    private lateinit var worldStateRepository: WorldStateRepository
+    private lateinit var officerTurnRepository: OfficerTurnRepository
+    private lateinit var factionTurnRepository: FactionTurnRepository
+    private lateinit var officerRepository: OfficerRepository
+    private lateinit var planetRepository: PlanetRepository
+    private lateinit var factionRepository: FactionRepository
+    private lateinit var sessionStateRepository: SessionStateRepository
     private lateinit var appUserRepository: AppUserRepository
     private lateinit var commandExecutor: CommandExecutor
     private lateinit var commandRegistry: CommandRegistry
@@ -41,12 +41,12 @@ class CommandServiceTest {
 
     @BeforeEach
     fun setUp() {
-        generalTurnRepository = mock(GeneralTurnRepository::class.java)
-        nationTurnRepository = mock(NationTurnRepository::class.java)
-        generalRepository = mock(GeneralRepository::class.java)
-        cityRepository = mock(CityRepository::class.java)
-        nationRepository = mock(NationRepository::class.java)
-        worldStateRepository = mock(WorldStateRepository::class.java)
+        officerTurnRepository = mock(OfficerTurnRepository::class.java)
+        factionTurnRepository = mock(FactionTurnRepository::class.java)
+        officerRepository = mock(OfficerRepository::class.java)
+        planetRepository = mock(PlanetRepository::class.java)
+        factionRepository = mock(FactionRepository::class.java)
+        sessionStateRepository = mock(SessionStateRepository::class.java)
         appUserRepository = mock(AppUserRepository::class.java)
         commandExecutor = mock(CommandExecutor::class.java)
         commandRegistry = mock(CommandRegistry::class.java)
@@ -54,16 +54,16 @@ class CommandServiceTest {
         gameConstService = mock(GameConstService::class.java)
         `when`(gameConstService.getInt("maxTurn")).thenReturn(5)
         `when`(gameConstService.getInt("maxChiefTurn")).thenReturn(4)
-        `when`(generalTurnRepository.saveAll(org.mockito.ArgumentMatchers.anyList())).thenAnswer { it.arguments[0] }
-        `when`(nationTurnRepository.saveAll(org.mockito.ArgumentMatchers.anyList())).thenAnswer { it.arguments[0] }
+        `when`(officerTurnRepository.saveAll(org.mockito.ArgumentMatchers.anyList())).thenAnswer { it.arguments[0] }
+        `when`(factionTurnRepository.saveAll(org.mockito.ArgumentMatchers.anyList())).thenAnswer { it.arguments[0] }
 
         service = CommandService(
-            generalTurnRepository = generalTurnRepository,
-            nationTurnRepository = nationTurnRepository,
-            generalRepository = generalRepository,
-            cityRepository = cityRepository,
-            nationRepository = nationRepository,
-            worldStateRepository = worldStateRepository,
+            officerTurnRepository = officerTurnRepository,
+            factionTurnRepository = factionTurnRepository,
+            officerRepository = officerRepository,
+            planetRepository = planetRepository,
+            factionRepository = factionRepository,
+            sessionStateRepository = sessionStateRepository,
             appUserRepository = appUserRepository,
             commandExecutor = commandExecutor,
             commandRegistry = commandRegistry,
@@ -75,12 +75,12 @@ class CommandServiceTest {
     @Test
     fun `pushTurns shifts queue right and fills leading slots with rest`() {
         val general = createGeneral()
-        val world = WorldState(id = 1, name = "world", scenarioCode = "test", realtimeMode = false)
+        val world = SessionState(id = 1, name = "world", scenarioCode = "test", realtimeMode = false)
         val existing = queue(general, listOf("A", "B", "C", "D", "E"))
 
-        `when`(generalRepository.findById(1L)).thenReturn(Optional.of(general))
-        `when`(worldStateRepository.findById(1)).thenReturn(Optional.of(world))
-        `when`(generalTurnRepository.findByGeneralIdOrderByTurnIdx(1L)).thenReturn(existing)
+        `when`(officerRepository.findById(1L)).thenReturn(Optional.of(general))
+        `when`(sessionStateRepository.findById(1)).thenReturn(Optional.of(world))
+        `when`(officerTurnRepository.findByOfficerIdOrderByTurnIdx(1L)).thenReturn(existing)
 
         val result = service.pushTurns(1L, 2)
 
@@ -90,12 +90,12 @@ class CommandServiceTest {
     @Test
     fun `pushTurns with negative amount pulls queue left and fills tail with rest`() {
         val general = createGeneral()
-        val world = WorldState(id = 1, name = "world", scenarioCode = "test", realtimeMode = false)
+        val world = SessionState(id = 1, name = "world", scenarioCode = "test", realtimeMode = false)
         val existing = queue(general, listOf("A", "B", "C", "D", "E"))
 
-        `when`(generalRepository.findById(1L)).thenReturn(Optional.of(general))
-        `when`(worldStateRepository.findById(1)).thenReturn(Optional.of(world))
-        `when`(generalTurnRepository.findByGeneralIdOrderByTurnIdx(1L)).thenReturn(existing)
+        `when`(officerRepository.findById(1L)).thenReturn(Optional.of(general))
+        `when`(sessionStateRepository.findById(1)).thenReturn(Optional.of(world))
+        `when`(officerTurnRepository.findByOfficerIdOrderByTurnIdx(1L)).thenReturn(existing)
 
         val result = service.pushTurns(1L, -2)
 
@@ -105,12 +105,12 @@ class CommandServiceTest {
     @Test
     fun `repeatTurns copies interval pattern across fixed queue`() {
         val general = createGeneral()
-        val world = WorldState(id = 1, name = "world", scenarioCode = "test", realtimeMode = false)
+        val world = SessionState(id = 1, name = "world", scenarioCode = "test", realtimeMode = false)
         val existing = queue(general, listOf("A", "B", "C", "D", "E"))
 
-        `when`(generalRepository.findById(1L)).thenReturn(Optional.of(general))
-        `when`(worldStateRepository.findById(1)).thenReturn(Optional.of(world))
-        `when`(generalTurnRepository.findByGeneralIdOrderByTurnIdx(1L)).thenReturn(existing)
+        `when`(officerRepository.findById(1L)).thenReturn(Optional.of(general))
+        `when`(sessionStateRepository.findById(1)).thenReturn(Optional.of(world))
+        `when`(officerTurnRepository.findByOfficerIdOrderByTurnIdx(1L)).thenReturn(existing)
 
         val result = service.repeatTurns(1L, 2)
 
@@ -121,12 +121,12 @@ class CommandServiceTest {
     @Test
     fun `pushNationTurns shifts queue right and fills leading slots with rest`() {
         val general = createGeneral(officerLevel = 5)
-        val world = WorldState(id = 1, name = "world", scenarioCode = "test", realtimeMode = false)
+        val world = SessionState(id = 1, name = "world", scenarioCode = "test", realtimeMode = false)
         val existing = nationQueue(general, listOf("N1", "N2", "N3", "N4"))
 
-        `when`(generalRepository.findById(1L)).thenReturn(Optional.of(general))
-        `when`(worldStateRepository.findById(1)).thenReturn(Optional.of(world))
-        `when`(nationTurnRepository.findByNationIdAndOfficerLevelOrderByTurnIdx(1L, 5)).thenReturn(existing)
+        `when`(officerRepository.findById(1L)).thenReturn(Optional.of(general))
+        `when`(sessionStateRepository.findById(1)).thenReturn(Optional.of(world))
+        `when`(factionTurnRepository.findByNationIdAndOfficerLevelOrderByTurnIdx(1L, 5)).thenReturn(existing)
 
         val result = service.pushNationTurns(1L, 1L, 1)
 
@@ -136,12 +136,12 @@ class CommandServiceTest {
     @Test
     fun `pushNationTurns with negative amount pulls queue left and fills tail with rest`() {
         val general = createGeneral(officerLevel = 5)
-        val world = WorldState(id = 1, name = "world", scenarioCode = "test", realtimeMode = false)
+        val world = SessionState(id = 1, name = "world", scenarioCode = "test", realtimeMode = false)
         val existing = nationQueue(general, listOf("N1", "N2", "N3", "N4"))
 
-        `when`(generalRepository.findById(1L)).thenReturn(Optional.of(general))
-        `when`(worldStateRepository.findById(1)).thenReturn(Optional.of(world))
-        `when`(nationTurnRepository.findByNationIdAndOfficerLevelOrderByTurnIdx(1L, 5)).thenReturn(existing)
+        `when`(officerRepository.findById(1L)).thenReturn(Optional.of(general))
+        `when`(sessionStateRepository.findById(1)).thenReturn(Optional.of(world))
+        `when`(factionTurnRepository.findByNationIdAndOfficerLevelOrderByTurnIdx(1L, 5)).thenReturn(existing)
 
         val result = service.pushNationTurns(1L, 1L, -2)
 
@@ -151,12 +151,12 @@ class CommandServiceTest {
     @Test
     fun `repeatNationTurns copies interval pattern across fixed chief queue`() {
         val general = createGeneral(officerLevel = 5)
-        val world = WorldState(id = 1, name = "world", scenarioCode = "test", realtimeMode = false)
+        val world = SessionState(id = 1, name = "world", scenarioCode = "test", realtimeMode = false)
         val existing = nationQueue(general, listOf("N1", "N2", "N3", "N4"))
 
-        `when`(generalRepository.findById(1L)).thenReturn(Optional.of(general))
-        `when`(worldStateRepository.findById(1)).thenReturn(Optional.of(world))
-        `when`(nationTurnRepository.findByNationIdAndOfficerLevelOrderByTurnIdx(1L, 5)).thenReturn(existing)
+        `when`(officerRepository.findById(1L)).thenReturn(Optional.of(general))
+        `when`(sessionStateRepository.findById(1)).thenReturn(Optional.of(world))
+        `when`(factionTurnRepository.findByNationIdAndOfficerLevelOrderByTurnIdx(1L, 5)).thenReturn(existing)
 
         val result = service.repeatNationTurns(1L, 1L, 2)
 
@@ -167,21 +167,21 @@ class CommandServiceTest {
     @Test
     fun `reserveGeneralTurns flushes after delete to prevent DuplicateKeyException`() {
         val general = createGeneral()
-        val world = WorldState(id = 1, name = "world", scenarioCode = "test", realtimeMode = false)
+        val world = SessionState(id = 1, name = "world", scenarioCode = "test", realtimeMode = false)
         val turns = listOf(
             com.openlogh.dto.TurnEntry(turnIdx = 0, actionCode = "모병", arg = mapOf("crewType" to 1300, "amount" to 4500)),
         )
 
-        `when`(generalRepository.findById(1L)).thenReturn(Optional.of(general))
-        `when`(worldStateRepository.findById(1)).thenReturn(Optional.of(world))
-        `when`(generalTurnRepository.save(org.mockito.ArgumentMatchers.any(GeneralTurn::class.java))).thenAnswer { it.arguments[0] }
+        `when`(officerRepository.findById(1L)).thenReturn(Optional.of(general))
+        `when`(sessionStateRepository.findById(1)).thenReturn(Optional.of(world))
+        `when`(officerTurnRepository.save(org.mockito.ArgumentMatchers.any(GeneralTurn::class.java))).thenAnswer { it.arguments[0] }
 
         val result = service.reserveGeneralTurns(1L, turns)
 
-        val inOrder = org.mockito.Mockito.inOrder(generalTurnRepository)
-        inOrder.verify(generalTurnRepository).deleteByGeneralIdAndTurnIdxIn(1L, listOf(0.toShort()))
-        inOrder.verify(generalTurnRepository).flush()
-        inOrder.verify(generalTurnRepository).save(org.mockito.ArgumentMatchers.any(GeneralTurn::class.java))
+        val inOrder = org.mockito.Mockito.inOrder(officerTurnRepository)
+        inOrder.verify(officerTurnRepository).deleteByGeneralIdAndTurnIdxIn(1L, listOf(0.toShort()))
+        inOrder.verify(officerTurnRepository).flush()
+        inOrder.verify(officerTurnRepository).save(org.mockito.ArgumentMatchers.any(GeneralTurn::class.java))
 
         assertEquals(1, result.size)
         assertEquals("모병", result[0].actionCode)
@@ -231,31 +231,31 @@ class CommandServiceTest {
     @Test
     fun `repeatNationTurns rejects mismatched nation before mutating`() {
         val general = createGeneral(officerLevel = 5)
-        val world = WorldState(id = 1, name = "world", scenarioCode = "test", realtimeMode = false)
+        val world = SessionState(id = 1, name = "world", scenarioCode = "test", realtimeMode = false)
 
-        `when`(generalRepository.findById(1L)).thenReturn(Optional.of(general))
-        `when`(worldStateRepository.findById(1)).thenReturn(Optional.of(world))
+        `when`(officerRepository.findById(1L)).thenReturn(Optional.of(general))
+        `when`(sessionStateRepository.findById(1)).thenReturn(Optional.of(world))
 
         val result = service.repeatNationTurns(1L, 99L, 2)
 
         assertEquals(null, result)
-        verify(nationTurnRepository, never()).findByNationIdAndOfficerLevelOrderByTurnIdx(1L, 5)
+        verify(factionTurnRepository, never()).findByNationIdAndOfficerLevelOrderByTurnIdx(1L, 5)
     }
 
-    private fun createGeneral(officerLevel: Short = 0): General = General(
+    private fun createGeneral(officerLevel: Short = 0): Officer = Officer(
         id = 1,
-        worldId = 1,
+        sessionId = 1,
         name = "장수",
-        nationId = 1,
-        cityId = 1,
+        factionId = 1,
+        planetId = 1,
         officerLevel = officerLevel,
         turnTime = OffsetDateTime.now(),
     )
 
-    private fun queue(general: General, actions: List<String>): List<GeneralTurn> {
+    private fun queue(general: Officer, actions: List<String>): List<GeneralTurn> {
         return actions.mapIndexed { idx, action ->
             GeneralTurn(
-                worldId = general.worldId,
+                worldId = general.sessionId,
                 generalId = general.id,
                 turnIdx = idx.toShort(),
                 actionCode = action,
@@ -264,11 +264,11 @@ class CommandServiceTest {
         }
     }
 
-    private fun nationQueue(general: General, actions: List<String>): List<com.openlogh.entity.NationTurn> {
+    private fun nationQueue(general: Officer, actions: List<String>): List<com.openlogh.entity.NationTurn> {
         return actions.mapIndexed { idx, action ->
             com.openlogh.entity.NationTurn(
-                worldId = general.worldId,
-                nationId = general.nationId,
+                worldId = general.sessionId,
+                nationId = general.factionId,
                 officerLevel = general.officerLevel,
                 turnIdx = idx.toShort(),
                 actionCode = action,
@@ -279,7 +279,7 @@ class CommandServiceTest {
 
     @Test
     fun `world config openingPartYears key is recognized by CommandService`() {
-        val world = WorldState(id = 1, name = "world", scenarioCode = "test", realtimeMode = false)
+        val world = SessionState(id = 1, name = "world", scenarioCode = "test", realtimeMode = false)
         world.config["openingPartYears"] = 0
         val value = (world.config["openingPartYears"] as? Number)?.toInt()
         assertEquals(0, value)
@@ -326,22 +326,22 @@ class CommandServiceTest {
     fun `reserveGeneralTurns fires CommandEvent with reserved type`() {
         val gameEventService = mock(GameEventService::class.java)
         val general = createGeneral()
-        val world = WorldState(id = 1, name = "world", scenarioCode = "test", realtimeMode = false)
+        val world = SessionState(id = 1, name = "world", scenarioCode = "test", realtimeMode = false)
         val turns = listOf(
             com.openlogh.dto.TurnEntry(turnIdx = 0, actionCode = "휴식", arg = null),
         )
 
-        `when`(generalRepository.findById(1L)).thenReturn(Optional.of(general))
-        `when`(worldStateRepository.findById(1)).thenReturn(Optional.of(world))
-        `when`(generalTurnRepository.save(org.mockito.ArgumentMatchers.any(GeneralTurn::class.java))).thenAnswer { it.arguments[0] }
+        `when`(officerRepository.findById(1L)).thenReturn(Optional.of(general))
+        `when`(sessionStateRepository.findById(1)).thenReturn(Optional.of(world))
+        `when`(officerTurnRepository.save(org.mockito.ArgumentMatchers.any(GeneralTurn::class.java))).thenAnswer { it.arguments[0] }
 
         val serviceWithEvent = CommandService(
-            generalTurnRepository = generalTurnRepository,
-            nationTurnRepository = nationTurnRepository,
-            generalRepository = generalRepository,
-            cityRepository = cityRepository,
-            nationRepository = nationRepository,
-            worldStateRepository = worldStateRepository,
+            officerTurnRepository = officerTurnRepository,
+            factionTurnRepository = factionTurnRepository,
+            officerRepository = officerRepository,
+            planetRepository = planetRepository,
+            factionRepository = factionRepository,
+            sessionStateRepository = sessionStateRepository,
             appUserRepository = appUserRepository,
             commandExecutor = commandExecutor,
             commandRegistry = commandRegistry,
@@ -364,7 +364,7 @@ class CommandServiceTest {
 
     @Test
     fun `world config stores available command whitelist from scenario`() {
-        val world = WorldState(id = 1, name = "world", scenarioCode = "test", realtimeMode = false)
+        val world = SessionState(id = 1, name = "world", scenarioCode = "test", realtimeMode = false)
         val whitelist = mapOf("개인" to listOf("휴식", "che_이동"))
         world.config["availableGeneralCommand"] = whitelist
 

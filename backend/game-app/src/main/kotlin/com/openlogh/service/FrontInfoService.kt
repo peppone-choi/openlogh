@@ -255,7 +255,7 @@ class FrontInfoService(
         // Officer list keyed by level (4=태수, 3=군사, 2=종사)
         val officerList = mutableMapOf<Int, CityOfficerInfo?>(4 to null, 3 to null, 2 to null)
         allGenerals
-            .filter { it.officerCity == c.id.toInt() && it.officerLevel.toInt() in listOf(2, 3, 4) }
+            .filter { it.officerPlanet == c.id.toInt() && it.officerLevel.toInt() in listOf(2, 3, 4) }
             .forEach { g ->
                 officerList[g.officerLevel.toInt()] = CityOfficerInfo(
                     officerLevel = g.officerLevel.toInt(),
@@ -331,7 +331,7 @@ class FrontInfoService(
                     nationLevel = nationLevel,
                     officerRankKey = officerRankKey
                 ),
-            officerCity = g.officerCity,
+            officerPlanet = g.officerPlanet,
             permission = permission,
             lbonus = calcLeadershipBonus(officerLevel, nationLevel),
             leadership = g.leadership.toInt(),

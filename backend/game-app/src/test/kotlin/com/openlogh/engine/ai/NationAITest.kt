@@ -1,15 +1,15 @@
 package com.openlogh.engine.ai
 
-import com.openlogh.entity.City
+import com.openlogh.entity.Planet
 import com.openlogh.entity.Diplomacy
-import com.openlogh.entity.General
-import com.openlogh.entity.Nation
-import com.openlogh.entity.WorldState
+import com.openlogh.entity.Officer
+import com.openlogh.entity.Faction
+import com.openlogh.entity.SessionState
 import com.openlogh.engine.turn.cqrs.persist.JpaWorldPortFactory
-import com.openlogh.repository.CityRepository
+import com.openlogh.repository.PlanetRepository
 import com.openlogh.repository.DiplomacyRepository
-import com.openlogh.repository.GeneralRepository
-import com.openlogh.repository.NationRepository
+import com.openlogh.repository.OfficerRepository
+import com.openlogh.repository.FactionRepository
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotEquals
@@ -23,28 +23,28 @@ import kotlin.random.Random
 
 class NationAITest {
 
-    private lateinit var ai: NationAI
-    private lateinit var cityRepository: CityRepository
-    private lateinit var generalRepository: GeneralRepository
-    private lateinit var nationRepository: NationRepository
+    private lateinit var ai: FactionAI
+    private lateinit var planetRepository: PlanetRepository
+    private lateinit var officerRepository: OfficerRepository
+    private lateinit var factionRepository: FactionRepository
     private lateinit var diplomacyRepository: DiplomacyRepository
 
     @BeforeEach
     fun setUp() {
-        cityRepository = mock(CityRepository::class.java)
-        generalRepository = mock(GeneralRepository::class.java)
-        nationRepository = mock(NationRepository::class.java)
+        planetRepository = mock(PlanetRepository::class.java)
+        officerRepository = mock(OfficerRepository::class.java)
+        factionRepository = mock(FactionRepository::class.java)
         diplomacyRepository = mock(DiplomacyRepository::class.java)
-        ai = NationAI(JpaWorldPortFactory(
-            generalRepository = generalRepository,
-            cityRepository = cityRepository,
-            nationRepository = nationRepository,
+        ai = FactionAI(JpaWorldPortFactory(
+            officerRepository = officerRepository,
+            planetRepository = planetRepository,
+            factionRepository = factionRepository,
             diplomacyRepository = diplomacyRepository,
         ))
     }
 
-    private fun createWorld(year: Short = 200, month: Short = 3): WorldState {
-        return WorldState(id = 1, scenarioCode = "test", currentYear = year, currentMonth = month, tickSeconds = 300)
+    private fun createWorld(year: Short = 200, month: Short = 3): SessionState {
+        return SessionState(id = 1, scenarioCode = "test", currentYear = year, currentMonth = month, tickSeconds = 300)
     }
 
     private fun createNation(
@@ -54,18 +54,18 @@ class NationAITest {
         power: Int = 100,
         warState: Short = 0,
         strategicCmdLimit: Short = 0,
-    ): Nation {
-        return Nation(
+    ): Faction {
+        return Faction(
             id = id,
-            worldId = 1,
+            sessionId = 1,
             name = "국가$id",
             color = "#FF0000",
-            gold = gold,
-            rice = rice,
-            power = power,
+            funds = gold,
+            supplies = rice,
+            militaryPower = power,
             warState = warState,
             strategicCmdLimit = strategicCmdLimit,
-            capitalCityId = 1,
+            capitalPlanetId = 1,
         )
     }
 
@@ -76,23 +76,23 @@ class NationAITest {
         npcState: Short = 2,
         officerLevel: Short = 1,
         dedication: Int = 100,
-    ): General {
-        return General(
+    ): Officer {
+        return Officer(
             id = id,
-            worldId = 1,
+            sessionId = 1,
             name = "장수$id",
-            nationId = nationId,
-            cityId = cityId,
+            factionId = nationId,
+            planetId = cityId,
             npcState = npcState,
             officerLevel = officerLevel,
             dedication = dedication,
             leadership = 50,
-            strength = 50,
-            intel = 50,
+            command = 50,
+            intelligence = 50,
             politics = 50,
-            charm = 50,
-            gold = 1000,
-            rice = 1000,
+            administration = 50,
+            funds = 1000,
+            supplies = 1000,
             turnTime = OffsetDateTime.now(),
         )
     }
@@ -101,34 +101,34 @@ class NationAITest {
         id: Long = 1,
         nationId: Long = 1,
         level: Short = 5,
-    ): City {
-        return City(
+    ): Planet {
+        return Planet(
             id = id,
-            worldId = 1,
+            sessionId = 1,
             name = "도시$id",
-            nationId = nationId,
+            factionId = nationId,
             level = level,
-            pop = 10000,
-            popMax = 50000,
-            agri = 500,
-            agriMax = 1000,
-            comm = 500,
-            commMax = 1000,
-            secu = 500,
-            secuMax = 1000,
+            population = 10000,
+            populationMax = 50000,
+            production = 500,
+            productionMax = 1000,
+            commerce = 500,
+            commerceMax = 1000,
+            security = 500,
+            securityMax = 1000,
         )
     }
 
     private fun setupRepos(
-        nation: Nation,
-        cities: List<City>,
-        generals: List<General>,
-        allNations: List<Nation> = listOf(nation),
+        nation: Faction,
+        cities: List<Planet>,
+        generals: List<Officer>,
+        allNations: List<Faction> = listOf(nation),
         diplomacies: List<Diplomacy> = emptyList(),
     ) {
-        `when`(cityRepository.findByNationId(nation.id)).thenReturn(cities)
-        `when`(generalRepository.findByWorldIdAndNationId(1L, nation.id)).thenReturn(generals)
-        `when`(nationRepository.findByWorldId(1L)).thenReturn(allNations)
+        `when`(planetRepository.findByFactionId(nation.id)).thenReturn(cities)
+        `when`(officerRepository.findBySessionIdAndFactionId(1L, nation.id)).thenReturn(generals)
+        `when`(factionRepository.findBySessionId(1L)).thenReturn(allNations)
         `when`(diplomacyRepository.findByWorldIdAndIsDeadFalse(1L)).thenReturn(diplomacies)
     }
 
@@ -136,10 +136,10 @@ class NationAITest {
     fun `should declare war when stronger and sufficiently prepared`() {
         val nation = createNation(gold = 20000, rice = 20000, power = 200)
         val target = createNation(id = 2, power = 50)
-        `when`(cityRepository.findByNationId(1)).thenReturn(listOf(createCity(id = 1), createCity(id = 2)))
-        `when`(cityRepository.findByNationId(2)).thenReturn(listOf(createCity(id = 3, nationId = 2)))
-        `when`(generalRepository.findByWorldIdAndNationId(1L, 1L)).thenReturn(listOf(createGeneral(id = 1), createGeneral(id = 2)))
-        `when`(generalRepository.findByWorldIdAndNationId(1L, 2L)).thenReturn(listOf(createGeneral(id = 3, nationId = 2)))
+        `when`(planetRepository.findByFactionId(1)).thenReturn(listOf(createCity(id = 1), createCity(id = 2)))
+        `when`(planetRepository.findByFactionId(2)).thenReturn(listOf(createCity(id = 3, nationId = 2)))
+        `when`(officerRepository.findBySessionIdAndFactionId(1L, 1L)).thenReturn(listOf(createGeneral(id = 1), createGeneral(id = 2)))
+        `when`(officerRepository.findBySessionIdAndFactionId(1L, 2L)).thenReturn(listOf(createGeneral(id = 3, nationId = 2)))
 
         assertTrue(ai.shouldDeclareWar(nation, target, createWorld()))
     }
@@ -148,10 +148,10 @@ class NationAITest {
     fun `should not declare war when weaker than target`() {
         val nation = createNation(gold = 20000, rice = 20000, power = 50)
         val target = createNation(id = 2, power = 200)
-        `when`(cityRepository.findByNationId(1)).thenReturn(listOf(createCity()))
-        `when`(cityRepository.findByNationId(2)).thenReturn(listOf(createCity(id = 2, nationId = 2)))
-        `when`(generalRepository.findByWorldIdAndNationId(1L, 1L)).thenReturn(listOf(createGeneral()))
-        `when`(generalRepository.findByWorldIdAndNationId(1L, 2L)).thenReturn(listOf(createGeneral(id = 2, nationId = 2)))
+        `when`(planetRepository.findByFactionId(1)).thenReturn(listOf(createCity()))
+        `when`(planetRepository.findByFactionId(2)).thenReturn(listOf(createCity(id = 2, nationId = 2)))
+        `when`(officerRepository.findBySessionIdAndFactionId(1L, 1L)).thenReturn(listOf(createGeneral()))
+        `when`(officerRepository.findBySessionIdAndFactionId(1L, 2L)).thenReturn(listOf(createGeneral(id = 2, nationId = 2)))
 
         assertFalse(ai.shouldDeclareWar(nation, target, createWorld()))
     }
@@ -259,7 +259,7 @@ class NationAITest {
     @Test
     fun `decideNationAction does not consider 천도 with only one city`() {
         val nation = createNation(gold = 10000, rice = 10000)
-        nation.capitalCityId = 1
+        nation.capitalPlanetId = 1
         val city = createCity(id = 1, level = 5)
         val generals = listOf(createGeneral(id = 1, officerLevel = 3, dedication = 120))
         setupRepos(nation, listOf(city), generals)

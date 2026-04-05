@@ -1,7 +1,7 @@
 package com.openlogh.engine.trigger
 
 import com.openlogh.engine.LiteHashDRBG
-import com.openlogh.entity.General
+import com.openlogh.entity.Officer
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import java.time.OffsetDateTime
@@ -14,18 +14,18 @@ class GeneralTriggerTest {
         rice: Int = 1000,
         atmos: Short = 100,
         itemCode: String = "None",
-    ): General {
-        return General(
+    ): Officer {
+        return Officer(
             id = 1,
-            worldId = 1,
+            sessionId = 1,
             name = "테스트",
-            nationId = 1,
-            cityId = 1,
+            factionId = 1,
+            planetId = 1,
             injury = injury,
-            crew = crew,
-            rice = rice,
-            atmos = atmos,
-            itemCode = itemCode,
+            ships = crew,
+            supplies = rice,
+            morale = atmos,
+            accessoryCode = itemCode,
             turnTime = OffsetDateTime.now(),
         )
     }
@@ -67,7 +67,7 @@ class GeneralTriggerTest {
         trigger.action(env)
 
         // 500 / 100 = 5 rice consumed
-        assertEquals(95, general.rice)
+        assertEquals(95, general.supplies)
         assertNull(env.vars["troopStarving"])
     }
 
@@ -79,8 +79,8 @@ class GeneralTriggerTest {
 
         trigger.action(env)
 
-        assertEquals(0, general.rice)
-        assertEquals(75.toShort(), general.atmos, "Atmos should drop by 5")
+        assertEquals(0, general.supplies)
+        assertEquals(75.toShort(), general.morale, "Atmos should drop by 5")
         assertTrue(env.vars["troopStarving"] as Boolean)
     }
 
@@ -92,7 +92,7 @@ class GeneralTriggerTest {
 
         trigger.action(env)
 
-        assertEquals(100, general.rice, "Rice should not change with zero crew")
+        assertEquals(100, general.supplies, "Rice should not change with zero crew")
     }
 
     // ========== MedicineHealTrigger ==========

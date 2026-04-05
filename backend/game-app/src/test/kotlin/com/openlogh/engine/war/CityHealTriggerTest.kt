@@ -3,7 +3,7 @@ package com.openlogh.engine.war
 import com.openlogh.engine.trigger.CityHealTrigger
 import com.openlogh.engine.trigger.TriggerEnv
 import com.openlogh.engine.trigger.buildPreTurnTriggers
-import com.openlogh.entity.General
+import com.openlogh.entity.Officer
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import java.time.OffsetDateTime
@@ -18,17 +18,17 @@ class CityHealTriggerTest {
         crew: Int = 1000,
         specialCode: String = "None",
         special2Code: String = "None",
-    ): General {
-        return General(
+    ): Officer {
+        return Officer(
             id = id,
-            worldId = 1,
+            sessionId = 1,
             name = "장수$id",
-            nationId = nationId,
-            cityId = 1,
+            factionId = nationId,
+            planetId = 1,
             leadership = 50,
-            strength = 50,
-            intel = 50,
-            crew = crew,
+            command = 50,
+            intelligence = 50,
+            ships = crew,
             specialCode = specialCode,
             special2Code = special2Code,
             turnTime = OffsetDateTime.now(),
@@ -74,7 +74,7 @@ class CityHealTriggerTest {
         assertEquals(0.toShort(), general.injury)
     }
 
-    // ========== Test 2: City-mate with injury above 10 healed at 50% ==========
+    // ========== Test 2: Planet-mate with injury above 10 healed at 50% ==========
 
     @Test
     fun `city-mate with injury above 10 healed at 50 percent probability`() {
@@ -87,7 +87,7 @@ class CityHealTriggerTest {
         assertEquals(0.toShort(), mate.injury)
     }
 
-    // ========== Test 3: City-mate with injury 10 or below not healed ==========
+    // ========== Test 3: Planet-mate with injury 10 or below not healed ==========
 
     @Test
     fun `city-mate with injury 10 or below not healed`() {
@@ -100,7 +100,7 @@ class CityHealTriggerTest {
         assertEquals(10.toShort(), mate.injury)
     }
 
-    // ========== Test 4: Nation-0 general only heals nation-0 city-mates ==========
+    // ========== Test 4: Faction-0 general only heals nation-0 city-mates ==========
 
     @Test
     fun `nation-0 general only heals nation-0 city-mates`() {
@@ -152,7 +152,7 @@ class CityHealTriggerTest {
         assertEquals(0.toShort(), otherNationMate.injury)
     }
 
-    // ========== Test 6: General does not heal itself via city-mate loop ==========
+    // ========== Test 6: Officer does not heal itself via city-mate loop ==========
 
     @Test
     fun `general does not heal itself via city-mate loop`() {
@@ -199,7 +199,7 @@ class CityHealTriggerTest {
         assertFalse(triggers.any { it.uniqueId.startsWith("도시치료_") })
     }
 
-    // ========== Test 9: City-mate not healed when rng does not trigger ==========
+    // ========== Test 9: Planet-mate not healed when rng does not trigger ==========
 
     @Test
     fun `city-mate not healed when rng does not trigger`() {

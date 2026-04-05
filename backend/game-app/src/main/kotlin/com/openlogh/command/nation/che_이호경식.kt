@@ -40,11 +40,11 @@ class che_이호경식(general: Officer, env: CommandEnv, arg: Map<String, Any>?
         val dn = destFaction ?: return CommandResult(false, logs, "대상 국가 정보를 찾을 수 없습니다")
 
         val generalName = general.name
-        val nationName = n.name
+        val factionName = n.name
         val destNationName = dn.name
 
         val josaYi = JosaUtil.pick(generalName, "이")
-        val josaYiNation = JosaUtil.pick(nationName, "이")
+        val josaYiNation = JosaUtil.pick(factionName, "이")
         val josaUl = JosaUtil.pick(actionName, "을")
 
         // Experience and dedication: 5 * (preReqTurn + 1)
@@ -61,12 +61,12 @@ class che_이호경식(general: Officer, env: CommandEnv, arg: Map<String, Any>?
         broadcastToNationGenerals(n.id, general.id, broadcastMessage)
 
         // Broadcast to dest nation generals
-        val destBroadcastMessage = "<D><b>${nationName}</b></>${josaYiNation} 아국에 <M>${actionName}</>${josaUl} 발동하였습니다."
+        val destBroadcastMessage = "<D><b>${factionName}</b></>${josaYiNation} 아국에 <M>${actionName}</>${josaUl} 발동하였습니다."
         broadcastToNationGenerals(dn.id, null, destBroadcastMessage)
 
         // Dest nation history
         pushDestNationalHistoryLogFor(dn.id,
-            "<D><b>${nationName}</b></>의 <Y>${generalName}</>${josaYi} 아국에 <M>${actionName}</>${josaUl} 발동")
+            "<D><b>${factionName}</b></>의 <Y>${generalName}</>${josaYi} 아국에 <M>${actionName}</>${josaUl} 발동")
 
         // General and nation history
         pushHistoryLog("<D><b>${destNationName}</b></>에 <M>${actionName}</>${josaUl} 발동")

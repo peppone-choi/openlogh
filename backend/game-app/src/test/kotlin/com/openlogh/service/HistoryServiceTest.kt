@@ -32,7 +32,7 @@ class HistoryServiceTest {
 
         verify(recordRepository).save(recordCaptor.capture())
         val captured = recordCaptor.value
-        assertEquals(1L, captured.worldId)
+        assertEquals(1L, captured.sessionId)
         assertEquals("world_history", captured.recordType)
         assertEquals(187, captured.year)
         assertEquals(1, captured.month)
@@ -48,7 +48,7 @@ class HistoryServiceTest {
 
         verify(recordRepository).save(recordCaptor.capture())
         val captured = recordCaptor.value
-        assertEquals(1L, captured.worldId)
+        assertEquals(1L, captured.sessionId)
         assertEquals(5L, captured.destId)
         assertEquals("nation_history", captured.recordType)
         assertEquals(187, captured.year)

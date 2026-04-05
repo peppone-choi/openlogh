@@ -1,6 +1,6 @@
 package com.openlogh.command
 
-import com.openlogh.entity.General
+import com.openlogh.entity.Officer
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -15,13 +15,13 @@ class CommandRegistryTest {
         registry = CommandRegistry()
     }
 
-    private fun createTestGeneral(): General {
-        return General(
+    private fun createTestGeneral(): Officer {
+        return Officer(
             id = 1,
-            worldId = 1,
+            sessionId = 1,
             name = "테스트",
-            nationId = 1,
-            cityId = 1,
+            factionId = 1,
+            planetId = 1,
             turnTime = OffsetDateTime.now(),
         )
     }
@@ -31,7 +31,7 @@ class CommandRegistryTest {
             year = 200,
             month = 1,
             startYear = 190,
-            worldId = 1,
+            sessionId = 1,
         )
     }
 
@@ -162,48 +162,48 @@ class CommandRegistryTest {
     // ========== Command Creation ==========
 
     @Test
-    fun `createGeneralCommand should create command by action code`() {
+    fun `createOfficerCommand should create command by action code`() {
         val general = createTestGeneral()
         val env = createTestEnv()
-        val cmd = registry.createGeneralCommand("휴식", general, env)
+        val cmd = registry.createOfficerCommand("휴식", general, env)
 
         assertEquals("휴식", cmd.actionName)
     }
 
     @Test
-    fun `createGeneralCommand should fallback to 휴식 for unknown action`() {
+    fun `createOfficerCommand should fallback to 휴식 for unknown action`() {
         val general = createTestGeneral()
         val env = createTestEnv()
-        val cmd = registry.createGeneralCommand("존재하지않는명령", general, env)
+        val cmd = registry.createOfficerCommand("존재하지않는명령", general, env)
 
         assertEquals("휴식", cmd.actionName)
     }
 
     @Test
-    fun `createGeneralCommand should pass arguments`() {
+    fun `createOfficerCommand should pass arguments`() {
         val general = createTestGeneral()
         val env = createTestEnv()
         val arg = mapOf<String, Any>("amount" to 500, "crewType" to 1)
-        val cmd = registry.createGeneralCommand("모병", general, env, arg)
+        val cmd = registry.createOfficerCommand("모병", general, env, arg)
 
         assertEquals("모병", cmd.actionName)
     }
 
     @Test
-    fun `createNationCommand should create command by action code`() {
+    fun `createFactionCommand should create command by action code`() {
         val general = createTestGeneral()
         val env = createTestEnv()
-        val cmd = registry.createNationCommand("Nation휴식", general, env)
+        val cmd = registry.createFactionCommand("Nation휴식", general, env)
 
         assertNotNull(cmd)
         assertEquals("휴식", cmd!!.actionName)
     }
 
     @Test
-    fun `createNationCommand should return null for unknown action`() {
+    fun `createFactionCommand should return null for unknown action`() {
         val general = createTestGeneral()
         val env = createTestEnv()
-        val cmd = registry.createNationCommand("존재하지않는명령", general, env)
+        val cmd = registry.createFactionCommand("존재하지않는명령", general, env)
 
         assertNull(cmd)
     }

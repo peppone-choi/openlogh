@@ -16,30 +16,30 @@ import kotlin.random.Random
 
 class GeneralAITest {
 
-    private lateinit var ai: GeneralAI
-    private lateinit var generalRepository: GeneralRepository
-    private lateinit var cityRepository: CityRepository
-    private lateinit var nationRepository: NationRepository
+    private lateinit var ai: OfficerAI
+    private lateinit var officerRepository: OfficerRepository
+    private lateinit var planetRepository: PlanetRepository
+    private lateinit var factionRepository: FactionRepository
     private lateinit var diplomacyRepository: DiplomacyRepository
     private lateinit var mapService: MapService
 
     @BeforeEach
     fun setUp() {
-        generalRepository = mock(GeneralRepository::class.java)
-        cityRepository = mock(CityRepository::class.java)
-        nationRepository = mock(NationRepository::class.java)
+        officerRepository = mock(OfficerRepository::class.java)
+        planetRepository = mock(PlanetRepository::class.java)
+        factionRepository = mock(FactionRepository::class.java)
         diplomacyRepository = mock(DiplomacyRepository::class.java)
         mapService = mock(MapService::class.java)
-        ai = GeneralAI(JpaWorldPortFactory(
-            generalRepository = generalRepository,
-            cityRepository = cityRepository,
-            nationRepository = nationRepository,
+        ai = OfficerAI(JpaWorldPortFactory(
+            officerRepository = officerRepository,
+            planetRepository = planetRepository,
+            factionRepository = factionRepository,
             diplomacyRepository = diplomacyRepository,
         ), mapService)
     }
 
-    private fun createWorld(year: Short = 200, month: Short = 3): WorldState {
-        return WorldState(
+    private fun createWorld(year: Short = 200, month: Short = 3): SessionState {
+        return SessionState(
             id = 1,
             scenarioCode = "test",
             currentYear = year,
@@ -64,21 +64,21 @@ class GeneralAITest {
         npcState: Short = 2,
         injury: Short = 0,
         dedication: Int = 100,
-    ): General {
-        return General(
+    ): Officer {
+        return Officer(
             id = id,
-            worldId = 1,
+            sessionId = 1,
             name = "NPC장수$id",
-            nationId = nationId,
-            cityId = cityId,
+            factionId = nationId,
+            planetId = cityId,
             leadership = leadership,
-            strength = strength,
-            intel = intel,
-            crew = crew,
-            train = train,
-            atmos = atmos,
-            gold = gold,
-            rice = rice,
+            command = strength,
+            intelligence = intel,
+            ships = crew,
+            training = train,
+            morale = atmos,
+            funds = gold,
+            supplies = rice,
             officerLevel = officerLevel,
             npcState = npcState,
             injury = injury,
@@ -97,21 +97,21 @@ class GeneralAITest {
         secu: Int = 500,
         secuMax: Int = 1000,
         frontState: Short = 0,
-    ): City {
-        return City(
+    ): Planet {
+        return Planet(
             id = id,
-            worldId = 1,
+            sessionId = 1,
             name = "도시$id",
-            nationId = nationId,
-            agri = agri,
-            agriMax = agriMax,
-            comm = comm,
-            commMax = commMax,
-            secu = secu,
-            secuMax = secuMax,
+            factionId = nationId,
+            production = agri,
+            productionMax = agriMax,
+            commerce = comm,
+            commerceMax = commMax,
+            security = secu,
+            securityMax = secuMax,
             frontState = frontState,
-            pop = 60000,
-            popMax = 100000,
+            population = 60000,
+            populationMax = 100000,
         )
     }
 
@@ -122,16 +122,16 @@ class GeneralAITest {
         rice: Int = 10000,
         power: Int = 100,
         warState: Short = 0,
-    ): Nation {
-        return Nation(
+    ): Faction {
+        return Faction(
             id = id,
-            worldId = 1,
+            sessionId = 1,
             name = "국가$id",
             color = "#FF0000",
-            level = level,
-            gold = gold,
-            rice = rice,
-            power = power,
+            factionRank = level,
+            funds = gold,
+            supplies = rice,
+            militaryPower = power,
             warState = warState,
         )
     }
@@ -142,30 +142,30 @@ class GeneralAITest {
         stateCode: String,
     ): Diplomacy {
         return Diplomacy(
-            worldId = 1,
-            srcNationId = srcNationId,
-            destNationId = destNationId,
+            sessionId = 1,
+            srcFactionId = srcNationId,
+            destFactionId = destNationId,
             stateCode = stateCode,
         )
     }
 
     private fun setupRepos(
-        world: WorldState,
-        general: General,
-        city: City,
-        nation: Nation?,
-        allCities: List<City> = listOf(city),
-        allGenerals: List<General> = listOf(general),
-        allNations: List<Nation> = listOfNotNull(nation),
+        world: SessionState,
+        general: Officer,
+        city: Planet,
+        nation: Faction?,
+        allCities: List<Planet> = listOf(city),
+        allGenerals: List<Officer> = listOf(general),
+        allNations: List<Faction> = listOfNotNull(nation),
         diplomacies: List<Diplomacy> = emptyList(),
     ) {
-        `when`(cityRepository.findById(general.cityId)).thenReturn(Optional.of(city))
+        `when`(planetRepository.findById(general.planetId)).thenReturn(Optional.of(city))
         if (nation != null) {
-            `when`(nationRepository.findById(general.nationId)).thenReturn(Optional.of(nation))
+            `when`(factionRepository.findById(general.factionId)).thenReturn(Optional.of(nation))
         }
-        `when`(cityRepository.findByWorldId(world.id.toLong())).thenReturn(allCities)
-        `when`(generalRepository.findByWorldId(world.id.toLong())).thenReturn(allGenerals)
-        `when`(nationRepository.findByWorldId(world.id.toLong())).thenReturn(allNations)
+        `when`(planetRepository.findBySessionId(world.id.toLong())).thenReturn(allCities)
+        `when`(officerRepository.findBySessionId(world.id.toLong())).thenReturn(allGenerals)
+        `when`(factionRepository.findBySessionId(world.id.toLong())).thenReturn(allNations)
         `when`(diplomacyRepository.findByWorldIdAndIsDeadFalse(world.id.toLong())).thenReturn(diplomacies)
     }
 
@@ -176,7 +176,7 @@ class GeneralAITest {
         val world = createWorld()
         val general = createGeneral(cityId = 999)
 
-        `when`(cityRepository.findById(999L)).thenReturn(Optional.empty())
+        `when`(planetRepository.findById(999L)).thenReturn(Optional.empty())
 
         val action = ai.decideAndExecute(general, world)
         assertEquals("휴식", action)
@@ -421,7 +421,7 @@ class GeneralAITest {
     fun `chooseGoldBillRate uses legacy city income war income and dedication bill`() {
         val world = createWorld()
         val general = createGeneral(nationId = 1, dedication = 2500).apply {
-            officerCity = 0
+            officerPlanet = 0
         }
         val city = createCity(
             nationId = 1,
@@ -441,14 +441,14 @@ class GeneralAITest {
         val bill = ai.chooseGoldBillRate(buildAiContext(world, general, city, nation, listOf(general)), listOf(city), NpcNationPolicy())
 
         assertEquals(141, bill)
-        assertEquals(141.toShort(), nation.bill)
+        assertEquals(141.toShort(), nation.taxRate)
     }
 
     @Test
     fun `chooseRiceBillRate uses legacy agriculture wall and dedication bill`() {
         val world = createWorld()
         val general = createGeneral(nationId = 1, dedication = 2500).apply {
-            officerCity = 0
+            officerPlanet = 0
         }
         val city = createCity(
             nationId = 1,
@@ -470,11 +470,11 @@ class GeneralAITest {
         val bill = ai.chooseRiceBillRate(buildAiContext(world, general, city, nation, listOf(general)), listOf(city), NpcNationPolicy())
 
         assertEquals(155, bill)
-        assertEquals(155.toShort(), nation.bill)
+        assertEquals(155.toShort(), nation.taxRate)
     }
 
-    private fun invokeDoNormalDomestic(world: WorldState, general: General, city: City, nation: Nation): String? {
-        val method = GeneralAI::class.java.getDeclaredMethod(
+    private fun invokeDoNormalDomestic(world: SessionState, general: Officer, city: Planet, nation: Faction): String? {
+        val method = OfficerAI::class.java.getDeclaredMethod(
             "doNormalDomestic",
             AIContext::class.java,
             Random::class.java,
@@ -498,8 +498,8 @@ class GeneralAITest {
         return method.invoke(ai, ctx, Random(0), NpcNationPolicy()) as String?
     }
 
-    private fun invokeDoTradeResources(world: WorldState, general: General, city: City, nation: Nation): String? {
-        val method = GeneralAI::class.java.getDeclaredMethod(
+    private fun invokeDoTradeResources(world: SessionState, general: Officer, city: Planet, nation: Faction): String? {
+        val method = OfficerAI::class.java.getDeclaredMethod(
             "doTradeResources",
             AIContext::class.java,
             Random::class.java,
@@ -523,11 +523,11 @@ class GeneralAITest {
         return method.invoke(ai, ctx, Random(0), NpcNationPolicy()) as String?
     }
 
-    private fun invokeDoRise(world: WorldState, general: General, rng: Random): String? {
-        val method = GeneralAI::class.java.getDeclaredMethod(
+    private fun invokeDoRise(world: SessionState, general: Officer, rng: Random): String? {
+        val method = OfficerAI::class.java.getDeclaredMethod(
             "doRise",
             General::class.java,
-            WorldState::class.java,
+            SessionState::class.java,
             Random::class.java,
         )
         method.isAccessible = true
@@ -535,19 +535,19 @@ class GeneralAITest {
     }
 
     private fun buildPromotionContext(
-        world: WorldState,
-        general: General,
-        city: City,
-        nation: Nation,
-        nationGenerals: List<General>,
+        world: SessionState,
+        general: Officer,
+        city: Planet,
+        nation: Faction,
+        nationGenerals: List<Officer>,
     ) = buildAiContext(world, general, city, nation, nationGenerals)
 
     private fun buildAiContext(
-        world: WorldState,
-        general: General,
-        city: City,
-        nation: Nation,
-        nationGenerals: List<General>,
+        world: SessionState,
+        general: Officer,
+        city: Planet,
+        nation: Faction,
+        nationGenerals: List<Officer>,
     ) = AIContext(
         world = world,
         general = general,
@@ -790,7 +790,7 @@ class GeneralAITest {
         val city = createCity(nationId = 1, agri = 600, agriMax = 1000, comm = 600, commMax = 1000, secu = 600, secuMax = 1000)
         val nation = createNation()
         val otherNation = createNation(id = 2)
-        val diplomacy = createDiplomacy(srcNationId = 1, destNationId = 2, stateCode = "동맹")
+        val diplomacy = createDiplomacy(srcFactionId = 1, destFactionId = 2, stateCode = "동맹")
 
         setupRepos(world, general, city, nation,
             allNations = listOf(nation, otherNation),
@@ -809,7 +809,7 @@ class GeneralAITest {
         val general = createGeneral(strength = 90, leadership = 50, intel = 30, crew = 0, gold = 200, rice = 200, train = 90, atmos = 90)
         val city = createCity(nationId = 1, agri = 600, agriMax = 1000, comm = 600, commMax = 1000, secu = 600, secuMax = 1000)
         val nation = createNation()
-        val diplomacy = createDiplomacy(srcNationId = 1, destNationId = 2, stateCode = "전쟁")
+        val diplomacy = createDiplomacy(srcFactionId = 1, destFactionId = 2, stateCode = "전쟁")
 
         setupRepos(world, general, city, nation, diplomacies = listOf(diplomacy),
             allNations = listOf(nation, createNation(id = 2)))
@@ -1039,7 +1039,7 @@ class GeneralAITest {
 
     @Test
     fun `getNationChiefLevel matches legacy exact mapping`() {
-        val method = GeneralAI::class.java.getDeclaredMethod("getNationChiefLevel", Int::class.java)
+        val method = OfficerAI::class.java.getDeclaredMethod("getNationChiefLevel", Int::class.java)
         method.isAccessible = true
 
         assertEquals(5, method.invoke(ai, 7), "Emperor (7) should return 5")
@@ -1438,7 +1438,7 @@ class GeneralAITest {
         ctx: AIContext, rng: Random, nationPolicy: NpcNationPolicy,
         attackable: Boolean, warTargetNations: Map<Long, Int>,
     ): String? {
-        val method = GeneralAI::class.java.getDeclaredMethod(
+        val method = OfficerAI::class.java.getDeclaredMethod(
             "doSortie",
             AIContext::class.java, Random::class.java, NpcNationPolicy::class.java,
             Boolean::class.java, Map::class.java,
@@ -1451,7 +1451,7 @@ class GeneralAITest {
         ctx: AIContext, rng: Random, policy: NpcGeneralPolicy,
         nationPolicy: NpcNationPolicy, warTargetNations: Map<Long, Int>,
     ): String? {
-        val method = GeneralAI::class.java.getDeclaredMethod(
+        val method = OfficerAI::class.java.getDeclaredMethod(
             "doRecruit",
             AIContext::class.java, Random::class.java, NpcGeneralPolicy::class.java,
             NpcNationPolicy::class.java, Map::class.java,
@@ -1464,7 +1464,7 @@ class GeneralAITest {
         ctx: AIContext, rng: Random, nationPolicy: NpcNationPolicy,
         warTargetNations: Map<Long, Int>,
     ): String? {
-        val method = GeneralAI::class.java.getDeclaredMethod(
+        val method = OfficerAI::class.java.getDeclaredMethod(
             "doCombatPrep",
             AIContext::class.java, Random::class.java, NpcNationPolicy::class.java,
             Map::class.java,
@@ -1477,7 +1477,7 @@ class GeneralAITest {
         ctx: AIContext, rng: Random, nationPolicy: NpcNationPolicy,
         attackable: Boolean, warTargetNations: Map<Long, Int>,
     ): String? {
-        val method = GeneralAI::class.java.getDeclaredMethod(
+        val method = OfficerAI::class.java.getDeclaredMethod(
             "doWarpToFront",
             AIContext::class.java, Random::class.java, NpcNationPolicy::class.java,
             Boolean::class.java, Map::class.java,
@@ -1712,9 +1712,9 @@ class GeneralAITest {
     private fun invokeDoWarpToRear(
         ctx: AIContext, rng: Random, policy: NpcGeneralPolicy,
         nationPolicy: NpcNationPolicy,
-        backupCities: List<City>, supplyCities: List<City>,
+        backupCities: List<Planet>, supplyCities: List<Planet>,
     ): String? {
-        val method = GeneralAI::class.java.getDeclaredMethod(
+        val method = OfficerAI::class.java.getDeclaredMethod(
             "doWarpToRear",
             AIContext::class.java, Random::class.java, NpcGeneralPolicy::class.java,
             NpcNationPolicy::class.java, List::class.java, List::class.java,
@@ -1723,8 +1723,8 @@ class GeneralAITest {
         return method.invoke(ai, ctx, rng, policy, nationPolicy, backupCities, supplyCities) as String?
     }
 
-    private fun invokeDoRally(general: General, rng: Random): String {
-        val method = GeneralAI::class.java.getDeclaredMethod(
+    private fun invokeDoRally(general: Officer, rng: Random): String {
+        val method = OfficerAI::class.java.getDeclaredMethod(
             "doRally",
             General::class.java, Random::class.java,
         )
@@ -1733,7 +1733,7 @@ class GeneralAITest {
     }
 
     private fun invokeDoDismiss(ctx: AIContext, rng: Random, attackable: Boolean): String? {
-        val method = GeneralAI::class.java.getDeclaredMethod(
+        val method = OfficerAI::class.java.getDeclaredMethod(
             "doDismiss",
             AIContext::class.java, Random::class.java, Boolean::class.java,
         )
@@ -2127,7 +2127,7 @@ class GeneralAITest {
                 }
             }.toTypedArray()
 
-            val method = GeneralAI::class.java.declaredMethods.first { m ->
+            val method = OfficerAI::class.java.declaredMethods.first { m ->
                 m.name == methodName && m.parameterCount == args.size
             }
             method.isAccessible = true
@@ -2299,7 +2299,7 @@ class GeneralAITest {
             assertEquals("건국", result)
             @Suppress("UNCHECKED_CAST")
             val aiArg = lord.meta["aiArg"] as Map<String, Any>
-            assertEquals("유비", aiArg["nationName"])
+            assertEquals("유비", aiArg["factionName"])
             assertNotNull(aiArg["nationType"])
             assertNotNull(aiArg["colorType"])
         }
@@ -2363,36 +2363,36 @@ class GeneralAITest {
 
         // ── Reflection helpers ──
 
-        private fun invokeDoWandererMove(world: WorldState, general: General, rng: Random): String? {
-            val method = GeneralAI::class.java.getDeclaredMethod(
-                "doWandererMove", General::class.java, WorldState::class.java, Random::class.java)
+        private fun invokeDoWandererMove(world: SessionState, general: Officer, rng: Random): String? {
+            val method = OfficerAI::class.java.getDeclaredMethod(
+                "doWandererMove", Officer::class.java, SessionState::class.java, Random::class.java)
             method.isAccessible = true
             return method.invoke(ai, general, world, rng) as String?
         }
 
-        private fun invokeDoSelectNation(world: WorldState, general: General, rng: Random): String? {
-            val method = GeneralAI::class.java.getDeclaredMethod(
-                "doSelectNation", General::class.java, WorldState::class.java, Random::class.java)
+        private fun invokeDoSelectNation(world: SessionState, general: Officer, rng: Random): String? {
+            val method = OfficerAI::class.java.getDeclaredMethod(
+                "doSelectNation", Officer::class.java, SessionState::class.java, Random::class.java)
             method.isAccessible = true
             return method.invoke(ai, general, world, rng) as String?
         }
 
-        private fun invokeDoFoundNation(general: General, rng: Random): String? {
-            val method = GeneralAI::class.java.getDeclaredMethod(
-                "doFoundNation", General::class.java, Random::class.java)
+        private fun invokeDoFoundNation(general: Officer, rng: Random): String? {
+            val method = OfficerAI::class.java.getDeclaredMethod(
+                "doFoundNation", Officer::class.java, Random::class.java)
             method.isAccessible = true
             return method.invoke(ai, general, rng) as String?
         }
 
-        private fun invokeDoDisband(general: General): String? {
-            val method = GeneralAI::class.java.getDeclaredMethod("doDisband", General::class.java)
+        private fun invokeDoDisband(general: Officer): String? {
+            val method = OfficerAI::class.java.getDeclaredMethod("doDisband", Officer::class.java)
             method.isAccessible = true
             return method.invoke(ai, general) as String?
         }
 
-        private fun invokeDoAbdicate(world: WorldState, general: General, rng: Random): String? {
-            val method = GeneralAI::class.java.getDeclaredMethod(
-                "doAbdicate", General::class.java, WorldState::class.java, Random::class.java)
+        private fun invokeDoAbdicate(world: SessionState, general: Officer, rng: Random): String? {
+            val method = OfficerAI::class.java.getDeclaredMethod(
+                "doAbdicate", Officer::class.java, SessionState::class.java, Random::class.java)
             method.isAccessible = true
             return method.invoke(ai, general, world, rng) as String?
         }
@@ -2532,10 +2532,10 @@ class GeneralAITest {
     // ========== Domestic AI Parity Tests (08-03) ==========
 
     private fun invokeDoUrgentDomestic(
-        world: WorldState, general: General, city: City, nation: Nation,
+        world: SessionState, general: Officer, city: Planet, nation: Faction,
         rng: Random = Random(0), dipState: DiplomacyState = DiplomacyState.AT_WAR,
     ): String? {
-        val method = GeneralAI::class.java.getDeclaredMethod(
+        val method = OfficerAI::class.java.getDeclaredMethod(
             "doUrgentDomestic", AIContext::class.java, Random::class.java, NpcNationPolicy::class.java,
         )
         method.isAccessible = true
@@ -2550,10 +2550,10 @@ class GeneralAITest {
     }
 
     private fun invokeDoWarDomestic(
-        world: WorldState, general: General, city: City, nation: Nation,
+        world: SessionState, general: Officer, city: Planet, nation: Faction,
         rng: Random = Random(0), dipState: DiplomacyState = DiplomacyState.AT_WAR,
     ): String? {
-        val method = GeneralAI::class.java.getDeclaredMethod(
+        val method = OfficerAI::class.java.getDeclaredMethod(
             "doWarDomestic", AIContext::class.java, Random::class.java, NpcNationPolicy::class.java,
         )
         method.isAccessible = true
@@ -2571,10 +2571,10 @@ class GeneralAITest {
     }
 
     private fun invokeDoDonate(
-        world: WorldState, general: General, city: City, nation: Nation,
+        world: SessionState, general: Officer, city: Planet, nation: Faction,
         rng: Random = Random(0),
     ): String? {
-        val method = GeneralAI::class.java.getDeclaredMethod(
+        val method = OfficerAI::class.java.getDeclaredMethod(
             "doDonate", AIContext::class.java, Random::class.java, NpcNationPolicy::class.java,
         )
         method.isAccessible = true
@@ -2589,10 +2589,10 @@ class GeneralAITest {
     }
 
     private fun invokeDoNpcDedicate(
-        world: WorldState, general: General, city: City, nation: Nation,
+        world: SessionState, general: Officer, city: Planet, nation: Faction,
         rng: Random = Random(0),
     ): String? {
-        val method = GeneralAI::class.java.getDeclaredMethod(
+        val method = OfficerAI::class.java.getDeclaredMethod(
             "doNpcDedicate", AIContext::class.java, Random::class.java, NpcNationPolicy::class.java,
         )
         method.isAccessible = true
@@ -2607,9 +2607,9 @@ class GeneralAITest {
     }
 
     private fun invokeDoReturn(
-        world: WorldState, general: General, city: City, nation: Nation,
+        world: SessionState, general: Officer, city: Planet, nation: Faction,
     ): String? {
-        val method = GeneralAI::class.java.getDeclaredMethod(
+        val method = OfficerAI::class.java.getDeclaredMethod(
             "doReturn", AIContext::class.java, Random::class.java,
         )
         method.isAccessible = true
@@ -2624,10 +2624,10 @@ class GeneralAITest {
     }
 
     private fun invokeDoWarpToDomestic(
-        world: WorldState, general: General, city: City, nation: Nation,
-        supplyCities: List<City>, rng: Random = Random(0),
+        world: SessionState, general: Officer, city: Planet, nation: Faction,
+        supplyCities: List<Planet>, rng: Random = Random(0),
     ): String? {
-        val method = GeneralAI::class.java.getDeclaredMethod(
+        val method = OfficerAI::class.java.getDeclaredMethod(
             "doWarpToDomestic", AIContext::class.java, Random::class.java,
             NpcNationPolicy::class.java, List::class.java,
         )
@@ -2867,7 +2867,7 @@ class GeneralAITest {
         val city = createCity(id = 1, nationId = 1)
         val nation = createNation()
 
-        val method = GeneralAI::class.java.getDeclaredMethod(
+        val method = OfficerAI::class.java.getDeclaredMethod(
             "doWarpToDomestic", AIContext::class.java, Random::class.java,
             NpcNationPolicy::class.java, List::class.java,
         )
@@ -2990,9 +2990,9 @@ class GeneralAITest {
     @Nested
     inner class WandererInjuryThresholdTests {
 
-        private fun invokeDecideWandererAction(general: General, world: WorldState, rng: Random): String {
-            val method = GeneralAI::class.java.getDeclaredMethod(
-                "decideWandererAction", General::class.java, WorldState::class.java, Random::class.java
+        private fun invokeDecideWandererAction(general: Officer, world: SessionState, rng: Random): String {
+            val method = OfficerAI::class.java.getDeclaredMethod(
+                "decideWandererAction", Officer::class.java, SessionState::class.java, Random::class.java
             )
             method.isAccessible = true
             return method.invoke(ai, general, world, rng) as String

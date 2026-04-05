@@ -25,7 +25,7 @@ class FleetService(
     fun create(worldId: Long, leaderGeneralId: Long, nationId: Long, name: String): Fleet {
         val troop = fleetRepository.save(Fleet(
             sessionId = worldId,
-            leaderGeneralId = leaderGeneralId,
+            leaderOfficerId = leaderGeneralId,
             factionId = nationId,
             name = name,
         ))

@@ -1,22 +1,22 @@
 package com.openlogh.engine
 
-import com.openlogh.entity.City
+import com.openlogh.entity.Planet
 import com.openlogh.entity.Diplomacy
-import com.openlogh.entity.General
-import com.openlogh.entity.Nation
+import com.openlogh.entity.Officer
+import com.openlogh.entity.Faction
 import com.openlogh.entity.NationTurn
 import com.openlogh.entity.OldGeneral
-import com.openlogh.entity.Troop
-import com.openlogh.entity.WorldState
-import com.openlogh.repository.CityRepository
+import com.openlogh.entity.Fleet
+import com.openlogh.entity.SessionState
+import com.openlogh.repository.PlanetRepository
 import com.openlogh.repository.DiplomacyRepository
-import com.openlogh.repository.GeneralAccessLogRepository
-import com.openlogh.repository.GeneralTurnRepository
+import com.openlogh.repository.OfficerAccessLogRepository
+import com.openlogh.repository.OfficerTurnRepository
 import com.openlogh.repository.HallOfFameRepository
-import com.openlogh.repository.NationRepository
-import com.openlogh.repository.NationTurnRepository
+import com.openlogh.repository.FactionRepository
+import com.openlogh.repository.FactionTurnRepository
 import com.openlogh.repository.OldGeneralRepository
-import com.openlogh.repository.TroopRepository
+import com.openlogh.repository.FleetRepository
 import com.openlogh.service.HistoryService
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
@@ -30,16 +30,16 @@ import java.util.Optional
 
 class GeneralMaintenanceServiceTest {
 
-    private lateinit var service: GeneralMaintenanceService
+    private lateinit var service: OfficerMaintenanceService
     private lateinit var hallOfFameRepository: HallOfFameRepository
-    private lateinit var nationRepository: NationRepository
-    private lateinit var cityRepository: CityRepository
+    private lateinit var factionRepository: FactionRepository
+    private lateinit var planetRepository: PlanetRepository
     private lateinit var diplomacyRepository: DiplomacyRepository
-    private lateinit var nationTurnRepository: NationTurnRepository
-    private lateinit var troopRepository: TroopRepository
+    private lateinit var factionTurnRepository: FactionTurnRepository
+    private lateinit var fleetRepository: FleetRepository
     private lateinit var oldGeneralRepository: OldGeneralRepository
-    private lateinit var generalTurnRepository: GeneralTurnRepository
-    private lateinit var generalAccessLogRepository: GeneralAccessLogRepository
+    private lateinit var officerTurnRepository: OfficerTurnRepository
+    private lateinit var officerAccessLogRepository: OfficerAccessLogRepository
     private lateinit var historyService: HistoryService
 
     @BeforeEach
@@ -48,31 +48,31 @@ class GeneralMaintenanceServiceTest {
         // Initialize GameConstService manually (it uses @PostConstruct)
         try { gameConstService.init() } catch (_: Exception) { /* resource may not be on classpath */ }
         hallOfFameRepository = mock(HallOfFameRepository::class.java)
-        nationRepository = mock(NationRepository::class.java)
-        cityRepository = mock(CityRepository::class.java)
+        factionRepository = mock(FactionRepository::class.java)
+        planetRepository = mock(PlanetRepository::class.java)
         diplomacyRepository = mock(DiplomacyRepository::class.java)
-        nationTurnRepository = mock(NationTurnRepository::class.java)
-        troopRepository = mock(TroopRepository::class.java)
+        factionTurnRepository = mock(FactionTurnRepository::class.java)
+        fleetRepository = mock(FleetRepository::class.java)
         oldGeneralRepository = mock(OldGeneralRepository::class.java)
-        generalTurnRepository = mock(GeneralTurnRepository::class.java)
-        generalAccessLogRepository = mock(GeneralAccessLogRepository::class.java)
+        officerTurnRepository = mock(OfficerTurnRepository::class.java)
+        officerAccessLogRepository = mock(OfficerAccessLogRepository::class.java)
         historyService = mock(HistoryService::class.java)
 
-        `when`(troopRepository.findById(anyLong())).thenReturn(Optional.empty())
+        `when`(fleetRepository.findById(anyLong())).thenReturn(Optional.empty())
         `when`(oldGeneralRepository.findByServerIdAndGeneralNo(anyString(), anyLong())).thenReturn(null)
-        `when`(generalAccessLogRepository.findByGeneralId(anyLong())).thenReturn(emptyList())
+        `when`(officerAccessLogRepository.findByGeneralId(anyLong())).thenReturn(emptyList())
 
-        service = GeneralMaintenanceService(
+        service = OfficerMaintenanceService(
             gameConstService,
             hallOfFameRepository,
-            nationRepository,
-            cityRepository,
+            factionRepository,
+            planetRepository,
             diplomacyRepository,
-            nationTurnRepository,
-            troopRepository,
+            factionTurnRepository,
+            fleetRepository,
             oldGeneralRepository,
-            generalTurnRepository,
-            generalAccessLogRepository,
+            officerTurnRepository,
+            officerAccessLogRepository,
             historyService,
         )
     }
@@ -81,8 +81,8 @@ class GeneralMaintenanceServiceTest {
         year: Short = 200,
         month: Short = 1,
         config: MutableMap<String, Any> = mutableMapOf(),
-    ): WorldState {
-        return WorldState(
+    ): SessionState {
+        return SessionState(
             id = 1,
             name = "test-world",
             scenarioCode = "test",
@@ -105,14 +105,14 @@ class GeneralMaintenanceServiceTest {
         nationId: Long = 1,
         officerLevel: Short = 0,
         troopId: Long = 0,
-    ): General {
-        return General(
+    ): Officer {
+        return Officer(
             id = id,
-            worldId = 1,
+            sessionId = 1,
             name = "장수$id",
-            nationId = nationId,
-            cityId = 1,
-            troopId = troopId,
+            factionId = nationId,
+            planetId = 1,
+            fleetId = troopId,
             age = age,
             deadYear = deadYear,
             experience = experience,
@@ -205,13 +205,13 @@ class GeneralMaintenanceServiceTest {
 
         service.processGeneralMaintenance(world, listOf(general))
 
-        assertEquals(7L, general.nationId)
+        assertEquals(7L, general.factionId)
         assertEquals(11.toShort(), general.officerLevel)
         assertEquals(0.toShort(), general.npcState)
         assertEquals(20.toShort(), general.age)
         assertEquals(82.toShort(), general.leadership)
-        assertEquals(10.toShort(), general.strength)
-        assertEquals(10.toShort(), general.intel)
+        assertEquals(10.toShort(), general.command)
+        assertEquals(10.toShort(), general.intelligence)
         assertEquals(0.toShort(), general.injury)
         assertEquals(500, general.experience)
         assertEquals(500, general.dedication)
@@ -235,7 +235,7 @@ class GeneralMaintenanceServiceTest {
 
         service.processGeneralMaintenance(world, listOf(general))
 
-        assertEquals(3L, general.nationId)
+        assertEquals(3L, general.factionId)
         assertEquals(9.toShort(), general.officerLevel)
         assertEquals(80.toShort(), general.age)
     }
@@ -284,20 +284,20 @@ class GeneralMaintenanceServiceTest {
     @Test
     fun `killGeneral promotes successor disbands troop and stores old general`() {
         val world = createWorld(year = 200, month = 6)
-        val nation = Nation(
+        val nation = Faction(
             id = 1,
-            worldId = 1,
+            sessionId = 1,
             name = "위",
             color = "#112233",
-            chiefGeneralId = 1,
-            gennum = 3,
-            level = 4,
+            chiefOfficerId = 1,
+            officerCount = 3,
+            factionRank = 4,
         )
-        val troop = Troop(
+        val troop = Fleet(
             id = 10,
-            worldId = 1,
+            sessionId = 1,
             leaderGeneralId = 1,
-            nationId = 1,
+            factionId = 1,
             name = "중군",
         )
         val dead = createGeneral(
@@ -325,27 +325,27 @@ class GeneralMaintenanceServiceTest {
             troopId = 10,
         )
 
-        `when`(nationRepository.findById(1L)).thenReturn(Optional.of(nation))
-        `when`(troopRepository.findById(10L)).thenReturn(Optional.of(troop))
+        `when`(factionRepository.findById(1L)).thenReturn(Optional.of(nation))
+        `when`(fleetRepository.findById(10L)).thenReturn(Optional.of(troop))
 
         service.processGeneralMaintenance(world, listOf(dead, successor, member))
 
         assertEquals(5.toShort(), dead.npcState)
-        assertEquals(0L, dead.nationId)
+        assertEquals(0L, dead.factionId)
         assertEquals(0.toShort(), dead.officerLevel)
-        assertEquals(0, dead.officerCity)
+        assertEquals(0, dead.officerPlanet)
         assertNull(dead.killTurn)
-        assertEquals(0L, dead.troopId)
+        assertEquals(0L, dead.fleetId)
 
         assertEquals(20.toShort(), successor.officerLevel)
-        assertEquals(0, successor.officerCity)
-        assertEquals(0L, successor.troopId)
-        assertEquals(0L, member.troopId)
+        assertEquals(0, successor.officerPlanet)
+        assertEquals(0L, successor.fleetId)
+        assertEquals(0L, member.fleetId)
 
-        assertEquals(2L, nation.chiefGeneralId)
-        assertEquals(2, nation.gennum)
-        verify(troopRepository).delete(troop)
-        verify(generalTurnRepository).deleteByGeneralId(1L)
+        assertEquals(2L, nation.chiefOfficerId)
+        assertEquals(2, nation.officerCount)
+        verify(fleetRepository).delete(troop)
+        verify(officerTurnRepository).deleteByGeneralId(1L)
 
         val captor = ArgumentCaptor.forClass(OldGeneral::class.java)
         verify(oldGeneralRepository).save(captor.capture())
@@ -411,29 +411,29 @@ class GeneralMaintenanceServiceTest {
     @Test
     fun `killGeneral collapses nation when no successor exists`() {
         val world = createWorld(year = 200, month = 6)
-        val nation = Nation(
+        val nation = Faction(
             id = 1,
-            worldId = 1,
+            sessionId = 1,
             name = "위",
             color = "#112233",
-            chiefGeneralId = 1,
-            capitalCityId = 99,
-            gennum = 1,
-            power = 400,
-            level = 5,
+            chiefOfficerId = 1,
+            capitalPlanetId = 99,
+            officerCount = 1,
+            militaryPower = 400,
+            factionRank = 5,
         )
-        val city = City(
+        val city = Planet(
             id = 99,
-            worldId = 1,
+            sessionId = 1,
             name = "낙양",
             level = 5,
-            nationId = 1,
+            factionId = 1,
         )
         val diplomacy = Diplomacy(
             id = 7,
-            worldId = 1,
-            srcNationId = 1,
-            destNationId = 2,
+            sessionId = 1,
+            srcFactionId = 1,
+            destFactionId = 2,
             stateCode = "전쟁",
         )
         val nationTurn = NationTurn(
@@ -452,26 +452,26 @@ class GeneralMaintenanceServiceTest {
             officerLevel = 20,
         )
 
-        `when`(nationRepository.findById(1L)).thenReturn(Optional.of(nation))
-        `when`(cityRepository.findByNationId(1L)).thenReturn(listOf(city))
-        `when`(troopRepository.findByNationId(1L)).thenReturn(emptyList())
-        `when`(diplomacyRepository.findByWorldId(1L)).thenReturn(listOf(diplomacy))
-        `when`(nationTurnRepository.findByWorldId(1L)).thenReturn(listOf(nationTurn))
+        `when`(factionRepository.findById(1L)).thenReturn(Optional.of(nation))
+        `when`(planetRepository.findByFactionId(1L)).thenReturn(listOf(city))
+        `when`(fleetRepository.findByFactionId(1L)).thenReturn(emptyList())
+        `when`(diplomacyRepository.findBySessionId(1L)).thenReturn(listOf(diplomacy))
+        `when`(factionTurnRepository.findBySessionId(1L)).thenReturn(listOf(nationTurn))
 
         service.processGeneralMaintenance(world, listOf(dead))
 
         assertEquals(5.toShort(), dead.npcState)
-        assertEquals(0L, dead.nationId)
-        assertEquals(0.toShort(), nation.level)
-        assertEquals(0, nation.gennum)
-        assertEquals(0, nation.power)
-        assertEquals(0L, nation.chiefGeneralId)
-        assertNull(nation.capitalCityId)
-        assertEquals(0L, city.nationId)
+        assertEquals(0L, dead.factionId)
+        assertEquals(0.toShort(), nation.factionRank)
+        assertEquals(0, nation.officerCount)
+        assertEquals(0, nation.militaryPower)
+        assertEquals(0L, nation.chiefOfficerId)
+        assertNull(nation.capitalPlanetId)
+        assertEquals(0L, city.factionId)
         assertEquals(0.toShort(), city.frontState)
         assertTrue(diplomacy.isDead)
         assertFalse(diplomacy.isShowing)
-        verify(nationTurnRepository).delete(nationTurn)
+        verify(factionTurnRepository).delete(nationTurn)
         verify(historyService).logWorldHistory(eq(1L), contains("멸망"), eq(200), eq(6), eq(false))
         verify(historyService).logNationHistory(eq(1L), eq(1L), contains("사망"), eq(200), eq(6))
     }

@@ -8,14 +8,14 @@ import com.openlogh.engine.turn.steps.DisasterAndTradeStep
 import com.openlogh.engine.turn.steps.EconomyPostUpdateStep
 import com.openlogh.engine.turn.steps.EconomyPreUpdateStep
 import com.openlogh.engine.turn.steps.YearlyStatisticsStep
-import com.openlogh.entity.City
-import com.openlogh.entity.General
-import com.openlogh.entity.Nation
-import com.openlogh.entity.WorldState
-import com.openlogh.repository.CityRepository
-import com.openlogh.repository.GeneralRepository
+import com.openlogh.entity.Planet
+import com.openlogh.entity.Officer
+import com.openlogh.entity.Faction
+import com.openlogh.entity.SessionState
+import com.openlogh.repository.PlanetRepository
+import com.openlogh.repository.OfficerRepository
 import com.openlogh.repository.MessageRepository
-import com.openlogh.repository.NationRepository
+import com.openlogh.repository.FactionRepository
 import com.openlogh.service.HistoryService
 import com.openlogh.service.InheritanceService
 import com.openlogh.service.MapService
@@ -54,23 +54,23 @@ import java.time.OffsetDateTime
 class EconomyIntegrationParityTest {
 
     private lateinit var service: EconomyService
-    private lateinit var cityRepository: CityRepository
-    private lateinit var nationRepository: NationRepository
-    private lateinit var generalRepository: GeneralRepository
+    private lateinit var planetRepository: PlanetRepository
+    private lateinit var factionRepository: FactionRepository
+    private lateinit var officerRepository: OfficerRepository
     private lateinit var mapService: MapService
 
-    private val cities = linkedMapOf<Long, City>()
-    private val nations = linkedMapOf<Long, Nation>()
-    private val generals = linkedMapOf<Long, General>()
+    private val cities = linkedMapOf<Long, Planet>()
+    private val nations = linkedMapOf<Long, Faction>()
+    private val generals = linkedMapOf<Long, Officer>()
 
     @BeforeEach
     fun setUp() {
-        cityRepository = mock(CityRepository::class.java)
-        nationRepository = mock(NationRepository::class.java)
-        generalRepository = mock(GeneralRepository::class.java)
+        planetRepository = mock(PlanetRepository::class.java)
+        factionRepository = mock(FactionRepository::class.java)
+        officerRepository = mock(OfficerRepository::class.java)
         mapService = mock(MapService::class.java)
         service = EconomyService(
-            cityRepository, nationRepository, generalRepository,
+            planetRepository, factionRepository, officerRepository,
             mock(MessageRepository::class.java), mapService,
             mock(HistoryService::class.java), mock(InheritanceService::class.java),
         )
@@ -80,41 +80,41 @@ class EconomyIntegrationParityTest {
     }
 
     private fun wireRepos() {
-        `when`(cityRepository.findByWorldId(ArgumentMatchers.anyLong())).thenAnswer { inv ->
+        `when`(planetRepository.findBySessionId(ArgumentMatchers.anyLong())).thenAnswer { inv ->
             val worldId = inv.arguments[0] as Long
-            cities.values.filter { it.worldId == worldId }.map { it.toSnapshot().toEntity() }
+            cities.values.filter { it.sessionId == worldId }.map { it.toSnapshot().toEntity() }
         }
-        `when`(nationRepository.findByWorldId(ArgumentMatchers.anyLong())).thenAnswer { inv ->
+        `when`(factionRepository.findBySessionId(ArgumentMatchers.anyLong())).thenAnswer { inv ->
             val worldId = inv.arguments[0] as Long
-            nations.values.filter { it.worldId == worldId }.map { it.toSnapshot().toEntity() }
+            nations.values.filter { it.sessionId == worldId }.map { it.toSnapshot().toEntity() }
         }
-        `when`(generalRepository.findByWorldId(ArgumentMatchers.anyLong())).thenAnswer { inv ->
+        `when`(officerRepository.findBySessionId(ArgumentMatchers.anyLong())).thenAnswer { inv ->
             val worldId = inv.arguments[0] as Long
-            generals.values.filter { it.worldId == worldId }.map { it.toSnapshot().toEntity() }
+            generals.values.filter { it.sessionId == worldId }.map { it.toSnapshot().toEntity() }
         }
-        `when`(generalRepository.findByWorldIdAndCityIdIn(ArgumentMatchers.anyLong(), ArgumentMatchers.anyList()))
+        `when`(officerRepository.findBySessionIdAndPlanetIdIn(ArgumentMatchers.anyLong(), ArgumentMatchers.anyList()))
             .thenReturn(emptyList())
-        `when`(cityRepository.save(ArgumentMatchers.any(City::class.java))).thenAnswer { inv ->
-            val city = inv.arguments[0] as City
+        `when`(planetRepository.save(ArgumentMatchers.any(City::class.java))).thenAnswer { inv ->
+            val city = inv.arguments[0] as Planet
             cities[city.id] = city.toSnapshot().toEntity()
             city
         }
-        `when`(nationRepository.save(ArgumentMatchers.any(Nation::class.java))).thenAnswer { inv ->
-            val nation = inv.arguments[0] as Nation
+        `when`(factionRepository.save(ArgumentMatchers.any(Nation::class.java))).thenAnswer { inv ->
+            val nation = inv.arguments[0] as Faction
             nations[nation.id] = nation.toSnapshot().toEntity()
             nation
         }
-        `when`(generalRepository.save(ArgumentMatchers.any(General::class.java))).thenAnswer { inv ->
-            val general = inv.arguments[0] as General
+        `when`(officerRepository.save(ArgumentMatchers.any(General::class.java))).thenAnswer { inv ->
+            val general = inv.arguments[0] as Officer
             generals[general.id] = general.toSnapshot().toEntity()
             general
         }
     }
 
     private fun seed(
-        cityList: List<City> = emptyList(),
-        nationList: List<Nation> = emptyList(),
-        generalList: List<General> = emptyList(),
+        cityList: List<Planet> = emptyList(),
+        nationList: List<Faction> = emptyList(),
+        generalList: List<Officer> = emptyList(),
     ) {
         cities.clear(); nations.clear(); generals.clear()
         cityList.forEach { cities[it.id] = it.toSnapshot().toEntity() }
@@ -122,8 +122,8 @@ class EconomyIntegrationParityTest {
         generalList.forEach { generals[it.id] = it.toSnapshot().toEntity() }
     }
 
-    private fun world(year: Short = 200, month: Short = 1, startYear: Int = 190): WorldState {
-        val w = WorldState(id = 1, scenarioCode = "test", currentYear = year, currentMonth = month, tickSeconds = 300)
+    private fun world(year: Short = 200, month: Short = 1, startYear: Int = 190): SessionState {
+        val w = SessionState(id = 1, scenarioCode = "test", currentYear = year, currentMonth = month, tickSeconds = 300)
         w.config["startYear"] = startYear
         w.config["hiddenSeed"] = "integration-test-seed"
         return w
@@ -139,8 +139,8 @@ class EconomyIntegrationParityTest {
         wall: Int = 500, wallMax: Int = 1000,
         trust: Float = 80f, supplyState: Short = 1,
         level: Short = 5, dead: Int = 0, trade: Int = 100,
-    ): City = City(
-        id = id, worldId = 1, name = "city$id", mapCityId = id.toInt(),
+    ): Planet = Planet(
+        id = id, sessionId = 1, name = "city$id", mapPlanetId = id.toInt(),
         nationId = nationId, pop = pop, popMax = popMax,
         agri = agri, agriMax = agriMax, comm = comm, commMax = commMax,
         secu = secu, secuMax = secuMax, def = def, defMax = defMax,
@@ -153,22 +153,22 @@ class EconomyIntegrationParityTest {
         level: Short = 1, rateTmp: Short = 15, bill: Short = 100,
         capitalCityId: Long? = 1, rate: Short = 15,
         typeCode: String = "che_중립",
-    ): Nation = Nation(
-        id = id, worldId = 1, name = "nation$id", color = "#FF0000",
-        gold = gold, rice = rice, level = level, rateTmp = rateTmp,
-        bill = bill, capitalCityId = capitalCityId, rate = rate,
-        typeCode = typeCode,
+    ): Faction = Faction(
+        id = id, sessionId = 1, name = "nation$id", color = "#FF0000",
+        funds = gold, supplies = rice, factionRank = level, conscriptionRateTmp = rateTmp,
+        taxRate = bill, capitalPlanetId = capitalCityId, conscriptionRate = rate,
+        factionType = typeCode,
     )
 
     private fun general(
         id: Long = 1, nationId: Long = 1, cityId: Long = 1,
         gold: Int = 1000, rice: Int = 1000, dedication: Int = 1000,
-        officerLevel: Short = 1, officerCity: Int = 0, npcState: Short = 0,
-    ): General = General(
-        id = id, worldId = 1, name = "general$id",
-        nationId = nationId, cityId = cityId, gold = gold, rice = rice,
+        officerLevel: Short = 1, officerPlanet: Int = 0, npcState: Short = 0,
+    ): Officer = Officer(
+        id = id, sessionId = 1, name = "general$id",
+        factionId = nationId, planetId = cityId, funds = gold, supplies = rice,
         dedication = dedication, officerLevel = officerLevel,
-        officerCity = officerCity, npcState = npcState,
+        officerPlanet = officerPlanet, npcState = npcState,
     )
 
     // ══════════════════════════════════════════════════════
@@ -215,8 +215,8 @@ class EconomyIntegrationParityTest {
             val w = world(year = 200, month = 1, startYear = 190)
 
             // Track initial state
-            val initialGold = nations[1L]!!.gold
-            val initialRice = nations[1L]!!.rice
+            val initialGold = nations[1L]!!.funds
+            val initialRice = nations[1L]!!.supplies
 
             var semiAnnualCount = 0
 
@@ -250,9 +250,9 @@ class EconomyIntegrationParityTest {
             val finalNation = nations[1L]!!
             // After 24 turns of income processing, gold should have increased significantly
             // (3 cities producing gold income each month, minus salary for 5 generals)
-            assertThat(finalNation.gold).isNotEqualTo(initialGold)
+            assertThat(finalNation.funds).isNotEqualTo(initialGold)
                 .describedAs("Gold should change after 24 income cycles")
-            assertThat(finalNation.rice).isNotEqualTo(initialRice)
+            assertThat(finalNation.supplies).isNotEqualTo(initialRice)
                 .describedAs("Rice should change after 24 income cycles")
 
             // Verify semi-annual count: months 1,7 of year 200, and months 1,7 of year 201
@@ -270,14 +270,14 @@ class EconomyIntegrationParityTest {
 
             // Populations may decrease due to trust decay (cities lose trust when isolated).
             // Verify populations remain valid (> 0) and were modified by semi-annual processing.
-            assertThat(finalC1.pop).isGreaterThan(0)
+            assertThat(finalC1.population).isGreaterThan(0)
                 .describedAs("City 1 pop should remain positive after 24 turns")
-            assertThat(finalC2.pop).isGreaterThan(0)
+            assertThat(finalC2.population).isGreaterThan(0)
                 .describedAs("City 2 pop should remain positive after 24 turns")
-            assertThat(finalC3.pop).isGreaterThan(0)
+            assertThat(finalC3.population).isGreaterThan(0)
                 .describedAs("City 3 pop should remain positive after 24 turns")
             // At least one city should have changed population (semi-annual processed)
-            val anyPopChanged = finalC1.pop != 8000 || finalC2.pop != 5000 || finalC3.pop != 2000
+            val anyPopChanged = finalC1.population != 8000 || finalC2.population != 5000 || finalC3.population != 2000
             assertThat(anyPopChanged).isTrue()
                 .describedAs("At least one city population should have changed after 4 semi-annual cycles")
         }
@@ -293,9 +293,9 @@ class EconomyIntegrationParityTest {
 
             val w = world(year = 200, month = 3)
 
-            val goldBefore = nations[1L]!!.gold
+            val goldBefore = nations[1L]!!.funds
             service.preUpdateMonthly(w)
-            val goldAfter = nations[1L]!!.gold
+            val goldAfter = nations[1L]!!.funds
 
             // With a productive city (pop=50k, comm=800/1000, trust=90) and only 1 general,
             // gold income should exceed the single general's salary
@@ -315,9 +315,9 @@ class EconomyIntegrationParityTest {
             seed(listOf(c1), listOf(n), genList)
 
             val w = world(year = 200, month = 3)
-            val goldBefore = nations[1L]!!.gold
+            val goldBefore = nations[1L]!!.funds
             service.preUpdateMonthly(w)
-            val goldAfter = nations[1L]!!.gold
+            val goldAfter = nations[1L]!!.funds
 
             // With tiny city income and 10 high-dedication generals, salary should dominate
             // and gold should decrease. If not, income covers it -- both are valid outcomes.
@@ -347,9 +347,9 @@ class EconomyIntegrationParityTest {
             // Legacy: growth = (max - current) * (100 - taxRate) / 200
             // For agri: (1000-200) * (100-15) / 200 = 800 * 85/200 = 340
             // newAgri = 200 + 340 = 540
-            assertThat(city1After.agri).isGreaterThan(200)
+            assertThat(city1After.production).isGreaterThan(200)
                 .describedAs("Agri should grow during semi-annual processing")
-            assertThat(city1After.comm).isGreaterThan(200)
+            assertThat(city1After.commerce).isGreaterThan(200)
                 .describedAs("Comm should grow during semi-annual processing")
         }
 
@@ -368,7 +368,7 @@ class EconomyIntegrationParityTest {
 
             val city1After = cities[1L]!!
             // Population should grow (trust=80, well below popMax, positive agri)
-            assertThat(city1After.pop).isGreaterThan(5000)
+            assertThat(city1After.population).isGreaterThan(5000)
                 .describedAs("Pop should grow with positive trust and room to grow")
         }
 
@@ -400,8 +400,8 @@ class EconomyIntegrationParityTest {
             // Simply verify the simulation completes without exception
             // and the nation still has valid state
             val finalNation = nations[1L]!!
-            assertThat(finalNation.gold).isGreaterThanOrEqualTo(0)
-            assertThat(finalNation.rice).isGreaterThanOrEqualTo(0)
+            assertThat(finalNation.funds).isGreaterThanOrEqualTo(0)
+            assertThat(finalNation.supplies).isGreaterThanOrEqualTo(0)
         }
 
         @Test

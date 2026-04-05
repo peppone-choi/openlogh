@@ -14,16 +14,16 @@ abstract class WarUnit(
 ) {
     var hp: Int = 0
     var maxHp: Int = 0
-    var crew: Int = 0
-    var train: Int = 0
-    var atmos: Int = 0
-    var crewType: Int = 0
+    var ships: Int = 0
+    var training: Int = 0
+    var morale: Int = 0
+    var shipClass: Int = 0
     var leadership: Int = 0
-    var strength: Int = 0
-    var intel: Int = 0
+    var command: Int = 0
+    var intelligence: Int = 0
     var experience: Int = 0
     var dedication: Int = 0
-    var tech: Float = 0f
+    var techLevel: Float = 0f
     var injury: Int = 0
 
     var attackMultiplier: Double = 1.0
@@ -33,7 +33,7 @@ abstract class WarUnit(
     var magicChance: Double = 0.0
     var magicDamageMultiplier: Double = 1.0
 
-    var rice: Int = 0
+    var supplies: Int = 0
     var killRiceMultiplier: Double = 1.0
 
     var activatedSkills: MutableList<String> = mutableListOf()
@@ -50,8 +50,8 @@ abstract class WarUnit(
 
     fun calcBattleOrder(): Double {
         // Legacy: (realStat + fullStat) / 2; Kotlin has single stat set ≈ effective stats
-        val totalStat = (leadership + strength + intel).toDouble()
-        val totalCrew = crew / 1000000.0 * (train * atmos).toDouble().pow(1.5)
+        val totalStat = (leadership + command + intelligence).toDouble()
+        val totalCrew = ships / 1000000.0 * (training * morale).toDouble().pow(1.5)
         return totalStat + totalCrew / 100.0
     }
 

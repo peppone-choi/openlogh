@@ -18,6 +18,6 @@ class WarFrontRecalcStep(
     override val order = 1300
 
     override fun execute(context: TurnContext) {
-        factionService.recalcAllFronts(context.sessionId)
+        factionService.recalcAllFronts(context.worldId)
     }
 }

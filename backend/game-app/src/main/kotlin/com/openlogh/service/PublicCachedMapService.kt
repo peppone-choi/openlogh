@@ -84,7 +84,7 @@ class PublicCachedMapService(
                 y = mapCity.y,
                 level = mapCity.level,
                 region = mapCity.region,
-                nationName = faction?.name ?: "",
+                factionName = faction?.name ?: "",
                 nationColor = faction?.color ?: "#4b5563",
                 nationAbbr = faction?.abbreviation?.ifBlank { null },
                 isCapital = isCapital,

@@ -771,17 +771,17 @@ class OfficerAI(
         if (frontCities.isEmpty()) return null
 
         val mapName = (ctx.world.config["mapName"] as? String) ?: "che"
-        val capitalMapCityId = ctx.allCities.find { it.id == nation.capitalPlanetId }?.mapCityId ?: return null
+        val capitalMapCityId = ctx.allCities.find { it.id == nation.capitalPlanetId }?.mapPlanetId ?: return null
 
         val targetNationIds = warTargetNations.keys.filter { it != 0L }
         val routeNationIds = mutableListOf(nation.id).apply { addAll(targetNationIds) }
         val warRoute = mapService.calcAllPairsDistanceByNations(routeNationIds, ctx.allCities, mapName)
 
-        val frontCityMapIds = frontCities.map { it.mapCityId }.toSet()
-        val supplyCityMapIds = supplyCities.map { it.mapCityId }.toSet()
+        val frontCityMapIds = frontCities.map { it.mapPlanetId }.toSet()
+        val supplyCityMapIds = supplyCities.map { it.mapPlanetId }.toSet()
         val ownCityByMapId = ctx.allCities
             .filter { it.factionId == nation.id }
-            .associateBy { it.mapCityId }
+            .associateBy { it.mapPlanetId }
 
         val troopLeaders = ctx.nationGenerals.filter { it.npcState.toInt() == 5 }
 
@@ -793,7 +793,7 @@ class OfficerAI(
         }
 
         for (leader in troopLeaders) {
-            val currentCityMapId = ctx.allCities.find { it.id == leader.planetId }?.mapCityId ?: continue
+            val currentCityMapId = ctx.allCities.find { it.id == leader.planetId }?.mapPlanetId ?: continue
             if (currentCityMapId in frontCityMapIds) continue
 
             val combatForce = policy.combatForce[leader.id.toInt()]
@@ -1564,9 +1564,9 @@ class OfficerAI(
         if (otherNations.isEmpty()) return null
 
         // Map-adjacency based neighbor check: only nations that share a border via connected cities
-        // mapAdjacency keys are mapCityId (from map JSON), not DB city.id
-        val myMapCityIds = ctx.allCities.filter { it.factionId == nation.id }.map { it.mapCityId.toLong() }.toSet()
-        val mapCityNationMap = ctx.allCities.associate { it.mapCityId.toLong() to it.factionId }
+        // mapAdjacency keys are mapPlanetId (from map JSON), not DB city.id
+        val myMapCityIds = ctx.allCities.filter { it.factionId == nation.id }.map { it.mapPlanetId.toLong() }.toSet()
+        val mapCityNationMap = ctx.allCities.associate { it.mapPlanetId.toLong() to it.factionId }
         val neighborNationIds = mutableSetOf<Long>()
         for (myMapCityId in myMapCityIds) {
             for (adjMapId in ctx.mapAdjacency[myMapCityId].orEmpty()) {
@@ -2187,8 +2187,8 @@ class OfficerAI(
         }
         if (targetCities.isEmpty()) return null
 
-        val adjacent = ctx.mapAdjacency[city.mapCityId.toLong()].orEmpty().toSet()
-        val reachable = targetCities.filter { adjacent.contains(it.mapCityId.toLong()) }
+        val adjacent = ctx.mapAdjacency[city.mapPlanetId.toLong()].orEmpty().toSet()
+        val reachable = targetCities.filter { adjacent.contains(it.mapPlanetId.toLong()) }
         val targetCity = if (reachable.isNotEmpty()) {
             reachable[rng.nextInt(reachable.size)]
         } else {
@@ -3038,7 +3038,7 @@ class OfficerAI(
             ?: return null
 
         candidate.officerLevel = 20
-        candidate.officerCity = 0
+        candidate.officerPlanet = 0
         ports.putOfficer(candidate.toSnapshot())
         logger.info("Auto-promoted {} ({}) to lord (officerLevel=20) for lordless nation", candidate.id, candidate.name)
         return candidate
@@ -3106,7 +3106,7 @@ class OfficerAI(
             val pick = usersSorted.firstOrNull()
             if (pick != null && !chiefGenerals.containsKey(11)) {
                 pick.officerLevel = 11
-                pick.officerCity = 0
+                pick.officerPlanet = 0
                 pick.permission = "ambassador"
                 ports.putOfficer(pick.toSnapshot())
                 nextChiefs[11] = pick
@@ -3163,12 +3163,12 @@ class OfficerAI(
             val oldChief = chiefGenerals[chiefLevel]
             if (oldChief != null && oldChief.id != newChief.id) {
                 oldChief.officerLevel = 1
-                oldChief.officerCity = 0
+                oldChief.officerPlanet = 0
                 ports.putOfficer(oldChief.toSnapshot())
             }
 
             newChief.officerLevel = chiefLevel.coerceIn(0, 20).toShort()
-            newChief.officerCity = 0
+            newChief.officerPlanet = 0
             ports.putOfficer(newChief.toSnapshot())
             nextChiefs[chiefLevel] = newChief
             chiefGenerals[chiefLevel] = newChief
@@ -3239,7 +3239,7 @@ class OfficerAI(
             if (picked == null) continue
 
             picked.officerLevel = chiefLevel.coerceIn(0, 20).toShort()
-            picked.officerCity = 0
+            picked.officerPlanet = 0
             ports.putOfficer(picked.toSnapshot())
             chiefGenerals[chiefLevel] = picked
         }
@@ -3741,7 +3741,7 @@ class OfficerAI(
         val nationColor = rng.nextInt(16)
 
         general.meta["aiArg"] = mutableMapOf<String, Any>(
-            "nationName" to general.name,
+            "factionName" to general.name,
             "nationType" to nationType.toString(),
             "colorType" to nationColor,
         )

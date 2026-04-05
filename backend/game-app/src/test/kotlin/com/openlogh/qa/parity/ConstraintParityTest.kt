@@ -1,9 +1,9 @@
 package com.openlogh.qa.parity
 
 import com.openlogh.command.constraint.*
-import com.openlogh.entity.City
-import com.openlogh.entity.General
-import com.openlogh.entity.Nation
+import com.openlogh.entity.Planet
+import com.openlogh.entity.Officer
+import com.openlogh.entity.Faction
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
@@ -372,7 +372,7 @@ class ConstraintParityTest {
         fun `ExistsDestGeneral passes when present`() {
             val gen = createGeneral()
             val dest = createGeneral(id = 2)
-            assertEquals(ConstraintResult.Pass, ExistsDestGeneral().test(ctx(gen, destGeneral = dest)))
+            assertEquals(ConstraintResult.Pass, ExistsDestGeneral().test(ctx(gen, destOfficer = dest)))
         }
 
         @Test
@@ -384,28 +384,28 @@ class ConstraintParityTest {
         fun `FriendlyDestGeneral passes when same nation`() {
             val gen = createGeneral(nationId = 1)
             val dest = createGeneral(id = 2, nationId = 1)
-            assertEquals(ConstraintResult.Pass, FriendlyDestGeneral().test(ctx(gen, destGeneral = dest)))
+            assertEquals(ConstraintResult.Pass, FriendlyDestGeneral().test(ctx(gen, destOfficer = dest)))
         }
 
         @Test
         fun `FriendlyDestGeneral fails when different nation`() {
             val gen = createGeneral(nationId = 1)
             val dest = createGeneral(id = 2, nationId = 2)
-            assertTrue(FriendlyDestGeneral().test(ctx(gen, destGeneral = dest)) is ConstraintResult.Fail)
+            assertTrue(FriendlyDestGeneral().test(ctx(gen, destOfficer = dest)) is ConstraintResult.Fail)
         }
 
         @Test
         fun `NotSameDestCity passes when different`() {
             val gen = createGeneral(cityId = 1)
-            val destCity = createCity(id = 2)
-            assertEquals(ConstraintResult.Pass, NotSameDestCity().test(ctx(gen, destCity = destCity)))
+            val destPlanet = createCity(id = 2)
+            assertEquals(ConstraintResult.Pass, NotSameDestCity().test(ctx(gen, destPlanet = destPlanet)))
         }
 
         @Test
         fun `NotSameDestCity fails when same`() {
             val gen = createGeneral(cityId = 1)
-            val destCity = createCity(id = 1)
-            assertTrue(NotSameDestCity().test(ctx(gen, destCity = destCity)) is ConstraintResult.Fail)
+            val destPlanet = createCity(id = 1)
+            assertTrue(NotSameDestCity().test(ctx(gen, destPlanet = destPlanet)) is ConstraintResult.Fail)
         }
     }
 
@@ -442,20 +442,20 @@ class ConstraintParityTest {
     // ──────────────────────────────────────────────────
 
     private fun ctx(
-        general: General,
-        city: City? = null,
-        nation: Nation? = null,
-        destGeneral: General? = null,
-        destCity: City? = null,
-        destNation: Nation? = null,
+        general: Officer,
+        city: Planet? = null,
+        nation: Faction? = null,
+        destOfficer: Officer? = null,
+        destPlanet: Planet? = null,
+        destFaction: Faction? = null,
         env: Map<String, Any> = emptyMap(),
     ) = ConstraintContext(
         general = general,
         city = city,
         nation = nation,
-        destGeneral = destGeneral,
-        destCity = destCity,
-        destNation = destNation,
+        destOfficer = destOfficer,
+        destPlanet = destPlanet,
+        destFaction = destFaction,
         env = env,
     )
 
@@ -472,23 +472,23 @@ class ConstraintParityTest {
         officerLevel: Short = 5,
         leadership: Short = 70,
         injury: Short = 0,
-    ): General = General(
+    ): Officer = Officer(
         id = id,
-        worldId = 1,
+        sessionId = 1,
         name = "테스트장수",
-        nationId = nationId,
-        cityId = cityId,
-        gold = gold,
-        rice = rice,
-        crew = crew,
-        crewType = crewType,
-        train = train,
-        atmos = atmos,
+        factionId = nationId,
+        planetId = cityId,
+        funds = gold,
+        supplies = rice,
+        ships = crew,
+        shipClass = crewType,
+        training = train,
+        morale = atmos,
         leadership = leadership,
-        strength = 70,
-        intel = 70,
+        command = 70,
+        intelligence = 70,
         politics = 60,
-        charm = 60,
+        administration = 60,
         officerLevel = officerLevel,
         injury = injury,
         turnTime = OffsetDateTime.now(),
@@ -509,24 +509,24 @@ class ConstraintParityTest {
         wall: Int = 500,
         wallMax: Int = 1000,
         trust: Float = 80f,
-    ): City = City(
+    ): Planet = Planet(
         id = id,
-        worldId = 1,
+        sessionId = 1,
         name = "테스트도시",
-        nationId = nationId,
-        pop = 50000,
-        popMax = 100000,
-        agri = agri,
-        agriMax = agriMax,
-        comm = comm,
-        commMax = commMax,
-        secu = secu,
-        secuMax = secuMax,
-        def = def,
-        defMax = defMax,
-        wall = wall,
-        wallMax = wallMax,
-        trust = trust,
+        factionId = nationId,
+        population = 50000,
+        populationMax = 100000,
+        production = agri,
+        productionMax = agriMax,
+        commerce = comm,
+        commerceMax = commMax,
+        security = secu,
+        securityMax = secuMax,
+        orbitalDefense = def,
+        orbitalDefenseMax = defMax,
+        fortress = wall,
+        fortressMax = wallMax,
+        approval = trust,
         supplyState = supplyState,
     )
 
@@ -534,11 +534,11 @@ class ConstraintParityTest {
         id: Long = 1,
         gold: Int = 10000,
         rice: Int = 10000,
-    ): Nation = Nation(
+    ): Faction = Faction(
         id = id,
-        worldId = 1,
+        sessionId = 1,
         name = "테스트국",
-        gold = gold,
-        rice = rice,
+        funds = gold,
+        supplies = rice,
     )
 }

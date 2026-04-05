@@ -34,11 +34,11 @@ class che_선전포고(general: Officer, env: CommandEnv, arg: Map<String, Any>?
         val dn = destFaction ?: return CommandResult(false, listOf("대상 국가 정보를 찾을 수 없습니다"))
         val date = formatDate()
         val generalName = general.name
-        val nationName = n.name
+        val factionName = n.name
         val destNationName = dn.name
 
         val josaYi = JosaUtil.pick(generalName, "이")
-        val josaYiNation = JosaUtil.pick(nationName, "이")
+        val josaYiNation = JosaUtil.pick(factionName, "이")
 
         // Update diplomacy: state=1 (declaration), term=24
         services!!.diplomacyService.setDiplomacyState(env.sessionId, n.id, dn.id, state = 1, term = 24)
@@ -50,17 +50,17 @@ class che_선전포고(general: Officer, env: CommandEnv, arg: Map<String, Any>?
         // Own national history
         pushNationalHistoryLog("<Y>${generalName}</>${josaYi} <D><b>${destNationName}</b></>에 선전 포고")
         // Dest national history
-        pushDestNationalHistoryLog("<D><b>${nationName}</b></>의 <Y>${generalName}</>${josaYi} 아국에 선전 포고")
+        pushDestNationalHistoryLog("<D><b>${factionName}</b></>의 <Y>${generalName}</>${josaYi} 아국에 선전 포고")
 
         // Global action log
         pushGlobalActionLog("<Y>${generalName}</>${josaYi} <D><b>${destNationName}</b></>에 <M>선전 포고</> 하였습니다.")
         // Global history log
-        pushGlobalHistoryLog("<R><b>【선포】</b></><D><b>${nationName}</b></>${josaYiNation} <D><b>${destNationName}</b></>에 선전 포고 하였습니다.")
+        pushGlobalHistoryLog("<R><b>【선포】</b></><D><b>${factionName}</b></>${josaYiNation} <D><b>${destNationName}</b></>에 선전 포고 하였습니다.")
 
         // National message to dest nation
-        val text = "【외교】${env.year}년 ${env.month}월:${nationName}에서 ${destNationName}에 선전포고"
+        val text = "【외교】${env.year}년 ${env.month}월:${factionName}에서 ${destNationName}에 선전포고"
         services!!.messageService?.sendNationalMessage(
-            sessionId = env.sessionId,
+            worldId = env.sessionId,
             srcNationId = n.id,
             destNationId = dn.id,
             srcGeneralId = general.id,

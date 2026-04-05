@@ -45,7 +45,7 @@ class 전투태세(general: Officer, env: CommandEnv, arg: Map<String, Any>? = n
         val crew = general.ships
         val techCost = getNationTechCost()
         val gold = (crew / 100.0 * 3 * techCost).roundToInt()
-        return CommandCost(gold = gold, rice = 0)
+        return CommandCost(funds = gold, supplies = 0)
     }
 
     override fun getPreReqTurn() = PRE_REQ_TURN

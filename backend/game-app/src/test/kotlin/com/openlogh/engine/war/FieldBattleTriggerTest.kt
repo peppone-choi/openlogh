@@ -1,12 +1,12 @@
 package com.openlogh.engine.war
 
-import com.openlogh.entity.City
-import com.openlogh.entity.General
+import com.openlogh.entity.Planet
+import com.openlogh.entity.Officer
 import com.openlogh.entity.Message
 import com.openlogh.entity.Record
-import com.openlogh.entity.WorldState
-import com.openlogh.repository.CityRepository
-import com.openlogh.repository.GeneralRepository
+import com.openlogh.entity.SessionState
+import com.openlogh.repository.PlanetRepository
+import com.openlogh.repository.OfficerRepository
 import com.openlogh.repository.MessageRepository
 import com.openlogh.repository.RecordRepository
 import org.junit.jupiter.api.Assertions.*
@@ -24,92 +24,92 @@ class FieldBattleTriggerTest {
 
     // ─── stub repositories ───────────────────────────────────────────────────
 
-    private class StubGeneralRepository : GeneralRepository {
-        val saved = mutableListOf<General>()
-        private val store = mutableMapOf<Long, General>()
+    private class StubGeneralRepository : OfficerRepository {
+        val saved = mutableListOf<Officer>()
+        private val store = mutableMapOf<Long, Officer>()
 
-        fun put(g: General) { store[g.id] = g }
+        fun put(g: Officer) { store[g.id] = g }
 
-        override fun <S : General> save(entity: S): S {
+        override fun <S : Officer> save(entity: S): S {
             saved += entity
             store[entity.id] = entity
             @Suppress("UNCHECKED_CAST") return entity as S
         }
-        override fun <S : General> saveAll(entities: Iterable<S>): List<S> = entities.map { save(it) }
-        override fun findById(id: Long): Optional<General> = Optional.ofNullable(store[id])
-        override fun findAll(): List<General> = store.values.toList()
-        override fun findAll(sort: Sort): List<General> = findAll()
-        override fun findAll(pageable: Pageable): Page<General> = Page.empty()
-        override fun <S : General> findAll(example: Example<S>): List<S> = emptyList()
-        override fun <S : General> findAll(example: Example<S>, sort: Sort): List<S> = emptyList()
-        override fun <S : General> findAll(example: Example<S>, pageable: Pageable): Page<S> = Page.empty()
-        override fun findAllById(ids: Iterable<Long>): List<General> = ids.mapNotNull { store[it] }
+        override fun <S : Officer> saveAll(entities: Iterable<S>): List<S> = entities.map { save(it) }
+        override fun findById(id: Long): Optional<Officer> = Optional.ofNullable(store[id])
+        override fun findAll(): List<Officer> = store.values.toList()
+        override fun findAll(sort: Sort): List<Officer> = findAll()
+        override fun findAll(pageable: Pageable): Page<Officer> = Page.empty()
+        override fun <S : Officer> findAll(example: Example<S>): List<S> = emptyList()
+        override fun <S : Officer> findAll(example: Example<S>, sort: Sort): List<S> = emptyList()
+        override fun <S : Officer> findAll(example: Example<S>, pageable: Pageable): Page<S> = Page.empty()
+        override fun findAllById(ids: Iterable<Long>): List<Officer> = ids.mapNotNull { store[it] }
         override fun count(): Long = store.size.toLong()
-        override fun <S : General> count(example: Example<S>): Long = 0
+        override fun <S : Officer> count(example: Example<S>): Long = 0
         override fun deleteById(id: Long) { store.remove(id) }
-        override fun delete(entity: General) { store.remove(entity.id) }
+        override fun delete(entity: Officer) { store.remove(entity.id) }
         override fun deleteAllById(ids: Iterable<Long>) { ids.forEach { store.remove(it) } }
-        override fun deleteAll(entities: Iterable<General>) { entities.forEach { store.remove(it.id) } }
+        override fun deleteAll(entities: Iterable<Officer>) { entities.forEach { store.remove(it.id) } }
         override fun deleteAll() { store.clear() }
         override fun existsById(id: Long): Boolean = id in store
-        override fun <S : General> exists(example: Example<S>): Boolean = false
-        override fun <S : General, R : Any> findBy(example: Example<S>, queryFunction: Function<FluentQuery.FetchableFluentQuery<S>, R>): R = throw UnsupportedOperationException()
+        override fun <S : Officer> exists(example: Example<S>): Boolean = false
+        override fun <S : Officer, R : Any> findBy(example: Example<S>, queryFunction: Function<FluentQuery.FetchableFluentQuery<S>, R>): R = throw UnsupportedOperationException()
         override fun flush() {}
-        override fun <S : General> saveAndFlush(entity: S): S = save(entity)
-        override fun <S : General> saveAllAndFlush(entities: Iterable<S>): List<S> = saveAll(entities)
-        override fun deleteAllInBatch(entities: Iterable<General>) {}
+        override fun <S : Officer> saveAndFlush(entity: S): S = save(entity)
+        override fun <S : Officer> saveAllAndFlush(entities: Iterable<S>): List<S> = saveAll(entities)
+        override fun deleteAllInBatch(entities: Iterable<Officer>) {}
         override fun deleteAllByIdInBatch(ids: Iterable<Long>) {}
         override fun deleteAllInBatch() {}
-        override fun getReferenceById(id: Long): General = store[id] ?: throw NoSuchElementException()
-        @Deprecated("Use getReferenceById") override fun getById(id: Long): General = getReferenceById(id)
-        @Deprecated("Use getReferenceById") override fun getOne(id: Long): General = getReferenceById(id)
-        override fun <S : General> findOne(example: Example<S>): Optional<S> = Optional.empty()
-        override fun findByWorldId(worldId: Long): List<General> = store.values.filter { it.worldId == worldId }
-        override fun findByNationId(nationId: Long): List<General> = store.values.filter { it.nationId == nationId }
-        override fun findByCityId(cityId: Long): List<General> = store.values.filter { it.cityId == cityId }
-        override fun findByUserId(userId: Long): List<General> = emptyList()
-        override fun findByWorldIdAndUserId(worldId: Long, userId: Long): List<General> = emptyList()
-        override fun findByWorldIdAndCityIdIn(worldId: Long, cityIds: List<Long>): List<General> = emptyList()
-        override fun findByWorldIdAndCommandEndTimeBefore(worldId: Long, time: OffsetDateTime): List<General> = emptyList()
-        override fun findByTroopId(troopId: Long): List<General> = emptyList()
-        override fun findByWorldIdAndNationId(worldId: Long, nationId: Long): List<General> = emptyList()
-        override fun findByNameAndWorldId(name: String, worldId: Long): General? = null
+        override fun getReferenceById(id: Long): Officer = store[id] ?: throw NoSuchElementException()
+        @Deprecated("Use getReferenceById") override fun getById(id: Long): Officer = getReferenceById(id)
+        @Deprecated("Use getReferenceById") override fun getOne(id: Long): Officer = getReferenceById(id)
+        override fun <S : Officer> findOne(example: Example<S>): Optional<S> = Optional.empty()
+        override fun findByWorldId(worldId: Long): List<Officer> = store.values.filter { it.sessionId == worldId }
+        override fun findByNationId(nationId: Long): List<Officer> = store.values.filter { it.factionId == nationId }
+        override fun findByCityId(cityId: Long): List<Officer> = store.values.filter { it.planetId == cityId }
+        override fun findByUserId(userId: Long): List<Officer> = emptyList()
+        override fun findByWorldIdAndUserId(worldId: Long, userId: Long): List<Officer> = emptyList()
+        override fun findByWorldIdAndCityIdIn(worldId: Long, cityIds: List<Long>): List<Officer> = emptyList()
+        override fun findByWorldIdAndCommandEndTimeBefore(worldId: Long, time: OffsetDateTime): List<Officer> = emptyList()
+        override fun findByTroopId(troopId: Long): List<Officer> = emptyList()
+        override fun findByWorldIdAndNationId(worldId: Long, nationId: Long): List<Officer> = emptyList()
+        override fun findByNameAndWorldId(name: String, worldId: Long): Officer? = null
         override fun getAverageStats(worldId: Long, nationId: Long) = com.openlogh.repository.GeneralAverageStats()
     }
 
-    private class StubCityRepository(private val cities: Map<Long, City> = emptyMap()) : CityRepository {
-        override fun <S : City> save(entity: S): S { @Suppress("UNCHECKED_CAST") return entity as S }
-        override fun <S : City> saveAll(entities: Iterable<S>): List<S> = entities.toList()
-        override fun findById(id: Long): Optional<City> = Optional.ofNullable(cities[id])
-        override fun findAll(): List<City> = cities.values.toList()
-        override fun findAll(sort: Sort): List<City> = findAll()
-        override fun findAll(pageable: Pageable): Page<City> = Page.empty()
-        override fun <S : City> findAll(example: Example<S>): List<S> = emptyList()
-        override fun <S : City> findAll(example: Example<S>, sort: Sort): List<S> = emptyList()
-        override fun <S : City> findAll(example: Example<S>, pageable: Pageable): Page<S> = Page.empty()
-        override fun findAllById(ids: Iterable<Long>): List<City> = ids.mapNotNull { cities[it] }
+    private class StubCityRepository(private val cities: Map<Long, Planet> = emptyMap()) : PlanetRepository {
+        override fun <S : Planet> save(entity: S): S { @Suppress("UNCHECKED_CAST") return entity as S }
+        override fun <S : Planet> saveAll(entities: Iterable<S>): List<S> = entities.toList()
+        override fun findById(id: Long): Optional<Planet> = Optional.ofNullable(cities[id])
+        override fun findAll(): List<Planet> = cities.values.toList()
+        override fun findAll(sort: Sort): List<Planet> = findAll()
+        override fun findAll(pageable: Pageable): Page<Planet> = Page.empty()
+        override fun <S : Planet> findAll(example: Example<S>): List<S> = emptyList()
+        override fun <S : Planet> findAll(example: Example<S>, sort: Sort): List<S> = emptyList()
+        override fun <S : Planet> findAll(example: Example<S>, pageable: Pageable): Page<S> = Page.empty()
+        override fun findAllById(ids: Iterable<Long>): List<Planet> = ids.mapNotNull { cities[it] }
         override fun count(): Long = cities.size.toLong()
-        override fun <S : City> count(example: Example<S>): Long = 0
+        override fun <S : Planet> count(example: Example<S>): Long = 0
         override fun deleteById(id: Long) {}
-        override fun delete(entity: City) {}
+        override fun delete(entity: Planet) {}
         override fun deleteAllById(ids: Iterable<Long>) {}
-        override fun deleteAll(entities: Iterable<City>) {}
+        override fun deleteAll(entities: Iterable<Planet>) {}
         override fun deleteAll() {}
         override fun existsById(id: Long): Boolean = id in cities
-        override fun <S : City> exists(example: Example<S>): Boolean = false
-        override fun <S : City, R : Any> findBy(example: Example<S>, queryFunction: Function<FluentQuery.FetchableFluentQuery<S>, R>): R = throw UnsupportedOperationException()
+        override fun <S : Planet> exists(example: Example<S>): Boolean = false
+        override fun <S : Planet, R : Any> findBy(example: Example<S>, queryFunction: Function<FluentQuery.FetchableFluentQuery<S>, R>): R = throw UnsupportedOperationException()
         override fun flush() {}
-        override fun <S : City> saveAndFlush(entity: S): S = save(entity)
-        override fun <S : City> saveAllAndFlush(entities: Iterable<S>): List<S> = saveAll(entities)
-        override fun deleteAllInBatch(entities: Iterable<City>) {}
+        override fun <S : Planet> saveAndFlush(entity: S): S = save(entity)
+        override fun <S : Planet> saveAllAndFlush(entities: Iterable<S>): List<S> = saveAll(entities)
+        override fun deleteAllInBatch(entities: Iterable<Planet>) {}
         override fun deleteAllByIdInBatch(ids: Iterable<Long>) {}
         override fun deleteAllInBatch() {}
-        override fun getReferenceById(id: Long): City = cities[id] ?: throw NoSuchElementException()
-        @Deprecated("Use getReferenceById") override fun getById(id: Long): City = getReferenceById(id)
-        @Deprecated("Use getReferenceById") override fun getOne(id: Long): City = getReferenceById(id)
-        override fun <S : City> findOne(example: Example<S>): Optional<S> = Optional.empty()
-        override fun findByWorldId(worldId: Long): List<City> = emptyList()
-        override fun findByNationId(nationId: Long): List<City> = emptyList()
+        override fun getReferenceById(id: Long): Planet = cities[id] ?: throw NoSuchElementException()
+        @Deprecated("Use getReferenceById") override fun getById(id: Long): Planet = getReferenceById(id)
+        @Deprecated("Use getReferenceById") override fun getOne(id: Long): Planet = getReferenceById(id)
+        override fun <S : Planet> findOne(example: Example<S>): Optional<S> = Optional.empty()
+        override fun findByWorldId(worldId: Long): List<Planet> = emptyList()
+        override fun findByNationId(nationId: Long): List<Planet> = emptyList()
     }
 
     private class StubMessageRepository : MessageRepository {
@@ -228,48 +228,48 @@ class FieldBattleTriggerTest {
         cityId: Long = 1L,
         crew: Int = 1000,
         lastTurn: MutableMap<String, Any> = mutableMapOf(),
-    ) = General(
+    ) = Officer(
         id = id,
-        worldId = 1,
+        sessionId = 1,
         name = "장수$id",
-        nationId = nationId,
-        cityId = cityId,
-        crew = crew,
-        rice = 10000,
+        factionId = nationId,
+        planetId = cityId,
+        ships = crew,
+        supplies = 10000,
         leadership = 60.toShort(),
         strength = 60.toShort(),
         intel = 60.toShort(),
         turnTime = OffsetDateTime.now(),
     ).also { it.lastTurn = lastTurn }
 
-    private fun makeCity(id: Long) = City(
+    private fun makeCity(id: Long) = Planet(
         id = id,
-        worldId = 1,
+        sessionId = 1,
         name = "도시$id",
-        nationId = 1,
-        def = 0,
-        defMax = 1000,
-        wall = 0,
-        wallMax = 1000,
-        pop = 10000,
-        popMax = 50000,
+        factionId = 1,
+        orbitalDefense = 0,
+        orbitalDefenseMax = 1000,
+        fortress = 0,
+        fortressMax = 1000,
+        population = 10000,
+        populationMax = 50000,
         level = 0,
     )
 
-    private fun makeWorld() = WorldState(id = 1.toShort()).also {
+    private fun makeWorld() = SessionState(id = 1.toShort()).also {
         it.currentYear = 200.toShort()
         it.currentMonth = 1.toShort()
     }
 
     private fun makeTrigger(
-        interceptorCity: City,
+        interceptorCity: Planet,
         generalRepo: StubGeneralRepository = StubGeneralRepository(),
         messageRepo: StubMessageRepository = StubMessageRepository(),
         recordRepo: StubRecordRepository = StubRecordRepository(),
     ) = FieldBattleTrigger(
         fieldBattleService = FieldBattleService(),
-        generalRepository = generalRepo,
-        cityRepository = StubCityRepository(mapOf(interceptorCity.id to interceptorCity)),
+        officerRepository = generalRepo,
+        planetRepository = StubCityRepository(mapOf(interceptorCity.id to interceptorCity)),
         messageRepository = messageRepo,
         recordRepository = recordRepo,
     )

@@ -3,14 +3,14 @@ package com.openlogh.qa.parity
 import com.openlogh.engine.EconomyService
 import com.openlogh.engine.turn.cqrs.persist.toEntity
 import com.openlogh.engine.turn.cqrs.persist.toSnapshot
-import com.openlogh.entity.City
-import com.openlogh.entity.General
-import com.openlogh.entity.Nation
-import com.openlogh.entity.WorldState
-import com.openlogh.repository.CityRepository
-import com.openlogh.repository.GeneralRepository
+import com.openlogh.entity.Planet
+import com.openlogh.entity.Officer
+import com.openlogh.entity.Faction
+import com.openlogh.entity.SessionState
+import com.openlogh.repository.PlanetRepository
+import com.openlogh.repository.OfficerRepository
 import com.openlogh.repository.MessageRepository
-import com.openlogh.repository.NationRepository
+import com.openlogh.repository.FactionRepository
 import com.openlogh.service.HistoryService
 import com.openlogh.service.InheritanceService
 import com.openlogh.service.MapService
@@ -43,23 +43,23 @@ import org.mockito.Mockito.`when`
 class EconomyEventParityTest {
 
     private lateinit var service: EconomyService
-    private lateinit var cityRepository: CityRepository
-    private lateinit var nationRepository: NationRepository
-    private lateinit var generalRepository: GeneralRepository
+    private lateinit var planetRepository: PlanetRepository
+    private lateinit var factionRepository: FactionRepository
+    private lateinit var officerRepository: OfficerRepository
     private lateinit var mapService: MapService
 
-    private val cities = linkedMapOf<Long, City>()
-    private val nations = linkedMapOf<Long, Nation>()
-    private val generals = linkedMapOf<Long, General>()
+    private val cities = linkedMapOf<Long, Planet>()
+    private val nations = linkedMapOf<Long, Faction>()
+    private val generals = linkedMapOf<Long, Officer>()
 
     @BeforeEach
     fun setUp() {
-        cityRepository = mock(CityRepository::class.java)
-        nationRepository = mock(NationRepository::class.java)
-        generalRepository = mock(GeneralRepository::class.java)
+        planetRepository = mock(PlanetRepository::class.java)
+        factionRepository = mock(FactionRepository::class.java)
+        officerRepository = mock(OfficerRepository::class.java)
         mapService = mock(MapService::class.java)
         service = EconomyService(
-            cityRepository, nationRepository, generalRepository,
+            planetRepository, factionRepository, officerRepository,
             mock(MessageRepository::class.java), mapService,
             mock(HistoryService::class.java), mock(InheritanceService::class.java),
         )
@@ -69,41 +69,41 @@ class EconomyEventParityTest {
     }
 
     private fun wireRepos() {
-        `when`(cityRepository.findByWorldId(ArgumentMatchers.anyLong())).thenAnswer { inv ->
+        `when`(planetRepository.findBySessionId(ArgumentMatchers.anyLong())).thenAnswer { inv ->
             val worldId = inv.arguments[0] as Long
-            cities.values.filter { it.worldId == worldId }.map { it.toSnapshot().toEntity() }
+            cities.values.filter { it.sessionId == worldId }.map { it.toSnapshot().toEntity() }
         }
-        `when`(nationRepository.findByWorldId(ArgumentMatchers.anyLong())).thenAnswer { inv ->
+        `when`(factionRepository.findBySessionId(ArgumentMatchers.anyLong())).thenAnswer { inv ->
             val worldId = inv.arguments[0] as Long
-            nations.values.filter { it.worldId == worldId }.map { it.toSnapshot().toEntity() }
+            nations.values.filter { it.sessionId == worldId }.map { it.toSnapshot().toEntity() }
         }
-        `when`(generalRepository.findByWorldId(ArgumentMatchers.anyLong())).thenAnswer { inv ->
+        `when`(officerRepository.findBySessionId(ArgumentMatchers.anyLong())).thenAnswer { inv ->
             val worldId = inv.arguments[0] as Long
-            generals.values.filter { it.worldId == worldId }.map { it.toSnapshot().toEntity() }
+            generals.values.filter { it.sessionId == worldId }.map { it.toSnapshot().toEntity() }
         }
-        `when`(generalRepository.findByWorldIdAndCityIdIn(ArgumentMatchers.anyLong(), ArgumentMatchers.anyList()))
+        `when`(officerRepository.findBySessionIdAndPlanetIdIn(ArgumentMatchers.anyLong(), ArgumentMatchers.anyList()))
             .thenReturn(emptyList())
-        `when`(cityRepository.save(ArgumentMatchers.any(City::class.java))).thenAnswer { inv ->
-            val city = inv.arguments[0] as City
+        `when`(planetRepository.save(ArgumentMatchers.any(City::class.java))).thenAnswer { inv ->
+            val city = inv.arguments[0] as Planet
             cities[city.id] = city.toSnapshot().toEntity()
             city
         }
-        `when`(nationRepository.save(ArgumentMatchers.any(Nation::class.java))).thenAnswer { inv ->
-            val nation = inv.arguments[0] as Nation
+        `when`(factionRepository.save(ArgumentMatchers.any(Nation::class.java))).thenAnswer { inv ->
+            val nation = inv.arguments[0] as Faction
             nations[nation.id] = nation.toSnapshot().toEntity()
             nation
         }
-        `when`(generalRepository.save(ArgumentMatchers.any(General::class.java))).thenAnswer { inv ->
-            val general = inv.arguments[0] as General
+        `when`(officerRepository.save(ArgumentMatchers.any(General::class.java))).thenAnswer { inv ->
+            val general = inv.arguments[0] as Officer
             generals[general.id] = general.toSnapshot().toEntity()
             general
         }
     }
 
     private fun seed(
-        cityList: List<City> = emptyList(),
-        nationList: List<Nation> = emptyList(),
-        generalList: List<General> = emptyList(),
+        cityList: List<Planet> = emptyList(),
+        nationList: List<Faction> = emptyList(),
+        generalList: List<Officer> = emptyList(),
     ) {
         cities.clear(); nations.clear(); generals.clear()
         cityList.forEach { cities[it.id] = it.toSnapshot().toEntity() }
@@ -111,8 +111,8 @@ class EconomyEventParityTest {
         generalList.forEach { generals[it.id] = it.toSnapshot().toEntity() }
     }
 
-    private fun world(year: Short = 200, month: Short = 1, startYear: Int = 190): WorldState {
-        val w = WorldState(id = 1, scenarioCode = "test", currentYear = year, currentMonth = month, tickSeconds = 300)
+    private fun world(year: Short = 200, month: Short = 1, startYear: Int = 190): SessionState {
+        val w = SessionState(id = 1, scenarioCode = "test", currentYear = year, currentMonth = month, tickSeconds = 300)
         w.config["startYear"] = startYear
         w.config["hiddenSeed"] = "test-seed"
         return w
@@ -128,8 +128,8 @@ class EconomyEventParityTest {
         wall: Int = 500, wallMax: Int = 1000,
         trust: Float = 80f, supplyState: Short = 1,
         level: Short = 5, dead: Int = 0, trade: Int = 100,
-    ): City = City(
-        id = id, worldId = 1, name = "city$id", mapCityId = id.toInt(),
+    ): Planet = Planet(
+        id = id, sessionId = 1, name = "city$id", mapPlanetId = id.toInt(),
         nationId = nationId, pop = pop, popMax = popMax,
         agri = agri, agriMax = agriMax, comm = comm, commMax = commMax,
         secu = secu, secuMax = secuMax, def = def, defMax = defMax,
@@ -142,22 +142,22 @@ class EconomyEventParityTest {
         level: Short = 1, rateTmp: Short = 15, bill: Short = 100,
         capitalCityId: Long? = 1, rate: Short = 15,
         typeCode: String = "che_중립",
-    ): Nation = Nation(
-        id = id, worldId = 1, name = "nation$id", color = "#FF0000",
-        gold = gold, rice = rice, level = level, rateTmp = rateTmp,
-        bill = bill, capitalCityId = capitalCityId, rate = rate,
-        typeCode = typeCode,
+    ): Faction = Faction(
+        id = id, sessionId = 1, name = "nation$id", color = "#FF0000",
+        funds = gold, supplies = rice, factionRank = level, conscriptionRateTmp = rateTmp,
+        taxRate = bill, capitalPlanetId = capitalCityId, conscriptionRate = rate,
+        factionType = typeCode,
     )
 
     private fun general(
         id: Long = 1, nationId: Long = 1, cityId: Long = 1,
         gold: Int = 1000, rice: Int = 1000, dedication: Int = 1000,
-        officerLevel: Short = 1, officerCity: Int = 0, npcState: Short = 0,
-    ): General = General(
-        id = id, worldId = 1, name = "general$id",
-        nationId = nationId, cityId = cityId, gold = gold, rice = rice,
+        officerLevel: Short = 1, officerPlanet: Int = 0, npcState: Short = 0,
+    ): Officer = Officer(
+        id = id, sessionId = 1, name = "general$id",
+        factionId = nationId, planetId = cityId, funds = gold, supplies = rice,
         dedication = dedication, officerLevel = officerLevel,
-        officerCity = officerCity, npcState = npcState,
+        officerPlanet = officerPlanet, npcState = npcState,
     )
 
     // ────────────────────────────────────────────────────────────────────────
@@ -184,12 +184,12 @@ class EconomyEventParityTest {
 
             // Month 3: no semi-annual growth
             service.postUpdateMonthly(world(month = 3))
-            val agriMonth3 = cities[1L]!!.agri
+            val agriMonth3 = cities[1L]!!.production
 
             // Reset and test month 1
             seed(listOf(city(agri = 500)), listOf(nation(rateTmp = 15)), listOf(general(gold = 0, rice = 0)))
             service.postUpdateMonthly(world(month = 1))
-            val agriMonth1 = cities[1L]!!.agri
+            val agriMonth1 = cities[1L]!!.production
 
             // Month 1 should have infrastructure change; month 3 should not
             assertThat(agriMonth1).isNotEqualTo(agriMonth3)
@@ -242,7 +242,7 @@ class EconomyEventParityTest {
 
             service.postUpdateMonthly(world(month = 1))
 
-            val updatedPop = cities[1L]!!.pop
+            val updatedPop = cities[1L]!!.population
             // Expected: 5000 + 10000 * (1 + 0.075 * 1.05) = 5000 + 10787 = 15787
             assertThat(updatedPop).isCloseTo(15787, within(10))
         }
@@ -261,7 +261,7 @@ class EconomyEventParityTest {
 
             service.postUpdateMonthly(world(month = 1))
 
-            val updatedPop = cities[1L]!!.pop
+            val updatedPop = cities[1L]!!.population
             assertThat(updatedPop).isCloseTo(14050, within(10))
         }
 
@@ -275,7 +275,7 @@ class EconomyEventParityTest {
 
             service.postUpdateMonthly(world(month = 1))
 
-            assertThat(cities[1L]!!.pop).isLessThanOrEqualTo(50000)
+            assertThat(cities[1L]!!.population).isLessThanOrEqualTo(50000)
         }
 
         // ── Infrastructure Growth ──
@@ -314,7 +314,7 @@ class EconomyEventParityTest {
 
             service.postUpdateMonthly(world(month = 1))
 
-            val updatedAgri = cities[1L]!!.agri
+            val updatedAgri = cities[1L]!!.production
             // Legacy: supplied nation cities get 0.99 pre-decay then growth
             // 500 * 0.99 = 495, then 495 * 1.025 = 507.375 -> 507
             val expected = (500 * 0.99 * 1.025).toInt()  // 507
@@ -334,8 +334,8 @@ class EconomyEventParityTest {
 
             service.postUpdateMonthly(world(month = 1))
 
-            assertThat(cities[1L]!!.agri).isLessThanOrEqualTo(1000)
-            assertThat(cities[1L]!!.comm).isLessThanOrEqualTo(1000)
+            assertThat(cities[1L]!!.production).isLessThanOrEqualTo(1000)
+            assertThat(cities[1L]!!.commerce).isLessThanOrEqualTo(1000)
         }
 
         // ── Trust Adjustment ──
@@ -358,7 +358,7 @@ class EconomyEventParityTest {
 
             service.postUpdateMonthly(world(month = 1))
 
-            assertThat(cities[1L]!!.trust).isEqualTo(expectedTrust)
+            assertThat(cities[1L]!!.approval).isEqualTo(expectedTrust)
         }
     }
 
@@ -381,11 +381,11 @@ class EconomyEventParityTest {
             service.postUpdateMonthly(world(month = 1))
 
             val updated = cities[1L]!!
-            assertThat(updated.agri).isEqualTo(990)
-            assertThat(updated.comm).isEqualTo(990)
-            assertThat(updated.secu).isEqualTo(990)
-            assertThat(updated.def).isEqualTo(990)
-            assertThat(updated.wall).isEqualTo(990)
+            assertThat(updated.production).isEqualTo(990)
+            assertThat(updated.commerce).isEqualTo(990)
+            assertThat(updated.security).isEqualTo(990)
+            assertThat(updated.orbitalDefense).isEqualTo(990)
+            assertThat(updated.fortress).isEqualTo(990)
         }
 
         @Test
@@ -396,7 +396,7 @@ class EconomyEventParityTest {
 
             service.postUpdateMonthly(world(month = 1))
 
-            assertThat(cities[1L]!!.trust).isEqualTo(50f)
+            assertThat(cities[1L]!!.approval).isEqualTo(50f)
         }
 
         @Test
@@ -432,8 +432,8 @@ class EconomyEventParityTest {
             service.postUpdateMonthly(world(month = 1))
 
             val updated = cities[1L]!!
-            assertThat(updated.agri).isEqualTo(990)
-            assertThat(updated.comm).isEqualTo(990)
+            assertThat(updated.production).isEqualTo(990)
+            assertThat(updated.commerce).isEqualTo(990)
         }
 
         @Test
@@ -447,7 +447,7 @@ class EconomyEventParityTest {
             service.postUpdateMonthly(world(month = 1))
 
             // With pre-decay + growth: 500 * 0.99 * 1.025 = 507 > 500
-            assertThat(cities[1L]!!.agri).isGreaterThan(500)
+            assertThat(cities[1L]!!.production).isGreaterThan(500)
         }
     }
 
@@ -497,10 +497,10 @@ class EconomyEventParityTest {
 
             val updated2 = cities[2L]!!
             // Unsupplied penalty: pop * 0.9, trust * 0.9, infra * 0.9
-            assertThat(updated2.pop).isEqualTo(9000)
-            assertThat(updated2.trust).isEqualTo(72f)
-            assertThat(updated2.agri).isEqualTo(450)
-            assertThat(updated2.comm).isEqualTo(450)
+            assertThat(updated2.population).isEqualTo(9000)
+            assertThat(updated2.approval).isEqualTo(72f)
+            assertThat(updated2.production).isEqualTo(450)
+            assertThat(updated2.commerce).isEqualTo(450)
             assertThat(updated2.supplyState.toInt()).isEqualTo(0)
         }
 
@@ -520,7 +520,7 @@ class EconomyEventParityTest {
 
             // trust = 25 * 0.9 = 22.5 < 30 -> city neutralized
             val updated2 = cities[2L]!!
-            assertThat(updated2.nationId).isEqualTo(0L)
+            assertThat(updated2.factionId).isEqualTo(0L)
         }
 
         @Test
@@ -536,7 +536,7 @@ class EconomyEventParityTest {
             service.postUpdateMonthly(world(month = 3))
 
             // Capital should remain owned even with trust < 30
-            assertThat(cities[1L]!!.nationId).isEqualTo(1L)
+            assertThat(cities[1L]!!.factionId).isEqualTo(1L)
         }
     }
 
@@ -566,7 +566,7 @@ class EconomyEventParityTest {
             // startYear=190, currentYear=192 -> within first 3 years
             service.processDisasterOrBoom(world(year = 192, month = 4, startYear = 190))
 
-            assertThat(cities[1L]!!.pop).isEqualTo(10000)
+            assertThat(cities[1L]!!.population).isEqualTo(10000)
         }
 
         @Test
@@ -698,7 +698,7 @@ class EconomyEventParityTest {
 
             service.randomizeCityTradeRate(world())
 
-            assertThat(cities[1L]!!.trade).isEqualTo(100)
+            assertThat(cities[1L]!!.tradeRoute).isEqualTo(100)
         }
 
         @Test
@@ -711,7 +711,7 @@ class EconomyEventParityTest {
 
             service.randomizeCityTradeRate(world())
 
-            assertThat(cities[1L]!!.trade).isEqualTo(100)
+            assertThat(cities[1L]!!.tradeRoute).isEqualTo(100)
         }
 
         @Test
@@ -725,7 +725,7 @@ class EconomyEventParityTest {
             service.randomizeCityTradeRate(world(year = 200, month = 5))
 
             for ((_, c) in cities) {
-                assertThat(c.trade).isBetween(95, 105)
+                assertThat(c.tradeRoute).isBetween(95, 105)
             }
         }
     }
@@ -734,7 +734,7 @@ class EconomyEventParityTest {
     // Yearly Statistics (National Power)
     // Legacy: power = (resource + tech + cityPower + statPower + dex + expDed) / 10
     //   resource = (nationGold + nationRice + sum(generalGold + generalRice)) / 100
-    //   tech = nation.tech
+    //   tech = nation.techLevel
     //   cityPower = sum(pop) * sum(pop+agri+comm+secu+wall+def) / sum(popMax+agriMax+commMax+secuMax+wallMax+defMax) / 100
     //   statPower = per-general formula
     //   dex = sum(dex1..5) / 1000
@@ -844,7 +844,7 @@ class EconomyEventParityTest {
 
             service.postUpdateMonthly(world(month = 1))
 
-            assertThat(cities[1L]!!.pop)
+            assertThat(cities[1L]!!.population)
                 .describedAs("Pop: pop=$pop popMax=$popMax secu=$secu/$secuMax tax=$taxRate")
                 .isCloseTo(expectedPop, within(10))
         }
@@ -858,14 +858,14 @@ class EconomyEventParityTest {
             // Default (중립)
             seed(listOf(c), listOf(nation(rateTmp = 15, typeCode = "che_중립")), listOf(g))
             service.postUpdateMonthly(world(month = 1))
-            val popDefault = cities[1L]!!.pop
+            val popDefault = cities[1L]!!.population
 
             // 농업국 (popGrowthMultiplier=1.05)
             seed(listOf(city(pop = 10000, popMax = 50000, secu = 500, secuMax = 1000)),
                 listOf(nation(rateTmp = 15, typeCode = "che_농업국")),
                 listOf(general(gold = 0, rice = 0)))
             service.postUpdateMonthly(world(month = 1))
-            val popAgri = cities[1L]!!.pop
+            val popAgri = cities[1L]!!.population
 
             // 농업국 should have higher population growth
             assertThat(popAgri).isGreaterThan(popDefault)
@@ -922,10 +922,10 @@ class EconomyEventParityTest {
 
             val updated = cities[1L]!!
             // All infra fields follow the same formula
-            assertThat(updated.agri)
+            assertThat(updated.production)
                 .describedAs("Agri: $initial -> decay+grow with tax=$taxRate")
                 .isCloseTo(expected, within(1))
-            assertThat(updated.comm)
+            assertThat(updated.commerce)
                 .describedAs("Comm: $initial -> decay+grow with tax=$taxRate")
                 .isCloseTo(expected, within(1))
         }
@@ -1017,7 +1017,7 @@ class EconomyEventParityTest {
     }
 
     // ────────────────────────────────────────────────────────────────────────
-    // PHP-Verified: Nation Level Thresholds
+    // PHP-Verified: Faction Level Thresholds
     // Legacy UpdateNationLevel.php:41-50:
     //   nationLevelByCityCnt = [0, 1, 2, 5, 8, 11, 16, 21]  (PHP 8-level)
     //   opensamguk extension: [0, 1, 2, 4, 6, 9, 12, 16, 20, 25] (10-level)
@@ -1061,10 +1061,10 @@ class EconomyEventParityTest {
             assertThat(nations[1L]!!.level.toInt())
                 .describedAs("Level for $highCityCount high cities")
                 .isEqualTo(expectedLevel)
-            assertThat(nations[1L]!!.gold)
+            assertThat(nations[1L]!!.funds)
                 .describedAs("Gold reward for level $expectedLevel")
                 .isEqualTo(expectedReward)
-            assertThat(nations[1L]!!.rice)
+            assertThat(nations[1L]!!.supplies)
                 .describedAs("Rice reward for level $expectedLevel")
                 .isEqualTo(expectedReward)
         }
@@ -1082,8 +1082,8 @@ class EconomyEventParityTest {
 
             assertThat(nations[1L]!!.level.toInt()).isEqualTo(4)
             // Reward = newLevel * 1000 = 4000
-            assertThat(nations[1L]!!.gold).isEqualTo(5000 + 4000)
-            assertThat(nations[1L]!!.rice).isEqualTo(5000 + 4000)
+            assertThat(nations[1L]!!.funds).isEqualTo(5000 + 4000)
+            assertThat(nations[1L]!!.supplies).isEqualTo(5000 + 4000)
         }
     }
 
@@ -1111,7 +1111,7 @@ class EconomyEventParityTest {
             for (yr in 200..299) {
                 seed(listOf(city(level = 4, trade = 100)), listOf(nation()), listOf(general()))
                 service.randomizeCityTradeRate(world(year = yr.toShort(), month = 5))
-                val trade = cities[1L]!!.trade
+                val trade = cities[1L]!!.tradeRoute
                 if (trade != 100) changedCount++
                 // Regardless, all randomized values should be in range
                 assertThat(trade).isBetween(95, 105)
@@ -1133,7 +1133,7 @@ class EconomyEventParityTest {
             service.randomizeCityTradeRate(world())
 
             // Level 1: prob=0, trade should reset (PHP: null, Kotlin: 100)
-            assertThat(cities[1L]!!.trade).isEqualTo(100)
+            assertThat(cities[1L]!!.tradeRoute).isEqualTo(100)
         }
     }
 
@@ -1237,9 +1237,9 @@ class EconomyEventParityTest {
             service.postUpdateMonthly(world(month = 3))
 
             val updated2 = cities[2L]!!
-            assertThat(updated2.pop).isCloseTo(expectedPop, within(1))
-            assertThat(updated2.trust).isCloseTo(expectedTrust, within(0.1f))
-            assertThat(updated2.agri).isCloseTo(expectedAgri, within(1))
+            assertThat(updated2.population).isCloseTo(expectedPop, within(1))
+            assertThat(updated2.approval).isCloseTo(expectedTrust, within(0.1f))
+            assertThat(updated2.production).isCloseTo(expectedAgri, within(1))
         }
 
         @Test
@@ -1258,7 +1258,7 @@ class EconomyEventParityTest {
             service.postUpdateMonthly(world(month = 3))
 
             // 33.4 * 0.9 = 30.06 >= 30 -> not neutralized
-            assertThat(cities[2L]!!.nationId).isEqualTo(1L)
+            assertThat(cities[2L]!!.factionId).isEqualTo(1L)
         }
     }
 }

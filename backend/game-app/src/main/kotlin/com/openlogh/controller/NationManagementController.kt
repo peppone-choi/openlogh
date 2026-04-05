@@ -23,7 +23,7 @@ class NationManagementController(
         @RequestBody request: AppointOfficerRequest,
     ): ResponseEntity<Void> {
         try {
-            if (!factionService.appointOfficer(nationId, request.generalId, request.officerLevel, request.officerCity)) {
+            if (!factionService.appointOfficer(nationId, request.generalId, request.officerLevel, request.officerPlanet)) {
                 return ResponseEntity.badRequest().build()
             }
             return ResponseEntity.ok().build()

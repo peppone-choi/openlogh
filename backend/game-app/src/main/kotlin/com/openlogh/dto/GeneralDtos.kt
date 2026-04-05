@@ -63,7 +63,7 @@ data class NpcCard(
     val politics: Short,
     val charm: Short,
     val nationId: Long,
-    val nationName: String,
+    val factionName: String,
     val nationColor: String,
     val personality: String,
     val special: String,

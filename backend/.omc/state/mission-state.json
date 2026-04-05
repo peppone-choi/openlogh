@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-01T07:26:39.295Z",
+  "updatedAt": "2026-04-05T10:05:38.378Z",
   "missions": [
     {
       "id": "session:4a0fb661-6be7-4637-bbf9-347e012cafe0:none",
@@ -94,6 +94,54 @@
           "agent": "gsd-verifier:a13fdb2",
           "detail": "completed",
           "sourceKey": "session-stop:a13fdb272584e933c"
+        }
+      ]
+    },
+    {
+      "id": "session:abcc047c-d4c3-4ed2-8d6b-6d35ad9d258a:none",
+      "source": "session",
+      "name": "none",
+      "objective": "Session mission",
+      "createdAt": "2026-04-05T09:33:21.649Z",
+      "updatedAt": "2026-04-05T10:05:38.378Z",
+      "status": "done",
+      "workerCount": 1,
+      "taskCounts": {
+        "total": 1,
+        "pending": 0,
+        "blocked": 0,
+        "inProgress": 0,
+        "completed": 1,
+        "failed": 0
+      },
+      "agents": [
+        {
+          "name": "gsd-executor:adb97a1",
+          "role": "gsd-executor",
+          "ownership": "adb97a19bd5bb01a5",
+          "status": "done",
+          "currentStep": null,
+          "latestUpdate": "completed",
+          "completedSummary": null,
+          "updatedAt": "2026-04-05T10:05:38.378Z"
+        }
+      ],
+      "timeline": [
+        {
+          "id": "session-start:adb97a19bd5bb01a5:2026-04-05T09:33:21.649Z",
+          "at": "2026-04-05T09:33:21.649Z",
+          "kind": "update",
+          "agent": "gsd-executor:adb97a1",
+          "detail": "started gsd-executor:adb97a1",
+          "sourceKey": "session-start:adb97a19bd5bb01a5"
+        },
+        {
+          "id": "session-stop:adb97a19bd5bb01a5:2026-04-05T10:05:38.378Z",
+          "at": "2026-04-05T10:05:38.378Z",
+          "kind": "completion",
+          "agent": "gsd-executor:adb97a1",
+          "detail": "completed",
+          "sourceKey": "session-stop:adb97a19bd5bb01a5"
         }
       ]
     }

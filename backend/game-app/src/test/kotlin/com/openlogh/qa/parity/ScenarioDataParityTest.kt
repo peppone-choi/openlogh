@@ -100,7 +100,7 @@ class ScenarioDataParityTest {
         }
     }
 
-    // ── DATA-01: General 3-Stat Parity ──
+    // ── DATA-01: Officer 3-Stat Parity ──
 
     @Nested
     @DisplayName("General 3-Stat Parity (DATA-01)")
@@ -326,7 +326,7 @@ class ScenarioDataParityTest {
         }
     }
 
-    // ── DATA-02: City Initial Conditions ──
+    // ── DATA-02: Planet Initial Conditions ──
 
     @Nested
     @DisplayName("City Initial Conditions (DATA-02)")

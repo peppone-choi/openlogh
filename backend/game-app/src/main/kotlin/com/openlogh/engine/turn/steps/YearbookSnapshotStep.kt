@@ -18,6 +18,6 @@ class YearbookSnapshotStep(
     override val order = 500
 
     override fun execute(context: TurnContext) {
-        yearbookService.saveMonthlySnapshot(context.sessionId, context.previousYear, context.previousMonth)
+        yearbookService.saveMonthlySnapshot(context.worldId, context.previousYear, context.previousMonth)
     }
 }

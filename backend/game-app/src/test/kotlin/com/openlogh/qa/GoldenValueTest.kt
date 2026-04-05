@@ -7,9 +7,9 @@ import com.openlogh.command.general.che_모병
 import com.openlogh.engine.LiteHashDRBG
 import com.openlogh.engine.war.BattleEngine
 import com.openlogh.engine.war.getDexLog
-import com.openlogh.engine.war.WarUnitGeneral
-import com.openlogh.entity.City
-import com.openlogh.entity.General
+import com.openlogh.engine.war.WarUnitOfficer
+import com.openlogh.entity.Planet
+import com.openlogh.entity.Officer
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.DisplayName
@@ -190,10 +190,10 @@ class GoldenValueTest {
             // Verify the ratio: warPower is multiplied by atmos and divided by train
             // With simple values: atmos=100, train=100 → ratio = 1.0 (no change)
             val general = createGeneral(leadership = 70, strength = 70, crew = 1000, train = 100, atmos = 100)
-            val unit = WarUnitGeneral(general, 0f)
+            val unit = WarUnitOfficer(general, 0f)
             // Just verify units are set correctly for formula input
-            assertEquals(100, unit.atmos)
-            assertEquals(100, unit.train)
+            assertEquals(100, unit.morale)
+            assertEquals(100, unit.training)
         }
     }
 
@@ -268,7 +268,7 @@ class GoldenValueTest {
         @DisplayName("continueWar: general stops if HP <= 0")
         fun `general stops fighting at 0 HP`() {
             val general = createGeneral(crew = 1000)
-            val unit = WarUnitGeneral(general, 0f)
+            val unit = WarUnitOfficer(general, 0f)
             unit.hp = 0
             assertFalse(unit.continueWar().canContinue, "hp=0 → cannot continue war (flee/escape)")
         }
@@ -277,9 +277,9 @@ class GoldenValueTest {
         @DisplayName("continueWar: general stops if rice depleted below crew/100")
         fun `general stops if rice below threshold`() {
             val general = createGeneral(crew = 1000, rice = 0)
-            val unit = WarUnitGeneral(general, 0f)
+            val unit = WarUnitOfficer(general, 0f)
             unit.hp = 500
-            unit.rice = 0
+            unit.supplies = 0
             // rice(0) <= hp/100 (5) → cannot continue
             assertFalse(unit.continueWar().canContinue, "empty rice → cannot continue war")
         }
@@ -288,9 +288,9 @@ class GoldenValueTest {
         @DisplayName("continueWar: general keeps fighting when HP > 0 and rice sufficient")
         fun `general continues with HP and rice`() {
             val general = createGeneral(crew = 1000, rice = 500)
-            val unit = WarUnitGeneral(general, 0f)
+            val unit = WarUnitOfficer(general, 0f)
             unit.hp = 500
-            unit.rice = 500
+            unit.supplies = 500
             // rice(500) > hp/100 (5) → can continue
             assertTrue(unit.continueWar().canContinue, "sufficient rice + hp → can continue")
         }
@@ -304,7 +304,7 @@ class GoldenValueTest {
         year = 200,
         month = 1,
         startYear = 190,
-        worldId = 1,
+        sessionId = 1,
         realtimeMode = false,
         develCost = 100,
     )
@@ -319,23 +319,23 @@ class GoldenValueTest {
         crewType: Short = 0,
         train: Short = 60,
         atmos: Short = 60,
-    ): General = General(
+    ): Officer = Officer(
         id = 1,
-        worldId = 1,
+        sessionId = 1,
         name = "테스트장수",
-        nationId = 1,
-        cityId = 1,
-        gold = gold,
-        rice = rice,
-        crew = crew,
-        crewType = crewType,
-        train = train,
-        atmos = atmos,
+        factionId = 1,
+        planetId = 1,
+        funds = gold,
+        supplies = rice,
+        ships = crew,
+        shipClass = crewType,
+        training = train,
+        morale = atmos,
         leadership = leadership,
-        strength = strength,
-        intel = intel,
+        command = strength,
+        intelligence = intel,
         politics = 60,
-        charm = 60,
+        administration = 60,
         turnTime = OffsetDateTime.now(),
     )
 
@@ -343,24 +343,24 @@ class GoldenValueTest {
         nationId: Long = 1,
         pop: Int = 50000,
         trust: Float = 80f,
-    ): City = City(
+    ): Planet = Planet(
         id = 1,
-        worldId = 1,
+        sessionId = 1,
         name = "테스트도시",
-        nationId = nationId,
-        pop = pop,
-        popMax = 100000,
-        agri = 500,
-        agriMax = 1000,
-        comm = 500,
-        commMax = 1000,
-        secu = 500,
-        secuMax = 1000,
-        def = 500,
-        defMax = 1000,
-        wall = 500,
-        wallMax = 1000,
-        trust = trust,
+        factionId = nationId,
+        population = pop,
+        populationMax = 100000,
+        production = 500,
+        productionMax = 1000,
+        commerce = 500,
+        commerceMax = 1000,
+        security = 500,
+        securityMax = 1000,
+        orbitalDefense = 500,
+        orbitalDefenseMax = 1000,
+        fortress = 500,
+        fortressMax = 1000,
+        approval = trust,
         frontState = 0,
     )
 }

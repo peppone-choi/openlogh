@@ -59,7 +59,7 @@ class MessageController(
     @PostMapping
     fun sendMessage(@RequestBody request: SendMessageRequest): ResponseEntity<MessageResponse> {
         val message = messageService.sendMessage(
-            worldId = request.sessionId,
+            worldId = request.worldId,
             mailboxCode = request.mailboxCode,
             mailboxType = request.mailboxType,
             messageType = request.messageType,
@@ -102,8 +102,8 @@ class MessageController(
         @PathVariable id: Long,
         @RequestParam generalId: Long,
     ): ResponseEntity<Map<String, String>> {
-        val nationName = messageService.acceptRecruitment(id, generalId)
-        return ResponseEntity.ok(mapOf("nationName" to nationName))
+        val factionName = messageService.acceptRecruitment(id, generalId)
+        return ResponseEntity.ok(mapOf("factionName" to factionName))
     }
 
     @PostMapping("/{id}/decline-recruitment")

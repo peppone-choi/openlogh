@@ -12,3 +12,6 @@
 {"t":0,"agent":"ad763f9","agent_type":"gsd-codebase-mapper","event":"agent_stop","success":true,"duration_ms":227192}
 {"t":0,"agent":"ac09bec","agent_type":"gsd-codebase-mapper","event":"agent_stop","success":true,"duration_ms":336762}
 {"t":0,"agent":"a81c272","agent_type":"gsd-codebase-mapper","event":"agent_stop","success":true,"duration_ms":597683}
+{"t":0,"agent":"a13b768","agent_type":"gsd-executor","event":"agent_stop","success":true}
+{"t":0,"agent":"aaf19cc","agent_type":"gsd-executor","event":"agent_start","parent_mode":"none"}
+{"t":0,"agent":"aaf19cc","agent_type":"gsd-executor","event":"agent_stop","success":true,"duration_ms":1827820}

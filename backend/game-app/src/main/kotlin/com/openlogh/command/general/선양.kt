@@ -31,7 +31,7 @@ class 선양(general: Officer, env: CommandEnv, arg: Map<String, Any>? = null)
         val date = formatDate()
         val dg = destOfficer ?: return CommandResult(success = false, logs = listOf("선양 대상 장수가 없습니다."))
         val destGeneralName = dg.name
-        val nationName = nation?.name ?: "알 수 없음"
+        val factionName = nation?.name ?: "알 수 없음"
         val generalName = general.name
 
         // Legacy PHP: Check penalty keys (noChief, noFoundNation, noAmbassador)
@@ -48,18 +48,18 @@ class 선양(general: Officer, env: CommandEnv, arg: Map<String, Any>? = null)
 
         // Global history log
         val josaYi = if (generalName.last().code % 28 != 0) "이" else ""
-        pushLog("[GLOBAL_HISTORY]<Y><b>【선양】</b></><Y>${generalName}</>${josaYi} <D><b>${nationName}</b></>의 군주 자리를 <Y>${destGeneralName}</>에게 선양했습니다.")
+        pushLog("[GLOBAL_HISTORY]<Y><b>【선양】</b></><Y>${generalName}</>${josaYi} <D><b>${factionName}</b></>의 군주 자리를 <Y>${destGeneralName}</>에게 선양했습니다.")
         // National history log
         pushLog("[NATIONAL_HISTORY]<Y>${generalName}</>${josaYi} <Y>${destGeneralName}</>에게 선양")
         // General action log
         pushLog("<Y>${destGeneralName}</>에게 군주의 자리를 물려줍니다. <1>$date</>")
         // General history log
-        pushLog("[HISTORY]<D><b>${nationName}</b></>의 군주자리를 <Y>${destGeneralName}</>에게 선양")
-        pushHistoryLog("<D><b>${nationName}</b></>의 군주자리를 <Y>${destGeneralName}</>에게 선양")
+        pushLog("[HISTORY]<D><b>${factionName}</b></>의 군주자리를 <Y>${destGeneralName}</>에게 선양")
+        pushHistoryLog("<D><b>${factionName}</b></>의 군주자리를 <Y>${destGeneralName}</>에게 선양")
         pushGlobalLog("<Y>${generalName}</>${josaYi} <Y>${destGeneralName}</>에게 군주 자리를 선양했습니다.")
-        pushGlobalHistoryLog("<Y><b>【선양】</b></><Y>${generalName}</>${josaYi} <D><b>${nationName}</b></>의 군주 자리를 <Y>${destGeneralName}</>에게 선양했습니다.")
+        pushGlobalHistoryLog("<Y><b>【선양】</b></><Y>${generalName}</>${josaYi} <D><b>${factionName}</b></>의 군주 자리를 <Y>${destGeneralName}</>에게 선양했습니다.")
         pushLog("_destGeneralLog:${dg.id}:<Y>${generalName}</>에게서 군주의 자리를 물려받습니다.")
-        pushLog("_destGeneralHistory:${dg.id}:<D><b>${nationName}</b></>의 군주자리를 물려 받음")
+        pushLog("_destGeneralHistory:${dg.id}:<D><b>${factionName}</b></>의 군주자리를 물려 받음")
 
         // Legacy PHP: experience *= 0.7
         val expMultiplier = 0.7
@@ -67,7 +67,7 @@ class 선양(general: Officer, env: CommandEnv, arg: Map<String, Any>? = null)
         return CommandResult(
             success = true,
             logs = logs,
-            message = """{"statChanges":{"officerLevel":1,"officerCity":0,"experienceMultiplier":$expMultiplier},"nationChanges":{"chiefGeneralId":${dg.id}},"destGeneralChanges":{"generalId":${dg.id},"officerLevel":20,"officerCity":0}}"""
+            message = """{"statChanges":{"officerLevel":1,"officerPlanet":0,"experienceMultiplier":$expMultiplier},"nationChanges":{"chiefGeneralId":${dg.id}},"destGeneralChanges":{"generalId":${dg.id},"officerLevel":20,"officerPlanet":0}}"""
         )
     }
 }

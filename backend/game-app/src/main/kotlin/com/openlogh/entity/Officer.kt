@@ -136,8 +136,8 @@ class Officer(
     @Column(name = "officer_level", nullable = false)
     var officerLevel: Short = 0,
 
-    @Column(name = "officer_city", nullable = false)
-    var officerCity: Int = 0,
+    @Column(name = "officer_planet", nullable = false)
+    var officerPlanet: Int = 0,
 
     @Column(nullable = false)
     var permission: String = "normal",

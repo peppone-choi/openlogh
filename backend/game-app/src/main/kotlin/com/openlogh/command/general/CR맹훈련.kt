@@ -38,7 +38,7 @@ class CR맹훈련(general: Officer, env: CommandEnv, arg: Map<String, Any>? = nu
         OccupiedCity(),
     )
 
-    override fun getCost() = CommandCost(rice = 500)
+    override fun getCost() = CommandCost(supplies = 500)
     override fun getPreReqTurn() = 0
     override fun getPostReqTurn() = 0
 

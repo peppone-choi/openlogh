@@ -47,7 +47,7 @@ class cr_인구이동(general: Officer, env: CommandEnv, arg: Map<String, Any>? 
 
     override fun getCost(): CommandCost {
         val cost = getCostAmount()
-        return CommandCost(gold = cost, rice = cost)
+        return CommandCost(funds = cost, supplies = cost)
     }
 
     override fun getPreReqTurn() = 0
@@ -67,8 +67,7 @@ class cr_인구이동(general: Officer, env: CommandEnv, arg: Map<String, Any>? 
         }
 
         val cost = CommandCost(
-            gold = round(env.develCost.toDouble() * actualAmount / 10000).toInt(),
-            rice = round(env.develCost.toDouble() * actualAmount / 10000).toInt()
+            funds = round(env.develCost.toDouble() * actualAmount / 10000).toInt(), supplies = round(env.develCost.toDouble() * actualAmount / 10000).toInt()
         )
 
         c.population -= actualAmount

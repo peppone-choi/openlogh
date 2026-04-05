@@ -1,7 +1,7 @@
 package com.openlogh.engine.war
 
-import com.openlogh.entity.City
-import com.openlogh.entity.General
+import com.openlogh.entity.Planet
+import com.openlogh.entity.Officer
 import com.openlogh.model.ArmType
 import com.openlogh.model.CrewType
 import org.junit.jupiter.api.Assertions.*
@@ -75,17 +75,17 @@ class BattleFormulaMatrixTest {
         rice: Int = 100000,
         experience: Int = 1000,
         specialCode: String = "None",
-    ): General = General(
+    ): Officer = Officer(
         id = id,
-        worldId = 1,
+        sessionId = 1,
         name = "테스트장수$id",
-        nationId = nationId,
-        cityId = 1,
+        factionId = nationId,
+        planetId = 1,
         leadership = leadership,
-        strength = strength,
-        intel = intel,
-        crew = crew,
-        crewType = crewTypeCode.toShort(),
+        command = strength,
+        intelligence = intel,
+        ships = crew,
+        shipClass = crewTypeCode.toShort(),
         train = train,
         atmos = atmos,
         gold = 1000,
@@ -107,18 +107,18 @@ class BattleFormulaMatrixTest {
         def: Int = 500,
         wall: Int = 1000,
         level: Short = 2,
-    ): City = City(
+    ): Planet = Planet(
         id = 1,
-        worldId = 1,
+        sessionId = 1,
         name = "테스트도시",
-        nationId = nationId,
+        factionId = nationId,
         level = level,
-        def = def,
-        defMax = 2000,
-        wall = wall,
-        wallMax = 2000,
-        pop = 10000,
-        popMax = 50000,
+        orbitalDefense = def,
+        orbitalDefenseMax = 2000,
+        fortress = wall,
+        fortressMax = 2000,
+        population = 10000,
+        populationMax = 50000,
     )
 
     // ── ArmType matrix: determinism verification ──
@@ -263,8 +263,8 @@ class BattleFormulaMatrixTest {
             dex1 = 100000, dex2 = 100000, dex3 = 100000, dex4 = 100000, dex5 = 100000,
         )
         val city = makeCity()
-        val attacker = WarUnitGeneral(weakGeneral)
-        val defender = WarUnitGeneral(strongDefender)
+        val attacker = WarUnitOfficer(weakGeneral)
+        val defender = WarUnitOfficer(strongDefender)
 
         val result = engine.resolveBattle(attacker, listOf(defender), city, Random(FIXED_SEED))
 
@@ -295,8 +295,8 @@ class BattleFormulaMatrixTest {
             dex1 = 0, dex2 = 0, dex3 = 0, dex4 = 0, dex5 = 0,
         )
         val city = makeCity()
-        val attacker = WarUnitGeneral(strongAttacker)
-        val defender = WarUnitGeneral(weakDefender)
+        val attacker = WarUnitOfficer(strongAttacker)
+        val defender = WarUnitOfficer(weakDefender)
 
         val result = engine.resolveBattle(attacker, listOf(defender), city, Random(FIXED_SEED))
 
@@ -305,7 +305,7 @@ class BattleFormulaMatrixTest {
         // After the defender dies (first phase), further damage is dealt to city, not to general.
         // The attackerDamageDealt includes all damage (to generals + city), so we check
         // that the defender general's HP went to 0 (they were defeated).
-        assertEquals(0, weakDefender.crew,
+        assertEquals(0, weakDefender.ships,
             "Weak defender should be reduced to 0 crew after overkill")
         assertTrue(result.attackerDamageDealt > 0,
             "Attacker should deal positive damage overall")
@@ -333,7 +333,7 @@ class BattleFormulaMatrixTest {
         val attackerCode = ARM_TYPE_CODES[attackerType]!!
         val attackerGen = makeGeneral(id = 1, nationId = 1, crewTypeCode = attackerCode)
         val city = makeCity()
-        val attacker = WarUnitGeneral(attackerGen)
+        val attacker = WarUnitOfficer(attackerGen)
 
         return if (defenderType == ArmType.CASTLE) {
             // Siege: no general defenders, fight city directly
@@ -341,7 +341,7 @@ class BattleFormulaMatrixTest {
         } else {
             val defenderCode = ARM_TYPE_CODES[defenderType]!!
             val defenderGen = makeGeneral(id = 2, nationId = 2, crewTypeCode = defenderCode)
-            val defender = WarUnitGeneral(defenderGen)
+            val defender = WarUnitOfficer(defenderGen)
             engine.resolveBattle(attacker, listOf(defender), city, Random(seed))
         }
     }
@@ -352,8 +352,8 @@ class BattleFormulaMatrixTest {
         val attackerGen = makeGeneral(id = 1, nationId = 1, crewTypeCode = attackerCode)
         val defenderGen = makeGeneral(id = 2, nationId = 2, crewTypeCode = defenderCode)
         val city = makeCity()
-        val attacker = WarUnitGeneral(attackerGen)
-        val defender = WarUnitGeneral(defenderGen)
+        val attacker = WarUnitOfficer(attackerGen)
+        val defender = WarUnitOfficer(defenderGen)
         return engine.resolveBattle(attacker, listOf(defender), city, Random(seed))
     }
 }

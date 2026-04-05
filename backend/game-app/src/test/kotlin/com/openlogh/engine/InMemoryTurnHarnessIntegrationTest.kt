@@ -1,9 +1,9 @@
 package com.openlogh.engine
 
-import com.openlogh.entity.City
-import com.openlogh.entity.General
-import com.openlogh.entity.Nation
-import com.openlogh.entity.WorldState
+import com.openlogh.entity.Planet
+import com.openlogh.entity.Officer
+import com.openlogh.entity.Faction
+import com.openlogh.entity.SessionState
 import com.openlogh.test.InMemoryTurnHarness
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -17,7 +17,7 @@ class InMemoryTurnHarnessIntegrationTest {
     @Test
     fun `tier2 reserved turn is consumed and world advances`() {
         val harness = InMemoryTurnHarness()
-        val world = WorldState(
+        val world = SessionState(
             id = 1,
             name = "test-world",
             scenarioCode = "test",
@@ -26,52 +26,52 @@ class InMemoryTurnHarnessIntegrationTest {
             tickSeconds = 60,
             updatedAt = OffsetDateTime.now().minusSeconds(90),
         )
-        val nation = Nation(
+        val nation = Faction(
             id = 1,
-            worldId = 1,
+            sessionId = 1,
             name = "위",
             color = "#ffffff",
-            level = 3,
+            factionRank = 3,
             strategicCmdLimit = 10,
         )
-        val city = City(
+        val city = Planet(
             id = 1,
-            worldId = 1,
+            sessionId = 1,
             name = "낙양",
             level = 5,
-            nationId = 1,
+            factionId = 1,
             supplyState = 1,
             frontState = 0,
-            pop = 10000,
-            popMax = 50000,
-            agri = 100,
-            agriMax = 1000,
-            comm = 100,
-            commMax = 1000,
-            secu = 100,
-            secuMax = 1000,
-            trust = 100,
-            def = 100,
-            defMax = 1000,
-            wall = 100,
-            wallMax = 1000,
+            population = 10000,
+            populationMax = 50000,
+            production = 100,
+            productionMax = 1000,
+            commerce = 100,
+            commerceMax = 1000,
+            security = 100,
+            securityMax = 1000,
+            approval = 100,
+            orbitalDefense = 100,
+            orbitalDefenseMax = 1000,
+            fortress = 100,
+            fortressMax = 1000,
         )
-        val general = General(
+        val general = Officer(
             id = 1,
-            worldId = 1,
+            sessionId = 1,
             name = "조조",
-            nationId = 1,
-            cityId = 1,
-            gold = 1000,
-            rice = 1000,
+            factionId = 1,
+            planetId = 1,
+            funds = 1000,
+            supplies = 1000,
             npcState = 0,
             turnTime = world.updatedAt.minusSeconds(600),
         )
 
         harness.putWorld(world)
-        harness.putNation(nation)
-        harness.putCity(city)
-        harness.putGeneral(general)
+        harness.putFaction(nation)
+        harness.putPlanet(city)
+        harness.putOfficer(general)
         harness.queueGeneralTurn(generalId = 1, actionCode = "휴식")
 
         harness.turnService.processWorld(world)
@@ -83,7 +83,7 @@ class InMemoryTurnHarnessIntegrationTest {
     @Test
     fun `tier3 monthly integration consumes nation turn and decrements strategic limit`() {
         val harness = InMemoryTurnHarness()
-        val world = WorldState(
+        val world = SessionState(
             id = 1,
             name = "test-world",
             scenarioCode = "test",
@@ -92,51 +92,51 @@ class InMemoryTurnHarnessIntegrationTest {
             tickSeconds = 60,
             updatedAt = OffsetDateTime.now().minusSeconds(190),
         )
-        val nation = Nation(
+        val nation = Faction(
             id = 1,
-            worldId = 1,
+            sessionId = 1,
             name = "촉",
             color = "#00ff00",
-            level = 4,
+            factionRank = 4,
             strategicCmdLimit = 5,
         )
-        val city = City(
+        val city = Planet(
             id = 1,
-            worldId = 1,
+            sessionId = 1,
             name = "성도",
             level = 5,
-            nationId = 1,
+            factionId = 1,
             supplyState = 1,
             frontState = 0,
-            pop = 12000,
-            popMax = 50000,
-            agri = 500,
-            agriMax = 1000,
-            comm = 500,
-            commMax = 1000,
-            secu = 500,
-            secuMax = 1000,
-            trust = 90,
-            def = 500,
-            defMax = 1000,
-            wall = 500,
-            wallMax = 1000,
+            population = 12000,
+            populationMax = 50000,
+            production = 500,
+            productionMax = 1000,
+            commerce = 500,
+            commerceMax = 1000,
+            security = 500,
+            securityMax = 1000,
+            approval = 90,
+            orbitalDefense = 500,
+            orbitalDefenseMax = 1000,
+            fortress = 500,
+            fortressMax = 1000,
         )
-        val officer = General(
+        val officer = Officer(
             id = 1,
-            worldId = 1,
+            sessionId = 1,
             name = "유비",
-            nationId = 1,
-            cityId = 1,
+            factionId = 1,
+            planetId = 1,
             officerLevel = 5,
             npcState = 0,
             turnTime = world.updatedAt.minusSeconds(600),
         )
 
         harness.putWorld(world)
-        harness.putNation(nation)
-        harness.putCity(city)
-        harness.putGeneral(officer)
+        harness.putFaction(nation)
+        harness.putPlanet(city)
+        harness.putOfficer(officer)
         harness.queueNationTurn(nationId = 1, officerLevel = 5, actionCode = "Nation휴식")
         harness.queueGeneralTurn(generalId = 1, actionCode = "휴식")
 

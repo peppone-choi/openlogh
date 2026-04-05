@@ -4,9 +4,9 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.openlogh.command.constraint.ConstraintResult
 import com.openlogh.command.general.*
 import com.openlogh.engine.LiteHashDRBG
-import com.openlogh.entity.City
-import com.openlogh.entity.General
-import com.openlogh.entity.Nation
+import com.openlogh.entity.Planet
+import com.openlogh.entity.Officer
+import com.openlogh.entity.Faction
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
@@ -34,26 +34,26 @@ class GeneralCivilCommandTest {
         experience: Int = 0,
         dedication: Int = 0,
         injury: Short = 0,
-    ): General {
-        return General(
+    ): Officer {
+        return Officer(
             id = 1,
-            worldId = 1,
+            sessionId = 1,
             name = "테스트장수",
-            nationId = nationId,
-            cityId = cityId,
-            gold = gold,
-            rice = rice,
-            crew = crew,
-            crewType = crewType,
-            train = train,
-            atmos = atmos,
+            factionId = nationId,
+            planetId = cityId,
+            funds = gold,
+            supplies = rice,
+            ships = crew,
+            shipClass = crewType,
+            training = train,
+            morale = atmos,
             leadership = leadership,
-            strength = strength,
-            intel = intel,
+            command = strength,
+            intelligence = intel,
             politics = politics,
-            charm = charm,
+            administration = charm,
             officerLevel = officerLevel,
-            troopId = troopId,
+            fleetId = troopId,
             experience = experience,
             dedication = dedication,
             injury = injury,
@@ -79,28 +79,28 @@ class GeneralCivilCommandTest {
         supplyState: Short = 1,
         frontState: Short = 0,
         trade: Int = 100,
-    ): City {
-        return City(
+    ): Planet {
+        return Planet(
             id = 1,
-            worldId = 1,
+            sessionId = 1,
             name = "테스트도시",
-            nationId = nationId,
-            agri = agri,
-            agriMax = agriMax,
-            comm = comm,
-            commMax = commMax,
-            secu = secu,
-            secuMax = secuMax,
-            def = def,
-            defMax = defMax,
-            wall = wall,
-            wallMax = wallMax,
-            pop = pop,
-            popMax = popMax,
-            trust = trust,
+            factionId = nationId,
+            production = agri,
+            productionMax = agriMax,
+            commerce = comm,
+            commerceMax = commMax,
+            security = secu,
+            securityMax = secuMax,
+            orbitalDefense = def,
+            orbitalDefenseMax = defMax,
+            fortress = wall,
+            fortressMax = wallMax,
+            population = pop,
+            populationMax = popMax,
+            approval = trust,
             supplyState = supplyState,
             frontState = frontState,
-            trade = trade,
+            tradeRoute = trade,
         )
     }
 
@@ -109,15 +109,15 @@ class GeneralCivilCommandTest {
         level: Short = 1,
         gold: Int = 10000,
         rice: Int = 10000,
-    ): Nation {
-        return Nation(
+    ): Faction {
+        return Faction(
             id = id,
-            worldId = 1,
+            sessionId = 1,
             name = "테스트국가",
             color = "#FF0000",
-            gold = gold,
-            rice = rice,
-            level = level,
+            funds = gold,
+            supplies = rice,
+            factionRank = level,
         )
     }
 
@@ -130,7 +130,7 @@ class GeneralCivilCommandTest {
         year = year,
         month = month,
         startYear = startYear,
-        worldId = 1,
+        sessionId = 1,
         realtimeMode = false,
         develCost = develCost,
     )
@@ -476,9 +476,9 @@ class GeneralCivilCommandTest {
         val nation = createTestNation(id = 7, level = 2, gold = 1234, rice = 4321)
 
         assertEquals(7, nation.id)
-        assertEquals(2, nation.level.toInt())
-        assertEquals(1234, nation.gold)
-        assertEquals(4321, nation.rice)
+        assertEquals(2, nation.factionRank.toInt())
+        assertEquals(1234, nation.funds)
+        assertEquals(4321, nation.supplies)
     }
 
     // ========== H5: DomesticCommand uses getStat() (modified stats path) ==========

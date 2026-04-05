@@ -120,7 +120,7 @@ class AccountController(
     @PostMapping("/buildNationCandidate")
     fun buildNationCandidate(): ResponseEntity<Any> {
         val loginId = getLoginId() ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
-        val general = officerService.getMyActiveGeneral(loginId)
+        val general = officerService.getMyActiveOfficer(loginId)
             ?: return ResponseEntity.badRequest().build()
         val world = worldService.getWorld(general.sessionId.toShort())
         if (world != null && worldService.getGamePhase(world) != WorldService.PHASE_PRE_OPEN) {
@@ -133,7 +133,7 @@ class AccountController(
     @PostMapping("/instantRetreat")
     fun instantRetreat(): ResponseEntity<Any> {
         val loginId = getLoginId() ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
-        val general = officerService.getMyActiveGeneral(loginId)
+        val general = officerService.getMyActiveOfficer(loginId)
             ?: return ResponseEntity.badRequest().build()
         val result = realtimeService.submitCommand(general.id, "접경귀환", null)
         return ResponseEntity.ok(result)
@@ -142,7 +142,7 @@ class AccountController(
     @PostMapping("/dieOnPrestart")
     fun dieOnPrestart(): ResponseEntity<Any> {
         val loginId = getLoginId() ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
-        val general = officerService.getMyActiveGeneral(loginId)
+        val general = officerService.getMyActiveOfficer(loginId)
             ?: return ResponseEntity.badRequest().build()
         val world = worldService.getWorld(general.sessionId.toShort())
         if (world != null && worldService.getGamePhase(world) != WorldService.PHASE_PRE_OPEN) {

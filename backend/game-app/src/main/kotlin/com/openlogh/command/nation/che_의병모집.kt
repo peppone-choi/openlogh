@@ -39,9 +39,9 @@ class che_의병모집(general: Officer, env: CommandEnv, arg: Map<String, Any>?
         val c = city ?: return CommandResult(false, logs, "도시 정보를 찾을 수 없습니다")
 
         val generalName = general.name
-        val nationName = n.name
+        val factionName = n.name
         val josaYi = JosaUtil.pick(generalName, "이")
-        val josaYiNation = JosaUtil.pick(nationName, "이")
+        val josaYiNation = JosaUtil.pick(factionName, "이")
         val josaUl = JosaUtil.pick(actionName, "을")
 
         // Experience and dedication: 5 * (preReqTurn + 1)
@@ -82,8 +82,7 @@ class che_의병모집(general: Officer, env: CommandEnv, arg: Map<String, Any>?
                     birthYear = env.year - 20,
                     deathYear = env.year + 10,
                     killTurn = rng.nextInt(64, 71),
-                    gold = 1000,
-                    rice = 1000,
+                    gold = 1000, rice = 1000,
                     experience = avgExperience,
                     dedication = avgDedication,
                     specAge = 19,
@@ -101,8 +100,7 @@ class che_의병모집(general: Officer, env: CommandEnv, arg: Map<String, Any>?
                     bornYear = (env.year - 20).toShort(),
                     deadYear = (env.year + 10).toShort(),
                     officerLevel = 1,
-                    gold = 1000,
-                    rice = 1000,
+                    funds = 1000, supplies = 1000,
                     experience = avgExperience,
                     dedication = avgDedication,
                 )

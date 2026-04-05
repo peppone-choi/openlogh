@@ -4,15 +4,15 @@ import com.openlogh.command.CommandExecutor
 import com.openlogh.command.CommandRegistry
 import com.openlogh.engine.*
 import com.openlogh.engine.war.BattleService
-import com.openlogh.engine.ai.GeneralAI
-import com.openlogh.engine.ai.NationAI
+import com.openlogh.engine.ai.OfficerAI
+import com.openlogh.engine.ai.FactionAI
 import com.openlogh.engine.modifier.ModifierService
 import com.openlogh.engine.turn.TurnPipeline
 import com.openlogh.engine.turn.cqrs.persist.JpaWorldPortFactory
 import com.openlogh.engine.turn.steps.DiplomacyStep
 import com.openlogh.engine.turn.steps.DisasterAndTradeStep
 import com.openlogh.engine.turn.steps.EconomyPostUpdateStep
-import com.openlogh.engine.turn.steps.GeneralMaintenanceStep
+import com.openlogh.engine.turn.steps.OfficerMaintenanceStep
 import com.openlogh.engine.turn.steps.UnificationCheckStep
 import com.openlogh.repository.TrafficSnapshotRepository
 import com.openlogh.service.WorldService
@@ -29,20 +29,20 @@ import java.util.Optional
 import java.util.concurrent.atomic.AtomicLong
 
 class InMemoryTurnHarness {
-    private val worlds = mutableMapOf<Short, WorldState>()
-    private val generals = mutableMapOf<Long, General>()
-    private val cities = mutableMapOf<Long, City>()
-    private val nations = mutableMapOf<Long, Nation>()
+    private val worlds = mutableMapOf<Short, SessionState>()
+    private val generals = mutableMapOf<Long, Officer>()
+    private val cities = mutableMapOf<Long, Planet>()
+    private val nations = mutableMapOf<Long, Faction>()
     private val generalTurns = mutableMapOf<Long, MutableList<GeneralTurn>>()
     private val nationTurns = mutableMapOf<Pair<Long, Short>, MutableList<NationTurn>>()
     private val turnIdSeq = AtomicLong(1)
 
-    val worldStateRepository: WorldStateRepository = mock(WorldStateRepository::class.java)
-    val generalRepository: GeneralRepository = mock(GeneralRepository::class.java)
-    val generalTurnRepository: GeneralTurnRepository = mock(GeneralTurnRepository::class.java)
-    val nationTurnRepository: NationTurnRepository = mock(NationTurnRepository::class.java)
-    val cityRepository: CityRepository = mock(CityRepository::class.java)
-    val nationRepository: NationRepository = mock(NationRepository::class.java)
+    val sessionStateRepository: SessionStateRepository = mock(SessionStateRepository::class.java)
+    val officerRepository: OfficerRepository = mock(OfficerRepository::class.java)
+    val officerTurnRepository: OfficerTurnRepository = mock(OfficerTurnRepository::class.java)
+    val factionTurnRepository: FactionTurnRepository = mock(FactionTurnRepository::class.java)
+    val planetRepository: PlanetRepository = mock(PlanetRepository::class.java)
+    val factionRepository: FactionRepository = mock(FactionRepository::class.java)
     val diplomacyRepository: DiplomacyRepository = mock(DiplomacyRepository::class.java)
     private val mapService: MapService = MapService().apply { init() }
 
@@ -50,13 +50,13 @@ class InMemoryTurnHarness {
     private val economyService: EconomyService = mock(EconomyService::class.java)
     private val eventService: EventService = mock(EventService::class.java)
     private val diplomacyService: DiplomacyService = mock(DiplomacyService::class.java)
-    private val generalMaintenanceService: GeneralMaintenanceService = mock(GeneralMaintenanceService::class.java)
+    private val officerMaintenanceService: OfficerMaintenanceService = mock(OfficerMaintenanceService::class.java)
     private val specialAssignmentService: SpecialAssignmentService = mock(SpecialAssignmentService::class.java)
     private val npcSpawnService: NpcSpawnService = mock(NpcSpawnService::class.java)
     val unificationService: UnificationService = mock(UnificationService::class.java)
     private val inheritanceService: InheritanceService = mock(InheritanceService::class.java)
-    private val generalAI: GeneralAI = mock(GeneralAI::class.java)
-    private val nationAI: NationAI = mock(NationAI::class.java)
+    private val officerAI: OfficerAI = mock(OfficerAI::class.java)
+    private val factionAI: FactionAI = mock(FactionAI::class.java)
     private val statChangeService: StatChangeService = mock(StatChangeService::class.java)
     private val modifierService: ModifierService = mock(ModifierService::class.java)
 
@@ -64,9 +64,9 @@ class InMemoryTurnHarness {
     private val messageService: com.openlogh.service.MessageService = mock(com.openlogh.service.MessageService::class.java)
     val commandExecutor = CommandExecutor(
         commandRegistry,
-        generalRepository,
-        cityRepository,
-        nationRepository,
+        officerRepository,
+        planetRepository,
+        factionRepository,
         diplomacyRepository,
         diplomacyService,
         mapService,
@@ -80,36 +80,36 @@ class InMemoryTurnHarness {
     private val tournamentService: com.openlogh.service.TournamentService = mock(com.openlogh.service.TournamentService::class.java)
     private val trafficSnapshotRepository: TrafficSnapshotRepository = mock(TrafficSnapshotRepository::class.java)
     private val worldService: WorldService = mock(WorldService::class.java)
-    private val nationService: com.openlogh.service.NationService = mock(com.openlogh.service.NationService::class.java)
+    private val factionService: com.openlogh.service.FactionService = mock(com.openlogh.service.FactionService::class.java)
     val battleService: BattleService = mock(BattleService::class.java)
     private val uniqueLotteryService: UniqueLotteryService = UniqueLotteryService()
     private val worldPortFactory: JpaWorldPortFactory = JpaWorldPortFactory(
-        generalRepository = generalRepository,
-        cityRepository = cityRepository,
-        nationRepository = nationRepository,
+        officerRepository = officerRepository,
+        planetRepository = planetRepository,
+        factionRepository = factionRepository,
     )
     private val turnPipeline: TurnPipeline = TurnPipeline(listOf(
         EconomyPostUpdateStep(economyService),
         DisasterAndTradeStep(economyService),
         DiplomacyStep(diplomacyService),
-        GeneralMaintenanceStep(generalMaintenanceService, specialAssignmentService, inheritanceService, worldPortFactory),
+        OfficerMaintenanceStep(officerMaintenanceService, specialAssignmentService, inheritanceService, worldPortFactory),
         UnificationCheckStep(unificationService),
     ))
 
     val turnService = TurnService(
-        worldStateRepository,
-        generalRepository,
-        generalTurnRepository,
-        nationTurnRepository,
-        cityRepository,
-        nationRepository,
+        sessionStateRepository,
+        officerRepository,
+        officerTurnRepository,
+        factionTurnRepository,
+        planetRepository,
+        factionRepository,
         commandExecutor,
         commandRegistry,
         scenarioService,
         economyService,
         eventService,
         diplomacyService,
-        generalMaintenanceService,
+        officerMaintenanceService,
         specialAssignmentService,
         npcSpawnService,
         unificationService,
@@ -118,16 +118,16 @@ class InMemoryTurnHarness {
         auctionService,
         tournamentService,
         trafficSnapshotRepository,
-        generalAI,
-        nationAI,
+        officerAI,
+        factionAI,
         modifierService,
         worldService,
-        nationService,
+        factionService,
         battleService,
         uniqueLotteryService,
         mock(com.openlogh.service.CommandLogDispatcher::class.java),
         mock(com.openlogh.service.GameConstService::class.java),
-        mock(com.openlogh.repository.GeneralAccessLogRepository::class.java),
+        mock(com.openlogh.repository.OfficerAccessLogRepository::class.java),
         turnPipeline,
         mock(com.openlogh.engine.war.FieldBattleTrigger::class.java),
     )
@@ -136,19 +136,19 @@ class InMemoryTurnHarness {
         wireRepositories()
     }
 
-    fun putWorld(world: WorldState) {
+    fun putWorld(world: SessionState) {
         worlds[world.id] = world
     }
 
-    fun putGeneral(general: General) {
+    fun putGeneral(general: Officer) {
         generals[general.id] = general
     }
 
-    fun putCity(city: City) {
+    fun putCity(city: Planet) {
         cities[city.id] = city
     }
 
-    fun putNation(nation: Nation) {
+    fun putNation(nation: Faction) {
         nations[nation.id] = nation
     }
 
@@ -156,7 +156,7 @@ class InMemoryTurnHarness {
         val general = generals[generalId] ?: error("General not found: $generalId")
         val turn = GeneralTurn(
             id = turnIdSeq.getAndIncrement(),
-            worldId = general.worldId,
+            worldId = general.sessionId,
             generalId = generalId,
             turnIdx = turnIdx,
             actionCode = actionCode,
@@ -177,7 +177,7 @@ class InMemoryTurnHarness {
         val nation = nations[nationId] ?: error("Nation not found: $nationId")
         val turn = NationTurn(
             id = turnIdSeq.getAndIncrement(),
-            worldId = nation.worldId,
+            worldId = nation.sessionId,
             nationId = nationId,
             officerLevel = officerLevel,
             turnIdx = turnIdx,
@@ -196,47 +196,47 @@ class InMemoryTurnHarness {
         nationTurns[nationId to officerLevel]?.toList() ?: emptyList()
 
     private fun wireRepositories() {
-        `when`(worldStateRepository.save(org.mockito.Mockito.any(WorldState::class.java))).thenAnswer {
-            val world = it.arguments[0] as WorldState
+        `when`(sessionStateRepository.save(org.mockito.Mockito.any(SessionState::class.java))).thenAnswer {
+            val world = it.arguments[0] as SessionState
             worlds[world.id] = world
             world
         }
-        `when`(worldStateRepository.findById(org.mockito.Mockito.anyShort())).thenAnswer {
+        `when`(sessionStateRepository.findById(org.mockito.Mockito.anyShort())).thenAnswer {
             Optional.ofNullable(worlds[it.arguments[0] as Short])
         }
 
-        `when`(generalRepository.findByWorldId(org.mockito.Mockito.anyLong())).thenAnswer {
+        `when`(officerRepository.findBySessionId(org.mockito.Mockito.anyLong())).thenAnswer {
             val worldId = it.arguments[0] as Long
-            generals.values.filter { g -> g.worldId == worldId }
+            generals.values.filter { g -> g.sessionId == worldId }
         }
-        `when`(generalRepository.findByNationId(org.mockito.Mockito.anyLong())).thenAnswer {
+        `when`(officerRepository.findByFactionId(org.mockito.Mockito.anyLong())).thenAnswer {
             val nationId = it.arguments[0] as Long
-            generals.values.filter { g -> g.nationId == nationId }
+            generals.values.filter { g -> g.factionId == nationId }
         }
-        `when`(generalRepository.findByWorldIdAndNationId(org.mockito.Mockito.anyLong(), org.mockito.Mockito.anyLong())).thenAnswer {
+        `when`(officerRepository.findBySessionIdAndFactionId(org.mockito.Mockito.anyLong(), org.mockito.Mockito.anyLong())).thenAnswer {
             val worldId = it.arguments[0] as Long
             val nationId = it.arguments[1] as Long
-            generals.values.filter { g -> g.worldId == worldId && g.nationId == nationId }
+            generals.values.filter { g -> g.sessionId == worldId && g.factionId == nationId }
         }
-        `when`(generalRepository.findByCityId(org.mockito.Mockito.anyLong())).thenAnswer {
+        `when`(officerRepository.findByPlanetId(org.mockito.Mockito.anyLong())).thenAnswer {
             val cityId = it.arguments[0] as Long
-            generals.values.filter { g -> g.cityId == cityId }
+            generals.values.filter { g -> g.planetId == cityId }
         }
-        `when`(generalRepository.findById(org.mockito.Mockito.anyLong())).thenAnswer {
+        `when`(officerRepository.findById(org.mockito.Mockito.anyLong())).thenAnswer {
             Optional.ofNullable(generals[it.arguments[0] as Long])
         }
-        `when`(generalRepository.save(org.mockito.Mockito.any(General::class.java))).thenAnswer {
-            val g = it.arguments[0] as General
+        `when`(officerRepository.save(org.mockito.Mockito.any(General::class.java))).thenAnswer {
+            val g = it.arguments[0] as Officer
             generals[g.id] = g
             g
         }
-        `when`(generalRepository.saveAll(org.mockito.Mockito.anyList<General>())).thenAnswer {
-            val list = it.arguments[0] as List<General>
+        `when`(officerRepository.saveAll(org.mockito.Mockito.anyList<Officer>())).thenAnswer {
+            val list = it.arguments[0] as List<Officer>
             list.forEach { g -> generals[g.id] = g }
             list
         }
 
-        `when`(generalTurnRepository.findByGeneralIdOrderByTurnIdx(org.mockito.Mockito.anyLong())).thenAnswer {
+        `when`(officerTurnRepository.findByOfficerIdOrderByTurnIdx(org.mockito.Mockito.anyLong())).thenAnswer {
             val generalId = it.arguments[0] as Long
             generalTurns[generalId]?.sortedBy { t -> t.turnIdx } ?: emptyList<GeneralTurn>()
         }
@@ -245,76 +245,76 @@ class InMemoryTurnHarness {
             val generalId = invocation.arguments[0] as Long
             generalTurns.remove(generalId)
             null
-        }.`when`(generalTurnRepository).deleteByGeneralId(org.mockito.Mockito.anyLong())
+        }.`when`(officerTurnRepository).deleteByGeneralId(org.mockito.Mockito.anyLong())
         doAnswer { invocation ->
             val turn = invocation.arguments[0] as GeneralTurn
             generalTurns[turn.generalId]?.removeIf { t -> t.id == turn.id }
             null
-        }.`when`(generalTurnRepository).delete(org.mockito.Mockito.any(GeneralTurn::class.java))
+        }.`when`(officerTurnRepository).delete(org.mockito.Mockito.any(GeneralTurn::class.java))
         doAnswer { invocation ->
             val turns = invocation.arguments[0] as List<GeneralTurn>
             turns.forEach { turn ->
                 generalTurns[turn.generalId]?.removeIf { t -> t.id == turn.id }
             }
             null
-        }.`when`(generalTurnRepository).deleteAll(org.mockito.Mockito.anyList<GeneralTurn>())
+        }.`when`(officerTurnRepository).deleteAll(org.mockito.Mockito.anyList<GeneralTurn>())
 
-        `when`(nationTurnRepository.findByNationIdAndOfficerLevelOrderByTurnIdx(org.mockito.Mockito.anyLong(), org.mockito.Mockito.anyShort())).thenAnswer {
+        `when`(factionTurnRepository.findByNationIdAndOfficerLevelOrderByTurnIdx(org.mockito.Mockito.anyLong(), org.mockito.Mockito.anyShort())).thenAnswer {
             val nationId = it.arguments[0] as Long
             val officerLevel = it.arguments[1] as Short
             nationTurns[nationId to officerLevel]?.sortedBy { t -> t.turnIdx } ?: emptyList<NationTurn>()
         }
         doAnswer { invocation ->
             val turn = invocation.arguments[0] as NationTurn
-            nationTurns[turn.nationId to turn.officerLevel]?.removeIf { t -> t.id == turn.id }
+            nationTurns[turn.factionId to turn.officerLevel]?.removeIf { t -> t.id == turn.id }
             null
-        }.`when`(nationTurnRepository).delete(org.mockito.Mockito.any(NationTurn::class.java))
+        }.`when`(factionTurnRepository).delete(org.mockito.Mockito.any(NationTurn::class.java))
         doAnswer { invocation ->
             val nationId = invocation.arguments[0] as Long
             val officerLevel = invocation.arguments[1] as Short
             nationTurns.remove(nationId to officerLevel)
             null
-        }.`when`(nationTurnRepository).deleteByNationIdAndOfficerLevel(org.mockito.Mockito.anyLong(), org.mockito.Mockito.anyShort())
+        }.`when`(factionTurnRepository).deleteByNationIdAndOfficerLevel(org.mockito.Mockito.anyLong(), org.mockito.Mockito.anyShort())
 
-        `when`(cityRepository.findById(org.mockito.Mockito.anyLong())).thenAnswer {
+        `when`(planetRepository.findById(org.mockito.Mockito.anyLong())).thenAnswer {
             Optional.ofNullable(cities[it.arguments[0] as Long])
         }
-        `when`(cityRepository.findByWorldId(org.mockito.Mockito.anyLong())).thenAnswer {
+        `when`(planetRepository.findBySessionId(org.mockito.Mockito.anyLong())).thenAnswer {
             val worldId = it.arguments[0] as Long
-            cities.values.filter { c -> c.worldId == worldId }
+            cities.values.filter { c -> c.sessionId == worldId }
         }
-        `when`(cityRepository.findByNationId(org.mockito.Mockito.anyLong())).thenAnswer {
+        `when`(planetRepository.findByFactionId(org.mockito.Mockito.anyLong())).thenAnswer {
             val nationId = it.arguments[0] as Long
-            cities.values.filter { c -> c.nationId == nationId }
+            cities.values.filter { c -> c.factionId == nationId }
         }
-        `when`(cityRepository.save(org.mockito.Mockito.any(City::class.java))).thenAnswer {
-            val city = it.arguments[0] as City
+        `when`(planetRepository.save(org.mockito.Mockito.any(City::class.java))).thenAnswer {
+            val city = it.arguments[0] as Planet
             cities[city.id] = city
             city
         }
 
-        `when`(nationRepository.findById(org.mockito.Mockito.anyLong())).thenAnswer {
+        `when`(factionRepository.findById(org.mockito.Mockito.anyLong())).thenAnswer {
             Optional.ofNullable(nations[it.arguments[0] as Long])
         }
-        `when`(nationRepository.findByWorldId(org.mockito.Mockito.anyLong())).thenAnswer {
+        `when`(factionRepository.findBySessionId(org.mockito.Mockito.anyLong())).thenAnswer {
             val worldId = it.arguments[0] as Long
-            nations.values.filter { n -> n.worldId == worldId }
+            nations.values.filter { n -> n.sessionId == worldId }
         }
-        `when`(nationRepository.save(org.mockito.Mockito.any(Nation::class.java))).thenAnswer {
-            val nation = it.arguments[0] as Nation
+        `when`(factionRepository.save(org.mockito.Mockito.any(Nation::class.java))).thenAnswer {
+            val nation = it.arguments[0] as Faction
             if (nation.id <= 0L) {
                 nation.id = (nations.keys.maxOrNull() ?: 0L) + 1L
             }
             nations[nation.id] = nation
             nation
         }
-        `when`(nationRepository.saveAll(org.mockito.Mockito.anyList<Nation>())).thenAnswer {
-            val list = it.arguments[0] as List<Nation>
+        `when`(factionRepository.saveAll(org.mockito.Mockito.anyList<Faction>())).thenAnswer {
+            val list = it.arguments[0] as List<Faction>
             list.forEach { n -> nations[n.id] = n }
             list
         }
 
-        `when`(diplomacyRepository.findByWorldId(org.mockito.Mockito.anyLong())).thenReturn(emptyList())
+        `when`(diplomacyRepository.findBySessionId(org.mockito.Mockito.anyLong())).thenReturn(emptyList())
         `when`(
             diplomacyRepository.findByWorldIdAndSrcNationIdOrDestNationId(
                 org.mockito.Mockito.anyLong(),

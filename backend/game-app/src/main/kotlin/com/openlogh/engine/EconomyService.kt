@@ -132,7 +132,7 @@ class EconomyService @Autowired constructor(
 
         // Count officers (officer_level 2-4) per city who are in their assigned city
         val officerCountByCity = generals
-            .filter { it.officerLevel in 2..4 && it.planetId == it.officerCity.toLong() }
+            .filter { it.officerLevel in 2..4 && it.planetId == it.officerPlanet.toLong() }
             .groupBy { it.planetId }
             .mapValues { it.value.size }
 
@@ -434,8 +434,8 @@ class EconomyService @Autowired constructor(
         val generalsByCity = generals.groupBy { it.planetId }
 
         // Build map city ID <-> DB city ID lookups
-        val dbToMapId = cities.associate { it.id to it.mapCityId }
-        val mapToDbId = cities.associate { it.mapCityId to it.id }
+        val dbToMapId = cities.associate { it.id to it.mapPlanetId }
+        val mapToDbId = cities.associate { it.mapPlanetId to it.id }
 
         // Neutral cities are always supplied
         for (city in cities) {
@@ -460,7 +460,7 @@ class EconomyService @Autowired constructor(
                     val adjacentMapIds = try {
                         mapService.getAdjacentCities(mapCode, currentMapId)
                     } catch (e: Exception) {
-                        log.warn("Failed to get adjacent cities for mapCityId={}: {}", currentMapId, e.message)
+                        log.warn("Failed to get adjacent cities for mapPlanetId={}: {}", currentMapId, e.message)
                         emptyList()
                     }
                     for (adjMapId in adjacentMapIds) {
@@ -502,9 +502,9 @@ class EconomyService @Autowired constructor(
                     if (city.approval < 30 && city.id != nation.capitalPlanetId) {
                         log.info("City {} (id={}) lost to isolation (trust={})", city.name, city.id, city.approval)
                         for (general in cityGenerals) {
-                            if (general.officerCity == city.id.toInt()) {
+                            if (general.officerPlanet == city.id.toInt()) {
                                 general.officerLevel = 1
-                                general.officerCity = 0
+                                general.officerPlanet = 0
                             }
                         }
                         city.factionId = 0
@@ -545,25 +545,25 @@ class EconomyService @Autowired constructor(
                 nation.supplies += newLevel * 1000
 
                 // Legacy parity: log 【작위】 history for nation level-up
-                val nationName = nation.name
+                val factionName = nation.name
                 val lordName = generalsByNation[nation.id]
                     ?.firstOrNull { it.officerLevel.toInt() == 20 }?.name ?: "군주"
                 val oldLevelText = getNationLevelName(oldLevel)
                 val newLevelText = getNationLevelName(newLevel)
 
                 val globalMsg = when (newLevel) {
-                    9 -> "【작위】 ${nationName} $oldLevelText ${lordName}이(가) ${newLevelText}로 옹립되었습니다."
-                    8 -> "【작위】 ${nationName}의 ${lordName}이(가) ${newLevelText}로 책봉되었습니다."
-                    in 3..7 -> "【작위】 ${nationName}의 ${lordName}이(가) ${newLevelText}로 임명되었습니다."
-                    2 -> "【작위】 ${lordName}이(가) 독립하여 ${nationName}(이)라는 ${newLevelText}로 나섰습니다."
-                    else -> "【작위】 ${nationName}의 ${lordName}이(가) ${newLevelText}로 승격되었습니다."
+                    9 -> "【작위】 ${factionName} $oldLevelText ${lordName}이(가) ${newLevelText}로 옹립되었습니다."
+                    8 -> "【작위】 ${factionName}의 ${lordName}이(가) ${newLevelText}로 책봉되었습니다."
+                    in 3..7 -> "【작위】 ${factionName}의 ${lordName}이(가) ${newLevelText}로 임명되었습니다."
+                    2 -> "【작위】 ${lordName}이(가) 독립하여 ${factionName}(이)라는 ${newLevelText}로 나섰습니다."
+                    else -> "【작위】 ${factionName}의 ${lordName}이(가) ${newLevelText}로 승격되었습니다."
                 }
                 val nationMsg = when (newLevel) {
-                    9 -> "${nationName} $oldLevelText ${lordName}이(가) ${newLevelText}로 옹립"
-                    8 -> "${nationName}의 ${lordName}이(가) ${newLevelText}로 책봉"
-                    in 3..7 -> "${nationName}의 ${lordName}이(가) ${newLevelText}로 임명됨"
-                    2 -> "${lordName}이(가) 독립하여 ${nationName}(이)라는 ${newLevelText}로 나서다"
-                    else -> "${nationName}의 ${lordName}이(가) ${newLevelText}로 승격됨"
+                    9 -> "${factionName} $oldLevelText ${lordName}이(가) ${newLevelText}로 옹립"
+                    8 -> "${factionName}의 ${lordName}이(가) ${newLevelText}로 책봉"
+                    in 3..7 -> "${factionName}의 ${lordName}이(가) ${newLevelText}로 임명됨"
+                    2 -> "${lordName}이(가) 독립하여 ${factionName}(이)라는 ${newLevelText}로 나서다"
+                    else -> "${factionName}의 ${lordName}이(가) ${newLevelText}로 승격됨"
                 }
 
                 historyService.logWorldHistory(
@@ -580,7 +580,7 @@ class EconomyService @Autowired constructor(
                     month = world.currentMonth.toInt(),
                 )
 
-                log.info("Nation {} leveled up to {} ({}) (reward: gold={}, rice={})",
+                log.info("Nation {} leveled up to {} ({}) (reward: gold={}, supplies = {})",
                     nation.name, newLevel, newLevelText, newLevel * 1000, newLevel * 1000)
 
                 for (general in generalsByNation[nation.id].orEmpty()) {

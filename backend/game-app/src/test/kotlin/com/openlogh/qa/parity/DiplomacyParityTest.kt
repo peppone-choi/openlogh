@@ -4,7 +4,7 @@ import com.openlogh.engine.DiplomacyService
 import com.openlogh.engine.turn.cqrs.persist.JpaWorldPortFactory
 import com.openlogh.engine.turn.cqrs.persist.toSnapshot
 import com.openlogh.entity.Diplomacy
-import com.openlogh.entity.WorldState
+import com.openlogh.entity.SessionState
 import com.openlogh.repository.DiplomacyRepository
 import com.openlogh.repository.MessageRepository
 import org.assertj.core.api.Assertions.assertThat
@@ -63,16 +63,16 @@ class DiplomacyParityTest {
 
     private fun wireRepos() {
         `when`(diplomacyRepository.findByWorldIdAndIsDeadFalse(anyLong())).thenAnswer {
-            diplomacies.filter { !it.isDead && it.worldId == WORLD_ID }
+            diplomacies.filter { !it.isDead && it.sessionId == WORLD_ID }
         }
-        `when`(diplomacyRepository.findByWorldId(anyLong())).thenAnswer {
-            diplomacies.filter { it.worldId == WORLD_ID }
+        `when`(diplomacyRepository.findBySessionId(anyLong())).thenAnswer {
+            diplomacies.filter { it.sessionId == WORLD_ID }
         }
         `when`(diplomacyRepository.findByWorldIdAndSrcNationIdOrDestNationId(anyLong(), anyLong(), anyLong()))
             .thenAnswer { inv ->
                 val nationId = inv.arguments[1] as Long
                 diplomacies.filter {
-                    it.worldId == WORLD_ID && (it.srcNationId == nationId || it.destNationId == nationId)
+                    it.sessionId == WORLD_ID && (it.srcFactionId == nationId || it.destFactionId == nationId)
                 }
             }
         `when`(diplomacyRepository.findActiveRelation(anyLong(), anyLong(), anyLong(), anyString()))
@@ -81,9 +81,9 @@ class DiplomacyParityTest {
                 val nationB = inv.arguments[2] as Long
                 val stateCode = inv.arguments[3] as String
                 diplomacies.firstOrNull {
-                    !it.isDead && it.worldId == WORLD_ID && it.stateCode == stateCode &&
-                        ((it.srcNationId == nationA && it.destNationId == nationB) ||
-                            (it.srcNationId == nationB && it.destNationId == nationA))
+                    !it.isDead && it.sessionId == WORLD_ID && it.stateCode == stateCode &&
+                        ((it.srcFactionId == nationA && it.destFactionId == nationB) ||
+                            (it.srcFactionId == nationB && it.destFactionId == nationA))
                 }
             }
         `when`(diplomacyRepository.findActiveRelationsBetween(anyLong(), anyLong(), anyLong()))
@@ -91,9 +91,9 @@ class DiplomacyParityTest {
                 val nationA = inv.arguments[1] as Long
                 val nationB = inv.arguments[2] as Long
                 diplomacies.filter {
-                    !it.isDead && it.worldId == WORLD_ID &&
-                        ((it.srcNationId == nationA && it.destNationId == nationB) ||
-                            (it.srcNationId == nationB && it.destNationId == nationA))
+                    !it.isDead && it.sessionId == WORLD_ID &&
+                        ((it.srcFactionId == nationA && it.destFactionId == nationB) ||
+                            (it.srcFactionId == nationB && it.destFactionId == nationA))
                 }
             }
         `when`(diplomacyRepository.save(any(Diplomacy::class.java))).thenAnswer { inv ->
@@ -124,9 +124,9 @@ class DiplomacyParityTest {
     ): Diplomacy {
         val d = Diplomacy(
             id = nextId++,
-            worldId = WORLD_ID,
-            srcNationId = srcNationId,
-            destNationId = destNationId,
+            sessionId = WORLD_ID,
+            srcFactionId = srcNationId,
+            destFactionId = destNationId,
             stateCode = stateCode,
             term = term,
             isDead = isDead,
@@ -135,7 +135,7 @@ class DiplomacyParityTest {
         return d
     }
 
-    private fun testWorld(): WorldState = WorldState(
+    private fun testWorld(): SessionState = SessionState(
         id = 1,
         scenarioCode = "test",
         currentYear = 210,

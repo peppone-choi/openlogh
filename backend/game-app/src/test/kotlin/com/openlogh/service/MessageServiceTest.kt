@@ -2,9 +2,9 @@ package com.openlogh.service
 
 import com.openlogh.entity.Message
 import com.openlogh.repository.BoardCommentRepository
-import com.openlogh.repository.GeneralRepository
+import com.openlogh.repository.OfficerRepository
 import com.openlogh.repository.MessageRepository
-import com.openlogh.repository.NationRepository
+import com.openlogh.repository.FactionRepository
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -18,18 +18,18 @@ import org.mockito.Mockito.`when`
 class MessageServiceTest {
     private lateinit var messageRepository: MessageRepository
     private lateinit var boardCommentRepository: BoardCommentRepository
-    private lateinit var generalRepository: GeneralRepository
-    private lateinit var nationRepository: NationRepository
+    private lateinit var officerRepository: OfficerRepository
+    private lateinit var factionRepository: FactionRepository
     private lateinit var service: MessageService
 
     @BeforeEach
     fun setUp() {
         messageRepository = mock(MessageRepository::class.java)
         boardCommentRepository = mock(BoardCommentRepository::class.java)
-        generalRepository = mock(GeneralRepository::class.java)
-        nationRepository = mock(NationRepository::class.java)
-        val worldStateRepository = mock(com.openlogh.repository.WorldStateRepository::class.java)
-        service = MessageService(messageRepository, boardCommentRepository, generalRepository, nationRepository, worldStateRepository)
+        officerRepository = mock(OfficerRepository::class.java)
+        factionRepository = mock(FactionRepository::class.java)
+        val sessionStateRepository = mock(com.openlogh.repository.SessionStateRepository::class.java)
+        service = MessageService(messageRepository, boardCommentRepository, officerRepository, factionRepository, sessionStateRepository)
     }
 
     @Test
@@ -39,7 +39,7 @@ class MessageServiceTest {
         val nationalMessages = listOf(message(10, mailboxType = MessageService.MAILBOX_NATIONAL, mailboxCode = "national"))
         val diplomacyMessages = listOf(message(12, mailboxType = MessageService.MAILBOX_DIPLOMACY, mailboxCode = "diplomacy"))
 
-        `when`(generalRepository.findById(5L)).thenReturn(java.util.Optional.of(general))
+        `when`(officerRepository.findById(5L)).thenReturn(java.util.Optional.of(general))
         `when`(messageRepository.findConversationByMailboxTypeAndOwnerIdAndIdGreaterThan(MessageService.MAILBOX_PRIVATE, 5L, 9L))
             .thenReturn(privateMessages)
         `when`(messageRepository.findByDestIdAndMailboxTypeAndIdGreaterThanOrderBySentAtDesc(7L, MessageService.MAILBOX_NATIONAL, 9L))
@@ -62,7 +62,7 @@ class MessageServiceTest {
         val general = general(id = 5L, nationId = 7L, officerLevel = 3)
         val privateMessages = listOf(message(11, mailboxType = MessageService.MAILBOX_PRIVATE, mailboxCode = "message"))
 
-        `when`(generalRepository.findById(5L)).thenReturn(java.util.Optional.of(general))
+        `when`(officerRepository.findById(5L)).thenReturn(java.util.Optional.of(general))
         `when`(messageRepository.findConversationByMailboxTypeAndOwnerId(MessageService.MAILBOX_PRIVATE, 5L))
             .thenReturn(privateMessages)
         `when`(messageRepository.findByDestIdAndMailboxTypeOrderBySentAtDesc(7L, MessageService.MAILBOX_NATIONAL))
@@ -79,7 +79,7 @@ class MessageServiceTest {
         val general = general(id = 5L, nationId = 7L, officerLevel = 3)
         val privateMessages = (1L..35L).map { message(it, mailboxType = MessageService.MAILBOX_PRIVATE, mailboxCode = "message") }
 
-        `when`(generalRepository.findById(5L)).thenReturn(java.util.Optional.of(general))
+        `when`(officerRepository.findById(5L)).thenReturn(java.util.Optional.of(general))
         `when`(messageRepository.findConversationByMailboxTypeAndOwnerId(MessageService.MAILBOX_PRIVATE, 5L))
             .thenReturn(privateMessages)
         `when`(messageRepository.findByDestIdAndMailboxTypeOrderBySentAtDesc(7L, MessageService.MAILBOX_NATIONAL))
@@ -95,7 +95,7 @@ class MessageServiceTest {
         val general = general(id = 5L, nationId = 7L, officerLevel = 3)
         val privateMessages = (1L..20L).map { message(it, mailboxType = MessageService.MAILBOX_PRIVATE, mailboxCode = "message") }
 
-        `when`(generalRepository.findById(5L)).thenReturn(java.util.Optional.of(general))
+        `when`(officerRepository.findById(5L)).thenReturn(java.util.Optional.of(general))
         `when`(messageRepository.findConversationByMailboxTypeAndOwnerId(MessageService.MAILBOX_PRIVATE, 5L))
             .thenReturn(privateMessages)
         `when`(messageRepository.findByDestIdAndMailboxTypeOrderBySentAtDesc(7L, MessageService.MAILBOX_NATIONAL))
@@ -151,32 +151,32 @@ class MessageServiceTest {
 
     @Test
     fun `getContacts includes nationColor from nation lookup`() {
-        val nation = com.openlogh.entity.Nation(id = 7L, worldId = 1, name = "위")
+        val nation = com.openlogh.entity.Faction(id = 7L, sessionId = 1, name = "위")
         nation.color = "#FF0000"
         val gen = general(id = 5L, nationId = 7L, officerLevel = 1)
 
-        `when`(generalRepository.findByWorldId(1L)).thenReturn(listOf(gen))
-        `when`(nationRepository.findByWorldId(1L)).thenReturn(listOf(nation))
+        `when`(officerRepository.findBySessionId(1L)).thenReturn(listOf(gen))
+        `when`(factionRepository.findBySessionId(1L)).thenReturn(listOf(nation))
 
         val result = service.getContacts(1L)
 
         assertEquals(1, result.size)
         assertEquals("#FF0000", result.first().nationColor)
-        assertEquals("위", result.first().nationName)
+        assertEquals("위", result.first().factionName)
     }
 
     @Test
     fun `getContacts returns null nationColor for general without nation`() {
         val gen = general(id = 3L, nationId = 0L, officerLevel = 1)
 
-        `when`(generalRepository.findByWorldId(1L)).thenReturn(listOf(gen))
-        `when`(nationRepository.findByWorldId(1L)).thenReturn(emptyList())
+        `when`(officerRepository.findBySessionId(1L)).thenReturn(listOf(gen))
+        `when`(factionRepository.findBySessionId(1L)).thenReturn(emptyList())
 
         val result = service.getContacts(1L)
 
         assertEquals(1, result.size)
         assertEquals(null, result.first().nationColor)
-        assertEquals("", result.first().nationName)
+        assertEquals("", result.first().factionName)
     }
 
     @Test
@@ -195,13 +195,13 @@ class MessageServiceTest {
         assertTrue(result.none { it.id == 4L })
     }
 
-    private fun general(id: Long, nationId: Long, officerLevel: Short): com.openlogh.entity.General {
-        return com.openlogh.entity.General(
+    private fun general(id: Long, nationId: Long, officerLevel: Short): com.openlogh.entity.Officer {
+        return com.openlogh.entity.Officer(
             id = id,
-            worldId = 1,
+            sessionId = 1,
             name = "장수",
-            nationId = nationId,
-            cityId = 1,
+            factionId = nationId,
+            planetId = 1,
             officerLevel = officerLevel,
             turnTime = java.time.OffsetDateTime.now(),
         )
@@ -210,7 +210,7 @@ class MessageServiceTest {
     private fun message(id: Long, mailboxType: String = MessageService.MAILBOX_PRIVATE, mailboxCode: String = "message"): Message {
         return Message(
             id = id,
-            worldId = 1,
+            sessionId = 1,
             mailboxCode = mailboxCode,
             mailboxType = mailboxType,
             messageType = "test",

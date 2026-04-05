@@ -1,7 +1,7 @@
 package com.openlogh.engine.war
 
-import com.openlogh.entity.City
-import com.openlogh.entity.General
+import com.openlogh.entity.Planet
+import com.openlogh.entity.Officer
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
@@ -39,25 +39,25 @@ class BattleExperienceParityTest {
         intelExp: Short = 0,
         specialCode: String = "None",
         special2Code: String = "None",
-    ): General {
-        return General(
+    ): Officer {
+        return Officer(
             id = id,
-            worldId = 1,
+            sessionId = 1,
             name = "장수$id",
-            nationId = nationId,
-            cityId = 1,
+            factionId = nationId,
+            planetId = 1,
             leadership = leadership,
-            strength = strength,
-            intel = intel,
-            crew = crew,
-            crewType = crewType,
-            train = train,
-            atmos = atmos,
-            rice = rice,
+            command = strength,
+            intelligence = intel,
+            ships = crew,
+            shipClass = crewType,
+            training = train,
+            morale = atmos,
+            supplies = rice,
             experience = experience,
             leadershipExp = leadershipExp,
-            strengthExp = strengthExp,
-            intelExp = intelExp,
+            commandExp = strengthExp,
+            intelligenceExp = intelExp,
             specialCode = specialCode,
             special2Code = special2Code,
             turnTime = OffsetDateTime.now(),
@@ -72,18 +72,18 @@ class BattleExperienceParityTest {
         wallMax: Int = 1000,
         pop: Int = 1000,
         popMax: Int = 50000,
-    ): City {
-        return City(
+    ): Planet {
+        return Planet(
             id = 1,
-            worldId = 1,
+            sessionId = 1,
             name = "도시",
-            nationId = nationId,
-            def = def,
-            defMax = defMax,
-            wall = wall,
-            wallMax = wallMax,
-            pop = pop,
-            popMax = popMax,
+            factionId = nationId,
+            orbitalDefense = def,
+            orbitalDefenseMax = defMax,
+            fortress = wall,
+            fortressMax = wallMax,
+            population = pop,
+            populationMax = popMax,
         )
     }
 
@@ -98,7 +98,7 @@ class BattleExperienceParityTest {
         fun `attacker 5000 damage gives 100 exp`() {
             // PHP: attackerDamageDealtForExp / 50 = 5000 / 50 = 100
             val general = createGeneral()
-            val unit = WarUnitGeneral(general)
+            val unit = WarUnitOfficer(general)
             unit.pendingLevelExp += 5000 / 50  // Simulating BattleEngine formula
             assertEquals(100, unit.pendingLevelExp)
         }
@@ -107,7 +107,7 @@ class BattleExperienceParityTest {
         @DisplayName("Attacker dealing 100 damage gets pendingLevelExp = 2")
         fun `attacker 100 damage gives 2 exp`() {
             val general = createGeneral()
-            val unit = WarUnitGeneral(general)
+            val unit = WarUnitOfficer(general)
             unit.pendingLevelExp += 100 / 50
             assertEquals(2, unit.pendingLevelExp)
         }
@@ -117,7 +117,7 @@ class BattleExperienceParityTest {
         fun `attacker 49 damage gives 0 exp - integer division`() {
             // PHP: intdiv(49, 50) = 0; Kotlin: 49 / 50 = 0 (integer division)
             val general = createGeneral()
-            val unit = WarUnitGeneral(general)
+            val unit = WarUnitOfficer(general)
             unit.pendingLevelExp += 49 / 50
             assertEquals(0, unit.pendingLevelExp)
         }
@@ -126,7 +126,7 @@ class BattleExperienceParityTest {
         @DisplayName("Boundary: 50 damage gives exactly 1 exp")
         fun `attacker 50 damage gives 1 exp`() {
             val general = createGeneral()
-            val unit = WarUnitGeneral(general)
+            val unit = WarUnitOfficer(general)
             unit.pendingLevelExp += 50 / 50
             assertEquals(1, unit.pendingLevelExp)
         }
@@ -140,9 +140,9 @@ class BattleExperienceParityTest {
             val defenderExp = (damageReceived / 50 * 0.8).toInt()
             assertEquals(48, defenderExp)
 
-            // Verify via WarUnitGeneral accumulation pattern
+            // Verify via WarUnitOfficer accumulation pattern
             val general = createGeneral(id = 2)
-            val unit = WarUnitGeneral(general)
+            val unit = WarUnitOfficer(general)
             unit.pendingLevelExp += defenderExp
             assertEquals(48, unit.pendingLevelExp)
         }
@@ -151,7 +151,7 @@ class BattleExperienceParityTest {
         @DisplayName("City capture adds +1000 exp to attacker pendingLevelExp")
         fun `city capture adds 1000 exp`() {
             val general = createGeneral()
-            val unit = WarUnitGeneral(general)
+            val unit = WarUnitOfficer(general)
             unit.pendingLevelExp = 100  // Some existing exp from damage
             unit.pendingLevelExp += 1000  // City capture bonus
             assertEquals(1100, unit.pendingLevelExp)
@@ -161,7 +161,7 @@ class BattleExperienceParityTest {
         @DisplayName("Zero damage gives 0 exp")
         fun `zero damage gives 0 exp`() {
             val general = createGeneral()
-            val unit = WarUnitGeneral(general)
+            val unit = WarUnitOfficer(general)
             unit.pendingLevelExp += 0 / 50
             assertEquals(0, unit.pendingLevelExp)
         }
@@ -170,7 +170,7 @@ class BattleExperienceParityTest {
         @DisplayName("99 damage gives 1 exp (99/50 = 1 integer division)")
         fun `99 damage gives 1 exp`() {
             val general = createGeneral()
-            val unit = WarUnitGeneral(general)
+            val unit = WarUnitOfficer(general)
             unit.pendingLevelExp += 99 / 50
             assertEquals(1, unit.pendingLevelExp)
         }
@@ -186,12 +186,12 @@ class BattleExperienceParityTest {
         @DisplayName("FOOTMAN (crewType 1100) routes pendingStatExp to strengthExp")
         fun `footman routes to strengthExp`() {
             val general = createGeneral(crewType = 1100)  // FOOTMAN
-            val unit = WarUnitGeneral(general)
+            val unit = WarUnitOfficer(general)
             unit.pendingStatExp = 1
             unit.applyResults()
 
-            assertEquals(1, general.strengthExp.toInt())
-            assertEquals(0, general.intelExp.toInt())
+            assertEquals(1, general.commandExp.toInt())
+            assertEquals(0, general.intelligenceExp.toInt())
             assertEquals(0, general.leadershipExp.toInt())
         }
 
@@ -199,12 +199,12 @@ class BattleExperienceParityTest {
         @DisplayName("ARCHER (crewType 1200) routes pendingStatExp to strengthExp (else branch)")
         fun `archer routes to strengthExp`() {
             val general = createGeneral(crewType = 1200)  // ARCHER
-            val unit = WarUnitGeneral(general)
+            val unit = WarUnitOfficer(general)
             unit.pendingStatExp = 1
             unit.applyResults()
 
-            assertEquals(1, general.strengthExp.toInt())
-            assertEquals(0, general.intelExp.toInt())
+            assertEquals(1, general.commandExp.toInt())
+            assertEquals(0, general.intelligenceExp.toInt())
             assertEquals(0, general.leadershipExp.toInt())
         }
 
@@ -212,12 +212,12 @@ class BattleExperienceParityTest {
         @DisplayName("CAVALRY (crewType 1300) routes pendingStatExp to strengthExp")
         fun `cavalry routes to strengthExp`() {
             val general = createGeneral(crewType = 1300)  // CAVALRY
-            val unit = WarUnitGeneral(general)
+            val unit = WarUnitOfficer(general)
             unit.pendingStatExp = 1
             unit.applyResults()
 
-            assertEquals(1, general.strengthExp.toInt())
-            assertEquals(0, general.intelExp.toInt())
+            assertEquals(1, general.commandExp.toInt())
+            assertEquals(0, general.intelligenceExp.toInt())
             assertEquals(0, general.leadershipExp.toInt())
         }
 
@@ -225,12 +225,12 @@ class BattleExperienceParityTest {
         @DisplayName("WIZARD (crewType 1400) routes pendingStatExp to intelExp only")
         fun `wizard routes to intelExp`() {
             val general = createGeneral(crewType = 1400)  // WIZARD
-            val unit = WarUnitGeneral(general)
+            val unit = WarUnitOfficer(general)
             unit.pendingStatExp = 1
             unit.applyResults()
 
-            assertEquals(1, general.intelExp.toInt())
-            assertEquals(0, general.strengthExp.toInt())
+            assertEquals(1, general.intelligenceExp.toInt())
+            assertEquals(0, general.commandExp.toInt())
             assertEquals(0, general.leadershipExp.toInt())
         }
 
@@ -238,13 +238,13 @@ class BattleExperienceParityTest {
         @DisplayName("SIEGE (crewType 1500) routes pendingStatExp to leadershipExp only")
         fun `siege routes to leadershipExp`() {
             val general = createGeneral(crewType = 1500)  // JEONGRAN (SIEGE)
-            val unit = WarUnitGeneral(general)
+            val unit = WarUnitOfficer(general)
             unit.pendingStatExp = 1
             unit.applyResults()
 
             assertEquals(1, general.leadershipExp.toInt())
-            assertEquals(0, general.strengthExp.toInt())
-            assertEquals(0, general.intelExp.toInt())
+            assertEquals(0, general.commandExp.toInt())
+            assertEquals(0, general.intelligenceExp.toInt())
         }
 
         @Test
@@ -253,13 +253,13 @@ class BattleExperienceParityTest {
             // No CrewType with ArmType.MISC exists currently, so fromCode returns null
             // When unitCrewType is null, unitCrewType?.armType is null, which matches else branch
             val general = createGeneral(crewType = 9999)  // Non-existent code
-            val unit = WarUnitGeneral(general)
-            // Must set crewType directly since WarUnitGeneral.init reads from general.crewType
+            val unit = WarUnitOfficer(general)
+            // Must set crewType directly since WarUnitOfficer.init reads from general.shipClass
             unit.pendingStatExp = 1
             unit.applyResults()
 
-            assertEquals(1, general.strengthExp.toInt())
-            assertEquals(0, general.intelExp.toInt())
+            assertEquals(1, general.commandExp.toInt())
+            assertEquals(0, general.intelligenceExp.toInt())
             assertEquals(0, general.leadershipExp.toInt())
         }
 
@@ -268,14 +268,14 @@ class BattleExperienceParityTest {
         fun `misc routes to all three stat exps`() {
             // NOTE: No CrewType entry currently maps to ArmType.MISC, so this branch is
             // unreachable via normal gameplay. This test verifies the logic by directly
-            // invoking applyResults with MISC routing. Since we can't create a WarUnitGeneral
+            // invoking applyResults with MISC routing. Since we can't create a WarUnitOfficer
             // with MISC armType through normal construction, we verify the formula in the
             // code matches legacy PHP addStatExp behavior for MISC.
             //
             // The MISC branch in applyResults:
             //   general.leadershipExp += pendingStatExp (capped 1000)
-            //   general.strengthExp += pendingStatExp (capped 1000)
-            //   general.intelExp += pendingStatExp (capped 1000)
+            //   general.commandExp += pendingStatExp (capped 1000)
+            //   general.intelligenceExp += pendingStatExp (capped 1000)
             //
             // This test documents expected behavior when/if MISC CrewType is added.
             // For now, the else branch (strengthExp) is what unknown/null codes hit.
@@ -293,30 +293,30 @@ class BattleExperienceParityTest {
         @DisplayName("Winner (attacker) atmos 80 -> (80*1.1).toInt() = 88")
         fun `winner atmos multiplied by 1_1`() {
             val general = createGeneral(atmos = 80)
-            val unit = WarUnitGeneral(general)
+            val unit = WarUnitOfficer(general)
             // Simulate attacker win: atmos *= 1.1
-            unit.atmos = (unit.atmos * 1.1).toInt().coerceAtMost(100)
-            assertEquals(88, unit.atmos)
+            unit.morale = (unit.morale * 1.1).toInt().coerceAtMost(100)
+            assertEquals(88, unit.morale)
         }
 
         @Test
         @DisplayName("Loser (attacker lost) atmos 80 -> (80*1.05).toInt() = 84")
         fun `loser atmos multiplied by 1_05`() {
             val general = createGeneral(atmos = 80)
-            val unit = WarUnitGeneral(general)
+            val unit = WarUnitOfficer(general)
             // Simulate attacker lose: atmos *= 1.05
-            unit.atmos = (unit.atmos * 1.05).toInt().coerceAtMost(100)
-            assertEquals(84, unit.atmos)
+            unit.morale = (unit.morale * 1.05).toInt().coerceAtMost(100)
+            assertEquals(84, unit.morale)
         }
 
         @Test
         @DisplayName("Winner atmos capped at 100")
         fun `winner atmos capped at 100`() {
             val general = createGeneral(atmos = 95)
-            val unit = WarUnitGeneral(general)
+            val unit = WarUnitOfficer(general)
             // atmos=95, (95*1.1).toInt() = 104, coerceAtMost(100) = 100
-            unit.atmos = (unit.atmos * 1.1).toInt().coerceAtMost(100)
-            assertEquals(100, unit.atmos)
+            unit.morale = (unit.morale * 1.1).toInt().coerceAtMost(100)
+            assertEquals(100, unit.morale)
         }
 
         @Test
@@ -324,8 +324,8 @@ class BattleExperienceParityTest {
         fun `both sides get pendingStatExp 1`() {
             val attackerGeneral = createGeneral(id = 1, nationId = 1)
             val defenderGeneral = createGeneral(id = 2, nationId = 2)
-            val attacker = WarUnitGeneral(attackerGeneral)
-            val defender = WarUnitGeneral(defenderGeneral)
+            val attacker = WarUnitOfficer(attackerGeneral)
+            val defender = WarUnitOfficer(defenderGeneral)
 
             // Simulate attacker won
             attacker.pendingStatExp += 1
@@ -339,10 +339,10 @@ class BattleExperienceParityTest {
         @DisplayName("Loser atmos 96 -> (96*1.05).toInt() = 100, within cap")
         fun `loser atmos at boundary`() {
             val general = createGeneral(atmos = 96)
-            val unit = WarUnitGeneral(general)
+            val unit = WarUnitOfficer(general)
             // (96*1.05).toInt() = 100.8.toInt() = 100, coerceAtMost(100) = 100
-            unit.atmos = (unit.atmos * 1.05).toInt().coerceAtMost(100)
-            assertEquals(100, unit.atmos)
+            unit.morale = (unit.morale * 1.05).toInt().coerceAtMost(100)
+            assertEquals(100, unit.morale)
         }
     }
 
@@ -356,31 +356,31 @@ class BattleExperienceParityTest {
         @DisplayName("strengthExp=999, pendingStatExp=5 -> coerceIn(0, 1000) = 1000")
         fun `strength exp capped at 1000`() {
             val general = createGeneral(crewType = 1100, strengthExp = 999)  // FOOTMAN
-            val unit = WarUnitGeneral(general)
+            val unit = WarUnitOfficer(general)
             unit.pendingStatExp = 5
             unit.applyResults()
 
             // (999 + 5).coerceIn(0, 1000) = 1000
-            assertEquals(1000, general.strengthExp.toInt())
+            assertEquals(1000, general.commandExp.toInt())
         }
 
         @Test
         @DisplayName("intelExp=998, pendingStatExp=3 -> coerceIn(0, 1000) = 1000")
         fun `intel exp capped at 1000`() {
             val general = createGeneral(crewType = 1400, intelExp = 998)  // WIZARD
-            val unit = WarUnitGeneral(general)
+            val unit = WarUnitOfficer(general)
             unit.pendingStatExp = 3
             unit.applyResults()
 
             // (998 + 3).coerceIn(0, 1000) = 1000
-            assertEquals(1000, general.intelExp.toInt())
+            assertEquals(1000, general.intelligenceExp.toInt())
         }
 
         @Test
         @DisplayName("leadershipExp=997, pendingStatExp=10 -> coerceIn(0, 1000) = 1000")
         fun `leadership exp capped at 1000`() {
             val general = createGeneral(crewType = 1500, leadershipExp = 997)  // SIEGE
-            val unit = WarUnitGeneral(general)
+            val unit = WarUnitOfficer(general)
             unit.pendingStatExp = 10
             unit.applyResults()
 
@@ -413,10 +413,10 @@ class BattleExperienceParityTest {
 
             // Capture initial experience BEFORE battle (resolveBattle calls applyResults internally)
             val initialExp = attackerGeneral.experience
-            val initialStrengthExp = attackerGeneral.strengthExp.toInt()
+            val initialStrengthExp = attackerGeneral.commandExp.toInt()
 
-            val attacker = WarUnitGeneral(attackerGeneral)
-            val defender = WarUnitGeneral(defenderGeneral)
+            val attacker = WarUnitOfficer(attackerGeneral)
+            val defender = WarUnitOfficer(defenderGeneral)
             val city = createCity(nationId = 2, def = 50, wall = 50)
 
             val engine = BattleEngine()
@@ -442,8 +442,8 @@ class BattleExperienceParityTest {
             // Verify strengthExp was updated (FOOTMAN -> strengthExp)
             assertEquals(
                 initialStrengthExp + attacker.pendingStatExp,
-                attackerGeneral.strengthExp.toInt(),
-                "general.strengthExp should equal initial + pendingStatExp for FOOTMAN"
+                attackerGeneral.commandExp.toInt(),
+                "general.commandExp should equal initial + pendingStatExp for FOOTMAN"
             )
         }
 
@@ -451,7 +451,7 @@ class BattleExperienceParityTest {
         @DisplayName("After applyResults, general.experience increased by pendingLevelExp")
         fun `applyResults writes pendingLevelExp to general experience`() {
             val general = createGeneral(experience = 500)
-            val unit = WarUnitGeneral(general)
+            val unit = WarUnitOfficer(general)
             unit.pendingLevelExp = 150
             unit.applyResults()
 
@@ -463,21 +463,21 @@ class BattleExperienceParityTest {
         fun `applyResults writes pendingStatExp to correct statExp field`() {
             // FOOTMAN -> strengthExp
             val footmanGeneral = createGeneral(crewType = 1100, strengthExp = 10)
-            val footmanUnit = WarUnitGeneral(footmanGeneral)
+            val footmanUnit = WarUnitOfficer(footmanGeneral)
             footmanUnit.pendingStatExp = 3
             footmanUnit.applyResults()
-            assertEquals(13, footmanGeneral.strengthExp.toInt())
+            assertEquals(13, footmanGeneral.commandExp.toInt())
 
             // WIZARD -> intelExp
             val wizardGeneral = createGeneral(crewType = 1400, intelExp = 20)
-            val wizardUnit = WarUnitGeneral(wizardGeneral)
+            val wizardUnit = WarUnitOfficer(wizardGeneral)
             wizardUnit.pendingStatExp = 5
             wizardUnit.applyResults()
-            assertEquals(25, wizardGeneral.intelExp.toInt())
+            assertEquals(25, wizardGeneral.intelligenceExp.toInt())
 
             // SIEGE -> leadershipExp
             val siegeGeneral = createGeneral(crewType = 1500, leadershipExp = 30)
-            val siegeUnit = WarUnitGeneral(siegeGeneral)
+            val siegeUnit = WarUnitOfficer(siegeGeneral)
             siegeUnit.pendingStatExp = 2
             siegeUnit.applyResults()
             assertEquals(32, siegeGeneral.leadershipExp.toInt())
@@ -489,22 +489,22 @@ class BattleExperienceParityTest {
             // Run 1
             val gen1 = createGeneral(id = 1, nationId = 1, strength = 70, crew = 5000, crewType = 1100, train = 80, atmos = 80, rice = 50000)
             val def1 = createGeneral(id = 2, nationId = 2, strength = 60, crew = 3000, crewType = 1100, train = 70, atmos = 70, rice = 30000)
-            val atk1 = WarUnitGeneral(gen1)
-            val defUnit1 = WarUnitGeneral(def1)
+            val atk1 = WarUnitOfficer(gen1)
+            val defUnit1 = WarUnitOfficer(def1)
             val city1 = createCity(nationId = 2, def = 50, wall = 50)
             val result1 = BattleEngine().resolveBattle(atk1, listOf(defUnit1), city1, Random(42))
 
             // Run 2: identical inputs, same seed
             val gen2 = createGeneral(id = 1, nationId = 1, strength = 70, crew = 5000, crewType = 1100, train = 80, atmos = 80, rice = 50000)
             val def2 = createGeneral(id = 2, nationId = 2, strength = 60, crew = 3000, crewType = 1100, train = 70, atmos = 70, rice = 30000)
-            val atk2 = WarUnitGeneral(gen2)
-            val defUnit2 = WarUnitGeneral(def2)
+            val atk2 = WarUnitOfficer(gen2)
+            val defUnit2 = WarUnitOfficer(def2)
             val city2 = createCity(nationId = 2, def = 50, wall = 50)
             val result2 = BattleEngine().resolveBattle(atk2, listOf(defUnit2), city2, Random(42))
 
             // Both runs should produce identical experience values
             assertEquals(gen1.experience, gen2.experience, "experience should be identical")
-            assertEquals(gen1.strengthExp, gen2.strengthExp, "strengthExp should be identical")
+            assertEquals(gen1.commandExp, gen2.commandExp, "strengthExp should be identical")
             assertEquals(result1.attackerWon, result2.attackerWon, "battle outcome should be identical")
         }
     }

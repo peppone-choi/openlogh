@@ -129,8 +129,8 @@ class PlanetService(
      * Get adjacent map planet IDs for a given map planet ID.
      * Delegates to MapService which holds the parsed map JSON.
      */
-    fun getAdjacentCities(mapCode: String, mapCityId: Int): List<Int> {
-        return mapService.getAdjacentCities(mapCode, mapCityId)
+    fun getAdjacentCities(mapCode: String, mapPlanetId: Int): List<Int> {
+        return mapService.getAdjacentCities(mapCode, mapPlanetId)
     }
 
     /**
@@ -315,9 +315,9 @@ class PlanetService(
         if (oldNationId != 0L) {
             val generals = officerRepository.findByPlanetId(planet.id)
             for (officer in generals) {
-                if (officer.factionId == oldNationId && officer.officerCity == planet.id.toInt()) {
+                if (officer.factionId == oldNationId && officer.officerPlanet == planet.id.toInt()) {
                     officer.officerLevel = 1
-                    officer.officerCity = 0
+                    officer.officerPlanet = 0
                     officerRepository.save(officer)
                 }
             }
@@ -425,7 +425,7 @@ class PlanetService(
             id = planet.id,
             sessionId = planet.sessionId,
             name = planet.name,
-            mapCityId = planet.mapCityId,
+            mapPlanetId = planet.mapPlanetId,
             level = planet.level,
             factionId = planet.factionId,
             supplyState = 0,

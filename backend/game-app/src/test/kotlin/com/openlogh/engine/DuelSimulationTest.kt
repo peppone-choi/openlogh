@@ -1,9 +1,9 @@
 package com.openlogh.engine
 
-import com.openlogh.entity.City
-import com.openlogh.entity.General
-import com.openlogh.entity.Nation
-import com.openlogh.entity.WorldState
+import com.openlogh.entity.Planet
+import com.openlogh.entity.Officer
+import com.openlogh.entity.Faction
+import com.openlogh.entity.SessionState
 import com.openlogh.model.ScenarioData
 import com.openlogh.service.ScenarioService
 import com.openlogh.test.InMemoryTurnHarness
@@ -33,7 +33,7 @@ class DuelSimulationTest {
 
         fx.harness.turnService.processWorld(fx.world)
 
-        assertEquals(2L, fx.city2.nationId)
+        assertEquals(2L, fx.city2.factionId)
     }
 
     @Test
@@ -59,7 +59,7 @@ class DuelSimulationTest {
 
     private fun setupWorld(userKing: Boolean, addWanderer: Boolean = false): Fixture {
         val harness = InMemoryTurnHarness()
-        val world = WorldState(
+        val world = SessionState(
             id = 1,
             name = "duel-world",
             scenarioCode = "test",
@@ -70,55 +70,55 @@ class DuelSimulationTest {
         )
         world.config = mutableMapOf("mapName" to "duel", "mapCode" to "duel", "hiddenSeed" to "test")
 
-        val dong = Nation(id = 1, worldId = 1, name = "동국", color = "#ff3300", level = 3, strategicCmdLimit = 10)
-        val seo = Nation(id = 2, worldId = 1, name = "서국", color = "#0033ff", level = 3, strategicCmdLimit = 10)
-        val city1 = City(
-            id = 1, worldId = 1, name = "동성", level = 5, nationId = 1,
-            supplyState = 1, frontState = 1, pop = 10000, popMax = 50000,
-            agri = 500, agriMax = 1000, comm = 500, commMax = 1000,
-            secu = 500, secuMax = 1000, trust = 100, def = 500, defMax = 1000, wall = 500, wallMax = 1000,
+        val dong = Faction(id = 1, sessionId = 1, name = "동국", color = "#ff3300", factionRank = 3, strategicCmdLimit = 10)
+        val seo = Faction(id = 2, sessionId = 1, name = "서국", color = "#0033ff", factionRank = 3, strategicCmdLimit = 10)
+        val city1 = Planet(
+            id = 1, sessionId = 1, name = "동성", level = 5, factionId = 1,
+            supplyState = 1, frontState = 1, population = 10000, populationMax = 50000,
+            production = 500, productionMax = 1000, commerce = 500, commerceMax = 1000,
+            security = 500, securityMax = 1000, approval = 100, orbitalDefense = 500, orbitalDefenseMax = 1000, fortress = 500, fortressMax = 1000,
         )
-        val city2 = City(
-            id = 2, worldId = 1, name = "서성", level = 5, nationId = 2,
-            supplyState = 1, frontState = 1, pop = 10000, popMax = 50000,
-            agri = 500, agriMax = 1000, comm = 500, commMax = 1000,
-            secu = 500, secuMax = 1000, trust = 100, def = 500, defMax = 1000, wall = 500, wallMax = 1000,
+        val city2 = Planet(
+            id = 2, sessionId = 1, name = "서성", level = 5, factionId = 2,
+            supplyState = 1, frontState = 1, population = 10000, populationMax = 50000,
+            production = 500, productionMax = 1000, commerce = 500, commerceMax = 1000,
+            security = 500, securityMax = 1000, approval = 100, orbitalDefense = 500, orbitalDefenseMax = 1000, fortress = 500, fortressMax = 1000,
         )
 
         val baseTurnTime = OffsetDateTime.now().minusSeconds(120)
-        val dongKing = General(
-            id = 11, worldId = 1, name = "동왕", nationId = 1, cityId = 1,
+        val dongKing = Officer(
+            id = 11, sessionId = 1, name = "동왕", factionId = 1, planetId = 1,
             officerLevel = 20, npcState = if (userKing) 0 else 2, crew = 2000, train = 100, atmos = 100,
             leadership = 95, strength = 90, intel = 80, turnTime = baseTurnTime,
         )
-        val dongOfficer = General(
-            id = 12, worldId = 1, name = "동장", nationId = 1, cityId = 1,
-            officerLevel = 8, npcState = 2, crew = 1500, train = 100, atmos = 100,
-            leadership = 82, strength = 78, intel = 75, turnTime = baseTurnTime.plusSeconds(1),
+        val dongOfficer = Officer(
+            id = 12, sessionId = 1, name = "동장", factionId = 1, planetId = 1,
+            officerLevel = 8, npcState = 2, ships = 1500, training = 100, morale = 100,
+            leadership = 82, command = 78, intelligence = 75, turnTime = baseTurnTime.plusSeconds(1),
         )
-        val seoKing = General(
-            id = 21, worldId = 1, name = "서왕", nationId = 2, cityId = 2,
-            officerLevel = 20, npcState = 2, crew = 1800, train = 100, atmos = 100,
-            leadership = 92, strength = 88, intel = 84, turnTime = baseTurnTime.plusSeconds(2),
+        val seoKing = Officer(
+            id = 21, sessionId = 1, name = "서왕", factionId = 2, planetId = 2,
+            officerLevel = 20, npcState = 2, ships = 1800, training = 100, morale = 100,
+            leadership = 92, command = 88, intelligence = 84, turnTime = baseTurnTime.plusSeconds(2),
         )
 
         harness.putWorld(world)
-        harness.putNation(dong)
-        harness.putNation(seo)
-        harness.putCity(city1)
-        harness.putCity(city2)
-        harness.putGeneral(dongKing)
-        harness.putGeneral(dongOfficer)
-        harness.putGeneral(seoKing)
+        harness.putFaction(dong)
+        harness.putFaction(seo)
+        harness.putPlanet(city1)
+        harness.putPlanet(city2)
+        harness.putOfficer(dongKing)
+        harness.putOfficer(dongOfficer)
+        harness.putOfficer(seoKing)
 
         if (addWanderer) {
-            harness.putGeneral(
-                General(
+            harness.putOfficer(
+                Officer(
                     id = 31,
-                    worldId = 1,
+                    sessionId = 1,
                     name = "재야장수",
-                    nationId = 0,
-                    cityId = 1,
+                    factionId = 0,
+                    planetId = 1,
                     officerLevel = 0,
                     npcState = 1,
                     turnTime = baseTurnTime.plusSeconds(3),
@@ -146,8 +146,8 @@ class DuelSimulationTest {
 
     private data class Fixture(
         val harness: InMemoryTurnHarness,
-        val world: WorldState,
-        val city2: City,
-        val dongKing: General,
+        val world: SessionState,
+        val city2: Planet,
+        val dongKing: Officer,
     )
 }

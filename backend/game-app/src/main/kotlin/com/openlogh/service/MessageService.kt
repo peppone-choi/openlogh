@@ -190,7 +190,7 @@ class MessageService(
                 generalId = gen.id,
                 name = gen.name,
                 nationId = gen.factionId,
-                nationName = nations[gen.factionId]?.name ?: "",
+                factionName = nations[gen.factionId]?.name ?: "",
                 nationColor = nations[gen.factionId]?.color,
                 picture = gen.picture,
             )
@@ -401,7 +401,7 @@ class MessageService(
         receiver.factionId = fromNationId
         receiver.planetId = destFaction.capitalPlanetId ?: receiver.planetId
         receiver.officerLevel = 1
-        receiver.officerCity = 0
+        receiver.officerPlanet = 0
         receiver.permission = "normal"
         receiver.belong = 1
         receiver.fleetId = 0

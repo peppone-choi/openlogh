@@ -16,20 +16,20 @@ class Sovereign(
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long = 0,
 
-    @Column(name = "session_id", nullable = false)
-    var sessionId: String = "",
+    @Column(name = "server_id", nullable = false)
+    var serverId: String = "",
 
     @Column(nullable = false)
     var phase: String = "",
 
-    @Column(name = "nation_count", nullable = false)
-    var nationCount: String = "",
+    @Column(name = "faction_count", nullable = false)
+    var factionCount: String = "",
 
-    @Column(name = "nation_name", nullable = false)
-    var nationName: String = "",
+    @Column(name = "faction_name", nullable = false)
+    var factionName: String = "",
 
-    @Column(name = "nation_hist", nullable = false)
-    var nationHist: String = "",
+    @Column(name = "faction_hist", nullable = false)
+    var factionHist: String = "",
 
     @Column(name = "gen_count", nullable = false)
     var genCount: String = "",
@@ -61,8 +61,8 @@ class Sovereign(
     @Column(nullable = false)
     var gennum: Int = 0,
 
-    @Column(nullable = false)
-    var citynum: Int = 0,
+    @Column(name = "planet_count", nullable = false)
+    var planetCount: Int = 0,
 
     @Column(nullable = false)
     var pop: String = "",

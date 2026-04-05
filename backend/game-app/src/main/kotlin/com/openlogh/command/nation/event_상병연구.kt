@@ -22,7 +22,7 @@ class event_상병연구(general: Officer, env: CommandEnv, arg: Map<String, Any
 
     override val minConditionConstraints get() = fullConditionConstraints
 
-    override fun getCost() = CommandCost(gold = 100000, rice = 100000)
+    override fun getCost() = CommandCost(funds = 100000, supplies = 100000)
     override fun getPreReqTurn() = 23
     override fun getPostReqTurn() = 0
 

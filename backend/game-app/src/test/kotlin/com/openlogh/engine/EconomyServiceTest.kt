@@ -2,14 +2,14 @@ package com.openlogh.engine
 
 import com.openlogh.engine.turn.cqrs.persist.toEntity
 import com.openlogh.engine.turn.cqrs.persist.toSnapshot
-import com.openlogh.entity.City
-import com.openlogh.entity.General
-import com.openlogh.entity.Nation
-import com.openlogh.entity.WorldState
-import com.openlogh.repository.CityRepository
-import com.openlogh.repository.GeneralRepository
+import com.openlogh.entity.Planet
+import com.openlogh.entity.Officer
+import com.openlogh.entity.Faction
+import com.openlogh.entity.SessionState
+import com.openlogh.repository.PlanetRepository
+import com.openlogh.repository.OfficerRepository
 import com.openlogh.repository.MessageRepository
-import com.openlogh.repository.NationRepository
+import com.openlogh.repository.FactionRepository
 import com.openlogh.service.InheritanceService
 import com.openlogh.service.MapService
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -24,67 +24,67 @@ import java.time.OffsetDateTime
 class EconomyServiceTest {
 
     private lateinit var service: EconomyService
-    private lateinit var cityRepository: CityRepository
-    private lateinit var nationRepository: NationRepository
-    private lateinit var generalRepository: GeneralRepository
+    private lateinit var planetRepository: PlanetRepository
+    private lateinit var factionRepository: FactionRepository
+    private lateinit var officerRepository: OfficerRepository
     private lateinit var mapService: MapService
 
-    private val cities = linkedMapOf<Long, City>()
-    private val nations = linkedMapOf<Long, Nation>()
-    private val generals = linkedMapOf<Long, General>()
+    private val cities = linkedMapOf<Long, Planet>()
+    private val nations = linkedMapOf<Long, Faction>()
+    private val generals = linkedMapOf<Long, Officer>()
 
     @BeforeEach
     fun setUp() {
-        cityRepository = mock(CityRepository::class.java)
-        nationRepository = mock(NationRepository::class.java)
-        generalRepository = mock(GeneralRepository::class.java)
+        planetRepository = mock(PlanetRepository::class.java)
+        factionRepository = mock(FactionRepository::class.java)
+        officerRepository = mock(OfficerRepository::class.java)
         mapService = mock(MapService::class.java)
-        service = EconomyService(cityRepository, nationRepository, generalRepository, mock(MessageRepository::class.java), mapService, mock(com.openlogh.service.HistoryService::class.java), mock(InheritanceService::class.java))
+        service = EconomyService(planetRepository, factionRepository, officerRepository, mock(MessageRepository::class.java), mapService, mock(com.openlogh.service.HistoryService::class.java), mock(InheritanceService::class.java))
         wireRepos()
         `when`(mapService.getAdjacentCities(ArgumentMatchers.anyString(), ArgumentMatchers.anyInt())).thenReturn(emptyList())
     }
 
     private fun wireRepos() {
-        `when`(cityRepository.findByWorldId(ArgumentMatchers.anyLong())).thenAnswer { inv ->
+        `when`(planetRepository.findBySessionId(ArgumentMatchers.anyLong())).thenAnswer { inv ->
             val worldId = inv.arguments[0] as Long
-            cities.values.filter { it.worldId == worldId }.map { cloneCity(it) }
+            cities.values.filter { it.sessionId == worldId }.map { cloneCity(it) }
         }
-        `when`(cityRepository.findByNationId(ArgumentMatchers.anyLong())).thenAnswer { inv ->
+        `when`(planetRepository.findByFactionId(ArgumentMatchers.anyLong())).thenAnswer { inv ->
             val nationId = inv.arguments[0] as Long
-            cities.values.filter { it.nationId == nationId }.map { cloneCity(it) }
+            cities.values.filter { it.factionId == nationId }.map { cloneCity(it) }
         }
-        `when`(cityRepository.save(ArgumentMatchers.any(City::class.java))).thenAnswer { inv ->
-            val city = inv.arguments[0] as City
+        `when`(planetRepository.save(ArgumentMatchers.any(City::class.java))).thenAnswer { inv ->
+            val city = inv.arguments[0] as Planet
             cities[city.id] = cloneCity(city)
             city
         }
 
-        `when`(nationRepository.findByWorldId(ArgumentMatchers.anyLong())).thenAnswer { inv ->
+        `when`(factionRepository.findBySessionId(ArgumentMatchers.anyLong())).thenAnswer { inv ->
             val worldId = inv.arguments[0] as Long
-            nations.values.filter { it.worldId == worldId }.map { cloneNation(it) }
+            nations.values.filter { it.sessionId == worldId }.map { cloneNation(it) }
         }
-        `when`(nationRepository.save(ArgumentMatchers.any(Nation::class.java))).thenAnswer { inv ->
-            val nation = inv.arguments[0] as Nation
+        `when`(factionRepository.save(ArgumentMatchers.any(Nation::class.java))).thenAnswer { inv ->
+            val nation = inv.arguments[0] as Faction
             nations[nation.id] = cloneNation(nation)
             nation
         }
 
-        `when`(generalRepository.findByWorldId(ArgumentMatchers.anyLong())).thenAnswer { inv ->
+        `when`(officerRepository.findBySessionId(ArgumentMatchers.anyLong())).thenAnswer { inv ->
             val worldId = inv.arguments[0] as Long
-            generals.values.filter { it.worldId == worldId }.map { cloneGeneral(it) }
+            generals.values.filter { it.sessionId == worldId }.map { cloneGeneral(it) }
         }
-        `when`(generalRepository.save(ArgumentMatchers.any(General::class.java))).thenAnswer { inv ->
-            val general = inv.arguments[0] as General
+        `when`(officerRepository.save(ArgumentMatchers.any(General::class.java))).thenAnswer { inv ->
+            val general = inv.arguments[0] as Officer
             generals[general.id] = cloneGeneral(general)
             general
         }
     }
 
-    private fun cloneCity(city: City): City = city.toSnapshot().toEntity()
-    private fun cloneNation(nation: Nation): Nation = nation.toSnapshot().toEntity()
-    private fun cloneGeneral(general: General): General = general.toSnapshot().toEntity()
+    private fun cloneCity(city: Planet): Planet = city.toSnapshot().toEntity()
+    private fun cloneNation(nation: Faction): Faction = nation.toSnapshot().toEntity()
+    private fun cloneGeneral(general: Officer): Officer = general.toSnapshot().toEntity()
 
-    private fun seed(world: WorldState, cityList: List<City>, nationList: List<Nation>, generalList: List<General>) {
+    private fun seed(world: SessionState, cityList: List<Planet>, nationList: List<Faction>, generalList: List<Officer>) {
         cities.clear()
         nations.clear()
         generals.clear()
@@ -93,8 +93,8 @@ class EconomyServiceTest {
         generalList.forEach { generals[it.id] = cloneGeneral(it) }
     }
 
-    private fun world(year: Short = 200, month: Short = 3): WorldState =
-        WorldState(id = 1, scenarioCode = "test", currentYear = year, currentMonth = month, tickSeconds = 300)
+    private fun world(year: Short = 200, month: Short = 3): SessionState =
+        SessionState(id = 1, scenarioCode = "test", currentYear = year, currentMonth = month, tickSeconds = 300)
 
     private fun city(
         id: Long = 1,
@@ -115,11 +115,11 @@ class EconomyServiceTest {
         supplyState: Short = 1,
         level: Short = 5,
         dead: Int = 0,
-    ): City = City(
+    ): Planet = Planet(
         id = id,
-        worldId = 1,
+        sessionId = 1,
         name = "테스트도시$id",
-        mapCityId = id.toInt(),
+        mapPlanetId = id.toInt(),
         nationId = nationId,
         pop = pop,
         popMax = popMax,
@@ -147,17 +147,17 @@ class EconomyServiceTest {
         rateTmp: Short = 15,
         bill: Short = 100,
         capitalCityId: Long? = 1,
-    ): Nation = Nation(
+    ): Faction = Faction(
         id = id,
-        worldId = 1,
+        sessionId = 1,
         name = "국가$id",
         color = "#FF0000",
-        gold = gold,
-        rice = rice,
-        level = level,
-        rateTmp = rateTmp,
-        bill = bill,
-        capitalCityId = capitalCityId,
+        funds = gold,
+        supplies = rice,
+        factionRank = level,
+        conscriptionRateTmp = rateTmp,
+        taxRate = bill,
+        capitalPlanetId = capitalCityId,
     )
 
     private fun general(
@@ -168,19 +168,19 @@ class EconomyServiceTest {
         rice: Int = 1000,
         dedication: Int = 1000,
         officerLevel: Short = 1,
-        officerCity: Int = 0,
+        officerPlanet: Int = 0,
         npcState: Short = 0,
-    ): General = General(
+    ): Officer = Officer(
         id = id,
-        worldId = 1,
+        sessionId = 1,
         name = "장수$id",
-        nationId = nationId,
-        cityId = cityId,
-        gold = gold,
-        rice = rice,
+        factionId = nationId,
+        planetId = cityId,
+        funds = gold,
+        supplies = rice,
         dedication = dedication,
         officerLevel = officerLevel,
-        officerCity = officerCity,
+        officerPlanet = officerPlanet,
         npcState = npcState,
         turnTime = OffsetDateTime.now(),
     )
@@ -193,8 +193,8 @@ class EconomyServiceTest {
         service.processMonthly(w)
 
         val updated = nations[1L]!!
-        assertTrue(updated.gold > 0)
-        assertTrue(updated.rice > 0)
+        assertTrue(updated.funds > 0)
+        assertTrue(updated.supplies > 0)
     }
 
     @Test
@@ -204,7 +204,7 @@ class EconomyServiceTest {
 
         service.processMonthly(w)
 
-        assertEquals(0, nations[1L]!!.gold)
+        assertEquals(0, nations[1L]!!.funds)
     }
 
     @Test
@@ -222,8 +222,8 @@ class EconomyServiceTest {
 
         service.processMonthly(w)
 
-        assertTrue(generals[1L]!!.gold > 0)
-        assertEquals(0, generals[2L]!!.gold)
+        assertTrue(generals[1L]!!.funds > 0)
+        assertEquals(0, generals[2L]!!.funds)
     }
 
     @Test
@@ -238,8 +238,8 @@ class EconomyServiceTest {
 
         service.processMonthly(w)
 
-        assertTrue(nations[1L]!!.gold >= 10)
-        assertTrue(cities[1L]!!.pop >= 5020)
+        assertTrue(nations[1L]!!.funds >= 10)
+        assertTrue(cities[1L]!!.population >= 5020)
         assertEquals(0, cities[1L]!!.dead)
     }
 
@@ -253,18 +253,18 @@ class EconomyServiceTest {
             listOf(general(gold = 20000, rice = 20000, dedication = 0)),
         )
         service.processMonthly(jan)
-        assertTrue(cities[1L]!!.agri < 1000)
-        assertEquals(50f, cities[2L]!!.trust)
+        assertTrue(cities[1L]!!.production < 1000)
+        assertEquals(50f, cities[2L]!!.approval)
 
         val jul = world(month = 7)
         seed(jul, listOf(city(agri = 1000, agriMax = 1000)), listOf(nation(gold = 50000, rice = 50000, rateTmp = 25, bill = 0)), listOf(general(gold = 20000, rice = 20000, dedication = 0)))
         service.processMonthly(jul)
-        assertTrue(cities[1L]!!.agri < 1000)
+        assertTrue(cities[1L]!!.production < 1000)
 
         val mar = world(month = 3)
         seed(mar, listOf(city(id = 2, nationId = 0, trust = 80f, agri = 1000, agriMax = 1000)), listOf(nation(gold = 0, rice = 0, bill = 0)), emptyList())
         service.processMonthly(mar)
-        assertEquals(80f, cities[2L]!!.trust)
+        assertEquals(80f, cities[2L]!!.approval)
     }
 
     @Test
@@ -279,8 +279,8 @@ class EconomyServiceTest {
 
         service.processMonthly(w)
 
-        assertTrue(generals[1L]!!.gold < 20000)
-        assertTrue(nations[1L]!!.gold < 200000)
+        assertTrue(generals[1L]!!.funds < 20000)
+        assertTrue(nations[1L]!!.funds < 200000)
     }
 
     @Test
@@ -311,7 +311,7 @@ class EconomyServiceTest {
             listOf(general(gold = 0, rice = 0, dedication = 0)),
         )
         service.processMonthly(w)
-        assertEquals(1039, cities[1L]!!.agri)
+        assertEquals(1039, cities[1L]!!.production)
     }
 
     @Test
@@ -327,7 +327,7 @@ class EconomyServiceTest {
         service.processMonthly(w)
         // Legacy: floor(1000 * 0.99) = 990
         // Bug: floor(floor(1000 * 0.99) * 0.99) = floor(990 * 0.99) = 980
-        assertEquals(990, cities[1L]!!.agri)
+        assertEquals(990, cities[1L]!!.production)
     }
 
     @Test
@@ -344,6 +344,6 @@ class EconomyServiceTest {
 
         service.processMonthly(w)
 
-        assertTrue(nations[1L]!!.gold > nations[2L]!!.gold)
+        assertTrue(nations[1L]!!.funds > nations[2L]!!.funds)
     }
 }

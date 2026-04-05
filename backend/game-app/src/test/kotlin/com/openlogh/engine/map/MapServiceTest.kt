@@ -1,6 +1,6 @@
 package com.openlogh.engine.map
 
-import com.openlogh.entity.General
+import com.openlogh.entity.Officer
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -48,8 +48,8 @@ class MapServiceTest {
         }
     }
 
-    private fun makeGeneral(posX: Float, posY: Float, destX: Float?, destY: Float?): General {
-        return General().apply {
+    private fun makeGeneral(posX: Float, posY: Float, destX: Float?, destY: Float?): Officer {
+        return Officer().apply {
             this.posX = posX
             this.posY = posY
             this.destX = destX

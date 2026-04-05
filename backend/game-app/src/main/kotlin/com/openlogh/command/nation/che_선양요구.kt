@@ -35,7 +35,7 @@ class che_선양요구(general: Officer, env: CommandEnv, arg: Map<String, Any>?
     override suspend fun run(rng: Random): CommandResult {
         val n = nation ?: return CommandResult(false, listOf("국가 정보를 찾을 수 없습니다."))
         val generalName = general.name
-        val nationName = n.name
+        val factionName = n.name
         val josaYi = JosaUtil.pick(generalName, "이")
 
         val emperorGeneralId = (env.gameStor["emperorGeneralId"] as? Number)?.toLong()
@@ -55,7 +55,7 @@ class che_선양요구(general: Officer, env: CommandEnv, arg: Map<String, Any>?
         pushLog("<C><b>${emperorName}</b></>에게 선양을 받아 제위에 올랐습니다. <1>${formatDate()}</>")
         pushHistoryLog("<C><b>${emperorName}</b></>에게 선양을 받음")
         pushNationalHistoryLog("<Y>${generalName}</>${josaYi} <C><b>${emperorName}</b></>에게 선양을 받아 제위에 올랐습니다.")
-        pushGlobalLog("<Y>${generalName}</>${josaYi} <C><b>${emperorName}</b></>에게 선양을 받아 <D><b>${nationName}</b></>에서 제위에 올랐습니다!")
+        pushGlobalLog("<Y>${generalName}</>${josaYi} <C><b>${emperorName}</b></>에게 선양을 받아 <D><b>${factionName}</b></>에서 제위에 올랐습니다!")
         pushGlobalHistoryLog("<C><b>【선양】</b></><C><b>${emperorName}</b></>${JosaUtil.pick(emperorName, "이")} <Y>${generalName}</>에게 선양하였습니다.")
 
         return CommandResult(true, logs)

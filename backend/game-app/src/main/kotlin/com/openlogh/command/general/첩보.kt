@@ -36,7 +36,7 @@ class 첩보(general: Officer, env: CommandEnv, arg: Map<String, Any>? = null)
 
     override fun getCost(): CommandCost {
         val cost = env.develCost * 3
-        return CommandCost(gold = cost, rice = cost)
+        return CommandCost(funds = cost, supplies = cost)
     }
 
     override fun getPreReqTurn() = 0
@@ -147,8 +147,8 @@ class 첩보(general: Officer, env: CommandEnv, arg: Map<String, Any>? = null)
         val ownNation = nation ?: return null
         if (destFaction.id == 0L || ownNation.id == 0L) return null
 
-        val destTech = destFaction.tech.toInt()
-        val ownTech = ownNation.tech.toInt()
+        val destTech = destFaction.techLevel.toInt()
+        val ownTech = ownNation.techLevel.toInt()
         val techDiff = destTech - ownTech
 
         val techText = when {

@@ -48,7 +48,7 @@ object NationTypeModifiers {
         },
         "che_학문" to object : ActionModifier {
             override val code = "che_학문"; override val name = "학문"
-            override fun onCalcStat(stat: StatContext) = stat.copy(intel = stat.intelligence + 3)
+            override fun onCalcStat(stat: StatContext) = stat.copy(intel = stat.intel + 3)
             override fun onCalcDomestic(ctx: DomesticContext) = ctx.copy(scoreMultiplier = ctx.scoreMultiplier * 1.1)
         },
         "che_명문" to object : ActionModifier {
@@ -67,7 +67,7 @@ object NationTypeModifiers {
         },
         "che_무사" to object : ActionModifier {
             override val code = "che_무사"; override val name = "무사"
-            override fun onCalcStat(stat: StatContext) = stat.copy(strength = stat.command + 3, warPower = stat.warPower * 1.05)
+            override fun onCalcStat(stat: StatContext) = stat.copy(strength = stat.strength + 3, warPower = stat.warPower * 1.05)
         },
         "che_건국" to object : ActionModifier {
             override val code = "che_건국"; override val name = "건국"

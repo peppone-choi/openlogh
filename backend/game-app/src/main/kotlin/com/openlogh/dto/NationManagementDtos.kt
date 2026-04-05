@@ -71,6 +71,6 @@ data class NationMutationResponse(
 
 data class OfficerInfo(val id: Long, val name: String, val picture: String, val officerLevel: Int, val cityId: Long)
 
-data class AppointOfficerRequest(val generalId: Long, val officerLevel: Int, val officerCity: Int? = null)
+data class AppointOfficerRequest(val generalId: Long, val officerLevel: Int, val officerPlanet: Int? = null)
 
 data class ExpelRequest(val generalId: Long)

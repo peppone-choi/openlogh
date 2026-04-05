@@ -143,7 +143,7 @@ class SelectNpcTokenService(
             if (officer.officerLevel < 1) {
                 officer.officerLevel = 1
             }
-            officer.officerCity = 0
+            officer.officerPlanet = 0
             officer.permission = "normal"
             if (officer.makeLimit > 0) {
                 officer.makeLimit = 0
@@ -160,7 +160,7 @@ class SelectNpcTokenService(
             (0 until maxTurn).map { turnIdx ->
                 OfficerTurn(
                     sessionId = worldId,
-                    generalId = saved.id,
+                    officerId = saved.id,
                     turnIdx = turnIdx.toShort(),
                     actionCode = "휴식",
                     brief = "휴식",
@@ -169,7 +169,7 @@ class SelectNpcTokenService(
         )
 
         deleteToken(worldId, userId)
-        return SelectNpcResult(success = true, officer = GeneralResponse.from(saved))
+        return SelectNpcResult(success = true, general = GeneralResponse.from(saved))
     }
 
     private fun ensureUserHasNoOfficer(worldId: Long, userId: Long) {
@@ -267,7 +267,7 @@ class SelectNpcTokenService(
                 politics = officer.politics,
                 charm = officer.administration,
                 nationId = officer.factionId,
-                nationName = faction?.name ?: "중립",
+                factionName = faction?.name ?: "중립",
                 nationColor = faction?.color ?: "#6b7280",
                 personality = officer.personalCode,
                 special = officer.specialCode,

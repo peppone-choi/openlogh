@@ -232,7 +232,7 @@ class InMemoryTurnProcessor(
                         deadOfficer.npcState = 5
                         deadOfficer.factionId = 0
                         deadOfficer.officerLevel = 0
-                        deadOfficer.officerCity = 0
+                        deadOfficer.officerPlanet = 0
                         deadOfficer.killTurn = null
                         deadOfficer.updatedAt = now
                         ports.putOfficer(deadOfficer)

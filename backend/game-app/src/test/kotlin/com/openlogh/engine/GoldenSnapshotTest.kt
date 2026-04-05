@@ -1,9 +1,9 @@
 package com.openlogh.engine
 
-import com.openlogh.entity.City
-import com.openlogh.entity.General
-import com.openlogh.entity.Nation
-import com.openlogh.entity.WorldState
+import com.openlogh.entity.Planet
+import com.openlogh.entity.Officer
+import com.openlogh.entity.Faction
+import com.openlogh.entity.SessionState
 import com.openlogh.test.InMemoryTurnHarness
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -23,7 +23,7 @@ class GoldenSnapshotTest {
 
     private fun runScenario(): Snapshot {
         val harness = InMemoryTurnHarness()
-        val world = WorldState(
+        val world = SessionState(
             id = 1,
             name = "golden-world",
             scenarioCode = "test",
@@ -33,24 +33,24 @@ class GoldenSnapshotTest {
             updatedAt = OffsetDateTime.now().minusSeconds(90),
         )
 
-        val nationWei = Nation(
+        val nationWei = Faction(
             id = 1,
-            worldId = 1,
+            sessionId = 1,
             name = "위",
             color = "#111111",
-            level = 3,
-            gold = 10000,
-            rice = 10000,
+            factionRank = 3,
+            funds = 10000,
+            supplies = 10000,
             strategicCmdLimit = 0,
         )
-        val nationShu = Nation(
+        val nationShu = Faction(
             id = 2,
-            worldId = 1,
+            sessionId = 1,
             name = "촉",
             color = "#228833",
-            level = 3,
-            gold = 9000,
-            rice = 8000,
+            factionRank = 3,
+            funds = 9000,
+            supplies = 8000,
             strategicCmdLimit = 0,
         )
 
@@ -64,15 +64,15 @@ class GoldenSnapshotTest {
         val g4 = createGeneral(id = 4, nationId = 2, cityId = 2, name = "관우", leadership = 50, crew = 400, train = 30, atmos = 60)
 
         harness.putWorld(world)
-        harness.putNation(nationWei)
-        harness.putNation(nationShu)
-        harness.putCity(cityWei)
-        harness.putCity(cityShu)
-        harness.putCity(cityNeutral)
-        harness.putGeneral(g1)
-        harness.putGeneral(g2)
-        harness.putGeneral(g3)
-        harness.putGeneral(g4)
+        harness.putFaction(nationWei)
+        harness.putFaction(nationShu)
+        harness.putPlanet(cityWei)
+        harness.putPlanet(cityShu)
+        harness.putPlanet(cityNeutral)
+        harness.putOfficer(g1)
+        harness.putOfficer(g2)
+        harness.putOfficer(g3)
+        harness.putOfficer(g4)
 
         harness.queueGeneralTurn(generalId = 1, actionCode = "훈련")
         harness.queueGeneralTurn(generalId = 2, actionCode = "훈련")
@@ -86,9 +86,9 @@ class GoldenSnapshotTest {
         assertTrue(harness.generalTurnsFor(3).isEmpty())
         assertTrue(harness.generalTurnsFor(4).isEmpty())
 
-        val generals = harness.generalRepository.findByWorldId(1).sortedBy { it.id }
-        val nations = harness.nationRepository.findByWorldId(1).sortedBy { it.id }
-        val cities = harness.cityRepository.findByWorldId(1).sortedBy { it.id }
+        val generals = harness.officerRepository.findBySessionId(1).sortedBy { it.id }
+        val nations = harness.factionRepository.findBySessionId(1).sortedBy { it.id }
+        val cities = harness.planetRepository.findBySessionId(1).sortedBy { it.id }
 
         return Snapshot(
             year = world.currentYear.toInt(),
@@ -96,9 +96,9 @@ class GoldenSnapshotTest {
             generals = generals.map {
                 GeneralState(
                     id = it.id,
-                    crew = it.crew,
-                    train = it.train.toInt(),
-                    atmos = it.atmos.toInt(),
+                    crew = it.ships,
+                    train = it.training.toInt(),
+                    atmos = it.morale.toInt(),
                     experience = it.experience,
                     dedication = it.dedication,
                 )
@@ -106,19 +106,19 @@ class GoldenSnapshotTest {
             nations = nations.map {
                 NationState(
                     id = it.id,
-                    gold = it.gold,
-                    rice = it.rice,
+                    gold = it.funds,
+                    rice = it.supplies,
                     strategicCmdLimit = it.strategicCmdLimit.toInt(),
                 )
             },
             cities = cities.map {
                 CityState(
                     id = it.id,
-                    nationId = it.nationId,
-                    agri = it.agri,
-                    comm = it.comm,
-                    secu = it.secu,
-                    pop = it.pop,
+                    nationId = it.factionId,
+                    agri = it.production,
+                    comm = it.commerce,
+                    secu = it.security,
+                    pop = it.population,
                 )
             },
         )
@@ -146,27 +146,27 @@ class GoldenSnapshotTest {
         )
     }
 
-    private fun createCity(id: Long, nationId: Long, name: String): City {
-        return City(
+    private fun createCity(id: Long, nationId: Long, name: String): Planet {
+        return Planet(
             id = id,
-            worldId = 1,
+            sessionId = 1,
             name = name,
-            nationId = nationId,
+            factionId = nationId,
             supplyState = 1,
             frontState = 0,
-            pop = 10000,
-            popMax = 50000,
-            agri = 500,
-            agriMax = 1000,
-            comm = 500,
-            commMax = 1000,
-            secu = 500,
-            secuMax = 1000,
-            trust = 80,
-            def = 500,
-            defMax = 1000,
-            wall = 500,
-            wallMax = 1000,
+            population = 10000,
+            populationMax = 50000,
+            production = 500,
+            productionMax = 1000,
+            commerce = 500,
+            commerceMax = 1000,
+            security = 500,
+            securityMax = 1000,
+            approval = 80,
+            orbitalDefense = 500,
+            orbitalDefenseMax = 1000,
+            fortress = 500,
+            fortressMax = 1000,
         )
     }
 
@@ -179,24 +179,24 @@ class GoldenSnapshotTest {
         crew: Int,
         train: Short,
         atmos: Short,
-    ): General {
-        return General(
+    ): Officer {
+        return Officer(
             id = id,
-            worldId = 1,
+            sessionId = 1,
             name = name,
-            nationId = nationId,
-            cityId = cityId,
+            factionId = nationId,
+            planetId = cityId,
             leadership = leadership,
-            strength = 70,
-            intel = 70,
+            command = 70,
+            intelligence = 70,
             politics = 60,
-            charm = 60,
-            crew = crew,
-            crewType = 0,
-            train = train,
-            atmos = atmos,
-            gold = 500,
-            rice = 500,
+            administration = 60,
+            ships = crew,
+            shipClass = 0,
+            training = train,
+            morale = atmos,
+            funds = 500,
+            supplies = 500,
             npcState = 0,
             turnTime = OffsetDateTime.now().minusSeconds(1200),
         )

@@ -1,18 +1,18 @@
 package com.openlogh.qa.parity
 
 import com.openlogh.engine.UnificationService
-import com.openlogh.entity.City
-import com.openlogh.entity.General
-import com.openlogh.entity.Nation
-import com.openlogh.entity.WorldState
+import com.openlogh.entity.Planet
+import com.openlogh.entity.Officer
+import com.openlogh.entity.Faction
+import com.openlogh.entity.SessionState
 import com.openlogh.repository.AppUserRepository
-import com.openlogh.repository.CityRepository
-import com.openlogh.repository.EmperorRepository
+import com.openlogh.repository.PlanetRepository
+import com.openlogh.repository.SovereignRepository
 import com.openlogh.repository.GameHistoryRepository
-import com.openlogh.repository.GeneralRepository
+import com.openlogh.repository.OfficerRepository
 import com.openlogh.repository.HallOfFameRepository
 import com.openlogh.repository.MessageRepository
-import com.openlogh.repository.NationRepository
+import com.openlogh.repository.FactionRepository
 import com.openlogh.repository.OldGeneralRepository
 import com.openlogh.repository.OldNationRepository
 import com.openlogh.service.HistoryService
@@ -45,12 +45,12 @@ import org.mockito.Mockito.`when`
 class GameEndParityTest {
 
     private lateinit var service: UnificationService
-    private lateinit var nationRepository: NationRepository
-    private lateinit var cityRepository: CityRepository
-    private lateinit var generalRepository: GeneralRepository
+    private lateinit var factionRepository: FactionRepository
+    private lateinit var planetRepository: PlanetRepository
+    private lateinit var officerRepository: OfficerRepository
     private lateinit var appUserRepository: AppUserRepository
     private lateinit var hallOfFameRepository: HallOfFameRepository
-    private lateinit var emperorRepository: EmperorRepository
+    private lateinit var sovereignRepository: SovereignRepository
     private lateinit var oldNationRepository: OldNationRepository
     private lateinit var oldGeneralRepository: OldGeneralRepository
     private lateinit var gameHistoryRepository: GameHistoryRepository
@@ -62,12 +62,12 @@ class GameEndParityTest {
 
     @BeforeEach
     fun setUp() {
-        nationRepository = mock(NationRepository::class.java)
-        cityRepository = mock(CityRepository::class.java)
-        generalRepository = mock(GeneralRepository::class.java)
+        factionRepository = mock(FactionRepository::class.java)
+        planetRepository = mock(PlanetRepository::class.java)
+        officerRepository = mock(OfficerRepository::class.java)
         appUserRepository = mock(AppUserRepository::class.java)
         hallOfFameRepository = mock(HallOfFameRepository::class.java)
-        emperorRepository = mock(EmperorRepository::class.java)
+        sovereignRepository = mock(SovereignRepository::class.java)
         oldNationRepository = mock(OldNationRepository::class.java)
         oldGeneralRepository = mock(OldGeneralRepository::class.java)
         gameHistoryRepository = mock(GameHistoryRepository::class.java)
@@ -75,12 +75,12 @@ class GameEndParityTest {
         historyService = mock(HistoryService::class.java)
 
         service = UnificationService(
-            nationRepository,
-            cityRepository,
-            generalRepository,
+            factionRepository,
+            planetRepository,
+            officerRepository,
             appUserRepository,
             hallOfFameRepository,
-            emperorRepository,
+            sovereignRepository,
             oldNationRepository,
             oldGeneralRepository,
             gameHistoryRepository,
@@ -91,8 +91,8 @@ class GameEndParityTest {
 
     // ── Helpers ──
 
-    private fun buildWorldState(isUnited: Int = 0, refreshLimit: Int = 30000): WorldState {
-        return WorldState(
+    private fun buildWorldState(isUnited: Int = 0, refreshLimit: Int = 30000): SessionState {
+        return SessionState(
             id = 1,
             name = "테스트서버",
             scenarioCode = "test",
@@ -108,22 +108,22 @@ class GameEndParityTest {
         }
     }
 
-    private fun buildNation(id: Long, level: Int, name: String = "위"): Nation {
-        return Nation(
+    private fun buildNation(id: Long, level: Int, name: String = "위"): Faction {
+        return Faction(
             id = id,
-            worldId = 1,
+            sessionId = 1,
             name = name,
             color = "#FF0000",
-            level = level.toShort(),
+            factionRank = level.toShort(),
         )
     }
 
-    private fun buildCity(id: Long, nationId: Long): City {
-        return City(
+    private fun buildCity(id: Long, nationId: Long): Planet {
+        return Planet(
             id = id,
-            worldId = 1,
+            sessionId = 1,
             name = "도시$id",
-            nationId = nationId,
+            factionId = nationId,
         )
     }
 
@@ -133,11 +133,11 @@ class GameEndParityTest {
         officerLevel: Int,
         userId: Long? = null,
         npcState: Short = 0,
-    ): General {
-        return General(
+    ): Officer {
+        return Officer(
             id = id,
-            worldId = 1,
-            nationId = nationId,
+            sessionId = 1,
+            factionId = nationId,
             name = "장수$id",
             officerLevel = officerLevel.toShort(),
             userId = userId,
@@ -150,13 +150,13 @@ class GameEndParityTest {
      * Callers can override specific mocks after calling this.
      */
     private fun wireSuccessfulUnificationMocks(
-        nations: List<Nation>,
-        cities: List<City>,
-        generals: List<General> = emptyList(),
+        nations: List<Faction>,
+        cities: List<Planet>,
+        generals: List<Officer> = emptyList(),
     ) {
-        `when`(nationRepository.findByWorldId(1L)).thenReturn(nations)
-        `when`(cityRepository.findByWorldId(1L)).thenReturn(cities)
-        `when`(generalRepository.findByWorldId(1L)).thenReturn(generals)
+        `when`(factionRepository.findBySessionId(1L)).thenReturn(nations)
+        `when`(planetRepository.findBySessionId(1L)).thenReturn(cities)
+        `when`(officerRepository.findBySessionId(1L)).thenReturn(generals)
         `when`(messageRepository.findByWorldIdAndMailboxCodeAndDestIdOrderBySentAtDesc(
             anyLong(), anyString(), anyLong()
         )).thenReturn(emptyList())
@@ -169,8 +169,8 @@ class GameEndParityTest {
         `when`(oldNationRepository.findByServerId(anyString())).thenReturn(emptyList())
         `when`(oldGeneralRepository.findByServerIdAndGeneralNo(anyString(), anyLong())).thenReturn(null)
         `when`(oldGeneralRepository.save(anyNonNull())).thenAnswer { it.arguments[0] }
-        `when`(emperorRepository.save(anyNonNull())).thenAnswer { it.arguments[0] }
-        `when`(hallOfFameRepository.findByServerIdAndTypeAndGeneralNo(anyString(), anyString(), anyLong()))
+        `when`(sovereignRepository.save(anyNonNull())).thenAnswer { it.arguments[0] }
+        `when`(hallOfFameRepository.findByServerIdAndTypeAndOfficerNo(anyString(), anyString(), anyLong()))
             .thenReturn(null)
         `when`(hallOfFameRepository.save(anyNonNull())).thenAnswer { it.arguments[0] }
         `when`(appUserRepository.findById(anyLong())).thenReturn(java.util.Optional.empty())
@@ -190,7 +190,7 @@ class GameEndParityTest {
 
             service.checkAndSettleUnification(world)
 
-            verify(nationRepository, never()).findByWorldId(anyLong())
+            verify(factionRepository, never()).findBySessionId(anyLong())
             assertThat(world.config["isUnited"])
                 .describedAs("isUnited must remain 2 (unchanged)")
                 .isEqualTo(2)
@@ -204,7 +204,7 @@ class GameEndParityTest {
 
             service.checkAndSettleUnification(world)
 
-            verify(nationRepository, never()).findByWorldId(anyLong())
+            verify(factionRepository, never()).findBySessionId(anyLong())
             assertThat(world.config["isUnited"])
                 .describedAs("isUnited must remain 1 (unchanged)")
                 .isEqualTo(1)
@@ -219,7 +219,7 @@ class GameEndParityTest {
                 buildNation(1, level = 7, name = "위"),
                 buildNation(2, level = 5, name = "촉"),
             )
-            `when`(nationRepository.findByWorldId(1L)).thenReturn(nations)
+            `when`(factionRepository.findBySessionId(1L)).thenReturn(nations)
 
             service.checkAndSettleUnification(world)
 
@@ -240,8 +240,8 @@ class GameEndParityTest {
                 buildCity(2, nationId = 1),
                 buildCity(3, nationId = 0), // unowned city
             )
-            `when`(nationRepository.findByWorldId(1L)).thenReturn(listOf(winner, loser))
-            `when`(cityRepository.findByWorldId(1L)).thenReturn(cities)
+            `when`(factionRepository.findBySessionId(1L)).thenReturn(listOf(winner, loser))
+            `when`(planetRepository.findBySessionId(1L)).thenReturn(cities)
 
             service.checkAndSettleUnification(world)
 
@@ -255,8 +255,8 @@ class GameEndParityTest {
         fun `empty cities skips`() {
             val world = buildWorldState()
             val winner = buildNation(1, level = 7)
-            `when`(nationRepository.findByWorldId(1L)).thenReturn(listOf(winner))
-            `when`(cityRepository.findByWorldId(1L)).thenReturn(emptyList())
+            `when`(factionRepository.findBySessionId(1L)).thenReturn(listOf(winner))
+            `when`(planetRepository.findBySessionId(1L)).thenReturn(emptyList())
 
             service.checkAndSettleUnification(world)
 
@@ -273,7 +273,7 @@ class GameEndParityTest {
                 buildNation(1, level = 0),
                 buildNation(2, level = 0),
             )
-            `when`(nationRepository.findByWorldId(1L)).thenReturn(nations)
+            `when`(factionRepository.findBySessionId(1L)).thenReturn(nations)
 
             service.checkAndSettleUnification(world)
 
@@ -410,7 +410,7 @@ class GameEndParityTest {
             assertThat(sourceFile.exists()).isTrue()
             val source = sourceFile.readText()
 
-            // The condition: general.nationId == winnerNationId && general.officerLevel.toInt() > 4
+            // The condition: general.factionId == winnerNationId && general.officerLevel.toInt() > 4
             assertThat(source)
                 .describedAs("settleInheritance must check officerLevel > 4 for UNIFIER_POINT award")
                 .contains("officerLevel")

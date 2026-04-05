@@ -3,14 +3,14 @@ package com.openlogh.qa.parity
 import com.openlogh.engine.EconomyService
 import com.openlogh.engine.turn.cqrs.persist.toEntity
 import com.openlogh.engine.turn.cqrs.persist.toSnapshot
-import com.openlogh.entity.City
-import com.openlogh.entity.General
-import com.openlogh.entity.Nation
-import com.openlogh.entity.WorldState
-import com.openlogh.repository.CityRepository
-import com.openlogh.repository.GeneralRepository
+import com.openlogh.entity.Planet
+import com.openlogh.entity.Officer
+import com.openlogh.entity.Faction
+import com.openlogh.entity.SessionState
+import com.openlogh.repository.PlanetRepository
+import com.openlogh.repository.OfficerRepository
 import com.openlogh.repository.MessageRepository
-import com.openlogh.repository.NationRepository
+import com.openlogh.repository.FactionRepository
 import com.openlogh.service.HistoryService
 import com.openlogh.service.InheritanceService
 import com.openlogh.service.MapService
@@ -48,23 +48,23 @@ import kotlin.math.sqrt
 class EconomyFormulaParityTest {
 
     private lateinit var service: EconomyService
-    private lateinit var cityRepository: CityRepository
-    private lateinit var nationRepository: NationRepository
-    private lateinit var generalRepository: GeneralRepository
+    private lateinit var planetRepository: PlanetRepository
+    private lateinit var factionRepository: FactionRepository
+    private lateinit var officerRepository: OfficerRepository
     private lateinit var mapService: MapService
 
-    private val cities = linkedMapOf<Long, City>()
-    private val nations = linkedMapOf<Long, Nation>()
-    private val generals = linkedMapOf<Long, General>()
+    private val cities = linkedMapOf<Long, Planet>()
+    private val nations = linkedMapOf<Long, Faction>()
+    private val generals = linkedMapOf<Long, Officer>()
 
     @BeforeEach
     fun setUp() {
-        cityRepository = mock(CityRepository::class.java)
-        nationRepository = mock(NationRepository::class.java)
-        generalRepository = mock(GeneralRepository::class.java)
+        planetRepository = mock(PlanetRepository::class.java)
+        factionRepository = mock(FactionRepository::class.java)
+        officerRepository = mock(OfficerRepository::class.java)
         mapService = mock(MapService::class.java)
         service = EconomyService(
-            cityRepository, nationRepository, generalRepository,
+            planetRepository, factionRepository, officerRepository,
             mock(MessageRepository::class.java), mapService,
             mock(HistoryService::class.java), mock(InheritanceService::class.java),
         )
@@ -74,41 +74,41 @@ class EconomyFormulaParityTest {
     }
 
     private fun wireRepos() {
-        `when`(cityRepository.findByWorldId(ArgumentMatchers.anyLong())).thenAnswer { inv ->
+        `when`(planetRepository.findBySessionId(ArgumentMatchers.anyLong())).thenAnswer { inv ->
             val worldId = inv.arguments[0] as Long
-            cities.values.filter { it.worldId == worldId }.map { it.toSnapshot().toEntity() }
+            cities.values.filter { it.sessionId == worldId }.map { it.toSnapshot().toEntity() }
         }
-        `when`(nationRepository.findByWorldId(ArgumentMatchers.anyLong())).thenAnswer { inv ->
+        `when`(factionRepository.findBySessionId(ArgumentMatchers.anyLong())).thenAnswer { inv ->
             val worldId = inv.arguments[0] as Long
-            nations.values.filter { it.worldId == worldId }.map { it.toSnapshot().toEntity() }
+            nations.values.filter { it.sessionId == worldId }.map { it.toSnapshot().toEntity() }
         }
-        `when`(generalRepository.findByWorldId(ArgumentMatchers.anyLong())).thenAnswer { inv ->
+        `when`(officerRepository.findBySessionId(ArgumentMatchers.anyLong())).thenAnswer { inv ->
             val worldId = inv.arguments[0] as Long
-            generals.values.filter { it.worldId == worldId }.map { it.toSnapshot().toEntity() }
+            generals.values.filter { it.sessionId == worldId }.map { it.toSnapshot().toEntity() }
         }
-        `when`(generalRepository.findByWorldIdAndCityIdIn(ArgumentMatchers.anyLong(), ArgumentMatchers.anyList()))
+        `when`(officerRepository.findBySessionIdAndPlanetIdIn(ArgumentMatchers.anyLong(), ArgumentMatchers.anyList()))
             .thenReturn(emptyList())
-        `when`(cityRepository.save(ArgumentMatchers.any(City::class.java))).thenAnswer { inv ->
-            val city = inv.arguments[0] as City
+        `when`(planetRepository.save(ArgumentMatchers.any(City::class.java))).thenAnswer { inv ->
+            val city = inv.arguments[0] as Planet
             cities[city.id] = city.toSnapshot().toEntity()
             city
         }
-        `when`(nationRepository.save(ArgumentMatchers.any(Nation::class.java))).thenAnswer { inv ->
-            val nation = inv.arguments[0] as Nation
+        `when`(factionRepository.save(ArgumentMatchers.any(Nation::class.java))).thenAnswer { inv ->
+            val nation = inv.arguments[0] as Faction
             nations[nation.id] = nation.toSnapshot().toEntity()
             nation
         }
-        `when`(generalRepository.save(ArgumentMatchers.any(General::class.java))).thenAnswer { inv ->
-            val general = inv.arguments[0] as General
+        `when`(officerRepository.save(ArgumentMatchers.any(General::class.java))).thenAnswer { inv ->
+            val general = inv.arguments[0] as Officer
             generals[general.id] = general.toSnapshot().toEntity()
             general
         }
     }
 
     private fun seed(
-        cityList: List<City> = emptyList(),
-        nationList: List<Nation> = emptyList(),
-        generalList: List<General> = emptyList(),
+        cityList: List<Planet> = emptyList(),
+        nationList: List<Faction> = emptyList(),
+        generalList: List<Officer> = emptyList(),
     ) {
         cities.clear(); nations.clear(); generals.clear()
         cityList.forEach { cities[it.id] = it.toSnapshot().toEntity() }
@@ -116,8 +116,8 @@ class EconomyFormulaParityTest {
         generalList.forEach { generals[it.id] = it.toSnapshot().toEntity() }
     }
 
-    private fun world(year: Short = 200, month: Short = 3): WorldState =
-        WorldState(id = 1, scenarioCode = "test", currentYear = year, currentMonth = month, tickSeconds = 300)
+    private fun world(year: Short = 200, month: Short = 3): SessionState =
+        SessionState(id = 1, scenarioCode = "test", currentYear = year, currentMonth = month, tickSeconds = 300)
 
     private fun city(
         id: Long = 1, nationId: Long = 1,
@@ -129,8 +129,8 @@ class EconomyFormulaParityTest {
         wall: Int = 500, wallMax: Int = 1000,
         trust: Float = 80f, supplyState: Short = 1,
         level: Short = 5, dead: Int = 0, trade: Int = 100,
-    ): City = City(
-        id = id, worldId = 1, name = "city$id", mapCityId = id.toInt(),
+    ): Planet = Planet(
+        id = id, sessionId = 1, name = "city$id", mapPlanetId = id.toInt(),
         nationId = nationId, pop = pop, popMax = popMax,
         agri = agri, agriMax = agriMax, comm = comm, commMax = commMax,
         secu = secu, secuMax = secuMax, def = def, defMax = defMax,
@@ -143,22 +143,22 @@ class EconomyFormulaParityTest {
         level: Short = 1, rateTmp: Short = 15, bill: Short = 100,
         capitalCityId: Long? = 1, rate: Short = 15,
         typeCode: String = "che_중립",
-    ): Nation = Nation(
-        id = id, worldId = 1, name = "nation$id", color = "#FF0000",
-        gold = gold, rice = rice, level = level, rateTmp = rateTmp,
-        bill = bill, capitalCityId = capitalCityId, rate = rate,
-        typeCode = typeCode,
+    ): Faction = Faction(
+        id = id, sessionId = 1, name = "nation$id", color = "#FF0000",
+        funds = gold, supplies = rice, factionRank = level, conscriptionRateTmp = rateTmp,
+        taxRate = bill, capitalPlanetId = capitalCityId, conscriptionRate = rate,
+        factionType = typeCode,
     )
 
     private fun general(
         id: Long = 1, nationId: Long = 1, cityId: Long = 1,
         gold: Int = 1000, rice: Int = 1000, dedication: Int = 1000,
-        officerLevel: Short = 1, officerCity: Int = 0, npcState: Short = 0,
-    ): General = General(
-        id = id, worldId = 1, name = "general$id",
-        nationId = nationId, cityId = cityId, gold = gold, rice = rice,
+        officerLevel: Short = 1, officerPlanet: Int = 0, npcState: Short = 0,
+    ): Officer = Officer(
+        id = id, sessionId = 1, name = "general$id",
+        factionId = nationId, planetId = cityId, funds = gold, supplies = rice,
         dedication = dedication, officerLevel = officerLevel,
-        officerCity = officerCity, npcState = npcState,
+        officerPlanet = officerPlanet, npcState = npcState,
     )
 
     // ── Legacy formula helpers (PHP golden-value computation) ──
@@ -261,7 +261,7 @@ class EconomyFormulaParityTest {
                 level = nationLevel.toShort(), bill = 0,  // zero bill so no salary deduction
             )
             val officerGenerals = (1..officers).map { idx ->
-                general(id = (10 + idx).toLong(), officerLevel = 3, officerCity = 1)
+                general(id = (10 + idx).toLong(), officerLevel = 3, officerPlanet = 1)
             }
             val allGenerals = listOf(general(npcState = 5)) + officerGenerals +
                 listOf(general(id = 99, dedication = 0, npcState = 0)) // keep nationGenerals non-empty
@@ -271,7 +271,7 @@ class EconomyFormulaParityTest {
 
             val expected = legacyCityGoldIncome(pop, comm, commMax, trust, secu, secuMax, officers, isCapital, nationLevel)
             val expectedTaxed = (expected * taxRate / 20).toInt()
-            val actual = nations[1L]!!.gold - 100000
+            val actual = nations[1L]!!.funds - 100000
 
             assertThat(actual)
                 .describedAs("Gold income: pop=$pop comm=$comm/$commMax trust=$trust secu=$secu/$secuMax off=$officers cap=$isCapital lv=$nationLevel tax=$taxRate -> expected=$expectedTaxed")
@@ -286,7 +286,7 @@ class EconomyFormulaParityTest {
             seed(listOf(c), listOf(n), listOf(general(npcState = 5)))
 
             service.preUpdateMonthly(world())
-            assertThat(nations[1L]!!.gold).isEqualTo(100000)
+            assertThat(nations[1L]!!.funds).isEqualTo(100000)
         }
 
         @Test
@@ -298,7 +298,7 @@ class EconomyFormulaParityTest {
 
             service.preUpdateMonthly(world())
             // Should not throw, no gold income from comm
-            assertThat(nations[1L]!!.gold).isEqualTo(100000)
+            assertThat(nations[1L]!!.funds).isEqualTo(100000)
         }
     }
 
@@ -331,7 +331,7 @@ class EconomyFormulaParityTest {
                 level = nationLevel.toShort(), bill = 0,
             )
             val officerGenerals = (1..officers).map { idx ->
-                general(id = (10 + idx).toLong(), officerLevel = 3, officerCity = 1)
+                general(id = (10 + idx).toLong(), officerLevel = 3, officerPlanet = 1)
             }
 
             seed(listOf(c), listOf(n), listOf(general(npcState = 5)) + officerGenerals +
@@ -340,7 +340,7 @@ class EconomyFormulaParityTest {
 
             val expected = legacyCityRiceIncome(pop, agri, agriMax, trust, secu, secuMax, officers, isCapital, nationLevel)
             val expectedTaxed = (expected * taxRate / 20).toInt()
-            val actual = nations[1L]!!.rice - 100000
+            val actual = nations[1L]!!.supplies - 100000
 
             assertThat(actual)
                 .describedAs("Rice income: pop=$pop agri=$agri/$agriMax")
@@ -379,7 +379,7 @@ class EconomyFormulaParityTest {
                 level = nationLevel.toShort(), bill = 0,
             )
             val officerGenerals = (1..officers).map { idx ->
-                general(id = (10 + idx).toLong(), officerLevel = 3, officerCity = 1)
+                general(id = (10 + idx).toLong(), officerLevel = 3, officerPlanet = 1)
             }
 
             seed(listOf(c), listOf(n), listOf(general(npcState = 5)) + officerGenerals +
@@ -388,7 +388,7 @@ class EconomyFormulaParityTest {
 
             val expected = legacyCityWallIncome(def, wall, wallMax, secu, secuMax, officers, isCapital, nationLevel)
             val expectedTaxed = (expected * taxRate / 20).toInt()
-            val actual = nations[1L]!!.rice - 100000
+            val actual = nations[1L]!!.supplies - 100000
 
             assertThat(actual)
                 .describedAs("Wall income: def=$def wall=$wall/$wallMax")
@@ -413,12 +413,12 @@ class EconomyFormulaParityTest {
             // Tax 20 (full multiplier = 20/20 = 1.0)
             seed(listOf(c), listOf(nation(gold = 100000, rateTmp = 20, bill = 0)), listOf(general(npcState = 5)))
             service.preUpdateMonthly(world())
-            val goldFull = nations[1L]!!.gold - 100000
+            val goldFull = nations[1L]!!.funds - 100000
 
             // Tax 10 (half multiplier = 10/20 = 0.5)
             seed(listOf(c), listOf(nation(gold = 100000, rateTmp = 10, bill = 0)), listOf(general(npcState = 5)))
             service.preUpdateMonthly(world())
-            val goldHalf = nations[1L]!!.gold - 100000
+            val goldHalf = nations[1L]!!.funds - 100000
 
             // goldHalf should be approximately goldFull / 2
             assertThat(goldHalf).isCloseTo(goldFull / 2, within(1))
@@ -449,7 +449,7 @@ class EconomyFormulaParityTest {
 
             service.preUpdateMonthly(world())
 
-            assertThat(nations[1L]!!.gold - 100000).isEqualTo(expectedGold)
+            assertThat(nations[1L]!!.funds - 100000).isEqualTo(expectedGold)
             assertThat(cities[1L]!!.dead).isEqualTo(0)
         }
 
@@ -462,7 +462,7 @@ class EconomyFormulaParityTest {
 
             service.preUpdateMonthly(world())
 
-            assertThat(cities[1L]!!.pop).isLessThanOrEqualTo(50000)
+            assertThat(cities[1L]!!.population).isLessThanOrEqualTo(50000)
         }
     }
 
@@ -497,7 +497,7 @@ class EconomyFormulaParityTest {
         fun `salary distribution ratio`() {
             // Nation: gold = 50000, BASE_GOLD = 0
             // 1 general: ded=1000, bill=1200
-            // outcome = bill * (nation.bill/100) = 1200 * 1.0 = 1200
+            // outcome = bill * (nation.taxRate/100) = 1200 * 1.0 = 1200
             // Nation gold after: 50000 + income - 1200
             // General gold after: 1000 + 1200 * ratio
             val c = city(pop = 20000, comm = 800, commMax = 1000, trust = 100f)
@@ -509,8 +509,8 @@ class EconomyFormulaParityTest {
 
             val updatedGeneral = generals[1L]!!
             // General should receive salary based on getBill(1000) = 1200
-            assertThat(updatedGeneral.gold).isGreaterThan(1000)
-            assertThat(updatedGeneral.rice).isGreaterThan(1000)
+            assertThat(updatedGeneral.funds).isGreaterThan(1000)
+            assertThat(updatedGeneral.supplies).isGreaterThan(1000)
         }
 
         @Test
@@ -524,7 +524,7 @@ class EconomyFormulaParityTest {
             service.preUpdateMonthly(world())
 
             // General should receive 0 salary (nation has no income, gold < BASE_GOLD after no income)
-            assertThat(generals[1L]!!.gold).isEqualTo(500)
+            assertThat(generals[1L]!!.funds).isEqualTo(500)
         }
 
         @Test
@@ -541,8 +541,8 @@ class EconomyFormulaParityTest {
 
             service.preUpdateMonthly(world())
 
-            assertThat(generals[1L]!!.gold).isLessThan(legacyBill(1000))
-            assertThat(nations[1L]!!.gold).isEqualTo(0) // BASE_GOLD
+            assertThat(generals[1L]!!.funds).isLessThan(legacyBill(1000))
+            assertThat(nations[1L]!!.funds).isEqualTo(0) // BASE_GOLD
         }
     }
 
@@ -577,7 +577,7 @@ class EconomyFormulaParityTest {
 
             service.postUpdateMonthly(world(month = 1))
 
-            assertThat(generals[1L]!!.gold).isEqualTo(expected)
+            assertThat(generals[1L]!!.funds).isEqualTo(expected)
         }
 
         @ParameterizedTest
@@ -595,7 +595,7 @@ class EconomyFormulaParityTest {
 
             service.postUpdateMonthly(world(month = 1))
 
-            assertThat(generals[1L]!!.rice).isEqualTo(expected)
+            assertThat(generals[1L]!!.supplies).isEqualTo(expected)
         }
     }
 
@@ -631,7 +631,7 @@ class EconomyFormulaParityTest {
 
             service.postUpdateMonthly(world(month = 1))
 
-            assertThat(nations[1L]!!.gold).isEqualTo(expected)
+            assertThat(nations[1L]!!.funds).isEqualTo(expected)
         }
 
         @ParameterizedTest
@@ -649,7 +649,7 @@ class EconomyFormulaParityTest {
 
             service.postUpdateMonthly(world(month = 1))
 
-            assertThat(nations[1L]!!.rice).isEqualTo(expected)
+            assertThat(nations[1L]!!.supplies).isEqualTo(expected)
         }
     }
 
@@ -713,8 +713,8 @@ class EconomyFormulaParityTest {
 
             service.postUpdateMonthly(world(month = 3))
 
-            assertThat(nations[1L]!!.gold).isGreaterThanOrEqualTo(1000 + 3000)
-            assertThat(nations[1L]!!.rice).isGreaterThanOrEqualTo(1000 + 3000)
+            assertThat(nations[1L]!!.funds).isGreaterThanOrEqualTo(1000 + 3000)
+            assertThat(nations[1L]!!.supplies).isGreaterThanOrEqualTo(1000 + 3000)
         }
 
         @Test
@@ -752,13 +752,13 @@ class EconomyFormulaParityTest {
             // No officers
             seed(listOf(c), listOf(nation(gold = 100000, bill = 0)), listOf(general(npcState = 5), dummy))
             service.preUpdateMonthly(world())
-            val goldNoOfficer = nations[1L]!!.gold - 100000
+            val goldNoOfficer = nations[1L]!!.funds - 100000
 
             // 3 officers assigned to city 1
-            val officers = (10..12L).map { general(id = it, officerLevel = 3, officerCity = 1) }
+            val officers = (10..12L).map { general(id = it, officerLevel = 3, officerPlanet = 1) }
             seed(listOf(c), listOf(nation(gold = 100000, bill = 0)), listOf(general(npcState = 5), dummy) + officers)
             service.preUpdateMonthly(world())
-            val goldWithOfficers = nations[1L]!!.gold - 100000
+            val goldWithOfficers = nations[1L]!!.funds - 100000
 
             // 1.05^3 ≈ 1.1576
             val expectedRatio = 1.05.pow(3)
@@ -774,15 +774,15 @@ class EconomyFormulaParityTest {
             val dummy = general(id = 99, dedication = 0, npcState = 0) // keep nationGenerals non-empty
 
             // Officer assigned to city 1 but located in city 99
-            val officer = general(id = 10, cityId = 99, officerLevel = 3, officerCity = 1, dedication = 0)
+            val officer = general(id = 10, cityId = 99, officerLevel = 3, officerPlanet = 1, dedication = 0)
             seed(listOf(c), listOf(nation(gold = 100000, bill = 0)), listOf(general(npcState = 5), dummy, officer))
             service.preUpdateMonthly(world())
-            val goldMismatch = nations[1L]!!.gold
+            val goldMismatch = nations[1L]!!.funds
 
             // No officers at all
             seed(listOf(c), listOf(nation(gold = 100000, bill = 0)), listOf(general(npcState = 5), dummy))
             service.preUpdateMonthly(world())
-            val goldNone = nations[1L]!!.gold
+            val goldNone = nations[1L]!!.funds
 
             assertThat(goldMismatch).isEqualTo(goldNone)
         }
@@ -807,12 +807,12 @@ class EconomyFormulaParityTest {
             // Capital city (capitalCityId = 1)
             seed(listOf(c), listOf(nation(gold = 100000, bill = 0, capitalCityId = 1)), listOf(general(npcState = 5), dummy))
             service.preUpdateMonthly(world())
-            val goldCapital = nations[1L]!!.gold - 100000
+            val goldCapital = nations[1L]!!.funds - 100000
 
             // Non-capital (capitalCityId = 99)
             seed(listOf(c), listOf(nation(gold = 100000, bill = 0, capitalCityId = 99)), listOf(general(npcState = 5), dummy))
             service.preUpdateMonthly(world())
-            val goldNonCapital = nations[1L]!!.gold - 100000
+            val goldNonCapital = nations[1L]!!.funds - 100000
 
             // level=1: bonus = 1 + 1/3/1 = 1.333
             val expectedRatio = 1 + 1.0 / 3 / 1
@@ -830,12 +830,12 @@ class EconomyFormulaParityTest {
             // Level 1: 1 + 1/3/1 = 1.333
             seed(listOf(c), listOf(nation(gold = 100000, bill = 0, level = 1, capitalCityId = 1)), listOf(general(npcState = 5), dummy))
             service.preUpdateMonthly(world())
-            val goldLevel1 = nations[1L]!!.gold - 100000
+            val goldLevel1 = nations[1L]!!.funds - 100000
 
             // Level 7: 1 + 1/3/7 = 1.047
             seed(listOf(c), listOf(nation(gold = 100000, bill = 0, level = 7, capitalCityId = 1)), listOf(general(npcState = 5), dummy))
             service.preUpdateMonthly(world())
-            val goldLevel7 = nations[1L]!!.gold - 100000
+            val goldLevel7 = nations[1L]!!.funds - 100000
 
             assertThat(goldLevel1).isGreaterThan(goldLevel7)
         }
@@ -882,13 +882,13 @@ class EconomyFormulaParityTest {
             val n = nation(gold = 100000, rice = 100000, rateTmp = taxRate.toShort(), capitalCityId = capitalCityId,
                 level = nationLevel.toShort(), bill = 0)
             val officerGenerals = (1..officers).map { idx ->
-                general(id = (10 + idx).toLong(), officerLevel = 3, officerCity = 1)
+                general(id = (10 + idx).toLong(), officerLevel = 3, officerPlanet = 1)
             }
             val allGenerals = listOf(general(npcState = 5)) + officerGenerals +
                 listOf(general(id = 99, dedication = 0, npcState = 0))
             seed(listOf(c), listOf(n), allGenerals)
             service.preUpdateMonthly(world())
-            val actual = nations[1L]!!.gold - 100000
+            val actual = nations[1L]!!.funds - 100000
             assertThat(actual).describedAs("Gold: pop=$pop comm=$comm/$commMax trust=$trust").isCloseTo(expectedGold, within(1))
         }
 
@@ -916,12 +916,12 @@ class EconomyFormulaParityTest {
             val n = nation(gold = 100000, rice = 100000, rateTmp = taxRate.toShort(), capitalCityId = capitalCityId,
                 level = nationLevel.toShort(), bill = 0)
             val officerGenerals = (1..officers).map { idx ->
-                general(id = (10 + idx).toLong(), officerLevel = 3, officerCity = 1)
+                general(id = (10 + idx).toLong(), officerLevel = 3, officerPlanet = 1)
             }
             seed(listOf(c), listOf(n), listOf(general(npcState = 5)) + officerGenerals +
                 listOf(general(id = 99, dedication = 0, npcState = 0)))
             service.preUpdateMonthly(world())
-            val actual = nations[1L]!!.rice - 100000
+            val actual = nations[1L]!!.supplies - 100000
             assertThat(actual).describedAs("Rice: pop=$pop agri=$agri/$agriMax").isCloseTo(expectedRice, within(1))
         }
 
@@ -949,12 +949,12 @@ class EconomyFormulaParityTest {
             val n = nation(gold = 100000, rice = 100000, rateTmp = taxRate.toShort(), capitalCityId = capitalCityId,
                 level = nationLevel.toShort(), bill = 0)
             val officerGenerals = (1..officers).map { idx ->
-                general(id = (10 + idx).toLong(), officerLevel = 3, officerCity = 1)
+                general(id = (10 + idx).toLong(), officerLevel = 3, officerPlanet = 1)
             }
             seed(listOf(c), listOf(n), listOf(general(npcState = 5)) + officerGenerals +
                 listOf(general(id = 99, dedication = 0, npcState = 0)))
             service.preUpdateMonthly(world())
-            val actual = nations[1L]!!.rice - 100000
+            val actual = nations[1L]!!.supplies - 100000
             assertThat(actual).describedAs("Wall: def=$def wall=$wall/$wallMax").isCloseTo(expectedWall, within(1))
         }
     }
@@ -981,13 +981,13 @@ class EconomyFormulaParityTest {
             seed(listOf(c), listOf(nation(gold = 100000, bill = 0, typeCode = "che_중립")),
                 listOf(general(npcState = 5), dummy))
             service.preUpdateMonthly(world())
-            val goldDefault = nations[1L]!!.gold - 100000
+            val goldDefault = nations[1L]!!.funds - 100000
 
             // 상인 (goldMultiplier=1.2)
             seed(listOf(c), listOf(nation(gold = 100000, bill = 0, typeCode = "che_상인")),
                 listOf(general(npcState = 5), dummy))
             service.preUpdateMonthly(world())
-            val goldMerchant = nations[1L]!!.gold - 100000
+            val goldMerchant = nations[1L]!!.funds - 100000
 
             assertThat(goldMerchant.toDouble() / goldDefault)
                 .describedAs("상인 gold multiplier should be ~1.2")
@@ -1004,13 +1004,13 @@ class EconomyFormulaParityTest {
             seed(listOf(c), listOf(nation(gold = 100000, rice = 100000, bill = 0, typeCode = "che_중립")),
                 listOf(general(npcState = 5), dummy))
             service.preUpdateMonthly(world())
-            val riceDefault = nations[1L]!!.rice - 100000
+            val riceDefault = nations[1L]!!.supplies - 100000
 
             // 농업국 (riceMultiplier=1.2)
             seed(listOf(c), listOf(nation(gold = 100000, rice = 100000, bill = 0, typeCode = "che_농업국")),
                 listOf(general(npcState = 5), dummy))
             service.preUpdateMonthly(world())
-            val riceAgri = nations[1L]!!.rice - 100000
+            val riceAgri = nations[1L]!!.supplies - 100000
 
             assertThat(riceAgri.toDouble() / riceDefault)
                 .describedAs("농업국 rice multiplier should be ~1.2")
@@ -1027,13 +1027,13 @@ class EconomyFormulaParityTest {
             seed(listOf(c), listOf(nation(gold = 100000, bill = 0, typeCode = "che_중립")),
                 listOf(general(npcState = 5), dummy))
             service.preUpdateMonthly(world())
-            val goldDefault = nations[1L]!!.gold - 100000
+            val goldDefault = nations[1L]!!.funds - 100000
 
             // 도적 (goldMultiplier=0.9)
             seed(listOf(c), listOf(nation(gold = 100000, bill = 0, typeCode = "che_도적")),
                 listOf(general(npcState = 5), dummy))
             service.preUpdateMonthly(world())
-            val goldBandit = nations[1L]!!.gold - 100000
+            val goldBandit = nations[1L]!!.funds - 100000
 
             assertThat(goldBandit.toDouble() / goldDefault)
                 .describedAs("도적 gold multiplier should be ~0.9")
@@ -1112,10 +1112,10 @@ class EconomyFormulaParityTest {
 
             // General should receive full salary = getBill(1000) = 1200 at ratio ~1.0
             val updatedGeneral = generals[1L]!!
-            assertThat(updatedGeneral.gold)
+            assertThat(updatedGeneral.funds)
                 .describedAs("General gold after full salary")
                 .isCloseTo(1200, within(10))
-            assertThat(updatedGeneral.rice)
+            assertThat(updatedGeneral.supplies)
                 .describedAs("General rice after full salary")
                 .isCloseTo(1200, within(10))
         }
@@ -1139,11 +1139,11 @@ class EconomyFormulaParityTest {
 
             val updatedGeneral = generals[1L]!!
             // Partial payment: general gets ~200 gold (all available treasury)
-            assertThat(updatedGeneral.gold)
+            assertThat(updatedGeneral.funds)
                 .describedAs("Partial salary gold")
                 .isCloseTo(200, within(5))
             // Nation treasury should be at BASE_GOLD(0)
-            assertThat(nations[1L]!!.gold).isEqualTo(0)
+            assertThat(nations[1L]!!.funds).isEqualTo(0)
         }
 
         @Test
@@ -1166,10 +1166,10 @@ class EconomyFormulaParityTest {
             // totalBill = 1200 + 600 = 1800
             // gold(5000) + 0 income = 5000 >= 1800 -> ratio = 1.0
             // g1 gold = 1200, g2 gold = 600
-            assertThat(updated1.gold)
+            assertThat(updated1.funds)
                 .describedAs("Higher dedication general gets more")
-                .isGreaterThan(updated2.gold)
-            assertThat(updated1.gold.toDouble() / updated2.gold)
+                .isGreaterThan(updated2.funds)
+            assertThat(updated1.funds.toDouble() / updated2.funds)
                 .describedAs("Salary ratio matches bill ratio 1200/600=2.0")
                 .isCloseTo(2.0, within(0.1))
         }
@@ -1183,13 +1183,13 @@ class EconomyFormulaParityTest {
             seed(listOf(c), listOf(nation(gold = 100000, rice = 100000, rateTmp = 20, bill = 0)),
                 listOf(general(npcState = 5)))
             service.preUpdateMonthly(world())
-            val incTax20 = nations[1L]!!.gold - 100000
+            val incTax20 = nations[1L]!!.funds - 100000
 
             // Tax 10 (half)
             seed(listOf(c), listOf(nation(gold = 100000, rice = 100000, rateTmp = 10, bill = 0)),
                 listOf(general(npcState = 5)))
             service.preUpdateMonthly(world())
-            val incTax10 = nations[1L]!!.gold - 100000
+            val incTax10 = nations[1L]!!.funds - 100000
 
             // Legacy: income *= taxRate/20, so tax10 should be exactly half of tax20
             assertThat(incTax10).isCloseTo(incTax20 / 2, within(1))

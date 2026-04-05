@@ -381,7 +381,7 @@ class BattleService(
             return attackerNationId
         }
 
-        val cityWinner = listOf(city.id.toString(), city.mapCityId.toString())
+        val cityWinner = listOf(city.id.toString(), city.mapPlanetId.toString())
             .firstNotNullOfOrNull { key ->
                 val value = conflictMap[key] ?: return@firstNotNullOfOrNull null
                 when (value) {
@@ -446,7 +446,7 @@ class BattleService(
             // Release from nation (legacy: nation=0, officer_level=0, officer_city=0, belong=0, troop=0)
             gen.factionId = 0
             gen.officerLevel = 0
-            gen.officerCity = 0
+            gen.officerPlanet = 0
             gen.belong = 0
             gen.fleetId = 0
 
@@ -576,7 +576,7 @@ class BattleService(
                 messageType = "capital_relocated",
                 destId = nation.id,
                 payload = mutableMapOf(
-                    "nationName" to nation.name,
+                    "factionName" to nation.name,
                     "newCapital" to newCapital.name,
                     "year" to world.currentYear.toInt(),
                     "month" to world.currentMonth.toInt(),
@@ -591,10 +591,10 @@ class BattleService(
      */
     private fun demoteCityOfficers(cityId: Long, oldNationId: Long) {
         val generals = officerRepository.findByPlanetId(cityId)
-            .filter { it.factionId == oldNationId && it.officerCity == cityId.toInt() }
+            .filter { it.factionId == oldNationId && it.officerPlanet == cityId.toInt() }
         for (gen in generals) {
             gen.officerLevel = 1
-            gen.officerCity = 0
+            gen.officerPlanet = 0
             officerRepository.save(gen)
         }
     }

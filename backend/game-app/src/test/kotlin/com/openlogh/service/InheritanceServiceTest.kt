@@ -2,13 +2,13 @@ package com.openlogh.service
 
 import com.openlogh.engine.modifier.TraitSpecRegistry
 import com.openlogh.entity.AppUser
-import com.openlogh.entity.General
-import com.openlogh.entity.WorldState
+import com.openlogh.entity.Officer
+import com.openlogh.entity.SessionState
 import com.openlogh.repository.AppUserRepository
-import com.openlogh.repository.CityRepository
-import com.openlogh.repository.GeneralRepository
+import com.openlogh.repository.PlanetRepository
+import com.openlogh.repository.OfficerRepository
 import com.openlogh.repository.RankDataRepository
-import com.openlogh.repository.WorldStateRepository
+import com.openlogh.repository.SessionStateRepository
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
@@ -23,28 +23,28 @@ import java.util.Optional
 
 class InheritanceServiceTest {
     private lateinit var appUserRepository: AppUserRepository
-    private lateinit var cityRepository: CityRepository
-    private lateinit var generalRepository: GeneralRepository
+    private lateinit var planetRepository: PlanetRepository
+    private lateinit var officerRepository: OfficerRepository
     private lateinit var rankDataRepository: RankDataRepository
-    private lateinit var worldStateRepository: WorldStateRepository
+    private lateinit var sessionStateRepository: SessionStateRepository
     private lateinit var gameConstService: GameConstService
     private lateinit var service: InheritanceService
 
     @BeforeEach
     fun setUp() {
         appUserRepository = mock(AppUserRepository::class.java)
-        cityRepository = mock(CityRepository::class.java)
-        generalRepository = mock(GeneralRepository::class.java)
+        planetRepository = mock(PlanetRepository::class.java)
+        officerRepository = mock(OfficerRepository::class.java)
         rankDataRepository = mock(RankDataRepository::class.java)
-        worldStateRepository = mock(WorldStateRepository::class.java)
+        sessionStateRepository = mock(SessionStateRepository::class.java)
         gameConstService = mock(GameConstService::class.java)
 
         service = InheritanceService(
             appUserRepository = appUserRepository,
-            cityRepository = cityRepository,
-            generalRepository = generalRepository,
+            planetRepository = planetRepository,
+            officerRepository = officerRepository,
             rankDataRepository = rankDataRepository,
-            worldStateRepository = worldStateRepository,
+            sessionStateRepository = sessionStateRepository,
             gameConstService = gameConstService,
         )
 
@@ -56,7 +56,7 @@ class InheritanceServiceTest {
         `when`(gameConstService.getInt("inheritBornStatPoint")).thenReturn(1000)
 
         `when`(appUserRepository.save(any(AppUser::class.java))).thenAnswer { it.arguments[0] }
-        `when`(generalRepository.save(any(General::class.java))).thenAnswer { it.arguments[0] }
+        `when`(officerRepository.save(any(General::class.java))).thenAnswer { it.arguments[0] }
     }
 
     @Test
@@ -125,11 +125,11 @@ class InheritanceServiceTest {
         assertEquals(listOf("che_저격"), general.meta["prev_special2"])
     }
 
-    private fun stubOwnership(user: AppUser, general: General, world: WorldState) {
+    private fun stubOwnership(user: AppUser, general: Officer, world: SessionState) {
         `when`(appUserRepository.findByLoginId(user.loginId)).thenReturn(user)
         `when`(appUserRepository.findById(user.id)).thenReturn(Optional.of(user))
-        `when`(generalRepository.findByWorldIdAndUserId(world.id.toLong(), user.id)).thenReturn(listOf(general))
-        `when`(worldStateRepository.findById(world.id)).thenReturn(Optional.of(world))
+        `when`(officerRepository.findBySessionIdAndUserId(world.id.toLong(), user.id)).thenReturn(listOf(general))
+        `when`(sessionStateRepository.findById(world.id)).thenReturn(Optional.of(world))
     }
 
     private fun createUser(points: Int): AppUser {
@@ -142,20 +142,20 @@ class InheritanceServiceTest {
         )
     }
 
-    private fun createGeneral(userId: Long): General {
-        return General(
+    private fun createGeneral(userId: Long): Officer {
+        return Officer(
             id = 10,
-            worldId = 1,
+            sessionId = 1,
             userId = userId,
             name = "장수",
-            nationId = 1,
-            cityId = 1,
+            factionId = 1,
+            planetId = 1,
             turnTime = OffsetDateTime.parse("2026-03-08T10:05:00+09:00"),
         )
     }
 
-    private fun createWorld(): WorldState {
-        return WorldState(
+    private fun createWorld(): SessionState {
+        return SessionState(
             id = 1,
             scenarioCode = "1",
             tickSeconds = 300,

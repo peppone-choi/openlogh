@@ -2,13 +2,13 @@ package com.openlogh.engine
 
 import com.openlogh.engine.war.BattleEngine
 import com.openlogh.engine.war.BattleResult
-import com.openlogh.engine.war.WarUnitGeneral
-import com.openlogh.entity.City
-import com.openlogh.entity.General
-import com.openlogh.repository.CityRepository
-import com.openlogh.repository.GeneralRepository
+import com.openlogh.engine.war.WarUnitOfficer
+import com.openlogh.entity.Planet
+import com.openlogh.entity.Officer
+import com.openlogh.repository.PlanetRepository
+import com.openlogh.repository.OfficerRepository
 import com.openlogh.repository.MessageRepository
-import com.openlogh.repository.NationRepository
+import com.openlogh.repository.FactionRepository
 import com.openlogh.service.InheritanceService
 import com.openlogh.service.MapService
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -26,9 +26,9 @@ class FormulaParityTest {
     @BeforeEach
     fun setUp() {
         economyService = EconomyService(
-            mock(CityRepository::class.java),
-            mock(NationRepository::class.java),
-            mock(GeneralRepository::class.java),
+            mock(PlanetRepository::class.java),
+            mock(FactionRepository::class.java),
+            mock(OfficerRepository::class.java),
             mock(MessageRepository::class.java),
             mock(MapService::class.java),
             mock(com.openlogh.service.HistoryService::class.java),
@@ -112,8 +112,8 @@ class FormulaParityTest {
         val city = createCity(nationId = 2, def = 450, wall = 500, pop = 20000)
 
         return battleEngine.resolveBattle(
-            attacker = WarUnitGeneral(attackerGeneral),
-            defenders = listOf(WarUnitGeneral(defenderGeneral)),
+            attacker = WarUnitOfficer(attackerGeneral),
+            defenders = listOf(WarUnitOfficer(defenderGeneral)),
             city = city,
             rng = LiteHashDRBG.build(seed),
         )
@@ -135,7 +135,7 @@ class FormulaParityTest {
         return method.invoke(economyService, dedication) as Int
     }
 
-    private fun invokeCalcCityGoldIncome(city: City, officerCnt: Int, isCapital: Boolean, nationLevel: Int): Double {
+    private fun invokeCalcCityGoldIncome(city: Planet, officerCnt: Int, isCapital: Boolean, nationLevel: Int): Double {
         val method = EconomyService::class.java.getDeclaredMethod(
             "calcCityGoldIncome",
             City::class.java,
@@ -148,7 +148,7 @@ class FormulaParityTest {
         return method.invoke(economyService, city, officerCnt, isCapital, nationLevel, 1.0) as Double
     }
 
-    private fun invokeCalcCityRiceIncome(city: City, officerCnt: Int, isCapital: Boolean, nationLevel: Int): Double {
+    private fun invokeCalcCityRiceIncome(city: Planet, officerCnt: Int, isCapital: Boolean, nationLevel: Int): Double {
         val method = EconomyService::class.java.getDeclaredMethod(
             "calcCityRiceIncome",
             City::class.java,
@@ -173,21 +173,21 @@ class FormulaParityTest {
         rice: Int,
         experience: Int,
         dedication: Int,
-    ): General {
-        return General(
+    ): Officer {
+        return Officer(
             id = id,
-            worldId = 1,
+            sessionId = 1,
             name = "장수$id",
-            nationId = nationId,
-            cityId = 1,
+            factionId = nationId,
+            planetId = 1,
             leadership = leadership,
-            strength = strength,
-            intel = intel,
-            crew = crew,
-            crewType = 0,
-            train = train,
-            atmos = atmos,
-            rice = rice,
+            command = strength,
+            intelligence = intel,
+            ships = crew,
+            shipClass = 0,
+            training = train,
+            morale = atmos,
+            supplies = rice,
             experience = experience,
             dedication = dedication,
             turnTime = OffsetDateTime.now(),
@@ -206,25 +206,25 @@ class FormulaParityTest {
         trust: Float = 80f,
         def: Int = 500,
         wall: Int = 500,
-    ): City {
-        return City(
+    ): Planet {
+        return Planet(
             id = 1,
-            worldId = 1,
+            sessionId = 1,
             name = "테스트도시",
-            nationId = nationId,
-            pop = pop,
-            popMax = 50000,
-            agri = agri,
-            agriMax = agriMax,
-            comm = comm,
-            commMax = commMax,
-            secu = secu,
-            secuMax = secuMax,
-            trust = trust,
-            def = def,
-            defMax = 1000,
-            wall = wall,
-            wallMax = 1000,
+            factionId = nationId,
+            population = pop,
+            populationMax = 50000,
+            production = agri,
+            productionMax = agriMax,
+            commerce = comm,
+            commerceMax = commMax,
+            security = secu,
+            securityMax = secuMax,
+            approval = trust,
+            orbitalDefense = def,
+            orbitalDefenseMax = 1000,
+            fortress = wall,
+            fortressMax = 1000,
         )
     }
 }

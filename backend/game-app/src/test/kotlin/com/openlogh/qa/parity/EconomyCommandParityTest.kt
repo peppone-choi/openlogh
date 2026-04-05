@@ -6,14 +6,14 @@ import com.openlogh.command.CommandResult
 import com.openlogh.command.general.*
 import com.openlogh.command.nation.*
 import com.openlogh.engine.LiteHashDRBG
-import com.openlogh.entity.City
-import com.openlogh.entity.General
-import com.openlogh.entity.Nation
-import com.openlogh.service.CityService.Companion.EXPAND_CITY_COST_COEF
-import com.openlogh.service.CityService.Companion.EXPAND_CITY_DEFAULT_COST
-import com.openlogh.service.CityService.Companion.EXPAND_CITY_DEVEL_INCREASE
-import com.openlogh.service.CityService.Companion.EXPAND_CITY_POP_INCREASE
-import com.openlogh.service.CityService.Companion.EXPAND_CITY_WALL_INCREASE
+import com.openlogh.entity.Planet
+import com.openlogh.entity.Officer
+import com.openlogh.entity.Faction
+import com.openlogh.service.PlanetService.Companion.EXPAND_CITY_COST_COEF
+import com.openlogh.service.PlanetService.Companion.EXPAND_CITY_DEFAULT_COST
+import com.openlogh.service.PlanetService.Companion.EXPAND_CITY_DEVEL_INCREASE
+import com.openlogh.service.PlanetService.Companion.EXPAND_CITY_POP_INCREASE
+import com.openlogh.service.PlanetService.Companion.EXPAND_CITY_WALL_INCREASE
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.DisplayName
@@ -57,8 +57,8 @@ class EconomyCommandParityTest {
 
         /**
          * PHP buy-rice formula (che_군량매매.php:127-136):
-         *   tradeRate = city.trade / 100  (e.g. 100 -> 1.0)
-         *   sellAmount = min(amount * tradeRate, general.gold)
+         *   tradeRate = city.tradeRoute / 100  (e.g. 100 -> 1.0)
+         *   sellAmount = min(amount * tradeRate, general.funds)
          *   tax = sellAmount * exchangeFee
          *   if (sellAmount + tax > gold): sellAmount *= gold/(sellAmount+tax); tax = gold - sellAmount
          *   buyAmount = sellAmount / tradeRate
@@ -214,7 +214,7 @@ class EconomyCommandParityTest {
 
         /**
          * PHP donation (che_헌납.php:122-145):
-         *   amount = min(arg.amount, general.gold or general.rice)
+         *   amount = min(arg.amount, general.funds or general.supplies)
          *   general.resKey -= amount
          *   nation.resKey += amount
          *   exp = 70, ded = 100, leadership_exp += 1
@@ -371,7 +371,7 @@ class EconomyCommandParityTest {
 
         @Test
         fun `domestic commands cap city stat at max value`() {
-            // city.agri = 990, agriMax = 1000 -> delta cannot exceed 10
+            // city.production = 990, agriMax = 1000 -> delta cannot exceed 10
             val gen = createGeneral(intel = 100, leadership = 100)
             val city = createCity(agri = 990, agriMax = 1000)
             val cmd = che_농지개간(gen, createEnv(), null)
@@ -448,9 +448,9 @@ class EconomyCommandParityTest {
 
         /**
          * PHP 포상 (che_포상.php:158-162):
-         *   amount = valueFit(amount, 0, nation.gold - baseGold)
-         *   destGeneral.gold += amount
-         *   nation.gold -= amount
+         *   amount = valueFit(amount, 0, nation.funds - baseGold)
+         *   destOfficer.funds += amount
+         *   nation.funds -= amount
          */
         @Test
         fun `che_포상 transfers gold from nation to dest general`() {
@@ -460,13 +460,13 @@ class EconomyCommandParityTest {
             val arg = mapOf<String, Any>("isGold" to true, "amount" to 1000, "destGeneralID" to 2)
             val cmd = che_포상(gen, createEnv(), arg)
             cmd.nation = nation
-            cmd.destGeneral = destGen
+            cmd.destOfficer = destGen
 
             val result = runCmd(cmd, "reward_gold")
             assertTrue(result.success)
             // 포상 directly mutates entities
-            assertEquals(9000, nation.gold, "Nation gold decreased by 1000")
-            assertEquals(1100, destGen.gold, "Dest general gold increased by 1000")
+            assertEquals(9000, nation.funds, "Nation gold decreased by 1000")
+            assertEquals(1100, destGen.funds, "Dest general gold increased by 1000")
         }
 
         @Test
@@ -477,12 +477,12 @@ class EconomyCommandParityTest {
             val arg = mapOf<String, Any>("isGold" to false, "amount" to 2000, "destGeneralID" to 2)
             val cmd = che_포상(gen, createEnv(), arg)
             cmd.nation = nation
-            cmd.destGeneral = destGen
+            cmd.destOfficer = destGen
 
             val result = runCmd(cmd, "reward_rice")
             assertTrue(result.success)
-            assertEquals(8000, nation.rice, "Nation rice decreased by 2000")
-            assertEquals(2100, destGen.rice, "Dest general rice increased by 2000")
+            assertEquals(8000, nation.supplies, "Nation rice decreased by 2000")
+            assertEquals(2100, destGen.supplies, "Dest general rice increased by 2000")
         }
 
         @Test
@@ -496,19 +496,19 @@ class EconomyCommandParityTest {
             env.gameStor["baseGold"] = 1000
             val cmd = che_포상(gen, env, arg)
             cmd.nation = nation
-            cmd.destGeneral = destGen
+            cmd.destOfficer = destGen
 
             val result = runCmd(cmd, "reward_cap")
             assertTrue(result.success)
-            assertEquals(1000, nation.gold, "Nation gold should be at baseGold level")
-            assertEquals(600, destGen.gold, "Dest general receives 500")
+            assertEquals(1000, nation.funds, "Nation gold should be at baseGold level")
+            assertEquals(600, destGen.funds, "Dest general receives 500")
         }
 
         /**
          * PHP 몰수 (che_몰수.php:167-208):
-         *   amount = valueFit(amount, 0, destGeneral.gold)
-         *   destGeneral.gold -= amount
-         *   nation.gold += amount
+         *   amount = valueFit(amount, 0, destOfficer.funds)
+         *   destOfficer.funds -= amount
+         *   nation.funds += amount
          */
         @Test
         fun `che_몰수 transfers gold from dest general to nation`() {
@@ -518,12 +518,12 @@ class EconomyCommandParityTest {
             val arg = mapOf<String, Any>("isGold" to true, "amount" to 2000, "destGeneralID" to 2)
             val cmd = che_몰수(gen, createEnv(), arg)
             cmd.nation = nation
-            cmd.destGeneral = destGen
+            cmd.destOfficer = destGen
 
             val result = runCmd(cmd, "seize_gold")
             assertTrue(result.success)
-            assertEquals(12000, nation.gold, "Nation gold increased by 2000")
-            assertEquals(3000, destGen.gold, "Dest general gold decreased by 2000")
+            assertEquals(12000, nation.funds, "Nation gold increased by 2000")
+            assertEquals(3000, destGen.funds, "Dest general gold decreased by 2000")
         }
 
         @Test
@@ -534,20 +534,20 @@ class EconomyCommandParityTest {
             val arg = mapOf<String, Any>("isGold" to true, "amount" to 5000, "destGeneralID" to 2)
             val cmd = che_몰수(gen, createEnv(), arg)
             cmd.nation = nation
-            cmd.destGeneral = destGen
+            cmd.destOfficer = destGen
 
             val result = runCmd(cmd, "seize_cap")
             assertTrue(result.success)
-            assertEquals(10300, nation.gold, "Nation gold increased by 300")
-            assertEquals(0, destGen.gold, "Dest general gold is 0")
+            assertEquals(10300, nation.funds, "Nation gold increased by 300")
+            assertEquals(0, destGen.funds, "Dest general gold is 0")
         }
 
         /**
          * PHP 물자원조 (che_물자원조.php:183-254):
-         *   goldAmount = valueFit(goldAmount, 0, nation.gold - basegold)
-         *   riceAmount = valueFit(riceAmount, 0, nation.rice - baserice)
-         *   nation.gold -= goldAmount; destNation.gold += goldAmount
-         *   nation.rice -= riceAmount; destNation.rice += riceAmount
+         *   goldAmount = valueFit(goldAmount, 0, nation.funds - basegold)
+         *   riceAmount = valueFit(riceAmount, 0, nation.supplies - baserice)
+         *   nation.funds -= goldAmount; destFaction.funds += goldAmount
+         *   nation.supplies -= riceAmount; destFaction.supplies += riceAmount
          *   general.exp += 5, general.ded += 5
          *   nation.surlimit += 12
          */
@@ -555,21 +555,21 @@ class EconomyCommandParityTest {
         fun `che_물자원조 transfers gold and rice between nations`() {
             val gen = createGeneral(officerLevel = 12, gold = 1000, rice = 1000)
             val nation = createNation(id = 1, gold = 10000, rice = 20000)
-            val destNation = createNation(id = 2, gold = 5000, rice = 5000)
+            val destFaction = createNation(id = 2, gold = 5000, rice = 5000)
             val arg = mapOf<String, Any>(
                 "destNationID" to 2,
                 "amountList" to listOf(3000, 5000)
             )
             val cmd = che_물자원조(gen, createEnv(), arg)
             cmd.nation = nation
-            cmd.destNation = destNation
+            cmd.destFaction = destFaction
 
             val result = runCmd(cmd, "aid_1")
             assertTrue(result.success)
-            assertEquals(7000, nation.gold, "Source nation gold decreased")
-            assertEquals(15000, nation.rice, "Source nation rice decreased")
-            assertEquals(8000, destNation.gold, "Dest nation gold increased")
-            assertEquals(10000, destNation.rice, "Dest nation rice increased")
+            assertEquals(7000, nation.funds, "Source nation gold decreased")
+            assertEquals(15000, nation.supplies, "Source nation rice decreased")
+            assertEquals(8000, destFaction.funds, "Dest nation gold increased")
+            assertEquals(10000, destFaction.supplies, "Dest nation rice increased")
         }
 
         @Test
@@ -578,14 +578,14 @@ class EconomyCommandParityTest {
             gen.experience = 0
             gen.dedication = 0
             val nation = createNation(id = 1, gold = 10000, rice = 20000)
-            val destNation = createNation(id = 2, gold = 5000, rice = 5000)
+            val destFaction = createNation(id = 2, gold = 5000, rice = 5000)
             val arg = mapOf<String, Any>(
                 "destNationID" to 2,
                 "amountList" to listOf(1000, 1000)
             )
             val cmd = che_물자원조(gen, createEnv(), arg)
             cmd.nation = nation
-            cmd.destNation = destNation
+            cmd.destFaction = destFaction
 
             val result = runCmd(cmd, "aid_exp")
             assertTrue(result.success)
@@ -596,13 +596,13 @@ class EconomyCommandParityTest {
         /**
          * PHP 증축 (che_증축.php:173-188):
          *   city.level += 1
-         *   city.popMax += expandCityPopIncreaseAmount (100000)
-         *   city.agriMax += expandCityDevelIncreaseAmount (2000)
-         *   city.commMax += expandCityDevelIncreaseAmount (2000)
-         *   city.secuMax += expandCityDevelIncreaseAmount (2000)
-         *   city.defMax += expandCityWallIncreaseAmount (2000)
-         *   city.wallMax += expandCityWallIncreaseAmount (2000)
-         *   nation.gold -= cost, nation.rice -= cost
+         *   city.populationMax += expandCityPopIncreaseAmount (100000)
+         *   city.productionMax += expandCityDevelIncreaseAmount (2000)
+         *   city.commerceMax += expandCityDevelIncreaseAmount (2000)
+         *   city.securityMax += expandCityDevelIncreaseAmount (2000)
+         *   city.orbitalDefenseMax += expandCityWallIncreaseAmount (2000)
+         *   city.fortressMax += expandCityWallIncreaseAmount (2000)
+         *   nation.funds -= cost, nation.supplies -= cost
          *   cost = develcost * expandCityCostCoef + expandCityDefaultCost
          *        = 100 * 500 + 60000 = 110000
          *   exp/ded = 5 * (preReqTurn+1) = 5 * 6 = 30
@@ -618,21 +618,21 @@ class EconomyCommandParityTest {
             val cmd = che_증축(gen, createEnv(develCost = 100), null)
             cmd.nation = nation
             cmd.city = city
-            cmd.destCity = city
+            cmd.destPlanet = city
 
             val result = runCmd(cmd, "expand_1")
             assertTrue(result.success)
             assertEquals(6.toShort(), city.level)
-            assertEquals(100000 + EXPAND_CITY_POP_INCREASE, city.popMax)
-            assertEquals(1000 + EXPAND_CITY_DEVEL_INCREASE, city.agriMax)
-            assertEquals(1000 + EXPAND_CITY_DEVEL_INCREASE, city.commMax)
-            assertEquals(1000 + EXPAND_CITY_DEVEL_INCREASE, city.secuMax)
-            assertEquals(1000 + EXPAND_CITY_WALL_INCREASE, city.defMax)
-            assertEquals(1000 + EXPAND_CITY_WALL_INCREASE, city.wallMax)
+            assertEquals(100000 + EXPAND_CITY_POP_INCREASE, city.populationMax)
+            assertEquals(1000 + EXPAND_CITY_DEVEL_INCREASE, city.productionMax)
+            assertEquals(1000 + EXPAND_CITY_DEVEL_INCREASE, city.commerceMax)
+            assertEquals(1000 + EXPAND_CITY_DEVEL_INCREASE, city.securityMax)
+            assertEquals(1000 + EXPAND_CITY_WALL_INCREASE, city.orbitalDefenseMax)
+            assertEquals(1000 + EXPAND_CITY_WALL_INCREASE, city.fortressMax)
             // Cost = 100 * 500 + 60000 = 110000
             val expectedCost = 100 * EXPAND_CITY_COST_COEF + EXPAND_CITY_DEFAULT_COST
-            assertEquals(200000 - expectedCost, nation.gold)
-            assertEquals(200000 - expectedCost, nation.rice)
+            assertEquals(200000 - expectedCost, nation.funds)
+            assertEquals(200000 - expectedCost, nation.supplies)
             // exp/ded = 5 * 6 = 30
             assertEquals(30, gen.experience)
             assertEquals(30, gen.dedication)
@@ -646,7 +646,7 @@ class EconomyCommandParityTest {
             val cmd = che_증축(gen, createEnv(), null)
             cmd.nation = nation
             cmd.city = city
-            cmd.destCity = city
+            cmd.destPlanet = city
 
             val result = runCmd(cmd, "expand_max")
             assertFalse(result.success, "Should fail when level >= 8")
@@ -655,14 +655,14 @@ class EconomyCommandParityTest {
         /**
          * PHP 감축 (che_감축.php:174-196):
          *   city.level -= 1
-         *   city.pop = max(pop - expandCityPopIncreaseAmount, minRecruitPop)
-         *   city.agri = max(agri - expandCityDevelIncreaseAmount, 0)
+         *   city.population = max(pop - expandCityPopIncreaseAmount, minRecruitPop)
+         *   city.production = max(agri - expandCityDevelIncreaseAmount, 0)
          *   (same for comm, secu)
-         *   city.def = max(def - expandCityWallIncreaseAmount, 0)
-         *   city.wall = max(wall - expandCityWallIncreaseAmount, 0)
-         *   city.popMax -= expandCityPopIncreaseAmount
+         *   city.orbitalDefense = max(def - expandCityWallIncreaseAmount, 0)
+         *   city.fortress = max(wall - expandCityWallIncreaseAmount, 0)
+         *   city.populationMax -= expandCityPopIncreaseAmount
          *   (same for all maxes)
-         *   nation.gold += cost, nation.rice += cost
+         *   nation.funds += cost, nation.supplies += cost
          *   cost = develcost * expandCityCostCoef + expandCityDefaultCost / 2
          *        = 100 * 500 + 30000 = 80000
          */
@@ -683,22 +683,22 @@ class EconomyCommandParityTest {
             val result = runCmd(cmd, "shrink_1")
             assertTrue(result.success)
             assertEquals(5.toShort(), city.level)
-            assertEquals(200000 - EXPAND_CITY_POP_INCREASE, city.popMax)
-            assertEquals(maxOf(0, 150000 - EXPAND_CITY_POP_INCREASE), city.pop)
-            assertEquals(3000 - EXPAND_CITY_DEVEL_INCREASE, city.agriMax)
-            assertEquals(maxOf(0, 800 - EXPAND_CITY_DEVEL_INCREASE), city.agri)
-            assertEquals(3000 - EXPAND_CITY_DEVEL_INCREASE, city.commMax)
-            assertEquals(maxOf(0, 700 - EXPAND_CITY_DEVEL_INCREASE), city.comm)
-            assertEquals(3000 - EXPAND_CITY_DEVEL_INCREASE, city.secuMax)
-            assertEquals(maxOf(0, 600 - EXPAND_CITY_DEVEL_INCREASE), city.secu)
-            assertEquals(3000 - EXPAND_CITY_WALL_INCREASE, city.defMax)
-            assertEquals(maxOf(0, 500 - EXPAND_CITY_WALL_INCREASE), city.def)
-            assertEquals(3000 - EXPAND_CITY_WALL_INCREASE, city.wallMax)
-            assertEquals(maxOf(0, 400 - EXPAND_CITY_WALL_INCREASE), city.wall)
+            assertEquals(200000 - EXPAND_CITY_POP_INCREASE, city.populationMax)
+            assertEquals(maxOf(0, 150000 - EXPAND_CITY_POP_INCREASE), city.population)
+            assertEquals(3000 - EXPAND_CITY_DEVEL_INCREASE, city.productionMax)
+            assertEquals(maxOf(0, 800 - EXPAND_CITY_DEVEL_INCREASE), city.production)
+            assertEquals(3000 - EXPAND_CITY_DEVEL_INCREASE, city.commerceMax)
+            assertEquals(maxOf(0, 700 - EXPAND_CITY_DEVEL_INCREASE), city.commerce)
+            assertEquals(3000 - EXPAND_CITY_DEVEL_INCREASE, city.securityMax)
+            assertEquals(maxOf(0, 600 - EXPAND_CITY_DEVEL_INCREASE), city.security)
+            assertEquals(3000 - EXPAND_CITY_WALL_INCREASE, city.orbitalDefenseMax)
+            assertEquals(maxOf(0, 500 - EXPAND_CITY_WALL_INCREASE), city.orbitalDefense)
+            assertEquals(3000 - EXPAND_CITY_WALL_INCREASE, city.fortressMax)
+            assertEquals(maxOf(0, 400 - EXPAND_CITY_WALL_INCREASE), city.fortress)
             // Refund: cost = 100 * 500 + 60000/2 = 80000
             val expectedRefund = 100 * EXPAND_CITY_COST_COEF + EXPAND_CITY_DEFAULT_COST / 2
-            assertEquals(50000 + expectedRefund, nation.gold)
-            assertEquals(50000 + expectedRefund, nation.rice)
+            assertEquals(50000 + expectedRefund, nation.funds)
+            assertEquals(50000 + expectedRefund, nation.supplies)
             // exp/ded = 5 * 6 = 30
             assertEquals(30, gen.experience)
             assertEquals(30, gen.dedication)
@@ -731,7 +731,7 @@ class EconomyCommandParityTest {
             year = 200,
             month = 1,
             startYear = 190,
-            worldId = 1,
+            sessionId = 1,
             realtimeMode = false,
             develCost = develCost,
         )
@@ -749,22 +749,22 @@ class EconomyCommandParityTest {
         crewType: Short = 0,
         train: Short = 0,
         atmos: Short = 0,
-    ): General = General(
+    ): Officer = Officer(
         id = id,
-        worldId = 1,
+        sessionId = 1,
         name = "테스트장수$id",
-        nationId = 1,
-        cityId = 1,
-        gold = gold,
-        rice = rice,
+        factionId = 1,
+        planetId = 1,
+        funds = gold,
+        supplies = rice,
         leadership = leadership,
-        strength = strength,
-        intel = intel,
+        command = strength,
+        intelligence = intel,
         officerLevel = officerLevel,
-        crew = crew,
-        crewType = crewType,
-        train = train,
-        atmos = atmos,
+        ships = crew,
+        shipClass = crewType,
+        training = train,
+        morale = atmos,
     )
 
     private fun createCity(
@@ -786,27 +786,27 @@ class EconomyCommandParityTest {
         level: Short = 5,
         trade: Int = 100,
         frontState: Short = 0,
-    ): City = City(
+    ): Planet = Planet(
         id = id,
-        worldId = 1,
+        sessionId = 1,
         name = "테스트도시$id",
-        nationId = nationId,
-        pop = pop,
-        popMax = popMax,
-        agri = agri,
-        agriMax = agriMax,
-        comm = comm,
-        commMax = commMax,
-        secu = secu,
-        secuMax = secuMax,
-        def = def,
-        defMax = defMax,
-        wall = wall,
-        wallMax = wallMax,
-        trust = trust,
+        factionId = nationId,
+        population = pop,
+        populationMax = popMax,
+        production = agri,
+        productionMax = agriMax,
+        commerce = comm,
+        commerceMax = commMax,
+        security = secu,
+        securityMax = secuMax,
+        orbitalDefense = def,
+        orbitalDefenseMax = defMax,
+        fortress = wall,
+        fortressMax = wallMax,
+        approval = trust,
         supplyState = 1,
         level = level,
-        trade = trade,
+        tradeRoute = trade,
         frontState = frontState,
     )
 
@@ -815,14 +815,14 @@ class EconomyCommandParityTest {
         gold: Int = 10000,
         rice: Int = 10000,
         level: Short = 5,
-    ): Nation = Nation(
+    ): Faction = Faction(
         id = id,
-        worldId = 1,
+        sessionId = 1,
         name = "테스트국가$id",
         color = "#FF0000",
-        gold = gold,
-        rice = rice,
-        level = level,
-        capitalCityId = 1,
+        funds = gold,
+        supplies = rice,
+        factionRank = level,
+        capitalPlanetId = 1,
     )
 }

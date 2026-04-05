@@ -33,7 +33,7 @@ class 해산(general: Officer, env: CommandEnv, arg: Map<String, Any>? = null)
     override suspend fun run(rng: Random): CommandResult {
         val date = formatDate()
         val generalName = general.name
-        val nationName = nation?.name ?: "소속세력"
+        val factionName = nation?.name ?: "소속세력"
 
         // Legacy: compare joinYearMonth(init_year, init_month) vs joinYearMonth(year, month)
         val initYearMonth = env.startYear * 12 + (env.startMonth ?: 1) - 1
@@ -51,10 +51,10 @@ class 해산(general: Officer, env: CommandEnv, arg: Map<String, Any>? = null)
         // Legacy: refreshNationStaticInfo, deleteNation
         pushLog("세력을 해산했습니다. <1>$date</>")
         pushLog("_global:<Y>${generalName}</>${josa(generalName, "이")} 세력을 해산했습니다.")
-        pushLog("_history:<D><b>${nationName}</b></>${josa(nationName, "을")} 해산")
-        pushHistoryLog("<D><b>${nationName}</b></>${josa(nationName, "을")} 해산")
+        pushLog("_history:<D><b>${factionName}</b></>${josa(factionName, "을")} 해산")
+        pushHistoryLog("<D><b>${factionName}</b></>${josa(factionName, "을")} 해산")
         pushGlobalLog("<Y>${generalName}</>${josa(generalName, "이")} 세력을 해산했습니다.")
-        pushGlobalHistoryLog("<Y><b>【해산】</b></><D><b>${nationName}</b></>${josa(nationName, "이")} 해산되었습니다.")
+        pushGlobalHistoryLog("<Y><b>【해산】</b></><D><b>${factionName}</b></>${josa(factionName, "이")} 해산되었습니다.")
 
         return CommandResult(
             success = true,

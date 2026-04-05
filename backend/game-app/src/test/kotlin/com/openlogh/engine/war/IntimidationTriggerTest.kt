@@ -1,8 +1,8 @@
 package com.openlogh.engine.war
 
 import com.openlogh.engine.war.trigger.IntimidationTrigger
-import com.openlogh.entity.City
-import com.openlogh.entity.General
+import com.openlogh.entity.Planet
+import com.openlogh.entity.Officer
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -20,17 +20,17 @@ class IntimidationTriggerTest {
         crew: Int = 1000,
         specialCode: String = "None",
         special2Code: String = "None",
-    ): General {
-        return General(
+    ): Officer {
+        return Officer(
             id = id,
-            worldId = 1,
+            sessionId = 1,
             name = "장수$id",
-            nationId = nationId,
-            cityId = 1,
+            factionId = nationId,
+            planetId = 1,
             leadership = leadership,
-            strength = strength,
-            intel = intel,
-            crew = crew,
+            command = strength,
+            intelligence = intel,
+            ships = crew,
             specialCode = specialCode,
             special2Code = special2Code,
             turnTime = OffsetDateTime.now(),
@@ -44,8 +44,8 @@ class IntimidationTriggerTest {
         phaseNumber: Int = 0,
         isVsCity: Boolean = false,
     ): BattleTriggerContext {
-        val a = attacker ?: WarUnitGeneral(createGeneral())
-        val d = defender ?: WarUnitGeneral(createGeneral(id = 2))
+        val a = attacker ?: WarUnitOfficer(createGeneral())
+        val d = defender ?: WarUnitOfficer(createGeneral(id = 2))
         return BattleTriggerContext(
             attacker = a,
             defender = d,
@@ -101,13 +101,13 @@ class IntimidationTriggerTest {
 
     @Test
     fun `onEngagementStart reduces defender atmos by 5 when activated`() {
-        val defender = WarUnitGeneral(createGeneral(id = 2))
-        defender.atmos = 50
+        val defender = WarUnitOfficer(createGeneral(id = 2))
+        defender.morale = 50
         val ctx = makeCtx(defender = defender, rng = Random(activateSeed))
 
         IntimidationTrigger.onEngagementStart(ctx)
 
-        assertEquals(45, ctx.defender.atmos)
+        assertEquals(45, ctx.defender.morale)
     }
 
     // ========== Test 4: intimidatePhasesRemaining set to 1 ==========
@@ -130,16 +130,16 @@ class IntimidationTriggerTest {
         assertTrue(ctx.battleLogs.any { "위압" in it })
     }
 
-    // ========== Test 6: Does not fire against WarUnitCity ==========
+    // ========== Test 6: Does not fire against WarUnitPlanet ==========
 
     @Test
-    fun `onEngagementStart does not fire against WarUnitCity defender`() {
-        val city = City(
-            id = 1, worldId = 1, name = "도시", nationId = 2,
-            def = 100, defMax = 1000, wall = 100, wallMax = 1000,
-            pop = 1000, popMax = 50000,
+    fun `onEngagementStart does not fire against WarUnitPlanet defender`() {
+        val city = Planet(
+            id = 1, sessionId = 1, name = "도시", factionId = 2,
+            orbitalDefense = 100, orbitalDefenseMax = 1000, fortress = 100, fortressMax = 1000,
+            population = 1000, populationMax = 50000,
         )
-        val defender = WarUnitCity(city)
+        val defender = WarUnitPlanet(city)
         val ctx = makeCtx(defender = defender, rng = Random(activateSeed))
 
         IntimidationTrigger.onEngagementStart(ctx)
@@ -159,13 +159,13 @@ class IntimidationTriggerTest {
 
     @Test
     fun `onEngagementStart does not reduce atmos below 0`() {
-        val defender = WarUnitGeneral(createGeneral(id = 2))
-        defender.atmos = 3
+        val defender = WarUnitOfficer(createGeneral(id = 2))
+        defender.morale = 3
         val ctx = makeCtx(defender = defender, rng = Random(activateSeed))
 
         IntimidationTrigger.onEngagementStart(ctx)
 
-        assertEquals(0, ctx.defender.atmos)
+        assertEquals(0, ctx.defender.morale)
     }
 
     // ========== Test 9: Registered in WarUnitTriggerRegistry ==========

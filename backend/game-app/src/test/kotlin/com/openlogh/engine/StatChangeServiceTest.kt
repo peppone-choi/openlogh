@@ -1,6 +1,6 @@
 package com.openlogh.engine
 
-import com.openlogh.entity.General
+import com.openlogh.entity.Officer
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -26,23 +26,23 @@ class StatChangeServiceTest {
         politicsExp: Short = 0,
         charm: Short = 50,
         charmExp: Short = 0,
-    ): General {
-        return General(
+    ): Officer {
+        return Officer(
             id = 1,
-            worldId = 1,
+            sessionId = 1,
             name = "테스트",
-            nationId = 1,
-            cityId = 1,
+            factionId = 1,
+            planetId = 1,
             leadership = leadership,
             leadershipExp = leadershipExp,
-            strength = strength,
-            strengthExp = strengthExp,
-            intel = intel,
-            intelExp = intelExp,
+            command = strength,
+            commandExp = strengthExp,
+            intelligence = intel,
+            intelligenceExp = intelExp,
             politics = politics,
             politicsExp = politicsExp,
-            charm = charm,
-            charmExp = charmExp,
+            administration = charm,
+            administrationExp = charmExp,
             turnTime = OffsetDateTime.now(),
         )
     }
@@ -67,9 +67,9 @@ class StatChangeServiceTest {
         val result = service.checkStatChange(general)
 
         assertTrue(result.hasChanges)
-        assertEquals(49.toShort(), general.strength)
+        assertEquals(49.toShort(), general.command)
         // Exp should be adjusted: -5 + 30 = 25
-        assertEquals(25.toShort(), general.strengthExp)
+        assertEquals(25.toShort(), general.commandExp)
         assertEquals(-1, result.changes[0].delta)
     }
 
@@ -81,8 +81,8 @@ class StatChangeServiceTest {
 
         assertFalse(result.hasChanges)
         assertEquals(50.toShort(), general.leadership)
-        assertEquals(50.toShort(), general.strength)
-        assertEquals(50.toShort(), general.intel)
+        assertEquals(50.toShort(), general.command)
+        assertEquals(50.toShort(), general.intelligence)
     }
 
     @Test
@@ -92,9 +92,9 @@ class StatChangeServiceTest {
         val result = service.checkStatChange(general)
 
         assertFalse(result.hasChanges, "No change entry when already at max")
-        assertEquals(255.toShort(), general.intel)
+        assertEquals(255.toShort(), general.intelligence)
         // Exp should still be consumed
-        assertEquals(0.toShort(), general.intelExp)
+        assertEquals(0.toShort(), general.intelligenceExp)
     }
 
     @Test

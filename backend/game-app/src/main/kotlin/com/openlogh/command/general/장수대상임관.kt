@@ -62,7 +62,7 @@ class 장수대상임관(general: Officer, env: CommandEnv, arg: Map<String, Any
         return CommandResult(
             success = true,
             logs = logs,
-            message = """{"statChanges":{"nation":${dn.id},"officerLevel":1,"officerCity":0,"belong":1,"city":$destCityId,"experience":$exp}}"""
+            message = """{"statChanges":{"nation":${dn.id},"officerLevel":1,"officerPlanet":0,"belong":1,"city":$destCityId,"experience":$exp}}"""
         )
     }
 }

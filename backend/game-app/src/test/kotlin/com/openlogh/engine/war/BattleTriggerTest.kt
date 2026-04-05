@@ -1,7 +1,7 @@
 package com.openlogh.engine.war
 
-import com.openlogh.entity.City
-import com.openlogh.entity.General
+import com.openlogh.entity.Planet
+import com.openlogh.entity.Officer
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import java.time.OffsetDateTime
@@ -18,17 +18,17 @@ class BattleTriggerTest {
         crew: Int = 1000,
         specialCode: String = "None",
         special2Code: String = "None",
-    ): General {
-        return General(
+    ): Officer {
+        return Officer(
             id = id,
-            worldId = 1,
+            sessionId = 1,
             name = "장수$id",
-            nationId = nationId,
-            cityId = 1,
+            factionId = nationId,
+            planetId = 1,
             leadership = leadership,
-            strength = strength,
-            intel = intel,
-            crew = crew,
+            command = strength,
+            intelligence = intel,
+            ships = crew,
             specialCode = specialCode,
             special2Code = special2Code,
             turnTime = OffsetDateTime.now(),
@@ -42,8 +42,8 @@ class BattleTriggerTest {
         phaseNumber: Int = 0,
         isVsCity: Boolean = false,
     ): BattleTriggerContext {
-        val a = attacker ?: WarUnitGeneral(createGeneral())
-        val d = defender ?: WarUnitGeneral(createGeneral(id = 2))
+        val a = attacker ?: WarUnitOfficer(createGeneral())
+        val d = defender ?: WarUnitOfficer(createGeneral(id = 2))
         return BattleTriggerContext(
             attacker = a,
             defender = d,
@@ -141,8 +141,8 @@ class BattleTriggerTest {
     @Test
     fun `저격 trigger applies wound on critical when defender is general`() {
         // Use strength=100 for high wound chance
-        val attacker = WarUnitGeneral(createGeneral(strength = 100))
-        val defender = WarUnitGeneral(createGeneral(id = 2))
+        val attacker = WarUnitOfficer(createGeneral(command = 100))
+        val defender = WarUnitOfficer(createGeneral(id = 2))
         // Use a seed that produces a low nextDouble (< 100/200 = 0.5)
         val rng = Random(1)
         val ctx = BattleTriggerContext(attacker = attacker, defender = defender, rng = rng)
@@ -160,9 +160,9 @@ class BattleTriggerTest {
 
     @Test
     fun `저격 trigger does not apply wound to city`() {
-        val attacker = WarUnitGeneral(createGeneral(strength = 100))
-        val city = City(id = 1, worldId = 1, name = "도시", nationId = 2, def = 100, defMax = 1000, wall = 100, wallMax = 1000, pop = 1000, popMax = 50000)
-        val defender = WarUnitCity(city)
+        val attacker = WarUnitOfficer(createGeneral(command = 100))
+        val city = Planet(id = 1, sessionId = 1, name = "도시", factionId = 2, orbitalDefense = 100, orbitalDefenseMax = 1000, fortress = 100, fortressMax = 1000, population = 1000, populationMax = 50000)
+        val defender = WarUnitPlanet(city)
         val ctx = BattleTriggerContext(attacker = attacker, defender = defender, rng = Random(1))
         ctx.criticalActivated = true
 
@@ -271,7 +271,7 @@ class BattleTriggerTest {
 
     @Test
     fun `귀모 trigger applies self-damage on magic fail`() {
-        val attacker = WarUnitGeneral(createGeneral(intel = 80))
+        val attacker = WarUnitOfficer(createGeneral(intelligence = 80))
         val ctx = makeCtx(attacker = attacker)
         귀모Trigger.onMagicFail(ctx)
         assertEquals(80 * 0.5, ctx.magicFailDamage, 0.01)
@@ -321,7 +321,7 @@ class BattleTriggerTest {
 
     @Test
     fun `분투 trigger gives 1_05 at normal HP`() {
-        val attacker = WarUnitGeneral(createGeneral(crew = 1000))
+        val attacker = WarUnitOfficer(createGeneral(ships = 1000))
         val ctx = makeCtx(attacker = attacker)
         분투Trigger.onDamageCalc(ctx)
         assertEquals(1.05, ctx.attackMultiplier, 0.01)
@@ -329,7 +329,7 @@ class BattleTriggerTest {
 
     @Test
     fun `분투 trigger gives 1_15 when HP below 50 percent`() {
-        val attacker = WarUnitGeneral(createGeneral(crew = 1000))
+        val attacker = WarUnitOfficer(createGeneral(ships = 1000))
         attacker.hp = 400  // < 1000/2 = 500
         val ctx = makeCtx(attacker = attacker)
         분투Trigger.onDamageCalc(ctx)

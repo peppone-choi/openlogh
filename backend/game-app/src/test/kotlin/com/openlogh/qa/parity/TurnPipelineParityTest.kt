@@ -3,7 +3,7 @@ package com.openlogh.qa.parity
 import com.openlogh.engine.turn.TurnContext
 import com.openlogh.engine.turn.TurnPipeline
 import com.openlogh.engine.turn.TurnStep
-import com.openlogh.entity.WorldState
+import com.openlogh.entity.SessionState
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -77,7 +77,7 @@ class TurnPipelineParityTest {
     }
 
     private fun testContext(): TurnContext {
-        val world = WorldState(id = 1, scenarioCode = "test", currentYear = 200, currentMonth = 3, tickSeconds = 300)
+        val world = SessionState(id = 1, scenarioCode = "test", currentYear = 200, currentMonth = 3, tickSeconds = 300)
         return TurnContext(
             world = world,
             worldId = 1L,
@@ -183,7 +183,7 @@ class TurnPipelineParityTest {
         assertThat(executed).isFalse()
 
         // Month 1: should execute
-        val month1World = WorldState(id = 1, scenarioCode = "test", currentYear = 200, currentMonth = 1, tickSeconds = 300)
+        val month1World = SessionState(id = 1, scenarioCode = "test", currentYear = 200, currentMonth = 1, tickSeconds = 300)
         val month1Context = TurnContext(
             world = month1World, worldId = 1L,
             year = 200, month = 1, previousYear = 199, previousMonth = 12,

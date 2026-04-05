@@ -1,7 +1,7 @@
 package com.openlogh.engine.war
 
 import com.openlogh.engine.war.trigger.SustainedChargeTrigger
-import com.openlogh.entity.General
+import com.openlogh.entity.Officer
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import java.time.OffsetDateTime
@@ -18,17 +18,17 @@ class SustainedChargeTriggerTest {
         crew: Int = 1000,
         specialCode: String = "None",
         special2Code: String = "None",
-    ): General {
-        return General(
+    ): Officer {
+        return Officer(
             id = id,
-            worldId = 1,
+            sessionId = 1,
             name = "장수$id",
-            nationId = nationId,
-            cityId = 1,
+            factionId = nationId,
+            planetId = 1,
             leadership = leadership,
-            strength = strength,
-            intel = intel,
-            crew = crew,
+            command = strength,
+            intelligence = intel,
+            ships = crew,
             specialCode = specialCode,
             special2Code = special2Code,
             turnTime = OffsetDateTime.now(),
@@ -42,8 +42,8 @@ class SustainedChargeTriggerTest {
         phaseNumber: Int = 0,
         isVsCity: Boolean = false,
     ): BattleTriggerContext {
-        val a = attacker ?: WarUnitGeneral(createGeneral())
-        val d = defender ?: WarUnitGeneral(createGeneral(id = 2))
+        val a = attacker ?: WarUnitOfficer(createGeneral())
+        val d = defender ?: WarUnitOfficer(createGeneral(id = 2))
         return BattleTriggerContext(
             attacker = a,
             defender = d,
@@ -71,8 +71,8 @@ class SustainedChargeTriggerTest {
 
     @Test
     fun `onPostDamage when attacker winning and rng triggers adds bonusPhases`() {
-        val attacker = WarUnitGeneral(createGeneral(crew = 2000))
-        val defender = WarUnitGeneral(createGeneral(id = 2, crew = 500))
+        val attacker = WarUnitOfficer(createGeneral(ships = 2000))
+        val defender = WarUnitOfficer(createGeneral(id = 2, ships = 500))
         val ctx = makeCtx(attacker = attacker, defender = defender, rng = Random(activateSeed))
 
         SustainedChargeTrigger.onPostDamage(ctx)
@@ -83,8 +83,8 @@ class SustainedChargeTriggerTest {
 
     @Test
     fun `onPostDamage when attacker losing does not add bonusPhases`() {
-        val attacker = WarUnitGeneral(createGeneral(crew = 500))
-        val defender = WarUnitGeneral(createGeneral(id = 2, crew = 2000))
+        val attacker = WarUnitOfficer(createGeneral(ships = 500))
+        val defender = WarUnitOfficer(createGeneral(id = 2, ships = 2000))
         val ctx = makeCtx(attacker = attacker, defender = defender, rng = Random(activateSeed))
 
         SustainedChargeTrigger.onPostDamage(ctx)
@@ -94,8 +94,8 @@ class SustainedChargeTriggerTest {
 
     @Test
     fun `onPostDamage does not activate when rng does not trigger`() {
-        val attacker = WarUnitGeneral(createGeneral(crew = 2000))
-        val defender = WarUnitGeneral(createGeneral(id = 2, crew = 500))
+        val attacker = WarUnitOfficer(createGeneral(ships = 2000))
+        val defender = WarUnitOfficer(createGeneral(id = 2, ships = 500))
         val ctx = makeCtx(attacker = attacker, defender = defender, rng = Random(noActivateSeed))
 
         SustainedChargeTrigger.onPostDamage(ctx)
