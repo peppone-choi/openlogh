@@ -133,4 +133,59 @@ class TickEngineTest {
         // processCompletedCommands should be called on every tick
         verify(realtimeService, times(5)).processCompletedCommands(world)
     }
+
+    // ── Tick broadcast tests ──
+
+    @Test
+    fun test_tick_broadcast_fires_every_10_ticks() {
+        val world = createWorld()
+        // After 10 ticks, broadcastTickState should fire once (at tick 10)
+        repeat(10) { tickEngine.processTick(world) }
+        verify(gameEventService, times(1)).broadcastTickState(world)
+
+        // After 20 total ticks, should fire twice (at tick 10 and 20)
+        repeat(10) { tickEngine.processTick(world) }
+        verify(gameEventService, times(2)).broadcastTickState(world)
+    }
+
+    @Test
+    fun test_tick_broadcast_not_on_first_tick() {
+        val world = createWorld()
+        // After 1 tick (tickCount=1), broadcast should NOT fire (1 % 10 != 0)
+        tickEngine.processTick(world)
+        verify(gameEventService, never()).broadcastTickState(any(SessionState::class.java))
+    }
+
+    @Test
+    fun test_tick_broadcast_not_at_9_ticks() {
+        val world = createWorld()
+        // After 9 ticks, broadcast should NOT fire
+        repeat(9) { tickEngine.processTick(world) }
+        verify(gameEventService, never()).broadcastTickState(any(SessionState::class.java))
+    }
+
+    /**
+     * Command duration integration verification:
+     *
+     * Command durations use wall-clock time (OffsetDateTime), not game time.
+     * A 300-second command takes 300 real seconds = 300 ticks = 7,200 game-seconds.
+     *
+     * Flow:
+     * - RealtimeService.submitCommand sets commandEndTime = OffsetDateTime.now().plusSeconds(duration)
+     * - TickEngine calls processCompletedCommands every tick, which checks commandEndTime < now
+     * - This means command durations work in real wall-clock seconds regardless of game-time speedup
+     * - No changes needed to RealtimeService -- the existing wall-clock duration mechanism is correct
+     *
+     * Broadcast does not interfere: broadcastTickState fires every 10 ticks (after save),
+     * while processCompletedCommands fires every tick (before save). They are independent.
+     */
+    @Test
+    fun test_command_duration_compatible_with_broadcast() {
+        val world = createWorld()
+        // Run 20 ticks -- verify both processCompletedCommands (every tick)
+        // and broadcastTickState (every 10 ticks) fire independently
+        repeat(20) { tickEngine.processTick(world) }
+        verify(realtimeService, times(20)).processCompletedCommands(world)
+        verify(gameEventService, times(2)).broadcastTickState(world)
+    }
 }
