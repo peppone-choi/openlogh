@@ -1,8 +1,7 @@
 package com.openlogh.gateway.controller
 
-import com.openlogh.gateway.dto.WorldStateResponse
+import com.openlogh.gateway.dto.SessionStateResponse
 import com.openlogh.gateway.dto.AttachWorldProcessRequest
-import com.openlogh.gateway.entity.WorldState
 import com.openlogh.gateway.dto.ActivateWorldRequest
 import com.openlogh.gateway.orchestrator.GameOrchestrator
 import com.openlogh.gateway.service.WorldService
@@ -32,21 +31,21 @@ class WorldController(
     private val webClientBuilder: WebClient.Builder,
 ) {
     @GetMapping
-    fun listWorlds(): ResponseEntity<List<WorldStateResponse>> {
-        return ResponseEntity.ok(worldService.listWorlds().map { WorldStateResponse.from(it) })
+    fun listWorlds(): ResponseEntity<List<SessionStateResponse>> {
+        return ResponseEntity.ok(worldService.listWorlds().map { SessionStateResponse.from(it) })
     }
 
     @GetMapping("/{id}")
-    fun getWorld(@PathVariable id: Short): ResponseEntity<WorldStateResponse> {
+    fun getWorld(@PathVariable id: Short): ResponseEntity<SessionStateResponse> {
         val world = worldService.getWorld(id) ?: return ResponseEntity.notFound().build()
-        return ResponseEntity.ok(WorldStateResponse.from(world))
+        return ResponseEntity.ok(SessionStateResponse.from(world))
     }
 
     @PostMapping
     fun createWorld(
         @Valid @RequestBody request: CreateWorldRequest,
         httpServletRequest: HttpServletRequest,
-    ): ResponseEntity<WorldStateResponse> {
+    ): ResponseEntity<SessionStateResponse> {
         val commitSha = request.commitSha?.takeIf { it.isNotBlank() } ?: "local"
         val requestedVersion = request.gameVersion?.takeIf { it.isNotBlank() } ?: "latest"
         val gameVersion = if (requestedVersion == "latest") {
@@ -87,7 +86,7 @@ class WorldController(
                 )
             }
 
-            val response = worldService.getWorld(created.id)?.let { WorldStateResponse.from(it) } ?: created
+            val response = worldService.getWorld(created.id)?.let { SessionStateResponse.from(it) } ?: created
             ResponseEntity.status(HttpStatus.CREATED).body(response)
         } catch (_: IllegalArgumentException) {
             ResponseEntity.badRequest().build()
@@ -159,7 +158,7 @@ class WorldController(
         @PathVariable id: Short,
         @RequestBody(required = false) body: ResetWorldRequest?,
         httpServletRequest: HttpServletRequest,
-    ): ResponseEntity<WorldStateResponse> {
+    ): ResponseEntity<SessionStateResponse> {
         val world = worldService.getWorld(id) ?: return ResponseEntity.notFound().build()
 
         return try {
@@ -190,7 +189,7 @@ class WorldController(
             world.meta["gatewayActive"] = true
 
             val saved = worldService.save(world)
-            ResponseEntity.ok(WorldStateResponse.from(saved))
+            ResponseEntity.ok(SessionStateResponse.from(saved))
         } catch (_: IllegalArgumentException) {
             ResponseEntity.badRequest().build()
         } catch (_: IllegalStateException) {
@@ -250,7 +249,7 @@ class WorldController(
         baseUrl: String,
         request: CreateWorldRequest,
         authorizationHeader: String?,
-    ): WorldStateResponse {
+    ): SessionStateResponse {
         return webClientBuilder
             .build()
             .post()
@@ -262,7 +261,7 @@ class WorldController(
             }
             .bodyValue(request)
             .retrieve()
-            .bodyToMono(WorldStateResponse::class.java)
+            .bodyToMono(SessionStateResponse::class.java)
             .block() ?: throw IllegalStateException("Empty response from game world creation")
     }
 
@@ -271,7 +270,7 @@ class WorldController(
         worldId: Short,
         body: ResetWorldRequest?,
         authorizationHeader: String?,
-    ): WorldStateResponse {
+    ): SessionStateResponse {
         return webClientBuilder
             .build()
             .post()
@@ -284,7 +283,7 @@ class WorldController(
             }
             .bodyValue(body ?: ResetWorldRequest())
             .retrieve()
-            .bodyToMono(WorldStateResponse::class.java)
+            .bodyToMono(SessionStateResponse::class.java)
             .block() ?: throw IllegalStateException("Empty response from game world reset")
     }
 

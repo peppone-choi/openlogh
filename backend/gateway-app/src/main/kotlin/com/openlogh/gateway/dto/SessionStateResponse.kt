@@ -1,9 +1,9 @@
 package com.openlogh.gateway.dto
 
-import com.openlogh.gateway.entity.WorldState
+import com.openlogh.gateway.entity.SessionState
 import java.time.OffsetDateTime
 
-data class WorldStateResponse(
+data class SessionStateResponse(
     val id: Short,
     val name: String,
     val scenarioCode: String,
@@ -19,7 +19,7 @@ data class WorldStateResponse(
     val updatedAt: OffsetDateTime,
 ) {
     companion object {
-        fun from(e: WorldState) = WorldStateResponse(
+        fun from(e: SessionState) = SessionStateResponse(
             id = e.id,
             name = e.name,
             scenarioCode = e.scenarioCode,

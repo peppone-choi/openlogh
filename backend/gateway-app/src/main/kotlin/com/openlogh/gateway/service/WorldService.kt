@@ -1,37 +1,37 @@
 package com.openlogh.gateway.service
 
-import com.openlogh.gateway.entity.WorldState
-import com.openlogh.gateway.repository.WorldStateRepository
+import com.openlogh.gateway.entity.SessionState
+import com.openlogh.gateway.repository.SessionStateRepository
 import org.springframework.stereotype.Service
 
 @Service
 class WorldService(
-    private val worldStateRepository: WorldStateRepository,
+    private val sessionStateRepository: SessionStateRepository,
 ) {
-    fun listWorlds(): List<WorldState> = worldStateRepository.findAll()
+    fun listWorlds(): List<SessionState> = sessionStateRepository.findAll()
 
-    fun getWorld(id: Short): WorldState? = worldStateRepository.findById(id).orElse(null)
+    fun getWorld(id: Short): SessionState? = sessionStateRepository.findById(id).orElse(null)
 
-    fun save(world: WorldState): WorldState = worldStateRepository.save(world)
+    fun save(world: SessionState): SessionState = sessionStateRepository.save(world)
 
     fun updateVersionAndActivation(
-        world: WorldState,
+        world: SessionState,
         commitSha: String,
         gameVersion: String,
         active: Boolean,
-    ): WorldState {
+    ): SessionState {
         world.commitSha = commitSha
         world.gameVersion = gameVersion
         world.meta["gatewayActive"] = active
-        return worldStateRepository.save(world)
+        return sessionStateRepository.save(world)
     }
 
-    fun markActivation(world: WorldState, active: Boolean): WorldState {
+    fun markActivation(world: SessionState, active: Boolean): SessionState {
         world.meta["gatewayActive"] = active
-        return worldStateRepository.save(world)
+        return sessionStateRepository.save(world)
     }
 
     fun deleteWorld(id: Short) {
-        worldStateRepository.deleteById(id)
+        sessionStateRepository.deleteById(id)
     }
 }

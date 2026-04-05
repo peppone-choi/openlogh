@@ -1,7 +1,7 @@
 package com.openlogh.gateway.orchestrator
 
 import com.openlogh.gateway.dto.AttachWorldProcessRequest
-import com.openlogh.gateway.entity.WorldState
+import com.openlogh.gateway.entity.SessionState
 import com.openlogh.gateway.service.WorldService
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
@@ -43,7 +43,7 @@ class WorldActivationBootstrap(
         }
     }
 
-    private fun restoreWithRetry(activeWorlds: List<WorldState>) {
+    private fun restoreWithRetry(activeWorlds: List<SessionState>) {
         val byVersion = activeWorlds.groupBy { it.commitSha to it.gameVersion }
         log.info(
             "Warming {} game instance(s) for {} world(s)",
@@ -93,7 +93,7 @@ class WorldActivationBootstrap(
                 }
             }
 
-            val failed = mutableListOf<WorldState>()
+            val failed = mutableListOf<SessionState>()
 
             for (world in remaining) {
                 try {
