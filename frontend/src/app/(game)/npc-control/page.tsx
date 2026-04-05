@@ -819,7 +819,7 @@ export default function NpcPage() {
 
             <Tabs defaultValue="list">
                 <TabsList>
-                    <TabsTrigger value="list">NPC 장교</TabsTrigger>
+                    <TabsTrigger value="list">NPC 장수</TabsTrigger>
                     <TabsTrigger value="policy">국가 정책</TabsTrigger>
                     <TabsTrigger value="priority">우선순위</TabsTrigger>
                     <TabsTrigger value="override">장수별 설정</TabsTrigger>
@@ -829,7 +829,7 @@ export default function NpcPage() {
                 {/* Tab 1: NPC generals list */}
                 <TabsContent value="list" className="mt-4">
                     {npcGenerals.length === 0 ? (
-                        <EmptyState icon={Bot} title="관리 가능한 NPC 장교가 없습니다." />
+                        <EmptyState icon={Bot} title="관리 가능한 NPC 장수가 없습니다." />
                     ) : (
                         <div className="overflow-x-auto">
                             <Table>
@@ -1112,12 +1112,12 @@ export default function NpcPage() {
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <p className="text-xs text-muted-foreground">
-                                특정 NPC 장교에 대해 국가 기본 정책을 덮어쓸 수 있습니다. 설정하지 않은 항목은 국가 기본
+                                특정 NPC 장수에 대해 국가 기본 정책을 덮어쓸 수 있습니다. 설정하지 않은 항목은 국가 기본
                                 정책을 따릅니다.
                             </p>
                             <Select value={selectedNpcId} onValueChange={setSelectedNpcId}>
                                 <SelectTrigger size="sm" className="w-full max-w-[300px]">
-                                    <SelectValue placeholder="NPC 장교 선택..." />
+                                    <SelectValue placeholder="NPC 장수 선택..." />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {npcGenerals.map((g) => (

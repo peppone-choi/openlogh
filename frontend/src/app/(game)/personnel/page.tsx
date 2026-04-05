@@ -394,7 +394,7 @@ export default function PersonnelPage() {
                             className="inline-flex items-center rounded-sm px-0.5"
                             style={{ backgroundColor: '#f0c040' }}
                         >
-                            <img src="/icons/emperor.png" alt="원수" width={18} height={18} />
+                            <img src="/icons/emperor.png" alt="황제" width={18} height={18} />
                         </span>
                     </div>
                 </div>

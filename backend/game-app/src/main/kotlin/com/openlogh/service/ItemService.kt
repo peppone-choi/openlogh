@@ -5,11 +5,14 @@ import com.openlogh.engine.modifier.ItemModifiers
 import com.openlogh.entity.General
 import com.openlogh.repository.GeneralRepository
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 
 @Service
+@Transactional
 class ItemService(
     private val generalRepository: GeneralRepository,
 ) {
+    @Transactional
     fun buyItem(generalId: Long, itemCode: String, requestedItemType: String? = null): ItemActionResult {
         val general = generalRepository.findById(generalId).orElse(null)
             ?: return ItemActionResult(false, "장수를 찾을 수 없습니다.")
@@ -20,6 +23,7 @@ class ItemService(
         return result
     }
 
+    @Transactional
     fun sellItem(generalId: Long, itemType: String): ItemActionResult {
         val general = generalRepository.findById(generalId).orElse(null)
             ?: return ItemActionResult(false, "장수를 찾을 수 없습니다.")
@@ -30,6 +34,7 @@ class ItemService(
         return result
     }
 
+    @Transactional
     fun consumeItem(generalId: Long, itemType: String? = null, itemCode: String? = null): ItemActionResult {
         val general = generalRepository.findById(generalId).orElse(null)
             ?: return ItemActionResult(false, "장수를 찾을 수 없습니다.")
@@ -40,6 +45,7 @@ class ItemService(
         return result
     }
 
+    @Transactional
     fun unequipItem(generalId: Long, itemType: String): ItemActionResult {
         val general = generalRepository.findById(generalId).orElse(null)
             ?: return ItemActionResult(false, "장수를 찾을 수 없습니다.")
@@ -50,6 +56,7 @@ class ItemService(
         return result
     }
 
+    @Transactional
     fun discardItem(generalId: Long, itemType: String): ItemActionResult {
         val general = generalRepository.findById(generalId).orElse(null)
             ?: return ItemActionResult(false, "장수를 찾을 수 없습니다.")
@@ -60,6 +67,7 @@ class ItemService(
         return result
     }
 
+    @Transactional
     fun giveItem(fromGeneralId: Long, targetGeneralId: Long, itemType: String): ItemActionResult {
         val fromGeneral = generalRepository.findById(fromGeneralId).orElse(null)
             ?: return ItemActionResult(false, "장수를 찾을 수 없습니다.")

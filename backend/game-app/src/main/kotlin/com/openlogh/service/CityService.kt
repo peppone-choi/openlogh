@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional
 import kotlin.math.roundToInt
 
 @Service
+@Transactional
 class CityService(
     private val cityRepository: CityRepository,
     private val mapService: MapService,
@@ -76,10 +77,12 @@ class CityService(
 
     // ── Basic CRUD ──
 
+    @Transactional(readOnly = true)
     fun listByWorld(worldId: Long): List<City> {
         return cityRepository.findByWorldId(worldId)
     }
 
+    @Transactional(readOnly = true)
     fun listByWorldMaskedForGeneral(worldId: Long, general: General): List<City> {
         val cities = cityRepository.findByWorldId(worldId)
         if (general.worldId != worldId) return cities.map(::toMaskedView)
@@ -101,22 +104,27 @@ class CityService(
         }
     }
 
+    @Transactional(readOnly = true)
     fun getById(id: Long): City? {
         return cityRepository.findById(id).orElse(null)
     }
 
+    @Transactional(readOnly = true)
     fun listByNation(nationId: Long): List<City> {
         return cityRepository.findByNationId(nationId)
     }
 
+    @Transactional
     fun save(city: City): City {
         return cityRepository.save(city)
     }
 
+    @Transactional
     fun saveAll(cities: List<City>): List<City> {
         return cityRepository.saveAll(cities)
     }
 
+    @Transactional(readOnly = true)
     fun canonicalRegionForDisplay(city: City): Short {
         return canonicalRegionByCityName[city.name] ?: city.region
     }
@@ -127,6 +135,7 @@ class CityService(
      * Get adjacent map city IDs for a given map city ID.
      * Delegates to MapService which holds the parsed map JSON.
      */
+    @Transactional(readOnly = true)
     fun getAdjacentCities(mapCode: String, mapCityId: Int): List<Int> {
         return mapService.getAdjacentCities(mapCode, mapCityId)
     }
@@ -134,6 +143,7 @@ class CityService(
     /**
      * Get all cities in a region from the map definition.
      */
+    @Transactional(readOnly = true)
     fun getCitiesByRegion(mapCode: String, region: Int): List<CityConst> {
         return mapService.getCities(mapCode).filter { it.region == region }
     }
@@ -142,6 +152,7 @@ class CityService(
      * Get distance between two cities on the map (BFS hop count).
      * Takes map city IDs, not DB city IDs.
      */
+    @Transactional(readOnly = true)
     fun getDistance(mapCode: String, fromMapCityId: Int, toMapCityId: Int): Int {
         return mapService.getDistance(mapCode, fromMapCityId, toMapCityId)
     }
@@ -149,6 +160,7 @@ class CityService(
     /**
      * Get the map code for a given world, reading from world config.
      */
+    @Transactional(readOnly = true)
     fun getMapCode(worldConfig: Map<String, Any>): String {
         return (worldConfig["mapCode"] as? String) ?: "che"
     }
@@ -160,6 +172,7 @@ class CityService(
      * Returns true if supplied, false otherwise.
      * This is a read-only check; the actual supply state update is done by EconomyService.
      */
+    @Transactional(readOnly = true)
     fun isSupplied(worldId: Long, cityId: Long, mapCode: String): Boolean {
         val city = getById(cityId) ?: return false
         if (city.nationId == 0L) return true // neutral cities are always supplied
@@ -191,6 +204,7 @@ class CityService(
      * @param baseAmount Base development amount from command
      * @return Actual development amount
      */
+    @Transactional(readOnly = true)
     fun calcDevelopment(city: City, statValue: Int, baseAmount: Int): Int {
         val levelMod = DEV_RATE_BY_LEVEL[city.level.toInt()] ?: 1.0
         val trustMod = city.trust / 100.0
@@ -202,6 +216,7 @@ class CityService(
      * Calculate supply income contribution of a city.
      * Legacy formula from EconomyService — exposed here for external callers.
      */
+    @Transactional(readOnly = true)
     fun calcSupply(city: City): Double {
         if (city.supplyState.toInt() == 0) return 0.0
         val trustRatio = city.trust / 200.0 + 0.5
@@ -274,6 +289,7 @@ class CityService(
      * Calculate the cost of expanding a city.
      * Legacy formula: defaultCost + (popMax / 100) * costCoef
      */
+    @Transactional(readOnly = true)
     fun calcExpandCost(city: City): Int {
         return EXPAND_CITY_DEFAULT_COST + (city.popMax / 100) * EXPAND_CITY_COST_COEF
     }
@@ -329,11 +345,13 @@ class CityService(
     /**
      * Get generals stationed in a city.
      */
+    @Transactional(readOnly = true)
     fun getGeneralsInCity(cityId: Long) = generalRepository.findByCityId(cityId)
 
     /**
      * Count cities owned by a nation at or above a given level.
      */
+    @Transactional(readOnly = true)
     fun countCitiesAboveLevel(nationId: Long, minLevel: Int): Int {
         return cityRepository.findByNationId(nationId).count { it.level >= minLevel }
     }
@@ -341,10 +359,12 @@ class CityService(
     /**
      * Get the region name for a region code.
      */
+    @Transactional(readOnly = true)
     fun getRegionName(mapCode: String, regionCode: Int): String {
         return mapService.getRegionName(mapCode, regionCode) ?: REGION_NAMES[regionCode] ?: "미상"
     }
 
+    @Transactional(readOnly = true)
     fun getRegionName(regionCode: Int): String {
         return getRegionName("che", regionCode)
     }
@@ -352,6 +372,7 @@ class CityService(
     /**
      * Get the level name for a level code.
      */
+    @Transactional(readOnly = true)
     fun getLevelName(levelCode: Int): String {
         return LEVEL_NAMES[levelCode] ?: "?"
     }
@@ -359,6 +380,7 @@ class CityService(
     /**
      * Get total population across all cities in a world.
      */
+    @Transactional(readOnly = true)
     fun getTotalPopulation(worldId: Long): Long {
         return cityRepository.findByWorldId(worldId).sumOf { it.pop.toLong() }
     }
@@ -366,6 +388,7 @@ class CityService(
     /**
      * Get cities with low trust (potential rebellion).
      */
+    @Transactional(readOnly = true)
     fun getLowTrustCities(worldId: Long, threshold: Float = 30f): List<City> {
         return cityRepository.findByWorldId(worldId).filter { it.trust < threshold && it.nationId != 0L }
     }

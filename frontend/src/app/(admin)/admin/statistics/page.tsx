@@ -174,14 +174,14 @@ export default function AdminStatisticsPage() {
     if (loading) return <LoadingState />;
 
     const columns: { key: SortKey; label: string }[] = [
-        { key: 'name', label: '진영' },
+        { key: 'name', label: '국가' },
         { key: 'level', label: '레벨' },
         { key: 'gold', label: '금' },
         { key: 'rice', label: '쌀' },
         { key: 'tech', label: '기술' },
         { key: 'power', label: '국력' },
-        { key: 'genCount', label: '장교' },
-        { key: 'cityCount', label: '성계' },
+        { key: 'genCount', label: '장수' },
+        { key: 'cityCount', label: '도시' },
         { key: 'totalCrew', label: '총병력' },
         { key: 'totalPop', label: '총인구' },
     ];

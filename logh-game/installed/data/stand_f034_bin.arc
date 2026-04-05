@@ -1,1 +1,0 @@
-../stand_f034_bin.arc

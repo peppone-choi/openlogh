@@ -129,7 +129,7 @@ export default function AdminMembersPage() {
             <div className="relative w-64">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                 <Input
-                    placeholder="장교 검색..."
+                    placeholder="장수 검색..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     className="pl-8"
@@ -242,7 +242,7 @@ export default function AdminMembersPage() {
                     {filtered.length === 0 && (
                         <TableRow>
                             <TableCell colSpan={10} className="text-center text-muted-foreground">
-                                장교가 없습니다.
+                                장수가 없습니다.
                             </TableCell>
                         </TableRow>
                     )}

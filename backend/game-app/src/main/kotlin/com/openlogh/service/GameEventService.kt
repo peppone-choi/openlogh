@@ -125,6 +125,7 @@ class CommandEvent(
 }
 
 @Service
+@Transactional
 class GameEventService(
     private val messagingTemplate: SimpMessagingTemplate,
     private val worldHistoryRepository: WorldHistoryRepository,
@@ -299,6 +300,7 @@ class GameEventService(
     /**
      * Get all history events for a world.
      */
+    @Transactional(readOnly = true)
     fun getWorldHistory(worldId: Long): List<WorldHistory> {
         return worldHistoryRepository.findByWorldIdOrderByCreatedAtDesc(worldId)
     }
@@ -306,6 +308,7 @@ class GameEventService(
     /**
      * Get history events by type.
      */
+    @Transactional(readOnly = true)
     fun getWorldHistoryByType(worldId: Long, eventType: String): List<WorldHistory> {
         return worldHistoryRepository.findByWorldIdAndEventType(worldId, eventType)
     }
@@ -313,6 +316,7 @@ class GameEventService(
     /**
      * Get history events for a specific year/month.
      */
+    @Transactional(readOnly = true)
     fun getWorldHistoryByDate(worldId: Long, year: Short, month: Short): List<WorldHistory> {
         return worldHistoryRepository.findByWorldIdAndYearAndMonth(worldId, year, month)
     }
@@ -320,6 +324,7 @@ class GameEventService(
     /**
      * Query events by general ID (searches payload JSONB).
      */
+    @Transactional(readOnly = true)
     fun getEventsByGeneral(worldId: Long, generalId: Long): List<WorldHistory> {
         return worldHistoryRepository.findByWorldIdAndEventType(worldId, "general")
             .filter { (it.payload["generalId"] as? Number)?.toLong() == generalId }
@@ -328,6 +333,7 @@ class GameEventService(
     /**
      * Query events by nation ID (searches payload JSONB).
      */
+    @Transactional(readOnly = true)
     fun getEventsByNation(worldId: Long, nationId: Long): List<WorldHistory> {
         return worldHistoryRepository.findByWorldId(worldId)
             .filter {
@@ -342,6 +348,7 @@ class GameEventService(
     /**
      * Query events by time range (year/month based).
      */
+    @Transactional(readOnly = true)
     fun getEventsByTimeRange(worldId: Long, startYear: Short, startMonth: Short, endYear: Short, endMonth: Short): List<WorldHistory> {
         val startTotal = startYear.toInt() * 12 + startMonth.toInt()
         val endTotal = endYear.toInt() * 12 + endMonth.toInt()
@@ -354,6 +361,7 @@ class GameEventService(
     /**
      * Get recent events (last N).
      */
+    @Transactional(readOnly = true)
     fun getRecentEvents(worldId: Long, limit: Int = 50): List<WorldHistory> {
         return worldHistoryRepository.findByWorldIdOrderByCreatedAtDesc(worldId).take(limit)
     }

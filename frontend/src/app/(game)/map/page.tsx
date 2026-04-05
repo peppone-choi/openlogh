@@ -254,7 +254,7 @@ export default function MapPage() {
             const isVisible = canViewCityInfo(cityId);
             try {
                 localStorage.setItem(
-                    `opensam:cityInfo:${cityId}`,
+                    `openlogh:cityInfo:${cityId}`,
                     JSON.stringify({
                         id: cityId,
                         name: city.name ?? '',
@@ -519,7 +519,7 @@ export default function MapPage() {
                     <span className="ml-1 text-muted-foreground">레이어</span>
                     {[
                         { key: 'nations' as MapLayer, label: '국가색' },
-                        { key: 'troops' as MapLayer, label: '함선' },
+                        { key: 'troops' as MapLayer, label: '병력' },
                         { key: 'supply' as MapLayer, label: '보급' },
                         { key: 'terrain' as MapLayer, label: '지형' },
                     ].map((layer) => (

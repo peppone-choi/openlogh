@@ -4,14 +4,17 @@ import com.openlogh.repository.AppUserRepository
 import com.openlogh.repository.GeneralRepository
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import java.time.OffsetDateTime
 
 @Service
+@Transactional
 class AccountService(
     private val appUserRepository: AppUserRepository,
     private val generalRepository: GeneralRepository,
     private val passwordEncoder: PasswordEncoder,
 ) {
+    @Transactional
     fun changePassword(loginId: String, currentPassword: String, newPassword: String): Boolean {
         val user = appUserRepository.findByLoginId(loginId) ?: return false
         if (!passwordEncoder.matches(currentPassword, user.passwordHash)) return false
@@ -20,6 +23,7 @@ class AccountService(
         return true
     }
 
+    @Transactional
     fun deleteAccount(loginId: String, password: String): Boolean {
         val user = appUserRepository.findByLoginId(loginId) ?: return false
         if (!passwordEncoder.matches(password, user.passwordHash)) return false
@@ -33,6 +37,7 @@ class AccountService(
         return true
     }
 
+    @Transactional
     fun updateSettings(
         loginId: String,
         defenceTrain: Int?,
@@ -91,6 +96,7 @@ class AccountService(
         return true
     }
 
+    @Transactional
     fun toggleVacation(loginId: String): Boolean {
         val user = appUserRepository.findByLoginId(loginId) ?: return false
         val generals = generalRepository.findByUserId(user.id)
@@ -102,6 +108,7 @@ class AccountService(
         return true
     }
 
+    @Transactional
     fun updateIconUrl(loginId: String, iconUrl: String): Boolean {
         val user = appUserRepository.findByLoginId(loginId) ?: return false
         if (iconUrl.isBlank()) {
@@ -123,6 +130,7 @@ class AccountService(
         return true
     }
 
+    @Transactional(readOnly = true)
     fun getDetailedInfo(loginId: String): Map<String, Any?>? {
         val user = appUserRepository.findByLoginId(loginId) ?: return null
         val oauthEntry = (user.meta["oauthProviders"] as? List<*>)
@@ -138,6 +146,7 @@ class AccountService(
             "oauthType" to oauthEntry?.get("provider")?.toString()?.uppercase(),
             "tokenValidUntil" to (oauthEntry?.get("tokenValidUntil") ?: oauthEntry?.get("accessTokenValidUntil") ?: user.meta["oauthExpiresAt"]),
             "acl" to user.meta["acl"],
+            "picture" to (user.meta["picture"] as? String),
         )
     }
 }

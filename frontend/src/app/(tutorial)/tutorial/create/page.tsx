@@ -37,10 +37,10 @@ export default function TutorialCreatePage() {
                         장수의 5가지 능력치입니다. 각 능력치는 게임 내 다양한 행동에 영향을 줍니다.
                     </p>
                     <StatBar label="통솔" value={stats.leadership} color="bg-red-500" />
-                    <StatBar label="지휘" value={stats.strength} color="bg-orange-500" />
-                    <StatBar label="정보" value={stats.intel} color="bg-blue-500" />
+                    <StatBar label="무력" value={stats.strength} color="bg-orange-500" />
+                    <StatBar label="지력" value={stats.intel} color="bg-blue-500" />
                     <StatBar label="정치" value={stats.politics} color="bg-green-500" />
-                    <StatBar label="운영" value={stats.charm} color="bg-purple-500" />
+                    <StatBar label="매력" value={stats.charm} color="bg-purple-500" />
 
                     <div className="mt-4 grid grid-cols-2 gap-2 text-xs text-muted-foreground">
                         <div>

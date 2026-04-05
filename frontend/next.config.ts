@@ -1,7 +1,7 @@
 import type { NextConfig } from 'next';
 import type { RemotePattern } from 'next/dist/shared/lib/image-config';
 
-const defaultImageCdn = 'https://cdn.jsdelivr.net/gh/peppone-choi/opensamguk-image@master/';
+const defaultImageCdn = 'https://cdn.jsdelivr.net/gh/peppone-choi/openlogh-image@master/';
 
 function toRemotePattern(url: string): RemotePattern {
     const parsed = new URL(url);

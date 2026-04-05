@@ -1,1 +1,0 @@
-../char_f050_vrm.arc

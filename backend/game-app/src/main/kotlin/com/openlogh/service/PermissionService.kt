@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional
  * Legacy: j_general_set_permission.php
  */
 @Service
+@Transactional
 class PermissionService(
     private val generalRepository: GeneralRepository,
 ) {

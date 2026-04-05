@@ -1,1 +1,0 @@
-../warshipmodel_tex.arc

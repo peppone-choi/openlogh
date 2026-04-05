@@ -8,11 +8,13 @@ import com.openlogh.service.HistoryService
 import com.openlogh.service.MapService
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import kotlin.math.ln
 import kotlin.math.round
 import kotlin.random.Random
 
 @Service
+@Transactional
 class NpcSpawnService(
     private val nationRepository: NationRepository,
     private val cityRepository: CityRepository,

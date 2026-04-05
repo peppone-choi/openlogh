@@ -87,8 +87,8 @@ function getActionAvailability(
         return {
             canJoin: false,
             canPossessNpc: false,
-            joinReason: '이미 장교가 있습니다',
-            npcReason: '이미 장교가 있습니다',
+            joinReason: '이미 장수가 있습니다',
+            npcReason: '이미 장수가 있습니다',
         };
     }
 
@@ -129,7 +129,7 @@ function getActionAvailability(
             : isFull
               ? '정원 초과'
               : blockNpc
-                ? 'NPC 부임 불가'
+                ? '빙의 불가'
                 : npcMode <= 0
                   ? 'NPC모드 불가'
                   : undefined,
@@ -409,10 +409,10 @@ export default function LobbyPage() {
                                     </div>
                                     <div className="space-y-1">
                                         <StatBar label="통솔" value={myGeneral.leadership} color="bg-red-500" />
-                                        <StatBar label="지휘" value={myGeneral.strength} color="bg-orange-500" />
-                                        <StatBar label="정보" value={myGeneral.intel} color="bg-blue-500" />
+                                        <StatBar label="무력" value={myGeneral.strength} color="bg-orange-500" />
+                                        <StatBar label="지력" value={myGeneral.intel} color="bg-blue-500" />
                                         <StatBar label="정치" value={myGeneral.politics} color="bg-green-500" />
-                                        <StatBar label="운영" value={myGeneral.charm} color="bg-purple-500" />
+                                        <StatBar label="매력" value={myGeneral.charm} color="bg-purple-500" />
                                     </div>
                                     <Button className="w-full" onClick={handleEnter}>
                                         <LogIn className="size-4 mr-1" />
@@ -487,9 +487,9 @@ export default function LobbyPage() {
                                                 <Bot className="size-5" />
                                             </div>
                                             <div className="flex-1">
-                                                <p className="font-medium">NPC 부임</p>
+                                                <p className="font-medium">NPC 빙의</p>
                                                 <p className="text-xs text-muted-foreground">
-                                                    기존 NPC 장교를 인수하여 플레이합니다.
+                                                    기존 NPC 장수를 인수하여 플레이합니다.
                                                 </p>
                                             </div>
                                             <Badge variant="secondary" className="text-[10px]">

@@ -1,1 +1,0 @@
-../cutin_f020_bin.arc

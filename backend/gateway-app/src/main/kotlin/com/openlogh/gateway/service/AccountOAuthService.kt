@@ -16,8 +16,10 @@ import java.nio.charset.StandardCharsets
 import java.time.OffsetDateTime
 import java.util.Base64
 import java.util.UUID
+import org.springframework.transaction.annotation.Transactional
 
 @Service
+@Transactional
 class AccountOAuthService(
     private val appUserRepository: AppUserRepository,
     @Value("\${KAKAO_REST_API_KEY:}") private val kakaoRestApiKey: String,

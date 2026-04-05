@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 @Service
+@Transactional
 class TournamentService(
     private val generalRepository: GeneralRepository,
     private val tournamentRepository: TournamentRepository,
@@ -84,6 +85,7 @@ class TournamentService(
         )
     }
 
+    @Transactional
     fun placeBet(worldId: Long, generalId: Long, targetId: Long, amount: Int): Map<String, Any>? {
         val general = generalRepository.findById(generalId).orElse(null) ?: return null
         if (general.gold < amount) return mapOf("error" to "금 부족")
@@ -378,6 +380,7 @@ class TournamentService(
         }
     }
 
+    @Transactional
     fun sendTournamentMessage(worldId: Long, message: String): Map<String, Any>? {
         val world = worldStateRepository.findById(worldId.toShort()).orElse(null) ?: return null
         val msgs = readAnyMutableList(world.meta["tournamentMessages"])
@@ -423,6 +426,7 @@ class TournamentService(
         return BettingInfoResponse(bets = bets, odds = emptyMap())
     }
 
+    @Transactional
     fun toggleBettingGate(worldId: Long, open: Boolean): Map<String, Any>? {
         val world = worldStateRepository.findById(worldId.toShort()).orElse(null) ?: return null
         world.meta["bettingActive"] = open

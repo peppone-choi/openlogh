@@ -1,7 +1,7 @@
 'use client';
 
 import type { GeneralFrontInfo, NationFrontInfo } from '@/types';
-import { LoghBar } from '@/components/game/logh-bar';
+import { SammoBar } from '@/components/game/sammo-bar';
 import {
     isBrightColor,
     calcInjury,
@@ -109,7 +109,7 @@ export function GeneralBasicCard({ general, nation, turnTerm, lastExecuted }: Ge
                         {general.npc === 10 && (
                             <img
                                 src="/icons/emperor.png"
-                                alt="원수"
+                                alt="황제"
                                 width={14}
                                 height={14}
                                 className="inline-block align-middle mr-0.5"
@@ -138,13 +138,13 @@ export function GeneralBasicCard({ general, nation, turnTerm, lastExecuted }: Ge
                     exp={(general.leadershipExp / statUpThreshold) * 100}
                 />
                 <StatCell
-                    label="지휘"
+                    label="무력"
                     value={strengthEff}
                     injuryColor={injuryInfo.color}
                     exp={(general.strengthExp / statUpThreshold) * 100}
                 />
                 <StatCell
-                    label="정보"
+                    label="지력"
                     value={intelEff}
                     injuryColor={injuryInfo.color}
                     exp={(general.intelExp / statUpThreshold) * 100}
@@ -156,7 +156,7 @@ export function GeneralBasicCard({ general, nation, turnTerm, lastExecuted }: Ge
                     exp={(general.politicsExp / statUpThreshold) * 100}
                 />
                 <StatCell
-                    label="운영"
+                    label="매력"
                     value={charmEff}
                     injuryColor={injuryInfo.color}
                     exp={(general.charmExp / statUpThreshold) * 100}
@@ -168,9 +168,9 @@ export function GeneralBasicCard({ general, nation, turnTerm, lastExecuted }: Ge
             </div>
 
             <div className="grid grid-cols-4 gap-px bg-border/50 border-t border-border">
-                <KV label="기관" value={isValidObjKey(general.horse) ? general.horse : '-'} />
-                <KV label="기함" value={isValidObjKey(general.weapon) ? general.weapon : '-'} />
-                <KV label="부속품" value={isValidObjKey(general.item) ? general.item : '-'} />
+                <KV label="명마" value={isValidObjKey(general.horse) ? general.horse : '-'} />
+                <KV label="무기" value={isValidObjKey(general.weapon) ? general.weapon : '-'} />
+                <KV label="도구" value={isValidObjKey(general.item) ? general.item : '-'} />
                 <KV label="자금" value={general.gold.toLocaleString()} valueColor="var(--game-gold)" />
             </div>
 
@@ -187,9 +187,9 @@ export function GeneralBasicCard({ general, nation, turnTerm, lastExecuted }: Ge
                     }}
                 />
                 <div className="flex-1 grid grid-cols-3 gap-px bg-border/50">
-                    <KV label="물자" value={general.rice.toLocaleString()} />
-                    <KV label="함종" value={getCrewTypeName(general.crewtype)} />
-                    <KV label="함선" value={general.crew.toLocaleString()} />
+                    <KV label="군량" value={general.rice.toLocaleString()} />
+                    <KV label="병종" value={getCrewTypeName(general.crewtype)} />
+                    <KV label="병사" value={general.crew.toLocaleString()} />
                     <KV label="훈련" value={String(general.train)} />
                     <KV label="사기" value={String(general.atmos)} />
                     <KV label="성격" value={isValidObjKey(general.personal) ? general.personal : '-'} />
@@ -201,7 +201,7 @@ export function GeneralBasicCard({ general, nation, turnTerm, lastExecuted }: Ge
                     <div className="flex items-center gap-1.5">
                         <span className="text-[10px] text-muted-foreground">Lv.{general.explevel}</span>
                         <div className="flex-1 min-w-0">
-                            <LoghBar height={7} percent={expPercent} />
+                            <SammoBar height={7} percent={expPercent} />
                         </div>
                         <span className="text-[10px]" style={{ color: ageColor(general.age) }}>
                             {general.age}세
@@ -282,7 +282,7 @@ export function GeneralBasicCard({ general, nation, turnTerm, lastExecuted }: Ge
                                     <span className="text-right tabular-nums text-muted-foreground">
                                         {(dex.value / 1000).toFixed(1)}K
                                     </span>
-                                    <LoghBar height={7} percent={(dex.value / 1_000_000) * 100} />
+                                    <SammoBar height={7} percent={(dex.value / 1_000_000) * 100} />
                                 </div>
                             );
                         })}
@@ -333,7 +333,7 @@ function StatCell({
                 </span>
             </div>
             <div className="mt-0.5">
-                <LoghBar height={7} percent={exp} />
+                <SammoBar height={7} percent={exp} />
             </div>
         </div>
     );

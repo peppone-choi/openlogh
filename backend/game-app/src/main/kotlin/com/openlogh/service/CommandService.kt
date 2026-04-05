@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 @Service
+@Transactional
 class CommandService(
     private val generalTurnRepository: GeneralTurnRepository,
     private val nationTurnRepository: NationTurnRepository,
@@ -30,12 +31,14 @@ class CommandService(
     private val gameConstService: GameConstService,
     private val gameEventService: GameEventService? = null,
 ) {
+    @Transactional(readOnly = true)
     fun verifyOwnership(generalId: Long, loginId: String): Boolean {
         val user = appUserRepository.findByLoginId(loginId) ?: return false
         val general = generalRepository.findById(generalId).orElse(null) ?: return false
         return general.userId == user.id
     }
 
+    @Transactional(readOnly = true)
     fun listGeneralTurns(generalId: Long): List<GeneralTurn> {
         return generalTurnRepository.findByGeneralIdOrderByTurnIdx(generalId)
     }
@@ -144,6 +147,7 @@ class CommandService(
         return result
     }
 
+    @Transactional(readOnly = true)
     fun getCommandTable(generalId: Long): Map<String, List<CommandTableEntry>>? {
         val general = generalRepository.findById(generalId).orElse(null) ?: return null
         val world = worldStateRepository.findById(general.worldId.toShort()).orElse(null) ?: return null
@@ -188,6 +192,7 @@ class CommandService(
         return categories
     }
 
+    @Transactional(readOnly = true)
     fun getNationCommandTable(generalId: Long): Map<String, List<CommandTableEntry>>? {
         val general = generalRepository.findById(generalId).orElse(null) ?: return null
         val world = worldStateRepository.findById(general.worldId.toShort()).orElse(null) ?: return null
@@ -339,6 +344,7 @@ class CommandService(
         )
     }
 
+    @Transactional(readOnly = true)
     fun listNationTurns(nationId: Long, officerLevel: Short): List<NationTurn> {
         return nationTurnRepository.findByNationIdAndOfficerLevelOrderByTurnIdx(nationId, officerLevel)
     }

@@ -15,7 +15,7 @@ import { PageHeader } from '@/components/game/page-header';
 import { LoadingState } from '@/components/game/loading-state';
 import { GeneralPortrait } from '@/components/game/general-portrait';
 import { NationBadge } from '@/components/game/nation-badge';
-import { LoghBar } from '@/components/game/logh-bar';
+import { SammoBar } from '@/components/game/sammo-bar';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/8bit/table';
 import {
     formatOfficerLevelText,
@@ -306,13 +306,13 @@ export default function GeneralPage() {
                                         color: 'red',
                                     },
                                     {
-                                        label: '지휘',
+                                        label: '무력',
                                         value: g.strength,
                                         exp: g.strengthExp,
                                         color: 'orange',
                                     },
                                     {
-                                        label: '정보',
+                                        label: '지력',
                                         value: g.intel,
                                         exp: g.intelExp,
                                         color: 'dodgerblue',
@@ -324,7 +324,7 @@ export default function GeneralPage() {
                                         color: 'limegreen',
                                     },
                                     {
-                                        label: '운영',
+                                        label: '매력',
                                         value: g.charm,
                                         exp: 0,
                                         color: 'mediumpurple',
@@ -336,7 +336,7 @@ export default function GeneralPage() {
                                         </span>
                                         <span className="w-6 text-xs text-right font-mono">{s.value}</span>
                                         <div className="flex-1">
-                                            <LoghBar height={7} percent={s.value} altText={`${s.value}/100`} />
+                                            <SammoBar height={7} percent={s.value} altText={`${s.value}/100`} />
                                         </div>
                                         {s.exp > 0 && (
                                             <span className="text-[10px] text-yellow-500 w-10 text-right">
@@ -467,7 +467,7 @@ export default function GeneralPage() {
                                             {info.name}
                                         </span>
                                         <div className="flex-1">
-                                            <LoghBar
+                                            <SammoBar
                                                 height={7}
                                                 percent={Math.min((info.level / 26) * 100, 100)}
                                                 altText={`${info.name} (${numberWithCommas(dex)})`}
@@ -585,7 +585,7 @@ function NationGeneralsList({
         return (
             <Card>
                 <CardContent className="py-8 text-center text-muted-foreground">
-                    세력에 소속된 장교가 없습니다.
+                    세력에 소속된 장수가 없습니다.
                 </CardContent>
             </Card>
         );

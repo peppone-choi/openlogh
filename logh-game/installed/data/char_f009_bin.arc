@@ -1,1 +1,0 @@
-../char_f009_bin.arc

@@ -1,1 +1,0 @@
-../atmospheremodel_mdx.arc

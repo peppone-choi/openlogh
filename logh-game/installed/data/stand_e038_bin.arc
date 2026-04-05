@@ -1,1 +1,0 @@
-../stand_e038_bin.arc

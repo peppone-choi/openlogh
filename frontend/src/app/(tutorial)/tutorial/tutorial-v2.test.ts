@@ -45,7 +45,7 @@ describe('tutorial-v2: city page uses real CityBasicCard', () => {
         expect(src).toContain('<CityBasicCard');
     });
 
-    it('does not contain LoghBar bars', () => {
-        expect(src).not.toContain('LoghBar');
+    it('does not contain SammoBar bars', () => {
+        expect(src).not.toContain('SammoBar');
     });
 });

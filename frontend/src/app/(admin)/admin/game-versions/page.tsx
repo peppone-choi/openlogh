@@ -119,7 +119,7 @@ export default function AdminGameVersionsPage() {
                         <div className="space-y-1">
                             <span className="text-sm text-muted-foreground">이미지 태그 (선택)</span>
                             <Input
-                                placeholder="opensam/game-app:v1.0.0"
+                                placeholder="openlogh/game-app:v1.0.0"
                                 value={imageTag}
                                 onChange={(e) => setImageTag(e.target.value)}
                             />

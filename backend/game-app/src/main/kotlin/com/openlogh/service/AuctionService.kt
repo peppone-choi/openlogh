@@ -16,6 +16,7 @@ import kotlin.math.ceil
 import kotlin.math.roundToInt
 
 @Service
+@Transactional
 class AuctionService(
     private val auctionRepository: AuctionRepository,
     private val auctionBidRepository: AuctionBidRepository,

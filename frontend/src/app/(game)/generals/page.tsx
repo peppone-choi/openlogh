@@ -54,10 +54,10 @@ const BASE_COLUMNS: { key: SortKey; label: string }[] = [
     { key: 'nation', label: '소속' },
     { key: 'officerLevel', label: '관직' },
     { key: 'leadership', label: '통솔' },
-    { key: 'strength', label: '지휘' },
-    { key: 'intel', label: '정보' },
+    { key: 'strength', label: '무력' },
+    { key: 'intel', label: '지력' },
     { key: 'politics', label: '정치' },
-    { key: 'charm', label: '운영' },
+    { key: 'charm', label: '매력' },
     { key: 'totalStats', label: '종능' },
     { key: 'crew', label: '병사' },
     { key: 'experience', label: '레벨' },
@@ -84,10 +84,10 @@ const SORT_DROPDOWN_OPTIONS: { key: SortKey; label: string }[] = [
     { key: 'experience', label: '레벨' },
     { key: 'totalStats', label: '종능' },
     { key: 'leadership', label: '통솔' },
-    { key: 'strength', label: '지휘' },
-    { key: 'intel', label: '정보' },
+    { key: 'strength', label: '무력' },
+    { key: 'intel', label: '지력' },
     { key: 'politics', label: '정치' },
-    { key: 'charm', label: '운영' },
+    { key: 'charm', label: '매력' },
     { key: 'crew', label: '병사수' },
     { key: 'train', label: '훈련' },
     { key: 'atmos', label: '사기' },
@@ -96,7 +96,7 @@ const SORT_DROPDOWN_OPTIONS: { key: SortKey; label: string }[] = [
     { key: 'age', label: '연령' },
     { key: 'officerLevel', label: '관직' },
     { key: 'nation', label: '소속' },
-    { key: 'city', label: '성계' },
+    { key: 'city', label: '도시' },
     { key: 'name', label: '이름' },
     { key: 'npcState', label: 'NPC' },
 ];
@@ -205,7 +205,7 @@ export default function GeneralsPage() {
                 <div className="relative w-48">
                     <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                     <Input
-                        placeholder="장교 검색..."
+                        placeholder="장수 검색..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                         className="pl-8"
@@ -379,7 +379,7 @@ export default function GeneralsPage() {
                                                     <img
                                                         src="/icons/emperor.png"
                                                         className="relative size-4"
-                                                        alt="원수"
+                                                        alt="황제"
                                                     />
                                                 </div>
                                             )}
@@ -452,7 +452,7 @@ export default function GeneralsPage() {
                         {sorted.length === 0 && (
                             <TableRow>
                                 <TableCell colSpan={columns.length + 1} className="text-center text-muted-foreground">
-                                    장교가 없습니다.
+                                    장수가 없습니다.
                                 </TableCell>
                             </TableRow>
                         )}

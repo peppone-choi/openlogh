@@ -28,13 +28,13 @@ type SortKey =
 
 const SORT_OPTIONS: { key: SortKey; label: string }[] = [
     { key: 'name', label: '이름' },
-    { key: 'faction', label: '진영' },
-    { key: 'planet', label: '성계' },
+    { key: 'nation', label: '국가' },
+    { key: 'city', label: '도시' },
     { key: 'totalStats', label: '종능' },
     { key: 'leadership', label: '통솔' },
-    { key: 'strength', label: '지휘' },
-    { key: 'intel', label: '정보' },
-    { key: 'crew', label: '함선' },
+    { key: 'strength', label: '무력' },
+    { key: 'intel', label: '지력' },
+    { key: 'crew', label: '병력' },
     { key: 'experience', label: '명성' },
     { key: 'dedication', label: '계급' },
 ];
@@ -128,7 +128,7 @@ export default function NpcListPage() {
                     <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                     <Input
                         type="text"
-                        placeholder="장교 검색..."
+                        placeholder="장수/악령 검색..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                         className="pl-8"
@@ -168,7 +168,7 @@ export default function NpcListPage() {
             </div>
 
             {npcGenerals.length === 0 ? (
-                <EmptyState icon={Bot} title="NPC 장교가 없습니다." />
+                <EmptyState icon={Bot} title="NPC 장수가 없습니다." />
             ) : (
                 <div className="overflow-x-auto">
                     <Table>
@@ -178,7 +178,7 @@ export default function NpcListPage() {
                                     className="cursor-pointer hover:text-foreground"
                                     onClick={() => handleSortChange('name')}
                                 >
-                                    NPC 장교{arrow('name')}
+                                    희생된 장수{arrow('name')}
                                 </TableHead>
                                 <TableHead>악령 이름</TableHead>
                                 <TableHead>Lv</TableHead>

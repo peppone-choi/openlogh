@@ -15,6 +15,7 @@ import com.openlogh.repository.AppUserRepository
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import java.net.URI
 import java.net.URLEncoder
 import java.net.http.HttpClient
@@ -28,6 +29,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ThreadLocalRandom
 
 @Service
+@Transactional
 class AuthService(
     private val userRepository: AppUserRepository,
     private val passwordEncoder: PasswordEncoder,
@@ -60,6 +62,7 @@ class AuthService(
         return loginUser(saved)
     }
 
+    @Transactional(readOnly = true)
     fun checkDup(field: String, rawValue: String): String? {
         val value = rawValue.trim()
         return when (field.lowercase()) {
@@ -82,6 +85,7 @@ class AuthService(
         return loginUser(user, validUntil)
     }
 
+    @Transactional(readOnly = true)
     fun requestLoginNonce(): LoginNonceResponse {
         cleanupExpiredNonces()
         val loginNonce = randomToken(16)

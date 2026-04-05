@@ -83,12 +83,12 @@ export function GameDashboard() {
             // Track lastVoteState for vote notification
             if (data.global?.lastVote) {
                 try {
-                    const prevVoteState = localStorage.getItem('opensam:lastVoteState');
+                    const prevVoteState = localStorage.getItem('openlogh:lastVoteState');
                     const curVoteId = String(data.global.lastVote.id ?? '');
                     if (prevVoteState !== curVoteId && curVoteId) {
                         toast.info('새로운 설문이 진행중입니다!', { duration: 5000 });
                     }
-                    if (curVoteId) localStorage.setItem('opensam:lastVoteState', curVoteId);
+                    if (curVoteId) localStorage.setItem('openlogh:lastVoteState', curVoteId);
                 } catch {
                     /* ignore */
                 }

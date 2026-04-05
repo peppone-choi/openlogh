@@ -1,1 +1,0 @@
-../distantview_mdx.arc

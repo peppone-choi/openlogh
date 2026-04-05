@@ -214,7 +214,7 @@ export default function ChiefPage() {
     const getNationTurn = (idx: number) => nationTurns.find((turn) => turn.turnIdx === idx);
 
     // Preset localStorage key
-    const nationPresetKey = myGeneral?.nationId ? `opensam:nation-presets:${myGeneral.nationId}` : null;
+    const nationPresetKey = myGeneral?.nationId ? `openlogh:nation-presets:${myGeneral.nationId}` : null;
 
     // Load presets from localStorage
     useEffect(() => {

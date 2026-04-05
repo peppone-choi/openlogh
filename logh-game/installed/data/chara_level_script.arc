@@ -1,1 +1,0 @@
-../chara_level_script.arc

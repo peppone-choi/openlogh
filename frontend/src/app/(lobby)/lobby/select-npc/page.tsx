@@ -142,7 +142,7 @@ export default function LobbySelectNpcPage() {
         try {
             await npcTokenApi.select(currentWorld.id, token.nonce, npc.id);
             await fetchMyGeneral(currentWorld.id);
-            toast.success('NPC 장교를 선택했습니다.');
+            toast.success('NPC 장수를 선택했습니다.');
             router.replace('/lobby');
         } catch {
             toast.error('NPC 선택에 실패했습니다.');

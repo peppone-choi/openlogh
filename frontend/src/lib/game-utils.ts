@@ -505,31 +505,31 @@ export function isValidObjKey<T>(key: T | 'None' | undefined | null): boolean {
 // --- Crew type names ---
 
 export const CREW_TYPE_NAMES: Record<number, string> = {
-    0: '전함',
-    1: '순양함',
-    2: '구축함',
-    3: '항공모함',
-    4: '수송함',
-    5: '병원선',
-    6: '요새',
-    7: '고속전함',
+    0: '보병',
+    1: '궁병',
+    2: '기병',
+    3: '귀병',
+    4: '차병',
+    5: '노병',
+    6: '연노병',
+    7: '근위기병',
     8: '무당병',
     9: '서량기병',
     10: '등갑병',
     11: '수군',
-    1100: '전함',
+    1100: '보병',
     1101: '청주병',
     1102: '수병',
     1103: '자객병',
     1104: '근위병',
     1105: '등갑병',
     1106: '백이병',
-    1200: '순양함',
+    1200: '궁병',
     1201: '궁기병',
-    1202: '요새',
+    1202: '연노병',
     1203: '강궁병',
     1204: '석궁병',
-    1300: '구축함',
+    1300: '기병',
     1301: '백마병',
     1302: '중장기병',
     1303: '돌격기병',
@@ -537,7 +537,7 @@ export const CREW_TYPE_NAMES: Record<number, string> = {
     1305: '수렵기병',
     1306: '맹수병',
     1307: '호표기병',
-    1400: '항공모함',
+    1400: '귀병',
     1401: '신귀병',
     1402: '백귀병',
     1403: '흑귀병',
@@ -546,10 +546,10 @@ export const CREW_TYPE_NAMES: Record<number, string> = {
     1406: '황귀병',
     1407: '천귀병',
     1408: '마귀병',
-    1500: '대형 미사일',
-    1501: '함재기',
-    1502: '에너지 포대',
-    1503: '보급 컨테이너',
+    1500: '정란',
+    1501: '충차',
+    1502: '벽력거',
+    1503: '목우',
 };
 
 /** Base crew type subset (0-11) for dropdowns / UI selectors */
@@ -637,14 +637,14 @@ export function getPersonalityName(code: string | undefined | null): string {
 // --- Region names ---
 
 export const REGION_NAMES: Record<number, string> = {
-    1: '제국 중심부',
-    2: '제국 변경',
-    3: '페잔 회랑',
-    4: '동맹 중심부',
-    5: '동맹 변경',
-    6: '이제르론 회랑',
-    7: '은하 외곽',
-    8: '미개척 영역',
+    1: '하북',
+    2: '중원',
+    3: '서북',
+    4: '서촉',
+    5: '남중',
+    6: '초',
+    7: '오월',
+    8: '동이',
 };
 
 // --- Stat color (ability value → color) ---
@@ -695,27 +695,27 @@ export function getNationLevelLabel(level: number, typeCode?: string): string {
 // --- City level names ---
 
 export const CITY_LEVEL_NAMES: Record<number, string> = {
-    1: '소행성',
-    2: '전초기지',
-    3: '변경 성계',
-    4: '중형 성계',
-    5: '주요 성계',
-    6: '중핵 성계',
-    7: '요새 성계',
-    8: '수도 성계',
+    1: '수',
+    2: '진',
+    3: '관',
+    4: '이',
+    5: '소',
+    6: '중',
+    7: '대',
+    8: '특',
 };
 
 // --- City level badge (legacy getCityLevelList) ---
 
 export const CITY_LEVEL_BADGES: Record<number, string> = {
-    1: '소행성',
-    2: '전초기지',
-    3: '변경 성계',
-    4: '중형 성계',
-    5: '주요 성계',
-    6: '중핵 성계',
-    7: '요새 성계',
-    8: '수도 성계',
+    1: '수',
+    2: '진',
+    3: '관',
+    4: '이',
+    5: '소',
+    6: '중',
+    7: '대',
+    8: '특',
 };
 
 export function formatCityLevelBadge(level: number): string {
@@ -732,7 +732,7 @@ export function isOfficerSet(officerSet: number, reqOfficerLevel: number): boole
 
 export function formatCityName(cityId: number, cityMap: Map<number, { name: string }>): string {
     const city = cityMap.get(cityId);
-    if (!city) return `성계#${cityId}`;
+    if (!city) return `도시#${cityId}`;
     return city.name;
 }
 

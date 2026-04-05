@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional
 import java.time.OffsetDateTime
 
 @Service
+@Transactional
 class MessageService(
     private val messageRepository: MessageRepository,
     private val boardCommentRepository: BoardCommentRepository,
@@ -29,6 +30,7 @@ class MessageService(
         private const val MAX_PAGE_SIZE = 100
     }
 
+    @Transactional(readOnly = true)
     fun getMessages(generalId: Long, sinceId: Long? = null, limit: Int? = null): List<Message> {
         val general = generalRepository.findById(generalId).orElse(null) ?: return emptyList()
         val privateMessages = if (sinceId != null) {
@@ -73,6 +75,7 @@ class MessageService(
         return if (normalizedLimit != null) messages.take(normalizedLimit) else messages
     }
 
+    @Transactional(readOnly = true)
     fun getPublicMessages(worldId: Long, beforeId: Long? = null, limit: Int? = null): List<Message> {
         val messages = if (beforeId != null) {
             messageRepository.findByWorldIdAndMailboxTypeAndIdLessThanOrderBySentAtDesc(worldId, MAILBOX_PUBLIC, beforeId)
@@ -84,6 +87,7 @@ class MessageService(
         return applyLimit(filtered, limit)
     }
 
+    @Transactional(readOnly = true)
     fun getNationalMessages(nationId: Long, beforeId: Long? = null, limit: Int? = null): List<Message> {
         val messages = if (beforeId != null) {
             messageRepository.findByDestIdAndMailboxTypeAndIdLessThanOrderBySentAtDesc(nationId, MAILBOX_NATIONAL, beforeId)
@@ -93,6 +97,7 @@ class MessageService(
         return applyLimit(messages, limit)
     }
 
+    @Transactional(readOnly = true)
     fun getPrivateMessages(generalId: Long, beforeId: Long? = null, limit: Int? = null): List<Message> {
         val messages = if (beforeId != null) {
             messageRepository.findConversationByMailboxTypeAndOwnerIdAndIdLessThan(MAILBOX_PRIVATE, generalId, beforeId)
@@ -102,6 +107,7 @@ class MessageService(
         return applyLimit(messages, limit)
     }
 
+    @Transactional(readOnly = true)
     fun getDiplomacyMessages(nationId: Long, officerLevel: Short, beforeId: Long? = null, limit: Int? = null): List<Message> {
         require(officerLevel >= 4) { "Diplomacy mailbox requires officer level 4 or higher" }
         val messages = if (beforeId != null) {
@@ -112,10 +118,12 @@ class MessageService(
         return applyLimit(messages, limit)
     }
 
+    @Transactional(readOnly = true)
     fun getBoardMessages(worldId: Long, nationId: Long): List<Message> {
         return messageRepository.findByWorldIdAndMailboxCodeAndDestIdOrderBySentAtDesc(worldId, "board", nationId)
     }
 
+    @Transactional(readOnly = true)
     fun getSecretBoardMessages(worldId: Long, nationId: Long): List<Message> {
         return messageRepository.findByWorldIdAndMailboxCodeAndDestIdOrderBySentAtDesc(worldId, "secret", nationId)
     }
@@ -182,6 +190,7 @@ class MessageService(
         messageRepository.save(message)
     }
 
+    @Transactional(readOnly = true)
     fun getContacts(worldId: Long): List<ContactInfo> {
         val generals = generalRepository.findByWorldId(worldId)
         val nations = nationRepository.findByWorldId(worldId).associateBy { it.id }
@@ -197,10 +206,12 @@ class MessageService(
         }
     }
 
+    @Transactional(readOnly = true)
     fun getRecentMessages(lastId: Long): List<Message> {
         return messageRepository.findByIdGreaterThanOrderBySentAtDesc(lastId)
     }
 
+    @Transactional(readOnly = true)
     fun getBoardComments(postId: Long): List<BoardCommentResponse> {
         val post = getBoardPost(postId)
         migrateLegacyPayloadComments(post)

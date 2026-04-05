@@ -971,7 +971,7 @@ export async function writeParityReport(report: ParityReport): Promise<string> {
             throw error;
         }
 
-        const fallbackDir = '/tmp/opensamguk-parity-screenshots';
+        const fallbackDir = '/tmp/openlogh-parity-screenshots';
         await mkdir(fallbackDir, { recursive: true });
         const fallbackPath = path.join(fallbackDir, reportName);
         await writeFile(fallbackPath, contents, 'utf8');

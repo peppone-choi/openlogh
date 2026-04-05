@@ -26,8 +26,10 @@ import java.time.OffsetDateTime
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ThreadLocalRandom
+import org.springframework.transaction.annotation.Transactional
 
 @Service
+@Transactional
 class AuthService(
     private val appUserRepository: AppUserRepository,
     private val passwordEncoder: PasswordEncoder,

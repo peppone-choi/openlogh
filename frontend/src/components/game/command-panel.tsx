@@ -175,8 +175,8 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
 
     const selectedCount = selectedTurnList.length;
 
-    const localStorageKey = `opensam:stored-actions:${generalId}`;
-    const recentActionsKey = `opensam:recent-actions:${generalId}`;
+    const localStorageKey = `openlogh:stored-actions:${generalId}`;
+    const recentActionsKey = `openlogh:recent-actions:${generalId}`;
 
     useEffect(() => {
         const updateClock = () => {

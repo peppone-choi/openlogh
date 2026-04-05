@@ -53,13 +53,13 @@ const GROUPS: {
             },
             {
                 key: 'strength',
-                label: '지휘',
+                label: '무력',
                 sortBy: 'strength',
                 getValue: (g) => g.strength,
             },
             {
                 key: 'intel',
-                label: '정보',
+                label: '지력',
                 sortBy: 'intel',
                 getValue: (g) => g.intel,
             },
@@ -71,7 +71,7 @@ const GROUPS: {
             },
             {
                 key: 'charm',
-                label: '운영',
+                label: '매력',
                 sortBy: 'charm',
                 getValue: (g) => g.charm,
             },

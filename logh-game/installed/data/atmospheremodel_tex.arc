@@ -1,1 +1,0 @@
-../atmospheremodel_tex.arc

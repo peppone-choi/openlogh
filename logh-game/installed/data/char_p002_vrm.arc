@@ -1,1 +1,0 @@
-../char_p002_vrm.arc

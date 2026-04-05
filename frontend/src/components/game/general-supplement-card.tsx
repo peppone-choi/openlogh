@@ -1,7 +1,7 @@
 'use client';
 
 import type { GeneralFrontInfo } from '@/types';
-import { LoghBar } from '@/components/game/logh-bar';
+import { SammoBar } from '@/components/game/sammo-bar';
 import { formatDexLevel, formatHonor } from '@/lib/game-utils';
 
 interface GeneralSupplementCardProps {
@@ -89,7 +89,7 @@ export function GeneralSupplementCard({ general, showCommandList = false }: Gene
                                     K
                                 </div>
                                 <div className="border-b border-border flex items-center px-1">
-                                    <LoghBar height={10} percent={(dex / 1_000_000) * 100} />
+                                    <SammoBar height={10} percent={(dex / 1_000_000) * 100} />
                                 </div>
                             </div>
                         );

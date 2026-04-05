@@ -1,1 +1,0 @@
-../stand_e007_vrm.arc

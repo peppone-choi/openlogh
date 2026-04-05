@@ -1,1 +1,0 @@
-../btl_script.arc

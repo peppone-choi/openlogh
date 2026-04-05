@@ -208,7 +208,7 @@ class TurnPipelineParityTest {
     fun `postUpdateMonthly order matches legacy`() {
         // Read TurnService source and verify post-pipeline call order.
         // Legacy order: checkWander -> updateGeneralNumber -> triggerTournament -> registerAuction
-        val turnServiceFile = File("src/main/kotlin/com/openlogh/engine/TurnService.kt")
+        val turnServiceFile = File("src/main/kotlin/com/opensam/engine/TurnService.kt")
         assertThat(turnServiceFile.exists())
             .describedAs("TurnService.kt must exist at expected path")
             .isTrue()

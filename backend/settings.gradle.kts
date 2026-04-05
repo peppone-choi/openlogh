@@ -1,4 +1,4 @@
-rootProject.name = "openlogh"
+rootProject.name = "opensam"
 
 include("shared")
 include("gateway-app")

@@ -48,7 +48,6 @@ services:
             DB_PASSWORD: ${DB_PASSWORD:-openlogh123}
             REDIS_HOST: redis
             REDIS_PORT: 6379
-            JWT_SECRET: ${JWT_SECRET:-openlogh-jwt-secret-key-must-be-at-least-256-bits-long-for-hs256}
         command:
             - '--spring.main.web-application-type=none'
             - '--spring.task.scheduling.enabled=false'
@@ -75,7 +74,6 @@ services:
             DB_PASSWORD: ${DB_PASSWORD:-openlogh123}
             REDIS_HOST: redis
             REDIS_PORT: 6379
-            JWT_SECRET: ${JWT_SECRET:-openlogh-jwt-secret-key-must-be-at-least-256-bits-long-for-hs256}
             DOCKER_NETWORK: openlogh-net
             DOCKER_IMAGE_PREFIX: ghcr.io/peppone-choi/openlogh-game
             ADMIN_BOOTSTRAP_ENABLED: ${ADMIN_BOOTSTRAP_ENABLED:-true}

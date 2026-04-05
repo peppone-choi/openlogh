@@ -1,1 +1,0 @@
-../planetsurfacemodel_tex.arc

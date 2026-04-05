@@ -1,1 +1,0 @@
-../cutin_f042_bin.arc

@@ -1,1 +1,0 @@
-../fortressmodel_tex.arc

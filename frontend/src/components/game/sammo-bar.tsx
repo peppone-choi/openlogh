@@ -1,12 +1,12 @@
 'use client';
 
-interface LoghBarProps {
+interface SammoBarProps {
     height: 7 | 10;
     percent: number;
     altText?: string;
 }
 
-export function LoghBar({ height, percent, altText }: LoghBarProps) {
+export function SammoBar({ height, percent, altText }: SammoBarProps) {
     const clampedPercent = Math.max(0, Math.min(100, percent));
     return (
         <div

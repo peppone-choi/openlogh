@@ -40,24 +40,24 @@ function isNpcModeEnabled(config: Record<string, unknown> | null | undefined): b
 // Legacy MainControlBar.vue parity — exact order from legacy-core/hwe/ts/components/MainControlBar.vue
 const navSections: NavSection[] = [
     {
-        label: '진영',
+        label: '국가',
         items: [
             { href: '/board', label: '회의실', require: 'nation' },
             { href: '/board?secret=true', label: '기밀실', require: 'secret' },
-            { href: '/troop', label: '함대편성', require: 'nation' },
-            { href: '/diplomacy', label: '외교국', require: 'secret' },
-            { href: '/personnel', label: '인사국', require: 'nation' },
-            { href: '/internal-affairs', label: '내무국', require: 'secret' },
+            { href: '/troop', label: '부대편성', require: 'nation' },
+            { href: '/diplomacy', label: '외교부', require: 'secret' },
+            { href: '/personnel', label: '인사부', require: 'nation' },
+            { href: '/internal-affairs', label: '내무부', require: 'secret' },
             { href: '/chief', label: '사령부', require: 'secret' },
             { href: '/npc-control', label: 'NPC정책', require: 'secret' },
-            { href: '/spy', label: '첩보국', require: 'secret' },
+            { href: '/spy', label: '암행부', require: 'secret' },
             { href: '/tournament', label: '토너먼트' },
-            { href: '/nation', label: '진영정보', require: 'nation' },
-            { href: '/nation-cities', label: '진영성계', require: 'nation' },
-            { href: '/nation-generals', label: '진영장교', require: 'nation' },
-            { href: '/global-diplomacy', label: '은하정보' },
-            { href: '/city', label: '현재성계' },
-            { href: '/battle', label: '작전감찰', require: 'secret' },
+            { href: '/nation', label: '세력정보', require: 'nation' },
+            { href: '/nation-cities', label: '세력도시', require: 'nation' },
+            { href: '/nation-generals', label: '세력장수', require: 'nation' },
+            { href: '/global-diplomacy', label: '중원정보' },
+            { href: '/city', label: '현재도시' },
+            { href: '/battle', label: '감찰부', require: 'secret' },
             { href: '/inherit', label: '유산관리' },
             { href: '/my-page', label: '내정보&설정' },
             { href: '/auction', label: '경매장' },
@@ -68,16 +68,16 @@ const navSections: NavSection[] = [
         // Legacy GlobalMenu.php parity — exact order from legacy-core/hwe/sammo/GlobalMenu.php
         label: '정보',
         items: [
-            { href: '/nation-betting', label: '은하 베팅' },
-            { href: '/nations', label: '진영일람' },
-            { href: '/generals', label: '장교일람' },
-            { href: '/best-generals', label: '명장교일람' },
+            { href: '/nation-betting', label: '천통국 베팅' },
+            { href: '/nations', label: '세력일람' },
+            { href: '/generals', label: '장수일람' },
+            { href: '/best-generals', label: '명장일람' },
             { href: '/hall-of-fame', label: '명예의전당' },
-            { href: '/emperor', label: '원수부일람' },
+            { href: '/emperor', label: '왕조일람' },
             { href: '/history', label: '연감' },
             { href: '/battle-simulator', label: '전투 시뮬레이터' },
             { href: '/traffic', label: '접속량정보' },
-            { href: '/npc-list', label: 'NPC일람', cond: 'npcMode' },
+            { href: '/npc-list', label: '빙의일람', cond: 'npcMode' },
             { href: '/vote', label: '설문조사' },
         ],
     },
@@ -114,7 +114,7 @@ export default function GameLayout({ children }: { children: React.ReactNode }) 
 
         if (!currentWorld || myGeneral === null) {
             if (prevGeneralRef.current !== null && currentWorld) {
-                toast.error(`${prevGeneralRef.current.name} 장교가 전사하였습니다. 로비로 이동합니다.`, {
+                toast.error(`${prevGeneralRef.current.name} 장수가 사망하였습니다. 로비로 이동합니다.`, {
                     duration: 5000,
                 });
             }

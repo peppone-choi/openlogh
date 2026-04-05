@@ -13,6 +13,7 @@ import com.openlogh.repository.NationRepository
 import com.openlogh.repository.WorldStateRepository
 import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import java.time.Duration
 import java.time.Instant
 import java.time.OffsetDateTime
@@ -23,6 +24,7 @@ import kotlin.math.pow
 import kotlin.random.Random
 
 @Service
+@Transactional
 class SelectNpcTokenService(
     private val generalRepository: GeneralRepository,
     private val generalTurnRepository: GeneralTurnRepository,
@@ -40,6 +42,7 @@ class SelectNpcTokenService(
         val keepCount: Int,
     )
 
+    @Transactional(readOnly = true)
     fun generateToken(worldId: Long, userId: Long): NpcTokenResponse {
         ensureNpcModeEnabled(worldId)
         ensureUserHasNoGeneral(worldId, userId)
@@ -68,6 +71,7 @@ class SelectNpcTokenService(
         return toResponse(worldId, token, picked)
     }
 
+    @Transactional(readOnly = true)
     fun refreshToken(worldId: Long, userId: Long, nonce: String, keepIds: List<Long>): NpcTokenResponse {
         ensureNpcModeEnabled(worldId)
         ensureUserHasNoGeneral(worldId, userId)
@@ -114,6 +118,7 @@ class SelectNpcTokenService(
         return toResponse(worldId, nextToken, kept + drawn)
     }
 
+    @Transactional
     fun selectNpc(worldId: Long, userId: Long, nonce: String, generalId: Long): SelectNpcResult {
         ensureNpcModeEnabled(worldId)
         ensureUserHasNoGeneral(worldId, userId)

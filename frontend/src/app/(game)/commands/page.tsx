@@ -128,7 +128,7 @@ function NationCommandPanel({
     const [presetName, setPresetName] = useState('');
 
     const currentWorld = useWorldStore((s) => s.currentWorld);
-    const presetKey = `opensam:commands:nation-presets:${nationId}`;
+    const presetKey = `openlogh:commands:nation-presets:${nationId}`;
 
     const loadData = useCallback(async () => {
         setLoading(true);

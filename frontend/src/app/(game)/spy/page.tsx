@@ -196,7 +196,7 @@ export default function SpyPage() {
                         {nationGenerals.length === 0 && (
                             <TableRow>
                                 <TableCell colSpan={11} className="text-center text-muted-foreground">
-                                    소속 장교가 없습니다.
+                                    소속 장수가 없습니다.
                                 </TableCell>
                             </TableRow>
                         )}

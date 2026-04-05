@@ -696,7 +696,7 @@ export default function NationCitiesPage() {
                                                         {nationGenerals.filter((g) => g.cityId === c.id).length ===
                                                         0 ? (
                                                             <span className="text-muted-foreground">
-                                                                배치된 장교가 없습니다.
+                                                                배치된 장수가 없습니다.
                                                             </span>
                                                         ) : (
                                                             <table className="w-full text-xs">

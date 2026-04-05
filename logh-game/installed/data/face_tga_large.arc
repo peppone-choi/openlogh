@@ -1,1 +1,0 @@
-../face_tga_large.arc

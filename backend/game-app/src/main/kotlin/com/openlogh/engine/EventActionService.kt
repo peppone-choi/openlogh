@@ -16,6 +16,7 @@ import kotlin.random.Random
  * PHP sources: /ref/core/hwe/sammo/Event/Action/
  */
 @Service
+@Transactional
 class EventActionService(
     private val generalRepository: GeneralRepository,
     private val nationRepository: NationRepository,

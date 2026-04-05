@@ -9,7 +9,7 @@ import type { City, General, Nation } from '@/types';
 import { useSearchParams } from 'next/navigation';
 import { PageHeader } from '@/components/game/page-header';
 import { LoadingState } from '@/components/game/loading-state';
-import { LoghBar } from '@/components/game/logh-bar';
+import { SammoBar } from '@/components/game/sammo-bar';
 import {
     getNPCColor,
     REGION_NAMES,
@@ -393,7 +393,7 @@ function CityPageContent() {
                                 <ValueCell>
                                     {isVisible ? (
                                         <>
-                                            <LoghBar
+                                            <SammoBar
                                                 height={7}
                                                 percent={city.popMax > 0 ? (city.pop / city.popMax) * 100 : 0}
                                             />
@@ -407,7 +407,7 @@ function CityPageContent() {
                                 <ValueCell>
                                     {isVisible ? (
                                         <>
-                                            <LoghBar height={7} percent={city.trust} />
+                                            <SammoBar height={7} percent={city.trust} />
                                             <span>
                                                 {city.trust.toLocaleString(undefined, {
                                                     maximumFractionDigits: 1,
@@ -844,7 +844,7 @@ function StatValueCell({
     const warn = perTurn != null ? remainWarning(val, max, perTurn) : null;
     return (
         <div className="border-t border-l border-gray-600 text-center text-xs py-0.5 px-0.5">
-            <LoghBar height={7} percent={max > 0 ? (val / max) * 100 : 0} />
+            <SammoBar height={7} percent={max > 0 ? (val / max) * 100 : 0} />
             <span style={{ color }}>
                 {val.toLocaleString()}/{max.toLocaleString()}
             </span>

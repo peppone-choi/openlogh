@@ -777,18 +777,18 @@ export default function InheritPage() {
                                             },
                                             {
                                                 id: 'strength',
-                                                label: '지휘',
+                                                label: '무력',
                                                 value: statStrength,
                                                 setter: setStatStrength,
                                             },
-                                            { id: 'intel', label: '정보', value: statIntel, setter: setStatIntel },
+                                            { id: 'intel', label: '지력', value: statIntel, setter: setStatIntel },
                                             {
                                                 id: 'politics',
                                                 label: '정치',
                                                 value: statPolitics,
                                                 setter: setStatPolitics,
                                             },
-                                            { id: 'charm', label: '운영', value: statCharm, setter: setStatCharm },
+                                            { id: 'charm', label: '매력', value: statCharm, setter: setStatCharm },
                                         ] as const
                                     ).map((stat) => (
                                         <div key={stat.id} className="space-y-1">

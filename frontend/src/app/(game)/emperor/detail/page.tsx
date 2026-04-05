@@ -154,7 +154,7 @@ export default function EmperorDetailPage() {
                                 </div>
                             ))}
                         {nationGenerals.filter((g) => g.officerLevel >= 5).length === 0 && (
-                            <p className="text-sm text-muted-foreground">주요 관직 장교가 없습니다.</p>
+                            <p className="text-sm text-muted-foreground">주요 관직 장수가 없습니다.</p>
                         )}
                     </div>
                 </CardContent>

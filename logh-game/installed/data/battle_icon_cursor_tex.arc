@@ -1,1 +1,0 @@
-../battle_icon_cursor_tex.arc

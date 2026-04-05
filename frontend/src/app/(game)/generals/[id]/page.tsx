@@ -13,7 +13,7 @@ import { EmptyState } from '@/components/game/empty-state';
 import { ErrorState } from '@/components/game/error-state';
 import { GeneralPortrait } from '@/components/game/general-portrait';
 import { NationBadge } from '@/components/game/nation-badge';
-import { LoghBar } from '@/components/game/logh-bar';
+import { SammoBar } from '@/components/game/sammo-bar';
 import { formatGameLogDate } from '@/lib/gameLogDate';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/8bit/card';
 import { Badge } from '@/components/ui/8bit/badge';
@@ -108,17 +108,17 @@ export default function GeneralDetailPage() {
             effective: calcInjury(general.leadership, general.injury),
         },
         {
-            label: '지휘',
+            label: '무력',
             base: general.strength,
             effective: calcInjury(general.strength, general.injury),
         },
         {
-            label: '정보',
+            label: '지력',
             base: general.intel,
             effective: calcInjury(general.intel, general.injury),
         },
         { label: '정치', base: general.politics, effective: general.politics },
-        { label: '운영', base: general.charm, effective: general.charm },
+        { label: '매력', base: general.charm, effective: general.charm },
     ];
 
     return (
@@ -137,7 +137,7 @@ export default function GeneralDetailPage() {
                                         className="inline-flex items-center rounded-sm px-0.5"
                                         style={{ backgroundColor: '#f0c040' }}
                                     >
-                                        <img src="/icons/emperor.png" alt="원수" width={18} height={18} />
+                                        <img src="/icons/emperor.png" alt="황제" width={18} height={18} />
                                     </span>
                                 )}
                                 <h2 className="text-lg font-bold" style={{ color: npcColor }}>
@@ -188,7 +188,7 @@ export default function GeneralDetailPage() {
                                 {s.effective}
                             </span>
                             <div className="flex-1">
-                                <LoghBar height={7} percent={s.base} altText={`${s.effective}/${s.base}`} />
+                                <SammoBar height={7} percent={s.base} altText={`${s.effective}/${s.base}`} />
                             </div>
                             {s.effective !== s.base && (
                                 <span className="text-[10px] text-muted-foreground w-12 text-right">
@@ -226,14 +226,14 @@ export default function GeneralDetailPage() {
                 <CardContent>
                     <div className="grid grid-cols-2 gap-3 text-sm">
                         <Row
-                            label="함종"
+                            label="병종"
                             value={
                                 <span className="text-cyan-300">
                                     {CREW_TYPE_NAMES[general.crewType] ?? `${general.crewType}`}
                                 </span>
                             }
                         />
-                        <Row label="함선" value={general.crew.toLocaleString()} />
+                        <Row label="병사" value={general.crew.toLocaleString()} />
                         <Row
                             label="훈련"
                             value={<span className={general.train >= 80 ? 'text-cyan-400' : ''}>{general.train}</span>}
@@ -243,7 +243,7 @@ export default function GeneralDetailPage() {
                             value={<span className={general.atmos >= 80 ? 'text-cyan-400' : ''}>{general.atmos}</span>}
                         />
                         <Row
-                            label="기함"
+                            label="무기"
                             value={
                                 isValidObjKey(general.weaponCode) ? (
                                     <span className="text-cyan-300">{general.weaponCode}</span>
@@ -253,7 +253,7 @@ export default function GeneralDetailPage() {
                             }
                         />
                         <Row
-                            label="특수장비"
+                            label="서적"
                             value={
                                 isValidObjKey(general.bookCode) ? (
                                     <span className="text-cyan-300">{general.bookCode}</span>
@@ -263,7 +263,7 @@ export default function GeneralDetailPage() {
                             }
                         />
                         <Row
-                            label="기관"
+                            label="명마"
                             value={
                                 isValidObjKey(general.horseCode) ? (
                                     <span className="text-cyan-300">{general.horseCode}</span>
@@ -273,7 +273,7 @@ export default function GeneralDetailPage() {
                             }
                         />
                         <Row
-                            label="부속품"
+                            label="도구"
                             value={
                                 isValidObjKey(general.itemCode) ? (
                                     <span className="text-cyan-300">{general.itemCode}</span>
@@ -287,7 +287,7 @@ export default function GeneralDetailPage() {
                             value={<span className="text-yellow-400">{numberWithCommas(general.gold)}</span>}
                         />
                         <Row
-                            label="물자"
+                            label="군량"
                             value={<span className="text-green-400">{numberWithCommas(general.rice)}</span>}
                         />
                         <Row label="계급" value={`Lv.${general.dedLevel ?? 0} (${general.dedication})`} />
@@ -311,7 +311,7 @@ export default function GeneralDetailPage() {
                                     {info.name}
                                 </span>
                                 <div className="flex-1">
-                                    <LoghBar
+                                    <SammoBar
                                         height={7}
                                         percent={Math.min((info.level / 26) * 100, 100)}
                                         altText={`${info.name} (${numberWithCommas(dex)})`}

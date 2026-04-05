@@ -73,7 +73,7 @@ export function CompactTooltip({
                 <span>{cityText}</span>
                 {isEmperorCity && (
                     <span className="ml-0.5 inline-flex items-center rounded-sm px-0.5 bg-yellow-500/80">
-                        <img src="/icons/emperor.png" alt="원수" width={12} height={12} />
+                        <img src="/icons/emperor.png" alt="황제" width={12} height={12} />
                     </span>
                 )}
             </div>

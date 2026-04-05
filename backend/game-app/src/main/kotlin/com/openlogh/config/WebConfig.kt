@@ -9,7 +9,7 @@ import java.nio.file.Paths
 class WebConfig : WebMvcConfigurer {
 
     override fun addResourceHandlers(registry: ResourceHandlerRegistry) {
-        val iconDir = Paths.get(System.getProperty("user.home"), ".openlogh", "icons").toAbsolutePath()
+        val iconDir = Paths.get(System.getProperty("user.home"), ".opensam", "icons").toAbsolutePath()
         registry.addResourceHandler("/uploads/icons/**")
             .addResourceLocations("file:$iconDir/")
     }

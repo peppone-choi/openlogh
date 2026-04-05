@@ -1,1 +1,0 @@
-../warshipmodel_mdx.arc

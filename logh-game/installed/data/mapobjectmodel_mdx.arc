@@ -1,1 +1,0 @@
-../mapobjectmodel_mdx.arc

@@ -1,1 +1,0 @@
-../chara_mutter_script.arc

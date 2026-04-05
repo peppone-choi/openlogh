@@ -173,14 +173,14 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
         id: 17,
         phase: 'nation',
         route: '/tutorial/nation',
-        title: '인사국',
+        title: '인사부',
         description: '장수에게 관직을 임명하여 능력 보너스를 부여할 수 있습니다. 적재적소에 인재를 배치하세요.',
     },
     {
         id: 18,
         phase: 'nation',
         route: '/tutorial/nation',
-        title: '내무국',
+        title: '내무부',
         description: '세율 조정, 수도 이전 등 국가 운영 전반의 정책을 설정합니다.',
     },
 

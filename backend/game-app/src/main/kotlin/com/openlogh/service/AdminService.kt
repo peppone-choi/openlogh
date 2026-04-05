@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional
 import java.time.OffsetDateTime
 
 @Service
+@Transactional
 class AdminService(
     private val worldStateRepository: WorldStateRepository,
     private val generalRepository: GeneralRepository,
@@ -37,6 +38,7 @@ class AdminService(
         const val INFINITE_KILL_TURN = 8000
     }
 
+    @Transactional(readOnly = true)
     fun getDashboard(worldId: Long): AdminDashboard {
         val worlds = worldStateRepository.findAll()
         val world = worlds.firstOrNull { it.id.toLong() == worldId }
@@ -60,6 +62,7 @@ class AdminService(
         )
     }
 
+    @Transactional
     fun updateSettings(worldId: Long, settings: Map<String, Any>): Boolean {
         val world = worldStateRepository.findById(worldId.toShort()).orElse(null) ?: return false
 
@@ -108,6 +111,7 @@ class AdminService(
         return true
     }
 
+    @Transactional(readOnly = true)
     fun listAllGenerals(worldId: Long): List<AdminGeneralSummary> {
         return generalRepository.findByWorldId(worldId).map {
             AdminGeneralSummary(
@@ -132,6 +136,7 @@ class AdminService(
         return true
     }
 
+    @Transactional(readOnly = true)
     fun getStatistics(worldId: Long): List<NationStatistic> {
         val nations = nationRepository.findByWorldId(worldId)
         return nations.map { nation ->
@@ -154,10 +159,12 @@ class AdminService(
         }
     }
 
+    @Transactional(readOnly = true)
     fun getGeneralLogs(worldId: Long, id: Long): List<Any> {
         return messageRepository.findByWorldIdAndMailboxCodeAndDestIdOrderBySentAtDesc(worldId, "general_action", id)
     }
 
+    @Transactional(readOnly = true)
     fun getDiplomacyMatrix(worldId: Long): List<Any> {
         return diplomacyRepository.findByWorldId(worldId)
     }
@@ -194,6 +201,7 @@ class AdminService(
         )
     }
 
+    @Transactional
     fun timeControl(worldId: Long, request: TimeControlRequest): Boolean {
         val world = worldStateRepository.findById(worldId.toShort()).orElse(null) ?: return false
 
@@ -376,6 +384,7 @@ class AdminService(
         generalTurnRepository.save(turn)
     }
 
+    @Transactional(readOnly = true)
     fun listUsers(): List<AdminUserSummary> {
         return appUserRepository.findAll().map {
             AdminUserSummary(
@@ -390,6 +399,7 @@ class AdminService(
         }
     }
 
+    @Transactional
     fun userAction(actorLoginId: String, id: Long, action: AdminUserAction): Boolean {
         val actor = appUserRepository.findByLoginId(actorLoginId) ?: return false
         val actorGrade = actor.grade.toInt()
@@ -434,6 +444,7 @@ class AdminService(
         }
     }
 
+    @Transactional
     fun broadcastMessage(worldId: Long, generalIds: List<Long>, message: String) {
         val messages = generalIds.map { generalId ->
             com.openlogh.entity.Message(

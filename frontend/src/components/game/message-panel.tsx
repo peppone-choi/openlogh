@@ -60,7 +60,7 @@ export function MessagePanel({ worldId, myGeneralId, generals }: MessagePanelPro
     // Load last_contact from localStorage
     useEffect(() => {
         try {
-            const raw = localStorage.getItem(`opensam:lastContacts:${myGeneralId}`);
+            const raw = localStorage.getItem(`openlogh:lastContacts:${myGeneralId}`);
             if (raw) setLastContacts(new Map(Object.entries(JSON.parse(raw)).map(([k, v]) => [Number(k), Number(v)])));
         } catch {
             /* ignore */
@@ -79,7 +79,7 @@ export function MessagePanel({ worldId, myGeneralId, generals }: MessagePanelPro
                 const trimmed = new Map(entries);
                 try {
                     localStorage.setItem(
-                        `opensam:lastContacts:${myGeneralId}`,
+                        `openlogh:lastContacts:${myGeneralId}`,
                         JSON.stringify(Object.fromEntries(trimmed))
                     );
                 } catch {

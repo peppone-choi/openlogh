@@ -1,1 +1,0 @@
-../stand_f017_vrm.arc

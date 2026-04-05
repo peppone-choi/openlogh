@@ -1,1 +1,0 @@
-../loading_vrm.arc

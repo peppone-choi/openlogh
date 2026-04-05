@@ -310,7 +310,7 @@ export default function BattleCenterPage() {
                     )}
                 </div>
             ) : orderedGenerals.length === 0 ? (
-                <EmptyState icon={Swords} title="조회 가능한 장교가 없습니다." />
+                <EmptyState icon={Swords} title="조회 가능한 장수가 없습니다." />
             ) : null}
         </div>
     );
@@ -331,10 +331,10 @@ function ComparisonView({
 }) {
     const stats: { label: string; a: number; b: number }[] = [
         { label: '통솔', a: generalA.leadership, b: generalB.leadership },
-        { label: '지휘', a: generalA.strength, b: generalB.strength },
-        { label: '정보', a: generalA.intel, b: generalB.intel },
+        { label: '무력', a: generalA.strength, b: generalB.strength },
+        { label: '지력', a: generalA.intel, b: generalB.intel },
         { label: '정치', a: generalA.politics, b: generalB.politics },
-        { label: '운영', a: generalA.charm, b: generalB.charm },
+        { label: '매력', a: generalA.charm, b: generalB.charm },
         { label: '병사', a: generalA.crew, b: generalB.crew },
         { label: '훈련', a: generalA.train, b: generalB.train },
         { label: '사기', a: generalA.atmos, b: generalB.atmos },
@@ -483,10 +483,10 @@ function GeneralBasicCard({ general, nation }: { general: General; nation?: { na
 
                 <div className="grid grid-cols-3 gap-x-4 gap-y-1">
                     <StatRow label="통솔" value={general.leadership} exp={general.leadershipExp} />
-                    <StatRow label="지휘" value={general.strength} exp={general.strengthExp} />
-                    <StatRow label="정보" value={general.intel} exp={general.intelExp} />
+                    <StatRow label="무력" value={general.strength} exp={general.strengthExp} />
+                    <StatRow label="지력" value={general.intel} exp={general.intelExp} />
                     <StatRow label="정치" value={general.politics} />
-                    <StatRow label="운영" value={general.charm} />
+                    <StatRow label="매력" value={general.charm} />
                     <StatRow
                         label="부상"
                         value={general.injury}
@@ -505,9 +505,9 @@ function GeneralBasicCard({ general, nation }: { general: General; nation?: { na
                 </div>
 
                 <div className="grid grid-cols-2 gap-x-4 gap-y-1">
-                    <EquipRow label="기함" value={general.weaponCode} />
-                    <EquipRow label="특수장비" value={general.bookCode} />
-                    <EquipRow label="기관" value={general.horseCode} />
+                    <EquipRow label="무기" value={general.weaponCode} />
+                    <EquipRow label="서적" value={general.bookCode} />
+                    <EquipRow label="명마" value={general.horseCode} />
                     <EquipRow label="아이템" value={general.itemCode} />
                 </div>
 

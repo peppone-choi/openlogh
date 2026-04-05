@@ -29,6 +29,7 @@ import kotlin.math.floor
 import kotlin.math.max
 
 @Service
+@Transactional
 class InheritanceService(
     private val appUserRepository: AppUserRepository,
     private val cityRepository: CityRepository,
@@ -117,6 +118,7 @@ class InheritanceService(
         return updatedUsers
     }
 
+    @Transactional(readOnly = true)
     fun getInheritance(worldId: Long, loginId: String): InheritanceInfo? {
         val user = appUserRepository.findByLoginId(loginId) ?: return null
         val points = (user.meta["inheritPoints"] as? Number)?.toInt() ?: 0
@@ -409,6 +411,7 @@ class InheritanceService(
         }
     }
 
+    @Transactional(readOnly = true)
     fun getMoreLog(worldId: Long, loginId: String, lastID: Long): List<InheritanceLogEntry> {
         val user = appUserRepository.findByLoginId(loginId) ?: return emptyList()
 

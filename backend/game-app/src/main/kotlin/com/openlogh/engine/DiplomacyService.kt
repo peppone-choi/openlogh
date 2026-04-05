@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional
  * - "불가침파기제의" = NON_AGGRESSION_BREAK_PROPOSAL (pending acceptance)
  */
 @Service
+@Transactional
 class DiplomacyService(
     private val worldPortFactory: JpaWorldPortFactory,
     private val diplomacyRepository: DiplomacyRepository,

@@ -235,7 +235,7 @@ class DisasterParityTest {
         @DisplayName("Kotlin uses 'disaster' seed -- PHP uses 'disater' (documented parity divergence)")
         fun `kotlin seed string documented`() {
             // Read EconomyService source to verify current seed string
-            val sourceFile = java.io.File("src/main/kotlin/com/openlogh/engine/EconomyService.kt")
+            val sourceFile = java.io.File("src/main/kotlin/com/opensam/engine/EconomyService.kt")
             assertThat(sourceFile.exists()).isTrue()
             val source = sourceFile.readText()
 
@@ -309,7 +309,7 @@ class DisasterParityTest {
          * This is a structural assertion -- the map must contain these exact state codes.
          */
         private fun assertMonthDisasterCodes(month: Int, expectedCodes: List<Short>) {
-            val sourceFile = java.io.File("src/main/kotlin/com/openlogh/engine/EconomyService.kt")
+            val sourceFile = java.io.File("src/main/kotlin/com/opensam/engine/EconomyService.kt")
             val source = sourceFile.readText()
 
             // Find "N to listOf(" then collect all DisasterOrBoomEntry codes until the next
@@ -343,7 +343,7 @@ class DisasterParityTest {
         }
 
         private fun assertBoomStateCode(month: Int, expectedCode: Short) {
-            val sourceFile = java.io.File("src/main/kotlin/com/openlogh/engine/EconomyService.kt")
+            val sourceFile = java.io.File("src/main/kotlin/com/opensam/engine/EconomyService.kt")
             val source = sourceFile.readText()
 
             // Find boomEntries for this month
@@ -513,7 +513,7 @@ class DisasterParityTest {
             // crew *= 0.98, atmos *= 0.98, train *= 0.98
 
             // Verify formula constants by reading source
-            val sourceFile = java.io.File("src/main/kotlin/com/openlogh/engine/EconomyService.kt")
+            val sourceFile = java.io.File("src/main/kotlin/com/opensam/engine/EconomyService.kt")
             val source = sourceFile.readText()
 
             // Check 30% threshold

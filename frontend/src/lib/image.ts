@@ -43,11 +43,11 @@ export function getCrewTypeIconUrl(crewType: number): string {
     return `${GAME_CDN_ROOT}/crewtype${normalizedCrewType}.png`;
 }
 
-export function getLoghBarBg(height: number): string {
+export function getSammoBarBg(height: number): string {
     return `${GAME_CDN_ROOT}/pr${height - 2}.gif`;
 }
 
-export function getLoghBarFill(height: number): string {
+export function getSammoBarFill(height: number): string {
     return `${GAME_CDN_ROOT}/pb${height - 2}.gif`;
 }
 

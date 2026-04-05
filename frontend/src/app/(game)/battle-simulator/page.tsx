@@ -456,13 +456,13 @@ function UnitBuilder({
                         max={100}
                     />
                     <NumberField
-                        label="지휘"
+                        label="무력"
                         value={unit.strength}
                         onChange={(v) => set('strength', v)}
                         min={1}
                         max={100}
                     />
-                    <NumberField label="정보" value={unit.intel} onChange={(v) => set('intel', v)} min={1} max={100} />
+                    <NumberField label="지력" value={unit.intel} onChange={(v) => set('intel', v)} min={1} max={100} />
                 </div>
 
                 {/* Crew */}
@@ -481,7 +481,7 @@ function UnitBuilder({
                             ))}
                         </select>
                     </div>
-                    <NumberField label="함선" value={unit.crew} onChange={(v) => set('crew', v)} min={100} step={100} />
+                    <NumberField label="병사" value={unit.crew} onChange={(v) => set('crew', v)} min={100} step={100} />
                 </div>
 
                 {/* Train / Atmos */}
@@ -500,7 +500,7 @@ function UnitBuilder({
                 {/* Injury / Rice */}
                 <div className="flex flex-wrap gap-2">
                     <NumberField label="부상" value={unit.injury} onChange={(v) => set('injury', v)} min={0} max={80} />
-                    <NumberField label="물자" value={unit.rice} onChange={(v) => set('rice', v)} min={0} step={1000} />
+                    <NumberField label="군량" value={unit.rice} onChange={(v) => set('rice', v)} min={0} step={1000} />
                     <span className="text-xs text-muted-foreground self-center">
                         상태:{' '}
                         <span style={{ color: formatInjury(unit.injury).color }}>{formatInjury(unit.injury).text}</span>
@@ -510,13 +510,13 @@ function UnitBuilder({
                 {/* Equipment dropdowns */}
                 <div className="flex flex-wrap gap-2">
                     <SelectField
-                        label="기함"
+                        label="무기"
                         value={unit.weaponCode}
                         onChange={(v) => set('weaponCode', v)}
                         options={WEAPON_CODES}
                     />
                     <SelectField
-                        label="특수장비"
+                        label="서적"
                         value={unit.bookCode}
                         onChange={(v) => set('bookCode', v)}
                         options={BOOK_CODES}
@@ -524,7 +524,7 @@ function UnitBuilder({
                 </div>
                 <div className="flex flex-wrap gap-2">
                     <SelectField
-                        label="기관"
+                        label="명마"
                         value={unit.horseCode}
                         onChange={(v) => set('horseCode', v)}
                         options={HORSE_CODES}

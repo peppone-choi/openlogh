@@ -335,7 +335,7 @@ class ScenarioDataParityTest {
         @Test
         @DisplayName("CITY_LEVEL_INIT matches legacy CityConstBase buildInit for all 8 levels")
         fun `city level init values match legacy`() {
-            val sourceFile = File("src/main/kotlin/com/openlogh/service/ScenarioService.kt")
+            val sourceFile = File("src/main/kotlin/com/opensam/service/ScenarioService.kt")
             assertThat(sourceFile.exists())
                 .describedAs("ScenarioService.kt must exist at expected path")
                 .isTrue()
@@ -364,7 +364,7 @@ class ScenarioDataParityTest {
         @Test
         @DisplayName("All 8 city levels are defined in CITY_LEVEL_INIT")
         fun `all 8 levels defined`() {
-            val sourceFile = File("src/main/kotlin/com/openlogh/service/ScenarioService.kt")
+            val sourceFile = File("src/main/kotlin/com/opensam/service/ScenarioService.kt")
             val source = sourceFile.readText()
 
             for (level in 1..8) {

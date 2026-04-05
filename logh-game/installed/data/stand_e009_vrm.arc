@@ -1,1 +1,0 @@
-../stand_e009_vrm.arc

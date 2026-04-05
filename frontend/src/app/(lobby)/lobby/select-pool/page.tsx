@@ -206,7 +206,7 @@ export default function LobbySelectPoolPage() {
                         풀에 등록된 장수 중 하나를 선택하여 플레이할 수 있습니다.
                     </p>
                     {pool.length === 0 ? (
-                        <EmptyState icon={Users} title="선택 가능한 장교가 없습니다." />
+                        <EmptyState icon={Users} title="선택 가능한 장수가 없습니다." />
                     ) : (
                         <div className="grid gap-3 sm:grid-cols-2">
                             {pool.map((g) => (
@@ -221,10 +221,10 @@ export default function LobbySelectPoolPage() {
                                         </div>
                                         <div className="space-y-1">
                                             <StatBar label="통솔" value={g.leadership} color="bg-red-500" />
-                                            <StatBar label="지휘" value={g.strength} color="bg-orange-500" />
-                                            <StatBar label="정보" value={g.intel} color="bg-blue-500" />
+                                            <StatBar label="무력" value={g.strength} color="bg-orange-500" />
+                                            <StatBar label="지력" value={g.intel} color="bg-blue-500" />
                                             <StatBar label="정치" value={g.politics} color="bg-green-500" />
-                                            <StatBar label="운영" value={g.charm} color="bg-purple-500" />
+                                            <StatBar label="매력" value={g.charm} color="bg-purple-500" />
                                         </div>
                                         <div className="flex gap-2 text-xs text-muted-foreground">
                                             <span>병력: {g.crew.toLocaleString()}</span>
@@ -423,7 +423,7 @@ export default function LobbySelectPoolPage() {
                     <p className="text-sm text-muted-foreground">풀에 있는 기존 장수의 능력치를 수정합니다.</p>
 
                     {pool.length === 0 ? (
-                        <EmptyState icon={Users} title="수정할 장교가 없습니다." />
+                        <EmptyState icon={Users} title="수정할 장수가 없습니다." />
                     ) : !selectedForUpdate ? (
                         <div className="grid gap-2 sm:grid-cols-2">
                             {pool.map((g) => (

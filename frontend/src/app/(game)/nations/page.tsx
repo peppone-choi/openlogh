@@ -219,11 +219,11 @@ export default function NationsPage() {
         );
 
     const columns: { key: SortKey; label: string }[] = [
-        { key: 'name', label: '진영' },
+        { key: 'name', label: '국가' },
         { key: 'capital', label: '수도' },
         { key: 'level', label: '작위' },
         { key: 'power', label: '국력' },
-        { key: 'generalCount', label: '장교' },
+        { key: 'generalCount', label: '장수' },
         { key: 'cityCount', label: '속령' },
         { key: 'gold', label: '금' },
         { key: 'rice', label: '쌀' },

@@ -1,1 +1,0 @@
-../char_e024_bin.arc

@@ -41,7 +41,7 @@ const ALL_COLUMNS: {
 }[] = [
     { key: 'officer', label: '관직', minOfficerLevel: 0 },
     { key: 'stats', label: '능력치', minOfficerLevel: 0 },
-    { key: 'crew', label: '함선', minOfficerLevel: 0 },
+    { key: 'crew', label: '병력', minOfficerLevel: 0 },
     { key: 'train', label: '훈련/사기', minOfficerLevel: 3 },
     { key: 'troop', label: '부대', minOfficerLevel: 0 },
     { key: 'gold', label: '자금', minOfficerLevel: 0 },
@@ -144,7 +144,7 @@ export default function NationGeneralsPage() {
             </div>
 
             {generals.length === 0 ? (
-                <EmptyState icon={Users} title="소속 장교가 없습니다." />
+                <EmptyState icon={Users} title="소속 장수가 없습니다." />
             ) : (
                 <div className="overflow-x-auto">
                     <Table>
@@ -176,7 +176,7 @@ export default function NationGeneralsPage() {
                                                                 <img
                                                                     src="/icons/emperor.png"
                                                                     className="relative size-4"
-                                                                    alt="원수"
+                                                                    alt="황제"
                                                                 />
                                                             </div>
                                                         )}

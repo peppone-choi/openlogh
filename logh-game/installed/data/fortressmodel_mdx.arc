@@ -1,1 +1,0 @@
-../fortressmodel_mdx.arc

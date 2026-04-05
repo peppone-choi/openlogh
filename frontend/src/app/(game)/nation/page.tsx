@@ -453,7 +453,7 @@ function NationPageContent() {
                         </CardHeader>
                         <CardContent>
                             {generals.length === 0 ? (
-                                <p className="text-sm text-muted-foreground">장교가 없습니다.</p>
+                                <p className="text-sm text-muted-foreground">장수가 없습니다.</p>
                             ) : (
                                 <div className="overflow-x-auto">
                                     <Table>
