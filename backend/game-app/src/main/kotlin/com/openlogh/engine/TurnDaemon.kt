@@ -19,6 +19,7 @@ class TurnDaemon(
     private val turnService: TurnService,
     private val turnCoordinator: TurnCoordinator,
     private val realtimeService: RealtimeService,
+    private val tickEngine: TickEngine,
     @Value("\${game.commit-sha:local}") private val processCommitSha: String,
     @Value("\${opensam.cqrs.enabled:false}") private val cqrsEnabled: Boolean,
     private val sessionStateRepository: SessionStateRepository,
@@ -47,7 +48,7 @@ class TurnDaemon(
         logger.debug("Daemon state: {} -> {} (reason={}, requestId={})", prev, newState, reason, requestId)
     }
 
-    @Scheduled(fixedDelayString = "\${app.turn.interval-ms:5000}")
+    @Scheduled(fixedRateString = "\${app.turn.tick-ms:1000}")
     fun tick() {
         if (state != DaemonState.IDLE) return
         val reqId = java.util.UUID.randomUUID().toString().take(8)
@@ -62,8 +63,7 @@ class TurnDaemon(
                 if (isWorldLocked(world)) continue
                 try {
                     if (world.realtimeMode) {
-                        realtimeService.processCompletedCommands(world)
-                        realtimeService.regenerateCommandPoints(world)
+                        tickEngine.processTick(world)
                     } else {
                         val prevYear = world.currentYear.toInt()
                         val prevMonth = world.currentMonth.toInt()
