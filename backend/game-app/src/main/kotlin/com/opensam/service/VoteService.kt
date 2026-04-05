@@ -4,12 +4,15 @@ import com.opensam.dto.VoteCommentResponse
 import com.opensam.entity.Message
 import com.opensam.repository.MessageRepository
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import java.time.OffsetDateTime
 
 @Service
+@Transactional
 class VoteService(
     private val messageRepository: MessageRepository,
 ) {
+    @Transactional(readOnly = true)
     fun listVotes(worldId: Long): List<Message> {
         return messageRepository.findByWorldIdAndMailboxCodeOrderBySentAtDesc(worldId, "vote")
     }
@@ -45,6 +48,7 @@ class VoteService(
         return true
     }
 
+    @Transactional(readOnly = true)
     fun getVoteComments(voteId: Long): List<VoteCommentResponse> {
         val vote = messageRepository.findById(voteId).orElse(null) ?: return emptyList()
         return parseVoteComments(vote)
