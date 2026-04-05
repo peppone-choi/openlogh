@@ -194,7 +194,7 @@ class NationServiceTest {
         assertEquals(1.toShort(), nation.warState)
         assertEquals(1, nation.meta["available_war_setting_cnt"])
 
-        val captor = ArgumentCaptor.forClass(Nation::class.java)
+        val captor = ArgumentCaptor.forClass(Faction::class.java)
         verify(factionRepository).save(captor.capture())
         assertEquals(1.toShort(), captor.value.warState)
     }

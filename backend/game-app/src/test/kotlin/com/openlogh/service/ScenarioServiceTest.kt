@@ -285,7 +285,7 @@ class ScenarioServiceTest {
             }
             cities
         }
-        `when`(planetRepository.save(any(City::class.java))).thenAnswer { inv ->
+        `when`(planetRepository.save(any(Planet::class.java))).thenAnswer { inv ->
             val city = inv.arguments[0] as Planet
             if (city.id == 0L) city.id = citySeq++
             cityStore[city.id] = city
@@ -758,7 +758,7 @@ class ScenarioServiceTest {
         assertTrue(captured.isNotEmpty())
         assertEquals(999L, captured.first().sessionId)
         assertTrue(captured.first().info.containsKey("generalName"))
-        verify(selectPoolRepository).deleteByWorldId(999L)
+        verify(selectPoolRepository).deleteBySessionId(999L)
     }
 
     @Test

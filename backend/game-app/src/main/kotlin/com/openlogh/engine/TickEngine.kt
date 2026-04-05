@@ -50,6 +50,11 @@ class TickEngine(
 
         // 5. Persist state
         sessionStateRepository.save(world)
+
+        // 6. Broadcast tick state to clients every TICK_BROADCAST_INTERVAL ticks
+        if (world.tickCount % GameTimeConstants.TICK_BROADCAST_INTERVAL == 0L) {
+            gameEventService.broadcastTickState(world)
+        }
     }
 
     /**
