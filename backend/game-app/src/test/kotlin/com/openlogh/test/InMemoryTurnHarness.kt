@@ -33,8 +33,8 @@ class InMemoryTurnHarness {
     private val generals = mutableMapOf<Long, Officer>()
     private val cities = mutableMapOf<Long, Planet>()
     private val nations = mutableMapOf<Long, Faction>()
-    private val generalTurns = mutableMapOf<Long, MutableList<GeneralTurn>>()
-    private val nationTurns = mutableMapOf<Pair<Long, Short>, MutableList<NationTurn>>()
+    private val generalTurns = mutableMapOf<Long, MutableList<OfficerTurn>>()
+    private val nationTurns = mutableMapOf<Pair<Long, Short>, MutableList<FactionTurn>>()
     private val turnIdSeq = AtomicLong(1)
 
     val sessionStateRepository: SessionStateRepository = mock(SessionStateRepository::class.java)
@@ -152,12 +152,12 @@ class InMemoryTurnHarness {
         nations[nation.id] = nation
     }
 
-    fun queueGeneralTurn(generalId: Long, actionCode: String, arg: MutableMap<String, Any> = mutableMapOf(), turnIdx: Short = 0) {
+    fun queueOfficerTurn(generalId: Long, actionCode: String, arg: MutableMap<String, Any> = mutableMapOf(), turnIdx: Short = 0) {
         val general = generals[generalId] ?: error("General not found: $generalId")
-        val turn = GeneralTurn(
+        val turn = OfficerTurn(
             id = turnIdSeq.getAndIncrement(),
-            worldId = general.sessionId,
-            generalId = generalId,
+            sessionId = general.sessionId,
+            officerId = generalId,
             turnIdx = turnIdx,
             actionCode = actionCode,
             arg = arg,
@@ -167,7 +167,7 @@ class InMemoryTurnHarness {
         generalTurns[generalId]!!.sortBy { it.turnIdx }
     }
 
-    fun queueNationTurn(
+    fun queueFactionTurn(
         nationId: Long,
         officerLevel: Short,
         actionCode: String,
@@ -175,10 +175,10 @@ class InMemoryTurnHarness {
         turnIdx: Short = 0,
     ) {
         val nation = nations[nationId] ?: error("Nation not found: $nationId")
-        val turn = NationTurn(
+        val turn = FactionTurn(
             id = turnIdSeq.getAndIncrement(),
-            worldId = nation.sessionId,
-            nationId = nationId,
+            sessionId = nation.sessionId,
+            factionId = nationId,
             officerLevel = officerLevel,
             turnIdx = turnIdx,
             actionCode = actionCode,
@@ -190,9 +190,9 @@ class InMemoryTurnHarness {
         nationTurns[key]!!.sortBy { it.turnIdx }
     }
 
-    fun generalTurnsFor(generalId: Long): List<GeneralTurn> = generalTurns[generalId]?.toList() ?: emptyList()
+    fun generalTurnsFor(generalId: Long): List<OfficerTurn> = generalTurns[generalId]?.toList() ?: emptyList()
 
-    fun nationTurnsFor(nationId: Long, officerLevel: Short): List<NationTurn> =
+    fun nationTurnsFor(nationId: Long, officerLevel: Short): List<FactionTurn> =
         nationTurns[nationId to officerLevel]?.toList() ?: emptyList()
 
     private fun wireRepositories() {
@@ -225,7 +225,7 @@ class InMemoryTurnHarness {
         `when`(officerRepository.findById(org.mockito.Mockito.anyLong())).thenAnswer {
             Optional.ofNullable(generals[it.arguments[0] as Long])
         }
-        `when`(officerRepository.save(org.mockito.Mockito.any(General::class.java))).thenAnswer {
+        `when`(officerRepository.save(org.mockito.Mockito.any(Officer::class.java))).thenAnswer {
             val g = it.arguments[0] as Officer
             generals[g.id] = g
             g
@@ -238,43 +238,43 @@ class InMemoryTurnHarness {
 
         `when`(officerTurnRepository.findByOfficerIdOrderByTurnIdx(org.mockito.Mockito.anyLong())).thenAnswer {
             val generalId = it.arguments[0] as Long
-            generalTurns[generalId]?.sortedBy { t -> t.turnIdx } ?: emptyList<GeneralTurn>()
+            generalTurns[generalId]?.sortedBy { t -> t.turnIdx } ?: emptyList<OfficerTurn>()
         }
 
         doAnswer { invocation ->
             val generalId = invocation.arguments[0] as Long
             generalTurns.remove(generalId)
             null
-        }.`when`(officerTurnRepository).deleteByGeneralId(org.mockito.Mockito.anyLong())
+        }.`when`(officerTurnRepository).deleteByOfficerId(org.mockito.Mockito.anyLong())
         doAnswer { invocation ->
-            val turn = invocation.arguments[0] as GeneralTurn
-            generalTurns[turn.generalId]?.removeIf { t -> t.id == turn.id }
+            val turn = invocation.arguments[0] as OfficerTurn
+            generalTurns[turn.officerId]?.removeIf { t -> t.id == turn.id }
             null
-        }.`when`(officerTurnRepository).delete(org.mockito.Mockito.any(GeneralTurn::class.java))
+        }.`when`(officerTurnRepository).delete(org.mockito.Mockito.any(OfficerTurn::class.java))
         doAnswer { invocation ->
-            val turns = invocation.arguments[0] as List<GeneralTurn>
+            val turns = invocation.arguments[0] as List<OfficerTurn>
             turns.forEach { turn ->
-                generalTurns[turn.generalId]?.removeIf { t -> t.id == turn.id }
+                generalTurns[turn.officerId]?.removeIf { t -> t.id == turn.id }
             }
             null
-        }.`when`(officerTurnRepository).deleteAll(org.mockito.Mockito.anyList<GeneralTurn>())
+        }.`when`(officerTurnRepository).deleteAll(org.mockito.Mockito.anyList<OfficerTurn>())
 
-        `when`(factionTurnRepository.findByNationIdAndOfficerLevelOrderByTurnIdx(org.mockito.Mockito.anyLong(), org.mockito.Mockito.anyShort())).thenAnswer {
+        `when`(factionTurnRepository.findByFactionIdAndOfficerLevelOrderByTurnIdx(org.mockito.Mockito.anyLong(), org.mockito.Mockito.anyShort())).thenAnswer {
             val nationId = it.arguments[0] as Long
             val officerLevel = it.arguments[1] as Short
-            nationTurns[nationId to officerLevel]?.sortedBy { t -> t.turnIdx } ?: emptyList<NationTurn>()
+            nationTurns[nationId to officerLevel]?.sortedBy { t -> t.turnIdx } ?: emptyList<FactionTurn>()
         }
         doAnswer { invocation ->
-            val turn = invocation.arguments[0] as NationTurn
+            val turn = invocation.arguments[0] as FactionTurn
             nationTurns[turn.factionId to turn.officerLevel]?.removeIf { t -> t.id == turn.id }
             null
-        }.`when`(factionTurnRepository).delete(org.mockito.Mockito.any(NationTurn::class.java))
+        }.`when`(factionTurnRepository).delete(org.mockito.Mockito.any(FactionTurn::class.java))
         doAnswer { invocation ->
             val nationId = invocation.arguments[0] as Long
             val officerLevel = invocation.arguments[1] as Short
             nationTurns.remove(nationId to officerLevel)
             null
-        }.`when`(factionTurnRepository).deleteByNationIdAndOfficerLevel(org.mockito.Mockito.anyLong(), org.mockito.Mockito.anyShort())
+        }.`when`(factionTurnRepository).deleteByFactionIdAndOfficerLevel(org.mockito.Mockito.anyLong(), org.mockito.Mockito.anyShort())
 
         `when`(planetRepository.findById(org.mockito.Mockito.anyLong())).thenAnswer {
             Optional.ofNullable(cities[it.arguments[0] as Long])
@@ -287,7 +287,7 @@ class InMemoryTurnHarness {
             val nationId = it.arguments[0] as Long
             cities.values.filter { c -> c.factionId == nationId }
         }
-        `when`(planetRepository.save(org.mockito.Mockito.any(City::class.java))).thenAnswer {
+        `when`(planetRepository.save(org.mockito.Mockito.any(Planet::class.java))).thenAnswer {
             val city = it.arguments[0] as Planet
             cities[city.id] = city
             city
@@ -300,7 +300,7 @@ class InMemoryTurnHarness {
             val worldId = it.arguments[0] as Long
             nations.values.filter { n -> n.sessionId == worldId }
         }
-        `when`(factionRepository.save(org.mockito.Mockito.any(Nation::class.java))).thenAnswer {
+        `when`(factionRepository.save(org.mockito.Mockito.any(Faction::class.java))).thenAnswer {
             val nation = it.arguments[0] as Faction
             if (nation.id <= 0L) {
                 nation.id = (nations.keys.maxOrNull() ?: 0L) + 1L
@@ -316,13 +316,13 @@ class InMemoryTurnHarness {
 
         `when`(diplomacyRepository.findBySessionId(org.mockito.Mockito.anyLong())).thenReturn(emptyList())
         `when`(
-            diplomacyRepository.findByWorldIdAndSrcNationIdOrDestNationId(
+            diplomacyRepository.findBySessionIdAndSrcFactionIdOrDestFactionId(
                 org.mockito.Mockito.anyLong(),
                 org.mockito.Mockito.anyLong(),
                 org.mockito.Mockito.anyLong(),
             )
         ).thenReturn(emptyList())
-        `when`(diplomacyRepository.findByWorldIdAndIsDeadFalse(org.mockito.Mockito.anyLong())).thenReturn(emptyList())
+        `when`(diplomacyRepository.findBySessionIdAndIsDeadFalse(org.mockito.Mockito.anyLong())).thenReturn(emptyList<com.openlogh.entity.Diplomacy>())
         `when`(diplomacyRepository.save(org.mockito.Mockito.any(Diplomacy::class.java))).thenAnswer { it.arguments[0] }
     }
 }
