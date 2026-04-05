@@ -6,8 +6,8 @@ import org.hibernate.type.SqlTypes
 import java.time.OffsetDateTime
 
 @Entity
-@Table(name = "world_state")
-class WorldState(
+@Table(name = "session_state")
+class SessionState(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Short = 0,

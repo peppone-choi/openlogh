@@ -6,14 +6,14 @@ import org.hibernate.type.SqlTypes
 import java.time.OffsetDateTime
 
 @Entity
-@Table(name = "nation")
-class Nation(
+@Table(name = "faction")
+class Faction(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long = 0,
 
-    @Column(name = "world_id", nullable = false)
-    var worldId: Long = 0,
+    @Column(name = "session_id", nullable = false)
+    var sessionId: Long = 0,
 
     @Column(nullable = false)
     var name: String = "",
@@ -24,29 +24,29 @@ class Nation(
     @Column(nullable = false)
     var color: String = "",
 
-    @Column(name = "capital_city_id")
-    var capitalCityId: Long? = null,
+    @Column(name = "capital_planet_id")
+    var capitalPlanetId: Long? = null,
 
     @Column(nullable = false)
-    var gold: Int = 0,
+    var funds: Int = 0,
 
     @Column(nullable = false)
-    var rice: Int = 0,
+    var supplies: Int = 0,
 
-    @Column(nullable = false)
-    var bill: Short = 100,
+    @Column(name = "tax_rate", nullable = false)
+    var taxRate: Short = 100,
 
-    @Column(nullable = false)
-    var rate: Short = 15,
+    @Column(name = "conscription_rate", nullable = false)
+    var conscriptionRate: Short = 15,
 
-    @Column(name = "rate_tmp", nullable = false)
-    var rateTmp: Short = 15,
+    @Column(name = "conscription_rate_tmp", nullable = false)
+    var conscriptionRateTmp: Short = 15,
 
     @Column(name = "secret_limit", nullable = false)
     var secretLimit: Short = 3,
 
-    @Column(name = "chief_general_id", nullable = false)
-    var chiefGeneralId: Long = 0,
+    @Column(name = "chief_officer_id", nullable = false)
+    var chiefOfficerId: Long = 0,
 
     @Column(name = "scout_level", nullable = false)
     var scoutLevel: Short = 0,
@@ -60,20 +60,20 @@ class Nation(
     @Column(name = "surrender_limit", nullable = false)
     var surrenderLimit: Short = 72,
 
-    @Column(nullable = false)
-    var tech: Float = 0f,
+    @Column(name = "tech_level", nullable = false)
+    var techLevel: Float = 0f,
 
-    @Column(nullable = false)
-    var power: Int = 0,
+    @Column(name = "military_power", nullable = false)
+    var militaryPower: Int = 0,
 
-    @Column(nullable = false)
-    var gennum: Int = 0,
+    @Column(name = "officer_count", nullable = false)
+    var officerCount: Int = 0,
 
-    @Column(nullable = false)
-    var level: Short = 0,
+    @Column(name = "faction_rank", nullable = false)
+    var factionRank: Short = 0,
 
-    @Column(name = "type_code", nullable = false)
-    var typeCode: String = "che_중립",
+    @Column(name = "faction_type", nullable = false)
+    var factionType: String = "che_neutral",
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb", nullable = false)

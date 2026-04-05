@@ -10,14 +10,14 @@ import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
 
 @Entity
-@Table(name = "emperor")
-class Emperor(
+@Table(name = "sovereign")
+class Sovereign(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long = 0,
 
-    @Column(name = "server_id", nullable = false)
-    var serverId: String = "",
+    @Column(name = "session_id", nullable = false)
+    var sessionId: String = "",
 
     @Column(nullable = false)
     var phase: String = "",

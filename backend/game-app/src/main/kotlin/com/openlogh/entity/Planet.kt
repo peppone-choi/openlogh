@@ -5,14 +5,14 @@ import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
 
 @Entity
-@Table(name = "city")
-class City(
+@Table(name = "planet")
+class Planet(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long = 0,
 
-    @Column(name = "world_id", nullable = false)
-    var worldId: Long = 0,
+    @Column(name = "session_id", nullable = false)
+    var sessionId: Long = 0,
 
     @Column(nullable = false)
     var name: String = "",
@@ -23,8 +23,8 @@ class City(
     @Column(nullable = false)
     var level: Short = 0,
 
-    @Column(name = "nation_id", nullable = false)
-    var nationId: Long = 0,
+    @Column(name = "faction_id", nullable = false)
+    var factionId: Long = 0,
 
     @Column(name = "supply_state", nullable = false)
     var supplyState: Short = 1,
@@ -33,47 +33,47 @@ class City(
     var frontState: Short = 0,
 
     @Column(nullable = false)
-    var pop: Int = 0,
+    var population: Int = 0,
 
-    @Column(name = "pop_max", nullable = false)
-    var popMax: Int = 0,
-
-    @Column(nullable = false)
-    var agri: Int = 0,
-
-    @Column(name = "agri_max", nullable = false)
-    var agriMax: Int = 0,
+    @Column(name = "population_max", nullable = false)
+    var populationMax: Int = 0,
 
     @Column(nullable = false)
-    var comm: Int = 0,
+    var production: Int = 0,
 
-    @Column(name = "comm_max", nullable = false)
-    var commMax: Int = 0,
-
-    @Column(nullable = false)
-    var secu: Int = 0,
-
-    @Column(name = "secu_max", nullable = false)
-    var secuMax: Int = 0,
-
-    trust: Number = 0,
+    @Column(name = "production_max", nullable = false)
+    var productionMax: Int = 0,
 
     @Column(nullable = false)
-    var trade: Int = 100,
+    var commerce: Int = 0,
+
+    @Column(name = "commerce_max", nullable = false)
+    var commerceMax: Int = 0,
+
+    @Column(nullable = false)
+    var security: Int = 0,
+
+    @Column(name = "security_max", nullable = false)
+    var securityMax: Int = 0,
+
+    approval: Number = 0,
+
+    @Column(nullable = false)
+    var tradeRoute: Int = 100,
 
     dead: Number = 0,
 
+    @Column(name = "orbital_defense", nullable = false)
+    var orbitalDefense: Int = 0,
+
+    @Column(name = "orbital_defense_max", nullable = false)
+    var orbitalDefenseMax: Int = 0,
+
     @Column(nullable = false)
-    var def: Int = 0,
+    var fortress: Int = 0,
 
-    @Column(name = "def_max", nullable = false)
-    var defMax: Int = 0,
-
-    @Column(nullable = false)
-    var wall: Int = 0,
-
-    @Column(name = "wall_max", nullable = false)
-    var wallMax: Int = 0,
+    @Column(name = "fortress_max", nullable = false)
+    var fortressMax: Int = 0,
 
     @Column(name = "officer_set", nullable = false)
     var officerSet: Int = 0,
@@ -96,7 +96,7 @@ class City(
     var meta: MutableMap<String, Any> = mutableMapOf(),
 ) {
     @Column(nullable = false)
-    var trust: Float = trust.toFloat()
+    var approval: Float = approval.toFloat()
 
     @Column(nullable = false)
     var dead: Int = dead.toInt()

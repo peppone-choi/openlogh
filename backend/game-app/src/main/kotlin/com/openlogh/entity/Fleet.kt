@@ -6,20 +6,20 @@ import org.hibernate.type.SqlTypes
 import java.time.OffsetDateTime
 
 @Entity
-@Table(name = "troop")
-class Troop(
+@Table(name = "fleet")
+class Fleet(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long = 0,
 
-    @Column(name = "world_id", nullable = false)
-    var worldId: Long = 0,
+    @Column(name = "session_id", nullable = false)
+    var sessionId: Long = 0,
 
-    @Column(name = "leader_general_id", nullable = false)
-    var leaderGeneralId: Long = 0,
+    @Column(name = "leader_officer_id", nullable = false)
+    var leaderOfficerId: Long = 0,
 
-    @Column(name = "nation_id", nullable = false)
-    var nationId: Long = 0,
+    @Column(name = "faction_id", nullable = false)
+    var factionId: Long = 0,
 
     @Column(nullable = false)
     var name: String = "",
