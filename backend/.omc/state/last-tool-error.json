@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"cd \\\"C:/Users/by0ng/OneDrive/Desktop/my_projets/opensamguk\\\" && node \\\"$HOME/.claude/get-shit-done/bin/gsd-tools.cjs\\\" state complete-phase --phase \\\"04\\\" 2>&1; node \\\"$HOME/.claude/get-sh...",
+  "error": "Exit code 1\n{\n  \"config\": {\n    \"model_profile\": \"quality\",\n    \"commit_docs\": true,\n    \"search_gitignored\": false,\n    \"branching_strategy\": \"none\",\n    \"phase_branch_template\": \"gsd/phase-{phase}-{slug}\",\n    \"milestone_branch_template\": \"gsd/{milestone}-{slug}\",\n    \"quick_branch_template\": null,\n    \"research\": true,\n    \"plan_checker\": true,\n    \"verifier\": true,\n    \"nyquist_validation\": true,\n    \"parallelization\": true,\n    \"brave_search\": false,\n    \"firecrawl\": false,\n    \"exa_search\"...",
+  "timestamp": "2026-04-01T07:26:48.818Z",
+  "retry_count": 1
+}

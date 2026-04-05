@@ -27,7 +27,6 @@ import org.springframework.transaction.annotation.Transactional
 import java.time.OffsetDateTime
 
 @Service
-@Transactional
 class RealtimeService(
     private val generalRepository: GeneralRepository,
     private val generalTurnRepository: GeneralTurnRepository,

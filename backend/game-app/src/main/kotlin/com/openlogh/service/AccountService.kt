@@ -8,7 +8,6 @@ import org.springframework.transaction.annotation.Transactional
 import java.time.OffsetDateTime
 
 @Service
-@Transactional
 class AccountService(
     private val appUserRepository: AppUserRepository,
     private val generalRepository: GeneralRepository,
@@ -130,7 +129,6 @@ class AccountService(
         return true
     }
 
-    @Transactional(readOnly = true)
     fun getDetailedInfo(loginId: String): Map<String, Any?>? {
         val user = appUserRepository.findByLoginId(loginId) ?: return null
         val oauthEntry = (user.meta["oauthProviders"] as? List<*>)

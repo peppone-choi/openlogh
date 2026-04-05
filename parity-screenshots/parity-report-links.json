@@ -1,0 +1,9 @@
+{
+    "section": "links",
+    "timestamp": "2026-03-06T03:03:39.698Z",
+    "results": [],
+    "screenshots": {
+        "legacy": "../parity-screenshots/parity-links-legacy.png",
+        "new": "../parity-screenshots/parity-links-new.png"
+    }
+}

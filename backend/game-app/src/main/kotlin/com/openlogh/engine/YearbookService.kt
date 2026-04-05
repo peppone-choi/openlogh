@@ -18,7 +18,6 @@ import kotlin.math.roundToInt
 import kotlin.math.sqrt
 
 @Service
-@Transactional
 class YearbookService(
     private val worldStateRepository: WorldStateRepository,
     private val cityRepository: CityRepository,

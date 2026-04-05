@@ -50,7 +50,6 @@ import kotlin.math.roundToLong
  * 8. NPC 스폰, 통일 체크
  */
 @Service
-@Transactional
 class TurnService @Autowired constructor(
     private val worldStateRepository: WorldStateRepository,
     private val generalRepository: GeneralRepository,

@@ -10,7 +10,6 @@ import org.springframework.transaction.annotation.Transactional
  * Legacy: j_adjust_icon.php
  */
 @Service
-@Transactional
 class IconSyncService(
     private val generalRepository: GeneralRepository,
     private val appUserRepository: AppUserRepository,

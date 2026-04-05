@@ -7,14 +7,11 @@ import org.springframework.transaction.annotation.Transactional
 import java.time.OffsetDateTime
 
 @Service
-@Transactional
 class SelectPoolService(
     private val selectPoolRepository: SelectPoolRepository,
 ) {
-    @Transactional(readOnly = true)
     fun listAll(worldId: Long): List<SelectPool> = selectPoolRepository.findByWorldId(worldId)
 
-    @Transactional(readOnly = true)
     fun listAvailable(worldId: Long): List<SelectPool> = selectPoolRepository.findByWorldIdAndGeneralIdIsNull(worldId)
 
     @Transactional

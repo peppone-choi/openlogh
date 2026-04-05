@@ -3,7 +3,6 @@ package com.openlogh.service
 import com.openlogh.entity.General
 import com.openlogh.repository.GeneralRepository
 import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Transactional
 import kotlin.random.Random
 
 /**
@@ -11,7 +10,6 @@ import kotlin.random.Random
  * Used by strategic commands like 의병모집 to spawn new NPC generals.
  */
 @Service
-@Transactional
 class GeneralPoolService(
     private val generalRepository: GeneralRepository,
 ) {

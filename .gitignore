@@ -28,18 +28,12 @@ backend/.gradle-home/
 backend/**/.gradle/
 backend/**/.kotlin/
 *.jar
-!backend/gradle/wrapper/gradle-wrapper.jar
 *.war
 
 # Frontend build
 frontend/.next/
 frontend/node_modules/
 frontend/out/
-
-# Plugin state
-.bkit/
-.omc/
-**/.omc/
 
 # Local automation artifacts
 .playwright-mcp/
@@ -81,5 +75,3 @@ ref_core2026/
 # Legacy core (parity reference, not project source)
 legacy-core/
 legacy-docker-src/
-logh-game/installed/drm_mdx.arc
-.claude/worktrees/

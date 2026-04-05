@@ -20,7 +20,6 @@ import kotlin.math.roundToInt
 import kotlin.random.Random
 
 @Service
-@Transactional
 class GeneralService(
     private val generalRepository: GeneralRepository,
     private val appUserRepository: AppUserRepository,
@@ -58,12 +57,10 @@ class GeneralService(
 
     private val availableSpecialCodes: Set<String> = TraitSpecRegistry.war.map { it.key }.toSet()
 
-    @Transactional(readOnly = true)
     fun listByWorld(worldId: Long): List<General> {
         return generalRepository.findByWorldId(worldId)
     }
 
-    @Transactional(readOnly = true)
     fun getById(id: Long): General? {
         return generalRepository.findById(id).orElse(null)
     }
@@ -85,12 +82,10 @@ class GeneralService(
         return general
     }
 
-    @Transactional(readOnly = true)
     fun listByNation(nationId: Long): List<General> {
         return generalRepository.findByNationId(nationId)
     }
 
-    @Transactional(readOnly = true)
     fun listByCity(cityId: Long): List<General> {
         return generalRepository.findByCityId(cityId)
     }
@@ -247,7 +242,6 @@ class GeneralService(
         return saved
     }
 
-    @Transactional(readOnly = true)
     fun listAvailableNpcs(worldId: Long): List<General> {
         return generalRepository.findByWorldId(worldId)
             .filter { it.npcState.toInt() == 1 && it.userId == null }
@@ -264,7 +258,6 @@ class GeneralService(
         return generalRepository.save(general)
     }
 
-    @Transactional(readOnly = true)
     fun listPool(worldId: Long): List<General> {
         return generalRepository.findByWorldId(worldId)
             .filter { it.npcState.toInt() == 5 && it.userId == null }
@@ -340,13 +333,11 @@ class GeneralService(
         return generalRepository.save(general)
     }
 
-    @Transactional(readOnly = true)
     fun getMyActiveGeneral(loginId: String): General? {
         val userId = getCurrentUserId(loginId) ?: return null
         return generalRepository.findByUserId(userId).firstOrNull { it.npcState.toInt() == 0 }
     }
 
-    @Transactional(readOnly = true)
     fun getCurrentUserId(loginId: String): Long? {
         return appUserRepository.findByLoginId(loginId)?.id
             ?: appUserRepository.findByLoginIdIgnoreCase(loginId.trim())?.id

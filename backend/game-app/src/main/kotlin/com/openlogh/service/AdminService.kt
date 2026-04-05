@@ -17,7 +17,6 @@ import org.springframework.transaction.annotation.Transactional
 import java.time.OffsetDateTime
 
 @Service
-@Transactional
 class AdminService(
     private val worldStateRepository: WorldStateRepository,
     private val generalRepository: GeneralRepository,
@@ -38,7 +37,6 @@ class AdminService(
         const val INFINITE_KILL_TURN = 8000
     }
 
-    @Transactional(readOnly = true)
     fun getDashboard(worldId: Long): AdminDashboard {
         val worlds = worldStateRepository.findAll()
         val world = worlds.firstOrNull { it.id.toLong() == worldId }
@@ -111,7 +109,6 @@ class AdminService(
         return true
     }
 
-    @Transactional(readOnly = true)
     fun listAllGenerals(worldId: Long): List<AdminGeneralSummary> {
         return generalRepository.findByWorldId(worldId).map {
             AdminGeneralSummary(
@@ -136,7 +133,6 @@ class AdminService(
         return true
     }
 
-    @Transactional(readOnly = true)
     fun getStatistics(worldId: Long): List<NationStatistic> {
         val nations = nationRepository.findByWorldId(worldId)
         return nations.map { nation ->
@@ -159,12 +155,10 @@ class AdminService(
         }
     }
 
-    @Transactional(readOnly = true)
     fun getGeneralLogs(worldId: Long, id: Long): List<Any> {
         return messageRepository.findByWorldIdAndMailboxCodeAndDestIdOrderBySentAtDesc(worldId, "general_action", id)
     }
 
-    @Transactional(readOnly = true)
     fun getDiplomacyMatrix(worldId: Long): List<Any> {
         return diplomacyRepository.findByWorldId(worldId)
     }
@@ -384,7 +378,6 @@ class AdminService(
         generalTurnRepository.save(turn)
     }
 
-    @Transactional(readOnly = true)
     fun listUsers(): List<AdminUserSummary> {
         return appUserRepository.findAll().map {
             AdminUserSummary(

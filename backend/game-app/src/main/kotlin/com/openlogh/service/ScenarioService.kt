@@ -18,7 +18,6 @@ import java.time.OffsetDateTime
 import kotlin.random.Random
 
 @Service
-@Transactional
 class ScenarioService(
     private val objectMapper: ObjectMapper,
     @Value("\${game.commit-sha:local}") private val defaultCommitSha: String,

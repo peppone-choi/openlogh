@@ -9,12 +9,10 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 @Service
-@Transactional
 class TroopService(
     private val troopRepository: TroopRepository,
     private val generalRepository: GeneralRepository,
 ) {
-    @Transactional(readOnly = true)
     fun listByNation(nationId: Long): List<TroopWithMembers> {
         val troops = troopRepository.findByNationId(nationId)
         return troops.map { troop ->

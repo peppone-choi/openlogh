@@ -1,0 +1,26 @@
+{
+    "mcpServers": {
+        "context7": {
+            "command": "cmd",
+            "args": ["/c", "npx", "-y", "@upstash/context7-mcp@latest"]
+        },
+        "sequential-thinking": {
+            "command": "cmd",
+            "args": ["/c", "npx", "-y", "@modelcontextprotocol/server-sequential-thinking"]
+        },
+        "playwright": {
+            "command": "cmd",
+            "args": ["/c", "npx", "-y", "@playwright/mcp@latest"]
+        },
+        "postgres": {
+            "command": "cmd",
+            "args": [
+                "/c",
+                "npx",
+                "-y",
+                "@modelcontextprotocol/server-postgres",
+                "postgresql://opensam:opensam123@localhost:5432/opensam"
+            ]
+        }
+    }
+}

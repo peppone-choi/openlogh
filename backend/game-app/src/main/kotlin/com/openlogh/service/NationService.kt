@@ -16,7 +16,6 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.util.HtmlUtils
 @Service
-@Transactional
 class NationService(
     private val nationRepository: NationRepository,
     private val generalRepository: GeneralRepository,
@@ -35,12 +34,10 @@ class NationService(
         val availableCnt: Int? = null,
     )
 
-    @Transactional(readOnly = true)
     fun listByWorld(worldId: Long): List<Nation> {
         return nationRepository.findByWorldId(worldId)
     }
 
-    @Transactional(readOnly = true)
     fun getById(id: Long): Nation? {
         return nationRepository.findById(id).orElse(null)
     }
@@ -54,7 +51,6 @@ class NationService(
 
     // -- Policy --
 
-    @Transactional(readOnly = true)
     fun getPolicy(nationId: Long): NationPolicyInfo? {
         val nation = nationRepository.findById(nationId).orElse(null) ?: return null
         return NationPolicyInfo(
@@ -80,7 +76,6 @@ class NationService(
         return true
     }
 
-    @Transactional(readOnly = true)
     fun verifyPolicyAccess(nationId: Long, loginId: String): Boolean {
         val nation = nationRepository.findById(nationId).orElse(null) ?: return false
         val user = appUserRepository.findByLoginId(loginId) ?: return false
@@ -99,7 +94,6 @@ class NationService(
         return general.officerLevel >= 5 || general.permission == "ambassador"
     }
 
-    @Transactional(readOnly = true)
     fun resolvePolicyActor(nationId: Long, loginId: String): General? {
         val nation = nationRepository.findById(nationId).orElse(null) ?: return null
         val user = appUserRepository.findByLoginId(loginId) ?: return null
@@ -186,7 +180,6 @@ class NationService(
 
     // -- Officers --
 
-    @Transactional(readOnly = true)
     fun getOfficers(nationId: Long): List<OfficerInfo> {
         val generals = generalRepository.findByNationId(nationId)
         return generals
@@ -252,7 +245,6 @@ class NationService(
 
     // -- NPC Policy --
 
-    @Transactional(readOnly = true)
     fun getNpcPolicy(nationId: Long): Map<String, Any>? {
         val nation = nationRepository.findById(nationId).orElse(null) ?: return null
         val legacyPolicy = readStringAnyMap(nation.meta["npcPolicy"])

@@ -7,7 +7,6 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 @Service
-@Transactional
 class RecordService(
     private val recordRepository: RecordRepository,
     private val generalRepository: GeneralRepository,
@@ -48,7 +47,6 @@ class RecordService(
         )
     }
 
-    @Transactional(readOnly = true)
     fun getGeneralActions(generalId: Long, beforeId: Long? = null, limit: Int? = null): List<Record> {
         val records = if (beforeId != null) {
             recordRepository.findByDestIdAndRecordTypeAndIdLessThanOrderByCreatedAtDesc(
@@ -62,7 +60,6 @@ class RecordService(
         return applyLimit(records, limit)
     }
 
-    @Transactional(readOnly = true)
     fun getGeneralRecords(generalId: Long, beforeId: Long? = null, limit: Int? = null): List<Record> {
         val records = if (beforeId != null) {
             recordRepository.findByDestIdAndRecordTypeAndIdLessThanOrderByCreatedAtDesc(
@@ -76,7 +73,6 @@ class RecordService(
         return applyLimit(records, limit)
     }
 
-    @Transactional(readOnly = true)
     fun getWorldRecords(worldId: Long, beforeId: Long? = null, limit: Int? = null): List<Record> {
         val records = if (beforeId != null) {
             recordRepository.findByWorldIdAndRecordTypeAndIdLessThanOrderByCreatedAtDesc(
@@ -90,7 +86,6 @@ class RecordService(
         return applyLimit(records, limit)
     }
 
-    @Transactional(readOnly = true)
     fun getWorldHistory(worldId: Long, beforeId: Long? = null, limit: Int? = null): List<Record> {
         val records = if (beforeId != null) {
             recordRepository.findByWorldIdAndRecordTypeAndIdLessThanOrderByCreatedAtDesc(
@@ -104,7 +99,6 @@ class RecordService(
         return applyLimit(records, limit)
     }
 
-    @Transactional(readOnly = true)
     fun getNationHistory(nationId: Long, beforeId: Long? = null, limit: Int? = null): List<Record> {
         val records = if (beforeId != null) {
             recordRepository.findByDestIdAndRecordTypeAndIdLessThanOrderByCreatedAtDesc(
@@ -118,7 +112,6 @@ class RecordService(
         return applyLimit(records, limit)
     }
 
-    @Transactional(readOnly = true)
     fun getBattleResults(generalId: Long, beforeId: Long? = null, limit: Int? = null): List<Record> {
         val records = if (beforeId != null) {
             recordRepository.findByDestIdAndRecordTypeAndIdLessThanOrderByCreatedAtDesc(
@@ -132,7 +125,6 @@ class RecordService(
         return applyLimit(records, limit)
     }
 
-    @Transactional(readOnly = true)
     fun getBattleDetails(generalId: Long, beforeId: Long? = null, limit: Int? = null): List<Record> {
         val records = if (beforeId != null) {
             recordRepository.findByDestIdAndRecordTypeAndIdLessThanOrderByCreatedAtDesc(
@@ -158,7 +150,6 @@ class RecordService(
         val logs: List<LogEntry> = emptyList(),
     )
 
-    @Transactional(readOnly = true)
     fun getOldLogs(generalId: Long, targetId: Long, type: String, toId: Long): LogResult {
         if (type !in listOf("generalAction", "battleResult", "battleDetail")) {
             return LogResult(false, "요청 타입이 올바르지 않습니다.")

@@ -1,0 +1,101 @@
+{
+  "updatedAt": "2026-04-01T09:04:06.831Z",
+  "missions": [
+    {
+      "id": "session:02f73c0e-d893-4bd9-897e-9dad606485a0:none",
+      "source": "session",
+      "name": "none",
+      "objective": "Session mission",
+      "createdAt": "2026-03-31T14:08:12.479Z",
+      "updatedAt": "2026-03-31T14:10:56.665Z",
+      "status": "done",
+      "workerCount": 1,
+      "taskCounts": {
+        "total": 1,
+        "pending": 0,
+        "blocked": 0,
+        "inProgress": 0,
+        "completed": 1,
+        "failed": 0
+      },
+      "agents": [
+        {
+          "name": "gsd-phase-researcher:ab50eaa",
+          "role": "gsd-phase-researcher",
+          "ownership": "ab50eaa4192b09eda",
+          "status": "done",
+          "currentStep": null,
+          "latestUpdate": "completed",
+          "completedSummary": null,
+          "updatedAt": "2026-03-31T14:10:56.665Z"
+        }
+      ],
+      "timeline": [
+        {
+          "id": "session-start:ab50eaa4192b09eda:2026-03-31T14:08:12.479Z",
+          "at": "2026-03-31T14:08:12.479Z",
+          "kind": "update",
+          "agent": "gsd-phase-researcher:ab50eaa",
+          "detail": "started gsd-phase-researcher:ab50eaa",
+          "sourceKey": "session-start:ab50eaa4192b09eda"
+        },
+        {
+          "id": "session-stop:ab50eaa4192b09eda:2026-03-31T14:10:56.665Z",
+          "at": "2026-03-31T14:10:56.665Z",
+          "kind": "completion",
+          "agent": "gsd-phase-researcher:ab50eaa",
+          "detail": "completed",
+          "sourceKey": "session-stop:ab50eaa4192b09eda"
+        }
+      ]
+    },
+    {
+      "id": "session:89e08555-1fc5-41b8-93ec-4a47c17d366e:none",
+      "source": "session",
+      "name": "none",
+      "objective": "Session mission",
+      "createdAt": "2026-04-01T08:56:05.811Z",
+      "updatedAt": "2026-04-01T09:04:06.831Z",
+      "status": "done",
+      "workerCount": 1,
+      "taskCounts": {
+        "total": 1,
+        "pending": 0,
+        "blocked": 0,
+        "inProgress": 0,
+        "completed": 1,
+        "failed": 0
+      },
+      "agents": [
+        {
+          "name": "gsd-planner:a3885ed",
+          "role": "gsd-planner",
+          "ownership": "a3885ed4602a49e45",
+          "status": "done",
+          "currentStep": null,
+          "latestUpdate": "completed",
+          "completedSummary": null,
+          "updatedAt": "2026-04-01T09:04:06.831Z"
+        }
+      ],
+      "timeline": [
+        {
+          "id": "session-start:a3885ed4602a49e45:2026-04-01T08:56:05.811Z",
+          "at": "2026-04-01T08:56:05.811Z",
+          "kind": "update",
+          "agent": "gsd-planner:a3885ed",
+          "detail": "started gsd-planner:a3885ed",
+          "sourceKey": "session-start:a3885ed4602a49e45"
+        },
+        {
+          "id": "session-stop:a3885ed4602a49e45:2026-04-01T09:04:06.831Z",
+          "at": "2026-04-01T09:04:06.831Z",
+          "kind": "completion",
+          "agent": "gsd-planner:a3885ed",
+          "detail": "completed",
+          "sourceKey": "session-stop:a3885ed4602a49e45"
+        }
+      ]
+    }
+  ]
+}

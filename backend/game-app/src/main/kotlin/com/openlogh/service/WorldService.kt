@@ -13,7 +13,6 @@ import org.springframework.transaction.annotation.Transactional
 import java.time.OffsetDateTime
 
 @Service
-@Transactional
 class WorldService(
     private val worldStateRepository: WorldStateRepository,
     private val nationRepository: NationRepository,
@@ -67,12 +66,10 @@ class WorldService(
 
     // ── Basic CRUD ──
 
-    @Transactional(readOnly = true)
     fun listWorlds(): List<WorldState> {
         return worldStateRepository.findAll()
     }
 
-    @Transactional(readOnly = true)
     fun getWorld(id: Short): WorldState? {
         return worldStateRepository.findById(id).orElse(null)
     }
@@ -94,7 +91,6 @@ class WorldService(
      * Get the current game phase based on world state.
      * Legacy parity: opening period, normal play, ending (single nation remaining).
      */
-    @Transactional(readOnly = true)
     fun getGamePhase(world: WorldState): String {
         val finished = world.config["finished"] as? Boolean ?: false
         if (finished) return PHASE_FINISHED
@@ -140,7 +136,6 @@ class WorldService(
     /**
      * Get the current season name.
      */
-    @Transactional(readOnly = true)
     fun getCurrentSeason(world: WorldState): String {
         return SEASON_BY_MONTH[world.currentMonth.toInt()] ?: "봄"
     }
@@ -149,7 +144,6 @@ class WorldService(
      * Get the allowed tech level based on elapsed years.
      * Legacy: initialAllowedTechLevel + (yearsElapsed / techLevelIncYear)
      */
-    @Transactional(readOnly = true)
     fun getAllowedTechLevel(world: WorldState): Int {
         val startYear = (world.config["startYear"] as? Number)?.toInt() ?: world.currentYear.toInt()
         val yearsElapsed = (world.currentYear.toInt() - startYear).coerceAtLeast(0)
@@ -179,7 +173,6 @@ class WorldService(
     /**
      * Get the map code for the world.
      */
-    @Transactional(readOnly = true)
     fun getMapCode(world: WorldState): String {
         return (world.config["mapCode"] as? String) ?: "che"
     }
@@ -187,7 +180,6 @@ class WorldService(
     /**
      * Get the unit set for the world.
      */
-    @Transactional(readOnly = true)
     fun getUnitSet(world: WorldState): String {
         return (world.config["unitSet"] as? String) ?: "che"
     }
@@ -197,7 +189,6 @@ class WorldService(
     /**
      * Get total population across all cities in the world.
      */
-    @Transactional(readOnly = true)
     fun getTotalPopulation(worldId: Long): Long {
         return cityRepository.findByWorldId(worldId).sumOf { it.pop.toLong() }
     }
@@ -205,7 +196,6 @@ class WorldService(
     /**
      * Get count of active nations (level > 0).
      */
-    @Transactional(readOnly = true)
     fun getActiveNationCount(worldId: Long): Int {
         return nationRepository.findByWorldId(worldId).count { it.level > 0 }
     }
@@ -213,7 +203,6 @@ class WorldService(
     /**
      * Get count of active generals (not in pool, npcState != 5).
      */
-    @Transactional(readOnly = true)
     fun getActiveGeneralCount(worldId: Long): Int {
         return generalRepository.findByWorldId(worldId).count { it.npcState.toInt() != 5 }
     }
@@ -221,7 +210,6 @@ class WorldService(
     /**
      * Get count of human players (userId != null).
      */
-    @Transactional(readOnly = true)
     fun getHumanPlayerCount(worldId: Long): Int {
         return generalRepository.findByWorldId(worldId).count { it.userId != null }
     }
@@ -230,7 +218,6 @@ class WorldService(
      * Check if any wars are active in the world.
      * A nation is at war if warState > 0.
      */
-    @Transactional(readOnly = true)
     fun isAtWar(worldId: Long): Boolean {
         return nationRepository.findByWorldId(worldId).any { it.warState > 0 }
     }
@@ -238,7 +225,6 @@ class WorldService(
     /**
      * Get total cities and cities per nation.
      */
-    @Transactional(readOnly = true)
     fun getCityDistribution(worldId: Long): Map<Long, Int> {
         return cityRepository.findByWorldId(worldId)
             .filter { it.nationId != 0L }
@@ -322,7 +308,6 @@ class WorldService(
     /**
      * Get all snapshots for a world, ordered by creation time.
      */
-    @Transactional(readOnly = true)
     fun getSnapshots(worldId: Long): List<WorldHistory> {
         return worldHistoryRepository.findByWorldIdAndEventType(worldId, "snapshot")
     }
@@ -330,7 +315,6 @@ class WorldService(
     /**
      * Get the latest snapshot for a world.
      */
-    @Transactional(readOnly = true)
     fun getLatestSnapshot(worldId: Long): WorldHistory? {
         return worldHistoryRepository.findByWorldIdAndEventType(worldId, "snapshot")
             .maxByOrNull { it.createdAt }
@@ -341,7 +325,6 @@ class WorldService(
     /**
      * Get a comprehensive world summary.
      */
-    @Transactional(readOnly = true)
     fun getWorldSummary(worldId: Short): Map<String, Any>? {
         val world = getWorld(worldId) ?: return null
         val wid = world.id.toLong()

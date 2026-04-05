@@ -8,7 +8,6 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 @Service
-@Transactional
 class HistoryService(
     private val recordRepository: RecordRepository,
     private val yearbookHistoryRepository: YearbookHistoryRepository,
@@ -44,29 +43,24 @@ class HistoryService(
         )
     }
 
-    @Transactional(readOnly = true)
     fun getWorldHistory(worldId: Long): List<Record> {
         return recordRepository.findByWorldIdAndRecordTypeOrderByCreatedAtDesc(worldId, "world_history")
     }
 
-    @Transactional(readOnly = true)
     fun getWorldRecords(worldId: Long): List<Record> {
         return recordRepository.findByWorldIdAndRecordTypeOrderByCreatedAtDesc(worldId, "world_record")
     }
 
-    @Transactional(readOnly = true)
     fun getGeneralRecords(generalId: Long): List<Record> {
         return recordRepository.findByDestIdAndRecordTypeOrderByCreatedAtDesc(generalId, "general_action")
     }
 
-    @Transactional(readOnly = true)
     fun getByYearMonth(worldId: Long, year: Int, month: Int): List<Record> {
         return recordRepository.findByWorldIdAndRecordTypeInAndYearAndMonthOrderByCreatedAtDesc(
             worldId, listOf("world_history", "world_record"), year, month
         )
     }
 
-    @Transactional(readOnly = true)
     fun getYearbook(worldId: Long, year: Int): YearbookHistory? {
         val yearShort = year.toShort()
         for (month in 12 downTo 1) {

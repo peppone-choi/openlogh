@@ -3,14 +3,11 @@ package com.openlogh.service
 import com.openlogh.entity.Message
 import com.openlogh.repository.MessageRepository
 import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Transactional
 
 @Service
-@Transactional
 class DiplomacyLetterService(
     private val messageRepository: MessageRepository,
 ) {
-    @Transactional(readOnly = true)
     fun listLetters(nationId: Long): List<Message> {
         return messageRepository.findByDestIdAndMailboxCodeOrderBySentAtDesc(nationId, "diplomacy_letter")
     }

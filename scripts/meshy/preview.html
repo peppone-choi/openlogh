@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>Meshy.ai GLB Preview</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #1a1a2e; color: #eee; font-family: -apple-system, sans-serif; }
+  .header { padding: 12px 20px; background: #16213e; }
+  .header h1 { font-size: 16px; margin-bottom: 8px; }
+  .tabs { display: flex; gap: 8px; margin-bottom: 8px; }
+  .tab { padding: 6px 14px; border: 1px solid #444; border-radius: 4px; background: #0f3460; color: #eee; cursor: pointer; font-size: 12px; }
+  .tab.active { background: #e94560; border-color: #e94560; }
+  .models { display: flex; gap: 6px; flex-wrap: wrap; }
+  .btn { padding: 5px 10px; border: 1px solid #333; border-radius: 4px; background: #1a1a3e; color: #ccc; cursor: pointer; font-size: 11px; }
+  .btn:hover { background: #2a2a5e; }
+  .btn.active { background: #0f3460; border-color: #4a90d9; color: #fff; }
+  .viewer { width: 100%; height: calc(100vh - 110px); }
+  .info { position: fixed; bottom: 12px; left: 12px; background: rgba(0,0,0,0.75); padding: 10px 14px; border-radius: 6px; font-size: 12px; line-height: 1.5; }
+  .info span { color: #e94560; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>Meshy.ai GLB Preview — v1 / v2 / Units</h1>
+  <div class="tabs" id="tabs"></div>
+  <div class="models" id="models"></div>
+</div>
+<div class="viewer" id="viewer"></div>
+<div class="info" id="info">Select a model...</div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+  }
+}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+const CATEGORIES = {
+  '최종 성곽': { dir: 'output-final', items: ['spot_naval','spot_camp','spot_gate','spot_tribal','city_small','city_medium','city_large','city_grand'] },
+  'v1 성곽': { dir: 'output', items: ['spot_naval','spot_camp','spot_gate','spot_tribal','city_small','city_medium','city_large','city_grand'] },
+  'v2 성곽': { dir: 'output-v2', items: ['spot_naval','spot_camp','spot_gate','spot_tribal','city_small','city_medium','city_large','city_grand'] },
+  '유닛': { dir: 'output', items: [] },
+  '지형 데코': { dir: 'output-terrain', items: ['tree_pine','tree_broad','rock_cluster','grass_patch','reed_water'] },
+};
+
+// 유닛 목록은 동적으로 탐지
+const KNOWN_UNITS = [
+  'unit_infantry','unit_qingzhou','unit_marine','unit_assassin','unit_guard','unit_rattan','unit_baekyi',
+  'unit_archer','unit_mounted_archer','unit_repeating_crossbow','unit_longbow','unit_crossbow',
+  'unit_cavalry','unit_white_horse','unit_heavy_cavalry','unit_shock_cavalry','unit_iron_cavalry',
+  'unit_hunter_cavalry','unit_beast_cavalry','unit_tiger_cavalry',
+  'unit_ghost','unit_divine_ghost','unit_white_ghost','unit_black_ghost','unit_evil_ghost',
+  'unit_south_ghost','unit_yellow_ghost','unit_heaven_ghost','unit_demon_ghost',
+  'unit_ballista','unit_battering_ram','unit_catapult','unit_wooden_ox',
+  'unit_shaman','unit_rattan_base','unit_navy','unit_flag',
+];
+CATEGORIES['유닛'].items = KNOWN_UNITS;
+
+const container = document.getElementById('viewer');
+const infoEl = document.getElementById('info');
+const tabsEl = document.getElementById('tabs');
+const modelsEl = document.getElementById('models');
+
+// Renderer
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(container.clientWidth, container.clientHeight);
+renderer.setPixelRatio(window.devicePixelRatio);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.2;
+container.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x1a1a2e);
+
+const camera = new THREE.PerspectiveCamera(50, container.clientWidth / container.clientHeight, 0.1, 1000);
+camera.position.set(5, 4, 8);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.05;
+controls.target.set(0, 1, 0);
+
+scene.add(new THREE.AmbientLight(0xfff8e7, 0.8));
+const sun = new THREE.DirectionalLight(0xffe4b5, 1.4);
+sun.position.set(10, 20, 5);
+scene.add(sun);
+scene.add(new THREE.HemisphereLight(0x87CEEB, 0x8B7355, 0.3));
+scene.add(new THREE.GridHelper(20, 20, 0x333355, 0x222244));
+
+const loader = new GLTFLoader();
+let currentModel = null;
+let currentCat = 'v1 성곽';
+
+function buildTabs() {
+  tabsEl.innerHTML = '';
+  for (const cat of Object.keys(CATEGORIES)) {
+    const el = document.createElement('div');
+    el.className = 'tab' + (cat === currentCat ? ' active' : '');
+    el.textContent = cat;
+    el.onclick = () => { currentCat = cat; buildTabs(); buildModels(); };
+    tabsEl.appendChild(el);
+  }
+}
+
+function buildModels() {
+  modelsEl.innerHTML = '';
+  const { items } = CATEGORIES[currentCat];
+  for (const name of items) {
+    const el = document.createElement('div');
+    el.className = 'btn';
+    el.textContent = name.replace('unit_','').replace('spot_','').replace('city_','');
+    el.onclick = () => {
+      modelsEl.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
+      el.classList.add('active');
+      loadModel(CATEGORIES[currentCat].dir, name);
+    };
+    modelsEl.appendChild(el);
+  }
+}
+
+function loadModel(dir, name) {
+  infoEl.textContent = `Loading ${name}.glb ...`;
+  if (currentModel) {
+    scene.remove(currentModel);
+    currentModel.traverse(c => {
+      if (c.geometry) c.geometry.dispose();
+      if (c.material) { (Array.isArray(c.material) ? c.material : [c.material]).forEach(m => m.dispose()); }
+    });
+  }
+  const t0 = performance.now();
+  loader.load(`${dir}/${name}.glb`, (gltf) => {
+    const model = gltf.scene;
+    const box = new THREE.Box3().setFromObject(model);
+    const center = box.getCenter(new THREE.Vector3());
+    const size = box.getSize(new THREE.Vector3());
+    const s = 5 / Math.max(size.x, size.y, size.z);
+    model.position.sub(center).multiplyScalar(s);
+    model.scale.setScalar(s);
+    model.position.y += (size.y * s) / 2;
+    scene.add(model);
+    currentModel = model;
+    let tri = 0;
+    model.traverse(c => { if (c.isMesh && c.geometry) { tri += (c.geometry.index ? c.geometry.index.count / 3 : c.geometry.attributes.position.count / 3); }});
+    infoEl.innerHTML = `<span>${name}.glb</span> [${dir}] | ${(performance.now()-t0).toFixed(0)}ms | ${tri.toLocaleString()} tris | ${size.x.toFixed(1)}x${size.y.toFixed(1)}x${size.z.toFixed(1)}`;
+  }, (p) => {
+    if (p.total) infoEl.textContent = `Loading ${name}.glb ... ${((p.loaded/p.total)*100).toFixed(0)}% (${(p.loaded/1048576).toFixed(1)}MB)`;
+  }, () => { infoEl.textContent = `${name}.glb not found (not yet generated?)`; });
+}
+
+buildTabs();
+buildModels();
+
+function animate() { requestAnimationFrame(animate); controls.update(); renderer.render(scene, camera); }
+animate();
+window.addEventListener('resize', () => { camera.aspect = container.clientWidth/container.clientHeight; camera.updateProjectionMatrix(); renderer.setSize(container.clientWidth, container.clientHeight); });
+</script>
+</body>
+</html>
