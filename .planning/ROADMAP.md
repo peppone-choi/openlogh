@@ -42,7 +42,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 Plans:
 - [x] 01-01-PLAN.md — V28 Flyway migration (table/column/index renames + new stat columns)
 - [x] 01-02-PLAN.md — OfficerStat enum (PCP/MCP grouping) + RankTitle resolver (11-tier)
-- [ ] 01-03-PLAN.md — Core entity renames (General->Officer, City->Planet, Nation->Faction, Troop->Fleet, Emperor->Sovereign, WorldState->SessionState)
+- [x] 01-03-PLAN.md — Core entity renames (General->Officer, City->Planet, Nation->Faction, Troop->Fleet, Emperor->Sovereign, WorldState->SessionState)
 - [ ] 01-04-PLAN.md — Gateway SessionState + auxiliary entity renames (turns, flags, old records, logs)
 - [ ] 01-05-PLAN.md — CQRS snapshot layer update (InMemoryWorldState, SnapshotEntityMapper, Loader, Persister, Ports)
 - [ ] 01-06-PLAN.md — Repository + Service layer renames
