@@ -1,6 +1,6 @@
 {
   "version": "3.0",
-  "lastUpdated": "2026-04-01T07:16:29.751Z",
+  "lastUpdated": "2026-04-05T05:12:16.594Z",
   "activeFeatures": [
     "engine",
     "war",
@@ -84,9 +84,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-23T07:03:46.614Z",
-        "lastUpdated": "2026-03-24T13:14:33.558Z"
+        "lastUpdated": "2026-04-05T05:12:16.593Z"
       },
-      "lastFile": "/Users/apple/Desktop/opensamguk/backend/game-app/src/main/kotlin/com/opensam/service/BattleSimService.kt"
+      "lastFile": "/Users/apple/Desktop/개인프로젝트/openlogh/backend/game-app/src/main/kotlin/com/openlogh/service/VoteService.kt"
     },
     "general": {
       "phase": "do",
@@ -651,7 +651,7 @@
   "session": {
     "startedAt": "2026-03-23T06:31:12.665Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-04-01T07:16:29.751Z"
+    "lastActivity": "2026-04-05T05:12:16.594Z"
   },
   "history": [
     {
@@ -4125,6 +4125,24 @@
     {
       "timestamp": "2026-04-01T07:16:29.751Z",
       "feature": "war",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-05T05:11:59.901Z",
+      "feature": "service",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-05T05:12:05.404Z",
+      "feature": "service",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-05T05:12:16.594Z",
+      "feature": "service",
       "phase": "do",
       "action": "updated"
     }

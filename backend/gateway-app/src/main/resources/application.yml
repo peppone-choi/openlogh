@@ -4,9 +4,9 @@ spring:
     main:
         lazy-initialization: true
     datasource:
-        url: jdbc:postgresql://localhost:5432/opensam
-        username: opensam
-        password: opensam123
+        url: jdbc:postgresql://localhost:5432/openlogh
+        username: openlogh
+        password: openlogh123
         driver-class-name: org.postgresql.Driver
     jpa:
         hibernate:
@@ -29,7 +29,7 @@ server:
 
 app:
     jwt:
-        secret: opensam-jwt-secret-key-must-be-at-least-256-bits-long-for-hs256
+        secret: openlogh-jwt-secret-key-must-be-at-least-256-bits-long-for-hs256
         expiration-ms: 86400000
     bootstrap:
         admin:
