@@ -37,7 +37,17 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Rank field supports 11 tiers (0-10) with separate Empire/Alliance title resolution
   4. All entity names in code and DB use LOGH domain terms (Officer, Planet, Faction, Fleet, SessionState) per the CLAUDE.md mapping table
   5. Flyway migrations V28+ apply cleanly on the existing schema, and the game-app boots without errors
-**Plans**: TBD
+**Plans:** 8 plans
+
+Plans:
+- [ ] 01-01-PLAN.md — V28 Flyway migration (table/column/index renames + new stat columns)
+- [ ] 01-02-PLAN.md — OfficerStat enum (PCP/MCP grouping) + RankTitle resolver (11-tier)
+- [ ] 01-03-PLAN.md — Core entity renames (General->Officer, City->Planet, Nation->Faction, Troop->Fleet, Emperor->Sovereign, WorldState->SessionState)
+- [ ] 01-04-PLAN.md — Gateway SessionState + auxiliary entity renames (turns, flags, old records, logs)
+- [ ] 01-05-PLAN.md — CQRS snapshot layer update (InMemoryWorldState, SnapshotEntityMapper, Loader, Persister, Ports)
+- [ ] 01-06-PLAN.md — Repository + Service layer renames
+- [ ] 01-07-PLAN.md — Command system (93 commands), war engine, turn engine, DTOs, controllers
+- [ ] 01-08-PLAN.md — Frontend types, API client, stores, components, pages
 
 ### Phase 2: Real-time Tick Engine
 **Goal**: The game world advances in real-time at 24x speed with 1-second server ticks instead of turn-based processing
@@ -187,7 +197,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 12
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Entity Model Foundation | 0/TBD | Not started | - |
+| 1. Entity Model Foundation | 0/8 | Planning complete | - |
 | 2. Real-time Tick Engine | 0/TBD | Not started | - |
 | 3. Command Point System | 0/TBD | Not started | - |
 | 4. Position Card & Command Authority | 0/TBD | Not started | - |
