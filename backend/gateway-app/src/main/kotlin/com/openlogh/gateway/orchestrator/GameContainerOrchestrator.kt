@@ -26,25 +26,25 @@ class GameContainerOrchestrator(
     private val worldRouteRegistry: WorldRouteRegistry,
     @Value("\${gateway.orchestrator.health-timeout-ms:120000}")
     private val healthTimeoutMs: Long,
-    @Value("\${gateway.docker.network:opensam-net}")
+    @Value("\${gateway.docker.network:openlogh-net}")
     private val dockerNetwork: String,
-    @Value("\${gateway.docker.image-prefix:opensam/game-app}")
+    @Value("\${gateway.docker.image-prefix:openlogh/game-app}")
     private val imagePrefix: String,
     @Value("\${DB_HOST:postgres}")
     private val dbHost: String,
     @Value("\${DB_PORT:5432}")
     private val dbPort: String,
-    @Value("\${DB_NAME:opensam}")
+    @Value("\${DB_NAME:openlogh}")
     private val dbName: String,
-    @Value("\${DB_USER:opensam}")
+    @Value("\${DB_USER:openlogh}")
     private val dbUser: String,
-    @Value("\${DB_PASSWORD:opensam123}")
+    @Value("\${DB_PASSWORD:openlogh123}")
     private val dbPassword: String,
     @Value("\${REDIS_HOST:redis}")
     private val redisHost: String,
     @Value("\${REDIS_PORT:6379}")
     private val redisPort: String,
-    @Value("\${gateway.docker.icon-volume:opensam-icon-data}")
+    @Value("\${gateway.docker.icon-volume:openlogh-icon-data}")
     private val iconVolumeName: String,
 ) : GameOrchestrator {
 
@@ -251,8 +251,8 @@ class GameContainerOrchestrator(
             "docker", "run", "-d",
             "--name", entry.containerName,
             "--network", dockerNetwork,
-            "--label", "opensam.role=game",
-            "-v", "$iconVolumeName:/root/.opensam/icons",
+            "--label", "openlogh.role=game",
+            "-v", "$iconVolumeName:/root/.openlogh/icons",
             "-e", "SERVER_PORT=9001",
             "-e", "SPRING_PROFILES_ACTIVE=docker",
             "-e", "GAME_COMMIT_SHA=${entry.commitSha}",
@@ -376,7 +376,7 @@ class GameContainerOrchestrator(
         return try {
             val process = ProcessBuilder(
                 "docker", "inspect", "-f",
-                "{{.State.Running}}|{{index .Config.Labels \"opensam.role\"}}",
+                "{{.State.Running}}|{{index .Config.Labels \"openlogh.role\"}}",
                 containerName,
             )
                 .redirectErrorStream(true)
@@ -516,6 +516,6 @@ class GameContainerOrchestrator(
     companion object {
         private const val CONTAINER_PORT = 9001
         private const val ROLE_GAME = "game"
-        private const val ROLE_LABEL = "opensam.role"
+        private const val ROLE_LABEL = "openlogh.role"
     }
 }

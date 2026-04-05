@@ -125,15 +125,21 @@
       "type": "file"
     },
     {
+      "path": "backend",
+      "accessCount": 88,
+      "lastAccessed": 1775371463354,
+      "type": "directory"
+    },
+    {
       "path": "backend/game-app/src/main/kotlin/com/opensam/engine/EconomyService.kt",
       "accessCount": 84,
       "lastAccessed": 1774344296500,
       "type": "file"
     },
     {
-      "path": "backend",
-      "accessCount": 78,
-      "lastAccessed": 1775033802708,
+      "path": "backend/game-app/src/main/kotlin",
+      "accessCount": 27,
+      "lastAccessed": 1775371492067,
       "type": "directory"
     },
     {
@@ -141,12 +147,6 @@
       "accessCount": 26,
       "lastAccessed": 1774338559490,
       "type": "file"
-    },
-    {
-      "path": "backend/game-app/src/main/kotlin",
-      "accessCount": 26,
-      "lastAccessed": 1774343879865,
-      "type": "directory"
     },
     {
       "path": "backend/game-app/src/main/kotlin/com/opensam/engine/EventService.kt",

@@ -121,7 +121,7 @@ volumes:
     postgres-data:
     redis-data:
     icon-data:
-        name: opensam-icon-data
+        name: openlogh-icon-data
 
 networks:
     openlogh-net:

@@ -1,7 +1,7 @@
 {
   "tool_name": "Read",
-  "tool_input_preview": "{\"file_path\":\"C:\\\\Users\\\\by0ng\\\\.claude\\\\get-shit-done\\\\workflows\\\\plan-phase.md\"}",
-  "error": "File content (10028 tokens) exceeds maximum allowed tokens (10000). Use offset and limit parameters to read specific portions of the file, or search for specific content instead of reading the whole file.",
-  "timestamp": "2026-04-01T08:54:27.561Z",
-  "retry_count": 1
+  "tool_input_preview": "{\"file_path\":\"/Users/apple/Desktop/개인프로젝트/openlogh/backend/game-app/src/main/kotlin/com/openlogh/engine/war/BattleEngine.kt\"}",
+  "error": "File content (13056 tokens) exceeds maximum allowed tokens (10000). Use offset and limit parameters to read specific portions of the file, or search for specific content instead of reading the whole file.",
+  "timestamp": "2026-04-05T06:43:56.414Z",
+  "retry_count": 4
 }
