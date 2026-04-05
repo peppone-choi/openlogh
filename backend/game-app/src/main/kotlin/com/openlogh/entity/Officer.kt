@@ -6,14 +6,14 @@ import org.hibernate.type.SqlTypes
 import java.time.OffsetDateTime
 
 @Entity
-@Table(name = "general")
-class General(
+@Table(name = "officer")
+class Officer(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long = 0,
 
-    @Column(name = "world_id", nullable = false)
-    var worldId: Long = 0,
+    @Column(name = "session_id", nullable = false)
+    var sessionId: Long = 0,
 
     @Column(name = "user_id")
     var userId: Long? = null,
@@ -21,14 +21,14 @@ class General(
     @Column(nullable = false)
     var name: String = "",
 
-    @Column(name = "nation_id", nullable = false)
-    var nationId: Long = 0,
+    @Column(name = "faction_id", nullable = false)
+    var factionId: Long = 0,
 
-    @Column(name = "city_id", nullable = false)
-    var cityId: Long = 0,
+    @Column(name = "planet_id", nullable = false)
+    var planetId: Long = 0,
 
-    @Column(name = "troop_id", nullable = false)
-    var troopId: Long = 0,
+    @Column(name = "fleet_id", nullable = false)
+    var fleetId: Long = 0,
 
     @Column(name = "npc_state", nullable = false)
     var npcState: Short = 0,
@@ -51,6 +51,7 @@ class General(
     @Column(name = "image_server", nullable = false)
     var imageServer: Short = 0,
 
+    // 8-stat system
     @Column(nullable = false)
     var leadership: Short = 50,
 
@@ -58,16 +59,16 @@ class General(
     var leadershipExp: Short = 0,
 
     @Column(nullable = false)
-    var strength: Short = 50,
+    var command: Short = 50,
 
-    @Column(name = "strength_exp", nullable = false)
-    var strengthExp: Short = 0,
+    @Column(name = "command_exp", nullable = false)
+    var commandExp: Short = 0,
 
     @Column(nullable = false)
-    var intel: Short = 50,
+    var intelligence: Short = 50,
 
-    @Column(name = "intel_exp", nullable = false)
-    var intelExp: Short = 0,
+    @Column(name = "intelligence_exp", nullable = false)
+    var intelligenceExp: Short = 0,
 
     @Column(nullable = false)
     var politics: Short = 50,
@@ -76,10 +77,28 @@ class General(
     var politicsExp: Short = 0,
 
     @Column(nullable = false)
-    var charm: Short = 50,
+    var administration: Short = 50,
 
-    @Column(name = "charm_exp", nullable = false)
-    var charmExp: Short = 0,
+    @Column(name = "administration_exp", nullable = false)
+    var administrationExp: Short = 0,
+
+    @Column(nullable = false)
+    var mobility: Short = 50,
+
+    @Column(name = "mobility_exp", nullable = false)
+    var mobilityExp: Short = 0,
+
+    @Column(nullable = false)
+    var attack: Short = 50,
+
+    @Column(name = "attack_exp", nullable = false)
+    var attackExp: Short = 0,
+
+    @Column(nullable = false)
+    var defense: Short = 50,
+
+    @Column(name = "defense_exp", nullable = false)
+    var defenseExp: Short = 0,
 
     @Column(name = "dex_1", nullable = false)
     var dex1: Int = 0,
@@ -95,6 +114,15 @@ class General(
 
     @Column(name = "dex_5", nullable = false)
     var dex5: Int = 0,
+
+    @Column(name = "dex_6", nullable = false)
+    var dex6: Int = 0,
+
+    @Column(name = "dex_7", nullable = false)
+    var dex7: Int = 0,
+
+    @Column(name = "dex_8", nullable = false)
+    var dex8: Int = 0,
 
     @Column(nullable = false)
     var injury: Short = 0,
@@ -115,34 +143,34 @@ class General(
     var permission: String = "normal",
 
     @Column(nullable = false)
-    var gold: Int = 1000,
+    var funds: Int = 1000,
 
     @Column(nullable = false)
-    var rice: Int = 1000,
+    var supplies: Int = 1000,
 
     @Column(nullable = false)
-    var crew: Int = 0,
+    var ships: Int = 0,
 
-    @Column(name = "crew_type", nullable = false)
-    var crewType: Short = 0,
-
-    @Column(nullable = false)
-    var train: Short = 0,
+    @Column(name = "ship_class", nullable = false)
+    var shipClass: Short = 0,
 
     @Column(nullable = false)
-    var atmos: Short = 0,
+    var training: Short = 0,
 
-    @Column(name = "weapon_code", nullable = false)
-    var weaponCode: String = "None",
+    @Column(nullable = false)
+    var morale: Short = 0,
 
-    @Column(name = "book_code", nullable = false)
-    var bookCode: String = "None",
+    @Column(name = "flagship_code", nullable = false)
+    var flagshipCode: String = "None",
 
-    @Column(name = "horse_code", nullable = false)
-    var horseCode: String = "None",
+    @Column(name = "equip_code", nullable = false)
+    var equipCode: String = "None",
 
-    @Column(name = "item_code", nullable = false)
-    var itemCode: String = "None",
+    @Column(name = "engine_code", nullable = false)
+    var engineCode: String = "None",
+
+    @Column(name = "accessory_code", nullable = false)
+    var accessoryCode: String = "None",
 
     @Column(name = "owner_name", nullable = false)
     var ownerName: String = "",
