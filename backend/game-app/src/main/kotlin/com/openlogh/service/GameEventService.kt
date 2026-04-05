@@ -1,5 +1,7 @@
 package com.openlogh.service
 
+import com.openlogh.engine.GameTimeConstants
+import com.openlogh.entity.SessionState
 import com.openlogh.entity.WorldHistory
 import com.openlogh.repository.WorldHistoryRepository
 import com.openlogh.repository.PlanetRepository
@@ -154,6 +156,22 @@ class GameEventService(
         messagingTemplate.convertAndSend(
             "/topic/world/$worldId/turn",
             mapOf("year" to year, "month" to month)
+        )
+    }
+
+    fun broadcastTickState(world: SessionState) {
+        messagingTemplate.convertAndSend(
+            "/topic/world/${world.id}/tick",
+            mapOf(
+                "type" to "tick_state",
+                "gameTimeSec" to world.gameTimeSec,
+                "tickCount" to world.tickCount,
+                "year" to world.currentYear.toInt(),
+                "month" to world.currentMonth.toInt(),
+                "gameDayOfMonth" to (world.gameTimeSec / GameTimeConstants.GAME_SECONDS_PER_DAY + 1),
+                "gameHour" to ((world.gameTimeSec % GameTimeConstants.GAME_SECONDS_PER_DAY) / 3600),
+                "serverTimestamp" to System.currentTimeMillis(),
+            )
         )
     }
 
