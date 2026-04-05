@@ -110,6 +110,7 @@ services:
             - '${HTTP_PORT:-80}:80'
         volumes:
             - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+            - icon-data:/data/icons:ro
         depends_on:
             - gateway
             - frontend
@@ -119,6 +120,8 @@ services:
 volumes:
     postgres-data:
     redis-data:
+    icon-data:
+        name: opensam-icon-data
 
 networks:
     opensam-net:

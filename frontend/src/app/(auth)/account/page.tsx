@@ -219,9 +219,12 @@ function AccountPageContent() {
         setPictureLoading(true);
         setPictureMsg('');
         try {
+            const trimmedUrl = pictureUrl.trim();
             await accountApi.updateSettings({
-                picture: pictureUrl.trim(),
+                picture: trimmedUrl,
             } as Record<string, unknown> & import('@/types').AccountSettings);
+            useAuthStore.setState((s) => ({ user: s.user ? { ...s.user, picture: trimmedUrl } : s.user }));
+            useGeneralStore.setState((s) => ({ myGeneral: s.myGeneral ? { ...s.myGeneral, picture: trimmedUrl } : s.myGeneral }));
             setPictureMsg('전콘이 변경되었습니다.');
         } catch {
             setPictureMsg('전콘 변경에 실패했습니다.');
