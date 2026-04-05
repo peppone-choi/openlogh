@@ -44,6 +44,8 @@ class GameContainerOrchestrator(
     private val redisHost: String,
     @Value("\${REDIS_PORT:6379}")
     private val redisPort: String,
+    @Value("\${gateway.docker.icon-volume:opensam-icon-data}")
+    private val iconVolumeName: String,
 ) : GameOrchestrator {
 
     private val log = LoggerFactory.getLogger(GameContainerOrchestrator::class.java)
@@ -250,6 +252,7 @@ class GameContainerOrchestrator(
             "--name", entry.containerName,
             "--network", dockerNetwork,
             "--label", "opensam.role=game",
+            "-v", "$iconVolumeName:/root/.opensam/icons",
             "-e", "SERVER_PORT=9001",
             "-e", "SPRING_PROFILES_ACTIVE=docker",
             "-e", "GAME_COMMIT_SHA=${entry.commitSha}",
