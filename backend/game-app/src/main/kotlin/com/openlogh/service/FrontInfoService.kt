@@ -100,7 +100,7 @@ class FrontInfoService(
             lastVote = null,
         )
 
-        val nationLevel = faction?.level?.toInt() ?: 0
+        val nationLevel = faction?.factionRank?.toInt() ?: 0
         val generalInfo = myGeneral?.let { toGeneralFrontInfo(it, nationLevel, allGenerals, nationsById) }
 
         val allCities = planetRepository.findBySessionId(worldId)
@@ -120,9 +120,9 @@ class FrontInfoService(
 
         return FrontInfoResponse(
             global = globalInfo,
-            officer = generalInfo,
-            faction = nationInfo,
-            planet = cityInfo,
+            general = generalInfo,
+            nation = nationInfo,
+            city = cityInfo,
             recentRecord = recentRecord,
             aux = AuxInfo(),
         )
@@ -176,21 +176,20 @@ class FrontInfoService(
             full = true,
             name = n.name,
             color = n.color,
-            level = n.level.toInt(),
+            level = n.factionRank.toInt(),
             type = NationTypeInfo(
                 raw = n.factionType,
                 name = resolveNationTypeName(n.factionType),
                 pros = resolveNationTypePros(n.factionType),
                 cons = resolveNationTypeCons(n.factionType),
             ),
-            gold = n.funds,
-            rice = n.supplies,
-            tech = n.tech,
-            power = n.power,
+            gold = n.funds, rice = n.supplies,
+            tech = n.techLevel,
+            power = n.militaryPower,
             gennum = myNationGens.size,
             capital = n.capitalPlanetId,
-            bill = n.bill.toInt(),
-            taxRate = n.rate.toInt(),
+            bill = n.taxRate.toInt(),
+            taxRate = n.conscriptionRate.toInt(),
             population = NationPopulationInfo(
                 cityCnt = myNationCities.size,
                 now = populationNow,
@@ -220,8 +219,7 @@ class FrontInfoService(
             color = "#000000",
             level = 0,
             type = NationTypeInfo(raw = "None", name = "-", pros = "", cons = ""),
-            gold = 0,
-            rice = 0,
+            gold = 0, rice = 0,
             tech = 0f,
             power = 0,
             gennum = 0,
@@ -284,7 +282,7 @@ class FrontInfoService(
         )
     }
 
-    private fun toGeneralFrontInfo(g: Officer, nationLevel: Int, allGenerals: List<Officer>, nations: Map<Long, Faction>): OfficerFrontInfo {
+    private fun toGeneralFrontInfo(g: Officer, nationLevel: Int, allGenerals: List<Officer>, nations: Map<Long, Faction>): GeneralFrontInfo {
         val officerLevel = g.officerLevel.toInt()
         val dedLevel = calcDedLevel(g.dedication)
 
@@ -293,12 +291,12 @@ class FrontInfoService(
         // Troop info
         val troopInfo = if (g.fleetId > 0) {
             val troops = fleetRepository.findByFactionId(g.factionId)
-            val troop = troops.find { it.leaderGeneralId == g.fleetId }
+            val troop = troops.find { it.leaderOfficerId == g.fleetId }
             if (troop != null) {
                 val leader = allGenerals.find { it.id == g.fleetId }
                 TroopInfo(
                     leader = TroopLeaderInfo(
-                        planet = leader?.planetId ?: 0,
+                        city = leader?.planetId ?: 0,
                         reservedCommand = null,
                     ),
                     name = troop.name,
@@ -322,9 +320,9 @@ class FrontInfoService(
             name = g.name,
             picture = g.picture,
             imgsvr = g.imageServer.toInt(),
-            faction = g.factionId,
+            nation = g.factionId,
             npc = g.npcState.toInt(),
-            planet = g.planetId,
+            city = g.planetId,
             troop = g.fleetId,
             officerLevel = officerLevel,
             officerLevelText = if (g.npcState == SovereignConstants.NPC_STATE_EMPEROR) "황제"
@@ -353,8 +351,7 @@ class FrontInfoService(
             honorText = getHonorText(g.experience),
             dedLevelText = getDedLevelText(dedLevel),
             bill = getBillByLevel(dedLevel),
-            gold = g.funds,
-            rice = g.supplies,
+            gold = g.funds, rice = g.supplies,
             crew = g.ships,
             crewtype = g.shipClass.toString(),
             train = g.training.toInt(),
@@ -525,7 +522,7 @@ class FrontInfoService(
             flushGeneral = generalRecords.isNotEmpty(),
             flushGlobal = globalRecords.isNotEmpty(),
             flushHistory = historyRecords.isNotEmpty(),
-            officer = generalRecords.map { toRecordEntry(it) },
+            general = generalRecords.map { toRecordEntry(it) },
             global = globalRecords.map { toRecordEntry(it) },
             history = historyRecords.map { toRecordEntry(it) },
         )

@@ -857,7 +857,7 @@ fun ExistsAllowJoinNation(relYear: Int, excludeNationIds: Set<Long>) = object : 
     override fun test(ctx: ConstraintContext): ConstraintResult {
         val nations = readNationList(ctx.env["nationList"])
         val exists = nations.any { nation ->
-            nation.id !in excludeNationIds && nation.factionRank > 0
+            nation.id !in excludeNationIds && nation.level > 0
         }
         return if (exists) ConstraintResult.Pass
         else ConstraintResult.Fail("임관 가능한 국가가 없습니다.")
@@ -1354,7 +1354,7 @@ fun AllowJoinDestNation() = object : Constraint {
     override val name = "AllowJoinDestNation"
     override fun test(ctx: ConstraintContext): ConstraintResult {
         val destFaction = ctx.destFaction ?: return ConstraintResult.Fail("대상 국가를 찾을 수 없습니다.")
-        if (destFaction.level.toInt() == 0) return ConstraintResult.Fail("방랑 세력에는 임관할 수 없습니다.")
+        if (destFaction.factionRank.toInt() == 0) return ConstraintResult.Fail("방랑 세력에는 임관할 수 없습니다.")
         val genLimit = (ctx.env["defaultMaxGeneral"] as? Number)?.toInt() ?: 30
         if (destFaction.officerCount >= genLimit) return ConstraintResult.Fail("대상 국가의 장수 정원이 가득 찼습니다.")
         return ConstraintResult.Pass

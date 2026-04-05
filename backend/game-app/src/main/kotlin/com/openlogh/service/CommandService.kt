@@ -59,7 +59,7 @@ class CommandService(
             officerTurnRepository.save(
                 OfficerTurn(
                     sessionId = officer.sessionId,
-                    generalId = generalId,
+                    officerId = generalId,
                     turnIdx = entry.turnIdx,
                     actionCode = entry.actionCode,
                     arg = entry.arg?.toMutableMap() ?: mutableMapOf(),
@@ -96,11 +96,11 @@ class CommandService(
         val result = runBlocking {
             commandExecutor.executeOfficerCommand(
                 actionCode = actionCode,
-                officer = officer,
+                general = officer,
                 env = env,
                 arg = arg,
-                planet = planet,
-                faction = faction,
+                city = planet,
+                nation = faction,
             )
         }
         officerRepository.save(officer)
@@ -131,11 +131,11 @@ class CommandService(
         val result = runBlocking {
             commandExecutor.executeFactionCommand(
                 actionCode = actionCode,
-                officer = officer,
+                general = officer,
                 env = env,
                 arg = arg,
-                planet = planet,
-                faction = faction,
+                city = planet,
+                nation = faction,
             )
         }
         officerRepository.save(officer)
@@ -163,8 +163,8 @@ class CommandService(
             // NPC/CR commands are scenario-specific; hide when no whitelist is configured
             if (allowedCommands == null && (actionCode.startsWith("NPC") || actionCode.startsWith("CR"))) continue
             val command = commandRegistry.createOfficerCommand(actionCode, officer, env, null)
-            command.planet = planet
-            command.faction = faction
+            command.city = planet
+            command.nation = faction
 
             val minCheck = command.checkMinCondition()
             val enabled = minCheck is ConstraintResult.Pass
@@ -209,8 +209,8 @@ class CommandService(
         for (actionCode in actionCodes) {
             if (allowedCommands != null && actionCode !in allowedCommands) continue
             val command = commandRegistry.createFactionCommand(actionCode, officer, env, null) ?: continue
-            command.planet = planet
-            command.faction = faction
+            command.city = planet
+            command.nation = faction
 
             val check = command.checkMinCondition()
             val enabled = check is ConstraintResult.Pass
@@ -313,14 +313,14 @@ class CommandService(
     }
 
     private fun replaceOfficerTurns(officer: com.openlogh.entity.Officer, turns: List<OfficerTurn>): List<OfficerTurn> {
-        officerTurnRepository.deleteByGeneralId(officer.id)
+        officerTurnRepository.deleteByOfficerId(officer.id)
         return officerTurnRepository.saveAll(turns.map { it.copyTurn(it.turnIdx) }).sortedBy { it.turnIdx }
     }
 
     private fun defaultOfficerTurn(officer: com.openlogh.entity.Officer, turnIdx: Short): OfficerTurn {
         return OfficerTurn(
             sessionId = officer.sessionId,
-            generalId = officer.id,
+            officerId = officer.id,
             turnIdx = turnIdx,
             actionCode = "휴식",
             arg = mutableMapOf(),
@@ -328,10 +328,10 @@ class CommandService(
         )
     }
 
-    private fun GeneralTurn.copyTurn(turnIdx: Short): OfficerTurn {
+    private fun OfficerTurn.copyTurn(turnIdx: Short): OfficerTurn {
         return OfficerTurn(
-            sessionId = worldId,
-            generalId = generalId,
+            sessionId = sessionId,
+            officerId = officerId,
             turnIdx = turnIdx,
             actionCode = actionCode,
             arg = arg.toMutableMap(),
@@ -470,7 +470,7 @@ class CommandService(
     }
 
     private fun replaceFactionTurns(officer: com.openlogh.entity.Officer, turns: List<FactionTurn>): List<FactionTurn> {
-        factionTurnRepository.deleteByNationIdAndOfficerLevel(officer.factionId, officer.officerLevel)
+        factionTurnRepository.deleteByFactionIdAndOfficerLevel(officer.factionId, officer.officerLevel)
         return factionTurnRepository.saveAll(turns.map { it.copyFactionTurn(it.turnIdx) }).sortedBy { it.turnIdx }
     }
 
@@ -486,10 +486,10 @@ class CommandService(
         )
     }
 
-    private fun NationTurn.copyFactionTurn(turnIdx: Short): FactionTurn {
+    private fun FactionTurn.copyFactionTurn(turnIdx: Short): FactionTurn {
         return FactionTurn(
-            sessionId = worldId,
-            factionId = nationId,
+            sessionId = sessionId,
+            factionId = factionId,
             officerLevel = officerLevel,
             turnIdx = turnIdx,
             actionCode = actionCode,
@@ -566,7 +566,7 @@ class CommandService(
             year = world.currentYear.toInt(),
             month = world.currentMonth.toInt(),
             startYear = (world.config["startyear"] as? Number)?.toInt() ?: world.currentYear.toInt(),
-            worldId = world.id.toLong(),
+            sessionId = world.id.toLong(),
             realtimeMode = world.realtimeMode,
             gameStor = gameStor,
             trainDelta = gameConstService.getDouble("trainDelta"),

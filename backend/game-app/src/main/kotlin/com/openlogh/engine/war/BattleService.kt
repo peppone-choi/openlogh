@@ -13,13 +13,13 @@ import com.openlogh.entity.Officer
 import com.openlogh.entity.Message
 import com.openlogh.entity.Record
 import com.openlogh.entity.SessionState
-import com.openlogh.entity.OldNation
+import com.openlogh.entity.OldFaction
 import com.openlogh.repository.PlanetRepository
 import com.openlogh.repository.OfficerRepository
 import com.openlogh.repository.MessageRepository
 import com.openlogh.repository.FactionRepository
 import com.openlogh.repository.FactionTurnRepository
-import com.openlogh.repository.OldNationRepository
+import com.openlogh.repository.OldFactionRepository
 import com.openlogh.repository.RecordRepository
 import com.openlogh.repository.FleetRepository
 import com.openlogh.service.GameConstService
@@ -39,7 +39,7 @@ class BattleService(
     private val factionRepository: FactionRepository,
     private val messageRepository: MessageRepository,
     private val recordRepository: RecordRepository,
-    private val oldNationRepository: OldNationRepository,
+    private val oldNationRepository: OldFactionRepository,
     private val fleetRepository: FleetRepository,
     private val factionTurnRepository: FactionTurnRepository,
     private val eventService: EventService,
@@ -83,7 +83,7 @@ class BattleService(
         val attackerNation = factionRepository.findById(attacker.factionId).orElse(null)
         val attackerUnit = WarUnitOfficer(
             attacker,
-            nationTech = attackerNation?.tech ?: 0f,
+            nationTech = attackerNation?.techLevel ?: 0f,
             isAttacker = true,
             cityLevel = targetCity.level.toInt(),
             capitalCityId = attackerNation?.capitalPlanetId ?: 0,
@@ -105,7 +105,7 @@ class BattleService(
                 val defNation = factionRepository.findById(gen.factionId).orElse(null)
                 val unit = WarUnitOfficer(
                     gen,
-                    nationTech = defNation?.tech ?: 0f,
+                    nationTech = defNation?.techLevel ?: 0f,
                     isAttacker = false,
                     cityLevel = targetCity.level.toInt(),
                     capitalCityId = defNation?.capitalPlanetId ?: 0,
@@ -301,9 +301,9 @@ class BattleService(
             messageRepository.saveAll(messages)
 
             // Dual-write to records table so FrontInfoService and history page can read battle logs
-            val records = messages.map { msg ->
+            val records = messages.map { msg: com.openlogh.entity.Message ->
                 Record(
-                    worldId = msg.sessionId,
+                    sessionId = msg.sessionId,
                     recordType = msg.mailboxCode,
                     srcId = msg.srcId,
                     destId = msg.destId,
@@ -497,20 +497,20 @@ class BattleService(
         diplomacyService.killAllRelationsForNation(world.id.toLong(), destroyedNationId)
 
         // Legacy: delete nation turns
-        factionTurnRepository.deleteByNationId(destroyedNationId)
+        factionTurnRepository.deleteByFactionId(destroyedNationId)
 
         // Legacy: archive nation data to old_nation before deletion
         oldNationRepository.save(
-            OldNation(
+            OldFaction(
                 serverId = world.id.toString(),
-                nation = destroyedNationId,
+                faction = destroyedNationId,
                 data = mutableMapOf(
                     "name" to destroyedNation.name,
                     "color" to destroyedNation.color,
-                    "level" to destroyedNation.level,
+                    "level" to destroyedNation.factionRank,
                     "gold" to destroyedNation.funds,
                     "rice" to destroyedNation.supplies,
-                    "tech" to destroyedNation.tech,
+                    "tech" to destroyedNation.techLevel,
                     "gennum" to destroyedNation.officerCount,
                     "generals" to generals.map { it.id },
                 ),
@@ -703,8 +703,8 @@ class BattleService(
 
         // 스탯 반영 (0-100 범위 클램핑)
         unit.leadership = modified.leadership.toInt().coerceIn(0, 100)
-        unit.command = modified.command.toInt().coerceIn(0, 100)
-        unit.intelligence = modified.intelligence.toInt().coerceIn(0, 100)
+        unit.command = modified.strength.toInt().coerceIn(0, 100)
+        unit.intelligence = modified.intel.toInt().coerceIn(0, 100)
         unit.criticalChance = modified.criticalChance
         unit.dodgeChance = modified.dodgeChance
         unit.magicChance = modified.magicChance

@@ -143,8 +143,7 @@ class AdminService(
                 name = faction.name,
                 color = faction.color,
                 level = faction.factionRank.toInt(),
-                gold = faction.funds,
-                rice = faction.supplies,
+                gold = faction.funds, rice = faction.supplies,
                 tech = faction.techLevel,
                 power = faction.militaryPower,
                 genCount = generals.size,
@@ -233,8 +232,8 @@ class AdminService(
             "all" -> {
                 val generals = officerRepository.findBySessionId(worldId)
                 generals.forEach { officer ->
-                    officer.funds += request.funds
-                    officer.supplies += request.supplies
+                    officer.funds += request.gold
+                    officer.supplies += request.rice
                 }
                 officerRepository.saveAll(generals)
                 true
@@ -242,8 +241,8 @@ class AdminService(
             "nations" -> {
                 val nations = factionRepository.findBySessionId(worldId)
                 nations.forEach { faction ->
-                    faction.funds += request.funds
-                    faction.supplies += request.supplies
+                    faction.funds += request.gold
+                    faction.supplies += request.rice
                 }
                 factionRepository.saveAll(nations)
                 true
@@ -337,7 +336,7 @@ class AdminService(
                         serverId = serverId,
                         season = season,
                         scenario = scenario,
-                        generalNo = officer.id,
+                        officerNo = officer.id,
                         type = type,
                         value = value,
                         owner = officer.userId?.toString(),
@@ -368,7 +367,7 @@ class AdminService(
             .firstOrNull { it.turnIdx.toInt() == turnIdx }
             ?: OfficerTurn(
                 sessionId = officer.sessionId,
-                generalId = officer.id,
+                officerId = officer.id,
                 turnIdx = turnIdx.toShort(),
             )
 

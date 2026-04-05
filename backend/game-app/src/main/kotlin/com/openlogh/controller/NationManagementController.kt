@@ -37,7 +37,7 @@ class NationManagementController(
         @PathVariable nationId: Long,
         @RequestBody request: ExpelRequest,
     ): ResponseEntity<Void> {
-        if (!factionService.expelGeneral(nationId, request.generalId)) return ResponseEntity.badRequest().build()
+        if (!factionService.expelOfficer(nationId, request.generalId)) return ResponseEntity.badRequest().build()
         return ResponseEntity.ok().build()
     }
 }

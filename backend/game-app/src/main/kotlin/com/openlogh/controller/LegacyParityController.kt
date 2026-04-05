@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.*
 @RequestMapping("/api")
 class LegacyParityController(
     private val iconSyncService: IconSyncService,
-    private val generalLogService: GeneralLogService,
+    private val generalLogService: OfficerLogService,
     private val permissionService: PermissionService,
     private val simulatorExportService: SimulatorExportService,
     private val officerService: OfficerService,
@@ -98,7 +98,7 @@ class LegacyParityController(
             loginId = loginId,
             eventName = request.event,
             eventArgs = request.args,
-            sessionId = request.sessionId,
+            worldId = request.worldId,
         )
 
         return if (result.result) {

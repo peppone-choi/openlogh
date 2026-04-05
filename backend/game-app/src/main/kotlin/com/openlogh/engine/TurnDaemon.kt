@@ -68,7 +68,7 @@ class TurnDaemon(
                         val prevYear = world.currentYear.toInt()
                         val prevMonth = world.currentMonth.toInt()
                         if (cqrsEnabled) {
-                            turnCoordinator.processWorld(world)
+                            turnCoordinator.processSession(world)
                         } else {
                             turnService.processWorld(world)
                             // Legacy path doesn't broadcast — notify frontend of turn advance

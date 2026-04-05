@@ -26,20 +26,20 @@ class WarUnitOfficer(
     var pendingStatExp: Int = 0
 
     init {
-        crew = general.ships
-        train = general.training.toInt()
-        atmos = general.morale.toInt()
-        crewType = general.shipClass.toInt()
+        ships = general.ships
+        training = general.training.toInt()
+        morale = general.morale.toInt()
+        shipClass = general.shipClass.toInt()
         leadership = general.leadership.toInt()
-        strength = general.command.toInt()
-        intel = general.intelligence.toInt()
+        command = general.command.toInt()
+        intelligence = general.intelligence.toInt()
         experience = general.experience
         dedication = general.dedication
-        tech = nationTech
+        techLevel = nationTech
         injury = general.injury.toInt()
-        rice = general.supplies
-        hp = crew
-        maxHp = crew
+        supplies = general.supplies
+        hp = ships
+        maxHp = ships
 
         // Legacy WarUnitOfficer constructor: city-level bonuses (GAP-8)
         if (isAttacker) {
@@ -55,13 +55,13 @@ class WarUnitOfficer(
             }
         }
 
-        // Apply city-level bonuses to effective train/atmos
-        train = (train + trainBonus).coerceAtMost(100)
-        atmos = (atmos + atmosBonus).coerceAtMost(100)
+        // Apply city-level bonuses to effective training/morale
+        training = (training + trainBonus).coerceAtMost(100)
+        morale = (morale + atmosBonus).coerceAtMost(100)
 
         val unitCrewType = getCrewType()
         criticalChance = computeCriticalChance(unitCrewType)
-        dodgeChance = unitCrewType.avoid / 100.0 * (train / 100.0)
+        dodgeChance = unitCrewType.avoid / 100.0 * (training / 100.0)
 
         // Apply item killRice modifier (e.g., 백우선/백상: 소모 군량 +10%)
         val itemKillRice = ItemModifiers.getKillRice(general.accessoryCode)
@@ -91,31 +91,31 @@ class WarUnitOfficer(
     override fun getBaseAttack(): Double {
         val unitCrewType = getCrewType()
         val ratioByArmType = when (unitCrewType.armType) {
-            ArmType.WIZARD -> intel * 2.0 - 40.0
+            ArmType.WIZARD -> intelligence * 2.0 - 40.0
             ArmType.SIEGE -> leadership * 2.0 - 40.0
-            ArmType.MISC -> (intel + leadership + strength) * 2.0 / 3.0 - 40.0
-            else -> strength * 2.0 - 40.0
+            ArmType.MISC -> (intelligence + leadership + command) * 2.0 / 3.0 - 40.0
+            else -> command * 2.0 - 40.0
         }
         val ratio = when {
             ratioByArmType < 10.0 -> 10.0
             ratioByArmType > 100.0 -> 50.0 + ratioByArmType / 2.0
             else -> ratioByArmType
         }
-        val attack = unitCrewType.attack + getTechAbil(tech)
+        val attack = unitCrewType.attack + getTechAbil(techLevel)
         return attack * ratio / 100.0 * attackMultiplier
     }
 
     /** Computed defence: stat + tech component. Train applied separately in war power. */
     override fun getBaseDefence(): Double {
         val unitCrewType = getCrewType()
-        val defence = unitCrewType.defence + getTechAbil(tech)
-        val crewFactor = crew / 233.33 + 70.0
+        val defence = unitCrewType.defence + getTechAbil(techLevel)
+        val crewFactor = ships / 233.33 + 70.0
         return defence * crewFactor / 100.0 * defenceMultiplier
     }
 
     /** Legacy: HP > 0 AND rice > crew/100. */
     override fun continueWar(): WarContinuation {
-        if (rice <= hp / 100) return WarContinuation(false, true)
+        if (supplies <= hp / 100) return WarContinuation(false, true)
         if (hp <= 0) return WarContinuation(false, false)
         return WarContinuation(true, false)
     }
@@ -126,19 +126,19 @@ class WarUnitOfficer(
         if (!isAttacker) consumption *= 0.8
         if (vsCity) consumption *= 0.8
         consumption *= unitCrewType.riceCost
-        consumption *= getTechCost(tech)
+        consumption *= getTechCost(techLevel)
         consumption *= killRiceMultiplier
-        rice = (rice - consumption.toInt()).coerceAtLeast(0)
+        supplies = (supplies - consumption.toInt()).coerceAtLeast(0)
     }
 
-    private fun getCrewType(): CrewType = CrewType.fromCode(crewType) ?: CrewType.FOOTMAN
+    private fun getCrewType(): CrewType = CrewType.fromCode(shipClass) ?: CrewType.FOOTMAN
 
     private fun computeCriticalChance(unitCrewType: CrewType): Double {
         val (mainStat, coef) = when (unitCrewType.armType) {
-            ArmType.WIZARD -> intel to 0.4
+            ArmType.WIZARD -> intelligence to 0.4
             ArmType.SIEGE -> leadership to 0.4
-            ArmType.MISC -> (intel + leadership + strength) / 3 to 0.4
-            else -> strength to 0.5
+            ArmType.MISC -> (intelligence + leadership + command) / 3 to 0.4
+            else -> command to 0.5
         }
         val ratio = (mainStat - 65).coerceAtLeast(0) * coef
         return min(50.0, ratio) / 100.0
@@ -146,9 +146,9 @@ class WarUnitOfficer(
 
     fun applyResults() {
         general.ships = hp.coerceAtLeast(0)
-        general.supplies = rice.coerceAtLeast(0)
-        general.training = train.coerceIn(0, 110).toShort()
-        general.morale = atmos.coerceIn(0, 150).toShort()
+        general.supplies = supplies.coerceAtLeast(0)
+        general.training = training.coerceIn(0, 110).toShort()
+        general.morale = morale.coerceIn(0, 150).toShort()
         general.injury = injury.coerceIn(0, 80).toShort()
 
         // C7: apply accumulated battle experience
@@ -157,7 +157,7 @@ class WarUnitOfficer(
         }
         if (pendingStatExp > 0) {
             // PHP addStatExp: armType FOOTMAN/CAVALRY → strength, WIZARD → intel, SIEGE → leadership, MISC → all three
-            val unitCrewType = CrewType.fromCode(crewType)
+            val unitCrewType = CrewType.fromCode(general.shipClass.toInt())
             when (unitCrewType?.armType) {
                 ArmType.WIZARD -> general.intelligenceExp = (general.intelligenceExp + pendingStatExp).coerceIn(0, 1000).toShort()
                 ArmType.SIEGE -> general.leadershipExp = (general.leadershipExp + pendingStatExp).coerceIn(0, 1000).toShort()

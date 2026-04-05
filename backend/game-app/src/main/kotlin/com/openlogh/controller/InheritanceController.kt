@@ -62,7 +62,7 @@ class InheritanceController(
         @RequestBody request: SetInheritCityRequest,
     ): ResponseEntity<InheritanceActionResult> {
         val loginId = getLoginId() ?: return ResponseEntity.status(401).build()
-        val result = inheritanceService.setInheritCity(worldId, loginId, request.planetId)
+        val result = inheritanceService.setInheritPlanet(worldId, loginId, request.cityId)
             ?: return ResponseEntity.notFound().build()
         if (result.error != null) return ResponseEntity.badRequest().body(result)
         return ResponseEntity.ok(result)

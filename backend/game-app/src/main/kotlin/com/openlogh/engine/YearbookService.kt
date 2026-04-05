@@ -78,8 +78,8 @@ class YearbookService(
 
         val yearShort = year.toShort()
         val monthShort = month.toShort()
-        val existing = yearbookHistoryRepository.findByWorldIdAndYearAndMonth(worldId, yearShort, monthShort)
-        val entity = existing ?: YearbookHistory(worldId = worldId, year = yearShort, month = monthShort)
+        val existing = yearbookHistoryRepository.findBySessionIdAndYearAndMonth(worldId, yearShort, monthShort)
+        val entity = existing ?: YearbookHistory(sessionId = worldId, year = yearShort, month = monthShort)
 
         entity.map = objectMapper.convertValue(map, object : TypeReference<MutableMap<String, Any>>() {})
         entity.nations = objectMapper.convertValue(nations, object : TypeReference<MutableList<Map<String, Any>>>() {})
@@ -217,7 +217,7 @@ class YearbookService(
     }
 
     private fun buildMonthlyLogs(worldId: Long, year: Int, month: Int): Pair<List<String>, List<String>> {
-        val messages = messageRepository.findByWorldIdAndYearAndMonthOrderBySentAtAsc(worldId, year, month)
+        val messages = messageRepository.findBySessionIdAndYearAndMonthOrderBySentAtAsc(worldId, year, month)
         val globalHistory = mutableListOf<String>()
         val globalAction = mutableListOf<String>()
 

@@ -220,9 +220,9 @@ class FieldBattleTrigger(
         )
 
         messageRepository.saveAll(messages)
-        val records = messages.map { msg ->
+        val records = messages.map { msg: com.openlogh.entity.Message ->
             Record(
-                worldId = msg.sessionId,
+                sessionId = msg.sessionId,
                 recordType = msg.mailboxCode,
                 srcId = msg.srcId,
                 destId = msg.destId,

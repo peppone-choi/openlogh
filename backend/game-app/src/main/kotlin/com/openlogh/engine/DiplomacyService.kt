@@ -207,7 +207,7 @@ class DiplomacyService(
 
         // Send diplomatic message to dest nation
         sendDiplomaticMessage(
-            sessionId = worldId,
+            worldId = worldId,
             srcNationId = srcNationId,
             destNationId = destNationId,
             messageType = MSG_NON_AGGRESSION_PROPOSAL,
@@ -251,7 +251,7 @@ class DiplomacyService(
         val proposal = createRelation(worldId, srcNationId, destNationId, "불가침파기제의", NA_PROPOSAL_TERM)
 
         sendDiplomaticMessage(
-            sessionId = worldId,
+            worldId = worldId,
             srcNationId = srcNationId,
             destNationId = destNationId,
             messageType = MSG_NON_AGGRESSION_BREAK,
@@ -301,7 +301,7 @@ class DiplomacyService(
         val proposal = createRelation(worldId, srcNationId, destNationId, "종전제의", CEASEFIRE_PROPOSAL_TERM)
 
         sendDiplomaticMessage(
-            sessionId = worldId,
+            worldId = worldId,
             srcNationId = srcNationId,
             destNationId = destNationId,
             messageType = MSG_CEASEFIRE_PROPOSAL,

@@ -3,7 +3,7 @@ package com.openlogh.engine
 import com.openlogh.entity.Officer
 import com.openlogh.entity.HallOfFame
 import com.openlogh.entity.Faction
-import com.openlogh.entity.OldGeneral
+import com.openlogh.entity.OldOfficer
 import com.openlogh.entity.SessionState
 import com.openlogh.repository.PlanetRepository
 import com.openlogh.repository.DiplomacyRepository
@@ -12,7 +12,7 @@ import com.openlogh.repository.OfficerTurnRepository
 import com.openlogh.repository.HallOfFameRepository
 import com.openlogh.repository.FactionRepository
 import com.openlogh.repository.FactionTurnRepository
-import com.openlogh.repository.OldGeneralRepository
+import com.openlogh.repository.OldOfficerRepository
 import com.openlogh.repository.FleetRepository
 import com.openlogh.service.GameConstService
 import com.openlogh.service.HistoryService
@@ -35,7 +35,7 @@ class OfficerMaintenanceService(
     private val diplomacyRepository: DiplomacyRepository,
     private val factionTurnRepository: FactionTurnRepository,
     private val fleetRepository: FleetRepository,
-    private val oldGeneralRepository: OldGeneralRepository,
+    private val oldGeneralRepository: OldOfficerRepository,
     private val officerTurnRepository: OfficerTurnRepository,
     private val officerAccessLogRepository: OfficerAccessLogRepository,
     private val historyService: HistoryService,
@@ -240,7 +240,7 @@ class OfficerMaintenanceService(
                         serverId = serverId,
                         season = season,
                         scenario = scenario,
-                        generalNo = general.id,
+                        officerNo = general.id,
                         type = type,
                         value = value,
                         owner = general.userId?.toString(),
@@ -292,8 +292,8 @@ class OfficerMaintenanceService(
     }
 
     private fun clearGeneralQueuesAndAccessLogs(generalId: Long) {
-        officerTurnRepository.deleteByGeneralId(generalId)
-        val accessLogs = officerAccessLogRepository.findByGeneralId(generalId)
+        officerTurnRepository.deleteByOfficerId(generalId)
+        val accessLogs = officerAccessLogRepository.findByOfficerId(generalId)
         if (accessLogs.isNotEmpty()) {
             officerAccessLogRepository.deleteAll(accessLogs)
         }
@@ -364,7 +364,7 @@ class OfficerMaintenanceService(
         allGenerals.filter { it.fleetId == troopId }.forEach { it.fleetId = 0 }
 
         fleetRepository.findById(troopId).orElse(null)
-            ?.takeIf { it.leaderGeneralId == general.id }
+            ?.takeIf { it.leaderOfficerId == general.id }
             ?.let { fleetRepository.delete(it) }
     }
 
@@ -377,7 +377,7 @@ class OfficerMaintenanceService(
             return troopId
         }
         val troop = fleetRepository.findById(troopId).orElse(null) ?: return null
-        return troopId.takeIf { troop.leaderGeneralId == general.id }
+        return troopId.takeIf { troop.leaderOfficerId == general.id }
     }
 
     private fun selectNextRuler(world: SessionState, deadGeneral: Officer, allGenerals: List<Officer>): Officer? {
@@ -459,9 +459,9 @@ class OfficerMaintenanceService(
     }
 
     private fun upsertOldGeneral(serverId: String, general: Officer, world: SessionState) {
-        val oldGeneral = oldGeneralRepository.findByServerIdAndGeneralNo(serverId, general.id) ?: OldGeneral(
+        val oldGeneral = oldGeneralRepository.findByServerIdAndOfficerNo(serverId, general.id) ?: OldOfficer(
             serverId = serverId,
-            generalNo = general.id,
+            officerNo = general.id,
         )
         oldGeneral.owner = general.userId?.toString()
         oldGeneral.name = general.name

@@ -358,10 +358,10 @@ class InheritanceService(
             ?: return InheritanceActionResult(error = "장수를 찾을 수 없습니다")
 
         officer.leadership = request.leadership.toShort()
-        officer.command = request.command.toShort()
-        officer.intelligence = request.intelligence.toShort()
+        officer.command = request.strength.toShort()
+        officer.intelligence = request.intel.toShort()
         officer.politics = request.politics.toShort()
-        officer.administration = request.administration.toShort()
+        officer.administration = request.charm.toShort()
 
         request.inheritBonusStat?.takeIf { hasBonusStat }?.let { bonusStat ->
             officer.leadership = (officer.leadership + bonusStat[0]).toShort()
@@ -377,7 +377,7 @@ class InheritanceService(
             user.meta["inheritPoints"] = points - cost
         }
         user.meta["inheritStatResetDone"] = true
-        addInheritLog(user, "능력치 초기화 (통${request.leadership}/무${request.command}/지${request.intelligence}/정${request.politics}/매${request.administration})", -cost)
+        addInheritLog(user, "능력치 초기화 (통${request.leadership}/무${request.strength}/지${request.intel}/정${request.politics}/매${request.charm})", -cost)
 
         appUserRepository.save(user)
         return InheritanceActionResult(remainingPoints = points - cost)

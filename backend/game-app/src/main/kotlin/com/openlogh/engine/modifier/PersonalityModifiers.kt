@@ -27,7 +27,7 @@ object PersonalityModifiers {
         },
         "명석" to object : ActionModifier {
             override val code = "명석"; override val name = "명석"
-            override fun onCalcStat(stat: StatContext) = stat.copy(intel = stat.intelligence + 2)
+            override fun onCalcStat(stat: StatContext) = stat.copy(intel = stat.intel + 2)
         },
         "강직" to object : ActionModifier {
             override val code = "강직"; override val name = "강직"

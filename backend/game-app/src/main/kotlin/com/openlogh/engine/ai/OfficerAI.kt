@@ -771,15 +771,15 @@ class OfficerAI(
         if (frontCities.isEmpty()) return null
 
         val mapName = (ctx.world.config["mapName"] as? String) ?: "che"
-        val capitalMapCityId = ctx.allPlanets.find { it.id == nation.capitalPlanetId }?.mapCityId ?: return null
+        val capitalMapCityId = ctx.allCities.find { it.id == nation.capitalPlanetId }?.mapCityId ?: return null
 
         val targetNationIds = warTargetNations.keys.filter { it != 0L }
         val routeNationIds = mutableListOf(nation.id).apply { addAll(targetNationIds) }
-        val warRoute = mapService.calcAllPairsDistanceByNations(routeNationIds, ctx.allPlanets, mapName)
+        val warRoute = mapService.calcAllPairsDistanceByNations(routeNationIds, ctx.allCities, mapName)
 
         val frontCityMapIds = frontCities.map { it.mapCityId }.toSet()
         val supplyCityMapIds = supplyCities.map { it.mapCityId }.toSet()
-        val ownCityByMapId = ctx.allPlanets
+        val ownCityByMapId = ctx.allCities
             .filter { it.factionId == nation.id }
             .associateBy { it.mapCityId }
 
@@ -793,7 +793,7 @@ class OfficerAI(
         }
 
         for (leader in troopLeaders) {
-            val currentCityMapId = ctx.allPlanets.find { it.id == leader.planetId }?.mapCityId ?: continue
+            val currentCityMapId = ctx.allCities.find { it.id == leader.planetId }?.mapCityId ?: continue
             if (currentCityMapId in frontCityMapIds) continue
 
             val combatForce = policy.combatForce[leader.id.toInt()]
@@ -869,7 +869,7 @@ class OfficerAI(
 
         // Find troop leaders in cities with low population
         val candidates = troopLeaders.filter { leader ->
-            val leaderCity = ctx.allPlanets.find { it.id == leader.planetId }
+            val leaderCity = ctx.allCities.find { it.id == leader.planetId }
             if (leaderCity == null || !supplyCityIds.contains(leaderCity.id)) {
                 true // Lost troop leader, needs rescue/rear
             } else {
@@ -936,7 +936,7 @@ class OfficerAI(
         if (ctx.diplomacyState == DiplomacyState.PEACE || ctx.diplomacyState == DiplomacyState.DECLARED) return null
 
         val frontCityIds = frontCities.map { it.id }.toSet()
-        val nationCityIds = ctx.allPlanets.filter { it.factionId == nation.id }.map { it.id }.toSet()
+        val nationCityIds = ctx.allCities.filter { it.factionId == nation.id }.map { it.id }.toSet()
 
         val npcWarGenerals = ctx.nationGenerals.filter { gen ->
             gen.npcState.toInt() >= 2 &&
@@ -987,7 +987,7 @@ class OfficerAI(
         val candidates = npcWarGenerals.filter { gen ->
             if (!supplyCityIds.contains(gen.planetId)) return@filter false
             if (gen.ships >= policy.minWarCrew) return@filter false
-            val genCity = ctx.allPlanets.find { it.id == gen.planetId } ?: return@filter false
+            val genCity = ctx.allCities.find { it.id == gen.planetId } ?: return@filter false
             genCity.populationMax > 0 &&
                 genCity.population.toDouble() / genCity.populationMax < policy.safeRecruitCityPopulationRatio
         }
@@ -1088,7 +1088,7 @@ class OfficerAI(
         if (ctx.diplomacyState == DiplomacyState.PEACE || ctx.diplomacyState == DiplomacyState.DECLARED) return null
 
         val frontCityIds = frontCities.map { it.id }.toSet()
-        val nationCityIds = ctx.allPlanets.filter { it.factionId == nation.id }.map { it.id }.toSet()
+        val nationCityIds = ctx.allCities.filter { it.factionId == nation.id }.map { it.id }.toSet()
 
         val userWarGenerals = ctx.nationGenerals.filter { gen ->
             gen.npcState.toInt() < 2 && gen.id != ctx.general.id
@@ -1490,7 +1490,7 @@ class OfficerAI(
         // TODO: TechLimit guard not implemented; opensamguk tech system may differ
 
         // Per PHP lines 1883-1902: use categorizeNationGeneral for war/civil separation
-        val nationCities = ctx.allPlanets.filter { it.factionId == nation.id }
+        val nationCities = ctx.allCities.filter { it.factionId == nation.id }
             .associateBy { it.id }
         val categories = categorizeNationGeneral(
             nationGenerals = ctx.nationGenerals,
@@ -1557,16 +1557,16 @@ class OfficerAI(
 
         // Find neighboring nations to declare war on
         // Per legacy: prefer nations not already in wars, weighted by inverse power
-        val otherNations = ctx.allFactions.filter {
-            it.id != nation.id && it.level > 0
+        val otherNations = ctx.allNations.filter {
+            it.id != nation.id && it.factionRank > 0
         }
 
         if (otherNations.isEmpty()) return null
 
         // Map-adjacency based neighbor check: only nations that share a border via connected cities
         // mapAdjacency keys are mapCityId (from map JSON), not DB city.id
-        val myMapCityIds = ctx.allPlanets.filter { it.factionId == nation.id }.map { it.mapCityId.toLong() }.toSet()
-        val mapCityNationMap = ctx.allPlanets.associate { it.mapCityId.toLong() to it.factionId }
+        val myMapCityIds = ctx.allCities.filter { it.factionId == nation.id }.map { it.mapCityId.toLong() }.toSet()
+        val mapCityNationMap = ctx.allCities.associate { it.mapCityId.toLong() to it.factionId }
         val neighborNationIds = mutableSetOf<Long>()
         for (myMapCityId in myMapCityIds) {
             for (adjMapId in ctx.mapAdjacency[myMapCityId].orEmpty()) {
@@ -1581,7 +1581,7 @@ class OfficerAI(
         if (targets.isEmpty()) return null
 
         // Weight by inverse power (prefer weaker targets)
-        val target = choiceByWeight(rng, targets) { 1.0 / sqrt(it.power.toDouble() + 1.0) } ?: return null
+        val target = choiceByWeight(rng, targets) { 1.0 / sqrt(it.militaryPower.toDouble() + 1.0) } ?: return null
         ctx.general.meta["warTarget"] = target.id
         return "선전포고"
     }
@@ -1993,7 +1993,7 @@ class OfficerAI(
         val riceAfterTrainCost = general.supplies - fullLeadership * 4
         if (goldAfterTrainCost <= 0 || riceAfterTrainCost <= 0) return null
 
-        val crewTypeCode = pickCrewType(general, ctx.generalType, rng, ctx.allPlanets, ctx.nation, ctx.world)
+        val crewTypeCode = pickCrewType(general, ctx.generalType, rng, ctx.allCities, ctx.nation, ctx.world)
         val maxAmount = fullLeadership * 100 - (if (crewTypeCode == general.shipClass.toInt()) general.ships else 0)
         if (maxAmount <= 0) return null
 
@@ -2065,7 +2065,7 @@ class OfficerAI(
         val ownRegionIds = ownedCities.map { it.region.toInt() }.toSet()
         val mapName = (world.config["mapName"] as? String) ?: "che"
         val regionNameToId = mapService.getRegions(mapName).entries.associate { (regionId, regionName) -> regionName to regionId }
-        val tech = nation?.tech?.toInt() ?: 0
+        val tech = nation?.techLevel?.toInt() ?: 0
         val startYear = (world.config["startyear"] as? Number)?.toInt()
             ?: (world.config["startYear"] as? Number)?.toInt()
             ?: world.currentYear.toInt()
@@ -2181,9 +2181,9 @@ class OfficerAI(
 
         val activeWarTargetIds = warTargetNations.filter { it.value >= 2 }.keys
         val targetCities = if (activeWarTargetIds.isNotEmpty()) {
-            ctx.allPlanets.filter { it.factionId in activeWarTargetIds && it.factionId != nation.id }
+            ctx.allCities.filter { it.factionId in activeWarTargetIds && it.factionId != nation.id }
         } else {
-            ctx.allPlanets.filter { it.factionId == 0L }
+            ctx.allCities.filter { it.factionId == 0L }
         }
         if (targetCities.isEmpty()) return null
 
@@ -2607,7 +2607,7 @@ class OfficerAI(
         if (ctx.diplomacyState != DiplomacyState.AT_WAR) return null
 
         val frontCityIds = ctx.frontCities.map { it.id }.toSet()
-        val nationCityMap = ctx.allPlanets.filter { it.factionId == nation.id }.associateBy { it.id }
+        val nationCityMap = ctx.allCities.filter { it.factionId == nation.id }.associateBy { it.id }
         val supplyCityIds = supplyCities.map { it.id }.toSet()
 
         // Troop leaders in our nation
@@ -3454,7 +3454,7 @@ class OfficerAI(
                 actionName, ctx, rng, nationPolicy, supplyCities, backupCities, attackable, warTargetNations
             )
             if (result != null) {
-                logger.debug("NationTurn: general {} chose {}", general.id, result)
+                logger.debug("FactionTurn: general {} chose {}", general.id, result)
                 return result
             }
         }

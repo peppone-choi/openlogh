@@ -57,7 +57,7 @@ open class 화계(general: Officer, env: CommandEnv, arg: Map<String, Any>? = nu
 
     override fun getCost(): CommandCost {
         val cost = env.develCost * 5
-        return CommandCost(gold = cost, rice = cost)
+        return CommandCost(funds = cost, supplies = cost)
     }
 
     override fun getPreReqTurn() = 0
@@ -73,8 +73,8 @@ open class 화계(general: Officer, env: CommandEnv, arg: Map<String, Any>? = nu
         val modified = services?.modifierService?.applyStatModifiers(mods, base) ?: base
         return when (statType) {
             "leadership" -> modified.leadership.toInt()
-            "strength" -> modified.command.toInt()
-            else -> modified.intelligence.toInt()
+            "strength" -> modified.strength.toInt()
+            else -> modified.intel.toInt()
         }
     }
 

@@ -37,7 +37,7 @@ class 이동(general: Officer, env: CommandEnv, arg: Map<String, Any>? = null)
             )
         }
 
-    override fun getCost() = CommandCost(gold = env.develCost, rice = 0)
+    override fun getCost() = CommandCost(funds = env.develCost, supplies = 0)
 
     override fun getPreReqTurn() = 0
     override fun getPostReqTurn() = 0
@@ -58,7 +58,7 @@ class 이동(general: Officer, env: CommandEnv, arg: Map<String, Any>? = null)
         val atmosDelta = newAtmos - general.morale.toInt()
 
         // Legacy PHP: if officer_level==20 and nation.factionRank==0 (roaming), move all nation generals
-        val isRoamingLeader = general.officerLevel.toInt() == 20 && (nation?.level?.toInt() ?: 1) == 0
+        val isRoamingLeader = general.officerLevel.toInt() == 20 && (nation?.factionRank?.toInt() ?: 1) == 0
         val roamingMoveJson = if (isRoamingLeader) {
             ""","roamingMove":{"nationId":${nation?.id ?: 0},"destCityId":"$destCityId","destCityName":"$destCityName"}"""
         } else ""

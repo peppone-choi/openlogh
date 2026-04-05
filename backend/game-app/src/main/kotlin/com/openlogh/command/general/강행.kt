@@ -29,7 +29,7 @@ class 강행(general: Officer, env: CommandEnv, arg: Map<String, Any>? = null)
             )
         }
 
-    override fun getCost() = CommandCost(gold = env.develCost * 5, rice = 0)
+    override fun getCost() = CommandCost(funds = env.develCost * 5, supplies = 0)
 
     override fun getPreReqTurn() = 0
     override fun getPostReqTurn() = 0
@@ -53,7 +53,7 @@ class 강행(general: Officer, env: CommandEnv, arg: Map<String, Any>? = null)
 
         // Legacy parity: 방랑군(nation.factionRank==0) 군주(officerLevel==20)가 강행하면
         // 같은 세력의 모든 장수를 함께 이동시킨다.
-        val isWanderingLord = general.officerLevel.toInt() == 20 && nation?.level?.toInt() == 0
+        val isWanderingLord = general.officerLevel.toInt() == 20 && nation?.factionRank?.toInt() == 0
         val wanderingJson = if (isWanderingLord) {
             ""","wanderingNationMove":{"destCityId":"$destCityId","nationId":"${general.factionId}","destCityName":"$destCityName","logMessage":"방랑군 세력이 <G><b>${destCityName}</b></>${josaRo} 강행했습니다."}"""
         } else ""

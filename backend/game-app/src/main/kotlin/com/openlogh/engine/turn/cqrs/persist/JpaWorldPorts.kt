@@ -98,14 +98,14 @@ class JpaWorldPorts(
             .toList()
 
     override fun diplomaciesByFaction(factionId: Long): List<DiplomacySnapshot> =
-        diplomacyRepository.findByWorldIdAndSrcNationIdOrDestNationId(sessionId, factionId, factionId)
+        diplomacyRepository.findBySessionIdAndSrcFactionIdOrDestFactionId(sessionId, factionId, factionId)
             .asSequence()
             .filter { it.sessionId == sessionId }
             .map(::toDiplomacySnapshot)
             .toList()
 
     override fun activeDiplomacies(): List<DiplomacySnapshot> =
-        diplomacyRepository.findByWorldIdAndIsDeadFalse(sessionId).map(::toDiplomacySnapshot)
+        diplomacyRepository.findBySessionIdAndIsDeadFalse(sessionId).map(::toDiplomacySnapshot)
 
     override fun officerTurns(officerId: Long): List<OfficerTurnSnapshot> =
         officerTurnRepository.findByOfficerIdOrderByTurnIdx(officerId)
@@ -115,7 +115,7 @@ class JpaWorldPorts(
             .toList()
 
     override fun factionTurns(factionId: Long, officerLevel: Short): List<FactionTurnSnapshot> =
-        factionTurnRepository.findByNationIdAndOfficerLevelOrderByTurnIdx(factionId, officerLevel)
+        factionTurnRepository.findByFactionIdAndOfficerLevelOrderByTurnIdx(factionId, officerLevel)
             .asSequence()
             .filter { it.sessionId == sessionId }
             .map(::toFactionTurnSnapshot)
@@ -172,7 +172,7 @@ class JpaWorldPorts(
     }
 
     override fun setOfficerTurns(officerId: Long, turns: List<OfficerTurnSnapshot>) {
-        officerTurnRepository.deleteByGeneralId(officerId)
+        officerTurnRepository.deleteByOfficerId(officerId)
         val entities = turns
             .sortedBy { it.turnIdx }
             .map { it.toEntityWithGeneratedId() }
@@ -180,7 +180,7 @@ class JpaWorldPorts(
     }
 
     override fun setFactionTurns(factionId: Long, officerLevel: Short, turns: List<FactionTurnSnapshot>) {
-        factionTurnRepository.deleteByNationIdAndOfficerLevel(factionId, officerLevel)
+        factionTurnRepository.deleteByFactionIdAndOfficerLevel(factionId, officerLevel)
         val entities = turns
             .sortedBy { it.turnIdx }
             .map { it.toEntityWithGeneratedId() }
@@ -188,11 +188,11 @@ class JpaWorldPorts(
     }
 
     override fun removeOfficerTurns(officerId: Long) {
-        officerTurnRepository.deleteByGeneralId(officerId)
+        officerTurnRepository.deleteByOfficerId(officerId)
     }
 
     override fun removeFactionTurns(factionId: Long, officerLevel: Short) {
-        factionTurnRepository.deleteByNationIdAndOfficerLevel(factionId, officerLevel)
+        factionTurnRepository.deleteByFactionIdAndOfficerLevel(factionId, officerLevel)
     }
 
     private fun toOfficerSnapshot(entity: Officer): OfficerSnapshot = entity.toSnapshot()

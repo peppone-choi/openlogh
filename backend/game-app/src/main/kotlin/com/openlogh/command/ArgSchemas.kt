@@ -206,7 +206,7 @@ val COMMAND_SCHEMAS: Map<String, ArgSchema> = mapOf(
 
     "물자조달" to ArgSchemas.amountWithDirection,
     "군량매매" to ArgSchemas.amountWithDirection,
-    "헌납" to ArgSchemas.tradeRoute,
+    "헌납" to ArgSchemas.trade,
 
     "출병" to ArgSchemas.destPlanet,
     "이동" to ArgSchemas.destPlanet,

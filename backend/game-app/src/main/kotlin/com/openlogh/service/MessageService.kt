@@ -208,14 +208,14 @@ class MessageService(
     }
 
     @Transactional
-    fun createBoardComment(postId: Long, authorGeneralId: Long, content: String): BoardCommentResponse {
+    fun createBoardComment(postId: Long, authorOfficerId: Long, content: String): BoardCommentResponse {
         val post = getBoardPost(postId)
         migrateLegacyPayloadComments(post)
 
         val saved = boardCommentRepository.save(
             BoardComment(
                 boardId = postId,
-                authorGeneralId = authorGeneralId,
+                authorOfficerId = authorOfficerId,
                 content = content,
                 createdAt = OffsetDateTime.now(),
             )
@@ -223,7 +223,7 @@ class MessageService(
 
         return BoardCommentResponse(
             id = saved.id,
-            authorGeneralId = authorGeneralId,
+            authorGeneralId = authorOfficerId,
             content = content,
             createdAt = saved.createdAt,
         )
@@ -236,7 +236,7 @@ class MessageService(
 
         val comment = boardCommentRepository.findById(commentId).orElse(null) ?: return false
         if (comment.boardId != postId) return false
-        if (comment.authorGeneralId != generalId) return false
+        if (comment.authorOfficerId != generalId) return false
 
         boardCommentRepository.delete(comment)
         return true
@@ -292,14 +292,14 @@ class MessageService(
         return raw.mapNotNull { item ->
             val map = item as? Map<*, *> ?: return@mapNotNull null
             val id = (map["id"] as? Number)?.toLong() ?: return@mapNotNull null
-            val authorGeneralId = (map["authorGeneralId"] as? Number)?.toLong() ?: return@mapNotNull null
+            val authorOfficerId = (map["authorOfficerId"] as? Number)?.toLong() ?: return@mapNotNull null
             val content = map["content"]?.toString() ?: return@mapNotNull null
             val createdAtRaw = map["createdAt"]?.toString() ?: return@mapNotNull null
             val createdAt = runCatching { OffsetDateTime.parse(createdAtRaw) }.getOrNull() ?: return@mapNotNull null
 
             BoardCommentResponse(
                 id = id,
-                authorGeneralId = authorGeneralId,
+                authorGeneralId = authorOfficerId,
                 content = content,
                 createdAt = createdAt,
             )
@@ -316,7 +316,7 @@ class MessageService(
         val entities = legacy.map {
             BoardComment(
                 boardId = post.id,
-                authorGeneralId = it.authorGeneralId,
+                authorOfficerId = it.authorGeneralId,
                 content = it.content,
                 createdAt = it.createdAt,
             )
@@ -329,7 +329,7 @@ class MessageService(
     private fun toBoardCommentResponse(comment: BoardComment): BoardCommentResponse {
         return BoardCommentResponse(
             id = comment.id,
-            authorGeneralId = comment.authorGeneralId,
+            authorGeneralId = comment.authorOfficerId,
             content = comment.content,
             createdAt = comment.createdAt,
         )
@@ -362,7 +362,7 @@ class MessageService(
 
         val destFaction = factionRepository.findById(fromNationId).orElse(null)
             ?: throw IllegalStateException("대상 국가가 존재하지 않습니다.")
-        if (destFaction.level <= 0) throw IllegalStateException("방랑군에는 임관할 수 없습니다.")
+        if (destFaction.factionRank <= 0) throw IllegalStateException("방랑군에는 임관할 수 없습니다.")
 
         val world = sessionStateRepository.findById(receiver.sessionId.toShort()).orElse(null)
         if (world != null) {
@@ -370,7 +370,7 @@ class MessageService(
             val openingPartYears = (world.config["openingPartYears"] as? Number)?.toInt() ?: 3
             val relYear = world.currentYear.toInt() - startYear
             if (relYear < openingPartYears) {
-                val genCount = officerRepository.findBySessionIdAndNationId(world.id.toLong(), fromNationId).size
+                val genCount = officerRepository.findBySessionIdAndFactionId(world.id.toLong(), fromNationId).size
                 val genLimit = (world.config["initialNationGenLimit"] as? Number)?.toInt() ?: 10
                 if (genCount >= genLimit) {
                     throw IllegalStateException("임관이 제한되고 있습니다. (개방 기간 중 국가당 최대 ${genLimit}명)")

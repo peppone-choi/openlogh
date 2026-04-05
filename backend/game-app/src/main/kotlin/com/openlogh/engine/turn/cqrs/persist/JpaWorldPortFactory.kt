@@ -126,13 +126,13 @@ private class PartialJpaWorldPorts(
 
     override fun diplomaciesByFaction(factionId: Long): List<DiplomacySnapshot> =
         diplomacyRepository
-            ?.findByWorldIdAndSrcNationIdOrDestNationId(sessionId, factionId, factionId)
+            ?.findBySessionIdAndSrcFactionIdOrDestFactionId(sessionId, factionId, factionId)
             ?.filter { it.sessionId == sessionId }
             ?.map(Diplomacy::toSnapshot)
             .orEmpty()
 
     override fun activeDiplomacies(): List<DiplomacySnapshot> =
-        diplomacyRepository?.findByWorldIdAndIsDeadFalse(sessionId)?.map(Diplomacy::toSnapshot).orEmpty()
+        diplomacyRepository?.findBySessionIdAndIsDeadFalse(sessionId)?.map(Diplomacy::toSnapshot).orEmpty()
 
     override fun officerTurns(officerId: Long): List<OfficerTurnSnapshot> = emptyList()
 

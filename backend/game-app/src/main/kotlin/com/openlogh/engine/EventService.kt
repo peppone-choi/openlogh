@@ -35,7 +35,7 @@ class EventService @Autowired constructor(
 
     @Transactional
     fun dispatchEvents(world: SessionState, targetCode: String) {
-        val events = eventRepository.findByWorldIdAndTargetCodeOrderByPriorityDescIdAsc(
+        val events = eventRepository.findBySessionIdAndTargetCodeOrderByPriorityDescIdAsc(
             world.id.toLong(), targetCode
         )
 

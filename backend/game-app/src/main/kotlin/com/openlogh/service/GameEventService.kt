@@ -253,7 +253,7 @@ class GameEventService(
     fun onGameEvent(event: GameEvent) {
         // 1. Persist to world_history table
         val history = WorldHistory(
-            worldId = event.sessionId,
+            sessionId = event.worldId,
             year = event.year,
             month = event.month,
             eventType = event.eventType,
@@ -265,33 +265,33 @@ class GameEventService(
         val payload = event.toPayload().apply { put("historyId", history.id) }
         when (event) {
             is BattleEvent -> {
-                broadcastBattle(event.sessionId, payload)
+                broadcastBattle(event.worldId, payload)
                 sendToOfficer(event.attackerGeneralId, payload)
                 sendToOfficer(event.defenderGeneralId, payload)
             }
             is TurnEvent -> {
-                broadcastTurnAdvance(event.sessionId, event.year.toInt(), event.month.toInt())
-                broadcastWorldUpdate(event.sessionId, payload)
+                broadcastTurnAdvance(event.worldId, event.year.toInt(), event.month.toInt())
+                broadcastWorldUpdate(event.worldId, payload)
             }
             is DiplomacyEvent -> {
-                broadcastWorldUpdate(event.sessionId, payload)
+                broadcastWorldUpdate(event.worldId, payload)
             }
             is NationEvent -> {
-                broadcastWorldUpdate(event.sessionId, payload)
+                broadcastWorldUpdate(event.worldId, payload)
             }
             is GeneralEvent -> {
                 sendToOfficer(event.generalId, payload)
-                broadcastWorldUpdate(event.sessionId, payload)
+                broadcastWorldUpdate(event.worldId, payload)
             }
             is CommandEvent -> {
-                broadcastCommand(event.sessionId, event.generalId, payload)
+                broadcastCommand(event.worldId, event.generalId, payload)
             }
             else -> {
-                broadcastWorldUpdate(event.sessionId, payload)
+                broadcastWorldUpdate(event.worldId, payload)
             }
         }
 
-        log.debug("[World {}] Event logged: type={}, id={}", event.sessionId, event.eventType, history.id)
+        log.debug("[World {}] Event logged: type={}, id={}", event.worldId, event.eventType, history.id)
     }
 
     // ── Event Query API ──
@@ -367,7 +367,7 @@ class GameEventService(
         eventType: String, payload: MutableMap<String, Any>,
     ): WorldHistory {
         val history = WorldHistory(
-            worldId = worldId,
+            sessionId = worldId,
             year = year,
             month = month,
             eventType = eventType,

@@ -27,10 +27,10 @@ class CityController(
     fun listVisibleByWorld(@PathVariable worldId: Long): ResponseEntity<List<CityResponse>> {
         val loginId = SecurityContextHolder.getContext().authentication?.name
             ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
-        val myGeneral = officerService.getMyGeneral(worldId, loginId)
+        val myGeneral = officerService.getMyOfficer(worldId, loginId)
             ?: return ResponseEntity.status(HttpStatus.FORBIDDEN).build()
         return ResponseEntity.ok(
-            planetService.listByWorldMaskedForGeneral(worldId, myGeneral).map { city ->
+            planetService.listByWorldMaskedForOfficer(worldId, myGeneral).map { city ->
                 CityResponse.from(city, planetService.canonicalRegionForDisplay(city))
             },
         )
@@ -42,9 +42,9 @@ class CityController(
             ?: return ResponseEntity.notFound().build()
         val loginId = SecurityContextHolder.getContext().authentication?.name
         val maskedCity = if (loginId != null) {
-            val myGeneral = officerService.getMyGeneral(city.sessionId, loginId)
+            val myGeneral = officerService.getMyOfficer(city.sessionId, loginId)
             if (myGeneral != null) {
-                planetService.listByWorldMaskedForGeneral(city.sessionId, myGeneral)
+                planetService.listByWorldMaskedForOfficer(city.sessionId, myGeneral)
                     .find { it.id == id } ?: city
             } else city
         } else city

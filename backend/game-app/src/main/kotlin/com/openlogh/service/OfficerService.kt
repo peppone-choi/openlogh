@@ -58,7 +58,7 @@ class OfficerService(
     private val availableSpecialCodes: Set<String> = TraitSpecRegistry.war.map { it.key }.toSet()
 
     fun listBySession(sessionId: Long): List<Officer> {
-        return officerRepository.findBySessionId(worldId)
+        return officerRepository.findBySessionId(sessionId)
     }
 
     fun getById(id: Long): Officer? {
@@ -99,7 +99,7 @@ class OfficerService(
         }
 
         ensureCreateAllowed(world, worldId, userId)
-        validateFiveStats(request.leadership, request.command, request.intelligence, request.politics, request.administration)
+        validateFiveStats(request.leadership, request.strength, request.intel, request.politics, request.charm)
 
         val prePurchasedSpecial = user.meta["inheritSpecificSpecialWar"] as? String
         val prePurchasedCity = (user.meta["inheritCity"] as? Number)?.toLong()
@@ -112,7 +112,7 @@ class OfficerService(
 
         val inheritBonusStat = normalizeInheritBonusStat(request.inheritBonusStat)
         val nameBlocked = isCustomNameBlocked(world)
-        val nationId = request.factionId ?: 0L
+        val nationId = request.nationId ?: 0L
         val faction = if (nationId > 0L) {
             factionRepository.findById(nationId).orElseThrow { IllegalArgumentException("국가를 찾을 수 없습니다.") }
                 .also {
@@ -124,7 +124,7 @@ class OfficerService(
             null
         }
 
-        val finalCityId = inheritCity ?: request.planetId ?: pickRandomStartPlanet(worldId, world, nationId)
+        val finalCityId = inheritCity ?: request.cityId ?: pickRandomStartPlanet(worldId, world, nationId)
         val planet = planetRepository.findById(finalCityId).orElseThrow {
             IllegalArgumentException("도시를 찾을 수 없습니다.")
         }.also {
@@ -158,7 +158,7 @@ class OfficerService(
         )
         applyJoinInheritCost(user, pointsToSpend)
 
-        val bonusStat = inheritBonusStat ?: randomBornBonus(rng, request.leadership.toInt(), request.command.toInt(), request.intelligence.toInt(), request.politics.toInt(), request.administration.toInt())
+        val bonusStat = inheritBonusStat ?: randomBornBonus(rng, request.leadership.toInt(), request.strength.toInt(), request.intel.toInt(), request.politics.toInt(), request.charm.toInt())
         val relYear = (world.currentYear.toInt() - getStartYear(world)).coerceAtLeast(0)
         val age = (20 + bonusStat.sum() * 2 - rng.nextInt(0, 2)).toShort()
         val specAge = calcSpecAge(age.toInt(), relYear)
@@ -182,17 +182,16 @@ class OfficerService(
                 picture = picture,
                 imageServer = imageServer,
                 leadership = (request.leadership + bonusStat[0]).toShort(),
-                strength = (request.command + bonusStat[1]).toShort(),
-                intel = (request.intelligence + bonusStat[2]).toShort(),
+                command = (request.strength + bonusStat[1]).toShort(),
+                intelligence = (request.intel + bonusStat[2]).toShort(),
                 politics = (request.politics + bonusStat[3]).toShort(),
-                charm = (request.administration + bonusStat[4]).toShort(),
+                administration = (request.charm + bonusStat[4]).toShort(),
                 experience = experience,
                 officerLevel = if (nationId > 0L) 1 else 0,
                 officerCity = 0,
                 permission = "normal",
-                gold = gameConstService.getInt("defaultGold"),
-                rice = gameConstService.getInt("defaultRice"),
-                crewType = request.shipClass,
+                funds = gameConstService.getInt("defaultGold"), supplies = gameConstService.getInt("defaultRice"),
+                shipClass = request.crewType,
                 ownerName = user.displayName,
                 turnTime = createInitialTurnTime(world, rng, request.inheritTurntimeZone),
                 killTurn = resolveKillTurn(world).toShort(),
@@ -216,7 +215,7 @@ class OfficerService(
             (0 until gameConstService.getInt("maxTurn")).map { turnIdx ->
                 OfficerTurn(
                     sessionId = worldId,
-                    generalId = saved.id,
+                    officerId = saved.id,
                     turnIdx = turnIdx.toShort(),
                     actionCode = "휴식",
                     brief = "휴식",
@@ -283,7 +282,7 @@ class OfficerService(
     fun buildPoolOfficer(worldId: Long, loginId: String, request: BuildPoolGeneralRequest): Officer? {
         val user = findUserByLoginId(loginId)
         val userId = user.id ?: throw IllegalArgumentException("계정 정보를 확인할 수 없습니다. 다시 로그인해주세요.")
-        validateFiveStats(request.leadership, request.command, request.intelligence, request.politics, request.administration)
+        validateFiveStats(request.leadership, request.strength, request.intel, request.politics, request.charm)
         if (hasActiveOfficer(worldId, userId)) return null
 
         val rng = createJoinRng(
@@ -296,10 +295,10 @@ class OfficerService(
             userId = userId,
             name = normalizeName(request.name),
             leadership = request.leadership,
-            strength = request.command,
-            intel = request.intelligence,
+            command = request.strength,
+            intelligence = request.intel,
             politics = request.politics,
-            charm = request.administration,
+            administration = request.charm,
             npcState = 5,
             turnTime = OffsetDateTime.now(),
             picture = picture,

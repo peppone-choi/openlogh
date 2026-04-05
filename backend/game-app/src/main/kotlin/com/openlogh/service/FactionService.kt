@@ -58,8 +58,8 @@ class FactionService(
             bill = faction.taxRate.toInt(),
             secretLimit = faction.secretLimit.toInt(),
             strategicCmdLimit = faction.strategicCmdLimit.toInt(),
-            notice = readFactionNoticeMessage(faction),
-            scoutMsg = readFactionScoutMessage(faction),
+            notice = readNationNoticeMessage(faction),
+            scoutMsg = readNationScoutMessage(faction),
             blockWar = faction.warState.toInt() != 0,
             blockScout = faction.scoutLevel.toInt() != 0,
         )
@@ -418,7 +418,7 @@ class FactionService(
      */
     @Transactional
     fun recalcAllFronts(worldId: Long) {
-        val nations = factionRepository.findBySessionId(worldId).filter { it.level > 0 }
+        val nations = factionRepository.findBySessionId(worldId).filter { it.factionRank > 0 }
         for (faction in nations) {
             setNationFront(worldId, faction.id)
         }

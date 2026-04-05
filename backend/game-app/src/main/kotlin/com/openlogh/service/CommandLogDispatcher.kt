@@ -167,7 +167,7 @@ class CommandLogDispatcher(
         month: Int,
     ): Record {
         return Record(
-            worldId = worldId,
+            sessionId = worldId,
             recordType = recordType,
             srcId = srcId,
             destId = destId,

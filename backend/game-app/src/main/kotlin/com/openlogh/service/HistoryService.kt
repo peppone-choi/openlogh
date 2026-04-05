@@ -18,7 +18,7 @@ class HistoryService(
         if (scenarioInit) payload["scenarioInit"] = true
         recordRepository.save(
             Record(
-                worldId = worldId,
+                sessionId = worldId,
                 recordType = "world_history",
                 year = year,
                 month = month,
@@ -31,7 +31,7 @@ class HistoryService(
     fun logNationHistory(worldId: Long, nationId: Long, message: String, year: Int, month: Int) {
         recordRepository.save(
             Record(
-                worldId = worldId,
+                sessionId = worldId,
                 recordType = "nation_history",
                 destId = nationId,
                 year = year,

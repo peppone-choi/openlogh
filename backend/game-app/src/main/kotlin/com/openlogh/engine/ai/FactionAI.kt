@@ -332,7 +332,7 @@ class FactionAI(
         val targetGenerals = ports.officersByFaction(targetNation.id).map { it.toEntity() }
 
         // Power comparison
-        if (nation.militaryPower < targetNation.power) return false
+        if (nation.militaryPower < targetNation.militaryPower) return false
 
         // Need sufficient cities and generals
         if (nationCities.size < 2) return false
@@ -407,16 +407,16 @@ class FactionAI(
 
         val targets = allNations.filter {
             it.id != nation.id &&
-                it.level > 0 &&
+                it.factionRank > 0 &&
                 it.id !in existingDiploNationIds &&
-                it.power < nation.militaryPower &&
+                it.militaryPower < nation.militaryPower &&
                 neighborNationIds.contains(it.id)
         }
 
         if (targets.isEmpty()) return null
         if (rng.nextInt(100) >= 10) return null
 
-        return choiceByWeightPair(rng, targets.map { it to 1.0 / sqrt(it.power.toDouble() + 1.0) })
+        return choiceByWeightPair(rng, targets.map { it to 1.0 / sqrt(it.militaryPower.toDouble() + 1.0) })
     }
 
     private fun mapNationPriorityToAction(priority: String): String? {

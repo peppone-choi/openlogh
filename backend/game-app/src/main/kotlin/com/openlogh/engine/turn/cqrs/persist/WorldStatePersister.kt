@@ -225,7 +225,7 @@ class WorldStatePersister(
         jpaBulkWriter.saveAll(diplomacyRepository, diplomacyUpserts)
         jpaBulkWriter.deleteAllById(diplomacyRepository, changes.deletedDiplomacyIds)
 
-        officerTurnRepository.deleteByWorldId(sessionId)
+        officerTurnRepository.deleteBySessionId(sessionId)
         val officerTurns = state.officerTurnsByOfficerId
             .values
             .flatten()
@@ -244,7 +244,7 @@ class WorldStatePersister(
             }
         jpaBulkWriter.saveAll(officerTurnRepository, officerTurns)
 
-        factionTurnRepository.deleteByWorldId(sessionId)
+        factionTurnRepository.deleteBySessionId(sessionId)
         val factionTurns = state.factionTurnsByFactionAndLevel
             .values
             .flatten()

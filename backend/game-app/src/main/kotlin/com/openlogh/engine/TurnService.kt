@@ -482,10 +482,10 @@ class TurnService @Autowired constructor(
                 var didConsumeNationTurn = false
                 if (general.officerLevel >= 5 && nation != null) {
                     val nationTurns = factionTurnRepository
-                        .findByNationIdAndOfficerLevelOrderByTurnIdx(general.factionId, general.officerLevel)
+                        .findByFactionIdAndOfficerLevelOrderByTurnIdx(general.factionId, general.officerLevel)
                     var nationActionCode: String? = null
                     var nationArg: Map<String, Any>? = null
-                    var consumedNationTurn: com.openlogh.entity.NationTurn? = null
+                    var consumedNationTurn: com.openlogh.entity.FactionTurn? = null
 
                     val hiddenSeed = (world.config["hiddenSeed"] as? String) ?: "${world.id}"
                     if (nationTurns.isNotEmpty()) {
@@ -560,7 +560,7 @@ class TurnService @Autowired constructor(
                 // General command
                 val actionCode: String
                 val arg: Map<String, Any>?
-                val executedTurn: com.openlogh.entity.GeneralTurn?
+                val executedTurn: com.openlogh.entity.OfficerTurn?
 
                 // autorun_limit: 플레이어 장수가 일정 기간 미접속 시 AI가 대신 행동
                 // legacy TurnExecutionHelper.php lines 289-296
@@ -777,7 +777,7 @@ class TurnService @Autowired constructor(
             year = world.currentYear.toInt(),
             month = world.currentMonth.toInt(),
             startYear = startYear,
-            worldId = world.id.toLong(),
+            sessionId = world.id.toLong(),
             realtimeMode = world.realtimeMode,
             gameStor = gameStor,
             trainDelta = gameConstService.getDouble("trainDelta"),
@@ -1001,7 +1001,7 @@ class TurnService @Autowired constructor(
 
         // Group online logs by nation, sort by count descending
         val onlineByNation = recentLogs
-            .groupBy { generalNationMap[it.generalId] ?: 0L }
+            .groupBy { generalNationMap[it.officerId] ?: 0L }
             .entries.sortedByDescending { it.value.size }
 
         val onlineNationStr = onlineByNation.map { (nationId, _) ->
@@ -1087,7 +1087,7 @@ class TurnService @Autowired constructor(
         val clampedRice = avgRice.coerceIn(1000.0, 20000.0)
 
         val openAuctions = auctionService.listActiveAuctions(worldId)
-            .filter { it.hostGeneralId == 0L }
+            .filter { it.hostOfficerId == 0L }
         val neutralBuyRiceCnt = openAuctions.count { it.subType == "buyRice" }
         val neutralSellRiceCnt = openAuctions.count { it.subType == "sellRice" }
 

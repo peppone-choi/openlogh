@@ -6,8 +6,8 @@ import com.openlogh.entity.GameHistory
 import com.openlogh.entity.Officer
 import com.openlogh.entity.HallOfFame
 import com.openlogh.entity.Message
-import com.openlogh.entity.OldGeneral
-import com.openlogh.entity.OldNation
+import com.openlogh.entity.OldOfficer
+import com.openlogh.entity.OldFaction
 import com.openlogh.entity.SessionState
 import com.openlogh.repository.AppUserRepository
 import com.openlogh.service.HistoryService
@@ -18,8 +18,8 @@ import com.openlogh.repository.OfficerRepository
 import com.openlogh.repository.HallOfFameRepository
 import com.openlogh.repository.MessageRepository
 import com.openlogh.repository.FactionRepository
-import com.openlogh.repository.OldGeneralRepository
-import com.openlogh.repository.OldNationRepository
+import com.openlogh.repository.OldOfficerRepository
+import com.openlogh.repository.OldFactionRepository
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -33,8 +33,8 @@ class UnificationService(
     private val appUserRepository: AppUserRepository,
     private val hallOfFameRepository: HallOfFameRepository,
     private val sovereignRepository: SovereignRepository,
-    private val oldNationRepository: OldNationRepository,
-    private val oldGeneralRepository: OldGeneralRepository,
+    private val oldNationRepository: OldFactionRepository,
+    private val oldGeneralRepository: OldOfficerRepository,
     private val gameHistoryRepository: GameHistoryRepository,
     private val messageRepository: MessageRepository,
     private val historyService: HistoryService,
@@ -54,7 +54,7 @@ class UnificationService(
 
         val worldId = world.id.toLong()
         val nations = factionRepository.findBySessionId(worldId)
-        val activeNations = nations.filter { it.level > 0 }
+        val activeNations = nations.filter { it.factionRank > 0 }
         if (activeNations.size != 1) {
             return
         }
@@ -230,7 +230,7 @@ class UnificationService(
                             serverId = serverId,
                             season = season,
                             scenario = scenario,
-                            generalNo = general.id,
+                            officerNo = general.id,
                             type = type,
                             value = value,
                             owner = general.userId?.toString(),
@@ -247,7 +247,7 @@ class UnificationService(
         }
 
         val gameHistory = gameHistoryRepository.findByServerId(serverId) ?: GameHistory(serverId = serverId)
-        gameHistory.winnerNation = winnerNationId
+        gameHistory.winnerFaction = winnerNationId
         gameHistory.date = OffsetDateTime.now()
         gameHistoryRepository.save(gameHistory)
     }
@@ -286,7 +286,7 @@ class UnificationService(
         val gen = winnerGenerals.sortedByDescending { it.dedication }.joinToString(", ") { it.name }
 
         val historyMessages = messageRepository
-            .findByWorldIdAndMailboxCodeAndDestIdOrderBySentAtDesc(worldId, "nation_history", winnerNationId)
+            .findBySessionIdAndMailboxCodeAndDestIdOrderBySentAtDesc(worldId, "nation_history", winnerNationId)
             .mapNotNull { it.payload["message"] as? String }
             .reversed()
 
@@ -298,10 +298,10 @@ class UnificationService(
                 "name" to winnerNation.name,
                 "color" to winnerNation.color,
                 "type" to winnerNation.factionType,
-                "level" to winnerNation.level,
+                "level" to winnerNation.factionRank,
                 "gold" to winnerNation.funds,
                 "rice" to winnerNation.supplies,
-                "power" to winnerNation.power,
+                "power" to winnerNation.militaryPower,
                 "capitalCityId" to (winnerNation.capitalPlanetId ?: 0),
                 "generals" to winnerGenerals.map { it.id },
                 "history" to historyMessages,
@@ -349,8 +349,8 @@ class UnificationService(
         val serverCount = gameHistoryRepository.count() + 1
 
         sovereignRepository.save(
-            Emperor(
-                serverId = serverId,
+            Sovereign(
+                sessionId = serverId,
                 phase = "${serverName}${serverCount}기",
                 nationCount = "${nations.size} / ${nations.size}",
                 nationName = nationNameList.joinToString(", "),
@@ -363,13 +363,12 @@ class UnificationService(
                 color = winnerNation.color,
                 year = world.currentYear,
                 month = world.currentMonth,
-                power = winnerNation.power,
+                power = winnerNation.militaryPower,
                 gennum = winnerGenerals.size,
                 citynum = ownedCities.size,
                 pop = popText,
                 poprate = popRate,
-                gold = winnerNation.funds,
-                rice = winnerNation.supplies,
+                gold = winnerNation.funds, rice = winnerNation.supplies,
                 l12name = officerMap[12]?.first ?: "",
                 l12pic = officerMap[12]?.second ?: "",
                 l11name = officerMap[11]?.first ?: "",
@@ -398,9 +397,9 @@ class UnificationService(
     }
 
     private fun upsertOldNation(serverId: String, nationId: Long, data: MutableMap<String, Any>) {
-        val oldNation = oldNationRepository.findByServerIdAndNation(serverId, nationId) ?: OldNation(
+        val oldNation = oldNationRepository.findByServerIdAndFaction(serverId, nationId) ?: OldFaction(
             serverId = serverId,
-            nation = nationId,
+            faction = nationId,
         )
         oldNation.data = data
         oldNation.date = OffsetDateTime.now()
@@ -408,9 +407,9 @@ class UnificationService(
     }
 
     private fun upsertOldGeneral(serverId: String, general: Officer, world: SessionState) {
-        val oldGeneral = oldGeneralRepository.findByServerIdAndGeneralNo(serverId, general.id) ?: OldGeneral(
+        val oldGeneral = oldGeneralRepository.findByServerIdAndOfficerNo(serverId, general.id) ?: OldOfficer(
             serverId = serverId,
-            generalNo = general.id,
+            officerNo = general.id,
         )
         oldGeneral.owner = general.userId?.toString()
         oldGeneral.name = general.name

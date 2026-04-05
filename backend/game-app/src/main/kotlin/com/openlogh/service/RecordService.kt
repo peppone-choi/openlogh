@@ -36,7 +36,7 @@ class RecordService(
     ): Record {
         return recordRepository.save(
             Record(
-                worldId = worldId,
+                sessionId = worldId,
                 recordType = recordType,
                 srcId = srcId,
                 destId = destId,

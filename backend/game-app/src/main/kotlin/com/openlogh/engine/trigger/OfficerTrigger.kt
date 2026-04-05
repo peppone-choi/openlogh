@@ -165,8 +165,8 @@ class ModifierBridgeTrigger(
         val modified = modifiers.fold(baseCtx) { stat, modifier -> modifier.onCalcStat(stat) }
         return when (statName) {
             "leadership" -> modified.leadership
-            "strength" -> modified.command
-            "intel" -> modified.intelligence
+            "strength" -> modified.strength
+            "intel" -> modified.intel
             "criticalChance" -> modified.criticalChance
             "dodgeChance" -> modified.dodgeChance
             "magicChance" -> modified.magicChance
