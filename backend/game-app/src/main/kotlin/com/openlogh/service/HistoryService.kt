@@ -44,11 +44,11 @@ class HistoryService(
     }
 
     fun getWorldHistory(worldId: Long): List<Record> {
-        return recordRepository.findByWorldIdAndRecordTypeOrderByCreatedAtDesc(worldId, "world_history")
+        return recordRepository.findBySessionIdAndRecordTypeOrderByCreatedAtDesc(worldId, "world_history")
     }
 
     fun getWorldRecords(worldId: Long): List<Record> {
-        return recordRepository.findByWorldIdAndRecordTypeOrderByCreatedAtDesc(worldId, "world_record")
+        return recordRepository.findBySessionIdAndRecordTypeOrderByCreatedAtDesc(worldId, "world_record")
     }
 
     fun getGeneralRecords(generalId: Long): List<Record> {
@@ -56,7 +56,7 @@ class HistoryService(
     }
 
     fun getByYearMonth(worldId: Long, year: Int, month: Int): List<Record> {
-        return recordRepository.findByWorldIdAndRecordTypeInAndYearAndMonthOrderByCreatedAtDesc(
+        return recordRepository.findBySessionIdAndRecordTypeInAndYearAndMonthOrderByCreatedAtDesc(
             worldId, listOf("world_history", "world_record"), year, month
         )
     }
@@ -64,7 +64,7 @@ class HistoryService(
     fun getYearbook(worldId: Long, year: Int): YearbookHistory? {
         val yearShort = year.toShort()
         for (month in 12 downTo 1) {
-            val snapshot = yearbookHistoryRepository.findByWorldIdAndYearAndMonth(worldId, yearShort, month.toShort())
+            val snapshot = yearbookHistoryRepository.findBySessionIdAndYearAndMonth(worldId, yearShort, month.toShort())
             if (snapshot != null) {
                 return snapshot
             }

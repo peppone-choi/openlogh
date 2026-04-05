@@ -5,22 +5,22 @@ import com.openlogh.dto.MessageResponse
 import com.openlogh.entity.HallOfFame
 import com.openlogh.entity.Message
 import com.openlogh.repository.AppUserRepository
-import com.openlogh.repository.GeneralRepository
+import com.openlogh.repository.OfficerRepository
 import com.openlogh.repository.HallOfFameRepository
-import com.openlogh.repository.WorldStateRepository
+import com.openlogh.repository.SessionStateRepository
 import org.springframework.stereotype.Service
 import java.time.OffsetDateTime
 import kotlin.math.roundToInt
 
 @Service
 class RankingService(
-    private val generalRepository: GeneralRepository,
+    private val officerRepository: OfficerRepository,
     private val hallOfFameRepository: HallOfFameRepository,
-    private val worldStateRepository: WorldStateRepository,
+    private val sessionStateRepository: SessionStateRepository,
     private val appUserRepository: AppUserRepository,
 ) {
     fun bestGenerals(worldId: Long, sortBy: String, limit: Int): List<BestGeneralResponse> {
-        val generals = generalRepository.findByWorldId(worldId)
+        val generals = officerRepository.findBySessionId(worldId)
         val sorted = when (sortBy) {
             "leadership" -> generals.sortedByDescending { it.leadership }
             "strength" -> generals.sortedByDescending { it.strength }
@@ -35,7 +35,7 @@ class RankingService(
     }
 
     fun hallOfFame(worldId: Long, season: Int?, scenario: String?): List<MessageResponse> {
-        val world = worldStateRepository.findById(worldId.toShort()).orElse(null) ?: return emptyList()
+        val world = sessionStateRepository.findById(worldId.toShort()).orElse(null) ?: return emptyList()
         val serverId = resolveServerId(world)
         val scenarioFilter = scenario?.toIntOrNull()
         val ownerIds = hallOfFameRepository.findByServerId(serverId)
@@ -53,7 +53,7 @@ class RankingService(
     }
 
     fun hallOfFameOptions(worldId: Long): Map<String, Any> {
-        val world = worldStateRepository.findById(worldId.toShort()).orElse(null) ?: return mapOf("seasons" to emptyList<Map<String, Any>>())
+        val world = sessionStateRepository.findById(worldId.toShort()).orElse(null) ?: return mapOf("seasons" to emptyList<Map<String, Any>>())
         val serverId = resolveServerId(world)
         val entries = hallOfFameRepository.findByServerId(serverId)
 
@@ -82,7 +82,7 @@ class RankingService(
     }
 
     fun uniqueItemOwners(worldId: Long): List<Map<String, Any?>> {
-        val generals = generalRepository.findByWorldId(worldId)
+        val generals = officerRepository.findBySessionId(worldId)
         val slots = listOf(
             "weapon" to "무기",
             "book" to "서적",

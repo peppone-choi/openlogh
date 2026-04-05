@@ -1,15 +1,15 @@
 package com.openlogh.service
 
-import com.openlogh.repository.GeneralAccessLogRepository
-import com.openlogh.repository.GeneralRepository
+import com.openlogh.repository.OfficerAccessLogRepository
+import com.openlogh.repository.OfficerRepository
 import com.openlogh.repository.TrafficSnapshotRepository
 import org.springframework.stereotype.Service
 
 @Service
 class TrafficService(
     private val trafficSnapshotRepo: TrafficSnapshotRepository,
-    private val accessLogRepo: GeneralAccessLogRepository,
-    private val generalRepo: GeneralRepository,
+    private val accessLogRepo: OfficerAccessLogRepository,
+    private val officerRepo: OfficerRepository,
 ) {
     data class TrafficResponse(
         val recentTraffic: List<TrafficEntry>,
@@ -34,10 +34,10 @@ class TrafficService(
         val refreshScoreTotal: Int,
     )
 
-    fun getTraffic(worldId: Long): TrafficResponse {
-        val snapshots = trafficSnapshotRepo.findTop30ByWorldIdOrderByRecordedAtDesc(worldId).reversed()
-        val maxRefresh = trafficSnapshotRepo.findMaxRefresh(worldId).coerceAtLeast(1)
-        val maxOnline = trafficSnapshotRepo.findMaxOnline(worldId).coerceAtLeast(1)
+    fun getTraffic(sessionId: Long): TrafficResponse {
+        val snapshots = trafficSnapshotRepo.findTop30BySessionIdOrderByRecordedAtDesc(sessionId).reversed()
+        val maxRefresh = trafficSnapshotRepo.findMaxRefresh(sessionId).coerceAtLeast(1)
+        val maxOnline = trafficSnapshotRepo.findMaxOnline(sessionId).coerceAtLeast(1)
 
         val recentTraffic = snapshots.map { s ->
             TrafficEntry(
@@ -49,21 +49,21 @@ class TrafficService(
             )
         }
 
-        // Top refreshers from general_access_log
-        val topLogs = accessLogRepo.findTopRefreshersByWorldId(worldId).take(5)
-        val generalIds = topLogs.map { it.generalId }.toSet()
-        val generalNames = generalRepo.findAllById(generalIds).associate { it.id to it.name }
+        // Top refreshers from officer_access_log
+        val topLogs = accessLogRepo.findTopRefreshersBySessionId(sessionId).take(5)
+        val officerIds = topLogs.map { it.officerId }.toSet()
+        val officerNames = officerRepo.findAllById(officerIds).associate { it.id to it.name }
 
         val topRefreshers = topLogs.map { log ->
             TopRefresher(
-                name = generalNames[log.generalId] ?: "#${log.generalId}",
+                name = officerNames[log.officerId] ?: "#${log.officerId}",
                 refresh = log.refresh,
                 refreshScoreTotal = log.refreshScoreTotal,
             )
         }
 
-        val totalRefresh = accessLogRepo.sumRefreshByWorldId(worldId)
-        val totalRefreshScoreTotal = accessLogRepo.sumRefreshScoreTotalByWorldId(worldId)
+        val totalRefresh = accessLogRepo.sumRefreshBySessionId(sessionId)
+        val totalRefreshScoreTotal = accessLogRepo.sumRefreshScoreTotalBySessionId(sessionId)
 
         return TrafficResponse(
             recentTraffic = recentTraffic,

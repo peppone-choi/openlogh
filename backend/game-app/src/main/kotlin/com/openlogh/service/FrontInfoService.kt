@@ -1,10 +1,10 @@
 package com.openlogh.service
 
 import com.openlogh.dto.*
-import com.openlogh.entity.City
-import com.openlogh.entity.General
+import com.openlogh.entity.Planet
+import com.openlogh.entity.Officer
 import com.openlogh.entity.Message
-import com.openlogh.entity.Nation
+import com.openlogh.entity.Faction
 import com.openlogh.engine.EmperorConstants
 import com.openlogh.engine.modifier.ItemModifiers
 import com.openlogh.engine.modifier.NationTypeModifiers
@@ -18,34 +18,34 @@ import kotlin.math.sqrt
 
 @Service
 class FrontInfoService(
-    private val worldStateRepository: WorldStateRepository,
-    private val generalRepository: GeneralRepository,
-    private val nationRepository: NationRepository,
-    private val cityRepository: CityRepository,
+    private val sessionStateRepository: SessionStateRepository,
+    private val officerRepository: OfficerRepository,
+    private val factionRepository: FactionRepository,
+    private val planetRepository: PlanetRepository,
     private val messageRepository: MessageRepository,
     private val recordRepository: RecordRepository,
     private val appUserRepository: AppUserRepository,
-    private val troopRepository: TroopRepository,
+    private val fleetRepository: FleetRepository,
     private val officerRankService: OfficerRankService,
     private val scenarioService: ScenarioService,
-    private val cityService: CityService,
+    private val planetService: PlanetService,
 ) {
     companion object {
         private const val MAX_DED_LEVEL = 10
     }
 
     fun getFrontInfo(worldId: Long, loginId: String, lastRecordId: Long?, lastHistoryId: Long?): FrontInfoResponse {
-        val world = worldStateRepository.findById(worldId.toShort()).orElse(null)
+        val world = sessionStateRepository.findById(worldId.toShort()).orElse(null)
             ?: throw IllegalArgumentException("World not found: $worldId")
 
-        val allGenerals = generalRepository.findByWorldId(worldId)
+        val allGenerals = officerRepository.findBySessionId(worldId)
         val userId = appUserRepository.findByLoginId(loginId)?.id
         val myGeneral = userId?.let { uid -> allGenerals.find { it.userId == uid } }
 
-        val nations = nationRepository.findByWorldId(worldId)
+        val nations = factionRepository.findBySessionId(worldId)
         val nationsById = nations.associateBy { it.id }
         val nation = myGeneral?.let { nationsById[it.nationId] }
-        val city = myGeneral?.let { cityRepository.findById(it.cityId).orElse(null) }
+        val city = myGeneral?.let { planetRepository.findById(it.cityId).orElse(null) }
 
         val nationGenerals = allGenerals.groupBy { it.nationId }
         val onlineNations = nations.filter { nationGenerals.containsKey(it.id) }.map { n ->
@@ -103,7 +103,7 @@ class FrontInfoService(
         val nationLevel = nation?.level?.toInt() ?: 0
         val generalInfo = myGeneral?.let { toGeneralFrontInfo(it, nationLevel, allGenerals, nationsById) }
 
-        val allCities = cityRepository.findByWorldId(worldId)
+        val allCities = planetRepository.findBySessionId(worldId)
         val nationInfo = if (myGeneral != null && nation != null && nation.id > 0) {
             buildNationInfo(nation, nationGenerals, allCities, allGenerals)
         } else {
@@ -129,10 +129,10 @@ class FrontInfoService(
     }
 
     private fun buildNationInfo(
-        n: Nation,
-        nationGenerals: Map<Long, List<General>>,
-        allCities: List<City>,
-        allGenerals: List<General>,
+        n: Faction,
+        nationGenerals: Map<Long, List<Officer>>,
+        allCities: List<Planet>,
+        allGenerals: List<Officer>,
     ): NationFrontInfo {
         val myNationCities = allCities.filter { it.nationId == n.id }
         val myNationGens = nationGenerals[n.id] ?: emptyList()
@@ -242,10 +242,10 @@ class FrontInfoService(
     }
 
     private fun buildCityInfo(
-        c: City,
-        myNation: Nation?,
-        nationsById: Map<Long, Nation>,
-        allGenerals: List<General>,
+        c: Planet,
+        myNation: Faction?,
+        nationsById: Map<Long, Faction>,
+        allGenerals: List<Officer>,
     ): CityFrontInfo {
         val cityNation = nationsById[c.nationId]
         val nationInfo = CityNationInfo(
@@ -270,7 +270,7 @@ class FrontInfoService(
             id = c.id,
             name = c.name,
             level = c.level.toInt(),
-            region = cityService.canonicalRegionForDisplay(c).toInt(),
+            region = planetService.canonicalRegionForDisplay(c).toInt(),
             nationInfo = nationInfo,
             trust = c.trust.toInt(),
             pop = listOf(c.pop, c.popMax),
@@ -284,7 +284,7 @@ class FrontInfoService(
         )
     }
 
-    private fun toGeneralFrontInfo(g: General, nationLevel: Int, allGenerals: List<General>, nations: Map<Long, Nation>): GeneralFrontInfo {
+    private fun toGeneralFrontInfo(g: Officer, nationLevel: Int, allGenerals: List<Officer>, nations: Map<Long, Faction>): OfficerFrontInfo {
         val officerLevel = g.officerLevel.toInt()
         val dedLevel = calcDedLevel(g.dedication)
 
@@ -292,7 +292,7 @@ class FrontInfoService(
 
         // Troop info
         val troopInfo = if (g.troopId > 0) {
-            val troops = troopRepository.findByNationId(g.nationId)
+            val troops = fleetRepository.findByFactionId(g.nationId)
             val troop = troops.find { it.leaderGeneralId == g.troopId }
             if (troop != null) {
                 val leader = allGenerals.find { it.id == g.troopId }
@@ -399,7 +399,7 @@ class FrontInfoService(
         )
     }
 
-    private fun calcPermission(g: General): Int {
+    private fun calcPermission(g: Officer): Int {
         if (g.nationId <= 0) return -1
         if (g.officerLevel.toInt() == 0) return -1
         if (g.officerLevel.toInt() == 20) return 4
@@ -505,7 +505,7 @@ class FrontInfoService(
         return NATION_TYPE_PROS_CONS[typeCode]?.second ?: ""
     }
 
-    private fun buildRecentRecord(worldId: Long, myGeneral: General?, lastRecordId: Long?, lastHistoryId: Long?): RecentRecordInfo {
+    private fun buildRecentRecord(worldId: Long, myGeneral: Officer?, lastRecordId: Long?, lastHistoryId: Long?): RecentRecordInfo {
         val generalRecords = if (myGeneral != null) {
             val sinceId = lastRecordId ?: 0
             recordRepository.findByDestIdAndRecordTypeAndIdGreaterThanOrderByCreatedAtDesc(
@@ -513,11 +513,11 @@ class FrontInfoService(
             )
         } else emptyList()
 
-        val globalRecords = recordRepository.findByWorldIdAndRecordTypeAndIdGreaterThanOrderByCreatedAtDesc(
+        val globalRecords = recordRepository.findBySessionIdAndRecordTypeAndIdGreaterThanOrderByCreatedAtDesc(
             worldId, "world_record", lastRecordId ?: 0
         )
 
-        val historyRecords = recordRepository.findByWorldIdAndRecordTypeAndIdGreaterThanOrderByCreatedAtDesc(
+        val historyRecords = recordRepository.findBySessionIdAndRecordTypeAndIdGreaterThanOrderByCreatedAtDesc(
             worldId, "world_history", lastHistoryId ?: 0
         )
 

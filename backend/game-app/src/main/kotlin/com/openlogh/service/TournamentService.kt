@@ -6,17 +6,17 @@ import com.openlogh.dto.TournamentBracketMatchResponse
 import com.openlogh.dto.TournamentInfoResponse
 import com.openlogh.engine.TournamentBattle
 import com.openlogh.entity.Tournament
-import com.openlogh.repository.GeneralRepository
+import com.openlogh.repository.OfficerRepository
 import com.openlogh.repository.TournamentRepository
-import com.openlogh.repository.WorldStateRepository
+import com.openlogh.repository.SessionStateRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 @Service
 class TournamentService(
-    private val generalRepository: GeneralRepository,
+    private val officerRepository: OfficerRepository,
     private val tournamentRepository: TournamentRepository,
-    private val worldStateRepository: WorldStateRepository,
+    private val sessionStateRepository: SessionStateRepository,
     private val inheritanceService: InheritanceService,
 ) {
     companion object {
@@ -27,10 +27,10 @@ class TournamentService(
 
     @Transactional(readOnly = true)
     fun getTournament(worldId: Long): TournamentInfoResponse? {
-        val world = worldStateRepository.findById(worldId.toShort()).orElse(null) ?: return null
+        val world = sessionStateRepository.findById(worldId.toShort()).orElse(null) ?: return null
         val state = (world.meta["tournamentState"] as? Number)?.toInt() ?: 0
 
-        val entries = tournamentRepository.findByWorldIdOrderByRoundAscBracketPositionAsc(worldId)
+        val entries = tournamentRepository.findBySessionIdOrderByRoundAscBracketPositionAsc(worldId)
         val participants = entries.filter { it.round.toInt() == 0 }.map { it.generalId }
         val bracket = entries
             .filter { it.round.toInt() > 0 }
@@ -57,7 +57,7 @@ class TournamentService(
     }
 
     fun getBetting(worldId: Long): BettingInfoResponse? {
-        val world = worldStateRepository.findById(worldId.toShort()).orElse(null) ?: return null
+        val world = sessionStateRepository.findById(worldId.toShort()).orElse(null) ?: return null
 
         val bets = (world.meta["bets"] as? List<*>)
             ?.mapNotNull { raw ->
@@ -86,11 +86,11 @@ class TournamentService(
 
     @Transactional
     fun placeBet(worldId: Long, generalId: Long, targetId: Long, amount: Int): Map<String, Any>? {
-        val general = generalRepository.findById(generalId).orElse(null) ?: return null
+        val general = officerRepository.findById(generalId).orElse(null) ?: return null
         if (general.gold < amount) return mapOf("error" to "금 부족")
         general.gold -= amount
-        generalRepository.save(general)
-        val world = worldStateRepository.findById(worldId.toShort()).orElse(null) ?: return null
+        officerRepository.save(general)
+        val world = sessionStateRepository.findById(worldId.toShort()).orElse(null) ?: return null
 
         val bets = mutableListOf<Map<String, Any>>()
         val existing = world.meta["bets"] as? List<*> ?: emptyList<Any>()
@@ -108,14 +108,14 @@ class TournamentService(
 
         bets.add(mapOf("generalId" to generalId, "targetId" to targetId, "amount" to amount))
         world.meta["bets"] = bets
-        worldStateRepository.save(world)
+        sessionStateRepository.save(world)
         return mapOf("success" to true)
     }
 
     @Transactional
     fun createTournament(worldId: Long, type: Int): Map<String, Any>? {
-        val world = worldStateRepository.findById(worldId.toShort()).orElse(null) ?: return null
-        tournamentRepository.deleteByWorldId(worldId)
+        val world = sessionStateRepository.findById(worldId.toShort()).orElse(null) ?: return null
+        tournamentRepository.deleteBySessionId(worldId)
 
         world.meta["tournamentState"] = STATE_REGISTER
         world.meta["tournamentType"] = type
@@ -123,21 +123,21 @@ class TournamentService(
         world.meta["tournamentWinnerId"] = 0L
         world.meta["tournamentParticipants"] = emptyList<Long>()
         world.meta["tournamentBracket"] = emptyList<Map<String, Any>>()
-        worldStateRepository.save(world)
+        sessionStateRepository.save(world)
 
         return mapOf("success" to true, "worldId" to worldId, "type" to type, "state" to STATE_REGISTER)
     }
 
     @Transactional
     fun registerParticipant(tournamentId: Long, generalId: Long): Map<String, Any>? {
-        val world = worldStateRepository.findById(tournamentId.toShort()).orElse(null) ?: return null
+        val world = sessionStateRepository.findById(tournamentId.toShort()).orElse(null) ?: return null
         val state = (world.meta["tournamentState"] as? Number)?.toInt() ?: 0
         if (state != STATE_REGISTER) return mapOf("error" to "등록 기간이 아닙니다")
 
-        val general = generalRepository.findById(generalId).orElse(null) ?: return mapOf("error" to "장수가 없습니다")
+        val general = officerRepository.findById(generalId).orElse(null) ?: return mapOf("error" to "장수가 없습니다")
         if (general.worldId != tournamentId) return mapOf("error" to "같은 월드의 장수만 참가할 수 있습니다")
 
-        val exists = tournamentRepository.findByWorldIdAndRound(tournamentId, 0).any { it.generalId == generalId }
+        val exists = tournamentRepository.findBySessionIdAndRound(tournamentId, 0).any { it.generalId == generalId }
         if (exists) return mapOf("error" to "이미 등록됨")
 
         tournamentRepository.save(
@@ -156,8 +156,8 @@ class TournamentService(
 
     @Transactional
     fun startTournament(tournamentId: Long): Map<String, Any>? {
-        val world = worldStateRepository.findById(tournamentId.toShort()).orElse(null) ?: return null
-        val participants = tournamentRepository.findByWorldIdAndRound(tournamentId, 0)
+        val world = sessionStateRepository.findById(tournamentId.toShort()).orElse(null) ?: return null
+        val participants = tournamentRepository.findBySessionIdAndRound(tournamentId, 0)
         if (participants.size < 2) return mapOf("error" to "참가자가 부족합니다")
 
         val seeded = participants.shuffled().map { it.generalId }.toMutableList()
@@ -196,19 +196,19 @@ class TournamentService(
 
         world.meta["tournamentState"] = STATE_BRACKET
         world.meta["tournamentRound"] = 1
-        worldStateRepository.save(world)
+        sessionStateRepository.save(world)
         syncWorldTournamentMeta(tournamentId)
         return mapOf("success" to true, "state" to STATE_BRACKET, "round" to 1)
     }
 
     @Transactional
     fun advanceRound(tournamentId: Long): Map<String, Any>? {
-        val world = worldStateRepository.findById(tournamentId.toShort()).orElse(null) ?: return null
+        val world = sessionStateRepository.findById(tournamentId.toShort()).orElse(null) ?: return null
         val state = (world.meta["tournamentState"] as? Number)?.toInt() ?: 0
         if (state != STATE_BRACKET) return mapOf("error" to "대회가 진행 중이 아닙니다")
 
         val round = (world.meta["tournamentRound"] as? Number)?.toInt() ?: 1
-        val current = tournamentRepository.findByWorldIdAndRoundOrderByBracketPositionAsc(tournamentId, round.toShort())
+        val current = tournamentRepository.findBySessionIdAndRoundOrderByBracketPositionAsc(tournamentId, round.toShort())
         if (current.isEmpty()) return mapOf("error" to "현재 라운드 데이터가 없습니다")
 
         val nextWinners = mutableListOf<Long>()
@@ -224,8 +224,8 @@ class TournamentService(
                 continue
             }
 
-            val attackerGeneral = generalRepository.findById(attackerRow.generalId).orElse(null)
-            val defenderGeneral = generalRepository.findById(defenderRow.generalId).orElse(null)
+            val attackerGeneral = officerRepository.findById(attackerRow.generalId).orElse(null)
+            val defenderGeneral = officerRepository.findById(defenderRow.generalId).orElse(null)
             if (attackerGeneral == null || defenderGeneral == null) continue
 
             val battleResult = TournamentBattle.resolveTournamentBattle(
@@ -274,7 +274,7 @@ class TournamentService(
         if (nextWinners.size <= 1) {
             world.meta["tournamentState"] = STATE_FINISHED
             world.meta["tournamentWinnerId"] = nextWinners.firstOrNull() ?: 0L
-            worldStateRepository.save(world)
+            sessionStateRepository.save(world)
             syncWorldTournamentMeta(tournamentId)
             return mapOf("success" to true, "finished" to true, "winnerId" to (nextWinners.firstOrNull() ?: 0L))
         }
@@ -308,37 +308,37 @@ class TournamentService(
         }
 
         world.meta["tournamentRound"] = nextRound
-        worldStateRepository.save(world)
+        sessionStateRepository.save(world)
         syncWorldTournamentMeta(tournamentId)
         return mapOf("success" to true, "finished" to false, "nextRound" to nextRound)
     }
 
     @Transactional
     fun finalizeTournament(tournamentId: Long): Map<String, Any>? {
-        val world = worldStateRepository.findById(tournamentId.toShort()).orElse(null) ?: return null
+        val world = sessionStateRepository.findById(tournamentId.toShort()).orElse(null) ?: return null
         val winnerId = (world.meta["tournamentWinnerId"] as? Number)?.toLong() ?: 0L
         if (winnerId == 0L) return mapOf("error" to "우승자가 정해지지 않았습니다")
 
-        val winner = generalRepository.findById(winnerId).orElse(null)
+        val winner = officerRepository.findById(winnerId).orElse(null)
             ?: return mapOf("error" to "우승 장수를 찾을 수 없습니다")
 
-        val finalRound = tournamentRepository.findByWorldId(world.id.toLong()).maxOfOrNull { it.round.toInt() } ?: 1
-        val finalists = tournamentRepository.findByWorldIdAndRound(world.id.toLong(), finalRound.toShort())
+        val finalRound = tournamentRepository.findBySessionId(world.id.toLong()).maxOfOrNull { it.round.toInt() } ?: 1
+        val finalists = tournamentRepository.findBySessionIdAndRound(world.id.toLong(), finalRound.toShort())
         val runnerUpId = finalists.firstOrNull { it.generalId != winnerId }?.generalId
-        val runnerUp = runnerUpId?.let { generalRepository.findById(it).orElse(null) }
+        val runnerUp = runnerUpId?.let { officerRepository.findById(it).orElse(null) }
 
         winner.gold += 5000
         winner.dedication += 100
-        generalRepository.save(winner)
+        officerRepository.save(winner)
 
         if (runnerUp != null) {
             runnerUp.gold += 2500
             runnerUp.dedication += 50
-            generalRepository.save(runnerUp)
+            officerRepository.save(runnerUp)
         }
 
         world.meta["tournamentState"] = 0
-        worldStateRepository.save(world)
+        sessionStateRepository.save(world)
 
         return mapOf(
             "success" to true,
@@ -355,7 +355,7 @@ class TournamentService(
      */
     @Transactional
     fun processTournamentTurn(worldId: Long) {
-        val world = worldStateRepository.findById(worldId.toShort()).orElse(null) ?: return
+        val world = sessionStateRepository.findById(worldId.toShort()).orElse(null) ?: return
         val state = (world.meta["tournamentState"] as? Number)?.toInt() ?: 0
         val isAuto = (world.meta["tournamentAuto"] as? Boolean) ?: true
 
@@ -381,16 +381,16 @@ class TournamentService(
 
     @Transactional
     fun sendTournamentMessage(worldId: Long, message: String): Map<String, Any>? {
-        val world = worldStateRepository.findById(worldId.toShort()).orElse(null) ?: return null
+        val world = sessionStateRepository.findById(worldId.toShort()).orElse(null) ?: return null
         val msgs = readAnyMutableList(world.meta["tournamentMessages"])
         msgs.add(mapOf("text" to message, "year" to world.currentYear.toInt(), "month" to world.currentMonth.toInt()))
         world.meta["tournamentMessages"] = msgs
-        worldStateRepository.save(world)
+        sessionStateRepository.save(world)
         return mapOf("success" to true)
     }
 
     fun getBettingHistory(worldId: Long): List<Map<String, Any?>> {
-        val world = worldStateRepository.findById(worldId.toShort()).orElse(null) ?: return emptyList()
+        val world = sessionStateRepository.findById(worldId.toShort()).orElse(null) ?: return emptyList()
         val history = world.meta["bettingHistory"] as? List<*> ?: return emptyList()
         return history.mapNotNull { raw ->
             val row = raw as? Map<*, *> ?: return@mapNotNull null
@@ -406,7 +406,7 @@ class TournamentService(
     }
 
     fun getBettingEvent(worldId: Long, yearMonth: String): BettingInfoResponse? {
-        val world = worldStateRepository.findById(worldId.toShort()).orElse(null) ?: return null
+        val world = sessionStateRepository.findById(worldId.toShort()).orElse(null) ?: return null
         val history = world.meta["bettingHistory"] as? List<*> ?: return getBetting(worldId)
         val event = history.firstOrNull { (it as? Map<*, *>)?.get("yearMonth") == yearMonth } as? Map<*, *>
             ?: return getBetting(worldId)
@@ -427,15 +427,15 @@ class TournamentService(
 
     @Transactional
     fun toggleBettingGate(worldId: Long, open: Boolean): Map<String, Any>? {
-        val world = worldStateRepository.findById(worldId.toShort()).orElse(null) ?: return null
+        val world = sessionStateRepository.findById(worldId.toShort()).orElse(null) ?: return null
         world.meta["bettingActive"] = open
-        worldStateRepository.save(world)
+        sessionStateRepository.save(world)
         return mapOf("success" to true, "open" to open)
     }
 
     private fun syncWorldTournamentMeta(worldId: Long) {
-        val world = worldStateRepository.findById(worldId.toShort()).orElse(null) ?: return
-        val entries = tournamentRepository.findByWorldIdOrderByRoundAscBracketPositionAsc(worldId)
+        val world = sessionStateRepository.findById(worldId.toShort()).orElse(null) ?: return
+        val entries = tournamentRepository.findBySessionIdOrderByRoundAscBracketPositionAsc(worldId)
 
         val participants = entries.filter { it.round.toInt() == 0 }.map { it.generalId }
         val bracket = entries
@@ -452,7 +452,7 @@ class TournamentService(
 
         world.meta["tournamentParticipants"] = participants
         world.meta["tournamentBracket"] = bracket
-        worldStateRepository.save(world)
+        sessionStateRepository.save(world)
     }
 
     /**
@@ -479,7 +479,7 @@ class TournamentService(
 
         val type = pattern.removeLastOrNull() ?: 0
         world.meta["tnmt_pattern"] = pattern
-        worldStateRepository.save(world)
+        sessionStateRepository.save(world)
 
         createTournament(world.id.toLong(), type)
     }

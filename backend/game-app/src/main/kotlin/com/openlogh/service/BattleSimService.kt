@@ -6,8 +6,8 @@ import com.openlogh.dto.SimulateResult
 import com.openlogh.engine.LiteHashDRBG
 import com.openlogh.engine.war.BattleEngine
 import com.openlogh.engine.war.WarUnitGeneral
-import com.openlogh.entity.City
-import com.openlogh.entity.General
+import com.openlogh.entity.Planet
+import com.openlogh.entity.Officer
 import org.springframework.stereotype.Service
 import kotlin.random.Random
 
@@ -33,7 +33,7 @@ class BattleSimService {
     fun simulate(request: SimulateRequest): SimulateResult {
         val defenders = if (request.defenders.isEmpty()) listOf(request.defender) else request.defenders
 
-        val city = City(
+        val city = Planet(
             id = 0,
             worldId = request.defenderCity.worldId,
             name = request.defenderCity.name,
@@ -47,10 +47,10 @@ class BattleSimService {
             popMax = 50000,
         )
 
-        val attackerGeneral = toGeneral(request.attacker)
-        val attackerUnit = WarUnitGeneral(attackerGeneral)
+        val attackerGeneral = toOfficer(request.attacker)
+        val attackerUnit = WarUnitOfficer(attackerGeneral)
 
-        val defenderUnits = defenders.map { unitInfo -> WarUnitGeneral(toGeneral(unitInfo)) }
+        val defenderUnits = defenders.map { unitInfo -> WarUnitOfficer(toOfficer(unitInfo)) }
 
         val terrainKey = request.terrain.lowercase()
         val weatherKey = request.weather.lowercase()
@@ -108,8 +108,8 @@ class BattleSimService {
         )
     }
 
-    private fun toGeneral(info: com.openlogh.dto.SimUnitInfo): General {
-        return General(
+    private fun toOfficer(info: com.openlogh.dto.SimUnitInfo): Officer {
+        return Officer(
             id = 0,
             worldId = 0,
             name = info.name,

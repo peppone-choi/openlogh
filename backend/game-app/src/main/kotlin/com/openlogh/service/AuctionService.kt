@@ -5,9 +5,9 @@ import com.openlogh.entity.AuctionBid
 import com.openlogh.entity.Message
 import com.openlogh.repository.AuctionBidRepository
 import com.openlogh.repository.AuctionRepository
-import com.openlogh.repository.CityRepository
-import com.openlogh.repository.GeneralRepository
-import com.openlogh.repository.WorldStateRepository
+import com.openlogh.repository.PlanetRepository
+import com.openlogh.repository.OfficerRepository
+import com.openlogh.repository.SessionStateRepository
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -19,9 +19,9 @@ import kotlin.math.roundToInt
 class AuctionService(
     private val auctionRepository: AuctionRepository,
     private val auctionBidRepository: AuctionBidRepository,
-    private val cityRepository: CityRepository,
-    private val generalRepository: GeneralRepository,
-    private val worldStateRepository: WorldStateRepository,
+    private val planetRepository: PlanetRepository,
+    private val officerRepository: OfficerRepository,
+    private val sessionStateRepository: SessionStateRepository,
 ) {
     companion object {
         private const val GENERAL_MINIMUM_GOLD = 100
@@ -46,7 +46,7 @@ class AuctionService(
             ?: return mapOf("error" to "선택한 경매가 없습니다.")
         val bids = auctionBidRepository.findByAuctionIdOrderByAmountDesc(auctionId)
         val bidGeneralIds = bids.map { it.bidderGeneralId }.toSet()
-        val generalNames = generalRepository.findAllById(bidGeneralIds).associate { it.id to it.name }
+        val generalNames = officerRepository.findAllById(bidGeneralIds).associate { it.id to it.name }
         val bidList = bids.map { bid ->
             mapOf(
                 "generalName" to (generalNames[bid.bidderGeneralId] ?: "알 수 없음"),
@@ -75,12 +75,12 @@ class AuctionService(
 
     @Transactional(readOnly = true)
     fun listAuctions(worldId: Long): List<Message> {
-        return auctionRepository.findByWorldIdAndStatusOrderByCreatedAtDesc(worldId, "open").map { toMessage(it) }
+        return auctionRepository.findBySessionIdAndStatusOrderByCreatedAtDesc(worldId, "open").map { toMessage(it) }
     }
 
     @Transactional(readOnly = true)
     fun listActiveAuctions(worldId: Long): List<Auction> {
-        return auctionRepository.findByWorldIdAndStatusOrderByCreatedAtDesc(worldId, "open")
+        return auctionRepository.findBySessionIdAndStatusOrderByCreatedAtDesc(worldId, "open")
     }
 
     @Transactional
@@ -102,7 +102,7 @@ class AuctionService(
             return toMessage(auction)
         }
 
-        val seller = generalRepository.findById(sellerId).orElse(null)
+        val seller = officerRepository.findById(sellerId).orElse(null)
             ?: throw IllegalArgumentException("장수를 찾을 수 없습니다")
         if (seller.worldId != worldId) throw IllegalArgumentException("잘못된 월드 장수입니다")
 
@@ -122,7 +122,7 @@ class AuctionService(
 
     @Transactional(readOnly = true)
     fun getActiveResourceAuctionList(worldId: Long): Map<String, Any> {
-        val active = auctionRepository.findByWorldIdAndStatusOrderByCreatedAtDesc(worldId, "open")
+        val active = auctionRepository.findBySessionIdAndStatusOrderByCreatedAtDesc(worldId, "open")
             .filter { it.type == RESOURCE_AUCTION_TYPE }
             .sortedBy { it.expiresAt }
 
@@ -147,7 +147,7 @@ class AuctionService(
                         "amount" to it.amount,
                         "date" to it.createdAt.toString(),
                         "generalId" to it.bidderGeneralId,
-                        "generalName" to (generalRepository.findById(it.bidderGeneralId).orElse(null)?.name ?: "Unknown"),
+                        "generalName" to (officerRepository.findById(it.bidderGeneralId).orElse(null)?.name ?: "Unknown"),
                     )
                 },
                 "closeDateExtensionCount" to auction.closeDateExtensionCount,
@@ -215,7 +215,7 @@ class AuctionService(
     @Transactional
     fun buyRice(generalId: Long, amount: Int): Map<String, Any> {
         if (amount <= 0) return mapOf("error" to "거래량은 1 이상이어야 합니다")
-        val general = generalRepository.findById(generalId).orElse(null)
+        val general = officerRepository.findById(generalId).orElse(null)
             ?: return mapOf("error" to "장수를 찾을 수 없습니다")
         val market = getMarketPrice(general.worldId)
         val cost = ceil(amount * market.goldPerRice).toInt().coerceAtLeast(1)
@@ -223,7 +223,7 @@ class AuctionService(
 
         general.gold -= cost
         general.rice += amount
-        generalRepository.save(general)
+        officerRepository.save(general)
 
         return mapOf(
             "success" to true,
@@ -238,7 +238,7 @@ class AuctionService(
     @Transactional
     fun sellRice(generalId: Long, amount: Int): Map<String, Any> {
         if (amount <= 0) return mapOf("error" to "거래량은 1 이상이어야 합니다")
-        val general = generalRepository.findById(generalId).orElse(null)
+        val general = officerRepository.findById(generalId).orElse(null)
             ?: return mapOf("error" to "장수를 찾을 수 없습니다")
         if (general.rice < amount) return mapOf("error" to "쌀이 부족합니다")
 
@@ -247,7 +247,7 @@ class AuctionService(
 
         general.rice -= amount
         general.gold += revenue
-        generalRepository.save(general)
+        officerRepository.save(general)
 
         return mapOf(
             "success" to true,
@@ -282,11 +282,11 @@ class AuctionService(
             return mapOf("error" to "즉시거래가는 시작거래가의 110% 이상이어야 합니다")
         }
 
-        val host = generalRepository.findById(hostGeneralId).orElse(null)
+        val host = officerRepository.findById(hostGeneralId).orElse(null)
             ?: return mapOf("error" to "장수를 찾을 수 없습니다")
         if (host.worldId != worldId) return mapOf("error" to "잘못된 월드 장수입니다")
 
-        val world = worldStateRepository.findById(worldId.toShort()).orElse(null)
+        val world = sessionStateRepository.findById(worldId.toShort()).orElse(null)
             ?: return mapOf("error" to "월드 정보를 찾을 수 없습니다")
 
         val hostResourceName = if (subType == RESOURCE_SUB_TYPE_BUY_RICE) "rice" else "gold"
@@ -302,7 +302,7 @@ class AuctionService(
         } else {
             host.gold -= amount
         }
-        generalRepository.save(host)
+        officerRepository.save(host)
 
         val now = OffsetDateTime.now()
         val turnSeconds = world.tickSeconds.toLong().coerceAtLeast(60L)
@@ -359,7 +359,7 @@ class AuctionService(
             return mapOf("error" to "즉시거래가보다 높을 수 없습니다")
         }
 
-        val bidder = generalRepository.findById(bidderId).orElse(null)
+        val bidder = officerRepository.findById(bidderId).orElse(null)
             ?: return mapOf("error" to "장수를 찾을 수 없습니다")
         if (bidder.worldId != auction.worldId) return mapOf("error" to "같은 월드에서만 입찰할 수 있습니다")
 
@@ -377,18 +377,18 @@ class AuctionService(
         }
 
         if (highest != null) {
-            val prevBidder = generalRepository.findById(highest.bidderGeneralId).orElse(null)
+            val prevBidder = officerRepository.findById(highest.bidderGeneralId).orElse(null)
             if (prevBidder != null) {
                 if (bidderResourceName == "gold") {
                     prevBidder.gold += highest.amount
                 } else {
                     prevBidder.rice += highest.amount
                 }
-                generalRepository.save(prevBidder)
+                officerRepository.save(prevBidder)
             }
         }
 
-        generalRepository.save(bidder)
+        officerRepository.save(bidder)
 
         auctionBidRepository.save(
             AuctionBid(
@@ -422,7 +422,7 @@ class AuctionService(
 
     private fun extendResourceAuctionCloseDate(auction: Auction) {
         if (auction.closeDateExtensionCount <= 0) return
-        val world = worldStateRepository.findById(auction.worldId.toShort()).orElse(null) ?: return
+        val world = sessionStateRepository.findById(auction.worldId.toShort()).orElse(null) ?: return
         val turnSeconds = world.tickSeconds.toLong().coerceAtLeast(60L)
         val extensionSeconds = maxOf(60L, (turnSeconds / 6.0).toLong())
         val maxCloseDate = (auction.meta["maxCloseDate"] as? String)
@@ -443,7 +443,7 @@ class AuctionService(
             return mapOf("success" to true, "auctionId" to auction.id, "status" to auction.status)
         }
 
-        val host = generalRepository.findById(auction.hostGeneralId).orElse(null)
+        val host = officerRepository.findById(auction.hostGeneralId).orElse(null)
             ?: return mapOf("error" to "경매 주최자를 찾을 수 없습니다")
         val highest = auctionBidRepository.findTopByAuctionIdOrderByAmountDesc(auction.id)
 
@@ -453,20 +453,20 @@ class AuctionService(
             } else {
                 host.gold += auction.amount
             }
-            generalRepository.save(host)
+            officerRepository.save(host)
             auction.status = "expired"
             auctionRepository.save(auction)
             return mapOf("success" to true, "auctionId" to auction.id, "status" to auction.status)
         }
 
-        val winner = generalRepository.findById(highest.bidderGeneralId).orElse(null)
+        val winner = officerRepository.findById(highest.bidderGeneralId).orElse(null)
         if (winner == null) {
             if (auction.subType == RESOURCE_SUB_TYPE_BUY_RICE) {
                 host.rice += auction.amount
             } else {
                 host.gold += auction.amount
             }
-            generalRepository.save(host)
+            officerRepository.save(host)
             auction.status = "failed"
             auctionRepository.save(auction)
             return mapOf("error" to "낙찰자를 찾을 수 없습니다")
@@ -479,8 +479,8 @@ class AuctionService(
             host.rice += highest.amount
             winner.gold += auction.amount
         }
-        generalRepository.save(host)
-        generalRepository.save(winner)
+        officerRepository.save(host)
+        officerRepository.save(winner)
 
         auction.buyerGeneralId = winner.id
         auction.currentPrice = highest.amount
@@ -498,14 +498,14 @@ class AuctionService(
     @Transactional
     fun createAuction(generalId: Long, itemType: String, startPrice: Int): Auction {
         if (startPrice <= 0) throw IllegalArgumentException("시작가는 1 이상이어야 합니다")
-        val seller = generalRepository.findById(generalId).orElse(null)
+        val seller = officerRepository.findById(generalId).orElse(null)
             ?: throw IllegalArgumentException("장수를 찾을 수 없습니다")
         if (seller.itemCode == "None" || seller.itemCode != itemType) {
             throw IllegalArgumentException("해당 아이템을 보유하고 있지 않습니다")
         }
 
         seller.itemCode = "None"
-        generalRepository.save(seller)
+        officerRepository.save(seller)
 
         val now = OffsetDateTime.now()
         val auction = Auction(
@@ -544,20 +544,20 @@ class AuctionService(
         if (amount <= auction.currentPrice) return mapOf("error" to "현재 입찰가보다 높아야 합니다")
         if (auction.sellerGeneralId == generalId) return mapOf("error" to "자신의 경매에는 입찰할 수 없습니다")
 
-        val bidder = generalRepository.findById(generalId).orElse(null)
+        val bidder = officerRepository.findById(generalId).orElse(null)
             ?: return mapOf("error" to "장수를 찾을 수 없습니다")
         if (bidder.worldId != auction.worldId) return mapOf("error" to "같은 월드에서만 입찰할 수 있습니다")
         if (bidder.gold < amount) return mapOf("error" to "금이 부족합니다")
 
         val prevHighest = auctionBidRepository.findTopByAuctionIdOrderByAmountDesc(auction.id)
         bidder.gold -= amount
-        generalRepository.save(bidder)
+        officerRepository.save(bidder)
 
         if (prevHighest != null) {
-            val prevBidder = generalRepository.findById(prevHighest.bidderGeneralId).orElse(null)
+            val prevBidder = officerRepository.findById(prevHighest.bidderGeneralId).orElse(null)
             if (prevBidder != null) {
                 prevBidder.gold += prevHighest.amount
-                generalRepository.save(prevBidder)
+                officerRepository.save(prevBidder)
             }
         }
 
@@ -585,25 +585,25 @@ class AuctionService(
         if (auction.type == RESOURCE_AUCTION_TYPE) {
             if (auction.hostGeneralId != generalId) return mapOf("error" to "본인 경매만 취소할 수 있습니다")
 
-            val host = generalRepository.findById(generalId).orElse(null)
+            val host = officerRepository.findById(generalId).orElse(null)
                 ?: return mapOf("error" to "장수를 찾을 수 없습니다")
             if (auction.subType == RESOURCE_SUB_TYPE_BUY_RICE) {
                 host.rice += auction.amount
             } else {
                 host.gold += auction.amount
             }
-            generalRepository.save(host)
+            officerRepository.save(host)
 
             val highest = auctionBidRepository.findTopByAuctionIdOrderByAmountDesc(auction.id)
             if (highest != null) {
-                val highestBidder = generalRepository.findById(highest.bidderGeneralId).orElse(null)
+                val highestBidder = officerRepository.findById(highest.bidderGeneralId).orElse(null)
                 if (highestBidder != null) {
                     if (auction.subType == RESOURCE_SUB_TYPE_BUY_RICE) {
                         highestBidder.gold += highest.amount
                     } else {
                         highestBidder.rice += highest.amount
                     }
-                    generalRepository.save(highestBidder)
+                    officerRepository.save(highestBidder)
                 }
             }
 
@@ -614,19 +614,19 @@ class AuctionService(
 
         if (auction.sellerGeneralId != generalId) return mapOf("error" to "본인 경매만 취소할 수 있습니다")
 
-        val seller = generalRepository.findById(generalId).orElse(null)
+        val seller = officerRepository.findById(generalId).orElse(null)
             ?: return mapOf("error" to "장수를 찾을 수 없습니다")
         if (seller.itemCode == "None") {
             seller.itemCode = auction.itemCode
-            generalRepository.save(seller)
+            officerRepository.save(seller)
         }
 
         val highest = auctionBidRepository.findTopByAuctionIdOrderByAmountDesc(auction.id)
         if (highest != null) {
-            val highestBidder = generalRepository.findById(highest.bidderGeneralId).orElse(null)
+            val highestBidder = officerRepository.findById(highest.bidderGeneralId).orElse(null)
             if (highestBidder != null) {
                 highestBidder.gold += highest.amount
-                generalRepository.save(highestBidder)
+                officerRepository.save(highestBidder)
             }
         }
 
@@ -645,23 +645,23 @@ class AuctionService(
         if (auction.status != "open") return mapOf("success" to true, "auctionId" to auction.id, "status" to auction.status)
 
         val highest = auctionBidRepository.findTopByAuctionIdOrderByAmountDesc(auction.id)
-        val seller = generalRepository.findById(auction.sellerGeneralId).orElse(null)
+        val seller = officerRepository.findById(auction.sellerGeneralId).orElse(null)
         if (highest == null || seller == null) {
             if (seller != null && seller.itemCode == "None") {
                 seller.itemCode = auction.itemCode
-                generalRepository.save(seller)
+                officerRepository.save(seller)
             }
             auction.status = "expired"
             auctionRepository.save(auction)
             return mapOf("success" to true, "auctionId" to auction.id, "status" to auction.status)
         }
 
-        val winner = generalRepository.findById(highest.bidderGeneralId).orElse(null)
+        val winner = officerRepository.findById(highest.bidderGeneralId).orElse(null)
         if (winner == null) {
             if (seller.itemCode == "None") {
                 seller.itemCode = auction.itemCode
             }
-            generalRepository.save(seller)
+            officerRepository.save(seller)
             auction.status = "failed"
             auctionRepository.save(auction)
             return mapOf("error" to "낙찰자를 찾을 수 없습니다")
@@ -670,8 +670,8 @@ class AuctionService(
         seller.gold += highest.amount
         winner.itemCode = auction.itemCode
 
-        generalRepository.save(seller)
-        generalRepository.save(winner)
+        officerRepository.save(seller)
+        officerRepository.save(winner)
 
         auction.buyerGeneralId = winner.id
         auction.currentPrice = highest.amount
@@ -689,13 +689,13 @@ class AuctionService(
 
     @Transactional(readOnly = true)
     fun getAuctionHistory(worldId: Long): List<Auction> {
-        return auctionRepository.findByWorldIdAndStatusNotOrderByCreatedAtDesc(worldId, "open")
+        return auctionRepository.findBySessionIdAndStatusNotOrderByCreatedAtDesc(worldId, "open")
     }
 
     @Transactional(readOnly = true)
     fun getMarketPrice(worldId: Long): MarketPrice {
-        val generals = generalRepository.findByWorldId(worldId)
-        val cities = cityRepository.findByWorldId(worldId)
+        val generals = officerRepository.findBySessionId(worldId)
+        val cities = planetRepository.findBySessionId(worldId)
 
         val totalRice = generals.sumOf { it.rice.toLong() }
         val totalGold = generals.sumOf { it.gold.toLong() }
@@ -733,7 +733,7 @@ class AuctionService(
         startBidAmount: Int,
         finishBidAmount: Int,
     ) {
-        val world = worldStateRepository.findById(worldId.toShort()).orElse(null) ?: return
+        val world = sessionStateRepository.findById(worldId.toShort()).orElse(null) ?: return
         val now = OffsetDateTime.now()
         val turnSeconds = world.tickSeconds.toLong().coerceAtLeast(60L)
         val closeDate = now.plusSeconds(turnSeconds * closeTurnCnt)
@@ -770,9 +770,9 @@ class AuctionService(
     }
 
     private fun toMessage(auction: Auction): Message {
-        val sellerName = generalRepository.findById(auction.sellerGeneralId).orElse(null)?.name ?: auction.hostName.ifBlank { "Unknown" }
+        val sellerName = officerRepository.findById(auction.sellerGeneralId).orElse(null)?.name ?: auction.hostName.ifBlank { "Unknown" }
         val highest = auctionBidRepository.findTopByAuctionIdOrderByAmountDesc(auction.id)
-        val highestBidderName = highest?.bidderGeneralId?.let { generalRepository.findById(it).orElse(null)?.name }
+        val highestBidderName = highest?.bidderGeneralId?.let { officerRepository.findById(it).orElse(null)?.name }
         return Message(
             id = auction.id,
             worldId = auction.worldId,

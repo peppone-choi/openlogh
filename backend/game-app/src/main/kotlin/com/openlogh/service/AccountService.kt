@@ -1,7 +1,7 @@
 package com.openlogh.service
 
 import com.openlogh.repository.AppUserRepository
-import com.openlogh.repository.GeneralRepository
+import com.openlogh.repository.OfficerRepository
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -10,7 +10,7 @@ import java.time.OffsetDateTime
 @Service
 class AccountService(
     private val appUserRepository: AppUserRepository,
-    private val generalRepository: GeneralRepository,
+    private val officerRepository: OfficerRepository,
     private val passwordEncoder: PasswordEncoder,
 ) {
     @Transactional
@@ -51,7 +51,7 @@ class AccountService(
         picture: String?,
     ): Boolean {
         val user = appUserRepository.findByLoginId(loginId) ?: return false
-        val generals = generalRepository.findByUserId(user.id)
+        val generals = officerRepository.findByUserId(user.id)
         var userChanged = false
 
         thirdUse?.let {
@@ -87,7 +87,7 @@ class AccountService(
             customCss?.let { meta["customCss"] = it }
             gen.meta = meta
 
-            generalRepository.save(gen)
+            officerRepository.save(gen)
         }
         if (userChanged) {
             appUserRepository.save(user)
@@ -98,11 +98,11 @@ class AccountService(
     @Transactional
     fun toggleVacation(loginId: String): Boolean {
         val user = appUserRepository.findByLoginId(loginId) ?: return false
-        val generals = generalRepository.findByUserId(user.id)
+        val generals = officerRepository.findByUserId(user.id)
         generals.forEach { gen ->
             val current = gen.meta["vacationMode"] as? Boolean ?: false
             gen.meta["vacationMode"] = !current
-            generalRepository.save(gen)
+            officerRepository.save(gen)
         }
         return true
     }
@@ -120,11 +120,11 @@ class AccountService(
         appUserRepository.save(user)
 
         // Sync to all generals (legacy parity: j_adjust_icon.php)
-        val generals = generalRepository.findByUserId(user.id).filter { it.npcState.toInt() == 0 }
+        val generals = officerRepository.findByUserId(user.id).filter { it.npcState.toInt() == 0 }
         generals.forEach { gen ->
             gen.picture = iconUrl.ifBlank { "" }
             gen.imageServer = 0
-            generalRepository.save(gen)
+            officerRepository.save(gen)
         }
         return true
     }

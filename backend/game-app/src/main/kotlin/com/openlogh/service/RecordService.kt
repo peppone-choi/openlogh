@@ -1,7 +1,7 @@
 package com.openlogh.service
 
 import com.openlogh.entity.Record
-import com.openlogh.repository.GeneralRepository
+import com.openlogh.repository.OfficerRepository
 import com.openlogh.repository.RecordRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -9,7 +9,7 @@ import org.springframework.transaction.annotation.Transactional
 @Service
 class RecordService(
     private val recordRepository: RecordRepository,
-    private val generalRepository: GeneralRepository,
+    private val officerRepository: OfficerRepository,
 ) {
     companion object {
         const val GENERAL_ACTION = "general_action"
@@ -75,26 +75,26 @@ class RecordService(
 
     fun getWorldRecords(worldId: Long, beforeId: Long? = null, limit: Int? = null): List<Record> {
         val records = if (beforeId != null) {
-            recordRepository.findByWorldIdAndRecordTypeAndIdLessThanOrderByCreatedAtDesc(
+            recordRepository.findBySessionIdAndRecordTypeAndIdLessThanOrderByCreatedAtDesc(
                 worldId,
                 WORLD_RECORD,
                 beforeId
             )
         } else {
-            recordRepository.findByWorldIdAndRecordTypeOrderByCreatedAtDesc(worldId, WORLD_RECORD)
+            recordRepository.findBySessionIdAndRecordTypeOrderByCreatedAtDesc(worldId, WORLD_RECORD)
         }
         return applyLimit(records, limit)
     }
 
     fun getWorldHistory(worldId: Long, beforeId: Long? = null, limit: Int? = null): List<Record> {
         val records = if (beforeId != null) {
-            recordRepository.findByWorldIdAndRecordTypeAndIdLessThanOrderByCreatedAtDesc(
+            recordRepository.findBySessionIdAndRecordTypeAndIdLessThanOrderByCreatedAtDesc(
                 worldId,
                 WORLD_HISTORY,
                 beforeId
             )
         } else {
-            recordRepository.findByWorldIdAndRecordTypeOrderByCreatedAtDesc(worldId, WORLD_HISTORY)
+            recordRepository.findBySessionIdAndRecordTypeOrderByCreatedAtDesc(worldId, WORLD_HISTORY)
         }
         return applyLimit(records, limit)
     }
@@ -165,9 +165,9 @@ class RecordService(
             else -> return LogResult(false, "잘못된 타입")
         }
 
-        val requester = generalRepository.findById(generalId).orElse(null)
+        val requester = officerRepository.findById(generalId).orElse(null)
             ?: return LogResult(false, "장수를 찾을 수 없습니다.")
-        val target = generalRepository.findById(targetId).orElse(null)
+        val target = officerRepository.findById(targetId).orElse(null)
             ?: return LogResult(false, "대상 장수를 찾을 수 없습니다.")
 
         if (requester.nationId != target.nationId && requester.id != target.id) {

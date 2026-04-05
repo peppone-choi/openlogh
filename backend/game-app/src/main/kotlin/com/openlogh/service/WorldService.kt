@@ -1,12 +1,12 @@
 package com.openlogh.service
 
 import com.openlogh.entity.WorldHistory
-import com.openlogh.entity.WorldState
-import com.openlogh.repository.CityRepository
-import com.openlogh.repository.GeneralRepository
-import com.openlogh.repository.NationRepository
+import com.openlogh.entity.SessionState
+import com.openlogh.repository.PlanetRepository
+import com.openlogh.repository.OfficerRepository
+import com.openlogh.repository.FactionRepository
 import com.openlogh.repository.WorldHistoryRepository
-import com.openlogh.repository.WorldStateRepository
+import com.openlogh.repository.SessionStateRepository
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -14,10 +14,10 @@ import java.time.OffsetDateTime
 
 @Service
 class WorldService(
-    private val worldStateRepository: WorldStateRepository,
-    private val nationRepository: NationRepository,
-    private val cityRepository: CityRepository,
-    private val generalRepository: GeneralRepository,
+    private val sessionStateRepository: SessionStateRepository,
+    private val factionRepository: FactionRepository,
+    private val planetRepository: PlanetRepository,
+    private val officerRepository: OfficerRepository,
     private val worldHistoryRepository: WorldHistoryRepository,
 ) {
     private val log = LoggerFactory.getLogger(WorldService::class.java)
@@ -66,23 +66,23 @@ class WorldService(
 
     // ── Basic CRUD ──
 
-    fun listWorlds(): List<WorldState> {
-        return worldStateRepository.findAll()
+    fun listWorlds(): List<SessionState> {
+        return sessionStateRepository.findAll()
     }
 
-    fun getWorld(id: Short): WorldState? {
-        return worldStateRepository.findById(id).orElse(null)
+    fun getWorld(id: Short): SessionState? {
+        return sessionStateRepository.findById(id).orElse(null)
     }
 
     @Transactional
-    fun save(world: WorldState): WorldState {
+    fun save(world: SessionState): SessionState {
         world.updatedAt = OffsetDateTime.now()
-        return worldStateRepository.save(world)
+        return sessionStateRepository.save(world)
     }
 
     @Transactional
     fun deleteWorld(id: Short) {
-        worldStateRepository.deleteById(id)
+        sessionStateRepository.deleteById(id)
     }
 
     // ── Game Phase / Season Tracking ──
@@ -91,7 +91,7 @@ class WorldService(
      * Get the current game phase based on world state.
      * Legacy parity: opening period, normal play, ending (single nation remaining).
      */
-    fun getGamePhase(world: WorldState): String {
+    fun getGamePhase(world: SessionState): String {
         val finished = world.config["finished"] as? Boolean ?: false
         if (finished) return PHASE_FINISHED
 
@@ -127,7 +127,7 @@ class WorldService(
         val yearsElapsed = world.currentYear.toInt() - startYear
         if (yearsElapsed < OPENING_PART_YEARS) return PHASE_OPENING
 
-        val nationCount = nationRepository.findByWorldId(world.id.toLong()).count { it.level > 0 }
+        val nationCount = factionRepository.findBySessionId(world.id.toLong()).count { it.level > 0 }
         if (nationCount <= 1) return PHASE_ENDING
 
         return PHASE_NORMAL
@@ -136,7 +136,7 @@ class WorldService(
     /**
      * Get the current season name.
      */
-    fun getCurrentSeason(world: WorldState): String {
+    fun getCurrentSeason(world: SessionState): String {
         return SEASON_BY_MONTH[world.currentMonth.toInt()] ?: "봄"
     }
 
@@ -144,7 +144,7 @@ class WorldService(
      * Get the allowed tech level based on elapsed years.
      * Legacy: initialAllowedTechLevel + (yearsElapsed / techLevelIncYear)
      */
-    fun getAllowedTechLevel(world: WorldState): Int {
+    fun getAllowedTechLevel(world: SessionState): Int {
         val startYear = (world.config["startYear"] as? Number)?.toInt() ?: world.currentYear.toInt()
         val yearsElapsed = (world.currentYear.toInt() - startYear).coerceAtLeast(0)
         return (INITIAL_ALLOWED_TECH_LEVEL + yearsElapsed / TECH_LEVEL_INC_YEAR).coerceAtMost(MAX_TECH_LEVEL)
@@ -155,7 +155,7 @@ class WorldService(
     /**
      * Get a configuration value with a typed default.
      */
-    fun <T> getConfig(world: WorldState, key: String, default: T): T {
+    fun <T> getConfig(world: SessionState, key: String, default: T): T {
         return (world.config[key] as? T) ?: default
     }
 
@@ -173,14 +173,14 @@ class WorldService(
     /**
      * Get the map code for the world.
      */
-    fun getMapCode(world: WorldState): String {
+    fun getMapCode(world: SessionState): String {
         return (world.config["mapCode"] as? String) ?: "che"
     }
 
     /**
      * Get the unit set for the world.
      */
-    fun getUnitSet(world: WorldState): String {
+    fun getUnitSet(world: SessionState): String {
         return (world.config["unitSet"] as? String) ?: "che"
     }
 
@@ -190,28 +190,28 @@ class WorldService(
      * Get total population across all cities in the world.
      */
     fun getTotalPopulation(worldId: Long): Long {
-        return cityRepository.findByWorldId(worldId).sumOf { it.pop.toLong() }
+        return planetRepository.findBySessionId(worldId).sumOf { it.pop.toLong() }
     }
 
     /**
      * Get count of active nations (level > 0).
      */
     fun getActiveNationCount(worldId: Long): Int {
-        return nationRepository.findByWorldId(worldId).count { it.level > 0 }
+        return factionRepository.findBySessionId(worldId).count { it.level > 0 }
     }
 
     /**
      * Get count of active generals (not in pool, npcState != 5).
      */
     fun getActiveGeneralCount(worldId: Long): Int {
-        return generalRepository.findByWorldId(worldId).count { it.npcState.toInt() != 5 }
+        return officerRepository.findBySessionId(worldId).count { it.npcState.toInt() != 5 }
     }
 
     /**
      * Get count of human players (userId != null).
      */
     fun getHumanPlayerCount(worldId: Long): Int {
-        return generalRepository.findByWorldId(worldId).count { it.userId != null }
+        return officerRepository.findBySessionId(worldId).count { it.userId != null }
     }
 
     /**
@@ -219,14 +219,14 @@ class WorldService(
      * A nation is at war if warState > 0.
      */
     fun isAtWar(worldId: Long): Boolean {
-        return nationRepository.findByWorldId(worldId).any { it.warState > 0 }
+        return factionRepository.findBySessionId(worldId).any { it.warState > 0 }
     }
 
     /**
      * Get total cities and cities per nation.
      */
     fun getCityDistribution(worldId: Long): Map<Long, Int> {
-        return cityRepository.findByWorldId(worldId)
+        return planetRepository.findBySessionId(worldId)
             .filter { it.nationId != 0L }
             .groupBy { it.nationId }
             .mapValues { it.value.size }
@@ -239,11 +239,11 @@ class WorldService(
      * Saves a WorldHistory entry with type "snapshot" containing the entire game state.
      */
     @Transactional
-    fun captureSnapshot(world: WorldState): WorldHistory {
+    fun captureSnapshot(world: SessionState): WorldHistory {
         val worldId = world.id.toLong()
-        val nations = nationRepository.findByWorldId(worldId)
-        val cities = cityRepository.findByWorldId(worldId)
-        val generals = generalRepository.findByWorldId(worldId)
+        val nations = factionRepository.findBySessionId(worldId)
+        val cities = planetRepository.findBySessionId(worldId)
+        val generals = officerRepository.findBySessionId(worldId)
 
         val nationSummaries = nations.filter { it.level > 0 }.map { nation ->
             val nationCities = cities.filter { it.nationId == nation.id }
@@ -309,14 +309,14 @@ class WorldService(
      * Get all snapshots for a world, ordered by creation time.
      */
     fun getSnapshots(worldId: Long): List<WorldHistory> {
-        return worldHistoryRepository.findByWorldIdAndEventType(worldId, "snapshot")
+        return worldHistoryRepository.findBySessionIdAndEventType(worldId, "snapshot")
     }
 
     /**
      * Get the latest snapshot for a world.
      */
     fun getLatestSnapshot(worldId: Long): WorldHistory? {
-        return worldHistoryRepository.findByWorldIdAndEventType(worldId, "snapshot")
+        return worldHistoryRepository.findBySessionIdAndEventType(worldId, "snapshot")
             .maxByOrNull { it.createdAt }
     }
 

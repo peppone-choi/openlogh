@@ -22,10 +22,10 @@ class ScenarioService(
     private val objectMapper: ObjectMapper,
     @Value("\${game.commit-sha:local}") private val defaultCommitSha: String,
     @Value("\${game.version:dev}") private val defaultGameVersion: String,
-    private val worldStateRepository: WorldStateRepository,
-    private val nationRepository: NationRepository,
-    private val cityRepository: CityRepository,
-    private val generalRepository: GeneralRepository,
+    private val sessionStateRepository: SessionStateRepository,
+    private val factionRepository: FactionRepository,
+    private val planetRepository: PlanetRepository,
+    private val officerRepository: OfficerRepository,
     private val diplomacyRepository: DiplomacyRepository,
     private val eventRepository: EventRepository,
     private val mapService: MapService,
@@ -98,7 +98,7 @@ class ScenarioService(
         autorunUser: List<String>? = null,
         startTime: String? = null,
         opentime: String? = null,
-    ): WorldState {
+    ): SessionState {
         val scenario = getScenario(scenarioCode)
         val resolvedCommitSha = commitSha?.takeIf { it.isNotBlank() } ?: defaultCommitSha
         val resolvedGameVersion = gameVersion?.takeIf { it.isNotBlank() } ?: defaultGameVersion
@@ -107,8 +107,8 @@ class ScenarioService(
         val extendedGeneralEnabled = extendEnabled ?: readExtendedGeneralFlag(scenario.const)
         val hiddenSeed = java.util.UUID.randomUUID().toString()
         val initRandom = Random(hiddenSeed.hashCode().toLong())
-        val world = worldStateRepository.save(
-            WorldState(
+        val world = sessionStateRepository.save(
+            SessionState(
                 scenarioCode = scenarioCode,
                 commitSha = resolvedCommitSha,
                 gameVersion = resolvedGameVersion,
@@ -140,7 +140,7 @@ class ScenarioService(
         val mapCities = try { mapService.getCities(mapName) } catch (_: Exception) { mapService.getCities("che") }
         val cityEntities = mapCities.map { mc ->
             val init = CITY_LEVEL_INIT[mc.level] ?: DEFAULT_CITY_INIT
-            City(
+            Planet(
                 worldId = worldId,
                 name = mc.name,
                 mapCityId = mc.id,
@@ -161,7 +161,7 @@ class ScenarioService(
                 region = mc.region.toShort(),
             )
         }
-        val savedCities = cityRepository.saveAll(cityEntities)
+        val savedCities = planetRepository.saveAll(cityEntities)
         val cityNameToId = savedCities.associate { it.name to it.id }
         val allCityIds = cityNameToId.values.toList()
 
@@ -175,10 +175,10 @@ class ScenarioService(
             }
             nation
         }
-        val savedNations = nationRepository.saveAll(nationEntities)
+        val savedNations = factionRepository.saveAll(nationEntities)
         val nationIdxToDbId = mutableMapOf<Int, Long>()
         val nationCityIds = mutableMapOf<Long, MutableList<Long>>()
-        val citiesToUpdate = mutableListOf<City>()
+        val citiesToUpdate = mutableListOf<Planet>()
         for ((idx, saved) in savedNations.withIndex()) {
             val nationIdx = idx + 1
             nationIdxToDbId[nationIdx] = saved.id
@@ -193,14 +193,14 @@ class ScenarioService(
                 }
             }
         }
-        if (citiesToUpdate.isNotEmpty()) cityRepository.saveAll(citiesToUpdate)
+        if (citiesToUpdate.isNotEmpty()) planetRepository.saveAll(citiesToUpdate)
 
-        val generalsToSave = mutableListOf<General>()
+        val generalsToSave = mutableListOf<Officer>()
         var delayedNpcCount = 0
 
         fun collectGenerals(rows: List<List<Any?>>, defaultNpcState: Short) {
             for (generalRow in rows) {
-                val general = parseGeneral(
+                val general = parseOfficer(
                     row = generalRow,
                     worldId = worldId,
                     nationIdxToDbId = nationIdxToDbId,
@@ -211,7 +211,7 @@ class ScenarioService(
                     startYear = scenario.startYear,
                     defaultNpcState = defaultNpcState,
                 )
-                if (shouldSpawnScenarioGeneral(general, scenario.startYear)) {
+                if (shouldSpawnScenarioOfficer(general, scenario.startYear)) {
                     generalsToSave.add(general)
                 } else {
                     delayedNpcCount++
@@ -222,7 +222,7 @@ class ScenarioService(
         collectGenerals(scenario.general, 2)
         if (extendedGeneralEnabled) collectGenerals(scenario.generalEx, 2)
         collectGenerals(scenario.generalNeutral, 6)
-        generalRepository.saveAll(generalsToSave)
+        officerRepository.saveAll(generalsToSave)
 
         if (delayedNpcCount > 0) {
             log.info(
@@ -232,8 +232,8 @@ class ScenarioService(
             )
         }
 
-        val allGenerals = generalRepository.findByWorldId(worldId)
-        val nationsToUpdate = mutableListOf<Nation>()
+        val allGenerals = officerRepository.findBySessionId(worldId)
+        val nationsToUpdate = mutableListOf<Faction>()
         for ((_, nationDbId) in nationIdxToDbId) {
             val ruler = allGenerals
                 .filter { it.nationId == nationDbId && it.officerLevel >= 20 }
@@ -246,7 +246,7 @@ class ScenarioService(
                 }
             }
         }
-        if (nationsToUpdate.isNotEmpty()) nationRepository.saveAll(nationsToUpdate)
+        if (nationsToUpdate.isNotEmpty()) factionRepository.saveAll(nationsToUpdate)
 
         // 5. Create diplomacy
         val diplomacies = buildScenarioDiplomacies(scenario.diplomacy, nationIdxToDbId, worldId)
@@ -276,7 +276,7 @@ class ScenarioService(
 
     @Transactional
     fun reinitializeWorld(
-        existingWorld: WorldState,
+        existingWorld: SessionState,
         scenarioCode: String,
         tickSeconds: Int = existingWorld.tickSeconds,
         extendEnabled: Boolean? = null,
@@ -290,7 +290,7 @@ class ScenarioService(
         autorunUser: List<String>? = null,
         startTime: String? = null,
         opentime: String? = null,
-    ): WorldState {
+    ): SessionState {
         val worldId = existingWorld.id.toLong()
         log.info("[World {}] Reinitializing with scenario '{}'", worldId, scenarioCode)
 
@@ -342,12 +342,12 @@ class ScenarioService(
         )
         existingWorld.meta = mutableMapOf()
         existingWorld.updatedAt = OffsetDateTime.now()
-        worldStateRepository.save(existingWorld)
+        sessionStateRepository.save(existingWorld)
 
         val mapCities = try { mapService.getCities(mapName) } catch (_: Exception) { mapService.getCities("che") }
         val reinitCityEntities = mapCities.map { mc ->
             val init = CITY_LEVEL_INIT[mc.level] ?: DEFAULT_CITY_INIT
-            City(
+            Planet(
                 worldId = worldId,
                 name = mc.name,
                 mapCityId = mc.id,
@@ -368,7 +368,7 @@ class ScenarioService(
                 region = mc.region.toShort(),
             )
         }
-        val reinitSavedCities = cityRepository.saveAll(reinitCityEntities)
+        val reinitSavedCities = planetRepository.saveAll(reinitCityEntities)
         val cityNameToId = reinitSavedCities.associate { it.name to it.id }
         val allCityIds = cityNameToId.values.toList()
 
@@ -381,10 +381,10 @@ class ScenarioService(
             }
             nation
         }
-        val reinitSavedNations = nationRepository.saveAll(nationEntities)
+        val reinitSavedNations = factionRepository.saveAll(nationEntities)
         val nationIdxToDbId = mutableMapOf<Int, Long>()
         val nationCityIds = mutableMapOf<Long, MutableList<Long>>()
-        val reinitCitiesToUpdate = mutableListOf<City>()
+        val reinitCitiesToUpdate = mutableListOf<Planet>()
         for ((idx, saved) in reinitSavedNations.withIndex()) {
             val nationIdx = idx + 1
             nationIdxToDbId[nationIdx] = saved.id
@@ -399,24 +399,24 @@ class ScenarioService(
                 }
             }
         }
-        if (reinitCitiesToUpdate.isNotEmpty()) cityRepository.saveAll(reinitCitiesToUpdate)
+        if (reinitCitiesToUpdate.isNotEmpty()) planetRepository.saveAll(reinitCitiesToUpdate)
 
-        val generalsToSave = mutableListOf<General>()
+        val generalsToSave = mutableListOf<Officer>()
         var delayedNpcCount = 0
         fun collectGenerals(rows: List<List<Any?>>, defaultNpcState: Short) {
             for (generalRow in rows) {
-                val general = parseGeneral(generalRow, worldId, nationIdxToDbId, nationCityIds, cityNameToId, allCityIds, initRandom, scenario.startYear, defaultNpcState)
-                if (shouldSpawnScenarioGeneral(general, scenario.startYear)) generalsToSave.add(general) else delayedNpcCount++
+                val general = parseOfficer(generalRow, worldId, nationIdxToDbId, nationCityIds, cityNameToId, allCityIds, initRandom, scenario.startYear, defaultNpcState)
+                if (shouldSpawnScenarioOfficer(general, scenario.startYear)) generalsToSave.add(general) else delayedNpcCount++
             }
         }
         collectGenerals(scenario.general, 2)
         if (extendedGeneralEnabled) collectGenerals(scenario.generalEx, 2)
         collectGenerals(scenario.generalNeutral, 6)
-        generalRepository.saveAll(generalsToSave)
+        officerRepository.saveAll(generalsToSave)
         if (delayedNpcCount > 0) log.info("[World {}] Delayed {} underage scenario NPC(s) for future yearly spawn", worldId, delayedNpcCount)
 
-        val allGenerals = generalRepository.findByWorldId(worldId)
-        val reinitNationsToUpdate = mutableListOf<Nation>()
+        val allGenerals = officerRepository.findBySessionId(worldId)
+        val reinitNationsToUpdate = mutableListOf<Faction>()
         for ((_, nationDbId) in nationIdxToDbId) {
             val ruler = allGenerals
                 .filter { it.nationId == nationDbId && it.officerLevel >= 20 }
@@ -429,7 +429,7 @@ class ScenarioService(
                 }
             }
         }
-        if (reinitNationsToUpdate.isNotEmpty()) nationRepository.saveAll(reinitNationsToUpdate)
+        if (reinitNationsToUpdate.isNotEmpty()) factionRepository.saveAll(reinitNationsToUpdate)
 
         val diplomacies = buildScenarioDiplomacies(scenario.diplomacy, nationIdxToDbId, worldId)
         if (diplomacies.isNotEmpty()) diplomacyRepository.saveAll(diplomacies)
@@ -486,10 +486,10 @@ class ScenarioService(
 
     private fun applyScenarioEmperorSettings(
         scenario: ScenarioData,
-        world: WorldState,
+        world: SessionState,
         nationIdxToDbId: Map<Int, Long>,
-        nations: List<Nation>,
-        generals: List<General>,
+        nations: List<Faction>,
+        generals: List<Officer>,
     ) {
         world.meta[EmperorConstants.WORLD_EMPEROR_SYSTEM] = true
 
@@ -529,7 +529,7 @@ class ScenarioService(
             val columns = (json["columns"] as? List<*>)?.map { it.toString() } ?: return
             val data = json["data"] as? List<*> ?: return
 
-            selectPoolRepository.deleteByWorldId(worldId)
+            selectPoolRepository.deleteBySessionId(worldId)
 
             val pools = data.mapNotNull { row ->
                 if (row !is List<*> || row.size != columns.size) return@mapNotNull null
@@ -577,7 +577,7 @@ class ScenarioService(
         return nationName.take(1)
     }
 
-    private fun parseNation(row: List<Any>, worldId: Long): Nation {
+    private fun parseFaction(row: List<Any>, worldId: Long): Faction {
         val typeRaw = row[6].toString()
         val typeCode = if (typeRaw.contains("_")) typeRaw else "che_$typeRaw"
         val description = row.getOrNull(4)?.toString() ?: ""
@@ -593,7 +593,7 @@ class ScenarioService(
             meta["officerRankKey"] = specialKey
         }
         
-        return Nation(
+        return Faction(
             worldId = worldId,
             name = nationName,
             abbreviation = explicitAbbr ?: deriveAbbreviation(nationName),
@@ -610,7 +610,7 @@ class ScenarioService(
         )
     }
 
-    private fun parseGeneral(
+    private fun parseOfficer(
         row: List<Any?>,
         worldId: Long,
         nationIdxToDbId: Map<Int, Long>,
@@ -620,7 +620,7 @@ class ScenarioService(
         rng: Random,
         startYear: Int,
         defaultNpcState: Short,
-    ): General {
+    ): Officer {
         val affinity = (row[0] as? Number)?.toShort() ?: 0
         val name = row[1] as String
         val rawPic = row[2]?.toString()?.takeIf { it.isNotEmpty() && it != "null" && it != "-1" }
@@ -684,7 +684,7 @@ class ScenarioService(
         val minimumAge = if (nationId == 0L) 14.toShort() else 20.toShort()
         val age = (startYear - bornYear).toShort().coerceAtLeast(minimumAge)
 
-        return General(
+        return Officer(
             worldId = worldId,
             name = name,
             nationId = nationId,
@@ -718,7 +718,7 @@ class ScenarioService(
         val specialIndex: Int,
     )
 
-    private fun shouldSpawnScenarioGeneral(general: General, year: Int): Boolean {
+    private fun shouldSpawnScenarioOfficer(officer: Officer, year: Int): Boolean {
         if (general.nationId != 0L) {
             return true
         }
@@ -732,7 +732,7 @@ class ScenarioService(
         return true
     }
 
-    fun spawnScenarioNpcGeneralsForYear(world: WorldState): Int {
+    fun spawnScenarioNpcGeneralsForYear(world: SessionState): Int {
         val scenario = getScenario(world.scenarioCode)
         val worldId = world.id.toLong()
         val currentYear = world.currentYear.toInt()
@@ -744,12 +744,12 @@ class ScenarioService(
             parseBooleanFlag(world.config["extend"] ?: world.config["extendedGeneral"])
                 ?: readExtendedGeneralFlag(scenario.const)
 
-        val allCities = cityRepository.findByWorldId(worldId)
+        val allCities = planetRepository.findBySessionId(worldId)
         if (allCities.isEmpty()) return 0
         val cityNameToId = allCities.associate { it.name to it.id }
         val allCityIds = allCities.map { it.id }
 
-        val nationByName = nationRepository.findByWorldId(worldId).associateBy { it.name }
+        val nationByName = factionRepository.findBySessionId(worldId).associateBy { it.name }
         val nationIdxToDbId = mutableMapOf<Int, Long>()
         for ((idx, nationRow) in scenario.nation.withIndex()) {
             val nationName = nationRow.getOrNull(0) as? String ?: continue
@@ -761,17 +761,17 @@ class ScenarioService(
             .groupBy { it.nationId }
             .mapValues { (_, cities) -> cities.map { it.id } }
 
-        val existingKeys = generalRepository.findByWorldId(worldId)
-            .map { ScenarioGeneralKey.fromGeneral(it) }
+        val existingKeys = officerRepository.findBySessionId(worldId)
+            .map { ScenarioGeneralKey.fromOfficer(it) }
             .toMutableSet()
 
         val hiddenSeed = (world.config["hiddenSeed"] as? String) ?: "${world.id}"
-        val spawnedGenerals = mutableListOf<General>()
+        val spawnedGenerals = mutableListOf<Officer>()
 
         fun spawnRows(rows: List<List<Any?>>, defaultNpcState: Short, source: String) {
             for ((idx, row) in rows.withIndex()) {
                 val rng = Random("$hiddenSeed:$source:$idx:$currentYear:$mapName".hashCode().toLong())
-                val general = parseGeneral(
+                val general = parseOfficer(
                     row = row,
                     worldId = worldId,
                     nationIdxToDbId = nationIdxToDbId,
@@ -784,9 +784,9 @@ class ScenarioService(
                 )
 
                 if (general.nationId != 0L) continue
-                if (!shouldSpawnScenarioGeneral(general, currentYear)) continue
+                if (!shouldSpawnScenarioOfficer(general, currentYear)) continue
 
-                val key = ScenarioGeneralKey.fromGeneral(general)
+                val key = ScenarioGeneralKey.fromOfficer(general)
                 if (!existingKeys.add(key)) continue
 
                 spawnedGenerals.add(general)
@@ -798,7 +798,7 @@ class ScenarioService(
             spawnRows(scenario.generalEx, 2, "generalEx")
         }
         spawnRows(scenario.generalNeutral, 6, "generalNeutral")
-        if (spawnedGenerals.isNotEmpty()) generalRepository.saveAll(spawnedGenerals)
+        if (spawnedGenerals.isNotEmpty()) officerRepository.saveAll(spawnedGenerals)
 
         return spawnedGenerals.size
     }
@@ -812,7 +812,7 @@ class ScenarioService(
         val nationId: Long,
     ) {
         companion object {
-            fun fromGeneral(general: General): ScenarioGeneralKey {
+            fun fromOfficer(officer: Officer): ScenarioGeneralKey {
                 return ScenarioGeneralKey(
                     name = general.name,
                     picture = general.picture,

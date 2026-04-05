@@ -2,9 +2,9 @@ package com.openlogh.service
 
 import com.openlogh.entity.WorldHistory
 import com.openlogh.repository.WorldHistoryRepository
-import com.openlogh.repository.CityRepository
-import com.openlogh.repository.GeneralRepository
-import com.openlogh.repository.NationRepository
+import com.openlogh.repository.PlanetRepository
+import com.openlogh.repository.OfficerRepository
+import com.openlogh.repository.FactionRepository
 import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationEvent
 import org.springframework.context.ApplicationEventPublisher
@@ -146,7 +146,7 @@ class GameEventService(
         messagingTemplate.convertAndSend("/topic/world/$worldId/battle", data)
     }
 
-    fun sendToGeneral(generalId: Long, data: Any) {
+    fun sendToOfficer(generalId: Long, data: Any) {
         messagingTemplate.convertAndSend("/topic/general/$generalId", data)
     }
 
@@ -159,7 +159,7 @@ class GameEventService(
 
     fun broadcastCommand(worldId: Long, generalId: Long, data: Any) {
         messagingTemplate.convertAndSend("/topic/world/$worldId/command", data)
-        sendToGeneral(generalId, data)
+        sendToOfficer(generalId, data)
     }
 
     // ── Event Publishing (Spring ApplicationEvent system) ──
@@ -227,7 +227,7 @@ class GameEventService(
     /**
      * Convenience: fire a general event.
      */
-    fun fireGeneral(
+    fun fireOfficer(
         worldId: Long, year: Short, month: Short,
         generalId: Long, nationId: Long = 0,
         generalEventType: String, detail: Map<String, Any> = emptyMap(),
@@ -266,8 +266,8 @@ class GameEventService(
         when (event) {
             is BattleEvent -> {
                 broadcastBattle(event.worldId, payload)
-                sendToGeneral(event.attackerGeneralId, payload)
-                sendToGeneral(event.defenderGeneralId, payload)
+                sendToOfficer(event.attackerGeneralId, payload)
+                sendToOfficer(event.defenderGeneralId, payload)
             }
             is TurnEvent -> {
                 broadcastTurnAdvance(event.worldId, event.year.toInt(), event.month.toInt())
@@ -280,7 +280,7 @@ class GameEventService(
                 broadcastWorldUpdate(event.worldId, payload)
             }
             is GeneralEvent -> {
-                sendToGeneral(event.generalId, payload)
+                sendToOfficer(event.generalId, payload)
                 broadcastWorldUpdate(event.worldId, payload)
             }
             is CommandEvent -> {
@@ -300,28 +300,28 @@ class GameEventService(
      * Get all history events for a world.
      */
     fun getWorldHistory(worldId: Long): List<WorldHistory> {
-        return worldHistoryRepository.findByWorldIdOrderByCreatedAtDesc(worldId)
+        return worldHistoryRepository.findBySessionIdOrderByCreatedAtDesc(worldId)
     }
 
     /**
      * Get history events by type.
      */
     fun getWorldHistoryByType(worldId: Long, eventType: String): List<WorldHistory> {
-        return worldHistoryRepository.findByWorldIdAndEventType(worldId, eventType)
+        return worldHistoryRepository.findBySessionIdAndEventType(worldId, eventType)
     }
 
     /**
      * Get history events for a specific year/month.
      */
     fun getWorldHistoryByDate(worldId: Long, year: Short, month: Short): List<WorldHistory> {
-        return worldHistoryRepository.findByWorldIdAndYearAndMonth(worldId, year, month)
+        return worldHistoryRepository.findBySessionIdAndYearAndMonth(worldId, year, month)
     }
 
     /**
      * Query events by general ID (searches payload JSONB).
      */
-    fun getEventsByGeneral(worldId: Long, generalId: Long): List<WorldHistory> {
-        return worldHistoryRepository.findByWorldIdAndEventType(worldId, "general")
+    fun getEventsByOfficer(worldId: Long, generalId: Long): List<WorldHistory> {
+        return worldHistoryRepository.findBySessionIdAndEventType(worldId, "general")
             .filter { (it.payload["generalId"] as? Number)?.toLong() == generalId }
     }
 
@@ -329,7 +329,7 @@ class GameEventService(
      * Query events by nation ID (searches payload JSONB).
      */
     fun getEventsByNation(worldId: Long, nationId: Long): List<WorldHistory> {
-        return worldHistoryRepository.findByWorldId(worldId)
+        return worldHistoryRepository.findBySessionId(worldId)
             .filter {
                 (it.payload["nationId"] as? Number)?.toLong() == nationId ||
                 (it.payload["fromNationId"] as? Number)?.toLong() == nationId ||
@@ -345,7 +345,7 @@ class GameEventService(
     fun getEventsByTimeRange(worldId: Long, startYear: Short, startMonth: Short, endYear: Short, endMonth: Short): List<WorldHistory> {
         val startTotal = startYear.toInt() * 12 + startMonth.toInt()
         val endTotal = endYear.toInt() * 12 + endMonth.toInt()
-        return worldHistoryRepository.findByWorldId(worldId).filter {
+        return worldHistoryRepository.findBySessionId(worldId).filter {
             val total = it.year.toInt() * 12 + it.month.toInt()
             total in startTotal..endTotal
         }
@@ -355,7 +355,7 @@ class GameEventService(
      * Get recent events (last N).
      */
     fun getRecentEvents(worldId: Long, limit: Int = 50): List<WorldHistory> {
-        return worldHistoryRepository.findByWorldIdOrderByCreatedAtDesc(worldId).take(limit)
+        return worldHistoryRepository.findBySessionIdOrderByCreatedAtDesc(worldId).take(limit)
     }
 
     /**

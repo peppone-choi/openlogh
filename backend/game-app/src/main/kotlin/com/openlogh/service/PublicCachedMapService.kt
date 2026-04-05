@@ -4,11 +4,11 @@ import com.openlogh.dto.PublicCachedMapCityResponse
 import com.openlogh.dto.PublicCachedMapHistoryResponse
 import com.openlogh.dto.PublicCachedMapResponse
 import com.openlogh.dto.PublicWorldSummary
-import com.openlogh.entity.WorldState
-import com.openlogh.repository.CityRepository
+import com.openlogh.entity.SessionState
+import com.openlogh.repository.PlanetRepository
 import com.openlogh.repository.RecordRepository
-import com.openlogh.repository.NationRepository
-import com.openlogh.repository.WorldStateRepository
+import com.openlogh.repository.FactionRepository
+import com.openlogh.repository.SessionStateRepository
 import org.springframework.stereotype.Service
 import java.time.Duration
 import java.time.Instant
@@ -16,12 +16,12 @@ import java.util.concurrent.ConcurrentHashMap
 
 @Service
 class PublicCachedMapService(
-    private val worldStateRepository: WorldStateRepository,
-    private val nationRepository: NationRepository,
-    private val cityRepository: CityRepository,
+    private val sessionStateRepository: SessionStateRepository,
+    private val factionRepository: FactionRepository,
+    private val planetRepository: PlanetRepository,
     private val recordRepository: RecordRepository,
     private val mapService: MapService,
-    private val cityService: CityService,
+    private val planetService: PlanetService,
 ) {
     private data class CacheEntry(
         val expiresAt: Instant,
@@ -36,7 +36,7 @@ class PublicCachedMapService(
 
     fun getCachedMap(worldId: Short? = null): PublicCachedMapResponse {
         val now = Instant.now()
-        val allWorlds = worldStateRepository.findAll().toList()
+        val allWorlds = sessionStateRepository.findAll().toList()
         val worldSummaries = allWorlds.map { PublicWorldSummary(it.id.toLong(), it.name) }
 
         val targetWorld = if (worldId != null) {
@@ -66,14 +66,14 @@ class PublicCachedMapService(
         return payload
     }
 
-    private fun buildPayload(world: WorldState, worldSummaries: List<PublicWorldSummary>): PublicCachedMapResponse {
+    private fun buildPayload(world: SessionState, worldSummaries: List<PublicWorldSummary>): PublicCachedMapResponse {
         val worldId = world.id.toLong()
         val mapCode = (world.config["mapCode"] as? String) ?: "che"
         val mapCityByName = mapService.getCities(mapCode).associateBy { it.name }
 
-        val nations = nationRepository.findByWorldId(worldId)
+        val nations = factionRepository.findBySessionId(worldId)
         val nationById = nations.associateBy { it.id }
-        val cities = cityRepository.findByWorldId(worldId).mapNotNull { city ->
+        val cities = planetRepository.findBySessionId(worldId).mapNotNull { city ->
             val mapCity = mapCityByName[city.name] ?: return@mapNotNull null
             val nation = nationById[city.nationId]
             val isCapital = nation != null && nation.capitalCityId == city.id
@@ -93,7 +93,7 @@ class PublicCachedMapService(
             )
         }
 
-        val history = recordRepository.findByWorldIdAndRecordTypeOrderByCreatedAtDesc(worldId, "world_history")
+        val history = recordRepository.findBySessionIdAndRecordTypeOrderByCreatedAtDesc(worldId, "world_history")
             .take(10)
             .map { record ->
                 val isScenarioInit = record.payload["scenarioInit"] == true

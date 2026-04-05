@@ -10,9 +10,9 @@ import java.time.OffsetDateTime
 class SelectPoolService(
     private val selectPoolRepository: SelectPoolRepository,
 ) {
-    fun listAll(worldId: Long): List<SelectPool> = selectPoolRepository.findByWorldId(worldId)
+    fun listAll(worldId: Long): List<SelectPool> = selectPoolRepository.findBySessionId(worldId)
 
-    fun listAvailable(worldId: Long): List<SelectPool> = selectPoolRepository.findByWorldIdAndGeneralIdIsNull(worldId)
+    fun listAvailable(worldId: Long): List<SelectPool> = selectPoolRepository.findBySessionIdAndGeneralIdIsNull(worldId)
 
     @Transactional
     fun create(worldId: Long, uniqueName: String, info: Map<String, Any>): SelectPool {
@@ -47,7 +47,7 @@ class SelectPoolService(
 
     @Transactional
     fun deleteAllByWorld(worldId: Long) {
-        selectPoolRepository.deleteByWorldId(worldId)
+        selectPoolRepository.deleteBySessionId(worldId)
     }
 
     @Transactional
@@ -63,7 +63,7 @@ class SelectPoolService(
     @Transactional
     fun releaseExpired(worldId: Long) {
         val now = OffsetDateTime.now()
-        selectPoolRepository.findByWorldId(worldId)
+        selectPoolRepository.findBySessionId(worldId)
             .filter { it.ownerId != null && it.generalId == null && (it.reservedUntil?.isBefore(now) == true) }
             .forEach {
                 it.ownerId = null

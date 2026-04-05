@@ -1,21 +1,21 @@
 package com.openlogh.service
 
-import com.openlogh.entity.City
-import com.openlogh.entity.General
+import com.openlogh.entity.Planet
+import com.openlogh.entity.Officer
 import com.openlogh.model.CityConst
-import com.openlogh.repository.CityRepository
-import com.openlogh.repository.GeneralRepository
-import com.openlogh.repository.NationRepository
+import com.openlogh.repository.PlanetRepository
+import com.openlogh.repository.OfficerRepository
+import com.openlogh.repository.FactionRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import kotlin.math.roundToInt
 
 @Service
-class CityService(
-    private val cityRepository: CityRepository,
+class PlanetService(
+    private val planetRepository: PlanetRepository,
     private val mapService: MapService,
-    private val generalRepository: GeneralRepository,
-    private val nationRepository: NationRepository,
+    private val officerRepository: OfficerRepository,
+    private val factionRepository: FactionRepository,
 ) {
     private val canonicalRegionByCityName: Map<String, Short> by lazy {
         mapService.getCities("che").associate { it.name to it.region.toShort() }
@@ -76,24 +76,24 @@ class CityService(
 
     // ── Basic CRUD ──
 
-    fun listByWorld(worldId: Long): List<City> {
-        return cityRepository.findByWorldId(worldId)
+    fun listByWorld(worldId: Long): List<Planet> {
+        return planetRepository.findBySessionId(worldId)
     }
 
-    fun listByWorldMaskedForGeneral(worldId: Long, general: General): List<City> {
-        val cities = cityRepository.findByWorldId(worldId)
+    fun listByWorldMaskedForOfficer(worldId: Long, officer: Officer): List<Planet> {
+        val cities = planetRepository.findBySessionId(worldId)
         if (general.worldId != worldId) return cities.map(::toMaskedView)
         val canSeeAllMilitary = general.permission == "spy"
         val visibleCityIds = if (canSeeAllMilitary || general.nationId <= 0L) {
             emptySet()
         } else {
-            nationRepository.findById(general.nationId).orElse(null)
+            factionRepository.findById(general.nationId).orElse(null)
                 ?.let { extractVisibleCityIds(it.spy) }
                 ?: emptySet()
         }
 
         return cities.map { city ->
-            if (isCityVisibleToGeneral(city, general, canSeeAllMilitary, visibleCityIds)) {
+            if (isCityVisibleToOfficer(city, general, canSeeAllMilitary, visibleCityIds)) {
                 city
             } else {
                 toMaskedView(city)
@@ -101,25 +101,25 @@ class CityService(
         }
     }
 
-    fun getById(id: Long): City? {
-        return cityRepository.findById(id).orElse(null)
+    fun getById(id: Long): Planet? {
+        return planetRepository.findById(id).orElse(null)
     }
 
-    fun listByNation(nationId: Long): List<City> {
-        return cityRepository.findByNationId(nationId)
-    }
-
-    @Transactional
-    fun save(city: City): City {
-        return cityRepository.save(city)
+    fun listByNation(nationId: Long): List<Planet> {
+        return planetRepository.findByFactionId(nationId)
     }
 
     @Transactional
-    fun saveAll(cities: List<City>): List<City> {
-        return cityRepository.saveAll(cities)
+    fun save(planet: Planet): Planet {
+        return planetRepository.save(city)
     }
 
-    fun canonicalRegionForDisplay(city: City): Short {
+    @Transactional
+    fun saveAll(cities: List<Planet>): List<Planet> {
+        return planetRepository.saveAll(cities)
+    }
+
+    fun canonicalRegionForDisplay(planet: Planet): Short {
         return canonicalRegionByCityName[city.name] ?: city.region
     }
 
@@ -177,7 +177,7 @@ class CityService(
         }
 
         // BFS from capital
-        val allNationCities = cityRepository.findByNationId(city.nationId)
+        val allNationCities = planetRepository.findByFactionId(city.nationId)
         // We don't have direct access to nation here, so just check supplyState
         return city.supplyState.toInt() == 1
     }
@@ -193,7 +193,7 @@ class CityService(
      * @param baseAmount Base development amount from command
      * @return Actual development amount
      */
-    fun calcDevelopment(city: City, statValue: Int, baseAmount: Int): Int {
+    fun calcDevelopment(planet: Planet, statValue: Int, baseAmount: Int): Int {
         val levelMod = DEV_RATE_BY_LEVEL[city.level.toInt()] ?: 1.0
         val trustMod = city.trust / 100.0
         val statMod = 1.0 + statValue / 100.0
@@ -204,7 +204,7 @@ class CityService(
      * Calculate supply income contribution of a city.
      * Legacy formula from EconomyService — exposed here for external callers.
      */
-    fun calcSupply(city: City): Double {
+    fun calcSupply(planet: Planet): Double {
         if (city.supplyState.toInt() == 0) return 0.0
         val trustRatio = city.trust / 200.0 + 0.5
         val goldBase = if (city.commMax > 0) {
@@ -223,8 +223,8 @@ class CityService(
      * Legacy parity: matches the initial values from CityConstBase.
      * Population and development values in CityConst are stored as x100.
      */
-    fun initializeCityFromConst(worldId: Long, cityConst: CityConst, nationId: Long = 0): City {
-        return City(
+    fun initializeCityFromConst(worldId: Long, cityConst: CityConst, nationId: Long = 0): Planet {
+        return Planet(
             worldId = worldId,
             name = cityConst.name,
             level = cityConst.level.toShort(),
@@ -263,10 +263,10 @@ class CityService(
      * Returns saved cities keyed by their CityConst ID.
      */
     @Transactional
-    fun initializeAllCities(worldId: Long, mapCode: String): Map<Int, City> {
+    fun initializeAllCities(worldId: Long, mapCode: String): Map<Int, Planet> {
         val cityConsts = mapService.getCities(mapCode)
         val cities = cityConsts.map { initializeCityFromConst(worldId, it) }
-        val saved = cityRepository.saveAll(cities)
+        val saved = planetRepository.saveAll(cities)
         return saved.associateBy { (it.meta["constId"] as? Number)?.toInt() ?: 0 }
     }
 
@@ -276,7 +276,7 @@ class CityService(
      * Calculate the cost of expanding a city.
      * Legacy formula: defaultCost + (popMax / 100) * costCoef
      */
-    fun calcExpandCost(city: City): Int {
+    fun calcExpandCost(planet: Planet): Int {
         return EXPAND_CITY_DEFAULT_COST + (city.popMax / 100) * EXPAND_CITY_COST_COEF
     }
 
@@ -285,14 +285,14 @@ class CityService(
      * Legacy parity: checks cost against nation treasury.
      */
     @Transactional
-    fun expandCity(city: City): City {
+    fun expandPlanet(planet: Planet): Planet {
         city.popMax += EXPAND_CITY_POP_INCREASE
         city.agriMax += EXPAND_CITY_DEVEL_INCREASE
         city.commMax += EXPAND_CITY_DEVEL_INCREASE
         city.secuMax += EXPAND_CITY_DEVEL_INCREASE
         city.defMax += EXPAND_CITY_DEVEL_INCREASE
         city.wallMax += EXPAND_CITY_WALL_INCREASE
-        return cityRepository.save(city)
+        return planetRepository.save(city)
     }
 
     // ── City Conquest ──
@@ -302,7 +302,7 @@ class CityService(
      * Legacy parity: reset officers, set default wall, clear conflict.
      */
     @Transactional
-    fun conquerCity(city: City, newNationId: Long) {
+    fun conquerPlanet(planet: Planet, newNationId: Long) {
         val oldNationId = city.nationId
         city.nationId = newNationId
         city.wall = DEFAULT_CITY_WALL.coerceAtMost(city.wallMax)
@@ -313,17 +313,17 @@ class CityService(
 
         // Reset officer assignments for generals in this city from old nation
         if (oldNationId != 0L) {
-            val generals = generalRepository.findByCityId(city.id)
+            val generals = officerRepository.findByPlanetId(city.id)
             for (general in generals) {
                 if (general.nationId == oldNationId && general.officerCity == city.id.toInt()) {
                     general.officerLevel = 1
                     general.officerCity = 0
-                    generalRepository.save(general)
+                    officerRepository.save(general)
                 }
             }
         }
 
-        cityRepository.save(city)
+        planetRepository.save(city)
     }
 
     // ── Utility ──
@@ -331,13 +331,13 @@ class CityService(
     /**
      * Get generals stationed in a city.
      */
-    fun getGeneralsInCity(cityId: Long) = generalRepository.findByCityId(cityId)
+    fun getGeneralsInPlanet(cityId: Long) = officerRepository.findByPlanetId(cityId)
 
     /**
      * Count cities owned by a nation at or above a given level.
      */
     fun countCitiesAboveLevel(nationId: Long, minLevel: Int): Int {
-        return cityRepository.findByNationId(nationId).count { it.level >= minLevel }
+        return planetRepository.findByFactionId(nationId).count { it.level >= minLevel }
     }
 
     /**
@@ -362,19 +362,19 @@ class CityService(
      * Get total population across all cities in a world.
      */
     fun getTotalPopulation(worldId: Long): Long {
-        return cityRepository.findByWorldId(worldId).sumOf { it.pop.toLong() }
+        return planetRepository.findBySessionId(worldId).sumOf { it.pop.toLong() }
     }
 
     /**
      * Get cities with low trust (potential rebellion).
      */
-    fun getLowTrustCities(worldId: Long, threshold: Float = 30f): List<City> {
-        return cityRepository.findByWorldId(worldId).filter { it.trust < threshold && it.nationId != 0L }
+    fun getLowTrustCities(worldId: Long, threshold: Float = 30f): List<Planet> {
+        return planetRepository.findBySessionId(worldId).filter { it.trust < threshold && it.nationId != 0L }
     }
 
-    private fun isCityVisibleToGeneral(
-        city: City,
-        general: General,
+    private fun isCityVisibleToOfficer(
+        planet: Planet,
+        officer: Officer,
         canSeeAllMilitary: Boolean,
         visibleCityIds: Set<Long>,
     ): Boolean {
@@ -420,8 +420,8 @@ class CityService(
         }
     }
 
-    private fun toMaskedView(city: City): City {
-        return City(
+    private fun toMaskedView(planet: Planet): Planet {
+        return Planet(
             id = city.id,
             worldId = city.worldId,
             name = city.name,

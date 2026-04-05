@@ -1,6 +1,6 @@
 package com.openlogh.service
 
-import com.openlogh.repository.GeneralRepository
+import com.openlogh.repository.OfficerRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -10,7 +10,7 @@ import org.springframework.transaction.annotation.Transactional
  */
 @Service
 class PermissionService(
-    private val generalRepository: GeneralRepository,
+    private val officerRepository: OfficerRepository,
 ) {
     data class PermissionResult(val result: Boolean, val reason: String)
 
@@ -25,7 +25,7 @@ class PermissionService(
      */
     @Transactional
     fun setPermission(userId: Long, nationId: Long, isAmbassador: Boolean, generalIds: List<Long>): PermissionResult {
-        val requester = generalRepository.findByUserId(userId)
+        val requester = officerRepository.findByUserId(userId)
             .firstOrNull { it.nationId == nationId && it.npcState.toInt() == 0 }
             ?: return PermissionResult(false, "장수를 찾을 수 없습니다.")
 
@@ -42,10 +42,10 @@ class PermissionService(
         }
 
         // Clear existing permissions of this type in the nation
-        val nationGenerals = generalRepository.findByNationId(nationId)
+        val nationGenerals = officerRepository.findByFactionId(nationId)
         nationGenerals.filter { it.permission == targetType }.forEach { g ->
             g.permission = "normal"
-            generalRepository.save(g)
+            officerRepository.save(g)
         }
 
         if (generalIds.isEmpty()) {
@@ -66,7 +66,7 @@ class PermissionService(
                 continue
             }
             general.permission = targetType
-            generalRepository.save(general)
+            officerRepository.save(general)
         }
 
         return PermissionResult(true, "success")

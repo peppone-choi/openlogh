@@ -5,12 +5,12 @@ import com.openlogh.dto.NpcCard
 import com.openlogh.dto.NpcTokenResponse
 import com.openlogh.dto.SelectNpcResult
 import com.openlogh.dto.GeneralResponse
-import com.openlogh.entity.General
-import com.openlogh.entity.GeneralTurn
-import com.openlogh.repository.GeneralRepository
-import com.openlogh.repository.GeneralTurnRepository
-import com.openlogh.repository.NationRepository
-import com.openlogh.repository.WorldStateRepository
+import com.openlogh.entity.Officer
+import com.openlogh.entity.OfficerTurn
+import com.openlogh.repository.OfficerRepository
+import com.openlogh.repository.OfficerTurnRepository
+import com.openlogh.repository.FactionRepository
+import com.openlogh.repository.SessionStateRepository
 import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -25,10 +25,10 @@ import kotlin.random.Random
 
 @Service
 class SelectNpcTokenService(
-    private val generalRepository: GeneralRepository,
-    private val generalTurnRepository: GeneralTurnRepository,
-    private val nationRepository: NationRepository,
-    private val worldStateRepository: WorldStateRepository,
+    private val officerRepository: OfficerRepository,
+    private val officerTurnRepository: OfficerTurnRepository,
+    private val factionRepository: FactionRepository,
+    private val sessionStateRepository: SessionStateRepository,
     private val gameConstService: GameConstService,
     private val redisTemplate: StringRedisTemplate,
     private val objectMapper: ObjectMapper,
@@ -43,7 +43,7 @@ class SelectNpcTokenService(
 
     fun generateToken(worldId: Long, userId: Long): NpcTokenResponse {
         ensureNpcModeEnabled(worldId)
-        ensureUserHasNoGeneral(worldId, userId)
+        ensureUserHasNoOfficer(worldId, userId)
 
         val existing = loadToken(worldId, userId)
         if (existing != null && Instant.now().isBefore(existing.validUntil)) {
@@ -71,7 +71,7 @@ class SelectNpcTokenService(
 
     fun refreshToken(worldId: Long, userId: Long, nonce: String, keepIds: List<Long>): NpcTokenResponse {
         ensureNpcModeEnabled(worldId)
-        ensureUserHasNoGeneral(worldId, userId)
+        ensureUserHasNoOfficer(worldId, userId)
         val current = loadToken(worldId, userId) ?: throw IllegalStateException("토큰이 만료되었습니다.")
         if (current.nonce != nonce) {
             throw IllegalArgumentException("유효하지 않은 nonce입니다.")
@@ -118,7 +118,7 @@ class SelectNpcTokenService(
     @Transactional
     fun selectNpc(worldId: Long, userId: Long, nonce: String, generalId: Long): SelectNpcResult {
         ensureNpcModeEnabled(worldId)
-        ensureUserHasNoGeneral(worldId, userId)
+        ensureUserHasNoOfficer(worldId, userId)
         val token = loadToken(worldId, userId) ?: throw IllegalStateException("토큰이 만료되었습니다.")
         if (token.nonce != nonce) {
             throw IllegalArgumentException("유효하지 않은 nonce입니다.")
@@ -131,7 +131,7 @@ class SelectNpcTokenService(
             throw IllegalArgumentException("선택할 수 없는 NPC입니다.")
         }
 
-        val general = generalRepository.findById(generalId).orElse(null)
+        val general = officerRepository.findById(generalId).orElse(null)
             ?: throw IllegalArgumentException("NPC 장수를 찾을 수 없습니다.")
         if (general.worldId != worldId || !isSelectableNpc(general)) {
             throw IllegalArgumentException("이미 선택되었거나 선택 불가능한 NPC입니다.")
@@ -152,13 +152,13 @@ class SelectNpcTokenService(
         general.killTurn = 6
         general.updatedAt = OffsetDateTime.now()
 
-        val saved = generalRepository.save(general)
+        val saved = officerRepository.save(general)
 
         // Initialize turn queue so the possessed NPC can execute reserved commands
         val maxTurn = gameConstService.getInt("maxTurn")
-        generalTurnRepository.saveAll(
+        officerTurnRepository.saveAll(
             (0 until maxTurn).map { turnIdx ->
-                GeneralTurn(
+                OfficerTurn(
                     worldId = worldId,
                     generalId = saved.id,
                     turnIdx = turnIdx.toShort(),
@@ -172,14 +172,14 @@ class SelectNpcTokenService(
         return SelectNpcResult(success = true, general = GeneralResponse.from(saved))
     }
 
-    private fun ensureUserHasNoGeneral(worldId: Long, userId: Long) {
-        if (generalRepository.findByWorldIdAndUserId(worldId, userId).any { it.npcState.toInt() < 5 }) {
+    private fun ensureUserHasNoOfficer(worldId: Long, userId: Long) {
+        if (officerRepository.findBySessionIdAndUserId(worldId, userId).any { it.npcState.toInt() < 5 }) {
             throw IllegalStateException("이미 장수를 보유하고 있습니다.")
         }
     }
 
     private fun ensureNpcModeEnabled(worldId: Long) {
-        val world = worldStateRepository.findById(worldId.toShort()).orElseThrow {
+        val world = sessionStateRepository.findById(worldId.toShort()).orElseThrow {
             IllegalArgumentException("월드를 찾을 수 없습니다.")
         }
         val npcMode = ((world.config["npcMode"] as? Number)?.toInt())
@@ -192,13 +192,13 @@ class SelectNpcTokenService(
         }
     }
 
-    private fun loadNpcCards(worldId: Long, ids: List<Long>): List<General> {
+    private fun loadNpcCards(worldId: Long, ids: List<Long>): List<Officer> {
         if (ids.isEmpty()) return emptyList()
-        return generalRepository.findAllById(ids).filter { it.worldId == worldId }
+        return officerRepository.findAllById(ids).filter { it.worldId == worldId }
     }
 
-    private fun drawNpcCards(worldId: Long, count: Int, excludeIds: Set<Long>): List<General> {
-        val candidates = generalRepository.findByWorldId(worldId)
+    private fun drawNpcCards(worldId: Long, count: Int, excludeIds: Set<Long>): List<Officer> {
+        val candidates = officerRepository.findBySessionId(worldId)
             .filter { isSelectableNpc(it) && !excludeIds.contains(it.id) }
             .toMutableList()
 
@@ -206,7 +206,7 @@ class SelectNpcTokenService(
             throw IllegalStateException("선택 가능한 NPC가 부족합니다.")
         }
 
-        val selected = mutableListOf<General>()
+        val selected = mutableListOf<Officer>()
         repeat(count) {
             val totalWeight = candidates.sumOf(::weight)
             val pickedIndex = if (totalWeight <= 0.0) {
@@ -219,7 +219,7 @@ class SelectNpcTokenService(
         return selected
     }
 
-    private fun weightedPickIndex(candidates: List<General>, totalWeight: Double): Int {
+    private fun weightedPickIndex(candidates: List<Officer>, totalWeight: Double): Int {
         var random = Random.nextDouble(totalWeight)
         candidates.forEachIndexed { index, general ->
             random -= weight(general)
@@ -228,19 +228,19 @@ class SelectNpcTokenService(
         return candidates.lastIndex
     }
 
-    private fun weight(general: General): Double {
+    private fun weight(officer: Officer): Double {
         val statSum = general.leadership.toInt() + general.strength.toInt() + general.intel.toInt()
         return max(1.0, statSum.toDouble().pow(1.5))
     }
 
-    private fun isSelectableNpc(general: General): Boolean {
+    private fun isSelectableNpc(officer: Officer): Boolean {
         val npc = general.npcState.toInt()
         return general.userId == null && npc >= 2 && npc < 5
     }
 
-    private fun generalsByOrderedIds(worldId: Long, ids: List<Long>): List<General> {
+    private fun generalsByOrderedIds(worldId: Long, ids: List<Long>): List<Officer> {
         if (ids.isEmpty()) return emptyList()
-        val generalsById = generalRepository.findByWorldId(worldId)
+        val generalsById = officerRepository.findBySessionId(worldId)
             .filter { ids.contains(it.id) && isSelectableNpc(it) }
             .associateBy { it.id }
 
@@ -250,8 +250,8 @@ class SelectNpcTokenService(
         return ids.map { generalsById[it]!! }
     }
 
-    private fun toResponse(worldId: Long, token: StoredNpcToken, generals: List<General>): NpcTokenResponse {
-        val nations = nationRepository.findByWorldId(worldId).associateBy { it.id }
+    private fun toResponse(worldId: Long, token: StoredNpcToken, generals: List<Officer>): NpcTokenResponse {
+        val nations = factionRepository.findBySessionId(worldId).associateBy { it.id }
         val cardsById = generals.associateBy { it.id }
         val orderedCards = token.generalIds.mapNotNull { generalId ->
             val general = cardsById[generalId] ?: return@mapNotNull null
@@ -314,7 +314,7 @@ class SelectNpcTokenService(
     }
 
     private fun turnTermMinutes(worldId: Long): Double {
-        val world = worldStateRepository.findById(worldId.toShort()).orElse(null)
+        val world = sessionStateRepository.findById(worldId.toShort()).orElse(null)
             ?: throw IllegalArgumentException("월드를 찾을 수 없습니다.")
         return max(0.0, world.tickSeconds.toDouble() / 60.0)
     }

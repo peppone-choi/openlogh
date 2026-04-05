@@ -1,6 +1,6 @@
 package com.openlogh.service
 
-import com.openlogh.repository.GeneralRepository
+import com.openlogh.repository.OfficerRepository
 import com.openlogh.repository.MessageRepository
 import com.openlogh.repository.RecordRepository
 import org.springframework.stereotype.Service
@@ -10,8 +10,8 @@ import org.springframework.stereotype.Service
  * Legacy: j_general_log_old.php
  */
 @Service
-class GeneralLogService(
-    private val generalRepository: GeneralRepository,
+class OfficerLogService(
+    private val officerRepository: OfficerRepository,
     private val messageRepository: MessageRepository,
     private val recordRepository: RecordRepository,
 ) {
@@ -42,9 +42,9 @@ class GeneralLogService(
         }
 
         // Check permission: same nation or own logs
-        val requester = generalRepository.findById(generalId).orElse(null)
+        val requester = officerRepository.findById(generalId).orElse(null)
             ?: return LogResult(false, "장수를 찾을 수 없습니다.")
-        val target = generalRepository.findById(targetId).orElse(null)
+        val target = officerRepository.findById(targetId).orElse(null)
             ?: return LogResult(false, "대상 장수를 찾을 수 없습니다.")
 
         if (requester.nationId != target.nationId && requester.id != target.id) {

@@ -1,6 +1,6 @@
 package com.openlogh.service
 
-import com.openlogh.repository.GeneralRepository
+import com.openlogh.repository.OfficerRepository
 import org.springframework.stereotype.Service
 
 /**
@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service
  */
 @Service
 class SimulatorExportService(
-    private val generalRepository: GeneralRepository,
+    private val officerRepository: OfficerRepository,
 ) {
     data class ExportResult(val result: Boolean, val reason: String? = null, val data: Map<String, Any?>? = null)
 
@@ -18,10 +18,10 @@ class SimulatorExportService(
             return ExportResult(false, "올바르지 않은 장수 코드입니다")
         }
 
-        val requester = generalRepository.findById(requesterId).orElse(null)
+        val requester = officerRepository.findById(requesterId).orElse(null)
             ?: return ExportResult(false, "요청자를 찾을 수 없습니다.")
 
-        val target = generalRepository.findById(targetId).orElse(null)
+        val target = officerRepository.findById(targetId).orElse(null)
             ?: return ExportResult(false, "대상 장수를 찾을 수 없습니다.")
 
         // Only same-nation generals can export (or self)

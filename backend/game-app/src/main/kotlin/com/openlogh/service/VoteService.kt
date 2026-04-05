@@ -14,7 +14,7 @@ class VoteService(
 ) {
     @Transactional(readOnly = true)
     fun listVotes(worldId: Long): List<Message> {
-        return messageRepository.findByWorldIdAndMailboxCodeOrderBySentAtDesc(worldId, "vote")
+        return messageRepository.findBySessionIdAndMailboxCodeOrderBySentAtDesc(worldId, "vote")
     }
 
     fun createVote(worldId: Long, creatorId: Long, title: String, options: List<String>): Message {

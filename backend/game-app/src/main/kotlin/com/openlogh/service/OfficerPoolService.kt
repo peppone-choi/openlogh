@@ -1,7 +1,7 @@
 package com.openlogh.service
 
-import com.openlogh.entity.General
-import com.openlogh.repository.GeneralRepository
+import com.openlogh.entity.Officer
+import com.openlogh.repository.OfficerRepository
 import org.springframework.stereotype.Service
 import kotlin.random.Random
 
@@ -10,8 +10,8 @@ import kotlin.random.Random
  * Used by strategic commands like 의병모집 to spawn new NPC generals.
  */
 @Service
-class GeneralPoolService(
-    private val generalRepository: GeneralRepository,
+class OfficerPoolService(
+    private val officerRepository: OfficerRepository,
 ) {
     /**
      * Pick and create an NPC general from the pool.
@@ -29,7 +29,7 @@ class GeneralPoolService(
      * @param dedication Initial dedication
      * @param specAge Special age field
      * @param rng Random number generator
-     * @return The created General entity
+     * @return The created Officer entity
      */
     fun pickAndCreateNpc(
         worldId: Long,
@@ -45,12 +45,12 @@ class GeneralPoolService(
         dedication: Int,
         specAge: Int,
         rng: Random,
-    ): General {
+    ): Officer {
         val leadership = (rng.nextInt(40, 80)).toShort()
         val strength = (rng.nextInt(30, 70)).toShort()
         val intel = (rng.nextInt(30, 70)).toShort()
 
-        val general = General(
+        val general = Officer(
             worldId = worldId,
             nationId = nationId,
             cityId = cityId,
@@ -70,7 +70,7 @@ class GeneralPoolService(
             officerLevel = 1,
         )
 
-        return generalRepository.save(general)
+        return officerRepository.save(general)
     }
 
     private fun generateNpcName(rng: Random): String {

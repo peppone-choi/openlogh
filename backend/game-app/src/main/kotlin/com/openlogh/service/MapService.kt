@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
-import com.openlogh.entity.City
+import com.openlogh.entity.Planet
 import com.openlogh.model.CityConst
 import jakarta.annotation.PostConstruct
 import org.springframework.core.io.ClassPathResource
@@ -64,7 +64,7 @@ class MapService {
         return maps[mapName] ?: throw IllegalArgumentException("Unknown map: $mapName")
     }
 
-    fun getCity(mapName: String, cityId: Int): CityConst? {
+    fun getPlanet(mapName: String, cityId: Int): CityConst? {
         return getCities(mapName).find { it.id == cityId }
     }
 
@@ -158,7 +158,7 @@ class MapService {
 
     fun calcAllPairsDistanceByNation(
         nationIds: List<Long>,
-        allCities: List<City>,
+        allCities: List<Planet>,
         mapName: String = "che",
     ): Map<Int, Map<Int, Int>> {
         val nationIdSet = nationIds.toSet()
@@ -171,7 +171,7 @@ class MapService {
 
     fun calcAllPairsDistanceByNations(
         nationIds: List<Long>,
-        allCities: List<City>,
+        allCities: List<Planet>,
         mapName: String = "che",
     ): Map<Int, Map<Int, Int>> = calcAllPairsDistanceByNation(nationIds, allCities, mapName)
 

@@ -1,9 +1,9 @@
 package com.openlogh.service
 
-import com.openlogh.repository.CityRepository
+import com.openlogh.repository.PlanetRepository
 import com.openlogh.repository.RecordRepository
-import com.openlogh.repository.NationRepository
-import com.openlogh.repository.WorldStateRepository
+import com.openlogh.repository.FactionRepository
+import com.openlogh.repository.SessionStateRepository
 import org.springframework.stereotype.Service
 import java.security.MessageDigest
 import java.time.Duration
@@ -21,12 +21,12 @@ import java.time.Instant
  */
 @Service
 class MapRecentService(
-    private val worldStateRepository: WorldStateRepository,
-    private val nationRepository: NationRepository,
-    private val cityRepository: CityRepository,
+    private val sessionStateRepository: SessionStateRepository,
+    private val factionRepository: FactionRepository,
+    private val planetRepository: PlanetRepository,
     private val recordRepository: RecordRepository,
     private val mapService: MapService,
-    private val cityService: CityService,
+    private val planetService: PlanetService,
 ) {
     data class MapRecentCacheEntry(
         val etag: String,
@@ -71,7 +71,7 @@ class MapRecentService(
     }
 
     private fun buildMapData(worldId: Long, nowEpoch: Long): MapRecentCacheEntry {
-        val world = worldStateRepository.findById(worldId.toShort()).orElse(null)
+        val world = sessionStateRepository.findById(worldId.toShort()).orElse(null)
             ?: return MapRecentCacheEntry(
                 etag = "",
                 timestamp = nowEpoch,
@@ -86,10 +86,10 @@ class MapRecentService(
         }
         val mapCityByName = mapCities.associateBy { it.name }
 
-        val nations = nationRepository.findByWorldId(worldId)
+        val nations = factionRepository.findBySessionId(worldId)
         val nationById = nations.associateBy { it.id }
 
-        val cities = cityRepository.findByWorldId(worldId)
+        val cities = planetRepository.findBySessionId(worldId)
         val cityDataList = cities.mapNotNull { city ->
             val mapCity = mapCityByName[city.name] ?: return@mapNotNull null
             val nation = nationById[city.nationId]
@@ -117,7 +117,7 @@ class MapRecentService(
         }
 
         // Get recent history (last 10 entries)
-        val historyRecords = recordRepository.findByWorldIdAndRecordTypeOrderByCreatedAtDesc(worldId, "world_history")
+        val historyRecords = recordRepository.findBySessionIdAndRecordTypeOrderByCreatedAtDesc(worldId, "world_history")
             .take(10)
         val history = historyRecords.map { record ->
             mapOf(

@@ -4,15 +4,15 @@ import com.openlogh.dto.BuildPoolGeneralRequest
 import com.openlogh.dto.CreateGeneralRequest
 import com.openlogh.engine.DeterministicRng
 import com.openlogh.engine.modifier.TraitSpecRegistry
-import com.openlogh.entity.General
-import com.openlogh.entity.GeneralTurn
-import com.openlogh.entity.WorldState
+import com.openlogh.entity.Officer
+import com.openlogh.entity.OfficerTurn
+import com.openlogh.entity.SessionState
 import com.openlogh.repository.AppUserRepository
-import com.openlogh.repository.CityRepository
-import com.openlogh.repository.GeneralRepository
-import com.openlogh.repository.GeneralTurnRepository
-import com.openlogh.repository.NationRepository
-import com.openlogh.repository.WorldStateRepository
+import com.openlogh.repository.PlanetRepository
+import com.openlogh.repository.OfficerRepository
+import com.openlogh.repository.OfficerTurnRepository
+import com.openlogh.repository.FactionRepository
+import com.openlogh.repository.SessionStateRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.OffsetDateTime
@@ -20,13 +20,13 @@ import kotlin.math.roundToInt
 import kotlin.random.Random
 
 @Service
-class GeneralService(
-    private val generalRepository: GeneralRepository,
+class OfficerService(
+    private val officerRepository: OfficerRepository,
     private val appUserRepository: AppUserRepository,
-    private val worldStateRepository: WorldStateRepository,
-    private val cityRepository: CityRepository,
-    private val nationRepository: NationRepository,
-    private val generalTurnRepository: GeneralTurnRepository,
+    private val sessionStateRepository: SessionStateRepository,
+    private val planetRepository: PlanetRepository,
+    private val factionRepository: FactionRepository,
+    private val officerTurnRepository: OfficerTurnRepository,
     private val gameConstService: GameConstService,
 ) {
     companion object {
@@ -57,18 +57,18 @@ class GeneralService(
 
     private val availableSpecialCodes: Set<String> = TraitSpecRegistry.war.map { it.key }.toSet()
 
-    fun listByWorld(worldId: Long): List<General> {
-        return generalRepository.findByWorldId(worldId)
+    fun listBySession(sessionId: Long): List<Officer> {
+        return officerRepository.findBySessionId(worldId)
     }
 
-    fun getById(id: Long): General? {
-        return generalRepository.findById(id).orElse(null)
+    fun getById(id: Long): Officer? {
+        return officerRepository.findById(id).orElse(null)
     }
 
     @Transactional
-    fun getMyGeneral(worldId: Long, loginId: String): General? {
+    fun getMyOfficer(worldId: Long, loginId: String): Officer? {
         val userId = getCurrentUserId(loginId) ?: return null
-        val general = generalRepository.findByWorldIdAndUserId(worldId, userId)
+        val general = officerRepository.findBySessionIdAndUserId(worldId, userId)
             .firstOrNull { it.npcState < 5 } ?: return null
         if (general.nationId > 0L && general.officerLevel < 1) {
             general.officerLevel = 1
@@ -77,24 +77,24 @@ class GeneralService(
             if (general.makeLimit > 0) {
                 general.makeLimit = 0
             }
-            return generalRepository.save(general)
+            return officerRepository.save(general)
         }
         return general
     }
 
-    fun listByNation(nationId: Long): List<General> {
-        return generalRepository.findByNationId(nationId)
+    fun listByNation(nationId: Long): List<Officer> {
+        return officerRepository.findByFactionId(nationId)
     }
 
-    fun listByCity(cityId: Long): List<General> {
-        return generalRepository.findByCityId(cityId)
+    fun listByPlanet(cityId: Long): List<Officer> {
+        return officerRepository.findByPlanetId(cityId)
     }
 
     @Transactional
-    fun createGeneral(worldId: Long, loginId: String, request: CreateGeneralRequest): General? {
+    fun createOfficer(worldId: Long, loginId: String, request: CreateGeneralRequest): Officer? {
         val user = findUserByLoginId(loginId)
         val userId = user.id ?: throw IllegalArgumentException("계정 정보를 확인할 수 없습니다. 다시 로그인해주세요.")
-        val world = worldStateRepository.findById(worldId.toShort()).orElseThrow {
+        val world = sessionStateRepository.findById(worldId.toShort()).orElseThrow {
             IllegalArgumentException("월드를 찾을 수 없습니다.")
         }
 
@@ -114,7 +114,7 @@ class GeneralService(
         val nameBlocked = isCustomNameBlocked(world)
         val nationId = request.nationId ?: 0L
         val nation = if (nationId > 0L) {
-            nationRepository.findById(nationId).orElseThrow { IllegalArgumentException("국가를 찾을 수 없습니다.") }
+            factionRepository.findById(nationId).orElseThrow { IllegalArgumentException("국가를 찾을 수 없습니다.") }
                 .also {
                     if (it.worldId != worldId) {
                         throw IllegalArgumentException("다른 월드의 국가입니다.")
@@ -124,8 +124,8 @@ class GeneralService(
             null
         }
 
-        val finalCityId = inheritCity ?: request.cityId ?: pickRandomStartCity(worldId, world, nationId)
-        val city = cityRepository.findById(finalCityId).orElseThrow {
+        val finalCityId = inheritCity ?: request.cityId ?: pickRandomStartPlanet(worldId, world, nationId)
+        val city = planetRepository.findById(finalCityId).orElseThrow {
             IllegalArgumentException("도시를 찾을 수 없습니다.")
         }.also {
             if (it.worldId != worldId) {
@@ -136,7 +136,7 @@ class GeneralService(
             }
         }
 
-        val allGenerals = generalRepository.findByWorldId(worldId)
+        val allGenerals = officerRepository.findBySessionId(worldId)
         val rng = createJoinRng(world, userId)
         val name = if (nameBlocked) {
             "__pending__${userId}_${System.currentTimeMillis()}"
@@ -144,7 +144,7 @@ class GeneralService(
             normalizeName(request.name)
         }
 
-        if (!nameBlocked && generalRepository.findByNameAndWorldId(name, worldId) != null) {
+        if (!nameBlocked && officerRepository.findByNameAndSessionId(name, worldId) != null) {
             throw IllegalArgumentException("이미 있는 장수입니다. 다른 이름으로 등록해 주세요!")
         }
 
@@ -171,8 +171,8 @@ class GeneralService(
         val useOwnIcon = request.useOwnIcon ?: request.pic ?: false
         val (picture, imageServer) = resolvePicture(user, useOwnIcon)
 
-        val saved = generalRepository.save(
-            General(
+        val saved = officerRepository.save(
+            Officer(
                 worldId = worldId,
                 userId = userId,
                 name = name,
@@ -209,12 +209,12 @@ class GeneralService(
 
         if (nameBlocked) {
             saved.name = generateObfuscatedName(saved.id, world)
-            generalRepository.save(saved)
+            officerRepository.save(saved)
         }
 
-        generalTurnRepository.saveAll(
+        officerTurnRepository.saveAll(
             (0 until gameConstService.getInt("maxTurn")).map { turnIdx ->
-                GeneralTurn(
+                OfficerTurn(
                     worldId = worldId,
                     generalId = saved.id,
                     turnIdx = turnIdx.toShort(),
@@ -226,7 +226,7 @@ class GeneralService(
 
         if (nation != null) {
             nation.gennum += 1
-            nationRepository.save(nation)
+            factionRepository.save(nation)
         }
 
         if (inheritSpecial != null && inheritSpecial == prePurchasedSpecial) {
@@ -242,32 +242,32 @@ class GeneralService(
         return saved
     }
 
-    fun listAvailableNpcs(worldId: Long): List<General> {
-        return generalRepository.findByWorldId(worldId)
+    fun listAvailableNpcs(worldId: Long): List<Officer> {
+        return officerRepository.findBySessionId(worldId)
             .filter { it.npcState.toInt() == 1 && it.userId == null }
     }
 
     @Transactional
-    fun possessNpc(worldId: Long, loginId: String, generalId: Long): General? {
+    fun possessNpc(worldId: Long, loginId: String, generalId: Long): Officer? {
         val userId = getCurrentUserId(loginId) ?: return null
-        if (hasActiveGeneral(worldId, userId)) return null
-        val general = generalRepository.findById(generalId).orElse(null) ?: return null
+        if (hasActiveOfficer(worldId, userId)) return null
+        val general = officerRepository.findById(generalId).orElse(null) ?: return null
         if (general.worldId != worldId || general.npcState.toInt() == 0 || general.userId != null) return null
         general.userId = userId
         general.npcState = 0
-        return generalRepository.save(general)
+        return officerRepository.save(general)
     }
 
-    fun listPool(worldId: Long): List<General> {
-        return generalRepository.findByWorldId(worldId)
+    fun listPool(worldId: Long): List<Officer> {
+        return officerRepository.findBySessionId(worldId)
             .filter { it.npcState.toInt() == 5 && it.userId == null }
     }
 
     @Transactional
-    fun selectFromPool(worldId: Long, loginId: String, generalId: Long): General? {
+    fun selectFromPool(worldId: Long, loginId: String, generalId: Long): Officer? {
         val userId = getCurrentUserId(loginId) ?: return null
-        if (hasActiveGeneral(worldId, userId)) return null
-        val general = generalRepository.findById(generalId).orElse(null) ?: return null
+        if (hasActiveOfficer(worldId, userId)) return null
+        val general = officerRepository.findById(generalId).orElse(null) ?: return null
         if (general.worldId != worldId || general.npcState.toInt() != 5 || general.userId != null) return null
         
         if (general.officerLevel.toInt() == 20) {
@@ -276,22 +276,22 @@ class GeneralService(
         
         general.userId = userId
         general.npcState = 0
-        return generalRepository.save(general)
+        return officerRepository.save(general)
     }
 
     @Transactional
-    fun buildPoolGeneral(worldId: Long, loginId: String, request: BuildPoolGeneralRequest): General? {
+    fun buildPoolOfficer(worldId: Long, loginId: String, request: BuildPoolGeneralRequest): Officer? {
         val user = findUserByLoginId(loginId)
         val userId = user.id ?: throw IllegalArgumentException("계정 정보를 확인할 수 없습니다. 다시 로그인해주세요.")
         validateFiveStats(request.leadership, request.strength, request.intel, request.politics, request.charm)
-        if (hasActiveGeneral(worldId, userId)) return null
+        if (hasActiveOfficer(worldId, userId)) return null
 
         val rng = createJoinRng(
-            world = worldStateRepository.findById(worldId.toShort()).orElseGet { WorldState(id = worldId.toShort()) },
+            world = sessionStateRepository.findById(worldId.toShort()).orElseGet { SessionState(id = worldId.toShort()) },
             userId = userId,
         )
         val (picture, imageServer) = resolvePicture(user, true)
-        val general = General(
+        val general = Officer(
             worldId = worldId,
             userId = userId,
             name = normalizeName(request.name),
@@ -307,11 +307,11 @@ class GeneralService(
             ownerName = user.displayName,
             personalCode = normalizePersonalityCode(request.personality ?: request.ego, rng),
         )
-        return generalRepository.save(general)
+        return officerRepository.save(general)
     }
 
     @Transactional
-    fun updatePoolGeneral(
+    fun updatePoolOfficer(
         worldId: Long,
         loginId: String,
         generalId: Long,
@@ -320,22 +320,22 @@ class GeneralService(
         intel: Short,
         politics: Short,
         charm: Short,
-    ): General? {
+    ): Officer? {
         validateFiveStats(leadership, strength, intel, politics, charm)
         val userId = getCurrentUserId(loginId) ?: return null
-        val general = generalRepository.findById(generalId).orElse(null) ?: return null
+        val general = officerRepository.findById(generalId).orElse(null) ?: return null
         if (general.worldId != worldId || general.userId != userId || general.npcState.toInt() != 5) return null
         general.leadership = leadership
         general.strength = strength
         general.intel = intel
         general.politics = politics
         general.charm = charm
-        return generalRepository.save(general)
+        return officerRepository.save(general)
     }
 
-    fun getMyActiveGeneral(loginId: String): General? {
+    fun getMyActiveOfficer(loginId: String): Officer? {
         val userId = getCurrentUserId(loginId) ?: return null
-        return generalRepository.findByUserId(userId).firstOrNull { it.npcState.toInt() == 0 }
+        return officerRepository.findByUserId(userId).firstOrNull { it.npcState.toInt() == 0 }
     }
 
     fun getCurrentUserId(loginId: String): Long? {
@@ -350,7 +350,7 @@ class GeneralService(
             ?: throw IllegalArgumentException("계정 정보를 찾을 수 없습니다. 다시 로그인해주세요.")
     }
 
-    private fun ensureCreateAllowed(world: WorldState, worldId: Long, userId: Long) {
+    private fun ensureCreateAllowed(world: SessionState, worldId: Long, userId: Long) {
         val blockBits = readInt(world.meta["blockGeneralCreate"])
             ?: readInt(world.config["blockGeneralCreate"])
             ?: 0
@@ -358,7 +358,7 @@ class GeneralService(
             throw IllegalArgumentException("장수 직접 생성이 불가능한 모드입니다.")
         }
 
-        if (hasActiveGeneral(worldId, userId)) {
+        if (hasActiveOfficer(worldId, userId)) {
             throw IllegalArgumentException("이미 등록하셨습니다!")
         }
 
@@ -366,21 +366,21 @@ class GeneralService(
             ?: readInt(world.config["generalCntLimit"])
             ?: readInt(world.meta["generalCntLimit"])
             ?: gameConstService.getInt("defaultMaxGeneral")
-        val currentPlayers = generalRepository.findByWorldId(worldId)
+        val currentPlayers = officerRepository.findBySessionId(worldId)
             .count { it.userId != null && it.npcState.toInt() != 5 }
         if (currentPlayers >= maxGeneral) {
             throw IllegalArgumentException("더이상 등록할 수 없습니다!")
         }
     }
 
-    private fun isCustomNameBlocked(world: WorldState): Boolean {
+    private fun isCustomNameBlocked(world: SessionState): Boolean {
         return readBoolean(world.meta["blockCustomGeneralName"])
             ?: readBoolean(world.config["blockCustomGeneralName"])
             ?: false
     }
 
-    private fun hasActiveGeneral(worldId: Long, userId: Long): Boolean {
-        return generalRepository.findByWorldIdAndUserId(worldId, userId).any { it.npcState.toInt() < 5 }
+    private fun hasActiveOfficer(worldId: Long, userId: Long): Boolean {
+        return officerRepository.findBySessionIdAndUserId(worldId, userId).any { it.npcState.toInt() < 5 }
     }
 
     private fun validateFiveStats(
@@ -480,7 +480,7 @@ class GeneralService(
         return (wait + age).toShort()
     }
 
-    private fun calcStartingExperience(allGenerals: List<General>, relYear: Int): Int {
+    private fun calcStartingExperience(allGenerals: List<Officer>, relYear: Int): Int {
         if (relYear < 3) return 0
         val experienced = allGenerals
             .filter { it.nationId != 0L && it.npcState.toInt() < 4 }
@@ -500,17 +500,17 @@ class GeneralService(
         return "default.jpg" to 0
     }
 
-    private fun createJoinRng(world: WorldState, userId: Long): Random {
+    private fun createJoinRng(world: SessionState, userId: Long): Random {
         val hiddenSeed = (world.config["hiddenSeed"] as? String) ?: world.id.toString()
         return DeterministicRng.create(hiddenSeed, "MakeGeneral", userId, OffsetDateTime.now().toEpochSecond())
     }
 
-    private fun getStartYear(world: WorldState): Int {
+    private fun getStartYear(world: SessionState): Int {
         return (world.config["startYear"] as? Number)?.toInt() ?: gameConstService.getInt("defaultStartYear")
     }
 
     // Parity: getRandTurn($rng, $env['turnterm'], new DateTimeImmutable($env['turntime']))
-    private fun createInitialTurnTime(world: WorldState, rng: Random, inheritTurntimeZone: Int?): OffsetDateTime {
+    private fun createInitialTurnTime(world: SessionState, rng: Random, inheritTurntimeZone: Int?): OffsetDateTime {
         val tickSeconds = world.tickSeconds.toLong().coerceAtLeast(1L)
         val baseDateTime = world.updatedAt
 
@@ -564,8 +564,8 @@ class GeneralService(
         user.meta["inheritPoints"] = currentPoints - pointsToSpend
     }
 
-    private fun pickRandomStartCity(worldId: Long, world: WorldState, nationId: Long): Long {
-        val allCities = cityRepository.findByWorldId(worldId)
+    private fun pickRandomStartPlanet(worldId: Long, world: SessionState, nationId: Long): Long {
+        val allCities = planetRepository.findBySessionId(worldId)
         
         val cities = if (nationId > 0L) {
             allCities.filter { it.nationId == nationId }
@@ -591,7 +591,7 @@ class GeneralService(
         return cities.random(rng).id
     }
 
-    private fun generateObfuscatedName(id: Long, world: WorldState): String {
+    private fun generateObfuscatedName(id: Long, world: SessionState): String {
         val hiddenSeed = (world.config["hiddenSeed"] as? String) ?: world.id.toString()
         val pool = LEGACY_FIRST_NAMES.flatMap { first ->
             LEGACY_LAST_NAMES.map { last -> "$first$last" }
@@ -613,13 +613,13 @@ class GeneralService(
      * Legacy parity: killturn = 4800 / turnterm.
      * npcmode==1 (빙의 모드)이면 1/3.
      */
-    private fun resolveKillTurn(world: WorldState): Int {
+    private fun resolveKillTurn(world: SessionState): Int {
         return (world.config["killturn"] as? Number)?.toInt()
             ?: (world.config["killTurn"] as? Number)?.toInt()
             ?: calcDefaultKillTurn(world)
     }
 
-    private fun calcDefaultKillTurn(world: WorldState): Int {
+    private fun calcDefaultKillTurn(world: SessionState): Int {
         val turnterm = (world.tickSeconds / 60).coerceAtLeast(1)
         val base = 4800 / turnterm
         val npcmode = (world.config["npcmode"] as? Number)?.toInt() ?: 0

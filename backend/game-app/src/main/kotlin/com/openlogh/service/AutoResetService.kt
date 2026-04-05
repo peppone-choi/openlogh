@@ -1,6 +1,6 @@
 package com.openlogh.service
 
-import com.openlogh.repository.WorldStateRepository
+import com.openlogh.repository.SessionStateRepository
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -27,7 +27,7 @@ import java.time.format.DateTimeFormatter
  */
 @Service
 class AutoResetService(
-    private val worldStateRepository: WorldStateRepository,
+    private val sessionStateRepository: SessionStateRepository,
     private val scenarioService: ScenarioService,
 ) {
     private val log = LoggerFactory.getLogger(AutoResetService::class.java)
@@ -44,7 +44,7 @@ class AutoResetService(
      */
     @Transactional
     fun checkAutoReset(worldId: Long): AutoResetResult {
-        val world = worldStateRepository.findById(worldId.toShort()).orElse(null)
+        val world = sessionStateRepository.findById(worldId.toShort()).orElse(null)
             ?: return AutoResetResult(status = "world_not_found")
 
         // Check for reserved reset configuration
@@ -147,14 +147,14 @@ class AutoResetService(
     private fun closeServer(world: com.openlogh.entity.WorldState) {
         world.config["serverClosed"] = true
         world.config["locked"] = true
-        worldStateRepository.save(world)
+        sessionStateRepository.save(world)
         log.info("Server closed for world {}", world.id)
     }
 
     private fun openServer(world: com.openlogh.entity.WorldState) {
         world.config["serverClosed"] = false
         world.config["locked"] = false
-        worldStateRepository.save(world)
+        sessionStateRepository.save(world)
         log.info("Server opened for world {}", world.id)
     }
 

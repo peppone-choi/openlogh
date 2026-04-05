@@ -15,13 +15,13 @@ import com.openlogh.dto.UniqueItemOption
 import com.openlogh.engine.DeterministicRng
 import com.openlogh.engine.modifier.TraitSpecRegistry
 import com.openlogh.entity.AppUser
-import com.openlogh.entity.General
-import com.openlogh.entity.WorldState
+import com.openlogh.entity.Officer
+import com.openlogh.entity.SessionState
 import com.openlogh.repository.AppUserRepository
-import com.openlogh.repository.CityRepository
-import com.openlogh.repository.GeneralRepository
+import com.openlogh.repository.PlanetRepository
+import com.openlogh.repository.OfficerRepository
 import com.openlogh.repository.RankDataRepository
-import com.openlogh.repository.WorldStateRepository
+import com.openlogh.repository.SessionStateRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.OffsetDateTime
@@ -31,10 +31,10 @@ import kotlin.math.max
 @Service
 class InheritanceService(
     private val appUserRepository: AppUserRepository,
-    private val cityRepository: CityRepository,
-    private val generalRepository: GeneralRepository,
+    private val planetRepository: PlanetRepository,
+    private val officerRepository: OfficerRepository,
     private val rankDataRepository: RankDataRepository,
-    private val worldStateRepository: WorldStateRepository,
+    private val sessionStateRepository: SessionStateRepository,
     private val gameConstService: GameConstService,
 ) {
     companion object {
@@ -82,15 +82,15 @@ class InheritanceService(
 
     @Transactional
     fun forceReapplyMergedPoints(worldId: Long): Int {
-        val mergeEntries = rankDataRepository.findByWorldIdAndCategory(worldId, "inherit_earned_dyn")
+        val mergeEntries = rankDataRepository.findBySessionIdAndCategory(worldId, "inherit_earned_dyn")
             .associateBy { (it.meta["generalId"] as? Number)?.toLong() ?: 0L }
-        val totalEntries = rankDataRepository.findByWorldIdAndCategory(worldId, "inherit_earned")
+        val totalEntries = rankDataRepository.findBySessionIdAndCategory(worldId, "inherit_earned")
             .associateBy { (it.meta["generalId"] as? Number)?.toLong() ?: 0L }
 
         var updatedUsers = 0
         val users = mutableMapOf<Long, AppUser>()
 
-        generalRepository.findByWorldId(worldId)
+        officerRepository.findBySessionId(worldId)
             .asSequence()
             .filter { it.npcState.toInt() == 0 && it.userId != null }
             .forEach { general ->
@@ -143,7 +143,7 @@ class InheritanceService(
         val rawBreakdown = readStringAnyMap(user.meta["inheritPointBreakdown"])
         val pointBreakdown = rawBreakdown.mapValues { (it.value as? Number)?.toInt() ?: 0 }
 
-        val general = generalRepository.findByWorldIdAndUserId(worldId, user.id!!).firstOrNull { it.npcState.toInt() < 5 }
+        val general = officerRepository.findBySessionIdAndUserId(worldId, user.id!!).firstOrNull { it.npcState.toInt() < 5 }
         val turnResetCount = readResetCount(general?.meta?.get("inheritResetTurnTime"))
         val specialWarResetCount = readResetCount(general?.meta?.get("inheritResetSpecialWar"))
 
@@ -168,7 +168,7 @@ class InheritanceService(
             )
         }
 
-        val allGenerals = generalRepository.findByWorldId(worldId)
+        val allGenerals = officerRepository.findBySessionId(worldId)
         val availableTargetGeneral = allGenerals
             .filter { it.npcState < 2 && it.id != general?.id }
             .associate { it.id!! to it.name }
@@ -215,7 +215,7 @@ class InheritanceService(
 
     fun setInheritSpecial(worldId: Long, loginId: String, specialCode: String): InheritanceActionResult? {
         val user = appUserRepository.findByLoginId(loginId) ?: return null
-        val general = findOwnedGeneral(worldId, user) ?: return InheritanceActionResult(error = "장수를 찾을 수 없습니다")
+        val general = findOwnedOfficer(worldId, user) ?: return InheritanceActionResult(error = "장수를 찾을 수 없습니다")
         val world = findWorld(worldId) ?: return InheritanceActionResult(error = "월드를 찾을 수 없습니다")
         if (isWorldUnited(world)) return InheritanceActionResult(error = "이미 천하가 통일되었습니다.")
 
@@ -234,19 +234,19 @@ class InheritanceService(
         general.meta["inheritSpecificSpecialWar"] = specialCode
 
         addInheritLog(user, "전투특기 지정: ${availableSpecialWar[specialCode]?.title ?: specialCode}", -cost)
-        generalRepository.save(general)
+        officerRepository.save(general)
         appUserRepository.save(user)
         return InheritanceActionResult(remainingPoints = points - cost)
     }
 
-    fun setInheritCity(worldId: Long, loginId: String, cityId: Long): InheritanceActionResult? {
+    fun setInheritPlanet(worldId: Long, loginId: String, cityId: Long): InheritanceActionResult? {
         val user = appUserRepository.findByLoginId(loginId) ?: return null
         val points = (user.meta["inheritPoints"] as? Number)?.toInt() ?: 0
 
         val cost = inheritCityCost()
         if (points < cost) return InheritanceActionResult(error = "포인트 부족 (필요: $cost)")
 
-        val city = cityRepository.findById(cityId).orElse(null) ?: return InheritanceActionResult(error = "존재하지 않는 도시")
+        val city = planetRepository.findById(cityId).orElse(null) ?: return InheritanceActionResult(error = "존재하지 않는 도시")
 
         user.meta["inheritPoints"] = points - cost
         user.meta["inheritCity"] = cityId
@@ -258,7 +258,7 @@ class InheritanceService(
 
     fun resetTurn(worldId: Long, loginId: String): InheritanceActionResult? {
         val user = appUserRepository.findByLoginId(loginId) ?: return null
-        val general = findOwnedGeneral(worldId, user) ?: return InheritanceActionResult(error = "장수를 찾을 수 없습니다")
+        val general = findOwnedOfficer(worldId, user) ?: return InheritanceActionResult(error = "장수를 찾을 수 없습니다")
         val world = findWorld(worldId) ?: return InheritanceActionResult(error = "월드를 찾을 수 없습니다")
         if (isWorldUnited(world)) return InheritanceActionResult(error = "이미 천하가 통일되었습니다.")
 
@@ -273,14 +273,14 @@ class InheritanceService(
         general.meta["nextTurnTimeBase"] = turnBaseSeconds
 
         addInheritLog(user, "턴 시간 초기화 (${resetCount + 1}회차)", -cost)
-        generalRepository.save(general)
+        officerRepository.save(general)
         appUserRepository.save(user)
         return InheritanceActionResult(remainingPoints = points - cost)
     }
 
     fun buyRandomUnique(worldId: Long, loginId: String): InheritanceActionResult? {
         val user = appUserRepository.findByLoginId(loginId) ?: return null
-        val general = findOwnedGeneral(worldId, user) ?: return InheritanceActionResult(error = "장수를 찾을 수 없습니다")
+        val general = findOwnedOfficer(worldId, user) ?: return InheritanceActionResult(error = "장수를 찾을 수 없습니다")
         val world = findWorld(worldId) ?: return InheritanceActionResult(error = "월드를 찾을 수 없습니다")
         if (isWorldUnited(world)) return InheritanceActionResult(error = "이미 천하가 통일되었습니다.")
 
@@ -296,12 +296,12 @@ class InheritanceService(
         general.meta["inheritRandomUnique"] = OffsetDateTime.now().toString()
         addInheritLog(user, "랜덤 유니크 획득", -cost)
 
-        generalRepository.save(general)
+        officerRepository.save(general)
         appUserRepository.save(user)
         return InheritanceActionResult(remainingPoints = points - cost)
     }
 
-    fun refundRandomUniquePurchase(general: General): Boolean {
+    fun refundRandomUniquePurchase(officer: Officer): Boolean {
         val userId = general.userId ?: return false
         val user = appUserRepository.findById(userId).orElse(null) ?: return false
         val currentPoints = (user.meta["inheritPoints"] as? Number)?.toInt() ?: 0
@@ -314,7 +314,7 @@ class InheritanceService(
 
     fun resetSpecialWar(worldId: Long, loginId: String): InheritanceActionResult? {
         val user = appUserRepository.findByLoginId(loginId) ?: return null
-        val general = findOwnedGeneral(worldId, user) ?: return InheritanceActionResult(error = "장수를 찾을 수 없습니다")
+        val general = findOwnedOfficer(worldId, user) ?: return InheritanceActionResult(error = "장수를 찾을 수 없습니다")
         val world = findWorld(worldId) ?: return InheritanceActionResult(error = "월드를 찾을 수 없습니다")
         if (isWorldUnited(world)) return InheritanceActionResult(error = "이미 천하가 통일되었습니다.")
 
@@ -336,7 +336,7 @@ class InheritanceService(
         user.meta["inheritPoints"] = points - cost
         addInheritLog(user, "전투특기 초기화 (${resetCount + 1}회차)", -cost)
 
-        generalRepository.save(general)
+        officerRepository.save(general)
         appUserRepository.save(user)
         return InheritanceActionResult(remainingPoints = points - cost)
     }
@@ -354,7 +354,7 @@ class InheritanceService(
             return InheritanceActionResult(error = "이미 이번 시즌에 능력치를 초기화했습니다")
         }
 
-        val general = generalRepository.findByWorldIdAndUserId(worldId, user.id!!).firstOrNull { it.npcState.toInt() < 5 }
+        val general = officerRepository.findBySessionIdAndUserId(worldId, user.id!!).firstOrNull { it.npcState.toInt() < 5 }
             ?: return InheritanceActionResult(error = "장수를 찾을 수 없습니다")
 
         general.leadership = request.leadership.toShort()
@@ -371,7 +371,7 @@ class InheritanceService(
             general.charm = (general.charm + bonusStat[4]).toShort()
         }
 
-        generalRepository.save(general)
+        officerRepository.save(general)
 
         if (cost > 0) {
             user.meta["inheritPoints"] = points - cost
@@ -391,8 +391,8 @@ class InheritanceService(
         if (points < cost) return CheckOwnerResponse(found = false)
 
         val general = when {
-            request.destGeneralID != null -> generalRepository.findById(request.destGeneralID).orElse(null)
-            request.generalName != null -> generalRepository.findByNameAndWorldId(request.generalName, worldId)
+            request.destGeneralID != null -> officerRepository.findById(request.destGeneralID).orElse(null)
+            request.generalName != null -> officerRepository.findByNameAndSessionId(request.generalName, worldId)
             else -> null
         } ?: return CheckOwnerResponse(found = false)
 
@@ -452,7 +452,7 @@ class InheritanceService(
         return InheritanceActionResult(remainingPoints = points - request.bidAmount)
     }
 
-    fun accruePoints(general: General, key: String, amount: Int) {
+    fun accruePoints(officer: Officer, key: String, amount: Int) {
         if (general.npcState >= 2) return
         val userId = general.userId ?: return
         val user = appUserRepository.findById(userId).orElse(null) ?: return
@@ -477,15 +477,15 @@ class InheritanceService(
         appUserRepository.save(user)
     }
 
-    private fun findOwnedGeneral(worldId: Long, user: AppUser): General? {
-        return generalRepository.findByWorldIdAndUserId(worldId, user.id!!).firstOrNull { it.npcState.toInt() < 5 }
+    private fun findOwnedOfficer(worldId: Long, user: AppUser): Officer? {
+        return officerRepository.findBySessionIdAndUserId(worldId, user.id!!).firstOrNull { it.npcState.toInt() < 5 }
     }
 
-    private fun findWorld(worldId: Long): WorldState? {
-        return worldStateRepository.findById(worldId.toShort()).orElse(null)
+    private fun findWorld(worldId: Long): SessionState? {
+        return sessionStateRepository.findById(worldId.toShort()).orElse(null)
     }
 
-    private fun isWorldUnited(world: WorldState): Boolean {
+    private fun isWorldUnited(world: SessionState): Boolean {
         val unified = (world.config["isunited"] as? Number)?.toInt()
             ?: (world.config["isUnited"] as? Number)?.toInt()
             ?: 0
@@ -514,7 +514,7 @@ class InheritanceService(
         return current
     }
 
-    private fun rollResetTurnBaseSeconds(world: WorldState, userId: Long, general: General): Double {
+    private fun rollResetTurnBaseSeconds(world: SessionState, userId: Long, officer: Officer): Double {
         val hiddenSeed = (world.config["hiddenSeed"] as? String) ?: world.id.toString()
         val seedSource = general.meta["nextTurnTimeBase"] ?: general.turnTime.toString()
         val rng = DeterministicRng.create(hiddenSeed, "ResetTurnTime", userId, seedSource.toString())

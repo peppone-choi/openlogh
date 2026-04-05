@@ -2,7 +2,7 @@ package com.openlogh.service
 
 import com.openlogh.engine.EventService
 import com.openlogh.repository.AppUserRepository
-import com.openlogh.repository.WorldStateRepository
+import com.openlogh.repository.SessionStateRepository
 import org.slf4j.LoggerFactory
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.stereotype.Service
@@ -21,7 +21,7 @@ import org.springframework.transaction.annotation.Transactional
 @Service
 class AdminEventService(
     private val appUserRepository: AppUserRepository,
-    private val worldStateRepository: WorldStateRepository,
+    private val sessionStateRepository: SessionStateRepository,
 ) {
     private val log = LoggerFactory.getLogger(AdminEventService::class.java)
 
@@ -72,7 +72,7 @@ class AdminEventService(
         }
 
         // Resolve world
-        val worlds = worldStateRepository.findAll().sortedBy { it.id }
+        val worlds = sessionStateRepository.findAll().sortedBy { it.id }
         val world = if (worldId != null) {
             worlds.firstOrNull { it.id.toLong() == worldId }
                 ?: return RaiseEventResult(false, "월드를 찾을 수 없습니다.")

@@ -1,16 +1,16 @@
 package com.openlogh.service
 
 import com.openlogh.entity.AppUser
-import com.openlogh.entity.WorldState
+import com.openlogh.entity.SessionState
 import com.openlogh.repository.AppUserRepository
-import com.openlogh.repository.WorldStateRepository
+import com.openlogh.repository.SessionStateRepository
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.stereotype.Service
 
 @Service
 class AdminAuthorizationService(
     private val appUserRepository: AppUserRepository,
-    private val worldStateRepository: WorldStateRepository,
+    private val sessionStateRepository: SessionStateRepository,
 ) {
     private companion object {
         const val PERMISSION_ADMIN_PROFILES = "admin.profiles.manage"
@@ -30,7 +30,7 @@ class AdminAuthorizationService(
 
     fun resolveWorldIdOrThrow(loginId: String, requestedWorldId: Long?, permission: String): Long {
         val user = requireUser(loginId)
-        val worlds = worldStateRepository.findAll().sortedBy { it.id }
+        val worlds = sessionStateRepository.findAll().sortedBy { it.id }
         if (worlds.isEmpty()) {
             throw IllegalArgumentException("월드가 없습니다.")
         }
@@ -145,7 +145,7 @@ class AdminAuthorizationService(
         return containsPermission(globalPermissions, "openClose") || containsPermission(globalPermissions, "*")
     }
 
-    private fun hasWorldPermission(user: AppUser, world: WorldState, permission: String): Boolean {
+    private fun hasWorldPermission(user: AppUser, world: SessionState, permission: String): Boolean {
         if (isGlobalAdmin(user)) {
             return true
         }
