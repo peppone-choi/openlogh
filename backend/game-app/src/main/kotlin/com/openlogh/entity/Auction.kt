@@ -10,11 +10,11 @@ class Auction(
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long = 0,
 
-    @Column(name = "world_id", nullable = false)
-    var worldId: Long = 0,
+    @Column(name = "session_id", nullable = false)
+    var sessionId: Long = 0,
 
-    @Column(name = "seller_general_id", nullable = false)
-    var sellerGeneralId: Long = 0,
+    @Column(name = "seller_officer_id", nullable = false)
+    var sellerOfficerId: Long = 0,
 
     @Column(nullable = false)
     var type: String = "item",
@@ -40,11 +40,11 @@ class Auction(
     @Column(name = "current_price", nullable = false)
     var currentPrice: Int = 0,
 
-    @Column(name = "buyer_general_id")
-    var buyerGeneralId: Long? = null,
+    @Column(name = "buyer_officer_id")
+    var buyerOfficerId: Long? = null,
 
-    @Column(name = "host_general_id", nullable = false)
-    var hostGeneralId: Long = 0,
+    @Column(name = "host_officer_id", nullable = false)
+    var hostOfficerId: Long = 0,
 
     @Column(name = "host_name", nullable = false)
     var hostName: String = "",

@@ -12,14 +12,14 @@ class Diplomacy(
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long = 0,
 
-    @Column(name = "world_id", nullable = false)
-    var worldId: Long = 0,
+    @Column(name = "session_id", nullable = false)
+    var sessionId: Long = 0,
 
-    @Column(name = "src_nation_id", nullable = false)
-    var srcNationId: Long = 0,
+    @Column(name = "src_faction_id", nullable = false)
+    var srcFactionId: Long = 0,
 
-    @Column(name = "dest_nation_id", nullable = false)
-    var destNationId: Long = 0,
+    @Column(name = "dest_faction_id", nullable = false)
+    var destFactionId: Long = 0,
 
     @Column(name = "state_code", nullable = false)
     var stateCode: String = "",

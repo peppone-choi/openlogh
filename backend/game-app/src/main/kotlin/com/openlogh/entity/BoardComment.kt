@@ -10,14 +10,14 @@ class BoardComment(
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long = 0,
 
-    @Column(name = "world_id", nullable = false)
-    var worldId: Long = 0,
+    @Column(name = "session_id", nullable = false)
+    var sessionId: Long = 0,
 
     @Column(name = "board_id", nullable = false)
     var boardId: Long = 0,
 
-    @Column(name = "author_general_id", nullable = false)
-    var authorGeneralId: Long = 0,
+    @Column(name = "author_officer_id", nullable = false)
+    var authorOfficerId: Long = 0,
 
     @Column(nullable = false)
     var content: String = "",

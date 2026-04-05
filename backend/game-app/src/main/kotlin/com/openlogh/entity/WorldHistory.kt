@@ -12,8 +12,8 @@ class WorldHistory(
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long = 0,
 
-    @Column(name = "world_id", nullable = false)
-    var worldId: Long = 0,
+    @Column(name = "session_id", nullable = false)
+    var sessionId: Long = 0,
 
     @Column(nullable = false)
     var year: Short = 0,

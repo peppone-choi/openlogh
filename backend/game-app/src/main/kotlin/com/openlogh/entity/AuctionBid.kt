@@ -10,14 +10,14 @@ class AuctionBid(
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long = 0,
 
-    @Column(name = "world_id", nullable = false)
-    var worldId: Long = 0,
+    @Column(name = "session_id", nullable = false)
+    var sessionId: Long = 0,
 
     @Column(name = "auction_id", nullable = false)
     var auctionId: Long = 0,
 
-    @Column(name = "bidder_general_id", nullable = false)
-    var bidderGeneralId: Long = 0,
+    @Column(name = "bidder_officer_id", nullable = false)
+    var bidderOfficerId: Long = 0,
 
     @Column(nullable = false)
     var amount: Int = 0,

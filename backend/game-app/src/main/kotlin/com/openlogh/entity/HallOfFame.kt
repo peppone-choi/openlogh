@@ -25,8 +25,8 @@ class HallOfFame(
     @Column(nullable = false)
     var scenario: Int = 0,
 
-    @Column(name = "general_no", nullable = false)
-    var generalNo: Long = 0,
+    @Column(name = "officer_no", nullable = false)
+    var officerNo: Long = 0,
 
     @Column(nullable = false)
     var type: String = "",

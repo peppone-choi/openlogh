@@ -11,8 +11,8 @@ import org.hibernate.type.SqlTypes
 import java.time.OffsetDateTime
 
 @Entity
-@Table(name = "old_nation")
-class OldNation(
+@Table(name = "old_officer")
+class OldOfficer(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long = 0,
@@ -20,12 +20,20 @@ class OldNation(
     @Column(name = "server_id", nullable = false)
     var serverId: String = "",
 
+    @Column(name = "officer_no", nullable = false)
+    var officerNo: Long = 0,
+
+    var owner: String? = null,
+
     @Column(nullable = false)
-    var nation: Long = 0,
+    var name: String = "",
+
+    @Column(name = "last_yearmonth", nullable = false)
+    var lastYearMonth: Int = 0,
+
+    var turnTime: OffsetDateTime? = null,
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb", nullable = false)
     var data: MutableMap<String, Any> = mutableMapOf(),
-
-    var date: OffsetDateTime? = null,
 )

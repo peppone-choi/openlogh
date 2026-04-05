@@ -10,14 +10,14 @@ class Board(
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long = 0,
 
-    @Column(name = "world_id", nullable = false)
-    var worldId: Long = 0,
+    @Column(name = "session_id", nullable = false)
+    var sessionId: Long = 0,
 
-    @Column(name = "nation_id")
-    var nationId: Long? = null,
+    @Column(name = "faction_id")
+    var factionId: Long? = null,
 
-    @Column(name = "author_general_id", nullable = false)
-    var authorGeneralId: Long = 0,
+    @Column(name = "author_officer_id", nullable = false)
+    var authorOfficerId: Long = 0,
 
     @Column(nullable = false)
     var title: String = "",

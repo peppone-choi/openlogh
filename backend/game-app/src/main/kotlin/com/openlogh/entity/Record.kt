@@ -9,7 +9,7 @@ import java.time.OffsetDateTime
 @Table(
     name = "records",
     indexes = [
-        Index(name = "idx_records_world_type", columnList = "world_id,record_type"),
+        Index(name = "idx_records_session_type", columnList = "session_id,record_type"),
         Index(name = "idx_records_dest_type", columnList = "dest_id,record_type"),
         Index(name = "idx_records_created", columnList = "created_at"),
     ]
@@ -19,16 +19,16 @@ class Record(
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long = 0,
 
-    @Column(name = "world_id", nullable = false)
-    var worldId: Long = 0,
+    @Column(name = "session_id", nullable = false)
+    var sessionId: Long = 0,
 
     /**
      * Record type classification:
-     * - general_action: 개인 동향 (장수의 행동 로그)
-     * - general_record: 장수 기록 (개인 역사에 남는 중요 기록)
-     * - world_record: 장수 동향 전체 (모든 장수에게 공개되는 동향)
-     * - world_history: 중원 정세 (천하의 중요 사건)
-     * - nation_history: 아국 기록 (국가 소속 장수에게만 공개)
+     * - officer_action: 개인 동향 (장교의 행동 로그)
+     * - officer_record: 장교 기록 (개인 역사에 남는 중요 기록)
+     * - session_record: 장교 동향 전체 (모든 장교에게 공개되는 동향)
+     * - session_history: 은하 정세 (은하의 중요 사건)
+     * - faction_history: 진영 기록 (진영 소속 장교에게만 공개)
      * - battle_result: 전투 결과
      * - battle_detail: 전투 상세
      */
@@ -36,17 +36,17 @@ class Record(
     var recordType: String = "",
 
     /**
-     * Source general ID (actor who performed the action)
+     * Source officer ID (actor who performed the action)
      */
     @Column(name = "src_id")
     var srcId: Long? = null,
 
     /**
      * Destination ID (target entity):
-     * - general_action, general_record: generalId
-     * - nation_history: nationId
-     * - world_record, world_history: null
-     * - battle_result, battle_detail: generalId or null
+     * - officer_action, officer_record: officerId
+     * - faction_history: factionId
+     * - session_record, session_history: null
+     * - battle_result, battle_detail: officerId or null
      */
     @Column(name = "dest_id")
     var destId: Long? = null,

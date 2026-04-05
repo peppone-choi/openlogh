@@ -15,8 +15,8 @@ class GameHistory(
     @Column(name = "server_id")
     var serverId: String = "",
 
-    @Column(name = "winner_nation")
-    var winnerNation: Long? = null,
+    @Column(name = "winner_faction")
+    var winnerFaction: Long? = null,
 
     var date: OffsetDateTime? = null,
 

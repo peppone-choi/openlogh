@@ -7,19 +7,19 @@ import java.time.OffsetDateTime
 
 @Entity
 @Table(
-    name = "general_turn",
-    uniqueConstraints = [UniqueConstraint(columnNames = ["general_id", "turn_idx"])]
+    name = "officer_turn",
+    uniqueConstraints = [UniqueConstraint(columnNames = ["officer_id", "turn_idx"])]
 )
-class GeneralTurn(
+class OfficerTurn(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long = 0,
 
-    @Column(name = "world_id", nullable = false)
-    var worldId: Long = 0,
+    @Column(name = "session_id", nullable = false)
+    var sessionId: Long = 0,
 
-    @Column(name = "general_id", nullable = false)
-    var generalId: Long = 0,
+    @Column(name = "officer_id", nullable = false)
+    var officerId: Long = 0,
 
     @Column(name = "turn_idx", nullable = false)
     var turnIdx: Short = 0,

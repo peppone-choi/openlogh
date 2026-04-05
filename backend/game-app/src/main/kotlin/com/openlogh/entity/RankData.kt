@@ -12,11 +12,11 @@ class RankData(
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long = 0,
 
-    @Column(name = "world_id", nullable = false)
-    var worldId: Long = 0,
+    @Column(name = "session_id", nullable = false)
+    var sessionId: Long = 0,
 
-    @Column(name = "nation_id", nullable = false)
-    var nationId: Long = 0,
+    @Column(name = "faction_id", nullable = false)
+    var factionId: Long = 0,
 
     @Column(nullable = false)
     var category: String = "",
