@@ -119,16 +119,16 @@
   },
   "hotPaths": [
     {
+      "path": "backend",
+      "accessCount": 126,
+      "lastAccessed": 1775459771273,
+      "type": "directory"
+    },
+    {
       "path": "backend/game-app/src/main/kotlin/com/opensam/engine/TurnService.kt",
       "accessCount": 124,
       "lastAccessed": 1774344962607,
       "type": "file"
-    },
-    {
-      "path": "backend",
-      "accessCount": 98,
-      "lastAccessed": 1775390758959,
-      "type": "directory"
     },
     {
       "path": "backend/game-app/src/main/kotlin/com/opensam/engine/EconomyService.kt",
@@ -138,8 +138,8 @@
     },
     {
       "path": "backend/game-app/src/main/kotlin",
-      "accessCount": 30,
-      "lastAccessed": 1775390919920,
+      "accessCount": 33,
+      "lastAccessed": 1775452522485,
       "type": "directory"
     },
     {
