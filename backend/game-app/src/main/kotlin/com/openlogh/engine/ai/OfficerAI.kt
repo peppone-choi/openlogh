@@ -13,7 +13,7 @@ import com.openlogh.entity.Officer
 import com.openlogh.entity.Faction
 import com.openlogh.entity.SessionState
 import com.openlogh.model.ArmType
-import com.openlogh.model.CrewType
+
 import org.slf4j.LoggerFactory
 import com.openlogh.service.MapService
 import org.springframework.stereotype.Service
@@ -2054,6 +2054,7 @@ class OfficerAI(
         return if (goldAfterTrainCost >= trainCost * 6) "모병" else "징병"
     }
 
+    // TODO Phase 3: 삼국지 병종 선택 AI(pickCrewType) 제거됨. gin7 함종 선택 로직으로 대체 예정.
     private fun pickCrewType(
         general: Officer,
         generalType: Int,
@@ -2061,92 +2062,7 @@ class OfficerAI(
         nationCities: List<Planet>,
         nation: Faction?,
         world: SessionState,
-    ): Int {
-        val randUtil = (rng as? LiteHashDRBG)?.let { RandUtil(it) }
-
-        var armTypeCode = (general.meta["armType"] as? Number)?.toInt()
-        if (armTypeCode != null) {
-            if (generalType and GeneralType.STRATEGIST.flag == 0 && armTypeCode == ArmType.WIZARD.code) {
-                armTypeCode = null
-            } else if (
-                generalType and GeneralType.WARRIOR.flag == 0 &&
-                armTypeCode in setOf(ArmType.FOOTMAN.code, ArmType.ARCHER.code, ArmType.CAVALRY.code)
-            ) {
-                armTypeCode = null
-            }
-        }
-
-        if (armTypeCode == null) {
-            val fullStrength = general.command.toInt()
-            val fullIntel = general.intelligence.toInt()
-
-            val dex = mapOf(
-                ArmType.FOOTMAN.code to sqrt((general.dex1 + 500).toDouble()),
-                ArmType.ARCHER.code to sqrt((general.dex2 + 500).toDouble()),
-                ArmType.CAVALRY.code to sqrt((general.dex3 + 500).toDouble()),
-                ArmType.WIZARD.code to sqrt((general.dex4 + 500).toDouble()),
-                ArmType.SIEGE.code to sqrt((general.dex5 + 500).toDouble()),
-            )
-
-            val availableArmTypes = linkedMapOf<Int, Double>()
-            if (fullStrength > fullIntel * 0.9) {
-                availableArmTypes[ArmType.FOOTMAN.code] = dex.getValue(ArmType.FOOTMAN.code) * fullStrength
-                availableArmTypes[ArmType.ARCHER.code] = dex.getValue(ArmType.ARCHER.code) * fullStrength
-                availableArmTypes[ArmType.CAVALRY.code] = dex.getValue(ArmType.CAVALRY.code) * fullStrength
-            }
-            if (fullIntel > fullStrength * 0.9) {
-                availableArmTypes[ArmType.WIZARD.code] = dex.getValue(ArmType.WIZARD.code) * fullIntel * 3
-            }
-
-            armTypeCode = if (availableArmTypes.isEmpty()) {
-                if (fullStrength >= fullIntel) ArmType.FOOTMAN.code else ArmType.WIZARD.code
-            } else {
-                randUtil?.choiceUsingWeight(availableArmTypes)
-                    ?: choiceByWeightPairRaw(rng, availableArmTypes.map { it.key to it.value })
-                    ?: ArmType.FOOTMAN.code
-            }
-        }
-
-        val nationId = nation?.id ?: general.factionId
-        val ownedCities = nationCities.filter { it.factionId == nationId }
-        val ownCityNames = ownedCities.map { it.name }.toSet()
-        val ownRegionIds = ownedCities.map { it.region.toInt() }.toSet()
-        val mapName = (world.config["mapName"] as? String) ?: "che"
-        val regionNameToId = mapService.getRegions(mapName).entries.associate { (regionId, regionName) -> regionName to regionId }
-        val tech = nation?.techLevel?.toInt() ?: 0
-        val startYear = (world.config["startyear"] as? Number)?.toInt()
-            ?: (world.config["startYear"] as? Number)?.toInt()
-            ?: world.currentYear.toInt()
-        val relYear = maxOf(0, world.currentYear.toInt() - startYear)
-
-        val armType = ArmType.entries.firstOrNull { it.code == armTypeCode } ?: ArmType.FOOTMAN
-        val validTypes = linkedMapOf<Int, Double>()
-        for (crewType in CrewType.byArmType(armType)) {
-            if (crewType.isValidForNation(ownCityNames, ownRegionIds, relYear, tech, regionNameToId)) {
-                validTypes[crewType.code] = crewType.pickScore(tech)
-            }
-        }
-
-        val selectedType = if (validTypes.isNotEmpty()) {
-            randUtil?.choiceUsingWeight(validTypes)
-                ?: choiceByWeightPairRaw(rng, validTypes.map { it.key to it.value })
-                ?: (CrewType.byArmType(armType).firstOrNull()?.code ?: CrewType.FOOTMAN.code)
-        } else {
-            CrewType.byArmType(armType).firstOrNull()?.code ?: CrewType.FOOTMAN.code
-        }
-
-        val currentCrewType = CrewType.fromCode(general.shipClass.toInt())
-        if (currentCrewType != null && currentCrewType.isValidForNation(ownCityNames, ownRegionIds, relYear, tech, regionNameToId)) {
-            if (currentCrewType.reqTech >= 2000) {
-                return currentCrewType.code
-            }
-            if (currentCrewType.armType != armType && currentCrewType.reqTech >= 1000) {
-                return currentCrewType.code
-            }
-        }
-
-        return selectedType
-    }
+    ): Int = general.shipClass.toInt()
 
     // ──────────────────────────────────────────────────────────
     //  do전투준비: Combat preparation (train/morale)

@@ -20,7 +20,7 @@ import kotlin.math.hypot
 class TacticalCombatEngine {
 
     private val detectionEngine = DetectionEngine()
-    private val groundBattleEngine = GroundBattleEngine()
+    // TODO Phase 3: groundBattleEngine 제거됨 (삼국지 GroundBattleEngine 삭제). gin7 지상전 엔진으로 대체 예정.
     private val captureProcessor = PlanetCaptureProcessor()
 
     /**

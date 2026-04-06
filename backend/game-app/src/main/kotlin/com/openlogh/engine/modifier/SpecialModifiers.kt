@@ -1,18 +1,11 @@
 package com.openlogh.engine.modifier
 
-import com.openlogh.model.ArmType
-import com.openlogh.model.CrewType
 import kotlin.math.log2
 
 object SpecialModifiers {
 
-    private fun isRegionalOrCityCrewType(raw: String): Boolean {
-        val code = raw.toIntOrNull() ?: return false
-        if (code <= 0) return true
-        val crewType = CrewType.fromCode(code) ?: return false
-        if (crewType.armType == ArmType.CASTLE) return true
-        return crewType.code % 100 != 0
-    }
+    // TODO Phase 3: 삼국지 병종 상성(CrewType) 제거됨. gin7 함종 상성으로 대체 예정.
+    private fun isRegionalOrCityCrewType(raw: String): Boolean = false
 
     private val specials = mapOf<String, ActionModifier>(
         // === War Specials (22) ===
