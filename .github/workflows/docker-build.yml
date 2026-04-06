@@ -124,9 +124,9 @@ jobs:
             - name: Deploy to EC2
               uses: appleboy/ssh-action@v1
               with:
-                  host: ${{ secrets.EC2_HOST }}
-                  username: ubuntu
-                  key: ${{ secrets.EC2_SSH_KEY }}
+                  host: ${{ secrets.SSH_HOST }}
+                  username: ${{ secrets.SSH_USERNAME }}
+                  key: ${{ secrets.SSH_PRIVATE_KEY }}
                   script: |
                       cd ~/openlogh-deploy
                       docker compose pull
