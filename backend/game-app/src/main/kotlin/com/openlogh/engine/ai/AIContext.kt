@@ -16,4 +16,5 @@ data class AIContext(
     val rearCities: List<Planet>,
     val nationGenerals: List<Officer>,
     val mapAdjacency: Map<Long, List<Long>> = emptyMap(),
+    val personality: PersonalityTrait = PersonalityTrait.BALANCED,
 )

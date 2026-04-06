@@ -117,6 +117,8 @@ class OfficerAI(
             emptyMap()
         }
 
+        val personality = PersonalityTrait.fromString(general.personality)
+
         val ctx = AIContext(
             world = world,
             general = general,
@@ -131,6 +133,7 @@ class OfficerAI(
             rearCities = rearCities,
             nationGenerals = nationGenerals,
             mapAdjacency = mapAdjacency,
+            personality = personality,
         )
 
         val generalPolicy = if (nation != null) {
@@ -216,12 +219,13 @@ class OfficerAI(
         }
 
         logger.info(
-            "General {} ({}) decided: {} [diplo={}, type={}]",
+            "General {} ({}) decided: {} [diplo={}, type={}, personality={}]",
             general.id,
             general.name,
             action,
             diplomacyState,
             generalType,
+            personality,
         )
         return action
     }
@@ -590,10 +594,13 @@ class OfficerAI(
         rng: Random = Random(0),
         minNPCWarLeadership: Int = 40,
     ): Int {
+        val personality = PersonalityTrait.fromString(general.personality)
+        val weights = PersonalityWeights.forTrait(personality)
+
         var flags = 0
-        val l = general.leadership.toInt()
-        val s = general.command.toInt()
-        val i = general.intelligence.toInt()
+        val l = (general.leadership.toInt() * weights.leadership).toInt()
+        val s = (general.command.toInt() * weights.command).toInt()
+        val i = (general.intelligence.toInt() * weights.intelligence).toInt()
 
         if (s >= i) {
             flags = flags or GeneralType.WARRIOR.flag
@@ -611,6 +618,47 @@ class OfficerAI(
         }
         if (l >= minNPCWarLeadership) flags = flags or GeneralType.COMMANDER.flag
         return flags
+    }
+
+    // ──────────────────────────────────────────────────────────
+    //  Personality-based action bias
+    // ──────────────────────────────────────────────────────────
+
+    /**
+     * Returns a bias multiplier for action selection based on personality.
+     * Values > 1.0 increase probability, < 1.0 decrease it.
+     */
+    internal fun personalityBias(personality: PersonalityTrait, actionCategory: String): Double {
+        return when (personality) {
+            PersonalityTrait.AGGRESSIVE -> when (actionCategory) {
+                "출병", "전투준비", "징병", "전방워프" -> 1.6
+                "일반내정", "후방워프", "내정워프" -> 0.6
+                "소집해제" -> 0.4
+                else -> 1.0
+            }
+            PersonalityTrait.DEFENSIVE -> when (actionCategory) {
+                "전투준비", "일반내정", "긴급내정" -> 1.4
+                "출병" -> 0.6
+                "전방워프" -> 0.7
+                "후방워프" -> 1.3
+                else -> 1.0
+            }
+            PersonalityTrait.POLITICAL -> when (actionCategory) {
+                "일반내정", "내정워프", "NPC헌납" -> 1.5
+                "출병", "전투준비" -> 0.6
+                "징병" -> 0.7
+                else -> 1.0
+            }
+            PersonalityTrait.CAUTIOUS -> when (actionCategory) {
+                "전투준비", "일반내정" -> 1.3
+                "출병" -> 0.5
+                "전방워프" -> 0.6
+                "후방워프" -> 1.2
+                "소집해제" -> 1.3
+                else -> 1.0
+            }
+            PersonalityTrait.BALANCED -> 1.0
+        }
     }
 
     // ──────────────────────────────────────────────────────────
