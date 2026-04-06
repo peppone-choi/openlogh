@@ -6,6 +6,7 @@ import com.openlogh.command.CommandResult
 import com.openlogh.command.CommandRegistry
 import com.openlogh.command.constraint.ConstraintResult
 import com.openlogh.engine.modifier.ModifierService
+import com.openlogh.model.PositionCardRegistry
 import com.openlogh.engine.trigger.TriggerCaller
 import com.openlogh.engine.trigger.TriggerEnv
 import com.openlogh.engine.trigger.buildPreTurnTriggers
@@ -62,6 +63,14 @@ class RealtimeService(
             return CommandResult(success = false, logs = listOf("Command already in progress."))
         }
 
+        // Position card authority check
+        if (actionCode !in ALWAYS_ALLOWED_COMMANDS) {
+            val officerCards = general.getPositionCardEnums()
+            if (!PositionCardRegistry.canExecute(officerCards, actionCode)) {
+                return CommandResult(success = false, logs = listOf("해당 직무권한카드가 없습니다."))
+            }
+        }
+
         return scheduleCommand(general, world, actionCode, arg, isNationCommand = false)
     }
 
@@ -71,8 +80,10 @@ class RealtimeService(
             IllegalArgumentException("General not found: $generalId")
         }
 
-        if (general.officerLevel < 5) {
-            return CommandResult(success = false, logs = listOf("국가 명령 권한이 없습니다."))
+        // Card-based authority check with legacy officerLevel fallback
+        val officerCards = general.getPositionCardEnums()
+        if (actionCode !in ALWAYS_ALLOWED_COMMANDS && !PositionCardRegistry.canExecute(officerCards, actionCode) && general.officerLevel < 5) {
+            return CommandResult(success = false, logs = listOf("해당 직무권한카드가 없습니다."))
         }
 
         val world = sessionStateRepository.findById(general.sessionId.toShort()).orElseThrow {
@@ -355,6 +366,10 @@ class RealtimeService(
             success = true,
             logs = listOf("${command.actionName} 명령이 접수되었습니다. ${duration}초 후 실행됩니다."),
         )
+    }
+
+    companion object {
+        private val ALWAYS_ALLOWED_COMMANDS = setOf("휴식", "Nation휴식", "NPC능동", "CR건국", "CR맹훈련")
     }
 
     private fun firePreTurnTriggers(world: SessionState, general: com.openlogh.entity.Officer, nation: Faction?) {

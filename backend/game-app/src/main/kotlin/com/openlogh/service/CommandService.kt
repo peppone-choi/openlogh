@@ -10,6 +10,7 @@ import com.openlogh.dto.TurnEntry
 import com.openlogh.engine.RealtimeService
 import com.openlogh.entity.OfficerTurn
 import com.openlogh.entity.FactionTurn
+import com.openlogh.model.PositionCardRegistry
 import com.openlogh.repository.*
 import kotlinx.coroutines.runBlocking
 import org.springframework.stereotype.Service
@@ -112,8 +113,10 @@ class CommandService(
     @Transactional
     fun executeFactionCommand(generalId: Long, actionCode: String, arg: Map<String, Any>?): CommandResult? {
         val officer = officerRepository.findById(generalId).orElse(null) ?: return null
-        if (officer.officerLevel < 5) {
-            return CommandResult(success = false, logs = listOf("국가 명령 권한이 없습니다."))
+        // Card-based authority check with legacy officerLevel fallback
+        val officerCards = officer.getPositionCardEnums()
+        if (actionCode != "Nation휴식" && !PositionCardRegistry.canExecute(officerCards, actionCode) && officer.officerLevel < 5) {
+            return CommandResult(success = false, logs = listOf("해당 직무권한카드가 없습니다."))
         }
         val world = sessionStateRepository.findById(officer.sessionId.toShort()).orElse(null) ?: return null
 
@@ -152,6 +155,7 @@ class CommandService(
         val env = createCommandEnv(world)
 
         val allowedCommands = extractAllowedCommands(world.config, "availableGeneralCommand")
+        val officerCards = officer.getPositionCardEnums()
 
         val categories = linkedMapOf<String, MutableList<CommandTableEntry>>()
         val actionCodes = commandRegistry.getGeneralCommandNames().toList().sortedWith(
@@ -162,6 +166,9 @@ class CommandService(
             if (allowedCommands != null && actionCode !in allowedCommands) continue
             // NPC/CR commands are scenario-specific; hide when no whitelist is configured
             if (allowedCommands == null && (actionCode.startsWith("NPC") || actionCode.startsWith("CR"))) continue
+            // Position card authority filter
+            if (actionCode !in ALWAYS_ALLOWED_OFFICER_COMMANDS && !PositionCardRegistry.canExecute(officerCards, actionCode)) continue
+
             val command = commandRegistry.createOfficerCommand(actionCode, officer, env, null)
             command.city = planet
             command.nation = faction
@@ -182,6 +189,7 @@ class CommandService(
                     durationSeconds = command.getDuration(),
                     commandPointCost = command.getCommandPointCost(),
                     poolType = command.getCommandPoolType().name,
+                    commandGroup = PositionCardRegistry.getCommandGroup(actionCode).name,
                 )
             )
         }
@@ -192,7 +200,14 @@ class CommandService(
     fun getNationCommandTable(generalId: Long): Map<String, List<CommandTableEntry>>? {
         val officer = officerRepository.findById(generalId).orElse(null) ?: return null
         val world = sessionStateRepository.findById(officer.sessionId.toShort()).orElse(null) ?: return null
-        if (officer.officerLevel < 5) {
+
+        val officerCards = officer.getPositionCardEnums()
+        // Card-based check with legacy fallback: show faction commands if officer has any
+        // non-PERSONAL/CAPTAIN card granting faction-level groups, OR officerLevel >= 5 (legacy)
+        val hasFactionCardAccess = officerCards.any { card ->
+            card.commandGroups.any { it != com.openlogh.model.CommandGroup.PERSONAL && it != com.openlogh.model.CommandGroup.OPERATIONS }
+        }
+        if (!hasFactionCardAccess && officer.officerLevel < 5) {
             return linkedMapOf()
         }
 
@@ -209,6 +224,9 @@ class CommandService(
 
         for (actionCode in actionCodes) {
             if (allowedCommands != null && actionCode !in allowedCommands) continue
+            // Position card authority filter (with legacy officerLevel >= 5 fallback)
+            if (actionCode != "Nation휴식" && !PositionCardRegistry.canExecute(officerCards, actionCode) && officer.officerLevel < 5) continue
+
             val command = commandRegistry.createFactionCommand(actionCode, officer, env, null) ?: continue
             command.city = planet
             command.nation = faction
@@ -228,6 +246,7 @@ class CommandService(
                     durationSeconds = command.getDuration(),
                     commandPointCost = command.getCommandPointCost(),
                     poolType = command.getCommandPoolType().name,
+                    commandGroup = PositionCardRegistry.getCommandGroup(actionCode).name,
                 )
             )
         }
@@ -542,6 +561,10 @@ class CommandService(
         "기타" -> 7
         "연구" -> 8
         else -> 99
+    }
+
+    companion object {
+        private val ALWAYS_ALLOWED_OFFICER_COMMANDS = setOf("휴식", "NPC능동", "CR건국", "CR맹훈련")
     }
 
     @Suppress("UNCHECKED_CAST")

@@ -25,6 +25,8 @@ data class CommandTableEntry(
     val commandPointCost: Int = 1,
     /** "PCP" or "MCP" - indicates which CP pool this command draws from. */
     val poolType: String = "PCP",
+    /** Command group from PositionCardRegistry (e.g. "PERSONAL", "COMMAND", "LOGISTICS"). */
+    val commandGroup: String = "PERSONAL",
 )
 
 data class RepeatRequest(val count: Int)
