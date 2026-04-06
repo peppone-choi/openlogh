@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: milestone
 status: verifying
-stopped_at: Completed 04-economy-system/04-03-PLAN.md
-last_updated: "2026-04-06T16:40:11.511Z"
+stopped_at: Completed 04-01-PLAN.md
+last_updated: "2026-04-06T17:27:53.969Z"
 last_activity: 2026-04-06
 progress:
   total_phases: 10
   completed_phases: 7
   total_plans: 48
-  completed_plans: 40
+  completed_plans: 42
   percent: 77
 ---
 
@@ -68,6 +68,7 @@ Progress: [████████░░] 77%
 | Phase 03-tactical-battle-engine P04 | 35 | 2 tasks | 8 files |
 | Phase 03-tactical-battle-engine P05 | 35 | 2 tasks | 5 files |
 | Phase 04-economy-system P03 | 35 | 2 tasks | 4 files |
+| Phase 04 P01 | 180 | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -111,6 +112,8 @@ Progress: [████████░░] 77%
 - [Phase 03-tactical-battle-engine]: getMissileSystem() exposed on TacticalBattleEngine for SORTIE command in service layer
 - [Phase 04-economy-system]: TransferRequest/TransferResult defined in WarehouseService.kt alongside AllocationResult for locality
 - [Phase 04-economy-system]: Overflow on transfer uses coerceAtMost (no exception) consistent with existing allocate() pattern
+- [Phase 04]: Tax collection on months 1,4,7,10 only (90-day gin7 cycle)
+- [Phase 04]: supplyState=0 planets excluded from tax and resource growth
 
 ### Pending Todos
 
@@ -124,6 +127,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-06T16:40:11.499Z
-Stopped at: Completed 04-economy-system/04-03-PLAN.md
+Last session: 2026-04-06T17:27:53.958Z
+Stopped at: Completed 04-01-PLAN.md
 Resume file: None

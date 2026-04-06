@@ -87,9 +87,9 @@ Plans:
 **Plans**: 5 plans
 
 Plans:
-- [ ] 04-01-PLAN.md — Gin7EconomyService (세율 징수 + 행성자원 성장) + TickEngine wiring
+- [x] 04-01-PLAN.md — Gin7EconomyService (세율 징수 + 행성자원 성장) + TickEngine wiring
 - [ ] 04-02-PLAN.md — ShipyardProductionService gin7 확장 + TickEngine 주기적 호출
-- [ ] 04-03-PLAN.md — 행성↔부대창고 transfer/return API (WarehouseService + WarehouseController)
+- [x] 04-03-PLAN.md — 행성↔부대창고 transfer/return API (WarehouseService + WarehouseController)
 - [ ] 04-04-PLAN.md — 페잔 차관 엔딩 트리거 (FezzanEndingService) + 함대 출격비용 (FleetSortieCostService)
 - [ ] 04-05-PLAN.md — 경제 시스템 통합 테스트 (ECON-01~06 전체 검증)
 
@@ -137,7 +137,7 @@ Plans:
 | 1. 레거시 제거 + 함종 유닛 기반 | 8/8 | Complete   | 2026-04-06 |
 | 2. gin7 81종 커맨드 시스템 | 6/7 | In Progress|  |
 | 3. 실시간 전술전 엔진 | 2/5 | In Progress|  |
-| 4. 경제 시스템 | 0/5 | Planned    |  |
+| 4. 경제 시스템 | 2/5 | In Progress|  |
 | 5. AI 시스템 | 0/TBD | Not started | - |
 | 6. 프론트엔드 통합 | 0/TBD | Not started | - |
 | 7. 시나리오 데이터 + 밸런싱 | 0/TBD | Not started | - |

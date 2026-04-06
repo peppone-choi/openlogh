@@ -52,9 +52,9 @@
 
 ### 경제 시스템 (ECON)
 
-- [ ] **ECON-01**: 행성 자원 시스템 (인구/생산/교역/치안/지지도/궤도방어/요새방어)
+- [x] **ECON-01**: 행성 자원 시스템 (인구/생산/교역/치안/지지도/궤도방어/요새방어)
 - [ ] **ECON-02**: 조병창 자동생산 (행성별 자동생산 품목, 지배권 이전까지 계속)
-- [ ] **ECON-03**: 세율/납입률 시스템 (행성별 세수→진영 자금, 90일 주기 징수)
+- [x] **ECON-03**: 세율/납입률 시스템 (행성별 세수→진영 자금, 90일 주기 징수)
 - [x] **ECON-04**: 행성/부대 창고 시스템 (행성창고↔부대창고 간 이동)
 - [ ] **ECON-05**: 페잔 차관 시스템 (일시불 차관, 이자 10%/분기, 미상환 시 페잔 엔딩)
 - [ ] **ECON-06**: 함대 출격 비용 (출격 중 함대 수 비례 자금 소모, 운영력 절감)
@@ -147,9 +147,9 @@
 | BATTLE-10 | Phase 3 | Pending |
 | BATTLE-11 | Phase 3 | Complete |
 | BATTLE-12 | Phase 3 | Complete |
-| ECON-01 | Phase 4 | Pending |
+| ECON-01 | Phase 4 | Complete |
 | ECON-02 | Phase 4 | Pending |
-| ECON-03 | Phase 4 | Pending |
+| ECON-03 | Phase 4 | Complete |
 | ECON-04 | Phase 4 | Complete |
 | ECON-05 | Phase 4 | Pending |
 | ECON-06 | Phase 4 | Pending |
