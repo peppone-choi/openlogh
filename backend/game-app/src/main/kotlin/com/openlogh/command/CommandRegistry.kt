@@ -81,6 +81,11 @@ class CommandRegistry {
         registerOfficerCommand("내정특기초기화") { g, e, a -> 내정특기초기화(g, e, a) }
         registerOfficerCommand("전투특기초기화") { g, e, a -> 전투특기초기화(g, e, a) }
 
+        // Strategic Operations (3)
+        registerOfficerCommand("작전수립") { g, e, a -> 작전수립(g, e, a) }
+        registerOfficerCommand("워프항행") { g, e, a -> 워프항행(g, e, a) }
+        registerOfficerCommand("장거리워프") { g, e, a -> 장거리워프(g, e, a) }
+
         // NPC/CR Special (3)
         registerOfficerCommand("NPC능동") { g, e, a -> NPC능동(g, e, a) }
         registerOfficerCommand("CR건국") { g, e, a -> CR건국(g, e, a) }
@@ -139,6 +144,9 @@ class CommandRegistry {
         registerFactionCommand("선양요구") { g, e, a -> che_선양요구(g, e, a) }
         registerFactionCommand("신속") { g, e, a -> che_신속(g, e, a) }
         registerFactionCommand("독립선언") { g, e, a -> che_독립선언(g, e, a) }
+
+        // Strategic Operations (1)
+        registerFactionCommand("작전지시") { g, e, a -> 작전지시(g, e, a) }
 
         // Special
         registerFactionCommand("무작위수도이전") { g, e, a -> che_무작위수도이전(g, e, a) }

@@ -30,18 +30,19 @@ object PositionCardRegistry {
         // Nation rest - always allowed (PERSONAL)
         put("Nation휴식", CommandGroup.PERSONAL)
 
-        // === OPERATIONS group (5) ===
+        // === OPERATIONS group (8) ===
         // Fleet/unit tactical operations via CAPTAIN card
-        for (code in listOf("출병", "집합", "전투태세", "요격", "순찰")) {
+        for (code in listOf("출병", "집합", "전투태세", "요격", "순찰", "작전수립", "워프항행", "장거리워프")) {
             put(code, CommandGroup.OPERATIONS)
         }
 
-        // === COMMAND group (12) ===
+        // === COMMAND group (13) ===
         // Military strategy, rebellion, strategic maneuvers
         for (code in listOf(
             "모반시도", "거병", "선양", "해산",
             "급습", "수몰", "허보", "초토화",
             "필사즉생", "이호경식", "피장파장", "의병모집",
+            "작전지시",
         )) { put(code, CommandGroup.COMMAND) }
 
         // === LOGISTICS group (19) ===

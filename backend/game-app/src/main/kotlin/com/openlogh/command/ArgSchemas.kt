@@ -183,6 +183,31 @@ object ArgSchemas {
             Field("term", required = false, defaultValue = 12, parser = ::parseInt),
         )
     )
+
+    val operationPlan = ArgSchema(
+        listOf(
+            Field(
+                "targetStarId",
+                aliases = listOf("destCityId", "destCityID"),
+                required = true,
+                parser = ::parseLong,
+            ),
+            Field("operationType", required = false, defaultValue = "occupy", parser = ::parseString),
+        )
+    )
+
+    val operationDirective = ArgSchema(
+        listOf(
+            Field(
+                "targetStarId",
+                aliases = listOf("destCityId", "destCityID"),
+                required = true,
+                parser = ::parseLong,
+            ),
+            Field("operationType", required = false, defaultValue = "occupy", parser = ::parseString),
+            Field("directive", required = false, defaultValue = "", parser = ::parseString),
+        )
+    )
 }
 
 val COMMAND_SCHEMAS: Map<String, ArgSchema> = mapOf(
@@ -304,4 +329,10 @@ val COMMAND_SCHEMAS: Map<String, ArgSchema> = mapOf(
     "무작위수도이전" to ArgSchemas.none,
     "부대탈퇴지시" to ArgSchemas.destOfficer,
     "인구이동" to ArgSchemas.destPlanet,
+
+    // Strategic commands (Phase 9)
+    "작전수립" to ArgSchemas.operationPlan,
+    "워프항행" to ArgSchemas.destPlanet,
+    "장거리워프" to ArgSchemas.destPlanet,
+    "작전지시" to ArgSchemas.operationDirective,
 )
