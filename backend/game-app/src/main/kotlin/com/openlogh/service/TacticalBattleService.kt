@@ -192,6 +192,22 @@ class TacticalBattleService(
     }
 
     /**
+     * Set a specific attack target for a unit.
+     * gin7 rule: 플레이어가 공격 대상 함대를 지정하면, 지정 대상이 살아있는 한 우선 공격.
+     */
+    fun setAttackTarget(battleId: Long, officerId: Long, targetFleetId: Long) {
+        val state = activeBattles[battleId] ?: throw IllegalStateException("Battle $battleId not active")
+        val unit = state.units.find { it.officerId == officerId && it.isAlive }
+            ?: throw IllegalArgumentException("Officer $officerId not found in battle $battleId")
+
+        unit.targetFleetId = targetFleetId
+        unit.commandRange = 0.0
+        unit.ticksSinceLastOrder = 0
+
+        log.debug("Officer {} set attack target fleet {} in battle {}", officerId, targetFleetId, battleId)
+    }
+
+    /**
      * Initiate retreat for a unit. Requires WARP energy >= 50%.
      */
     fun retreat(battleId: Long, officerId: Long) {
