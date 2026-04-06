@@ -2,6 +2,10 @@ package com.openlogh.engine
 
 import com.openlogh.entity.SessionState
 import com.openlogh.repository.SessionStateRepository
+import com.openlogh.service.AlliancePoliticsService
+import com.openlogh.service.EmpirePoliticsService
+import com.openlogh.service.FezzanEndingService
+import com.openlogh.service.FezzanService
 import com.openlogh.service.GameEventService
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -21,6 +25,11 @@ class TickEngine(
     private val realtimeService: RealtimeService,
     private val sessionStateRepository: SessionStateRepository,
     private val gameEventService: GameEventService,
+    private val empirePoliticsService: EmpirePoliticsService,
+    private val alliancePoliticsService: AlliancePoliticsService,
+    private val fezzanService: FezzanService,
+    private val fezzanAiService: FezzanAiService,
+    private val fezzanEndingService: FezzanEndingService,
 ) {
     private val logger = LoggerFactory.getLogger(TickEngine::class.java)
 
@@ -48,12 +57,49 @@ class TickEngine(
             runMonthlyPipeline(world)
         }
 
-        // 5. Persist state
+        // 5. Political processing
+        processPolitics(world)
+
+        // 6. Persist state
         sessionStateRepository.save(world)
 
-        // 6. Broadcast tick state to clients every TICK_BROADCAST_INTERVAL ticks
+        // 7. Broadcast tick state to clients every TICK_BROADCAST_INTERVAL ticks
         if (world.tickCount % GameTimeConstants.TICK_BROADCAST_INTERVAL == 0L) {
             gameEventService.broadcastTickState(world)
+        }
+    }
+
+    /**
+     * Process faction politics: coups, elections, loans, Fezzan AI.
+     * Called every tick but most subsystems run on intervals.
+     */
+    private fun processPolitics(world: SessionState) {
+        val sessionId = world.id.toLong()
+        try {
+            // Empire: check active coups every 10 ticks
+            if (world.tickCount % 10 == 0L) {
+                empirePoliticsService.processCoupTick(sessionId)
+            }
+
+            // Alliance: check election deadlines every 10 ticks
+            if (world.tickCount % 10 == 0L) {
+                alliancePoliticsService.processElectionTick(sessionId)
+            }
+
+            // Fezzan: process loan interest/defaults every 100 ticks
+            if (world.tickCount % 100 == 0L) {
+                fezzanService.processLoanTick(sessionId)
+            }
+
+            // Fezzan AI: evaluate and act
+            fezzanAiService.processFezzanTick(sessionId, world.tickCount)
+
+            // Fezzan ending check every 100 ticks
+            if (world.tickCount % 100 == 0L) {
+                fezzanEndingService.checkAndTrigger(sessionId)
+            }
+        } catch (e: Exception) {
+            logger.warn("Political processing error for session {}: {}", sessionId, e.message)
         }
     }
 
