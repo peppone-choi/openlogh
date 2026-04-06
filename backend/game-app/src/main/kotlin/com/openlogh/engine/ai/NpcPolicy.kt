@@ -1,7 +1,6 @@
 package com.openlogh.engine.ai
 
 import com.openlogh.entity.Faction
-import com.openlogh.model.CrewType
 import kotlin.math.floor
 import kotlin.math.roundToInt
 
@@ -152,12 +151,14 @@ class NpcNationPolicy(
 
     private fun calcCrewCostWithTech(nation: Faction, maxCrew: Int): Int {
         val techCost = 1.0 + floor(nation.techLevel.toDouble() / 1000.0) * 0.15
-        return (defaultCrewType.cost * techCost * maxCrew / 100.0).roundToInt()
+        // Legacy parity: defaultShipFundsCost replaces CrewType.FOOTMAN.cost (삼국지 army cost removed)
+        return (defaultShipFundsCost * techCost * maxCrew / 100.0).roundToInt()
     }
 
     private fun calcCrewRiceWithTech(nation: Faction, maxCrew: Int): Int {
         val techCost = 1.0 + floor(nation.techLevel.toDouble() / 1000.0) * 0.15
-        return (defaultCrewType.riceCost * techCost * maxCrew / 100.0).roundToInt()
+        // Legacy parity: defaultShipSuppliesCost replaces CrewType.FOOTMAN.riceCost (삼국지 army cost removed)
+        return (defaultShipSuppliesCost * techCost * maxCrew / 100.0).roundToInt()
     }
 
     private fun roundToHundreds(value: Int): Int {
@@ -199,7 +200,10 @@ class NpcNationPolicy(
         private const val defaultStatMax = 70
         private const val defaultStatNpcMax = 60
         private const val defaultDevelCost = 100
-        private val defaultCrewType = CrewType.FOOTMAN
+        // Legacy parity: was CrewType.FOOTMAN.cost/riceCost (삼국지 병종 제거 → gin7 함선 기준 비용)
+        // Battleship unit: ~9 funds + 9 supplies per 100 ships (same ratio as FOOTMAN for NPC estimation)
+        private const val defaultShipFundsCost = 9
+        private const val defaultShipSuppliesCost = 9
     }
 
     override fun equals(other: Any?): Boolean {

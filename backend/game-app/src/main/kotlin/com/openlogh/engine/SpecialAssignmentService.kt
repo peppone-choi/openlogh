@@ -24,21 +24,21 @@ class SpecialAssignmentService {
         private const val STAT_NOT_STRENGTH = 0x40000
         private const val STAT_NOT_INTEL = 0x80000
 
-        // Army type bitmask constants (for dexterity-based selection)
-        private const val ARMY_FOOTMAN = 0x100
-        private const val ARMY_ARCHER = 0x200
-        private const val ARMY_CAVALRY = 0x400
-        private const val ARMY_WIZARD = 0x800
-        private const val ARMY_SIEGE = 0x1000
+        // Ship class bitmask constants (gin7 함종 기반 — 삼국지 병종 제거)
+        private const val SHIP_BATTLESHIP = 0x100
+        private const val SHIP_CRUISER = 0x200
+        private const val SHIP_DESTROYER = 0x400
+        private const val SHIP_CARRIER = 0x800
+        private const val SHIP_SIEGE = 0x1000  // 요새급 (이제르론/가이에스부르크)
         private const val REQ_DEXTERITY = 0x4000
 
-        // Dex meta key → army bitmask (dex0=보병, dex1=궁병, dex2=기병, dex3=극병, dex4=차병)
+        // Dex meta key → ship class bitmask (dex0=전함, dex1=순양함, dex2=구축함, dex3=항공모함, dex4=요새급)
         private val DEX_ARMY_MAP = listOf(
-            "dex0" to ARMY_FOOTMAN,
-            "dex1" to ARMY_ARCHER,
-            "dex2" to ARMY_CAVALRY,
-            "dex3" to ARMY_WIZARD,
-            "dex4" to ARMY_SIEGE,
+            "dex0" to SHIP_BATTLESHIP,
+            "dex1" to SHIP_CRUISER,
+            "dex2" to SHIP_DESTROYER,
+            "dex3" to SHIP_CARRIER,
+            "dex4" to SHIP_SIEGE,
         )
 
         // Domestic specials: code → (name, required bitmask conditions, weight)
@@ -58,23 +58,24 @@ class SpecialAssignmentService {
             SpecialCandidate("모병_특기", listOf(STAT_STRENGTH, STAT_LEADERSHIP), 8),
         )
 
-        // War specials: dexterity-gated entries use compound bitmasks with REQ_DEXTERITY + ARMY_*
+        // War specials: dexterity-gated entries use compound bitmasks with REQ_DEXTERITY + SHIP_*
+        // Legacy parity: 기병/보병/궁병 삼국지 병종 특기 → gin7 함종 기반 전술 특기로 교체
         private val WAR_SPECIALS = listOf(
-            // Dexterity-gated specials (require crew-type dex match)
-            SpecialCandidate("기병", listOf(
-                STAT_LEADERSHIP or REQ_DEXTERITY or ARMY_CAVALRY or STAT_NOT_INTEL,
-                STAT_STRENGTH or REQ_DEXTERITY or ARMY_CAVALRY
+            // Dexterity-gated specials (require ship-class dex match)
+            SpecialCandidate("전함전술", listOf(
+                STAT_LEADERSHIP or REQ_DEXTERITY or SHIP_BATTLESHIP or STAT_NOT_INTEL,
+                STAT_STRENGTH or REQ_DEXTERITY or SHIP_BATTLESHIP
             ), 10),
-            SpecialCandidate("보병", listOf(
-                STAT_LEADERSHIP or REQ_DEXTERITY or ARMY_FOOTMAN or STAT_NOT_INTEL,
-                STAT_STRENGTH or REQ_DEXTERITY or ARMY_FOOTMAN
+            SpecialCandidate("순양전술", listOf(
+                STAT_LEADERSHIP or REQ_DEXTERITY or SHIP_CRUISER or STAT_NOT_INTEL,
+                STAT_STRENGTH or REQ_DEXTERITY or SHIP_CRUISER
             ), 10),
-            SpecialCandidate("궁병", listOf(
-                STAT_LEADERSHIP or REQ_DEXTERITY or ARMY_ARCHER or STAT_NOT_INTEL,
-                STAT_STRENGTH or REQ_DEXTERITY or ARMY_ARCHER
+            SpecialCandidate("구축전술", listOf(
+                STAT_LEADERSHIP or REQ_DEXTERITY or SHIP_DESTROYER or STAT_NOT_INTEL,
+                STAT_STRENGTH or REQ_DEXTERITY or SHIP_DESTROYER
             ), 8),
-            SpecialCandidate("공성", listOf(
-                STAT_LEADERSHIP or REQ_DEXTERITY or ARMY_SIEGE
+            SpecialCandidate("요새전술", listOf(
+                STAT_LEADERSHIP or REQ_DEXTERITY or SHIP_SIEGE
             ), 5),
             // Stat-only specials
             SpecialCandidate("필살", listOf(STAT_STRENGTH), 5),
