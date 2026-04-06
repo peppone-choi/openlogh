@@ -33,6 +33,7 @@ class TickEngine(
     private val fezzanAiService: FezzanAiService,
     private val fezzanEndingService: FezzanEndingService,
     private val tacticalBattleService: TacticalBattleService,
+    private val gin7EconomyService: Gin7EconomyService,
 ) {
     private val logger = LoggerFactory.getLogger(TickEngine::class.java)
 
@@ -123,17 +124,21 @@ class TickEngine(
     }
 
     /**
-     * Run the monthly pipeline (economy, diplomacy, maintenance, etc.).
-     *
-     * TODO: Wire to actual TurnPipeline steps when turn-based command execution
-     *       is fully decoupled from monthly processing. Currently logs and broadcasts
-     *       the month advance event.
+     * Run the monthly pipeline: gin7 경제 파이프라인 (세율/납입 + 행성자원 성장) + broadcast.
      */
     private fun runMonthlyPipeline(world: SessionState) {
         logger.info(
             "Monthly pipeline triggered for world {} at year={} month={}",
             world.id, world.currentYear, world.currentMonth
         )
+
+        // Gin7 경제 파이프라인: 세율/납입 + 행성자원 성장
+        try {
+            gin7EconomyService.processMonthly(world)
+        } catch (e: Exception) {
+            logger.warn("Economy pipeline error for world {}: {}", world.id, e.message)
+        }
+
         gameEventService.broadcastTurnAdvance(
             world.id.toLong(),
             world.currentYear.toInt(),
