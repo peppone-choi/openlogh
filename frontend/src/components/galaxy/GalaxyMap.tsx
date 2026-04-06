@@ -156,7 +156,7 @@ export function GalaxyMap({ sessionId }: GalaxyMapProps) {
 
     if (isLoading) {
         return (
-            <div className="flex h-96 items-center justify-center text-gray-400">
+            <div className="flex h-full min-h-[400px] items-center justify-center text-gray-400">
                 은하 지도를 불러오는 중...
             </div>
         );
@@ -164,7 +164,7 @@ export function GalaxyMap({ sessionId }: GalaxyMapProps) {
 
     if (error) {
         return (
-            <div className="flex h-96 items-center justify-center text-red-400">
+            <div className="flex h-full min-h-[400px] items-center justify-center text-red-400">
                 오류: {error}
             </div>
         );
@@ -172,7 +172,7 @@ export function GalaxyMap({ sessionId }: GalaxyMapProps) {
 
     if (systems.length === 0) {
         return (
-            <div className="flex h-96 items-center justify-center text-gray-500">
+            <div className="flex h-full min-h-[400px] items-center justify-center text-gray-500">
                 표시할 항성계가 없습니다.
             </div>
         );

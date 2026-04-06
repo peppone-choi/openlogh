@@ -15,9 +15,9 @@ export default function GalaxyPage() {
     }
 
     return (
-        <div className="flex flex-col h-[calc(100vh-8rem)]">
-            <h1 className="text-lg font-bold px-2 py-1">은하 지도</h1>
-            <div className="flex-1 min-h-0">
+        <div className="flex flex-col h-[calc(100vh-7rem)] lg:h-[calc(100vh-5rem)]">
+            <h1 className="text-lg font-bold px-2 py-1 shrink-0">은하 지도</h1>
+            <div className="flex-1 min-h-0 w-full">
                 <GalaxyMap sessionId={currentWorld.id} />
             </div>
         </div>
