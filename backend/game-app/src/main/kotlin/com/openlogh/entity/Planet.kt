@@ -87,6 +87,24 @@ class Planet(
     @Column(nullable = false)
     var term: Short = 0,
 
+    @Column(name = "star_system_id")
+    var starSystemId: Long? = null,
+
+    @Column(name = "fortress_type", nullable = false)
+    var fortressType: String = "NONE",
+
+    @Column(name = "fortress_gun_power", nullable = false)
+    var fortressGunPower: Int = 0,
+
+    @Column(name = "fortress_gun_range", nullable = false)
+    var fortressGunRange: Int = 0,
+
+    @Column(name = "fortress_gun_cooldown", nullable = false)
+    var fortressGunCooldown: Int = 0,
+
+    @Column(name = "garrison_capacity", nullable = false)
+    var garrisonCapacity: Int = 0,
+
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb", nullable = false)
     var conflict: MutableMap<String, Any> = mutableMapOf(),
