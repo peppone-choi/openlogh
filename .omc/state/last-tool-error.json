@@ -1,7 +1,7 @@
 {
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"git commit -m \\\"$(cat <<'EOF'\\nrefactor: 삼국지 잔여 한국어 용어를 LOGH 세계관 용어로 전면 교체\\n\\n- 장수→장교, 도시→행성, 국가→진영, 부대→함대\\n- 무력→지휘, 지력→정보, 매력→운영\\n- 병력→함선, 병종→함종, 징병→징집\\n- 농업→생산, 상업→교역, 민심→지지도, 성벽→요새, 국력→...",
-  "error": "Exit code 1\nOn branch main\nYour branch is ahead of 'origin/main' by 1 commit.\n  (use \"git push\" to publish your local commits)\n\nChanges not staged for commit:\n  (use \"git add <file>...\" to update what will be committed)\n  (use \"git restore <file>...\" to discard changes in working directory)\n\tmodified:   .bkit/audit/2026-04-06.jsonl\n\tmodified:   .bkit/state/pdca-status.json\n\tmodified:   .omc/state/hud-stdin-cache.json\n\tmodified:   .omc/state/idle-notif-cooldown.json\n\tmodified:   .omc/state/last-t...",
-  "timestamp": "2026-04-06T10:52:06.585Z",
+  "tool_name": "Read",
+  "tool_input_preview": "{\"file_path\":\"/Users/apple/Desktop/개인프로젝트/openlogh/frontend/src/components/game/command-panel.tsx\"}",
+  "error": "File content (11486 tokens) exceeds maximum allowed tokens (10000). Use offset and limit parameters to read specific portions of the file, or search for specific content instead of reading the whole file.",
+  "timestamp": "2026-04-06T11:23:02.477Z",
   "retry_count": 1
 }

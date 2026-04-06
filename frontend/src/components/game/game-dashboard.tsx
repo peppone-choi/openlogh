@@ -39,10 +39,10 @@ export function GameDashboard() {
     const [mobileTab, setMobileTab] = useState<'map' | 'commands' | 'status' | 'world'>('map');
 
     const mobileTabs = [
-        { key: 'map', label: 'Galaxy', icon: MapIcon },
-        { key: 'commands', label: 'Commands', icon: Swords },
-        { key: 'status', label: 'Status', icon: User },
-        { key: 'world', label: 'Intel', icon: ScrollText },
+        { key: 'map', label: '은하맵', icon: MapIcon },
+        { key: 'commands', label: '커맨드', icon: Swords },
+        { key: 'status', label: '상태', icon: User },
+        { key: 'world', label: '정보', icon: ScrollText },
     ] as const;
 
     const isTabActive = (tab: string) => mobileTab === tab;
@@ -69,7 +69,7 @@ export function GameDashboard() {
                     const prevVoteState = localStorage.getItem('openlogh:lastVoteState');
                     const curVoteId = String(data.global.lastVote.id ?? '');
                     if (prevVoteState !== curVoteId && curVoteId) {
-                        toast.info('A new survey is in progress!', { duration: 5000 });
+                        toast.info('새로운 설문이 진행 중입니다!', { duration: 5000 });
                     }
                     if (curVoteId) localStorage.setItem('openlogh:lastVoteState', curVoteId);
                 } catch {
@@ -144,7 +144,7 @@ export function GameDashboard() {
         return { user, npc };
     }, [frontInfo?.global.genCount]);
 
-    if (!currentWorld) return <LoadingState message="Loading session..." />;
+    if (!currentWorld) return <LoadingState message="세션 로딩 중..." />;
     if (loading) return <LoadingState />;
 
     const global = frontInfo?.global;

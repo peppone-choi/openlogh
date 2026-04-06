@@ -35,88 +35,88 @@ import { useWorldStore } from '@/stores/worldStore';
 
 const navItems = [
     {
-        title: 'Bridge',
+        title: '대시보드',
         url: '/',
         icon: Home,
     },
     {
-        title: 'Star System',
+        title: '행성 관리',
         url: '/city',
         icon: Globe,
     },
     {
-        title: 'Faction',
+        title: '진영 정보',
         icon: Shield,
         requireNation: true,
         items: [
-            { title: 'Faction Info', url: '/nation' },
-            { title: 'Officers', url: '/nation-generals' },
-            { title: 'Planets', url: '/nation-cities' },
-            { title: 'Fleet Org', url: '/troop' },
-            { title: 'Diplomacy', url: '/diplomacy', requireSecret: true as const },
-            { title: 'Personnel', url: '/personnel' },
-            { title: 'Administration', url: '/internal-affairs', requireSecret: true as const },
-            { title: 'Command HQ', url: '/chief', requireSecret: true as const },
-            { title: 'NPC Policy', url: '/npc-control', requireSecret: true as const },
-            { title: 'Intelligence', url: '/spy', requireSecret: true as const },
-            { title: 'Military Review', url: '/battle', requireSecret: true as const },
+            { title: '진영 현황', url: '/nation' },
+            { title: '장교 목록', url: '/nation-generals' },
+            { title: '행성 목록', url: '/nation-cities' },
+            { title: '함대 편성', url: '/troop' },
+            { title: '외교', url: '/diplomacy', requireSecret: true as const },
+            { title: '인사', url: '/personnel' },
+            { title: '내정', url: '/internal-affairs', requireSecret: true as const },
+            { title: '사령부', url: '/chief', requireSecret: true as const },
+            { title: 'NPC 정책', url: '/npc-control', requireSecret: true as const },
+            { title: '첩보', url: '/spy', requireSecret: true as const },
+            { title: '전투 검토', url: '/battle', requireSecret: true as const },
         ],
     },
     {
-        title: 'My Officer',
+        title: '내 장교',
         icon: User,
         items: [
-            { title: 'Profile & Settings', url: '/my-page' },
-            { title: 'Officer Detail', url: '/general' },
-            { title: 'Legacy', url: '/inherit' },
+            { title: '프로필 / 설정', url: '/my-page' },
+            { title: '장교 상세', url: '/general' },
+            { title: '후계', url: '/inherit' },
         ],
     },
     {
-        title: 'Galaxy',
+        title: '은하',
         icon: MapIcon,
         items: [
-            { title: 'Galaxy Overview', url: '/global-diplomacy' },
-            { title: 'All Factions', url: '/nations' },
-            { title: 'All Officers', url: '/generals' },
-            { title: 'Distinguished Officers', url: '/best-generals' },
-            { title: 'NPC Roster', url: '/npc-list', requireNpcMode: true as const },
+            { title: '은하 정세', url: '/global-diplomacy' },
+            { title: '전체 진영', url: '/nations' },
+            { title: '전체 장교', url: '/generals' },
+            { title: '명장 목록', url: '/best-generals' },
+            { title: 'NPC 명부', url: '/npc-list', requireNpcMode: true as const },
         ],
     },
     {
-        title: 'Records',
+        title: '기록',
         icon: ScrollText,
         items: [
-            { title: 'Chronicle', url: '/history' },
-            { title: 'Hall of Fame', url: '/hall-of-fame' },
-            { title: 'Sovereigns', url: '/emperor' },
+            { title: '연대기', url: '/history' },
+            { title: '명예의 전당', url: '/hall-of-fame' },
+            { title: '원수/의장', url: '/emperor' },
         ],
     },
     {
-        title: 'Comms',
+        title: '통신',
         icon: MessageSquare,
         items: [
-            { title: 'War Room', url: '/board', requireNation: true as const },
-            { title: 'Classified', url: '/board?secret=true', requireSecret: true as const },
-            { title: 'Messages', url: '/messages' },
+            { title: '작전실', url: '/board', requireNation: true as const },
+            { title: '기밀', url: '/board?secret=true', requireSecret: true as const },
+            { title: '메일', url: '/messages' },
         ],
     },
     {
-        title: 'Services',
+        title: '서비스',
         icon: Gamepad2,
         items: [
-            { title: 'Tournament', url: '/tournament' },
-            { title: 'Auction', url: '/auction' },
-            { title: 'Betting', url: '/betting' },
-            { title: 'Faction Betting', url: '/nation-betting' },
-            { title: 'Battle Sim', url: '/battle-simulator' },
+            { title: '토너먼트', url: '/tournament' },
+            { title: '경매', url: '/auction' },
+            { title: '베팅', url: '/betting' },
+            { title: '진영 베팅', url: '/nation-betting' },
+            { title: '전투 시뮬', url: '/battle-simulator' },
         ],
     },
     {
-        title: 'System',
+        title: '설정',
         icon: Settings,
         items: [
-            { title: 'Server Info', url: '/traffic' },
-            { title: 'Survey', url: '/vote' },
+            { title: '서버 정보', url: '/traffic' },
+            { title: '설문', url: '/vote' },
         ],
     },
 ];
@@ -163,7 +163,7 @@ export function AppSidebar() {
         <Sidebar collapsible="icon">
             <SidebarHeader>
                 <div className="group-data-[collapsible=icon]:hidden px-2 py-1 font-bold text-base tracking-wider text-[#00d4ff]">
-                    OPEN LOGH
+                    오픈은하영웅전설
                 </div>
             </SidebarHeader>
 
@@ -218,7 +218,7 @@ export function AppSidebar() {
 
             <SidebarFooter>
                 <div className="group-data-[collapsible=icon]:hidden p-2 text-xs text-muted-foreground">
-                    {myOfficer?.name || 'No officer'}
+                    {myOfficer?.name || '장교 없음'}
                 </div>
             </SidebarFooter>
         </Sidebar>

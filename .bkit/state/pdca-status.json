@@ -1,6 +1,6 @@
 {
   "version": "3.0",
-  "lastUpdated": "2026-04-06T11:11:39.421Z",
+  "lastUpdated": "2026-04-06T11:24:58.455Z",
   "activeFeatures": [
     "engine",
     "war",
@@ -246,9 +246,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-23T11:46:41.223Z",
-        "lastUpdated": "2026-04-06T10:02:11.182Z"
+        "lastUpdated": "2026-04-06T11:24:58.453Z"
       },
-      "lastFile": "/Users/apple/Desktop/개인프로젝트/openlogh/frontend/src/components/game/error-state.tsx"
+      "lastFile": "/Users/apple/Desktop/개인프로젝트/openlogh/frontend/src/components/game/game-dashboard.tsx"
     },
     "trigger": {
       "phase": "do",
@@ -298,9 +298,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-24T00:32:24.227Z",
-        "lastUpdated": "2026-04-06T11:11:39.420Z"
+        "lastUpdated": "2026-04-06T11:24:31.639Z"
       },
-      "lastFile": "/Users/apple/Desktop/개인프로젝트/openlogh/frontend/src/types/galaxy.ts"
+      "lastFile": "/Users/apple/Desktop/개인프로젝트/openlogh/frontend/src/components/top-bar.tsx"
     },
     "city": {
       "phase": "do",
@@ -917,7 +917,7 @@
   "session": {
     "startedAt": "2026-03-23T06:31:12.665Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-04-06T11:11:39.421Z"
+    "lastActivity": "2026-04-06T11:24:58.455Z"
   },
   "history": [
     {
@@ -8651,6 +8651,78 @@
     {
       "timestamp": "2026-04-06T11:11:39.421Z",
       "feature": "frontend",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T11:24:06.750Z",
+      "feature": "frontend",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T11:24:11.315Z",
+      "feature": "frontend",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T11:24:12.534Z",
+      "feature": "frontend",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T11:24:17.271Z",
+      "feature": "frontend",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T11:24:18.196Z",
+      "feature": "frontend",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T11:24:19.560Z",
+      "feature": "frontend",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T11:24:20.704Z",
+      "feature": "frontend",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T11:24:31.640Z",
+      "feature": "frontend",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T11:24:43.711Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T11:24:52.028Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T11:24:57.053Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T11:24:58.455Z",
+      "feature": "game",
       "phase": "do",
       "action": "updated"
     }
