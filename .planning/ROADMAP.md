@@ -22,7 +22,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 8: Scenario & Character System** - 10 scenarios, custom character creation, original character selection, scenario events (completed 2026-04-06)
 - [x] **Phase 9: Strategic Commands** - Operation planning, logistics, production, supply chain commands (completed 2026-04-06)
 - [x] **Phase 10: Tactical Combat (RTS)** - WebSocket real-time fleet battle, energy allocation, formations, fortress guns (completed 2026-04-06)
-- [ ] **Phase 11: Faction Politics & Diplomacy** - Empire autocracy, Alliance democracy, Fezzan NPC systems, coups, elections
+- [x] **Phase 11: Faction Politics & Diplomacy** - Empire autocracy, Alliance democracy, Fezzan NPC systems, coups, elections (completed 2026-04-06)
 - [ ] **Phase 12: Communication & Session Lifecycle** - Mail, chat, victory conditions, session restart, rankings
 
 ## Phase Details
@@ -223,11 +223,11 @@ Plans:
 **UI hint**: yes
 
 Plans:
-- [ ] 11-01-PLAN.md — Empire politics: NobilityRank enum (5 levels), CoupPhase enum, CoupEvent entity, Flyway V38 (coup_event, council_seat, fezzan_loan, election tables)
-- [ ] 11-02-PLAN.md — Alliance politics: CouncilSeatCode enum (11 seats), ElectionType enum, CouncilSeat/Election entities, AlliancePoliticsService, EmpirePoliticsService (coup state machine)
-- [ ] 11-03-PLAN.md — Fezzan NPC: FezzanLoan entity, IntelligenceType enum, FezzanService (loans/intel/trade), FezzanAiService (tick AI), FezzanEndingService
-- [ ] 11-04-PLAN.md — REST API: FactionPoliticsController (15 endpoints), DTOs, TickEngine integration, GameEventService political broadcasts
-- [ ] 11-05-PLAN.md — Frontend: politics types, politicsApi, politicsStore, EmpirePanel/AlliancePanel/FezzanPanel, politics page route
+- [x] 11-01-PLAN.md — Empire politics: NobilityRank enum (5 levels), CoupPhase enum, CoupEvent entity, Flyway V38 (coup_event, council_seat, fezzan_loan, election tables)
+- [x] 11-02-PLAN.md — Alliance politics: CouncilSeatCode enum (11 seats), ElectionType enum, CouncilSeat/Election entities, AlliancePoliticsService, EmpirePoliticsService (coup state machine)
+- [x] 11-03-PLAN.md — Fezzan NPC: FezzanLoan entity, IntelligenceType enum, FezzanService (loans/intel/trade), FezzanAiService (tick AI), FezzanEndingService
+- [x] 11-04-PLAN.md — REST API: FactionPoliticsController (15 endpoints), DTOs, TickEngine integration, GameEventService political broadcasts
+- [x] 11-05-PLAN.md — Frontend: politics types, politicsApi, politicsStore, EmpirePanel/AlliancePanel/FezzanPanel, politics page route
 
 ### Phase 12: Communication, NPC AI & Session Lifecycle
 **Goal**: Players communicate in-game, NPC officers act autonomously with personality, and sessions have clear victory/end conditions
@@ -258,5 +258,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 12
 | 8. Scenario & Character System | 3/3 | Complete   | 2026-04-06 |
 | 9. Strategic Commands | 4/4 | Complete   | 2026-04-06 |
 | 10. Tactical Combat (RTS) | 4/4 | Complete   | 2026-04-06 |
-| 11. Faction Politics & Diplomacy | 0/5 | In Progress | - |
+| 11. Faction Politics & Diplomacy | 5/5 | Complete | 2026-04-06 |
 | 12. Communication, NPC AI & Session Lifecycle | 1/6 | In Progress|  |

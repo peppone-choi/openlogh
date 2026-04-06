@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-05)
 
 **Core value:** gin7의 핵심 "조직 시뮬레이션" — 직무권한카드 기반 커맨드 시스템으로 계급 구조 안에서 명령/제안/인사/정치를 수행
-**Current focus:** Phase 9 - Strategic Commands (complete)
+**Current focus:** Phase 11 - Faction Politics & Diplomacy (complete)
 
 ## Current Position
 
-Phase: 9 of 12 (Strategic Commands)
-Plan: 4 of 4 in current phase
-Status: Phase complete — ready for verification
+Phase: 11 of 12 (Faction Politics & Diplomacy)
+Plan: 5 of 5 in current phase
+Status: Phase complete
 Last activity: 2026-04-06
 
-Progress: [█████░░░░░] 50%
+Progress: [████████░░] 75%
 
 ## Performance Metrics
 
@@ -82,6 +82,7 @@ Progress: [█████░░░░░] 50%
 | Phase 09 P02 | 4min | 2 tasks | 10 files |
 | Phase 09 P03 | 3min | 2 tasks | 8 files |
 | Phase 09 P04 | 1min | 2 tasks | 1 files |
+| Phase 11 Pall | 17min | 10 tasks | 30 files |
 | Phase 12 Pall | 14min | 13 tasks | 30 files |
 
 ## Accumulated Context
@@ -127,6 +128,12 @@ Recent decisions affecting current work:
 - [Phase 10]: Fortress gun fires in line-of-fire hitting ALL units including friendlies (gin7 faithful)
 - [Phase 10]: 600-tick battle timeout with HP ratio comparison for winner determination
 - [Phase 10]: Retreat requires 50% WARP energy allocation to prevent instant escapes
+- [Phase 11]: Nobility rank stored in Officer.meta JSONB -- no schema change to officer table
+- [Phase 11]: Coup threshold default 8000 per gin7 scenario mechanics
+- [Phase 11]: CouncilSeatCode mapped to existing PositionCard entries (COUNCIL_CHAIRMAN etc.)
+- [Phase 11]: Fezzan AI offers loans every 100 ticks to factions below 50% average funds
+- [Phase 11]: 3 defaulted loans triggers Fezzan domination ending
+- [Phase 11]: Loan interest: 5% base + 2% per existing unpaid loan
 - [Phase 12]: Personality stored as VARCHAR column for first-class query support
 - [Phase 12]: Victory check every 60 ticks (1 real-time minute); chat reuses Message entity with new mailboxCode prefixes
 - [Phase 12]: Mailbox 120-cap deletes oldest on overflow; SessionRanking in dedicated table
@@ -141,6 +148,9 @@ None yet.
 - 34 JPA entities need domain renaming in Phase 1; risk of breaking existing tests
 
 ## Session Continuity
+
+Last session: 2026-04-06T05:56:00Z
+Stopped at: Completed Phase 11 Faction Politics & Diplomacy
 
 Last session: 2026-04-06T05:53:52.632Z
 Stopped at: Completed 12-PLAN.md (all 6 plans)
