@@ -1,8 +1,11 @@
 package com.openlogh.controller
 
+import com.openlogh.engine.tactical.ConquestCommand
+import com.openlogh.engine.tactical.ConquestRequest
 import com.openlogh.model.EnergyAllocation
 import com.openlogh.model.UnitStance
 import com.openlogh.service.TacticalBattleService
+import com.openlogh.service.UnitCommandRequest
 import org.slf4j.LoggerFactory
 import org.springframework.messaging.handler.annotation.DestinationVariable
 import org.springframework.messaging.handler.annotation.MessageMapping
@@ -112,6 +115,69 @@ class BattleWebSocketController(
             log.error("Error setting attack target for battle {} officer {}: {}", battleId, payload.officerId, e.message)
         }
     }
+
+    /**
+     * 행성 점령 커맨드.
+     * Channel: /app/battle/{sessionId}/{battleId}/planet-conquest
+     *
+     * command 필드: SURRENDER_DEMAND/PRECISION_BOMBING/CARPET_BOMBING/GROUND_ASSAULT/INFILTRATION/SUBVERSION
+     * officerId는 payload에 포함 (JWT principal은 String subject — OfficerPrincipal 미구현).
+     */
+    @MessageMapping("/battle/{sessionId}/{battleId}/planet-conquest")
+    fun planetConquest(
+        @DestinationVariable sessionId: Long,
+        @DestinationVariable battleId: Long,
+        @Payload payload: PlanetConquestRequest,
+    ) {
+        try {
+            val command = ConquestCommand.valueOf(payload.command.uppercase())
+            val req = ConquestRequest(
+                command = command,
+                attackerOfficerId = payload.officerId,
+                attackerFactionId = payload.attackerFactionId,
+                attackerFactionType = payload.attackerFactionType,
+                defenderFactionId = payload.defenderFactionId,
+                planetId = payload.planetId,
+                planetName = payload.planetName,
+                planetDefense = payload.planetDefense,
+                garrisonUnits = payload.garrisonUnits,
+                warehouseSupplies = payload.warehouseSupplies,
+                shipyardShipsInProgress = 0,
+                shipyardShipsStored = 0,
+                isFortress = payload.isFortress,
+                defeatedOfficerIds = emptyList(),
+                planetPositionCards = emptyList(),
+                attackerMissileCount = payload.attackerMissileCount,
+                militaryWorkPoint = payload.militaryWorkPoint,
+                intelWorkPoint = payload.intelWorkPoint,
+            )
+            tacticalBattleService.executeConquest(battleId, payload.officerId, req)
+        } catch (e: Exception) {
+            log.error("Error processing planet conquest for battle {} officer {}: {}",
+                battleId, payload.officerId, e.message)
+        }
+    }
+
+    /**
+     * 전술 유닛 커맨드 11종.
+     * Channel: /app/battle/{sessionId}/{battleId}/unit-command
+     *
+     * command 필드: MOVE/TURN/STRAFE/REVERSE/ATTACK/FIRE/ORBIT/FORMATION_CHANGE/REPAIR/RESUPPLY/SORTIE
+     * officerId는 payload에 포함 (JWT principal은 String subject — OfficerPrincipal 미구현).
+     */
+    @MessageMapping("/battle/{sessionId}/{battleId}/unit-command")
+    fun unitCommand(
+        @DestinationVariable sessionId: Long,
+        @DestinationVariable battleId: Long,
+        @Payload payload: UnitCommandRequest,
+    ) {
+        try {
+            tacticalBattleService.executeUnitCommand(battleId, payload)
+        } catch (e: Exception) {
+            log.error("Error executing unit command {} for battle {} officer {}: {}",
+                payload.command, battleId, payload.officerId, e.message)
+        }
+    }
 }
 
 /** 에너지 배분 변경 요청 DTO */
@@ -140,4 +206,23 @@ data class RetreatRequest(
 data class AttackTargetRequest(
     val officerId: Long,
     val targetFleetId: Long,
+)
+
+/** 행성 점령 커맨드 요청 DTO */
+data class PlanetConquestRequest(
+    val officerId: Long,
+    /** ConquestCommand 이름 (SURRENDER_DEMAND/PRECISION_BOMBING/CARPET_BOMBING/GROUND_ASSAULT/INFILTRATION/SUBVERSION) */
+    val command: String,
+    val attackerFactionId: Long,
+    val attackerFactionType: String,
+    val defenderFactionId: Long,
+    val planetId: Long,
+    val planetName: String,
+    val planetDefense: Int,
+    val garrisonUnits: Int,
+    val warehouseSupplies: Int,
+    val isFortress: Boolean,
+    val attackerMissileCount: Int,
+    val militaryWorkPoint: Int = 0,
+    val intelWorkPoint: Int = 0,
 )

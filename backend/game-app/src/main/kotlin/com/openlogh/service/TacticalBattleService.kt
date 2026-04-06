@@ -11,6 +11,7 @@ import com.openlogh.model.UnitStance
 import com.openlogh.repository.FleetRepository
 import com.openlogh.repository.OfficerRepository
 import com.openlogh.repository.TacticalBattleRepository
+import kotlin.math.sqrt
 import org.slf4j.LoggerFactory
 import org.springframework.messaging.simp.SimpMessagingTemplate
 import org.springframework.stereotype.Service
@@ -33,6 +34,7 @@ class TacticalBattleService(
 ) {
     private val log = LoggerFactory.getLogger(TacticalBattleService::class.java)
     private val engine = TacticalBattleEngine()
+    private val planetConquestService = PlanetConquestService()
 
     /** In-memory active battle states keyed by battleId */
     private val activeBattles = ConcurrentHashMap<Long, TacticalBattleState>()
@@ -225,6 +227,58 @@ class TacticalBattleService(
         log.info("Officer {} initiating retreat in battle {}", officerId, battleId)
     }
 
+    /**
+     * 행성 점령 커맨드 실행.
+     *
+     * gin7 6종: 항복권고/정밀폭격/무차별폭격/육전대강하/점거/선동
+     * - GROUND_ASSAULT: groundUnitsEmbark > 0 확인 후 GroundBattleState 초기화
+     * - 정밀폭격/무차별폭격: missileCount 소모 반영
+     */
+    fun executeConquest(battleId: Long, officerId: Long, request: ConquestRequest): ConquestResult {
+        val state = activeBattles[battleId]
+            ?: throw IllegalStateException("Battle $battleId not active")
+        val unit = state.units.find { it.officerId == officerId && it.isAlive }
+            ?: throw IllegalArgumentException("Officer $officerId not found in battle $battleId")
+
+        // 육전대강하: groundUnitsEmbark > 0 확인 + GroundBattleState 초기화
+        if (request.command == ConquestCommand.GROUND_ASSAULT) {
+            require(unit.groundUnitsEmbark > 0) { "탑재 육전대 없음" }
+            if (state.groundBattleState == null) {
+                state.groundBattleState = GroundBattleState(
+                    planetId = request.planetId,
+                    attackerFactionId = request.attackerFactionId,
+                    defenderFactionId = request.defenderFactionId,
+                )
+            }
+            val groundEngine = GroundBattleEngine()
+            val attackers = (1..unit.groundUnitsEmbark).map { i ->
+                GroundUnit(
+                    unitId = unit.fleetId * 100 + i,
+                    factionId = unit.factionId,
+                    groundUnitType = "ARMORED_INFANTRY",
+                    count = 100,
+                    maxCount = 100,
+                )
+            }
+            groundEngine.addAttackers(state.groundBattleState!!, attackers)
+        }
+
+        val result = planetConquestService.executeConquest(request)
+        unit.commandRange = 0.0
+        unit.ticksSinceLastOrder = 0
+
+        // 미사일 소모 반영
+        if (result.missilesConsumed > 0) {
+            unit.missileCount = (unit.missileCount - result.missilesConsumed).coerceAtLeast(0)
+        }
+
+        state.tickEvents.add(BattleTickEvent("conquest", sourceUnitId = unit.fleetId,
+            detail = "${request.command.displayNameKo}: ${result.reason}"))
+
+        log.info("Conquest {} by officer {}: {}", request.command, officerId, result.reason)
+        return result
+    }
+
     // ── Battle End ──
 
     @Transactional
@@ -275,6 +329,87 @@ class TacticalBattleService(
         broadcastBattleState(battle.sessionId, state, battle)
 
         log.info("Tactical battle {} ended: {} ({})", battle.id, battle.result, outcome.reason)
+    }
+
+    /**
+     * 전술 유닛 커맨드 11종 처리.
+     * MOVE/TURN/STRAFE/REVERSE/ATTACK/FIRE/ORBIT/FORMATION_CHANGE/REPAIR/RESUPPLY/SORTIE
+     */
+    fun executeUnitCommand(battleId: Long, cmd: UnitCommandRequest) {
+        val state = activeBattles[battleId] ?: throw IllegalStateException("Battle $battleId not active")
+        val unit = state.units.find { it.officerId == cmd.officerId && it.isAlive }
+            ?: throw IllegalArgumentException("Officer ${cmd.officerId} not found in battle $battleId")
+
+        // 모든 커맨드는 commandRange 리셋
+        unit.commandRange = 0.0
+        unit.ticksSinceLastOrder = 0
+
+        when (cmd.command.uppercase()) {
+            "MOVE" -> {
+                val norm = sqrt(cmd.dirX * cmd.dirX + cmd.dirY * cmd.dirY).coerceAtLeast(0.001)
+                val spd = TacticalBattleEngine.BASE_SPEED * cmd.speed.coerceIn(0.0, 2.0)
+                unit.velX = (cmd.dirX / norm) * spd
+                unit.velY = (cmd.dirY / norm) * spd
+            }
+            "TURN" -> {
+                val currentSpeed = sqrt(unit.velX * unit.velX + unit.velY * unit.velY)
+                val norm = sqrt(cmd.dirX * cmd.dirX + cmd.dirY * cmd.dirY).coerceAtLeast(0.001)
+                unit.velX = (cmd.dirX / norm) * currentSpeed
+                unit.velY = (cmd.dirY / norm) * currentSpeed
+            }
+            "STRAFE" -> {
+                // 방향 유지, 횡이동 (현재 속도 유지, dirY 방향으로 벡터 추가)
+                unit.velY = cmd.dirY * TacticalBattleEngine.BASE_SPEED
+            }
+            "REVERSE" -> {
+                unit.velX = -unit.velX
+                unit.velY = -unit.velY
+            }
+            "ATTACK", "FIRE" -> {
+                if (cmd.targetFleetId != null) unit.targetFleetId = cmd.targetFleetId
+            }
+            "ORBIT" -> {
+                if (cmd.targetFleetId != null) unit.targetFleetId = cmd.targetFleetId
+                unit.isOrbiting = true
+            }
+            "FORMATION_CHANGE" -> {
+                val formation = cmd.formation?.let { Formation.fromString(it) } ?: Formation.MIXED
+                unit.formation = formation
+            }
+            "REPAIR" -> {
+                // 수리: 사기 5 소모 → 훈련 비례 HP 회복
+                if (unit.morale >= 5) {
+                    unit.morale -= 5
+                    val repairAmount = (unit.training / 100.0 * unit.maxHp * 0.05).toInt().coerceAtLeast(1)
+                    unit.hp = (unit.hp + repairAmount).coerceAtMost(unit.maxHp)
+                    state.tickEvents.add(BattleTickEvent("repair", sourceUnitId = unit.fleetId,
+                        value = repairAmount, detail = "${unit.officerName} 자함 수리 (+$repairAmount HP)"))
+                }
+            }
+            "RESUPPLY" -> {
+                // 보급: 행성 인근(100 units) 이내에서만 가능
+                val nearPlanet = unit.posX < 100.0 || unit.posX > 900.0
+                if (nearPlanet && unit.missileCount < 100) {
+                    val resupplyAmount = 20
+                    unit.missileCount = (unit.missileCount + resupplyAmount).coerceAtMost(100)
+                    state.tickEvents.add(BattleTickEvent("resupply", sourceUnitId = unit.fleetId,
+                        value = resupplyAmount, detail = "${unit.officerName} 미사일 보급 (+$resupplyAmount)"))
+                }
+            }
+            "SORTIE" -> {
+                // 전투정 발진: 가장 가까운 적에게 전투정 공격
+                val enemies = state.units.filter { it.side != unit.side && it.isAlive }
+                val target = enemies.minByOrNull {
+                    val dx = unit.posX - it.posX
+                    val dy = unit.posY - it.posY
+                    sqrt(dx * dx + dy * dy)
+                }
+                if (target != null) {
+                    engine.getMissileSystem().processFighterAttack(unit, target, state)
+                }
+            }
+            else -> log.warn("Unknown unit command: {}", cmd.command)
+        }
     }
 
     /**
@@ -378,7 +513,11 @@ class TacticalBattleService(
         unitType = unit.unitType,
     )
 
-    private fun broadcastBattleState(sessionId: Long, state: TacticalBattleState, battle: TacticalBattle) {
+    private fun broadcastBattleState(
+        sessionId: Long,
+        state: TacticalBattleState,
+        battle: TacticalBattle,
+    ) {
         val broadcast = BattleTickBroadcast(
             battleId = battle.id,
             tickCount = state.tickCount,
@@ -391,3 +530,17 @@ class TacticalBattleService(
         messagingTemplate.convertAndSend("/topic/world/$sessionId/tactical-battle/${battle.id}", broadcast)
     }
 }
+
+/**
+ * 전술 유닛 커맨드 11종 요청 DTO.
+ * command: MOVE/TURN/STRAFE/REVERSE/ATTACK/FIRE/ORBIT/FORMATION_CHANGE/REPAIR/RESUPPLY/SORTIE
+ */
+data class UnitCommandRequest(
+    val officerId: Long,
+    val command: String,
+    val dirX: Double = 0.0,
+    val dirY: Double = 0.0,
+    val speed: Double = 1.0,
+    val targetFleetId: Long? = null,
+    val formation: String? = null,
+)
