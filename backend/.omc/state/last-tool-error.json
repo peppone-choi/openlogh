@@ -1,7 +1,7 @@
 {
   "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"docker exec openlogh-postgres psql -U openlogh -d postgres -c \\\"DROP DATABASE openlogh;\\\" 2>&1 && docker exec openlogh-postgres psql -U openlogh -d postgres -c \\\"CREATE DATABASE openlogh;\\...",
-  "error": "Exit code 1\nERROR:  database \"openlogh\" is being accessed by other users\nDETAIL:  There are 10 other sessions using the database.",
-  "timestamp": "2026-04-05T11:08:13.310Z",
+  "tool_input_preview": "{\"command\":\"export JAVA_HOME=/Users/apple/Library/Java/JavaVirtualMachines/temurin-23.0.2/Contents/Home && ./gradlew :game-app:compileTestKotlin 2>&1 | grep \\\"^e:\\\" > /tmp/errors13.txt && wc -l /tmp/e...",
+  "error": "Exit code 1",
+  "timestamp": "2026-04-06T02:26:38.141Z",
   "retry_count": 1
 }
