@@ -170,6 +170,9 @@ class TacticalBattleEngine(
         const val FIGHTER_RANGE = 600.0    // TacticalWeaponType.FIGHTER.baseRange * 100
     }
 
+    /** Expose missile system for SORTIE command in TacticalBattleService. */
+    fun getMissileSystem(): MissileWeaponSystem = missileSystem
+
     /**
      * Process a single battle tick. Returns updated state.
      */
