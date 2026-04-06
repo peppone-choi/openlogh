@@ -3,10 +3,9 @@ package com.openlogh.engine.modifier
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
-import com.openlogh.model.ArmType
-import com.openlogh.model.CrewType
 import com.openlogh.engine.war.BattleTrigger
 import com.openlogh.engine.war.BattleTriggerRegistry
+import com.openlogh.model.CrewType
 import kotlin.math.floor
 
 object ItemModifiers {
@@ -216,18 +215,10 @@ class MiscItem(
     private val opposeStatMods: Map<String, Double> = emptyMap(),
     val triggerType: String? = null,
 ) : ActionModifier {
-    private fun parseCrewType(raw: String): CrewType? {
-        val code = raw.toIntOrNull() ?: return null
-        return CrewType.fromCode(code)
-    }
+    // TODO Phase 3: 삼국지 병종 상성(CrewType) 로직 제거됨. gin7 함종 상성으로 대체 예정.
+    private fun parseCrewType(raw: String): CrewType? = null
 
-    private fun isRegionalOrCityCrewType(raw: String): Boolean {
-        val code = raw.toIntOrNull() ?: return false
-        if (code <= 0) return true
-        val crewType = CrewType.fromCode(code) ?: return false
-        if (crewType.armType == ArmType.CASTLE) return true
-        return crewType.code % 100 != 0
-    }
+    private fun isRegionalOrCityCrewType(raw: String): Boolean = false
 
     override fun onCalcStat(stat: StatContext): StatContext {
         var s = stat
@@ -264,20 +255,8 @@ class MiscItem(
             }
         }
 
-        if (triggerType == "typeAdvantage" || triggerType == "antiRegional") {
-            val myCrewType = parseCrewType(s.crewType)
-            val opponentCrewType = parseCrewType(s.opponentCrewType)
-            if (triggerType == "typeAdvantage" && myCrewType != null && opponentCrewType != null) {
-                if (myCrewType.getAttackCoef(opponentCrewType) >= 1.0) {
-                    s = s.copy(warPower = s.warPower * 1.1)
-                }
-            }
-            if (triggerType == "antiRegional") {
-                if (isRegionalOrCityCrewType(s.opponentCrewType)) {
-                    s = s.copy(warPower = s.warPower * 1.15)
-                }
-            }
-        }
+        // TODO Phase 3: 삼국지 병종 상성(typeAdvantage, antiRegional) 제거됨. gin7 함종 상성으로 대체 예정.
+        // parseCrewType() and isRegionalOrCityCrewType() are stubs returning null/false.
 
         if (triggerType == "perseverance") {
             val leadership = s.leadership.coerceAtLeast(1.0)
@@ -352,16 +331,7 @@ class MiscItem(
                 "dodgeChance" -> s = s.copy(dodgeChance = s.dodgeChance + value)
             }
         }
-        // typeAdvantage defence: advantage → opponent warPower * 0.9
-        if (triggerType == "typeAdvantage") {
-            val myCrewType = parseCrewType(s.crewType)
-            val opponentCrewType = parseCrewType(s.opponentCrewType)
-            if (myCrewType != null && opponentCrewType != null) {
-                if (myCrewType.getAttackCoef(opponentCrewType) >= 1.0) {
-                    s = s.copy(warPower = s.warPower * 0.9)
-                }
-            }
-        }
+        // TODO Phase 3: 삼국지 typeAdvantage 병종 상성 방어 로직 제거됨. gin7 함종 상성으로 대체 예정.
         if (triggerType == "antiRegional" && isRegionalOrCityCrewType(s.opponentCrewType)) {
             s = s.copy(warPower = s.warPower * 0.85)
         }
