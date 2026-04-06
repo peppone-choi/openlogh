@@ -2,6 +2,7 @@ package com.openlogh.engine.tactical
 
 import com.openlogh.model.EnergyAllocation
 import com.openlogh.model.Formation
+import com.openlogh.model.UnitStance
 import kotlin.math.*
 import kotlin.random.Random
 
@@ -58,6 +59,22 @@ data class TacticalUnit(
     // Unit type info
     var unitType: String = "FLEET",
     var shipClass: Int = 0,
+
+    // gin7 확장 필드 (Plan 03-01)
+    /** 현재 태세 (NAVIGATION/ANCHORING/STATIONED/COMBAT) */
+    var stance: UnitStance = UnitStance.NAVIGATION,
+    /** 미사일 잔탄 수 */
+    var missileCount: Int = 100,
+    /** 함선 서브타입 (battleship/cruiser/destroyer 등 세부 구분) */
+    var shipSubtype: String = "",
+    /** 기함 여부 */
+    var isFlagship: Boolean = false,
+    /** 탑재 지상부대 수 */
+    var groundUnitsEmbark: Int = 0,
+    /** 스파르타니안 속도 디버프 잔여 틱 */
+    var fighterSpeedDebuffTicks: Int = 0,
+    /** 마지막 태세 변경 이후 경과 틱 (쿨다운 관리) */
+    var ticksSinceStanceChange: Int = 0,
 )
 
 enum class BattleSide { ATTACKER, DEFENDER }
@@ -87,6 +104,9 @@ data class TacticalBattleState(
 
     // Tick events for broadcasting
     val tickEvents: MutableList<BattleTickEvent> = mutableListOf(),
+
+    /** 현재 전투 단계 (보급/이동/수색/교전/점령) */
+    var currentPhase: String = "MOVEMENT",
 )
 
 data class BattleTickEvent(
@@ -129,12 +149,17 @@ class TacticalBattleEngine {
 
         val aliveUnits = state.units.filter { it.isAlive }
 
+        // 0. Update per-tick counters
+        for (unit in aliveUnits) {
+            unit.ticksSinceStanceChange++
+        }
+
         // 1. Update command range for all units
         for (unit in aliveUnits) {
             updateCommandRange(unit)
         }
 
-        // 2. Process movement
+        // 2. Process movement (STATIONED/ANCHORING cannot move — handled in processMovement)
         for (unit in aliveUnits) {
             if (unit.isRetreating) {
                 processRetreat(unit, state)
@@ -144,7 +169,9 @@ class TacticalBattleEngine {
         }
 
         // 3. Process combat (weapons fire)
-        for (unit in aliveUnits.filter { !it.isRetreating }) {
+        // gin7 rule: 사기 20 미만 함대는 공격 행동 불가 (isEffective=false)
+        val effectiveUnits = aliveUnits.filter { it.morale >= MORALE_DAMAGE_THRESHOLD && !it.isRetreating }
+        for (unit in effectiveUnits) {
             processCombat(unit, state, aliveUnits, rng)
         }
 
@@ -212,6 +239,9 @@ class TacticalBattleEngine {
     }
 
     private fun processMovement(unit: TacticalUnit, state: TacticalBattleState, allUnits: List<TacticalUnit>) {
+        // gin7 rule: STATIONED/ANCHORING 태세는 이동 불가
+        if (!unit.stance.canMove) return
+
         val speed = BASE_SPEED * unit.energy.speedMultiplier() * unit.formation.speedModifier * (unit.mobility / 50.0)
 
         // Find closest enemy
@@ -273,15 +303,17 @@ class TacticalBattleEngine {
         val dist = distance(unit, target)
 
         // Combat effectiveness factors
-        val moraleModifier = if (unit.morale < MORALE_DAMAGE_THRESHOLD) 0.5 else (unit.morale / 100.0).coerceIn(0.3, 1.2)
+        val moraleModifier = (unit.morale / 100.0).coerceIn(0.3, 1.2)
         val trainingModifier = (unit.training / 100.0).coerceIn(0.3, 1.2)
         val attackStatModifier = unit.attack / 50.0
         val formationAttack = unit.formation.attackModifier
+        // gin7 rule: 태세별 attackModifier 적용
+        val stanceAttack = unit.stance.attackModifier
 
         // BEAM damage
         if (unit.energy.beam > 0 && dist <= BEAM_RANGE) {
             val beamDmg = (BEAM_BASE_DAMAGE * unit.energy.beamMultiplier() * attackStatModifier
-                * formationAttack * moraleModifier * trainingModifier)
+                * formationAttack * stanceAttack * moraleModifier * trainingModifier)
             val sensorAccuracy = unit.energy.sensorMultiplier()
             val hitChance = (0.6 + sensorAccuracy * 0.3).coerceAtMost(0.95)
             if (rng.nextDouble() < hitChance) {
@@ -292,7 +324,7 @@ class TacticalBattleEngine {
         // GUN damage
         if (unit.energy.gun > 0 && dist <= GUN_RANGE) {
             val gunDmg = (GUN_BASE_DAMAGE * unit.energy.gunMultiplier() * attackStatModifier
-                * formationAttack * moraleModifier * trainingModifier)
+                * formationAttack * stanceAttack * moraleModifier * trainingModifier)
             val sensorAccuracy = unit.energy.sensorMultiplier()
             val hitChance = (0.5 + sensorAccuracy * 0.3).coerceAtMost(0.90)
             if (rng.nextDouble() < hitChance) {
@@ -302,11 +334,13 @@ class TacticalBattleEngine {
     }
 
     private fun applyDamage(target: TacticalUnit, rawDamage: Int, state: TacticalBattleState, source: TacticalUnit, weaponType: String) {
-        // Apply shield absorption
+        // Apply shield absorption with stance defenseModifier
+        // gin7 rule: STATIONED(1.3) 방어 보너스, COMBAT(0.9) 방어 패널티
         val shieldAbsorb = target.energy.shieldAbsorption()
         val formationDefense = target.formation.defenseModifier
         val defenseStatModifier = target.defense / 50.0
-        val absorbed = (rawDamage * shieldAbsorb * formationDefense * defenseStatModifier).toInt()
+        val stanceDefense = target.stance.defenseModifier
+        val absorbed = (rawDamage * shieldAbsorb * formationDefense * defenseStatModifier * stanceDefense).toInt()
         val finalDamage = (rawDamage - absorbed).coerceAtLeast(1)
 
         target.hp -= finalDamage
@@ -385,6 +419,10 @@ class TacticalBattleEngine {
         // Morale boost from leadership
         if (unit.leadership > 70 && unit.morale < 80) {
             unit.morale = (unit.morale + 1).coerceAtMost(100)
+        }
+        // gin7 rule: COMBAT 태세이면 매 틱 사기 감소 (moraleDecayRate=0.002 → 0.2/틱 → toInt()=0, 500틱마다 1 감소)
+        if (unit.stance == UnitStance.COMBAT) {
+            unit.morale = (unit.morale - (unit.stance.moraleDecayRate * 100).toInt()).coerceAtLeast(0)
         }
     }
 
