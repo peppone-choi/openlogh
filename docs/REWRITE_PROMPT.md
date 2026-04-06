@@ -1,0 +1,189 @@
+# Open LOGH — gin7 게임 로직 전면 재작성 프롬프트
+
+## 프로젝트 컨텍스트
+
+OpenSamguk(삼국지 웹게임)을 포크하여 은하영웅전설VII(gin7, 2004 BOTHTEC) 기반 웹 MMO로 전환하는 프로젝트.
+현재 엔티티 이름과 일부 모델은 LOGH로 변환했으나, **게임 로직 자체는 여전히 삼국지 기반**이다.
+이 프롬프트는 삼국지 게임 로직을 gin7 매뉴얼 기준으로 **전면 재작성**하기 위한 것이다.
+
+## 참조 문서 (반드시 읽을 것)
+
+- `CLAUDE.md` — 도메인 매핑, 스탯, 조직, 계급, 함종, 커맨드포인트
+- `/Users/apple/Downloads/gin7manualsaved.pdf` — gin7 공식 매뉴얼 (101페이지)
+- `docs/star_systems.json` — 80개 성계 데이터
+- `docs/scenarios.json` — 10개 시나리오 데이터
+- `docs/reference/unit_composition.md` — 부대 편성 규칙
+- `docs/reference/scenarios_detail.md` — 시나리오 상세 설명
+- `backend/shared/src/main/resources/data/commands.json` — 81개 전략 커맨드 정의
+- `backend/shared/src/main/resources/data/ship_stats_empire.json` — 제국 함선 88 서브타입 스탯
+- `backend/shared/src/main/resources/data/ship_stats_alliance.json` — 동맹 함선 88 서브타입 스탯
+- `backend/shared/src/main/resources/data/ground_unit_stats.json` — 육전병 11종 스탯
+
+## 기존에 완료된 것 (유지)
+
+### 엔티티 모델 (Phase 1)
+- Officer (8스탯: leadership/politics/administration/intelligence/command/mobility/attack/defense)
+- Planet, Faction, Fleet, SessionState, Sovereign
+- OfficerStat enum (PCP/MCP 그룹), RankTitle (11단계)
+- Flyway V1~V44 마이그레이션
+
+### 데이터 모델 (이미 구현)
+- OfficerStat, RankTitle, CpPoolConfig, PositionCard(82종), CommandGroup(7종)
+- PositionCardRegistry, UnitType(6종), CrewSlotRole(10종)
+- GameTimeConstants (24배속), FortressType(4종)
+- ShipSubtype(22종), ShipClass(11종), GroundUnitType(3종)
+- CrewProficiency(4단계), UnitStance(4종), Formation(4종)
+- EnergyAllocation(6채널), DetectionInfo, CommandRange, CommandAuthority
+- NobilityRank, CoupPhase, CouncilSeatCode, ElectionType
+- PersonalityTrait(5종)
+
+### 인프라 (유지)
+- Spring Boot 3 + Kotlin + PostgreSQL + Redis + WebSocket/STOMP
+- Gateway + Game-app 멀티프로세스 아키텍처
+- Flyway DB 마이그레이션
+- Next.js 15 프론트엔드 (React Konva 갤럭시맵)
+- CI/CD (GitHub Actions → EC2 Docker)
+
+## 전면 재작성 대상
+
+### 1. 병종 시스템 → 함종 시스템
+
+**삭제해야 할 것:**
+- `crewType` (보병/궁병/기병 코드) → 완전 제거
+- 병종 상성 시스템 (창>기>궁 등) → 제거
+- `UnitModelType = 'infantry' | 'archer' | 'cavalry'` → 제거
+- 삼국지 프리셋 캐릭터 (관우, 장비 등) → 제거
+
+**새로 작성:**
+- 함정 유닛: 11함종 × I~VIII 서브타입 (ship_stats JSON 데이터 기반)
+  - 전함, 고속전함(제국), 순양함, 타격순항함(동맹), 구축함, 전투정모함, 뇌격정모함(제국), 공작함, 수송함, 병원수송함, 양륙함, 민간선
+- 기함 유닛: 고유명 기함 + 범용기함 (계급에 따라 결정)
+- 육전대 유닛: 장갑병/장갑유탄병/경장육전병 (ground_unit_stats.json 기반)
+- 함정 유닛 = 300척 단위, 각 서브타입별 상세 스탯 (장갑, 실드, 무기, 속도, 승무원, 물자적재량)
+
+### 2. 전투 엔진 → gin7 전술전
+
+**삭제:**
+- BattleService의 삼국지 수치 비교 자동전투
+- 병종 상성 로직
+- 삼국지 전투 결과 처리
+
+**새로 작성 (TacticalBattleEngine 확장):**
+- 전투 개시: 같은 그리드에 적아 유닛 공존 시 자동 개시
+- 에너지 배분: BEAM/GUN/SHIELD/ENGINE/WARP/SENSOR (총합 100, 실시간 변경)
+- 무기 시스템: BEAM(중근거리), GUN(중근거리), 미사일(원거리, 물자소비), 전투정(속도저하)
+- 진형: 방추/함종별/혼성/삼열 (각각 공격/방어/속도 보정)
+- 커맨드레인지서클: 시간경과로 확대, 발령시 0 리셋, 지휘 스탯으로 확대율 결정
+- 색적: SENSOR 배분 기반, 거리/유닛종별 정밀도, 전자전 회피
+- 요새포: 토르해머/가이에스하켄, 사선 통과 전 유닛 명중, 아군 피격 가능
+- 지상전: 육전대 강하, 지상전 박스(30유닛 제한), 행성타입별 참가 가능 유닛
+- 점령 후 처리: 직무카드 상실, 수비대 전멸, 긴급출격, 물자접수, 시설접수
+- 태세: 항행/정박/주류/전투 (전투모드: 공격↑, 색적↓, 사기↓)
+- 전사/부상: 기함 격침 → 부상 → 귀환성 워프
+
+### 3. 커맨드 시스템 → gin7 직무권한카드 커맨드
+
+**삭제:**
+- 93개 삼국지 커맨드 (농지개간, 상업투자, 징병 등)
+- 턴 예약 큐 (이미 일부 제거)
+- 커맨드 콘솔 UI
+
+**새로 작성 (commands.json 기반):**
+- 작전커맨드 (16종): 워프항행, 연료보급, 성계내항행, 군기유지, 항공훈련, 육전훈련, 공전훈련, 육전전술훈련, 공전전술훈련, 경계출동, 무력진압, 분열행진, 징발, 특별경비, 육전대출격, 육전대철수
+- 개인커맨드 (15종): 원거리이동, 근거리이동, 퇴역, 지원, 망명, 회견, 수강, 병기연습, 반의, 모의, 설득, 반란, 참가, 자금투입, 기함구매
+- 지휘커맨드 (8종): 작전계획, 작전철회, 발령, 부대결성, 부대해산, 강의, 수송계획, 수송중지
+- 병참커맨드 (6종): 완전수리, 완전보급, 재편성, 보충, 반출입, 할당
+- 인사커맨드 (10종): 승진, 발탁, 강등, 서작, 서훈, 임명, 파면, 사임, 봉토수여, 봉토직할
+- 정치커맨드 (12종): 야회, 수렵, 회담, 담화, 연설, 국가목표, 납입률변경, 관세율변경, 분배, 처단, 외교, 통치목표
+- 첩보커맨드 (14종): 일제수색, 체포허가, 집행명령, 체포명령, 사열, 습격, 감시, 잠입공작, 탈출공작, 정보공작, 파괴공작, 선동공작, 침입공작, 귀환공작
+- 각 커맨드: CP비용, 실행대기시간, 실행소요시간, PCP/MCP 구분, 필요 직무카드
+- 실시간 실행 (턴 대기 아님): 커맨드 → CP 차감 → 대기시간 → 실행 → 결과
+
+### 4. 경제 시스템 → gin7 행성 경제
+
+**삭제:**
+- 삼국지 농업/상업 수치 기반 경제
+- 삼국지 세율/징병률 계산
+
+**새로 작성:**
+- 행성 자원: 인구, 생산, 교역, 치안, 지지도, 궤도방어, 요새방어
+- 조병창 자동생산: 행성별 자동생산 품목 (함종+승조원+육전병), 지배권 이전까지 계속
+- 세율/납입률: 행성별 세수 → 진영 자금
+- 관세: 교역 품목별 관세율
+- 페잔 차관: 차관 시스템, 빚 상환 실패 시 페잔 엔딩
+- 예산 분배: 군무성 예산 + 통수본부 예산 (시나리오 10 등)
+- 인구 기반 부대 편성 제한: 10억당 함대 1, 순찰대/지상부대 6
+
+### 5. 아이템 시스템 → gin7 기함/장비
+
+**삭제:**
+- 무기/서적/말/아이템 (삼국지)
+
+**새로 작성:**
+- 기함: 고유기함 (빌헬미나, 히페리온, 바르바로사 등) + 범용기함 (계급별)
+- 기함 구매: 평가포인트 소비
+- 기함 변경: 계급 변경 시 자동
+- 특수장비: 원작 설정 기반 (선택적)
+
+### 6. NPC/AI → gin7 기반 AI
+
+**삭제:**
+- 삼국지 AI 의사결정 로직
+
+**새로 작성:**
+- 성격 기반 행동: 5종 성격특성(AGGRESSIVE/DEFENSIVE/BALANCED/POLITICAL/CAUTIOUS)
+- 스탯 가중치 의사결정: 각 스탯에 성격 보정 적용
+- 오프라인 플레이어 자동 행동: 플레이어 스탯으로 AI 가동
+- 진영 AI: 작전수립, 예산 배분, 인사 자동 처리
+- 시나리오 이벤트: 쿠데타 조건 감지, 내전 트리거, 특수 이벤트
+
+### 7. 프론트엔드 전면 재작성
+
+**삭제:**
+- 삼국지 UI 컴포넌트 (city-basic-card, general-basic-card 등)
+- 턴 예약 UI (커맨드 콘솔)
+- 삼국지 3D 맵 (castle loader)
+- 삼국지 튜토리얼
+
+**새로 작성:**
+- 은하맵: React Konva 도트스타일 (진영 색상 기반)
+- 전술전 UI: SVG 2D 전투맵, 에너지 패널, 진형 선택, 유닛 커맨드
+- 장교 프로필: 8스탯 바, 계급 뱃지, 직무카드, PCP/MCP
+- 커맨드 실행 UI: 직무권한카드 → 커맨드 목록 → 실행 (턴 예약 아님)
+- 함대 관리: 6종 부대, 승조원 편성, 창고 시스템
+- 행성 관리: 자원 현황, 시설, 수비대
+- 정치 UI: 제국(쿠데타/귀족), 동맹(의회/선거), 페잔(차관/정보)
+- 시나리오 선택: 10개 시나리오 + 커스텀 캐릭터 생성 (8스탯)
+- 메일/메신저/채팅
+- 승리 화면
+
+## 기술 스택 (변경 없음)
+
+- Backend: Spring Boot 3 (Kotlin 2.1.0) + JPA + PostgreSQL 16 + Redis 7
+- Frontend: Next.js 16 + React 19 + TypeScript + Tailwind CSS + React Konva
+- 실시간: WebSocket/STOMP + 1초 tick (24배속)
+- 빌드: Gradle 8 + pnpm
+- 배포: Docker + GitHub Actions + EC2
+
+## 작업 순서 제안
+
+1. **삼국지 게임 로직 제거** — 병종, 전투, 커맨드, 경제, 아이템, AI의 삼국지 코드 삭제
+2. **함종/함정 유닛 시스템** — ShipUnit 엔티티, 11함종 서브타입, 기함 시스템
+3. **gin7 커맨드 81종 구현** — commands.json 기반, 실시간 실행
+4. **전술전 엔진** — TacticalBattleEngine 완성 (에너지, 무기, 진형, 색적, 요새포)
+5. **경제 시스템** — 행성 자원, 조병창, 세율, 페잔 차관
+6. **AI 시스템** — 성격 기반 의사결정
+7. **프론트엔드** — 각 백엔드 시스템에 맞는 UI
+8. **시나리오 데이터** — 10개 시나리오 초기 데이터 (인물, 배치, 이벤트)
+9. **밸런싱 + 테스트**
+
+## 주의사항
+
+- DB 마이그레이션은 V45__ 이후로 추가
+- 기존 엔티티 필드 중 삼국지 전용인 것은 마이그레이션으로 제거
+- LOGH 시나리오(scenario_logh_01~10)만 유지
+- gin7 매뉴얼의 게임 메카닉스를 최대한 충실히 재현
+- 리얼타임 (1초 tick = 24 게임초) 기반
+- 소위부터 플레이 가능
+- 인구-병력 연동 (10억=함대1, 순찰대6)
+- 페잔은 NPC 전용
