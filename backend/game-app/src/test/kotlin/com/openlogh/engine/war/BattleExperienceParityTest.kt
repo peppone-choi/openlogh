@@ -24,19 +24,19 @@ class BattleExperienceParityTest {
 
     private fun createGeneral(
         id: Long = 1,
-        nationId: Long = 1,
+        factionId: Long = 1,
         leadership: Short = 50,
-        strength: Short = 50,
-        intel: Short = 50,
-        crew: Int = 1000,
-        crewType: Short = 1100,  // FOOTMAN by default
-        train: Short = 80,
-        atmos: Short = 80,
-        rice: Int = 10000,
+        command: Short = 50,
+        intelligence: Short = 50,
+        ships: Int = 1000,
+        shipClass: Short = 1100,  // FOOTMAN by default
+        training: Short = 80,
+        morale: Short = 80,
+        supplies: Int = 10000,
         experience: Int = 0,
         leadershipExp: Short = 0,
-        strengthExp: Short = 0,
-        intelExp: Short = 0,
+        commandExp: Short = 0,
+        intelligenceExp: Short = 0,
         specialCode: String = "None",
         special2Code: String = "None",
     ): Officer {
@@ -44,20 +44,20 @@ class BattleExperienceParityTest {
             id = id,
             sessionId = 1,
             name = "장수$id",
-            factionId = nationId,
+            factionId = factionId,
             planetId = 1,
             leadership = leadership,
-            command = strength,
-            intelligence = intel,
-            ships = crew,
-            shipClass = crewType,
-            training = train,
-            morale = atmos,
-            supplies = rice,
+            command = command,
+            intelligence = intelligence,
+            ships = ships,
+            shipClass = shipClass,
+            training = training,
+            morale = morale,
+            supplies = supplies,
             experience = experience,
             leadershipExp = leadershipExp,
-            commandExp = strengthExp,
-            intelligenceExp = intelExp,
+            commandExp = commandExp,
+            intelligenceExp = intelligenceExp,
             specialCode = specialCode,
             special2Code = special2Code,
             turnTime = OffsetDateTime.now(),
@@ -65,25 +65,25 @@ class BattleExperienceParityTest {
     }
 
     private fun createCity(
-        nationId: Long = 2,
-        def: Int = 100,
-        defMax: Int = 1000,
-        wall: Int = 100,
-        wallMax: Int = 1000,
-        pop: Int = 1000,
-        popMax: Int = 50000,
+        factionId: Long = 2,
+        orbitalDefense: Int = 100,
+        orbitalDefenseMax: Int = 1000,
+        fortress: Int = 100,
+        fortressMax: Int = 1000,
+        population: Int = 1000,
+        populationMax: Int = 50000,
     ): Planet {
         return Planet(
             id = 1,
             sessionId = 1,
             name = "도시",
-            factionId = nationId,
-            orbitalDefense = def,
-            orbitalDefenseMax = defMax,
-            fortress = wall,
-            fortressMax = wallMax,
-            population = pop,
-            populationMax = popMax,
+            factionId = factionId,
+            orbitalDefense = orbitalDefense,
+            orbitalDefenseMax = orbitalDefenseMax,
+            fortress = fortress,
+            fortressMax = fortressMax,
+            population = population,
+            populationMax = populationMax,
         )
     }
 
@@ -185,7 +185,7 @@ class BattleExperienceParityTest {
         @Test
         @DisplayName("FOOTMAN (crewType 1100) routes pendingStatExp to strengthExp")
         fun `footman routes to strengthExp`() {
-            val general = createGeneral(crewType = 1100)  // FOOTMAN
+            val general = createGeneral(shipClass = 1100)  // FOOTMAN
             val unit = WarUnitOfficer(general)
             unit.pendingStatExp = 1
             unit.applyResults()
@@ -198,7 +198,7 @@ class BattleExperienceParityTest {
         @Test
         @DisplayName("ARCHER (crewType 1200) routes pendingStatExp to strengthExp (else branch)")
         fun `archer routes to strengthExp`() {
-            val general = createGeneral(crewType = 1200)  // ARCHER
+            val general = createGeneral(shipClass = 1200)  // ARCHER
             val unit = WarUnitOfficer(general)
             unit.pendingStatExp = 1
             unit.applyResults()
@@ -211,7 +211,7 @@ class BattleExperienceParityTest {
         @Test
         @DisplayName("CAVALRY (crewType 1300) routes pendingStatExp to strengthExp")
         fun `cavalry routes to strengthExp`() {
-            val general = createGeneral(crewType = 1300)  // CAVALRY
+            val general = createGeneral(shipClass = 1300)  // CAVALRY
             val unit = WarUnitOfficer(general)
             unit.pendingStatExp = 1
             unit.applyResults()
@@ -224,7 +224,7 @@ class BattleExperienceParityTest {
         @Test
         @DisplayName("WIZARD (crewType 1400) routes pendingStatExp to intelExp only")
         fun `wizard routes to intelExp`() {
-            val general = createGeneral(crewType = 1400)  // WIZARD
+            val general = createGeneral(shipClass = 1400)  // WIZARD
             val unit = WarUnitOfficer(general)
             unit.pendingStatExp = 1
             unit.applyResults()
@@ -237,7 +237,7 @@ class BattleExperienceParityTest {
         @Test
         @DisplayName("SIEGE (crewType 1500) routes pendingStatExp to leadershipExp only")
         fun `siege routes to leadershipExp`() {
-            val general = createGeneral(crewType = 1500)  // JEONGRAN (SIEGE)
+            val general = createGeneral(shipClass = 1500)  // JEONGRAN (SIEGE)
             val unit = WarUnitOfficer(general)
             unit.pendingStatExp = 1
             unit.applyResults()
@@ -252,7 +252,7 @@ class BattleExperienceParityTest {
         fun `unknown crewType routes to strengthExp via else`() {
             // No CrewType with ArmType.MISC exists currently, so fromCode returns null
             // When unitCrewType is null, unitCrewType?.armType is null, which matches else branch
-            val general = createGeneral(crewType = 9999)  // Non-existent code
+            val general = createGeneral(shipClass = 9999)  // Non-existent code
             val unit = WarUnitOfficer(general)
             // Must set crewType directly since WarUnitOfficer.init reads from general.shipClass
             unit.pendingStatExp = 1
@@ -292,7 +292,7 @@ class BattleExperienceParityTest {
         @Test
         @DisplayName("Winner (attacker) atmos 80 -> (80*1.1).toInt() = 88")
         fun `winner atmos multiplied by 1_1`() {
-            val general = createGeneral(atmos = 80)
+            val general = createGeneral(morale = 80)
             val unit = WarUnitOfficer(general)
             // Simulate attacker win: atmos *= 1.1
             unit.morale = (unit.morale * 1.1).toInt().coerceAtMost(100)
@@ -302,7 +302,7 @@ class BattleExperienceParityTest {
         @Test
         @DisplayName("Loser (attacker lost) atmos 80 -> (80*1.05).toInt() = 84")
         fun `loser atmos multiplied by 1_05`() {
-            val general = createGeneral(atmos = 80)
+            val general = createGeneral(morale = 80)
             val unit = WarUnitOfficer(general)
             // Simulate attacker lose: atmos *= 1.05
             unit.morale = (unit.morale * 1.05).toInt().coerceAtMost(100)
@@ -312,9 +312,9 @@ class BattleExperienceParityTest {
         @Test
         @DisplayName("Winner atmos capped at 100")
         fun `winner atmos capped at 100`() {
-            val general = createGeneral(atmos = 95)
+            val general = createGeneral(morale = 95)
             val unit = WarUnitOfficer(general)
-            // atmos=95, (95*1.1).toInt() = 104, coerceAtMost(100) = 100
+            // morale =95, (95*1.1).toInt() = 104, coerceAtMost(100) = 100
             unit.morale = (unit.morale * 1.1).toInt().coerceAtMost(100)
             assertEquals(100, unit.morale)
         }
@@ -322,8 +322,8 @@ class BattleExperienceParityTest {
         @Test
         @DisplayName("Both winner AND loser get pendingStatExp += 1")
         fun `both sides get pendingStatExp 1`() {
-            val attackerGeneral = createGeneral(id = 1, nationId = 1)
-            val defenderGeneral = createGeneral(id = 2, nationId = 2)
+            val attackerGeneral = createGeneral(id = 1, factionId = 1)
+            val defenderGeneral = createGeneral(id = 2, factionId = 2)
             val attacker = WarUnitOfficer(attackerGeneral)
             val defender = WarUnitOfficer(defenderGeneral)
 
@@ -338,7 +338,7 @@ class BattleExperienceParityTest {
         @Test
         @DisplayName("Loser atmos 96 -> (96*1.05).toInt() = 100, within cap")
         fun `loser atmos at boundary`() {
-            val general = createGeneral(atmos = 96)
+            val general = createGeneral(morale = 96)
             val unit = WarUnitOfficer(general)
             // (96*1.05).toInt() = 100.8.toInt() = 100, coerceAtMost(100) = 100
             unit.morale = (unit.morale * 1.05).toInt().coerceAtMost(100)
@@ -353,9 +353,9 @@ class BattleExperienceParityTest {
     inner class StatExpOverflow {
 
         @Test
-        @DisplayName("strengthExp=999, pendingStatExp=5 -> coerceIn(0, 1000) = 1000")
+        @DisplayName("commandExp =999, pendingStatExp=5 -> coerceIn(0, 1000) = 1000")
         fun `strength exp capped at 1000`() {
-            val general = createGeneral(crewType = 1100, strengthExp = 999)  // FOOTMAN
+            val general = createGeneral(shipClass = 1100, commandExp = 999)  // FOOTMAN
             val unit = WarUnitOfficer(general)
             unit.pendingStatExp = 5
             unit.applyResults()
@@ -365,9 +365,9 @@ class BattleExperienceParityTest {
         }
 
         @Test
-        @DisplayName("intelExp=998, pendingStatExp=3 -> coerceIn(0, 1000) = 1000")
+        @DisplayName("intelligenceExp =998, pendingStatExp=3 -> coerceIn(0, 1000) = 1000")
         fun `intel exp capped at 1000`() {
-            val general = createGeneral(crewType = 1400, intelExp = 998)  // WIZARD
+            val general = createGeneral(shipClass = 1400, intelligenceExp = 998)  // WIZARD
             val unit = WarUnitOfficer(general)
             unit.pendingStatExp = 3
             unit.applyResults()
@@ -379,7 +379,7 @@ class BattleExperienceParityTest {
         @Test
         @DisplayName("leadershipExp=997, pendingStatExp=10 -> coerceIn(0, 1000) = 1000")
         fun `leadership exp capped at 1000`() {
-            val general = createGeneral(crewType = 1500, leadershipExp = 997)  // SIEGE
+            val general = createGeneral(shipClass = 1500, leadershipExp = 997)  // SIEGE
             val unit = WarUnitOfficer(general)
             unit.pendingStatExp = 10
             unit.applyResults()
@@ -399,15 +399,15 @@ class BattleExperienceParityTest {
         @DisplayName("resolveBattle with fixed seed produces deterministic pendingLevelExp and pendingStatExp")
         fun `full battle pipeline with fixed seed`() {
             val attackerGeneral = createGeneral(
-                id = 1, nationId = 1,
-                strength = 70, crew = 5000, crewType = 1100,  // FOOTMAN
-                train = 80, atmos = 80, rice = 50000,
+                id = 1, factionId = 1,
+                command = 70, ships = 5000, shipClass = 1100,  // FOOTMAN
+                training = 80, morale = 80, supplies = 50000,
                 experience = 0,
             )
             val defenderGeneral = createGeneral(
-                id = 2, nationId = 2,
-                strength = 60, crew = 3000, crewType = 1100,
-                train = 70, atmos = 70, rice = 30000,
+                id = 2, factionId = 2,
+                command = 60, ships = 3000, shipClass = 1100,
+                training = 70, morale = 70, supplies = 30000,
                 experience = 0,
             )
 
@@ -417,7 +417,7 @@ class BattleExperienceParityTest {
 
             val attacker = WarUnitOfficer(attackerGeneral)
             val defender = WarUnitOfficer(defenderGeneral)
-            val city = createCity(nationId = 2, def = 50, wall = 50)
+            val city = createCity(factionId = 2, orbitalDefense = 50, fortress = 50)
 
             val engine = BattleEngine()
             val result = engine.resolveBattle(
@@ -462,21 +462,21 @@ class BattleExperienceParityTest {
         @DisplayName("After applyResults, correct statExp field increased based on crewType")
         fun `applyResults writes pendingStatExp to correct statExp field`() {
             // FOOTMAN -> strengthExp
-            val footmanGeneral = createGeneral(crewType = 1100, strengthExp = 10)
+            val footmanGeneral = createGeneral(shipClass = 1100, commandExp = 10)
             val footmanUnit = WarUnitOfficer(footmanGeneral)
             footmanUnit.pendingStatExp = 3
             footmanUnit.applyResults()
             assertEquals(13, footmanGeneral.commandExp.toInt())
 
             // WIZARD -> intelExp
-            val wizardGeneral = createGeneral(crewType = 1400, intelExp = 20)
+            val wizardGeneral = createGeneral(shipClass = 1400, intelligenceExp = 20)
             val wizardUnit = WarUnitOfficer(wizardGeneral)
             wizardUnit.pendingStatExp = 5
             wizardUnit.applyResults()
             assertEquals(25, wizardGeneral.intelligenceExp.toInt())
 
             // SIEGE -> leadershipExp
-            val siegeGeneral = createGeneral(crewType = 1500, leadershipExp = 30)
+            val siegeGeneral = createGeneral(shipClass = 1500, leadershipExp = 30)
             val siegeUnit = WarUnitOfficer(siegeGeneral)
             siegeUnit.pendingStatExp = 2
             siegeUnit.applyResults()
@@ -487,19 +487,19 @@ class BattleExperienceParityTest {
         @DisplayName("Full pipeline reproducibility: same seed produces same exp values")
         fun `full pipeline is reproducible with same seed`() {
             // Run 1
-            val gen1 = createGeneral(id = 1, nationId = 1, strength = 70, crew = 5000, crewType = 1100, train = 80, atmos = 80, rice = 50000)
-            val def1 = createGeneral(id = 2, nationId = 2, strength = 60, crew = 3000, crewType = 1100, train = 70, atmos = 70, rice = 30000)
+            val gen1 = createGeneral(id = 1, factionId = 1, command = 70, ships = 5000, shipClass = 1100, training = 80, morale = 80, supplies = 50000)
+            val def1 = createGeneral(id = 2, factionId = 2, command = 60, ships = 3000, shipClass = 1100, training = 70, morale = 70, supplies = 30000)
             val atk1 = WarUnitOfficer(gen1)
             val defUnit1 = WarUnitOfficer(def1)
-            val city1 = createCity(nationId = 2, def = 50, wall = 50)
+            val city1 = createCity(factionId = 2, orbitalDefense = 50, fortress = 50)
             val result1 = BattleEngine().resolveBattle(atk1, listOf(defUnit1), city1, Random(42))
 
             // Run 2: identical inputs, same seed
-            val gen2 = createGeneral(id = 1, nationId = 1, strength = 70, crew = 5000, crewType = 1100, train = 80, atmos = 80, rice = 50000)
-            val def2 = createGeneral(id = 2, nationId = 2, strength = 60, crew = 3000, crewType = 1100, train = 70, atmos = 70, rice = 30000)
+            val gen2 = createGeneral(id = 1, factionId = 1, command = 70, ships = 5000, shipClass = 1100, training = 80, morale = 80, supplies = 50000)
+            val def2 = createGeneral(id = 2, factionId = 2, command = 60, ships = 3000, shipClass = 1100, training = 70, morale = 70, supplies = 30000)
             val atk2 = WarUnitOfficer(gen2)
             val defUnit2 = WarUnitOfficer(def2)
-            val city2 = createCity(nationId = 2, def = 50, wall = 50)
+            val city2 = createCity(factionId = 2, orbitalDefense = 50, fortress = 50)
             val result2 = BattleEngine().resolveBattle(atk2, listOf(defUnit2), city2, Random(42))
 
             // Both runs should produce identical experience values

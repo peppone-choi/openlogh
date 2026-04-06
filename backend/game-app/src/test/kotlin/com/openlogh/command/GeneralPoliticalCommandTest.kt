@@ -40,21 +40,21 @@ class GeneralPoliticalCommandTest {
     private fun createTestGeneral(
         id: Long = 1,
         name: String? = null,
-        gold: Int = 1000,
-        rice: Int = 1000,
-        crew: Int = 0,
-        crewType: Short = 0,
-        train: Short = 0,
-        atmos: Short = 0,
+        funds: Int = 1000,
+        supplies: Int = 1000,
+        ships: Int = 0,
+        shipClass: Short = 0,
+        training: Short = 0,
+        morale: Short = 0,
         leadership: Short = 50,
-        strength: Short = 50,
-        intel: Short = 50,
+        command: Short = 50,
+        intelligence: Short = 50,
         politics: Short = 50,
-        charm: Short = 50,
-        nationId: Long = 1,
-        cityId: Long = 1,
+        administration: Short = 50,
+        factionId: Long = 1,
+        planetId: Long = 1,
         officerLevel: Short = 0,
-        troopId: Long = 0,
+        fleetId: Long = 0,
         experience: Int = 0,
         dedication: Int = 0,
         age: Short = 20,
@@ -64,30 +64,30 @@ class GeneralPoliticalCommandTest {
         betray: Short = 0,
         specialCode: String = "None",
         special2Code: String = "None",
-        weaponCode: String = "None",
-        bookCode: String = "None",
-        horseCode: String = "None",
-        itemCode: String = "None",
+        flagshipCode: String = "None",
+        equipCode: String = "None",
+        engineCode: String = "None",
+        accessoryCode: String = "None",
     ): Officer {
         return Officer(
             id = id,
             sessionId = 1,
             name = name ?: "테스트장수$id",
-            factionId = nationId,
-            planetId = cityId,
-            funds = gold,
-            supplies = rice,
-            ships = crew,
-            shipClass = crewType,
-            training = train,
-            morale = atmos,
+            factionId = factionId,
+            planetId = planetId,
+            funds = funds,
+            supplies = supplies,
+            ships = ships,
+            shipClass = shipClass,
+            training = training,
+            morale = morale,
             leadership = leadership,
-            command = strength,
-            intelligence = intel,
+            command = command,
+            intelligence = intelligence,
             politics = politics,
-            administration = charm,
+            administration = administration,
             officerLevel = officerLevel,
-            fleetId = troopId,
+            fleetId = fleetId,
             experience = experience,
             dedication = dedication,
             age = age,
@@ -97,38 +97,38 @@ class GeneralPoliticalCommandTest {
             betray = betray,
             specialCode = specialCode,
             special2Code = special2Code,
-            flagshipCode = weaponCode,
-            equipCode = bookCode,
-            engineCode = horseCode,
-            accessoryCode = itemCode,
+            flagshipCode = flagshipCode,
+            equipCode = equipCode,
+            engineCode = engineCode,
+            accessoryCode = accessoryCode,
             turnTime = OffsetDateTime.now(),
         )
     }
 
     private fun createTestCity(
         id: Long = 1,
-        nationId: Long = 1,
+        factionId: Long = 1,
         supplyState: Short = 1,
         name: String = "허창",
-        pop: Int = 10000,
-        secu: Int = 500,
+        population: Int = 10000,
+        security: Int = 500,
     ): Planet {
         return Planet(
             id = id,
             sessionId = 1,
             name = name,
-            factionId = nationId,
+            factionId = factionId,
             production = 500,
             productionMax = 1000,
             commerce = 500,
             commerceMax = 1000,
-            security = secu,
+            security = security,
             securityMax = 1000,
             orbitalDefense = 500,
             orbitalDefenseMax = 1000,
             fortress = 500,
             fortressMax = 1000,
-            population = pop,
+            population = population,
             populationMax = 50000,
             approval = 80f,
             supplyState = supplyState,
@@ -140,19 +140,19 @@ class GeneralPoliticalCommandTest {
         id: Long = 1,
         name: String? = null,
         level: Short = 1,
-        gold: Int = 10000,
-        rice: Int = 10000,
-        capitalCityId: Long? = 1,
+        funds: Int = 10000,
+        supplies: Int = 10000,
+        capitalPlanetId: Long? = 1,
     ): Faction {
         return Faction(
             id = id,
             sessionId = 1,
             name = name ?: "테스트국가$id",
             color = "#FF0000",
-            funds = gold,
-            supplies = rice,
+            funds = funds,
+            supplies = supplies,
             factionRank = level,
-            capitalPlanetId = capitalCityId,
+            capitalPlanetId = capitalPlanetId,
         )
     }
 
@@ -190,7 +190,7 @@ class GeneralPoliticalCommandTest {
 
         `when`(officerRepository.findBySessionId(1L)).thenReturn(allGenerals)
         `when`(factionRepository.findBySessionId(1L)).thenReturn(allNations)
-        `when`(factionRepository.save(org.mockito.Mockito.any(Nation::class.java))).thenAnswer { it.arguments[0] as Faction }
+        `when`(factionRepository.save(org.mockito.Mockito.any(Faction::class.java))).thenAnswer { it.arguments[0] as Faction }
 
         for ((nId, gens) in nationGeneralsMap) {
             `when`(officerRepository.findByFactionId(nId)).thenReturn(gens)
@@ -214,12 +214,12 @@ class GeneralPoliticalCommandTest {
 
         @Test
         fun `등용 golden value -- statChanges match PHP trace`() {
-            // Fixture: 유비 tries to recruit 관우 (nationId=2, exp=1000, ded=1000)
-            val general = createTestGeneral(id = 1, name = "유비", gold = 2000, nationId = 1, cityId = 1)
-            val destGen = createTestGeneral(id = 2, name = "관우", nationId = 2, experience = 1000, dedication = 1000)
+            // Fixture: 유비 tries to recruit 관우 (factionId=2, exp=1000, ded=1000)
+            val general = createTestGeneral(id = 1, name = "유비", funds = 2000, factionId = 1, planetId = 1)
+            val destGen = createTestGeneral(id = 2, name = "관우", factionId = 2, experience = 1000, dedication = 1000)
             val env = createTestEnv(develCost = 100)
             val cmd = 등용(general, env, mapOf("destGeneralID" to 2L))
-            cmd.city = createTestCity(nationId = 1)
+            cmd.city = createTestCity(factionId = 1)
             cmd.nation = createTestNation(id = 1, name = "촉")
             cmd.destOfficer = destGen
             cmd.services = createMockServices()
@@ -245,11 +245,11 @@ class GeneralPoliticalCommandTest {
 
         @Test
         fun `등용 constraint -- cannot recruit lord`() {
-            val general = createTestGeneral(nationId = 1)
+            val general = createTestGeneral(factionId = 1)
             val env = createTestEnv()
             val cmd = 등용(general, env, mapOf("destGeneralID" to 2L))
-            cmd.city = createTestCity(nationId = 1)
-            cmd.destOfficer = createTestGeneral(id = 2, nationId = 2, officerLevel = 20)
+            cmd.city = createTestCity(factionId = 1)
+            cmd.destOfficer = createTestGeneral(id = 2, factionId = 2, officerLevel = 20)
 
             val cond = cmd.checkFullCondition()
             assertTrue(cond is ConstraintResult.Fail)
@@ -258,11 +258,11 @@ class GeneralPoliticalCommandTest {
 
         @Test
         fun `등용 constraint -- cannot recruit same nation general`() {
-            val general = createTestGeneral(nationId = 1)
+            val general = createTestGeneral(factionId = 1)
             val env = createTestEnv()
             val cmd = 등용(general, env, mapOf("destGeneralID" to 2L))
-            cmd.city = createTestCity(nationId = 1)
-            cmd.destOfficer = createTestGeneral(id = 2, nationId = 1)
+            cmd.city = createTestCity(factionId = 1)
+            cmd.destOfficer = createTestGeneral(id = 2, factionId = 1)
 
             val cond = cmd.checkFullCondition()
             assertTrue(cond is ConstraintResult.Fail)
@@ -277,13 +277,13 @@ class GeneralPoliticalCommandTest {
         fun `등용수락 golden value -- neutral general joins nation`() {
             // 방랑 장수가 등용 수락 → 국가 가입
             val general = createTestGeneral(
-                id = 1, name = "조운", nationId = 0, troopId = 0,
-                gold = 1500, rice = 1400, experience = 500, dedication = 300,
+                id = 1, name = "조운", factionId = 0, fleetId = 0,
+                funds = 1500, supplies = 1400, experience = 500, dedication = 300,
                 npcState = 0, betray = 0,
             )
             val env = createTestEnv()
             val cmd = 등용수락(general, env)
-            cmd.destFaction = createTestNation(id = 2, name = "촉", capitalCityId = 3)
+            cmd.destFaction = createTestNation(id = 2, name = "촉", capitalPlanetId = 3)
 
             assertTrue(cmd.checkFullCondition() is ConstraintResult.Pass)
             val result = runBlocking { cmd.run(freshRng()) }
@@ -307,7 +307,7 @@ class GeneralPoliticalCommandTest {
             assertEquals(100, rc["experience"].asInt())
             assertEquals(100, rc["dedication"].asInt())
 
-            // troopDisband = false (troopId=0 != id=1)
+            // troopDisband = false (fleetId=0 != id=1)
             assertFalse(json["troopDisband"].asBoolean())
 
             // Color-tagged log with josa: "조운" ends with 운(종성 ㄴ) → "이"
@@ -319,13 +319,13 @@ class GeneralPoliticalCommandTest {
         @Test
         fun `등용수락 golden value -- betrayal penalty for affiliated general`() {
             val general = createTestGeneral(
-                id = 1, name = "여포", nationId = 3, troopId = 0,
-                gold = 2000, rice = 2500, experience = 1000, dedication = 800,
+                id = 1, name = "여포", factionId = 3, fleetId = 0,
+                funds = 2000, supplies = 2500, experience = 1000, dedication = 800,
                 betray = 2,
             )
             val env = createTestEnv()
             val cmd = 등용수락(general, env)
-            cmd.destFaction = createTestNation(id = 5, name = "위", capitalCityId = 7)
+            cmd.destFaction = createTestNation(id = 5, name = "위", capitalPlanetId = 7)
 
             val result = runBlocking { cmd.run(freshRng()) }
             assertTrue(result.success)
@@ -338,10 +338,10 @@ class GeneralPoliticalCommandTest {
             // ded = floor(800 * 0.8) = 640
             assertEquals(800, sc["experience"].asInt(), "experience with betrayal penalty")
             assertEquals(640, sc["dedication"].asInt(), "dedication with betrayal penalty")
-            // Return gold: 2000 - 1000 = 1000 returned
+            // Return funds: 2000 - 1000 = 1000 returned
             assertEquals(1000, sc["gold"].asInt(), "gold capped to 1000")
             assertEquals(1000, sc["returnGold"].asInt(), "return excess gold to nation")
-            // Return rice: 2500 - 1000 = 1500 returned
+            // Return supplies: 2500 - 1000 = 1500 returned
             assertEquals(1000, sc["rice"].asInt(), "rice capped to 1000")
             assertEquals(1500, sc["returnRice"].asInt(), "return excess rice to nation")
             // betray incremented: min(2+1, 10) = 3
@@ -354,17 +354,17 @@ class GeneralPoliticalCommandTest {
     inner class 임관Test {
 
         @Test
-        fun `임관 golden value -- small nation exp bonus and gennum increment`() {
-            val general = createTestGeneral(id = 1, name = "장비", nationId = 0, makeLimit = 0)
+        fun `임관 golden value -- small nation exp bonus and officerCount increment`() {
+            val general = createTestGeneral(id = 1, name = "장비", factionId = 0, makeLimit = 0)
             val env = createTestEnv()
-            val destFaction = createTestNation(id = 3, name = "촉").apply { gennum = 5 }
+            val destFaction = createTestNation(id = 3, name = "촉").apply { officerCount = 5 }
             val cmd = 임관(general, env)
             cmd.destFaction = destFaction
             cmd.services = createMockServices(
                 allNations = listOf(destFaction),
                 nationGeneralsMap = mapOf(3L to listOf(
-                    createTestGeneral(id = 100, nationId = 3),
-                    createTestGeneral(id = 101, nationId = 3),
+                    createTestGeneral(id = 100, factionId = 3),
+                    createTestGeneral(id = 101, factionId = 3),
                 )),
             )
 
@@ -375,7 +375,7 @@ class GeneralPoliticalCommandTest {
             val json = mapper.readTree(result.message)
             val sc = json["statChanges"]
 
-            // gennum=2 (from findByNationId) < 8 → exp = 700
+            // officerCount=2 (from findByNationId) < 8 → exp = 700
             assertEquals(700, sc["experience"].asInt(), "small nation exp bonus")
             assertEquals(3, sc["nation"].asInt())
             assertEquals(1, sc["officerLevel"].asInt())
@@ -383,8 +383,8 @@ class GeneralPoliticalCommandTest {
             assertEquals(1, sc["belong"].asInt())
             assertEquals(0, sc["troop"].asInt())
 
-            // Entity mutation: gennum incremented
-            assertEquals(6, destFaction.officerCount, "nation gennum incremented")
+            // Entity mutation: officerCount incremented
+            assertEquals(6, destFaction.officerCount, "nation officerCount incremented")
 
             // moveToCityOfLord and inheritanceBonus
             assertTrue(json["moveToCityOfLord"].asBoolean())
@@ -399,7 +399,7 @@ class GeneralPoliticalCommandTest {
 
         @Test
         fun `임관 golden value -- large nation exp lower`() {
-            val general = createTestGeneral(nationId = 0)
+            val general = createTestGeneral(factionId = 0)
             val env = createTestEnv()
             val destFaction = createTestNation(id = 4, name = "위")
             val cmd = 임관(general, env)
@@ -408,7 +408,7 @@ class GeneralPoliticalCommandTest {
             cmd.services = createMockServices(
                 allNations = listOf(destFaction),
                 nationGeneralsMap = mapOf(4L to (1L..10L).map {
-                    createTestGeneral(id = it + 200, nationId = 4)
+                    createTestGeneral(id = it + 200, factionId = 4)
                 }),
             )
 
@@ -427,16 +427,16 @@ class GeneralPoliticalCommandTest {
         @Test
         fun `랜덤임관 golden value -- deterministic nation selection by affinity`() {
             val general = createTestGeneral(
-                id = 1, name = "관우", nationId = 0, makeLimit = 0,
+                id = 1, name = "관우", factionId = 0, makeLimit = 0,
                 npcState = 2, affinity = 20,
             )
             val env = createTestEnv(scenario = 1500)
             val cmd = 랜덤임관(general, env)
 
-            val nationA = createTestNation(id = 10, name = "촉", capitalCityId = 101).apply { gennum = 2; scoutLevel = 0 }
-            val nationB = createTestNation(id = 11, name = "위", capitalCityId = 102).apply { gennum = 3; scoutLevel = 0 }
-            val lordA = createTestGeneral(id = 1001, nationId = 10, officerLevel = 20, cityId = 201, affinity = 22)
-            val lordB = createTestGeneral(id = 1002, nationId = 11, officerLevel = 20, cityId = 202, affinity = 120)
+            val nationA = createTestNation(id = 10, name = "촉", capitalPlanetId = 101).apply { officerCount = 2; scoutLevel = 0 }
+            val nationB = createTestNation(id = 11, name = "위", capitalPlanetId = 102).apply { officerCount = 3; scoutLevel = 0 }
+            val lordA = createTestGeneral(id = 1001, factionId = 10, officerLevel = 20, planetId = 201, affinity = 22)
+            val lordB = createTestGeneral(id = 1002, factionId = 11, officerLevel = 20, planetId = 202, affinity = 120)
             cmd.services = createMockServices(
                 allNations = listOf(nationA, nationB),
                 allGenerals = listOf(lordA, lordB),
@@ -455,9 +455,9 @@ class GeneralPoliticalCommandTest {
             assertEquals(0, sc["officerPlanet"].asInt())
             assertEquals(1, sc["belong"].asInt())
             assertEquals(0, sc["troop"].asInt())
-            // cityId should be lord's city
-            assertEquals("201", sc["cityId"].asText(), "move to lord's city")
-            // gennum=2 < 5(initialNationGenLimit) → exp = 700
+            // planetId should be lord's city
+            assertEquals("201", sc["planetId"].asText(), "move to lord's city")
+            // officerCount=2 < 5(initialNationGenLimit) → exp = 700
             assertEquals(700, sc["experience"].asInt(), "small nation exp bonus")
 
             assertTrue(json["tryUniqueLottery"].asBoolean())
@@ -470,7 +470,7 @@ class GeneralPoliticalCommandTest {
 
         @Test
         fun `랜덤임관 golden value -- fail when no eligible nation exists`() {
-            val general = createTestGeneral(nationId = 0, makeLimit = 0)
+            val general = createTestGeneral(factionId = 0, makeLimit = 0)
             val env = createTestEnv()
             val cmd = 랜덤임관(general, env)
 
@@ -491,17 +491,17 @@ class GeneralPoliticalCommandTest {
     inner class 장수대상임관Test {
 
         @Test
-        fun `장수대상임관 golden value -- dest general city and gennum`() {
-            val general = createTestGeneral(id = 1, name = "마초", nationId = 0, makeLimit = 0)
+        fun `장수대상임관 golden value -- dest general city and officerCount`() {
+            val general = createTestGeneral(id = 1, name = "마초", factionId = 0, makeLimit = 0)
             val env = createTestEnv()
-            val destFaction = createTestNation(id = 4, name = "촉", capitalCityId = 9).apply { gennum = 3 }
+            val destFaction = createTestNation(id = 4, name = "촉", capitalPlanetId = 9).apply { officerCount = 3 }
             val cmd = 장수대상임관(general, env)
             cmd.destFaction = destFaction
-            cmd.destOfficer = createTestGeneral(id = 2, name = "유비", cityId = 7, nationId = 4)
+            cmd.destOfficer = createTestGeneral(id = 2, name = "유비", planetId = 7, factionId = 4)
             cmd.services = createMockServices(
                 allNations = listOf(destFaction),
                 nationGeneralsMap = mapOf(4L to listOf(
-                    createTestGeneral(id = 100, nationId = 4),
+                    createTestGeneral(id = 100, factionId = 4),
                 )),
             )
 
@@ -521,8 +521,8 @@ class GeneralPoliticalCommandTest {
             assertEquals(0, sc["officerPlanet"].asInt())
             assertEquals(1, sc["belong"].asInt())
 
-            // Entity mutation: gennum incremented
-            assertEquals(4, destFaction.officerCount, "nation gennum incremented")
+            // Entity mutation: officerCount incremented
+            assertEquals(4, destFaction.officerCount, "nation officerCount incremented")
 
             // Color-tagged log with josa: "마초" ends with 초(종성 없음) → "가"
             assertTrue(result.logs.any { it.contains("<Y>마초</>가") },
@@ -536,7 +536,7 @@ class GeneralPoliticalCommandTest {
 
         @Test
         fun `건국 golden value -- General City Nation 3-entity mutation`() {
-            val general = createTestGeneral(id = 1, name = "조조", nationId = 0, cityId = 5, officerLevel = 0)
+            val general = createTestGeneral(id = 1, name = "조조", factionId = 0, planetId = 5, officerLevel = 0)
             val env = createTestEnv(year = 200, month = 2, startYear = 190)
             val cmd = 건국(general, env, mapOf(
                 "factionName" to "위",
@@ -544,7 +544,7 @@ class GeneralPoliticalCommandTest {
                 "nationType" to "che_군벌",
                 "colorType" to 3,
             ))
-            cmd.city = createTestCity(id = 5, name = "허창", nationId = 0)
+            cmd.city = createTestCity(id = 5, name = "허창", factionId = 0)
             cmd.nation = createTestNation(id = 0, level = 0)
 
             val result = runBlocking { cmd.run(freshRng()) }
@@ -564,7 +564,7 @@ class GeneralPoliticalCommandTest {
             assertEquals("che_군벌", nc["nationType"].asText())
             assertEquals(3, nc["colorType"].asInt())
             assertEquals(1, nc["level"].asInt())
-            assertEquals(5, nc["capital"].asLong(), "capital = general's cityId")
+            assertEquals(5, nc["capital"].asLong(), "capital = general's planetId")
             assertEquals(1, nc["can_국기변경"].asInt())
 
             // cityChanges
@@ -588,11 +588,11 @@ class GeneralPoliticalCommandTest {
 
         @Test
         fun `건국 constraint -- fails during first turn`() {
-            val general = createTestGeneral(nationId = 0, cityId = 1)
+            val general = createTestGeneral(factionId = 0, planetId = 1)
             // year=190, month=1, startYear=190 → yearMonth=2281 <= initYearMonth=2281
             val env = createTestEnv(year = 190, month = 1, startYear = 190)
             val cmd = 건국(general, env, mapOf("factionName" to "신국"))
-            cmd.city = createTestCity(nationId = 0)
+            cmd.city = createTestCity(factionId = 0)
             cmd.nation = createTestNation(level = 0)
 
             val result = runBlocking { cmd.run(freshRng()) }
@@ -608,7 +608,7 @@ class GeneralPoliticalCommandTest {
 
         @Test
         fun `무작위건국 golden value -- deterministic city selection and multi-entity`() {
-            val general = createTestGeneral(id = 1, name = "손견", nationId = 0, cityId = 1, officerLevel = 0)
+            val general = createTestGeneral(id = 1, name = "손견", factionId = 0, planetId = 1, officerLevel = 0)
             val env = createTestEnv(year = 200, month = 2, startYear = 190)
             val cmd = 무작위건국(general, env, mapOf(
                 "factionName" to "오",
@@ -655,7 +655,7 @@ class GeneralPoliticalCommandTest {
 
         @Test
         fun `무작위건국 fails during first turn`() {
-            val general = createTestGeneral(nationId = 0)
+            val general = createTestGeneral(factionId = 0)
             val env = createTestEnv(year = 190, month = 1, startYear = 190)
             val cmd = 무작위건국(general, env, mapOf("factionName" to "신국"))
 
@@ -673,10 +673,10 @@ class GeneralPoliticalCommandTest {
         @Test
         fun `모반시도 golden value -- success case entity mutations`() {
             // 모반시도 run() always succeeds (constraint handles eligibility)
-            val general = createTestGeneral(id = 1, name = "사마의", nationId = 1, officerLevel = 12)
+            val general = createTestGeneral(id = 1, name = "사마의", factionId = 1, officerLevel = 12)
             val env = createTestEnv()
             val cmd = 모반시도(general, env)
-            cmd.city = createTestCity(nationId = 1)
+            cmd.city = createTestCity(factionId = 1)
             cmd.nation = createTestNation(id = 1, name = "위")
 
             val result = runBlocking { cmd.run(freshRng()) }
@@ -711,10 +711,10 @@ class GeneralPoliticalCommandTest {
 
         @Test
         fun `모반시도 constraint -- lord cannot rebel`() {
-            val general = createTestGeneral(nationId = 1, officerLevel = 20)
+            val general = createTestGeneral(factionId = 1, officerLevel = 20)
             val env = createTestEnv()
             val cmd = 모반시도(general, env)
-            cmd.city = createTestCity(nationId = 1)
+            cmd.city = createTestCity(factionId = 1)
             cmd.nation = createTestNation(id = 1)
 
             val cond = cmd.checkFullCondition()
@@ -730,8 +730,8 @@ class GeneralPoliticalCommandTest {
         @Test
         fun `인재탐색 golden value -- NPC not found case`() {
             val general = createTestGeneral(
-                id = 1, name = "유비", gold = 500,
-                leadership = 80, strength = 60, intel = 70,
+                id = 1, name = "유비", funds = 500,
+                leadership = 80, command = 60, intelligence = 70,
             )
             // High general count → foundProp very low → most likely not found
             val env = createTestEnv(develCost = 100, gameStor = mutableMapOf(
@@ -751,7 +751,7 @@ class GeneralPoliticalCommandTest {
             assertEquals(100, sc["experience"].asInt(), "not-found exp parity")
             assertEquals(70, sc["dedication"].asInt(), "not-found ded parity")
 
-            // Weighted stat: leadership=80, strength=60, intel=70, total=210
+            // Weighted stat: leadership=80, command =60, intelligence =70, total=210
             // rng.nextInt(210) deterministic → check which stat gets +1
             assertTrue(
                 sc.has("leadershipExp") || sc.has("strengthExp") || sc.has("intelExp"),
@@ -766,8 +766,8 @@ class GeneralPoliticalCommandTest {
         @Test
         fun `인재탐색 golden value -- NPC found case`() {
             val general = createTestGeneral(
-                id = 1, name = "조조", gold = 500,
-                leadership = 50, strength = 50, intel = 50,
+                id = 1, name = "조조", funds = 500,
+                leadership = 50, command = 50, intelligence = 50,
             )
             // Very low general count → foundProp high → very likely found
             val env = createTestEnv(develCost = 100, gameStor = mutableMapOf(
@@ -806,11 +806,11 @@ class GeneralPoliticalCommandTest {
 
         @Test
         fun `증여 golden value -- gold transfer with multi-entity assertion`() {
-            val general = createTestGeneral(id = 1, name = "유비", nationId = 1, cityId = 1, gold = 2000, rice = 2000)
-            val destGen = createTestGeneral(id = 2, name = "관우", nationId = 1, cityId = 1)
+            val general = createTestGeneral(id = 1, name = "유비", factionId = 1, planetId = 1, funds = 2000, supplies = 2000)
+            val destGen = createTestGeneral(id = 2, name = "관우", factionId = 1, planetId = 1)
             val env = createTestEnv()
             val cmd = 증여(general, env, mapOf("isGold" to true, "amount" to 500))
-            cmd.city = createTestCity(nationId = 1)
+            cmd.city = createTestCity(factionId = 1)
             cmd.destOfficer = destGen
 
             assertTrue(cmd.checkFullCondition() is ConstraintResult.Pass)
@@ -826,7 +826,7 @@ class GeneralPoliticalCommandTest {
 
             // destGeneralChanges
             val dgc = json["destGeneralChanges"]
-            assertEquals("2", dgc["generalId"].asText())
+            assertEquals("2", dgc["officerId"].asText())
             assertEquals(500, dgc["gold"].asInt(), "dest general receives gold")
 
             // Color-tagged log with amount formatting
@@ -838,11 +838,11 @@ class GeneralPoliticalCommandTest {
         fun `증여 golden value -- rice transfer clamped to available amount`() {
             // general has 600 rice, minimum reserve=100, max giveable = 500
             // request 1000 → clamped to 500
-            val general = createTestGeneral(nationId = 1, cityId = 1, gold = 2000, rice = 600)
+            val general = createTestGeneral(factionId = 1, planetId = 1, funds = 2000, supplies = 600)
             val env = createTestEnv()
             val cmd = 증여(general, env, mapOf("isGold" to false, "amount" to 1000))
-            cmd.city = createTestCity(nationId = 1)
-            cmd.destOfficer = createTestGeneral(id = 2, nationId = 1, cityId = 1)
+            cmd.city = createTestCity(factionId = 1)
+            cmd.destOfficer = createTestGeneral(id = 2, factionId = 1, planetId = 1)
 
             val result = runBlocking { cmd.run(freshRng()) }
             assertTrue(result.success)
@@ -858,11 +858,11 @@ class GeneralPoliticalCommandTest {
 
         @Test
         fun `장비매매 golden value -- buy weapon`() {
-            val general = createTestGeneral(id = 1, name = "관우", gold = 5000)
+            val general = createTestGeneral(id = 1, name = "관우", funds = 5000)
             val env = createTestEnv()
             // Buy "che_무기_01_단도" (grade=1, cost=1000)
             val cmd = 장비매매(general, env, mapOf("itemType" to "weapon", "itemCode" to "che_무기_01_단도"))
-            cmd.city = createTestCity(nationId = 1)
+            cmd.city = createTestCity(factionId = 1)
 
             val result = runBlocking { cmd.run(freshRng()) }
             assertTrue(result.success)
@@ -884,8 +884,8 @@ class GeneralPoliticalCommandTest {
         @Test
         fun `장비매매 golden value -- sell weapon`() {
             val general = createTestGeneral(
-                id = 1, name = "조운", gold = 1000,
-                weaponCode = "che_무기_01_단도",
+                id = 1, name = "조운", funds = 1000,
+                flagshipCode = "che_무기_01_단도",
             )
             val env = createTestEnv()
             val cmd = 장비매매(general, env, mapOf("itemType" to "weapon", "itemCode" to "None"))
@@ -906,7 +906,7 @@ class GeneralPoliticalCommandTest {
 
         @Test
         fun `장비매매 fails without args`() {
-            val general = createTestGeneral(gold = 5000)
+            val general = createTestGeneral(funds = 5000)
             val env = createTestEnv()
             val cmd = 장비매매(general, env)
 
@@ -925,9 +925,9 @@ class GeneralPoliticalCommandTest {
         @Test
         fun `하야 golden value -- betrayal penalty and resource return`() {
             val general = createTestGeneral(
-                id = 1, name = "여포", nationId = 1, officerLevel = 5,
-                gold = 3000, rice = 2500, experience = 1000, dedication = 800,
-                betray = 1, troopId = 0,
+                id = 1, name = "여포", factionId = 1, officerLevel = 5,
+                funds = 3000, supplies = 2500, experience = 1000, dedication = 800,
+                betray = 1, fleetId = 0,
             )
             val env = createTestEnv()
             val cmd = 하야(general, env)
@@ -1020,8 +1020,8 @@ class GeneralPoliticalCommandTest {
 
         @Test
         fun `선양 golden value -- lord transfer multi-entity`() {
-            val general = createTestGeneral(id = 1, name = "유비", nationId = 1, officerLevel = 20)
-            val destGen = createTestGeneral(id = 2, name = "유선", nationId = 1)
+            val general = createTestGeneral(id = 1, name = "유비", factionId = 1, officerLevel = 20)
+            val destGen = createTestGeneral(id = 2, name = "유선", factionId = 1)
             val env = createTestEnv()
             val cmd = 선양(general, env)
             cmd.nation = createTestNation(id = 1, name = "촉")
@@ -1044,7 +1044,7 @@ class GeneralPoliticalCommandTest {
 
             // destGeneralChanges: new lord
             val dgc = json["destGeneralChanges"]
-            assertEquals(2, dgc["generalId"].asLong())
+            assertEquals(2, dgc["officerId"].asLong())
             assertEquals(20, dgc["officerLevel"].asInt(), "new lord level 20")
             assertEquals(0, dgc["officerPlanet"].asInt())
 
@@ -1057,9 +1057,9 @@ class GeneralPoliticalCommandTest {
 
         @Test
         fun `선양 constraint -- non-lord cannot abdicate`() {
-            val general = createTestGeneral(nationId = 1, officerLevel = 11)
+            val general = createTestGeneral(factionId = 1, officerLevel = 11)
             val cmd = 선양(general, createTestEnv())
-            cmd.destOfficer = createTestGeneral(id = 2, nationId = 1)
+            cmd.destOfficer = createTestGeneral(id = 2, factionId = 1)
             assertTrue(cmd.checkFullCondition() is ConstraintResult.Fail)
         }
     }
@@ -1070,7 +1070,7 @@ class GeneralPoliticalCommandTest {
 
         @Test
         fun `해산 golden value -- disband nation and resource caps`() {
-            val general = createTestGeneral(id = 1, name = "원소", nationId = 1, officerLevel = 20)
+            val general = createTestGeneral(id = 1, name = "원소", factionId = 1, officerLevel = 20)
             val env = createTestEnv(year = 191, month = 2, startYear = 190)
             val cmd = 해산(general, env)
             cmd.nation = createTestNation(id = 1, name = "기", level = 0)
@@ -1287,7 +1287,7 @@ class GeneralPoliticalCommandTest {
         @Test
         fun `CR건국 parity -- nation foundation with city claim`() {
             val general = createTestGeneral(
-                id = 1, name = "유비", officerLevel = 0, nationId = 0, cityId = 1,
+                id = 1, name = "유비", officerLevel = 0, factionId = 0, planetId = 1,
             )
             val env = createTestEnv(year = 200, month = 2, startYear = 190)
             val cmd = CR건국(general, env, mapOf(
@@ -1296,7 +1296,7 @@ class GeneralPoliticalCommandTest {
                 "colorType" to 2,
             ))
             cmd.nation = createTestNation(level = 0)
-            cmd.city = createTestCity(id = 1, name = "성도", nationId = 0)
+            cmd.city = createTestCity(id = 1, name = "성도", factionId = 0)
 
             val result = runBlocking { cmd.run(freshRng()) }
             assertTrue(result.success)
@@ -1307,7 +1307,7 @@ class GeneralPoliticalCommandTest {
             assertEquals("촉한", nf["name"].asText())
             assertEquals("che_왕도", nf["type"].asText())
             assertEquals(2, nf["colorType"].asInt())
-            assertEquals(1, nf["capitalCityId"].asLong())
+            assertEquals(1, nf["capitalPlanetId"].asLong())
 
             assertEquals(1000, json["statChanges"]["experience"].asInt())
             assertEquals(1000, json["statChanges"]["dedication"].asInt())
@@ -1321,10 +1321,10 @@ class GeneralPoliticalCommandTest {
 
         @Test
         fun `CR건국 fails during first turn`() {
-            val general = createTestGeneral(nationId = 0, cityId = 1)
+            val general = createTestGeneral(factionId = 0, planetId = 1)
             val env = createTestEnv(year = 190, month = 1, startYear = 190)
             val cmd = CR건국(general, env, mapOf("factionName" to "신국"))
-            cmd.city = createTestCity(nationId = 0)
+            cmd.city = createTestCity(factionId = 0)
 
             val result = runBlocking { cmd.run(freshRng()) }
             assertFalse(result.success)
@@ -1338,13 +1338,13 @@ class GeneralPoliticalCommandTest {
         @Test
         fun `CR맹훈련 parity -- train and atmos gain golden value`() {
             val general = createTestGeneral(
-                id = 1, name = "관우", nationId = 1,
-                crew = 1000, train = 50, atmos = 60,
-                leadership = 80, crewType = 1,
+                id = 1, name = "관우", factionId = 1,
+                ships = 1000, training = 50, morale = 60,
+                leadership = 80, shipClass = 1,
             )
             val env = createTestEnv()
             val cmd = CR맹훈련(general, env)
-            cmd.city = createTestCity(nationId = 1)
+            cmd.city = createTestCity(factionId = 1)
 
             assertTrue(cmd.checkFullCondition() is ConstraintResult.Pass)
             val result = runBlocking { cmd.run(freshRng()) }

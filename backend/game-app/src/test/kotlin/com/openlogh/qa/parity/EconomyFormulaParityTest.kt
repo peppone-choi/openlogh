@@ -75,30 +75,30 @@ class EconomyFormulaParityTest {
 
     private fun wireRepos() {
         `when`(planetRepository.findBySessionId(ArgumentMatchers.anyLong())).thenAnswer { inv ->
-            val worldId = inv.arguments[0] as Long
-            cities.values.filter { it.sessionId == worldId }.map { it.toSnapshot().toEntity() }
+            val sessionId = inv.arguments[0] as Long
+            cities.values.filter { it.sessionId == sessionId }.map { it.toSnapshot().toEntity() }
         }
         `when`(factionRepository.findBySessionId(ArgumentMatchers.anyLong())).thenAnswer { inv ->
-            val worldId = inv.arguments[0] as Long
-            nations.values.filter { it.sessionId == worldId }.map { it.toSnapshot().toEntity() }
+            val sessionId = inv.arguments[0] as Long
+            nations.values.filter { it.sessionId == sessionId }.map { it.toSnapshot().toEntity() }
         }
         `when`(officerRepository.findBySessionId(ArgumentMatchers.anyLong())).thenAnswer { inv ->
-            val worldId = inv.arguments[0] as Long
-            generals.values.filter { it.sessionId == worldId }.map { it.toSnapshot().toEntity() }
+            val sessionId = inv.arguments[0] as Long
+            generals.values.filter { it.sessionId == sessionId }.map { it.toSnapshot().toEntity() }
         }
         `when`(officerRepository.findBySessionIdAndPlanetIdIn(ArgumentMatchers.anyLong(), ArgumentMatchers.anyList()))
             .thenReturn(emptyList())
-        `when`(planetRepository.save(ArgumentMatchers.any(City::class.java))).thenAnswer { inv ->
+        `when`(planetRepository.save(ArgumentMatchers.any(Planet::class.java))).thenAnswer { inv ->
             val city = inv.arguments[0] as Planet
             cities[city.id] = city.toSnapshot().toEntity()
             city
         }
-        `when`(factionRepository.save(ArgumentMatchers.any(Nation::class.java))).thenAnswer { inv ->
+        `when`(factionRepository.save(ArgumentMatchers.any(Faction::class.java))).thenAnswer { inv ->
             val nation = inv.arguments[0] as Faction
             nations[nation.id] = nation.toSnapshot().toEntity()
             nation
         }
-        `when`(officerRepository.save(ArgumentMatchers.any(General::class.java))).thenAnswer { inv ->
+        `when`(officerRepository.save(ArgumentMatchers.any(Officer::class.java))).thenAnswer { inv ->
             val general = inv.arguments[0] as Officer
             generals[general.id] = general.toSnapshot().toEntity()
             general
@@ -120,43 +120,43 @@ class EconomyFormulaParityTest {
         SessionState(id = 1, scenarioCode = "test", currentYear = year, currentMonth = month, tickSeconds = 300)
 
     private fun city(
-        id: Long = 1, nationId: Long = 1,
-        pop: Int = 10000, popMax: Int = 50000,
-        agri: Int = 500, agriMax: Int = 1000,
-        comm: Int = 500, commMax: Int = 1000,
-        secu: Int = 500, secuMax: Int = 1000,
-        def: Int = 500, defMax: Int = 1000,
-        wall: Int = 500, wallMax: Int = 1000,
-        trust: Float = 80f, supplyState: Short = 1,
+        id: Long = 1, factionId: Long = 1,
+        population: Int = 10000, populationMax: Int = 50000,
+        production: Int = 500, productionMax: Int = 1000,
+        commerce: Int = 500, commerceMax: Int = 1000,
+        security: Int = 500, securityMax: Int = 1000,
+        orbitalDefense: Int = 500, orbitalDefenseMax: Int = 1000,
+        fortress: Int = 500, fortressMax: Int = 1000,
+        approval: Float = 80f, supplyState: Short = 1,
         level: Short = 5, dead: Int = 0, trade: Int = 100,
     ): Planet = Planet(
         id = id, sessionId = 1, name = "city$id", mapPlanetId = id.toInt(),
-        nationId = nationId, pop = pop, popMax = popMax,
-        agri = agri, agriMax = agriMax, comm = comm, commMax = commMax,
-        secu = secu, secuMax = secuMax, def = def, defMax = defMax,
-        wall = wall, wallMax = wallMax, trust = trust,
+        factionId = factionId, population = population, populationMax = populationMax,
+        production = production, productionMax = productionMax, commerce = commerce, commerceMax = commerceMax,
+        security = security, securityMax = securityMax, orbitalDefense = orbitalDefense, orbitalDefenseMax = orbitalDefenseMax,
+        fortress = fortress, fortressMax = fortressMax, approval = approval,
         supplyState = supplyState, level = level, dead = dead, trade = trade,
     )
 
     private fun nation(
-        id: Long = 1, gold: Int = 10000, rice: Int = 10000,
+        id: Long = 1, funds: Int = 10000, supplies: Int = 10000,
         level: Short = 1, rateTmp: Short = 15, bill: Short = 100,
-        capitalCityId: Long? = 1, rate: Short = 15,
-        typeCode: String = "che_중립",
+        capitalPlanetId: Long? = 1, conscriptionRate: Short = 15,
+        factionType: String = "che_중립",
     ): Faction = Faction(
         id = id, sessionId = 1, name = "nation$id", color = "#FF0000",
-        funds = gold, supplies = rice, factionRank = level, conscriptionRateTmp = rateTmp,
-        taxRate = bill, capitalPlanetId = capitalCityId, conscriptionRate = rate,
-        factionType = typeCode,
+        funds = funds, supplies = supplies, factionRank = level, conscriptionRateTmp = rateTmp,
+        taxRate = bill, capitalPlanetId = capitalPlanetId, conscriptionRate = conscriptionRate,
+        factionType = factionType,
     )
 
     private fun general(
-        id: Long = 1, nationId: Long = 1, cityId: Long = 1,
-        gold: Int = 1000, rice: Int = 1000, dedication: Int = 1000,
+        id: Long = 1, factionId: Long = 1, planetId: Long = 1,
+        funds: Int = 1000, supplies: Int = 1000, dedication: Int = 1000,
         officerLevel: Short = 1, officerPlanet: Int = 0, npcState: Short = 0,
     ): Officer = Officer(
         id = id, sessionId = 1, name = "general$id",
-        factionId = nationId, planetId = cityId, funds = gold, supplies = rice,
+        factionId = factionId, planetId = planetId, funds = funds, supplies = supplies,
         dedication = dedication, officerLevel = officerLevel,
         officerPlanet = officerPlanet, npcState = npcState,
     )
@@ -182,14 +182,14 @@ class EconomyFormulaParityTest {
      * Source: func_time_event.php:88-104
      */
     private fun legacyCityGoldIncome(
-        pop: Int, comm: Int, commMax: Int, trust: Float,
-        secu: Int, secuMax: Int, officers: Int,
+        population: Int, commerce: Int, commerceMax: Int, approval: Float,
+        security: Int, securityMax: Int, officers: Int,
         isCapital: Boolean, nationLevel: Int,
     ): Double {
-        if (commMax == 0) return 0.0
-        val trustRatio = trust / 200.0 + 0.5
-        var income = pop.toDouble() * comm / commMax * trustRatio / 30
-        income *= 1 + secu.toDouble() / secuMax.coerceAtLeast(1) / 10
+        if (commerceMax == 0) return 0.0
+        val trustRatio = approval / 200.0 + 0.5
+        var income = population.toDouble() * commerce / commerceMax * trustRatio / 30
+        income *= 1 + security.toDouble() / securityMax.coerceAtLeast(1) / 10
         income *= 1.05.pow(officers)
         if (isCapital) income *= 1 + 1.0 / 3 / nationLevel.coerceAtLeast(1)
         return income
@@ -200,14 +200,14 @@ class EconomyFormulaParityTest {
      * Source: func_time_event.php:106-122
      */
     private fun legacyCityRiceIncome(
-        pop: Int, agri: Int, agriMax: Int, trust: Float,
-        secu: Int, secuMax: Int, officers: Int,
+        population: Int, production: Int, productionMax: Int, approval: Float,
+        security: Int, securityMax: Int, officers: Int,
         isCapital: Boolean, nationLevel: Int,
     ): Double {
-        if (agriMax == 0) return 0.0
-        val trustRatio = trust / 200.0 + 0.5
-        var income = pop.toDouble() * agri / agriMax * trustRatio / 30
-        income *= 1 + secu.toDouble() / secuMax.coerceAtLeast(1) / 10
+        if (productionMax == 0) return 0.0
+        val trustRatio = approval / 200.0 + 0.5
+        var income = population.toDouble() * production / productionMax * trustRatio / 30
+        income *= 1 + security.toDouble() / securityMax.coerceAtLeast(1) / 10
         income *= 1.05.pow(officers)
         if (isCapital) income *= 1 + 1.0 / 3 / nationLevel.coerceAtLeast(1)
         return income
@@ -218,13 +218,13 @@ class EconomyFormulaParityTest {
      * Source: func_time_event.php:124-139
      */
     private fun legacyCityWallIncome(
-        def: Int, wall: Int, wallMax: Int,
-        secu: Int, secuMax: Int, officers: Int,
+        orbitalDefense: Int, fortress: Int, fortressMax: Int,
+        security: Int, securityMax: Int, officers: Int,
         isCapital: Boolean, nationLevel: Int,
     ): Double {
-        if (wallMax == 0) return 0.0
-        var income = def.toDouble() * wall / wallMax / 3
-        income *= 1 + secu.toDouble() / secuMax.coerceAtLeast(1) / 10
+        if (fortressMax == 0) return 0.0
+        var income = orbitalDefense.toDouble() * fortress / fortressMax / 3
+        income *= 1 + security.toDouble() / securityMax.coerceAtLeast(1) / 10
         income *= 1.05.pow(officers)
         if (isCapital) income *= 1 + 1.0 / 3 / nationLevel.coerceAtLeast(1)
         return income
@@ -241,7 +241,7 @@ class EconomyFormulaParityTest {
 
         @ParameterizedTest
         @CsvSource(
-            // pop, comm, commMax, trust, secu, secuMax, officers, isCapital, nationLevel, taxRate
+            // population, commerce, commerceMax, approval, security, securityMax, officers, isCapital, nationLevel, taxRate
             "10000, 500, 1000, 80,  500, 1000, 0, false, 1, 20",
             "50000, 800, 1000, 100, 900, 1000, 3, true,  3, 20",
             "5000,  200, 1000, 50,  100, 1000, 0, false, 5, 10",
@@ -250,14 +250,14 @@ class EconomyFormulaParityTest {
         )
         @DisplayName("Gold income golden value matches legacy formula exactly")
         fun `gold income golden values`(
-            pop: Int, comm: Int, commMax: Int, trust: Float, secu: Int, secuMax: Int,
+            population: Int, commerce: Int, commerceMax: Int, approval: Float, security: Int, securityMax: Int,
             officers: Int, isCapital: Boolean, nationLevel: Int, taxRate: Int,
         ) {
-            val capitalCityId = if (isCapital) 1L else 99L
-            val c = city(pop = pop, comm = comm, commMax = commMax, trust = trust, secu = secu, secuMax = secuMax)
+            val capitalPlanetId = if (isCapital) 1L else 99L
+            val c = city(population = population, commerce = commerce, commerceMax = commerceMax, approval = approval, security = security, securityMax = securityMax)
             val n = nation(
-                gold = 100000, rice = 100000,  // large treasury to avoid salary affecting result
-                rateTmp = taxRate.toShort(), capitalCityId = capitalCityId,
+                funds = 100000, supplies = 100000,  // large treasury to avoid salary affecting result
+                rateTmp = taxRate.toShort(), capitalPlanetId = capitalPlanetId,
                 level = nationLevel.toShort(), bill = 0,  // zero bill so no salary deduction
             )
             val officerGenerals = (1..officers).map { idx ->
@@ -269,12 +269,12 @@ class EconomyFormulaParityTest {
             seed(listOf(c), listOf(n), allGenerals)
             service.preUpdateMonthly(world())
 
-            val expected = legacyCityGoldIncome(pop, comm, commMax, trust, secu, secuMax, officers, isCapital, nationLevel)
+            val expected = legacyCityGoldIncome(population, commerce, commerceMax, approval, security, securityMax, officers, isCapital, nationLevel)
             val expectedTaxed = (expected * taxRate / 20).toInt()
             val actual = nations[1L]!!.funds - 100000
 
             assertThat(actual)
-                .describedAs("Gold income: pop=$pop comm=$comm/$commMax trust=$trust secu=$secu/$secuMax off=$officers cap=$isCapital lv=$nationLevel tax=$taxRate -> expected=$expectedTaxed")
+                .describedAs("Gold income: population=$population commerce=$commerce/$commerceMax approval=$approval security=$security/$securityMax off=$officers cap=$isCapital lv=$nationLevel tax=$taxRate -> expected=$expectedTaxed")
                 .isCloseTo(expectedTaxed, within(1))
         }
 
@@ -282,7 +282,7 @@ class EconomyFormulaParityTest {
         @DisplayName("Unsupplied city produces zero income — legacy supply==0 guard")
         fun `unsupplied city zero income`() {
             val c = city(supplyState = 0)
-            val n = nation(gold = 100000, bill = 0)
+            val n = nation(funds = 100000, bill = 0)
             seed(listOf(c), listOf(n), listOf(general(npcState = 5)))
 
             service.preUpdateMonthly(world())
@@ -290,20 +290,20 @@ class EconomyFormulaParityTest {
         }
 
         @Test
-        @DisplayName("Zero commMax produces zero gold income (no division by zero)")
-        fun `zero commMax safe`() {
-            val c = city(commMax = 0)
-            val n = nation(gold = 100000, bill = 0)
+        @DisplayName("Zero commerceMax produces zero gold income (no division by zero)")
+        fun `zero commerceMax safe`() {
+            val c = city(commerceMax = 0)
+            val n = nation(funds = 100000, bill = 0)
             seed(listOf(c), listOf(n), listOf(general(npcState = 5)))
 
             service.preUpdateMonthly(world())
-            // Should not throw, no gold income from comm
+            // Should not throw, no gold income from commerce
             assertThat(nations[1L]!!.funds).isEqualTo(100000)
         }
     }
 
     // ────────────────────────────────────────────────────────────────────────
-    // 2. City Rice Income (agri-based)
+    // 2. City Rice Income (production-based)
     // Legacy: func_time_event.php:106 calcCityRiceIncome()
     // ────────────────────────────────────────────────────────────────────────
 
@@ -319,15 +319,15 @@ class EconomyFormulaParityTest {
         )
         @DisplayName("Rice income golden value matches legacy formula exactly")
         fun `rice income golden values`(
-            pop: Int, agri: Int, agriMax: Int, trust: Float, secu: Int, secuMax: Int,
+            population: Int, production: Int, productionMax: Int, approval: Float, security: Int, securityMax: Int,
             officers: Int, isCapital: Boolean, nationLevel: Int, taxRate: Int,
         ) {
-            val capitalCityId = if (isCapital) 1L else 99L
-            val c = city(pop = pop, agri = agri, agriMax = agriMax, trust = trust, secu = secu, secuMax = secuMax,
-                wall = 0, wallMax = 0)  // zero wall to isolate rice-from-agri
+            val capitalPlanetId = if (isCapital) 1L else 99L
+            val c = city(population = population, production = production, productionMax = productionMax, approval = approval, security = security, securityMax = securityMax,
+                fortress = 0, fortressMax = 0)  // zero fortress to isolate rice-from-production
             val n = nation(
-                gold = 100000, rice = 100000,
-                rateTmp = taxRate.toShort(), capitalCityId = capitalCityId,
+                funds = 100000, supplies = 100000,
+                rateTmp = taxRate.toShort(), capitalPlanetId = capitalPlanetId,
                 level = nationLevel.toShort(), bill = 0,
             )
             val officerGenerals = (1..officers).map { idx ->
@@ -338,12 +338,12 @@ class EconomyFormulaParityTest {
                 listOf(general(id = 99, dedication = 0, npcState = 0))) // keep nationGenerals non-empty
             service.preUpdateMonthly(world())
 
-            val expected = legacyCityRiceIncome(pop, agri, agriMax, trust, secu, secuMax, officers, isCapital, nationLevel)
+            val expected = legacyCityRiceIncome(population, production, productionMax, approval, security, securityMax, officers, isCapital, nationLevel)
             val expectedTaxed = (expected * taxRate / 20).toInt()
             val actual = nations[1L]!!.supplies - 100000
 
             assertThat(actual)
-                .describedAs("Rice income: pop=$pop agri=$agri/$agriMax")
+                .describedAs("Rice income: population=$population production=$production/$productionMax")
                 .isCloseTo(expectedTaxed, within(1))
         }
     }
@@ -364,18 +364,18 @@ class EconomyFormulaParityTest {
             "1000,1000,1000, 1000,1000, 3, true,  7, 15",
         )
         @DisplayName("Wall income golden value matches legacy formula exactly")
-        fun `wall income golden values`(
-            def: Int, wall: Int, wallMax: Int,
-            secu: Int, secuMax: Int, officers: Int,
+        fun `fortress income golden values`(
+            orbitalDefense: Int, fortress: Int, fortressMax: Int,
+            security: Int, securityMax: Int, officers: Int,
             isCapital: Boolean, nationLevel: Int, taxRate: Int,
         ) {
-            val capitalCityId = if (isCapital) 1L else 99L
-            // Zero agri/comm to isolate wall income
-            val c = city(pop = 1000, agri = 0, agriMax = 0, comm = 0, commMax = 0,
-                def = def, wall = wall, wallMax = wallMax, secu = secu, secuMax = secuMax)
+            val capitalPlanetId = if (isCapital) 1L else 99L
+            // Zero production/commerce to isolate fortress income
+            val c = city(population = 1000, production = 0, productionMax = 0, commerce = 0, commerceMax = 0,
+                orbitalDefense = orbitalDefense, fortress = fortress, fortressMax = fortressMax, security = security, securityMax = securityMax)
             val n = nation(
-                gold = 100000, rice = 100000,
-                rateTmp = taxRate.toShort(), capitalCityId = capitalCityId,
+                funds = 100000, supplies = 100000,
+                rateTmp = taxRate.toShort(), capitalPlanetId = capitalPlanetId,
                 level = nationLevel.toShort(), bill = 0,
             )
             val officerGenerals = (1..officers).map { idx ->
@@ -386,12 +386,12 @@ class EconomyFormulaParityTest {
                 listOf(general(id = 99, dedication = 0, npcState = 0))) // keep nationGenerals non-empty
             service.preUpdateMonthly(world())
 
-            val expected = legacyCityWallIncome(def, wall, wallMax, secu, secuMax, officers, isCapital, nationLevel)
+            val expected = legacyCityWallIncome(orbitalDefense, fortress, fortressMax, security, securityMax, officers, isCapital, nationLevel)
             val expectedTaxed = (expected * taxRate / 20).toInt()
             val actual = nations[1L]!!.supplies - 100000
 
             assertThat(actual)
-                .describedAs("Wall income: def=$def wall=$wall/$wallMax")
+                .describedAs("Wall income: orbitalDefense=$orbitalDefense fortress=$fortress/$fortressMax")
                 .isCloseTo(expectedTaxed, within(1))
         }
     }
@@ -408,15 +408,15 @@ class EconomyFormulaParityTest {
         @Test
         @DisplayName("Tax rate 20 gives full income, rate 10 gives half")
         fun `tax rate scales income linearly`() {
-            val c = city(pop = 20000, comm = 800, commMax = 1000, trust = 100f, secu = 500, secuMax = 1000)
+            val c = city(population = 20000, commerce = 800, commerceMax = 1000, approval = 100f, security = 500, securityMax = 1000)
 
             // Tax 20 (full multiplier = 20/20 = 1.0)
-            seed(listOf(c), listOf(nation(gold = 100000, rateTmp = 20, bill = 0)), listOf(general(npcState = 5)))
+            seed(listOf(c), listOf(nation(funds = 100000, rateTmp = 20, bill = 0)), listOf(general(npcState = 5)))
             service.preUpdateMonthly(world())
             val goldFull = nations[1L]!!.funds - 100000
 
             // Tax 10 (half multiplier = 10/20 = 0.5)
-            seed(listOf(c), listOf(nation(gold = 100000, rateTmp = 10, bill = 0)), listOf(general(npcState = 5)))
+            seed(listOf(c), listOf(nation(funds = 100000, rateTmp = 10, bill = 0)), listOf(general(npcState = 5)))
             service.preUpdateMonthly(world())
             val goldHalf = nations[1L]!!.funds - 100000
 
@@ -428,7 +428,7 @@ class EconomyFormulaParityTest {
     // ────────────────────────────────────────────────────────────────────────
     // 5. War Income
     // Legacy: calcCityWarGoldIncome() → dead / 10
-    // Legacy: dead resets to 0; pop += dead * 0.2 (capped at popMax)
+    // Legacy: dead resets to 0; population += dead * 0.2 (capped at populationMax)
     // ────────────────────────────────────────────────────────────────────────
 
     @Nested
@@ -437,14 +437,14 @@ class EconomyFormulaParityTest {
 
         @ParameterizedTest
         @CsvSource(
-            "1000,  10000, 50000, 100",   // dead=1000 -> gold+=100, pop+=200
-            "5000,  30000, 50000, 500",   // dead=5000 -> gold+=500, pop+=1000
-            "500,   49900, 50000, 50",    // dead=500  -> gold+=50, pop+=100 (no cap)
+            "1000,  10000, 50000, 100",   // dead=1000 -> gold+=100, population+=200
+            "5000,  30000, 50000, 500",   // dead=5000 -> gold+=500, population+=1000
+            "500,   49900, 50000, 50",    // dead=500  -> gold+=50, population+=100 (no cap)
         )
         @DisplayName("War gold income = dead / 10")
-        fun `war income from dead`(dead: Int, pop: Int, popMax: Int, expectedGold: Int) {
-            val c = city(dead = dead, pop = pop, popMax = popMax, comm = 0, commMax = 0, agri = 0, agriMax = 0, def = 0, defMax = 0, wall = 0, wallMax = 0)
-            val n = nation(gold = 100000, rice = 100000, bill = 0)
+        fun `war income from dead`(dead: Int, population: Int, populationMax: Int, expectedGold: Int) {
+            val c = city(dead = dead, population = population, populationMax = populationMax, commerce = 0, commerceMax = 0, production = 0, productionMax = 0, orbitalDefense = 0, orbitalDefenseMax = 0, fortress = 0, fortressMax = 0)
+            val n = nation(funds = 100000, supplies = 100000, bill = 0)
             seed(listOf(c), listOf(n), listOf(general(npcState = 0, dedication = 0)))
 
             service.preUpdateMonthly(world())
@@ -454,10 +454,10 @@ class EconomyFormulaParityTest {
         }
 
         @Test
-        @DisplayName("Pop gain from dead troops capped by popMax")
-        fun `pop gain capped at popMax`() {
-            val c = city(dead = 50000, pop = 49900, popMax = 50000, comm = 0, commMax = 0, agri = 0, agriMax = 0, def = 0, defMax = 0, wall = 0, wallMax = 0)
-            val n = nation(gold = 100000, bill = 0)
+        @DisplayName("Pop gain from dead troops capped by populationMax")
+        fun `population gain capped at populationMax`() {
+            val c = city(dead = 50000, population = 49900, populationMax = 50000, commerce = 0, commerceMax = 0, production = 0, productionMax = 0, orbitalDefense = 0, orbitalDefenseMax = 0, fortress = 0, fortressMax = 0)
+            val n = nation(funds = 100000, bill = 0)
             seed(listOf(c), listOf(n), listOf(general(npcState = 0, dedication = 0)))
 
             service.preUpdateMonthly(world())
@@ -495,14 +495,14 @@ class EconomyFormulaParityTest {
         @Test
         @DisplayName("Salary distributed at ratio = realOutcome / totalBill")
         fun `salary distribution ratio`() {
-            // Nation: gold = 50000, BASE_GOLD = 0
+            // Nation: funds = 50000, BASE_GOLD = 0
             // 1 general: ded=1000, bill=1200
             // outcome = bill * (nation.taxRate/100) = 1200 * 1.0 = 1200
             // Nation gold after: 50000 + income - 1200
             // General gold after: 1000 + 1200 * ratio
-            val c = city(pop = 20000, comm = 800, commMax = 1000, trust = 100f)
-            val n = nation(gold = 50000, rice = 50000, bill = 100)
-            val g = general(dedication = 1000, gold = 1000, rice = 1000)
+            val c = city(population = 20000, commerce = 800, commerceMax = 1000, approval = 100f)
+            val n = nation(funds = 50000, supplies = 50000, bill = 100)
+            val g = general(dedication = 1000, funds = 1000, supplies = 1000)
             seed(listOf(c), listOf(n), listOf(g))
 
             service.preUpdateMonthly(world())
@@ -517,8 +517,8 @@ class EconomyFormulaParityTest {
         @DisplayName("Nation gold below BASE_GOLD(0) pays zero salary")
         fun `zero salary when treasury empty`() {
             // Treasury at 0, no cities -> no income -> gold stays at 0
-            val n = nation(gold = 0, rice = 0, bill = 100)
-            val g = general(gold = 500, rice = 500, dedication = 1000)
+            val n = nation(funds = 0, supplies = 0, bill = 100)
+            val g = general(funds = 500, supplies = 500, dedication = 1000)
             seed(emptyList(), listOf(n), listOf(g))
 
             service.preUpdateMonthly(world())
@@ -530,13 +530,13 @@ class EconomyFormulaParityTest {
         @Test
         @DisplayName("Partial salary when treasury insufficient: ratio = (gold - BASE_GOLD) / totalBill")
         fun `partial salary when partially broke`() {
-            // Nation gold = 100, bill = 100, 1 general ded=1000 -> totalBill=1200, outcome=1200
+            // Nation funds = 100, bill = 100, 1 general ded=1000 -> totalBill=1200, outcome=1200
             // gold < outcome: realOutcome = 100 - 0 = 100, ratio = 100/1200
             // No city income -> general gets 100 * 100/1200 = 8.33 -> 8
-            val n = nation(gold = 100, rice = 100, bill = 100)
-            val g = general(gold = 0, rice = 0, dedication = 1000)
-            // Need at least one city so nationCities is non-null; zero commMax/agriMax/wallMax = zero income
-            val zeroCity = city(commMax = 0, agriMax = 0, wallMax = 0)
+            val n = nation(funds = 100, supplies = 100, bill = 100)
+            val g = general(funds = 0, supplies = 0, dedication = 1000)
+            // Need at least one city so nationCities is non-null; zero commerceMax/productionMax/fortressMax = zero income
+            val zeroCity = city(commerceMax = 0, productionMax = 0, fortressMax = 0)
             seed(listOf(zeroCity), listOf(n), listOf(g))
 
             service.preUpdateMonthly(world())
@@ -572,7 +572,7 @@ class EconomyFormulaParityTest {
         fun `general gold decay`(initial: Int, expected: Int) {
             val c = city()
             val n = nation()
-            val g = general(id = 1, gold = initial, rice = 0)
+            val g = general(id = 1, funds = initial, supplies = 0)
             seed(listOf(c), listOf(n), listOf(g))
 
             service.postUpdateMonthly(world(month = 1))
@@ -590,7 +590,7 @@ class EconomyFormulaParityTest {
         fun `general rice decay`(initial: Int, expected: Int) {
             val c = city()
             val n = nation()
-            val g = general(id = 1, gold = 0, rice = initial)
+            val g = general(id = 1, funds = 0, supplies = initial)
             seed(listOf(c), listOf(n), listOf(g))
 
             service.postUpdateMonthly(world(month = 1))
@@ -627,7 +627,7 @@ class EconomyFormulaParityTest {
         fun `nation gold decay`(initial: Int, expected: Int) {
             val c = city()
             val g = general()
-            seed(listOf(c), listOf(nation(gold = initial)), listOf(g))
+            seed(listOf(c), listOf(nation(funds = initial)), listOf(g))
 
             service.postUpdateMonthly(world(month = 1))
 
@@ -645,7 +645,7 @@ class EconomyFormulaParityTest {
         fun `nation rice decay`(initial: Int, expected: Int) {
             val c = city()
             val g = general()
-            seed(listOf(c), listOf(nation(rice = initial)), listOf(g))
+            seed(listOf(c), listOf(nation(supplies = initial)), listOf(g))
 
             service.postUpdateMonthly(world(month = 1))
 
@@ -693,7 +693,7 @@ class EconomyFormulaParityTest {
             } else {
                 (1..highCityCount.toLong()).map { city(id = it, level = 5) }
             }
-            val n = nation(level = 0, gold = 0, rice = 0)
+            val n = nation(level = 0, funds = 0, supplies = 0)
             val g = general()
             seed(cityList, listOf(n), listOf(g))
 
@@ -707,7 +707,7 @@ class EconomyFormulaParityTest {
         fun `level up reward`() {
             // 5 high cities -> level 3, reward = 3 * 1000 = 3000
             val highCities = (1..5L).map { city(id = it, level = 5) }
-            val n = nation(level = 0, gold = 1000, rice = 1000)
+            val n = nation(level = 0, funds = 1000, supplies = 1000)
             val g = general()
             seed(highCities, listOf(n), listOf(g))
 
@@ -745,18 +745,18 @@ class EconomyFormulaParityTest {
         @Test
         @DisplayName("Officers (level 2-4) in assigned city give 1.05^N multiplier")
         fun `officer count multiplier`() {
-            val c = city(pop = 20000, comm = 800, commMax = 1000, trust = 100f)
+            val c = city(population = 20000, commerce = 800, commerceMax = 1000, approval = 100f)
 
             val dummy = general(id = 99, dedication = 0, npcState = 0) // keep nationGenerals non-empty
 
             // No officers
-            seed(listOf(c), listOf(nation(gold = 100000, bill = 0)), listOf(general(npcState = 5), dummy))
+            seed(listOf(c), listOf(nation(funds = 100000, bill = 0)), listOf(general(npcState = 5), dummy))
             service.preUpdateMonthly(world())
             val goldNoOfficer = nations[1L]!!.funds - 100000
 
             // 3 officers assigned to city 1
             val officers = (10..12L).map { general(id = it, officerLevel = 3, officerPlanet = 1) }
-            seed(listOf(c), listOf(nation(gold = 100000, bill = 0)), listOf(general(npcState = 5), dummy) + officers)
+            seed(listOf(c), listOf(nation(funds = 100000, bill = 0)), listOf(general(npcState = 5), dummy) + officers)
             service.preUpdateMonthly(world())
             val goldWithOfficers = nations[1L]!!.funds - 100000
 
@@ -769,18 +769,18 @@ class EconomyFormulaParityTest {
         @Test
         @DisplayName("Officers NOT in their assigned city do not count")
         fun `officers elsewhere ignored`() {
-            val c = city(pop = 20000, comm = 800, commMax = 1000, trust = 100f)
+            val c = city(population = 20000, commerce = 800, commerceMax = 1000, approval = 100f)
 
             val dummy = general(id = 99, dedication = 0, npcState = 0) // keep nationGenerals non-empty
 
             // Officer assigned to city 1 but located in city 99
-            val officer = general(id = 10, cityId = 99, officerLevel = 3, officerPlanet = 1, dedication = 0)
-            seed(listOf(c), listOf(nation(gold = 100000, bill = 0)), listOf(general(npcState = 5), dummy, officer))
+            val officer = general(id = 10, planetId = 99, officerLevel = 3, officerPlanet = 1, dedication = 0)
+            seed(listOf(c), listOf(nation(funds = 100000, bill = 0)), listOf(general(npcState = 5), dummy, officer))
             service.preUpdateMonthly(world())
             val goldMismatch = nations[1L]!!.funds
 
             // No officers at all
-            seed(listOf(c), listOf(nation(gold = 100000, bill = 0)), listOf(general(npcState = 5), dummy))
+            seed(listOf(c), listOf(nation(funds = 100000, bill = 0)), listOf(general(npcState = 5), dummy))
             service.preUpdateMonthly(world())
             val goldNone = nations[1L]!!.funds
 
@@ -800,17 +800,17 @@ class EconomyFormulaParityTest {
         @Test
         @DisplayName("Capital city gets (1 + 1/3/nationLevel) multiplier")
         fun `capital bonus applied`() {
-            val c = city(pop = 20000, comm = 800, commMax = 1000, trust = 100f)
+            val c = city(population = 20000, commerce = 800, commerceMax = 1000, approval = 100f)
 
             val dummy = general(id = 99, dedication = 0, npcState = 0) // keep nationGenerals non-empty
 
-            // Capital city (capitalCityId = 1)
-            seed(listOf(c), listOf(nation(gold = 100000, bill = 0, capitalCityId = 1)), listOf(general(npcState = 5), dummy))
+            // Capital city (capitalPlanetId = 1)
+            seed(listOf(c), listOf(nation(funds = 100000, bill = 0, capitalPlanetId = 1)), listOf(general(npcState = 5), dummy))
             service.preUpdateMonthly(world())
             val goldCapital = nations[1L]!!.funds - 100000
 
-            // Non-capital (capitalCityId = 99)
-            seed(listOf(c), listOf(nation(gold = 100000, bill = 0, capitalCityId = 99)), listOf(general(npcState = 5), dummy))
+            // Non-capital (capitalPlanetId = 99)
+            seed(listOf(c), listOf(nation(funds = 100000, bill = 0, capitalPlanetId = 99)), listOf(general(npcState = 5), dummy))
             service.preUpdateMonthly(world())
             val goldNonCapital = nations[1L]!!.funds - 100000
 
@@ -823,17 +823,17 @@ class EconomyFormulaParityTest {
         @Test
         @DisplayName("Capital bonus scales inversely with nation level")
         fun `capital bonus inversely scales with level`() {
-            val c = city(pop = 20000, comm = 800, commMax = 1000, trust = 100f)
+            val c = city(population = 20000, commerce = 800, commerceMax = 1000, approval = 100f)
 
             val dummy = general(id = 99, dedication = 0, npcState = 0) // keep nationGenerals non-empty
 
             // Level 1: 1 + 1/3/1 = 1.333
-            seed(listOf(c), listOf(nation(gold = 100000, bill = 0, level = 1, capitalCityId = 1)), listOf(general(npcState = 5), dummy))
+            seed(listOf(c), listOf(nation(funds = 100000, bill = 0, level = 1, capitalPlanetId = 1)), listOf(general(npcState = 5), dummy))
             service.preUpdateMonthly(world())
             val goldLevel1 = nations[1L]!!.funds - 100000
 
             // Level 7: 1 + 1/3/7 = 1.047
-            seed(listOf(c), listOf(nation(gold = 100000, bill = 0, level = 7, capitalCityId = 1)), listOf(general(npcState = 5), dummy))
+            seed(listOf(c), listOf(nation(funds = 100000, bill = 0, level = 7, capitalPlanetId = 1)), listOf(general(npcState = 5), dummy))
             service.preUpdateMonthly(world())
             val goldLevel7 = nations[1L]!!.funds - 100000
 
@@ -852,21 +852,21 @@ class EconomyFormulaParityTest {
 
         @ParameterizedTest
         @CsvSource(
-            // pop, comm, commMax, trust, secu, secuMax, officers, isCapital, nationLevel, taxRate, expectedGold
-            // Case 1: pop=10000, comm=500, commMax=1000, trust=80, secu=500, secuMax=1000, off=0, nonCap, lv=1, tax=20
+            // population, commerce, commerceMax, approval, security, securityMax, officers, isCapital, nationLevel, taxRate, expectedGold
+            // Case 1: population=10000, commerce=500, commerceMax=1000, approval=80, security=500, securityMax=1000, off=0, nonCap, lv=1, tax=20
             //   trustRatio=80/200+0.5=0.9, income=10000*500/1000*0.9/30=150, secuMul=1+500/1000/10=1.05
             //   income=150*1.05=157.5, 1.05^0=1, noCap, taxed=157.5*20/20=157 (intval)
             "10000, 500, 1000, 80.0,  500, 1000, 0, false, 1, 20, 157",
-            // Case 2: pop=50000, comm=800, commMax=1000, trust=100, secu=900, secuMax=1000, off=3, cap, lv=3, tax=20
+            // Case 2: population=50000, commerce=800, commerceMax=1000, approval=100, security=900, securityMax=1000, off=3, cap, lv=3, tax=20
             //   trustRatio=100/200+0.5=1.0, income=50000*800/1000*1.0/30=1333.33, secuMul=1+900/1000/10=1.09
             //   income=1333.33*1.09=1453.33, 1.05^3=1.157625, income*=1.157625=1682.43
             //   capBonus=1+1/3/3=1.1111, income*=1.1111=1869.36, taxed=1869.36*20/20=1869
             "50000, 800, 1000, 100.0, 900, 1000, 3, true,  3, 20, 1869",
-            // Case 3: pop=5000, comm=200, commMax=1000, trust=50, secu=100, secuMax=1000, off=0, nonCap, lv=5, tax=10
+            // Case 3: population=5000, commerce=200, commerceMax=1000, approval=50, security=100, securityMax=1000, off=0, nonCap, lv=5, tax=10
             //   trustRatio=50/200+0.5=0.75, income=5000*200/1000*0.75/30=25, secuMul=1+100/1000/10=1.01
             //   income=25*1.01=25.25, 1.05^0=1, noCap, taxed=25.25*10/20=12 (intval)
             "5000,  200, 1000, 50.0,  100, 1000, 0, false, 5, 10, 12",
-            // Case 4: pop=1000, comm=100, commMax=500, trust=30, secu=50, secuMax=200, off=1, nonCap, lv=2, tax=15
+            // Case 4: population=1000, commerce=100, commerceMax=500, approval=30, security=50, securityMax=200, off=1, nonCap, lv=2, tax=15
             //   trustRatio=30/200+0.5=0.65, income=1000*100/500*0.65/30=4.333, secuMul=1+50/200/10=1.025
             //   income=4.333*1.025=4.4416, 1.05^1=1.05, income*=1.05=4.6637, noCap
             //   taxed=4.6637*15/20=3.4978 -> 3
@@ -874,12 +874,12 @@ class EconomyFormulaParityTest {
         )
         @DisplayName("Gold income PHP-traced golden values")
         fun `gold income exact php trace`(
-            pop: Int, comm: Int, commMax: Int, trust: Float, secu: Int, secuMax: Int,
+            population: Int, commerce: Int, commerceMax: Int, approval: Float, security: Int, securityMax: Int,
             officers: Int, isCapital: Boolean, nationLevel: Int, taxRate: Int, expectedGold: Int,
         ) {
-            val capitalCityId = if (isCapital) 1L else 99L
-            val c = city(pop = pop, comm = comm, commMax = commMax, trust = trust, secu = secu, secuMax = secuMax)
-            val n = nation(gold = 100000, rice = 100000, rateTmp = taxRate.toShort(), capitalCityId = capitalCityId,
+            val capitalPlanetId = if (isCapital) 1L else 99L
+            val c = city(population = population, commerce = commerce, commerceMax = commerceMax, approval = approval, security = security, securityMax = securityMax)
+            val n = nation(funds = 100000, supplies = 100000, rateTmp = taxRate.toShort(), capitalPlanetId = capitalPlanetId,
                 level = nationLevel.toShort(), bill = 0)
             val officerGenerals = (1..officers).map { idx ->
                 general(id = (10 + idx).toLong(), officerLevel = 3, officerPlanet = 1)
@@ -889,17 +889,17 @@ class EconomyFormulaParityTest {
             seed(listOf(c), listOf(n), allGenerals)
             service.preUpdateMonthly(world())
             val actual = nations[1L]!!.funds - 100000
-            assertThat(actual).describedAs("Gold: pop=$pop comm=$comm/$commMax trust=$trust").isCloseTo(expectedGold, within(1))
+            assertThat(actual).describedAs("Gold: population=$population commerce=$commerce/$commerceMax approval=$approval").isCloseTo(expectedGold, within(1))
         }
 
         @ParameterizedTest
         @CsvSource(
-            // pop, agri, agriMax, trust, secu, secuMax, officers, isCapital, nationLevel, taxRate, expectedRice
-            // Case 1: same formula as gold but uses agri instead of comm
-            //   pop=10000, agri=500, agriMax=1000, trust=80, secu=500, secuMax=1000, off=0, nonCap, lv=1, tax=20
+            // population, production, productionMax, approval, security, securityMax, officers, isCapital, nationLevel, taxRate, expectedRice
+            // Case 1: same formula as gold but uses production instead of commerce
+            //   population=10000, production=500, productionMax=1000, approval=80, security=500, securityMax=1000, off=0, nonCap, lv=1, tax=20
             //   -> 157 (same as gold case 1)
             "10000, 500, 1000, 80.0,  500, 1000, 0, false, 1, 20, 157",
-            // Case 2: pop=30000, agri=1000, agriMax=1000, trust=60, secu=800, secuMax=1000, off=1, nonCap, lv=5, tax=15
+            // Case 2: population=30000, production=1000, productionMax=1000, approval=60, security=800, securityMax=1000, off=1, nonCap, lv=5, tax=15
             //   trustRatio=60/200+0.5=0.8, income=30000*1000/1000*0.8/30=800, secuMul=1+800/1000/10=1.08
             //   income=800*1.08=864, 1.05^1=1.05, income*=1.05=907.2, noCap
             //   taxed=907.2*15/20=680.4 -> 680
@@ -907,13 +907,13 @@ class EconomyFormulaParityTest {
         )
         @DisplayName("Rice income PHP-traced golden values")
         fun `rice income exact php trace`(
-            pop: Int, agri: Int, agriMax: Int, trust: Float, secu: Int, secuMax: Int,
+            population: Int, production: Int, productionMax: Int, approval: Float, security: Int, securityMax: Int,
             officers: Int, isCapital: Boolean, nationLevel: Int, taxRate: Int, expectedRice: Int,
         ) {
-            val capitalCityId = if (isCapital) 1L else 99L
-            val c = city(pop = pop, agri = agri, agriMax = agriMax, trust = trust, secu = secu, secuMax = secuMax,
-                wall = 0, wallMax = 0)
-            val n = nation(gold = 100000, rice = 100000, rateTmp = taxRate.toShort(), capitalCityId = capitalCityId,
+            val capitalPlanetId = if (isCapital) 1L else 99L
+            val c = city(population = population, production = production, productionMax = productionMax, approval = approval, security = security, securityMax = securityMax,
+                fortress = 0, fortressMax = 0)
+            val n = nation(funds = 100000, supplies = 100000, rateTmp = taxRate.toShort(), capitalPlanetId = capitalPlanetId,
                 level = nationLevel.toShort(), bill = 0)
             val officerGenerals = (1..officers).map { idx ->
                 general(id = (10 + idx).toLong(), officerLevel = 3, officerPlanet = 1)
@@ -922,31 +922,31 @@ class EconomyFormulaParityTest {
                 listOf(general(id = 99, dedication = 0, npcState = 0)))
             service.preUpdateMonthly(world())
             val actual = nations[1L]!!.supplies - 100000
-            assertThat(actual).describedAs("Rice: pop=$pop agri=$agri/$agriMax").isCloseTo(expectedRice, within(1))
+            assertThat(actual).describedAs("Rice: population=$population production=$production/$productionMax").isCloseTo(expectedRice, within(1))
         }
 
         @ParameterizedTest
         @CsvSource(
-            // def, wall, wallMax, secu, secuMax, officers, isCapital, nationLevel, taxRate, expectedWall
-            // Case 1: def=500, wall=500, wallMax=1000, secu=500, secuMax=1000, off=0, nonCap, lv=1, tax=20
+            // orbitalDefense, fortress, fortressMax, security, securityMax, officers, isCapital, nationLevel, taxRate, expectedWall
+            // Case 1: orbitalDefense=500, fortress=500, fortressMax=1000, security=500, securityMax=1000, off=0, nonCap, lv=1, tax=20
             //   income=500*500/1000/3=83.333, secuMul=1+500/1000/10=1.05, income=83.333*1.05=87.5
             //   1.05^0=1, noCap, taxed=87.5*20/20=87
             "500,  500, 1000, 500, 1000, 0, false, 1, 20, 87",
-            // Case 2: def=1000, wall=1000, wallMax=1000, secu=1000, secuMax=1000, off=3, cap, lv=7, tax=15
+            // Case 2: orbitalDefense=1000, fortress=1000, fortressMax=1000, security=1000, securityMax=1000, off=3, cap, lv=7, tax=15
             //   income=1000*1000/1000/3=333.333, secuMul=1+1000/1000/10=1.1, income=333.333*1.1=366.666
             //   1.05^3=1.157625, income*=1.157625=424.462, capBonus=1+1/3/7=1.04762
             //   income*=1.04762=444.657, taxed=444.657*15/20=333.493 -> 333
             "1000, 1000,1000, 1000,1000, 3, true,  7, 15, 333",
         )
         @DisplayName("Wall income PHP-traced golden values")
-        fun `wall income exact php trace`(
-            def: Int, wall: Int, wallMax: Int, secu: Int, secuMax: Int,
+        fun `fortress income exact php trace`(
+            orbitalDefense: Int, fortress: Int, fortressMax: Int, security: Int, securityMax: Int,
             officers: Int, isCapital: Boolean, nationLevel: Int, taxRate: Int, expectedWall: Int,
         ) {
-            val capitalCityId = if (isCapital) 1L else 99L
-            val c = city(pop = 1000, agri = 0, agriMax = 0, comm = 0, commMax = 0,
-                def = def, wall = wall, wallMax = wallMax, secu = secu, secuMax = secuMax)
-            val n = nation(gold = 100000, rice = 100000, rateTmp = taxRate.toShort(), capitalCityId = capitalCityId,
+            val capitalPlanetId = if (isCapital) 1L else 99L
+            val c = city(population = 1000, production = 0, productionMax = 0, commerce = 0, commerceMax = 0,
+                orbitalDefense = orbitalDefense, fortress = fortress, fortressMax = fortressMax, security = security, securityMax = securityMax)
+            val n = nation(funds = 100000, supplies = 100000, rateTmp = taxRate.toShort(), capitalPlanetId = capitalPlanetId,
                 level = nationLevel.toShort(), bill = 0)
             val officerGenerals = (1..officers).map { idx ->
                 general(id = (10 + idx).toLong(), officerLevel = 3, officerPlanet = 1)
@@ -955,13 +955,13 @@ class EconomyFormulaParityTest {
                 listOf(general(id = 99, dedication = 0, npcState = 0)))
             service.preUpdateMonthly(world())
             val actual = nations[1L]!!.supplies - 100000
-            assertThat(actual).describedAs("Wall: def=$def wall=$wall/$wallMax").isCloseTo(expectedWall, within(1))
+            assertThat(actual).describedAs("Wall: orbitalDefense=$orbitalDefense fortress=$fortress/$fortressMax").isCloseTo(expectedWall, within(1))
         }
     }
 
     // ────────────────────────────────────────────────────────────────────────
     // 13. Nation Type Modifier Income Variants
-    // Legacy: nationType->onCalcNationalIncome('gold'/'rice'/'pop', value) modifies income
+    // Legacy: nationType->onCalcNationalIncome('gold'/'rice'/'population', value) modifies income
     //   상인: goldMultiplier=1.2
     //   농업국: riceMultiplier=1.2, popGrowthMultiplier=1.05
     //   도적: goldMultiplier=0.9
@@ -974,17 +974,17 @@ class EconomyFormulaParityTest {
         @Test
         @DisplayName("상인 nation type gives 1.2x gold income")
         fun `merchant nation gold bonus`() {
-            val c = city(pop = 20000, comm = 800, commMax = 1000, trust = 100f)
+            val c = city(population = 20000, commerce = 800, commerceMax = 1000, approval = 100f)
             val dummy = general(id = 99, dedication = 0, npcState = 0)
 
             // Default (중립)
-            seed(listOf(c), listOf(nation(gold = 100000, bill = 0, typeCode = "che_중립")),
+            seed(listOf(c), listOf(nation(funds = 100000, bill = 0, factionType = "che_중립")),
                 listOf(general(npcState = 5), dummy))
             service.preUpdateMonthly(world())
             val goldDefault = nations[1L]!!.funds - 100000
 
             // 상인 (goldMultiplier=1.2)
-            seed(listOf(c), listOf(nation(gold = 100000, bill = 0, typeCode = "che_상인")),
+            seed(listOf(c), listOf(nation(funds = 100000, bill = 0, factionType = "che_상인")),
                 listOf(general(npcState = 5), dummy))
             service.preUpdateMonthly(world())
             val goldMerchant = nations[1L]!!.funds - 100000
@@ -997,17 +997,17 @@ class EconomyFormulaParityTest {
         @Test
         @DisplayName("농업국 nation type gives 1.2x rice income")
         fun `agricultural nation rice bonus`() {
-            val c = city(pop = 20000, agri = 800, agriMax = 1000, trust = 100f, comm = 0, commMax = 0, wall = 0, wallMax = 0)
+            val c = city(population = 20000, production = 800, productionMax = 1000, approval = 100f, commerce = 0, commerceMax = 0, fortress = 0, fortressMax = 0)
             val dummy = general(id = 99, dedication = 0, npcState = 0)
 
             // Default (중립)
-            seed(listOf(c), listOf(nation(gold = 100000, rice = 100000, bill = 0, typeCode = "che_중립")),
+            seed(listOf(c), listOf(nation(funds = 100000, supplies = 100000, bill = 0, factionType = "che_중립")),
                 listOf(general(npcState = 5), dummy))
             service.preUpdateMonthly(world())
             val riceDefault = nations[1L]!!.supplies - 100000
 
             // 농업국 (riceMultiplier=1.2)
-            seed(listOf(c), listOf(nation(gold = 100000, rice = 100000, bill = 0, typeCode = "che_농업국")),
+            seed(listOf(c), listOf(nation(funds = 100000, supplies = 100000, bill = 0, factionType = "che_농업국")),
                 listOf(general(npcState = 5), dummy))
             service.preUpdateMonthly(world())
             val riceAgri = nations[1L]!!.supplies - 100000
@@ -1020,17 +1020,17 @@ class EconomyFormulaParityTest {
         @Test
         @DisplayName("도적 nation type gives 0.9x gold income")
         fun `bandit nation gold penalty`() {
-            val c = city(pop = 20000, comm = 800, commMax = 1000, trust = 100f)
+            val c = city(population = 20000, commerce = 800, commerceMax = 1000, approval = 100f)
             val dummy = general(id = 99, dedication = 0, npcState = 0)
 
             // Default (중립)
-            seed(listOf(c), listOf(nation(gold = 100000, bill = 0, typeCode = "che_중립")),
+            seed(listOf(c), listOf(nation(funds = 100000, bill = 0, factionType = "che_중립")),
                 listOf(general(npcState = 5), dummy))
             service.preUpdateMonthly(world())
             val goldDefault = nations[1L]!!.funds - 100000
 
             // 도적 (goldMultiplier=0.9)
-            seed(listOf(c), listOf(nation(gold = 100000, bill = 0, typeCode = "che_도적")),
+            seed(listOf(c), listOf(nation(funds = 100000, bill = 0, factionType = "che_도적")),
                 listOf(general(npcState = 5), dummy))
             service.preUpdateMonthly(world())
             val goldBandit = nations[1L]!!.funds - 100000
@@ -1088,7 +1088,7 @@ class EconomyFormulaParityTest {
     //   goldRatio = realOutcome / totalBill (where totalBill = sum(getBill(ded)) at 100% billRate)
     //   Each general receives: round(getBill(ded) * ratio)
     //   Treasury: gold += income, then gold -= realOutcome, clamped >= BASE_GOLD(0)
-    //   Partial: if gold < totalBill, realOutcome = gold - BASE_GOLD
+    //   Partial: if gold < totalBill, realOutcome = funds - BASE_GOLD
     //   Zero: if gold < BASE_GOLD, realOutcome = 0, ratio = 0
     // ────────────────────────────────────────────────────────────────────────
 
@@ -1099,13 +1099,13 @@ class EconomyFormulaParityTest {
         @Test
         @DisplayName("Full salary: nation gold sufficient -> ratio = billRate/100")
         fun `full salary distribution`() {
-            // Nation: gold=50000, rice=50000, bill=100
+            // Nation: funds =50000, supplies =50000, bill=100
             // General: ded=1000, getBill=1200
             // City with decent income to ensure treasury covers salary
-            val c = city(pop = 30000, comm = 900, commMax = 1000, agri = 900, agriMax = 1000, trust = 100f,
-                secu = 500, secuMax = 1000, wall = 0, wallMax = 0)
-            val n = nation(gold = 50000, rice = 50000, bill = 100)
-            val g = general(gold = 0, rice = 0, dedication = 1000)  // bill=1200
+            val c = city(population = 30000, commerce = 900, commerceMax = 1000, production = 900, productionMax = 1000, approval = 100f,
+                security = 500, securityMax = 1000, fortress = 0, fortressMax = 0)
+            val n = nation(funds = 50000, supplies = 50000, bill = 100)
+            val g = general(funds = 0, supplies = 0, dedication = 1000)  // bill=1200
             seed(listOf(c), listOf(n), listOf(g))
 
             service.preUpdateMonthly(world())
@@ -1123,16 +1123,16 @@ class EconomyFormulaParityTest {
         @Test
         @DisplayName("Partial salary: nation gold < total bill -> reduced ratio")
         fun `partial salary with insufficient treasury`() {
-            // Nation: gold=200, rice=200, bill=100
+            // Nation: funds =200, supplies =200, bill=100
             // No city income (all maxes = 0) -> gold stays at 200
             // General: ded=1000, getBill=1200
             // outcome = 1200 * 100/100 = 1200
             // gold(200) + income(0) = 200 > BASE_GOLD(0), but 200 < 1200
             // realOutcome = 200, ratio = 200/1200 = 0.1667
             // generalGold = round(1200 * 0.1667) = 200
-            val c = city(commMax = 0, agriMax = 0, wallMax = 0)
-            val n = nation(gold = 200, rice = 200, bill = 100)
-            val g = general(gold = 0, rice = 0, dedication = 1000)
+            val c = city(commerceMax = 0, productionMax = 0, fortressMax = 0)
+            val n = nation(funds = 200, supplies = 200, bill = 100)
+            val g = general(funds = 0, supplies = 0, dedication = 1000)
             seed(listOf(c), listOf(n), listOf(g))
 
             service.preUpdateMonthly(world())
@@ -1149,11 +1149,11 @@ class EconomyFormulaParityTest {
         @Test
         @DisplayName("Multiple generals: salary distributed proportionally by dedication")
         fun `salary proportional to dedication among generals`() {
-            val c = city(commMax = 0, agriMax = 0, wallMax = 0)
-            val n = nation(gold = 5000, rice = 5000, bill = 100)
+            val c = city(commerceMax = 0, productionMax = 0, fortressMax = 0)
+            val n = nation(funds = 5000, supplies = 5000, bill = 100)
             // General 1: ded=1000, bill=1200; General 2: ded=100, bill=600
-            val g1 = general(id = 1, gold = 0, rice = 0, dedication = 1000)
-            val g2 = general(id = 2, gold = 0, rice = 0, dedication = 100)
+            val g1 = general(id = 1, funds = 0, supplies = 0, dedication = 1000)
+            val g2 = general(id = 2, funds = 0, supplies = 0, dedication = 100)
             seed(listOf(c), listOf(n), listOf(g1, g2))
 
             service.preUpdateMonthly(world())
@@ -1165,7 +1165,7 @@ class EconomyFormulaParityTest {
             // Both get bill * ratio where ratio = min(1.0, available/totalBill)
             // totalBill = 1200 + 600 = 1800
             // gold(5000) + 0 income = 5000 >= 1800 -> ratio = 1.0
-            // g1 gold = 1200, g2 gold = 600
+            // g1 funds = 1200, g2 funds = 600
             assertThat(updated1.funds)
                 .describedAs("Higher dedication general gets more")
                 .isGreaterThan(updated2.funds)
@@ -1177,16 +1177,16 @@ class EconomyFormulaParityTest {
         @Test
         @DisplayName("Tax rate affects income and thus salary capacity")
         fun `tax rate 10 vs 20 income difference`() {
-            val c = city(pop = 20000, comm = 800, commMax = 1000, trust = 100f, agri = 0, agriMax = 0, wall = 0, wallMax = 0)
+            val c = city(population = 20000, commerce = 800, commerceMax = 1000, approval = 100f, production = 0, productionMax = 0, fortress = 0, fortressMax = 0)
 
             // Tax 20 (full)
-            seed(listOf(c), listOf(nation(gold = 100000, rice = 100000, rateTmp = 20, bill = 0)),
+            seed(listOf(c), listOf(nation(funds = 100000, supplies = 100000, rateTmp = 20, bill = 0)),
                 listOf(general(npcState = 5)))
             service.preUpdateMonthly(world())
             val incTax20 = nations[1L]!!.funds - 100000
 
             // Tax 10 (half)
-            seed(listOf(c), listOf(nation(gold = 100000, rice = 100000, rateTmp = 10, bill = 0)),
+            seed(listOf(c), listOf(nation(funds = 100000, supplies = 100000, rateTmp = 10, bill = 0)),
                 listOf(general(npcState = 5)))
             service.preUpdateMonthly(world())
             val incTax10 = nations[1L]!!.funds - 100000

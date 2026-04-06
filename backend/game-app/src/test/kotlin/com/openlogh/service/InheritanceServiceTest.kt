@@ -56,7 +56,7 @@ class InheritanceServiceTest {
         `when`(gameConstService.getInt("inheritBornStatPoint")).thenReturn(1000)
 
         `when`(appUserRepository.save(any(AppUser::class.java))).thenAnswer { it.arguments[0] }
-        `when`(officerRepository.save(any(General::class.java))).thenAnswer { it.arguments[0] }
+        `when`(officerRepository.save(any(Officer::class.java))).thenAnswer { it.arguments[0] }
     }
 
     @Test

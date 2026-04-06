@@ -19,8 +19,8 @@ class UnificationServiceTest {
     private lateinit var appUserRepository: AppUserRepository
     private lateinit var hallOfFameRepository: HallOfFameRepository
     private lateinit var sovereignRepository: SovereignRepository
-    private lateinit var oldNationRepository: OldNationRepository
-    private lateinit var oldGeneralRepository: OldGeneralRepository
+    private lateinit var oldFactionRepository: OldFactionRepository
+    private lateinit var oldOfficerRepository: OldOfficerRepository
     private lateinit var gameHistoryRepository: GameHistoryRepository
     private lateinit var messageRepository: MessageRepository
 
@@ -35,8 +35,8 @@ class UnificationServiceTest {
         appUserRepository = mock(AppUserRepository::class.java)
         hallOfFameRepository = mock(HallOfFameRepository::class.java)
         sovereignRepository = mock(SovereignRepository::class.java)
-        oldNationRepository = mock(OldNationRepository::class.java)
-        oldGeneralRepository = mock(OldGeneralRepository::class.java)
+        oldFactionRepository = mock(OldFactionRepository::class.java)
+        oldOfficerRepository = mock(OldOfficerRepository::class.java)
         gameHistoryRepository = mock(GameHistoryRepository::class.java)
         messageRepository = mock(MessageRepository::class.java)
 
@@ -49,8 +49,8 @@ class UnificationServiceTest {
             appUserRepository,
             hallOfFameRepository,
             sovereignRepository,
-            oldNationRepository,
-            oldGeneralRepository,
+            oldFactionRepository,
+            oldOfficerRepository,
             gameHistoryRepository,
             messageRepository,
             historyService,
@@ -125,15 +125,15 @@ class UnificationServiceTest {
         `when`(factionRepository.findBySessionId(1L)).thenReturn(nations)
         `when`(planetRepository.findBySessionId(1L)).thenReturn(cities)
         `when`(officerRepository.findBySessionId(1L)).thenReturn(emptyList())
-        `when`(messageRepository.findByWorldIdAndMailboxCodeAndDestIdOrderBySentAtDesc(anyLong(), anyString(), anyLong()))
+        `when`(messageRepository.findBySessionIdAndMailboxCodeAndDestIdOrderBySentAtDesc(anyLong(), anyString(), anyLong()))
             .thenReturn(emptyList())
         `when`(messageRepository.save(anyNonNull())).thenAnswer { it.arguments[0] }
         `when`(gameHistoryRepository.findByServerId(anyString())).thenReturn(null)
         `when`(gameHistoryRepository.save(anyNonNull())).thenAnswer { it.arguments[0] }
         `when`(gameHistoryRepository.count()).thenReturn(0)
-        `when`(oldNationRepository.findByServerIdAndNation(anyString(), anyLong())).thenReturn(null)
-        `when`(oldNationRepository.save(anyNonNull())).thenAnswer { it.arguments[0] }
-        `when`(oldNationRepository.findByServerId(anyString())).thenReturn(emptyList())
+        `when`(oldFactionRepository.findBySessionIdAndFaction(anyString(), anyLong())).thenReturn(null)
+        `when`(oldFactionRepository.save(anyNonNull())).thenAnswer { it.arguments[0] }
+        `when`(oldFactionRepository.findByServerId(anyString())).thenReturn(emptyList())
         `when`(sovereignRepository.save(anyNonNull())).thenAnswer { it.arguments[0] }
 
         service.checkAndSettleUnification(world)

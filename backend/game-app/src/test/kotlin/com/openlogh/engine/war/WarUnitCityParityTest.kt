@@ -59,7 +59,7 @@ class WarUnitCityParityTest {
     @Test
     fun `cityTrainAtmos with level 1 city adds 5 to train only`() {
         // PHP: level==1 → trainBonus += 5; getComputedTrain = cityTrainAtmos + 5
-        // year=201, startYear=180 → cityTrainAtmos=80; train=80+5=85, atmos=80
+        // year=201, startYear=180 → cityTrainAtmos=80; training =80+5=85, morale =80
         val unit = WarUnitPlanet(buildCity(level = 1), year = 201, startYear = 180)
         assertEquals(85, unit.training, "Level 1 city grants +5 train bonus")
         assertEquals(80, unit.morale, "Level 1 city does not affect atmos")

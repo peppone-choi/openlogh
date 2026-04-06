@@ -19,15 +19,15 @@ class BattleEngineTest {
 
     private fun createGeneral(
         id: Long = 1,
-        nationId: Long = 1,
+        factionId: Long = 1,
         leadership: Short = 50,
-        strength: Short = 50,
-        intel: Short = 50,
-        crew: Int = 1000,
-        train: Short = 80,
-        atmos: Short = 80,
-        gold: Int = 1000,
-        rice: Int = 5000,
+        command: Short = 50,
+        intelligence: Short = 50,
+        ships: Int = 1000,
+        training: Short = 80,
+        morale: Short = 80,
+        funds: Int = 1000,
+        supplies: Int = 5000,
         experience: Int = 1000,
         dedication: Int = 1000,
         specialCode: String = "None",
@@ -37,17 +37,17 @@ class BattleEngineTest {
             id = id,
             sessionId = 1,
             name = "장수$id",
-            factionId = nationId,
+            factionId = factionId,
             planetId = 1,
             leadership = leadership,
-            command = strength,
-            intelligence = intel,
-            ships = crew,
+            command = command,
+            intelligence = intelligence,
+            ships = ships,
             shipClass = 0,
-            training = train,
-            morale = atmos,
-            funds = gold,
-            supplies = rice,
+            training = training,
+            morale = morale,
+            funds = funds,
+            supplies = supplies,
             experience = experience,
             dedication = dedication,
             specialCode = specialCode,
@@ -57,23 +57,23 @@ class BattleEngineTest {
     }
 
     private fun createCity(
-        nationId: Long = 2,
-        def: Int = 500,
-        defMax: Int = 1000,
-        wall: Int = 500,
-        wallMax: Int = 1000,
-        pop: Int = 10000,
+        factionId: Long = 2,
+        orbitalDefense: Int = 500,
+        orbitalDefenseMax: Int = 1000,
+        fortress: Int = 500,
+        fortressMax: Int = 1000,
+        population: Int = 10000,
     ): Planet {
         return Planet(
             id = 1,
             sessionId = 1,
             name = "테스트도시",
-            factionId = nationId,
-            orbitalDefense = def,
-            orbitalDefenseMax = defMax,
-            fortress = wall,
-            fortressMax = wallMax,
-            population = pop,
+            factionId = factionId,
+            orbitalDefense = orbitalDefense,
+            orbitalDefenseMax = orbitalDefenseMax,
+            fortress = fortress,
+            fortressMax = fortressMax,
+            population = population,
             populationMax = 50000,
         )
     }
@@ -82,7 +82,7 @@ class BattleEngineTest {
 
     @Test
     fun `WarUnitOfficer initializes HP from crew`() {
-        val general = createGeneral(crew = 2000)
+        val general = createGeneral(ships = 2000)
         val unit = WarUnitOfficer(general)
 
         assertEquals(2000, unit.hp)
@@ -91,17 +91,17 @@ class BattleEngineTest {
 
     @Test
     fun `WarUnitOfficer base attack uses legacy crew-type-specific stat ratio`() {
-        val general = createGeneral(strength = 100, leadership = 50)
+        val general = createGeneral(command = 100, leadership = 50)
         val unit = WarUnitOfficer(general)
 
-        // Legacy: FOOTMAN → ratio = strength*2-40 = 160, clamped: 50+160/2 = 130
+        // Legacy: FOOTMAN → ratio = command*2-40 = 160, clamped: 50+160/2 = 130
         // FOOTMAN.attack=100, techAbil=0 → (100+0)*130/100 = 130.0
         assertEquals(130.0, unit.getBaseAttack(), 0.01)
     }
 
     @Test
     fun `WarUnitOfficer base defence uses legacy crew factor formula`() {
-        val general = createGeneral(leadership = 60, strength = 40, intel = 80, crew = 1000)
+        val general = createGeneral(leadership = 60, command = 40, intelligence = 80, ships = 1000)
         val unit = WarUnitOfficer(general)
 
         // Legacy: FOOTMAN.defence=150, techAbil=0, crewFactor=1000/233.33+70=74.286
@@ -111,7 +111,7 @@ class BattleEngineTest {
 
     @Test
     fun `WarUnitOfficer tech bonus increases attack`() {
-        val general = createGeneral(strength = 100, leadership = 50)
+        val general = createGeneral(command = 100, leadership = 50)
         val unit = WarUnitOfficer(general, nationTech = 1000f)
 
         // techLevel=(1000/1000)=1, techAbil=25, ratio=130 (same as above)
@@ -121,7 +121,7 @@ class BattleEngineTest {
 
     @Test
     fun `WarUnitOfficer continueWar requires HP and rice`() {
-        val general = createGeneral(crew = 1000, rice = 5000)
+        val general = createGeneral(ships = 1000, supplies = 5000)
         val unit = WarUnitOfficer(general)
 
         assertTrue(unit.continueWar().canContinue)
@@ -133,7 +133,7 @@ class BattleEngineTest {
 
     @Test
     fun `WarUnitOfficer continueWar false when HP is zero`() {
-        val general = createGeneral(crew = 1000)
+        val general = createGeneral(ships = 1000)
         val unit = WarUnitOfficer(general)
 
         unit.hp = 0
@@ -142,7 +142,7 @@ class BattleEngineTest {
 
     @Test
     fun `WarUnitOfficer consumeRice applies legacy multipliers`() {
-        val general = createGeneral(rice = 1000)
+        val general = createGeneral(supplies = 1000)
         val unit = WarUnitOfficer(general)
 
         unit.consumeRice(500)
@@ -153,7 +153,7 @@ class BattleEngineTest {
 
     @Test
     fun `WarUnitOfficer consumeRice defender and vsCity multipliers`() {
-        val general = createGeneral(rice = 1000)
+        val general = createGeneral(supplies = 1000)
         val unit = WarUnitOfficer(general)
 
         unit.consumeRice(500, isAttacker = false, vsCity = true)
@@ -164,7 +164,7 @@ class BattleEngineTest {
 
     @Test
     fun `WarUnitOfficer applyResults writes back to general`() {
-        val general = createGeneral(crew = 1000, rice = 5000, train = 80, atmos = 80)
+        val general = createGeneral(ships = 1000, supplies = 5000, training = 80, morale = 80)
         val unit = WarUnitOfficer(general)
 
         unit.hp = 800
@@ -184,16 +184,16 @@ class BattleEngineTest {
     // ========== WarUnitPlanet ==========
 
     @Test
-    fun `WarUnitPlanet HP is def times 10`() {
-        val city = createCity(def = 300)
+    fun `WarUnitPlanet HP is orbitalDefense times 10`() {
+        val city = createCity(orbitalDefense = 300)
         val unit = WarUnitPlanet(city)
 
         assertEquals(3000, unit.hp)
     }
 
     @Test
-    fun `WarUnitPlanet base attack uses def and wall`() {
-        val city = createCity(def = 500, wall = 500)
+    fun `WarUnitPlanet base attack uses orbitalDefense and fortress`() {
+        val city = createCity(orbitalDefense = 500, fortress = 500)
         val unit = WarUnitPlanet(city)
 
         // (500 + 500*9) / 500 + 200 = (500+4500)/500 + 200 = 10 + 200 = 210
@@ -202,16 +202,16 @@ class BattleEngineTest {
 
     @Test
     fun `WarUnitPlanet base defence equals attack (legacy parity)`() {
-        val city = createCity(def = 500, wall = 500)
+        val city = createCity(orbitalDefense = 500, fortress = 500)
         val unit = WarUnitPlanet(city)
 
-        // Legacy: both getComputedAttack and getComputedDefence return (def + wall*9) / 500 + 200
+        // Legacy: both getComputedAttack and getComputedDefence return (orbitalDefense + fortress*9) / 500 + 200
         assertEquals(unit.getBaseAttack(), unit.getBaseDefence(), 0.01)
     }
 
     @Test
-    fun `WarUnitPlanet applyResults writes def back to city`() {
-        val city = createCity(def = 500)
+    fun `WarUnitPlanet applyResults writes orbitalDefense back to city`() {
+        val city = createCity(orbitalDefense = 500)
         val unit = WarUnitPlanet(city)
 
         unit.hp = 3000
@@ -223,7 +223,7 @@ class BattleEngineTest {
 
     @Test
     fun `takeDamage reduces HP`() {
-        val general = createGeneral(crew = 1000)
+        val general = createGeneral(ships = 1000)
         val unit = WarUnitOfficer(general)
 
         unit.takeDamage(300)
@@ -233,7 +233,7 @@ class BattleEngineTest {
 
     @Test
     fun `takeDamage kills unit when HP reaches zero`() {
-        val general = createGeneral(crew = 500)
+        val general = createGeneral(ships = 500)
         val unit = WarUnitOfficer(general)
 
         unit.takeDamage(500)
@@ -243,7 +243,7 @@ class BattleEngineTest {
 
     @Test
     fun `takeDamage kills unit when damage exceeds HP`() {
-        val general = createGeneral(crew = 100)
+        val general = createGeneral(ships = 100)
         val unit = WarUnitOfficer(general)
 
         unit.takeDamage(9999)
@@ -255,8 +255,8 @@ class BattleEngineTest {
 
     @Test
     fun `calcBattleOrder higher stats and crew gives higher order`() {
-        val strong = createGeneral(leadership = 90, strength = 90, intel = 90, crew = 5000, train = 80, atmos = 80)
-        val weak = createGeneral(leadership = 30, strength = 30, intel = 30, crew = 500, train = 30, atmos = 30)
+        val strong = createGeneral(leadership = 90, command = 90, intelligence = 90, ships = 5000, training = 80, morale = 80)
+        val weak = createGeneral(leadership = 30, command = 30, intelligence = 30, ships = 500, training = 30, morale = 30)
 
         val strongUnit = WarUnitOfficer(strong)
         val weakUnit = WarUnitOfficer(weak)
@@ -269,9 +269,9 @@ class BattleEngineTest {
     @Test
     fun `resolveBattle strong attacker beats weak defender`() {
         val rng = Random(42)
-        val attackerGeneral = createGeneral(id = 1, nationId = 1, strength = 90, leadership = 90, crew = 5000, rice = 50000, train = 80, atmos = 80)
-        val defenderGeneral = createGeneral(id = 2, nationId = 2, strength = 30, leadership = 30, crew = 500, rice = 500, train = 30, atmos = 30)
-        val city = createCity(nationId = 2, def = 100, wall = 100)
+        val attackerGeneral = createGeneral(id = 1, factionId = 1, command = 90, leadership = 90, ships = 5000, supplies = 50000, training = 80, morale = 80)
+        val defenderGeneral = createGeneral(id = 2, factionId = 2, command = 30, leadership = 30, ships = 500, supplies = 500, training = 30, morale = 30)
+        val city = createCity(factionId = 2, orbitalDefense = 100, fortress = 100)
 
         val attacker = WarUnitOfficer(attackerGeneral)
         val defender = WarUnitOfficer(defenderGeneral)
@@ -285,9 +285,9 @@ class BattleEngineTest {
     @Test
     fun `resolveBattle returns damage amounts`() {
         val rng = Random(42)
-        val attackerGeneral = createGeneral(id = 1, nationId = 1, strength = 70, leadership = 70, crew = 3000, rice = 30000)
-        val defenderGeneral = createGeneral(id = 2, nationId = 2, strength = 50, leadership = 50, crew = 2000, rice = 20000)
-        val city = createCity(nationId = 2)
+        val attackerGeneral = createGeneral(id = 1, factionId = 1, command = 70, leadership = 70, ships = 3000, supplies = 30000)
+        val defenderGeneral = createGeneral(id = 2, factionId = 2, command = 50, leadership = 50, ships = 2000, supplies = 20000)
+        val city = createCity(factionId = 2)
 
         val attacker = WarUnitOfficer(attackerGeneral)
         val defender = WarUnitOfficer(defenderGeneral)
@@ -301,9 +301,9 @@ class BattleEngineTest {
     @Test
     fun `resolveBattle attacker retreats when out of rice`() {
         val rng = Random(42)
-        val attackerGeneral = createGeneral(id = 1, nationId = 1, crew = 1000, rice = 1, strength = 50)
-        val defenderGeneral = createGeneral(id = 2, nationId = 2, crew = 1000, rice = 50000, strength = 50)
-        val city = createCity(nationId = 2)
+        val attackerGeneral = createGeneral(id = 1, factionId = 1, ships = 1000, supplies = 1, command = 50)
+        val defenderGeneral = createGeneral(id = 2, factionId = 2, ships = 1000, supplies = 50000, command = 50)
+        val city = createCity(factionId = 2)
 
         val attacker = WarUnitOfficer(attackerGeneral)
         val defender = WarUnitOfficer(defenderGeneral)
@@ -316,9 +316,9 @@ class BattleEngineTest {
     @Test
     fun `resolveBattle applies morale loss`() {
         val rng = Random(42)
-        val attackerGeneral = createGeneral(id = 1, nationId = 1, crew = 3000, rice = 50000, atmos = 80)
-        val defenderGeneral = createGeneral(id = 2, nationId = 2, crew = 2000, rice = 50000, atmos = 80)
-        val city = createCity(nationId = 2)
+        val attackerGeneral = createGeneral(id = 1, factionId = 1, ships = 3000, supplies = 50000, morale = 80)
+        val defenderGeneral = createGeneral(id = 2, factionId = 2, ships = 2000, supplies = 50000, morale = 80)
+        val city = createCity(factionId = 2)
 
         val attacker = WarUnitOfficer(attackerGeneral)
         val defender = WarUnitOfficer(defenderGeneral)
@@ -333,9 +333,9 @@ class BattleEngineTest {
     fun `resolveBattle with siege occupies city when all defenders eliminated`() {
         val rng = Random(100)
         // Very strong attacker vs very weak defender and city
-        val attackerGeneral = createGeneral(id = 1, nationId = 1, strength = 99, leadership = 99, crew = 50000, rice = 500000, train = 80, atmos = 80, experience = 10000)
-        val defenderGeneral = createGeneral(id = 2, nationId = 2, strength = 10, leadership = 10, crew = 10, rice = 1, train = 10, atmos = 10)
-        val city = createCity(nationId = 2, def = 10, wall = 10, pop = 100)
+        val attackerGeneral = createGeneral(id = 1, factionId = 1, command = 99, leadership = 99, ships = 50000, supplies = 500000, training = 80, morale = 80, experience = 10000)
+        val defenderGeneral = createGeneral(id = 2, factionId = 2, command = 10, leadership = 10, ships = 10, supplies = 1, training = 10, morale = 10)
+        val city = createCity(factionId = 2, orbitalDefense = 10, fortress = 10, population = 100)
 
         val attacker = WarUnitOfficer(attackerGeneral)
         val defender = WarUnitOfficer(defenderGeneral)
@@ -350,8 +350,8 @@ class BattleEngineTest {
     @Test
     fun `resolveBattle with no defenders goes straight to siege`() {
         val rng = Random(42)
-        val attackerGeneral = createGeneral(id = 1, nationId = 1, strength = 90, leadership = 90, crew = 10000, rice = 100000, train = 80, atmos = 80)
-        val city = createCity(nationId = 2, def = 50, wall = 50)
+        val attackerGeneral = createGeneral(id = 1, factionId = 1, command = 90, leadership = 90, ships = 10000, supplies = 100000, training = 80, morale = 80)
+        val city = createCity(factionId = 2, orbitalDefense = 50, fortress = 50)
 
         val attacker = WarUnitOfficer(attackerGeneral)
 
@@ -364,10 +364,10 @@ class BattleEngineTest {
     @Test
     fun `resolveBattle multiple defenders sorted by battle order`() {
         val rng = Random(42)
-        val attackerGeneral = createGeneral(id = 1, nationId = 1, strength = 80, leadership = 80, crew = 5000, rice = 50000)
-        val weakDefender = createGeneral(id = 2, nationId = 2, strength = 20, leadership = 20, crew = 500, rice = 5000)
-        val strongDefender = createGeneral(id = 3, nationId = 2, strength = 70, leadership = 70, crew = 3000, rice = 30000)
-        val city = createCity(nationId = 2)
+        val attackerGeneral = createGeneral(id = 1, factionId = 1, command = 80, leadership = 80, ships = 5000, supplies = 50000)
+        val weakDefender = createGeneral(id = 2, factionId = 2, command = 20, leadership = 20, ships = 500, supplies = 5000)
+        val strongDefender = createGeneral(id = 3, factionId = 2, command = 70, leadership = 70, ships = 3000, supplies = 30000)
+        val city = createCity(factionId = 2)
 
         val attacker = WarUnitOfficer(attackerGeneral)
         val defenders = listOf(WarUnitOfficer(weakDefender), WarUnitOfficer(strongDefender))
@@ -429,14 +429,14 @@ class BattleEngineTest {
         for (seed in 1..50) {
             val rng = Random(seed)
             val attackerGeneral = createGeneral(
-                id = 1, nationId = 1, strength = 60, leadership = 60,
-                crew = 3000, rice = 50000, specialCode = "견고",
+                id = 1, factionId = 1, command = 60, leadership = 60,
+                ships = 3000, supplies = 50000, specialCode = "견고",
             )
             val defenderGeneral = createGeneral(
-                id = 2, nationId = 2, strength = 50, leadership = 50,
-                crew = 2000, rice = 20000,
+                id = 2, factionId = 2, command = 50, leadership = 50,
+                ships = 2000, supplies = 20000,
             )
-            val city = createCity(nationId = 2)
+            val city = createCity(factionId = 2)
 
             val attacker = WarUnitOfficer(attackerGeneral)
             val defender = WarUnitOfficer(defenderGeneral)
@@ -455,10 +455,10 @@ class BattleEngineTest {
     fun `공성 special works in siege without errors`() {
         val rng = Random(42)
         val gen = createGeneral(
-            id = 1, nationId = 1, strength = 90, leadership = 90,
-            crew = 10000, rice = 100000, specialCode = "공성",
+            id = 1, factionId = 1, command = 90, leadership = 90,
+            ships = 10000, supplies = 100000, specialCode = "공성",
         )
-        val city = createCity(nationId = 2, def = 50, wall = 50)
+        val city = createCity(factionId = 2, orbitalDefense = 50, fortress = 50)
         val attacker = WarUnitOfficer(gen)
 
         val result = engine.resolveBattle(attacker, emptyList(), city, rng)
@@ -476,14 +476,14 @@ class BattleEngineTest {
         for (special in specials) {
             val rng = Random(42)
             val attackerGeneral = createGeneral(
-                id = 1, nationId = 1, strength = 70, leadership = 70,
-                crew = 3000, rice = 50000, specialCode = special,
+                id = 1, factionId = 1, command = 70, leadership = 70,
+                ships = 3000, supplies = 50000, specialCode = special,
             )
             val defenderGeneral = createGeneral(
-                id = 2, nationId = 2, strength = 50, leadership = 50,
-                crew = 2000, rice = 20000,
+                id = 2, factionId = 2, command = 50, leadership = 50,
+                ships = 2000, supplies = 20000,
             )
-            val city = createCity(nationId = 2)
+            val city = createCity(factionId = 2)
 
             val attacker = WarUnitOfficer(attackerGeneral)
             val defender = WarUnitOfficer(defenderGeneral)
@@ -499,9 +499,9 @@ class BattleEngineTest {
     @Test
     fun `pendingLevelExp accumulates during battle`() {
         val rng = Random(42)
-        val attackerGeneral = createGeneral(id = 1, nationId = 1, strength = 80, leadership = 80, crew = 5000, rice = 50000, train = 80, atmos = 80)
-        val defenderGeneral = createGeneral(id = 2, nationId = 2, strength = 50, leadership = 50, crew = 2000, rice = 20000)
-        val city = createCity(nationId = 2)
+        val attackerGeneral = createGeneral(id = 1, factionId = 1, command = 80, leadership = 80, ships = 5000, supplies = 50000, training = 80, morale = 80)
+        val defenderGeneral = createGeneral(id = 2, factionId = 2, command = 50, leadership = 50, ships = 2000, supplies = 20000)
+        val city = createCity(factionId = 2)
 
         val attacker = WarUnitOfficer(attackerGeneral)
         val defender = WarUnitOfficer(defenderGeneral)
@@ -513,14 +513,14 @@ class BattleEngineTest {
 
     @Test
     fun `resolveBattle deterministic with same seed`() {
-        val attackerGen1 = createGeneral(id = 1, nationId = 1, strength = 70, crew = 3000, rice = 50000)
-        val defenderGen1 = createGeneral(id = 2, nationId = 2, strength = 50, crew = 2000, rice = 20000)
-        val city1 = createCity(nationId = 2)
+        val attackerGen1 = createGeneral(id = 1, factionId = 1, command = 70, ships = 3000, supplies = 50000)
+        val defenderGen1 = createGeneral(id = 2, factionId = 2, command = 50, ships = 2000, supplies = 20000)
+        val city1 = createCity(factionId = 2)
         val result1 = engine.resolveBattle(WarUnitOfficer(attackerGen1), listOf(WarUnitOfficer(defenderGen1)), city1, Random(123))
 
-        val attackerGen2 = createGeneral(id = 1, nationId = 1, strength = 70, crew = 3000, rice = 50000)
-        val defenderGen2 = createGeneral(id = 2, nationId = 2, strength = 50, crew = 2000, rice = 20000)
-        val city2 = createCity(nationId = 2)
+        val attackerGen2 = createGeneral(id = 1, factionId = 1, command = 70, ships = 3000, supplies = 50000)
+        val defenderGen2 = createGeneral(id = 2, factionId = 2, command = 50, ships = 2000, supplies = 20000)
+        val city2 = createCity(factionId = 2)
         val result2 = engine.resolveBattle(WarUnitOfficer(attackerGen2), listOf(WarUnitOfficer(defenderGen2)), city2, Random(123))
 
         assertEquals(result1.attackerDamageDealt, result2.attackerDamageDealt)

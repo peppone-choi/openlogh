@@ -16,44 +16,44 @@ class FieldBattleTest {
 
     private fun createGeneral(
         id: Long = 1,
-        nationId: Long = 1,
-        cityId: Long = 1,
-        crew: Int = 1000,
-        rice: Int = 5000,
+        factionId: Long = 1,
+        planetId: Long = 1,
+        ships: Int = 1000,
+        supplies: Int = 5000,
         leadership: Short = 50,
-        strength: Short = 50,
-        intel: Short = 50,
-        train: Short = 70,
-        atmos: Short = 70,
+        command: Short = 50,
+        intelligence: Short = 50,
+        training: Short = 70,
+        morale: Short = 70,
     ): Officer = Officer(
         id = id,
         sessionId = 1,
         name = "장수$id",
-        factionId = nationId,
-        planetId = cityId,
-        ships = crew,
-        supplies = rice,
+        factionId = factionId,
+        planetId = planetId,
+        ships = ships,
+        supplies = supplies,
         leadership = leadership,
-        command = strength,
-        intelligence = intel,
-        training = train,
-        morale = atmos,
+        command = command,
+        intelligence = intelligence,
+        training = training,
+        morale = morale,
         turnTime = OffsetDateTime.now(),
     )
 
     private fun createCity(
-        nationId: Long = 1,
-        def: Int = 500,
-        wall: Int = 500,
+        factionId: Long = 1,
+        orbitalDefense: Int = 500,
+        fortress: Int = 500,
         level: Short = 0,
     ): Planet = Planet(
         id = 1,
         sessionId = 1,
         name = "테스트도시",
-        factionId = nationId,
-        orbitalDefense = def,
+        factionId = factionId,
+        orbitalDefense = orbitalDefense,
         orbitalDefenseMax = 1000,
-        fortress = wall,
+        fortress = fortress,
         fortressMax = 1000,
         population = 10000,
         populationMax = 50000,
@@ -72,7 +72,7 @@ class FieldBattleTest {
 
     @Test
     fun `요격 saves correct lastTurn fields`() {
-        val general = createGeneral(crew = 500, rice = 100)
+        val general = createGeneral(ships = 500, supplies = 100)
         val env = createEnv()
         val destPlanet = createCity()
         val arg = mapOf<String, Any>("destCityId" to 42L)
@@ -89,7 +89,7 @@ class FieldBattleTest {
 
     @Test
     fun `요격 logs ambush message with city name`() {
-        val general = createGeneral(crew = 500, rice = 100)
+        val general = createGeneral(ships = 500, supplies = 100)
         val env = createEnv()
         val destPlanet = createCity()
         destPlanet.name = "낙양"
@@ -128,7 +128,7 @@ class FieldBattleTest {
 
     @Test
     fun `순찰 saves correct lastTurn fields`() {
-        val general = createGeneral(cityId = 7L, crew = 200, rice = 100)
+        val general = createGeneral(planetId = 7L, ships = 200, supplies = 100)
         val env = createEnv()
 
         val cmd = 순찰(general, env)
@@ -140,7 +140,7 @@ class FieldBattleTest {
 
     @Test
     fun `순찰 logs patrol start message`() {
-        val general = createGeneral(crew = 200, rice = 100)
+        val general = createGeneral(ships = 200, supplies = 100)
         val env = createEnv()
 
         val cmd = 순찰(general, env)
@@ -175,8 +175,8 @@ class FieldBattleTest {
     @Test
     fun `FieldBattleService ambush increases interceptor attack multiplier`() {
         val service = FieldBattleService()
-        val interceptorGeneral = createGeneral(id = 1, nationId = 1, crew = 3000, rice = 30000, strength = 80.toShort(), leadership = 80.toShort())
-        val targetGeneral = createGeneral(id = 2, nationId = 2, crew = 2000, rice = 20000)
+        val interceptorGeneral = createGeneral(id = 1, factionId = 1, ships = 3000, supplies = 30000, command = 80.toShort(), leadership = 80.toShort())
+        val targetGeneral = createGeneral(id = 2, factionId = 2, ships = 2000, supplies = 20000)
         val city = createCity()
 
         val interceptor = WarUnitOfficer(interceptorGeneral)
@@ -196,8 +196,8 @@ class FieldBattleTest {
     @Test
     fun `FieldBattleService ambush reduces target atmos and defenceMultiplier`() {
         val service = FieldBattleService()
-        val interceptorGeneral = createGeneral(id = 1, nationId = 1, crew = 3000, rice = 30000, strength = 80.toShort())
-        val targetGeneral = createGeneral(id = 2, nationId = 2, crew = 2000, rice = 20000, atmos = 60.toShort())
+        val interceptorGeneral = createGeneral(id = 1, factionId = 1, ships = 3000, supplies = 30000, command = 80.toShort())
+        val targetGeneral = createGeneral(id = 2, factionId = 2, ships = 2000, supplies = 20000, morale = 60.toShort())
         val city = createCity()
 
         val interceptor = WarUnitOfficer(interceptorGeneral)
@@ -207,7 +207,7 @@ class FieldBattleTest {
 
         service.resolve(interceptor, target, city, Random(42), isAmbush = true, year = 200, startYear = 180)
 
-        // target atmos: 60 - 10 = 50 (applied before battle, then battle may change further)
+        // target morale: 60 - 10 = 50 (applied before battle, then battle may change further)
         // We verify the multiplier was applied (0.85)
         assertEquals(initialTargetDefMult * 0.85, target.defenceMultiplier, 0.001)
     }
@@ -215,8 +215,8 @@ class FieldBattleTest {
     @Test
     fun `FieldBattleService non-ambush does not boost interceptor`() {
         val service = FieldBattleService()
-        val interceptorGeneral = createGeneral(id = 1, nationId = 1, crew = 3000, rice = 30000, strength = 80.toShort())
-        val targetGeneral = createGeneral(id = 2, nationId = 2, crew = 2000, rice = 20000)
+        val interceptorGeneral = createGeneral(id = 1, factionId = 1, ships = 3000, supplies = 30000, command = 80.toShort())
+        val targetGeneral = createGeneral(id = 2, factionId = 2, ships = 2000, supplies = 20000)
         val city = createCity()
 
         val interceptor = WarUnitOfficer(interceptorGeneral)
@@ -228,7 +228,7 @@ class FieldBattleTest {
 
         service.resolve(interceptor, target, city, Random(42), isAmbush = false, year = 200, startYear = 180)
 
-        // No ambush boost — only the atmos/def reductions still apply
+        // No ambush boost — only the atmos/orbitalDefense reductions still apply
         assertEquals(initialAttackMultiplier, interceptor.attackMultiplier, 0.001)
         assertEquals(initialCritChance, interceptor.criticalChance, 0.001)
         assertEquals(initialTargetDefMult * 0.85, target.defenceMultiplier, 0.001)
@@ -237,8 +237,8 @@ class FieldBattleTest {
     @Test
     fun `FieldBattleService returns valid BattleResult`() {
         val service = FieldBattleService()
-        val interceptorGeneral = createGeneral(id = 1, nationId = 1, crew = 5000, rice = 50000, strength = 90.toShort(), leadership = 90.toShort(), train = 80.toShort(), atmos = 80.toShort())
-        val targetGeneral = createGeneral(id = 2, nationId = 2, crew = 1000, rice = 5000, strength = 30.toShort(), leadership = 30.toShort())
+        val interceptorGeneral = createGeneral(id = 1, factionId = 1, ships = 5000, supplies = 50000, command = 90.toShort(), leadership = 90.toShort(), training = 80.toShort(), morale = 80.toShort())
+        val targetGeneral = createGeneral(id = 2, factionId = 2, ships = 1000, supplies = 5000, command = 30.toShort(), leadership = 30.toShort())
         val city = createCity()
 
         val interceptor = WarUnitOfficer(interceptorGeneral)
@@ -253,12 +253,12 @@ class FieldBattleTest {
 
     @Test
     fun `FieldBattleService field city has no walls`() {
-        // Verify that a very weak city stat does not matter — FieldBattleService sets def=0 wall=0
+        // Verify that a very weak city stat does not matter — FieldBattleService sets orbitalDefense=0 fortress=0
         // so siege phase adds no resistance. Strong attacker with no defenders should win easily.
         val service = FieldBattleService()
-        val interceptorGeneral = createGeneral(id = 1, nationId = 1, crew = 10000, rice = 100000, strength = 99.toShort(), leadership = 99.toShort(), train = 99.toShort(), atmos = 99.toShort())
-        val targetGeneral = createGeneral(id = 2, nationId = 2, crew = 10, rice = 1, strength = 10.toShort(), leadership = 10.toShort(), train = 10.toShort(), atmos = 10.toShort())
-        val city = createCity(def = 9999, wall = 9999)
+        val interceptorGeneral = createGeneral(id = 1, factionId = 1, ships = 10000, supplies = 100000, command = 99.toShort(), leadership = 99.toShort(), training = 99.toShort(), morale = 99.toShort())
+        val targetGeneral = createGeneral(id = 2, factionId = 2, ships = 10, supplies = 1, command = 10.toShort(), leadership = 10.toShort(), training = 10.toShort(), morale = 10.toShort())
+        val city = createCity(orbitalDefense = 9999, fortress = 9999)
 
         val interceptor = WarUnitOfficer(interceptorGeneral)
         val target = WarUnitOfficer(targetGeneral)

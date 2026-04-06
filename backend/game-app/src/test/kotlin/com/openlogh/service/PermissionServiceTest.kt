@@ -28,7 +28,7 @@ class PermissionServiceTest {
     private fun general(
         id: Long,
         userId: Long? = null,
-        nationId: Long = 1,
+        factionId: Long = 1,
         officerLevel: Short = 1,
         permission: String = "normal",
     ): Officer {
@@ -37,7 +37,7 @@ class PermissionServiceTest {
             sessionId = 1,
             userId = userId,
             name = "장수$id",
-            factionId = nationId,
+            factionId = factionId,
             planetId = 1,
             officerLevel = officerLevel,
             permission = permission,
@@ -47,22 +47,22 @@ class PermissionServiceTest {
 
     @Test
     fun `setPermission applies legacy candidate filters`() {
-        val leader = general(id = 1, userId = 10, nationId = 1, officerLevel = 20)
-        val eligible = general(id = 2, nationId = 1)
-        val noChief = general(id = 3, nationId = 1).apply {
+        val leader = general(id = 1, userId = 10, factionId = 1, officerLevel = 20)
+        val eligible = general(id = 2, factionId = 1)
+        val noChief = general(id = 3, factionId = 1).apply {
             penalty = mutableMapOf("noChief" to true)
         }
-        val existingAuditor = general(id = 4, nationId = 1, permission = "auditor")
-        val ruler = general(id = 5, nationId = 1, officerLevel = 20)
+        val existingAuditor = general(id = 4, factionId = 1, permission = "auditor")
+        val ruler = general(id = 5, factionId = 1, officerLevel = 20)
 
         `when`(officerRepository.findByUserId(10L)).thenReturn(listOf(leader))
         `when`(officerRepository.findByFactionId(1L)).thenReturn(listOf(leader, eligible, noChief, existingAuditor, ruler))
 
         val result = service.setPermission(
             userId = 10,
-            nationId = 1,
+            factionId = 1,
             isAmbassador = false,
-            generalIds = listOf(2, 3, 4, 5),
+            officerIds = listOf(2, 3, 4, 5),
         )
 
         assertTrue(result.result)
@@ -77,17 +77,17 @@ class PermissionServiceTest {
 
     @Test
     fun `setPermission clears existing target permission when selection is empty`() {
-        val leader = general(id = 1, userId = 10, nationId = 1, officerLevel = 20)
-        val ambassador = general(id = 2, nationId = 1, permission = "ambassador")
+        val leader = general(id = 1, userId = 10, factionId = 1, officerLevel = 20)
+        val ambassador = general(id = 2, factionId = 1, permission = "ambassador")
 
         `when`(officerRepository.findByUserId(10L)).thenReturn(listOf(leader))
         `when`(officerRepository.findByFactionId(1L)).thenReturn(listOf(leader, ambassador))
 
         val result = service.setPermission(
             userId = 10,
-            nationId = 1,
+            factionId = 1,
             isAmbassador = true,
-            generalIds = emptyList(),
+            officerIds = emptyList(),
         )
 
         assertTrue(result.result)
@@ -97,15 +97,15 @@ class PermissionServiceTest {
 
     @Test
     fun `setPermission rejects more than two ambassadors`() {
-        val leader = general(id = 1, userId = 10, nationId = 1, officerLevel = 20)
+        val leader = general(id = 1, userId = 10, factionId = 1, officerLevel = 20)
 
         `when`(officerRepository.findByUserId(10L)).thenReturn(listOf(leader))
 
         val result = service.setPermission(
             userId = 10,
-            nationId = 1,
+            factionId = 1,
             isAmbassador = true,
-            generalIds = listOf(2, 3, 4),
+            officerIds = listOf(2, 3, 4),
         )
 
         assertFalse(result.result)

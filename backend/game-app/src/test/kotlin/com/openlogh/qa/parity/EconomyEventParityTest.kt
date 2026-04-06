@@ -70,30 +70,30 @@ class EconomyEventParityTest {
 
     private fun wireRepos() {
         `when`(planetRepository.findBySessionId(ArgumentMatchers.anyLong())).thenAnswer { inv ->
-            val worldId = inv.arguments[0] as Long
-            cities.values.filter { it.sessionId == worldId }.map { it.toSnapshot().toEntity() }
+            val sessionId = inv.arguments[0] as Long
+            cities.values.filter { it.sessionId == sessionId }.map { it.toSnapshot().toEntity() }
         }
         `when`(factionRepository.findBySessionId(ArgumentMatchers.anyLong())).thenAnswer { inv ->
-            val worldId = inv.arguments[0] as Long
-            nations.values.filter { it.sessionId == worldId }.map { it.toSnapshot().toEntity() }
+            val sessionId = inv.arguments[0] as Long
+            nations.values.filter { it.sessionId == sessionId }.map { it.toSnapshot().toEntity() }
         }
         `when`(officerRepository.findBySessionId(ArgumentMatchers.anyLong())).thenAnswer { inv ->
-            val worldId = inv.arguments[0] as Long
-            generals.values.filter { it.sessionId == worldId }.map { it.toSnapshot().toEntity() }
+            val sessionId = inv.arguments[0] as Long
+            generals.values.filter { it.sessionId == sessionId }.map { it.toSnapshot().toEntity() }
         }
         `when`(officerRepository.findBySessionIdAndPlanetIdIn(ArgumentMatchers.anyLong(), ArgumentMatchers.anyList()))
             .thenReturn(emptyList())
-        `when`(planetRepository.save(ArgumentMatchers.any(City::class.java))).thenAnswer { inv ->
+        `when`(planetRepository.save(ArgumentMatchers.any(Planet::class.java))).thenAnswer { inv ->
             val city = inv.arguments[0] as Planet
             cities[city.id] = city.toSnapshot().toEntity()
             city
         }
-        `when`(factionRepository.save(ArgumentMatchers.any(Nation::class.java))).thenAnswer { inv ->
+        `when`(factionRepository.save(ArgumentMatchers.any(Faction::class.java))).thenAnswer { inv ->
             val nation = inv.arguments[0] as Faction
             nations[nation.id] = nation.toSnapshot().toEntity()
             nation
         }
-        `when`(officerRepository.save(ArgumentMatchers.any(General::class.java))).thenAnswer { inv ->
+        `when`(officerRepository.save(ArgumentMatchers.any(Officer::class.java))).thenAnswer { inv ->
             val general = inv.arguments[0] as Officer
             generals[general.id] = general.toSnapshot().toEntity()
             general
@@ -119,43 +119,43 @@ class EconomyEventParityTest {
     }
 
     private fun city(
-        id: Long = 1, nationId: Long = 1,
-        pop: Int = 10000, popMax: Int = 50000,
-        agri: Int = 500, agriMax: Int = 1000,
-        comm: Int = 500, commMax: Int = 1000,
-        secu: Int = 500, secuMax: Int = 1000,
-        def: Int = 500, defMax: Int = 1000,
-        wall: Int = 500, wallMax: Int = 1000,
-        trust: Float = 80f, supplyState: Short = 1,
+        id: Long = 1, factionId: Long = 1,
+        population: Int = 10000, populationMax: Int = 50000,
+        production: Int = 500, productionMax: Int = 1000,
+        commerce: Int = 500, commerceMax: Int = 1000,
+        security: Int = 500, securityMax: Int = 1000,
+        orbitalDefense: Int = 500, orbitalDefenseMax: Int = 1000,
+        fortress: Int = 500, fortressMax: Int = 1000,
+        approval: Float = 80f, supplyState: Short = 1,
         level: Short = 5, dead: Int = 0, trade: Int = 100,
     ): Planet = Planet(
         id = id, sessionId = 1, name = "city$id", mapPlanetId = id.toInt(),
-        nationId = nationId, pop = pop, popMax = popMax,
-        agri = agri, agriMax = agriMax, comm = comm, commMax = commMax,
-        secu = secu, secuMax = secuMax, def = def, defMax = defMax,
-        wall = wall, wallMax = wallMax, trust = trust,
+        factionId = factionId, population = population, populationMax = populationMax,
+        production = production, productionMax = productionMax, commerce = commerce, commerceMax = commerceMax,
+        security = security, securityMax = securityMax, orbitalDefense = orbitalDefense, orbitalDefenseMax = orbitalDefenseMax,
+        fortress = fortress, fortressMax = fortressMax, approval = approval,
         supplyState = supplyState, level = level, dead = dead, trade = trade,
     )
 
     private fun nation(
-        id: Long = 1, gold: Int = 10000, rice: Int = 10000,
+        id: Long = 1, funds: Int = 10000, supplies: Int = 10000,
         level: Short = 1, rateTmp: Short = 15, bill: Short = 100,
-        capitalCityId: Long? = 1, rate: Short = 15,
-        typeCode: String = "che_중립",
+        capitalPlanetId: Long? = 1, conscriptionRate: Short = 15,
+        factionType: String = "che_중립",
     ): Faction = Faction(
         id = id, sessionId = 1, name = "nation$id", color = "#FF0000",
-        funds = gold, supplies = rice, factionRank = level, conscriptionRateTmp = rateTmp,
-        taxRate = bill, capitalPlanetId = capitalCityId, conscriptionRate = rate,
-        factionType = typeCode,
+        funds = funds, supplies = supplies, factionRank = level, conscriptionRateTmp = rateTmp,
+        taxRate = bill, capitalPlanetId = capitalPlanetId, conscriptionRate = conscriptionRate,
+        factionType = factionType,
     )
 
     private fun general(
-        id: Long = 1, nationId: Long = 1, cityId: Long = 1,
-        gold: Int = 1000, rice: Int = 1000, dedication: Int = 1000,
+        id: Long = 1, factionId: Long = 1, planetId: Long = 1,
+        funds: Int = 1000, supplies: Int = 1000, dedication: Int = 1000,
         officerLevel: Short = 1, officerPlanet: Int = 0, npcState: Short = 0,
     ): Officer = Officer(
         id = id, sessionId = 1, name = "general$id",
-        factionId = nationId, planetId = cityId, funds = gold, supplies = rice,
+        factionId = factionId, planetId = planetId, funds = funds, supplies = supplies,
         dedication = dedication, officerLevel = officerLevel,
         officerPlanet = officerPlanet, npcState = npcState,
     )
@@ -163,7 +163,7 @@ class EconomyEventParityTest {
     // ────────────────────────────────────────────────────────────────────────
     // Semi-Annual Events (January / July)
     // Legacy ProcessSemiAnnual.php::run():
-    //   Step 1: ALL cities get 0.99 decay on agri/comm/secu/def/wall + dead=0
+    //   Step 1: ALL cities get 0.99 decay on production/commerce/security/orbitalDefense/fortress + dead=0
     //   Step 2: popIncrease() applies growth ONLY to supplied nation cities
     //
     // CRITICAL: Legacy decays ALL cities first (line 75-82), then grows supplied.
@@ -177,9 +177,9 @@ class EconomyEventParityTest {
         @Test
         @DisplayName("Semi-annual only triggers on month 1 and 7")
         fun `semi-annual month guard`() {
-            val c = city(agri = 500)
+            val c = city(production = 500)
             val n = nation(rateTmp = 15)
-            val g = general(gold = 0, rice = 0)
+            val g = general(funds = 0, supplies = 0)
             seed(listOf(c), listOf(n), listOf(g))
 
             // Month 3: no semi-annual growth
@@ -187,7 +187,7 @@ class EconomyEventParityTest {
             val agriMonth3 = cities[1L]!!.production
 
             // Reset and test month 1
-            seed(listOf(city(agri = 500)), listOf(nation(rateTmp = 15)), listOf(general(gold = 0, rice = 0)))
+            seed(listOf(city(production = 500)), listOf(nation(rateTmp = 15)), listOf(general(funds = 0, supplies = 0)))
             service.postUpdateMonthly(world(month = 1))
             val agriMonth1 = cities[1L]!!.production
 
@@ -200,7 +200,7 @@ class EconomyEventParityTest {
         fun `dead reset to zero`() {
             val c = city(dead = 500)
             val n = nation()
-            val g = general(gold = 0, rice = 0)
+            val g = general(funds = 0, supplies = 0)
             seed(listOf(c), listOf(n), listOf(g))
 
             service.postUpdateMonthly(world(month = 1))
@@ -209,7 +209,7 @@ class EconomyEventParityTest {
         }
 
         // ── Population Growth ──
-        // Legacy: pop = least(popMax, BASE_POP_INCREASE + pop * (1 + popRatio * (1 ± secu/secuMax/10)))
+        // Legacy: population = least(populationMax, BASE_POP_INCREASE + population * (1 + popRatio * (1 ± security/securityMax/10)))
         //   popRatio = (30 - taxRate) / 200
 
         @ParameterizedTest
@@ -222,22 +222,22 @@ class EconomyEventParityTest {
             "50, -0.1",       // (30-50)/200 = -0.1 = -10%
         )
         @DisplayName("popRatio = (30 - taxRate) / 200")
-        fun `pop ratio formula`(taxRate: Int, expectedRatio: Double) {
+        fun `population ratio formula`(taxRate: Int, expectedRatio: Double) {
             val actualRatio = (30.0 - taxRate) / 200
             assertThat(actualRatio).isCloseTo(expectedRatio, within(0.001))
         }
 
         @Test
-        @DisplayName("Population growth with positive popRatio includes secu bonus")
+        @DisplayName("Population growth with positive popRatio includes security bonus")
         fun `population growth positive ratio`() {
-            // pop=10000, taxRate=15, secu=500, secuMax=1000
+            // population=10000, taxRate=15, security=500, securityMax=1000
             // popRatio = (30-15)/200 = 0.075
-            // secuBonus = secu/secuMax/10 = 0.05
-            // newPop = least(popMax, 5000 + 10000 * (1 + 0.075 * (1 + 0.05)))
+            // secuBonus = security/securityMax/10 = 0.05
+            // newPop = least(populationMax, 5000 + 10000 * (1 + 0.075 * (1 + 0.05)))
             //        = least(50000, 5000 + 10000 * 1.07875) = 15787
-            val c = city(pop = 10000, popMax = 50000, secu = 500, secuMax = 1000)
+            val c = city(population = 10000, populationMax = 50000, security = 500, securityMax = 1000)
             val n = nation(rateTmp = 15)
-            val g = general(gold = 0, rice = 0)
+            val g = general(funds = 0, supplies = 0)
             seed(listOf(c), listOf(n), listOf(g))
 
             service.postUpdateMonthly(world(month = 1))
@@ -248,15 +248,15 @@ class EconomyEventParityTest {
         }
 
         @Test
-        @DisplayName("Population growth with negative popRatio reverses secu bonus")
+        @DisplayName("Population growth with negative popRatio reverses security bonus")
         fun `population growth negative ratio`() {
-            // pop=10000, taxRate=50, secu=500, secuMax=1000
+            // population=10000, taxRate=50, security=500, securityMax=1000
             // popRatio = (30-50)/200 = -0.1
             // Since popRatio < 0: newPop = 5000 + 10000 * (1 + (-0.1) * (1 - 0.05))
             //                             = 5000 + 10000 * (1 - 0.095) = 5000 + 9050 = 14050
-            val c = city(pop = 10000, popMax = 50000, secu = 500, secuMax = 1000)
+            val c = city(population = 10000, populationMax = 50000, security = 500, securityMax = 1000)
             val n = nation(rateTmp = 50)
-            val g = general(gold = 0, rice = 0)
+            val g = general(funds = 0, supplies = 0)
             seed(listOf(c), listOf(n), listOf(g))
 
             service.postUpdateMonthly(world(month = 1))
@@ -266,11 +266,11 @@ class EconomyEventParityTest {
         }
 
         @Test
-        @DisplayName("Population capped at popMax")
+        @DisplayName("Population capped at populationMax")
         fun `population capped at max`() {
-            val c = city(pop = 49000, popMax = 50000, secu = 1000, secuMax = 1000)
+            val c = city(population = 49000, populationMax = 50000, security = 1000, securityMax = 1000)
             val n = nation(rateTmp = 5)  // very low tax -> high growth
-            val g = general(gold = 0, rice = 0)
+            val g = general(funds = 0, supplies = 0)
             seed(listOf(c), listOf(n), listOf(g))
 
             service.postUpdateMonthly(world(month = 1))
@@ -303,13 +303,13 @@ class EconomyEventParityTest {
         @Test
         @DisplayName("Supplied city infrastructure grows by genericRatio after 0.99 pre-decay")
         fun `infrastructure growth with pre-decay`() {
-            // Legacy: agri = agri * 0.99 (pre-decay), then agri = least(max, agri * (1 + genericRatio))
-            // agri=500, taxRate=15, genericRatio=(20-15)/200=0.025
+            // Legacy: production = production * 0.99 (pre-decay), then production = least(max, production * (1 + genericRatio))
+            // production=500, taxRate=15, genericRatio=(20-15)/200=0.025
             // After pre-decay: 500 * 0.99 = 495
             // After growth: 495 * 1.025 = 507.375 -> 507
-            val c = city(agri = 500, agriMax = 1000)
+            val c = city(production = 500, productionMax = 1000)
             val n = nation(rateTmp = 15)
-            val g = general(gold = 0, rice = 0)
+            val g = general(funds = 0, supplies = 0)
             seed(listOf(c), listOf(n), listOf(g))
 
             service.postUpdateMonthly(world(month = 1))
@@ -320,16 +320,16 @@ class EconomyEventParityTest {
             val expected = (500 * 0.99 * 1.025).toInt()  // 507
 
             assertThat(updatedAgri)
-                .describedAs("Supplied city agri grows by genericRatio without pre-decay")
+                .describedAs("Supplied city production grows by genericRatio without pre-decay")
                 .isEqualTo(expected)
         }
 
         @Test
         @DisplayName("Infrastructure capped at max values")
         fun `infrastructure capped at max`() {
-            val c = city(agri = 990, agriMax = 1000, comm = 995, commMax = 1000)
+            val c = city(production = 990, productionMax = 1000, commerce = 995, commerceMax = 1000)
             val n = nation(rateTmp = 15)
-            val g = general(gold = 0, rice = 0)
+            val g = general(funds = 0, supplies = 0)
             seed(listOf(c), listOf(n), listOf(g))
 
             service.postUpdateMonthly(world(month = 1))
@@ -339,7 +339,7 @@ class EconomyEventParityTest {
         }
 
         // ── Trust Adjustment ──
-        // Legacy: trust = greatest(0, least(100, trust + (20 - taxRate)))
+        // Legacy: approval = greatest(0, least(100, approval + (20 - taxRate)))
 
         @ParameterizedTest
         @CsvSource(
@@ -349,11 +349,11 @@ class EconomyEventParityTest {
             "95,  10,  100",   // 95 + (20-10) = 105 -> capped at 100
             "5,   25,  0",     // 5 + (20-25) = 0 -> clamped at 0
         )
-        @DisplayName("Trust adjustment: trust += (20 - taxRate), clamped [0, 100]")
-        fun `trust adjustment`(initialTrust: Float, taxRate: Int, expectedTrust: Float) {
-            val c = city(trust = initialTrust)
+        @DisplayName("Trust adjustment: approval += (20 - taxRate), clamped [0, 100]")
+        fun `approval adjustment`(initialTrust: Float, taxRate: Int, expectedTrust: Float) {
+            val c = city(approval = initialTrust)
             val n = nation(rateTmp = taxRate.toShort())
-            val g = general(gold = 0, rice = 0)
+            val g = general(funds = 0, supplies = 0)
             seed(listOf(c), listOf(n), listOf(g))
 
             service.postUpdateMonthly(world(month = 1))
@@ -365,7 +365,7 @@ class EconomyEventParityTest {
     // ────────────────────────────────────────────────────────────────────────
     // Neutral City Decay
     // Legacy ProcessSemiAnnual.php (func_time_event.php:42-49):
-    //   nation=0 cities: trust=50, infra *= 0.99
+    //   nation=0 cities: approval=50, infra *= 0.99
     // ────────────────────────────────────────────────────────────────────────
 
     @Nested
@@ -375,7 +375,7 @@ class EconomyEventParityTest {
         @Test
         @DisplayName("Neutral cities get single 0.99 decay on semi-annual")
         fun `neutral city decays`() {
-            val c = city(id = 1, nationId = 0, agri = 1000, comm = 1000, secu = 1000, def = 1000, wall = 1000)
+            val c = city(id = 1, factionId = 0, production = 1000, commerce = 1000, security = 1000, orbitalDefense = 1000, fortress = 1000)
             seed(listOf(c), emptyList(), emptyList())
 
             service.postUpdateMonthly(world(month = 1))
@@ -389,9 +389,9 @@ class EconomyEventParityTest {
         }
 
         @Test
-        @DisplayName("Neutral city trust resets to 50 on semi-annual")
-        fun `neutral city trust resets`() {
-            val c = city(id = 1, nationId = 0, trust = 80f)
+        @DisplayName("Neutral city approval resets to 50 on semi-annual")
+        fun `neutral city approval resets`() {
+            val c = city(id = 1, factionId = 0, approval = 80f)
             seed(listOf(c), emptyList(), emptyList())
 
             service.postUpdateMonthly(world(month = 1))
@@ -402,7 +402,7 @@ class EconomyEventParityTest {
         @Test
         @DisplayName("Neutral city dead resets to 0")
         fun `neutral city dead resets`() {
-            val c = city(id = 1, nationId = 0, dead = 300)
+            val c = city(id = 1, factionId = 0, dead = 300)
             seed(listOf(c), emptyList(), emptyList())
 
             service.postUpdateMonthly(world(month = 1))
@@ -424,9 +424,9 @@ class EconomyEventParityTest {
         @Test
         @DisplayName("Non-supplied nation city gets 0.99 decay during semi-annual")
         fun `non-supplied city decays`() {
-            val c = city(supplyState = 0, agri = 1000, comm = 1000)
+            val c = city(supplyState = 0, production = 1000, commerce = 1000)
             val n = nation()
-            val g = general(gold = 0, rice = 0)
+            val g = general(funds = 0, supplies = 0)
             seed(listOf(c), listOf(n), listOf(g))
 
             service.postUpdateMonthly(world(month = 1))
@@ -439,9 +439,9 @@ class EconomyEventParityTest {
         @Test
         @DisplayName("Supplied nation city grows (not just decays)")
         fun `supplied city grows`() {
-            val c = city(supplyState = 1, agri = 500, agriMax = 1000)
+            val c = city(supplyState = 1, production = 500, productionMax = 1000)
             val n = nation(rateTmp = 15)  // genericRatio = 0.025 > 0
-            val g = general(gold = 0, rice = 0)
+            val g = general(funds = 0, supplies = 0)
             seed(listOf(c), listOf(n), listOf(g))
 
             service.postUpdateMonthly(world(month = 1))
@@ -465,7 +465,7 @@ class EconomyEventParityTest {
             val c1 = city(id = 1, supplyState = 0)
             val c2 = city(id = 2, supplyState = 0)
             val c3 = city(id = 3, supplyState = 0)
-            val n = nation(capitalCityId = 1)
+            val n = nation(capitalPlanetId = 1)
             val g = general()
 
             `when`(mapService.getAdjacentCities("che", 1)).thenReturn(listOf(2))
@@ -483,10 +483,10 @@ class EconomyEventParityTest {
         @Test
         @DisplayName("Isolated city marked as unsupplied with penalty")
         fun `isolated city penalized`() {
-            val c1 = city(id = 1, pop = 10000, trust = 80f, agri = 500, comm = 500)
-            val c2 = city(id = 2, pop = 10000, trust = 80f, agri = 500, comm = 500)
-            val n = nation(capitalCityId = 1)
-            val g = general(cityId = 1)
+            val c1 = city(id = 1, population = 10000, approval = 80f, production = 500, commerce = 500)
+            val c2 = city(id = 2, population = 10000, approval = 80f, production = 500, commerce = 500)
+            val n = nation(capitalPlanetId = 1)
+            val g = general(planetId = 1)
 
             // No adjacency -> c2 is isolated
             `when`(mapService.getAdjacentCities("che", 1)).thenReturn(emptyList())
@@ -496,7 +496,7 @@ class EconomyEventParityTest {
             service.postUpdateMonthly(world(month = 3))
 
             val updated2 = cities[2L]!!
-            // Unsupplied penalty: pop * 0.9, trust * 0.9, infra * 0.9
+            // Unsupplied penalty: population * 0.9, approval * 0.9, infra * 0.9
             assertThat(updated2.population).isEqualTo(9000)
             assertThat(updated2.approval).isEqualTo(72f)
             assertThat(updated2.production).isEqualTo(450)
@@ -506,11 +506,11 @@ class EconomyEventParityTest {
 
         @Test
         @DisplayName("Trust < 30 on unsupplied non-capital city -> neutralized")
-        fun `trust below 30 neutralizes city`() {
+        fun `approval below 30 neutralizes city`() {
             val c1 = city(id = 1)  // capital
-            val c2 = city(id = 2, trust = 25f)  // low trust, isolated
-            val n = nation(capitalCityId = 1)
-            val g = general(cityId = 1)
+            val c2 = city(id = 2, approval = 25f)  // low approval, isolated
+            val n = nation(capitalPlanetId = 1)
+            val g = general(planetId = 1)
 
             `when`(mapService.getAdjacentCities("che", 1)).thenReturn(emptyList())
             `when`(mapService.getAdjacentCities("che", 2)).thenReturn(emptyList())
@@ -518,24 +518,24 @@ class EconomyEventParityTest {
             seed(listOf(c1, c2), listOf(n), listOf(g))
             service.postUpdateMonthly(world(month = 3))
 
-            // trust = 25 * 0.9 = 22.5 < 30 -> city neutralized
+            // approval = 25 * 0.9 = 22.5 < 30 -> city neutralized
             val updated2 = cities[2L]!!
             assertThat(updated2.factionId).isEqualTo(0L)
         }
 
         @Test
-        @DisplayName("Capital city is never neutralized even with low trust")
+        @DisplayName("Capital city is never neutralized even with low approval")
         fun `capital never neutralized`() {
-            val c1 = city(id = 1, trust = 10f)  // capital with very low trust
-            val n = nation(capitalCityId = 1)
-            val g = general(cityId = 1)
+            val c1 = city(id = 1, approval = 10f)  // capital with very low approval
+            val n = nation(capitalPlanetId = 1)
+            val g = general(planetId = 1)
 
             `when`(mapService.getAdjacentCities("che", 1)).thenReturn(emptyList())
 
             seed(listOf(c1), listOf(n), listOf(g))
             service.postUpdateMonthly(world(month = 3))
 
-            // Capital should remain owned even with trust < 30
+            // Capital should remain owned even with approval < 30
             assertThat(cities[1L]!!.factionId).isEqualTo(1L)
         }
     }
@@ -547,8 +547,8 @@ class EconomyEventParityTest {
     //   - Boom months: 4 (25%), 7 (25%); other months: 0%
     //   - Disaster: city prob = 0.06 - secuRatio * 0.05 (1~6%)
     //   - Boom: city prob = 0.02 + secuRatio * 0.05 (2~7%)
-    //   - Disaster affectRatio = 0.8 + clamp(secu/secuMax/0.8, 0, 1) * 0.15
-    //   - Boom affectRatio = 1.01 + clamp(secu/secuMax/0.8, 0, 1) * 0.04
+    //   - Disaster affectRatio = 0.8 + clamp(security/securityMax/0.8, 0, 1) * 0.15
+    //   - Boom affectRatio = 1.01 + clamp(security/securityMax/0.8, 0, 1) * 0.04
     // ────────────────────────────────────────────────────────────────────────
 
     @Nested
@@ -572,7 +572,7 @@ class EconomyEventParityTest {
         @Test
         @DisplayName("Year exactly at startYear+3 is NOT skipped")
         fun `year at boundary not skipped`() {
-            val c = city(secu = 0, secuMax = 1000)  // low secu = high disaster prob
+            val c = city(security = 0, securityMax = 1000)  // low security = high disaster prob
             val n = nation()
             val g = general()
             seed(listOf(c), listOf(n), listOf(g))
@@ -585,9 +585,9 @@ class EconomyEventParityTest {
         @ParameterizedTest
         @CsvSource(
             // secuRatio, expectedDisasterProb, expectedBoomProb
-            "0.0,  0.06,  0.02",    // 0%  secu: disaster=6%, boom=2%
-            "0.5,  0.035, 0.045",   // 50% secu: disaster=3.5%, boom=4.5%
-            "1.0,  0.01,  0.07",    // 100% secu: disaster=1%, boom=7%
+            "0.0,  0.06,  0.02",    // 0%  security: disaster=6%, boom=2%
+            "0.5,  0.035, 0.045",   // 50% security: disaster=3.5%, boom=4.5%
+            "1.0,  0.01,  0.07",    // 100% security: disaster=1%, boom=7%
         )
         @DisplayName("Security ratio affects disaster/boom probability")
         fun `security ratio probability`(secuRatio: Double, expectedDisaster: Double, expectedBoom: Double) {
@@ -600,8 +600,8 @@ class EconomyEventParityTest {
 
         @ParameterizedTest
         @CsvSource(
-            // secu, secuMax, isDisaster, expectedRatio
-            "0,    1000, true,  0.8",      // secu/secuMax/0.8 = 0 -> 0.8 + 0*0.15 = 0.8
+            // security, securityMax, isDisaster, expectedRatio
+            "0,    1000, true,  0.8",      // security/securityMax/0.8 = 0 -> 0.8 + 0*0.15 = 0.8
             "400,  1000, true,  0.875",    // 400/1000/0.8 = 0.5 -> 0.8 + 0.5*0.15 = 0.875
             "800,  1000, true,  0.95",     // 800/1000/0.8 = 1.0 -> 0.8 + 1.0*0.15 = 0.95
             "1000, 1000, true,  0.95",     // 1000/1000/0.8 = 1.25 -> clamp(1) -> 0.95
@@ -609,8 +609,8 @@ class EconomyEventParityTest {
             "800,  1000, false, 1.05",     // boom: 1.01 + 1.0*0.04 = 1.05
         )
         @DisplayName("Disaster/boom affectRatio formula")
-        fun `affect ratio formula`(secu: Int, secuMax: Int, isDisaster: Boolean, expectedRatio: Double) {
-            val secuRatio = if (secuMax > 0) secu.toDouble() / secuMax / 0.8 else 0.0
+        fun `affect ratio formula`(security: Int, securityMax: Int, isDisaster: Boolean, expectedRatio: Double) {
+            val secuRatio = if (securityMax > 0) security.toDouble() / securityMax / 0.8 else 0.0
             val clamped = secuRatio.coerceIn(0.0, 1.0)
             val actualRatio = if (isDisaster) {
                 0.8 + clamped * 0.15
@@ -651,7 +651,7 @@ class EconomyEventParityTest {
 
             // This is a structural verification - just verify no crash on all months
             for (month in listOf<Short>(1, 4, 7, 10)) {
-                seed(listOf(city(secu = 0, secuMax = 1000)), listOf(nation()), listOf(general()))
+                seed(listOf(city(security = 0, securityMax = 1000)), listOf(nation()), listOf(general()))
                 service.processDisasterOrBoom(world(year = 200, month = month, startYear = 190))
             }
         }
@@ -732,10 +732,10 @@ class EconomyEventParityTest {
 
     // ────────────────────────────────────────────────────────────────────────
     // Yearly Statistics (National Power)
-    // Legacy: power = (resource + tech + cityPower + statPower + dex + expDed) / 10
+    // Legacy: militaryPower = (resource + tech + cityPower + statPower + dex + expDed) / 10
     //   resource = (nationGold + nationRice + sum(generalGold + generalRice)) / 100
-    //   tech = nation.techLevel
-    //   cityPower = sum(pop) * sum(pop+agri+comm+secu+wall+def) / sum(popMax+agriMax+commMax+secuMax+wallMax+defMax) / 100
+    //   techLevel = nation.techLevel
+    //   cityPower = sum(population) * sum(population+production+commerce+security+fortress+orbitalDefense) / sum(populationMax+productionMax+commerceMax+securityMax+fortressMax+orbitalDefenseMax) / 100
     //   statPower = per-general formula
     //   dex = sum(dex1..5) / 1000
     //   expDed = sum(experience+dedication) / 100
@@ -748,14 +748,14 @@ class EconomyEventParityTest {
         @Test
         @DisplayName("National power calculated for active nations")
         fun `national power calculated`() {
-            val c = city(pop = 30000, popMax = 50000, agri = 800, agriMax = 1000, comm = 700, commMax = 1000)
-            val n = nation(gold = 50000, rice = 50000, level = 3)
+            val c = city(population = 30000, populationMax = 50000, production = 800, productionMax = 1000, commerce = 700, commerceMax = 1000)
+            val n = nation(funds = 50000, supplies = 50000, level = 3)
             val g = general(dedication = 5000)
             seed(listOf(c), listOf(n), listOf(g))
 
             service.processYearlyStatistics(world(year = 200, month = 1))
 
-            assertThat(nations[1L]!!.power).isGreaterThan(0)
+            assertThat(nations[1L]!!.militaryPower).isGreaterThan(0)
         }
 
         @Test
@@ -768,27 +768,27 @@ class EconomyEventParityTest {
 
             service.processYearlyStatistics(world(month = 1))
 
-            assertThat(nations[1L]!!.power).isEqualTo(0)
+            assertThat(nations[1L]!!.militaryPower).isEqualTo(0)
         }
 
         @Test
         @DisplayName("More resources and generals increase power")
         fun `more resources more power`() {
             // Low resources
-            val cLow = city(pop = 5000, popMax = 50000, agri = 100, agriMax = 1000)
-            val nLow = nation(gold = 1000, rice = 1000, level = 1)
+            val cLow = city(population = 5000, populationMax = 50000, production = 100, productionMax = 1000)
+            val nLow = nation(funds = 1000, supplies = 1000, level = 1)
             val gLow = general(dedication = 100)
             seed(listOf(cLow), listOf(nLow), listOf(gLow))
             service.processYearlyStatistics(world(month = 1))
-            val powerLow = nations[1L]!!.power
+            val powerLow = nations[1L]!!.militaryPower
 
             // High resources
-            val cHigh = city(pop = 40000, popMax = 50000, agri = 900, agriMax = 1000, comm = 900, commMax = 1000)
-            val nHigh = nation(gold = 100000, rice = 100000, level = 5)
+            val cHigh = city(population = 40000, populationMax = 50000, production = 900, productionMax = 1000, commerce = 900, commerceMax = 1000)
+            val nHigh = nation(funds = 100000, supplies = 100000, level = 5)
             val gHigh = general(dedication = 10000)
             seed(listOf(cHigh), listOf(nHigh), listOf(gHigh))
             service.processYearlyStatistics(world(month = 1))
-            val powerHigh = nations[1L]!!.power
+            val powerHigh = nations[1L]!!.militaryPower
 
             assertThat(powerHigh).isGreaterThan(powerLow)
         }
@@ -798,8 +798,8 @@ class EconomyEventParityTest {
     // PHP-Verified: Population Increase Golden Values
     // Legacy func_time_event.php popIncrease():
     //   popRatio = (30 - taxRate) / 200
-    //   if popRatio >= 0: newPop = least(popMax, BASE_POP_INCREASE + pop * (1 + popRatio * (1 + secu/secuMax/10)))
-    //   if popRatio < 0:  newPop = least(popMax, BASE_POP_INCREASE + pop * (1 + popRatio * (1 - secu/secuMax/10)))
+    //   if popRatio >= 0: newPop = least(populationMax, BASE_POP_INCREASE + population * (1 + popRatio * (1 + security/securityMax/10)))
+    //   if popRatio < 0:  newPop = least(populationMax, BASE_POP_INCREASE + population * (1 + popRatio * (1 - security/securityMax/10)))
     //   BASE_POP_INCREASE = 5000
     // ────────────────────────────────────────────────────────────────────────
 
@@ -809,61 +809,61 @@ class EconomyEventParityTest {
 
         @ParameterizedTest
         @CsvSource(
-            // pop, popMax, secu, secuMax, taxRate, expectedPop
-            // Case 1: pop=1000, popMax=50000, secu=500, secuMax=1000, tax=15
+            // population, populationMax, security, securityMax, taxRate, expectedPop
+            // Case 1: population=1000, populationMax=50000, security=500, securityMax=1000, tax=15
             //   popRatio=(30-15)/200=0.075, secuBonus=500/1000/10=0.05
             //   newPop=least(50000, 5000 + 1000*(1+0.075*(1+0.05))) = 5000+1078 = 6078
             "1000,  50000, 500, 1000, 15, 6078",
-            // Case 2: pop=5000, popMax=50000, secu=500, secuMax=1000, tax=15
+            // Case 2: population=5000, populationMax=50000, security=500, securityMax=1000, tax=15
             //   newPop=least(50000, 5000 + 5000*(1+0.075*1.05)) = 5000+5393 = 10393
             "5000,  50000, 500, 1000, 15, 10393",
-            // Case 3: pop=9000, popMax=10000, secu=500, secuMax=1000, tax=15
+            // Case 3: population=9000, populationMax=10000, security=500, securityMax=1000, tax=15
             //   newPop=least(10000, 5000 + 9000*1.07875) = least(10000, 5000+9708) = 10000 (capped)
             "9000,  10000, 500, 1000, 15, 10000",
-            // Case 4: pop=10000, popMax=50000, secu=500, secuMax=1000, tax=50 (negative popRatio)
+            // Case 4: population=10000, populationMax=50000, security=500, securityMax=1000, tax=50 (negative popRatio)
             //   popRatio=(30-50)/200=-0.1, secuBonus reverses: (1-0.05)=0.95
             //   newPop=least(50000, 5000+10000*(1+(-0.1)*0.95)) = 5000+10000*0.905 = 5000+9050 = 14050
             "10000, 50000, 500, 1000, 50, 14050",
-            // Case 5: pop=10000, popMax=50000, secu=0, secuMax=1000, tax=20
+            // Case 5: population=10000, populationMax=50000, security=0, securityMax=1000, tax=20
             //   popRatio=(30-20)/200=0.05, secuBonus=0/1000/10=0
             //   newPop=5000+10000*(1+0.05*1.0) = 5000+10500 = 15500
             "10000, 50000, 0,   1000, 20, 15500",
-            // Case 6: pop=10000, popMax=50000, secu=1000, secuMax=1000, tax=20
+            // Case 6: population=10000, populationMax=50000, security=1000, securityMax=1000, tax=20
             //   popRatio=0.05, secuBonus=1000/1000/10=0.1
             //   newPop=5000+10000*(1+0.05*1.1) = 5000+10550 = 15550
             "10000, 50000, 1000,1000, 20, 15550",
         )
         @DisplayName("popIncrease PHP-traced golden values")
-        fun `pop increase golden values`(
-            pop: Int, popMax: Int, secu: Int, secuMax: Int, taxRate: Int, expectedPop: Int,
+        fun `population increase golden values`(
+            population: Int, populationMax: Int, security: Int, securityMax: Int, taxRate: Int, expectedPop: Int,
         ) {
-            val c = city(pop = pop, popMax = popMax, secu = secu, secuMax = secuMax)
+            val c = city(population = population, populationMax = populationMax, security = security, securityMax = securityMax)
             val n = nation(rateTmp = taxRate.toShort())
-            val g = general(gold = 0, rice = 0)
+            val g = general(funds = 0, supplies = 0)
             seed(listOf(c), listOf(n), listOf(g))
 
             service.postUpdateMonthly(world(month = 1))
 
             assertThat(cities[1L]!!.population)
-                .describedAs("Pop: pop=$pop popMax=$popMax secu=$secu/$secuMax tax=$taxRate")
+                .describedAs("Pop: population=$population populationMax=$populationMax security=$security/$securityMax tax=$taxRate")
                 .isCloseTo(expectedPop, within(10))
         }
 
         @Test
         @DisplayName("농업국 popGrowthMultiplier=1.05 increases population growth")
-        fun `agricultural nation pop growth bonus`() {
-            val c = city(pop = 10000, popMax = 50000, secu = 500, secuMax = 1000)
-            val g = general(gold = 0, rice = 0)
+        fun `agricultural nation population growth bonus`() {
+            val c = city(population = 10000, populationMax = 50000, security = 500, securityMax = 1000)
+            val g = general(funds = 0, supplies = 0)
 
             // Default (중립)
-            seed(listOf(c), listOf(nation(rateTmp = 15, typeCode = "che_중립")), listOf(g))
+            seed(listOf(c), listOf(nation(rateTmp = 15, factionType = "che_중립")), listOf(g))
             service.postUpdateMonthly(world(month = 1))
             val popDefault = cities[1L]!!.population
 
             // 농업국 (popGrowthMultiplier=1.05)
-            seed(listOf(city(pop = 10000, popMax = 50000, secu = 500, secuMax = 1000)),
-                listOf(nation(rateTmp = 15, typeCode = "che_농업국")),
-                listOf(general(gold = 0, rice = 0)))
+            seed(listOf(city(population = 10000, populationMax = 50000, security = 500, securityMax = 1000)),
+                listOf(nation(rateTmp = 15, factionType = "che_농업국")),
+                listOf(general(funds = 0, supplies = 0)))
             service.postUpdateMonthly(world(month = 1))
             val popAgri = cities[1L]!!.population
 
@@ -888,22 +888,22 @@ class EconomyEventParityTest {
         @ParameterizedTest
         @CsvSource(
             // field, initial, max, taxRate, expectedAfter
-            // Case 1: agri=500, max=1000, tax=15, genericRatio=(20-15)/200=0.025
+            // Case 1: production=500, max=1000, tax=15, genericRatio=(20-15)/200=0.025
             //   500*0.99=495, 495*1.025=507.375 -> 507
             "500, 1000, 15, 507",
-            // Case 2: agri=100, max=1000, tax=15
+            // Case 2: production=100, max=1000, tax=15
             //   100*0.99=99, 99*1.025=101.475 -> 101
             "100, 1000, 15, 101",
-            // Case 3: agri=900, max=1000, tax=15
+            // Case 3: production=900, max=1000, tax=15
             //   900*0.99=891, 891*1.025=913.275 -> 913
             "900, 1000, 15, 913",
-            // Case 4: agri=990, max=1000, tax=15
+            // Case 4: production=990, max=1000, tax=15
             //   990*0.99=980, 980*1.025=1004.5 -> capped at 1000
             "990, 1000, 15, 1000",
-            // Case 5: agri=500, max=1000, tax=0, genericRatio=(20-0)/200=0.1
+            // Case 5: production=500, max=1000, tax=0, genericRatio=(20-0)/200=0.1
             //   500*0.99=495, 495*1.1=544.5 -> 544
             "500, 1000, 0,  544",
-            // Case 6: agri=500, max=1000, tax=30, genericRatio=(20-30)/200=-0.05
+            // Case 6: production=500, max=1000, tax=30, genericRatio=(20-30)/200=-0.05
             //   500*0.99=495, 495*0.95=470.25 -> 470
             "500, 1000, 30, 470",
         )
@@ -911,11 +911,11 @@ class EconomyEventParityTest {
         fun `infrastructure growth golden values`(
             initial: Int, max: Int, taxRate: Int, expected: Int,
         ) {
-            val c = city(agri = initial, agriMax = max, comm = initial, commMax = max,
-                secu = initial, secuMax = max, def = initial, defMax = max,
-                wall = initial, wallMax = max)
+            val c = city(production = initial, productionMax = max, commerce = initial, commerceMax = max,
+                security = initial, securityMax = max, orbitalDefense = initial, orbitalDefenseMax = max,
+                fortress = initial, fortressMax = max)
             val n = nation(rateTmp = taxRate.toShort())
-            val g = general(gold = 0, rice = 0)
+            val g = general(funds = 0, supplies = 0)
             seed(listOf(c), listOf(n), listOf(g))
 
             service.postUpdateMonthly(world(month = 1))
@@ -934,14 +934,14 @@ class EconomyEventParityTest {
     // ────────────────────────────────────────────────────────────────────────
     // PHP-Verified: Disaster/Boom Effect Golden Values
     // Legacy RaiseDisaster.php:
-    //   Disaster affectRatio = 0.8 + clamp(secu/secuMax/0.8, 0, 1) * 0.15
-    //     secu=0   -> 0.8 (20% reduction)
-    //     secu=400 -> 0.875 (12.5% reduction)
-    //     secu=800 -> 0.95 (5% reduction)
-    //     secu>=800-> 0.95 (max protection)
-    //   Boom affectRatio = 1.01 + clamp(secu/secuMax/0.8, 0, 1) * 0.04
-    //     secu=0   -> 1.01 (1% boost)
-    //     secu=800 -> 1.05 (5% boost)
+    //   Disaster affectRatio = 0.8 + clamp(security/securityMax/0.8, 0, 1) * 0.15
+    //     security=0   -> 0.8 (20% reduction)
+    //     security=400 -> 0.875 (12.5% reduction)
+    //     security=800 -> 0.95 (5% reduction)
+    //     security>=800-> 0.95 (max protection)
+    //   Boom affectRatio = 1.01 + clamp(security/securityMax/0.8, 0, 1) * 0.04
+    //     security=0   -> 1.01 (1% boost)
+    //     security=800 -> 1.05 (5% boost)
     // ────────────────────────────────────────────────────────────────────────
 
     @Nested
@@ -950,7 +950,7 @@ class EconomyEventParityTest {
 
         @ParameterizedTest
         @CsvSource(
-            // secu, secuMax, expectedRatio
+            // security, securityMax, expectedRatio
             "0,    1000, 0.80",     // clamp(0/1000/0.8)=0 -> 0.8+0*0.15=0.8
             "200,  1000, 0.8375",   // clamp(200/1000/0.8=0.25)=0.25 -> 0.8+0.25*0.15=0.8375
             "400,  1000, 0.875",    // clamp(400/1000/0.8=0.5)=0.5 -> 0.8+0.5*0.15=0.875
@@ -958,29 +958,29 @@ class EconomyEventParityTest {
             "800,  1000, 0.95",     // clamp(800/1000/0.8=1.0)=1.0 -> 0.8+1.0*0.15=0.95
             "1000, 1000, 0.95",     // clamp(1000/1000/0.8=1.25)=1.0 -> 0.8+1.0*0.15=0.95 (capped)
         )
-        @DisplayName("Disaster affectRatio = 0.8 + clamp(secu/secuMax/0.8, 0, 1) * 0.15")
-        fun `disaster affect ratio golden values`(secu: Int, secuMax: Int, expectedRatio: Double) {
-            val secuRatioNorm = if (secuMax > 0) (secu.toDouble() / secuMax / 0.8).coerceIn(0.0, 1.0) else 0.0
+        @DisplayName("Disaster affectRatio = 0.8 + clamp(security/securityMax/0.8, 0, 1) * 0.15")
+        fun `disaster affect ratio golden values`(security: Int, securityMax: Int, expectedRatio: Double) {
+            val secuRatioNorm = if (securityMax > 0) (security.toDouble() / securityMax / 0.8).coerceIn(0.0, 1.0) else 0.0
             val actualRatio = 0.8 + secuRatioNorm * 0.15
             assertThat(actualRatio)
-                .describedAs("Disaster ratio for secu=$secu/$secuMax")
+                .describedAs("Disaster ratio for security=$security/$securityMax")
                 .isCloseTo(expectedRatio, within(0.0001))
         }
 
         @ParameterizedTest
         @CsvSource(
-            // secu, secuMax, expectedRatio
+            // security, securityMax, expectedRatio
             "0,    1000, 1.01",     // 1.01+0*0.04=1.01
             "400,  1000, 1.03",     // 1.01+0.5*0.04=1.03
             "800,  1000, 1.05",     // 1.01+1.0*0.04=1.05
             "1000, 1000, 1.05",     // capped at 1.0
         )
-        @DisplayName("Boom affectRatio = 1.01 + clamp(secu/secuMax/0.8, 0, 1) * 0.04")
-        fun `boom affect ratio golden values`(secu: Int, secuMax: Int, expectedRatio: Double) {
-            val secuRatioNorm = if (secuMax > 0) (secu.toDouble() / secuMax / 0.8).coerceIn(0.0, 1.0) else 0.0
+        @DisplayName("Boom affectRatio = 1.01 + clamp(security/securityMax/0.8, 0, 1) * 0.04")
+        fun `boom affect ratio golden values`(security: Int, securityMax: Int, expectedRatio: Double) {
+            val secuRatioNorm = if (securityMax > 0) (security.toDouble() / securityMax / 0.8).coerceIn(0.0, 1.0) else 0.0
             val actualRatio = 1.01 + secuRatioNorm * 0.04
             assertThat(actualRatio)
-                .describedAs("Boom ratio for secu=$secu/$secuMax")
+                .describedAs("Boom ratio for security=$security/$securityMax")
                 .isCloseTo(expectedRatio, within(0.0001))
         }
 
@@ -1052,7 +1052,7 @@ class EconomyEventParityTest {
             } else {
                 (1..highCityCount.toLong()).map { city(id = it, level = 5) }
             }
-            val n = nation(level = 0, gold = 0, rice = 0)
+            val n = nation(level = 0, funds = 0, supplies = 0)
             val g = general()
             seed(cityList, listOf(n), listOf(g))
 
@@ -1074,7 +1074,7 @@ class EconomyEventParityTest {
         fun `level up from non zero base`() {
             // Start at level 2, increase to 4 (needs 6 high cities)
             val cityList = (1..6L).map { city(id = it, level = 5) }
-            val n = nation(level = 2, gold = 5000, rice = 5000)
+            val n = nation(level = 2, funds = 5000, supplies = 5000)
             val g = general()
             seed(cityList, listOf(n), listOf(g))
 
@@ -1142,9 +1142,9 @@ class EconomyEventParityTest {
     // Legacy checkStatistic:
     //   resource = (nationGold + nationRice + sum(generalGold + generalRice)) / 100
     //   cityPower = totalPop * totalInfra / totalInfraMax / 100
-    //     where totalInfra = sum(pop+agri+comm+secu+wall+def)
-    //     and totalInfraMax = sum(popMax+agriMax+commMax+secuMax+wallMax+defMax)
-    //   power = (resource + tech + cityPower + statPower + dex + expDed) / 10
+    //     where totalInfra = sum(population+production+commerce+security+fortress+orbitalDefense)
+    //     and totalInfraMax = sum(populationMax+productionMax+commerceMax+securityMax+fortressMax+orbitalDefenseMax)
+    //   militaryPower = (resource + tech + cityPower + statPower + dex + expDed) / 10
     // ────────────────────────────────────────────────────────────────────────
 
     @Nested
@@ -1154,50 +1154,50 @@ class EconomyEventParityTest {
         @Test
         @DisplayName("Power formula with known inputs produces deterministic value")
         fun `power formula deterministic`() {
-            val c = city(pop = 30000, popMax = 50000, agri = 800, agriMax = 1000,
-                comm = 700, commMax = 1000, secu = 600, secuMax = 1000,
-                def = 500, defMax = 1000, wall = 400, wallMax = 1000)
-            val n = nation(gold = 50000, rice = 50000, level = 3)
-            val g = general(gold = 5000, rice = 5000, dedication = 5000)
+            val c = city(population = 30000, populationMax = 50000, production = 800, productionMax = 1000,
+                commerce = 700, commerceMax = 1000, security = 600, securityMax = 1000,
+                orbitalDefense = 500, orbitalDefenseMax = 1000, fortress = 400, fortressMax = 1000)
+            val n = nation(funds = 50000, supplies = 50000, level = 3)
+            val g = general(funds = 5000, supplies = 5000, dedication = 5000)
             seed(listOf(c), listOf(n), listOf(g))
 
             service.processYearlyStatistics(world(year = 200, month = 1))
 
-            val power = nations[1L]!!.power
+            val militaryPower = nations[1L]!!.militaryPower
             assertThat(power)
                 .describedAs("Power should be deterministic for fixed inputs")
                 .isGreaterThan(0)
 
             // Run again with same inputs -> same result
-            seed(listOf(city(pop = 30000, popMax = 50000, agri = 800, agriMax = 1000,
-                comm = 700, commMax = 1000, secu = 600, secuMax = 1000,
-                def = 500, defMax = 1000, wall = 400, wallMax = 1000)),
-                listOf(nation(gold = 50000, rice = 50000, level = 3)),
-                listOf(general(gold = 5000, rice = 5000, dedication = 5000)))
+            seed(listOf(city(population = 30000, populationMax = 50000, production = 800, productionMax = 1000,
+                commerce = 700, commerceMax = 1000, security = 600, securityMax = 1000,
+                orbitalDefense = 500, orbitalDefenseMax = 1000, fortress = 400, fortressMax = 1000)),
+                listOf(nation(funds = 50000, supplies = 50000, level = 3)),
+                listOf(general(funds = 5000, supplies = 5000, dedication = 5000)))
             service.processYearlyStatistics(world(year = 200, month = 1))
-            assertThat(nations[1L]!!.power).isEqualTo(power)
+            assertThat(nations[1L]!!.militaryPower).isEqualTo(power)
         }
 
         @Test
         @DisplayName("Power increases with more cities and generals")
         fun `power scales with nation size`() {
             // Single city, single general
-            seed(listOf(city(pop = 30000, popMax = 50000)),
-                listOf(nation(gold = 50000, rice = 50000, level = 3)),
+            seed(listOf(city(population = 30000, populationMax = 50000)),
+                listOf(nation(funds = 50000, supplies = 50000, level = 3)),
                 listOf(general(dedication = 5000)))
             service.processYearlyStatistics(world(month = 1))
-            val powerSmall = nations[1L]!!.power
+            val powerSmall = nations[1L]!!.militaryPower
 
             // Two cities, two generals -> more power
-            val c1 = city(id = 1, pop = 30000, popMax = 50000)
-            val c2 = city(id = 2, pop = 25000, popMax = 50000)
+            val c1 = city(id = 1, population = 30000, populationMax = 50000)
+            val c2 = city(id = 2, population = 25000, populationMax = 50000)
             val g1 = general(id = 1, dedication = 5000)
             val g2 = general(id = 2, dedication = 3000)
             seed(listOf(c1, c2),
-                listOf(nation(gold = 80000, rice = 80000, level = 5)),
+                listOf(nation(funds = 80000, supplies = 80000, level = 5)),
                 listOf(g1, g2))
             service.processYearlyStatistics(world(month = 1))
-            val powerLarge = nations[1L]!!.power
+            val powerLarge = nations[1L]!!.militaryPower
 
             assertThat(powerLarge).isGreaterThan(powerSmall)
         }
@@ -1205,8 +1205,8 @@ class EconomyEventParityTest {
 
     // ────────────────────────────────────────────────────────────────────────
     // PHP-Verified: Supply Chain penalty effects
-    // Legacy: unsupplied city gets pop*0.9, trust*0.9, infra*0.9
-    //   If trust < 30 after penalty (and not capital) -> neutralized (nationId=0)
+    // Legacy: unsupplied city gets population*0.9, approval*0.9, infra*0.9
+    //   If approval < 30 after penalty (and not capital) -> neutralized (factionId=0)
     // ────────────────────────────────────────────────────────────────────────
 
     @Nested
@@ -1215,20 +1215,20 @@ class EconomyEventParityTest {
 
         @ParameterizedTest
         @CsvSource(
-            // pop, trust, agri, expectedPop, expectedTrust, expectedAgri
+            // population, approval, production, expectedPop, expectedTrust, expectedAgri
             "10000, 80.0, 500, 9000, 72.0, 450",   // 10000*0.9=9000, 80*0.9=72, 500*0.9=450
             "5000,  50.0, 800, 4500, 45.0, 720",    // 5000*0.9=4500, 50*0.9=45, 800*0.9=720
             "1000,  33.0, 100, 900,  29.7, 90",     // 1000*0.9=900, 33*0.9=29.7, 100*0.9=90
         )
         @DisplayName("Unsupplied city penalty: all stats * 0.9")
         fun `unsupplied penalty golden values`(
-            pop: Int, trust: Float, agri: Int,
+            population: Int, approval: Float, production: Int,
             expectedPop: Int, expectedTrust: Float, expectedAgri: Int,
         ) {
             val c1 = city(id = 1)  // capital
-            val c2 = city(id = 2, pop = pop, trust = trust, agri = agri, comm = agri, commMax = 1000)
-            val n = nation(capitalCityId = 1)
-            val g = general(cityId = 1)
+            val c2 = city(id = 2, population = population, approval = approval, production = production, commerce = production, commerceMax = 1000)
+            val n = nation(capitalPlanetId = 1)
+            val g = general(planetId = 1)
 
             `when`(mapService.getAdjacentCities("che", 1)).thenReturn(emptyList())
             `when`(mapService.getAdjacentCities("che", 2)).thenReturn(emptyList())
@@ -1244,12 +1244,12 @@ class EconomyEventParityTest {
 
         @Test
         @DisplayName("Trust exactly at 30 after penalty does NOT neutralize")
-        fun `trust at 30 boundary not neutralized`() {
-            // trust = 33.33... -> after 0.9: 30.0 exactly -> NOT < 30 -> stays
+        fun `approval at 30 boundary not neutralized`() {
+            // approval = 33.33... -> after 0.9: 30.0 exactly -> NOT < 30 -> stays
             val c1 = city(id = 1)
-            val c2 = city(id = 2, trust = 33.4f)
-            val n = nation(capitalCityId = 1)
-            val g = general(cityId = 1)
+            val c2 = city(id = 2, approval = 33.4f)
+            val n = nation(capitalPlanetId = 1)
+            val g = general(planetId = 1)
 
             `when`(mapService.getAdjacentCities("che", 1)).thenReturn(emptyList())
             `when`(mapService.getAdjacentCities("che", 2)).thenReturn(emptyList())

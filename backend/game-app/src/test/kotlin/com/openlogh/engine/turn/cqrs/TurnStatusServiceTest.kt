@@ -14,7 +14,7 @@ class TurnStatusServiceTest {
     }
 
     @Test
-    fun `getStatus returns IDLE for unknown worldId`() {
+    fun `getStatus returns IDLE for unknown sessionId`() {
         val status = service.getStatus(999L)
         assertEquals(TurnLifecycleState.IDLE, status)
     }

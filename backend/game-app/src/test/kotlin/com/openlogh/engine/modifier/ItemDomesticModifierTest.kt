@@ -112,7 +112,7 @@ class ItemDomesticModifierTest {
 
         @Test
         fun `StatItem returns unchanged context`() {
-            val item = StatItem(code = "test_weapon", name = "test", strength = 5.0)
+            val item = StatItem(code = "test_weapon", name = "test", command = 5.0)
             val ctx = DomesticContext(actionCode = "농업", scoreMultiplier = 1.0, costMultiplier = 1.0)
             val result = item.onCalcDomestic(ctx)
             assertThat(result).isEqualTo(ctx)

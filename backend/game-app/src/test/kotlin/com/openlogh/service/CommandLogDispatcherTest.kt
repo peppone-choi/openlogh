@@ -24,9 +24,9 @@ class CommandLogDispatcherTest {
         val logs = listOf("장수가 훈련을 실시하였습니다")
         
         dispatcher.dispatchLogs(
-            worldId = 1L,
-            generalId = 10L,
-            nationId = 5L,
+            sessionId = 1L,
+            officerId = 10L,
+            factionId = 5L,
             year = 220,
             month = 1,
             logs = logs
@@ -46,9 +46,9 @@ class CommandLogDispatcherTest {
         val logs = listOf("_globalHistory:천하에 대사건이 발생하였습니다")
         
         dispatcher.dispatchLogs(
-            worldId = 1L,
-            generalId = 10L,
-            nationId = 5L,
+            sessionId = 1L,
+            officerId = 10L,
+            factionId = 5L,
             year = 220,
             month = 1,
             logs = logs
@@ -68,9 +68,9 @@ class CommandLogDispatcherTest {
         val logs = listOf("_history:역사에 기록될 업적을 달성하였습니다")
         
         dispatcher.dispatchLogs(
-            worldId = 1L,
-            generalId = 10L,
-            nationId = 5L,
+            sessionId = 1L,
+            officerId = 10L,
+            factionId = 5L,
             year = 220,
             month = 1,
             logs = logs

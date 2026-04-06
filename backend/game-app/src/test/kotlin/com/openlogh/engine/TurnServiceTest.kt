@@ -14,7 +14,7 @@ import com.openlogh.repository.TrafficSnapshotRepository
 import com.openlogh.service.GameEventService
 import com.openlogh.service.WorldService
 import com.openlogh.entity.Officer
-import com.openlogh.entity.GeneralTurn
+import com.openlogh.entity.OfficerTurn
 import com.openlogh.entity.Faction
 import com.openlogh.entity.SessionState
 import com.openlogh.repository.*
@@ -311,7 +311,7 @@ class TurnServiceTest {
 
         service.processWorld(world)
 
-        val captor = ArgumentCaptor.forClass(Nation::class.java)
+        val captor = ArgumentCaptor.forClass(Faction::class.java)
         verify(factionRepository).save(captor.capture())
         assertEquals(4.toShort(), captor.value.strategicCmdLimit, "Strategic limit should decrement by 1")
     }
@@ -330,7 +330,7 @@ class TurnServiceTest {
 
         service.processWorld(world)
 
-        val captor = ArgumentCaptor.forClass(Nation::class.java)
+        val captor = ArgumentCaptor.forClass(Faction::class.java)
         verify(factionRepository).save(captor.capture())
         assertEquals(0.toShort(), captor.value.strategicCmdLimit, "Strategic limit should stay at 0")
     }
@@ -350,7 +350,7 @@ class TurnServiceTest {
 
         service.processWorld(world)
 
-        val captor = ArgumentCaptor.forClass(Nation::class.java)
+        val captor = ArgumentCaptor.forClass(Faction::class.java)
         verify(factionRepository, times(2)).save(captor.capture())
         val saved = captor.allValues.last()
         assertTrue(saved.strategicCmdLimit <= 9, "Strategic limit should be decremented during catch-up turns")
@@ -463,7 +463,7 @@ class TurnServiceTest {
 
         service.processWorld(world)
 
-        val captor = ArgumentCaptor.forClass(General::class.java)
+        val captor = ArgumentCaptor.forClass(Officer::class.java)
         verify(officerRepository, atLeastOnce()).save(captor.capture())
         assertTrue(captor.allValues.any { it.id == 1L && it.turnTime == originalTurnTime.plusSeconds(300) })
     }
@@ -486,9 +486,9 @@ class TurnServiceTest {
             turnTime = now.minusSeconds(500),
         )
         val nation = com.openlogh.entity.Faction(id = 1, sessionId = 1, name = "위", color = "#FF0000")
-        val nationTurnEntry = com.openlogh.entity.NationTurn(
-            worldId = 1,
-            nationId = 1,
+        val nationTurnEntry = com.openlogh.entity.FactionTurn(
+            sessionId = 1,
+            factionId = 1,
             officerLevel = 5,
             turnIdx = 0,
             actionCode = "Nation휴식",
@@ -499,7 +499,7 @@ class TurnServiceTest {
         `when`(factionRepository.findBySessionId(1L)).thenReturn(listOf(nation))
         // nationCache is populated via cityCache/nationCache inside executeGeneralCommandsUntil
         `when`(factionRepository.findById(1L)).thenReturn(java.util.Optional.of(nation))
-        `when`(factionTurnRepository.findByNationIdAndOfficerLevelOrderByTurnIdx(1L, 5)).thenReturn(listOf(nationTurnEntry))
+        `when`(factionTurnRepository.findByFactionIdAndOfficerLevelOrderByTurnIdx(1L, 5)).thenReturn(listOf(nationTurnEntry))
         `when`(officerTurnRepository.findByOfficerIdOrderByTurnIdx(1L)).thenReturn(emptyList())
         `when`(planetRepository.findBySessionId(1L)).thenReturn(emptyList())
         // hasNationCommand("Nation휴식") must return true so nationActionCode is set
@@ -561,12 +561,12 @@ class TurnServiceTest {
 
         // Commands execute before month advances: month is still 6 at time of fireCommand
         verify(gameEventService).fireCommand(
-            worldId = 1L,
+            sessionId = 1L,
             year = 200.toShort(),
             month = 6.toShort(),
-            generalId = 1L,
+            officerId = 1L,
             commandEventType = "consumed",
-            detail = mapOf("actionCode" to "Nation휴식", "nationId" to 1L),
+            detail = mapOf("actionCode" to "Nation휴식", "factionId" to 1L),
         )
     }
 
@@ -633,8 +633,8 @@ class TurnServiceTest {
         val now = OffsetDateTime.now()
         val world = createWorld(year = 200, month = 6, tickSeconds = 300, updatedAt = now.minusSeconds(400))
 
-        val log1 = com.openlogh.entity.GeneralAccessLog(id = 1, generalId = 1, worldId = 1, accessedAt = now.minusSeconds(10))
-        val log2 = com.openlogh.entity.GeneralAccessLog(id = 2, generalId = 2, worldId = 1, accessedAt = now.minusSeconds(20))
+        val log1 = com.openlogh.entity.OfficerAccessLog(id = 1, officerId = 1, sessionId = 1, accessedAt = now.minusSeconds(10))
+        val log2 = com.openlogh.entity.OfficerAccessLog(id = 2, officerId = 2, sessionId = 1, accessedAt = now.minusSeconds(20))
         val general1 = Officer(id = 1, sessionId = 1, name = "장수1", factionId = 1, planetId = 1, turnTime = now)
         val general2 = Officer(id = 2, sessionId = 1, name = "장수2", factionId = 2, planetId = 1, turnTime = now)
         val nation1 = Faction(id = 1, sessionId = 1, name = "위", color = "#FF0000")
@@ -719,7 +719,7 @@ class TurnServiceTest {
     // ========== updateGeneralNumber ==========
 
     @Test
-    fun `updateGeneralNumber updates nation gennum to count of non-npcState5 generals`() {
+    fun `updateGeneralNumber updates nation officerCount to count of non-npcState5 generals`() {
         val now = OffsetDateTime.now()
         val world = createWorld(year = 200, month = 6, tickSeconds = 300, updatedAt = now.minusSeconds(400))
 
@@ -762,7 +762,7 @@ class TurnServiceTest {
         val captor = ArgumentCaptor.forClass(List::class.java) as ArgumentCaptor<List<Faction>>
         verify(factionRepository, atLeastOnce()).saveAll(captor.capture())
         val saved = captor.value
-        assertEquals(0, saved.find { it.id == 1L }?.officerCount, "Nation gennum should be 0 when no generals")
+        assertEquals(0, saved.find { it.id == 1L }?.officerCount, "Nation officerCount should be 0 when no generals")
     }
 
     /** Helper: Mockito eq() wrapper returning non-null for Kotlin. */

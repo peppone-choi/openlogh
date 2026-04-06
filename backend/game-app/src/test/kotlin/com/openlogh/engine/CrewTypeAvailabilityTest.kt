@@ -144,13 +144,13 @@ class CrewTypeAvailabilityTest {
     fun `crew type region requirements follow map specific region ids`() {
         val habukCrewType = CrewType.entries.first { it.reqRegionNames == setOf("하북") }
 
-        assertFalse(habukCrewType.isValidForNation(emptySet(), setOf(4), relYear = 10, tech = 5000))
+        assertFalse(habukCrewType.isValidForNation(emptySet(), setOf(4), relYear = 10, techLevel = 5000))
         assertTrue(
             habukCrewType.isValidForNation(
                 ownCityNames = emptySet(),
                 ownRegionIds = setOf(4),
                 relYear = 10,
-                tech = 5000,
+                techLevel = 5000,
                 regionNameToId = mapOf("하북" to 4),
             ),
         )

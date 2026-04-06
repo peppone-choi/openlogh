@@ -12,39 +12,39 @@ class ConstraintChainTest {
 
     private fun createGeneral(
         id: Long = 1,
-        nationId: Long = 1,
-        cityId: Long = 1,
-        gold: Int = 1000,
-        rice: Int = 1000,
-        crew: Int = 100,
+        factionId: Long = 1,
+        planetId: Long = 1,
+        funds: Int = 1000,
+        supplies: Int = 1000,
+        ships: Int = 100,
         officerLevel: Short = 5,
         injury: Short = 0,
-        troopId: Long = 0,
+        fleetId: Long = 0,
         makeLimit: Short = 0,
     ): Officer {
         return Officer(
             id = id,
             sessionId = 1,
             name = "테스트",
-            factionId = nationId,
-            planetId = cityId,
-            funds = gold,
-            supplies = rice,
-            ships = crew,
+            factionId = factionId,
+            planetId = planetId,
+            funds = funds,
+            supplies = supplies,
+            ships = ships,
             officerLevel = officerLevel,
             injury = injury,
-            fleetId = troopId,
+            fleetId = fleetId,
             makeLimit = makeLimit,
             turnTime = OffsetDateTime.now(),
         )
     }
 
-    private fun createCity(nationId: Long = 1, supplyState: Short = 1): Planet {
+    private fun createCity(factionId: Long = 1, supplyState: Short = 1): Planet {
         return Planet(
             id = 1,
             sessionId = 1,
             name = "테스트도시",
-            factionId = nationId,
+            factionId = factionId,
             supplyState = supplyState,
         )
     }
@@ -61,8 +61,8 @@ class ConstraintChainTest {
 
     @Test
     fun `testAll returns Pass when all constraints pass`() {
-        val general = createGeneral(nationId = 1, gold = 500)
-        val city = createCity(nationId = 1, supplyState = 1)
+        val general = createGeneral(factionId = 1, funds = 500)
+        val city = createCity(factionId = 1, supplyState = 1)
         val constraints = listOf(
             NotBeNeutral(),
             OccupiedCity(),
@@ -74,7 +74,7 @@ class ConstraintChainTest {
 
     @Test
     fun `testAll returns first failure`() {
-        val general = createGeneral(nationId = 0)
+        val general = createGeneral(factionId = 0)
         val constraints = listOf(
             NotBeNeutral(),
             OccupiedCity(),
@@ -92,8 +92,8 @@ class ConstraintChainTest {
 
     @Test
     fun `testAll stops at first failure`() {
-        val general = createGeneral(nationId = 1, gold = 50)
-        val city = createCity(nationId = 2) // wrong nation
+        val general = createGeneral(factionId = 1, funds = 50)
+        val city = createCity(factionId = 2) // wrong nation
         val constraints = listOf(
             OccupiedCity(),      // will fail
             ReqGeneralGold(100), // would also fail but won't be reached
@@ -107,7 +107,7 @@ class ConstraintChainTest {
 
     @Test
     fun `HasRoute passes with dest city`() {
-        val destPlanet = createCity().apply { id = 2; nationId = 1 }
+        val destPlanet = createCity().apply { id = 2; factionId = 1 }
         val env = mapOf(
             "mapAdjacency" to mapOf(1L to listOf(2L), 2L to listOf(1L)),
             "cityNationById" to mapOf(1L to 1L, 2L to 1L),
@@ -128,7 +128,7 @@ class ConstraintChainTest {
 
     @Test
     fun `NearCity passes for adjacent city`() {
-        val general = createGeneral(cityId = 1)
+        val general = createGeneral(planetId = 1)
         val destPlanet = createCity().apply { id = 2 }
         val env = mapOf(
             "mapAdjacency" to mapOf(1L to listOf(2L), 2L to listOf(1L)),
@@ -141,7 +141,7 @@ class ConstraintChainTest {
 
     @Test
     fun `NearCity fails when destination is too far`() {
-        val general = createGeneral(cityId = 1)
+        val general = createGeneral(planetId = 1)
         val destPlanet = createCity().apply { id = 3 }
         val env = mapOf(
             "mapAdjacency" to mapOf(1L to listOf(2L), 2L to listOf(1L, 3L), 3L to listOf(2L)),
@@ -154,7 +154,7 @@ class ConstraintChainTest {
 
     @Test
     fun `ReqTroopMembers passes when troop has members`() {
-        val general = createGeneral(id = 10, troopId = 10)
+        val general = createGeneral(id = 10, fleetId = 10)
         val env = mapOf("troopMemberExistsByTroopId" to mapOf(10L to true))
         val result = ReqTroopMembers().test(ctx(general = general, env = env))
         assertTrue(result is ConstraintResult.Pass)
@@ -162,7 +162,7 @@ class ConstraintChainTest {
 
     @Test
     fun `ReqTroopMembers fails when troop has no members`() {
-        val general = createGeneral(id = 10, troopId = 10)
+        val general = createGeneral(id = 10, fleetId = 10)
         val env = mapOf("troopMemberExistsByTroopId" to mapOf(10L to false))
         val result = ReqTroopMembers().test(ctx(general = general, env = env))
         assertTrue(result is ConstraintResult.Fail)
@@ -186,8 +186,8 @@ class ConstraintChainTest {
 
     @Test
     fun `HasRouteWithEnemy passes when target nation is at war and route exists`() {
-        val general = createGeneral(nationId = 1, cityId = 1)
-        val destPlanet = createCity(nationId = 2).apply { id = 3 }
+        val general = createGeneral(factionId = 1, planetId = 1)
+        val destPlanet = createCity(factionId = 2).apply { id = 3 }
         val env = mapOf(
             "atWarNationIds" to setOf(2L),
             "mapAdjacency" to mapOf(1L to listOf(2L), 2L to listOf(1L, 3L), 3L to listOf(2L)),
@@ -202,8 +202,8 @@ class ConstraintChainTest {
 
     @Test
     fun `HasRouteWithEnemy fails when target nation is not at war`() {
-        val general = createGeneral(nationId = 1, cityId = 1)
-        val destPlanet = createCity(nationId = 3).apply { id = 3 }
+        val general = createGeneral(factionId = 1, planetId = 1)
+        val destPlanet = createCity(factionId = 3).apply { id = 3 }
         val env = mapOf(
             "atWarNationIds" to setOf(2L),
             "mapAdjacency" to mapOf(1L to listOf(3L), 3L to listOf(1L)),
@@ -232,16 +232,16 @@ class ConstraintChainTest {
 
     @Test
     fun `BattleGroundCity passes for neutral destination`() {
-        val general = createGeneral(nationId = 1)
-        val destPlanet = createCity(nationId = 0).apply { id = 2 }
+        val general = createGeneral(factionId = 1)
+        val destPlanet = createCity(factionId = 0).apply { id = 2 }
         val result = BattleGroundCity().test(ctx(general = general, destPlanet = destPlanet, env = mapOf("atWarNationIds" to emptySet<Long>())))
         assertTrue(result is ConstraintResult.Pass)
     }
 
     @Test
     fun `BattleGroundCity fails when destination nation is not at war`() {
-        val general = createGeneral(nationId = 1)
-        val destPlanet = createCity(nationId = 3).apply { id = 2 }
+        val general = createGeneral(factionId = 1)
+        val destPlanet = createCity(factionId = 3).apply { id = 2 }
         val result = BattleGroundCity().test(ctx(general = general, destPlanet = destPlanet, env = mapOf("atWarNationIds" to setOf(2L))))
         assertTrue(result is ConstraintResult.Fail)
         assertTrue((result as ConstraintResult.Fail).reason.contains("교전중"))

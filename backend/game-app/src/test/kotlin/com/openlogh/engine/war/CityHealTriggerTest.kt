@@ -13,9 +13,9 @@ class CityHealTriggerTest {
 
     private fun createGeneral(
         id: Long = 1,
-        nationId: Long = 1,
+        factionId: Long = 1,
         injury: Short = 0,
-        crew: Int = 1000,
+        ships: Int = 1000,
         specialCode: String = "None",
         special2Code: String = "None",
     ): Officer {
@@ -23,12 +23,12 @@ class CityHealTriggerTest {
             id = id,
             sessionId = 1,
             name = "장수$id",
-            factionId = nationId,
+            factionId = factionId,
             planetId = 1,
             leadership = 50,
             command = 50,
             intelligence = 50,
-            ships = crew,
+            ships = ships,
             specialCode = specialCode,
             special2Code = special2Code,
             turnTime = OffsetDateTime.now(),
@@ -36,12 +36,12 @@ class CityHealTriggerTest {
         )
     }
 
-    private fun makeEnv(generalId: Long = 1): TriggerEnv {
+    private fun makeEnv(officerId: Long = 1): TriggerEnv {
         return TriggerEnv(
-            worldId = 1,
+            sessionId = 1,
             year = 200,
             month = 1,
-            generalId = generalId,
+            officerId = officerId,
         )
     }
 
@@ -104,9 +104,9 @@ class CityHealTriggerTest {
 
     @Test
     fun `nation-0 general only heals nation-0 city-mates`() {
-        val general = createGeneral(id = 1, nationId = 0)
-        val sameNationMate = createGeneral(id = 2, nationId = 0, injury = 20)
-        val otherNationMate = createGeneral(id = 3, nationId = 1, injury = 20)
+        val general = createGeneral(id = 1, factionId = 0)
+        val sameNationMate = createGeneral(id = 2, factionId = 0, injury = 20)
+        val otherNationMate = createGeneral(id = 3, factionId = 1, injury = 20)
         val trigger = CityHealTrigger(
             general,
             listOf(sameNationMate, otherNationMate),
@@ -125,9 +125,9 @@ class CityHealTriggerTest {
 
     @Test
     fun `non-nation-0 general heals any city-mate`() {
-        val general = createGeneral(id = 1, nationId = 1)
-        val sameNationMate = createGeneral(id = 2, nationId = 1, injury = 20)
-        val otherNationMate = createGeneral(id = 3, nationId = 2, injury = 20)
+        val general = createGeneral(id = 1, factionId = 1)
+        val sameNationMate = createGeneral(id = 2, factionId = 1, injury = 20)
+        val otherNationMate = createGeneral(id = 3, factionId = 2, injury = 20)
 
         // Need a seed that heals both -- find seed where first two nextDouble() < 0.5
         var dualHealSeed = 0

@@ -14,7 +14,7 @@ import com.openlogh.engine.turn.cqrs.memory.OfficerTurnSnapshot
 import com.openlogh.engine.turn.cqrs.memory.InMemoryTurnProcessor
 import com.openlogh.engine.turn.cqrs.memory.InMemoryWorldState
 import com.openlogh.engine.turn.cqrs.memory.FactionSnapshot
-import com.openlogh.engine.turn.cqrs.memory.NationTurnKey
+import com.openlogh.engine.turn.cqrs.memory.FactionTurnKey
 import com.openlogh.engine.turn.cqrs.memory.FactionTurnSnapshot
 import com.openlogh.engine.turn.cqrs.memory.WorldStateLoader
 import com.openlogh.engine.turn.cqrs.persist.WorldStatePersister
@@ -93,25 +93,25 @@ class TurnCoordinatorIntegrationTest {
         )
 
         val state = InMemoryWorldState(
-            worldId = 1,
+            sessionId = 1,
             generals = mutableMapOf(
                 101L to generalSnapshot(
                     id = 101,
-                    worldId = 1,
-                    nationId = 10,
+                    sessionId = 1,
+                    factionId = 10,
                     officerLevel = 5,
                     turnTime = now.minusSeconds(20),
                 )
             ),
             nations = mutableMapOf(
-                10L to nationSnapshot(id = 10, worldId = 1, strategicCmdLimit = 3)
+                10L to nationSnapshot(id = 10, sessionId = 1, strategicCmdLimit = 3)
             ),
-            generalTurnsByGeneralId = mutableMapOf(
+            officerTurnsByOfficerId = mutableMapOf(
                 101L to mutableListOf(
                     OfficerTurnSnapshot(
                         id = 1,
                         sessionId = 1,
-                        generalId = 101,
+                        officerId = 101,
                         turnIdx = 0,
                         actionCode = "휴식",
                         arg = mutableMapOf(),
@@ -120,8 +120,8 @@ class TurnCoordinatorIntegrationTest {
                     )
                 )
             ),
-            nationTurnsByNationAndLevel = mutableMapOf(
-                NationTurnKey(10, 5) to mutableListOf(
+            factionTurnsByFactionAndLevel = mutableMapOf(
+                FactionTurnKey(10, 5) to mutableListOf(
                     FactionTurnSnapshot(
                         id = 2,
                         sessionId = 1,
@@ -140,19 +140,19 @@ class TurnCoordinatorIntegrationTest {
         doReturn(state).`when`(worldStateLoader).loadWorldState(1)
         doAnswer { it.arguments[0] }.`when`(sessionStateRepository).save(org.mockito.Mockito.any(SessionState::class.java))
 
-        coordinator.processWorld(world)
+        coordinator.processSession(world)
 
         assertEquals(2, world.currentMonth.toInt())
-        assertTrue(state.generalTurnsByGeneralId[101].isNullOrEmpty())
-        assertTrue(state.nationTurnsByNationAndLevel[NationTurnKey(10, 5)].isNullOrEmpty())
+        assertTrue(state.officerTurnsByOfficerId[101].isNullOrEmpty())
+        assertTrue(state.factionTurnsByFactionAndLevel[FactionTurnKey(10, 5)].isNullOrEmpty())
         assertEquals(2, state.nations.getValue(10).strategicCmdLimit.toInt())
     }
 
-    private fun nationSnapshot(id: Long, worldId: Long, strategicCmdLimit: Int): FactionSnapshot {
+    private fun nationSnapshot(id: Long, sessionId: Long, strategicCmdLimit: Int): FactionSnapshot {
         val now = OffsetDateTime.now()
         return FactionSnapshot(
             id = id,
-            sessionId = worldId,
+            sessionId = sessionId,
             name = "nation-$id",
             color = "#ffffff",
             capitalPlanetId = null,
@@ -167,10 +167,10 @@ class TurnCoordinatorIntegrationTest {
             warState = 0,
             strategicCmdLimit = strategicCmdLimit.toShort(),
             surrenderLimit = 72,
-            tech = 0f,
-            power = 0,
+            techLevel = 0f,
+            militaryPower = 0,
             level = 0,
-            typeCode = "che_중립",
+            factionType = "che_중립",
             spy = mutableMapOf(),
             meta = mutableMapOf(),
             createdAt = now,
@@ -180,18 +180,18 @@ class TurnCoordinatorIntegrationTest {
 
     private fun generalSnapshot(
         id: Long,
-        worldId: Long,
-        nationId: Long,
+        sessionId: Long,
+        factionId: Long,
         officerLevel: Int,
         turnTime: OffsetDateTime,
     ): OfficerSnapshot {
         val now = OffsetDateTime.now()
         return OfficerSnapshot(
             id = id,
-            sessionId = worldId,
+            sessionId = sessionId,
             userId = null,
             name = "general-$id",
-            factionId = nationId,
+            factionId = factionId,
             planetId = 1,
             fleetId = 0,
             npcState = 0,
@@ -220,16 +220,16 @@ class TurnCoordinatorIntegrationTest {
             officerLevel = officerLevel.toShort(),
             officerPlanet = 0,
             permission = "normal",
-            gold = 1000,
-            rice = 1000,
-            crew = 1000,
-            crewType = 0,
-            train = 0,
-            atmos = 0,
-            weaponCode = "None",
-            bookCode = "None",
-            horseCode = "None",
-            itemCode = "None",
+            funds = 1000,
+            supplies = 1000,
+            ships = 1000,
+            shipClass = 0,
+            training = 0,
+            morale = 0,
+            flagshipCode = "None",
+            equipCode = "None",
+            engineCode = "None",
+            accessoryCode = "None",
             ownerName = "",
             newmsg = 0,
             turnTime = turnTime,

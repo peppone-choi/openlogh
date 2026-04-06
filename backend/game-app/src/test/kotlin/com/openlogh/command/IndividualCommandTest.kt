@@ -13,21 +13,21 @@ import kotlin.random.Random
 class IndividualCommandTest {
 
     private fun createTestGeneral(
-        gold: Int = 1000,
-        rice: Int = 1000,
-        crew: Int = 0,
-        crewType: Short = 0,
-        train: Short = 0,
-        atmos: Short = 0,
+        funds: Int = 1000,
+        supplies: Int = 1000,
+        ships: Int = 0,
+        shipClass: Short = 0,
+        training: Short = 0,
+        morale: Short = 0,
         leadership: Short = 50,
-        strength: Short = 50,
-        intel: Short = 50,
+        command: Short = 50,
+        intelligence: Short = 50,
         politics: Short = 50,
-        charm: Short = 50,
-        nationId: Long = 1,
-        cityId: Long = 1,
+        administration: Short = 50,
+        factionId: Long = 1,
+        planetId: Long = 1,
         officerLevel: Short = 0,
-        troopId: Long = 0,
+        fleetId: Long = 0,
         experience: Int = 0,
         dedication: Int = 0,
         injury: Short = 0,
@@ -36,21 +36,21 @@ class IndividualCommandTest {
             id = 1,
             sessionId = 1,
             name = "테스트장수",
-            factionId = nationId,
-            planetId = cityId,
-            funds = gold,
-            supplies = rice,
-            ships = crew,
-            shipClass = crewType,
-            training = train,
-            morale = atmos,
+            factionId = factionId,
+            planetId = planetId,
+            funds = funds,
+            supplies = supplies,
+            ships = ships,
+            shipClass = shipClass,
+            training = training,
+            morale = morale,
             leadership = leadership,
-            command = strength,
-            intelligence = intel,
+            command = command,
+            intelligence = intelligence,
             politics = politics,
-            administration = charm,
+            administration = administration,
             officerLevel = officerLevel,
-            fleetId = troopId,
+            fleetId = fleetId,
             experience = experience,
             dedication = dedication,
             injury = injury,
@@ -59,20 +59,20 @@ class IndividualCommandTest {
     }
 
     private fun createTestCity(
-        nationId: Long = 1,
-        agri: Int = 500,
-        agriMax: Int = 1000,
-        comm: Int = 500,
-        commMax: Int = 1000,
-        secu: Int = 500,
-        secuMax: Int = 1000,
-        def: Int = 500,
-        defMax: Int = 1000,
-        wall: Int = 500,
-        wallMax: Int = 1000,
-        pop: Int = 10000,
-        popMax: Int = 50000,
-        trust: Float = 80f,
+        factionId: Long = 1,
+        production: Int = 500,
+        productionMax: Int = 1000,
+        commerce: Int = 500,
+        commerceMax: Int = 1000,
+        security: Int = 500,
+        securityMax: Int = 1000,
+        orbitalDefense: Int = 500,
+        orbitalDefenseMax: Int = 1000,
+        fortress: Int = 500,
+        fortressMax: Int = 1000,
+        population: Int = 10000,
+        populationMax: Int = 50000,
+        approval: Float = 80f,
         supplyState: Short = 1,
         frontState: Short = 0,
     ): Planet {
@@ -80,20 +80,20 @@ class IndividualCommandTest {
             id = 1,
             sessionId = 1,
             name = "테스트도시",
-            factionId = nationId,
-            production = agri,
-            productionMax = agriMax,
-            commerce = comm,
-            commerceMax = commMax,
-            security = secu,
-            securityMax = secuMax,
-            orbitalDefense = def,
-            orbitalDefenseMax = defMax,
-            fortress = wall,
-            fortressMax = wallMax,
-            population = pop,
-            populationMax = popMax,
-            approval = trust,
+            factionId = factionId,
+            production = production,
+            productionMax = productionMax,
+            commerce = commerce,
+            commerceMax = commerceMax,
+            security = security,
+            securityMax = securityMax,
+            orbitalDefense = orbitalDefense,
+            orbitalDefenseMax = orbitalDefenseMax,
+            fortress = fortress,
+            fortressMax = fortressMax,
+            population = population,
+            populationMax = populationMax,
+            approval = approval,
             supplyState = supplyState,
             frontState = frontState,
         )
@@ -102,16 +102,16 @@ class IndividualCommandTest {
     private fun createTestNation(
         id: Long = 1,
         level: Short = 1,
-        gold: Int = 10000,
-        rice: Int = 10000,
+        funds: Int = 10000,
+        supplies: Int = 10000,
     ): Faction {
         return Faction(
             id = id,
             sessionId = 1,
             name = "테스트국가",
             color = "#FF0000",
-            funds = gold,
-            supplies = rice,
+            funds = funds,
+            supplies = supplies,
             factionRank = level,
         )
     }
@@ -165,7 +165,7 @@ class IndividualCommandTest {
 
     @Test
     fun `견문 may increase or decrease gold and rice`() {
-        val general = createTestGeneral(gold = 5000, rice = 5000)
+        val general = createTestGeneral(funds = 5000, supplies = 5000)
         val env = createTestEnv()
         val cmd = 견문(general, env)
 
@@ -234,8 +234,8 @@ class IndividualCommandTest {
     // ========== 이동 (Move) ==========
 
     @Test
-    fun `이동 should change cityId to destination`() {
-        val general = createTestGeneral(cityId = 1, gold = 500)
+    fun `이동 should change planetId to destination`() {
+        val general = createTestGeneral(planetId = 1, funds = 500)
         val env = createTestEnv()
         val destPlanet = createTestCity().apply { id = 2 }
         val cmd = 이동(general, env)
@@ -246,13 +246,13 @@ class IndividualCommandTest {
         assertTrue(result.success)
         assertTrue(result.logs[0].contains("이동"))
         assertNotNull(result.message)
-        // Check that cityId changes to 2
-        assertTrue(result.message!!.contains("\"cityId\":\"2\""))
+        // Check that planetId changes to 2
+        assertTrue(result.message!!.contains("\"planetId\":\"2\""))
     }
 
     @Test
     fun `이동 should decrease atmos by 5 (min 20)`() {
-        val general = createTestGeneral(atmos = 60, gold = 500)
+        val general = createTestGeneral(morale = 60, funds = 500)
         val env = createTestEnv()
         val destPlanet = createTestCity().apply { id = 2 }
         val cmd = 이동(general, env)
@@ -268,7 +268,7 @@ class IndividualCommandTest {
 
     @Test
     fun `이동 should not decrease atmos below 20`() {
-        val general = createTestGeneral(atmos = 20, gold = 500)
+        val general = createTestGeneral(morale = 20, funds = 500)
         val env = createTestEnv()
         val destPlanet = createTestCity().apply { id = 2 }
         val cmd = 이동(general, env)
@@ -284,7 +284,7 @@ class IndividualCommandTest {
 
     @Test
     fun `이동 should consume gold based on develCost`() {
-        val general = createTestGeneral(gold = 500)
+        val general = createTestGeneral(funds = 500)
         val env = createTestEnv(develCost = 150)
         val destPlanet = createTestCity().apply { id = 2 }
         val cmd = 이동(general, env)
@@ -302,7 +302,7 @@ class IndividualCommandTest {
 
     @Test
     fun `훈련 should increase train stat`() {
-        val general = createTestGeneral(crew = 1000, train = 50, leadership = 80, nationId = 1)
+        val general = createTestGeneral(ships = 1000, training = 50, leadership = 80, factionId = 1)
         val env = createTestEnv()
         val city = createTestCity()
         val cmd = che_훈련(general, env)
@@ -319,7 +319,7 @@ class IndividualCommandTest {
 
     @Test
     fun `훈련 should reduce atmos as side effect (90 percent retention)`() {
-        val general = createTestGeneral(crew = 1000, train = 50, atmos = 80, leadership = 80, nationId = 1)
+        val general = createTestGeneral(ships = 1000, training = 50, morale = 80, leadership = 80, factionId = 1)
         val env = createTestEnv()
         val city = createTestCity()
         val cmd = che_훈련(general, env)
@@ -335,7 +335,7 @@ class IndividualCommandTest {
 
     @Test
     fun `훈련 should cap train at 100`() {
-        val general = createTestGeneral(crew = 1000, train = 99, leadership = 80, nationId = 1)
+        val general = createTestGeneral(ships = 1000, training = 99, leadership = 80, factionId = 1)
         val env = createTestEnv()
         val city = createTestCity()
         val cmd = che_훈련(general, env)
@@ -352,7 +352,7 @@ class IndividualCommandTest {
 
     @Test
     fun `사기진작 should increase atmos stat`() {
-        val general = createTestGeneral(crew = 1000, atmos = 50, train = 80, leadership = 80, nationId = 1, gold = 500)
+        val general = createTestGeneral(ships = 1000, morale = 50, training = 80, leadership = 80, factionId = 1, funds = 500)
         val env = createTestEnv()
         val city = createTestCity()
         val cmd = che_사기진작(general, env)
@@ -369,7 +369,7 @@ class IndividualCommandTest {
 
     @Test
     fun `사기진작 should reduce train as side effect (90 percent retention)`() {
-        val general = createTestGeneral(crew = 1000, atmos = 50, train = 80, leadership = 80, nationId = 1, gold = 500)
+        val general = createTestGeneral(ships = 1000, morale = 50, training = 80, leadership = 80, factionId = 1, funds = 500)
         val env = createTestEnv()
         val city = createTestCity()
         val cmd = che_사기진작(general, env)
@@ -385,7 +385,7 @@ class IndividualCommandTest {
 
     @Test
     fun `사기진작 should consume gold based on crew count`() {
-        val general = createTestGeneral(crew = 1000, atmos = 50, leadership = 80, nationId = 1, gold = 500)
+        val general = createTestGeneral(ships = 1000, morale = 50, leadership = 80, factionId = 1, funds = 500)
         val env = createTestEnv()
         val city = createTestCity()
         val cmd = che_사기진작(general, env)
@@ -395,7 +395,7 @@ class IndividualCommandTest {
 
         assertTrue(result.success)
         assertNotNull(result.message)
-        // gold cost = crew / 100 = 1000 / 100 = 10
+        // gold cost = ships / 100 = 1000 / 100 = 10
         assertTrue(result.message!!.contains("\"gold\":-10"))
     }
 
@@ -403,9 +403,9 @@ class IndividualCommandTest {
 
     @Test
     fun `모병 should increase crew count`() {
-        val general = createTestGeneral(crew = 0, leadership = 50, gold = 5000, rice = 5000, nationId = 1)
+        val general = createTestGeneral(ships = 0, leadership = 50, funds = 5000, supplies = 5000, factionId = 1)
         val env = createTestEnv()
-        val city = createTestCity(pop = 50000)
+        val city = createTestCity(population = 50000)
         val arg = mapOf<String, Any>("amount" to 500, "crewType" to 0)
         val cmd = che_모병(general, env, arg)
         cmd.city = city
@@ -421,9 +421,9 @@ class IndividualCommandTest {
 
     @Test
     fun `모병 should set default train and atmos for new crew`() {
-        val general = createTestGeneral(crew = 0, leadership = 50, gold = 5000, rice = 5000, nationId = 1)
+        val general = createTestGeneral(ships = 0, leadership = 50, funds = 5000, supplies = 5000, factionId = 1)
         val env = createTestEnv()
-        val city = createTestCity(pop = 50000)
+        val city = createTestCity(population = 50000)
         val arg = mapOf<String, Any>("amount" to 500, "crewType" to 0)
         val cmd = che_모병(general, env, arg)
         cmd.city = city
@@ -439,9 +439,9 @@ class IndividualCommandTest {
 
     @Test
     fun `모병 should merge train and atmos when adding to same crew type`() {
-        val general = createTestGeneral(crew = 1000, crewType = 1, train = 80, atmos = 80, leadership = 50, gold = 5000, rice = 5000, nationId = 1)
+        val general = createTestGeneral(ships = 1000, shipClass = 1, training = 80, morale = 80, leadership = 50, funds = 5000, supplies = 5000, factionId = 1)
         val env = createTestEnv()
-        val city = createTestCity(pop = 50000)
+        val city = createTestCity(population = 50000)
         val arg = mapOf<String, Any>("amount" to 500, "crewType" to 1)
         val cmd = che_모병(general, env, arg)
         cmd.city = city
@@ -455,9 +455,9 @@ class IndividualCommandTest {
 
     @Test
     fun `모병 should consume gold and rice`() {
-        val general = createTestGeneral(crew = 0, leadership = 50, gold = 5000, rice = 5000, nationId = 1)
+        val general = createTestGeneral(ships = 0, leadership = 50, funds = 5000, supplies = 5000, factionId = 1)
         val env = createTestEnv()
-        val city = createTestCity(pop = 50000)
+        val city = createTestCity(population = 50000)
         val arg = mapOf<String, Any>("amount" to 500, "crewType" to 0)
         val cmd = che_모병(general, env, arg)
         cmd.city = city
@@ -473,9 +473,9 @@ class IndividualCommandTest {
 
     @Test
     fun `모병 should decrease city population`() {
-        val general = createTestGeneral(crew = 0, leadership = 50, gold = 5000, rice = 5000, nationId = 1)
+        val general = createTestGeneral(ships = 0, leadership = 50, funds = 5000, supplies = 5000, factionId = 1)
         val env = createTestEnv()
-        val city = createTestCity(pop = 50000)
+        val city = createTestCity(population = 50000)
         val arg = mapOf<String, Any>("amount" to 500, "crewType" to 0)
         val cmd = che_모병(general, env, arg)
         cmd.city = city
@@ -484,16 +484,16 @@ class IndividualCommandTest {
 
         assertTrue(result.success)
         assertNotNull(result.message)
-        assertTrue(result.message!!.contains("\"pop\":-500"))
+        assertTrue(result.message!!.contains("\"population\":-500"))
     }
 
     // ========== 징병 (Conscription) ==========
 
     @Test
     fun `징병 should increase crew count with lower train and atmos than 모병`() {
-        val general = createTestGeneral(crew = 0, leadership = 50, gold = 5000, rice = 5000, nationId = 1)
+        val general = createTestGeneral(ships = 0, leadership = 50, funds = 5000, supplies = 5000, factionId = 1)
         val env = createTestEnv()
-        val city = createTestCity(pop = 50000)
+        val city = createTestCity(population = 50000)
         val arg = mapOf<String, Any>("amount" to 500, "crewType" to 0)
         val cmd = che_징병(general, env, arg)
         cmd.city = city
@@ -512,9 +512,9 @@ class IndividualCommandTest {
 
     @Test
     fun `징병 should be cheaper than 모병`() {
-        val general = createTestGeneral(crew = 0, leadership = 50, gold = 5000, rice = 5000, nationId = 1)
+        val general = createTestGeneral(ships = 0, leadership = 50, funds = 5000, supplies = 5000, factionId = 1)
         val env = createTestEnv()
-        val city = createTestCity(pop = 50000)
+        val city = createTestCity(population = 50000)
         val arg = mapOf<String, Any>("amount" to 500, "crewType" to 0)
         val cmd = che_징병(general, env, arg)
         cmd.city = city
@@ -532,7 +532,7 @@ class IndividualCommandTest {
 
     @Test
     fun `소집해제 should set crew to zero`() {
-        val general = createTestGeneral(crew = 500, nationId = 1)
+        val general = createTestGeneral(ships = 500, factionId = 1)
         val env = createTestEnv()
         val cmd = che_소집해제(general, env)
 
@@ -547,7 +547,7 @@ class IndividualCommandTest {
 
     @Test
     fun `소집해제 should return crew as city population`() {
-        val general = createTestGeneral(crew = 500, nationId = 1)
+        val general = createTestGeneral(ships = 500, factionId = 1)
         val env = createTestEnv()
         val cmd = che_소집해제(general, env)
 
@@ -555,15 +555,15 @@ class IndividualCommandTest {
 
         assertTrue(result.success)
         assertNotNull(result.message)
-        // city pop should increase by 500
-        assertTrue(result.message!!.contains("\"pop\":500"))
+        // city population should increase by 500
+        assertTrue(result.message!!.contains("\"population\":500"))
     }
 
     // ========== 헌납 (Donate) ==========
 
     @Test
     fun `헌납 gold should transfer gold from general to nation`() {
-        val general = createTestGeneral(gold = 5000, nationId = 1)
+        val general = createTestGeneral(funds = 5000, factionId = 1)
         val env = createTestEnv()
         val city = createTestCity()
         val arg = mapOf<String, Any>("isGold" to true, "amount" to 1000)
@@ -583,7 +583,7 @@ class IndividualCommandTest {
 
     @Test
     fun `헌납 rice should transfer rice from general to nation`() {
-        val general = createTestGeneral(rice = 5000, nationId = 1)
+        val general = createTestGeneral(supplies = 5000, factionId = 1)
         val env = createTestEnv()
         val city = createTestCity()
         val arg = mapOf<String, Any>("isGold" to false, "amount" to 1000)
@@ -603,7 +603,7 @@ class IndividualCommandTest {
 
     @Test
     fun `헌납 should cap amount at general's available resource`() {
-        val general = createTestGeneral(gold = 300, nationId = 1)
+        val general = createTestGeneral(funds = 300, factionId = 1)
         val env = createTestEnv()
         val city = createTestCity()
         val arg = mapOf<String, Any>("isGold" to true, "amount" to 1000)
@@ -621,10 +621,10 @@ class IndividualCommandTest {
     // ========== 농지개간 (Farming Development) ==========
 
     @Test
-    fun `농지개간 should increase city agri`() {
-        val general = createTestGeneral(intel = 80, gold = 500, nationId = 1)
+    fun `농지개간 should increase city production`() {
+        val general = createTestGeneral(intelligence = 80, funds = 500, factionId = 1)
         val env = createTestEnv()
-        val city = createTestCity(agri = 500, agriMax = 1000)
+        val city = createTestCity(production = 500, productionMax = 1000)
         val cmd = che_농지개간(general, env)
         cmd.city = city
 
@@ -633,15 +633,15 @@ class IndividualCommandTest {
         assertTrue(result.success)
         assertTrue(result.logs[0].contains("농지 개간"))
         assertNotNull(result.message)
-        // agri should increase
-        assertTrue(result.message!!.contains("\"agri\":"))
+        // production should increase
+        assertTrue(result.message!!.contains("\"production\":"))
     }
 
     @Test
     fun `농지개간 should use intel stat for calculation`() {
-        val general = createTestGeneral(intel = 90, gold = 500, nationId = 1)
+        val general = createTestGeneral(intelligence = 90, funds = 500, factionId = 1)
         val env = createTestEnv()
-        val city = createTestCity(agri = 500, agriMax = 1000, trust = 100f)
+        val city = createTestCity(production = 500, productionMax = 1000, approval = 100f)
         val cmd = che_농지개간(general, env)
         cmd.city = city
 
@@ -655,9 +655,9 @@ class IndividualCommandTest {
 
     @Test
     fun `농지개간 should apply front line debuff`() {
-        val general = createTestGeneral(intel = 80, gold = 500, nationId = 1)
+        val general = createTestGeneral(intelligence = 80, funds = 500, factionId = 1)
         val env = createTestEnv()
-        val city = createTestCity(agri = 500, agriMax = 1000, frontState = 1, trust = 100f)
+        val city = createTestCity(production = 500, productionMax = 1000, frontState = 1, approval = 100f)
         val cmd = che_농지개간(general, env)
         cmd.city = city
 
@@ -670,9 +670,9 @@ class IndividualCommandTest {
 
     @Test
     fun `농지개간 should consume gold based on develCost`() {
-        val general = createTestGeneral(intel = 80, gold = 500, nationId = 1)
+        val general = createTestGeneral(intelligence = 80, funds = 500, factionId = 1)
         val env = createTestEnv(develCost = 150)
-        val city = createTestCity(agri = 500, agriMax = 1000)
+        val city = createTestCity(production = 500, productionMax = 1000)
         val cmd = che_농지개간(general, env)
         cmd.city = city
 
@@ -686,10 +686,10 @@ class IndividualCommandTest {
     // ========== 상업투자 (Commerce Investment) ==========
 
     @Test
-    fun `상업투자 should increase city comm`() {
-        val general = createTestGeneral(intel = 80, gold = 500, nationId = 1)
+    fun `상업투자 should increase city commerce`() {
+        val general = createTestGeneral(intelligence = 80, funds = 500, factionId = 1)
         val env = createTestEnv()
-        val city = createTestCity(comm = 500, commMax = 1000)
+        val city = createTestCity(commerce = 500, commerceMax = 1000)
         val cmd = che_상업투자(general, env)
         cmd.city = city
 
@@ -698,15 +698,15 @@ class IndividualCommandTest {
         assertTrue(result.success)
         assertTrue(result.logs[0].contains("상업 투자"))
         assertNotNull(result.message)
-        // comm should increase
-        assertTrue(result.message!!.contains("\"comm\":"))
+        // commerce should increase
+        assertTrue(result.message!!.contains("\"commerce\":"))
     }
 
     @Test
     fun `상업투자 should use intel stat for calculation`() {
-        val general = createTestGeneral(intel = 90, gold = 500, nationId = 1)
+        val general = createTestGeneral(intelligence = 90, funds = 500, factionId = 1)
         val env = createTestEnv()
-        val city = createTestCity(comm = 500, commMax = 1000, trust = 100f)
+        val city = createTestCity(commerce = 500, commerceMax = 1000, approval = 100f)
         val cmd = che_상업투자(general, env)
         cmd.city = city
 
@@ -720,10 +720,10 @@ class IndividualCommandTest {
     // ========== 치안강화 (Security Enhancement) ==========
 
     @Test
-    fun `치안강화 should increase city secu`() {
-        val general = createTestGeneral(intel = 80, gold = 500, nationId = 1)
+    fun `치안강화 should increase city security`() {
+        val general = createTestGeneral(intelligence = 80, funds = 500, factionId = 1)
         val env = createTestEnv()
-        val city = createTestCity(secu = 500, secuMax = 1000)
+        val city = createTestCity(security = 500, securityMax = 1000)
         val cmd = che_치안강화(general, env)
         cmd.city = city
 
@@ -732,15 +732,15 @@ class IndividualCommandTest {
         assertTrue(result.success)
         assertTrue(result.logs[0].contains("치안 강화"))
         assertNotNull(result.message)
-        // secu should increase
-        assertTrue(result.message!!.contains("\"secu\":"))
+        // security should increase
+        assertTrue(result.message!!.contains("\"security\":"))
     }
 
     @Test
     fun `치안강화 should use intel stat for calculation`() {
-        val general = createTestGeneral(intel = 90, gold = 500, nationId = 1)
+        val general = createTestGeneral(intelligence = 90, funds = 500, factionId = 1)
         val env = createTestEnv()
-        val city = createTestCity(secu = 500, secuMax = 1000, trust = 100f)
+        val city = createTestCity(security = 500, securityMax = 1000, approval = 100f)
         val cmd = che_치안강화(general, env)
         cmd.city = city
 
@@ -755,9 +755,9 @@ class IndividualCommandTest {
 
     @Test
     fun `농지개간 can have critical success or failure`() {
-        val general = createTestGeneral(intel = 80, gold = 500, nationId = 1)
+        val general = createTestGeneral(intelligence = 80, funds = 500, factionId = 1)
         val env = createTestEnv()
-        val city = createTestCity(agri = 500, agriMax = 1000, trust = 80f)
+        val city = createTestCity(production = 500, productionMax = 1000, approval = 80f)
         val cmd = che_농지개간(general, env)
         cmd.city = city
 

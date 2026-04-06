@@ -13,8 +13,8 @@ import com.openlogh.repository.OfficerRepository
 import com.openlogh.repository.HallOfFameRepository
 import com.openlogh.repository.MessageRepository
 import com.openlogh.repository.FactionRepository
-import com.openlogh.repository.OldGeneralRepository
-import com.openlogh.repository.OldNationRepository
+import com.openlogh.repository.OldOfficerRepository
+import com.openlogh.repository.OldFactionRepository
 import com.openlogh.service.HistoryService
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
@@ -51,8 +51,8 @@ class GameEndParityTest {
     private lateinit var appUserRepository: AppUserRepository
     private lateinit var hallOfFameRepository: HallOfFameRepository
     private lateinit var sovereignRepository: SovereignRepository
-    private lateinit var oldNationRepository: OldNationRepository
-    private lateinit var oldGeneralRepository: OldGeneralRepository
+    private lateinit var oldFactionRepository: OldFactionRepository
+    private lateinit var oldOfficerRepository: OldOfficerRepository
     private lateinit var gameHistoryRepository: GameHistoryRepository
     private lateinit var messageRepository: MessageRepository
     private lateinit var historyService: HistoryService
@@ -68,8 +68,8 @@ class GameEndParityTest {
         appUserRepository = mock(AppUserRepository::class.java)
         hallOfFameRepository = mock(HallOfFameRepository::class.java)
         sovereignRepository = mock(SovereignRepository::class.java)
-        oldNationRepository = mock(OldNationRepository::class.java)
-        oldGeneralRepository = mock(OldGeneralRepository::class.java)
+        oldFactionRepository = mock(OldFactionRepository::class.java)
+        oldOfficerRepository = mock(OldOfficerRepository::class.java)
         gameHistoryRepository = mock(GameHistoryRepository::class.java)
         messageRepository = mock(MessageRepository::class.java)
         historyService = mock(HistoryService::class.java)
@@ -81,8 +81,8 @@ class GameEndParityTest {
             appUserRepository,
             hallOfFameRepository,
             sovereignRepository,
-            oldNationRepository,
-            oldGeneralRepository,
+            oldFactionRepository,
+            oldOfficerRepository,
             gameHistoryRepository,
             messageRepository,
             historyService,
@@ -118,18 +118,18 @@ class GameEndParityTest {
         )
     }
 
-    private fun buildCity(id: Long, nationId: Long): Planet {
+    private fun buildCity(id: Long, factionId: Long): Planet {
         return Planet(
             id = id,
             sessionId = 1,
             name = "도시$id",
-            factionId = nationId,
+            factionId = factionId,
         )
     }
 
     private fun buildGeneral(
         id: Long,
-        nationId: Long,
+        factionId: Long,
         officerLevel: Int,
         userId: Long? = null,
         npcState: Short = 0,
@@ -137,7 +137,7 @@ class GameEndParityTest {
         return Officer(
             id = id,
             sessionId = 1,
-            factionId = nationId,
+            factionId = factionId,
             name = "장수$id",
             officerLevel = officerLevel.toShort(),
             userId = userId,
@@ -157,18 +157,18 @@ class GameEndParityTest {
         `when`(factionRepository.findBySessionId(1L)).thenReturn(nations)
         `when`(planetRepository.findBySessionId(1L)).thenReturn(cities)
         `when`(officerRepository.findBySessionId(1L)).thenReturn(generals)
-        `when`(messageRepository.findByWorldIdAndMailboxCodeAndDestIdOrderBySentAtDesc(
+        `when`(messageRepository.findBySessionIdAndMailboxCodeAndDestIdOrderBySentAtDesc(
             anyLong(), anyString(), anyLong()
         )).thenReturn(emptyList())
         `when`(messageRepository.save(anyNonNull())).thenAnswer { it.arguments[0] }
         `when`(gameHistoryRepository.findByServerId(anyString())).thenReturn(null)
         `when`(gameHistoryRepository.save(anyNonNull())).thenAnswer { it.arguments[0] }
         `when`(gameHistoryRepository.count()).thenReturn(0)
-        `when`(oldNationRepository.findByServerIdAndNation(anyString(), anyLong())).thenReturn(null)
-        `when`(oldNationRepository.save(anyNonNull())).thenAnswer { it.arguments[0] }
-        `when`(oldNationRepository.findByServerId(anyString())).thenReturn(emptyList())
-        `when`(oldGeneralRepository.findByServerIdAndGeneralNo(anyString(), anyLong())).thenReturn(null)
-        `when`(oldGeneralRepository.save(anyNonNull())).thenAnswer { it.arguments[0] }
+        `when`(oldFactionRepository.findBySessionIdAndFaction(anyString(), anyLong())).thenReturn(null)
+        `when`(oldFactionRepository.save(anyNonNull())).thenAnswer { it.arguments[0] }
+        `when`(oldFactionRepository.findByServerId(anyString())).thenReturn(emptyList())
+        `when`(oldOfficerRepository.findBySessionIdAndOfficerId(anyString(), anyLong())).thenReturn(null)
+        `when`(oldOfficerRepository.save(anyNonNull())).thenAnswer { it.arguments[0] }
         `when`(sovereignRepository.save(anyNonNull())).thenAnswer { it.arguments[0] }
         `when`(hallOfFameRepository.findByServerIdAndTypeAndOfficerNo(anyString(), anyString(), anyLong()))
             .thenReturn(null)
@@ -236,9 +236,9 @@ class GameEndParityTest {
             val winner = buildNation(1, level = 7)
             val loser = buildNation(2, level = 0)
             val cities = listOf(
-                buildCity(1, nationId = 1),
-                buildCity(2, nationId = 1),
-                buildCity(3, nationId = 0), // unowned city
+                buildCity(1, factionId = 1),
+                buildCity(2, factionId = 1),
+                buildCity(3, factionId = 0), // unowned city
             )
             `when`(factionRepository.findBySessionId(1L)).thenReturn(listOf(winner, loser))
             `when`(planetRepository.findBySessionId(1L)).thenReturn(cities)
@@ -298,9 +298,9 @@ class GameEndParityTest {
             val winner = buildNation(1, level = 5)
             val loser = buildNation(2, level = 0)
             val cities = listOf(
-                buildCity(1, nationId = 1),
-                buildCity(2, nationId = 1),
-                buildCity(3, nationId = 1),
+                buildCity(1, factionId = 1),
+                buildCity(2, factionId = 1),
+                buildCity(3, factionId = 1),
             )
             wireSuccessfulUnificationMocks(listOf(winner, loser), cities)
 
@@ -322,9 +322,9 @@ class GameEndParityTest {
             val world = buildWorldState(isUnited = 0, refreshLimit = 30000)
             val winner = buildNation(1, level = 5)
             val cities = listOf(
-                buildCity(1, nationId = 1),
-                buildCity(2, nationId = 1),
-                buildCity(3, nationId = 1),
+                buildCity(1, factionId = 1),
+                buildCity(2, factionId = 1),
+                buildCity(3, factionId = 1),
             )
             wireSuccessfulUnificationMocks(listOf(winner), cities)
 
@@ -342,8 +342,8 @@ class GameEndParityTest {
             val world = buildWorldState(isUnited = 0, refreshLimit = 50000)
             val winner = buildNation(1, level = 7)
             val cities = listOf(
-                buildCity(1, nationId = 1),
-                buildCity(2, nationId = 1),
+                buildCity(1, factionId = 1),
+                buildCity(2, factionId = 1),
             )
             wireSuccessfulUnificationMocks(listOf(winner), cities)
 
@@ -361,7 +361,7 @@ class GameEndParityTest {
             val world = buildWorldState(isUnited = 0, refreshLimit = 30000)
             world.config.remove("refreshLimit")
             val winner = buildNation(1, level = 5)
-            val cities = listOf(buildCity(1, nationId = 1))
+            val cities = listOf(buildCity(1, factionId = 1))
             wireSuccessfulUnificationMocks(listOf(winner), cities)
 
             service.checkAndSettleUnification(world)

@@ -20,7 +20,7 @@ class SelectPoolServiceTest {
     }
 
     @Test
-    fun `create saves pool entry with worldId and uniqueName`() {
+    fun `create saves pool entry with sessionId and uniqueName`() {
         val pool = SelectPool(id = 1, sessionId = 10, uniqueName = "test")
         `when`(repo.save(any(SelectPool::class.java))).thenReturn(pool)
 

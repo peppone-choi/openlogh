@@ -174,7 +174,7 @@ class BattleParityTest {
         @Test
         fun `footman uses strength stat with ratio formula`() {
             // Legacy: ratio = str*2-40, clamped; attack = (crewType.attack + techAbil) * ratio/100
-            val gen = createGeneral(strength = 80, crewType = CrewType.FOOTMAN.code)
+            val gen = createGeneral(command = 80, shipClass = CrewType.FOOTMAN.code)
             val unit = WarUnitOfficer(gen, nationTech = 0f)
             // ratio = 80*2-40 = 120 → since >100: 50 + 120/2 = 110
             // attack = FOOTMAN.attack(100) + techAbil(0) = 100
@@ -184,7 +184,7 @@ class BattleParityTest {
 
         @Test
         fun `low strength gets clamped ratio`() {
-            val gen = createGeneral(strength = 20, crewType = CrewType.FOOTMAN.code)
+            val gen = createGeneral(command = 20, shipClass = CrewType.FOOTMAN.code)
             val unit = WarUnitOfficer(gen, nationTech = 0f)
             // ratio = 20*2-40 = 0 → since <10: 10
             // baseAttack = 100 * 10/100 = 10.0
@@ -193,7 +193,7 @@ class BattleParityTest {
 
         @Test
         fun `wizard uses intel stat`() {
-            val gen = createGeneral(intel = 90, crewType = CrewType.WIZARD.code)
+            val gen = createGeneral(intelligence = 90, shipClass = CrewType.WIZARD.code)
             val unit = WarUnitOfficer(gen, nationTech = 0f)
             // ratio = 90*2-40 = 140 → >100: 50+140/2 = 120
             // attack = WIZARD.attack + 0
@@ -204,7 +204,7 @@ class BattleParityTest {
 
         @Test
         fun `tech bonus adds to attack`() {
-            val gen = createGeneral(strength = 70, crewType = CrewType.FOOTMAN.code)
+            val gen = createGeneral(command = 70, shipClass = CrewType.FOOTMAN.code)
             val unit = WarUnitOfficer(gen, nationTech = 1000f)
             // ratio = 70*2-40 = 100 → exactly 100
             // techAbil = getTechAbil(1000) = getTechLevel(1000)*25 = 1*25 = 25
@@ -220,8 +220,8 @@ class BattleParityTest {
 
         @Test
         fun `defence uses crew factor formula`() {
-            // Legacy: crewFactor = crew/233.33 + 70; defence = (crewType.defence + techAbil) * crewFactor/100
-            val gen = createGeneral(crewType = CrewType.FOOTMAN.code, crew = 5000)
+            // Legacy: crewFactor = ships/233.33 + 70; defence = (crewType.defence + techAbil) * crewFactor/100
+            val gen = createGeneral(shipClass = CrewType.FOOTMAN.code, ships = 5000)
             val unit = WarUnitOfficer(gen, nationTech = 0f)
             val crewFactor = 5000 / 233.33 + 70.0
             val expected = (CrewType.FOOTMAN.defence + 0) * crewFactor / 100.0
@@ -230,7 +230,7 @@ class BattleParityTest {
 
         @Test
         fun `small crew gives lower defence`() {
-            val gen = createGeneral(crewType = CrewType.FOOTMAN.code, crew = 100)
+            val gen = createGeneral(shipClass = CrewType.FOOTMAN.code, ships = 100)
             val unit = WarUnitOfficer(gen, nationTech = 0f)
             val crewFactor = 100 / 233.33 + 70.0
             val expected = CrewType.FOOTMAN.defence * crewFactor / 100.0
@@ -243,9 +243,9 @@ class BattleParityTest {
     inner class CityUnitParity {
 
         @Test
-        fun `city attack formula uses def and wall`() {
-            // Legacy: base = (def + wall*9) / 500 + 200
-            val city = createCity(def = 1000, wall = 500)
+        fun `city attack formula uses orbitalDefense and fortress`() {
+            // Legacy: base = (orbitalDefense + fortress*9) / 500 + 200
+            val city = createCity(orbitalDefense = 1000, fortress = 500)
             val unit = WarUnitPlanet(city)
             val expected = (1000 + 500 * 9) / 500.0 + 200.0
             assertEquals(expected, unit.getBaseAttack(), 0.01)
@@ -254,15 +254,15 @@ class BattleParityTest {
         @Test
         fun `city defence equals attack (legacy parity)`() {
             // Legacy WarUnitPlanet.php: both getComputedAttack and getComputedDefence
-            // return (def + wall*9) / 500 + 200
-            val city = createCity(def = 1000, wall = 500)
+            // return (orbitalDefense + fortress*9) / 500 + 200
+            val city = createCity(orbitalDefense = 1000, fortress = 500)
             val unit = WarUnitPlanet(city)
             assertEquals(unit.getBaseAttack(), unit.getBaseDefence(), 0.01)
         }
 
         @Test
-        fun `city HP is def times 10`() {
-            val city = createCity(def = 500, wall = 200)
+        fun `city HP is orbitalDefense times 10`() {
+            val city = createCity(orbitalDefense = 500, fortress = 200)
             val unit = WarUnitPlanet(city)
             assertEquals(5000, unit.hp)
         }
@@ -280,7 +280,7 @@ class BattleParityTest {
         fun `footman critical uses strength stat with 0_5 coef`() {
             // Legacy: (mainStat - 65) * coef / 100, capped at 50%
             // For footman (non-wizard, non-siege): strength, coef=0.5
-            val gen = createGeneral(strength = 85, crewType = CrewType.FOOTMAN.code, train = 100)
+            val gen = createGeneral(command = 85, shipClass = CrewType.FOOTMAN.code, training = 100)
             val unit = WarUnitOfficer(gen, nationTech = 0f)
             // (85-65)*0.5 = 10 → 10/100 = 0.10
             assertEquals(0.10, unit.criticalChance, 0.001)
@@ -288,7 +288,7 @@ class BattleParityTest {
 
         @Test
         fun `low stat gives zero critical chance`() {
-            val gen = createGeneral(strength = 50, crewType = CrewType.FOOTMAN.code)
+            val gen = createGeneral(command = 50, shipClass = CrewType.FOOTMAN.code)
             val unit = WarUnitOfficer(gen, nationTech = 0f)
             // (50-65) = -15, clamped to 0
             assertEquals(0.0, unit.criticalChance, 0.001)
@@ -296,7 +296,7 @@ class BattleParityTest {
 
         @Test
         fun `critical chance capped at 50 percent`() {
-            val gen = createGeneral(strength = 200.toShort(), crewType = CrewType.FOOTMAN.code)
+            val gen = createGeneral(command = 200.toShort(), shipClass = CrewType.FOOTMAN.code)
             val unit = WarUnitOfficer(gen, nationTech = 0f)
             // (200-65)*0.5 = 67.5, capped to 50 → 0.50
             assertEquals(0.50, unit.criticalChance, 0.001)
@@ -314,7 +314,7 @@ class BattleParityTest {
         @Test
         fun `dodge chance uses crew type avoid and train`() {
             // Legacy: crewType.avoid / 100 * (train / 100)
-            val gen = createGeneral(crewType = CrewType.FOOTMAN.code, train = 80)
+            val gen = createGeneral(shipClass = CrewType.FOOTMAN.code, training = 80)
             val unit = WarUnitOfficer(gen, nationTech = 0f)
             // FOOTMAN.avoid=10; 10/100 * 80/100 = 0.08
             val expected = CrewType.FOOTMAN.avoid / 100.0 * (80 / 100.0)
@@ -332,7 +332,7 @@ class BattleParityTest {
 
         @Test
         fun `attacker rice consumption formula`() {
-            val gen = createGeneral(crewType = CrewType.FOOTMAN.code, rice = 10000)
+            val gen = createGeneral(shipClass = CrewType.FOOTMAN.code, supplies = 10000)
             val unit = WarUnitOfficer(gen, nationTech = 0f)
             val initialRice = unit.supplies
 
@@ -347,7 +347,7 @@ class BattleParityTest {
 
         @Test
         fun `defender gets 0_8 multiplier`() {
-            val gen = createGeneral(crewType = CrewType.FOOTMAN.code, rice = 10000)
+            val gen = createGeneral(shipClass = CrewType.FOOTMAN.code, supplies = 10000)
             val unit = WarUnitOfficer(gen, nationTech = 0f)
             val initialRice = unit.supplies
 
@@ -361,7 +361,7 @@ class BattleParityTest {
 
         @Test
         fun `vsCity gets additional 0_8 multiplier`() {
-            val gen = createGeneral(crewType = CrewType.FOOTMAN.code, rice = 10000)
+            val gen = createGeneral(shipClass = CrewType.FOOTMAN.code, supplies = 10000)
             val unit = WarUnitOfficer(gen, nationTech = 0f)
             val initialRice = unit.supplies
 
@@ -408,7 +408,7 @@ class BattleParityTest {
                 createGeneral(id = 2, leadership = 60, command = 60, intelligence = 50, ships = 3000, training = 70, morale = 70, supplies = 5000),
                 nationTech = 300f
             )
-            val city = createCity(def = 500, wall = 200, nationId = 2)
+            val city = createCity(orbitalDefense = 500, fortress = 200, factionId = 2)
             return BattleEngine().resolveBattle(attacker, listOf(defender), city, Random(seed))
         }
     }
@@ -423,7 +423,7 @@ class BattleParityTest {
 
         @Test
         fun `injury capped at 80`() {
-            val gen = createGeneral(crew = 5000, rice = 10000)
+            val gen = createGeneral(ships = 5000, supplies = 10000)
             gen.injury = 79
             val unit = WarUnitOfficer(gen, nationTech = 0f)
             unit.injury = 79
@@ -435,15 +435,15 @@ class BattleParityTest {
         @Test
         fun `continueWar false when rice too low relative to HP`() {
             // Legacy: rice <= hp/100
-            val gen = createGeneral(crew = 1000, rice = 5)
+            val gen = createGeneral(ships = 1000, supplies = 5)
             val unit = WarUnitOfficer(gen, nationTech = 0f)
-            // hp=1000, rice=5; 5 <= 1000/100=10 → can't continue
+            // hp=1000, supplies =5; 5 <= 1000/100=10 → can't continue
             assertFalse(unit.continueWar().canContinue)
         }
 
         @Test
         fun `continueWar true when enough rice`() {
-            val gen = createGeneral(crew = 1000, rice = 100)
+            val gen = createGeneral(ships = 1000, supplies = 100)
             val unit = WarUnitOfficer(gen, nationTech = 0f)
             assertTrue(unit.continueWar().canContinue)
         }
@@ -487,13 +487,13 @@ class BattleParityTest {
     private fun createGeneral(
         id: Long = 1,
         leadership: Short = 70,
-        strength: Short = 70,
-        intel: Short = 70,
-        crew: Int = 3000,
-        train: Short = 80,
-        atmos: Short = 80,
-        rice: Int = 5000,
-        crewType: Int = CrewType.FOOTMAN.code,
+        command: Short = 70,
+        intelligence: Short = 70,
+        ships: Int = 3000,
+        training: Short = 80,
+        morale: Short = 80,
+        supplies: Int = 5000,
+        shipClass: Int = CrewType.FOOTMAN.code,
         dex1: Int = 1000,
         dex2: Int = 1000,
         dex3: Int = 1000,
@@ -506,14 +506,14 @@ class BattleParityTest {
         factionId = 1,
         planetId = 1,
         leadership = leadership,
-        command = strength,
-        intelligence = intel,
-        ships = crew,
-        shipClass = crewType.toShort(),
-        train = train,
-        atmos = atmos,
-        rice = rice,
-        gold = 5000,
+        command = command,
+        intelligence = intelligence,
+        ships = ships,
+        shipClass = shipClass.toShort(),
+        training = training,
+        morale = morale,
+        supplies = supplies,
+        funds = 5000,
         dex1 = dex1,
         dex2 = dex2,
         dex3 = dex3,
@@ -523,20 +523,20 @@ class BattleParityTest {
     )
 
     private fun createCity(
-        def: Int = 500,
-        wall: Int = 200,
-        nationId: Long = 1,
-        pop: Int = 50000,
+        orbitalDefense: Int = 500,
+        fortress: Int = 200,
+        factionId: Long = 1,
+        population: Int = 50000,
     ): Planet = Planet(
         id = 1,
         sessionId = 1,
         name = "테스트도시",
-        factionId = nationId,
-        orbitalDefense = def,
+        factionId = factionId,
+        orbitalDefense = orbitalDefense,
         orbitalDefenseMax = 2000,
-        fortress = wall,
+        fortress = fortress,
         fortressMax = 2000,
-        population = pop,
+        population = population,
         populationMax = 100000,
     )
 }

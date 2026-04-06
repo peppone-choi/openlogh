@@ -59,25 +59,25 @@ class HistoryServiceTest {
     @Test
     fun `getWorldHistory should query record repository`() {
         val mockRecords = listOf(mock(Record::class.java))
-        `when`(recordRepository.findByWorldIdAndRecordTypeOrderByCreatedAtDesc(1L, "world_history"))
+        `when`(recordRepository.findBySessionIdAndRecordTypeOrderByCreatedAtDesc(1L, "world_history"))
             .thenReturn(mockRecords)
 
         val result = historyService.getWorldHistory(1L)
 
         assertEquals(mockRecords, result)
-        verify(recordRepository).findByWorldIdAndRecordTypeOrderByCreatedAtDesc(1L, "world_history")
+        verify(recordRepository).findBySessionIdAndRecordTypeOrderByCreatedAtDesc(1L, "world_history")
     }
 
     @Test
     fun `getWorldRecords should query record repository`() {
         val mockRecords = listOf(mock(Record::class.java))
-        `when`(recordRepository.findByWorldIdAndRecordTypeOrderByCreatedAtDesc(1L, "world_record"))
+        `when`(recordRepository.findBySessionIdAndRecordTypeOrderByCreatedAtDesc(1L, "world_record"))
             .thenReturn(mockRecords)
 
         val result = historyService.getWorldRecords(1L)
 
         assertEquals(mockRecords, result)
-        verify(recordRepository).findByWorldIdAndRecordTypeOrderByCreatedAtDesc(1L, "world_record")
+        verify(recordRepository).findBySessionIdAndRecordTypeOrderByCreatedAtDesc(1L, "world_record")
     }
 
     @Test
@@ -95,14 +95,14 @@ class HistoryServiceTest {
     @Test
     fun `getByYearMonth should query record repository`() {
         val mockRecords = listOf(mock(Record::class.java))
-        `when`(recordRepository.findByWorldIdAndRecordTypeInAndYearAndMonthOrderByCreatedAtDesc(
+        `when`(recordRepository.findBySessionIdAndRecordTypeInAndYearAndMonthOrderByCreatedAtDesc(
             1L, listOf("world_history", "world_record"), 187, 1
         )).thenReturn(mockRecords)
 
         val result = historyService.getByYearMonth(1L, 187, 1)
 
         assertEquals(mockRecords, result)
-        verify(recordRepository).findByWorldIdAndRecordTypeInAndYearAndMonthOrderByCreatedAtDesc(
+        verify(recordRepository).findBySessionIdAndRecordTypeInAndYearAndMonthOrderByCreatedAtDesc(
             1L, listOf("world_history", "world_record"), 187, 1
         )
     }

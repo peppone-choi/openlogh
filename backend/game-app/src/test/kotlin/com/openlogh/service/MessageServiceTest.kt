@@ -34,7 +34,7 @@ class MessageServiceTest {
 
     @Test
     fun `getMessages uses sinceId when provided`() {
-        val general = general(id = 5L, nationId = 7L, officerLevel = 4)
+        val general = general(id = 5L, factionId = 7L, officerLevel = 4)
         val privateMessages = listOf(message(11, mailboxType = MessageService.MAILBOX_PRIVATE, mailboxCode = "message"))
         val nationalMessages = listOf(message(10, mailboxType = MessageService.MAILBOX_NATIONAL, mailboxCode = "national"))
         val diplomacyMessages = listOf(message(12, mailboxType = MessageService.MAILBOX_DIPLOMACY, mailboxCode = "diplomacy"))
@@ -59,7 +59,7 @@ class MessageServiceTest {
 
     @Test
     fun `getMessages excludes diplomacy for low officer level`() {
-        val general = general(id = 5L, nationId = 7L, officerLevel = 3)
+        val general = general(id = 5L, factionId = 7L, officerLevel = 3)
         val privateMessages = listOf(message(11, mailboxType = MessageService.MAILBOX_PRIVATE, mailboxCode = "message"))
 
         `when`(officerRepository.findById(5L)).thenReturn(java.util.Optional.of(general))
@@ -76,7 +76,7 @@ class MessageServiceTest {
 
     @Test
     fun `getMessages defaults to page size on initial load`() {
-        val general = general(id = 5L, nationId = 7L, officerLevel = 3)
+        val general = general(id = 5L, factionId = 7L, officerLevel = 3)
         val privateMessages = (1L..35L).map { message(it, mailboxType = MessageService.MAILBOX_PRIVATE, mailboxCode = "message") }
 
         `when`(officerRepository.findById(5L)).thenReturn(java.util.Optional.of(general))
@@ -92,7 +92,7 @@ class MessageServiceTest {
 
     @Test
     fun `getMessages uses explicit limit when provided`() {
-        val general = general(id = 5L, nationId = 7L, officerLevel = 3)
+        val general = general(id = 5L, factionId = 7L, officerLevel = 3)
         val privateMessages = (1L..20L).map { message(it, mailboxType = MessageService.MAILBOX_PRIVATE, mailboxCode = "message") }
 
         `when`(officerRepository.findById(5L)).thenReturn(java.util.Optional.of(general))
@@ -113,7 +113,7 @@ class MessageServiceTest {
             message(7, mailboxType = MessageService.MAILBOX_PUBLIC, mailboxCode = "public"),
             message(6, mailboxType = MessageService.MAILBOX_PUBLIC, mailboxCode = "public"),
         )
-        `when`(messageRepository.findByWorldIdAndMailboxTypeAndIdLessThanOrderBySentAtDesc(1L, MessageService.MAILBOX_PUBLIC, 9L))
+        `when`(messageRepository.findBySessionIdAndMailboxTypeAndIdLessThanOrderBySentAtDesc(1L, MessageService.MAILBOX_PUBLIC, 9L))
             .thenReturn(messages)
 
         val result = service.getPublicMessages(1L, 9L, 2)
@@ -135,7 +135,7 @@ class MessageServiceTest {
     @Test
     fun `getPublicMessages defaults to typed page size`() {
         val messages = (1L..35L).map { message(it, mailboxType = MessageService.MAILBOX_PUBLIC, mailboxCode = "public") }
-        `when`(messageRepository.findByWorldIdAndMailboxTypeOrderBySentAtDesc(1L, MessageService.MAILBOX_PUBLIC)).thenReturn(messages)
+        `when`(messageRepository.findBySessionIdAndMailboxTypeOrderBySentAtDesc(1L, MessageService.MAILBOX_PUBLIC)).thenReturn(messages)
 
         val result = service.getPublicMessages(1L)
 
@@ -153,7 +153,7 @@ class MessageServiceTest {
     fun `getContacts includes nationColor from nation lookup`() {
         val nation = com.openlogh.entity.Faction(id = 7L, sessionId = 1, name = "위")
         nation.color = "#FF0000"
-        val gen = general(id = 5L, nationId = 7L, officerLevel = 1)
+        val gen = general(id = 5L, factionId = 7L, officerLevel = 1)
 
         `when`(officerRepository.findBySessionId(1L)).thenReturn(listOf(gen))
         `when`(factionRepository.findBySessionId(1L)).thenReturn(listOf(nation))
@@ -167,7 +167,7 @@ class MessageServiceTest {
 
     @Test
     fun `getContacts returns null nationColor for general without nation`() {
-        val gen = general(id = 3L, nationId = 0L, officerLevel = 1)
+        val gen = general(id = 3L, factionId = 0L, officerLevel = 1)
 
         `when`(officerRepository.findBySessionId(1L)).thenReturn(listOf(gen))
         `when`(factionRepository.findBySessionId(1L)).thenReturn(emptyList())
@@ -186,7 +186,7 @@ class MessageServiceTest {
         val chatMsg = message(3L, mailboxType = MessageService.MAILBOX_PUBLIC, mailboxCode = "public_chat")
         val actionMsg = message(4L, mailboxType = MessageService.MAILBOX_PUBLIC, mailboxCode = "general_action")
 
-        `when`(messageRepository.findByWorldIdAndMailboxTypeOrderBySentAtDesc(1L, MessageService.MAILBOX_PUBLIC))
+        `when`(messageRepository.findBySessionIdAndMailboxTypeOrderBySentAtDesc(1L, MessageService.MAILBOX_PUBLIC))
             .thenReturn(listOf(publicMsg, boardMsg, chatMsg, actionMsg))
 
         val result = service.getPublicMessages(1L)
@@ -195,12 +195,12 @@ class MessageServiceTest {
         assertTrue(result.none { it.id == 4L })
     }
 
-    private fun general(id: Long, nationId: Long, officerLevel: Short): com.openlogh.entity.Officer {
+    private fun general(id: Long, factionId: Long, officerLevel: Short): com.openlogh.entity.Officer {
         return com.openlogh.entity.Officer(
             id = id,
             sessionId = 1,
             name = "장수",
-            factionId = nationId,
+            factionId = factionId,
             planetId = 1,
             officerLevel = officerLevel,
             turnTime = java.time.OffsetDateTime.now(),

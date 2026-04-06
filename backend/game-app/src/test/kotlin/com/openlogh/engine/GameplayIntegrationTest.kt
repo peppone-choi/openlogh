@@ -20,10 +20,10 @@ class GameplayIntegrationTest {
         val nation = baseNation()
         val city = baseCity()
         val general = baseGeneral(
-            intel = 80,
+            intelligence = 80,
             politics = 80,
-            gold = 5000,
-            rice = 5000,
+            funds = 5000,
+            supplies = 5000,
             officerLevel = 0,
         )
 
@@ -32,11 +32,11 @@ class GameplayIntegrationTest {
         harness.putPlanet(city)
         harness.putOfficer(general)
 
-        harness.queueGeneralTurn(generalId = general.id, actionCode = "농지개간", turnIdx = 0)
-        harness.queueGeneralTurn(generalId = general.id, actionCode = "농지개간", turnIdx = 1)
-        harness.queueGeneralTurn(generalId = general.id, actionCode = "상업투자", turnIdx = 2)
-        harness.queueGeneralTurn(generalId = general.id, actionCode = "치안강화", turnIdx = 3)
-        harness.queueGeneralTurn(generalId = general.id, actionCode = "모병", turnIdx = 4)
+        harness.queueGeneralTurn(officerId = general.id, actionCode = "농지개간", turnIdx = 0)
+        harness.queueGeneralTurn(officerId = general.id, actionCode = "농지개간", turnIdx = 1)
+        harness.queueGeneralTurn(officerId = general.id, actionCode = "상업투자", turnIdx = 2)
+        harness.queueGeneralTurn(officerId = general.id, actionCode = "치안강화", turnIdx = 3)
+        harness.queueGeneralTurn(officerId = general.id, actionCode = "모병", turnIdx = 4)
 
         repeat(5) {
             markTickReady(world)
@@ -53,8 +53,8 @@ class GameplayIntegrationTest {
         val world = baseWorld()
         val nation = baseNation()
         val city = baseCity()
-        val chojo = baseGeneral(id = 1, name = "조조", intel = 90)
-        val yubi = baseGeneral(id = 2, name = "유비", strength = 90, crew = 300)
+        val chojo = baseGeneral(id = 1, name = "조조", intelligence = 90)
+        val yubi = baseGeneral(id = 2, name = "유비", command = 90, ships = 300)
 
         harness.putWorld(world)
         harness.putFaction(nation)
@@ -65,8 +65,8 @@ class GameplayIntegrationTest {
         val initialAgri = city.production
         val initialTrain = yubi.training.toInt()
 
-        harness.queueGeneralTurn(generalId = chojo.id, actionCode = "농지개간", turnIdx = 0)
-        harness.queueGeneralTurn(generalId = yubi.id, actionCode = "훈련", turnIdx = 0)
+        harness.queueGeneralTurn(officerId = chojo.id, actionCode = "농지개간", turnIdx = 0)
+        harness.queueGeneralTurn(officerId = yubi.id, actionCode = "훈련", turnIdx = 0)
 
         markTickReady(world)
         harness.turnService.processWorld(world)
@@ -90,8 +90,8 @@ class GameplayIntegrationTest {
         harness.putPlanet(city)
         harness.putOfficer(chief)
 
-        harness.queueNationTurn(nationId = nation.id, officerLevel = 5, actionCode = "Nation휴식", turnIdx = 0)
-        harness.queueGeneralTurn(generalId = chief.id, actionCode = "휴식", turnIdx = 0)
+        harness.queueNationTurn(factionId = nation.id, officerLevel = 5, actionCode = "Nation휴식", turnIdx = 0)
+        harness.queueGeneralTurn(officerId = chief.id, actionCode = "휴식", turnIdx = 0)
 
         markTickReady(world, ticksBehind = 3)
         harness.turnService.processWorld(world)
@@ -114,7 +114,7 @@ class GameplayIntegrationTest {
         harness.putOfficer(general)
 
         repeat(12) { idx ->
-            harness.queueGeneralTurn(generalId = general.id, actionCode = "휴식", turnIdx = idx.toShort())
+            harness.queueGeneralTurn(officerId = general.id, actionCode = "휴식", turnIdx = idx.toShort())
         }
 
         repeat(12) {
@@ -131,12 +131,12 @@ class GameplayIntegrationTest {
         val harness = InMemoryTurnHarness()
         val world = baseWorld()
         val nation = baseNation()
-        val city = baseCity(pop = 10000)
+        val city = baseCity(population = 10000)
         val general = baseGeneral(
             leadership = 80,
-            strength = 60,
-            gold = 5000,
-            rice = 5000,
+            command = 60,
+            funds = 5000,
+            supplies = 5000,
         )
 
         harness.putWorld(world)
@@ -144,10 +144,10 @@ class GameplayIntegrationTest {
         harness.putPlanet(city)
         harness.putOfficer(general)
 
-        harness.queueGeneralTurn(generalId = general.id, actionCode = "모병", turnIdx = 0)
-        harness.queueGeneralTurn(generalId = general.id, actionCode = "훈련", turnIdx = 1)
-        harness.queueGeneralTurn(generalId = general.id, actionCode = "훈련", turnIdx = 2)
-        harness.queueGeneralTurn(generalId = general.id, actionCode = "사기진작", turnIdx = 3)
+        harness.queueGeneralTurn(officerId = general.id, actionCode = "모병", turnIdx = 0)
+        harness.queueGeneralTurn(officerId = general.id, actionCode = "훈련", turnIdx = 1)
+        harness.queueGeneralTurn(officerId = general.id, actionCode = "훈련", turnIdx = 2)
+        harness.queueGeneralTurn(officerId = general.id, actionCode = "사기진작", turnIdx = 3)
 
         repeat(4) {
             markTickReady(world)
@@ -181,7 +181,7 @@ class GameplayIntegrationTest {
         )
     }
 
-    private fun baseCity(pop: Int = 10000): Planet {
+    private fun baseCity(population: Int = 10000): Planet {
         return Planet(
             id = 1,
             sessionId = 1,
@@ -190,7 +190,7 @@ class GameplayIntegrationTest {
             factionId = 1,
             supplyState = 1,
             frontState = 0,
-            population = pop,
+            population = population,
             populationMax = 50000,
             production = 100,
             productionMax = 1000,
@@ -209,31 +209,31 @@ class GameplayIntegrationTest {
     private fun baseGeneral(
         id: Long = 1,
         name: String = "조조",
-        nationId: Long = 1,
-        cityId: Long = 1,
+        factionId: Long = 1,
+        planetId: Long = 1,
         officerLevel: Int = 0,
         leadership: Int = 50,
-        strength: Int = 50,
-        intel: Int = 50,
+        command: Int = 50,
+        intelligence: Int = 50,
         politics: Int = 50,
-        gold: Int = 1000,
-        rice: Int = 1000,
-        crew: Int = 0,
+        funds: Int = 1000,
+        supplies: Int = 1000,
+        ships: Int = 0,
     ): Officer {
         return Officer(
             id = id,
             sessionId = 1,
             name = name,
-            factionId = nationId,
-            planetId = cityId,
+            factionId = factionId,
+            planetId = planetId,
             officerLevel = officerLevel.toShort(),
             leadership = leadership.toShort(),
-            strength = strength.toShort(),
-            intel = intel.toShort(),
+            command = command.toShort(),
+            intelligence = intelligence.toShort(),
             politics = politics.toShort(),
-            gold = gold,
-            rice = rice,
-            crew = crew,
+            funds = funds,
+            supplies = supplies,
+            ships = ships,
             npcState = 0,
             turnTime = OffsetDateTime.now().minusSeconds(1200),
         )

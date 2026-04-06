@@ -97,7 +97,7 @@ class TurnDaemonTest {
         )
         cqrsDaemon.tick()
 
-        verify(turnCoordinator).processWorld(world)
+        verify(turnCoordinator).processSession(world)
         verify(turnService, never()).processWorld(anyNonNull())
     }
 

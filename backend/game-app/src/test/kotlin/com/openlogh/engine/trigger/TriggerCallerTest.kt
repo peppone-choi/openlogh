@@ -8,19 +8,19 @@ import org.junit.jupiter.api.Test
 class TriggerCallerTest {
 
     private fun createGeneral(
-        crew: Int = 1000,
-        rice: Int = 500,
+        ships: Int = 1000,
+        supplies: Int = 500,
         injury: Short = 5,
-        atmos: Short = 80,
+        morale: Short = 80,
     ): Officer {
         return Officer(
             id = 1,
             sessionId = 1,
             name = "TestGeneral",
-            ships = crew,
-            supplies = rice,
+            ships = ships,
+            supplies = supplies,
             injury = injury,
-            morale = atmos,
+            morale = morale,
         )
     }
 
@@ -169,7 +169,7 @@ class TriggerCallerTest {
 
     @Test
     fun `TroopConsumptionTrigger consumes rice for troops`() {
-        val general = createGeneral(crew = 1000, rice = 500)
+        val general = createGeneral(ships = 1000, supplies = 500)
         val trigger = TroopConsumptionTrigger(general)
         val env = TriggerEnv(worldId = 1, year = 200, month = 3, generalId = general.id)
 
@@ -180,7 +180,7 @@ class TriggerCallerTest {
 
     @Test
     fun `TroopConsumptionTrigger minimum consumption is 1`() {
-        val general = createGeneral(crew = 50, rice = 100)
+        val general = createGeneral(ships = 50, supplies = 100)
         val trigger = TroopConsumptionTrigger(general)
         val env = TriggerEnv(worldId = 1, year = 200, month = 3, generalId = general.id)
 
@@ -191,7 +191,7 @@ class TriggerCallerTest {
 
     @Test
     fun `TroopConsumptionTrigger does nothing when crew is 0`() {
-        val general = createGeneral(crew = 0, rice = 100)
+        val general = createGeneral(ships = 0, supplies = 100)
         val trigger = TroopConsumptionTrigger(general)
         val env = TriggerEnv(worldId = 1, year = 200, month = 3, generalId = general.id)
 
@@ -202,7 +202,7 @@ class TriggerCallerTest {
 
     @Test
     fun `TroopConsumptionTrigger reduces atmos when not enough rice`() {
-        val general = createGeneral(crew = 1000, rice = 3, atmos = 80)
+        val general = createGeneral(ships = 1000, supplies = 3, morale = 80)
         val trigger = TroopConsumptionTrigger(general)
         val env = TriggerEnv(worldId = 1, year = 200, month = 3, generalId = general.id)
 

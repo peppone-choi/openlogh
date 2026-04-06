@@ -34,21 +34,21 @@ class GameEventServiceTest {
     }
 
     @Test
-    fun `CommandEvent toPayload includes generalId and commandEventType`() {
+    fun `CommandEvent toPayload includes officerId and commandEventType`() {
         val event = CommandEvent(
             source = service,
             sessionId = 1L,
             year = 200,
             month = 6,
-            generalId = 42L,
+            officerId = 42L,
             commandEventType = "reserved",
         )
 
         val payload = event.toPayload()
 
-        assertEquals(42L, payload["generalId"])
+        assertEquals(42L, payload["officerId"])
         assertEquals("reserved", payload["commandEventType"])
-        assertEquals(1L, payload["worldId"])
+        assertEquals(1L, payload["sessionId"])
         assertEquals("command", payload["eventType"])
     }
 
@@ -57,16 +57,16 @@ class GameEventServiceTest {
         val captor = ArgumentCaptor.forClass(CommandEvent::class.java)
 
         service.fireCommand(
-            worldId = 1L,
+            sessionId = 1L,
             year = 200,
             month = 6,
-            generalId = 42L,
+            officerId = 42L,
             commandEventType = "reserved",
         )
 
         verify(applicationEventPublisher).publishEvent(captor.capture())
         val published = captor.value
-        assertEquals(42L, published.generalId)
+        assertEquals(42L, published.officerId)
         assertEquals("reserved", published.commandEventType)
         assertEquals(1L, published.sessionId)
     }
@@ -74,7 +74,7 @@ class GameEventServiceTest {
     @Test
     fun `onGameEvent with CommandEvent calls broadcastCommand`() {
         val history = WorldHistory(
-            worldId = 1L,
+            sessionId = 1L,
             year = 200,
             month = 6,
             eventType = "command",
@@ -88,13 +88,13 @@ class GameEventServiceTest {
             sessionId = 1L,
             year = 200,
             month = 6,
-            generalId = 42L,
+            officerId = 42L,
             commandEventType = "consumed",
         )
 
         service.onGameEvent(event)
 
-        // broadcastCommand sends to /topic/world/{worldId}/command and /topic/general/{generalId}
+        // broadcastCommand sends to /topic/world/{sessionId}/command and /topic/general/{officerId}
         verify(messagingTemplate).convertAndSend(
             org.mockito.ArgumentMatchers.eq("/topic/world/1/command"),
             org.mockito.ArgumentMatchers.any<Any>(),

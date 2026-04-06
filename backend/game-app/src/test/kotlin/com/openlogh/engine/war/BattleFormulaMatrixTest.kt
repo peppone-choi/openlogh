@@ -50,8 +50,8 @@ class BattleFormulaMatrixTest {
         @JvmStatic
         fun provideArmTypePairings(): Stream<Arguments> {
             return ATTACKER_TYPES.flatMap { atk ->
-                DEFENDER_TYPES.map { def ->
-                    Arguments.of(atk, def)
+                DEFENDER_TYPES.map { orbitalDefense ->
+                    Arguments.of(atk, orbitalDefense)
                 }
             }.stream()
         }
@@ -59,37 +59,37 @@ class BattleFormulaMatrixTest {
 
     private fun makeGeneral(
         id: Long = 1,
-        nationId: Long = 1,
+        factionId: Long = 1,
         crewTypeCode: Int = CrewType.FOOTMAN.code,
         leadership: Short = 70,
-        strength: Short = 70,
-        intel: Short = 70,
-        crew: Int = 5000,
-        train: Short = 80,
-        atmos: Short = 80,
+        command: Short = 70,
+        intelligence: Short = 70,
+        ships: Int = 5000,
+        training: Short = 80,
+        morale: Short = 80,
         dex1: Int = 50000,
         dex2: Int = 50000,
         dex3: Int = 50000,
         dex4: Int = 50000,
         dex5: Int = 50000,
-        rice: Int = 100000,
+        supplies: Int = 100000,
         experience: Int = 1000,
         specialCode: String = "None",
     ): Officer = Officer(
         id = id,
         sessionId = 1,
         name = "테스트장수$id",
-        factionId = nationId,
+        factionId = factionId,
         planetId = 1,
         leadership = leadership,
-        command = strength,
-        intelligence = intel,
-        ships = crew,
+        command = command,
+        intelligence = intelligence,
+        ships = ships,
         shipClass = crewTypeCode.toShort(),
-        train = train,
-        atmos = atmos,
-        gold = 1000,
-        rice = rice,
+        training = training,
+        morale = morale,
+        funds = 1000,
+        supplies = supplies,
         experience = experience,
         dedication = 1000,
         specialCode = specialCode,
@@ -103,19 +103,19 @@ class BattleFormulaMatrixTest {
     )
 
     private fun makeCity(
-        nationId: Long = 2,
-        def: Int = 500,
-        wall: Int = 1000,
+        factionId: Long = 2,
+        orbitalDefense: Int = 500,
+        fortress: Int = 1000,
         level: Short = 2,
     ): Planet = Planet(
         id = 1,
         sessionId = 1,
         name = "테스트도시",
-        factionId = nationId,
+        factionId = factionId,
         level = level,
-        orbitalDefense = def,
+        orbitalDefense = orbitalDefense,
         orbitalDefenseMax = 2000,
-        fortress = wall,
+        fortress = fortress,
         fortressMax = 2000,
         population = 10000,
         populationMax = 50000,
@@ -248,18 +248,18 @@ class BattleFormulaMatrixTest {
         // Create a very weak attacker with minimal stats
         // Low strength means low getBaseAttack, creating warPower < 100 condition
         val weakGeneral = makeGeneral(
-            id = 1, nationId = 1,
+            id = 1, factionId = 1,
             crewTypeCode = CrewType.FOOTMAN.code,
-            leadership = 10, strength = 10, intel = 10,
-            crew = 100, train = 10, atmos = 10,
+            leadership = 10, command = 10, intelligence = 10,
+            ships = 100, training = 10, morale = 10,
             dex1 = 0, dex2 = 0, dex3 = 0, dex4 = 0, dex5 = 0,
         )
         // Strong defender to make warPower even lower
         val strongDefender = makeGeneral(
-            id = 2, nationId = 2,
+            id = 2, factionId = 2,
             crewTypeCode = CrewType.FOOTMAN.code,
-            leadership = 90, strength = 90, intel = 90,
-            crew = 10000, train = 100, atmos = 100,
+            leadership = 90, command = 90, intelligence = 90,
+            ships = 10000, training = 100, morale = 100,
             dex1 = 100000, dex2 = 100000, dex3 = 100000, dex4 = 100000, dex5 = 100000,
         )
         val city = makeCity()
@@ -280,18 +280,18 @@ class BattleFormulaMatrixTest {
         // Strong attacker vs very weak defender with low HP
         val initialDefenderCrew = 50
         val strongAttacker = makeGeneral(
-            id = 1, nationId = 1,
+            id = 1, factionId = 1,
             crewTypeCode = CrewType.FOOTMAN.code,
-            leadership = 95, strength = 95, intel = 95,
-            crew = 10000, train = 100, atmos = 100,
+            leadership = 95, command = 95, intelligence = 95,
+            ships = 10000, training = 100, morale = 100,
             dex1 = 100000, dex2 = 100000, dex3 = 100000, dex4 = 100000, dex5 = 100000,
         )
         val weakDefender = makeGeneral(
-            id = 2, nationId = 2,
+            id = 2, factionId = 2,
             crewTypeCode = CrewType.FOOTMAN.code,
-            leadership = 10, strength = 10, intel = 10,
-            crew = initialDefenderCrew,
-            train = 10, atmos = 10,
+            leadership = 10, command = 10, intelligence = 10,
+            ships = initialDefenderCrew,
+            training = 10, morale = 10,
             dex1 = 0, dex2 = 0, dex3 = 0, dex4 = 0, dex5 = 0,
         )
         val city = makeCity()
@@ -331,7 +331,7 @@ class BattleFormulaMatrixTest {
 
     private fun runPairing(attackerType: ArmType, defenderType: ArmType, seed: Long): BattleResult {
         val attackerCode = ARM_TYPE_CODES[attackerType]!!
-        val attackerGen = makeGeneral(id = 1, nationId = 1, crewTypeCode = attackerCode)
+        val attackerGen = makeGeneral(id = 1, factionId = 1, crewTypeCode = attackerCode)
         val city = makeCity()
         val attacker = WarUnitOfficer(attackerGen)
 
@@ -340,7 +340,7 @@ class BattleFormulaMatrixTest {
             engine.resolveBattle(attacker, emptyList(), city, Random(seed))
         } else {
             val defenderCode = ARM_TYPE_CODES[defenderType]!!
-            val defenderGen = makeGeneral(id = 2, nationId = 2, crewTypeCode = defenderCode)
+            val defenderGen = makeGeneral(id = 2, factionId = 2, crewTypeCode = defenderCode)
             val defender = WarUnitOfficer(defenderGen)
             engine.resolveBattle(attacker, listOf(defender), city, Random(seed))
         }
@@ -349,8 +349,8 @@ class BattleFormulaMatrixTest {
     private fun runGeneralPairing(attackerType: ArmType, defenderType: ArmType, seed: Long): BattleResult {
         val attackerCode = ARM_TYPE_CODES[attackerType]!!
         val defenderCode = ARM_TYPE_CODES[defenderType]!!
-        val attackerGen = makeGeneral(id = 1, nationId = 1, crewTypeCode = attackerCode)
-        val defenderGen = makeGeneral(id = 2, nationId = 2, crewTypeCode = defenderCode)
+        val attackerGen = makeGeneral(id = 1, factionId = 1, crewTypeCode = attackerCode)
+        val defenderGen = makeGeneral(id = 2, factionId = 2, crewTypeCode = defenderCode)
         val city = makeCity()
         val attacker = WarUnitOfficer(attackerGen)
         val defender = WarUnitOfficer(defenderGen)

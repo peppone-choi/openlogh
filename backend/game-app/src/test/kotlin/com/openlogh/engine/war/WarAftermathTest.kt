@@ -23,13 +23,13 @@ class WarAftermathTest {
         castleCrewTypeId = 1000,
     )
 
-    private fun buildCity(id: Long, nationId: Long): Planet {
+    private fun buildCity(id: Long, factionId: Long): Planet {
         return Planet(
             id = id,
             sessionId = 1,
             name = "City$id",
             level = 2,
-            factionId = nationId,
+            factionId = factionId,
             population = 10_000,
             populationMax = 10_000,
             production = 1000,
@@ -66,13 +66,13 @@ class WarAftermathTest {
         )
     }
 
-    private fun buildGeneral(id: Long, nationId: Long, cityId: Long): Officer {
+    private fun buildGeneral(id: Long, factionId: Long, planetId: Long): Officer {
         return Officer(
             id = id,
             sessionId = 1,
             name = "General$id",
-            factionId = nationId,
-            planetId = cityId,
+            factionId = factionId,
+            planetId = planetId,
             fleetId = 0,
             leadership = 70,
             command = 70,
@@ -148,8 +148,8 @@ class WarAftermathTest {
     fun `applies conquest collapse rewards`() {
         val attackerNation = buildNation(1)
         val defenderNation = buildNation(2).apply {
-            gold = 5000
-            rice = 6000
+            funds = 5000
+            supplies = 6000
         }
         val attackerCity = buildCity(1, 1)
         val defenderCity = buildCity(2, 2).apply {

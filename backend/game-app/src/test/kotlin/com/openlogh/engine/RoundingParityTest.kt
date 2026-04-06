@@ -133,8 +133,8 @@ class RoundingParityTest {
 
         @Test
         fun `game-typical values without exact half never diverge`() {
-            // Economy formula: pop * comm / commMax * trustRatio / 30
-            // With pop=10000, comm=500, commMax=1000, trust=100 -> trustRatio=1.0
+            // Economy formula: population * commerce / commerceMax * trustRatio / 30
+            // With population=10000, commerce=500, commerceMax=1000, approval=100 -> trustRatio=1.0
             val income = 10000.0 * 500 / 1000 * 1.0 / 30.0  // = 166.666...
             assertEquals(167, round(income).toInt(), "game income rounding")
 

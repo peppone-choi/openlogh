@@ -79,8 +79,8 @@ class ScenarioDataParityTest {
                     if (row.size < 8) continue
                     val name = row.getOrNull(1)?.toString() ?: continue
                     val leadership = toInt(row[5])
-                    val strength = toInt(row[6])
-                    val intel = toInt(row[7])
+                    val command = toInt(row[6])
+                    val intelligence = toInt(row[7])
                     result.putIfAbsent(name, Triple(leadership, strength, intel))
                 }
             }
@@ -342,7 +342,7 @@ class ScenarioDataParityTest {
             val source = sourceFile.readText()
 
             // Legacy CityConstBase::$buildInit golden values (from PHP source)
-            // Format: CityInit(pop, agri, comm, secu, def, wall)
+            // Format: CityInit(population, production, commerce, security, orbitalDefense, fortress)
             val expectedValues = mapOf(
                 1 to "1 to CityInit(5000, 100, 100, 100, 500, 500)",
                 2 to "2 to CityInit(5000, 100, 100, 100, 500, 500)",

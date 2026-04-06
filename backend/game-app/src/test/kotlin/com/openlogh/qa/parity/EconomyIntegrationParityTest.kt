@@ -33,7 +33,7 @@ import java.time.OffsetDateTime
  * Economy Integration Parity Test
  *
  * Runs a 24-turn simulation (2 game years: months 1-12, 1-12) with:
- *   - 1 nation (neutral type, taxRate=15, gold=10000, rice=20000)
+ *   - 1 nation (neutral type, taxRate=15, funds =10000, supplies =20000)
  *   - 3 cities with varying population and infrastructure
  *   - 5 generals with varying dedication for salary spread
  *   - 4 semi-annual cycles (months 1,7 of each year)
@@ -81,30 +81,30 @@ class EconomyIntegrationParityTest {
 
     private fun wireRepos() {
         `when`(planetRepository.findBySessionId(ArgumentMatchers.anyLong())).thenAnswer { inv ->
-            val worldId = inv.arguments[0] as Long
-            cities.values.filter { it.sessionId == worldId }.map { it.toSnapshot().toEntity() }
+            val sessionId = inv.arguments[0] as Long
+            cities.values.filter { it.sessionId == sessionId }.map { it.toSnapshot().toEntity() }
         }
         `when`(factionRepository.findBySessionId(ArgumentMatchers.anyLong())).thenAnswer { inv ->
-            val worldId = inv.arguments[0] as Long
-            nations.values.filter { it.sessionId == worldId }.map { it.toSnapshot().toEntity() }
+            val sessionId = inv.arguments[0] as Long
+            nations.values.filter { it.sessionId == sessionId }.map { it.toSnapshot().toEntity() }
         }
         `when`(officerRepository.findBySessionId(ArgumentMatchers.anyLong())).thenAnswer { inv ->
-            val worldId = inv.arguments[0] as Long
-            generals.values.filter { it.sessionId == worldId }.map { it.toSnapshot().toEntity() }
+            val sessionId = inv.arguments[0] as Long
+            generals.values.filter { it.sessionId == sessionId }.map { it.toSnapshot().toEntity() }
         }
         `when`(officerRepository.findBySessionIdAndPlanetIdIn(ArgumentMatchers.anyLong(), ArgumentMatchers.anyList()))
             .thenReturn(emptyList())
-        `when`(planetRepository.save(ArgumentMatchers.any(City::class.java))).thenAnswer { inv ->
+        `when`(planetRepository.save(ArgumentMatchers.any(Planet::class.java))).thenAnswer { inv ->
             val city = inv.arguments[0] as Planet
             cities[city.id] = city.toSnapshot().toEntity()
             city
         }
-        `when`(factionRepository.save(ArgumentMatchers.any(Nation::class.java))).thenAnswer { inv ->
+        `when`(factionRepository.save(ArgumentMatchers.any(Faction::class.java))).thenAnswer { inv ->
             val nation = inv.arguments[0] as Faction
             nations[nation.id] = nation.toSnapshot().toEntity()
             nation
         }
-        `when`(officerRepository.save(ArgumentMatchers.any(General::class.java))).thenAnswer { inv ->
+        `when`(officerRepository.save(ArgumentMatchers.any(Officer::class.java))).thenAnswer { inv ->
             val general = inv.arguments[0] as Officer
             generals[general.id] = general.toSnapshot().toEntity()
             general
@@ -130,43 +130,43 @@ class EconomyIntegrationParityTest {
     }
 
     private fun city(
-        id: Long = 1, nationId: Long = 1,
-        pop: Int = 10000, popMax: Int = 50000,
-        agri: Int = 500, agriMax: Int = 1000,
-        comm: Int = 500, commMax: Int = 1000,
-        secu: Int = 500, secuMax: Int = 1000,
-        def: Int = 500, defMax: Int = 1000,
-        wall: Int = 500, wallMax: Int = 1000,
-        trust: Float = 80f, supplyState: Short = 1,
+        id: Long = 1, factionId: Long = 1,
+        population: Int = 10000, populationMax: Int = 50000,
+        production: Int = 500, productionMax: Int = 1000,
+        commerce: Int = 500, commerceMax: Int = 1000,
+        security: Int = 500, securityMax: Int = 1000,
+        orbitalDefense: Int = 500, orbitalDefenseMax: Int = 1000,
+        fortress: Int = 500, fortressMax: Int = 1000,
+        approval: Float = 80f, supplyState: Short = 1,
         level: Short = 5, dead: Int = 0, trade: Int = 100,
     ): Planet = Planet(
         id = id, sessionId = 1, name = "city$id", mapPlanetId = id.toInt(),
-        nationId = nationId, pop = pop, popMax = popMax,
-        agri = agri, agriMax = agriMax, comm = comm, commMax = commMax,
-        secu = secu, secuMax = secuMax, def = def, defMax = defMax,
-        wall = wall, wallMax = wallMax, trust = trust,
+        factionId = factionId, population = population, populationMax = populationMax,
+        production = production, productionMax = productionMax, commerce = commerce, commerceMax = commerceMax,
+        security = security, securityMax = securityMax, orbitalDefense = orbitalDefense, orbitalDefenseMax = orbitalDefenseMax,
+        fortress = fortress, fortressMax = fortressMax, approval = approval,
         supplyState = supplyState, level = level, dead = dead, trade = trade,
     )
 
     private fun nation(
-        id: Long = 1, gold: Int = 10000, rice: Int = 10000,
+        id: Long = 1, funds: Int = 10000, supplies: Int = 10000,
         level: Short = 1, rateTmp: Short = 15, bill: Short = 100,
-        capitalCityId: Long? = 1, rate: Short = 15,
-        typeCode: String = "che_중립",
+        capitalPlanetId: Long? = 1, conscriptionRate: Short = 15,
+        factionType: String = "che_중립",
     ): Faction = Faction(
         id = id, sessionId = 1, name = "nation$id", color = "#FF0000",
-        funds = gold, supplies = rice, factionRank = level, conscriptionRateTmp = rateTmp,
-        taxRate = bill, capitalPlanetId = capitalCityId, conscriptionRate = rate,
-        factionType = typeCode,
+        funds = funds, supplies = supplies, factionRank = level, conscriptionRateTmp = rateTmp,
+        taxRate = bill, capitalPlanetId = capitalPlanetId, conscriptionRate = conscriptionRate,
+        factionType = factionType,
     )
 
     private fun general(
-        id: Long = 1, nationId: Long = 1, cityId: Long = 1,
-        gold: Int = 1000, rice: Int = 1000, dedication: Int = 1000,
+        id: Long = 1, factionId: Long = 1, planetId: Long = 1,
+        funds: Int = 1000, supplies: Int = 1000, dedication: Int = 1000,
         officerLevel: Short = 1, officerPlanet: Int = 0, npcState: Short = 0,
     ): Officer = Officer(
         id = id, sessionId = 1, name = "general$id",
-        factionId = nationId, planetId = cityId, funds = gold, supplies = rice,
+        factionId = factionId, planetId = planetId, funds = funds, supplies = supplies,
         dedication = dedication, officerLevel = officerLevel,
         officerPlanet = officerPlanet, npcState = npcState,
     )
@@ -191,25 +191,25 @@ class EconomyIntegrationParityTest {
         @Test
         fun `24-turn simulation processes income and semi-annual cycles consistently`() {
             // Setup: 1 nation, 3 cities, 5 generals
-            val c1 = city(id = 1, pop = 8000, popMax = 10000, agri = 500, agriMax = 1000,
-                comm = 400, commMax = 1000, secu = 600, secuMax = 1000,
-                def = 300, defMax = 1000, wall = 500, wallMax = 1000,
-                trust = 70f, trade = 100, level = 5)
-            val c2 = city(id = 2, pop = 5000, popMax = 10000, agri = 500, agriMax = 1000,
-                comm = 400, commMax = 1000, secu = 600, secuMax = 1000,
-                def = 300, defMax = 1000, wall = 500, wallMax = 1000,
-                trust = 70f, trade = 100, level = 5)
-            val c3 = city(id = 3, pop = 2000, popMax = 10000, agri = 500, agriMax = 1000,
-                comm = 400, commMax = 1000, secu = 600, secuMax = 1000,
-                def = 300, defMax = 1000, wall = 500, wallMax = 1000,
-                trust = 70f, trade = 100, level = 5)
-            val n = nation(id = 1, gold = 10000, rice = 20000, level = 3, rateTmp = 15,
-                capitalCityId = 1)
-            val g1 = general(id = 1, dedication = 50, cityId = 1)
-            val g2 = general(id = 2, dedication = 100, cityId = 1)
-            val g3 = general(id = 3, dedication = 200, cityId = 2)
-            val g4 = general(id = 4, dedication = 400, cityId = 2)
-            val g5 = general(id = 5, dedication = 900, cityId = 3)
+            val c1 = city(id = 1, population = 8000, populationMax = 10000, production = 500, productionMax = 1000,
+                commerce = 400, commerceMax = 1000, security = 600, securityMax = 1000,
+                orbitalDefense = 300, orbitalDefenseMax = 1000, fortress = 500, fortressMax = 1000,
+                approval = 70f, trade = 100, level = 5)
+            val c2 = city(id = 2, population = 5000, populationMax = 10000, production = 500, productionMax = 1000,
+                commerce = 400, commerceMax = 1000, security = 600, securityMax = 1000,
+                orbitalDefense = 300, orbitalDefenseMax = 1000, fortress = 500, fortressMax = 1000,
+                approval = 70f, trade = 100, level = 5)
+            val c3 = city(id = 3, population = 2000, populationMax = 10000, production = 500, productionMax = 1000,
+                commerce = 400, commerceMax = 1000, security = 600, securityMax = 1000,
+                orbitalDefense = 300, orbitalDefenseMax = 1000, fortress = 500, fortressMax = 1000,
+                approval = 70f, trade = 100, level = 5)
+            val n = nation(id = 1, funds = 10000, supplies = 20000, level = 3, rateTmp = 15,
+                capitalPlanetId = 1)
+            val g1 = general(id = 1, dedication = 50, planetId = 1)
+            val g2 = general(id = 2, dedication = 100, planetId = 1)
+            val g3 = general(id = 3, dedication = 200, planetId = 2)
+            val g4 = general(id = 4, dedication = 400, planetId = 2)
+            val g5 = general(id = 5, dedication = 900, planetId = 3)
             seed(listOf(c1, c2, c3), listOf(n), listOf(g1, g2, g3, g4, g5))
 
             val w = world(year = 200, month = 1, startYear = 190)
@@ -263,19 +263,19 @@ class EconomyIntegrationParityTest {
                 .describedAs("4 semi-annual cycles in 24 turns (month 1,7 x 2 years)")
 
             // Verify city populations have been modified by semi-annual growth
-            // After 4 semi-annual cycles, populations should have grown (trust=70 > 0 means growth)
+            // After 4 semi-annual cycles, populations should have grown (approval=70 > 0 means growth)
             val finalC1 = cities[1L]!!
             val finalC2 = cities[2L]!!
             val finalC3 = cities[3L]!!
 
-            // Populations may decrease due to trust decay (cities lose trust when isolated).
+            // Populations may decrease due to approval decay (cities lose approval when isolated).
             // Verify populations remain valid (> 0) and were modified by semi-annual processing.
             assertThat(finalC1.population).isGreaterThan(0)
-                .describedAs("City 1 pop should remain positive after 24 turns")
+                .describedAs("City 1 population should remain positive after 24 turns")
             assertThat(finalC2.population).isGreaterThan(0)
-                .describedAs("City 2 pop should remain positive after 24 turns")
+                .describedAs("City 2 population should remain positive after 24 turns")
             assertThat(finalC3.population).isGreaterThan(0)
-                .describedAs("City 3 pop should remain positive after 24 turns")
+                .describedAs("City 3 population should remain positive after 24 turns")
             // At least one city should have changed population (semi-annual processed)
             val anyPopChanged = finalC1.population != 8000 || finalC2.population != 5000 || finalC3.population != 2000
             assertThat(anyPopChanged).isTrue()
@@ -284,11 +284,11 @@ class EconomyIntegrationParityTest {
 
         @Test
         fun `income processing increases nation gold each turn`() {
-            val c1 = city(id = 1, pop = 50000, popMax = 100000, comm = 800, commMax = 1000,
-                secu = 700, secuMax = 1000, trust = 90f, level = 5)
-            val n = nation(id = 1, gold = 10000, rice = 20000, level = 3, rateTmp = 15,
-                capitalCityId = 1)
-            val g1 = general(id = 1, dedication = 100, cityId = 1)
+            val c1 = city(id = 1, population = 50000, populationMax = 100000, commerce = 800, commerceMax = 1000,
+                security = 700, securityMax = 1000, approval = 90f, level = 5)
+            val n = nation(id = 1, funds = 10000, supplies = 20000, level = 3, rateTmp = 15,
+                capitalPlanetId = 1)
+            val g1 = general(id = 1, dedication = 100, planetId = 1)
             seed(listOf(c1), listOf(n), listOf(g1))
 
             val w = world(year = 200, month = 3)
@@ -297,7 +297,7 @@ class EconomyIntegrationParityTest {
             service.preUpdateMonthly(w)
             val goldAfter = nations[1L]!!.funds
 
-            // With a productive city (pop=50k, comm=800/1000, trust=90) and only 1 general,
+            // With a productive city (population=50k, commerce=800/1000, approval=90) and only 1 general,
             // gold income should exceed the single general's salary
             assertThat(goldAfter).isGreaterThan(goldBefore)
                 .describedAs("Gold should increase with productive city and low salary burden")
@@ -306,12 +306,12 @@ class EconomyIntegrationParityTest {
         @Test
         fun `salary deduction reduces nation gold proportionally to general count`() {
             // Setup: small city, many generals with high dedication (high salary)
-            val c1 = city(id = 1, pop = 1000, popMax = 100000, comm = 100, commMax = 1000,
-                secu = 100, secuMax = 1000, trust = 50f, level = 5)
-            val n = nation(id = 1, gold = 100000, rice = 100000, level = 1, rateTmp = 15,
-                capitalCityId = 1)
+            val c1 = city(id = 1, population = 1000, populationMax = 100000, commerce = 100, commerceMax = 1000,
+                security = 100, securityMax = 1000, approval = 50f, level = 5)
+            val n = nation(id = 1, funds = 100000, supplies = 100000, level = 1, rateTmp = 15,
+                capitalPlanetId = 1)
             // 10 generals with dedication=10000 each -> high salary
-            val genList = (1..10L).map { general(id = it, dedication = 10000, cityId = 1) }
+            val genList = (1..10L).map { general(id = it, dedication = 10000, planetId = 1) }
             seed(listOf(c1), listOf(n), genList)
 
             val w = world(year = 200, month = 3)
@@ -327,15 +327,15 @@ class EconomyIntegrationParityTest {
         }
 
         @Test
-        fun `semi-annual infrastructure growth increases agri comm secu toward max`() {
-            // Start with low infrastructure, high trust
-            val c1 = city(id = 1, pop = 30000, popMax = 50000,
-                agri = 200, agriMax = 1000, comm = 200, commMax = 1000,
-                secu = 200, secuMax = 1000, def = 200, defMax = 1000,
-                wall = 200, wallMax = 1000, trust = 90f, level = 5)
-            val n = nation(id = 1, gold = 50000, rice = 50000, level = 3, rateTmp = 15,
-                capitalCityId = 1)
-            val g1 = general(id = 1, dedication = 100, cityId = 1)
+        fun `semi-annual infrastructure growth increases production commerce security toward max`() {
+            // Start with low infrastructure, high approval
+            val c1 = city(id = 1, population = 30000, populationMax = 50000,
+                production = 200, productionMax = 1000, commerce = 200, commerceMax = 1000,
+                security = 200, securityMax = 1000, orbitalDefense = 200, orbitalDefenseMax = 1000,
+                fortress = 200, fortressMax = 1000, approval = 90f, level = 5)
+            val n = nation(id = 1, funds = 50000, supplies = 50000, level = 3, rateTmp = 15,
+                capitalPlanetId = 1)
+            val g1 = general(id = 1, dedication = 100, planetId = 1)
             seed(listOf(c1), listOf(n), listOf(g1))
 
             // Process semi-annual at month=1
@@ -345,7 +345,7 @@ class EconomyIntegrationParityTest {
             val city1After = cities[1L]!!
             // Semi-annual growth should increase infrastructure values
             // Legacy: growth = (max - current) * (100 - taxRate) / 200
-            // For agri: (1000-200) * (100-15) / 200 = 800 * 85/200 = 340
+            // For production: (1000-200) * (100-15) / 200 = 800 * 85/200 = 340
             // newAgri = 200 + 340 = 540
             assertThat(city1After.production).isGreaterThan(200)
                 .describedAs("Agri should grow during semi-annual processing")
@@ -354,29 +354,29 @@ class EconomyIntegrationParityTest {
         }
 
         @Test
-        fun `population grows during semi-annual processing with positive trust`() {
-            val c1 = city(id = 1, pop = 5000, popMax = 50000,
-                agri = 500, agriMax = 1000, secu = 500, secuMax = 1000,
-                trust = 80f, level = 5)
-            val n = nation(id = 1, gold = 50000, rice = 50000, level = 3, rateTmp = 15,
-                capitalCityId = 1)
-            val g1 = general(id = 1, dedication = 100, cityId = 1)
+        fun `population grows during semi-annual processing with positive approval`() {
+            val c1 = city(id = 1, population = 5000, populationMax = 50000,
+                production = 500, productionMax = 1000, security = 500, securityMax = 1000,
+                approval = 80f, level = 5)
+            val n = nation(id = 1, funds = 50000, supplies = 50000, level = 3, rateTmp = 15,
+                capitalPlanetId = 1)
+            val g1 = general(id = 1, dedication = 100, planetId = 1)
             seed(listOf(c1), listOf(n), listOf(g1))
 
             val w = world(year = 200, month = 1)
             service.postUpdateMonthly(w)
 
             val city1After = cities[1L]!!
-            // Population should grow (trust=80, well below popMax, positive agri)
+            // Population should grow (approval=80, well below populationMax, positive production)
             assertThat(city1After.population).isGreaterThan(5000)
-                .describedAs("Pop should grow with positive trust and room to grow")
+                .describedAs("Pop should grow with positive approval and room to grow")
         }
 
         @Test
         fun `24-turn simulation with disaster processing does not crash`() {
-            val c1 = city(id = 1, pop = 8000, popMax = 10000, secu = 600, secuMax = 1000,
-                trust = 70f, trade = 100, level = 5)
-            val n = nation(id = 1, gold = 10000, rice = 20000, level = 3, rateTmp = 15)
+            val c1 = city(id = 1, population = 8000, populationMax = 10000, security = 600, securityMax = 1000,
+                approval = 70f, trade = 100, level = 5)
+            val n = nation(id = 1, funds = 10000, supplies = 20000, level = 3, rateTmp = 15)
             val g1 = general(id = 1, dedication = 100)
             seed(listOf(c1), listOf(n), listOf(g1))
 
@@ -406,17 +406,17 @@ class EconomyIntegrationParityTest {
 
         @Test
         fun `yearly statistics fires only at month 1`() {
-            val c1 = city(id = 1, pop = 50000, popMax = 100000,
-                agri = 800, agriMax = 1000, comm = 700, commMax = 1000,
-                secu = 600, secuMax = 1000, level = 5)
-            val n = nation(id = 1, gold = 50000, rice = 50000, level = 3, rateTmp = 15)
-            val g1 = general(id = 1, dedication = 500, cityId = 1)
+            val c1 = city(id = 1, population = 50000, populationMax = 100000,
+                production = 800, productionMax = 1000, commerce = 700, commerceMax = 1000,
+                security = 600, securityMax = 1000, level = 5)
+            val n = nation(id = 1, funds = 50000, supplies = 50000, level = 3, rateTmp = 15)
+            val g1 = general(id = 1, dedication = 500, planetId = 1)
             seed(listOf(c1), listOf(n), listOf(g1))
 
             // Process at month=1 -> yearly statistics should fire
             val w1 = world(year = 200, month = 1)
             service.processYearlyStatistics(w1)
-            val powerAfterMonth1 = nations[1L]!!.power
+            val powerAfterMonth1 = nations[1L]!!.militaryPower
 
             // Power should be computed (non-zero with valid city/general data)
             assertThat(powerAfterMonth1).isGreaterThan(0)
@@ -489,7 +489,7 @@ class EconomyIntegrationParityTest {
             val step = EconomyPreUpdateStep(service)
             val w = world(year = 200, month = 3)
             val ctx = TurnContext(
-                world = w, worldId = 1,
+                world = w, sessionId = 1,
                 year = 200, month = 3,
                 previousYear = 200, previousMonth = 2,
                 nextTurnAt = OffsetDateTime.now()
@@ -505,7 +505,7 @@ class EconomyIntegrationParityTest {
 
             val wMonth3 = world(year = 200, month = 3)
             val ctx3 = TurnContext(
-                world = wMonth3, worldId = 1,
+                world = wMonth3, sessionId = 1,
                 year = 200, month = 3,
                 previousYear = 200, previousMonth = 2,
                 nextTurnAt = OffsetDateTime.now()
@@ -515,7 +515,7 @@ class EconomyIntegrationParityTest {
 
             val wMonth1 = world(year = 200, month = 1)
             val ctx1 = TurnContext(
-                world = wMonth1, worldId = 1,
+                world = wMonth1, sessionId = 1,
                 year = 200, month = 1,
                 previousYear = 199, previousMonth = 12,
                 nextTurnAt = OffsetDateTime.now()
@@ -529,7 +529,7 @@ class EconomyIntegrationParityTest {
             val step = EconomyPostUpdateStep(service)
             val w = world(year = 200, month = 6)
             val ctx = TurnContext(
-                world = w, worldId = 1,
+                world = w, sessionId = 1,
                 year = 200, month = 6,
                 previousYear = 200, previousMonth = 5,
                 nextTurnAt = OffsetDateTime.now()
@@ -543,7 +543,7 @@ class EconomyIntegrationParityTest {
             val step = DisasterAndTradeStep(service)
             val w = world(year = 200, month = 4)
             val ctx = TurnContext(
-                world = w, worldId = 1,
+                world = w, sessionId = 1,
                 year = 200, month = 4,
                 previousYear = 200, previousMonth = 3,
                 nextTurnAt = OffsetDateTime.now()

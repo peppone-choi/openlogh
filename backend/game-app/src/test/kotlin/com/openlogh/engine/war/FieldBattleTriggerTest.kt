@@ -24,7 +24,7 @@ class FieldBattleTriggerTest {
 
     // ─── stub repositories ───────────────────────────────────────────────────
 
-    private class StubGeneralRepository : OfficerRepository {
+    private class StubOfficerRepository : OfficerRepository {
         val saved = mutableListOf<Officer>()
         private val store = mutableMapOf<Long, Officer>()
 
@@ -64,20 +64,20 @@ class FieldBattleTriggerTest {
         @Deprecated("Use getReferenceById") override fun getById(id: Long): Officer = getReferenceById(id)
         @Deprecated("Use getReferenceById") override fun getOne(id: Long): Officer = getReferenceById(id)
         override fun <S : Officer> findOne(example: Example<S>): Optional<S> = Optional.empty()
-        override fun findByWorldId(worldId: Long): List<Officer> = store.values.filter { it.sessionId == worldId }
-        override fun findByNationId(nationId: Long): List<Officer> = store.values.filter { it.factionId == nationId }
-        override fun findByCityId(cityId: Long): List<Officer> = store.values.filter { it.planetId == cityId }
+        override fun findBySessionId(sessionId: Long): List<Officer> = store.values.filter { it.sessionId == sessionId }
+        override fun findByNationId(factionId: Long): List<Officer> = store.values.filter { it.factionId == factionId }
+        override fun findByCityId(planetId: Long): List<Officer> = store.values.filter { it.planetId == planetId }
         override fun findByUserId(userId: Long): List<Officer> = emptyList()
-        override fun findByWorldIdAndUserId(worldId: Long, userId: Long): List<Officer> = emptyList()
-        override fun findByWorldIdAndCityIdIn(worldId: Long, cityIds: List<Long>): List<Officer> = emptyList()
-        override fun findByWorldIdAndCommandEndTimeBefore(worldId: Long, time: OffsetDateTime): List<Officer> = emptyList()
-        override fun findByTroopId(troopId: Long): List<Officer> = emptyList()
-        override fun findByWorldIdAndNationId(worldId: Long, nationId: Long): List<Officer> = emptyList()
-        override fun findByNameAndWorldId(name: String, worldId: Long): Officer? = null
-        override fun getAverageStats(worldId: Long, nationId: Long) = com.openlogh.repository.GeneralAverageStats()
+        override fun findBySessionIdAndUserId(sessionId: Long, userId: Long): List<Officer> = emptyList()
+        override fun findBySessionIdAndCityIdIn(sessionId: Long, planetIds: List<Long>): List<Officer> = emptyList()
+        override fun findBySessionIdAndCommandEndTimeBefore(sessionId: Long, time: OffsetDateTime): List<Officer> = emptyList()
+        override fun findByTroopId(fleetId: Long): List<Officer> = emptyList()
+        override fun findBySessionIdAndNationId(sessionId: Long, factionId: Long): List<Officer> = emptyList()
+        override fun findByNameAndWorldId(name: String, sessionId: Long): Officer? = null
+        override fun getAverageStats(sessionId: Long, factionId: Long) = com.openlogh.repository.OfficerAverageStats()
     }
 
-    private class StubCityRepository(private val cities: Map<Long, Planet> = emptyMap()) : PlanetRepository {
+    private class StubPlanetRepository(private val cities: Map<Long, Planet> = emptyMap()) : PlanetRepository {
         override fun <S : Planet> save(entity: S): S { @Suppress("UNCHECKED_CAST") return entity as S }
         override fun <S : Planet> saveAll(entities: Iterable<S>): List<S> = entities.toList()
         override fun findById(id: Long): Optional<Planet> = Optional.ofNullable(cities[id])
@@ -108,8 +108,8 @@ class FieldBattleTriggerTest {
         @Deprecated("Use getReferenceById") override fun getById(id: Long): Planet = getReferenceById(id)
         @Deprecated("Use getReferenceById") override fun getOne(id: Long): Planet = getReferenceById(id)
         override fun <S : Planet> findOne(example: Example<S>): Optional<S> = Optional.empty()
-        override fun findByWorldId(worldId: Long): List<Planet> = emptyList()
-        override fun findByNationId(nationId: Long): List<Planet> = emptyList()
+        override fun findBySessionId(sessionId: Long): List<Planet> = emptyList()
+        override fun findByNationId(factionId: Long): List<Planet> = emptyList()
     }
 
     private class StubMessageRepository : MessageRepository {
@@ -150,23 +150,23 @@ class FieldBattleTriggerTest {
         override fun <S : Message> findOne(example: Example<S>): Optional<S> = Optional.empty()
         override fun findByDestIdOrderBySentAtDesc(destId: Long): List<Message> = emptyList()
         override fun findByDestIdAndIdGreaterThanOrderBySentAtDesc(destId: Long, id: Long): List<Message> = emptyList()
-        override fun findByWorldIdAndMailboxCodeOrderBySentAtDesc(worldId: Long, mailboxCode: String): List<Message> = emptyList()
-        override fun findByWorldIdAndMailboxCodeAndSrcIdOrderBySentAtDesc(worldId: Long, mailboxCode: String, srcId: Long): List<Message> = emptyList()
+        override fun findBySessionIdAndMailboxCodeOrderBySentAtDesc(sessionId: Long, mailboxCode: String): List<Message> = emptyList()
+        override fun findBySessionIdAndMailboxCodeAndSrcIdOrderBySentAtDesc(sessionId: Long, mailboxCode: String, srcId: Long): List<Message> = emptyList()
         override fun findBySrcIdAndMailboxCodeOrderBySentAtDesc(srcId: Long, mailboxCode: String): List<Message> = emptyList()
-        override fun findByWorldIdAndMailboxCodeAndIdGreaterThanOrderBySentAtDesc(worldId: Long, mailboxCode: String, id: Long): List<Message> = emptyList()
+        override fun findBySessionIdAndMailboxCodeAndIdGreaterThanOrderBySentAtDesc(sessionId: Long, mailboxCode: String, id: Long): List<Message> = emptyList()
         override fun findByIdGreaterThanOrderBySentAtDesc(id: Long): List<Message> = emptyList()
         override fun findByDestIdAndMailboxCodeOrderBySentAtDesc(destId: Long, mailboxCode: String): List<Message> = emptyList()
-        override fun findByWorldIdAndMailboxCodeAndDestIdOrderBySentAtDesc(worldId: Long, mailboxCode: String, destId: Long): List<Message> = emptyList()
-        override fun findByWorldIdAndMailboxTypeOrderBySentAtDesc(worldId: Long, mailboxType: String): List<Message> = emptyList()
-        override fun findByWorldIdAndMailboxTypeAndIdLessThanOrderBySentAtDesc(worldId: Long, mailboxType: String, id: Long): List<Message> = emptyList()
+        override fun findBySessionIdAndMailboxCodeAndDestIdOrderBySentAtDesc(sessionId: Long, mailboxCode: String, destId: Long): List<Message> = emptyList()
+        override fun findBySessionIdAndMailboxTypeOrderBySentAtDesc(sessionId: Long, mailboxType: String): List<Message> = emptyList()
+        override fun findBySessionIdAndMailboxTypeAndIdLessThanOrderBySentAtDesc(sessionId: Long, mailboxType: String, id: Long): List<Message> = emptyList()
         override fun findByDestIdAndMailboxTypeOrderBySentAtDesc(destId: Long, mailboxType: String): List<Message> = emptyList()
         override fun findByDestIdAndMailboxTypeAndIdLessThanOrderBySentAtDesc(destId: Long, mailboxType: String, id: Long): List<Message> = emptyList()
         override fun findByDestIdAndMailboxTypeAndIdGreaterThanOrderBySentAtDesc(destId: Long, mailboxType: String, id: Long): List<Message> = emptyList()
         override fun findByDestIdAndMailboxCodeAndIdLessThanOrderByIdDesc(destId: Long, mailboxCode: String, id: Long): List<Message> = emptyList()
         override fun findByDestIdAndMailboxCodeAndIdGreaterThanOrderBySentAtDesc(destId: Long, mailboxCode: String, id: Long): List<Message> = emptyList()
         override fun findByDestIdAndMailboxTypeAndMessageTypeOrderBySentAtDesc(destId: Long, mailboxType: String, messageType: String): List<Message> = emptyList()
-        override fun findByWorldIdAndYearAndMonthOrderBySentAtAsc(worldId: Long, year: Int, month: Int): List<Message> = emptyList()
-        override fun findByWorldIdAndYearOrderBySentAtDesc(worldId: Long, year: Int): List<Message> = emptyList()
+        override fun findBySessionIdAndYearAndMonthOrderBySentAtAsc(sessionId: Long, year: Int, month: Int): List<Message> = emptyList()
+        override fun findBySessionIdAndYearOrderBySentAtDesc(sessionId: Long, year: Int): List<Message> = emptyList()
         override fun findConversationByMailboxTypeAndOwnerId(mailboxType: String, ownerId: Long): List<Message> = emptyList()
         override fun findConversationByMailboxTypeAndOwnerIdAndIdLessThan(mailboxType: String, ownerId: Long, beforeId: Long): List<Message> = emptyList()
         override fun findConversationByMailboxTypeAndOwnerIdAndIdGreaterThan(mailboxType: String, ownerId: Long, sinceId: Long): List<Message> = emptyList()
@@ -208,15 +208,15 @@ class FieldBattleTriggerTest {
         @Deprecated("Use getReferenceById") override fun getById(id: Long): Record = throw UnsupportedOperationException()
         @Deprecated("Use getReferenceById") override fun getOne(id: Long): Record = throw UnsupportedOperationException()
         override fun <S : Record> findOne(example: Example<S>): Optional<S> = Optional.empty()
-        override fun findByWorldIdAndRecordTypeOrderByCreatedAtDesc(worldId: Long, recordType: String): List<Record> = emptyList()
+        override fun findBySessionIdAndRecordTypeOrderByCreatedAtDesc(sessionId: Long, recordType: String): List<Record> = emptyList()
         override fun findByDestIdAndRecordTypeOrderByCreatedAtDesc(destId: Long, recordType: String): List<Record> = emptyList()
-        override fun findByWorldIdAndRecordTypeAndIdLessThanOrderByCreatedAtDesc(worldId: Long, recordType: String, beforeId: Long): List<Record> = emptyList()
+        override fun findBySessionIdAndRecordTypeAndIdLessThanOrderByCreatedAtDesc(sessionId: Long, recordType: String, beforeId: Long): List<Record> = emptyList()
         override fun findByDestIdAndRecordTypeAndIdLessThanOrderByCreatedAtDesc(destId: Long, recordType: String, beforeId: Long): List<Record> = emptyList()
-        override fun findByWorldIdAndRecordTypeAndIdGreaterThanOrderByCreatedAtDesc(worldId: Long, recordType: String, sinceId: Long): List<Record> = emptyList()
+        override fun findBySessionIdAndRecordTypeAndIdGreaterThanOrderByCreatedAtDesc(sessionId: Long, recordType: String, sinceId: Long): List<Record> = emptyList()
         override fun findByDestIdAndRecordTypeAndIdGreaterThanOrderByCreatedAtDesc(destId: Long, recordType: String, sinceId: Long): List<Record> = emptyList()
-        override fun findByWorldIdAndYearAndMonth(worldId: Long, year: Int, month: Int): List<Record> = emptyList()
-        override fun findByWorldIdAndRecordTypeInAndYearAndMonthOrderByCreatedAtDesc(worldId: Long, recordType: List<String>, year: Int, month: Int): List<Record> = emptyList()
-        override fun findByWorldIdAndRecordTypesWithPagination(worldId: Long, recordTypes: List<String>, beforeId: Long?): List<Record> = emptyList()
+        override fun findBySessionIdAndYearAndMonth(sessionId: Long, year: Int, month: Int): List<Record> = emptyList()
+        override fun findBySessionIdAndRecordTypeInAndYearAndMonthOrderByCreatedAtDesc(sessionId: Long, recordType: List<String>, year: Int, month: Int): List<Record> = emptyList()
+        override fun findBySessionIdAndRecordTypesWithPagination(sessionId: Long, recordTypes: List<String>, beforeId: Long?): List<Record> = emptyList()
         override fun findByDestIdAndRecordTypesWithPagination(destId: Long, recordTypes: List<String>, beforeId: Long?): List<Record> = emptyList()
     }
 
@@ -224,21 +224,21 @@ class FieldBattleTriggerTest {
 
     private fun makeGeneral(
         id: Long,
-        nationId: Long,
-        cityId: Long = 1L,
-        crew: Int = 1000,
+        factionId: Long,
+        planetId: Long = 1L,
+        ships: Int = 1000,
         lastTurn: MutableMap<String, Any> = mutableMapOf(),
     ) = Officer(
         id = id,
         sessionId = 1,
         name = "장수$id",
-        factionId = nationId,
-        planetId = cityId,
-        ships = crew,
+        factionId = factionId,
+        planetId = planetId,
+        ships = ships,
         supplies = 10000,
         leadership = 60.toShort(),
-        strength = 60.toShort(),
-        intel = 60.toShort(),
+        command = 60.toShort(),
+        intelligence = 60.toShort(),
         turnTime = OffsetDateTime.now(),
     ).also { it.lastTurn = lastTurn }
 
@@ -263,13 +263,13 @@ class FieldBattleTriggerTest {
 
     private fun makeTrigger(
         interceptorCity: Planet,
-        generalRepo: StubGeneralRepository = StubGeneralRepository(),
+        generalRepo: StubOfficerRepository = StubOfficerRepository(),
         messageRepo: StubMessageRepository = StubMessageRepository(),
         recordRepo: StubRecordRepository = StubRecordRepository(),
     ) = FieldBattleTrigger(
         fieldBattleService = FieldBattleService(),
         officerRepository = generalRepo,
-        planetRepository = StubCityRepository(mapOf(interceptorCity.id to interceptorCity)),
+        planetRepository = StubPlanetRepository(mapOf(interceptorCity.id to interceptorCity)),
         messageRepository = messageRepo,
         recordRepository = recordRepo,
     )
@@ -280,17 +280,17 @@ class FieldBattleTriggerTest {
     fun `요격 intercepts mover on matching road segment`() {
         val city = makeCity(10L)
         val interceptor = makeGeneral(
-            id = 2L, nationId = 2L, cityId = 10L,
+            id = 2L, factionId = 2L, planetId = 10L,
             lastTurn = mutableMapOf(
                 "action" to "요격",
                 "originCityId" to 10L,
                 "interceptionTargetCityId" to 20L,
             ),
         )
-        val mover = makeGeneral(id = 1L, nationId = 1L, cityId = 20L)
+        val mover = makeGeneral(id = 1L, factionId = 1L, planetId = 20L)
         val allGenerals = listOf(mover, interceptor)
 
-        val generalRepo = StubGeneralRepository()
+        val generalRepo = StubOfficerRepository()
         val trigger = makeTrigger(city, generalRepo)
 
         val triggered = trigger.checkAndTrigger(mover, "이동", fromCityId = 10L, allGenerals = allGenerals, world = makeWorld())
@@ -304,14 +304,14 @@ class FieldBattleTriggerTest {
     fun `요격 does not trigger for same-nation general`() {
         val city = makeCity(10L)
         val interceptor = makeGeneral(
-            id = 2L, nationId = 1L, cityId = 10L,
+            id = 2L, factionId = 1L, planetId = 10L,
             lastTurn = mutableMapOf(
                 "action" to "요격",
                 "originCityId" to 10L,
                 "interceptionTargetCityId" to 20L,
             ),
         )
-        val mover = makeGeneral(id = 1L, nationId = 1L, cityId = 20L)
+        val mover = makeGeneral(id = 1L, factionId = 1L, planetId = 20L)
         val allGenerals = listOf(mover, interceptor)
 
         val trigger = makeTrigger(city)
@@ -324,14 +324,14 @@ class FieldBattleTriggerTest {
     fun `요격 does not trigger for non-move action`() {
         val city = makeCity(10L)
         val interceptor = makeGeneral(
-            id = 2L, nationId = 2L, cityId = 10L,
+            id = 2L, factionId = 2L, planetId = 10L,
             lastTurn = mutableMapOf(
                 "action" to "요격",
                 "originCityId" to 10L,
                 "interceptionTargetCityId" to 20L,
             ),
         )
-        val mover = makeGeneral(id = 1L, nationId = 1L, cityId = 20L)
+        val mover = makeGeneral(id = 1L, factionId = 1L, planetId = 20L)
         val allGenerals = listOf(mover, interceptor)
 
         val trigger = makeTrigger(city)
@@ -344,14 +344,14 @@ class FieldBattleTriggerTest {
     fun `요격 does not trigger when road segment does not match`() {
         val city = makeCity(10L)
         val interceptor = makeGeneral(
-            id = 2L, nationId = 2L, cityId = 10L,
+            id = 2L, factionId = 2L, planetId = 10L,
             lastTurn = mutableMapOf(
                 "action" to "요격",
                 "originCityId" to 30L,
                 "interceptionTargetCityId" to 40L,
             ),
         )
-        val mover = makeGeneral(id = 1L, nationId = 1L, cityId = 20L)
+        val mover = makeGeneral(id = 1L, factionId = 1L, planetId = 20L)
         val allGenerals = listOf(mover, interceptor)
 
         val trigger = makeTrigger(city)
@@ -364,16 +364,16 @@ class FieldBattleTriggerTest {
     fun `순찰 intercepts mover passing through patrol city`() {
         val city = makeCity(10L)
         val patrol = makeGeneral(
-            id = 2L, nationId = 2L, cityId = 10L,
+            id = 2L, factionId = 2L, planetId = 10L,
             lastTurn = mutableMapOf(
                 "action" to "순찰",
                 "patrolCityId" to 10L,
             ),
         )
-        val mover = makeGeneral(id = 1L, nationId = 1L, cityId = 20L)
+        val mover = makeGeneral(id = 1L, factionId = 1L, planetId = 20L)
         val allGenerals = listOf(mover, patrol)
 
-        val generalRepo = StubGeneralRepository()
+        val generalRepo = StubOfficerRepository()
         val trigger = makeTrigger(city, generalRepo)
         val triggered = trigger.checkAndTrigger(mover, "이동", fromCityId = 10L, allGenerals = allGenerals, world = makeWorld())
 
@@ -384,14 +384,14 @@ class FieldBattleTriggerTest {
     fun `interceptor with zero crew does not trigger`() {
         val city = makeCity(10L)
         val interceptor = makeGeneral(
-            id = 2L, nationId = 2L, cityId = 10L, crew = 0,
+            id = 2L, factionId = 2L, planetId = 10L, ships = 0,
             lastTurn = mutableMapOf(
                 "action" to "요격",
                 "originCityId" to 10L,
                 "interceptionTargetCityId" to 20L,
             ),
         )
-        val mover = makeGeneral(id = 1L, nationId = 1L, cityId = 20L)
+        val mover = makeGeneral(id = 1L, factionId = 1L, planetId = 20L)
         val allGenerals = listOf(mover, interceptor)
 
         val trigger = makeTrigger(city)
@@ -404,14 +404,14 @@ class FieldBattleTriggerTest {
     fun `logs are persisted when field battle triggers`() {
         val city = makeCity(10L)
         val interceptor = makeGeneral(
-            id = 2L, nationId = 2L, cityId = 10L,
+            id = 2L, factionId = 2L, planetId = 10L,
             lastTurn = mutableMapOf(
                 "action" to "요격",
                 "originCityId" to 10L,
                 "interceptionTargetCityId" to 20L,
             ),
         )
-        val mover = makeGeneral(id = 1L, nationId = 1L, cityId = 20L)
+        val mover = makeGeneral(id = 1L, factionId = 1L, planetId = 20L)
         val allGenerals = listOf(mover, interceptor)
 
         val messageRepo = StubMessageRepository()
@@ -428,17 +428,17 @@ class FieldBattleTriggerTest {
     fun `요격 reverse road direction also triggers`() {
         val city = makeCity(20L)
         val interceptor = makeGeneral(
-            id = 2L, nationId = 2L, cityId = 20L,
+            id = 2L, factionId = 2L, planetId = 20L,
             lastTurn = mutableMapOf(
                 "action" to "요격",
                 "originCityId" to 20L,
                 "interceptionTargetCityId" to 10L,
             ),
         )
-        val mover = makeGeneral(id = 1L, nationId = 1L, cityId = 20L)
+        val mover = makeGeneral(id = 1L, factionId = 1L, planetId = 20L)
         val allGenerals = listOf(mover, interceptor)
 
-        val generalRepo = StubGeneralRepository()
+        val generalRepo = StubOfficerRepository()
         val trigger = makeTrigger(city, generalRepo)
         val triggered = trigger.checkAndTrigger(mover, "이동", fromCityId = 10L, allGenerals = allGenerals, world = makeWorld())
 

@@ -167,14 +167,14 @@ class TickEngineTest {
     /**
      * Command duration integration verification:
      *
-     * Command durations use wall-clock time (OffsetDateTime), not game time.
+     * Command durations use fortress-clock time (OffsetDateTime), not game time.
      * A 300-second command takes 300 real seconds = 300 ticks = 7,200 game-seconds.
      *
      * Flow:
      * - RealtimeService.submitCommand sets commandEndTime = OffsetDateTime.now().plusSeconds(duration)
      * - TickEngine calls processCompletedCommands every tick, which checks commandEndTime < now
-     * - This means command durations work in real wall-clock seconds regardless of game-time speedup
-     * - No changes needed to RealtimeService -- the existing wall-clock duration mechanism is correct
+     * - This means command durations work in real fortress-clock seconds regardless of game-time speedup
+     * - No changes needed to RealtimeService -- the existing fortress-clock duration mechanism is correct
      *
      * Broadcast does not interfere: broadcastTickState fires every 10 ticks (after save),
      * while processCompletedCommands fires every tick (before save). They are independent.

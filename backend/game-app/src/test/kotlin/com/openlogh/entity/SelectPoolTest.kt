@@ -12,7 +12,7 @@ class SelectPoolTest {
         assertEquals(1L, pool.sessionId)
         assertEquals("test-pool", pool.uniqueName)
         assertNull(pool.ownerId)
-        assertNull(pool.generalId)
+        assertNull(pool.officerId)
         assertNull(pool.reservedUntil)
         assertTrue(pool.info.isEmpty())
     }

@@ -177,7 +177,7 @@ class OfficerLevelModifierTest {
         }
 
         @Test
-        fun `level 20 wall gives bonus`() {
+        fun `level 20 fortress gives bonus`() {
             val mod = OfficerLevelModifier(officerLevel = 20, nationLevel = 5)
             val result = mod.onCalcDomestic(DomesticContext(actionCode = "성벽"))
             assertThat(result.scoreMultiplier).isEqualTo(1.05)

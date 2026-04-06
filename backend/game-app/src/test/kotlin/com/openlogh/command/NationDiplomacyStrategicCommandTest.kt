@@ -39,20 +39,20 @@ class NationDiplomacyStrategicCommandTest {
 
     private fun createGeneral(
         id: Long = 1,
-        nationId: Long = 1,
-        cityId: Long = 1,
+        factionId: Long = 1,
+        planetId: Long = 1,
         officerLevel: Short = 20,
-        gold: Int = 1000,
-        rice: Int = 1000,
+        funds: Int = 1000,
+        supplies: Int = 1000,
     ): Officer = Officer(
         id = id,
         sessionId = 1,
         name = "테스트장수$id",
-        factionId = nationId,
-        planetId = cityId,
+        factionId = factionId,
+        planetId = planetId,
         officerLevel = officerLevel,
-        funds = gold,
-        supplies = rice,
+        funds = funds,
+        supplies = supplies,
         leadership = 50,
         command = 50,
         intelligence = 50,
@@ -63,16 +63,16 @@ class NationDiplomacyStrategicCommandTest {
 
     private fun createCity(
         id: Long = 1,
-        nationId: Long = 1,
+        factionId: Long = 1,
         supplyState: Short = 1,
-        def: Int = 500,
-        wall: Int = 500,
-        pop: Int = 10000,
+        orbitalDefense: Int = 500,
+        fortress: Int = 500,
+        population: Int = 10000,
     ): Planet = Planet(
         id = id,
         sessionId = 1,
         name = "테스트도시$id",
-        factionId = nationId,
+        factionId = factionId,
         supplyState = supplyState,
         production = 500,
         productionMax = 1000,
@@ -80,11 +80,11 @@ class NationDiplomacyStrategicCommandTest {
         commerceMax = 1000,
         security = 500,
         securityMax = 1000,
-        orbitalDefense = def,
+        orbitalDefense = orbitalDefense,
         orbitalDefenseMax = 1000,
-        fortress = wall,
+        fortress = fortress,
         fortressMax = 1000,
-        population = pop,
+        population = population,
         populationMax = 50000,
         approval = 80,
     )
@@ -93,15 +93,15 @@ class NationDiplomacyStrategicCommandTest {
         id: Long = 1,
         level: Short = 7,
         strategicCmdLimit: Short = 0,
-        gold: Int = 200000,
-        rice: Int = 200000,
+        funds: Int = 200000,
+        supplies: Int = 200000,
     ): Faction = Faction(
         id = id,
         sessionId = 1,
         name = "테스트국가$id",
         color = "#FF0000",
-        funds = gold,
-        supplies = rice,
+        funds = funds,
+        supplies = supplies,
         factionRank = level,
         strategicCmdLimit = strategicCmdLimit,
         chiefOfficerId = 1,
@@ -160,7 +160,7 @@ class NationDiplomacyStrategicCommandTest {
         val cmd = che_종전제의(general, env())
         val mocks = createMockServicesBundle()
         cmd.services = mocks.services
-        cmd.city = createCity(nationId = 1, supplyState = 1)
+        cmd.city = createCity(factionId = 1, supplyState = 1)
         cmd.nation = createNation(id = 1)
         cmd.destFaction = createNation(id = 2)
         cmd.constraintEnv = mapOf("diplomacy_1_2" to 0) // at war
@@ -187,7 +187,7 @@ class NationDiplomacyStrategicCommandTest {
         cmd.services = mocks.services
         cmd.nation = createNation(id = 1)
         cmd.destFaction = createNation(id = 2)
-        cmd.destOfficer = createGeneral(id = 10, nationId = 2)
+        cmd.destOfficer = createGeneral(id = 10, factionId = 2)
         cmd.constraintEnv = mapOf("diplomacy_1_2" to 0) // at war
 
         val check = cmd.checkFullCondition()
@@ -224,10 +224,10 @@ class NationDiplomacyStrategicCommandTest {
     @Test
     fun `불가침수락 checks occupation and run calls diplomacy service`() {
         val cmd1 = che_불가침수락(createGeneral(), env())
-        cmd1.city = createCity(nationId = 2)
+        cmd1.city = createCity(factionId = 2)
         cmd1.nation = createNation(id = 1)
         cmd1.destFaction = createNation(id = 2)
-        cmd1.destOfficer = createGeneral(id = 10, nationId = 2)
+        cmd1.destOfficer = createGeneral(id = 10, factionId = 2)
         val failed = cmd1.checkFullCondition()
         assertTrue(failed is ConstraintResult.Fail)
 
@@ -235,10 +235,10 @@ class NationDiplomacyStrategicCommandTest {
         val cmd = che_불가침수락(general, env())
         val mocks = createMockServicesBundle()
         cmd.services = mocks.services
-        cmd.city = createCity(nationId = 1, supplyState = 1)
+        cmd.city = createCity(factionId = 1, supplyState = 1)
         cmd.nation = createNation(id = 1)
         cmd.destFaction = createNation(id = 2)
-        cmd.destOfficer = createGeneral(id = 10, nationId = 2)
+        cmd.destOfficer = createGeneral(id = 10, factionId = 2)
         cmd.constraintEnv = mapOf("diplomacy_1_2" to 2) // peace (not at war)
 
         val check = cmd.checkFullCondition()
@@ -262,7 +262,7 @@ class NationDiplomacyStrategicCommandTest {
         val cmd = che_불가침파기제의(general, env())
         val mocks = createMockServicesBundle()
         cmd.services = mocks.services
-        cmd.city = createCity(nationId = 1, supplyState = 1)
+        cmd.city = createCity(factionId = 1, supplyState = 1)
         cmd.nation = createNation(id = 1)
         cmd.destFaction = createNation(id = 2)
         cmd.constraintEnv = mapOf("diplomacy_1_2" to 7) // non-aggression pact
@@ -289,7 +289,7 @@ class NationDiplomacyStrategicCommandTest {
         cmd.services = mocks.services
         cmd.nation = createNation(id = 1)
         cmd.destFaction = createNation(id = 2)
-        cmd.destOfficer = createGeneral(id = 10, nationId = 2)
+        cmd.destOfficer = createGeneral(id = 10, factionId = 2)
         cmd.constraintEnv = mapOf("diplomacy_1_2" to 7) // non-aggression pact
 
         val check = cmd.checkFullCondition()
@@ -309,7 +309,7 @@ class NationDiplomacyStrategicCommandTest {
         assertEquals(40, cmdMeta.getPostReqTurn())
 
         val nonChief = che_급습(createGeneral(officerLevel = 5), env())
-        nonChief.city = createCity(nationId = 1)
+        nonChief.city = createCity(factionId = 1)
         nonChief.nation = createNation(id = 1)
         nonChief.destFaction = createNation(id = 2)
         val failed = nonChief.checkFullCondition()
@@ -326,7 +326,7 @@ class NationDiplomacyStrategicCommandTest {
 
         val nation = createNation(id = 1)
         cmd.services = mocks.services
-        cmd.city = createCity(nationId = 1)
+        cmd.city = createCity(factionId = 1)
         cmd.nation = nation
         cmd.destFaction = createNation(id = 2)
 
@@ -350,9 +350,9 @@ class NationDiplomacyStrategicCommandTest {
         assertEquals(20, cmdMeta.getPostReqTurn())
 
         val cmdFail = che_수몰(createGeneral(officerLevel = 20), env())
-        cmdFail.city = createCity(nationId = 1)
+        cmdFail.city = createCity(factionId = 1)
         cmdFail.nation = createNation(id = 1)
-        cmdFail.destPlanet = createCity(id = 2, nationId = 2)
+        cmdFail.destPlanet = createCity(id = 2, factionId = 2)
         cmdFail.constraintEnv = mapOf("atWarNationIds" to emptySet<Long>())
         val failed = cmdFail.checkFullCondition()
         assertTrue(failed is ConstraintResult.Fail)
@@ -360,8 +360,8 @@ class NationDiplomacyStrategicCommandTest {
         val general = createGeneral(officerLevel = 20)
         val cmd = che_수몰(general, env())
         val nation = createNation(id = 1)
-        val destPlanet = createCity(id = 2, nationId = 2, def = 800, wall = 600, pop = 10000)
-        cmd.city = createCity(nationId = 1)
+        val destPlanet = createCity(id = 2, factionId = 2, orbitalDefense = 800, fortress = 600, population = 10000)
+        cmd.city = createCity(factionId = 1)
         cmd.nation = nation
         cmd.destPlanet = destPlanet
         cmd.constraintEnv = mapOf("atWarNationIds" to setOf(2L))
@@ -387,7 +387,7 @@ class NationDiplomacyStrategicCommandTest {
         assertEquals(20, cmdMeta.getPostReqTurn())
 
         val cmdFail = che_허보(createGeneral(), env())
-        cmdFail.city = createCity(nationId = 1)
+        cmdFail.city = createCity(factionId = 1)
         cmdFail.nation = createNation(id = 1)
         val failed = cmdFail.checkFullCondition()
         assertTrue(failed is ConstraintResult.Fail)
@@ -395,17 +395,17 @@ class NationDiplomacyStrategicCommandTest {
         val general = createGeneral(officerLevel = 20)
         val cmd = che_허보(general, env())
         val nation = createNation(id = 1)
-        val destPlanet = createCity(id = 2, nationId = 2)
-        val enemyGeneral1 = createGeneral(id = 101, nationId = 2, cityId = 2).apply { troopId = 999 }
-        val enemyGeneral2 = createGeneral(id = 102, nationId = 2, cityId = 2).apply { troopId = 102 }
-        val allyGeneral = createGeneral(id = 201, nationId = 1, cityId = 2)
+        val destPlanet = createCity(id = 2, factionId = 2)
+        val enemyGeneral1 = createGeneral(id = 101, factionId = 2, planetId = 2).apply { fleetId = 999 }
+        val enemyGeneral2 = createGeneral(id = 102, factionId = 2, planetId = 2).apply { fleetId = 102 }
+        val allyGeneral = createGeneral(id = 201, factionId = 1, planetId = 2)
 
         val mocks = createMockServicesBundle()
         `when`(mocks.officerRepository.findByPlanetId(2)).thenReturn(listOf(enemyGeneral1, enemyGeneral2, allyGeneral))
-        `when`(mocks.planetRepository.findByFactionId(2)).thenReturn(listOf(destPlanet, createCity(id = 3, nationId = 2)))
+        `when`(mocks.planetRepository.findByFactionId(2)).thenReturn(listOf(destPlanet, createCity(id = 3, factionId = 2)))
 
         cmd.services = mocks.services
-        cmd.city = createCity(nationId = 1)
+        cmd.city = createCity(factionId = 1)
         cmd.nation = nation
         cmd.destPlanet = destPlanet
 
@@ -419,7 +419,7 @@ class NationDiplomacyStrategicCommandTest {
         assertEquals(3L, enemyGeneral2.planetId)
         assertEquals(0L, enemyGeneral1.fleetId)
         assertEquals(102L, enemyGeneral2.fleetId)
-        verify(mocks.officerRepository, times(2)).save(org.mockito.Mockito.any(General::class.java))
+        verify(mocks.officerRepository, times(2)).save(org.mockito.Mockito.any(Officer::class.java))
     }
 
     @Test
@@ -431,14 +431,14 @@ class NationDiplomacyStrategicCommandTest {
         assertEquals(100, cmdMeta.getPostReqTurn())
 
         val cmdFail = che_의병모집(createGeneral(), env(year = 190, startYear = 190))
-        cmdFail.city = createCity(nationId = 1)
+        cmdFail.city = createCity(factionId = 1)
         cmdFail.nation = createNation(id = 1)
         val failed = cmdFail.checkFullCondition()
         assertTrue(failed is ConstraintResult.Fail)
 
         val cmd = che_의병모집(createGeneral(officerLevel = 20), env(year = 200, startYear = 190))
         val nation = createNation(id = 1)
-        val city = createCity(id = 1, nationId = 1, pop = 30000)
+        val city = createCity(id = 1, factionId = 1, population = 30000)
         val mocks = createMockServicesBundle()
 
         cmd.services = mocks.services
@@ -452,7 +452,7 @@ class NationDiplomacyStrategicCommandTest {
         assertTrue(result.success)
         assertEquals(15000, city.population)
         assertEquals(9, nation.strategicCmdLimit.toInt())
-        verify(mocks.officerRepository, times(3)).save(org.mockito.Mockito.any(General::class.java))
+        verify(mocks.officerRepository, times(3)).save(org.mockito.Mockito.any(Officer::class.java))
     }
 
     @Test
@@ -464,7 +464,7 @@ class NationDiplomacyStrategicCommandTest {
         assertEquals(126, cmdMeta.getPostReqTurn())
 
         val cmdFail = che_이호경식(createGeneral(), env())
-        cmdFail.city = createCity(nationId = 1)
+        cmdFail.city = createCity(factionId = 1)
         cmdFail.nation = createNation(id = 1)
         val failed = cmdFail.checkFullCondition()
         assertTrue(failed is ConstraintResult.Fail)
@@ -477,7 +477,7 @@ class NationDiplomacyStrategicCommandTest {
         `when`(mocks.diplomacyService.getDiplomacyState(1, 1, 2)).thenReturn(null)
 
         cmd.services = mocks.services
-        cmd.city = createCity(nationId = 1)
+        cmd.city = createCity(factionId = 1)
         cmd.nation = nation
         cmd.destFaction = destFaction
 
@@ -499,7 +499,7 @@ class NationDiplomacyStrategicCommandTest {
         assertEquals(8, cmdMeta.getPostReqTurn())
 
         val cmdFail = che_피장파장(createGeneral(), env())
-        cmdFail.city = createCity(nationId = 1)
+        cmdFail.city = createCity(factionId = 1)
         cmdFail.nation = createNation(id = 1, strategicCmdLimit = 2)
         cmdFail.destFaction = createNation(id = 2)
         val failed = cmdFail.checkFullCondition()
@@ -508,7 +508,7 @@ class NationDiplomacyStrategicCommandTest {
         val cmd = che_피장파장(createGeneral(officerLevel = 20), env())
         val nation = createNation(id = 1, strategicCmdLimit = 0)
         val destFaction = createNation(id = 2, strategicCmdLimit = 5)
-        cmd.city = createCity(nationId = 1)
+        cmd.city = createCity(factionId = 1)
         cmd.nation = nation
         cmd.destFaction = destFaction
 
@@ -529,7 +529,7 @@ class NationDiplomacyStrategicCommandTest {
         val cmd = che_선전포고(general, env())
         val mocks = createMockServicesBundle()
         cmd.services = mocks.services
-        cmd.city = createCity(nationId = 1, supplyState = 1)
+        cmd.city = createCity(factionId = 1, supplyState = 1)
         cmd.nation = createNation(id = 1)
         cmd.destFaction = createNation(id = 2)
 
@@ -551,7 +551,7 @@ class NationDiplomacyStrategicCommandTest {
         val cmd = che_종전제의(general, env())
         val mocks = createMockServicesBundle()
         cmd.services = mocks.services
-        cmd.city = createCity(nationId = 1, supplyState = 1)
+        cmd.city = createCity(factionId = 1, supplyState = 1)
         cmd.nation = createNation(id = 1)
         cmd.destFaction = createNation(id = 2)
         cmd.constraintEnv = mapOf("diplomacy_1_2" to 0)
@@ -572,7 +572,7 @@ class NationDiplomacyStrategicCommandTest {
         cmd.services = mocks.services
         cmd.nation = createNation(id = 1)
         cmd.destFaction = createNation(id = 2)
-        cmd.destOfficer = createGeneral(id = 10, nationId = 2)
+        cmd.destOfficer = createGeneral(id = 10, factionId = 2)
         cmd.constraintEnv = mapOf("diplomacy_1_2" to 0)
 
         val result = runBlocking { cmd.run(fixedRng) }
@@ -604,10 +604,10 @@ class NationDiplomacyStrategicCommandTest {
         val cmd = che_불가침수락(general, env())
         val mocks = createMockServicesBundle()
         cmd.services = mocks.services
-        cmd.city = createCity(nationId = 1, supplyState = 1)
+        cmd.city = createCity(factionId = 1, supplyState = 1)
         cmd.nation = createNation(id = 1)
         cmd.destFaction = createNation(id = 2)
-        cmd.destOfficer = createGeneral(id = 10, nationId = 2)
+        cmd.destOfficer = createGeneral(id = 10, factionId = 2)
         cmd.constraintEnv = mapOf("diplomacy_1_2" to 2)
 
         val result = runBlocking { cmd.run(fixedRng) }
@@ -622,7 +622,7 @@ class NationDiplomacyStrategicCommandTest {
         val cmd = che_불가침파기제의(general, env())
         val mocks = createMockServicesBundle()
         cmd.services = mocks.services
-        cmd.city = createCity(nationId = 1, supplyState = 1)
+        cmd.city = createCity(factionId = 1, supplyState = 1)
         cmd.nation = createNation(id = 1)
         cmd.destFaction = createNation(id = 2)
         cmd.constraintEnv = mapOf("diplomacy_1_2" to 7)
@@ -641,7 +641,7 @@ class NationDiplomacyStrategicCommandTest {
         cmd.services = mocks.services
         cmd.nation = createNation(id = 1)
         cmd.destFaction = createNation(id = 2)
-        cmd.destOfficer = createGeneral(id = 10, nationId = 2)
+        cmd.destOfficer = createGeneral(id = 10, factionId = 2)
         cmd.constraintEnv = mapOf("diplomacy_1_2" to 7)
 
         val result = runBlocking { cmd.run(fixedRng) }
@@ -667,7 +667,7 @@ class NationDiplomacyStrategicCommandTest {
 
         val nation = createNation(id = 1)
         cmd.services = mocks.services
-        cmd.city = createCity(nationId = 1)
+        cmd.city = createCity(factionId = 1)
         cmd.nation = nation
         cmd.destFaction = createNation(id = 2)
 
@@ -694,18 +694,18 @@ class NationDiplomacyStrategicCommandTest {
         general.dedication = 0
         val cmd = che_수몰(general, env())
         val nation = createNation(id = 1)
-        val destPlanet = createCity(id = 2, nationId = 2, def = 1000, wall = 500, pop = 20000)
-        cmd.city = createCity(nationId = 1)
+        val destPlanet = createCity(id = 2, factionId = 2, orbitalDefense = 1000, fortress = 500, population = 20000)
+        cmd.city = createCity(factionId = 1)
         cmd.nation = nation
         cmd.destPlanet = destPlanet
         cmd.constraintEnv = mapOf("atWarNationIds" to setOf(2L))
 
         val result = runBlocking { cmd.run(fixedRng) }
         assertTrue(result.success)
-        // PHP golden value: def *= 0.2, wall *= 0.2, pop *= 0.5
-        assertEquals(200, destPlanet.orbitalDefense, "def = 1000 * 0.2")
-        assertEquals(100, destPlanet.fortress, "wall = 500 * 0.2")
-        assertEquals(10000, destPlanet.population, "pop = 20000 * 0.5")
+        // PHP golden value: orbitalDefense *= 0.2, fortress *= 0.2, population *= 0.5
+        assertEquals(200, destPlanet.orbitalDefense, "orbitalDefense = 1000 * 0.2")
+        assertEquals(100, destPlanet.fortress, "fortress = 500 * 0.2")
+        assertEquals(10000, destPlanet.population, "population = 20000 * 0.5")
         // PHP: dead += (beforePop - afterPop) * 0.1 = (20000 - 10000) * 0.1 = 1000
         assertEquals(1000, destPlanet.dead, "dead = 10000 * 0.1")
         // PHP: strategicCmdLimit = 9
@@ -722,17 +722,17 @@ class NationDiplomacyStrategicCommandTest {
         val general = createGeneral(officerLevel = 20)
         val cmd = che_허보(general, env())
         val nation = createNation(id = 1)
-        val destPlanet = createCity(id = 2, nationId = 2)
-        val enemy1 = createGeneral(id = 101, nationId = 2, cityId = 2).apply { troopId = 999 }
-        val enemy2 = createGeneral(id = 102, nationId = 2, cityId = 2).apply { troopId = 102 }
-        val otherCity = createCity(id = 3, nationId = 2)
+        val destPlanet = createCity(id = 2, factionId = 2)
+        val enemy1 = createGeneral(id = 101, factionId = 2, planetId = 2).apply { fleetId = 999 }
+        val enemy2 = createGeneral(id = 102, factionId = 2, planetId = 2).apply { fleetId = 102 }
+        val otherCity = createCity(id = 3, factionId = 2)
 
         val mocks = createMockServicesBundle()
         `when`(mocks.officerRepository.findByPlanetId(2)).thenReturn(listOf(enemy1, enemy2))
         `when`(mocks.planetRepository.findByFactionId(2)).thenReturn(listOf(destPlanet, otherCity))
 
         cmd.services = mocks.services
-        cmd.city = createCity(nationId = 1)
+        cmd.city = createCity(factionId = 1)
         cmd.nation = nation
         cmd.destPlanet = destPlanet
 
@@ -741,21 +741,21 @@ class NationDiplomacyStrategicCommandTest {
         // PHP golden value: enemy generals moved to random other city
         assertEquals(3L, enemy1.planetId, "enemy1 relocated to city 3")
         assertEquals(3L, enemy2.planetId, "enemy2 relocated to city 3")
-        // PHP golden value: troop leader (troopId != self.id) reset to 0
-        assertEquals(0L, enemy1.fleetId, "troop leader enemy1 troopId reset")
-        // PHP golden value: troop member (troopId == self.id) kept
-        assertEquals(102L, enemy2.fleetId, "troop member enemy2 troopId kept")
+        // PHP golden value: troop leader (fleetId != self.id) reset to 0
+        assertEquals(0L, enemy1.fleetId, "troop leader enemy1 fleetId reset")
+        // PHP golden value: troop member (fleetId == self.id) kept
+        assertEquals(102L, enemy2.fleetId, "troop member enemy2 fleetId kept")
         assertEquals(9, nation.strategicCmdLimit.toInt())
     }
 
     @Test
-    fun `의병모집 golden value -- pop halved and NPC generals created`() {
+    fun `의병모집 golden value -- population halved and NPC generals created`() {
         val general = createGeneral(officerLevel = 20)
         general.experience = 0
         general.dedication = 0
         val cmd = che_의병모집(general, env(year = 200, startYear = 190))
         val nation = createNation(id = 1)
-        val city = createCity(id = 1, nationId = 1, pop = 40000)
+        val city = createCity(id = 1, factionId = 1, population = 40000)
         val mocks = createMockServicesBundle()
 
         cmd.services = mocks.services
@@ -764,8 +764,8 @@ class NationDiplomacyStrategicCommandTest {
 
         val result = runBlocking { cmd.run(fixedRng) }
         assertTrue(result.success)
-        // PHP golden value: pop halved
-        assertEquals(20000, city.population, "pop = 40000 * 0.5")
+        // PHP golden value: population halved
+        assertEquals(20000, city.population, "population = 40000 * 0.5")
         // PHP golden value: strategicCmdLimit = 9
         assertEquals(9, nation.strategicCmdLimit.toInt())
         // PHP golden value: exp/ded = 5 * (2 + 1) = 15
@@ -787,7 +787,7 @@ class NationDiplomacyStrategicCommandTest {
         `when`(mocks.diplomacyService.getDiplomacyState(1, 1, 2)).thenReturn(null)
 
         cmd.services = mocks.services
-        cmd.city = createCity(nationId = 1)
+        cmd.city = createCity(factionId = 1)
         cmd.nation = nation
         cmd.destFaction = destFaction
 
@@ -807,7 +807,7 @@ class NationDiplomacyStrategicCommandTest {
         val cmd = che_피장파장(general, env())
         val nation = createNation(id = 1, strategicCmdLimit = 0)
         val destFaction = createNation(id = 2, strategicCmdLimit = 3)
-        cmd.city = createCity(nationId = 1)
+        cmd.city = createCity(factionId = 1)
         cmd.nation = nation
         cmd.destFaction = destFaction
 
@@ -826,7 +826,7 @@ class NationDiplomacyStrategicCommandTest {
     @Test
     fun `피장파장 golden value -- failure when strategic limit active`() {
         val cmdFail = che_피장파장(createGeneral(officerLevel = 20), env())
-        cmdFail.city = createCity(nationId = 1)
+        cmdFail.city = createCity(factionId = 1)
         cmdFail.nation = createNation(id = 1, strategicCmdLimit = 5)
         cmdFail.destFaction = createNation(id = 2)
         val failed = cmdFail.checkFullCondition()

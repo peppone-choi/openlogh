@@ -11,11 +11,11 @@ class BattleTriggerTest {
 
     private fun createGeneral(
         id: Long = 1,
-        nationId: Long = 1,
+        factionId: Long = 1,
         leadership: Short = 50,
-        strength: Short = 50,
-        intel: Short = 50,
-        crew: Int = 1000,
+        command: Short = 50,
+        intelligence: Short = 50,
+        ships: Int = 1000,
         specialCode: String = "None",
         special2Code: String = "None",
     ): Officer {
@@ -23,12 +23,12 @@ class BattleTriggerTest {
             id = id,
             sessionId = 1,
             name = "장수$id",
-            factionId = nationId,
+            factionId = factionId,
             planetId = 1,
             leadership = leadership,
-            command = strength,
-            intelligence = intel,
-            ships = crew,
+            command = command,
+            intelligence = intelligence,
+            ships = ships,
             specialCode = specialCode,
             special2Code = special2Code,
             turnTime = OffsetDateTime.now(),
@@ -140,7 +140,7 @@ class BattleTriggerTest {
 
     @Test
     fun `저격 trigger applies wound on critical when defender is general`() {
-        // Use strength=100 for high wound chance
+        // Use command =100 for high wound chance
         val attacker = WarUnitOfficer(createGeneral(command = 100))
         val defender = WarUnitOfficer(createGeneral(id = 2))
         // Use a seed that produces a low nextDouble (< 100/200 = 0.5)
@@ -150,7 +150,7 @@ class BattleTriggerTest {
 
         저격Trigger.onPostCritical(ctx)
 
-        // With strength=100, wound chance is 0.5. May or may not trigger depending on RNG.
+        // With command =100, wound chance is 0.5. May or may not trigger depending on RNG.
         // We just verify the mechanism works without errors.
         if (ctx.snipeActivated) {
             assertTrue(ctx.snipeWoundAmount in 2..6)

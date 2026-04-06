@@ -9,13 +9,13 @@ class ProximityDetectorTest {
 
     private val detector = ProximityDetector()
 
-    private fun makeGeneral(id: Long, nationId: Long, posX: Float, posY: Float, crew: Int = 100): Officer {
+    private fun makeGeneral(id: Long, factionId: Long, posX: Float, posY: Float, ships: Int = 100): Officer {
         return Officer().apply {
             this.id = id
-            this.factionId = nationId
+            this.factionId = factionId
             this.posX = posX
             this.posY = posY
-            this.ships = crew
+            this.ships = ships
         }
     }
 
@@ -37,8 +37,8 @@ class ProximityDetectorTest {
 
     @Test
     fun `enemies out of contact range produce no contact`() {
-        val a = makeGeneral(1L, 1L, 0f, 0f, crew = 100)
-        val b = makeGeneral(2L, 2L, 500f, 500f, crew = 100)
+        val a = makeGeneral(1L, 1L, 0f, 0f, ships = 100)
+        val b = makeGeneral(2L, 2L, 500f, 500f, ships = 100)
         val contacts = detector.findContacts(listOf(a, b)) { _, _ -> true }
         assertTrue(contacts.isEmpty())
     }

@@ -65,20 +65,20 @@ class DisasterParityTest {
 
     private fun wireRepos() {
         `when`(planetRepository.findBySessionId(ArgumentMatchers.anyLong())).thenAnswer { inv ->
-            val worldId = inv.arguments[0] as Long
-            cities.values.filter { it.sessionId == worldId }.map { it.toSnapshot().toEntity() }
+            val sessionId = inv.arguments[0] as Long
+            cities.values.filter { it.sessionId == sessionId }.map { it.toSnapshot().toEntity() }
         }
         `when`(factionRepository.findBySessionId(ArgumentMatchers.anyLong())).thenAnswer {
             emptyList<Any>()
         }
         `when`(officerRepository.findBySessionId(ArgumentMatchers.anyLong())).thenAnswer { inv ->
-            val worldId = inv.arguments[0] as Long
-            generals.values.filter { it.sessionId == worldId }
+            val sessionId = inv.arguments[0] as Long
+            generals.values.filter { it.sessionId == sessionId }
         }
         `when`(officerRepository.findBySessionIdAndPlanetIdIn(ArgumentMatchers.anyLong(), ArgumentMatchers.anyList()))
             .thenAnswer { inv ->
-                val cityIds = inv.arguments[1] as List<*>
-                generals.values.filter { it.sessionId == 1L && cityIds.contains(it.planetId) }
+                val planetIds = inv.arguments[1] as List<*>
+                generals.values.filter { it.sessionId == 1L && planetIds.contains(it.planetId) }
             }
         `when`(officerRepository.saveAll(ArgumentMatchers.anyList<Officer>())).thenAnswer { inv ->
             @Suppress("UNCHECKED_CAST")
@@ -89,7 +89,7 @@ class DisasterParityTest {
         `when`(messageRepository.saveAll(ArgumentMatchers.anyList<com.openlogh.entity.Message>())).thenAnswer { inv ->
             inv.arguments[0]
         }
-        `when`(planetRepository.save(ArgumentMatchers.any(City::class.java))).thenAnswer { inv ->
+        `when`(planetRepository.save(ArgumentMatchers.any(Planet::class.java))).thenAnswer { inv ->
             val city = inv.arguments[0] as Planet
             cities[city.id] = city.toSnapshot().toEntity()
             city
@@ -117,17 +117,17 @@ class DisasterParityTest {
         }
     }
 
-    private fun testCity(id: Long, pop: Int = 50000, agri: Int = 800, comm: Int = 600,
-                         secu: Int = 400, secuMax: Int = 1000, def: Int = 500, defMax: Int = 1000,
-                         wall: Int = 300, wallMax: Int = 1000): Planet {
+    private fun testCity(id: Long, population: Int = 50000, production: Int = 800, commerce: Int = 600,
+                         security: Int = 400, securityMax: Int = 1000, orbitalDefense: Int = 500, orbitalDefenseMax: Int = 1000,
+                         fortress: Int = 300, fortressMax: Int = 1000): Planet {
         return Planet(
             id = id, sessionId = 1, name = "TestCity$id", mapPlanetId = id.toInt(),
-            pop = pop, popMax = 100000,
-            agri = agri, agriMax = 1500,
-            comm = comm, commMax = 1200,
-            secu = secu, secuMax = secuMax,
-            trust = 50f, def = def, defMax = defMax,
-            wall = wall, wallMax = wallMax,
+            population = population, populationMax = 100000,
+            production = production, productionMax = 1500,
+            commerce = commerce, commerceMax = 1200,
+            security = security, securityMax = securityMax,
+            approval = 50f, orbitalDefense = orbitalDefense, orbitalDefenseMax = orbitalDefenseMax,
+            fortress = fortress, fortressMax = fortressMax,
         )
     }
 
@@ -152,9 +152,9 @@ class DisasterParityTest {
 
             // City fields should be unchanged (grace period skip)
             val resultCity = cities[1L]!!
-            assertThat(resultCity.population).describedAs("pop unchanged during grace period").isEqualTo(origPop)
-            assertThat(resultCity.production).describedAs("agri unchanged during grace period").isEqualTo(origAgri)
-            assertThat(resultCity.commerce).describedAs("comm unchanged during grace period").isEqualTo(origComm)
+            assertThat(resultCity.population).describedAs("population unchanged during grace period").isEqualTo(origPop)
+            assertThat(resultCity.production).describedAs("production unchanged during grace period").isEqualTo(origAgri)
+            assertThat(resultCity.commerce).describedAs("commerce unchanged during grace period").isEqualTo(origComm)
         }
 
         @Test
@@ -363,33 +363,33 @@ class DisasterParityTest {
     inner class DisasterEffect {
 
         @Test
-        @DisplayName("Disaster affectRatio formula: 0.8 + valueFit(secu/secuMax/0.8, 0, 1) * 0.15")
+        @DisplayName("Disaster affectRatio formula: 0.8 + valueFit(security/securityMax/0.8, 0, 1) * 0.15")
         fun `disaster affectRatio golden value`() {
-            // City: secu=400, secuMax=1000
+            // City: security=400, securityMax=1000
             // secuRatio = 400/1000/0.8 = 0.5
             // valueFit(0.5, 0, 1) = 0.5
             // affectRatio = 0.8 + 0.5 * 0.15 = 0.875
-            val secu = 400.0
-            val secuMax = 1000.0
-            val secuRatio = (secu / secuMax / 0.8).coerceIn(0.0, 1.0)
+            val security = 400.0
+            val securityMax = 1000.0
+            val secuRatio = (security / securityMax / 0.8).coerceIn(0.0, 1.0)
             val affectRatio = 0.8 + secuRatio * 0.15
 
             assertThat(secuRatio).isEqualTo(0.5)
             assertThat(affectRatio).isEqualTo(0.875)
 
-            // Apply to city fields (PHP does pop * affectRatio, no coerceAtLeast)
-            val pop = 50000
-            val agri = 800
-            val comm = 600
-            assertThat((pop * affectRatio).toInt()).isEqualTo(43750)
-            assertThat((agri * affectRatio).toInt()).isEqualTo(700)
-            assertThat((comm * affectRatio).toInt()).isEqualTo(525)
+            // Apply to city fields (PHP does population * affectRatio, no coerceAtLeast)
+            val population = 50000
+            val production = 800
+            val commerce = 600
+            assertThat((population * affectRatio).toInt()).isEqualTo(43750)
+            assertThat((production * affectRatio).toInt()).isEqualTo(700)
+            assertThat((commerce * affectRatio).toInt()).isEqualTo(525)
         }
 
         @Test
         @DisplayName("Disaster with high security reduces damage (secuRatio capped at 1.0)")
-        fun `disaster high secu golden value`() {
-            // secu=1000, secuMax=1000
+        fun `disaster high security golden value`() {
+            // security=1000, securityMax=1000
             // secuRatio = 1000/1000/0.8 = 1.25 -> capped at 1.0
             // affectRatio = 0.8 + 1.0 * 0.15 = 0.95
             val secuRatio = (1000.0 / 1000.0 / 0.8).coerceIn(0.0, 1.0)
@@ -403,8 +403,8 @@ class DisasterParityTest {
 
         @Test
         @DisplayName("Disaster with zero security maximizes damage")
-        fun `disaster zero secu golden value`() {
-            // secu=0, secuMax=1000
+        fun `disaster zero security golden value`() {
+            // security=0, securityMax=1000
             // secuRatio = 0/1000/0.8 = 0 -> capped at 0
             // affectRatio = 0.8 + 0 * 0.15 = 0.8
             val secuRatio = (0.0 / 1000.0 / 0.8).coerceIn(0.0, 1.0)
@@ -422,9 +422,9 @@ class DisasterParityTest {
     inner class BoomEffect {
 
         @Test
-        @DisplayName("Boom affectRatio formula: 1.01 + valueFit(secu/secuMax/0.8, 0, 1) * 0.04")
+        @DisplayName("Boom affectRatio formula: 1.01 + valueFit(security/securityMax/0.8, 0, 1) * 0.04")
         fun `boom affectRatio golden value`() {
-            // City: secu=400, secuMax=1000
+            // City: security=400, securityMax=1000
             // secuRatio = 400/1000/0.8 = 0.5
             // affectRatio = 1.01 + 0.5 * 0.04 = 1.03
             val secuRatio = (400.0 / 1000.0 / 0.8).coerceIn(0.0, 1.0)
@@ -434,18 +434,18 @@ class DisasterParityTest {
             assertThat(affectRatio).isEqualTo(1.03)
 
             // Apply to city fields (PHP caps at *_max)
-            val pop = 50000
-            val agri = 800
-            val comm = 600
-            assertThat((pop * affectRatio).toInt()).isEqualTo(51500)
-            assertThat((agri * affectRatio).toInt()).isEqualTo(824)
-            assertThat((comm * affectRatio).toInt()).isEqualTo(618)
+            val population = 50000
+            val production = 800
+            val commerce = 600
+            assertThat((population * affectRatio).toInt()).isEqualTo(51500)
+            assertThat((production * affectRatio).toInt()).isEqualTo(824)
+            assertThat((commerce * affectRatio).toInt()).isEqualTo(618)
         }
 
         @Test
         @DisplayName("Boom with high security maximizes growth")
-        fun `boom high secu golden value`() {
-            // secu=1000, secuMax=1000
+        fun `boom high security golden value`() {
+            // security=1000, securityMax=1000
             // secuRatio = 1.25 -> capped at 1.0
             // affectRatio = 1.01 + 1.0 * 0.04 = 1.05
             val secuRatio = (1000.0 / 1000.0 / 0.8).coerceIn(0.0, 1.0)
@@ -458,14 +458,14 @@ class DisasterParityTest {
         }
 
         @Test
-        @DisplayName("Boom pop capped at popMax")
-        fun `boom pop capped at max`() {
-            // pop=99000, popMax=100000, affectRatio=1.05
+        @DisplayName("Boom population capped at populationMax")
+        fun `boom population capped at max`() {
+            // population=99000, populationMax=100000, affectRatio=1.05
             // 99000 * 1.05 = 103950 -> capped at 100000
-            val pop = 99000
-            val popMax = 100000
+            val population = 99000
+            val populationMax = 100000
             val affectRatio = 1.05
-            assertThat((pop * affectRatio).toInt().coerceAtMost(popMax)).isEqualTo(100000)
+            assertThat((population * affectRatio).toInt().coerceAtMost(populationMax)).isEqualTo(100000)
         }
     }
 
@@ -478,23 +478,23 @@ class DisasterParityTest {
         @Test
         @DisplayName("Disaster raiseProp: 0.06 - secuRatio * 0.05 (1-6%)")
         fun `disaster raiseProp golden values`() {
-            // secu/secuMax = 0.0 -> raiseProp = 0.06 (max disaster chance)
+            // security/securityMax = 0.0 -> raiseProp = 0.06 (max disaster chance)
             assertThat(0.06 - 0.0 * 0.05).isEqualTo(0.06)
 
-            // secu/secuMax = 1.0 -> raiseProp = 0.01 (min disaster chance)
+            // security/securityMax = 1.0 -> raiseProp = 0.01 (min disaster chance)
             assertThat(0.06 - 1.0 * 0.05).isCloseTo(0.01, within(1e-10))
 
-            // secu/secuMax = 0.5 -> raiseProp = 0.035
+            // security/securityMax = 0.5 -> raiseProp = 0.035
             assertThat(0.06 - 0.5 * 0.05).isCloseTo(0.035, within(1e-10))
         }
 
         @Test
         @DisplayName("Boom raiseProp: 0.02 + secuRatio * 0.05 (2-7%)")
         fun `boom raiseProp golden values`() {
-            // secu/secuMax = 0.0 -> raiseProp = 0.02 (min boom chance)
+            // security/securityMax = 0.0 -> raiseProp = 0.02 (min boom chance)
             assertThat(0.02 + 0.0 * 0.05).isEqualTo(0.02)
 
-            // secu/secuMax = 1.0 -> raiseProp = 0.07 (max boom chance)
+            // security/securityMax = 1.0 -> raiseProp = 0.07 (max boom chance)
             assertThat(0.02 + 1.0 * 0.05).isEqualTo(0.07)
         }
     }
@@ -544,13 +544,13 @@ class DisasterParityTest {
         @Test
         @DisplayName("Crew/atmos/train reduction golden values")
         fun `stat reduction golden values`() {
-            // crew=5000 -> 5000 * 0.98 = 4900
+            // ships =5000 -> 5000 * 0.98 = 4900
             assertThat((5000 * 0.98).toInt()).isEqualTo(4900)
 
-            // atmos=100 -> 100 * 0.98 = 98
+            // morale =100 -> 100 * 0.98 = 98
             assertThat((100 * 0.98).toInt()).isEqualTo(98)
 
-            // train=80 -> 80 * 0.98 = 78 (78.4 truncated)
+            // training =80 -> 80 * 0.98 = 78 (78.4 truncated)
             assertThat((80 * 0.98).toInt()).isEqualTo(78)
         }
     }

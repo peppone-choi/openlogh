@@ -62,17 +62,17 @@ class DiplomacyParityTest {
     }
 
     private fun wireRepos() {
-        `when`(diplomacyRepository.findByWorldIdAndIsDeadFalse(anyLong())).thenAnswer {
+        `when`(diplomacyRepository.findBySessionIdAndIsDeadFalse(anyLong())).thenAnswer {
             diplomacies.filter { !it.isDead && it.sessionId == WORLD_ID }
         }
         `when`(diplomacyRepository.findBySessionId(anyLong())).thenAnswer {
             diplomacies.filter { it.sessionId == WORLD_ID }
         }
-        `when`(diplomacyRepository.findByWorldIdAndSrcNationIdOrDestNationId(anyLong(), anyLong(), anyLong()))
+        `when`(diplomacyRepository.findBySessionIdAndSrcNationIdOrDestNationId(anyLong(), anyLong(), anyLong()))
             .thenAnswer { inv ->
-                val nationId = inv.arguments[1] as Long
+                val factionId = inv.arguments[1] as Long
                 diplomacies.filter {
-                    it.sessionId == WORLD_ID && (it.srcFactionId == nationId || it.destFactionId == nationId)
+                    it.sessionId == WORLD_ID && (it.srcFactionId == factionId || it.destFactionId == factionId)
                 }
             }
         `when`(diplomacyRepository.findActiveRelation(anyLong(), anyLong(), anyLong(), anyString()))
@@ -118,15 +118,15 @@ class DiplomacyParityTest {
     private fun addDiplomacy(
         stateCode: String,
         term: Short,
-        srcNationId: Long = NATION_A,
-        destNationId: Long = NATION_B,
+        srcFactionId: Long = NATION_A,
+        destFactionId: Long = NATION_B,
         isDead: Boolean = false,
     ): Diplomacy {
         val d = Diplomacy(
             id = nextId++,
             sessionId = WORLD_ID,
-            srcFactionId = srcNationId,
-            destFactionId = destNationId,
+            srcFactionId = srcFactionId,
+            destFactionId = destFactionId,
             stateCode = stateCode,
             term = term,
             isDead = isDead,

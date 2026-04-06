@@ -32,8 +32,8 @@ class SpecialAssignmentServiceTest {
         id: Long = 1,
         age: Short = 25,
         leadership: Short = 70,
-        strength: Short = 70,
-        intel: Short = 70,
+        command: Short = 70,
+        intelligence: Short = 70,
         specialCode: String = "None",
         special2Code: String = "None",
         specAge: Short = 20,
@@ -48,8 +48,8 @@ class SpecialAssignmentServiceTest {
             planetId = 1,
             age = age,
             leadership = leadership,
-            command = strength,
-            intelligence = intel,
+            command = command,
+            intelligence = intelligence,
             specialCode = specialCode,
             special2Code = special2Code,
             specAge = specAge,
@@ -74,7 +74,7 @@ class SpecialAssignmentServiceTest {
     @Test
     fun `checkAndAssignSpecials proceeds after 3 years`() {
         val world = createWorld(year = 187, startYear = 184)
-        val general = createGeneral(age = 30, specAge = 25, leadership = 80, intel = 80)
+        val general = createGeneral(age = 30, specAge = 25, leadership = 80, intelligence = 80)
 
         service.checkAndAssignSpecials(world, listOf(general))
 
@@ -90,8 +90,8 @@ class SpecialAssignmentServiceTest {
             age = 30,
             specAge = 25,
             leadership = 80,
-            intel = 80,
-            strength = 50,
+            intelligence = 80,
+            command = 50,
         )
 
         service.checkAndAssignSpecials(world, listOf(general))
@@ -107,7 +107,7 @@ class SpecialAssignmentServiceTest {
             age = 20,
             specAge = 30,
             leadership = 80,
-            intel = 80,
+            intelligence = 80,
         )
 
         service.checkAndAssignSpecials(world, listOf(general))
@@ -123,7 +123,7 @@ class SpecialAssignmentServiceTest {
             specAge = 30,
             specialCode = "농업",
             leadership = 80,
-            intel = 80,
+            intelligence = 80,
         )
 
         service.checkAndAssignSpecials(world, listOf(general))
@@ -139,9 +139,9 @@ class SpecialAssignmentServiceTest {
         val general = createGeneral(
             age = 30,
             spec2Age = 25,
-            strength = 80,
+            command = 80,
             leadership = 70,
-            intel = 50,
+            intelligence = 50,
         )
 
         service.checkAndAssignSpecials(world, listOf(general))
@@ -156,7 +156,7 @@ class SpecialAssignmentServiceTest {
         val general = createGeneral(
             age = 20,
             spec2Age = 30,
-            strength = 80,
+            command = 80,
         )
 
         service.checkAndAssignSpecials(world, listOf(general))
@@ -185,11 +185,11 @@ class SpecialAssignmentServiceTest {
     fun `calcStatCondition sets STAT_LEADERSHIP for high leadership`() {
         val method = SpecialAssignmentService::class.java.getDeclaredMethod(
             "calcStatCondition",
-            General::class.java
+            Officer::class.java
         )
         method.isAccessible = true
 
-        val general = createGeneral(leadership = 80, strength = 50, intel = 50)
+        val general = createGeneral(leadership = 80, command = 50, intelligence = 50)
         val result = method.invoke(service, general) as Int
 
         // STAT_LEADERSHIP = 0x2
@@ -200,11 +200,11 @@ class SpecialAssignmentServiceTest {
     fun `calcStatCondition sets STAT_STRENGTH for high strength`() {
         val method = SpecialAssignmentService::class.java.getDeclaredMethod(
             "calcStatCondition",
-            General::class.java
+            Officer::class.java
         )
         method.isAccessible = true
 
-        val general = createGeneral(leadership = 50, strength = 80, intel = 50)
+        val general = createGeneral(leadership = 50, command = 80, intelligence = 50)
         val result = method.invoke(service, general) as Int
 
         // STAT_STRENGTH = 0x4
@@ -215,11 +215,11 @@ class SpecialAssignmentServiceTest {
     fun `calcStatCondition sets STAT_INTEL for high intel`() {
         val method = SpecialAssignmentService::class.java.getDeclaredMethod(
             "calcStatCondition",
-            General::class.java
+            Officer::class.java
         )
         method.isAccessible = true
 
-        val general = createGeneral(leadership = 50, strength = 50, intel = 80)
+        val general = createGeneral(leadership = 50, command = 50, intelligence = 80)
         val result = method.invoke(service, general) as Int
 
         // STAT_INTEL = 0x8
@@ -230,11 +230,11 @@ class SpecialAssignmentServiceTest {
     fun `calcStatCondition sets NOT flags for low stats when another stat is high`() {
         val method = SpecialAssignmentService::class.java.getDeclaredMethod(
             "calcStatCondition",
-            General::class.java
+            Officer::class.java
         )
         method.isAccessible = true
 
-        val general = createGeneral(leadership = 30, strength = 30, intel = 80)
+        val general = createGeneral(leadership = 30, command = 30, intelligence = 80)
         val result = method.invoke(service, general) as Int
 
         // Should have STAT_INTEL (0x8) and STAT_NOT_LEADERSHIP (0x20000) and STAT_NOT_STRENGTH (0x40000)
@@ -312,8 +312,8 @@ class SpecialAssignmentServiceTest {
     @Test
     fun `checkAndAssignSpecials processes multiple generals`() {
         val world = createWorld(year = 200, startYear = 184)
-        val g1 = createGeneral(id = 1, age = 30, specAge = 25, leadership = 80, intel = 80)
-        val g2 = createGeneral(id = 2, age = 35, spec2Age = 30, strength = 90)
+        val g1 = createGeneral(id = 1, age = 30, specAge = 25, leadership = 80, intelligence = 80)
+        val g2 = createGeneral(id = 2, age = 35, spec2Age = 30, command = 90)
         val g3 = createGeneral(id = 3, age = 20, specAge = 30)
 
         service.checkAndAssignSpecials(world, listOf(g1, g2, g3))

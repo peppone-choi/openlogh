@@ -66,27 +66,27 @@ class DiplomacyServiceTest {
         }
 
         `when`(diplomacyRepository.findBySessionId(ArgumentMatchers.anyLong())).thenAnswer { inv ->
-            val worldId = inv.arguments[0] as Long
-            diplomacies.values.filter { it.sessionId == worldId }.map { cloneDiplomacy(it) }
+            val sessionId = inv.arguments[0] as Long
+            diplomacies.values.filter { it.sessionId == sessionId }.map { cloneDiplomacy(it) }
         }
 
-        `when`(diplomacyRepository.findByWorldIdAndIsDeadFalse(ArgumentMatchers.anyLong())).thenAnswer { inv ->
-            val worldId = inv.arguments[0] as Long
-            diplomacies.values.filter { it.sessionId == worldId && !it.isDead }.map { cloneDiplomacy(it) }
+        `when`(diplomacyRepository.findBySessionIdAndIsDeadFalse(ArgumentMatchers.anyLong())).thenAnswer { inv ->
+            val sessionId = inv.arguments[0] as Long
+            diplomacies.values.filter { it.sessionId == sessionId && !it.isDead }.map { cloneDiplomacy(it) }
         }
 
         `when`(
-            diplomacyRepository.findByWorldIdAndSrcNationIdOrDestNationId(
+            diplomacyRepository.findBySessionIdAndSrcNationIdOrDestNationId(
                 ArgumentMatchers.anyLong(),
                 ArgumentMatchers.anyLong(),
                 ArgumentMatchers.anyLong(),
             )
         ).thenAnswer { inv ->
-            val worldId = inv.arguments[0] as Long
+            val sessionId = inv.arguments[0] as Long
             val src = inv.arguments[1] as Long
             val dest = inv.arguments[2] as Long
             diplomacies.values
-                .filter { it.sessionId == worldId && (it.srcFactionId == src || it.destFactionId == dest) }
+                .filter { it.sessionId == sessionId && (it.srcFactionId == src || it.destFactionId == dest) }
                 .map { cloneDiplomacy(it) }
         }
     }
@@ -111,16 +111,16 @@ class DiplomacyServiceTest {
 
     private fun createDiplomacy(
         id: Long,
-        srcNationId: Long = 1,
-        destNationId: Long = 2,
+        srcFactionId: Long = 1,
+        destFactionId: Long = 2,
         stateCode: String,
         term: Short,
         isDead: Boolean = false,
     ): Diplomacy = Diplomacy(
         id = id,
         sessionId = 1,
-        srcFactionId = srcNationId,
-        destFactionId = destNationId,
+        srcFactionId = srcFactionId,
+        destFactionId = destFactionId,
         stateCode = stateCode,
         term = term,
         isDead = isDead,
@@ -357,7 +357,7 @@ class DiplomacyServiceTest {
             messageType = DiplomacyService.MSG_NON_AGGRESSION_PROPOSAL,
             srcId = 1,
             destId = 2,
-            payload = mutableMapOf("srcNationId" to 1L, "destNationId" to 2L),
+            payload = mutableMapOf("srcFactionId" to 1L, "destFactionId" to 2L),
         )
         messages[100] = message
 
@@ -376,7 +376,7 @@ class DiplomacyServiceTest {
             sessionId = 1,
             mailboxCode = "diplomacy",
             messageType = DiplomacyService.MSG_NON_AGGRESSION_PROPOSAL,
-            payload = mutableMapOf("srcNationId" to 1L, "destNationId" to 2L),
+            payload = mutableMapOf("srcFactionId" to 1L, "destFactionId" to 2L),
         )
 
         service.rejectDiplomaticMessage(1L, 100)

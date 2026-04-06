@@ -31,30 +31,30 @@ class BattleEngineParityTest {
 
     private fun makeGeneral(
         id: Long = 1,
-        nationId: Long = 1,
-        strength: Short = 70,
+        factionId: Long = 1,
+        command: Short = 70,
         leadership: Short = 70,
-        intel: Short = 70,
-        crew: Int = 3000,
-        rice: Int = 50000,
-        crewType: Short = 0, // FOOTMAN (0 in entity, mapped to CrewType.FOOTMAN code 1000)
-        train: Short = 80,
-        atmos: Short = 80,
+        intelligence: Short = 70,
+        ships: Int = 3000,
+        supplies: Int = 50000,
+        shipClass: Short = 0, // FOOTMAN (0 in entity, mapped to CrewType.FOOTMAN code 1000)
+        training: Short = 80,
+        morale: Short = 80,
     ): Officer = Officer(
         id = id,
         sessionId = 1,
         name = "테스트장수$id",
-        factionId = nationId,
+        factionId = factionId,
         planetId = 1,
         leadership = leadership,
-        command = strength,
-        intelligence = intel,
-        ships = crew,
-        shipClass = crewType,
-        training = train,
-        morale = atmos,
+        command = command,
+        intelligence = intelligence,
+        ships = ships,
+        shipClass = shipClass,
+        training = training,
+        morale = morale,
         funds = 1000,
-        supplies = rice,
+        supplies = supplies,
         experience = 1000,
         dedication = 1000,
         specialCode = "None",
@@ -63,17 +63,17 @@ class BattleEngineParityTest {
     )
 
     private fun makeCity(
-        nationId: Long = 2,
-        def: Int = 300,
-        wall: Int = 300,
+        factionId: Long = 2,
+        orbitalDefense: Int = 300,
+        fortress: Int = 300,
     ): Planet = Planet(
         id = 1,
         sessionId = 1,
         name = "테스트도시",
-        factionId = nationId,
-        orbitalDefense = def,
+        factionId = factionId,
+        orbitalDefense = orbitalDefense,
         orbitalDefenseMax = 1000,
-        fortress = wall,
+        fortress = fortress,
         fortressMax = 1000,
         population = 10000,
         populationMax = 50000,
@@ -90,7 +90,7 @@ class BattleEngineParityTest {
      * CASTLE.defenceCoef["1"] = 1.2 → footman deals 1.2× damage to castle.
      *
      * Test approach: run two siege battles with identical stats.
-     * Battle A: footman vs weak city (def=50) → cityHP reduction measured.
+     * Battle A: footman vs weak city (orbitalDefense=50) → cityHP reduction measured.
      * Battle B: same setup.
      * With PHP-correct multiply, footman deals more absolute damage per phase
      * than the broken divide implementation.
@@ -107,13 +107,13 @@ class BattleEngineParityTest {
 
         // Using a weak city: footman should conquer it in one engagement
         val rng = Random(42)
-        val gen = makeGeneral(id = 1, nationId = 1, strength = 80, leadership = 80, crew = 5000, rice = 100000)
-        val city = makeCity(nationId = 2, def = 50, wall = 50)
+        val gen = makeGeneral(id = 1, factionId = 1, command = 80, leadership = 80, ships = 5000, supplies = 100000)
+        val city = makeCity(factionId = 2, orbitalDefense = 50, fortress = 50)
 
         val attacker = WarUnitOfficer(gen)
         val result = engine.resolveBattle(attacker, emptyList(), city, rng)
 
-        // City HP = def * 10 = 500. Footman gets 1.2x boost → should fall.
+        // City HP = orbitalDefense * 10 = 500. Footman gets 1.2x boost → should fall.
         assertTrue(result.cityOccupied, "Footman should take city with 1.2x damage multiplier to castle")
     }
 
@@ -137,16 +137,16 @@ class BattleEngineParityTest {
         val seed = 12345L
 
         // Battle 1: cavalry attacker vs archer defender
-        val cavalryGen = makeGeneral(id = 1, nationId = 1, strength = 70, crew = 3000, rice = 50000, crewType = 3)
-        val archerDefender = makeGeneral(id = 2, nationId = 2, strength = 70, crew = 3000, rice = 50000, crewType = 2)
+        val cavalryGen = makeGeneral(id = 1, factionId = 1, command = 70, ships = 3000, supplies = 50000, shipClass = 3)
+        val archerDefender = makeGeneral(id = 2, factionId = 2, command = 70, ships = 3000, supplies = 50000, shipClass = 2)
         val city1 = makeCity()
         val unit1 = WarUnitOfficer(cavalryGen)
         val def1 = WarUnitOfficer(archerDefender)
         val result1 = engine.resolveBattle(unit1, listOf(def1), city1, Random(seed))
 
         // Battle 2: cavalry attacker vs footman defender (neutral matchup)
-        val cavalryGen2 = makeGeneral(id = 1, nationId = 1, strength = 70, crew = 3000, rice = 50000, crewType = 3)
-        val footmanDefender = makeGeneral(id = 2, nationId = 2, strength = 70, crew = 3000, rice = 50000, crewType = 0)
+        val cavalryGen2 = makeGeneral(id = 1, factionId = 1, command = 70, ships = 3000, supplies = 50000, shipClass = 3)
+        val footmanDefender = makeGeneral(id = 2, factionId = 2, command = 70, ships = 3000, supplies = 50000, shipClass = 0)
         val city2 = makeCity()
         val unit2 = WarUnitOfficer(cavalryGen2)
         val def2 = WarUnitOfficer(footmanDefender)
@@ -171,9 +171,9 @@ class BattleEngineParityTest {
         // PHP process_war.php: $attacker->addTrain(1) at start of each new engagement
         // (when defender.phase==0 && defender.oppose==null)
         val rng = Random(42)
-        val gen = makeGeneral(id = 1, nationId = 1, strength = 80, leadership = 80, crew = 5000, rice = 100000, train = 70)
-        val defenderGen = makeGeneral(id = 2, nationId = 2, strength = 30, crew = 100, rice = 1000, train = 30)
-        val city = makeCity(nationId = 2, def = 50, wall = 50)
+        val gen = makeGeneral(id = 1, factionId = 1, command = 80, leadership = 80, ships = 5000, supplies = 100000, training = 70)
+        val defenderGen = makeGeneral(id = 2, factionId = 2, command = 30, ships = 100, supplies = 1000, training = 30)
+        val city = makeCity(factionId = 2, orbitalDefense = 50, fortress = 50)
 
         val attacker = WarUnitOfficer(gen)
         val defender = WarUnitOfficer(defenderGen)
@@ -192,10 +192,10 @@ class BattleEngineParityTest {
     fun `defender train increases by 1 at start of each engagement`() {
         // PHP: $defender->addTrain(1) when opponent.phase==0 && opponent.oppose==null
         val rng = Random(42)
-        val gen = makeGeneral(id = 1, nationId = 1, strength = 50, leadership = 50, crew = 3000, rice = 30000)
-        val defenderGen = makeGeneral(id = 2, nationId = 2, strength = 50, crew = 2000, rice = 20000, train = 60)
+        val gen = makeGeneral(id = 1, factionId = 1, command = 50, leadership = 50, ships = 3000, supplies = 30000)
+        val defenderGen = makeGeneral(id = 2, factionId = 2, command = 50, ships = 2000, supplies = 20000, training = 60)
 
-        val city = makeCity(nationId = 2)
+        val city = makeCity(factionId = 2)
         val attacker = WarUnitOfficer(gen)
         val defender = WarUnitOfficer(defenderGen)
         val initialDefenderTrain = defender.training
@@ -218,17 +218,17 @@ class BattleEngineParityTest {
     fun `siege city uses year-based cityTrainAtmos not fixed 80`() {
         // PHP: cityTrainAtmos = clamp(year - startYear + 59, 60, 110)
         // At game start (year=181, startYear=180): cityTrainAtmos = 60
-        // train=60 is LOWER than the fixed 80 → city is WEAKER defensively
+        // training =60 is LOWER than the fixed 80 → city is WEAKER defensively
         //
-        // A fixed train=80 means city resists more. cityTrainAtmos=60 means less resistance.
-        // Test: city with year=181 should have train=60, year=221 should have train=100.
+        // A fixed training =80 means city resists more. cityTrainAtmos=60 means less resistance.
+        // Test: city with year=181 should have training =60, year=221 should have training =100.
 
-        val cityEarly = makeCity(def = 300, wall = 300)
+        val cityEarly = makeCity(orbitalDefense = 300, fortress = 300)
         val unitEarly = WarUnitPlanet(cityEarly, year = 181, startYear = 180)
-        assertEquals(60, unitEarly.training, "Early game city should have train=60")
+        assertEquals(60, unitEarly.training, "Early game city should have training =60")
 
-        val cityLate = makeCity(def = 300, wall = 300)
+        val cityLate = makeCity(orbitalDefense = 300, fortress = 300)
         val unitLate = WarUnitPlanet(cityLate, year = 221, startYear = 180)
-        assertEquals(100, unitLate.training, "Late game city should have train=100")
+        assertEquals(100, unitLate.training, "Late game city should have training =100")
     }
 }

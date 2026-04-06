@@ -30,14 +30,14 @@ import kotlin.math.roundToInt
  *   - hwe/sammo/Command/General/che_군량매매.php: trade formula with exchangeFee
  *   - hwe/sammo/Command/General/che_헌납.php: donation (exp=70, ded=100, leadershipExp+1)
  *   - hwe/sammo/Command/General/che_상업투자.php: DomesticCommand base class
- *   - hwe/sammo/Command/General/che_농지개간.php: agri, intel, debuffFront=0.5
- *   - hwe/sammo/Command/General/che_치안강화.php: secu, strength, debuffFront=1
- *   - hwe/sammo/Command/General/che_수비강화.php: def, strength, debuffFront=0.5
- *   - hwe/sammo/Command/General/che_성벽보수.php: wall, strength, debuffFront=0.25
+ *   - hwe/sammo/Command/General/che_농지개간.php: production, intel, debuffFront=0.5
+ *   - hwe/sammo/Command/General/che_치안강화.php: security, strength, debuffFront=1
+ *   - hwe/sammo/Command/General/che_수비강화.php: orbitalDefense, strength, debuffFront=0.5
+ *   - hwe/sammo/Command/General/che_성벽보수.php: fortress, strength, debuffFront=0.25
  *   - hwe/sammo/Command/Nation/che_포상.php: nation->general resource transfer
  *   - hwe/sammo/Command/Nation/che_몰수.php: general->nation resource transfer
  *   - hwe/sammo/Command/Nation/che_물자원조.php: nation->nation resource transfer
- *   - hwe/sammo/Command/Nation/che_증축.php: city level+1, popMax/develMax/wallMax increase
+ *   - hwe/sammo/Command/Nation/che_증축.php: city level+1, populationMax/develMax/fortressMax increase
  *   - hwe/sammo/Command/Nation/che_감축.php: city level-1, refund cost, reduce stats
  *
  * Current impl: command classes in com.openlogh.command.general/nation
@@ -60,7 +60,7 @@ class EconomyCommandParityTest {
          *   tradeRate = city.tradeRoute / 100  (e.g. 100 -> 1.0)
          *   sellAmount = min(amount * tradeRate, general.funds)
          *   tax = sellAmount * exchangeFee
-         *   if (sellAmount + tax > gold): sellAmount *= gold/(sellAmount+tax); tax = gold - sellAmount
+         *   if (sellAmount + tax > gold): sellAmount *= funds/(sellAmount+tax); tax = funds - sellAmount
          *   buyAmount = sellAmount / tradeRate
          *   totalSell = sellAmount + tax
          *
@@ -77,7 +77,7 @@ class EconomyCommandParityTest {
             // buyAmount = 1000 / 1.0 = 1000
             // totalSell = 1000 + 30 = 1030
             // goldDelta = -1030, riceDelta = +1000, nationTax = 30
-            val gen = createGeneral(gold = 5000, rice = 1000)
+            val gen = createGeneral(funds = 5000, supplies = 1000)
             val city = createCity(trade = 100)
             val arg = mapOf<String, Any>("buyRice" to true, "amount" to 1000)
             val cmd = che_군량매매(gen, createEnv(), arg)
@@ -99,7 +99,7 @@ class EconomyCommandParityTest {
             // tax = 1000 * 0.03 = 30
             // buyAmount -= tax => 970
             // goldDelta = +970, riceDelta = -1000
-            val gen = createGeneral(gold = 1000, rice = 5000)
+            val gen = createGeneral(funds = 1000, supplies = 5000)
             val city = createCity(trade = 100)
             val arg = mapOf<String, Any>("buyRice" to false, "amount" to 1000)
             val cmd = che_군량매매(gen, createEnv(), arg)
@@ -122,7 +122,7 @@ class EconomyCommandParityTest {
             // buyAmount = 800 / 0.8 = 1000
             // totalSell = 800 + 24 = 824
             // goldDelta = -824, riceDelta = +1000
-            val gen = createGeneral(gold = 5000, rice = 1000)
+            val gen = createGeneral(funds = 5000, supplies = 1000)
             val city = createCity(trade = 80)
             val arg = mapOf<String, Any>("buyRice" to true, "amount" to 1000)
             val cmd = che_군량매매(gen, createEnv(), arg)
@@ -144,7 +144,7 @@ class EconomyCommandParityTest {
             // tax = 1200 * 0.03 = 36
             // buyAmount -= tax => 1164
             // goldDelta = +1164, riceDelta = -1000
-            val gen = createGeneral(gold = 1000, rice = 5000)
+            val gen = createGeneral(funds = 1000, supplies = 5000)
             val city = createCity(trade = 120)
             val arg = mapOf<String, Any>("buyRice" to false, "amount" to 1000)
             val cmd = che_군량매매(gen, createEnv(), arg)
@@ -160,7 +160,7 @@ class EconomyCommandParityTest {
 
         @Test
         fun `buy rice capped by general gold when sell+tax exceeds gold`() {
-            // amount=10000, tradeRate=1.0, gold=500
+            // amount=10000, tradeRate=1.0, funds =500
             // sellAmount = min(10000*1.0, 500) = 500
             // tax = 500 * 0.03 = 15
             // 500+15 = 515 > 500 => adjustment
@@ -168,7 +168,7 @@ class EconomyCommandParityTest {
             // tax = 500 - 485.436 = 14.563...
             // buyAmount = 485.436 / 1.0 = 485.436... -> rounded to 485
             // totalSell = 485.436 + 14.563 = 500 -> rounded to 500
-            val gen = createGeneral(gold = 500, rice = 100)
+            val gen = createGeneral(funds = 500, supplies = 100)
             val city = createCity(trade = 100)
             val arg = mapOf<String, Any>("buyRice" to true, "amount" to 10000)
             val cmd = che_군량매매(gen, createEnv(), arg)
@@ -185,7 +185,7 @@ class EconomyCommandParityTest {
 
         @Test
         fun `trade grants exp=30 ded=50 and one random stat exp`() {
-            val gen = createGeneral(gold = 5000, rice = 5000)
+            val gen = createGeneral(funds = 5000, supplies = 5000)
             val city = createCity(trade = 100)
             val arg = mapOf<String, Any>("buyRice" to true, "amount" to 1000)
             val cmd = che_군량매매(gen, createEnv(), arg)
@@ -221,7 +221,7 @@ class EconomyCommandParityTest {
          */
         @Test
         fun `donate gold 1000 from general to nation`() {
-            val gen = createGeneral(gold = 5000, rice = 1000)
+            val gen = createGeneral(funds = 5000, supplies = 1000)
             val arg = mapOf<String, Any>("isGold" to true, "amount" to 1000)
             val cmd = che_헌납(gen, createEnv(), arg)
 
@@ -237,7 +237,7 @@ class EconomyCommandParityTest {
 
         @Test
         fun `donate rice 1000 from general to nation`() {
-            val gen = createGeneral(gold = 1000, rice = 5000)
+            val gen = createGeneral(funds = 1000, supplies = 5000)
             val arg = mapOf<String, Any>("isGold" to false, "amount" to 1000)
             val cmd = che_헌납(gen, createEnv(), arg)
 
@@ -251,7 +251,7 @@ class EconomyCommandParityTest {
         @Test
         fun `donate amount capped by general holdings`() {
             // general has 300 gold, requests 1000
-            val gen = createGeneral(gold = 300, rice = 1000)
+            val gen = createGeneral(funds = 300, supplies = 1000)
             val arg = mapOf<String, Any>("isGold" to true, "amount" to 1000)
             val cmd = che_헌납(gen, createEnv(), arg)
 
@@ -273,7 +273,7 @@ class EconomyCommandParityTest {
 
         /**
          * PHP domestic formula (che_상업투자.php:104-127):
-         *   score = stat * (trust/100) * getDomesticExpLevelBonus(expLevel) * rng(0.8..1.2)
+         *   score = stat * (approval/100) * getDomesticExpLevelBonus(expLevel) * rng(0.8..1.2)
          *   score *= onCalcDomestic(actionKey, 'score', score)  [1.0 without modifiers]
          *   score = max(1, score)
          *   pick = choiceUsingWeight(fail, success, normal)
@@ -284,9 +284,9 @@ class EconomyCommandParityTest {
          * Tests verify the command returns correct JSON structure with cityChanges.
          */
         @Test
-        fun `che_농지개간 returns agri delta with correct structure`() {
-            val gen = createGeneral(intel = 80, leadership = 70)
-            val city = createCity(agri = 500, agriMax = 1000)
+        fun `che_농지개간 returns production delta with correct structure`() {
+            val gen = createGeneral(intelligence = 80, leadership = 70)
+            val city = createCity(production = 500, productionMax = 1000)
             val arg = emptyMap<String, Any>()
             val cmd = che_농지개간(gen, createEnv(), arg)
             cmd.city = city
@@ -295,10 +295,10 @@ class EconomyCommandParityTest {
             assertTrue(result.success)
             val json = mapper.readTree(result.message)
             assertTrue(json.has("cityChanges"), "Must have cityChanges")
-            assertTrue(json["cityChanges"].has("agri"), "Must have agri delta")
-            val agriDelta = json["cityChanges"]["agri"].asInt()
-            assertTrue(agriDelta > 0, "agri delta should be positive: $agriDelta")
-            assertTrue(agriDelta <= 500, "agri delta should not exceed remaining capacity")
+            assertTrue(json["cityChanges"].has("production"), "Must have production delta")
+            val agriDelta = json["cityChanges"]["production"].asInt()
+            assertTrue(agriDelta > 0, "production delta should be positive: $agriDelta")
+            assertTrue(agriDelta <= 500, "production delta should not exceed remaining capacity")
             // exp = score * 0.7 (int), ded = score
             assertTrue(json["statChanges"]["experience"].asInt() > 0)
             assertTrue(json["statChanges"]["dedication"].asInt() > 0)
@@ -306,89 +306,89 @@ class EconomyCommandParityTest {
         }
 
         @Test
-        fun `che_상업투자 returns comm delta`() {
-            val gen = createGeneral(intel = 80, leadership = 70)
-            val city = createCity(comm = 400, commMax = 1000)
+        fun `che_상업투자 returns commerce delta`() {
+            val gen = createGeneral(intelligence = 80, leadership = 70)
+            val city = createCity(commerce = 400, commerceMax = 1000)
             val cmd = che_상업투자(gen, createEnv(), null)
             cmd.city = city
 
             val result = runCmd(cmd, "comm_1")
             assertTrue(result.success)
             val json = mapper.readTree(result.message)
-            val commDelta = json["cityChanges"]["comm"].asInt()
-            assertTrue(commDelta > 0, "comm delta should be positive: $commDelta")
-            assertTrue(commDelta <= 600, "comm delta should not exceed remaining capacity")
+            val commDelta = json["cityChanges"]["commerce"].asInt()
+            assertTrue(commDelta > 0, "commerce delta should be positive: $commDelta")
+            assertTrue(commDelta <= 600, "commerce delta should not exceed remaining capacity")
             assertEquals(1, json["statChanges"]["intelExp"].asInt(), "상업투자 uses intel stat")
         }
 
         @Test
-        fun `che_치안강화 returns secu delta using strength stat`() {
-            val gen = createGeneral(strength = 80, leadership = 70)
-            val city = createCity(secu = 600, secuMax = 1000)
+        fun `che_치안강화 returns security delta using strength stat`() {
+            val gen = createGeneral(command = 80, leadership = 70)
+            val city = createCity(security = 600, securityMax = 1000)
             val cmd = che_치안강화(gen, createEnv(), null)
             cmd.city = city
 
             val result = runCmd(cmd, "secu_1")
             assertTrue(result.success)
             val json = mapper.readTree(result.message)
-            val secuDelta = json["cityChanges"]["secu"].asInt()
-            assertTrue(secuDelta > 0, "secu delta should be positive: $secuDelta")
-            assertTrue(secuDelta <= 400, "secu delta should not exceed remaining capacity")
+            val secuDelta = json["cityChanges"]["security"].asInt()
+            assertTrue(secuDelta > 0, "security delta should be positive: $secuDelta")
+            assertTrue(secuDelta <= 400, "security delta should not exceed remaining capacity")
             assertEquals(1, json["statChanges"]["strengthExp"].asInt(), "치안강화 uses strength stat")
         }
 
         @Test
-        fun `che_수비강화 returns def delta using strength stat`() {
-            val gen = createGeneral(strength = 80, leadership = 70)
-            val city = createCity(def = 300, defMax = 1000)
+        fun `che_수비강화 returns orbitalDefense delta using strength stat`() {
+            val gen = createGeneral(command = 80, leadership = 70)
+            val city = createCity(orbitalDefense = 300, orbitalDefenseMax = 1000)
             val cmd = che_수비강화(gen, createEnv(), null)
             cmd.city = city
 
             val result = runCmd(cmd, "def_1")
             assertTrue(result.success)
             val json = mapper.readTree(result.message)
-            val defDelta = json["cityChanges"]["def"].asInt()
-            assertTrue(defDelta > 0, "def delta should be positive: $defDelta")
-            assertTrue(defDelta <= 700, "def delta should not exceed remaining capacity")
+            val defDelta = json["cityChanges"]["orbitalDefense"].asInt()
+            assertTrue(defDelta > 0, "orbitalDefense delta should be positive: $defDelta")
+            assertTrue(defDelta <= 700, "orbitalDefense delta should not exceed remaining capacity")
             assertEquals(1, json["statChanges"]["strengthExp"].asInt(), "수비강화 uses strength stat")
         }
 
         @Test
-        fun `che_성벽보수 returns wall delta using strength stat`() {
-            val gen = createGeneral(strength = 80, leadership = 70)
-            val city = createCity(wall = 500, wallMax = 1000)
+        fun `che_성벽보수 returns fortress delta using strength stat`() {
+            val gen = createGeneral(command = 80, leadership = 70)
+            val city = createCity(fortress = 500, fortressMax = 1000)
             val cmd = che_성벽보수(gen, createEnv(), null)
             cmd.city = city
 
             val result = runCmd(cmd, "wall_1")
             assertTrue(result.success)
             val json = mapper.readTree(result.message)
-            val wallDelta = json["cityChanges"]["wall"].asInt()
-            assertTrue(wallDelta > 0, "wall delta should be positive: $wallDelta")
-            assertTrue(wallDelta <= 500, "wall delta should not exceed remaining capacity")
+            val wallDelta = json["cityChanges"]["fortress"].asInt()
+            assertTrue(wallDelta > 0, "fortress delta should be positive: $wallDelta")
+            assertTrue(wallDelta <= 500, "fortress delta should not exceed remaining capacity")
             assertEquals(1, json["statChanges"]["strengthExp"].asInt(), "성벽보수 uses strength stat")
         }
 
         @Test
         fun `domestic commands cap city stat at max value`() {
-            // city.production = 990, agriMax = 1000 -> delta cannot exceed 10
-            val gen = createGeneral(intel = 100, leadership = 100)
-            val city = createCity(agri = 990, agriMax = 1000)
+            // city.production = 990, productionMax = 1000 -> delta cannot exceed 10
+            val gen = createGeneral(intelligence = 100, leadership = 100)
+            val city = createCity(production = 990, productionMax = 1000)
             val cmd = che_농지개간(gen, createEnv(), null)
             cmd.city = city
 
             val result = runCmd(cmd, "agri_cap")
             assertTrue(result.success)
             val json = mapper.readTree(result.message)
-            val agriDelta = json["cityChanges"]["agri"].asInt()
-            assertTrue(agriDelta <= 10, "agri delta capped at remaining capacity: $agriDelta")
+            val agriDelta = json["cityChanges"]["production"].asInt()
+            assertTrue(agriDelta <= 10, "production delta capped at remaining capacity: $agriDelta")
         }
 
         @Test
         fun `domestic command deducts gold cost from general`() {
             // develCost=100, no modifiers -> cost = round(100) = 100 gold
-            val gen = createGeneral(gold = 5000, intel = 80)
-            val city = createCity(comm = 500, commMax = 1000)
+            val gen = createGeneral(funds = 5000, intelligence = 80)
+            val city = createCity(commerce = 500, commerceMax = 1000)
             val cmd = che_상업투자(gen, createEnv(develCost = 100), null)
             cmd.city = city
 
@@ -396,13 +396,13 @@ class EconomyCommandParityTest {
             assertTrue(result.success)
             val json = mapper.readTree(result.message)
             val goldDelta = json["statChanges"]["gold"].asInt()
-            assertTrue(goldDelta < 0, "Should deduct gold: $goldDelta")
+            assertTrue(goldDelta < 0, "Should deduct funds: $goldDelta")
         }
 
         @Test
         fun `domestic command critical result is one of fail normal success`() {
-            val gen = createGeneral(intel = 80, leadership = 70)
-            val city = createCity(agri = 500, agriMax = 1000)
+            val gen = createGeneral(intelligence = 80, leadership = 70)
+            val city = createCity(production = 500, productionMax = 1000)
             val cmd = che_농지개간(gen, createEnv(), null)
             cmd.city = city
 
@@ -417,8 +417,8 @@ class EconomyCommandParityTest {
         @Test
         fun `domestic command experience equals score times 0_7 and dedication equals score`() {
             // Run deterministic seed to get a known score, verify exp/ded ratio
-            val gen = createGeneral(intel = 80, leadership = 70)
-            val city = createCity(agri = 100, agriMax = 2000)
+            val gen = createGeneral(intelligence = 80, leadership = 70)
+            val city = createCity(production = 100, productionMax = 2000)
             val cmd = che_농지개간(gen, createEnv(), null)
             cmd.city = city
 
@@ -427,7 +427,7 @@ class EconomyCommandParityTest {
             val json = mapper.readTree(result.message)
             val exp = json["statChanges"]["experience"].asInt()
             val ded = json["statChanges"]["dedication"].asInt()
-            val agriDelta = json["cityChanges"]["agri"].asInt()
+            val agriDelta = json["cityChanges"]["production"].asInt()
             // The score used to compute exp/ded may differ from cityDelta (due to front debuff),
             // but the relationship exp = floor(score * 0.7) and ded = score should hold.
             // ded should be >= agriDelta (score before front debuff)
@@ -455,8 +455,8 @@ class EconomyCommandParityTest {
         @Test
         fun `che_포상 transfers gold from nation to dest general`() {
             val gen = createGeneral(officerLevel = 12) // chief
-            val destGen = createGeneral(id = 2, gold = 100, rice = 100)
-            val nation = createNation(gold = 10000, rice = 10000)
+            val destGen = createGeneral(id = 2, funds = 100, supplies = 100)
+            val nation = createNation(funds = 10000, supplies = 10000)
             val arg = mapOf<String, Any>("isGold" to true, "amount" to 1000, "destGeneralID" to 2)
             val cmd = che_포상(gen, createEnv(), arg)
             cmd.nation = nation
@@ -472,8 +472,8 @@ class EconomyCommandParityTest {
         @Test
         fun `che_포상 transfers rice from nation to dest general`() {
             val gen = createGeneral(officerLevel = 12)
-            val destGen = createGeneral(id = 2, gold = 100, rice = 100)
-            val nation = createNation(gold = 10000, rice = 10000)
+            val destGen = createGeneral(id = 2, funds = 100, supplies = 100)
+            val nation = createNation(funds = 10000, supplies = 10000)
             val arg = mapOf<String, Any>("isGold" to false, "amount" to 2000, "destGeneralID" to 2)
             val cmd = che_포상(gen, createEnv(), arg)
             cmd.nation = nation
@@ -487,10 +487,10 @@ class EconomyCommandParityTest {
 
         @Test
         fun `che_포상 caps amount at nation resources minus base`() {
-            // nation gold=1500, baseGold default=1000 in gameStor -> available=500
+            // nation funds =1500, baseGold default=1000 in gameStor -> available=500
             val gen = createGeneral(officerLevel = 12)
-            val destGen = createGeneral(id = 2, gold = 100, rice = 100)
-            val nation = createNation(gold = 1500, rice = 10000)
+            val destGen = createGeneral(id = 2, funds = 100, supplies = 100)
+            val nation = createNation(funds = 1500, supplies = 10000)
             val arg = mapOf<String, Any>("isGold" to true, "amount" to 5000, "destGeneralID" to 2)
             val env = createEnv()
             env.gameStor["baseGold"] = 1000
@@ -513,8 +513,8 @@ class EconomyCommandParityTest {
         @Test
         fun `che_몰수 transfers gold from dest general to nation`() {
             val gen = createGeneral(officerLevel = 12)
-            val destGen = createGeneral(id = 2, gold = 5000, rice = 5000)
-            val nation = createNation(gold = 10000, rice = 10000)
+            val destGen = createGeneral(id = 2, funds = 5000, supplies = 5000)
+            val nation = createNation(funds = 10000, supplies = 10000)
             val arg = mapOf<String, Any>("isGold" to true, "amount" to 2000, "destGeneralID" to 2)
             val cmd = che_몰수(gen, createEnv(), arg)
             cmd.nation = nation
@@ -529,8 +529,8 @@ class EconomyCommandParityTest {
         @Test
         fun `che_몰수 caps at dest general holdings`() {
             val gen = createGeneral(officerLevel = 12)
-            val destGen = createGeneral(id = 2, gold = 300, rice = 5000)
-            val nation = createNation(gold = 10000, rice = 10000)
+            val destGen = createGeneral(id = 2, funds = 300, supplies = 5000)
+            val nation = createNation(funds = 10000, supplies = 10000)
             val arg = mapOf<String, Any>("isGold" to true, "amount" to 5000, "destGeneralID" to 2)
             val cmd = che_몰수(gen, createEnv(), arg)
             cmd.nation = nation
@@ -553,9 +553,9 @@ class EconomyCommandParityTest {
          */
         @Test
         fun `che_물자원조 transfers gold and rice between nations`() {
-            val gen = createGeneral(officerLevel = 12, gold = 1000, rice = 1000)
-            val nation = createNation(id = 1, gold = 10000, rice = 20000)
-            val destFaction = createNation(id = 2, gold = 5000, rice = 5000)
+            val gen = createGeneral(officerLevel = 12, funds = 1000, supplies = 1000)
+            val nation = createNation(id = 1, funds = 10000, supplies = 20000)
+            val destFaction = createNation(id = 2, funds = 5000, supplies = 5000)
             val arg = mapOf<String, Any>(
                 "destNationID" to 2,
                 "amountList" to listOf(3000, 5000)
@@ -574,11 +574,11 @@ class EconomyCommandParityTest {
 
         @Test
         fun `che_물자원조 grants exp=5 ded=5`() {
-            val gen = createGeneral(officerLevel = 12, gold = 1000, rice = 1000)
+            val gen = createGeneral(officerLevel = 12, funds = 1000, supplies = 1000)
             gen.experience = 0
             gen.dedication = 0
-            val nation = createNation(id = 1, gold = 10000, rice = 20000)
-            val destFaction = createNation(id = 2, gold = 5000, rice = 5000)
+            val nation = createNation(id = 1, funds = 10000, supplies = 20000)
+            val destFaction = createNation(id = 2, funds = 5000, supplies = 5000)
             val arg = mapOf<String, Any>(
                 "destNationID" to 2,
                 "amountList" to listOf(1000, 1000)
@@ -612,9 +612,9 @@ class EconomyCommandParityTest {
             val gen = createGeneral(officerLevel = 12)
             gen.experience = 0
             gen.dedication = 0
-            val nation = createNation(gold = 200000, rice = 200000)
-            val city = createCity(level = 5, popMax = 100000, agriMax = 1000, commMax = 1000,
-                secuMax = 1000, defMax = 1000, wallMax = 1000)
+            val nation = createNation(funds = 200000, supplies = 200000)
+            val city = createCity(level = 5, populationMax = 100000, productionMax = 1000, commerceMax = 1000,
+                securityMax = 1000, orbitalDefenseMax = 1000, fortressMax = 1000)
             val cmd = che_증축(gen, createEnv(develCost = 100), null)
             cmd.nation = nation
             cmd.city = city
@@ -641,7 +641,7 @@ class EconomyCommandParityTest {
         @Test
         fun `che_증축 fails when level is already 8`() {
             val gen = createGeneral(officerLevel = 12)
-            val nation = createNation(gold = 500000, rice = 500000)
+            val nation = createNation(funds = 500000, supplies = 500000)
             val city = createCity(level = 8)
             val cmd = che_증축(gen, createEnv(), null)
             cmd.nation = nation
@@ -655,11 +655,11 @@ class EconomyCommandParityTest {
         /**
          * PHP 감축 (che_감축.php:174-196):
          *   city.level -= 1
-         *   city.population = max(pop - expandCityPopIncreaseAmount, minRecruitPop)
-         *   city.production = max(agri - expandCityDevelIncreaseAmount, 0)
-         *   (same for comm, secu)
-         *   city.orbitalDefense = max(def - expandCityWallIncreaseAmount, 0)
-         *   city.fortress = max(wall - expandCityWallIncreaseAmount, 0)
+         *   city.population = max(population - expandCityPopIncreaseAmount, minRecruitPop)
+         *   city.production = max(production - expandCityDevelIncreaseAmount, 0)
+         *   (same for commerce, security)
+         *   city.orbitalDefense = max(orbitalDefense - expandCityWallIncreaseAmount, 0)
+         *   city.fortress = max(fortress - expandCityWallIncreaseAmount, 0)
          *   city.populationMax -= expandCityPopIncreaseAmount
          *   (same for all maxes)
          *   nation.funds += cost, nation.supplies += cost
@@ -671,11 +671,11 @@ class EconomyCommandParityTest {
             val gen = createGeneral(officerLevel = 12)
             gen.experience = 0
             gen.dedication = 0
-            val nation = createNation(gold = 50000, rice = 50000)
-            val city = createCity(level = 6, pop = 150000, popMax = 200000,
-                agri = 800, agriMax = 3000, comm = 700, commMax = 3000,
-                secu = 600, secuMax = 3000, def = 500, defMax = 3000,
-                wall = 400, wallMax = 3000)
+            val nation = createNation(funds = 50000, supplies = 50000)
+            val city = createCity(level = 6, population = 150000, populationMax = 200000,
+                production = 800, productionMax = 3000, commerce = 700, commerceMax = 3000,
+                security = 600, securityMax = 3000, orbitalDefense = 500, orbitalDefenseMax = 3000,
+                fortress = 400, fortressMax = 3000)
             val cmd = che_감축(gen, createEnv(develCost = 100), null)
             cmd.nation = nation
             cmd.city = city
@@ -707,7 +707,7 @@ class EconomyCommandParityTest {
         @Test
         fun `che_감축 fails when level is 1`() {
             val gen = createGeneral(officerLevel = 12)
-            val nation = createNation(gold = 50000, rice = 50000)
+            val nation = createNation(funds = 50000, supplies = 50000)
             val city = createCity(level = 1)
             val cmd = che_감축(gen, createEnv(), null)
             cmd.nation = nation
@@ -740,49 +740,49 @@ class EconomyCommandParityTest {
     private fun createGeneral(
         id: Long = 1,
         leadership: Short = 70,
-        strength: Short = 70,
-        intel: Short = 70,
-        gold: Int = 1000,
-        rice: Int = 1000,
+        command: Short = 70,
+        intelligence: Short = 70,
+        funds: Int = 1000,
+        supplies: Int = 1000,
         officerLevel: Short = 1,
-        crew: Int = 0,
-        crewType: Short = 0,
-        train: Short = 0,
-        atmos: Short = 0,
+        ships: Int = 0,
+        shipClass: Short = 0,
+        training: Short = 0,
+        morale: Short = 0,
     ): Officer = Officer(
         id = id,
         sessionId = 1,
         name = "테스트장수$id",
         factionId = 1,
         planetId = 1,
-        funds = gold,
-        supplies = rice,
+        funds = funds,
+        supplies = supplies,
         leadership = leadership,
-        command = strength,
-        intelligence = intel,
+        command = command,
+        intelligence = intelligence,
         officerLevel = officerLevel,
-        ships = crew,
-        shipClass = crewType,
-        training = train,
-        morale = atmos,
+        ships = ships,
+        shipClass = shipClass,
+        training = training,
+        morale = morale,
     )
 
     private fun createCity(
         id: Long = 1,
-        nationId: Long = 1,
-        pop: Int = 50000,
-        popMax: Int = 100000,
-        agri: Int = 500,
-        agriMax: Int = 1000,
-        comm: Int = 500,
-        commMax: Int = 1000,
-        secu: Int = 500,
-        secuMax: Int = 1000,
-        def: Int = 500,
-        defMax: Int = 1000,
-        wall: Int = 500,
-        wallMax: Int = 1000,
-        trust: Float = 80f,
+        factionId: Long = 1,
+        population: Int = 50000,
+        populationMax: Int = 100000,
+        production: Int = 500,
+        productionMax: Int = 1000,
+        commerce: Int = 500,
+        commerceMax: Int = 1000,
+        security: Int = 500,
+        securityMax: Int = 1000,
+        orbitalDefense: Int = 500,
+        orbitalDefenseMax: Int = 1000,
+        fortress: Int = 500,
+        fortressMax: Int = 1000,
+        approval: Float = 80f,
         level: Short = 5,
         trade: Int = 100,
         frontState: Short = 0,
@@ -790,20 +790,20 @@ class EconomyCommandParityTest {
         id = id,
         sessionId = 1,
         name = "테스트도시$id",
-        factionId = nationId,
-        population = pop,
-        populationMax = popMax,
-        production = agri,
-        productionMax = agriMax,
-        commerce = comm,
-        commerceMax = commMax,
-        security = secu,
-        securityMax = secuMax,
-        orbitalDefense = def,
-        orbitalDefenseMax = defMax,
-        fortress = wall,
-        fortressMax = wallMax,
-        approval = trust,
+        factionId = factionId,
+        population = population,
+        populationMax = populationMax,
+        production = production,
+        productionMax = productionMax,
+        commerce = commerce,
+        commerceMax = commerceMax,
+        security = security,
+        securityMax = securityMax,
+        orbitalDefense = orbitalDefense,
+        orbitalDefenseMax = orbitalDefenseMax,
+        fortress = fortress,
+        fortressMax = fortressMax,
+        approval = approval,
         supplyState = 1,
         level = level,
         tradeRoute = trade,
@@ -812,16 +812,16 @@ class EconomyCommandParityTest {
 
     private fun createNation(
         id: Long = 1,
-        gold: Int = 10000,
-        rice: Int = 10000,
+        funds: Int = 10000,
+        supplies: Int = 10000,
         level: Short = 5,
     ): Faction = Faction(
         id = id,
         sessionId = 1,
         name = "테스트국가$id",
         color = "#FF0000",
-        funds = gold,
-        supplies = rice,
+        funds = funds,
+        supplies = supplies,
         factionRank = level,
         capitalPlanetId = 1,
     )

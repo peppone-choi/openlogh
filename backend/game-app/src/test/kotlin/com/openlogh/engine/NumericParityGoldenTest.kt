@@ -63,30 +63,30 @@ class NumericParityGoldenTest {
 
     private fun wireRepos() {
         `when`(planetRepository.findBySessionId(ArgumentMatchers.anyLong())).thenAnswer { inv ->
-            val worldId = inv.arguments[0] as Long
-            cities.values.filter { it.sessionId == worldId }.map { it.toSnapshot().toEntity() }
+            val sessionId = inv.arguments[0] as Long
+            cities.values.filter { it.sessionId == sessionId }.map { it.toSnapshot().toEntity() }
         }
         `when`(factionRepository.findBySessionId(ArgumentMatchers.anyLong())).thenAnswer { inv ->
-            val worldId = inv.arguments[0] as Long
-            nations.values.filter { it.sessionId == worldId }.map { it.toSnapshot().toEntity() }
+            val sessionId = inv.arguments[0] as Long
+            nations.values.filter { it.sessionId == sessionId }.map { it.toSnapshot().toEntity() }
         }
         `when`(officerRepository.findBySessionId(ArgumentMatchers.anyLong())).thenAnswer { inv ->
-            val worldId = inv.arguments[0] as Long
-            generals.values.filter { it.sessionId == worldId }.map { it.toSnapshot().toEntity() }
+            val sessionId = inv.arguments[0] as Long
+            generals.values.filter { it.sessionId == sessionId }.map { it.toSnapshot().toEntity() }
         }
         `when`(officerRepository.findBySessionIdAndPlanetIdIn(ArgumentMatchers.anyLong(), ArgumentMatchers.anyList()))
             .thenReturn(emptyList())
-        `when`(planetRepository.save(ArgumentMatchers.any(City::class.java))).thenAnswer { inv ->
+        `when`(planetRepository.save(ArgumentMatchers.any(Planet::class.java))).thenAnswer { inv ->
             val city = inv.arguments[0] as Planet
             cities[city.id] = city.toSnapshot().toEntity()
             city
         }
-        `when`(factionRepository.save(ArgumentMatchers.any(Nation::class.java))).thenAnswer { inv ->
+        `when`(factionRepository.save(ArgumentMatchers.any(Faction::class.java))).thenAnswer { inv ->
             val nation = inv.arguments[0] as Faction
             nations[nation.id] = nation.toSnapshot().toEntity()
             nation
         }
-        `when`(officerRepository.save(ArgumentMatchers.any(General::class.java))).thenAnswer { inv ->
+        `when`(officerRepository.save(ArgumentMatchers.any(Officer::class.java))).thenAnswer { inv ->
             val general = inv.arguments[0] as Officer
             generals[general.id] = general.toSnapshot().toEntity()
             general
@@ -263,21 +263,21 @@ class NumericParityGoldenTest {
         assertEquals(2000, result.nationRice2, "nation2 rice")
 
         // City 1 (Wei)
-        assertEquals(50000, result.city1Pop, "city1 pop")
-        assertEquals(776, result.city1Agri, "city1 agri")
-        assertEquals(776, result.city1Comm, "city1 comm")
-        assertEquals(776, result.city1Secu, "city1 secu")
-        assertEquals(444, result.city1Def, "city1 def")
-        assertEquals(776, result.city1Wall, "city1 wall")
+        assertEquals(50000, result.city1Pop, "city1 population")
+        assertEquals(776, result.city1Agri, "city1 production")
+        assertEquals(776, result.city1Comm, "city1 commerce")
+        assertEquals(776, result.city1Secu, "city1 security")
+        assertEquals(444, result.city1Def, "city1 orbitalDefense")
+        assertEquals(776, result.city1Wall, "city1 fortress")
 
         // City 2 (Shu) - same initial conditions as city 1
-        assertEquals(50000, result.city2Pop, "city2 pop")
-        assertEquals(776, result.city2Agri, "city2 agri")
-        assertEquals(776, result.city2Comm, "city2 comm")
+        assertEquals(50000, result.city2Pop, "city2 population")
+        assertEquals(776, result.city2Agri, "city2 production")
+        assertEquals(776, result.city2Comm, "city2 commerce")
 
         // City 3 (neutral) - no nation, no income processing growth
-        assertEquals(10000, result.city3Pop, "city3 neutral pop")
-        assertEquals(344, result.city3Agri, "city3 neutral agri")
+        assertEquals(10000, result.city3Pop, "city3 neutral population")
+        assertEquals(344, result.city3Agri, "city3 neutral production")
 
         // General gold/rice accumulation from salary distribution
         assertEquals(65277, result.generals[0].funds, "general1 (조조) gold")
@@ -296,10 +296,10 @@ class NumericParityGoldenTest {
 
         for (g in result.generals) {
             assertTrue(g.leadership in 0..100, "general ${g.id} leadership=${g.leadership} out of bounds")
-            assertTrue(g.command in 0..100, "general ${g.id} strength=${g.command} out of bounds")
-            assertTrue(g.intelligence in 0..100, "general ${g.id} intel=${g.intelligence} out of bounds")
-            assertTrue(g.training in 0..110, "general ${g.id} train=${g.training} out of bounds")
-            assertTrue(g.morale in 0..110, "general ${g.id} atmos=${g.morale} out of bounds")
+            assertTrue(g.command in 0..100, "general ${g.id} command =${g.command} out of bounds")
+            assertTrue(g.intelligence in 0..100, "general ${g.id} intelligence =${g.intelligence} out of bounds")
+            assertTrue(g.training in 0..110, "general ${g.id} training =${g.training} out of bounds")
+            assertTrue(g.morale in 0..110, "general ${g.id} morale =${g.morale} out of bounds")
             assertTrue(g.injury in 0..100, "general ${g.id} injury=${g.injury} out of bounds")
         }
     }
@@ -325,13 +325,13 @@ class NumericParityGoldenTest {
 
     private data class OfficerSnapshot(
         val id: Long,
-        val gold: Int,
-        val rice: Int,
+        val funds: Int,
+        val supplies: Int,
         val leadership: Short,
-        val strength: Short,
-        val intel: Short,
-        val train: Short,
-        val atmos: Short,
+        val command: Short,
+        val intelligence: Short,
+        val training: Short,
+        val morale: Short,
         val injury: Short,
     )
 }

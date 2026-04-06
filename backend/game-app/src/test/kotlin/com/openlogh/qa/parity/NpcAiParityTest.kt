@@ -70,35 +70,35 @@ class NpcAiParityTest {
 
         @Test
         fun `strength dominant general has WARRIOR flag`() {
-            val gen = createGeneral(leadership = 40, strength = 90, intel = 40)
+            val gen = createGeneral(leadership = 40, command = 90, intelligence = 40)
             val type = ai.classifyGeneral(gen)
             assertTrue(type and GeneralType.WARRIOR.flag != 0, "Should have WARRIOR flag")
         }
 
         @Test
         fun `intel dominant general has STRATEGIST flag`() {
-            val gen = createGeneral(leadership = 40, strength = 40, intel = 90)
+            val gen = createGeneral(leadership = 40, command = 40, intelligence = 90)
             val type = ai.classifyGeneral(gen)
             assertTrue(type and GeneralType.STRATEGIST.flag != 0, "Should have STRATEGIST flag")
         }
 
         @Test
         fun `high leadership sets COMMANDER flag`() {
-            val gen = createGeneral(leadership = 80, strength = 60, intel = 60)
+            val gen = createGeneral(leadership = 80, command = 60, intelligence = 60)
             val type = ai.classifyGeneral(gen, minNPCWarLeadership = 40)
             assertTrue(type and GeneralType.COMMANDER.flag != 0, "Should have COMMANDER flag")
         }
 
         @Test
         fun `low leadership does not set COMMANDER flag`() {
-            val gen = createGeneral(leadership = 30, strength = 80, intel = 40)
+            val gen = createGeneral(leadership = 30, command = 80, intelligence = 40)
             val type = ai.classifyGeneral(gen, minNPCWarLeadership = 40)
             assertEquals(0, type and GeneralType.COMMANDER.flag, "Should NOT have COMMANDER flag")
         }
 
         @Test
         fun `balanced high stats can have multiple flags`() {
-            val gen = createGeneral(leadership = 80, strength = 80, intel = 80)
+            val gen = createGeneral(leadership = 80, command = 80, intelligence = 80)
             val type = ai.classifyGeneral(gen, minNPCWarLeadership = 40)
             assertTrue(type and GeneralType.COMMANDER.flag != 0)
             assertTrue(type and (GeneralType.WARRIOR.flag or GeneralType.STRATEGIST.flag) != 0)
@@ -106,7 +106,7 @@ class NpcAiParityTest {
 
         @Test
         fun `deterministic with same RNG seed`() {
-            val gen = createGeneral(leadership = 70, strength = 70, intel = 70)
+            val gen = createGeneral(leadership = 70, command = 70, intelligence = 70)
             val r1 = ai.classifyGeneral(gen, Random(42))
             val r2 = ai.classifyGeneral(gen, Random(42))
             assertEquals(r1, r2)
@@ -114,7 +114,7 @@ class NpcAiParityTest {
 
         @Test
         fun `consistent COMMANDER for clearly dominant leadership across seeds`() {
-            val gen = createGeneral(leadership = 90, strength = 50, intel = 50)
+            val gen = createGeneral(leadership = 90, command = 50, intelligence = 50)
             repeat(20) { seed ->
                 val type = ai.classifyGeneral(gen, Random(seed.toLong()), minNPCWarLeadership = 40)
                 assertTrue(type and GeneralType.COMMANDER.flag != 0,
@@ -198,7 +198,7 @@ class NpcAiParityTest {
             val nation = createNation(id = 1)
             val world = createWorld(year = 200, month = 3, startYear = 180)
             val diplomacy = createDiplomacy(srcFactionId = 1, destFactionId = 2, stateCode = "전쟁")
-            val frontCity = createCity(id = 1, nationId = 1, frontState = 2, supplyState = 1)
+            val frontCity = createCity(id = 1, factionId = 1, frontState = 2, supplyState = 1)
             val result = ai.calcDiplomacyState(world, nation, listOf(diplomacy), listOf(frontCity))
             assertEquals(DiplomacyState.AT_WAR, result.dipState)
             assertEquals(4, result.dipState.code)
@@ -263,7 +263,7 @@ class NpcAiParityTest {
         fun `categorizeNationGeneral classifies NPC with high leadership as npcWarGeneral`() {
             val self = createGeneral(id = 1, leadership = 90, npcState = 2)
             val npcWar = createGeneral(id = 2, leadership = 60, npcState = 2)
-            val city = createCity(id = 1, nationId = 1, supplyState = 1)
+            val city = createCity(id = 1, factionId = 1, supplyState = 1)
 
             val result = ai.categorizeNationGeneral(
                 nationGenerals = listOf(self, npcWar),
@@ -281,7 +281,7 @@ class NpcAiParityTest {
         fun `categorizeNationGeneral classifies NPC with low leadership as npcCivilGeneral`() {
             val self = createGeneral(id = 1, leadership = 90, npcState = 2)
             val npcCivil = createGeneral(id = 2, leadership = 30, npcState = 2)
-            val city = createCity(id = 1, nationId = 1, supplyState = 1)
+            val city = createCity(id = 1, factionId = 1, supplyState = 1)
 
             val result = ai.categorizeNationGeneral(
                 nationGenerals = listOf(self, npcCivil),
@@ -301,7 +301,7 @@ class NpcAiParityTest {
             val userWar = createGeneral(id = 2, leadership = 60, npcState = 0).apply {
                 meta["warnum"] = 5  // Recent combat
             }
-            val city = createCity(id = 1, nationId = 1, supplyState = 1)
+            val city = createCity(id = 1, factionId = 1, supplyState = 1)
 
             val result = ai.categorizeNationGeneral(
                 nationGenerals = listOf(self, userWar),
@@ -317,8 +317,8 @@ class NpcAiParityTest {
         @Test
         fun `categorizeNationGeneral classifies player general without combat as userCivilGeneral`() {
             val self = createGeneral(id = 1, leadership = 90, npcState = 2)
-            val userCivil = createGeneral(id = 2, leadership = 60, npcState = 0, crew = 100)
-            val city = createCity(id = 1, nationId = 1, supplyState = 1)
+            val userCivil = createGeneral(id = 2, leadership = 60, npcState = 0, ships = 100)
+            val city = createCity(id = 1, factionId = 1, supplyState = 1)
 
             val result = ai.categorizeNationGeneral(
                 nationGenerals = listOf(self, userCivil),
@@ -335,7 +335,7 @@ class NpcAiParityTest {
         fun `categorizeNationGeneral classifies npcState 5 as troopLeader`() {
             val self = createGeneral(id = 1, leadership = 90, npcState = 2)
             val troopLeader = createGeneral(id = 2, leadership = 60, npcState = 5)
-            val city = createCity(id = 1, nationId = 1, supplyState = 1)
+            val city = createCity(id = 1, factionId = 1, supplyState = 1)
 
             val result = ai.categorizeNationGeneral(
                 nationGenerals = listOf(self, troopLeader),
@@ -353,7 +353,7 @@ class NpcAiParityTest {
             val dying = createGeneral(id = 2, leadership = 80, npcState = 2).apply {
                 killTurn = 3
             }
-            val city = createCity(id = 1, nationId = 1, supplyState = 1)
+            val city = createCity(id = 1, factionId = 1, supplyState = 1)
 
             val result = ai.categorizeNationGeneral(
                 nationGenerals = listOf(self, dying),
@@ -368,9 +368,9 @@ class NpcAiParityTest {
         @Test
         fun `categorizeNationGeneral marks generals in non-supply city as lost`() {
             val self = createGeneral(id = 1, leadership = 90, npcState = 2)
-            val lost = createGeneral(id = 2, leadership = 60, npcState = 2, cityId = 2)
-            val city1 = createCity(id = 1, nationId = 1, supplyState = 1)
-            val city2 = createCity(id = 2, nationId = 1, supplyState = 0)
+            val lost = createGeneral(id = 2, leadership = 60, npcState = 2, planetId = 2)
+            val city1 = createCity(id = 1, factionId = 1, supplyState = 1)
+            val city2 = createCity(id = 2, factionId = 1, supplyState = 0)
 
             val result = ai.categorizeNationGeneral(
                 nationGenerals = listOf(self, lost),
@@ -386,7 +386,7 @@ class NpcAiParityTest {
         fun `categorizeNationGeneral marks high officerLevel as chiefGeneral`() {
             val self = createGeneral(id = 1, leadership = 90, npcState = 2)
             val chief = createGeneral(id = 2, leadership = 60, npcState = 2, officerLevel = 11)
-            val city = createCity(id = 1, nationId = 1, supplyState = 1)
+            val city = createCity(id = 1, factionId = 1, supplyState = 1)
 
             val result = ai.categorizeNationGeneral(
                 nationGenerals = listOf(self, chief),
@@ -498,7 +498,7 @@ class NpcAiParityTest {
 
         @Test
         fun `low crew below minWarCrew triggers recruitment`() {
-            val gen = createGeneral(crew = 100, leadership = 80, train = 80, atmos = 80)
+            val gen = createGeneral(ships = 100, leadership = 80, training = 80, morale = 80)
             val policy = NpcGeneralPolicy(minWarCrew = 500)
             assertTrue(gen.ships < policy.minWarCrew,
                 "crew(100) < minWarCrew(500) -> should recruit")
@@ -506,7 +506,7 @@ class NpcAiParityTest {
 
         @Test
         fun `sufficient crew passes recruitment check`() {
-            val gen = createGeneral(crew = 5000, leadership = 80)
+            val gen = createGeneral(ships = 5000, leadership = 80)
             val policy = NpcGeneralPolicy(minWarCrew = 500)
             assertFalse(gen.ships < policy.minWarCrew,
                 "crew(5000) >= minWarCrew(500) -> no recruitment needed")
@@ -514,21 +514,21 @@ class NpcAiParityTest {
 
         @Test
         fun `low train triggers training`() {
-            val gen = createGeneral(train = 30)
+            val gen = createGeneral(training = 30)
             val policy = NpcGeneralPolicy(properWarTrainAtmos = 80)
             assertTrue(gen.training < policy.properWarTrainAtmos)
         }
 
         @Test
         fun `low atmos triggers morale boost`() {
-            val gen = createGeneral(atmos = 30)
+            val gen = createGeneral(morale = 30)
             val policy = NpcGeneralPolicy(properWarTrainAtmos = 80)
             assertTrue(gen.morale < policy.properWarTrainAtmos)
         }
 
         @Test
         fun `all stats sufficient means ready for attack`() {
-            val gen = createGeneral(crew = 5000, leadership = 80, train = 80, atmos = 80)
+            val gen = createGeneral(ships = 5000, leadership = 80, training = 80, morale = 80)
             val policy = NpcGeneralPolicy(minWarCrew = 500, properWarTrainAtmos = 80)
             val crewOk = gen.ships >= policy.minWarCrew
             val trainOk = gen.training >= policy.properWarTrainAtmos
@@ -579,16 +579,16 @@ class NpcAiParityTest {
     inner class PeaceTimeParity {
 
         @Test
-        fun `low agri ratio should trigger agriculture first`() {
+        fun `low production ratio should trigger agriculture first`() {
             val agriRatio = 400.0 / 1000.0
             val commRatio = 800.0 / 1000.0
             assertTrue(agriRatio < 0.8 && commRatio >= 0.8,
-                "Only agri below threshold -> should develop agri first")
+                "Only production below threshold -> should develop production first")
         }
 
         @Test
         fun `warrior type prefers training when crew exists`() {
-            val gen = createGeneral(strength = 90, intel = 40, leadership = 40)
+            val gen = createGeneral(command = 90, intelligence = 40, leadership = 40)
             val type = ai.classifyGeneral(gen)
             assertTrue(type and GeneralType.WARRIOR.flag != 0,
                 "Strength-dominant should be WARRIOR")
@@ -596,7 +596,7 @@ class NpcAiParityTest {
 
         @Test
         fun `strategist type prefers development when city needs it`() {
-            val gen = createGeneral(strength = 40, intel = 90, leadership = 40)
+            val gen = createGeneral(command = 40, intelligence = 90, leadership = 40)
             val type = ai.classifyGeneral(gen)
             assertTrue(type and GeneralType.STRATEGIST.flag != 0,
                 "Intel-dominant should be STRATEGIST")
@@ -619,15 +619,15 @@ class NpcAiParityTest {
 
         @Test
         fun `npcState 2 or 3 wanderers can attempt 거병`() {
-            val gen2 = createGeneral(npcState = 2, nationId = 0)
-            val gen3 = createGeneral(npcState = 3, nationId = 0)
+            val gen2 = createGeneral(npcState = 2, factionId = 0)
+            val gen3 = createGeneral(npcState = 3, factionId = 0)
             assertTrue(gen2.npcState.toInt() in listOf(2, 3) && gen2.factionId == 0L)
             assertTrue(gen3.npcState.toInt() in listOf(2, 3) && gen3.factionId == 0L)
         }
 
         @Test
         fun `npcState 2 with nation does NOT trigger 거병`() {
-            val gen = createGeneral(npcState = 2, nationId = 1)
+            val gen = createGeneral(npcState = 2, factionId = 1)
             assertFalse(gen.factionId == 0L, "Has nation -> no 거병")
         }
     }
@@ -763,7 +763,7 @@ class NpcAiParityTest {
         }
 
         @Test
-        fun `chooseGeneralTurn RNG seed context uses OfficerAI not GeneralTurn`() {
+        fun `chooseGeneralTurn RNG seed context uses OfficerAI not OfficerTurn`() {
             // Per PHP Pitfall 5: All AI RNG uses "OfficerAI" context
             // This is a structural test - verified by reading the source code
             // The RNG context "OfficerAI" is now used in both chooseGeneralTurn and chooseNationTurn
@@ -800,14 +800,14 @@ class NpcAiParityTest {
 
     private fun createGeneral(
         id: Long = 1,
-        nationId: Long = 1,
-        cityId: Long = 1,
+        factionId: Long = 1,
+        planetId: Long = 1,
         leadership: Short = 70,
-        strength: Short = 70,
-        intel: Short = 70,
-        crew: Int = 3000,
-        train: Short = 70,
-        atmos: Short = 70,
+        command: Short = 70,
+        intelligence: Short = 70,
+        ships: Int = 3000,
+        training: Short = 70,
+        morale: Short = 70,
         injury: Short = 0,
         npcState: Short = 2,
         officerLevel: Short = 5,
@@ -815,14 +815,14 @@ class NpcAiParityTest {
         id = id,
         sessionId = 1,
         name = "테스트장수",
-        factionId = nationId,
-        planetId = cityId,
+        factionId = factionId,
+        planetId = planetId,
         leadership = leadership,
-        command = strength,
-        intelligence = intel,
-        ships = crew,
-        training = train,
-        morale = atmos,
+        command = command,
+        intelligence = intelligence,
+        ships = ships,
+        training = training,
+        morale = morale,
         injury = injury,
         npcState = npcState,
         officerLevel = officerLevel,
@@ -857,28 +857,28 @@ class NpcAiParityTest {
 
     private fun createCity(
         id: Long = 1,
-        nationId: Long = 1,
+        factionId: Long = 1,
         frontState: Short = 0,
         supplyState: Short = 1,
     ): Planet = Planet(
         id = id,
         sessionId = 1,
         name = "테스트도시",
-        factionId = nationId,
+        factionId = factionId,
         frontState = frontState,
     ).apply {
         this.supplyState = supplyState
     }
 
     private fun createDiplomacy(
-        srcNationId: Long = 1,
-        destNationId: Long = 2,
+        srcFactionId: Long = 1,
+        destFactionId: Long = 2,
         stateCode: String = "선전포고",
         term: Short = 0,
     ): Diplomacy = Diplomacy(
         sessionId = 1,
-        srcFactionId = srcNationId,
-        destFactionId = destNationId,
+        srcFactionId = srcFactionId,
+        destFactionId = destFactionId,
         stateCode = stateCode,
         term = term,
     )

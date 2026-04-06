@@ -34,8 +34,8 @@ class CommandParityTest {
 
     @Test
     fun `che_훈련 parity and determinism`() {
-        val general = createGeneral(leadership = 80, crew = 200, train = 60, atmos = 70)
-        val city = createCity(nationId = 1)
+        val general = createGeneral(leadership = 80, ships = 200, training = 60, morale = 70)
+        val city = createCity(factionId = 1)
         val env = createEnv()
 
         val first = runTraining(general, city, env, "test_cmd_1")
@@ -45,7 +45,7 @@ class CommandParityTest {
         assertEquals(first.message, second.message)
 
         val json = mapper.readTree(first.message)
-        // leadership=80, crew=200, train=60: rawScore=80*100/200*30.0=1200, clamped to min(1200, 100-60)=40
+        // leadership=80, ships =200, training =60: rawScore=80*100/200*30.0=1200, clamped to min(1200, 100-60)=40
         assertEquals(40, json["statChanges"]["train"].asInt())
         // atmosSideEffectByTraining=1.0: atmosAfter=(70*1.0).toInt()=70, delta=0
         assertEquals(0, json["statChanges"]["atmos"].asInt())
@@ -55,8 +55,8 @@ class CommandParityTest {
 
     @Test
     fun `che_징병 parity and determinism`() {
-        val general = createGeneral(leadership = 50, crew = 0, crewType = 0, train = 0, atmos = 0)
-        val city = createCity(nationId = 1, pop = 50000)
+        val general = createGeneral(leadership = 50, ships = 0, shipClass = 0, training = 0, morale = 0)
+        val city = createCity(factionId = 1, population = 50000)
         val env = createEnv()
         val arg = mapOf<String, Any>("amount" to 500, "crewType" to 0)
 
@@ -73,16 +73,16 @@ class CommandParityTest {
         assertEquals(40, json["statChanges"]["atmos"].asInt())
         assertEquals(-50, json["statChanges"]["gold"].asInt())
         assertEquals(-5, json["statChanges"]["rice"].asInt())
-        assertEquals(-500, json["cityChanges"]["pop"].asInt())
+        assertEquals(-500, json["cityChanges"]["population"].asInt())
     }
 
     @Test
     fun `che_농지개간 parity and determinism`() {
-        val general = createGeneral(intel = 80, gold = 500)
-        val city = createCity(nationId = 1, trust = 80f, agri = 500, agriMax = 1000, frontState = 0)
+        val general = createGeneral(intelligence = 80, funds = 500)
+        val city = createCity(factionId = 1, approval = 80f, production = 500, productionMax = 1000, frontState = 0)
         val env = createEnv(develCost = 100)
 
-        val expected = expectedDomesticDelta(stat = 80, trust = 80f, current = 500, max = 1000, frontState = 0, seed = "test_cmd_3", leadership = 70, strength = 70, intel = 80, statKey = "intel")
+        val expected = expectedDomesticDelta(stat = 80, approval = 80f, current = 500, max = 1000, frontState = 0, seed = "test_cmd_3", leadership = 70, command = 70, intelligence = 80, statKey = "intel")
 
         val first = runAgri(general, city, env, "test_cmd_3")
         val second = runAgri(general, city, env, "test_cmd_3")
@@ -95,17 +95,17 @@ class CommandParityTest {
         assertEquals(expected.exp, json["statChanges"]["experience"].asInt())
         assertEquals(expected.score, json["statChanges"]["dedication"].asInt())
         assertEquals(1, json["statChanges"]["intelExp"].asInt())
-        assertEquals(expected.delta, json["cityChanges"]["agri"].asInt())
+        assertEquals(expected.delta, json["cityChanges"]["production"].asInt())
         assertEquals(expected.pick, json["criticalResult"].asText())
     }
 
     @Test
     fun `che_상업투자 parity and determinism`() {
-        val general = createGeneral(intel = 75, gold = 500)
-        val city = createCity(nationId = 1, trust = 90f, comm = 450, commMax = 1000, frontState = 0)
+        val general = createGeneral(intelligence = 75, funds = 500)
+        val city = createCity(factionId = 1, approval = 90f, commerce = 450, commerceMax = 1000, frontState = 0)
         val env = createEnv(develCost = 120)
 
-        val expected = expectedDomesticDelta(stat = 75, trust = 90f, current = 450, max = 1000, frontState = 0, seed = "test_cmd_4", leadership = 70, strength = 70, intel = 75, statKey = "intel")
+        val expected = expectedDomesticDelta(stat = 75, approval = 90f, current = 450, max = 1000, frontState = 0, seed = "test_cmd_4", leadership = 70, command = 70, intelligence = 75, statKey = "intel")
 
         val first = runCommerce(general, city, env, "test_cmd_4")
         val second = runCommerce(general, city, env, "test_cmd_4")
@@ -118,14 +118,14 @@ class CommandParityTest {
         assertEquals(expected.exp, json["statChanges"]["experience"].asInt())
         assertEquals(expected.score, json["statChanges"]["dedication"].asInt())
         assertEquals(1, json["statChanges"]["intelExp"].asInt())
-        assertEquals(expected.delta, json["cityChanges"]["comm"].asInt())
+        assertEquals(expected.delta, json["cityChanges"]["commerce"].asInt())
         assertEquals(expected.pick, json["criticalResult"].asText())
     }
 
     @Test
     fun `che_사기진작 parity and determinism`() {
-        val general = createGeneral(leadership = 80, crew = 200, atmos = 70, train = 80, gold = 1000)
-        val city = createCity(nationId = 1)
+        val general = createGeneral(leadership = 80, ships = 200, morale = 70, training = 80, funds = 1000)
+        val city = createCity(factionId = 1)
         val env = createEnv()
 
         val first = runMorale(general, city, env, "test_cmd_5")
@@ -136,7 +136,7 @@ class CommandParityTest {
 
         val json = mapper.readTree(first.message)
         assertEquals(-2, json["statChanges"]["gold"].asInt())
-        // leadership=80, crew=200, atmos=70: rawScore=80*100/200*30.0*statBonus(60)=40*30*1.02=1224, clamped to min(1224,100-70)=30
+        // leadership=80, ships =200, morale =70: rawScore=80*100/200*30.0*statBonus(60)=40*30*1.02=1224, clamped to min(1224,100-70)=30
         assertEquals(30, json["statChanges"]["atmos"].asInt())
         // trainSideEffectByAtmosTurn=1.0: sideEffect=(80*1.0).toInt()=80, delta=80-80=0
         assertEquals(0, json["statChanges"]["train"].asInt())
@@ -148,23 +148,23 @@ class CommandParityTest {
     fun `che_단련 parity and determinism`() {
         val general = createGeneral(
             leadership = 60,
-            strength = 70,
-            intel = 50,
-            crew = 1000,
-            train = 60,
-            atmos = 70,
-            gold = 1000,
-            rice = 1000,
+            command = 70,
+            intelligence = 50,
+            ships = 1000,
+            training = 60,
+            morale = 70,
+            funds = 1000,
+            supplies = 1000,
         )
         val env = createEnv(develCost = 120)
 
         val expected = expectedDrill(
-            crew = 1000,
-            train = 60,
-            atmos = 70,
+            ships = 1000,
+            training = 60,
+            morale = 70,
             leadership = 60,
-            strength = 70,
-            intel = 50,
+            command = 70,
+            intelligence = 50,
             seed = "test_cmd_6",
         )
 
@@ -221,19 +221,19 @@ class CommandParityTest {
 
     private fun expectedDomesticDelta(
         stat: Int,
-        trust: Float,
+        approval: Float,
         current: Int,
         max: Int,
         frontState: Int,
         seed: String,
         leadership: Int = 70,
-        strength: Int = 70,
-        intel: Int = 70,
+        command: Int = 70,
+        intelligence: Int = 70,
         statKey: String = "intel",
         politics: Int = 60,
     ): DomesticExpected {
         val rng = LiteHashDRBG.build(seed)
-        val trustApplied = maxOf(50f, trust).toDouble()
+        val trustApplied = maxOf(50f, approval).toDouble()
         var score = (stat * (trustApplied / 100.0) * (0.8 + rng.nextDouble() * 0.4)).toInt()
         score = maxOf(1, score)
         val politicsBonus = 1.0 + (politics - 50) / 500.0
@@ -284,12 +284,12 @@ class CommandParityTest {
     }
 
     private fun expectedDrill(
-        crew: Int,
-        train: Int,
-        atmos: Int,
+        ships: Int,
+        training: Int,
+        morale: Int,
         leadership: Int,
-        strength: Int,
-        intel: Int,
+        command: Int,
+        intelligence: Int,
         seed: String,
     ): DrillExpected {
         val rng = LiteHashDRBG.build(seed)
@@ -325,7 +325,7 @@ class CommandParityTest {
             } -> "leadershipExp"
 
             run {
-                roll -= strength
+                roll -= command
                 roll < 0
             } -> "strengthExp"
 
@@ -348,14 +348,14 @@ class CommandParityTest {
 
     private fun createGeneral(
         leadership: Short = 70,
-        strength: Short = 70,
-        intel: Short = 70,
-        gold: Int = 500,
-        rice: Int = 500,
-        crew: Int = 1000,
-        crewType: Short = 0,
-        train: Short = 60,
-        atmos: Short = 60,
+        command: Short = 70,
+        intelligence: Short = 70,
+        funds: Int = 500,
+        supplies: Int = 500,
+        ships: Int = 1000,
+        shipClass: Short = 0,
+        training: Short = 60,
+        morale: Short = 60,
     ): Officer {
         return Officer(
             id = 1,
@@ -363,15 +363,15 @@ class CommandParityTest {
             name = "테스트장수",
             factionId = 1,
             planetId = 1,
-            funds = gold,
-            supplies = rice,
-            ships = crew,
-            shipClass = crewType,
-            training = train,
-            morale = atmos,
+            funds = funds,
+            supplies = supplies,
+            ships = ships,
+            shipClass = shipClass,
+            training = training,
+            morale = morale,
             leadership = leadership,
-            command = strength,
-            intelligence = intel,
+            command = command,
+            intelligence = intelligence,
             politics = 60,
             administration = 60,
             turnTime = OffsetDateTime.now(),
@@ -379,34 +379,34 @@ class CommandParityTest {
     }
 
     private fun createCity(
-        nationId: Long,
-        pop: Int = 10000,
-        agri: Int = 500,
-        agriMax: Int = 1000,
-        comm: Int = 500,
-        commMax: Int = 1000,
-        secu: Int = 500,
-        trust: Float = 80f,
+        factionId: Long,
+        population: Int = 10000,
+        production: Int = 500,
+        productionMax: Int = 1000,
+        commerce: Int = 500,
+        commerceMax: Int = 1000,
+        security: Int = 500,
+        approval: Float = 80f,
         frontState: Short = 0,
     ): Planet {
         return Planet(
             id = 1,
             sessionId = 1,
             name = "테스트도시",
-            factionId = nationId,
-            population = pop,
+            factionId = factionId,
+            population = population,
             populationMax = 50000,
-            production = agri,
-            productionMax = agriMax,
-            commerce = comm,
-            commerceMax = commMax,
-            security = secu,
+            production = production,
+            productionMax = productionMax,
+            commerce = commerce,
+            commerceMax = commerceMax,
+            security = security,
             securityMax = 1000,
             orbitalDefense = 500,
             orbitalDefenseMax = 1000,
             fortress = 500,
             fortressMax = 1000,
-            approval = trust,
+            approval = approval,
             supplyState = 1,
             frontState = frontState,
         )
@@ -432,11 +432,11 @@ class CommandParityTest {
      */
     @Test
     fun `징병 onCalcDomestic cost modifier reduces gold via personality che_안전`() {
-        val base = createGeneral(leadership = 50, crew = 0, crewType = 0)
-        val modified = createGeneral(leadership = 50, crew = 0, crewType = 0).apply {
+        val base = createGeneral(leadership = 50, ships = 0, shipClass = 0)
+        val modified = createGeneral(leadership = 50, ships = 0, shipClass = 0).apply {
             personalCode = "che_안전"
         }
-        val city = createCity(nationId = 1, pop = 50000)
+        val city = createCity(factionId = 1, population = 50000)
         val env = createEnv()
         val arg = mapOf<String, Any>("amount" to 500, "crewType" to 0)
 
@@ -462,11 +462,11 @@ class CommandParityTest {
      */
     @Test
     fun `모병 inherits 징병 onCalcDomestic cost modifier chain`() {
-        val base = createGeneral(leadership = 50, crew = 0, crewType = 0)
-        val modified = createGeneral(leadership = 50, crew = 0, crewType = 0).apply {
+        val base = createGeneral(leadership = 50, ships = 0, shipClass = 0)
+        val modified = createGeneral(leadership = 50, ships = 0, shipClass = 0).apply {
             personalCode = "che_안전"
         }
-        val city = createCity(nationId = 1, pop = 50000)
+        val city = createCity(factionId = 1, population = 50000)
         val env = createEnv()
         val arg = mapOf<String, Any>("amount" to 500, "crewType" to 0)
 
@@ -492,9 +492,9 @@ class CommandParityTest {
      */
     @Test
     fun `농지개간 DomesticCommand score modifier via 온후 personality`() {
-        val baseGen = createGeneral(intel = 80, gold = 500)
-        val modGen = createGeneral(intel = 80, gold = 500).apply { personalCode = "온후" }
-        val city = createCity(nationId = 1, trust = 80f, agri = 500, agriMax = 1000, frontState = 0)
+        val baseGen = createGeneral(intelligence = 80, funds = 500)
+        val modGen = createGeneral(intelligence = 80, funds = 500).apply { personalCode = "온후" }
+        val city = createCity(factionId = 1, approval = 80f, production = 500, productionMax = 1000, frontState = 0)
         val env = createEnv(develCost = 100)
 
         // Use same seed so rng sequence is identical
@@ -511,11 +511,11 @@ class CommandParityTest {
         val jsonBase = mapper.readTree(resultBase.message)
         val jsonMod = mapper.readTree(resultMod.message)
 
-        val baseAgri = jsonBase["cityChanges"]["agri"].asInt()
-        val modAgri = jsonMod["cityChanges"]["agri"].asInt()
+        val baseAgri = jsonBase["cityChanges"]["production"].asInt()
+        val modAgri = jsonMod["cityChanges"]["production"].asInt()
 
         assertTrue(modAgri >= baseAgri,
-            "온후 personality should increase or maintain agri score: base=$baseAgri mod=$modAgri")
+            "온후 personality should increase or maintain production score: base=$baseAgri mod=$modAgri")
     }
 
     /**
@@ -525,9 +525,9 @@ class CommandParityTest {
      */
     @Test
     fun `상업투자 success modifier is wired via DomesticCommand`() {
-        val baseGen = createGeneral(intel = 75, gold = 10000)
-        val modGen = createGeneral(intel = 75, gold = 10000).apply { personalCode = "신중" }
-        val city = createCity(nationId = 1, trust = 80f, comm = 450, commMax = 1000, frontState = 0)
+        val baseGen = createGeneral(intelligence = 75, funds = 10000)
+        val modGen = createGeneral(intelligence = 75, funds = 10000).apply { personalCode = "신중" }
+        val city = createCity(factionId = 1, approval = 80f, commerce = 450, commerceMax = 1000, frontState = 0)
         val env = createEnv(develCost = 1)
 
         // Run 100 trials and count successes for each
@@ -536,11 +536,11 @@ class CommandParityTest {
         repeat(100) { i ->
             val seed = "test_success_modifier_$i"
             val r1 = runBlocking {
-                val cmd = che_상업투자(createGeneral(intel = 75, gold = 10000), env).apply { this.city = city; services = createServices() }
+                val cmd = che_상업투자(createGeneral(intelligence = 75, funds = 10000), env).apply { this.city = city; services = createServices() }
                 cmd.run(LiteHashDRBG.build(seed))
             }
             val r2 = runBlocking {
-                val modGenFresh = createGeneral(intel = 75, gold = 10000).apply { personalCode = "신중" }
+                val modGenFresh = createGeneral(intelligence = 75, funds = 10000).apply { personalCode = "신중" }
                 val cmd = che_상업투자(modGenFresh, env).apply { this.city = city; services = createServices() }
                 cmd.run(LiteHashDRBG.build(seed))
             }
@@ -561,9 +561,9 @@ class CommandParityTest {
      */
     @Test
     fun `치안강화 onCalcDomestic score modifier is wired via DomesticCommand`() {
-        val baseGen = createGeneral(intel = 80, gold = 500)
-        val modGen = createGeneral(intel = 80, gold = 500).apply { personalCode = "호전" }
-        val city = createCity(nationId = 1, trust = 80f, secu = 500, frontState = 0)
+        val baseGen = createGeneral(intelligence = 80, funds = 500)
+        val modGen = createGeneral(intelligence = 80, funds = 500).apply { personalCode = "호전" }
+        val city = createCity(factionId = 1, approval = 80f, security = 500, frontState = 0)
         val env = createEnv(develCost = 100)
 
         val seed = "test_modifier_secu"
@@ -579,12 +579,12 @@ class CommandParityTest {
         val jsonBase = mapper.readTree(resultBase.message)
         val jsonMod = mapper.readTree(resultMod.message)
 
-        val baseSecu = jsonBase["cityChanges"]["secu"].asInt()
-        val modSecu = jsonMod["cityChanges"]["secu"].asInt()
+        val baseSecu = jsonBase["cityChanges"]["security"].asInt()
+        val modSecu = jsonMod["cityChanges"]["security"].asInt()
 
         // 호전 reduces score by 5%, so modded result should be <= base
         assertTrue(modSecu <= baseSecu,
-            "호전 personality should reduce secu delta: base=$baseSecu mod=$modSecu")
+            "호전 personality should reduce security delta: base=$baseSecu mod=$modSecu")
     }
 
     private data class DomesticExpected(

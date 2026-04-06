@@ -202,7 +202,7 @@ class NpcSpawnServiceTest {
         val politics = politicsMethod.invoke(service, 40, 40, 90, rng1) as Int
 
         val rng2 = Random(100)
-        val charm = charmMethod.invoke(service, 40, 40, 90, rng2) as Int
+        val administration = charmMethod.invoke(service, 40, 40, 90, rng2) as Int
 
         // Politics = 90*0.4 + 40*0.3 = 36 + 12 = 48 ± 15
         // Charm = 40*0.3 + 90*0.2 + 40*0.1 = 12 + 18 + 4 = 34 ± 15
@@ -264,15 +264,15 @@ class NpcSpawnServiceTest {
         var nextGeneralId = 1000L
         val savedGenerals = mutableListOf<Officer>()
 
-        `when`(factionRepository.save(any(Nation::class.java))).thenAnswer { invocation ->
+        `when`(factionRepository.save(any(Faction::class.java))).thenAnswer { invocation ->
             val nation = invocation.arguments[0] as Faction
             if (nation.id == 0L) {
                 nation.id = nextNationId++
             }
             nation
         }
-        `when`(planetRepository.save(any(City::class.java))).thenAnswer { invocation -> invocation.arguments[0] as Planet }
-        `when`(officerRepository.save(any(General::class.java))).thenAnswer { invocation ->
+        `when`(planetRepository.save(any(Planet::class.java))).thenAnswer { invocation -> invocation.arguments[0] as Planet }
+        `when`(officerRepository.save(any(Officer::class.java))).thenAnswer { invocation ->
             val general = invocation.arguments[0] as Officer
             if (general.id == 0L) {
                 general.id = nextGeneralId++
@@ -285,7 +285,7 @@ class NpcSpawnServiceTest {
             "buildNpcNation",
             SessionState::class.java,
             Random::class.java,
-            City::class.java,
+            Planet::class.java,
             Map::class.java,
             Int::class.javaPrimitiveType,
             Float::class.javaPrimitiveType,
@@ -298,12 +298,12 @@ class NpcSpawnServiceTest {
             Random(42),
             city,
             mapOf(
-                "pop" to 6000,
-                "agri" to 500,
-                "comm" to 500,
-                "secu" to 500,
-                "def" to 500,
-                "wall" to 500,
+                "population" to 6000,
+                "production" to 500,
+                "commerce" to 500,
+                "security" to 500,
+                "orbitalDefense" to 500,
+                "fortress" to 500,
             ),
             4,
             0f,

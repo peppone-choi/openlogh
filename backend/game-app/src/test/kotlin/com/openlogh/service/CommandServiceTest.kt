@@ -3,7 +3,7 @@ package com.openlogh.service
 import com.openlogh.command.CommandExecutor
 import com.openlogh.command.CommandRegistry
 import com.openlogh.entity.Officer
-import com.openlogh.entity.GeneralTurn
+import com.openlogh.entity.OfficerTurn
 import com.openlogh.entity.SessionState
 import com.openlogh.engine.RealtimeService
 import com.openlogh.repository.AppUserRepository
@@ -126,7 +126,7 @@ class CommandServiceTest {
 
         `when`(officerRepository.findById(1L)).thenReturn(Optional.of(general))
         `when`(sessionStateRepository.findById(1)).thenReturn(Optional.of(world))
-        `when`(factionTurnRepository.findByNationIdAndOfficerLevelOrderByTurnIdx(1L, 5)).thenReturn(existing)
+        `when`(factionTurnRepository.findByFactionIdAndOfficerLevelOrderByTurnIdx(1L, 5)).thenReturn(existing)
 
         val result = service.pushNationTurns(1L, 1L, 1)
 
@@ -141,7 +141,7 @@ class CommandServiceTest {
 
         `when`(officerRepository.findById(1L)).thenReturn(Optional.of(general))
         `when`(sessionStateRepository.findById(1)).thenReturn(Optional.of(world))
-        `when`(factionTurnRepository.findByNationIdAndOfficerLevelOrderByTurnIdx(1L, 5)).thenReturn(existing)
+        `when`(factionTurnRepository.findByFactionIdAndOfficerLevelOrderByTurnIdx(1L, 5)).thenReturn(existing)
 
         val result = service.pushNationTurns(1L, 1L, -2)
 
@@ -156,7 +156,7 @@ class CommandServiceTest {
 
         `when`(officerRepository.findById(1L)).thenReturn(Optional.of(general))
         `when`(sessionStateRepository.findById(1)).thenReturn(Optional.of(world))
-        `when`(factionTurnRepository.findByNationIdAndOfficerLevelOrderByTurnIdx(1L, 5)).thenReturn(existing)
+        `when`(factionTurnRepository.findByFactionIdAndOfficerLevelOrderByTurnIdx(1L, 5)).thenReturn(existing)
 
         val result = service.repeatNationTurns(1L, 1L, 2)
 
@@ -174,14 +174,14 @@ class CommandServiceTest {
 
         `when`(officerRepository.findById(1L)).thenReturn(Optional.of(general))
         `when`(sessionStateRepository.findById(1)).thenReturn(Optional.of(world))
-        `when`(officerTurnRepository.save(org.mockito.ArgumentMatchers.any(GeneralTurn::class.java))).thenAnswer { it.arguments[0] }
+        `when`(officerTurnRepository.save(org.mockito.ArgumentMatchers.any(OfficerTurn::class.java))).thenAnswer { it.arguments[0] }
 
         val result = service.reserveGeneralTurns(1L, turns)
 
         val inOrder = org.mockito.Mockito.inOrder(officerTurnRepository)
-        inOrder.verify(officerTurnRepository).deleteByGeneralIdAndTurnIdxIn(1L, listOf(0.toShort()))
+        inOrder.verify(officerTurnRepository).deleteByOfficerIdAndTurnIdxIn(1L, listOf(0.toShort()))
         inOrder.verify(officerTurnRepository).flush()
-        inOrder.verify(officerTurnRepository).save(org.mockito.ArgumentMatchers.any(GeneralTurn::class.java))
+        inOrder.verify(officerTurnRepository).save(org.mockito.ArgumentMatchers.any(OfficerTurn::class.java))
 
         assertEquals(1, result.size)
         assertEquals("모병", result[0].actionCode)
@@ -239,7 +239,7 @@ class CommandServiceTest {
         val result = service.repeatNationTurns(1L, 99L, 2)
 
         assertEquals(null, result)
-        verify(factionTurnRepository, never()).findByNationIdAndOfficerLevelOrderByTurnIdx(1L, 5)
+        verify(factionTurnRepository, never()).findByFactionIdAndOfficerLevelOrderByTurnIdx(1L, 5)
     }
 
     private fun createGeneral(officerLevel: Short = 0): Officer = Officer(
@@ -252,11 +252,11 @@ class CommandServiceTest {
         turnTime = OffsetDateTime.now(),
     )
 
-    private fun queue(general: Officer, actions: List<String>): List<GeneralTurn> {
+    private fun queue(general: Officer, actions: List<String>): List<OfficerTurn> {
         return actions.mapIndexed { idx, action ->
-            GeneralTurn(
-                worldId = general.sessionId,
-                generalId = general.id,
+            OfficerTurn(
+                sessionId = general.sessionId,
+                officerId = general.id,
                 turnIdx = idx.toShort(),
                 actionCode = action,
                 brief = action,
@@ -264,11 +264,11 @@ class CommandServiceTest {
         }
     }
 
-    private fun nationQueue(general: Officer, actions: List<String>): List<com.openlogh.entity.NationTurn> {
+    private fun nationQueue(general: Officer, actions: List<String>): List<com.openlogh.entity.FactionTurn> {
         return actions.mapIndexed { idx, action ->
-            com.openlogh.entity.NationTurn(
-                worldId = general.sessionId,
-                nationId = general.factionId,
+            com.openlogh.entity.FactionTurn(
+                sessionId = general.sessionId,
+                factionId = general.factionId,
                 officerLevel = general.officerLevel,
                 turnIdx = idx.toShort(),
                 actionCode = action,
@@ -333,7 +333,7 @@ class CommandServiceTest {
 
         `when`(officerRepository.findById(1L)).thenReturn(Optional.of(general))
         `when`(sessionStateRepository.findById(1)).thenReturn(Optional.of(world))
-        `when`(officerTurnRepository.save(org.mockito.ArgumentMatchers.any(GeneralTurn::class.java))).thenAnswer { it.arguments[0] }
+        `when`(officerTurnRepository.save(org.mockito.ArgumentMatchers.any(OfficerTurn::class.java))).thenAnswer { it.arguments[0] }
 
         val serviceWithEvent = CommandService(
             officerTurnRepository = officerTurnRepository,
@@ -353,10 +353,10 @@ class CommandServiceTest {
         serviceWithEvent.reserveGeneralTurns(1L, turns)
 
         verify(gameEventService).fireCommand(
-            worldId = 1L,
+            sessionId = 1L,
             year = world.currentYear,
             month = world.currentMonth,
-            generalId = 1L,
+            officerId = 1L,
             commandEventType = "reserved",
             detail = mapOf("turnCount" to 1),
         )

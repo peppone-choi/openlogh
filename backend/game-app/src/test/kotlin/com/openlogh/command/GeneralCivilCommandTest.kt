@@ -16,21 +16,21 @@ import kotlin.random.Random
 class GeneralCivilCommandTest {
 
     private fun createTestGeneral(
-        gold: Int = 1000,
-        rice: Int = 1000,
-        crew: Int = 0,
-        crewType: Short = 0,
-        train: Short = 0,
-        atmos: Short = 0,
+        funds: Int = 1000,
+        supplies: Int = 1000,
+        ships: Int = 0,
+        shipClass: Short = 0,
+        training: Short = 0,
+        morale: Short = 0,
         leadership: Short = 50,
-        strength: Short = 50,
-        intel: Short = 50,
+        command: Short = 50,
+        intelligence: Short = 50,
         politics: Short = 50,
-        charm: Short = 50,
-        nationId: Long = 1,
-        cityId: Long = 1,
+        administration: Short = 50,
+        factionId: Long = 1,
+        planetId: Long = 1,
         officerLevel: Short = 0,
-        troopId: Long = 0,
+        fleetId: Long = 0,
         experience: Int = 0,
         dedication: Int = 0,
         injury: Short = 0,
@@ -39,21 +39,21 @@ class GeneralCivilCommandTest {
             id = 1,
             sessionId = 1,
             name = "테스트장수",
-            factionId = nationId,
-            planetId = cityId,
-            funds = gold,
-            supplies = rice,
-            ships = crew,
-            shipClass = crewType,
-            training = train,
-            morale = atmos,
+            factionId = factionId,
+            planetId = planetId,
+            funds = funds,
+            supplies = supplies,
+            ships = ships,
+            shipClass = shipClass,
+            training = training,
+            morale = morale,
             leadership = leadership,
-            command = strength,
-            intelligence = intel,
+            command = command,
+            intelligence = intelligence,
             politics = politics,
-            administration = charm,
+            administration = administration,
             officerLevel = officerLevel,
-            fleetId = troopId,
+            fleetId = fleetId,
             experience = experience,
             dedication = dedication,
             injury = injury,
@@ -62,20 +62,20 @@ class GeneralCivilCommandTest {
     }
 
     private fun createTestCity(
-        nationId: Long = 1,
-        agri: Int = 500,
-        agriMax: Int = 1000,
-        comm: Int = 500,
-        commMax: Int = 1000,
-        secu: Int = 500,
-        secuMax: Int = 1000,
-        def: Int = 500,
-        defMax: Int = 1000,
-        wall: Int = 500,
-        wallMax: Int = 1000,
-        pop: Int = 10000,
-        popMax: Int = 50000,
-        trust: Float = 80f,
+        factionId: Long = 1,
+        production: Int = 500,
+        productionMax: Int = 1000,
+        commerce: Int = 500,
+        commerceMax: Int = 1000,
+        security: Int = 500,
+        securityMax: Int = 1000,
+        orbitalDefense: Int = 500,
+        orbitalDefenseMax: Int = 1000,
+        fortress: Int = 500,
+        fortressMax: Int = 1000,
+        population: Int = 10000,
+        populationMax: Int = 50000,
+        approval: Float = 80f,
         supplyState: Short = 1,
         frontState: Short = 0,
         trade: Int = 100,
@@ -84,20 +84,20 @@ class GeneralCivilCommandTest {
             id = 1,
             sessionId = 1,
             name = "테스트도시",
-            factionId = nationId,
-            production = agri,
-            productionMax = agriMax,
-            commerce = comm,
-            commerceMax = commMax,
-            security = secu,
-            securityMax = secuMax,
-            orbitalDefense = def,
-            orbitalDefenseMax = defMax,
-            fortress = wall,
-            fortressMax = wallMax,
-            population = pop,
-            populationMax = popMax,
-            approval = trust,
+            factionId = factionId,
+            production = production,
+            productionMax = productionMax,
+            commerce = commerce,
+            commerceMax = commerceMax,
+            security = security,
+            securityMax = securityMax,
+            orbitalDefense = orbitalDefense,
+            orbitalDefenseMax = orbitalDefenseMax,
+            fortress = fortress,
+            fortressMax = fortressMax,
+            population = population,
+            populationMax = populationMax,
+            approval = approval,
             supplyState = supplyState,
             frontState = frontState,
             tradeRoute = trade,
@@ -107,16 +107,16 @@ class GeneralCivilCommandTest {
     private fun createTestNation(
         id: Long = 1,
         level: Short = 1,
-        gold: Int = 10000,
-        rice: Int = 10000,
+        funds: Int = 10000,
+        supplies: Int = 10000,
     ): Faction {
         return Faction(
             id = id,
             sessionId = 1,
             name = "테스트국가",
             color = "#FF0000",
-            funds = gold,
-            supplies = rice,
+            funds = funds,
+            supplies = supplies,
             factionRank = level,
         )
     }
@@ -141,7 +141,7 @@ class GeneralCivilCommandTest {
     fun `수비강화 domestic metadata should match spec`() {
         val cmd = che_수비강화(createTestGeneral(), createTestEnv())
 
-        assertEquals("def", cmd.cityKey)
+        assertEquals("orbitalDefense", cmd.cityKey)
         assertEquals("strength", cmd.statKey)
         assertEquals(0.5, cmd.debuffFront, 0.0001)
     }
@@ -149,7 +149,7 @@ class GeneralCivilCommandTest {
     @Test
     fun `수비강화 should fail when city defense is maxed`() {
         val cmd = che_수비강화(createTestGeneral(), createTestEnv())
-        cmd.city = createTestCity(def = 1000, defMax = 1000)
+        cmd.city = createTestCity(orbitalDefense = 1000, orbitalDefenseMax = 1000)
 
         val condition = cmd.checkFullCondition()
         assertTrue(condition is ConstraintResult.Fail)
@@ -157,8 +157,8 @@ class GeneralCivilCommandTest {
 
     @Test
     fun `수비강화 should run and return expected message keys`() {
-        val cmd = che_수비강화(createTestGeneral(strength = 80), createTestEnv(develCost = 150))
-        cmd.city = createTestCity(def = 500, defMax = 1000, trust = 90f)
+        val cmd = che_수비강화(createTestGeneral(command = 80), createTestEnv(develCost = 150))
+        cmd.city = createTestCity(orbitalDefense = 500, orbitalDefenseMax = 1000, approval = 90f)
 
         val result = runBlocking { cmd.run(LiteHashDRBG.build("defense_boost_seed")) }
 
@@ -168,7 +168,7 @@ class GeneralCivilCommandTest {
         val msg = result.message ?: ""
         assertTrue(msg.contains("\"statChanges\""))
         assertTrue(msg.contains("\"cityChanges\""))
-        assertTrue(msg.contains("\"def\":"))
+        assertTrue(msg.contains("\"orbitalDefense\":"))
         assertTrue(msg.contains("\"criticalResult\""))
     }
 
@@ -176,15 +176,15 @@ class GeneralCivilCommandTest {
     fun `성벽보수 domestic metadata should match spec`() {
         val cmd = che_성벽보수(createTestGeneral(), createTestEnv())
 
-        assertEquals("wall", cmd.cityKey)
+        assertEquals("fortress", cmd.cityKey)
         assertEquals("strength", cmd.statKey)
         assertEquals(0.25, cmd.debuffFront, 0.0001)
     }
 
     @Test
-    fun `성벽보수 should fail when city wall is maxed`() {
+    fun `성벽보수 should fail when city fortress is maxed`() {
         val cmd = che_성벽보수(createTestGeneral(), createTestEnv())
-        cmd.city = createTestCity(wall = 1000, wallMax = 1000)
+        cmd.city = createTestCity(fortress = 1000, fortressMax = 1000)
 
         val condition = cmd.checkFullCondition()
         assertTrue(condition is ConstraintResult.Fail)
@@ -192,8 +192,8 @@ class GeneralCivilCommandTest {
 
     @Test
     fun `성벽보수 should run and return expected message keys`() {
-        val cmd = che_성벽보수(createTestGeneral(strength = 75), createTestEnv())
-        cmd.city = createTestCity(wall = 300, wallMax = 1000, trust = 85f)
+        val cmd = che_성벽보수(createTestGeneral(command = 75), createTestEnv())
+        cmd.city = createTestCity(fortress = 300, fortressMax = 1000, approval = 85f)
 
         val result = runBlocking { cmd.run(LiteHashDRBG.build("wall_repair_seed")) }
 
@@ -203,14 +203,14 @@ class GeneralCivilCommandTest {
         val msg = result.message ?: ""
         assertTrue(msg.contains("\"statChanges\""))
         assertTrue(msg.contains("\"cityChanges\""))
-        assertTrue(msg.contains("\"wall\":"))
+        assertTrue(msg.contains("\"fortress\":"))
         assertTrue(msg.contains("\"criticalResult\""))
     }
 
     @Test
     fun `정착장려 should pass constraints with enough rice and capacity`() {
-        val cmd = che_정착장려(createTestGeneral(rice = 1000), createTestEnv(develCost = 100))
-        cmd.city = createTestCity(pop = 10000, popMax = 50000)
+        val cmd = che_정착장려(createTestGeneral(supplies = 1000), createTestEnv(develCost = 100))
+        cmd.city = createTestCity(population = 10000, populationMax = 50000)
 
         val condition = cmd.checkFullCondition()
         assertTrue(condition is ConstraintResult.Pass)
@@ -218,8 +218,8 @@ class GeneralCivilCommandTest {
 
     @Test
     fun `정착장려 should fail constraints when city population is maxed`() {
-        val cmd = che_정착장려(createTestGeneral(rice = 1000), createTestEnv())
-        cmd.city = createTestCity(pop = 50000, popMax = 50000)
+        val cmd = che_정착장려(createTestGeneral(supplies = 1000), createTestEnv())
+        cmd.city = createTestCity(population = 50000, populationMax = 50000)
 
         val condition = cmd.checkFullCondition()
         assertTrue(condition is ConstraintResult.Fail)
@@ -227,8 +227,8 @@ class GeneralCivilCommandTest {
 
     @Test
     fun `정착장려 should run successfully with deterministic rng`() {
-        val cmd = che_정착장려(createTestGeneral(leadership = 80, rice = 1000), createTestEnv(develCost = 120))
-        cmd.city = createTestCity(pop = 10000, popMax = 50000)
+        val cmd = che_정착장려(createTestGeneral(leadership = 80, supplies = 1000), createTestEnv(develCost = 120))
+        cmd.city = createTestCity(population = 10000, populationMax = 50000)
 
         val result = runBlocking { cmd.run(LiteHashDRBG.build("settle_policy_seed")) }
 
@@ -238,32 +238,32 @@ class GeneralCivilCommandTest {
         val msg = result.message ?: ""
         assertTrue(msg.contains("\"statChanges\""))
         assertTrue(msg.contains("\"cityChanges\""))
-        assertTrue(msg.contains("\"pop\":"))
+        assertTrue(msg.contains("\"population\":"))
         assertTrue(msg.contains("\"criticalResult\""))
     }
 
     @Test
-    fun `주민선정 should pass constraints when trust is below max`() {
-        val cmd = che_주민선정(createTestGeneral(rice = 1000), createTestEnv())
-        cmd.city = createTestCity(trust = 99.9f)
+    fun `주민선정 should pass constraints when approval is below max`() {
+        val cmd = che_주민선정(createTestGeneral(supplies = 1000), createTestEnv())
+        cmd.city = createTestCity(approval = 99.9f)
 
         val condition = cmd.checkFullCondition()
         assertTrue(condition is ConstraintResult.Pass)
     }
 
     @Test
-    fun `주민선정 should fail constraints when trust is max`() {
-        val cmd = che_주민선정(createTestGeneral(rice = 1000), createTestEnv())
-        cmd.city = createTestCity(trust = 100f)
+    fun `주민선정 should fail constraints when approval is max`() {
+        val cmd = che_주민선정(createTestGeneral(supplies = 1000), createTestEnv())
+        cmd.city = createTestCity(approval = 100f)
 
         val condition = cmd.checkFullCondition()
         assertTrue(condition is ConstraintResult.Fail)
     }
 
     @Test
-    fun `주민선정 should run and include trust change`() {
-        val cmd = che_주민선정(createTestGeneral(leadership = 85, rice = 1000), createTestEnv(develCost = 110))
-        cmd.city = createTestCity(trust = 80f)
+    fun `주민선정 should run and include approval change`() {
+        val cmd = che_주민선정(createTestGeneral(leadership = 85, supplies = 1000), createTestEnv(develCost = 110))
+        cmd.city = createTestCity(approval = 80f)
 
         val result = runBlocking { cmd.run(fixedRng) }
 
@@ -273,14 +273,14 @@ class GeneralCivilCommandTest {
         val msg = result.message ?: ""
         assertTrue(msg.contains("\"statChanges\""))
         assertTrue(msg.contains("\"cityChanges\""))
-        assertTrue(msg.contains("\"trust\":"))
+        assertTrue(msg.contains("\"approval\":"))
         assertTrue(msg.contains("\"criticalResult\""))
     }
 
     @Test
     fun `기술연구 should pass constraints with enough resources`() {
-        val cmd = che_기술연구(createTestGeneral(gold = 500, rice = 1000), createTestEnv(develCost = 100))
-        cmd.city = createTestCity(trust = 80f)
+        val cmd = che_기술연구(createTestGeneral(funds = 500, supplies = 1000), createTestEnv(develCost = 100))
+        cmd.city = createTestCity(approval = 80f)
 
         val condition = cmd.checkFullCondition()
         assertTrue(condition is ConstraintResult.Pass)
@@ -288,8 +288,8 @@ class GeneralCivilCommandTest {
 
     @Test
     fun `기술연구 should fail constraints when gold is insufficient`() {
-        val cmd = che_기술연구(createTestGeneral(gold = 10, rice = 1000), createTestEnv(develCost = 100))
-        cmd.city = createTestCity(trust = 80f)
+        val cmd = che_기술연구(createTestGeneral(funds = 10, supplies = 1000), createTestEnv(develCost = 100))
+        cmd.city = createTestCity(approval = 80f)
 
         val condition = cmd.checkFullCondition()
         assertTrue(condition is ConstraintResult.Fail)
@@ -297,8 +297,8 @@ class GeneralCivilCommandTest {
 
     @Test
     fun `기술연구 should run and produce nation tech change`() {
-        val cmd = che_기술연구(createTestGeneral(intel = 90, gold = 1000, rice = 1000), createTestEnv())
-        cmd.city = createTestCity(trust = 90f)
+        val cmd = che_기술연구(createTestGeneral(intelligence = 90, funds = 1000, supplies = 1000), createTestEnv())
+        cmd.city = createTestCity(approval = 90f)
 
         val result = runBlocking { cmd.run(LiteHashDRBG.build("tech_research_seed")) }
 
@@ -315,7 +315,7 @@ class GeneralCivilCommandTest {
     @Test
     fun `숙련전환 should pass constraints with enough gold and rice`() {
         val arg = mapOf<String, Any>("srcArmType" to 1, "destArmType" to 2)
-        val cmd = che_숙련전환(createTestGeneral(gold = 500, rice = 500), createTestEnv(), arg)
+        val cmd = che_숙련전환(createTestGeneral(funds = 500, supplies = 500), createTestEnv(), arg)
         cmd.city = createTestCity()
 
         val condition = cmd.checkFullCondition()
@@ -325,7 +325,7 @@ class GeneralCivilCommandTest {
     @Test
     fun `숙련전환 should fail constraints when rice is insufficient`() {
         val arg = mapOf<String, Any>("srcArmType" to 1, "destArmType" to 2)
-        val cmd = che_숙련전환(createTestGeneral(gold = 500, rice = 10), createTestEnv(develCost = 100), arg)
+        val cmd = che_숙련전환(createTestGeneral(funds = 500, supplies = 10), createTestEnv(develCost = 100), arg)
         cmd.city = createTestCity()
 
         val condition = cmd.checkFullCondition()
@@ -334,7 +334,7 @@ class GeneralCivilCommandTest {
 
     @Test
     fun `숙련전환 should run and include dex conversion payload`() {
-        val general = createTestGeneral(gold = 1000, rice = 1000).apply {
+        val general = createTestGeneral(funds = 1000, supplies = 1000).apply {
             meta["dex1"] = 100
         }
         val arg = mapOf<String, Any>("srcArmType" to 1, "destArmType" to 2)
@@ -355,7 +355,7 @@ class GeneralCivilCommandTest {
 
     @Test
     fun `숙련전환 should fail run when arg is missing`() {
-        val cmd = che_숙련전환(createTestGeneral(gold = 1000, rice = 1000), createTestEnv(), null)
+        val cmd = che_숙련전환(createTestGeneral(funds = 1000, supplies = 1000), createTestEnv(), null)
         cmd.city = createTestCity()
 
         val result = runBlocking { cmd.run(fixedRng) }
@@ -386,7 +386,7 @@ class GeneralCivilCommandTest {
 
     @Test
     fun `물자조달 should run and include nation resource changes`() {
-        val cmd = che_물자조달(createTestGeneral(leadership = 80, strength = 75, intel = 70), createTestEnv())
+        val cmd = che_물자조달(createTestGeneral(leadership = 80, command = 75, intelligence = 70), createTestEnv())
         cmd.city = createTestCity(frontState = 0)
 
         val result = runBlocking { cmd.run(LiteHashDRBG.build("supply_fetch_seed")) }
@@ -403,9 +403,9 @@ class GeneralCivilCommandTest {
 
     @Test
     fun `물자조달 front line should reduce gathered amount`() {
-        val baseCmd = che_물자조달(createTestGeneral(leadership = 80, strength = 80, intel = 80), createTestEnv())
+        val baseCmd = che_물자조달(createTestGeneral(leadership = 80, command = 80, intelligence = 80), createTestEnv())
         baseCmd.city = createTestCity(frontState = 0)
-        val frontCmd = che_물자조달(createTestGeneral(leadership = 80, strength = 80, intel = 80), createTestEnv())
+        val frontCmd = che_물자조달(createTestGeneral(leadership = 80, command = 80, intelligence = 80), createTestEnv())
         frontCmd.city = createTestCity(frontState = 1)
 
         val baseResult = runBlocking { baseCmd.run(LiteHashDRBG.build("supply_front_cmp")) }
@@ -421,7 +421,7 @@ class GeneralCivilCommandTest {
     @Test
     fun `군량매매 should pass constraints when buying rice with gold`() {
         val arg = mapOf<String, Any>("buyRice" to true, "amount" to 500)
-        val cmd = che_군량매매(createTestGeneral(gold = 1000, rice = 1000), createTestEnv(), arg)
+        val cmd = che_군량매매(createTestGeneral(funds = 1000, supplies = 1000), createTestEnv(), arg)
         cmd.city = createTestCity(trade = 100)
 
         val condition = cmd.checkFullCondition()
@@ -431,7 +431,7 @@ class GeneralCivilCommandTest {
     @Test
     fun `군량매매 should fail constraints when buying rice without gold`() {
         val arg = mapOf<String, Any>("buyRice" to true, "amount" to 500)
-        val cmd = che_군량매매(createTestGeneral(gold = 0, rice = 1000), createTestEnv(), arg)
+        val cmd = che_군량매매(createTestGeneral(funds = 0, supplies = 1000), createTestEnv(), arg)
         cmd.city = createTestCity(trade = 100)
 
         val condition = cmd.checkFullCondition()
@@ -441,7 +441,7 @@ class GeneralCivilCommandTest {
     @Test
     fun `군량매매 should run and include tax plus stat changes`() {
         val arg = mapOf<String, Any>("buyRice" to true, "amount" to 500)
-        val cmd = che_군량매매(createTestGeneral(gold = 1000, rice = 1000, leadership = 70, strength = 60, intel = 80), createTestEnv(), arg)
+        val cmd = che_군량매매(createTestGeneral(funds = 1000, supplies = 1000, leadership = 70, command = 60, intelligence = 80), createTestEnv(), arg)
         cmd.city = createTestCity(trade = 100)
 
         val result = runBlocking { cmd.run(fixedRng) }
@@ -459,7 +459,7 @@ class GeneralCivilCommandTest {
     @Test
     fun `군량매매 should round small amount up to 100 unit trade`() {
         val arg = mapOf<String, Any>("buyRice" to true, "amount" to 55)
-        val cmd = che_군량매매(createTestGeneral(gold = 1000, rice = 1000), createTestEnv(), arg)
+        val cmd = che_군량매매(createTestGeneral(funds = 1000, supplies = 1000), createTestEnv(), arg)
         cmd.city = createTestCity(trade = 100)
 
         val result = runBlocking { cmd.run(LiteHashDRBG.build("trade_rounding_seed")) }
@@ -473,7 +473,7 @@ class GeneralCivilCommandTest {
 
     @Test
     fun `createTestNation helper should build valid fixture`() {
-        val nation = createTestNation(id = 7, level = 2, gold = 1234, rice = 4321)
+        val nation = createTestNation(id = 7, level = 2, funds = 1234, supplies = 4321)
 
         assertEquals(7, nation.id)
         assertEquals(2, nation.factionRank.toInt())
@@ -484,20 +484,20 @@ class GeneralCivilCommandTest {
     // ========== H5: DomesticCommand uses getStat() (modified stats path) ==========
 
     @Test
-    fun `농지개간 higher intel stat yields higher agri score on average`() {
+    fun `농지개간 higher intel stat yields higher production score on average`() {
         val seed = "h5_stat_test"
-        val lowIntelCmd = che_농지개간(createTestGeneral(intel = 30, gold = 1000), createTestEnv())
-        lowIntelCmd.city = createTestCity(agri = 0, agriMax = 10000, trust = 100f, frontState = 0)
-        val highIntelCmd = che_농지개간(createTestGeneral(intel = 99, gold = 1000), createTestEnv())
-        highIntelCmd.city = createTestCity(agri = 0, agriMax = 10000, trust = 100f, frontState = 0)
+        val lowIntelCmd = che_농지개간(createTestGeneral(intelligence = 30, funds = 1000), createTestEnv())
+        lowIntelCmd.city = createTestCity(production = 0, productionMax = 10000, approval = 100f, frontState = 0)
+        val highIntelCmd = che_농지개간(createTestGeneral(intelligence = 99, funds = 1000), createTestEnv())
+        highIntelCmd.city = createTestCity(production = 0, productionMax = 10000, approval = 100f, frontState = 0)
 
         val lowResult = runBlocking { lowIntelCmd.run(LiteHashDRBG.build(seed)) }
         val highResult = runBlocking { highIntelCmd.run(LiteHashDRBG.build(seed)) }
 
-        val lowAgri = extractCityValue(lowResult.message, "agri")
-        val highAgri = extractCityValue(highResult.message, "agri")
+        val lowAgri = extractCityValue(lowResult.message, "production")
+        val highAgri = extractCityValue(highResult.message, "production")
 
-        assertTrue(highAgri > lowAgri, "Higher intel should yield higher agri score via getStat(); low=$lowAgri high=$highAgri")
+        assertTrue(highAgri > lowAgri, "Higher intel should yield higher production score via getStat(); low=$lowAgri high=$highAgri")
     }
 
     // ========== C2: 물자조달 getDomesticExpLevelBonus and critical multipliers ==========
@@ -507,7 +507,7 @@ class GeneralCivilCommandTest {
         // expLevel is derived from experience; use general.expLevel property by setting experience
         // expLevel=0 → bonus=1.0, expLevel=100 → bonus=1.2
         // General.expLevel depends on experience field — we just test that higher stats give more
-        val lowExpGeneral = createTestGeneral(leadership = 80, strength = 80, intel = 80)
+        val lowExpGeneral = createTestGeneral(leadership = 80, command = 80, intelligence = 80)
         // Can't easily set expLevel directly — test via score comparison with high vs normal stats
         val cmd = che_물자조달(lowExpGeneral, createTestEnv())
         cmd.city = createTestCity(frontState = 0)
@@ -527,7 +527,7 @@ class GeneralCivilCommandTest {
         // Run with a seed known to hit success to verify multiplier range
         var foundSuccess = false
         for (i in 0..100) {
-            val cmd = che_물자조달(createTestGeneral(leadership = 80, strength = 80, intel = 80), createTestEnv())
+            val cmd = che_물자조달(createTestGeneral(leadership = 80, command = 80, intelligence = 80), createTestEnv())
             cmd.city = createTestCity(frontState = 0)
             val result = runBlocking { cmd.run(Random(i)) }
             if (result.message?.contains("\"success\"") == true) {
@@ -552,8 +552,8 @@ class GeneralCivilCommandTest {
 
     @Test
     fun `parity 정착장려 golden value matches PHP-traced expectation`() {
-        val cmd = che_정착장려(createTestGeneral(leadership = 80, rice = 1000), createTestEnv(develCost = 120))
-        cmd.city = createTestCity(pop = 10000, popMax = 50000)
+        val cmd = che_정착장려(createTestGeneral(leadership = 80, supplies = 1000), createTestEnv(develCost = 120))
+        cmd.city = createTestCity(population = 10000, populationMax = 50000)
 
         val result = runBlocking { cmd.run(LiteHashDRBG.build(GOLDEN_SEED)) }
         assertTrue(result.success)
@@ -564,7 +564,7 @@ class GeneralCivilCommandTest {
         assertEquals(26, json["statChanges"]["dedication"].asInt())
         assertEquals(1, json["statChanges"]["leadershipExp"].asInt())
         assertEquals(0, json["statChanges"]["max_domestic_critical"].asInt())
-        assertEquals(260, json["cityChanges"]["pop"].asInt())
+        assertEquals(260, json["cityChanges"]["population"].asInt())
         assertEquals("fail", json["criticalResult"].asText())
 
         // Log color tag parity
@@ -573,24 +573,24 @@ class GeneralCivilCommandTest {
         assertTrue(result.logs[0].contains("<1>200년 01월</>"))
 
         // Determinism: same seed -> same result
-        val cmd2 = che_정착장려(createTestGeneral(leadership = 80, rice = 1000), createTestEnv(develCost = 120))
-        cmd2.city = createTestCity(pop = 10000, popMax = 50000)
+        val cmd2 = che_정착장려(createTestGeneral(leadership = 80, supplies = 1000), createTestEnv(develCost = 120))
+        cmd2.city = createTestCity(population = 10000, populationMax = 50000)
         val result2 = runBlocking { cmd2.run(LiteHashDRBG.build(GOLDEN_SEED)) }
         assertEquals(result.message, result2.message)
     }
 
     @Test
-    fun `parity 정착장려 constraint fails when pop is maxed`() {
-        val cmd = che_정착장려(createTestGeneral(rice = 1000), createTestEnv())
-        cmd.city = createTestCity(pop = 50000, popMax = 50000)
+    fun `parity 정착장려 constraint fails when population is maxed`() {
+        val cmd = che_정착장려(createTestGeneral(supplies = 1000), createTestEnv())
+        cmd.city = createTestCity(population = 50000, populationMax = 50000)
         val cond = cmd.checkFullCondition()
         assertTrue(cond is ConstraintResult.Fail)
     }
 
     @Test
     fun `parity 주민선정 golden value matches PHP-traced expectation`() {
-        val cmd = che_주민선정(createTestGeneral(leadership = 85, rice = 1000), createTestEnv(develCost = 110))
-        cmd.city = createTestCity(trust = 80f)
+        val cmd = che_주민선정(createTestGeneral(leadership = 85, supplies = 1000), createTestEnv(develCost = 110))
+        cmd.city = createTestCity(approval = 80f)
 
         val result = runBlocking { cmd.run(LiteHashDRBG.build(GOLDEN_SEED)) }
         assertTrue(result.success)
@@ -600,7 +600,7 @@ class GeneralCivilCommandTest {
         assertEquals(19, json["statChanges"]["experience"].asInt())
         assertEquals(27, json["statChanges"]["dedication"].asInt())
         assertEquals(1, json["statChanges"]["leadershipExp"].asInt())
-        assertEquals("2.72", json["cityChanges"]["trust"].asText())
+        assertEquals("2.72", json["cityChanges"]["approval"].asText())
         assertEquals("fail", json["criticalResult"].asText())
 
         // Log color tag parity
@@ -609,16 +609,16 @@ class GeneralCivilCommandTest {
     }
 
     @Test
-    fun `parity 주민선정 constraint fails when trust is max`() {
-        val cmd = che_주민선정(createTestGeneral(rice = 1000), createTestEnv())
-        cmd.city = createTestCity(trust = 100f)
+    fun `parity 주민선정 constraint fails when approval is max`() {
+        val cmd = che_주민선정(createTestGeneral(supplies = 1000), createTestEnv())
+        cmd.city = createTestCity(approval = 100f)
         assertTrue(cmd.checkFullCondition() is ConstraintResult.Fail)
     }
 
     @Test
     fun `parity 기술연구 golden value matches PHP-traced expectation`() {
-        val cmd = che_기술연구(createTestGeneral(intel = 90, gold = 1000), createTestEnv(develCost = 100))
-        cmd.city = createTestCity(trust = 90f)
+        val cmd = che_기술연구(createTestGeneral(intelligence = 90, funds = 1000), createTestEnv(develCost = 100))
+        cmd.city = createTestCity(approval = 90f)
 
         val result = runBlocking { cmd.run(LiteHashDRBG.build(GOLDEN_SEED)) }
         assertTrue(result.success)
@@ -639,7 +639,7 @@ class GeneralCivilCommandTest {
 
     @Test
     fun `parity 기술연구 constraint fails when gold insufficient`() {
-        val cmd = che_기술연구(createTestGeneral(gold = 10), createTestEnv(develCost = 100))
+        val cmd = che_기술연구(createTestGeneral(funds = 10), createTestEnv(develCost = 100))
         cmd.city = createTestCity()
         assertTrue(cmd.checkFullCondition() is ConstraintResult.Fail)
     }
@@ -647,8 +647,8 @@ class GeneralCivilCommandTest {
     @Test
     fun `parity 모병 golden value matches PHP-traced expectation`() {
         val arg = mapOf<String, Any>("amount" to 500, "crewType" to 0)
-        val cmd = che_모병(createTestGeneral(leadership = 50, crew = 0, crewType = 0, gold = 1000, rice = 1000), createTestEnv(), arg)
-        cmd.city = createTestCity(pop = 50000)
+        val cmd = che_모병(createTestGeneral(leadership = 50, ships = 0, shipClass = 0, funds = 1000, supplies = 1000), createTestEnv(), arg)
+        cmd.city = createTestCity(population = 50000)
 
         val result = runBlocking { cmd.run(LiteHashDRBG.build(GOLDEN_SEED)) }
         assertTrue(result.success)
@@ -662,8 +662,8 @@ class GeneralCivilCommandTest {
         assertEquals(-5, json["statChanges"]["rice"].asInt())
         assertEquals(5, json["statChanges"]["experience"].asInt())
         assertEquals(5, json["statChanges"]["dedication"].asInt())
-        assertEquals(-500, json["cityChanges"]["pop"].asInt())
-        assertEquals(-1, json["cityChanges"]["trust"].asInt())
+        assertEquals(-500, json["cityChanges"]["population"].asInt())
+        assertEquals(-1, json["cityChanges"]["approval"].asInt())
         assertEquals(0, json["dexChanges"]["crewType"].asInt())
         assertEquals(5, json["dexChanges"]["amount"].asInt())
 
@@ -675,8 +675,8 @@ class GeneralCivilCommandTest {
     @Test
     fun `parity 징병 golden value matches PHP-traced expectation`() {
         val arg = mapOf<String, Any>("amount" to 500, "crewType" to 0)
-        val cmd = che_징병(createTestGeneral(leadership = 50, crew = 0, crewType = 0, gold = 1000, rice = 1000), createTestEnv(), arg)
-        cmd.city = createTestCity(pop = 50000)
+        val cmd = che_징병(createTestGeneral(leadership = 50, ships = 0, shipClass = 0, funds = 1000, supplies = 1000), createTestEnv(), arg)
+        cmd.city = createTestCity(population = 50000)
 
         val result = runBlocking { cmd.run(LiteHashDRBG.build(GOLDEN_SEED)) }
         assertTrue(result.success)
@@ -690,8 +690,8 @@ class GeneralCivilCommandTest {
         assertEquals(-5, json["statChanges"]["rice"].asInt())
         assertEquals(5, json["statChanges"]["experience"].asInt())
         assertEquals(5, json["statChanges"]["dedication"].asInt())
-        assertEquals(-500, json["cityChanges"]["pop"].asInt())
-        assertEquals(-1, json["cityChanges"]["trust"].asInt())
+        assertEquals(-500, json["cityChanges"]["population"].asInt())
+        assertEquals(-1, json["cityChanges"]["approval"].asInt())
 
         // Log color tag parity
         assertTrue(result.logs[0].contains("<C>500</>"))
@@ -699,16 +699,16 @@ class GeneralCivilCommandTest {
     }
 
     @Test
-    fun `parity 징병 constraint fails when pop too low`() {
+    fun `parity 징병 constraint fails when population too low`() {
         val arg = mapOf<String, Any>("amount" to 500, "crewType" to 0)
-        val cmd = che_징병(createTestGeneral(leadership = 50, gold = 1000, rice = 1000), createTestEnv(), arg)
-        cmd.city = createTestCity(pop = 10000) // below MIN_AVAILABLE_RECRUIT_POP + maxCrew
+        val cmd = che_징병(createTestGeneral(leadership = 50, funds = 1000, supplies = 1000), createTestEnv(), arg)
+        cmd.city = createTestCity(population = 10000) // below MIN_AVAILABLE_RECRUIT_POP + maxCrew
         assertTrue(cmd.checkFullCondition() is ConstraintResult.Fail)
     }
 
     @Test
     fun `parity 훈련 golden value matches PHP-traced expectation`() {
-        val cmd = che_훈련(createTestGeneral(leadership = 80, crew = 200, train = 60, atmos = 70), createTestEnv())
+        val cmd = che_훈련(createTestGeneral(leadership = 80, ships = 200, training = 60, morale = 70), createTestEnv())
         cmd.city = createTestCity()
 
         val result = runBlocking { cmd.run(LiteHashDRBG.build(GOLDEN_SEED)) }
@@ -728,7 +728,7 @@ class GeneralCivilCommandTest {
         assertTrue(result.logs[0].contains("훈련치가"))
 
         // Determinism
-        val cmd2 = che_훈련(createTestGeneral(leadership = 80, crew = 200, train = 60, atmos = 70), createTestEnv())
+        val cmd2 = che_훈련(createTestGeneral(leadership = 80, ships = 200, training = 60, morale = 70), createTestEnv())
         cmd2.city = createTestCity()
         val result2 = runBlocking { cmd2.run(LiteHashDRBG.build(GOLDEN_SEED)) }
         assertEquals(result.message, result2.message)
@@ -736,14 +736,14 @@ class GeneralCivilCommandTest {
 
     @Test
     fun `parity 훈련 constraint fails when train is maxed`() {
-        val cmd = che_훈련(createTestGeneral(crew = 200, train = 100, atmos = 70), createTestEnv())
+        val cmd = che_훈련(createTestGeneral(ships = 200, training = 100, morale = 70), createTestEnv())
         cmd.city = createTestCity()
         assertTrue(cmd.checkFullCondition() is ConstraintResult.Fail)
     }
 
     @Test
     fun `parity 사기진작 golden value matches PHP-traced expectation`() {
-        val cmd = che_사기진작(createTestGeneral(leadership = 80, crew = 200, atmos = 70, train = 80, charm = 60, gold = 1000), createTestEnv())
+        val cmd = che_사기진작(createTestGeneral(leadership = 80, ships = 200, morale = 70, training = 80, administration = 60, funds = 1000), createTestEnv())
         cmd.city = createTestCity()
 
         val result = runBlocking { cmd.run(LiteHashDRBG.build(GOLDEN_SEED)) }
@@ -766,14 +766,14 @@ class GeneralCivilCommandTest {
 
     @Test
     fun `parity 사기진작 constraint fails when atmos is maxed`() {
-        val cmd = che_사기진작(createTestGeneral(crew = 200, atmos = 100, gold = 1000), createTestEnv())
+        val cmd = che_사기진작(createTestGeneral(ships = 200, morale = 100, funds = 1000), createTestEnv())
         cmd.city = createTestCity()
         assertTrue(cmd.checkFullCondition() is ConstraintResult.Fail)
     }
 
     @Test
     fun `parity 소집해제 golden value matches PHP-traced expectation`() {
-        val cmd = che_소집해제(createTestGeneral(crew = 500), createTestEnv())
+        val cmd = che_소집해제(createTestGeneral(ships = 500), createTestEnv())
         cmd.city = createTestCity()
 
         val result = runBlocking { cmd.run(LiteHashDRBG.build(GOLDEN_SEED)) }
@@ -783,7 +783,7 @@ class GeneralCivilCommandTest {
         assertEquals(-500, json["statChanges"]["crew"].asInt())
         assertEquals(70, json["statChanges"]["experience"].asInt())
         assertEquals(100, json["statChanges"]["dedication"].asInt())
-        assertEquals(500, json["cityChanges"]["pop"].asInt())
+        assertEquals(500, json["cityChanges"]["population"].asInt())
 
         // Log color tag parity
         assertTrue(result.logs[0].contains("<R>소집해제</>"))
@@ -791,13 +791,13 @@ class GeneralCivilCommandTest {
 
     @Test
     fun `parity 소집해제 constraint fails when crew is zero`() {
-        val cmd = che_소집해제(createTestGeneral(crew = 0), createTestEnv())
+        val cmd = che_소집해제(createTestGeneral(ships = 0), createTestEnv())
         assertTrue(cmd.checkFullCondition() is ConstraintResult.Fail)
     }
 
     @Test
     fun `parity 숙련전환 golden value matches PHP-traced expectation`() {
-        val general = createTestGeneral(gold = 1000, rice = 1000).apply { meta["dex1"] = 100 }
+        val general = createTestGeneral(funds = 1000, supplies = 1000).apply { meta["dex1"] = 100 }
         val arg = mapOf<String, Any>("srcArmType" to 1, "destArmType" to 2)
         val cmd = che_숙련전환(general, createTestEnv(), arg)
         cmd.city = createTestCity()
@@ -822,7 +822,7 @@ class GeneralCivilCommandTest {
     @Test
     fun `parity 숙련전환 constraint fails when same arm type`() {
         val arg = mapOf<String, Any>("srcArmType" to 1, "destArmType" to 1)
-        val cmd = che_숙련전환(createTestGeneral(gold = 1000, rice = 1000), createTestEnv(), arg)
+        val cmd = che_숙련전환(createTestGeneral(funds = 1000, supplies = 1000), createTestEnv(), arg)
         cmd.city = createTestCity()
         val result = runBlocking { cmd.run(fixedRng) }
         assertFalse(result.success)
@@ -830,7 +830,7 @@ class GeneralCivilCommandTest {
 
     @Test
     fun `parity 물자조달 golden value matches PHP-traced expectation`() {
-        val cmd = che_물자조달(createTestGeneral(leadership = 80, strength = 75, intel = 70), createTestEnv())
+        val cmd = che_물자조달(createTestGeneral(leadership = 80, command = 75, intelligence = 70), createTestEnv())
         cmd.city = createTestCity(frontState = 0)
 
         val result = runBlocking { cmd.run(LiteHashDRBG.build(GOLDEN_SEED)) }
@@ -858,7 +858,7 @@ class GeneralCivilCommandTest {
     @Test
     fun `parity 단련 golden value matches PHP-traced expectation`() {
         val cmd = che_단련(
-            createTestGeneral(leadership = 60, strength = 70, intel = 50, crew = 1000, train = 60, atmos = 70, gold = 1000, rice = 1000),
+            createTestGeneral(leadership = 60, command = 70, intelligence = 50, ships = 1000, training = 60, morale = 70, funds = 1000, supplies = 1000),
             createTestEnv(develCost = 120)
         )
 
@@ -881,14 +881,14 @@ class GeneralCivilCommandTest {
 
     @Test
     fun `parity 단련 constraint fails when crew is zero`() {
-        val cmd = che_단련(createTestGeneral(crew = 0, gold = 1000, rice = 1000), createTestEnv())
+        val cmd = che_단련(createTestGeneral(ships = 0, funds = 1000, supplies = 1000), createTestEnv())
         assertTrue(cmd.checkFullCondition() is ConstraintResult.Fail)
     }
 
     @Test
     fun `parity 군량매매 golden value regression matches expected`() {
         val arg = mapOf<String, Any>("buyRice" to true, "amount" to 500)
-        val cmd = che_군량매매(createTestGeneral(gold = 1000, rice = 1000, leadership = 70, strength = 60, intel = 80), createTestEnv(), arg)
+        val cmd = che_군량매매(createTestGeneral(funds = 1000, supplies = 1000, leadership = 70, command = 60, intelligence = 80), createTestEnv(), arg)
         cmd.city = createTestCity(trade = 100)
 
         val result = runBlocking { cmd.run(LiteHashDRBG.build(GOLDEN_SEED)) }

@@ -23,7 +23,7 @@ import org.mockito.Mockito.`when`
 import java.time.OffsetDateTime
 import java.util.Optional
 
-class NationServiceTest {
+class FactionServiceTest {
     private lateinit var factionRepository: FactionRepository
     private lateinit var officerRepository: OfficerRepository
     private lateinit var appUserRepository: AppUserRepository

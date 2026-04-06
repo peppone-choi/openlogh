@@ -4,7 +4,7 @@ import com.openlogh.entity.Planet
 import com.openlogh.entity.Diplomacy
 import com.openlogh.entity.Officer
 import com.openlogh.entity.Faction
-import com.openlogh.entity.NationTurn
+import com.openlogh.entity.FactionTurn
 import com.openlogh.entity.OldGeneral
 import com.openlogh.entity.Fleet
 import com.openlogh.entity.SessionState
@@ -15,7 +15,7 @@ import com.openlogh.repository.OfficerTurnRepository
 import com.openlogh.repository.HallOfFameRepository
 import com.openlogh.repository.FactionRepository
 import com.openlogh.repository.FactionTurnRepository
-import com.openlogh.repository.OldGeneralRepository
+import com.openlogh.repository.OldOfficerRepository
 import com.openlogh.repository.FleetRepository
 import com.openlogh.service.HistoryService
 import org.junit.jupiter.api.Assertions.*
@@ -37,7 +37,7 @@ class GeneralMaintenanceServiceTest {
     private lateinit var diplomacyRepository: DiplomacyRepository
     private lateinit var factionTurnRepository: FactionTurnRepository
     private lateinit var fleetRepository: FleetRepository
-    private lateinit var oldGeneralRepository: OldGeneralRepository
+    private lateinit var oldOfficerRepository: OldOfficerRepository
     private lateinit var officerTurnRepository: OfficerTurnRepository
     private lateinit var officerAccessLogRepository: OfficerAccessLogRepository
     private lateinit var historyService: HistoryService
@@ -53,14 +53,14 @@ class GeneralMaintenanceServiceTest {
         diplomacyRepository = mock(DiplomacyRepository::class.java)
         factionTurnRepository = mock(FactionTurnRepository::class.java)
         fleetRepository = mock(FleetRepository::class.java)
-        oldGeneralRepository = mock(OldGeneralRepository::class.java)
+        oldOfficerRepository = mock(OldOfficerRepository::class.java)
         officerTurnRepository = mock(OfficerTurnRepository::class.java)
         officerAccessLogRepository = mock(OfficerAccessLogRepository::class.java)
         historyService = mock(HistoryService::class.java)
 
         `when`(fleetRepository.findById(anyLong())).thenReturn(Optional.empty())
-        `when`(oldGeneralRepository.findByServerIdAndGeneralNo(anyString(), anyLong())).thenReturn(null)
-        `when`(officerAccessLogRepository.findByGeneralId(anyLong())).thenReturn(emptyList())
+        `when`(oldOfficerRepository.findBySessionIdAndOfficerId(anyString(), anyLong())).thenReturn(null)
+        `when`(officerAccessLogRepository.findByOfficerId(anyLong())).thenReturn(emptyList())
 
         service = OfficerMaintenanceService(
             gameConstService,
@@ -70,7 +70,7 @@ class GeneralMaintenanceServiceTest {
             diplomacyRepository,
             factionTurnRepository,
             fleetRepository,
-            oldGeneralRepository,
+            oldOfficerRepository,
             officerTurnRepository,
             officerAccessLogRepository,
             historyService,
@@ -102,17 +102,17 @@ class GeneralMaintenanceServiceTest {
         blockState: Short = 0,
         killTurn: Short? = null,
         npcState: Short = 0,
-        nationId: Long = 1,
+        factionId: Long = 1,
         officerLevel: Short = 0,
-        troopId: Long = 0,
+        fleetId: Long = 0,
     ): Officer {
         return Officer(
             id = id,
             sessionId = 1,
             name = "장수$id",
-            factionId = nationId,
+            factionId = factionId,
             planetId = 1,
-            fleetId = troopId,
+            fleetId = fleetId,
             age = age,
             deadYear = deadYear,
             experience = experience,
@@ -183,10 +183,10 @@ class GeneralMaintenanceServiceTest {
             month = 1,
             config = mutableMapOf("isUnited" to 1),
         )
-        val general = createGeneral(age = 80, nationId = 7, officerLevel = 11).apply {
+        val general = createGeneral(age = 80, factionId = 7, officerLevel = 11).apply {
             leadership = 97
-            strength = 11
-            intel = 10
+            command = 11
+            intelligence = 10
             injury = 6
             experience = 1001
             dedication = 1001
@@ -231,7 +231,7 @@ class GeneralMaintenanceServiceTest {
     @Test
     fun `no retirement before retirement age`() {
         val world = createWorld(year = 260, month = 1)
-        val general = createGeneral(age = 79, nationId = 3, officerLevel = 9)
+        val general = createGeneral(age = 79, factionId = 3, officerLevel = 9)
 
         service.processGeneralMaintenance(world, listOf(general))
 
@@ -304,25 +304,25 @@ class GeneralMaintenanceServiceTest {
             id = 1,
             age = 40,
             killTurn = 0,
-            nationId = 1,
+            factionId = 1,
             officerLevel = 20,
-            troopId = 10,
+            fleetId = 10,
         )
         val successor = createGeneral(
             id = 2,
             age = 35,
-            nationId = 1,
+            factionId = 1,
             officerLevel = 11,
-            troopId = 10,
+            fleetId = 10,
         ).apply {
             dedication = 700
         }
         val member = createGeneral(
             id = 3,
             age = 33,
-            nationId = 1,
+            factionId = 1,
             officerLevel = 5,
-            troopId = 10,
+            fleetId = 10,
         )
 
         `when`(factionRepository.findById(1L)).thenReturn(Optional.of(nation))
@@ -345,10 +345,10 @@ class GeneralMaintenanceServiceTest {
         assertEquals(2L, nation.chiefOfficerId)
         assertEquals(2, nation.officerCount)
         verify(fleetRepository).delete(troop)
-        verify(officerTurnRepository).deleteByGeneralId(1L)
+        verify(officerTurnRepository).deleteByOfficerId(1L)
 
-        val captor = ArgumentCaptor.forClass(OldGeneral::class.java)
-        verify(oldGeneralRepository).save(captor.capture())
+        val captor = ArgumentCaptor.forClass(OldOfficer::class.java)
+        verify(oldOfficerRepository).save(captor.capture())
         assertEquals("test-world", captor.value.serverId)
         assertEquals(1L, captor.value.generalNo)
         assertEquals(20006, captor.value.lastYearMonth)
@@ -436,10 +436,10 @@ class GeneralMaintenanceServiceTest {
             destFactionId = 2,
             stateCode = "전쟁",
         )
-        val nationTurn = NationTurn(
+        val nationTurn = FactionTurn(
             id = 11,
-            worldId = 1,
-            nationId = 1,
+            sessionId = 1,
+            factionId = 1,
             officerLevel = 20,
             turnIdx = 0,
             actionCode = "Nation휴식",
@@ -448,7 +448,7 @@ class GeneralMaintenanceServiceTest {
             id = 1,
             age = 40,
             killTurn = 0,
-            nationId = 1,
+            factionId = 1,
             officerLevel = 20,
         )
 

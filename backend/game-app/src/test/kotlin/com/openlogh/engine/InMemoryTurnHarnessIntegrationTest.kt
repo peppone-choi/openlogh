@@ -72,7 +72,7 @@ class InMemoryTurnHarnessIntegrationTest {
         harness.putFaction(nation)
         harness.putPlanet(city)
         harness.putOfficer(general)
-        harness.queueGeneralTurn(generalId = 1, actionCode = "휴식")
+        harness.queueGeneralTurn(officerId = 1, actionCode = "휴식")
 
         harness.turnService.processWorld(world)
 
@@ -137,8 +137,8 @@ class InMemoryTurnHarnessIntegrationTest {
         harness.putFaction(nation)
         harness.putPlanet(city)
         harness.putOfficer(officer)
-        harness.queueNationTurn(nationId = 1, officerLevel = 5, actionCode = "Nation휴식")
-        harness.queueGeneralTurn(generalId = 1, actionCode = "휴식")
+        harness.queueNationTurn(factionId = 1, officerLevel = 5, actionCode = "Nation휴식")
+        harness.queueGeneralTurn(officerId = 1, actionCode = "휴식")
 
         harness.turnService.processWorld(world)
 

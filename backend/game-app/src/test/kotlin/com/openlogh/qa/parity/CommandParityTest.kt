@@ -44,7 +44,7 @@ class CommandParityTest {
         @Test
         fun `high leadership low crew gives high training score`() {
             // Legacy: score = clamp(round(leadership * 100 / crew * trainDelta), 0, maxTrain - train)
-            val gen = createGeneral(leadership = 100, crew = 100, train = 0, atmos = 80)
+            val gen = createGeneral(leadership = 100, ships = 100, training = 0, morale = 80)
             val result = runCmd(che_훈련(gen, createEnv()), "train_1")
             assertTrue(result.success)
             val json = mapper.readTree(result.message)
@@ -54,7 +54,7 @@ class CommandParityTest {
 
         @Test
         fun `training cannot exceed max train`() {
-            val gen = createGeneral(leadership = 100, crew = 100, train = 79, atmos = 80)
+            val gen = createGeneral(leadership = 100, ships = 100, training = 79, morale = 80)
             val result = runCmd(che_훈련(gen, createEnv()), "train_2")
             assertTrue(result.success)
             val json = mapper.readTree(result.message)
@@ -64,7 +64,7 @@ class CommandParityTest {
 
         @Test
         fun `training at max gives zero`() {
-            val gen = createGeneral(leadership = 100, crew = 100, train = 100, atmos = 80)
+            val gen = createGeneral(leadership = 100, ships = 100, training = 100, morale = 80)
             val result = runCmd(che_훈련(gen, createEnv()), "train_3")
             assertTrue(result.success)
             val json = mapper.readTree(result.message)
@@ -74,8 +74,8 @@ class CommandParityTest {
         @Test
         fun `atmos side effect matches legacy formula`() {
             // atmosSideEffectByTraining = 1.0 (no side effect)
-            // atmosAfter = max(0, (atmos * 1.0).toInt()); delta = atmosAfter - atmos = 0
-            val gen = createGeneral(leadership = 80, crew = 200, train = 60, atmos = 100)
+            // atmosAfter = max(0, (atmos * 1.0).toInt()); delta = atmosAfter - morale = 0
+            val gen = createGeneral(leadership = 80, ships = 200, training = 60, morale = 100)
             val result = runCmd(che_훈련(gen, createEnv()), "train_4")
             val json = mapper.readTree(result.message)
             // atmosAfter = (100 * 1.0).toInt() = 100; delta = 100 - 100 = 0
@@ -84,7 +84,7 @@ class CommandParityTest {
 
         @Test
         fun `atmos zero stays zero`() {
-            val gen = createGeneral(leadership = 80, crew = 200, train = 60, atmos = 0)
+            val gen = createGeneral(leadership = 80, ships = 200, training = 60, morale = 0)
             val result = runCmd(che_훈련(gen, createEnv()), "train_5")
             val json = mapper.readTree(result.message)
             assertEquals(0, json["statChanges"]["atmos"].asInt())
@@ -93,7 +93,7 @@ class CommandParityTest {
         @Test
         fun `experience and dedication are fixed at 100 and 70`() {
             // Legacy: $exp = 100; $ded = 70;
-            val gen = createGeneral(leadership = 80, crew = 200, train = 60, atmos = 70)
+            val gen = createGeneral(leadership = 80, ships = 200, training = 60, morale = 70)
             val result = runCmd(che_훈련(gen, createEnv()), "train_6")
             val json = mapper.readTree(result.message)
             assertEquals(100, json["statChanges"]["experience"].asInt())
@@ -113,7 +113,7 @@ class CommandParityTest {
         @Test
         fun `adding to existing same crew type blends train and atmos`() {
             // Legacy: newTrain = (oldCrew*oldTrain + newCrew*50) / (oldCrew+newCrew)
-            val gen = createGeneral(crew = 1000, crewType = 1100, train = 80, atmos = 80, gold = 10000, rice = 10000, leadership = 80)
+            val gen = createGeneral(ships = 1000, shipClass = 1100, training = 80, morale = 80, funds = 10000, supplies = 10000, leadership = 80)
             val arg = mapOf<String, Any>("amount" to 1000, "crewType" to 1100)
             val result = runCmd(che_징병(gen, createEnv(), arg), "con_1")
             assertTrue(result.success)
@@ -125,7 +125,7 @@ class CommandParityTest {
 
         @Test
         fun `switching crew type resets to 50 50`() {
-            val gen = createGeneral(crew = 1000, crewType = 1100, train = 80, atmos = 80, gold = 10000, rice = 10000, leadership = 80)
+            val gen = createGeneral(ships = 1000, shipClass = 1100, training = 80, morale = 80, funds = 10000, supplies = 10000, leadership = 80)
             val arg = mapOf<String, Any>("amount" to 500, "crewType" to 1200) // different type
             val result = runCmd(che_징병(gen, createEnv(), arg), "con_2")
             assertTrue(result.success)
@@ -136,7 +136,7 @@ class CommandParityTest {
 
         @Test
         fun `conscription capped at leadership times 100`() {
-            val gen = createGeneral(crew = 0, crewType = 0, leadership = 10, gold = 50000, rice = 50000)
+            val gen = createGeneral(ships = 0, shipClass = 0, leadership = 10, funds = 50000, supplies = 50000)
             val arg = mapOf<String, Any>("amount" to 5000, "crewType" to 1100)
             val result = runCmd(che_징병(gen, createEnv(), arg), "con_3")
             assertTrue(result.success)
@@ -147,7 +147,7 @@ class CommandParityTest {
 
         @Test
         fun `gold cost includes tech cost multiplier`() {
-            val gen = createGeneral(crew = 0, crewType = 0, leadership = 50, gold = 50000, rice = 50000)
+            val gen = createGeneral(ships = 0, shipClass = 0, leadership = 50, funds = 50000, supplies = 50000)
             gen.factionId = 1
             val nation = Faction(id = 1, sessionId = 1, name = "테스트국", techLevel = 1000f)
             val env = createEnv()
@@ -175,68 +175,68 @@ class CommandParityTest {
 
         @Test
         fun `성벽보수 uses strength stat`() {
-            val gen = createGeneral(strength = 80, gold = 500)
-            val city = createCity(wall = 500, wallMax = 1000, trust = 80f)
+            val gen = createGeneral(command = 80, funds = 500)
+            val city = createCity(fortress = 500, fortressMax = 1000, approval = 80f)
             val result = runDomestic(che_성벽보수(gen, createEnv()), city, "wall_1")
             assertTrue(result.success)
             val json = mapper.readTree(result.message)
             assertEquals(1, json["statChanges"]["strengthExp"].asInt())
-            assertTrue(json["cityChanges"]["wall"].asInt() > 0)
+            assertTrue(json["cityChanges"]["fortress"].asInt() > 0)
         }
 
         @Test
         fun `수비강화 uses strength stat`() {
-            val gen = createGeneral(strength = 80, gold = 500)
-            val city = createCity(def = 500, defMax = 1000, trust = 80f)
+            val gen = createGeneral(command = 80, funds = 500)
+            val city = createCity(orbitalDefense = 500, orbitalDefenseMax = 1000, approval = 80f)
             val result = runDomestic(che_수비강화(gen, createEnv()), city, "def_1")
             assertTrue(result.success)
             val json = mapper.readTree(result.message)
             assertEquals(1, json["statChanges"]["strengthExp"].asInt())
-            assertTrue(json["cityChanges"]["def"].asInt() > 0)
+            assertTrue(json["cityChanges"]["orbitalDefense"].asInt() > 0)
         }
 
         @Test
         fun `치안강화 uses strength stat`() {
-            val gen = createGeneral(strength = 80, gold = 500)
-            val city = createCity(secu = 500, secuMax = 1000, trust = 80f)
+            val gen = createGeneral(command = 80, funds = 500)
+            val city = createCity(security = 500, securityMax = 1000, approval = 80f)
             val result = runDomestic(che_치안강화(gen, createEnv()), city, "secu_1")
             assertTrue(result.success)
             val json = mapper.readTree(result.message)
             assertEquals(1, json["statChanges"]["strengthExp"].asInt())
-            assertTrue(json["cityChanges"]["secu"].asInt() > 0)
+            assertTrue(json["cityChanges"]["security"].asInt() > 0)
         }
 
         @Test
         fun `front line debuff factors differ by command type`() {
             // Legacy: 성벽보수 debuffFront=0.25, 수비강화=0.5, 치안강화=1.0
             // On front line city, score *= debuffFront
-            val gen80 = createGeneral(strength = 80, gold = 5000)
+            val gen80 = createGeneral(command = 80, funds = 5000)
 
-            val cityFront = createCity(wall = 100, wallMax = 1000, trust = 80f, frontState = 1)
-            val cityRear = createCity(wall = 100, wallMax = 1000, trust = 80f, frontState = 0)
+            val cityFront = createCity(fortress = 100, fortressMax = 1000, approval = 80f, frontState = 1)
+            val cityRear = createCity(fortress = 100, fortressMax = 1000, approval = 80f, frontState = 0)
 
             val resultFront = runDomestic(che_성벽보수(gen80.copy(), createEnv()), cityFront.copy(), "debuff_f1")
             val resultRear = runDomestic(che_성벽보수(gen80.copy(), createEnv()), cityRear.copy(), "debuff_f1")
 
-            val frontDelta = mapper.readTree(resultFront.message)["cityChanges"]["wall"].asInt()
-            val rearDelta = mapper.readTree(resultRear.message)["cityChanges"]["wall"].asInt()
+            val frontDelta = mapper.readTree(resultFront.message)["cityChanges"]["fortress"].asInt()
+            val rearDelta = mapper.readTree(resultRear.message)["cityChanges"]["fortress"].asInt()
 
             // Front should be much lower due to 0.25 debuff
-            assertTrue(frontDelta <= rearDelta, "Front wall delta ($frontDelta) should be <= rear ($rearDelta)")
+            assertTrue(frontDelta <= rearDelta, "Front fortress delta ($frontDelta) should be <= rear ($rearDelta)")
         }
 
         @Test
         fun `치안강화 front line debuff is 1_0 meaning no reduction`() {
             // debuffFront=1.0 → score *= 1.0 → no change
-            val gen = createGeneral(strength = 80, gold = 5000)
-            val cityFront = createCity(secu = 100, secuMax = 1000, trust = 80f, frontState = 1)
-            val cityRear = createCity(secu = 100, secuMax = 1000, trust = 80f, frontState = 0)
+            val gen = createGeneral(command = 80, funds = 5000)
+            val cityFront = createCity(security = 100, securityMax = 1000, approval = 80f, frontState = 1)
+            val cityRear = createCity(security = 100, securityMax = 1000, approval = 80f, frontState = 0)
 
             val resultFront = runDomestic(che_치안강화(gen.copy(), createEnv()), cityFront.copy(), "secu_debuff")
             val resultRear = runDomestic(che_치안강화(gen.copy(), createEnv()), cityRear.copy(), "secu_debuff")
 
-            val frontDelta = mapper.readTree(resultFront.message)["cityChanges"]["secu"].asInt()
-            val rearDelta = mapper.readTree(resultRear.message)["cityChanges"]["secu"].asInt()
+            val frontDelta = mapper.readTree(resultFront.message)["cityChanges"]["security"].asInt()
+            val rearDelta = mapper.readTree(resultRear.message)["cityChanges"]["security"].asInt()
 
             // With debuffFront=1.0, front score = score * 1.0 → same as rear before clamping
             // (May still differ slightly due to max clamping, but should be similar)
@@ -245,32 +245,32 @@ class CommandParityTest {
 
         @Test
         fun `domestic command cannot exceed max value`() {
-            val gen = createGeneral(intel = 100, gold = 500)
-            val city = createCity(agri = 990, agriMax = 1000, trust = 100f)
+            val gen = createGeneral(intelligence = 100, funds = 500)
+            val city = createCity(production = 990, productionMax = 1000, approval = 100f)
             val result = runDomestic(che_농지개간(gen, createEnv()), city, "max_1")
             assertTrue(result.success)
             val json = mapper.readTree(result.message)
-            val delta = json["cityChanges"]["agri"].asInt()
+            val delta = json["cityChanges"]["production"].asInt()
             assertTrue(delta <= 10, "Delta ($delta) should not exceed remaining capacity (10)")
         }
 
         @Test
-        fun `low trust reduces score`() {
-            // Legacy: trust < 50 → clamped to 50
-            // Score uses trust/100.0 as multiplier
-            val genHighTrust = createGeneral(intel = 80, gold = 500)
-            val genLowTrust = createGeneral(intel = 80, gold = 500)
+        fun `low approval reduces score`() {
+            // Legacy: approval < 50 → clamped to 50
+            // Score uses approval/100.0 as multiplier
+            val genHighTrust = createGeneral(intelligence = 80, funds = 500)
+            val genLowTrust = createGeneral(intelligence = 80, funds = 500)
 
-            val cityHigh = createCity(agri = 100, agriMax = 1000, trust = 100f)
-            val cityLow = createCity(agri = 100, agriMax = 1000, trust = 50f)
+            val cityHigh = createCity(production = 100, productionMax = 1000, approval = 100f)
+            val cityLow = createCity(production = 100, productionMax = 1000, approval = 50f)
 
             val resultHigh = runDomestic(che_농지개간(genHighTrust, createEnv()), cityHigh, "trust_h")
             val resultLow = runDomestic(che_농지개간(genLowTrust, createEnv()), cityLow, "trust_h")
 
-            val deltaHigh = mapper.readTree(resultHigh.message)["cityChanges"]["agri"].asInt()
-            val deltaLow = mapper.readTree(resultLow.message)["cityChanges"]["agri"].asInt()
+            val deltaHigh = mapper.readTree(resultHigh.message)["cityChanges"]["production"].asInt()
+            val deltaLow = mapper.readTree(resultLow.message)["cityChanges"]["production"].asInt()
 
-            assertTrue(deltaHigh >= deltaLow, "High trust ($deltaHigh) should give >= low trust ($deltaLow)")
+            assertTrue(deltaHigh >= deltaLow, "High approval ($deltaHigh) should give >= low approval ($deltaLow)")
         }
 
         @Test
@@ -278,8 +278,8 @@ class CommandParityTest {
             // Run many seeds and verify we get all three outcomes
             val picks = mutableSetOf<String>()
             for (i in 1..50) {
-                val gen = createGeneral(intel = 80, gold = 500)
-                val city = createCity(agri = 100, agriMax = 1000, trust = 80f)
+                val gen = createGeneral(intelligence = 80, funds = 500)
+                val city = createCity(production = 100, productionMax = 1000, approval = 80f)
                 val result = runDomestic(che_농지개간(gen, createEnv()), city, "crit_$i")
                 val json = mapper.readTree(result.message)
                 picks.add(json["criticalResult"].asText())
@@ -292,8 +292,8 @@ class CommandParityTest {
         @Test
         fun `gold cost equals develCost from env`() {
             val develCost = 150
-            val gen = createGeneral(gold = 500)
-            val city = createCity(agri = 100, agriMax = 1000, trust = 80f)
+            val gen = createGeneral(funds = 500)
+            val city = createCity(production = 100, productionMax = 1000, approval = 80f)
             val result = runDomestic(che_농지개간(gen, createEnv(develCost = develCost)), city, "cost_1")
             val json = mapper.readTree(result.message)
             assertEquals(-develCost, json["statChanges"]["gold"].asInt())
@@ -311,7 +311,7 @@ class CommandParityTest {
         @Test
         fun `morale boost has no train side effect`() {
             // trainSideEffectByAtmosTurn = 1.0 (no side effect)
-            val gen = createGeneral(leadership = 80, crew = 200, atmos = 60, train = 80)
+            val gen = createGeneral(leadership = 80, ships = 200, morale = 60, training = 80)
             val result = runCmd(che_사기진작(gen, createEnv()), "morale_1")
             assertTrue(result.success)
             val json = mapper.readTree(result.message)
@@ -332,10 +332,10 @@ class CommandParityTest {
         fun `all domestic commands deterministic with same seed`() {
             val commands = listOf("농지개간", "상업투자", "성벽보수", "수비강화", "치안강화")
             for (name in commands) {
-                val gen1 = createGeneral(strength = 80, intel = 80, gold = 500)
-                val gen2 = createGeneral(strength = 80, intel = 80, gold = 500)
-                val city1 = createCity(agri = 100, comm = 100, wall = 100, def = 100, secu = 100,
-                    agriMax = 1000, commMax = 1000, wallMax = 1000, defMax = 1000, secuMax = 1000, trust = 80f)
+                val gen1 = createGeneral(command = 80, intelligence = 80, funds = 500)
+                val gen2 = createGeneral(command = 80, intelligence = 80, funds = 500)
+                val city1 = createCity(production = 100, commerce = 100, fortress = 100, orbitalDefense = 100, security = 100,
+                    productionMax = 1000, commerceMax = 1000, fortressMax = 1000, orbitalDefenseMax = 1000, securityMax = 1000, approval = 80f)
                 val city2 = city1.copy()
 
                 val cmd1 = createDomesticCmd(name, gen1, createEnv())
@@ -386,83 +386,83 @@ class CommandParityTest {
 
     private fun createGeneral(
         leadership: Short = 70,
-        strength: Short = 70,
-        intel: Short = 70,
-        gold: Int = 500,
-        rice: Int = 500,
-        crew: Int = 1000,
-        crewType: Short = 0,
-        train: Short = 60,
-        atmos: Short = 60,
+        command: Short = 70,
+        intelligence: Short = 70,
+        funds: Int = 500,
+        supplies: Int = 500,
+        ships: Int = 1000,
+        shipClass: Short = 0,
+        training: Short = 60,
+        morale: Short = 60,
     ): Officer = Officer(
         id = 1,
         sessionId = 1,
         name = "테스트장수",
         factionId = 1,
         planetId = 1,
-        funds = gold,
-        supplies = rice,
-        ships = crew,
-        shipClass = crewType,
-        training = train,
-        morale = atmos,
+        funds = funds,
+        supplies = supplies,
+        ships = ships,
+        shipClass = shipClass,
+        training = training,
+        morale = morale,
         leadership = leadership,
-        command = strength,
-        intelligence = intel,
+        command = command,
+        intelligence = intelligence,
         politics = 60,
         administration = 60,
         turnTime = OffsetDateTime.now(),
     )
 
     private fun createCity(
-        nationId: Long = 1,
-        pop: Int = 50000,
-        agri: Int = 500,
-        agriMax: Int = 1000,
-        comm: Int = 500,
-        commMax: Int = 1000,
-        secu: Int = 500,
-        secuMax: Int = 1000,
-        def: Int = 500,
-        defMax: Int = 1000,
-        wall: Int = 500,
-        wallMax: Int = 1000,
-        trust: Float = 80f,
+        factionId: Long = 1,
+        population: Int = 50000,
+        production: Int = 500,
+        productionMax: Int = 1000,
+        commerce: Int = 500,
+        commerceMax: Int = 1000,
+        security: Int = 500,
+        securityMax: Int = 1000,
+        orbitalDefense: Int = 500,
+        orbitalDefenseMax: Int = 1000,
+        fortress: Int = 500,
+        fortressMax: Int = 1000,
+        approval: Float = 80f,
         frontState: Short = 0,
     ): Planet = Planet(
         id = 1,
         sessionId = 1,
         name = "테스트도시",
-        factionId = nationId,
-        population = pop,
+        factionId = factionId,
+        population = population,
         populationMax = 100000,
-        production = agri,
-        productionMax = agriMax,
-        commerce = comm,
-        commerceMax = commMax,
-        security = secu,
-        securityMax = secuMax,
-        orbitalDefense = def,
-        orbitalDefenseMax = defMax,
-        fortress = wall,
-        fortressMax = wallMax,
-        approval = trust,
+        production = production,
+        productionMax = productionMax,
+        commerce = commerce,
+        commerceMax = commerceMax,
+        security = security,
+        securityMax = securityMax,
+        orbitalDefense = orbitalDefense,
+        orbitalDefenseMax = orbitalDefenseMax,
+        fortress = fortress,
+        fortressMax = fortressMax,
+        approval = approval,
         supplyState = 1,
         frontState = frontState,
     )
 
     // Extension for General to support copy-like behavior in tests
     private fun General.copy(): Officer = Officer(
-        id = id, sessionId = worldId, name = name, factionId = nationId, planetId = cityId,
-        funds = gold, supplies = rice, ships = crew, shipClass = crewType, training = train, morale = atmos,
-        leadership = leadership, command = strength, intelligence = intel, politics = politics, administration = charm,
+        id = id, sessionId = sessionId, name = name, factionId = factionId, planetId = planetId,
+        funds = funds, supplies = supplies, ships = ships, shipClass = shipClass, training = training, morale = morale,
+        leadership = leadership, command = command, intelligence = intelligence, politics = politics, administration = administration,
         turnTime = turnTime,
     )
 
     private fun City.copy(): Planet = Planet(
-        id = id, sessionId = worldId, name = name, factionId = nationId,
-        population = pop, populationMax = popMax, production = agri, productionMax = agriMax, commerce = comm, commerceMax = commMax,
-        security = secu, securityMax = secuMax, orbitalDefense = def, orbitalDefenseMax = defMax, fortress = wall, fortressMax = wallMax,
-        approval = trust, supplyState = supplyState, frontState = frontState,
+        id = id, sessionId = sessionId, name = name, factionId = factionId,
+        population = population, populationMax = populationMax, production = production, productionMax = productionMax, commerce = commerce, commerceMax = commerceMax,
+        security = security, securityMax = securityMax, orbitalDefense = orbitalDefense, orbitalDefenseMax = orbitalDefenseMax, fortress = fortress, fortressMax = fortressMax,
+        approval = approval, supplyState = supplyState, frontState = frontState,
     )
 }

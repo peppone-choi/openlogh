@@ -32,15 +32,15 @@ class ConstraintParityTest {
     inner class NotBeNeutralParity {
 
         @Test
-        fun `fails when nationId is 0`() {
-            val gen = createGeneral(nationId = 0)
+        fun `fails when factionId is 0`() {
+            val gen = createGeneral(factionId = 0)
             val result = NotBeNeutral().test(ctx(gen))
             assertTrue(result is ConstraintResult.Fail)
         }
 
         @Test
-        fun `passes when nationId is nonzero`() {
-            val gen = createGeneral(nationId = 1)
+        fun `passes when factionId is nonzero`() {
+            val gen = createGeneral(factionId = 1)
             assertEquals(ConstraintResult.Pass, NotBeNeutral().test(ctx(gen)))
         }
     }
@@ -50,13 +50,13 @@ class ConstraintParityTest {
     inner class BeNeutralParity {
 
         @Test
-        fun `passes when nationId is 0`() {
-            assertEquals(ConstraintResult.Pass, BeNeutral().test(ctx(createGeneral(nationId = 0))))
+        fun `passes when factionId is 0`() {
+            assertEquals(ConstraintResult.Pass, BeNeutral().test(ctx(createGeneral(factionId = 0))))
         }
 
         @Test
-        fun `fails when nationId is nonzero`() {
-            assertTrue(BeNeutral().test(ctx(createGeneral(nationId = 1))) is ConstraintResult.Fail)
+        fun `fails when factionId is nonzero`() {
+            assertTrue(BeNeutral().test(ctx(createGeneral(factionId = 1))) is ConstraintResult.Fail)
         }
     }
 
@@ -70,25 +70,25 @@ class ConstraintParityTest {
 
         @Test
         fun `gold passes when exactly equal`() {
-            val gen = createGeneral(gold = 100)
+            val gen = createGeneral(funds = 100)
             assertEquals(ConstraintResult.Pass, ReqGeneralGold(100).test(ctx(gen)))
         }
 
         @Test
         fun `gold fails when under`() {
-            val gen = createGeneral(gold = 99)
+            val gen = createGeneral(funds = 99)
             assertTrue(ReqGeneralGold(100).test(ctx(gen)) is ConstraintResult.Fail)
         }
 
         @Test
         fun `rice passes when over`() {
-            val gen = createGeneral(rice = 200)
+            val gen = createGeneral(supplies = 200)
             assertEquals(ConstraintResult.Pass, ReqGeneralRice(100).test(ctx(gen)))
         }
 
         @Test
         fun `rice fails when zero`() {
-            val gen = createGeneral(rice = 0)
+            val gen = createGeneral(supplies = 0)
             assertTrue(ReqGeneralRice(1).test(ctx(gen)) is ConstraintResult.Fail)
         }
     }
@@ -103,19 +103,19 @@ class ConstraintParityTest {
 
         @Test
         fun `passes with default minCrew 1`() {
-            val gen = createGeneral(crew = 1)
+            val gen = createGeneral(ships = 1)
             assertEquals(ConstraintResult.Pass, ReqGeneralCrew().test(ctx(gen)))
         }
 
         @Test
         fun `fails with 0 crew`() {
-            val gen = createGeneral(crew = 0)
+            val gen = createGeneral(ships = 0)
             assertTrue(ReqGeneralCrew().test(ctx(gen)) is ConstraintResult.Fail)
         }
 
         @Test
         fun `custom minCrew threshold`() {
-            val gen = createGeneral(crew = 99)
+            val gen = createGeneral(ships = 99)
             assertTrue(ReqGeneralCrew(100).test(ctx(gen)) is ConstraintResult.Fail)
             assertEquals(ConstraintResult.Pass, ReqGeneralCrew(99).test(ctx(gen)))
         }
@@ -127,25 +127,25 @@ class ConstraintParityTest {
 
         @Test
         fun `train margin passes when below max`() {
-            val gen = createGeneral(train = 79)
+            val gen = createGeneral(training = 79)
             assertEquals(ConstraintResult.Pass, ReqGeneralTrainMargin(80).test(ctx(gen)))
         }
 
         @Test
         fun `train margin fails at max`() {
-            val gen = createGeneral(train = 80)
+            val gen = createGeneral(training = 80)
             assertTrue(ReqGeneralTrainMargin(80).test(ctx(gen)) is ConstraintResult.Fail)
         }
 
         @Test
         fun `atmos margin passes when below max`() {
-            val gen = createGeneral(atmos = 79)
+            val gen = createGeneral(morale = 79)
             assertEquals(ConstraintResult.Pass, ReqGeneralAtmosMargin(80).test(ctx(gen)))
         }
 
         @Test
         fun `atmos margin fails at max`() {
-            val gen = createGeneral(atmos = 80)
+            val gen = createGeneral(morale = 80)
             assertTrue(ReqGeneralAtmosMargin(80).test(ctx(gen)) is ConstraintResult.Fail)
         }
     }
@@ -159,24 +159,24 @@ class ConstraintParityTest {
     inner class CityConstraintParity {
 
         @Test
-        fun `occupied city passes when nationId matches`() {
-            val gen = createGeneral(nationId = 1)
-            val city = createCity(nationId = 1)
+        fun `occupied city passes when factionId matches`() {
+            val gen = createGeneral(factionId = 1)
+            val city = createCity(factionId = 1)
             val c = ctx(gen, city = city)
             assertEquals(ConstraintResult.Pass, OccupiedCity().test(c))
         }
 
         @Test
-        fun `occupied city fails when nationId differs`() {
-            val gen = createGeneral(nationId = 1)
-            val city = createCity(nationId = 2)
+        fun `occupied city fails when factionId differs`() {
+            val gen = createGeneral(factionId = 1)
+            val city = createCity(factionId = 2)
             assertTrue(OccupiedCity().test(ctx(gen, city = city)) is ConstraintResult.Fail)
         }
 
         @Test
-        fun `occupied city with allowNeutral passes for nationId 0`() {
-            val gen = createGeneral(nationId = 1)
-            val city = createCity(nationId = 0)
+        fun `occupied city with allowNeutral passes for factionId 0`() {
+            val gen = createGeneral(factionId = 1)
+            val city = createCity(factionId = 0)
             assertEquals(ConstraintResult.Pass, OccupiedCity(allowNeutral = true).test(ctx(gen, city = city)))
         }
 
@@ -199,22 +199,22 @@ class ConstraintParityTest {
 
         @Test
         fun `passes when current below max`() {
-            val city = createCity(agri = 999, agriMax = 1000)
+            val city = createCity(production = 999, productionMax = 1000)
             assertEquals(ConstraintResult.Pass,
-                RemainCityCapacity("agri", "농업").test(ctx(createGeneral(), city = city)))
+                RemainCityCapacity("production", "농업").test(ctx(createGeneral(), city = city)))
         }
 
         @Test
         fun `fails when current equals max`() {
-            val city = createCity(agri = 1000, agriMax = 1000)
-            assertTrue(RemainCityCapacity("agri", "농업").test(ctx(createGeneral(), city = city)) is ConstraintResult.Fail)
+            val city = createCity(production = 1000, productionMax = 1000)
+            assertTrue(RemainCityCapacity("production", "농업").test(ctx(createGeneral(), city = city)) is ConstraintResult.Fail)
         }
 
         @Test
         fun `works for all city keys`() {
-            for ((key, displayName) in listOf("agri" to "농업", "comm" to "상업", "secu" to "치안", "def" to "수비", "wall" to "성벽")) {
-                val city = createCity(agri = 999, comm = 999, secu = 999, def = 999, wall = 999,
-                    agriMax = 1000, commMax = 1000, secuMax = 1000, defMax = 1000, wallMax = 1000)
+            for ((key, displayName) in listOf("production" to "농업", "commerce" to "상업", "security" to "치안", "orbitalDefense" to "수비", "fortress" to "성벽")) {
+                val city = createCity(production = 999, commerce = 999, security = 999, orbitalDefense = 999, fortress = 999,
+                    productionMax = 1000, commerceMax = 1000, securityMax = 1000, orbitalDefenseMax = 1000, fortressMax = 1000)
                 assertEquals(ConstraintResult.Pass,
                     RemainCityCapacity(key, displayName).test(ctx(createGeneral(), city = city)),
                     "Should pass for $key")
@@ -265,20 +265,20 @@ class ConstraintParityTest {
 
         @Test
         fun `passes when different crew type`() {
-            val gen = createGeneral(crewType = 1100, crew = 10000, leadership = 50)
+            val gen = createGeneral(shipClass = 1100, ships = 10000, leadership = 50)
             assertEquals(ConstraintResult.Pass, ReqGeneralCrewMargin(1200).test(ctx(gen)))
         }
 
         @Test
         fun `passes when same type with room`() {
-            val gen = createGeneral(crewType = 1100, crew = 4999, leadership = 50)
+            val gen = createGeneral(shipClass = 1100, ships = 4999, leadership = 50)
             assertEquals(ConstraintResult.Pass, ReqGeneralCrewMargin(1100).test(ctx(gen)))
         }
 
         @Test
         fun `fails when same type at max`() {
-            // maxCrew = 50*100 = 5000; crew=5000 → not > → fail
-            val gen = createGeneral(crewType = 1100, crew = 5000, leadership = 50)
+            // maxCrew = 50*100 = 5000; ships =5000 → not > → fail
+            val gen = createGeneral(shipClass = 1100, ships = 5000, leadership = 50)
             assertTrue(ReqGeneralCrewMargin(1100).test(ctx(gen)) is ConstraintResult.Fail)
         }
     }
@@ -293,20 +293,20 @@ class ConstraintParityTest {
 
         @Test
         fun `nation gold passes when sufficient`() {
-            val nation = createNation(gold = 1000)
+            val nation = createNation(funds = 1000)
             assertEquals(ConstraintResult.Pass,
                 ReqNationGold(1000).test(ctx(createGeneral(), nation = nation)))
         }
 
         @Test
         fun `nation gold fails when insufficient`() {
-            val nation = createNation(gold = 999)
+            val nation = createNation(funds = 999)
             assertTrue(ReqNationGold(1000).test(ctx(createGeneral(), nation = nation)) is ConstraintResult.Fail)
         }
 
         @Test
         fun `nation rice passes when sufficient`() {
-            val nation = createNation(rice = 500)
+            val nation = createNation(supplies = 500)
             assertEquals(ConstraintResult.Pass,
                 ReqNationRice(500).test(ctx(createGeneral(), nation = nation)))
         }
@@ -327,7 +327,7 @@ class ConstraintParityTest {
 
         @Test
         fun `chain stops at first failure`() {
-            val gen = createGeneral(nationId = 0, gold = 0)
+            val gen = createGeneral(factionId = 0, funds = 0)
             val constraints = listOf(
                 NotBeNeutral(),
                 ReqGeneralGold(100),
@@ -340,7 +340,7 @@ class ConstraintParityTest {
 
         @Test
         fun `chain passes when all pass`() {
-            val gen = createGeneral(nationId = 1, gold = 500)
+            val gen = createGeneral(factionId = 1, funds = 500)
             val constraints = listOf(
                 NotBeNeutral(),
                 ReqGeneralGold(100),
@@ -382,28 +382,28 @@ class ConstraintParityTest {
 
         @Test
         fun `FriendlyDestGeneral passes when same nation`() {
-            val gen = createGeneral(nationId = 1)
-            val dest = createGeneral(id = 2, nationId = 1)
+            val gen = createGeneral(factionId = 1)
+            val dest = createGeneral(id = 2, factionId = 1)
             assertEquals(ConstraintResult.Pass, FriendlyDestGeneral().test(ctx(gen, destOfficer = dest)))
         }
 
         @Test
         fun `FriendlyDestGeneral fails when different nation`() {
-            val gen = createGeneral(nationId = 1)
-            val dest = createGeneral(id = 2, nationId = 2)
+            val gen = createGeneral(factionId = 1)
+            val dest = createGeneral(id = 2, factionId = 2)
             assertTrue(FriendlyDestGeneral().test(ctx(gen, destOfficer = dest)) is ConstraintResult.Fail)
         }
 
         @Test
         fun `NotSameDestCity passes when different`() {
-            val gen = createGeneral(cityId = 1)
+            val gen = createGeneral(planetId = 1)
             val destPlanet = createCity(id = 2)
             assertEquals(ConstraintResult.Pass, NotSameDestCity().test(ctx(gen, destPlanet = destPlanet)))
         }
 
         @Test
         fun `NotSameDestCity fails when same`() {
-            val gen = createGeneral(cityId = 1)
+            val gen = createGeneral(planetId = 1)
             val destPlanet = createCity(id = 1)
             assertTrue(NotSameDestCity().test(ctx(gen, destPlanet = destPlanet)) is ConstraintResult.Fail)
         }
@@ -461,14 +461,14 @@ class ConstraintParityTest {
 
     private fun createGeneral(
         id: Long = 1,
-        nationId: Long = 1,
-        cityId: Long = 1,
-        gold: Int = 500,
-        rice: Int = 500,
-        crew: Int = 1000,
-        crewType: Short = 0,
-        train: Short = 60,
-        atmos: Short = 60,
+        factionId: Long = 1,
+        planetId: Long = 1,
+        funds: Int = 500,
+        supplies: Int = 500,
+        ships: Int = 1000,
+        shipClass: Short = 0,
+        training: Short = 60,
+        morale: Short = 60,
         officerLevel: Short = 5,
         leadership: Short = 70,
         injury: Short = 0,
@@ -476,14 +476,14 @@ class ConstraintParityTest {
         id = id,
         sessionId = 1,
         name = "테스트장수",
-        factionId = nationId,
-        planetId = cityId,
-        funds = gold,
-        supplies = rice,
-        ships = crew,
-        shipClass = crewType,
-        training = train,
-        morale = atmos,
+        factionId = factionId,
+        planetId = planetId,
+        funds = funds,
+        supplies = supplies,
+        ships = ships,
+        shipClass = shipClass,
+        training = training,
+        morale = morale,
         leadership = leadership,
         command = 70,
         intelligence = 70,
@@ -496,49 +496,49 @@ class ConstraintParityTest {
 
     private fun createCity(
         id: Long = 1,
-        nationId: Long = 1,
+        factionId: Long = 1,
         supplyState: Short = 1,
-        agri: Int = 500,
-        agriMax: Int = 1000,
-        comm: Int = 500,
-        commMax: Int = 1000,
-        secu: Int = 500,
-        secuMax: Int = 1000,
-        def: Int = 500,
-        defMax: Int = 1000,
-        wall: Int = 500,
-        wallMax: Int = 1000,
-        trust: Float = 80f,
+        production: Int = 500,
+        productionMax: Int = 1000,
+        commerce: Int = 500,
+        commerceMax: Int = 1000,
+        security: Int = 500,
+        securityMax: Int = 1000,
+        orbitalDefense: Int = 500,
+        orbitalDefenseMax: Int = 1000,
+        fortress: Int = 500,
+        fortressMax: Int = 1000,
+        approval: Float = 80f,
     ): Planet = Planet(
         id = id,
         sessionId = 1,
         name = "테스트도시",
-        factionId = nationId,
+        factionId = factionId,
         population = 50000,
         populationMax = 100000,
-        production = agri,
-        productionMax = agriMax,
-        commerce = comm,
-        commerceMax = commMax,
-        security = secu,
-        securityMax = secuMax,
-        orbitalDefense = def,
-        orbitalDefenseMax = defMax,
-        fortress = wall,
-        fortressMax = wallMax,
-        approval = trust,
+        production = production,
+        productionMax = productionMax,
+        commerce = commerce,
+        commerceMax = commerceMax,
+        security = security,
+        securityMax = securityMax,
+        orbitalDefense = orbitalDefense,
+        orbitalDefenseMax = orbitalDefenseMax,
+        fortress = fortress,
+        fortressMax = fortressMax,
+        approval = approval,
         supplyState = supplyState,
     )
 
     private fun createNation(
         id: Long = 1,
-        gold: Int = 10000,
-        rice: Int = 10000,
+        funds: Int = 10000,
+        supplies: Int = 10000,
     ): Faction = Faction(
         id = id,
         sessionId = 1,
         name = "테스트국",
-        funds = gold,
-        supplies = rice,
+        funds = funds,
+        supplies = supplies,
     )
 }

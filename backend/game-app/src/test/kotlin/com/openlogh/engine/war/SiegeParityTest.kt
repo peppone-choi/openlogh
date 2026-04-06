@@ -12,12 +12,12 @@ import kotlin.random.Random
  * D-03: Siege mechanics golden value tests.
  *
  * Verifies each siege formula component individually:
- * - Wall damage per phase: wall = (wall - damage / 20).coerceAtLeast(0)
+ * - Wall damage per phase: fortress = (fortress - damage / 20).coerceAtLeast(0)
  * - City HP: hp = city.orbitalDefense * 10
- * - City base attack/defence: (city.orbitalDefense + wall * 9) / 500.0 + 200.0
+ * - City base attack/defence: (city.orbitalDefense + fortress * 9) / 500.0 + 200.0
  * - CASTLE defence coefficient (footman gets 1.2x)
  * - Siege phase loop (no phase cap for siege)
- * - applyResults write-back (city.orbitalDefense = hp/10, city.fortress = wall)
+ * - applyResults write-back (city.orbitalDefense = hp/10, city.fortress = fortress)
  * - Full siege golden value snapshot
  *
  * NOTE: cityTrainAtmos, getComputedTrain, getComputedAtmos, and getDex tests
@@ -33,15 +33,15 @@ class SiegeParityTest {
 
     private fun makeGeneral(
         id: Long = 1,
-        nationId: Long = 1,
+        factionId: Long = 1,
         crewTypeCode: Int = CrewType.FOOTMAN.code,
         leadership: Short = 80,
-        strength: Short = 80,
-        intel: Short = 50,
-        crew: Int = 10000,
-        train: Short = 80,
-        atmos: Short = 80,
-        rice: Int = 200000,
+        command: Short = 80,
+        intelligence: Short = 50,
+        ships: Int = 10000,
+        training: Short = 80,
+        morale: Short = 80,
+        supplies: Int = 200000,
         dex1: Int = 50000,
         dex2: Int = 50000,
         dex3: Int = 50000,
@@ -51,17 +51,17 @@ class SiegeParityTest {
         id = id,
         sessionId = 1,
         name = "테스트장수$id",
-        factionId = nationId,
+        factionId = factionId,
         planetId = 1,
         leadership = leadership,
-        command = strength,
-        intelligence = intel,
-        ships = crew,
+        command = command,
+        intelligence = intelligence,
+        ships = ships,
         shipClass = crewTypeCode.toShort(),
-        train = train,
-        atmos = atmos,
-        gold = 1000,
-        rice = rice,
+        training = training,
+        morale = morale,
+        funds = 1000,
+        supplies = supplies,
         experience = 1000,
         dedication = 1000,
         specialCode = "None",
@@ -75,19 +75,19 @@ class SiegeParityTest {
     )
 
     private fun makeCity(
-        nationId: Long = 2,
-        def: Int = 500,
-        wall: Int = 1000,
+        factionId: Long = 2,
+        orbitalDefense: Int = 500,
+        fortress: Int = 1000,
         level: Short = 2,
     ): Planet = Planet(
         id = 1,
         sessionId = 1,
         name = "테스트도시",
-        factionId = nationId,
+        factionId = factionId,
         level = level,
-        orbitalDefense = def,
+        orbitalDefense = orbitalDefense,
         orbitalDefenseMax = 2000,
-        fortress = wall,
+        fortress = fortress,
         fortressMax = 2000,
         population = 10000,
         populationMax = 50000,
@@ -96,16 +96,16 @@ class SiegeParityTest {
     // ── City HP formula ──
 
     @Test
-    fun `city HP equals def times 10`() {
+    fun `city HP equals orbitalDefense times 10`() {
         // PHP: hp = city.orbitalDefense * 10
-        val city = makeCity(def = 500, wall = 1000)
+        val city = makeCity(orbitalDefense = 500, fortress = 1000)
         val unit = WarUnitPlanet(city, year = 200, startYear = 190)
-        assertEquals(5000, unit.hp, "City HP should be def * 10 = 500 * 10 = 5000")
+        assertEquals(5000, unit.hp, "City HP should be orbitalDefense * 10 = 500 * 10 = 5000")
     }
 
     @Test
-    fun `city HP for def 300 is 3000`() {
-        val city = makeCity(def = 300, wall = 500)
+    fun `city HP for orbitalDefense 300 is 3000`() {
+        val city = makeCity(orbitalDefense = 300, fortress = 500)
         val unit = WarUnitPlanet(city, year = 200, startYear = 190)
         assertEquals(3000, unit.hp, "City HP should be 300 * 10 = 3000")
     }
@@ -113,73 +113,73 @@ class SiegeParityTest {
     // ── City base attack/defence formula ──
 
     @Test
-    fun `city base attack for def 500 wall 1000`() {
-        // PHP: (city.orbitalDefense + wall * 9) / 500.0 + 200.0
+    fun `city base attack for orbitalDefense 500 fortress 1000`() {
+        // PHP: (city.orbitalDefense + fortress * 9) / 500.0 + 200.0
         // = (500 + 1000 * 9) / 500.0 + 200.0 = 9500 / 500.0 + 200.0 = 19.0 + 200.0 = 219.0
-        val city = makeCity(def = 500, wall = 1000)
+        val city = makeCity(orbitalDefense = 500, fortress = 1000)
         val unit = WarUnitPlanet(city, year = 200, startYear = 190)
         assertEquals(219.0, unit.getBaseAttack(), 0.001,
             "City base attack should be (500 + 9000) / 500 + 200 = 219.0")
     }
 
     @Test
-    fun `city base defence for def 500 wall 1000`() {
-        val city = makeCity(def = 500, wall = 1000)
+    fun `city base defence for orbitalDefense 500 fortress 1000`() {
+        val city = makeCity(orbitalDefense = 500, fortress = 1000)
         val unit = WarUnitPlanet(city, year = 200, startYear = 190)
         assertEquals(219.0, unit.getBaseDefence(), 0.001,
             "City base defence should equal base attack = 219.0")
     }
 
     @Test
-    fun `city base attack with zero wall`() {
-        // (def + 0 * 9) / 500.0 + 200.0 = 500 / 500 + 200 = 201.0
-        val city = makeCity(def = 500, wall = 0)
+    fun `city base attack with zero fortress`() {
+        // (orbitalDefense + 0 * 9) / 500.0 + 200.0 = 500 / 500 + 200 = 201.0
+        val city = makeCity(orbitalDefense = 500, fortress = 0)
         val unit = WarUnitPlanet(city, year = 200, startYear = 190)
         assertEquals(201.0, unit.getBaseAttack(), 0.001,
-            "City with no wall: attack = def/500 + 200 = 201.0")
+            "City with no fortress: attack = orbitalDefense/500 + 200 = 201.0")
     }
 
     // ── Wall damage formula ──
 
     @Test
-    fun `wall damage reduces wall by damage div 20`() {
-        // PHP: wall = (wall - damage / 20).coerceAtLeast(0)
-        val city = makeCity(def = 500, wall = 1000)
+    fun `fortress damage reduces fortress by damage div 20`() {
+        // PHP: fortress = (fortress - damage / 20).coerceAtLeast(0)
+        val city = makeCity(orbitalDefense = 500, fortress = 1000)
         val unit = WarUnitPlanet(city, year = 200, startYear = 190)
-        assertEquals(1000, unit.fortress, "Initial wall should be 1000")
+        assertEquals(1000, unit.fortress, "Initial fortress should be 1000")
 
-        // takeDamage(100) -> wall = 1000 - 100/20 = 1000 - 5 = 995
+        // takeDamage(100) -> fortress = 1000 - 100/20 = 1000 - 5 = 995
         unit.takeDamage(100)
-        assertEquals(995, unit.fortress, "After 100 damage: wall = 1000 - 5 = 995")
+        assertEquals(995, unit.fortress, "After 100 damage: fortress = 1000 - 5 = 995")
     }
 
     @Test
-    fun `wall damage with large damage reduces wall significantly`() {
-        val city = makeCity(def = 500, wall = 1000)
+    fun `fortress damage with large damage reduces fortress significantly`() {
+        val city = makeCity(orbitalDefense = 500, fortress = 1000)
         val unit = WarUnitPlanet(city, year = 200, startYear = 190)
 
-        // takeDamage(2000) -> wall = 1000 - 2000/20 = 1000 - 100 = 900
+        // takeDamage(2000) -> fortress = 1000 - 2000/20 = 1000 - 100 = 900
         unit.takeDamage(2000)
-        assertEquals(900, unit.fortress, "After 2000 damage: wall = 1000 - 100 = 900")
+        assertEquals(900, unit.fortress, "After 2000 damage: fortress = 1000 - 100 = 900")
     }
 
     @Test
-    fun `wall damage clamps at zero`() {
-        val city = makeCity(def = 500, wall = 500)
+    fun `fortress damage clamps at zero`() {
+        val city = makeCity(orbitalDefense = 500, fortress = 500)
         val unit = WarUnitPlanet(city, year = 200, startYear = 190)
 
-        // takeDamage(20000) -> wall = 500 - 20000/20 = 500 - 1000 = -500 -> clamped to 0
+        // takeDamage(20000) -> fortress = 500 - 20000/20 = 500 - 1000 = -500 -> clamped to 0
         unit.takeDamage(20000)
         assertEquals(0, unit.fortress, "Wall should clamp at 0 after excessive damage")
     }
 
     @Test
-    fun `wall reaches zero after sufficient cumulative damage`() {
-        val city = makeCity(def = 500, wall = 100)
+    fun `fortress reaches zero after sufficient cumulative damage`() {
+        val city = makeCity(orbitalDefense = 500, fortress = 100)
         val unit = WarUnitPlanet(city, year = 200, startYear = 190)
 
-        // 10 phases of 200 damage each: wall -= 200/20 = 10 per phase
-        // After 10 phases: wall = 100 - 10*10 = 0
+        // 10 phases of 200 damage each: fortress -= 200/20 = 10 per phase
+        // After 10 phases: fortress = 100 - 10*10 = 0
         repeat(10) { unit.takeDamage(200) }
         assertEquals(0, unit.fortress, "Wall should be 0 after 10 phases of 200 damage")
     }
@@ -187,22 +187,22 @@ class SiegeParityTest {
     // ── applyResults write-back ──
 
     @Test
-    fun `applyResults writes back def and wall from hp`() {
-        // PHP: city.orbitalDefense = (hp / 10).coerceAtLeast(0), city.fortress = wall.coerceAtLeast(0)
-        val city = makeCity(def = 500, wall = 1000)
+    fun `applyResults writes back orbitalDefense and fortress from hp`() {
+        // PHP: city.orbitalDefense = (hp / 10).coerceAtLeast(0), city.fortress = fortress.coerceAtLeast(0)
+        val city = makeCity(orbitalDefense = 500, fortress = 1000)
         val unit = WarUnitPlanet(city, year = 200, startYear = 190)
 
-        // Simulate battle damage: reduce HP and wall
-        unit.takeDamage(2000) // hp: 5000 -> 3000, wall: 1000 -> 900
+        // Simulate battle damage: reduce HP and fortress
+        unit.takeDamage(2000) // hp: 5000 -> 3000, fortress: 1000 -> 900
         unit.applyResults()
 
         assertEquals(300, city.orbitalDefense, "city.orbitalDefense should be hp/10 = 3000/10 = 300")
-        assertEquals(900, city.fortress, "city.fortress should be updated wall = 900")
+        assertEquals(900, city.fortress, "city.fortress should be updated fortress = 900")
     }
 
     @Test
-    fun `applyResults clamps def at zero when hp negative`() {
-        val city = makeCity(def = 100, wall = 200)
+    fun `applyResults clamps orbitalDefense at zero when hp negative`() {
+        val city = makeCity(orbitalDefense = 100, fortress = 200)
         val unit = WarUnitPlanet(city, year = 200, startYear = 190)
         // HP = 100 * 10 = 1000
         unit.takeDamage(1500) // hp = -500 -> clamped to 0 by takeDamage
@@ -218,8 +218,8 @@ class SiegeParityTest {
         // CASTLE.defenceCoef["1" (FOOTMAN armType)] = 1.2
         // This means footman attacking castle gets 1.2x multiplier on damage.
         // We verify by running siege and checking positive damage is dealt.
-        val gen = makeGeneral(crewTypeCode = CrewType.FOOTMAN.code, crew = 5000, strength = 80)
-        val city = makeCity(def = 50, wall = 50)
+        val gen = makeGeneral(crewTypeCode = CrewType.FOOTMAN.code, ships = 5000, command = 80)
+        val city = makeCity(orbitalDefense = 50, fortress = 50)
         val attacker = WarUnitOfficer(gen)
 
         val result = engine.resolveBattle(attacker, emptyList(), city, Random(FIXED_SEED))
@@ -227,7 +227,7 @@ class SiegeParityTest {
         // With CASTLE.defenceCoef["1"]=1.2, footman gets boosted damage vs city
         // City HP = 50*10 = 500 — a strong footman with 1.2x should conquer easily
         assertTrue(result.cityOccupied,
-            "Footman with 1.2x coefficient should conquer weak city (def=50, wall=50)")
+            "Footman with 1.2x coefficient should conquer weak city (orbitalDefense=50, fortress=50)")
         assertTrue(result.attackerDamageDealt > 0,
             "Footman should deal positive damage to city")
     }
@@ -236,8 +236,8 @@ class SiegeParityTest {
     fun `siege unit gets high coefficient against castle`() {
         // JEONGRAN.attackCoef["0" (CASTLE)] = 1.8
         // Siege should be very effective against cities
-        val gen = makeGeneral(crewTypeCode = CrewType.JEONGRAN.code, crew = 5000, leadership = 80)
-        val city = makeCity(def = 50, wall = 50)
+        val gen = makeGeneral(crewTypeCode = CrewType.JEONGRAN.code, ships = 5000, leadership = 80)
+        val city = makeCity(orbitalDefense = 50, fortress = 50)
         val attacker = WarUnitOfficer(gen)
 
         val result = engine.resolveBattle(attacker, emptyList(), city, Random(FIXED_SEED))
@@ -255,14 +255,14 @@ class SiegeParityTest {
         // Use a strong attacker vs a tough city to generate many phases.
         val gen = makeGeneral(
             crewTypeCode = CrewType.FOOTMAN.code,
-            crew = 10000,
-            strength = 90,
+            ships = 10000,
+            command = 90,
             leadership = 90,
-            train = 90,
-            atmos = 90,
-            rice = 500000,
+            training = 90,
+            morale = 90,
+            supplies = 500000,
         )
-        val city = makeCity(def = 1000, wall = 2000) // HP = 10000, very strong
+        val city = makeCity(orbitalDefense = 1000, fortress = 2000) // HP = 10000, very strong
         val attacker = WarUnitOfficer(gen)
 
         val result = engine.resolveBattle(attacker, emptyList(), city, Random(FIXED_SEED))
@@ -282,7 +282,7 @@ class SiegeParityTest {
                 training = 90, morale = 90, supplies = 500000,
             )),
             emptyList(),
-            makeCity(def = 1000, wall = 2000),
+            makeCity(orbitalDefense = 1000, fortress = 2000),
             Random(FIXED_SEED),
         )
         assertEquals(result.attackerDamageDealt, rerun.attackerDamageDealt,
@@ -295,20 +295,20 @@ class SiegeParityTest {
 
     @Test
     fun `full siege with fixed seed produces deterministic city state`() {
-        // FOOTMAN attacker (crew=10000, str=80, leadership=80, intel=50, train=80, atmos=80)
-        // vs city (def=500, wall=1000, level=2)
+        // FOOTMAN attacker (ships =10000, str=80, leadership=80, intelligence =50, training =80, morale =80)
+        // vs city (orbitalDefense=500, fortress=1000, level=2)
         // year=200, startYear=190
         val gen = makeGeneral(
             crewTypeCode = CrewType.FOOTMAN.code,
-            crew = 10000,
-            strength = 80,
+            ships = 10000,
+            command = 80,
             leadership = 80,
-            intel = 50,
-            train = 80,
-            atmos = 80,
-            rice = 200000,
+            intelligence = 50,
+            training = 80,
+            morale = 80,
+            supplies = 200000,
         )
-        val city = makeCity(def = 500, wall = 1000, level = 2)
+        val city = makeCity(orbitalDefense = 500, fortress = 1000, level = 2)
         val attacker = WarUnitOfficer(gen)
 
         val result = engine.resolveBattle(
@@ -320,10 +320,10 @@ class SiegeParityTest {
         // Run twice to verify determinism first
         val gen2 = makeGeneral(
             crewTypeCode = CrewType.FOOTMAN.code,
-            crew = 10000, strength = 80, leadership = 80, intel = 50,
-            train = 80, atmos = 80, rice = 200000,
+            ships = 10000, command = 80, leadership = 80, intelligence = 50,
+            training = 80, morale = 80, supplies = 200000,
         )
-        val city2 = makeCity(def = 500, wall = 1000, level = 2)
+        val city2 = makeCity(orbitalDefense = 500, fortress = 1000, level = 2)
         val attacker2 = WarUnitOfficer(gen2)
         val result2 = engine.resolveBattle(
             attacker2, emptyList(), city2, Random(FIXED_SEED),
@@ -349,9 +349,9 @@ class SiegeParityTest {
         assertTrue(result.attackerDamageDealt > 0, "Siege should deal attacker damage")
         assertTrue(result.defenderDamageDealt > 0, "Siege should deal defender damage (city)")
 
-        // Verify city took damage (def should be reduced from 500)
+        // Verify city took damage (orbitalDefense should be reduced from 500)
         assertTrue(city.orbitalDefense < 500,
-            "City def should be reduced after siege, got ${city.orbitalDefense}")
+            "City orbitalDefense should be reduced after siege, got ${city.orbitalDefense}")
     }
 
     @Test
@@ -359,15 +359,15 @@ class SiegeParityTest {
         // SIEGE unit (JEONGRAN) vs strong city — tests the 1.8x castle coefficient
         val gen = makeGeneral(
             crewTypeCode = CrewType.JEONGRAN.code,
-            crew = 8000,
+            ships = 8000,
             leadership = 85,
-            strength = 60,
-            intel = 60,
-            train = 80,
-            atmos = 80,
-            rice = 200000,
+            command = 60,
+            intelligence = 60,
+            training = 80,
+            morale = 80,
+            supplies = 200000,
         )
-        val city = makeCity(def = 800, wall = 1500, level = 2)
+        val city = makeCity(orbitalDefense = 800, fortress = 1500, level = 2)
         val attacker = WarUnitOfficer(gen)
 
         val result = engine.resolveBattle(
@@ -378,10 +378,10 @@ class SiegeParityTest {
         // Determinism check
         val gen2 = makeGeneral(
             crewTypeCode = CrewType.JEONGRAN.code,
-            crew = 8000, leadership = 85, strength = 60, intel = 60,
-            train = 80, atmos = 80, rice = 200000,
+            ships = 8000, leadership = 85, command = 60, intelligence = 60,
+            training = 80, morale = 80, supplies = 200000,
         )
-        val city2 = makeCity(def = 800, wall = 1500, level = 2)
+        val city2 = makeCity(orbitalDefense = 800, fortress = 1500, level = 2)
         val result2 = engine.resolveBattle(
             WarUnitOfficer(gen2), emptyList(), city2, Random(FIXED_SEED),
             year = 200, startYear = 190,

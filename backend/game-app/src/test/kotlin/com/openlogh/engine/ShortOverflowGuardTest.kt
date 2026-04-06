@@ -107,7 +107,7 @@ class ShortOverflowGuardTest {
     }
 
     @Nested
-    @DisplayName("Military (train: 0..110, atmos: 0..150, injury: 0..80, defenceTrain: 0..100)")
+    @DisplayName("Military (training: 0..110, morale: 0..150, injury: 0..80, defenceTrain: 0..100)")
     inner class MilitaryFields {
 
         @Test
@@ -173,7 +173,7 @@ class ShortOverflowGuardTest {
     }
 
     @Nested
-    @DisplayName("Nation Economy (bill: 0..200, rate: 0..100, rateTmp: 0..100)")
+    @DisplayName("Nation Economy (bill: 0..200, conscriptionRate: 0..100, rateTmp: 0..100)")
     inner class NationEconomyFields {
 
         @Test
@@ -238,7 +238,7 @@ class ShortOverflowGuardTest {
 
         @Test
         fun `large intermediate computation stays safe with guard`() {
-            // Simulates crew * train = 10000 * 110 = 1_100_000 then assigned to Short field
+            // Simulates crew * training = 10000 * 110 = 1_100_000 then assigned to Short field
             val computed = 10000 * 110  // 1_100_000
             assertEquals(110.toShort(), guardedShort(computed, 0, 110))
         }

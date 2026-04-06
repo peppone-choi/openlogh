@@ -45,7 +45,7 @@ class YearbookServiceTest {
             ObjectMapper(),
         )
 
-        `when`(messageRepository.findByWorldIdAndYearAndMonthOrderBySentAtAsc(anyLong(), anyInt(), anyInt()))
+        `when`(messageRepository.findBySessionIdAndYearAndMonthOrderBySentAtAsc(anyLong(), anyInt(), anyInt()))
             .thenReturn(emptyList())
     }
 
@@ -96,7 +96,7 @@ class YearbookServiceTest {
                     turnTime = OffsetDateTime.now()),
             )
         )
-        `when`(yearbookHistoryRepository.findByWorldIdAndYearAndMonth(1L, 200.toShort(), 6.toShort()))
+        `when`(yearbookHistoryRepository.findBySessionIdAndYearAndMonth(1L, 200.toShort(), 6.toShort()))
             .thenReturn(null)
         `when`(yearbookHistoryRepository.save(anyNonNull())).thenAnswer { it.arguments[0] }
 
@@ -113,7 +113,7 @@ class YearbookServiceTest {
         `when`(planetRepository.findBySessionId(1L)).thenReturn(emptyList())
         `when`(factionRepository.findBySessionId(1L)).thenReturn(emptyList())
         `when`(officerRepository.findBySessionId(1L)).thenReturn(emptyList())
-        `when`(yearbookHistoryRepository.findByWorldIdAndYearAndMonth(1L, 200.toShort(), 6.toShort()))
+        `when`(yearbookHistoryRepository.findBySessionIdAndYearAndMonth(1L, 200.toShort(), 6.toShort()))
             .thenReturn(null)
         `when`(yearbookHistoryRepository.save(anyNonNull())).thenAnswer { it.arguments[0] }
 
@@ -131,7 +131,7 @@ class YearbookServiceTest {
         `when`(planetRepository.findBySessionId(1L)).thenReturn(emptyList())
         `when`(factionRepository.findBySessionId(1L)).thenReturn(emptyList())
         `when`(officerRepository.findBySessionId(1L)).thenReturn(emptyList())
-        `when`(yearbookHistoryRepository.findByWorldIdAndYearAndMonth(1L, 200.toShort(), 6.toShort()))
+        `when`(yearbookHistoryRepository.findBySessionIdAndYearAndMonth(1L, 200.toShort(), 6.toShort()))
             .thenReturn(null)
         `when`(yearbookHistoryRepository.save(anyNonNull())).thenAnswer { it.arguments[0] }
 

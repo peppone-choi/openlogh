@@ -28,54 +28,54 @@ class EdgeCaseTest {
 
     private fun general(
         id: Long = 1,
-        nationId: Long = 1,
-        cityId: Long = 1,
+        factionId: Long = 1,
+        planetId: Long = 1,
         leadership: Short = 70,
-        strength: Short = 70,
-        intel: Short = 70,
-        crew: Int = 1000,
-        crewType: Short = 0,
-        train: Short = 60,
-        atmos: Short = 60,
-        gold: Int = 100_000,
-        rice: Int = 100_000,
+        command: Short = 70,
+        intelligence: Short = 70,
+        ships: Int = 1000,
+        shipClass: Short = 0,
+        training: Short = 60,
+        morale: Short = 60,
+        funds: Int = 100_000,
+        supplies: Int = 100_000,
         injury: Short = 0,
     ): Officer = Officer(
         id = id,
         sessionId = 1,
         name = "장수$id",
-        factionId = nationId,
-        planetId = cityId,
+        factionId = factionId,
+        planetId = planetId,
         leadership = leadership,
-        command = strength,
-        intelligence = intel,
-        ships = crew,
-        shipClass = crewType,
-        training = train,
-        morale = atmos,
-        funds = gold,
-        supplies = rice,
+        command = command,
+        intelligence = intelligence,
+        ships = ships,
+        shipClass = shipClass,
+        training = training,
+        morale = morale,
+        funds = funds,
+        supplies = supplies,
         injury = injury,
         turnTime = OffsetDateTime.now(),
     )
 
     private fun city(
-        nationId: Long = 1,
-        pop: Int = 50_000,
-        trust: Float = 80f,
+        factionId: Long = 1,
+        population: Int = 50_000,
+        approval: Float = 80f,
     ): Planet = Planet(
         id = 1,
         sessionId = 1,
         name = "테스트도시",
-        factionId = nationId,
-        population = pop,
+        factionId = factionId,
+        population = population,
         populationMax = 100_000,
         production = 500, productionMax = 1000,
         commerce = 500, commerceMax = 1000,
         security = 500, securityMax = 1000,
         orbitalDefense = 500, orbitalDefenseMax = 1000,
         fortress = 500, fortressMax = 1000,
-        approval = trust,
+        approval = approval,
         supplyState = 1,
     )
 
@@ -95,14 +95,14 @@ class EdgeCaseTest {
 
     @Test
     fun `ReqGeneralCrew fails when crew is 0`() {
-        val gen = general(crew = 0)
+        val gen = general(ships = 0)
         val result = ReqGeneralCrew(minCrew = 1).test(constraintCtx(gen))
-        assertTrue(result is ConstraintResult.Fail, "Expected Fail when crew=0")
+        assertTrue(result is ConstraintResult.Fail, "Expected Fail when ships =0")
     }
 
     @Test
     fun `ReqGeneralCrew passes when crew is 1`() {
-        val gen = general(crew = 1)
+        val gen = general(ships = 1)
         val result = ReqGeneralCrew(minCrew = 1).test(constraintCtx(gen))
         assertEquals(ConstraintResult.Pass, result)
     }
@@ -111,7 +111,7 @@ class EdgeCaseTest {
 
     @Test
     fun `WarUnitOfficer with all stats 100 does not overflow or throw`() {
-        val gen = general(leadership = 100, strength = 100, intel = 100, crew = 100_000, train = 100, atmos = 100)
+        val gen = general(leadership = 100, command = 100, intelligence = 100, ships = 100_000, training = 100, morale = 100)
         val unit = WarUnitOfficer(gen)
         // Should not throw; base attack/defence are finite positive doubles
         val baseAttack = unit.getBaseAttack()
@@ -123,13 +123,13 @@ class EdgeCaseTest {
     // ─── 3. City with 0 population: 징병 ReqCityCapacity blocks ─────────────
 
     @Test
-    fun `ReqCityCapacity pop fails when city has 0 population`() {
+    fun `ReqCityCapacity population fails when city has 0 population`() {
         val gen = general()
-        val zeroPop = city(pop = 0)
-        // ReqCityCapacity("pop", ...) needs pop >= MIN_AVAILABLE_RECRUIT_POP + reqCrew
-        val constraint = ReqCityCapacity("pop", "주민", 3100)
+        val zeroPop = city(population = 0)
+        // ReqCityCapacity("population", ...) needs population >= MIN_AVAILABLE_RECRUIT_POP + reqCrew
+        val constraint = ReqCityCapacity("population", "주민", 3100)
         val result = constraint.test(constraintCtx(gen, zeroPop))
-        assertTrue(result is ConstraintResult.Fail, "Expected Fail when city pop=0")
+        assertTrue(result is ConstraintResult.Fail, "Expected Fail when city population=0")
     }
 
     // ─── 4. Battle determinism + warPower < 100 RNG floor ───────────────────
@@ -137,9 +137,9 @@ class EdgeCaseTest {
     @Test
     fun `BattleEngine is deterministic with same seed`() {
         val engine = BattleEngine()
-        val attacker = general(leadership = 30, strength = 30, intel = 30, crew = 100, train = 40, atmos = 40)
-        val defender = general(id = 2, nationId = 2, leadership = 30, strength = 30, intel = 30, crew = 100, train = 40, atmos = 40)
-        val c = city(nationId = 2)
+        val attacker = general(leadership = 30, command = 30, intelligence = 30, ships = 100, training = 40, morale = 40)
+        val defender = general(id = 2, factionId = 2, leadership = 30, command = 30, intelligence = 30, ships = 100, training = 40, morale = 40)
+        val c = city(factionId = 2)
 
         val r1 = engine.resolveBattle(
             attacker = WarUnitOfficer(attacker),
@@ -150,7 +150,7 @@ class EdgeCaseTest {
         val r2 = engine.resolveBattle(
             attacker = WarUnitOfficer(general(leadership = 30, command = 30, intelligence = 30, ships = 100, training = 40, morale = 40)),
             defenders = listOf(WarUnitOfficer(general(id = 2, factionId = 2, leadership = 30, command = 30, intelligence = 30, ships = 100, training = 40, morale = 40))),
-            city = city(nationId = 2),
+            city = city(factionId = 2),
             rng = LiteHashDRBG.build("edge_case_det"),
         )
 
@@ -163,9 +163,9 @@ class EdgeCaseTest {
     fun `BattleEngine with very weak attacker does not produce negative damage`() {
         val engine = BattleEngine()
         // Very weak attacker (low stats) triggers warPower < 100 floor path
-        val attacker = general(leadership = 1, strength = 1, intel = 1, crew = 100, train = 1, atmos = 1)
-        val defender = general(id = 2, nationId = 2, leadership = 100, strength = 100, intel = 100, crew = 10_000, train = 100, atmos = 100)
-        val c = city(nationId = 2)
+        val attacker = general(leadership = 1, command = 1, intelligence = 1, ships = 100, training = 1, morale = 1)
+        val defender = general(id = 2, factionId = 2, leadership = 100, command = 100, intelligence = 100, ships = 10_000, training = 100, morale = 100)
+        val c = city(factionId = 2)
 
         val result = engine.resolveBattle(
             attacker = WarUnitOfficer(attacker),
@@ -242,7 +242,7 @@ class EdgeCaseTest {
 
     @Test
     fun `징병 run produces correct blended train in statChanges`() {
-        val gen = general(crew = 1000, crewType = 0, train = 80, atmos = 80, leadership = 50, gold = 50_000, rice = 50_000)
+        val gen = general(ships = 1000, shipClass = 0, training = 80, morale = 80, leadership = 50, funds = 50_000, supplies = 50_000)
         val arg = mapOf<String, Any>("amount" to 500, "crewType" to 0)
         val cmd = che_징병(gen, env(), arg)
         cmd.city = city()
@@ -275,8 +275,8 @@ class EdgeCaseTest {
 
     @Test
     fun `모병 run produces higher default train than 징병`() {
-        val gen1 = general(crew = 0, crewType = 0, train = 50, atmos = 50, leadership = 50, gold = 200_000, rice = 200_000)
-        val gen2 = general(crew = 0, crewType = 0, train = 50, atmos = 50, leadership = 50, gold = 200_000, rice = 200_000)
+        val gen1 = general(ships = 0, shipClass = 0, training = 50, morale = 50, leadership = 50, funds = 200_000, supplies = 200_000)
+        val gen2 = general(ships = 0, shipClass = 0, training = 50, morale = 50, leadership = 50, funds = 200_000, supplies = 200_000)
         val arg = mapOf<String, Any>("amount" to 500, "crewType" to 0)
 
         val cmdJingbyeong = che_징병(gen1, env(), arg)
@@ -290,10 +290,10 @@ class EdgeCaseTest {
         val j1 = mapper.readTree(r1.message)
         val j2 = mapper.readTree(r2.message)
 
-        // 징병 default train = 40, 모병 default train = 70
-        // Both start with crew=0, so newTrain = defaultTrain directly
+        // 징병 default training = 40, 모병 default training = 70
+        // Both start with ships =0, so newTrain = defaultTrain directly
         val newTrain1 = 50 + j1["statChanges"]["train"].asInt()  // 50 + (40-50) = 40
         val newTrain2 = 50 + j2["statChanges"]["train"].asInt()  // 50 + (70-50) = 70
-        assertTrue(newTrain2 > newTrain1, "모병 (train=$newTrain2) should produce higher train than 징병 (train=$newTrain1)")
+        assertTrue(newTrain2 > newTrain1, "모병 (training =$newTrain2) should produce higher train than 징병 (training =$newTrain1)")
     }
 }

@@ -104,7 +104,7 @@ class SpecialDomesticModifierTest {
         }
 
         @Test
-        fun `short-form actionCode fires for wall`() {
+        fun `short-form actionCode fires for fortress`() {
             val mod = SpecialModifiers.get("보수")!!
             val result = mod.onCalcDomestic(DomesticContext(actionCode = "성벽"))
             assertThat(result.scoreMultiplier).isEqualTo(1.3)
@@ -118,7 +118,7 @@ class SpecialDomesticModifierTest {
         }
 
         @Test
-        fun `long-form actionCode fires for wall`() {
+        fun `long-form actionCode fires for fortress`() {
             val mod = SpecialModifiers.get("보수")!!
             val result = mod.onCalcDomestic(DomesticContext(actionCode = "성벽보수"))
             assertThat(result.scoreMultiplier).isEqualTo(1.3)
@@ -210,7 +210,7 @@ class SpecialDomesticModifierTest {
         }
 
         @Test
-        fun `short-form actionCode fires for wall`() {
+        fun `short-form actionCode fires for fortress`() {
             val mod = SpecialModifiers.get("건축")!!
             val result = mod.onCalcDomestic(DomesticContext(actionCode = "성벽"))
             assertThat(result.scoreMultiplier).isEqualTo(1.3)
@@ -224,7 +224,7 @@ class SpecialDomesticModifierTest {
         }
 
         @Test
-        fun `long-form actionCode fires for wall`() {
+        fun `long-form actionCode fires for fortress`() {
             val mod = SpecialModifiers.get("건축")!!
             val result = mod.onCalcDomestic(DomesticContext(actionCode = "성벽보수"))
             assertThat(result.scoreMultiplier).isEqualTo(1.3)

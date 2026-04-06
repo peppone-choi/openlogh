@@ -5,7 +5,7 @@ import com.openlogh.dto.CreateGeneralRequest
 import com.openlogh.entity.AppUser
 import com.openlogh.entity.Planet
 import com.openlogh.entity.Officer
-import com.openlogh.entity.GeneralTurn
+import com.openlogh.entity.OfficerTurn
 import com.openlogh.entity.SessionState
 import com.openlogh.repository.AppUserRepository
 import com.openlogh.repository.PlanetRepository
@@ -29,7 +29,7 @@ import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
 import java.util.Optional
 
-class GeneralServiceTest {
+class OfficerServiceTest {
     private lateinit var officerRepository: OfficerRepository
     private lateinit var appUserRepository: AppUserRepository
     private lateinit var sessionStateRepository: SessionStateRepository
@@ -76,7 +76,7 @@ class GeneralServiceTest {
             constMap[invocation.getArgument<String>(0)] ?: 0
         }
 
-        `when`(officerRepository.save(any(General::class.java))).thenAnswer { invocation ->
+        `when`(officerRepository.save(any(Officer::class.java))).thenAnswer { invocation ->
             val general = invocation.getArgument<Officer>(0)
             if (general.id == 0L) {
                 general.id = 77
@@ -84,7 +84,7 @@ class GeneralServiceTest {
             general
         }
         `when`(officerTurnRepository.saveAll(anyList())).thenAnswer { invocation ->
-            invocation.getArgument<List<GeneralTurn>>(0)
+            invocation.getArgument<List<OfficerTurn>>(0)
         }
     }
 
@@ -128,13 +128,13 @@ class GeneralServiceTest {
             "user",
             CreateGeneralRequest(
                 name = "신장수",
-                cityId = 10L,
+                planetId = 10L,
                 leadership = 70,
-                strength = 70,
-                intel = 70,
+                command = 70,
+                intelligence = 70,
                 politics = 70,
-                charm = 70,
-                crewType = 2,
+                administration = 70,
+                shipClass = 2,
                 personality = "che_대의",
                 pic = true,
                 inheritSpecial = "che_저격",
@@ -153,11 +153,11 @@ class GeneralServiceTest {
         assertEquals(3000, user.meta["inheritPoints"])
 
         @Suppress("UNCHECKED_CAST")
-        val turnCaptor = ArgumentCaptor.forClass(Iterable::class.java) as ArgumentCaptor<Iterable<GeneralTurn>>
+        val turnCaptor = ArgumentCaptor.forClass(Iterable::class.java) as ArgumentCaptor<Iterable<OfficerTurn>>
         verify(officerTurnRepository).saveAll(turnCaptor.capture())
         val turns = turnCaptor.value.toList()
         assertEquals(30, turns.size)
-        assertTrue(turns.all { it.actionCode == "휴식" && it.generalId == 77L })
+        assertTrue(turns.all { it.actionCode == "휴식" && it.officerId == 77L })
     }
 
     @Test
@@ -195,12 +195,12 @@ class GeneralServiceTest {
             "user",
             CreateGeneralRequest(
                 name = "계승장수",
-                cityId = 5L,
+                planetId = 5L,
                 leadership = 70,
-                strength = 70,
-                intel = 70,
+                command = 70,
+                intelligence = 70,
                 politics = 70,
-                charm = 70,
+                administration = 70,
                 personality = "che_안전",
             ),
         )
@@ -242,10 +242,10 @@ class GeneralServiceTest {
             BuildPoolGeneralRequest(
                 name = "풀장수",
                 leadership = 70,
-                strength = 70,
-                intel = 70,
+                command = 70,
+                intelligence = 70,
                 politics = 70,
-                charm = 70,
+                administration = 70,
                 personality = "che_왕좌",
             ),
         )
@@ -289,13 +289,13 @@ class GeneralServiceTest {
             "USER",
             CreateGeneralRequest(
                 name = "신장수",
-                cityId = 10L,
+                planetId = 10L,
                 leadership = 70,
-                strength = 70,
-                intel = 70,
+                command = 70,
+                intelligence = 70,
                 politics = 70,
-                charm = 70,
-                crewType = 0,
+                administration = 70,
+                shipClass = 0,
             ),
         )
 
@@ -304,7 +304,7 @@ class GeneralServiceTest {
     }
 
     @Test
-    fun `createGeneral sets turnTime relative to world updatedAt not wall clock`() {
+    fun `createGeneral sets turnTime relative to world updatedAt not fortress clock`() {
         val user = AppUser(
             id = 5,
             loginId = "user",
@@ -336,12 +336,12 @@ class GeneralServiceTest {
             "user",
             CreateGeneralRequest(
                 name = "턴타임장수",
-                cityId = 10L,
+                planetId = 10L,
                 leadership = 70,
-                strength = 70,
-                intel = 70,
+                command = 70,
+                intelligence = 70,
                 politics = 70,
-                charm = 70,
+                administration = 70,
             ),
         )
 
@@ -387,12 +387,12 @@ class GeneralServiceTest {
             "user",
             CreateGeneralRequest(
                 name = "삭턴장수",
-                cityId = 10L,
+                planetId = 10L,
                 leadership = 70,
-                strength = 70,
-                intel = 70,
+                command = 70,
+                intelligence = 70,
                 politics = 70,
-                charm = 70,
+                administration = 70,
             ),
         )
 
@@ -431,12 +431,12 @@ class GeneralServiceTest {
             "user",
             CreateGeneralRequest(
                 name = "설정장수",
-                cityId = 10L,
+                planetId = 10L,
                 leadership = 70,
-                strength = 70,
-                intel = 70,
+                command = 70,
+                intelligence = 70,
                 politics = 70,
-                charm = 70,
+                administration = 70,
             ),
         )
 
@@ -455,12 +455,12 @@ class GeneralServiceTest {
                 "ghost",
                 CreateGeneralRequest(
                     name = "신장수",
-                    cityId = 10L,
+                    planetId = 10L,
                     leadership = 70,
-                    strength = 70,
-                    intel = 70,
+                    command = 70,
+                    intelligence = 70,
                     politics = 70,
-                    charm = 70,
+                    administration = 70,
                 ),
             )
         }

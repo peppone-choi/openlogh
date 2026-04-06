@@ -143,57 +143,64 @@ class InMemoryTurnHarness {
     fun putGeneral(general: Officer) {
         generals[general.id] = general
     }
+    fun putOfficer(officer: Officer) = putGeneral(officer)
 
     fun putCity(city: Planet) {
         cities[city.id] = city
     }
+    fun putPlanet(planet: Planet) = putCity(planet)
 
     fun putNation(nation: Faction) {
         nations[nation.id] = nation
     }
+    fun putFaction(faction: Faction) = putNation(faction)
 
-    fun queueOfficerTurn(generalId: Long, actionCode: String, arg: MutableMap<String, Any> = mutableMapOf(), turnIdx: Short = 0) {
-        val general = generals[generalId] ?: error("General not found: $generalId")
+    fun queueOfficerTurn(officerId: Long, actionCode: String, arg: MutableMap<String, Any> = mutableMapOf(), turnIdx: Short = 0) {
+        val general = generals[officerId] ?: error("General not found: $officerId")
         val turn = OfficerTurn(
             id = turnIdSeq.getAndIncrement(),
             sessionId = general.sessionId,
-            officerId = generalId,
+            officerId = officerId,
             turnIdx = turnIdx,
             actionCode = actionCode,
             arg = arg,
             createdAt = OffsetDateTime.now(),
         )
-        generalTurns.getOrPut(generalId) { mutableListOf() }.add(turn)
-        generalTurns[generalId]!!.sortBy { it.turnIdx }
+        generalTurns.getOrPut(officerId) { mutableListOf() }.add(turn)
+        generalTurns[officerId]!!.sortBy { it.turnIdx }
     }
+    fun queueGeneralTurn(officerId: Long, actionCode: String, arg: MutableMap<String, Any> = mutableMapOf(), turnIdx: Short = 0) =
+        queueOfficerTurn(officerId, actionCode, arg, turnIdx)
 
     fun queueFactionTurn(
-        nationId: Long,
+        factionId: Long,
         officerLevel: Short,
         actionCode: String,
         arg: MutableMap<String, Any> = mutableMapOf(),
         turnIdx: Short = 0,
     ) {
-        val nation = nations[nationId] ?: error("Nation not found: $nationId")
+        val nation = nations[factionId] ?: error("Nation not found: $factionId")
         val turn = FactionTurn(
             id = turnIdSeq.getAndIncrement(),
             sessionId = nation.sessionId,
-            factionId = nationId,
+            factionId = factionId,
             officerLevel = officerLevel,
             turnIdx = turnIdx,
             actionCode = actionCode,
             arg = arg,
             createdAt = OffsetDateTime.now(),
         )
-        val key = nationId to officerLevel
+        val key = factionId to officerLevel
         nationTurns.getOrPut(key) { mutableListOf() }.add(turn)
         nationTurns[key]!!.sortBy { it.turnIdx }
     }
+    fun queueNationTurn(factionId: Long, officerLevel: Short, actionCode: String, arg: MutableMap<String, Any> = mutableMapOf(), turnIdx: Short = 0) =
+        queueFactionTurn(factionId, officerLevel, actionCode, arg, turnIdx)
 
-    fun generalTurnsFor(generalId: Long): List<OfficerTurn> = generalTurns[generalId]?.toList() ?: emptyList()
+    fun generalTurnsFor(officerId: Long): List<OfficerTurn> = generalTurns[officerId]?.toList() ?: emptyList()
 
-    fun nationTurnsFor(nationId: Long, officerLevel: Short): List<FactionTurn> =
-        nationTurns[nationId to officerLevel]?.toList() ?: emptyList()
+    fun nationTurnsFor(factionId: Long, officerLevel: Short): List<FactionTurn> =
+        nationTurns[factionId to officerLevel]?.toList() ?: emptyList()
 
     private fun wireRepositories() {
         `when`(sessionStateRepository.save(org.mockito.Mockito.any(SessionState::class.java))).thenAnswer {
@@ -206,21 +213,21 @@ class InMemoryTurnHarness {
         }
 
         `when`(officerRepository.findBySessionId(org.mockito.Mockito.anyLong())).thenAnswer {
-            val worldId = it.arguments[0] as Long
-            generals.values.filter { g -> g.sessionId == worldId }
+            val sessionId = it.arguments[0] as Long
+            generals.values.filter { g -> g.sessionId == sessionId }
         }
         `when`(officerRepository.findByFactionId(org.mockito.Mockito.anyLong())).thenAnswer {
-            val nationId = it.arguments[0] as Long
-            generals.values.filter { g -> g.factionId == nationId }
+            val factionId = it.arguments[0] as Long
+            generals.values.filter { g -> g.factionId == factionId }
         }
         `when`(officerRepository.findBySessionIdAndFactionId(org.mockito.Mockito.anyLong(), org.mockito.Mockito.anyLong())).thenAnswer {
-            val worldId = it.arguments[0] as Long
-            val nationId = it.arguments[1] as Long
-            generals.values.filter { g -> g.sessionId == worldId && g.factionId == nationId }
+            val sessionId = it.arguments[0] as Long
+            val factionId = it.arguments[1] as Long
+            generals.values.filter { g -> g.sessionId == sessionId && g.factionId == factionId }
         }
         `when`(officerRepository.findByPlanetId(org.mockito.Mockito.anyLong())).thenAnswer {
-            val cityId = it.arguments[0] as Long
-            generals.values.filter { g -> g.planetId == cityId }
+            val planetId = it.arguments[0] as Long
+            generals.values.filter { g -> g.planetId == planetId }
         }
         `when`(officerRepository.findById(org.mockito.Mockito.anyLong())).thenAnswer {
             Optional.ofNullable(generals[it.arguments[0] as Long])
@@ -237,13 +244,13 @@ class InMemoryTurnHarness {
         }
 
         `when`(officerTurnRepository.findByOfficerIdOrderByTurnIdx(org.mockito.Mockito.anyLong())).thenAnswer {
-            val generalId = it.arguments[0] as Long
-            generalTurns[generalId]?.sortedBy { t -> t.turnIdx } ?: emptyList<OfficerTurn>()
+            val officerId = it.arguments[0] as Long
+            generalTurns[officerId]?.sortedBy { t -> t.turnIdx } ?: emptyList<OfficerTurn>()
         }
 
         doAnswer { invocation ->
-            val generalId = invocation.arguments[0] as Long
-            generalTurns.remove(generalId)
+            val officerId = invocation.arguments[0] as Long
+            generalTurns.remove(officerId)
             null
         }.`when`(officerTurnRepository).deleteByOfficerId(org.mockito.Mockito.anyLong())
         doAnswer { invocation ->
@@ -260,9 +267,9 @@ class InMemoryTurnHarness {
         }.`when`(officerTurnRepository).deleteAll(org.mockito.Mockito.anyList<OfficerTurn>())
 
         `when`(factionTurnRepository.findByFactionIdAndOfficerLevelOrderByTurnIdx(org.mockito.Mockito.anyLong(), org.mockito.Mockito.anyShort())).thenAnswer {
-            val nationId = it.arguments[0] as Long
+            val factionId = it.arguments[0] as Long
             val officerLevel = it.arguments[1] as Short
-            nationTurns[nationId to officerLevel]?.sortedBy { t -> t.turnIdx } ?: emptyList<FactionTurn>()
+            nationTurns[factionId to officerLevel]?.sortedBy { t -> t.turnIdx } ?: emptyList<FactionTurn>()
         }
         doAnswer { invocation ->
             val turn = invocation.arguments[0] as FactionTurn
@@ -270,9 +277,9 @@ class InMemoryTurnHarness {
             null
         }.`when`(factionTurnRepository).delete(org.mockito.Mockito.any(FactionTurn::class.java))
         doAnswer { invocation ->
-            val nationId = invocation.arguments[0] as Long
+            val factionId = invocation.arguments[0] as Long
             val officerLevel = invocation.arguments[1] as Short
-            nationTurns.remove(nationId to officerLevel)
+            nationTurns.remove(factionId to officerLevel)
             null
         }.`when`(factionTurnRepository).deleteByFactionIdAndOfficerLevel(org.mockito.Mockito.anyLong(), org.mockito.Mockito.anyShort())
 
@@ -280,12 +287,12 @@ class InMemoryTurnHarness {
             Optional.ofNullable(cities[it.arguments[0] as Long])
         }
         `when`(planetRepository.findBySessionId(org.mockito.Mockito.anyLong())).thenAnswer {
-            val worldId = it.arguments[0] as Long
-            cities.values.filter { c -> c.sessionId == worldId }
+            val sessionId = it.arguments[0] as Long
+            cities.values.filter { c -> c.sessionId == sessionId }
         }
         `when`(planetRepository.findByFactionId(org.mockito.Mockito.anyLong())).thenAnswer {
-            val nationId = it.arguments[0] as Long
-            cities.values.filter { c -> c.factionId == nationId }
+            val factionId = it.arguments[0] as Long
+            cities.values.filter { c -> c.factionId == factionId }
         }
         `when`(planetRepository.save(org.mockito.Mockito.any(Planet::class.java))).thenAnswer {
             val city = it.arguments[0] as Planet
@@ -297,8 +304,8 @@ class InMemoryTurnHarness {
             Optional.ofNullable(nations[it.arguments[0] as Long])
         }
         `when`(factionRepository.findBySessionId(org.mockito.Mockito.anyLong())).thenAnswer {
-            val worldId = it.arguments[0] as Long
-            nations.values.filter { n -> n.sessionId == worldId }
+            val sessionId = it.arguments[0] as Long
+            nations.values.filter { n -> n.sessionId == sessionId }
         }
         `when`(factionRepository.save(org.mockito.Mockito.any(Faction::class.java))).thenAnswer {
             val nation = it.arguments[0] as Faction

@@ -87,8 +87,8 @@ class FrontInfoServiceTest {
         `when`(scenarioService.getScenario("test")).thenReturn(ScenarioData(title = "테스트 시나리오"))
         `when`(officerRankService.getRankTitle(0, 1)).thenReturn("무품관")
         `when`(messageRepository.findByDestIdAndMailboxCodeAndIdGreaterThanOrderBySentAtDesc(general.id, "general_action", 0)).thenReturn(emptyList())
-        `when`(messageRepository.findByWorldIdAndMailboxCodeAndIdGreaterThanOrderBySentAtDesc(1, "world_record", 0)).thenReturn(emptyList())
-        `when`(messageRepository.findByWorldIdAndMailboxCodeAndIdGreaterThanOrderBySentAtDesc(1, "world_history", 0)).thenReturn(emptyList())
+        `when`(messageRepository.findBySessionIdAndMailboxCodeAndIdGreaterThanOrderBySentAtDesc(1, "world_record", 0)).thenReturn(emptyList())
+        `when`(messageRepository.findBySessionIdAndMailboxCodeAndIdGreaterThanOrderBySentAtDesc(1, "world_history", 0)).thenReturn(emptyList())
     }
 
     @Test
@@ -103,7 +103,7 @@ class FrontInfoServiceTest {
         )
         stubCommon(world, user, nation, city, general)
 
-        val response = service.getFrontInfo(worldId = 1, loginId = "tester", lastRecordId = null, lastHistoryId = null)
+        val response = service.getFrontInfo(sessionId = 1, loginId = "tester", lastRecordId = null, lastHistoryId = null)
 
         assertNotNull(response.general)
         assertEquals("3", response.general!!.crewtype)
@@ -119,17 +119,17 @@ class FrontInfoServiceTest {
             id = 11, sessionId = 1, userId = 10, factionId = 7, planetId = 5,
             name = "장수", shipClass = 3, turnTime = OffsetDateTime.now(),
         ).apply {
-            weaponCode = "che_무기_15_의천검"
-            bookCode = "che_회피_태평요술"
-            horseCode = "che_명마_15_적토마"
-            itemCode = "None"
+            flagshipCode = "che_무기_15_의천검"
+            equipCode = "che_회피_태평요술"
+            engineCode = "che_명마_15_적토마"
+            accessoryCode = "None"
             personalCode = "che_패권"
             specialCode = "농업"
             special2Code = "che_기병"
         }
         stubCommon(world, user, nation, city, general)
 
-        val response = service.getFrontInfo(worldId = 1, loginId = "tester", lastRecordId = null, lastHistoryId = null)
+        val response = service.getFrontInfo(sessionId = 1, loginId = "tester", lastRecordId = null, lastHistoryId = null)
 
         assertNotNull(response.general)
         val g = response.general!!

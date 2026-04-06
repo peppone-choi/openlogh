@@ -60,14 +60,14 @@ class TurnCoordinatorTest {
     @Test
     fun `processWorld transitions through lifecycle states`() {
         val world = createWorld()
-        val state = InMemoryWorldState(worldId = 1L)
+        val state = InMemoryWorldState(sessionId = 1L)
         val result = TurnResult(advancedTurns = 1, events = emptyList())
 
         doReturn(state).`when`(worldStateLoader).loadWorldState(1L)
         doReturn(result).`when`(inMemoryTurnProcessor).process(anyNonNull(), anyNonNull(), anyNonNull())
         doAnswer { it.arguments[0] }.`when`(sessionStateRepository).save(anyNonNull<SessionState>())
 
-        coordinator.processWorld(world)
+        coordinator.processSession(world)
 
         val inOrder = inOrder(turnStatusService)
         inOrder.verify(turnStatusService).updateStatus(1L, TurnLifecycleState.LOADING)
@@ -80,14 +80,14 @@ class TurnCoordinatorTest {
     @Test
     fun `processWorld saves world state after persisting`() {
         val world = createWorld()
-        val state = InMemoryWorldState(worldId = 1L)
+        val state = InMemoryWorldState(sessionId = 1L)
         val result = TurnResult(advancedTurns = 1, events = emptyList())
 
         doReturn(state).`when`(worldStateLoader).loadWorldState(1L)
         doReturn(result).`when`(inMemoryTurnProcessor).process(anyNonNull(), anyNonNull(), anyNonNull())
         doAnswer { it.arguments[0] }.`when`(sessionStateRepository).save(anyNonNull<SessionState>())
 
-        coordinator.processWorld(world)
+        coordinator.processSession(world)
 
         verify(sessionStateRepository).save(world)
     }
@@ -98,7 +98,7 @@ class TurnCoordinatorTest {
 
         `when`(worldStateLoader.loadWorldState(1L)).thenThrow(RuntimeException("DB down"))
 
-        coordinator.processWorld(world)
+        coordinator.processSession(world)
 
         verify(turnStatusService).updateStatus(1L, TurnLifecycleState.FAILED)
         verify(turnStatusService).updateStatus(1L, TurnLifecycleState.IDLE)
@@ -107,14 +107,14 @@ class TurnCoordinatorTest {
     @Test
     fun `processWorld reaches publishing phase on successful turn`() {
         val world = createWorld()
-        val state = InMemoryWorldState(worldId = 1L)
+        val state = InMemoryWorldState(sessionId = 1L)
         val result = TurnResult(advancedTurns = 1, events = emptyList())
 
         doReturn(state).`when`(worldStateLoader).loadWorldState(1L)
         doReturn(result).`when`(inMemoryTurnProcessor).process(anyNonNull(), anyNonNull(), anyNonNull())
         doAnswer { it.arguments[0] }.`when`(sessionStateRepository).save(anyNonNull<SessionState>())
 
-        coordinator.processWorld(world)
+        coordinator.processSession(world)
 
         verify(turnStatusService).updateStatus(1L, TurnLifecycleState.PUBLISHING)
     }
@@ -122,14 +122,14 @@ class TurnCoordinatorTest {
     @Test
     fun `processWorld does not broadcast when no events`() {
         val world = createWorld()
-        val state = InMemoryWorldState(worldId = 1L)
+        val state = InMemoryWorldState(sessionId = 1L)
         val result = TurnResult(advancedTurns = 0, events = emptyList())
 
         doReturn(state).`when`(worldStateLoader).loadWorldState(1L)
         doReturn(result).`when`(inMemoryTurnProcessor).process(anyNonNull(), anyNonNull(), anyNonNull())
         doAnswer { it.arguments[0] }.`when`(sessionStateRepository).save(anyNonNull<SessionState>())
 
-        coordinator.processWorld(world)
+        coordinator.processSession(world)
 
         verify(gameEventService, never()).broadcastTurnAdvance(anyLong(), anyInt(), anyInt())
     }

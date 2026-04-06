@@ -7,7 +7,7 @@ import com.openlogh.engine.turn.cqrs.memory.InMemoryTurnProcessor
 import com.openlogh.engine.turn.cqrs.memory.InMemoryWorldPorts
 import com.openlogh.engine.turn.cqrs.memory.InMemoryWorldState
 import com.openlogh.engine.turn.cqrs.memory.FactionSnapshot
-import com.openlogh.engine.turn.cqrs.memory.NationTurnKey
+import com.openlogh.engine.turn.cqrs.memory.FactionTurnKey
 import com.openlogh.engine.turn.cqrs.memory.FactionTurnSnapshot
 import com.openlogh.entity.SessionState
 import com.openlogh.repository.TrafficSnapshotRepository
@@ -50,7 +50,7 @@ class DeterministicReplayParityTest {
         assertEquals(2, canonical.worldMonth)
         assertEquals(2, canonical.strategicCmdLimit)
         assertEquals("개간", canonical.lastActionCode)
-        assertEquals(mapOf("cityId" to 1), canonical.lastActionArg)
+        assertEquals(mapOf("planetId" to 1), canonical.lastActionArg)
         assertEquals(0, canonical.generalQueueSize)
         assertEquals(0, canonical.nationQueueSize)
         assertEquals(0, canonical.generalNpcState)
@@ -83,8 +83,8 @@ class DeterministicReplayParityTest {
     private fun runFixture(fixture: ReplayFixture): CanonicalReplayOutput {
         val ports = InMemoryWorldPorts(fixture.state, fixture.tracker)
         val result = processor.process(fixture.world, fixture.state, ports)
-        val general = fixture.state.generals.getValue(fixture.generalId)
-        val nation = fixture.state.nations.getValue(fixture.factionId)
+        val general = fixture.state.officers.getValue(fixture.officerId)
+        val nation = fixture.state.factions.getValue(fixture.factionId)
         val lastActionCode = general.lastTurn["actionCode"] as? String ?: "NONE"
         val lastActionArg = (general.lastTurn["arg"] as? Map<*, *>)
             ?.entries
@@ -99,9 +99,9 @@ class DeterministicReplayParityTest {
             strategicCmdLimit = nation.strategicCmdLimit.toInt(),
             lastActionCode = lastActionCode,
             lastActionArg = lastActionArg,
-            generalQueueSize = fixture.state.generalTurnsByGeneralId[fixture.generalId]?.size ?: 0,
-            nationQueueSize = fixture.state.nationTurnsByNationAndLevel[
-                NationTurnKey(fixture.factionId, fixture.generalOfficerLevel)
+            generalQueueSize = fixture.state.officerTurnsByOfficerId[fixture.officerId]?.size ?: 0,
+            nationQueueSize = fixture.state.factionTurnsByFactionAndLevel[
+                FactionTurnKey(fixture.factionId, fixture.generalOfficerLevel)
             ]?.size ?: 0,
             generalNpcState = general.npcState.toInt(),
             generalNationId = general.factionId,
@@ -123,8 +123,8 @@ class DeterministicReplayParityTest {
 
         val general = generalSnapshot(
             id = 101,
-            worldId = 1,
-            nationId = 10,
+            sessionId = 1,
+            factionId = 10,
             officerLevel = 5,
             npcState = 0,
             killTurn = null,
@@ -134,30 +134,30 @@ class DeterministicReplayParityTest {
 
         val nation = nationSnapshot(
             id = 10,
-            worldId = 1,
+            sessionId = 1,
             strategicCmdLimit = 3,
         )
 
         val state = InMemoryWorldState(
-            worldId = 1,
-            generals = mutableMapOf(101L to general),
-            nations = mutableMapOf(10L to nation),
-            generalTurnsByGeneralId = mutableMapOf(
+            sessionId = 1,
+            officers = mutableMapOf(101L to general),
+            factions = mutableMapOf(10L to nation),
+            officerTurnsByOfficerId = mutableMapOf(
                 101L to mutableListOf(
                     OfficerTurnSnapshot(
                         id = 1,
                         sessionId = 1,
-                        generalId = 101,
+                        officerId = 101,
                         turnIdx = 0,
                         actionCode = "개간",
-                        arg = mutableMapOf("cityId" to 1),
+                        arg = mutableMapOf("planetId" to 1),
                         brief = null,
                         createdAt = now.minusMinutes(1),
                     )
                 )
             ),
-            nationTurnsByNationAndLevel = mutableMapOf(
-                NationTurnKey(10L, 5) to mutableListOf(
+            factionTurnsByFactionAndLevel = mutableMapOf(
+                FactionTurnKey(10L, 5) to mutableListOf(
                     FactionTurnSnapshot(
                         id = 2,
                         sessionId = 1,
@@ -177,8 +177,8 @@ class DeterministicReplayParityTest {
             world = world,
             state = state,
             tracker = DirtyTracker(),
-            generalId = 101,
-            nationId = 10,
+            officerId = 101,
+            factionId = 10,
             generalOfficerLevel = 5,
         )
     }
@@ -197,8 +197,8 @@ class DeterministicReplayParityTest {
 
         val general = generalSnapshot(
             id = 201,
-            worldId = 1,
-            nationId = 20,
+            sessionId = 1,
+            factionId = 20,
             officerLevel = 5,
             npcState = 2,
             killTurn = 1,
@@ -208,20 +208,20 @@ class DeterministicReplayParityTest {
 
         val nation = nationSnapshot(
             id = 20,
-            worldId = 1,
+            sessionId = 1,
             strategicCmdLimit = 1,
         )
 
         val state = InMemoryWorldState(
-            worldId = 1,
-            generals = mutableMapOf(201L to general),
-            nations = mutableMapOf(20L to nation),
-            generalTurnsByGeneralId = mutableMapOf(
+            sessionId = 1,
+            officers = mutableMapOf(201L to general),
+            factions = mutableMapOf(20L to nation),
+            officerTurnsByOfficerId = mutableMapOf(
                 201L to mutableListOf(
                     OfficerTurnSnapshot(
                         id = 3,
                         sessionId = 1,
-                        generalId = 201,
+                        officerId = 201,
                         turnIdx = 0,
                         actionCode = "휴식",
                         arg = mutableMapOf(),
@@ -236,17 +236,17 @@ class DeterministicReplayParityTest {
             world = world,
             state = state,
             tracker = DirtyTracker(),
-            generalId = 201,
-            nationId = 20,
+            officerId = 201,
+            factionId = 20,
             generalOfficerLevel = 5,
         )
     }
 
-    private fun nationSnapshot(id: Long, worldId: Long, strategicCmdLimit: Int): FactionSnapshot {
+    private fun nationSnapshot(id: Long, sessionId: Long, strategicCmdLimit: Int): FactionSnapshot {
         val now = OffsetDateTime.now()
         return FactionSnapshot(
             id = id,
-            sessionId = worldId,
+            sessionId = sessionId,
             name = "nation-$id",
             color = "#ffffff",
             capitalPlanetId = null,
@@ -261,10 +261,12 @@ class DeterministicReplayParityTest {
             warState = 0,
             strategicCmdLimit = strategicCmdLimit.toShort(),
             surrenderLimit = 72,
-            tech = 0f,
-            power = 0,
-            level = 0,
-            typeCode = "che_중립",
+            techLevel = 0f,
+            militaryPower = 0,
+            officerCount = 0,
+            factionRank = 0,
+            factionType = "che_중립",
+            abbreviation = "",
             spy = mutableMapOf(),
             meta = mutableMapOf(),
             createdAt = now,
@@ -274,8 +276,8 @@ class DeterministicReplayParityTest {
 
     private fun generalSnapshot(
         id: Long,
-        worldId: Long,
-        nationId: Long,
+        sessionId: Long,
+        factionId: Long,
         officerLevel: Int,
         npcState: Int,
         killTurn: Int?,
@@ -285,10 +287,10 @@ class DeterministicReplayParityTest {
         val now = OffsetDateTime.now()
         return OfficerSnapshot(
             id = id,
-            sessionId = worldId,
+            sessionId = sessionId,
             userId = null,
             name = "general-$id",
-            factionId = nationId,
+            factionId = factionId,
             planetId = 1,
             fleetId = 0,
             npcState = npcState.toShort(),
@@ -300,33 +302,44 @@ class DeterministicReplayParityTest {
             imageServer = 0,
             leadership = 50,
             leadershipExp = 0,
-            strength = 50,
-            strengthExp = 0,
-            intel = 50,
-            intelExp = 0,
+            command = 50,
+            commandExp = 0,
+            intelligence = 50,
+            intelligenceExp = 0,
             politics = 50,
-            charm = 50,
+            politicsExp = 0,
+            administration = 50,
+            administrationExp = 0,
+            mobility = 50,
+            mobilityExp = 0,
+            attack = 50,
+            attackExp = 0,
+            defense = 50,
+            defenseExp = 0,
             dex1 = 0,
             dex2 = 0,
             dex3 = 0,
             dex4 = 0,
             dex5 = 0,
+            dex6 = 0,
+            dex7 = 0,
+            dex8 = 0,
             injury = 0,
             experience = 0,
             dedication = 0,
             officerLevel = officerLevel.toShort(),
             officerPlanet = 0,
             permission = "normal",
-            gold = 1000,
-            rice = 1000,
-            crew = 1000,
-            crewType = 0,
-            train = 0,
-            atmos = 0,
-            weaponCode = "None",
-            bookCode = "None",
-            horseCode = "None",
-            itemCode = "None",
+            funds = 1000,
+            supplies = 1000,
+            ships = 1000,
+            shipClass = 0,
+            training = 0,
+            morale = 0,
+            flagshipCode = "None",
+            equipCode = "None",
+            engineCode = "None",
+            accessoryCode = "None",
             ownerName = "",
             newmsg = 0,
             turnTime = turnTime,
@@ -349,6 +362,10 @@ class DeterministicReplayParityTest {
             tournamentState = 0,
             commandPoints = 10,
             commandEndTime = null,
+            posX = 0f,
+            posY = 0f,
+            destX = null,
+            destY = null,
             lastTurn = mutableMapOf(),
             meta = mutableMapOf(),
             penalty = mutableMapOf(),
@@ -361,8 +378,8 @@ class DeterministicReplayParityTest {
         val world: SessionState,
         val state: InMemoryWorldState,
         val tracker: DirtyTracker,
-        val generalId: Long,
-        val nationId: Long,
+        val officerId: Long,
+        val factionId: Long,
         val generalOfficerLevel: Short,
     )
 

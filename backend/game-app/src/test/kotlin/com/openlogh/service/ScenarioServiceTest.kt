@@ -88,7 +88,7 @@ class ScenarioServiceTest {
 
     private fun callParseGeneral(
         row: List<Any?>,
-        nationIdxToDbId: Map<Int, Long> = emptyMap(),
+        factionIdxToDbId: Map<Int, Long> = emptyMap(),
         nationCityIds: Map<Long, List<Long>> = emptyMap(),
         cityNameToId: Map<String, Long> = emptyMap(),
         allCityIds: List<Long> = listOf(999L),
@@ -99,7 +99,7 @@ class ScenarioServiceTest {
             service,
             row,
             1L,
-            nationIdxToDbId,
+            factionIdxToDbId,
             nationCityIds,
             cityNameToId,
             allCityIds,
@@ -147,10 +147,10 @@ class ScenarioServiceTest {
 
     @Test
     fun `parseGeneral resolves nation by index`() {
-        val nationIdxToDbId = mapOf(1 to 42L)
+        val factionIdxToDbId = mapOf(1 to 42L)
         val nationCityIds = mapOf(42L to listOf(100L))
         val row: List<Any?> = listOf(1, "헌제", "1002", 1, null, 17, 13, 61, 53, 46, 0, 170, 250)
-        val general = callParseGeneral(row, nationIdxToDbId = nationIdxToDbId, nationCityIds = nationCityIds)
+        val general = callParseGeneral(row, factionIdxToDbId = factionIdxToDbId, nationCityIds = nationCityIds)
         assertEquals(42L, general.factionId)
         assertEquals(2.toShort(), general.npcState) // NPC belonging to nation
     }
@@ -195,13 +195,13 @@ class ScenarioServiceTest {
 
     @Test
     fun `parseGeneral keeps nation general lifespan years unchanged even if younger than 14`() {
-        val nationIdxToDbId = mapOf(1 to 42L)
+        val factionIdxToDbId = mapOf(1 to 42L)
         val nationCityIds = mapOf(42L to listOf(100L))
         val row: List<Any?> = listOf(0, "소년", "1001", 1, null, 50, 50, 50, 50, 50, 2, 195, 260)
 
         val general = callParseGeneral(
             row,
-            nationIdxToDbId = nationIdxToDbId,
+            factionIdxToDbId = factionIdxToDbId,
             nationCityIds = nationCityIds,
             startYear = 200,
         )
@@ -215,7 +215,7 @@ class ScenarioServiceTest {
     @Test
     fun `parseGeneral supports legacy 3-stat tuple with officer field`() {
         val row: List<Any?> = listOf(1, "헌제", "1002", 1, null, 17, 13, 61, 0, 170, 250, "안전", null)
-        val general = callParseGeneral(row, nationIdxToDbId = mapOf(1 to 42L), nationCityIds = mapOf(42L to listOf(100L)))
+        val general = callParseGeneral(row, factionIdxToDbId = mapOf(1 to 42L), nationCityIds = mapOf(42L to listOf(100L)))
 
         assertEquals(61.toShort(), general.intelligence)
         assertEquals(61.toShort(), general.politics)
@@ -241,7 +241,7 @@ class ScenarioServiceTest {
     }
 
     @Test
-    fun `initializeWorld seeds cities with trust 50 and assigns all configured nation cities`() {
+    fun `initializeWorld seeds cities with approval 50 and assigns all configured nation cities`() {
         val scenario = ScenarioData(
             title = "테스트",
             startYear = 181,
@@ -677,12 +677,12 @@ class ScenarioServiceTest {
         val scenario = com.openlogh.model.ScenarioData(
             title = "test",
             startYear = 184,
-            emperor = mapOf("generalName" to "헌제", "nationIdx" to 1, "status" to "enthroned"),
+            emperor = mapOf("generalName" to "헌제", "factionIdx" to 1, "status" to "enthroned"),
         )
 
-        val nationIdxToDbId = mapOf(1 to 100L)
+        val factionIdxToDbId = mapOf(1 to 100L)
 
-        applyMethod.invoke(service, scenario, world, nationIdxToDbId, listOf(nation), listOf(general))
+        applyMethod.invoke(service, scenario, world, factionIdxToDbId, listOf(nation), listOf(general))
 
         assertEquals(55L, general.planetId)
     }
@@ -709,12 +709,12 @@ class ScenarioServiceTest {
         val scenario = com.openlogh.model.ScenarioData(
             title = "test",
             startYear = 184,
-            emperor = mapOf("generalName" to "영제", "nationIdx" to 1, "status" to "enthroned"),
+            emperor = mapOf("generalName" to "영제", "factionIdx" to 1, "status" to "enthroned"),
         )
 
-        val nationIdxToDbId = mapOf(1 to 100L)
+        val factionIdxToDbId = mapOf(1 to 100L)
 
-        applyMethod.invoke(service, scenario, world, nationIdxToDbId, listOf(nation), listOf(general))
+        applyMethod.invoke(service, scenario, world, factionIdxToDbId, listOf(nation), listOf(general))
 
         assertEquals(true, world.meta[com.openlogh.engine.SovereignConstants.WORLD_EMPEROR_SYSTEM])
         assertEquals(com.openlogh.engine.SovereignConstants.NPC_STATE_EMPEROR, general.npcState)

@@ -33,7 +33,7 @@ class ApiContractTest {
     inner class GeneralPoolEndpoints {
 
         @Test
-        @DisplayName("POST /worlds/{worldId}/pool endpoint exists")
+        @DisplayName("POST /worlds/{sessionId}/pool endpoint exists")
         fun `buildPoolGeneral endpoint exists`() {
             val fn = GeneralController::class.memberFunctions
                 .firstOrNull { it.name == "buildPoolGeneral" }
@@ -43,7 +43,7 @@ class ApiContractTest {
         }
 
         @Test
-        @DisplayName("PUT /worlds/{worldId}/pool/{generalId} endpoint exists")
+        @DisplayName("PUT /worlds/{sessionId}/pool/{officerId} endpoint exists")
         fun `updatePoolGeneral endpoint exists`() {
             val fn = GeneralController::class.memberFunctions
                 .firstOrNull { it.name == "updatePoolGeneral" }
@@ -170,7 +170,7 @@ class ApiContractTest {
     inner class DiplomacyEndpoints {
 
         @Test
-        @DisplayName("POST /worlds/{worldId}/diplomacy/respond endpoint exists")
+        @DisplayName("POST /worlds/{sessionId}/diplomacy/respond endpoint exists")
         fun `respond endpoint exists`() {
             val fn = DiplomacyController::class.memberFunctions
                 .firstOrNull { it.name == "respond" }

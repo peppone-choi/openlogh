@@ -97,6 +97,6 @@ class TechResearchParityTest {
         sessionId = 1,
         name = "테스트국",
         techLevel = 1000f,
-        meta = mutableMapOf("gennum" to 10),
+        meta = mutableMapOf("officerCount" to 10),
     )
 }

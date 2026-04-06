@@ -10,10 +10,10 @@ class GeneralTriggerTest {
 
     private fun createGeneral(
         injury: Short = 0,
-        crew: Int = 0,
-        rice: Int = 1000,
-        atmos: Short = 100,
-        itemCode: String = "None",
+        ships: Int = 0,
+        supplies: Int = 1000,
+        morale: Short = 100,
+        accessoryCode: String = "None",
     ): Officer {
         return Officer(
             id = 1,
@@ -22,10 +22,10 @@ class GeneralTriggerTest {
             factionId = 1,
             planetId = 1,
             injury = injury,
-            ships = crew,
-            supplies = rice,
-            morale = atmos,
-            accessoryCode = itemCode,
+            ships = ships,
+            supplies = supplies,
+            morale = morale,
+            accessoryCode = accessoryCode,
             turnTime = OffsetDateTime.now(),
         )
     }
@@ -60,7 +60,7 @@ class GeneralTriggerTest {
 
     @Test
     fun `TroopConsumptionTrigger consumes rice for crew`() {
-        val general = createGeneral(crew = 500, rice = 100)
+        val general = createGeneral(ships = 500, supplies = 100)
         val trigger = TroopConsumptionTrigger(general)
         val env = TriggerEnv(worldId = 1, year = 200, month = 6, generalId = 1)
 
@@ -73,7 +73,7 @@ class GeneralTriggerTest {
 
     @Test
     fun `TroopConsumptionTrigger drops morale when no rice`() {
-        val general = createGeneral(crew = 500, rice = 0, atmos = 80)
+        val general = createGeneral(ships = 500, supplies = 0, morale = 80)
         val trigger = TroopConsumptionTrigger(general)
         val env = TriggerEnv(worldId = 1, year = 200, month = 6, generalId = 1)
 
@@ -86,7 +86,7 @@ class GeneralTriggerTest {
 
     @Test
     fun `TroopConsumptionTrigger does nothing when crew is 0`() {
-        val general = createGeneral(crew = 0, rice = 100)
+        val general = createGeneral(ships = 0, supplies = 100)
         val trigger = TroopConsumptionTrigger(general)
         val env = TriggerEnv(worldId = 1, year = 200, month = 6, generalId = 1)
 
@@ -99,7 +99,7 @@ class GeneralTriggerTest {
 
     @Test
     fun `MedicineHealTrigger heals injury at or above threshold`() {
-        val general = createGeneral(injury = 15, itemCode = "medicine_pill")
+        val general = createGeneral(injury = 15, accessoryCode = "medicine_pill")
         val trigger = MedicineHealTrigger(general, injuryTarget = 10)
         val env = TriggerEnv(worldId = 1, year = 200, month = 6, generalId = 1)
 
@@ -111,7 +111,7 @@ class GeneralTriggerTest {
 
     @Test
     fun `MedicineHealTrigger does not heal when injury below threshold`() {
-        val general = createGeneral(injury = 5, itemCode = "medicine_pill")
+        val general = createGeneral(injury = 5, accessoryCode = "medicine_pill")
         val trigger = MedicineHealTrigger(general, injuryTarget = 10)
         val env = TriggerEnv(worldId = 1, year = 200, month = 6, generalId = 1)
 

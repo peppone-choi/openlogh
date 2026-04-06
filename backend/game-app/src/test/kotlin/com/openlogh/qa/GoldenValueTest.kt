@@ -39,38 +39,38 @@ class GoldenValueTest {
         @Test
         @DisplayName("same crew type: blendedTrain = (1000*80 + 1000*40) / 2000 = 60")
         fun `same crew type blend produces train 60`() {
-            // oldCrew=1000/train=80, newCrew=1000(recruited)/defaultTrain=40 → blendedTrain=60
-            val general = createGeneral(crew = 1000, crewType = 0, train = 80, atmos = 80)
+            // oldCrew=1000/training =80, newCrew=1000(recruited)/defaultTrain=40 → blendedTrain=60
+            val general = createGeneral(ships = 1000, shipClass = 0, training = 80, morale = 80)
             val cmd = che_징병(
                 general, createEnv(),
                 mapOf("crewType" to 0, "amount" to 1000)
             )
-            cmd.city = createCity(pop = 100000, trust = 90f)
+            cmd.city = createCity(population = 100000, approval = 90f)
             val result = runBlocking { cmd.run(LiteHashDRBG.build("golden_jb_1")) }
             assertTrue(result.success)
             val json = mapper.readTree(result.message)
             val trainDelta = json["statChanges"]["train"].asInt()
-            // new train = 60, old train = 80, delta = -20
+            // new training = 60, old training = 80, delta = -20
             assertEquals(-20, trainDelta, "blended train should be 60 (delta=-20 from 80)")
         }
 
         @Test
         @DisplayName("same crew type: popLoss equals recruited amount (reqCrewDown = reqCrew with no modifier)")
-        fun `pop loss equals recruited amount`() {
-            val general = createGeneral(crew = 1000, crewType = 0, train = 80, atmos = 80)
+        fun `population loss equals recruited amount`() {
+            val general = createGeneral(ships = 1000, shipClass = 0, training = 80, morale = 80)
             val cmd = che_징병(
                 general, createEnv(),
                 mapOf("crewType" to 0, "amount" to 1000)
             )
-            cmd.city = createCity(pop = 100000, trust = 90f)
+            cmd.city = createCity(population = 100000, approval = 90f)
             val result = runBlocking { cmd.run(LiteHashDRBG.build("golden_jb_pop")) }
             assertTrue(result.success)
             val json = mapper.readTree(result.message)
             // Pop loss = -reqCrewDown; without domestic modifiers, reqCrewDown = maxCrew
-            val popChange = json["cityChanges"]["pop"].asInt()
-            assertTrue(popChange < 0, "pop should decrease")
+            val popChange = json["cityChanges"]["population"].asInt()
+            assertTrue(popChange < 0, "population should decrease")
             // exact value: leadership=70, maxCrew = min(1000, 70*100 - 1000) = min(1000, 6000)=1000
-            assertEquals(-1000, popChange, "pop loss should equal recruited amount 1000")
+            assertEquals(-1000, popChange, "population loss should equal recruited amount 1000")
         }
     }
 
@@ -86,17 +86,17 @@ class GoldenValueTest {
         @DisplayName("different crew type resets train to 40 (delta from old train)")
         fun `different crew type resets train to default 40`() {
             // oldTrain=80, crewType differs → reset to defaultTrain=40, delta=-40
-            val general = createGeneral(crew = 1000, crewType = 1, train = 80, atmos = 80)
+            val general = createGeneral(ships = 1000, shipClass = 1, training = 80, morale = 80)
             val cmd = che_징병(
                 general, createEnv(),
                 mapOf("crewType" to 0, "amount" to 500)
             )
-            cmd.city = createCity(pop = 100000, trust = 90f)
+            cmd.city = createCity(population = 100000, approval = 90f)
             val result = runBlocking { cmd.run(LiteHashDRBG.build("golden_jb_reset")) }
             assertTrue(result.success)
             val json = mapper.readTree(result.message)
             val trainDelta = json["statChanges"]["train"].asInt()
-            // new train = 40 (default for 징병), old train = 80 → delta = -40
+            // new training = 40 (default for 징병), old training = 80 → delta = -40
             assertEquals(-40, trainDelta, "different crew type should reset train to 40 (delta=-40)")
         }
     }
@@ -113,34 +113,34 @@ class GoldenValueTest {
         @DisplayName("same crew type: blendedTrain = (1000*80 + 1000*70) / 2000 = 75")
         fun `same crew type blend produces train 75`() {
             // 모병 defaultTrain = 70; (1000*80 + 1000*70) / 2000 = 75
-            val general = createGeneral(crew = 1000, crewType = 0, train = 80, atmos = 80)
+            val general = createGeneral(ships = 1000, shipClass = 0, training = 80, morale = 80)
             val cmd = che_모병(
                 general, createEnv(),
                 mapOf("crewType" to 0, "amount" to 1000)
             )
-            cmd.city = createCity(pop = 100000, trust = 90f)
+            cmd.city = createCity(population = 100000, approval = 90f)
             val result = runBlocking { cmd.run(LiteHashDRBG.build("golden_mb_1")) }
             assertTrue(result.success)
             val json = mapper.readTree(result.message)
             val trainDelta = json["statChanges"]["train"].asInt()
-            // new train = 75, old train = 80 → delta = -5
+            // new training = 75, old training = 80 → delta = -5
             assertEquals(-5, trainDelta, "모병 blend: (1000*80+1000*70)/2000=75, delta from 80 = -5")
         }
 
         @Test
-        @DisplayName("모병 default train = 70, different crew type resets to 70")
+        @DisplayName("모병 default training = 70, different crew type resets to 70")
         fun `different crew type resets to mobyeong default 70`() {
-            val general = createGeneral(crew = 1000, crewType = 1, train = 40, atmos = 40)
+            val general = createGeneral(ships = 1000, shipClass = 1, training = 40, morale = 40)
             val cmd = che_모병(
                 general, createEnv(),
                 mapOf("crewType" to 0, "amount" to 500)
             )
-            cmd.city = createCity(pop = 100000, trust = 90f)
+            cmd.city = createCity(population = 100000, approval = 90f)
             val result = runBlocking { cmd.run(LiteHashDRBG.build("golden_mb_reset")) }
             assertTrue(result.success)
             val json = mapper.readTree(result.message)
             val trainDelta = json["statChanges"]["train"].asInt()
-            // new train = 70, old = 40 → delta = +30
+            // new training = 70, old = 40 → delta = +30
             assertEquals(30, trainDelta, "모병 different type: resets train to 70 (delta=+30 from 40)")
         }
     }
@@ -188,8 +188,8 @@ class GoldenValueTest {
         @DisplayName("warPower formula: atmos/train ratio applied correctly")
         fun `warPower atmos train ratio golden value`() {
             // Verify the ratio: warPower is multiplied by atmos and divided by train
-            // With simple values: atmos=100, train=100 → ratio = 1.0 (no change)
-            val general = createGeneral(leadership = 70, strength = 70, crew = 1000, train = 100, atmos = 100)
+            // With simple values: morale =100, training =100 → ratio = 1.0 (no change)
+            val general = createGeneral(leadership = 70, command = 70, ships = 1000, training = 100, morale = 100)
             val unit = WarUnitOfficer(general, 0f)
             // Just verify units are set correctly for formula input
             assertEquals(100, unit.morale)
@@ -247,7 +247,7 @@ class GoldenValueTest {
             // At 50% loss: 0.5 * 0.5 = 0.25
             // However if we interpret 50% HP loss as remaining HP = 50% (hpLossRatio = 0.5):
             // woundChance = 0.25 — the code gives 0.25, not 0.15.
-            // This test documents the actual code behavior (trust code, not docs).
+            // This test documents the actual code behavior (approval code, not docs).
             val hpLossRatio = 0.5
             val actualWoundChance = (hpLossRatio * 0.5).coerceAtMost(0.3)
             // Document actual formula result per code (0.25), not the spec claim (0.15)
@@ -267,7 +267,7 @@ class GoldenValueTest {
         @Test
         @DisplayName("continueWar: general stops if HP <= 0")
         fun `general stops fighting at 0 HP`() {
-            val general = createGeneral(crew = 1000)
+            val general = createGeneral(ships = 1000)
             val unit = WarUnitOfficer(general, 0f)
             unit.hp = 0
             assertFalse(unit.continueWar().canContinue, "hp=0 → cannot continue war (flee/escape)")
@@ -276,7 +276,7 @@ class GoldenValueTest {
         @Test
         @DisplayName("continueWar: general stops if rice depleted below crew/100")
         fun `general stops if rice below threshold`() {
-            val general = createGeneral(crew = 1000, rice = 0)
+            val general = createGeneral(ships = 1000, supplies = 0)
             val unit = WarUnitOfficer(general, 0f)
             unit.hp = 500
             unit.supplies = 0
@@ -287,7 +287,7 @@ class GoldenValueTest {
         @Test
         @DisplayName("continueWar: general keeps fighting when HP > 0 and rice sufficient")
         fun `general continues with HP and rice`() {
-            val general = createGeneral(crew = 1000, rice = 500)
+            val general = createGeneral(ships = 1000, supplies = 500)
             val unit = WarUnitOfficer(general, 0f)
             unit.hp = 500
             unit.supplies = 500
@@ -311,44 +311,44 @@ class GoldenValueTest {
 
     private fun createGeneral(
         leadership: Short = 70,
-        strength: Short = 70,
-        intel: Short = 70,
-        gold: Int = 10000,
-        rice: Int = 10000,
-        crew: Int = 1000,
-        crewType: Short = 0,
-        train: Short = 60,
-        atmos: Short = 60,
+        command: Short = 70,
+        intelligence: Short = 70,
+        funds: Int = 10000,
+        supplies: Int = 10000,
+        ships: Int = 1000,
+        shipClass: Short = 0,
+        training: Short = 60,
+        morale: Short = 60,
     ): Officer = Officer(
         id = 1,
         sessionId = 1,
         name = "테스트장수",
         factionId = 1,
         planetId = 1,
-        funds = gold,
-        supplies = rice,
-        ships = crew,
-        shipClass = crewType,
-        training = train,
-        morale = atmos,
+        funds = funds,
+        supplies = supplies,
+        ships = ships,
+        shipClass = shipClass,
+        training = training,
+        morale = morale,
         leadership = leadership,
-        command = strength,
-        intelligence = intel,
+        command = command,
+        intelligence = intelligence,
         politics = 60,
         administration = 60,
         turnTime = OffsetDateTime.now(),
     )
 
     private fun createCity(
-        nationId: Long = 1,
-        pop: Int = 50000,
-        trust: Float = 80f,
+        factionId: Long = 1,
+        population: Int = 50000,
+        approval: Float = 80f,
     ): Planet = Planet(
         id = 1,
         sessionId = 1,
         name = "테스트도시",
-        factionId = nationId,
-        population = pop,
+        factionId = factionId,
+        population = population,
         populationMax = 100000,
         production = 500,
         productionMax = 1000,
@@ -360,7 +360,7 @@ class GoldenValueTest {
         orbitalDefenseMax = 1000,
         fortress = 500,
         fortressMax = 1000,
-        approval = trust,
+        approval = approval,
         frontState = 0,
     )
 }

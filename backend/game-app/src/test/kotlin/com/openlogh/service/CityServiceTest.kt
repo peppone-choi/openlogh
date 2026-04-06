@@ -13,7 +13,7 @@ import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
 import java.time.OffsetDateTime
 
-class CityServiceTest {
+class PlanetServiceTest {
     private lateinit var planetRepository: PlanetRepository
     private lateinit var mapService: MapService
     private lateinit var officerRepository: OfficerRepository
@@ -39,7 +39,7 @@ class CityServiceTest {
                     commerce = 1,
                     security = 1,
                     defence = 1,
-                    wall = 1,
+                    fortress = 1,
                     x = 0,
                     y = 0,
                     connections = emptyList(),
@@ -70,12 +70,12 @@ class CityServiceTest {
             turnTime = OffsetDateTime.now(),
         )
 
-        val result = planetService.listByWorldMaskedForGeneral(1L, general)
+        val result = planetService.listByWorldMaskedForOfficer(1L, general)
         val maskedNeutral = result.find { it.id == 1L }!!
         val ownCity = result.find { it.id == 2L }!!
 
-        assertEquals(0, maskedNeutral.production, "Neutral city agri should be masked")
-        assertEquals(0, maskedNeutral.commerce, "Neutral city comm should be masked")
+        assertEquals(0, maskedNeutral.production, "Neutral city production should be masked")
+        assertEquals(0, maskedNeutral.commerce, "Neutral city commerce should be masked")
         assertEquals(400, ownCity.production, "Own nation city should not be masked")
     }
 
@@ -89,7 +89,7 @@ class CityServiceTest {
             turnTime = OffsetDateTime.now(),
         )
 
-        val result = planetService.listByWorldMaskedForGeneral(1L, general)
+        val result = planetService.listByWorldMaskedForOfficer(1L, general)
         assertEquals(500, result.first().production, "General's own city should be fully visible")
     }
 }

@@ -9,7 +9,7 @@ class ArgSchemaValidationTest {
 
     @Test
     fun `dest city schema parses aliases and emits legacy keys`() {
-        val validated = ArgSchemas.destPlanet.parse(mapOf("cityId" to "12"))
+        val validated = ArgSchemas.destPlanet.parse(mapOf("planetId" to "12"))
 
         assertTrue(validated.ok())
         assertEquals(12L, validated.longOrNull("destCityId"))
@@ -17,7 +17,7 @@ class ArgSchemaValidationTest {
         val legacy = validated.toLegacyMap(ArgSchemas.destPlanet)
         assertEquals(12L, legacy["destCityId"])
         assertEquals(12L, legacy["destCityID"])
-        assertEquals(12L, legacy["cityId"])
+        assertEquals(12L, legacy["planetId"])
         assertEquals(12L, legacy["targetCityId"])
     }
 

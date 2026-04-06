@@ -4,7 +4,7 @@ import com.openlogh.dto.ResourceDistributionRequest
 import com.openlogh.dto.TimeControlRequest
 import com.openlogh.engine.EventActionService
 import com.openlogh.entity.Officer
-import com.openlogh.entity.GeneralTurn
+import com.openlogh.entity.OfficerTurn
 import com.openlogh.entity.SessionState
 import com.openlogh.repository.AppUserRepository
 import com.openlogh.repository.PlanetRepository
@@ -138,7 +138,7 @@ class AdminServiceTest {
                 startYear = 190,
                 locked = true,
                 turnTerm = 10,
-                distribute = ResourceDistributionRequest(gold = 50, rice = 75, target = "all"),
+                distribute = ResourceDistributionRequest(funds = 50, supplies = 75, target = "all"),
                 auctionSync = true,
                 auctionCloseMinutes = 45,
                 opentime = "2026-04-01T00:00:00Z",
@@ -186,7 +186,7 @@ class AdminServiceTest {
         val result = service.timeControl(
             1L,
             TimeControlRequest(
-                distribute = ResourceDistributionRequest(gold = 10, rice = 10, target = "invalid"),
+                distribute = ResourceDistributionRequest(funds = 10, supplies = 10, target = "invalid"),
             )
         )
 
@@ -243,10 +243,10 @@ class AdminServiceTest {
             name = "장수",
             turnTime = initialTurnTime,
         )
-        val queuedTurn = GeneralTurn(
+        val queuedTurn = OfficerTurn(
             id = 1,
-            worldId = 1,
-            generalId = 9,
+            sessionId = 1,
+            officerId = 9,
             turnIdx = 0,
             actionCode = "che_출병",
             arg = mutableMapOf("dest" to 12),
@@ -261,7 +261,7 @@ class AdminServiceTest {
         assertEquals(0.toShort(), general.killTurn)
         assertTrue(general.turnTime.isAfter(initialTurnTime))
 
-        val captor = ArgumentCaptor.forClass(GeneralTurn::class.java)
+        val captor = ArgumentCaptor.forClass(OfficerTurn::class.java)
         verify(officerTurnRepository).save(captor.capture())
         val savedTurn = captor.value
         assertEquals(0.toShort(), savedTurn.turnIdx)
@@ -288,7 +288,7 @@ class AdminServiceTest {
         assertTrue(resignResult)
         assertTrue(wanderResult)
 
-        val captor = ArgumentCaptor.forClass(GeneralTurn::class.java)
+        val captor = ArgumentCaptor.forClass(OfficerTurn::class.java)
         verify(officerTurnRepository, org.mockito.Mockito.times(3)).save(captor.capture())
         val savedTurns = captor.allValues
         assertEquals(listOf("che_하야", "che_방랑", "che_해산"), savedTurns.map { it.actionCode })

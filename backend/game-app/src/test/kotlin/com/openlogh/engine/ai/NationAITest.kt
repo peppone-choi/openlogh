@@ -49,9 +49,9 @@ class NationAITest {
 
     private fun createNation(
         id: Long = 1,
-        gold: Int = 10000,
-        rice: Int = 10000,
-        power: Int = 100,
+        funds: Int = 10000,
+        supplies: Int = 10000,
+        militaryPower: Int = 100,
         warState: Short = 0,
         strategicCmdLimit: Short = 0,
     ): Faction {
@@ -60,9 +60,9 @@ class NationAITest {
             sessionId = 1,
             name = "국가$id",
             color = "#FF0000",
-            funds = gold,
-            supplies = rice,
-            militaryPower = power,
+            funds = funds,
+            supplies = supplies,
+            militaryPower = militaryPower,
             warState = warState,
             strategicCmdLimit = strategicCmdLimit,
             capitalPlanetId = 1,
@@ -71,8 +71,8 @@ class NationAITest {
 
     private fun createGeneral(
         id: Long = 1,
-        nationId: Long = 1,
-        cityId: Long = 1,
+        factionId: Long = 1,
+        planetId: Long = 1,
         npcState: Short = 2,
         officerLevel: Short = 1,
         dedication: Int = 100,
@@ -81,8 +81,8 @@ class NationAITest {
             id = id,
             sessionId = 1,
             name = "장수$id",
-            factionId = nationId,
-            planetId = cityId,
+            factionId = factionId,
+            planetId = planetId,
             npcState = npcState,
             officerLevel = officerLevel,
             dedication = dedication,
@@ -99,14 +99,14 @@ class NationAITest {
 
     private fun createCity(
         id: Long = 1,
-        nationId: Long = 1,
+        factionId: Long = 1,
         level: Short = 5,
     ): Planet {
         return Planet(
             id = id,
             sessionId = 1,
             name = "도시$id",
-            factionId = nationId,
+            factionId = factionId,
             level = level,
             population = 10000,
             populationMax = 50000,
@@ -129,36 +129,36 @@ class NationAITest {
         `when`(planetRepository.findByFactionId(nation.id)).thenReturn(cities)
         `when`(officerRepository.findBySessionIdAndFactionId(1L, nation.id)).thenReturn(generals)
         `when`(factionRepository.findBySessionId(1L)).thenReturn(allNations)
-        `when`(diplomacyRepository.findByWorldIdAndIsDeadFalse(1L)).thenReturn(diplomacies)
+        `when`(diplomacyRepository.findBySessionIdAndIsDeadFalse(1L)).thenReturn(diplomacies)
     }
 
     @Test
     fun `should declare war when stronger and sufficiently prepared`() {
-        val nation = createNation(gold = 20000, rice = 20000, power = 200)
-        val target = createNation(id = 2, power = 50)
+        val nation = createNation(funds = 20000, supplies = 20000, militaryPower = 200)
+        val target = createNation(id = 2, militaryPower = 50)
         `when`(planetRepository.findByFactionId(1)).thenReturn(listOf(createCity(id = 1), createCity(id = 2)))
-        `when`(planetRepository.findByFactionId(2)).thenReturn(listOf(createCity(id = 3, nationId = 2)))
+        `when`(planetRepository.findByFactionId(2)).thenReturn(listOf(createCity(id = 3, factionId = 2)))
         `when`(officerRepository.findBySessionIdAndFactionId(1L, 1L)).thenReturn(listOf(createGeneral(id = 1), createGeneral(id = 2)))
-        `when`(officerRepository.findBySessionIdAndFactionId(1L, 2L)).thenReturn(listOf(createGeneral(id = 3, nationId = 2)))
+        `when`(officerRepository.findBySessionIdAndFactionId(1L, 2L)).thenReturn(listOf(createGeneral(id = 3, factionId = 2)))
 
         assertTrue(ai.shouldDeclareWar(nation, target, createWorld()))
     }
 
     @Test
     fun `should not declare war when weaker than target`() {
-        val nation = createNation(gold = 20000, rice = 20000, power = 50)
-        val target = createNation(id = 2, power = 200)
+        val nation = createNation(funds = 20000, supplies = 20000, militaryPower = 50)
+        val target = createNation(id = 2, militaryPower = 200)
         `when`(planetRepository.findByFactionId(1)).thenReturn(listOf(createCity()))
-        `when`(planetRepository.findByFactionId(2)).thenReturn(listOf(createCity(id = 2, nationId = 2)))
+        `when`(planetRepository.findByFactionId(2)).thenReturn(listOf(createCity(id = 2, factionId = 2)))
         `when`(officerRepository.findBySessionIdAndFactionId(1L, 1L)).thenReturn(listOf(createGeneral()))
-        `when`(officerRepository.findBySessionIdAndFactionId(1L, 2L)).thenReturn(listOf(createGeneral(id = 2, nationId = 2)))
+        `when`(officerRepository.findBySessionIdAndFactionId(1L, 2L)).thenReturn(listOf(createGeneral(id = 2, factionId = 2)))
 
         assertFalse(ai.shouldDeclareWar(nation, target, createWorld()))
     }
 
     @Test
     fun `decideNationAction returns Nation휴식 when nation gold is very low`() {
-        val nation = createNation(gold = 500)
+        val nation = createNation(funds = 500)
         setupRepos(nation, listOf(createCity()), listOf(createGeneral()))
 
         val action = ai.decideNationAction(nation, createWorld(), Random(42))
@@ -167,7 +167,7 @@ class NationAITest {
 
     @Test
     fun `decideNationAction returns war strategic action when at war and strategic commands available`() {
-        val nation = createNation(gold = 20000, rice = 20000, warState = 1, strategicCmdLimit = 2)
+        val nation = createNation(funds = 20000, supplies = 20000, warState = 1, strategicCmdLimit = 2)
         setupRepos(nation, listOf(createCity()), listOf(createGeneral()))
 
         val action = ai.decideNationAction(nation, createWorld(), Random(42))
@@ -176,7 +176,7 @@ class NationAITest {
 
     @Test
     fun `decideNationAction returns Nation휴식 when at war but no strategic command available`() {
-        val nation = createNation(gold = 20000, rice = 20000, warState = 1, strategicCmdLimit = 0)
+        val nation = createNation(funds = 20000, supplies = 20000, warState = 1, strategicCmdLimit = 0)
         setupRepos(nation, listOf(createCity()), listOf(createGeneral()))
 
         val action = ai.decideNationAction(nation, createWorld(), Random(42))
@@ -185,7 +185,7 @@ class NationAITest {
 
     @Test
     fun `decideNationAction returns 발령 when unassigned generals exist`() {
-        val nation = createNation(gold = 20000, rice = 20000)
+        val nation = createNation(funds = 20000, supplies = 20000)
         val unassigned = createGeneral(id = 1, officerLevel = 0, npcState = 2)
         setupRepos(nation, listOf(createCity()), listOf(unassigned))
 
@@ -195,7 +195,7 @@ class NationAITest {
 
     @Test
     fun `decideNationAction returns 증축 when nation can expand low-level city`() {
-        val nation = createNation(gold = 20000, rice = 20000)
+        val nation = createNation(funds = 20000, supplies = 20000)
         val cities = listOf(createCity(id = 1, level = 4), createCity(id = 2, level = 5))
         val generals = listOf(createGeneral(id = 1, officerLevel = 1, dedication = 120))
         setupRepos(nation, cities, generals)
@@ -206,7 +206,7 @@ class NationAITest {
 
     @Test
     fun `decideNationAction returns 포상 when generals have low dedication and nation has enough gold`() {
-        val nation = createNation(gold = 15000, rice = 15000)
+        val nation = createNation(funds = 15000, supplies = 15000)
         val cities = listOf(createCity(level = 5))
         val lowDedGeneral = createGeneral(id = 1, officerLevel = 1, dedication = 50)
         setupRepos(nation, cities, listOf(lowDedGeneral))
@@ -217,7 +217,7 @@ class NationAITest {
 
     @Test
     fun `decideNationAction falls back to Nation휴식 when no trigger condition matches`() {
-        val nation = createNation(gold = 20000, rice = 20000, power = 100)
+        val nation = createNation(funds = 20000, supplies = 20000, militaryPower = 100)
         val cities = listOf(createCity(level = 5))
         val generals = listOf(createGeneral(id = 1, officerLevel = 3, dedication = 120))
         setupRepos(
@@ -236,8 +236,8 @@ class NationAITest {
 
     @Test
     fun `decideNationAction returns Nation휴식 when gold below reqNationGold threshold`() {
-        // Default reqNationGold = 10000, so gold = 1500 should trigger rest
-        val nation = createNation(gold = 1500, rice = 10000)
+        // Default reqNationGold = 10000, so funds = 1500 should trigger rest
+        val nation = createNation(funds = 1500, supplies = 10000)
         setupRepos(nation, listOf(createCity()), listOf(createGeneral()))
 
         val action = ai.decideNationAction(nation, createWorld(), Random(42))
@@ -246,8 +246,8 @@ class NationAITest {
 
     @Test
     fun `decideNationAction returns Nation휴식 when rice below reqNationRice threshold`() {
-        // Default reqNationRice = 12000, so rice = 1500 should trigger rest
-        val nation = createNation(gold = 10000, rice = 1500)
+        // Default reqNationRice = 12000, so supplies = 1500 should trigger rest
+        val nation = createNation(funds = 10000, supplies = 1500)
         setupRepos(nation, listOf(createCity()), listOf(createGeneral()))
 
         val action = ai.decideNationAction(nation, createWorld(), Random(42))
@@ -258,7 +258,7 @@ class NationAITest {
 
     @Test
     fun `decideNationAction does not consider 천도 with only one city`() {
-        val nation = createNation(gold = 10000, rice = 10000)
+        val nation = createNation(funds = 10000, supplies = 10000)
         nation.capitalPlanetId = 1
         val city = createCity(id = 1, level = 5)
         val generals = listOf(createGeneral(id = 1, officerLevel = 3, dedication = 120))

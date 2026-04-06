@@ -63,14 +63,14 @@ class RealtimeServiceTest {
 
     private fun createGeneral(
         id: Long = 1,
-        worldId: Long = 1,
+        sessionId: Long = 1,
         commandEndTime: OffsetDateTime? = null,
         commandPoints: Int = 10,
         officerLevel: Short = 1,
     ): Officer {
         return Officer(
             id = id,
-            sessionId = worldId,
+            sessionId = sessionId,
             name = "테스트",
             factionId = 1,
             planetId = 1,

@@ -68,12 +68,12 @@ class EventActionServiceTest {
 
     private fun createGeneral(
         id: Long = 1L,
-        worldId: Long = 1L,
-        nationId: Long = 1L,
+        sessionId: Long = 1L,
+        factionId: Long = 1L,
         name: String = "장수",
         leadership: Short = 60,
-        strength: Short = 60,
-        intel: Short = 60,
+        command: Short = 60,
+        intelligence: Short = 60,
         betray: Short = 0,
         age: Short = 25,
         belong: Short = 5,
@@ -81,45 +81,45 @@ class EventActionServiceTest {
         npcState: Short = 2,
         experience: Int = 1000,
         dedication: Int = 500,
-        itemCode: String = "None",
+        accessoryCode: String = "None",
     ): Officer = Officer(
-        id = id, sessionId = worldId, factionId = nationId, name = name,
-        leadership = leadership, command = strength, intelligence = intel,
+        id = id, sessionId = sessionId, factionId = factionId, name = name,
+        leadership = leadership, command = command, intelligence = intelligence,
         betray = betray, age = age, belong = belong, officerLevel = officerLevel,
         npcState = npcState, experience = experience, dedication = dedication,
-        accessoryCode = itemCode,
+        accessoryCode = accessoryCode,
     )
 
     private fun createNation(
         id: Long = 1L,
-        worldId: Long = 1L,
+        sessionId: Long = 1L,
         name: String = "테스트국",
         level: Short = 2,
         scoutLevel: Short = 0,
-        gold: Int = 10000,
-    ): Faction = Faction(id = id, sessionId = worldId, name = name, factionRank = level, scoutLevel = scoutLevel, funds = gold)
+        funds: Int = 10000,
+    ): Faction = Faction(id = id, sessionId = sessionId, name = name, factionRank = level, scoutLevel = scoutLevel, funds = funds)
 
     private fun createCity(
         id: Long = 1L,
-        worldId: Long = 1L,
-        nationId: Long = 1L,
-        pop: Int = 10000,
-        popMax: Int = 50000,
-        agri: Int = 500, agriMax: Int = 1000,
-        comm: Int = 500, commMax: Int = 1000,
-        secu: Int = 500, secuMax: Int = 1000,
-        def: Int = 500, defMax: Int = 1000,
-        wall: Int = 500, wallMax: Int = 1000,
-        trust: Float = 80f,
+        sessionId: Long = 1L,
+        factionId: Long = 1L,
+        population: Int = 10000,
+        populationMax: Int = 50000,
+        production: Int = 500, productionMax: Int = 1000,
+        commerce: Int = 500, commerceMax: Int = 1000,
+        security: Int = 500, securityMax: Int = 1000,
+        orbitalDefense: Int = 500, orbitalDefenseMax: Int = 1000,
+        fortress: Int = 500, fortressMax: Int = 1000,
+        approval: Float = 80f,
         trade: Int = 100,
         officerSet: Int = 0,
         dead: Int = 0,
     ): Planet = Planet(
-        id = id, sessionId = worldId, name = "테스트도시$id", factionId = nationId,
-        population = pop, populationMax = popMax, production = agri, productionMax = agriMax,
-        commerce = comm, commerceMax = commMax, security = secu, securityMax = secuMax,
-        orbitalDefense = def, orbitalDefenseMax = defMax, fortress = wall, fortressMax = wallMax,
-        approval = trust.toInt(), trade = trade, officerSet = officerSet, dead = dead,
+        id = id, sessionId = sessionId, name = "테스트도시$id", factionId = factionId,
+        population = population, populationMax = populationMax, production = production, productionMax = productionMax,
+        commerce = commerce, commerceMax = commerceMax, security = security, securityMax = securityMax,
+        orbitalDefense = orbitalDefense, orbitalDefenseMax = orbitalDefenseMax, fortress = fortress, fortressMax = fortressMax,
+        approval = approval.toInt(), trade = trade, officerSet = officerSet, dead = dead,
     )
 
     // ─── AddGlobalBetray ───────────────────────────────────────────────────
@@ -234,14 +234,14 @@ class EventActionServiceTest {
     inner class ChangeCity {
 
         @Test
-        fun `applies trust absolute value to all cities when target is null`() {
-            // PHP: $actions['trust'] = 50 → city.approval = 50
-            val city1 = createCity(id = 1, trust = 80f)
-            val city2 = createCity(id = 2, trust = 60f)
+        fun `applies approval absolute value to all cities when target is null`() {
+            // PHP: $actions['approval'] = 50 → city.approval = 50
+            val city1 = createCity(id = 1, approval = 80f)
+            val city2 = createCity(id = 2, approval = 60f)
             `when`(planetRepository.findBySessionId(1L)).thenReturn(listOf(city1, city2))
             `when`(planetRepository.saveAll(anyNonNull<List<Planet>>())).thenReturn(listOf(city1, city2))
 
-            service.changeCity(createWorld(), null, mapOf("trust" to 50))
+            service.changeCity(createWorld(), null, mapOf("approval" to 50))
 
             assertEquals(50f, city1.approval, 0.01f)
             assertEquals(50f, city2.approval, 0.01f)
@@ -261,12 +261,12 @@ class EventActionServiceTest {
 
         @Test
         fun `filters cities by free target`() {
-            val freeCity = createCity(id = 1, nationId = 0)
-            val occupiedCity = createCity(id = 2, nationId = 1)
+            val freeCity = createCity(id = 1, factionId = 0)
+            val occupiedCity = createCity(id = 2, factionId = 1)
             `when`(planetRepository.findBySessionId(1L)).thenReturn(listOf(freeCity, occupiedCity))
             `when`(planetRepository.saveAll(anyNonNull<List<Planet>>())).thenReturn(listOf(freeCity))
 
-            service.changeCity(createWorld(), "free", mapOf("trust" to 100))
+            service.changeCity(createWorld(), "free", mapOf("approval" to 100))
 
             assertEquals(100f, freeCity.approval, 0.01f)
             // occupied city should be unchanged
@@ -275,23 +275,23 @@ class EventActionServiceTest {
 
         @Test
         fun `applies math expression with plus operator to city field`() {
-            val city = createCity(agri = 400, agriMax = 1000)
+            val city = createCity(production = 400, productionMax = 1000)
             `when`(planetRepository.findBySessionId(1L)).thenReturn(listOf(city))
             `when`(planetRepository.saveAll(anyNonNull<List<Planet>>())).thenReturn(listOf(city))
 
-            // "+100" should add 100 to current agri
-            service.changeCity(createWorld(), null, mapOf("agri" to "+100"))
+            // "+100" should add 100 to current production
+            service.changeCity(createWorld(), null, mapOf("production" to "+100"))
 
             assertEquals(500, city.production)
         }
 
         @Test
-        fun `clamps trust to 100 maximum`() {
-            val city = createCity(trust = 90f)
+        fun `clamps approval to 100 maximum`() {
+            val city = createCity(approval = 90f)
             `when`(planetRepository.findBySessionId(1L)).thenReturn(listOf(city))
             `when`(planetRepository.saveAll(anyNonNull<List<Planet>>())).thenReturn(listOf(city))
 
-            service.changeCity(createWorld(), null, mapOf("trust" to 200))
+            service.changeCity(createWorld(), null, mapOf("approval" to 200))
 
             assertEquals(100f, city.approval, 0.01f)
         }
@@ -305,7 +305,7 @@ class EventActionServiceTest {
         @Test
         fun `increments age for all generals`() {
             // PHP: foreach general → age++
-            val gen = createGeneral(age = 25, nationId = 1)
+            val gen = createGeneral(age = 25, factionId = 1)
             `when`(officerRepository.findBySessionId(1L)).thenReturn(listOf(gen))
             `when`(officerRepository.saveAll(anyNonNull<List<Officer>>())).thenReturn(listOf(gen))
 
@@ -317,7 +317,7 @@ class EventActionServiceTest {
         @Test
         fun `increments belong for generals in a nation`() {
             // PHP: foreach general where nation != 0 → belong++
-            val gen = createGeneral(nationId = 1, belong = 10)
+            val gen = createGeneral(factionId = 1, belong = 10)
             `when`(officerRepository.findBySessionId(1L)).thenReturn(listOf(gen))
             `when`(officerRepository.saveAll(anyNonNull<List<Officer>>())).thenReturn(listOf(gen))
 
@@ -329,7 +329,7 @@ class EventActionServiceTest {
         @Test
         fun `does not increment belong for wandering generals`() {
             // PHP: only generals in a nation get belong++; nation==0 → wander
-            val gen = createGeneral(nationId = 0, belong = 5)
+            val gen = createGeneral(factionId = 0, belong = 5)
             `when`(officerRepository.findBySessionId(1L)).thenReturn(listOf(gen))
             `when`(officerRepository.saveAll(anyNonNull<List<Officer>>())).thenReturn(listOf(gen))
 
@@ -391,8 +391,8 @@ class EventActionServiceTest {
 
         @Test
         fun `converts dead troops back to population at 20 percent`() {
-            // PHP: pop += dead * 0.2; dead = 0
-            val city = createCity(nationId = 1, pop = 10000, dead = 500)
+            // PHP: population += dead * 0.2; dead = 0
+            val city = createCity(factionId = 1, population = 10000, dead = 500)
             `when`(planetRepository.findBySessionId(anyLong())).thenReturn(listOf(city))
             `when`(planetRepository.saveAll(anyNonNull<List<Planet>>())).thenReturn(listOf(city))
             `when`(factionRepository.findBySessionId(anyLong())).thenReturn(emptyList())
@@ -400,15 +400,15 @@ class EventActionServiceTest {
 
             service.processWarIncome(createWorld())
 
-            // 500 dead * 0.2 = 100 returned as pop
+            // 500 dead * 0.2 = 100 returned as population
             assertEquals(10100, city.population)
             assertEquals(0, city.dead)
         }
 
         @Test
-        fun `pop gain from dead capped at popMax`() {
-            // dead=50000, pop=49900, popMax=50000 → gain=10000 but capped to 100
-            val city = createCity(nationId = 1, pop = 49900, popMax = 50000, dead = 50000)
+        fun `population gain from dead capped at populationMax`() {
+            // dead=50000, population=49900, populationMax=50000 → gain=10000 but capped to 100
+            val city = createCity(factionId = 1, population = 49900, populationMax = 50000, dead = 50000)
             `when`(planetRepository.findBySessionId(anyLong())).thenReturn(listOf(city))
             `when`(planetRepository.saveAll(anyNonNull<List<Planet>>())).thenReturn(listOf(city))
             `when`(factionRepository.findBySessionId(anyLong())).thenReturn(emptyList())
@@ -416,13 +416,13 @@ class EventActionServiceTest {
 
             service.processWarIncome(createWorld())
 
-            assertTrue(city.population <= 50000, "pop should not exceed popMax")
+            assertTrue(city.population <= 50000, "population should not exceed populationMax")
             assertEquals(0, city.dead)
         }
 
         @Test
-        fun `zero dead means no pop change`() {
-            val city = createCity(pop = 10000, dead = 0)
+        fun `zero dead means no population change`() {
+            val city = createCity(population = 10000, dead = 0)
             `when`(planetRepository.findBySessionId(anyLong())).thenReturn(listOf(city))
             `when`(planetRepository.saveAll(anyNonNull<List<Planet>>())).thenReturn(listOf(city))
             `when`(factionRepository.findBySessionId(anyLong())).thenReturn(emptyList())
@@ -444,7 +444,7 @@ class EventActionServiceTest {
             // PHP: nation not found → delete event
             `when`(factionRepository.findById(anyLong())).thenReturn(java.util.Optional.empty())
 
-            service.autoDeleteInvader(createWorld(), nationId = 99L, currentEventId = 42L)
+            service.autoDeleteInvader(createWorld(), factionId = 99L, currentEventId = 42L)
 
             verify(eventRepository).deleteById(42L)
         }
@@ -456,7 +456,7 @@ class EventActionServiceTest {
             `when`(factionRepository.findById(anyLong())).thenReturn(java.util.Optional.of(nation))
             `when`(officerRepository.findByFactionId(anyLong())).thenReturn(emptyList())
 
-            service.autoDeleteInvader(createWorld(), nationId = 1L, currentEventId = 5L)
+            service.autoDeleteInvader(createWorld(), factionId = 1L, currentEventId = 5L)
 
             verify(eventRepository, never()).deleteById(anyLong())
         }
@@ -469,14 +469,14 @@ class EventActionServiceTest {
 
         @Test
         fun `creates a general with specified stats`() {
-            // PHP: insert general with name, nationId, leadership, strength, intel
+            // PHP: insert general with name, factionId, leadership, strength, intel
             `when`(planetRepository.findBySessionId(1L)).thenReturn(emptyList())
-            val generalCaptor = ArgumentCaptor.forClass(General::class.java)
+            val generalCaptor = ArgumentCaptor.forClass(Officer::class.java)
             `when`(officerRepository.save(generalCaptor.capture())).thenAnswer { it.arguments[0] }
 
             val params = mapOf(
                 "name" to "테스트장수",
-                "nationId" to 2,
+                "factionId" to 2,
                 "leadership" to 80,
                 "strength" to 70,
                 "intel" to 60,
@@ -494,7 +494,7 @@ class EventActionServiceTest {
         @Test
         fun `regNeutralNPC creates general with npcState 6`() {
             `when`(planetRepository.findBySessionId(1L)).thenReturn(emptyList())
-            val generalCaptor = ArgumentCaptor.forClass(General::class.java)
+            val generalCaptor = ArgumentCaptor.forClass(Officer::class.java)
             `when`(officerRepository.save(generalCaptor.capture())).thenAnswer { it.arguments[0] }
 
             service.regNeutralNPC(createWorld(), mapOf("name" to "중립NPC"))
@@ -504,11 +504,11 @@ class EventActionServiceTest {
         }
 
         @Test
-        fun `resolves city by name when cityId not specified`() {
+        fun `resolves city by name when planetId not specified`() {
             val city = createCity(id = 5L)
             city.name = "낙양"
             `when`(planetRepository.findBySessionId(1L)).thenReturn(listOf(city))
-            val generalCaptor = ArgumentCaptor.forClass(General::class.java)
+            val generalCaptor = ArgumentCaptor.forClass(Officer::class.java)
             `when`(officerRepository.save(generalCaptor.capture())).thenAnswer { it.arguments[0] }
 
             service.regNPC(createWorld(), mapOf("name" to "장수", "city" to "낙양"))
@@ -525,7 +525,7 @@ class EventActionServiceTest {
 
         @Test
         fun `does not affect generals with no items`() {
-            val gen = createGeneral(npcState = 1, itemCode = "None")
+            val gen = createGeneral(npcState = 1, accessoryCode = "None")
             `when`(officerRepository.findBySessionId(1L)).thenReturn(listOf(gen))
 
             service.lostUniqueItem(createWorld(), lostProb = 1.0)
@@ -536,7 +536,7 @@ class EventActionServiceTest {
 
         @Test
         fun `does not affect NPC generals (npcState gt 1)`() {
-            val gen = createGeneral(npcState = 3, itemCode = "전국옥새")
+            val gen = createGeneral(npcState = 3, accessoryCode = "전국옥새")
             `when`(officerRepository.findBySessionId(1L)).thenReturn(listOf(gen))
 
             service.lostUniqueItem(createWorld(), lostProb = 1.0)
@@ -547,7 +547,7 @@ class EventActionServiceTest {
 
         @Test
         fun `does not remove buyable items even at 100 percent probability`() {
-            val gen = createGeneral(npcState = 0, itemCode = "숫돌")
+            val gen = createGeneral(npcState = 0, accessoryCode = "숫돌")
             `when`(officerRepository.findBySessionId(1L)).thenReturn(listOf(gen))
 
             service.lostUniqueItem(createWorld(), lostProb = 1.0)
@@ -563,7 +563,7 @@ class EventActionServiceTest {
 
         @Test
         fun `deletes old merge entries and creates new ones per general`() {
-            val gen = createGeneral(id = 1, leadership = 80, strength = 70, intel = 60, experience = 1000, dedication = 500)
+            val gen = createGeneral(id = 1, leadership = 80, command = 70, intelligence = 60, experience = 1000, dedication = 500)
             `when`(officerRepository.findBySessionId(anyLong())).thenReturn(listOf(gen))
             `when`(rankDataRepository.findBySessionIdAndCategory(anyLong(), anyString())).thenReturn(emptyList())
             `when`(rankDataRepository.saveAll(anyNonNull<List<RankData>>())).thenReturn(emptyList())
@@ -576,7 +576,7 @@ class EventActionServiceTest {
 
         @Test
         fun `calculates positive inheritance score from general stats`() {
-            val gen = createGeneral(leadership = 80, strength = 70, intel = 60, experience = 2000, dedication = 1000)
+            val gen = createGeneral(leadership = 80, command = 70, intelligence = 60, experience = 2000, dedication = 1000)
             `when`(officerRepository.findBySessionId(anyLong())).thenReturn(listOf(gen))
             `when`(rankDataRepository.findBySessionIdAndCategory(anyLong(), anyString())).thenReturn(emptyList())
             `when`(rankDataRepository.saveAll(anyNonNull<List<RankData>>())).thenReturn(emptyList())
@@ -595,7 +595,7 @@ class EventActionServiceTest {
 
         @Test
         fun `creates specified number of NPCs`() {
-            val city = createCity(nationId = 0)
+            val city = createCity(factionId = 0)
             `when`(planetRepository.findBySessionId(1L)).thenReturn(listOf(city))
             `when`(officerRepository.findBySessionId(1L)).thenReturn(emptyList())
             val savedGenerals = mutableListOf<Officer>()
@@ -622,10 +622,10 @@ class EventActionServiceTest {
 
         @Test
         fun `created NPCs have npcState 3`() {
-            val city = createCity(nationId = 0)
+            val city = createCity(factionId = 0)
             `when`(planetRepository.findBySessionId(1L)).thenReturn(listOf(city))
             `when`(officerRepository.findBySessionId(1L)).thenReturn(emptyList())
-            val generalCaptor = ArgumentCaptor.forClass(General::class.java)
+            val generalCaptor = ArgumentCaptor.forClass(Officer::class.java)
             `when`(officerRepository.save(generalCaptor.capture())).thenAnswer { it.arguments[0] }
 
             service.createManyNPC(createWorld(), npcCount = 1, fillCnt = 0)

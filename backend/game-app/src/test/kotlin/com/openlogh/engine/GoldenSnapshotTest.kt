@@ -54,14 +54,14 @@ class GoldenSnapshotTest {
             strategicCmdLimit = 0,
         )
 
-        val cityWei = createCity(id = 1, nationId = 1, name = "허창")
-        val cityShu = createCity(id = 2, nationId = 2, name = "성도")
-        val cityNeutral = createCity(id = 3, nationId = 0, name = "중립")
+        val cityWei = createCity(id = 1, factionId = 1, name = "허창")
+        val cityShu = createCity(id = 2, factionId = 2, name = "성도")
+        val cityNeutral = createCity(id = 3, factionId = 0, name = "중립")
 
-        val g1 = createGeneral(id = 1, nationId = 1, cityId = 1, name = "조조", leadership = 80, crew = 200, train = 60, atmos = 70)
-        val g2 = createGeneral(id = 2, nationId = 1, cityId = 1, name = "하후돈", leadership = 60, crew = 300, train = 40, atmos = 65)
-        val g3 = createGeneral(id = 3, nationId = 2, cityId = 2, name = "유비", leadership = 75, crew = 250, train = 55, atmos = 75)
-        val g4 = createGeneral(id = 4, nationId = 2, cityId = 2, name = "관우", leadership = 50, crew = 400, train = 30, atmos = 60)
+        val g1 = createGeneral(id = 1, factionId = 1, planetId = 1, name = "조조", leadership = 80, ships = 200, training = 60, morale = 70)
+        val g2 = createGeneral(id = 2, factionId = 1, planetId = 1, name = "하후돈", leadership = 60, ships = 300, training = 40, morale = 65)
+        val g3 = createGeneral(id = 3, factionId = 2, planetId = 2, name = "유비", leadership = 75, ships = 250, training = 55, morale = 75)
+        val g4 = createGeneral(id = 4, factionId = 2, planetId = 2, name = "관우", leadership = 50, ships = 400, training = 30, morale = 60)
 
         harness.putWorld(world)
         harness.putFaction(nationWei)
@@ -74,10 +74,10 @@ class GoldenSnapshotTest {
         harness.putOfficer(g3)
         harness.putOfficer(g4)
 
-        harness.queueGeneralTurn(generalId = 1, actionCode = "훈련")
-        harness.queueGeneralTurn(generalId = 2, actionCode = "훈련")
-        harness.queueGeneralTurn(generalId = 3, actionCode = "훈련")
-        harness.queueGeneralTurn(generalId = 4, actionCode = "훈련")
+        harness.queueGeneralTurn(officerId = 1, actionCode = "훈련")
+        harness.queueGeneralTurn(officerId = 2, actionCode = "훈련")
+        harness.queueGeneralTurn(officerId = 3, actionCode = "훈련")
+        harness.queueGeneralTurn(officerId = 4, actionCode = "훈련")
 
         harness.turnService.processWorld(world)
 
@@ -96,9 +96,9 @@ class GoldenSnapshotTest {
             generals = generals.map {
                 GeneralState(
                     id = it.id,
-                    crew = it.ships,
-                    train = it.training.toInt(),
-                    atmos = it.morale.toInt(),
+                    ships = it.ships,
+                    training = it.training.toInt(),
+                    morale = it.morale.toInt(),
                     experience = it.experience,
                     dedication = it.dedication,
                 )
@@ -106,19 +106,19 @@ class GoldenSnapshotTest {
             nations = nations.map {
                 NationState(
                     id = it.id,
-                    gold = it.funds,
-                    rice = it.supplies,
+                    funds = it.funds,
+                    supplies = it.supplies,
                     strategicCmdLimit = it.strategicCmdLimit.toInt(),
                 )
             },
             cities = cities.map {
                 CityState(
                     id = it.id,
-                    nationId = it.factionId,
-                    agri = it.production,
-                    comm = it.commerce,
-                    secu = it.security,
-                    pop = it.population,
+                    factionId = it.factionId,
+                    production = it.production,
+                    commerce = it.commerce,
+                    security = it.security,
+                    population = it.population,
                 )
             },
         )
@@ -129,29 +129,29 @@ class GoldenSnapshotTest {
             year = 200,
             month = 2,
             generals = listOf(
-                GeneralState(id = 1, crew = 199, train = 100, atmos = 70, experience = 100, dedication = 70),
-                GeneralState(id = 2, crew = 299, train = 100, atmos = 65, experience = 100, dedication = 70),
-                GeneralState(id = 3, crew = 249, train = 100, atmos = 75, experience = 100, dedication = 70),
-                GeneralState(id = 4, crew = 399, train = 100, atmos = 60, experience = 100, dedication = 70),
+                GeneralState(id = 1, ships = 199, training = 100, morale = 70, experience = 100, dedication = 70),
+                GeneralState(id = 2, ships = 299, training = 100, morale = 65, experience = 100, dedication = 70),
+                GeneralState(id = 3, ships = 249, training = 100, morale = 75, experience = 100, dedication = 70),
+                GeneralState(id = 4, ships = 399, training = 100, morale = 60, experience = 100, dedication = 70),
             ),
             nations = listOf(
-                NationState(id = 1, gold = 10000, rice = 10000, strategicCmdLimit = 0),
-                NationState(id = 2, gold = 9000, rice = 8000, strategicCmdLimit = 0),
+                NationState(id = 1, funds = 10000, supplies = 10000, strategicCmdLimit = 0),
+                NationState(id = 2, funds = 9000, supplies = 8000, strategicCmdLimit = 0),
             ),
             cities = listOf(
-                CityState(id = 1, nationId = 1, agri = 500, comm = 500, secu = 500, pop = 10000),
-                CityState(id = 2, nationId = 2, agri = 500, comm = 500, secu = 500, pop = 10000),
-                CityState(id = 3, nationId = 0, agri = 500, comm = 500, secu = 500, pop = 10000),
+                CityState(id = 1, factionId = 1, production = 500, commerce = 500, security = 500, population = 10000),
+                CityState(id = 2, factionId = 2, production = 500, commerce = 500, security = 500, population = 10000),
+                CityState(id = 3, factionId = 0, production = 500, commerce = 500, security = 500, population = 10000),
             ),
         )
     }
 
-    private fun createCity(id: Long, nationId: Long, name: String): Planet {
+    private fun createCity(id: Long, factionId: Long, name: String): Planet {
         return Planet(
             id = id,
             sessionId = 1,
             name = name,
-            factionId = nationId,
+            factionId = factionId,
             supplyState = 1,
             frontState = 0,
             population = 10000,
@@ -172,29 +172,29 @@ class GoldenSnapshotTest {
 
     private fun createGeneral(
         id: Long,
-        nationId: Long,
-        cityId: Long,
+        factionId: Long,
+        planetId: Long,
         name: String,
         leadership: Short,
-        crew: Int,
-        train: Short,
-        atmos: Short,
+        ships: Int,
+        training: Short,
+        morale: Short,
     ): Officer {
         return Officer(
             id = id,
             sessionId = 1,
             name = name,
-            factionId = nationId,
-            planetId = cityId,
+            factionId = factionId,
+            planetId = planetId,
             leadership = leadership,
             command = 70,
             intelligence = 70,
             politics = 60,
             administration = 60,
-            ships = crew,
+            ships = ships,
             shipClass = 0,
-            training = train,
-            morale = atmos,
+            training = training,
+            morale = morale,
             funds = 500,
             supplies = 500,
             npcState = 0,
@@ -212,26 +212,26 @@ class GoldenSnapshotTest {
 
     private data class GeneralState(
         val id: Long,
-        val crew: Int,
-        val train: Int,
-        val atmos: Int,
+        val ships: Int,
+        val training: Int,
+        val morale: Int,
         val experience: Int,
         val dedication: Int,
     )
 
     private data class NationState(
         val id: Long,
-        val gold: Int,
-        val rice: Int,
+        val funds: Int,
+        val supplies: Int,
         val strategicCmdLimit: Int,
     )
 
     private data class CityState(
         val id: Long,
-        val nationId: Long,
-        val agri: Int,
-        val comm: Int,
-        val secu: Int,
-        val pop: Int,
+        val factionId: Long,
+        val production: Int,
+        val commerce: Int,
+        val security: Int,
+        val population: Int,
     )
 }

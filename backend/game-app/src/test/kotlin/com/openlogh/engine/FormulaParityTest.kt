@@ -46,7 +46,7 @@ class FormulaParityTest {
 
     @Test
     fun `calcCityGoldIncome matches legacy formula sample`() {
-        val city = createCity(pop = 10000, comm = 500, commMax = 1000, trust = 80f, secu = 500, secuMax = 1000)
+        val city = createCity(population = 10000, commerce = 500, commerceMax = 1000, approval = 80f, security = 500, securityMax = 1000)
 
         val income = invokeCalcCityGoldIncome(city, officerCnt = 0, isCapital = false, nationLevel = 1)
 
@@ -55,7 +55,7 @@ class FormulaParityTest {
 
     @Test
     fun `calcCityRiceIncome matches legacy formula sample`() {
-        val city = createCity(pop = 10000, agri = 500, agriMax = 1000, trust = 80f, secu = 500, secuMax = 1000)
+        val city = createCity(population = 10000, production = 500, productionMax = 1000, approval = 80f, security = 500, securityMax = 1000)
 
         val income = invokeCalcCityRiceIncome(city, officerCnt = 0, isCapital = false, nationLevel = 1)
 
@@ -85,31 +85,31 @@ class FormulaParityTest {
     private fun runBattle(seed: String): BattleResult {
         val attackerGeneral = createGeneral(
             id = 1,
-            nationId = 1,
+            factionId = 1,
             leadership = 75,
-            strength = 78,
-            intel = 60,
-            crew = 3500,
-            train = 78,
-            atmos = 77,
-            rice = 120000,
+            command = 78,
+            intelligence = 60,
+            ships = 3500,
+            training = 78,
+            morale = 77,
+            supplies = 120000,
             experience = 3000,
             dedication = 2000,
         )
         val defenderGeneral = createGeneral(
             id = 2,
-            nationId = 2,
+            factionId = 2,
             leadership = 70,
-            strength = 72,
-            intel = 65,
-            crew = 3200,
-            train = 75,
-            atmos = 74,
-            rice = 100000,
+            command = 72,
+            intelligence = 65,
+            ships = 3200,
+            training = 75,
+            morale = 74,
+            supplies = 100000,
             experience = 2500,
             dedication = 1800,
         )
-        val city = createCity(nationId = 2, def = 450, wall = 500, pop = 20000)
+        val city = createCity(factionId = 2, orbitalDefense = 450, fortress = 500, population = 20000)
 
         return battleEngine.resolveBattle(
             attacker = WarUnitOfficer(attackerGeneral),
@@ -138,7 +138,7 @@ class FormulaParityTest {
     private fun invokeCalcCityGoldIncome(city: Planet, officerCnt: Int, isCapital: Boolean, nationLevel: Int): Double {
         val method = EconomyService::class.java.getDeclaredMethod(
             "calcCityGoldIncome",
-            City::class.java,
+            Planet::class.java,
             Int::class.javaPrimitiveType,
             Boolean::class.javaPrimitiveType,
             Int::class.javaPrimitiveType,
@@ -151,7 +151,7 @@ class FormulaParityTest {
     private fun invokeCalcCityRiceIncome(city: Planet, officerCnt: Int, isCapital: Boolean, nationLevel: Int): Double {
         val method = EconomyService::class.java.getDeclaredMethod(
             "calcCityRiceIncome",
-            City::class.java,
+            Planet::class.java,
             Int::class.javaPrimitiveType,
             Boolean::class.javaPrimitiveType,
             Int::class.javaPrimitiveType,
@@ -163,14 +163,14 @@ class FormulaParityTest {
 
     private fun createGeneral(
         id: Long,
-        nationId: Long,
+        factionId: Long,
         leadership: Short,
-        strength: Short,
-        intel: Short,
-        crew: Int,
-        train: Short,
-        atmos: Short,
-        rice: Int,
+        command: Short,
+        intelligence: Short,
+        ships: Int,
+        training: Short,
+        morale: Short,
+        supplies: Int,
         experience: Int,
         dedication: Int,
     ): Officer {
@@ -178,16 +178,16 @@ class FormulaParityTest {
             id = id,
             sessionId = 1,
             name = "장수$id",
-            factionId = nationId,
+            factionId = factionId,
             planetId = 1,
             leadership = leadership,
-            command = strength,
-            intelligence = intel,
-            ships = crew,
+            command = command,
+            intelligence = intelligence,
+            ships = ships,
             shipClass = 0,
-            training = train,
-            morale = atmos,
-            supplies = rice,
+            training = training,
+            morale = morale,
+            supplies = supplies,
             experience = experience,
             dedication = dedication,
             turnTime = OffsetDateTime.now(),
@@ -195,35 +195,35 @@ class FormulaParityTest {
     }
 
     private fun createCity(
-        nationId: Long = 1,
-        pop: Int = 10000,
-        agri: Int = 500,
-        agriMax: Int = 1000,
-        comm: Int = 500,
-        commMax: Int = 1000,
-        secu: Int = 500,
-        secuMax: Int = 1000,
-        trust: Float = 80f,
-        def: Int = 500,
-        wall: Int = 500,
+        factionId: Long = 1,
+        population: Int = 10000,
+        production: Int = 500,
+        productionMax: Int = 1000,
+        commerce: Int = 500,
+        commerceMax: Int = 1000,
+        security: Int = 500,
+        securityMax: Int = 1000,
+        approval: Float = 80f,
+        orbitalDefense: Int = 500,
+        fortress: Int = 500,
     ): Planet {
         return Planet(
             id = 1,
             sessionId = 1,
             name = "테스트도시",
-            factionId = nationId,
-            population = pop,
+            factionId = factionId,
+            population = population,
             populationMax = 50000,
-            production = agri,
-            productionMax = agriMax,
-            commerce = comm,
-            commerceMax = commMax,
-            security = secu,
-            securityMax = secuMax,
-            approval = trust,
-            orbitalDefense = def,
+            production = production,
+            productionMax = productionMax,
+            commerce = commerce,
+            commerceMax = commerceMax,
+            security = security,
+            securityMax = securityMax,
+            approval = approval,
+            orbitalDefense = orbitalDefense,
             orbitalDefenseMax = 1000,
-            fortress = wall,
+            fortress = fortress,
             fortressMax = 1000,
         )
     }

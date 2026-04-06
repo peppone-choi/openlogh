@@ -18,13 +18,13 @@ class StatChangeServiceTest {
     private fun createGeneral(
         leadership: Short = 50,
         leadershipExp: Short = 0,
-        strength: Short = 50,
-        strengthExp: Short = 0,
-        intel: Short = 50,
-        intelExp: Short = 0,
+        command: Short = 50,
+        commandExp: Short = 0,
+        intelligence: Short = 50,
+        intelligenceExp: Short = 0,
         politics: Short = 50,
         politicsExp: Short = 0,
-        charm: Short = 50,
+        administration: Short = 50,
         charmExp: Short = 0,
     ): Officer {
         return Officer(
@@ -35,13 +35,13 @@ class StatChangeServiceTest {
             planetId = 1,
             leadership = leadership,
             leadershipExp = leadershipExp,
-            command = strength,
-            commandExp = strengthExp,
-            intelligence = intel,
-            intelligenceExp = intelExp,
+            command = command,
+            commandExp = commandExp,
+            intelligence = intelligence,
+            intelligenceExp = intelligenceExp,
             politics = politics,
             politicsExp = politicsExp,
-            administration = charm,
+            administration = administration,
             administrationExp = charmExp,
             turnTime = OffsetDateTime.now(),
         )
@@ -62,7 +62,7 @@ class StatChangeServiceTest {
 
     @Test
     fun `stat decreases by 1 when exp is negative`() {
-        val general = createGeneral(strength = 50, strengthExp = (-5).toShort())
+        val general = createGeneral(command = 50, commandExp = (-5).toShort())
 
         val result = service.checkStatChange(general)
 
@@ -75,7 +75,7 @@ class StatChangeServiceTest {
 
     @Test
     fun `no change when exp is between 0 and upgrade limit`() {
-        val general = createGeneral(leadershipExp = 15, strengthExp = 0, intelExp = 29)
+        val general = createGeneral(leadershipExp = 15, commandExp = 0, intelligenceExp = 29)
 
         val result = service.checkStatChange(general)
 
@@ -87,7 +87,7 @@ class StatChangeServiceTest {
 
     @Test
     fun `stat does not increase above MAX_LEVEL`() {
-        val general = createGeneral(intel = 255, intelExp = 30)
+        val general = createGeneral(intelligence = 255, intelligenceExp = 30)
 
         val result = service.checkStatChange(general)
 

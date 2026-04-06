@@ -129,7 +129,7 @@ class EventServiceTest {
             action = mutableMapOf("type" to "log", "message" to "Test event"),
         )
 
-        `when`(eventRepository.findByWorldIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "turn_start"))
+        `when`(eventRepository.findBySessionIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "turn_start"))
             .thenReturn(listOf(event))
 
         service.dispatchEvents(world, "turn_start")
@@ -147,7 +147,7 @@ class EventServiceTest {
             action = mutableMapOf("type" to "log", "message" to "Should not fire"),
         )
 
-        `when`(eventRepository.findByWorldIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "turn_start"))
+        `when`(eventRepository.findBySessionIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "turn_start"))
             .thenReturn(listOf(event))
 
         service.dispatchEvents(world, "turn_start")
@@ -165,7 +165,7 @@ class EventServiceTest {
             action = mutableMapOf("type" to "log", "message" to "Date matched"),
         )
 
-        `when`(eventRepository.findByWorldIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "turn_start"))
+        `when`(eventRepository.findBySessionIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "turn_start"))
             .thenReturn(listOf(event))
 
         service.dispatchEvents(world, "turn_start")
@@ -183,7 +183,7 @@ class EventServiceTest {
             action = mutableMapOf("type" to "log", "message" to "Should not fire"),
         )
 
-        `when`(eventRepository.findByWorldIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "turn_start"))
+        `when`(eventRepository.findBySessionIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "turn_start"))
             .thenReturn(listOf(event))
 
         service.dispatchEvents(world, "turn_start")
@@ -201,7 +201,7 @@ class EventServiceTest {
             action = mutableMapOf("type" to "log", "message" to "Date after matched"),
         )
 
-        `when`(eventRepository.findByWorldIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "turn_start"))
+        `when`(eventRepository.findBySessionIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "turn_start"))
             .thenReturn(listOf(event))
 
         service.dispatchEvents(world, "turn_start")
@@ -221,7 +221,7 @@ class EventServiceTest {
             action = mutableMapOf("type" to "log", "message" to "History log test"),
         )
 
-        `when`(eventRepository.findByWorldIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "turn_start"))
+        `when`(eventRepository.findBySessionIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "turn_start"))
             .thenReturn(listOf(event))
 
         service.dispatchEvents(world, "turn_start")
@@ -239,7 +239,7 @@ class EventServiceTest {
             action = mutableMapOf("type" to "notice", "message" to "Notice test"),
         )
 
-        `when`(eventRepository.findByWorldIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "turn_start"))
+        `when`(eventRepository.findBySessionIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "turn_start"))
             .thenReturn(listOf(event))
 
         service.dispatchEvents(world, "turn_start")
@@ -260,7 +260,7 @@ class EventServiceTest {
             action = mutableMapOf("type" to "delete_event", "eventId" to 99),
         )
 
-        `when`(eventRepository.findByWorldIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "turn_start"))
+        `when`(eventRepository.findBySessionIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "turn_start"))
             .thenReturn(listOf(event))
 
         service.dispatchEvents(world, "turn_start")
@@ -288,7 +288,7 @@ class EventServiceTest {
             priority = 100,
         )
 
-        `when`(eventRepository.findByWorldIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "turn_start"))
+        `when`(eventRepository.findBySessionIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "turn_start"))
             .thenReturn(listOf(event1, event2))
 
         service.dispatchEvents(world, "turn_start")
@@ -302,7 +302,7 @@ class EventServiceTest {
     fun `dispatchEvents handles no events gracefully`() {
         val world = createWorld()
 
-        `when`(eventRepository.findByWorldIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "turn_start"))
+        `when`(eventRepository.findBySessionIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "turn_start"))
             .thenReturn(emptyList())
 
         assertDoesNotThrow {
@@ -324,7 +324,7 @@ class EventServiceTest {
             action = mutableMapOf("type" to "log", "message" to "Few nations remain"),
         )
 
-        `when`(eventRepository.findByWorldIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "turn_start"))
+        `when`(eventRepository.findBySessionIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "turn_start"))
             .thenReturn(listOf(event))
         `when`(factionRepository.findBySessionId(1L)).thenReturn(emptyList())
 
@@ -345,7 +345,7 @@ class EventServiceTest {
             action = mutableMapOf("type" to "process_income"),
         )
 
-        `when`(eventRepository.findByWorldIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "MONTH"))
+        `when`(eventRepository.findBySessionIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "MONTH"))
             .thenReturn(listOf(event))
 
         service.dispatchEvents(world, "MONTH")
@@ -363,7 +363,7 @@ class EventServiceTest {
             action = mutableMapOf("type" to "process_semi_annual"),
         )
 
-        `when`(eventRepository.findByWorldIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "MONTH"))
+        `when`(eventRepository.findBySessionIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "MONTH"))
             .thenReturn(listOf(event))
 
         service.dispatchEvents(world, "MONTH")
@@ -381,7 +381,7 @@ class EventServiceTest {
             action = mutableMapOf("type" to "update_city_supply"),
         )
 
-        `when`(eventRepository.findByWorldIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "MONTH"))
+        `when`(eventRepository.findBySessionIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "MONTH"))
             .thenReturn(listOf(event))
 
         service.dispatchEvents(world, "MONTH")
@@ -399,7 +399,7 @@ class EventServiceTest {
             action = mutableMapOf("type" to "update_nation_level"),
         )
 
-        `when`(eventRepository.findByWorldIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "MONTH"))
+        `when`(eventRepository.findBySessionIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "MONTH"))
             .thenReturn(listOf(event))
 
         service.dispatchEvents(world, "MONTH")
@@ -417,7 +417,7 @@ class EventServiceTest {
             action = mutableMapOf("type" to "randomize_trade_rate"),
         )
 
-        `when`(eventRepository.findByWorldIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "MONTH"))
+        `when`(eventRepository.findBySessionIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "MONTH"))
             .thenReturn(listOf(event))
 
         service.dispatchEvents(world, "MONTH")
@@ -437,7 +437,7 @@ class EventServiceTest {
             action = mutableMapOf("type" to "delete_self"),
         )
 
-        `when`(eventRepository.findByWorldIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "MONTH"))
+        `when`(eventRepository.findBySessionIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "MONTH"))
             .thenReturn(listOf(event))
 
         service.dispatchEvents(world, "MONTH")
@@ -461,7 +461,7 @@ class EventServiceTest {
             action = mutableMapOf("type" to "compound", "actions" to subActions),
         )
 
-        `when`(eventRepository.findByWorldIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "MONTH"))
+        `when`(eventRepository.findBySessionIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "MONTH"))
             .thenReturn(listOf(event))
 
         service.dispatchEvents(world, "MONTH")
@@ -482,7 +482,7 @@ class EventServiceTest {
             action = mutableMapOf("type" to "raise_invader"),
         )
 
-        `when`(eventRepository.findByWorldIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "MONTH"))
+        `when`(eventRepository.findBySessionIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "MONTH"))
             .thenReturn(listOf(event))
 
         assertDoesNotThrow { service.dispatchEvents(world, "MONTH") }
@@ -498,7 +498,7 @@ class EventServiceTest {
             action = mutableMapOf("type" to "raise_npc_nation"),
         )
 
-        `when`(eventRepository.findByWorldIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "MONTH"))
+        `when`(eventRepository.findBySessionIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "MONTH"))
             .thenReturn(listOf(event))
 
         assertDoesNotThrow { service.dispatchEvents(world, "MONTH") }
@@ -514,7 +514,7 @@ class EventServiceTest {
             action = mutableMapOf("type" to "provide_npc_troop_leader"),
         )
 
-        `when`(eventRepository.findByWorldIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "MONTH"))
+        `when`(eventRepository.findBySessionIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "MONTH"))
             .thenReturn(listOf(event))
 
         assertDoesNotThrow { service.dispatchEvents(world, "MONTH") }
