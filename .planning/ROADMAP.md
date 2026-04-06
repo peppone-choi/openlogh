@@ -126,11 +126,11 @@ Plans:
   3. Fleet movement follows route connections with travel time based on distance and engine speed
   4. Iserlohn and Geiersburg display as fortress systems with special defense values, garrison slots, and fortress gun capabilities
   5. Planet detail view shows all resource fields (population, production, commerce, security, approval, orbital defense, fortress, trade route)
-**Plans:** 4 plans
+**Plans:** 1/4 plans executed
 **UI hint**: yes
 
 Plans:
-- [ ] 06-01-PLAN.md — logh.json map data (80 systems), StarSystem/StarRoute entities, FortressType enum, Flyway V35 migration
+- [x] 06-01-PLAN.md — logh.json map data (80 systems), StarSystem/StarRoute entities, FortressType enum, Flyway V35 migration
 - [ ] 06-02-PLAN.md — StarSystemService, MapService LOGH support, StarSystemController REST API, DTOs
 - [ ] 06-03-PLAN.md — Frontend galaxy types, API client, Zustand store, GalaxyMap UI (React Konva), fortress indicators
 - [ ] 06-04-PLAN.md — Galaxy page route, ScenarioService integration, visual verification checkpoint
@@ -224,7 +224,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 12
 | 3. Command Point System | 0/TBD | Not started | - |
 | 4. Position Card & Command Authority | 4/4 | Complete   | 2026-04-06 |
 | 5. Organization & Fleet Structure | 1/4 | In Progress|  |
-| 6. Galaxy Map & Planet Model | 0/4 | Planning complete | - |
+| 6. Galaxy Map & Planet Model | 1/4 | In Progress|  |
 | 7. Rank, Merit & Personnel | 0/TBD | Not started | - |
 | 8. Scenario & Character System | 0/TBD | Not started | - |
 | 9. Strategic Commands | 0/TBD | Not started | - |
