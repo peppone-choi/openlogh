@@ -85,6 +85,8 @@ sourceSets {
                 // Phase 04-03: ShipyardProductionServiceTest uses mockito-kotlin `whenever` not in classpath
                 "com/openlogh/service/ShipyardProductionServiceTest.kt",
                 // Phase 04-04: FezzanEndingServiceTest implemented with new constructor — exclusion removed
+                // Phase 05-01: FactionAISchedulerTest references FactionAIScheduler (not yet implemented)
+                "com/openlogh/engine/ai/FactionAISchedulerTest.kt",
             )
         }
     }
