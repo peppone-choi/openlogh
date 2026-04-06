@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: milestone
 status: verifying
-stopped_at: Completed 02-gin7-command-system/02-05-PLAN.md
-last_updated: "2026-04-06T14:36:44.979Z"
+stopped_at: Completed 02-gin7-command-system/02-06-PLAN.md
+last_updated: "2026-04-06T14:41:49.256Z"
 last_activity: 2026-04-06
 progress:
   total_phases: 8
   completed_phases: 5
   total_plans: 38
-  completed_plans: 33
+  completed_plans: 34
   percent: 77
 ---
 
@@ -61,6 +61,7 @@ Progress: [████████░░] 77%
 | Phase 02-gin7-command-system P03 | 25 | 2 tasks | 18 files |
 | Phase 02-gin7-command-system P02 | 45 | 2 tasks | 17 files |
 | Phase 02-gin7-command-system P05 | 35 | 2 tasks | 10 files |
+| Phase 02-gin7-command-system P06 | 10 | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -88,6 +89,8 @@ Progress: [████████░░] 77%
 - [Phase 02-gin7-command-system]: Planet.supplies 없음 — RequisitionCommand/TransferGoodsCommand은 planet.production을 자원 proxy로 사용
 - [Phase 02-gin7-command-system]: FullRepairCommand: ShipUnitRepository CommandServices 미노출 — fleet.meta[pendingFullRepair]=true 플래그로 turn engine에 위임
 - [Phase 02-gin7-command-system]: FleetRepository added as nullable field to CommandServices; injected via CommandExecutor @Autowired constructor
+- [Phase 02-gin7-command-system]: CommandProposalService: uses currentYear for both year and startYear in CommandEnv (SessionState has no startYear field)
+- [Phase 02-gin7-command-system]: CommandProposalController.approveProposal: uses runBlocking{} wrapper since project is Spring MVC not WebFlux
 
 ### Pending Todos
 
@@ -101,6 +104,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-06T14:36:44.972Z
-Stopped at: Completed 02-gin7-command-system/02-05-PLAN.md
+Last session: 2026-04-06T14:41:49.246Z
+Stopped at: Completed 02-gin7-command-system/02-06-PLAN.md
 Resume file: None
