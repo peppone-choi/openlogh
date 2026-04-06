@@ -123,6 +123,9 @@ jobs:
         steps:
             - name: Deploy to EC2
               uses: appleboy/ssh-action@v1
+              env:
+                  DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+                  JWT_SECRET: ${{ secrets.JWT_SECRET }}
               with:
                   host: ${{ secrets.SSH_HOST }}
                   username: ${{ secrets.SSH_USERNAME }}
@@ -135,12 +138,7 @@ jobs:
                       fi
                       cd ~/openlogh-deploy
                       git pull origin main
-                      cat > .env << DOTENV
-                      DB_NAME=openlogh
-                      DB_USER=openlogh
-                      DB_PASSWORD=${DB_PASSWORD}
-                      JWT_SECRET=${JWT_SECRET}
-                      DOTENV
+                      printf 'DB_NAME=openlogh\nDB_USER=openlogh\nDB_PASSWORD=%s\nJWT_SECRET=%s\n' "$DB_PASSWORD" "$JWT_SECRET" > .env
                       docker compose down --remove-orphans || true
                       docker compose pull
                       docker compose up -d
