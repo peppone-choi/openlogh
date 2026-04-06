@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: milestone
 status: verifying
-stopped_at: Completed 02-gin7-command-system/02-07-PLAN.md
-last_updated: "2026-04-06T14:55:38.926Z"
+stopped_at: Completed 03-tactical-battle-engine/03-01-PLAN.md
+last_updated: "2026-04-06T15:26:46.688Z"
 last_activity: 2026-04-06
 progress:
-  total_phases: 8
-  completed_phases: 5
-  total_plans: 38
-  completed_plans: 34
+  total_phases: 9
+  completed_phases: 6
+  total_plans: 43
+  completed_plans: 36
   percent: 77
 ---
 
@@ -94,6 +94,8 @@ Progress: [████████░░] 77%
 - [Phase 02-gin7-command-system]: CommandProposalController.approveProposal: uses runBlocking{} wrapper since project is Spring MVC not WebFlux
 - [Phase 02-gin7-command-system]: Mockito cannot stub Kotlin suspend functions without mockito-kotlin; used SuccessCommandExecutor fake subclass for approveProposal test
 - [Phase 02-gin7-command-system]: Pre-existing broken test files (samguk che_* commands, BattleService, TurnService) excluded from compilation via sourceSets.test.kotlin.exclude in build.gradle.kts
+- [Phase 03-tactical-battle-engine]: BattleWebSocketController uses officerId in payload (not OfficerPrincipal) — consistent with JwtAuthenticationFilter String principal
+- [Phase 03-tactical-battle-engine]: UnitStance.defenseModifier: NAVIGATION=1.0, ANCHORING=1.1, STATIONED=1.3, COMBAT=0.9
 
 ### Pending Todos
 
@@ -107,6 +109,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-06T14:55:38.919Z
-Stopped at: Completed 02-gin7-command-system/02-07-PLAN.md
+Last session: 2026-04-06T15:26:46.238Z
+Stopped at: Completed 03-tactical-battle-engine/03-01-PLAN.md
 Resume file: None
