@@ -55,7 +55,7 @@ export function StarSystemNode({
     onHover,
 }: StarSystemNodeProps) {
     const r = getStarRadius(system.level);
-    const color = system.factionColor || getFactionColor(system.region);
+    const color = system.factionColor || '#444444';
     const palette = getDotPaletteFromHex(color);
     const hasFortress = isFortress(system);
 

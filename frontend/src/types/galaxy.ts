@@ -11,9 +11,10 @@ export interface StarSystem {
     spectralType: string;
     starRgb: number[];
     level: number;
-    region: number | string;
-    /** Faction color from DB — used for map rendering. Overrides region-based color when present. */
-    factionColor?: string;
+    /** Faction display name (e.g. '은하제국', '자유행성동맹'). Empty for vacant. */
+    factionName: string;
+    /** Faction color hex from DB — directly used for map rendering */
+    factionColor: string;
     fortressType: FortressType;
     fortressGunPower: number;
     fortressGunRange: number;

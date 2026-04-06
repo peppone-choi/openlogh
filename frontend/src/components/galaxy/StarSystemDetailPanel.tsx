@@ -13,17 +13,9 @@ interface StarSystemDetailPanelProps {
     onClose: () => void;
 }
 
-function getRegionLabel(region: number): string {
-    switch (region) {
-        case 1:
-            return '은하제국';
-        case 2:
-            return '자유행성동맹';
-        case 3:
-            return '페잔 자치령';
-        default:
-            return '미확인';
-    }
+function getFactionLabel(system: StarSystem): string {
+    if (system.factionName) return system.factionName;
+    return '공백지';
 }
 
 export function StarSystemDetailPanel({
@@ -35,7 +27,7 @@ export function StarSystemDetailPanel({
 
     if (!system) return null;
 
-    const color = getFactionColor(system.region);
+    const color = system.factionColor || '#444444';
     const hasFortress = isFortress(system);
     const connectedSystems = getConnectedSystems(system.mapStarId);
 
@@ -84,7 +76,7 @@ export function StarSystemDetailPanel({
                     }}
                 />
                 <span className="text-sm text-gray-300">
-                    {getRegionLabel(system.region)}
+                    {getFactionLabel(system)}
                 </span>
             </div>
 
@@ -163,7 +155,7 @@ export function StarSystemDetailPanel({
                                 <span
                                     className="mr-1 inline-block h-2 w-2 rounded-full"
                                     style={{
-                                        backgroundColor: getFactionColor(conn.region),
+                                        backgroundColor: conn.factionColor || '#444444',
                                     }}
                                 />
                                 {conn.nameKo}
