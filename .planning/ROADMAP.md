@@ -219,8 +219,15 @@ Plans:
   3. Fezzan operates as NPC faction: offers loans to both factions, trades intelligence, maintains neutrality until story events trigger intervention
   4. Fezzan debt mechanics work: factions can take loans, failure to repay triggers escalating penalties up to Fezzan ending (Fezzan domination)
   5. The faction politics UI shows governance structure, current leadership, political status, and available political actions per faction type
-**Plans**: TBD
+**Plans:** 5 plans
 **UI hint**: yes
+
+Plans:
+- [ ] 11-01-PLAN.md — Empire politics: NobilityRank enum (5 levels), CoupPhase enum, CoupEvent entity, Flyway V38 (coup_event, council_seat, fezzan_loan, election tables)
+- [ ] 11-02-PLAN.md — Alliance politics: CouncilSeatCode enum (11 seats), ElectionType enum, CouncilSeat/Election entities, AlliancePoliticsService, EmpirePoliticsService (coup state machine)
+- [ ] 11-03-PLAN.md — Fezzan NPC: FezzanLoan entity, IntelligenceType enum, FezzanService (loans/intel/trade), FezzanAiService (tick AI), FezzanEndingService
+- [ ] 11-04-PLAN.md — REST API: FactionPoliticsController (15 endpoints), DTOs, TickEngine integration, GameEventService political broadcasts
+- [ ] 11-05-PLAN.md — Frontend: politics types, politicsApi, politicsStore, EmpirePanel/AlliancePanel/FezzanPanel, politics page route
 
 ### Phase 12: Communication, NPC AI & Session Lifecycle
 **Goal**: Players communicate in-game, NPC officers act autonomously with personality, and sessions have clear victory/end conditions
@@ -251,5 +258,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 12
 | 8. Scenario & Character System | 3/3 | Complete   | 2026-04-06 |
 | 9. Strategic Commands | 4/4 | Complete   | 2026-04-06 |
 | 10. Tactical Combat (RTS) | 4/4 | Complete   | 2026-04-06 |
-| 11. Faction Politics & Diplomacy | 0/TBD | Not started | - |
-| 12. Communication, NPC AI & Session Lifecycle | 0/TBD | Not started | - |
+| 11. Faction Politics & Diplomacy | 0/5 | In Progress | - |
+| 12. Communication, NPC AI & Session Lifecycle | 1/6 | In Progress|  |
