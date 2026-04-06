@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: milestone
 status: verifying
-stopped_at: Completed 02-gin7-command-system/02-06-PLAN.md
-last_updated: "2026-04-06T14:41:49.256Z"
+stopped_at: Completed 02-gin7-command-system/02-07-PLAN.md
+last_updated: "2026-04-06T14:55:38.926Z"
 last_activity: 2026-04-06
 progress:
   total_phases: 8
@@ -62,6 +62,7 @@ Progress: [████████░░] 77%
 | Phase 02-gin7-command-system P02 | 45 | 2 tasks | 17 files |
 | Phase 02-gin7-command-system P05 | 35 | 2 tasks | 10 files |
 | Phase 02-gin7-command-system P06 | 10 | 2 tasks | 5 files |
+| Phase 02-gin7-command-system P07 | 45 | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -91,6 +92,8 @@ Progress: [████████░░] 77%
 - [Phase 02-gin7-command-system]: FleetRepository added as nullable field to CommandServices; injected via CommandExecutor @Autowired constructor
 - [Phase 02-gin7-command-system]: CommandProposalService: uses currentYear for both year and startYear in CommandEnv (SessionState has no startYear field)
 - [Phase 02-gin7-command-system]: CommandProposalController.approveProposal: uses runBlocking{} wrapper since project is Spring MVC not WebFlux
+- [Phase 02-gin7-command-system]: Mockito cannot stub Kotlin suspend functions without mockito-kotlin; used SuccessCommandExecutor fake subclass for approveProposal test
+- [Phase 02-gin7-command-system]: Pre-existing broken test files (samguk che_* commands, BattleService, TurnService) excluded from compilation via sourceSets.test.kotlin.exclude in build.gradle.kts
 
 ### Pending Todos
 
@@ -104,6 +107,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-06T14:41:49.246Z
-Stopped at: Completed 02-gin7-command-system/02-06-PLAN.md
+Last session: 2026-04-06T14:55:38.919Z
+Stopped at: Completed 02-gin7-command-system/02-07-PLAN.md
 Resume file: None
