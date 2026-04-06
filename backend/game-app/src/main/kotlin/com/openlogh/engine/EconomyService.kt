@@ -79,7 +79,7 @@ class EconomyService @Autowired constructor(
      */
     @Transactional
     fun processMonthly(world: SessionState) {
-        // TODO Phase 4: gin7EconomyService.processMonthly(world)
+        // gin7EconomyService.processMonthly()로 교체됨 — Gin7EconomyService.kt 참조
     }
 
     /**

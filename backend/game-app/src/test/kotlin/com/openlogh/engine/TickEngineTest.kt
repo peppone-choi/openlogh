@@ -7,6 +7,7 @@ import com.openlogh.service.EmpirePoliticsService
 import com.openlogh.service.FezzanEndingService
 import com.openlogh.service.FezzanService
 import com.openlogh.service.GameEventService
+import com.openlogh.service.TacticalBattleService
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -33,6 +34,8 @@ class TickEngineTest {
             mock(FezzanService::class.java),
             mock(FezzanAiService::class.java),
             mock(FezzanEndingService::class.java),
+            mock(TacticalBattleService::class.java),
+            mock(Gin7EconomyService::class.java),
         )
 
         // stub save to return the argument
@@ -41,9 +44,9 @@ class TickEngineTest {
 
     private fun createWorld(): SessionState {
         return SessionState().apply {
-            id = 1
-            currentYear = 801
-            currentMonth = 1
+            id = 1.toShort()
+            currentYear = 801.toShort()
+            currentMonth = 1.toShort()
             realtimeMode = true
             gameTimeSec = 0
             tickCount = 0
@@ -166,7 +169,7 @@ class TickEngineTest {
         val world = createWorld()
         // After 1 tick (tickCount=1), broadcast should NOT fire (1 % 10 != 0)
         tickEngine.processTick(world)
-        verify(gameEventService, never()).broadcastTickState(any(SessionState::class.java))
+        verify(gameEventService, never()).broadcastTickState(world)
     }
 
     @Test
@@ -174,7 +177,7 @@ class TickEngineTest {
         val world = createWorld()
         // After 9 ticks, broadcast should NOT fire
         repeat(9) { tickEngine.processTick(world) }
-        verify(gameEventService, never()).broadcastTickState(any(SessionState::class.java))
+        verify(gameEventService, never()).broadcastTickState(world)
     }
 
     /**
