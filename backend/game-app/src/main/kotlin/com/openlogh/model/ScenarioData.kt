@@ -49,4 +49,9 @@ data class ScenarioInfo(
     val startYear: Int,
     val id: String = code,
     val name: String = title,
+    val mapName: String = "che",
+    val factionCount: Int = 0,
+    val description: String = "",
+    val formableFleets: Map<String, List<Int>>? = null,
+    val battleLocation: String? = null,
 )

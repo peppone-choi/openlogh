@@ -33,6 +33,7 @@ class ScenarioService(
     private val selectPoolRepository: com.openlogh.repository.SelectPoolRepository,
     private val entityManager: EntityManager,
     private val starSystemService: StarSystemService,
+    private val scenarioEventService: ScenarioEventService,
 ) {
     private val scenarios = mutableMapOf<String, ScenarioData>()
     @Volatile
@@ -73,7 +74,21 @@ class ScenarioService(
     fun listScenarios(): List<ScenarioInfo> {
         loadAllScenarios()
         return scenarios.map { (code, data) ->
-            ScenarioInfo(code, data.title, data.startYear)
+            val constMap = data.const
+            @Suppress("UNCHECKED_CAST")
+            val formableFleets = constMap["formableFleets"] as? Map<String, List<Int>>
+            val battleLocation = constMap["battleLocation"]?.toString()?.takeIf { it != "null" }
+            val description = data.nation.firstOrNull()?.getOrNull(4)?.toString() ?: ""
+            ScenarioInfo(
+                code = code,
+                title = data.title,
+                startYear = data.startYear,
+                mapName = data.map?.mapName ?: "che",
+                factionCount = data.nation.size,
+                description = description,
+                formableFleets = formableFleets,
+                battleLocation = battleLocation,
+            )
         }.sortedBy { it.code }
     }
 
@@ -300,6 +315,12 @@ class ScenarioService(
             }
         }
 
+        // Load LOGH-specific scenario events if this is a LOGH scenario
+        val loghScenarioId = (scenario.const["scenarioId"] as? Number)?.toInt()
+        if (mapName == "logh" && loghScenarioId != null) {
+            scenarioEventService.loadLoghScenarioEvents(worldId, loghScenarioId)
+        }
+
         return world
     }
 
@@ -481,6 +502,12 @@ class ScenarioService(
             }
         }
 
+        // Load LOGH-specific scenario events if this is a LOGH scenario
+        val loghScenarioId = (scenario.const["scenarioId"] as? Number)?.toInt()
+        if (mapName == "logh" && loghScenarioId != null) {
+            scenarioEventService.loadLoghScenarioEvents(worldId, loghScenarioId)
+        }
+
         log.info("[World {}] Reinitialized successfully (same ID preserved)", worldId)
         return existingWorld
     }
@@ -658,46 +685,110 @@ class ScenarioService(
         val nationId = if (nationIdx > 0) nationIdxToDbId[nationIdx] ?: 0L else 0L
 
         val leadership = (row[5] as Number).toShort()
-        val strength = (row[6] as Number).toShort()
-        val intel = (row[7] as Number).toShort()
+        val stat6 = (row[6] as Number).toShort()
+        val stat7 = (row[7] as Number).toShort()
 
-        val hasFiveStatTuple = row.getOrNull(10) is Number && row.getOrNull(11) is Number && row.getOrNull(12) is Number
-        val hasLegacyThreeStatWithOfficer = row.getOrNull(8) is Number && row.getOrNull(9) is Number && row.getOrNull(10) is Number
-        val hasLegacyThreeStatWithoutOfficer = row.getOrNull(8) is Number && row.getOrNull(9) is Number
+        // Detect 8-stat LOGH format: indices 5-12 are all 8 stats, 13=officerLevel, 14=bornYear, 15=deadYear
+        val hasEightStatTuple = row.size >= 16 &&
+            row.getOrNull(13) is Number && row.getOrNull(14) is Number && row.getOrNull(15) is Number &&
+            row.getOrNull(10) is Number && row.getOrNull(11) is Number && row.getOrNull(12) is Number &&
+            row.getOrNull(8) is Number && row.getOrNull(9) is Number &&
+            (row.getOrNull(14) as? Number)?.toInt()?.let { it in 700..900 } == true // bornYear range check for LOGH UC calendar
 
-        val (politics, charm, officerLevel, bornYear, deadYear, personalityIndex, specialIndex) = when {
-            hasFiveStatTuple -> TupleLayout(
-                politics = (row[8] as Number).toShort(),
-                charm = (row[9] as Number).toShort(),
-                officerLevel = (row[10] as Number).toShort(),
-                bornYear = (row[11] as Number).toShort(),
-                deadYear = (row[12] as Number).toShort(),
-                personalityIndex = 13,
-                specialIndex = 14,
-            )
-            hasLegacyThreeStatWithOfficer -> TupleLayout(
-                politics = intel,
-                charm = intel,
-                officerLevel = (row[8] as Number).toShort(),
-                bornYear = (row[9] as Number).toShort(),
-                deadYear = (row[10] as Number).toShort(),
-                personalityIndex = 11,
-                specialIndex = 12,
-            )
-            hasLegacyThreeStatWithoutOfficer -> TupleLayout(
-                politics = intel,
-                charm = intel,
-                officerLevel = 0,
-                bornYear = (row[8] as Number).toShort(),
-                deadYear = (row[9] as Number).toShort(),
-                personalityIndex = 10,
-                specialIndex = 11,
-            )
+        val hasFiveStatTuple = !hasEightStatTuple &&
+            row.getOrNull(10) is Number && row.getOrNull(11) is Number && row.getOrNull(12) is Number
+        val hasLegacyThreeStatWithOfficer = !hasEightStatTuple && !hasFiveStatTuple &&
+            row.getOrNull(8) is Number && row.getOrNull(9) is Number && row.getOrNull(10) is Number
+        val hasLegacyThreeStatWithoutOfficer = !hasEightStatTuple && !hasFiveStatTuple && !hasLegacyThreeStatWithOfficer &&
+            row.getOrNull(8) is Number && row.getOrNull(9) is Number
+
+        data class ParsedOfficerStats(
+            val command: Short,
+            val intelligence: Short,
+            val politics: Short,
+            val administration: Short,
+            val mobility: Short,
+            val attack: Short,
+            val defense: Short,
+            val officerLevel: Short,
+            val bornYear: Short,
+            val deadYear: Short,
+            val personalityIndex: Int,
+            val specialIndex: Int,
+        )
+
+        val parsed = when {
+            hasEightStatTuple -> {
+                // LOGH 8-stat: [aff, name, pic, nation, city, lead, cmd, intel, poli, admin, mob, atk, def, level, born, dead, pers, spec]
+                ParsedOfficerStats(
+                    command = stat6,
+                    intelligence = stat7,
+                    politics = (row[8] as Number).toShort(),
+                    administration = (row[9] as Number).toShort(),
+                    mobility = (row[10] as Number).toShort(),
+                    attack = (row[11] as Number).toShort(),
+                    defense = (row[12] as Number).toShort(),
+                    officerLevel = (row[13] as Number).toShort(),
+                    bornYear = (row[14] as Number).toShort(),
+                    deadYear = (row[15] as Number).toShort(),
+                    personalityIndex = 16,
+                    specialIndex = 17,
+                )
+            }
+            hasFiveStatTuple -> {
+                // Legacy 5-stat: [aff, name, pic, nation, city, lead, str, int, pol, cha, level, born, dead, pers, spec]
+                ParsedOfficerStats(
+                    command = stat6,
+                    intelligence = stat7,
+                    politics = (row[8] as Number).toShort(),
+                    administration = (row[9] as Number).toShort(),
+                    mobility = 50,
+                    attack = 50,
+                    defense = 50,
+                    officerLevel = (row[10] as Number).toShort(),
+                    bornYear = (row[11] as Number).toShort(),
+                    deadYear = (row[12] as Number).toShort(),
+                    personalityIndex = 13,
+                    specialIndex = 14,
+                )
+            }
+            hasLegacyThreeStatWithOfficer -> {
+                ParsedOfficerStats(
+                    command = stat6,
+                    intelligence = stat7,
+                    politics = stat7,
+                    administration = stat7,
+                    mobility = 50,
+                    attack = 50,
+                    defense = 50,
+                    officerLevel = (row[8] as Number).toShort(),
+                    bornYear = (row[9] as Number).toShort(),
+                    deadYear = (row[10] as Number).toShort(),
+                    personalityIndex = 11,
+                    specialIndex = 12,
+                )
+            }
+            hasLegacyThreeStatWithoutOfficer -> {
+                ParsedOfficerStats(
+                    command = stat6,
+                    intelligence = stat7,
+                    politics = stat7,
+                    administration = stat7,
+                    mobility = 50,
+                    attack = 50,
+                    defense = 50,
+                    officerLevel = 0,
+                    bornYear = (row[8] as Number).toShort(),
+                    deadYear = (row[9] as Number).toShort(),
+                    personalityIndex = 10,
+                    specialIndex = 11,
+                )
+            }
             else -> throw IllegalArgumentException("Unsupported officer tuple format: $row")
         }
 
-        val personality = row.getOrNull(personalityIndex)?.toString()
-        val special = row.getOrNull(specialIndex)?.toString()
+        val personality = row.getOrNull(parsed.personalityIndex)?.toString()
+        val special = row.getOrNull(parsed.specialIndex)?.toString()
 
         val rowCityId = resolveCityId(row.getOrNull(4), cityNameToId)
         val cityId: Long = if (rowCityId != null) {
@@ -710,7 +801,7 @@ class ScenarioService(
         }
 
         val minimumAge = if (nationId == 0L) 14.toShort() else 20.toShort()
-        val age = (startYear - bornYear).toShort().coerceAtLeast(minimumAge)
+        val age = (startYear - parsed.bornYear).toShort().coerceAtLeast(minimumAge)
 
         return Officer(
             sessionId = worldId,
@@ -718,15 +809,18 @@ class ScenarioService(
             factionId = nationId,
             planetId = cityId,
             affinity = affinity,
-            bornYear = bornYear,
-            deadYear = deadYear,
+            bornYear = parsed.bornYear,
+            deadYear = parsed.deadYear,
             picture = picture,
             leadership = leadership,
-            command = strength,
-            intelligence = intel,
-            politics = politics,
-            administration = charm,
-            officerLevel = officerLevel,
+            command = parsed.command,
+            intelligence = parsed.intelligence,
+            politics = parsed.politics,
+            administration = parsed.administration,
+            mobility = parsed.mobility,
+            attack = parsed.attack,
+            defense = parsed.defense,
+            officerLevel = parsed.officerLevel,
             npcState = defaultNpcState,
             age = age,
             startAge = age,
@@ -735,16 +829,6 @@ class ScenarioService(
             turnTime = OffsetDateTime.now(),
         )
     }
-
-    private data class TupleLayout(
-        val politics: Short,
-        val charm: Short,
-        val officerLevel: Short,
-        val bornYear: Short,
-        val deadYear: Short,
-        val personalityIndex: Int,
-        val specialIndex: Int,
-    )
 
     private fun shouldSpawnScenarioOfficer(officer: Officer, year: Int): Boolean {
         if (officer.factionId != 0L) {
