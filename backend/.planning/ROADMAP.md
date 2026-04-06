@@ -76,11 +76,11 @@ Plans:
   3. A player can use PCP for military commands (or MCP for political commands) at exactly 2x the normal cost
   4. Command execution correctly deducts from the appropriate pool, and insufficient points prevent execution with a clear error message
   5. CP pool sizes scale with rank (higher rank = larger pool)
-**Plans:** 3 plans
+**Plans:** 1/3 plans executed
 **UI hint**: yes
 
 Plans:
-- [ ] 03-01-PLAN.md — V31 migration (pcp/mcp/pcp_max/mcp_max columns) + Officer entity + CpPoolConfig
+- [x] 03-01-PLAN.md — V31 migration (pcp/mcp/pcp_max/mcp_max columns) + Officer entity + CpPoolConfig
 - [ ] 03-02-PLAN.md — CpService (deduction, 2x cross-use, stat-based recovery) + BaseCommand pool type + DTO
 - [ ] 03-03-PLAN.md — Wire into RealtimeService/CommandService + frontend dual CP display
 
@@ -209,7 +209,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 12
 |-------|----------------|--------|-----------|
 | 1. Entity Model Foundation | 0/8 | Planning complete | - |
 | 2. Real-time Tick Engine | 0/3 | Planning complete | - |
-| 3. Command Point System | 0/3 | Planning complete | - |
+| 3. Command Point System | 1/3 | In Progress|  |
 | 4. Position Card & Command Authority | 0/TBD | Not started | - |
 | 5. Organization & Fleet Structure | 0/TBD | Not started | - |
 | 6. Galaxy Map & Planet Model | 0/TBD | Not started | - |
