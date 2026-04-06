@@ -15,8 +15,10 @@ import org.springframework.transaction.annotation.Transactional
  * - Production continues as long as ownership doesn't change.
  * - Auto-production doesn't affect planet tax revenue.
  * - Only GREEN-level crew from production.
+ * - Neutral planets (factionId=0) do not produce.
+ * - Per-planet ship class configured via planet.meta["shipyardClass"] (default: BATTLESHIP).
  *
- * Called by the turn engine each turn cycle.
+ * Called by TickEngine every SHIPYARD_INTERVAL_TICKS (3600 ticks = 1 game day).
  */
 @Service
 class ShipyardProductionService(
@@ -27,12 +29,14 @@ class ShipyardProductionService(
 
     /**
      * Run auto-production for all shipyard planets in a session.
-     * Called once per turn by the turn engine.
+     * Called once per game day by the tick engine.
      *
      * Production formula: based on planet's production stat.
-     * - Ship units produced = production / 200 (minimum 1 if shipyard exists)
+     * - Ship units produced = production / 200, coerceAtLeast(1)
      * - Crew produced = ship units produced (1 crew per ship unit, GREEN only)
-     * - Default ship class produced: BATTLESHIP (can be configured per planet)
+     * - Supply output = production / 100, coerceAtLeast(1)
+     * - Ship class = planet.meta["shipyardClass"] (default BATTLESHIP)
+     * - Neutral planets (factionId=0) are skipped
      */
     @Transactional
     fun runProduction(sessionId: Long): List<ProductionReport> {
@@ -44,12 +48,20 @@ class ShipyardProductionService(
         for (pw in shipyardWarehouses) {
             val planet = planetRepository.findById(pw.planetId).orElse(null) ?: continue
 
+            // Skip neutral planets — no faction owns them
+            if (planet.factionId == 0L) continue
+
             // Calculate production output
             val productionStat = planet.production.coerceAtLeast(0)
             val baseOutput = (productionStat / 200).coerceAtLeast(1)
 
-            // Determine what to produce (default: battleship; can be extended with planet meta)
-            val shipClass = ShipClassType.BATTLESHIP
+            // Determine what to produce from planet meta (default: BATTLESHIP)
+            val shipClassStr = (planet.meta["shipyardClass"] as? String) ?: "BATTLESHIP"
+            val shipClass = try {
+                ShipClassType.valueOf(shipClassStr)
+            } catch (e: IllegalArgumentException) {
+                ShipClassType.BATTLESHIP
+            }
 
             // Produce ships
             pw.addShips(shipClass, baseOutput)
@@ -57,7 +69,7 @@ class ShipyardProductionService(
             // Produce crew (always GREEN)
             pw.addCrew(CrewProficiency.GREEN, baseOutput)
 
-            // Produce some supplies based on production
+            // Produce supplies based on production
             val supplyOutput = (productionStat / 100).coerceAtLeast(1)
             pw.supplies += supplyOutput
 
@@ -68,6 +80,7 @@ class ShipyardProductionService(
                 ProductionReport(
                     planetId = pw.planetId,
                     planetName = planet.name,
+                    factionId = planet.factionId,
                     shipsProduced = baseOutput,
                     shipClass = shipClass,
                     crewProduced = baseOutput,
@@ -90,6 +103,7 @@ class ShipyardProductionService(
 data class ProductionReport(
     val planetId: Long,
     val planetName: String,
+    val factionId: Long,
     val shipsProduced: Int,
     val shipClass: ShipClassType,
     val crewProduced: Int,
