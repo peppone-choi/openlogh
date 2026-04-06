@@ -20,7 +20,7 @@ export function MobileMenuSheet({ children, open, onOpenChange }: MobileMenuShee
 
     const worldDate =
         currentWorld?.currentYear && currentWorld?.currentMonth
-            ? `${currentWorld.currentYear}년 ${currentWorld.currentMonth}월`
+            ? `UC ${currentWorld.currentYear}.${currentWorld.currentMonth}`
             : '';
 
     return (

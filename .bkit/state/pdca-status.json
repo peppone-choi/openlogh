@@ -1,6 +1,6 @@
 {
   "version": "3.0",
-  "lastUpdated": "2026-04-06T11:24:58.455Z",
+  "lastUpdated": "2026-04-06T11:30:53.001Z",
   "activeFeatures": [
     "engine",
     "war",
@@ -246,9 +246,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-23T11:46:41.223Z",
-        "lastUpdated": "2026-04-06T11:24:58.453Z"
+        "lastUpdated": "2026-04-06T11:26:59.854Z"
       },
-      "lastFile": "/Users/apple/Desktop/개인프로젝트/openlogh/frontend/src/components/game/game-dashboard.tsx"
+      "lastFile": "/Users/apple/Desktop/개인프로젝트/openlogh/frontend/src/components/game/command-panel.tsx"
     },
     "trigger": {
       "phase": "do",
@@ -298,9 +298,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-24T00:32:24.227Z",
-        "lastUpdated": "2026-04-06T11:24:31.639Z"
+        "lastUpdated": "2026-04-06T11:30:05.063Z"
       },
-      "lastFile": "/Users/apple/Desktop/개인프로젝트/openlogh/frontend/src/components/top-bar.tsx"
+      "lastFile": "/Users/apple/Desktop/개인프로젝트/openlogh/frontend/src/types/galaxy.ts"
     },
     "city": {
       "phase": "do",
@@ -378,9 +378,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-24T01:50:23.956Z",
-        "lastUpdated": "2026-04-06T05:51:09.083Z"
+        "lastUpdated": "2026-04-06T11:30:44.767Z"
       },
-      "lastFile": "/Users/apple/Desktop/개인프로젝트/openlogh/frontend/src/stores/politicsStore.ts"
+      "lastFile": "/Users/apple/Desktop/개인프로젝트/openlogh/frontend/src/stores/galaxyStore.ts"
     },
     "create": {
       "phase": "do",
@@ -508,7 +508,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-24T03:28:34.485Z",
-        "lastUpdated": "2026-04-06T09:43:16.076Z"
+        "lastUpdated": "2026-04-06T11:29:27.180Z"
       },
       "lastFile": "/Users/apple/Desktop/개인프로젝트/openlogh/frontend/src/app/(game)/layout.tsx"
     },
@@ -800,7 +800,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-04-06T04:28:12.079Z",
-        "lastUpdated": "2026-04-06T11:11:00.911Z"
+        "lastUpdated": "2026-04-06T11:30:52.999Z"
       },
       "lastFile": "/Users/apple/Desktop/개인프로젝트/openlogh/frontend/src/components/galaxy/StarSystemDetailPanel.tsx"
     },
@@ -917,7 +917,7 @@
   "session": {
     "startedAt": "2026-03-23T06:31:12.665Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-04-06T11:24:58.455Z"
+    "lastActivity": "2026-04-06T11:30:53.001Z"
   },
   "history": [
     {
@@ -8723,6 +8723,336 @@
     {
       "timestamp": "2026-04-06T11:24:58.455Z",
       "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T11:25:04.764Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T11:25:13.903Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T11:25:17.978Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T11:25:19.808Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T11:25:22.045Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T11:25:23.047Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T11:25:24.398Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T11:25:26.661Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T11:25:27.511Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T11:25:39.887Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T11:25:41.727Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T11:25:43.160Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T11:25:44.581Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T11:25:45.988Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T11:25:47.707Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T11:25:49.066Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T11:25:50.346Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T11:25:51.234Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T11:25:52.683Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T11:25:53.494Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T11:25:54.754Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T11:25:55.763Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T11:26:08.262Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T11:26:09.078Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T11:26:13.955Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T11:26:15.328Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T11:26:16.225Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T11:26:17.530Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T11:26:21.357Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T11:26:22.591Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T11:26:23.965Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T11:26:25.746Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T11:26:26.615Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T11:26:29.292Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T11:26:30.641Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T11:26:31.958Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T11:26:34.115Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T11:26:35.085Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T11:26:36.011Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T11:26:36.900Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T11:26:39.179Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T11:26:41.032Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T11:26:42.420Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T11:26:43.371Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T11:26:45.145Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T11:26:46.544Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T11:26:59.855Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T11:28:51.916Z",
+      "feature": "galaxy",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T11:29:00.115Z",
+      "feature": "galaxy",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T11:29:20.486Z",
+      "feature": "(game)",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T11:29:27.181Z",
+      "feature": "(game)",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T11:30:05.064Z",
+      "feature": "frontend",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T11:30:37.960Z",
+      "feature": "stores",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T11:30:44.769Z",
+      "feature": "stores",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T11:30:53.000Z",
+      "feature": "galaxy",
       "phase": "do",
       "action": "updated"
     }

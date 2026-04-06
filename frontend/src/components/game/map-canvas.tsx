@@ -247,7 +247,7 @@ export function MapCanvas({
                             className="text-white text-sm font-bold drop-shadow-lg"
                             style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}
                         >
-                            서기 {yearMonth.year}년 {yearMonth.month}월 {SEASON_LABELS[season] ?? ''}
+                            UC {yearMonth.year}.{yearMonth.month} {SEASON_LABELS[season] ?? ''}
                         </span>
                     </div>
                 )}
