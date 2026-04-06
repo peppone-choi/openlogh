@@ -1,5 +1,6 @@
 package com.openlogh.service
 
+import com.openlogh.engine.ai.AiCommandBridge
 import com.openlogh.engine.ai.OfficerAI
 import com.openlogh.engine.ai.PersonalityTrait
 import com.openlogh.engine.ai.PersonalityWeights
@@ -21,6 +22,7 @@ import java.time.Duration
 class OfflinePlayerAIService(
     private val officerRepository: OfficerRepository,
     private val officerAI: OfficerAI,
+    private val aiCommandBridge: AiCommandBridge,
 ) {
     private val logger = LoggerFactory.getLogger(OfflinePlayerAIService::class.java)
 
@@ -56,8 +58,9 @@ class OfflinePlayerAIService(
                 // Infer personality from player's stats if not already set
                 ensurePersonality(officer)
 
-                // Execute AI decision using OfficerAI with the officer's personality
-                val action = officerAI.decideAndExecute(officer, world)
+                // Execute AI decision through the full gin7 CommandExecutor pipeline
+                val trait = PersonalityTrait.fromString(officer.personality)
+                val action = aiCommandBridge.executeAiCommand(officer, world, trait)
                 logger.info(
                     "Offline player {} ({}) AI decided: {} [personality={}]",
                     officer.id, officer.name, action,

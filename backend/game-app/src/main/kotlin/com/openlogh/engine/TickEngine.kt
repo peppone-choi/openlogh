@@ -7,6 +7,7 @@ import com.openlogh.service.EmpirePoliticsService
 import com.openlogh.service.FezzanEndingService
 import com.openlogh.service.FezzanService
 import com.openlogh.service.GameEventService
+import com.openlogh.service.OfflinePlayerAIService
 import com.openlogh.service.ShipyardProductionService
 import com.openlogh.service.TacticalBattleService
 import org.slf4j.LoggerFactory
@@ -38,6 +39,7 @@ class TickEngine(
     private val gin7EconomyService: Gin7EconomyService,
     private val shipyardProductionService: ShipyardProductionService,
     private val fleetSortieCostService: FleetSortieCostService,
+    private val offlinePlayerAIService: OfflinePlayerAIService,
 ) {
     private val logger = LoggerFactory.getLogger(TickEngine::class.java)
 
@@ -126,6 +128,11 @@ class TickEngine(
             // Fezzan ending check every 100 ticks
             if (world.tickCount % 100 == 0L) {
                 fezzanEndingService.checkAndTrigger(sessionId)
+            }
+
+            // Offline player AI: every 100 ticks (same interval as fezzanService)
+            if (world.tickCount % 100 == 0L) {
+                offlinePlayerAIService.processOfflinePlayers(world)
             }
         } catch (e: Exception) {
             logger.warn("Political processing error for session {}: {}", sessionId, e.message)
