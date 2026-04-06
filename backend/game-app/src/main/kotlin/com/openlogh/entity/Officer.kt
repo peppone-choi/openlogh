@@ -292,6 +292,12 @@ class Officer(
     @Column(name = "created_at", nullable = false)
     var createdAt: OffsetDateTime = OffsetDateTime.now(),
 
+    @Column(nullable = false)
+    var personality: String = "BALANCED",
+
+    @Column(name = "last_access_at")
+    var lastAccessAt: OffsetDateTime? = null,
+
     @Column(name = "updated_at", nullable = false)
     var updatedAt: OffsetDateTime = OffsetDateTime.now(),
 ) {
