@@ -17,7 +17,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 3: Command Point System** - Implement dual PCP/MCP pools with independent recovery and cross-use penalty
 - [x] **Phase 4: Position Card & Command Authority** - 77 position cards, command groups, authority gating, suggestion system (completed 2026-04-06)
 - [ ] **Phase 5: Organization & Fleet Structure** - 6 unit types with crew slots, population-military linkage
-- [ ] **Phase 6: Galaxy Map & Planet Model** - 80 star systems, route network, territory zones, fortress systems, galaxy map UI
+- [x] **Phase 6: Galaxy Map & Planet Model** - 80 star systems, route network, territory zones, fortress systems, galaxy map UI (completed 2026-04-06)
 - [ ] **Phase 7: Rank, Merit & Personnel** - 11-tier rank ladder, merit points, promotion/demotion, appointment authority
 - [ ] **Phase 8: Scenario & Character System** - 10 scenarios, custom character creation, original character selection, scenario events
 - [ ] **Phase 9: Strategic Commands** - Operation planning, logistics, production, supply chain commands
@@ -126,14 +126,14 @@ Plans:
   3. Fleet movement follows route connections with travel time based on distance and engine speed
   4. Iserlohn and Geiersburg display as fortress systems with special defense values, garrison slots, and fortress gun capabilities
   5. Planet detail view shows all resource fields (population, production, commerce, security, approval, orbital defense, fortress, trade route)
-**Plans:** 3/4 plans executed
+**Plans:** 4/4 plans complete
 **UI hint**: yes
 
 Plans:
 - [x] 06-01-PLAN.md — logh.json map data (80 systems), StarSystem/StarRoute entities, FortressType enum, Flyway V35 migration
 - [x] 06-02-PLAN.md — StarSystemService, MapService LOGH support, StarSystemController REST API, DTOs
 - [x] 06-03-PLAN.md — Frontend galaxy types, API client, Zustand store, GalaxyMap UI (React Konva), fortress indicators
-- [ ] 06-04-PLAN.md — Galaxy page route, ScenarioService integration, visual verification checkpoint
+- [x] 06-04-PLAN.md — Galaxy page route, ScenarioService integration, visual verification checkpoint
 
 ### Phase 7: Rank, Merit & Personnel
 **Goal**: Officers progress through an 11-tier rank ladder via merit points, with rank determining authority, CP pools, and appointment eligibility
@@ -224,7 +224,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 12
 | 3. Command Point System | 0/TBD | Not started | - |
 | 4. Position Card & Command Authority | 4/4 | Complete   | 2026-04-06 |
 | 5. Organization & Fleet Structure | 1/4 | In Progress|  |
-| 6. Galaxy Map & Planet Model | 3/4 | In Progress|  |
+| 6. Galaxy Map & Planet Model | 4/4 | Complete   | 2026-04-06 |
 | 7. Rank, Merit & Personnel | 0/TBD | Not started | - |
 | 8. Scenario & Character System | 0/TBD | Not started | - |
 | 9. Strategic Commands | 0/TBD | Not started | - |
