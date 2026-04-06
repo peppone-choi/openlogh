@@ -105,7 +105,7 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 05-01-PLAN.md — UtilityScorer (성격 기반 gin7 커맨드 점수) + AiCommandBridge + OfflinePlayerAI TickEngine 연결
+- [x] 05-01-PLAN.md — UtilityScorer (성격 기반 gin7 커맨드 점수) + AiCommandBridge + OfflinePlayerAI TickEngine 연결
 - [ ] 05-02-PLAN.md — FactionAIScheduler (슬롯 기반 라운드 로빈) + TickEngine 10틱 연결
 - [ ] 05-03-PLAN.md — ScenarioEventAIService (쿠데타 감지 + 내전 트리거) + AI-01~04 통합 테스트
 
@@ -143,6 +143,6 @@ Plans:
 | 2. gin7 81종 커맨드 시스템 | 6/7 | In Progress|  |
 | 3. 실시간 전술전 엔진 | 2/5 | In Progress|  |
 | 4. 경제 시스템 | 5/5 | Complete   | 2026-04-06 |
-| 5. AI 시스템 | 0/3 | Not started | - |
+| 5. AI 시스템 | 1/3 | In Progress|  |
 | 6. 프론트엔드 통합 | 0/TBD | Not started | - |
 | 7. 시나리오 데이터 + 밸런싱 | 0/TBD | Not started | - |

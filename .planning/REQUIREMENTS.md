@@ -61,8 +61,8 @@
 
 ### AI 시스템 (AI)
 
-- [ ] **AI-01**: 성격 기반 행동 시스템 (5종 PersonalityTrait 가중치 의사결정)
-- [ ] **AI-02**: 오프라인 플레이어 자동 행동 (플레이어 스탯으로 AI 가동)
+- [x] **AI-01**: 성격 기반 행동 시스템 (5종 PersonalityTrait 가중치 의사결정)
+- [x] **AI-02**: 오프라인 플레이어 자동 행동 (플레이어 스탯으로 AI 가동)
 - [ ] **AI-03**: 진영 AI (작전수립, 예산 배분, 인사 자동 처리)
 - [ ] **AI-04**: 시나리오 이벤트 AI (쿠데타 조건 감지, 내전 트리거)
 
@@ -153,8 +153,8 @@
 | ECON-04 | Phase 4 | Complete |
 | ECON-05 | Phase 4 | Complete |
 | ECON-06 | Phase 4 | Complete |
-| AI-01 | Phase 5 | Pending |
-| AI-02 | Phase 5 | Pending |
+| AI-01 | Phase 5 | Complete |
+| AI-02 | Phase 5 | Complete |
 | AI-03 | Phase 5 | Pending |
 | AI-04 | Phase 5 | Pending |
 | FE-01 | Phase 6 | Pending |
