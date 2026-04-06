@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: milestone
 status: verifying
-stopped_at: Completed 03-tactical-battle-engine/03-04-PLAN.md
-last_updated: "2026-04-06T16:02:04.838Z"
+stopped_at: Completed 03-tactical-battle-engine/03-05-PLAN.md
+last_updated: "2026-04-06T16:03:39.241Z"
 last_activity: 2026-04-06
 progress:
   total_phases: 9
-  completed_phases: 6
+  completed_phases: 7
   total_plans: 43
-  completed_plans: 39
+  completed_plans: 40
   percent: 77
 ---
 
@@ -66,6 +66,7 @@ Progress: [████████░░] 77%
 | Phase 03-tactical-battle-engine P03 | 35 | 2 tasks | 6 files |
 | Phase 03-tactical-battle-engine P02 | 45 | 2 tasks | 7 files |
 | Phase 03-tactical-battle-engine P04 | 35 | 2 tasks | 8 files |
+| Phase 03-tactical-battle-engine P05 | 35 | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -105,6 +106,8 @@ Progress: [████████░░] 77%
 - [Phase 03-tactical-battle-engine]: DetectionService wraps DetectionEngine — precision>=0.5 OR 2+ detectors for confirmation
 - [Phase 03-tactical-battle-engine]: GroundBattleEngine is stateless pure class — injected inline in TacticalBattleEngine processTick, no Spring DI needed
 - [Phase 03-tactical-battle-engine]: GROUND_ASSAULT ConquestCommand returns success=false (ground battle starts) — conquest completion detected via GroundBattleState.isConquestComplete each tick
+- [Phase 03-tactical-battle-engine]: isFlagship cleared on destruction before replacement promotion — avoids stale flagship state
+- [Phase 03-tactical-battle-engine]: getMissileSystem() exposed on TacticalBattleEngine for SORTIE command in service layer
 
 ### Pending Todos
 
@@ -118,6 +121,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-06T16:02:04.823Z
-Stopped at: Completed 03-tactical-battle-engine/03-04-PLAN.md
+Last session: 2026-04-06T16:03:39.233Z
+Stopped at: Completed 03-tactical-battle-engine/03-05-PLAN.md
 Resume file: None

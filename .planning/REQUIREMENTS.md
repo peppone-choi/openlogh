@@ -47,8 +47,8 @@
 - [x] **BATTLE-08**: 지상전 구현 (육전대 강하, 지상전 박스 30유닛 제한, 행성타입별)
 - [x] **BATTLE-09**: 행성/요새 점령 처리 (항복권고/정밀폭격/무차별폭격/육전대강하/점거/선동)
 - [ ] **BATTLE-10**: 태세 시스템 (항행/정박/주류/전투 4종, 각각 공격/색적/사기 보정)
-- [ ] **BATTLE-11**: 전사/부상 시스템 (기함 격침→부상→귀환성 워프)
-- [ ] **BATTLE-12**: 전술 유닛 커맨드 (이동/회전/평행이동/반전/공격/사격/공전/대열/수리/보급/출격)
+- [x] **BATTLE-11**: 전사/부상 시스템 (기함 격침→부상→귀환성 워프)
+- [x] **BATTLE-12**: 전술 유닛 커맨드 (이동/회전/평행이동/반전/공격/사격/공전/대열/수리/보급/출격)
 
 ### 경제 시스템 (ECON)
 
@@ -145,8 +145,8 @@
 | BATTLE-08 | Phase 3 | Complete |
 | BATTLE-09 | Phase 3 | Complete |
 | BATTLE-10 | Phase 3 | Pending |
-| BATTLE-11 | Phase 3 | Pending |
-| BATTLE-12 | Phase 3 | Pending |
+| BATTLE-11 | Phase 3 | Complete |
+| BATTLE-12 | Phase 3 | Complete |
 | ECON-01 | Phase 4 | Pending |
 | ECON-02 | Phase 4 | Pending |
 | ECON-03 | Phase 4 | Pending |

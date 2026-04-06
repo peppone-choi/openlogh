@@ -72,7 +72,7 @@ Plans:
 - [x] 03-02-PLAN.md — 미사일/전투정 무기 시스템 + BEAM 사거리 곡선 + 색적 DetectionService
 - [x] 03-03-PLAN.md — 요새포 4종 FortressGunSystem + 전투 REST API + 퇴각/공격대상 채널
 - [x] 03-04-PLAN.md — 지상전 박스(30유닛 제한) + 행성 점령 6종 PlanetConquestService
-- [ ] 03-05-PLAN.md — 기함 격침→부상→귀환성 워프 + 전술 커맨드 11종 + 통합 테스트
+- [x] 03-05-PLAN.md — 기함 격침→부상→귀환성 워프 + 전술 커맨드 11종 + 통합 테스트
 **UI hint**: yes
 
 ### Phase 4: 경제 시스템
