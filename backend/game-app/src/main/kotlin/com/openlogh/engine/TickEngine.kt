@@ -7,6 +7,7 @@ import com.openlogh.service.EmpirePoliticsService
 import com.openlogh.service.FezzanEndingService
 import com.openlogh.service.FezzanService
 import com.openlogh.service.GameEventService
+import com.openlogh.service.ShipyardProductionService
 import com.openlogh.service.TacticalBattleService
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -21,6 +22,7 @@ import org.springframework.stereotype.Service
  *   4. Trigger monthly pipeline on month boundary crossing (every 108,000 ticks = 30 real hours)
  *   5. Persist updated world state
  *   6. Process active tactical battles (every tick)
+ *   7. Shipyard auto-production (every 3600 ticks = 1 game day)
  */
 @Service
 class TickEngine(
@@ -34,6 +36,7 @@ class TickEngine(
     private val fezzanEndingService: FezzanEndingService,
     private val tacticalBattleService: TacticalBattleService,
     private val gin7EconomyService: Gin7EconomyService,
+    private val shipyardProductionService: ShipyardProductionService,
 ) {
     private val logger = LoggerFactory.getLogger(TickEngine::class.java)
 
@@ -67,10 +70,19 @@ class TickEngine(
         // 6. Process active tactical battles
         tacticalBattleService.processSessionBattles(world.id.toLong())
 
-        // 7. Persist state
+        // 7. 조병창 자동생산: 매 3600틱(1 게임일)마다
+        if (world.tickCount % GameTimeConstants.SHIPYARD_INTERVAL_TICKS == 0L) {
+            try {
+                shipyardProductionService.runProduction(world.id.toLong())
+            } catch (e: Exception) {
+                logger.warn("Shipyard production error for world {}: {}", world.id, e.message)
+            }
+        }
+
+        // 8. Persist state
         sessionStateRepository.save(world)
 
-        // 8. Broadcast tick state to clients every TICK_BROADCAST_INTERVAL ticks
+        // 9. Broadcast tick state to clients every TICK_BROADCAST_INTERVAL ticks
         if (world.tickCount % GameTimeConstants.TICK_BROADCAST_INTERVAL == 0L) {
             gameEventService.broadcastTickState(world)
         }

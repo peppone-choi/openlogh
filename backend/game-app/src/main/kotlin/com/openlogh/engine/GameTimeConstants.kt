@@ -31,4 +31,7 @@ object GameTimeConstants {
 
     /** Game-seconds in one game day: 24 * 3,600 = 86,400. */
     const val GAME_SECONDS_PER_DAY = 86_400L
+
+    /** Shipyard auto-production interval: 1 game day = 3,600 ticks. */
+    const val SHIPYARD_INTERVAL_TICKS = 3_600L
 }
