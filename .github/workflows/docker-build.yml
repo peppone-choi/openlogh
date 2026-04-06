@@ -128,11 +128,10 @@ jobs:
                   username: ${{ secrets.SSH_USERNAME }}
                   key: ${{ secrets.SSH_PRIVATE_KEY }}
                   script: |
-                      mkdir -p ~/openlogh-deploy
+                      if [ ! -d ~/openlogh-deploy ]; then
+                        git clone https://github.com/peppone-choi/openlogh-deploy.git ~/openlogh-deploy
+                      fi
                       cd ~/openlogh-deploy
-                      curl -sL -o docker-compose.yml https://raw.githubusercontent.com/${{ github.repository }}/main/docker-compose.yml
-                      curl -sL -o nginx.conf https://raw.githubusercontent.com/${{ github.repository }}/main/nginx/nginx.conf
-                      mkdir -p nginx
-                      mv nginx.conf nginx/nginx.conf
+                      git pull origin main
                       docker compose pull
                       docker compose up -d
