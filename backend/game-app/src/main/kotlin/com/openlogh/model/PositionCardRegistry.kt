@@ -45,7 +45,7 @@ object PositionCardRegistry {
             "작전지시",
         )) { put(code, CommandGroup.COMMAND) }
 
-        // === LOGISTICS group (19) ===
+        // === LOGISTICS group (23) ===
         // Infrastructure, resource management, military supply
         for (code in listOf(
             "농지개간", "상업투자", "치안강화", "수비강화", "성벽보수",
@@ -53,6 +53,7 @@ object PositionCardRegistry {
             "모병", "징병", "훈련", "사기진작", "소집해제",
             "물자조달", "헌납", "물자원조",
             "증축", "감축", "백성동원",
+            "물자배분", "함선보급", "함대재편", "생산감독",
         )) { put(code, CommandGroup.LOGISTICS) }
 
         // === PERSONNEL group (7) ===
@@ -61,13 +62,14 @@ object PositionCardRegistry {
             "등용", "인재탐색", "증여", "발령", "포상", "몰수", "부대탈퇴지시",
         )) { put(code, CommandGroup.PERSONNEL) }
 
-        // === POLITICS group (27) ===
+        // === POLITICS group (28) ===
         // Diplomacy, governance, faction-level decisions
         for (code in listOf(
             "하야", "선전포고", "종전제의", "종전수락",
             "불가침제의", "불가침수락", "불가침파기제의", "불가침파기수락",
             "칭제", "천자맞이", "선양요구", "신속", "독립선언",
             "천도", "국기변경", "국호변경", "무작위수도이전", "인구이동",
+            "예산편성",
         )) { put(code, CommandGroup.POLITICS) }
 
         // Research commands -> POLITICS

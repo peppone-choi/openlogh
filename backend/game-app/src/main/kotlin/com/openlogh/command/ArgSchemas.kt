@@ -208,6 +208,13 @@ object ArgSchemas {
             Field("directive", required = false, defaultValue = "", parser = ::parseString),
         )
     )
+
+    val budgetAllocation = ArgSchema(
+        listOf(
+            Field("taxRate", required = false, parser = ::parseInt),
+            Field("conscriptionRate", required = false, parser = ::parseInt),
+        )
+    )
 }
 
 val COMMAND_SCHEMAS: Map<String, ArgSchema> = mapOf(
@@ -335,4 +342,11 @@ val COMMAND_SCHEMAS: Map<String, ArgSchema> = mapOf(
     "워프항행" to ArgSchemas.destPlanet,
     "장거리워프" to ArgSchemas.destPlanet,
     "작전지시" to ArgSchemas.operationDirective,
+
+    // Logistics commands (Phase 9)
+    "물자배분" to ArgSchemas.amountWithDirection,
+    "함선보급" to ArgSchemas.amountWithDirection,
+    "함대재편" to ArgSchemas.crewTypeOnly,
+    "생산감독" to ArgSchemas.none,
+    "예산편성" to ArgSchemas.budgetAllocation,
 )

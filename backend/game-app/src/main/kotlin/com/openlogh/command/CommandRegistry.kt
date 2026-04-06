@@ -86,6 +86,12 @@ class CommandRegistry {
         registerOfficerCommand("워프항행") { g, e, a -> 워프항행(g, e, a) }
         registerOfficerCommand("장거리워프") { g, e, a -> 장거리워프(g, e, a) }
 
+        // Logistics (4)
+        registerOfficerCommand("물자배분") { g, e, a -> 물자배분(g, e, a) }
+        registerOfficerCommand("함선보급") { g, e, a -> 함선보급(g, e, a) }
+        registerOfficerCommand("함대재편") { g, e, a -> 함대재편(g, e, a) }
+        registerOfficerCommand("생산감독") { g, e, a -> 생산감독(g, e, a) }
+
         // NPC/CR Special (3)
         registerOfficerCommand("NPC능동") { g, e, a -> NPC능동(g, e, a) }
         registerOfficerCommand("CR건국") { g, e, a -> CR건국(g, e, a) }
@@ -147,6 +153,9 @@ class CommandRegistry {
 
         // Strategic Operations (1)
         registerFactionCommand("작전지시") { g, e, a -> 작전지시(g, e, a) }
+
+        // Budget (1)
+        registerFactionCommand("예산편성") { g, e, a -> 예산편성(g, e, a) }
 
         // Special
         registerFactionCommand("무작위수도이전") { g, e, a -> che_무작위수도이전(g, e, a) }
