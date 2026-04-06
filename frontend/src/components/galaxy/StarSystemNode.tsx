@@ -14,41 +14,40 @@ interface StarSystemNodeProps {
 }
 
 /** Pixel-art style color steps: highlight → base → shadow */
-function getDotPalette(faction: string) {
-    switch (faction) {
-        case 'empire':
-            return {
-                highlight: '#a0b4ff',
-                light: '#7088e0',
-                base: '#5a6ee0',
-                dark: '#3a4ab0',
-                shadow: '#252e70',
-            };
-        case 'alliance':
-            return {
-                highlight: '#ffa0b0',
-                light: '#e08090',
-                base: '#d06878',
-                dark: '#a04858',
-                shadow: '#602838',
-            };
-        case 'fezzan':
-            return {
-                highlight: '#d0d0d8',
-                light: '#b0b0b8',
-                base: '#9898a0',
-                dark: '#686870',
-                shadow: '#404048',
-            };
-        default:
-            return {
-                highlight: '#c0c0c8',
-                light: '#a0a0a8',
-                base: '#808088',
-                dark: '#585860',
-                shadow: '#303038',
-            };
+function getDotPalette(region: number) {
+    // region: 1=Empire, 2=Alliance, 3=Fezzan (convention from galaxy.ts)
+    if (region === 1) {
+        return {
+            highlight: '#a0b4ff',
+            light: '#7088e0',
+            base: '#5a6ee0',
+            dark: '#3a4ab0',
+            shadow: '#252e70',
+        };
+    } else if (region === 2) {
+        return {
+            highlight: '#ffa0b0',
+            light: '#e08090',
+            base: '#d06878',
+            dark: '#a04858',
+            shadow: '#602838',
+        };
+    } else if (region === 3) {
+        return {
+            highlight: '#d0d0d8',
+            light: '#b0b0b8',
+            base: '#9898a0',
+            dark: '#686870',
+            shadow: '#404048',
+        };
     }
+    return {
+        highlight: '#c0c0c8',
+        light: '#a0a0a8',
+        base: '#808088',
+        dark: '#585860',
+        shadow: '#303038',
+    };
 }
 
 function getStarRadius(level: number): number {
