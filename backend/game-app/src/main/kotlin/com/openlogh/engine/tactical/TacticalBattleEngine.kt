@@ -2,6 +2,7 @@ package com.openlogh.engine.tactical
 
 import com.openlogh.model.EnergyAllocation
 import com.openlogh.model.Formation
+import com.openlogh.model.InjuryEvent
 import com.openlogh.model.TacticalWeaponType
 import com.openlogh.model.UnitStance
 import kotlin.math.*
@@ -78,6 +79,8 @@ data class TacticalUnit(
     var ticksSinceStanceChange: Int = 0,
     /** 플레이어 지정 공격 대상 함대 ID (null=자동 선택) */
     var targetFleetId: Long? = null,
+    /** 선회 중 여부 (ORBIT 커맨드) */
+    var isOrbiting: Boolean = false,
 )
 
 enum class BattleSide { ATTACKER, DEFENDER }
@@ -116,6 +119,18 @@ data class TacticalBattleState(
      * DetectionService.updateDetectionMatrix() 호출 시 매 틱 갱신.
      */
     val detectionMatrix: MutableMap<Long, MutableSet<Long>> = mutableMapOf(),
+
+    /**
+     * 기함 격침으로 생성된 부상 이벤트 목록.
+     * endBattle 이후 TacticalBattleService.processFlagshipDestructions()에서 처리.
+     */
+    val pendingInjuryEvents: MutableList<InjuryEvent> = mutableListOf(),
+
+    /**
+     * 지상전 박스 상태. 육전대 강하 시 초기화 (Plan 03-04).
+     * null이면 지상전 미진행.
+     */
+    var groundBattleState: GroundBattleState? = null,
 )
 
 data class BattleTickEvent(
@@ -203,7 +218,52 @@ class TacticalBattleEngine(
             if (unit.hp <= 0 && unit.isAlive) {
                 unit.isAlive = false
                 unit.ships = 0
-                state.tickEvents.add(BattleTickEvent("destroy", targetUnitId = unit.fleetId, detail = "${unit.officerName} 함대 궤멸"))
+                state.tickEvents.add(BattleTickEvent("destroy", targetUnitId = unit.fleetId,
+                    detail = "${unit.officerName} 함대 궤멸"))
+
+                // 기함 격침 → 부상 이벤트 생성
+                if (unit.isFlagship) {
+                    // 격침된 기함은 isFlagship 해제
+                    unit.isFlagship = false
+
+                    val damageRatio = 1.0  // 기함 격침 = 최대 피해
+                    val severity = InjuryEvent.calculateSeverity(0, damageRatio)
+                    state.pendingInjuryEvents.add(InjuryEvent(
+                        officerId = unit.officerId,
+                        officerName = unit.officerName,
+                        severity = severity,
+                        returnPlanetId = 0L,  // 플레이스홀더 — TacticalBattleService에서 DB 조회로 교체
+                        tick = state.tickCount,
+                    ))
+                    state.tickEvents.add(BattleTickEvent("flagship_destroyed",
+                        sourceUnitId = unit.fleetId, value = severity,
+                        detail = "${unit.officerName} 기함 격침 → 부상 (중증도 $severity)"))
+
+                    // 다음 부대가 기함 대체: 같은 진영 잔존 유닛 중 ships 최대 유닛 승격
+                    val replacementUnit = state.units
+                        .filter { it.isAlive && it.ships > 0 && it.side == unit.side && it.fleetId != unit.fleetId }
+                        .maxByOrNull { it.ships }
+                    if (replacementUnit != null) {
+                        replacementUnit.isFlagship = true
+                        state.tickEvents.add(BattleTickEvent("flagship_transfer",
+                            sourceUnitId = replacementUnit.fleetId,
+                            detail = "${replacementUnit.officerName} 기함 부대 대체"))
+                    }
+                }
+            }
+        }
+
+        // 5.5 Ground battle tick (Plan 03-04)
+        state.groundBattleState?.let { groundState ->
+            val groundEngine = GroundBattleEngine()
+            val groundLogs = groundEngine.processTick(groundState)
+            if (groundLogs.isNotEmpty()) {
+                state.tickEvents.add(BattleTickEvent("ground_battle",
+                    detail = groundLogs.joinToString("; ")))
+            }
+            if (groundState.isConquestComplete) {
+                state.tickEvents.add(BattleTickEvent("conquest_complete",
+                    detail = "지상전 승리 — 행성 점령 완료 (행성 ${groundState.planetId})"))
             }
         }
 

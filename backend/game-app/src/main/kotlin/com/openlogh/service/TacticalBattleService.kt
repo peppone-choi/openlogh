@@ -6,6 +6,7 @@ import com.openlogh.entity.TacticalBattle
 import com.openlogh.model.BattlePhase
 import com.openlogh.model.EnergyAllocation
 import com.openlogh.model.Formation
+import com.openlogh.model.InjuryEvent
 import com.openlogh.model.UnitStance
 import com.openlogh.repository.FleetRepository
 import com.openlogh.repository.OfficerRepository
@@ -239,6 +240,11 @@ class TacticalBattleService(
         tacticalBattleRepository.save(battle)
         activeBattles.remove(battle.id)
 
+        // Process flagship destructions (injury + warp to return planet)
+        if (state.pendingInjuryEvents.isNotEmpty()) {
+            processFlagshipDestructions(battle.sessionId, state)
+        }
+
         // Update fleet ships based on battle results
         for (unit in state.units) {
             val fleet = fleetRepository.findById(unit.fleetId).orElse(null) ?: continue
@@ -269,6 +275,45 @@ class TacticalBattleService(
         broadcastBattleState(battle.sessionId, state, battle)
 
         log.info("Tactical battle {} ended: {} ({})", battle.id, battle.result, outcome.reason)
+    }
+
+    /**
+     * 기함 격침으로 생성된 부상 이벤트를 처리한다.
+     * officer.injury 갱신 + officer.planetId = returnPlanetId (귀환성 워프).
+     */
+    @Transactional
+    fun processFlagshipDestructions(sessionId: Long, state: TacticalBattleState) {
+        for (injuryEvent in state.pendingInjuryEvents) {
+            val officer = officerRepository.findById(injuryEvent.officerId).orElse(null) ?: continue
+
+            // 귀환성 결정: 설정된 귀환성 → 진영 수도(미구현, Phase 4) → 현재 행성
+            val returnPlanetId = InjuryEvent.resolveReturnPlanet(
+                configuredReturnPlanetId = null,   // officer.returnPlanetId 미구현 — Phase 4에서 추가
+                factionCapitalPlanetId = null,     // FactionRepository 수도 조회 — Phase 4에서 구현
+                currentPlanetId = officer.planetId ?: 1L,
+            )
+
+            // 부상 수치 누적 갱신 (0~80 스케일)
+            val newInjury = (officer.injury.toInt() + injuryEvent.severity).coerceAtMost(InjuryEvent.MAX_INJURY)
+            officer.injury = newInjury.toShort()
+
+            // 귀환성 워프
+            officer.planetId = returnPlanetId
+
+            officerRepository.save(officer)
+
+            log.info("Officer {} injured (severity={}) → warped to planet {}",
+                officer.id, injuryEvent.severity, returnPlanetId)
+
+            messagingTemplate.convertAndSend("/topic/world/$sessionId/events", mapOf(
+                "type" to "officer_injured",
+                "officerId" to officer.id,
+                "officerName" to officer.name,
+                "severity" to newInjury,
+                "returnPlanetId" to returnPlanetId,
+            ))
+        }
+        state.pendingInjuryEvents.clear()
     }
 
     // ── Query Methods ──

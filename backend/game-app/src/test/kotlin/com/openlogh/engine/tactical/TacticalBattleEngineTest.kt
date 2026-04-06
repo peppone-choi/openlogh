@@ -181,4 +181,112 @@ class TacticalBattleEngineTest {
         )
         assertEquals("MOVEMENT", state.currentPhase)
     }
+
+    /**
+     * 기함(isFlagship=true) hp<=0 시 pendingInjuryEvents에 InjuryEvent가 추가된다.
+     */
+    @Test
+    fun `flagship destroyed generates pendingInjuryEvent`() {
+        val flagship = TacticalUnit(
+            fleetId = 1L,
+            officerId = 101L,
+            officerName = "라인하르트",
+            factionId = 1L,
+            side = BattleSide.ATTACKER,
+            posX = 100.0, posY = 300.0,
+            hp = 0,       // already at 0 — will be destroyed this tick
+            maxHp = 1000,
+            ships = 1, maxShips = 300,
+            isFlagship = true,
+            isAlive = true,
+        )
+        val enemy = makeUnit(2L, BattleSide.DEFENDER, posX = 900.0, posY = 300.0)
+        val state = makeState(flagship, enemy)
+
+        engine.processTick(state)
+
+        assertTrue(state.pendingInjuryEvents.size == 1,
+            "기함 격침 시 pendingInjuryEvents.size == 1, got: ${state.pendingInjuryEvents.size}")
+        assertEquals(101L, state.pendingInjuryEvents[0].officerId)
+    }
+
+    /**
+     * 일반 유닛(isFlagship=false) hp<=0 시 pendingInjuryEvents에 추가되지 않는다.
+     */
+    @Test
+    fun `non-flagship destroyed does not generate pendingInjuryEvent`() {
+        val nonFlagship = TacticalUnit(
+            fleetId = 1L,
+            officerId = 101L,
+            officerName = "일반장교",
+            factionId = 1L,
+            side = BattleSide.ATTACKER,
+            posX = 100.0, posY = 300.0,
+            hp = 0,
+            maxHp = 1000,
+            ships = 1, maxShips = 300,
+            isFlagship = false,
+            isAlive = true,
+        )
+        val enemy = makeUnit(2L, BattleSide.DEFENDER, posX = 900.0, posY = 300.0)
+        val state = makeState(nonFlagship, enemy)
+
+        engine.processTick(state)
+
+        assertTrue(state.pendingInjuryEvents.isEmpty(),
+            "일반 유닛 격침 시 pendingInjuryEvents는 비어있어야 함")
+    }
+
+    /**
+     * 기함 전멸 후 같은 진영 잔존 유닛 중 ships 최대 유닛이 isFlagship=true로 승격된다.
+     */
+    @Test
+    fun `flagship replacement promotes unit with most ships on same side`() {
+        val flagship = TacticalUnit(
+            fleetId = 1L,
+            officerId = 101L,
+            officerName = "기함부대",
+            factionId = 1L,
+            side = BattleSide.ATTACKER,
+            posX = 100.0, posY = 300.0,
+            hp = 0,
+            maxHp = 1000,
+            ships = 1, maxShips = 300,
+            isFlagship = true,
+            isAlive = true,
+        )
+        val smallUnit = TacticalUnit(
+            fleetId = 2L,
+            officerId = 102L,
+            officerName = "소규모부대",
+            factionId = 1L,
+            side = BattleSide.ATTACKER,
+            posX = 120.0, posY = 300.0,
+            hp = 500, maxHp = 500,
+            ships = 50, maxShips = 100,
+            isFlagship = false,
+            isAlive = true,
+        )
+        val largeUnit = TacticalUnit(
+            fleetId = 3L,
+            officerId = 103L,
+            officerName = "대규모부대",
+            factionId = 1L,
+            side = BattleSide.ATTACKER,
+            posX = 130.0, posY = 300.0,
+            hp = 800, maxHp = 800,
+            ships = 200, maxShips = 300,
+            isFlagship = false,
+            isAlive = true,
+        )
+        val enemy = makeUnit(4L, BattleSide.DEFENDER, posX = 900.0, posY = 300.0)
+        val state = makeState(flagship, smallUnit, largeUnit, enemy)
+
+        engine.processTick(state)
+
+        assertFalse(flagship.isFlagship, "격침된 기함은 isFlagship=false 유지")
+        assertTrue(largeUnit.isFlagship,
+            "ships 최대 유닛(fleetId=3, ships=200)이 기함으로 승격되어야 함")
+        assertFalse(smallUnit.isFlagship, "소규모 부대는 기함으로 승격되지 않아야 함")
+    }
 }
