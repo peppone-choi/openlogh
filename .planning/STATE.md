@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: verifying
-stopped_at: Completed 04-03-PLAN.md
-last_updated: "2026-04-06T03:28:54.209Z"
+stopped_at: Completed 04-02-PLAN.md
+last_updated: "2026-04-06T03:31:26.404Z"
 last_activity: 2026-04-06
 progress:
   total_phases: 12
   completed_phases: 1
   total_plans: 15
-  completed_plans: 12
+  completed_plans: 13
   percent: 25
 ---
 
@@ -64,6 +64,7 @@ Progress: [███░░░░░░░] 25%
 | Phase 02 P03 | 6min | 2 tasks | 4 files |
 | Phase 04 P01 | 8min | 2 tasks | 10 files |
 | Phase 04 P03 | 2min | 2 tasks | 6 files |
+| Phase 04 P02 | 4min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -89,6 +90,8 @@ Recent decisions affecting current work:
 - [Phase 02]: Command durations use wall-clock time, not game time -- no changes needed
 - [Phase 04]: 82 position cards defined (plan stated 77 but explicitly listed 82); all gin7 organizational positions covered
 - [Phase 04]: CP deduction on proposal approval goes to requester via CommandService.executeCommand pipeline
+- [Phase 04]: Legacy officerLevel >= 5 fallback kept for faction commands during card migration
+- [Phase 04]: Cooldown storage converted from turn-index Int to OffsetDateTime ISO strings with backward compat
 
 ### Pending Todos
 
@@ -101,6 +104,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-06T03:28:54.203Z
-Stopped at: Completed 04-03-PLAN.md
+Last session: 2026-04-06T03:31:26.398Z
+Stopped at: Completed 04-02-PLAN.md
 Resume file: None

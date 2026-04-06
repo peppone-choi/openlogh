@@ -93,7 +93,7 @@ Plans:
 
 Plans:
 - [x] 04-01-PLAN.md — PositionCard enum (77 cards), CommandGroup enum (7 groups), PositionCardRegistry, Flyway V32, Officer entity update
-- [ ] 04-02-PLAN.md — Authority gating in CommandExecutor, real-time cooldowns (OffsetDateTime), command table filtering
+- [x] 04-02-PLAN.md — Authority gating in CommandExecutor, real-time cooldowns (OffsetDateTime), command table filtering
 - [x] 04-03-PLAN.md — Proposal entity + Flyway V33, ProposalService (submit/approve/reject), ProposalController REST endpoints
 - [ ] 04-04-PLAN.md — Frontend command panel (card-filtered, grouped by command group), proposal panel UI, command store
 
