@@ -114,7 +114,7 @@ Plans:
 - [x] 05-01-PLAN.md — Flyway V34 migration, UnitType/CrewSlotRole enums, Fleet entity update, UnitCrew entity, CQRS snapshots
 - [x] 05-02-PLAN.md — FormationCapService (population linkage), UnitCrewService, FleetService update, REST API
 - [x] 05-03-PLAN.md — Frontend unit types, API client, UnitListPanel/UnitDetailPanel/CrewRosterPanel/FormationCapBar UI
-- [ ] 05-04-PLAN.md — CQRS layer wiring for UnitCrew + integration verification checkpoint
+- [x] 05-04-PLAN.md — CQRS layer wiring for UnitCrew + integration verification checkpoint
 
 ### Phase 6: Galaxy Map & Planet Model
 **Goal**: Players navigate and manage 80 star systems connected by routes, with territory visualization and fortress mechanics
