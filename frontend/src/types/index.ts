@@ -1699,3 +1699,114 @@ export const CREW_PROFICIENCY_INFO: Record<CrewProficiency, { level: number; nam
     VETERAN: { level: 2, nameKo: '숙련', nameEn: 'Veteran', combatMultiplier: 1.2 },
     ELITE: { level: 3, nameKo: '정예', nameEn: 'Elite', combatMultiplier: 1.5 },
 };
+
+// =============================================================
+// Mail System - Position Card Mail Addresses (직무 메일주소)
+// =============================================================
+
+export interface MailAddress {
+    officerId: number;
+    officerName: string;
+    addressType: 'PERSONAL' | 'POSITION_CARD';
+    positionCard: string | null;
+    displayName: string;
+}
+
+export interface AddressBookEntry {
+    officerId: number;
+    name: string;
+    factionId: number;
+    factionName: string;
+    rankLevel: number;
+    isContact: boolean;
+    addressType: string;
+    positionCard: string | null;
+    positionCardName: string | null;
+}
+
+export interface NameCardExchangeResponse {
+    success: boolean;
+    newAddressesAdded: number;
+}
+
+export interface MailboxCounts {
+    private: number;
+    national: number;
+    diplomacy: number;
+    privateMax: number;
+}
+
+// =============================================================
+// Messenger System (메신저 1:1 통화)
+// =============================================================
+
+export type MessengerConnectionStatus = 'PENDING' | 'ACTIVE' | 'CANCELLED' | 'DECLINED';
+
+export interface MessengerCallResponse {
+    connectionId: number;
+    status: MessengerConnectionStatus;
+}
+
+export interface MessengerAcceptResponse {
+    connectionId: number;
+    status: MessengerConnectionStatus;
+    callerId: number;
+}
+
+export interface MessengerPendingCall {
+    connectionId: number;
+    callerId: number;
+    callerName: string;
+    callerFactionId: number;
+    createdAt: string;
+}
+
+export interface MessengerEvent {
+    type: 'INCOMING_CALL' | 'CALL_ACCEPTED' | 'CALL_DECLINED' | 'CALL_CANCELLED' | 'CALL_DISCONNECTED' | 'MESSAGE';
+    connectionId: number;
+    callerId?: number;
+    callerName?: string;
+    callerFactionId?: number;
+    calleeId?: number;
+    calleeName?: string;
+    senderId?: number;
+    senderName?: string;
+    content?: string;
+    timestamp?: string;
+    reason?: string;
+    disconnectedBy?: number;
+}
+
+// =============================================================
+// Offline Location-Based Processing (오프라인 처리)
+// =============================================================
+
+export type OfflineLocation = 'HOME' | 'FLAGSHIP' | 'OTHER';
+
+export interface OfflineStatus {
+    location: OfflineLocation;
+    canDieInCombat: boolean;
+    canBeArrested: boolean;
+    subjectToPersonnel: boolean;
+    canMove: boolean;
+    aiControlled: boolean;
+    anchored: boolean;
+    description: string;
+}
+
+// =============================================================
+// Chat Commands (챗 커맨드)
+// =============================================================
+
+export interface ChatSystemMessage {
+    type: 'SYSTEM';
+    content: string;
+    timestamp: string;
+}
+
+export interface ChatCommandRequest {
+    officerId: number;
+    content: string;
+    scope: string;
+    targetOfficerId?: number;
+}
