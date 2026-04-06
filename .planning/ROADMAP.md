@@ -65,9 +65,15 @@ Plans:
   3. 빔/건/미사일(물자소비) 무기가 사거리/위력/보정에 따라 피해를 계산하고 88 서브타입 스탯이 적용된다
   4. 커맨드레인지서클이 tick 경과에 따라 확대되고 명령 발령 시 0으로 리셋된다
   5. 육전대 강하 후 지상전이 시작되며 6종 행성 점령 방식(항복권고/정밀폭격/무차별폭격/육전대강하/점거/선동)이 각기 다른 결과를 낸다
-**Plans**: TBD
+**Plans**: 5 plans
+
+Plans:
+- [ ] 03-01-PLAN.md — TacticalUnit 확장 + 태세/에너지 WebSocket 채널 + 자동 전투 개시
+- [ ] 03-02-PLAN.md — 미사일/전투정 무기 시스템 + BEAM 사거리 곡선 + 색적 DetectionService
+- [ ] 03-03-PLAN.md — 요새포 4종 FortressGunSystem + 전투 REST API + 퇴각/공격대상 채널
+- [ ] 03-04-PLAN.md — 지상전 박스(30유닛 제한) + 행성 점령 6종 PlanetConquestService
+- [ ] 03-05-PLAN.md — 기함 격침→부상→귀환성 워프 + 전술 커맨드 11종 + 통합 테스트
 **UI hint**: yes
-**Research flag**: Phase 3 planning 전 지상전 지형 규칙 및 5단계 전술전 구조 gin7 매뉴얼 검증 권장
 
 ### Phase 4: 경제 시스템
 **Goal**: 행성 자원 생산, 조병창 자동생산, 세율/납입, 창고 이동, 페잔 차관이 TickEngine의 월별 파이프라인을 통해 순환된다
