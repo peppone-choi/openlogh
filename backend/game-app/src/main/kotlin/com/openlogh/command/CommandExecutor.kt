@@ -711,7 +711,7 @@ class CommandExecutor @Autowired constructor(
         /** Base cooldown period in seconds per postReqTurn unit (5 minutes). */
         private const val COOLDOWN_BASE_SECONDS = 300L
         /** Commands that bypass position card authority checks. */
-        private val ALWAYS_ALLOWED_COMMANDS = setOf("휴식", "Nation휴식", "NPC능동", "CR건국", "CR맹훈련")
+        private val ALWAYS_ALLOWED_COMMANDS = setOf("대기")
 
         private val NATION_COLORS = listOf(
             "#FF0000", "#800000", "#A0522D", "#FF6347", "#FFA500",
