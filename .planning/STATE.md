@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed Phase 8 Scenario & Character System
-last_updated: "2026-04-06T05:06:00Z"
+stopped_at: Completed Phase 10 Tactical Combat (RTS)
+last_updated: "2026-04-06T05:28:00Z"
 last_activity: 2026-04-06
 progress:
   total_phases: 12
-  completed_phases: 5
-  total_plans: 26
-  completed_plans: 25
-  percent: 42
+  completed_phases: 6
+  total_plans: 30
+  completed_plans: 29
+  percent: 50
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-05)
 
 **Core value:** gin7의 핵심 "조직 시뮬레이션" — 직무권한카드 기반 커맨드 시스템으로 계급 구조 안에서 명령/제안/인사/정치를 수행
-**Current focus:** Phase 8 - Scenario & Character System (complete)
+**Current focus:** Phase 10 - Tactical Combat / RTS (complete)
 
 ## Current Position
 
-Phase: 8 of 12 (Scenario & Character System)
-Plan: 3 of 3 in current phase
+Phase: 10 of 12 (Tactical Combat / RTS)
+Plan: 4 of 4 in current phase
 Status: Phase complete
 Last activity: 2026-04-06
 
-Progress: [████░░░░░░] 42%
+Progress: [█████░░░░░] 50%
 
 ## Performance Metrics
 
@@ -74,6 +74,10 @@ Progress: [████░░░░░░] 42%
 | Phase 06 P02 | 3min | 2 tasks | 5 files |
 | Phase 06 P03 | 3min | 2 tasks | 8 files |
 | Phase 06 P04 | 3min | 2 tasks | 3 files |
+| Phase 10 P01 | 3min | 2 tasks | 7 files |
+| Phase 10 P02 | 3min | 2 tasks | 2 files |
+| Phase 10 P03 | 3min | 2 tasks | 4 files |
+| Phase 10 P04 | 3min | 2 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -110,6 +114,11 @@ Recent decisions affecting current work:
 - [Phase 06]: StarSystemExtra as inner data class of MapService; bidirectional routes deduplicated in API
 - [Phase 06]: Galaxy map uses uniform coordinate scaling with React Konva 2D canvas
 - [Phase 06]: Star system initialization placed after nation assignment in ScenarioService.initializeWorld for correct faction mapping
+- [Phase 10]: Active battle states stored in ConcurrentHashMap for fast tick processing, DB persistence every 10 ticks
+- [Phase 10]: SVG-based battle map instead of React Konva to avoid extra dependency
+- [Phase 10]: Fortress gun fires in line-of-fire hitting ALL units including friendlies (gin7 faithful)
+- [Phase 10]: 600-tick battle timeout with HP ratio comparison for winner determination
+- [Phase 10]: Retreat requires 50% WARP energy allocation to prevent instant escapes
 
 ### Pending Todos
 
@@ -122,6 +131,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-06T04:37:10.755Z
-Stopped at: Completed 06-04-PLAN.md
+Last session: 2026-04-06T05:28:00Z
+Stopped at: Completed Phase 10 Tactical Combat (RTS)
 Resume file: None

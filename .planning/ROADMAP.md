@@ -21,7 +21,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 7: Rank, Merit & Personnel** - 11-tier rank ladder, merit points, promotion/demotion, appointment authority (completed 2026-04-05)
 - [x] **Phase 8: Scenario & Character System** - 10 scenarios, custom character creation, original character selection, scenario events (completed 2026-04-06)
 - [ ] **Phase 9: Strategic Commands** - Operation planning, logistics, production, supply chain commands
-- [ ] **Phase 10: Tactical Combat (RTS)** - WebSocket real-time fleet battle, energy allocation, formations, fortress guns
+- [x] **Phase 10: Tactical Combat (RTS)** - WebSocket real-time fleet battle, energy allocation, formations, fortress guns (completed 2026-04-06)
 - [ ] **Phase 11: Faction Politics & Diplomacy** - Empire autocracy, Alliance democracy, Fezzan NPC systems, coups, elections
 - [ ] **Phase 12: Communication & Session Lifecycle** - Mail, chat, victory conditions, session restart, rankings
 
@@ -194,8 +194,14 @@ Plans:
   3. Fleet formation selection (wedge, by-class, mixed, three-column) visibly affects combat performance (attack/defense/speed modifiers)
   4. Fortress guns (Thor Hammer at Iserlohn, Geiersburg Haken) fire at fleets within range, dealing massive damage with appropriate cooldown
   5. The tactical battle UI shows fleet positions, damage in real-time, energy allocation controls, formation selector, and battle outcome resolution
-**Plans**: TBD
+**Plans:** 4/4 plans complete
 **UI hint**: yes
+
+Plans:
+- [x] 10-01-PLAN.md — EnergyAllocation, Formation, BattlePhase models, TacticalBattle entity, V37 migration
+- [x] 10-02-PLAN.md — TacticalBattleEngine (tick-based RTS), BattleTriggerService, fortress gun line-of-fire
+- [x] 10-03-PLAN.md — TacticalBattleService, WebSocket controller, REST API, DTO classes
+- [x] 10-04-PLAN.md — Frontend tactical page, BattleMap SVG, EnergyPanel, FormationSelector, BattleStatus
 
 ### Phase 11: Faction Politics & Diplomacy
 **Goal**: Each faction operates under its unique political system with coups, elections, loans, and inter-faction diplomacy
@@ -238,6 +244,6 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 12
 | 7. Rank, Merit & Personnel | 3/3 | Complete   | 2026-04-05 |
 | 8. Scenario & Character System | 3/3 | Complete   | 2026-04-06 |
 | 9. Strategic Commands | 0/TBD | Not started | - |
-| 10. Tactical Combat (RTS) | 0/TBD | Not started | - |
+| 10. Tactical Combat (RTS) | 4/4 | Complete   | 2026-04-06 |
 | 11. Faction Politics & Diplomacy | 0/TBD | Not started | - |
 | 12. Communication, NPC AI & Session Lifecycle | 0/TBD | Not started | - |
