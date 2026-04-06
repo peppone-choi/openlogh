@@ -1593,3 +1593,109 @@ export const CREW_SLOT_INFO: Record<CrewSlotRole, { nameKo: string; nameEn: stri
     STAFF_OFFICER_6: { nameKo: '참모6', nameEn: 'Staff Officer 6' },
     ADJUTANT: { nameKo: '부관', nameEn: 'Adjutant' },
 };
+
+// ──────────────────────────────────────────────────────────────────────
+// Logistics System (병참 시스템 — Warehouse & Supply Chain)
+// ──────────────────────────────────────────────────────────────────────
+
+export type ShipClassType = 'BATTLESHIP' | 'CRUISER' | 'DESTROYER' | 'CARRIER' | 'TRANSPORT' | 'HOSPITAL';
+
+export type CrewProficiency = 'GREEN' | 'NORMAL' | 'VETERAN' | 'ELITE';
+
+export interface PlanetWarehouse {
+    id: number;
+    sessionId: number;
+    planetId: number;
+    battleship: number;
+    cruiser: number;
+    destroyer: number;
+    carrier: number;
+    transport: number;
+    hospital: number;
+    crewGreen: number;
+    crewNormal: number;
+    crewVeteran: number;
+    crewElite: number;
+    supplies: number;
+    missiles: number;
+    hasShipyard: boolean;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface FleetWarehouse {
+    id: number;
+    sessionId: number;
+    fleetId: number;
+    battleship: number;
+    cruiser: number;
+    destroyer: number;
+    carrier: number;
+    transport: number;
+    hospital: number;
+    crewGreen: number;
+    crewNormal: number;
+    crewVeteran: number;
+    crewElite: number;
+    supplies: number;
+    missiles: number;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface AllocationRequest {
+    fleetId: number;
+    battleship?: number;
+    cruiser?: number;
+    destroyer?: number;
+    carrier?: number;
+    transport?: number;
+    hospital?: number;
+    crewGreen?: number;
+    crewNormal?: number;
+    crewVeteran?: number;
+    crewElite?: number;
+    supplies?: number;
+    missiles?: number;
+}
+
+export interface ReorganizationRequest {
+    toWarehouse: boolean;
+    battleship?: number;
+    cruiser?: number;
+    destroyer?: number;
+    carrier?: number;
+    transport?: number;
+    hospital?: number;
+}
+
+export interface ReplenishmentRequest {
+    shipClass: ShipClassType;
+    shipClassCode: number;
+    amount: number;
+}
+
+export interface ProductionReport {
+    planetId: number;
+    planetName: string;
+    shipsProduced: number;
+    shipClass: ShipClassType;
+    crewProduced: number;
+    suppliesProduced: number;
+}
+
+export const SHIP_CLASS_INFO: Record<ShipClassType, { code: number; nameKo: string; nameEn: string; shipsPerUnit: number }> = {
+    BATTLESHIP: { code: 0, nameKo: '전함', nameEn: 'Battleship', shipsPerUnit: 300 },
+    CRUISER: { code: 1, nameKo: '순양함', nameEn: 'Cruiser', shipsPerUnit: 300 },
+    DESTROYER: { code: 2, nameKo: '구축함', nameEn: 'Destroyer', shipsPerUnit: 300 },
+    CARRIER: { code: 3, nameKo: '항공모함', nameEn: 'Carrier', shipsPerUnit: 300 },
+    TRANSPORT: { code: 4, nameKo: '수송함', nameEn: 'Transport', shipsPerUnit: 300 },
+    HOSPITAL: { code: 5, nameKo: '병원선', nameEn: 'Hospital Ship', shipsPerUnit: 300 },
+};
+
+export const CREW_PROFICIENCY_INFO: Record<CrewProficiency, { level: number; nameKo: string; nameEn: string; combatMultiplier: number }> = {
+    GREEN: { level: 0, nameKo: '신병', nameEn: 'Green', combatMultiplier: 0.7 },
+    NORMAL: { level: 1, nameKo: '일반', nameEn: 'Normal', combatMultiplier: 1.0 },
+    VETERAN: { level: 2, nameKo: '숙련', nameEn: 'Veteran', combatMultiplier: 1.2 },
+    ELITE: { level: 3, nameKo: '정예', nameEn: 'Elite', combatMultiplier: 1.5 },
+};
