@@ -48,7 +48,7 @@ Plans:
 
 Plans:
 - [x] 02-01-PLAN.md — PositionCardRegistry gin7 매핑 교체 + Gin7CommandRegistry MCP/PCP 분리
-- [ ] 02-02-PLAN.md — 작전커맨드 16종 + 병참커맨드 6종 구현체
+- [x] 02-02-PLAN.md — 작전커맨드 16종 + 병참커맨드 6종 구현체
 - [x] 02-03-PLAN.md — 개인커맨드 15종 + 인사커맨드 10종 구현체
 - [x] 02-04-PLAN.md — 정치커맨드 12종 + 첩보커맨드 14종 구현체
 - [ ] 02-05-PLAN.md — 지휘커맨드 8종 구현체 + stub 전량 제거
