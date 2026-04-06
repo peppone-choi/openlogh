@@ -402,15 +402,16 @@ class FrontInfoService(
         if (g.officerLevel.toInt() == 20) return 4
         if (g.permission == "ambassador") return 4
         if (g.permission == "auditor") return 3
-        if (g.officerLevel >= 5) return 2
+        // TODO Phase 2: gin7 직무권한카드 기반 접근 레벨로 교체
+        // 임시: PositionCard 미구현 상태에서 기본값 반환
         if (g.officerLevel > 1) return 1
         return 0
     }
 
     private fun calcLeadershipBonus(officerLevel: Int, nationLevel: Int): Int {
+        // TODO Phase 2: gin7 직무권한카드 기반 리더십 보너스로 교체
         return when {
             officerLevel == 20 -> nationLevel * 2
-            officerLevel >= 5 -> nationLevel
             else -> 0
         }
     }

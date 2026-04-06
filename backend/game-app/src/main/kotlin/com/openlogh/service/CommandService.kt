@@ -156,12 +156,12 @@ class CommandService(
         val world = sessionStateRepository.findById(officer.sessionId.toShort()).orElse(null) ?: return null
 
         val officerCards = officer.getPositionCardEnums()
-        // Card-based check with legacy fallback: show faction commands if officer has any
-        // non-PERSONAL/CAPTAIN card granting faction-level groups, OR officerLevel >= 5 (legacy)
+        // Card-based check: show faction commands if officer has any
+        // non-PERSONAL/CAPTAIN card granting faction-level groups
         val hasFactionCardAccess = officerCards.any { card ->
             card.commandGroups.any { it != com.openlogh.model.CommandGroup.PERSONAL && it != com.openlogh.model.CommandGroup.OPERATIONS }
         }
-        if (!hasFactionCardAccess && officer.officerLevel < 5) {
+        if (!hasFactionCardAccess) {
             return linkedMapOf()
         }
 
@@ -178,8 +178,8 @@ class CommandService(
 
         for (actionCode in actionCodes) {
             if (allowedCommands != null && actionCode !in allowedCommands) continue
-            // Position card authority filter (with legacy officerLevel >= 5 fallback)
-            if (actionCode != "Nation휴식" && !PositionCardRegistry.canExecute(officerCards, actionCode) && officer.officerLevel < 5) continue
+            // Position card authority filter — Phase 2에서 gin7 81종 PositionCard 매핑으로 완성 예정
+            if (actionCode != "Nation휴식" && !PositionCardRegistry.canExecute(officerCards, actionCode)) continue
 
             val command = commandRegistry.createFactionCommand(actionCode, officer, env, null) ?: continue
             command.city = planet

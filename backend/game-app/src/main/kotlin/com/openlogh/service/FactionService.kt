@@ -85,13 +85,14 @@ class FactionService(
         if (officer.penalty["noTopSecret"] == true) {
             return false
         }
-        if (officer.officerLevel >= 5 && officer.penalty["noChief"] == true) {
+        if (officer.penalty["noChief"] == true) {
             return false
         }
         if (officer.permission == "ambassador" && officer.penalty["noAmbassador"] == true) {
             return false
         }
-        return officer.officerLevel >= 5 || officer.permission == "ambassador"
+        // TODO Phase 2: gin7 직무권한카드(faction chief card) 기반으로 교체
+        return officer.permission == "ambassador"
     }
 
     fun resolvePolicyActor(nationId: Long, loginId: String): Officer? {
@@ -217,14 +218,8 @@ class FactionService(
             throw IllegalStateException("${nationTitle} 국가에서는 해당 관직을 임명할 수 없습니다.")
         }
 
-        if (officerLevel >= 5) {
-            val existing = officerRepository.findBySessionId(officer.sessionId)
-                .filter { it.factionId == nationId && it.officerLevel.toInt() == officerLevel && it.id != generalId }
-            for (prev in existing) {
-                prev.officerLevel = 1
-                officerRepository.save(prev)
-            }
-        }
+        // TODO Phase 2: gin7 직무권한카드 기반으로 중복 직위 해소 로직 교체
+        // 현재는 officerLevel 5+ 중복 해소 로직 제거 — PositionCard 시스템에서 관리
         
         officer.officerLevel = officerLevel.toShort()
         if (officerPlanet != null) officer.officerPlanet = officerPlanet

@@ -183,13 +183,11 @@ class CommandExecutor @Autowired constructor(
         if (actionCode !in ALWAYS_ALLOWED_COMMANDS) {
             val officerCards = general.getPositionCardEnums()
             if (!PositionCardRegistry.canExecute(officerCards, actionCode)) {
-                // Legacy fallback: officerLevel >= 5 still grants access during migration
-                if (general.officerLevel < 5) {
-                    return CommandResult(
-                        success = false,
-                        logs = listOf("<R>${actionCode}</>을(를) 실행할 수 없습니다. - 해당 직무권한카드가 없습니다.")
-                    )
-                }
+                // Phase 2에서 gin7 81종 PositionCard 매핑으로 완성 예정
+                return CommandResult(
+                    success = false,
+                    logs = listOf("<R>${actionCode}</>을(를) 실행할 수 없습니다. - 해당 직무권한카드가 없습니다.")
+                )
             }
         }
 

@@ -10,7 +10,7 @@ package com.openlogh.engine.modifier
  * Three effects from legacy:
  *   1. Leadership bonus: level 20 → nationLevel*2, level 8-19 → nationLevel*1, else 0
  *      (applied externally via calcLeadershipBonus; this modifier handles stat context)
- *      Legacy threshold: officerLevel >= 5 out of 12 → scaled to >= 8 out of 20
+ *      Legacy threshold (삼국지 원본): level 5/12 → scaled to 8/20 in OpenLOGH
  *   2. Domestic score ×1.05 for specific officer levels per command type
  *   3. War power multiplier / opponent war power multiplier per level bracket
  *

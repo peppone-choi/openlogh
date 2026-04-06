@@ -96,7 +96,7 @@ class UnificationService(
 
         val generals = officerRepository.findBySessionId(world.id.toLong())
         val chiefs = generals
-            .filter { it.factionId == winnerNationId && it.officerLevel >= 5 && it.npcState.toInt() < 2 }
+            .filter { it.factionId == winnerNationId && it.npcState.toInt() < 2 }
             .sortedByDescending { it.officerLevel }
             .take(2)
 

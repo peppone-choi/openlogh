@@ -247,7 +247,7 @@ class InMemoryTurnProcessor(
                 continue
             }
 
-            if (officer.officerLevel >= 5 && officer.factionId > 0) {
+            if (officer.factionId > 0) {
                 val factionKey = FactionTurnKey(officer.factionId, officer.officerLevel)
                 val factionQueue = state.factionTurnsByFactionAndLevel[factionKey]
                 if (!factionQueue.isNullOrEmpty()) {
