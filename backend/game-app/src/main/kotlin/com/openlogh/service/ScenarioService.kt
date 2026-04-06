@@ -32,6 +32,7 @@ class ScenarioService(
     private val historyService: HistoryService,
     private val selectPoolRepository: com.openlogh.repository.SelectPoolRepository,
     private val entityManager: EntityManager,
+    private val starSystemService: StarSystemService,
 ) {
     private val scenarios = mutableMapOf<String, ScenarioData>()
     @Volatile
@@ -194,6 +195,34 @@ class ScenarioService(
             }
         }
         if (citiesToUpdate.isNotEmpty()) planetRepository.saveAll(citiesToUpdate)
+
+        // 2.5 Initialize star systems (LOGH maps only)
+        if (mapName == "logh") {
+            val regions = mapService.getRegions(mapName)
+            val factionMap = mutableMapOf<String, Long>()
+            for (nation in savedNations) {
+                // Match faction name to region name for mapping
+                for ((_, regionName) in regions) {
+                    if (nation.name.contains(regionName) || regionName.contains(nation.name)) {
+                        factionMap[regionName] = nation.id
+                    }
+                }
+            }
+            val starSystemMap = starSystemService.initializeStarSystems(worldId, mapName, factionMap)
+
+            // Update planets with star system IDs by matching mapPlanetId to mapStarId
+            val planetsToLink = mutableListOf<Planet>()
+            for (planet in savedCities) {
+                val starSystem = starSystemMap[planet.mapPlanetId]
+                if (starSystem != null) {
+                    planet.starSystemId = starSystem.id
+                    planetsToLink.add(planet)
+                }
+            }
+            if (planetsToLink.isNotEmpty()) planetRepository.saveAll(planetsToLink)
+            log.info("[World {}] Initialized {} star systems with {} routes", worldId, starSystemMap.size,
+                starSystemService.getRoutes(worldId).size)
+        }
 
         val generalsToSave = mutableListOf<Officer>()
         var delayedNpcCount = 0

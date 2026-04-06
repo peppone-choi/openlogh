@@ -69,6 +69,7 @@ class ScenarioServiceTest {
             historyService = historyService,
             selectPoolRepository = selectPoolRepository,
             entityManager = entityManager,
+            starSystemService = mock(StarSystemService::class.java),
         )
 
         parseGeneral = ScenarioService::class.java.getDeclaredMethod(
