@@ -11,7 +11,7 @@ import { useOfficerStore } from '@/stores/officerStore';
 import { useRouter } from 'next/navigation';
 
 function formatCompact(n: number): string {
-    if (n >= 10000) return `${(n / 10000).toFixed(1)}만`;
+    if (n >= 10000) return `${(n / 10000).toFixed(1)}M`;
     if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
     return n.toLocaleString();
 }
@@ -30,16 +30,16 @@ export function TopBar({ onMessageClick, onMobileMenuClick }: TopBarProps) {
 
     const worldDate =
         currentWorld.currentYear && currentWorld.currentMonth
-            ? `${currentWorld.currentYear}년 ${currentWorld.currentMonth}월`
+            ? `UC ${currentWorld.currentYear}.${currentWorld.currentMonth}`
             : '';
 
     return (
-        <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border bg-card/95 backdrop-blur-md px-4">
+        <header className="flex h-14 shrink-0 items-center gap-2 border-b border-[#1a2040] bg-[#0f1429]/95 backdrop-blur-md px-4">
             <Button
                 variant="ghost"
                 className="flex md:hidden items-center gap-2 h-auto p-1"
                 onClick={() => router.push('/general')}
-                aria-label="장수 정보"
+                aria-label="Officer Info"
             >
                 <GeneralPortrait picture={myOfficer.picture} name={myOfficer.name} size="xs" />
                 <div className="flex flex-col min-w-0 items-start">
@@ -50,7 +50,7 @@ export function TopBar({ onMessageClick, onMobileMenuClick }: TopBarProps) {
 
             <SidebarTrigger className="hidden md:flex" />
             <div className="hidden md:flex items-center gap-2 text-sm font-semibold">
-                <span>오픈삼국</span>
+                <span className="text-[#00d4ff] tracking-wider">OPEN LOGH</span>
                 {worldDate && <span className="text-muted-foreground">| {worldDate}</span>}
             </div>
 
@@ -64,21 +64,21 @@ export function TopBar({ onMessageClick, onMobileMenuClick }: TopBarProps) {
                 </div>
 
                 <div className="flex md:hidden items-center gap-2">
-                    <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-yellow-500/20">
-                        <div className="w-3.5 h-3.5 rounded-full bg-yellow-500 flex items-center justify-center">
-                            <span className="text-[8px] text-yellow-950 font-bold">금</span>
+                    <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-[#c9a84c]/20">
+                        <div className="w-3.5 h-3.5 rounded-full bg-[#c9a84c] flex items-center justify-center">
+                            <span className="text-[8px] text-black font-bold">F</span>
                         </div>
-                        <span className="text-[11px] font-medium text-yellow-400">{formatCompact(myOfficer.gold)}</span>
+                        <span className="text-[11px] font-medium text-[#c9a84c]">{formatCompact(myOfficer.gold)}</span>
                     </div>
-                    <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-green-500/20">
-                        <div className="w-3.5 h-3.5 rounded-full bg-green-500 flex items-center justify-center">
-                            <span className="text-[8px] text-green-950 font-bold">미</span>
+                    <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-[#00d4ff]/20">
+                        <div className="w-3.5 h-3.5 rounded-full bg-[#00d4ff] flex items-center justify-center">
+                            <span className="text-[8px] text-black font-bold">S</span>
                         </div>
-                        <span className="text-[11px] font-medium text-green-400">{formatCompact(myOfficer.rice)}</span>
+                        <span className="text-[11px] font-medium text-[#00d4ff]">{formatCompact(myOfficer.rice)}</span>
                     </div>
                 </div>
 
-                <Button variant="ghost" size="icon" onClick={onMessageClick} aria-label="메시지">
+                <Button variant="ghost" size="icon" onClick={onMessageClick} aria-label="Messages">
                     <Bell className="h-5 w-5" />
                 </Button>
 
@@ -88,7 +88,7 @@ export function TopBar({ onMessageClick, onMobileMenuClick }: TopBarProps) {
 
                 <Button variant="ghost" size="sm" onClick={() => router.push('/lobby')}>
                     <LogOut className="h-4 w-4 md:mr-2" />
-                    <span className="hidden md:inline">로비</span>
+                    <span className="hidden md:inline">Lobby</span>
                 </Button>
             </div>
         </header>

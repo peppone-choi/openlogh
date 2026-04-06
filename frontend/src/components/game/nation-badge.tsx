@@ -10,7 +10,7 @@ export function NationBadge({ name, color, size = 'sm' }: NationBadgeProps) {
     if (!name) {
         return (
             <Badge variant="outline" className="text-muted-foreground">
-                재야
+                Unaffiliated
             </Badge>
         );
     }

@@ -44,7 +44,7 @@ export function RankBadge({
             </Badge>
             {showMerit && meritPoints !== undefined && (
                 <span className="text-xs text-muted-foreground">
-                    공적 {meritPoints}
+                    Merit {meritPoints}
                 </span>
             )}
         </div>
@@ -66,7 +66,7 @@ export function MeritProgressBar({
     return (
         <div className="flex items-center gap-2">
             <span className="text-xs text-muted-foreground whitespace-nowrap">
-                공적
+                Merit
             </span>
             <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
                 <div
