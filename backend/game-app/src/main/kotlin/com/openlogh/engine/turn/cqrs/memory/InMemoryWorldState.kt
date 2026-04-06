@@ -9,6 +9,7 @@ data class InMemoryWorldState(
     val factions: MutableMap<Long, FactionSnapshot> = mutableMapOf(),
     val fleets: MutableMap<Long, FleetSnapshot> = mutableMapOf(),
     val diplomacies: MutableMap<Long, DiplomacySnapshot> = mutableMapOf(),
+    val unitCrews: MutableMap<Long, UnitCrewSnapshot> = mutableMapOf(),
     val officerTurnsByOfficerId: MutableMap<Long, MutableList<OfficerTurnSnapshot>> = mutableMapOf(),
     val factionTurnsByFactionAndLevel: MutableMap<FactionTurnKey, MutableList<FactionTurnSnapshot>> = mutableMapOf(),
 )
@@ -174,8 +175,22 @@ data class FleetSnapshot(
     var leaderOfficerId: Long,
     var factionId: Long,
     var name: String,
+    var unitType: String,
+    var maxUnits: Int,
+    var currentUnits: Int,
+    var maxCrew: Int,
+    var planetId: Long?,
     var meta: MutableMap<String, Any>,
     var createdAt: OffsetDateTime,
+)
+
+data class UnitCrewSnapshot(
+    val id: Long,
+    val sessionId: Long,
+    var fleetId: Long,
+    var officerId: Long,
+    var slotRole: String,
+    var assignedAt: OffsetDateTime,
 )
 
 data class DiplomacySnapshot(

@@ -5,11 +5,13 @@ import com.openlogh.engine.turn.cqrs.memory.FactionSnapshot
 import com.openlogh.engine.turn.cqrs.memory.FleetSnapshot
 import com.openlogh.engine.turn.cqrs.memory.OfficerSnapshot
 import com.openlogh.engine.turn.cqrs.memory.PlanetSnapshot
+import com.openlogh.engine.turn.cqrs.memory.UnitCrewSnapshot
 import com.openlogh.entity.Diplomacy
 import com.openlogh.entity.Faction
 import com.openlogh.entity.Fleet
 import com.openlogh.entity.Officer
 import com.openlogh.entity.Planet
+import com.openlogh.entity.UnitCrew
 
 fun OfficerSnapshot.toEntity(): Officer = Officer(
     id = id,
@@ -317,6 +319,11 @@ fun FleetSnapshot.toEntity(): Fleet = Fleet(
     leaderOfficerId = leaderOfficerId,
     factionId = factionId,
     name = name,
+    unitType = unitType,
+    maxUnits = maxUnits,
+    currentUnits = currentUnits,
+    maxCrew = maxCrew,
+    planetId = planetId,
     meta = meta.toMutableMap(),
     createdAt = createdAt,
 )
@@ -327,8 +334,31 @@ fun Fleet.toSnapshot(): FleetSnapshot = FleetSnapshot(
     leaderOfficerId = leaderOfficerId,
     factionId = factionId,
     name = name,
+    unitType = unitType,
+    maxUnits = maxUnits,
+    currentUnits = currentUnits,
+    maxCrew = maxCrew,
+    planetId = planetId,
     meta = meta.toMutableMap(),
     createdAt = createdAt,
+)
+
+fun UnitCrewSnapshot.toEntity(): UnitCrew = UnitCrew(
+    id = id,
+    sessionId = sessionId,
+    fleetId = fleetId,
+    officerId = officerId,
+    slotRole = slotRole,
+    assignedAt = assignedAt,
+)
+
+fun UnitCrew.toSnapshot(): UnitCrewSnapshot = UnitCrewSnapshot(
+    id = id,
+    sessionId = sessionId,
+    fleetId = fleetId,
+    officerId = officerId,
+    slotRole = slotRole,
+    assignedAt = assignedAt,
 )
 
 fun DiplomacySnapshot.toEntity(): Diplomacy = Diplomacy(
