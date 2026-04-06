@@ -7,6 +7,7 @@ import com.openlogh.service.EmpirePoliticsService
 import com.openlogh.service.FezzanEndingService
 import com.openlogh.service.FezzanService
 import com.openlogh.service.GameEventService
+import com.openlogh.service.ShipyardProductionService
 import com.openlogh.service.TacticalBattleService
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
@@ -36,6 +37,7 @@ class TickEngineTest {
             mock(FezzanEndingService::class.java),
             mock(TacticalBattleService::class.java),
             mock(Gin7EconomyService::class.java),
+            mock(ShipyardProductionService::class.java),
         )
 
         // stub save to return the argument

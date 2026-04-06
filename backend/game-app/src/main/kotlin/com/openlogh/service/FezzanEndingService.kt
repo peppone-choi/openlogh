@@ -2,6 +2,7 @@ package com.openlogh.service
 
 import com.openlogh.repository.FactionRepository
 import com.openlogh.repository.EventRepository
+import com.openlogh.repository.SessionStateRepository
 import com.openlogh.entity.Event
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -16,6 +17,8 @@ class FezzanEndingService(
     private val factionRepository: FactionRepository,
     private val eventRepository: EventRepository,
     private val fezzanService: FezzanService,
+    private val gameEventService: GameEventService,
+    private val sessionStateRepository: SessionStateRepository,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -48,6 +51,16 @@ class FezzanEndingService(
         )
         eventRepository.save(event)
 
+        // Broadcast the Fezzan ending event to all connected clients
+        gameEventService.broadcastWorldUpdate(
+            sessionId,
+            mapOf(
+                "eventType" to "FEZZAN_ENDING",
+                "dominatedFactionId" to dominatedFactionId,
+                "message" to "페잔이 ${faction.name}을(를) 경제적으로 지배하였습니다.",
+            ),
+        )
+
         log.info("[Session {}] FEZZAN ENDING triggered! Faction {} dominated by Fezzan",
             sessionId, dominatedFactionId)
     }
@@ -55,12 +68,19 @@ class FezzanEndingService(
     /**
      * Check and trigger Fezzan ending if conditions are met.
      * Called periodically from the tick engine.
+     * Includes duplicate-trigger prevention via SessionState.meta flag.
      */
     @Transactional
     fun checkAndTrigger(sessionId: Long) {
+        // 중복 방지: 이미 트리거됨
+        val world = sessionStateRepository.findById(sessionId.toShort()).orElse(null) ?: return
+        if (world.meta["fezzanEndingTriggered"] == true) return
+
         val result = fezzanService.checkFezzanEnding(sessionId)
         if (result.triggered && result.dominatedFactionId != null) {
             triggerFezzanEnding(sessionId, result.dominatedFactionId)
+            world.meta["fezzanEndingTriggered"] = true
+            sessionStateRepository.save(world)
         }
     }
 }
