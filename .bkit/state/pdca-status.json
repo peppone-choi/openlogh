@@ -1,6 +1,6 @@
 {
   "version": "3.0",
-  "lastUpdated": "2026-04-06T07:59:53.364Z",
+  "lastUpdated": "2026-04-06T08:54:38.575Z",
   "activeFeatures": [
     "engine",
     "war",
@@ -745,9 +745,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-04-06T02:43:34.268Z",
-        "lastUpdated": "2026-04-06T07:24:08.018Z"
+        "lastUpdated": "2026-04-06T08:54:38.571Z"
       },
-      "lastFile": "/Users/apple/Desktop/개인프로젝트/openlogh/backend/game-app/src/test/kotlin/com/openlogh/model/ShipSubtypeTest.kt"
+      "lastFile": "/Users/apple/Desktop/개인프로젝트/openlogh/backend/shared/src/main/kotlin/com/openlogh/shared/model/GroundUnitStats.kt"
     },
     "unit-panel": {
       "phase": "do",
@@ -875,7 +875,7 @@
   "session": {
     "startedAt": "2026-03-23T06:31:12.665Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-04-06T07:59:53.364Z"
+    "lastActivity": "2026-04-06T08:54:38.575Z"
   },
   "history": [
     {
@@ -7811,6 +7811,24 @@
     {
       "timestamp": "2026-04-06T07:59:53.364Z",
       "feature": "frontend",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T08:53:57.153Z",
+      "feature": "model",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T08:54:15.021Z",
+      "feature": "model",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T08:54:38.574Z",
+      "feature": "model",
       "phase": "do",
       "action": "updated"
     }

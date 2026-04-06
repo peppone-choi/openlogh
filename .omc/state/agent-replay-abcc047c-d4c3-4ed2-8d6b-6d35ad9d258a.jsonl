@@ -32,3 +32,5 @@
 {"t":0,"agent":"ab153c6","agent_type":"gsd-executor","event":"agent_stop","success":true,"duration_ms":576258}
 {"t":0,"agent":"aff4cd2","agent_type":"gsd-executor","event":"agent_start","parent_mode":"none"}
 {"t":0,"agent":"aff4cd2","agent_type":"gsd-executor","event":"agent_stop","success":true,"duration_ms":447969}
+{"t":0,"agent":"a528334","agent_type":"gsd-executor","event":"agent_start","parent_mode":"none"}
+{"t":0,"agent":"a528334","agent_type":"gsd-executor","event":"agent_stop","success":true,"duration_ms":795964}
