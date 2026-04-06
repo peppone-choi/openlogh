@@ -595,7 +595,7 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
         const defaultName = items
             .map((item) => (item.actionCode === '휴식' ? '휴' : item.actionCode.charAt(0)))
             .join('');
-        const input = window.prompt('Saved action name', defaultName);
+        const input = window.prompt('저장할 액션 이름', defaultName);
         if (!input) return;
 
         const trimmedName = input.trim();
@@ -728,7 +728,7 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
         <Card className="border-gray-700" data-tutorial="command-panel">
             <CardHeader className="space-y-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                    <CardTitle className="text-base text-[#00d4ff]">Command Console</CardTitle>
+                    <CardTitle className="text-base text-[#00d4ff]">커맨드 콘솔</CardTitle>
                     <div className="flex items-center gap-2 text-xs text-gray-300">
                         <Clock3 className="size-3.5 text-amber-300" />
                         <span>{serverClock}</span>
@@ -737,7 +737,7 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
                                 <span className="text-blue-400">PCP {realtimeStatus.pcp}/{realtimeStatus.pcpMax}</span>
                                 {' '}
                                 <span className="text-red-400">MCP {realtimeStatus.mcp}/{realtimeStatus.mcpMax}</span>
-                                {' / Cooldown '}
+                                {' / 쿨다운 '}
                                 {realtimeStatus.remainingSeconds}s
                             </Badge>
                         ) : null}
@@ -751,7 +751,7 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
                         onClick={() => setToolbarCollapsed((v) => !v)}
                     >
                         {toolbarCollapsed ? <ChevronDown className="size-3" /> : <ChevronUp className="size-3" />}
-                        Tools
+                        도구
                     </button>
                 </div>
 
@@ -760,10 +760,10 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
                     style={{ maxHeight: toolbarCollapsed ? '0px' : '500px', opacity: toolbarCollapsed ? 0 : 1 }}
                 >
                     <Button size="sm" variant="outline" disabled={realtimeMode} onClick={() => setShowSelector(true)}>
-                        Fill Selected
+                        선택 채우기
                     </Button>
                     <Button size="sm" variant="outline" onClick={copySelected}>
-                        Copy
+                        복사
                     </Button>
                     <Button
                         size="sm"
@@ -771,7 +771,7 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
                         disabled={!clipboard || realtimeMode}
                         onClick={() => void pasteClipboard()}
                     >
-                        Paste
+                        붙여넣기
                     </Button>
                     <Button
                         size="sm"
@@ -780,7 +780,7 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
                         disabled={realtimeMode}
                         onClick={() => void clearTurns(selectedTurnList)}
                     >
-                        Clear Selected
+                        선택 비우기
                     </Button>
                     <Button
                         size="sm"
@@ -788,7 +788,7 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
                         disabled={realtimeMode || selectedTurnList.length === 0}
                         onClick={() => void eraseAndPull()}
                     >
-                        Erase & Pull
+                        삭제 후 당기기
                     </Button>
                     <Button
                         size="sm"
@@ -796,29 +796,29 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
                         disabled={realtimeMode || selectedTurnList.length === 0}
                         onClick={() => void pushEmpty()}
                     >
-                        Push Back
+                        뒤로 밀기
                     </Button>
                     <Button
                         size="sm"
                         variant="outline"
                         disabled={realtimeMode || selectedTurnList.length !== 1}
-                        title="Repeat-fill selected command to subsequent empty slots"
+                        title="선택한 커맨드를 이후 빈 슬롯에 반복 채우기"
                         onClick={() => void repeatFillDown()}
                     >
-                        Repeat Fill
+                        반복 채우기
                     </Button>
                     <Button
                         size="sm"
                         variant="outline"
                         disabled={selectedTurnList.length === 0}
                         onClick={copySelectedAsText}
-                        title="Copy selected slots as text to clipboard"
+                        title="선택한 슬롯을 텍스트로 클립보드에 복사"
                     >
                         <ClipboardCopy className="size-3 mr-1" />
-                        Copy Text
+                        텍스트 복사
                     </Button>
                     <Button size="sm" variant="outline" disabled={realtimeMode} onClick={saveStoredAction}>
-                        Save
+                        저장
                     </Button>
 
                     <select
@@ -826,7 +826,7 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
                         onChange={(event) => setSelectedStoredAction(event.target.value)}
                         className="h-8 min-w-[140px] rounded-none border border-input bg-background px-2 text-xs"
                     >
-                        <option value="">Select saved action</option>
+                        <option value="">저장된 액션 선택</option>
                         {storedActions.map((item) => (
                             <option key={item.name} value={item.name}>
                                 {item.name}
@@ -839,7 +839,7 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
                         disabled={!selectedStoredAction || realtimeMode}
                         onClick={() => void loadStoredAction()}
                     >
-                        Load
+                        불러오기
                     </Button>
                     <Button
                         size="sm"
@@ -848,7 +848,7 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
                         disabled={!selectedStoredAction}
                         onClick={deleteStoredAction}
                     >
-                        Delete
+                        삭제
                     </Button>
 
                     {/* Range selection helpers */}
@@ -863,7 +863,7 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
                             setSelectedTurns(s);
                         }}
                     >
-                        Odd
+                        홀수
                     </Button>
                     <Button
                         size="sm"
@@ -875,7 +875,7 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
                             setSelectedTurns(s);
                         }}
                     >
-                        Even
+                        짝수
                     </Button>
                     <Button
                         size="sm"
@@ -887,11 +887,11 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
                             setSelectedTurns(s);
                         }}
                     >
-                        All
+                        전체
                     </Button>
 
                     <div className="ml-auto text-[11px] text-gray-400">
-                        {selectedCount} selected · Shift range · Ctrl multi · Drag reorder
+                        {selectedCount}개 선택 · Shift 범위 · Ctrl 다중 · 드래그 정렬
                     </div>
                 </div>
             </CardHeader>
@@ -900,10 +900,10 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
                 <div className="overflow-hidden rounded-none border border-gray-700">
                     <div className="grid grid-cols-[24px_68px_120px_1fr_136px] bg-[#1a1a1a] px-2 py-1.5 text-[11px] text-gray-400">
                         <div />
-                        <div>Date</div>
-                        <div>Command</div>
-                        <div>Target/Detail</div>
-                        <div className="text-right">Actions</div>
+                        <div>날짜</div>
+                        <div>커맨드</div>
+                        <div>대상/상세</div>
+                        <div className="text-right">동작</div>
                     </div>
 
                     {filledTurns.slice(0, visibleCount).map((turn) => {
@@ -931,7 +931,7 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
                                     onDragStart={(e) => handleDragStart(turn.turnIdx, e)}
                                     onDragEnd={handleDragEnd}
                                     className="flex items-center justify-center cursor-grab active:cursor-grabbing h-full text-gray-500 hover:text-gray-300"
-                                    title="Drag to reorder"
+                                    title="드래그하여 순서 변경"
                                 >
                                     <GripVertical className="size-3.5" />
                                 </div>
@@ -1025,12 +1025,12 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
                     {expanded ? (
                         <>
                             <ChevronUp className="size-3 mr-1" />
-                            Collapse ({COLLAPSED_TURN_COUNT})
+                            접기 ({COLLAPSED_TURN_COUNT})
                         </>
                     ) : (
                         <>
                             <ChevronDown className="size-3 mr-1" />
-                            Expand ({MAX_TURN_COUNT})
+                            펼치기 ({MAX_TURN_COUNT})
                         </>
                     )}
                 </Button>
@@ -1038,7 +1038,7 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
                 {/* Recent actions quick-apply bar */}
                 {recentActions.length > 0 && !realtimeMode && (
                     <div className="space-y-1">
-                        <p className="text-[10px] text-muted-foreground font-medium">Recent Commands</p>
+                        <p className="text-[10px] text-muted-foreground font-medium">최근 커맨드</p>
                         <div className="flex flex-wrap gap-1">
                             {recentActions.map((ra, idx) => (
                                 <Button

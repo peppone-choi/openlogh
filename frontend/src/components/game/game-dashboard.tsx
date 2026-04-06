@@ -157,7 +157,7 @@ export function GameDashboard() {
                 <>
                     {/* Mobile compact summary */}
                     <div className="lg:hidden text-center text-xs py-1.5 bg-[#0f1429]/80 border-y border-[#1a2040]">
-                        <span className="text-[#00d4ff]">{global.scenarioText}</span> | UC {global.year}.{global.month} | Online{' '}
+                        <span className="text-[#00d4ff]">{global.scenarioText}</span> | UC {global.year}.{global.month} | 접속{' '}
                         {(global.onlineUserCnt ?? 0).toLocaleString()}
                     </div>
                     {/* Desktop full header */}
@@ -171,13 +171,13 @@ export function GameDashboard() {
                                 UC {global.year}.{global.month}
                             </div>
                             <div className="col-span-2 border-r border-[#1a2040] py-1.5">
-                                Online: {(global.onlineUserCnt ?? 0).toLocaleString()}
+                                접속: {(global.onlineUserCnt ?? 0).toLocaleString()}
                             </div>
                             <div className="col-span-3 border-r border-[#1a2040] py-1.5">
-                                Officers: {genCounts.user.toLocaleString()} + <span className="text-[#00d4ff]">NPC {genCounts.npc.toLocaleString()}</span>
+                                장교: {genCounts.user.toLocaleString()} + <span className="text-[#00d4ff]">NPC {genCounts.npc.toLocaleString()}</span>
                             </div>
                             <div className="col-span-3 py-1.5 text-gray-400">
-                                Last tick: {global.lastExecuted?.substring(5) ?? '-'}
+                                최종 갱신: {global.lastExecuted?.substring(5) ?? '-'}
                             </div>
                         </div>
                     </div>
@@ -187,7 +187,7 @@ export function GameDashboard() {
             {/* ===== Active Factions Bar ===== */}
             {global && (
                 <div className="border-b border-[#1a2040] px-2 py-1.5 text-xs overflow-x-auto whitespace-nowrap lg:whitespace-normal lg:overflow-visible scrollbar-hide bg-[#0f1429]/50">
-                    <span className="text-gray-400 mr-2">Active Factions:</span>
+                    <span className="text-gray-400 mr-2">활동 진영:</span>
                     {global.onlineNations.map((n) => (
                         <span key={n.id} className="mr-3">
                             <span
@@ -203,13 +203,13 @@ export function GameDashboard() {
             {/* ===== Online Officers ===== */}
             {frontInfo?.nation && (
                 <div className="border-b border-[#1a2040] px-2 py-1 text-xs bg-[#0a0e1a]">
-                    <span className="text-[#00d4ff]">Online:</span> {frontInfo.nation.onlineGen}
+                    <span className="text-[#00d4ff]">접속 중:</span> {frontInfo.nation.onlineGen}
                 </div>
             )}
 
             {/* ===== Faction Notice ===== */}
             <div className="border-b border-[#1a2040] py-1 bg-[#0f1429]/30">
-                <div className="px-2 text-xs font-bold text-[#c9a84c]">Faction Directive</div>
+                <div className="px-2 text-xs font-bold text-[#c9a84c]">진영 공지</div>
                 {frontInfo?.nation?.notice && (
                     <div
                         className="px-2 text-xs break-all text-gray-300"
@@ -222,7 +222,7 @@ export function GameDashboard() {
             <div className="hidden lg:flex justify-end border-b border-[#1a2040] px-2 py-1.5">
                 <Button onClick={handleRefresh} variant="outline" size="sm" className="gap-1 border-[#1a2040] text-[#00d4ff] hover:bg-[#1a2040]">
                     <RefreshCw className="h-3.5 w-3.5" />
-                    Refresh
+                    새로고침
                 </Button>
             </div>
 
@@ -288,10 +288,10 @@ export function GameDashboard() {
                 <div className={`grid grid-cols-1 lg:grid-cols-2 ${isTabActive('world') ? '' : 'max-lg:hidden'}`}>
                     <div>
                         <div className="text-center border-t border-b border-[#1a2040] text-xs font-semibold py-1 bg-[#1a2040]/50 text-[#00d4ff] tracking-wide">
-                            Officer Activity
+                            장교 동향
                         </div>
                         {frontInfo.recentRecord.global.length === 0 ? (
-                            <div className="px-2 py-1 text-xs text-gray-500">No records</div>
+                            <div className="px-2 py-1 text-xs text-gray-500">기록 없음</div>
                         ) : (
                             frontInfo.recentRecord.global.slice(0, 15).map((r) => (
                                 <div key={r.id} className="border-b border-[#1a2040]/50 px-2 py-0.5 text-xs">
@@ -302,10 +302,10 @@ export function GameDashboard() {
                     </div>
                     <div>
                         <div className="text-center border-t border-b border-[#1a2040] text-xs font-semibold py-1 bg-[#1a2040]/50 text-[#00d4ff] tracking-wide">
-                            Personal Log
+                            개인 기록
                         </div>
                         {frontInfo.recentRecord.general.length === 0 ? (
-                            <div className="px-2 py-1 text-xs text-gray-500">No records</div>
+                            <div className="px-2 py-1 text-xs text-gray-500">기록 없음</div>
                         ) : (
                             frontInfo.recentRecord.general.slice(0, 15).map((r) => (
                                 <div key={r.id} className="border-b border-[#1a2040]/50 px-2 py-0.5 text-xs">
@@ -316,10 +316,10 @@ export function GameDashboard() {
                     </div>
                     <div className="col-span-1 lg:col-span-2">
                         <div className="text-center border-t border-b border-[#1a2040] text-xs font-semibold py-1 bg-[#c9a84c]/10 text-[#c9a84c] tracking-wide">
-                            Galaxy News
+                            은하 뉴스
                         </div>
                         {frontInfo.recentRecord.history.length === 0 ? (
-                            <div className="px-2 py-1 text-xs text-gray-500">No records</div>
+                            <div className="px-2 py-1 text-xs text-gray-500">기록 없음</div>
                         ) : (
                             frontInfo.recentRecord.history.slice(0, 15).map((r) => (
                                 <div key={r.id} className="border-b border-[#1a2040]/50 px-2 py-0.5 text-xs">
@@ -335,7 +335,7 @@ export function GameDashboard() {
             {global && global.onlineNations.length > 0 && (
                 <div className={`${isTabActive('world') ? '' : 'max-lg:hidden'}`}>
                     <div className="text-center border-t border-b border-[#1a2040] text-xs font-semibold py-1 bg-[#c9a84c]/10 text-[#c9a84c] tracking-wide">
-                        Faction Power
+                        진영 세력
                     </div>
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-1 p-1">
                         {global.onlineNations
@@ -348,7 +348,7 @@ export function GameDashboard() {
                                 >
                                     <div className="min-w-0 flex-1">
                                         <p className="text-xs font-medium truncate">{n.name}</p>
-                                        <p className="text-[10px] text-gray-500">Officers: {n.genCount}</p>
+                                        <p className="text-[10px] text-gray-500">장교: {n.genCount}</p>
                                     </div>
                                 </div>
                             ))}
@@ -360,39 +360,39 @@ export function GameDashboard() {
             {frontInfo?.general && (
                 <div className={`${isTabActive('status') ? '' : 'max-lg:hidden'}`}>
                     <div className="text-center border-t border-b border-[#1a2040] text-xs font-semibold py-1 bg-[#00d4ff]/10 text-[#00d4ff] tracking-wide">
-                        My Officer Summary
+                        내 장교 요약
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 text-center text-xs border-b border-[#1a2040]">
                         <div className="border-r border-[#1a2040]/50 py-1">
-                            <span className="text-gray-500">Battles</span>{' '}
+                            <span className="text-gray-500">전투</span>{' '}
                             <span className="text-[#00d4ff]">
-                                {frontInfo.general.warnum}W {frontInfo.general.killnum}V {frontInfo.general.deathnum}D
+                                {frontInfo.general.warnum}전 {frontInfo.general.killnum}승 {frontInfo.general.deathnum}패
                             </span>
                         </div>
                         <div className="border-r border-[#1a2040]/50 py-1">
-                            <span className="text-gray-500">Kills</span>{' '}
+                            <span className="text-gray-500">격파</span>{' '}
                             <span className="text-orange-400">{frontInfo.general.killcrew.toLocaleString()}</span>
                         </div>
                         <div className="border-r border-[#1a2040]/50 py-1">
-                            <span className="text-gray-500">Losses</span>{' '}
+                            <span className="text-gray-500">손실</span>{' '}
                             <span className="text-red-400">{frontInfo.general.deathcrew.toLocaleString()}</span>
                         </div>
                         <div className="border-r border-[#1a2040]/50 py-1">
-                            <span className="text-gray-500">Intel Ops</span>{' '}
+                            <span className="text-gray-500">첩보</span>{' '}
                             <span className="text-purple-400">{frontInfo.general.firenum}</span>
                         </div>
                         <div className="border-r border-[#1a2040]/50 py-1">
-                            <span className="text-gray-500">Injury</span>{' '}
+                            <span className="text-gray-500">부상</span>{' '}
                             <span className={frontInfo.general.injury > 0 ? 'text-red-400' : 'text-green-400'}>
                                 {frontInfo.general.injury}%
                             </span>
                         </div>
                         <div className="border-r border-[#1a2040]/50 py-1">
-                            <span className="text-gray-500">Honor</span>{' '}
+                            <span className="text-gray-500">명성</span>{' '}
                             <span className="text-yellow-400">{frontInfo.general.honorText}</span>
                         </div>
                         <div className="py-1">
-                            <span className="text-gray-500">Salary</span>{' '}
+                            <span className="text-gray-500">봉록</span>{' '}
                             <span className="text-[#c9a84c]">{frontInfo.general.bill}</span>
                         </div>
                     </div>
@@ -407,7 +407,7 @@ export function GameDashboard() {
                         className="text-[10px] text-gray-600 hover:text-gray-400"
                         onClick={() => setShowVersionModal(true)}
                     >
-                        Session Info
+                        세션 정보
                     </button>
                 </div>
             )}
@@ -420,19 +420,19 @@ export function GameDashboard() {
                         className="bg-[#0f1429] border border-[#1a2040] rounded p-4 max-w-sm w-full mx-4 space-y-2"
                         onClick={(e) => e.stopPropagation()}
                     >
-                        <h3 className="text-sm font-bold text-center text-[#00d4ff]">Session Info</h3>
+                        <h3 className="text-sm font-bold text-center text-[#00d4ff]">세션 정보</h3>
                         <div className="text-xs space-y-1 text-gray-300">
-                            <p><span className="text-gray-500">Scenario:</span> {global?.scenarioText}</p>
-                            <p><span className="text-gray-500">Server:</span> {currentWorld?.name}</p>
-                            <p><span className="text-gray-500">Game Time:</span> UC {global?.year}.{global?.month}</p>
-                            <p><span className="text-gray-500">Last Tick:</span> {global?.lastExecuted ?? '-'}</p>
-                            <p><span className="text-gray-500">Extended Officers:</span> {global?.extendedGeneral ? 'ON' : 'OFF'}</p>
-                            <p><span className="text-gray-500">NPC Mode:</span> {['Disabled', 'Enabled', 'Create'][global?.npcMode ?? 0]}</p>
-                            <p><span className="text-gray-500">Officer Limit:</span> {global?.generalCntLimit?.toLocaleString() ?? 'Unlimited'}</p>
+                            <p><span className="text-gray-500">시나리오:</span> {global?.scenarioText}</p>
+                            <p><span className="text-gray-500">서버:</span> {currentWorld?.name}</p>
+                            <p><span className="text-gray-500">게임 시간:</span> UC {global?.year}.{global?.month}</p>
+                            <p><span className="text-gray-500">최종 갱신:</span> {global?.lastExecuted ?? '-'}</p>
+                            <p><span className="text-gray-500">확장 장교:</span> {global?.extendedGeneral ? 'ON' : 'OFF'}</p>
+                            <p><span className="text-gray-500">NPC 모드:</span> {['비활성', '활성', '생성'][global?.npcMode ?? 0]}</p>
+                            <p><span className="text-gray-500">장교 제한:</span> {global?.generalCntLimit?.toLocaleString() ?? '무제한'}</p>
                         </div>
                         <div className="flex justify-center pt-2">
                             <Button size="sm" variant="outline" onClick={() => setShowVersionModal(false)} className="border-[#1a2040] text-[#00d4ff]">
-                                Close
+                                닫기
                             </Button>
                         </div>
                     </div>
