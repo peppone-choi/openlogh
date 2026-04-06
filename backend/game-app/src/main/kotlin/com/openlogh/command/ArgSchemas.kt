@@ -349,4 +349,9 @@ val COMMAND_SCHEMAS: Map<String, ArgSchema> = mapOf(
     "함대재편" to ArgSchemas.crewTypeOnly,
     "생산감독" to ArgSchemas.none,
     "예산편성" to ArgSchemas.budgetAllocation,
+
+    // Intelligence & Occupation commands (Phase 9)
+    "정찰" to ArgSchemas.destPlanet,
+    "통신방해" to ArgSchemas.destPlanet,
+    "점거" to ArgSchemas.destPlanet,
 )

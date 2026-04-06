@@ -30,9 +30,9 @@ object PositionCardRegistry {
         // Nation rest - always allowed (PERSONAL)
         put("Nation휴식", CommandGroup.PERSONAL)
 
-        // === OPERATIONS group (8) ===
+        // === OPERATIONS group (9) ===
         // Fleet/unit tactical operations via CAPTAIN card
-        for (code in listOf("출병", "집합", "전투태세", "요격", "순찰", "작전수립", "워프항행", "장거리워프")) {
+        for (code in listOf("출병", "집합", "전투태세", "요격", "순찰", "작전수립", "워프항행", "장거리워프", "점거")) {
             put(code, CommandGroup.OPERATIONS)
         }
 
@@ -78,9 +78,9 @@ object PositionCardRegistry {
             "상병연구", "원융노병연구", "음귀병연구", "화륜차연구", "화시병연구",
         )) { put(code, CommandGroup.POLITICS) }
 
-        // === INTELLIGENCE group (5) ===
-        // Espionage, sabotage, arson
-        for (code in listOf("첩보", "선동", "탈취", "파괴", "화계")) {
+        // === INTELLIGENCE group (7) ===
+        // Espionage, sabotage, arson, reconnaissance
+        for (code in listOf("첩보", "선동", "탈취", "파괴", "화계", "정찰", "통신방해")) {
             put(code, CommandGroup.INTELLIGENCE)
         }
     }

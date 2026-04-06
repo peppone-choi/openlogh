@@ -92,6 +92,11 @@ class CommandRegistry {
         registerOfficerCommand("함대재편") { g, e, a -> 함대재편(g, e, a) }
         registerOfficerCommand("생산감독") { g, e, a -> 생산감독(g, e, a) }
 
+        // Intelligence & Occupation (3)
+        registerOfficerCommand("정찰") { g, e, a -> 정찰(g, e, a) }
+        registerOfficerCommand("통신방해") { g, e, a -> 통신방해(g, e, a) }
+        registerOfficerCommand("점거") { g, e, a -> 점거(g, e, a) }
+
         // NPC/CR Special (3)
         registerOfficerCommand("NPC능동") { g, e, a -> NPC능동(g, e, a) }
         registerOfficerCommand("CR건국") { g, e, a -> CR건국(g, e, a) }
