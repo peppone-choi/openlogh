@@ -76,6 +76,8 @@ data class TacticalUnit(
     var fighterSpeedDebuffTicks: Int = 0,
     /** 마지막 태세 변경 이후 경과 틱 (쿨다운 관리) */
     var ticksSinceStanceChange: Int = 0,
+    /** 플레이어 지정 공격 대상 함대 ID (null=자동 선택) */
+    var targetFleetId: Long? = null,
 )
 
 enum class BattleSide { ATTACKER, DEFENDER }
@@ -108,6 +110,12 @@ data class TacticalBattleState(
 
     /** 현재 전투 단계 (보급/이동/수색/교전/점령) */
     var currentPhase: String = "MOVEMENT",
+
+    /**
+     * 색적 매트릭스: officerId → 탐지된 적 fleetId 집합.
+     * DetectionService.updateDetectionMatrix() 호출 시 매 틱 갱신.
+     */
+    val detectionMatrix: MutableMap<Long, MutableSet<Long>> = mutableMapOf(),
 )
 
 data class BattleTickEvent(
@@ -131,6 +139,7 @@ data class BattleTickEvent(
 class TacticalBattleEngine(
     private val missileSystem: MissileWeaponSystem = MissileWeaponSystem(),
     private val fortressGunSystem: FortressGunSystem = FortressGunSystem(),
+    private val detectionService: DetectionService = DetectionService(),
 ) {
 
     companion object {
@@ -173,6 +182,9 @@ class TacticalBattleEngine(
                 processMovement(unit, state, aliveUnits)
             }
         }
+
+        // 2.5 Detection sweep — update detectionMatrix from SENSOR allocations
+        detectionService.updateDetectionMatrix(state)
 
         // 3. Process combat (weapons fire)
         // gin7 rule: 사기 20 미만 함대는 공격 행동 불가 (isEffective=false)
@@ -309,10 +321,13 @@ class TacticalBattleEngine(
         val enemies = allUnits.filter { it.side != unit.side && it.isAlive && !it.isRetreating }
         if (enemies.isEmpty()) return
 
-        // Target: closest enemy within range
-        val target = enemies.filter { distance(unit, it) <= BEAM_RANGE }
-            .minByOrNull { distance(unit, it) }
-            ?: return
+        // Target: player-designated target takes priority; fallback to closest in range
+        val target = if (unit.targetFleetId != null) {
+            enemies.find { it.fleetId == unit.targetFleetId && it.isAlive }
+                ?: enemies.filter { distance(unit, it) <= BEAM_RANGE }.minByOrNull { distance(unit, it) }
+        } else {
+            enemies.filter { distance(unit, it) <= BEAM_RANGE }.minByOrNull { distance(unit, it) }
+        } ?: return
 
         val dist = distance(unit, target)
 
