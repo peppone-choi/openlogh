@@ -2,6 +2,7 @@ package com.openlogh.command
 
 import com.openlogh.engine.DiplomacyService
 import com.openlogh.engine.modifier.ModifierService
+import com.openlogh.repository.FleetRepository
 import com.openlogh.repository.PlanetRepository
 import com.openlogh.repository.OfficerRepository
 import com.openlogh.repository.FactionRepository
@@ -22,6 +23,7 @@ data class CommandServices(
     val factionService: FactionService? = null,
     val officerPoolService: OfficerPoolService? = null,
     val modifierService: ModifierService? = null,
+    val fleetRepository: FleetRepository? = null,
 ) {
     /**
      * Resolve city name by ID. Returns null if not found.
