@@ -1,5 +1,57 @@
 package com.openlogh.command
 
+import com.openlogh.command.gin7.personal.AttendLectureCommand
+import com.openlogh.command.gin7.personal.AudienceCommand
+import com.openlogh.command.gin7.personal.ConspiracyCommand
+import com.openlogh.command.gin7.personal.DefectionCommand
+import com.openlogh.command.gin7.personal.EnlistCommand
+import com.openlogh.command.gin7.personal.FlagshipPurchaseCommand
+import com.openlogh.command.gin7.personal.FundInjectionCommand
+import com.openlogh.command.gin7.personal.LongRangeMoveCommand
+import com.openlogh.command.gin7.personal.ObjectionCommand
+import com.openlogh.command.gin7.personal.ParticipateCommand
+import com.openlogh.command.gin7.personal.PersuasionCommand
+import com.openlogh.command.gin7.personal.RebellionCommand
+import com.openlogh.command.gin7.personal.RetirementCommand
+import com.openlogh.command.gin7.personal.ShortRangeMoveCommand
+import com.openlogh.command.gin7.personal.WeaponsDrillCommand
+import com.openlogh.command.gin7.personnel.AppointCommand
+import com.openlogh.command.gin7.personnel.AwardDecorationCommand
+import com.openlogh.command.gin7.personnel.DemoteCommand
+import com.openlogh.command.gin7.personnel.DismissCommand
+import com.openlogh.command.gin7.personnel.FieldPromoteCommand
+import com.openlogh.command.gin7.personnel.FiefCommands
+import com.openlogh.command.gin7.personnel.GrantFiefCommand
+import com.openlogh.command.gin7.personnel.GrantTitleCommand
+import com.openlogh.command.gin7.personnel.PromoteCommand
+import com.openlogh.command.gin7.personnel.ReclaimFiefCommand
+import com.openlogh.command.gin7.personnel.ResignCommand
+import com.openlogh.command.gin7.intelligence.AgitationOpCommand
+import com.openlogh.command.gin7.intelligence.ArrestAuthorizationCommand
+import com.openlogh.command.gin7.intelligence.ArrestOrderCommand
+import com.openlogh.command.gin7.intelligence.EscapeOpCommand
+import com.openlogh.command.gin7.intelligence.ExecutionOrderCommand
+import com.openlogh.command.gin7.intelligence.GeneralSearchCommand
+import com.openlogh.command.gin7.intelligence.IncursionOpCommand
+import com.openlogh.command.gin7.intelligence.InfiltrationOpCommand
+import com.openlogh.command.gin7.intelligence.InspectionCommand
+import com.openlogh.command.gin7.intelligence.IntelligenceOpCommand
+import com.openlogh.command.gin7.intelligence.RaidCommand
+import com.openlogh.command.gin7.intelligence.ReturnOpCommand
+import com.openlogh.command.gin7.intelligence.SabotageOpCommand
+import com.openlogh.command.gin7.intelligence.SurveillanceCommand
+import com.openlogh.command.gin7.politics.AddressCommand
+import com.openlogh.command.gin7.politics.BanquetCommand
+import com.openlogh.command.gin7.politics.ConferenceCommand
+import com.openlogh.command.gin7.politics.DiplomacyCommand
+import com.openlogh.command.gin7.politics.DistributionCommand
+import com.openlogh.command.gin7.politics.ExecutionCommand
+import com.openlogh.command.gin7.politics.GovernanceGoalCommand
+import com.openlogh.command.gin7.politics.HuntCommand
+import com.openlogh.command.gin7.politics.NationalGoalCommand
+import com.openlogh.command.gin7.politics.SpeechCommand
+import com.openlogh.command.gin7.politics.TariffRateChangeCommand
+import com.openlogh.command.gin7.politics.TaxRateChangeCommand
 import com.openlogh.entity.Officer
 import com.openlogh.model.StatCategory
 import kotlin.random.Random
@@ -43,21 +95,21 @@ class Gin7CommandRegistry : CommandRegistry() {
         registerMcpStub("육전대철수")      // ground_force_withdraw
 
         // === 개인커맨드 (Personal, PCP, 15종) ===
-        registerPcpStub("원거리이동")      // long_range_move
-        registerPcpStub("근거리이동")      // short_range_move
-        registerPcpStub("퇴역")            // retirement
-        registerPcpStub("지원")            // enlist
-        registerPcpStub("망명")            // defection
-        registerPcpStub("회견")            // audience
-        registerPcpStub("수강")            // attend_lecture
-        registerPcpStub("병기연습")        // weapons_drill
-        registerPcpStub("반의")            // objection
-        registerPcpStub("모의")            // conspiracy
-        registerPcpStub("설득")            // persuasion
-        registerPcpStub("반란")            // rebellion
-        registerPcpStub("참가")            // participate
-        registerPcpStub("자금투입")        // fund_injection
-        registerPcpStub("기함구매")        // flagship_purchase
+        registerOfficerCommand("원거리이동") { g, e, a -> LongRangeMoveCommand(g, e, a) }
+        registerOfficerCommand("근거리이동") { g, e, a -> ShortRangeMoveCommand(g, e, a) }
+        registerOfficerCommand("퇴역") { g, e, a -> RetirementCommand(g, e, a) }
+        registerOfficerCommand("지원") { g, e, a -> EnlistCommand(g, e, a) }
+        registerOfficerCommand("망명") { g, e, a -> DefectionCommand(g, e, a) }
+        registerOfficerCommand("회견") { g, e, a -> AudienceCommand(g, e, a) }
+        registerOfficerCommand("수강") { g, e, a -> AttendLectureCommand(g, e, a) }
+        registerOfficerCommand("병기연습") { g, e, a -> WeaponsDrillCommand(g, e, a) }
+        registerOfficerCommand("반의") { g, e, a -> ObjectionCommand(g, e, a) }
+        registerOfficerCommand("모의") { g, e, a -> ConspiracyCommand(g, e, a) }
+        registerOfficerCommand("설득") { g, e, a -> PersuasionCommand(g, e, a) }
+        registerOfficerCommand("반란") { g, e, a -> RebellionCommand(g, e, a) }
+        registerOfficerCommand("참가") { g, e, a -> ParticipateCommand(g, e, a) }
+        registerOfficerCommand("자금투입") { g, e, a -> FundInjectionCommand(g, e, a) }
+        registerOfficerCommand("기함구매") { g, e, a -> FlagshipPurchaseCommand(g, e, a) }
 
         // === 지휘커맨드 (Command, MCP, 8종) ===
         registerMcpStub("작전계획")        // operation_plan
@@ -78,46 +130,46 @@ class Gin7CommandRegistry : CommandRegistry() {
         registerMcpStub("할당")            // allocate
 
         // === 인사커맨드 (Personnel, PCP, 10종) ===
-        registerPcpStub("승진")            // promote
-        registerPcpStub("발탁")            // field_promote
-        registerPcpStub("강등")            // demote
-        registerPcpStub("서작")            // grant_title
-        registerPcpStub("서훈")            // award_decoration
-        registerPcpStub("임명")            // appoint
-        registerPcpStub("파면")            // dismiss
-        registerPcpStub("사임")            // resign
-        registerPcpStub("봉토수여")        // grant_fief
-        registerPcpStub("봉토직할")        // reclaim_fief
+        registerOfficerCommand("승진") { g, e, a -> PromoteCommand(g, e, a) }
+        registerOfficerCommand("발탁") { g, e, a -> FieldPromoteCommand(g, e, a) }
+        registerOfficerCommand("강등") { g, e, a -> DemoteCommand(g, e, a) }
+        registerOfficerCommand("서작") { g, e, a -> GrantTitleCommand(g, e, a) }
+        registerOfficerCommand("서훈") { g, e, a -> AwardDecorationCommand(g, e, a) }
+        registerOfficerCommand("임명") { g, e, a -> AppointCommand(g, e, a) }
+        registerOfficerCommand("파면") { g, e, a -> DismissCommand(g, e, a) }
+        registerOfficerCommand("사임") { g, e, a -> ResignCommand(g, e, a) }
+        registerOfficerCommand("봉토수여") { g, e, a -> GrantFiefCommand(g, e, a) }
+        registerOfficerCommand("봉토직할") { g, e, a -> ReclaimFiefCommand(g, e, a) }
 
         // === 정치커맨드 (Politics, PCP, 12종) ===
-        registerPcpStub("야회")            // banquet
-        registerPcpStub("수렵")            // hunt
-        registerPcpStub("회담")            // conference
-        registerPcpStub("담화")            // address
-        registerPcpStub("연설")            // speech
-        registerPcpStub("국가목표")        // national_goal
-        registerPcpStub("납입률변경")      // tax_rate_change
-        registerPcpStub("관세율변경")      // tariff_rate_change
-        registerPcpStub("분배")            // distribution
-        registerPcpStub("처단")            // execution
-        registerPcpStub("외교")            // diplomacy
-        registerPcpStub("통치목표")        // governance_goal
+        registerOfficerCommand("야회") { g, e, a -> BanquetCommand(g, e, a) }
+        registerOfficerCommand("수렵") { g, e, a -> HuntCommand(g, e, a) }
+        registerOfficerCommand("회담") { g, e, a -> ConferenceCommand(g, e, a) }
+        registerOfficerCommand("담화") { g, e, a -> AddressCommand(g, e, a) }
+        registerOfficerCommand("연설") { g, e, a -> SpeechCommand(g, e, a) }
+        registerOfficerCommand("국가목표") { g, e, a -> NationalGoalCommand(g, e, a) }
+        registerOfficerCommand("납입률변경") { g, e, a -> TaxRateChangeCommand(g, e, a) }
+        registerOfficerCommand("관세율변경") { g, e, a -> TariffRateChangeCommand(g, e, a) }
+        registerOfficerCommand("분배") { g, e, a -> DistributionCommand(g, e, a) }
+        registerOfficerCommand("처단") { g, e, a -> ExecutionCommand(g, e, a) }
+        registerOfficerCommand("외교") { g, e, a -> DiplomacyCommand(g, e, a) }
+        registerOfficerCommand("통치목표") { g, e, a -> GovernanceGoalCommand(g, e, a) }
 
         // === 첩보커맨드 (Intelligence, MCP, 14종) ===
-        registerMcpStub("일제수색")        // general_search
-        registerMcpStub("체포허가")        // arrest_authorization
-        registerMcpStub("집행명령")        // execution_order
-        registerMcpStub("체포명령")        // arrest_order
-        registerMcpStub("사열")            // inspection
-        registerMcpStub("습격")            // raid
-        registerMcpStub("감시")            // surveillance
-        registerMcpStub("잠입공작")        // infiltration_op
-        registerMcpStub("탈출공작")        // escape_op
-        registerMcpStub("정보공작")        // intelligence_op
-        registerMcpStub("파괴공작")        // sabotage_op
-        registerMcpStub("선동공작")        // agitation_op
-        registerMcpStub("침입공작")        // incursion_op
-        registerMcpStub("귀환공작")        // return_op
+        registerOfficerCommand("일제수색") { g, e, a -> GeneralSearchCommand(g, e, a) }
+        registerOfficerCommand("체포허가") { g, e, a -> ArrestAuthorizationCommand(g, e, a) }
+        registerOfficerCommand("집행명령") { g, e, a -> ExecutionOrderCommand(g, e, a) }
+        registerOfficerCommand("체포명령") { g, e, a -> ArrestOrderCommand(g, e, a) }
+        registerOfficerCommand("사열") { g, e, a -> InspectionCommand(g, e, a) }
+        registerOfficerCommand("습격") { g, e, a -> RaidCommand(g, e, a) }
+        registerOfficerCommand("감시") { g, e, a -> SurveillanceCommand(g, e, a) }
+        registerOfficerCommand("잠입공작") { g, e, a -> InfiltrationOpCommand(g, e, a) }
+        registerOfficerCommand("탈출공작") { g, e, a -> EscapeOpCommand(g, e, a) }
+        registerOfficerCommand("정보공작") { g, e, a -> IntelligenceOpCommand(g, e, a) }
+        registerOfficerCommand("파괴공작") { g, e, a -> SabotageOpCommand(g, e, a) }
+        registerOfficerCommand("선동공작") { g, e, a -> AgitationOpCommand(g, e, a) }
+        registerOfficerCommand("침입공작") { g, e, a -> IncursionOpCommand(g, e, a) }
+        registerOfficerCommand("귀환공작") { g, e, a -> ReturnOpCommand(g, e, a) }
 
         // === 대기 커맨드 (ALWAYS_ALLOWED 기본 커맨드, PCP) ===
         registerPcpStub("대기")            // standby - always allowed
